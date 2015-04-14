@@ -1,0 +1,17 @@
+{
+  "name": "tiled_display",
+  "private": true,
+  "version": "1.0.0",
+  "description": "redis test",
+  "main": "server/server.js",
+  "optionalDependencies": {
+    "hiredis": "*"
+  },
+  "dependencies": {
+    "redis": "*",
+    "socket.io": "*",
+    "websocket": "*",
+    "phantomjs": "*",
+    "image-size": "*"
+  }
+}

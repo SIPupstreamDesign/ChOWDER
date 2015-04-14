@@ -1,0 +1,22 @@
+*:not(input) {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	font-family: 'Hiragino Kaku Gothic Pro','Hiragino Kaku Gothic Pro W3', Meiryo, sans-serif;
+}
+
+div {
+	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	white-space: nowrap;
+}
+
+pre {
+	font-family: "monospace, serif";
+	-webkit-box-sizing: "";
+	box-sizing: content-box;
+	line-height: 1;
+	margin: 0;
+}

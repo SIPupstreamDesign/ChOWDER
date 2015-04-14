@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<link href="css/controller.css" rel="stylesheet"/>
+	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="js/metabinary.js"></script>
+	<script type="text/javascript" src="js/controller.js"></script>
+</head>
+<body>
+
+<h1>Controller</h1>
+<a href="view.html">→Display</a>
+	
+<hr>
+<div>
+	<p>テキストの送信</p>
+	<input type="text" id="text_input" />
+	<input type="button" value="Send" id="text_send_button"></input>
+</div>
+<hr>
+<div>
+	<p>URLの送信</p>
+	<input type="text" id="url_input" />
+	<input type="button" value="Send" id="url_send_button"></input>
+</div>
+<hr>
+<div>
+	<p>画像の送信</p>
+	<input type="file" name="filename" id="file_input" />
+	<!--input type="button" value="Send" id="image_send_button"></input-->
+</div>
+<hr>
+<div>
+	<p>コンテンツ削除</p>
+	<span>ID:</span><span id="delete_content_id" >No Content Selected.</span>
+	<input type="button" value="Delete" id="content_delete_button" disabled></input>
+</div>
+<hr>
+<div>
+	<p>画像差し替え</p>
+	<span>ID:</span><span id="update_content_id" >No Content Selected.</span>
+	<input type="file" value="UpdateImage" id="update_image_input" disabled></input>
+</div>
+<hr>
+<div>
+	<input type="button" value="Reload" id="reload_button"></input>
+</div>
+	
+<!--div id="drop_zone">ここにファイルをドロップ</div-->
+	
+<!--img src="" id="image_preview" /-->
+<div id="preview_area">
+</div>
+
+</body>
+</html>
