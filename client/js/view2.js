@@ -93,9 +93,9 @@
 		if (windowData) {
 			console.log("saveCookie", windowData);
 			document.cookie = 'window_id=' + windowData.id;
-			document.cookie = 'posx=' + windowData.posx;
-			document.cookie = 'posy=' + windowData.posy;
-			document.cookie = 'visible=' + windowData.visible;
+			document.cookie = windowData.id + '_x=' + windowData.posx;
+			document.cookie = windowData.id + '_y=' + windowData.posy;
+			document.cookie = windowData.id + '_visible=' + windowData.visible;
 		}
 	}
 	
@@ -108,21 +108,28 @@
 			cx = wh.width / 2.0,
 			cy = wh.height / 2.0,
 			window_id = getCookie('window_id'),
-			visible = (getCookie('visible') === "true"),
-			posx = getCookie('posx'),
-			posy = getCookie('posy'),
+			visible,
+			posx,
+			posy,
 			hashid = location.hash.split("#").join("");
 		console.log("visible", visible);
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 		
 		if (hashid.length > 0) {
 			window_id = hashid;
-			posx = window.screenX || window.screenLeft;
-			posy = window.screenY || window.screenTop;
-			if (!posx) { posx = 0; }
-			if (!posy) { posy = 0; }
-			client.send(JSON.stringify({ command : 'reqAddWindow', id : hashid, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : true }));
+			visible = "true";
+			if (getCookie(window_id + '_visible') === 'false') {
+				visible = "false";
+			}
+			posx = getCookie(window_id + '_x');
+			posy = getCookie(window_id + '_y');
+			if (!posx) { posx = window.screenX || window.screenLeft; }
+			if (!posy) { posy = window.screenY || window.screenTop; }
+			client.send(JSON.stringify({ command : 'reqAddWindow', id : hashid, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
 		} else if (window_id !== "") {
+			visible = (getCookie(window_id + '_visible') === "true");
+			posx = getCookie(window_id + '_x');
+			posy = getCookie(window_id + '_y');
 			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
 		} else {
 			client.send(JSON.stringify({ command : 'reqAddWindow', posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }));
