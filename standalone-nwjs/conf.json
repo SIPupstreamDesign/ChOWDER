@@ -1,0 +1,9 @@
+{
+	"url": "http://localhost:8080/view2.html",
+	"ws_url:" : "ws://localhost:8081/v1/",
+	"id" : ["tile1", "tile2"],
+	"rect" : {
+		"tile1" : [0, 0, 500, 350],
+		"tile2" : [500, 0, 500, 350]
+	}
+}

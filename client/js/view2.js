@@ -91,7 +91,7 @@
 	 */
 	function saveCookie() {
 		if (windowData) {
-			console.log("saveCookie");
+			console.log("saveCookie", windowData);
 			document.cookie = 'window_id=' + windowData.id;
 			document.cookie = 'posx=' + windowData.posx;
 			document.cookie = 'posy=' + windowData.posy;
@@ -110,11 +110,19 @@
 			window_id = getCookie('window_id'),
 			visible = (getCookie('visible') === "true"),
 			posx = getCookie('posx'),
-			posy = getCookie('posy');
+			posy = getCookie('posy'),
+			hashid = location.hash.split("#").join("");
 		console.log("visible", visible);
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 		
-		if (window_id !== "" && window_id.length === 8) {
+		if (hashid.length > 0) {
+			window_id = hashid;
+			posx = window.screenX || window.screenLeft;
+			posy = window.screenY || window.screenTop;
+			if (!posx) { posx = 0; }
+			if (!posy) { posy = 0; }
+			client.send(JSON.stringify({ command : 'reqAddWindow', id : hashid, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : true }));
+		} else if (window_id !== "") {
 			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
 		} else {
 			client.send(JSON.stringify({ command : 'reqAddWindow', posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }));
