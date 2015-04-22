@@ -5,5 +5,7 @@
 	"rect" : {
 		"tile1" : [0, 0, 500, 350],
 		"tile2" : [500, 0, 500, 350]
-	}
+	},
+	"fullscreen" : true,
+	"frame" : false
 }

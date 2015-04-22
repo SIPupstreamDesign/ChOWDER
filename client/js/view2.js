@@ -30,8 +30,8 @@
 	 */
 	function getWindowSize() {
 		return {
-			width : document.documentElement.clientWidth,
-			height : document.documentElement.clientHeight
+			width : window.innerWidth,
+			height : window.innerHeight
 		};
 	}
 	

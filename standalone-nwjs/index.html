@@ -15,7 +15,9 @@
 			parseddata,
 			window_id,
 			rect,
-			new_win;
+			new_win,
+			frame = true,
+			fullscreen = false;
 		
 		console.log(confpath);
 		if (fs.existsSync(confpath)) {
@@ -30,16 +32,30 @@
 				}
 			}
 		}
+		
+		if (parseddata.hasOwnProperty('frame')) {
+			frame = parseddata.frame;
+		}
+		if (parseddata.hasOwnProperty('fullscreen')) {
+			fullscreen = parseddata.fullscreen;
+		}
 
 		for (i = 0; i < parseddata.id.length; i = i + 1) {
 			window_id = parseddata.id[i];
 			rect = parseddata.rect[window_id];
 			new_win = gui.Window.open(parseddata.url + "#" + window_id, {
 				position : 'center',
+				toolbar : false,
+				frame: frame,
 				width : rect[2],
 				height : rect[3]
 			});
 			new_win.moveTo(rect[0], rect[1]);
+			
+			if (fullscreen) {
+				new_win.toggleFullscreen();
+				new_win.resizeTo(rect[2], rect[3]);
+			}
 		}
 		win.close();
 	</script>
