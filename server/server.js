@@ -130,7 +130,7 @@ var opsever = http.createServer(function (req, res) {
 	}
 });
 if (process.argv.length > 2) {
-	port = process.argv[2];
+	port = parseInt(process.argv[2], 10);
 }
 opsever.listen(port);
 

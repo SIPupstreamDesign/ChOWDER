@@ -176,6 +176,19 @@
 		}
 	}
 	
+	function isInvalidImageSize(metaData) {
+		if (!metaData.hasOwnProperty('width') || isNaN(metaData.width)) {
+			return true;
+		}
+		if (!metaData.hasOwnProperty('height') || isNaN(metaData.height)) {
+			return true;
+		}
+		if (metaData.width <= 0 || metaData.height <= 0) {
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * コンテンツ追加
 	 * @method addContent
@@ -184,7 +197,8 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function addContent(metaData, data, endCallback) {
-		var contentData = null;
+		var contentData = null,
+			dimensions;
 		if (metaData.type === 'text') {
 			contentData = data;
 			metaData.mime = "text/plain";
@@ -214,6 +228,15 @@
 					metaData.orgHeight = metaData.height;
 					if (!metaData.hasOwnProperty('zIndex')) {
 						metaData.zIndex = 0;
+					}
+					if (metaData.type === 'image') {
+						if (isInvalidImageSize(metaData)) {
+							dimensions = image_size(contentData);
+							metaData.width = dimensions.width;
+							metaData.height = dimensions.height;
+							metaData.orgWidth = metaData.width;
+							metaData.orgHeight = metaData.height;
+						}
 					}
 					setMetaData(metaData.type, id, metaData, function (metaData) {
 						endCallback(metaData, contentData);
