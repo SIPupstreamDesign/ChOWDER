@@ -797,9 +797,9 @@
 			io.sockets.emit(Command.update);
 		}
 		
-		function updateTransform() {
-			ws.broadcast(Command.updateTransform);
-			io.sockets.emit(Command.updateTransform);
+		function updateTransform(id) {
+			ws.broadcast(Command.updateTransform + ":" + id);
+			io.sockets.emit(Command.updateTransform, id);
 		}
 		
 		function updateWindow() {
@@ -819,7 +819,6 @@
 			});
 		});
 		*/
-		
 		socket.on(Command.reqAddContent, function (data) {
 			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
 				commandAddContent(socket, null, metaData, binaryData, update);
@@ -841,12 +840,21 @@
 		
 		socket.on(Command.reqUpdateContent, function (data) {
 			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
-				commandUpdateContent(socket, null, metaData, binaryData, updateTransform);
+				commandUpdateContent(socket, null, metaData, binaryData, (function (id) {
+					return function () {
+						updateTransform(id);
+					};
+				}(metaData.id)));
 			});
 		});
 		
 		socket.on(Command.reqUpdateTransform, function (data) {
-			commandUpdateTransform(socket, null, JSON.parse(data), updateTransform);
+			var parsed = JSON.parse(data);
+			commandUpdateTransform(socket, null, parsed, (function (id) {
+				return function () {
+					updateTransform(id);
+				};
+			}(parsed.id)));
 		});
 
 		socket.on(Command.reqAddWindow, function (data) {
@@ -898,9 +906,9 @@
 			io.sockets.emit(Command.update);
 		}
 		
-		function updateTransform() {
-			ws.broadcast(Command.updateTransform);
-			io.sockets.emit(Command.updateTransform);
+		function updateTransform(id) {
+			ws.broadcast(Command.updateTransform + ":" + id);
+			io.sockets.emit(Command.updateTransform, id);
 		}
 		
 		function updateWindow() {
@@ -925,7 +933,11 @@
 				} else if (request.command === Command.reqGetContent) {
 					commandGetContent(null, ws_connection, request, function () {});
 				} else if (request.command === Command.reqUpdateTransform) {
-					commandUpdateTransform(null, ws_connection, request, updateTransform);
+					commandUpdateTransform(null, ws_connection, request, (function (id) {
+						return function () {
+							updateTransform(id);
+						};
+					}(request.id)));
 				} else if (request.command === Command.reqAddWindow) {
 					commandAddWindow(null, ws_connection, request, updateWindow);
 				} else if (request.command === Command.reqGetWindow) {
@@ -950,7 +962,11 @@
 						} else if (request === Command.reqDeleteContent) {
 							commandDeleteContent(null, ws_connection, metaData, update);
 						} else if (request === Command.reqUpdateContent) {
-							commandUpdateContent(null, ws_connection, metaData, binaryData, updateTransform);
+							commandUpdateContent(null, ws_connection, metaData, binaryData, (function (id) {
+								return function () {
+									updateTransform(id);
+								};
+							}(metaData.id)));
 						}
 					}
 				});

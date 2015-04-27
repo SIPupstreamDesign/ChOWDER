@@ -160,7 +160,7 @@
 	 * update contants.
 	 * @method update
 	 */
-	function update() {
+	function update(targetid) {
 		var previewArea = document.getElementById('preview_area');
 		
 		if (updateType === 'all') {
@@ -172,7 +172,11 @@
 			client.send(JSON.stringify({ command : 'reqGetWindow', id : windowData.id}));
 		} else {
 			console.log("update transform");
-			client.send(JSON.stringify({ command : 'reqGetMetaData', type: 'all', id: ''}));
+			if (targetid) {
+				client.send(JSON.stringify({ command : 'reqGetMetaData', type: '', id: targetid}));
+			} else {
+				client.send(JSON.stringify({ command : 'reqGetMetaData', type: 'all', id: ''}));
+			}
 		}
 	}
 	
@@ -348,17 +352,21 @@
 				console.log("update");
 				updateType = 'all';
 				update();
-			} else if (message.data === "updateTransform") {
-				// recieve update transfrom request
-				//console.log("updateTransform");
-				updateType = 'transform';
-				update();
+			//} else if (message.data === "updateTransform") {
+			//	// recieve update transfrom request
+			//	//console.log("updateTransform");
+			//	updateType = 'transform';
+			//	update();
 			} else if (message.data === "updateWindow") {
 				updateType = 'window';
 				console.log("updateWindow");
 				update();
 			} else if (message.data.indexOf("showWindowID:") >= 0) {
 				showDisplayID(message.data.split(':')[1]);
+			} else if (message.data.indexOf("updateTransform:") >= 0) {
+				updateType = 'transform';
+				console.log("updateTransform" , message.data);
+				update(message.data.split(':')[1]);
 			} else {
 				// recieve metadata
 				json = JSON.parse(message.data);
