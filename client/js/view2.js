@@ -442,6 +442,17 @@
 	 * @method init
 	 */
 	function init() {
+		var input_id = document.getElementById('input_id'),
+			registered = false,
+			onfocus = false,
+			hideMenuFunc = function () {
+				console.log("onfocus:", onfocus);
+				if (!onfocus) {
+					console.log("hideMenuFunc");
+					document.getElementById('menu').classList.add('hide');
+				}
+				registered = false;
+			};
 		
 		// resize event
 		/*
@@ -455,20 +466,27 @@
 		};
 		*/
 
-		var registered = false;
 		window.addEventListener('mousemove', function (evt) {
 			document.getElementById('menu').classList.remove('hide');
 			if (!registered) {
 				registered = true;
-				setTimeout(function () {
-					document.getElementById('menu').classList.add('hide');
-					registered = false;
-				}, 3000);
+				setTimeout(hideMenuFunc, 3000);
 			}
 		});
 		
 		document.getElementById('change_id').onclick = changeID;
-		document.getElementById('input_id').onkeypress = function (ev) {
+		
+		input_id.onfocus = function (ev) {
+			console.log("onfocus");
+			onfocus = true;
+			document.getElementById('menu').classList.remove('hide');
+			clearTimeout(hideMenuFunc);
+		};
+		input_id.onblur = function (ev) {
+			console.log("onblur");
+			onfocus = false;
+		};
+		input_id.onkeypress = function (ev) {
 			console.log(ev.keyCode);
 			if (ev.keyCode === 13) { // enter
 				document.getElementById('change_id').onclick(ev);
