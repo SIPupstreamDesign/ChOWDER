@@ -542,6 +542,7 @@
 		vscreen.splitWhole(ix, iy);
 		assignSplitWholes(vscreen.getSplitWholes());
 		if (!withoutUpdate) {
+			updateScreen();
 			updateWindowData();
 		}
 	}
@@ -2353,10 +2354,17 @@
 	
 	socket.on('doneGetWindow', function (reply) {
 		console.log('doneGetWindow:');
-		var windowData = JSON.parse(reply);
+		var windowData = JSON.parse(reply),
+			elem;
 		importWindow(windowData);
 		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastDraggingID === windowData.id)) {
 			assignContentProperty(windowData);
+		}
+		if (lastDraggingID) {
+			elem = document.getElementById(lastDraggingID);
+			if (elem) {
+				manipulator.moveManipulator(elem);
+			}
 		}
 	});
 	
