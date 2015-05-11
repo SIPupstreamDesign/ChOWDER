@@ -346,13 +346,23 @@
 			}
 			socketidToHash[socketid] = id;
 			console.log("registerWindow: " + id);
-			windowData.id = id;
-			windowData.socketid = socketid;
-			windowData.orgWidth = windowData.width;
-			windowData.orgHeight = windowData.height;
-			windowData.type = "window";
-			textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
-				endCallback(windowData);
+			textClient.hexists(windowPrefix + id, function (err, reply) {
+				if (reply === 1) {
+					windowData.socketid = socketid;
+					windowData.type = "window";
+					textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
+						endCallback(windowData);
+					});
+				} else {
+					windowData.id = id;
+					windowData.socketid = socketid;
+					windowData.orgWidth = windowData.width;
+					windowData.orgHeight = windowData.height;
+					windowData.type = "window";
+					textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
+						endCallback(windowData);
+					});
+				}
 			});
 		});
 	}

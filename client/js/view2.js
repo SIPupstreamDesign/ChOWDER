@@ -1,5 +1,5 @@
 /*jslint devel:true*/
-/*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, unescape */
+/*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, unescape, escape */
 
 (function (metabinary, vscreen, vsutil) {
 	"use strict";
@@ -33,6 +33,10 @@
 			width : window.innerWidth,
 			height : window.innerHeight
 		};
+	}
+	
+	function fixedEncodeURIComponent(str) {
+		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 	}
 	
 	function insertElementWithDictionarySort(area, elem) {
@@ -116,7 +120,7 @@
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 		
 		if (hashid.length > 0) {
-			window_id = hashid;
+			window_id = decodeURIComponent(hashid);
 			visible = "true";
 			if (getCookie(window_id + '_visible') === 'false') {
 				visible = "false";
@@ -125,7 +129,7 @@
 			posy = getCookie(window_id + '_y');
 			if (!posx) { posx = window.screenX || window.screenLeft; }
 			if (!posy) { posy = window.screenY || window.screenTop; }
-			client.send(JSON.stringify({ command : 'reqAddWindow', id : hashid, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
+			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
 		} else if (window_id !== "") {
 			visible = (getCookie(window_id + '_visible') === "true");
 			posx = getCookie(window_id + '_x');
@@ -365,7 +369,7 @@
 				showDisplayID(message.data.split(':')[1]);
 			} else if (message.data.indexOf("updateTransform:") >= 0) {
 				updateType = 'transform';
-				console.log("updateTransform" , message.data);
+				console.log("updateTransform", message.data);
 				update(message.data.split(':')[1]);
 			} else {
 				// recieve metadata
@@ -377,6 +381,7 @@
 						windowData = json;
 						saveCookie();
 						window.parent.document.title = "Display ID:" + json.id;
+						document.getElementById('input_id').value = json.id;
 						document.getElementById('displayid').innerHTML = "ID:" + json.id;
 						updateWindow(windowData);
 						assingVisible(windowData);
@@ -415,6 +420,20 @@
 			});
 		}
 	};
+
+	function changeID(e) {
+		var elem = document.getElementById('input_id'),
+			val,
+			url;
+		e.preventDefault();
+		if (elem && elem.value) {
+			console.log(elem.value);
+			val = elem.value.split(' ').join('');
+			val = val.split('　').join('');
+			location.hash = fixedEncodeURIComponent(val);
+			location.reload(true);
+		}
+	}
 	
 	/// initialize.
 	/// setup gui events
@@ -441,12 +460,20 @@
 			document.getElementById('menu').classList.remove('hide');
 			if (!registered) {
 				registered = true;
-				setTimeout(function() {
+				setTimeout(function () {
 					document.getElementById('menu').classList.add('hide');
 					registered = false;
 				}, 3000);
 			}
 		});
+		
+		document.getElementById('change_id').onclick = changeID;
+		document.getElementById('input_id').onkeypress = function (ev) {
+			console.log(ev.keyCode);
+			if (ev.keyCode === 13) { // enter
+				document.getElementById('change_id').onclick(ev);
+			}
+		};
 	}
 	
 	window.onload = init;
