@@ -264,6 +264,8 @@
 	 */
 	function update() {
 		vscreen.clearScreenAll();
+		document.getElementById('content_area').innerHTML = "";
+		document.getElementById('content_preview_area').innerHTML = "";
 		socket.emit('reqGetVirtualDisplay', JSON.stringify({type: "all", id: ""}));
 		socket.emit('reqGetContent', JSON.stringify({type: "all", id: ""}));
 		socket.emit('reqGetWindow', JSON.stringify({type: "all", id: ""}));
@@ -540,6 +542,7 @@
 		vscreen.splitWhole(ix, iy);
 		assignSplitWholes(vscreen.getSplitWholes());
 		if (!withoutUpdate) {
+			updateScreen();
 			updateWindowData();
 		}
 	}
@@ -1717,7 +1720,8 @@
 			blob,
 			mime = "image/jpeg";
 
-		if (isVisible(metaData)) {
+		//if (isVisible(metaData))
+		{
 			metaDataDict[metaData.id] = metaData;
 			console.log("importContentToView:" + JSON.stringify(metaData));
 
@@ -2286,7 +2290,8 @@
 		var json = JSON.parse(data);
 		if (json.type === windowType) { return; }
 		metaDataDict[json.id] = json;
-		if (isVisible(json)) {
+		//if (isVisible(json)) 
+		{
 			vsutil.assignMetaData(document.getElementById(json.id), json, true);
 			if (draggingID === json.id || (manipulator.getDraggingManip() && lastDraggingID === json.id)) {
 				assignContentProperty(json);
@@ -2349,10 +2354,17 @@
 	
 	socket.on('doneGetWindow', function (reply) {
 		console.log('doneGetWindow:');
-		var windowData = JSON.parse(reply);
+		var windowData = JSON.parse(reply),
+			elem;
 		importWindow(windowData);
 		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastDraggingID === windowData.id)) {
 			assignContentProperty(windowData);
+		}
+		if (lastDraggingID) {
+			elem = document.getElementById(lastDraggingID);
+			if (elem) {
+				manipulator.moveManipulator(elem);
+			}
 		}
 	});
 	
@@ -2383,8 +2395,19 @@
 		}
 	});
 	
-	socket.on('updateTransform', function () {
-		socket.emit('reqGetMetaData', JSON.stringify({type: "all", id: ""}));
+	socket.on('updateTransform', function (id) {
+		var elem;
+		if (id) {
+			socket.emit('reqGetMetaData', JSON.stringify({type: "", id: id}));
+			if (lastDraggingID) {
+				elem = document.getElementById(lastDraggingID);
+				if (elem) {
+					manipulator.moveManipulator(elem);
+				}
+			}
+		} else {
+			socket.emit('reqGetMetaData', JSON.stringify({type: "all", id: ""}));
+		}
 	});
 	
 	socket.on('updateWindow', function () {

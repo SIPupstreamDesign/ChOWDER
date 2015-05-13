@@ -176,6 +176,19 @@
 		}
 	}
 	
+	function isInvalidImageSize(metaData) {
+		if (!metaData.hasOwnProperty('width') || isNaN(metaData.width)) {
+			return true;
+		}
+		if (!metaData.hasOwnProperty('height') || isNaN(metaData.height)) {
+			return true;
+		}
+		if (metaData.width <= 0 || metaData.height <= 0) {
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * コンテンツ追加
 	 * @method addContent
@@ -184,7 +197,8 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function addContent(metaData, data, endCallback) {
-		var contentData = null;
+		var contentData = null,
+			dimensions;
 		if (metaData.type === 'text') {
 			contentData = data;
 			metaData.mime = "text/plain";
@@ -214,6 +228,15 @@
 					metaData.orgHeight = metaData.height;
 					if (!metaData.hasOwnProperty('zIndex')) {
 						metaData.zIndex = 0;
+					}
+					if (metaData.type === 'image') {
+						if (isInvalidImageSize(metaData)) {
+							dimensions = image_size(contentData);
+							metaData.width = dimensions.width;
+							metaData.height = dimensions.height;
+							metaData.orgWidth = metaData.width;
+							metaData.orgHeight = metaData.height;
+						}
 					}
 					setMetaData(metaData.type, id, metaData, function (metaData) {
 						endCallback(metaData, contentData);
@@ -323,13 +346,23 @@
 			}
 			socketidToHash[socketid] = id;
 			console.log("registerWindow: " + id);
-			windowData.id = id;
-			windowData.socketid = socketid;
-			windowData.orgWidth = windowData.width;
-			windowData.orgHeight = windowData.height;
-			windowData.type = "window";
-			textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
-				endCallback(windowData);
+			textClient.hexists(windowPrefix + id, function (err, reply) {
+				if (reply === 1) {
+					windowData.socketid = socketid;
+					windowData.type = "window";
+					textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
+						endCallback(windowData);
+					});
+				} else {
+					windowData.id = id;
+					windowData.socketid = socketid;
+					windowData.orgWidth = windowData.width;
+					windowData.orgHeight = windowData.height;
+					windowData.type = "window";
+					textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
+						endCallback(windowData);
+					});
+				}
 			});
 		});
 	}
@@ -774,9 +807,9 @@
 			io.sockets.emit(Command.update);
 		}
 		
-		function updateTransform() {
-			ws.broadcast(Command.updateTransform);
-			io.sockets.emit(Command.updateTransform);
+		function updateTransform(id) {
+			ws.broadcast(Command.updateTransform + ":" + id);
+			io.sockets.emit(Command.updateTransform, id);
 		}
 		
 		function updateWindow() {
@@ -796,7 +829,6 @@
 			});
 		});
 		*/
-		
 		socket.on(Command.reqAddContent, function (data) {
 			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
 				commandAddContent(socket, null, metaData, binaryData, update);
@@ -818,12 +850,21 @@
 		
 		socket.on(Command.reqUpdateContent, function (data) {
 			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
-				commandUpdateContent(socket, null, metaData, binaryData, updateTransform);
+				commandUpdateContent(socket, null, metaData, binaryData, (function (id) {
+					return function () {
+						updateTransform(id);
+					};
+				}(metaData.id)));
 			});
 		});
 		
 		socket.on(Command.reqUpdateTransform, function (data) {
-			commandUpdateTransform(socket, null, JSON.parse(data), updateTransform);
+			var parsed = JSON.parse(data);
+			commandUpdateTransform(socket, null, parsed, (function (id) {
+				return function () {
+					updateTransform(id);
+				};
+			}(parsed.id)));
 		});
 
 		socket.on(Command.reqAddWindow, function (data) {
@@ -875,9 +916,9 @@
 			io.sockets.emit(Command.update);
 		}
 		
-		function updateTransform() {
-			ws.broadcast(Command.updateTransform);
-			io.sockets.emit(Command.updateTransform);
+		function updateTransform(id) {
+			ws.broadcast(Command.updateTransform + ":" + id);
+			io.sockets.emit(Command.updateTransform, id);
 		}
 		
 		function updateWindow() {
@@ -902,7 +943,11 @@
 				} else if (request.command === Command.reqGetContent) {
 					commandGetContent(null, ws_connection, request, function () {});
 				} else if (request.command === Command.reqUpdateTransform) {
-					commandUpdateTransform(null, ws_connection, request, updateTransform);
+					commandUpdateTransform(null, ws_connection, request, (function (id) {
+						return function () {
+							updateTransform(id);
+						};
+					}(request.id)));
 				} else if (request.command === Command.reqAddWindow) {
 					commandAddWindow(null, ws_connection, request, updateWindow);
 				} else if (request.command === Command.reqGetWindow) {
@@ -927,7 +972,11 @@
 						} else if (request === Command.reqDeleteContent) {
 							commandDeleteContent(null, ws_connection, metaData, update);
 						} else if (request === Command.reqUpdateContent) {
-							commandUpdateContent(null, ws_connection, metaData, binaryData, updateTransform);
+							commandUpdateContent(null, ws_connection, metaData, binaryData, (function (id) {
+								return function () {
+									updateTransform(id);
+								};
+							}(metaData.id)));
 						}
 					}
 				});

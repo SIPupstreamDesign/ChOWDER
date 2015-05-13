@@ -103,6 +103,17 @@
 	}
 	
 	/**
+	 * メタデータが表示中であるかを判別する
+	 * @method isVisible
+	 * @param {JSON} metaData 判別対象メタデータ
+	 * @return LogicalExpression
+	 */
+	function isVisible(metaData) {
+		console.log(metaData);
+		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
+	}
+	
+	/**
 	 * メタデータを割り当て
 	 * @method assignMetaData
 	 * @param {Element} elem エレメント
@@ -121,6 +132,14 @@
 			assignZIndex(elem, metaData);
 			if (metaData.type === "text") {
 				resizeText(elem, rect);
+			}
+			
+			if (isVisible(metaData)) {
+				console.log("isvisible");
+				elem.style.display = "block";
+			} else {
+				console.log("not isvisible");
+				elem.style.display = "none";
 			}
 		}
 	}
@@ -188,6 +207,7 @@
 	window.vscreen_util = new VscreenUtil();
 	window.vscreen_util.assignMetaData = assignMetaData;
 	window.vscreen_util.assignScreenRect = assignScreenRect;
+	window.vscreen_util.isVisible = isVisible;
 	window.vscreen_util.trans = trans;
 	window.vscreen_util.transInv = transInv;
 	window.vscreen_util.transPosInv = transPosInv;

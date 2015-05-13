@@ -188,7 +188,7 @@
 				console.log("update");
 				updateType = 'all';
 				update();
-			} else if (message.data === "updateTransform") {
+			} else if (message.data.indexOf("updateTransform:") >= 0) {
 				// recieve update transfrom request
 				//console.log("updateTransform");
 				updateType = 'transform';

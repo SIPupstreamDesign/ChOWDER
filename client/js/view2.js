@@ -1,5 +1,5 @@
 /*jslint devel:true*/
-/*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, unescape */
+/*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, unescape, escape */
 
 (function (metabinary, vscreen, vsutil) {
 	"use strict";
@@ -30,9 +30,13 @@
 	 */
 	function getWindowSize() {
 		return {
-			width : document.documentElement.clientWidth,
-			height : document.documentElement.clientHeight
+			width : window.innerWidth,
+			height : window.innerHeight
 		};
+	}
+	
+	function fixedEncodeURIComponent(str) {
+		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 	}
 	
 	function insertElementWithDictionarySort(area, elem) {
@@ -91,11 +95,11 @@
 	 */
 	function saveCookie() {
 		if (windowData) {
-			console.log("saveCookie");
+			console.log("saveCookie", windowData);
 			document.cookie = 'window_id=' + windowData.id;
-			document.cookie = 'posx=' + windowData.posx;
-			document.cookie = 'posy=' + windowData.posy;
-			document.cookie = 'visible=' + windowData.visible;
+			document.cookie = windowData.id + '_x=' + windowData.posx;
+			document.cookie = windowData.id + '_y=' + windowData.posy;
+			document.cookie = windowData.id + '_visible=' + windowData.visible;
 		}
 	}
 	
@@ -108,13 +112,28 @@
 			cx = wh.width / 2.0,
 			cy = wh.height / 2.0,
 			window_id = getCookie('window_id'),
-			visible = (getCookie('visible') === "true"),
-			posx = getCookie('posx'),
-			posy = getCookie('posy');
+			visible,
+			posx,
+			posy,
+			hashid = location.hash.split("#").join("");
 		console.log("visible", visible);
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 		
-		if (window_id !== "" && window_id.length === 8) {
+		if (hashid.length > 0) {
+			window_id = decodeURIComponent(hashid);
+			visible = "true";
+			if (getCookie(window_id + '_visible') === 'false') {
+				visible = "false";
+			}
+			posx = getCookie(window_id + '_x');
+			posy = getCookie(window_id + '_y');
+			if (!posx) { posx = window.screenX || window.screenLeft; }
+			if (!posy) { posy = window.screenY || window.screenTop; }
+			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
+		} else if (window_id !== "") {
+			visible = (getCookie(window_id + '_visible') === "true");
+			posx = getCookie(window_id + '_x');
+			posy = getCookie(window_id + '_y');
 			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
 		} else {
 			client.send(JSON.stringify({ command : 'reqAddWindow', posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }));
@@ -145,7 +164,7 @@
 	 * update contants.
 	 * @method update
 	 */
-	function update() {
+	function update(targetid) {
 		var previewArea = document.getElementById('preview_area');
 		
 		if (updateType === 'all') {
@@ -157,7 +176,11 @@
 			client.send(JSON.stringify({ command : 'reqGetWindow', id : windowData.id}));
 		} else {
 			console.log("update transform");
-			client.send(JSON.stringify({ command : 'reqGetMetaData', type: 'all', id: ''}));
+			if (targetid) {
+				client.send(JSON.stringify({ command : 'reqGetMetaData', type: '', id: targetid}));
+			} else {
+				client.send(JSON.stringify({ command : 'reqGetMetaData', type: 'all', id: ''}));
+			}
 		}
 	}
 	
@@ -333,17 +356,21 @@
 				console.log("update");
 				updateType = 'all';
 				update();
-			} else if (message.data === "updateTransform") {
-				// recieve update transfrom request
-				//console.log("updateTransform");
-				updateType = 'transform';
-				update();
+			//} else if (message.data === "updateTransform") {
+			//	// recieve update transfrom request
+			//	//console.log("updateTransform");
+			//	updateType = 'transform';
+			//	update();
 			} else if (message.data === "updateWindow") {
 				updateType = 'window';
 				console.log("updateWindow");
 				update();
 			} else if (message.data.indexOf("showWindowID:") >= 0) {
 				showDisplayID(message.data.split(':')[1]);
+			} else if (message.data.indexOf("updateTransform:") >= 0) {
+				updateType = 'transform';
+				console.log("updateTransform", message.data);
+				update(message.data.split(':')[1]);
 			} else {
 				// recieve metadata
 				json = JSON.parse(message.data);
@@ -354,6 +381,7 @@
 						windowData = json;
 						saveCookie();
 						window.parent.document.title = "Display ID:" + json.id;
+						document.getElementById('input_id').value = json.id;
 						document.getElementById('displayid').innerHTML = "ID:" + json.id;
 						updateWindow(windowData);
 						assingVisible(windowData);
@@ -392,6 +420,20 @@
 			});
 		}
 	};
+
+	function changeID(e) {
+		var elem = document.getElementById('input_id'),
+			val,
+			url;
+		e.preventDefault();
+		if (elem && elem.value) {
+			console.log(elem.value);
+			val = elem.value.split(' ').join('');
+			val = val.split('　').join('');
+			location.hash = fixedEncodeURIComponent(val);
+			location.reload(true);
+		}
+	}
 	
 	/// initialize.
 	/// setup gui events
@@ -400,6 +442,17 @@
 	 * @method init
 	 */
 	function init() {
+		var input_id = document.getElementById('input_id'),
+			registered = false,
+			onfocus = false,
+			hideMenuFunc = function () {
+				console.log("onfocus:", onfocus);
+				if (!onfocus) {
+					console.log("hideMenuFunc");
+					document.getElementById('menu').classList.add('hide');
+				}
+				registered = false;
+			};
 		
 		// resize event
 		/*
@@ -413,17 +466,32 @@
 		};
 		*/
 
-		var registered = false;
 		window.addEventListener('mousemove', function (evt) {
 			document.getElementById('menu').classList.remove('hide');
 			if (!registered) {
 				registered = true;
-				setTimeout(function() {
-					document.getElementById('menu').classList.add('hide');
-					registered = false;
-				}, 3000);
+				setTimeout(hideMenuFunc, 3000);
 			}
 		});
+		
+		document.getElementById('change_id').onclick = changeID;
+		
+		input_id.onfocus = function (ev) {
+			console.log("onfocus");
+			onfocus = true;
+			document.getElementById('menu').classList.remove('hide');
+			clearTimeout(hideMenuFunc);
+		};
+		input_id.onblur = function (ev) {
+			console.log("onblur");
+			onfocus = false;
+		};
+		input_id.onkeypress = function (ev) {
+			console.log(ev.keyCode);
+			if (ev.keyCode === 13) { // enter
+				document.getElementById('change_id').onclick(ev);
+			}
+		};
 	}
 	
 	window.onload = init;

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<script>
+		global.nwrequire = require;
+		global.document = window.document;
+	</script>
+	
+	<script>
+		var fs = require("fs"),
+			os = require("os"),
+			path = require("path"),
+			gui = require('nw.gui'),
+			win = gui.Window.get(),
+			confpath = path.join(path.dirname(process.execPath), "conf.json"),
+			confdata,
+			parseddata,
+			window_id,
+			rect,
+			new_win,
+			frame = true,
+			fullscreen = false;
+		
+		if (os.platform() === 'darwin') {
+			confpath = path.join(path.dirname(process.execPath), "../../../../../../conf.json");
+		}
+		
+		console.log(confpath);
+		if (fs.existsSync(confpath)) {
+			confdata = fs.readFileSync(confpath);
+			if (confdata.length > 0) {
+				try {
+					parseddata = JSON.parse(confdata);
+				} catch(e) {
+					alert("error: failed load conf.json");
+					alert(e);
+					process.exit();
+				}
+			}
+		}
+		
+		if (parseddata.hasOwnProperty('frame')) {
+			frame = parseddata.frame;
+		}
+		if (parseddata.hasOwnProperty('fullscreen')) {
+			fullscreen = parseddata.fullscreen;
+		}
+
+		for (i = 0; i < parseddata.id.length; i = i + 1) {
+			window_id = parseddata.id[i];
+			rect = parseddata.rect[window_id];
+			new_win = gui.Window.open(parseddata.url + "#" + window_id, {
+				position : 'center',
+				toolbar : false,
+				frame: frame,
+				width : rect[2],
+				height : rect[3]
+			});
+			new_win.moveTo(rect[0], rect[1]);
+			
+			if (fullscreen) {
+				new_win.toggleFullscreen();
+				new_win.resizeTo(rect[2], rect[3]);
+			}
+		}
+		win.close();
+	</script>
+</html>
