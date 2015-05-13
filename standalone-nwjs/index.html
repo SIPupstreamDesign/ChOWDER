@@ -7,6 +7,7 @@
 	
 	<script>
 		var fs = require("fs"),
+			os = require("os"),
 			path = require("path"),
 			gui = require('nw.gui'),
 			win = gui.Window.get(),
@@ -18,6 +19,10 @@
 			new_win,
 			frame = true,
 			fullscreen = false;
+		
+		if (os.platform() === 'darwin') {
+			confpath = path.join(path.dirname(process.execPath), "../../../../../../conf.json"),
+		}
 		
 		console.log(confpath);
 		if (fs.existsSync(confpath)) {
