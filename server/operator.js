@@ -578,7 +578,11 @@
 				meta.command = Command.doneGetContent;
 				getContent(meta.type, meta.id, function (reply) {
 					var binary = metabinary.createMetaBinary(meta, reply);
-					sendBinary(Command.doneGetContent, binary, socket, ws_connection);
+					if (binary == null) {
+					    console.log('Failed to create Metabinary');
+					} else {
+					    sendBinary(Command.doneGetContent, binary, socket, ws_connection);
+					}
 					endCallback();
 				});
 			}
