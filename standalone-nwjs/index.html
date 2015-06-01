@@ -17,6 +17,7 @@
 			window_id,
 			rect,
 			new_win,
+			offset,
 			frame = true,
 			fullscreen = false;
 		
@@ -55,7 +56,14 @@
 				width : rect[2],
 				height : rect[3]
 			});
-			new_win.moveTo(rect[0], rect[1]);
+			
+			if (parseddata.hasOwnProperty('offset')) {
+				if (parseddata.offset.hasOwnProperty(window_id)) {
+					offset = parseddata.offset[window_id];
+					new_win.moveTo(offset[0], offset[1]);
+				}
+			}
+			
 			
 			if (fullscreen) {
 				new_win.toggleFullscreen();

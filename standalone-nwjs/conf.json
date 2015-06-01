@@ -6,6 +6,10 @@
 		"tile1" : [0, 0, 500, 350],
 		"tile2" : [500, 0, 500, 350]
 	},
-	"fullscreen" : true,
+	"offset" : {
+		"tile1" : [0, 0],
+		"tile2" : [500, 0]
+	},
+	"fullscreen" : false,
 	"frame" : false
 }
