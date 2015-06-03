@@ -2276,7 +2276,12 @@
 		// for ie, safari
 		document.getElementById('dropdown_item2').addEventListener('mousedown', function (evt) {
 			document.getElementById('dropdown_item2').click();
-			document.getElementById('dropdown1').className = "dropdown1";
+			document.getElementById('dropdown1').className = "dropdown2";
+		});
+		// for ie, safari
+		document.getElementById('dropdown_item3').addEventListener('mousedown', function (evt) {
+			document.getElementById('dropdown_item3').click();
+			document.getElementById('dropdown1').className = "dropdown3";
 		});
 		
 		updateScreen();
