@@ -350,18 +350,26 @@
 				if (reply === 1) {
 					windowData.socketid = socketid;
 					windowData.type = "window";
-					textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
-						endCallback(windowData);
-					});
+					textClient.hmset(windowPrefix + id, windowData, (function (textClient, id) {
+						return function (err, reply) {
+							textClient.hgetall(windowPrefix + id, function (err, reply) {
+								endCallback(reply);
+							});
+						};
+					}(textClient, id)));
 				} else {
 					windowData.id = id;
 					windowData.socketid = socketid;
 					windowData.orgWidth = windowData.width;
 					windowData.orgHeight = windowData.height;
 					windowData.type = "window";
-					textClient.hmset(windowPrefix + id, windowData, function (err, reply) {
-						endCallback(windowData);
-					});
+					textClient.hmset(windowPrefix + id, windowData, (function (textClient, id) {
+						return function (err, reply) {
+							textClient.hgetall(windowPrefix + id, function (err, reply) {
+								endCallback(reply);
+							});
+						};
+					}(textClient, id)));
 				}
 			});
 		});
