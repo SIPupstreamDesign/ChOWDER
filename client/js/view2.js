@@ -467,16 +467,14 @@
 		reconnect();
 		
 		// resize event
-		/*
 		window.onresize = function () {
 			if (timer) {
 				clearTimeout(timer);
 			}
 			timer = setTimeout(function () {
-				updateWholeWindow();
+				registerWindow();
 			}, 200);
 		};
-		*/
 
 		window.addEventListener('mousemove', function (evt) {
 			document.getElementById('menu').classList.remove('hide');
