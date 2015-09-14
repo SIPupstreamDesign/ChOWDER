@@ -6,6 +6,7 @@ var fs = require('fs'),
 	WebSocket = require('websocket'),
 	util = require('./util'),
 	operator = require('./operator.js'),
+	connector = require('./connector.js'),
 	sender = require('./sender.js'),
 	port = 8080,
 	currentVersion = "v1",
@@ -143,12 +144,17 @@ io.sockets.on('connection', function (socket) {
 	
 	socket.on('reqRegisterEvent', function (apiVersion) {
 		if (apiVersion === currentVersion) {
-			operator.registerEvent(socket, io, ws);
+			//connector.registerEvent(io, socket, operator);
+			operator.registerEvent(io, socket, ws);
 			io.sockets.emit(Command.update);
 		}
 	});
 	socket.on('disconnect', function () {
 		console.log("disconnect:" + socket.id);
+	});
+	socket.on('error', function (err) {
+		console.log('trace.. ' + err.stack);
+		console.error('trace.. ' + err.stack);
 	});
 });
 

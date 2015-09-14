@@ -19,6 +19,7 @@
 		metadataPrefix = "metadata:",
 		contentPrefix = "content:",
 		windowPrefix = "window:",
+		connector = require('./connector.js'),
 		metabinary = require('./metabinary.js'),
 		util = require('./util.js'),
 		Command = require('./command.js'),
@@ -27,7 +28,8 @@
 		phantomjs = require('phantomjs'),
 		frontPrefix = "tiled_server:",
 		uuidPrefix = "invalid:",
-		socketidToHash = {};
+		socketidToHash = {},
+		methods;
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
@@ -52,9 +54,11 @@
 			if (fs.existsSync(output)) {
 				console.log("output found");
 				image_size(output, function (err, dimensions) {
-					endCallback(fs.readFileSync(output), dimensions);
+					if (endCallback) {
+						endCallback(fs.readFileSync(output), dimensions);
+					}
 				});
-			} else {
+			} else if (endCallback) {
 				endCallback(null);
 			}
 		});
@@ -75,7 +79,7 @@
 			}
 			if (doesExist === 1) {
 				generateContentID(endCallback);
-			} else {
+			} else if (endCallback) {
 				endCallback(id);
 			}
 		});
@@ -96,7 +100,7 @@
 			}
 			if (doesExist === 1) {
 				generateWindowID(endCallback);
-			} else {
+			} else if (endCallback) {
 				endCallback(id);
 			}
 		});
@@ -134,7 +138,7 @@
 		textClient.hmset(metadataPrefix + id, metaData, function (err) {
 			if (err) {
 				console.log(err);
-			} else {
+			} else if (endCallback) {
 				endCallback(metaData);
 			}
 		});
@@ -152,7 +156,9 @@
 			textClient.keys(metadataPrefix + '*', function (err, replies) {
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
-						endCallback(data);
+						if (endCallback) {
+							endCallback(data);
+						}
 					});
 				});
 			});
@@ -170,7 +176,9 @@
 		} else {
 			textClient.hgetall(metadataPrefix + id, function (err, data) {
 				if (data) {
-					endCallback(data);
+					if (endCallback) {
+						endCallback(data);
+					}
 				}
 			});
 		}
@@ -239,7 +247,9 @@
 						}
 					}
 					setMetaData(metaData.type, id, metaData, function (metaData) {
-						endCallback(metaData, contentData);
+						if (endCallback) {
+							endCallback(metaData, contentData);
+						}
 					});
 				}
 			});
@@ -259,7 +269,9 @@
 				replies.forEach(function (id, index) {
 					client.get(id, function (err, reply) {
 						if (!err) {
-							endCallback(reply);
+							if (endCallback) {
+								endCallback(reply);
+							}
 						} else {
 							console.log(err);
 						}
@@ -269,7 +281,9 @@
 		} else {
 			client.get(contentPrefix + id, function (err, reply) {
 				if (!err) {
-					endCallback(reply);
+					if (endCallback) {
+						endCallback(reply);
+					}
 				} else {
 					console.log(err);
 				}
@@ -288,7 +302,9 @@
 			if (!err && doesExist) {
 				client.del(metadataPrefix + id, function (err) {
 					client.del(contentPrefix + id, function (err) {
-						endCallback(id);
+						if (endCallback) {
+							endCallback(id);
+						}
 					});
 				});
 			} else {
@@ -326,7 +342,9 @@
 			} else {
 				redis.print(err, reply);
 				setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
-					endCallback(metaData.id);
+					if (endCallback) {
+						endCallback(metaData.id);
+					}
 				});
 			}
 		});
@@ -353,7 +371,9 @@
 					textClient.hmset(windowPrefix + id, windowData, (function (textClient, id) {
 						return function (err, reply) {
 							textClient.hgetall(windowPrefix + id, function (err, reply) {
-								endCallback(reply);
+								if (endCallback) {
+									endCallback(reply);
+								}
 							});
 						};
 					}(textClient, id)));
@@ -366,7 +386,9 @@
 					textClient.hmset(windowPrefix + id, windowData, (function (textClient, id) {
 						return function (err, reply) {
 							textClient.hgetall(windowPrefix + id, function (err, reply) {
-								endCallback(reply);
+								if (endCallback) {
+									endCallback(reply);
+								}
 							});
 						};
 					}(textClient, id)));
@@ -384,7 +406,9 @@
 	function setVirtualDisplay(windowData, endCallback) {
 		if (windowData) {
 			textClient.hmset(virtualDisplayIDStr, windowData, function (err, reply) {
-				endCallback(windowData);
+				if (endCallback) {
+					endCallback(windowData);
+				}
 			});
 		}
 	}
@@ -396,10 +420,12 @@
 	 */
 	function getVirtualDisplay(endCallback) {
 		textClient.hgetall(virtualDisplayIDStr, function (err, data) {
-			if (data) {
-				endCallback(data);
-			} else {
-				endCallback({});
+			if (endCallback) {
+				if (data) {
+					endCallback(data);
+				} else {
+					endCallback({});
+				}
 			}
 		});
 	}
@@ -417,7 +443,9 @@
 			} else {
 				console.log("unregister window id:" + id);
 			}
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -437,7 +465,9 @@
 				} else {
 					console.log("unregister window socketid:" + socketid + ", id:" + id);
 				}
-				endCallback();
+				if (endCallback) {
+					endCallback();
+				}
 			});
 		}
 	}
@@ -456,7 +486,9 @@
 					//console.log("getWindowAllID:" + id);
 					textClient.hgetall(id, function (err, reply) {
 						if (!err) {
-							endCallback(reply);
+							if (endCallback) {
+								endCallback(reply);
+							}
 						} else {
 							console.log(err);
 						}
@@ -466,7 +498,9 @@
 		} else {
 			textClient.hgetall(windowPrefix + windowData.id, function (err, data) {
 				if (data) {
-					endCallback(data);
+					if (endCallback) {
+						endCallback(data);
+					}
 				}
 			});
 		}
@@ -482,7 +516,9 @@
 	function updateWindow(socketid, windowData, endCallback) {
 		if (!windowData.hasOwnProperty("id")) { return; }
 		textClient.hmset(windowPrefix + windowData.id, windowData, function (err, reply) {
-			endCallback(windowData);
+			if (endCallback) {
+				endCallback(windowData);
+			}
 		});
 	}
 	
@@ -510,7 +546,8 @@
 	function sendMetaData(command, metaData, socket, ws_connection) {
 		metaData.command = command;
 		if (socket) {
-			socket.emit(command, JSON.stringify(metaData));
+			connector.send(socket, command, metaData, function () {});
+			//socket.emit(command, JSON.stringify(metaData));
 		} else if (ws_connection) {
 			ws_connection.sendUTF(JSON.stringify(metaData));
 		}
@@ -527,7 +564,8 @@
 	 */
 	function sendBinary(command, binary, socket, ws_connection) {
 		if (socket) {
-			socket.emit(command, binary);
+			connector.sendBinary(socket, command, binary, function () {});
+			//socket.emit(command, binary);
 		} else if (ws_connection) {
 			ws_connection.sendBytes(binary);
 		}
@@ -545,6 +583,7 @@
 	 */
 	function commandAddContent(socket, ws_connection, metaData, binaryData, endCallback) {
 		console.log("commandAddContent");
+		
 		if (metaData.type === 'url') {
 			renderURL(binaryData, function (image, dimension) {
 				if (image) {
@@ -557,7 +596,9 @@
 					metaData.orgHeight = dimension.height;
 					addContent(metaData, image, function (metaData, contentData) {
 						sendMetaData(Command.doneAddContent, metaData, socket, ws_connection);
-						endCallback();
+						if (endCallback) {
+							endCallback();
+						}
 					});
 				}
 			});
@@ -565,7 +606,9 @@
 			//console.log(Command.reqAddContent + ":" + metaData);
 			addContent(metaData, binaryData, function (metaData, contentData) {
 				sendMetaData(Command.doneAddContent, metaData, socket, ws_connection);
-				endCallback();
+				if (endCallback) {
+					endCallback();
+				}
 			});
 		}
 	}
@@ -586,12 +629,14 @@
 				meta.command = Command.doneGetContent;
 				getContent(meta.type, meta.id, function (reply) {
 					var binary = metabinary.createMetaBinary(meta, reply);
-					if (binary == null) {
+					if (binary === null) {
 					    console.log('Failed to create Metabinary');
 					} else {
 					    sendBinary(Command.doneGetContent, binary, socket, ws_connection);
 					}
-					endCallback();
+					if (endCallback) {
+						endCallback();
+					}
 				});
 			}
 		});
@@ -610,7 +655,9 @@
 		//console.log("commandGetMetaData:" + json.type + "/" + json.id);
 		getMetaData(json.type, json.id, function (metaData) {
 			sendMetaData(Command.doneGetMetaData, metaData, socket, ws_connection);
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -627,7 +674,9 @@
 		//console.log("commandDeleteContent:" + json.id);
 		deleteContent(json.id, function (id) {
 			socket.emit(Command.doneDeleteContent, JSON.stringify({"id" : id}));
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -645,7 +694,9 @@
 		//console.log("commandUpdateContent");
 		updateContent(metaData, binaryData, function (id) {
 			socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -662,7 +713,9 @@
 		//console.log("commandUpdateTransform:" + json.id);
 		setMetaData(json.type, json.id, json, function () {
 			socket.emit(Command.doneUpdateTransform, JSON.stringify(json));
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -682,7 +735,9 @@
 		if (ws_connection) { id = ws_connection.id; }
 		addWindow(id, json, function (windowData) {
 			sendMetaData(Command.doneAddWindow, windowData, socket, ws_connection);
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -708,7 +763,9 @@
 					});
 					multi.exec(function (err, data) {
 						console.log("debugDeleteWindowAll");
-						endCallback();
+						if (endCallback) {
+							endCallback();
+						}
 					});
 				});
 			} else {
@@ -719,7 +776,9 @@
 						if (socketidToHash.hasOwnProperty(data.socketid)) {
 							delete socketidToHash[data.socketid];
 						}
-						endCallback();
+						if (endCallback) {
+							endCallback();
+						}
 					});
 				});
 			}
@@ -727,7 +786,9 @@
 			console.log("commandDeleteWindow : " + socketid);
 			deleteWindowBySocketID(socketid, function () {
 				sendMetaData(Command.doneDeleteWindow, { socketid: socketid }, socket, ws_connection);
-				endCallback();
+				if (endCallback) {
+					endCallback();
+				}
 			});
 		}
 	}
@@ -744,7 +805,9 @@
 	function commandUpdateVirtualDisplay(socket, ws_connection, json, endCallback) {
 		if (json) {
 			setVirtualDisplay(json, function (data) {
-				endCallback();
+				if (endCallback) {
+					endCallback();
+				}
 			});
 		}
 	}
@@ -761,7 +824,9 @@
 	function commandGetVirtualDisplay(socket, ws_connection, json, endCallback) {
 		getVirtualDisplay(function (data) {
 			sendMetaData(Command.doneGetVirtualDisplay, data, socket, ws_connection);
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -778,7 +843,9 @@
 		//console.log("commandGetWindow : " + JSON.stringify(json));
 		getWindow(json, function (windowData) {
 			sendMetaData(Command.doneGetWindow, windowData, socket, ws_connection);
-			endCallback();
+			if (endCallback) {
+				endCallback();
+			}
 		});
 	}
 	
@@ -799,115 +866,6 @@
 			sendMetaData(Command.doneUpdateWindow, windowData, socket, ws_connection);
 			endCallback();
 		});
-	}
-	
-	/// register socket.io events
-	/// @param socket
-	/// @param io
-	/// @param ws display's ws connection
-	/**
-	 * Description
-	 * @method registerEvent
-	 * @param {BLOB} socket socket.ioオブジェクト
-	 * @param {BLOB} io socket.ioオブジェクト
-	 * @param {BLOB} ws WebSocketオブジェクト
-	 */
-	function registerEvent(socket, io, ws) {
-		
-		function update() {
-			ws.broadcast(Command.update);
-			io.sockets.emit(Command.update);
-		}
-		
-		function updateTransform(id) {
-			ws.broadcast(Command.updateTransform + ":" + id);
-			io.sockets.emit(Command.updateTransform, id);
-		}
-		
-		function updateWindow() {
-			ws.broadcast(Command.updateWindow);
-			io.sockets.emit(Command.updateWindow);
-		}
-		
-		function showWindowID(data) {
-			ws.broadcast(Command.showWindowID + ":" + data.id);
-			io.sockets.emit(Command.showWindowID, data.id);
-		}
-		
-		/*
-		socket.on("message", function (data) {
-			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
-				commandAddContent(socket, null, metaData, binaryData, update);
-			});
-		});
-		*/
-		socket.on(Command.reqAddContent, function (data) {
-			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
-				commandAddContent(socket, null, metaData, binaryData, update);
-			});
-		});
-		
-		socket.on(Command.reqGetContent, function (data) {
-			var json = JSON.parse(data);
-			commandGetContent(socket, null, JSON.parse(data), function () {});
-		});
-		
-		socket.on(Command.reqGetMetaData, function (data) {
-			commandGetMetaData(socket, null, JSON.parse(data), function () {});
-		});
-
-		socket.on(Command.reqDeleteContent, function (data) {
-			commandDeleteContent(socket, null, JSON.parse(data), update);
-		});
-		
-		socket.on(Command.reqUpdateContent, function (data) {
-			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
-				commandUpdateContent(socket, null, metaData, binaryData, (function (id) {
-					return function () {
-						updateTransform(id);
-					};
-				}(metaData.id)));
-			});
-		});
-		
-		socket.on(Command.reqUpdateTransform, function (data) {
-			var parsed = JSON.parse(data);
-			commandUpdateTransform(socket, null, parsed, (function (id) {
-				return function () {
-					updateTransform(id);
-				};
-			}(parsed.id)));
-		});
-
-		socket.on(Command.reqAddWindow, function (data) {
-			commandAddWindow(socket, null, JSON.parse(data), updateWindow);
-		});
-		
-		socket.on(Command.reqGetWindow, function (data) {
-			commandGetWindow(socket, null, JSON.parse(data), function () {});
-		});
-		
-		socket.on(Command.reqUpdateWindow, function (data) {
-			commandUpdateWindow(socket, null, JSON.parse(data), updateWindow);
-		});
-		
-		socket.on(Command.reqDeleteWindow, function (data) {
-			commandDeleteWindow(socket, null, JSON.parse(data), update);
-		});
-		
-		socket.on(Command.reqUpdateVirtualDisplay, function (data) {
-			commandUpdateVirtualDisplay(socket, null, JSON.parse(data), updateWindow);
-		});
-		
-		socket.on(Command.reqGetVirtualDisplay, function (data) {
-			commandGetVirtualDisplay(socket, null, JSON.parse(data), function () {});
-		});
-		
-		socket.on(Command.reqShowWindowID, function (data) {
-			showWindowID(JSON.parse(data));
-		});
-		
-		getSessionList();
 	}
 	
 	/// register websockets events
@@ -994,6 +952,111 @@
 				});
 			}
 		});
+		
+		getSessionList();
+	}
+	
+	/**
+	 * Description
+	 * @method registerEvent
+	 * @param {BLOB} socket socket.ioオブジェクト
+	 * @param {BLOB} io socket.ioオブジェクト
+	 * @param {BLOB} ws WebSocketオブジェクト
+	 */
+	function registerEvent(io, socket, ws) {
+		var methods = {},
+			default_result = function (resultCallback) {
+				return function () {
+					resultCallback(null, '{}');
+				};
+			},
+			post_update = (function (ws, io) {
+				return function (resultCallback) {
+					ws.broadcast(Command.update);
+					io.sockets.emit(Command.update);
+				};
+			}(ws, io)),
+			post_updateTransform = (function (ws, io) {
+				return function (id, resultCallback) {
+					ws.broadcast(Command.updateTransform + ":" + id);
+					io.sockets.emit(Command.updateTransform, id);
+					resultCallback(null, '{}');
+				};
+			}(ws, io)),
+			post_updateWindow = (function (ws, io) {
+				return function (resultCallback) {
+					ws.broadcast(Command.updateWindow);
+					io.sockets.emit(Command.updateWindow);
+					resultCallback(null, '{}');
+				};
+			}(ws, io));
+
+		methods.reqAddContent = function (data, resultCallback) {
+			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
+				commandAddContent(socket, null, metaData, binaryData, post_update(resultCallback));
+			});
+		};
+
+		methods.reqGetContent = function (data, resultCallback) {
+			commandGetContent(socket, null, data, default_result(resultCallback));
+		};
+
+		methods.reqGetMetaData = function (data, resultCallback) {
+			commandGetMetaData(socket, null, data, default_result(resultCallback));
+		};
+
+		methods.reqDeleteContent = function (data, resultCallback) {
+			commandDeleteContent(socket, null, data, post_update(resultCallback));
+		};
+
+		methods.reqUpdateContent = function (data, resultCallback) {
+			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
+				commandUpdateContent(socket, null, metaData, binaryData, (function (id) {
+					return function () {
+						post_updateTransform(id, resultCallback);
+					};
+				}(metaData.id)));
+			});
+		};
+
+		methods.reqUpdateTransform = function (data, resultCallback) {
+			commandUpdateTransform(socket, null, data, (function (id) {
+				return function () {
+					post_updateTransform(id, resultCallback);
+				};
+			}(data.id)));
+		};
+
+		methods.reqAddWindow = function (data, resultCallback) {
+			commandAddWindow(socket, null, data, post_updateWindow(resultCallback));
+		};
+
+		methods.reqGetWindow = function (data, resultCallback) {
+			commandGetWindow(socket, null, data, default_result(resultCallback));
+		};
+
+		methods.reqUpdateWindow = function (data, resultCallback) {
+			commandUpdateWindow(socket, null, data, post_updateWindow(resultCallback));
+		};
+
+		methods.reqDeleteWindow = function (data, resultCallback) {
+			commandDeleteWindow(socket, null, data, post_update(resultCallback));
+		};
+
+		methods.reqUpdateVirtualDisplay = function (data, resultCallback) {
+			commandUpdateVirtualDisplay(socket, null, data, post_updateWindow(resultCallback));
+		};
+
+		methods.reqGetVirtualDisplay = function (data, resultCallback) {
+			commandGetVirtualDisplay(socket, null, data, default_result(resultCallback));
+		};
+
+		methods.reqShowWindowID = function (data, resultCallback) {
+			ws.broadcast(Command.showWindowID + ":" + data.id);
+			io.sockets.emit(Command.showWindowID, data.id);
+		};
+
+		connector.registerEvent(methods, io, socket);
 	}
 	
 	/// @param id server's id
