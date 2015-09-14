@@ -5,6 +5,7 @@
 	"use strict";
 	
 	var Command = {
+		reqRegisterEvent : "reqRegisterEvent",
 		
 		// request command
 		reqAddContent : "reqAddContent",

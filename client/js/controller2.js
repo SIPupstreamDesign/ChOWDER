@@ -1,7 +1,7 @@
 /*jslint devel:true */
-/*global io, socket, FileReader, Uint8Array, Blob, URL, event, unescape */
+/*global io, socket, FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (metabinary, vscreen, vsutil, manipulator) {
+(function (metabinary, vscreen, vsutil, manipulator, connector) {
 	"use strict";
 	
 	var socket = io.connect(),
@@ -21,7 +21,22 @@
 		initialDisplayScale = 0.5,
 		snapSetting = "free",
 		contentSelectColor = "#04B431",
-		windowSelectColor = "#0080FF";
+		windowSelectColor = "#0080FF",
+		setupContent = function () {},
+		updateScreen = function () {},
+		setupWindow = function () {},
+		changeDisplayValue = function () {},
+		changeZIndex = function () {},
+		changeRect = function () {},
+		doneGetVirtualDisplay,
+		doneGetContent,
+		doneGetWindow,
+		doneDeleteContent,
+		doneAddContent,
+		doneUpdateContent,
+		doneUpdateTransform,
+		doneUpdateWindow,
+		doneGetMetaData;
 	
 	socket.on('connect', function () {
 		console.log("connect");
@@ -266,9 +281,9 @@
 		vscreen.clearScreenAll();
 		document.getElementById('content_area').innerHTML = "";
 		document.getElementById('content_preview_area').innerHTML = "";
-		socket.emit('reqGetVirtualDisplay', JSON.stringify({type: "all", id: ""}));
-		socket.emit('reqGetContent', JSON.stringify({type: "all", id: ""}));
-		socket.emit('reqGetWindow', JSON.stringify({type: "all", id: ""}));
+		connector.send('reqGetVirtualDisplay', JSON.stringify({type: "all", id: ""}), doneGetVirtualDisplay);
+		connector.send('reqGetContent', JSON.stringify({type: "all", id: ""}), doneGetContent);
+		connector.send('reqGetWindow', JSON.stringify({type: "all", id: ""}), doneGetWindow);
 	}
 	
 	/// delete content
@@ -278,7 +293,7 @@
 	 */
 	function deleteContent(evt) {
 		if (getSelectedID()) {
-			socket.emit('reqDeleteContent', JSON.stringify({id : getSelectedID()}));
+			connector.send('reqDeleteContent', JSON.stringify({id : getSelectedID()}), doneDeleteContent);
 		}
 	}
 	
@@ -289,7 +304,7 @@
 	function deleteDisplay() {
 		if (getSelectedID()) {
 			console.log('reqDeleteWindow' + getSelectedID());
-			socket.emit('reqDeleteWindow', JSON.stringify({id : getSelectedID()}));
+			connector.send('reqDeleteWindow', JSON.stringify({id : getSelectedID()}));
 		}
 	}
 	
@@ -298,7 +313,7 @@
 	 * @method deleteDisplayAll
 	 */
 	function deleteDisplayAll() {
-		socket.emit('reqDeleteWindow', JSON.stringify({type : "all", id : ""}));
+		connector.send('reqDeleteWindow', JSON.stringify({type : "all", id : ""}));
 	}
 	
 	/**
@@ -307,7 +322,7 @@
 	 * @param {BLOB} binary
 	 */
 	function addContent(binary) {
-		socket.emit('reqAddContent', binary);
+		connector.sendBinary('reqAddContent', binary, doneAddContent);
 	}
 	
 	/**
@@ -319,10 +334,10 @@
 		//console.log(JSON.stringify(metaData));
 		if (metaData.type === windowType) {
 			// window
-			socket.emit('reqUpdateWindow', JSON.stringify(metaData));
+			connector.send('reqUpdateWindow', JSON.stringify(metaData), doneUpdateWindow);
 		} else {
 			//console.log("reqUpdateTransform");
-			socket.emit('reqUpdateTransform', JSON.stringify(metaData));
+			connector.send('reqUpdateTransform', JSON.stringify(metaData), doneUpdateTransform);
 		}
 	}
 	
@@ -332,7 +347,7 @@
 	 * @param {} binary
 	 */
 	function updateContent(binary) {
-		socket.emit('reqUpdateContent', binary);
+		connector.sendBinary('reqUpdateContent', binary, doneUpdateContent);
 	}
 	
 	/**
@@ -359,7 +374,7 @@
 		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
 			windowData.orgWidth = initialWholeHeight;
 		}
-		socket.emit('reqUpdateVirtualDisplay', JSON.stringify(windowData));
+		connector.send('reqUpdateVirtualDisplay', JSON.stringify(windowData));
 	}
 	
 	/**
@@ -695,7 +710,7 @@
 		if (transh) { transh.value = 0; }
 		if (transz) { transz.value = 0; }
 		if (content_id) { content_id.innerHTML = ""; }
-		if (dlbtn)  { dlbtn.style.display = 'none'; }
+		if (dlbtn) { dlbtn.style.display = 'none'; }
 	}
 	
 	/**
@@ -999,7 +1014,7 @@
 	 * @method changeZIndex
 	 * @param {String} index 設定するzIndex
 	 */
-	function changeZIndex(index) {
+	changeZIndex = function (index) {
 		var elem = getSelectedElem(),
 			metaData;
 		if (elem) {
@@ -1009,7 +1024,7 @@
 			updateTransform(metaData);
 			console.log("change zindex:" + index);
 		}
-	}
+	};
 	
 	/// change rect
 	/**
@@ -1018,7 +1033,7 @@
 	 * @param {String} id Content or Display ID
 	 * @param {String } value 変更値
 	 */
-	function changeRect(id, value) {
+	changeRect = function (id, value) {
 		var elem = getSelectedElem(),
 			metaData,
 			aspect = 1.0;
@@ -1050,7 +1065,7 @@
 			}
 			manipulator.removeManipulator();
 		}
-	}
+	};
 
 	/**
 	 * 指定された座標がContent or Displayの内部に存在するかを判定する。setupContentsにて使用されている。
@@ -1079,7 +1094,7 @@
 	 * @param {Object} elem 設定対象Object
 	 * @param {String} id ContentID
 	 */
-	function setupContent(elem, id) {
+	setupContent = function (elem, id) {
 		elem.onmousedown = function (evt) {
 			var rect = evt.target.getBoundingClientRect(),
 				metaData = null,
@@ -1098,8 +1113,8 @@
 
 			
 			if (id === wholeWindowID ||
-				(metaData && !isDisplayTabSelected() && metaData.type === windowType) ||
-				(metaData && isDisplayTabSelected() && metaData.type !== windowType)) {
+					(metaData && !isDisplayTabSelected() && metaData.type === windowType) ||
+					(metaData && isDisplayTabSelected() && metaData.type !== windowType)) {
 				console.log(metaData);
 				childs = otherPreviewArea.childNodes;
 
@@ -1134,7 +1149,7 @@
 			evt.stopPropagation();
 			evt.preventDefault();
 		};
-	}
+	};
 	
 	///  setup window
 	/**
@@ -1143,9 +1158,9 @@
 	 * @param {Object} elem 設定対象Element
 	 * @param {String} id ContentID
 	*/
-	function setupWindow(elem, id) {
+	setupWindow = function (elem, id) {
 		setupContent(elem, id);
-	}
+	};
 	
 	/**
 	 * Content or Displayのスナップ処理
@@ -1608,7 +1623,7 @@
 	 * @method updateScreen
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	function updateScreen(windowData) {
+	updateScreen = function (windowData) {
 		var whole = vscreen.getWhole(),
 			splitCount = vscreen.getSplitCount(),
 			previewArea = document.getElementById('display_preview_area'),
@@ -1650,13 +1665,13 @@
 		}
 		addScreenRect(windowData);
 		//changeWholeSplit(wholeSplitX.value, this.value);
-	}
+	};
 	
 	/**
 	 * PropertyのDisplayパラメータ更新ハンドル
 	 * @method changeDisplayValue
 	 */
-	function changeDisplayValue() {
+	changeDisplayValue = function () {
 		var whole = vscreen.getWhole(),
 			wholeWidth = document.getElementById('whole_width'),
 			wholeHeight = document.getElementById('whole_height'),
@@ -1704,7 +1719,7 @@
 		updateWindowData();
 		updateScreen();
 		changeWholeSplit(ix, iy, true);
-	}
+	};
 	
 	/**
 	 * 受領したメタデータからプレビューツリーにコンテンツを反映する。
@@ -1721,58 +1736,58 @@
 			mime = "image/jpeg";
 
 		//if (isVisible(metaData))
-		{
-			metaDataDict[metaData.id] = metaData;
-			console.log("importContentToView:" + JSON.stringify(metaData));
+		//{
+		metaDataDict[metaData.id] = metaData;
+		console.log("importContentToView:" + JSON.stringify(metaData));
 
-			if (metaData.type === 'text') {
-				tagName = 'pre';
-			} else {
-				tagName = 'img';
-			}
-			if (document.getElementById(metaData.id)) {
-				elem = document.getElementById(metaData.id);
-				//console.log("found " + json.type);
-			} else {
-				elem = document.createElement(tagName);
-				elem.id = metaData.id;
-				elem.style.position = "absolute";
-				setupContent(elem, metaData.id);
-				
-				insertElementWithDictionarySort(previewArea, elem);
-				//previewArea.appendChild(elem);
-			}
-			
-			console.log("id=" + metaData.id);
-			if (metaData.type === 'text') {
-				// contentData is text
-				elem.innerHTML = contentData;
-				elem.style.overflow = "visible"; // Show all text
-				vsutil.assignMetaData(elem, metaData, true);
-			} else {
-				// contentData is blob
-				if (metaData.hasOwnProperty('mime')) {
-					mime = metaData.mime;
-					console.log("mime:" + mime);
-				}
-				blob = new Blob([contentData], {type: mime});
-				if (elem && blob) {
-					elem.src = URL.createObjectURL(blob);
+		if (metaData.type === 'text') {
+			tagName = 'pre';
+		} else {
+			tagName = 'img';
+		}
+		if (document.getElementById(metaData.id)) {
+			elem = document.getElementById(metaData.id);
+			//console.log("found " + json.type);
+		} else {
+			elem = document.createElement(tagName);
+			elem.id = metaData.id;
+			elem.style.position = "absolute";
+			setupContent(elem, metaData.id);
 
-					elem.onload = function () {
-						if (metaData.width < 10) {
-							console.log("naturalWidth:" + elem.naturalWidth);
-							metaData.width = elem.naturalWidth;
-						}
-						if (metaData.height < 10) {
-							console.log("naturalHeight:" + elem.naturalHeight);
-							metaData.height = elem.naturalHeight;
-						}
-						vsutil.assignMetaData(elem, metaData, true);
-					};
-				}
+			insertElementWithDictionarySort(previewArea, elem);
+			//previewArea.appendChild(elem);
+		}
+
+		console.log("id=" + metaData.id);
+		if (metaData.type === 'text') {
+			// contentData is text
+			elem.innerHTML = contentData;
+			elem.style.overflow = "visible"; // Show all text
+			vsutil.assignMetaData(elem, metaData, true);
+		} else {
+			// contentData is blob
+			if (metaData.hasOwnProperty('mime')) {
+				mime = metaData.mime;
+				console.log("mime:" + mime);
+			}
+			blob = new Blob([contentData], {type: mime});
+			if (elem && blob) {
+				elem.src = URL.createObjectURL(blob);
+
+				elem.onload = function () {
+					if (metaData.width < 10) {
+						console.log("naturalWidth:" + elem.naturalWidth);
+						metaData.width = elem.naturalWidth;
+					}
+					if (metaData.height < 10) {
+						console.log("naturalHeight:" + elem.naturalHeight);
+						metaData.height = elem.naturalHeight;
+					}
+					vsutil.assignMetaData(elem, metaData, true);
+				};
 			}
 		}
+		//}
 	}
 	
 	/**
@@ -2128,14 +2143,14 @@
 			console.log("reqShowWindowID:" + id);
 			if (id) {
 				if (metaDataDict[id].type === windowType) {
-					socket.emit('reqShowWindowID', JSON.stringify({id : id}));
+					connector.send('reqShowWindowID', JSON.stringify({id : id}));
 					lastDraggingID = id;
 					document.getElementById("onlist:" + id).style.borderColor = windowSelectColor;
 				} else {
-					socket.emit('reqShowWindowID', JSON.stringify({type : 'all', id : ""}));
+					connector.send('reqShowWindowID', JSON.stringify({type : 'all', id : ""}));
 				}
 			} else {
-				socket.emit('reqShowWindowID', JSON.stringify({type : 'all', id : ""}));
+				connector.send('reqShowWindowID', JSON.stringify({type : 'all', id : ""}));
 			}
 		};
 
@@ -2182,11 +2197,10 @@
 			scale,
 			snap,
 			contentstab = window.animtab.create('left', {
-					'leftTab' : { min : '0px', max : 'auto' },
-				}, {
-					'leftArea' : { min : '0px', max : '250px' },
-				}, 'Contents'
-			),
+				'leftTab' : { min : '0px', max : 'auto' }
+			}, {
+				'leftArea' : { min : '0px', max : '250px' }
+			}, 'Contents'),
 			/*bottomfunc = window.animtab.create('bottom',
 				{ 'bottomTab' : { min : '0px', max : 'auto' }},
 				{ 'bottomArea' : { min : '0px', max : '400px' }}, 'AddContent'),*/
@@ -2204,6 +2218,8 @@
 			rightfunc = window.animtab.create('right',
 				{ 'rightTab' : { min : '0px', max : 'auto' }},
 				{ 'rightArea' : { min : '0px', max : '250px' }}, 'Property');
+		
+		connector = window.connector;
 		
 		scale = parseFloat(getCookie('display_scale'));
 		console.log("cookie - display_scale:" + scale);
@@ -2291,30 +2307,28 @@
 	///------------------------------------------------------------------------
 	
 	/// meta data updated
-	socket.on('doneGetMetaData', function (data) {
-		var json = JSON.parse(data);
+	doneGetMetaData = function (err, reply) {
+		var json = JSON.parse(reply);
 		if (json.type === windowType) { return; }
 		metaDataDict[json.id] = json;
-		//if (isVisible(json)) 
-		{
-			vsutil.assignMetaData(document.getElementById(json.id), json, true);
-			if (draggingID === json.id || (manipulator.getDraggingManip() && lastDraggingID === json.id)) {
-				assignContentProperty(json);
-			}
+		
+		vsutil.assignMetaData(document.getElementById(json.id), json, true);
+		if (draggingID === json.id || (manipulator.getDraggingManip() && lastDraggingID === json.id)) {
+			assignContentProperty(json);
 		}
-	});
+	};
 	
 	/// content data updated
-	socket.on('doneGetContent', function (data) {
-		metabinary.loadMetaBinary(new Blob([data]), function (metaData, contentData) {
+	doneGetContent = function (err, reply) {
+		metabinary.loadMetaBinary(new Blob([reply]), function (metaData, contentData) {
 			importContent(metaData, contentData);
 		});
-	});
+	};
 	
-	socket.on('doneUpdateTransform', function (reply) {
-	});
+	doneUpdateTransform = function (err, reply) {
+	};
 	
-	socket.on('doneUpdateWindow', function (reply) {
+	doneUpdateWindow = function (err, reply) {
 		console.log("doneUpdateWindow");
 		//console.log(reply);
 		var windowData = JSON.parse(reply);
@@ -2322,9 +2336,9 @@
 		vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
 		vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 		updateScreen(windowData);
-	});
+	};
 	
-	socket.on('doneDeleteContent', function (reply) {
+	doneDeleteContent = function (err, reply) {
 		console.log("doneDeleteContent");
 		var json = JSON.parse(reply),
 			contentArea = document.getElementById('content_area'),
@@ -2336,16 +2350,17 @@
 			contentArea.removeChild(document.getElementById("onlist:" + json.id));
 		}
 		contentID.innerHTML = "No Content Selected.";
-	});
+	};
 	
-	socket.on('doneUpdateContent', function (reply) {
+	doneUpdateContent = function (err, reply) {
+		console.log("doneUpdateContent");
 		var updateContentID = document.getElementById('update_content_id');
 		updateContentID.innerHTML = "No Content Selected.";
 		document.getElementById('update_image_input').disabled = true;
 		update();
-	});
+	};
 	
-	socket.on('doneAddContent', function (reply) {
+	doneAddContent = function (err, reply) {
 		var json = JSON.parse(reply);
 		console.log("doneAddContent:" + json.id + ":" + json.type);
 		
@@ -2355,9 +2370,9 @@
 			//console.log(currentContent);
 		}
 		currentContent = null;
-	});
+	};
 	
-	socket.on('doneGetWindow', function (reply) {
+	doneGetWindow = function (err, reply) {
 		console.log('doneGetWindow:');
 		var windowData = JSON.parse(reply),
 			elem;
@@ -2371,9 +2386,9 @@
 				manipulator.moveManipulator(elem);
 			}
 		}
-	});
+	};
 	
-	socket.on('doneGetVirtualDisplay', function (reply) {
+	doneGetVirtualDisplay = function (err, reply) {
 		var windowData = JSON.parse(reply),
 			whole = vscreen.getWhole(),
 			split = vscreen.getSplitCount(),
@@ -2398,12 +2413,12 @@
 			changeDisplayValue();
 			updateWindowData();
 		}
-	});
+	};
 	
 	socket.on('updateTransform', function (id) {
 		var elem;
 		if (id) {
-			socket.emit('reqGetMetaData', JSON.stringify({type: "", id: id}));
+			connector.send('reqGetMetaData', JSON.stringify({type: "", id: id}), doneGetMetaData);
 			if (lastDraggingID) {
 				elem = document.getElementById(lastDraggingID);
 				if (elem) {
@@ -2411,7 +2426,7 @@
 				}
 			}
 		} else {
-			socket.emit('reqGetMetaData', JSON.stringify({type: "all", id: ""}));
+			connector.send('reqGetMetaData', JSON.stringify({type: "all", id: ""}), doneGetMetaData);
 		}
 	});
 	
@@ -2419,7 +2434,7 @@
 		console.log('updateWindow');
 		//updateScreen();
 		//clearWindowList();
-		socket.emit('reqGetWindow', JSON.stringify({type: "all", id: ""}));
+		connector.send('reqGetWindow', JSON.stringify({type: "all", id: ""}), doneGetWindow);
 	});
 	
 	socket.on('update', function () {
@@ -2432,4 +2447,4 @@
 	
 	window.onload = init;
 
-}(window.metabinary, window.vscreen, window.vscreen_util, window.manipulator));
+}(window.metabinary, window.vscreen, window.vscreen_util, window.manipulator, window.connector));
