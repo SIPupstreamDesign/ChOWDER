@@ -281,9 +281,9 @@
 		vscreen.clearScreenAll();
 		document.getElementById('content_area').innerHTML = "";
 		document.getElementById('content_preview_area').innerHTML = "";
-		connector.send('reqGetVirtualDisplay', JSON.stringify({type: "all", id: ""}), doneGetVirtualDisplay);
-		connector.send('reqGetContent', JSON.stringify({type: "all", id: ""}), doneGetContent);
-		connector.send('reqGetWindow', JSON.stringify({type: "all", id: ""}), doneGetWindow);
+		connector.send('reqGetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
+		connector.send('reqGetContent', {type: "all", id: ""}, doneGetContent);
+		connector.send('reqGetWindow', {type: "all", id: ""}, doneGetWindow);
 	}
 	
 	/// delete content
@@ -293,7 +293,7 @@
 	 */
 	function deleteContent(evt) {
 		if (getSelectedID()) {
-			connector.send('reqDeleteContent', JSON.stringify({id : getSelectedID()}), doneDeleteContent);
+			connector.send('reqDeleteContent', {id : getSelectedID()}, doneDeleteContent);
 		}
 	}
 	
@@ -304,7 +304,7 @@
 	function deleteDisplay() {
 		if (getSelectedID()) {
 			console.log('reqDeleteWindow' + getSelectedID());
-			connector.send('reqDeleteWindow', JSON.stringify({id : getSelectedID()}));
+			connector.send('reqDeleteWindow', {id : getSelectedID()});
 		}
 	}
 	
@@ -313,7 +313,7 @@
 	 * @method deleteDisplayAll
 	 */
 	function deleteDisplayAll() {
-		connector.send('reqDeleteWindow', JSON.stringify({type : "all", id : ""}));
+		connector.send('reqDeleteWindow', {type : "all", id : ""});
 	}
 	
 	/**
@@ -334,10 +334,10 @@
 		//console.log(JSON.stringify(metaData));
 		if (metaData.type === windowType) {
 			// window
-			connector.send('reqUpdateWindow', JSON.stringify(metaData), doneUpdateWindow);
+			connector.send('reqUpdateWindow', metaData, doneUpdateWindow);
 		} else {
 			//console.log("reqUpdateTransform");
-			connector.send('reqUpdateTransform', JSON.stringify(metaData), doneUpdateTransform);
+			connector.send('reqUpdateTransform', metaData, doneUpdateTransform);
 		}
 	}
 	
@@ -374,7 +374,7 @@
 		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
 			windowData.orgWidth = initialWholeHeight;
 		}
-		connector.send('reqUpdateVirtualDisplay', JSON.stringify(windowData));
+		connector.send('reqUpdateVirtualDisplay', windowData);
 	}
 	
 	/**
@@ -2143,14 +2143,14 @@
 			console.log("reqShowWindowID:" + id);
 			if (id) {
 				if (metaDataDict[id].type === windowType) {
-					connector.send('reqShowWindowID', JSON.stringify({id : id}));
+					connector.send('reqShowWindowID', {id : id});
 					lastDraggingID = id;
 					document.getElementById("onlist:" + id).style.borderColor = windowSelectColor;
 				} else {
-					connector.send('reqShowWindowID', JSON.stringify({type : 'all', id : ""}));
+					connector.send('reqShowWindowID', {type : 'all', id : ""});
 				}
 			} else {
-				connector.send('reqShowWindowID', JSON.stringify({type : 'all', id : ""}));
+				connector.send('reqShowWindowID', {type : 'all', id : ""});
 			}
 		};
 
@@ -2308,7 +2308,7 @@
 	
 	/// meta data updated
 	doneGetMetaData = function (err, reply) {
-		var json = JSON.parse(reply);
+		var json = reply;
 		if (json.type === windowType) { return; }
 		metaDataDict[json.id] = json;
 		
@@ -2320,6 +2320,7 @@
 	
 	/// content data updated
 	doneGetContent = function (err, reply) {
+		console.log("doneGetContent", reply);
 		metabinary.loadMetaBinary(new Blob([reply]), function (metaData, contentData) {
 			importContent(metaData, contentData);
 		});
@@ -2331,7 +2332,7 @@
 	doneUpdateWindow = function (err, reply) {
 		console.log("doneUpdateWindow");
 		//console.log(reply);
-		var windowData = JSON.parse(reply);
+		var windowData = reply;
 		vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
 		vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
 		vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
@@ -2340,7 +2341,7 @@
 	
 	doneDeleteContent = function (err, reply) {
 		console.log("doneDeleteContent");
-		var json = JSON.parse(reply),
+		var json = reply,
 			contentArea = document.getElementById('content_area'),
 			previewArea = document.getElementById('content_preview_area'),
 			contentID = document.getElementById('content_id'),
@@ -2361,7 +2362,7 @@
 	};
 	
 	doneAddContent = function (err, reply) {
-		var json = JSON.parse(reply);
+		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
 		
 		if (currentContent) {
@@ -2374,7 +2375,7 @@
 	
 	doneGetWindow = function (err, reply) {
 		console.log('doneGetWindow:');
-		var windowData = JSON.parse(reply),
+		var windowData = reply,
 			elem;
 		importWindow(windowData);
 		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastDraggingID === windowData.id)) {
@@ -2389,7 +2390,7 @@
 	};
 	
 	doneGetVirtualDisplay = function (err, reply) {
-		var windowData = JSON.parse(reply),
+		var windowData = reply,
 			whole = vscreen.getWhole(),
 			split = vscreen.getSplitCount(),
 			cx = window.innerWidth / 2,
@@ -2418,7 +2419,7 @@
 	socket.on('updateTransform', function (id) {
 		var elem;
 		if (id) {
-			connector.send('reqGetMetaData', JSON.stringify({type: "", id: id}), doneGetMetaData);
+			connector.send('reqGetMetaData', {type: "", id: id}, doneGetMetaData);
 			if (lastDraggingID) {
 				elem = document.getElementById(lastDraggingID);
 				if (elem) {
@@ -2426,7 +2427,7 @@
 				}
 			}
 		} else {
-			connector.send('reqGetMetaData', JSON.stringify({type: "all", id: ""}), doneGetMetaData);
+			connector.send('reqGetMetaData', {type: "all", id: ""}, doneGetMetaData);
 		}
 	});
 	
@@ -2434,7 +2435,7 @@
 		console.log('updateWindow');
 		//updateScreen();
 		//clearWindowList();
-		connector.send('reqGetWindow', JSON.stringify({type: "all", id: ""}), doneGetWindow);
+		connector.send('reqGetWindow', {type: "all", id: ""}, doneGetWindow);
 	});
 	
 	socket.on('update', function () {

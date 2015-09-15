@@ -47,12 +47,12 @@
 		messageID = 1;
 
 	function registerEvent(methods, io, socket) {
-		socket.on("chowder_request", function (data) {
+		socket.on("chowder_request", function (data, binary) {
 			console.log("chowder_request : ", data);
 			var parsed,
 				result;
 
-			if (!data.type || data.type === 'utf8') {
+			if (binary === undefined || !binary) {
 				try {
 					parsed = JSON.parse(data);
 				} catch (e) {
@@ -71,74 +71,74 @@
 				if (methods.hasOwnProperty(parsed.method)) {
 					methods[parsed.method](parsed.params, (function (injson) {
 						return function (err, res) {
-							console.log("chowder_responsechowder_responsechowder_responsechowder_response", err);
+							var isBinary = (res instanceof Buffer);
+							result = {
+								jsonrpc: "2.0",
+								id: injson.id,
+								method : injson.method,
+								to : 'client'
+							};
 							if (err) {
-								result = {
-									jsonrpc: "2.0",
-									error: err,
-									id: injson.id,
-									method : injson.method,
-									to : 'client'
-								};
-							} else {
-								result = {
-									jsonrpc: "2.0",
-									result: res,
-									id: injson.id,
-									method : injson.method,
-									to : 'client'
-								};
+								result.error = err;
 							}
-							socket.emit("chowder_response", JSON.stringify(result));
+							console.log("isBinary", isBinary);
+							if (isBinary) {
+								result.type = 'binary';
+								console.log("chowder_response", result);
+								socket.emit("chowder_response", JSON.stringify(result), res);
+							} else {
+								result.type = 'utf8';
+								result.result = res;
+								console.log("chowder_response", result);
+								socket.emit("chowder_response", JSON.stringify(result));
+							}
 						};
 					}(parsed)));
 				}
 			}
 		});
+
+		socket.on('chowder_response', function (resdata, binary) {
+			var isBinary = (!(binary === undefined || !binary)),
+				parsed;
+			console.log('[Info] chowder_response', resdata);
+
+			try {
+				parsed = JSON.parse(resdata);
+			} catch (e) {
+				console.error('[Error] Recieve invalid JSON :', e);
+			}
+
+			if (parsed.error) {
+				if (resultCallbacks[parsed.id]) {
+					resultCallbacks[parsed.id](parsed.error, null);
+				}
+			} else if (parsed.method) {
+				console.log('NotImplementedError: ',  'connector');
+				resultCallbacks[parsed.id]('NotImplementedError', null);
+			} else if (parsed.result || isBinary) {
+				if (!parsed.id) {
+					console.error('[Error] Not found message ID');
+					console.error(event.data);
+					return;
+				}
+				if (resultCallbacks[parsed.id]) {
+					resultCallbacks[parsed.id](null, parsed.result);
+				}
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				resultCallbacks[parsed.id]('ArgumentError', null);
+			}
+		});
 	}
 	
-	function sendWrapper(socket, id, method, reqdata, resultCallback) {
-		var parsed;
+	function sendWrapper(socket, id, method, reqdata, binary, resultCallback) {
 		if (methods.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_request', reqdata);
-			socket.emit('chowder_request', reqdata);
+			socket.emit('chowder_request', reqdata, binary);
 
-			socket.once('chowder_response', function (resdata) {
-				console.log('[Info] chowder_response', resdata);
-				
-				if (!resdata.type || resdata.type === 'utf8') {
-					try {
-						parsed = JSON.parse(resdata);
-					} catch (e) {
-						console.error('[Error] Recieve invalid JSON :', e);
-					}
-				} else {
-					parsed = resdata;
-				}
-				
-				if (parsed.error) {
-					if (resultCallbacks[parsed.id]) {
-						resultCallbacks[parsed.id](parsed.error, null);
-					}
-				} else if (parsed.method) {
-					console.log('NotImplementedError: ',  'connector');
-					resultCallbacks[parsed.id]('NotImplementedError', null);
-				} else if (parsed.result) {
-					if (!parsed.id) {
-						console.error('[Error] Not found message ID');
-						console.error(event.data);
-						return;
-					}
-					if (resultCallbacks[parsed.id]) {
-						resultCallbacks[parsed.id](null, parsed.result);
-					}
-				} else {
-					console.error('[Error] ArgumentError in connector.js');
-					resultCallbacks[parsed.id]('ArgumentError', null);
-				}
-			});
 		} else {
 			console.log('[Error] Not found the method in connector: ', method);
 		}
@@ -163,26 +163,26 @@
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
-			sendWrapper(socket, reqjson.id, reqjson.method, data, resultCallback);
+			sendWrapper(socket, reqjson.id, reqjson.method, data, null, resultCallback);
 		} catch (e) {
 			console.error(e);
 		}
 	}
 	
-	function sendBinary(socket, method, args, resultCallback) {
-		var data = {
+	function sendBinary(socket, method, binary, resultCallback) {
+		var reqjson = {
 			jsonrpc: '2.0',
 			type : 'binary',
 			id: messageID,
 			method: method,
-			params: args,
 			to: 'client'
-		};
+		}, data;
 		
 		messageID = messageID + 1;
 		
 		try {
-			sendWrapper(socket, data.id, data.method, data, resultCallback);
+			data = JSON.stringify(reqjson);
+			sendWrapper(socket, data.id, data.method, data, binary, resultCallback);
 		} catch (e) {
 			console.error(e);
 		}
