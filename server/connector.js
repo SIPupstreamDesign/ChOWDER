@@ -47,12 +47,12 @@
 		messageID = 1;
 
 	function registerEvent(methods, io, socket) {
-		socket.on("chowder_request", function (data, binary) {
+		socket.on("chowder_request", function (data) {
 			console.log("chowder_request : ", data);
 			var parsed,
 				result;
 
-			if (binary === undefined || !binary) {
+			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data);
 				} catch (e) {
@@ -84,8 +84,9 @@
 							console.log("isBinary", isBinary);
 							if (isBinary) {
 								result.type = 'binary';
+								result.result = res;
 								console.log("chowder_response", result);
-								socket.emit("chowder_response", JSON.stringify(result), res);
+								socket.emit("chowder_response", result);
 							} else {
 								result.type = 'utf8';
 								result.result = res;
@@ -98,9 +99,8 @@
 			}
 		});
 
-		socket.on('chowder_response', function (resdata, binary) {
-			var isBinary = (!(binary === undefined || !binary)),
-				parsed;
+		socket.on('chowder_response', function (resdata) {
+			var parsed;
 			console.log('[Info] chowder_response', resdata);
 
 			try {
@@ -116,15 +116,13 @@
 			} else if (parsed.method) {
 				console.log('NotImplementedError: ',  'connector');
 				resultCallbacks[parsed.id]('NotImplementedError', null);
-			} else if (parsed.result || isBinary) {
+			} else if (parsed.result) {
 				if (!parsed.id) {
 					console.error('[Error] Not found message ID');
 					console.error(event.data);
 					return;
 				}
-				if (resultCallbacks[parsed.id]) {
-					resultCallbacks[parsed.id](null, parsed.result);
-				}
+				resultCallbacks[parsed.id](null, parsed.result);
 			} else {
 				console.error('[Error] ArgumentError in connector.js');
 				resultCallbacks[parsed.id]('ArgumentError', null);
@@ -132,12 +130,12 @@
 		});
 	}
 	
-	function sendWrapper(socket, id, method, reqdata, binary, resultCallback) {
+	function sendWrapper(socket, id, method, reqdata, resultCallback) {
 		if (methods.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_request', reqdata);
-			socket.emit('chowder_request', reqdata, binary);
+			socket.emit('chowder_request', reqdata);
 
 		} else {
 			console.log('[Error] Not found the method in connector: ', method);
@@ -163,26 +161,26 @@
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
-			sendWrapper(socket, reqjson.id, reqjson.method, data, null, resultCallback);
+			sendWrapper(socket, reqjson.id, reqjson.method, data, resultCallback);
 		} catch (e) {
 			console.error(e);
 		}
 	}
 	
 	function sendBinary(socket, method, binary, resultCallback) {
-		var reqjson = {
+		var data = {
 			jsonrpc: '2.0',
 			type : 'binary',
 			id: messageID,
 			method: method,
+			params: binary,
 			to: 'client'
-		}, data;
+		};
 		
 		messageID = messageID + 1;
 		
 		try {
-			data = JSON.stringify(reqjson);
-			sendWrapper(socket, data.id, data.method, data, binary, resultCallback);
+			sendWrapper(socket, data.id, data.method, data, resultCallback);
 		} catch (e) {
 			console.error(e);
 		}
