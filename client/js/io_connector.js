@@ -1,9 +1,9 @@
 /*jslint devel: true, nomen: true */
-/*global io */
+/*global io, Blob */
 
-(function (controller) {
+(function (metabinary) {
 	'use strict';
-	var connector = {},
+	var io_connector = {},
 		socket = io.connect(),
 		methods = {
 			reqRegisterEvent : "reqRegisterEvent",
@@ -47,47 +47,41 @@
 		resultCallbacks = {},
 		messageID = 1;
 	
-	/*
-	socket.on("chowder_request", function (data) {
-		console.log("chowder_request : ", data);
-		var parsed,
-			result;
-
-		if (!data.type || data.type === 'utf8') {
-			try {
-				parsed = JSON.parse(data);
-			} catch (e) {
-				console.error("failed to parse json : ", e);
-			}
-		} else {
-			parsed = data;
-		}
-		
-		if (parsed.hasOwnProperty("to") && parsed.to === "client") {
-			if (parsed.params === null) {
-				parsed.params = [];
-			}
-		}
-	});
-	*/
-
 	socket.on('chowder_response', function (resdata) {
 		var parsed;
 			
 		console.log('[Info] chowder_response', resdata);
 
-		if (!resdata.type || resdata.type === 'utf8') {
+		if (typeof resdata === "string") {
 			try {
 				parsed = JSON.parse(resdata);
 			} catch (e) {
 				console.error('[Error] Recieve invalid JSON :', e);
 			}
 		} else {
-			parsed = resdata;
+			metabinary.loadMetaBinary(new Blob([resdata]), function (metaData, contentData) {
+				var data = {
+					metaData : metaData,
+					contentData : contentData
+				};
+				//console.log(contentData);
+				if (metaData.error) {
+					if (resultCallbacks[metaData.connection_id]) {
+						resultCallbacks[metaData.connection_id](metaData.error, null);
+					}
+				} else if (metaData.connection_id && contentData) {
+					if (resultCallbacks[metaData.connection_id]) {
+						resultCallbacks[metaData.connection_id](null, data);
+					}
+					delete data.metaData.connection_id;
+				} else {
+					console.error('[Error] ArgumentError in connector.js');
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			});
+			return;
 		}
 
-		console.log("chowder_responsechowder_response");
-		console.log(parsed.hasOwnProperty('result'));
 		console.log(parsed);
 
 		if (parsed.error) {
@@ -164,13 +158,22 @@
 			console.error(e);
 		}
 	}
+	
+	function on(method, callback) {
+		socket.on(method, callback);
+	}
 
-	socket.on('connect', function () {
-		socket.emit('connect_page');
-	});
+	function connect() {
+		socket.on('connect', function () {
+			console.log("connect");
+			socket.emit('reqRegisterEvent', "v1");
+		});
+	}
 
-	window.connector = connector;
-	window.connector.send = send;
-	window.connector.sendBinary = sendBinary;
-	window.connector.methods = methods;
-}(window.controller));
+	window.io_connector = io_connector;
+	window.io_connector.send = send;
+	window.io_connector.connect = connect;
+	window.io_connector.sendBinary = sendBinary;
+	window.io_connector.methods = methods;
+	window.io_connector.on = on;
+}(window.metabinary));

@@ -1,7 +1,7 @@
 /*jslint devel:true*/
 /*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, unescape, escape */
 
-(function (metabinary, vscreen, vsutil) {
+(function (vscreen, vsutil, connector) {
 	"use strict";
 
 	console.log(location);
@@ -11,7 +11,10 @@
 		timer,
 		windowData = null,
 		metaDataDict = {},
-		windowType = "window";
+		windowType = "window",
+		doneAddWindow,
+		doneGetWindow,
+		doneGetContent;
 	
 	/**
 	 * メタデータが表示中であるかを判別する
@@ -117,7 +120,7 @@
 			posx,
 			posy,
 			hashid = location.hash.split("#").join("");
-		console.log("visible", visible);
+		
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 		
 		if (hashid.length > 0) {
@@ -130,14 +133,14 @@
 			posy = getCookie(window_id + '_y');
 			if (!posx) { posx = window.screenX || window.screenLeft; }
 			if (!posy) { posy = window.screenY || window.screenTop; }
-			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
+			connector.send('reqAddWindow', {id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
 		} else if (window_id !== "") {
 			visible = (getCookie(window_id + '_visible') === "true");
 			posx = getCookie(window_id + '_x');
 			posy = getCookie(window_id + '_y');
-			client.send(JSON.stringify({ command : 'reqAddWindow', id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }));
+			connector.send('reqAddWindow', { id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
 		} else {
-			client.send(JSON.stringify({ command : 'reqAddWindow', posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }));
+			connector.send('reqAddWindow', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
 		}
 	}
 	
@@ -152,16 +155,16 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			client.send(JSON.stringify({ command : 'reqGetContent', type: 'all', id: ''}));
+			connector.send('reqGetContent', { type: 'all', id: '' }, doneGetContent);
 		} else if (updateType === 'window') {
 			console.log("update winodow");
-			client.send(JSON.stringify({ command : 'reqGetWindow', id : windowData.id}));
+			connector.send('reqGetWindow', { id : windowData.id}, doneGetWindow);
 		} else {
 			console.log("update transform");
 			if (targetid) {
-				client.send(JSON.stringify({ command : 'reqGetMetaData', type: '', id: targetid}));
+				connector.send('reqGetMetaData', { type: '', id: targetid}, function () {});
 			} else {
-				client.send(JSON.stringify({ command : 'reqGetMetaData', type: 'all', id: ''}));
+				connector.send('reqGetMetaData', { type: 'all', id: ''}, function () {});
 			}
 		}
 	}
@@ -337,112 +340,97 @@
 		}
 	}
 	
+
+	function updateVisible(json) {
+		var elem = document.getElementById(json.id);
+		//console.log(elem);
+		if (elem) {
+			if (isVisible(json)) {
+				vsutil.assignMetaData(elem, json, false);
+				elem.style.display = "block";
+			} else {
+				elem.style.display = "none";
+			}
+		} else if (isVisible(json)) {
+			// new visible content
+			updateType = 'all';
+			update();
+		}
+		resizeViewport(windowData);
+	}
+	
+	doneAddWindow = function (err, json) {
+		metaDataDict[json.id] = json;
+
+		console.log("doneAddWindow", json);
+		windowData = json;
+		saveCookie();
+		window.parent.document.title = "Display ID:" + json.id;
+		document.getElementById('input_id').value = json.id;
+		document.getElementById('displayid').innerHTML = "ID:" + json.id;
+		updateWindow(windowData);
+		assingVisible(windowData);
+		updateVisible(json);
+	};
+	
+	doneGetWindow = function (err, json) {
+		metaDataDict[json.id] = json;
+
+		console.log("doneGetWindow", json);
+		windowData = json;
+		saveCookie();
+		console.log(windowData);
+		setVisibleWindow(windowData);
+		resizeViewport(windowData);
+		assingVisible(windowData);
+		//updateVisible(json);
+	};
+	
+	doneGetContent = function (err, data) {
+		var metaData = data.metaData,
+			contentData = data.contentData;
+		
+		//console.log("doneGetContent", metaData, contentData);
+		assignMetaBinary(metaData, contentData);
+	};
+
 	function reconnect() {
-		client = new WebSocket("ws://" + location.hostname + ":8081/v1/");
-		/**
-		 * View側Window[Display]登録、サーバーにWindow登録通知
-		 * @method onopen
-		 */
-		client.onopen = function () {
-			console.log("onopen");
-			client.send("view");
+		//client = new WebSocket("ws://" + location.hostname + ":8081/v1/");
+		connector.connect(function () {
 			if (!windowData) {
+				console.log("registerWindow");
 				registerWindow();
 			}
-		};
-	
-		/**
-		 * close
-		 * @method onclose
-		 */
-		client.onclose = (function (self) {
+		}, (function () {
 			return function (ev) {
 				console.log('close');
 				setTimeout(function () {
 					reconnect();
 				}, reconnectTimeout);
 			};
-		}(this));
+		}()));
+
+		connector.on("update", function (data) {
+			console.log("update");
+			updateType = 'all';
+			update();
+		});
+
+		connector.on("updateWindow", function (data) {
+			updateType = 'window';
+			console.log("updateWindow");
+			update();
+		});
 		
-		/**
-		 * Description
-		 * @method onmessage
-		 * @param {} message
-		 */
-		client.onmessage = function (message) {
-			var json,
-				elem;
-			//console.log('> got message');
-			if (typeof message.data === "string") {
-				if (message.data === "update") {
-					// recieve update request
-					console.log("update");
-					updateType = 'all';
-					update();
-				//} else if (message.data === "updateTransform") {
-				//	// recieve update transfrom request
-				//	//console.log("updateTransform");
-				//	updateType = 'transform';
-				//	update();
-				} else if (message.data === "updateWindow") {
-					updateType = 'window';
-					console.log("updateWindow");
-					update();
-				} else if (message.data.indexOf("showWindowID:") >= 0) {
-					showDisplayID(message.data.split(':')[1]);
-				} else if (message.data.indexOf("updateTransform:") >= 0) {
-					updateType = 'transform';
-					console.log("updateTransform", message.data);
-					update(message.data.split(':')[1]);
-				} else {
-					// recieve metadata
-					json = JSON.parse(message.data);
-					metaDataDict[json.id] = json;
-					if (json.hasOwnProperty('command')) {
-						if (json.command === "doneAddWindow") {
-							console.log("doneAddWindow");
-							windowData = json;
-							saveCookie();
-							window.parent.document.title = "Display ID:" + json.id;
-							document.getElementById('input_id').value = json.id;
-							document.getElementById('displayid').innerHTML = "ID:" + json.id;
-							updateWindow(windowData);
-							assingVisible(windowData);
-							return;
-						} else if (json.command === "doneGetWindow") {
-							console.log("doneGetWindow");
-							windowData = json;
-							saveCookie();
-							console.log(windowData);
-							setVisibleWindow(windowData);
-							resizeViewport(windowData);
-							assingVisible(windowData);
-							return;
-						}
-					}
-					elem = document.getElementById(json.id);
-					//console.log(elem);
-					if (elem) {
-						if (isVisible(json)) {
-							vsutil.assignMetaData(elem, json, false);
-							elem.style.display = "block";
-						} else {
-							elem.style.display = "none";
-						}
-					} else if (isVisible(json)) {
-						// new visible content
-						updateType = 'all';
-						update();
-					}
-					resizeViewport(windowData);
-				}
-			} else if (message.data instanceof Blob) {
-				//console.log("found blob");
-				metabinary.loadMetaBinary(message.data, function (metaData, contentData) {
-					assignMetaBinary(metaData, contentData);
-				});
-			}
-		};
+		connector.on("showWindowID", function (data) {
+			showDisplayID(data.id);
+		});
+		
+		connector.on("updateTransform", function (data) {
+			updateType = 'transform';
+			console.log("updateTransform", data);
+			update(data.id);
+		});
 	}
 
 	/// initialize.
@@ -505,4 +493,4 @@
 	}
 	
 	window.onload = init;
-}(window.metabinary, window.vscreen, window.vscreen_util));
+}(window.vscreen, window.vscreen_util, window.ws_connector));
