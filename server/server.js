@@ -6,8 +6,8 @@ var fs = require('fs'),
 	WebSocket = require('websocket'),
 	util = require('./util'),
 	operator = require('./operator.js'),
-	connector = require('./connector.js'),
 	sender = require('./sender.js'),
+	ws_connector = require('./ws_connector.js'),
 	port = 8080,
 	currentVersion = "v1",
 	ws_connections = {},
@@ -56,12 +56,12 @@ ws.on('request', function (request) {
 	
 	connection.on('message', function (message) {
 		if (message.type === 'utf8') {
-			//console.log("got text" + data);
+			console.log("got text:" + message.utf8Data);
 			if (message.utf8Data === "view") {
 				sender.setOperator(operator);
 				console.log("register" + message.utf8Data);
 				sender.registerWSEvent(connection, io, ws);
-				ws.broadcast("update");
+				ws_connector.broadcast(connection, "update");
 			}
 		}
 	});
@@ -144,7 +144,6 @@ io.sockets.on('connection', function (socket) {
 	
 	socket.on('reqRegisterEvent', function (apiVersion) {
 		if (apiVersion === currentVersion) {
-			//connector.registerEvent(io, socket, operator);
 			operator.registerEvent(io, socket, ws);
 			io.sockets.emit(Command.update);
 		}

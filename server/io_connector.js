@@ -3,7 +3,8 @@
 
 (function () {
 	"use strict";
-	var Connector = function () {},
+	var IOConnector = function () {},
+		metabinary = require('./metabinary.js'),
 		methods = {
 			reqRegisterEvent : "reqRegisterEvent",
 			
@@ -70,24 +71,34 @@
 				}
 				if (methods.hasOwnProperty(parsed.method)) {
 					methods[parsed.method](parsed.params, (function (injson) {
-						return function (err, res) {
-							var isBinary = (res instanceof Buffer);
-							result = {
-								jsonrpc: "2.0",
-								id: injson.id,
-								method : injson.method,
-								to : 'client'
-							};
-							if (err) {
-								result.error = err;
-							}
-							console.log("isBinary", isBinary);
-							if (isBinary) {
-								result.type = 'binary';
-								result.result = res;
-								console.log("chowder_response", result);
-								socket.emit("chowder_response", result);
+						return function (err, res, binary) {
+							var metabin = null;
+							if (binary) {
+								res.connection_id = injson.id;
+								metabin = metabinary.createMetaBinary(res, binary);
+								if (metabin === null) {
+									console.log('Failed to create Metabinary');
+									result = {
+										jsonrpc: "2.0",
+										id: injson.id,
+										method : injson.method,
+										to : 'client',
+										err : 'Failed to create Metabinary'
+									};
+									socket.emit("chowder_response", JSON.stringify(result));
+								} else {
+									socket.emit("chowder_response", metabin);
+								}
 							} else {
+								result = {
+									jsonrpc: "2.0",
+									id: injson.id,
+									method : injson.method,
+									to : 'client'
+								};
+								if (err) {
+									result.error = err;
+								}
 								result.type = 'utf8';
 								result.result = res;
 								console.log("chowder_response", result);
@@ -186,8 +197,8 @@
 		}
 	}
 	
-	Connector.prototype.registerEvent = registerEvent;
-	Connector.prototype.send = send;
-	Connector.prototype.sendBinary = sendBinary;
-	module.exports = new Connector();
+	IOConnector.prototype.registerEvent = registerEvent;
+	IOConnector.prototype.send = send;
+	IOConnector.prototype.sendBinary = sendBinary;
+	module.exports = new IOConnector();
 }());

@@ -10,6 +10,7 @@
 	 */
 	var Sender = function () {},
 		operator,
+		ws_connector = require('./ws_connector.js'),
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js');
 	
@@ -30,29 +31,48 @@
 	 * @param {Socket} ws WebSocketServerオブジェクト
 	 */
 	function registerWSEvent(ws_connection, io, ws) {
-		ws_connection.on('message', function (message) {
-			var request;
-			if (message.type === 'utf8' && message.utf8Data === 'view') { return; }
-			
-			function update() {
-				ws.broadcast(Command.update);
-				io.sockets.emit(Command.update);
-			}
+		var methods = {},
+			post_update = (function (ws, io) {
+				return function (resultCallback) {
+					ws_connector.broadcast(ws, Command.update);
+					io.sockets.emit(Command.update);
+					return resultCallback;
+				};
+			}(ws, io)),
+			post_updateTransform = (function (ws, io) {
+				return function (id, resultCallback) {
+					//io_connector.broadcast(ws, io, Command.updateTransform, { id : id});
+					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
+					io.sockets.emit(Command.updateTransform, id);
+					return resultCallback;
+				};
+			}(ws, io)),
+			post_updateWindow = (function (ws, io) {
+				return function (resultCallback) {
+					ws_connector.broadcast(ws, Command.updateWindow);
+					io.sockets.emit(Command.updateWindow);
+					return resultCallback;
+				};
+			}(ws, io));
+		
+		
+		methods.reqGetMetaData = function (data, resultCallback) {
+			operator.commandGetMetaData(null, ws_connection, data, resultCallback);
+		};
 
-			if (message.type === 'utf8') {
-				request = JSON.parse(message.utf8Data);
-
-				if (request.command === Command.reqGetMetaData) {
-					operator.commandGetMetaData(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqGetContent) {
-					operator.commandGetContent(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqGetWindow) {
-					operator.commandGetWindow(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqAddWindow) {
-					operator.commandAddWindow(null, ws_connection, request, update);
-				}
-			}
-		});
+		methods.reqGetContent = function (data, resultCallback) {
+			operator.commandGetContent(null, ws_connection, data, resultCallback);
+		};
+		
+		methods.reqGetWindow = function (data, resultCallback) {
+			operator.commandGetWindow(null, ws_connection, data, resultCallback);
+		};
+		
+		methods.reqAddWindow = function (data, resultCallback) {
+			operator.commandAddWindow(null, ws_connection, data, post_update(resultCallback));
+		};
+		
+		ws_connector.registerEvent(methods, ws, ws_connection);
 	}
 	
 	Sender.prototype.registerWSEvent = registerWSEvent;

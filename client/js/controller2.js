@@ -4,8 +4,7 @@
 (function (metabinary, vscreen, vsutil, manipulator, connector) {
 	"use strict";
 	
-	var socket = io.connect(),
-		currentContent = null,
+	var currentContent = null,
 		draggingID = 0,
 		lastDraggingID = null,
 		dragOffsetTop = 0,
@@ -38,10 +37,7 @@
 		doneUpdateWindow,
 		doneGetMetaData;
 	
-	socket.on('connect', function () {
-		console.log("connect");
-		socket.emit('reqRegisterEvent', "v1");
-	});
+	connector.connect();
 	
 	/**
 	 * ドラッグ中のオフセット設定。Manipulatorにて使用される。
@@ -1549,9 +1545,7 @@
 				if (elem) {
 					previewArea.removeChild(elem);
 				}
-				
 				updateContent(binary);
-				
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -2219,7 +2213,7 @@
 				{ 'rightTab' : { min : '0px', max : 'auto' }},
 				{ 'rightArea' : { min : '0px', max : '250px' }}, 'Property');
 		
-		connector = window.connector;
+		connector = window.io_connector;
 		
 		scale = parseFloat(getCookie('display_scale'));
 		console.log("cookie - display_scale:" + scale);
@@ -2320,10 +2314,11 @@
 	
 	/// content data updated
 	doneGetContent = function (err, reply) {
+		var metaData = reply.metaData,
+			contentData = reply.contentData;
+		
 		console.log("doneGetContent", reply);
-		metabinary.loadMetaBinary(new Blob([reply]), function (metaData, contentData) {
-			importContent(metaData, contentData);
-		});
+		importContent(metaData, contentData);
 	};
 	
 	doneUpdateTransform = function (err, reply) {
@@ -2416,7 +2411,7 @@
 		}
 	};
 	
-	socket.on('updateTransform', function (id) {
+	connector.on('updateTransform', function (id) {
 		var elem;
 		if (id) {
 			connector.send('reqGetMetaData', {type: "", id: id}, doneGetMetaData);
@@ -2431,14 +2426,14 @@
 		}
 	});
 	
-	socket.on('updateWindow', function () {
+	connector.on('updateWindow', function () {
 		console.log('updateWindow');
 		//updateScreen();
 		//clearWindowList();
 		connector.send('reqGetWindow', {type: "all", id: ""}, doneGetWindow);
 	});
 	
-	socket.on('update', function () {
+	connector.on('update', function () {
 		manipulator.removeManipulator();
 		update();
 		clearWindowList();
@@ -2448,4 +2443,4 @@
 	
 	window.onload = init;
 
-}(window.metabinary, window.vscreen, window.vscreen_util, window.manipulator, window.connector));
+}(window.metabinary, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

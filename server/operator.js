@@ -19,7 +19,8 @@
 		metadataPrefix = "metadata:",
 		contentPrefix = "content:",
 		windowPrefix = "window:",
-		connector = require('./connector.js'),
+		io_connector = require('./io_connector.js'),
+		ws_connector = require('./ws_connector.js'),
 		metabinary = require('./metabinary.js'),
 		util = require('./util.js'),
 		Command = require('./command.js'),
@@ -545,12 +546,11 @@
 	 * @param {BLOB} ws_connection WebSocketコネクション
 	 */
 	function sendMetaData(command, metaData, socket, ws_connection) {
-		metaData.command = command;
+		// metaData.command = command;
 		if (socket) {
-			connector.send(socket, command, metaData, function () {});
-			//socket.emit(command, JSON.stringify(metaData));
+			io_connector.send(socket, command, metaData, function () {});
 		} else if (ws_connection) {
-			ws_connection.sendUTF(JSON.stringify(metaData));
+			ws_connector.send(ws_connection, command, metaData, function () {});
 		}
 	}
 	
@@ -565,10 +565,9 @@
 	 */
 	function sendBinary(command, binary, socket, ws_connection) {
 		if (socket) {
-			connector.sendBinary(socket, command, binary, function () {});
-			//socket.emit(command, binary);
+			io_connector.sendBinary(socket, command, binary, function () {});
 		} else if (ws_connection) {
-			ws_connection.sendBytes(binary);
+			ws_connector.sendBinary(ws_connection, command, binary, function () {});
 		}
 	}
 	
@@ -627,17 +626,9 @@
 		console.log("commandGetContent:" + json.id);
 		getMetaData(json.type, json.id, function (meta) {
 			if (meta) {
-				meta.command = Command.doneGetContent;
+				//meta.command = Command.doneGetContent;
 				getContent(meta.type, meta.id, function (reply) {
-					var binary = metabinary.createMetaBinary(meta, reply);
-					console.log(binary);
-					if (binary === null) {
-						console.log('Failed to create Metabinary');
-						endCallback('Failed to create Metabinary', null);
-					} else if (endCallback) {
-						console.log("endcallback");
-						endCallback(null, binary);
-					}
+					endCallback(null, meta, reply);
 					//sendBinary(Command.doneGetContent, binary, socket, ws_connection);
 				});
 			}
@@ -736,6 +727,7 @@
 		if (socket) { id = socket.id; }
 		if (ws_connection) { id = ws_connection.id; }
 		addWindow(id, json, function (windowData) {
+			console.log("addwindowaddwindowaddwindowaddwindowaddwindow", id);
 			// sendMetaData(Command.doneAddWindow, windowData, socket, ws_connection);
 			if (endCallback) {
 				endCallback(null, windowData);
@@ -884,80 +876,105 @@
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
 	function registerWSEvent(ws_connection, io, ws) {
+		var methods = {},
+			post_update = (function (ws, io) {
+				return function (resultCallback) {
+					ws_connector.broadcast(ws, Command.update);
+					io.sockets.emit(Command.update);
+					return resultCallback;
+				};
+			}(ws, io)),
+			post_updateTransform = (function (ws, io) {
+				return function (id, resultCallback) {
+					//io_connector.broadcast(ws, io, Command.updateTransform, { id : id});
+					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
+					io.sockets.emit(Command.updateTransform, id);
+					return resultCallback;
+				};
+			}(ws, io)),
+			post_updateWindow = (function (ws, io) {
+				return function (resultCallback) {
+					ws_connector.broadcast(ws, Command.updateWindow);
+					io.sockets.emit(Command.updateWindow);
+					return resultCallback;
+				};
+			}(ws, io));
 		
 		function update() {
-			ws.broadcast(Command.update);
+			ws_connector.broadcast(ws, Command.update);
 			io.sockets.emit(Command.update);
 		}
 		
 		function updateTransform(id) {
-			ws.broadcast(Command.updateTransform + ":" + id);
+			ws_connector.broadcast(ws, Command.updateTransform, {id : id});
 			io.sockets.emit(Command.updateTransform, id);
 		}
 		
-		function updateWindow() {
-			ws.broadcast(Command.updateWindow);
-			io.sockets.emit(Command.updateWindow);
-		}
-		
 		function showWindowID(data) {
-			ws.broadcast(Command.showWindowID + ":" + data.id);
+			ws.broadcast(ws, Command.showWindowID, {id : data.id});
 			io.sockets.emit(Command.showWindowID, data.id);
 		}
 		
-		ws_connection.on('message', function (message) {
-			var request;
-			if (message.type === 'utf8' && message.utf8Data === 'view') { return; }
-			
-			if (message.type === 'utf8') {
-				// json
-				request = JSON.parse(message.utf8Data);
-				if (request.command === Command.reqGetMetaData) {
-					commandGetMetaData(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqGetContent) {
-					commandGetContent(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqUpdateTransform) {
-					commandUpdateTransform(null, ws_connection, request, (function (id) {
-						return function () {
-							updateTransform(id);
-						};
-					}(request.id)));
-				} else if (request.command === Command.reqAddWindow) {
-					commandAddWindow(null, ws_connection, request, updateWindow);
-				} else if (request.command === Command.reqGetWindow) {
-					commandGetWindow(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqUpdateWindow) {
-					commandUpdateWindow(null, ws_connection, request, updateWindow);
-				} else if (request.command === Command.reqUpdateVirtualDisplay) {
-					commandUpdateVirtualDisplay(null, ws_connection, request, updateWindow);
-				} else if (request.command === Command.reqGetVirtualDisplay) {
-					commandGetVirtualDisplay(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqShowWindowID) {
-					showWindowID(request);
-				}
-			} else {
-				// binary
-				metabinary.loadMetaBinary(message.binaryData, function (metaData, binaryData) {
-					if (metaData && metaData.hasOwnProperty('command')) {
-						request = metaData.command;
-						if (request === Command.reqAddContent) {
-							console.log(Command.reqAddContent);
-							commandAddContent(null, ws_connection, metaData, binaryData, update);
-						} else if (request === Command.reqDeleteContent) {
-							commandDeleteContent(null, ws_connection, metaData, update);
-						} else if (request === Command.reqUpdateContent) {
-							commandUpdateContent(null, ws_connection, metaData, binaryData, (function (id) {
-								return function () {
-									updateTransform(id);
-								};
-							}(metaData.id)));
-						}
-					}
-				});
-			}
-		});
+		methods.reqGetMetaData = function (data, resultCallback) {
+			commandGetMetaData(null, ws_connection, data, resultCallback);
+		};
+
+		methods.reqGetContent = function (data, resultCallback) {
+			commandGetContent(null, ws_connection, data, resultCallback);
+		};
 		
+		methods.reqUpdateTransform = function (data, resultCallback) {
+			commandUpdateTransform(null, ws_connection, data, post_updateTransform(data.id, resultCallback));
+		};
+		
+		methods.reqAddWindow = function (data, resultCallback) {
+			commandAddWindow(null, ws_connection, data, post_updateWindow(resultCallback));
+		};
+		
+		methods.reqGetWindow = function (data, resultCallback) {
+			commandGetWindow(null, ws_connection, data, resultCallback);
+		};
+		
+		methods.reqUpdateWindow = function (data, resultCallback) {
+			commandUpdateWindow(null, ws_connection, data, post_updateWindow(resultCallback));
+		};
+		
+		methods.reqUpdateVirtualDisplay = function (data, resultCallback) {
+			commandUpdateVirtualDisplay(null, ws_connection, data, post_updateWindow(resultCallback));
+		};
+		
+		methods.reqGetVirtualDisplay = function (data, resultCallback) {
+			commandGetVirtualDisplay(null, ws_connection, data, resultCallback);
+		};
+		
+		methods.reqShowWindowID = function (data, resultCallback) {
+			showWindowID(data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		};
+		
+		methods.reqAddContent = function (data, resultCallback) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			console.log(Command.reqAddContent);
+			commandAddContent(null, ws_connection, metaData, binaryData, post_update(resultCallback));
+		};
+				
+		methods.reqDeleteContent = function (data, resultCallback) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandDeleteContent(null, ws_connection, metaData, post_update(resultCallback));
+		};
+		
+		methods.reqUpdateContent = function (data, resultCallback) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandUpdateContent(null, ws_connection, metaData, binaryData, post_updateTransform(metaData.id, resultCallback));
+		};
+
 		getSessionList();
+		ws_connector.registerEvent(methods, ws, ws_connection);
 	}
 	
 	/**
@@ -969,29 +986,24 @@
 	 */
 	function registerEvent(io, socket, ws) {
 		var methods = {},
-			default_result = function (resultCallback) {
-				return function () {
-					resultCallback(null, '{}');
-				};
-			},
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
-					ws.broadcast(Command.update);
+					ws_connector.broadcast(ws, Command.update);
 					io.sockets.emit(Command.update);
-                    return resultCallback;
+					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateTransform = (function (ws, io) {
 				return function (id, resultCallback) {
-					//connector.broadcast(ws, io, Command.updateTransform, { id : id});
-					ws.broadcast(Command.updateTransform + ":" + id);
+					//io_connector.broadcast(ws, io, Command.updateTransform, { id : id});
+					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
 					io.sockets.emit(Command.updateTransform, id);
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
-					ws.broadcast(Command.updateWindow);
+					ws_connector.broadcast(ws, Command.updateWindow);
 					io.sockets.emit(Command.updateWindow);
 					return resultCallback;
 				};
@@ -1062,7 +1074,7 @@
 			io.sockets.emit(Command.showWindowID, data.id);
 		};
 
-		connector.registerEvent(methods, io, socket);
+		io_connector.registerEvent(methods, io, socket);
 	}
 	
 	/// @param id server's id
