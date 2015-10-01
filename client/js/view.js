@@ -35,10 +35,10 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			client.send(JSON.stringify({ command : 'reqGetContent', type: 'all', id: ''}));
+			client.send(JSON.stringify({ command : 'GetContent', type: 'all', id: ''}));
 		} else {
 			console.log("update transform");
-			client.send(JSON.stringify({ command : 'reqGetMetaData', type: 'all', id: ''}));
+			client.send(JSON.stringify({ command : 'GetMetaData', type: 'all', id: ''}));
 		}
 	}
 	

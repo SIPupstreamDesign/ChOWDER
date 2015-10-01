@@ -277,9 +277,9 @@
 		vscreen.clearScreenAll();
 		document.getElementById('content_area').innerHTML = "";
 		document.getElementById('content_preview_area').innerHTML = "";
-		connector.send('reqGetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
-		connector.send('reqGetContent', {type: "all", id: ""}, doneGetContent);
-		connector.send('reqGetWindow', {type: "all", id: ""}, doneGetWindow);
+		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
+		connector.send('GetContent', {type: "all", id: ""}, doneGetContent);
+		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
 	}
 	
 	/// delete content
@@ -289,7 +289,7 @@
 	 */
 	function deleteContent(evt) {
 		if (getSelectedID()) {
-			connector.send('reqDeleteContent', {id : getSelectedID()}, doneDeleteContent);
+			connector.send('DeleteContent', {id : getSelectedID()}, doneDeleteContent);
 		}
 	}
 	
@@ -299,8 +299,8 @@
 	 */
 	function deleteDisplay() {
 		if (getSelectedID()) {
-			console.log('reqDeleteWindow' + getSelectedID());
-			connector.send('reqDeleteWindow', {id : getSelectedID()});
+			console.log('DeleteWindow' + getSelectedID());
+			connector.send('DeleteWindow', {id : getSelectedID()});
 		}
 	}
 	
@@ -309,7 +309,7 @@
 	 * @method deleteDisplayAll
 	 */
 	function deleteDisplayAll() {
-		connector.send('reqDeleteWindow', {type : "all", id : ""});
+		connector.send('DeleteWindow', {type : "all", id : ""});
 	}
 	
 	/**
@@ -318,7 +318,7 @@
 	 * @param {BLOB} binary
 	 */
 	function addContent(binary) {
-		connector.sendBinary('reqAddContent', binary, doneAddContent);
+		connector.sendBinary('AddContent', binary, doneAddContent);
 	}
 	
 	/**
@@ -329,10 +329,10 @@
 	function updateTransform(metaData) {
 		if (metaData.type === windowType) {
 			// window
-			connector.send('reqUpdateWindow', metaData, doneUpdateWindow);
+			connector.send('UpdateWindow', metaData, doneUpdateWindow);
 		} else {
-			//console.log("reqUpdateTransform");
-			connector.send('reqUpdateTransform', metaData, doneUpdateTransform);
+			//console.log("UpdateTransform");
+			connector.send('UpdateTransform', metaData, doneUpdateTransform);
 		}
 	}
 	
@@ -342,7 +342,7 @@
 	 * @param {} binary
 	 */
 	function updateContent(binary) {
-		connector.sendBinary('reqUpdateContent', binary, doneUpdateContent);
+		connector.sendBinary('UpdateContent', binary, doneUpdateContent);
 	}
 	
 	/**
@@ -369,7 +369,7 @@
 		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
 			windowData.orgWidth = initialWholeHeight;
 		}
-		connector.send('reqUpdateVirtualDisplay', windowData);
+		connector.send('UpdateVirtualDisplay', windowData);
 	}
 	
 	/**
@@ -2133,17 +2133,17 @@
 		
 		showIDButton.onclick = function () {
 			var id = document.getElementById('content_id').innerHTML;
-			console.log("reqShowWindowID:" + id);
+			console.log("ShowWindowID:" + id);
 			if (id) {
 				if (metaDataDict[id].type === windowType) {
-					connector.send('reqShowWindowID', {id : id});
+					connector.send('ShowWindowID', {id : id});
 					lastDraggingID = id;
 					document.getElementById("onlist:" + id).style.borderColor = windowSelectColor;
 				} else {
-					connector.send('reqShowWindowID', {type : 'all', id : ""});
+					connector.send('ShowWindowID', {type : 'all', id : ""});
 				}
 			} else {
-				connector.send('reqShowWindowID', {type : 'all', id : ""});
+				connector.send('ShowWindowID', {type : 'all', id : ""});
 			}
 		};
 
@@ -2415,7 +2415,7 @@
 	connector.on('updateTransform', function (id) {
 		var elem;
 		if (id) {
-			connector.send('reqGetMetaData', {type: "", id: id}, doneGetMetaData);
+			connector.send('GetMetaData', {type: "", id: id}, doneGetMetaData);
 			if (lastDraggingID) {
 				elem = document.getElementById(lastDraggingID);
 				if (elem) {
@@ -2423,7 +2423,7 @@
 				}
 			}
 		} else {
-			connector.send('reqGetMetaData', {type: "all", id: ""}, doneGetMetaData);
+			connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
 		}
 	});
 	
@@ -2431,7 +2431,7 @@
 		console.log('updateWindow');
 		//updateScreen();
 		//clearWindowList();
-		connector.send('reqGetWindow', {type: "all", id: ""}, doneGetWindow);
+		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
 	});
 	
 	connector.on('update', function () {
