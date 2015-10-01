@@ -56,15 +56,15 @@
 			}(ws, io));
 		
 		
-		methods.reqGetMetaData = function (data, resultCallback) {
+		methods.GetMetaData = function (data, resultCallback) {
 			operator.commandGetMetaData(null, ws_connection, data, resultCallback);
 		};
 
-		methods.reqGetContent = function (data, resultCallback) {
+		methods.GetContent = function (data, resultCallback) {
 			operator.commandGetContent(null, ws_connection, data, resultCallback);
 		};
 		
-		methods.reqGetWindow = function (data, resultCallback) {
+		methods.GetWindow = function (data, resultCallback) {
 			operator.commandGetWindow(null, ws_connection, data, resultCallback);
 		};
 		

@@ -156,16 +156,16 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			connector.send('reqGetContent', { type: 'all', id: '' }, doneGetContent);
+			connector.send('GetContent', { type: 'all', id: '' }, doneGetContent);
 		} else if (updateType === 'window') {
 			console.log("update winodow");
-			connector.send('reqGetWindow', { id : windowData.id}, doneGetWindow);
+			connector.send('GetWindow', { id : windowData.id}, doneGetWindow);
 		} else {
 			console.log("update transform");
 			if (targetid) {
-				connector.send('reqGetMetaData', { type: '', id: targetid}, doneGetMetaData);
+				connector.send('GetMetaData', { type: '', id: targetid}, doneGetMetaData);
 			} else {
-				connector.send('reqGetMetaData', { type: 'all', id: ''}, doneGetMetaData);
+				connector.send('GetMetaData', { type: 'all', id: ''}, doneGetMetaData);
 			}
 		}
 	}

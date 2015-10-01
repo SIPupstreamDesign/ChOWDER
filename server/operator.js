@@ -603,7 +603,7 @@
 				}
 			});
 		} else {
-			//console.log(Command.reqAddContent + ":" + metaData);
+			//console.log(Command.AddContent + ":" + metaData);
 			addContent(metaData, binaryData, function (metaData, contentData) {
 				//sendMetaData(Command.doneAddContent, metaData, socket, ws_connection);
 				if (endCallback) {
@@ -619,7 +619,7 @@
 	 * @method commandGetContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqGetContent時JSONデータ
+	 * @param {JSON} json socket.io.on:GetContent時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetContent(socket, ws_connection, json, endCallback) {
@@ -641,7 +641,7 @@
 	 * @method commandGetMetaData
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqGetMetaData時JSONデータ
+	 * @param {JSON} json socket.io.on:GetMetaData時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetMetaData(socket, ws_connection, json, endCallback) {
@@ -660,7 +660,7 @@
 	 * @method commandDeleteContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqDeleteContent時JSONデータ
+	 * @param {JSON} json socket.io.on:DeleteContent時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteContent(socket, ws_connection, json, endCallback) {
@@ -699,7 +699,7 @@
 	 * @method commandUpdateTransform
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqUpdateTransform時JSONデータ
+	 * @param {JSON} json socket.io.on:UpdateTransform時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandUpdateTransform(socket, ws_connection, json, endCallback) {
@@ -741,7 +741,7 @@
 	 * @method commandDeleteWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqUpdateWindow時JSONデータ
+	 * @param {JSON} json socket.io.on:UpdateWindow時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteWindow(socket, ws_connection, json, endCallback) {
@@ -831,7 +831,7 @@
 	 * @method commandGetWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqGetWindow時JSONデータ
+	 * @param {JSON} json socket.io.on:GetWindow時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetWindow(socket, ws_connection, json, endCallback) {
@@ -851,7 +851,7 @@
 	 * @method commandUpdateWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqUpdateWindow時JSONデータ,
+	 * @param {JSON} json socket.io.on:UpdateWindow時JSONデータ,
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandUpdateWindow(socket, ws_connection, json, endCallback) {
@@ -915,15 +915,15 @@
 			io.sockets.emit(Command.showWindowID, data.id);
 		}
 		
-		methods.reqGetMetaData = function (data, resultCallback) {
+		methods.GetMetaData = function (data, resultCallback) {
 			commandGetMetaData(null, ws_connection, data, resultCallback);
 		};
 
-		methods.reqGetContent = function (data, resultCallback) {
+		methods.GetContent = function (data, resultCallback) {
 			commandGetContent(null, ws_connection, data, resultCallback);
 		};
 		
-		methods.reqUpdateTransform = function (data, resultCallback) {
+		methods.UpdateTransform = function (data, resultCallback) {
 			commandUpdateTransform(null, ws_connection, data, post_updateTransform(data.id, resultCallback));
 		};
 		
@@ -931,43 +931,43 @@
 			commandAddWindow(null, ws_connection, data, post_updateWindow(resultCallback));
 		};
 		
-		methods.reqGetWindow = function (data, resultCallback) {
+		methods.GetWindow = function (data, resultCallback) {
 			commandGetWindow(null, ws_connection, data, resultCallback);
 		};
 		
-		methods.reqUpdateWindow = function (data, resultCallback) {
+		methods.UpdateWindow = function (data, resultCallback) {
 			commandUpdateWindow(null, ws_connection, data, post_updateWindow(resultCallback));
 		};
 		
-		methods.reqUpdateVirtualDisplay = function (data, resultCallback) {
+		methods.UpdateVirtualDisplay = function (data, resultCallback) {
 			commandUpdateVirtualDisplay(null, ws_connection, data, post_updateWindow(resultCallback));
 		};
 		
-		methods.reqGetVirtualDisplay = function (data, resultCallback) {
+		methods.GetVirtualDisplay = function (data, resultCallback) {
 			commandGetVirtualDisplay(null, ws_connection, data, resultCallback);
 		};
 		
-		methods.reqShowWindowID = function (data, resultCallback) {
+		methods.ShowWindowID = function (data, resultCallback) {
 			showWindowID(data);
 			if (resultCallback) {
 				resultCallback();
 			}
 		};
 		
-		methods.reqAddContent = function (data, resultCallback) {
+		methods.AddContent = function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			console.log(Command.reqAddContent);
+			console.log(Command.AddContent);
 			commandAddContent(null, ws_connection, metaData, binaryData, post_update(resultCallback));
 		};
 				
-		methods.reqDeleteContent = function (data, resultCallback) {
+		methods.DeleteContent = function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			commandDeleteContent(null, ws_connection, metaData, post_update(resultCallback));
 		};
 		
-		methods.reqUpdateContent = function (data, resultCallback) {
+		methods.UpdateContent = function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			commandUpdateContent(null, ws_connection, metaData, binaryData, post_updateTransform(metaData.id, resultCallback));
@@ -1009,25 +1009,25 @@
 				};
 			}(ws, io));
 
-		methods.reqAddContent = function (data, resultCallback) {
+		methods.AddContent = function (data, resultCallback) {
 			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
 				commandAddContent(socket, null, metaData, binaryData, post_update(resultCallback));
 			});
 		};
 
-		methods.reqGetContent = function (data, resultCallback) {
+		methods.GetContent = function (data, resultCallback) {
 			commandGetContent(socket, null, data, resultCallback);
 		};
 
-		methods.reqGetMetaData = function (data, resultCallback) {
+		methods.GetMetaData = function (data, resultCallback) {
 			commandGetMetaData(socket, null, data, resultCallback);
 		};
 
-		methods.reqDeleteContent = function (data, resultCallback) {
+		methods.DeleteContent = function (data, resultCallback) {
 			commandDeleteContent(socket, null, data, post_update(resultCallback));
 		};
 
-		methods.reqUpdateContent = function (data, resultCallback) {
+		methods.UpdateContent = function (data, resultCallback) {
 			metabinary.loadMetaBinary(data, function (metaData, binaryData) {
 				commandUpdateContent(socket, null, metaData, binaryData, (function (id) {
 					return function () {
@@ -1037,7 +1037,7 @@
 			});
 		};
 
-		methods.reqUpdateTransform = function (data, resultCallback) {
+		methods.UpdateTransform = function (data, resultCallback) {
 			commandUpdateTransform(socket, null, data, (function (id) {
 				return function () {
 					post_updateTransform(id, resultCallback);
@@ -1049,27 +1049,27 @@
 			commandAddWindow(socket, null, data, post_updateWindow(resultCallback));
 		};
 
-		methods.reqGetWindow = function (data, resultCallback) {
+		methods.GetWindow = function (data, resultCallback) {
 			commandGetWindow(socket, null, data, resultCallback);
 		};
 
-		methods.reqUpdateWindow = function (data, resultCallback) {
+		methods.UpdateWindow = function (data, resultCallback) {
 			commandUpdateWindow(socket, null, data, post_updateWindow(resultCallback));
 		};
 
-		methods.reqDeleteWindow = function (data, resultCallback) {
+		methods.DeleteWindow = function (data, resultCallback) {
 			commandDeleteWindow(socket, null, data, post_update(resultCallback));
 		};
 
-		methods.reqUpdateVirtualDisplay = function (data, resultCallback) {
+		methods.UpdateVirtualDisplay = function (data, resultCallback) {
 			commandUpdateVirtualDisplay(socket, null, data, post_updateWindow(resultCallback));
 		};
 
-		methods.reqGetVirtualDisplay = function (data, resultCallback) {
+		methods.GetVirtualDisplay = function (data, resultCallback) {
 			commandGetVirtualDisplay(socket, null, data, resultCallback);
 		};
 
-		methods.reqShowWindowID = function (data, resultCallback) {
+		methods.ShowWindowID = function (data, resultCallback) {
 			ws.broadcast(Command.showWindowID + ":" + data.id);
 			io.sockets.emit(Command.showWindowID, data.id);
 		};
