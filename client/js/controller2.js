@@ -327,7 +327,6 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	function updateTransform(metaData) {
-		//console.log(JSON.stringify(metaData));
 		if (metaData.type === windowType) {
 			// window
 			connector.send('reqUpdateWindow', metaData, doneUpdateWindow);
@@ -2322,6 +2321,8 @@
 	};
 	
 	doneUpdateTransform = function (err, reply) {
+		var json = reply;
+		metaDataDict[json.id] = json;
 	};
 	
 	doneUpdateWindow = function (err, reply) {

@@ -14,7 +14,8 @@
 		windowType = "window",
 		doneAddWindow,
 		doneGetWindow,
-		doneGetContent;
+		doneGetContent,
+		doneGetMetaData;
 	
 	/**
 	 * メタデータが表示中であるかを判別する
@@ -162,9 +163,9 @@
 		} else {
 			console.log("update transform");
 			if (targetid) {
-				connector.send('reqGetMetaData', { type: '', id: targetid}, function () {});
+				connector.send('reqGetMetaData', { type: '', id: targetid}, doneGetMetaData);
 			} else {
-				connector.send('reqGetMetaData', { type: 'all', id: ''}, function () {});
+				connector.send('reqGetMetaData', { type: 'all', id: ''}, doneGetMetaData);
 			}
 		}
 	}
@@ -392,6 +393,28 @@
 		
 		//console.log("doneGetContent", metaData, contentData);
 		assignMetaBinary(metaData, contentData);
+	};
+	
+	doneGetMetaData = function (err, json) {
+		metaDataDict[json.id] = json;
+		var elem = document.getElementById(json.id);
+		console.log("doneGetMetaData");
+		console.log(elem);
+		if (elem) {
+			if (isVisible(json)) {
+				vsutil.assignMetaData(elem, json, false);
+				elem.style.display = "block";
+			} else {
+				elem.style.display = "none";
+			}
+		} else if (isVisible(json)) {
+			// new visible content
+			updateType = 'all';
+			update();
+		}
+		if (json.type === windowType) {
+			resizeViewport(windowData);
+		}
 	};
 
 	function reconnect() {
