@@ -8,6 +8,7 @@ var fs = require('fs'),
 	operator = require('./operator.js'),
 	sender = require('./sender.js'),
 	ws_connector = require('./ws_connector.js'),
+	io_connector = require('./io_connector.js'),
 	port = 8080,
 	currentVersion = "v1",
 	ws_connections = {},
@@ -61,7 +62,7 @@ ws.on('request', function (request) {
 				sender.setOperator(operator);
 				console.log("register" + message.utf8Data);
 				sender.registerWSEvent(connection, io, ws);
-				ws_connector.broadcast(connection, "update");
+				ws_connector.broadcast(ws, "update");
 			}
 		}
 	});
@@ -69,7 +70,7 @@ ws.on('request', function (request) {
 	connection.on('close', function () {
 		delete ws_connections[connection.id];
 		operator.commandDeleteWindow(null, connection, null, function () {
-			io.sockets.emit(Command.update);
+			io_connector.broadcast(io, Command.update);
 			ws2.broadcast(Command.update);
 			console.log("broadcast update");
 		});
@@ -145,7 +146,7 @@ io.sockets.on('connection', function (socket) {
 	socket.on('reqRegisterEvent', function (apiVersion) {
 		if (apiVersion === currentVersion) {
 			operator.registerEvent(io, socket, ws);
-			io.sockets.emit(Command.update);
+			io_connector.broadcast(io, Command.update);
 		}
 	});
 	socket.on('disconnect', function () {
@@ -205,7 +206,7 @@ ws2.on('request', function (request) {
 		delete ws2_connections[connection.id];
 		operator.commandDeleteWindow(null, connection, null, function () {
 			console.log("broadcast update");
-			io.sockets.emit(Command.update);
+			io_connector.broadcast(io, Command.update);
 			ws2.broadcast(Command.update);
 		});
 		console.log('connection closed :' + connection.id);
