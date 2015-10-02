@@ -1,31 +1,10 @@
 /*jslint devel: true, nomen: true */
 /*global io, Blob */
 
-(function (metabinary) {
+(function (command, metabinary) {
 	'use strict';
 	var io_connector = {},
 		socket = io.connect(),
-		methods = {
-			RegisterEvent : "RegisterEvent",
-			
-			// request command
-			AddContent : "AddContent",
-			GetContent : "GetContent",
-			GetMetaData : "GetMetaData",
-			DeleteContent : "DeleteContent",
-			UpdateContent : "UpdateContent",
-			AddWindow : "AddWindow",
-			DeleteWindow : "DeleteWindow",
-			GetWindow : "GetWindow",
-			UpdateVirtualDisplay : "UpdateVirtualDisplay",
-			GetVirtualDisplay : "GetVirtualDisplay",
-
-			// both client and server
-			Update : "Update",
-			UpdateTransform : "UpdateTransform",
-			UpdateWindow : "UpdateWindow",
-			ShowWindowID : "ShowWindowID"
-		},
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1;
@@ -94,7 +73,7 @@
 	});
 
 	function sendWrapper(id, method, reqdata, resultCallback) {
-		if (methods.hasOwnProperty(method)) {
+		if (command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_request', reqdata);
@@ -163,6 +142,5 @@
 	window.io_connector.send = send;
 	window.io_connector.connect = connect;
 	window.io_connector.sendBinary = sendBinary;
-	window.io_connector.methods = methods;
 	window.io_connector.on = on;
-}(window.metabinary));
+}(window.command, window.metabinary));
