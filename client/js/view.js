@@ -133,14 +133,14 @@
 			posy = getCookie(window_id + '_y');
 			if (!posx) { posx = window.screenX || window.screenLeft; }
 			if (!posy) { posy = window.screenY || window.screenTop; }
-			connector.send('reqAddWindow', {id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
+			connector.send('AddWindow', {id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
 		} else if (window_id !== "") {
 			visible = (getCookie(window_id + '_visible') === "true");
 			posx = getCookie(window_id + '_x');
 			posy = getCookie(window_id + '_y');
-			connector.send('reqAddWindow', { id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
+			connector.send('AddWindow', { id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
 		} else {
-			connector.send('reqAddWindow', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
+			connector.send('AddWindow', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
 		}
 	}
 	
@@ -343,7 +343,7 @@
 
 	function updateVisible(json) {
 		var elem = document.getElementById(json.id);
-		//console.log(elem);
+		console.log("updateVisible", elem);
 		if (elem) {
 			if (isVisible(json)) {
 				vsutil.assignMetaData(elem, json, false);
@@ -432,23 +432,23 @@
 			};
 		}()));
 
-		connector.on("update", function (data) {
+		connector.on("Update", function (data) {
 			console.log("update");
 			updateType = 'all';
 			update();
 		});
 
-		connector.on("updateWindow", function (data) {
+		connector.on("UpdateWindow", function (data) {
 			updateType = 'window';
-			console.log("updateWindow");
+			console.log("updateWindow", updateType);
 			update();
 		});
 		
-		connector.on("showWindowID", function (data) {
+		connector.on("ShowWindowID", function (data) {
 			showDisplayID(data.id);
 		});
 		
-		connector.on("updateTransform", function (data) {
+		connector.on("UpdateTransform", function (data) {
 			updateType = 'transform';
 			console.log("updateTransform", data);
 			update(data.id);

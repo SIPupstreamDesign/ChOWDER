@@ -11,6 +11,7 @@
 	var Sender = function () {},
 		operator,
 		ws_connector = require('./ws_connector.js'),
+		io_connector = require('./io_connector.js'),
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js');
 	
@@ -34,23 +35,22 @@
 		var methods = {},
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.update);
-					io.sockets.emit(Command.update);
+					ws_connector.broadcast(ws, Command.Update);
+					io_connector.broadcast(io, Command.Update);
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateTransform = (function (ws, io) {
 				return function (id, resultCallback) {
-					//io_connector.broadcast(ws, io, Command.updateTransform, { id : id});
-					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
-					io.sockets.emit(Command.updateTransform, id);
+					ws_connector.broadcast(ws, Command.UpdateTransform, {id : id});
+					io_connector.broadcast(io, Command.UpdateTransform, {id : id});
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.updateWindow);
-					io.sockets.emit(Command.updateWindow);
+					ws_connector.broadcast(ws, Command.UpdateWindow);
+					io_connector.broadcast(io, Command.UpdateWindow);
 					return resultCallback;
 				};
 			}(ws, io));
@@ -68,7 +68,7 @@
 			operator.commandGetWindow(null, ws_connection, data, resultCallback);
 		};
 		
-		methods.reqAddWindow = function (data, resultCallback) {
+		methods.AddWindow = function (data, resultCallback) {
 			operator.commandAddWindow(null, ws_connection, data, post_update(resultCallback));
 		};
 		

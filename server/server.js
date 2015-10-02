@@ -62,7 +62,7 @@ ws.on('request', function (request) {
 				sender.setOperator(operator);
 				console.log("register" + message.utf8Data);
 				sender.registerWSEvent(connection, io, ws);
-				ws_connector.broadcast(ws, "update");
+				ws_connector.broadcast(ws, Command.Update);
 			}
 		}
 	});
@@ -70,8 +70,8 @@ ws.on('request', function (request) {
 	connection.on('close', function () {
 		delete ws_connections[connection.id];
 		operator.commandDeleteWindow(null, connection, null, function () {
-			io_connector.broadcast(io, Command.update);
-			ws2.broadcast(Command.update);
+			io_connector.broadcast(io, Command.Update);
+			ws2.broadcast(Command.Update);
 			console.log("broadcast update");
 		});
 		console.log('connection closed :' + connection.id);
@@ -143,10 +143,10 @@ io.sockets.on('connection', function (socket) {
 	"use strict";
 	console.log("[CONNECT] ID=" + socket.id);
 	
-	socket.on('reqRegisterEvent', function (apiVersion) {
+	socket.on('RegisterEvent', function (apiVersion) {
 		if (apiVersion === currentVersion) {
 			operator.registerEvent(io, socket, ws);
-			io_connector.broadcast(io, Command.update);
+			io_connector.broadcast(io, Command.Update);
 		}
 	});
 	socket.on('disconnect', function () {
@@ -206,8 +206,8 @@ ws2.on('request', function (request) {
 		delete ws2_connections[connection.id];
 		operator.commandDeleteWindow(null, connection, null, function () {
 			console.log("broadcast update");
-			io_connector.broadcast(io, Command.update);
-			ws2.broadcast(Command.update);
+			io_connector.broadcast(io, Command.Update);
+			ws2.broadcast(Command.Update);
 		});
 		console.log('connection closed :' + connection.id);
 	});
