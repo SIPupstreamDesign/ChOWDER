@@ -57,7 +57,7 @@
 	 * @return LogicalExpression
 	 */
 	function isVisible(metaData) {
-		return (metaData.hasOwnProperty('visible') && metaData.visible === "true");
+		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
 	}
 	
 	/**
