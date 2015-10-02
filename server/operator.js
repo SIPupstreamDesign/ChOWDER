@@ -718,7 +718,7 @@
 	 * @method commandAddWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:reqAddWindow時JSONデータ
+	 * @param {JSON} json socket.io.on:AddWindow時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandAddWindow(socket, ws_connection, json, endCallback) {
@@ -879,22 +879,22 @@
 		var methods = {},
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.update);
-					io_connector.broadcast(io, Command.update);
+					ws_connector.broadcast(ws, Command.Update);
+					io_connector.broadcast(io, Command.Update);
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateTransform = (function (ws, io) {
 				return function (id, resultCallback) {
-					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
-					io_connector.broadcast(io, Command.updateTransform, {id : id});
+					ws_connector.broadcast(ws, Command.UpdateTransform, {id : id});
+					io_connector.broadcast(io, Command.UpdateTransform, {id : id});
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.updateWindow);
-					io_connector.broadcast(io, Command.updateWindow);
+					ws_connector.broadcast(ws, Command.UpdateWindow);
+					io_connector.broadcast(io, Command.UpdateWindow);
 					return resultCallback;
 				};
 			}(ws, io));
@@ -911,7 +911,7 @@
 			commandUpdateTransform(null, ws_connection, data, post_updateTransform(data.id, resultCallback));
 		};
 		
-		methods.reqAddWindow = function (data, resultCallback) {
+		methods.AddWindow = function (data, resultCallback) {
 			commandAddWindow(null, ws_connection, data, post_updateWindow(resultCallback));
 		};
 		
@@ -973,22 +973,22 @@
 		var methods = {},
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.update);
-					io_connector.broadcast(ws, Command.update);
+					ws_connector.broadcast(ws, Command.Update);
+					io_connector.broadcast(ws, Command.Update);
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateTransform = (function (ws, io) {
 				return function (id, resultCallback) {
-					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
-					io_connector.broadcast(io, Command.updateTransform, {id : id});
+					ws_connector.broadcast(ws, Command.UpdateTransform, {id : id});
+					io_connector.broadcast(io, Command.UpdateTransform, {id : id});
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.updateWindow);
-					io_connector.broadcast(io, Command.updateWindow);
+					ws_connector.broadcast(ws, Command.UpdateWindow);
+					io_connector.broadcast(io, Command.UpdateWindow);
 					return resultCallback;
 				};
 			}(ws, io));
@@ -1029,7 +1029,7 @@
 			}(data.id)));
 		};
 
-		methods.reqAddWindow = function (data, resultCallback) {
+		methods.AddWindow = function (data, resultCallback) {
 			commandAddWindow(socket, null, data, post_updateWindow(resultCallback));
 		};
 

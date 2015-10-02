@@ -5,7 +5,7 @@
 	"use strict";
 	
 	var Command = {
-		reqRegisterEvent : "reqRegisterEvent",
+		RegisterEvent : "RegisterEvent",
 		
 		// request command
 		AddContent : "AddContent",
@@ -13,35 +13,17 @@
 		GetMetaData : "GetMetaData",
 		DeleteContent : "DeleteContent",
 		UpdateContent : "UpdateContent",
-		UpdateTransform : "UpdateTransform",
-		reqAddWindow : "reqAddWindow",
+		AddWindow : "AddWindow",
 		DeleteWindow : "DeleteWindow",
 		GetWindow : "GetWindow",
-		UpdateWindow : "UpdateWindow",
 		UpdateVirtualDisplay : "UpdateVirtualDisplay",
 		GetVirtualDisplay : "GetVirtualDisplay",
-		ShowWindowID : "ShowWindowID",
 		
-		// result command
-		doneAddContent : "doneAddContent",
-		doneGetContent : "doneGetContent",
-		doneGetMetaData : "doneGetMetaData",
-		doneDeleteContent : "doneDeleteContent",
-		doneUpdateContent : "doneUpdateContent",
-		doneUpdateTransform : "doneUpdateTransform",
-		doneAddWindow : "doneAddWindow",
-		doneDeleteWindow : "doneDeleteWindow",
-		doneGetWindow : "doneGetWindow",
-		doneUpdateWindow : "doneUpdateWindow",
-		doneUpdateVirtualDisplay : "doneUpdateVirtualDisplay",
-		doneGetVirtualDisplay : "doneGetVirtualDisplay",
-		doneShowWindowID : "doneShowWindowID",
-		
-		// update request from server
-		update : "update",
-		updateTransform : "updateTransform",
-		updateWindow : "updateWindow",
-		showWindowID : "showWindowID"
+		// using both server and client
+		Update : "Update",
+		UpdateTransform : "UpdateTransform",
+		UpdateWindow : "UpdateWindow",
+		ShowWindowID : "ShowWindowID"
 	};
 	
 	module.exports = Command;

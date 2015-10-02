@@ -2412,7 +2412,7 @@
 		}
 	};
 	
-	connector.on('updateTransform', function (id) {
+	connector.on('UpdateTransform', function (id) {
 		var elem;
 		if (id) {
 			connector.send('GetMetaData', {type: "", id: id}, doneGetMetaData);
@@ -2427,14 +2427,14 @@
 		}
 	});
 	
-	connector.on('updateWindow', function () {
-		console.log('updateWindow');
+	connector.on('UpdateWindow', function () {
+		console.log('UpdateWindow');
 		//updateScreen();
 		//clearWindowList();
 		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
 	});
 	
-	connector.on('update', function () {
+	connector.on('Update', function () {
 		manipulator.removeManipulator();
 		update();
 		clearWindowList();

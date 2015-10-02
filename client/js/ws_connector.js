@@ -5,7 +5,7 @@
 	'use strict';
 	var ws_connector = {},
 		methods = {
-			reqRegisterEvent : "reqRegisterEvent",
+			RegisterEvent : "RegisterEvent",
 			
 			// request command
 			AddContent : "AddContent",
@@ -13,20 +13,17 @@
 			GetMetaData : "GetMetaData",
 			DeleteContent : "DeleteContent",
 			UpdateContent : "UpdateContent",
-			UpdateTransform : "UpdateTransform",
-			reqAddWindow : "reqAddWindow",
+			AddWindow : "AddWindow",
 			DeleteWindow : "DeleteWindow",
 			GetWindow : "GetWindow",
-			UpdateWindow : "UpdateWindow",
 			UpdateVirtualDisplay : "UpdateVirtualDisplay",
 			GetVirtualDisplay : "GetVirtualDisplay",
-			ShowWindowID : "ShowWindowID",
 
-			// update request from server
-			update : "update",
-			updateTransform : "updateTransform",
-			updateWindow : "updateWindow",
-			showWindowID : "showWindowID"
+			// both client and server
+			Update : "Update",
+			UpdateTransform : "UpdateTransform",
+			UpdateWindow : "UpdateWindow",
+			ShowWindowID : "ShowWindowID"
 		},
 		resultCallbacks = {},
 		recievers = {},
