@@ -3,33 +3,13 @@
 
 (function () {
 	"use strict";
-	var IOConnector = function () {},
+	var IOConnector =  function () {},
 		metabinary = require('./metabinary.js'),
-		methods = {
-			RegisterEvent : "RegisterEvent",
-			
-			// request command
-			AddContent : "AddContent",
-			GetContent : "GetContent",
-			GetMetaData : "GetMetaData",
-			DeleteContent : "DeleteContent",
-			UpdateContent : "UpdateContent",
-			AddWindow : "AddWindow",
-			DeleteWindow : "DeleteWindow",
-			GetWindow : "GetWindow",
-			UpdateVirtualDisplay : "UpdateVirtualDisplay",
-			GetVirtualDisplay : "GetVirtualDisplay",
-
-			// both client and server
-			Update : "Update",
-			UpdateTransform : "UpdateTransform",
-			UpdateWindow : "UpdateWindow",
-			ShowWindowID : "ShowWindowID"
-		},
+		Command = require('./command.js'),
 		resultCallbacks = {},
 		messageID = 1;
 
-	function registerEvent(methods, io, socket) {
+	function registerEvent(Command, io, socket) {
 		socket.on("chowder_request", function (data) {
 			console.log("chowder_request : ", data);
 			var parsed,
@@ -51,8 +31,8 @@
 				if (parsed.params === null) {
 					parsed.params = [];
 				}
-				if (methods.hasOwnProperty(parsed.method)) {
-					methods[parsed.method](parsed.params, (function (injson) {
+				if (Command.hasOwnProperty(parsed.method)) {
+					Command[parsed.method](parsed.params, (function (injson) {
 						return function (err, res, binary) {
 							var metabin = null;
 							if (binary) {
@@ -124,7 +104,7 @@
 	}
 	
 	function sendWrapper(socket, id, method, reqdata, resultCallback) {
-		if (methods.hasOwnProperty(method)) {
+		if (Command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_request', reqdata);
