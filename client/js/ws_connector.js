@@ -1,30 +1,9 @@
 /*jslint devel: true, nomen: true */
 /*global WebSocket, Blob */
 
-(function (metabinary) {
+(function (command, metabinary) {
 	'use strict';
 	var ws_connector = {},
-		methods = {
-			RegisterEvent : "RegisterEvent",
-			
-			// request command
-			AddContent : "AddContent",
-			GetContent : "GetContent",
-			GetMetaData : "GetMetaData",
-			DeleteContent : "DeleteContent",
-			UpdateContent : "UpdateContent",
-			AddWindow : "AddWindow",
-			DeleteWindow : "DeleteWindow",
-			GetWindow : "GetWindow",
-			UpdateVirtualDisplay : "UpdateVirtualDisplay",
-			GetVirtualDisplay : "GetVirtualDisplay",
-
-			// both client and server
-			Update : "Update",
-			UpdateTransform : "UpdateTransform",
-			UpdateWindow : "UpdateWindow",
-			ShowWindowID : "ShowWindowID"
-		},
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
@@ -121,7 +100,7 @@
 	}
 	
 	function sendWrapper(id, method, reqdata, resultCallback) {
-		if (methods.hasOwnProperty(method)) {
+		if (command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_request', reqdata);
@@ -186,5 +165,5 @@
 	window.ws_connector.on = on;
 	window.ws_connector.send = send;
 	window.ws_connector.sendBinary = sendBinary;
-	window.ws_connector.methods = methods;
-}(window.metabinary));
+	
+}(window.command, window.metabinary));
