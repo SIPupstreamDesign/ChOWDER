@@ -1,12 +1,11 @@
 /*jslint devel:true*/
-/*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, unescape, escape */
+/*global Blob, URL, FileReader, DataView, Uint8Array, unescape, escape */
 
 (function (vscreen, vsutil, connector) {
 	"use strict";
 
 	console.log(location);
-	var client,
-		reconnectTimeout = 2000,
+	var reconnectTimeout = 2000,
 		updateType = "all",
 		timer,
 		windowData = null,
@@ -417,7 +416,6 @@
 	};
 
 	function reconnect() {
-		//client = new WebSocket("ws://" + location.hostname + ":8081/v1/");
 		connector.connect(function () {
 			if (!windowData) {
 				console.log("registerWindow");

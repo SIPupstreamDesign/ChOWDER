@@ -1,5 +1,5 @@
 /*jslint devel:true */
-/*global io, socket, FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
+/*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
 (function (metabinary, vscreen, vsutil, manipulator, connector) {
 	"use strict";
