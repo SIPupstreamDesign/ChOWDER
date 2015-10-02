@@ -5,31 +5,11 @@
 	"use strict";
 	var WSConnector = function () {},
 		metabinary = require('./metabinary.js'),
-		methods = {
-			RegisterEvent : "RegisterEvent",
-			
-			// request command
-			AddContent : "AddContent",
-			GetContent : "GetContent",
-			GetMetaData : "GetMetaData",
-			DeleteContent : "DeleteContent",
-			UpdateContent : "UpdateContent",
-			AddWindow : "AddWindow",
-			DeleteWindow : "DeleteWindow",
-			GetWindow : "GetWindow",
-			UpdateVirtualDisplay : "UpdateVirtualDisplay",
-			GetVirtualDisplay : "GetVirtualDisplay",
-
-			// both client and server
-			Update : "Update",
-			UpdateTransform : "UpdateTransform",
-			UpdateWindow : "UpdateWindow",
-			ShowWindowID : "ShowWindowID"
-		},
+		Command = require('./command.js'),
 		resultCallbacks = {},
 		messageID = 1;
-
-	function registerEvent(methods, ws, ws_connection) {
+	
+	function registerEvent(Command, ws, ws_connection) {
 		ws_connection.on('message', function (data) {
 			console.log("chowder_request : ", data);
 			var parsed,
@@ -71,8 +51,8 @@
 				if (parsed.params === null) {
 					parsed.params = [];
 				}
-				if (methods.hasOwnProperty(parsed.method)) {
-					methods[parsed.method](parsed.params, (function (injson) {
+				if (Command.hasOwnProperty(parsed.method)) {
+					Command[parsed.method](parsed.params, (function (injson) {
 						return function (err, res, binary) {
 							var metabin = null;
 							console.log("isBinary", binary);
@@ -152,7 +132,7 @@
 		try {
 			data = JSON.stringify(reqjson);
 			
-			if (methods.hasOwnProperty(reqjson.method)) {
+			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
 
 				console.log('[Info] chowder_request', data);
@@ -179,7 +159,7 @@
 		messageID = messageID + 1;
 		
 		try {
-			if (methods.hasOwnProperty(data.method)) {
+			if (Command.hasOwnProperty(data.method)) {
 				resultCallbacks[data.id] = resultCallback;
 
 				console.log('[Info] chowder_request binary', data);
@@ -207,7 +187,7 @@
 		try {
 			data = JSON.stringify(reqjson);
 			
-			if (methods.hasOwnProperty(reqjson.method)) {
+			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
 
 				console.log('[Info] chowder_request', data);
