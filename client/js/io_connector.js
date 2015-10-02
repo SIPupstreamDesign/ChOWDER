@@ -30,6 +30,7 @@
 			showWindowID : "showWindowID"
 		},
 		resultCallbacks = {},
+		recievers = {},
 		messageID = 1;
 	
 	socket.on('chowder_response', function (resdata) {
@@ -69,6 +70,13 @@
 
 		console.log(parsed);
 
+		if (parsed.method) {
+			if (recievers.hasOwnProperty(parsed.method)) {
+				recievers[parsed.method](parsed.params);
+				return;
+			}
+		}
+
 		if (parsed.error) {
 			if (resultCallbacks[parsed.id]) {
 				resultCallbacks[parsed.id](parsed.error, null);
@@ -87,7 +95,7 @@
 			resultCallbacks[parsed.id]('ArgumentError', null);
 		}
 	});
-	
+
 	function sendWrapper(id, method, reqdata, resultCallback) {
 		if (methods.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
@@ -135,7 +143,6 @@
 		};
 		
 		messageID = messageID + 1;
-		
 		try {
 			//data = JSON.stringify(reqjson);
 			sendWrapper(data.id, data.method, data, resultCallback);
@@ -145,7 +152,7 @@
 	}
 	
 	function on(method, callback) {
-		socket.on(method, callback);
+		recievers[method] = callback;
 	}
 
 	function connect() {

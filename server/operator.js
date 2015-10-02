@@ -880,40 +880,24 @@
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
 					ws_connector.broadcast(ws, Command.update);
-					io.sockets.emit(Command.update);
+					io_connector.broadcast(io, Command.update);
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateTransform = (function (ws, io) {
 				return function (id, resultCallback) {
-					//io_connector.broadcast(ws, io, Command.updateTransform, { id : id});
 					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
-					io.sockets.emit(Command.updateTransform, id);
+					io_connector.broadcast(io, Command.updateTransform, {id : id});
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
 					ws_connector.broadcast(ws, Command.updateWindow);
-					io.sockets.emit(Command.updateWindow);
+					io_connector.broadcast(io, Command.updateWindow);
 					return resultCallback;
 				};
 			}(ws, io));
-		
-		function update() {
-			ws_connector.broadcast(ws, Command.update);
-			io.sockets.emit(Command.update);
-		}
-		
-		function updateTransform(id) {
-			ws_connector.broadcast(ws, Command.updateTransform, {id : id});
-			io.sockets.emit(Command.updateTransform, id);
-		}
-		
-		function showWindowID(data) {
-			ws.broadcast(ws, Command.showWindowID, {id : data.id});
-			io.sockets.emit(Command.showWindowID, data.id);
-		}
 		
 		methods.GetMetaData = function (data, resultCallback) {
 			commandGetMetaData(null, ws_connection, data, resultCallback);
@@ -948,7 +932,8 @@
 		};
 		
 		methods.ShowWindowID = function (data, resultCallback) {
-			showWindowID(data);
+			ws_connector.broadcast(ws, Command.showWindowID, {id : data.id});
+			io_connector.broadcast(io, Command.showWindowID, {id : data.id});
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -989,22 +974,21 @@
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
 					ws_connector.broadcast(ws, Command.update);
-					io.sockets.emit(Command.update);
+					io_connector.broadcast(ws, Command.update);
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateTransform = (function (ws, io) {
 				return function (id, resultCallback) {
-					//io_connector.broadcast(ws, io, Command.updateTransform, { id : id});
 					ws_connector.broadcast(ws, Command.updateTransform, {id : id});
-					io.sockets.emit(Command.updateTransform, id);
+					io_connector.broadcast(io, Command.updateTransform, {id : id});
 					return resultCallback;
 				};
 			}(ws, io)),
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
 					ws_connector.broadcast(ws, Command.updateWindow);
-					io.sockets.emit(Command.updateWindow);
+					io_connector.broadcast(io, Command.updateWindow);
 					return resultCallback;
 				};
 			}(ws, io));
@@ -1070,8 +1054,8 @@
 		};
 
 		methods.ShowWindowID = function (data, resultCallback) {
-			ws.broadcast(Command.showWindowID + ":" + data.id);
-			io.sockets.emit(Command.showWindowID, data.id);
+			ws_connector.broadcast(ws, Command.showWindowID, { id : data.id });
+			io_connector.broadcast(io, Command.showWindowID, { id : data.id });
 		};
 
 		io_connector.registerEvent(methods, io, socket);

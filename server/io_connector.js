@@ -182,8 +182,28 @@
 		}
 	}
 	
+	function broadcast(io, method, args, resultCallback) {
+		var reqjson = {
+			jsonrpc: '2.0',
+			type : 'utf8',
+			id: messageID,
+			method: method,
+			params: args,
+			to: 'client'
+		}, data;
+		
+		messageID = messageID + 1;
+		try {
+			data = JSON.stringify(reqjson);
+			io.sockets.emit('chowder_response', data);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+	
 	IOConnector.prototype.registerEvent = registerEvent;
 	IOConnector.prototype.send = send;
 	IOConnector.prototype.sendBinary = sendBinary;
+	IOConnector.prototype.broadcast = broadcast;
 	module.exports = new IOConnector();
 }());
