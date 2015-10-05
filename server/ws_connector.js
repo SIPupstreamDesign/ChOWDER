@@ -7,113 +7,131 @@
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js'),
 		resultCallbacks = {},
+		recievers = {},
 		messageID = 1;
 	
-	function registerEvent(Command, ws, ws_connection) {
+	function sendResponse(ws_connection, injson) {
+		return function (err, res, binary) {
+			var metabin = null,
+				result;
+			console.log("isBinary", binary);
+			if (binary !== undefined && binary !== null) {
+				result = {
+					jsonrpc: "2.0",
+					id: injson.id,
+					method : injson.method,
+					params : res,
+					to : 'client'
+				};
+				metabin = metabinary.createMetaBinary(result, binary);
+				if (metabin === null || metabin === undefined) {
+					result.err = 'Failed to create Metabinary';
+					console.log('Failed to create Metabinary');
+					ws_connection.sendUTF(JSON.stringify(result));
+				} else {
+					console.log(metabin);
+					ws_connection.sendBytes(metabin);
+				}
+			} else {
+				result = {
+					jsonrpc: "2.0",
+					id: injson.id,
+					method : injson.method,
+					to : 'client'
+				};
+				if (err) {
+					result.error = err;
+				}
+				result.result = res;
+				console.log("chowder_response", result);
+				ws_connection.sendUTF(JSON.stringify(result));
+			}
+		};
+	}
+
+	function eventTextMessage(ws_connection, metaData) {
+		if (metaData.to === "client") {
+			// masterからclientに送ったメッセージが返ってきた.
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
+				resultCallbacks[metaData.id](null, metaData.result);
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.hasOwnProperty('id')) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		} else {
+			// clientからmasterにメッセージが来た
+			if (recievers.hasOwnProperty(metaData.method)) {
+				recievers[metaData.method](metaData.params, (function (ws_connection) {
+					return sendResponse(ws_connection, metaData);
+				}(ws_connection)));
+			}
+		}
+	}
+	
+	function eventBinaryMessage(ws_connection, metaData, contentData) {
+		var data = {
+			metaData : metaData,
+			contentData : contentData
+		};
+		if (metaData.to === "client") {
+			// masterからclientに送ったメッセージが返ってきた.
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.id && contentData) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](null, data);
+				}
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.id && resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		} else {
+			// clientからmasterにメッセージが来た
+			if (recievers.hasOwnProperty(metaData.method)) {
+				// onで登録していたrecieverを呼び出し
+				// 完了後のコールバックでclientにメッセージを返す.
+				recievers[metaData.method](data, (function (ws_connection) {
+					return sendResponse(ws_connection, metaData);
+				}(ws_connection)));
+			}
+		}
+	}
+	
+	function registerEvent(ws, ws_connection) {
 		ws_connection.on('message', function (data) {
-			console.log("chowder_request : ", data);
+			console.log("ws chowder_request : ", data);
 			var parsed,
 				result;
-
+			
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data.utf8Data);
+					eventTextMessage(ws_connection, parsed);
 				} catch (e) {
 					console.error("failed to parse json : ", e);
 				}
-			} else {
+			} else if (data.type === 'binary') {
+				data = data.binaryData;
+				console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
-					var data = {
-						metaData : metaData,
-						contentData : contentData
-					};
-					//console.log(contentData);
-					if (metaData.error) {
-						if (resultCallbacks[metaData.connection_id]) {
-							resultCallbacks[metaData.connection_id](metaData.error, null);
-						}
-					} else if (metaData.connection_id && contentData) {
-						if (resultCallbacks[metaData.connection_id]) {
-							resultCallbacks[metaData.connection_id](null, data);
-						}
-						delete data.metaData.connection_id;
-					} else {
-						console.error('[Error] ArgumentError in connector.js');
-						resultCallbacks[metaData.id]('ArgumentError', null);
-					}
+					eventBinaryMessage(ws_connection, metaData, contentData);
 				});
-				return;
-			}
-
-			console.log(parsed.hasOwnProperty("to"));
-			console.log(parsed.to === "master");
-			if (parsed.hasOwnProperty("to") && parsed.to === "master") {
-				if (parsed.params === null) {
-					parsed.params = [];
-				}
-				if (Command.hasOwnProperty(parsed.method)) {
-					Command[parsed.method](parsed.params, (function (injson) {
-						return function (err, res, binary) {
-							var metabin = null;
-							console.log("isBinary", binary);
-							if (binary) {
-								res.connection_id = injson.id;
-								metabin = metabinary.createMetaBinary(res, binary);
-								if (metabin === null) {
-									console.log('Failed to create Metabinary');
-									result = {
-										jsonrpc: "2.0",
-										id: injson.id,
-										method : injson.method,
-										to : 'client',
-										err : 'Failed to create Metabinary'
-									};
-									ws_connection.sendUTF(JSON.stringify(result));
-								} else {
-									ws_connection.sendBytes(metabin);
-								}
-							} else {
-								result = {
-									jsonrpc: "2.0",
-									id: injson.id,
-									method : injson.method,
-									to : 'client'
-								};
-								if (err) {
-									result.error = err;
-								}
-								result.result = res;
-								console.log("chowder_response", result);
-								ws_connection.sendUTF(JSON.stringify(result));
-							}
-						};
-					}(parsed)));
-				}
-			} else {
-				if (parsed.error) {
-					if (resultCallbacks[parsed.id]) {
-						resultCallbacks[parsed.id](parsed.error, null);
-					}
-				} else if (parsed.method) {
-					console.log('NotImplementedError: ',  'connector');
-					resultCallbacks[parsed.id]('NotImplementedError', null);
-				} else if (parsed.result) {
-					if (!parsed.id) {
-						console.error('[Error] Not found message ID');
-						console.error(event.data);
-						return;
-					}
-					resultCallbacks[parsed.id](null, parsed.result);
-				} else {
-					console.error('[Error] ArgumentError in connector.js');
-					resultCallbacks[parsed.id]('ArgumentError', null);
-				}
 			}
 		});
 	}
 	
 	/**
-	 * サーバへ送信する
+	 * clientにメッセージを送信する
 	 * @param method メソッド
 	 * @param args パラメータ
 	 * @param resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
@@ -146,6 +164,9 @@
 		}
 	}
 	
+	/**
+	 * clientにバイナリメッセージを送信する
+	 */
 	function sendBinary(ws_connection, method, binary, resultCallback) {
 		var data = {
 			jsonrpc: '2.0',
@@ -157,7 +178,6 @@
 		};
 		
 		messageID = messageID + 1;
-		
 		try {
 			if (Command.hasOwnProperty(data.method)) {
 				resultCallbacks[data.id] = resultCallback;
@@ -173,6 +193,9 @@
 		}
 	}
 	
+	/**
+	 * clientにメッセージをブロードキャスト.
+	 */
 	function broadcast(ws, method, args, resultCallback) {
 		var reqjson = {
 			jsonrpc: '2.0',
@@ -200,7 +223,12 @@
 		}
 	}
 	
+	function on(method, callback) {
+		recievers[method] = callback;
+	}
+	
 	WSConnector.prototype.registerEvent = registerEvent;
+	WSConnector.prototype.on = on;
 	WSConnector.prototype.broadcast = broadcast;
 	WSConnector.prototype.send = send;
 	WSConnector.prototype.sendBinary = sendBinary;

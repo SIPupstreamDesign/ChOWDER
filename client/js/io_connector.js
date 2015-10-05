@@ -23,19 +23,19 @@
 		} else {
 			metabinary.loadMetaBinary(new Blob([resdata]), function (metaData, contentData) {
 				var data = {
-					metaData : metaData,
+					metaData : metaData.params,
 					contentData : contentData
 				};
-				//console.log(contentData);
+				console.log(metaData, contentData);
 				if (metaData.error) {
-					if (resultCallbacks[metaData.connection_id]) {
-						resultCallbacks[metaData.connection_id](metaData.error, null);
+					if (resultCallbacks[metaData.id]) {
+						resultCallbacks[metaData.id](metaData.error, null);
 					}
-				} else if (metaData.connection_id && contentData) {
-					if (resultCallbacks[metaData.connection_id]) {
-						resultCallbacks[metaData.connection_id](null, data);
+				} else if (metaData.id && contentData) {
+					if (resultCallbacks[metaData.id]) {
+						console.log(data);
+						resultCallbacks[metaData.id](null, data);
 					}
-					delete data.metaData.connection_id;
 				} else {
 					console.error('[Error] ArgumentError in connector.js');
 					resultCallbacks[metaData.id]('ArgumentError', null);
@@ -57,13 +57,14 @@
 			if (resultCallbacks[parsed.id]) {
 				resultCallbacks[parsed.id](parsed.error, null);
 			}
-		} else if (parsed.result) {
+		} else if (parsed.hasOwnProperty('result')) {
 			if (!parsed.id) {
 				console.error('[Error] Not found message ID');
 				console.error(event.data);
 				return;
 			}
 			if (resultCallbacks[parsed.id]) {
+				console.log(parsed.result);
 				resultCallbacks[parsed.id](null, parsed.result);
 			}
 		} else {
@@ -108,20 +109,23 @@
 		}
 	}
 	
-	function sendBinary(method, binary, resultCallback) {
+	function sendBinary(method, metaData, binary, resultCallback) {
 		var data = {
 			jsonrpc: '2.0',
 			type : 'binary',
 			id: messageID,
 			method: method,
-			params: binary,
+			params: metaData,
 			to: 'master'
-		};
+		}, metabin;
 		
 		messageID = messageID + 1;
 		try {
+			console.log(data, binary);
+			metabin = metabinary.createMetaBinary(data, binary);
+			console.log(metabin);
 			//data = JSON.stringify(reqjson);
-			sendWrapper(data.id, data.method, data, resultCallback);
+			sendWrapper(data.id, data.method, metabin, resultCallback);
 		} catch (e) {
 			console.error(e);
 		}

@@ -386,11 +386,13 @@
 	};
 	
 	doneGetContent = function (err, data) {
-		var metaData = data.metaData,
-			contentData = data.contentData;
-		
-		//console.log("doneGetContent", metaData, contentData);
-		assignMetaBinary(metaData, contentData);
+		if (!err) {
+			var metaData = data.metaData,
+				contentData = data.contentData;
+
+			//console.log("doneGetContent", metaData, contentData);
+			assignMetaBinary(metaData, contentData);
+		}
 	};
 	
 	doneGetMetaData = function (err, json) {
