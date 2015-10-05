@@ -56,23 +56,23 @@
 			}(ws, io));
 		
 		
-		methods.GetMetaData = function (data, resultCallback) {
+		ws_connector.on(Command.GetMetaData, function (data, resultCallback) {
 			operator.commandGetMetaData(null, ws_connection, data, resultCallback);
-		};
+		});
 
-		methods.GetContent = function (data, resultCallback) {
+		ws_connector.on(Command.GetContent, function (data, resultCallback) {
 			operator.commandGetContent(null, ws_connection, data, resultCallback);
-		};
+		});
 		
-		methods.GetWindow = function (data, resultCallback) {
+		ws_connector.on(Command.GetWindow, function (data, resultCallback) {
 			operator.commandGetWindow(null, ws_connection, data, resultCallback);
-		};
+		});
 		
-		methods.AddWindow = function (data, resultCallback) {
+		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
 			operator.commandAddWindow(null, ws_connection, data, post_update(resultCallback));
-		};
+		});
 		
-		ws_connector.registerEvent(methods, ws, ws_connection);
+		ws_connector.registerEvent(ws, ws_connection);
 	}
 	
 	Sender.prototype.registerWSEvent = registerWSEvent;

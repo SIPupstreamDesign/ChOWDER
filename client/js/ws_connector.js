@@ -49,19 +49,18 @@
 			} else {
 				metabinary.loadMetaBinary(new Blob([message.data]), function (metaData, contentData) {
 					var data = {
-						metaData : metaData,
+						metaData : metaData.params,
 						contentData : contentData
 					};
-					//console.log(contentData);
+					console.log("loadMetaBinaryloadMetaBinary", contentData);
 					if (metaData.error) {
-						if (resultCallbacks[metaData.connection_id]) {
-							resultCallbacks[metaData.connection_id](metaData.error, null);
+						if (resultCallbacks[metaData.id]) {
+							resultCallbacks[metaData.id](metaData.error, null);
 						}
-					} else if (metaData.connection_id && contentData) {
-						if (resultCallbacks[metaData.connection_id]) {
-							resultCallbacks[metaData.connection_id](null, data);
+					} else if (metaData.id && contentData) {
+						if (resultCallbacks[metaData.id]) {
+							resultCallbacks[metaData.id](null, data);
 						}
-						delete data.metaData.connection_id;
 					} else {
 						console.error('[Error] ArgumentError in connector.js');
 						resultCallbacks[metaData.id]('ArgumentError', null);

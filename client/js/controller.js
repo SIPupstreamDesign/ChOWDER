@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (metabinary, vscreen, vsutil, manipulator, connector) {
+(function (vscreen, vsutil, manipulator, connector) {
 	"use strict";
 	
 	var currentContent = null,
@@ -37,7 +37,6 @@
 		doneUpdateWindow,
 		doneGetMetaData;
 	
-	connector.connect();
 	
 	/**
 	 * ドラッグ中のオフセット設定。Manipulatorにて使用される。
@@ -317,8 +316,8 @@
 	 * @method addContent
 	 * @param {BLOB} binary
 	 */
-	function addContent(binary) {
-		connector.sendBinary('AddContent', binary, doneAddContent);
+	function addContent(metaData, binary) {
+		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
 	}
 	
 	/**
@@ -341,8 +340,8 @@
 	 * @method updateContent
 	 * @param {} binary
 	 */
-	function updateContent(binary) {
-		connector.sendBinary('UpdateContent', binary, doneUpdateContent);
+	function updateContent(metaData, binary) {
+		connector.sendBinary('UpdateContent', metaData, binary, doneUpdateContent);
 	}
 	
 	/**
@@ -1382,8 +1381,7 @@
 			elem = document.createElement('pre'),
 			width = (textInput.clientWidth + 1),
 			height = (textInput.clientHeight + 1),
-			textData = "",
-			binary = null;
+			textData = "";
 		
 		if (text) {
 			textData = text;
@@ -1411,10 +1409,9 @@
 		}
 		*/
 		previewArea.removeChild(elem);
-		binary = metabinary.createMetaBinary({type : "text", posx : 0, posy : 0, width : width, height : height}, textData);
 
 		currentContent = elem;
-		addContent(binary);
+		addContent({type : "text", posx : 0, posy : 0, width : width, height : height}, textData);
 	}
 	
 	/// send url to server
@@ -1426,8 +1423,7 @@
 		console.log("sendurl");
 		var previewArea = document.getElementById('content_preview_area'),
 			urlInput = document.getElementById('url_input'),
-			img = document.createElement('img'),
-			binary;
+			img = document.createElement('img');
 
 		console.log(urlInput.value);
 		urlInput.value = urlInput.value.split(' ').join('');
@@ -1435,8 +1431,7 @@
 			return;
 		}
 		
-		binary = metabinary.createMetaBinary({type : "url"}, urlInput.value);
-		addContent(binary);
+		addContent({type : "url"}, urlInput.value);
 		urlInput.value = '';
 	}
 	
@@ -1449,10 +1444,9 @@
 	 * @param {String} height
 	 */
 	function sendImage(imagebinary, width, height) {
-		var metaData = {type : "image", posx : 0, posy : 0, width : width, height: height},
-			binary = metabinary.createMetaBinary(metaData, imagebinary);
+		var metaData = {type : "image", posx : 0, posy : 0, width : width, height: height};
 		console.log("sendImage");
-		addContent(binary);
+		addContent(metaData, imagebinary);
 	}
 	
 	/// open image file
@@ -1530,7 +1524,6 @@
 			file,
 			i,
 			fileReader = new FileReader(),
-			binary,
 			id = document.getElementById('update_content_id').innerHTML,
 			previewArea = document.getElementById('content_preview_area'),
 			elem;
@@ -1538,13 +1531,11 @@
 		fileReader.onloadend = function (e) {
 			if (e.target.result) {
 				console.log("update_content_id", id);
-				binary = metabinary.createMetaBinary({type : "image", id : id}, e.target.result);
-				
 				elem = document.getElementById(id);
 				if (elem) {
 					previewArea.removeChild(elem);
 				}
-				updateContent(binary);
+				updateContent({type : "image", id : id}, e.target.result);
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -2313,11 +2304,7 @@
 	
 	/// content data updated
 	doneGetContent = function (err, reply) {
-		var metaData = reply.metaData,
-			contentData = reply.contentData;
-		
-		console.log("doneGetContent", reply);
-		importContent(metaData, contentData);
+		importContent(reply.metaData, reply.contentData);
 	};
 	
 	doneUpdateTransform = function (err, reply) {
@@ -2413,6 +2400,7 @@
 	};
 	
 	connector.on('UpdateTransform', function (id) {
+		console.log('UpdateTransformUpdateTransform', id);
 		var elem;
 		if (id) {
 			connector.send('GetMetaData', {type: "", id: id}, doneGetMetaData);
@@ -2443,5 +2431,6 @@
 	});
 	
 	window.onload = init;
+	connector.connect();
 
-}(window.metabinary, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

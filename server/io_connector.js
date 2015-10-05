@@ -7,98 +7,125 @@
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js'),
 		resultCallbacks = {},
+		recievers = {},
 		messageID = 1;
 
-	function registerEvent(Command, io, socket) {
+	function sendResponse(socket, injson) {
+		return function (err, res, binary) {
+			var metabin = null,
+				result;
+			//console.log("isBinary", binary);
+			if (binary !== undefined && binary !== null) {
+				result = {
+					jsonrpc: "2.0",
+					id: injson.id,
+					method : injson.method,
+					params : res,
+					to : 'client'
+				};
+				metabin = metabinary.createMetaBinary(result, binary);
+				if (metabin === null) {
+					result.err = 'Failed to create Metabinary';
+					console.log('Failed to create Metabinary');
+					socket.emit("chowder_response", JSON.stringify(result));
+				} else {
+					socket.emit("chowder_response", metabin);
+				}
+			} else {
+				result = {
+					jsonrpc: "2.0",
+					id: injson.id,
+					method : injson.method,
+					to : 'client'
+				};
+				if (err) {
+					result.error = err;
+				}
+				result.result = res;
+				console.log("chowder_response", result);
+				socket.emit("chowder_response", JSON.stringify(result));
+			}
+		};
+	}
+
+	function eventTextMessage(socket, metaData) {
+		if (metaData.to === "client") {
+			// masterからclientに送ったメッセージが返ってきた.
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
+				resultCallbacks[metaData.id](null, metaData.result);
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.hasOwnProperty('id')) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		} else {
+			// clientからmasterにメッセージが来た
+			if (recievers.hasOwnProperty(metaData.method)) {
+				recievers[metaData.method](metaData.params, (function (socket) {
+					return sendResponse(socket, metaData);
+				}(socket)));
+			}
+		}
+	}
+	
+	function eventBinaryMessage(socket, metaData, contentData) {
+		var data = {
+			metaData : metaData.params,
+			contentData : contentData
+		};
+		if (metaData.to === "client") {
+			// masterからclientに送ったメッセージが返ってきた.
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.id && contentData) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](null, data);
+				}
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.id && resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		} else {
+			// clientからmasterにメッセージが来た
+			if (recievers.hasOwnProperty(metaData.method)) {
+				// onで登録していたrecieverを呼び出し
+				// 完了後のコールバックでclientにメッセージを返す.
+				recievers[metaData.method](data, (function (socket) {
+					return sendResponse(socket, metaData);
+				}(socket)));
+			}
+		}
+	}
+	
+	function registerEvent(io, socket) {
+		console.log("registerEventregisterEventregisterEvent");
 		socket.on("chowder_request", function (data) {
 			console.log("chowder_request : ", data);
 			var parsed,
 				result;
-
+			
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data);
+					eventTextMessage(socket, parsed);
 				} catch (e) {
 					console.error("failed to parse json : ", e);
 				}
 			} else {
-				parsed = data;
-			}
-
-			console.log(parsed.hasOwnProperty("to"));
-			console.log(parsed.to === "master");
-			if (parsed.hasOwnProperty("to") && parsed.to === "master") {
-				if (parsed.params === null) {
-					parsed.params = [];
-				}
-				if (Command.hasOwnProperty(parsed.method)) {
-					Command[parsed.method](parsed.params, (function (injson) {
-						return function (err, res, binary) {
-							var metabin = null;
-							if (binary) {
-								res.connection_id = injson.id;
-								metabin = metabinary.createMetaBinary(res, binary);
-								if (metabin === null) {
-									console.log('Failed to create Metabinary');
-									result = {
-										jsonrpc: "2.0",
-										id: injson.id,
-										method : injson.method,
-										to : 'client',
-										err : 'Failed to create Metabinary'
-									};
-									socket.emit("chowder_response", JSON.stringify(result));
-								} else {
-									socket.emit("chowder_response", metabin);
-								}
-							} else {
-								result = {
-									jsonrpc: "2.0",
-									id: injson.id,
-									method : injson.method,
-									to : 'client'
-								};
-								if (err) {
-									result.error = err;
-								}
-								result.type = 'utf8';
-								result.result = res;
-								console.log("chowder_response", result);
-								socket.emit("chowder_response", JSON.stringify(result));
-							}
-						};
-					}(parsed)));
-				}
-			}
-		});
-
-		socket.on('chowder_response', function (resdata) {
-			var parsed;
-			console.log('[Info] chowder_response', resdata);
-
-			try {
-				parsed = JSON.parse(resdata);
-			} catch (e) {
-				console.error('[Error] Recieve invalid JSON :', e);
-			}
-
-			if (parsed.error) {
-				if (resultCallbacks[parsed.id]) {
-					resultCallbacks[parsed.id](parsed.error, null);
-				}
-			} else if (parsed.method) {
-				console.log('NotImplementedError: ',  'connector');
-				resultCallbacks[parsed.id]('NotImplementedError', null);
-			} else if (parsed.result) {
-				if (!parsed.id) {
-					console.error('[Error] Not found message ID');
-					console.error(event.data);
-					return;
-				}
-				resultCallbacks[parsed.id](null, parsed.result);
-			} else {
-				console.error('[Error] ArgumentError in connector.js');
-				resultCallbacks[parsed.id]('ArgumentError', null);
+				data = data.binaryData;
+				console.log("load meta binary", data);
+				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					eventBinaryMessage(socket, metaData, contentData);
+				});
 			}
 		});
 	}
@@ -107,8 +134,8 @@
 		if (Command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
-			console.log('[Info] chowder_request', reqdata);
-			socket.emit('chowder_request', reqdata);
+			console.log('[Info] chowder_response', reqdata);
+			socket.emit('chowder_response', reqdata);
 
 		} else {
 			console.log('[Error] Not found the method in connector: ', method);
@@ -159,6 +186,10 @@
 		}
 	}
 	
+	function on(method, callback) {
+		recievers[method] = callback;
+	}
+	
 	function broadcast(io, method, args, resultCallback) {
 		var reqjson = {
 			jsonrpc: '2.0',
@@ -179,6 +210,7 @@
 	}
 	
 	IOConnector.prototype.registerEvent = registerEvent;
+	IOConnector.prototype.on = on;
 	IOConnector.prototype.send = send;
 	IOConnector.prototype.sendBinary = sendBinary;
 	IOConnector.prototype.broadcast = broadcast;
