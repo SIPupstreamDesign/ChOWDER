@@ -154,7 +154,10 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
+			connector.send('GetWindow', { type: 'all', id: ''}, function (err, json) {
+				doneGetWindow(err, json);
+				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
+			});
 		} else if (updateType === 'window') {
 			console.log("update winodow");
 			connector.send('GetWindow', { id : windowData.id}, doneGetWindow);
@@ -435,9 +438,16 @@
 	doneGetMetaData = function (err, json) {
 		metaDataDict[json.id] = json;
 		var elem = document.getElementById(json.id),
-			isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
+			isWindow = (json.type === windowType),
+			isOutside = false;
 		console.log("doneGetMetaData", json);
 		console.log("isOutside:", isOutside);
+		
+		if (!isWindow) {
+			isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
+		}
+		
+		
 		if (isOutside) {
 			if (elem) {
 				elem.style.display = "none";
@@ -461,7 +471,7 @@
 				elem = document.getElementById(json.id);
 				vscreen_util.assignMetaData(elem, json, false);
 			}
-			if (json.type === windowType) {
+			if (isWindow) {
 				resizeViewport(windowData);
 			}
 		}
