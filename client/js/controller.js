@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (vscreen, vsutil, manipulator, connector) {
+(function (vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
 	var currentContent = null,
@@ -274,10 +274,10 @@
 	 */
 	function update() {
 		vscreen.clearScreenAll();
-		document.getElementById('content_area').innerHTML = "";
-		document.getElementById('content_preview_area').innerHTML = "";
+		// document.getElementById('content_area').innerHTML = "";
+		// document.getElementById('content_preview_area').innerHTML = "";
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
-		connector.send('GetContent', {type: "all", id: ""}, doneGetContent);
+		connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
 		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
 	}
 	
@@ -512,7 +512,7 @@
 					screenElem.style.borderWidth = '1px';
 					screenElem.style.borderColor = "gray";
 					screenElem.style.zIndex = -100000;
-					vsutil.assignScreenRect(screenElem, vscreen.transformScreen(w));
+					vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(w));
 					previewArea.appendChild(screenElem);
 					setupWindow(screenElem, w.id);
 				}
@@ -778,7 +778,7 @@
 			if (metaData.type !== windowType && !isVisible(metaData)) {
 				return;
 			}
-			vsutil.trans(metaData);
+			vscreen_util.trans(metaData);
 			lastx = metaData.posx;
 			lasty = metaData.posy;
 			lastw = metaData.width;
@@ -815,8 +815,8 @@
 			} else if (draggingManip.id === '_manip_3') {
 				metaData.posy = (lasty - ydiff);
 			}
-			vsutil.transInv(metaData);
-			vsutil.assignMetaData(elem, metaData, true);
+			vscreen_util.transInv(metaData);
+			vscreen_util.assignMetaData(elem, metaData, true);
 			console.log("lastDraggingID:" + lastDraggingID);
 			metaDataDict[lastDraggingID] = metaData;
 			updateTransform(metaData);
@@ -1285,8 +1285,8 @@
 			
 			metaData.posx = evt.clientX - dragOffsetLeft;
 			metaData.posy = evt.clientY - dragOffsetTop;
-			vsutil.transPosInv(metaData);
-			vsutil.assignMetaData(elem, metaData, true);
+			vscreen_util.transPosInv(metaData);
+			vscreen_util.assignMetaData(elem, metaData, true);
 			
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
@@ -1327,7 +1327,7 @@
 				metaData.visible = true;
 				elem.style.color = "black";
 				if (isFreeMode()) {
-					vsutil.assignMetaData(elem, metaData, true);
+					vscreen_util.assignMetaData(elem, metaData, true);
 					updateTransform(metaData);
 				} else if (isDisplayMode()) {
 					px = rect.left + dragOffsetLeft;
@@ -1337,7 +1337,7 @@
 					if (screen) {
 						snapToScreen(elem, metaData, screen);
 					}
-					vsutil.assignMetaData(elem, metaData, true);
+					vscreen_util.assignMetaData(elem, metaData, true);
 					updateTransform(metaData);
 					manipulator.moveManipulator(elem);
 				} else {
@@ -1350,7 +1350,7 @@
 					if (splitWhole) {
 						snapToSplitWhole(elem, metaData, splitWhole);
 					}
-					vsutil.assignMetaData(elem, metaData, true);
+					vscreen_util.assignMetaData(elem, metaData, true);
 					updateTransform(metaData);
 					manipulator.moveManipulator(elem);
 				}
@@ -1563,7 +1563,7 @@
 		if (windowData) {
 			screenElem = document.getElementById(windowData.id);
 			if (screenElem) {
-				vsutil.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
+				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 				return;
 			}
 		}
@@ -1579,7 +1579,7 @@
 		wholeElem.id = wholeWindowID;
 		wholeElem.style.color = "black";
 		setupWindow(wholeElem, wholeElem.id);
-		vsutil.assignScreenRect(wholeElem, whole);
+		vscreen_util.assignScreenRect(wholeElem, whole);
 		previewArea.appendChild(wholeElem);
 		for (s in screens) {
 			if (screens.hasOwnProperty(s)) {
@@ -1593,7 +1593,7 @@
 				screenElem.id = s;
 				console.log("screenElemID:" + JSON.stringify(screens[s]));
 				screenElem.style.border = 'solid';
-				vsutil.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
+				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
 				previewArea.appendChild(screenElem);
 				setupWindow(screenElem, s);
 			}
@@ -1622,7 +1622,7 @@
 			elem = document.getElementById(windowData.id);
 			if (elem) {
 				console.log("assignScreenRect");
-				vsutil.assignMetaData(elem, windowData, true);
+				vscreen_util.assignMetaData(elem, windowData, true);
 				elem.style.display = "block";
 				return;
 			}
@@ -1640,7 +1640,7 @@
 						if (metaData.type !== windowType) {
 							elem = document.getElementById(metaData.id);
 							if (elem) {
-								vsutil.assignMetaData(elem, metaData, true);
+								vscreen_util.assignMetaData(elem, metaData, true);
 							}
 						}
 					}
@@ -1706,6 +1706,32 @@
 	};
 	
 	/**
+	 * コンテンツタイプから適切なタグ名を取得する.
+	 */
+	function getTagName(contentType) {
+		var tagName;
+		if (contentType === 'text') {
+			tagName = 'pre';
+		} else {
+			tagName = 'img';
+		}
+		return tagName;
+	}
+	
+	/**
+	 * コンテンツタイプから適切なクラス名を取得する.
+	 */
+	function getClassName(contentType) {
+		var classname;
+		if (contentType === 'text') {
+			classname = 'textcontent';
+		} else {
+			classname = 'imagecontent';
+		}
+		return classname;
+	}
+	
+	/**
 	 * 受領したメタデータからプレビューツリーにコンテンツを反映する。
 	 * doneGetContent時にコールされる。
 	 * @method importContentToView
@@ -1718,21 +1744,21 @@
 			tagName,
 			blob,
 			mime = "image/jpeg";
-
-		//if (isVisible(metaData))
-		//{
-		metaDataDict[metaData.id] = metaData;
+		
 		console.log("importContentToView:" + JSON.stringify(metaData));
-
-		if (metaData.type === 'text') {
-			tagName = 'pre';
-		} else {
-			tagName = 'img';
+		tagName = getTagName(metaData.type);
+		
+		// メタデータはGetMetaDataで取得済のものを使う.
+		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
+		if (metaDataDict.hasOwnProperty(metaData.id)) {
+			metaData = metaDataDict[metaData.id];
 		}
+		
 		if (document.getElementById(metaData.id)) {
 			elem = document.getElementById(metaData.id);
-			//console.log("found " + json.type);
-		} else {
+		}
+		
+		if (!elem) {
 			elem = document.createElement(tagName);
 			elem.id = metaData.id;
 			elem.style.position = "absolute";
@@ -1747,7 +1773,7 @@
 			// contentData is text
 			elem.innerHTML = contentData;
 			elem.style.overflow = "visible"; // Show all text
-			vsutil.assignMetaData(elem, metaData, true);
+			vscreen_util.assignMetaData(elem, metaData, true);
 		} else {
 			// contentData is blob
 			if (metaData.hasOwnProperty('mime')) {
@@ -1767,7 +1793,7 @@
 						console.log("naturalHeight:" + elem.naturalHeight);
 						metaData.height = elem.naturalHeight;
 					}
-					vsutil.assignMetaData(elem, metaData, true);
+					vscreen_util.assignMetaData(elem, metaData, true);
 				};
 			}
 		}
@@ -1782,8 +1808,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContentToList(metaData, contentData) {
-		var hasVisible = metaData.hasOwnProperty('visible'),
-			contentArea = document.getElementById('content_area'),
+		var contentArea = document.getElementById('content_area'),
 			contentElem,
 			divElem,
 			tagName,
@@ -1791,20 +1816,22 @@
 			blob,
 			mime = "image/jpeg",
 			onlistID = "onlist:" + metaData.id;
-		
-		metaDataDict[metaData.id] = metaData;
-		if (metaData.type === 'text') {
-			tagName = 'pre';
-			classname = 'textcontent';
-		} else {
-			tagName = 'img';
-			classname = 'imagecontent';
+
+		// メタデータはGetMetaDataで取得済のものを使う.
+		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
+		if (metaDataDict.hasOwnProperty(metaData.id)) {
+			metaData = metaDataDict[metaData.id];
 		}
+
+		tagName = getTagName(metaData.type);
+		classname = getClassName(metaData.type);
+		
 		if (document.getElementById(onlistID)) {
 			divElem = document.getElementById(onlistID);
 			contentElem = divElem.childNodes[0];
-			//console.log("found " + json.type);
-		} else {
+		}
+		
+		if (!divElem) {
 			contentElem = document.createElement(tagName);
 			
 			divElem = document.createElement('div');
@@ -1863,6 +1890,20 @@
 	function importContent(metaData, contentData) {
 		importContentToList(metaData, contentData);
 		importContentToView(metaData, contentData);
+	}
+	
+	/**
+	 * コンテンツロード完了まで表示する枠を作る.
+	 */
+	function createBoundingBox(metaData) {
+		var previewArea = document.getElementById('content_preview_area'),
+			tagName = 'div',
+			elem = document.createElement(tagName);
+		
+		elem.id = metaData.id;
+		elem.style.position = "absolute";
+		elem.className = "temporary_bounds";
+		insertElementWithDictionarySort(previewArea, elem);
 	}
 	
 	/**
@@ -2292,22 +2333,42 @@
 	
 	/// meta data updated
 	doneGetMetaData = function (err, reply) {
-		var json = reply;
+		var json = reply,
+			elem,
+			metaData = json;
 		if (json.type === windowType) { return; }
 		metaDataDict[json.id] = json;
 		
-		vsutil.assignMetaData(document.getElementById(json.id), json, true);
+		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
 		if (draggingID === json.id || (manipulator.getDraggingManip() && lastDraggingID === json.id)) {
 			assignContentProperty(json);
+		}
+		
+		elem = document.getElementById(metaData.id);
+		if (elem) {
+			if (isVisible(json)) {
+				vscreen_util.assignMetaData(elem, json, true);
+				elem.style.display = "block";
+			} else {
+				elem.style.display = "none";
+			}
+		} else {
+			// コンテンツがロードされるまで枠を表示しておく.
+			if (!elem) {
+				// 新規コンテンツロード.
+				connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+			}
 		}
 	};
 	
 	/// content data updated
 	doneGetContent = function (err, reply) {
+		console.log("doneGetContent", reply);
 		importContent(reply.metaData, reply.contentData);
 	};
 	
 	doneUpdateTransform = function (err, reply) {
+		console.log("doneUpdateTransform", reply);
 		var json = reply;
 		metaDataDict[json.id] = json;
 	};

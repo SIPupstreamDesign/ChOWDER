@@ -405,7 +405,7 @@
 		document.getElementById('displayid').innerHTML = "ID:" + json.id;
 		updateWindow(windowData);
 		assignVisible(windowData);
-		updateVisible(json);
+		//updateVisible(json);
 	};
 	
 	doneGetWindow = function (err, json) {
