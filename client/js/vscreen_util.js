@@ -229,6 +229,14 @@
 		// コンテンツのメタデータは, 仮想スクリーン全体を基準としたrect
 		var rect = toFloatRect(metaData);
 		
+		/*
+		console.log("isOutsideWindow", window, rect,
+				   (-window.x > (rect.x + rect.w)),
+				   (-window.y > (rect.y + rect.h)),
+				   ((window.w - window.x + rect.w) < (rect.w + rect.x)),
+				   ((window.h - window.y + rect.h) < (rect.h + rect.y)));
+				   */
+		
 		return (-window.x > (rect.x + rect.w)) || // window左端よりコンテンツが左か
 			(-window.y > (rect.y + rect.h)) ||    // 上
 			((window.w - window.x + rect.w) < (rect.w + rect.x)) || // 右
