@@ -107,6 +107,19 @@
 	}
 	
 	/**
+	 * window idの取得.
+	 */
+	function getWindowID() {
+		var window_id = getCookie('window_id'),
+			hashid = location.hash.split("#").join("");
+		
+		if (hashid.length > 0) {
+			window_id = decodeURIComponent(hashid);
+		}
+		return window_id;
+	}
+	
+	/**
 	 * View側Window[Display]登録
 	 * @method registerWindow
 	 */
@@ -154,7 +167,7 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			connector.send('GetWindow', { type: 'all', id: ''}, function (err, json) {
+			connector.send('GetWindow', { id: getWindowID() }, function (err, json) {
 				doneGetWindow(err, json);
 				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 			});
@@ -408,7 +421,7 @@
 		document.getElementById('displayid').innerHTML = "ID:" + json.id;
 		updateWindow(windowData);
 		assignVisible(windowData);
-		//updateVisible(json);
+		updateVisible(json);
 	};
 	
 	doneGetWindow = function (err, json) {
@@ -443,7 +456,12 @@
 		console.log("doneGetMetaData", json);
 		console.log("isOutside:", isOutside);
 		
-		if (!isWindow) {
+		if (isWindow) {
+			console.log(json.id, getWindowID());
+			if (json.id !== getWindowID()) {
+				return;
+			}
+		} else {
 			isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
 		}
 		
