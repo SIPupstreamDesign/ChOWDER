@@ -169,6 +169,34 @@
 	}
 	
 	/**
+	 * コンテンツタイプから適切なタグ名を取得する.
+	 */
+	function getTagName(contentType) {
+		var tagName;
+		if (contentType === 'text') {
+			tagName = 'pre';
+		} else {
+			tagName = 'img';
+		}
+		return tagName;
+	}
+	
+	
+	function assignVisible(json) {
+		var elem = document.getElementById("preview_area");
+		if (elem) {
+			if (isVisible(json)) {
+				console.log("isvisible");
+				vscreen_util.assignMetaData(elem, json, false);
+				elem.style.display = "block";
+			} else {
+				console.log("not isvisible");
+				elem.style.display = "none";
+			}
+		}
+	}
+
+	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
 	 * @param {JSON} metaData
@@ -179,24 +207,33 @@
 			tagName,
 			blob,
 			elem,
-			mime = "image/jpeg";
+			mime = "image/jpeg",
+			boundElem;
 		
 		console.log("id=" + metaData.id);
 
 		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && metaData.visible === "true")) {
-			metaDataDict[metaData.id] = metaData;
-			if (metaData.type === 'text') {
-				tagName = 'pre';
-			} else {
-				tagName = 'img';
-			}
+			tagName = getTagName(metaData.type);
+			
+			// 既に読み込み済みのコンテンツかどうか
 			if (document.getElementById(metaData.id)) {
 				elem = document.getElementById(metaData.id);
-			} else {
+				// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
+				if (elem.tagName.toLowerCase() !== tagName) {
+					previewArea.removeChild(elem);
+					elem = null;
+				}
+				// メタデータはGetMetaDataで取得済のものを使う.
+				// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
+				if (metaDataDict.hasOwnProperty(metaData.id)) {
+					metaData = metaDataDict[metaData.id];
+				}
+			}
+			
+			if (!elem) {
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
 				elem.style.position = "absolute";
-				
 				insertElementWithDictionarySort(previewArea, elem);
 				//previewArea.appendChild(elem);
 			}
@@ -215,6 +252,20 @@
 			}
 			vscreen_util.assignMetaData(elem, metaData, false);
 		}
+	}
+	
+	/**
+	 * コンテンツロード完了まで表示する枠を作る.
+	 */
+	function createBoundingBox(metaData) {
+		var previewArea = document.getElementById('preview_area'),
+			tagName = 'div',
+			elem = document.createElement(tagName);
+		
+		elem.id = metaData.id;
+		elem.style.position = "absolute";
+		elem.className = "temporary_bounds";
+		insertElementWithDictionarySort(previewArea, elem);
 	}
 	
 	/**
@@ -310,21 +361,6 @@
 		}
 	}
 	
-	
-	function assingVisible(json) {
-		var elem = document.getElementById("preview_area");
-		if (elem) {
-			if (isVisible(json)) {
-				console.log("isvisible");
-				vscreen_util.assignMetaData(elem, json, false);
-				elem.style.display = "block";
-			} else {
-				console.log("not isvisible");
-				elem.style.display = "none";
-			}
-		}
-	}
-
 	function changeID(e) {
 		var elem = document.getElementById('input_id'),
 			val,
@@ -368,7 +404,7 @@
 		document.getElementById('input_id').value = json.id;
 		document.getElementById('displayid').innerHTML = "ID:" + json.id;
 		updateWindow(windowData);
-		assingVisible(windowData);
+		assignVisible(windowData);
 		updateVisible(json);
 	};
 	
@@ -381,7 +417,7 @@
 		console.log(windowData);
 		setVisibleWindow(windowData);
 		resizeViewport(windowData);
-		assingVisible(windowData);
+		assignVisible(windowData);
 		//updateVisible(json);
 	};
 	
@@ -408,7 +444,7 @@
 			}
 		} else {
 			console.log("inside", elem);
-			if (elem) {
+			if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
 				if (isVisible(json)) {
 					vscreen_util.assignMetaData(elem, json, false);
 					elem.style.display = "block";
@@ -416,8 +452,14 @@
 					elem.style.display = "none";
 				}
 			} else if (isVisible(json)) {
-				// 新規コンテンツ.
-				connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+				// コンテンツがロードされるまで枠を表示しておく.
+				if (!elem) {
+					createBoundingBox(json);
+					// 新規コンテンツロード.
+					connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+				}
+				elem = document.getElementById(json.id);
+				vscreen_util.assignMetaData(elem, json, false);
 			}
 			if (json.type === windowType) {
 				resizeViewport(windowData);
