@@ -890,8 +890,8 @@
 		});
 		
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.showWindowID, {id : data.id});
-			io_connector.broadcast(io, Command.showWindowID, {id : data.id});
+			ws_connector.broadcast(ws, Command.ShowWindowID, {id : data.id});
+			io_connector.broadcast(io, Command.ShowWindowID, {id : data.id});
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -1013,8 +1013,8 @@
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.showWindowID, { id : data.id });
-			io_connector.broadcast(io, Command.showWindowID, { id : data.id });
+			ws_connector.broadcast(ws, Command.ShowWindowID, { id : data.id });
+			io_connector.broadcast(io, Command.ShowWindowID, { id : data.id });
 		});
 
 		io_connector.registerEvent(io, socket);
