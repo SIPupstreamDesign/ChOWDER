@@ -204,6 +204,37 @@
 		metaData.posy = rect.y;
 	}
 	
+	/**
+	 * metaDataが完全にwindowの内側かどうか返す
+	 * @param {Object} metaData メタデータ.
+	 */
+	function isInsideWindow(metaData, window) {
+		// コンテンツのメタデータは, 仮想スクリーン全体を基準としたrect
+		var rect = toFloatRect(metaData);
+		
+		// viewのwindowRectは、divの移動量。
+		// コントローラで, 仮想スクリーン全体に対して, +x, +yだけdisplayを動かした場合、
+		// divを-x, -yだけ動かして、動いたように見せている.
+
+		return (-window.x < rect.x) && // window左端よりコンテンツが右か
+			(-window.y < rect.y) &&    // 上
+			((window.w - window.x) > (rect.w + rect.x)) && // 右
+			((window.h - window.y) > (rect.h + rect.y));   // 下
+	}
+	
+	/**
+	 * metaDataが完全にwindowの外側かどうか返す
+	 */
+	function isOutsideWindow(metaData, window) {
+		// コンテンツのメタデータは, 仮想スクリーン全体を基準としたrect
+		var rect = toFloatRect(metaData);
+		
+		return (-window.x > (rect.x + rect.w)) || // window左端よりコンテンツが左か
+			(-window.y > (rect.y + rect.h)) ||    // 上
+			((window.w - window.x + rect.w) < (rect.w + rect.x)) || // 右
+			((window.h - window.y + rect.h) < (rect.h + rect.y));   // 下
+	}
+	
 	window.vscreen_util = new VscreenUtil();
 	window.vscreen_util.assignMetaData = assignMetaData;
 	window.vscreen_util.assignScreenRect = assignScreenRect;
@@ -211,4 +242,6 @@
 	window.vscreen_util.trans = trans;
 	window.vscreen_util.transInv = transInv;
 	window.vscreen_util.transPosInv = transPosInv;
+	window.vscreen_util.isInsideWindow = isInsideWindow;
+	window.vscreen_util.isOutsideWindow = isOutsideWindow;
 }(window.vscreen));

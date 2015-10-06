@@ -24,7 +24,7 @@
 					params : res
 				};
 				metabin = metabinary.createMetaBinary(result, binary);
-				if (metabin === null) {
+				if (metabin === null || metabin === undefined) {
 					result.err = 'Failed to create Metabinary';
 					console.log('Failed to create Metabinary');
 					socket.emit("chowder_response", JSON.stringify(result));
