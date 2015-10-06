@@ -69,6 +69,7 @@
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
+			console.log("Command.AddWindow");
 			operator.commandAddWindow(null, ws_connection, data, post_update(resultCallback));
 		});
 		

@@ -386,6 +386,7 @@
 	};
 	
 	doneGetContent = function (err, data) {
+		console.log("doneGetContent", err, data);
 		if (!err) {
 			var metaData = data.metaData,
 				contentData = data.contentData;

@@ -9,6 +9,58 @@
 		messageID = 1,
 		client;
 
+	function eventTextMessage(metaData) {
+		if (metaData.to === "client") {
+			// masterからメッセージがきた
+			if (recievers.hasOwnProperty(metaData.method)) {
+				recievers[metaData.method](metaData.params);
+			}
+		} else {
+			// clientからmasterに送ったメッセージが返ってきた
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
+				resultCallbacks[metaData.id](null, metaData.result);
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.hasOwnProperty('id')) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		}
+	}
+	
+	function eventBinaryMessage(metaData, contentData) {
+		console.log(metaData);
+		var data = {
+			metaData : metaData.params,
+			contentData : contentData
+		};
+		if (metaData.to === "client") {
+			// masterからメッセージがきた
+			if (recievers.hasOwnProperty(metaData.method)) {
+				recievers[metaData.method](data);
+			}
+		} else {
+			// clientからmasterに送ったメッセージが返ってきた
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.id && contentData) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](null, data);
+				}
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.id && resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		}
+	}
 	function connect(onopen, onclose) {
 		client = new WebSocket("ws://" + location.hostname + ":8081/v1/");
 		/**
@@ -35,8 +87,27 @@
 		 * @param {} message
 		 */
 		client.onmessage = function (message) {
+			console.log("ws chowder_request : ", message);
+			var data = message.data,
+				parsed,
+				result;
+			
+			if (typeof data === "string") {
+				try {
+					parsed = JSON.parse(data);
+					eventTextMessage(parsed);
+				} catch (e) {
+					console.error("failed to parse json : ", e);
+				}
+			} else {
+				console.log("load meta binary", data);
+				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					eventBinaryMessage(metaData, contentData);
+				});
+			}
+			
+			/*
 			var parsed,
-				elem,
 				binary = null;
 			console.log('[Info] chowder_response', message);
 			//console.log(typeof message.data);
@@ -95,6 +166,7 @@
 				console.error('[Error] ArgumentError in connector.js', parsed);
 				resultCallbacks[parsed.id]('ArgumentError', null);
 			}
+			*/
 		};
 	}
 	
