@@ -1,7 +1,7 @@
 /*jslint devel:true*/
 /*global Blob, URL, FileReader, DataView, Uint8Array, unescape, escape */
 
-(function (vscreen, vsutil, connector) {
+(function (vscreen, vscreen_util, connector) {
 	"use strict";
 
 	console.log(location);
@@ -154,7 +154,7 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			connector.send('GetContent', { type: 'all', id: '' }, doneGetContent);
+			connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 		} else if (updateType === 'window') {
 			console.log("update winodow");
 			connector.send('GetWindow', { id : windowData.id}, doneGetWindow);
@@ -213,7 +213,7 @@
 					elem.src = URL.createObjectURL(blob);
 				}
 			}
-			vsutil.assignMetaData(elem, metaData, false);
+			vscreen_util.assignMetaData(elem, metaData, false);
 		}
 	}
 	
@@ -275,7 +275,7 @@
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				if (document.getElementById(id)) {
-					vsutil.assignMetaData(document.getElementById(id), metaDataDict[id], false);
+					vscreen_util.assignMetaData(document.getElementById(id), metaDataDict[id], false);
 				} else {
 					delete metaDataDict[id];
 				}
@@ -316,7 +316,7 @@
 		if (elem) {
 			if (isVisible(json)) {
 				console.log("isvisible");
-				vsutil.assignMetaData(elem, json, false);
+				vscreen_util.assignMetaData(elem, json, false);
 				elem.style.display = "block";
 			} else {
 				console.log("not isvisible");
@@ -345,7 +345,7 @@
 		console.log("updateVisible", elem);
 		if (elem) {
 			if (isVisible(json)) {
-				vsutil.assignMetaData(elem, json, false);
+				vscreen_util.assignMetaData(elem, json, false);
 				elem.style.display = "block";
 			} else {
 				elem.style.display = "none";
@@ -398,23 +398,30 @@
 	
 	doneGetMetaData = function (err, json) {
 		metaDataDict[json.id] = json;
-		var elem = document.getElementById(json.id);
-		console.log("doneGetMetaData");
-		console.log(elem);
-		if (elem) {
-			if (isVisible(json)) {
-				vsutil.assignMetaData(elem, json, false);
-				elem.style.display = "block";
-			} else {
+		var elem = document.getElementById(json.id),
+			isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
+		console.log("doneGetMetaData", json);
+		console.log("isOutside:", isOutside);
+		if (isOutside) {
+			if (elem) {
 				elem.style.display = "none";
 			}
-		} else if (isVisible(json)) {
-			// new visible content
-			updateType = 'all';
-			update();
-		}
-		if (json.type === windowType) {
-			resizeViewport(windowData);
+		} else {
+			console.log("inside", elem);
+			if (elem) {
+				if (isVisible(json)) {
+					vscreen_util.assignMetaData(elem, json, false);
+					elem.style.display = "block";
+				} else {
+					elem.style.display = "none";
+				}
+			} else if (isVisible(json)) {
+				// 新規コンテンツ.
+				connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+			}
+			if (json.type === windowType) {
+				resizeViewport(windowData);
+			}
 		}
 	};
 
