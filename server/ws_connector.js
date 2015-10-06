@@ -6,6 +6,7 @@
 	var WSConnector = function () {},
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js'),
+		util = require('./util.js'),
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1;
@@ -76,7 +77,7 @@
 	
 	function eventBinaryMessage(ws_connection, metaData, contentData) {
 		var data = {
-			metaData : metaData,
+			metaData : metaData.params,
 			contentData : contentData
 		};
 		if (metaData.to === "client") {
@@ -116,6 +117,9 @@
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data.utf8Data);
+					if (!parsed.hasOwnProperty('id')) {
+						parsed.id = util.generateUUID8();
+					}
 					eventTextMessage(ws_connection, parsed);
 				} catch (e) {
 					console.error("failed to parse json : ", e);
@@ -124,6 +128,9 @@
 				data = data.binaryData;
 				console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					if (!metaData.hasOwnProperty('id')) {
+						metaData.id = util.generateUUID8();
+					}
 					eventBinaryMessage(ws_connection, metaData, contentData);
 				});
 			}

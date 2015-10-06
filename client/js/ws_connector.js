@@ -7,7 +7,9 @@
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
-		client;
+		client,
+		currentVersion = "v2",
+		url = "ws://" + location.hostname + ":8081/" + currentVersion + "/";
 
 	function eventTextMessage(metaData) {
 		if (metaData.to === "client") {
@@ -62,7 +64,7 @@
 		}
 	}
 	function connect(onopen, onclose) {
-		client = new WebSocket("ws://" + location.hostname + ":8081/v1/");
+		client = new WebSocket(url);
 		/**
 		 * View側Window[Display]登録、サーバーにWindow登録通知
 		 * @method onopen

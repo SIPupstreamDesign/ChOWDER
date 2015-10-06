@@ -113,6 +113,9 @@
 			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);
+					if (!parsed.hasOwnProperty('id')) {
+						parsed.id = util.generateUUID8();
+					}
 					eventTextMessage(socket, parsed);
 				} catch (e) {
 					console.error("failed to parse json : ", e);
@@ -120,6 +123,9 @@
 			} else {
 				console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					if (!metaData.hasOwnProperty('id')) {
+						metaData.id = util.generateUUID8();
+					}
 					eventBinaryMessage(socket, metaData, contentData);
 				});
 			}

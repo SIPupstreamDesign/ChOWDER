@@ -7,7 +7,8 @@
 		socket = io.connect(),
 		resultCallbacks = {},
 		recievers = {},
-		messageID = 1;
+		messageID = 1,
+		currentVersion = "v2";
 	
 	function eventTextMessage(socket, metaData) {
 		if (metaData.to === "client") {
@@ -145,7 +146,7 @@
 	function connect() {
 		socket.on('connect', function () {
 			console.log("connect");
-			socket.emit('RegisterEvent', "v1");
+			socket.emit('RegisterEvent', currentVersion);
 		});
 	}
 
