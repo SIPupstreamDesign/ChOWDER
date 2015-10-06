@@ -117,6 +117,7 @@
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data.utf8Data);
+					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!parsed.hasOwnProperty('id')) {
 						parsed.id = util.generateUUID8();
 					}
@@ -128,6 +129,7 @@
 				data = data.binaryData;
 				console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!metaData.hasOwnProperty('id')) {
 						metaData.id = util.generateUUID8();
 					}

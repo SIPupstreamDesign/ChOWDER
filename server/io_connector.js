@@ -6,6 +6,7 @@
 	var IOConnector =  function () {},
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js'),
+		util = require('./util.js'),
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1;
@@ -113,6 +114,7 @@
 			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);
+					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!parsed.hasOwnProperty('id')) {
 						parsed.id = util.generateUUID8();
 					}
@@ -123,6 +125,7 @@
 			} else {
 				console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!metaData.hasOwnProperty('id')) {
 						metaData.id = util.generateUUID8();
 					}
