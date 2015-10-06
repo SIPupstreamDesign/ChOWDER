@@ -20,8 +20,7 @@
 					jsonrpc: "2.0",
 					id: injson.id,
 					method : injson.method,
-					params : res,
-					to : 'client'
+					params : res
 				};
 				metabin = metabinary.createMetaBinary(result, binary);
 				if (metabin === null) {
@@ -35,8 +34,7 @@
 				result = {
 					jsonrpc: "2.0",
 					id: injson.id,
-					method : injson.method,
-					to : 'client'
+					method : injson.method
 				};
 				if (err) {
 					result.error = err;
@@ -107,13 +105,12 @@
 	}
 	
 	function registerEvent(io, socket) {
-		console.log("registerEventregisterEventregisterEvent");
 		socket.on("chowder_request", function (data) {
 			console.log("chowder_request : ", data);
 			var parsed,
 				result;
 			
-			if (!data.type || data.type === 'utf8') {
+			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);
 					eventTextMessage(socket, parsed);
@@ -121,7 +118,6 @@
 					console.error("failed to parse json : ", e);
 				}
 			} else {
-				data = data.binaryData;
 				console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
 					eventBinaryMessage(socket, metaData, contentData);
@@ -135,6 +131,7 @@
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_response', reqdata);
+			console.log("chowder_response sendWrapper");
 			socket.emit('chowder_response', reqdata);
 
 		} else {
@@ -203,6 +200,7 @@
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
+			console.log("chowder_response broadcast");
 			io.sockets.emit('chowder_response', data);
 		} catch (e) {
 			console.error(e);

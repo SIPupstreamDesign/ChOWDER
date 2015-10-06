@@ -9,67 +9,74 @@
 		recievers = {},
 		messageID = 1;
 	
-	socket.on('chowder_response', function (resdata) {
+	function eventTextMessage(socket, metaData) {
+		if (metaData.to === "client") {
+			// masterからメッセージがきた
+			if (recievers.hasOwnProperty(metaData.method)) {
+				recievers[metaData.method](metaData.params);
+			}
+		} else {
+			// clientからmasterに送ったメッセージが返ってきた
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
+				resultCallbacks[metaData.id](null, metaData.result);
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.hasOwnProperty('id')) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		}
+	}
+	
+	function eventBinaryMessage(socket, metaData, contentData) {
+		var data = {
+			metaData : metaData.params,
+			contentData : contentData
+		};
+		console.log(metaData);
+		if (metaData.to === "client") {
+			// masterからメッセージがきた
+			if (recievers.hasOwnProperty(metaData.method)) {
+				recievers[metaData.method](data);
+			}
+		} else {
+			// clientからmasterに送ったメッセージが返ってきた
+			if (metaData.error) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](metaData.error, null);
+				}
+			} else if (metaData.id && contentData) {
+				if (resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id](null, data);
+				}
+			} else {
+				console.error('[Error] ArgumentError in connector.js');
+				if (metaData.id && resultCallbacks[metaData.id]) {
+					resultCallbacks[metaData.id]('ArgumentError', null);
+				}
+			}
+		}
+	}
+	
+	socket.on('chowder_response', function (data) {
 		var parsed;
-			
-		console.log('[Info] chowder_response', resdata);
-
-		if (typeof resdata === "string") {
+		console.log('chowder_response', data);
+		if (typeof data === "string") {
 			try {
-				parsed = JSON.parse(resdata);
+				parsed = JSON.parse(data);
+				eventTextMessage(socket, parsed);
 			} catch (e) {
 				console.error('[Error] Recieve invalid JSON :', e);
 			}
 		} else {
-			metabinary.loadMetaBinary(new Blob([resdata]), function (metaData, contentData) {
-				var data = {
-					metaData : metaData.params,
-					contentData : contentData
-				};
-				console.log(metaData, contentData);
-				if (metaData.error) {
-					if (resultCallbacks[metaData.id]) {
-						resultCallbacks[metaData.id](metaData.error, null);
-					}
-				} else if (metaData.id && contentData) {
-					if (resultCallbacks[metaData.id]) {
-						console.log(data);
-						resultCallbacks[metaData.id](null, data);
-					}
-				} else {
-					console.error('[Error] ArgumentError in connector.js');
-					resultCallbacks[metaData.id]('ArgumentError', null);
-				}
+			console.log("load meta binary", data);
+			metabinary.loadMetaBinary(new Blob([data]), function (metaData, contentData) {
+				eventBinaryMessage(socket, metaData, contentData);
 			});
-			return;
-		}
-
-		console.log(parsed);
-
-		if (parsed.method) {
-			if (recievers.hasOwnProperty(parsed.method)) {
-				recievers[parsed.method](parsed.params);
-				return;
-			}
-		}
-
-		if (parsed.error) {
-			if (resultCallbacks[parsed.id]) {
-				resultCallbacks[parsed.id](parsed.error, null);
-			}
-		} else if (parsed.hasOwnProperty('result')) {
-			if (!parsed.id) {
-				console.error('[Error] Not found message ID');
-				console.error(event.data);
-				return;
-			}
-			if (resultCallbacks[parsed.id]) {
-				console.log(parsed.result);
-				resultCallbacks[parsed.id](null, parsed.result);
-			}
-		} else {
-			console.error('[Error] ArgumentError in connector.js');
-			resultCallbacks[parsed.id]('ArgumentError', null);
 		}
 	});
 

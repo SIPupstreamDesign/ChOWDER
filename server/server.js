@@ -71,7 +71,7 @@ ws.on('request', function (request) {
 		delete ws_connections[connection.id];
 		operator.commandDeleteWindow(null, connection, null, function () {
 			io_connector.broadcast(io, Command.Update);
-			ws2.broadcast(Command.Update);
+			ws_connector.broadcast(ws2, Command.Update);
 			console.log("broadcast update");
 		});
 		console.log('connection closed :' + connection.id);
@@ -207,7 +207,7 @@ ws2.on('request', function (request) {
 		operator.commandDeleteWindow(null, connection, null, function () {
 			console.log("broadcast update");
 			io_connector.broadcast(io, Command.Update);
-			ws2.broadcast(Command.Update);
+			ws_connector.broadcast(ws2, Command.Update);
 		});
 		console.log('connection closed :' + connection.id);
 	});
