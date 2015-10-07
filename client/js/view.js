@@ -403,7 +403,7 @@
 			}
 		} else if (isVisible(json)) {
 			// new visible content
-			update('all');
+			update('', json.id);
 		}
 		resizeViewport(windowData);
 	}

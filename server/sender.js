@@ -35,23 +35,13 @@
 		var methods = {},
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.Update);
-					io_connector.broadcast(io, Command.Update);
-					return resultCallback;
-				};
-			}(ws, io)),
-			post_updateTransform = (function (ws, io) {
-				return function (id, resultCallback) {
-					ws_connector.broadcast(ws, Command.UpdateTransform, {id : id});
-					io_connector.broadcast(io, Command.UpdateTransform, {id : id});
-					return resultCallback;
-				};
-			}(ws, io)),
-			post_updateWindow = (function (ws, io) {
-				return function (resultCallback) {
-					ws_connector.broadcast(ws, Command.UpdateWindow);
-					io_connector.broadcast(io, Command.UpdateWindow);
-					return resultCallback;
+					return function (err, reply) {
+						ws_connector.broadcast(ws, Command.Update);
+						io_connector.broadcast(io, Command.Update);
+						if (resultCallback) {
+							resultCallback(err, reply);
+						}
+					};
 				};
 			}(ws, io));
 		
