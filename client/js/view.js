@@ -41,6 +41,12 @@
 		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 	}
 	
+	/**
+	 * 辞書順でElementをareaに挿入.
+	 * @method getCookie
+	 * @param {Element} area  
+	 * @param {Element} elem  
+	 */
 	function insertElementWithDictionarySort(area, elem) {
 		var i,
 			child,
@@ -155,10 +161,11 @@
 		}
 	}
 	
-	/// update all contants
 	/**
-	 * update contants.
+	 * コンテンツまたはウィンドウの更新(再取得).
 	 * @method update
+	 * @param {String} updateType
+	 * @param {String} targetid
 	 */
 	function update(updateType, targetid) {
 		var previewArea = document.getElementById('preview_area');
@@ -185,6 +192,8 @@
 	
 	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
+	 * @method getTagName
+	 * @param {String} contentType
 	 */
 	function getTagName(contentType) {
 		var tagName;
@@ -196,21 +205,6 @@
 		return tagName;
 	}
 	
-	
-	function assignVisible(json) {
-		var elem = document.getElementById("preview_area");
-		if (elem) {
-			if (isVisible(json)) {
-				console.log("isvisible");
-				vscreen_util.assignMetaData(elem, json, false);
-				elem.style.display = "block";
-			} else {
-				console.log("not isvisible");
-				elem.style.display = "none";
-			}
-		}
-	}
-
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -357,9 +351,9 @@
 	});
 	
 	/**
-	 * Description
+	 * ディスプレイIDの表示.
 	 * @method showDisplayID
-	 * @param {} id
+	 * @param {string} id
 	 */
 	function showDisplayID(id) {
 		console.log("showDisplayID:" + id);
@@ -376,6 +370,11 @@
 		}
 	}
 	
+	/**
+	 * ディスプレイIDの変更.
+	 * @method changeID
+	 * @param {Event} e
+	 */
 	function changeID(e) {
 		var elem = document.getElementById('input_id'),
 			val,
@@ -390,7 +389,30 @@
 		}
 	}
 	
+	/**
+	 * 表示非表示の更新.
+	 * @method updateVisible
+	 * @param {JSON} json
+	 */
+	function assignVisible(json) {
+		var elem = document.getElementById("preview_area");
+		if (elem) {
+			if (isVisible(json)) {
+				console.log("isvisible");
+				vscreen_util.assignMetaData(elem, json, false);
+				elem.style.display = "block";
+			} else {
+				console.log("not isvisible");
+				elem.style.display = "none";
+			}
+		}
+	}
 
+	/**
+	 * 表示非表示の更新.
+	 * @method updateVisible
+	 * @param {JSON} json
+	 */
 	function updateVisible(json) {
 		var elem = document.getElementById(json.id);
 		console.log("updateVisible", elem);
@@ -493,6 +515,9 @@
 		}
 	};
 
+	/**
+	 * 再接続.
+	 */
 	function reconnect() {
 		connector.connect(function () {
 			if (!windowData) {
@@ -537,10 +562,8 @@
 		});
 	}
 
-	/// initialize.
-	/// setup gui events
 	/**
-	 * Description
+	 * 初期化
 	 * @method init
 	 */
 	function init() {
