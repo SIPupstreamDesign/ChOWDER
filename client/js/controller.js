@@ -2333,6 +2333,7 @@
 	
 	/// meta data updated
 	doneGetMetaData = function (err, reply) {
+		console.log('doneGetMetaData', reply);
 		var json = reply,
 			elem,
 			metaData = json;
@@ -2405,6 +2406,8 @@
 	doneAddContent = function (err, reply) {
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
+		
+		doneGetMetaData(err, reply);
 		
 		if (currentContent) {
 			currentContent.id = json.id;
@@ -2500,6 +2503,7 @@
 	
 	// すべての更新が必要なときにブロードキャストされてくる.
 	connector.on('Update', function () {
+		console.log("on update");
 		manipulator.removeManipulator();
 		update();
 		clearWindowList();

@@ -6,9 +6,6 @@
 	
 	var metabinary = {};
 	
-	//
-	// Array Buffer To String funciton
-	//
 	/**
 	 * arrayBufferをStringに変換して返す
 	 * @method arrayBufferToString
@@ -77,9 +74,6 @@
 		return bytes;
 	}
 	
-	/// load metabinary
-	/// @param binary Blob data
-	/// @param endCallback end callback with loaded data (metadata, binary)
 	/**
 	 * メタバイナリの読み込み.
 	 * @method loadMetaBinary
@@ -133,9 +127,6 @@
 		reader.readAsArrayBuffer(binary);
 	}
 	
-	/// create metabinary
-	/// @param metaData json
-	/// @param binary arraybuffer
 	/**
 	 * メタバイナリの作成
 	 * @method createMetaBinary
