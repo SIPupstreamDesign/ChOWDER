@@ -860,8 +860,8 @@
 			post_updateMetaData = (function (ws, io) {
 				return function (metaData, resultCallback) {
 					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateMetaData, metaData);
-						io_connector.broadcast(io, Command.UpdateMetaData, metaData);
+						ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
+						io_connector.broadcast(io, Command.UpdateMetaData, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -871,8 +871,8 @@
 			post_updateContent = (function (ws, io) {
 				return function (metaData, resultCallback) {
 					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateContent, metaData);
-						io_connector.broadcast(io, Command.UpdateContent, metaData);
+						ws_connector.broadcast(ws, Command.UpdateContent, reply);
+						io_connector.broadcast(io, Command.UpdateContent, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -902,7 +902,7 @@
 		});
 		
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			commandUpdateMetaData(null, ws_connection, data, post_updateMetaData(data, resultCallback));
+			commandUpdateMetaData(null, ws_connection, data, post_updateMetaData(resultCallback));
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
@@ -937,7 +937,7 @@
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			console.log(Command.AddContent, data);
-			commandAddContent(null, ws_connection, metaData, binaryData, post_update(resultCallback), post_updateContent(metaData, resultCallback));
+			commandAddContent(null, ws_connection, metaData, binaryData, post_update(resultCallback), post_updateContent(resultCallback));
 		});
 				
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
@@ -949,7 +949,7 @@
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandUpdateContent(null, ws_connection, metaData, binaryData, post_updateContent(metaData, resultCallback));
+			commandUpdateContent(null, ws_connection, metaData, binaryData, post_updateContent(resultCallback));
 		});
 
 		getSessionList();
@@ -979,8 +979,8 @@
 			post_updateMetaData = (function (ws, io) {
 				return function (metaData, resultCallback) {
 					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateMetaData, metaData);
-						io_connector.broadcast(io, Command.UpdateMetaData, metaData);
+						ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
+						io_connector.broadcast(io, Command.UpdateMetaData, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -990,8 +990,8 @@
 			post_updateContent = (function (ws, io) {
 				return function (metaData, resultCallback) {
 					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateContent, metaData);
-						io_connector.broadcast(io, Command.UpdateContent, metaData);
+						ws_connector.broadcast(ws, Command.UpdateContent, reply);
+						io_connector.broadcast(io, Command.UpdateContent, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -1013,7 +1013,7 @@
 		io_connector.on(Command.AddContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddContent(socket, null, metaData, binaryData, post_update(resultCallback), post_updateContent(metaData, resultCallback));
+			commandAddContent(socket, null, metaData, binaryData, post_update(resultCallback), post_updateContent(resultCallback));
 		});
 
 		io_connector.on(Command.GetContent, function (data, resultCallback) {
@@ -1032,11 +1032,11 @@
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			
-			commandUpdateContent(socket, null, metaData, binaryData, post_updateContent(metaData, resultCallback));
+			commandUpdateContent(socket, null, metaData, binaryData, post_updateContent(resultCallback));
 		});
 
 		io_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			commandUpdateMetaData(socket, null, data, post_updateMetaData(data, resultCallback));
+			commandUpdateMetaData(socket, null, data, post_updateMetaData(resultCallback));
 		});
 
 		io_connector.on(Command.AddWindow, function (data, resultCallback) {

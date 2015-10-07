@@ -2492,10 +2492,12 @@
 			previewArea = document.getElementById('content_preview_area');
 		
 		if (id) {
-			if (document.getElementById(metaData.id)) {
-				previewArea.removeChild(document.getElementById(metaData.id));
-			}
-			connector.send('GetMetaData', metaData, doneGetMetaData);
+			connector.send('GetMetaData', metaData, function (err, json) {
+				doneGetMetaData(err, json);
+				connector.send('GetContent', json, doneGetContent);
+			});
+			
+			//connector.send('GetMetaData', metaData, doneGetMetaData);
 		}
 	});
 	
