@@ -206,7 +206,8 @@
 	
 	/**
 	 * metaDataが完全にwindowの内側かどうか返す
-	 * @param {Object} metaData メタデータ.
+	 * @param {Object} metaData メタデータ
+	 * @param {Object} window ウィンドウレクト
 	 */
 	function isInsideWindow(metaData, window) {
 		// コンテンツのメタデータは, 仮想スクリーン全体を基準としたrect
@@ -224,6 +225,9 @@
 	
 	/**
 	 * metaDataが完全にwindowの外側かどうか返す
+	 * @method isOutsideWindow
+	 * @param {Object} metaData メタデータ
+	 * @param {Object} window ウィンドウレクト
 	 */
 	function isOutsideWindow(metaData, window) {
 		// コンテンツのメタデータは, 仮想スクリーン全体を基準としたrect
