@@ -515,16 +515,11 @@
 		
 		connector.on("UpdateContent", function (data) {
 			console.log("UpdateContent", data);
-			var previewArea = document.getElementById('preview_area');
-			// 更新されるコンテンツが既にロード済であったら削除しておく.
-			if (document.getElementById(data.id)) {
-				previewArea.removeChild(document.getElementById(data.id));
-			}
-			if (metaDataDict.hasOwnProperty(data.id)) {
-				console.log(metaDataDict[data.id]);
-				delete metaDataDict[data.id];
-			}
-			update('', data.id);
+			
+			connector.send('GetMetaData', data, function (err, json) {
+				doneGetMetaData(err, json);
+				connector.send('GetContent', json, doneGetContent);
+			});
 		});
 
 		connector.on("UpdateWindow", function (data) {
