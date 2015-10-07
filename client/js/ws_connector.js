@@ -11,6 +11,11 @@
 		currentVersion = "v2",
 		url = "ws://" + location.hostname + ":8081/" + currentVersion + "/";
 
+	/**
+	 * テキストメッセージの処理.
+	 * @method eventTextMessage
+	 * @param {JSON} metaData メタデータ
+	 */
 	function eventTextMessage(metaData) {
 		if (metaData.to === "client") {
 			// masterからメッセージがきた
@@ -34,6 +39,12 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージの処理.
+	 * @method eventBinaryMessage
+	 * @param {JSON} metaData メタデータ
+	 * @param {Blob} contentData バイナリデータ
+	 */
 	function eventBinaryMessage(metaData, contentData) {
 		console.log(metaData);
 		var data = {
@@ -63,6 +74,13 @@
 			}
 		}
 	}
+	
+	/**
+	 * websocketで接続する.
+	 * @method connect
+	 * @param {Function} onopen 開始時コールバック
+	 * @param {Function} onclose クローズ時コールバック
+	 */
 	function connect(onopen, onclose) {
 		client = new WebSocket(url);
 		/**
