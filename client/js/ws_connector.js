@@ -107,68 +107,6 @@
 					eventBinaryMessage(metaData, contentData);
 				});
 			}
-			
-			/*
-			var parsed,
-				binary = null;
-			console.log('[Info] chowder_response', message);
-			//console.log(typeof message.data);
-			if (typeof message.data === "string") {
-				try {
-					parsed = JSON.parse(message.data);
-				} catch (e) {
-					console.error(e);
-				}
-			} else {
-				metabinary.loadMetaBinary(new Blob([message.data]), function (metaData, contentData) {
-					var data = {
-						metaData : metaData.params,
-						contentData : contentData
-					};
-					console.log("loadMetaBinaryloadMetaBinary", contentData);
-					if (metaData.error) {
-						if (resultCallbacks[metaData.id]) {
-							resultCallbacks[metaData.id](metaData.error, null);
-						}
-					} else if (metaData.id && contentData) {
-						if (resultCallbacks[metaData.id]) {
-							resultCallbacks[metaData.id](null, data);
-						}
-					} else {
-						console.error('[Error] ArgumentError in connector.js');
-						resultCallbacks[metaData.id]('ArgumentError', null);
-					}
-				});
-				return;
-			}
-
-			console.log(parsed);
-			
-			if (parsed.method) {
-				if (recievers.hasOwnProperty(parsed.method)) {
-					recievers[parsed.method](parsed.params);
-					return;
-				}
-			}
-
-			if (parsed.error) {
-				if (resultCallbacks[parsed.id]) {
-					resultCallbacks[parsed.id](parsed.error, null);
-				}
-			} else if (parsed.hasOwnProperty('result')) {
-				if (!parsed.id) {
-					console.error('[Error] Not found message ID');
-					console.error(event.data);
-					return;
-				}
-				if (resultCallbacks[parsed.id]) {
-					resultCallbacks[parsed.id](null, parsed.result);
-				}
-			} else {
-				console.error('[Error] ArgumentError in connector.js', parsed);
-				resultCallbacks[parsed.id]('ArgumentError', null);
-			}
-			*/
 		};
 	}
 	

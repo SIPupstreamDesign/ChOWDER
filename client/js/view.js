@@ -6,7 +6,6 @@
 
 	console.log(location);
 	var reconnectTimeout = 2000,
-		updateType = "all",
 		timer,
 		windowData = null,
 		metaDataDict = {},
@@ -161,7 +160,7 @@
 	 * update contants.
 	 * @method update
 	 */
-	function update(targetid) {
+	function update(updateType, targetid) {
 		var previewArea = document.getElementById('preview_area');
 		
 		if (updateType === 'all') {
@@ -404,8 +403,7 @@
 			}
 		} else if (isVisible(json)) {
 			// new visible content
-			updateType = 'all';
-			update();
+			update('all');
 		}
 		resizeViewport(windowData);
 	}
@@ -512,8 +510,7 @@
 
 		connector.on("Update", function (data) {
 			console.log("update");
-			updateType = 'all';
-			update();
+			update('all');
 		});
 		
 		connector.on("UpdateContent", function (data) {
@@ -527,13 +524,12 @@
 				console.log(metaDataDict[data.id]);
 				delete metaDataDict[data.id];
 			}
-			update(data.id);
+			update('', data.id);
 		});
 
 		connector.on("UpdateWindow", function (data) {
-			updateType = 'window';
-			console.log("updateWindow", updateType);
-			update();
+			console.log("updateWindow");
+			update('window');
 		});
 		
 		connector.on("ShowWindowID", function (data) {
@@ -541,9 +537,8 @@
 		});
 		
 		connector.on("UpdateMetaData", function (data) {
-			updateType = 'transform';
 			console.log("UpdateMetaData", data);
-			update(data.id);
+			update('', data.id);
 		});
 	}
 
