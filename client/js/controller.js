@@ -33,7 +33,7 @@
 		doneDeleteContent,
 		doneAddContent,
 		doneUpdateContent,
-		doneUpdateTransform,
+		doneUpdateMetaData,
 		doneUpdateWindow,
 		doneGetMetaData;
 	
@@ -322,16 +322,16 @@
 	
 	/**
 	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
-	 * @method updateTransform
+	 * @method updateMetaData
 	 * @param {JSON} metaData メタデータ
 	 */
-	function updateTransform(metaData) {
+	function updateMetaData(metaData) {
 		if (metaData.type === windowType) {
 			// window
 			connector.send('UpdateWindow', metaData, doneUpdateWindow);
 		} else {
-			//console.log("UpdateTransform");
-			connector.send('UpdateTransform', metaData, doneUpdateTransform);
+			//console.log("UpdateMetaData");
+			connector.send('UpdateMetaData', metaData, doneUpdateMetaData);
 		}
 	}
 	
@@ -819,7 +819,7 @@
 			vscreen_util.assignMetaData(elem, metaData, true);
 			console.log("lastDraggingID:" + lastDraggingID);
 			metaDataDict[lastDraggingID] = metaData;
-			updateTransform(metaData);
+			updateMetaData(metaData);
 		}
 	}
 	
@@ -961,7 +961,7 @@
 	/// close selected content or window
 	/**
 	 * クローズボタンハンドル。選択されているcontent or windowを削除する。
-	 * その後クローズされた結果をupdateTransformにて各Windowに通知する。
+	 * その後クローズされた結果をupdateMetaDataにて各Windowに通知する。
 	 * @method closeFunc
 	 */
 	function closeFunc() {
@@ -985,7 +985,7 @@
 			}
 			previewArea.removeChild(elem);
 			
-			updateTransform(metaData);
+			updateMetaData(metaData);
 		}
 	}
 	
@@ -1015,7 +1015,7 @@
 			metaData = metaDataDict[elem.id];
 			elem.style.zIndex = index;
 			metaData.zIndex = index;
-			updateTransform(metaData);
+			updateMetaData(metaData);
 			console.log("change zindex:" + index);
 		}
 	};
@@ -1041,20 +1041,20 @@
 				}
 				if (id === 'content_transform_x') {
 					metaData.posx = value;
-					updateTransform(metaData);
+					updateMetaData(metaData);
 				} else if (id === 'content_transform_y') {
 					metaData.posy = value;
-					updateTransform(metaData);
+					updateMetaData(metaData);
 				} else if (id === 'content_transform_w' && value > 10) {
 					metaData.width = value;
 					metaData.height = value * aspect;
 					document.getElementById('content_transform_h').value = metaData.height;
-					updateTransform(metaData);
+					updateMetaData(metaData);
 				} else if (id === 'content_transform_h' && value > 10) {
 					metaData.width = value / aspect;
 					metaData.height = value;
 					document.getElementById('content_transform_w').value = metaData.width;
-					updateTransform(metaData);
+					updateMetaData(metaData);
 				}
 			}
 			manipulator.removeManipulator();
@@ -1290,7 +1290,7 @@
 			
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
-				updateTransform(metaData);
+				updateMetaData(metaData);
 			}
 			evt.stopPropagation();
 			evt.preventDefault();
@@ -1328,7 +1328,7 @@
 				elem.style.color = "black";
 				if (isFreeMode()) {
 					vscreen_util.assignMetaData(elem, metaData, true);
-					updateTransform(metaData);
+					updateMetaData(metaData);
 				} else if (isDisplayMode()) {
 					px = rect.left + dragOffsetLeft;
 					py = rect.top + dragOffsetTop;
@@ -1338,7 +1338,7 @@
 						snapToScreen(elem, metaData, screen);
 					}
 					vscreen_util.assignMetaData(elem, metaData, true);
-					updateTransform(metaData);
+					updateMetaData(metaData);
 					manipulator.moveManipulator(elem);
 				} else {
 					// grid mode
@@ -1351,7 +1351,7 @@
 						snapToSplitWhole(elem, metaData, splitWhole);
 					}
 					vscreen_util.assignMetaData(elem, metaData, true);
-					updateTransform(metaData);
+					updateMetaData(metaData);
 					manipulator.moveManipulator(elem);
 				}
 			}
@@ -1359,7 +1359,7 @@
 		}
 		if (manipulator.getDraggingManip() && lastDraggingID) {
 			metaData = metaDataDict[lastDraggingID];
-			//updateTransform(metaData);
+			//updateMetaData(metaData);
 		} else {
 			lastDraggingID = draggingID;
 			draggingID = null;
@@ -2353,11 +2353,8 @@
 				elem.style.display = "none";
 			}
 		} else {
-			// コンテンツがロードされるまで枠を表示しておく.
-			if (!elem) {
-				// 新規コンテンツロード.
-				connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
-			}
+			// 新規コンテンツロード.
+			connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
 		}
 	};
 	
@@ -2367,8 +2364,8 @@
 		importContent(reply.metaData, reply.contentData);
 	};
 	
-	doneUpdateTransform = function (err, reply) {
-		console.log("doneUpdateTransform", reply);
+	doneUpdateMetaData = function (err, reply) {
+		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 		metaDataDict[json.id] = json;
 	};
@@ -2400,9 +2397,9 @@
 	doneUpdateContent = function (err, reply) {
 		console.log("doneUpdateContent");
 		var updateContentID = document.getElementById('update_content_id');
+
 		updateContentID.innerHTML = "No Content Selected.";
 		document.getElementById('update_image_input').disabled = true;
-		update();
 	};
 	
 	doneAddContent = function (err, reply) {
@@ -2460,11 +2457,14 @@
 		}
 	};
 	
-	connector.on('UpdateTransform', function (id) {
-		console.log('UpdateTransformUpdateTransform', id);
-		var elem;
+	// メタデータが更新されたときにブロードキャストされてくる.
+	connector.on('UpdateMetaData', function (metaData) {
+		console.log('UpdateMetaData', metaData.id);
+		var elem,
+			id = metaData.id;
 		if (id) {
-			connector.send('GetMetaData', {type: "", id: id}, doneGetMetaData);
+			console.log(metaData);
+			doneGetMetaData(null, metaData);
 			if (lastDraggingID) {
 				elem = document.getElementById(lastDraggingID);
 				if (elem) {
@@ -2476,6 +2476,21 @@
 		}
 	});
 	
+	// コンテンツが差し替えられたときにブロードキャストされてくる.
+	connector.on('UpdateContent', function (metaData) {
+		console.log('UpdateContent', metaData);
+		var id = metaData.id,
+			previewArea = document.getElementById('content_preview_area');
+		
+		if (id) {
+			if (document.getElementById(metaData.id)) {
+				previewArea.removeChild(document.getElementById(metaData.id));
+			}
+			connector.send('GetMetaData', metaData, doneGetMetaData);
+		}
+	});
+	
+	// windowが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateWindow', function () {
 		console.log('UpdateWindow');
 		//updateScreen();
@@ -2483,6 +2498,7 @@
 		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
 	});
 	
+	// すべての更新が必要なときにブロードキャストされてくる.
 	connector.on('Update', function () {
 		manipulator.removeManipulator();
 		update();

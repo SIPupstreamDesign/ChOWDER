@@ -535,7 +535,6 @@
 		});
 	}
 	
-	/// do addContent command
 	/**
 	 * do addContent command
 	 * @method commandAddContent
@@ -575,7 +574,6 @@
 		}
 	}
 	
-	/// do GetContent command
 	/**
 	 * do GetContent command
 	 * @method commandGetContent
@@ -599,7 +597,6 @@
 		});
 	}
 	
-	/// do GetMetaData command
 	/**
 	 * do GetMetaData command
 	 * @method commandGetMetaData
@@ -617,7 +614,6 @@
 		});
 	}
 	
-	/// do DeleteContent command
 	/**
 	 * do DeleteContent command
 	 * @method commandDeleteContent
@@ -651,24 +647,23 @@
 		updateContent(metaData, binaryData, function (id) {
 			// socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
 			if (endCallback) {
-				endCallback(null, {"id" : id});
+				endCallback(null, metaData);
 			}
 		});
 	}
 	
-	/// do UpdateTransform command
+	/// do UpdateMetaData command
 	/**
-	 * do UpdateTransform command
-	 * @method commandUpdateTransform
+	 * do UpdateMetaData command
+	 * @method commandUpdateMetaData
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:UpdateTransform時JSONデータ
+	 * @param {JSON} json socket.io.on:UpdateMetaData時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateTransform(socket, ws_connection, json, endCallback) {
-		//console.log("commandUpdateTransform:" + json.id);
+	function commandUpdateMetaData(socket, ws_connection, json, endCallback) {
+		//console.log("commandUpdateMetaData:" + json.id);
 		setMetaData(json.type, json.id, json, function () {
-			//socket.emit(Command.doneUpdateTransform, JSON.stringify(json));
 			if (endCallback) {
 				endCallback(null, json);
 			}
@@ -840,10 +835,17 @@
 					return resultCallback;
 				};
 			}(ws, io)),
-			post_updateTransform = (function (ws, io) {
-				return function (id, resultCallback) {
-					ws_connector.broadcast(ws, Command.UpdateTransform, {id : id});
-					io_connector.broadcast(io, Command.UpdateTransform, {id : id});
+			post_updateMetaData = (function (ws, io) {
+				return function (metaData, resultCallback) {
+					ws_connector.broadcast(ws, Command.UpdateMetaData, metaData);
+					io_connector.broadcast(io, Command.UpdateMetaData, metaData);
+					return resultCallback;
+				};
+			}(ws, io)),
+			post_updateContent = (function (ws, io) {
+				return function (metaData, resultCallback) {
+					ws_connector.broadcast(ws, Command.UpdateContent, metaData);
+					io_connector.broadcast(io, Command.UpdateContent, metaData);
 					return resultCallback;
 				};
 			}(ws, io)),
@@ -865,8 +867,8 @@
 			commandGetContent(null, ws_connection, data, resultCallback);
 		});
 		
-		ws_connector.on(Command.UpdateTransform, function (data, resultCallback) {
-			commandUpdateTransform(null, ws_connection, data, post_updateTransform(data.id, resultCallback));
+		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
+			commandUpdateMetaData(null, ws_connection, data, post_updateMetaData(data, resultCallback));
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
@@ -913,7 +915,7 @@
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandUpdateContent(null, ws_connection, metaData, binaryData, post_updateTransform(metaData.id, resultCallback));
+			commandUpdateContent(null, ws_connection, metaData, binaryData, post_updateContent(metaData, resultCallback));
 		});
 
 		getSessionList();
@@ -936,10 +938,17 @@
 					return resultCallback;
 				};
 			}(ws, io)),
-			post_updateTransform = (function (ws, io) {
-				return function (id, resultCallback) {
-					ws_connector.broadcast(ws, Command.UpdateTransform, {id : id});
-					io_connector.broadcast(io, Command.UpdateTransform, {id : id});
+			post_updateMetaData = (function (ws, io) {
+				return function (metaData, resultCallback) {
+					ws_connector.broadcast(ws, Command.UpdateMetaData, metaData);
+					io_connector.broadcast(io, Command.UpdateMetaData, metaData);
+					return resultCallback;
+				};
+			}(ws, io)),
+			post_updateContent = (function (ws, io) {
+				return function (metaData, resultCallback) {
+					ws_connector.broadcast(ws, Command.UpdateContent, metaData);
+					io_connector.broadcast(io, Command.UpdateContent, metaData);
 					return resultCallback;
 				};
 			}(ws, io)),
@@ -973,19 +982,11 @@
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			
-			commandUpdateContent(socket, null, metaData, binaryData, (function (id) {
-				return function () {
-					post_updateTransform(id, resultCallback);
-				};
-			}(metaData.id)));
+			commandUpdateContent(socket, null, metaData, binaryData, post_updateContent(metaData, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateTransform, function (data, resultCallback) {
-			commandUpdateTransform(socket, null, data, (function (id) {
-				return function () {
-					post_updateTransform(id, resultCallback);
-				};
-			}(data.id)));
+		io_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
+			commandUpdateMetaData(socket, null, data, post_updateMetaData(data, resultCallback));
 		});
 
 		io_connector.on(Command.AddWindow, function (data, resultCallback) {
