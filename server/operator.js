@@ -550,7 +550,6 @@
 		if (metaData.type === 'url') {
 			renderURL(binaryData, function (image, dimension) {
 				if (image) {
-					//console.log(Command.doneAddContent);
 					metaData.posx = 0;
 					metaData.posy = 0;
 					metaData.width = dimension.width;
@@ -565,7 +564,6 @@
 				}
 			});
 		} else {
-			//console.log(Command.AddContent + ":" + metaData);
 			addContent(metaData, binaryData, function (metaData, contentData) {
 				if (endCallback) {
 					endCallback(null, metaData);
