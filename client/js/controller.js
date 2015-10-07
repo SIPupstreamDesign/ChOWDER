@@ -173,6 +173,12 @@
 		}
 	}
 
+	/**
+	 * 辞書順でElementをareaに挿入.
+	 * @method getCookie
+	 * @param {Element} area  
+	 * @param {Element} elem  
+	 */
 	function insertElementWithDictionarySort(area, elem) {
 		var i,
 			child,
@@ -267,23 +273,19 @@
 		return metaData;
 	}
 	
-	/// get image from server
 	/**
-	 * get image from server
+	 * コンテンツとウィンドウの更新(再取得).
 	 * @method update
 	 */
 	function update() {
 		vscreen.clearScreenAll();
-		// document.getElementById('content_area').innerHTML = "";
-		// document.getElementById('content_preview_area').innerHTML = "";
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
 		connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
 		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
 	}
 	
-	/// delete content
 	/**
-	 * delete content
+	 * コンテンツの削除.
 	 * @method deleteContent
 	 */
 	function deleteContent(evt) {
@@ -488,7 +490,7 @@
 	/**
 	 * VirualDisplay分割設定
 	 * @method assignSplitWholes
-	 * @param {} splitWholes
+	 * @param {Object} splitWholes
 	 */
 	function assignSplitWholes(splitWholes) {
 		var screenElem,
@@ -862,7 +864,6 @@
 		}
 	}
 	
-	/// select content or window
 	/**
 	 * Content or Display選択。
 	 * @method select
@@ -931,7 +932,6 @@
 		}
 	}
 	
-	/// unselect content or window
 	/**
 	 * 現在選択されているContents, もしくはVirtualDisplayを非選択状態にする
 	 * @method unselect
@@ -958,7 +958,6 @@
 		clearProperty();
 	}
 	
-	/// close selected content or window
 	/**
 	 * クローズボタンハンドル。選択されているcontent or windowを削除する。
 	 * その後クローズされた結果をupdateMetaDataにて各Windowに通知する。
@@ -1002,7 +1001,6 @@
 		return null;
 	}
 	
-	/// change zIndex
 	/**
 	 * 選択中のコンテンツのzIndexを変更する
 	 * @method changeZIndex
@@ -1020,7 +1018,6 @@
 		}
 	};
 	
-	/// change rect
 	/**
 	 * Content or Displayの矩形サイズ変更時ハンドラ。initPropertyAreaのコールバックとして指定されている。
 	 * @method changeRect
@@ -1145,7 +1142,6 @@
 		};
 	};
 	
-	///  setup window
 	/**
 	 * Display設定
 	 * @method setupWindow
@@ -1185,6 +1181,13 @@
 		manipulator.moveManipulator(elem);
 	}
 	
+	/**
+	 * Screenへスナップさせる.
+	 * @method snapToScreen
+	 * @param {Element} elem
+	 * @param {JSON} metaData
+	 * @param {Object} screen
+	 */
 	function snapToScreen(elem, metaData, screen) {
 		return snapToSplitWhole(elem, metaData, screen);
 	}
@@ -1369,7 +1372,6 @@
 		dragOffsetLeft = 0;
 	});
 	
-	/// send text to server
 	/**
 	 * テキストデータ送信
 	 * @method sendText
@@ -1414,7 +1416,6 @@
 		addContent({type : "text", posx : 0, posy : 0, width : width, height : height}, textData);
 	}
 	
-	/// send url to server
 	/**
 	 * URLデータ送信
 	 * @method sendURL
@@ -1435,7 +1436,6 @@
 		urlInput.value = '';
 	}
 	
-	/// send image to server
 	/**
 	 * 画像データ送信
 	 * @method sendImage
@@ -1449,7 +1449,6 @@
 		addContent(metaData, imagebinary);
 	}
 	
-	/// open image file
 	/**
 	 * 画像ファイルFileOpenハンドラ
 	 * @method openImage
@@ -1488,7 +1487,6 @@
 		}
 	}
 	
-	/// open text file
 	/**
 	 * テキストファイルFileOpenハンドラ
 	 * @method openText
@@ -1513,7 +1511,6 @@
 		}
 	}
 	
-	/// replace image file
 	/**
 	 * 画像イメージ差し替えFileOpenハンドラ
 	 * @method replaceImage
@@ -1545,7 +1542,6 @@
 		}
 	}
 	
-	/// add all screens
 	/**
 	 * VirualDisplayをVirtualScreenに設定
 	 * @method addScreenRect
@@ -1601,7 +1597,6 @@
 		assignSplitWholes(vscreen.getSplitWholes());
 	}
 	
-	/// update all screens
 	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
@@ -2010,7 +2005,6 @@
 		displayArea.innerHTML = "";
 	}
 	
-	/// import window
 	/**
 	 * 指定されたWindowをリストビューにインポートする
 	 * @method importWindow
@@ -2212,7 +2206,6 @@
 		initDisplayArea();
 	}
 	
-	/// initialize elemets, events
 	/**
 	 * コントローラ初期化
 	 * @method init
