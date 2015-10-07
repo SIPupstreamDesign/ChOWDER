@@ -1633,7 +1633,6 @@
 			for (i = screens.length - 1; i >= 0; i = i - 1) {
 				previewArea.removeChild(screens.item(i));
 			}
-			/*
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
 					metaData = metaDataDict[i];
@@ -1647,7 +1646,6 @@
 					}
 				}
 			}
-			*/
 		}
 		addScreenRect(windowData);
 		//changeWholeSplit(wholeSplitX.value, this.value);
