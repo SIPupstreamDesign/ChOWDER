@@ -12,7 +12,6 @@
 		GetContent : "GetContent",
 		GetMetaData : "GetMetaData",
 		DeleteContent : "DeleteContent",
-		UpdateContent : "UpdateContent",
 		AddWindow : "AddWindow",
 		DeleteWindow : "DeleteWindow",
 		GetWindow : "GetWindow",
@@ -21,7 +20,8 @@
 		
 		// using both server and client
 		Update : "Update",
-		UpdateTransform : "UpdateTransform",
+		UpdateMetaData : "UpdateMetaData",
+		UpdateContent : "UpdateContent",
 		UpdateWindow : "UpdateWindow",
 		ShowWindowID : "ShowWindowID"
 	};

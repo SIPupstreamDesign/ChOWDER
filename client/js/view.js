@@ -515,6 +515,20 @@
 			updateType = 'all';
 			update();
 		});
+		
+		connector.on("UpdateContent", function (data) {
+			console.log("UpdateContent", data);
+			var previewArea = document.getElementById('preview_area');
+			// 更新されるコンテンツが既にロード済であったら削除しておく.
+			if (document.getElementById(data.id)) {
+				previewArea.removeChild(document.getElementById(data.id));
+			}
+			if (metaDataDict.hasOwnProperty(data.id)) {
+				console.log(metaDataDict[data.id]);
+				delete metaDataDict[data.id];
+			}
+			update(data.id);
+		});
 
 		connector.on("UpdateWindow", function (data) {
 			updateType = 'window';
@@ -526,9 +540,9 @@
 			showDisplayID(data.id);
 		});
 		
-		connector.on("UpdateTransform", function (data) {
+		connector.on("UpdateMetaData", function (data) {
 			updateType = 'transform';
-			console.log("updateTransform", data);
+			console.log("UpdateMetaData", data);
 			update(data.id);
 		});
 	}
