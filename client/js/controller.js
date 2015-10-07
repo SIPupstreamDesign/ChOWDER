@@ -2407,6 +2407,12 @@
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
 		
+		// 新規追加ではなく差し替えだった場合.
+		if (metaDataDict.hasOwnProperty(json.id)) {
+			doneUpdateContent(err, reply);
+			return;
+		}
+		
 		doneGetMetaData(err, reply);
 		
 		if (currentContent) {
