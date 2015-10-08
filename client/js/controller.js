@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (vscreen, vscreen_util, manipulator, connector) {
+(function (gui, vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
 	var currentContent = null,
@@ -11,7 +11,6 @@
 		dragOffsetLeft = 0,
 		metaDataDict = {},
 		windowType = "window",
-		onContentArea = false,
 		wholeWindowID = "whole_window",
 		wholeWindowListID = "onlist:whole_window",
 		wholeSubWindowID = "whole_sub_window",
@@ -24,8 +23,6 @@
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
-		changeDisplayValue = function () {},
-		changeZIndex = function () {},
 		changeRect = function () {},
 		doneGetVirtualDisplay,
 		doneGetContent,
@@ -102,7 +99,7 @@
 	 * @return LogicalExpression
 	 */
 	function isContentArea(evt) {
-		var contentArea = document.getElementById('left_main_area'),
+		var contentArea = gui.get_left_main_area(),
 			px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
@@ -117,7 +114,7 @@
 	 * @return BinaryExpression
 	 */
 	function isDisplayTabSelected() {
-		return (document.getElementById('display_tab_link').className.indexOf("active") >= 0);
+		return (gui.get_display_tab_link().className.indexOf("active") >= 0);
 	}
 	
 	/**
@@ -158,24 +155,8 @@
 	}
 	
 	/**
-	 * 選択されたタブに左リストdomの切り替えを行う。
-	 * onclickはinit時に設定される
-	 * @method changeLeftTab
-	 * @param {String} type WindowかContentのタブ名
-	 */
-	function changeLeftTab(type) {
-		var displayTabTitle = document.getElementById('display_tab_title'),
-			contentTabTitle = document.getElementById('content_tab_title');
-		if (type === windowType) {
-			displayTabTitle.onclick();
-		} else {
-			contentTabTitle.onclick();
-		}
-	}
-
-	/**
 	 * 辞書順でElementをareaに挿入.
-	 * @method getCookie
+	 * @method insertElementWithDictionarySort
 	 * @param {Element} area  
 	 * @param {Element} elem  
 	 */
@@ -231,9 +212,9 @@
 				elem.appendChild(child);
 				
 				if (isDisplayTabSelected()) {
-					previewArea = document.getElementById('display_preview_area');
+					previewArea = gui.get_display_preview_area();
 				} else {
-					previewArea = document.getElementById('content_preview_area');
+					previewArea = gui.get_content_preview_area();
 				}
 				if (isContentArea) {
 					elem.style.display = "none";
@@ -285,33 +266,42 @@
 	}
 	
 	/**
-	 * コンテンツの削除.
-	 * @method deleteContent
-	 */
-	function deleteContent(evt) {
-		if (getSelectedID()) {
-			connector.send('DeleteContent', {id : getSelectedID()}, doneDeleteContent);
-		}
-	}
-	
-	/**
 	 * Displayを削除する
 	 * @method deleteDisplay
 	 */
-	function deleteDisplay() {
+	gui.on_deletedisplay_clicked = function () {
 		if (getSelectedID()) {
 			console.log('DeleteWindow' + getSelectedID());
 			connector.send('DeleteWindow', {id : getSelectedID()});
 		}
-	}
+	};
 	
 	/**
 	 * Displayを全削除する
 	 * @method deleteDisplayAll
 	 */
-	function deleteDisplayAll() {
+	gui.on_deletealldisplay_clicked = function () {
 		connector.send('DeleteWindow', {type : "all", id : ""});
-	}
+	};
+	
+	/**
+	 * Show Display ID ボタンが押された.
+	 */
+	gui.on_showidbutton_clicked = function () {
+		var id = getSelectedID();
+		console.log("ShowWindowID:" + id);
+		if (id && id !== "No Content Selected.") {
+			if (metaDataDict[id].type === windowType) {
+				connector.send('ShowWindowID', {id : id});
+				lastDraggingID = id;
+				gui.get_list_elem(id).style.borderColor = windowSelectColor;
+			} else {
+				connector.send('ShowWindowID', {type : 'all', id : ""});
+			}
+		} else {
+			connector.send('ShowWindowID', {type : 'all', id : ""});
+		}
+	};
 	
 	/**
 	 * Content追加
@@ -373,119 +363,6 @@
 		connector.send('UpdateVirtualDisplay', windowData);
 	}
 	
-	/**
-	 * Propertyタブに入力プロパティを追加する
-	 * @method addInputProperty
-	 * @param {Object} input element id
-	 * @param {String} leftLabel 左ラベル
-	 * @param {String} rightLabel 右ラベル
-	 * @param {String} value 初期入力値
-	 */
-	function addInputProperty(id, leftLabel, rightLabel, value) {
-		/*
-			<div class="input-group">
-				<span class="input-group-addon">x</span>
-				<input type="text" class="form-control" id="content_transform_x" value="0">
-				<span class="input-group-addon">px</span>
-			</div>
-		*/
-		var transInput = document.getElementById('transform_input'),
-			group = document.createElement('div'),
-			leftSpan = document.createElement('span'),
-			rightSpan = document.createElement('span'),
-			input = document.createElement('input');
-		
-		group.className = "input-group";
-		leftSpan.className = "input-group-addon";
-		leftSpan.innerHTML = leftLabel;
-		rightSpan.className = "input-group-addon";
-		rightSpan.innerHTML = rightLabel;
-		input.className = "form-control";
-		input.id = id;
-		input.value = value;
-		//input.nodeType = "text";
-		
-		group.appendChild(leftSpan);
-		group.appendChild(input);
-		if (rightLabel) {
-			group.appendChild(rightSpan);
-		}
-		transInput.appendChild(group);
-	}
-	
-	/**
-	 * Propertyタブにボタン追加
-	 * @method addButtonProperty
-	 * @param {String} id ボタンID
-	 * @param {String} value ボタンinnerHTML
-	 * @param {Function} func onclick時コールバック
-	 */
-	function addButtonProperty(id, value, func) {
-		/*
-			<div class="btn btn-success" id="content_add_button">Add</div>
-		*/
-		var transInput = document.getElementById('transform_input'),
-			group = document.createElement('div'),
-			button = document.createElement('div');
-		
-		group.className = "input-group";
-		button.className = "btn btn-primary property_button";
-		button.innerHTML = value;
-		button.id = id;
-		button.onclick = func;
-		group.appendChild(button);
-		transInput.appendChild(group);
-	}
-	
-	/**
-	 * VirtualDisplayスケール設定ボタン追加
-	 * @method addScaleDropdown
-	 * @param {String} id ID
-	 * @param {String} value ボタンinnerHTML
-	 */
-	function addScaleDropdown(id, value) {
-		/*
-			<li role="presentation">
-				<a role="menuitem" tabindex="-1" href="#" id="scale_dropdown_item1">Display</a>
-			</li>
-		*/
-		var dropDown = document.getElementById('scale_drop_down'),
-			current = document.getElementById('scale_dropdown_current'),
-			li = document.createElement('li'),
-			a = document.createElement('a');
-		
-		li.role = "presentation";
-		a.role = "menuitem";
-		a.tabindex = "-1";
-		a.href = "#";
-		a.id = id;
-		a.innerHTML = value;
-		/**
-		 * Description
-		 * @method onclick
-		 * @param {} evt
-		 */
-		a.onclick = function (evt) {
-			var displayScale = parseFloat(this.innerHTML);
-			if (displayScale < 0) {
-				displayScale = 0.01;
-			} else if (displayScale > 1.0) {
-				displayScale = 1.0;
-			}
-			vscreen.setWholeScale(displayScale, true);
-			saveCookie();
-			current.innerHTML = displayScale;
-			updateScreen();
-		};
-		li.appendChild(a);
-		dropDown.appendChild(li);
-		
-		// for ie, safari
-		a.addEventListener('mousedown', function (evt) {
-			a.click();
-			document.getElementById('dropdown2').className = "dropdown2";
-		});
-	}
 	
 	/**
 	 * VirualDisplay分割設定
@@ -496,7 +373,7 @@
 		var screenElem,
 			i,
 			w,
-			previewArea = document.getElementById('display_preview_area');
+			previewArea = gui.get_display_preview_area();
 			
 		console.log("assignSplitWholes");
 		
@@ -535,7 +412,7 @@
 			splitWholes,
 			elem,
 			i,
-			previewArea = document.getElementById('display_preview_area');
+			previewArea = gui.get_display_preview_area();
 		
 		if (isNaN(ix) || isNaN(iy)) {
 			return;
@@ -556,205 +433,6 @@
 			updateScreen();
 			updateWindowData();
 		}
-	}
-	
-	/**
-	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
-	 * @method initPropertyArea
-	 * @param {String} id ContentもしくはDisplay ID
-	 * @param {String} type 設定タイプ
-	 */
-	function initPropertyArea(id, type) {
-		var contentX,
-			contentY,
-			contentW,
-			contentH,
-			contentZ,
-			wholeW,
-			wholeH,
-			wholeSplitX,
-			wholeSplitY,
-			transInput = document.getElementById('transform_input'),
-			idlabel = document.getElementById('content_id_label'),
-			idtext = document.getElementById('content_id'),
-			downloadButton = document.getElementById('download_button'),
-			extension,
-			rectChangeFunc = function () {
-				changeRect(this.id, parseInt(this.value, 10));
-			};
-		console.log("initPropertyArea");
-		if (id) {
-			document.getElementById('content_id').innerHTML = id;
-		} else {
-			document.getElementById('content_id').innerHTML = "";
-		}
-		transInput.innerHTML = "";
-		if (type === "display") {
-			idlabel.innerHTML = "Display ID:";
-			addInputProperty('content_transform_x', 'x', 'px', '0');
-			addInputProperty('content_transform_y', 'y', 'px', '0');
-			addInputProperty('content_transform_w', 'w', 'px', '0');
-			addInputProperty('content_transform_h', 'h', 'px', '0');
-			contentX = document.getElementById('content_transform_x');
-			contentY = document.getElementById('content_transform_y');
-			contentW = document.getElementById('content_transform_w');
-			contentH = document.getElementById('content_transform_h');
-			contentX.onchange = rectChangeFunc;
-			contentY.onchange = rectChangeFunc;
-			contentW.onchange = rectChangeFunc;
-			contentH.onchange = rectChangeFunc;
-			downloadButton.style.display = "none";
-			
-		} else if (type === "whole_window") {
-			idlabel.innerHTML = "Virtual Display Setting";
-			idtext.innerHTML = "";
-			addInputProperty('whole_width', 'w', 'px', '1000');
-			addInputProperty('whole_height', 'h', 'px', '900');
-			addInputProperty('whole_split_x', 'split x', '', '1');
-			addInputProperty('whole_split_y', 'split y', '', '1');
-			wholeW = document.getElementById('whole_width');
-			wholeH = document.getElementById('whole_height');
-			wholeSplitX = document.getElementById('whole_split_x');
-			wholeSplitY = document.getElementById('whole_split_y');
-			wholeW.onchange = function () {
-				changeDisplayValue();
-			};
-			wholeH.onchange = function () {
-				changeDisplayValue();
-			};
-			wholeSplitX.onchange = function () {
-				changeWholeSplit(this.value, wholeSplitY.value);
-			};
-			wholeSplitY.onchange = function () {
-				changeWholeSplit(wholeSplitX.value, this.value);
-			};
-			downloadButton.style.display = "none";
-		} else { // content (text, image, url... )
-			idlabel.innerHTML = "Content ID:";
-			addInputProperty('content_transform_x', 'x', 'px', '0');
-			addInputProperty('content_transform_y', 'y', 'px', '0');
-			addInputProperty('content_transform_w', 'w', 'px', '0');
-			addInputProperty('content_transform_h', 'h', 'px', '0');
-			addInputProperty('content_transform_z', 'z', 'index', '0');
-			contentX = document.getElementById('content_transform_x');
-			contentY = document.getElementById('content_transform_y');
-			contentW = document.getElementById('content_transform_w');
-			contentH = document.getElementById('content_transform_h');
-			contentZ = document.getElementById('content_transform_z');
-			contentX.onchange = rectChangeFunc;
-			contentY.onchange = rectChangeFunc;
-			contentW.onchange = rectChangeFunc;
-			contentH.onchange = rectChangeFunc;
-			contentZ.onchange = function () {
-				var val = parseInt(contentZ.value, 10);
-				changeZIndex(val);
-			};
-			downloadButton.style.display = "block";
-			downloadButton.href = "download?" + id;
-			downloadButton.target = "_blank";
-			if (type === "text") {
-				downloadButton.download = id + ".txt";
-			} else {
-				// image or url
-				if (metaDataDict[id].hasOwnProperty('mime')) {
-					extension = metaDataDict[id].mime.split('/')[1];
-					downloadButton.download = id + "." + extension;
-				} else {
-					downloadButton.download = id + ".img";
-				}
-			}
-		}
-	}
-	
-	/**
-	 * メタデータをPropertyエリアに反映
-	 * @method assignContentProperty
-	 * @param {JSON} metaData メタデータ
-	 */
-	function assignContentProperty(metaData) {
-		console.log("assignContentProperty:" + JSON.stringify(metaData));
-		var transx = document.getElementById('content_transform_x'),
-			transy = document.getElementById('content_transform_y'),
-			transw = document.getElementById('content_transform_w'),
-			transh = document.getElementById('content_transform_h'),
-			transz = document.getElementById('content_transform_z');
-		
-		transx.value = parseInt(metaData.posx, 10);
-		transy.value = parseInt(metaData.posy, 10);
-		transw.value = parseInt(metaData.width, 10);
-		transh.value = parseInt(metaData.height, 10);
-		if (metaData.hasOwnProperty('zIndex')) {
-			transz.value = parseInt(metaData.zIndex, 10);
-		}
-	}
-
-	/**
-	 * Propertyエリアパラメータ消去
-	 * @method clearProperty
-	 */
-	function clearProperty() {
-		var transx = document.getElementById('content_transform_x'),
-			transy = document.getElementById('content_transform_y'),
-			transw = document.getElementById('content_transform_w'),
-			transh = document.getElementById('content_transform_h'),
-			transz = document.getElementById('content_transform_z'),
-			dlbtn  = document.getElementById('download_button'),
-			content_id = document.getElementById('content_id');
-		if (transx) { transx.value = 0; }
-		if (transy) { transy.value = 0; }
-		if (transw) { transw.value = 0; }
-		if (transh) { transh.value = 0; }
-		if (transz) { transz.value = 0; }
-		if (content_id) { content_id.innerHTML = ""; }
-		if (dlbtn) { dlbtn.style.display = 'none'; }
-	}
-	
-	/**
-	 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
-	 * @method assignVirtualDisplayProperty
-	 */
-	function assignVirtualDisplayProperty() {
-		var whole = vscreen.getWhole(),
-			splitCount = vscreen.getSplitCount(),
-			wholeWidth = document.getElementById('whole_width'),
-			wholeHeight = document.getElementById('whole_height'),
-			wholeSplitX = document.getElementById('whole_split_x'),
-			wholeSplitY = document.getElementById('whole_split_y');
-
-		if (wholeWidth) {
-			wholeWidth.value = parseInt(whole.orgW, 10);
-		}
-		if (wholeHeight) {
-			wholeHeight.value = parseInt(whole.orgH, 10);
-		}
-		if (wholeSplitX) {
-			wholeSplitX.value = splitCount.x;
-		}
-		if (wholeSplitY) {
-			wholeSplitY.value = splitCount.y;
-		}
-	}
-	
-	/**
-	 * Viewスケール設定
-	 * @method assignViewSetting
-	 */
-	function assignViewSetting() {
-		var scale = vscreen.getWholeScale(),
-			scale_current = document.getElementById('scale_dropdown_current'),
-			snap_current = document.getElementById('snap_dropdown_current');
-		
-		scale_current.innerHTML = scale;
-		if (isFreeMode()) {
-			snap_current.innerHTML = 'Free';
-		} else if (isDisplayMode()) {
-			snap_current.innerHTML = 'Display';
-		} else {
-			// grid
-			snap_current.innerHTML = 'Grid';
-		}
-		
-		manipulator.removeManipulator();
 	}
 	
 	/**
@@ -826,45 +504,6 @@
 	}
 	
 	/**
-	 * Deleteボタン有効化設定
-	 * @method enableDeleteButton
-	 * @param {bool} isEnable ボタン有効化
-	 */
-	function enableDeleteButton(isEnable) {
-		if (isEnable) {
-			document.getElementById('content_delete_button').className = "btn btn-danger";
-		} else {
-			document.getElementById('content_delete_button').className = "btn btn-danger disabled";
-		}
-	}
-	
-	/**
-	 * DisplayDeleteボタン有効化設定
-	 * @method enableDisplayDeleteButton
-	 * @param {bool} isEnable ボタン有効化
-	 */
-	function enableDisplayDeleteButton(isEnable) {
-		if (isEnable) {
-			document.getElementById('display_delete_button').className = "btn btn-primary";
-		} else {
-			document.getElementById('display_delete_button').className = "btn btn-primary disabled";
-		}
-	}
-	
-	/**
-	 * 画像更新ボタン有効化
-	 * @method enableUpdateImageButton
-	 * @param {bool} isEnable ボタン有効化
-	 */
-	function enableUpdateImageButton(isEnable) {
-		if (isEnable) {
-			document.getElementById('update_image_input').disabled = false;
-		} else {
-			document.getElementById('update_image_input').disabled = true;
-		}
-	}
-	
-	/**
 	 * Content or Display選択。
 	 * @method select
 	 * @param {String} id 選択したID
@@ -872,55 +511,66 @@
 	function select(id, isContentArea) {
 		var elem,
 			metaData,
-			initialVisible;
+			initialVisible,
+			mime = null;
+		
+		if (metaDataDict.hasOwnProperty(id)) {
+			if (metaDataDict[id].hasOwnProperty('mime')) {
+				mime = metaDataDict[id].mime;
+			}
+		}
 		
 		if (id === wholeWindowListID || id === wholeWindowID) {
-			initPropertyArea(id, "whole_window");
-			assignVirtualDisplayProperty();
-			document.getElementById(wholeWindowListID).style.borderColor = windowSelectColor;
-			changeLeftTab(windowType);
+			gui.init_property_area(id, "whole_window", mime);
+			gui.assign_virtual_display_property(vscreen.getWhole(), vscreen.getSplitCount());
+			gui.get_whole_window_elem().style.borderColor = windowSelectColor;
+			gui.change_left_tab(windowType);
 			return;
 		}
 		if (id.indexOf(wholeSubWindowID) >= 0) {
 			return;
 		}
-		document.getElementById(wholeWindowListID).style.borderColor = "white";
+		gui.get_whole_window_elem().style.borderColor = "white";
 		elem = getElem(id, isContentArea);
 		if (elem.id !== id) {
 			id = elem.id;
 		}
 		//elem.style.visibility = "visible";
 		metaData = metaDataDict[id];
+		if (metaData.hasOwnProperty('mime')) {
+			mime = metaData.mime;
+		}
+		
 		console.log("metaData", metaData);
 		initialVisible = metaData.visible;
 		draggingID = id;
 		console.log("draggingID = id:" + draggingID);
 		elem.style.border = "solid 2px";
 		if (metaData.type === windowType) {
-			initPropertyArea(id, "display");
-			assignContentProperty(metaDataDict[id]);
-			enableDeleteButton(false);
-			enableDisplayDeleteButton(true);
-			enableUpdateImageButton(false);
-			changeLeftTab(windowType);
-			if (document.getElementById("onlist:" + id)) {
-				document.getElementById("onlist:" + id).style.borderColor = windowSelectColor;
+			gui.init_property_area(id, "display", mime);
+			gui.assign_content_property(metaDataDict[id]);
+			gui.enable_delete_button(false);
+			gui.enable_display_delete_button(true);
+			gui.enable_update_image_button(false);
+			gui.change_left_tab(windowType);
+			if (gui.get_list_elem(id)) {
+				gui.get_list_elem(id).style.borderColor = windowSelectColor;
 			}
 			elem.style.borderColor = windowSelectColor;
-			manipulator.showManipulator(elem, document.getElementById('display_preview_area'));
+			manipulator.showManipulator(elem, gui.get_display_preview_area());
 		} else {
-			initPropertyArea(id, metaData.type);
-			assignContentProperty(metaDataDict[id]);
-			enableDeleteButton(true);
-			enableUpdateImageButton(true);
-			enableDisplayDeleteButton(false);
-			document.getElementById('update_content_id').innerHTML = id;
-			changeLeftTab(metaData.type);
-			if (document.getElementById("onlist:" + id)) {
-				document.getElementById("onlist:" + id).style.borderColor = contentSelectColor;
+			gui.init_property_area(id, metaData.type, mime);
+			gui.assign_content_property(metaDataDict[id]);
+			gui.enable_delete_button(true);
+			gui.enable_update_image_button(true);
+			gui.enable_display_delete_button(false);
+			gui.set_update_content_id(id);
+			gui.change_left_tab(metaData.type);
+			if (gui.get_list_elem(id)) {
+				gui.get_list_elem(id).style.borderColor = contentSelectColor;
 			}
 			elem.style.borderColor = contentSelectColor;
-			manipulator.showManipulator(elem, document.getElementById('content_preview_area'));
+			manipulator.showManipulator(elem, gui.get_content_preview_area());
 		}
 		if (elem.style.zIndex === "") {
 			elem.style.zIndex = 0;
@@ -947,15 +597,15 @@
 				if (metaData.type !== windowType && isVisible(metaData)) {
 					elem.style.border = "";
 				}
-				if (document.getElementById("onlist:" + lastDraggingID)) {
-					document.getElementById("onlist:" + lastDraggingID).style.borderColor = "white";
+				if (gui.get_list_elem(lastDraggingID)) {
+					gui.get_list_elem(lastDraggingID).style.borderColor = "white";
 				}
 				elem.style.borderColor = "black";
 			}
 			lastDraggingID = null;
 		}
 		manipulator.removeManipulator();
-		clearProperty();
+		gui.clear_property();
 	}
 	
 	/**
@@ -978,9 +628,9 @@
 			metaData.visible = false;
 			
 			if (metaData.type === "window") {
-				previewArea = document.getElementById('display_preview_area');
+				previewArea = gui.get_display_preview_area();
 			} else {
-				previewArea = document.getElementById('content_preview_area');
+				previewArea = gui.get_content_preview_area();
 			}
 			previewArea.removeChild(elem);
 			
@@ -989,43 +639,13 @@
 	}
 	
 	/**
-	 * PropertyエリアのコンテンツIDからElementを取得する
-	 * @method getSelectedElem
-	 * @return Literal
-	 */
-	function getSelectedElem() {
-		var targetID = document.getElementById('content_id').innerHTML;
-		if (targetID) {
-			return document.getElementById(targetID);
-		}
-		return null;
-	}
-	
-	/**
-	 * 選択中のコンテンツのzIndexを変更する
-	 * @method changeZIndex
-	 * @param {String} index 設定するzIndex
-	 */
-	changeZIndex = function (index) {
-		var elem = getSelectedElem(),
-			metaData;
-		if (elem) {
-			metaData = metaDataDict[elem.id];
-			elem.style.zIndex = index;
-			metaData.zIndex = index;
-			updateMetaData(metaData);
-			console.log("change zindex:" + index);
-		}
-	};
-	
-	/**
 	 * Content or Displayの矩形サイズ変更時ハンドラ。initPropertyAreaのコールバックとして指定されている。
 	 * @method changeRect
 	 * @param {String} id Content or Display ID
 	 * @param {String } value 変更値
 	 */
 	changeRect = function (id, value) {
-		var elem = getSelectedElem(),
+		var elem = gui.get_selected_elem(),
 			metaData,
 			aspect = 1.0;
 		if (elem) {
@@ -1060,7 +680,7 @@
 
 	/**
 	 * 指定された座標がContent or Displayの内部に存在するかを判定する。setupContentsにて使用されている。
-	 * @method changeRect
+	 * @method isInsideElement
 	 * @param {String} id Content or Display ID
 	 * @param {String} x x座標値
 	 * @param {String} y y座標値
@@ -1089,7 +709,7 @@
 		elem.onmousedown = function (evt) {
 			var rect = evt.target.getBoundingClientRect(),
 				metaData = null,
-				otherPreviewArea = document.getElementById('content_preview_area'),
+				otherPreviewArea = gui.get_content_preview_area(),
 				childs,
 				i,
 				topElement = null,
@@ -1098,7 +718,7 @@
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
 				if (metaData.type !== windowType) {
-					otherPreviewArea = document.getElementById('display_preview_area');
+					otherPreviewArea = gui.get_display_preview_area();
 				}
 			}
 
@@ -1216,17 +836,6 @@
 		}
 	}
 	
-	// add content mousedown event
-	/*
-	window.document.addEventListener("mousedown", function (evt) {
-		// erase last border
-		if (lastDraggingID && !manipulator.getDraggingManip()) {
-			console.log("UNSELECT");
-			//unselect();
-		}
-	});
-	*/
-	
 	// add content mousemove event
 	window.document.addEventListener("mousemove", function (evt) {
 		var i,
@@ -1238,7 +847,7 @@
 			py,
 			elemOnPos,
 			onInvisibleContent,
-			leftArea = document.getElementById('leftArea'),
+			leftArea = gui.get_left_area(),
 			rect = evt.target.getBoundingClientRect(),
 			orgPos,
 			splitWhole,
@@ -1313,7 +922,7 @@
 	
 	// add content mouseup event
 	window.document.addEventListener("mouseup", function (evt) {
-		var contentArea = document.getElementById('content_area'),
+		var contentArea = gui.get_content_area(),
 			metaData,
 			elem,
 			px,
@@ -1378,168 +987,28 @@
 	 * @param {String} text
 	 */
 	function sendText(text) {
-		var previewArea = document.getElementById('content_preview_area'),
+		var previewArea = gui.get_content_preview_area(),
 			textInput = document.getElementById('text_input'),
 			elem = document.createElement('pre'),
 			width = (textInput.clientWidth + 1),
-			height = (textInput.clientHeight + 1),
-			textData = "";
+			height = (textInput.clientHeight + 1);
 		
-		if (text) {
-			textData = text;
-		} else {
-			textData = textInput.value;
-			textInput.value = "";
+		if (!text) {
+			text = "";
 		}
 		elem.style.position = "absolute";
 		elem.style.top = "0px";
 		elem.style.left = "0px";
-		elem.innerHTML = textData;
+		elem.innerHTML = text;
 		previewArea.appendChild(elem);
 		
 		// calculate width, height
 		width = elem.offsetWidth / vscreen.getWholeScale();
 		height = elem.offsetHeight / vscreen.getWholeScale();
-		/*
-		if (width > vscreen.getWhole().orgW) {
-			width = vscreen.getWhole().orgW;
-			elem.style.overflow = "auto";
-		}
-		if (height > vscreen.getWhole().orgH) {
-			height = vscreen.getWhole().orgH;
-			elem.style.overflow = "auto";
-		}
-		*/
 		previewArea.removeChild(elem);
 
 		currentContent = elem;
-		addContent({type : "text", posx : 0, posy : 0, width : width, height : height}, textData);
-	}
-	
-	/**
-	 * URLデータ送信
-	 * @method sendURL
-	 */
-	function sendURL() {
-		console.log("sendurl");
-		var previewArea = document.getElementById('content_preview_area'),
-			urlInput = document.getElementById('url_input'),
-			img = document.createElement('img');
-
-		console.log(urlInput.value);
-		urlInput.value = urlInput.value.split(' ').join('');
-		if (urlInput.value.indexOf("http") < 0) {
-			return;
-		}
-		
-		addContent({type : "url"}, urlInput.value);
-		urlInput.value = '';
-	}
-	
-	/**
-	 * 画像データ送信
-	 * @method sendImage
-	 * @param {BLOB} imagebinary
-	 * @param {String} width
-	 * @param {String} height
-	 */
-	function sendImage(imagebinary, width, height) {
-		var metaData = {type : "image", posx : 0, posy : 0, width : width, height: height};
-		console.log("sendImage");
-		addContent(metaData, imagebinary);
-	}
-	
-	/**
-	 * 画像ファイルFileOpenハンドラ
-	 * @method openImage
-	 * @param {Object} evt FileOpenイベント
-	 */
-	function openImage(evt) {
-		var files = evt.target.files,
-			file,
-			i,
-			fileReader = new FileReader(),
-			buffer,
-			blob;
-
-		fileReader.onloadend = function (e) {
-			var data = e.target.result,
-				img;
-			if (data) {
-				img = document.createElement('img');
-				buffer = new Uint8Array(e.target.result);
-				blob = new Blob([buffer], {type: "image/jpeg"});
-				img.src = URL.createObjectURL(blob);
-				img.style.position = "absolute";
-				img.style.left = "0px";
-				img.style.right = "0px";
-				img.onload = function () {
-					img.style.width = img.naturalWidth + "px";
-					img.style.height = img.naturalHeight + "px";
-					sendImage(e.target.result, img.naturalWidth, img.naturalHeight);
-				};
-			}
-		};
-		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
-			if (file.type.match('image.*')) {
-				fileReader.readAsArrayBuffer(file);
-			}
-		}
-	}
-	
-	/**
-	 * テキストファイルFileOpenハンドラ
-	 * @method openText
-	 * @param {Object} evt FileOpenイベント
-	 */
-	function openText(evt) {
-		var files = evt.target.files,
-			file,
-			i,
-			fileReader = new FileReader();
-		
-		console.log("openText");
-		fileReader.onloadend = function (e) {
-			var data = e.target.result;
-			//console.log(data);
-			sendText(data);
-		};
-		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
-			if (file.type.match('text.*')) {
-				fileReader.readAsText(file);
-			}
-		}
-	}
-	
-	/**
-	 * 画像イメージ差し替えFileOpenハンドラ
-	 * @method replaceImage
-	 * @param {Object} evt FileOpenイベント
-	 */
-	function replaceImage(evt) {
-		var files = evt.target.files,
-			file,
-			i,
-			fileReader = new FileReader(),
-			id = document.getElementById('update_content_id').innerHTML,
-			previewArea = document.getElementById('content_preview_area'),
-			elem;
-
-		fileReader.onloadend = function (e) {
-			if (e.target.result) {
-				console.log("update_content_id", id);
-				elem = document.getElementById(id);
-				if (elem) {
-					previewArea.removeChild(elem);
-				}
-				updateContent({type : "image", id : id}, e.target.result);
-			}
-		};
-		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
-			if (file.type.match('image.*')) {
-				fileReader.readAsArrayBuffer(file);
-			}
-		}
+		addContent({type : "text", posx : 0, posy : 0, width : width, height : height}, text);
 	}
 	
 	/**
@@ -1553,7 +1022,7 @@
 			split_wholes = vscreen.getSplitWholes(),
 			s,
 			wholeElem,
-			previewArea = document.getElementById('display_preview_area'),
+			previewArea = gui.get_display_preview_area(),
 			screenElem;
 		
 		if (windowData) {
@@ -1604,7 +1073,7 @@
 	updateScreen = function (windowData) {
 		var whole = vscreen.getWhole(),
 			splitCount = vscreen.getSplitCount(),
-			previewArea = document.getElementById('display_preview_area'),
+			previewArea = gui.get_display_preview_area(),
 			screens = previewArea.getElementsByClassName('screen'),
 			scale = vscreen.getWholeScale(),
 			i,
@@ -1622,8 +1091,9 @@
 			}
 		} else {
 			// recreate all screens
-			assignVirtualDisplayProperty();
-			assignViewSetting();
+			gui.assign_virtual_display_property(vscreen.getWhole(), vscreen.getSplitCount());
+			gui.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
+			manipulator.removeManipulator();
 			for (i = screens.length - 1; i >= 0; i = i - 1) {
 				previewArea.removeChild(screens.item(i));
 			}
@@ -1643,60 +1113,6 @@
 		}
 		addScreenRect(windowData);
 		//changeWholeSplit(wholeSplitX.value, this.value);
-	};
-	
-	/**
-	 * PropertyのDisplayパラメータ更新ハンドル
-	 * @method changeDisplayValue
-	 */
-	changeDisplayValue = function () {
-		var whole = vscreen.getWhole(),
-			wholeWidth = document.getElementById('whole_width'),
-			wholeHeight = document.getElementById('whole_height'),
-			wholeSplitX = document.getElementById('whole_split_x'),
-			wholeSplitY = document.getElementById('whole_split_y'),
-			scale_current = document.getElementById('scale_dropdown_current'),
-			w,
-			h,
-			s = parseFloat(scale_current.innerHTML),
-			ix = parseInt(wholeSplitX.value, 10),
-			iy = parseInt(wholeSplitY.value, 10),
-			cx = window.innerWidth / 2,
-			cy = window.innerHeight / 2;
-
-		if (!wholeWidth || !whole.hasOwnProperty('w')) {
-			w = initialWholeWidth;
-		} else {
-			w = parseInt(wholeWidth.value, 10);
-			if (w <= 1) {
-				wholeWidth.value = 100;
-				w = 100;
-			}
-		}
-		if (!wholeHeight || !whole.hasOwnProperty('h')) {
-			h = initialWholeHeight;
-		} else {
-			h = parseInt(wholeHeight.value, 10);
-			if (h <= 1) {
-				wholeHeight.value = 100;
-				h = 100;
-			}
-		}
-		
-		if (s <= 0) {
-			s = 0.1;
-			scale_current.innerHTML = 0.1;
-		}
-		console.log("changeDisplayValue", w, h, s);
-		if (w && h && s) {
-			vscreen.assignWhole(w, h, cx, cy, s);
-		}
-		if (ix && iy) {
-			vscreen.splitWhole(ix, iy);
-		}
-		updateWindowData();
-		updateScreen();
-		changeWholeSplit(ix, iy, true);
 	};
 	
 	/**
@@ -1733,7 +1149,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContentToView(metaData, contentData) {
-		var previewArea = document.getElementById('content_preview_area'),
+		var previewArea = gui.get_content_preview_area(),
 			elem,
 			tagName,
 			blob,
@@ -1802,7 +1218,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContentToList(metaData, contentData) {
-		var contentArea = document.getElementById('content_area'),
+		var contentArea = gui.get_content_area(),
 			contentElem,
 			divElem,
 			tagName,
@@ -1820,8 +1236,8 @@
 		tagName = getTagName(metaData.type);
 		classname = getClassName(metaData.type);
 		
-		if (document.getElementById(onlistID)) {
-			divElem = document.getElementById(onlistID);
+		if (gui.get_list_elem(metaData.id)) {
+			divElem = gui.get_list_elem(metaData.id);
 			contentElem = divElem.childNodes[0];
 		}
 		
@@ -1890,7 +1306,7 @@
 	 * コンテンツロード完了まで表示する枠を作る.
 	 */
 	function createBoundingBox(metaData) {
-		var previewArea = document.getElementById('content_preview_area'),
+		var previewArea = gui.get_content_preview_area(),
 			tagName = 'div',
 			elem = document.createElement(tagName);
 		
@@ -1945,11 +1361,11 @@
 	 */
 	function importWindowToList(windowData) {
 		console.log("importWindowToList", windowData);
-		var displayArea = document.getElementById('display_area'),
+		var displayArea = gui.get_display_area(),
 			divElem,
 			onlistID = "onlist:" + windowData.id;
 		
-		divElem = document.getElementById(onlistID);
+		divElem = gui.get_list_elem(windowData.id);
 		if (divElem) { return; }
 		
 		divElem = document.createElement("div");
@@ -1974,9 +1390,9 @@
 	 * @method addWholeWindowToList
 	 */
 	function addWholeWindowToList() {
-		var displayArea = document.getElementById('display_area'),
+		var displayArea = gui.get_display_area(),
 			divElem = document.createElement("div"),
-			onlistID = "onlist:" + "whole_window";
+			onlistID = wholeWindowListID;
 		
 		divElem.innerHTML = "Virtual Display";
 		divElem.id = onlistID;
@@ -1999,7 +1415,7 @@
 	 * @method clearWindowList
 	 */
 	function clearWindowList() {
-		var displayArea = document.getElementById('display_area');
+		var displayArea = gui.get_display_area();
 		displayArea.innerHTML = "";
 	}
 	
@@ -2013,314 +1429,7 @@
 		importWindowToList(windowData);
 	}
 	
-	/**
-	 * コンテンツ追加ポップアップの初期化
-	 * @method initAddContentArea
-	 * @param {Function} bottomfunc
-	 */
-	function initAddContentArea(bottomfunc) {
-		var textSendButton = document.getElementById('text_send_button'),
-			urlSendButton = document.getElementById('url_send_button'),
-			imageFileInput = document.getElementById('image_file_input'),
-			textFileInput = document.getElementById('text_file_input'),
-			updateImageInput = document.getElementById('update_image_input');
-		
-		urlSendButton.onclick = sendURL;
-		updateImageInput.addEventListener('change', function (evt) {
-			replaceImage(evt);
-			updateImageInput.value = "";
-			bottomfunc(false);
-		}, false);
-		imageFileInput.addEventListener('change', function (evt) {
-			openImage(evt);
-			imageFileInput.value = "";
-			bottomfunc(false);
-		}, false);
-		textFileInput.addEventListener('change', function (evt) {
-			openText(evt);
-			textFileInput.value = "";
-			bottomfunc(false);
-		}, false);
-		textSendButton.onclick = function (evt) {
-			sendText(null);
-			bottomfunc(false);
-		};
-	}
-	
-	/**
-	 * ビュー領域初期化。スケーリング表示、スナップ設定などのelementの初期化を行う。
-	 * @method initViewSettingArea
-	 */
-	function initViewSettingArea(rightfunc) {
-		var dropDownCurrent = document.getElementById('snap_dropdown_current'),
-			dropdownMenu1 = document.getElementById('dropdownMenu1'),
-			dropdownMenu2 = document.getElementById('dropdownMenu2'),
-			free = document.getElementById('dropdown_item1'),
-			display = document.getElementById('dropdown_item2'),
-			grid = document.getElementById('dropdown_item3'),
-			displaySettingItem = document.getElementById('virtual_display_setting'),
-			i;
-		
-		/*
-		dropdownMenu1.onmousedown = function () {
-			rightfunc(false);
-		};
-		dropdownMenu2.onmousedown = function () {
-			rightfunc(false);
-		};
-		*/
-	
-		free.onclick = function () {
-			dropDownCurrent.innerHTML = this.innerHTML;
-			console.log("free mode");
-			snapSetting = 'free';
-			saveCookie();
-		};
-
-		display.onclick = function () {
-			dropDownCurrent.innerHTML = this.innerHTML;
-			console.log("display mode");
-			snapSetting = 'display';
-			saveCookie();
-		};
-		
-		grid.onclick = function () {
-			dropDownCurrent.innerHTML = this.innerHTML;
-			console.log("grid mode");
-			snapSetting = 'grid';
-			saveCookie();
-		};
-
-		displaySettingItem.onclick = function () {
-			unselect();
-			select(wholeWindowListID);
-			rightfunc(true);
-		};
-		
-		addScaleDropdown('display_scale_1', 0.1);
-		addScaleDropdown('display_scale_2', 0.2);
-		addScaleDropdown('display_scale_3', 0.3);
-		addScaleDropdown('display_scale_4', 0.4);
-		addScaleDropdown('display_scale_5', 0.5);
-		addScaleDropdown('display_scale_6', 0.6);
-		addScaleDropdown('display_scale_7', 0.7);
-		addScaleDropdown('display_scale_8', 0.8);
-		addScaleDropdown('display_scale_9', 0.9);
-		addScaleDropdown('display_scale_10', 1.0);
-		//addScaleDropdown('display_scale_11', "custum");
-	}
-	
-	/**
-	 * 左コンテンツタブ初期化
-	 * @method initContentArea
-	 * @param {Function} bottomfunc addボタンコールバック
-	 */
-	function initContentArea(bottomfunc) {
-		var addButton = document.getElementById('content_add_button'),
-			contentDeleteButton = document.getElementById('content_delete_button');
-		
-		addButton.onclick = function () {
-			bottomfunc(true);
-		};
-		contentDeleteButton.onclick = deleteContent;
-	}
-	
-	/**
-	 * ディスプレイタブの初期化
-	 * @method initDisplayArea
-	 */
-	function initDisplayArea() {
-		var displayDeleteButton = document.getElementById('display_delete_button'),
-			displayDeleteAllButton = document.getElementById('display_delete_all_button');
-		displayDeleteButton.onclick = deleteDisplay;
-		displayDeleteAllButton.onclick = deleteDisplayAll;
-	}
-	
-	
-	/**
-	 * 左メニュー領域[ディスプレイタブ、コンテンツタブ]の初期化
-	 * @method initLeftArea
-	 * @param {Function} bottomfunc addボタンコールバック
-	 */
-	function initLeftArea(bottomfunc) {
-		var displayArea = document.getElementById('display_area'),
-			displayTabTitle = document.getElementById('display_tab_title'),
-			displayTabLink = document.getElementById('display_tab_link'),
-			displayButtonArea = document.getElementById('display_button_area'),
-			contentArea = document.getElementById('content_area'),
-			contentButtonArea = document.getElementById('content_button_area'),
-			contentTabTitle = document.getElementById('content_tab_title'),
-			contentTabLink = document.getElementById('content_tab_link'),
-			showIDButton = document.getElementById('show_display_id_button'),
-			displayPreviewArea = document.getElementById('display_preview_area'),
-			contentPreviewArea = document.getElementById('content_preview_area');
-		
-		showIDButton.onclick = function () {
-			var id = document.getElementById('content_id').innerHTML;
-			console.log("ShowWindowID:" + id);
-			if (id) {
-				if (metaDataDict[id].type === windowType) {
-					connector.send('ShowWindowID', {id : id});
-					lastDraggingID = id;
-					document.getElementById("onlist:" + id).style.borderColor = windowSelectColor;
-				} else {
-					connector.send('ShowWindowID', {type : 'all', id : ""});
-				}
-			} else {
-				connector.send('ShowWindowID', {type : 'all', id : ""});
-			}
-		};
-
-		displayTabTitle.onclick = function () {
-			displayArea.style.display = "block";
-			contentArea.style.display = "none";
-			contentButtonArea.style.display = "none";
-			displayButtonArea.style.display = "block";
-			displayTabTitle.className = "display_tab_title active";
-			contentTabTitle.className = "content_tab_title";
-			displayTabLink.className = "active";
-			contentTabLink.className = "";
-			displayPreviewArea.style.opacity = 1.0;
-			contentPreviewArea.style.opacity = 0.3;
-			displayPreviewArea.style.zIndex = 10;
-			contentPreviewArea.style.zIndex = -1000;
-		};
-
-		contentTabTitle.onclick = function () {
-			displayArea.style.display = "none";
-			contentArea.style.display = "block";
-			contentButtonArea.style.display = "block";
-			displayButtonArea.style.display = "none";
-			displayTabTitle.className = "display_tab_title";
-			contentTabTitle.className = "content_tab_title active";
-			contentTabLink.className = "active";
-			displayTabLink.className = "";
-			displayPreviewArea.style.opacity = 0.3;
-			contentPreviewArea.style.opacity = 1.0;
-			displayPreviewArea.style.zIndex = -1000;
-			contentPreviewArea.style.zIndex = 10;
-		};
-		initContentArea(bottomfunc);
-		initDisplayArea();
-	}
-	
-	/**
-	 * コントローラ初期化
-	 * @method init
-	 */
-	function init() {
-		var timer = null,
-			scale,
-			snap,
-			contentstab = window.animtab.create('left', {
-				'leftTab' : { min : '0px', max : 'auto' }
-			}, {
-				'leftArea' : { min : '0px', max : '250px' }
-			}, 'Contents'),
-			/*bottomfunc = window.animtab.create('bottom',
-				{ 'bottomTab' : { min : '0px', max : 'auto' }},
-				{ 'bottomArea' : { min : '0px', max : '400px' }}, 'AddContent'),*/
-			bottomfunc = function (show) {
-				if (show) {
-					$show($('overall_block'));
-					$show($('bottomArea'));
-					$show($('bottomTab'));
-				} else {
-					$hide($('overall_block'));
-					$hide($('bottomArea'));
-					$hide($('bottomTab'));
-				}
-			},
-			rightfunc = window.animtab.create('right',
-				{ 'rightTab' : { min : '0px', max : 'auto' }},
-				{ 'rightArea' : { min : '0px', max : '250px' }}, 'Property');
-		
-		connector = window.io_connector;
-		
-		scale = parseFloat(getCookie('display_scale'));
-		console.log("cookie - display_scale:" + scale);
-		snap = getCookie('snap_setting');
-		console.log("cookie - snap_setting:" + snap);
-		if (!isNaN(scale) && scale > 0) {
-			vscreen.setWholeScale(scale, true);
-		}
-		if (snap) {
-			if (snap === 'display') {
-				snapSetting = 'display';
-			}
-		}
-		
-		manipulator.setDraggingOffsetFunc(draggingOffsetFunc);
-		manipulator.setCloseFunc(closeFunc);
-		bottomfunc(false);
-		
-		initPropertyArea(wholeWindowListID, "whole_window");
-		initLeftArea(bottomfunc);
-		initAddContentArea(bottomfunc);
-		initViewSettingArea(rightfunc);
-		
-		// resize event
-		window.onresize = function () {
-			if (timer) {
-				clearTimeout(timer);
-			}
-			timer = setTimeout(function () {
-				var whole = vscreen.getWhole(),
-					cx = window.innerWidth / 2,
-					cy = window.innerHeight / 2;
-				
-				vscreen.assignWhole(whole.orgW, whole.orgH, cx, cy, vscreen.getWholeScale());
-				manipulator.removeManipulator();
-				updateScreen();
-			}, 200);
-		};
-		
-	
-		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
-			// erase last border
-			if (lastDraggingID && !manipulator.getDraggingManip()) {
-				unselect();
-			}
-		});
-
-		document.getElementById('display_preview_area').addEventListener("mousedown", function (evt) {
-			// erase last border
-			if (lastDraggingID && !manipulator.getDraggingManip()) {
-				unselect();
-			}
-		});
-		
-		document.getElementById('content_area').addEventListener("mousedown", function (evt) {
-			// erase last border
-			if (lastDraggingID && !manipulator.getDraggingManip()) {
-				unselect();
-			}
-		});
-		document.getElementById('overall_block').addEventListener('click', function (evt) {
-			bottomfunc(false);
-		});
-		
-		// for ie, safari
-		document.getElementById('dropdown_item1').addEventListener('mousedown', function (evt) {
-			document.getElementById('dropdown_item1').click();
-			document.getElementById('dropdown1').className = "dropdown1";
-		});
-		// for ie, safari
-		document.getElementById('dropdown_item2').addEventListener('mousedown', function (evt) {
-			document.getElementById('dropdown_item2').click();
-			document.getElementById('dropdown1').className = "dropdown2";
-		});
-		// for ie, safari
-		document.getElementById('dropdown_item3').addEventListener('mousedown', function (evt) {
-			document.getElementById('dropdown_item3').click();
-			document.getElementById('dropdown1').className = "dropdown3";
-		});
-		
-		updateScreen();
-		vscreen.dump();
-	}
-	
-	///------------------------------------------------------------------------
+	///-------------------------------------------------------------------------------------------------------
 	
 	/// meta data updated
 	doneGetMetaData = function (err, reply) {
@@ -2333,7 +1442,7 @@
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
 		if (draggingID === json.id || (manipulator.getDraggingManip() && lastDraggingID === json.id)) {
-			assignContentProperty(json);
+			gui.assign_content_property(json);
 		}
 		
 		elem = document.getElementById(metaData.id);
@@ -2375,23 +1484,21 @@
 	doneDeleteContent = function (err, reply) {
 		console.log("doneDeleteContent");
 		var json = reply,
-			contentArea = document.getElementById('content_area'),
-			previewArea = document.getElementById('content_preview_area'),
-			contentID = document.getElementById('content_id'),
+			contentArea = gui.get_content_area(),
+			previewArea = gui.get_content_preview_area(),
 			deleted = document.getElementById(json.id);
 		previewArea.removeChild(deleted);
-		if (document.getElementById("onlist:" + json.id)) {
-			contentArea.removeChild(document.getElementById("onlist:" + json.id));
+		if (gui.get_list_elem(json.id)) {
+			contentArea.removeChild(gui.get_list_elem(json.id));
 		}
-		contentID.innerHTML = "No Content Selected.";
+		gui.set_update_content_id("No Content Selected.");
 	};
 	
 	doneUpdateContent = function (err, reply) {
 		console.log("doneUpdateContent");
-		var updateContentID = document.getElementById('update_content_id');
 
-		updateContentID.innerHTML = "No Content Selected.";
-		document.getElementById('update_image_input').disabled = true;
+		gui.set_update_content_id("No Content Selected.");
+		gui.enable_update_image_button(false);
 	};
 	
 	doneAddContent = function (err, reply) {
@@ -2420,7 +1527,7 @@
 			elem;
 		importWindow(windowData);
 		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastDraggingID === windowData.id)) {
-			assignContentProperty(windowData);
+			gui.assign_content_property(windowData);
 		}
 		if (lastDraggingID) {
 			elem = document.getElementById(lastDraggingID);
@@ -2452,11 +1559,244 @@
 			updateScreen();
 		} else {
 			// running first time
-			changeDisplayValue();
+			gui.update_display_value();
 			updateWindowData();
 		}
 	};
 	
+	///-------------------------------------------------------------------------------------------------------
+	/**
+	 * テキスト送信.
+	 */
+	gui.on_textsendbutton_clicked = function (evt) {
+		var textInput = document.getElementById('text_input'),
+			text = textInput.value;
+		
+		textInput.value = "";
+		sendText(text);
+	};
+	
+	/**
+	 * URLデータ送信
+	 * @method on_sendbuton_clicked
+	 */
+	gui.on_urlsendbuton_clicked = function () {
+		console.log("sendurl");
+		var previewArea = gui.get_content_preview_area(),
+			urlInput = document.getElementById('url_input');
+
+		console.log(previewArea, urlInput.value);
+		urlInput.value = urlInput.value.split(' ').join('');
+		if (urlInput.value.indexOf("http") < 0) {
+			return;
+		}
+		
+		addContent({type : "url"}, urlInput.value);
+		urlInput.value = '';
+	};
+	
+	/**
+	 * 画像ファイルFileOpenハンドラ
+	 * @method on_imagefileinput_changed
+	 * @param {Object} evt FileOpenイベント
+	 */
+	gui.on_imagefileinput_changed = function (evt) {
+		var files = evt.target.files,
+			file,
+			i,
+			fileReader = new FileReader(),
+			buffer,
+			blob;
+
+		fileReader.onloadend = function (e) {
+			var data = e.target.result,
+				img;
+			if (data) {
+				img = document.createElement('img');
+				buffer = new Uint8Array(e.target.result);
+				blob = new Blob([buffer], {type: "image/jpeg"});
+				img.src = URL.createObjectURL(blob);
+				img.style.position = "absolute";
+				img.style.left = "0px";
+				img.style.right = "0px";
+				img.onload = function () {
+					var metaData = {type : "image", posx : 0, posy : 0, width : img.naturalWidth, height: img.naturalHeight};
+					img.style.width = img.naturalWidth + "px";
+					img.style.height = img.naturalHeight + "px";
+					console.log("sendImage");
+					addContent(metaData, e.target.result);
+				};
+			}
+		};
+		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+			if (file.type.match('image.*')) {
+				fileReader.readAsArrayBuffer(file);
+			}
+		}
+	};
+	
+	/**
+	 * テキストファイルFileOpenハンドラ
+	 * @method openText
+	 * @param {Object} evt FileOpenイベント
+	 */
+	gui.on_textfileinput_changed = function (evt) {
+		var files = evt.target.files,
+			file,
+			i,
+			fileReader = new FileReader();
+		
+		console.log("openText");
+		fileReader.onloadend = function (e) {
+			var data = e.target.result;
+			//console.log(data);
+			sendText(data);
+		};
+		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+			if (file.type.match('text.*')) {
+				fileReader.readAsText(file);
+			}
+		}
+	};
+	
+	/**
+	 * 画像イメージ差し替えFileOpenハンドラ
+	 * @method on_updateimageinput_changed
+	 * @param {Object} evt FileOpenイベント
+	 */
+	gui.on_updateimageinput_changed = function (evt) {
+		var files = evt.target.files,
+			file,
+			i,
+			fileReader = new FileReader(),
+			id = gui.get_update_content_id(),
+			previewArea = gui.get_content_preview_area(),
+			elem;
+
+		fileReader.onloadend = function (e) {
+			if (e.target.result) {
+				console.log("update_content_id", id);
+				elem = document.getElementById(id);
+				if (elem) {
+					previewArea.removeChild(elem);
+				}
+				updateContent({type : "image", id : id}, e.target.result);
+			}
+		};
+		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+			if (file.type.match('image.*')) {
+				fileReader.readAsArrayBuffer(file);
+			}
+		}
+	};
+
+	/**
+	 * ディスプレイスケールが変更された.
+	 */
+	gui.on_display_scale_changed = function (displayScale) {
+		vscreen.setWholeScale(displayScale, true);
+		saveCookie();
+		updateScreen();
+	};
+
+	/**
+	 * コンテンツの削除.
+	 * @method deleteContent
+	 */
+	gui.on_contentdeletebutton_clicked = function (evt) {
+		if (getSelectedID()) {
+			connector.send('DeleteContent', {id : getSelectedID()}, doneDeleteContent);
+		}
+	};
+	
+	/**
+	 * PropertyのDisplayパラメータ更新ハンドル
+	 * @method on_display_value_changed
+	 */
+	gui.on_display_value_changed = function () {
+		var whole = vscreen.getWhole(),
+			wholeWidth = document.getElementById('whole_width'),
+			wholeHeight = document.getElementById('whole_height'),
+			wholeSplitX = document.getElementById('whole_split_x'),
+			wholeSplitY = document.getElementById('whole_split_y'),
+			scale_current = document.getElementById('scale_dropdown_current'),
+			w,
+			h,
+			s = parseFloat(scale_current.innerHTML),
+			ix = parseInt(wholeSplitX.value, 10),
+			iy = parseInt(wholeSplitY.value, 10),
+			cx = window.innerWidth / 2,
+			cy = window.innerHeight / 2;
+
+		if (!wholeWidth || !whole.hasOwnProperty('w')) {
+			w = initialWholeWidth;
+		} else {
+			w = parseInt(wholeWidth.value, 10);
+			if (w <= 1) {
+				wholeWidth.value = 100;
+				w = 100;
+			}
+		}
+		if (!wholeHeight || !whole.hasOwnProperty('h')) {
+			h = initialWholeHeight;
+		} else {
+			h = parseInt(wholeHeight.value, 10);
+			if (h <= 1) {
+				wholeHeight.value = 100;
+				h = 100;
+			}
+		}
+		
+		if (s <= 0) {
+			s = 0.1;
+			scale_current.innerHTML = 0.1;
+		}
+		console.log("changeDisplayValue", w, h, s);
+		if (w && h && s) {
+			vscreen.assignWhole(w, h, cx, cy, s);
+		}
+		if (ix && iy) {
+			vscreen.splitWhole(ix, iy);
+		}
+		updateWindowData();
+		updateScreen();
+		gui.update_whole_split(ix, iy, true);
+	};
+	
+	/**
+	 * スナップ設定のドロップダウンがクリックされた.
+	 */
+	gui.on_snapdropdown_clicked = function (snapType) {
+		snapSetting = snapType;
+		saveCookie();
+	};
+	
+	/**
+	 * Virtual Dsiplay Settingボタンがクリックされた.
+	 */
+	gui.on_virtualdisplaysetting_clicked = function () {
+		unselect();
+		select(wholeWindowListID);
+	};
+	
+	/**
+	 * 選択中のコンテンツのzIndexを変更する
+	 * @method changeZIndex
+	 * @param {String} index 設定するzIndex
+	 */
+	gui.on_change_zindex = function (index) {
+		var elem = gui.get_selected_elem(),
+			metaData;
+		if (elem) {
+			metaData = metaDataDict[elem.id];
+			elem.style.zIndex = index;
+			metaData.zIndex = index;
+			updateMetaData(metaData);
+			console.log("change zindex:" + index);
+		}
+	};
+	
+	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateMetaData', function (metaData) {
 		console.log('UpdateMetaData', metaData.id);
@@ -2480,7 +1820,7 @@
 	connector.on('UpdateContent', function (metaData) {
 		console.log('UpdateContent', metaData);
 		var id = metaData.id,
-			previewArea = document.getElementById('content_preview_area');
+			previewArea = gui.get_content_preview_area();
 		
 		if (id) {
 			connector.send('GetMetaData', metaData, function (err, json) {
@@ -2510,7 +1850,81 @@
 		updateScreen();
 	});
 	
+	///-------------------------------------------------------------------------------------------------------
+	/**
+	 * コントローラ初期化
+	 * @method init
+	 */
+	function init() {
+		var timer = null,
+			scale,
+			snap;
+			
+		scale = parseFloat(getCookie('display_scale'));
+		console.log("cookie - display_scale:" + scale);
+		snap = getCookie('snap_setting');
+		console.log("cookie - snap_setting:" + snap);
+		if (!isNaN(scale) && scale > 0) {
+			vscreen.setWholeScale(scale, true);
+		}
+		if (snap) {
+			if (snap === 'display') {
+				snapSetting = 'display';
+			}
+		}
+		
+		gui.on_rect_changed = function () {
+			changeRect(this.id, parseInt(this.value, 10));
+		};
+		
+		gui.on_mousedown_content_preview_area = function () {
+			// erase last border
+			if (lastDraggingID && !manipulator.getDraggingManip()) {
+				unselect();
+			}
+		};
+		
+		gui.on_mousedown_display_preview_area = function () {
+			// erase last border
+			if (lastDraggingID && !manipulator.getDraggingManip()) {
+				unselect();
+			}
+		};
+		
+		gui.on_mousedown_content_area = function () {
+			// erase last border
+			if (lastDraggingID && !manipulator.getDraggingManip()) {
+				unselect();
+			}
+		};
+		
+		gui.init();
+		connector = window.io_connector;
+		
+		manipulator.setDraggingOffsetFunc(draggingOffsetFunc);
+		manipulator.setCloseFunc(closeFunc);
+		
+		// resize event
+		window.onresize = function () {
+			if (timer) {
+				clearTimeout(timer);
+			}
+			timer = setTimeout(function () {
+				var whole = vscreen.getWhole(),
+					cx = window.innerWidth / 2,
+					cy = window.innerHeight / 2;
+				
+				vscreen.assignWhole(whole.orgW, whole.orgH, cx, cy, vscreen.getWholeScale());
+				manipulator.removeManipulator();
+				updateScreen();
+			}, 200);
+		};
+		
+		updateScreen();
+		vscreen.dump();
+	}
+	
 	window.onload = init;
 	connector.connect();
 
-}(window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.controller_gui, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
