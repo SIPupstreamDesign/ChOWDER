@@ -1106,7 +1106,7 @@
 			if (id === wholeWindowID ||
 					(metaData && !isDisplayTabSelected() && metaData.type === windowType) ||
 					(metaData && isDisplayTabSelected() && metaData.type !== windowType)) {
-				console.log(metaData);
+				console.log("setupContent", metaData);
 				childs = otherPreviewArea.childNodes;
 
 				for (i = 0; i < childs.length; i = i + 1) {
@@ -1580,18 +1580,17 @@
 		for (s in screens) {
 			if (screens.hasOwnProperty(s)) {
 				screenElem = document.getElementById(s);
-				if (!screenElem) {
-					screenElem = document.createElement('div');
+				if (screenElem) {
+					screenElem.className = "screen";
+					screenElem.style.zIndex = -100;
+					screenElem.style.display = "block";
+					screenElem.id = s;
+					console.log("screenElemID:" + JSON.stringify(screens[s]));
+					screenElem.style.border = 'solid';
+					vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
+					previewArea.appendChild(screenElem);
+					setupWindow(screenElem, s);
 				}
-				screenElem.className = "screen";
-				screenElem.style.zIndex = -100;
-				screenElem.style.display = "block";
-				screenElem.id = s;
-				console.log("screenElemID:" + JSON.stringify(screens[s]));
-				screenElem.style.border = 'solid';
-				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
-				previewArea.appendChild(screenElem);
-				setupWindow(screenElem, s);
 			}
 		}
 		assignSplitWholes(vscreen.getSplitWholes());
@@ -1945,14 +1944,13 @@
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
 	function importWindowToList(windowData) {
+		console.log("importWindowToList", windowData);
 		var displayArea = document.getElementById('display_area'),
 			divElem,
 			onlistID = "onlist:" + windowData.id;
 		
 		divElem = document.getElementById(onlistID);
 		if (divElem) { return; }
-		
-		console.log("importWindowToList");
 		
 		divElem = document.createElement("div");
 		divElem.innerHTML = "ID:" + windowData.id;
