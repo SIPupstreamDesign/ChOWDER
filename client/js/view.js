@@ -219,7 +219,7 @@
 			mime = "image/jpeg",
 			boundElem;
 		
-		console.log("id=" + metaData.id);
+		console.log("assignMetaBinary", "id=" + metaData.id);
 
 		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && metaData.visible === "true")) {
 			tagName = getTagName(metaData.type);
@@ -278,22 +278,6 @@
 	}
 	
 	/**
-	 * 指定されたメタデータをvisibleにする
-	 * @method setVisibleWindow
-	 * @param {JSON} metaData
-	 */
-	function setVisibleWindow(metaData) {
-		if (metaData.hasOwnProperty('visible')) {
-			console.log("setVisibleWindow:", metaData);
-			if (metaData.visible === "true") {
-				document.getElementById('preview_area').style.display = "block";
-			} else {
-				document.getElementById('preview_area').style.display = "none";
-			}
-		}
-	}
-	
-	/**
 	 * VirtualDisplay更新
 	 * @method updateWindow
 	 * @param {JSON} metaData VirtualDisplayメタデータ
@@ -336,8 +320,6 @@
 			if (metaDataDict.hasOwnProperty(id)) {
 				if (document.getElementById(id)) {
 					vscreen_util.assignMetaData(document.getElementById(id), metaDataDict[id], false);
-				} else {
-					delete metaDataDict[id];
 				}
 			}
 		}
@@ -391,70 +373,72 @@
 	
 	/**
 	 * 表示非表示の更新.
-	 * @method updateVisible
+	 * @method updatePreviewAreaVisible
 	 * @param {JSON} json
 	 */
-	function assignVisible(json) {
-		var elem = document.getElementById("preview_area");
+	function updatePreviewAreaVisible(json) {
+		var previewArea = document.getElementById("preview_area"),
+			elem = document.getElementById(json.id);
+		console.log("updatePreviewAreaVisible", previewArea, elem);
+		if (previewArea) {
+			if (isVisible(json)) {
+				vscreen_util.assignMetaData(previewArea, json, false);
+				previewArea.style.display = "block";
+			} else {
+				previewArea.style.display = "none";
+			}
+		}
 		if (elem) {
 			if (isVisible(json)) {
-				console.log("isvisible");
 				vscreen_util.assignMetaData(elem, json, false);
 				elem.style.display = "block";
 			} else {
-				console.log("not isvisible");
 				elem.style.display = "none";
 			}
 		}
 	}
 
 	/**
-	 * 表示非表示の更新.
-	 * @method updateVisible
-	 * @param {JSON} json
+	 * コンテンツメタデータがウィンドウ内にあるか再計算する
+	 * @method recalculateContentVisible
 	 */
-	function updateVisible(json) {
-		var elem = document.getElementById(json.id);
-		console.log("updateVisible", elem);
-		if (elem) {
-			if (isVisible(json)) {
-				vscreen_util.assignMetaData(elem, json, false);
-				elem.style.display = "block";
-			} else {
-				elem.style.display = "none";
+	function updateContentVisible() {
+		var i;
+		for (i in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(i)) {
+				console.log(metaDataDict[i]);
+				if (metaDataDict[i].type !== 'window') {
+					doneGetMetaData(null, metaDataDict[i]);
+				}
 			}
-		} else if (isVisible(json)) {
-			// new visible content
-			update('', json.id);
 		}
-		resizeViewport(windowData);
 	}
 	
 	doneAddWindow = function (err, json) {
-		metaDataDict[json.id] = json;
-
 		console.log("doneAddWindow", json);
-		windowData = json;
-		saveCookie();
-		window.parent.document.title = "Display ID:" + json.id;
-		document.getElementById('input_id').value = json.id;
-		document.getElementById('displayid').innerHTML = "ID:" + json.id;
-		updateWindow(windowData);
-		assignVisible(windowData);
-		updateVisible(json);
+		if (!err) {
+			metaDataDict[json.id] = json;
+			windowData = json;
+			saveCookie();
+			window.parent.document.title = "Display ID:" + json.id;
+			document.getElementById('input_id').value = json.id;
+			document.getElementById('displayid').innerHTML = "ID:" + json.id;
+			updatePreviewAreaVisible(windowData);
+			resizeViewport(windowData);
+			update('all');
+		}
 	};
 	
 	doneGetWindow = function (err, json) {
-		metaDataDict[json.id] = json;
-
 		console.log("doneGetWindow", json);
-		windowData = json;
-		saveCookie();
-		console.log(windowData);
-		setVisibleWindow(windowData);
-		resizeViewport(windowData);
-		assignVisible(windowData);
-		//updateVisible(json);
+		if (!err) {
+			metaDataDict[json.id] = json;
+			windowData = json;
+			saveCookie();
+			updatePreviewAreaVisible(windowData);
+			resizeViewport(windowData);
+			updateContentVisible();
+		}
 	};
 	
 	doneGetContent = function (err, data) {
@@ -463,54 +447,53 @@
 			var metaData = data.metaData,
 				contentData = data.contentData;
 
-			//console.log("doneGetContent", metaData, contentData);
 			assignMetaBinary(metaData, contentData);
 		}
 	};
 	
 	doneGetMetaData = function (err, json) {
-		metaDataDict[json.id] = json;
-		var elem = document.getElementById(json.id),
-			isWindow = (json.type === windowType),
-			isOutside = false;
 		console.log("doneGetMetaData", json);
-		console.log("isOutside:", isOutside);
-		
-		if (isWindow) {
-			console.log(json.id, getWindowID());
-			if (json.id !== getWindowID()) {
-				return;
+		metaDataDict[json.id] = json;
+		if (!err) {
+			var elem = document.getElementById(json.id),
+				isWindow = (json.type === windowType),
+				isOutside = false;
+			console.log("isOutside:", isOutside);
+
+			if (isWindow) {
+				console.log(json.id, getWindowID());
+				if (json.id !== getWindowID()) {
+					return;
+				}
+			} else {
+				isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
 			}
-		} else {
-			isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
-		}
-		
-		
-		if (isOutside) {
-			if (elem) {
-				elem.style.display = "none";
-			}
-		} else {
-			console.log("inside", elem);
-			if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
-				if (isVisible(json)) {
-					vscreen_util.assignMetaData(elem, json, false);
-					elem.style.display = "block";
-				} else {
+
+			if (isOutside) {
+				if (elem) {
 					elem.style.display = "none";
 				}
-			} else if (isVisible(json)) {
-				// コンテンツがロードされるまで枠を表示しておく.
-				if (!elem) {
-					createBoundingBox(json);
-					// 新規コンテンツロード.
-					connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+			} else {
+				if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
+					if (isVisible(json)) {
+						vscreen_util.assignMetaData(elem, json, false);
+						elem.style.display = "block";
+					} else {
+						elem.style.display = "none";
+					}
+				} else if (isVisible(json)) {
+					// コンテンツがロードされるまで枠を表示しておく.
+					if (!elem) {
+						createBoundingBox(json);
+						// 新規コンテンツロード.
+						connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+					}
+					elem = document.getElementById(json.id);
+					vscreen_util.assignMetaData(elem, json, false);
 				}
-				elem = document.getElementById(json.id);
-				vscreen_util.assignMetaData(elem, json, false);
-			}
-			if (isWindow) {
-				resizeViewport(windowData);
+				if (isWindow) {
+					resizeViewport(windowData);
+				}
 			}
 		}
 	};
@@ -542,8 +525,10 @@
 			console.log("UpdateContent", data);
 			
 			connector.send('GetMetaData', data, function (err, json) {
-				doneGetMetaData(err, json);
-				connector.send('GetContent', json, doneGetContent);
+				if (!err) {
+					doneGetMetaData(err, json);
+					connector.send('GetContent', json, doneGetContent);
+				}
 			});
 		});
 
