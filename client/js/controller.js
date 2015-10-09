@@ -381,8 +381,9 @@
 		for (i in splitWholes) {
 			if (splitWholes.hasOwnProperty(i)) {
 				w = splitWholes[i];
-				console.log(w.id);
+				console.log(w);
 				if (!document.getElementById(w.id)) {
+					console.log("create_new_window", w);
 					screenElem = document.createElement('div');
 					screenElem.style.position = "absolute";
 					screenElem.className = "screen";
@@ -824,14 +825,18 @@
 		//console.log("splitWholes", splitWholes);
 		for (i in splitWholes) {
 			if (splitWholes.hasOwnProperty(i)) {
-				document.getElementById(splitWholes[i].id).style.background = "transparent";
+				if (document.getElementById(splitWholes[i].id)) {
+					document.getElementById(splitWholes[i].id).style.background = "transparent";
+				}
 			}
 		}
 		
 		screens = vscreen.getScreenAll();
 		for (i in screens) {
 			if (screens.hasOwnProperty(i)) {
-				document.getElementById(screens[i].id).style.background = "transparent";
+				if (document.getElementById(screens[i].id)) {
+					document.getElementById(screens[i].id).style.background = "transparent";
+				}
 			}
 		}
 	}
@@ -1037,7 +1042,7 @@
 		if (!wholeElem) {
 			wholeElem = document.createElement('span');
 		}
-		console.log("screens:" + JSON.stringify(vscreen));
+		console.log("screens:", screens);
 		wholeElem.style.border = 'solid';
 		wholeElem.style.zIndex = -1000;
 		wholeElem.className = "screen";
@@ -1049,6 +1054,12 @@
 		for (s in screens) {
 			if (screens.hasOwnProperty(s)) {
 				screenElem = document.getElementById(s);
+				if (!screenElem) {
+					if (isVisible(windowData)) {
+						screenElem = document.createElement('div');
+						screenElem.innerHTML = "ID:" + windowData.id;
+					}
+				}
 				if (screenElem) {
 					screenElem.className = "screen";
 					screenElem.style.zIndex = -100;
@@ -1080,7 +1091,7 @@
 			metaData,
 			elem;
 		
-		console.log("updateScreen", windowData);
+		console.log("updateScreen", windowData, metaDataDict);
 		if (windowData) {
 			elem = document.getElementById(windowData.id);
 			if (elem) {
@@ -1833,11 +1844,11 @@
 	});
 	
 	// windowが更新されたときにブロードキャストされてくる.
-	connector.on('UpdateWindow', function () {
-		console.log('UpdateWindow');
+	connector.on('UpdateWindow', function (metaData) {
+		console.log('UpdateWindow', metaData);
 		//updateScreen();
 		//clearWindowList();
-		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
+		connector.send('GetWindow', metaData, doneGetWindow);
 	});
 	
 	// すべての更新が必要なときにブロードキャストされてくる.

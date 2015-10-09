@@ -882,8 +882,8 @@
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
 					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateWindow);
-						io_connector.broadcast(io, Command.UpdateWindow);
+						ws_connector.broadcast(ws, Command.UpdateWindow, reply);
+						io_connector.broadcast(io, Command.UpdateWindow, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -1001,8 +1001,8 @@
 			post_updateWindow = (function (ws, io) {
 				return function (resultCallback) {
 					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateWindow);
-						io_connector.broadcast(io, Command.UpdateWindow);
+						ws_connector.broadcast(ws, Command.UpdateWindow, reply);
+						io_connector.broadcast(io, Command.UpdateWindow, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
