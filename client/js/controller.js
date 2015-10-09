@@ -360,7 +360,11 @@
 		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
 			windowData.orgWidth = initialWholeHeight;
 		}
-		connector.send('UpdateVirtualDisplay', windowData);
+		connector.send('UpdateVirtualDisplay', windowData, function (err, res) {
+			if (!err) {
+				doneGetVirtualDisplay(null, res);
+			}
+		});
 	}
 	
 	
@@ -382,7 +386,8 @@
 			if (splitWholes.hasOwnProperty(i)) {
 				w = splitWholes[i];
 				console.log(w);
-				if (!document.getElementById(w.id)) {
+				screenElem = document.getElementById(w.id);
+				if (!screenElem) {
 					console.log("create_new_window", w);
 					screenElem = document.createElement('div');
 					screenElem.style.position = "absolute";
@@ -392,41 +397,44 @@
 					screenElem.style.borderWidth = '1px';
 					screenElem.style.borderColor = "gray";
 					screenElem.style.zIndex = -100000;
-					vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(w));
 					previewArea.appendChild(screenElem);
 					setupWindow(screenElem, w.id);
 				}
+				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(w));
 			}
 		}
 	}
 	
 	/**
 	 * VirualDisplay分割数変更
-	 * @method changeWholeSplit
+	 * @method on_change_whole_split
 	 * @param {String} x x軸分割数
 	 * @param {String} y y軸分割数
 	 * @param {bool} withoutUpdate 設定後各Displayの更新をするかのフラグ
 	 */
-	function changeWholeSplit(x, y, withoutUpdate) {
+	gui.on_change_whole_split = function (x, y, withoutUpdate) {
 		var ix = parseInt(x, 10),
 			iy = parseInt(y, 10),
 			splitWholes,
 			elem,
 			i,
+			wholes = vscreen.getSplitWholes(),
 			previewArea = gui.get_display_preview_area();
 		
 		if (isNaN(ix) || isNaN(iy)) {
 			return;
 		}
 		
-		for (i = previewArea.childNodes.length - 1; i >= 0; i = i - 1) {
-			elem = previewArea.childNodes[i];
-			if (elem.hasOwnProperty('id')) {
-				if (elem.id.indexOf(wholeSubWindowID) >= 0) {
+		for (i in wholes) {
+			if (wholes.hasOwnProperty(i)) {
+				elem = document.getElementById(i);
+				if (elem) {
+					console.log("removeChildaa");
 					previewArea.removeChild(elem);
 				}
 			}
 		}
+		
 		vscreen.clearSplitWholes();
 		vscreen.splitWhole(ix, iy);
 		assignSplitWholes(vscreen.getSplitWholes());
@@ -515,6 +523,7 @@
 			initialVisible,
 			mime = null;
 		
+		console.log("selectid", id);
 		if (metaDataDict.hasOwnProperty(id)) {
 			if (metaDataDict[id].hasOwnProperty('mime')) {
 				mime = metaDataDict[id].mime;
@@ -1019,95 +1028,50 @@
 	/**
 	 * VirualDisplayをVirtualScreenに設定
 	 * @method addScreenRect
-	 * @param {JSON} windowData ウィンドウデータ
+	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが再生成される.
 	 */
 	function addScreenRect(windowData) {
-		var whole = vscreen.getWhole(),
-			screens = vscreen.getScreenAll(),
-			split_wholes = vscreen.getSplitWholes(),
-			s,
-			wholeElem,
-			previewArea = gui.get_display_preview_area(),
-			screenElem;
-		
-		if (windowData) {
-			screenElem = document.getElementById(windowData.id);
-			if (screenElem) {
-				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
-				return;
-			}
-		}
-
-		wholeElem = document.getElementById(wholeWindowID);
-		if (!wholeElem) {
-			wholeElem = document.createElement('span');
-		}
-		console.log("screens:", screens);
-		wholeElem.style.border = 'solid';
-		wholeElem.style.zIndex = -1000;
-		wholeElem.className = "screen";
-		wholeElem.id = wholeWindowID;
-		wholeElem.style.color = "black";
-		setupWindow(wholeElem, wholeElem.id);
-		vscreen_util.assignScreenRect(wholeElem, whole);
-		previewArea.appendChild(wholeElem);
-		for (s in screens) {
-			if (screens.hasOwnProperty(s)) {
-				screenElem = document.getElementById(s);
-				if (!screenElem) {
-					if (isVisible(windowData)) {
-						screenElem = document.createElement('div');
-						screenElem.innerHTML = "ID:" + windowData.id;
-					}
-				}
-				if (screenElem) {
-					screenElem.className = "screen";
-					screenElem.style.zIndex = -100;
-					screenElem.style.display = "block";
-					screenElem.id = s;
-					console.log("screenElemID:" + JSON.stringify(screens[s]));
-					screenElem.style.border = 'solid';
-					vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
-					previewArea.appendChild(screenElem);
-					setupWindow(screenElem, s);
-				}
-			}
-		}
-		assignSplitWholes(vscreen.getSplitWholes());
 	}
 	
 	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
-	 * @param {JSON} windowData ウィンドウデータ
+	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが更新される.
 	 */
 	updateScreen = function (windowData) {
-		var whole = vscreen.getWhole(),
-			splitCount = vscreen.getSplitCount(),
+		var i,
+			whole = vscreen.getWhole(),
+			screens = vscreen.getScreenAll(),
+			split_wholes = vscreen.getSplitWholes(),
+			s,
+			wholeElem,
 			previewArea = gui.get_display_preview_area(),
-			screens = previewArea.getElementsByClassName('screen'),
-			scale = vscreen.getWholeScale(),
-			i,
-			metaData,
-			elem;
+			elem,
+			screenElem,
+			metaData;
 		
-		console.log("updateScreen", windowData, metaDataDict);
-		if (windowData) {
-			elem = document.getElementById(windowData.id);
-			if (elem) {
-				console.log("assignScreenRect");
-				vscreen_util.assignMetaData(elem, windowData, true);
-				elem.style.display = "block";
-				return;
+		if (windowData && windowData !== undefined) {
+			screenElem = document.getElementById(windowData.id);
+			if (!screenElem && isVisible(windowData)) {
+				screenElem = document.createElement('div');
+				screenElem.innerHTML = "ID:" + windowData.id;
+				screenElem.className = "screen";
+				screenElem.style.zIndex = -100;
+				screenElem.style.display = "block";
+				screenElem.id = windowData.id;
+				screenElem.style.border = 'solid';
+				previewArea.appendChild(screenElem);
+				setupWindow(screenElem, windowData.id);
+				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
+			}
+			if (screenElem) {
+				vscreen_util.assignMetaData(screenElem, windowData, true);
 			}
 		} else {
-			// recreate all screens
 			gui.assign_virtual_display_property(vscreen.getWhole(), vscreen.getSplitCount());
 			gui.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
-			manipulator.removeManipulator();
-			for (i = screens.length - 1; i >= 0; i = i - 1) {
-				previewArea.removeChild(screens.item(i));
-			}
+			
+			// 全可視コンテンツの配置を再計算.
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
 					metaData = metaDataDict[i];
@@ -1121,6 +1085,49 @@
 					}
 				}
 			}
+			
+			// Virtual Displayを生成して配置.
+			wholeElem = document.getElementById(wholeWindowID);
+			if (!wholeElem) {
+				wholeElem = document.createElement('span');
+				wholeElem.style.border = 'solid';
+				wholeElem.style.zIndex = -1000;
+				wholeElem.className = "screen";
+				wholeElem.id = wholeWindowID;
+				wholeElem.style.color = "black";
+				setupWindow(wholeElem, wholeElem.id);
+				previewArea.appendChild(wholeElem);
+			}
+			vscreen_util.assignScreenRect(wholeElem, whole);
+			
+			// 保持しているscreen座標情報から枠を生成して配置.
+			for (s in screens) {
+				if (screens.hasOwnProperty(s)) {
+					screenElem = document.getElementById(s);
+					if (metaDataDict.hasOwnProperty(s)) {
+						metaData = metaDataDict[s];
+						if (!screenElem) {
+							if (isVisible(metaData)) {
+								screenElem = document.createElement('div');
+								screenElem.innerHTML = "ID:" + s;
+								screenElem.className = "screen";
+								screenElem.style.zIndex = -100;
+								screenElem.style.display = "block";
+								screenElem.id = s;
+								console.log("screenElemID:" + JSON.stringify(screens[s]));
+								screenElem.style.border = 'solid';
+								previewArea.appendChild(screenElem);
+								setupWindow(screenElem, s);
+							}
+						}
+						if (screenElem) {
+							vscreen_util.assignMetaData(screenElem, metaData, true);
+							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
+						}
+					}
+				}
+			}
+			assignSplitWholes(vscreen.getSplitWholes());
 		}
 		addScreenRect(windowData);
 		//changeWholeSplit(wholeSplitX.value, this.value);
@@ -1541,6 +1548,7 @@
 			gui.assign_content_property(windowData);
 		}
 		if (lastDraggingID) {
+			console.log("moveManipulator");
 			elem = document.getElementById(lastDraggingID);
 			if (elem) {
 				manipulator.moveManipulator(elem);
@@ -1705,6 +1713,7 @@
 	 * ディスプレイスケールが変更された.
 	 */
 	gui.on_display_scale_changed = function (displayScale) {
+		manipulator.removeManipulator();
 		vscreen.setWholeScale(displayScale, true);
 		saveCookie();
 		updateScreen();
@@ -1848,7 +1857,8 @@
 		console.log('UpdateWindow', metaData);
 		//updateScreen();
 		//clearWindowList();
-		connector.send('GetWindow', metaData, doneGetWindow);
+		doneGetWindow(null, metaData);
+		//connector.send('GetWindow', metaData, doneGetWindow);
 	});
 	
 	// すべての更新が必要なときにブロードキャストされてくる.
