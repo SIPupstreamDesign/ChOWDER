@@ -111,7 +111,7 @@
 	 * @method setMetaData
 	 * @param {String} type メタデータタイプ
 	 * @param {String} id ContentsID
-	 * @param {} data
+	 * @param {JSON} data メタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function setMetaData(type, id, data, endCallback) {
@@ -512,7 +512,7 @@
 	 * Window更新
 	 * @method updateWindow
 	 * @param {BLOB} socketid socket.ioオブジェクトid
-	 * @param {JSON} windowデータJSON
+	 * @param {JSON} windowData windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function updateWindow(socketid, windowData, endCallback) {
@@ -563,7 +563,7 @@
 	}
 	
 	/**
-	 * do addContent command
+	 * コンテンツの追加を行うコマンドを実行する.
 	 * @method commandAddContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -593,7 +593,7 @@
 	}
 	
 	/**
-	 * do GetContent command
+	 * コンテンツの取得を行うコマンドを実行する.
 	 * @method commandGetContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -616,7 +616,7 @@
 	}
 	
 	/**
-	 * do GetMetaData command
+	 * メタデータの取得を行うコマンドを実行する.
 	 * @method commandGetMetaData
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -633,7 +633,7 @@
 	}
 	
 	/**
-	 * do DeleteContent command
+	 * コンテンツの削除を行うコマンドを実行する.
 	 * @method commandDeleteContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -650,9 +650,8 @@
 		});
 	}
 	
-	/// do UpdateContent command
 	/**
-	 * do UpdateContent command
+	 * コンテンツの更新を行うコマンドを実行する.
 	 * @method commandUpdateContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション(null)
@@ -670,9 +669,8 @@
 		});
 	}
 	
-	/// do UpdateMetaData command
 	/**
-	 * do UpdateMetaData command
+	 * メタデータの更新を行うコマンドを実行する.
 	 * @method commandUpdateMetaData
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -688,9 +686,8 @@
 		});
 	}
 	
-	/// do AddWindow command
 	/**
-	 * do AddWindow command
+	 * ウィンドウの追加を行うコマンドを実行する.
 	 * @method commandAddWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -709,9 +706,8 @@
 		});
 	}
 	
-	/// do DeleteWindow
 	/**
-	 * do DeleteWindow
+	 * ウィンドウの削除行うコマンドを実行する.
 	 * @method commandDeleteWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -759,9 +755,8 @@
 		}
 	}
 	
-	/// do UpdateVirtualDisplay command
 	/**
-	 * do UpdateVirtualDisplay command
+	 * VirtualDisplayの更新を行うコマンドを実行する.
 	 * @method commandUpdateVirtualDisplay
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -778,9 +773,8 @@
 		}
 	}
 	
-	/// do commandGetVirtualDisplay command
 	/**
-	 * do commandGetVirtualDisplay command
+	 * VirtualDisplayの取得を行うコマンドを実行する.
 	 * @method commandGetVirtualDisplay
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -796,9 +790,8 @@
 		});
 	}
 	
-	/// do GetWindow command
 	/**
-	 * do GetWindow command
+	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -815,9 +808,8 @@
 		});
 	}
 	
-	/// do UpdateWindow command
 	/**
-	 * do UpdateWindow command
+	 * ウィンドウの更新を行うコマンドを実行する.
 	 * @method commandUpdateWindow
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -833,11 +825,8 @@
 		});
 	}
 	
-	/// register websockets events
-	/// @param ws_connection controller's ws connection
-	/// @param io
-	/// @param ws display's ws instance
 	/**
+	 * websocketイベントの登録を行う.
 	 * register websockets events
 	 * @method registerWSEvent
 	 * @param {BLOB} ws_connection WebSocketコネクション
@@ -957,7 +946,7 @@
 	}
 	
 	/**
-	 * Description
+	 * socketioイベントの登録を行う.
 	 * @method registerEvent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} io socket.ioオブジェクト
@@ -1071,11 +1060,10 @@
 		io_connector.registerEvent(io, socket);
 	}
 	
-	/// @param id server's id
 	/**
-	 * registerUUID.
+	 * UUIDを登録する.
 	 * @method registerUUID
-	 * @param {String} id ContentsID
+	 * @param {String} id UUID
 	 */
 	function registerUUID(id) {
 		uuidPrefix = id + ":";

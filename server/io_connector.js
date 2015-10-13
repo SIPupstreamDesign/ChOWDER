@@ -47,6 +47,12 @@
 		};
 	}
 
+	/**
+	 * テキストメッセージの処理.
+	 * @method eventTextMessage
+	 * @param {Object} socket socket
+	 * @param {JSON} metaData メタデータ
+	 */
 	function eventTextMessage(socket, metaData) {
 		if (metaData.to === "client") {
 			// masterからclientに送ったメッセージが返ってきた.
@@ -72,6 +78,13 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージの処理.
+	 * @method eventBinaryMessage
+	 * @param {Object} socket socket
+	 * @param {JSON} metaData メタデータ
+	 * @param {Blob} contentData コンテンツバイナリ
+	 */
 	function eventBinaryMessage(socket, metaData, contentData) {
 		var data = {
 			metaData : metaData.params,
@@ -105,6 +118,12 @@
 		}
 	}
 	
+	/**
+	 * イベントを登録する
+	 * @method registerEvent
+	 * @param {Object} io ソケットIO
+	 * @param {Object} socket socket
+	 */
 	function registerEvent(io, socket) {
 		socket.on("chowder_request", function (data) {
 			console.log("chowder_request : ", data);
@@ -149,10 +168,12 @@
 	}
 	
 	/**
-	 * サーバへ送信する
-	 * @param method メソッド
-	 * @param args パラメータ
-	 * @param resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 * テキストメッセージをclientへ送信する
+	 * @method send
+	 * @oaram {Object} socket socket
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(socket, method, args, resultCallback) {
 		var reqjson = {
@@ -173,6 +194,15 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージをclientへ送信する
+	 * @method sendBinary
+	 * @oaram {Object} socket socket
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {ArrayBuffer} binary バイナリデータ
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 */
 	function sendBinary(socket, method, binary, resultCallback) {
 		var data = {
 			jsonrpc: '2.0',
@@ -192,10 +222,24 @@
 		}
 	}
 	
+	/**
+	 * コールバックの登録.
+	 * @method on
+	 * @param {String} method JSONRPCメソッド
+	 * @param {Function} callback サーバからメッセージを受け取った場合に呼ばれる. callback(err, res)の形式.
+	 */
 	function on(method, callback) {
 		recievers[method] = callback;
 	}
 	
+	/**
+	 * ブロードキャストする.
+	 * @method broadcast
+	 * @param {Object} io socket.ioオブジェクト
+	 * @param {String} method JSONRPCメソッド
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 */
 	function broadcast(io, method, args, resultCallback) {
 		var reqjson = {
 			jsonrpc: '2.0',

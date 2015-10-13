@@ -4,10 +4,6 @@
 (function () {
 	"use strict";
 	
-	/**
-	 * Sender
-	 * @method Sender
-	 */
 	var Sender = function () {},
 		operator,
 		ws_connector = require('./ws_connector.js'),
@@ -18,7 +14,7 @@
 	/**
 	 * オペレータ(operator.js)設定
 	 * @method setOperator
-	 * @param {} ope
+	 * @param {Object} ope オペレータインスタンス
 	 */
 	function setOperator(ope) {
 		operator = ope;

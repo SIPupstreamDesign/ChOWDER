@@ -48,6 +48,11 @@
 		};
 	}
 
+	/**
+	 * テキストメッセージの処理.
+	 * @method eventTextMessage
+	 * @param {JSON} metaData メタデータ
+	 */
 	function eventTextMessage(ws_connection, metaData) {
 		console.log("eventTextMessage");
 		if (metaData.to === "client") {
@@ -75,6 +80,13 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージの処理.
+	 * @method eventBinaryMessage
+	 * @param {Object} ws_connection websocketコネクション
+	 * @param {JSON} metaData メタデータ
+	 * @param {Blob} contentData バイナリデータ
+	 */
 	function eventBinaryMessage(ws_connection, metaData, contentData) {
 		var data = {
 			metaData : metaData.params,
@@ -108,6 +120,12 @@
 		}
 	}
 	
+	/**
+	 * イベントの登録.
+	 * @method registerEvent
+	 * @param {Object} ws websocketオブジェクト
+	 * @param {Object} ws_connection websocketコネクション
+	 */
 	function registerEvent(ws, ws_connection) {
 		ws_connection.on('message', function (data) {
 			console.log("ws chowder_request : ", data);
@@ -140,10 +158,12 @@
 	}
 	
 	/**
-	 * clientにメッセージを送信する
-	 * @param method メソッド
-	 * @param args パラメータ
-	 * @param resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 * テキストメッセージをclientへ送信する
+	 * @method send
+	 * @param {Object} ws_connection websocketコネクション
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(ws_connection, method, args, resultCallback) {
 		var reqjson = {
@@ -174,7 +194,12 @@
 	}
 	
 	/**
-	 * clientにバイナリメッセージを送信する
+	 * バイナリメッセージをclientへ送信する
+	 * @method sendBinary
+	 * @param {Object} ws_connection websocketコネクション
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {ArrayBuffer} binary バイナリデータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function sendBinary(ws_connection, method, binary, resultCallback) {
 		var data = {
@@ -203,7 +228,12 @@
 	}
 	
 	/**
-	 * clientにメッセージをブロードキャスト.
+	 * ブロードキャストする.
+	 * @method broadcast
+	 * @parma {Object} ws websocketオブジェクト
+	 * @param {String} method JSONRPCメソッド
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function broadcast(ws, method, args, resultCallback) {
 		var reqjson = {
