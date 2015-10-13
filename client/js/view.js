@@ -19,7 +19,7 @@
 	 * メタデータが表示中であるかを判別する
 	 * @method isVisible
 	 * @param {JSON} metaData 判別対象メタデータ
-	 * @return LogicalExpression
+	 * @return {bool} 表示中であればtrueを返す.
 	 */
 	function isVisible(metaData) {
 		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
@@ -28,7 +28,7 @@
 	/**
 	 * クライアントサイズを取得する
 	 * @method getWindowSize
-	 * @return ObjectExpression クライアントサイズ
+	 * @return {Object} クライアントサイズ
 	 */
 	function getWindowSize() {
 		return {
@@ -37,15 +37,21 @@
 		};
 	}
 	
+	/**
+	 * エンコードされた文字列を返す.
+	 * @method fixedEncodeURIComponent
+	 * @param {String} str 文字列.
+	 * @return {String} エンコードされた文字列
+	 */
 	function fixedEncodeURIComponent(str) {
 		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 	}
 	
 	/**
 	 * 辞書順でElementをareaに挿入.
-	 * @method getCookie
-	 * @param {Element} area  
-	 * @param {Element} elem  
+	 * @method insertElementWithDictionarySort
+	 * @param {Element} area  挿入先エリアのelement
+	 * @param {Element} elem  挿入するelement
 	 */
 	function insertElementWithDictionarySort(area, elem) {
 		var i,
@@ -164,8 +170,8 @@
 	/**
 	 * コンテンツまたはウィンドウの更新(再取得).
 	 * @method update
-	 * @param {String} updateType
-	 * @param {String} targetid
+	 * @param {String} updateType 更新の種類.
+	 * @param {String} targetid 対象コンテンツID
 	 */
 	function update(updateType, targetid) {
 		var previewArea = document.getElementById('preview_area');
@@ -193,7 +199,7 @@
 	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
 	 * @method getTagName
-	 * @param {String} contentType
+	 * @param {String} contentType コンテンツタイプ.
 	 */
 	function getTagName(contentType) {
 		var tagName;
@@ -208,8 +214,8 @@
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
-	 * @param {JSON} metaData
-	 * @param {String} contentData
+	 * @param {JSON} metaData メタデータ
+	 * @param {Object} contentData コンテンツデータ(テキストまたはバイナリデータ)
 	 */
 	function assignMetaBinary(metaData, contentData) {
 		var previewArea = document.getElementById('preview_area'),
@@ -265,6 +271,8 @@
 	
 	/**
 	 * コンテンツロード完了まで表示する枠を作る.
+	 * @method createBoundingBox
+	 * @param {JSON} metaData メタデータ
 	 */
 	function createBoundingBox(metaData) {
 		var previewArea = document.getElementById('preview_area'),
@@ -304,7 +312,7 @@
 	/**
 	 * リサイズに伴うDisplayの更新
 	 * @method resizeViewport
-	 * @param {JSON} windowData
+	 * @param {JSON} windowData ウィンドウメタデータ
 	 */
 	function resizeViewport(windowData) {
 		var wh = getWindowSize(),
@@ -335,7 +343,7 @@
 	/**
 	 * ディスプレイIDの表示.
 	 * @method showDisplayID
-	 * @param {string} id
+	 * @param {string} id ディスプレイID
 	 */
 	function showDisplayID(id) {
 		console.log("showDisplayID:" + id);
@@ -355,7 +363,7 @@
 	/**
 	 * ディスプレイIDの変更.
 	 * @method changeID
-	 * @param {Event} e
+	 * @param {Event} e イベント
 	 */
 	function changeID(e) {
 		var elem = document.getElementById('input_id'),
@@ -374,7 +382,7 @@
 	/**
 	 * 表示非表示の更新.
 	 * @method updatePreviewAreaVisible
-	 * @param {JSON} json
+	 * @param {JSON} json メタデータ
 	 */
 	function updatePreviewAreaVisible(json) {
 		var previewArea = document.getElementById("preview_area"),
@@ -414,6 +422,11 @@
 		}
 	}
 	
+	/**
+	 * AddWindow終了コールバック
+	 * @param {String} err エラー.なければnull
+	 * @param {JSON} json メタデータ
+	 */
 	doneAddWindow = function (err, json) {
 		console.log("doneAddWindow", json);
 		if (!err) {
@@ -429,6 +442,11 @@
 		}
 	};
 	
+	/**
+	 * GetWindow終了コールバック
+	 * @param {String} err エラー.なければnull
+	 * @param {JSON} json メタデータ
+	 */
 	doneGetWindow = function (err, json) {
 		console.log("doneGetWindow", json);
 		if (!err) {
@@ -441,6 +459,11 @@
 		}
 	};
 	
+	/**
+	 * GetContent終了コールバック
+	 * @param {String} err エラー.なければnull
+	 * @param {Object} data コンテンツデータ
+	 */
 	doneGetContent = function (err, data) {
 		console.log("doneGetContent", err, data);
 		if (!err) {
@@ -451,6 +474,11 @@
 		}
 	};
 	
+	/**
+	 * GetMetaData終了コールバック
+	 * @param {String} err エラー.なければnull
+	 * @param {JSON} json メタデータ
+	 */
 	doneGetMetaData = function (err, json) {
 		console.log("doneGetMetaData", json);
 		metaDataDict[json.id] = json;
