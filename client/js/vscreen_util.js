@@ -164,7 +164,7 @@
 	/**
 	 * 指定されたメタデータの情報を座標逆変換
 	 * @method transInv
-	 * @param {Object} metaData
+	 * @param {Object} metaData メタデータ
 	 * @return metaData
 	 */
 	function transInv(metaData) {
