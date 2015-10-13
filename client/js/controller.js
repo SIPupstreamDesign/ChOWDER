@@ -38,8 +38,8 @@
 	/**
 	 * ドラッグ中のオフセット設定。Manipulatorにて使用される。
 	 * @method draggingOffsetFunc
-	 * @param {Function} top
-	 * @param {Function} left
+	 * @param {Function} top 上下移動量.
+	 * @param {Function} left 左右移動量.
 	 */
 	function draggingOffsetFunc(top, left) {
 		dragOffsetTop = top;
@@ -49,8 +49,8 @@
 	/**
 	 * メタデータが表示中かを判定する
 	 * @method isVisible
-	 * @param {Object} metaData
-	 * @return LogicalExpression
+	 * @param {Object} metaData メタデータ
+	 * @return {bool} 表示中であればtrue
 	 */
 	function isVisible(metaData) {
 		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
@@ -59,7 +59,7 @@
 	/**
 	 * VirtualDisplayのモードがFreeModeかを判別する
 	 * @method isFreeMode
-	 * @return BinaryExpression
+	 * @return {bool} FreeModeであればtrueを返す.
 	 */
 	function isFreeMode() {
 		return snapSetting === 'free';
@@ -68,7 +68,7 @@
 	/**
 	 * VirtualDisplayのモードがGridModeかを判別する
 	 * @method isGridMode
-	 * @return BinaryExpression
+	 * @return {bool} GridModeであればtrueを返す.
 	 */
 	function isGridMode() {
 		return snapSetting === 'grid';
@@ -77,7 +77,7 @@
 	/**
 	 * VirtualDisplayのモードがDisplayModeかを判別する
 	 * @method isDisplayMode
-	 * @return BinaryExpression
+	 * @return {bool} DisplayModeであればtrueを返す.
 	 */
 	function isDisplayMode() {
 		return snapSetting === 'display';
@@ -86,8 +86,8 @@
 	/**
 	 * 左リスト表示中かをIDから判別する
 	 * @method isUnvisibleID
-	 * @param {String} id
-	 * @return BinaryExpression
+	 * @param {String} id コンテンツID
+	 * @return {bool} 左のリストに表示されているコンテンツのIDであればtrueを返す.
 	 */
 	function isUnvisibleID(id) {
 		return (id.indexOf("onlist:") >= 0);
@@ -96,7 +96,8 @@
 	/**
 	 * 発生したイベントが左リストビュー領域で発生しているかを判別する
 	 * @method isContentArea
-	 * @return LogicalExpression
+	 * @param {Object} evt イベント.
+	 * @return {bool} 発生したイベントが左リストビュー領域で発生していたらtrueを返す.
 	 */
 	function isContentArea(evt) {
 		var contentArea = gui.get_left_main_area(),
@@ -109,9 +110,9 @@
 	}
 	
 	/**
-	 * 左リストにて選択されたアクティブなタブを判別する。
+	 * 左リストでディスプレイタブが選択されているかを判別する。
 	 * @method isDisplayTabSelected
-	 * @return BinaryExpression
+	 * @return {bool} 左リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isDisplayTabSelected() {
 		return (gui.get_display_tab_link().className.indexOf("active") >= 0);
@@ -121,7 +122,7 @@
 	 * cookie取得
 	 * @method getCookie
 	 * @param {String} key cookieIDキー
-	 * @return Literal
+	 * @return {String} cookie
 	 */
 	function getCookie(key) {
 		var i,
@@ -157,8 +158,8 @@
 	/**
 	 * 辞書順でElementをareaに挿入.
 	 * @method insertElementWithDictionarySort
-	 * @param {Element} area  
-	 * @param {Element} elem  
+	 * @param {Element} area  挿入先エリアのelement
+	 * @param {Element} elem  挿入するelement
 	 */
 	function insertElementWithDictionarySort(area, elem) {
 		var i,
@@ -187,9 +188,9 @@
 	/**
 	 * 選択されたIDからElement取得
 	 * @method getElem
-	 * @param {String} id element id
+	 * @param {String} id コンテンツID
 	 * @param {bool} isContentArea コンテンツエリアか
-	 * @return CallExpression
+	 * @return {Object} Element
 	 */
 	function getElem(id, isContentArea) {
 		var elem,
@@ -233,7 +234,7 @@
 	/**
 	 * 選択されているContentIDを返却する
 	 * @method getSelectedID
-	 * @return MemberExpression
+	 * @return {String} コンテンツID
 	 */
 	function getSelectedID() {
 		var contentID = document.getElementById('content_id');
@@ -244,7 +245,7 @@
 	 * メタデータの位置情報、サイズ情報をString -> Intへ変換する
 	 * @method toIntMetaData
 	 * @param {JSON} metaData メタデータ
-	 * @return metaData
+	 * @return {JSON} metaData
 	 */
 	function toIntMetaData(metaData) {
 		metaData.posx = parseInt(metaData.posx, 10);
@@ -266,8 +267,8 @@
 	}
 	
 	/**
-	 * Displayを削除する
-	 * @method deleteDisplay
+	 * Displayを削除するボタンが押された.
+	 * @method on_deletedisplay_clicked
 	 */
 	gui.on_deletedisplay_clicked = function () {
 		if (getSelectedID()) {
@@ -277,8 +278,8 @@
 	};
 	
 	/**
-	 * Displayを全削除する
-	 * @method deleteDisplayAll
+	 * Displayを全削除するボタンが押された
+	 * @method on_deletealldisplay_clicked
 	 */
 	gui.on_deletealldisplay_clicked = function () {
 		connector.send('DeleteWindow', {type : "all", id : ""});
@@ -286,6 +287,7 @@
 	
 	/**
 	 * Show Display ID ボタンが押された.
+	 * @method on_showidbutton_clicked
 	 */
 	gui.on_showidbutton_clicked = function () {
 		var id = getSelectedID();
@@ -306,7 +308,8 @@
 	/**
 	 * Content追加
 	 * @method addContent
-	 * @param {BLOB} binary
+	 * @param {JSON} metaData コンテンツのメタデータ
+	 * @param {BLOB} binary コンテンツのバイナリデータ
 	 */
 	function addContent(metaData, binary) {
 		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
@@ -330,7 +333,8 @@
 	/**
 	 * コンテンツ更新要求送信
 	 * @method updateContent
-	 * @param {} binary
+	 * @param {JSON} metaData 更新するコンテンツのメタデータ
+	 * @param {Blob} binary 更新するコンテンツのバイナリ
 	 */
 	function updateContent(metaData, binary) {
 		connector.sendBinary('UpdateContent', metaData, binary, doneUpdateContent);
@@ -371,7 +375,7 @@
 	/**
 	 * VirualDisplay分割設定
 	 * @method assignSplitWholes
-	 * @param {Object} splitWholes
+	 * @param {Object} splitWholes VirtualDisplayの分割情報.
 	 */
 	function assignSplitWholes(splitWholes) {
 		var screenElem,
@@ -513,9 +517,10 @@
 	}
 	
 	/**
-	 * Content or Display選択。
+	 * ContentかDisplayを選択する。
 	 * @method select
 	 * @param {String} id 選択したID
+	 * @parma {bool} コンテンツエリアを対象にするかどうか.
 	 */
 	function select(id, isContentArea) {
 		var elem,
@@ -649,10 +654,10 @@
 	}
 	
 	/**
-	 * Content or Displayの矩形サイズ変更時ハンドラ。initPropertyAreaのコールバックとして指定されている。
+	 * ContentかDisplayの矩形サイズ変更時ハンドラ。initPropertyAreaのコールバックとして指定されている。
 	 * @method changeRect
-	 * @param {String} id Content or Display ID
-	 * @param {String } value 変更値
+	 * @param {String} id ContentまたはDisplay ID
+	 * @param {String} value 変更値
 	 */
 	changeRect = function (id, value) {
 		var elem = gui.get_selected_elem(),
@@ -689,9 +694,9 @@
 	};
 
 	/**
-	 * 指定された座標がContent or Displayの内部に存在するかを判定する。setupContentsにて使用されている。
+	 * 指定された座標がContentまたはDisplayの内部に存在するかを判定する。setupContentsにて使用されている。
 	 * @method isInsideElement
-	 * @param {String} id Content or Display ID
+	 * @param {String} id ContentまたはDisplay ID
 	 * @param {String} x x座標値
 	 * @param {String} y y座標値
 	 */
@@ -783,7 +788,7 @@
 	};
 	
 	/**
-	 * Content or Displayのスナップ処理
+	 * ContentまたはDisplayのスナップ処理
 	 * @method snapToSplitWhole
 	 * @param {Object} elem スナップ対象Object
 	 * @param {JSON} metaData メタデータ
@@ -814,9 +819,9 @@
 	/**
 	 * Screenへスナップさせる.
 	 * @method snapToScreen
-	 * @param {Element} elem
-	 * @param {JSON} metaData
-	 * @param {Object} screen
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData 対象メタデータ
+	 * @param {Object} screen スナップ先スクリーン
 	 */
 	function snapToScreen(elem, metaData, screen) {
 		return snapToSplitWhole(elem, metaData, screen);
@@ -998,7 +1003,7 @@
 	/**
 	 * テキストデータ送信
 	 * @method sendText
-	 * @param {String} text
+	 * @param {String} text 送信するテキスト.
 	 */
 	function sendText(text) {
 		var previewArea = gui.get_content_preview_area(),
@@ -1135,6 +1140,7 @@
 	
 	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
+	 * @parma {String} contentType コンテンツタイプ
 	 */
 	function getTagName(contentType) {
 		var tagName;
@@ -1148,6 +1154,7 @@
 	
 	/**
 	 * コンテンツタイプから適切なクラス名を取得する.
+	 * @parma {String} contentType コンテンツタイプ
 	 */
 	function getClassName(contentType) {
 		var classname;
@@ -1322,6 +1329,7 @@
 	
 	/**
 	 * コンテンツロード完了まで表示する枠を作る.
+	 * @param {JSON} metaData メタデータ
 	 */
 	function createBoundingBox(metaData) {
 		var previewArea = gui.get_content_preview_area(),
@@ -1450,6 +1458,13 @@
 	///-------------------------------------------------------------------------------------------------------
 	
 	/// meta data updated
+	
+	/**
+	 * GetMetaDataを送信した後の終了コールバック.
+	 * @method doneGetMetaData
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneGetMetaData = function (err, reply) {
 		console.log('doneGetMetaData', reply);
 		var json = reply,
@@ -1478,17 +1493,35 @@
 	};
 	
 	/// content data updated
+	/**
+	 * GetContentを送信した後の終了コールバック.
+	 * @method doneGetContent
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {Object} reply 返信されたコンテンツ
+	 */
 	doneGetContent = function (err, reply) {
 		console.log("doneGetContent", reply);
 		importContent(reply.metaData, reply.contentData);
 	};
 	
+	/**
+	 * UpdateMetaDataを送信した後の終了コールバック.
+	 * @method doneUpdateMetaData
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneUpdateMetaData = function (err, reply) {
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 		metaDataDict[json.id] = json;
 	};
 	
+	/**
+	 * UpdateWindowを送信した後の終了コールバック.
+	 * @method doneUpdateWindow
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneUpdateWindow = function (err, reply) {
 		console.log("doneUpdateWindow");
 		//console.log(reply);
@@ -1499,6 +1532,12 @@
 		updateScreen(windowData);
 	};
 	
+	/**
+	 * DeleteContentを送信した後の終了コールバック.
+	 * @method doneDeleteContent
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneDeleteContent = function (err, reply) {
 		console.log("doneDeleteContent");
 		var json = reply,
@@ -1512,6 +1551,12 @@
 		gui.set_update_content_id("No Content Selected.");
 	};
 	
+	/**
+	 * UpdateContentを送信した後の終了コールバック.
+	 * @method doneUpdateContent
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneUpdateContent = function (err, reply) {
 		console.log("doneUpdateContent");
 
@@ -1519,6 +1564,12 @@
 		gui.enable_update_image_button(false);
 	};
 	
+	/**
+	 * AddContentを送信した後の終了コールバック.
+	 * @method doneAddContent
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneAddContent = function (err, reply) {
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
@@ -1539,6 +1590,12 @@
 		currentContent = null;
 	};
 	
+	/**
+	 * GetWindowを送信した後の終了コールバック.
+	 * @method doneGetWindow
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneGetWindow = function (err, reply) {
 		console.log('doneGetWindow:');
 		var windowData = reply,
@@ -1556,6 +1613,12 @@
 		}
 	};
 	
+	/**
+	 * GetVirtualDisplayを送信した後の終了コールバック.
+	 * @method doneGetVirtualDisplay
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
 	doneGetVirtualDisplay = function (err, reply) {
 		var windowData = reply,
 			whole = vscreen.getWhole(),
@@ -1585,7 +1648,8 @@
 	
 	///-------------------------------------------------------------------------------------------------------
 	/**
-	 * テキスト送信.
+	 * テキスト送信ボタンが押された.
+	 * @param {Object} evt ボタンイベント.
 	 */
 	gui.on_textsendbutton_clicked = function (evt) {
 		var textInput = document.getElementById('text_input'),
@@ -1596,7 +1660,7 @@
 	};
 	
 	/**
-	 * URLデータ送信
+	 * URLデータ送信ボタンが押された.
 	 * @method on_sendbuton_clicked
 	 */
 	gui.on_urlsendbuton_clicked = function () {
@@ -1720,8 +1784,8 @@
 	};
 
 	/**
-	 * コンテンツの削除.
-	 * @method deleteContent
+	 * コンテンツの削除ボタンが押された.
+	 * @method on_contentdeletebutton_clicked
 	 */
 	gui.on_contentdeletebutton_clicked = function (evt) {
 		if (getSelectedID()) {
@@ -1785,6 +1849,8 @@
 	
 	/**
 	 * スナップ設定のドロップダウンがクリックされた.
+	 * @method on_snapdropdown_clicked
+	 * @param {String} snapType スナップタイプ
 	 */
 	gui.on_snapdropdown_clicked = function (snapType) {
 		snapSetting = snapType;
@@ -1793,6 +1859,7 @@
 	
 	/**
 	 * Virtual Dsiplay Settingボタンがクリックされた.
+	 * @method on_virtualdisplaysetting_clicked
 	 */
 	gui.on_virtualdisplaysetting_clicked = function () {
 		unselect();
@@ -1801,7 +1868,7 @@
 	
 	/**
 	 * 選択中のコンテンツのzIndexを変更する
-	 * @method changeZIndex
+	 * @method on_change_zindex
 	 * @param {String} index 設定するzIndex
 	 */
 	gui.on_change_zindex = function (index) {
