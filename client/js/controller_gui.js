@@ -1,4 +1,4 @@
-﻿/*jslint devel:true */
+/*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
 (function () {
@@ -54,11 +54,6 @@
 		a.href = "#";
 		a.id = id;
 		a.innerHTML = value;
-		/**
-		 * Description
-		 * @method onclick
-		 * @param {} evt
-		 */
 		a.onclick = function (evt) {
 			var displayScale = parseFloat(this.innerHTML);
 			if (displayScale < 0) {
@@ -84,7 +79,7 @@
 	/**
 	 * コンテンツ追加ポップアップの初期化
 	 * @method initAddContentArea
-	 * @param {Function} bottomfunc
+	 * @param {Function} bottomfunc 下部エリアの開閉ファンクション.
 	 */
 	function initAddContentArea(bottomfunc) {
 		var textSendButton = document.getElementById('text_send_button'),
@@ -304,6 +299,7 @@
 	 * @method initPropertyArea
 	 * @param {String} id ContentもしくはDisplay ID
 	 * @param {String} type 設定タイプ
+	 * @param {String} mime mime
 	 */
 	function initPropertyArea(id, type, mime) {
 		var contentX,
