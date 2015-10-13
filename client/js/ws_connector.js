@@ -95,17 +95,8 @@
 			}
 		};
 	
-		/**
-		 * close
-		 * @method onclose
-		 */
 		client.onclose = onclose;
 		
-		/**
-		 * Description
-		 * @method onmessage
-		 * @param {} message
-		 */
 		client.onmessage = function (message) {
 			console.log("ws chowder_request : ", message);
 			var data = message.data,
@@ -141,10 +132,11 @@
 	}
 	
 	/**
-	 * サーバへ送信する
-	 * @param method メソッド
-	 * @param args パラメータ
-	 * @param resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 * テキストメッセージをサーバへ送信する
+	 * @method send
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(method, args, resultCallback) {
 		var reqjson = {
@@ -165,6 +157,13 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージをサーバへ送信する
+	 * @method sendBinary
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {ArrayBuffer} binary バイナリデータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 */
 	function sendBinary(method, binary, resultCallback) {
 		var data = {
 			jsonrpc: '2.0',
@@ -185,6 +184,12 @@
 		}
 	}
 	
+	/**
+	 * コールバックの登録.
+	 * @method on
+	 * @param {String} method JSONRPCメソッド
+	 * @param {Function} callback サーバからメッセージを受け取った場合に呼ばれる. callback(err, res)の形式.
+	 */
 	function on(method, callback) {
 		recievers[method] = callback;
 	}

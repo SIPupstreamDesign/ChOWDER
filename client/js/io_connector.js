@@ -10,6 +10,12 @@
 		messageID = 1,
 		currentVersion = "v2";
 	
+	/**
+	 * テキストメッセージの処理.
+	 * @method eventTextMessage
+	 * @param {Object} socket socket
+	 * @param {JSON} metaData メタデータ
+	 */
 	function eventTextMessage(socket, metaData) {
 		if (metaData.to === "client") {
 			// masterからメッセージがきた
@@ -33,6 +39,13 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージの処理.
+	 * @method eventBinaryMessage
+	 * @param {Object} socket socket
+	 * @param {JSON} metaData メタデータ
+	 * @param {Blob} contentData コンテンツバイナリ
+	 */
 	function eventBinaryMessage(socket, metaData, contentData) {
 		var data = {
 			metaData : metaData.params,
@@ -93,10 +106,11 @@
 	}
 	
 	/**
-	 * サーバへ送信する
-	 * @param method メソッド
-	 * @param args パラメータ
-	 * @param resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 * テキストメッセージをサーバへ送信する
+	 * @method send
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(method, args, resultCallback) {
 		var reqjson = {
@@ -117,6 +131,14 @@
 		}
 	}
 	
+	/**
+	 * バイナリメッセージをサーバへ送信する
+	 * @method sendBinary
+	 * @param {String} method メソッド JSONRPCメソッド
+	 * @param {ArrayBuffer} binary バイナリデータ
+	 * @param {JSON} args パラメータ
+	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
+	 */
 	function sendBinary(method, metaData, binary, resultCallback) {
 		var data = {
 			jsonrpc: '2.0',
@@ -139,10 +161,20 @@
 		}
 	}
 	
+	/**
+	 * コールバックの登録.
+	 * @method on
+	 * @param {String} method JSONRPCメソッド
+	 * @param {Function} callback サーバからメッセージを受け取った場合に呼ばれる. callback(err, res)の形式.
+	 */
 	function on(method, callback) {
 		recievers[method] = callback;
 	}
 
+	/**
+	 * 接続する.
+	 * @method connect
+	 */
 	function connect() {
 		socket.on('connect', function () {
 			console.log("connect");
