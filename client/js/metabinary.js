@@ -89,7 +89,7 @@
 				head,
 				metasize,
 				metaData,
-				params,
+				params = null,
 				binary,
 				pos = 0;
 			
@@ -119,7 +119,7 @@
 			}
 			
 			binary = buf.slice(pos, buf.byteLength);
-			if (params.type === 'text') {
+			if (params !== null && params.type === 'text') {
 				binary = arrayBufferToString(binary);
 			}
 			endCallback(metaData, binary);
