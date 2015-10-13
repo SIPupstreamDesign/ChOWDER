@@ -52,8 +52,8 @@ function getFiles(dir, list) {
 /**
  * 指定された文字列から拡張子取得
  * @method getExtention
- * @param {String} 取得対象文字列
- * @return CallExpression
+ * @param {String} fileName 取得対象文字列
+ * @return {String} 拡張子
  */
 function getExtention(fileName) {
 	"use strict";
@@ -75,7 +75,7 @@ function getExtention(fileName) {
 /**
  * ファイル削除
  * @method removeFile
- * @param {String} 削除対象ファイルフルパス
+ * @param {String} filePath 削除対象ファイルフルパス
  */
 function removeFile(filePath) {
 	"use strict";
@@ -87,7 +87,7 @@ function removeFile(filePath) {
 /**
  * ディレクトリ削除
  * @method removeDir
- * @param {String} 削除対象ディレクトリフルパス
+ * @param {String} dirPath 削除対象ディレクトリフルパス
  */
 function removeDir(dirPath) {
 	"use strict";
@@ -99,7 +99,7 @@ function removeDir(dirPath) {
 /**
  * ディレクトリ作成
  * @method mkdirSync
- * @param {String} 作成するディレクトリ名
+ * @param {String} path 作成するディレクトリ名
  */
 var mkdirSync = function (path) {
 	"use strict";
@@ -186,7 +186,7 @@ function kill(proc) {
 }
 
 /**
- * isRelative
+ * 相対パスかどうか返す.
  * @method isRelative
  * @param {String} p Path
  * @return BinaryExpression
@@ -202,7 +202,7 @@ function isRelative(p) {
  * 指定されたバイト列からUUID生成
  * @method uuidFromBytes
  * @param {Bytes} rnd バイト列
- * @return CallExpression
+ * @return {String} UUID UUID
  */
 function uuidFromBytes(rnd) {
 	"use strict";
@@ -232,7 +232,7 @@ function generateUUID(callback) {
 /**
  * 8ケタのUUID生成
  * @method generateUUID8
- * @return CallExpression
+ * @return {String} UUID 8ケタのUUID
  */
 function generateUUID8() {
 	'use strict';
