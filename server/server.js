@@ -129,18 +129,15 @@ if (process.argv.length > 2) {
 opsever.listen(port);
 
 /// socekt.io server instance
-io = require('socket.io').listen(opsever);
+io = require('socket.io').listen(opsever).of(currentVersion);
 
-io.sockets.on('connection', function (socket) {
+io.on('connection', function (socket) {
 	"use strict";
 	console.log("[CONNECT] ID=" + socket.id);
-	
-	socket.on('RegisterEvent', function (apiVersion) {
-		if (apiVersion === currentVersion) {
-			operator.registerEvent(io, socket, ws);
-			io_connector.broadcast(io, Command.Update);
-		}
-	});
+
+	operator.registerEvent(io, socket, ws);
+	io_connector.broadcast(io, Command.Update);
+
 	socket.on('disconnect', function () {
 		console.log("disconnect:" + socket.id);
 	});

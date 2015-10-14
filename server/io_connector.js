@@ -254,7 +254,7 @@
 		try {
 			data = JSON.stringify(reqjson);
 			console.log("chowder_response broadcast");
-			io.sockets.emit('chowder_response', data);
+			io.emit('chowder_response', data);
 		} catch (e) {
 			console.error(e);
 		}
