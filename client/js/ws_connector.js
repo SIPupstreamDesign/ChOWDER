@@ -75,49 +75,6 @@
 		}
 	}
 	
-	/**
-	 * websocketで接続する.
-	 * @method connect
-	 * @param {Function} onopen 開始時コールバック
-	 * @param {Function} onclose クローズ時コールバック
-	 */
-	function connect(onopen, onclose) {
-		client = new WebSocket(url);
-		/**
-		 * View側Window[Display]登録、サーバーにWindow登録通知
-		 * @method onopen
-		 */
-		client.onopen = function () {
-			if (onopen) {
-				console.log("onopen");
-				onopen();
-			}
-		};
-	
-		client.onclose = onclose;
-		
-		client.onmessage = function (message) {
-			console.log("ws chowder_request : ", message);
-			var data = message.data,
-				parsed,
-				result;
-			
-			if (typeof data === "string") {
-				try {
-					parsed = JSON.parse(data);
-					eventTextMessage(parsed);
-				} catch (e) {
-					console.error("failed to parse json : ", e);
-				}
-			} else {
-				console.log("load meta binary", data);
-				metabinary.loadMetaBinary(data, function (metaData, contentData) {
-					eventBinaryMessage(metaData, contentData);
-				});
-			}
-		};
-	}
-	
 	function sendWrapper(id, method, reqdata, resultCallback) {
 		if (command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
@@ -193,6 +150,49 @@
 		recievers[method] = callback;
 	}
 
+	/**
+	 * websocketで接続する.
+	 * @method connect
+	 * @param {Function} onopen 開始時コールバック
+	 * @param {Function} onclose クローズ時コールバック
+	 */
+	function connect(onopen, onclose) {
+		client = new WebSocket(url);
+		/**
+		 * View側Window[Display]登録、サーバーにWindow登録通知
+		 * @method onopen
+		 */
+		client.onopen = function () {
+			if (onopen) {
+				console.log("onopen");
+				onopen();
+			}
+		};
+	
+		client.onclose = onclose;
+		
+		client.onmessage = function (message) {
+			console.log("ws chowder_request : ", message);
+			var data = message.data,
+				parsed,
+				result;
+			
+			if (typeof data === "string") {
+				try {
+					parsed = JSON.parse(data);
+					eventTextMessage(parsed);
+				} catch (e) {
+					console.error("failed to parse json : ", e);
+				}
+			} else {
+				console.log("load meta binary", data);
+				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+					eventBinaryMessage(metaData, contentData);
+				});
+			}
+		};
+	}
+	
 	window.ws_connector = ws_connector;
 	window.ws_connector.connect = connect;
 	window.ws_connector.on = on;

@@ -4,11 +4,12 @@
 (function (command, metabinary) {
 	'use strict';
 	var io_connector = {},
-		socket = io.connect(),
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
-		currentVersion = "v2";
+		currentVersion = "v2",
+		url = "http://" + location.hostname + ":8080/" + currentVersion,
+		socket;
 	
 	/**
 	 * テキストメッセージの処理.
@@ -76,24 +77,6 @@
 		}
 	}
 	
-	socket.on('chowder_response', function (data) {
-		var parsed;
-		console.log('chowder_response', data);
-		if (typeof data === "string") {
-			try {
-				parsed = JSON.parse(data);
-				eventTextMessage(socket, parsed);
-			} catch (e) {
-				console.error('[Error] Recieve invalid JSON :', e);
-			}
-		} else {
-			console.log("load meta binary", data);
-			metabinary.loadMetaBinary(new Blob([data]), function (metaData, contentData) {
-				eventBinaryMessage(socket, metaData, contentData);
-			});
-		}
-	});
-
 	function sendWrapper(id, method, reqdata, resultCallback) {
 		if (command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
@@ -176,9 +159,26 @@
 	 * @method connect
 	 */
 	function connect() {
+		socket = io.connect(url);
 		socket.on('connect', function () {
 			console.log("connect");
-			socket.emit('RegisterEvent', currentVersion);
+		});
+		socket.on('chowder_response', function (data) {
+			var parsed;
+			console.log('chowder_response', data);
+			if (typeof data === "string") {
+				try {
+					parsed = JSON.parse(data);
+					eventTextMessage(socket, parsed);
+				} catch (e) {
+					console.error('[Error] Recieve invalid JSON :', e);
+				}
+			} else {
+				console.log("load meta binary", data);
+				metabinary.loadMetaBinary(new Blob([data]), function (metaData, contentData) {
+					eventBinaryMessage(socket, metaData, contentData);
+				});
+			}
 		});
 	}
 
