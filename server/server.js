@@ -55,17 +55,9 @@ ws.on('request', function (request) {
 	ws_connections.id_counter = connection;
 	id_counter = id_counter + 1;
 	
-	connection.on('message', function (message) {
-		if (message.type === 'utf8') {
-			console.log("got text:" + message.utf8Data);
-			if (message.utf8Data === "view") {
-				sender.setOperator(operator);
-				console.log("register" + message.utf8Data);
-				sender.registerWSEvent(connection, io, ws);
-				ws_connector.broadcast(ws, Command.Update);
-			}
-		}
-	});
+	sender.setOperator(operator);
+	sender.registerWSEvent(connection, io, ws);
+	ws_connector.broadcast(ws, Command.Update);
 	
 	connection.on('close', function () {
 		delete ws_connections[connection.id];
@@ -192,15 +184,6 @@ ws2.on('request', function (request) {
 	id_counter = id_counter + 1;
 	
 	operator.registerWSEvent(connection, io, ws);
-	
-	connection.on('message', function (message) {
-		if (message.type === 'utf8') {
-			//console.log("got text" + data);
-			if (message.utf8Data === "view") {
-				console.log("register" + message.utf8Data);
-			}
-		}
-	});
 	
 	connection.on('close', function () {
 		delete ws2_connections[connection.id];

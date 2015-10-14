@@ -88,7 +88,6 @@
 		 * @method onopen
 		 */
 		client.onopen = function () {
-			client.send("view");
 			if (onopen) {
 				console.log("onopen");
 				onopen();
