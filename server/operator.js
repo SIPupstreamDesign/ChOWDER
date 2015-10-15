@@ -342,11 +342,11 @@
 				console.log("Error on updateContent:" + err);
 			} else {
 				redis.print(err, reply);
-				setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
-					if (endCallback) {
-						endCallback(metaData);
-					}
-				});
+				//setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
+				if (endCallback) {
+					endCallback(metaData);
+				}
+				//});
 			}
 		});
 	}
