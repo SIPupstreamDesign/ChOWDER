@@ -32,7 +32,8 @@
 		doneUpdateContent,
 		doneUpdateMetaData,
 		doneUpdateWindow,
-		doneGetMetaData;
+		doneGetMetaData,
+		doneDeleteWindow;
 	
 	
 	/**
@@ -273,7 +274,7 @@
 	gui.on_deletedisplay_clicked = function () {
 		if (getSelectedID()) {
 			console.log('DeleteWindow' + getSelectedID());
-			connector.send('DeleteWindow', {id : getSelectedID()});
+			connector.send('DeleteWindow', {id : getSelectedID()}, doneDeleteWindow);
 		}
 	};
 	
@@ -282,7 +283,7 @@
 	 * @method on_deletealldisplay_clicked
 	 */
 	gui.on_deletealldisplay_clicked = function () {
-		connector.send('DeleteWindow', {type : "all", id : ""});
+		connector.send('DeleteWindow', {type : "all", id : ""}, doneDeleteWindow);
 	};
 	
 	/**
@@ -1549,6 +1550,41 @@
 			contentArea.removeChild(gui.get_list_elem(json.id));
 		}
 		gui.set_update_content_id("No Content Selected.");
+	};
+	
+	/**
+	 * DeleteWindowを送信した後の終了コールバック.
+	 * @method doneDeleteWindow
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneDeleteWindow = function (err, reply) {
+		console.log("doneDeleteWindow", reply);
+		var elem,
+			id,
+			windowData,
+			previewArea = gui.get_display_preview_area();
+		
+		if (reply.hasOwnProperty('id')) {
+			elem = document.getElementById(reply.id);
+			if (elem) {
+				previewArea.removeChild(elem);
+			}
+		} else {
+			// 全部消された.
+			console.log(metaDataDict);
+			for (id in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(id)) {
+					windowData = metaDataDict[id];
+					if (windowData.type === windowType) {
+						elem = document.getElementById(id);
+						if (elem) {
+							previewArea.removeChild(elem);
+						}
+					}
+				}
+			}
+		}
 	};
 	
 	/**
