@@ -109,7 +109,7 @@
 	 * @return LogicalExpression
 	 */
 	function isVisible(metaData) {
-		console.log(metaData);
+		//console.log(metaData);
 		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
 	}
 	

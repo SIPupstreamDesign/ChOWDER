@@ -739,29 +739,31 @@
 			}
 
 			
-			if (id === wholeWindowID ||
-					(metaData && !isDisplayTabSelected() && metaData.type === windowType) ||
-					(metaData && isDisplayTabSelected() && metaData.type !== windowType)) {
-				console.log("setupContent", metaData);
-				childs = otherPreviewArea.childNodes;
+			if (metaData) {
+				if (id === wholeWindowID ||
+					(!isDisplayTabSelected() && metaData.type === windowType) ||
+					(isDisplayTabSelected() && metaData.type !== windowType)) {
+					console.log("setupContent", metaData);
+					childs = otherPreviewArea.childNodes;
 
-				for (i = 0; i < childs.length; i = i + 1) {
-					if (childs[i].onmousedown) {
-						if (!topElement || topElement.zIndex < childs[i].zIndex) {
-							if (isInsideElement(childs[i], evt.clientX, evt.clientY)) {
-								topElement = childs[i];
+					for (i = 0; i < childs.length; i = i + 1) {
+						if (childs[i].onmousedown) {
+							if (!topElement || topElement.zIndex < childs[i].zIndex) {
+								if (isInsideElement(childs[i], evt.clientX, evt.clientY)) {
+									topElement = childs[i];
+								}
 							}
 						}
 					}
+					if (topElement) {
+						//console.log("left", elem.offsetLeft - topElement.offsetLeft);
+						//console.log("top", elem.offsetTop - topElement.offsetTop);
+						topElement.onmousedown(evt);
+						dragOffsetTop = evt.clientY - topElement.getBoundingClientRect().top;
+						dragOffsetLeft = evt.clientX - topElement.getBoundingClientRect().left;
+					}
+					return;
 				}
-				if (topElement) {
-					//console.log("left", elem.offsetLeft - topElement.offsetLeft);
-					//console.log("top", elem.offsetTop - topElement.offsetTop);
-					topElement.onmousedown(evt);
-					dragOffsetTop = evt.clientY - topElement.getBoundingClientRect().top;
-					dragOffsetLeft = evt.clientX - topElement.getBoundingClientRect().left;
-				}
-				return;
 			}
 			
 			// erase last border
@@ -1136,7 +1138,6 @@
 			assignSplitWholes(vscreen.getSplitWholes());
 		}
 		addScreenRect(windowData);
-		//changeWholeSplit(wholeSplitX.value, this.value);
 	};
 	
 	/**
@@ -1387,7 +1388,7 @@
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
 	function importWindowToList(windowData) {
-		console.log("importWindowToList", windowData);
+		console.log("importWindowToList");
 		var displayArea = gui.get_display_area(),
 			divElem,
 			onlistID = "onlist:" + windowData.id;
@@ -1452,6 +1453,7 @@
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
 	function importWindow(windowData) {
+		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
 		importWindowToView(windowData);
 		importWindowToList(windowData);
 	}
@@ -1472,6 +1474,7 @@
 			elem,
 			metaData = json;
 		if (json.type === windowType) { return; }
+		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
@@ -1570,6 +1573,7 @@
 			if (elem) {
 				previewArea.removeChild(elem);
 			}
+			delete metaDataDict[reply.id];
 		} else {
 			// 全部消された.
 			console.log(metaDataDict);
@@ -1582,6 +1586,7 @@
 							previewArea.removeChild(elem);
 						}
 					}
+					delete metaDataDict[id];
 				}
 			}
 		}
