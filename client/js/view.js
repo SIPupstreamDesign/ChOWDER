@@ -518,9 +518,7 @@
 					return;
 				}
 			} else {
-				whole = vscreen.getWhole();
-				whole.w = whole.w / vscreen.getWholeScale();
-				whole.h = whole.h / vscreen.getWholeScale();
+				whole = vscreen.transformOrgInv(vscreen.getWhole());
 				isOutside = vscreen_util.isOutsideWindow(json, whole);
 				//console.log(isOutside, json, vscreen.getWhole());
 			}
