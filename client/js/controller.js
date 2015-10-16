@@ -1181,7 +1181,9 @@
 	 */
 	function importContentToView(metaData, contentData) {
 		var previewArea = gui.get_content_preview_area(),
+			id,
 			elem,
+			duplicatedElem,
 			tagName,
 			blob,
 			mime = "image/jpeg";
@@ -1238,7 +1240,25 @@
 				};
 			}
 		}
-		//}
+		
+		// 同じコンテンツを参照しているメタデータがあれば更新
+		if (elem) {
+			for (id in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
+					if (metaData.content_id === metaDataDict[id].content_id) {
+						duplicatedElem = document.getElementById(id);
+						if (duplicatedElem) {
+							if (metaData.type === 'text') {
+								duplicatedElem.innerHTML = elem.innerHTML;
+							} else {
+								duplicatedElem.src = elem.src;
+							}
+							connector.send('GetMetaData', metaDataDict[id], doneGetMetaData);
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	/**
@@ -1251,6 +1271,8 @@
 	function importContentToList(metaData, contentData) {
 		var contentArea = gui.get_content_area(),
 			contentElem,
+			id,
+			duplicatedElem,
 			divElem,
 			tagName,
 			classname,
@@ -1274,7 +1296,6 @@
 		
 		if (!divElem) {
 			contentElem = document.createElement(tagName);
-			
 			divElem = document.createElement('div');
 			divElem.id = onlistID;
 			setupContent(divElem, onlistID);
@@ -1319,6 +1340,25 @@
 		divElem.style.borderColor = "white";
 		divElem.style.marginTop = "5px";
 		divElem.style.color = "white";
+		
+		// 同じコンテンツを参照しているメタデータがあれば更新
+		if (contentElem) {
+			for (id in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
+					if (metaData.content_id === metaDataDict[id].content_id) {
+						duplicatedElem = gui.get_list_elem(id);
+						if (duplicatedElem) {
+							duplicatedElem = duplicatedElem.childNodes[0];
+							if (metaData.type === 'text') {
+								duplicatedElem.innerHTML = contentElem.innerHTML;
+							} else {
+								duplicatedElem.src = contentElem.src;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	/// import content
@@ -1988,11 +2028,12 @@
 		
 		if (id) {
 			connector.send('GetMetaData', metaData, function (err, json) {
-				doneGetMetaData(err, json);
 				connector.send('GetContent', json, doneGetContent);
 			});
 			
-			//connector.send('GetMetaData', metaData, doneGetMetaData);
+			//	doneGetMetaData(err, json);
+			//	connector.send('GetContent', json, doneGetContent);
+			//});
 		}
 	});
 	

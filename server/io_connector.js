@@ -142,7 +142,7 @@
 					console.error("failed to parse json : ", e);
 				}
 			} else {
-				console.log("load meta binary", data);
+				//console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
 					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!metaData.hasOwnProperty('id')) {
@@ -159,7 +159,7 @@
 			resultCallbacks[id] = resultCallback;
 
 			console.log('[Info] chowder_response', reqdata);
-			console.log("chowder_response sendWrapper");
+			//console.log("chowder_response sendWrapper");
 			socket.emit('chowder_response', reqdata);
 
 		} else {
