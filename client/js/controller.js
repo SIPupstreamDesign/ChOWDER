@@ -316,6 +316,10 @@
 		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
 	}
 	
+	function addMetaData(metaData) {
+		connector.send('AddMetaData', metaData, doneAddContent);
+	}
+	
 	/**
 	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
 	 * @method updateMetaData
@@ -447,7 +451,7 @@
 			updateScreen();
 			updateWindowData();
 		}
-	}
+	};
 	
 	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
@@ -1719,6 +1723,27 @@
 		urlInput.value = '';
 	};
 	
+	/** 
+	 * 複製ボタンが押された
+	 * @method on_duplicatebutton_clicked
+	 * @param {Object} evt ボタンイベント.
+	 */
+	gui.on_duplicatebutton_clicked = function (evt) {
+		console.log('duplicate');
+		var id = getSelectedID(),
+			metaData,
+			metaDataCopy;
+		
+		if (id) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				metaDataCopy = JSON.parse(JSON.stringify(metaData));
+				delete metaDataCopy.id;
+				addMetaData(metaDataCopy);
+			}
+		}
+	};
+	
 	/**
 	 * 画像ファイルFileOpenハンドラ
 	 * @method on_imagefileinput_changed
@@ -1795,7 +1820,8 @@
 			fileReader = new FileReader(),
 			id = gui.get_update_content_id(),
 			previewArea = gui.get_content_preview_area(),
-			elem;
+			elem,
+			metaData;
 
 		fileReader.onloadend = function (e) {
 			if (e.target.result) {
@@ -1804,7 +1830,11 @@
 				if (elem) {
 					previewArea.removeChild(elem);
 				}
-				updateContent({type : "image", id : id}, e.target.result);
+				if (metaDataDict.hasOwnProperty(id)) {
+					metaData = metaDataDict[id];
+					metaData.type = "image";
+					updateContent(metaData, e.target.result);
+				}
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -1829,8 +1859,14 @@
 	 * @method on_contentdeletebutton_clicked
 	 */
 	gui.on_contentdeletebutton_clicked = function (evt) {
-		if (getSelectedID()) {
-			connector.send('DeleteContent', {id : getSelectedID()}, doneDeleteContent);
+		var id = getSelectedID(),
+			metaData;
+		
+		if (id) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				connector.send('DeleteContent', metaData, doneDeleteContent);
+			}
 		}
 	};
 	

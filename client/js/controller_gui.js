@@ -86,7 +86,8 @@
 			urlSendButton = document.getElementById('url_send_button'),
 			imageFileInput = document.getElementById('image_file_input'),
 			textFileInput = document.getElementById('text_file_input'),
-			updateImageInput = document.getElementById('update_image_input');
+			updateImageInput = document.getElementById('update_image_input'),
+			duplicateButton = document.getElementById('duplicate_button');
 		
 		urlSendButton.onclick = function (evt) {
 			gui.on_urlsendbuton_clicked(evt);
@@ -113,6 +114,12 @@
 			gui.on_textsendbutton_clicked(evt);
 			bottomfunc(false);
 		};
+		if (duplicateButton) {
+			duplicateButton.onclick = function (evt) {
+				gui.on_duplicatebutton_clicked(evt);
+				bottomfunc(false);
+			};
+		}
 	}
 	
 	/**
@@ -631,6 +638,7 @@
 	window.controller_gui.on_textfileinput_changed = null;
 	window.controller_gui.on_urlsendbuton_clicked = null;
 	window.controller_gui.on_textsendbutton_clicked = null;
+	window.controller_gui.on_duplicatebutton_clicked = null;
 	window.controller_gui.on_contentdeletebutton_clicked = null;
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;

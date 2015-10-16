@@ -23,11 +23,12 @@
 	/**
 	 * WebSocketイベント登録
 	 * @method registerWSEvent
+	 * @param {String} socketid ソケットID
 	 * @param {Socket} ws_connection WebSocketコネクション
 	 * @param {Socket} io socket.io オブジェクト
 	 * @param {Socket} ws WebSocketServerオブジェクト
 	 */
-	function registerWSEvent(ws_connection, io, ws) {
+	function registerWSEvent(socketid, ws_connection, io, ws) {
 		var methods = {},
 			post_update = (function (ws, io) {
 				return function (resultCallback) {
@@ -43,20 +44,20 @@
 		
 		
 		ws_connector.on(Command.GetMetaData, function (data, resultCallback) {
-			operator.commandGetMetaData(null, ws_connection, data, resultCallback);
+			operator.commandGetMetaData(data, resultCallback);
 		});
 
 		ws_connector.on(Command.GetContent, function (data, resultCallback) {
-			operator.commandGetContent(null, ws_connection, data, resultCallback);
+			operator.commandGetContent(data, resultCallback);
 		});
 		
 		ws_connector.on(Command.GetWindow, function (data, resultCallback) {
-			operator.commandGetWindow(null, ws_connection, data, resultCallback);
+			operator.commandGetWindow(socketid, data, resultCallback);
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
 			console.log("Command.AddWindow");
-			operator.commandAddWindow(null, ws_connection, data, post_update(resultCallback));
+			operator.commandAddWindow(socketid, data, post_update(resultCallback));
 		});
 		
 		ws_connector.registerEvent(ws, ws_connection);
