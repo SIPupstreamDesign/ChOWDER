@@ -9,6 +9,7 @@
 		
 		// request command
 		AddContent : "AddContent",
+		AddMetaData : "AddMetaData",
 		GetContent : "GetContent",
 		GetMetaData : "GetMetaData",
 		DeleteContent : "DeleteContent",

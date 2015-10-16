@@ -54,9 +54,9 @@ ws.on('request', function (request) {
 	connection.id = id_counter;
 	ws_connections.id_counter = connection;
 	id_counter = id_counter + 1;
-	
+
 	sender.setOperator(operator);
-	sender.registerWSEvent(connection, io, ws);
+	sender.registerWSEvent(connection.id, connection, io, ws);
 	ws_connector.broadcast(ws, Command.Update);
 	
 	connection.on('close', function () {
@@ -135,7 +135,7 @@ io.on('connection', function (socket) {
 	"use strict";
 	console.log("[CONNECT] ID=" + socket.id);
 
-	operator.registerEvent(io, socket, ws);
+	operator.registerEvent(socket.id, io, socket, ws);
 	io_connector.broadcast(io, Command.Update);
 
 	socket.on('disconnect', function () {
@@ -180,7 +180,7 @@ ws2.on('request', function (request) {
 	ws2_connections.id_counter = connection;
 	id_counter = id_counter + 1;
 	
-	operator.registerWSEvent(connection, io, ws);
+	operator.registerWSEvent(connection.id, connection, io, ws);
 	
 	connection.on('close', function () {
 		delete ws2_connections[connection.id];

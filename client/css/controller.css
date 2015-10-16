@@ -297,7 +297,8 @@ p {
 	/*padding: 20px;*/
 	background-color: rgba(55, 55, 55, 1.0);
 	position : absolute;
-	height : 520px;
+	/*height : 520px;*/
+	height : 620px;
 	width : 800px;
 	bottom : 0px;
 	top: 150px;
