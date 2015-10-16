@@ -928,8 +928,9 @@
 			
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
-				updateMetaData(metaData);
+				//updateMetaData(metaData);
 			}
+
 			evt.stopPropagation();
 			evt.preventDefault();
 		} else if (lastDraggingID && manipulator.getDraggingManip()) {
@@ -1253,7 +1254,6 @@
 							} else {
 								duplicatedElem.src = elem.src;
 							}
-							connector.send('GetMetaData', metaDataDict[id], doneGetMetaData);
 						}
 					}
 				}
@@ -2007,8 +2007,8 @@
 		var elem,
 			id = metaData.id;
 		if (id) {
-			console.log(metaData);
-			doneGetMetaData(null, metaData);
+			//console.log(metaData);
+			//doneGetMetaData(null, metaData);
 			if (lastDraggingID) {
 				elem = document.getElementById(lastDraggingID);
 				if (elem) {
@@ -2024,16 +2024,15 @@
 	connector.on('UpdateContent', function (metaData) {
 		console.log('UpdateContent', metaData);
 		var id = metaData.id,
+			elem,
 			previewArea = gui.get_content_preview_area();
 		
 		if (id) {
-			connector.send('GetMetaData', metaData, function (err, json) {
-				connector.send('GetContent', json, doneGetContent);
+			connector.send('GetMetaData', metaData, function (err, metaData) {
+				connector.send('GetContent', metaData, function (err, reply) {
+					doneGetContent(err, reply);
+				});
 			});
-			
-			//	doneGetMetaData(err, json);
-			//	connector.send('GetContent', json, doneGetContent);
-			//});
 		}
 	});
 	
