@@ -482,6 +482,7 @@
 			if (windowData.hasOwnProperty('id') && windowData.id !== "") {
 				id = windowData.id;
 			}
+			windowData.id = id;
 			socketidToHash[socketid] = id;
 			console.log("registerWindow: " + id);
 			textClient.hexists(windowPrefix + id, function (err, reply) {
@@ -498,7 +499,6 @@
 						};
 					}(textClient, id)));
 				} else {
-					windowData.id = id;
 					windowData.socketid = socketid;
 					windowData.orgWidth = windowData.width;
 					windowData.orgHeight = windowData.height;
