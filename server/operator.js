@@ -257,7 +257,7 @@
 	
 	/**
 	 * メタデータ追加
-	 * @method addContent
+	 * @method addMetaData
 	 * @param {Object} metaData メタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -268,42 +268,52 @@
 			}
 			metaData.id = id;
 			if (metaData.hasOwnProperty('content_id') && metaData.content_id !== "") {
-				getContent('', metaData.content_id, function (contentData) {
-					var dimensions;
-					metaData.orgWidth = metaData.width;
-					metaData.orgHeight = metaData.height;
-
-					if (metaData.type === 'text') {
-						metaData.mime = "text/plain";
-					} else if (metaData.type === 'image') {
-						metaData.mime = util.detectImageType(contentData);
-					} else if (metaData.type === 'url') {
-						metaData.mime = util.detectImageType(contentData);
-					} else {
-						console.log("Error undefined type:" + metaData.type);
-					}
-
-					if (!metaData.hasOwnProperty('zIndex')) {
-						metaData.zIndex = 0;
-					}
-					if (metaData.type === 'image') {
-						if (isInvalidImageSize(metaData)) {
-							dimensions = image_size(contentData);
-							metaData.width = dimensions.width;
-							metaData.height = dimensions.height;
+				client.exists(contentPrefix + metaData.content_id, function (err, doesExists) {
+					if (!err && doesExists.toString() === "1") {
+						getContent('', metaData.content_id, function (contentData) {
+							var dimensions;
 							metaData.orgWidth = metaData.width;
 							metaData.orgHeight = metaData.height;
-						}
+
+							if (metaData.type === 'text') {
+								metaData.mime = "text/plain";
+							} else if (metaData.type === 'image') {
+								metaData.mime = util.detectImageType(contentData);
+							} else if (metaData.type === 'url') {
+								metaData.mime = util.detectImageType(contentData);
+							} else {
+								console.log("Error undefined type:" + metaData.type);
+							}
+
+							if (!metaData.hasOwnProperty('zIndex')) {
+								metaData.zIndex = 0;
+							}
+							if (metaData.type === 'image') {
+								if (isInvalidImageSize(metaData)) {
+									dimensions = image_size(contentData);
+									metaData.width = dimensions.width;
+									metaData.height = dimensions.height;
+									metaData.orgWidth = metaData.width;
+									metaData.orgHeight = metaData.height;
+								}
+							}
+							setMetaData(metaData.type, id, metaData, function (metaData) {
+								// 参照カウント.
+								textClient.setnx(contentRefPrefix + metaData.content_id, 0);
+								textClient.incr(contentRefPrefix + metaData.content_id);
+
+								if (endCallback) {
+									endCallback(metaData);
+								}
+							});
+						});
+					} else {
+						setMetaData(metaData.type, id, metaData, function (metaData) {
+							if (endCallback) {
+								endCallback(metaData);
+							}
+						});
 					}
-					setMetaData(metaData.type, id, metaData, function (metaData) {
-						// 参照カウント.
-						textClient.setnx(contentRefPrefix + metaData.content_id, 0);
-						textClient.incr(contentRefPrefix + metaData.content_id);
-						
-						if (endCallback) {
-							endCallback(metaData);
-						}
-					});
 				});
 			} else {
 				setMetaData(metaData.type, id, metaData, function (metaData) {
@@ -684,7 +694,7 @@
 		if (metaData.hasOwnProperty('id') && metaData.id !== "") {
 			client.exists(metadataPrefix + metaData.id, function (err, doesExists) {
 				if (!err && doesExists.toString() === "1") {
-					getMetaData('typical', metaData.id, function (meta) {
+					getMetaData('', metaData.id, function (meta) {
 						var oldContentID,
 							newContentID;
 						if (metaData.hasOwnProperty('content_id')) {
@@ -700,7 +710,7 @@
 								}
 							});
 						} else {
-							addContentCore(metaData, binaryData, endCallback);
+							addContentCore(meta, binaryData, endCallback);
 						}
 					});
 				} else {

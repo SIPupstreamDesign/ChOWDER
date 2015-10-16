@@ -15,7 +15,7 @@
 		return function (err, res, binary) {
 			var metabin = null,
 				result;
-			console.log("isBinary", binary);
+			//console.log("isBinary", binary);
 			if (binary !== undefined && binary !== null) {
 				result = {
 					jsonrpc: "2.0",
@@ -145,7 +145,7 @@
 				}
 			} else if (data.type === 'binary') {
 				data = data.binaryData;
-				console.log("load meta binary", data);
+				//console.log("load meta binary", data);
 				metabinary.loadMetaBinary(data, function (metaData, contentData) {
 					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!metaData.hasOwnProperty('id')) {
