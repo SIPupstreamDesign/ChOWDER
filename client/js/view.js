@@ -223,7 +223,9 @@
 			blob,
 			elem,
 			mime = "image/jpeg",
-			boundElem;
+			boundElem,
+			id,
+			duplicatedElem;
 		
 		console.log("assignMetaBinary", "id=" + metaData.id);
 
@@ -266,6 +268,25 @@
 				}
 			}
 			vscreen_util.assignMetaData(elem, metaData, false);
+			
+			// 同じコンテンツを参照しているメタデータがあれば更新
+			if (elem) {
+				for (id in metaDataDict) {
+					if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
+						if (metaData.content_id === metaDataDict[id].content_id) {
+							duplicatedElem = document.getElementById(id);
+							if (duplicatedElem) {
+								if (metaData.type === 'text') {
+									duplicatedElem.innerHTML = elem.innerHTML;
+								} else {
+									duplicatedElem.src = elem.src;
+								}
+								connector.send('GetMetaData', metaDataDict[id], doneGetMetaData);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	
@@ -485,7 +506,10 @@
 		if (!err) {
 			var elem = document.getElementById(json.id),
 				isWindow = (json.type === windowType),
-				isOutside = false;
+				isOutside = false,
+				whole,
+				w,
+				h;
 			console.log("isOutside:", isOutside);
 
 			if (isWindow) {
@@ -494,7 +518,11 @@
 					return;
 				}
 			} else {
-				isOutside = vscreen_util.isOutsideWindow(json, vscreen.getWhole());
+				whole = vscreen.getWhole();
+				whole.w = whole.w / vscreen.getWholeScale();
+				whole.h = whole.h / vscreen.getWholeScale();
+				isOutside = vscreen_util.isOutsideWindow(json, whole);
+				//console.log(isOutside, json, vscreen.getWhole());
 			}
 
 			if (isOutside) {
