@@ -12,7 +12,6 @@
 		AddMetaData : "AddMetaData",
 		GetContent : "GetContent",
 		GetMetaData : "GetMetaData",
-		DeleteContent : "DeleteContent",
 		AddWindow : "AddWindow",
 		DeleteWindow : "DeleteWindow",
 		GetWindow : "GetWindow",
@@ -23,6 +22,7 @@
 		Update : "Update",
 		UpdateMetaData : "UpdateMetaData",
 		UpdateContent : "UpdateContent",
+		DeleteContent : "DeleteContent",
 		UpdateWindow : "UpdateWindow",
 		ShowWindowID : "ShowWindowID"
 	};

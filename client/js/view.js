@@ -296,6 +296,7 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	function createBoundingBox(metaData) {
+		console.log("createBoundingBox", metaData);
 		var previewArea = document.getElementById('preview_area'),
 			tagName = 'div',
 			elem = document.createElement(tagName);
@@ -535,7 +536,7 @@
 					} else {
 						elem.style.display = "none";
 					}
-				} else if (isVisible(json)) {
+				} else if (!isWindow && isVisible(json)) {
 					// コンテンツがロードされるまで枠を表示しておく.
 					if (!elem) {
 						createBoundingBox(json);
@@ -584,6 +585,16 @@
 					connector.send('GetContent', json, doneGetContent);
 				}
 			});
+		});
+		
+		connector.on("DeleteContent", function (data) {
+			console.log("DeleteContent", data);
+			var elem = document.getElementById(data.id),
+				previewArea = document.getElementById('preview_area');
+			if (elem) {
+				previewArea.removeChild(elem);
+				delete metaDataDict[data.id];
+			}
 		});
 
 		connector.on("UpdateWindow", function (data) {

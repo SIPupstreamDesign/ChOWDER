@@ -972,7 +972,7 @@
 				};
 			}(ws, io)),
 			post_updateMetaData = (function (ws, io) {
-				return function (metaData, resultCallback) {
+				return function (resultCallback) {
 					return function (err, reply) {
 						ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
 						io_connector.broadcast(io, Command.UpdateMetaData, reply);
@@ -983,10 +983,21 @@
 				};
 			}(ws, io)),
 			post_updateContent = (function (ws, io) {
-				return function (metaData, resultCallback) {
+				return function (resultCallback) {
 					return function (err, reply) {
 						ws_connector.broadcast(ws, Command.UpdateContent, reply);
 						io_connector.broadcast(io, Command.UpdateContent, reply);
+						if (resultCallback) {
+							resultCallback(err, reply);
+						}
+					};
+				};
+			}(ws, io)),
+			post_deletecontent = (function (ws, io) {
+				return function (resultCallback) {
+					return function (err, reply) {
+						ws_connector.broadcast(ws, Command.DeleteContent, reply);
+						io_connector.broadcast(io, Command.DeleteContent, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -1061,7 +1072,7 @@
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandDeleteContent(metaData, post_update(resultCallback));
+			commandDeleteContent(metaData, post_deletecontent(resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
@@ -1096,7 +1107,7 @@
 				};
 			}(ws, io)),
 			post_updateMetaData = (function (ws, io) {
-				return function (metaData, resultCallback) {
+				return function (resultCallback) {
 					return function (err, reply) {
 						ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
 						io_connector.broadcast(io, Command.UpdateMetaData, reply);
@@ -1107,10 +1118,21 @@
 				};
 			}(ws, io)),
 			post_updateContent = (function (ws, io) {
-				return function (metaData, resultCallback) {
+				return function (resultCallback) {
 					return function (err, reply) {
 						ws_connector.broadcast(ws, Command.UpdateContent, reply);
 						io_connector.broadcast(io, Command.UpdateContent, reply);
+						if (resultCallback) {
+							resultCallback(err, reply);
+						}
+					};
+				};
+			}(ws, io)),
+			post_deleteContent = (function (ws, io) {
+				return function (resultCallback) {
+					return function (err, reply) {
+						ws_connector.broadcast(ws, Command.DeleteContent, reply);
+						io_connector.broadcast(io, Command.DeleteContent, reply);
 						if (resultCallback) {
 							resultCallback(err, reply);
 						}
@@ -1148,7 +1170,7 @@
 		});
 
 		io_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			commandDeleteContent(data, post_update(resultCallback));
+			commandDeleteContent(data, post_deleteContent(resultCallback));
 		});
 
 		io_connector.on(Command.UpdateContent, function (data, resultCallback) {
