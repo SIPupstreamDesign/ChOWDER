@@ -1592,6 +1592,7 @@
 			contentArea = gui.get_content_area(),
 			previewArea = gui.get_content_preview_area(),
 			deleted = document.getElementById(json.id);
+		manipulator.removeManipulator();
 		previewArea.removeChild(deleted);
 		if (gui.get_list_elem(json.id)) {
 			contentArea.removeChild(gui.get_list_elem(json.id));
@@ -1905,6 +1906,7 @@
 		if (id) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
+				metaData.visible = false;
 				connector.send('DeleteContent', metaData, doneDeleteContent);
 			}
 		}
@@ -2055,6 +2057,10 @@
 		updateScreen();
 	});
 	
+	// コンテンツが削除されたときにブロードキャストされてくる.
+	connector.on('DeleteContent', function (metaData) {
+		console.log('DeleteContent', metaData);
+	});
 	///-------------------------------------------------------------------------------------------------------
 	/**
 	 * コントローラ初期化

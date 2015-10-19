@@ -54,7 +54,6 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	function eventTextMessage(ws_connection, metaData) {
-		console.log("eventTextMessage");
 		if (metaData.to === "client") {
 			// masterからclientに送ったメッセージが返ってきた.
 			if (metaData.error) {
@@ -72,7 +71,6 @@
 		} else {
 			// clientからmasterにメッセージが来た
 			if (recievers.hasOwnProperty(metaData.method)) {
-				console.log(recievers[metaData.method]);
 				recievers[metaData.method](metaData.params, (function (ws_connection) {
 					return sendResponse(ws_connection, metaData);
 				}(ws_connection)));
