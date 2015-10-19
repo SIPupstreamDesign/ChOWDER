@@ -928,7 +928,7 @@
 			
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
-				//updateMetaData(metaData);
+				updateMetaData(metaData);
 			}
 
 			evt.stopPropagation();
