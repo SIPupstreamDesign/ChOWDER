@@ -1183,7 +1183,7 @@
 		var previewArea = gui.get_content_preview_area(),
 			id,
 			elem,
-			duplicatedElem,
+			sourceElem,
 			tagName,
 			blob,
 			mime = "image/jpeg";
@@ -1212,32 +1212,34 @@
 		}
 
 		console.log("id=" + metaData.id);
-		if (metaData.type === 'text') {
-			// contentData is text
-			elem.innerHTML = contentData;
-			elem.style.overflow = "visible"; // Show all text
-			vscreen_util.assignMetaData(elem, metaData, true);
-		} else {
-			// contentData is blob
-			if (metaData.hasOwnProperty('mime')) {
-				mime = metaData.mime;
-				console.log("mime:" + mime);
-			}
-			blob = new Blob([contentData], {type: mime});
-			if (elem && blob) {
-				elem.src = URL.createObjectURL(blob);
+		if (contentData) {
+			if (metaData.type === 'text') {
+				// contentData is text
+				elem.innerHTML = contentData;
+				elem.style.overflow = "visible"; // Show all text
+				vscreen_util.assignMetaData(elem, metaData, true);
+			} else {
+				// contentData is blob
+				if (metaData.hasOwnProperty('mime')) {
+					mime = metaData.mime;
+					console.log("mime:" + mime);
+				}
+				blob = new Blob([contentData], {type: mime});
+				if (elem && blob) {
+					elem.src = URL.createObjectURL(blob);
 
-				elem.onload = function () {
-					if (metaData.width < 10) {
-						console.log("naturalWidth:" + elem.naturalWidth);
-						metaData.width = elem.naturalWidth;
-					}
-					if (metaData.height < 10) {
-						console.log("naturalHeight:" + elem.naturalHeight);
-						metaData.height = elem.naturalHeight;
-					}
-					vscreen_util.assignMetaData(elem, metaData, true);
-				};
+					elem.onload = function () {
+						if (metaData.width < 10) {
+							console.log("naturalWidth:" + elem.naturalWidth);
+							metaData.width = elem.naturalWidth;
+						}
+						if (metaData.height < 10) {
+							console.log("naturalHeight:" + elem.naturalHeight);
+							metaData.height = elem.naturalHeight;
+						}
+						vscreen_util.assignMetaData(elem, metaData, true);
+					};
+				}
 			}
 		}
 		
@@ -1246,13 +1248,16 @@
 			for (id in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
 					if (metaData.content_id === metaDataDict[id].content_id) {
-						duplicatedElem = document.getElementById(id);
-						if (duplicatedElem) {
+						sourceElem = document.getElementById(id);
+						if (sourceElem) {
 							if (metaData.type === 'text') {
-								duplicatedElem.innerHTML = elem.innerHTML;
-							} else {
-								duplicatedElem.src = elem.src;
+								if (sourceElem.innerHTML !== "") {
+									elem.innerHTML = sourceElem.innerHTML;
+								}
+							} else if (sourceElem.src) {
+								elem.src = sourceElem.src;
 							}
+							vscreen_util.assignMetaData(elem, metaData, true);
 						}
 					}
 				}
@@ -1271,8 +1276,10 @@
 		var contentArea = gui.get_content_area(),
 			contentElem,
 			id,
-			duplicatedElem,
+			elem,
+			sourceElem,
 			divElem,
+			aspect,
 			tagName,
 			classname,
 			blob,
@@ -1304,30 +1311,32 @@
 		contentElem.classList.add(classname);
 
 		//console.log("id=" + metaData.id);
-		if (metaData.type === 'text') {
-			// contentData is text
-			contentElem.innerHTML = contentData;
-			divElem.style.width = "200px";
-			divElem.style.height = "50px";
-		} else {
-			// contentData is blob
-			if (metaData.hasOwnProperty('mime')) {
-				mime = metaData.mime;
-				//console.log("mime:" + mime);
-			}
-			divElem.style.width = "200px";
-			blob = new Blob([contentData], {type: mime});
-			if (contentElem && blob) {
-				contentElem.src = URL.createObjectURL(blob);
+		if (contentData) {
+			if (metaData.type === 'text') {
+				// contentData is text
+				contentElem.innerHTML = contentData;
+				divElem.style.width = "200px";
+				divElem.style.height = "50px";
+			} else {
+				// contentData is blob
+				if (metaData.hasOwnProperty('mime')) {
+					mime = metaData.mime;
+					//console.log("mime:" + mime);
+				}
+				divElem.style.width = "200px";
+				blob = new Blob([contentData], {type: mime});
+				if (contentElem && blob) {
+					contentElem.src = URL.createObjectURL(blob);
 
-				contentElem.onload = function () {
-					var aspect;
-					if (contentElem.offsetHeight > 200) {
-						aspect = contentElem.offsetWidth / contentElem.offsetHeight;
-						divElem.style.height = "100px";
-						divElem.style.width = 100 * aspect;
-					}
-				};
+					contentElem.onload = function () {
+						var aspect;
+						if (contentElem.offsetHeight > 200) {
+							aspect = contentElem.offsetWidth / contentElem.offsetHeight;
+							divElem.style.height = "100px";
+							divElem.style.width = 100 * aspect;
+						}
+					};
+				}
 			}
 		}
 		contentElem.style.width = "100%";
@@ -1345,13 +1354,19 @@
 			for (id in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
 					if (metaData.content_id === metaDataDict[id].content_id) {
-						duplicatedElem = gui.get_list_elem(id);
-						if (duplicatedElem) {
-							duplicatedElem = duplicatedElem.childNodes[0];
-							if (metaData.type === 'text') {
-								duplicatedElem.innerHTML = contentElem.innerHTML;
-							} else {
-								duplicatedElem.src = contentElem.src;
+						elem = gui.get_list_elem(id);
+						if (elem) {
+							sourceElem = elem.childNodes[0];
+							if (metaData.type === 'text' && sourceElem.innerHTML !== "") {
+								contentElem.innerHTML = sourceElem.innerHTML;
+							} else if (sourceElem.src) {
+								contentElem.src = sourceElem.src;
+								divElem.style.width = "200px";
+								if (contentElem.offsetHeight > 200) {
+									aspect = metaDataDict[id].width / metaDataDict[id].height;
+									divElem.style.height = "100px";
+									divElem.style.width = 100 * aspect;
+								}
 							}
 						}
 					}
@@ -1684,7 +1699,9 @@
 	 */
 	doneAddMetaData = function (err, reply) {
 		console.log("doneAddMetaData", reply);
-		doneGetMetaData(err, reply);
+		metaDataDict[reply.id] = reply;
+		importContent(reply, null);
+		//doneGetMetaData(err, reply);
 	};
 	
 	/**
