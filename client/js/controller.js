@@ -29,6 +29,7 @@
 		doneGetWindow,
 		doneDeleteContent,
 		doneAddContent,
+		doneAddMetaData,
 		doneUpdateContent,
 		doneUpdateMetaData,
 		doneUpdateWindow,
@@ -317,7 +318,7 @@
 	}
 	
 	function addMetaData(metaData) {
-		connector.send('AddMetaData', metaData, doneAddContent);
+		connector.send('AddMetaData', metaData, doneAddMetaData);
 	}
 	
 	/**
@@ -1520,7 +1521,7 @@
 		metaDataDict[json.id] = json;
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
-		if (draggingID === json.id || (manipulator.getDraggingManip() && lastDraggingID === json.id)) {
+		if (draggingID === json.id || (manipulator.isShowManipulator() && lastDraggingID === json.id)) {
 			gui.assign_content_property(json);
 		}
 		
@@ -1673,6 +1674,17 @@
 			//console.log(currentContent);
 		}
 		currentContent = null;
+	};
+	
+	/**
+	 * AddMetaDataを送信した後の終了コールバック.
+	 * @method doneAddMetaData
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneAddMetaData = function (err, reply) {
+		console.log("doneAddMetaData", reply);
+		doneGetMetaData(err, reply);
 	};
 	
 	/**
@@ -2008,6 +2020,7 @@
 		console.log("on_lefttab_changed", lastDraggingID);
 		unselect();
 		if (isDisplayTabSelected()) {
+			gui.init_property_area("", "display");
 			select(wholeWindowListID);
 		} else {
 			gui.init_property_area("", "content");
