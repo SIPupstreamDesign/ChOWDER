@@ -1590,7 +1590,6 @@
 	doneUpdateMetaData = function (err, reply) {
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
-		metaDataDict[json.id] = json;
 		gui.assign_content_property(json);
 	};
 	
@@ -1716,7 +1715,6 @@
 		console.log("doneAddMetaData", reply);
 		metaDataDict[reply.id] = reply;
 		importContent(reply, null);
-		//doneGetMetaData(err, reply);
 	};
 	
 	/**
@@ -2067,7 +2065,7 @@
 			id = metaData.id;
 		if (id) {
 			//console.log(metaData);
-			//doneGetMetaData(null, metaData);
+			doneGetMetaData(null, metaData);
 			if (lastDraggingID) {
 				elem = document.getElementById(lastDraggingID);
 				if (elem) {
@@ -2087,8 +2085,8 @@
 			previewArea = gui.get_content_preview_area();
 		
 		if (id) {
-			connector.send('GetMetaData', metaData, function (err, metaData) {
-				connector.send('GetContent', metaData, function (err, reply) {
+			connector.send('GetMetaData', metaData, function (err, meta) {
+				connector.send('GetContent', meta, function (err, reply) {
 					doneGetContent(err, reply);
 				});
 			});
@@ -2117,6 +2115,7 @@
 	// コンテンツが削除されたときにブロードキャストされてくる.
 	connector.on('DeleteContent', function (metaData) {
 		console.log('DeleteContent', metaData);
+		doneDeleteContent(null, metaData);
 	});
 	///-------------------------------------------------------------------------------------------------------
 	/**

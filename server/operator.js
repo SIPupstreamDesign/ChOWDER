@@ -818,9 +818,9 @@
 	 */
 	function commandUpdateMetaData(json, endCallback) {
 		//console.log("commandUpdateMetaData:" + json.id);
-		setMetaData(json.type, json.id, json, function () {
+		setMetaData(json.type, json.id, json, function (meta) {
 			if (endCallback) {
-				endCallback(null, json);
+				endCallback(null, meta);
 			}
 		});
 	}
