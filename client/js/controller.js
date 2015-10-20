@@ -1171,7 +1171,49 @@
 		}
 		return classname;
 	}
-	
+
+	/**
+	 * エレメント間でコンテントデータをコピーする.
+	 */
+	function copyContentData(fromElem, toElem, metaData, isListContent) {
+		var elem,
+			id;
+		
+		for (id in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
+				if (metaData.content_id === metaDataDict[id].content_id) {
+					if (isListContent) {
+						elem = gui.get_list_elem(id);
+						if (elem) {
+							elem = elem.childNodes[0];
+						}
+					} else {
+						elem = document.getElementById(id);
+					}
+					if (elem && toElem) {
+						if (metaData.type === 'text') {
+							if (elem.innerHTML !== "") {
+								toElem.innerHTML = elem.innerHTML;
+							}
+						} else if (elem.src) {
+							toElem.src = elem.src;
+						}
+						if (!isListContent) {
+							vscreen_util.assignMetaData(toElem, metaData, true);
+						}
+					}
+					if (elem && fromElem) {
+						if (metaData.type === 'text') {
+							elem.innerHTML = fromElem.innerHTML;
+						} else {
+							elem.src = fromElem.src;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * 受領したメタデータからプレビューツリーにコンテンツを反映する。
 	 * doneGetContent時にコールされる。
@@ -1182,8 +1224,8 @@
 	function importContentToView(metaData, contentData) {
 		var previewArea = gui.get_content_preview_area(),
 			id,
+			contentElem,
 			elem,
-			sourceElem,
 			tagName,
 			blob,
 			mime = "image/jpeg";
@@ -1198,26 +1240,26 @@
 		}
 		
 		if (document.getElementById(metaData.id)) {
-			elem = document.getElementById(metaData.id);
+			contentElem = document.getElementById(metaData.id);
 		}
 		
-		if (!elem) {
-			elem = document.createElement(tagName);
-			elem.id = metaData.id;
-			elem.style.position = "absolute";
-			setupContent(elem, metaData.id);
+		if (!contentElem) {
+			contentElem = document.createElement(tagName);
+			contentElem.id = metaData.id;
+			contentElem.style.position = "absolute";
+			setupContent(contentElem, metaData.id);
 
-			insertElementWithDictionarySort(previewArea, elem);
-			//previewArea.appendChild(elem);
+			insertElementWithDictionarySort(previewArea, contentElem);
+			//previewArea.appendChild(contentElem);
 		}
 
 		console.log("id=" + metaData.id);
 		if (contentData) {
 			if (metaData.type === 'text') {
 				// contentData is text
-				elem.innerHTML = contentData;
-				elem.style.overflow = "visible"; // Show all text
-				vscreen_util.assignMetaData(elem, metaData, true);
+				contentElem.innerHTML = contentData;
+				contentElem.style.overflow = "visible"; // Show all text
+				vscreen_util.assignMetaData(contentElem, metaData, true);
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -1225,43 +1267,29 @@
 					console.log("mime:" + mime);
 				}
 				blob = new Blob([contentData], {type: mime});
-				if (elem && blob) {
-					elem.src = URL.createObjectURL(blob);
+				if (contentElem && blob) {
+					contentElem.src = URL.createObjectURL(blob);
 
-					elem.onload = function () {
+					contentElem.onload = function () {
 						if (metaData.width < 10) {
-							console.log("naturalWidth:" + elem.naturalWidth);
-							metaData.width = elem.naturalWidth;
+							console.log("naturalWidth:" + contentElem.naturalWidth);
+							metaData.width = contentElem.naturalWidth;
 						}
 						if (metaData.height < 10) {
-							console.log("naturalHeight:" + elem.naturalHeight);
-							metaData.height = elem.naturalHeight;
+							console.log("naturalHeight:" + contentElem.naturalHeight);
+							metaData.height = contentElem.naturalHeight;
 						}
-						vscreen_util.assignMetaData(elem, metaData, true);
+						vscreen_util.assignMetaData(contentElem, metaData, true);
 					};
 				}
 			}
 		}
 		
 		// 同じコンテンツを参照しているメタデータがあれば更新
-		if (elem) {
-			for (id in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
-					if (metaData.content_id === metaDataDict[id].content_id) {
-						sourceElem = document.getElementById(id);
-						if (sourceElem) {
-							if (metaData.type === 'text') {
-								if (sourceElem.innerHTML !== "") {
-									elem.innerHTML = sourceElem.innerHTML;
-								}
-							} else if (sourceElem.src) {
-								elem.src = sourceElem.src;
-							}
-							vscreen_util.assignMetaData(elem, metaData, true);
-						}
-					}
-				}
-			}
+		if (!contentData && contentElem) {
+			copyContentData(null, contentElem, metaData, false);
+		} else {
+			copyContentData(contentElem, null, metaData, false);
 		}
 	}
 	
@@ -1350,32 +1378,19 @@
 		divElem.style.color = "white";
 		
 		// 同じコンテンツを参照しているメタデータがあれば更新
-		if (contentElem) {
-			for (id in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
-					if (metaData.content_id === metaDataDict[id].content_id) {
-						elem = gui.get_list_elem(id);
-						if (elem) {
-							sourceElem = elem.childNodes[0];
-							if (metaData.type === 'text' && sourceElem.innerHTML !== "") {
-								contentElem.innerHTML = sourceElem.innerHTML;
-							} else if (sourceElem.src) {
-								contentElem.src = sourceElem.src;
-								divElem.style.width = "200px";
-								if (contentElem.offsetHeight > 200) {
-									aspect = metaDataDict[id].width / metaDataDict[id].height;
-									divElem.style.height = "100px";
-									divElem.style.width = 100 * aspect;
-								}
-							}
-						}
-					}
-				}
+		if (!contentData && contentElem) {
+			copyContentData(null, contentElem, metaData, true);
+			divElem.style.width = "200px";
+			if (contentElem.offsetHeight > 200) {
+				aspect = metaDataDict[id].width / metaDataDict[id].height;
+				divElem.style.height = "100px";
+				divElem.style.width = 100 * aspect;
 			}
+		} else {
+			copyContentData(contentElem, null, metaData, true);
 		}
 	}
 	
-	/// import content
 	/**
 	 * メタデータからコンテンツをインポートする
 	 * @method importContent
