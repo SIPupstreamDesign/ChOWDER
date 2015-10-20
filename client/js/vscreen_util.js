@@ -135,7 +135,7 @@
 			}
 			
 			if (isVisible(metaData)) {
-				console.log("isvisible");
+				//console.log("isvisible");
 				elem.style.display = "block";
 			} else {
 				console.log("not isvisible");

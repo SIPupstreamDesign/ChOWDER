@@ -544,7 +544,6 @@
 			gui.init_property_area(id, "whole_window", mime);
 			gui.assign_virtual_display_property(vscreen.getWhole(), vscreen.getSplitCount());
 			gui.get_whole_window_elem().style.borderColor = windowSelectColor;
-			gui.change_left_tab(windowType);
 			return;
 		}
 		if (id.indexOf(wholeSubWindowID) >= 0) {
@@ -572,7 +571,6 @@
 			gui.enable_delete_button(false);
 			gui.enable_display_delete_button(true);
 			gui.enable_update_image_button(false);
-			gui.change_left_tab(windowType);
 			if (gui.get_list_elem(id)) {
 				gui.get_list_elem(id).style.borderColor = windowSelectColor;
 			}
@@ -585,7 +583,6 @@
 			gui.enable_update_image_button(true);
 			gui.enable_display_delete_button(false);
 			gui.set_update_content_id(id);
-			gui.change_left_tab(metaData.type);
 			if (gui.get_list_elem(id)) {
 				gui.get_list_elem(id).style.borderColor = contentSelectColor;
 			}
@@ -693,6 +690,7 @@
 					document.getElementById('content_transform_w').value = metaData.width;
 					updateMetaData(metaData);
 				}
+				vscreen_util.assignMetaData(elem, metaData, true);
 			}
 			manipulator.removeManipulator();
 		}
@@ -962,7 +960,7 @@
 			elem = document.getElementById(draggingID);
 			metaData = metaDataDict[draggingID];
 			if (!isContentArea(evt)) {
-				console.log("not onContentArea");
+				//console.log("not onContentArea");
 				metaData.visible = true;
 				elem.style.color = "black";
 				if (isFreeMode()) {
@@ -996,7 +994,7 @@
 			}
 			clearSnapHightlight();
 		}
-		if (manipulator.getDraggingManip() && lastDraggingID) {
+		if (manipulator.isShowManipulator() && lastDraggingID) {
 			metaData = metaDataDict[lastDraggingID];
 			//updateMetaData(metaData);
 		} else {
@@ -1562,6 +1560,7 @@
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 		metaDataDict[json.id] = json;
+		gui.assign_content_property(json);
 	};
 	
 	/**
@@ -1770,7 +1769,7 @@
 	 * @param {Object} evt ボタンイベント.
 	 */
 	gui.on_duplicatebutton_clicked = function (evt) {
-		console.log('duplicate');
+		console.log('duplicate', getSelectedID());
 		var id = getSelectedID(),
 			metaData,
 			metaDataCopy;
@@ -2002,6 +2001,19 @@
 		}
 	};
 	
+	/**
+	 * 左ペインのタブが切り替えられた.
+	 */
+	gui.on_lefttab_changed = function () {
+		console.log("on_lefttab_changed", lastDraggingID);
+		unselect();
+		if (isDisplayTabSelected()) {
+			select(wholeWindowListID);
+		} else {
+			gui.init_property_area("", "content");
+		}
+	};
+	
 	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateMetaData', function (metaData) {
@@ -2085,6 +2097,7 @@
 		}
 		
 		gui.on_rect_changed = function () {
+			console.log('on_rect_changed');
 			changeRect(this.id, parseInt(this.value, 10));
 		};
 		

@@ -1,4 +1,4 @@
-/*jslint devel:true */
+﻿/*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
 (function () {
@@ -241,6 +241,7 @@
 			contentPreviewArea.style.opacity = 0.3;
 			displayPreviewArea.style.zIndex = 10;
 			contentPreviewArea.style.zIndex = -1000;
+			gui.on_lefttab_changed();
 		};
 
 		contentTabTitle.onclick = function () {
@@ -256,6 +257,7 @@
 			contentPreviewArea.style.opacity = 1.0;
 			displayPreviewArea.style.zIndex = -1000;
 			contentPreviewArea.style.zIndex = 10;
+			gui.on_lefttab_changed();
 		};
 		initContentArea(bottomfunc);
 		initDisplayArea();
@@ -534,22 +536,6 @@
 	}
 	
 	/**
-	 * 選択されたタブに左リストdomの切り替えを行う。
-	 * onclickはinit時に設定される
-	 * @method changeLeftTab
-	 * @param {String} type WindowかContentのタブ名
-	 */
-	function changeLeftTab(type) {
-		var displayTabTitle = document.getElementById('display_tab_title'),
-			contentTabTitle = document.getElementById('content_tab_title');
-		if (type === windowType) {
-			displayTabTitle.onclick();
-		} else {
-			contentTabTitle.onclick();
-		}
-	}
-
-	/**
 	 * PropertyエリアのコンテンツIDからElementを取得する
 	 * @method getSelectedElem
 	 * @return Literal
@@ -562,6 +548,10 @@
 		return null;
 	}
 	
+	/**
+	 * 初期化
+	 * @method init
+	 */
 	function init() {
 		var contentstab = window.animtab.create('left', {
 				'leftTab' : { min : '0px', max : 'auto' }
@@ -642,6 +632,7 @@
 	window.controller_gui.on_contentdeletebutton_clicked = null;
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;
+	window.controller_gui.on_lefttab_changed = null;
 	window.controller_gui.on_showidbutton_clicked = null;
 	window.controller_gui.on_snapdropdown_clicked = null;
 	window.controller_gui.on_virtualdisplaysetting_clicked　= null;
@@ -668,7 +659,6 @@
 	window.controller_gui.update_whole_split = function (x, y, flag) {
 		gui.on_change_whole_split(x, y, flag);
 	};
-	window.controller_gui.change_left_tab = changeLeftTab;
 	
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;

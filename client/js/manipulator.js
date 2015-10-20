@@ -62,7 +62,7 @@
 	 */
 	function moveManipulator(targetElem) {
 		if (manipulators.length < 3) {
-			console.log("manipulators:", manipulators);
+			//console.log("manipulators:", manipulators);
 			return;
 		}
 		
@@ -202,11 +202,16 @@
 		}
 	}
 	
+	function isShowManipulator() {
+		return (document.getElementById("_manip_0") !== null);
+	}
+	
 	window.manipulator = new Manipulator();
 	window.manipulator.moveManipulator = moveManipulator;
 	window.manipulator.setupManipulator = setupManipulator;
 	window.manipulator.removeManipulator = removeManipulator;
 	window.manipulator.showManipulator = showManipulator;
+	window.manipulator.isShowManipulator = isShowManipulator;
 	window.manipulator.getDraggingManip = getDraggingManip;
 	window.manipulator.clearDraggingManip = clearDraggingManip;
 	window.manipulator.setDraggingOffsetFunc = setDraggingOffsetFunc;
