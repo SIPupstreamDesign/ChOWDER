@@ -10,10 +10,9 @@
 		// request command
 		AddContent : "AddContent",
 		AddMetaData : "AddMetaData",
+		AddWindowMetaData : "AddWindowMetaData",
 		GetContent : "GetContent",
 		GetMetaData : "GetMetaData",
-		AddWindow : "AddWindow",
-		DeleteWindow : "DeleteWindow",
 		GetWindowMetaData : "GetWindowMetaData",
 		UpdateVirtualDisplay : "UpdateVirtualDisplay",
 		GetVirtualDisplay : "GetVirtualDisplay",
@@ -22,8 +21,9 @@
 		Update : "Update",
 		UpdateMetaData : "UpdateMetaData",
 		UpdateContent : "UpdateContent",
+		UpdateWindowMetaData : "UpdateWindowMetaData",
 		DeleteContent : "DeleteContent",
-		UpdateWindow : "UpdateWindow",
+		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID"
 	};
 	

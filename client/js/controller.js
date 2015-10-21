@@ -32,9 +32,9 @@
 		doneAddMetaData,
 		doneUpdateContent,
 		doneUpdateMetaData,
-		doneUpdateWindow,
+		doneUpdateWindowMetaData,
 		doneGetMetaData,
-		doneDeleteWindow;
+		doneDeleteWindowMetaData;
 	
 	
 	/**
@@ -274,8 +274,8 @@
 	 */
 	gui.on_deletedisplay_clicked = function () {
 		if (getSelectedID()) {
-			console.log('DeleteWindow' + getSelectedID());
-			connector.send('DeleteWindow', metaDataDict[getSelectedID()], doneDeleteWindow);
+			console.log('DeleteWindowMetaData' + getSelectedID());
+			connector.send('DeleteWindowMetaData', metaDataDict[getSelectedID()], doneDeleteWindowMetaData);
 		}
 	};
 	
@@ -284,7 +284,7 @@
 	 * @method on_deletealldisplay_clicked
 	 */
 	gui.on_deletealldisplay_clicked = function () {
-		connector.send('DeleteWindow', {type : "all", id : ""}, doneDeleteWindow);
+		connector.send('DeleteWindowMetaData', {type : "all", id : ""}, doneDeleteWindowMetaData);
 	};
 	
 	/**
@@ -329,7 +329,7 @@
 	function updateMetaData(metaData) {
 		if (metaData.type === windowType) {
 			// window
-			connector.send('UpdateWindow', metaData, doneUpdateWindow);
+			connector.send('UpdateWindowMetaData', metaData, doneUpdateWindowMetaData);
 		} else {
 			//console.log("UpdateMetaData");
 			connector.send('UpdateMetaData', metaData, doneUpdateMetaData);
@@ -1594,13 +1594,13 @@
 	};
 	
 	/**
-	 * UpdateWindowを送信した後の終了コールバック.
-	 * @method doneUpdateWindow
+	 * UpdateWindowMetaDataを送信した後の終了コールバック.
+	 * @method doneUpdateWindowMetaData
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneUpdateWindow = function (err, reply) {
-		console.log("doneUpdateWindow");
+	doneUpdateWindowMetaData = function (err, reply) {
+		console.log("doneUpdateWindowMetaData");
 		//console.log(reply);
 		var windowData = reply;
 		vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
@@ -1630,13 +1630,13 @@
 	};
 	
 	/**
-	 * DeleteWindowを送信した後の終了コールバック.
-	 * @method doneDeleteWindow
+	 * DeleteWindowMetaDataを送信した後の終了コールバック.
+	 * @method doneDeleteWindowMetaData
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneDeleteWindow = function (err, reply) {
-		console.log("doneDeleteWindow", reply);
+	doneDeleteWindowMetaData = function (err, reply) {
+		console.log("doneDeleteWindowMetaData", reply);
 		var elem,
 			id,
 			windowData,
@@ -2104,8 +2104,8 @@
 	});
 	
 	// windowが更新されたときにブロードキャストされてくる.
-	connector.on('UpdateWindow', function (metaData) {
-		console.log('UpdateWindow', metaData);
+	connector.on('UpdateWindowMetaData', function (metaData) {
+		console.log('UpdateWindowMetaData', metaData);
 		//updateScreen();
 		//clearWindowList();
 		doneGetWindowMetaData(null, metaData);
@@ -2129,9 +2129,9 @@
 	});
 	
 	// ウィンドウが削除されたときにブロードキャストされてくる.
-	connector.on("DeleteWindow", function (metaData) {
-		console.log("DeleteWindow", metaData);
-		doneDeleteWindow(null, metaData);
+	connector.on("DeleteWindowMetaData", function (metaData) {
+		console.log("DeleteWindowMetaData", metaData);
+		doneDeleteWindowMetaData(null, metaData);
 	});
 	///-------------------------------------------------------------------------------------------------------
 	/**
