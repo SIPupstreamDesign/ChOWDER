@@ -123,9 +123,11 @@
 	function getWindowID() {
 		var window_id = getCookie('window_id'),
 			hashid = location.hash.split("#").join("");
-		
 		if (hashid.length > 0) {
 			window_id = decodeURIComponent(hashid);
+		}
+		if (!window_id || window_id === undefined || window_id === "undefined") {
+			window_id = '';
 		}
 		return window_id;
 	}
@@ -142,26 +144,44 @@
 			visible,
 			posx,
 			posy,
+			width,
+			height,
+			senddata,
 			hashid = location.hash.split("#").join("");
 		
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 		
 		if (hashid.length > 0) {
 			window_id = decodeURIComponent(hashid);
-			visible = "true";
-			if (getCookie(window_id + '_visible') === 'false') {
-				visible = "false";
-			}
-			posx = getCookie(window_id + '_x');
-			posy = getCookie(window_id + '_y');
-			if (!posx) { posx = window.screenX || window.screenLeft; }
-			if (!posy) { posy = window.screenY || window.screenTop; }
-			connector.send('AddWindow', {id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
+			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
+				console.log("aaee", err, metaData);
+				if (!err && metaData) {
+					posx = metaData.posx;
+					posy = metaData.posy;
+					visible = metaData.visible;
+					width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+					height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+					senddata = {id : window_id, posx : posx, posy : posy, width : width, height : height, orgWidth : wh.width, orgHeight : wh.height, visible : visible };
+					connector.send('AddWindow', senddata, doneAddWindow);
+				} else {
+					connector.send('AddWindow', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
+				}
+			});
 		} else if (window_id !== "") {
-			visible = (getCookie(window_id + '_visible') === "true");
-			posx = getCookie(window_id + '_x');
-			posy = getCookie(window_id + '_y');
-			connector.send('AddWindow', { id : window_id, posx : posx, posy : posy, width : wh.width, height : wh.height, visible : visible }, doneAddWindow);
+			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
+				console.log("aaee", err, metaData);
+				if (!err && metaData) {
+					posx = metaData.posx;
+					posy = metaData.posy;
+					visible = metaData.visible;
+					width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+					height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+					senddata = {id : window_id, posx : posx, posy : posy, width : width, height : height, orgWidth : wh.width, orgHeight : wh.height, visible : visible };
+					connector.send('AddWindow', senddata, doneAddWindow);
+				} else {
+					connector.send('AddWindow', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
+				}
+			});
 		} else {
 			connector.send('AddWindow', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
 		}
@@ -184,7 +204,7 @@
 				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 			});
 		} else if (updateType === 'window') {
-			console.log("update winodow");
+			console.log("update winodow", windowData);
 			connector.send('GetWindowMetaData', { id : windowData.id}, doneGetWindowMetaData);
 		} else {
 			console.log("update transform");
@@ -471,7 +491,7 @@
 	 */
 	doneGetWindowMetaData = function (err, json) {
 		console.log("doneGetWindowMetaData", json);
-		if (!err) {
+		if (!err && json) {
 			metaDataDict[json.id] = json;
 			windowData = json;
 			saveCookie();
@@ -560,7 +580,7 @@
 		connector.connect(function () {
 			if (!windowData) {
 				console.log("registerWindow");
-				registerWindow();
+				registerWindow(true);
 			}
 		}, (function () {
 			return function (ev) {
@@ -597,6 +617,11 @@
 			}
 		});
 
+		connector.on("DeleteWindow", function (data) {
+			console.log("DeleteWindow", data);
+			update('window');
+		});
+		
 		connector.on("UpdateWindow", function (data) {
 			console.log("updateWindow");
 			update('window');

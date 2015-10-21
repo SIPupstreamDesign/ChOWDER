@@ -66,25 +66,29 @@
 		});
 	}
 	
+	function generateID(prefix, endCallback) {
+		var id = util.generateUUID8();
+		console.log("newid: " + id);
+		client.exists(prefix + id, function (err, doesExist) {
+			if (err) {
+				console.log(err);
+				return;
+			}
+			if (doesExist.toString() === "1") {
+				generateID(prefix, endCallback);
+			} else if (endCallback) {
+				endCallback(id);
+			}
+		});
+	}
+	
 	/**
 	 * ContentID生成。generateUUID8を用いる。
 	 * @method generateContentID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function generateContentID(endCallback) {
-		var id = util.generateUUID8();
-		console.log("newid: " + id);
-		client.exists(contentPrefix + id, function (err, doesExist) {
-			if (err) {
-				console.log(err);
-				return;
-			}
-			if (doesExist.toString() === "1") {
-				generateContentID(endCallback);
-			} else if (endCallback) {
-				endCallback(id);
-			}
-		});
+		generateID(contentPrefix, endCallback);
 	}
 	
 	/**
@@ -93,40 +97,25 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function generateMetaDataID(endCallback) {
-		var id = util.generateUUID8();
-		console.log("newid: " + id);
-		client.exists(metadataPrefix + id, function (err, doesExist) {
-			if (err) {
-				console.log(err);
-				return;
-			}
-			if (doesExist.toString() === "1") {
-				generateContentID(endCallback);
-			} else if (endCallback) {
-				endCallback(id);
-			}
-		});
+		generateID(metadataPrefix, endCallback);
 	}
 	
 	/**
 	 * WindowID生成。generateUUID8を用いる。
-	 * @method generateWindowID
+	 * @method generateWindowMetaDataID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function generateWindowID(endCallback) {
-		var id = util.generateUUID8();
-		console.log("newid: " + id);
-		client.exists(windowMetaDataPrefix + id, function (err, doesExist) {
-			if (err) {
-				console.log(err);
-				return;
-			}
-			if (doesExist.toString() === 1) {
-				generateWindowID(endCallback);
-			} else if (endCallback) {
-				endCallback(id);
-			}
-		});
+	function generateWindowMetaDataID(endCallback) {
+		generateID(windowMetaDataPrefix, endCallback);
+	}
+	
+	/**
+	 * WindowID生成。generateUUID8を用いる。
+	 * @method generateWindowContentID
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function generateWindowContentID(endCallback) {
+		generateID(windowContentPrefix, endCallback);
 	}
 	
 	/**
@@ -258,7 +247,7 @@
 	/**
 	 * メタデータ追加
 	 * @method addMetaData
-	 * @param {Object} metaData メタデータ
+	 * @param {JSON} metaData contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function addMetaData(metaData, endCallback) {
@@ -328,7 +317,7 @@
 	/**
 	 * コンテンツ追加
 	 * @method addContent
-	 * @param {Object} metaData メタデータ
+	 * @param {JSON} metaData contentメタデータ
 	 * @param {BLOB} data バイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -357,7 +346,7 @@
 					if (err) {
 						console.log("Error on addContent:" + err);
 					} else {
-						redis.print(err, reply);
+						//redis.print(err, reply);
 						
 						// 参照カウント.
 						textClient.setnx(contentRefPrefix + content_id, 0);
@@ -392,7 +381,7 @@
 	/**
 	 * 指定されたidのコンテンツ削除
 	 * @method deleteContent
-	 * @param {String} id ContentsID
+	 * @param {JSON} metaData contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function deleteContent(metaData, endCallback) {
@@ -431,7 +420,7 @@
 	/**
 	 * コンテンツ更新
 	 * @method updateContent
-	 * @param {Object} metaData メタバイナリ
+	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} data     バイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -457,7 +446,7 @@
 					if (err) {
 						console.log("Error on updateContent:" + err);
 					} else {
-						redis.print(err, reply);
+						//redis.print(err, reply);
 						//setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
 						if (endCallback) {
 							endCallback(metaData);
@@ -469,22 +458,14 @@
 		});
 	}
 	
-	/**
-	 * Window追加
-	 * @method addWindow
-	 * @param {BLOB} socket socket.ioオブジェクトid
-	 * @param {JSON} windowData 追加するWindowデータ
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function addWindow(socketid, windowData, endCallback) {
-		console.log("add window", windowData);
-		generateWindowID(function (id) {
+	function addWindowMetaData(socketid, windowData, endCallback) {
+		generateWindowMetaDataID(function (id) {
 			if (windowData.hasOwnProperty('id') && windowData.id !== "") {
 				id = windowData.id;
 			}
 			windowData.id = id;
 			socketidToHash[socketid] = id;
-			console.log("registerWindow: " + id);
+			//console.log("registerWindow: " + id);
 			textClient.hexists(windowMetaDataPrefix + id, function (err, reply) {
 				if (reply === 1) {
 					windowData.socketid = socketid;
@@ -500,8 +481,13 @@
 					}(textClient, id)));
 				} else {
 					windowData.socketid = socketid;
-					windowData.orgWidth = windowData.width;
-					windowData.orgHeight = windowData.height;
+					if (!windowData.hasOwnProperty('orgWidth')) {
+						windowData.orgWidth = windowData.width;
+					}
+					if (!windowData.hasOwnProperty('orgHeight')) {
+						windowData.orgHeight = windowData.height;
+					}
+					
 					windowData.type = "window";
 					textClient.hmset(windowMetaDataPrefix + id, windowData, (function (textClient, id) {
 						return function (err, reply) {
@@ -513,6 +499,37 @@
 						};
 					}(textClient, id)));
 				}
+			});
+		});
+	}
+	
+	/**
+	 * Window追加
+	 * @method addWindow
+	 * @param {BLOB} socket socket id
+	 * @param {JSON} windowData windowメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addWindow(socketid, windowData, endCallback) {
+		console.log("add window");
+		addWindowMetaData(socketid, windowData, function (metaData) {
+			generateWindowContentID(function (content_id) {
+				if (metaData.hasOwnProperty('content_id') && metaData.content_id !== "") {
+					content_id = metaData.content_id;
+				}
+				metaData.content_id = content_id;
+				console.log("add window content id:", content_id);
+				client.hmset(windowContentPrefix + content_id, metaData, function (err, reply) {
+					if (err) {
+						console.log("Error on addWindow:" + err);
+					} else {
+						client.hmset(windowMetaDataPrefix + metaData.id, metaData, function (err, reply) {
+							if (endCallback) {
+								endCallback(metaData);
+							}
+						});
+					}
+				});
 			});
 		});
 	}
@@ -551,51 +568,9 @@
 	}
 	
 	/**
-	 * Window削除
-	 * @method deleteWindowMetaData
-	 * @param {String} id ContentsID
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function deleteWindowMetaData(id, endCallback) {
-		client.del(windowMetaDataPrefix + id, function (err) {
-			if (err) {
-				console.log(err);
-			} else {
-				console.log("unregister window id:" + id);
-			}
-			if (endCallback) {
-				endCallback();
-			}
-		});
-	}
-	
-	/**
-	 * SocketIDで指定されたWindow削除
-	 * @method deleteWindowMetaDataBySocketID
-	 * @param {BLOB} socket socket.ioオブジェクトid
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function deleteWindowMetaDataBySocketID(socketid, endCallback) {
-		var id;
-		if (socketidToHash.hasOwnProperty(socketid)) {
-			id = socketidToHash[socketid];
-			client.del(windowMetaDataPrefix + id, function (err) {
-				if (err) {
-					console.log(err);
-				} else {
-					console.log("unregister window socketid:" + socketid + ", id:" + id);
-				}
-				if (endCallback) {
-					endCallback();
-				}
-			});
-		}
-	}
-	
-	/**
 	 * Window取得
 	 * @method getWindow
-	 * @param {JSON} windowData windowデータJSON
+	 * @param {JSON} windowData windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function getWindowMetaData(windowData, endCallback) {
@@ -605,21 +580,31 @@
 				replies.forEach(function (id, index) {
 					//console.log("getWindowAllID:" + id);
 					textClient.hgetall(id, function (err, reply) {
-						if (!err) {
-							if (endCallback) {
+						if (err) {
+							console.error(err);
+						} else {
+							if (endCallback && reply) {
 								endCallback(reply);
 							}
-						} else {
-							console.log(err);
 						}
 					});
 				});
 			});
 		} else {
-			textClient.hgetall(windowMetaDataPrefix + windowData.id, function (err, data) {
-				if (data) {
+			client.exists(windowMetaDataPrefix + windowData.id, function (err, doesExist) {
+				if (!err && doesExist.toString() === "1") {
+					textClient.hgetall(windowMetaDataPrefix + windowData.id, function (err, data) {
+						if (err) {
+							console.error(err);
+						} else {
+							if (endCallback) {
+								endCallback(data);
+							}
+						}
+					});
+				} else {
 					if (endCallback) {
-						endCallback(data);
+						endCallback(null);
 					}
 				}
 			});
@@ -627,9 +612,84 @@
 	}
 	
 	/**
+	 * Window削除
+	 * @method deleteWindowMetaData
+	 * @param {JSON} metaData windowメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function deleteWindowMetaData(metaData, endCallback) {
+		client.del(windowMetaDataPrefix + metaData.id, function (err) {
+			if (!err) {
+				console.log("unregister window id:" + metaData.id);
+			}
+			if (endCallback) {
+				endCallback(err, metaData);
+			}
+		});
+	}
+	
+	/**
+	 * SocketIDで指定されたWindow削除
+	 * @method deleteWindowMetaDataBySocketID
+	 * @param {string} socketid socket id
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function deleteWindowBySocketID(socketid, endCallback) {
+		var id;
+		if (socketidToHash.hasOwnProperty(socketid)) {
+			id = socketidToHash[socketid];
+			
+			client.exists(windowMetaDataPrefix + id, function (err, doesExist) {
+				if (!err && doesExist.toString() === "1") {
+					textClient.hgetall(windowMetaDataPrefix + id, function (err, data) {
+						if (!err && data) {
+							client.del(windowMetaDataPrefix + data.id, function (err) {
+								if (!err) {
+									console.log("unregister window socketid:" + socketid + ", id:" + id);
+									client.del(windowContentPrefix + data.content_id, function (err) {
+										if (endCallback) {
+											endCallback(err, data);
+										}
+									});
+								}
+							});
+						}
+					});
+				}
+			});
+		}
+	}
+	
+	/**
+	 * Window削除
+	 * @method deleteWindow
+	 * @param {JSON} windowData windowメタデータJSON
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function deleteWindow(metaData, endCallback) {
+		deleteWindowMetaData(metaData, function (err, meta) {
+			if (meta.hasOwnProperty('content_id') && meta.content_id !== '') {
+				client.exists(windowContentPrefix + meta.content_id, function (err, doesExist) {
+					if (!err && doesExist.toString() === "1") {
+						textClient.del(windowContentPrefix + meta.content_id, function (err) {
+							if (!err) {
+								if (endCallback) {
+									endCallback(meta);
+								}
+							}
+						});
+					}
+				});
+			} else {
+				console.error(err);
+			}
+		});
+	}
+	
+	/**
 	 * Window更新
 	 * @method updateWindow
-	 * @param {BLOB} socketid socket.ioオブジェクトid
+	 * @param {BLOB} socketid socket id
 	 * @param {JSON} windowData windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -725,7 +785,7 @@
 	/**
 	 * コンテンツの取得を行うコマンドを実行する.
 	 * @method commandGetContent
-	 * @param {JSON} json socket.io.on:GetContent時JSONデータ
+	 * @param {JSON} json contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetContent(json, endCallback) {
@@ -746,7 +806,7 @@
 	/**
 	 * メタデータの追加を行うコマンドを実行する.
 	 * @method commandGetMetaData
-	 * @param {JSON} json socket.io.on:GetMetaData時JSONデータ
+	 * @param {JSON} json contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandAddMetaData(json, endCallback) {
@@ -761,7 +821,7 @@
 	/**
 	 * メタデータの取得を行うコマンドを実行する.
 	 * @method commandGetMetaData
-	 * @param {JSON} json socket.io.on:GetMetaData時JSONデータ
+	 * @param {JSON} json contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetMetaData(json, endCallback) {
@@ -794,7 +854,7 @@
 	 * @method commandUpdateContent
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション(null)
-	 * @param {Object} metaData loadMetaBinaryから受領したメタデータ
+	 * @param {Object} metaData contentメタデータ
 	 * @param {BLOB} binaryData loadMetaBinaryから受領したバイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -813,7 +873,7 @@
 	 * @method commandUpdateMetaData
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} ws_connection WebSocketコネクション
-	 * @param {JSON} json socket.io.on:UpdateMetaData時JSONデータ
+	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandUpdateMetaData(json, endCallback) {
@@ -829,7 +889,7 @@
 	 * ウィンドウの追加を行うコマンドを実行する.
 	 * @method commandAddWindow
 	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:AddWindow時JSONデータ
+	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandAddWindow(socketid, json, endCallback) {
@@ -845,10 +905,11 @@
 	 * ウィンドウの削除行うコマンドを実行する.
 	 * @method commandDeleteWindow
 	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateWindow時JSONデータ
+	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteWindow(socketid, json, endCallback) {
+		//console.log(socketid, json);
 		if (json) {
 			if (json.hasOwnProperty('type') && json.type === 'all') {
 				client.keys(windowMetaDataPrefix + '*', function (err, replies) {
@@ -864,23 +925,29 @@
 					}
 				});
 			} else {
-				getWindowMetaData(json, function (data) {
-					deleteWindowMetaData(json.id, function () {
-						console.log("commandDeleteWindow : " + JSON.stringify(json));
+				getWindowMetaData(json, function (metaData) {
+					if (metaData) {
+						deleteWindow(metaData, function (meta) {
+							//console.log("commandDeleteWindow : " + JSON.stringify(meta));
+							if (endCallback) {
+								endCallback(null, meta);
+							}
+							if (socketidToHash.hasOwnProperty(meta.socketid)) {
+								delete socketidToHash[meta.socketid];
+							}
+						});
+					} else {
 						if (endCallback) {
-							endCallback(null, { id: json.id });
+							endCallback("not exists window metadata", null);
 						}
-						if (socketidToHash.hasOwnProperty(data.socketid)) {
-							delete socketidToHash[data.socketid];
-						}
-					});
+					}
 				});
 			}
 		} else {
-			console.log("commandDeleteWindow : " + socketid);
-			deleteWindowMetaDataBySocketID(socketid, function () {
+			//console.log("commandDeleteWindow : " + socketid);
+			deleteWindowBySocketID(socketid, function (err, meta) {
 				if (endCallback) {
-					endCallback(null, { socketid: socketid });
+					endCallback(null, meta);
 				}
 			});
 		}
@@ -927,13 +994,16 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetWindowMetaData(socketid, json, endCallback) {
-		//console.log("commandGetWindowMetaData : " + JSON.stringify(json));
-		getWindowMetaData(json, function (windowData) {
-			console.log("doneGetWindow:", windowData);
-			if (endCallback) {
-				endCallback(null, windowData);
-			}
-		});
+		var isAllType = json.hasOwnProperty('type') && json.type === 'all',
+			isIdentityType = json.hasOwnProperty('id') && json.id !== undefined && json.id !== "undefined" && json.id !== "";
+		if (isAllType || isIdentityType) {
+			getWindowMetaData(json, function (windowData) {
+				console.log("doneGetWindow:", windowData);
+				if (endCallback) {
+					endCallback(null, windowData);
+				}
+			});
+		}
 	}
 	
 	/**
@@ -999,6 +1069,20 @@
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.DeleteContent, reply);
 			io_connector.broadcast(io, Command.DeleteContent, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * deleteWindow処理実行後のブロードキャスト用ラッパー.
+	 * @method post_deleteWindow
+	 */
+	function post_deleteWindow(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.DeleteWindow, reply);
+			io_connector.broadcast(io, Command.DeleteWindow, reply);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -1157,7 +1241,7 @@
 		});
 
 		io_connector.on(Command.DeleteWindow, function (data, resultCallback) {
-			commandDeleteWindow(socketid, data, post_update(ws, io, resultCallback));
+			commandDeleteWindow(socketid, data, post_deleteWindow(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
@@ -1188,11 +1272,13 @@
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
 		windowMetaDataPrefix = frontPrefix + uuidPrefix + windowMetaDataPrefix;
+		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);
 		console.log("idstr:" + windowMetaDataPrefix);
+		console.log("idstr:" + windowContentPrefix);
 	}
 	
 	Operator.prototype.getContent = getContent;

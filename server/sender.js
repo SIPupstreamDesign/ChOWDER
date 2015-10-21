@@ -21,6 +21,34 @@
 	}
 	
 	/**
+	 * update処理実行後のブロードキャスト用ラッパー.
+	 * @method post_update
+	 */
+	function post_update(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.Update);
+			io_connector.broadcast(io, Command.Update);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * updateWindow処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateWindow
+	 */
+	function post_updateWindow(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateWindow, reply);
+			io_connector.broadcast(io, Command.UpdateWindow, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
 	 * WebSocketイベント登録
 	 * @method registerWSEvent
 	 * @param {String} socketid ソケットID
@@ -29,19 +57,7 @@
 	 * @param {Socket} ws WebSocketServerオブジェクト
 	 */
 	function registerWSEvent(socketid, ws_connection, io, ws) {
-		var methods = {},
-			post_update = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.Update);
-						io_connector.broadcast(io, Command.Update);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io));
-		
+		var methods = {};
 		
 		ws_connector.on(Command.GetMetaData, function (data, resultCallback) {
 			operator.commandGetMetaData(data, resultCallback);
@@ -56,8 +72,7 @@
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
-			console.log("Command.AddWindow");
-			operator.commandAddWindow(socketid, data, post_update(resultCallback));
+			operator.commandAddWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 		
 		ws_connector.registerEvent(ws, ws_connection);
