@@ -255,7 +255,6 @@
 		}
 	}
 	
-	
 	/**
 	 * メタデータ追加
 	 * @method addMetaData
@@ -553,11 +552,11 @@
 	
 	/**
 	 * Window削除
-	 * @method deleteWindow
+	 * @method deleteWindowMetaData
 	 * @param {String} id ContentsID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function deleteWindow(id, endCallback) {
+	function deleteWindowMetaData(id, endCallback) {
 		client.del(windowMetaDataPrefix + id, function (err) {
 			if (err) {
 				console.log(err);
@@ -572,11 +571,11 @@
 	
 	/**
 	 * SocketIDで指定されたWindow削除
-	 * @method deleteWindowBySocketID
+	 * @method deleteWindowMetaDataBySocketID
 	 * @param {BLOB} socket socket.ioオブジェクトid
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function deleteWindowBySocketID(socketid, endCallback) {
+	function deleteWindowMetaDataBySocketID(socketid, endCallback) {
 		var id;
 		if (socketidToHash.hasOwnProperty(socketid)) {
 			id = socketidToHash[socketid];
@@ -599,7 +598,7 @@
 	 * @param {JSON} windowData windowデータJSON
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function getWindow(windowData, endCallback) {
+	function getWindowMetaData(windowData, endCallback) {
 		if (windowData.hasOwnProperty('type') && windowData.type === 'all') {
 			//console.log("getWindowAll");
 			textClient.keys(windowMetaDataPrefix + '*', function (err, replies) {
@@ -865,8 +864,8 @@
 					}
 				});
 			} else {
-				getWindow(json, function (data) {
-					deleteWindow(json.id, function () {
+				getWindowMetaData(json, function (data) {
+					deleteWindowMetaData(json.id, function () {
 						console.log("commandDeleteWindow : " + JSON.stringify(json));
 						if (endCallback) {
 							endCallback(null, { id: json.id });
@@ -879,7 +878,7 @@
 			}
 		} else {
 			console.log("commandDeleteWindow : " + socketid);
-			deleteWindowBySocketID(socketid, function () {
+			deleteWindowMetaDataBySocketID(socketid, function () {
 				if (endCallback) {
 					endCallback(null, { socketid: socketid });
 				}
@@ -929,7 +928,7 @@
 	 */
 	function commandGetWindowMetaData(socketid, json, endCallback) {
 		//console.log("commandGetWindowMetaData : " + JSON.stringify(json));
-		getWindow(json, function (windowData) {
+		getWindowMetaData(json, function (windowData) {
 			console.log("doneGetWindow:", windowData);
 			if (endCallback) {
 				endCallback(null, windowData);
@@ -951,6 +950,76 @@
 	}
 	
 	/**
+	 * update処理実行後のブロードキャスト用ラッパー.
+	 * @method post_update
+	 */
+	function post_update(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.Update);
+			io_connector.broadcast(io, Command.Update);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * updateMetaData処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMetaData
+	 */
+	function post_updateMetaData(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
+			io_connector.broadcast(io, Command.UpdateMetaData, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * updateContent処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateContent
+	 */
+	function post_updateContent(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateContent, reply);
+			io_connector.broadcast(io, Command.UpdateContent, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * deletecontent処理実行後のブロードキャスト用ラッパー.
+	 * @method post_deleteContent
+	 */
+	function post_deleteContent(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.DeleteContent, reply);
+			io_connector.broadcast(io, Command.DeleteContent, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * updateWindow処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateWindow
+	 */
+	function post_updateWindow(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateWindow, reply);
+			io_connector.broadcast(io, Command.UpdateWindow, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
 	 * websocketイベントの登録を行う.
 	 * register websockets events
 	 * @method registerWSEvent
@@ -960,62 +1029,7 @@
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
 	function registerWSEvent(socketid, ws_connection, io, ws) {
-		var methods = {},
-			post_update = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.Update);
-						io_connector.broadcast(io, Command.Update);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_updateMetaData = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
-						io_connector.broadcast(io, Command.UpdateMetaData, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_updateContent = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateContent, reply);
-						io_connector.broadcast(io, Command.UpdateContent, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_deletecontent = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.DeleteContent, reply);
-						io_connector.broadcast(io, Command.DeleteContent, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_updateWindow = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateWindow, reply);
-						io_connector.broadcast(io, Command.UpdateWindow, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io));
+		var methods = {};
 
 		console.log("registerWSEvent");
 		
@@ -1032,11 +1046,11 @@
 		});
 		
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			commandUpdateMetaData(data, post_updateMetaData(resultCallback));
+			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
-			commandAddWindow(socketid, data, post_updateWindow(resultCallback));
+			commandAddWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
@@ -1044,11 +1058,11 @@
 		});
 		
 		ws_connector.on(Command.UpdateWindow, function (data, resultCallback) {
-			commandUpdateWindow(socketid, data, post_updateWindow(resultCallback));
+			commandUpdateWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindow(resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
@@ -1067,19 +1081,19 @@
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			console.log(Command.AddContent, data);
-			commandAddContent(metaData, binaryData, post_update(resultCallback), post_updateContent(resultCallback));
+			commandAddContent(metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandDeleteContent(metaData, post_deletecontent(resultCallback));
+			commandDeleteContent(metaData, post_deleteContent(resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandUpdateContent(metaData, binaryData, post_updateContent(resultCallback));
+			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
 		getSessionList();
@@ -1095,67 +1109,12 @@
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
 	function registerEvent(socketid, io, socket, ws) {
-		var methods = {},
-			post_update = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.Update);
-						io_connector.broadcast(io, Command.Update);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_updateMetaData = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
-						io_connector.broadcast(io, Command.UpdateMetaData, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_updateContent = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateContent, reply);
-						io_connector.broadcast(io, Command.UpdateContent, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_deleteContent = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.DeleteContent, reply);
-						io_connector.broadcast(io, Command.DeleteContent, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io)),
-			post_updateWindow = (function (ws, io) {
-				return function (resultCallback) {
-					return function (err, reply) {
-						ws_connector.broadcast(ws, Command.UpdateWindow, reply);
-						io_connector.broadcast(io, Command.UpdateWindow, reply);
-						if (resultCallback) {
-							resultCallback(err, reply);
-						}
-					};
-				};
-			}(ws, io));
+		var methods = {};
 
 		io_connector.on(Command.AddContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddContent(metaData, binaryData, post_update(resultCallback), post_updateContent(resultCallback));
+			commandAddContent(metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.AddMetaData, function (data, resultCallback) {
@@ -1171,22 +1130,22 @@
 		});
 
 		io_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			commandDeleteContent(data, post_deleteContent(resultCallback));
+			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			
-			commandUpdateContent(metaData, binaryData, post_updateContent(resultCallback));
+			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			commandUpdateMetaData(data, post_updateMetaData(resultCallback));
+			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.AddWindow, function (data, resultCallback) {
-			commandAddWindow(socketid, data, post_updateWindow(resultCallback));
+			commandAddWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
@@ -1194,15 +1153,15 @@
 		});
 
 		io_connector.on(Command.UpdateWindow, function (data, resultCallback) {
-			commandUpdateWindow(socketid, data, post_updateWindow(resultCallback));
+			commandUpdateWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.DeleteWindow, function (data, resultCallback) {
-			commandDeleteWindow(socketid, data, post_update(resultCallback));
+			commandDeleteWindow(socketid, data, post_update(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindow(resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
