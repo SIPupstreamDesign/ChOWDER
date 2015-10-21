@@ -141,12 +141,6 @@
 			cx = wh.width / 2.0,
 			cy = wh.height / 2.0,
 			window_id = getCookie('window_id'),
-			visible,
-			posx,
-			posy,
-			width,
-			height,
-			senddata,
 			hashid = location.hash.split("#").join("");
 		
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
@@ -154,30 +148,24 @@
 		if (hashid.length > 0) {
 			window_id = decodeURIComponent(hashid);
 			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
-				console.log("aaee", err, metaData);
 				if (!err && metaData) {
-					posx = metaData.posx;
-					posy = metaData.posy;
-					visible = metaData.visible;
-					width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
-					height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
-					senddata = {id : window_id, posx : posx, posy : posy, width : width, height : height, orgWidth : wh.width, orgHeight : wh.height, visible : visible };
-					connector.send('AddWindow', senddata, doneAddWindow);
+					metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+					metaData.orgWidth = wh.width;
+					metaData.orgHeight = wh.height;
+					connector.send('AddWindow', metaData, doneAddWindow);
 				} else {
 					connector.send('AddWindow', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
 				}
 			});
 		} else if (window_id !== "") {
 			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
-				console.log("aaee", err, metaData);
 				if (!err && metaData) {
-					posx = metaData.posx;
-					posy = metaData.posy;
-					visible = metaData.visible;
-					width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
-					height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
-					senddata = {id : window_id, posx : posx, posy : posy, width : width, height : height, orgWidth : wh.width, orgHeight : wh.height, visible : visible };
-					connector.send('AddWindow', senddata, doneAddWindow);
+					metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+					metaData.orgWidth = wh.width;
+					metaData.orgHeight = wh.height;
+					connector.send('AddWindow', metaData, doneAddWindow);
 				} else {
 					connector.send('AddWindow', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
 				}
