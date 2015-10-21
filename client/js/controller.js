@@ -275,7 +275,7 @@
 	gui.on_deletedisplay_clicked = function () {
 		if (getSelectedID()) {
 			console.log('DeleteWindow' + getSelectedID());
-			connector.send('DeleteWindow', {id : getSelectedID()}, doneDeleteWindow);
+			connector.send('DeleteWindow', metaDataDict[getSelectedID()], doneDeleteWindow);
 		}
 	};
 	
@@ -1640,12 +1640,18 @@
 		var elem,
 			id,
 			windowData,
+			displayArea = gui.get_display_area(),
 			previewArea = gui.get_display_preview_area();
 		
+		manipulator.removeManipulator();
 		if (reply.hasOwnProperty('id')) {
 			elem = document.getElementById(reply.id);
 			if (elem) {
 				previewArea.removeChild(elem);
+			}
+			elem = gui.get_list_elem(reply.id);
+			if (elem) {
+				displayArea.removeChild(elem);
 			}
 			delete metaDataDict[reply.id];
 		} else {
@@ -1658,6 +1664,10 @@
 						elem = document.getElementById(id);
 						if (elem) {
 							previewArea.removeChild(elem);
+						}
+						elem = gui.get_list_elem(id);
+						if (elem) {
+							displayArea.removeChild(elem);
 						}
 					}
 					delete metaDataDict[id];
@@ -2116,6 +2126,12 @@
 	connector.on('DeleteContent', function (metaData) {
 		console.log('DeleteContent', metaData);
 		doneDeleteContent(null, metaData);
+	});
+	
+	// ウィンドウが削除されたときにブロードキャストされてくる.
+	connector.on("DeleteWindow", function (metaData) {
+		console.log("DeleteWindow", metaData);
+		doneDeleteWindow(null, metaData);
 	});
 	///-------------------------------------------------------------------------------------------------------
 	/**
