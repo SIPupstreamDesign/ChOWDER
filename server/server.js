@@ -61,13 +61,13 @@ ws.on('request', function (request) {
 	
 	connection.on('close', function () {
 		delete ws_connections[connection.id];
-		/*
-		operator.commandDeleteWindow(null, connection, null, function () {
-			io_connector.broadcast(io, Command.Update);
-			ws_connector.broadcast(ws2, Command.Update);
+
+		operator.commandDeleteWindowMetaData(connection.id, null, function (err, meta) {
+			io_connector.broadcast(io, Command.DeleteWindowMetaData, meta);
+			ws_connector.broadcast(ws2, Command.DeleteWindowMetaData, meta);
 			console.log("broadcast update");
 		});
-		*/
+
 		console.log('connection closed :' + connection.id);
 	});
 	
@@ -186,13 +186,13 @@ ws2.on('request', function (request) {
 	
 	connection.on('close', function () {
 		delete ws2_connections[connection.id];
-		/*
-		operator.commandDeleteWindow(null, connection, null, function () {
+		
+		operator.commandDeleteWindowMetaData(connection.id, null, function (err, meta) {
 			console.log("broadcast update");
-			io_connector.broadcast(io, Command.Update);
-			ws_connector.broadcast(ws2, Command.Update);
+			io_connector.broadcast(io, Command.DeleteWindowMetaData, meta);
+			ws_connector.broadcast(ws2, Command.DeleteWindowMetaData, meta);
 		});
-		*/
+		
 		console.log('connection closed :' + connection.id);
 	});
 	
@@ -211,7 +211,7 @@ function unregisterAllWindow(endCallback) {
 	}
 	for (id in ws2_connections) {
 		if (ws2_connections.hasOwnProperty(id)) {
-			operator.commandDeleteWindow(id);
+			operator.commandDeleteWindowMetaData(id);
 		}
 	}
 }

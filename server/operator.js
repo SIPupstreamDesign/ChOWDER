@@ -518,6 +518,7 @@
 				}
 				metaData.content_id = content_id;
 				console.log("add window content id:", content_id);
+				
 				client.hmset(windowContentPrefix + content_id, metaData, function (err, reply) {
 					if (err) {
 						console.log("Error on addWindow:" + err);
@@ -633,38 +634,6 @@
 	}
 	
 	/**
-	 * SocketIDで指定されたWindow削除
-	 * @method deleteWindowMetaDataBySocketID
-	 * @param {string} socketid socket id
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function deleteWindowBySocketID(socketid, endCallback) {
-		var id;
-		if (socketidToHash.hasOwnProperty(socketid)) {
-			id = socketidToHash[socketid];
-			
-			client.exists(windowMetaDataPrefix + id, function (err, doesExist) {
-				if (!err && doesExist.toString() === "1") {
-					textClient.hgetall(windowMetaDataPrefix + id, function (err, data) {
-						if (!err && data) {
-							client.del(windowMetaDataPrefix + data.id, function (err) {
-								if (!err) {
-									console.log("unregister window socketid:" + socketid + ", id:" + id);
-									client.del(windowContentPrefix + data.content_id, function (err) {
-										if (endCallback) {
-											endCallback(err, data);
-										}
-									});
-								}
-							});
-						}
-					});
-				}
-			});
-		}
-	}
-	
-	/**
 	 * Window削除
 	 * @method deleteWindow
 	 * @param {JSON} windowData windowメタデータJSON
@@ -698,6 +667,29 @@
 				console.error(err);
 			}
 		});
+	}
+	
+	/**
+	 * SocketIDで指定されたWindow削除
+	 * @method deleteWindowMetaDataBySocketID
+	 * @param {string} socketid socket id
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function deleteWindowBySocketID(socketid, endCallback) {
+		var id;
+		if (socketidToHash.hasOwnProperty(socketid)) {
+			id = socketidToHash[socketid];
+			
+			client.exists(windowMetaDataPrefix + id, function (err, doesExist) {
+				if (!err && doesExist.toString() === "1") {
+					textClient.hgetall(windowMetaDataPrefix + id, function (err, data) {
+						if (!err && data) {
+							deleteWindow(data, endCallback);
+						}
+					});
+				}
+			});
+		}
 	}
 	
 	/**
@@ -943,11 +935,11 @@
 					if (metaData) {
 						deleteWindow(metaData, function (meta) {
 							//console.log("commandDeleteWindowMetaData : " + JSON.stringify(meta));
-							if (endCallback) {
-								endCallback(null, meta);
-							}
 							if (socketidToHash.hasOwnProperty(meta.socketid)) {
 								delete socketidToHash[meta.socketid];
+							}
+							if (endCallback) {
+								endCallback(null, meta);
 							}
 						});
 					} else {
