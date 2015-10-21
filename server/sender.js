@@ -51,8 +51,8 @@
 			operator.commandGetContent(data, resultCallback);
 		});
 		
-		ws_connector.on(Command.GetWindow, function (data, resultCallback) {
-			operator.commandGetWindow(socketid, data, resultCallback);
+		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+			operator.commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
 		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
