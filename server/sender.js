@@ -40,8 +40,8 @@
 	 */
 	function post_updateWindow(ws, io, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateWindow, reply);
-			io_connector.broadcast(io, Command.UpdateWindow, reply);
+			ws_connector.broadcast(ws, Command.UpdateWindowMetaData, reply);
+			io_connector.broadcast(io, Command.UpdateWindowMetaData, reply);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -71,8 +71,8 @@
 			operator.commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
-		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
-			operator.commandAddWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
+		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+			operator.commandAddWindowMetaData(socketid, data, post_updateWindow(ws, io, resultCallback));
 		});
 		
 		ws_connector.registerEvent(ws, ws_connection);

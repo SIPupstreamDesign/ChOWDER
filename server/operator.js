@@ -702,12 +702,12 @@
 	
 	/**
 	 * Window更新
-	 * @method updateWindow
+	 * @method updateWindowMetaData
 	 * @param {BLOB} socketid socket id
 	 * @param {JSON} windowData windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function updateWindow(socketid, windowData, endCallback) {
+	function updateWindowMetaData(socketid, windowData, endCallback) {
 		if (!windowData.hasOwnProperty("id")) { return; }
 		textClient.hmset(windowMetaDataPrefix + windowData.id, windowData, function (err, reply) {
 			if (endCallback) {
@@ -901,13 +901,13 @@
 	
 	/**
 	 * ウィンドウの追加を行うコマンドを実行する.
-	 * @method commandAddWindow
+	 * @method commandAddWindowMetaData
 	 * @param {String} socketid ソケットID
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandAddWindow(socketid, json, endCallback) {
-		console.log("commandAddWindow : " + JSON.stringify(json));
+	function commandAddWindowMetaData(socketid, json, endCallback) {
+		console.log("commandAddWindowMetaData : " + JSON.stringify(json));
 		addWindow(socketid, json, function (windowData) {
 			if (endCallback) {
 				endCallback(null, windowData);
@@ -917,12 +917,12 @@
 	
 	/**
 	 * ウィンドウの削除行うコマンドを実行する.
-	 * @method commandDeleteWindow
+	 * @method commandDeleteWindowMetaData
 	 * @param {String} socketid ソケットID
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandDeleteWindow(socketid, json, endCallback) {
+	function commandDeleteWindowMetaData(socketid, json, endCallback) {
 		//console.log(socketid, json);
 		if (json) {
 			if (json.hasOwnProperty('type') && json.type === 'all') {
@@ -932,7 +932,7 @@
 						multi.del(reply);
 					});
 					multi.exec(function (err, data) {
-						console.log("debugDeleteWindowAll");
+						console.log("debugDeleteWindowMetaDataAll");
 					});
 					if (endCallback) {
 						endCallback(null, {});
@@ -942,7 +942,7 @@
 				getWindowMetaData(json, function (metaData) {
 					if (metaData) {
 						deleteWindow(metaData, function (meta) {
-							//console.log("commandDeleteWindow : " + JSON.stringify(meta));
+							//console.log("commandDeleteWindowMetaData : " + JSON.stringify(meta));
 							if (endCallback) {
 								endCallback(null, meta);
 							}
@@ -958,7 +958,7 @@
 				});
 			}
 		} else {
-			//console.log("commandDeleteWindow : " + socketid);
+			//console.log("commandDeleteWindowMetaData : " + socketid);
 			deleteWindowBySocketID(socketid, function (err, meta) {
 				if (endCallback) {
 					endCallback(null, meta);
@@ -1022,13 +1022,13 @@
 	
 	/**
 	 * ウィンドウの更新を行うコマンドを実行する.
-	 * @method commandUpdateWindow
+	 * @method commandUpdateWindowMetaData
 	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateWindow時JSONデータ,
+	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateWindow(socketid, json, endCallback) {
-		updateWindow(socketid, json, function (windowData) {
+	function commandUpdateWindowMetaData(socketid, json, endCallback) {
+		updateWindowMetaData(socketid, json, function (windowData) {
 			endCallback(null, windowData);
 		});
 	}
@@ -1095,8 +1095,8 @@
 	 */
 	function post_deleteWindow(ws, io, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.DeleteWindow, reply);
-			io_connector.broadcast(io, Command.DeleteWindow, reply);
+			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
+			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -1104,13 +1104,13 @@
 	}
 	
 	/**
-	 * updateWindow処理実行後のブロードキャスト用ラッパー.
-	 * @method post_updateWindow
+	 * updateWindowMetaData処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateWindowMetaData
 	 */
-	function post_updateWindow(ws, io, resultCallback) {
+	function post_updateWindowMetaData(ws, io, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateWindow, reply);
-			io_connector.broadcast(io, Command.UpdateWindow, reply);
+			ws_connector.broadcast(ws, Command.UpdateWindowMetaData, reply);
+			io_connector.broadcast(io, Command.UpdateWindowMetaData, reply);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -1147,20 +1147,20 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.AddWindow, function (data, resultCallback) {
-			commandAddWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
+		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
 			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
-		ws_connector.on(Command.UpdateWindow, function (data, resultCallback) {
-			commandUpdateWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
+		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindow(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
@@ -1242,24 +1242,24 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.AddWindow, function (data, resultCallback) {
-			commandAddWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
+		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
 			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 
-		io_connector.on(Command.UpdateWindow, function (data, resultCallback) {
-			commandUpdateWindow(socketid, data, post_updateWindow(ws, io, resultCallback));
+		io_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteWindow, function (data, resultCallback) {
-			commandDeleteWindow(socketid, data, post_deleteWindow(ws, io, resultCallback));
+		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
+			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindow(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
@@ -1301,10 +1301,10 @@
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;
 	Operator.prototype.registerUUID = registerUUID;
-	Operator.prototype.commandDeleteWindow = commandDeleteWindow;
+	Operator.prototype.commandDeleteWindowMetaData = commandDeleteWindowMetaData;
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
-	Operator.prototype.commandAddWindow = commandAddWindow;
+	Operator.prototype.commandAddWindowMetaData = commandAddWindowMetaData;
 	module.exports = new Operator();
 }());

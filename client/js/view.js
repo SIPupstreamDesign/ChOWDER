@@ -10,7 +10,7 @@
 		windowData = null,
 		metaDataDict = {},
 		windowType = "window",
-		doneAddWindow,
+		doneAddWindowMetaData,
 		doneGetWindowMetaData,
 		doneGetContent,
 		doneGetMetaData;
@@ -153,9 +153,9 @@
 					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
 					metaData.orgWidth = wh.width;
 					metaData.orgHeight = wh.height;
-					connector.send('AddWindow', metaData, doneAddWindow);
+					connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
 				} else {
-					connector.send('AddWindow', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
+					connector.send('AddWindowMetaData', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
 				}
 			});
 		} else if (window_id !== "") {
@@ -165,13 +165,13 @@
 					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
 					metaData.orgWidth = wh.width;
 					metaData.orgHeight = wh.height;
-					connector.send('AddWindow', metaData, doneAddWindow);
+					connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
 				} else {
-					connector.send('AddWindow', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
+					connector.send('AddWindowMetaData', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
 				}
 			});
 		} else {
-			connector.send('AddWindow', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindow);
+			connector.send('AddWindowMetaData', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
 		}
 	}
 	
@@ -453,12 +453,12 @@
 	}
 	
 	/**
-	 * AddWindow終了コールバック
+	 * AddWindowMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
 	 */
-	doneAddWindow = function (err, json) {
-		console.log("doneAddWindow", json);
+	doneAddWindowMetaData = function (err, json) {
+		console.log("doneAddWindowMetaData", json);
 		if (!err) {
 			metaDataDict[json.id] = json;
 			windowData = json;
@@ -605,12 +605,12 @@
 			}
 		});
 
-		connector.on("DeleteWindow", function (data) {
-			console.log("DeleteWindow", data);
+		connector.on("DeleteWindowMetaData", function (data) {
+			console.log("DeleteWindowMetaData", data);
 			update('window');
 		});
 		
-		connector.on("UpdateWindow", function (data) {
+		connector.on("UpdateWindowMetaData", function (data) {
 			console.log("updateWindow");
 			update('window');
 		});

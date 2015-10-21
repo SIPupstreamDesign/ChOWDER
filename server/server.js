@@ -61,11 +61,13 @@ ws.on('request', function (request) {
 	
 	connection.on('close', function () {
 		delete ws_connections[connection.id];
+		/*
 		operator.commandDeleteWindow(null, connection, null, function () {
 			io_connector.broadcast(io, Command.Update);
 			ws_connector.broadcast(ws2, Command.Update);
 			console.log("broadcast update");
 		});
+		*/
 		console.log('connection closed :' + connection.id);
 	});
 	
