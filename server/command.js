@@ -14,7 +14,7 @@
 		GetMetaData : "GetMetaData",
 		AddWindow : "AddWindow",
 		DeleteWindow : "DeleteWindow",
-		GetWindow : "GetWindow",
+		GetWindowMetaData : "GetWindowMetaData",
 		UpdateVirtualDisplay : "UpdateVirtualDisplay",
 		GetVirtualDisplay : "GetVirtualDisplay",
 		

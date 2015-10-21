@@ -19,7 +19,8 @@
 		metadataPrefix = "metadata:",
 		contentPrefix = "content:",
 		contentRefPrefix = "contentref:",
-		windowPrefix = "window:",
+		windowMetaDataPrefix = "window_metadata:",
+		windowContentPrefix = "window_content:",
 		io_connector = require('./io_connector.js'),
 		ws_connector = require('./ws_connector.js'),
 		util = require('./util.js'),
@@ -27,7 +28,7 @@
 		path = require('path'),
 		fs = require('fs'),
 		phantomjs = require('phantomjs'),
-		frontPrefix = "tiled_server:",
+		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
 		methods;
@@ -115,7 +116,7 @@
 	function generateWindowID(endCallback) {
 		var id = util.generateUUID8();
 		console.log("newid: " + id);
-		client.exists(windowPrefix + id, function (err, doesExist) {
+		client.exists(windowMetaDataPrefix + id, function (err, doesExist) {
 			if (err) {
 				console.log(err);
 				return;
@@ -485,13 +486,13 @@
 			windowData.id = id;
 			socketidToHash[socketid] = id;
 			console.log("registerWindow: " + id);
-			textClient.hexists(windowPrefix + id, function (err, reply) {
+			textClient.hexists(windowMetaDataPrefix + id, function (err, reply) {
 				if (reply === 1) {
 					windowData.socketid = socketid;
 					windowData.type = "window";
-					textClient.hmset(windowPrefix + id, windowData, (function (textClient, id) {
+					textClient.hmset(windowMetaDataPrefix + id, windowData, (function (textClient, id) {
 						return function (err, reply) {
-							textClient.hgetall(windowPrefix + id, function (err, reply) {
+							textClient.hgetall(windowMetaDataPrefix + id, function (err, reply) {
 								if (endCallback) {
 									endCallback(reply);
 								}
@@ -503,9 +504,9 @@
 					windowData.orgWidth = windowData.width;
 					windowData.orgHeight = windowData.height;
 					windowData.type = "window";
-					textClient.hmset(windowPrefix + id, windowData, (function (textClient, id) {
+					textClient.hmset(windowMetaDataPrefix + id, windowData, (function (textClient, id) {
 						return function (err, reply) {
-							textClient.hgetall(windowPrefix + id, function (err, reply) {
+							textClient.hgetall(windowMetaDataPrefix + id, function (err, reply) {
 								if (endCallback) {
 									endCallback(reply);
 								}
@@ -557,7 +558,7 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function deleteWindow(id, endCallback) {
-		client.del(windowPrefix + id, function (err) {
+		client.del(windowMetaDataPrefix + id, function (err) {
 			if (err) {
 				console.log(err);
 			} else {
@@ -579,7 +580,7 @@
 		var id;
 		if (socketidToHash.hasOwnProperty(socketid)) {
 			id = socketidToHash[socketid];
-			client.del(windowPrefix + id, function (err) {
+			client.del(windowMetaDataPrefix + id, function (err) {
 				if (err) {
 					console.log(err);
 				} else {
@@ -601,7 +602,7 @@
 	function getWindow(windowData, endCallback) {
 		if (windowData.hasOwnProperty('type') && windowData.type === 'all') {
 			//console.log("getWindowAll");
-			textClient.keys(windowPrefix + '*', function (err, replies) {
+			textClient.keys(windowMetaDataPrefix + '*', function (err, replies) {
 				replies.forEach(function (id, index) {
 					//console.log("getWindowAllID:" + id);
 					textClient.hgetall(id, function (err, reply) {
@@ -616,7 +617,7 @@
 				});
 			});
 		} else {
-			textClient.hgetall(windowPrefix + windowData.id, function (err, data) {
+			textClient.hgetall(windowMetaDataPrefix + windowData.id, function (err, data) {
 				if (data) {
 					if (endCallback) {
 						endCallback(data);
@@ -635,7 +636,7 @@
 	 */
 	function updateWindow(socketid, windowData, endCallback) {
 		if (!windowData.hasOwnProperty("id")) { return; }
-		textClient.hmset(windowPrefix + windowData.id, windowData, function (err, reply) {
+		textClient.hmset(windowMetaDataPrefix + windowData.id, windowData, function (err, reply) {
 			if (endCallback) {
 				endCallback(windowData);
 			}
@@ -851,7 +852,7 @@
 	function commandDeleteWindow(socketid, json, endCallback) {
 		if (json) {
 			if (json.hasOwnProperty('type') && json.type === 'all') {
-				client.keys(windowPrefix + '*', function (err, replies) {
+				client.keys(windowMetaDataPrefix + '*', function (err, replies) {
 					var multi = textClient.multi();
 					replies.forEach(function (reply, index) {
 						multi.del(reply);
@@ -921,13 +922,13 @@
 	
 	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
-	 * @method commandGetWindow
+	 * @method commandGetWindowMetaData
 	 * @param {String} socketid ソケットID
 	 * @param {JSON} json socket.io.on:GetWindow時JSONデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandGetWindow(socketid, json, endCallback) {
-		//console.log("commandGetWindow : " + JSON.stringify(json));
+	function commandGetWindowMetaData(socketid, json, endCallback) {
+		//console.log("commandGetWindowMetaData : " + JSON.stringify(json));
 		getWindow(json, function (windowData) {
 			console.log("doneGetWindow:", windowData);
 			if (endCallback) {
@@ -1038,8 +1039,8 @@
 			commandAddWindow(socketid, data, post_updateWindow(resultCallback));
 		});
 		
-		ws_connector.on(Command.GetWindow, function (data, resultCallback) {
-			commandGetWindow(socketid, data, resultCallback);
+		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
 		ws_connector.on(Command.UpdateWindow, function (data, resultCallback) {
@@ -1188,8 +1189,8 @@
 			commandAddWindow(socketid, data, post_updateWindow(resultCallback));
 		});
 
-		io_connector.on(Command.GetWindow, function (data, resultCallback) {
-			commandGetWindow(socketid, data, resultCallback);
+		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 
 		io_connector.on(Command.UpdateWindow, function (data, resultCallback) {
@@ -1224,15 +1225,15 @@
 	function registerUUID(id) {
 		uuidPrefix = id + ":";
 		client.sadd(frontPrefix + 'sessions', id);
-		contentPrefix = frontPrefix + "t:" + uuidPrefix + contentPrefix;
-		contentRefPrefix = frontPrefix + "t:" + uuidPrefix + contentRefPrefix;
-		metadataPrefix = frontPrefix + "t:" + uuidPrefix + metadataPrefix;
-		windowPrefix = frontPrefix + "t:" + uuidPrefix + windowPrefix;
-		virtualDisplayIDStr = frontPrefix + "t:" + uuidPrefix + virtualDisplayIDStr;
+		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
+		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
+		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
+		windowMetaDataPrefix = frontPrefix + uuidPrefix + windowMetaDataPrefix;
+		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);
-		console.log("idstr:" + windowPrefix);
+		console.log("idstr:" + windowMetaDataPrefix);
 	}
 	
 	Operator.prototype.getContent = getContent;
@@ -1242,7 +1243,7 @@
 	Operator.prototype.commandDeleteWindow = commandDeleteWindow;
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
-	Operator.prototype.commandGetWindow = commandGetWindow;
+	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
 	Operator.prototype.commandAddWindow = commandAddWindow;
 	module.exports = new Operator();
 }());

@@ -11,7 +11,7 @@
 		metaDataDict = {},
 		windowType = "window",
 		doneAddWindow,
-		doneGetWindow,
+		doneGetWindowMetaData,
 		doneGetContent,
 		doneGetMetaData;
 	
@@ -179,13 +179,13 @@
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
-			connector.send('GetWindow', { id: getWindowID() }, function (err, json) {
-				doneGetWindow(err, json);
+			connector.send('GetWindowMetaData', { id: getWindowID() }, function (err, json) {
+				doneGetWindowMetaData(err, json);
 				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 			});
 		} else if (updateType === 'window') {
 			console.log("update winodow");
-			connector.send('GetWindow', { id : windowData.id}, doneGetWindow);
+			connector.send('GetWindowMetaData', { id : windowData.id}, doneGetWindowMetaData);
 		} else {
 			console.log("update transform");
 			if (targetid) {
@@ -465,12 +465,12 @@
 	};
 	
 	/**
-	 * GetWindow終了コールバック
+	 * GetWindowMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
 	 */
-	doneGetWindow = function (err, json) {
-		console.log("doneGetWindow", json);
+	doneGetWindowMetaData = function (err, json) {
+		console.log("doneGetWindowMetaData", json);
 		if (!err) {
 			metaDataDict[json.id] = json;
 			windowData = json;

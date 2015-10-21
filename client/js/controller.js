@@ -26,7 +26,7 @@
 		changeRect = function () {},
 		doneGetVirtualDisplay,
 		doneGetContent,
-		doneGetWindow,
+		doneGetWindowMetaData,
 		doneDeleteContent,
 		doneAddContent,
 		doneAddMetaData,
@@ -265,7 +265,7 @@
 		vscreen.clearScreenAll();
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
 		connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
-		connector.send('GetWindow', {type: "all", id: ""}, doneGetWindow);
+		connector.send('GetWindowMetaData', {type: "all", id: ""}, doneGetWindowMetaData);
 	}
 	
 	/**
@@ -1718,13 +1718,13 @@
 	};
 	
 	/**
-	 * GetWindowを送信した後の終了コールバック.
-	 * @method doneGetWindow
+	 * GetWindowMetaDataを送信した後の終了コールバック.
+	 * @method doneGetWindowMetaData
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneGetWindow = function (err, reply) {
-		console.log('doneGetWindow:');
+	doneGetWindowMetaData = function (err, reply) {
+		console.log('doneGetWindowMetaData:');
 		var windowData = reply,
 			elem;
 		importWindow(windowData);
@@ -2098,8 +2098,8 @@
 		console.log('UpdateWindow', metaData);
 		//updateScreen();
 		//clearWindowList();
-		doneGetWindow(null, metaData);
-		//connector.send('GetWindow', metaData, doneGetWindow);
+		doneGetWindowMetaData(null, metaData);
+		//connector.send('GetWindowMetaData', metaData, doneGetWindowMetaData);
 	});
 	
 	// すべての更新が必要なときにブロードキャストされてくる.
