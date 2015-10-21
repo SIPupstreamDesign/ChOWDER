@@ -580,7 +580,7 @@
 		connector.connect(function () {
 			if (!windowData) {
 				console.log("registerWindow");
-				registerWindow(true);
+				registerWindow();
 			}
 		}, (function () {
 			return function (ev) {

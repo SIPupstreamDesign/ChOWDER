@@ -184,11 +184,13 @@ ws2.on('request', function (request) {
 	
 	connection.on('close', function () {
 		delete ws2_connections[connection.id];
+		/*
 		operator.commandDeleteWindow(null, connection, null, function () {
 			console.log("broadcast update");
 			io_connector.broadcast(io, Command.Update);
 			ws_connector.broadcast(ws2, Command.Update);
 		});
+		*/
 		console.log('connection closed :' + connection.id);
 	});
 	
