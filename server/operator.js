@@ -19,6 +19,7 @@
 		metadataPrefix = "metadata:",
 		contentPrefix = "content:",
 		contentRefPrefix = "contentref:",
+		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
 		io_connector = require('./io_connector.js'),
@@ -346,8 +347,6 @@
 					if (err) {
 						console.log("Error on addContent:" + err);
 					} else {
-						//redis.print(err, reply);
-						
 						// 参照カウント.
 						textClient.setnx(contentRefPrefix + content_id, 0);
 						textClient.incr(contentRefPrefix + content_id);
@@ -391,6 +390,7 @@
 				if (metaData.hasOwnProperty('content_id') && metaData.content_id !== '') {
 					client.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 						if (!err && doesExist.toString() === "1") {
+							// 参照カウントを減らす.
 							textClient.decr(contentRefPrefix + metaData.content_id, function (err, value) {
 								if (value.toString() === '0') {
 									console.log("reference count zero. delete content");
@@ -405,7 +405,9 @@
 										}
 									});
 								} else {
-									endCallback(metaData);
+									if (endCallback) {
+										endCallback(metaData);
+									}
 								}
 							});
 						}
@@ -446,12 +448,9 @@
 					if (err) {
 						console.log("Error on updateContent:" + err);
 					} else {
-						//redis.print(err, reply);
-						//setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
 						if (endCallback) {
 							endCallback(metaData);
 						}
-						//});
 					}
 				});
 			}
@@ -523,6 +522,11 @@
 					if (err) {
 						console.log("Error on addWindow:" + err);
 					} else {
+						
+						// 参照カウント.
+						textClient.setnx(windowContentRefPrefix + content_id, 0);
+						textClient.incr(windowContentRefPrefix + content_id);
+						
 						client.hmset(windowMetaDataPrefix + metaData.id, metaData, function (err, reply) {
 							if (endCallback) {
 								endCallback(metaData);
@@ -671,8 +675,18 @@
 			if (meta.hasOwnProperty('content_id') && meta.content_id !== '') {
 				client.exists(windowContentPrefix + meta.content_id, function (err, doesExist) {
 					if (!err && doesExist.toString() === "1") {
-						textClient.del(windowContentPrefix + meta.content_id, function (err) {
-							if (!err) {
+						// 参照カウントを減らす
+						textClient.decr(windowContentRefPrefix + meta.content_id, function (err, value) {
+							if (value.toString() === '0') {
+								client.del(windowContentPrefix + meta.content_id, function (err) {
+									if (!err) {
+										textClient.del(windowContentRefPrefix + meta.content_id);
+										if (endCallback) {
+											endCallback(meta);
+										}
+									}
+								});
+							} else {
 								if (endCallback) {
 									endCallback(meta);
 								}
@@ -1273,12 +1287,14 @@
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
 		windowMetaDataPrefix = frontPrefix + uuidPrefix + windowMetaDataPrefix;
 		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
+		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);
 		console.log("idstr:" + windowMetaDataPrefix);
 		console.log("idstr:" + windowContentPrefix);
+		console.log("idstr:" + windowContentRefPrefix);
 	}
 	
 	Operator.prototype.getContent = getContent;
