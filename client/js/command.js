@@ -5,8 +5,6 @@
 	"use strict";
 	
 	var Command = {
-		RegisterEvent : "RegisterEvent",
-		
 		// request command
 		AddContent : "AddContent",
 		AddMetaData : "AddMetaData",
@@ -24,7 +22,10 @@
 		UpdateWindowMetaData : "UpdateWindowMetaData",
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
-		ShowWindowID : "ShowWindowID"
+		ShowWindowID : "ShowWindowID",
+		
+		// to client
+		Disconnect : "Disconnect"
 	};
 	
 	window.command = Command;

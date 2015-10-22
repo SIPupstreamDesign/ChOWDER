@@ -565,6 +565,8 @@
 	 * 再接続.
 	 */
 	function reconnect() {
+		var isDisconnect = false;
+		
 		connector.connect(function () {
 			if (!windowData) {
 				console.log("registerWindow");
@@ -573,9 +575,11 @@
 		}, (function () {
 			return function (ev) {
 				console.log('close');
-				setTimeout(function () {
-					reconnect();
-				}, reconnectTimeout);
+				if (!isDisconnect) {
+					setTimeout(function () {
+						reconnect();
+					}, reconnectTimeout);
+				}
 			};
 		}()));
 
@@ -622,6 +626,15 @@
 		connector.on("UpdateMetaData", function (data) {
 			console.log("UpdateMetaData", data);
 			update('', data.id);
+		});
+		
+		connector.on("Disconnect", function () {
+			var previewArea = document.getElementById("preview_area");
+			isDisconnect = true;
+
+			if (previewArea) {
+				previewArea.style.display = "none";
+			}
 		});
 	}
 

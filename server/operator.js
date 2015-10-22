@@ -896,8 +896,6 @@
 	/**
 	 * コンテンツの更新を行うコマンドを実行する.
 	 * @method commandUpdateContent
-	 * @param {BLOB} socket socket.ioオブジェクト
-	 * @param {BLOB} ws_connection WebSocketコネクション(null)
 	 * @param {Object} metaData contentメタデータ
 	 * @param {BLOB} binaryData loadMetaBinaryから受領したバイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
@@ -915,8 +913,6 @@
 	/**
 	 * メタデータの更新を行うコマンドを実行する.
 	 * @method commandUpdateMetaData
-	 * @param {BLOB} socket socket.ioオブジェクト
-	 * @param {BLOB} ws_connection WebSocketコネクション
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -1128,10 +1124,14 @@
 	 * deleteWindow処理実行後のブロードキャスト用ラッパー.
 	 * @method post_deleteWindow
 	 */
-	function post_deleteWindow(ws, io, resultCallback) {
+	function post_deleteWindow(ws, io, ws_connections, resultCallback) {
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
 			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
+			console.log("aaa", ws_connections);
+			if (ws_connections.hasOwnProperty(reply.socketid)) {
+				ws_connector.send(ws_connections[reply.socketid], Command.Disconnect);
+			}
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -1241,7 +1241,7 @@
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerEvent(socketid, io, socket, ws) {
+	function registerEvent(socketid, io, socket, ws, ws_connections) {
 		var methods = {};
 
 		io_connector.on(Command.AddContent, function (data, resultCallback) {
@@ -1290,7 +1290,7 @@
 		});
 
 		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
-			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, resultCallback));
+			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
