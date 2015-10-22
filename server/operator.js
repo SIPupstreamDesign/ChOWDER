@@ -392,7 +392,7 @@
 						if (!err && doesExist.toString() === "1") {
 							// 参照カウントを減らす.
 							textClient.decr(contentRefPrefix + metaData.content_id, function (err, value) {
-								if (value.toString() === '0') {
+								if (value <= 0) {
 									console.log("reference count zero. delete content");
 									client.del(contentPrefix + metaData.content_id, function (err) {
 										if (!err) {
@@ -646,7 +646,7 @@
 					if (!err && doesExist.toString() === "1") {
 						// 参照カウントを減らす
 						textClient.decr(windowContentRefPrefix + meta.content_id, function (err, value) {
-							if (value.toString() === '0') {
+							if (value <= 0) {
 								client.del(windowContentPrefix + meta.content_id, function (err) {
 									if (!err) {
 										textClient.del(windowContentRefPrefix + meta.content_id);
@@ -684,7 +684,13 @@
 				if (!err && doesExist.toString() === "1") {
 					textClient.hgetall(windowMetaDataPrefix + id, function (err, data) {
 						if (!err && data) {
-							deleteWindow(data, endCallback);
+							// 参照カウントのみを減らす
+							textClient.decr(windowContentRefPrefix + data.content_id, function (err, value) {
+								///deleteWindow(data, endCallback);
+								if (endCallback) {
+									endCallback(data);
+								}
+							});
 						}
 					});
 				}
@@ -918,17 +924,22 @@
 		//console.log(socketid, json);
 		if (json) {
 			if (json.hasOwnProperty('type') && json.type === 'all') {
-				client.keys(windowMetaDataPrefix + '*', function (err, replies) {
-					var multi = textClient.multi();
-					replies.forEach(function (reply, index) {
-						multi.del(reply);
+				textClient.keys(windowMetaDataPrefix + '*', function (err, replies) {
+					replies.forEach(function (id, index) {
+						console.log(id);
+						textClient.hgetall(id, function (err, data) {
+							if (!err && data) {
+								deleteWindow(data, function (meta) {
+									if (socketidToHash.hasOwnProperty(meta.socketid)) {
+										delete socketidToHash[meta.socketid];
+									}
+									if (endCallback) {
+										endCallback(null, meta);
+									}
+								});
+							}
+						});
 					});
-					multi.exec(function (err, data) {
-						console.log("debugDeleteWindowMetaDataAll");
-					});
-					if (endCallback) {
-						endCallback(null, {});
-					}
 				});
 			} else {
 				getWindowMetaData(json, function (metaData) {
