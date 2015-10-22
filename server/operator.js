@@ -1128,7 +1128,6 @@
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
 			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
-			console.log("aaa", ws_connections);
 			if (ws_connections.hasOwnProperty(reply.socketid)) {
 				ws_connector.send(ws_connections[reply.socketid], Command.Disconnect);
 			}

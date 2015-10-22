@@ -196,6 +196,7 @@
 				});
 			}
 		};
+		return client;
 	}
 	
 	window.ws_connector = ws_connector;
