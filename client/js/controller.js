@@ -6,7 +6,8 @@
 	
 	var currentContent = null,
 		draggingID = 0,
-		lastDraggingID = null,
+		lastSelectContentID = null,
+		lastSelectWindowID = null,
 		dragOffsetTop = 0,
 		dragOffsetLeft = 0,
 		metaDataDict = {},
@@ -297,7 +298,7 @@
 		if (id && id !== "No Content Selected.") {
 			if (metaDataDict[id].type === windowType) {
 				connector.send('ShowWindowID', {id : id});
-				lastDraggingID = id;
+				lastSelectWindowID = id;
 				gui.get_list_elem(id).style.borderColor = windowSelectColor;
 			} else {
 				connector.send('ShowWindowID', {type : 'all', id : ""});
@@ -455,6 +456,36 @@
 	};
 	
 	/**
+	 * 最後に選択されたエレメントを返す.
+	 * 何も選択されていないならnullを返す.
+	 * @method getLastSelectedElem
+	 */
+	function getLastSelectedElem() {
+		if (isDisplayTabSelected() && lastSelectWindowID) {
+			return document.getElementById(lastSelectWindowID);
+		}
+		if (!isDisplayTabSelected() && lastSelectContentID) {
+			return document.getElementById(lastSelectContentID);
+		}
+		return null;
+	}
+	
+	/**
+	 * 最後に選択されたメタデータを返す.
+	 * 何も選択されていないならnullを返す.
+	 * @method getLastSelectedElem
+	 */
+	function getLastSelectedMetaData() {
+		if (isDisplayTabSelected() && lastSelectWindowID) {
+			return metaDataDict[lastSelectWindowID];
+		}
+		if (!isDisplayTabSelected() && lastSelectContentID) {
+			return metaDataDict[lastSelectContentID];
+		}
+		return null;
+	}
+	
+	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
 	 * @method onManipulatorMove
 	 * @param {Object} evt マウスイベント
@@ -466,59 +497,61 @@
 			currentw,
 			currenth,
 			ydiff,
-			elem,
+			elem = null,
 			metaData,
 			draggingManip = manipulator.getDraggingManip(),
 			invAspect;
 		
-		if (draggingManip && lastDraggingID) {
-			elem = document.getElementById(lastDraggingID);
-			metaData = metaDataDict[lastDraggingID];
-			if (metaData.type !== windowType && !isVisible(metaData)) {
-				return;
+		if (draggingManip) {
+			elem = getLastSelectedElem();
+			metaData = getLastSelectedMetaData();
+			if (elem) {
+				if (metaData.type !== windowType && !isVisible(metaData)) {
+					// 非表示コンテンツ
+					return;
+				}
+				vscreen_util.trans(metaData);
+				lastx = metaData.posx;
+				lasty = metaData.posy;
+				lastw = metaData.width;
+				lasth = metaData.height;
+				invAspect = metaData.orgHeight / metaData.orgWidth;
+
+				if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
+					px = evt.clientX - dragOffsetLeft;
+					py = evt.clientY - dragOffsetTop;
+					currentw = lastw - (px - lastx);
+				} else {
+					px = evt.clientX - lastw - dragOffsetLeft;
+					py = evt.clientY - dragOffsetTop;
+					currentw = lastw + (px - lastx);
+				}
+				if (isNaN(invAspect)) {
+					invAspect = lasth / lastw;
+					console.log("aspect NaN" + invAspect);
+				}
+
+				if (currentw < 20) {
+					currentw = 20;
+				}
+				currenth = currentw * invAspect;
+				ydiff = currentw * invAspect - lasth;
+
+				metaData.width = currentw;
+				metaData.height = currentw * invAspect;
+				if (draggingManip.id === '_manip_0') {
+					metaData.posx = px;
+					metaData.posy = (lasty - ydiff);
+				} else if (draggingManip.id === '_manip_1') {
+					metaData.posx = px;
+				} else if (draggingManip.id === '_manip_3') {
+					metaData.posy = (lasty - ydiff);
+				}
+				vscreen_util.transInv(metaData);
+				vscreen_util.assignMetaData(elem, metaData, true);
+				metaDataDict[metaData.id] = metaData;
+				updateMetaData(metaData);
 			}
-			vscreen_util.trans(metaData);
-			lastx = metaData.posx;
-			lasty = metaData.posy;
-			lastw = metaData.width;
-			lasth = metaData.height;
-			invAspect = metaData.orgHeight / metaData.orgWidth;
-			
-			if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
-				px = evt.clientX - dragOffsetLeft;
-				py = evt.clientY - dragOffsetTop;
-				currentw = lastw - (px - lastx);
-			} else {
-				px = evt.clientX - lastw - dragOffsetLeft;
-				py = evt.clientY - dragOffsetTop;
-				currentw = lastw + (px - lastx);
-			}
-			if (isNaN(invAspect)) {
-				invAspect = lasth / lastw;
-				console.log("aspect NaN" + invAspect);
-			}
-			
-			if (currentw < 20) {
-				currentw = 20;
-			}
-			currenth = currentw * invAspect;
-			ydiff = currentw * invAspect - lasth;
-			
-			metaData.width = currentw;
-			metaData.height = currentw * invAspect;
-			if (draggingManip.id === '_manip_0') {
-				metaData.posx = px;
-				metaData.posy = (lasty - ydiff);
-			} else if (draggingManip.id === '_manip_1') {
-				metaData.posx = px;
-			} else if (draggingManip.id === '_manip_3') {
-				metaData.posy = (lasty - ydiff);
-			}
-			vscreen_util.transInv(metaData);
-			vscreen_util.assignMetaData(elem, metaData, true);
-			console.log("lastDraggingID:" + lastDraggingID);
-			metaDataDict[lastDraggingID] = metaData;
-			updateMetaData(metaData);
 		}
 	}
 	
@@ -605,22 +638,24 @@
 	 * @method unselect
 	 */
 	function unselect() {
-		var elem,
+		var elem = null,
 			metaData;
-		
-		if (lastDraggingID) {
-			elem = document.getElementById(lastDraggingID);
-			if (elem) {
-				metaData = metaDataDict[lastDraggingID];
-				if (metaData.type !== windowType && isVisible(metaData)) {
-					elem.style.border = "";
-				}
-				if (gui.get_list_elem(lastDraggingID)) {
-					gui.get_list_elem(lastDraggingID).style.borderColor = "white";
-				}
-				elem.style.borderColor = "black";
+
+		elem = getLastSelectedElem();
+		metaData = getLastSelectedMetaData();
+		if (elem) {
+			if (metaData.type !== windowType && isVisible(metaData)) {
+				elem.style.border = "";
 			}
-			lastDraggingID = null;
+			if (gui.get_list_elem(elem.id)) {
+				gui.get_list_elem(elem.id).style.borderColor = "white";
+			}
+			elem.style.borderColor = "black";
+			if (metaData.type === windowType) {
+				lastSelectWindowID = null;
+			} else {
+				lastSelectContentID = null;
+			}
 		}
 		manipulator.removeManipulator();
 		gui.clear_property();
@@ -932,17 +967,19 @@
 
 			evt.stopPropagation();
 			evt.preventDefault();
-		} else if (lastDraggingID && manipulator.getDraggingManip()) {
+		} else if (manipulator.getDraggingManip()) {
 			console.log("iscontentarea");
 			// scaling
-			elem = document.getElementById(lastDraggingID);
-			metaData = metaDataDict[lastDraggingID];
-			if (metaData.type === windowType || isVisible(metaData)) {
-				onManipulatorMove(evt);
-				manipulator.moveManipulator(elem);
+			elem = getLastSelectedElem();
+			metaData = getLastSelectedMetaData();
+			if (elem) {
+				if (metaData.type === windowType || isVisible(metaData)) {
+					onManipulatorMove(evt);
+					manipulator.moveManipulator(elem);
+				}
+				evt.stopPropagation();
+				evt.preventDefault();
 			}
-			evt.stopPropagation();
-			evt.preventDefault();
 		}
 	});
 	
@@ -995,12 +1032,16 @@
 			}
 			clearSnapHightlight();
 		}
-		if (manipulator.isShowManipulator() && lastDraggingID) {
-			metaData = metaDataDict[lastDraggingID];
-			//updateMetaData(metaData);
+		if (isDisplayTabSelected()) {
+			if (!(manipulator.isShowManipulator() && lastSelectWindowID)) {
+				lastSelectWindowID = draggingID;
+				draggingID = null;
+			}
 		} else {
-			lastDraggingID = draggingID;
-			draggingID = null;
+			if (!(manipulator.isShowManipulator() && lastSelectContentID)) {
+				lastSelectContentID = draggingID;
+				draggingID = null;
+			}
 		}
 		manipulator.clearDraggingManip();
 		dragOffsetTop = 0;
@@ -1551,7 +1592,7 @@
 		metaDataDict[json.id] = json;
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
-		if (draggingID === json.id || (manipulator.isShowManipulator() && lastDraggingID === json.id)) {
+		if (draggingID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
 			gui.assign_content_property(json);
 		}
 		
@@ -1738,12 +1779,12 @@
 		var windowData = reply,
 			elem;
 		importWindow(windowData);
-		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastDraggingID === windowData.id)) {
+		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
 			gui.assign_content_property(windowData);
 		}
-		if (lastDraggingID) {
+		if (lastSelectWindowID) {
 			console.log("moveManipulator");
-			elem = document.getElementById(lastDraggingID);
+			elem = document.getElementById(lastSelectWindowID);
 			if (elem) {
 				manipulator.moveManipulator(elem);
 			}
@@ -2057,14 +2098,29 @@
 	 * 左ペインのタブが切り替えられた.
 	 */
 	gui.on_lefttab_changed = function () {
-		console.log("on_lefttab_changed", lastDraggingID);
-		unselect();
+		var id;
+		console.log("on_lefttab_changed", lastSelectContentID);
+		if (isDisplayTabSelected()) {
+			id = lastSelectWindowID;
+			if (!id) {
+				id = wholeWindowListID;
+			}
+		} else {
+			id = lastSelectContentID;
+		}
+		// 現在の選択解除
+		//unselect();
+		manipulator.removeManipulator();
 		if (isDisplayTabSelected()) {
 			gui.init_property_area("", "display");
-			select(wholeWindowListID);
 		} else {
 			gui.init_property_area("", "content");
 		}
+		// 以前選択していたものを再選択する.
+		if (id) {
+			select(id, false);
+		}
+		draggingID = null;
 	};
 	
 	///-------------------------------------------------------------------------------------------------------
@@ -2076,8 +2132,8 @@
 		if (id) {
 			//console.log(metaData);
 			doneGetMetaData(null, metaData);
-			if (lastDraggingID) {
-				elem = document.getElementById(lastDraggingID);
+			if (lastSelectContentID) {
+				elem = document.getElementById(lastSelectContentID);
 				if (elem) {
 					manipulator.moveManipulator(elem);
 				}
@@ -2163,22 +2219,28 @@
 		
 		gui.on_mousedown_content_preview_area = function () {
 			// erase last border
-			if (lastDraggingID && !manipulator.getDraggingManip()) {
-				unselect();
+			if (!manipulator.getDraggingManip()) {
+				if (getLastSelectedElem()) {
+					unselect();
+				}
 			}
 		};
 		
 		gui.on_mousedown_display_preview_area = function () {
 			// erase last border
-			if (lastDraggingID && !manipulator.getDraggingManip()) {
-				unselect();
+			if (!manipulator.getDraggingManip()) {
+				if (getLastSelectedElem()) {
+					unselect();
+				}
 			}
 		};
 		
 		gui.on_mousedown_content_area = function () {
 			// erase last border
-			if (lastDraggingID && !manipulator.getDraggingManip()) {
-				unselect();
+			if (!manipulator.getDraggingManip()) {
+				if (getLastSelectedElem()) {
+					unselect();
+				}
 			}
 		};
 		
