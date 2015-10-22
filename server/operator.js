@@ -142,7 +142,7 @@
 			};
 		}
 		if (metaData.type === "window") {
-			console.log("invalid matadata.");
+			console.error("invalid matadata.");
 			return;
 		}
 		if (metaData.hasOwnProperty('command')) {
@@ -150,7 +150,7 @@
 		}
 		textClient.hmset(metadataPrefix + id, metaData, function (err) {
 			if (err) {
-				console.log(err);
+				console.error(err);
 			} else if (endCallback) {
 				endCallback(metaData);
 			}
@@ -227,7 +227,7 @@
 								endCallback(reply);
 							}
 						} else {
-							console.log(err);
+							console.error(err);
 						}
 					});
 				});
@@ -239,7 +239,7 @@
 						endCallback(reply);
 					}
 				} else {
-					console.log(err);
+					console.error(err);
 				}
 			});
 		}
@@ -262,7 +262,7 @@
 		} else if (metaData.type === 'url') {
 			metaData.mime = util.detectImageType(contentData);
 		} else {
-			console.log("Error undefined type:" + metaData.type);
+			console.error("Error undefined type:" + metaData.type);
 		}
 		if (metaData.type === 'image') {
 			if (isInvalidImageSize(metaData)) {
@@ -337,7 +337,7 @@
 		} else if (metaData.type === 'url') {
 			metaData.mime = util.detectImageType(contentData);
 		} else {
-			console.log("Error undefined type:" + metaData.type);
+			console.error("Error undefined type:" + metaData.type);
 		}
 		
 		console.log("mime:" + metaData.mime);
@@ -351,7 +351,7 @@
 				
 				client.set(contentPrefix + content_id, contentData, function (err, reply) {
 					if (err) {
-						console.log("Error on addContent:" + err);
+						console.error("Error on addContent:" + err);
 					} else {
 						// 参照カウント.
 						textClient.setnx(contentRefPrefix + content_id, 0);
@@ -447,14 +447,14 @@
 			contentData = data;
 			metaData.mime = util.detectImageType(data);
 		} else {
-			console.log("Error undefined type:" + metaData.type);
+			console.error("Error undefined type:" + metaData.type);
 		}
 		
 		client.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 			if (!err && doesExist.toString() === "1") {
 				client.set(contentPrefix + metaData.content_id, contentData, function (err, reply) {
 					if (err) {
-						console.log("Error on updateContent:" + err);
+						console.error("Error on updateContent:" + err);
 					} else {
 						if (endCallback) {
 							endCallback(metaData);
@@ -529,7 +529,7 @@
 				
 				client.hmset(windowContentPrefix + content_id, metaData, function (err, reply) {
 					if (err) {
-						console.log("Error on addWindow:" + err);
+						console.error("Error on addWindow:" + err);
 					} else {
 						
 						// 参照カウント.
