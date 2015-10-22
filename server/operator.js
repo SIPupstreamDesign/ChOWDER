@@ -865,12 +865,32 @@
 	 */
 	function commandDeleteContent(json, endCallback) {
 		console.log("commandDeleteContent:" + json.id);
-		deleteContent(json, function (metaData) {
-			//socket.emit(Command.doneDeleteContent, JSON.stringify({"id" : id}));
-			if (endCallback) {
-				endCallback(null, metaData);
+		
+		if (json) {
+			if (json.hasOwnProperty('type') && json.type === 'all') {
+				textClient.keys(metadataPrefix + '*', function (err, replies) {
+					replies.forEach(function (id, index) {
+						console.log(id);
+						textClient.hgetall(id, function (err, data) {
+							if (!err && data) {
+								deleteContent(data, function (meta) {
+									if (endCallback) {
+										endCallback(null, meta);
+									}
+								});
+							}
+						});
+					});
+				});
+			} else {
+				deleteContent(json, function (metaData) {
+					//socket.emit(Command.doneDeleteContent, JSON.stringify({"id" : id}));
+					if (endCallback) {
+						endCallback(null, metaData);
+					}
+				});
 			}
-		});
+		}
 	}
 	
 	/**
