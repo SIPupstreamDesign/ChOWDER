@@ -1,4 +1,4 @@
-﻿/*jslint devel:true */
+/*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
 (function () {
@@ -179,7 +179,8 @@
 	 */
 	function initContentArea(bottomfunc) {
 		var addButton = document.getElementById('content_add_button'),
-			contentDeleteButton = document.getElementById('content_delete_button');
+			contentDeleteButton = document.getElementById('content_delete_button'),
+			contentDeleteAllButton = document.getElementById('content_delete_all_button');
 		
 		addButton.onclick = function () {
 			bottomfunc(true);
@@ -187,6 +188,9 @@
 		
 		contentDeleteButton.onclick = function (evt) {
 			gui.on_contentdeletebutton_clicked(evt);
+		};
+		contentDeleteAllButton.onclick = function (evt) {
+			gui.on_deleteallcontent_clicked(evt);
 		};
 	}
 	
@@ -632,6 +636,7 @@
 	window.controller_gui.on_contentdeletebutton_clicked = null;
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;
+	window.controller_gui.on_deleteallcontent_clicked = null;
 	window.controller_gui.on_lefttab_changed = null;
 	window.controller_gui.on_showidbutton_clicked = null;
 	window.controller_gui.on_snapdropdown_clicked = null;

@@ -270,45 +270,6 @@
 	}
 	
 	/**
-	 * Displayを削除するボタンが押された.
-	 * @method on_deletedisplay_clicked
-	 */
-	gui.on_deletedisplay_clicked = function () {
-		if (getSelectedID()) {
-			console.log('DeleteWindowMetaData' + getSelectedID());
-			connector.send('DeleteWindowMetaData', metaDataDict[getSelectedID()], doneDeleteWindowMetaData);
-		}
-	};
-	
-	/**
-	 * Displayを全削除するボタンが押された
-	 * @method on_deletealldisplay_clicked
-	 */
-	gui.on_deletealldisplay_clicked = function () {
-		connector.send('DeleteWindowMetaData', {type : "all", id : ""}, doneDeleteWindowMetaData);
-	};
-	
-	/**
-	 * Show Display ID ボタンが押された.
-	 * @method on_showidbutton_clicked
-	 */
-	gui.on_showidbutton_clicked = function () {
-		var id = getSelectedID();
-		console.log("ShowWindowID:" + id);
-		if (id && id !== "No Content Selected.") {
-			if (metaDataDict[id].type === windowType) {
-				connector.send('ShowWindowID', {id : id});
-				lastSelectWindowID = id;
-				gui.get_list_elem(id).style.borderColor = windowSelectColor;
-			} else {
-				connector.send('ShowWindowID', {type : 'all', id : ""});
-			}
-		} else {
-			connector.send('ShowWindowID', {type : 'all', id : ""});
-		}
-	};
-	
-	/**
 	 * Content追加
 	 * @method addContent
 	 * @param {JSON} metaData コンテンツのメタデータ
@@ -415,45 +376,6 @@
 			}
 		}
 	}
-	
-	/**
-	 * VirualDisplay分割数変更
-	 * @method on_change_whole_split
-	 * @param {String} x x軸分割数
-	 * @param {String} y y軸分割数
-	 * @param {bool} withoutUpdate 設定後各Displayの更新をするかのフラグ
-	 */
-	gui.on_change_whole_split = function (x, y, withoutUpdate) {
-		var ix = parseInt(x, 10),
-			iy = parseInt(y, 10),
-			splitWholes,
-			elem,
-			i,
-			wholes = vscreen.getSplitWholes(),
-			previewArea = gui.get_display_preview_area();
-		
-		if (isNaN(ix) || isNaN(iy)) {
-			return;
-		}
-		
-		for (i in wholes) {
-			if (wholes.hasOwnProperty(i)) {
-				elem = document.getElementById(i);
-				if (elem) {
-					console.log("removeChildaa");
-					previewArea.removeChild(elem);
-				}
-			}
-		}
-		
-		vscreen.clearSplitWholes();
-		vscreen.splitWhole(ix, iy);
-		assignSplitWholes(vscreen.getSplitWholes());
-		if (!withoutUpdate) {
-			updateScreen();
-			updateWindowData();
-		}
-	};
 	
 	/**
 	 * 最後に選択されたエレメントを返す.
@@ -1831,6 +1753,90 @@
 	};
 	
 	///-------------------------------------------------------------------------------------------------------
+	
+	
+	/**
+	 * Displayを削除するボタンが押された.
+	 * @method on_deletedisplay_clicked
+	 */
+	gui.on_deletedisplay_clicked = function () {
+		if (getSelectedID()) {
+			console.log('DeleteWindowMetaData' + getSelectedID());
+			connector.send('DeleteWindowMetaData', metaDataDict[getSelectedID()], doneDeleteWindowMetaData);
+		}
+	};
+	
+	/**
+	 * Displayを全削除するボタンが押された
+	 * @method on_deletealldisplay_clicked
+	 */
+	gui.on_deletealldisplay_clicked = function () {
+		connector.send('DeleteWindowMetaData', {type : "all", id : ""}, doneDeleteWindowMetaData);
+	};
+	
+	gui.on_deleteallcontent_clicked = function () {
+		connector.send('DeleteContent', {type : "all", id : ""}, doneDeleteContent);
+	};
+	
+	/**
+	 * Show Display ID ボタンが押された.
+	 * @method on_showidbutton_clicked
+	 */
+	gui.on_showidbutton_clicked = function () {
+		var id = getSelectedID();
+		console.log("ShowWindowID:" + id);
+		if (id && id !== "No Content Selected.") {
+			if (metaDataDict[id].type === windowType) {
+				connector.send('ShowWindowID', {id : id});
+				lastSelectWindowID = id;
+				gui.get_list_elem(id).style.borderColor = windowSelectColor;
+			} else {
+				connector.send('ShowWindowID', {type : 'all', id : ""});
+			}
+		} else {
+			connector.send('ShowWindowID', {type : 'all', id : ""});
+		}
+	};
+	
+	/**
+	 * VirualDisplay分割数変更
+	 * @method on_change_whole_split
+	 * @param {String} x x軸分割数
+	 * @param {String} y y軸分割数
+	 * @param {bool} withoutUpdate 設定後各Displayの更新をするかのフラグ
+	 */
+	gui.on_change_whole_split = function (x, y, withoutUpdate) {
+		var ix = parseInt(x, 10),
+			iy = parseInt(y, 10),
+			splitWholes,
+			elem,
+			i,
+			wholes = vscreen.getSplitWholes(),
+			previewArea = gui.get_display_preview_area();
+		
+		if (isNaN(ix) || isNaN(iy)) {
+			return;
+		}
+		
+		for (i in wholes) {
+			if (wholes.hasOwnProperty(i)) {
+				elem = document.getElementById(i);
+				if (elem) {
+					console.log("removeChildaa");
+					previewArea.removeChild(elem);
+				}
+			}
+		}
+		
+		vscreen.clearSplitWholes();
+		vscreen.splitWhole(ix, iy);
+		assignSplitWholes(vscreen.getSplitWholes());
+		if (!withoutUpdate) {
+			updateScreen();
+			updateWindowData();
+		}
+	};
+	
 	/**
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
