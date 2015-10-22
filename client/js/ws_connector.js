@@ -47,16 +47,21 @@
 	 */
 	function eventBinaryMessage(metaData, contentData) {
 		console.log(metaData);
-		var data = {
-			metaData : metaData.params,
-			contentData : contentData
-		};
+		var data;
 		if (metaData.to === "client") {
 			// masterからメッセージがきた
+			data = {
+				metaData : metaData.params,
+				contentData : contentData
+			};
 			if (recievers.hasOwnProperty(metaData.method)) {
 				recievers[metaData.method](data);
 			}
 		} else {
+			data = {
+				metaData : metaData.result,
+				contentData : contentData
+			};
 			// clientからmasterに送ったメッセージが返ってきた
 			if (metaData.error) {
 				if (resultCallbacks[metaData.id]) {

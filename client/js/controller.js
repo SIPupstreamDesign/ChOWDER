@@ -1074,7 +1074,7 @@
 		height = elem.offsetHeight / vscreen.getWholeScale();
 		previewArea.removeChild(elem);
 
-		currentContent = elem;
+		//currentContent = elem;
 		addContent({type : "text", posx : 0, posy : 0, width : width, height : height}, text);
 	}
 	
@@ -1752,12 +1752,14 @@
 		
 		doneGetMetaData(err, reply);
 		
+		/*
 		if (currentContent) {
 			currentContent.id = json.id;
 			setupContent(currentContent, json.id);
 			//console.log(currentContent);
 		}
 		currentContent = null;
+		*/
 	};
 	
 	/**
