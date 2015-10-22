@@ -565,23 +565,22 @@
 	 * 再接続.
 	 */
 	function reconnect() {
-		var isDisconnect = false;
-		
-		connector.connect(function () {
-			if (!windowData) {
-				console.log("registerWindow");
-				registerWindow();
-			}
-		}, (function () {
-			return function (ev) {
-				console.log('close');
-				if (!isDisconnect) {
-					setTimeout(function () {
-						reconnect();
-					}, reconnectTimeout);
+		var isDisconnect = false,
+			client = connector.connect(function () {
+				if (!windowData) {
+					console.log("registerWindow");
+					registerWindow();
 				}
-			};
-		}()));
+			}, (function () {
+				return function (ev) {
+					console.log('close');
+					if (!isDisconnect) {
+						setTimeout(function () {
+							reconnect();
+						}, reconnectTimeout);
+					}
+				};
+			}()));
 
 		connector.on("Update", function (data) {
 			console.log("update");
@@ -628,14 +627,17 @@
 			update('', data.id);
 		});
 		
-		connector.on("Disconnect", function () {
-			var previewArea = document.getElementById("preview_area");
-			isDisconnect = true;
+		connector.on("Disconnect", (function (client) {
+			return function () {
+				var previewArea = document.getElementById("preview_area");
+				isDisconnect = true;
+				client.close();
 
-			if (previewArea) {
-				previewArea.style.display = "none";
-			}
-		});
+				if (previewArea) {
+					previewArea.style.display = "none";
+				}
+			};
+		}(client)));
 	}
 
 	/**
