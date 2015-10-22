@@ -246,6 +246,36 @@
 	}
 	
 	/**
+	 * メタデータをコンテンツバイナリから初期設定する.
+	 * @method initialMetaDataSetting
+	 * @param {JSON} metaData contentメタデータ
+	 * @param {BLOB} contentData バイナリデータ
+	 */
+	function initialMetaDataSetting(metaData, contentData) {
+		var dimensions;
+		metaData.orgWidth = metaData.width;
+		metaData.orgHeight = metaData.height;
+		if (metaData.type === 'text') {
+			metaData.mime = "text/plain";
+		} else if (metaData.type === 'image') {
+			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === 'url') {
+			metaData.mime = util.detectImageType(contentData);
+		} else {
+			console.log("Error undefined type:" + metaData.type);
+		}
+		if (metaData.type === 'image') {
+			if (isInvalidImageSize(metaData)) {
+				dimensions = image_size(contentData);
+				metaData.width = dimensions.width;
+				metaData.height = dimensions.height;
+				metaData.orgWidth = metaData.width;
+				metaData.orgHeight = metaData.height;
+			}
+		}
+	}
+	
+	/**
 	 * メタデータ追加
 	 * @method addMetaData
 	 * @param {JSON} metaData contentメタデータ
@@ -261,37 +291,13 @@
 				client.exists(contentPrefix + metaData.content_id, function (err, doesExists) {
 					if (!err && doesExists.toString() === "1") {
 						getContent('', metaData.content_id, function (contentData) {
-							var dimensions;
-							metaData.orgWidth = metaData.width;
-							metaData.orgHeight = metaData.height;
-
-							if (metaData.type === 'text') {
-								metaData.mime = "text/plain";
-							} else if (metaData.type === 'image') {
-								metaData.mime = util.detectImageType(contentData);
-							} else if (metaData.type === 'url') {
-								metaData.mime = util.detectImageType(contentData);
-							} else {
-								console.log("Error undefined type:" + metaData.type);
-							}
-
-							if (!metaData.hasOwnProperty('zIndex')) {
-								metaData.zIndex = 0;
-							}
-							if (metaData.type === 'image') {
-								if (isInvalidImageSize(metaData)) {
-									dimensions = image_size(contentData);
-									metaData.width = dimensions.width;
-									metaData.height = dimensions.height;
-									metaData.orgWidth = metaData.width;
-									metaData.orgHeight = metaData.height;
-								}
-							}
+							// 参照カウント.
+							textClient.setnx(contentRefPrefix + metaData.content_id, 0);
+							textClient.incr(contentRefPrefix + metaData.content_id);
+							
+							// メタデータを初回設定.
+							initialMetaDataSetting(metaData, contentData);
 							setMetaData(metaData.type, id, metaData, function (metaData) {
-								// 参照カウント.
-								textClient.setnx(contentRefPrefix + metaData.content_id, 0);
-								textClient.incr(contentRefPrefix + metaData.content_id);
-
 								if (endCallback) {
 									endCallback(metaData);
 								}
@@ -350,7 +356,9 @@
 						// 参照カウント.
 						textClient.setnx(contentRefPrefix + content_id, 0);
 						textClient.incr(contentRefPrefix + content_id);
-
+						
+						// メタデータを初回設定.
+						initialMetaDataSetting(metaData, contentData);
 						setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
 							if (endCallback) {
 								endCallback(metaData, contentData);
