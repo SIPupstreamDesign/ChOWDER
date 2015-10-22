@@ -1200,7 +1200,7 @@
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandDeleteContent(metaData, post_deleteContent(resultCallback));
+			commandDeleteContent(metaData, post_deleteContent(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
