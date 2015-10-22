@@ -653,22 +653,26 @@
 				client.exists(windowContentPrefix + meta.content_id, function (err, doesExist) {
 					if (!err && doesExist.toString() === "1") {
 						// 参照カウントを減らす
-						textClient.decr(windowContentRefPrefix + meta.content_id, function (err, value) {
-							if (value <= 0) {
-								client.del(windowContentPrefix + meta.content_id, function (err) {
-									if (!err) {
-										textClient.del(windowContentRefPrefix + meta.content_id);
-										if (endCallback) {
-											endCallback(meta);
-										}
-									}
-								});
+						//textClient.decr(windowContentRefPrefix + meta.content_id, function (err, value) {
+						//	if (value <= 0) {
+						client.del(windowContentPrefix + meta.content_id, function (err) {
+							if (!err) {
+								textClient.del(windowContentRefPrefix + meta.content_id);
+								if (endCallback) {
+									endCallback(meta);
+								}
+							} else {
+								console.error(err);
+							}
+						});
+						/*
 							} else {
 								if (endCallback) {
 									endCallback(meta);
 								}
 							}
 						});
+						*/
 					}
 				});
 			} else {
