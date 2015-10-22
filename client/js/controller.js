@@ -1657,17 +1657,20 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneDeleteContent = function (err, reply) {
-		console.log("doneDeleteContent");
+		console.log("doneDeleteContent", err, reply);
 		var json = reply,
 			contentArea = gui.get_content_area(),
 			previewArea = gui.get_content_preview_area(),
 			deleted = document.getElementById(json.id);
 		manipulator.removeManipulator();
-		previewArea.removeChild(deleted);
+		if (deleted) {
+			previewArea.removeChild(deleted);
+		}
 		if (gui.get_list_elem(json.id)) {
 			contentArea.removeChild(gui.get_list_elem(json.id));
 		}
 		gui.set_update_content_id("No Content Selected.");
+		lastSelectContentID = null;
 	};
 	
 	/**
@@ -1715,6 +1718,7 @@
 				}
 			}
 		}
+		lastSelectWindowID = null;
 	};
 	
 	/**
