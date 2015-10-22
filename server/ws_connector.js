@@ -21,7 +21,7 @@
 					jsonrpc: "2.0",
 					id: injson.id,
 					method : injson.method,
-					params : res
+					result : res
 				};
 				metabin = metabinary.createMetaBinary(result, binary);
 				if (metabin === null || metabin === undefined) {

@@ -48,17 +48,22 @@
 	 * @param {Blob} contentData コンテンツバイナリ
 	 */
 	function eventBinaryMessage(socket, metaData, contentData) {
-		var data = {
-			metaData : metaData.params,
-			contentData : contentData
-		};
+		var data;
 		console.log(metaData);
 		if (metaData.to === "client") {
 			// masterからメッセージがきた
+			data = {
+				metaData : metaData.params,
+				contentData : contentData
+			};
 			if (recievers.hasOwnProperty(metaData.method)) {
 				recievers[metaData.method](data);
 			}
 		} else {
+			data = {
+				metaData : metaData.result,
+				contentData : contentData
+			};
 			// clientからmasterに送ったメッセージが返ってきた
 			if (metaData.error) {
 				if (resultCallbacks[metaData.id]) {
