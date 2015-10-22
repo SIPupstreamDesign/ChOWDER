@@ -216,7 +216,7 @@ p {
 
 .content_area {
 	display: none;
-	height: 700px;
+	height: 670px;
 	width : 250px;
 	overflow-y: auto;
 	border : solid 4px;
@@ -452,7 +452,7 @@ p {
 	display : none;
 	position :absolute;
 	width : 160px;
-	bottom : 24px;
+	bottom : 22px;
 }
 
 .content_button {
@@ -498,6 +498,10 @@ p {
 	margin-bottom: 5px;
 }
 
+.content_add {
+	margin-bottom: 5px;
+}
+
 #display_preview_area {
 	z-index: 1;
 	opacity: 1.0;
@@ -506,4 +510,16 @@ p {
 #content_preview_area {
 	z-index: 0;
 	opacity: 0.3;
+}
+
+#content_delete_all_button {
+	color: #fff;
+    background-color: #c9302c;
+    border-color: #ac2925;
+}
+
+#content_delete_all_button:hover {
+	color: #fff;
+    background-color: #a9100c;
+    border-color: #a9100c;
 }
