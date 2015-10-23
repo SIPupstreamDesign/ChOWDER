@@ -140,3 +140,12 @@ pre {
 	border: dashed 2px;
 	border-color: black;
 }
+
+.disconnected_text {
+	position : fixed;
+	bottom : 0px;
+	right : 20px;
+	color : white;
+	font-size: 50px;
+	display : none;
+}
