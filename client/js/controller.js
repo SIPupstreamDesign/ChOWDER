@@ -1444,7 +1444,9 @@
 		
 		divElem = gui.get_list_elem(windowData.id);
 		if (divElem) {
-			changeColor(divElem);
+			if (!draggingID) {
+				changeColor(divElem);
+			}
 			return;
 		}
 		
