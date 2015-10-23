@@ -567,6 +567,10 @@
 	function reconnect() {
 		var isDisconnect = false,
 			client = connector.connect(function () {
+				var disconnected_text = document.getElementById("disconnected_text");
+				if (disconnected_text) {
+					disconnected_text.style.display = "none";
+				}
 				if (!windowData) {
 					console.log("registerWindow");
 					registerWindow();
@@ -574,6 +578,10 @@
 			}, (function () {
 				return function (ev) {
 					console.log('close');
+					var disconnected_text = document.getElementById("disconnected_text");
+					if (disconnected_text) {
+						disconnected_text.style.display = "block";
+					}
 					if (!isDisconnect) {
 						setTimeout(function () {
 							reconnect();
@@ -629,12 +637,16 @@
 		
 		connector.on("Disconnect", (function (client) {
 			return function () {
-				var previewArea = document.getElementById("preview_area");
+				var previewArea = document.getElementById("preview_area"),
+					disconnected_text = document.getElementById("disconnected_text");
 				isDisconnect = true;
 				client.close();
 
 				if (previewArea) {
 					previewArea.style.display = "none";
+				}
+				if (disconnected_text) {
+					disconnected_text.innerHTML = "Display Deleted";
 				}
 			};
 		}(client)));
