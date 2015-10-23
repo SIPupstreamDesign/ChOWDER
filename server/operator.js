@@ -534,12 +534,13 @@
 						
 						// 参照カウント.
 						textClient.setnx(windowContentRefPrefix + content_id, 0);
-						textClient.incr(windowContentRefPrefix + content_id);
-						
-						client.hmset(windowMetaDataPrefix + metaData.id, metaData, function (err, reply) {
-							if (endCallback) {
-								endCallback(metaData);
-							}
+						textClient.incr(windowContentRefPrefix + content_id, function (err, value) {
+							metaData.reference_count = value;
+							client.hmset(windowMetaDataPrefix + metaData.id, metaData, function (err, reply) {
+								if (endCallback) {
+									endCallback(metaData);
+								}
+							});
 						});
 					}
 				});
@@ -652,12 +653,13 @@
 			if (meta.hasOwnProperty('content_id') && meta.content_id !== '') {
 				client.exists(windowContentPrefix + meta.content_id, function (err, doesExist) {
 					if (!err && doesExist.toString() === "1") {
-						// 参照カウントを減らす
-						//textClient.decr(windowContentRefPrefix + meta.content_id, function (err, value) {
-						//	if (value <= 0) {
+						
 						client.del(windowContentPrefix + meta.content_id, function (err) {
 							if (!err) {
 								textClient.del(windowContentRefPrefix + meta.content_id);
+								if (meta.hasOwnProperty('reference_count')) {
+									delete meta.reference_count;
+								}
 								if (endCallback) {
 									endCallback(meta);
 								}
@@ -665,14 +667,6 @@
 								console.error(err);
 							}
 						});
-						/*
-							} else {
-								if (endCallback) {
-									endCallback(meta);
-								}
-							}
-						});
-						*/
 					}
 				});
 			} else {
@@ -698,10 +692,12 @@
 						if (!err && data) {
 							// 参照カウントのみを減らす
 							textClient.decr(windowContentRefPrefix + data.content_id, function (err, value) {
-								///deleteWindow(data, endCallback);
-								if (endCallback) {
-									endCallback(data);
-								}
+								data.reference_count = value;
+								textClient.hmset(windowMetaDataPrefix + id, data, function (err, result) {
+									if (endCallback) {
+										endCallback(null, data);
+									}
+								});
 							});
 						}
 					});
@@ -988,14 +984,16 @@
 					}
 				});
 			}
-		} else {
-			//console.log("commandDeleteWindowMetaData : " + socketid);
-			deleteWindowBySocketID(socketid, function (err, meta) {
-				if (endCallback) {
-					endCallback(null, meta);
-				}
-			});
 		}
+	}
+	
+	function removeOneWindow(socketid, endCallback) {
+		//console.log("commandDeleteWindowMetaData : " + socketid);
+		deleteWindowBySocketID(socketid, function (err, meta) {
+			if (endCallback) {
+				endCallback(null, meta);
+			}
+		});
 	}
 	
 	/**
@@ -1335,7 +1333,7 @@
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;
 	Operator.prototype.registerUUID = registerUUID;
-	Operator.prototype.commandDeleteWindowMetaData = commandDeleteWindowMetaData;
+	Operator.prototype.removeOneWindow = removeOneWindow;
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;

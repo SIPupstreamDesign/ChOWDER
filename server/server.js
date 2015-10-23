@@ -62,10 +62,9 @@ ws.on('request', function (request) {
 	connection.on('close', function () {
 		delete ws_connections[connection.id];
 
-		operator.commandDeleteWindowMetaData(connection.id, null, function (err, meta) {
-			io_connector.broadcast(io, Command.DeleteWindowMetaData, meta);
-			ws_connector.broadcast(ws2, Command.DeleteWindowMetaData, meta);
-			console.log("broadcast update");
+		operator.removeOneWindow(connection.id, function (err, meta) {
+			io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
+			//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 		});
 
 		console.log('connection closed :' + connection.id);
@@ -187,10 +186,9 @@ ws2.on('request', function (request) {
 	connection.on('close', function () {
 		delete ws2_connections[connection.id];
 		
-		operator.commandDeleteWindowMetaData(connection.id, null, function (err, meta) {
-			console.log("broadcast update");
-			io_connector.broadcast(io, Command.DeleteWindowMetaData, meta);
-			ws_connector.broadcast(ws2, Command.DeleteWindowMetaData, meta);
+		operator.removeOneWindow(connection.id, function (err, meta) {
+			io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
+			//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 		});
 		
 		console.log('connection closed :' + connection.id);

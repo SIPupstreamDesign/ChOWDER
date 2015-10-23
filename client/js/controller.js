@@ -570,7 +570,11 @@
 				elem.style.border = "";
 			}
 			if (gui.get_list_elem(elem.id)) {
-				gui.get_list_elem(elem.id).style.borderColor = "white";
+				if (metaData.hasOwnProperty('reference_count') && parseInt(metaData.reference_count, 10) <= 0) {
+					gui.get_list_elem(elem.id).style.borderColor = "gray";
+				} else {
+					gui.get_list_elem(elem.id).style.borderColor = "white";
+				}
 			}
 			elem.style.borderColor = "black";
 			if (metaData.type === windowType) {
@@ -1427,10 +1431,22 @@
 		console.log("importWindowToList");
 		var displayArea = gui.get_display_area(),
 			divElem,
-			onlistID = "onlist:" + windowData.id;
+			onlistID = "onlist:" + windowData.id,
+			changeColor = function (divElem) {
+				if (windowData.hasOwnProperty('reference_count') && parseInt(windowData.reference_count, 10) <= 0) {
+					divElem.style.borderColor = "gray";
+					divElem.style.color = "gray";
+				} else {
+					divElem.style.borderColor = "white";
+					divElem.style.color = "white";
+				}
+			};
 		
 		divElem = gui.get_list_elem(windowData.id);
-		if (divElem) { return; }
+		if (divElem) {
+			changeColor(divElem);
+			return;
+		}
 		
 		divElem = document.createElement("div");
 		divElem.innerHTML = "ID:" + windowData.id;
@@ -1442,9 +1458,8 @@
 		divElem.style.width = "200px";
 		divElem.style.height = "50px";
 		divElem.style.border = "solid";
-		divElem.style.borderColor = "white";
 		divElem.style.marginTop = "5px";
-		divElem.style.color = "white";
+		changeColor(divElem);
 		setupContent(divElem, onlistID);
 		displayArea.appendChild(divElem);
 	}
@@ -1711,7 +1726,6 @@
 			gui.assign_content_property(windowData);
 		}
 		if (lastSelectWindowID) {
-			console.log("moveManipulator");
 			elem = document.getElementById(lastSelectWindowID);
 			if (elem) {
 				manipulator.moveManipulator(elem);
