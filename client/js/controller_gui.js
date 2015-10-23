@@ -155,6 +155,8 @@
 		};
 
 		displaySettingItem.onclick = function () {
+			var displayTabTitle = document.getElementById('display_tab_title');
+			displayTabTitle.onclick();
 			gui.on_virtualdisplaysetting_clicked();
 			rightfunc(true);
 		};
