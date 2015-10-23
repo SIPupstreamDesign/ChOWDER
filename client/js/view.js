@@ -147,6 +147,9 @@
 		
 		if (hashid.length > 0) {
 			window_id = decodeURIComponent(hashid);
+		} else if (window_id) {
+			changeID(null, window_id);
+			return;
 		}
 		
 		if (window_id !== "") {
@@ -164,6 +167,24 @@
 		} else {
 			connector.send('AddWindowMetaData', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
 		}
+	}
+	
+	/**
+	 * リサイズ処理.
+	 * リサイズされたサイズでUpdateWindowMetaDataを行う.
+	 * @method registerWindow
+	 */
+	function resizeWindow() {
+		var wh = getWindowSize(),
+			cx = wh.width / 2.0,
+			cy = wh.height / 2.0,
+			metaData = windowData;
+		if (!metaData) { return; }
+		metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+		metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+		metaData.orgWidth = wh.width;
+		metaData.orgHeight = wh.height;
+		connector.send('UpdateWindowMetaData', windowData, doneAddWindowMetaData);
 	}
 	
 	/**
@@ -386,16 +407,21 @@
 	 * @method changeID
 	 * @param {Event} e イベント
 	 */
-	function changeID(e) {
+	function changeID(e, id) {
 		var elem = document.getElementById('input_id'),
 			val,
 			url;
-		e.preventDefault();
+		if (e) {
+			e.preventDefault();
+		}
 		if (elem && elem.value) {
 			console.log(elem.value);
 			val = elem.value.split(' ').join('');
 			val = val.split('　').join('');
 			location.hash = fixedEncodeURIComponent(val);
+			location.reload(true);
+		} else if (id) {
+			location.hash = fixedEncodeURIComponent(id);
 			location.reload(true);
 		}
 	}
@@ -671,7 +697,7 @@
 				clearTimeout(timer);
 			}
 			timer = setTimeout(function () {
-				registerWindow();
+				resizeWindow();
 			}, 200);
 		};
 
