@@ -21,20 +21,6 @@
 	}
 	
 	/**
-	 * update処理実行後のブロードキャスト用ラッパー.
-	 * @method post_update
-	 */
-	function post_update(ws, io, resultCallback) {
-		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.Update);
-			io_connector.broadcast(io, Command.Update);
-			if (resultCallback) {
-				resultCallback(err, reply);
-			}
-		};
-	}
-	
-	/**
 	 * updateWindowMetaData処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateWindowMetaData
 	 */
