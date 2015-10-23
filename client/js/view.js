@@ -119,6 +119,7 @@
 	
 	/**
 	 * window idの取得.
+	 * @method getWindowID
 	 */
 	function getWindowID() {
 		var window_id = getCookie('window_id'),
@@ -580,6 +581,7 @@
 
 	/**
 	 * 再接続.
+	 * @method reconnect
 	 */
 	function reconnect() {
 		var isDisconnect = false,

@@ -674,12 +674,12 @@
 	}
 	
 	/**
-	 * SocketIDで指定されたWindow削除
-	 * @method deleteWindowMetaDataBySocketID
+	 * SocketIDで指定されたWindowの参照カウントをsocketidをもとに減らす
+	 * @method decrWindowReferenceCount
 	 * @param {string} socketid socket id
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function deleteWindowBySocketID(socketid, endCallback) {
+	function decrWindowReferenceCount(socketid, endCallback) {
 		var id;
 		if (socketidToHash.hasOwnProperty(socketid)) {
 			id = socketidToHash[socketid];
@@ -977,15 +977,6 @@
 				});
 			}
 		}
-	}
-	
-	function removeOneWindow(socketid, endCallback) {
-		//console.log("commandDeleteWindowMetaData : " + socketid);
-		deleteWindowBySocketID(socketid, function (err, meta) {
-			if (endCallback) {
-				endCallback(null, meta);
-			}
-		});
 	}
 	
 	/**
@@ -1336,7 +1327,7 @@
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;
 	Operator.prototype.registerUUID = registerUUID;
-	Operator.prototype.removeOneWindow = removeOneWindow;
+	Operator.prototype.decrWindowReferenceCount = decrWindowReferenceCount;
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;

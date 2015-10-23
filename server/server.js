@@ -64,7 +64,7 @@ ws.on('request', (function (ws_connections) {
 			return function () {
 				delete ws_connections[connection.id];
 
-				operator.removeOneWindow(connection.id, function (err, meta) {
+				operator.decrWindowReferenceCount(connection.id, function (err, meta) {
 					io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
 					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 				});
@@ -193,7 +193,7 @@ ws2.on('request', function (request) {
 		return function () {
 			delete ws2_connections[connection.id];
 
-			operator.removeOneWindow(connection.id, function (err, meta) {
+			operator.decrWindowReferenceCount(connection.id, function (err, meta) {
 				io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
 				//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 			});
