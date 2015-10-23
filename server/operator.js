@@ -472,10 +472,9 @@
 			}
 			windowData.id = id;
 			socketidToHash[socketid] = id;
-			//console.log("registerWindow: " + id);
+			console.log("registerWindow: " + id);
 			textClient.hexists(windowMetaDataPrefix + id, function (err, reply) {
 				if (reply === 1) {
-					windowData.socketid = socketid;
 					windowData.type = "window";
 					textClient.hmset(windowMetaDataPrefix + id, windowData, (function (textClient, id) {
 						return function (err, reply) {
@@ -487,7 +486,6 @@
 						};
 					}(textClient, id)));
 				} else {
-					windowData.socketid = socketid;
 					if (!windowData.hasOwnProperty('orgWidth')) {
 						windowData.orgWidth = windowData.width;
 					}
@@ -954,9 +952,6 @@
 						textClient.hgetall(id, function (err, data) {
 							if (!err && data) {
 								deleteWindow(data, function (meta) {
-									if (socketidToHash.hasOwnProperty(meta.socketid)) {
-										delete socketidToHash[meta.socketid];
-									}
 									if (endCallback) {
 										endCallback(null, meta);
 									}
@@ -970,9 +965,6 @@
 					if (metaData) {
 						deleteWindow(metaData, function (meta) {
 							//console.log("commandDeleteWindowMetaData : " + JSON.stringify(meta));
-							if (socketidToHash.hasOwnProperty(meta.socketid)) {
-								delete socketidToHash[meta.socketid];
-							}
 							if (endCallback) {
 								endCallback(null, meta);
 							}
@@ -1124,10 +1116,21 @@
 	 */
 	function post_deleteWindow(ws, io, ws_connections, resultCallback) {
 		return function (err, reply) {
+			var socketid,
+				id;
 			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
 			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
-			if (ws_connections.hasOwnProperty(reply.socketid)) {
-				ws_connector.send(ws_connections[reply.socketid], Command.Disconnect);
+			
+			for (socketid in socketidToHash) {
+				if (socketidToHash.hasOwnProperty(socketid)) {
+					id = socketidToHash[socketid];
+					if (reply.id === id) {
+						if (ws_connections.hasOwnProperty(socketid)) {
+							ws_connector.send(ws_connections[socketid], Command.Disconnect);
+						}
+					}
+					delete socketidToHash[socketid];
+				}
 			}
 			if (resultCallback) {
 				resultCallback(err, reply);
@@ -1338,5 +1341,6 @@
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
 	Operator.prototype.commandAddWindowMetaData = commandAddWindowMetaData;
+	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
 	module.exports = new Operator();
 }());

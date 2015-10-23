@@ -1422,6 +1422,23 @@
 		}
 	}
 	
+	function changeWindowBorderColor(windowData) {
+		var divElem = gui.get_list_elem(windowData.id);
+		if (divElem) {
+			if (windowData.hasOwnProperty('reference_count') && parseInt(windowData.reference_count, 10) <= 0) {
+				if (divElem.style.borderColor !== "gray") {
+					divElem.style.borderColor = "gray";
+					divElem.style.color = "gray";
+				}
+			} else {
+				if (divElem.style.borderColor !== "white") {
+					divElem.style.borderColor = "white";
+					divElem.style.color = "white";
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Displayを左リストビューにインポートする。
 	 * @method importWindowToList
@@ -1431,22 +1448,10 @@
 		console.log("importWindowToList");
 		var displayArea = gui.get_display_area(),
 			divElem,
-			onlistID = "onlist:" + windowData.id,
-			changeColor = function (divElem) {
-				if (windowData.hasOwnProperty('reference_count') && parseInt(windowData.reference_count, 10) <= 0) {
-					divElem.style.borderColor = "gray";
-					divElem.style.color = "gray";
-				} else {
-					divElem.style.borderColor = "white";
-					divElem.style.color = "white";
-				}
-			};
+			onlistID = "onlist:" + windowData.id;
 		
 		divElem = gui.get_list_elem(windowData.id);
 		if (divElem) {
-			if (!draggingID) {
-				changeColor(divElem);
-			}
 			return;
 		}
 		
@@ -1461,9 +1466,9 @@
 		divElem.style.height = "50px";
 		divElem.style.border = "solid";
 		divElem.style.marginTop = "5px";
-		changeColor(divElem);
 		setupContent(divElem, onlistID);
 		displayArea.appendChild(divElem);
+		changeWindowBorderColor(windowData);
 	}
 	
 	/**
@@ -2189,10 +2194,17 @@
 	
 	// windowが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateWindowMetaData', function (metaData) {
-		console.log('UpdateWindowMetaData', metaData);
+		console.log('UpdateWindowMetaData', metaData, draggingID);
 		//updateScreen();
 		//clearWindowList();
+		if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
+			if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
+				changeWindowBorderColor(metaData);
+			}
+		}
+				 
 		doneGetWindowMetaData(null, metaData);
+		
 		//connector.send('GetWindowMetaData', metaData, doneGetWindowMetaData);
 	});
 	

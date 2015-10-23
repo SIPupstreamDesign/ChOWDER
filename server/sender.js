@@ -75,6 +75,10 @@
 			operator.commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
+		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+			operator.commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+		});
+		
 		ws_connector.registerEvent(ws, ws_connection);
 	}
 	
