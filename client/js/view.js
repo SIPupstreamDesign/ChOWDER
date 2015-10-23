@@ -147,18 +147,9 @@
 		
 		if (hashid.length > 0) {
 			window_id = decodeURIComponent(hashid);
-			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
-				if (!err && metaData) {
-					metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
-					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
-					metaData.orgWidth = wh.width;
-					metaData.orgHeight = wh.height;
-					connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
-				} else {
-					connector.send('AddWindowMetaData', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
-				}
-			});
-		} else if (window_id !== "") {
+		}
+		
+		if (window_id !== "") {
 			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
 				if (!err && metaData) {
 					metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
