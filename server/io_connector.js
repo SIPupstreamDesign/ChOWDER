@@ -41,7 +41,7 @@
 					result.error = err;
 				}
 				result.result = res;
-				console.log("chowder_response", result);
+				console.log("chowder_response", result.method);
 				socket.emit("chowder_response", JSON.stringify(result));
 			}
 		};
@@ -253,7 +253,7 @@
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
-			console.log("chowder_response broadcast");
+			console.log("chowder_response broadcast io", method);
 			io.emit('chowder_response', data);
 		} catch (e) {
 			console.error(e);

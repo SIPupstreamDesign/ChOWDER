@@ -29,7 +29,7 @@
 					console.log('Failed to create Metabinary');
 					ws_connection.sendUTF(JSON.stringify(result));
 				} else {
-					console.log("chowder_response", metabin);
+					console.log("chowder_response", result.method);
 					ws_connection.sendBytes(metabin);
 				}
 			} else {
@@ -42,7 +42,7 @@
 					result.error = err;
 				}
 				result.result = res;
-				console.log("chowder_response", result);
+				console.log("chowder_response", result.method);
 				ws_connection.sendUTF(JSON.stringify(result));
 			}
 		};
@@ -249,8 +249,7 @@
 			
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
-
-				console.log('[Info] chowder_request', data);
+				console.log("chowder_response broadcast ws", method);
 				ws.broadcast(data);
 			} else {
 				console.log('[Error] Not found the method in connector: ', data);
