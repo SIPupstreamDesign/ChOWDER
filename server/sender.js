@@ -35,10 +35,10 @@
 	}
 	
 	/**
-	 * updateWindow処理実行後のブロードキャスト用ラッパー.
-	 * @method post_updateWindow
+	 * updateWindowMetaData処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateWindowMetaData
 	 */
-	function post_updateWindow(ws, io, resultCallback) {
+	function post_updateWindowMetaData(ws, io, resultCallback) {
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.UpdateWindowMetaData, reply);
 			io_connector.broadcast(io, Command.UpdateWindowMetaData, reply);
@@ -72,7 +72,7 @@
 		});
 		
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
-			operator.commandAddWindowMetaData(socketid, data, post_updateWindow(ws, io, resultCallback));
+			operator.commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
 		ws_connector.registerEvent(ws, ws_connection);

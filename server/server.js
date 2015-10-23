@@ -57,7 +57,7 @@ ws.on('request', function (request) {
 
 	sender.setOperator(operator);
 	sender.registerWSEvent(connection.id, connection, io, ws);
-	ws_connector.broadcast(ws, Command.Update);
+	//ws_connector.broadcast(ws, Command.Update);
 	
 	connection.on('close', function () {
 		delete ws_connections[connection.id];

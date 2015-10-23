@@ -591,12 +591,12 @@
 			}()));
 
 		connector.on("Update", function (data) {
-			console.log("update");
+			console.log("onUpdate", data);
 			update('all');
 		});
 		
 		connector.on("UpdateContent", function (data) {
-			console.log("UpdateContent", data);
+			console.log("onUpdateContent", data);
 			
 			connector.send('GetMetaData', data, function (err, json) {
 				if (!err) {
@@ -607,7 +607,7 @@
 		});
 		
 		connector.on("DeleteContent", function (data) {
-			console.log("DeleteContent", data);
+			console.log("onDeleteContent", data);
 			var elem = document.getElementById(data.id),
 				previewArea = document.getElementById('preview_area');
 			if (elem) {
@@ -617,21 +617,24 @@
 		});
 
 		connector.on("DeleteWindowMetaData", function (data) {
-			console.log("DeleteWindowMetaData", data);
+			console.log("onDeleteWindowMetaData", data);
 			update('window');
 		});
 		
 		connector.on("UpdateWindowMetaData", function (data) {
-			console.log("updateWindow");
-			update('window');
+			console.log("onUpdateWindowMetaData", data);
+			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
+				update('window');
+			}
 		});
 		
 		connector.on("ShowWindowID", function (data) {
+			console.log("onShowWindowID", data);
 			showDisplayID(data.id);
 		});
 		
 		connector.on("UpdateMetaData", function (data) {
-			console.log("UpdateMetaData", data);
+			console.log("onUpdateMetaData", data);
 			update('', data.id);
 		});
 		
