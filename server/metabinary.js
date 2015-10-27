@@ -59,17 +59,26 @@
 			metaSize,
 			metaData,
 			version,
-			content;
+			content,
+			params;
 		if (head !== headerStr) { return; }
+		
+		console.log("metabinary load start");
 		
 		version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0);
 		metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);
 		metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString('ascii'));
+		
+		if (metaData.hasOwnProperty('params')) {
+			params = metaData.params;
+		} else if (metaData.hasOwnProperty('result')) {
+			params = metaData.result;
+		}
 		//console.log(metaData);
 
 		content = binary.slice(headerStr.length + 8 + metaSize);
 		
-		if (metaData.type === 'text' || metaData.type === 'url') {
+		if (params.type === 'text' || params.type === 'url') {
 			content = content.toString('utf8');
 		}
 		if (metaData && content) {

@@ -6,9 +6,6 @@
 	
 	var metabinary = {};
 	
-	//
-	// Array Buffer To String funciton
-	//
 	/**
 	 * arrayBufferをStringに変換して返す
 	 * @method arrayBufferToString
@@ -77,9 +74,6 @@
 		return bytes;
 	}
 	
-	/// load metabinary
-	/// @param binary Blob data
-	/// @param endCallback end callback with loaded data (metadata, binary)
 	/**
 	 * メタバイナリの読み込み.
 	 * @method loadMetaBinary
@@ -94,7 +88,8 @@
 				version,
 				head,
 				metasize,
-				metadata,
+				metaData,
+				params = null,
 				binary,
 				pos = 0;
 			
@@ -113,22 +108,25 @@
 			pos = pos + 4;
 			
 			if (buf.byteLength < pos + metasize) { return; }
-			metadata = arrayBufferToString(buf.slice(pos, pos + metasize));
-			metadata = JSON.parse(metadata);
+			metaData = arrayBufferToString(buf.slice(pos, pos + metasize));
+			metaData = JSON.parse(metaData);
 			pos = pos + metasize;
 			
+			if (metaData.hasOwnProperty('params')) {
+				params = metaData.params;
+			} else if (metaData.hasOwnProperty('result')) {
+				params = metaData.result;
+			}
+			
 			binary = buf.slice(pos, buf.byteLength);
-			if (metadata.type === 'text') {
+			if (params !== null && params.type === 'text') {
 				binary = arrayBufferToString(binary);
 			}
-			endCallback(metadata, binary);
+			endCallback(metaData, binary);
 		});
 		reader.readAsArrayBuffer(binary);
 	}
 	
-	/// create metabinary
-	/// @param metaData json
-	/// @param binary arraybuffer
 	/**
 	 * メタバイナリの作成
 	 * @method createMetaBinary
@@ -147,12 +145,19 @@
 			binaryView,
 			pos = 0,
 			i,
-			c;
+			c,
+			params;
 		
-		if (metaData.type === 'url') {
+		if (metaData.hasOwnProperty('params')) {
+			params = metaData.params;
+		} else if (metaData.hasOwnProperty('result')) {
+			params = metaData.result;
+		}
+		
+		if (params.type === 'url') {
 			binary = utf8StringToArray(encodeURI(data));
 			dstBufferSize = head.length + 8 + metaDataStr.length + binary.length;
-		} else if (metaData.type === 'text') {
+		} else if (params.type === 'text') {
 			binary = utf8StringToArray(data);
 			dstBufferSize = head.length + 8 + metaDataStr.length + binary.length;
 		} else {
@@ -182,7 +187,7 @@
 		}
 		pos = pos + metaDataStr.length;
 		
-		if (metaData.type === 'text' || metaData.type === 'url') {
+		if (params.type === 'text' || params.type === 'url') {
 			for (i = pos; i < dstBufferSize; i = i + 1) {
 				view.setUint8(i, binary[i - pos], false);
 			}

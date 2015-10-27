@@ -28,5 +28,5 @@
 		Disconnect : "Disconnect"
 	};
 	
-	module.exports = Command;
+	window.command = Command;
 }());

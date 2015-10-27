@@ -4,55 +4,68 @@
 (function () {
 	"use strict";
 	
-	/**
-	 * Sender
-	 * @method Sender
-	 */
 	var Sender = function () {},
 		operator,
+		ws_connector = require('./ws_connector.js'),
+		io_connector = require('./io_connector.js'),
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js');
 	
 	/**
 	 * オペレータ(operator.js)設定
 	 * @method setOperator
-	 * @param {} ope
+	 * @param {Object} ope オペレータインスタンス
 	 */
 	function setOperator(ope) {
 		operator = ope;
 	}
 	
 	/**
+	 * updateWindowMetaData処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateWindowMetaData
+	 */
+	function post_updateWindowMetaData(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateWindowMetaData, reply);
+			io_connector.broadcast(io, Command.UpdateWindowMetaData, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
 	 * WebSocketイベント登録
 	 * @method registerWSEvent
+	 * @param {String} socketid ソケットID
 	 * @param {Socket} ws_connection WebSocketコネクション
 	 * @param {Socket} io socket.io オブジェクト
 	 * @param {Socket} ws WebSocketServerオブジェクト
 	 */
-	function registerWSEvent(ws_connection, io, ws) {
-		ws_connection.on('message', function (message) {
-			var request;
-			if (message.type === 'utf8' && message.utf8Data === 'view') { return; }
-			
-			function update() {
-				ws.broadcast(Command.update);
-				io.sockets.emit(Command.update);
-			}
-
-			if (message.type === 'utf8') {
-				request = JSON.parse(message.utf8Data);
-
-				if (request.command === Command.reqGetMetaData) {
-					operator.commandGetMetaData(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqGetContent) {
-					operator.commandGetContent(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqGetWindow) {
-					operator.commandGetWindow(null, ws_connection, request, function () {});
-				} else if (request.command === Command.reqAddWindow) {
-					operator.commandAddWindow(null, ws_connection, request, update);
-				}
-			}
+	function registerWSEvent(socketid, ws_connection, io, ws) {
+		var methods = {};
+		
+		ws_connector.on(Command.GetMetaData, function (data, resultCallback) {
+			operator.commandGetMetaData(data, resultCallback);
 		});
+
+		ws_connector.on(Command.GetContent, function (data, resultCallback) {
+			operator.commandGetContent(data, resultCallback);
+		});
+		
+		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+			operator.commandGetWindowMetaData(socketid, data, resultCallback);
+		});
+		
+		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+			operator.commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+			operator.commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+		});
+		
+		ws_connector.registerEvent(ws, ws_connection);
 	}
 	
 	Sender.prototype.registerWSEvent = registerWSEvent;

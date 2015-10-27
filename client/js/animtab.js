@@ -139,17 +139,24 @@
 					offset = window.pageYOffset || document.documentElement.scrollTop;
 					pos = document.documentElement.clientHeight - (offset + e.clientY);
 				}
+				
 				//console.log(direction + ":" + pos);
 				for (id in targets) {
 					if (targets.hasOwnProperty(id)) {
 						target = document.getElementById(id);
-						target.style[whstr] = (pos - targetMaxOffset[id]) + 'px';
-						targets[id].max = (pos - targetMaxOffset[id]) + 'px';
+						if ((pos - targetMaxOffset[id]) > 0) {
+							//console.log(target, pos, targetMaxOffset[id]);
+							target.style[whstr] = (pos - targetMaxOffset[id]) + 'px';
+							targets[id].max = (pos - targetMaxOffset[id]) + 'px';
+						}
 					}
 				}
-				separator.style[direction] = pos + 'px';
-				buttonElem.style[direction] = (pos + diffButtonTargetMax) + 'px';
-				button[buttonID].max = (pos + diffButtonTargetMax) + 'px';
+				if ((pos + diffButtonTargetMax) > 0) {
+					separator.style[direction] = pos + 'px';
+					console.log(target, pos, diffButtonTargetMax);
+					//buttonElem.style[direction] = (pos + diffButtonTargetMax) + 'px';
+					button[buttonID].max = (pos + diffButtonTargetMax) + 'px';
+				}
 			}
 			if (dragging === "ready") {
 				dragging = "yes";

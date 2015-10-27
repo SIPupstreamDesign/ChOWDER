@@ -7,8 +7,10 @@ var fs = require('fs'),
 	util = require('./util'),
 	operator = require('./operator.js'),
 	sender = require('./sender.js'),
+	ws_connector = require('./ws_connector.js'),
+	io_connector = require('./io_connector.js'),
 	port = 8080,
-	currentVersion = "v1",
+	currentVersion = "v2",
 	ws_connections = {},
 	ws2_connections = {},
 	id_counter = 0,
@@ -38,44 +40,41 @@ ws = new WebSocket.server({ httpServer : seserver,
 		maxReceivedFrameSize : 0x1000000, // more receive buffer!! default 65536B
 		autoAcceptConnections : false});
 
-ws.on('request', function (request) {
+ws.on('request', (function (ws_connections) {
 	"use strict";
-	var connection = null;
-	if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
-		console.log('invalid version');
-		return;
-	}
-	connection = request.accept(null, request.origin);
-	console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
-	
-	// save connection with id
-	connection.id = id_counter;
-	ws_connections.id_counter = connection;
-	id_counter = id_counter + 1;
-	
-	connection.on('message', function (message) {
-		if (message.type === 'utf8') {
-			//console.log("got text" + data);
-			if (message.utf8Data === "view") {
-				sender.setOperator(operator);
-				console.log("register" + message.utf8Data);
-				sender.registerWSEvent(connection, io, ws);
-				ws.broadcast("update");
-			}
+	return function (request) {
+		var connection = null;
+		if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
+			console.log('invalid version');
+			return;
 		}
-	});
-	
-	connection.on('close', function () {
-		delete ws_connections[connection.id];
-		operator.commandDeleteWindow(null, connection, null, function () {
-			io.sockets.emit(Command.update);
-			ws2.broadcast(Command.update);
-			console.log("broadcast update");
-		});
-		console.log('connection closed :' + connection.id);
-	});
-	
-});
+		connection = request.accept(null, request.origin);
+		console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
+
+		// save connection with id
+		connection.id = id_counter;
+		ws_connections[id_counter] = connection;
+		id_counter = id_counter + 1;
+
+		sender.setOperator(operator);
+		sender.registerWSEvent(connection.id, connection, io, ws);
+		//ws_connector.broadcast(ws, Command.Update);
+
+		connection.on('close', (function (connection) {
+			return function () {
+				delete ws_connections[connection.id];
+
+				operator.decrWindowReferenceCount(connection.id, function (err, meta) {
+					io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
+					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
+				});
+
+				console.log('connection closed :' + connection.id);
+			};
+		}(connection)));
+
+	};
+}(ws_connections)));
 
 //----------------------------------------------------------------------------------------
 // socket.io operator
@@ -135,22 +134,25 @@ if (process.argv.length > 2) {
 opsever.listen(port);
 
 /// socekt.io server instance
-io = require('socket.io').listen(opsever);
+io = require('socket.io').listen(opsever).of(currentVersion);
 
-io.sockets.on('connection', function (socket) {
+io.on('connection', (function (ws_connections) {
 	"use strict";
-	console.log("[CONNECT] ID=" + socket.id);
-	
-	socket.on('reqRegisterEvent', function (apiVersion) {
-		if (apiVersion === currentVersion) {
-			operator.registerEvent(socket, io, ws);
-			io.sockets.emit(Command.update);
-		}
-	});
-	socket.on('disconnect', function () {
-		console.log("disconnect:" + socket.id);
-	});
-});
+	return function (socket) {
+		console.log("[CONNECT] ID=" + socket.id);
+
+		operator.registerEvent(socket.id, io, socket, ws, ws_connections);
+		io_connector.broadcast(io, Command.Update);
+
+		socket.on('disconnect', function () {
+			console.log("disconnect:" + socket.id);
+		});
+		socket.on('error', function (err) {
+			console.log('trace.. ' + err.stack);
+			console.error('trace.. ' + err.stack);
+		});
+	};
+}(ws_connections)));
 
 
 //----------------------------------------------------------------------------------------
@@ -182,29 +184,23 @@ ws2.on('request', function (request) {
 	
 	// save connection with id
 	connection.id = id_counter;
-	ws2_connections.id_counter = connection;
+	ws2_connections[id_counter] = connection;
 	id_counter = id_counter + 1;
 	
-	operator.registerWSEvent(connection, io, ws);
+	operator.registerWSEvent(connection.id, connection, io, ws);
 	
-	connection.on('message', function (message) {
-		if (message.type === 'utf8') {
-			//console.log("got text" + data);
-			if (message.utf8Data === "view") {
-				console.log("register" + message.utf8Data);
-			}
-		}
-	});
-	
-	connection.on('close', function () {
-		delete ws2_connections[connection.id];
-		operator.commandDeleteWindow(null, connection, null, function () {
-			console.log("broadcast update");
-			io.sockets.emit(Command.update);
-			ws2.broadcast(Command.update);
-		});
-		console.log('connection closed :' + connection.id);
-	});
+	connection.on('close', (function (connection) {
+		return function () {
+			delete ws2_connections[connection.id];
+
+			operator.decrWindowReferenceCount(connection.id, function (err, meta) {
+				io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
+				//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
+			});
+
+			console.log('connection closed :' + connection.id);
+		};
+	}(connection)));
 	
 });
 
@@ -221,7 +217,7 @@ function unregisterAllWindow(endCallback) {
 	}
 	for (id in ws2_connections) {
 		if (ws2_connections.hasOwnProperty(id)) {
-			operator.commandDeleteWindow(id);
+			operator.commandDeleteWindowMetaData(id);
 		}
 	}
 }
