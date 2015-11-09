@@ -24,6 +24,9 @@ console.log(operator);
 // register server id
 operator.registerUUID("default");
 
+if (process.argv.length > 2) {
+	port = parseInt(process.argv[2], 10);
+}
 //----------------------------------------------------------------------------------------
 // websocket sender
 //----------------------------------------------------------------------------------------
@@ -128,9 +131,6 @@ var opsever = http.createServer(function (req, res) {
 		}); // fs.readFile
 	}
 });
-if (process.argv.length > 2) {
-	port = parseInt(process.argv[2], 10);
-}
 opsever.listen(port);
 
 /// socekt.io server instance
