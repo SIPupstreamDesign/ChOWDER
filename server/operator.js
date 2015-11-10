@@ -253,8 +253,16 @@
 	 */
 	function initialMetaDataSetting(metaData, contentData) {
 		var dimensions;
-		metaData.orgWidth = metaData.width;
-		metaData.orgHeight = metaData.height;
+		if (metaData.hasOwnProperty('orgWidth')) {
+			metaData.width = metaData.orgWidth;
+		} else if (metaData.hasOwnProperty('width')) {
+			metaData.orgWidth = metaData.width;
+		}
+		if (metaData.hasOwnProperty('orgHeight')) {
+			metaData.height = metaData.orgHeight;
+		} else if (metaData.hasOwnProperty('height')) {
+			metaData.orgHeight = metaData.height;
+		}
 		if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
@@ -267,10 +275,14 @@
 		if (metaData.type === 'image') {
 			if (isInvalidImageSize(metaData)) {
 				dimensions = image_size(contentData);
-				metaData.width = dimensions.width;
-				metaData.height = dimensions.height;
-				metaData.orgWidth = metaData.width;
-				metaData.orgHeight = metaData.height;
+				if (!metaData.hasOwnProperty('orgWidth')) {
+					metaData.width = dimensions.width;
+					metaData.orgWidth = metaData.width;
+				}
+				if (!metaData.hasOwnProperty('orgHeight')) {
+					metaData.height = dimensions.height;
+					metaData.orgHeight = metaData.height;
+				}
 			}
 		}
 	}
@@ -452,14 +464,16 @@
 		
 		client.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 			if (!err && doesExist.toString() === "1") {
-				client.set(contentPrefix + metaData.content_id, contentData, function (err, reply) {
-					if (err) {
-						console.error("Error on updateContent:" + err);
-					} else {
-						if (endCallback) {
-							endCallback(metaData);
+				setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+					client.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
+						if (err) {
+							console.error("Error on updateContent:" + err);
+						} else {
+							if (endCallback) {
+								endCallback(meta);
+							}
 						}
-					}
+					});
 				});
 			}
 		});
@@ -781,8 +795,10 @@
 						if (meta.hasOwnProperty('content_id')) {
 							newContentID = meta.content_id;
 						}
+						
+						
 						if (newContentID !== '' && oldContentID === newContentID) {
-							updateContent(meta, binaryData, function (reply) {
+							updateContent(metaData, binaryData, function (reply) {
 								if (updateEndCallback) {
 									updateEndCallback(null, reply);
 								}
@@ -823,7 +839,7 @@
 	
 	/**
 	 * メタデータの追加を行うコマンドを実行する.
-	 * @method commandGetMetaData
+	 * @method commandAddMetaData
 	 * @param {JSON} json contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
