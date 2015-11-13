@@ -2232,9 +2232,11 @@
 					reply.metaData = meta;
 					doneGetContent(err, reply);
 					doneGetMetaData(err, meta);
+					/*
 					if (document.getElementById(meta.id)) {
 						manipulator.moveManipulator(document.getElementById(meta.id));
 					}
+					*/
 				});
 			});
 		}
