@@ -1323,12 +1323,17 @@
 				if (contentElem && blob) {
 					contentElem.src = URL.createObjectURL(blob);
 
+					if (contentElem.offsetHeight > 150) {
+						aspect = contentElem.offsetWidth / contentElem.offsetHeight;
+						divElem.style.height = "150px";
+						divElem.style.width = 150 * aspect;
+					}
 					contentElem.onload = function () {
 						var aspect;
-						if (contentElem.offsetHeight > 200) {
+						if (contentElem.offsetHeight > 150) {
 							aspect = contentElem.offsetWidth / contentElem.offsetHeight;
-							divElem.style.height = "100px";
-							divElem.style.width = 100 * aspect;
+							divElem.style.height = "150px";
+							divElem.style.width = 150 * aspect;
 						}
 					};
 				}
@@ -2156,6 +2161,44 @@
 		draggingID = null;
 	};
 	
+	/**
+	 * orgWidth,orgHeightを元にアスペクト比を調整
+	 * @method correctAspect
+	 * @param {JSON} metaData メタデータ
+	 * @param {Function} endCallback 終了時コールバック
+	 */
+	function correctAspect(metaData, endCallback) {
+		var w, h, ow, oh,
+			aspect, orgAspect,
+			isCorrect = true;
+		if (metaData.hasOwnProperty('orgWidth') && metaData.hasOwnProperty('orgHeight')) {
+			if (metaData.hasOwnProperty('width') && metaData.hasOwnProperty('height')) {
+				w = parseFloat(metaData.width);
+				h = parseFloat(metaData.height);
+				ow = parseFloat(metaData.orgWidth);
+				oh = parseFloat(metaData.orgHeight);
+				aspect = w / h;
+				orgAspect = ow / oh;
+				if (orgAspect !== aspect) {
+					if (aspect > 1) {
+						metaData.height = w / orgAspect;
+					} else {
+						metaData.width = h * orgAspect;
+					}
+					isCorrect = false;
+					connector.send('UpdateMetaData', metaData, function (err, metaData) {
+						if (endCallback) {
+							endCallback(err, metaData);
+						}
+					});
+				}
+			}
+		}
+		if (isCorrect && endCallback) {
+			endCallback(null, metaData);
+		}
+	}
+	
 	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateMetaData', function (metaData) {
@@ -2184,9 +2227,16 @@
 			previewArea = gui.get_content_preview_area();
 		
 		if (id) {
-			connector.send('GetMetaData', metaData, function (err, meta) {
-				connector.send('GetContent', meta, function (err, reply) {
+			connector.send('GetContent', metaData, function (err, reply) {
+				correctAspect(reply.metaData, function (err, meta) {
+					reply.metaData = meta;
 					doneGetContent(err, reply);
+					doneGetMetaData(err, meta);
+					/*
+					if (document.getElementById(meta.id)) {
+						manipulator.moveManipulator(document.getElementById(meta.id));
+					}
+					*/
 				});
 			});
 		}
