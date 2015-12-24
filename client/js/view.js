@@ -14,7 +14,32 @@
 		doneGetWindowMetaData,
 		doneGetContent,
 		doneGetMetaData;
-	
+
+	function toggleFullScreen() {
+		if (!document.fullscreenElement &&    // alternative standard method
+				!document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {  // current working methods
+			if (document.documentElement.requestFullscreen) {
+				document.documentElement.requestFullscreen();
+			} else if (document.documentElement.msRequestFullscreen) {
+				document.documentElement.msRequestFullscreen();
+			} else if (document.documentElement.mozRequestFullScreen) {
+				document.documentElement.mozRequestFullScreen();
+			} else if (document.documentElement.webkitRequestFullscreen) {
+				document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+			}
+		} else {
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+			} else if (document.mozCancelFullScreen) {
+				document.mozCancelFullScreen();
+			} else if (document.webkitExitFullscreen) {
+				document.webkitExitFullscreen();
+			}
+		}
+	}
+
 	/**
 	 * メタデータが表示中であるかを判別する
 	 * @method isVisible
@@ -24,7 +49,7 @@
 	function isVisible(metaData) {
 		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
 	}
-	
+
 	/**
 	 * クライアントサイズを取得する
 	 * @method getWindowSize
@@ -36,7 +61,7 @@
 			height : window.innerHeight
 		};
 	}
-	
+
 	/**
 	 * エンコードされた文字列を返す.
 	 * @method fixedEncodeURIComponent
@@ -46,7 +71,7 @@
 	function fixedEncodeURIComponent(str) {
 		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 	}
-	
+
 	/**
 	 * 辞書順でElementをareaに挿入.
 	 * @method insertElementWithDictionarySort
@@ -76,7 +101,7 @@
 			return;
 		}
 	}
-	
+
 	/**
 	 * cookie取得
 	 * @method getCookie
@@ -102,7 +127,7 @@
 		}
 		return "";
 	}
-	
+
 	/**
 	 * cookie保存
 	 * @method saveCookie
@@ -116,7 +141,7 @@
 			document.cookie = windowData.id + '_visible=' + windowData.visible;
 		}
 	}
-	
+
 	/**
 	 * window idの取得.
 	 * @method getWindowID
@@ -132,7 +157,7 @@
 		}
 		return window_id;
 	}
-	
+
 	/**
 	 * View側Window[Display]登録
 	 * @method registerWindow
@@ -143,16 +168,16 @@
 			cy = wh.height / 2.0,
 			window_id = getCookie('window_id'),
 			hashid = location.hash.split("#").join("");
-		
+
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
-		
+
 		if (hashid.length > 0) {
 			window_id = decodeURIComponent(hashid);
 		} else if (window_id) {
 			changeID(null, window_id);
 			return;
 		}
-		
+
 		if (window_id !== "") {
 			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
 				if (!err && metaData) {
@@ -169,7 +194,7 @@
 			connector.send('AddWindowMetaData', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
 		}
 	}
-	
+
 	/**
 	 * リサイズ処理.
 	 * リサイズされたサイズでUpdateWindowMetaDataを行う.
@@ -187,7 +212,7 @@
 		metaData.orgHeight = wh.height;
 		connector.send('UpdateWindowMetaData', windowData, doneAddWindowMetaData);
 	}
-	
+
 	/**
 	 * コンテンツまたはウィンドウの更新(再取得).
 	 * @method update
@@ -196,7 +221,7 @@
 	 */
 	function update(updateType, targetid) {
 		var previewArea = document.getElementById('preview_area');
-		
+
 		if (updateType === 'all') {
 			console.log("update all");
 			previewArea.innerHTML = "";
@@ -216,7 +241,7 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
 	 * @method getTagName
@@ -231,7 +256,7 @@
 		}
 		return tagName;
 	}
-	
+
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -247,12 +272,12 @@
 			boundElem,
 			id,
 			duplicatedElem;
-		
+
 		console.log("assignMetaBinary", "id=" + metaData.id);
 
 		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && metaData.visible === "true")) {
 			tagName = getTagName(metaData.type);
-			
+
 			// 既に読み込み済みのコンテンツかどうか
 			if (document.getElementById(metaData.id)) {
 				elem = document.getElementById(metaData.id);
@@ -267,7 +292,7 @@
 					metaData = metaDataDict[metaData.id];
 				}
 			}
-			
+
 			if (!elem) {
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
@@ -289,7 +314,7 @@
 				}
 			}
 			vscreen_util.assignMetaData(elem, metaData, false);
-			
+
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {
 				for (id in metaDataDict) {
@@ -310,7 +335,7 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * コンテンツロード完了まで表示する枠を作る.
 	 * @method createBoundingBox
@@ -321,13 +346,13 @@
 		var previewArea = document.getElementById('preview_area'),
 			tagName = 'div',
 			elem = document.createElement(tagName);
-		
+
 		elem.id = metaData.id;
 		elem.style.position = "absolute";
 		elem.className = "temporary_bounds";
 		insertElementWithDictionarySort(previewArea, elem);
 	}
-	
+
 	/**
 	 * VirtualDisplay更新
 	 * @method updateWindow
@@ -340,18 +365,18 @@
 			h = parseFloat(metaData.height),
 			orgW = parseFloat(vscreen.getWhole().orgW),
 			scale = orgW / w;
-		
+
 		console.log("scale:" + scale);
-		
+
 		// scale
 		vscreen.setWholePos(0, 0);
 		vscreen.setWholeCenter(0, 0);
 		vscreen.setWholeScale(scale);
-		
+
 		// trans
 		vscreen.translateWhole(-cx, -cy);
 	}
-	
+
 	/**
 	 * リサイズに伴うDisplayの更新
 	 * @method resizeViewport
@@ -366,7 +391,7 @@
 			metaTemp;
 
 		updateWindow(windowData);
-		
+
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				if (document.getElementById(id)) {
@@ -375,14 +400,14 @@
 			}
 		}
 	}
-	
+
 	window.document.addEventListener("mousedown", function () {
 		var displayArea = document.getElementById('displayid_area');
 		if (displayArea.style.display !== "none") {
 			displayArea.style.display = "none";
 		}
 	});
-	
+
 	/**
 	 * ディスプレイIDの表示.
 	 * @method showDisplayID
@@ -402,7 +427,7 @@
 			}, 8 * 1000);
 		}
 	}
-	
+
 	/**
 	 * ディスプレイIDの変更.
 	 * @method changeID
@@ -426,7 +451,7 @@
 			location.reload(true);
 		}
 	}
-	
+
 	/**
 	 * 表示非表示の更新.
 	 * @method updatePreviewAreaVisible
@@ -469,7 +494,7 @@
 			}
 		}
 	}
-	
+
 	/**
 	 * AddWindowMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -489,7 +514,7 @@
 			update('all');
 		}
 	};
-	
+
 	/**
 	 * GetWindowMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -506,7 +531,7 @@
 			updateContentVisible();
 		}
 	};
-	
+
 	/**
 	 * GetContent終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -521,7 +546,7 @@
 			assignMetaBinary(metaData, contentData);
 		}
 	};
-	
+
 	/**
 	 * GetMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -613,10 +638,10 @@
 			console.log("onUpdate", data);
 			update('all');
 		});
-		
+
 		connector.on("UpdateContent", function (data) {
 			console.log("onUpdateContent", data);
-			
+
 			connector.send('GetMetaData', data, function (err, json) {
 				if (!err) {
 					doneGetMetaData(err, json);
@@ -624,7 +649,7 @@
 				}
 			});
 		});
-		
+
 		connector.on("DeleteContent", function (data) {
 			console.log("onDeleteContent", data);
 			var elem = document.getElementById(data.id),
@@ -639,24 +664,24 @@
 			console.log("onDeleteWindowMetaData", data);
 			update('window');
 		});
-		
+
 		connector.on("UpdateWindowMetaData", function (data) {
 			console.log("onUpdateWindowMetaData", data);
 			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
 				update('window');
 			}
 		});
-		
+
 		connector.on("ShowWindowID", function (data) {
 			console.log("onShowWindowID", data);
 			showDisplayID(data.id);
 		});
-		
+
 		connector.on("UpdateMetaData", function (data) {
 			console.log("onUpdateMetaData", data);
 			update('', data.id);
 		});
-		
+
 		connector.on("Disconnect", (function (client) {
 			return function () {
 				var previewArea = document.getElementById("preview_area"),
@@ -690,9 +715,9 @@
 				}
 				registered = false;
 			};
-		
+
 		reconnect();
-		
+
 		// resize event
 		window.onresize = function () {
 			if (timer) {
@@ -710,9 +735,10 @@
 				setTimeout(hideMenuFunc, 3000);
 			}
 		});
-		
+
 		document.getElementById('change_id').onclick = changeID;
-		
+		document.getElementById('fullscreen').onclick = toggleFullScreen;
+
 		input_id.onfocus = function (ev) {
 			console.log("onfocus");
 			onfocus = true;
@@ -729,7 +755,30 @@
 				document.getElementById('change_id').onclick(ev);
 			}
 		};
+
+		// スクロールを抑止する関数
+		function preventScroll(event) {
+			// preventDefaultでブラウザ標準動作を抑止する。
+			event.preventDefault();
+		}
+
+		document.addEventListener("touchstart", function (evt) {
+			document.getElementById('menu').classList.remove('hide');
+			if (!registered) {
+				registered = true;
+				setTimeout(hideMenuFunc, 3000);
+			}
+		}, false);
+
+		// タッチイベントの初期化
+		//document.addEventListener("touchstart", preventScroll, false);
+		document.addEventListener("touchmove", preventScroll, false);
+		//document.addEventListener("touchend", preventScroll, false);
+		// ジェスチャーイベントの初期化
+		//document.addEventListener("gesturestart", preventScroll, false);
+		document.addEventListener("gesturechange", preventScroll, false);
+		//document.addEventListener("gestureend", preventScroll, false);
 	}
-	
+
 	window.onload = init;
 }(window.vscreen, window.vscreen_util, window.ws_connector));
