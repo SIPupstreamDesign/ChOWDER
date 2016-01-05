@@ -9,7 +9,7 @@
 		messageID = 1,
 		client,
 		currentVersion = "v2",
-		url = "ws://" + location.hostname + ":8081/" + currentVersion + "/";
+		url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
 
 	/**
 	 * テキストメッセージの処理.
