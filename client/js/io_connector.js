@@ -8,7 +8,7 @@
 		recievers = {},
 		messageID = 1,
 		currentVersion = "v2",
-		url = "http://" + location.hostname + ":8080/" + currentVersion,
+		url = "http://" + location.hostname + ":" + location.port + "/" + currentVersion,
 		socket;
 	
 	/**
