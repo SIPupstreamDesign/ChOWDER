@@ -562,7 +562,6 @@
 				whole,
 				w,
 				h;
-			console.log("isOutside:", isOutside);
 
 			if (isWindow) {
 				console.log(json.id, getWindowID());
@@ -571,9 +570,12 @@
 				}
 			} else {
 				whole = vscreen.transformOrgInv(vscreen.getWhole());
+				whole.x = vscreen.getWhole().x;
+				whole.y = vscreen.getWhole().y;
 				isOutside = vscreen_util.isOutsideWindow(json, whole);
 				//console.log(isOutside, json, vscreen.getWhole());
 			}
+			console.log("isOutside:", isOutside);
 
 			if (isOutside) {
 				if (elem) {
