@@ -210,6 +210,8 @@
 		metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
 		metaData.orgWidth = wh.width;
 		metaData.orgHeight = wh.height;
+		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
+
 		connector.send('UpdateWindowMetaData', windowData, doneAddWindowMetaData);
 	}
 
