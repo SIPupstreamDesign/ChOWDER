@@ -9,6 +9,7 @@ console.log(location);
 		recievers = {},
 		messageID = 1,
 		client,
+		is_connected,
 		currentVersion = "v2",
 		//url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
 		url = "ws://localhost:8082/" + currentVersion + "/";
@@ -177,9 +178,15 @@ console.log(location);
 				console.log("onopen");
 				onopen();
 			}
+			is_connected = true;
 		};
 	
-		client.onclose = onclose;
+		client.onclose = function () {
+			if (onclose) {
+				onclose();
+			}
+			is_connected = false;
+		};
 		
 		client.onmessage = function (message) {
 			console.log("ws chowder_request : ", message);
@@ -216,5 +223,6 @@ console.log(location);
 	window.ws_connector.send = send;
 	window.ws_connector.sendBinary = sendBinary;
 	window.ws_connector.close = close;
+	window.ws_connector.isConnected = function () { return is_connected; }
 	
 }(window.command, window.metabinary));

@@ -4,7 +4,7 @@
   "description": "chowder client extension.",
   "background": {
     "persistent": false,
-    "scripts": ["js/command.js", "js/metabinary.js", "js/background.js", "js/ws_connector.js"]
+    "scripts": ["js/command.js", "js/metabinary.js", "js/background.js", "js/ws_connector.js", "js/options.js"]
   },
   "browser_action": {
     "default_icon": "img/chowder.png",
@@ -12,7 +12,8 @@
 	"default_popup": "popup.html"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage"
   ],
   "manifest_version": 2
 }
