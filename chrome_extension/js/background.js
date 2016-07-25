@@ -15,34 +15,39 @@
 	}
 
 	// Listen for a click on the camera icon. On that click, take a screenshot.
-	chrome.browserAction.onClicked.addListener(function() {
-
-		chrome.tabs.captureVisibleTab({format : "jpeg"}, function(screenshotUrl) {
-			var connector = window.ws_connector,
-				img;
-			connector.connect(function () {
-				console.log("connector connected");
-			}, function () {
-				console.log("connector closed");
-			});
-			
-			img = document.createElement('img');
-			img.onload = function (evt) {
-				var buffer = dataURLtoArrayBuffer(screenshotUrl),
-					metaData = {
-						type : "image",
-						posx : 0,
-						posy : 0,
-						width : img.naturalWidth,
-						height: img.naturalHeight
-					};
-
-				connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
-					console.log("doneAddContent", err, reply);
-					connector.close();
+	//chrome.browserAction.onClicked.addListener(function() {
+	chrome.runtime.onMessage.addListener(function (message) {
+		if (message.method === "capture") {
+			chrome.tabs.captureVisibleTab({format : "jpeg"}, function(screenshotUrl) {
+				var connector = window.ws_connector,
+					img;
+				connector.connect(function () {
+					console.log("connector connected");
+				}, function () {
+					console.log("connector closed");
 				});
-			};
-			img.src = screenshotUrl;
-		});
+				
+				img = document.createElement('img');
+				img.onload = function (evt) {
+					var buffer = dataURLtoArrayBuffer(screenshotUrl),
+						metaData = {
+							type : "image",
+							posx : 0,
+							posy : 0,
+							width : img.naturalWidth,
+							height: img.naturalHeight
+						};
+
+					connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
+						console.log("doneAddContent", err, reply);
+						connector.close();
+					});
+				};
+				img.src = screenshotUrl;
+			});
+		} else if (method.method === "setting") {
+
+		}
 	});
+	
 }(window.command));
