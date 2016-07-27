@@ -17,7 +17,7 @@
 				console.log("websocket open");
 			}, (function () {
 				return function (ev) {
-					console.error('websocket closed');
+					console.error('websocket closed', ev);
 					stopAutoCapture();
 					if (!isDisconnect) {
 						setTimeout(function () {
@@ -55,26 +55,31 @@
 		return ab;
 	}
 
-	function capture(option) {
-		chrome.tabs.captureVisibleTab({format : "jpeg"}, function(screenshotUrl) {
-			var img;
-			
-			img = document.createElement('img');
-			img.onload = function (evt) {
-				var buffer = dataURLtoArrayBuffer(screenshotUrl),
-					metaData = {
-						id : "chrome_extension_" + currentTabID,
-						content_id : "chrome_extension_" + currentTabID, 
-						type : "image",
-					};
 
-					console.log("capture", metaData)
-				connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
-					console.log("doneAddContent", err, reply);
-				});
-			};
-			img.src = screenshotUrl;
-		});
+	var canSend = true;
+	function capture(option) {
+		if (canSend) {
+			chrome.tabs.captureVisibleTab({format : "jpeg"}, function(screenshotUrl) {
+				var img;
+				img = document.createElement('img');
+				img.onload = function (evt) {
+					var buffer = dataURLtoArrayBuffer(screenshotUrl),
+						metaData = {
+							id : "chrome_extension_" + currentTabID,
+							content_id : "chrome_extension_" + currentTabID, 
+							type : "image",
+						};
+
+					console.log("capture", metaData);
+					canSend = false;
+					connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
+						console.log("doneAddContent", err, reply);
+						canSend = true;
+					});
+				};
+				img.src = screenshotUrl;
+			});
+		}
 	}
 
 	// キャプチャーを削除.

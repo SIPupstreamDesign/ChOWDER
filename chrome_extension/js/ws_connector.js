@@ -191,9 +191,9 @@ console.log(location);
 			is_connected = true;
 		};
 	
-		client.onclose = function () {
+		client.onclose = function (ev) {
 			if (onclose) {
-				onclose();
+				onclose(ev);
 			}
 			is_connected = false;
 		};

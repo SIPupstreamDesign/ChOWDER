@@ -1235,6 +1235,7 @@
 				}
 				blob = new Blob([contentData], {type: mime});
 				if (contentElem && blob) {
+					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
 
 					contentElem.onload = function () {
@@ -1321,6 +1322,7 @@
 				divElem.style.width = "200px";
 				blob = new Blob([contentData], {type: mime});
 				if (contentElem && blob) {
+					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
 
 					if (contentElem.offsetHeight > 150) {
@@ -1943,6 +1945,7 @@
 					var metaData = {type : "image", posx : 0, posy : 0, width : img.naturalWidth, height: img.naturalHeight};
 					img.style.width = img.naturalWidth + "px";
 					img.style.height = img.naturalHeight + "px";
+					URL.revokeObjectURL(img.src);
 					console.log("sendImage");
 					addContent(metaData, e.target.result);
 				};
