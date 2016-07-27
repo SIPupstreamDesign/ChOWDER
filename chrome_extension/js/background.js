@@ -1,20 +1,46 @@
 
 (function (Command) {
-	var id = 100,
+	var reconnectTimeout = 1000,
+		id = 100,
 		autoUpdateHandles = {},
 		currentIntervalHandle = null,
 		currentTabID = null,
+		isDisconnect = false,
 		connector;
 
 	function connect() {
-		connector = window.ws_connector;
-		if (!connector.isConnected()) {
-			connector.connect(function () {
-				console.log("connector connected");
-			}, function () {
-				console.log("connector closed");
-			});
+		if (!connector) {
+			connector = window.ws_connector;
 		}
+		console.log("connect");
+		var client = connector.connect(function () {
+				console.log("websocket open");
+			}, (function () {
+				return function (ev) {
+					console.error('websocket closed');
+					stopAutoCapture();
+					if (!isDisconnect) {
+						setTimeout(function () {
+							console.error('websocket try connect');
+							connect();
+							resumeAutoCapture(currentTabID);
+						}, reconnectTimeout);
+					}
+				};
+			}()));
+		/*
+		if (!connector.isConnected()) {
+			if (!isConnecting) {
+				isConnecting = true;
+				connector.connect(function () {
+					console.log("connector connected");
+				}, function () {
+					console.log("connector closed");
+					isConnecting = false;
+				});
+			}
+		}
+		*/
 	}
 	
 	function dataURLtoArrayBuffer(dataURL) {
@@ -37,17 +63,12 @@
 			img.onload = function (evt) {
 				var buffer = dataURLtoArrayBuffer(screenshotUrl),
 					metaData = {
-						id : currentTabID,
+						id : "chrome_extension_" + currentTabID,
+						content_id : "chrome_extension_" + currentTabID, 
 						type : "image",
-						posx : 0,
-						posy : 0,
-						width : img.naturalWidth,
-						height: img.naturalHeight
 					};
 
-					console.log("tabIDaaa", metaData)
-
-				connect();
+					console.log("capture", metaData)
 				connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
 					console.log("doneAddContent", err, reply);
 				});
@@ -59,9 +80,8 @@
 	// キャプチャーを削除.
 	function deleteCapture(tabId) {
 		var connector = window.ws_connector;
-		connect();
 		connector.send(Command.DeleteContent, {
-			id : tabId,
+			id : "chrome_extension_" + tabId,
 			visible : false
 		}, function (err, reply) {
 			console.log("delete capture", err, reply);
@@ -70,7 +90,7 @@
 
 	// タブの自動更新を開始.
 	function startAutoCapture(option, tabId) {
-			console.log("autocapture!a", option, option.hasOwnProperty("interval"));
+		console.log("startAutoCapture", option, option.hasOwnProperty("interval"));
 		if (!option.hasOwnProperty("interval")) {
 			return false;
 		}
@@ -79,23 +99,28 @@
 			console.log("autocapture!");
 			capture(option);
 		}, Number(option.interval) * 1000);
+		autoUpdateHandles[tabId] = currentIntervalHandle;
 
 		return true;
 	}
 
 	// タブの自動更新を停止.
 	function stopAutoCapture() {
+		console.log("stopAutoCapture");
 		if (currentIntervalHandle) {
 			clearInterval(currentIntervalHandle);
+			currentIntervalHandle = null;
 		}
 	}
 
 	// タブの自動更新を再起動.
 	function resumeAutoCapture(tabId) {
+		console.log("resumeAutoCapture", tabId)
 		window.options.restore(function (items) {
 			stopAutoCapture();
+			console.log("autoUpdateHandles", autoUpdateHandles)
 			if (autoUpdateHandles.hasOwnProperty(tabId)) {
-				startAutoCapture(option, tabId);
+				startAutoCapture(items, tabId);
 			}
 		});
 	}
@@ -104,11 +129,12 @@
 		// 取得するタブの条件
 		var queryInfo = {
 			active: true,
-			windowId: chrome.windows.WINDOW_ID_CURRENT
+			currentWindow: true
 		};
 		chrome.tabs.query(queryInfo, function (result) {
 			// 配列の先頭に現在タブの情報が入っている
 			if (result.length > 0) {
+				console.log("getCurrentTabID", result[0].id)
 				callback(result[0].id);
 			}
 		});
@@ -122,6 +148,7 @@
 				currentTabID = tabId;
 			}
 			if (message.method === "connect") {
+				isDisconnect = false;
 				console.log("connect");
 				connect();
 			} else if (message.method === "capture") {
@@ -153,9 +180,12 @@
 
 	// ウィンドウが変更された
 	chrome.windows.onFocusChanged.addListener(function  (windowId) {
-		if (windowId >= 0) {
-			console.log("onFocusChanged", windowId);
+		if (windowId === chrome.windows.WINDOW_ID_NONE) {
+			// フォーカスが外れた
+			stopAutoCapture();
+		} else {
 			getCurrentTabID(windowId, function (tabId) {
+				console.log("onFocusChanged", windowId, tabId);
 				currentTabID = tabId;
 				resumeAutoCapture(tabId);
 			});
@@ -165,6 +195,7 @@
 	// ページを閉じた
 	chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 		console.log("close tab id", tabId);
+		isDisconnect = true;
 		if (tabId === currentTabID) {
 			stopAutoCapture();
 		}

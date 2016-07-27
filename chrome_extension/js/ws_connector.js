@@ -8,8 +8,8 @@ console.log(location);
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
-		client,
-		is_connected,
+		client = null,
+		is_connected = false,
 		currentVersion = "v2",
 		//url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
 		url = "ws://localhost:8082/" + currentVersion + "/";
@@ -103,6 +103,11 @@ console.log(location);
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(method, args, resultCallback) {
+		if (client && client.readyState !== 1) {
+			console.error("client.readyState", client.readyState);
+			resultCallback(-1, null);
+			return; 
+		}
 		var reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',
@@ -129,6 +134,11 @@ console.log(location);
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function sendBinary(method, metaData, binary, resultCallback) {
+		if (client && client.readyState !== 1) {
+			console.error("client.readyState", client.readyState);
+			resultCallback(-1, null);
+			return; 
+		}
 		var data = {
 			jsonrpc: '2.0',
 			type : 'binary',
