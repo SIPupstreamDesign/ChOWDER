@@ -24,7 +24,7 @@
 			}, (function () {
 				return function (ev) {
 					console.error('websocket closed', ev);
-					stopAutoCapture();
+					stopInterval();
 					if (!isDisconnect) {
 						setTimeout(function () {
 							console.error('websocket try connect');
@@ -110,12 +110,29 @@
 		return true;
 	}
 
-	// タブの自動更新を停止.
-	function stopAutoCapture() {
-		console.log("stopAutoCapture");
+	function stopInterval() {
+		console.log("stopInterval");
 		if (currentIntervalHandle) {
 			clearInterval(currentIntervalHandle);
 			currentIntervalHandle = null;
+		}
+	}
+
+	// タブの自動更新を停止.
+	function stopAutoCapture(tabId) {
+		console.log("stopAutoCapture");
+		if (currentIntervalHandle === autoUpdateHandles[tabId]) {
+			isDisconnect = true;
+			canSend = true;
+			stopInterval();
+
+			chrome.browserAction.setIcon({
+				path : "../img/chowder.png",
+				tabId : tabId
+			});
+		}
+		if (autoUpdateHandles.hasOwnProperty(tabId)) {
+			delete autoUpdateHandles[tabId];
 		}
 	}
 
@@ -123,7 +140,7 @@
 	function resumeAutoCapture(tabId) {
 		console.log("resumeAutoCapture", tabId)
 		window.options.restore(function (items) {
-			stopAutoCapture();
+			stopInterval();
 			console.log("autoUpdateHandles", autoUpdateHandles)
 			if (autoUpdateHandles.hasOwnProperty(tabId)) {
 				startAutoCapture(items, tabId);
@@ -146,6 +163,18 @@
 		});
 	}
 
+	function sendAutoUpdateChanged(tabId) {
+		var hasAutoUpdate = false;
+		
+		chrome.runtime.sendMessage({
+			jsonrpc: '2.0',
+			type : 'utf8',
+			method: "is_autocapture",
+			param : autoUpdateHandles.hasOwnProperty(tabId)
+		}, function(response) {
+		});
+	}
+
 	// フロントからのメッセージ
 	chrome.runtime.onMessage.addListener(function (message, sender) {
 		console.log(message);
@@ -157,20 +186,29 @@
 				console.log("connect");
 				connect();
 			}
-			if (message.method === "capture") {
+			if (message.method === "connect") {
+				console.error("connect")
+				sendAutoUpdateChanged(tabId);
+			}
+			else if (message.method === "capture") {
 				console.log("currentTabID", currentTabID, tabId);
 				window.options.restore(function (items) {
 					console.log("option", items);
 					capture(items, tabId);
 					captureTabs[tabId] = 1;
 				});
-			} else if (message.method === "autocapture") {
+			} else if (message.method === "start_autocapture") {
 				console.log("autocapture")
 				window.options.restore(function (items) {
 					console.log("option", items);
 					startAutoCapture(items, tabId);
 					captureTabs[tabId] = 1;
+					sendAutoUpdateChanged(tabId);
 				});
+			} else if (message.method === "stop_autocapture") {
+				console.log("stop_autocapture")
+				stopAutoCapture(tabId);
+				sendAutoUpdateChanged(tabId);
 			} else if (message.method === "setting_updated") {
 				window.options.restore(function (items) {
 					resumeAutoCapture(tabId);
@@ -196,7 +234,7 @@
 	chrome.windows.onFocusChanged.addListener(function  (windowId) {
 		if (windowId === chrome.windows.WINDOW_ID_NONE) {
 			// フォーカスが外れた
-			stopAutoCapture();
+			stopInterval();
 		} else {
 			getCurrentTabID(windowId, function (tabId) {
 				console.log("onFocusChanged", windowId, tabId);
@@ -216,19 +254,8 @@
 			return;
 		}
 		// 閉じたタブが自動更新中だった場合、更新停止.
-		if (currentIntervalHandle === autoUpdateHandles[tabId]) {
-			isDisconnect = true;
-			canSend = true;
-			stopAutoCapture();
+		stopAutoCapture(tabId);
 
-			chrome.browserAction.setIcon({
-				path : "../img/chowder.png",
-				tabId : tabId
-			});
-		}
-		if (autoUpdateHandles.hasOwnProperty(tabId)) {
-			delete autoUpdateHandles[tabId];
-		}
 		// 閉じたタブの画像が登録されていた場合、画像削除.
 		if (captureTabs.hasOwnProperty(tabId)) {
 			delete captureTabs[tabId];

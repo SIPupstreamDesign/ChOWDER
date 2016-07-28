@@ -18,16 +18,41 @@
 			});
 		};
 
+		//backgroundからのメッセージ
+		chrome.runtime.onMessage.addListener(function (message, sender) {
+			if (message.method === "is_autocapture") {
+				console.log("hogehoge", message.param )
+				if (message.param === true) {
+					autocapture_button.innerText = "StopCapture";
+					autocapture_button.className = "btn btn-danger";
+				} else {
+					autocapture_button.innerText = "StartCapture";
+					autocapture_button.className = "btn btn-primary";
+				}
+			}
+		});
+
 		autocapture_button.onclick = function () {
 			console.log("autocapture button clicked");
-			chrome.runtime.sendMessage({
-				jsonrpc: '2.0',
-				type : 'utf8',
-				id: ++message_id,
-				method: "autocapture"
-			}, function(response) {
-				console.log("capture_button response", response);
-			});
+			if (autocapture_button.innerText === "StartCapture") {
+				chrome.runtime.sendMessage({
+					jsonrpc: '2.0',
+					type : 'utf8',
+					id: ++message_id,
+					method: "start_autocapture"
+				}, function(response) {
+					console.log("capture_button response", response);
+				});
+			} else {
+				chrome.runtime.sendMessage({
+					jsonrpc: '2.0',
+					type : 'utf8',
+					id: ++message_id,
+					method: "stop_autocapture"
+				}, function(response) {
+					console.log("capture_button response", response);
+				});
+			}
 		};
 
 		setting_button.onclick = function () {
