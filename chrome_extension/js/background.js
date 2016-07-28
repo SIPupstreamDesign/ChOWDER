@@ -6,6 +6,7 @@
 		currentIntervalHandle = null,
 		currentTabID = null,
 		isDisconnect = false,
+		isPageClosing = false,
 		connector;
 
 	function connect() {
@@ -28,19 +29,6 @@
 					}
 				};
 			}()));
-		/*
-		if (!connector.isConnected()) {
-			if (!isConnecting) {
-				isConnecting = true;
-				connector.connect(function () {
-					console.log("connector connected");
-				}, function () {
-					console.log("connector closed");
-					isConnecting = false;
-				});
-			}
-		}
-		*/
 	}
 	
 	function dataURLtoArrayBuffer(dataURL) {
@@ -55,30 +43,31 @@
 		return ab;
 	}
 
-
 	var canSend = true;
-	function capture(option) {
+	function capture(option, tabId) {
 		if (canSend) {
-			chrome.tabs.captureVisibleTab({format : "jpeg"}, function(screenshotUrl) {
-				var img;
-				img = document.createElement('img');
-				img.onload = function (evt) {
-					var buffer = dataURLtoArrayBuffer(screenshotUrl),
-						metaData = {
-							id : "chrome_extension_" + currentTabID,
-							content_id : "chrome_extension_" + currentTabID, 
-							type : "image",
-						};
+			chrome.tabs.captureVisibleTab({format : "jpeg"}, (function (tabId) {
+				return function(screenshotUrl) {
+					var img;
+					img = document.createElement('img');
+					img.onload = function (evt) {
+						var buffer = dataURLtoArrayBuffer(screenshotUrl),
+							metaData = {
+								id : "chrome_extension_" + tabId,
+								content_id : "chrome_extension_" + tabId, 
+								type : "image",
+							};
 
-					console.log("capture", metaData);
-					canSend = false;
-					connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
-						console.log("doneAddContent", err, reply);
-						canSend = true;
-					});
-				};
-				img.src = screenshotUrl;
-			});
+						console.log("capture", metaData);
+						canSend = false;
+						connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
+							console.log("doneAddContent", err, reply);
+							canSend = true;
+						});
+					};
+					img.src = screenshotUrl;
+				}
+			}(tabId)));
 		}
 	}
 
@@ -102,7 +91,7 @@
 
 		currentIntervalHandle = setInterval(function () {
 			console.log("autocapture!");
-			capture(option);
+			capture(option, tabId);
 		}, Number(option.interval) * 1000);
 		autoUpdateHandles[tabId] = currentIntervalHandle;
 
@@ -160,7 +149,7 @@
 				console.log("currentTabID", currentTabID, tabId);
 				window.options.restore(function (items) {
 					console.log("option", items);
-					capture(items);
+					capture(items, tabId);
 				});
 			} else if (message.method === "autocapture") {
 				console.log("autocapture")
@@ -199,9 +188,9 @@
 
 	// ページを閉じた
 	chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-		console.log("close tab id", tabId);
+		console.log("close tab id", tabId, currentTabID);
 		isDisconnect = true;
-		if (tabId === currentTabID) {
+		if (currentIntervalHandle === autoUpdateHandles[tabId]) {
 			stopAutoCapture();
 		}
 		if (autoUpdateHandles.hasOwnProperty(tabId)) {
