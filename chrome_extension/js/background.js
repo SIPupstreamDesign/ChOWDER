@@ -100,6 +100,19 @@
 		}, Number(option.interval) * 1000);
 		autoUpdateHandles[tabId] = currentIntervalHandle;
 
+
+		chrome.browserAction.setIcon({
+			path : "../img/chowder2.png",
+			tabId : tabId
+		});
+
+		/*
+		chrome.browserAction.setBadgeBackgroundColor({
+			color:[255, 0, 0, 255],
+			tabId : tabId
+		});
+		*/
+
 		return true;
 	}
 

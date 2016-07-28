@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   inkscape:export-filename="D:\hatta\Source\CHOWDER\chrome_extension\img\chowder.png"
+   inkscape:export-filename="D:\hatta\Source\CHOWDER\chrome_extension\img\chowder2.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90"
    sodipodi:docname="chowder.svg">
@@ -29,7 +29,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="11.2"
-     inkscape:cx="12.211985"
+     inkscape:cx="-5.913015"
      inkscape:cy="10.023646"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -51,7 +51,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -61,15 +61,15 @@
      id="layer1"
      transform="translate(217,-520.36218)">
     <rect
-       style="fill:#2cb13a;fill-opacity:1;stroke:#0e85fb;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="fill:#2cb13a;fill-opacity:0.44404333;stroke:#0e85fb;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect4162"
        width="34.534592"
        height="33.14563"
-       x="-221.60883"
+       x="-259.73383"
        y="516.01477" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:24.21471977px;line-height:125%;font-family:'Showcard Gothic';-inkscape-font-specification:'Showcard Gothic';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:#0e85fb;stroke-width:1.21073627;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:24.21471977px;line-height:125%;font-family:'Showcard Gothic';-inkscape-font-specification:'Showcard Gothic';letter-spacing:0px;word-spacing:0px;fill:#00ffff;fill-opacity:1;stroke:#0e85fb;stroke-width:1.21073627;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;"
        x="-212.57118"
        y="541.12073"
        id="text4147"
@@ -78,6 +78,6 @@
          id="tspan4149"
          x="-212.57118"
          y="541.12073"
-         style="stroke:#0e85fb;stroke-width:1.21073627;stroke-opacity:1">C</tspan></text>
+         style="stroke:#0e85fb;stroke-width:1.21073627;stroke-opacity:1;fill:#00ffff;fill-opacity:1;">C</tspan></text>
   </g>
 </svg>
