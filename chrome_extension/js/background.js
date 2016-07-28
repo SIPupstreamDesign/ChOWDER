@@ -103,7 +103,6 @@
 		}, Number(option.interval) * 1000);
 		autoUpdateHandles[tabId] = currentIntervalHandle;
 
-
 		chrome.browserAction.setIcon({
 			path : "../img/chowder2.png",
 			tabId : tabId
@@ -207,6 +206,7 @@
 		}
 	});
 
+	// ページを閉じた
 	function closePage(tabId, removeInfo) {
 		console.log("close tab id", tabId, currentTabID);
 		if (isDisconnect) {
@@ -215,14 +215,21 @@
 			});
 			return;
 		}
+		// 閉じたタブが自動更新中だった場合、更新停止.
 		if (currentIntervalHandle === autoUpdateHandles[tabId]) {
 			isDisconnect = true;
 			canSend = true;
 			stopAutoCapture();
+
+			chrome.browserAction.setIcon({
+				path : "../img/chowder.png",
+				tabId : tabId
+			});
 		}
 		if (autoUpdateHandles.hasOwnProperty(tabId)) {
 			delete autoUpdateHandles[tabId];
 		}
+		// 閉じたタブの画像が登録されていた場合、画像削除.
 		if (captureTabs.hasOwnProperty(tabId)) {
 			delete captureTabs[tabId];
 			deleteCapture(tabId);
