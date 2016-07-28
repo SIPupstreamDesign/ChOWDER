@@ -3,7 +3,6 @@
 
 (function (command, metabinary) {
 	'use strict';
-console.log(location);
 	var ws_connector = {},
 		resultCallbacks = {},
 		recievers = {},
@@ -234,5 +233,15 @@ console.log(location);
 	window.ws_connector.sendBinary = sendBinary;
 	window.ws_connector.close = close;
 	window.ws_connector.isConnected = function () { return is_connected; }
+	window.ws_connector.setURL = function (wsurl) {
+		if (wsurl[wsurl.length - 1] !== '/') {
+			wsurl = wsurl + '/';
+		}
+		wsurl = wsurl + currentVersion + "/";
+		url = wsurl;
+	};
+	window.ws_connector.getURL = function () {
+		return wsurl;
+	};
 	
 }(window.command, window.metabinary));

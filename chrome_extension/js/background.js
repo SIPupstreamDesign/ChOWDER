@@ -35,6 +35,19 @@
 				};
 			}()));
 	}
+
+	function setURL(url) {
+		if (connector && connector.getURL() !== url) {
+			isDisconnect = true;
+			if (isDisconnect && wsclient) {
+				wsclient.close();
+				wsclient = null;
+			}
+			console.log("setURL", url);
+			connector.setURL(url);
+			connect();
+		}
+	}
 	
 	function dataURLtoArrayBuffer(dataURL) {
 		var byteString = atob(dataURL.replace(/^.*,/, '')),
@@ -125,14 +138,14 @@
 			isDisconnect = true;
 			canSend = true;
 			stopInterval();
-
+		}
+		if (autoUpdateHandles.hasOwnProperty(tabId)) {
+			delete autoUpdateHandles[tabId];
+			
 			chrome.browserAction.setIcon({
 				path : "../img/chowder.png",
 				tabId : tabId
 			});
-		}
-		if (autoUpdateHandles.hasOwnProperty(tabId)) {
-			delete autoUpdateHandles[tabId];
 		}
 	}
 
@@ -211,6 +224,7 @@
 				sendAutoUpdateChanged(tabId);
 			} else if (message.method === "setting_updated") {
 				window.options.restore(function (items) {
+					setURL(items.url);
 					resumeAutoCapture(tabId);
 				});
 			}
