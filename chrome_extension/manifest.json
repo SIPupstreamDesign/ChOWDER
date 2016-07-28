@@ -12,7 +12,7 @@
 	"default_popup": "popup.html"
   },
   "permissions": [
-    "activeTab",
+    "<all_urls>",
     "storage"
   ],
   "manifest_version": 2

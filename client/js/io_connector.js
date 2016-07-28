@@ -25,8 +25,8 @@
 			}
 		} else {
 			// clientからmasterに送ったメッセージが返ってきた
-			if (metaData.error) {
-				if (resultCallbacks[metaData.id]) {
+			if (metaData.hasOwnProperty("error")) {
+				if (resultCallbacks.hasOwnProperty(metaData.id)) {
 					resultCallbacks[metaData.id](metaData.error, null);
 				}
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {

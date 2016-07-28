@@ -3,10 +3,11 @@
 	var reconnectTimeout = 1000,
 		id = 100,
 		autoUpdateHandles = {},
+		captureTabs = {},
 		currentIntervalHandle = null,
 		currentTabID = null,
-		isDisconnect = false,
-		isPageClosing = false,
+		isDisconnect = true, // 再接続しない切断状態の場合true
+		wsclient = null,
 		connector;
 
 	function connect() {
@@ -14,8 +15,9 @@
 			connector = window.ws_connector;
 		}
 		console.log("connect");
-		var client = connector.connect(function () {
+		wsclient = connector.connect(function () {
 				console.log("websocket open");
+				isDisconnect = false;
 			}, (function () {
 				return function (ev) {
 					console.error('websocket closed', ev);
@@ -78,6 +80,7 @@
 		var connector = window.ws_connector;
 		connector.send(Command.DeleteContent, {
 			id : "chrome_extension_" + tabId,
+			content_id : "chrome_extension_" + tabId,
 			visible : false
 		}, function (err, reply) {
 			console.log("delete capture", err, reply);
@@ -111,16 +114,14 @@
 
 	// タブの自動更新を再起動.
 	function resumeAutoCapture(tabId) {
-		if (!isDisconnect) {
-			console.log("resumeAutoCapture", tabId)
-			window.options.restore(function (items) {
-				stopAutoCapture();
-				console.log("autoUpdateHandles", autoUpdateHandles)
-				if (autoUpdateHandles.hasOwnProperty(tabId)) {
-					startAutoCapture(items, tabId);
-				}
-			});
-		}
+		console.log("resumeAutoCapture", tabId)
+		window.options.restore(function (items) {
+			stopAutoCapture();
+			console.log("autoUpdateHandles", autoUpdateHandles)
+			if (autoUpdateHandles.hasOwnProperty(tabId)) {
+				startAutoCapture(items, tabId);
+			}
+		});
 	}
 
 	function getCurrentTabID(windowId, callback) {
@@ -145,21 +146,23 @@
 			if (currentTabID == null) {
 				currentTabID = tabId;
 			}
-			if (message.method === "connect") {
-				isDisconnect = false;
+			if (isDisconnect) {
 				console.log("connect");
 				connect();
-			} else if (message.method === "capture") {
+			}
+			if (message.method === "capture") {
 				console.log("currentTabID", currentTabID, tabId);
 				window.options.restore(function (items) {
 					console.log("option", items);
 					capture(items, tabId);
+					captureTabs[tabId] = 1;
 				});
 			} else if (message.method === "autocapture") {
 				console.log("autocapture")
 				window.options.restore(function (items) {
 					console.log("option", items);
 					startAutoCapture(items, tabId);
+					captureTabs[tabId] = 1;
 				});
 			} else if (message.method === "setting_updated") {
 				window.options.restore(function (items) {
@@ -174,6 +177,12 @@
 		console.log("onactivated", activeInfo);
 		currentTabID = activeInfo.tabId;
 		resumeAutoCapture(activeInfo.tabId);
+	});
+
+	chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+		console.log("onUpdated", tabId);
+		currentTabID = tabId;
+		resumeAutoCapture(tabId);
 	});
 
 	// ウィンドウが変更された
@@ -193,14 +202,22 @@
 	// ページを閉じた
 	chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 		console.log("close tab id", tabId, currentTabID);
-		isDisconnect = true;
 		if (currentIntervalHandle === autoUpdateHandles[tabId]) {
+			isDisconnect = true;
+			canSend = true;
 			stopAutoCapture();
 		}
 		if (autoUpdateHandles.hasOwnProperty(tabId)) {
 			delete autoUpdateHandles[tabId];
 		}
-		deleteCapture(tabId);
+		if (captureTabs.hasOwnProperty(tabId)) {
+			delete captureTabs[tabId];
+			deleteCapture(tabId);
+		}
+		if (isDisconnect && wsclient) {
+			wsclient.close();
+			wsclient = null;
+		}
 	});
 
 	//https://bugs.chromium.org/p/chromium/issues/detail?id=30885
