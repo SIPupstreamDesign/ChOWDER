@@ -8,7 +8,7 @@
   },
   "browser_action": {
     "default_icon": "img/chowder.png",
-    "default_title": "Take a screen shot!",
+    "default_title": "ChOWDER",
 	"default_popup": "popup.html"
   },
   "permissions": [

@@ -10,7 +10,7 @@
 		wsclient = null,
 		connector;
 
-	function connect() {
+	function connect(callback) {
 		if (!connector) {
 			connector = window.ws_connector;
 		}
@@ -18,6 +18,9 @@
 		wsclient = connector.connect(function () {
 				console.log("websocket open");
 				isDisconnect = false;
+				if (callback) {
+					callback();
+				}
 			}, (function () {
 				return function (ev) {
 					console.error('websocket closed', ev);
@@ -105,14 +108,6 @@
 			path : "../img/chowder2.png",
 			tabId : tabId
 		});
-
-		/*
-		chrome.browserAction.setBadgeBackgroundColor({
-			color:[255, 0, 0, 255],
-			tabId : tabId
-		});
-		*/
-
 		return true;
 	}
 
@@ -212,9 +207,14 @@
 		}
 	});
 
-	// ページを閉じた
-	chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+	function closePage(tabId, removeInfo) {
 		console.log("close tab id", tabId, currentTabID);
+		if (isDisconnect) {
+			connect(function () {
+				closePage(tabId, removeInfo);
+			});
+			return;
+		}
 		if (currentIntervalHandle === autoUpdateHandles[tabId]) {
 			isDisconnect = true;
 			canSend = true;
@@ -231,7 +231,10 @@
 			wsclient.close();
 			wsclient = null;
 		}
-	});
+	}
+
+	// ページを閉じた
+	chrome.tabs.onRemoved.addListener(closePage);
 
 	//https://bugs.chromium.org/p/chromium/issues/detail?id=30885
 	// 	No way to detect when the browser is closed
