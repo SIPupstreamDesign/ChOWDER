@@ -45,25 +45,27 @@
 
 	var canSend = true;
 	function capture(option, tabId) {
-		if (canSend) {
+		if (canSend && !isDisconnect) {
 			chrome.tabs.captureVisibleTab({format : "jpeg"}, (function (tabId) {
 				return function(screenshotUrl) {
 					var img;
 					img = document.createElement('img');
 					img.onload = function (evt) {
-						var buffer = dataURLtoArrayBuffer(screenshotUrl),
-							metaData = {
-								id : "chrome_extension_" + tabId,
-								content_id : "chrome_extension_" + tabId, 
-								type : "image",
-							};
+						if (canSend && !isDisconnect) {
+							var buffer = dataURLtoArrayBuffer(screenshotUrl),
+								metaData = {
+									id : "chrome_extension_" + tabId,
+									content_id : "chrome_extension_" + tabId, 
+									type : "image",
+								};
 
-						console.log("capture", metaData);
-						canSend = false;
-						connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
-							console.log("doneAddContent", err, reply);
-							canSend = true;
-						});
+							console.log("capture", metaData);
+							canSend = false;
+							connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
+								console.log("doneAddContent", err, reply);
+								canSend = true;
+							});
+						}
 					};
 					img.src = screenshotUrl;
 				}
@@ -109,14 +111,16 @@
 
 	// タブの自動更新を再起動.
 	function resumeAutoCapture(tabId) {
-		console.log("resumeAutoCapture", tabId)
-		window.options.restore(function (items) {
-			stopAutoCapture();
-			console.log("autoUpdateHandles", autoUpdateHandles)
-			if (autoUpdateHandles.hasOwnProperty(tabId)) {
-				startAutoCapture(items, tabId);
-			}
-		});
+		if (!isDisconnect) {
+			console.log("resumeAutoCapture", tabId)
+			window.options.restore(function (items) {
+				stopAutoCapture();
+				console.log("autoUpdateHandles", autoUpdateHandles)
+				if (autoUpdateHandles.hasOwnProperty(tabId)) {
+					startAutoCapture(items, tabId);
+				}
+			});
+		}
 	}
 
 	function getCurrentTabID(windowId, callback) {
