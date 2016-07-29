@@ -1,18 +1,31 @@
 (function () {
-	var message_id = 0;
+	var message_id = 0,
+		initial_wsurl = "ws://localhost:8082",
+		initial_interval = 1.0;
 
 	function init () {
 		var apply_button = document.getElementById('apply_button'),
-			cancel_button = document.getElementById('cancel_button');
+			cancel_button = document.getElementById('cancel_button'),
+			reset_interval_button = document.getElementById('reset_interval'),
+			reset_url_button = document.getElementById('reset_url'),
+			interval = document.getElementById('interval'),
+			wsurl = document.getElementById('wsurl');
 
 		window.options.restore(function (items) {
 			console.log("restored", items)
-			var interval = document.getElementById('interval'),
-				wsurl = document.getElementById('wsurl');
-
 			interval.value = items.interval;
 			wsurl.value = items.url;
 		});
+
+		reset_url_button.onclick = function () {
+			wsurl.value = initial_wsurl;
+		};
+		wsurl.value = initial_wsurl;
+
+		reset_interval_button.onclick = function () {
+			interval.value = initial_interval;
+		};
+		interval.value = initial_interval;
 
 		apply_button.onclick = function () {
 			window.options.save(function() {

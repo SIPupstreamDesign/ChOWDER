@@ -26,7 +26,7 @@
 					autocapture_button.innerText = "StopCapture";
 					autocapture_button.className = "btn btn-danger";
 				} else {
-					autocapture_button.innerText = "StartCapture";
+					autocapture_button.innerText = "AutoCapture";
 					autocapture_button.className = "btn btn-primary";
 				}
 			}
@@ -34,7 +34,7 @@
 
 		autocapture_button.onclick = function () {
 			console.log("autocapture button clicked");
-			if (autocapture_button.innerText === "StartCapture") {
+			if (autocapture_button.innerText === "AutoCapture") {
 				chrome.runtime.sendMessage({
 					jsonrpc: '2.0',
 					type : 'utf8',
