@@ -75,6 +75,8 @@
 									id : "chrome_extension_" + tabId,
 									content_id : "chrome_extension_" + tabId, 
 									type : "image",
+									orgWidth : img.width,
+									orgHeight : img.height
 								};
 
 							console.log("capture", metaData);
