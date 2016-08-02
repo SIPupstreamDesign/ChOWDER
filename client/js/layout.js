@@ -77,6 +77,9 @@
 			setting = panels[id].setting;
 			direction = panels[id].direction;
 			parent = panels[id].parent;
+			if (setting.hasOwnProperty('zIndex')) {
+				panel.style.zIndex = setting['zIndex'];
+			}
 			if (setting.hasOwnProperty('size')) {
 				size = setting.size;
 				if (direction === 'horizontal') {
@@ -222,6 +225,7 @@
 	};
 
 	function init() {
+		var bigZIndex = 10000;
 		var setting = {
 			id : 'layout',
 			direction : 'horizontal',
@@ -231,11 +235,13 @@
 					id : 'head_menu',
 					position : 'top',
 					size : "50px",
-					minSize : "50px"
+					minSize : "50px",
+					zIndex : bigZIndex
 				},
 				{
 					size : "3px",
-					splitter : "3px"
+					splitter : "3px",
+					zIndex : bigZIndex
 				},
 				{
 					id : 'layout2',
@@ -246,7 +252,7 @@
 							id : 'leftArea',
 							position : 'left',
 							size : "260px",
-							minSize : "42px",
+							minSize : "150px",
 							direction : 'horizontal',
 							contents : [
 								{
@@ -263,7 +269,8 @@
 						},
 						{
 							size : "3px",
-							splitter : "3px"
+							splitter : "3px",
+							zIndex : bigZIndex
 						},
 						{
 							id : 'preview_area',
@@ -271,19 +278,21 @@
 						},
 						{
 							size : "3px",
-							splitter : "3px"
+							splitter : "3px",
+							zIndex : bigZIndex
 						},
 						{
 							id : 'rightArea',
 							position : 'right',
 							size : "260px",
-							minSize : "42px"
+							minSize : "150px"
 						}
 					]
 				},
 				{
 					size : "3px",
-					splitter : "3px"
+					splitter : "3px",
+					zIndex : bigZIndex
 				},
 				{
 					id : 'bottomArea',

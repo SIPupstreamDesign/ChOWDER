@@ -560,7 +560,7 @@
 	 */
 	function init() {
 		window.layout.init();
-		
+
 		//bottomfunc(false);
 		
 		initPropertyArea(wholeWindowListID, "whole_window");

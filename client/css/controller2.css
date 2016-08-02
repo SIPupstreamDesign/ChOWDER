@@ -50,8 +50,41 @@ a.active {
 }
 
 p {
-	color: #000;
+	color: white;
 }
+
+::-webkit-scrollbar {
+	width: 8px;
+	background-color: rgba(0,0,0,0);
+	-webkit-border-radius: 100px;
+}
+::-webkit-scrollbar:horizontal {
+	height: 8px;
+}
+
+::-webkit-scrollbar:hover {
+  background-color: rgba(0, 0, 0, 0.09);
+}
+
+::-webkit-scrollbar-thumb {
+	border : 1px solid rgba(255, 255, 255, 0.2);
+	background: rgba(4,19,25,1);
+	-webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:active {
+	background: rgba(4,19,25,1);
+	-webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar-corner
+{
+	overflow:hidden;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	background: rgba(0,0,0,0);
+}
+
 
 .head_menu {
 	/*background : rgb(44,177,58);*/
@@ -161,7 +194,7 @@ p {
 	position : absolute;
 	height : 100%;
 	width : 100%;
-	overflow: hidden;
+	overflow: auto;
 	z-index: 100000;
 }
 
@@ -172,7 +205,7 @@ p {
 
 .left_main_area {
 	height : 100%;
-	background-color: rgba(55, 55, 55, 1.0);
+	background: linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 	padding-bottom: 100px;
 }
 
@@ -245,12 +278,11 @@ p {
 	border: solid;
 	border-color: rgba(100, 100, 100, 0.5);
 	*/
-	background-color: rgba(55, 55, 55, 1.0);
+	background: linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 	position : absolute;
 	height : 100%;
 	width : 100%;
-	right : 0px;
-	overflow: hidden;
+	overflow: auto;
 	z-index: 100000;
 }
 
@@ -295,22 +327,22 @@ p {
 	z-index: 100001;
 }
 .bottomArea {
-	
+	/*
 	border: solid;
 	border-color: rgb(44,177,58);
-	
+	*/
 	/*padding: 20px;*/
-	background-color: rgba(55, 55, 55, 1.0);
+	background-color: #333;
 	position : absolute;
-	height : 520px;
+	height : 100%;
 	/*height : 620px;*/
-	width : 800px;
-	bottom : 0px;
-	top: 150px;
-	left: 50%;
-	margin-left:-400px;
+	width : 100%;
+	/*bottom : 0px;*/
+	top: 0px;
+	/*left: 50%;*/
+	/*margin-left:-400px;*/
 	overflow: auto;
-	z-index: 100002;
+	/*z-index: 100002;*/
 }
 
 .bottomTab {
@@ -347,16 +379,14 @@ p {
 }
 
 .content_id {
-	position: relative;
-	left: 40px;
 	margin: 10px;
+	padding-left : 30px;
 }
 
 .input-group {
-	width: 220px;
 	margin: 10px;
-	padding-left: 40px;
-	padding-right: 20px;
+	padding-left: 5px;
+	padding-right: 5px;
 }
 
 .form-control {
@@ -432,7 +462,6 @@ p {
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index:-1;
 }
 
 .content_dialog {
