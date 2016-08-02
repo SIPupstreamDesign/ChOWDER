@@ -239,13 +239,8 @@
 					zIndex : bigZIndex
 				},
 				{
-					size : "3px",
-					splitter : "3px",
-					zIndex : bigZIndex
-				},
-				{
 					id : 'layout2',
-					size : "-256px",
+					size : "-253px",
 					direction : 'vertical',
 					contents : [
 						{
