@@ -25,7 +25,7 @@
 				};
 				metabin = metabinary.createMetaBinary(result, binary);
 				if (metabin === null || metabin === undefined) {
-					result.err = 'Failed to create Metabinary';
+					result.error = 'Failed to create Metabinary';
 					console.log('Failed to create Metabinary');
 					socket.emit("chowder_response", JSON.stringify(result));
 				} else {
@@ -57,7 +57,7 @@
 		if (metaData.to === "client") {
 			// masterからclientに送ったメッセージが返ってきた.
 			if (metaData.error) {
-				if (resultCallbacks[metaData.id]) {
+				if (resultCallbacks.hasOwnProperty(metaData.id)) {
 					resultCallbacks[metaData.id](metaData.error, null);
 				}
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {

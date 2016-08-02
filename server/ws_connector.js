@@ -25,7 +25,7 @@
 				};
 				metabin = metabinary.createMetaBinary(result, binary);
 				if (metabin === null || metabin === undefined) {
-					result.err = 'Failed to create Metabinary';
+					result.error = 'Failed to create Metabinary';
 					console.log('Failed to create Metabinary');
 					ws_connection.sendUTF(JSON.stringify(result));
 				} else {

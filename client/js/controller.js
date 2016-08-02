@@ -1570,7 +1570,11 @@
 	 */
 	doneGetContent = function (err, reply) {
 		console.log("doneGetContent", reply);
-		importContent(reply.metaData, reply.contentData);
+		if (!err) {
+			importContent(reply.metaData, reply.contentData);
+		} else {
+			console.error(err);
+		}
 	};
 	
 	/**
