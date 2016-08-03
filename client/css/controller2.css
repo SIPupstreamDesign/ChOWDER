@@ -124,10 +124,12 @@ p {
 }
 
 .head_mode_menu {
+	position : absolute;
 	text-align: center;
 	padding: 2px;
-	display : none;
+	width : 100%;
 }
+
 .head_mode_text {
 	color: #000;
 	font-size: 20px;
