@@ -561,6 +561,8 @@
 	function init() {
 		window.layout.init();
 
+		window.menu.init(document.getElementById('head_menu'));
+
 		//bottomfunc(false);
 		
 		initPropertyArea(wholeWindowListID, "whole_window");

@@ -112,24 +112,25 @@ p {
 .head_title {
 	position:absolute;
 	width : 180px;
-	height : 50px;
+	height : 30px;
 	font-size: 18px;
 	text-align: right;
 }
 
 .head_title_text {
 	position : relative;
-	top : 12px;
-	height : 30px;
+	top : 3px;
+	height : 20px;
 }
 
 .head_mode_menu {
 	text-align: center;
-	padding: 8px;
+	padding: 2px;
+	display : none;
 }
 .head_mode_text {
 	color: #000;
-	font-size: 24px;
+	font-size: 20px;
 	font-weight: 700;
 }
 
@@ -137,7 +138,7 @@ p {
 	position:absolute;
 	left : 200px;
 	width : 200px;
-	height : 50px;
+	height : 30px;
 	font-size: 16px;
 	text-align: left;
 }
@@ -159,16 +160,17 @@ p {
 .head_select_mode_menu {
 	position:absolute;
 	left : 20px;
+	display : none;
 }
 
 .head_select_menu_text {
 	position : relative;
-	top : 12px;
-	height : 30px;
-	font-size: 18px;
+	top : 5px;
+	height : 20px;
+	font-size: 14px;
 	
 	border-style : solid;
-	padding : 5px 10px 5px 10px;
+	padding : 2px 8px 2px 8px;
 	border-width: 2px;
 	border-radius: 6px;
 }
@@ -176,16 +178,17 @@ p {
 .head_vdisplay_menu {
 	position:absolute;
 	right : 20px;
+	display : none;
 }
 
 .head_vdisplay_menu_text {
 	position : relative;
-	top : 12px;
-	height : 30px;
-	font-size: 18px;
+	top : 5px;
+	height : 20px;
+	font-size: 14px;
 	
 	border-style : solid;
-	padding : 5px 10px 5px 10px;
+	padding : 2px 8px 2px 8px;
 	border-width: 2px;
 	border-radius: 6px;
 }
@@ -429,15 +432,13 @@ p {
 .topmenu1 {
 	position: absolute;
 	right : 380px;
-	padding-top : 10px;
-	z-index: 100001;
+	z-index: 1000001;
 }
 
 .topmenu2 {
 	position: absolute;
 	right : 260px;
-	padding-top : 10px;
-	z-index: 100001;
+	z-index: 1000001;
 }
 
 .popup_background {

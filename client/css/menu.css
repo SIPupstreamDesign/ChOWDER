@@ -1,0 +1,168 @@
+ol, ul {
+	list-style: none;
+	padding : 0px;
+}
+
+.menu {
+	position: absolute;
+	width: 100%;
+	height: 30px;
+	max-width: 1000px;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.menu > li {
+	float: left;
+	width: 150px;
+	height: 30px;
+	line-height: 30px;
+	background: rgb(112, 180, 239);
+}
+
+.menu > li a {
+	display: block;
+	color : black;
+}
+
+ul.menu_level1 > li a:hover {
+	color: #999;
+}
+
+ul.menu_level2 > li a:hover {
+	color: #999;
+}
+
+ul.menu_level3 > li a:hover {
+	color: #999;
+}
+
+ul.menu_level1 {
+    display : none;
+    opacity: 0;
+}
+
+ul.menu_level2 {
+    display : none;
+    opacity: 0;
+}
+
+ul.menu_level3 {
+    display : none;
+    opacity: 0;
+}
+
+.menu > li:hover {
+    background: rgb(62, 130, 189);
+    -webkit-transition: all .5s;
+    transition: all .5s;
+}
+
+.menu_level1 li {
+    border-top: 1px solid #111;
+}
+
+.menu_level2 li {
+    border-top: 1px solid #111;
+}
+
+.menu_level1 li a:hover {
+    background: rgb(62, 130, 189);
+}
+
+.menu_level2 li a:hover {
+    background: rgb(62, 130, 189);
+}
+
+.menu_level3 li a:hover {
+    background: rgb(62, 130, 189);
+}
+
+/* floatクリア */
+.menu:before,
+.menu:after {
+    content: " ";
+    display: table;
+}
+
+.menu:after {
+	clear: both;
+}
+
+.menu > li.menu__multi {
+	position: relative;
+}
+
+li.menu__multi ul.menu_level1 {
+	position: absolute;
+	top: 20px;
+	width: 100%;
+	background: rgb(112, 180, 239);
+	-webkit-transition: all .2s ease;
+	transition: all .2s ease;
+}
+
+li.menu__multi:hover ul.menu_level1 {
+	top: 30px;
+	display : block;
+	opacity: 1;
+}
+
+li.menu__multi ul.menu_level1 li {
+    position: relative;
+}
+
+li.menu__multi ul.menu_level1 li ul.menu_level2 {
+    position: absolute;
+    top: -1px;
+    left: 100%;
+    width: 100%;
+    background: rgb(112, 180, 239);
+    -webkit-transition: all .2s ease;
+    transition: all .2s ease;
+}
+
+li.menu__multi ul.menu_level1 li:hover ul.menu_level2 {
+    display : block;
+    opacity: 1;
+}
+
+li.menu__multi ul.menu_level1 li ul.menu_level2 li {
+    position: relative;
+}
+
+li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover {
+    background: rgb(112, 180, 239);
+}
+
+li.menu__multi ul.menu_level1 li ul.menu_level2 li ul.menu_level3 {
+	position: absolute;
+	top: -1px;
+	left: 100%;
+	width: 100%;
+	background: rgb(112, 180, 239);
+	-webkit-transition: all .2s ease;
+	transition: all .2s ease;
+}
+
+li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover ul.menu_level3 {
+	display : block;
+	opacity: 1;
+}
+
+.init-right:after {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin: 0 0 0 15px;
+	border-right: 1px solid #fff;
+	border-top: 1px solid #fff;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+.init-bottom {
+	border-right: 1px solid #111;
+}

@@ -234,13 +234,13 @@
 				{
 					id : 'head_menu',
 					position : 'top',
-					size : "50px",
-					minSize : "50px",
-					zIndex : bigZIndex
+					size : "30px",
+					minSize : "30px",
+					zIndex : 1000000
 				},
 				{
 					id : 'layout2',
-					size : "-253px",
+					size : "-233px",
 					direction : 'vertical',
 					contents : [
 						{

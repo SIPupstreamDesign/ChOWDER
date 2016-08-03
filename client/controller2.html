@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 	<link href="css/controller2.css" rel="stylesheet"/>
+	<link href="css/menu.css" rel="stylesheet" />
 	<link href="css/bootstrap.css" rel="stylesheet" />
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 	<!--script type="text/javascript" src="js/qatrix-1.1.js"></script-->
@@ -15,6 +16,7 @@
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
 	<script type="text/javascript" src="js/manipulator.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
 	<script type="text/javascript" src="js/layout.js"></script>
 	<script type="text/javascript" src="js/controller_gui2.js"></script>
 	<script type="text/javascript" src="js/controller2.js"></script>
@@ -27,23 +29,13 @@
 <div class="page" id="layout">
 
 	<div id="head_menu" class="head_menu" >
-		<div class="">
-			<!--
-			<span class="head_title">
-				<a class="head_title_text" href="#">ChOWDER</a>
-			</span>
-			<span class="head_menu_content" id="">
-				<span class="head_menu_content_inner">
-					<span class="active"><a href="#" class="head_menu_content_text active">Controller <span class="sr-only">(current)</span></a></span>
-					<span><a href="view2.html" class="head_menu_content_text" target="_blank">Display</a></span>
-				</span>
-			</span>
-			-->
+		<!--div class="">
 			<span class="head_select_mode_menu">
 				<a class="head_select_menu_text" id="select_mode" href="/">
 					Select Mode
 				</a>
 			</span>
+		</div-->
 			
 			<span class="head_vdisplay_menu">
 				<a class="head_vdisplay_menu_text" id="virtual_display_setting" href="#">
@@ -56,7 +48,6 @@
 					Controller
 				</div>
 			</div>
-		</div>
 	</div>
 
 	<div class="top_control_panel">
