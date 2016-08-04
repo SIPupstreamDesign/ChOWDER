@@ -1525,6 +1525,8 @@
 	
 	///-------------------------------------------------------------------------------------------------------
 	
+	var canUpdateContent = true;
+
 	/// meta data updated
 	
 	/**
@@ -1557,6 +1559,7 @@
 			}
 		} else {
 			// 新規コンテンツロード.
+			canUpdateContent = true;
 			connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
 		}
 	};
@@ -1571,7 +1574,9 @@
 	doneGetContent = function (err, reply) {
 		console.log("doneGetContent", reply);
 		if (!err) {
-			importContent(reply.metaData, reply.contentData);
+			if (canUpdateContent) {
+				importContent(reply.metaData, reply.contentData);
+			}
 		} else {
 			console.error(err);
 		}
@@ -2234,11 +2239,14 @@
 			previewArea = gui.get_content_preview_area();
 		
 		if (id) {
+			canUpdateContent = true;
 			connector.send('GetContent', metaData, function (err, reply) {
 				correctAspect(reply.metaData, function (err, meta) {
 					reply.metaData = meta;
-					doneGetContent(err, reply);
-					doneGetMetaData(err, meta);
+					if (canUpdateContent) {
+						doneGetContent(err, reply);
+						doneGetMetaData(err, meta);
+					}
 					/*
 					if (document.getElementById(meta.id)) {
 						manipulator.moveManipulator(document.getElementById(meta.id));
@@ -2278,6 +2286,7 @@
 	// コンテンツが削除されたときにブロードキャストされてくる.
 	connector.on('DeleteContent', function (metaData) {
 		console.log('DeleteContent', metaData);
+		canUpdateContent = false;
 		doneDeleteContent(null, metaData);
 	});
 	
