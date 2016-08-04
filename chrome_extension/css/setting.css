@@ -1,0 +1,30 @@
+
+
+.resetbutton {
+	border : solid 1px gray;
+	float : right;
+	width : 24px;
+	height : 24px;
+	background-image : url('../img/reset.png');
+}
+
+.raw_container {
+	margin:5px 5px 0px 5px;
+	width:200px;
+	text-align : left;
+}
+
+#interval {
+	width : 60px;
+	text-align : center;
+}
+
+#apply_button {
+	width:80px;
+	margin:5px 2px;
+}
+
+#cancel_button {
+	width:80px;
+	margin:5px 2px;
+}

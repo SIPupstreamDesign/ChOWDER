@@ -70,12 +70,12 @@
 	function generateID(prefix, endCallback) {
 		var id = util.generateUUID8();
 		console.log("newid: " + id);
-		client.exists(prefix + id, function (err, doesExist) {
+		textClient.exists(prefix + id, function (err, doesExist) {
 			if (err) {
 				console.log(err);
 				return;
 			}
-			if (doesExist.toString() === "1") {
+			if (doesExist === 1) {
 				generateID(prefix, endCallback);
 			} else if (endCallback) {
 				endCallback(id);
@@ -300,8 +300,8 @@
 			}
 			metaData.id = id;
 			if (metaData.hasOwnProperty('content_id') && metaData.content_id !== "") {
-				client.exists(contentPrefix + metaData.content_id, function (err, doesExists) {
-					if (!err && doesExists.toString() === "1") {
+				textClient.exists(contentPrefix + metaData.content_id, function (err, doesExists) {
+					if (!err && doesExists === 1) {
 						getContent('', metaData.content_id, function (contentData) {
 							// 参照カウント.
 							textClient.setnx(contentRefPrefix + metaData.content_id, 0);
@@ -361,7 +361,7 @@
 				}
 				metaData.content_id = content_id;
 				
-				client.set(contentPrefix + content_id, contentData, function (err, reply) {
+				textClient.set(contentPrefix + content_id, contentData, function (err, reply) {
 					if (err) {
 						console.error("Error on addContent:" + err);
 					} else {
@@ -383,9 +383,9 @@
 	}
 	
 	function deleteMetaData(metaData, endCallback) {
-		client.exists(metadataPrefix + metaData.id, function (err, doesExist) {
-			if (!err && doesExist.toString() === "1") {
-				client.del(metadataPrefix + metaData.id, function (err) {
+		textClient.exists(metadataPrefix + metaData.id, function (err, doesExist) {
+			if (!err &&  doesExist === 1) {
+				textClient.del(metadataPrefix + metaData.id, function (err) {
 					console.log("deleteMetadata");
 					if (endCallback) {
 						endCallback(err, metaData);
@@ -408,13 +408,13 @@
 			if (!err) {
 				console.log("deleteContent", metaData);
 				if (metaData.hasOwnProperty('content_id') && metaData.content_id !== '') {
-					client.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
-						if (!err && doesExist.toString() === "1") {
+					textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
+						if (!err && doesExist === 1) {
 							// 参照カウントを減らす.
 							textClient.decr(contentRefPrefix + metaData.content_id, function (err, value) {
 								if (value <= 0) {
 									console.log("reference count zero. delete content");
-									client.del(contentPrefix + metaData.content_id, function (err) {
+									textClient.del(contentPrefix + metaData.content_id, function (err) {
 										if (!err) {
 											textClient.del(contentRefPrefix + metaData.content_id);
 											if (endCallback) {
@@ -462,10 +462,10 @@
 			console.error("Error undefined type:" + metaData.type);
 		}
 		
-		client.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
-			if (!err && doesExist.toString() === "1") {
+		textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
+			if (!err && doesExist === 1) {
 				setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-					client.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
+					textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
 						if (err) {
 							console.error("Error on updateContent:" + err);
 						} else {
@@ -539,7 +539,7 @@
 				metaData.content_id = content_id;
 				console.log("add window content id:", content_id);
 				
-				client.hmset(windowContentPrefix + content_id, metaData, function (err, reply) {
+				textClient.hmset(windowContentPrefix + content_id, metaData, function (err, reply) {
 					if (err) {
 						console.error("Error on addWindow:" + err);
 					} else {
@@ -548,7 +548,7 @@
 						textClient.setnx(windowContentRefPrefix + content_id, 0);
 						textClient.incr(windowContentRefPrefix + content_id, function (err, value) {
 							metaData.reference_count = value;
-							client.hmset(windowMetaDataPrefix + metaData.id, metaData, function (err, reply) {
+							textClient.hmset(windowMetaDataPrefix + metaData.id, metaData, function (err, reply) {
 								if (endCallback) {
 									endCallback(metaData);
 								}
@@ -617,8 +617,8 @@
 				});
 			});
 		} else {
-			client.exists(windowMetaDataPrefix + windowData.id, function (err, doesExist) {
-				if (!err && doesExist.toString() === "1") {
+			textClient.exists(windowMetaDataPrefix + windowData.id, function (err, doesExist) {
+				if (!err && doesExist === 1) {
 					textClient.hgetall(windowMetaDataPrefix + windowData.id, function (err, data) {
 						if (err) {
 							console.error(err);
@@ -644,7 +644,7 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function deleteWindowMetaData(metaData, endCallback) {
-		client.del(windowMetaDataPrefix + metaData.id, function (err) {
+		textClient.del(windowMetaDataPrefix + metaData.id, function (err) {
 			if (!err) {
 				console.log("unregister window id:" + metaData.id);
 			}
@@ -663,10 +663,10 @@
 	function deleteWindow(metaData, endCallback) {
 		deleteWindowMetaData(metaData, function (err, meta) {
 			if (meta.hasOwnProperty('content_id') && meta.content_id !== '') {
-				client.exists(windowContentPrefix + meta.content_id, function (err, doesExist) {
-					if (!err && doesExist.toString() === "1") {
+				textClient.exists(windowContentPrefix + meta.content_id, function (err, doesExist) {
+					if (!err && doesExist === 1) {
 						
-						client.del(windowContentPrefix + meta.content_id, function (err) {
+						textClient.del(windowContentPrefix + meta.content_id, function (err) {
 							if (!err) {
 								textClient.del(windowContentRefPrefix + meta.content_id);
 								if (meta.hasOwnProperty('reference_count')) {
@@ -698,8 +698,8 @@
 		if (socketidToHash.hasOwnProperty(socketid)) {
 			id = socketidToHash[socketid];
 			
-			client.exists(windowMetaDataPrefix + id, function (err, doesExist) {
-				if (!err && doesExist.toString() === "1") {
+			textClient.exists(windowMetaDataPrefix + id, function (err, doesExist) {
+				if (!err && doesExist === 1) {
 					textClient.hgetall(windowMetaDataPrefix + id, function (err, data) {
 						if (!err && data) {
 							// 参照カウントのみを減らす
@@ -739,7 +739,7 @@
 	 * @method getSessionList
 	 */
 	function getSessionList() {
-		client.smembers('sessions', function (err, replies) {
+		textClient.smembers('sessions', function (err, replies) {
 			replies.forEach(function (id, index) {
 				console.log(id + ":" + index);
 			});
@@ -784,8 +784,8 @@
 		console.log("commandAddContent", metaData, binaryData);
 		
 		if (metaData.hasOwnProperty('id') && metaData.id !== "") {
-			client.exists(metadataPrefix + metaData.id, function (err, doesExists) {
-				if (!err && doesExists.toString() === "1") {
+			textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+				if (!err && doesExists === 1) {
 					getMetaData('', metaData.id, function (meta) {
 						var oldContentID,
 							newContentID;
@@ -1225,9 +1225,7 @@
 		});
 		
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			var metaData = data.metaData,
-				binaryData = data.contentData;
-			commandDeleteContent(metaData, post_deleteContent(ws, io, resultCallback));
+			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
@@ -1238,6 +1236,9 @@
 
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
+
+		
+		console.log("registerWSEvent End");
 	}
 	
 	/**
@@ -1323,7 +1324,7 @@
 	 */
 	function registerUUID(id) {
 		uuidPrefix = id + ":";
-		client.sadd(frontPrefix + 'sessions', id);
+		textClient.sadd(frontPrefix + 'sessions', id);
 		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;

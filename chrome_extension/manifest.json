@@ -1,0 +1,24 @@
+{
+  "name": "ChOWDER client extension",
+  "version": "0.1",
+  "description": "chowder client extension.",
+  "background": {
+    "persistent": false,
+    "scripts": ["js/command.js", "js/metabinary.js", "js/background.js", "js/ws_connector.js", "js/options.js"]
+  },
+  "browser_action": {
+    "default_icon": "img/chowder.png",
+    "default_title": "ChOWDER",
+	"default_popup": "popup.html"
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "<all_urls>",
+    "storage"
+  ],
+  "icons" : {
+    "128": "img/chowder128.png"
+  },
+  "manifest_version": 2
+}

@@ -232,8 +232,10 @@
 				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 			});
 		} else if (updateType === 'window') {
-			console.log("update winodow", windowData);
-			connector.send('GetWindowMetaData', { id : windowData.id}, doneGetWindowMetaData);
+			if (windowData !== null) {
+				console.log("update winodow", windowData);
+				connector.send('GetWindowMetaData', { id : windowData.id}, doneGetWindowMetaData);
+			}
 		} else {
 			console.log("update transform");
 			if (targetid) {
@@ -312,6 +314,7 @@
 				}
 				blob = new Blob([contentData], {type: mime});
 				if (elem && blob) {
+					URL.revokeObjectURL(elem.src);
 					elem.src = URL.createObjectURL(blob);
 				}
 			}
@@ -625,7 +628,7 @@
 				}
 			}, (function () {
 				return function (ev) {
-					console.log('close');
+					console.log('close', ev);
 					var disconnected_text = document.getElementById("disconnected_text");
 					if (disconnected_text) {
 						disconnected_text.style.display = "block";
