@@ -241,7 +241,7 @@
 		url = wsurl;
 	};
 	window.ws_connector.getURL = function () {
-		return wsurl;
+		return url;
 	};
 	
 }(window.command, window.metabinary));
