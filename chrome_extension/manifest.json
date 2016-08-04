@@ -3,7 +3,7 @@
   "version": "0.1",
   "description": "chowder client extension.",
   "background": {
-    "persistent": false,
+    "persistent": true,
     "scripts": ["js/command.js", "js/metabinary.js", "js/background.js", "js/ws_connector.js", "js/options.js"]
   },
   "browser_action": {
