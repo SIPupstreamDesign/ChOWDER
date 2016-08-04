@@ -156,7 +156,7 @@
 		console.log("resumeAutoCapture", tabId)
 		window.options.restore(function (items) {
 			stopInterval();
-			console.log("autoUpdateHandles", autoUpdateHandles)
+			console.log("autoUpdateHandles", autoUpdateHandles, tabId)
 			if (autoUpdateHandles.hasOwnProperty(tabId)) {
 				startAutoCapture(items, tabId);
 			}
@@ -251,6 +251,11 @@
 		if (windowId === chrome.windows.WINDOW_ID_NONE) {
 			// フォーカスが外れた
 			stopInterval();
+			getCurrentTabID(windowId, function (tabId) {
+				console.log("onFocusOut", windowId, tabId);
+				currentTabID = tabId;
+				resumeAutoCapture(tabId);
+			});
 		} else {
 			getCurrentTabID(windowId, function (tabId) {
 				console.log("onFocusChanged", windowId, tabId);
