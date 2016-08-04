@@ -12,8 +12,12 @@
 	"default_popup": "popup.html"
   },
   "permissions": [
-    "<all_urls>",
+    "tabs",
+	"activeTab",
     "storage"
   ],
+  "icons" : {
+    "128": "img/chowder128.png"
+  },
   "manifest_version": 2
 }
