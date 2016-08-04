@@ -80,11 +80,13 @@
 								};
 
 							console.log("capture", metaData);
-							canSend = false;
-							connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
-								console.log("doneAddContent", err, reply);
-								canSend = true;
-							});
+							if (captureTabs.hasOwnProperty(tabId)) {
+								canSend = false;
+								connector.sendBinary(Command.AddContent, metaData, buffer, function(err, reply) {
+									console.log("doneAddContent", err, reply);
+									canSend = true;
+								});
+							}
 						}
 					};
 					img.src = screenshotUrl;
@@ -96,6 +98,10 @@
 	// キャプチャーを削除.
 	function deleteCapture(tabId) {
 		var connector = window.ws_connector;
+		if (!canSend) {
+			setTimeout( function () { deleteCapture(tabId); }, 100);
+			return;
+		}
 		connector.send(Command.DeleteContent, {
 			id : "chrome_extension_" + tabId,
 			content_id : "chrome_extension_" + tabId,

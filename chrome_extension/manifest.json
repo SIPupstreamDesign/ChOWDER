@@ -13,7 +13,8 @@
   },
   "permissions": [
     "tabs",
-	"activeTab",
+    "activeTab",
+    "<all_urls>",
     "storage"
   ],
   "icons" : {
