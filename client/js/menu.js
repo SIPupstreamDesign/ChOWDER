@@ -2,7 +2,7 @@
 /*global io, socket, FileReader, Uint8Array, Blob, URL, event */
 
 /// menu
-(function () {
+(function (gui) {
 	"use strict";
 
 	var Menu;
@@ -129,62 +129,25 @@
 				}, {
 					Edit : [{
 							VirtualDisplaySetting : {
-								func : function () { document.getElementById('virtual_display_setting').click(); }
+								func : function () { 
+									document.getElementById('display_tab_title').click();
+									gui.on_virtualdisplaysetting_clicked();
+								}
 							},
 						}, {
 							Snap : [{
 								Free : {
-									func : function () {}
+									func : function () { gui.on_snapdropdown_clicked('free'); }
 								},
 							}, {
 								Display : {
-									func : function () {}
+									func : function () {
+										gui.on_snapdropdown_clicked('display');
+									}
 								},
 							}, {
 								Grid : {
-									func : function () {}
-								}
-							}],
-						}, {
-							Scale : [{
-								0.1 : {
-									func : function () {}
-								}
-							}, {
-								0.2 : {
-									func : function () {}
-								}
-							}, {
-								0.3 : {
-									func : function () {}
-								}
-							}, {
-								0.4 : {
-									func : function () {}
-								}
-							}, {
-								0.5 : {
-									func : function () {}
-								}
-							}, {
-								0.6 : {
-									func : function () {}
-								}
-							}, {
-								0.7 : {
-									func : function () {}
-								}
-							}, {
-								0.8 : {
-									func : function () {}
-								}
-							}, {
-								0.9 : {
-									func : function () {}
-								}
-							}, {
-								1.0 : {
-									func : function () {}
+									func : function () { gui.on_snapdropdown_clicked('grid'); }
 								}
 							}],
 						}, {
@@ -199,4 +162,4 @@
 
 	window.menu = {};
 	window.menu.init = init;
-}());
+}(window.controller_gui));

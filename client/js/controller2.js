@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (gui, vscreen, vscreen_util, manipulator, connector) {
+(function (gui, content_property, vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
 	var currentContent = null,
@@ -497,8 +497,8 @@
 		}
 		
 		if (id === wholeWindowListID || id === wholeWindowID) {
-			gui.init_property_area(id, "whole_window", mime);
-			gui.assign_virtual_display_property(vscreen.getWhole(), vscreen.getSplitCount());
+			content_property.init(id, "whole_window", mime);
+			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			gui.get_whole_window_elem().style.borderColor = windowSelectColor;
 			return;
 		}
@@ -522,8 +522,8 @@
 		console.log("draggingID = id:" + draggingID);
 		elem.style.border = "solid 2px";
 		if (metaData.type === windowType) {
-			gui.init_property_area(id, "display", mime);
-			gui.assign_content_property(metaDataDict[id]);
+			content_property.init(id, "display", mime);
+			content_property.assign_content_property(metaDataDict[id]);
 			gui.enable_delete_button(false);
 			gui.enable_display_delete_button(true);
 			gui.enable_update_image_button(false);
@@ -533,8 +533,8 @@
 			elem.style.borderColor = windowSelectColor;
 			manipulator.showManipulator(elem, gui.get_display_preview_area());
 		} else {
-			gui.init_property_area(id, metaData.type, mime);
-			gui.assign_content_property(metaDataDict[id]);
+			content_property.init(id, metaData.type, mime);
+			content_property.assign_content_property(metaDataDict[id]);
 			gui.enable_delete_button(true);
 			gui.enable_update_image_button(true);
 			gui.enable_display_delete_button(false);
@@ -584,7 +584,7 @@
 			}
 		}
 		manipulator.removeManipulator();
-		gui.clear_property();
+		content_property.clear();
 	}
 	
 	/**
@@ -1047,8 +1047,8 @@
 				vscreen_util.assignMetaData(screenElem, windowData, true);
 			}
 		} else {
-			gui.assign_virtual_display_property(vscreen.getWhole(), vscreen.getSplitCount());
-			gui.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
+			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
+			content_property.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
 			
 			// 全可視コンテンツの配置を再計算.
 			for (i in metaDataDict) {
@@ -1544,7 +1544,7 @@
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
 		if (draggingID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
-			gui.assign_content_property(json);
+			content_property.assign_content_property(json);
 		}
 		
 		elem = document.getElementById(metaData.id);
@@ -1586,7 +1586,7 @@
 	doneUpdateMetaData = function (err, reply) {
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
-		gui.assign_content_property(json);
+		content_property.assign_content_property(json);
 	};
 	
 	/**
@@ -1741,7 +1741,7 @@
 			elem;
 		importWindow(windowData);
 		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
-			gui.assign_content_property(windowData);
+			content_property.assign_content_property(windowData);
 		}
 		if (lastSelectWindowID) {
 			elem = document.getElementById(lastSelectWindowID);
@@ -1779,7 +1779,7 @@
 			updateScreen();
 		} else {
 			// running first time
-			gui.update_display_value();
+			content_property.update_display_value();
 			updateWindowData();
 		}
 	};
@@ -1837,7 +1837,7 @@
 	 * @param {String} y y軸分割数
 	 * @param {bool} withoutUpdate 設定後各Displayの更新をするかのフラグ
 	 */
-	gui.on_change_whole_split = function (x, y, withoutUpdate) {
+	content_property.on_change_whole_split = function (x, y, withoutUpdate) {
 		var ix = parseInt(x, 10),
 			iy = parseInt(y, 10),
 			splitWholes,
@@ -2053,7 +2053,7 @@
 	 * PropertyのDisplayパラメータ更新ハンドル
 	 * @method on_display_value_changed
 	 */
-	gui.on_display_value_changed = function () {
+	content_property.on_display_value_changed = function () {
 		var whole = vscreen.getWhole(),
 			wholeWidth = document.getElementById('whole_width'),
 			wholeHeight = document.getElementById('whole_height'),
@@ -2100,7 +2100,7 @@
 		}
 		updateWindowData();
 		updateScreen();
-		gui.update_whole_split(ix, iy, true);
+		content_property.update_whole_split(ix, iy, true);
 	};
 	
 	/**
@@ -2127,7 +2127,7 @@
 	 * @method on_change_zindex
 	 * @param {String} index 設定するzIndex
 	 */
-	gui.on_change_zindex = function (index) {
+	content_property.on_change_zindex = function (index) {
 		var elem = gui.get_selected_elem(),
 			metaData;
 		if (elem) {
@@ -2157,9 +2157,9 @@
 		//unselect();
 		manipulator.removeManipulator();
 		if (isDisplayTabSelected()) {
-			gui.init_property_area("", "display");
+			content_property.init("", "display");
 		} else {
-			gui.init_property_area("", "content");
+			content_property.init("", "content");
 		}
 		// 以前選択していたものを再選択する.
 		if (id) {
@@ -2309,7 +2309,7 @@
 			}
 		}
 		
-		gui.on_rect_changed = function () {
+		content_property.on_rect_changed = function () {
 			console.log('on_rect_changed');
 			changeRect(this.id, parseInt(this.value, 10));
 		};
@@ -2370,4 +2370,4 @@
 	window.onload = init;
 	connector.connect();
 
-}(window.controller_gui, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.controller_gui, window.content_property, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
