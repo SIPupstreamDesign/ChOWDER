@@ -123,7 +123,7 @@
 			contentPreviewArea.style.opacity = 0.3;
 			displayPreviewArea.style.zIndex = 10;
 			contentPreviewArea.style.zIndex = -1000;
-			content_box.on_tab_changed();
+			window.content_box.on_tab_changed();
 		} else if (tabName === 'Content') {
 			//contentButtonArea.style.display = "block";
 			//displayButtonArea.style.display = "none";
@@ -133,7 +133,7 @@
 			contentPreviewArea.style.opacity = 1.0;
 			displayPreviewArea.style.zIndex = -1000;
 			contentPreviewArea.style.zIndex = 10;
-			content_box.on_tab_changed();
+			window.content_box.on_tab_changed();
 		} else if (tabName === 'Search') {
 
 		}

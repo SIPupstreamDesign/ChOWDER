@@ -181,6 +181,7 @@
 	 * @method initContentArea
 	 * @param {Function} bottomfunc addボタンコールバック
 	 */
+	/*
 	function initContentArea(bottomfunc) {
 		var addButton = document.getElementById('content_add_button'),
 			contentDeleteButton = document.getElementById('content_delete_button'),
@@ -197,11 +198,13 @@
 			gui.on_deleteallcontent_clicked(evt);
 		};
 	}
+	*/
 	
 	/**
 	 * ディスプレイタブの初期化
 	 * @method initDisplayArea
 	 */
+	/*
 	function initDisplayArea() {
 		var displayDeleteButton = document.getElementById('display_delete_button'),
 			displayDeleteAllButton = document.getElementById('display_delete_all_button');
@@ -212,12 +215,14 @@
 			gui.on_deletealldisplay_clicked(evt);
 		};
 	}
+	*/
 	
 	/**
 	 * 左メニュー領域[ディスプレイタブ、コンテンツタブ]の初期化
 	 * @method initLeftArea
 	 * @param {Function} bottomfunc addボタンコールバック
 	 */
+	/*
 	function initLeftArea(bottomfunc) {
 		
 		showIDButton.onclick = function (evt) {
@@ -226,6 +231,7 @@
 		initContentArea(bottomfunc);
 		initDisplayArea();
 	}
+	*/
 
 	/**
 	 * Deleteボタン有効化設定
@@ -233,11 +239,13 @@
 	 * @param {bool} isEnable ボタン有効化
 	 */
 	function enableDeleteButton(isEnable) {
+		/*
 		if (isEnable) {
 			document.getElementById('content_delete_button').className = "btn btn-danger";
 		} else {
 			document.getElementById('content_delete_button').className = "btn btn-danger disabled";
 		}
+		*/
 	}
 	
 	/**
@@ -246,11 +254,13 @@
 	 * @param {bool} isEnable ボタン有効化
 	 */
 	function enableDisplayDeleteButton(isEnable) {
+		/*
 		if (isEnable) {
 			document.getElementById('display_delete_button').className = "btn btn-primary";
 		} else {
 			document.getElementById('display_delete_button').className = "btn btn-primary disabled";
 		}
+		*/
 	}
 	
 	/**
@@ -290,7 +300,7 @@
 		window.content_box.init(document.getElementById('bottomArea'));
 		window.content_property.init(wholeWindowListID, "whole_window");
 
-		initLeftArea(function () {});
+		//initLeftArea(function () {});
 		initAddContentArea(function () {});
 		initViewSettingArea(function () {});
 		
@@ -301,9 +311,11 @@
 		document.getElementById('display_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_display_preview_area();
 		});
+		/*
 		document.getElementById('content_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_area();
 		});
+		*/
 		document.getElementById('overall_block').addEventListener('click', function (evt) {
 			//bottomfunc(false);
 		});
