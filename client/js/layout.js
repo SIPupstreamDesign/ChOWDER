@@ -239,36 +239,12 @@
 				},
 				{
 					id : 'layout2',
-					size : "-233px",
+					size : "-253px",
 					direction : 'vertical',
 					contents : [
 						{
-							id : 'leftArea',
-							position : 'left',
-							size : "260px",
-							minSize : "150px",
-							direction : 'horizontal',
-							contents : [
-								{
-									id : "left_tab_area",
-									position : 'top',
-									size : '50px',
-									minSize : "50px"
-								},
-								{
-									id : "left_main_area",
-									size : "-306px"
-								}
-							]
-						},
-						{
-							size : "3px",
-							splitter : "3px",
-							zIndex : bigZIndex
-						},
-						{
 							id : 'preview_area',
-							size : "-526px"
+							size : "-263px"
 						},
 						{
 							size : "3px",
@@ -290,8 +266,8 @@
 				},
 				{
 					id : 'bottomArea',
-					size : "200px",
-					minSize : "50px"
+					size : "220px",
+					minSize : "100px"
 				}]
 			};
 

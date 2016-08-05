@@ -213,59 +213,15 @@
 		};
 	}
 	
-	
 	/**
 	 * 左メニュー領域[ディスプレイタブ、コンテンツタブ]の初期化
 	 * @method initLeftArea
 	 * @param {Function} bottomfunc addボタンコールバック
 	 */
 	function initLeftArea(bottomfunc) {
-		var displayArea = document.getElementById('display_area'),
-			displayTabTitle = document.getElementById('display_tab_title'),
-			displayTabLink = document.getElementById('display_tab_link'),
-			displayButtonArea = document.getElementById('display_button_area'),
-			contentArea = document.getElementById('content_area'),
-			contentButtonArea = document.getElementById('content_button_area'),
-			contentTabTitle = document.getElementById('content_tab_title'),
-			contentTabLink = document.getElementById('content_tab_link'),
-			showIDButton = document.getElementById('show_display_id_button'),
-			displayPreviewArea = document.getElementById('display_preview_area'),
-			contentPreviewArea = document.getElementById('content_preview_area');
 		
 		showIDButton.onclick = function (evt) {
 			gui.on_showidbutton_clicked(evt);
-		};
-
-		displayTabTitle.onclick = function () {
-			displayArea.style.display = "block";
-			contentArea.style.display = "none";
-			contentButtonArea.style.display = "none";
-			displayButtonArea.style.display = "block";
-			displayTabTitle.className = "display_tab_title active";
-			contentTabTitle.className = "content_tab_title";
-			displayTabLink.className = "active";
-			contentTabLink.className = "";
-			displayPreviewArea.style.opacity = 1.0;
-			contentPreviewArea.style.opacity = 0.3;
-			displayPreviewArea.style.zIndex = 10;
-			contentPreviewArea.style.zIndex = -1000;
-			gui.on_lefttab_changed();
-		};
-
-		contentTabTitle.onclick = function () {
-			displayArea.style.display = "none";
-			contentArea.style.display = "block";
-			contentButtonArea.style.display = "block";
-			displayButtonArea.style.display = "none";
-			displayTabTitle.className = "display_tab_title";
-			contentTabTitle.className = "content_tab_title active";
-			contentTabLink.className = "active";
-			displayTabLink.className = "";
-			displayPreviewArea.style.opacity = 0.3;
-			contentPreviewArea.style.opacity = 1.0;
-			displayPreviewArea.style.zIndex = -1000;
-			contentPreviewArea.style.zIndex = 10;
-			gui.on_lefttab_changed();
 		};
 		initContentArea(bottomfunc);
 		initDisplayArea();
@@ -345,7 +301,6 @@
 		document.getElementById('display_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_display_preview_area();
 		});
-		
 		document.getElementById('content_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_area();
 		});
@@ -372,7 +327,6 @@
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;
 	window.controller_gui.on_deleteallcontent_clicked = null;
-	window.controller_gui.on_lefttab_changed = null;
 	window.controller_gui.on_showidbutton_clicked = null;
 	window.controller_gui.on_snapdropdown_clicked = null;
 	window.controller_gui.on_virtualdisplaysetting_clicked　= null;
@@ -383,14 +337,7 @@
 	window.controller_gui.enable_display_delete_button = enableDisplayDeleteButton;
 	window.controller_gui.enable_update_image_button = enableUpdateImageButton;
 	
-	// 更新など
-	window.controller_gui.update_display_value = function () {
-		gui.on_display_value_changed();
-	};
-	window.controller_gui.update_whole_split = function (x, y, flag) {
-		gui.on_change_whole_split(x, y, flag);
-	};
-	
+
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;
 	
@@ -407,10 +354,10 @@
 		return document.getElementById('content_preview_area');
 	};
 	window.controller_gui.get_content_area = function () {
-		return document.getElementById('content_area');
+		return document.getElementById('content_tab_box');
 	};
 	window.controller_gui.get_display_area = function () {
-		return document.getElementById('display_area');
+		return document.getElementById('display_tab_box');
 	};
 	window.controller_gui.get_left_area = function () {
 		return document.getElementById('leftArea');

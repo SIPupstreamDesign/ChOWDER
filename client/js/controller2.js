@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (gui, content_property, vscreen, vscreen_util, manipulator, connector) {
+(function (gui, content_property, content_box, vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
 	var currentContent = null,
@@ -1348,8 +1348,9 @@
 		divElem.style.left = "20px";
 		divElem.style.border = "solid";
 		divElem.style.borderColor = "white";
-		divElem.style.marginTop = "5px";
+		divElem.style.margin = "5px";
 		divElem.style.color = "white";
+		divElem.style.float = "left";
 		
 		// 同じコンテンツを参照しているメタデータがあれば更新
 		if (!contentData && contentElem) {
@@ -1472,7 +1473,8 @@
 		divElem.style.width = "200px";
 		divElem.style.height = "50px";
 		divElem.style.border = "solid";
-		divElem.style.marginTop = "5px";
+		divElem.style.margin = "5px";
+		divElem.style.float = "left";
 		setupContent(divElem, onlistID);
 		displayArea.appendChild(divElem);
 		changeWindowBorderColor(windowData);
@@ -1496,7 +1498,8 @@
 		divElem.style.height = "50px";
 		divElem.style.border = "solid";
 		divElem.style.borderColor = "white";
-		divElem.style.marginTop = "5px";
+		divElem.style.margin = "5px";
+		divElem.style.float = "left";
 		divElem.style.color = "white";
 		divElem.classList.add("screen");
 		setupContent(divElem, onlistID);
@@ -2142,7 +2145,7 @@
 	/**
 	 * 左ペインのタブが切り替えられた.
 	 */
-	gui.on_lefttab_changed = function () {
+	content_box.on_tab_changed = function () {
 		var id;
 		console.log("on_lefttab_changed", lastSelectContentID);
 		if (isDisplayTabSelected()) {
@@ -2370,4 +2373,5 @@
 	window.onload = init;
 	connector.connect();
 
-}(window.controller_gui, window.content_property, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.controller_gui, window.content_property, window.content_box, 
+window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

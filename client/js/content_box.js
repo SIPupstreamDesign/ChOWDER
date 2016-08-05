@@ -104,23 +104,58 @@
 		return elem;
 	};
 
+	function changeTab(tabName) {
+		var 
+			//displayTabLink = document.getElementById('display_tab_link'),
+			//displayButtonArea = document.getElementById('display_button_area'),
+			//contentButtonArea = document.getElementById('content_button_area'),
+			//contentTabLink = document.getElementById('content_tab_link'),
+			//showIDButton = document.getElementById('show_display_id_button'),
+			displayPreviewArea = document.getElementById('display_preview_area'),
+			contentPreviewArea = document.getElementById('content_preview_area');
+
+		if (tabName === 'Display') {
+			//contentButtonArea.style.display = "none";
+			//displayButtonArea.style.display = "block";
+			//displayTabLink.className = "active";
+			//contentTabLink.className = "";
+			displayPreviewArea.style.opacity = 1.0;
+			contentPreviewArea.style.opacity = 0.3;
+			displayPreviewArea.style.zIndex = 10;
+			contentPreviewArea.style.zIndex = -1000;
+			content_box.on_tab_changed();
+		} else if (tabName === 'Content') {
+			//contentButtonArea.style.display = "block";
+			//displayButtonArea.style.display = "none";
+			//contentTabLink.className = "active";
+			//displayTabLink.className = "";
+			displayPreviewArea.style.opacity = 0.3;
+			contentPreviewArea.style.opacity = 1.0;
+			displayPreviewArea.style.zIndex = -1000;
+			contentPreviewArea.style.zIndex = 10;
+			content_box.on_tab_changed();
+		} else if (tabName === 'Search') {
+
+		}
+	}
+
 	function init(containerElem) {
 		var setting = {
 			tabs : [{
 					Display : {
 						id : "display_tab",
-						func : function () { document.getElementById('display_tab_title').click(); },
+						func : function () { changeTab('Display'); },
 						active : true,
 					},
 				}, {
 					Content : {
 						id : "content_tab",
-						func : function () { document.getElementById('content_tab_title').click(); }
+						func : function () { changeTab('Content'); }
 					},
 				}, {
 					Search : {
 						id : "search_tab",
-						func : function () { /*document.getElementById('search_tab_title').click();*/ }
+						func : function () { changeTab('Search'); }
 					}
 				}]
 		};
@@ -129,5 +164,6 @@
 
 	window.content_box = {};
 	window.content_box.init = init;
+	window.content_box.on_tab_changed = null;
 
 }(window.controller_gui));
