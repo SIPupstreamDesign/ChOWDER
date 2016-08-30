@@ -152,7 +152,6 @@
 
 	function is_active(tabID) {
  		var tab = document.getElementById(tabID);
-		 console.log(tab.className);
 		return tab.className.indexOf('active') >= 0;
 	}
 

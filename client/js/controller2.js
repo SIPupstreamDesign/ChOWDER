@@ -10,6 +10,7 @@
 		lastSelectWindowID = null,
 		dragOffsetTop = 0,
 		dragOffsetLeft = 0,
+		mouseDownPos = [],
 		metaDataDict = {},
 		windowType = "window",
 		wholeWindowID = "whole_window",
@@ -103,19 +104,26 @@
 	 * @return {bool} 発生したイベントが左リストビュー領域で発生していたらtrueを返す.
 	 */
 	function isContentArea(evt) {
-		/*
-		var contentArea = gui.get_left_main_area(),
-			rect = contentArea.getBoundingClientRect(),
+		var contentArea = gui.get_bottom_area(),
 			px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
 			return false;
 		}
-		return px < rect.right && py > rect.top;
-		*/
-		return false;
+		return py > rect.top;
 	}
 	
+	function isContentArea2(evt) {
+		if (mouseDownPos.length < 2) { return false; }
+		var contentArea = gui.get_bottom_area(),
+			px = mouseDownPos[0] + (document.body.scrollLeft || document.documentElement.scrollLeft),
+			py = mouseDownPos[1] + (document.body.scrollTop || document.documentElement.scrollTop);
+		if (!contentArea) {
+			return false;
+		}
+		return py > rect.top;
+	}
+
 	/**
 	 * 左リストでディスプレイタブが選択されているかを判別する。
 	 * @method isDisplayTabSelected
@@ -741,6 +749,11 @@
 			evt = (evt) || window.event;
 			dragOffsetTop = evt.clientY - rect.top;
 			dragOffsetLeft = evt.clientX - rect.left;
+			mouseDownPos = [
+				rect.left,
+				rect.top
+			];
+
 			//dragOffsetTop = evt.clientY - elem.offsetTop;
 			//dragOffsetLeft = evt.clientX - elem.offsetLeft;
 			evt.stopPropagation();
@@ -847,7 +860,7 @@
 		
 		if (draggingID) {
 			// detect content list area
-			if (isContentArea(evt)) {
+			if (isContentArea2(evt) && isContentArea(evt)) {
 				elem = document.getElementById(draggingID);
 				return;
 			}

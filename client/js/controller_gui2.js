@@ -338,7 +338,7 @@
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;
 	
-	window.controller_gui.get_left_main_area = function () {
+	window.controller_gui.get_bottom_area = function () {
 		return document.getElementById('bottomArea');
 	};
 	window.controller_gui.get_display_tab_link = function () {
