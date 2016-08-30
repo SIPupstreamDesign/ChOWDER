@@ -333,10 +333,6 @@
 		center_y = parseFloat(y);
 	}
 	
-	/// assign single screen
-	/// if exists, overwrite.
-	/// @param x window coordinate
-	/// @param y window coordinate
 	/**
 	 * スクリーンの設定
 	 * @method assignScreen

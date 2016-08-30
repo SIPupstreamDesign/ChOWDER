@@ -105,6 +105,7 @@
 	 */
 	function isContentArea(evt) {
 		var contentArea = gui.get_bottom_area(),
+			rect = contentArea.getBoundingClientRect(), 
 			px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
@@ -116,6 +117,7 @@
 	function isContentArea2(evt) {
 		if (mouseDownPos.length < 2) { return false; }
 		var contentArea = gui.get_bottom_area(),
+			rect = contentArea.getBoundingClientRect(),
 			px = mouseDownPos[0] + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = mouseDownPos[1] + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
