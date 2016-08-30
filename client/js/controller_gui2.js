@@ -216,22 +216,6 @@
 		};
 	}
 	*/
-	
-	/**
-	 * 左メニュー領域[ディスプレイタブ、コンテンツタブ]の初期化
-	 * @method initLeftArea
-	 * @param {Function} bottomfunc addボタンコールバック
-	 */
-	/*
-	function initLeftArea(bottomfunc) {
-		
-		showIDButton.onclick = function (evt) {
-			gui.on_showidbutton_clicked(evt);
-		};
-		initContentArea(bottomfunc);
-		initDisplayArea();
-	}
-	*/
 
 	/**
 	 * Deleteボタン有効化設定
@@ -288,6 +272,28 @@
 		}
 		return null;
 	}
+
+	function initContextMenu() {
+		var delete_button = document.getElementById('context_menu_delete');
+
+		delete_button.onclick = function (evt) {
+			var menu = document.getElementById('context_menu');
+			gui.on_close_item();
+			menu.style.display = "none";
+		};
+
+		document.body.oncontextmenu = function (evt) {
+			var menu = document.getElementById('context_menu'),
+				px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+
+			menu.style.left = px + "px";
+			menu.style.top = py + "px";
+			menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
+			menu.style.display = 'block';
+			evt.preventDefault();
+		};
+	}
 	
 	/**
 	 * 初期化
@@ -300,9 +306,9 @@
 		window.content_box.init(document.getElementById('bottomArea'));
 		window.content_property.init(wholeWindowListID, "whole_window");
 
-		//initLeftArea(function () {});
 		initAddContentArea(function () {});
 		initViewSettingArea(function () {});
+		initContextMenu();
 		
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_preview_area();
@@ -319,19 +325,6 @@
 		document.getElementById('overall_block').addEventListener('click', function (evt) {
 			//bottomfunc(false);
 		});
-
-		
-		document.body.oncontextmenu = function (evt) {
-			var menu = document.getElementById('context_menu'),
-				px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
-
-			menu.style.left = px + "px";
-			menu.style.top = py + "px";
-			menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
-			menu.style.display = 'block';
-			evt.preventDefault();
-		};
 
 	}
 
@@ -357,6 +350,7 @@
 	window.controller_gui.on_snapdropdown_clicked = null;
 	window.controller_gui.on_virtualdisplaysetting_clicked　= null;
 	window.controller_gui.on_display_scale_changed = null;
+	window.controller_gui.on_close_item = null;
 	
 	// enable設定.
 	window.controller_gui.enable_delete_button = enableDeleteButton;

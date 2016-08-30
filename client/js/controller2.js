@@ -2343,6 +2343,10 @@
 				}
 			}
 		};
+
+		gui.on_close_item = function () {
+			closeFunc();
+		};
 		
 		gui.init();
 		connector = window.io_connector;
