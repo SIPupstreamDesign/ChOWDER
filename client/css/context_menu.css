@@ -13,8 +13,10 @@
 	background : white;
 	cursor: default;
 	font-size : 14px;
+	color : black;
 }
 
 .context_menu_item:hover {
-	background : rgb(66, 129, 244); 
+	background : rgb(66, 129, 244);
+	color : white;
 }
