@@ -166,3 +166,21 @@ li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover ul.menu_level3 {
 .init-bottom {
 	border-right: 1px solid #111;
 }
+
+.context_menu {
+	width : 200px;
+	height : 400px;
+	background : rgb(255,255,255);
+	border : 1px solid rgb(186, 186, 186);
+	color : black;
+	position : absolute;
+	box-shadow: 2px 4px 5px black;
+}
+
+.context_menu_item {
+	background : white;
+}
+
+.context_menu_item:hover {
+	background : rgb(66, 129, 244); 
+}

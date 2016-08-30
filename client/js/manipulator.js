@@ -109,11 +109,11 @@
 			isdragging = false;
 		
 		manip.style.position = "absolute";
-		manip.style.border = "solid 2px black";
+		manip.style.border = "solid 2px rgb(4, 180, 49)";
 		manip.style.zIndex = '10';
 		manip.style.width = manipHalfWidth * 2 + "px";
 		manip.style.height = manipHalfHeight * 2 + "px";
-		manip.style.background = "#000";
+		manip.style.background = "rgb(4, 180, 49)";
 		if (manip.id === '_manip_0') {
 			cursor = "nw-resize";
 		} else if (manip.id === '_manip_1') {

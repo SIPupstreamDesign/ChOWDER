@@ -42,6 +42,7 @@
 		boxArea.style.width = "100%";
 		boxArea.style.height = "100%";
 		boxArea.style.paddingTop = "30px";
+		boxArea.style.overflow = "hidden";
 		this.container.appendChild(boxArea);
 
 		if (this.setting.hasOwnProperty("tabs")) {
@@ -60,6 +61,7 @@
 				box.id = tabItem.id + "_box";
 				box.style.width = "100%";
 				box.style.height = "100%";
+				box.style.overflow = "auto";
 				if (tabItem.hasOwnProperty('active') && tabItem['active']) {
 					box.style.display = "block";
 				} else {

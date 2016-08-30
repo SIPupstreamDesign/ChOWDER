@@ -319,6 +319,20 @@
 		document.getElementById('overall_block').addEventListener('click', function (evt) {
 			//bottomfunc(false);
 		});
+
+		
+		document.body.oncontextmenu = function (evt) {
+			var menu = document.getElementById('context_menu'),
+				px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+
+			menu.style.left = px + "px";
+			menu.style.top = py + "px";
+			menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
+			menu.style.display = 'block';
+			evt.preventDefault();
+		};
+
 	}
 
 	window.controller_gui = gui;
