@@ -100,12 +100,12 @@
 		var menuSetting = {
 				menu : [{
 					Delete : {
-							func : function () { alert('not implement'); }
+							func : function (evt) { gui.on_deletedisplay_clicked(evt); }
 						}
 					},
 					{
 					DeleteAll : {
-							func : function () { alert('not implement'); }
+							func : function (evt) { gui.on_deletealldisplay_clicked(evt); }
 						}
 					}]
 				};

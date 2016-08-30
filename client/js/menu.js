@@ -123,7 +123,7 @@
 							},
 						}, {
 							URL : {
-								func : function () { console.log("todo"); }
+								func : function () { window.alert("todo"); }
 							}
 						}],
 				}, {

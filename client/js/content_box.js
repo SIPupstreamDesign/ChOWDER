@@ -82,7 +82,7 @@
 			link;
 		elem = document.createElement('span');
 		elem.id = tabContent.id;
-		elem.className = tabContent.id; 
+		elem.className = tabContent.id + " active";
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabContent.id + "_link";
@@ -107,30 +107,16 @@
 	};
 
 	function changeTab(tabName) {
-		var 
-			//displayTabLink = document.getElementById('display_tab_link'),
-			//displayButtonArea = document.getElementById('display_button_area'),
-			//contentButtonArea = document.getElementById('content_button_area'),
-			//contentTabLink = document.getElementById('content_tab_link'),
-			//showIDButton = document.getElementById('show_display_id_button'),
-			displayPreviewArea = document.getElementById('display_preview_area'),
+		var displayPreviewArea = document.getElementById('display_preview_area'),
 			contentPreviewArea = document.getElementById('content_preview_area');
 
 		if (tabName === 'Display') {
-			//contentButtonArea.style.display = "none";
-			//displayButtonArea.style.display = "block";
-			//displayTabLink.className = "active";
-			//contentTabLink.className = "";
 			displayPreviewArea.style.opacity = 1.0;
 			contentPreviewArea.style.opacity = 0.3;
 			displayPreviewArea.style.zIndex = 10;
 			contentPreviewArea.style.zIndex = -1000;
 			window.content_box.on_tab_changed();
 		} else if (tabName === 'Content') {
-			//contentButtonArea.style.display = "block";
-			//displayButtonArea.style.display = "none";
-			//contentTabLink.className = "active";
-			//displayTabLink.className = "";
 			displayPreviewArea.style.opacity = 0.3;
 			contentPreviewArea.style.opacity = 1.0;
 			displayPreviewArea.style.zIndex = -1000;
@@ -164,8 +150,15 @@
 		content_box = new ContentBox(containerElem, setting);
 	}
 
+	function is_active(tabID) {
+ 		var tab = document.getElementById(tabID);
+		 console.log(tab.className);
+		return tab.className.indexOf('active') >= 0;
+	}
+
 	window.content_box = {};
 	window.content_box.init = init;
 	window.content_box.on_tab_changed = null;
+	window.content_box.is_active = is_active;
 
 }(window.controller_gui));

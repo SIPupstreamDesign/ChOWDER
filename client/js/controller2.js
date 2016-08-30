@@ -122,7 +122,7 @@
 	 * @return {bool} 左リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isDisplayTabSelected() {
-		return (gui.get_display_tab_link().className.indexOf("active") >= 0);
+		return content_box.is_active("display_tab");
 	}
 	
 	/**
