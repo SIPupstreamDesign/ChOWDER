@@ -5,10 +5,10 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 	<link href="css/controller2.css" rel="stylesheet"/>
 	<link href="css/content_box.css" rel="stylesheet" />
-	<link href="css/menu.css" rel="stylesheet" />
 	<link href="css/context_menu.css" rel="stylesheet" />
-	<link href="css/burger_menu.css" rel="stylesheet" />
 	<link href="css/3rd/bootstrap.css" rel="stylesheet" />
+	<link href="css/menu.css" rel="stylesheet" />
+	<link href="css/burger_menu.css" rel="stylesheet" />
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
 	<script type="text/javascript" src="js/metabinary.js"></script>
@@ -33,12 +33,6 @@
 <div class="page" id="layout">
 
 	<div id="head_menu" class="head_menu" >
-		<span class="head_vdisplay_menu" style="display:none">
-			<a class="head_vdisplay_menu_text" id="virtual_display_setting" href="#">
-				Virtual Display Setting
-			</a>
-		</span>
-		
 		<div class="head_mode_menu">
 			<div class="head_mode_text stopselect">
 				Controller
@@ -64,7 +58,6 @@
 		</div>
 	</div>
 
-	<div id="bottomTab" class="bottomTab" style="display:none;">Add Content</div>
 	<div id="bottomArea" class="bottomArea">
 	</div>
 	
@@ -73,6 +66,8 @@
 	
 </div>
 
+	<div id="bottom_burger_menu"></div>
+	
 	<div id="context_menu" class="context_menu" style="display:none">
 		<div class="context_menu_item" id="context_menu_add_memo">メモ追加</div>
 		<div class="context_menu_item" id="context_menu_add_image">画像追加</div>

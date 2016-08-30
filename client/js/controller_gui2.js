@@ -288,6 +288,8 @@
 		// コンテキストメニューの初期化.
 		initContextMenu();
 
+		// 下部バーガーメニューの初期化	
+		window.burger_menu.init(document.getElementById('bottom_burger_menu'));
 
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_preview_area();

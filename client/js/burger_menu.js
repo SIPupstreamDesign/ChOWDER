@@ -10,40 +10,64 @@
 	// コンストラクタ
 	BurgerMenu = function (containerElem, setting) {
 /*
-		<ul class="burger_menu">
-			<li class="burger_menu__multi">
-				<a href="#" class="init-bottom">BurgerMenu multi level</a>
-				<ul class="burger_menu_level1">
-					<li>
-						<a href="#" class="init-right">Child BurgerMenu</a>
-						<ul class="burger_menu_level2">
-							<li>
-								<a href="#" class="init-right">Grandchild BurgerMenu</a>
-								<ul class="burger_menu_level3">
-									<li><a href="#">Great-Grandchild BurgerMenu</a></li>
-									<li><a href="#">Great-Grandchild BurgerMenu</a></li>
-									<li><a href="#">Great-Grandchild BurgerMenu</a></li>
-								</ul>
-							</li>
-							<li><a href="#">Grandchild BurgerMenu</a></li>
-							<li><a href="#">Grandchild BurgerMenu</a></li>
-						</ul>
-					</li>
-				</ul>
-			</li>
-			<!-- 他メニュー-->
-		</ul>
+	<div id="burger_menu">
+		<label id="burger_menu_icon" class="burger_menu_icon" for="burger_menu_checkbox">≡</label>
+		<label id="burger_menu_background" class="burger_menu_background" for="burger_menu_checkbox"></label>
+		<div id="burger_menu_contents" class="burger_menu_contents">
+			<ul>
+				<li>メニュー1</li>
+				<li>メニュー2</li>
+				<li>メニュー3</li>
+			</ul>
+		</div>
+	</div>
 */
 		var i,
 			head,
 			link,
 			li,
 			ul,
-			burger_menu;
+			input,
+			label_icon,
+			label_background,
+			div;
+
+		label_icon = document.createElement("label");
+		label_icon.className = "burger_menu_icon";
+		label_icon.id = containerElem.id + "_icon";
+		label_icon.innerHTML = "≡";
+
+		label_background = document.createElement("label");
+		label_background.className = "burger_menu_background";
+		label_background.id = containerElem.id + "_background";
+
+		div = document.createElement("div");
+		div.className = "burger_menu_contents";
+		div.id = containerElem.id + "_contents";
+
+		containerElem.appendChild(label_icon);
+		containerElem.appendChild(label_background);
+		containerElem.appendChild(div);
 
 		ul = document.createElement('ul');
-		ul.className = "burger_menu";
-		containerElem.appendChild(ul);
+		div.appendChild(ul);
+
+		function label_click_func(evt) {
+				var visible = (div.style.display === "none" || div.style.display === "");
+				div.style.display = visible ? "block" : "none";
+				
+				if (visible) {
+					console.log("visible")
+					label_background.style.opacity = 0.5;
+					label_background.style.zIndex = 1000000;
+				} else {
+					label_background.style.opacity = 0.0;
+					label_background.style.zIndex = -1;
+				}
+				label_background.onclick = label_icon.onclick;
+		}
+
+		label_icon.onclick = label_click_func;
 
 		function createBurgerMenu(setting, ul, n) {
 			var i,
@@ -56,44 +80,16 @@
 				key = Object.keys(setting[i])[0];
 				value = setting[i][key];
 				
-				link = document.createElement('a');
-				link.href = "#";
-				link.innerHTML = key;
-
-				if (value instanceof Array) {
-					// 子有り.
-					if (n === 1) {
-						link.className = "burger_menu_init-bottom";
-					} else {
-						link.className = "burger_menu_init-right";
-					}
-					li = document.createElement('li');
-					li.className = "burger_menu__multi";
-					li.appendChild(link);
-					ul.appendChild(li);
-						
-					ul2 = document.createElement('ul');
-					ul2.className = "burger_menu_level" + n;
-					li.appendChild(ul2);
-					li = document.createElement('li');
-					ul2.appendChild(li);
-
-					var count = value.length;
-					createBurgerMenu(value, ul2, n + 1);
-				} else {
-					// 末端.
-					if (value.hasOwnProperty('url')) {
-						link.href = value.url;
-					}
-					if (value.hasOwnProperty('func')) {
-						link.onclick = value.func;
-					}
-					link.className = "";
-					li = document.createElement('li');
-					li.className = "";
-					li.appendChild(link);
-					ul.appendChild(li);
+				li = document.createElement('li');
+				li.className = "burger_menu_content";
+				li.innerHTML = key;
+				if (value.hasOwnProperty('func')) {
+					li.onclick = function (evt) {
+						value.func(evt);
+						label_click_func(evt);
+					};
 				}
+				ul.appendChild(li);
 			}
 		}
 		createBurgerMenu(setting.menu, ul, 1);
@@ -103,58 +99,14 @@
 	function init(containerElem) {
 		var menuSetting = {
 				menu : [{
-					SelectMode : [{
-							View : {
-								url : "view.html"
-							},
-						}, {
-							Controller : {
-								url : "controller.html"
-							}
-						}],
-				}, {
-					Add : [{
-							Image : {
-								func : function () { document.getElementById('image_file_input').click() }
-							}
-						}, {
-							Text : {
-								func : function () { document.getElementById('text_file_input').click(); }
-							},
-						}, {
-							URL : {
-								func : function () { console.log("todo"); }
-							}
-						}],
-				}, {
-					Edit : [{
-							VirtualDisplaySetting : {
-								func : function () { 
-									document.getElementById('display_tab_title').click();
-									gui.on_virtualdisplaysetting_clicked();
-								}
-							},
-						}, {
-							Snap : [{
-								Free : {
-									func : function () { gui.on_snapdropdown_clicked('free'); }
-								},
-							}, {
-								Display : {
-									func : function () {
-										gui.on_snapdropdown_clicked('display');
-									}
-								},
-							}, {
-								Grid : {
-									func : function () { gui.on_snapdropdown_clicked('grid'); }
-								}
-							}],
-						}, {
-							ReplaceImage : {
-								func : function () { document.getElementById('update_image_input').click(); }
-							}
-						}]
+					Delete : {
+							func : function () { alert('not implement'); }
+						}
+					},
+					{
+					DeleteAll : {
+							func : function () { alert('not implement'); }
+						}
 					}]
 				};
 		var menu = new BurgerMenu(containerElem, menuSetting);

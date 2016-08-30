@@ -130,7 +130,7 @@
 					Edit : [{
 							VirtualDisplaySetting : {
 								func : function () { 
-									document.getElementById('display_tab_title').click();
+									document.getElementById('display_tab_link').click();
 									gui.on_virtualdisplaysetting_clicked();
 								}
 							},

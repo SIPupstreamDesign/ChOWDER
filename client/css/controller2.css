@@ -309,20 +309,6 @@ p {
 	/*z-index: 100002;*/
 }
 
-.bottomTab {
-	color: #EEE;
-	background-color: #AAA;
-	padding: 0px 20px 0px 20px;
-	width: 130px;
-	position: absolute;
-	top:128px;
-	left: 50%;
-	margin-left:-380px;
-	border: solid 1px;
-	border-radius:1px;
-	z-index: 100002;
-}
-
 .leftTab {
 	top : 140px;
 	background-color: #AAA;
