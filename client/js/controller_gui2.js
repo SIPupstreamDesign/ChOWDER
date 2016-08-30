@@ -79,9 +79,8 @@
 	/**
 	 * コンテンツ追加ポップアップの初期化
 	 * @method initAddContentArea
-	 * @param {Function} bottomfunc 下部エリアの開閉ファンクション.
 	 */
-	function initAddContentArea(bottomfunc) {
+	function initAddContentArea() {
 		var textSendButton = document.getElementById('text_send_button'),
 			urlSendButton = document.getElementById('url_send_button'),
 			imageFileInput = document.getElementById('image_file_input'),
@@ -96,28 +95,23 @@
 		updateImageInput.addEventListener('change', function (evt) {
 			gui.on_updateimageinput_changed(evt);
 			updateImageInput.value = "";
-			bottomfunc(false);
 		}, false);
 		imageFileInput.addEventListener('change', function (evt) {
 			gui.on_imagefileinput_changed(evt);
 			
 			imageFileInput.value = "";
-			bottomfunc(false);
 		}, false);
 		textFileInput.addEventListener('change', function (evt) {
 			gui.on_textfileinput_changed(evt);
 			
 			textFileInput.value = "";
-			bottomfunc(false);
 		}, false);
 		textSendButton.onclick = function (evt) {
 			gui.on_textsendbutton_clicked(evt);
-			bottomfunc(false);
 		};
 		if (duplicateButton) {
 			duplicateButton.onclick = function (evt) {
 				gui.on_duplicatebutton_clicked(evt);
-				bottomfunc(false);
 			};
 		}
 	}
@@ -274,17 +268,28 @@
 	}
 
 	function initContextMenu() {
-		var delete_button = document.getElementById('context_menu_delete');
+		var menu = document.getElementById('context_menu'),
+			delete_button = document.getElementById('context_menu_delete'),
+			add_image_button = document.getElementById('context_menu_add_image'),
+			add_memo_button = document.getElementById('context_menu_add_memo');
 
 		delete_button.onclick = function (evt) {
-			var menu = document.getElementById('context_menu');
 			gui.on_close_item();
 			menu.style.display = "none";
 		};
 
+		add_image_button.onclick = function (evt) {
+			document.getElementById('image_file_input').click();
+			menu.style.display = "none";
+		};
+
+		add_memo_button.onclick = function (evt) {
+			// TODO
+			menu.style.display = "none";
+		};
+
 		document.body.oncontextmenu = function (evt) {
-			var menu = document.getElementById('context_menu'),
-				px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+			var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 
 			menu.style.left = px + "px";
@@ -306,7 +311,7 @@
 		window.content_box.init(document.getElementById('bottomArea'));
 		window.content_property.init(wholeWindowListID, "whole_window");
 
-		initAddContentArea(function () {});
+		initAddContentArea();
 		initViewSettingArea(function () {});
 		initContextMenu();
 		
@@ -322,15 +327,11 @@
 			gui.on_mousedown_content_area();
 		});
 		*/
-		document.getElementById('overall_block').addEventListener('click', function (evt) {
-			//bottomfunc(false);
-		});
 
 	}
 
 	window.controller_gui = gui;
 	window.controller_gui.init = init;
-	//window.controller_gui.init_property_area = window.content_proprety.init;
 
 	// イベントコールバック.
 	window.controller_gui.on_mousedown_content_preview_area = null;

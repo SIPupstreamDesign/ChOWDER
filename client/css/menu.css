@@ -179,6 +179,8 @@ li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover ul.menu_level3 {
 
 .context_menu_item {
 	background : white;
+	cursor: default;
+	font-size : 14px;
 }
 
 .context_menu_item:hover {
