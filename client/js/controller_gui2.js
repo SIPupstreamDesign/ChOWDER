@@ -80,6 +80,7 @@
 	 * コンテンツ追加ポップアップの初期化
 	 * @method initAddContentArea
 	 */
+	/*
 	function initAddContentArea() {
 		var textSendButton = document.getElementById('text_send_button'),
 			urlSendButton = document.getElementById('url_send_button'),
@@ -115,47 +116,14 @@
 			};
 		}
 	}
+	*/
 	
 	/**
 	 * ビュー領域初期化。スケーリング表示、スナップ設定などのelementの初期化を行う。
 	 * @method initViewSettingArea
 	 */
-	function initViewSettingArea(rightfunc) {
-		var dropDownCurrent = document.getElementById('snap_dropdown_current'),
-			dropdownMenu1 = document.getElementById('dropdownMenu1'),
-			dropdownMenu2 = document.getElementById('dropdownMenu2'),
-			free = document.getElementById('dropdown_item1'),
-			display = document.getElementById('dropdown_item2'),
-			grid = document.getElementById('dropdown_item3'),
-			displaySettingItem = document.getElementById('virtual_display_setting'),
-			i;
-		
-		/*
-		free.onclick = function () {
-			dropDownCurrent.innerHTML = this.innerHTML;
-			console.log("free mode");
-			gui.on_snapdropdown_clicked('free');
-		};
-
-		display.onclick = function () {
-			dropDownCurrent.innerHTML = this.innerHTML;
-			console.log("display mode");
-			gui.on_snapdropdown_clicked('display');
-		};
-		
-		grid.onclick = function () {
-			dropDownCurrent.innerHTML = this.innerHTML;
-			console.log("grid mode");
-			gui.on_snapdropdown_clicked('grid');
-		};
-
-		displaySettingItem.onclick = function () {
-			var displayTabTitle = document.getElementById('display_tab_title');
-			displayTabTitle.onclick();
-			gui.on_virtualdisplaysetting_clicked();
-			rightfunc(true);
-		};
-		
+	/*
+	function initViewSettingArea(rightfunc) {		
 		addScaleDropdown('display_scale_1', 0.1);
 		addScaleDropdown('display_scale_2', 0.2);
 		addScaleDropdown('display_scale_3', 0.3);
@@ -166,9 +134,9 @@
 		addScaleDropdown('display_scale_8', 0.8);
 		addScaleDropdown('display_scale_9', 0.9);
 		addScaleDropdown('display_scale_10', 1.0);
-		*/
 		//addScaleDropdown('display_scale_11', "custum");
 	}
+	*/
 	
 	/**
 	 * 左コンテンツタブ初期化
@@ -267,6 +235,9 @@
 		return null;
 	}
 
+	/**
+	 * コンテキストメニューを初期化する.
+	 */
 	function initContextMenu() {
 		var menu = document.getElementById('context_menu'),
 			delete_button = document.getElementById('context_menu_delete'),
@@ -307,14 +278,17 @@
 	function init() {
 		window.layout.init();
 
+		// 上部メニューの初期化.
 		window.menu.init(document.getElementById('head_menu'));
+		// 下部コンテンツボックスの初期化.
 		window.content_box.init(document.getElementById('bottomArea'));
+		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "whole_window");
 
-		initAddContentArea();
-		initViewSettingArea(function () {});
+		// コンテキストメニューの初期化.
 		initContextMenu();
-		
+
+
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_preview_area();
 		});

@@ -1,32 +1,32 @@
 /*jslint devel:true*/
 /*global io, socket, FileReader, Uint8Array, Blob, URL, event */
 
-/// menu
+/// burger_menu
 (function (gui) {
 	"use strict";
 
-	var Menu;
+	var BurgerMenu;
 
 	// コンストラクタ
-	Menu = function (containerElem, setting) {
+	BurgerMenu = function (containerElem, setting) {
 /*
-		<ul class="menu">
-			<li class="menu__multi">
-				<a href="#" class="init-bottom">Menu multi level</a>
-				<ul class="menu_level1">
+		<ul class="burger_menu">
+			<li class="burger_menu__multi">
+				<a href="#" class="init-bottom">BurgerMenu multi level</a>
+				<ul class="burger_menu_level1">
 					<li>
-						<a href="#" class="menu_init-right">Child Menu</a>
-						<ul class="menu_level2">
+						<a href="#" class="init-right">Child BurgerMenu</a>
+						<ul class="burger_menu_level2">
 							<li>
-								<a href="#" class="menu_init-right">Grandchild Menu</a>
-								<ul class="menu_level3">
-									<li><a href="#">Great-Grandchild Menu</a></li>
-									<li><a href="#">Great-Grandchild Menu</a></li>
-									<li><a href="#">Great-Grandchild Menu</a></li>
+								<a href="#" class="init-right">Grandchild BurgerMenu</a>
+								<ul class="burger_menu_level3">
+									<li><a href="#">Great-Grandchild BurgerMenu</a></li>
+									<li><a href="#">Great-Grandchild BurgerMenu</a></li>
+									<li><a href="#">Great-Grandchild BurgerMenu</a></li>
 								</ul>
 							</li>
-							<li><a href="#">Grandchild Menu</a></li>
-							<li><a href="#">Grandchild Menu</a></li>
+							<li><a href="#">Grandchild BurgerMenu</a></li>
+							<li><a href="#">Grandchild BurgerMenu</a></li>
 						</ul>
 					</li>
 				</ul>
@@ -39,13 +39,13 @@
 			link,
 			li,
 			ul,
-			menu;
+			burger_menu;
 
 		ul = document.createElement('ul');
-		ul.className = "menu";
+		ul.className = "burger_menu";
 		containerElem.appendChild(ul);
 
-		function createMenu(setting, ul, n) {
+		function createBurgerMenu(setting, ul, n) {
 			var i,
 				ul2,
 				key,
@@ -63,23 +63,23 @@
 				if (value instanceof Array) {
 					// 子有り.
 					if (n === 1) {
-						link.className = "menu_init-bottom";
+						link.className = "burger_menu_init-bottom";
 					} else {
-						link.className = "menu_init-right";
+						link.className = "burger_menu_init-right";
 					}
 					li = document.createElement('li');
-					li.className = "menu__multi";
+					li.className = "burger_menu__multi";
 					li.appendChild(link);
 					ul.appendChild(li);
 						
 					ul2 = document.createElement('ul');
-					ul2.className = "menu_level" + n;
+					ul2.className = "burger_menu_level" + n;
 					li.appendChild(ul2);
 					li = document.createElement('li');
 					ul2.appendChild(li);
 
 					var count = value.length;
-					createMenu(value, ul2, n + 1);
+					createBurgerMenu(value, ul2, n + 1);
 				} else {
 					// 末端.
 					if (value.hasOwnProperty('url')) {
@@ -96,7 +96,7 @@
 				}
 			}
 		}
-		createMenu(setting.menu, ul, 1);
+		createBurgerMenu(setting.menu, ul, 1);
 	};
 
 	// 初期化
@@ -157,9 +157,9 @@
 						}]
 					}]
 				};
-		var menu = new Menu(containerElem, menuSetting);
+		var menu = new BurgerMenu(containerElem, menuSetting);
 	}
 
-	window.menu = {};
-	window.menu.init = init;
+	window.burger_menu = {};
+	window.burger_menu.init = init;
 }(window.controller_gui));
