@@ -103,13 +103,17 @@
 	 * @return {bool} 発生したイベントが左リストビュー領域で発生していたらtrueを返す.
 	 */
 	function isContentArea(evt) {
+		/*
 		var contentArea = gui.get_left_main_area(),
+			rect = contentArea.getBoundingClientRect(),
 			px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
 			return false;
 		}
-		return (px < (contentArea.scrollWidth) && py > 100 && py < (100 + contentArea.offsetTop + contentArea.scrollHeight));
+		return px < rect.right && py > rect.top;
+		*/
+		return false;
 	}
 	
 	/**

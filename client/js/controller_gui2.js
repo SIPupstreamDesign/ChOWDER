@@ -339,7 +339,7 @@
 	window.controller_gui.get_selected_elem = getSelectedElem;
 	
 	window.controller_gui.get_left_main_area = function () {
-		return document.getElementById('left_main_area');
+		return document.getElementById('bottomArea');
 	};
 	window.controller_gui.get_display_tab_link = function () {
 		return document.getElementById('display_tab_link');
