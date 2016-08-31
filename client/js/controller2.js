@@ -529,9 +529,6 @@
 		if (metaData.type === windowType) {
 			content_property.init(id, "display", mime);
 			content_property.assign_content_property(metaDataDict[id]);
-			gui.enable_delete_button(false);
-			gui.enable_display_delete_button(true);
-			gui.enable_update_image_button(false);
 			if (gui.get_list_elem(id)) {
 				gui.get_list_elem(id).style.borderColor = windowSelectColor;
 			}
@@ -540,9 +537,6 @@
 		} else {
 			content_property.init(id, metaData.type, mime);
 			content_property.assign_content_property(metaDataDict[id]);
-			gui.enable_delete_button(true);
-			gui.enable_update_image_button(true);
-			gui.enable_display_delete_button(false);
 			gui.set_update_content_id(id);
 			if (gui.get_list_elem(id)) {
 				gui.get_list_elem(id).style.borderColor = contentSelectColor;
@@ -1713,7 +1707,6 @@
 		console.log("doneUpdateContent");
 
 		gui.set_update_content_id("No Content Selected.");
-		gui.enable_update_image_button(false);
 	};
 	
 	/**

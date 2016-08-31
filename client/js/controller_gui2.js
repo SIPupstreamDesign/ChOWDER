@@ -54,50 +54,6 @@
 			document.getElementById('dropdown2').className = "dropdown2";
 		});
 	}
-
-	/**
-	 * Deleteボタン有効化設定
-	 * @method enableDeleteButton
-	 * @param {bool} isEnable ボタン有効化
-	 */
-	function enableDeleteButton(isEnable) {
-		/*
-		if (isEnable) {
-			document.getElementById('content_delete_button').className = "btn btn-danger";
-		} else {
-			document.getElementById('content_delete_button').className = "btn btn-danger disabled";
-		}
-		*/
-	}
-	
-	/**
-	 * DisplayDeleteボタン有効化設定
-	 * @method enableDisplayDeleteButton
-	 * @param {bool} isEnable ボタン有効化
-	 */
-	function enableDisplayDeleteButton(isEnable) {
-		// TODO burgermenuのボタンの有効化
-		/*
-		if (isEnable) {
-			document.getElementById('display_delete_button').className = "btn btn-primary";
-		} else {
-			document.getElementById('display_delete_button').className = "btn btn-primary disabled";
-		}
-		*/
-	}
-	
-	/**
-	 * 画像更新ボタン有効化
-	 * @method enableUpdateImageButton
-	 * @param {bool} isEnable ボタン有効化
-	 */
-	function enableUpdateImageButton(isEnable) {
-		if (isEnable) {
-			document.getElementById('update_image_input').disabled = false;
-		} else {
-			document.getElementById('update_image_input').disabled = true;
-		}
-	}
 	
 	/**
 	 * PropertyエリアのコンテンツIDからElementを取得する
@@ -367,12 +323,6 @@
 	window.controller_gui.on_close_item = null;
 	window.controller_gui.on_file_dropped = null;
 	
-	// enable設定.
-	window.controller_gui.enable_delete_button = enableDeleteButton;
-	window.controller_gui.enable_display_delete_button = enableDisplayDeleteButton;
-	window.controller_gui.enable_update_image_button = enableUpdateImageButton;
-	
-
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;
 	
