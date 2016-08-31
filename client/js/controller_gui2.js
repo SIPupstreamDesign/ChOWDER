@@ -6,7 +6,9 @@
 	var gui = {},
 		windowType = "window",
 		wholeWindowListID = "onlist:whole_window",
-		groupBox = null;
+		groupBox = null,
+		displayMenu = null,
+		contentMenu = null;
 	
 	/**
 	 * VirtualDisplayスケール設定ボタン追加
@@ -74,6 +76,7 @@
 	 * @param {bool} isEnable ボタン有効化
 	 */
 	function enableDisplayDeleteButton(isEnable) {
+		// TODO burgermenuのボタンの有効化
 		/*
 		if (isEnable) {
 			document.getElementById('display_delete_button').className = "btn btn-primary";
@@ -176,6 +179,25 @@
 	}
 	
 	/**
+	 * ドラッグアンドドロップの初期化
+	 */
+	function initDragAndDrop() {
+		window.addEventListener('dragover', function(evt) {
+			var  e = evt || event;
+			e.preventDefault();
+			evt.dataTransfer.dropEffect = 'copy';
+		});
+		window.addEventListener('drop', function(evt) {
+			var  e = evt || event;
+			e.preventDefault();
+			e.stopPropagation();
+			evt.preventDefault();
+			evt.stopPropagation();
+			gui.on_file_dropped(evt);
+		});
+	}
+
+	/**
 	 *  タブが変更された
 	 * @param tabName タブ名
 	 */
@@ -223,7 +245,7 @@
 		window.menu.init(document.getElementById('head_menu'));
 
 		// 下部コンテンツボックスの初期化.
-		window.content_box.init(document.getElementById('bottomArea'),
+		window.content_box.init(document.getElementById('bottom_area'),
 			{
 				tabs : [{
 						Display : {
@@ -244,6 +266,7 @@
 					}]
 			});
 
+		// コンテンツボックスにグループボックスを埋め込み.
 		groupBox = window.group_box.init(document.getElementById('content_tab_box'),
 			{
 				tabs : [{
@@ -272,33 +295,36 @@
 		// コンテンツ入力の初期化
 		initContentInputs();
 
+		// ファイルドラッグアンドドロップ
+		initDragAndDrop();
+
 		// 下部バーガーメニューの初期化	
-		window.burger_menu.init(
+		displayMenu = window.burger_menu.init(
 			document.getElementById('bottom_burger_menu_display'),
 			{
 				menu : [{
-					選択Displayを削除 : {
+						選択Displayを削除 : {
 							func : function (evt) { gui.on_deletedisplay_clicked(evt); }
 						}
 					},
 					{
-					全てのDisplayを削除 : {
+						全てのDisplayを削除 : {
 							func : function (evt) { gui.on_deletealldisplay_clicked(evt); }
 						}
 					}]
 			});
 
 		// 下部バーガーメニューの初期化
-		window.burger_menu.init(
+		contentMenu = window.burger_menu.init(
 			document.getElementById('bottom_burger_menu_content'),
 			{
 				menu : [{
-					選択コンテンツを削除 : {
+						選択コンテンツを削除 : {
 							func : function (evt) { gui.on_contentdeletebutton_clicked(evt); }
 						}
 					},
 					{
-					グループ内のコンテンツを全て削除 : {
+						グループ内のコンテンツを全て削除 : {
 							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
 						}
 					},
@@ -311,32 +337,10 @@
 
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_preview_area();
-			console.log("on_mousedown_content_preview_area");
 		});
 
 		document.getElementById('display_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_display_preview_area();
-			console.log("on_mousedown_display_preview_area");
-		});
-		/*
-		document.getElementById('content_area').addEventListener("mousedown", function (evt) {
-			gui.on_mousedown_content_area();
-		});
-		*/
-		
-		// ファイルドラッグアンドドロップ
-		window.addEventListener('dragover', function(evt) {
-			var  e = evt || event;
-			e.preventDefault();
-			evt.dataTransfer.dropEffect = 'copy';
-		});
-		window.addEventListener('drop', function(evt) {
-			var  e = evt || event;
-			e.preventDefault();
-			e.stopPropagation();
-			evt.preventDefault();
-			evt.stopPropagation();
-			gui.on_file_dropped(evt);
 		});
 	}
 
@@ -346,7 +350,6 @@
 	// イベントコールバック.
 	window.controller_gui.on_mousedown_content_preview_area = null;
 	window.controller_gui.on_mousedown_display_preview_area = null;
-	window.controller_gui.on_mousedown_content_area = null;
 	window.controller_gui.on_updateimageinput_changed = null;
 	window.controller_gui.on_imagefileinput_changed = null;
 	window.controller_gui.on_textfileinput_changed = null;
@@ -374,7 +377,7 @@
 	window.controller_gui.get_selected_elem = getSelectedElem;
 	
 	window.controller_gui.get_bottom_area = function () {
-		return document.getElementById('bottomArea');
+		return document.getElementById('bottom_area');
 	};
 	window.controller_gui.get_display_tab_link = function () {
 		return document.getElementById('display_tab_link');

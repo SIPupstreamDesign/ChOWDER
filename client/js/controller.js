@@ -1005,14 +1005,6 @@
 	}
 	
 	/**
-	 * VirualDisplayをVirtualScreenに設定
-	 * @method addScreenRect
-	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが再生成される.
-	 */
-	function addScreenRect(windowData) {
-	}
-	
-	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
 	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが更新される.
@@ -1108,7 +1100,6 @@
 			}
 			assignSplitWholes(vscreen.getSplitWholes());
 		}
-		addScreenRect(windowData);
 	};
 	
 	/**

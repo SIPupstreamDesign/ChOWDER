@@ -265,7 +265,7 @@
 					zIndex : bigZIndex
 				},
 				{
-					id : 'bottomArea',
+					id : 'bottom_area',
 					size : "220px",
 					minSize : "100px"
 				}]

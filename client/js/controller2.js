@@ -2353,15 +2353,6 @@
 			}
 		};
 		
-		gui.on_mousedown_content_area = function () {
-			// erase last border
-			if (!manipulator.getDraggingManip()) {
-				if (getLastSelectedElem()) {
-					unselect();
-				}
-			}
-		};
-
 		gui.on_close_item = function () {
 			closeFunc();
 		};
