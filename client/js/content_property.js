@@ -125,7 +125,8 @@
 			addInputProperty('content_transform_h', 'h', 'px', '0');
 			addTextInputProperty('content_text', "");
 			addSubmitButton('content_text_submit', "登録", true, function () {
-				console.log("登録done");
+				var text = document.getElementById('content_text');
+				window.content_property.on_metainfo_changed(text.value);
 			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
@@ -146,7 +147,8 @@
 			addInputProperty('whole_split_y', 'split y', '', '1');
 			addTextInputProperty('content_text', "");
 			addSubmitButton('content_text_submit', "登録", true, function () {
-				console.log("登録done");
+				var text = document.getElementById('content_text');
+				window.content_property.on_metainfo_changed(text.value);
 			})
 			wholeW = document.getElementById('whole_width');
 			wholeH = document.getElementById('whole_height');
@@ -174,7 +176,8 @@
 			addInputProperty('content_transform_z', 'z', 'index', '0');
 			addTextInputProperty('content_text', "");
 			addSubmitButton('content_text_submit', "登録", false, function () {
-				console.log("登録done");
+				var text = document.getElementById('content_text');
+				window.content_property.on_metainfo_changed(text.value);
 			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
@@ -290,6 +293,7 @@
 	window.content_property.on_rect_changed = null;
 	window.content_property.on_display_value_changed = null;
 	window.content_property.on_change_whole_split = null;
+	window.content_property.on_metainfo_changed = null;
 	//window.content_property.assign_view_setting = assignViewSetting;
 	window.content_property.assign_content_property = assignContentProperty;
 

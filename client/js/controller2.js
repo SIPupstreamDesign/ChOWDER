@@ -2327,6 +2327,11 @@
 			console.log('on_rect_changed');
 			changeRect(this.id, parseInt(this.value, 10));
 		};
+
+		content_property.on_metainfo_changed = function (text) {
+			console.log('on_metainfo_changed', text);
+			
+		};
 		
 		gui.on_mousedown_content_preview_area = function () {
 			// erase last border
