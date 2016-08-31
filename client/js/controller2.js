@@ -1009,9 +1009,7 @@
 		if (!text) {
 			text = "";
 		}
-		elem.style.position = "absolute";
-		elem.style.top = "0px";
-		elem.style.left = "0px";
+		elem.className = "text_content";
 		elem.innerHTML = text;
 		previewArea.appendChild(elem);
 		
@@ -1056,8 +1054,6 @@
 				screenElem = document.createElement('div');
 				screenElem.innerHTML = "ID:" + windowData.id;
 				screenElem.className = "screen";
-				screenElem.style.zIndex = -100;
-				screenElem.style.display = "block";
 				screenElem.id = windowData.id;
 				screenElem.style.border = 'solid';
 				previewArea.appendChild(screenElem);
@@ -1090,11 +1086,8 @@
 			wholeElem = document.getElementById(wholeWindowID);
 			if (!wholeElem) {
 				wholeElem = document.createElement('span');
-				wholeElem.style.border = 'solid';
-				wholeElem.style.zIndex = -1000;
-				wholeElem.className = "screen";
+				wholeElem.className = "whole_screen_elem";
 				wholeElem.id = wholeWindowID;
-				wholeElem.style.color = "black";
 				setupWindow(wholeElem, wholeElem.id);
 				previewArea.appendChild(wholeElem);
 			}
@@ -1111,8 +1104,6 @@
 								screenElem = document.createElement('div');
 								screenElem.innerHTML = "ID:" + s;
 								screenElem.className = "screen";
-								screenElem.style.zIndex = -100;
-								screenElem.style.display = "block";
 								screenElem.id = s;
 								console.log("screenElemID:" + JSON.stringify(screens[s]));
 								screenElem.style.border = 'solid';
@@ -1738,15 +1729,6 @@
 		}
 		
 		doneGetMetaData(err, reply);
-		
-		/*
-		if (currentContent) {
-			currentContent.id = json.id;
-			setupContent(currentContent, json.id);
-			//console.log(currentContent);
-		}
-		currentContent = null;
-		*/
 	};
 	
 	/**
@@ -1974,9 +1956,7 @@
 				buffer = new Uint8Array(e.target.result);
 				blob = new Blob([buffer], {type: "image/jpeg"});
 				img.src = URL.createObjectURL(blob);
-				img.style.position = "absolute";
-				img.style.left = "0px";
-				img.style.right = "0px";
+				img.className = "image_content";
 				img.onload = function () {
 					var metaData = {type : "image", posx : 0, posy : 0, width : img.naturalWidth, height: img.naturalHeight};
 					metaData.group = gui.get_current_group_name();
@@ -2017,9 +1997,7 @@
 				buffer = new Uint8Array(e.target.result);
 				blob = new Blob([buffer], {type: "image/jpeg"});
 				img.src = URL.createObjectURL(blob);
-				img.style.position = "absolute";
-				img.style.left = "0px";
-				img.style.right = "0px";
+				img.className = "image_content";
 				img.onload = function () {
 					var metaData = {type : "image", posx : px, posy : py, width : img.naturalWidth, height: img.naturalHeight};
 					vscreen_util.transPosInv(metaData);
@@ -2326,11 +2304,6 @@
 					reply.metaData = meta;
 					doneGetContent(err, reply);
 					doneGetMetaData(err, meta);
-					/*
-					if (document.getElementById(meta.id)) {
-						manipulator.moveManipulator(document.getElementById(meta.id));
-					}
-					*/
 				});
 			});
 		}
@@ -2339,8 +2312,6 @@
 	// windowが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateWindowMetaData', function (metaData) {
 		console.log('UpdateWindowMetaData', metaData, draggingID);
-		//updateScreen();
-		//clearWindowList();
 		if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
 			if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
 				changeWindowBorderColor(metaData);
@@ -2348,8 +2319,6 @@
 		}
 				 
 		doneGetWindowMetaData(null, metaData);
-		
-		//connector.send('GetWindowMetaData', metaData, doneGetWindowMetaData);
 	});
 	
 	// すべての更新が必要なときにブロードキャストされてくる.
