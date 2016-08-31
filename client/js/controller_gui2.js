@@ -288,6 +288,17 @@
 					}]
 			});
 
+		function testdeletegroup(evt) {
+			var i,
+				tab = groupBox.get_tab("Group1"),
+				node;
+
+			for (i = 0; i < tab.childNodes.length; i = i + 1) {
+				node = tab.childNodes[i];
+			}
+			groupBox.delete_tab("Group1");
+		}
+
 		// 下部バーガーメニューの初期化
 		window.burger_menu.init(
 			document.getElementById('bottom_burger_menu_content'),
@@ -300,6 +311,11 @@
 					{
 					グループ内のコンテンツを全て削除 : {
 							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
+						}
+					},
+					{
+						テストdeletegroup : {
+							func : function (evt) { testdeletegroup(evt); }
 						}
 					}]
 			});
@@ -318,7 +334,20 @@
 			gui.on_mousedown_content_area();
 		});
 		*/
-
+			
+		window.addEventListener('dragover', function(evt) {
+			var  e = evt || event;
+			e.preventDefault();
+			evt.dataTransfer.dropEffect = 'copy';
+		});
+		window.addEventListener('drop', function(evt) {
+			var  e = evt || event;
+			e.preventDefault();
+			e.stopPropagation();
+			evt.preventDefault();
+			evt.stopPropagation();
+			gui.on_file_dropped(evt);
+		});
 	}
 
 	window.controller_gui = gui;
@@ -343,6 +372,7 @@
 	window.controller_gui.on_virtualdisplaysetting_clicked　= null;
 	window.controller_gui.on_display_scale_changed = null;
 	window.controller_gui.on_close_item = null;
+	window.controller_gui.on_file_dropped = null;
 	
 	// enable設定.
 	window.controller_gui.enable_delete_button = enableDeleteButton;

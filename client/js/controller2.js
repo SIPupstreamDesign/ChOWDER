@@ -23,6 +23,7 @@
 		contentSelectColor = "#04B431",
 		contentBorderColor = "rgba(0,0,0,0)",
 		windowSelectColor = "#0080FF",
+		textColor = "white",
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
@@ -946,7 +947,6 @@
 			if (!isContentArea(evt)) {
 				//console.log("not onContentArea");
 				metaData.visible = true;
-				elem.style.color = "black";
 				if (isFreeMode()) {
 					vscreen_util.assignMetaData(elem, metaData, true);
 					updateMetaData(metaData);
@@ -999,7 +999,7 @@
 	 * @method sendText
 	 * @param {String} text 送信するテキスト.
 	 */
-	function sendText(text) {
+	function sendText(text, metaData) {
 		var previewArea = gui.get_content_preview_area(),
 			textInput = document.getElementById('text_input'),
 			elem = document.createElement('pre'),
@@ -1016,12 +1016,13 @@
 		previewArea.appendChild(elem);
 		
 		// calculate width, height
-		width = elem.offsetWidth / vscreen.getWholeScale();
-		height = elem.offsetHeight / vscreen.getWholeScale();
+		metaData.width = elem.offsetWidth / vscreen.getWholeScale();
+		metaData.height = elem.offsetHeight / vscreen.getWholeScale();
 		previewArea.removeChild(elem);
+		metaData.type = "text";
 
 		//currentContent = elem;
-		addContent({type : "text", posx : 0, posy : 0, width : width, height : height}, text);
+		addContent(metaData, text);
 	}
 	
 	/**
@@ -1245,6 +1246,7 @@
 			if (metaData.type === 'text') {
 				// contentData is text
 				contentElem.innerHTML = contentData;
+				contentElem.style.color = textColor;
 				contentElem.style.overflow = "visible"; // Show all text
 				vscreen_util.assignMetaData(contentElem, metaData, true);
 			} else {
@@ -1339,6 +1341,7 @@
 				contentElem.innerHTML = contentData;
 				divElem.style.width = "200px";
 				divElem.style.height = "50px";
+				divElem.style.color = textColor;
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -1907,7 +1910,7 @@
 			text = textInput.value;
 		
 		textInput.value = "";
-		sendText(text);
+		sendText(text, { posx : 0, posy : 0 });
 	};
 	
 	/**
@@ -1991,7 +1994,61 @@
 			}
 		}
 	};
-	
+
+	gui.on_file_dropped = function (evt) {
+		var i,
+			buffer,
+			blob,
+			file,
+			files = evt.dataTransfer.files,
+			fileReader = new FileReader(),
+			px = 0,
+			py = 0,
+			rect = evt.target.getBoundingClientRect();
+
+ 		px = rect.left + evt.offsetX;
+		py = rect.top + evt.offsetY;
+
+		fileReader.onloadend = function (e) {
+			var data = e.target.result,
+				img;
+			if (data && data instanceof ArrayBuffer) {
+				img = document.createElement('img');
+				buffer = new Uint8Array(e.target.result);
+				blob = new Blob([buffer], {type: "image/jpeg"});
+				img.src = URL.createObjectURL(blob);
+				img.style.position = "absolute";
+				img.style.left = "0px";
+				img.style.right = "0px";
+				img.onload = function () {
+					var metaData = {type : "image", posx : px, posy : py, width : img.naturalWidth, height: img.naturalHeight};
+					vscreen_util.transPosInv(metaData);
+					metaData.visible = true;
+					metaData.group = gui.get_current_group_name();
+					img.style.width = img.naturalWidth + "px";
+					img.style.height = img.naturalHeight + "px";
+					URL.revokeObjectURL(img.src);
+					console.log("sendImage");
+					addContent(metaData, e.target.result);
+				};
+			} else {
+				var metaData = { posx : px, posy : py };
+				vscreen_util.transPosInv(metaData);
+				metaData.visible = true;
+				metaData.group = gui.get_current_group_name();
+				sendText(data, metaData);
+			}
+		};
+		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+			if (file.type.match('image.*')) {
+				fileReader.readAsArrayBuffer(file);
+			}
+			if (file.type.match('text.*')) {
+				fileReader.readAsText(file);
+			}
+		}
+	};
+
 	/**
 	 * テキストファイルFileOpenハンドラ
 	 * @method openText
@@ -2007,7 +2064,7 @@
 		fileReader.onloadend = function (e) {
 			var data = e.target.result;
 			//console.log(data);
-			sendText(data);
+			sendText(data, { posx : 0, posy : 0 });
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
 			if (file.type.match('text.*')) {

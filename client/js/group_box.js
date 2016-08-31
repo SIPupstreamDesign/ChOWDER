@@ -8,6 +8,7 @@
 		this.container = containerElem;
 		this.setting = setting;
 		this.tabIDs = [];
+		this.tabGroupToElems = {};
 		this.currentTab = null;
 		this.init();
 	};
@@ -24,7 +25,7 @@
 			boxArea,
 			box,
 			tabs,
-			tabName,
+			groupName,
 			tabItem,
 			elem;
 
@@ -41,13 +42,16 @@
 		if (this.setting.hasOwnProperty("tabs")) {
 			tabs = this.setting["tabs"];
 			elem = document.createElement('div');
+			elem.className = "group_tab_div";
 			tabArea.appendChild(elem);
 		
 			for (i = 0; i < tabs.length; i = i + 1) {
-				tabName = Object.keys(tabs[i])[0];
-				tabItem = tabs[i][tabName];
-				console.log("tabname", tabName);
-				elem.appendChild(this.create_tab(tabName, tabItem, i === 0));
+				groupName = Object.keys(tabs[i])[0];
+				if (!this.tabGroupToElems.hasOwnProperty(groupName)) {
+					this.tabGroupToElems[groupName] = [];
+				}
+				tabItem = tabs[i][groupName];
+				elem.appendChild(this.create_tab(groupName, tabItem, i === 0));
 				this.tabIDs.push(tabItem.id);
 					
 				box = document.createElement('div');
@@ -64,8 +68,10 @@
 				boxArea.appendChild(box);
 				if (this.currentTab === null) {
 					this.currentTab = box;
-					this.currentGroupName = tabName;
+					this.currentGroupName = groupName;
 				}
+				
+				this.tabGroupToElems[groupName].push(box);
 			}
 		}
 	};
@@ -97,16 +103,17 @@
 		<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
 		..
 	*/
-	GroupBox.prototype.create_tab = function (tabName, tabContent, is_active) {
+	GroupBox.prototype.create_tab = function (groupName, tabContent, is_active) {
 		var elem,
 			link;
 		elem = document.createElement('span');
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
+		this.tabGroupToElems[groupName].push(elem);
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabContent.id + "_link";
-		link.innerHTML = tabName;
+		link.innerHTML = groupName;
 		if (tabContent.hasOwnProperty('func')) {
 			link.onclick = function () {
 				var i,
@@ -124,11 +131,41 @@
 					window.group_box.on_tab_changed();
 				}
 				this.currentTab = document.getElementById(tabContent.id + "_box");
-				this.currentGroupName = tabName;
+				this.currentGroupName = groupName;
 			}.bind(this);
 		}
 		elem.appendChild(link);
 		return elem;
+	};
+
+	GroupBox.prototype.delete_tab = function(groupName) {
+		var i,
+			div,
+			elem,
+			parent = null;
+		
+		if (groupName === "default") {
+			return;
+		}
+		if (this.tabGroupToElems.hasOwnProperty(groupName)) {
+			parent = this.container.getElementsByClassName("group_box_area")[0];
+			div = this.container.getElementsByClassName("group_tab_div")[0];
+			if (parent && div) {
+				for (i = 0; i < this.tabGroupToElems[groupName].length; ++i) {
+					elem = this.tabGroupToElems[groupName][i];
+					if(parent.contains(elem)) {
+						parent.removeChild(elem);
+						console.error("deleted", elem);
+					}
+					if(div.contains(elem)) {
+						div.removeChild(elem);
+						console.error("deleted", elem);
+					}
+				}
+				this.currentTab = this.get_tab('default');
+				this.currentTab.style.display = "block";
+			}
+		}
 	};
 
 	function init(containerElem, setting) {
