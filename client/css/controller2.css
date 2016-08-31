@@ -195,6 +195,7 @@ p {
 	border-radius: 6px;
 }
 
+/*
 .leftArea {
 	position : absolute;
 	height : 100%;
@@ -214,6 +215,7 @@ p {
 	padding-bottom: 100px;
 }
 
+*/
 
 .content_area {
 	display: none;
@@ -237,11 +239,8 @@ p {
 	border-color: #0080FF;
 }
 
+/*
 .rightArea {
-	/*
-	border: solid;
-	border-color: rgba(100, 100, 100, 0.5);
-	*/
 	background: linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 	position : absolute;
 	height : 100%;
@@ -270,6 +269,7 @@ p {
 	transform: rotate(-90deg);
 	z-index: 100000;
 }
+*/
 
 .bgcolor {
 	background: linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
@@ -305,7 +305,7 @@ p {
 	top: 0px;
 	/*left: 50%;*/
 	/*margin-left:-400px;*/
-	overflow: auto;
+	overflow: hidden;
 	/*z-index: 100002;*/
 }
 

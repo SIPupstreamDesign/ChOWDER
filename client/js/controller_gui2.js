@@ -5,7 +5,8 @@
 	"use strict";
 	var gui = {},
 		windowType = "window",
-		wholeWindowListID = "onlist:whole_window";
+		wholeWindowListID = "onlist:whole_window",
+		groupBox = null;
 	
 	/**
 	 * VirtualDisplayスケール設定ボタン追加
@@ -123,6 +124,7 @@
 		};
 
 		add_image_button.onclick = function (evt) {
+			console.error("hogehoge")
 			document.getElementById('image_file_input').click();
 			menu.style.display = "none";
 		};
@@ -143,7 +145,9 @@
 			evt.preventDefault();
 		};
 		window.addEventListener("mousedown", function (evt) {
-			menu.style.display = 'none';
+			if (evt.target.className !== "context_menu_item") {
+				menu.style.display = "none";
+			}
 		});
 	}
 
@@ -210,10 +214,14 @@
 	 * @method init
 	 */
 	function init() {
+
+
+		// 全体のレイアウトの初期化.
 		window.layout.init();
 
 		// 上部メニューの初期化.
 		window.menu.init(document.getElementById('head_menu'));
+
 		// 下部コンテンツボックスの初期化.
 		window.content_box.init(document.getElementById('bottomArea'),
 			{
@@ -232,6 +240,25 @@
 						Search : {
 							id : "search_tab",
 							func : function () { changeTab('Search'); }
+						}
+					}]
+			});
+
+		groupBox = window.group_box.init(document.getElementById('content_tab_box'),
+			{
+				tabs : [{
+						Group1 : {
+							id : "group_tab_1",
+							className : "group_tab",
+							func : function () {},
+							active : true
+						}
+					}, {
+						Group2 : {
+							id : "group_tab_2",
+							className : "group_tab",
+							func : function () {},
+							active : true
 						}
 					}]
 			});
@@ -339,7 +366,7 @@
 		return document.getElementById('content_preview_area');
 	};
 	window.controller_gui.get_content_area = function () {
-		return document.getElementById('content_tab_box');
+		return groupBox ? groupBox.get_current_tab() : null;
 	};
 	window.controller_gui.get_display_area = function () {
 		return document.getElementById('display_tab_box');
