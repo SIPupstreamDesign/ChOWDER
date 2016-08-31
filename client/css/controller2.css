@@ -239,38 +239,6 @@ p {
 	border-color: #0080FF;
 }
 
-/*
-.rightArea {
-	background: linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
-	position : absolute;
-	height : 100%;
-	width : 100%;
-	overflow: auto;
-	z-index: 100000;
-}
-
-.rightTab {
-	background-color: #AAA;
-	padding: 0px 20px 0px 20px;
-
-	border: solid 1px;
-	border-radius:1px;
-	
-	top :114px;
-	-moz-transform-origin: 91% 63%;
-	-webkit-transform-origin: 91% 63%;
-	-o-transform-origin: 91% 63%;
-	-ms-transform-origin: 91% 63%;
-	transform-origin: 91% 63%;
-	-moz-transform: rotate(-90deg);
-	-webkit-transform: rotate(-90deg);
-	-o-transform: rotate(-90deg);
-	-ms-transform: rotate(-90deg);
-	transform: rotate(-90deg);
-	z-index: 100000;
-}
-*/
-
 .bgcolor {
 	background: linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 	position: fixed;
@@ -329,6 +297,11 @@ p {
 }
 
 .content_id {
+	margin: 10px;
+	padding-left : 30px;
+}
+
+.meta_info {
 	margin: 10px;
 	padding-left : 30px;
 }
@@ -472,8 +445,9 @@ p {
 }
 
 .property_button {
-	width : 160px;
-	height : 35px;
+	float : right;
+	width : 80px;
+	height : 30px;
 }
 
 .show_display_id {
@@ -538,4 +512,15 @@ p {
 	border : 1px solid;
 	z-index : -1000;
 	color : white;
+}
+
+.user_data_input {
+	text-align: center;
+}
+
+.user_data_text_input {
+	width : 90%;
+	height : 200px;
+	margin-left : 10px;
+	margin-right : 10px;
 }

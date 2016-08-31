@@ -1064,7 +1064,7 @@
 			}
 		} else {
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			content_property.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
+			//content_property.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
 			
 			// 全可視コンテンツの配置を再計算.
 			for (i in metaDataDict) {

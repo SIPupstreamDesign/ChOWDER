@@ -40,7 +40,50 @@
 		}
 		transInput.appendChild(group);
 	}
-	
+
+	/**
+ 	 * Propertyタブにボタン追加
+ 	 * @method addButtonProperty
+ 	 * @param {String} id ボタンID
+ 	 * @param {String} value ボタンinnerHTML
+ 	 * @param {Function} func onclick時コールバック
+ 	 */
+ 	function addSubmitButton(id, value, is_display, func) {
+ 		/*
+ 			<div class="btn btn-success" id="content_add_button">Add</div>
+ 		*/
+ 		var user_data_input = document.getElementById('user_data_input'),
+ 			group = document.createElement('div'),
+ 			button = document.createElement('div');
+ 		
+ 		group.className = "input-group";
+		if (is_display) {
+ 			button.className = "btn btn-primary property_button";
+		} else {
+			button.className = "btn btn-success property_button";
+		}
+ 		button.innerHTML = value;
+ 		button.id = id;
+ 		button.onclick = func;
+ 		group.appendChild(button);
+ 		user_data_input.appendChild(group);
+ 	}
+
+	/**
+	 * Propertyタブに入力プロパティを追加する
+	 * @method addInputProperty
+	 * @param {Object} input element id
+	 * @param {String} value 初期入力値
+	 */
+	function addTextInputProperty(id, value) {
+		var user_data_input = document.getElementById('user_data_input'),
+			input = document.createElement('textarea');
+
+		input.id = id;
+		input.value = value;
+		input.className = "user_data_text_input";
+		user_data_input.appendChild(input);
+	}
 
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
@@ -60,6 +103,7 @@
 			wholeSplitX,
 			wholeSplitY,
 			transInput = document.getElementById('transform_input'),
+			user_data_input = document.getElementById('user_data_input'),
 			idlabel = document.getElementById('content_id_label'),
 			idtext = document.getElementById('content_id'),
 			downloadButton = document.getElementById('download_button'),
@@ -72,12 +116,17 @@
 			document.getElementById('content_id').innerHTML = "";
 		}
 		transInput.innerHTML = "";
+		user_data_input.innerHTML = "";
 		if (type === "display") {
 			idlabel.innerHTML = "Display ID:";
 			addInputProperty('content_transform_x', 'x', 'px', '0');
 			addInputProperty('content_transform_y', 'y', 'px', '0');
 			addInputProperty('content_transform_w', 'w', 'px', '0');
 			addInputProperty('content_transform_h', 'h', 'px', '0');
+			addTextInputProperty('content_text', "");
+			addSubmitButton('content_text_submit', "登録", true, function () {
+				console.log("登録done");
+			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
 			contentW = document.getElementById('content_transform_w');
@@ -95,6 +144,10 @@
 			addInputProperty('whole_height', 'h', 'px', '900');
 			addInputProperty('whole_split_x', 'split x', '', '1');
 			addInputProperty('whole_split_y', 'split y', '', '1');
+			addTextInputProperty('content_text', "");
+			addSubmitButton('content_text_submit', "登録", true, function () {
+				console.log("登録done");
+			})
 			wholeW = document.getElementById('whole_width');
 			wholeH = document.getElementById('whole_height');
 			wholeSplitX = document.getElementById('whole_split_x');
@@ -119,6 +172,10 @@
 			addInputProperty('content_transform_w', 'w', 'px', '0');
 			addInputProperty('content_transform_h', 'h', 'px', '0');
 			addInputProperty('content_transform_z', 'z', 'index', '0');
+			addTextInputProperty('content_text', "");
+			addSubmitButton('content_text_submit', "登録", false, function () {
+				console.log("登録done");
+			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
 			contentW = document.getElementById('content_transform_w');
@@ -197,27 +254,6 @@
 			wholeSplitY.value = splitCount.y;
 		}
 	}
-
-	/**
-	 * Viewスケール設定
-	 * @method assignViewSetting
-	 */
-	function assignViewSetting(wholeScale, isFreeMode, isDisplayMode) {
-		/*
-		var scale_current = document.getElementById('scale_dropdown_current'),
-			snap_current = document.getElementById('snap_dropdown_current');
-		
-		scale_current.innerHTML = wholeScale;
-		if (isFreeMode) {
-			snap_current.innerHTML = 'Free';
-		} else if (isDisplayMode) {
-			snap_current.innerHTML = 'Display';
-		} else {
-			// grid
-			snap_current.innerHTML = 'Grid';
-		}
-		*/
-	}
 	
 	/**
 	 * メタデータをPropertyエリアに反映
@@ -230,7 +266,8 @@
 			transy = document.getElementById('content_transform_y'),
 			transw = document.getElementById('content_transform_w'),
 			transh = document.getElementById('content_transform_h'),
-			transz = document.getElementById('content_transform_z');
+			transz = document.getElementById('content_transform_z'),
+			text = document.getElementById('content_text');
 		
 		transx.value = parseInt(metaData.posx, 10);
 		transy.value = parseInt(metaData.posy, 10);
@@ -238,6 +275,10 @@
 		transh.value = parseInt(metaData.height, 10);
 		if (metaData.hasOwnProperty('zIndex')) {
 			transz.value = parseInt(metaData.zIndex, 10);
+		}
+
+		if (metaData.hasOwnProperty('user_data_text')) {
+			text.value = metaData.user_data_text;
 		}
 	}
 
@@ -249,7 +290,7 @@
 	window.content_property.on_rect_changed = null;
 	window.content_property.on_display_value_changed = null;
 	window.content_property.on_change_whole_split = null;
-	window.content_property.assign_view_setting = assignViewSetting;
+	//window.content_property.assign_view_setting = assignViewSetting;
 	window.content_property.assign_content_property = assignContentProperty;
 
 	window.content_property.update_display_value = function () {
