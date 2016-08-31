@@ -42,17 +42,6 @@
 	
 	
 	/**
-	 * ドラッグ中のオフセット設定。Manipulatorにて使用される。
-	 * @method draggingOffsetFunc
-	 * @param {Function} top 上下移動量.
-	 * @param {Function} left 左右移動量.
-	 */
-	function draggingOffsetFunc(top, left) {
-		dragOffsetTop = top;
-		dragOffsetLeft = left;
-	}
-	
-	/**
 	 * メタデータが表示中かを判定する
 	 * @method isVisible
 	 * @param {Object} metaData メタデータ
@@ -90,25 +79,25 @@
 	}
 	
 	/**
-	 * 左リスト表示中かをIDから判別する
+	 * リスト表示中かをIDから判別する
 	 * @method isUnvisibleID
 	 * @param {String} id コンテンツID
-	 * @return {bool} 左のリストに表示されているコンテンツのIDであればtrueを返す.
+	 * @return {bool} リストに表示されているコンテンツのIDであればtrueを返す.
 	 */
 	function isUnvisibleID(id) {
 		return (id.indexOf("onlist:") >= 0);
 	}
 	
 	/**
-	 * 発生したイベントが左リストビュー領域で発生しているかを判別する
+	 * 発生したイベントがリストビュー領域で発生しているかを判別する
 	 * @method isContentArea
 	 * @param {Object} evt イベント.
-	 * @return {bool} 発生したイベントが左リストビュー領域で発生していたらtrueを返す.
+	 * @return {bool} 発生したイベントがリストビュー領域で発生していたらtrueを返す.
 	 */
 	function isContentArea(evt) {
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(), 
-			px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+			//px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
 			return false;
@@ -120,7 +109,7 @@
 		if (mouseDownPos.length < 2) { return false; }
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(),
-			px = mouseDownPos[0] + (document.body.scrollLeft || document.documentElement.scrollLeft),
+			//px = mouseDownPos[0] + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = mouseDownPos[1] + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
 			return false;
@@ -129,9 +118,9 @@
 	}
 
 	/**
-	 * 左リストでディスプレイタブが選択されているかを判別する。
+	 * リストでディスプレイタブが選択されているかを判別する。
 	 * @method isDisplayTabSelected
-	 * @return {bool} 左リストでディスプレイタブが選択されていたらtrueを返す.
+	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isDisplayTabSelected() {
 		return content_box.is_active("display_tab");
@@ -854,7 +843,6 @@
 			py,
 			elemOnPos,
 			onInvisibleContent,
-			leftArea = gui.get_left_area(),
 			rect = evt.target.getBoundingClientRect(),
 			orgPos,
 			splitWhole,
@@ -1013,9 +1001,10 @@
 		elem.innerHTML = text;
 		previewArea.appendChild(elem);
 		
-		// calculate width, height
+		vscreen_util.transPosInv(metaData);
 		metaData.width = elem.offsetWidth / vscreen.getWholeScale();
 		metaData.height = elem.offsetHeight / vscreen.getWholeScale();
+		metaData.group = gui.get_current_group_name();
 		previewArea.removeChild(elem);
 		metaData.type = "text";
 
@@ -1023,12 +1012,28 @@
 		addContent(metaData, text);
 	}
 	
-	/**
-	 * VirualDisplayをVirtualScreenに設定
-	 * @method addScreenRect
-	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが再生成される.
-	 */
-	function addScreenRect(windowData) {
+	function sendImage(data, metaData) {
+		var img = document.createElement('img'),
+			buffer,
+			blob,
+		buffer = new Uint8Array(data);
+		blob = new Blob([buffer], {type: "image/jpeg"});
+		img.src = URL.createObjectURL(blob);
+		img.className = "image_content";
+		img.onload = (function (metaData) {
+			return function () {
+				metaData.type = "image";
+				metaData.width = img.naturalWidth;
+				metaData.height = img.naturalHeight;
+				metaData.group = gui.get_current_group_name();
+				vscreen_util.transPosInv(metaData);
+				img.style.width = img.naturalWidth + "px";
+				img.style.height = img.naturalHeight + "px";
+				URL.revokeObjectURL(img.src);
+				console.log("sendImage");
+				addContent(metaData, data);
+			};
+		}(metaData));
 	}
 	
 	/**
@@ -1120,7 +1125,6 @@
 			}
 			assignSplitWholes(vscreen.getSplitWholes());
 		}
-		addScreenRect(windowData);
 	};
 	
 	/**
@@ -1413,7 +1417,7 @@
 	}
 	
 	/**
-	 * Displayを左リストビューにインポートする。
+	 * Displayをリストビューにインポートする。
 	 * @method importWindowToView
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
@@ -1468,7 +1472,7 @@
 	}
 	
 	/**
-	 * Displayを左リストビューにインポートする。
+	 * Displayをリストビューにインポートする。
 	 * @method importWindowToList
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
@@ -1944,28 +1948,15 @@
 		var files = evt.target.files,
 			file,
 			i,
-			fileReader = new FileReader(),
-			buffer,
-			blob;
+			fileReader = new FileReader();
+
+			console.error(evt);
 
 		fileReader.onloadend = function (e) {
 			var data = e.target.result,
 				img;
-			if (data) {
-				img = document.createElement('img');
-				buffer = new Uint8Array(e.target.result);
-				blob = new Blob([buffer], {type: "image/jpeg"});
-				img.src = URL.createObjectURL(blob);
-				img.className = "image_content";
-				img.onload = function () {
-					var metaData = {type : "image", posx : 0, posy : 0, width : img.naturalWidth, height: img.naturalHeight};
-					metaData.group = gui.get_current_group_name();
-					img.style.width = img.naturalWidth + "px";
-					img.style.height = img.naturalHeight + "px";
-					URL.revokeObjectURL(img.src);
-					console.log("sendImage");
-					addContent(metaData, e.target.result);
-				};
+			if (data && data instanceof ArrayBuffer) {
+				sendImage(data,  { posx : 0, posy : 0, visible : true });
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -1975,46 +1966,25 @@
 		}
 	};
 
+	/**
+	 *  ファイルドロップハンドラ
+	 * @param {Object} evt FileDropイベント
+	 */
 	gui.on_file_dropped = function (evt) {
 		var i,
-			buffer,
-			blob,
 			file,
 			files = evt.dataTransfer.files,
 			fileReader = new FileReader(),
-			px = 0,
-			py = 0,
-			rect = evt.target.getBoundingClientRect();
-
- 		px = rect.left + evt.offsetX;
-		py = rect.top + evt.offsetY;
+			rect = evt.target.getBoundingClientRect(),
+			px = rect.left + evt.offsetX,
+			py = rect.top + evt.offsetY;
 
 		fileReader.onloadend = function (e) {
-			var data = e.target.result,
-				img;
+			var data = e.target.result;
 			if (data && data instanceof ArrayBuffer) {
-				img = document.createElement('img');
-				buffer = new Uint8Array(e.target.result);
-				blob = new Blob([buffer], {type: "image/jpeg"});
-				img.src = URL.createObjectURL(blob);
-				img.className = "image_content";
-				img.onload = function () {
-					var metaData = {type : "image", posx : px, posy : py, width : img.naturalWidth, height: img.naturalHeight};
-					vscreen_util.transPosInv(metaData);
-					metaData.visible = true;
-					metaData.group = gui.get_current_group_name();
-					img.style.width = img.naturalWidth + "px";
-					img.style.height = img.naturalHeight + "px";
-					URL.revokeObjectURL(img.src);
-					console.log("sendImage");
-					addContent(metaData, e.target.result);
-				};
+				sendImage(data,  { posx : px, posy : py, visible : true });
 			} else {
-				var metaData = { posx : px, posy : py };
-				vscreen_util.transPosInv(metaData);
-				metaData.visible = true;
-				metaData.group = gui.get_current_group_name();
-				sendText(data, metaData);
+				sendText(data, { posx : px, posy : py, visible : true });
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -2038,11 +2008,11 @@
 			i,
 			fileReader = new FileReader();
 		
-		console.log("openText");
 		fileReader.onloadend = function (e) {
 			var data = e.target.result;
-			//console.log(data);
-			sendText(data, { posx : 0, posy : 0 });
+			if (data) {
+				sendText(data, { posx : 0, posy : 0 });
+			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
 			if (file.type.match('text.*')) {
@@ -2205,11 +2175,11 @@
 	};
 	
 	/**
-	 * 左ペインのタブが切り替えられた.
+	 * タブが切り替えられた.
 	 */
 	content_box.on_tab_changed = function () {
 		var id;
-		console.log("on_lefttab_changed", lastSelectContentID);
+		console.log("on_tab_changed", lastSelectContentID);
 		if (isDisplayTabSelected()) {
 			id = lastSelectWindowID;
 			if (!id) {
@@ -2218,8 +2188,6 @@
 		} else {
 			id = lastSelectContentID;
 		}
-		// 現在の選択解除
-		//unselect();
 		manipulator.removeManipulator();
 		if (isDisplayTabSelected()) {
 			content_property.init("", "display");
@@ -2294,10 +2262,7 @@
 	// コンテンツが差し替えられたときにブロードキャストされてくる.
 	connector.on('UpdateContent', function (metaData) {
 		console.log('UpdateContent', metaData);
-		var id = metaData.id,
-			elem,
-			previewArea = gui.get_content_preview_area();
-		
+		var id = metaData.id;
 		if (id) {
 			connector.send('GetContent', metaData, function (err, reply) {
 				correctAspect(reply.metaData, function (err, meta) {
@@ -2404,7 +2369,10 @@
 		gui.init();
 		connector = window.io_connector;
 		
-		manipulator.setDraggingOffsetFunc(draggingOffsetFunc);
+		manipulator.setDraggingOffsetFunc(function (top, left) {
+			dragOffsetTop = top;
+			dragOffsetLeft = left;
+		});
 		manipulator.setCloseFunc(closeFunc);
 		
 		// resize event

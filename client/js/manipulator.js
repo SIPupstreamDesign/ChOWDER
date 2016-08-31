@@ -124,11 +124,6 @@
 			cursor = "ne-resize";
 		} else if (manip.id === '_manip_4') {
 			// x button
-			/*manip.style.cursor = "pointer";
-			manip.innerHTML = "<pre>x</pre>";
-			manip.style.textAlign = "center";
-			manip.style.background = "red";
-			manip.style.borderRadius = "3px";*/
 			manip.setAttribute("style", ""); // clear
 			manip.style.position = "absolute";
 			manip.style.zIndex = '10';
@@ -144,7 +139,6 @@
 			manip.onmousedown = function (evt) {
 				var rect = evt.target.getBoundingClientRect();
 				if (draggingOffsetFunc) {
-					console.log("draggingOffsetFunc");
 					draggingOffsetFunc(evt.clientY - rect.top, evt.clientX - rect.left);
 				}
 				draggingManip = manip;

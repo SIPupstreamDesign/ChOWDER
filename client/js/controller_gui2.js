@@ -124,8 +124,8 @@
 		};
 
 		add_image_button.onclick = function (evt) {
-			console.error("hogehoge")
 			document.getElementById('image_file_input').click();
+			//gui.on_file_dropped()
 			menu.style.display = "none";
 		};
 
@@ -288,17 +288,6 @@
 					}]
 			});
 
-		function testdeletegroup(evt) {
-			var i,
-				tab = groupBox.get_tab("Group1"),
-				node;
-
-			for (i = 0; i < tab.childNodes.length; i = i + 1) {
-				node = tab.childNodes[i];
-			}
-			groupBox.delete_tab("Group1");
-		}
-
 		// 下部バーガーメニューの初期化
 		window.burger_menu.init(
 			document.getElementById('bottom_burger_menu_content'),
@@ -315,7 +304,7 @@
 					},
 					{
 						テストdeletegroup : {
-							func : function (evt) { testdeletegroup(evt); }
+							func : function (evt) {}
 						}
 					}]
 			});
@@ -334,7 +323,8 @@
 			gui.on_mousedown_content_area();
 		});
 		*/
-			
+		
+		// ファイルドラッグアンドドロップ
 		window.addEventListener('dragover', function(evt) {
 			var  e = evt || event;
 			e.preventDefault();
@@ -406,9 +396,6 @@
 	};
 	window.controller_gui.get_display_area = function () {
 		return document.getElementById('display_tab_box');
-	};
-	window.controller_gui.get_left_area = function () {
-		return document.getElementById('leftArea');
 	};
 	window.controller_gui.get_list_elem = function (id) {
 		return document.getElementById("onlist:" + id);
