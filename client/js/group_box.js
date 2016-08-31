@@ -8,8 +8,8 @@
 		this.container = containerElem;
 		this.setting = setting;
 		this.tabIDs = [];
-		this.init();
 		this.currentTab = null;
+		this.init();
 	};
 
 	/*
@@ -64,6 +64,7 @@
 				boxArea.appendChild(box);
 				if (this.currentTab === null) {
 					this.currentTab = box;
+					this.currentGroupName = tabName;
 				}
 			}
 		}
@@ -71,6 +72,24 @@
 
 	GroupBox.prototype.get_current_tab = function () {
 		return this.currentTab;
+	};
+
+	GroupBox.prototype.get_tab = function (group) {
+		var i,
+			tab,
+			tabItem;
+		for (i = 0; i < this.setting.tabs.length; ++i) {
+			tab = this.setting.tabs[i];
+			if (Object.keys(tab)[0] === group) {
+				tabItem = tab[Object.keys(tab)[0]]; 
+				return document.getElementById(tabItem.id + "_box");
+			} 
+		}
+		return null;
+	};
+
+	GroupBox.prototype.get_current_group_name = function () {
+		return this.currentGroupName;
 	};
 
 	/*
@@ -105,6 +124,7 @@
 					window.group_box.on_tab_changed();
 				}
 				this.currentTab = document.getElementById(tabContent.id + "_box");
+				this.currentGroupName = tabName;
 			}.bind(this);
 		}
 		elem.appendChild(link);

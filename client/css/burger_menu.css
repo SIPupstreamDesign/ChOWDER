@@ -10,7 +10,6 @@ ul, ol {
 	position: fixed;
 	right: 12px;
 	bottom: 41px;
-	width: 200px;
 	z-index: 1000001;
 	border : 1px solid black;
 	display : none;

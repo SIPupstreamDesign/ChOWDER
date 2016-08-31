@@ -18,6 +18,8 @@
 	text-align: center;
 	background-color: #0080FF;
 	border: 0px 0px 0px 0px;
+	border : 1px solid rgb(230, 230, 230);
+	border-bottom : 0px;
 }
 
 #display_tab_box {
@@ -44,6 +46,8 @@
 	text-align: center;
 	background: #04B431;
 	border: 0px 0px 0px 0px;
+	border : 1px solid rgb(230, 230, 230);
+	border-bottom : 0px;
 }
 
 #content_tab_box {
@@ -70,6 +74,8 @@
 	text-align: center;
 	background-color: #FF8055;
 	border: 0px 0px 0px 0px;
+	border : 1px solid rgb(230, 230, 230);
+	border-bottom : 0px;
 }
 
 #search_tab_box {

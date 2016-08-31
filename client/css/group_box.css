@@ -1,4 +1,5 @@
 
+
 .group_tab_area {
 	width : 100%;
 	height : 30px;
@@ -27,7 +28,7 @@
 }
 
 .group_tab.active {
-	border: 2px solid white;
+	border: 2px solid rgb(104,247,168);
 }
 
 .group_tab_box {

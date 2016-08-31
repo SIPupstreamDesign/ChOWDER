@@ -46,7 +46,7 @@
 				tabName = Object.keys(tabs[i])[0];
 				tabItem = tabs[i][tabName];
 				console.log("tabname", tabName);
-				elem.appendChild(this.create_tab(tabName, tabItem));
+				elem.appendChild(this.create_tab(tabName, tabItem, i === 0));
 				this.tabIDs.push(tabItem.id);
 					
 				box = document.createElement('div');
@@ -69,12 +69,12 @@
 		<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
 		..
 	*/
-	ContentBox.prototype.create_tab = function (tabName, tabContent) {
+	ContentBox.prototype.create_tab = function (tabName, tabContent, is_active) {
 		var elem,
 			link;
 		elem = document.createElement('span');
 		elem.id = tabContent.id;
-		elem.className = tabContent.id + " active";
+		elem.className = is_active ? tabContent.id + " active" : tabContent.id;
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabContent.id + "_link";

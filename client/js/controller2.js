@@ -21,6 +21,7 @@
 		initialDisplayScale = 0.5,
 		snapSetting = "free",
 		contentSelectColor = "#04B431",
+		contentBorderColor = "rgba(0,0,0,0)",
 		windowSelectColor = "#0080FF",
 		setupContent = function () {},
 		updateScreen = function () {},
@@ -587,7 +588,11 @@
 				if (metaData.hasOwnProperty('reference_count') && parseInt(metaData.reference_count, 10) <= 0) {
 					gui.get_list_elem(elem.id).style.borderColor = "gray";
 				} else {
-					gui.get_list_elem(elem.id).style.borderColor = "white";
+					if (metaData.type !== windowType) {
+						gui.get_list_elem(elem.id).style.borderColor = contentBorderColor;
+					} else {
+						gui.get_list_elem(elem.id).style.borderColor = "white";
+					}
 				}
 			}
 			elem.style.borderColor = "black";
@@ -1284,7 +1289,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContentToList(metaData, contentData) {
-		var contentArea = gui.get_content_area(),
+		var contentArea,
 			contentElem,
 			id,
 			elem,
@@ -1301,6 +1306,12 @@
 		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
 		if (metaDataDict.hasOwnProperty(metaData.id)) {
 			metaData = metaDataDict[metaData.id];
+		}
+
+		if (metaData.hasOwnProperty('group')) {
+			contentArea = gui.get_content_area_by_group(metaData.group);
+		} else {
+			contentArea = gui.get_content_area_by_group("default");
 		}
 
 		tagName = getTagName(metaData.type);
@@ -1362,7 +1373,7 @@
 		divElem.style.top = "5px";
 		divElem.style.left = "20px";
 		divElem.style.border = "solid";
-		divElem.style.borderColor = "white";
+		divElem.style.borderColor = contentBorderColor;
 		divElem.style.margin = "5px";
 		divElem.style.color = "white";
 		divElem.style.float = "left";
@@ -1965,6 +1976,7 @@
 				img.style.right = "0px";
 				img.onload = function () {
 					var metaData = {type : "image", posx : 0, posy : 0, width : img.naturalWidth, height: img.naturalHeight};
+					metaData.group = gui.get_current_group_name();
 					img.style.width = img.naturalWidth + "px";
 					img.style.height = img.naturalHeight + "px";
 					URL.revokeObjectURL(img.src);

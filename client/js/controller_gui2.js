@@ -247,15 +247,15 @@
 		groupBox = window.group_box.init(document.getElementById('content_tab_box'),
 			{
 				tabs : [{
-						Group1 : {
-							id : "group_tab_1",
+						default : {
+							id : "group_default",
 							className : "group_tab",
 							func : function () {},
 							active : true
 						}
 					}, {
-						Group2 : {
-							id : "group_tab_2",
+						Group1 : {
+							id : "group_1",
 							className : "group_tab",
 							func : function () {},
 							active : true
@@ -293,12 +293,12 @@
 			document.getElementById('bottom_burger_menu_content'),
 			{
 				menu : [{
-					選択Contentを削除 : {
+					選択コンテンツを削除 : {
 							func : function (evt) { gui.on_contentdeletebutton_clicked(evt); }
 						}
 					},
 					{
-					全てのContentを削除 : {
+					グループ内のコンテンツを全て削除 : {
 							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
 						}
 					}]
@@ -367,6 +367,12 @@
 	};
 	window.controller_gui.get_content_area = function () {
 		return groupBox ? groupBox.get_current_tab() : null;
+	};
+	window.controller_gui.get_content_area_by_group = function (group) {
+		return groupBox ? groupBox.get_tab(group) : null;
+	};
+	window.controller_gui.get_current_group_name = function () {
+		return groupBox ? groupBox.get_current_group_name() : null;
 	};
 	window.controller_gui.get_display_area = function () {
 		return document.getElementById('display_tab_box');
