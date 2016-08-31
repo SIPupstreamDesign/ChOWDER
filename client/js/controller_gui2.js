@@ -8,30 +8,6 @@
 		wholeWindowListID = "onlist:whole_window";
 	
 	/**
-	 * Propertyタブにボタン追加
-	 * @method addButtonProperty
-	 * @param {String} id ボタンID
-	 * @param {String} value ボタンinnerHTML
-	 * @param {Function} func onclick時コールバック
-	 */
-	function addButtonProperty(id, value, func) {
-		/*
-			<div class="btn btn-success" id="content_add_button">Add</div>
-		*/
-		var transInput = document.getElementById('transform_input'),
-			group = document.createElement('div'),
-			button = document.createElement('div');
-		
-		group.className = "input-group";
-		button.className = "btn btn-primary property_button";
-		button.innerHTML = value;
-		button.id = id;
-		button.onclick = func;
-		group.appendChild(button);
-		transInput.appendChild(group);
-	}
-	
-	/**
 	 * VirtualDisplayスケール設定ボタン追加
 	 * @method addScaleDropdown
 	 * @param {String} id ID
@@ -75,109 +51,6 @@
 			document.getElementById('dropdown2').className = "dropdown2";
 		});
 	}
-	
-	/**
-	 * コンテンツ追加ポップアップの初期化
-	 * @method initAddContentArea
-	 */
-	/*
-	function initAddContentArea() {
-		var textSendButton = document.getElementById('text_send_button'),
-			urlSendButton = document.getElementById('url_send_button'),
-			imageFileInput = document.getElementById('image_file_input'),
-			textFileInput = document.getElementById('text_file_input'),
-			updateImageInput = document.getElementById('update_image_input'),
-			duplicateButton = document.getElementById('duplicate_button');
-		
-		urlSendButton.onclick = function (evt) {
-			gui.on_urlsendbuton_clicked(evt);
-		};
-		
-		updateImageInput.addEventListener('change', function (evt) {
-			gui.on_updateimageinput_changed(evt);
-			updateImageInput.value = "";
-		}, false);
-		imageFileInput.addEventListener('change', function (evt) {
-			gui.on_imagefileinput_changed(evt);
-			
-			imageFileInput.value = "";
-		}, false);
-		textFileInput.addEventListener('change', function (evt) {
-			gui.on_textfileinput_changed(evt);
-			
-			textFileInput.value = "";
-		}, false);
-		textSendButton.onclick = function (evt) {
-			gui.on_textsendbutton_clicked(evt);
-		};
-		if (duplicateButton) {
-			duplicateButton.onclick = function (evt) {
-				gui.on_duplicatebutton_clicked(evt);
-			};
-		}
-	}
-	*/
-	
-	/**
-	 * ビュー領域初期化。スケーリング表示、スナップ設定などのelementの初期化を行う。
-	 * @method initViewSettingArea
-	 */
-	/*
-	function initViewSettingArea(rightfunc) {		
-		addScaleDropdown('display_scale_1', 0.1);
-		addScaleDropdown('display_scale_2', 0.2);
-		addScaleDropdown('display_scale_3', 0.3);
-		addScaleDropdown('display_scale_4', 0.4);
-		addScaleDropdown('display_scale_5', 0.5);
-		addScaleDropdown('display_scale_6', 0.6);
-		addScaleDropdown('display_scale_7', 0.7);
-		addScaleDropdown('display_scale_8', 0.8);
-		addScaleDropdown('display_scale_9', 0.9);
-		addScaleDropdown('display_scale_10', 1.0);
-		//addScaleDropdown('display_scale_11', "custum");
-	}
-	*/
-	
-	/**
-	 * 左コンテンツタブ初期化
-	 * @method initContentArea
-	 * @param {Function} bottomfunc addボタンコールバック
-	 */
-	/*
-	function initContentArea(bottomfunc) {
-		var addButton = document.getElementById('content_add_button'),
-			contentDeleteButton = document.getElementById('content_delete_button'),
-			contentDeleteAllButton = document.getElementById('content_delete_all_button');
-		
-		addButton.onclick = function () {
-			bottomfunc(true);
-		};
-		
-		contentDeleteButton.onclick = function (evt) {
-			gui.on_contentdeletebutton_clicked(evt);
-		};
-		contentDeleteAllButton.onclick = function (evt) {
-			gui.on_deleteallcontent_clicked(evt);
-		};
-	}
-	*/
-	
-	/**
-	 * ディスプレイタブの初期化
-	 * @method initDisplayArea
-	 */
-	/*
-	function initDisplayArea() {
-		var displayDeleteButton = document.getElementById('display_delete_button'),
-			displayDeleteAllButton = document.getElementById('display_delete_all_button');
-		displayDeleteButton.onclick = function (evt) {
-			gui.on_deletedisplay_clicked(evt);
-		};
-		displayDeleteAllButton.onclick = function (evt) {
-			gui.on_deletealldisplay_clicked(evt);
-		};
-	}
-	*/
 
 	/**
 	 * Deleteボタン有効化設定
@@ -269,8 +142,69 @@
 			menu.style.display = 'block';
 			evt.preventDefault();
 		};
+		window.addEventListener("mousedown", function (evt) {
+			menu.style.display = 'none';
+		});
+	}
+
+	/**
+	 * コンテンツ入力の初期化
+	 */
+	function initContentInputs() {
+		var imageFileInput = document.getElementById('image_file_input'),
+			textFileInput = document.getElementById('text_file_input'),
+			updateImageInput = document.getElementById('update_image_input');
+
+		imageFileInput.addEventListener('change', function (evt) {
+			gui.on_imagefileinput_changed(evt);
+			imageFileInput.value = "";
+		}, false);
+		
+		textFileInput.addEventListener('change', function (evt) {
+			gui.on_textfileinput_changed(evt);
+			textFileInput.value = "";
+		}, false);
+
+		updateImageInput.addEventListener('change', function (evt) {
+			gui.on_updateimageinput_changed(evt);
+			updateImageInput.value = "";
+		}, false);
 	}
 	
+	/**
+	 *  タブが変更された
+	 * @param tabName タブ名
+	 */
+	function changeTab(tabName) {
+		var displayPreviewArea = document.getElementById('display_preview_area'),
+			contentPreviewArea = document.getElementById('content_preview_area'),
+			contentMenu = document.getElementById('bottom_burger_menu_content'),
+			displayMenu = document.getElementById('bottom_burger_menu_display'),
+			searchMenu = document.getElementById('bottom_burger_menu_search');
+
+		if (tabName === 'Display') {
+			displayPreviewArea.style.opacity = 1.0;
+			contentPreviewArea.style.opacity = 0.3;
+			displayPreviewArea.style.zIndex = 10;
+			contentPreviewArea.style.zIndex = -1000;
+			displayMenu.style.display = "block";
+			contentMenu.style.display = "none";
+			searchMenu.style.display = "none";
+		} else if (tabName === 'Content') {
+			displayPreviewArea.style.opacity = 0.3;
+			contentPreviewArea.style.opacity = 1.0;
+			displayPreviewArea.style.zIndex = -1000;
+			contentPreviewArea.style.zIndex = 10;
+			displayMenu.style.display = "none";
+			contentMenu.style.display = "block";
+			searchMenu.style.display = "none";
+		} else if (tabName === 'Search') {
+			displayMenu.style.display = "none";
+			contentMenu.style.display = "none";
+			searchMenu.style.display = "block";
+		}
+	}
+
 	/**
 	 * 初期化
 	 * @method init
@@ -281,22 +215,76 @@
 		// 上部メニューの初期化.
 		window.menu.init(document.getElementById('head_menu'));
 		// 下部コンテンツボックスの初期化.
-		window.content_box.init(document.getElementById('bottomArea'));
+		window.content_box.init(document.getElementById('bottomArea'),
+			{
+				tabs : [{
+						Display : {
+							id : "display_tab",
+							func : function () { changeTab('Display'); },
+							active : true,
+						},
+					}, {
+						Content : {
+							id : "content_tab",
+							func : function () { changeTab('Content'); }
+						},
+					}, {
+						Search : {
+							id : "search_tab",
+							func : function () { changeTab('Search'); }
+						}
+					}]
+			});
+
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "whole_window");
 
 		// コンテキストメニューの初期化.
 		initContextMenu();
 
+		// コンテンツ入力の初期化
+		initContentInputs();
+
 		// 下部バーガーメニューの初期化	
-		window.burger_menu.init(document.getElementById('bottom_burger_menu'));
+		window.burger_menu.init(
+			document.getElementById('bottom_burger_menu_display'),
+			{
+				menu : [{
+					選択Displayを削除 : {
+							func : function (evt) { gui.on_deletedisplay_clicked(evt); }
+						}
+					},
+					{
+					全てのDisplayを削除 : {
+							func : function (evt) { gui.on_deletealldisplay_clicked(evt); }
+						}
+					}]
+			});
+
+		// 下部バーガーメニューの初期化
+		window.burger_menu.init(
+			document.getElementById('bottom_burger_menu_content'),
+			{
+				menu : [{
+					選択Contentを削除 : {
+							func : function (evt) { gui.on_contentdeletebutton_clicked(evt); }
+						}
+					},
+					{
+					全てのContentを削除 : {
+							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
+						}
+					}]
+			});
 
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_preview_area();
+			console.log("on_mousedown_content_preview_area");
 		});
 
 		document.getElementById('display_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_display_preview_area();
+			console.log("on_mousedown_display_preview_area");
 		});
 		/*
 		document.getElementById('content_area').addEventListener("mousedown", function (evt) {

@@ -8,30 +8,6 @@
 		wholeWindowListID = "onlist:whole_window";
 	
 	/**
-	 * Propertyタブにボタン追加
-	 * @method addButtonProperty
-	 * @param {String} id ボタンID
-	 * @param {String} value ボタンinnerHTML
-	 * @param {Function} func onclick時コールバック
-	 */
-	function addButtonProperty(id, value, func) {
-		/*
-			<div class="btn btn-success" id="content_add_button">Add</div>
-		*/
-		var transInput = document.getElementById('transform_input'),
-			group = document.createElement('div'),
-			button = document.createElement('div');
-		
-		group.className = "input-group";
-		button.className = "btn btn-primary property_button";
-		button.innerHTML = value;
-		button.id = id;
-		button.onclick = func;
-		group.appendChild(button);
-		transInput.appendChild(group);
-	}
-	
-	/**
 	 * VirtualDisplayスケール設定ボタン追加
 	 * @method addScaleDropdown
 	 * @param {String} id ID

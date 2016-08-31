@@ -2,8 +2,7 @@
 /*global Float32Array */
 (function (gui) {
 	"use strict";
-	var ContentBox,
-		content_box;
+	var ContentBox;
 
 	ContentBox = function (containerElem, setting) {
 		this.container = containerElem;
@@ -100,54 +99,15 @@
 				tabElem.className = tabElem.className + " active";
 				document.getElementById(tabContent.id + "_box").style.display = "block";
 				tabContent.func();
+				window.content_box.on_tab_changed();
 			}.bind(this);
 		}
 		elem.appendChild(link);
 		return elem;
 	};
 
-	function changeTab(tabName) {
-		var displayPreviewArea = document.getElementById('display_preview_area'),
-			contentPreviewArea = document.getElementById('content_preview_area');
-
-		if (tabName === 'Display') {
-			displayPreviewArea.style.opacity = 1.0;
-			contentPreviewArea.style.opacity = 0.3;
-			displayPreviewArea.style.zIndex = 10;
-			contentPreviewArea.style.zIndex = -1000;
-			window.content_box.on_tab_changed();
-		} else if (tabName === 'Content') {
-			displayPreviewArea.style.opacity = 0.3;
-			contentPreviewArea.style.opacity = 1.0;
-			displayPreviewArea.style.zIndex = -1000;
-			contentPreviewArea.style.zIndex = 10;
-			window.content_box.on_tab_changed();
-		} else if (tabName === 'Search') {
-
-		}
-	}
-
-	function init(containerElem) {
-		var setting = {
-			tabs : [{
-					Display : {
-						id : "display_tab",
-						func : function () { changeTab('Display'); },
-						active : true,
-					},
-				}, {
-					Content : {
-						id : "content_tab",
-						func : function () { changeTab('Content'); }
-					},
-				}, {
-					Search : {
-						id : "search_tab",
-						func : function () { changeTab('Search'); }
-					}
-				}]
-		};
-		content_box = new ContentBox(containerElem, setting);
+	function init(containerElem, setting) {
+		return new ContentBox(containerElem, setting);
 	}
 
 	function is_active(tabID) {

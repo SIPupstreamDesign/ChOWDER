@@ -84,10 +84,12 @@
 				li.className = "burger_menu_content";
 				li.innerHTML = key;
 				if (value.hasOwnProperty('func')) {
-					li.onclick = function (evt) {
-						value.func(evt);
-						label_click_func(evt);
-					};
+					li.onclick = (function (value) {
+						return function (evt) {
+							value.func(evt);
+							label_click_func(evt);
+						};
+					}(value));
 				}
 				ul.appendChild(li);
 			}
@@ -96,20 +98,8 @@
 	};
 
 	// 初期化
-	function init(containerElem) {
-		var menuSetting = {
-				menu : [{
-					Delete : {
-							func : function (evt) { gui.on_deletedisplay_clicked(evt); }
-						}
-					},
-					{
-					DeleteAll : {
-							func : function (evt) { gui.on_deletealldisplay_clicked(evt); }
-						}
-					}]
-				};
-		var menu = new BurgerMenu(containerElem, menuSetting);
+	function init(containerElem, menuSetting) {
+		return new BurgerMenu(containerElem, menuSetting);
 	}
 
 	window.burger_menu = {};

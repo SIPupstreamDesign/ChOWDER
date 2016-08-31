@@ -755,10 +755,6 @@
 				rect.left,
 				rect.top
 			];
-
-			//dragOffsetTop = evt.clientY - elem.offsetTop;
-			//dragOffsetLeft = evt.clientX - elem.offsetLeft;
-			evt.stopPropagation();
 			evt.preventDefault();
 		};
 	};
