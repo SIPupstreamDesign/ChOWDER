@@ -105,11 +105,11 @@
 				menu : [{
 					SelectMode : [{
 							View : {
-								url : "view.html"
+								url : "view2.html"
 							},
 						}, {
 							Controller : {
-								url : "controller.html"
+								url : "controller2.html"
 							}
 						}],
 				}, {
