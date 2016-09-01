@@ -17,7 +17,7 @@
 .group_tab {
 	text-align: center;
 	background: rgb(54,187,68);
-	border: 1px solid rgb(54,187,68);
+	border: 1px solid rgb(200,200,200);
 	top: 5px;
 	left : 4px;
 	width : 100px;
@@ -25,14 +25,27 @@
 	padding-left : 2px;
 	padding-right : 2px;
 	font-size: 13px;
+	float : left;
 }
 
 .group_tab_close {
+	border: 1px solid rgb(250, 100, 100);
+	border-radius: 14px;
+	width : 14px;
+	height : 14px;
+	background :rgb(250, 100, 100);
+	float : right;
+	position : relative;
+	top : 2px;
+	color : white;
+}
 
+.group_tab_close:hover {
+	background :red;
 }
 
 .group_tab.active {
-	border: 2px solid rgb(104,247,168);
+	border: 2px solid rgb(204,247,168);
 }
 
 .group_tab_box {

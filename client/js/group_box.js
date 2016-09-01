@@ -2,7 +2,8 @@
 /*global Float32Array */
 (function (gui) {
 	"use strict";
-	var GroupBox;
+	var GroupBox,
+		defaultGroup = "default";
 
 	GroupBox = function (containerElem, setting) {
 		this.container = containerElem;
@@ -15,8 +16,8 @@
 
 	/*
 		<div class="left_tab_area" id="left_tab_area">
-			<span id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></span>
-			<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
+			<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
+			<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
 		</div>
 	*/
 	GroupBox.prototype.init = function () {
@@ -99,14 +100,15 @@
 	};
 
 	/*
-		<span id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></span>
-		<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
+		<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
+		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
 		..
 	*/
 	GroupBox.prototype.create_tab = function (groupName, tabContent, is_active) {
 		var elem,
-			link;
-		elem = document.createElement('span');
+			link,
+			close_button;
+		elem = document.createElement('div');
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
 		elem.style.cursor = "pointer";
@@ -136,6 +138,16 @@
 			}.bind(this);
 		}
 		elem.appendChild(link);
+		
+		if (groupName !== defaultGroup) {
+			close_button = document.createElement('div');
+			close_button.className = "group_tab_close";
+			close_button.innerHTML = "×";
+			close_button.onclick = function (evt) {
+				alert("not implemented");
+			};
+			elem.appendChild(close_button);
+		}
 		return elem;
 	};
 
@@ -145,7 +157,7 @@
 			elem,
 			parent = null;
 		
-		if (groupName === "default") {
+		if (groupName === defaultGroup) {
 			return;
 		}
 		if (this.tabGroupToElems.hasOwnProperty(groupName)) {
@@ -163,7 +175,7 @@
 						console.error("deleted", elem);
 					}
 				}
-				this.currentTab = this.get_tab('default');
+				this.currentTab = this.get_tab(defaultGroup);
 				this.currentTab.style.display = "block";
 			}
 		}
