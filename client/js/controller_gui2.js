@@ -8,7 +8,9 @@
 		wholeWindowListID = "onlist:whole_window",
 		groupBox = null,
 		displayMenu = null,
-		contentMenu = null;
+		contentMenu = null,
+		is_display_scale_changing = false,
+		display_scale = 1.0;
 	
 	/**
 	 * VirtualDisplayスケール設定ボタン追加
@@ -94,13 +96,15 @@
 		};
 
 		document.body.oncontextmenu = function (evt) {
-			var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+			if (getSelectedElem()) {
+				var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 
-			menu.style.left = px + "px";
-			menu.style.top = py + "px";
-			menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
-			menu.style.display = 'block';
+				menu.style.left = px + "px";
+				menu.style.top = py + "px";
+				menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
+				menu.style.display = 'block';
+			}
 			evt.preventDefault();
 		};
 		window.addEventListener("mousedown", function (evt) {
@@ -154,6 +158,64 @@
 	}
 
 	/**
+	 * メインビューの右ドラッグスケーリングの初期化
+	 */
+	function initMainViewScaling() {
+		var displayPreviewArea = document.getElementById('display_preview_area'),
+			contentPreviewArea = document.getElementById('content_preview_area'),
+			is_dragging = false,
+			mouseDownPosY = 0;
+		
+		contentPreviewArea.addEventListener('mousedown', function (evt) {
+			if (evt.button === 2) {
+				var rect = contentPreviewArea.getBoundingClientRect();
+				mouseDownPosY = evt.clientY - rect.top;
+				is_dragging = true;
+			}
+		});
+
+		displayPreviewArea.addEventListener('mousedown', function (evt) {
+			if (evt.button === 2) {
+				var rect = displayPreviewArea.getBoundingClientRect();
+				mouseDownPosY = evt.clientY - rect.top;
+				is_dragging = true;
+			}
+		});
+
+		window.addEventListener('mousemove', function (evt) {
+			var rect = contentPreviewArea.getBoundingClientRect();
+			if (is_dragging) {
+				var dy = evt.clientY - rect.top - mouseDownPosY,
+					ds = dy;
+				if (ds > 0) {
+					display_scale += 0.005 * Math.abs(ds + 0.5);
+				} else {
+					if (display_scale < 1.0) {
+						display_scale -= 0.002 * Math.abs(ds - 0.5);
+					} else {
+						display_scale -= 0.005 * Math.abs(ds - 0.5);
+					}
+				}
+				if (display_scale < 0.05) {
+					display_scale = 0.05;
+				}
+				if (display_scale > 2) {
+					display_scale = 2;
+				}
+				gui.on_display_scale_changed(display_scale);
+			}
+			mouseDownPosY = evt.clientY;
+		});
+
+		window.addEventListener('mouseup', function (evt) {
+			if (evt.button === 2) {
+				is_dragging = false;
+			} 
+		})
+
+	}
+
+	/**
 	 *  タブが変更された
 	 * @param tabName タブ名
 	 */
@@ -192,7 +254,6 @@
 	 * @method init
 	 */
 	function init() {
-
 
 		// 全体のレイアウトの初期化.
 		window.layout.init();
@@ -251,8 +312,11 @@
 		// コンテンツ入力の初期化
 		initContentInputs();
 
-		// ファイルドラッグアンドドロップ
+		// ファイルドラッグアンドドロップの初期化
 		initDragAndDrop();
+
+		// メインビューの拡大縮小の初期化
+		initMainViewScaling();
 
 		// 下部バーガーメニューの初期化	
 		displayMenu = window.burger_menu.init(
@@ -363,6 +427,10 @@
 	// Setter.
 	window.controller_gui.set_update_content_id = function (id) {
 		document.getElementById('update_content_id').innerHTML = id;
+	};
+
+	window.controller_gui.set_display_scale = function (scale) {
+		display_scale = scale; 
 	};
 	
 }());

@@ -828,6 +828,7 @@
 	
 	// add content mousemove event
 	window.document.addEventListener("mousemove", function (evt) {
+		if (evt.button !== 0) { return; } // 左ドラッグのみ
 		var i,
 			metaData,
 			metaTemp,
@@ -2307,15 +2308,16 @@
 	 */
 	function init() {
 		var timer = null,
-			scale,
+			display_scale,
 			snap;
 			
-		scale = parseFloat(getCookie('display_scale'));
-		console.log("cookie - display_scale:" + scale);
+		display_scale = parseFloat(getCookie('display_scale'));
+		console.log("cookie - display_scale:" + display_scale);
 		snap = getCookie('snap_setting');
 		console.log("cookie - snap_setting:" + snap);
-		if (!isNaN(scale) && scale > 0) {
-			vscreen.setWholeScale(scale, true);
+		if (!isNaN(display_scale) && display_scale > 0) {
+			vscreen.setWholeScale(display_scale, true);
+			gui.set_display_scale(display_scale);
 		}
 		if (snap) {
 			if (snap === 'display') {
