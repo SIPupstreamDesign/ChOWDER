@@ -286,7 +286,6 @@
 			elem;
 		for (i in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(i)) {
-				console.log(metaDataDict[i])
 				elem = document.getElementById(metaDataDict[i].id);
 				if (elem && elem.is_dragging) {
 					elem.is_dragging = false;
@@ -329,7 +328,6 @@
 			elem;
 		for (i in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(i)) {
-				console.log(metaDataDict[i])
 				elem = document.getElementById(metaDataDict[i].id);
 				if (elem && elem.is_dragging) {
 					return elem;
