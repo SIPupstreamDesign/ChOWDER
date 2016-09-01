@@ -20,11 +20,15 @@
 	border: 1px solid rgb(54,187,68);
 	top: 5px;
 	left : 4px;
-	width : 80px;
+	width : 100px;
 	height : 20px;
 	padding-left : 2px;
 	padding-right : 2px;
 	font-size: 13px;
+}
+
+.group_tab_close {
+
 }
 
 .group_tab.active {

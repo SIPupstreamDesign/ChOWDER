@@ -109,13 +109,14 @@
 		elem = document.createElement('span');
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
+		elem.style.cursor = "pointer";
 		this.tabGroupToElems[groupName].push(elem);
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabContent.id + "_link";
 		link.innerHTML = groupName;
 		if (tabContent.hasOwnProperty('func')) {
-			link.onclick = function () {
+			elem.onclick = function () {
 				var i,
 					tabElem;
 				for (i = 0; i < this.tabIDs.length; i = i + 1) {

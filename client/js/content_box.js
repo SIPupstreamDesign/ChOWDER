@@ -75,12 +75,13 @@
 		elem = document.createElement('span');
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.id + " active" : tabContent.id;
+		elem.style.cursor = "pointer";
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabContent.id + "_link";
 		link.innerHTML = tabName;
 		if (tabContent.hasOwnProperty('func')) {
-			link.onclick = function () {
+			elem.onclick = function () {
 				var i,
 					tabElem;
 				for (i = 0; i < this.tabIDs.length; i = i + 1) {
