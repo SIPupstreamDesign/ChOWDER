@@ -298,6 +298,7 @@
 
 	/**
 	 * 指定Contentを移動させる
+	 * @oaram targetid コンテンツのid
 	 * @param x ページのx座標
 	 * @param y ページのy座標
 	 */
@@ -321,7 +322,7 @@
 	}
 
 	/**
-	 * 現在選択されているContentのエレメントを返す
+	 * 現在選択されているContentのエレメントを返す. ない場合はnullが返る.
 	 */
 	function getSelectedElem() {
 		var i,
@@ -335,9 +336,14 @@
 				}
 			}
 		}
-		return;
+		return null;
 	}
 
+	/**
+	 * コンテンツにイベント等を設定.
+	 * @param elem コンテンツのelement
+	 * @param targetid コンテンツのid
+	 */
 	function setupContent(elem, targetid) {
 		elem.onmousedown = (function (elem) {
 			return function (evt) {
