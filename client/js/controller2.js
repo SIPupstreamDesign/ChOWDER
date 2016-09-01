@@ -2329,8 +2329,14 @@
 		};
 
 		content_property.on_metainfo_changed = function (text) {
+			var id = getSelectedID(),
+				metaData;
 			console.log('on_metainfo_changed', text);
-			
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				metaData.user_data_text = JSON.stringify({ text: text });
+				updateMetaData(metaData);
+			}
 		};
 		
 		gui.on_mousedown_content_preview_area = function () {

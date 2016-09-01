@@ -281,7 +281,16 @@
 		}
 
 		if (metaData.hasOwnProperty('user_data_text')) {
-			text.value = metaData.user_data_text;
+			var parsed = null;
+			try {
+				parsed = JSON.parse(metaData.user_data_text);
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			if (parsed.hasOwnProperty("text")) {
+				text.value = parsed.text;
+			}
 		}
 	}
 
