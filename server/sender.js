@@ -35,6 +35,20 @@
 	}
 	
 	/**
+	 * updateMetaData処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMetaData
+	 */
+	function post_updateMetaData(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
+			io_connector.broadcast(io, Command.UpdateMetaData, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
 	 * WebSocketイベント登録
 	 * @method registerWSEvent
 	 * @param {String} socketid ソケットID
@@ -65,6 +79,10 @@
 			operator.commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
+		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
+			operator.commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
+		});
+
 		ws_connector.registerEvent(ws, ws_connection);
 	}
 	
