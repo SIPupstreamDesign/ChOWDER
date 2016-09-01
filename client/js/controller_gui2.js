@@ -13,51 +13,6 @@
 		display_scale = 1.0;
 	
 	/**
-	 * VirtualDisplayスケール設定ボタン追加
-	 * @method addScaleDropdown
-	 * @param {String} id ID
-	 * @param {String} value ボタンinnerHTML
-	 */
-	function addScaleDropdown(id, value) {
-		/*
-			<li role="presentation">
-				<a role="menuitem" tabindex="-1" href="#" id="scale_dropdown_item1">Display</a>
-			</li>
-		*/
-		var dropDown = document.getElementById('scale_drop_down'),
-			current = document.getElementById('scale_dropdown_current'),
-			li = document.createElement('li'),
-			a = document.createElement('a');
-		
-		li.role = "presentation";
-		a.role = "menuitem";
-		a.tabindex = "-1";
-		a.href = "#";
-		a.id = id;
-		a.innerHTML = value;
-		a.onclick = function (evt) {
-			var displayScale = parseFloat(this.innerHTML);
-			if (displayScale < 0) {
-				displayScale = 0.01;
-			} else if (displayScale > 1.0) {
-				displayScale = 1.0;
-			}
-			
-			gui.on_display_scale_changed(displayScale);
-			
-			current.innerHTML = displayScale;
-		};
-		li.appendChild(a);
-		dropDown.appendChild(li);
-		
-		// for ie, safari
-		a.addEventListener('mousedown', function (evt) {
-			a.click();
-			document.getElementById('dropdown2').className = "dropdown2";
-		});
-	}
-	
-	/**
 	 * PropertyエリアのコンテンツIDからElementを取得する
 	 * @method getSelectedElem
 	 * @return Literal
