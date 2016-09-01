@@ -47,7 +47,7 @@
 			}
 		};
 	}
-	
+
 	/**
 	 * WebSocketイベント登録
 	 * @method registerWSEvent
@@ -80,7 +80,7 @@
 		});
 		
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			operator.commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
+			operator.commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 
 		ws_connector.registerEvent(ws, ws_connection);

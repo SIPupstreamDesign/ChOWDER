@@ -1350,5 +1350,6 @@
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
 	Operator.prototype.commandAddWindowMetaData = commandAddWindowMetaData;
 	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
+	Operator.prototype.commandUpdateMetaData = commandUpdateMetaData;
 	module.exports = new Operator();
 }());

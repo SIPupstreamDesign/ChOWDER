@@ -118,7 +118,7 @@
 	 * @method assignMetaData
 	 * @param {Element} elem エレメント
 	 * @param {Object} metaData メタデータ
-	 * @param {Object} useOrg ユーザーデータ
+	 * @param {Object} useOrg 初期座標系を使うかどうか
 	 */
 	function assignMetaData(elem, metaData, useOrg) {
 		var rect;
@@ -191,8 +191,24 @@
 		return metaData;
 	}
 	
+	
 	/**
-	 * 指定されたメタデータのザ行位置を逆変換
+	 * 指定されたメタデータの位置を初期仮想スクリーンに変換
+	 * @method trans
+	 * @param {Object} metaData メタデータ
+	 * @return metaData メタデータ
+	 */
+	function transPos(metaData) {
+		var rect = vscreen.transformOrg(
+			vscreen.makeRect(parseFloat(metaData.posx, 10), parseFloat(metaData.posy, 10), 0, 0)
+		);
+		metaData.posx = rect.x;
+		metaData.posy = rect.y;
+		return metaData;
+	}
+	
+	/**
+	 * 指定されたメタデータの位置を逆変換
 	 * @method transPosInv
 	 * @param {Object} metaData メタデータ
 	 */
@@ -253,6 +269,7 @@
 	window.vscreen_util.isVisible = isVisible;
 	window.vscreen_util.trans = trans;
 	window.vscreen_util.transInv = transInv;
+	window.vscreen_util.transPos = transPos;
 	window.vscreen_util.transPosInv = transPosInv;
 	window.vscreen_util.isInsideWindow = isInsideWindow;
 	window.vscreen_util.isOutsideWindow = isOutsideWindow;

@@ -247,6 +247,22 @@
 	}
 
 	/**
+	 * コンテンツの選択
+	 * @method select
+	 * @param {String} targetid 対象コンテンツID
+	 */
+	function select(targetid) {
+		var metaData,
+			elem;
+		if (metaDataDict.hasOwnProperty(targetid)) {
+			metaData = metaDataDict[targetid];
+			elem = document.getElementById(targetid);
+			elem.style.border = "solid";
+			elem.is_dragging = true;
+		}
+	}
+
+	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
 	 * @method getTagName
 	 * @param {String} contentType コンテンツタイプ.
@@ -260,6 +276,89 @@
 		}
 		return tagName;
 	}
+
+	/**
+	 * 現在選択されているContentを非選択状態にする
+	 * @method unselect
+	 */
+	function unselect() {
+		var i,
+			elem;
+		for (i in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(i)) {
+				console.log(metaDataDict[i])
+				elem = document.getElementById(metaDataDict[i].id);
+				if (elem && elem.is_dragging) {
+					elem.is_dragging = false;
+					elem.style.border = "none";
+				}
+			}
+		}
+	}
+
+	/**
+	 * 指定Contentを移動させる
+	 * @param x ページのx座標
+	 * @param y ページのy座標
+	 */
+	function translate(targetid, x, y) {
+		var elem,
+			metaData;
+		
+		if (metaDataDict.hasOwnProperty(targetid)) {
+			elem = document.getElementById(targetid)
+			metaData = metaDataDict[targetid];
+			metaData.posx = x;
+			metaData.posy = y;
+			
+			vscreen_util.transPosInv(metaData);
+			metaData.posx -= vscreen.getWhole().x;
+			metaData.posy -= vscreen.getWhole().y;
+			connector.send('UpdateMetaData', metaData, function (err, reply) {
+				console.log("doneUpdateMetaData", reply);
+			});
+		}
+	}
+
+	/**
+	 * 現在選択されているContentのエレメントを返す
+	 */
+	function getSelectedElem() {
+		var i,
+			elem;
+		for (i in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(i)) {
+				console.log(metaDataDict[i])
+				elem = document.getElementById(metaDataDict[i].id);
+				if (elem && elem.is_dragging) {
+					return elem;
+				}
+			}
+		}
+		return;
+	}
+
+	function setupContent(elem, targetid) {
+		elem.onmousedown = (function (elem) {
+			return function (evt) {
+				var rect = elem.getBoundingClientRect();
+				unselect();
+				select(targetid);
+				elem.draggingOffsetLeft = evt.clientX - rect.left;
+				elem.draggingOffsetTop = evt.clientY - rect.top;
+			};
+		}(elem));
+		window.onmouseup = function () {
+			unselect();
+		};
+		window.onmousemove = function (evt) {
+			var elem = getSelectedElem();
+			if (elem && elem.is_dragging) {
+				translate(elem.id, evt.pageX - elem.draggingOffsetLeft, evt.pageY - elem.draggingOffsetTop);
+			}
+			evt.preventDefault();
+		};
+	} 
 
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
@@ -301,6 +400,7 @@
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
 				elem.style.position = "absolute";
+				setupContent(elem, elem.id);
 				insertElementWithDictionarySort(previewArea, elem);
 				//previewArea.appendChild(elem);
 			}
@@ -355,6 +455,7 @@
 		elem.id = metaData.id;
 		elem.style.position = "absolute";
 		elem.className = "temporary_bounds";
+		setupContent(elem, elem.id);
 		insertElementWithDictionarySort(previewArea, elem);
 	}
 
