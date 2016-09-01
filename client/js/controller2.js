@@ -873,7 +873,7 @@
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
 				console.log("px py whole", px, py, screen);
-				if (screen) {
+				if (screen && document.getElementById(screen.id)) {
 					document.getElementById(screen.id).style.background = "red";
 				}
 			}

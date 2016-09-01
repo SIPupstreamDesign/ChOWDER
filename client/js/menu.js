@@ -35,6 +35,7 @@
 		</ul>
 */
 		var i,
+			k,
 			head,
 			link,
 			li,
@@ -44,6 +45,13 @@
 		ul = document.createElement('ul');
 		ul.className = "menu";
 		containerElem.appendChild(ul);
+
+		ul.onmouseover = function () {
+			var elems = document.getElementsByClassName('menu_level1');
+			for (k = 0; k < elems.length; k = k + 1) {
+				elems[k].style.display = "block";
+			}
+		}
 
 		function createMenu(setting, ul, n) {
 			var i,
@@ -86,7 +94,15 @@
 						link.href = value.url;
 					}
 					if (value.hasOwnProperty('func')) {
-						link.onclick = value.func;
+						link.onclick = (function (ul, value) {
+							return function (evt) {
+								var elems = document.getElementsByClassName('menu_level1');
+								for (k = 0; k < elems.length; k = k + 1) {
+									elems[k].style.display = "none";
+								}
+								value.func(evt);
+							};
+						}(ul, value));
 					}
 					link.className = "";
 					li = document.createElement('li');
