@@ -22,6 +22,7 @@
 		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
+		groupListPrefix = "grouplist",
 		io_connector = require('./io_connector.js'),
 		ws_connector = require('./ws_connector.js'),
 		util = require('./util.js'),
@@ -117,6 +118,85 @@
 	 */
 	function generateWindowContentID(endCallback) {
 		generateID(windowContentPrefix, endCallback);
+	}
+
+	/**
+	 * グループリストの取得. ない場合は空がendcallbackにわたる.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function getGroupList(endCallback) {
+		textClient.get(groupListPrefix, function (err, reply) {
+			var data = reply;
+			if (!reply) {
+				data = []
+			} else {
+				try {
+					data = JSON.parse(data);
+				} catch (e) {
+					return false;
+				}
+			}
+			endCallback(err, data);
+		});
+	}
+
+	/**
+	 * グループリストにgroupを追加
+	 * @param {String} groupName グループ名.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addGroup(groupName, endCallback) {
+		getGroupList(function (err, data) {
+			if (data.indexOf(groupName) < 0) {
+				data.push(groupName);
+				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+			} else {
+				endCallback(null, null);
+			}
+		});
+	}
+
+	/**
+	 * グループリストからgroupの削除
+	 * @param {String} groupName グループ名.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function deleteGroup(groupName, endCallback) {
+		getGroupList(function (err, data) {
+			var index = data.indexOf(groupName);
+			if (index >= 0) { 
+				data.splice(index, 1);
+				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				return true;
+			} else {
+				endCallback("not found");
+				return false;
+			}
+		});
+	}
+
+	/**
+	 * グループリストのgroupのインデックスを変更する
+	 * @param {String} groupName グループ名.
+	 * @param {Integer} insertIndex 新規に割り当てるインデックス.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function changeGroupIndex(groupName, insertIndex, endCallback) {
+		getGroupList(function (err, data) {
+			var index = data.indexOf(groupName);
+			if (index >= 0) {
+				data.splice(index, 1);
+				if (insertIndex > 0 && insertIndex >= index) {
+					insertIndex -= 1;
+				}
+				data.splice(insertIndex, 0, groupName);
+				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				return true;
+			} else {
+				endCallback("not found");
+				return false;
+			}
+		});
 	}
 	
 	/**
@@ -1332,12 +1412,43 @@
 		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
 		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
+		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);
 		console.log("idstr:" + windowMetaDataPrefix);
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
+		console.log("idstr:" + groupListPrefix);
+		/*
+		addGroup("default", function (err, reply) {
+			addGroup("hoge", function (err, reply) {
+				addGroup("piyo", function (err, reply) {
+					addGroup("hoge", function (err, reply) {
+						addGroup("moga", function (err, reply) {
+					
+						});
+					});
+				});
+			});
+		});
+		*/
+		/*
+		deleteGroup("moga", function (err, reply) {
+			if (!err) {
+				console.log("remove group success");
+			}
+		});
+		*/
+		/*
+		addGroup("moga", function (err, reply) {
+			changeGroupIndex("hoge", 3, function  (err, reply) {
+				if (!err) {
+					console.log("changeGroupIndex success");
+				}
+			});
+		});
+		*/
 	}
 	
 	Operator.prototype.getContent = getContent;
