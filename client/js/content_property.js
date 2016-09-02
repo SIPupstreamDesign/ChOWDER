@@ -92,7 +92,7 @@
 	 * @param {String} type 設定タイプ
 	 * @param {String} mime mime
 	 */
-	function initPropertyArea(id, type, mime) {
+	function initPropertyArea(id, group, type, mime) {
 		var contentX,
 			contentY,
 			contentW,
@@ -105,15 +105,22 @@
 			transInput = document.getElementById('transform_input'),
 			user_data_input = document.getElementById('user_data_input'),
 			idlabel = document.getElementById('content_id_label'),
+			grouplabel = document.getElementById('group_name_label'),
 			idtext = document.getElementById('content_id'),
+			group_name = document.getElementById('group_name'),
 			downloadButton = document.getElementById('download_button'),
 			extension,
 			rectChangeFunc = window.content_property.on_rect_changed;
 		console.log("initPropertyArea");
 		if (id) {
-			document.getElementById('content_id').innerHTML = id;
+			document.getElementById('content_id').innerHTML = " " + id;
 		} else {
 			document.getElementById('content_id').innerHTML = "";
+		}
+		if (group) {
+			document.getElementById('group_name').innerHTML = " " + group;
+		} else {
+			document.getElementById('group_name').innerHTML = "";
 		}
 		transInput.innerHTML = "";
 		user_data_input.innerHTML = "";
@@ -141,6 +148,7 @@
 		} else if (type === "whole_window") {
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
+			grouplabel.innerHTML = "";
 			addInputProperty('whole_width', 'w', 'px', '1000');
 			addInputProperty('whole_height', 'h', 'px', '900');
 			addInputProperty('whole_split_x', 'split x', '', '1');
@@ -169,6 +177,7 @@
 			downloadButton.style.display = "none";
 		} else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
+			grouplabel.innerHTML = "Group:";
 			addInputProperty('content_transform_x', 'x', 'px', '0');
 			addInputProperty('content_transform_y', 'y', 'px', '0');
 			addInputProperty('content_transform_w', 'w', 'px', '0');
@@ -230,8 +239,8 @@
 		if (dlbtn) { dlbtn.style.display = 'none'; }
 	}
 
-	function init(id, type, mime) {
-		initPropertyArea(id, type, mime);
+	function init(id, group, type, mime) {
+		initPropertyArea(id, group, type, mime);
 	}
 
 	/**

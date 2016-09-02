@@ -520,7 +520,7 @@
 		}
 		
 		if (id === wholeWindowListID || id === wholeWindowID) {
-			content_property.init(id, "whole_window", mime);
+			content_property.init(id, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			gui.get_whole_window_elem().style.borderColor = windowSelectColor;
 			return;
@@ -545,7 +545,7 @@
 		console.log("draggingID = id:" + draggingID);
 		elem.style.border = "solid 2px";
 		if (metaData.type === windowType) {
-			content_property.init(id, "display", mime);
+			content_property.init(id, "", "display", mime);
 			content_property.assign_content_property(metaDataDict[id]);
 			if (gui.get_list_elem(id)) {
 				gui.get_list_elem(id).style.borderColor = windowSelectColor;
@@ -553,7 +553,7 @@
 			elem.style.borderColor = windowSelectColor;
 			manipulator.showManipulator(elem, gui.get_display_preview_area());
 		} else {
-			content_property.init(id, metaData.type, mime);
+			content_property.init(id, metaData.group, metaData.type, mime);
 			content_property.assign_content_property(metaDataDict[id]);
 			gui.set_update_content_id(id);
 			if (gui.get_list_elem(id)) {
@@ -2311,9 +2311,9 @@
 		}
 		manipulator.removeManipulator();
 		if (isDisplayTabSelected()) {
-			content_property.init("", "display");
+			content_property.init("", "", "display");
 		} else {
-			content_property.init("", "content");
+			content_property.init("", "", "content");
 		}
 		// 以前選択していたものを再選択する.
 		if (id) {

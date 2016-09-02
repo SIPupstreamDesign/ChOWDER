@@ -356,7 +356,7 @@
 		initGroupBoxEvents(groupBox);
 
 		// 右部コンテンツプロパティの初期化.
-		window.content_property.init(wholeWindowListID, "whole_window");
+		window.content_property.init(wholeWindowListID, "", "whole_window");
 
 		// コンテキストメニューの初期化.
 		initContextMenu();
