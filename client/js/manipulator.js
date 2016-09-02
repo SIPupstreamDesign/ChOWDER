@@ -102,7 +102,7 @@
 	 * @method setupManipulator
 	 * @param {Element} manip マニピュレータエレメント
 	 */
-	function setupManipulator(manip) {
+	function setupManipulator(manip, targetElem) {
 		var manipHalfWidth = 5,
 			manipHalfHeight = 5,
 			cursor,
@@ -110,10 +110,11 @@
 		
 		manip.style.position = "absolute";
 		manip.style.border = "solid 2px rgb(4, 180, 49)";
+		manip.style.borderColor = targetElem.style.borderColor;
 		manip.style.zIndex = '10';
 		manip.style.width = manipHalfWidth * 2 + "px";
 		manip.style.height = manipHalfHeight * 2 + "px";
-		manip.style.background = "rgb(4, 180, 49)";
+		manip.style.background = targetElem.style.borderColor;//"rgb(4, 180, 49)";
 		if (manip.id === '_manip_0') {
 			cursor = "nw-resize";
 		} else if (manip.id === '_manip_1') {
@@ -190,7 +191,7 @@
 		for (i = 0; i < manips.length; i = i + 1) {
 			manip = manips[i];
 			manip.id = "_manip_" + i;
-			setupManipulator(manip);
+			setupManipulator(manip, elem);
 			previewArea.appendChild(manip);
 			manipulators.push(manip);
 		}

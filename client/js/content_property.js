@@ -113,12 +113,12 @@
 			rectChangeFunc = window.content_property.on_rect_changed;
 		console.log("initPropertyArea");
 		if (id) {
-			document.getElementById('content_id').innerHTML = " " + id;
+			document.getElementById('content_id').innerHTML = id;
 		} else {
 			document.getElementById('content_id').innerHTML = "";
 		}
 		if (group) {
-			document.getElementById('group_name').innerHTML = " " + group;
+			document.getElementById('group_name').innerHTML = group;
 		} else {
 			document.getElementById('group_name').innerHTML = "";
 		}

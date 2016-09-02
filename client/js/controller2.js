@@ -12,6 +12,7 @@
 		dragOffsetLeft = 0,
 		mouseDownPos = [],
 		metaDataDict = {},
+		groupList = [],
 		windowType = "window",
 		wholeWindowID = "whole_window",
 		wholeWindowListID = "onlist:whole_window",
@@ -399,6 +400,22 @@
 			}
 		}
 	}
+
+	/**
+	 * グループの色を返す
+	 */
+	function getGroupColor(groupName) {
+		var i,
+			item;
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			item = groupList[i];
+			if (item.name === groupName) {
+				return item.color;
+			}
+		}
+		return contentSelectColor;
+	}
 	
 	/**
 	 * 最後に選択されたエレメントを返す.
@@ -510,7 +527,8 @@
 		var elem,
 			metaData,
 			initialVisible,
-			mime = null;
+			mime = null,
+			col;
 		
 		console.log("selectid", id);
 		if (metaDataDict.hasOwnProperty(id)) {
@@ -556,10 +574,13 @@
 			content_property.init(id, metaData.group, metaData.type, mime);
 			content_property.assign_content_property(metaDataDict[id]);
 			gui.set_update_content_id(id);
+			col = getGroupColor(metaDataDict[id].group);
 			if (gui.get_list_elem(id)) {
-				gui.get_list_elem(id).style.borderColor = contentSelectColor;
+				//gui.get_list_elem(id).style.borderColor = contentSelectColor;
+				gui.get_list_elem(id).style.borderColor = col;
 			}
-			elem.style.borderColor = contentSelectColor;
+			//elem.style.borderColor = contentSelectColor;
+			elem.style.borderColor = col;
 			manipulator.showManipulator(elem, gui.get_content_preview_area());
 		}
 		if (elem.style.zIndex === "") {
@@ -1837,6 +1858,7 @@
 			}
 
 			gui.set_group_list(reply.grouplist);
+			groupList = reply.grouplist;
 
 			// 元々あったリストエレメントを全部つけなおす
 			for (group in groupToElems) {
@@ -2243,8 +2265,12 @@
 	 * Group追加ボタンがクリックされた
 	 */
 	gui.on_group_append_clicked = function () {
-		var group = "test" + String(Math.floor(Math.random()*10000));
-		connector.send('AddGroup', { name : group }, function (err, reply) {
+		var group = "test" + String(Math.floor(Math.random()*10000)),
+			groupColor = "rgb("+ Math.floor(Math.random() * 128 + 127) + "," 
+				+ Math.floor(Math.random() * 128 + 127) + "," 
+				+ Math.floor(Math.random() * 128 + 127) + ")";
+				
+		connector.send('AddGroup', { name : group, color : groupColor }, function (err, reply) {
 			console.log("AddGroup done", err, reply);
 			updateGroupList();
 		});
@@ -2268,7 +2294,6 @@
 		var id = getSelectedID(),
 			metaData;
 		
-		console.error('on_group_change_clicked', groupName);
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
 			metaData.group = groupName;

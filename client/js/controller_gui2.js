@@ -20,6 +20,7 @@
 	function getSelectedElem() {
 		var targetID = document.getElementById('content_id').innerHTML;
 		if (targetID) {
+			//targetID = targetID.substr(1); // 最初の空白削除
 			return document.getElementById(targetID);
 		}
 		return null;
@@ -256,6 +257,9 @@
 		}
 	}
 
+	/**
+	 * グループのタブに対するイベントを設定. 
+	 */
 	function initGroupBoxEvents(groupBox) {
 		groupBox.on_tab_close = function (groupName) {
 			if (window.controller_gui.on_group_delete_clicked) {
@@ -279,14 +283,17 @@
 			setting = { tabs : [] },
 			groupName,
 			tab = {},
+			groupColor,
 			i;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			groupName = groupList[i].name;
+			groupColor = groupList[i].color;
 			tab = {}; 
 			tab[groupName] = {
 				id : (groupName === "default") ? "group_default" : "group_" + i,
 				className : "group_tab",
+				color : groupColor,
 				active : true
 			};
 			setting.tabs.push(tab);
@@ -398,11 +405,6 @@
 					{
 						グループ内のコンテンツを全て削除 : {
 							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
-						}
-					},
-					{
-						テストdeletegroup : {
-							func : function (evt) {}
 						}
 					}]
 			});

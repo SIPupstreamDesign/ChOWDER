@@ -153,12 +153,13 @@
 	/**
 	 * グループリストにgroupを追加
 	 * @param {String} groupName グループ名.
+	 * @param {String} color グループ色.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function addGroup(groupName, endCallback) {
+	function addGroup(groupName, color, endCallback) {
 		getGroupList(function (err, data) {
 			if (getGroupIndex(data.grouplist, groupName) < 0) {
-				data.grouplist.push({ name : groupName, color : "" });
+				data.grouplist.push({ name : groupName, color : color });
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 			} else {
 				endCallback(null, null);
@@ -1132,8 +1133,12 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandAddGroup(json, endCallback) {
+		var groupColor = "";
 		if (json.hasOwnProperty("name") && json.name !== "") {
-			addGroup(json.name, endCallback);
+			if (json.hasOwnProperty("color")) {
+				groupColor = json.color;
+			}
+			addGroup(json.name, groupColor, endCallback);
 		}
 	}
 

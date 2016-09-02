@@ -31,6 +31,7 @@
 			box,
 			tabs,
 			groupName,
+			groupColor = null,
 			tabItem,
 			elem,
 			span;
@@ -57,9 +58,13 @@
 					this.tabGroupToElems[groupName] = [];
 				}
 				tabItem = tabs[i][groupName];
-				elem.appendChild(this.create_tab(groupName, tabItem, i === 0));
-				this.tabIDs.push(tabItem.id);
+				if (tabItem.hasOwnProperty('color')) {
+					groupColor = tabItem.color;
+				}
 					
+				elem.appendChild(this.create_tab(groupName, groupColor, tabItem, i === 0));
+				this.tabIDs.push(tabItem.id);
+
 				box = document.createElement('div');
 				box.id = tabItem.id + "_box";
 				box.className = tabItem.className + "_box";
@@ -124,7 +129,7 @@
 		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
 		..
 	*/
-	GroupBox.prototype.create_tab = function (groupName, tabContent, is_active) {
+	GroupBox.prototype.create_tab = function (groupName, groupColor, tabContent, is_active) {
 		var elem,
 			link,
 			close_button,
@@ -133,6 +138,9 @@
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
 		elem.style.cursor = "pointer";
+		if (groupColor) {
+			elem.style.backgroundColor = groupColor;
+		}
 		this.tabGroupToElems[groupName].push(elem);
 		link = document.createElement('a');
 		link.href = "#";
