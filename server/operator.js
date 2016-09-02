@@ -1484,6 +1484,7 @@
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
+		/*
 		addGroup("default", function (err, reply) {
 			addGroup("hoge", function (err, reply) {
 				addGroup("piyo", function (err, reply) {
@@ -1495,6 +1496,7 @@
 				});
 			});
 		});
+		*/
 		/*
 		deleteGroup("moga", function (err, reply) {
 			if (!err) {
