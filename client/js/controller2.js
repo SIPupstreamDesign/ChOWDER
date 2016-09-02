@@ -24,6 +24,7 @@
 		contentBorderColor = "rgba(0,0,0,0)",
 		windowSelectColor = "#0080FF",
 		textColor = "white",
+		defaultGroup = "default",
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
@@ -31,6 +32,7 @@
 		doneGetVirtualDisplay,
 		doneGetContent,
 		doneGetWindowMetaData,
+		doneGetGroupList,
 		doneDeleteContent,
 		doneAddContent,
 		doneAddMetaData,
@@ -262,6 +264,14 @@
 		metaData.height = parseInt(metaData.height, 10);
 		return metaData;
 	}
+
+	/**
+	 * グループリストの更新(再取得)
+	 * @method updateGroupList
+	 */
+	function updateGroupList() {
+		connector.send('GetGroupList', {}, doneGetGroupList);
+	}
 	
 	/**
 	 * コンテンツとウィンドウの更新(再取得).
@@ -269,8 +279,12 @@
 	 */
 	function update() {
 		vscreen.clearScreenAll();
+		connector.send('GetMetaData', {type: "all", id: ""}, function (err, reply) {
+			doneGetMetaData(err, reply, function (err) {
+				updateGroupList();
+			});
+		});
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
-		connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
 		connector.send('GetWindowMetaData', {type: "all", id: ""}, doneGetWindowMetaData);
 	}
 	
@@ -1030,7 +1044,7 @@
 			};
 		}(metaData));
 	}
-	
+
 	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
@@ -1281,7 +1295,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContentToList(metaData, contentData) {
-		var contentArea,
+		var contentArea = null,
 			contentElem,
 			id,
 			elem,
@@ -1302,8 +1316,9 @@
 
 		if (metaData.hasOwnProperty('group')) {
 			contentArea = gui.get_content_area_by_group(metaData.group);
-		} else {
-			contentArea = gui.get_content_area_by_group("default");
+		}
+		if (!contentArea) {
+			contentArea = gui.get_content_area_by_group(defaultGroup);
 		}
 
 		tagName = getTagName(metaData.type);
@@ -1555,7 +1570,7 @@
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneGetMetaData = function (err, reply) {
+	doneGetMetaData = function (err, reply, endCallback) {
 		console.log('doneGetMetaData', reply);
 		var json = reply,
 			elem,
@@ -1577,9 +1592,14 @@
 			} else {
 				elem.style.display = "none";
 			}
+			if (endCallback) {
+				endCallback(null);
+			}
 		} else {
 			// 新規コンテンツロード.
-			connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+			connector.send('GetContent', { type: json.type, id: json.id }, function (err, data) {
+				doneGetContent(err, data, endCallback);
+			});
 		}
 	};
 	
@@ -1590,10 +1610,13 @@
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {Object} reply 返信されたコンテンツ
 	 */
-	doneGetContent = function (err, reply) {
+	doneGetContent = function (err, reply, endCallback) {
 		console.log("doneGetContent", reply);
 		if (!err) {
 			importContent(reply.metaData, reply.contentData);
+			if (endCallback) {
+				endCallback(null);
+			}
 		} else {
 			console.error(err);
 		}
@@ -1759,6 +1782,63 @@
 			elem = document.getElementById(lastSelectWindowID);
 			if (elem) {
 				manipulator.moveManipulator(elem);
+			}
+		}
+	};
+
+	/**
+	 * GetGroupListを送信した後の終了コールバック.
+	 * @method doneGetGroupList
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneGetGroupList = function (err, reply) {
+		console.log("doneGetGroupList", reply);
+		var i,
+			groupToElems = { default : [] },
+			group,
+			elem,
+			onlistID,
+			meta,
+			metaData,
+			contentArea;
+
+		if (!err && reply.hasOwnProperty('grouplist')) {
+			// 一旦全部のリストエレメントをはずす.
+			for (meta in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(meta)) {
+					metaData = metaDataDict[meta];
+					if (metaData.type !== windowType) {
+						onlistID = "onlist:" + metaData.id;
+						elem = document.getElementById(onlistID);
+						if (elem) {
+							elem.parentNode.removeChild(elem);
+							if (metaData.hasOwnProperty('group')) {
+								if (!groupToElems.hasOwnProperty(metaData.group)) {
+									groupToElems[metaData.group] = [];
+								}
+								groupToElems[metaData.group].push(elem);
+							} else {
+								groupToElems[defaultGroup].push(elem);
+							}
+						}
+					}
+				}
+			}
+
+			gui.set_group_list(reply.grouplist);
+
+			// 元々あったリストエレメントを全部つけなおす
+			for (group in groupToElems) {
+				if (groupToElems.hasOwnProperty(group)) {
+					contentArea = gui.get_content_area_by_group(group);
+					if (!contentArea) {
+						contentArea = gui.get_content_area_by_group(defaultGroup);
+					}
+					for (i = 0; i < groupToElems[group].length; i = i + 1) {
+						contentArea.appendChild(groupToElems[group][i])	
+					}
+				}
 			}
 		}
 	};
@@ -1943,8 +2023,6 @@
 			file,
 			i,
 			fileReader = new FileReader();
-
-			console.error(evt);
 
 		fileReader.onloadend = function (e) {
 			var data = e.target.result,
@@ -2150,7 +2228,28 @@
 		unselect();
 		select(wholeWindowListID);
 	};
-	
+
+	/**
+	 * Group追加ボタンがクリックされた
+	 */
+	gui.on_group_append_clicked = function () {
+		var group = "test" + String(Math.floor(Math.random()*10000));
+		connector.send('AddGroup', { name : group }, function (err, reply) {
+			console.log("AddGroup done", err, reply);
+			updateGroupList();
+		});
+	};
+
+	/**
+	 * Group削除ボタンがクリックされた
+	 */
+	gui.on_group_delete_clicked = function (groupName) {
+		connector.send('DeleteGroup', { name : groupName }, function (err, reply) {
+			console.log("DeleteGroup done", err, reply);
+			updateGroupList();
+		});
+	};
+
 	/**
 	 * 選択中のコンテンツのzIndexを変更する
 	 * @method on_change_zindex

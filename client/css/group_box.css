@@ -35,8 +35,9 @@
 	height : 14px;
 	background :rgb(250, 100, 100);
 	float : right;
-	position : relative;
+	position : absolute;
 	top : 3px;
+	margin-left: 80px;
 }
 
 .group_tab_close:hover {

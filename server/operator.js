@@ -128,7 +128,7 @@
 		textClient.get(groupListPrefix, function (err, reply) {
 			var data = reply;
 			if (!reply) {
-				data = []
+				data = { grouplist : [] }
 			} else {
 				try {
 					data = JSON.parse(data);
@@ -140,6 +140,16 @@
 		});
 	}
 
+	function getGroupIndex(groupList, groupName) {
+		var i;
+		for (i = 0; i < groupList.length; i = i + 1) {
+			if (groupList[i].name === groupName) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	/**
 	 * グループリストにgroupを追加
 	 * @param {String} groupName グループ名.
@@ -147,8 +157,8 @@
 	 */
 	function addGroup(groupName, endCallback) {
 		getGroupList(function (err, data) {
-			if (data.indexOf(groupName) < 0) {
-				data.push(groupName);
+			if (getGroupIndex(data.grouplist, groupName) < 0) {
+				data.grouplist.push({ name : groupName, color : "" });
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 			} else {
 				endCallback(null, null);
@@ -163,9 +173,9 @@
 	 */
 	function deleteGroup(groupName, endCallback) {
 		getGroupList(function (err, data) {
-			var index = data.indexOf(groupName);
+			var index = getGroupIndex(data.grouplist, groupName);
 			if (index >= 0) { 
-				data.splice(index, 1);
+				data.grouplist.splice(index, 1);
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 				return true;
 			} else {
@@ -183,13 +193,13 @@
 	 */
 	function changeGroupIndex(groupName, insertIndex, endCallback) {
 		getGroupList(function (err, data) {
-			var index = data.indexOf(groupName);
+			var index = getGroupIndex(data.grouplist, groupName);
 			if (index >= 0) {
-				data.splice(index, 1);
+				data.grouplist.splice(index, 1);
 				if (insertIndex > 0 && insertIndex >= index) {
 					insertIndex -= 1;
 				}
-				data.splice(insertIndex, 0, groupName);
+				data.grouplist.splice(insertIndex, 0, groupName);
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 				return true;
 			} else {
@@ -1107,7 +1117,37 @@
 			}
 		});
 	}
+
+	/**
+	 *  グループリストを取得する.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandGetGroupList(endCallback) {
+		getGroupList(endCallback);
+	}
 	
+	/**
+	 *  グループを追加する.
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandAddGroup(json, endCallback) {
+		if (json.hasOwnProperty("name") && json.name !== "") {
+			addGroup(json.name, endCallback);
+		}
+	}
+
+	/**
+	 *  グループを削除する.
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandDeleteGroup(json, endCallback) {
+		if (json.hasOwnProperty("name") && json.name !== "") {
+			deleteGroup(json.name, endCallback);
+		}
+	}
+
 	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
@@ -1288,7 +1328,19 @@
 		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
 			commandGetVirtualDisplay(socketid, data, resultCallback);
 		});
+
+		ws_connector.on(Command.GetGroupList, function (data, resultCallback) {
+			commandGetGroupList(resultCallback);
+		});
 		
+		ws_connector.on(Command.AddGroup, function (data, resultCallback) {
+			commandAddGroup(data, resultCallback);
+		});
+
+		ws_connector.on(Command.DeleteGroup, function (data, resultCallback) {
+			commandDeleteGroup(data, resultCallback);
+		});
+
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.ShowWindowID, {id : data.id});
 			io_connector.broadcast(io, Command.ShowWindowID, {id : data.id});
@@ -1388,6 +1440,18 @@
 		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
 			commandGetVirtualDisplay(socketid, data, resultCallback);
 		});
+		
+		io_connector.on(Command.GetGroupList, function (data, resultCallback) {
+			commandGetGroupList(resultCallback);
+		});
+
+		io_connector.on(Command.AddGroup, function (data, resultCallback) {
+			commandAddGroup(data, resultCallback);
+		});
+
+		io_connector.on(Command.DeleteGroup, function (data, resultCallback) {
+			commandDeleteGroup(data, resultCallback);
+		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.ShowWindowID, { id : data.id });
@@ -1420,7 +1484,6 @@
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
-		/*
 		addGroup("default", function (err, reply) {
 			addGroup("hoge", function (err, reply) {
 				addGroup("piyo", function (err, reply) {
@@ -1432,7 +1495,6 @@
 				});
 			});
 		});
-		*/
 		/*
 		deleteGroup("moga", function (err, reply) {
 			if (!err) {

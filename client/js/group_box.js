@@ -12,6 +12,10 @@
 		this.tabGroupToElems = {};
 		this.currentTab = null;
 		this.init();
+
+		this.on_tab_changed = null; // タブが切り替わった時呼ばれるイベント関数をしこむ 
+		this.on_tab_close = null; // タブのxを押したときに呼ばれるイベント関数をしこむ
+		this.on_tab_append = null; // タブの+を押したときに呼ばれるイベント関数をしこむ
 	};
 
 	/*
@@ -82,9 +86,11 @@
 			span.className = "group_tab_append_label";
 			span.innerHTML = "+";
 			elem.appendChild(span);
-			elem.onclick = function (evt) {
-				alert("not implemented");
-			};
+			elem.onclick = function () {
+				if (this.on_tab_append) {
+					this.on_tab_append();
+				}
+			}.bind(this);
 			tabArea.appendChild(elem);
             // search tab generate
             this.gen_search_tab_box();
@@ -132,34 +138,38 @@
 		link.href = "#";
 		link.id = tabContent.id + "_link";
 		link.innerHTML = groupName;
-		if (tabContent.hasOwnProperty('func')) {
-			elem.onclick = function () {
-				var i,
-					tabElem;
-				for (i = 0; i < this.tabIDs.length; i = i + 1) {
-					document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
-					tabElem = document.getElementById(this.tabIDs[i]); 
-					tabElem.className = tabElem.className.split(" active").join("");
-				}
-				tabElem = document.getElementById(tabContent.id); 
-				tabElem.className = tabElem.className + " active";
-				document.getElementById(tabContent.id + "_box").style.display = "block";
+		elem.onclick = function (evt) {
+			var i,
+				tabElem;
+			for (i = 0; i < this.tabIDs.length; i = i + 1) {
+				document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
+				tabElem = document.getElementById(this.tabIDs[i]); 
+				tabElem.className = tabElem.className.split(" active").join("");
+			}
+			tabElem = document.getElementById(tabContent.id); 
+			tabElem.className = tabElem.className + " active";
+			document.getElementById(tabContent.id + "_box").style.display = "block";
+			if (tabContent.hasOwnProperty('func')) {
 				tabContent.func();
-				if (window.group_box.on_tab_changed) {
-					window.group_box.on_tab_changed();
-				}
-				this.currentTab = document.getElementById(tabContent.id + "_box");
-				this.currentGroupName = groupName;
-			}.bind(this);
-		}
+			}
+			if (this.on_tab_changed) {
+				this.on_tab_changed(evt);
+			}
+			this.currentTab = document.getElementById(tabContent.id + "_box");
+			this.currentGroupName = groupName;
+		}.bind(this);
 		elem.appendChild(link);
 		
 		if (groupName !== defaultGroup) {
 			close_button = document.createElement('div');
 			close_button.className = "group_tab_close";
-			close_button.onclick = function (evt) {
-				alert("not implemented");
-			};
+			close_button.onclick = (function (self, groupName) {
+				return function () {
+					if (self.on_tab_close) {
+						self.on_tab_close(groupName);
+					}
+				};
+			}(this, groupName));
 			span = document.createElement('span');
 			span.innerHTML = "x";
 			span.className = "group_tab_close_label";
@@ -169,7 +179,7 @@
 		return elem;
 	};
 
-	GroupBox.prototype.delete_tab = function(groupName) {
+	GroupBox.prototype.close_tab = function(groupName) {
 		var i,
 			div,
 			elem,
@@ -186,11 +196,11 @@
 					elem = this.tabGroupToElems[groupName][i];
 					if(parent.contains(elem)) {
 						parent.removeChild(elem);
-						console.error("deleted", elem);
+						console.error("closed", elem);
 					}
 					if(div.contains(elem)) {
 						div.removeChild(elem);
-						console.error("deleted", elem);
+						console.error("closed", elem);
 					}
 				}
 				this.currentTab = this.get_tab(defaultGroup);
@@ -263,6 +273,18 @@
         }
     };
 
+	GroupBox.prototype.get_active_tab_name = function () {
+		var gname;
+		for (gname in this.tabGroupToElems) {
+			if (this.tabGroupToElems.hasOwnProperty(gname)) {
+				if (this.tabGroupToElems[gname][0].className.indexOf('active') >= 0) {
+					return gname;
+				}
+			}
+		}
+		return null;
+	};
+
 	function init(containerElem, setting) {
 		return new GroupBox(containerElem, setting);
 	}
@@ -274,7 +296,6 @@
 
 	window.group_box = {};
 	window.group_box.init = init;
-	window.group_box.on_tab_changed = null;
 	window.group_box.is_active = is_active;
 
 }(window.controller_gui));

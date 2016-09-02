@@ -204,6 +204,47 @@
 		}
 	}
 
+	function initGroupBoxEvents(groupBox) {
+		groupBox.on_tab_close = function (groupName) {
+			if (window.controller_gui.on_group_delete_clicked) {
+				window.controller_gui.on_group_delete_clicked(groupName);
+			}
+		};
+
+		groupBox.on_tab_append = function () {
+			if (window.controller_gui.on_group_append_clicked) {
+				window.controller_gui.on_group_append_clicked();
+			}
+		};
+	}
+
+	/**
+	 * グループリストをセットする。
+	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
+	 */
+	function setGroupList(groupList) {
+		var activeTab = groupBox.get_active_tab_name(),
+			setting = { tabs : [] },
+			groupName,
+			tab = {},
+			i;
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			groupName = groupList[i].name;
+			tab = {}; 
+			tab[groupName] = {
+				id : (groupName === "default") ? "group_default" : "group_" + i,
+				className : "group_tab",
+				active : true
+			};
+			setting.tabs.push(tab);
+		}
+
+		document.getElementById('content_tab_box').innerHTML = "";
+		groupBox = window.group_box.init(document.getElementById('content_tab_box'), setting);
+		initGroupBoxEvents(groupBox);
+	}
+
 	/**
 	 * 初期化
 	 * @method init
@@ -257,6 +298,7 @@
 						}
 					}]
 			});
+		initGroupBoxEvents(groupBox);
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "whole_window");
@@ -341,6 +383,8 @@
 	window.controller_gui.on_display_scale_changed = null;
 	window.controller_gui.on_close_item = null;
 	window.controller_gui.on_file_dropped = null;
+	window.controller_gui.on_group_append_clicked = null;
+	window.controller_gui.on_group_delete_clicked = null;
 	
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;
@@ -386,6 +430,10 @@
 
 	window.controller_gui.set_display_scale = function (scale) {
 		display_scale = scale; 
+	};
+
+	window.controller_gui.set_group_list = function (grouplist) {
+		setGroupList(grouplist);
 	};
 	
 }());
