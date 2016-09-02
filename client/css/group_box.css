@@ -36,12 +36,41 @@
 	background :rgb(250, 100, 100);
 	float : right;
 	position : relative;
-	top : 2px;
-	color : white;
+	top : 3px;
 }
 
 .group_tab_close:hover {
 	background :red;
+}
+
+.group_tab_close_label {
+	color : white;
+	position : relative;
+	top : -3px;
+}
+
+.group_tab_append {
+	border: 1px solid rgb(100, 250, 100);
+	border-radius: 14px;
+	width : 14px;
+	height : 14px;
+	background :rgb(100, 250, 100);
+	float : left;
+	position : relative;
+	top : 3px;
+	left : 5px;
+	cursor : pointer;
+	margin : auto auto;
+}
+
+.group_tab_append:hover {
+	background :rgb(54,187,68);
+}
+
+.group_tab_append_label {
+	color : black;
+	position : relative;
+	top : -3px;
 }
 
 .group_tab.active {

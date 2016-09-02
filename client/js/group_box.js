@@ -28,7 +28,8 @@
 			tabs,
 			groupName,
 			tabItem,
-			elem;
+			elem,
+			span;
 
 		// tabArea
 		tabArea = document.createElement('div');
@@ -74,6 +75,18 @@
 				
 				this.tabGroupToElems[groupName].push(box);
 			}
+
+			// 追加ボタン
+			elem = document.createElement('div');
+			elem.className = "group_tab_append";
+			span = document.createElement('span');
+			span.className = "group_tab_append_label";
+			span.innerHTML = "+";
+			elem.appendChild(span);
+			elem.onclick = function (evt) {
+				alert("not implemented");
+			}
+			tabArea.appendChild(elem);
 		}
 	};
 
@@ -107,7 +120,8 @@
 	GroupBox.prototype.create_tab = function (groupName, tabContent, is_active) {
 		var elem,
 			link,
-			close_button;
+			close_button,
+			span;
 		elem = document.createElement('div');
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
@@ -142,10 +156,13 @@
 		if (groupName !== defaultGroup) {
 			close_button = document.createElement('div');
 			close_button.className = "group_tab_close";
-			close_button.innerHTML = "×";
 			close_button.onclick = function (evt) {
 				alert("not implemented");
 			};
+			span = document.createElement('span');
+			span.innerHTML = "x";
+			span.className = "group_tab_close_label";
+			close_button.appendChild(span);
 			elem.appendChild(close_button);
 		}
 		return elem;
