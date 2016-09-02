@@ -209,6 +209,10 @@
 		}
 	};
 
+	GroupBox.prototype.get_tabgroup_to_elems = function () {
+		return this.tabGroupToElems;
+	};
+
     GroupBox.prototype.gen_search_tab_box = function(){
         var e, f, g, h, i, j;
         var box = document.getElementById('search_tab_box');

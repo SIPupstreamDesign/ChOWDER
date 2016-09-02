@@ -95,3 +95,7 @@
 	height : 30px;
 	position : absolute;
 }
+
+#context_menu_change_group_list { 
+	display : none;
+}

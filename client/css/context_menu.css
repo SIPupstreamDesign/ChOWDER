@@ -21,3 +21,22 @@
 	background : rgb(66, 129, 244);
 	color : white;
 }
+
+.context_menu_change_group_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+	position : relative;
+	left : 200px;
+	top : -40px;
+}
+
+.context_menu_change_group_list {
+	display : none;
+}
+
+.context_menu_change_group_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}

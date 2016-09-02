@@ -75,12 +75,18 @@
 	<div id="bottom_burger_menu_content"></div>
 	<div id="bottom_burger_menu_search"></div>
 	
-	<div id="context_menu" class="context_menu" style="display:none">
-		<div class="context_menu_item" id="context_menu_add_memo">メモ追加</div>
-		<div class="context_menu_item" id="context_menu_add_image">画像追加</div>
-		<div class="context_menu_item" id="context_menu_delete">コンテンツ削除</div>
-	</div>
+	<ul id="context_menu" class="context_menu" style="display:none">
+		<li class="context_menu_item" id="context_menu_add_memo">メモ追加</li>
+		<li class="context_menu_item" id="context_menu_add_image">画像追加</li>
+		<li class="context_menu_item" id="context_menu_change_group">グループ変更</li>
+		<li class="context_menu_item" id="context_menu_delete">コンテンツ削除</li>
 
+		<ul class="context_menu_change_group_list" id="context_menu_change_group_list">
+			<!--li class="context_menu_item" id="context_menu_change_group_item">グループ1</li-->
+		</ul>
+	</ul>
+
+	
 	<div style="display:none">
 		<div>
 			<p style="margin-top:20px;margin-left:20px">テキストの送信</p>

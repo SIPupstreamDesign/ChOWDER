@@ -32,7 +32,11 @@
 		var menu = document.getElementById('context_menu'),
 			delete_button = document.getElementById('context_menu_delete'),
 			add_image_button = document.getElementById('context_menu_add_image'),
-			add_memo_button = document.getElementById('context_menu_add_memo');
+			add_memo_button = document.getElementById('context_menu_add_memo'),
+			change_group_button = document.getElementById('context_menu_change_group'),
+			change_group_list = document.getElementById('context_menu_change_group_list'),
+			on_change_group = false,
+			on_change_group_item = false;
 
 		delete_button.onclick = function (evt) {
 			gui.on_close_item();
@@ -48,6 +52,28 @@
 		add_memo_button.onclick = function (evt) {
 			// TODO
 			menu.style.display = "none";
+		};
+
+		// サブメニュー
+		change_group_button.onmouseover = function () {
+			var container = document.getElementById('context_menu_change_group_list');
+			container.style.display = "block";
+			on_change_group = true;
+		};
+		change_group_button.onmouseout = function () {
+			on_change_group = false;
+		};
+		change_group_list.onmouseover = function () {
+			on_change_group_item = true;
+		};
+		change_group_list.onmouseout = function () {
+			on_change_group_item = false;
+		};
+		menu.onmousemove = function () {
+			if (!on_change_group && !on_change_group_item) {
+				var container = document.getElementById('context_menu_change_group_list');
+				container.style.display = "none";
+			}
 		};
 
 		document.body.oncontextmenu = function (evt) {
@@ -67,6 +93,32 @@
 				menu.style.display = "none";
 			}
 		});
+	}
+
+	/**
+	 * コンテキストメニューの動的に変化する部分を更新.
+	 */
+	function updateContextMenu() {
+		var groupToElems = groupBox.get_tabgroup_to_elems(),
+			container = document.getElementById('context_menu_change_group_list'),
+			item,
+			gname;
+		container.innerHTML = "";
+
+		for (gname in groupToElems) {
+			if (groupToElems.hasOwnProperty(gname)) {
+				item = document.createElement('li');
+				item.className = "context_menu_change_group_item";
+				item.style.top = "-" + ((Object.keys(groupToElems).length + 1) * 20) + "px";
+				item.innerHTML = gname;
+				container.appendChild(item);
+				item.onmousedown = (function (gname) {
+					return function (evt) {
+						window.controller_gui.on_group_change_clicked(gname);
+					};
+				}(gname));
+			}
+		}
 	}
 
 	/**
@@ -243,6 +295,9 @@
 		document.getElementById('content_tab_box').innerHTML = "";
 		groupBox = window.group_box.init(document.getElementById('content_tab_box'), setting);
 		initGroupBoxEvents(groupBox);
+
+		// コンテキストメニューを刷新
+		updateContextMenu();
 	}
 
 	/**
@@ -385,6 +440,7 @@
 	window.controller_gui.on_file_dropped = null;
 	window.controller_gui.on_group_append_clicked = null;
 	window.controller_gui.on_group_delete_clicked = null;
+	window.controller_gui.on_group_change_clicked = null;
 	
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;

@@ -307,13 +307,17 @@
 	 * @method updateMetaData
 	 * @param {JSON} metaData メタデータ
 	 */
-	function updateMetaData(metaData) {
+	function updateMetaData(metaData, endCallback) {
 		if (metaData.type === windowType) {
 			// window
-			connector.send('UpdateWindowMetaData', metaData, doneUpdateWindowMetaData);
+			connector.send('UpdateWindowMetaData', metaData, function (err, reply) {
+				doneUpdateWindowMetaData(err, reply, endCallback);
+			});
 		} else {
 			//console.log("UpdateMetaData");
-			connector.send('UpdateMetaData', metaData, doneUpdateMetaData);
+			connector.send('UpdateMetaData', metaData, function (err, reply) {
+				doneUpdateMetaData(err, reply, endCallback);
+			});
 		}
 	}
 	
@@ -1628,10 +1632,13 @@
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneUpdateMetaData = function (err, reply) {
+	doneUpdateMetaData = function (err, reply, endCallback) {
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 		content_property.assign_content_property(json);
+		if (endCallback) {
+			endCallback(null);
+		}
 	};
 	
 	/**
@@ -1640,7 +1647,7 @@
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneUpdateWindowMetaData = function (err, reply) {
+	doneUpdateWindowMetaData = function (err, reply, endCallback) {
 		console.log("doneUpdateWindowMetaData");
 		//console.log(reply);
 		var windowData = reply;
@@ -1648,6 +1655,9 @@
 		vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
 		vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 		updateScreen(windowData);
+		if (endCallback) {
+			endCallback(null);
+		}
 	};
 	
 	/**
@@ -2248,6 +2258,24 @@
 			console.log("DeleteGroup done", err, reply);
 			updateGroupList();
 		});
+	};
+
+	/**
+	 * Group変更がクリックされた
+	 * @param {String} groupName 変更先のグループ名
+	 */
+	gui.on_group_change_clicked = function (groupName) {
+		var id = getSelectedID(),
+			metaData;
+		
+		console.error('on_group_change_clicked', groupName);
+		if (metaDataDict.hasOwnProperty(id)) {
+			metaData = metaDataDict[id];
+			metaData.group = groupName;
+			updateMetaData(metaData, function (err, data) {
+				updateGroupList();
+			});
+		}
 	};
 
 	/**
