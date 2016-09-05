@@ -530,3 +530,17 @@ p {
 	margin-left : 10px;
 	margin-right : 10px;
 }
+
+.maniplator_menu_star {
+	width : 26px;
+	height : 26px;
+	position : absolute;
+	background-image:url("../image/star_off.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	border: 1px solid gray;
+}
+
+.maniplator_menu_star.active {
+	background-image:url("../image/star_on.png");
+}

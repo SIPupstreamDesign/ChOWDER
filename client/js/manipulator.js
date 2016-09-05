@@ -13,6 +13,7 @@
 		draggingManip = null,
 		windowType = "window",
 		manipulators = [],
+		manipulatorMenus = [],
 		draggingOffsetFunc = null,
 		closeFunc = null,
 		parent = null;
@@ -95,6 +96,10 @@
 		// x button
 		manipulators[4].style.left = (left + width - 30) + "px";
 		manipulators[4].style.top = (top + 20) + "px";
+
+		// ☆
+		manipulatorMenus[0].style.left = (left + 5) + "px";
+		manipulatorMenus[0].style.top = (top - 30) + "px";
 	}
 	
 	/**
@@ -161,12 +166,37 @@
 			for (i = 0; i < manipulators.length; i = i + 1) {
 				previewArea.removeChild(manipulators[i]);
 			}
+			for (i = 0; i < manipulatorMenus.length; i = i + 1) {
+				previewArea.removeChild(manipulatorMenus[i]);
+			}
 		}
 		manipulators = [];
+		manipulatorMenus = [];
 		parent = null;
 	}
 	
-	/// show manipulator rects on elem
+	/**
+	 * マニピュレータのセットアップ
+	 * @method setupManipulator
+	 * @param {Element} manip マニピュレータエレメント
+	 */
+	function setupManipulatorMenus(previewArea, targetElem) {
+		var star = document.createElement('div');
+		star.id = "_manip_menu_0";
+		star.className = "maniplator_menu_star";
+		previewArea.appendChild(star);
+		manipulatorMenus.push(star);
+		star.onmousedown = function (evt) {
+			if (star.classList.contains('active')) {
+				star.classList.remove('active');
+			} else {
+				star.classList.add('active');
+			}
+			evt.stopPropagation();
+		};
+		star.style.borderColor = targetElem.style.borderColor;
+	}
+
 	/**
 	 * マニピュレータを表示
 	 * @method showManipulator
@@ -195,6 +225,7 @@
 			previewArea.appendChild(manip);
 			manipulators.push(manip);
 		}
+		setupManipulatorMenus(previewArea, elem);
 	}
 	
 	function isShowManipulator() {
