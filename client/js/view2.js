@@ -416,6 +416,8 @@
 				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
 				rect = elem.getBoundingClientRect();
 				memo.style.width = (rect.right - rect.left) + "px";
+				memo.style.left = rect.left + "px";
+				memo.style.top =  rect.bottom + "px";
 			} else {
 				memo = document.createElement("pre");
 				memo.id = "memo:" + metaData.id;
@@ -429,16 +431,6 @@
 				memo.style.height = "auto";
 				previewArea.appendChild(memo);
 			}
-		}
-	}
-
-	function translateMemo(elem, metaData) {
-		var memo = document.getElementById("memo:" + metaData.id),
-			rect = elem ? elem.getBoundingClientRect() : null;
-
-		if (memo && rect) {
-			memo.style.left = rect.left + "px";
-			memo.style.top =  rect.bottom + "px";
 		}
 	}
 
@@ -837,7 +829,6 @@
 					resizeViewport(windowData);
 				} else {
 					setupMemo(elem, metaData);
-					translateMemo(elem, metaData);
 					toggleMark(elem, metaData);
 				}
 			}
