@@ -177,7 +177,6 @@
 		client.onclose = onclose;
 		
 		client.onmessage = function (message) {
-			console.log("ws chowder_request : ", message);
 			var data = message.data,
 				parsed,
 				result;

@@ -26,6 +26,7 @@
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
+		UpdateMouseCursor : "UpdateMouseCursor",
 		
 		// to client
 		Disconnect : "Disconnect"

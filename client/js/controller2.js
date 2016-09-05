@@ -314,6 +314,11 @@
 			connector.send('UpdateWindowMetaData', metaData, function (err, reply) {
 				doneUpdateWindowMetaData(err, reply, endCallback);
 			});
+        } else if (metaData.type === 'mouse') {
+            // mouse cursor
+            connector.send('UpdateMouseCursor', metaData, function (err, reply) {
+                // console.log(err, reply);
+            });
 		} else {
 			//console.log("UpdateMetaData");
 			connector.send('UpdateMetaData', metaData, function (err, reply) {
@@ -867,7 +872,6 @@
 	
 	// add content mousemove event
 	window.document.addEventListener("mousemove", function (evt) {
-		if (evt.button !== 0) { return; } // 左ドラッグのみ
 		var i,
 			metaData,
 			metaTemp,
@@ -881,8 +885,23 @@
 			orgPos,
 			splitWhole,
 			screen;
+		if (evt.button !== 0) { return; } // 左ドラッグのみ
 		
 		evt = (evt) || window.event;
+		
+        // mouse cursor position
+        if(Date.now() % 5 === 0 || evt.target.id !== ''){
+            var obj = {
+                type: 'mouse',
+                id: evt.target.id,
+                target: evt.target.id,
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top,
+                w: rect.width,
+                h: rect.height,
+            };
+            updateMetaData(obj);
+        }
 		
 		if (draggingID) {
 			// detect content list area
@@ -1892,7 +1911,7 @@
 						contentArea = gui.get_content_area_by_group(defaultGroup);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
-						contentArea.appendChild(groupToElems[group][i])	
+						contentArea.appendChild(groupToElems[group][i]);
 					}
 				}
 			}
@@ -2490,6 +2509,17 @@
 		clearWindowList();
 		addWholeWindowToList();
 		updateScreen();
+	});
+	
+	// windowが更新されたときにブロードキャストされてくる.
+	connector.on('UpdateMouseCursor', function (metaData) {
+        // console.log('UpdateMouseCursor', metaData, draggingID);
+
+        // if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
+        //     if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
+        //         changeWindowBorderColor(metaData);
+        //     }
+        // }
 	});
 	
 	// コンテンツが削除されたときにブロードキャストされてくる.

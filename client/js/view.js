@@ -689,6 +689,11 @@
 			update('', data.id);
 		});
 
+		connector.on("UpdateMouseCursor", function (data) {
+			console.log("onUpdateMouseCursor", data);
+			// update('', data.id);
+		});
+
 		connector.on("Disconnect", (function (client) {
 			return function () {
 				var previewArea = document.getElementById("preview_area"),
