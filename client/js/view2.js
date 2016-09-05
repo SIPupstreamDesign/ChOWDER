@@ -715,7 +715,7 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	function toggleMark(elem, metaData) {
-		if (metaData.hasOwnProperty("id")) {
+		if (elem && metaData.hasOwnProperty("id")) {
 			if (metaData.hasOwnProperty('mark') && (metaData["mark"] === 'true' || metaData["mark"] === true)) {
 				if (!elem.classList.contains("marked")) {
 					elem.classList.add("marked");
