@@ -165,3 +165,11 @@ pre {
 	border : 1px solid orange;
 	background-color: orange
 }
+#hiddenCursor {
+    background-image: url(../image/cursor.png);
+    background-size: contain;
+    width: 28px;
+    height: 40px;
+    position: absolute;
+    top: -9999px;
+}

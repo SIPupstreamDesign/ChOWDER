@@ -903,12 +903,20 @@
 			}
 		});
 
-		connector.on("UpdateMouseCursor", function (data) {
-			// console.log("onUpdateMouseCursor", data);
-			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
-				// update('window');
-			}
-		});
+        connector.on("UpdateMouseCursor", function (data) {
+            // console.log("onUpdateMouseCursor", data);
+            if (data.hasOwnProperty('id') && data.id === getWindowID()) {
+                var ww = window.innerWidth;
+                var wh = window.innerHeight;
+                var x = (data.x / data.w) * ww;
+                var y = (data.y / data.h) * wh;
+                var e = document.getElementById('hiddenCursor');
+                if(e){
+                    e.style.left = x + 'px';
+                    e.style.top  = y + 'px';
+                }
+            }
+        });
 
 		connector.on("ShowWindowID", function (data) {
 			console.log("onShowWindowID", data);
