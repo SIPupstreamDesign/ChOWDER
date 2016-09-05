@@ -189,7 +189,7 @@
 		previewArea.appendChild(star);
 		manipulatorMenus.push(star);
 		// 初期のトグル設定
-		if (metaData.hasOwnProperty('mark') && metaData.mark) {
+		if (metaData.hasOwnProperty('mark') && (metaData.mark === "true" || metaData.mark === true)) {
 			star.classList.add('active');
 		}
 
