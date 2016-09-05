@@ -834,11 +834,10 @@
 	 */
 	function updateMouseCursor(socketid, mouseData, endCallback) {
 		if (!mouseData.hasOwnProperty("id")) { return; }
-		// textClient.hmset(windowMetaDataPrefix + mouseData.id, mouseData, function (err, reply) {
-			if (endCallback) {
-				endCallback(mouseData);
-			}
-		// });
+        var obj = {data: mouseData, id: socketid};
+        if (endCallback) {
+            endCallback(obj);
+        }
 	}
 	
 	/**

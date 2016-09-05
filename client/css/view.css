@@ -165,11 +165,35 @@ pre {
 	border : 1px solid orange;
 	background-color: orange
 }
-#hiddenCursor {
-    background-image: url(../image/cursor.png);
-    background-size: contain;
-    width: 28px;
-    height: 40px;
+.hiddenCursor {
+    color: transparent;
+    width: 50px;
+    height: 50px;
     position: absolute;
     top: -9999px;
+    overflow: hidden;
 }
+.hiddenCursor:before {
+    content: '　';
+    width: 50px;
+    height: 50px;
+    display: inline-block;
+    transform: rotate(45deg) translate(-40px,0px);
+}
+.hiddenCursor:after {
+    content: '　';
+    width: 20px;
+    height: 50px;
+    display: inline-block;
+    transform: rotate(-45deg) translate(-25px,-40px);
+}
+#hiddenCursor0:before, #hiddenCursor0:after {background-color: rgb(200,  20, 100);}
+#hiddenCursor1:before, #hiddenCursor1:after {background-color: rgb(100,  20, 200);}
+#hiddenCursor2:before, #hiddenCursor2:after {background-color: rgb( 20, 200,  20);}
+#hiddenCursor3:before, #hiddenCursor3:after {background-color: rgb( 20, 100, 200);}
+#hiddenCursor4:before, #hiddenCursor4:after {background-color: rgb(200, 200,  20);}
+#hiddenCursor5:before, #hiddenCursor5:after {background-color: rgb( 20, 100,  20);}
+#hiddenCursor6:before, #hiddenCursor6:after {background-color: rgb(200, 100,  20);}
+#hiddenCursor7:before, #hiddenCursor7:after {background-color: rgb( 20,  20,  20);}
+#hiddenCursor8:before, #hiddenCursor8:after {background-color: rgb(100, 100, 100);}
+#hiddenCursor9:before, #hiddenCursor9:after {background-color: rgb(200, 200, 200);}
