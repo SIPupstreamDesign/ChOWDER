@@ -47,6 +47,20 @@
 			}
 		};
 	}
+	
+	/**
+	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMouseCursor
+	 */
+	function post_updateMouseCursor(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMouseCursor, reply);
+			io_connector.broadcast(io, Command.UpdateMouseCursor, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
 
 	/**
 	 * WebSocketイベント登録
@@ -81,6 +95,10 @@
 		
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
 			operator.commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.UpdateMouseCursor, function (data, resultCallback) {
+			operator.commandUpdateMouseCursor(data, post_updateMouseCursor(ws, io, resultCallback));
 		});
 
 		ws_connector.registerEvent(ws, ws_connection);

@@ -128,7 +128,7 @@
 		textClient.get(groupListPrefix, function (err, reply) {
 			var data = reply;
 			if (!reply) {
-				data = { grouplist : [] }
+				data = { grouplist : [] };
 			} else {
 				try {
 					data = JSON.parse(data);
@@ -826,6 +826,22 @@
 	}
 	
 	/**
+	 * cursor更新
+	 * @method updateMouseCursor
+	 * @param {BLOB} socketid socket id
+	 * @param {JSON} mouseData mouseメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function updateMouseCursor(socketid, mouseData, endCallback) {
+		if (!mouseData.hasOwnProperty("id")) { return; }
+		// textClient.hmset(windowMetaDataPrefix + mouseData.id, mouseData, function (err, reply) {
+			if (endCallback) {
+				endCallback(mouseData);
+			}
+		// });
+	}
+	
+	/**
 	 * セッションリスト取得。registerWSEventにてコールされる。
 	 * @method getSessionList
 	 */
@@ -1187,6 +1203,19 @@
 	}
 	
 	/**
+	 * mouseコマンドを実行する.
+	 * @method commandUpdateMouseCursor
+	 * @param {String} socketid ソケットID
+	 * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateMouseCursor(socketid, json, endCallback) {
+		updateMouseCursor(socketid, json, function (windowData) {
+			endCallback(null, windowData);
+		});
+	}
+	
+	/**
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
 	 */
@@ -1285,6 +1314,20 @@
 	}
 	
 	/**
+	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMouseCursor
+	 */
+	function post_updateMouseCursor(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMouseCursor, reply);
+			io_connector.broadcast(io, Command.UpdateMouseCursor, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
 	 * websocketイベントの登録を行う.
 	 * register websockets events
 	 * @method registerWSEvent
@@ -1324,6 +1367,10 @@
 		
 		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.UpdateMouseCursor, function (data, resultCallback) {
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
@@ -1438,6 +1485,10 @@
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
 
+		io_connector.on(Command.UpdateMouseCursor, function (data, resultCallback) {
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+		});
+
 		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
@@ -1530,6 +1581,7 @@
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
 	Operator.prototype.commandAddWindowMetaData = commandAddWindowMetaData;
 	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
+	Operator.prototype.commandUpdateMouseCursor = commandUpdateMouseCursor;
 	Operator.prototype.commandUpdateMetaData = commandUpdateMetaData;
 	module.exports = new Operator();
 }());

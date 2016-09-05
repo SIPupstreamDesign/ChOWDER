@@ -910,6 +910,13 @@
 			}
 		});
 
+		connector.on("UpdateMouseCursor", function (data) {
+			// console.log("onUpdateMouseCursor", data);
+			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
+				// update('window');
+			}
+		});
+
 		connector.on("ShowWindowID", function (data) {
 			console.log("onShowWindowID", data);
 			showDisplayID(data.id);
