@@ -6,6 +6,7 @@
 	-ms-user-select: none;
 	user-select: none;
 	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	box-sizing: border-box;
 }
 
 body {
@@ -149,4 +150,8 @@ pre {
 	color : white;
 	font-size: 50px;
 	display : none;
+}
+
+.marked {
+	border : 6px solid orange;
 }

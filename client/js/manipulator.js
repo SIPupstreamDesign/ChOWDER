@@ -178,19 +178,32 @@
 	/**
 	 * マニピュレータのセットアップ
 	 * @method setupManipulator
-	 * @param {Element} manip マニピュレータエレメント
+	 * @param {Element} previewArea プレビューエリア
+	 * @param {Element} targetElem ターゲットエレメント(imgなど)
+	 * @param {Element} metaData メタデータ
 	 */
-	function setupManipulatorMenus(previewArea, targetElem) {
+	function setupManipulatorMenus(previewArea, targetElem, metaData) {
 		var star = document.createElement('div');
 		star.id = "_manip_menu_0";
 		star.className = "maniplator_menu_star";
 		previewArea.appendChild(star);
 		manipulatorMenus.push(star);
+		// 初期のトグル設定
+		if (metaData.hasOwnProperty('mark') && metaData.mark) {
+			star.classList.add('active');
+		}
+
 		star.onmousedown = function (evt) {
 			if (star.classList.contains('active')) {
 				star.classList.remove('active');
+				if (window.manipulator.on_toggle_star) {
+					window.manipulator.on_toggle_star(false);
+				}
 			} else {
 				star.classList.add('active');
+				if (window.manipulator.on_toggle_star) {
+					window.manipulator.on_toggle_star(true);
+				}
 			}
 			evt.stopPropagation();
 		};
@@ -200,10 +213,11 @@
 	/**
 	 * マニピュレータを表示
 	 * @method showManipulator
-	 * @param {Element} elem 対象エレメント
+	 * @param {Element} targetElem ターゲットエレメント(imgなど)
 	 * @param {Element} previewArea 表示先エレメント
+	 * @param {Element} metaData メタデータ
 	 */
-	function showManipulator(elem, previewArea) {
+	function showManipulator(targetElem, previewArea, metaData) {
 		var manips = [
 				document.createElement('span'),
 				document.createElement('span'),
@@ -214,18 +228,18 @@
 			manip,
 			i;
 		
-		moveManipulator(manips, elem);
+		moveManipulator(manips, targetElem);
 		removeManipulator();
 		parent = previewArea;
 		
 		for (i = 0; i < manips.length; i = i + 1) {
 			manip = manips[i];
 			manip.id = "_manip_" + i;
-			setupManipulator(manip, elem);
+			setupManipulator(manip, targetElem);
 			previewArea.appendChild(manip);
 			manipulators.push(manip);
 		}
-		setupManipulatorMenus(previewArea, elem);
+		setupManipulatorMenus(previewArea, targetElem, metaData);
 	}
 	
 	function isShowManipulator() {
@@ -242,4 +256,5 @@
 	window.manipulator.clearDraggingManip = clearDraggingManip;
 	window.manipulator.setDraggingOffsetFunc = setDraggingOffsetFunc;
 	window.manipulator.setCloseFunc = setCloseFunc;
+	window.manipulator.on_toggle_star = null;
 }());

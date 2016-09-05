@@ -569,7 +569,7 @@
 				gui.get_list_elem(id).style.borderColor = windowSelectColor;
 			}
 			elem.style.borderColor = windowSelectColor;
-			manipulator.showManipulator(elem, gui.get_display_preview_area());
+			manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
 		} else {
 			content_property.init(id, metaData.group, metaData.type, mime);
 			content_property.assign_content_property(metaDataDict[id]);
@@ -581,7 +581,7 @@
 			}
 			//elem.style.borderColor = contentSelectColor;
 			elem.style.borderColor = col;
-			manipulator.showManipulator(elem, gui.get_content_preview_area());
+			manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
 		}
 		if (elem.style.zIndex === "") {
 			elem.style.zIndex = 0;
@@ -2345,6 +2345,19 @@
 			select(id, false);
 		}
 		draggingID = null;
+	};
+
+	/**
+	 * マニピュレータの星がトグルされた
+	 */
+	manipulator.on_toggle_star = function (is_active) {
+		var id = getSelectedID(),
+			metaData;
+		if (metaDataDict.hasOwnProperty(id)) {
+			metaData = metaDataDict[id];
+			metaData.mark = is_active;
+			updateMetaData(metaData);
+		}
 	};
 	
 	/**

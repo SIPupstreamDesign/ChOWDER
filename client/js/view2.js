@@ -307,7 +307,7 @@
 				elem = document.getElementById(metaDataDict[i].id);
 				if (elem && elem.is_dragging) {
 					elem.is_dragging = false;
-					elem.style.border = "none";
+					elem.style.border = "";
 				}
 			}
 		}
@@ -466,7 +466,7 @@
 				}
 			}
 			vscreen_util.assignMetaData(elem, metaData, false);
-
+			
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {
 				for (id in metaDataDict) {
@@ -710,11 +710,31 @@
 	};
 
 	/**
+	 * 星ボタンによるコンテンツ強調表示のトグル
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	function toggleMark(elem, metaData) {
+		if (metaData.hasOwnProperty("id")) {
+			if (metaData.hasOwnProperty('mark') && (metaData["mark"] === 'true' || metaData["mark"] === true)) {
+				if (!elem.classList.contains("marked")) {
+					elem.classList.add("marked");
+				}
+			} else {
+				if (elem.classList.contains("marked")) {
+					elem.classList.remove("marked");
+				}
+			}
+		}
+	}
+
+	/**
 	 * GetMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
 	 */
 	doneGetMetaData = function (err, json) {
+		var metaData = json;
 		console.log("doneGetMetaData", json);
 		metaDataDict[json.id] = json;
 		if (!err) {
@@ -756,13 +776,18 @@
 					if (!elem) {
 						createBoundingBox(json);
 						// 新規コンテンツロード.
-						connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+						connector.send('GetContent', { type: json.type, id: json.id }, function (err, reply) {
+							doneGetContent(err, reply);
+							toggleMark(document.getElementById(json.id), metaData);
+						});
 					}
 					elem = document.getElementById(json.id);
 					vscreen_util.assignMetaData(elem, json, false);
 				}
 				if (isWindow) {
 					resizeViewport(windowData);
+				} else {
+					toggleMark(elem, metaData);
 				}
 			}
 		}
