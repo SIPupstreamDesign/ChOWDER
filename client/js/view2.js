@@ -710,19 +710,30 @@
 	};
 
 	/**
-	 * 星ボタンによるコンテンツ強調表示のトグル
+	 * マークによるコンテンツ強調表示のトグル
 	 * @param {Element} elem 対象エレメント
 	 * @param {JSON} metaData メタデータ
 	 */
 	function toggleMark(elem, metaData) {
+		var mark_memo = "mark_memo",
+			mark = "mark";
 		if (elem && metaData.hasOwnProperty("id")) {
-			if (metaData.hasOwnProperty('mark') && (metaData["mark"] === 'true' || metaData["mark"] === true)) {
-				if (!elem.classList.contains("marked")) {
-					elem.classList.add("marked");
+			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
+				if (!elem.classList.contains(mark)) {
+					elem.classList.add(mark);
 				}
 			} else {
-				if (elem.classList.contains("marked")) {
-					elem.classList.remove("marked");
+				if (elem.classList.contains(mark)) {
+					elem.classList.remove(mark);
+				}
+			}
+			if (metaData.hasOwnProperty(mark_memo) && (metaData[mark_memo] === 'true' || metaData[mark_memo] === true)) {
+				if (!elem.classList.contains(mark_memo)) {
+					elem.classList.add(mark_memo);
+				}
+			} else {
+				if (elem.classList.contains(mark_memo)) {
+					elem.classList.remove(mark_memo);
 				}
 			}
 		}

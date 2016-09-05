@@ -100,6 +100,9 @@
 		// ☆
 		manipulatorMenus[0].style.left = (left + 5) + "px";
 		manipulatorMenus[0].style.top = (top - 30) + "px";
+		// memo
+		manipulatorMenus[1].style.left = (left + 35) + "px";
+		manipulatorMenus[1].style.top = (top - 30) + "px";
 	}
 	
 	/**
@@ -183,16 +186,19 @@
 	 * @param {Element} metaData メタデータ
 	 */
 	function setupManipulatorMenus(previewArea, targetElem, metaData) {
-		var star = document.createElement('div');
+		var star = document.createElement('div'),
+			memo = document.createElement('div');
+
+		// 星のトグルボタン
 		star.id = "_manip_menu_0";
-		star.className = "maniplator_menu_star";
+		star.className = "manipulator_menu_star";
+		star.style.borderColor = targetElem.style.borderColor;
 		previewArea.appendChild(star);
 		manipulatorMenus.push(star);
 		// 初期のトグル設定
 		if (metaData.hasOwnProperty('mark') && (metaData.mark === "true" || metaData.mark === true)) {
 			star.classList.add('active');
 		}
-
 		star.onmousedown = function (evt) {
 			if (star.classList.contains('active')) {
 				star.classList.remove('active');
@@ -207,8 +213,33 @@
 			}
 			evt.stopPropagation();
 		};
-		star.style.borderColor = targetElem.style.borderColor;
+
+		// メモのトグルボタン
+		memo.id = "_manip_menu_1";
+		memo.className = "manipulator_menu_memo";
+		memo.style.borderColor = targetElem.style.borderColor;
+		previewArea.appendChild(memo);
+		manipulatorMenus.push(memo);
+		// 初期のトグル設定
+		if (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === "true" || metaData.mark_memo === true)) {
+			memo.classList.add('active');
+		}
+		memo.onmousedown = function (evt) {
+			if (memo.classList.contains('active')) {
+				memo.classList.remove('active');
+				if (window.manipulator.on_toggle_memo) {
+					window.manipulator.on_toggle_memo(false);
+				}
+			} else {
+				memo.classList.add('active');
+				if (window.manipulator.on_toggle_memo) {
+					window.manipulator.on_toggle_memo(true);
+				}
+			}
+			evt.stopPropagation();
+		};
 	}
+	
 
 	/**
 	 * マニピュレータを表示
@@ -257,4 +288,5 @@
 	window.manipulator.setDraggingOffsetFunc = setDraggingOffsetFunc;
 	window.manipulator.setCloseFunc = setCloseFunc;
 	window.manipulator.on_toggle_star = null;
+	window.manipulator.on_toggle_memo = null;
 }());

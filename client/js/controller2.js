@@ -618,7 +618,7 @@
 					}
 				}
 			}
-			elem.style.borderColor = "black";
+			elem.style.borderColor = "";
 			if (metaData.type === windowType) {
 				lastSelectWindowID = null;
 			} else {
@@ -1302,6 +1302,7 @@
 					};
 				}
 			}
+			toggleMark(contentElem, metaData);
 		}
 		
 		// 同じコンテンツを参照しているメタデータがあれば更新
@@ -1590,6 +1591,27 @@
 	/// meta data updated
 	
 	/**
+	 * マークによるコンテンツ強調表示のトグル
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	function toggleMark(elem, metaData) {
+		var mark_memo = "mark_memo",
+			mark = "mark";
+		if (elem && metaData.hasOwnProperty("id")) {
+			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
+				if (!elem.classList.contains(mark)) {
+					elem.classList.add(mark);
+				}
+			} else {
+				if (elem.classList.contains(mark)) {
+					elem.classList.remove(mark);
+				}
+			}
+		}
+	}
+
+	/**
 	 * GetMetaDataを送信した後の終了コールバック.
 	 * @method doneGetMetaData
 	 * @param {String} err エラー. 無ければnull.
@@ -1620,10 +1642,12 @@
 			if (endCallback) {
 				endCallback(null);
 			}
+			toggleMark(elem, metaData);
 		} else {
 			// 新規コンテンツロード.
 			connector.send('GetContent', { type: json.type, id: json.id }, function (err, data) {
 				doneGetContent(err, data, endCallback);
+				toggleMark(elem, metaData);
 			});
 		}
 	};
@@ -2356,6 +2380,19 @@
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
 			metaData.mark = is_active;
+			updateMetaData(metaData);
+		}
+	};
+
+	/**
+	 * マニピュレータのmemoがトグルされた
+	 */
+	manipulator.on_toggle_memo = function (is_active) {
+		var id = getSelectedID(),
+			metaData;
+		if (metaDataDict.hasOwnProperty(id)) {
+			metaData = metaDataDict[id];
+			metaData.mark_memo = is_active;
 			updateMetaData(metaData);
 		}
 	};
