@@ -162,7 +162,9 @@
 				data.grouplist.push({ name : groupName, color : color });
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 			} else {
-				endCallback(null, null);
+				if (endCallback) {
+					endCallback(null, null);
+				}
 			}
 		});
 	}
@@ -1539,6 +1541,7 @@
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
+		addGroup("default", function (err, reply) {} );
 		/*
 		addGroup("default", function (err, reply) {
 			addGroup("hoge", function (err, reply) {
