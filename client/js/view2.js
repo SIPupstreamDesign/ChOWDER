@@ -414,6 +414,8 @@
 		if (elem && metaData.user_data_text) {
 			if (memo) {
 				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+				rect = elem.getBoundingClientRect();
+				memo.style.width = (rect.right - rect.left) + "px";
 			} else {
 				memo = document.createElement("pre");
 				memo.id = "memo:" + metaData.id;
