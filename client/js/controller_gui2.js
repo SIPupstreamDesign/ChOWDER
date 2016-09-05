@@ -351,13 +351,6 @@
 							func : function () {},
 							active : true
 						}
-					}, {
-						Group1 : {
-							id : "group_1",
-							className : "group_tab",
-							func : function () {},
-							active : true
-						}
 					}]
 			});
 		initGroupBoxEvents(groupBox);

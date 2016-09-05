@@ -287,6 +287,7 @@
 		});
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
 		connector.send('GetWindowMetaData', {type: "all", id: ""}, doneGetWindowMetaData);
+		updateGroupList();
 	}
 	
 	/**
