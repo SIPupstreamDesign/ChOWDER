@@ -407,6 +407,39 @@
         }
     };
 
+	function setupMemo(elem, metaData) {
+		var previewArea = document.getElementById('preview_area'),
+			memo = document.getElementById("memo:" + metaData.id),
+			rect;
+		if (elem && metaData.user_data_text) {
+			if (memo) {
+				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+			} else {
+				memo = document.createElement("pre");
+				memo.id = "memo:" + metaData.id;
+				memo.className = "memo";
+				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+				rect = elem.getBoundingClientRect();
+				memo.style.left = rect.left + "px";
+				memo.style.top = rect.bottom + "px";
+				memo.style.position = "absolute";
+				memo.style.width = (rect.right - rect.left) + "px";
+				memo.style.height = "auto";
+				previewArea.appendChild(memo);
+			}
+		}
+	}
+
+	function translateMemo(elem, metaData) {
+		var memo = document.getElementById("memo:" + metaData.id),
+			rect = elem ? elem.getBoundingClientRect() : null;
+
+		if (memo && rect) {
+			memo.style.left = rect.left + "px";
+			memo.style.top =  rect.bottom + "px";
+		}
+	}
+
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -418,6 +451,7 @@
 			tagName,
 			blob,
 			elem,
+			memo,
 			mime = "image/jpeg",
 			boundElem,
 			id,
@@ -485,6 +519,8 @@
 					}
 				}
 			}
+
+			setupMemo(elem, metaData);
 		}
 	}
 
@@ -716,7 +752,8 @@
 	 */
 	function toggleMark(elem, metaData) {
 		var mark_memo = "mark_memo",
-			mark = "mark";
+			mark = "mark",
+			memo = null;
 		if (elem && metaData.hasOwnProperty("id")) {
 			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
 				if (!elem.classList.contains(mark)) {
@@ -727,13 +764,12 @@
 					elem.classList.remove(mark);
 				}
 			}
-			if (metaData.hasOwnProperty(mark_memo) && (metaData[mark_memo] === 'true' || metaData[mark_memo] === true)) {
-				if (!elem.classList.contains(mark_memo)) {
-					elem.classList.add(mark_memo);
-				}
-			} else {
-				if (elem.classList.contains(mark_memo)) {
-					elem.classList.remove(mark_memo);
+			memo =  document.getElementById("memo:" + metaData.id);
+			if (memo) {
+				if (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) {
+					memo.style.display = "block";
+				} else {
+					memo.style.display = "none";
 				}
 			}
 		}
@@ -798,6 +834,8 @@
 				if (isWindow) {
 					resizeViewport(windowData);
 				} else {
+					setupMemo(elem, metaData);
+					translateMemo(elem, metaData);
 					toggleMark(elem, metaData);
 				}
 			}

@@ -155,3 +155,13 @@ pre {
 .mark {
 	border : 6px solid orange;
 }
+
+.memo {
+	position : absolute;
+	color : black;
+	width : 200px;
+	height : 100px;
+	font-size : 1.2em;
+	border : 1px solid orange;
+	background-color: orange
+}

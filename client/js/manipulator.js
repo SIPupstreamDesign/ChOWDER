@@ -98,11 +98,13 @@
 		manipulators[4].style.top = (top + 20) + "px";
 
 		// ☆
-		manipulatorMenus[0].style.left = (left + 5) + "px";
-		manipulatorMenus[0].style.top = (top - 30) + "px";
-		// memo
-		manipulatorMenus[1].style.left = (left + 35) + "px";
-		manipulatorMenus[1].style.top = (top - 30) + "px";
+		if (manipulatorMenus.length > 1) {
+			manipulatorMenus[0].style.left = (left + 5) + "px";
+			manipulatorMenus[0].style.top = (top - 30) + "px";
+			// memo
+			manipulatorMenus[1].style.left = (left + 35) + "px";
+			manipulatorMenus[1].style.top = (top - 30) + "px";
+		}
 	}
 	
 	/**
@@ -270,7 +272,9 @@
 			previewArea.appendChild(manip);
 			manipulators.push(manip);
 		}
-		setupManipulatorMenus(previewArea, targetElem, metaData);
+		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {
+			setupManipulatorMenus(previewArea, targetElem, metaData);
+		}
 	}
 	
 	function isShowManipulator() {
