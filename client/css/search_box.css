@@ -1,4 +1,11 @@
 
+.search_tab_box_wrapper {
+	height : 100%;
+	display : flex;
+	overflow : hidden;
+	flex-direction : row;
+}
+
 .search_group_checkbox {
 	display : inline-block;
 	margin-left : 5px;

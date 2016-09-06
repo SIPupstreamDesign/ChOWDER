@@ -9,6 +9,9 @@
 		this.container = containerElem;
 		this.setting = setting;
 		this.init();
+
+		// 検索ボックスに入力されたときのイベント
+		this.on_input_changed = null;
 	};
 
     SearchBox.prototype.gen_search_tab_box = function (){
@@ -23,10 +26,7 @@
         // タブの中の要素全体を包むラッパー
         e = document.createElement('div');
         e.id = 'search_tab_box_wrapper';
-        e.style.height = '100%';
-        e.style.display = 'flex';
-        e.style.overflow = 'hidden';
-        e.style.flexDirection = 'row';
+		e.className = "search_tab_box_wrapper";
         box.appendChild(e);
         // 検索窓とチェックボックスの入る左側のカラム
         f = document.createElement('div');
@@ -43,6 +43,11 @@
         h.type = 'text';
 		h.className = "search_text_input";
         h.setAttribute('placeholder', '🔍  search');
+		h.oninput = function (evt) {
+			if (this.on_input_changed) {
+				this.on_input_changed(evt);
+			}
+		}.bind(this);
         d.appendChild(h);
         f.appendChild(d);
         // 左カラム内、下段にチェックボックスが入るエリア

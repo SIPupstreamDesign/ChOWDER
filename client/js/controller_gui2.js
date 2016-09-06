@@ -276,6 +276,17 @@
 	}
 
 	/**
+	 * Searchのタブに対するイベントを設定.
+	 */
+	function initSearchBoxEvents(searchBox) {
+		searchBox.on_input_changed = function (evt) {
+			if (window.controller_gui.on_search_input_changed) {
+				window.controller_gui.on_search_input_changed(evt.target.value);
+			}
+		};
+	}
+
+	/**
 	 * グループリストをセットする。
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
 	 * サーチタブにもグループを追加。
@@ -311,6 +322,7 @@
 		updateContextMenu();
 
 		searchBox = window.search_box.init(document.getElementById('search_tab_box'), searchSetting);
+		initSearchBoxEvents(searchBox);
 	}
 
 	/**
@@ -366,6 +378,7 @@
 			{
 				groups : ["default"]
 			});
+		initSearchBoxEvents(searchBox);
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "", "whole_window");
@@ -448,6 +461,7 @@
 	window.controller_gui.on_group_append_clicked = null;
 	window.controller_gui.on_group_delete_clicked = null;
 	window.controller_gui.on_group_change_clicked = null;
+	window.controller_gui.on_search_input_changed = null;
 	
 	// Getter.
 	window.controller_gui.get_selected_elem = getSelectedElem;
@@ -499,4 +513,8 @@
 		setGroupList(grouplist);
 	};
 	
+	window.controller_gui.set_search_result = function (search_result) {
+
+	};
+
 }());

@@ -1194,20 +1194,6 @@
 		}
 		return tagName;
 	}
-	
-	/**
-	 * コンテンツタイプから適切なクラス名を取得する.
-	 * @parma {String} contentType コンテンツタイプ
-	 */
-	function getClassName(contentType) {
-		var classname;
-		if (contentType === 'text') {
-			classname = 'textcontent';
-		} else {
-			classname = 'imagecontent';
-		}
-		return classname;
-	}
 
 	/**
 	 * エレメント間でコンテントデータをコピーする.
@@ -1258,7 +1244,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	function importContentToView(metaData, contentData) {
+	function importContentToView(metaDataDict, metaData, contentData) {
 		var previewArea = gui.get_content_preview_area(),
 			id,
 			contentElem,
@@ -1334,127 +1320,14 @@
 	}
 	
 	/**
-	 * 受領したメタデータから左側コンテンツエリアに反映する。
-	 * doneGetContent時にコールされる。
-	 * @method importContentToList
-	 * @param {JSON} metaData メタデータ
-	 * @param {BLOB} contentData コンテンツデータ
-	 */
-	function importContentToList(metaData, contentData) {
-		var contentArea = null,
-			contentElem,
-			id,
-			elem,
-			sourceElem,
-			divElem,
-			aspect,
-			tagName,
-			classname,
-			blob,
-			mime = "image/jpeg",
-			onlistID = "onlist:" + metaData.id;
-
-		// メタデータはGetMetaDataで取得済のものを使う.
-		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
-		if (metaDataDict.hasOwnProperty(metaData.id)) {
-			metaData = metaDataDict[metaData.id];
-		}
-
-		if (metaData.hasOwnProperty('group')) {
-			contentArea = gui.get_content_area_by_group(metaData.group);
-		}
-		if (!contentArea) {
-			contentArea = gui.get_content_area_by_group(defaultGroup);
-		}
-
-		tagName = getTagName(metaData.type);
-		classname = getClassName(metaData.type);
-		
-		if (gui.get_list_elem(metaData.id)) {
-			divElem = gui.get_list_elem(metaData.id);
-			contentElem = divElem.childNodes[0];
-		}
-		
-		if (!divElem) {
-			contentElem = document.createElement(tagName);
-			divElem = document.createElement('div');
-			divElem.id = onlistID;
-			setupContent(divElem, onlistID);
-			divElem.appendChild(contentElem);
-			contentArea.appendChild(divElem);
-		}
-		contentElem.classList.add(classname);
-
-		//console.log("id=" + metaData.id);
-		if (contentData) {
-			if (metaData.type === 'text') {
-				// contentData is text
-				contentElem.innerHTML = contentData;
-				divElem.style.width = "200px";
-				divElem.style.height = "50px";
-				divElem.style.color = textColor;
-			} else {
-				// contentData is blob
-				if (metaData.hasOwnProperty('mime')) {
-					mime = metaData.mime;
-					//console.log("mime:" + mime);
-				}
-				divElem.style.width = "200px";
-				blob = new Blob([contentData], {type: mime});
-				if (contentElem && blob) {
-					URL.revokeObjectURL(contentElem.src);
-					contentElem.src = URL.createObjectURL(blob);
-
-					if (contentElem.offsetHeight > 150) {
-						aspect = contentElem.offsetWidth / contentElem.offsetHeight;
-						divElem.style.height = "150px";
-						divElem.style.width = 150 * aspect;
-					}
-					contentElem.onload = function () {
-						var aspect;
-						if (contentElem.offsetHeight > 150) {
-							aspect = contentElem.offsetWidth / contentElem.offsetHeight;
-							divElem.style.height = "150px";
-							divElem.style.width = 150 * aspect;
-						}
-					};
-				}
-			}
-		}
-		contentElem.style.width = "100%";
-		contentElem.style.height = "100%";
-		divElem.style.position = "relative";
-		divElem.style.top = "5px";
-		divElem.style.left = "20px";
-		divElem.style.border = "solid";
-		divElem.style.borderColor = contentBorderColor;
-		divElem.style.margin = "5px";
-		divElem.style.color = "white";
-		divElem.style.float = "left";
-		
-		// 同じコンテンツを参照しているメタデータがあれば更新
-		if (!contentData && contentElem) {
-			copyContentData(null, contentElem, metaData, true);
-			divElem.style.width = "200px";
-			if (contentElem.offsetHeight > 200) {
-				aspect = metaDataDict[id].width / metaDataDict[id].height;
-				divElem.style.height = "100px";
-				divElem.style.width = 100 * aspect;
-			}
-		} else {
-			copyContentData(contentElem, null, metaData, true);
-		}
-	}
-	
-	/**
 	 * メタデータからコンテンツをインポートする
 	 * @method importContent
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContent(metaData, contentData) {
-		importContentToList(metaData, contentData);
-		importContentToView(metaData, contentData);
+		window.content_list.import_content_to_list(metaDataDict, metaData, contentData);
+		importContentToView(metaDataDict, metaData, contentData);
 	}
 	
 	/**
@@ -2231,6 +2104,20 @@
 			}
 		}
 	};
+
+	/**
+	 * コンテンツリストでセットアップコンテンツが呼ばれた
+	 */
+	window.content_list.on_setup_content = function (elem, uid) {
+		setupContent(elem, uid);
+	};
+
+	/**
+	 * コンテンツリストでコピーコンテンツが呼ばれた
+	 */
+	window.content_list.on_copy_content = function (fromElem, toElem, metaData, isListContent) {
+		copyContentData(fromElem, toElem, metaData, isListContent);
+	};
 	
 	/**
 	 * PropertyのDisplayパラメータ更新ハンドル
@@ -2345,6 +2232,27 @@
 				updateGroupList();
 			});
 		}
+	};
+
+	/**
+	 * Searchテキストが入力された
+	 */
+	gui.on_search_input_changed = function (text) {
+		var id, 
+			metaData,
+			foundContents = [];
+		for (id in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				if (metaData.type !== windowType) {
+					if (JSON.stringify(metaData).indexOf(text) >= 0) {
+						//elem = srcElem.cloneNode();
+						foundContents.push(metaData);
+					}
+				}
+			}
+		}
+		gui.set_search_result(foundContents);
 	};
 
 	/**
