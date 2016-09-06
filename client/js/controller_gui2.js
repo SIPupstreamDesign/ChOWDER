@@ -252,6 +252,10 @@
 			contentMenu.style.display = "block";
 			searchMenu.style.display = "none";
 		} else if (tabName === 'Search') {
+			displayPreviewArea.style.opacity = 0.3;
+			contentPreviewArea.style.opacity = 1.0;
+			displayPreviewArea.style.zIndex = -1000;
+			contentPreviewArea.style.zIndex = 10;
 			displayMenu.style.display = "none";
 			contentMenu.style.display = "none";
 			searchMenu.style.display = "block";
@@ -493,6 +497,9 @@
 	window.controller_gui.get_list_elem = function (id) {
 		return document.getElementById("onlist:" + id);
 	};
+	window.controller_gui.get_search_elem = function (id) {
+		return document.getElementById("onsearch:" + id);
+	};
 	window.controller_gui.get_whole_window_elem = function () {
 		return document.getElementById(wholeWindowListID);
 	};
@@ -514,7 +521,7 @@
 	};
 	
 	window.controller_gui.set_search_result = function (search_result) {
-
+		searchBox.set_search_result(search_result);
 	};
 
 }());

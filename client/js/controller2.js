@@ -574,6 +574,9 @@
 			if (gui.get_list_elem(id)) {
 				gui.get_list_elem(id).style.borderColor = windowSelectColor;
 			}
+			if (gui.get_search_elem(id)) {
+				gui.get_search_elem(id).style.borderColor = windowSelectColor;
+			}
 			elem.style.borderColor = windowSelectColor;
 			manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
 		} else {
@@ -584,6 +587,9 @@
 			if (gui.get_list_elem(id)) {
 				//gui.get_list_elem(id).style.borderColor = contentSelectColor;
 				gui.get_list_elem(id).style.borderColor = col;
+			}
+			if (gui.get_search_elem(id)) {
+				gui.get_search_elem(id).style.borderColor = col;
 			}
 			//elem.style.borderColor = contentSelectColor;
 			elem.style.borderColor = col;
@@ -619,8 +625,14 @@
 				} else {
 					if (metaData.type !== windowType) {
 						gui.get_list_elem(elem.id).style.borderColor = contentBorderColor;
+						if (gui.get_search_elem(elem.id)) {
+							gui.get_search_elem(elem.id).style.borderColor = contentBorderColor;
+						}
 					} else {
 						gui.get_list_elem(elem.id).style.borderColor = "white";
+						if (gui.get_search_elem(elem.id)) {
+							gui.get_list_elem(elem.id).style.borderColor = "white";
+						}
 					}
 				}
 			}
@@ -1247,23 +1259,6 @@
 		window.content_list.import_content(metaDataDict, metaData, contentData);
 		window.content_view.import_content(metaDataDict, metaData, contentData);
 	}
-	
-	/**
-	 * コンテンツロード完了まで表示する枠を作る.
-	 * @param {JSON} metaData メタデータ
-	 */
-	/*
-	function createBoundingBox(metaData) {
-		var previewArea = gui.get_content_preview_area(),
-			tagName = 'div',
-			elem = document.createElement(tagName);
-		
-		elem.id = metaData.id;
-		elem.style.position = "absolute";
-		elem.className = "temporary_bounds";
-		insertElementWithDictionarySort(previewArea, elem);
-	}
-	*/
 	
 	function changeWindowBorderColor(windowData) {
 		var divElem = gui.get_list_elem(windowData.id);
@@ -2131,14 +2126,27 @@
 	gui.on_search_input_changed = function (text) {
 		var id, 
 			metaData,
-			foundContents = [];
+			foundContents = [],
+			elem,
+			copy,
+			child;
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
 				if (metaData.type !== windowType) {
 					if (JSON.stringify(metaData).indexOf(text) >= 0) {
-						//elem = srcElem.cloneNode();
-						foundContents.push(metaData);
+						elem = document.getElementById("onlist:" + metaData.id);
+						if (elem) {
+							copy = elem.cloneNode();
+							copy.id = "onsearch:" + metaData.id;
+							child = elem.childNodes[0].cloneNode();
+							child.innerHTML = elem.childNodes[0].innerHTML;
+							copy.appendChild(child);
+
+							setupContent(copy, metaData.id);
+				
+							foundContents.push(copy);
+						}
 					}
 				}
 			}

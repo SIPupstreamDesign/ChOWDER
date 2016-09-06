@@ -8,10 +8,12 @@
 	SearchList = function (containerElem, setting) {
 		this.container = containerElem;
 		this.setting = setting;
+		this.item_area = null;
 		this.init();
 
 		// 検索ボックスに入力されたときのイベント
 		this.on_input_changed = null;
+
 	};
 
     SearchList.prototype.gen_search_tab_box = function (){
@@ -71,21 +73,24 @@
             h.appendChild(j);
         }
 
-        // temp そのに
-        for(i = 0; i < 10; i++){
-            e = document.createElement('div');
-            e.style.display = 'inline-block';
-            e.style.margin = '15px';
-            e.style.width = '120px';
-            e.style.height = '120px';
-            e.style.backgroundColor = 'skyblue';
-            g.appendChild(e);
-        }
+		this.item_area = g;
     };
 
 	SearchList.prototype.init = function () {
 		// search tab generate
 		this.gen_search_tab_box();
+	};
+
+	SearchList.prototype.set_search_result = function (result) {
+		console.error("set_search_result", result, this.item_area)
+		var i;
+		if (!this.item_area) {
+			return;
+		}
+		this.item_area.innerHTML = "";
+		for (i = 0; i < result.length; ++i) {
+			this.item_area.appendChild(result[i]);
+		}
 	};
 
 	function init(containerElem, setting) {
