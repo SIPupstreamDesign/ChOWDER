@@ -162,7 +162,9 @@
 				data.grouplist.push({ name : groupName, color : color });
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 			} else {
-				endCallback(null, null);
+				if (endCallback) {
+					endCallback(null, null);
+				}
 			}
 		});
 	}
@@ -834,11 +836,10 @@
 	 */
 	function updateMouseCursor(socketid, mouseData, endCallback) {
 		if (!mouseData.hasOwnProperty("id")) { return; }
-		// textClient.hmset(windowMetaDataPrefix + mouseData.id, mouseData, function (err, reply) {
-			if (endCallback) {
-				endCallback(mouseData);
-			}
-		// });
+        var obj = {data: mouseData, id: socketid};
+        if (endCallback) {
+            endCallback(obj);
+        }
 	}
 	
 	/**
@@ -1369,9 +1370,9 @@
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.UpdateMouseCursor, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateMouseCursor, (function(socketid){return function(data, resultCallback){
 			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
-		});
+		};}(socketid)));
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
@@ -1485,9 +1486,9 @@
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateMouseCursor, function (data, resultCallback) {
+		io_connector.on(Command.UpdateMouseCursor, (function(socketid){return function(data, resultCallback){
 			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
-		});
+		};}(socketid)));
 
 		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
@@ -1540,6 +1541,7 @@
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
+		addGroup("default", function (err, reply) {} );
 		/*
 		addGroup("default", function (err, reply) {
 			addGroup("hoge", function (err, reply) {

@@ -13,7 +13,8 @@
 		doneAddWindowMetaData,
 		doneGetWindowMetaData,
 		doneGetContent,
-		doneGetMetaData;
+		doneGetMetaData,
+        controllers = {connectionCount: -1};
 
 	function toggleFullScreen() {
 		if (!document.fullscreenElement &&    // alternative standard method
@@ -903,12 +904,26 @@
 			}
 		});
 
-		connector.on("UpdateMouseCursor", function (data) {
-			// console.log("onUpdateMouseCursor", data);
-			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
-				// update('window');
-			}
-		});
+        connector.on("UpdateMouseCursor", function (res) {
+            // console.log("onUpdateMouseCursor", data);
+            if (res.hasOwnProperty('data') && res.data.id === getWindowID()) {
+                var ctrlid = res.id;
+                if(!controllers.hasOwnProperty(ctrlid)){
+                    ++controllers.connectionCount;
+                    controllers[ctrlid] = controllers.connectionCount;
+                }
+                var idstring = parseInt(controllers[ctrlid] % 10, 10);
+                var ww = window.innerWidth;
+                var wh = window.innerHeight;
+                var x = (res.data.x / res.data.w) * ww;
+                var y = (res.data.y / res.data.h) * wh;
+                var e = document.getElementById('hiddenCursor' + idstring);
+                if(e){
+                    e.style.left = x + 'px';
+                    e.style.top  = y + 'px';
+                }
+            }
+        });
 
 		connector.on("ShowWindowID", function (data) {
 			console.log("onShowWindowID", data);
