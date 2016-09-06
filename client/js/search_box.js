@@ -82,7 +82,7 @@
 	};
 
 	SearchList.prototype.set_search_result = function (result) {
-		console.error("set_search_result", result, this.item_area)
+		//console.error("set_search_result", result, this.item_area)
 		var i;
 		if (!this.item_area) {
 			return;

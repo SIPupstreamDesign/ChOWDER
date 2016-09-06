@@ -99,6 +99,8 @@ p {
 
 .screen {
 	padding: 12px;
+	border-color : lightslategray;
+	color : white;
 }
 
 .stopselect{

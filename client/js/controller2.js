@@ -1126,7 +1126,7 @@
 				screenElem.innerHTML = "ID:" + windowData.id;
 				screenElem.className = "screen";
 				screenElem.id = windowData.id;
-				screenElem.style.border = 'solid';
+				screenElem.style.borderStyle = 'solid';
 				previewArea.appendChild(screenElem);
 				setupWindow(screenElem, windowData.id);
 				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
@@ -1177,7 +1177,7 @@
 								screenElem.className = "screen";
 								screenElem.id = s;
 								console.log("screenElemID:" + JSON.stringify(screens[s]));
-								screenElem.style.border = 'solid';
+								screenElem.style.borderStyle = 'solid';
 								previewArea.appendChild(screenElem);
 								setupWindow(screenElem, s);
 							}
