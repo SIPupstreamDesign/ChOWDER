@@ -12,7 +12,7 @@
 	};
 
     SearchBox.prototype.gen_search_tab_box = function (){
-        var e, f, g, h, i, j;
+        var d, e, f, g, h, i, j;
         var box = this.container;
         // 既に該当 ID が存在する場合は一度 DOM を削除して再生成する
         e = document.getElementById('search_tab_box_wrapper');
@@ -30,22 +30,21 @@
         box.appendChild(e);
         // 検索窓とチェックボックスの入る左側のカラム
         f = document.createElement('div');
-        f.style.width = '300px';
-        f.style.height = '100%';
-        f.style.overflow = 'auto';
+        f.className = "search_area";
         e.appendChild(f);
         // アイテムが並ぶ右側のカラム
         g = document.createElement('div');
-        g.style.width = 'calc(100% - 300px)';
-        g.style.height = '100%';
-        g.style.overflow = 'auto';
+        g.className = "search_item_wrapper"
         e.appendChild(g);
         // 左カラム内、上段に検索ボックス
+        d = document.createElement('div');
+        d.className = "search_text_input_wrapper";
         h = document.createElement('input');
         h.type = 'text';
 		h.className = "search_text_input";
         h.setAttribute('placeholder', '🔍  search');
-        f.appendChild(h);
+        d.appendChild(h);
+        f.appendChild(d);
         // 左カラム内、下段にチェックボックスが入るエリア
         h = document.createElement('div');
 		h.className = "search_check_wrapper";

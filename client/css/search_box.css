@@ -17,9 +17,35 @@
 	width : calc(100% - 10px);
 	padding : 7px;
 	padding-left: 10px;
+	border : 1px solid #FF8055;
+}
+
+.search_text_input_wrapper {
+	position: absolute;
+	width : 269px;
+}
+
+.search_item_wrapper {
+	width : calc(100% - 270px);
+	height : 100%;
+	overflow : auto;
 }
 
 .search_text_input {
 	width : calc(100% - 10px);
+	height : 27px;
 	padding : 5px;
 }
+
+.search_check_wrapper {
+	overflow : auto;
+	height : 100%;
+	padding-top : 27px;
+}
+
+.search_area {
+	width : 270px;
+	height : 100%;
+	overflow : hidden;
+}
+
