@@ -303,9 +303,9 @@
 	 * Searchのタブに対するイベントを設定.
 	 */
 	function initSearchBoxEvents(searchBox) {
-		searchBox.on_input_changed = function (evt) {
+		searchBox.on_input_changed = function (value, groups) {
 			if (window.controller_gui.on_search_input_changed) {
-				window.controller_gui.on_search_input_changed(evt.target.value);
+				window.controller_gui.on_search_input_changed(value, groups);
 			}
 		};
 	}

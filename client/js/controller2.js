@@ -2137,29 +2137,30 @@
 	/**
 	 * Searchテキストが入力された
 	 */
-	gui.on_search_input_changed = function (text) {
+	gui.on_search_input_changed = function (text, groups) {
 		var id, 
 			metaData,
 			foundContents = [],
 			elem,
 			copy,
 			child;
+			
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
 				if (metaData.type !== windowType) {
-					if (JSON.stringify(metaData).indexOf(text) >= 0) {
-						elem = document.getElementById("onlist:" + metaData.id);
-						if (elem) {
-							copy = elem.cloneNode();
-							copy.id = "onsearch:" + metaData.id;
-							child = elem.childNodes[0].cloneNode();
-							child.innerHTML = elem.childNodes[0].innerHTML;
-							copy.appendChild(child);
-
-							setupContent(copy, metaData.id);
-				
-							foundContents.push(copy);
+					if (groups.indexOf(metaData.group) >= 0) {
+						if (text === "" || JSON.stringify(metaData).indexOf(text) >= 0) {
+							elem = document.getElementById("onlist:" + metaData.id);
+							if (elem) {
+								copy = elem.cloneNode();
+								copy.id = "onsearch:" + metaData.id;
+								child = elem.childNodes[0].cloneNode();
+								child.innerHTML = elem.childNodes[0].innerHTML;
+								copy.appendChild(child);
+								setupContent(copy, metaData.id);
+								foundContents.push(copy);
+							}
 						}
 					}
 				}
@@ -2167,7 +2168,7 @@
 		}
 		gui.set_search_result(foundContents);
 	};
-
+	
 	/**
 	 * 選択中のコンテンツのzIndexを変更する
 	 * @method on_change_zindex
