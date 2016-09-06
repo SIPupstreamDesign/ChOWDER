@@ -155,7 +155,7 @@
 	}
 	
 	window.content_list = {};
-	window.content_list.import_content_to_list = function (metaDataDict, metaData, contentData) {
+	window.content_list.import_content = function (metaDataDict, metaData, contentData) {
 		importContentToList(metaDataDict, metaData, contentData);
 	};
 	window.content_list.on_setup_content = null;

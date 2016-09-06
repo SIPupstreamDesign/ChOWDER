@@ -1238,102 +1238,21 @@
 	}
 
 	/**
-	 * 受領したメタデータからプレビューツリーにコンテンツを反映する。
-	 * doneGetContent時にコールされる。
-	 * @method importContentToView
-	 * @param {JSON} metaData メタデータ
-	 * @param {BLOB} contentData コンテンツデータ
-	 */
-	function importContentToView(metaDataDict, metaData, contentData) {
-		var previewArea = gui.get_content_preview_area(),
-			id,
-			contentElem,
-			elem,
-			tagName,
-			blob,
-			mime = "image/jpeg";
-		
-		console.log("importContentToView:" + JSON.stringify(metaData));
-		tagName = getTagName(metaData.type);
-		
-		// メタデータはGetMetaDataで取得済のものを使う.
-		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
-		if (metaDataDict.hasOwnProperty(metaData.id)) {
-			metaData = metaDataDict[metaData.id];
-		}
-		
-		if (document.getElementById(metaData.id)) {
-			contentElem = document.getElementById(metaData.id);
-		}
-		
-		if (!contentElem) {
-			contentElem = document.createElement(tagName);
-			contentElem.id = metaData.id;
-			contentElem.style.position = "absolute";
-			setupContent(contentElem, metaData.id);
-
-			insertElementWithDictionarySort(previewArea, contentElem);
-			//previewArea.appendChild(contentElem);
-		}
-
-		console.log("id=" + metaData.id);
-		if (contentData) {
-			if (metaData.type === 'text') {
-				// contentData is text
-				contentElem.innerHTML = contentData;
-				contentElem.style.color = textColor;
-				contentElem.style.overflow = "visible"; // Show all text
-				vscreen_util.assignMetaData(contentElem, metaData, true);
-			} else {
-				// contentData is blob
-				if (metaData.hasOwnProperty('mime')) {
-					mime = metaData.mime;
-					console.log("mime:" + mime);
-				}
-				blob = new Blob([contentData], {type: mime});
-				if (contentElem && blob) {
-					URL.revokeObjectURL(contentElem.src);
-					contentElem.src = URL.createObjectURL(blob);
-
-					contentElem.onload = function () {
-						if (metaData.width < 10) {
-							console.log("naturalWidth:" + contentElem.naturalWidth);
-							metaData.width = contentElem.naturalWidth;
-						}
-						if (metaData.height < 10) {
-							console.log("naturalHeight:" + contentElem.naturalHeight);
-							metaData.height = contentElem.naturalHeight;
-						}
-						vscreen_util.assignMetaData(contentElem, metaData, true);
-					};
-				}
-			}
-			toggleMark(contentElem, metaData);
-		}
-		
-		// 同じコンテンツを参照しているメタデータがあれば更新
-		if (!contentData && contentElem) {
-			copyContentData(null, contentElem, metaData, false);
-		} else {
-			copyContentData(contentElem, null, metaData, false);
-		}
-	}
-	
-	/**
 	 * メタデータからコンテンツをインポートする
 	 * @method importContent
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContent(metaData, contentData) {
-		window.content_list.import_content_to_list(metaDataDict, metaData, contentData);
-		importContentToView(metaDataDict, metaData, contentData);
+		window.content_list.import_content(metaDataDict, metaData, contentData);
+		window.content_view.import_content(metaDataDict, metaData, contentData);
 	}
 	
 	/**
 	 * コンテンツロード完了まで表示する枠を作る.
 	 * @param {JSON} metaData メタデータ
 	 */
+	/*
 	function createBoundingBox(metaData) {
 		var previewArea = gui.get_content_preview_area(),
 			tagName = 'div',
@@ -1344,44 +1263,7 @@
 		elem.className = "temporary_bounds";
 		insertElementWithDictionarySort(previewArea, elem);
 	}
-	
-	/**
-	 * Displayをリストビューにインポートする。
-	 * @method importWindowToView
-	 * @param {JSON} windowData ウィンドウデータ
-	 */
-	function importWindowToView(windowData) {
-		var displayArea,
-			screen;
-		if (windowData.type !== windowType) {
-			return;
-		}
-		if (windowData.hasOwnProperty('posx')) {
-			windowData.posx = parseInt(windowData.posx, 10);
-		} else {
-			windowData.posx = 0;
-		}
-		if (windowData.hasOwnProperty('posy')) {
-			windowData.posy = parseInt(windowData.posy, 10);
-		} else {
-			windowData.posy = 0;
-		}
-		metaDataDict[windowData.id] = windowData;
-		if (isVisible(windowData)) {
-			console.log("import window:" + JSON.stringify(windowData));
-			vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-			vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
-			vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
-			//console.log("import windowsc:", vscreen.getScreen(windowData.id));
-			updateScreen(windowData);
-		} else {
-			displayArea = document.getElementById("display_preview_area");
-			screen = document.getElementById(windowData.id);
-			if (displayArea && screen) {
-				screen.style.display = "none";
-			}
-		}
-	}
+	*/
 	
 	function changeWindowBorderColor(windowData) {
 		var divElem = gui.get_list_elem(windowData.id);
@@ -1398,39 +1280,6 @@
 				}
 			}
 		}
-	}
-	
-	/**
-	 * Displayをリストビューにインポートする。
-	 * @method importWindowToList
-	 * @param {JSON} windowData ウィンドウデータ
-	 */
-	function importWindowToList(windowData) {
-		console.log("importWindowToList");
-		var displayArea = gui.get_display_area(),
-			divElem,
-			onlistID = "onlist:" + windowData.id;
-		
-		divElem = gui.get_list_elem(windowData.id);
-		if (divElem) {
-			return;
-		}
-		
-		divElem = document.createElement("div");
-		divElem.innerHTML = "ID:" + windowData.id;
-		divElem.id = onlistID;
-		divElem.className = "screen";
-		divElem.style.position = "relative";
-		divElem.style.top = "5px";
-		divElem.style.left = "20px";
-		divElem.style.width = "200px";
-		divElem.style.height = "50px";
-		divElem.style.border = "solid";
-		divElem.style.margin = "5px";
-		divElem.style.float = "left";
-		setupContent(divElem, onlistID);
-		displayArea.appendChild(divElem);
-		changeWindowBorderColor(windowData);
 	}
 	
 	/**
@@ -1475,8 +1324,8 @@
 	 */
 	function importWindow(windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
-		importWindowToView(windowData);
-		importWindowToList(windowData);
+		window.window_view.import_window(metaDataDict, windowData);
+		window.window_list.import_window(metaDataDict, windowData);
 	}
 	
 	///-------------------------------------------------------------------------------------------------------
@@ -2113,12 +1962,54 @@
 	};
 
 	/**
+	 * コンテンツビューでセットアップコンテンツが呼ばれた
+	 */
+	window.content_view.on_setup_content = function (elem, uid) {
+		setupContent(elem, uid);
+	};
+
+	/**
 	 * コンテンツリストでコピーコンテンツが呼ばれた
 	 */
 	window.content_list.on_copy_content = function (fromElem, toElem, metaData, isListContent) {
 		copyContentData(fromElem, toElem, metaData, isListContent);
 	};
+
+	/**
+	 * コンテンツビューでコピーコンテンツが呼ばれた
+	 */
+	window.content_view.on_copy_content = function (fromElem, toElem, metaData, isListContent) {
+		copyContentData(fromElem, toElem, metaData, isListContent);
+	};
+
+	/**
+	 * コンテンツビューでinsertコンテンツが呼ばれた
+	 */
+	window.content_view.on_insert_content = function (area, elem) {
+		insertElementWithDictionarySort(area, elem);
+	};
 	
+	/**
+	 * コンテンツビューで強調トグルが必要になった
+	 */
+	window.content_view.on_toggle_mark = function (contentElem, metaData) {
+		toggleMark(contentElem, metaData);
+	};
+
+	/**
+	 * ウィンドウリストでセットアップコンテンツが呼ばれた
+	 */
+	window.window_list.on_setup_content = function (elem, uid) {
+		setupContent(elem, uid);
+	};
+
+	/**
+	 * ウィンドウリストでスクリーン更新が呼ばれた
+	 */
+	window.window_view.on_update_screen = function (windowData) {
+		updateScreen(windowData);
+	};
+
 	/**
 	 * PropertyのDisplayパラメータ更新ハンドル
 	 * @method on_display_value_changed
@@ -2505,6 +2396,7 @@
 		};
 		
 		gui.init();
+		window.window_view.init(vscreen);
 		connector = window.io_connector;
 		
 		manipulator.setDraggingOffsetFunc(function (top, left) {
