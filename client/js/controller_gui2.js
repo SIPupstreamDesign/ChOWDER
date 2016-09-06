@@ -321,7 +321,7 @@
 		// コンテキストメニューを刷新
 		updateContextMenu();
 
-		searchBox = window.search_box.init(document.getElementById('search_tab_box'), searchSetting);
+		searchBox = window.search_list.init(document.getElementById('search_tab_box'), searchSetting);
 		initSearchBoxEvents(searchBox);
 	}
 
@@ -374,7 +374,7 @@
 		initGroupBoxEvents(groupBox);
 
 		// Searchエリアの中身を作成
-		searchBox = window.search_box.init(document.getElementById('search_tab_box'),
+		searchBox = window.search_list.init(document.getElementById('search_tab_box'),
 			{
 				groups : ["default"]
 			});

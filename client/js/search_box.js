@@ -92,7 +92,7 @@
 		return new SearchList(containerElem, setting);
 	}
 
-	window.search_box = {};
-	window.search_box.init = init;
+	window.search_list = {};
+	window.search_list.init = init;
 
 }(window.controller_gui));
