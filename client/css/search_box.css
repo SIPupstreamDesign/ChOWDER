@@ -1,0 +1,25 @@
+
+.search_group_checkbox {
+	display : inline-block;
+	margin-left : 5px;
+	width : 16px;
+	height: 16px;
+}
+
+.search_group_label {
+	color : white;
+	margin-left : 5px;
+	cursor : pointer;
+	font-size : 15px;
+}
+
+.search_check_wrapper {
+	width : calc(100% - 10px);
+	padding : 7px;
+	padding-left: 10px;
+}
+
+.search_text_input {
+	width : calc(100% - 10px);
+	padding : 5px;
+}

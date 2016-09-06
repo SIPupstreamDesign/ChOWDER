@@ -43,33 +43,26 @@
         // 左カラム内、上段に検索ボックス
         h = document.createElement('input');
         h.type = 'text';
+		h.className = "search_text_input";
         h.setAttribute('placeholder', '🔍  search');
-        h.style.display = 'block';
-        h.style.width = 'calc(100% - 10px)';
-        h.style.padding = '5px';
         f.appendChild(h);
         // 左カラム内、下段にチェックボックスが入るエリア
         h = document.createElement('div');
-        h.style.display = 'block';
-        h.style.width = 'calc(100% - 10px)';
-        h.style.padding = '5px';
+		h.className = "search_check_wrapper";
         f.appendChild(h);
 
         // temp そのいち
-        for(i = 0; i < 10; i++){
+        for(i = 0; i < this.setting.groups.length; i++){
             j = document.createElement('div');
             e = document.createElement('input');
-            e.id = 'check_temp_' + i;
+            e.id = 'search_check_' + i;
+			e.className = "search_group_checkbox";
             e.type = 'checkbox';
-            e.style.display = 'inline-block';
-            e.style.margin = '10px';
             j.appendChild(e);
             f = document.createElement('label');
-            f.setAttribute('for', 'check_temp_' + i);
-            f.textContent = 'check_temp_' + i;
-            f.style.color = 'white';
-            f.style.margin = '10px 5px';
-            f.style.cursor = 'pointer';
+            f.setAttribute('for', 'search_check_' + i);
+            f.textContent = this.setting.groups[i];
+			f.className = "search_group_label";
             j.appendChild(f);
             h.appendChild(j);
         }
@@ -87,8 +80,8 @@
     };
 
 	SearchBox.prototype.init = function () {
-            // search tab generate
-            this.gen_search_tab_box();
+		// search tab generate
+		this.gen_search_tab_box();
 	};
 
 	function init(containerElem, setting) {

@@ -7,6 +7,7 @@
 		windowType = "window",
 		wholeWindowListID = "onlist:whole_window",
 		groupBox = null,
+		searchBox = null,
 		displayMenu = null,
 		contentMenu = null,
 		is_display_scale_changing = false,
@@ -277,10 +278,12 @@
 	/**
 	 * グループリストをセットする。
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
+	 * サーチタブにもグループを追加。
 	 */
 	function setGroupList(groupList) {
 		var activeTab = groupBox.get_active_tab_name(),
-			setting = { tabs : [] },
+			contentSetting = { tabs : [] },
+			searchSetting = { groups : [] },
 			groupName,
 			tab = {},
 			groupColor,
@@ -289,22 +292,25 @@
 		for (i = 0; i < groupList.length; i = i + 1) {
 			groupName = groupList[i].name;
 			groupColor = groupList[i].color;
-			tab = {}; 
+			tab = {};
 			tab[groupName] = {
 				id : (groupName === "default") ? "group_default" : "group_" + i,
 				className : "group_tab",
 				color : groupColor,
 				active : true
 			};
-			setting.tabs.push(tab);
+			contentSetting.tabs.push(tab);
+			searchSetting.groups.push(groupName);
 		}
 
 		document.getElementById('content_tab_box').innerHTML = "";
-		groupBox = window.group_box.init(document.getElementById('content_tab_box'), setting);
+		groupBox = window.group_box.init(document.getElementById('content_tab_box'), contentSetting);
 		initGroupBoxEvents(groupBox);
 
 		// コンテキストメニューを刷新
 		updateContextMenu();
+
+		searchBox = window.search_box.init(document.getElementById('search_tab_box'), searchSetting);
 	}
 
 	/**
@@ -356,7 +362,10 @@
 		initGroupBoxEvents(groupBox);
 
 		// Searchエリアの中身を作成
-		window.search_box.init(document.getElementById('search_tab_box'));
+		searchBox = window.search_box.init(document.getElementById('search_tab_box'),
+			{
+				groups : ["default"]
+			});
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "", "whole_window");
