@@ -2,8 +2,7 @@
 /*global Float32Array */
 (function (gui) {
 	"use strict";
-	var SearchList,
-		defaultGroup = "default";
+	var SearchList;
 
 	SearchList = function (containerElem, setting) {
 		this.container = containerElem;
@@ -13,14 +12,16 @@
 
 		// 検索ボックスに入力されたときのイベント
 		this.on_input_changed = null;
-        this.check_groups = [];
 
+        // チェックされているグループリスト
+        this.check_groups = [];
 	};
 
     SearchList.prototype.gen_search_tab_box = function (){
         var d, e, f, g, h, i, j,
-            text_input;
-        var box = this.container;
+            text_input,
+            box = this.container;
+
         // 既に該当 ID が存在する場合は一度 DOM を削除して再生成する
         e = document.getElementById('search_tab_box_wrapper');
         if(e){
@@ -64,7 +65,44 @@
 		h.className = "search_check_wrapper";
         f.appendChild(h);
 
-        // temp そのいち
+        function checkFunction(self, target, i) {
+            if (target.checked) {
+                self.check_groups.push(self.setting.groups[i]);
+            } else {
+                self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i]));
+            }
+        }
+
+        // 全て選択チェックボックス
+        (function (self, text_input) {
+            var div = document.createElement('div'),
+                all_checkbox = document.createElement('input'),
+                label,
+                target;
+            all_checkbox.id = 'all_check_';
+            all_checkbox.className = "search_group_checkbox";
+            all_checkbox.type = 'checkbox';
+            label = document.createElement('label');
+            label.setAttribute('for', 'search_check_' + i);
+            label.textContent = "All";
+            label.className = "search_group_label";
+
+            all_checkbox.onclick = function (evt) {
+                for (i = 0; i < self.setting.groups.length; i = i + 1) {
+                    target = document.getElementById('search_check_' + i); 
+                    target.checked = evt.target.checked;
+                    checkFunction(self, target, i);
+                }
+                if (self.on_input_changed) {
+                    self.on_input_changed(text_input.value, self.check_groups);
+                }
+            };
+            div.appendChild(all_checkbox);
+            div.appendChild(label);
+            h.appendChild(div);
+        }(this, text_input));
+
+        // group チェックボックス
         for(i = 0; i < this.setting.groups.length; i++){
             j = document.createElement('div');
             e = document.createElement('input');
@@ -73,11 +111,7 @@
             e.type = 'checkbox';
             e.onclick = (function (self, text_input, i) {
                 return function (evt) {
-                    if (evt.target.checked) {
-                        self.check_groups.push(self.setting.groups[i]);
-                    } else {
-                        self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i]), 1);
-                    }
+                    checkFunction(self, evt.target, i);
                     if (self.on_input_changed) {
                         self.on_input_changed(text_input.value, self.check_groups);
                     }
