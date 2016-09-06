@@ -355,6 +355,9 @@
 			});
 		initGroupBoxEvents(groupBox);
 
+		// Searchエリアの中身を作成
+		window.search_box.init(document.getElementById('search_tab_box'));
+
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "", "whole_window");
 
