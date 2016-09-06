@@ -76,7 +76,7 @@
                     if (evt.target.checked) {
                         self.check_groups.push(self.setting.groups[i]);
                     } else {
-                        self.check_groups.splice(self.setting.groups[i], 1);
+                        self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i]), 1);
                     }
                     if (self.on_input_changed) {
                         self.on_input_changed(text_input.value, self.check_groups);
