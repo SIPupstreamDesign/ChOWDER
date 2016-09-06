@@ -59,3 +59,15 @@ ul, ol {
 	background : rgb(66, 129, 244);
 	color : white;
 }
+
+#bottom_burger_menu_content {
+	display : none;
+}
+
+#bottom_burger_menu_display {
+	display : block;
+}
+
+#bottom_burger_menu_search {
+	display : none;
+}
