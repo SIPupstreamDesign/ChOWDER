@@ -430,6 +430,7 @@
 				memo.style.position = "absolute";
 				memo.style.width = (rect.right - rect.left) + "px";
 				memo.style.height = "auto";
+				memo.style.whiteSpace = "pre-line";
 				previewArea.appendChild(memo);
 			}
 		}
