@@ -1933,6 +1933,20 @@
 	};
 
 	/**
+	 * ディスプレイトランスが変更された.
+	 */
+	gui.on_display_trans_changed = function (dx, dy) {
+		manipulator.removeManipulator();
+		var center = vscreen.getCenter();
+		var whole = vscreen.getWhole(),
+			cx = window.innerWidth / 2,
+			cy = window.innerHeight / 2;
+		
+		vscreen.assignWhole(whole.orgW, whole.orgH, center.x + dx, center.y + dy, vscreen.getWholeScale());
+		updateScreen();
+	};
+
+	/**
 	 * コンテンツの削除ボタンが押された.
 	 * @method on_contentdeletebutton_clicked
 	 */

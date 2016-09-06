@@ -172,14 +172,21 @@
 	function initMainViewScaling() {
 		var displayPreviewArea = document.getElementById('display_preview_area'),
 			contentPreviewArea = document.getElementById('content_preview_area'),
-			is_dragging = false,
+			is_right_dragging = false,
+			is_middle_dragging = false,
+			mouseDownPosX = 0,
 			mouseDownPosY = 0;
 		
 		contentPreviewArea.addEventListener('mousedown', function (evt) {
 			if (evt.button === 2) {
 				var rect = contentPreviewArea.getBoundingClientRect();
 				mouseDownPosY = evt.clientY - rect.top;
-				is_dragging = true;
+				is_right_dragging = true;
+			} else if (evt.button === 1) {
+				var rect = contentPreviewArea.getBoundingClientRect();
+				mouseDownPosX = evt.clientX - rect.left;
+				mouseDownPosY = evt.clientY - rect.top;
+				is_middle_dragging = true;
 			}
 		});
 
@@ -187,13 +194,18 @@
 			if (evt.button === 2) {
 				var rect = displayPreviewArea.getBoundingClientRect();
 				mouseDownPosY = evt.clientY - rect.top;
-				is_dragging = true;
+				is_right_dragging = true;
+			} else if (evt.button === 1) {
+				var rect = displayPreviewArea.getBoundingClientRect();
+				mouseDownPosX = evt.clientX - rect.left;
+				mouseDownPosY = evt.clientY - rect.top;
+				is_middle_dragging = true;
 			}
 		});
 
 		window.addEventListener('mousemove', function (evt) {
 			var rect = contentPreviewArea.getBoundingClientRect();
-			if (is_dragging) {
+			if (is_right_dragging) {
 				var dy = evt.clientY - rect.top - mouseDownPosY,
 					ds = dy;
 				if (ds > 0) {
@@ -212,14 +224,22 @@
 					display_scale = 2;
 				}
 				gui.on_display_scale_changed(display_scale);
+			} else if (is_middle_dragging) {
+				var dx = evt.clientX - rect.left - mouseDownPosX,
+					dy = evt.clientY - rect.top - mouseDownPosY;
+				
+				gui.on_display_trans_changed(dx, dy);
 			}
+			mouseDownPosX = evt.clientX;
 			mouseDownPosY = evt.clientY;
 		});
 
 		window.addEventListener('mouseup', function (evt) {
 			if (evt.button === 2) {
-				is_dragging = false;
-			} 
+				is_right_dragging = false;
+			} else if (evt.button === 1) {
+				is_middle_dragging = false;
+			}
 		})
 
 	}
@@ -460,6 +480,7 @@
 	window.controller_gui.on_snapdropdown_clicked = null;
 	window.controller_gui.on_virtualdisplaysetting_clicked　= null;
 	window.controller_gui.on_display_scale_changed = null;
+	window.controller_gui.on_display_trans_changed = null;
 	window.controller_gui.on_close_item = null;
 	window.controller_gui.on_file_dropped = null;
 	window.controller_gui.on_group_append_clicked = null;
