@@ -585,7 +585,6 @@
 			gui.set_update_content_id(id);
 			col = getGroupColor(metaDataDict[id].group);
 			if (gui.get_list_elem(id)) {
-				//gui.get_list_elem(id).style.borderColor = contentSelectColor;
 				gui.get_list_elem(id).style.borderColor = col;
 			}
 			if (gui.get_search_elem(id)) {
@@ -1452,6 +1451,7 @@
 		console.log("doneDeleteContent", err, reply);
 		var json = reply,
 			contentArea = gui.get_content_area(),
+			searchArea = gui.get_search_area(),
 			previewArea = gui.get_content_preview_area(),
 			deleted = document.getElementById(json.id);
 		manipulator.removeManipulator();
@@ -1460,6 +1460,9 @@
 		}
 		if (gui.get_list_elem(json.id)) {
 			contentArea.removeChild(gui.get_list_elem(json.id));
+		}
+		if (gui.get_search_elem(json.id)) {
+			searchArea.removeChild(gui.get_search_elem(json.id));
 		}
 		gui.set_update_content_id("No Content Selected.");
 		lastSelectContentID = null;

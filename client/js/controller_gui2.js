@@ -506,6 +506,9 @@
 	window.controller_gui.get_content_area = function () {
 		return groupBox ? groupBox.get_current_tab() : null;
 	};
+	window.controller_gui.get_search_area = function () {
+		return searchBox ? document.getElementsByClassName('search_item_wrapper')[0] : null;
+	};
 	window.controller_gui.get_content_area_by_group = function (group) {
 		return groupBox ? groupBox.get_tab(group) : null;
 	};
