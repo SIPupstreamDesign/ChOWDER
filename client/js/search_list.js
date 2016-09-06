@@ -2,10 +2,10 @@
 /*global Float32Array */
 (function (gui) {
 	"use strict";
-	var SearchBox,
+	var SearchList,
 		defaultGroup = "default";
 
-	SearchBox = function (containerElem, setting) {
+	SearchList = function (containerElem, setting) {
 		this.container = containerElem;
 		this.setting = setting;
 		this.init();
@@ -14,7 +14,7 @@
 		this.on_input_changed = null;
 	};
 
-    SearchBox.prototype.gen_search_tab_box = function (){
+    SearchList.prototype.gen_search_tab_box = function (){
         var d, e, f, g, h, i, j;
         var box = this.container;
         // 既に該当 ID が存在する場合は一度 DOM を削除して再生成する
@@ -83,13 +83,13 @@
         }
     };
 
-	SearchBox.prototype.init = function () {
+	SearchList.prototype.init = function () {
 		// search tab generate
 		this.gen_search_tab_box();
 	};
 
 	function init(containerElem, setting) {
-		return new SearchBox(containerElem, setting);
+		return new SearchList(containerElem, setting);
 	}
 
 	window.search_box = {};
