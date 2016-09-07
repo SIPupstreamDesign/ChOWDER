@@ -133,7 +133,9 @@
 			addTextInputProperty('content_text', "");
 			addSubmitButton('content_text_submit', "登録", true, function () {
 				var text = document.getElementById('content_text');
-				window.content_property.on_metainfo_changed(text.value);
+				if (window.content_property.on_metainfo_changed) {
+					window.content_property.on_metainfo_changed(text.value);
+				}
 			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
@@ -156,23 +158,33 @@
 			addTextInputProperty('content_text', "");
 			addSubmitButton('content_text_submit', "登録", true, function () {
 				var text = document.getElementById('content_text');
-				window.content_property.on_metainfo_changed(text.value);
+				if (window.content_property.on_metainfo_changed) {
+					window.content_property.on_metainfo_changed(text.value);
+				}
 			})
 			wholeW = document.getElementById('whole_width');
 			wholeH = document.getElementById('whole_height');
 			wholeSplitX = document.getElementById('whole_split_x');
 			wholeSplitY = document.getElementById('whole_split_y');
 			wholeW.onchange = function () {
-				window.content_property.on_display_value_changed();
+				if (window.content_property.on_display_value_change) {
+					window.content_property.on_display_value_changed();
+				}
 			};
 			wholeH.onchange = function () {
-				window.content_property.on_display_value_changed();
+				if (window.content_property.on_display_value_changed) {
+					window.content_property.on_display_value_changed();
+				}
 			};
 			wholeSplitX.onchange = function () {
-				window.content_property.on_change_whole_split(this.value, wholeSplitY.value);
+				if (window.content_property.on_change_whole_split) {
+					window.content_property.on_change_whole_split(this.value, wholeSplitY.value);
+				}
 			};
 			wholeSplitY.onchange = function () {
-				window.content_property.on_change_whole_split(wholeSplitX.value, this.value);
+				if (window.content_property.on_change_whole_split) {
+					window.content_property.on_change_whole_split(wholeSplitX.value, this.value);
+				}
 			};
 			downloadButton.style.display = "none";
 		} else { // content (text, image, url... )
@@ -186,7 +198,9 @@
 			addTextInputProperty('content_text', "");
 			addSubmitButton('content_text_submit', "登録", false, function () {
 				var text = document.getElementById('content_text');
-				window.content_property.on_metainfo_changed(text.value);
+				if (window.content_property.on_metainfo_changed) {
+					window.content_property.on_metainfo_changed(text.value);
+				}
 			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
@@ -199,7 +213,9 @@
 			contentH.onchange = rectChangeFunc;
 			contentZ.onchange = function () {
 				var val = parseInt(contentZ.value, 10);
-				window.content_property.on_change_zindex(val);
+				if (window.content_property.on_change_zindex) {
+					window.content_property.on_change_zindex(val);
+				}
 			};
 			downloadButton.style.display = "block";
 			downloadButton.href = "download?" + id;
@@ -316,7 +332,9 @@
 	window.content_property.assign_content_property = assignContentProperty;
 
 	window.content_property.update_display_value = function () {
-		window.content_property.on_display_value_change();
+		if (window.content_property.on_display_value_change) {
+			window.content_property.on_display_value_change();
+		}
 	};
 	window.content_property.update_whole_split = function (x, y, flag) {
 		window.content_property.on_change_whole_split(x, y, flag);

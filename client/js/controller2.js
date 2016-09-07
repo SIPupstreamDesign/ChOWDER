@@ -360,7 +360,7 @@
 			windowData.orgWidth = initialWholeWidth;
 		}
 		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
-			windowData.orgWidth = initialWholeHeight;
+			windowData.orgHeight = initialWholeHeight;
 		}
 		connector.send('UpdateVirtualDisplay', windowData, function (err, res) {
 			if (!err) {
