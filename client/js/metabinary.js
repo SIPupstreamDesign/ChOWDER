@@ -20,7 +20,11 @@
 		for (i = 0; i < chars.length; i = i + 1) {
 			encodedString = encodedString + String.fromCharCode(chars[i]);
 		}
-		decodedString = decodeURIComponent(escape(encodedString));
+		try {
+			decodedString = decodeURIComponent(escape(encodedString));
+		} catch (e) {
+			decodedString = decodeURIComponent(encodedString);
+		}
 		return decodedString;
 	}
 	
