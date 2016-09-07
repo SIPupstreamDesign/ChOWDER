@@ -417,7 +417,9 @@
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
 			if (item.name === groupName) {
-				return item.color;
+				if (item.color) {
+					return item.color;
+				}
 			}
 		}
 		return contentSelectColor;
