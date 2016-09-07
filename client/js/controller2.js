@@ -612,6 +612,12 @@
 			}
 		}
 
+		if (isDisplayTabSelected()) {
+			lastSelectWindowID = id;
+		} else {
+			lastSelectContentID = id;
+		}
+		
 		if (elem.style.zIndex === "") {
 			elem.style.zIndex = 0;
 		}
@@ -666,6 +672,7 @@
 		for (i = selectedIDList.length - 1; i >= 0; i = i - 1) {
 			unselect(selectedIDList[i]);
 		}
+		content_property.init("", "", "content");
 	}
 
 	/**
@@ -1079,17 +1086,6 @@
 					}
 				}
 				clearSnapHightlight();
-			}
-			if (draggingID === getSelectedID()) {
-				if (isDisplayTabSelected()) {
-					if (!(manipulator.isShowManipulator() && lastSelectWindowID)) {
-						lastSelectWindowID = draggingID;
-					}
-				} else {
-					if (!(manipulator.isShowManipulator() && lastSelectContentID)) {
-						lastSelectContentID = draggingID;
-					}
-				}
 			}
 			draggingIDList.splice(i, 1);
 			dragOffsetTop = 0;
