@@ -2229,14 +2229,20 @@
 	 * @param {String} index 設定するzIndex
 	 */
 	content_property.on_change_zindex = function (index) {
-		var elem = gui.get_selected_elem(),
+		var i,
+			id,
+			elem,
 			metaData;
-		if (elem) {
-			metaData = metaDataDict[elem.id];
-			elem.style.zIndex = index;
-			metaData.zIndex = index;
-			updateMetaData(metaData);
-			console.log("change zindex:" + index);
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			metaData = metaDataDict[id];
+			elem = document.getElementById(id);
+			if (metaData && elem) {
+				elem.style.zIndex = index;
+				metaData.zIndex = index;
+				updateMetaData(metaData);
+				console.log("change zindex:" + index, id);
+			}
 		}
 	};
 	

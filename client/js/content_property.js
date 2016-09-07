@@ -200,6 +200,12 @@
 			grouplabel.innerHTML = "";
 			addInputProperty('multi_transform_z', 'z', 'index', '');
 			multiZ = document.getElementById('multi_transform_z');
+			multiZ.onchange = function () {
+				var val = parseInt(multiZ.value, 10);
+				if (window.content_property.on_change_zindex) {
+					window.content_property.on_change_zindex(val);
+				}
+			};
 			downloadButton.style.display = "none";
 			metalabel.style.display = "none";
 		} else { // content (text, image, url... )
@@ -327,7 +333,7 @@
 		if (transh) {
 			transh.value = parseInt(metaData.height, 10);
 		}
-		if (metaData.hasOwnProperty('zIndex')) {
+		if (transz && metaData.hasOwnProperty('zIndex')) {
 			transz.value = parseInt(metaData.zIndex, 10);
 		}
 
