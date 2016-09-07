@@ -143,6 +143,7 @@
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabContent.id + "_link";
+		link.className = "group_tab_link";
 		link.innerHTML = groupName;
 		elem.onclick = function (evt) {
 			var i,
