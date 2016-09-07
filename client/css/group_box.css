@@ -17,7 +17,7 @@
 .group_tab {
 	text-align: center;
 	background: rgb(54,187,68);
-	border: 1px solid rgb(200,200,200);
+	border: 1px solid rgba(255, 255, 255, 0.3);
 	top: 5px;
 	left : 4px;
 	width : 170px;
@@ -76,7 +76,7 @@
 }
 
 .group_tab.active {
-	border: 2px solid rgb(204,247,168);
+	border: 3px solid white;
 }
 
 .group_tab_box {
