@@ -67,9 +67,11 @@
 
         function checkFunction(self, target, i) {
             if (target.checked) {
-                self.check_groups.push(self.setting.groups[i]);
+                if (self.check_groups.indexOf(self.setting.groups[i]) < 0) {
+                    self.check_groups.push(self.setting.groups[i]);
+                }
             } else {
-                self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i]));
+                self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i]), 1);
             }
         }
 
