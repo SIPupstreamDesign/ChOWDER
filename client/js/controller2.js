@@ -5,7 +5,9 @@
 	"use strict";
 	
 	var currentContent = null,
-		draggingID = 0,
+		draggingIDList = [],
+		selectedIDList = [],
+		onCtrlDown = false, // Ctrlボタンを押してるかどうか
 		lastSelectContentID = null,
 		lastSelectWindowID = null,
 		dragOffsetTop = 0,
@@ -248,8 +250,11 @@
 	 * @return {String} コンテンツID
 	 */
 	function getSelectedID() {
-		var contentID = document.getElementById('content_id');
-		return contentID.innerHTML;
+		//var contentID = document.getElementById('content_id');
+		if (selectedIDList.length > 0) {
+			return selectedIDList[0];
+		}
+		return null;//contentID.innerHTML;
 	}
 	
 	/**
@@ -473,9 +478,9 @@
 			invAspect;
 		
 		if (draggingManip) {
-			elem = getLastSelectedElem();
-			metaData = getLastSelectedMetaData();
+			elem = document.getElementById(getSelectedID());
 			if (elem) {
+				metaData = metaDataDict[elem.id];
 				if (metaData.type !== windowType && !isVisible(metaData)) {
 					// 非表示コンテンツ
 					return;
@@ -486,6 +491,7 @@
 				lastw = metaData.width;
 				lasth = metaData.height;
 				invAspect = metaData.orgHeight / metaData.orgWidth;
+
 
 				if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
 					px = evt.clientX - dragOffsetLeft;
@@ -567,9 +573,8 @@
 		
 		console.log("metaData", metaData);
 		initialVisible = metaData.visible;
-		draggingID = id;
-		console.log("draggingID = id:" + draggingID);
 		elem.style.border = "solid 2px";
+		
 		if (metaData.type === windowType) {
 			content_property.init(id, "", "display", mime);
 			content_property.assign_content_property(metaDataDict[id]);
@@ -596,6 +601,16 @@
 			elem.style.borderColor = col;
 			manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
 		}
+		
+		if (selectedIDList.indexOf(id) < 0) {
+			selectedIDList.push(id);
+		}
+		draggingIDList = JSON.parse(JSON.stringify(selectedIDList));
+		
+		if (selectedIDList.length !== 1) {
+			manipulator.removeManipulator();
+		}
+
 		if (elem.style.zIndex === "") {
 			elem.style.zIndex = 0;
 		}
@@ -610,13 +625,14 @@
 	 * 現在選択されているContents, もしくはVirtualDisplayを非選択状態にする
 	 * @method unselect
 	 */
-	function unselect() {
+	function unselect(id) {
 		var elem = null,
-			metaData;
+			metaData,
+			i;
 
-		elem = getLastSelectedElem();
-		metaData = getLastSelectedMetaData();
+		elem = getElem(id, true);//getLastSelectedElem();
 		if (elem) {
+			metaData = metaDataDict[id]; //getLastSelectedMetaData();
 			if (metaData.type !== windowType && isVisible(metaData)) {
 				elem.style.border = "";
 			}
@@ -638,16 +654,19 @@
 				}
 			}
 			elem.style.borderColor = "";
-			if (metaData.type === windowType) {
-				lastSelectWindowID = null;
-			} else {
-				lastSelectContentID = null;
-			}
 		}
+		selectedIDList.splice(selectedIDList.indexOf(id), 1);
 		manipulator.removeManipulator();
 		content_property.clear();
 	}
 	
+	function unselectAll() {
+		var i;
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			unselect(selectedIDList[i]);
+		}
+	}
+
 	/**
 	 * クローズボタンハンドル。選択されているcontent or windowを削除する。
 	 * その後クローズされた結果をupdateMetaDataにて各Windowに通知する。
@@ -661,7 +680,7 @@
 		
 		console.log("closeFunc");
 		if (metaDataDict.hasOwnProperty(id)) {
-			unselect();
+			unselect(id);
 			elem = getElem(id, false);
 			
 			metaData = metaDataDict[id];
@@ -747,6 +766,16 @@
 	 * @param {String} id ContentID
 	 */
 	setupContent = function (elem, id) {
+		window.onkeydown = function (evt) {
+			if (evt.keyCode === 17) {
+				onCtrlDown = true;
+			}
+		};
+		window.onkeyup = function (evt) {
+			if (evt.keyCode === 17) {
+				onCtrlDown = false;
+			}
+		};
 		elem.onmousedown = function (evt) {
 			var rect = evt.target.getBoundingClientRect(),
 				metaData = null,
@@ -790,18 +819,22 @@
 					return;
 				}
 			}
-			
+
 			// erase last border
-			unselect();
+			if (!onCtrlDown) {
+				unselectAll();
+			}
 			select(id, isContentArea(evt));
 			
 			evt = (evt) || window.event;
-			dragOffsetTop = evt.clientY - rect.top;
-			dragOffsetLeft = evt.clientX - rect.left;
 			mouseDownPos = [
 				rect.left,
 				rect.top
 			];
+
+			dragOffsetTop = evt.clientY - rect.top;
+			dragOffsetLeft = evt.clientX - rect.left;
+			evt.stopPropagation();
 			evt.preventDefault();
 		};
 	};
@@ -896,8 +929,11 @@
 			elemOnPos,
 			onInvisibleContent,
 			rect = evt.target.getBoundingClientRect(),
+			rect2 = null,
 			orgPos,
 			splitWhole,
+			draggingID,
+			selectedID,
 			screen;
 		if (evt.button !== 0) { return; } // 左ドラッグのみ
 		
@@ -917,10 +953,11 @@
             updateMetaData(obj);
         }
 		
-		if (draggingID) {
+		for (i = 0; i < draggingIDList.length; i = i + 1) {
+			draggingID = draggingIDList[i];
+
 			// detect content list area
 			if (isContentArea2(evt) && isContentArea(evt)) {
-				elem = document.getElementById(draggingID);
 				return;
 			}
 
@@ -961,92 +998,98 @@
 			metaData.posy = evt.clientY - dragOffsetTop;
 			vscreen_util.transPosInv(metaData);
 			vscreen_util.assignMetaData(elem, metaData, true);
-			
+
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
 				updateMetaData(metaData);
 			}
-
-			evt.stopPropagation();
-			evt.preventDefault();
-		} else if (manipulator.getDraggingManip()) {
+		}
+		if (manipulator.getDraggingManip()) {
 			console.log("iscontentarea");
 			// scaling
-			elem = getLastSelectedElem();
-			metaData = getLastSelectedMetaData();
+			elem = document.getElementById(getSelectedID());
 			if (elem) {
+				metaData = metaDataDict[elem.id];
 				if (metaData.type === windowType || isVisible(metaData)) {
 					onManipulatorMove(evt);
 					manipulator.moveManipulator(elem);
 				}
-				evt.stopPropagation();
-				evt.preventDefault();
 			}
 		}
+
+		evt.stopPropagation();
+		evt.preventDefault();
 	});
 	
 	// add content mouseup event
 	window.document.addEventListener("mouseup", function (evt) {
-		var contentArea = gui.get_content_area(),
+		var i,
+			contentArea = gui.get_content_area(),
 			metaData,
 			elem,
 			px,
 			py,
 			rect = evt.target.getBoundingClientRect(),
+			draggingID,
 			orgPos,
 			splitWhole,
 			screen;
-		if (draggingID && metaDataDict.hasOwnProperty(draggingID)) {
-			elem = document.getElementById(draggingID);
-			metaData = metaDataDict[draggingID];
-			if (!isContentArea(evt)) {
-				//console.log("not onContentArea");
-				metaData.visible = true;
-				if (isFreeMode()) {
-					vscreen_util.assignMetaData(elem, metaData, true);
-					updateMetaData(metaData);
-				} else if (isDisplayMode()) {
-					px = rect.left + dragOffsetLeft;
-					py = rect.top + dragOffsetTop;
-					orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-					screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
-					if (screen) {
-						snapToScreen(elem, metaData, screen);
+
+		for (i = draggingIDList.length - 1; i >= 0; i = i - 1) {
+			draggingID = draggingIDList[i];
+			if (metaDataDict.hasOwnProperty(draggingID)) {
+				elem = document.getElementById(draggingID);
+				metaData = metaDataDict[draggingID];
+				if (!isContentArea(evt)) {
+					//console.log("not onContentArea");
+					metaData.visible = true;
+					if (isFreeMode()) {
+						vscreen_util.assignMetaData(elem, metaData, true);
+						updateMetaData(metaData);
+					} else if (isDisplayMode()) {
+						px = rect.left + dragOffsetLeft;
+						py = rect.top + dragOffsetTop;
+						orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+						screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
+						if (screen) {
+							snapToScreen(elem, metaData, screen);
+						}
+						vscreen_util.assignMetaData(elem, metaData, true);
+						updateMetaData(metaData);
+						manipulator.moveManipulator(elem);
+					} else {
+						// grid mode
+						px = rect.left + dragOffsetLeft;
+						py = rect.top + dragOffsetTop;
+						orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+						splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+						//console.log(splitWhole);
+						if (splitWhole) {
+							snapToSplitWhole(elem, metaData, splitWhole);
+						}
+						vscreen_util.assignMetaData(elem, metaData, true);
+						updateMetaData(metaData);
+						manipulator.moveManipulator(elem);
 					}
-					vscreen_util.assignMetaData(elem, metaData, true);
-					updateMetaData(metaData);
-					manipulator.moveManipulator(elem);
+				}
+				clearSnapHightlight();
+			}
+			if (draggingID === getSelectedID()) {
+				if (isDisplayTabSelected()) {
+					if (!(manipulator.isShowManipulator() && lastSelectWindowID)) {
+						lastSelectWindowID = draggingID;
+					}
 				} else {
-					// grid mode
-					px = rect.left + dragOffsetLeft;
-					py = rect.top + dragOffsetTop;
-					orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-					splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-					//console.log(splitWhole);
-					if (splitWhole) {
-						snapToSplitWhole(elem, metaData, splitWhole);
+					if (!(manipulator.isShowManipulator() && lastSelectContentID)) {
+						lastSelectContentID = draggingID;
 					}
-					vscreen_util.assignMetaData(elem, metaData, true);
-					updateMetaData(metaData);
-					manipulator.moveManipulator(elem);
 				}
 			}
-			clearSnapHightlight();
-		}
-		if (isDisplayTabSelected()) {
-			if (!(manipulator.isShowManipulator() && lastSelectWindowID)) {
-				lastSelectWindowID = draggingID;
-				draggingID = null;
-			}
-		} else {
-			if (!(manipulator.isShowManipulator() && lastSelectContentID)) {
-				lastSelectContentID = draggingID;
-				draggingID = null;
-			}
+			draggingIDList.splice(i, 1);
+			dragOffsetTop = 0;
+			dragOffsetLeft= 0;
 		}
 		manipulator.clearDraggingManip();
-		dragOffsetTop = 0;
-		dragOffsetLeft = 0;
 	});
 	
 	/**
@@ -1365,7 +1408,7 @@
 		metaDataDict[json.id] = json;
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
-		if (draggingID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
+		if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
 			content_property.assign_content_property(json);
 		}
 		
@@ -1572,7 +1615,7 @@
 		var windowData = reply,
 			elem;
 		importWindow(windowData);
-		if (draggingID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
+		if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
 			content_property.assign_content_property(windowData);
 		}
 		if (lastSelectWindowID) {
@@ -2093,7 +2136,7 @@
 	 * @method on_virtualdisplaysetting_clicked
 	 */
 	gui.on_virtualdisplaysetting_clicked = function () {
-		unselect();
+		unselectAll();
 		select(wholeWindowListID);
 	};
 
@@ -2211,11 +2254,13 @@
 		} else {
 			content_property.init("", "", "content");
 		}
+		unselectAll();
 		// 以前選択していたものを再選択する.
 		if (id) {
 			select(id, false);
 		}
-		draggingID = null;
+		draggingIDList = [];
+		console.error(draggingIDList);
 	};
 
 	/**
@@ -2291,8 +2336,8 @@
 		if (id) {
 			//console.log(metaData);
 			doneGetMetaData(null, metaData);
-			if (lastSelectContentID) {
-				elem = document.getElementById(lastSelectContentID);
+			if (getSelectedID()) {
+				elem = document.getElementById(getSelectedID());
 				if (elem) {
 					manipulator.moveManipulator(elem);
 				}
@@ -2319,7 +2364,7 @@
 	
 	// windowが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateWindowMetaData', function (metaData) {
-		console.log('UpdateWindowMetaData', metaData, draggingID);
+		console.log('UpdateWindowMetaData', metaData);
 		if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
 			if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
 				changeWindowBorderColor(metaData);
@@ -2341,7 +2386,7 @@
 	
 	// windowが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateMouseCursor', function (metaData) {
-        // console.log('UpdateMouseCursor', metaData, draggingID);
+        // console.log('UpdateMouseCursor', metaData);
 
         // if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
         //     if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
@@ -2402,20 +2447,14 @@
 		};
 		
 		gui.on_mousedown_content_preview_area = function () {
-			// erase last border
 			if (!manipulator.getDraggingManip()) {
-				if (getLastSelectedElem()) {
-					unselect();
-				}
+				unselectAll();
 			}
 		};
 		
 		gui.on_mousedown_display_preview_area = function () {
-			// erase last border
 			if (!manipulator.getDraggingManip()) {
-				if (getLastSelectedElem()) {
-					unselect();
-				}
+				unselectAll();
 			}
 		};
 		

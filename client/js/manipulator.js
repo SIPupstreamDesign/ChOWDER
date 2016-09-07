@@ -66,7 +66,7 @@
 			//console.log("manipulators:", manipulators);
 			return;
 		}
-		
+		//console.error(targetElem);
 		var left,
 			top,
 			width,
@@ -261,7 +261,7 @@
 			manip,
 			i;
 		
-		moveManipulator(manips, targetElem);
+		moveManipulator(targetElem);
 		removeManipulator();
 		parent = previewArea;
 		

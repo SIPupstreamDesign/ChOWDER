@@ -328,7 +328,6 @@
 	window.content_property.on_display_value_changed = null;
 	window.content_property.on_change_whole_split = null;
 	window.content_property.on_metainfo_changed = null;
-	//window.content_property.assign_view_setting = assignViewSetting;
 	window.content_property.assign_content_property = assignContentProperty;
 
 	window.content_property.update_display_value = function () {

@@ -477,25 +477,6 @@
 	}
 	
 	/**
-	 * Viewスケール設定
-	 * @method assignViewSetting
-	 */
-	function assignViewSetting(wholeScale, isFreeMode, isDisplayMode) {
-		var scale_current = document.getElementById('scale_dropdown_current'),
-			snap_current = document.getElementById('snap_dropdown_current');
-		
-		scale_current.innerHTML = wholeScale;
-		if (isFreeMode) {
-			snap_current.innerHTML = 'Free';
-		} else if (isDisplayMode) {
-			snap_current.innerHTML = 'Display';
-		} else {
-			// grid
-			snap_current.innerHTML = 'Grid';
-		}
-	}
-	
-	/**
 	 * メタデータをPropertyエリアに反映
 	 * @method assignContentProperty
 	 * @param {JSON} metaData メタデータ
@@ -633,7 +614,6 @@
 	// 更新など
 	window.controller_gui.clear_property = clearProperty;
 	window.controller_gui.assign_virtual_display_property = assignVirtualDisplayProperty;
-	window.controller_gui.assign_view_setting = assignViewSetting;
 	window.controller_gui.assign_content_property = assignContentProperty;
 
 	window.controller_gui.update_display_value = function () {
