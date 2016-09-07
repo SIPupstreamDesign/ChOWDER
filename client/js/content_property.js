@@ -98,6 +98,11 @@
 			contentW,
 			contentH,
 			contentZ,
+			multiX,
+			multiY,
+			multiW,
+			multiH,
+			multiZ,
 			wholeW,
 			wholeH,
 			wholeSplitX,
@@ -109,6 +114,7 @@
 			idtext = document.getElementById('content_id'),
 			group_name = document.getElementById('group_name'),
 			downloadButton = document.getElementById('download_button'),
+			metalabel = document.getElementById("meta_info"),
 			extension,
 			rectChangeFunc = window.content_property.on_rect_changed;
 		console.log("initPropertyArea");
@@ -146,7 +152,7 @@
 			contentW.onchange = rectChangeFunc;
 			contentH.onchange = rectChangeFunc;
 			downloadButton.style.display = "none";
-			
+			metalabel.style.display = "block";
 		} else if (type === "whole_window") {
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
@@ -187,6 +193,15 @@
 				}
 			};
 			downloadButton.style.display = "none";
+			metalabel.style.display = "block";
+		} else if (type === "multi_display" || type === "multi_content") {
+			idlabel.innerHTML = "Content ID:";
+			idtext.innerHTML = "";
+			grouplabel.innerHTML = "";
+			addInputProperty('multi_transform_z', 'z', 'index', '');
+			multiZ = document.getElementById('multi_transform_z');
+			downloadButton.style.display = "none";
+			metalabel.style.display = "none";
 		} else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
 			grouplabel.innerHTML = "Group:";
@@ -230,6 +245,9 @@
 				} else {
 					downloadButton.download = id + ".img";
 				}
+			}
+			if (metalabel) {
+				metalabel.style.display = "block";
 			}
 		}
 	}
@@ -297,10 +315,18 @@
 			transz = document.getElementById('content_transform_z'),
 			text = document.getElementById('content_text');
 		
-		transx.value = parseInt(metaData.posx, 10);
-		transy.value = parseInt(metaData.posy, 10);
-		transw.value = parseInt(metaData.width, 10);
-		transh.value = parseInt(metaData.height, 10);
+		if (transx) {
+			transx.value = parseInt(metaData.posx, 10);
+		}
+		if (transy) {
+			transy.value = parseInt(metaData.posy, 10);
+		}
+		if (transw) {
+			transw.value = parseInt(metaData.width, 10);
+		}
+		if (transh) {
+			transh.value = parseInt(metaData.height, 10);
+		}
 		if (metaData.hasOwnProperty('zIndex')) {
 			transz.value = parseInt(metaData.zIndex, 10);
 		}
@@ -313,7 +339,7 @@
 				console.error(e);
 				return;
 			}
-			if (parsed.hasOwnProperty("text")) {
+			if (text && parsed.hasOwnProperty("text")) {
 				text.value = parsed.text;
 			}
 		}

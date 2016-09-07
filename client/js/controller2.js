@@ -575,40 +575,68 @@
 		initialVisible = metaData.visible;
 		elem.style.border = "solid 2px";
 		
-		if (metaData.type === windowType) {
-			content_property.init(id, "", "display", mime);
-			content_property.assign_content_property(metaDataDict[id]);
-			if (gui.get_list_elem(id)) {
-				gui.get_list_elem(id).style.borderColor = windowSelectColor;
-			}
-			if (gui.get_search_elem(id)) {
-				gui.get_search_elem(id).style.borderColor = windowSelectColor;
-			}
-			elem.style.borderColor = windowSelectColor;
-			manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
-		} else {
-			content_property.init(id, metaData.group, metaData.type, mime);
-			content_property.assign_content_property(metaDataDict[id]);
-			gui.set_update_content_id(id);
-			col = getGroupColor(metaDataDict[id].group);
-			if (gui.get_list_elem(id)) {
-				gui.get_list_elem(id).style.borderColor = col;
-			}
-			if (gui.get_search_elem(id)) {
-				gui.get_search_elem(id).style.borderColor = col;
-			}
-			//elem.style.borderColor = contentSelectColor;
-			elem.style.borderColor = col;
-			manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
-		}
-		
 		if (selectedIDList.indexOf(id) < 0) {
 			selectedIDList.push(id);
 		}
 		draggingIDList = JSON.parse(JSON.stringify(selectedIDList));
 		
-		if (selectedIDList.length !== 1) {
+		if (selectedIDList.length <= 0) {
 			manipulator.removeManipulator();
+		} else if (selectedIDList.length > 1) {
+			// 複数選択.
+			manipulator.removeManipulator();
+			if (metaData.type === windowType) {
+				content_property.init(id, "", "multi_display", mime);
+				//content_property.assign_content_property(metaDataDict[id]);
+				if (gui.get_list_elem(id)) {
+					gui.get_list_elem(id).style.borderColor = windowSelectColor;
+				}
+				if (gui.get_search_elem(id)) {
+					gui.get_search_elem(id).style.borderColor = windowSelectColor;
+				}
+				elem.style.borderColor = windowSelectColor;
+			} else {
+				content_property.init(id, "", "multi_content", mime);
+				//content_property.init(id, metaData.group, metaData.type, mime);
+				//content_property.assign_content_property(metaDataDict[id]);
+				//gui.set_update_content_id(id);
+				col = getGroupColor(metaDataDict[id].group);
+				if (gui.get_list_elem(id)) {
+					gui.get_list_elem(id).style.borderColor = col;
+				}
+				if (gui.get_search_elem(id)) {
+					gui.get_search_elem(id).style.borderColor = col;
+				}
+				elem.style.borderColor = col;
+			}
+		} else {
+			// 単一選択.
+			if (metaData.type === windowType) {
+				content_property.init(id, "", "display", mime);
+				content_property.assign_content_property(metaDataDict[id]);
+				if (gui.get_list_elem(id)) {
+					gui.get_list_elem(id).style.borderColor = windowSelectColor;
+				}
+				if (gui.get_search_elem(id)) {
+					gui.get_search_elem(id).style.borderColor = windowSelectColor;
+				}
+				elem.style.borderColor = windowSelectColor;
+				manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
+			} else {
+				content_property.init(id, metaData.group, metaData.type, mime);
+				content_property.assign_content_property(metaDataDict[id]);
+				gui.set_update_content_id(id);
+				col = getGroupColor(metaDataDict[id].group);
+				if (gui.get_list_elem(id)) {
+					gui.get_list_elem(id).style.borderColor = col;
+				}
+				if (gui.get_search_elem(id)) {
+					gui.get_search_elem(id).style.borderColor = col;
+				}
+				//elem.style.borderColor = contentSelectColor;
+				elem.style.borderColor = col;
+				manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
+			}
 		}
 
 		if (elem.style.zIndex === "") {
