@@ -573,3 +573,24 @@ p {
 .mark {
 	border : 4px solid orange;
 }
+#head_menu_hover {
+    background-color: transparent;
+    color: #222;
+    line-height: 30px;
+    width: 120px;
+    height: 30px;
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+#head_menu_hover_left {
+    text-align: center;
+    width: 80px;
+}
+#head_menu_hover_right {
+    text-align: center;
+    width: 40px;
+}
+

@@ -940,7 +940,7 @@
 		evt = (evt) || window.event;
 		
         // mouse cursor position
-        if(Date.now() % 5 === 0 || evt.target.id !== ''){
+        if(Date.now() % 2 === 0 && evt.target.id !== ''){
             var obj = {
                 type: 'mouse',
                 id: evt.target.id,
@@ -2129,6 +2129,8 @@
 	gui.on_snapdropdown_clicked = function (snapType) {
 		snapSetting = snapType;
 		saveCookie();
+        var e = document.getElementById('head_menu_hover_left');
+        if(e){e.textContent = snapType;}
 	};
 	
 	/**
@@ -2412,7 +2414,7 @@
 	 * @method init
 	 */
 	function init() {
-		var timer = null,
+		var e, timer = null,
 			display_scale,
 			snap;
 			
@@ -2428,6 +2430,8 @@
 			if (snap === 'display') {
 				snapSetting = 'display';
 			}
+            e = document.getElementById('head_menu_hover_left');
+            if(e){e.textContent = snap;}
 		}
 		
 		content_property.on_rect_changed = function () {
