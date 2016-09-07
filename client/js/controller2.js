@@ -904,7 +904,7 @@
 		evt = (evt) || window.event;
 		
         // mouse cursor position
-        if(Date.now() % 5 === 0 || evt.target.id !== ''){
+        if(Date.now() % 2 === 0 && evt.target.id !== ''){
             var obj = {
                 type: 'mouse',
                 id: evt.target.id,
