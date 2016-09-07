@@ -2262,7 +2262,6 @@
 			select(id, false);
 		}
 		draggingIDList = [];
-		console.error(draggingIDList);
 	};
 
 	/**
