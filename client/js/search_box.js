@@ -140,7 +140,6 @@
             }
             h.appendChild(group_div);
         }
-            console.error(this.setting.colors);
 
 		this.item_area = g;
     };
