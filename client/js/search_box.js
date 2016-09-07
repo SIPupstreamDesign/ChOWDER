@@ -2,9 +2,9 @@
 /*global Float32Array */
 (function (gui) {
 	"use strict";
-	var SearchList;
+	var SearchBox;
 
-	SearchList = function (containerElem, setting) {
+	SearchBox = function (containerElem, setting) {
 		this.container = containerElem;
 		this.setting = setting;
 		this.item_area = null;
@@ -17,9 +17,11 @@
         this.check_groups = [];
 	};
 
-    SearchList.prototype.gen_search_tab_box = function (){
+    SearchBox.prototype.gen_search_tab_box = function (){
         var d, e, f, g, h, i, j,
             text_input,
+            group_div,
+            checkbox,
             box = this.container;
 
         // 既に該当 ID が存在する場合は一度 DOM を削除して再生成する
@@ -77,7 +79,7 @@
 
         // 全て選択チェックボックス
         (function (self, text_input) {
-            var div = document.createElement('div'),
+            var group_div = document.createElement('div'),
                 all_checkbox = document.createElement('input'),
                 label,
                 target;
@@ -89,54 +91,66 @@
             label.textContent = "All";
             label.className = "search_group_label";
 
-            all_checkbox.onclick = function (evt) {
+            group_div.onclick = function (evt) {
+                var checkbox = document.getElementById('all_check_');
+                checkbox.checked = !checkbox.checked; 
                 for (i = 0; i < self.setting.groups.length; i = i + 1) {
                     target = document.getElementById('search_check_' + i); 
-                    target.checked = evt.target.checked;
+                    target.checked = checkbox.checked;
                     checkFunction(self, target, i);
                 }
                 if (self.on_input_changed) {
                     self.on_input_changed(text_input.value, self.check_groups);
                 }
             };
-            div.appendChild(all_checkbox);
-            div.appendChild(label);
-            h.appendChild(div);
+            group_div.appendChild(all_checkbox);
+            group_div.appendChild(label);
+            group_div.className = "search_group_div";
+            h.appendChild(group_div);
         }(this, text_input));
 
         // group チェックボックス
         for(i = 0; i < this.setting.groups.length; i++){
-            j = document.createElement('div');
-            e = document.createElement('input');
-            e.id = 'search_check_' + i;
-			e.className = "search_group_checkbox";
-            e.type = 'checkbox';
-            e.onclick = (function (self, text_input, i) {
+            group_div = document.createElement('div');
+            checkbox = document.createElement('input');
+            checkbox.id = 'search_check_' + i;
+			checkbox.className = "search_group_checkbox";
+            checkbox.type = 'checkbox';
+            group_div.appendChild(checkbox);
+            group_div.onclick = (function (self, text_input, i) {
                 return function (evt) {
-                    checkFunction(self, evt.target, i);
+                    var checkbox = document.getElementById('search_check_' + i);
+                    checkbox.checked = !checkbox.checked; 
+                    checkFunction(self, checkbox, i);
                     if (self.on_input_changed) {
                         self.on_input_changed(text_input.value, self.check_groups);
                     }
                 };
             }(this, text_input, i));
-            j.appendChild(e);
             f = document.createElement('label');
             f.setAttribute('for', 'search_check_' + i);
             f.textContent = this.setting.groups[i];
 			f.className = "search_group_label";
-            j.appendChild(f);
-            h.appendChild(j);
+            group_div.appendChild(f);
+            group_div.className = "search_group_div";
+            if (this.setting.colors[i]) {
+                group_div.style.backgroundColor = this.setting.colors[i];
+            } else {
+                group_div.style.backgroundColor = "rgb(54,187,68)";
+            }
+            h.appendChild(group_div);
         }
+            console.error(this.setting.colors);
 
 		this.item_area = g;
     };
 
-	SearchList.prototype.init = function () {
+	SearchBox.prototype.init = function () {
 		// search tab generate
 		this.gen_search_tab_box();
 	};
 
-	SearchList.prototype.set_search_result = function (result) {
+	SearchBox.prototype.set_search_result = function (result) {
 		//console.error("set_search_result", result, this.item_area)
 		var i;
 		if (!this.item_area) {
@@ -149,10 +163,10 @@
 	};
 
 	function init(containerElem, setting) {
-		return new SearchList(containerElem, setting);
+		return new SearchBox(containerElem, setting);
 	}
 
-	window.search_list = {};
-	window.search_list.init = init;
+	window.search_box = {};
+	window.search_box.init = init;
 
 }(window.controller_gui));

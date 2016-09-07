@@ -318,7 +318,7 @@
 	function setGroupList(groupList) {
 		var activeTab = groupBox.get_active_tab_name(),
 			contentSetting = { tabs : [] },
-			searchSetting = { groups : [] },
+			searchSetting = { groups : [], colors : [] },
 			groupName,
 			tab = {},
 			groupColor,
@@ -336,6 +336,7 @@
 			};
 			contentSetting.tabs.push(tab);
 			searchSetting.groups.push(groupName);
+			searchSetting.colors.push(groupColor);
 		}
 
 		document.getElementById('content_tab_box').innerHTML = "";
@@ -345,7 +346,7 @@
 		// コンテキストメニューを刷新
 		updateContextMenu();
 
-		searchBox = window.search_list.init(document.getElementById('search_tab_box'), searchSetting);
+		searchBox = window.search_box.init(document.getElementById('search_tab_box'), searchSetting);
 		initSearchBoxEvents(searchBox);
 	}
 
@@ -398,9 +399,10 @@
 		initGroupBoxEvents(groupBox);
 
 		// Searchエリアの中身を作成
-		searchBox = window.search_list.init(document.getElementById('search_tab_box'),
+		searchBox = window.search_box.init(document.getElementById('search_tab_box'),
 			{
-				groups : ["default"]
+				groups : ["default"],
+				colors : ["rgb(54,187,68)"]
 			});
 		initSearchBoxEvents(searchBox);
 
