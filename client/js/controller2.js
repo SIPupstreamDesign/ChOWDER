@@ -1015,10 +1015,15 @@
 					manipulator.moveManipulator(elem);
 				}
 			}
+			evt.stopPropagation();
+			evt.preventDefault();
 		}
 
-		evt.stopPropagation();
-		evt.preventDefault();
+		if (draggingIDList.length > 0) {
+			evt.stopPropagation();
+			evt.preventDefault();
+		}
+
 	});
 	
 	// add content mouseup event
