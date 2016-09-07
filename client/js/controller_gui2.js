@@ -473,7 +473,7 @@
 	window.controller_gui.on_textfileinput_changed = null;
 	window.controller_gui.on_urlsendbuton_clicked = null;
 	window.controller_gui.on_textsendbutton_clicked = null;
-	window.controller_gui.on_duplicatebutton_clicked = null;
+	//window.controller_gui.on_duplicatebutton_clicked = null;
 	window.controller_gui.on_contentdeletebutton_clicked = null;
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;

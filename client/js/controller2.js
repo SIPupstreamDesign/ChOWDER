@@ -305,9 +305,12 @@
 		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
 	}
 	
+
+	/*
 	function addMetaData(metaData) {
 		connector.send('AddMetaData', metaData, doneAddMetaData);
 	}
+	*/
 	
 	/**
 	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
@@ -428,36 +431,6 @@
 			}
 		}
 		return contentSelectColor;
-	}
-	
-	/**
-	 * 最後に選択されたエレメントを返す.
-	 * 何も選択されていないならnullを返す.
-	 * @method getLastSelectedElem
-	 */
-	function getLastSelectedElem() {
-		if (isDisplayTabSelected() && lastSelectWindowID) {
-			return document.getElementById(lastSelectWindowID);
-		}
-		if (!isDisplayTabSelected() && lastSelectContentID) {
-			return document.getElementById(lastSelectContentID);
-		}
-		return null;
-	}
-	
-	/**
-	 * 最後に選択されたメタデータを返す.
-	 * 何も選択されていないならnullを返す.
-	 * @method getLastSelectedElem
-	 */
-	function getLastSelectedMetaData() {
-		if (isDisplayTabSelected() && lastSelectWindowID) {
-			return metaDataDict[lastSelectWindowID];
-		}
-		if (!isDisplayTabSelected() && lastSelectContentID) {
-			return metaDataDict[lastSelectContentID];
-		}
-		return null;
 	}
 	
 	/**
@@ -658,9 +631,9 @@
 			metaData,
 			i;
 
-		elem = getElem(id, true);//getLastSelectedElem();
+		elem = getElem(id, true);
 		if (elem) {
-			metaData = metaDataDict[id]; //getLastSelectedMetaData();
+			metaData = metaDataDict[id];
 			if (metaData.type !== windowType && isVisible(metaData)) {
 				elem.style.border = "";
 			}
@@ -690,7 +663,7 @@
 	
 	function unselectAll() {
 		var i;
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
+		for (i = selectedIDList.length - 1; i >= 0; i = i - 1) {
 			unselect(selectedIDList[i]);
 		}
 	}
@@ -1871,6 +1844,7 @@
 	 * @method on_duplicatebutton_clicked
 	 * @param {Object} evt ボタンイベント.
 	 */
+	/*
 	gui.on_duplicatebutton_clicked = function (evt) {
 		console.log('duplicate', getSelectedID());
 		var id = getSelectedID(),
@@ -1886,6 +1860,7 @@
 			}
 		}
 	};
+	*/
 	
 	/**
 	 * 画像ファイルFileOpenハンドラ
