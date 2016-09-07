@@ -560,7 +560,6 @@
 			manipulator.removeManipulator();
 			if (metaData.type === windowType) {
 				content_property.init(id, "", "multi_display", mime);
-				//content_property.assign_content_property(metaDataDict[id]);
 				if (gui.get_list_elem(id)) {
 					gui.get_list_elem(id).style.borderColor = windowSelectColor;
 				}
@@ -570,9 +569,6 @@
 				elem.style.borderColor = windowSelectColor;
 			} else {
 				content_property.init(id, "", "multi_content", mime);
-				//content_property.init(id, metaData.group, metaData.type, mime);
-				//content_property.assign_content_property(metaDataDict[id]);
-				//gui.set_update_content_id(id);
 				col = getGroupColor(metaDataDict[id].group);
 				if (gui.get_list_elem(id)) {
 					gui.get_list_elem(id).style.borderColor = col;

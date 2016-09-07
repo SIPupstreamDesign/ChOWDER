@@ -542,6 +542,7 @@ p {
 	background-repeat:no-repeat;
 	background-size: contain;
 	border: 1px solid gray;
+	z-index: 1000000;
 }
 
 .manipulator_menu_star:hover {
@@ -560,6 +561,7 @@ p {
 	background-repeat:no-repeat;
 	background-size: contain;
 	border: 1px solid gray;
+	z-index: 1000000;
 }
 
 .manipulator_menu_memo:hover {
