@@ -41,8 +41,11 @@ ul, ol {
 	right: 12px;
 	bottom: 3px;
 	width: 30px;
-	transition: all 0.3s linear 0s; /*0.3s はアニメーションにかかる時間*/
 	z-index: 1000001;
+}
+
+.burger_menu_icon:hover {
+	background-color: lightgray;
 }
 
 .burger_menu_checkbox {
