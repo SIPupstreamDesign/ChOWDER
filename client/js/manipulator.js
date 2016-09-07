@@ -53,9 +53,6 @@
 		draggingManip = null;
 	}
 
-	/// move manipulator rects on elem
-	/// @param manips list of manipulator elements
-	/// @param targetElem manipulator target
 	/**
 	 * マニピュレータを移動させる
 	 * @method moveManipulator

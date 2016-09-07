@@ -827,8 +827,12 @@
 			// erase last border
 			if (!onCtrlDown) {
 				unselectAll();
+				select(id, isContentArea(evt));
+			} else if (selectedIDList.indexOf(id) >= 0) {
+				unselect(id);
+			} else {
+				select(id, isContentArea(evt));
 			}
-			select(id, isContentArea(evt));
 			
 			evt = (evt) || window.event;
 			mouseDownPos = [
@@ -957,55 +961,57 @@
             updateMetaData(obj);
         }
 		
-		for (i = 0; i < draggingIDList.length; i = i + 1) {
-			draggingID = draggingIDList[i];
+		if (draggingIDList.length === 1) {
+			for (i = 0; i < draggingIDList.length; i = i + 1) {
+				draggingID = draggingIDList[i];
 
-			// detect content list area
-			if (isContentArea2(evt) && isContentArea(evt)) {
-				return;
-			}
-
-			// clear splitwhole colors
-			clearSnapHightlight();
-			
-			// detect spilt screen area
-			if (isGridMode()) {
-				px = rect.left + dragOffsetLeft;
-				py = rect.top + dragOffsetTop;
-				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-				splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-				console.log("px py whole", px, py, splitWhole);
-				if (splitWhole) {
-					document.getElementById(splitWhole.id).style.background = "red";
+				// detect content list area
+				if (isContentArea2(evt) && isContentArea(evt)) {
+					return;
 				}
-			}
-			
-			if (isDisplayMode()) {
-				px = rect.left + dragOffsetLeft;
-				py = rect.top + dragOffsetTop;
-				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-				screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
-				console.log("px py whole", px, py, screen);
-				if (screen && document.getElementById(screen.id)) {
-					document.getElementById(screen.id).style.background = "red";
+
+				// clear splitwhole colors
+				clearSnapHightlight();
+				
+				// detect spilt screen area
+				if (isGridMode()) {
+					px = rect.left + dragOffsetLeft;
+					py = rect.top + dragOffsetTop;
+					orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+					splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+					console.log("px py whole", px, py, splitWhole);
+					if (splitWhole) {
+						document.getElementById(splitWhole.id).style.background = "red";
+					}
 				}
-			}
+				
+				if (isDisplayMode()) {
+					px = rect.left + dragOffsetLeft;
+					py = rect.top + dragOffsetTop;
+					orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+					screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
+					console.log("px py whole", px, py, screen);
+					if (screen && document.getElementById(screen.id)) {
+						document.getElementById(screen.id).style.background = "red";
+					}
+				}
 
-			// translate
-			elem = document.getElementById(draggingID);
-			if (elem.style.display === "none") {
-				elem.style.display = "block";
-			}
-			metaData = metaDataDict[draggingID];
-			
-			metaData.posx = evt.clientX - dragOffsetLeft;
-			metaData.posy = evt.clientY - dragOffsetTop;
-			vscreen_util.transPosInv(metaData);
-			vscreen_util.assignMetaData(elem, metaData, true);
+				// translate
+				elem = document.getElementById(draggingID);
+				if (elem.style.display === "none") {
+					elem.style.display = "block";
+				}
+				metaData = metaDataDict[draggingID];
+				
+				metaData.posx = evt.clientX - dragOffsetLeft;
+				metaData.posy = evt.clientY - dragOffsetTop;
+				vscreen_util.transPosInv(metaData);
+				vscreen_util.assignMetaData(elem, metaData, true);
 
-			if (metaData.type === windowType || isVisible(metaData)) {
-				manipulator.moveManipulator(elem);
-				updateMetaData(metaData);
+				if (metaData.type === windowType || isVisible(metaData)) {
+					manipulator.moveManipulator(elem);
+					updateMetaData(metaData);
+				}
 			}
 		}
 		if (manipulator.getDraggingManip()) {
