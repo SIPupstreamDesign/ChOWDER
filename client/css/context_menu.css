@@ -40,3 +40,15 @@
 	background : rgb(66, 129, 244);
 	color : white;
 }
+
+.context_menu_add_content {
+	display : none;
+}
+
+.context_menu_add_content_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+	display : none;
+}
