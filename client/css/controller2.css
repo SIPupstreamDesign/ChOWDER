@@ -614,10 +614,8 @@ p {
 }
 
 #url_input {
-	width : 300px;
-	height : 200px;
+	width : 250px;
 	margin-left : 10px;
-	margin-right : 10px;
 	border: 2px solid rgb(112, 180, 239);
 	border-radius: 3px;
 }
