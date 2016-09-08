@@ -95,7 +95,7 @@
 				// contentData is text
 				contentElem.innerHTML = contentData;
 				divElem.style.width = "200px";
-				divElem.style.height = "200px";
+				divElem.style.height = "150px";
 				divElem.style.color = textColor;
 			} else {
 				// contentData is blob

@@ -498,8 +498,6 @@ p {
 
 .text_content {
 	position : absolute;
-	left : 0px;
-	right : 0px;
 }
 
 .whole_screen_elem {
@@ -585,8 +583,7 @@ p {
 #text_input_dialog {
 	top: 50%;
 	left: 50%;
-	width: 340px;
-	height: 116px;
+	padding-right : 15px;
 	margin-top:-53px;
 	margin-left:-145px;
 	position: fixed;
@@ -617,7 +614,10 @@ p {
 }
 
 #url_input {
-	width: 250px;
+	width : 300px;
+	height : 200px;
+	margin-left : 10px;
+	margin-right : 10px;
 	border: 2px solid rgb(112, 180, 239);
 	border-radius: 3px;
 }
@@ -626,6 +626,7 @@ p {
 	background-color: rgb(112, 180, 239);
 	color: black;
 	margin-left: 5px;
+	margin-bottom: 23px;
 }
 
 #url_send_button {
