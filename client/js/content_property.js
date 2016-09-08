@@ -153,6 +153,7 @@
 			contentH.onchange = rectChangeFunc;
 			downloadButton.style.display = "none";
 			metalabel.style.display = "block";
+			document.getElementById('color_picker').style.display = "block";
 		} else if (type === "whole_window") {
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
@@ -194,6 +195,7 @@
 			};
 			downloadButton.style.display = "none";
 			metalabel.style.display = "block";
+			document.getElementById('color_picker').style.display = "none";
 		} else if (type === "multi_display" || type === "multi_content") {
 			idlabel.innerHTML = "Content ID:";
 			idtext.innerHTML = "";
@@ -208,6 +210,7 @@
 			};
 			downloadButton.style.display = "none";
 			metalabel.style.display = "none";
+			document.getElementById('color_picker').style.display = "none";
 		} else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
 			grouplabel.innerHTML = "Group:";
@@ -255,6 +258,7 @@
 			if (metalabel) {
 				metalabel.style.display = "block";
 			}
+			document.getElementById('color_picker').style.display = "none";
 		}
 	}
 

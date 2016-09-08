@@ -2598,7 +2598,7 @@
 		};
 
         // colorselector insert ui
-        var rightArea = document.getElementById('rightArea');
+        var rightArea = document.getElementById('color_picker');
         var colorselector = new ColorSelector(function(colorvalue){
             // select change callback
             console.log(colorvalue);
