@@ -351,6 +351,30 @@
 	}
 
 	/**
+	 * テキスト入力ダイアログの表示をトグル
+	 */
+	function toggleTextInput() {
+		var background = document.getElementById("popup_background"),
+			input = document.getElementById("text_input_dialog");
+		background.style.display = (background.style.display === "block") ? "none" : "block";
+		input.style.display = background.style.display;
+		background.onclick = toggleTextInput;
+	}
+
+	/**
+	 *  テキスト入力ダイアログの初期化
+	 */
+	function initTextInputDialog() {
+		var textSendButton = document.getElementById('text_send_button');
+		
+		textSendButton.onclick = function (evt) {
+			gui.on_textsendbutton_clicked(evt);
+			toggleTextInput();
+		};
+			
+	}
+
+	/**
 	 * 初期化
 	 * @method init
 	 */
@@ -360,7 +384,67 @@
 		window.layout.init();
 
 		// 上部メニューの初期化.
-		window.menu.init(document.getElementById('head_menu'));
+		window.menu.init(document.getElementById('head_menu'),
+			{
+				menu : [{
+					SelectMode : [{
+							View : {
+								url : "view2.html"
+							},
+						}, {
+							Controller : {
+								url : "controller2.html"
+							}
+						}],
+				}, {
+					Add : [{
+							Image : {
+								func : function () { document.getElementById('image_file_input').click() }
+							}
+						}, {
+							Text : {
+								func : function () { toggleTextInput(); }
+							},
+						}, {
+							TextFile : {
+								func : function () { document.getElementById('text_file_input').click(); }
+							},
+						}, {
+							URL : {
+								func : function () { window.alert("todo"); }
+							}
+						}],
+				}, {
+					Edit : [{
+						VirtualDisplaySetting : {
+							func : function () { 
+								document.getElementById('display_tab_link').click();
+								gui.on_virtualdisplaysetting_clicked();
+							}
+						},
+					}, {
+						Snap : [{
+							Free : {
+								func : function () { gui.on_snapdropdown_clicked('free'); }
+							},
+						}, {
+							Display : {
+								func : function () {
+									gui.on_snapdropdown_clicked('display');
+								}
+							},
+						}, {
+							Grid : {
+								func : function () { gui.on_snapdropdown_clicked('grid'); }
+							}
+						}],
+					}, {
+						ReplaceImage : {
+							func : function () { document.getElementById('update_image_input').click(); }
+						}
+					}]
+				}]
+			});
 
 		// 下部コンテンツボックスの初期化.
 		window.content_box.init(document.getElementById('bottom_area'),
@@ -420,6 +504,9 @@
 
 		// メインビューの拡大縮小の初期化
 		initMainViewScaling();
+
+		// テキスト入力ダイアログの初期化
+		initTextInputDialog();
 
 		// 下部バーガーメニューの初期化	
 		displayMenu = window.burger_menu.init(

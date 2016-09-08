@@ -2,7 +2,8 @@
 (function (gui) {
 	"use strict";
 	
-	var contentBorderColor = "rgba(0,0,0,0)";
+	var contentBorderColor = "rgba(0,0,0,0)",
+		textColor = "white";
 
 	/**
 	 * コンテンツタイプから適切なクラス名を取得する.

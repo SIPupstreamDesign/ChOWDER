@@ -4,13 +4,11 @@
 	text-align: center;
 	background-color: #0080FF;
 	border-style: none;
-	border-top-right-radius:4px;
-	border-top-left-radius:4px;
-	top: 5px;
-	left : 5px;
+	top: 4px;
+	left : 4px;
 	width : 80px;
-	height : 25px;
-	padding-top: 8px;
+	height : 26px;
+	padding-top: 6px;
 	font-size: 13px;
 }
 
@@ -32,13 +30,11 @@
 	text-align: center;
 	background: rgb(44,177,58);
 	border-style: none;
-	border-top-right-radius:4px;
-	border-top-left-radius:4px;
-	top: 5px;
-	left : 90px;
+	top: 4px;
+	left : 88px;
 	width : 80px;
-	height : 25px;
-	padding-top: 8px;
+	height : 26px;
+	padding-top: 6px;
 	font-size: 13px;
 }
 
@@ -60,13 +56,11 @@
 	text-align: center;
 	background-color: #FF8055;
 	border-style: none;
-	border-top-right-radius:4px;
-	border-top-left-radius:4px;
-	top: 5px;
-	left: 180px;
+	top: 4px;
+	left: 172px;
 	width : 80px;
-	height : 25px;
-	padding-top: 8px;
+	height : 26px;
+	padding-top: 6px;
 	font-size: 13px;
 }
 

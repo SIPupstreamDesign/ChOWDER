@@ -27,7 +27,6 @@
 		contentSelectColor = "#04B431",
 		contentBorderColor = "rgba(0,0,0,0)",
 		windowSelectColor = "#0080FF",
-		textColor = "white",
 		defaultGroup = "default",
 		setupContent = function () {},
 		updateScreen = function () {},

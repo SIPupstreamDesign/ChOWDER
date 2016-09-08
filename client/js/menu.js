@@ -116,63 +116,7 @@
 	};
 
 	// 初期化
-	function init(containerElem) {
-		var menuSetting = {
-				menu : [{
-					SelectMode : [{
-							View : {
-								url : "view2.html"
-							},
-						}, {
-							Controller : {
-								url : "controller2.html"
-							}
-						}],
-				}, {
-					Add : [{
-							Image : {
-								func : function () { document.getElementById('image_file_input').click() }
-							}
-						}, {
-							Text : {
-								func : function () { document.getElementById('text_file_input').click(); }
-							},
-						}, {
-							URL : {
-								func : function () { window.alert("todo"); }
-							}
-						}],
-				}, {
-					Edit : [{
-							VirtualDisplaySetting : {
-								func : function () { 
-									document.getElementById('display_tab_link').click();
-									gui.on_virtualdisplaysetting_clicked();
-								}
-							},
-						}, {
-							Snap : [{
-								Free : {
-									func : function () { gui.on_snapdropdown_clicked('free'); }
-								},
-							}, {
-								Display : {
-									func : function () {
-										gui.on_snapdropdown_clicked('display');
-									}
-								},
-							}, {
-								Grid : {
-									func : function () { gui.on_snapdropdown_clicked('grid'); }
-								}
-							}],
-						}, {
-							ReplaceImage : {
-								func : function () { document.getElementById('update_image_input').click(); }
-							}
-						}]
-					}]
-				};
+	function init(containerElem, menuSetting) {
 		var menu = new Menu(containerElem, menuSetting);
 	}
 

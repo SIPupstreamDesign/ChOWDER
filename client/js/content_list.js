@@ -3,7 +3,8 @@
 	"use strict";
 	
 	var contentBorderColor = "rgba(0,0,0,0)",
-		defaultGroup = "default";
+		defaultGroup = "default",
+		textColor = "white";
 
 	/**
 	 * コンテンツタイプから適切なクラス名を取得する.
@@ -94,7 +95,7 @@
 				// contentData is text
 				contentElem.innerHTML = contentData;
 				divElem.style.width = "200px";
-				divElem.style.height = "50px";
+				divElem.style.height = "200px";
 				divElem.style.color = textColor;
 			} else {
 				// contentData is blob
