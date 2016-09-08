@@ -1,7 +1,7 @@
 
 (function(global){
     'use strict';
-    function ColorSelector(w, h){
+    function ColorSelector(callback, w, h){
         this.elementWrapper = null;
         this.elementCanvas = null;
         this.elementCurrentColor = null;
@@ -13,6 +13,9 @@
         this.canvasHeight = h || 128;
         this.currentColor = [0, 0, 0, 1.0];
         this.hoverColor = [0, 0, 0, 1.0];
+        this.setColorCallback = null;
+        if(callback){this.setColorCallback = callback;}
+        this.generate();
     }
     ColorSelector.prototype.click = function(eve){
         var x = parseInt(eve.offsetX, 10);
@@ -57,6 +60,9 @@
         this.currentColor[2] = b;
         this.currentColor[3] = a;
         this.elementCurrentColor.style.backgroundColor = 'rgba(' + this.currentColor.join(',') + ')';
+        if(this.setColorCallback !== null && this.setColorCallback !== undefined){
+            this.setColorCallback(this.currentColor.concat());
+        }
     };
     ColorSelector.prototype.setHoverColor = function(r, g, b, a){
         this.hoverColor[0] = r;
@@ -67,9 +73,10 @@
         this.elementColorString.textContent = this.convertCSSColor();
     };
     ColorSelector.prototype.getColor = function(){
-        return this.currentColor.concat();
+        var returnValue = this.currentColor.concat();
+        return returnValue;
     };
-    ColorSelector.prototype.generate = function(callback){
+    ColorSelector.prototype.generate = function(){
         var e, f, g, h, i, j, k;
         var gradient;
         e = document.createElement('div');
