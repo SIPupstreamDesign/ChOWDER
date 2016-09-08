@@ -33,53 +33,84 @@
 	function initContextMenu() {
 		var menu = document.getElementById('context_menu'),
 			delete_button = document.getElementById('context_menu_delete'),
+			add_content_button = document.getElementById('context_menu_add_content'),
 			add_image_button = document.getElementById('context_menu_add_image'),
 			add_text_button = document.getElementById('context_menu_add_text'),
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
+			add_url_button = document.getElementById('context_menu_add_url'),
 			change_group_button = document.getElementById('context_menu_change_group'),
-			change_group_list = document.getElementById('context_menu_change_group_list'),
+			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
+			add_content_submenu = document.getElementById("context_menu_add_content_submenu"),
 			on_change_group = false,
-			on_change_group_item = false;
+			on_change_group_item = false,
+			on_add_content = false,
+			on_add_content_item = false;
 
 		delete_button.onclick = function (evt) {
 			gui.on_close_item();
 			menu.style.display = "none";
 		};
 
-		add_image_button.onclick = function (evt) {
+		add_image_button.onmousedown = function (evt) {
 			document.getElementById('image_file_input').click();
 			//gui.on_file_dropped()
 			menu.style.display = "none";
 		};
 
-		add_text_file_button.onclick = function (evt) {
+		add_text_file_button.onmousedown = function (evt) {
 		 	document.getElementById('text_file_input').click();	
 			menu.style.display = "none";
 		};
 
-		add_text_button.onclick = function (evt) {
+		add_url_button.onmousedown = function (evt) {
+			toggleURLInput();
+			menu.style.display = "none";
+		};
+
+		add_text_button.onmousedown = function (evt) {
 			toggleTextInput();
 			menu.style.display = "none";
 		};
 
-		// サブメニュー
+		// コンテンツ追加サブメニュー
+		add_content_button.onmouseover = function () {
+			var container = document.getElementById("context_menu_add_content_submenu");
+			container.style.display = "block";
+			on_add_content = true;
+		};
+
+		add_content_button.onmouseout = function () {
+			on_add_content = false;
+		};
+		add_content_submenu.onmouseover = function () {
+			on_add_content_item = true;
+		};
+		add_content_submenu.onmouseout = function () {
+			on_add_content_item = false;
+		};
+
+		// グループ変更サブメニュー
 		change_group_button.onmouseover = function () {
-			var container = document.getElementById('context_menu_change_group_list');
+			var container = document.getElementById('context_menu_change_group_submenu');
 			container.style.display = "block";
 			on_change_group = true;
 		};
 		change_group_button.onmouseout = function () {
 			on_change_group = false;
 		};
-		change_group_list.onmouseover = function () {
+		change_group_submenu.onmouseover = function () {
 			on_change_group_item = true;
 		};
-		change_group_list.onmouseout = function () {
+		change_group_submenu.onmouseout = function () {
 			on_change_group_item = false;
 		};
 		menu.onmousemove = function () {
 			if (!on_change_group && !on_change_group_item) {
-				var container = document.getElementById('context_menu_change_group_list');
+				var container = document.getElementById('context_menu_change_group_submenu');
+				container.style.display = "none";
+			}
+			if (!on_add_content && !on_add_content_item) {
+				var container = document.getElementById('context_menu_add_content_submenu');
 				container.style.display = "none";
 			}
 		};
@@ -108,7 +139,7 @@
 	 */
 	function updateContextMenu() {
 		var groupToElems = groupBox.get_tabgroup_to_elems(),
-			container = document.getElementById('context_menu_change_group_list'),
+			container = document.getElementById('context_menu_change_group_submenu'),
 			item,
 			gname;
 		container.innerHTML = "";
@@ -117,7 +148,6 @@
 			if (groupToElems.hasOwnProperty(gname)) {
 				item = document.createElement('li');
 				item.className = "context_menu_change_group_item";
-				item.style.top = "-" + ((Object.keys(groupToElems).length + 1) * 20) + "px";
 				item.innerHTML = gname;
 				container.appendChild(item);
 				item.onmousedown = (function (gname) {

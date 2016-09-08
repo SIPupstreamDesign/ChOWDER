@@ -32,7 +32,7 @@
 	top : -40px;
 }
 
-.context_menu_change_group_list {
+.context_menu_change_group_submenu {
 	display : none;
 }
 
@@ -41,7 +41,7 @@
 	color : white;
 }
 
-.context_menu_add_content {
+.context_menu_add_content_submenu {
 	display : none;
 }
 
@@ -50,5 +50,12 @@
 	cursor: default;
 	font-size : 14px;
 	color : black;
-	display : none;
+	position : relative;
+	left : 200px;
+	top : -60px;
+}
+
+.context_menu_add_content_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
 }

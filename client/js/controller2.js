@@ -554,7 +554,9 @@
 		if (id.indexOf(wholeSubWindowID) >= 0) {
 			return;
 		}
-		gui.get_whole_window_elem().style.borderColor = "white";
+		if (gui.get_whole_window_elem()) {
+			gui.get_whole_window_elem().style.borderColor = "white";
+		}
 		elem = getElem(id, isContentArea);
 		if (elem.id !== id) {
 			id = elem.id;
