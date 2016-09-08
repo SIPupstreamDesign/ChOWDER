@@ -2,18 +2,18 @@
 (function(global){
     'use strict';
     function ColorSelector(callback, w, h){
-        this.elementWrapper = null;
-        this.elementCanvas = null;
-        this.elementCurrentColor = null;
-        this.elementHoverColor = null;
-        this.elementColorString = null;
-        this.canvasContext = null;
-        this.canvasImageData = null;
-        this.canvasWidth = w || 256;
-        this.canvasHeight = h || 128;
-        this.currentColor = [0, 0, 0, 1.0];
-        this.hoverColor = [0, 0, 0, 1.0];
-        this.setColorCallback = null;
+        this.elementWrapper = null;         // 全体を包んでいる div
+        this.elementCanvas = null;          // 色を表示している canvas
+        this.elementCurrentColor = null;    // 現在のカレントな色用の DOM
+        this.elementHoverColor = null;      // ホバー中の色用の DOM
+        this.elementColorString = null;     // ホバー中の色の 16 進数表記文字用の DOM
+        this.canvasContext = null;          // canvas 2d context
+        this.canvasImageData = null;        // imageData
+        this.canvasWidth = w || 256;        // width
+        this.canvasHeight = h || 128;       // height
+        this.currentColor = [0, 0, 0, 1.0]; // カレントの色
+        this.hoverColor = [0, 0, 0, 1.0];   // ホバー中の色
+        this.setColorCallback = null;       // 色選択時に呼ばれるコールバック
         if(callback){this.setColorCallback = callback;}
         this.generate();
     }
@@ -80,9 +80,8 @@
         var e, f, g, h, i, j, k;
         var gradient;
         e = document.createElement('div');
-        e.style.backgroundColor = 'rgb(220, 220, 240)';
-        e.style.border = '2px solid silver';
-        e.style.borderRadius = '3px';
+        e.style.backgroundColor = 'transparent';
+        e.style.border = '0px solid silver';
         e.style.margin = '0';
         e.style.padding = '10px';
         e.style.width = (this.canvasWidth + 24) + 'px';
@@ -115,13 +114,15 @@
         j.style.width = parseInt(this.canvasWidth / 3, 10) + 'px';
         j.style.height = '20px';
         k = document.createElement('div');
+        k.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
         k.style.margin = '0';
         k.style.padding = '0';
-        k.style.width = parseInt(this.canvasWidth / 3, 10) + 'px';
+        k.style.minWidth = '100px';
+        // k.style.width = parseInt(this.canvasWidth / 3, 10) + 'px';
         k.style.height = '20px';
         k.style.fontSize = 'smaller';
         k.style.lineHeight = '20px';
-        k.style.color = '#555';
+        k.style.color = '#444';
         k.style.fontFamily = '"ＭＳ ゴシック", Monaco, Ricty, monospace';
         k.style.textAlign = 'center';
         g.appendChild(j);

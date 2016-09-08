@@ -2594,6 +2594,18 @@
 				updateScreen();
 			}, 200);
 		};
+
+        // colorselector insert ui
+        var rightArea = document.getElementById('rightArea');
+        var colorselector = new ColorSelector(function(colorvalue){
+            // select change callback
+            console.log(colorvalue);
+        }, 234, 120); // 幅、高さ
+        // ColorSelector を new でインスタンス化後、elementWrapper を参照すると、
+        // カラーセレクタの一番外側の DOM を取得できます。
+        // インスタンス化の際に渡しているコールバックには配列で 0 〜 255 の
+        // レンジの RGB と 0 〜 1 のレンジのアルファが引数で渡されてきます
+        rightArea.appendChild(colorselector.elementWrapper);
 		
 		updateScreen();
 		vscreen.dump();
