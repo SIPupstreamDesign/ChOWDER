@@ -34,7 +34,8 @@
 		var menu = document.getElementById('context_menu'),
 			delete_button = document.getElementById('context_menu_delete'),
 			add_image_button = document.getElementById('context_menu_add_image'),
-			add_memo_button = document.getElementById('context_menu_add_memo'),
+			add_text_button = document.getElementById('context_menu_add_text'),
+			add_text_file_button = document.getElementById('context_menu_add_text_file'),
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_list = document.getElementById('context_menu_change_group_list'),
 			on_change_group = false,
@@ -51,8 +52,13 @@
 			menu.style.display = "none";
 		};
 
-		add_memo_button.onclick = function (evt) {
-			// TODO
+		add_text_file_button.onclick = function (evt) {
+		 	document.getElementById('text_file_input').click();	
+			menu.style.display = "none";
+		};
+
+		add_text_button.onclick = function (evt) {
+			toggleTextInput();
 			menu.style.display = "none";
 		};
 
@@ -355,7 +361,9 @@
 	 */
 	function toggleTextInput() {
 		var background = document.getElementById("popup_background"),
-			input = document.getElementById("text_input_dialog");
+			input = document.getElementById("text_input_dialog"),
+			textInput = document.getElementById('text_input');
+
 		background.style.display = (background.style.display === "block") ? "none" : "block";
 		input.style.display = background.style.display;
 		background.onclick = toggleTextInput;
