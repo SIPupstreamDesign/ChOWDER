@@ -978,7 +978,7 @@
 	/**
 	 * コンテンツの削除を行うコマンドを実行する.
 	 * @method commandDeleteContent
-	 * @param {JSON} json socket.io.on:DeleteContent時JSONデータ
+	 * @param {JSON} json メタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteContent(json, endCallback) {
@@ -1011,6 +1011,34 @@
 		}
 	}
 	
+	/**
+	 * コンテンツの削除を行うコマンドを実行する.
+	 * @method commandDeleteContentMulti
+	 * @param {JSON} json メタデータリスト
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandDeleteContentMulti(json, endCallback) {
+		console.log("commandDeleteContentMulti:", json.length);
+		var i,
+			metaData,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			metaData = json[i];
+			deleteContent(metaData.type, metaData.id, metaData, function (meta) {
+				--all_done;
+				results.push(meta);
+				if (all_done <= 0) {
+					if (endCallback) {
+						endCallback(null, results);
+						return;
+					}
+				}
+			});
+		}
+	}
+
 	/**
 	 * コンテンツの更新を行うコマンドを実行する.
 	 * @method commandUpdateContent
@@ -1342,6 +1370,20 @@
 			}
 		};
 	}
+
+	/**
+	 * deletecontentMulti処理実行後のブロードキャスト用ラッパー.
+	 * @method post_deleteContent
+	 */
+	function post_deleteContentMulti(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.DeleteContentMulti, reply);
+			io_connector.broadcast(io, Command.DeleteContentMulti, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
 	
 	/**
 	 * deleteWindow処理実行後のブロードキャスト用ラッパー.
@@ -1505,6 +1547,10 @@
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
 			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
+
+		ws_connector.on(Command.DeleteContentMulti, function (data, resultcallback) {
+			commandDeleteContentMulti(data, post_deleteContentMulti(ws, io, resultCallback));
+		});
 		
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
@@ -1550,6 +1596,10 @@
 
 		io_connector.on(Command.DeleteContent, function (data, resultCallback) {
 			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.DeleteContentMulti, function (data, resultcallback) {
+			commandDeleteContentMulti(data, post_deleteContentMulti(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateContent, function (data, resultCallback) {

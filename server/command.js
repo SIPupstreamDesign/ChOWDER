@@ -27,6 +27,7 @@
 		UpdateWindowMetaDataMulti : "UpdateWindowMetaDataMulti",
 		UpdateMouseCursor : "UpdateMouseCursor",
 		DeleteContent : "DeleteContent",
+		DeleteContentMulti : "DeleteContentMulti",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		
