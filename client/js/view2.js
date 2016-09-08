@@ -905,6 +905,17 @@
 			}
 		});
 
+		connector.on("UpdateWindowMetaDataMulti", function (data) {
+			console.log("onUpdateWindowMetaDataMulti", data);
+			var i;
+			for (i = 0; i < data.length; ++i) {
+				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
+					update('window');
+					return;
+				}
+			}
+		});
+
         connector.on("UpdateMouseCursor", function (res) {
             // console.log("onUpdateMouseCursor", data);
             if (res.hasOwnProperty('data') && res.data.id === getWindowID()) {
@@ -934,6 +945,14 @@
 		connector.on("UpdateMetaData", function (data) {
 			console.log("onUpdateMetaData", data);
 			update('', data.id);
+		});
+
+		connector.on("UpdateMetaDataMulti", function (data) {
+			var i;
+			console.log("UpdateMetaDataMulti", data);
+			for (i = 0; i < data.length; ++i) {
+				update('', data[i].id);
+			}
 		});
 
 		connector.on("Disconnect", (function (client) {

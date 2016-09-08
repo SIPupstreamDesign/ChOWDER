@@ -1044,6 +1044,34 @@
 	}
 	
 	/**
+	 * メタデータの更新を行うコマンドを実行する.
+	 * @method commandUpdateMetaData
+	 * @param {JSON} json windowメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateMetaDataMulti(json, endCallback) {
+		console.log("commandUpdateMetaDataMulti:", json.length);
+		var i,
+			metaData,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			metaData = json[i];
+			setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+				--all_done;
+				results.push(meta);
+				if (all_done <= 0) {
+					if (endCallback) {
+						endCallback(null, results);
+						return;
+					}
+				}
+			});
+		}
+	}
+
+	/**
 	 * ウィンドウの追加を行うコマンドを実行する.
 	 * @method commandAddWindowMetaData
 	 * @param {String} socketid ソケットID
@@ -1202,7 +1230,36 @@
 			endCallback(null, windowData);
 		});
 	}
-	
+
+	/**
+	 * ウィンドウの更新を行うコマンドを実行する.
+	 * @method commandUpdateWindowMetaData
+	 * @param {String} socketid ソケットID
+	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateWindowMetaDataMulti(socketid, json, endCallback) {
+		console.log("commandUpdateWindowMetaDataMulti:", json.length);
+		var i,
+			metaData,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			metaData = json[i];
+			updateWindowMetaData(socketid, metaData, function (meta) {
+				--all_done;
+				results.push(meta);
+				if (all_done <= 0) {
+					if (endCallback) {
+						endCallback(null, results);
+						return;
+					}
+				}
+			});
+		}
+	}
+
 	/**
 	 * mouseコマンドを実行する.
 	 * @method commandUpdateMouseCursor
@@ -1238,6 +1295,20 @@
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
 			io_connector.broadcast(io, Command.UpdateMetaData, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * updateMetaDataMulti処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMetaDataMulti
+	 */
+	function post_updateMetaDataMulti(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMetaDataMulti, reply);
+			io_connector.broadcast(io, Command.UpdateMetaDataMulti, reply);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -1315,6 +1386,20 @@
 	}
 	
 	/**
+	 * updateWindowMetaDataMulti処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateWindowMetaData
+	 */
+	function post_updateWindowMetaDataMulti(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateWindowMetaDataMulti, reply);
+			io_connector.broadcast(io, Command.UpdateWindowMetaDataMulti, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
+	/**
 	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateMouseCursor
 	 */
@@ -1358,6 +1443,10 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
+		ws_connector.on(Command.UpdateMetaDataMulti, function (data, resultCallback) {
+			commandUpdateMetaDataMulti(data, post_updateMetaDataMulti(ws, io, resultCallback));
+		});
+
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
@@ -1368,6 +1457,10 @@
 		
 		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.UpdateWindowMetaDataMulti, function (data, resultCallback) {
+			commandUpdateWindowMetaDataMulti(socketid, data, post_updateWindowMetaDataMulti(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateMouseCursor, (function(socketid){return function(data, resultCallback){
@@ -1470,6 +1563,10 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 
+		io_connector.on(Command.UpdateMetaDataMulti, function (data, resultCallback) {
+			commandUpdateMetaDataMulti(data, post_updateMetaDataMulti(ws, io, resultCallback));
+		});
+
 		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
@@ -1482,6 +1579,10 @@
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
+		io_connector.on(Command.UpdateWindowMetaDataMulti, function (data, resultCallback) {
+			commandUpdateWindowMetaDataMulti(socketid, data, post_updateWindowMetaDataMulti(ws, io, resultCallback));
+		});
+		
 		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});

@@ -12,6 +12,7 @@
 		lastSelectWindowID = null,
 		dragOffsetTop = 0,
 		dragOffsetLeft = 0,
+		dragRect = {},
 		mouseDownPos = [],
 		metaDataDict = {},
 		groupList = [],
@@ -42,6 +43,8 @@
 		doneUpdateContent,
 		doneUpdateMetaData,
 		doneUpdateWindowMetaData,
+		doneUpdateMetaDataMulti,
+		doneUpdateWindowMetaDataMulti,
 		doneGetMetaData,
 		doneDeleteWindowMetaData;
 	
@@ -336,6 +339,25 @@
 		}
 	}
 	
+	/**
+	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
+	 * @method updateMetaData
+	 * @param {JSON} metaData メタデータ
+	 */
+	function updateMetaDataMulti(metaDataList, endCallback) {
+		if (metaDataList.length > 0) {
+			if (metaDataList[0].type === windowType) {
+				connector.send('UpdateWindowMetaDataMulti', metaDataList, function (err, reply) {
+					doneUpdateWindowMetaDataMulti(err, reply, endCallback);
+				});
+			} else {
+				connector.send('UpdateMetaDataMulti', metaDataList, function (err, reply) {
+					doneUpdateMetaDataMulti(err, reply, endCallback);
+				});
+			}
+		}
+	}
+
 	/**
 	 * コンテンツ更新要求送信
 	 * @method updateContent
@@ -668,6 +690,7 @@
 		for (i = selectedIDList.length - 1; i >= 0; i = i - 1) {
 			unselect(selectedIDList[i]);
 		}
+		dragRect = {};
 		content_property.init("", "", "content");
 	}
 
@@ -786,6 +809,7 @@
 				otherPreviewArea = gui.get_content_preview_area(),
 				childs,
 				i,
+				elem,
 				topElement = null,
 				e;
 			
@@ -842,6 +866,28 @@
 
 			dragOffsetTop = evt.clientY - rect.top;
 			dragOffsetLeft = evt.clientX - rect.left;
+
+			if (metaData && metaData.type !== windowType && evt.target.id) {
+				// メインビューのコンテンツ
+				for (i = 0; i < draggingIDList.length; i = i + 1) {
+					elem = document.getElementById(draggingIDList[i]);
+					if (elem) {
+						dragRect[draggingIDList[i]] = {
+							left : elem.getBoundingClientRect().left - rect.left,
+							top : elem.getBoundingClientRect().top - rect.top
+						}
+					}
+				}
+			} else {
+				// リストのコンテンツ
+				for (i = 0; i < draggingIDList.length; i = i + 1) {
+					dragRect[draggingIDList[i]] = {
+						left : 0,
+						top : 0
+					}
+				}
+			}
+
 			evt.stopPropagation();
 			evt.preventDefault();
 		};
@@ -942,6 +988,7 @@
 			splitWhole,
 			draggingID,
 			selectedID,
+			targetMetaDatas = [],
 			screen;
 		if (evt.button !== 0) { return; } // 左ドラッグのみ
 		
@@ -960,60 +1007,67 @@
             };
             updateMetaData(obj);
         }
+
+
 		
-		if (draggingIDList.length === 1) {
-			for (i = 0; i < draggingIDList.length; i = i + 1) {
-				draggingID = draggingIDList[i];
+		for (i = 0; i < draggingIDList.length; i = i + 1) {
+			draggingID = draggingIDList[i];
 
-				// detect content list area
-				if (isContentArea2(evt) && isContentArea(evt)) {
-					return;
-				}
+			// detect content list area
+			if (isContentArea2(evt) && isContentArea(evt)) {
+				return;
+			}
 
-				// clear splitwhole colors
-				clearSnapHightlight();
-				
-				// detect spilt screen area
-				if (isGridMode()) {
-					px = rect.left + dragOffsetLeft;
-					py = rect.top + dragOffsetTop;
-					orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-					splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-					console.log("px py whole", px, py, splitWhole);
-					if (splitWhole) {
-						document.getElementById(splitWhole.id).style.background = "red";
-					}
-				}
-				
-				if (isDisplayMode()) {
-					px = rect.left + dragOffsetLeft;
-					py = rect.top + dragOffsetTop;
-					orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-					screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
-					console.log("px py whole", px, py, screen);
-					if (screen && document.getElementById(screen.id)) {
-						document.getElementById(screen.id).style.background = "red";
-					}
-				}
-
-				// translate
-				elem = document.getElementById(draggingID);
-				if (elem.style.display === "none") {
-					elem.style.display = "block";
-				}
-				metaData = metaDataDict[draggingID];
-				
-				metaData.posx = evt.clientX - dragOffsetLeft;
-				metaData.posy = evt.clientY - dragOffsetTop;
-				vscreen_util.transPosInv(metaData);
-				vscreen_util.assignMetaData(elem, metaData, true);
-
-				if (metaData.type === windowType || isVisible(metaData)) {
-					manipulator.moveManipulator(elem);
-					updateMetaData(metaData);
+			// clear splitwhole colors
+			clearSnapHightlight();
+			
+			// detect spilt screen area
+			if (isGridMode()) {
+				px = rect.left + dragOffsetLeft;
+				py = rect.top + dragOffsetTop;
+				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+				splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+				console.log("px py whole", px, py, splitWhole);
+				if (splitWhole) {
+					document.getElementById(splitWhole.id).style.background = "red";
 				}
 			}
+			
+			if (isDisplayMode()) {
+				px = rect.left + dragOffsetLeft;
+				py = rect.top + dragOffsetTop;
+				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+				screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
+				console.log("px py whole", px, py, screen);
+				if (screen && document.getElementById(screen.id)) {
+					document.getElementById(screen.id).style.background = "red";
+				}
+			}
+
+			// translate
+			elem = document.getElementById(draggingID);
+			if (elem.style.display === "none") {
+				elem.style.display = "block";
+			}
+			metaData = metaDataDict[draggingID];
+
+			metaData.posx = evt.clientX - dragOffsetLeft + dragRect[draggingID].left;
+			metaData.posy = evt.clientY - dragOffsetTop + dragRect[draggingID].top;
+
+			vscreen_util.transPosInv(metaData);
+			vscreen_util.assignMetaData(elem, metaData, true);
+
+			if (metaData.type === windowType || isVisible(metaData)) {
+				manipulator.moveManipulator(elem);
+				targetMetaDatas.push(metaData);
+				//updateMetaData(metaData);
+			}
 		}
+
+		if (targetMetaDatas.length > 0) {
+			updateMetaDataMulti(targetMetaDatas);
+		}
+
 		if (manipulator.getDraggingManip()) {
 			console.log("iscontentarea");
 			// scaling
@@ -1472,6 +1526,22 @@
 	};
 	
 	/**
+	 * UpdateMetaDataMultiを送信した後の終了コールバック.
+	 * @method doneUpdateMetaData
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneUpdateMetaDataMulti = function (err, reply, endCallback) {
+		console.log("doneUpdateMetaDataMulti", reply);
+		if (reply.length === 1) {
+			content_property.assign_content_property(reply[0]);
+		}
+		if (endCallback) {
+			endCallback(null);
+		}
+	};
+
+	/**
 	 * UpdateWindowMetaDataを送信した後の終了コールバック.
 	 * @method doneUpdateWindowMetaData
 	 * @param {String} err エラー. 無ければnull.
@@ -1490,6 +1560,29 @@
 		}
 	};
 	
+	/**
+	 * UpdateWindowMetaDataMultiを送信した後の終了コールバック.
+	 * @method doneUpdateWindowMetaData
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneUpdateWindowMetaDataMulti = function (err, reply, endCallback) {
+		console.log("doneUpdateWindowMetaData");
+		var i,
+			windowData,
+			windowDataList = reply;
+		for (i = 0; i < windowDataList.length; ++i) {
+			windowData = windowDataList[i];
+			vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
+			vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
+			vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
+			updateScreen(windowData);
+		}
+		if (endCallback) {
+			endCallback(null);
+		}
+	};
+
 	/**
 	 * DeleteContentを送信した後の終了コールバック.
 	 * @method doneDeleteContent

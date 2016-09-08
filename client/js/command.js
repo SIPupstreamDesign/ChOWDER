@@ -21,8 +21,10 @@
 		// using both server and client
 		Update : "Update",
 		UpdateMetaData : "UpdateMetaData",
+		UpdateMetaDataMulti : "UpdateMetaDataMulti",
 		UpdateContent : "UpdateContent",
 		UpdateWindowMetaData : "UpdateWindowMetaData",
+		UpdateWindowMetaDataMulti : "UpdateWindowMetaDataMulti",
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
