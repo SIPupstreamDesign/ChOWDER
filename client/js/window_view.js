@@ -55,6 +55,12 @@
 				screen.style.display = "none";
 			}
 		}
+		if (windowData.hasOwnProperty("color")) {
+			screen = document.getElementById(windowData.id);
+			if (screen) {
+				screen.style.borderColor = windowData.color;
+			}
+		}
 	}
 	window.window_view = {};
 	window.window_view.init = function (vscreen) {

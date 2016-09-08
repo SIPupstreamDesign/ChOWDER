@@ -26,7 +26,6 @@
 		snapSetting = "free",
 		contentSelectColor = "#04B431",
 		contentBorderColor = "rgba(0,0,0,0)",
-		windowSelectColor = "#0080FF",
 		defaultGroup = "default",
 		setupContent = function () {},
 		updateScreen = function () {},
@@ -453,6 +452,18 @@
 		}
 		return contentSelectColor;
 	}
+
+	/**
+	 * windowの枠色を返す
+	 */
+	function getWindowBorderColor(id) {
+		if (metaDataDict.hasOwnProperty(id)) {
+			if (metaDataDict[id].hasOwnProperty("color")) {
+				return metaDataDict[id].color;
+			}
+		}
+		return "#0080FF";
+	}
 	
 	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
@@ -548,7 +559,7 @@
 		if (id === wholeWindowListID || id === wholeWindowID) {
 			content_property.init(id, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			gui.get_whole_window_elem().style.borderColor = windowSelectColor;
+			gui.get_whole_window_elem().style.borderColor = getWindowBorderColor(id);
 			return;
 		}
 		if (id.indexOf(wholeSubWindowID) >= 0) {
@@ -584,12 +595,12 @@
 			if (metaData.type === windowType) {
 				content_property.init(id, "", "multi_display", mime);
 				if (gui.get_list_elem(id)) {
-					gui.get_list_elem(id).style.borderColor = windowSelectColor;
+					gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
 				}
 				if (gui.get_search_elem(id)) {
-					gui.get_search_elem(id).style.borderColor = windowSelectColor;
+					gui.get_search_elem(id).style.borderColor = getWindowBorderColor(id);
 				}
-				elem.style.borderColor = windowSelectColor;
+				elem.style.borderColor = getWindowBorderColor(id);
 			} else {
 				content_property.init(id, "", "multi_content", mime);
 				col = getGroupColor(metaDataDict[id].group);
@@ -607,12 +618,12 @@
 				content_property.init(id, "", "display", mime);
 				content_property.assign_content_property(metaDataDict[id]);
 				if (gui.get_list_elem(id)) {
-					gui.get_list_elem(id).style.borderColor = windowSelectColor;
+					gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
 				}
 				if (gui.get_search_elem(id)) {
-					gui.get_search_elem(id).style.borderColor = windowSelectColor;
+					gui.get_search_elem(id).style.borderColor = getWindowBorderColor(id);
 				}
-				elem.style.borderColor = windowSelectColor;
+				elem.style.borderColor = getWindowBorderColor(id);
 				manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
 			} else {
 				content_property.init(id, metaData.group, metaData.type, mime);
@@ -1852,7 +1863,7 @@
 			if (metaDataDict[id].type === windowType) {
 				connector.send('ShowWindowID', {id : id});
 				lastSelectWindowID = id;
-				gui.get_list_elem(id).style.borderColor = windowSelectColor;
+				gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
 			} else {
 				connector.send('ShowWindowID', {type : 'all', id : ""});
 			}
@@ -2219,6 +2230,20 @@
 		updateWindowData();
 		updateScreen();
 		content_property.update_whole_split(ix, iy, true);
+	};
+
+	/**
+	 *  ディスプレイ枠色変更
+	 */
+	content_property.on_display_color_changed = function (colorvalue) {
+		var id = getSelectedID(),
+			metaData;
+		if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type === windowType) {
+			metaData = metaDataDict[id]; 
+			metaData.color = colorvalue;
+			updateMetaData(metaData, function (err, reply) {
+			});
+		}
 	};
 	
 	/**
@@ -2597,18 +2622,6 @@
 			}, 200);
 		};
 
-        // colorselector insert ui
-        var rightArea = document.getElementById('color_picker');
-        var colorselector = new ColorSelector(function(colorvalue){
-            // select change callback
-            console.log(colorvalue);
-        }, 234, 120); // 幅、高さ
-        // ColorSelector を new でインスタンス化後、elementWrapper を参照すると、
-        // カラーセレクタの一番外側の DOM を取得できます。
-        // インスタンス化の際に渡しているコールバックには配列で 0 〜 255 の
-        // レンジの RGB と 0 〜 1 のレンジのアルファが引数で渡されてきます
-        rightArea.appendChild(colorselector.elementWrapper);
-		
 		updateScreen();
 		vscreen.dump();
 	}

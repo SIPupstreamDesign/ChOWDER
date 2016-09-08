@@ -1,5 +1,7 @@
 
 (function (gui) {
+	// colorselector insert ui
+	var colorselector = null;
 	
 	/**
 	 * Propertyタブに入力プロパティを追加する
@@ -284,6 +286,23 @@
 	}
 
 	function init(id, group, type, mime) {
+		if (!colorselector) {
+			colorselector = new ColorSelector(function(colorvalue){
+				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")"; 
+				// ディスプレイ枠色変更
+				if (window.content_property.on_display_color_changed) {
+					window.content_property.on_display_color_changed(colorstr);
+				}
+				console.log(colorvalue);
+			}, 234, 120); // 幅、高さ
+			var color_picker = document.getElementById('color_picker');
+			// ColorSelector を new でインスタンス化後、elementWrapper を参照すると、
+			// カラーセレクタの一番外側の DOM を取得できます。
+			// インスタンス化の際に渡しているコールバックには配列で 0 〜 255 の
+			// レンジの RGB と 0 〜 1 のレンジのアルファが引数で渡されてきます
+			color_picker.appendChild(colorselector.elementWrapper);
+		}
+
 		initPropertyArea(id, group, type, mime);
 	}
 
@@ -353,6 +372,16 @@
 				text.value = parsed.text;
 			}
 		}
+
+		if (metaData.hasOwnProperty('color') && colorselector) {
+			var temp = colorselector.setColorCallback;
+			var col = metaData.color.split('rgb(').join("");
+			col = col.split(")").join("");
+			col = col.split(",");
+			colorselector.setColorCallback = null;
+			colorselector.setColor(col[0], col[1], col[2], 1);
+			colorselector.setColorCallback = temp;
+		}
 	}
 
 	window.content_property = {}
@@ -362,6 +391,7 @@
 	window.content_property.on_change_zindex = null;
 	window.content_property.on_rect_changed = null;
 	window.content_property.on_display_value_changed = null;
+	window.content_property.on_display_color_changed = null;
 	window.content_property.on_change_whole_split = null;
 	window.content_property.on_metainfo_changed = null;
 	window.content_property.assign_content_property = assignContentProperty;
