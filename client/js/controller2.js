@@ -2267,13 +2267,12 @@
 	/**
 	 * Group追加ボタンがクリックされた
 	 */
-	gui.on_group_append_clicked = function () {
-		var group = "test" + String(Math.floor(Math.random()*10000)),
-			groupColor = "rgb("+ Math.floor(Math.random() * 128 + 127) + "," 
+	gui.on_group_append_clicked = function (groupName) {
+		var groupColor = "rgb("+ Math.floor(Math.random() * 128 + 127) + "," 
 				+ Math.floor(Math.random() * 128 + 127) + "," 
 				+ Math.floor(Math.random() * 128 + 127) + ")";
 				
-		connector.send('AddGroup', { name : group, color : groupColor }, function (err, reply) {
+		connector.send('AddGroup', { name : groupName, color : groupColor }, function (err, reply) {
 			console.log("AddGroup done", err, reply);
 			updateGroupList();
 		});
@@ -2282,14 +2281,13 @@
 	/**
 	 * Group削除ボタンがクリックされた
 	 */
-	gui.on_group_delete_clicked = function (groupName) {
+	gui.on_group_delete_clicked = function (groupID) {
 		var i,
-			item,
-			index = groupList.indexOf(groupName);
+			item;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
-			if (item.name === groupName) {
+			if (item.id === groupID) {
 				connector.send('DeleteGroup', item, function (err, reply) {
 					console.log("DeleteGroup done", err, reply);
 					updateGroupList();
@@ -2303,13 +2301,22 @@
 	 * Group変更がクリックされた
 	 * @param {String} groupName 変更先のグループ名
 	 */
-	gui.on_group_change_clicked = function (groupName) {
-		var id = getSelectedID(),
+	gui.on_group_change_clicked = function (groupID) {
+		var i,
+			item,
+			id = getSelectedID(),
 			metaData;
 		
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
-			metaData.group = groupName;
+			
+			for (i = 0; i < groupList.length; i = i + 1) {
+				item = groupList[i];
+				if (item.id === groupID) {
+					metaData.group = item.name;
+					break;
+				}
+			}
 			updateMetaData(metaData, function (err, data) {
 				updateGroupList();
 			});
@@ -2319,14 +2326,13 @@
 	/**
 	 * Group名変更
 	 */
-	window.controller_gui.on_group_edit_name =　function (preGroupName, groupName) {
+	window.controller_gui.on_group_edit_name =　function (groupID, groupName) {
 		var i,
-			item,
-			index = groupList.indexOf(groupName);
+			item;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
-			if (item.name === preGroupName) {
+			if (item.id === groupID) {
 				item.name = groupName;
 				connector.send('UpdateGroup', item, function (err, reply) {
 					console.log("UpdateGroup done", err, reply);
@@ -2339,14 +2345,13 @@
 	/**
 	 * Group色変更
 	 */
-	window.controller_gui.on_group_edit_color = function (groupName, color) {
+	window.controller_gui.on_group_edit_color = function (groupID, color) {
 		var i,
-			item,
-			index = groupList.indexOf(groupName);
+			item;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
-			if (item.name === groupName) {
+			if (item.id === groupID) {
 				item.color = color;
 				connector.send('UpdateGroup', item, function (err, reply) {
 					console.log("UpdateGroup done", err, reply);

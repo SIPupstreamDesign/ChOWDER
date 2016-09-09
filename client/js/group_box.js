@@ -30,6 +30,7 @@
 			boxArea,
 			box,
 			tabs,
+			id,
 			groupName,
 			groupColor = null,
 			tabItem,
@@ -61,8 +62,10 @@
 				if (tabItem.hasOwnProperty('color')) {
 					groupColor = tabItem.color;
 				}
-					
-				elem.appendChild(this.create_tab(groupName, groupColor, tabItem, i === 0));
+				if (tabItem.hasOwnProperty('id')) {
+					id = tabItem.id;
+				}
+				elem.appendChild(this.create_tab(id, groupName, groupColor, tabItem, i === 0));
 				this.tabIDs.push(tabItem.id);
 
 				box = document.createElement('div');
@@ -92,9 +95,15 @@
 			span.innerHTML = "+";
 			elem.appendChild(span);
 			elem.onclick = function () {
-				if (this.on_group_append) {
-					this.on_group_append();
-				}
+				window.input_dialog.text_input({
+						name : "新規グループ",
+						initialValue :  "",
+						okButtonName : "OK",
+					}, function (value) {
+						if (this.on_group_append) {
+							this.on_group_append(value);
+						}
+					}.bind(this));
 			}.bind(this);
 			tabArea.appendChild(elem);
 		}
@@ -127,7 +136,7 @@
 		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
 		..
 	*/
-	GroupBox.prototype.create_tab = function (groupName, groupColor, tabContent, is_active) {
+	GroupBox.prototype.create_tab = function (groupID, groupName, groupColor, tabContent, is_active) {
 		var elem,
 			link,
 			setting_button,
@@ -191,7 +200,7 @@
 
 					delete_button.onclick = function () {
 						if (self.on_group_delete) {
-							self.on_group_delete(groupName);
+							self.on_group_delete(groupID);
 						}
 						background.style.display = "none";
 						menu.style.display = "none"
@@ -204,7 +213,7 @@
 								okButtonName : "OK",
 							}, function (value) {
 								if (self.on_group_edit_name) {
-									self.on_group_edit_name(groupName, value);
+									self.on_group_edit_name(groupID, value);
 								}
 							});
 						menu.style.display = "none"
@@ -217,7 +226,7 @@
 								okButtonName : "OK"
 							}, function (value) {
 								if (self.on_group_edit_color) {
-									self.on_group_edit_color(groupName, value);
+									self.on_group_edit_color(groupID, value);
 								}
 							});
 						menu.style.display = "none"
@@ -250,11 +259,9 @@
 					elem = this.tabGroupToElems[groupName][i];
 					if(parent.contains(elem)) {
 						parent.removeChild(elem);
-						console.error("closed", elem);
 					}
 					if(div.contains(elem)) {
 						div.removeChild(elem);
-						console.error("closed", elem);
 					}
 				}
 				this.currentTab = this.get_tab(defaultGroup);

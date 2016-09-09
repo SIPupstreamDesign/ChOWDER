@@ -322,26 +322,26 @@
 	 * グループのタブに対するイベントを設定. 
 	 */
 	function initGroupBoxEvents(groupBox) {
-		groupBox.on_group_delete = function (groupName) {
+		groupBox.on_group_delete = function (groupID) {
 			if (window.controller_gui.on_group_delete_clicked) {
-				window.controller_gui.on_group_delete_clicked(groupName);
+				window.controller_gui.on_group_delete_clicked(groupID);
 			}
 		};
 
-		groupBox.on_group_append = function () {
+		groupBox.on_group_append = function (groupName) {
 			if (window.controller_gui.on_group_append_clicked) {
-				window.controller_gui.on_group_append_clicked();
+				window.controller_gui.on_group_append_clicked(groupName);
 			}
 		};
 
-		groupBox.on_group_edit_name = function (preGroupName, groupName) {
+		groupBox.on_group_edit_name = function (groupID, groupName) {
 			if (window.controller_gui.on_group_edit_name) {
-				window.controller_gui.on_group_edit_name(preGroupName, groupName);
+				window.controller_gui.on_group_edit_name(groupID, groupName);
 			}
 		};
-		groupBox.on_group_edit_color = function (groupName, color) {
+		groupBox.on_group_edit_color = function (groupID, color) {
 			if (window.controller_gui.on_group_edit_color) {
-				window.controller_gui.on_group_edit_color(groupName, color);
+				window.controller_gui.on_group_edit_color(groupID, color);
 			}
 		};
 	}
@@ -369,14 +369,16 @@
 			groupName,
 			tab = {},
 			groupColor,
+			groupID,
 			i;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			groupName = groupList[i].name;
 			groupColor = groupList[i].color;
+			groupID = groupList[i].id;
 			tab = {};
 			tab[groupName] = {
-				id : (groupName === "default") ? "group_default" : "group_" + i,
+				id : groupID,
 				className : "group_tab",
 				color : groupColor,
 				active : true
