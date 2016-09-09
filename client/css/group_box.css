@@ -28,23 +28,29 @@
 	float : left;
 }
 
-.group_tab_close {
-	border: 1px solid rgb(250, 100, 100);
-	border-radius: 14px;
-	width : 14px;
-	height : 14px;
-	background :rgb(250, 100, 100);
+.group_tab_setting {
+	border: 1px solid gray;
+	border-radius: 2px;
+	width : 16px;
+	height : 16px;
+	background :rgb(54,187,68);
 	float : right;
 	position : relative;
 	right: 10px;
 	top : 7px;
+	background-image:url("../image/setting.png");
+	background-repeat:no-repeat;
+	background-size: contain;
 }
 
-.group_tab_close:hover {
-	background :red;
+.group_tab_setting:hover {
+	background : rgb(24,137,38);
+	background-image:url("../image/setting2.png");
+	background-repeat:no-repeat;
+	background-size: contain;
 }
 
-.group_tab_close_label {
+.group_tab_setting_label {
 	color : white;
 	position : relative;
 	top : -3px;

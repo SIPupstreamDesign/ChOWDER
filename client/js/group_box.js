@@ -169,7 +169,7 @@
 		
 		if (groupName !== defaultGroup) {
 			close_button = document.createElement('div');
-			close_button.className = "group_tab_close";
+			close_button.className = "group_tab_setting";
 			close_button.onclick = (function (self, groupName) {
 				return function () {
 					if (self.on_tab_close) {
@@ -178,8 +178,8 @@
 				};
 			}(this, groupName));
 			span = document.createElement('span');
-			span.innerHTML = "x";
-			span.className = "group_tab_close_label";
+			//span.innerHTML = "x";
+			span.className = "group_tab_setting_label";
 			close_button.appendChild(span);
 			elem.appendChild(close_button);
 		}

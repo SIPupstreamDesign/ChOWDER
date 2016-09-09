@@ -34,13 +34,13 @@ ul, ol {
 	cursor: pointer;
 	display: block;
 	font-size: 30px;
-	height: 30px;
+	height: 28px;
 	line-height: 30px;
 	position: fixed;
 	text-align: center;
 	right: 12px;
-	bottom: 3px;
-	width: 30px;
+	bottom: 8px;
+	width: 28px;
 	z-index: 1000001;
 }
 
