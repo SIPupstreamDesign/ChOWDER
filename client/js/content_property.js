@@ -374,13 +374,10 @@
 		}
 
 		if (metaData.hasOwnProperty('color') && colorselector) {
-			var temp = colorselector.setColorCallback;
 			var col = metaData.color.split('rgb(').join("");
 			col = col.split(")").join("");
 			col = col.split(",");
-			colorselector.setColorCallback = null;
-			colorselector.setColor(col[0], col[1], col[2], 1);
-			colorselector.setColorCallback = temp;
+			colorselector.setColor(col[0], col[1], col[2], 1, true);
 		}
 	}
 

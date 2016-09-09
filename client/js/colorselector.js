@@ -54,15 +54,13 @@
     ColorSelector.prototype.zeroPad = function(v){
         return v.length % 2 ? '0' + v : v;
     };
-    ColorSelector.prototype.setColor = function(r, g, b, a){
+    ColorSelector.prototype.setColor = function(r, g, b, a, cancel){
         this.currentColor[0] = r;
         this.currentColor[1] = g;
         this.currentColor[2] = b;
         this.currentColor[3] = a;
         this.elementCurrentColor.style.backgroundColor = 'rgba(' + this.currentColor.join(',') + ')';
-        if(this.setColorCallback !== null && this.setColorCallback !== undefined){
-            this.setColorCallback(this.currentColor.concat());
-        }
+        if(cancel !== true){this.setColorCallback(this.currentColor.concat());}
     };
     ColorSelector.prototype.setHoverColor = function(r, g, b, a){
         this.hoverColor[0] = r;
