@@ -20,6 +20,7 @@
 .context_menu_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
+	width: 200px;
 }
 
 .context_menu_change_group_item {
@@ -58,4 +59,22 @@
 .context_menu_add_content_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
+}
+
+#context_menu_change_group:after, #context_menu_add_content:after {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin: 0 0 0 15px;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+#context_menu_change_group:hover:after, #context_menu_add_content:hover:after {
+	border-right: 1px solid white;
+	border-top: 1px solid white;
 }
