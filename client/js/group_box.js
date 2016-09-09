@@ -198,10 +198,15 @@
 					};
 
 					name_button.onclick = function () {
-						if (self.on_group_edit_name) {
-							self.on_group_edit_name(groupName, "hogehoge");
-						}
-						background.style.display = "none";
+						window.input_dialog({
+								name : "グループ名変更",
+								initialName :  groupName,
+								okButtonName : "OK",
+							}, function (value) {
+								if (self.on_group_edit_name) {
+									self.on_group_edit_name(groupName, value);
+							}
+						});
 						menu.style.display = "none"
 					};
 

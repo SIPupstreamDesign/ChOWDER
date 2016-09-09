@@ -63,3 +63,17 @@
 	cursor : pointer;
 	opacity : 0.9;
 }
+
+#group_input_dialog {
+	top: 50%;
+	left: 50%;
+	width: 340px;
+	height: 116px;
+	margin-top:-53px;
+	margin-left:-145px;
+	position: fixed;
+	z-index: 100000000;
+	display: none;
+	background-color: rgb(83, 83, 83);
+	border-radius: 5px;
+}

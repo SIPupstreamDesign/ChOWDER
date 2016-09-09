@@ -19,6 +19,7 @@
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
 	<script type="text/javascript" src="js/colorselector.js"></script>
+	<script type="text/javascript" src="js/input_dialog.js"></script>
 	<script type="text/javascript" src="js/manipulator.js"></script>
 	<script type="text/javascript" src="js/layout.js"></script>
 	<script type="text/javascript" src="js/content_property.js"></script>
@@ -111,10 +112,10 @@
 		<textarea  id="text_input" style="margin-left:20px"></textarea>
 		<input class="btn" type="button" value="Send" id="text_send_button" />
 	</div>
-	<div id="url_input_dialog">
-		<p style="margin-top:20px;margin-left:20px">URLの送信</p>
-		<input type="text" id="url_input" style="margin-left:20px"/>
-		<input class="btn" type="button" value="Send" id="url_send_button" />
+	<div id="input_dialog">
+		<p style="margin-top:20px;margin-left:20px" id="input_dialog_name"></p>
+		<input type="text" id="input_dialog_input" style="margin-left:20px"/>
+		<input class="btn" type="button" value="OK" id="input_ok_button" />
 	</div>
 
 	<!---グループ設定メニュー--->

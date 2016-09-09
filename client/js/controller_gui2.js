@@ -427,23 +427,13 @@
 	 * URL入力ダイアログの表示をトグル
 	 */
 	function toggleURLInput() {
-		var background = document.getElementById("popup_background"),
-			input = document.getElementById("url_input_dialog");
-		background.style.display = (background.style.display === "block") ? "none" : "block";
-		input.style.display = background.style.display;
-		background.onclick = toggleURLInput;
-	}
-
-	/**
-	 * URL入力ダイアログの初期化
-	 */
-	function initURLInputDialog() {
-		var urlSendButton = document.getElementById('url_send_button');
-		
-		urlSendButton.onclick = function (evt) {
-			gui.on_urlsendbuton_clicked(evt);
-			toggleURLInput();
-		};
+		window.input_dialog({
+				name : "URLの送信",
+				initialName :  "",
+				okButtonName : "Send",
+			}, function (value) {
+				gui.on_urlsendbuton_clicked(value);
+			});
 	}
 
 	/**
@@ -579,9 +569,6 @@
 
 		// テキスト入力ダイアログの初期化
 		initTextInputDialog();
-
-		// URL入力ダイアログの初期化
-		initURLInputDialog();
 
 		// 下部バーガーメニューの初期化	
 		displayMenu = window.burger_menu.init(

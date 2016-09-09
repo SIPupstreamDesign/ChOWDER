@@ -593,29 +593,8 @@ p {
 	border-radius: 5px;
 }
 
-#url_input_dialog {
-	top: 50%;
-	left: 50%;
-	width: 340px;
-	height: 116px;
-	margin-top:-53px;
-	margin-left:-145px;
-	position: fixed;
-	z-index: 100000000;
-	display: none;
-	background-color: rgb(83, 83, 83);
-	border-radius: 5px;
-}
-
 #text_input {
 	width: 250px;
-	border: 2px solid rgb(112, 180, 239);
-	border-radius: 3px;
-}
-
-#url_input {
-	width : 250px;
-	margin-left : 10px;
 	border: 2px solid rgb(112, 180, 239);
 	border-radius: 3px;
 }
@@ -627,11 +606,6 @@ p {
 	margin-bottom: 23px;
 }
 
-#url_send_button {
-	background-color: rgb(112, 180, 239);
-	color: black;
-	margin-left: 5px;
-}
 
 .popup_background {
 	min-height: 100%;
@@ -645,4 +619,31 @@ p {
 	opacity: 0.5;
 	z-index: 3;
 	display: none;
+}
+
+#input_dialog {
+	top: 50%;
+	left: 50%;
+	width: 340px;
+	height: 116px;
+	margin-top:-53px;
+	margin-left:-145px;
+	position: fixed;
+	z-index: 100000000;
+	display: none;
+	background-color: rgb(83, 83, 83);
+	border-radius: 5px;
+}
+
+#input_dialog_input {
+	width : 250px;
+	margin-left : 10px;
+	border: 2px solid rgb(112, 180, 239);
+	border-radius: 3px;
+}
+
+#input_ok_button {
+	background-color: rgb(112, 180, 239);
+	color: black;
+	margin-left: 5px;
 }

@@ -1927,19 +1927,16 @@
 	 * URLデータ送信ボタンが押された.
 	 * @method on_sendbuton_clicked
 	 */
-	gui.on_urlsendbuton_clicked = function () {
+	gui.on_urlsendbuton_clicked = function (value) {
 		console.log("sendurl");
-		var previewArea = gui.get_content_preview_area(),
-			urlInput = document.getElementById('url_input');
+		var previewArea = gui.get_content_preview_area();
 
-		console.log(previewArea, urlInput.value);
-		urlInput.value = urlInput.value.split(' ').join('');
-		if (urlInput.value.indexOf("http") < 0) {
+		value = value.split(' ').join('');
+		if (value.indexOf("http") < 0) {
+			console.error(value)
 			return;
 		}
-		
-		addContent({type : "url"}, urlInput.value);
-		urlInput.value = '';
+		addContent({type : "url"}, value);
 	};
 	
 	/** 
