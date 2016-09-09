@@ -168,13 +168,19 @@
 	function connect() {
 		socket = io.connect(url);
 		socket.on('connect', function () {
-			console.log("connect");
+            console.log("connect");
             var e = document.getElementById('head_menu_hover_right');
-            if(e){e.textContent = '◎';}
-		});
+            if(e){
+                e.textContent = '○';
+                e.className = 'connect';
+            }
+        });
         socket.on('disconnect', function(data){
             var e = document.getElementById('head_menu_hover_right');
-            if(e){e.textContent = '×';}
+            if(e){
+                e.textContent = '×';
+                e.className = 'disconnect';
+            }
         });
 		socket.on('chowder_response', function (data) {
 			var parsed;
