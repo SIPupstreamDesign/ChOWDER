@@ -2,9 +2,10 @@
 
 .group_tab_area {
 	width : 170px;
-	height : 100%;
+	height : calc(100% - 60px);
 	position : absolute;
-	overflow  : auto;
+	overflow-y  : auto;
+	overflow-x : hidden;
 }
 
 .group_box_area {
@@ -63,7 +64,7 @@
 	height : 16px;
 	background :rgb(100, 250, 100);
 	position : fixed;
-	bottom : 10px;
+	bottom : 7px;
 	left : 10px;
 	cursor : pointer;
 	margin : auto auto;
