@@ -932,22 +932,42 @@
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-            // console.log("onUpdateMouseCursor", data);
+            var i, a, e, x, y, ww, wh;
+            var ctrlid, idstring;
+            var WAIT_TIME = 1000 * 60 * 5;
             if (res.hasOwnProperty('data') && res.data.id === getWindowID()) {
-                var ctrlid = res.id;
+                ctrlid = res.id;
                 if(!controllers.hasOwnProperty(ctrlid)){
                     ++controllers.connectionCount;
-                    controllers[ctrlid] = controllers.connectionCount;
+                    controllers[ctrlid] = {
+                        index: controllers.connectionCount,
+                        lastActive: 0
+                    };
                 }
-                var idstring = parseInt(controllers[ctrlid] % 10, 10);
-                var ww = window.innerWidth;
-                var wh = window.innerHeight;
-                var x = (res.data.x / res.data.w) * ww;
-                var y = (res.data.y / res.data.h) * wh;
-                var e = document.getElementById('hiddenCursor' + idstring);
+                idstring = parseInt(controllers[ctrlid].index % 10, 10);
+                ww = window.innerWidth;
+                wh = window.innerHeight;
+                x = (res.data.x / res.data.w) * ww;
+                y = (res.data.y / res.data.h) * wh;
+                e = document.getElementById('hiddenCursor' + idstring);
                 if(e){
                     e.style.left = x + 'px';
                     e.style.top  = y + 'px';
+                    controllers[ctrlid].lastActive = Date.now();
+                }
+            } else {
+                a = Object.keys(controllers);
+                for(i = 0; i < a.length; ++i){
+                    if(a[i] !== 'connectionCount'){
+                        if(Date.now() - controllers[a[i]].lastActive > WAIT_TIME){
+                            idstring = parseInt(controllers[a[i]].index % 10, 10);
+                            e = document.getElementById('hiddenCursor' + idstring);
+                            if(e){
+                                e.style.left = '-9999px';
+                                e.style.top  = '-9999px';
+                            }
+                        }
+                    }
                 }
             }
         });
