@@ -103,6 +103,8 @@
                     self.on_input_changed(text_input.value, self.check_groups);
                 }
             };
+            all_checkbox.onclick = group_div.onclick;
+
             group_div.appendChild(all_checkbox);
             group_div.appendChild(label);
             group_div.className = "search_group_div";
@@ -127,10 +129,15 @@
                     }
                 };
             }(this, text_input, i));
+
             f = document.createElement('label');
             f.setAttribute('for', 'search_check_' + i);
             f.textContent = this.setting.groups[i];
 			f.className = "search_group_label";
+            
+            checkbox.onclick = group_div.onclick;
+            f .onclick = group_div.onclick;
+
             group_div.appendChild(f);
             group_div.className = "search_group_div";
             if (this.setting.colors[i]) {
