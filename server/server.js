@@ -101,7 +101,10 @@ var opsever = http.createServer(function (req, res) {
 		if (temp.length > 1) {
 			contentID = temp[1];
 			if (contentID.length === 8) {
-				operator.getContent(null, contentID, function (reply) {
+				operator.commandGetContent({
+					id : contentID,
+					type : null
+				}, function (err, meta, reply) {
 					res.end(reply);
 				});
 			} else {
