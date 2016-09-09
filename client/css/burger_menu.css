@@ -28,7 +28,7 @@ ul, ol {
 }
 
 .burger_menu_icon {
-	background-color: white;
+	/*background-color: white;*/
 	border-radius: 2px;
 	color: #333;
 	cursor: pointer;
@@ -42,6 +42,22 @@ ul, ol {
 	bottom: 8px;
 	width: 28px;
 	z-index: 1000001;
+}
+
+#bottom_burger_menu_display_icon {
+	background-color: rgb(66, 129, 244);
+}
+
+#bottom_burger_menu_display_icon:hover {
+	background-color: rgb(46, 109, 224);
+}
+
+#bottom_burger_menu_content_icon {
+	background-color: rgb(54,187,68);
+}
+
+#bottom_burger_menu_content_icon:hover {
+	background-color: rgb(34,167,48);
 }
 
 .burger_menu_icon:hover {
