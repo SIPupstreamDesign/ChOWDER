@@ -65,7 +65,7 @@
 	background :rgb(100, 250, 100);
 	position : fixed;
 	bottom : 7px;
-	left : 10px;
+	left : 150px;
 	cursor : pointer;
 	margin : auto auto;
 	font-size : 16px;
@@ -80,6 +80,56 @@
 	color : black;
 	position : relative;
 	top : -3px;
+}
+
+.group_tab_up {
+	border: 1px solid rgb(100, 250, 100);
+	border-radius: 16px;
+	width : 16px;
+	height : 16px;
+	background :rgb(100, 250, 100);
+	position : fixed;
+	bottom : 7px;
+	left : 10px;
+	cursor : pointer;
+	margin : auto auto;
+	font-size : 16px;
+	text-align: center;
+	background-image:url("../image/group_up.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_up:hover {
+	background :rgb(54,187,68);
+	background-image:url("../image/group_up.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_down {
+	border: 1px solid rgb(100, 250, 100);
+	border-radius: 16px;
+	width : 16px;
+	height : 16px;
+	background :rgb(100, 250, 100);
+	position : fixed;
+	bottom : 7px;
+	left : 30px;
+	cursor : pointer;
+	margin : auto auto;
+	font-size : 16px;
+	text-align: center;
+	background-image:url("../image/group_down.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_down:hover {
+	background :rgb(54,187,68);
+	background-image:url("../image/group_down.png");
+	background-repeat:no-repeat;
+	background-size: contain;
 }
 
 .group_tab.active {

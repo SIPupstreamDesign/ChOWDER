@@ -2318,6 +2318,56 @@
 	};
 
 	/**
+	 * Groupを１つ下に
+	 * @param {String} groupName 変更先のグループ名
+	 */
+	gui.on_group_down = function (groupName) {
+		var i,
+			target;
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			if (groupList[i].name === groupName) {
+				if (i > 0 && i < (groupList.length - 1)) {
+					target = {
+						id : groupList[i].id,
+						index : i + 2
+					};
+					connector.send('ChangeGroupIndex', target, function (err, reply) {
+						console.log("ChangeGroupIndex done", err, reply);
+						updateGroupList();
+					});
+					return;
+				}
+			}
+		}
+	};
+
+	/**
+	 * Groupを１つ上に
+	 * @param {String} groupName 変更先のグループ名
+	 */
+	gui.on_group_up = function (groupName) {
+		var i,
+			target;
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			if (groupList[i].name === groupName) {
+				if (i > 1 && i <= (groupList.length - 1)) {
+					target = {
+						id : groupList[i].id,
+						index : i - 1
+					};
+					connector.send('ChangeGroupIndex', target, function (err, reply) {
+						console.log("ChangeGroupIndex done", err, reply);
+						updateGroupList();
+					});
+					return;
+				}
+			}
+		}
+	};
+
+	/**
 	 * Group名変更
 	 */
 	window.controller_gui.on_group_edit_name =　function (groupID, groupName) {

@@ -334,6 +334,18 @@
 			}
 		};
 
+		groupBox.on_group_up = function (groupName) {
+			if (window.controller_gui.on_group_up) {
+				window.controller_gui.on_group_up(groupName);
+			}
+		};
+		
+		groupBox.on_group_down = function (groupName) {
+			if (window.controller_gui.on_group_down) {
+				window.controller_gui.on_group_down(groupName);
+			}
+		};
+
 		groupBox.on_group_edit_name = function (groupID, groupName) {
 			if (window.controller_gui.on_group_edit_name) {
 				window.controller_gui.on_group_edit_name(groupID, groupName);
@@ -639,6 +651,8 @@
 	window.controller_gui.on_group_append_clicked = null;
 	window.controller_gui.on_group_delete_clicked = null;
 	window.controller_gui.on_group_change_clicked = null;
+	window.controller_gui.on_group_down = null;
+	window.controller_gui.on_group_up = null;
 	window.controller_gui.on_group_edit_name = null;
 	window.controller_gui.on_group_edit_color = null;
 	window.controller_gui.on_search_input_changed = null;

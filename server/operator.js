@@ -231,19 +231,21 @@
 
 	/**
 	 * グループリストのgroupのインデックスを変更する
-	 * @param {String} groupName グループ名.
+	 * @param {String} id グループid.
 	 * @param {Integer} insertIndex 新規に割り当てるインデックス.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function changeGroupIndex(groupName, insertIndex, endCallback) {
+	function changeGroupIndex(id, insertIndex, endCallback) {
 		getGroupList(function (err, data) {
-			var index = getGroupIndex(data.grouplist, groupName);
+			var index = getGroupIndex(data.grouplist, id),
+				item;
 			if (index >= 0) {
+				item = data.grouplist[index];
 				data.grouplist.splice(index, 1);
 				if (insertIndex > 0 && insertIndex >= index) {
 					insertIndex -= 1;
 				}
-				data.grouplist.splice(insertIndex, 0, groupName);
+				data.grouplist.splice(insertIndex, 0, item);
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 				return true;
 			} else {
@@ -1279,6 +1281,15 @@
 	}
 
 	/**
+	 * グループインデックスを変更する.
+	 */
+	function commandChangeGroupIndex(json, endCallback) {
+		if (json.hasOwnProperty("id") && json.hasOwnProperty("index")) {
+			changeGroupIndex(json.id, json.index, endCallback);
+		}
+	}
+
+	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
 	 * @param {String} socketid ソケットID
@@ -1596,6 +1607,10 @@
 		ws_connector.on(Command.UpdateGroup, function (data, resultCallback) {
 			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
 		});
+		
+		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
+			commandChangeGroupIndex(data, resultCallback);
+		});
 
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.ShowWindowID, {id : data.id});
@@ -1733,6 +1748,10 @@
 
 		io_connector.on(Command.UpdateGroup, function (data, resultCallback) {
 			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
+			commandChangeGroupIndex(data, resultCallback);
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
