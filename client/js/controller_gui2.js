@@ -322,15 +322,26 @@
 	 * グループのタブに対するイベントを設定. 
 	 */
 	function initGroupBoxEvents(groupBox) {
-		groupBox.on_tab_close = function (groupName) {
+		groupBox.on_group_delete = function (groupName) {
 			if (window.controller_gui.on_group_delete_clicked) {
 				window.controller_gui.on_group_delete_clicked(groupName);
 			}
 		};
 
-		groupBox.on_tab_append = function () {
+		groupBox.on_group_append = function () {
 			if (window.controller_gui.on_group_append_clicked) {
 				window.controller_gui.on_group_append_clicked();
+			}
+		};
+
+		groupBox.on_group_edit_name = function (preGroupName, groupName) {
+			if (window.controller_gui.on_group_edit_name) {
+				window.controller_gui.on_group_edit_name(preGroupName, groupName);
+			}
+		};
+		groupBox.on_group_edit_color = function (groupName, color) {
+			if (window.controller_gui.on_group_edit_color) {
+				window.controller_gui.on_group_edit_color(groupName, color);
 			}
 		};
 	}
@@ -639,6 +650,8 @@
 	window.controller_gui.on_group_append_clicked = null;
 	window.controller_gui.on_group_delete_clicked = null;
 	window.controller_gui.on_group_change_clicked = null;
+	window.controller_gui.on_group_edit_name = null;
+	window.controller_gui.on_group_edit_color = null;
 	window.controller_gui.on_search_input_changed = null;
 	
 	// Getter.

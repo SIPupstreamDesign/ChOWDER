@@ -25,6 +25,7 @@
 		UpdateContent : "UpdateContent",
 		UpdateWindowMetaData : "UpdateWindowMetaData",
 		UpdateWindowMetaDataMulti : "UpdateWindowMetaDataMulti",
+		UpdateGroup : "UpdateGroup",
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		DeleteContentMulti : "DeleteContentMulti",

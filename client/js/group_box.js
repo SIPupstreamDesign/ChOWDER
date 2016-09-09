@@ -13,9 +13,9 @@
 		this.currentTab = null;
 		this.init();
 
-		this.on_tab_changed = null; // タブが切り替わった時呼ばれるイベント関数をしこむ 
-		this.on_tab_close = null; // タブのxを押したときに呼ばれるイベント関数をしこむ
-		this.on_tab_append = null; // タブの+を押したときに呼ばれるイベント関数をしこむ
+		this.on_group_changed = null; // タブが切り替わった時呼ばれるイベント関数をしこむ 
+		this.on_group_delete = null; // タブのxを押したときに呼ばれるイベント関数をしこむ
+		this.on_group_append = null; // タブの+を押したときに呼ばれるイベント関数をしこむ
 	};
 
 	/*
@@ -92,8 +92,8 @@
 			span.innerHTML = "+";
 			elem.appendChild(span);
 			elem.onclick = function () {
-				if (this.on_tab_append) {
-					this.on_tab_append();
+				if (this.on_group_append) {
+					this.on_group_append();
 				}
 			}.bind(this);
 			tabArea.appendChild(elem);
@@ -159,8 +159,8 @@
 			if (tabContent.hasOwnProperty('func')) {
 				tabContent.func();
 			}
-			if (this.on_tab_changed) {
-				this.on_tab_changed(evt);
+			if (this.on_group_changed) {
+				this.on_group_changed(evt);
 			}
 			this.currentTab = document.getElementById(tabContent.id + "_box");
 			this.currentGroupName = groupName;
@@ -190,19 +190,25 @@
 					}(menu));
 
 					delete_button.onclick = function () {
-						if (self.on_tab_close) {
-							self.on_tab_close(groupName);
+						if (self.on_group_delete) {
+							self.on_group_delete(groupName);
 						}
 						background.style.display = "none";
 						menu.style.display = "none"
 					};
 
 					name_button.onclick = function () {
+						if (self.on_group_edit_name) {
+							self.on_group_edit_name(groupName, "hogehoge");
+						}
 						background.style.display = "none";
 						menu.style.display = "none"
 					};
 
 					color_button.onclick = function () {
+						if (self.on_group_edit_color) {
+							self.on_group_edit_color(groupName, "rgb(255,0,0)");
+						}
 						background.style.display = "none";
 						menu.style.display = "none"
 					};

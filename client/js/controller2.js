@@ -2286,10 +2286,20 @@
 	 * Group削除ボタンがクリックされた
 	 */
 	gui.on_group_delete_clicked = function (groupName) {
-		connector.send('DeleteGroup', { name : groupName }, function (err, reply) {
-			console.log("DeleteGroup done", err, reply);
-			updateGroupList();
-		});
+		var i,
+			item,
+			index = groupList.indexOf(groupName);
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			item = groupList[i];
+			if (item.name === groupName) {
+				connector.send('DeleteGroup', item, function (err, reply) {
+					console.log("DeleteGroup done", err, reply);
+					updateGroupList();
+				});
+				return;
+			}
+		}
 	};
 
 	/**
@@ -2306,6 +2316,48 @@
 			updateMetaData(metaData, function (err, data) {
 				updateGroupList();
 			});
+		}
+	};
+
+	/**
+	 * Group名変更
+	 */
+	window.controller_gui.on_group_edit_name =　function (preGroupName, groupName) {
+		var i,
+			item,
+			index = groupList.indexOf(groupName);
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			item = groupList[i];
+			if (item.name === preGroupName) {
+				item.name = groupName;
+				connector.send('UpdateGroup', item, function (err, reply) {
+					console.log("UpdateGroup done", err, reply);
+					updateGroupList();
+				});
+				return;
+			}
+		}
+	};
+	
+	/**
+	 * Group色変更
+	 */
+	window.controller_gui.on_group_edit_color = function (groupName, color) {
+		var i,
+			item,
+			index = groupList.indexOf(groupName);
+
+		for (i = 0; i < groupList.length; i = i + 1) {
+			item = groupList[i];
+			if (item.name === groupName) {
+				item.color = color;
+				connector.send('UpdateGroup', item, function (err, reply) {
+					console.log("UpdateGroup done", err, reply);
+					updateGroupList();
+				});
+				return;
+			}
 		}
 	};
 

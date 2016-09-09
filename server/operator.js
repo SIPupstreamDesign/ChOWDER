@@ -140,10 +140,10 @@
 		});
 	}
 
-	function getGroupIndex(groupList, groupName) {
+	function getGroupIndex(groupList, id) {
 		var i;
 		for (i = 0; i < groupList.length; i = i + 1) {
-			if (groupList[i].name === groupName) {
+			if (groupList[i].id === id) {
 				return i;
 			}
 		}
@@ -152,31 +152,34 @@
 
 	/**
 	 * グループリストにgroupを追加
+	 * @param {String} id グループid. nullの場合自動割り当て.
 	 * @param {String} groupName グループ名.
 	 * @param {String} color グループ色.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function addGroup(groupName, color, endCallback) {
+	function addGroup(groupID, groupName, color, endCallback) {
 		getGroupList(function (err, data) {
-			if (getGroupIndex(data.grouplist, groupName) < 0) {
-				data.grouplist.push({ name : groupName, color : color });
-				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+			if (groupID) {
+				data.grouplist.push({ name : groupName, color : color, id : groupID });
 			} else {
-				if (endCallback) {
-					endCallback(null, null);
-				}
+				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+			}
+			textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+			if (endCallback) {
+				endCallback(null, null);
 			}
 		});
 	}
 
 	/**
 	 * グループリストからgroupの削除
+	 * @param {String} id グループid.
 	 * @param {String} groupName グループ名.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function deleteGroup(groupName, endCallback) {
+	function deleteGroup(id, groupName, endCallback) {
 		getGroupList(function (err, data) {
-			var index = getGroupIndex(data.grouplist, groupName);
+			var index = getGroupIndex(data.grouplist, id);
 			if (index >= 0) { 
 				data.grouplist.splice(index, 1);
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
@@ -184,6 +187,30 @@
 			} else {
 				endCallback("not found");
 				return false;
+			}
+		});
+	}
+
+	/**
+	 * グループ更新
+	 * @param {String} groupName グループ名.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function updateGroup(id, json, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndex(data.grouplist, id);
+			if (index >= 0) {
+				data.grouplist[index] = json;
+				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				if (endCallback) {
+					endCallback(null);
+				}
+				return true;
+			} else {
+				if (endCallback) {
+					endCallback("Not Found Group:" + id + ":" + groupName);
+					return false;
+				}
 			}
 		});
 	}
@@ -1211,18 +1238,29 @@
 			if (json.hasOwnProperty("color")) {
 				groupColor = json.color;
 			}
-			addGroup(json.name, groupColor, endCallback);
+			addGroup(null, json.name, groupColor, endCallback);
 		}
 	}
 
 	/**
 	 *  グループを削除する.
-	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteGroup(json, endCallback) {
-		if (json.hasOwnProperty("name") && json.name !== "") {
-			deleteGroup(json.name, endCallback);
+		if (json.hasOwnProperty("id") && json.hasOwnProperty("name") && json.name !== "") {
+			deleteGroup(json.id, json.name, endCallback);
+		}
+	}
+
+	/**
+	 * グループを更新する
+	 * @param {JSON} json 対象のid, nameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateGroup(json, endCallback) {
+		if (json.hasOwnProperty("id")) {
+			updateGroup(json.id, json, endCallback);
 		}
 	}
 
@@ -1329,6 +1367,16 @@
 		};
 	}
 	
+	function post_updateGroup(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateGroup, reply);
+			io_connector.broadcast(io, Command.UpdateGroup, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
 	/**
 	 * updateMetaDataMulti処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateMetaDataMulti
@@ -1531,6 +1579,10 @@
 			commandDeleteGroup(data, resultCallback);
 		});
 
+		ws_connector.on(Command.UpdateGroup, function (data, resultCallback) {
+			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.ShowWindowID, {id : data.id});
 			io_connector.broadcast(io, Command.ShowWindowID, {id : data.id});
@@ -1665,6 +1717,10 @@
 			commandDeleteGroup(data, resultCallback);
 		});
 
+		io_connector.on(Command.UpdateGroup, function (data, resultCallback) {
+			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.ShowWindowID, { id : data.id });
 			io_connector.broadcast(io, Command.ShowWindowID, { id : data.id });
@@ -1696,36 +1752,7 @@
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
-		addGroup("default", function (err, reply) {} );
-		/*
-		addGroup("default", function (err, reply) {
-			addGroup("hoge", function (err, reply) {
-				addGroup("piyo", function (err, reply) {
-					addGroup("hoge", function (err, reply) {
-						addGroup("moga", function (err, reply) {
-					
-						});
-					});
-				});
-			});
-		});
-		*/
-		/*
-		deleteGroup("moga", function (err, reply) {
-			if (!err) {
-				console.log("remove group success");
-			}
-		});
-		*/
-		/*
-		addGroup("moga", function (err, reply) {
-			changeGroupIndex("hoge", 3, function  (err, reply) {
-				if (!err) {
-					console.log("changeGroupIndex success");
-				}
-			});
-		});
-		*/
+		addGroup("group_defalut", "default", function (err, reply) {} );
 	}
 	
 	Operator.prototype.getContent = getContent;

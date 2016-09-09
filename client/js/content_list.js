@@ -109,14 +109,14 @@
 					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
 
-					if (contentElem.offsetHeight > 150) {
+					if (contentElem.offsetHeight <= 0 || contentElem.offsetHeight > 150) {
 						aspect = contentElem.offsetWidth / contentElem.offsetHeight;
 						divElem.style.height = "150px";
 						divElem.style.width = 150 * aspect;
 					}
 					contentElem.onload = function () {
 						var aspect;
-						if (contentElem.offsetHeight > 150) {
+						if (contentElem.offsetHeight <= 0 || contentElem.offsetHeight > 150) {
 							aspect = contentElem.offsetWidth / contentElem.offsetHeight;
 							divElem.style.height = "150px";
 							divElem.style.width = 150 * aspect;
