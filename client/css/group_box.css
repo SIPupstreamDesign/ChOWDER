@@ -94,3 +94,26 @@
 	position : relative;
 	top : 5px;
 }
+
+.group_setting_menu {
+	width : 100px;
+	height : 60px;
+	background : rgb(255,255,255);
+	border : 1px solid rgb(186, 186, 186);
+	color : black;
+	position : absolute;
+	box-shadow: 2px 4px 5px black;
+	z-index: 1000000;
+}
+
+.group_setting_menu_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+}
+
+.group_setting_menu_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}

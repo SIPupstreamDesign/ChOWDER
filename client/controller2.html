@@ -91,7 +91,7 @@
 	<ul id="context_menu" class="context_menu" style="display:none">
 		<li class="context_menu_item" id="context_menu_add_content">コンテンツ追加</li>
 		<li class="context_menu_item" id="context_menu_change_group">グループ変更</li>
-		<li class="context_menu_item" id="context_menu_delete">コンテンツ削除</li>
+		<li class="context_menu_item" id="context_menu_delete">非表示</li>
 
 		<ul class="context_menu_add_content_submenu" id="context_menu_add_content_submenu">
 			<li class="context_menu_add_content_item" id="context_menu_add_image">画像ファイル</li>
@@ -104,7 +104,7 @@
 		</ul>
 	</ul>
 
-	
+	<!---ポップアップダイアログ--->
 	<div class="popup_background"></div>
 	<div id="text_input_dialog">
 		<p style="margin-top:20px;margin-left:20px">テキストの送信</p>
@@ -116,6 +116,14 @@
 		<input type="text" id="url_input" style="margin-left:20px"/>
 		<input class="btn" type="button" value="Send" id="url_send_button" />
 	</div>
+
+	<!---グループ設定メニュー--->
+	<ul id="group_setting_menu" class="group_setting_menu" style="display:none">
+		<li class="group_setting_menu_item" id="group_setting_name">名前変更</li>
+		<li class="group_setting_menu_item" id="group_setting_color">色変更</li>
+		<li class="group_setting_menu_item" id="group_setting_delete">削除</li>
+	</ul>
+	
 
 	<div style="display:none">
 		<hr>

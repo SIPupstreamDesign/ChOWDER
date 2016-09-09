@@ -130,7 +130,7 @@
 	GroupBox.prototype.create_tab = function (groupName, groupColor, tabContent, is_active) {
 		var elem,
 			link,
-			close_button,
+			setting_button,
 			span;
 		elem = document.createElement('div');
 		elem.id = tabContent.id;
@@ -168,20 +168,51 @@
 		elem.appendChild(link);
 		
 		if (groupName !== defaultGroup) {
-			close_button = document.createElement('div');
-			close_button.className = "group_tab_setting";
-			close_button.onclick = (function (self, groupName) {
-				return function () {
-					if (self.on_tab_close) {
-						self.on_tab_close(groupName);
-					}
+			setting_button = document.createElement('div');
+			setting_button.className = "group_tab_setting";
+			setting_button.onclick = (function (self, groupName) {
+				return function (evt) {
+					var menu = document.getElementById('group_setting_menu'),
+						background = document.getElementById("popup_background"),
+						delete_button = document.getElementById('group_setting_delete'),
+						name_button = document.getElementById('group_setting_name'),
+						color_button = document.getElementById('group_setting_color');
+
+					menu.style.display = "block";
+					menu.style.top = evt.clientY + "px";
+					menu.style.left = evt.clientX + "px";
+					background.style.display = "block";
+					background.onclick = (function (menu) {
+						return function () {
+							menu.style.display = "none"
+							background.style.display = "none";
+						};
+					}(menu));
+
+					delete_button.onclick = function () {
+						if (self.on_tab_close) {
+							self.on_tab_close(groupName);
+						}
+						background.style.display = "none";
+						menu.style.display = "none"
+					};
+
+					name_button.onclick = function () {
+						background.style.display = "none";
+						menu.style.display = "none"
+					};
+
+					color_button.onclick = function () {
+						background.style.display = "none";
+						menu.style.display = "none"
+					};
+
 				};
 			}(this, groupName));
 			span = document.createElement('span');
-			//span.innerHTML = "x";
 			span.className = "group_tab_setting_label";
-			close_button.appendChild(span);
-			elem.appendChild(close_button);
+			setting_button.appendChild(span);
+			elem.appendChild(setting_button);
 		}
 		return elem;
 	};
