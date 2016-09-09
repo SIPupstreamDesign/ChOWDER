@@ -98,6 +98,7 @@
         g.style.height = '20px';
         g.style.display = 'flex';
         g.style.flexDirection = 'row';
+        g.style.boxShadow = '0px 0px 0px 1px gray';
         e.appendChild(g);
         i = document.createElement('div');
         i.style.backgroundColor = 'black';
