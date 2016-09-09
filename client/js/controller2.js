@@ -2143,6 +2143,40 @@
 	};
 
 	/**
+	 * コンテンツのzindex変更が要求された
+	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
+	 */
+	gui.on_content_index_changed = function (isFront) {
+		var id = getSelectedID(),
+			i,
+			max = 0,
+			min = 0,
+			metaData;
+		
+		if (id) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				for (i in metaDataDict) {
+					if (metaDataDict.hasOwnProperty(i)) {
+						if (metaDataDict[i].id !== metaData.id && 
+							metaDataDict[i].type !== windowType &&
+							metaDataDict[i].hasOwnProperty("zIndex")) {
+							max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+							min = Math.min(min, parseInt(metaDataDict[i].zIndex, 10));
+						}
+					}
+				}
+				if (isFront) {
+					metaData.zIndex = max + 1;
+				} else {
+					metaData.zIndex = min - 1;
+				}
+				updateMetaData(metaData, function (err, reply) {});
+			}
+		}
+	}
+
+	/**
 	 * コンテンツリストでセットアップコンテンツが呼ばれた
 	 */
 	window.content_list.on_setup_content = function (elem, uid) {

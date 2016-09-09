@@ -34,6 +34,8 @@
 		var menu = document.getElementById('context_menu'),
 			delete_button = document.getElementById('context_menu_delete'),
 			add_content_button = document.getElementById('context_menu_add_content'),
+			move_front_button = document.getElementById("context_menu_move_front"),
+			move_back_button = document.getElementById("context_menu_move_back"),
 			add_image_button = document.getElementById('context_menu_add_image'),
 			add_text_button = document.getElementById('context_menu_add_text'),
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
@@ -69,6 +71,20 @@
 
 		add_text_button.onmousedown = function (evt) {
 			toggleTextInput();
+			menu.style.display = "none";
+		};
+
+		move_front_button.onclick = function (evt) {
+			if (gui.on_content_index_changed) {
+				gui.on_content_index_changed(true);
+			}
+			menu.style.display = "none";
+		};
+
+		move_back_button.onclick = function (evt) {
+			if (gui.on_content_index_changed) {
+				gui.on_content_index_changed(false);
+			}
 			menu.style.display = "none";
 		};
 
@@ -646,6 +662,7 @@
 	window.controller_gui.on_virtualdisplaysetting_clicked　= null;
 	window.controller_gui.on_display_scale_changed = null;
 	window.controller_gui.on_display_trans_changed = null;
+	window.controller_gui.on_content_index_changed = null;
 	window.controller_gui.on_close_item = null;
 	window.controller_gui.on_file_dropped = null;
 	window.controller_gui.on_group_append_clicked = null;
