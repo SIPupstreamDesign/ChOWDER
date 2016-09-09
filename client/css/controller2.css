@@ -700,3 +700,7 @@ p {
     right: 15px;
     bottom: 15px;
 }
+
+#rightArea_panel__ {
+	background:linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
+}
