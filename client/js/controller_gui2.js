@@ -427,7 +427,7 @@
 	 * URL入力ダイアログの表示をトグル
 	 */
 	function toggleURLInput() {
-		window.input_dialog({
+		window.input_dialog.text_input({
 				name : "URLの送信",
 				initialName :  "",
 				okButtonName : "Send",

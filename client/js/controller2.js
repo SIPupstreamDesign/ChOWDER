@@ -2332,7 +2332,6 @@
 					console.log("UpdateGroup done", err, reply);
 					updateGroupList();
 				});
-				return;
 			}
 		}
 	};

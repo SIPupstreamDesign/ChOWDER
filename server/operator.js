@@ -150,6 +150,16 @@
 		return -1;
 	}
 
+	function getGroupIndexByName(groupList, name) {
+		var i;
+		for (i = 0; i < groupList.length; i = i + 1) {
+			if (groupList[i].name === name) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	/**
 	 * グループリストにgroupを追加
 	 * @param {String} id グループid. nullの場合自動割り当て.
@@ -159,6 +169,13 @@
 	 */
 	function addGroup(groupID, groupName, color, endCallback) {
 		getGroupList(function (err, data) {
+			var index = getGroupIndexByName(data.grouplist, groupName);
+			if (index >= 0) {
+				if (endCallback) {
+					endCallback("Detect same group name");
+				}
+				return;
+			}
 			if (groupID) {
 				data.grouplist.push({ name : groupName, color : color, id : groupID });
 			} else {
@@ -202,9 +219,6 @@
 			if (index >= 0) {
 				data.grouplist[index] = json;
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
-				if (endCallback) {
-					endCallback(null);
-				}
 				return true;
 			} else {
 				if (endCallback) {

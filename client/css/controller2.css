@@ -647,3 +647,25 @@ p {
 	color: black;
 	margin-left: 5px;
 }
+
+#color_dialog {
+	top: 50%;
+	left: 50%;
+	width: 320px;
+	height: 230px;
+	margin-top:-53px;
+	margin-left:-145px;
+	position: fixed;
+	z-index: 100000000;
+	display: none;
+	background-color: rgb(83, 83, 83);
+	border-radius: 5px;
+}
+
+#color_ok_button {
+	background-color: rgb(112, 180, 239);
+	color: black;
+	position: absolute;
+    right: 15px;
+    bottom: 15px;
+}

@@ -198,23 +198,28 @@
 					};
 
 					name_button.onclick = function () {
-						window.input_dialog({
+						window.input_dialog.text_input({
 								name : "グループ名変更",
-								initialName :  groupName,
+								initialValue :  groupName,
 								okButtonName : "OK",
 							}, function (value) {
 								if (self.on_group_edit_name) {
 									self.on_group_edit_name(groupName, value);
-							}
-						});
+								}
+							});
 						menu.style.display = "none"
 					};
 
 					color_button.onclick = function () {
-						if (self.on_group_edit_color) {
-							self.on_group_edit_color(groupName, "rgb(255,0,0)");
-						}
-						background.style.display = "none";
+						window.input_dialog.color_input({
+								name : "グループ色変更",
+								initialValue : "",
+								okButtonName : "OK"
+							}, function (value) {
+								if (self.on_group_edit_color) {
+									self.on_group_edit_color(groupName, value);
+								}
+							});
 						menu.style.display = "none"
 					};
 
