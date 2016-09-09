@@ -1639,12 +1639,13 @@
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
 
-		ws_connector.on(Command.UpdateMouseCursor, (function(socketid){
+		io_connector.on(Command.UpdateMouseCursor, (function(socketid){
             return function(data, resultCallback){
                 commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
             };
         }(socketid)));
-		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
+
+        io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
