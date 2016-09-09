@@ -259,6 +259,22 @@
 	}
 	
 	/**
+	 * 選択されているGroupIDを返却する
+	 * @method getSelectedGroup
+	 * @return {String} グループID
+	 */
+	function getSelectedGroup() {
+		var i,
+			groupElem = document.getElementsByClassName('group_tab');
+		for (i = 0; i < groupElem.length; ++i) {
+			if (groupElem[i].className.indexOf("active") >= 0) {
+				return groupElem[i].id;
+			}
+		}
+		return groupList[0].id;//contentID.innerHTML;
+	}
+
+	/**
 	 * メタデータの位置情報、サイズ情報をString -> Intへ変換する
 	 * @method toIntMetaData
 	 * @param {JSON} metaData メタデータ
@@ -1750,7 +1766,10 @@
 			onlistID,
 			meta,
 			metaData,
-			contentArea;
+			contentArea,
+			selectedGroup;
+
+		selectedGroup = getSelectedGroup();
 
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
@@ -1789,6 +1808,10 @@
 						contentArea.appendChild(groupToElems[group][i]);
 					}
 				}
+			}
+
+			if (selectedGroup && document.getElementById(selectedGroup)) {
+				document.getElementById(selectedGroup).onclick();
 			}
 		}
 	};

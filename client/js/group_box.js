@@ -318,6 +318,14 @@
 		return null;
 	};
 
+	GroupBox.prototype.select_tab = function (groupName) {
+		var gname;
+		if (this.tabGroupToElems.hasOwnProperty(groupName)) {
+			this.tabGroupToElems[groupName][0].onclick();
+		}
+		return null;
+	};
+
 	function init(containerElem, setting) {
 		return new GroupBox(containerElem, setting);
 	}
