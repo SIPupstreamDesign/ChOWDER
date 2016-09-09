@@ -169,7 +169,13 @@
 		socket = io.connect(url);
 		socket.on('connect', function () {
 			console.log("connect");
+            var e = document.getElementById('head_menu_hover_right');
+            if(e){e.textContent = '◎';}
 		});
+        socket.on('disconnect', function(data){
+            var e = document.getElementById('head_menu_hover_right');
+            if(e){e.textContent = '×';}
+        });
 		socket.on('chowder_response', function (data) {
 			var parsed;
 			if(!(typeof data === 'string' && data.match(/UpdateMouseCursor/))){console.log('chowder_response', data);}
