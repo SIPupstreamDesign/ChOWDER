@@ -2301,7 +2301,7 @@
 	 * Group変更がクリックされた
 	 * @param {String} groupName 変更先のグループ名
 	 */
-	gui.on_group_change_clicked = function (groupID) {
+	gui.on_group_change_clicked = function (groupName) {
 		var i,
 			item,
 			id = getSelectedID(),
@@ -2309,14 +2309,8 @@
 		
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
+			metaData.group = groupName;
 			
-			for (i = 0; i < groupList.length; i = i + 1) {
-				item = groupList[i];
-				if (item.id === groupID) {
-					metaData.group = item.name;
-					break;
-				}
-			}
 			updateMetaData(metaData, function (err, data) {
 				updateGroupList();
 			});
