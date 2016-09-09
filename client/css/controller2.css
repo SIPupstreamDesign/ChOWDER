@@ -503,7 +503,7 @@ p {
 .whole_screen_elem {
 	padding: 12px;
 	border : 1px solid;
-	z-index : -1000;
+	z-index : -1000000;
 	color : white;
 }
 

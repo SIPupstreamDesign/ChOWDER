@@ -38,8 +38,12 @@ pre {
 	left: 0;
 	background-color:#555555;
 	opacity: 0.9;
-	z-index: 1000;
+	z-index: 1000000;
 	display: none;
+}
+
+#preview_area {
+	z-index : -1000000;
 }
 
 .displayid {
@@ -57,7 +61,7 @@ pre {
 	position: absolute;
 	left: 0px;
 	right: 0px;
-	z-index: 20000;
+	z-index: 1000000;
 }
 
 

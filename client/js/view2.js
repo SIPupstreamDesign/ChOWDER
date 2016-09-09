@@ -322,7 +322,9 @@
 	 */
 	function translate(targetid, x, y) {
 		var elem,
-			metaData;
+			metaData,
+			i,
+			max = 0;
 		
 		if (metaDataDict.hasOwnProperty(targetid)) {
 			elem = document.getElementById(targetid);
@@ -333,9 +335,33 @@
 			vscreen_util.transPosInv(metaData);
 			metaData.posx -= vscreen.getWhole().x;
 			metaData.posy -= vscreen.getWhole().y;
+			
 			connector.send('UpdateMetaData', metaData, function (err, reply) {
-				console.log("doneUpdateMetaData", reply);
 			});
+		}
+	}
+
+	function translateZ(targetid) {
+		var metaData,
+			i,
+			max = 0;
+		
+		if (metaDataDict.hasOwnProperty(targetid)) {
+			metaData = metaDataDict[targetid];
+			for (i in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(i)) {
+					if (metaDataDict[i].id !== metaData.id && 
+						metaDataDict[i].type !== windowType &&
+						metaDataDict[i].hasOwnProperty("zIndex")) {
+						if (Number.isInteger(parseInt(metaDataDict[i].zIndex, 10))) {
+							max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+						}
+					}
+				}
+			}
+			metaData.zIndex = max + 1;
+			
+			connector.send('UpdateMetaData', metaData, function (err, reply) {});
 		}
 	}
 
@@ -371,6 +397,7 @@
                     select(targetid);
                     elem.draggingOffsetLeft = evt.clientX - rect.left;
                     elem.draggingOffsetTop = evt.clientY - rect.top;
+					translateZ(targetid);
                     evt.preventDefault();
                 };
             }(elem)), false);
@@ -392,6 +419,7 @@
                     select(targetid);
                     elem.draggingOffsetLeft = evt.changedTouches[0].clientX - rect.left;
                     elem.draggingOffsetTop = evt.changedTouches[0].clientY - rect.top;
+					translateZ(targetid);
                     evt.preventDefault();
                 };
             }(elem)), false);
