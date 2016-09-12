@@ -2391,7 +2391,16 @@
 		snapSetting = snapType;
 		saveCookie();
         var e = document.getElementById('head_menu_hover_left');
-        if(e){e.textContent = snapType;}
+        if(e){
+            var i, o;
+            o = e.options;
+            for(i = 0; i < o.length; ++i){
+                if(snapType === o[i].value){
+                    e.selectedIndex = i;
+                    break;
+                }
+            }
+        }
 	};
 	
 	/**
@@ -2848,7 +2857,16 @@
 				snapSetting = 'display';
 			}
             e = document.getElementById('head_menu_hover_left');
-            if(e){e.textContent = snap;}
+            if(e){
+                var i, o;
+                o = e.options;
+                for(i = 0; i < o.length; ++i){
+                    if(snap === o[i].value){
+                        e.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
 		}
 		
 		content_property.on_rect_changed = function () {
