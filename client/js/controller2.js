@@ -915,7 +915,7 @@
 				}
 			}
 			
-			if (evt.button === 0) {
+			if (evt.button === 0 || evt.button === 2) {
 				evt.stopPropagation();
 				evt.preventDefault();
 			}
