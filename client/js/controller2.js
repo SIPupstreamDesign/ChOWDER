@@ -1826,8 +1826,7 @@
 						// グループが見つからない場合、defaultグループに変更する
 						for (i in groupToMeta[group]) {
 							groupToMeta[group][i].group = defaultGroup; 
-						} 
-						console.error(groupToMeta[group])
+						}
 						contentArea = gui.get_content_area_by_group(defaultGroup);
 						changeMetaDataList = changeMetaDataList.concat(groupToMeta[group]);
 					}
