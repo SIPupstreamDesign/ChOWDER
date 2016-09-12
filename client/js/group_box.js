@@ -254,7 +254,7 @@
 					color_button.onclick = function () {
 						window.input_dialog.color_input({
 								name : "グループ色変更",
-								initialValue : "",
+								initialValue : groupColor,
 								okButtonName : "OK"
 							}, function (value) {
 								if (self.on_group_edit_color) {

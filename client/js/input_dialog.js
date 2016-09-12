@@ -63,6 +63,13 @@
 		}, 234, 120); // 幅、高さ
 		color_picker.appendChild(colorselector.elementWrapper);
 		
+		if (setting.initialValue) {
+			var col = setting.initialValue.split('rgb(').join("");
+			col = col.split(")").join("");
+			col = col.split(",");
+			colorselector.setColor(col[0], col[1], col[2], 1, true);
+		}
+
 		okbutton.value = setting.okButtonName;
 		okbutton.onclick = function (evt) {
 			var colorvalue = colorselector.getColor(),
