@@ -1488,15 +1488,20 @@
 		var json = reply,
 			elem,
 			metaData = json;
-		if (json.type === windowType) { return; }
 		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
 		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
-		if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
-			content_property.assign_content_property(json);
-		}
+
+		if ( (isDisplayTabSelected() && json.type === windowType) ||
+			(!isDisplayTabSelected() && json.type !== windowType)) {
+				if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
+					content_property.assign_content_property(json);
+				}
+			}
+
 		
+		if (json.type === windowType) { return; }
 		elem = document.getElementById(metaData.id);
 		if (elem) {
 			if (isVisible(json)) {
@@ -1546,8 +1551,13 @@
 	doneUpdateMetaData = function (err, reply, endCallback) {
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
+
 		metaDataDict[reply.id] = json;
-		content_property.assign_content_property(json);
+		if ( (isDisplayTabSelected() && json.type === windowType) ||
+			(!isDisplayTabSelected() && json.type !== windowType)) {
+				content_property.assign_content_property(json);
+			}
+	
 		if (endCallback) {
 			endCallback(null);
 		}
@@ -1755,15 +1765,21 @@
 		var windowData = reply,
 			elem;
 		importWindow(windowData);
-		if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
-			content_property.assign_content_property(windowData);
-		}
+		if ( (isDisplayTabSelected() && reply.type === windowType) ||
+			(!isDisplayTabSelected() && reply.type !== windowType)) {
+				if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
+					content_property.assign_content_property(windowData);
+				}
+			}
+
+/*
 		if (lastSelectWindowID) {
 			elem = document.getElementById(lastSelectWindowID);
 			if (elem) {
 				manipulator.moveManipulator(elem);
 			}
 		}
+		*/
 	};
 
 	/**
@@ -2579,8 +2595,17 @@
 	 * タブが切り替えられた.
 	 */
 	content_box.on_tab_changed_pre = function () {
+		manipulator.removeManipulator();
+		unselectAll(true);
+	};
+
+	content_box.on_tab_changed_post = function () {
 		var id;
-		console.log("on_tab_changed", lastSelectContentID);
+		if (isDisplayTabSelected()) {
+			content_property.init("", "", "display");
+		} else {
+			content_property.init("", "", "content");
+		}
 		if (isDisplayTabSelected()) {
 			id = lastSelectWindowID;
 			if (!id) {
@@ -2589,19 +2614,13 @@
 		} else {
 			id = lastSelectContentID;
 		}
-		manipulator.removeManipulator();
-		unselectAll(true);
-		if (isDisplayTabSelected()) {
-			content_property.init("", "", "display");
-		} else {
-			content_property.init("", "", "content");
-		}
+		selectedIDList = [];
 		// 以前選択していたものを再選択する.
 		if (id) {
 			select(id, false);
 		}
 		draggingIDList = [];
-	};
+	}
 
 	/**
 	 * マニピュレータの星がトグルされた

@@ -272,7 +272,7 @@
 		if (dlbtn) { dlbtn.style.display = 'none'; }
 	}
 
-	function init(id, group, type, mime, updateText) {
+	function init(id, group, type, mime) {
 		if (!colorselector) {
 			colorselector = new ColorSelector(function(colorvalue){
 				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")"; 
