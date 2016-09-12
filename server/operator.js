@@ -284,6 +284,7 @@
 		if (metaData.hasOwnProperty('command')) {
 			delete metaData.command;
 		}
+	
 		textClient.hmset(metadataPrefix + id, metaData, function (err) {
 			if (err) {
 				console.error(err);
@@ -1109,9 +1110,13 @@
 	 */
 	function commandUpdateMetaData(json, endCallback) {
 		//console.log("commandUpdateMetaData:" + json.id);
-		setMetaData(json.type, json.id, json, function (meta) {
-			if (endCallback) {
-				endCallback(null, meta);
+		textClient.exists(metadataPrefix + json.id, function (err, doesExists) {
+			if (!err && doesExists === 1) {
+				setMetaData(json.type, json.id, json, function (meta) {
+					if (endCallback) {
+						endCallback(null, meta);
+					}
+				});
 			}
 		});
 	}
@@ -1131,14 +1136,18 @@
 
 		for (i = 0; i < json.length; i = i + 1) {
 			metaData = json[i];
-			setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-				--all_done;
-				results.push(meta);
-				if (all_done <= 0) {
-					if (endCallback) {
-						endCallback(null, results);
-						return;
-					}
+			textClient.exists(metadataPrefix + json.id, function (err, doesExists) {
+				if (!err && doesExists === 1) {
+					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+						--all_done;
+						results.push(meta);
+						if (all_done <= 0) {
+							if (endCallback) {
+								endCallback(null, results);
+								return;
+							}
+						}
+					});
 				}
 			});
 		}
