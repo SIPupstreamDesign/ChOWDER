@@ -295,11 +295,15 @@
 		if (metaDataDict.hasOwnProperty(targetid)) {
 			metaData = metaDataDict[targetid];
 			elem = document.getElementById(targetid);
+			elem.style.borderWidth = "1px";
 			elem.style.border = "solid";
 			elem.is_dragging = true;
 			
-			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-				elem.style.borderColor = groupDict[metaData.group].color; 
+			if (elem.classList.contains("mark")) {
+				elem.style.borderWidth = "6px";
+				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+					elem.style.borderColor = groupDict[metaData.group].color; 
+				}
 			}
 		}
 	}
@@ -331,7 +335,9 @@
 				elem = document.getElementById(metaDataDict[i].id);
 				if (elem && elem.is_dragging) {
 					elem.is_dragging = false;
-					elem.style.borderWidth = "0px";
+					if (!elem.classList.contains("mark")) {
+						elem.style.borderWidth = "0px";
+					}
 				}
 			}
 		}
@@ -470,6 +476,7 @@
 				memo.style.width = (rect.right - rect.left) + "px";
 				memo.style.left = rect.left + "px";
 				memo.style.top =  rect.bottom + "px";
+				memo.style.zIndex = elem.style.zIndex;
 			} else {
 				memo = document.createElement("pre");
 				memo.id = "memo:" + metaData.id;
@@ -482,6 +489,7 @@
 				memo.style.width = (rect.right - rect.left) + "px";
 				memo.style.height = "auto";
 				memo.style.whiteSpace = "pre-line";
+				memo.style.zIndex = elem.style.zIndex;
 				previewArea.appendChild(memo);
 			}
 			
@@ -807,16 +815,18 @@
 			mark = "mark",
 			memo = null;
 		if (elem && metaData.hasOwnProperty("id")) {
-			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-				elem.style.borderColor = groupDict[metaData.group].color;
-			}
 			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
 				if (!elem.classList.contains(mark)) {
 					elem.classList.add(mark);
+					if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+						elem.style.borderColor = groupDict[metaData.group].color;
+						elem.style.borderWidth = "6px";
+					}
 				}
 			} else {
 				if (elem.classList.contains(mark)) {
 					elem.classList.remove(mark);
+					elem.style.borderWidth = "0px";
 				}
 			}
 			memo =  document.getElementById("memo:" + metaData.id);
