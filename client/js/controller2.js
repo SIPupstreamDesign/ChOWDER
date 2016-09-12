@@ -1949,19 +1949,25 @@
 	 * Show Display ID ボタンが押された.
 	 * @method on_showidbutton_clicked
 	 */
-	gui.on_showidbutton_clicked = function () {
+	gui.on_showidbutton_clicked = function (isAll) {
 		var id = getSelectedID();
 		console.log("ShowWindowID:" + id);
+		if (isAll) {
+			connector.send('ShowWindowID', {type : 'all', id : ""});
+			return;
+		}
 		if (id && id !== "No Content Selected.") {
 			if (metaDataDict[id].type === windowType) {
 				connector.send('ShowWindowID', {id : id});
 				lastSelectWindowID = id;
 				gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
-			} else {
-				connector.send('ShowWindowID', {type : 'all', id : ""});
+				setTimeout(function () {
+					var memo  = document.getElementById('_manip_menu_1');
+					if (memo.classList.contains('active')) {
+						memo.classList.remove('active');
+					}
+				}, 8 * 1000);
 			}
-		} else {
-			connector.send('ShowWindowID', {type : 'all', id : ""});
 		}
 	};
 	
@@ -2643,11 +2649,15 @@
 			metaData;
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
-			metaData.mark_memo = is_active;
-			updateMetaData(metaData);
+			if (metaData.type === windowType) {
+				gui.on_showidbutton_clicked(false);
+			} else {
+				metaData.mark_memo = is_active;
+				updateMetaData(metaData);
+			}
 		}
 	};
-	
+
 	/**
 	 * orgWidth,orgHeightを元にアスペクト比を調整
 	 * @method correctAspect

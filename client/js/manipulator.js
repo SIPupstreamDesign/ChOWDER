@@ -94,13 +94,18 @@
 		manipulators[4].style.left = (left + width - 30) + "px";
 		manipulators[4].style.top = (top + 20) + "px";
 
-		// ☆
 		if (manipulatorMenus.length > 1) {
+			// ☆
 			manipulatorMenus[0].style.left = (left + 5) + "px";
 			manipulatorMenus[0].style.top = (top - 30) + "px";
 			// memo
 			manipulatorMenus[1].style.left = (left + 35) + "px";
 			manipulatorMenus[1].style.top = (top - 30) + "px";
+		}
+		else if (manipulatorMenus.length === 1) {
+			// memo
+			manipulatorMenus[0].style.left = (left + 5) + "px";
+			manipulatorMenus[0].style.top = (top - 30) + "px";
 		}
 	}
 	
@@ -189,11 +194,13 @@
 			memo = document.createElement('div');
 
 		// 星のトグルボタン
-		star.id = "_manip_menu_0";
-		star.className = "manipulator_menu_star";
-		star.style.borderColor = targetElem.style.borderColor;
-		previewArea.appendChild(star);
-		manipulatorMenus.push(star);
+		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {
+			star.id = "_manip_menu_0";
+			star.className = "manipulator_menu_star";
+			star.style.borderColor = targetElem.style.borderColor;
+			previewArea.appendChild(star);
+			manipulatorMenus.push(star);
+		}
 		// 初期のトグル設定
 		if (metaData.hasOwnProperty('mark') && (metaData.mark === "true" || metaData.mark === true)) {
 			star.classList.add('active');
@@ -269,9 +276,7 @@
 			previewArea.appendChild(manip);
 			manipulators.push(manip);
 		}
-		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {
-			setupManipulatorMenus(previewArea, targetElem, metaData);
-		}
+		setupManipulatorMenus(previewArea, targetElem, metaData);
 	}
 	
 	function isShowManipulator() {

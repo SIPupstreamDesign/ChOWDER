@@ -605,6 +605,14 @@
 			document.getElementById('bottom_burger_menu_display'),
 			{
 				menu : [{
+						選択DisplayのIDを表示 : {
+							func : function (evt) { gui.on_showidbutton_clicked(false); }
+						}
+					},{
+						全てのDisplayのIDを表示 : {
+							func : function (evt) { gui.on_showidbutton_clicked(true); }
+						}
+					},{
 						選択Displayを削除 : {
 							func : function (evt) { gui.on_deletedisplay_clicked(evt); }
 						}

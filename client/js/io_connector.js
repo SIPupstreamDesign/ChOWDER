@@ -190,7 +190,7 @@
 					parsed = JSON.parse(data);
 					eventTextMessage(socket, parsed);
 				} catch (e) {
-					console.error('[Error] Recieve invalid JSON :', e);
+					console.error('[Error] Recieve invalid JSON :', e, parsed);
 				}
 			} else {
 				console.log("load meta binary", data);
