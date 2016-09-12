@@ -2035,7 +2035,7 @@
 			console.error(value)
 			return;
 		}
-		addContent({type : "url"}, value);
+		addContent({type : "url", user_data_text : JSON.stringify({ text: value }) }, value);
 	};
 	
 	/** 
@@ -2072,13 +2072,17 @@
 			i,
 			fileReader = new FileReader();
 
-		fileReader.onloadend = function (e) {
-			var data = e.target.result,
-				img;
-			if (data && data instanceof ArrayBuffer) {
-				sendImage(data,  { posx : 0, posy : 0, visible : true });
-			}
-		};
+				console.error();
+		fileReader.onload = (function (name) {
+			return function (e) {
+				var data = e.target.result,
+					img;
+				if (data && data instanceof ArrayBuffer) {
+					sendImage(data,  { posx : 0, posy : 0, visible : true, 
+						user_data_text : JSON.stringify({ text: name }) });
+				}
+			};
+		}(files[0].name));
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
 			if (file.type.match('image.*')) {
 				fileReader.readAsArrayBuffer(file);

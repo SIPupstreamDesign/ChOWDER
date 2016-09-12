@@ -35,7 +35,9 @@
 			input = document.getElementById("input_dialog_input");
 
 		dialogname.textContent = setting.name;
-		input.value = setting.initialValue;
+		if (setting.initialValue) {
+			input.value = setting.initialValue;
+		}
 
 		okbutton.value = setting.okButtonName;
 		okbutton.onclick = function (evt) {
