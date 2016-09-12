@@ -44,7 +44,8 @@
 		doneUpdateMetaDataMulti,
 		doneUpdateWindowMetaDataMulti,
 		doneGetMetaData,
-		doneDeleteWindowMetaData;
+		doneDeleteWindowMetaData,
+		doneDeleteContentMulti;
 	
 	
 	/**
@@ -1639,6 +1640,21 @@
 	};
 	
 	/**
+	 * DeleteContentMultiを送信した後の終了コールバック.
+	 * @method doneDeleteContent
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneDeleteContentMulti = function (err, reply) {
+		console.log("doneDeleteContentMulti", err, reply);
+		var i;
+
+		for (i = 0; i < reply.length; i = i + 1) {
+			doneDeleteContent(err, reply[i]);
+		}
+	};
+
+	/**
 	 * DeleteWindowMetaDataを送信した後の終了コールバック.
 	 * @method doneDeleteWindowMetaData
 	 * @param {String} err エラー. 無ければnull.
@@ -1871,8 +1887,34 @@
 		connector.send('DeleteWindowMetaData', {type : "all", id : ""}, doneDeleteWindowMetaData);
 	};
 	
+	/**
+	 * Group内のコンテンツ全て削除.
+	 */
 	gui.on_deleteallcontent_clicked = function () {
-		connector.send('DeleteContent', {type : "all", id : ""}, doneDeleteContent);
+		var i,
+			metaData,
+			selectedGroup = getSelectedGroup(),
+			targetList = [],
+			groupToID = {};
+
+		for (i = 0; i < groupList.length; ++i) {
+			groupToID[groupList[i].name] = groupList[i].id;
+		}
+		
+		if (selectedGroup) {
+			for (i in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(i)) {
+					if (metaDataDict[i] !== windowType) {
+						if (groupToID[metaDataDict[i].group] === selectedGroup) {
+							targetList.push(metaDataDict[i]);
+						}
+					}
+				}
+			}
+		}
+		if (targetList.length > 0) {
+			connector.send('DeleteContentMulti', targetList, doneDeleteContentMulti);
+		}
 	};
 	
 	/**

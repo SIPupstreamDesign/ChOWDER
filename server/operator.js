@@ -1069,7 +1069,7 @@
 
 		for (i = 0; i < json.length; i = i + 1) {
 			metaData = json[i];
-			deleteContent(metaData.type, metaData.id, metaData, function (meta) {
+			deleteContent(metaData, function (meta) {
 				--all_done;
 				results.push(meta);
 				if (all_done <= 0) {
@@ -1681,7 +1681,7 @@
 			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteContentMulti, function (data, resultcallback) {
+		io_connector.on(Command.DeleteContentMulti, function (data, resultCallback) {
 			commandDeleteContentMulti(data, post_deleteContentMulti(ws, io, resultCallback));
 		});
 
