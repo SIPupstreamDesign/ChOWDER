@@ -914,9 +914,11 @@
 					}
 				}
 			}
-
-			evt.stopPropagation();
-			evt.preventDefault();
+			
+			if (evt.button === 0) {
+				evt.stopPropagation();
+				evt.preventDefault();
+			}
 		};
 	};
 	
