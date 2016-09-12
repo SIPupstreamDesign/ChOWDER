@@ -320,13 +320,6 @@
 		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
 	}
 	
-
-	/*
-	function addMetaData(metaData) {
-		connector.send('AddMetaData', metaData, doneAddMetaData);
-	}
-	*/
-	
 	/**
 	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
 	 * @method updateMetaData
