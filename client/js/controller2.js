@@ -2857,16 +2857,11 @@
 				snapSetting = 'display';
 			}
             e = document.getElementById('head_menu_hover_left');
-            if(e){
-                var i, o;
-                o = e.options;
-                for(i = 0; i < o.length; ++i){
-                    if(snap === o[i].value){
-                        e.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
+            e.addEventListener('change', function(eve){
+                var f = eve.currentTarget.value;
+                window.controller_gui.on_snapdropdown_clicked(f);
+            }, false);
+            window.controller_gui.on_snapdropdown_clicked(snap);
 		}
 		
 		content_property.on_rect_changed = function () {
