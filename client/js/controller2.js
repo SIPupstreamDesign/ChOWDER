@@ -2705,6 +2705,27 @@
 			connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
 		}
 	});
+
+	connector.on("UpdateMetaDataMulti", function (data) {
+		var i,
+			elem,
+			id,
+			metaData;
+
+		for (i = 0; i < data.length; ++i) {
+			metaData = data[i];
+			id = metaData.id;
+			if (id) {
+				doneGetMetaData(null, metaData);
+				if (getSelectedID()) {
+					elem = document.getElementById(getSelectedID());
+					if (elem) {
+						manipulator.moveManipulator(elem);
+					}
+				}
+			}
+		}
+	});
 	
 	// コンテンツが差し替えられたときにブロードキャストされてくる.
 	connector.on('UpdateContent', function (metaData) {
@@ -2733,6 +2754,21 @@
 		doneGetWindowMetaData(null, metaData);
 	});
 	
+	connector.on("UpdateWindowMetaDataMulti", function (data) {
+		console.log("onUpdateWindowMetaDataMulti", data);
+		var i,
+			metaData;
+		for (i = 0; i < data.length; ++i) {
+			metaData = data[i];
+			if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
+				if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
+					changeWindowBorderColor(metaData);
+				}
+			}
+			doneGetWindowMetaData(null, metaData);
+		}
+	});
+
 	// すべての更新が必要なときにブロードキャストされてくる.
 	connector.on('Update', function () {
 		console.log("on update");
@@ -2758,6 +2794,14 @@
 	connector.on('DeleteContent', function (metaData) {
 		console.log('DeleteContent', metaData);
 		doneDeleteContent(null, metaData);
+	});
+	
+	connector.on("DeleteContentMulti", function (data) {
+		console.log("onDeleteContentMulti", data);
+		var i;
+		for (i = 0; i < data.length; ++i) {
+			doneDeleteContent(null, data[i]);
+		}
 	});
 	
 	// ウィンドウが削除されたときにブロードキャストされてくる.

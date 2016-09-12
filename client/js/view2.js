@@ -928,10 +928,10 @@
 				previewArea = document.getElementById('preview_area');
 
 			for (i = 0; i < data.length; ++i) {
-				elem = document.getElementById(data.id);
+				elem = document.getElementById(data[i].id);
 				if (elem) {
 					previewArea.removeChild(elem);
-					delete metaDataDict[data.id];
+					delete metaDataDict[data[i].id];
 				}
 			}
 		});

@@ -522,7 +522,7 @@
 		textClient.exists(metadataPrefix + metaData.id, function (err, doesExist) {
 			if (!err &&  doesExist === 1) {
 				textClient.del(metadataPrefix + metaData.id, function (err) {
-					console.log("deleteMetadata");
+					console.log("deleteMetadata", metaData.id);
 					if (endCallback) {
 						endCallback(err, metaData);
 					}
@@ -1065,21 +1065,23 @@
 		var i,
 			metaData,
 			results = [],
-			all_done = json.length;
-
-		for (i = 0; i < json.length; i = i + 1) {
-			metaData = json[i];
-			deleteContent(metaData, function (meta) {
-				--all_done;
-				results.push(meta);
+			all_done = json.length,
+			syncDelete = function (results, all_done) {
 				if (all_done <= 0) {
 					if (endCallback) {
 						endCallback(null, results);
 						return;
 					}
+				} else {
+					var metaData = json[all_done - 1];
+					deleteContent(metaData, function (meta) {
+						results.push(meta);
+						syncDelete(results, all_done - 1);
+					});
 				}
-			});
-		}
+			}
+
+			syncDelete(results, all_done);
 	}
 
 	/**
