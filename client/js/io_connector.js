@@ -172,6 +172,7 @@
             var e = document.getElementById('head_menu_hover_right');
             if(e){
                 e.textContent = '○';
+                e.title = 'サーバーと接続されています';
                 e.className = 'connect';
             }
         });
@@ -179,6 +180,7 @@
             var e = document.getElementById('head_menu_hover_right');
             if(e){
                 e.textContent = '×';
+                e.title = 'サーバーと接続できていません';
                 e.className = 'disconnect';
             }
         });

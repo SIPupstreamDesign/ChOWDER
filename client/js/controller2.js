@@ -2349,7 +2349,16 @@
 		snapSetting = snapType;
 		saveCookie();
         var e = document.getElementById('head_menu_hover_left');
-        if(e){e.textContent = snapType;}
+        if(e){
+            var i, o;
+            o = e.options;
+            for(i = 0; i < o.length; ++i){
+                if(snapType === o[i].value){
+                    e.selectedIndex = i;
+                    break;
+                }
+            }
+        }
 	};
 	
 	/**
@@ -2770,7 +2779,11 @@
 				snapSetting = 'display';
 			}
             e = document.getElementById('head_menu_hover_left');
-            if(e){e.textContent = snap;}
+            e.addEventListener('change', function(eve){
+                var f = eve.currentTarget.value;
+                window.controller_gui.on_snapdropdown_clicked(f);
+            }, false);
+            window.controller_gui.on_snapdropdown_clicked(snap);
 		}
 		
 		content_property.on_rect_changed = function () {
