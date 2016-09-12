@@ -41,11 +41,8 @@
 		doneUpdateContent,
 		doneUpdateMetaData,
 		doneUpdateWindowMetaData,
-		doneUpdateMetaDataMulti,
-		doneUpdateWindowMetaDataMulti,
 		doneGetMetaData,
-		doneDeleteWindowMetaData,
-		doneDeleteContentMulti;
+		doneDeleteWindowMetaData;
 	
 	
 	/**
@@ -338,7 +335,7 @@
 	function updateMetaData(metaData, endCallback) {
 		if (metaData.type === windowType) {
 			// window
-			connector.send('UpdateWindowMetaData', metaData, function (err, reply) {
+			connector.send('UpdateWindowMetaData', [metaData], function (err, reply) {
 				doneUpdateWindowMetaData(err, reply, endCallback);
 			});
         } else if (metaData.type === 'mouse') {
@@ -347,7 +344,7 @@
                 // console.log(err, reply);
             });
 		} else {
-			connector.send('UpdateMetaData', metaData, function (err, reply) {
+			connector.send('UpdateMetaData', [metaData], function (err, reply) {
 				doneUpdateMetaData(err, reply, endCallback);
 			});
 		}
@@ -361,12 +358,12 @@
 	function updateMetaDataMulti(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
 			if (metaDataList[0].type === windowType) {
-				connector.send('UpdateWindowMetaDataMulti', metaDataList, function (err, reply) {
-					doneUpdateWindowMetaDataMulti(err, reply, endCallback);
+				connector.send('UpdateWindowMetaData', metaDataList, function (err, reply) {
+					doneUpdateWindowMetaData(err, reply, endCallback);
 				});
 			} else {
-				connector.send('UpdateMetaDataMulti', metaDataList, function (err, reply) {
-					doneUpdateMetaDataMulti(err, reply, endCallback);
+				connector.send('UpdateMetaData', metaDataList, function (err, reply) {
+					doneUpdateMetaData(err, reply, endCallback);
 				});
 			}
 		}
@@ -1554,47 +1551,14 @@
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 
-		metaDataDict[reply.id] = json;
-		if ( (isDisplayTabSelected() && json.type === windowType) ||
-			(!isDisplayTabSelected() && json.type !== windowType)) {
-				content_property.assign_content_property(json);
-			}
-	
-		if (endCallback) {
-			endCallback(null);
-		}
-	};
-	
-	/**
-	 * UpdateMetaDataMultiを送信した後の終了コールバック.
-	 * @method doneUpdateMetaData
-	 * @param {String} err エラー. 無ければnull.
-	 * @param {JSON} reply 返信されたメタデータ
-	 */
-	doneUpdateMetaDataMulti = function (err, reply, endCallback) {
-		console.log("doneUpdateMetaDataMulti", reply);
 		if (reply.length === 1) {
-			content_property.assign_content_property(reply[0]);
+			metaDataDict[reply.id] = json;
+			if ( (isDisplayTabSelected() && json.type === windowType) ||
+				(!isDisplayTabSelected() && json.type !== windowType)) {
+					content_property.assign_content_property(json);
+				}
 		}
-		if (endCallback) {
-			endCallback(null);
-		}
-	};
-
-	/**
-	 * UpdateWindowMetaDataを送信した後の終了コールバック.
-	 * @method doneUpdateWindowMetaData
-	 * @param {String} err エラー. 無ければnull.
-	 * @param {JSON} reply 返信されたメタデータ
-	 */
-	doneUpdateWindowMetaData = function (err, reply, endCallback) {
-		console.log("doneUpdateWindowMetaData");
-		//console.log(reply);
-		var windowData = reply;
-		vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-		vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
-		vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
-		updateScreen(windowData);
+	
 		if (endCallback) {
 			endCallback(null);
 		}
@@ -1606,7 +1570,7 @@
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneUpdateWindowMetaDataMulti = function (err, reply, endCallback) {
+	doneUpdateWindowMetaData = function (err, reply, endCallback) {
 		console.log("doneUpdateWindowMetaData");
 		var i,
 			windowData,
@@ -1631,38 +1595,32 @@
 	 */
 	doneDeleteContent = function (err, reply) {
 		console.log("doneDeleteContent", err, reply);
-		var json = reply,
-			contentArea = gui.get_content_area(),
-			searchArea = gui.get_search_area(),
-			previewArea = gui.get_content_preview_area(),
-			deleted = document.getElementById(json.id);
-		manipulator.removeManipulator();
-		if (deleted) {
-			previewArea.removeChild(deleted);
+		var func = function (err, reply) {
+			var json = reply,
+				contentArea = gui.get_content_area(),
+				searchArea = gui.get_search_area(),
+				previewArea = gui.get_content_preview_area(),
+				deleted = document.getElementById(json.id);
+			manipulator.removeManipulator();
+			if (deleted) {
+				previewArea.removeChild(deleted);
+			}
+			if (gui.get_list_elem(json.id)) {
+				contentArea.removeChild(gui.get_list_elem(json.id));
+			}
+			if (gui.get_search_elem(json.id)) {
+				searchArea.removeChild(gui.get_search_elem(json.id));
+			}
+			gui.set_update_content_id("No Content Selected.");
+			lastSelectContentID = null;
 		}
-		if (gui.get_list_elem(json.id)) {
-			contentArea.removeChild(gui.get_list_elem(json.id));
-		}
-		if (gui.get_search_elem(json.id)) {
-			searchArea.removeChild(gui.get_search_elem(json.id));
-		}
-		gui.set_update_content_id("No Content Selected.");
-		lastSelectContentID = null;
-	};
-	
-	/**
-	 * DeleteContentMultiを送信した後の終了コールバック.
-	 * @method doneDeleteContent
-	 * @param {String} err エラー. 無ければnull.
-	 * @param {JSON} reply 返信されたメタデータ
-	 */
-	doneDeleteContentMulti = function (err, reply) {
-		console.log("doneDeleteContentMulti", err, reply);
+
 		var i;
 
 		for (i = 0; i < reply.length; i = i + 1) {
-			doneDeleteContent(err, reply[i]);
+			func(err, reply[i]);
 		}
+
 	};
 
 	/**
@@ -1943,7 +1901,7 @@
 			}
 		}
 		if (targetList.length > 0) {
-			connector.send('DeleteContentMulti', targetList, doneDeleteContentMulti);
+			connector.send('DeleteContent', targetList, doneDeleteContent);
 		}
 	};
 	
@@ -2219,7 +2177,7 @@
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
 				metaData.visible = false;
-				connector.send('DeleteContent', metaData, doneDeleteContent);
+				connector.send('DeleteContent', [metaData], doneDeleteContent);
 			}
 		}
 	};
@@ -2704,25 +2662,7 @@
 	
 	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
-	connector.on('UpdateMetaData', function (metaData) {
-		console.log('UpdateMetaData', metaData.id);
-		var elem,
-			id = metaData.id;
-		if (id) {
-			//console.log(metaData);
-			doneGetMetaData(null, metaData);
-			if (getSelectedID()) {
-				elem = document.getElementById(getSelectedID());
-				if (elem) {
-					manipulator.moveManipulator(elem);
-				}
-			}
-		} else {
-			connector.send('GetMetaData', {type: "all", id: ""}, doneGetMetaData);
-		}
-	});
-
-	connector.on("UpdateMetaDataMulti", function (data) {
+	connector.on("UpdateMetaData", function (data) {
 		var i,
 			elem,
 			id,
@@ -2759,19 +2699,8 @@
 	});
 	
 	// windowが更新されたときにブロードキャストされてくる.
-	connector.on('UpdateWindowMetaData', function (metaData) {
-		console.log('UpdateWindowMetaData', metaData);
-		if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
-			if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
-				changeWindowBorderColor(metaData);
-			}
-		}
-				 
-		doneGetWindowMetaData(null, metaData);
-	});
-	
-	connector.on("UpdateWindowMetaDataMulti", function (data) {
-		console.log("onUpdateWindowMetaDataMulti", data);
+	connector.on("UpdateWindowMetaData", function (data) {
+		console.log("onUpdateWindowMetaData", data);
 		var i,
 			metaData;
 		for (i = 0; i < data.length; ++i) {
@@ -2807,17 +2736,10 @@
 	});
 	
 	// コンテンツが削除されたときにブロードキャストされてくる.
-	connector.on('DeleteContent', function (metaData) {
-		console.log('DeleteContent', metaData);
-		doneDeleteContent(null, metaData);
-	});
-	
-	connector.on("DeleteContentMulti", function (data) {
-		console.log("onDeleteContentMulti", data);
+	connector.on("DeleteContent", function (data) {
+		console.log("onDeleteContent", data);
 		var i;
-		for (i = 0; i < data.length; ++i) {
-			doneDeleteContent(null, data[i]);
-		}
+		doneDeleteContent(null, data);
 	});
 	
 	// ウィンドウが削除されたときにブロードキャストされてくる.

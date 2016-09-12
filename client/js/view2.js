@@ -232,7 +232,7 @@
 		metaData.orgHeight = wh.height;
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 
-		connector.send('UpdateWindowMetaData', windowData, doneAddWindowMetaData);
+		connector.send('UpdateWindowMetaData', [windowData], doneAddWindowMetaData);
 	}
 
 	function updateGroupDict(groupList) {
@@ -365,7 +365,7 @@
 			metaData.posx -= vscreen.getWhole().x;
 			metaData.posy -= vscreen.getWhole().y;
 			
-			connector.send('UpdateMetaData', metaData, function (err, reply) {
+			connector.send('UpdateMetaData', [metaData], function (err, reply) {
 			});
 		}
 	}
@@ -390,7 +390,7 @@
 			}
 			metaData.zIndex = max + 1;
 			
-			connector.send('UpdateMetaData', metaData, function (err, reply) {});
+			connector.send('UpdateMetaData', [metaData], function (err, reply) {});
 		}
 	}
 
@@ -962,16 +962,6 @@
 
 		connector.on("DeleteContent", function (data) {
 			console.log("onDeleteContent", data);
-			var elem = document.getElementById(data.id),
-				previewArea = document.getElementById('preview_area');
-			if (elem) {
-				previewArea.removeChild(elem);
-				delete metaDataDict[data.id];
-			}
-		});
-
-		connector.on("DeleteContentMulti", function (data) {
-			console.log("onDeleteContent", data);
 			var i,
 				elem,
 				previewArea = document.getElementById('preview_area');
@@ -992,13 +982,6 @@
 
 		connector.on("UpdateWindowMetaData", function (data) {
 			console.log("onUpdateWindowMetaData", data);
-			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
-				update('window');
-			}
-		});
-
-		connector.on("UpdateWindowMetaDataMulti", function (data) {
-			console.log("onUpdateWindowMetaDataMulti", data);
 			var i;
 			for (i = 0; i < data.length; ++i) {
 				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
@@ -1055,13 +1038,8 @@
 		});
 
 		connector.on("UpdateMetaData", function (data) {
-			console.log("onUpdateMetaData", data);
-			update('', data.id);
-		});
-
-		connector.on("UpdateMetaDataMulti", function (data) {
 			var i;
-			console.log("UpdateMetaDataMulti", data);
+			console.log("UpdateMetaData", data);
 			for (i = 0; i < data.length; ++i) {
 				update('', data[i].id);
 			}

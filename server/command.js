@@ -21,15 +21,12 @@
 		// using both server and client
 		Update : "Update",
 		UpdateMetaData : "UpdateMetaData",
-		UpdateMetaDataMulti : "UpdateMetaDataMulti",
 		UpdateContent : "UpdateContent",
 		UpdateWindowMetaData : "UpdateWindowMetaData",
-		UpdateWindowMetaDataMulti : "UpdateWindowMetaDataMulti",
 		UpdateMouseCursor : "UpdateMouseCursor",
 		UpdateGroup : "UpdateGroup",
 		ChangeGroupIndex : "ChangeGroupIndex",
 		DeleteContent : "DeleteContent",
-		DeleteContentMulti : "DeleteContentMulti",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		

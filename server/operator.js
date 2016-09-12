@@ -1024,47 +1024,11 @@
 	/**
 	 * コンテンツの削除を行うコマンドを実行する.
 	 * @method commandDeleteContent
-	 * @param {JSON} json メタデータ
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function commandDeleteContent(json, endCallback) {
-		console.log("commandDeleteContent:" + json.id);
-		
-		if (json) {
-			if (json.hasOwnProperty('type') && json.type === 'all') {
-				textClient.keys(metadataPrefix + '*', function (err, replies) {
-					replies.forEach(function (id, index) {
-						console.log(id);
-						textClient.hgetall(id, function (err, data) {
-							if (!err && data) {
-								deleteContent(data, function (meta) {
-									if (endCallback) {
-										endCallback(null, meta);
-									}
-								});
-							}
-						});
-					});
-				});
-			} else {
-				deleteContent(json, function (metaData) {
-					//socket.emit(Command.doneDeleteContent, JSON.stringify({"id" : id}));
-					if (endCallback) {
-						endCallback(null, metaData);
-					}
-				});
-			}
-		}
-	}
-	
-	/**
-	 * コンテンツの削除を行うコマンドを実行する.
-	 * @method commandDeleteContentMulti
 	 * @param {JSON} json メタデータリスト
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandDeleteContentMulti(json, endCallback) {
-		console.log("commandDeleteContentMulti:", json.length);
+	function commandDeleteContent(json, endCallback) {
+		console.log("commandDeleteContent:", json.length);
 		var i,
 			metaData,
 			results = [],
@@ -1077,10 +1041,32 @@
 					}
 				} else {
 					var metaData = json[all_done - 1];
-					deleteContent(metaData, function (meta) {
-						results.push(meta);
-						syncDelete(results, all_done - 1);
-					});
+					if (metaData.hasOwnProperty('type') && metaData.type === 'all') {
+						textClient.keys(metadataPrefix + '*', function (err, replies) {
+							replies.forEach(function (id, index) {
+								console.log(id);
+								textClient.hgetall(id, function (err, data) {
+									if (!err && data) {
+										deleteContent(data, function (meta) {
+											if (endCallback) {
+												endCallback(null, meta);
+											}
+										});
+									}
+								});
+							});
+						});
+						all_done = 0;
+						if (endCallback) {
+							endCallback(null, results);
+							return;
+						}
+					} else {
+						deleteContent(metaData, function (meta) {
+							results.push(meta);
+							syncDelete(results, all_done - 1);
+						});
+					}
 				}
 			}
 
@@ -1110,6 +1096,7 @@
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
+	/*
 	function commandUpdateMetaData(json, endCallback) {
 		//console.log("commandUpdateMetaData:" + json.id);
 		textClient.exists(metadataPrefix + json.id, function (err, doesExists) {
@@ -1122,6 +1109,7 @@
 			}
 		});
 	}
+	*/
 	
 	/**
 	 * メタデータの更新を行うコマンドを実行する.
@@ -1129,8 +1117,8 @@
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateMetaDataMulti(json, endCallback) {
-		console.log("commandUpdateMetaDataMulti:", json.length);
+	function commandUpdateMetaData(json, endCallback) {
+		console.log("commandUpdateMetaData:", json.length);
 		var i,
 			metaData,
 			results = [],
@@ -1138,20 +1126,22 @@
 
 		for (i = 0; i < json.length; i = i + 1) {
 			metaData = json[i];
-			textClient.exists(metadataPrefix + json.id, function (err, doesExists) {
-				if (!err && doesExists === 1) {
-					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-						--all_done;
-						results.push(meta);
-						if (all_done <= 0) {
-							if (endCallback) {
-								endCallback(null, results);
-								return;
+			textClient.exists(metadataPrefix + json[i].id, (function (metaData) {
+				return function (err, doesExists) {
+					if (!err && doesExists === 1) {
+						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+							--all_done;
+							results.push(meta);
+							if (all_done <= 0) {
+								if (endCallback) {
+									endCallback(null, results);
+									return;
+								}
 							}
-						}
-					});
-				}
-			});
+						});
+					}
+				};
+			}(metaData)));
 		}
 	}
 
@@ -1166,7 +1156,7 @@
 		console.log("commandAddWindowMetaData : " + JSON.stringify(json));
 		addWindow(socketid, json, function (windowData) {
 			if (endCallback) {
-				endCallback(null, windowData);
+				endCallback(null, [windowData]);
 			}
 		});
 	}
@@ -1329,11 +1319,13 @@
 	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
+	/*
 	function commandUpdateWindowMetaData(socketid, json, endCallback) {
 		updateWindowMetaData(socketid, json, function (windowData) {
 			endCallback(null, windowData);
 		});
 	}
+	*/
 
 	/**
 	 * ウィンドウの更新を行うコマンドを実行する.
@@ -1342,8 +1334,8 @@
 	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateWindowMetaDataMulti(socketid, json, endCallback) {
-		console.log("commandUpdateWindowMetaDataMulti:", json.length);
+	function commandUpdateWindowMetaData(socketid, json, endCallback) {
+		console.log("commandUpdateWindowMetaData:", json.length);
 		var i,
 			metaData,
 			results = [],
@@ -1416,20 +1408,6 @@
 	}
 
 	/**
-	 * updateMetaDataMulti処理実行後のブロードキャスト用ラッパー.
-	 * @method post_updateMetaDataMulti
-	 */
-	function post_updateMetaDataMulti(ws, io, resultCallback) {
-		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateMetaDataMulti, reply);
-			io_connector.broadcast(io, Command.UpdateMetaDataMulti, reply);
-			if (resultCallback) {
-				resultCallback(err, reply);
-			}
-		};
-	}
-	
-	/**
 	 * updateContent処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateContent
 	 */
@@ -1457,20 +1435,6 @@
 		};
 	}
 
-	/**
-	 * deletecontentMulti処理実行後のブロードキャスト用ラッパー.
-	 * @method post_deleteContent
-	 */
-	function post_deleteContentMulti(ws, io, resultCallback) {
-		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.DeleteContentMulti, reply);
-			io_connector.broadcast(io, Command.DeleteContentMulti, reply);
-			if (resultCallback) {
-				resultCallback(err, reply);
-			}
-		};
-	}
-	
 	/**
 	 * deleteWindow処理実行後のブロードキャスト用ラッパー.
 	 * @method post_deleteWindow
@@ -1513,20 +1477,6 @@
 		};
 	}
 	
-	/**
-	 * updateWindowMetaDataMulti処理実行後のブロードキャスト用ラッパー.
-	 * @method post_updateWindowMetaData
-	 */
-	function post_updateWindowMetaDataMulti(ws, io, resultCallback) {
-		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateWindowMetaDataMulti, reply);
-			io_connector.broadcast(io, Command.UpdateWindowMetaDataMulti, reply);
-			if (resultCallback) {
-				resultCallback(err, reply);
-			}
-		};
-	}
-
 	/**
 	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateMouseCursor
@@ -1571,10 +1521,6 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.UpdateMetaDataMulti, function (data, resultCallback) {
-			commandUpdateMetaDataMulti(data, post_updateMetaDataMulti(ws, io, resultCallback));
-		});
-
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
@@ -1586,11 +1532,7 @@
 		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
-		
-		ws_connector.on(Command.UpdateWindowMetaDataMulti, function (data, resultCallback) {
-			commandUpdateWindowMetaDataMulti(socketid, data, post_updateWindowMetaDataMulti(ws, io, resultCallback));
-		});
-		
+				
 		ws_connector.on(Command.UpdateMouseCursor, (function(socketid){
             return function(data, resultCallback){
                 commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
@@ -1644,10 +1586,6 @@
 			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.DeleteContentMulti, function (data, resultcallback) {
-			commandDeleteContentMulti(data, post_deleteContentMulti(ws, io, resultCallback));
-		});
-		
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
@@ -1694,10 +1632,6 @@
 			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteContentMulti, function (data, resultCallback) {
-			commandDeleteContentMulti(data, post_deleteContentMulti(ws, io, resultCallback));
-		});
-
 		io_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
@@ -1707,10 +1641,6 @@
 
 		io_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
-		});
-
-		io_connector.on(Command.UpdateMetaDataMulti, function (data, resultCallback) {
-			commandUpdateMetaDataMulti(data, post_updateMetaDataMulti(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
@@ -1725,10 +1655,6 @@
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateWindowMetaDataMulti, function (data, resultCallback) {
-			commandUpdateWindowMetaDataMulti(socketid, data, post_updateWindowMetaDataMulti(ws, io, resultCallback));
-		});
-		
 		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
