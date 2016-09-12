@@ -1777,11 +1777,13 @@
 		console.log("doneGetGroupList", reply);
 		var i,
 			groupToElems = { default : [] },
+			groupToMeta = { default : [] },
 			group,
 			elem,
 			onlistID,
 			meta,
 			metaData,
+			changeMetaDataList = [],
 			contentArea,
 			selectedGroup;
 
@@ -1800,10 +1802,13 @@
 							if (metaData.hasOwnProperty('group')) {
 								if (!groupToElems.hasOwnProperty(metaData.group)) {
 									groupToElems[metaData.group] = [];
+									groupToMeta[metaData.group] = [];
 								}
 								groupToElems[metaData.group].push(elem);
+								groupToMeta[metaData.group].push(metaData);
 							} else {
 								groupToElems[defaultGroup].push(elem);
+								groupToMeta[defaultGroup].push(metaData);
 							}
 						}
 					}
@@ -1818,7 +1823,13 @@
 				if (groupToElems.hasOwnProperty(group)) {
 					contentArea = gui.get_content_area_by_group(group);
 					if (!contentArea) {
+						// グループが見つからない場合、defaultグループに変更する
+						for (i in groupToMeta[group]) {
+							groupToMeta[group][i].group = defaultGroup; 
+						} 
+						console.error(groupToMeta[group])
 						contentArea = gui.get_content_area_by_group(defaultGroup);
+						changeMetaDataList = changeMetaDataList.concat(groupToMeta[group]);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
 						contentArea.appendChild(groupToElems[group][i]);
@@ -1828,6 +1839,9 @@
 
 			if (selectedGroup && document.getElementById(selectedGroup)) {
 				document.getElementById(selectedGroup).onclick();
+			}
+			if (changeMetaDataList.length > 0) {
+				updateMetaDataMulti(changeMetaDataList);
 			}
 		}
 	};
