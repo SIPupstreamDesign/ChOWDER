@@ -139,12 +139,6 @@
 			addInputProperty('content_transform_w', 'w', 'px', '0');
 			addInputProperty('content_transform_h', 'h', 'px', '0');
 			addTextInputProperty('content_text', "");
-			addSubmitButton('content_text_submit', "登録", true, function () {
-				var text = document.getElementById('content_text');
-				if (window.content_property.on_metainfo_changed) {
-					window.content_property.on_metainfo_changed(text.value);
-				}
-			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
 			contentW = document.getElementById('content_transform_w');
@@ -165,12 +159,6 @@
 			addInputProperty('whole_split_x', 'split x', '', '1');
 			addInputProperty('whole_split_y', 'split y', '', '1');
 			addTextInputProperty('content_text', "");
-			addSubmitButton('content_text_submit', "登録", true, function () {
-				var text = document.getElementById('content_text');
-				if (window.content_property.on_metainfo_changed) {
-					window.content_property.on_metainfo_changed(text.value);
-				}
-			})
 			wholeW = document.getElementById('whole_width');
 			wholeH = document.getElementById('whole_height');
 			wholeSplitX = document.getElementById('whole_split_x');
@@ -222,12 +210,6 @@
 			addInputProperty('content_transform_h', 'h', 'px', '0');
 			addInputProperty('content_transform_z', 'z', 'index', '0');
 			addTextInputProperty('content_text', "");
-			addSubmitButton('content_text_submit', "登録", false, function () {
-				var text = document.getElementById('content_text');
-				if (window.content_property.on_metainfo_changed) {
-					window.content_property.on_metainfo_changed(text.value);
-				}
-			})
 			contentX = document.getElementById('content_transform_x');
 			contentY = document.getElementById('content_transform_y');
 			contentW = document.getElementById('content_transform_w');
@@ -268,7 +250,12 @@
 	 * Propertyエリアパラメータ消去
 	 * @method clearProperty
 	 */
-	function clear() {
+	function clear(updateText) {
+		var content_text = document.getElementById('content_text');
+		if (content_text && updateText) {
+			window.content_property.on_metainfo_changed(content_text.value);
+		}
+
 		var transx = document.getElementById('content_transform_x'),
 			transy = document.getElementById('content_transform_y'),
 			transw = document.getElementById('content_transform_w'),
@@ -285,7 +272,7 @@
 		if (dlbtn) { dlbtn.style.display = 'none'; }
 	}
 
-	function init(id, group, type, mime) {
+	function init(id, group, type, mime, updateText) {
 		if (!colorselector) {
 			colorselector = new ColorSelector(function(colorvalue){
 				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")"; 

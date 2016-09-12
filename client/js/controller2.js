@@ -347,7 +347,6 @@
                 // console.log(err, reply);
             });
 		} else {
-			//console.log("UpdateMetaData");
 			connector.send('UpdateMetaData', metaData, function (err, reply) {
 				doneUpdateMetaData(err, reply, endCallback);
 			});
@@ -679,7 +678,7 @@
 	 * 現在選択されているContents, もしくはVirtualDisplayを非選択状態にする
 	 * @method unselect
 	 */
-	function unselect(id) {
+	function unselect(id, updateText) {
 		var elem = null,
 			metaData,
 			i;
@@ -709,18 +708,17 @@
 			}
 			elem.style.borderColor = "";
 		}
+		content_property.clear(updateText);
 		selectedIDList.splice(selectedIDList.indexOf(id), 1);
 		manipulator.removeManipulator();
-		content_property.clear();
 	}
 	
-	function unselectAll() {
+	function unselectAll(updateText) {
 		var i;
 		for (i = selectedIDList.length - 1; i >= 0; i = i - 1) {
-			unselect(selectedIDList[i]);
+			unselect(selectedIDList[i], updateText);
 		}
 		dragRect = {};
-		content_property.init("", "", "content");
 	}
 
 	/**
@@ -879,7 +877,7 @@
 
 			// erase last border
 			if (!onCtrlDown) {
-				unselectAll();
+				unselectAll(true);
 				select(id, isContentArea(evt));
 			} else if (selectedIDList.indexOf(id) >= 0) {
 				unselect(id);
@@ -896,7 +894,7 @@
 			dragOffsetTop = evt.clientY - rect.top;
 			dragOffsetLeft = evt.clientX - rect.left;
 
-			if (metaData && metaData.type !== windowType && evt.target.id) {
+			if (metaData  && evt.target.id) {
 				// メインビューのコンテンツ
 				for (i = 0; i < draggingIDList.length; i = i + 1) {
 					elem = document.getElementById(draggingIDList[i]);
@@ -1548,6 +1546,7 @@
 	doneUpdateMetaData = function (err, reply, endCallback) {
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
+		metaDataDict[reply.id] = json;
 		content_property.assign_content_property(json);
 		if (endCallback) {
 			endCallback(null);
@@ -2372,7 +2371,7 @@
 	 * @method on_virtualdisplaysetting_clicked
 	 */
 	gui.on_virtualdisplaysetting_clicked = function () {
-		unselectAll();
+		unselectAll(true);
 		select(wholeWindowListID);
 	};
 
@@ -2579,7 +2578,7 @@
 	/**
 	 * タブが切り替えられた.
 	 */
-	content_box.on_tab_changed = function () {
+	content_box.on_tab_changed_pre = function () {
 		var id;
 		console.log("on_tab_changed", lastSelectContentID);
 		if (isDisplayTabSelected()) {
@@ -2591,12 +2590,12 @@
 			id = lastSelectContentID;
 		}
 		manipulator.removeManipulator();
+		unselectAll(true);
 		if (isDisplayTabSelected()) {
 			content_property.init("", "", "display");
 		} else {
 			content_property.init("", "", "content");
 		}
-		unselectAll();
 		// 以前選択していたものを再選択する.
 		if (id) {
 			select(id, false);
@@ -2778,26 +2777,35 @@
 			changeRect(this.id, parseInt(this.value, 10));
 		};
 
-		content_property.on_metainfo_changed = function (text) {
+		content_property.on_metainfo_changed = function (text, endCallback) {
 			var id = getSelectedID(),
 				metaData;
-			console.log('on_metainfo_changed', text);
-			if (metaDataDict.hasOwnProperty(id)) {
+			
+			if (id && metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
+				metaDataDict[id] = metaData;
 				metaData.user_data_text = JSON.stringify({ text: text });
-				updateMetaData(metaData);
+				updateMetaData(metaData, function (err, reply) {
+					if (endCallback) {
+						endCallback(null);
+					}
+				});
+			} else {
+				if (endCallback) {
+					endCallback(null);
+				}
 			}
 		};
 		
 		gui.on_mousedown_content_preview_area = function () {
 			if (!manipulator.getDraggingManip()) {
-				unselectAll();
+				unselectAll(true);
 			}
 		};
 		
 		gui.on_mousedown_display_preview_area = function () {
 			if (!manipulator.getDraggingManip()) {
-				unselectAll();
+				unselectAll(true);
 			}
 		};
 		
@@ -2836,6 +2844,9 @@
 	}
 	
 	window.onload = init;
+	window.onunload = function () {
+		window.content_property.clear(true);
+	};
 	connector.connect();
 
 }(window.controller_gui, window.content_property, window.content_box, 
