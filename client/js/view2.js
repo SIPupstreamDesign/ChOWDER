@@ -9,6 +9,7 @@
 		timer,
 		windowData = null,
 		metaDataDict = {},
+		groupDict = {},
 		windowType = "window",
 		doneAddWindowMetaData,
 		doneGetWindowMetaData,
@@ -234,6 +235,13 @@
 		connector.send('UpdateWindowMetaData', windowData, doneAddWindowMetaData);
 	}
 
+	function updateGroupDict(groupList) {
+		var i;
+		for (i = 0; i < groupList.length; ++i) {
+			groupDict[groupList[i].name] = groupList[i];
+		}
+	}
+
 	/**
 	 * コンテンツまたはウィンドウの更新(再取得).
 	 * @method update
@@ -250,11 +258,22 @@
 				doneGetWindowMetaData(err, json);
 				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 			});
+			connector.send('GetGroupList', {}, function (err, data) {
+				if (!err && data.hasOwnProperty("grouplist")) {
+					updateGroupDict(data.grouplist);
+				}
+			});
 		} else if (updateType === 'window') {
 			if (windowData !== null) {
 				console.log("update winodow", windowData);
 				connector.send('GetWindowMetaData', { id : windowData.id}, doneGetWindowMetaData);
 			}
+		} else if (updateType === 'group') {
+			connector.send('GetGroupList', {}, function (err, data) {
+				if (!err && data.hasOwnProperty("grouplist")) {
+					updateGroupDict(data.grouplist);
+				}
+			});
 		} else {
 			console.log("update transform");
 			if (targetid) {
@@ -278,6 +297,10 @@
 			elem = document.getElementById(targetid);
 			elem.style.border = "solid";
 			elem.is_dragging = true;
+			
+			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+				elem.style.borderColor = groupDict[metaData.group].color; 
+			}
 		}
 	}
 
@@ -308,7 +331,7 @@
 				elem = document.getElementById(metaDataDict[i].id);
 				if (elem && elem.is_dragging) {
 					elem.is_dragging = false;
-					elem.style.border = "";
+					elem.style.borderWidth = "0px";
 				}
 			}
 		}
@@ -460,6 +483,11 @@
 				memo.style.height = "auto";
 				memo.style.whiteSpace = "pre-line";
 				previewArea.appendChild(memo);
+			}
+			
+			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+				memo.style.borderColor = groupDict[metaData.group].color;
+				memo.style.backgroundColor = groupDict[metaData.group].color; 
 			}
 		}
 	}
@@ -779,6 +807,9 @@
 			mark = "mark",
 			memo = null;
 		if (elem && metaData.hasOwnProperty("id")) {
+			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+				elem.style.borderColor = groupDict[metaData.group].color;
+			}
 			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
 				if (!elem.classList.contains(mark)) {
 					elem.classList.add(mark);
@@ -790,6 +821,10 @@
 			}
 			memo =  document.getElementById("memo:" + metaData.id);
 			if (memo) {
+				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+					memo.style.borderColor = groupDict[metaData.group].color;
+					memo.style.backgroundColor = groupDict[metaData.group].color; 
+				}
 				if (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) {
 					memo.style.display = "block";
 				} else {
@@ -909,6 +944,10 @@
 					connector.send('GetContent', json, doneGetContent);
 				}
 			});
+		});
+
+		connector.on("UpdateGroup", function (err, data) {
+			update("group", "");
 		});
 
 		connector.on("DeleteContent", function (data) {

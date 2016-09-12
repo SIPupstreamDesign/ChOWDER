@@ -85,6 +85,10 @@
 			operator.commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
+		ws_connector.on(Command.GetGroupList, function (data, resultCallback) {
+			operator.commandGetGroupList(resultCallback);
+		});
+		
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
 			operator.commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});

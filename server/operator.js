@@ -218,7 +218,9 @@
 			var index = getGroupIndex(data.grouplist, id);
 			if (index >= 0) {
 				data.grouplist[index] = json;
-				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				textClient.set(groupListPrefix, JSON.stringify(data), function () {
+					endCallback(null, json);
+				});
 				return true;
 			} else {
 				if (endCallback) {
@@ -1807,6 +1809,7 @@
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
+	Operator.prototype.commandGetGroupList = commandGetGroupList;
 	Operator.prototype.commandAddWindowMetaData = commandAddWindowMetaData;
 	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
 	Operator.prototype.commandUpdateMouseCursor = commandUpdateMouseCursor;

@@ -157,7 +157,8 @@ pre {
 }
 
 .mark {
-	border : 6px solid orange;
+	border-width : 6px;
+	border-style: solid;
 }
 
 .memo {
