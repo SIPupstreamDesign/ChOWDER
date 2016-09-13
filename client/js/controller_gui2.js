@@ -497,7 +497,7 @@
 	 */
 	function toggleURLInput() {
 		window.input_dialog.text_input({
-				name : "URLの送信",
+				name : "URLの追加",
 				initialName :  "",
 				okButtonName : "Send",
 			}, function (value) {

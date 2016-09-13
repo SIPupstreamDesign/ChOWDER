@@ -106,14 +106,14 @@ ul, ol {
 
 .burger_menu_submenu_add_content {
 	position : "fixed";
-	bottom : "100px";
-	right : "260px";
-	width : "100px";
-	height : "100px";
-	background : "white";
-	color : "black";
+	bottom : 100px;
+	right : 260px;
+	width : 100px;
+	background : white;
+	color : black;
 	border : 1px solid black;
 	z-index : 10000000;
+	display : none;
 }
 
 .burger_menu_content_submenu:before {
