@@ -760,17 +760,20 @@
 	 */
 	doneAddWindowMetaData = function (err, json) {
 		console.log("doneAddWindowMetaData", json);
+		var i;
 		if (!err) {
-			metaDataDict[json.id] = json;
-			windowData = json;
-			saveCookie();
-			window.parent.document.title = "Display ID:" + json.id;
-			document.getElementById('input_id').value = json.id;
-			document.getElementById('displayid').innerHTML = "ID:" + json.id;
-			updatePreviewAreaVisible(windowData);
-			resizeViewport(windowData);
-			update('all');
+			for (i = 0; i < json.length; i = i + 1) {
+				metaDataDict[json[i].id] = json[i];
+				windowData = json[i];
+				saveCookie();
+				window.parent.document.title = "Display ID:" + json[i].id;
+				document.getElementById('input_id').value = json[i].id;
+				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
+				updatePreviewAreaVisible(windowData);
+				resizeViewport(windowData);
+			}
 		}
+		update('all');
 	};
 
 	/**
