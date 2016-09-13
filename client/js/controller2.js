@@ -2365,7 +2365,6 @@
 				
 		connector.send('AddGroup', { name : groupName, color : groupColor }, function (err, reply) {
 			console.log("AddGroup done", err, reply);
-			updateGroupList();
 		});
 	};
 
@@ -2381,7 +2380,6 @@
 			if (item.id === groupID) {
 				connector.send('DeleteGroup', item, function (err, reply) {
 					console.log("DeleteGroup done", err, reply);
-					updateGroupList();
 				});
 				return;
 			}
@@ -2425,7 +2423,6 @@
 					};
 					connector.send('ChangeGroupIndex', target, function (err, reply) {
 						console.log("ChangeGroupIndex done", err, reply);
-						updateGroupList();
 					});
 					return;
 				}
@@ -2450,7 +2447,6 @@
 					};
 					connector.send('ChangeGroupIndex', target, function (err, reply) {
 						console.log("ChangeGroupIndex done", err, reply);
-						updateGroupList();
 					});
 					return;
 				}
@@ -2471,7 +2467,6 @@
 				item.name = groupName;
 				connector.send('UpdateGroup', item, function (err, reply) {
 					console.log("UpdateGroup done", err, reply);
-					updateGroupList();
 				});
 			}
 		}
@@ -2490,7 +2485,6 @@
 				item.color = color;
 				connector.send('UpdateGroup', item, function (err, reply) {
 					console.log("UpdateGroup done", err, reply);
-					updateGroupList();
 				});
 				return;
 			}
@@ -2726,6 +2720,11 @@
 		}
 	});
 
+	// グループが更新されたときにブロードキャストされてくる.
+	connector.on('UpdateGroup', function (metaData) {
+		updateGroupList();
+	});
+
 	// すべての更新が必要なときにブロードキャストされてくる.
 	connector.on('Update', function () {
 		console.log("on update");
@@ -2759,6 +2758,7 @@
 		console.log("DeleteWindowMetaData", metaData);
 		doneDeleteWindowMetaData(null, metaData);
 	});
+
 	///-------------------------------------------------------------------------------------------------------
 	/**
 	 * コントローラ初期化

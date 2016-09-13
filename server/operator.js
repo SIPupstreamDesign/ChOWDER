@@ -1552,11 +1552,11 @@
 		});
 		
 		ws_connector.on(Command.AddGroup, function (data, resultCallback) {
-			commandAddGroup(data, resultCallback);
+			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.DeleteGroup, function (data, resultCallback) {
-			commandDeleteGroup(data, resultCallback);
+			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.UpdateGroup, function (data, resultCallback) {
@@ -1564,7 +1564,7 @@
 		});
 		
 		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
-			commandChangeGroupIndex(data, resultCallback);
+			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
@@ -1678,11 +1678,11 @@
 		});
 
 		io_connector.on(Command.AddGroup, function (data, resultCallback) {
-			commandAddGroup(data, resultCallback);
+			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.DeleteGroup, function (data, resultCallback) {
-			commandDeleteGroup(data, resultCallback);
+			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateGroup, function (data, resultCallback) {
@@ -1690,7 +1690,7 @@
 		});
 
 		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
-			commandChangeGroupIndex(data, resultCallback);
+			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
