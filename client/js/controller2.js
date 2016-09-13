@@ -2399,10 +2399,17 @@
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
 			metaData.group = groupName;
-			
-			updateMetaData(metaData, function (err, data) {
-				updateGroupList();
-			});
+
+			for (i = 0; i < groupList.length; i = i + 1) {
+				if (groupList[i].name === groupName) {
+					updateMetaData(metaData, (function (group) {
+						return function (err, data) {
+							connector.send('UpdateGroup', group, function (err, reply) {});
+						};
+					}(groupList[i])));
+					break;
+				}
+			}
 		}
 	};
 
