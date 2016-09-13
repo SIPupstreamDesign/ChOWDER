@@ -2869,7 +2869,24 @@
 		};
 		
 		gui.on_close_item = function () {
-			closeFunc();
+			var i,
+				id,
+				metaData,
+				elem,
+				metaDataList = [];
+
+			manipulator.removeManipulator();
+			for (i = 0; i < selectedIDList.length; i = i + 1) {
+				id = selectedIDList[i]; 
+				if (metaDataDict.hasOwnProperty(id)) {
+					metaData = metaDataDict[id];
+					metaData.visible = false;
+					metaDataList.push(metaData);
+				}
+			}
+			if (metaDataList.length > 0) {
+				updateMetaDataMulti(metaDataList);
+			}
 		};
 		
 		gui.init();
