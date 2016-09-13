@@ -90,7 +90,18 @@
 </div>
 
 	<div id="bottom_burger_menu_display"></div>
-	<div id="bottom_burger_menu_content"></div>
+	<div id="bottom_burger_menu_content">
+		<ul class="burger_menu_submenu" id="burger_menu_submenu">
+			<!--li class="burger_menu_submenu_item" id="burger_menu_submenu_item1">グループ1</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_submenu_item2">グループ2</li-->
+		</ul>
+		<ul class="burger_menu_submenu_add_content" id="burger_menu_submenu_add_content">
+			<li class="burger_menu_submenu_item" id="burger_menu_add_image">画像ファイル</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_text">テキスト</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_text_file">テキストファイル</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_url">URL</li>
+		</ul>
+	</div>
 	<div id="bottom_burger_menu_search"></div>
 	
 	<ul id="context_menu" class="context_menu" style="display:none">
@@ -100,6 +111,9 @@
 		<li class="context_menu_item" id="context_menu_change_group">グループ変更</li>
 		<li class="context_menu_item" id="context_menu_change_image">画像差し替え</li>
 		<li class="context_menu_item" id="context_menu_delete">非表示</li>
+		<li class="context_menu_item" id="context_menu_delete_from_redis">削除</li>
+		<!--li class="context_menu_item" id="context_menu_select_all">全て選択</li>
+		<li class="context_menu_item" id="context_menu_select_group">グループ内全て選択</li-->
 
 		<ul class="context_menu_add_content_submenu" id="context_menu_add_content_submenu">
 			<li class="context_menu_add_content_item" id="context_menu_add_image">画像ファイル</li>

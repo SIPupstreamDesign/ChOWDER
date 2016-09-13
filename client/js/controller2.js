@@ -2392,22 +2392,52 @@
 	 */
 	gui.on_group_change_clicked = function (groupName) {
 		var i,
-			item,
-			id = getSelectedID(),
+			k,
+			id,
+			targetMetaDataList = [],
+			group,
 			metaData;
-		
-		if (metaDataDict.hasOwnProperty(id)) {
-			metaData = metaDataDict[id];
-			metaData.group = groupName;
 
-			for (i = 0; i < groupList.length; i = i + 1) {
-				if (groupList[i].name === groupName) {
-					updateMetaData(metaData, (function (group) {
-						return function (err, data) {
-							connector.send('UpdateGroup', group, function (err, reply) {});
-						};
-					}(groupList[i])));
-					break;
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				metaData.group = groupName;
+
+				for (k = 0; k < groupList.length; k = k + 1) {
+					if (groupList[k].name === groupName) {
+						targetMetaDataList.push(metaData);
+						group = groupList[k];
+						break;
+					}
+				}
+			}
+		}
+
+		if (targetMetaDataList.length > 0) {
+			updateMetaDataMulti(targetMetaDataList, (function (group) {
+				return function (err, data) {
+					connector.send('UpdateGroup', group, function (err, reply) {});
+					//updateGroupList();
+				};
+			}(group)));
+		}
+	};
+
+	gui.on_select_contents_clicked = function (onlyCurrentGroup) {
+		var i,
+			id,
+			currentGroup = gui.get_current_group_name();
+
+		unselectAll(true);
+		for (id in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				if (onlyCurrentGroup) {
+					if (metaDataDict[id].group === currentGroup) {
+						select(id, true);
+					}
+				} else {
+					select(id, true);
 				}
 			}
 		}
@@ -2729,6 +2759,7 @@
 
 	// グループが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateGroup', function (metaData) {
+		console.log("onUpdateGroup")
 		updateGroupList();
 	});
 

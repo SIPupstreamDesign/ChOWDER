@@ -30,7 +30,7 @@
 	color : black;
 	position : relative;
 	left : 200px;
-	top : -40px;
+	top : -120px;
 }
 
 .context_menu_change_group_submenu {
@@ -53,7 +53,7 @@
 	color : black;
 	position : relative;
 	left : 200px;
-	top : -60px;
+	top : -160px;
 }
 
 .context_menu_add_content_item:hover {

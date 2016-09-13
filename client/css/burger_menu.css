@@ -6,13 +6,13 @@ ul, ol {
 .burger_menu_contents {
 	background-color: white;
 	box-sizing: border-box;
-	padding: 5px 5px;
 	position: fixed;
 	right: 12px;
 	bottom: 41px;
 	z-index: 1000001;
 	border : 1px solid black;
 	display : none;
+	width : 270px;
 }
 
 .burger_menu_background {
@@ -72,6 +72,7 @@ ul, ol {
 	background : white;
 	color : black;
 	font-size : 14px;
+	padding: 1px 5px;
 }
 
 .burger_menu_content:hover {
@@ -89,4 +90,46 @@ ul, ol {
 
 #bottom_burger_menu_search {
 	display : none;
+}
+
+.burger_menu_submenu {
+	position : "fixed";
+	bottom : "100px";
+	right : "260px";
+	width : "100px";
+	height : "100px";
+	background : "white";
+	color : "black";
+	border : 1px solid black;
+	z-index : 10000000;
+}
+
+.burger_menu_submenu_add_content {
+	position : "fixed";
+	bottom : "100px";
+	right : "260px";
+	width : "100px";
+	height : "100px";
+	background : "white";
+	color : "black";
+	border : 1px solid black;
+	z-index : 10000000;
+}
+
+.burger_menu_content_submenu:before {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin: 0 5px 0 5px;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	-webkit-transform: rotate(-135deg);
+	-ms-transform: rotate(-135deg);
+	transform: rotate(-135deg);
+}
+
+.burger_menu_submenu_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
 }

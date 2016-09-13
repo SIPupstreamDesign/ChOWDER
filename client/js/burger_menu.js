@@ -66,7 +66,7 @@
 				}
 				label_background.onclick = label_icon.onclick;
 		}
-
+		this.toggle = label_click_func;
 		label_icon.onclick = label_click_func;
 
 		function createBurgerMenu(setting, ul, n) {
@@ -86,8 +86,29 @@
 				if (value.hasOwnProperty('func')) {
 					li.onclick = (function (value) {
 						return function (evt) {
-							value.func(evt);
-							label_click_func(evt);
+							var result = value.func(evt);
+							if (result === undefined) {
+								label_click_func(evt);
+							}
+						};
+					}(value));
+				}
+				if (value.hasOwnProperty('submenu')) {
+					if (value.submenu) {
+						li.classList.add("burger_menu_content_submenu");
+					}
+				}
+				if (value.hasOwnProperty('mouseoverfunc')) {
+					li.onmouseover = (function (value) {
+						return function (evt) {
+							value.mouseoverfunc(evt);
+						};
+					}(value));
+				}
+				if (value.hasOwnProperty('mouseoutfunc')) {
+					li.onmouseout = (function (value) {
+						return function (evt) {
+							value.mouseoutfunc(evt);
 						};
 					}(value));
 				}

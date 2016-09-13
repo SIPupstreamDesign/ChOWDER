@@ -33,6 +33,7 @@
 	function initContextMenu() {
 		var menu = document.getElementById('context_menu'),
 			delete_button = document.getElementById('context_menu_delete'),
+			delete_from_redis = document.getElementById('context_menu_delete_from_redis'),
 			add_content_button = document.getElementById('context_menu_add_content'),
 			move_front_button = document.getElementById("context_menu_move_front"),
 			move_back_button = document.getElementById("context_menu_move_back"),
@@ -42,6 +43,7 @@
 			add_url_button = document.getElementById('context_menu_add_url'),
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
+			change_image_button = document.getElementById('context_menu_change_image'),
 			add_content_submenu = document.getElementById("context_menu_add_content_submenu"),
 			on_change_group = false,
 			on_change_group_item = false,
@@ -50,6 +52,11 @@
 
 		delete_button.onclick = function (evt) {
 			gui.on_close_item();
+			menu.style.display = "none";
+		};
+
+		delete_from_redis.onclick = function (evt) {
+			gui.on_contentdeletebutton_clicked(evt); 
 			menu.style.display = "none";
 		};
 
@@ -71,6 +78,11 @@
 
 		add_text_button.onmousedown = function (evt) {
 			toggleTextInput();
+			menu.style.display = "none";
+		};
+
+		change_image_button.onmousedown = function (evt) {
+			document.getElementById('update_image_input').click();
 			menu.style.display = "none";
 		};
 
@@ -165,10 +177,35 @@
 				item = document.createElement('li');
 				item.className = "context_menu_change_group_item";
 				item.innerHTML = gname;
+				item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
 				container.appendChild(item);
 				item.onmousedown = (function (gname) {
 					return function (evt) {
 						window.controller_gui.on_group_change_clicked(gname);
+					};
+				}(gname));
+			}
+		}
+	}
+	
+	function updateBurgerMenu() {
+		var groupToElems = groupBox.get_tabgroup_to_elems(),
+			container = document.getElementById('burger_menu_submenu'),
+			item,
+			gname;
+		container.innerHTML = "";
+
+		for (gname in groupToElems) {
+			if (groupToElems.hasOwnProperty(gname)) {
+				item = document.createElement('li');
+				item.className = "burger_menu_submenu_item";
+				item.innerHTML = gname;
+				container.appendChild(item);
+				item.onmousedown = (function (gname) {
+					return function (evt) {
+						window.controller_gui.on_group_change_clicked(gname);
+						toggleBurgerSubmenu(false);
+						contentMenu.toggle();
 					};
 				}(gname));
 			}
@@ -422,6 +459,8 @@
 
 		// コンテキストメニューを刷新
 		updateContextMenu();
+		// バーガーメニューを刷新
+		updateBurgerMenu();
 
 		searchBox = window.search_box.init(document.getElementById('search_tab_box'), searchSetting);
 		initSearchBoxEvents(searchBox);
@@ -431,6 +470,7 @@
 	 * テキスト入力ダイアログの表示をトグル
 	 */
 	function toggleTextInput() {
+		console.error("toggleTextInput")
 		var background = document.getElementById("popup_background"),
 			input = document.getElementById("text_input_dialog"),
 			textInput = document.getElementById('text_input');
@@ -464,6 +504,73 @@
 			}, function (value) {
 				gui.on_urlsendbuton_clicked(value);
 			});
+	}
+
+	/**
+	 * バーガーメニューのサブメニュー
+	 */
+	function toggleBurgerSubmenu(show, bottom) {
+		var container = document.getElementById('burger_menu_submenu');
+		if (show) {
+			container.style.display = "block";
+			container.style.position = "fixed";
+			container.style.bottom = bottom;
+			container.style.right = "280px";
+			container.style.width = "150px";
+			container.style.backgroundColor = "white";
+			container.style.color = "black";
+		} else {
+			container.style.display = "none";
+		}
+	}
+
+	/**
+	 * バーガーメニューのコンテンツ追加サブメニュー
+	 */
+	function toggleBurgerSubmenuAddContent(show, bottom) {
+		var container = document.getElementById('burger_menu_submenu_add_content');
+		if (show) {
+			container.style.display = "block";
+			container.style.position = "fixed";
+			container.style.bottom = bottom;
+			container.style.right = "280px";
+			container.style.width = "150px";
+			container.style.backgroundColor = "white";
+			container.style.color = "black";
+		} else {
+			container.style.display = "none";
+		}
+	}
+
+	function initBurgerMenuContent() {
+		var add_image_button = document.getElementById('burger_menu_add_image'),
+			add_text_button = document.getElementById('burger_menu_add_text'),
+			add_text_file_button = document.getElementById('burger_menu_add_text_file'),
+			add_url_button = document.getElementById('burger_menu_add_url');
+		
+		add_image_button.onmousedown = function (evt) {
+			toggleBurgerSubmenuAddContent(false);
+			contentMenu.toggle();
+			document.getElementById('image_file_input').click();
+		};
+
+		add_text_file_button.onmousedown = function (evt) {
+			toggleBurgerSubmenuAddContent(false);
+			contentMenu.toggle();
+		 	document.getElementById('text_file_input').click();	
+		};
+
+		add_url_button.onmousedown = function (evt) {
+			toggleBurgerSubmenuAddContent(false);
+			contentMenu.toggle();
+			toggleURLInput();
+		};
+
+		add_text_button.onmousedown = function (evt) {
+			toggleBurgerSubmenuAddContent(false);
+			contentMenu.toggle();
+			toggleTextInput();
+		};
 	}
 
 	/**
@@ -624,29 +731,108 @@
 					}]
 			});
 
+		initBurgerMenuContent();
+
 		// 下部バーガーメニューの初期化
+		var on_burger_submenu = false,
+			on_group_change = false,
+			on_burger_submenu_add_content = false,
+			on_add_content = false;
 		contentMenu = window.burger_menu.init(
 			document.getElementById('bottom_burger_menu_content'),
 			{
 				menu : [{
-						選択コンテンツのグループ移動 : {
-							func : function (evt) { alert("未実装"); }
+						最前面に移動 : {
+							func : function (evt) { gui.on_content_index_changed(true); }
 						}
 					},{
-						グループ内コンテンツのグループ移動 : {
-							func : function (evt) { alert("未実装"); }
+						最背面に移動 : {
+							func : function (evt) { gui.on_content_index_changed(false); }
 						}
 					},{
-						選択コンテンツを削除 : {
+						コンテンツ追加: {
+							submenu: true,
+							mouseoverfunc : function (evt) {
+								toggleBurgerSubmenuAddContent(true, "170px"); 
+								on_add_content = true;
+							},
+							mouseoutfunc : function (evt) {
+								on_add_content = false;
+							}
+						}
+					},{
+						グループ変更 : {
+							submenu: true,
+							mouseoverfunc : function (evt) {
+								toggleBurgerSubmenu(true, "150px"); 
+								on_group_change = true;
+							},
+							mouseoutfunc : function (evt) {
+								on_group_change = false;
+							}
+						}
+					},{
+						画像差し替え : {
+							func : function (evt) {
+								document.getElementById('update_image_input').click()
+							}
+						}
+					},{
+						非表示 : {
+							func : function (evt) { gui.on_close_item(); }
+						}
+					},{
+						削除 : {
 							func : function (evt) { gui.on_contentdeletebutton_clicked(evt); }
 						}
-					},
+					},{
+						全て選択 : {
+							func : function (evt) { gui.on_select_contents_clicked(false); }
+						}
+					},{
+						グループ内全て選択 : {
+							func : function (evt) { gui.on_select_contents_clicked(true); }
+						}
+					}
+										/*
 					{
-						グループ内のコンテンツを全て削除 : {
+						グループ内一括削除 : {
 							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
 						}
-					}]
+					}
+					{
+							submenu: true,
+							mouseoverfunc : function (evt) {
+								toggleBurgerSubmenu(true, "87px"); 
+								on_group_change_all = true;
+							},
+							mouseoutfunc : function (evt) {
+								on_group_change_all = false; 
+							}
+						}*/]
 			});
+
+		// サブメニュー用
+		document.getElementById('burger_menu_submenu').onmouseover = function (evt) {
+			on_burger_submenu = true;
+		};
+		document.getElementById('burger_menu_submenu').onmouseout = function (evt) {
+			on_burger_submenu = false;
+		};
+		document.getElementById('burger_menu_submenu_add_content').onmouseover = function (evt) {
+			on_burger_submenu_add_content = true;
+		};
+		document.getElementById('burger_menu_submenu_add_content').onmouseout = function (evt) {
+			on_burger_submenu_add_content = false;
+		};
+		document.getElementById('bottom_burger_menu_content').onmousemove = function (evt) {
+			if (!on_burger_submenu && !on_group_change) {
+				toggleBurgerSubmenu(false);
+			}
+			if (!on_burger_submenu_add_content && !on_add_content) {
+				toggleBurgerSubmenuAddContent(false);
+			}
+		};
 
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
 			gui.on_mousedown_content_preview_area();
@@ -670,6 +856,7 @@
 	window.controller_gui.on_textsendbutton_clicked = null;
 	//window.controller_gui.on_duplicatebutton_clicked = null;
 	window.controller_gui.on_contentdeletebutton_clicked = null;
+	window.controller_gui.on_select_contents_clicked = null;
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;
 	window.controller_gui.on_deleteallcontent_clicked = null;
