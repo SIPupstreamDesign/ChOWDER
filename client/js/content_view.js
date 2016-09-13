@@ -40,7 +40,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	function importContentToView(metaDataDict, metaData, contentData) {
+	function importContentToView(metaDataDict, metaData, contentData, groupDict) {
 		var previewArea = gui.get_content_preview_area(),
 			id,
 			contentElem,
@@ -86,7 +86,7 @@
 				contentElem.innerHTML = contentData;
 				contentElem.style.color = textColor;
 				contentElem.style.overflow = "visible"; // Show all text
-				vscreen_util.assignMetaData(contentElem, metaData, true);
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -107,7 +107,7 @@
 							console.log("naturalHeight:" + contentElem.naturalHeight);
 							metaData.height = contentElem.naturalHeight;
 						}
-						vscreen_util.assignMetaData(contentElem, metaData, true);
+						vscreen_util.assignMetaData(contentElem, metaData, true,groupDict);
 					};
 				}
 			}
@@ -131,8 +131,8 @@
 	
 	
 	window.content_view = {};
-	window.content_view.import_content = function (metaDataDict, metaData, contentData) {
-		importContentToView(metaDataDict, metaData, contentData);
+	window.content_view.import_content = function (metaDataDict, metaData, contentData, groupDict) {
+		importContentToView(metaDataDict, metaData, contentData, groupDict);
 	};
 	window.content_view.on_setup_content = null;
 	window.content_view.on_copy_content = null;

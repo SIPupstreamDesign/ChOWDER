@@ -559,7 +559,7 @@
 					elem.src = URL.createObjectURL(blob);
 				}
 			}
-			vscreen_util.assignMetaData(elem, metaData, false);
+			vscreen_util.assignMetaData(elem, metaData, false, groupDict);
 			
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {
@@ -644,7 +644,7 @@
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				if (document.getElementById(id)) {
-					vscreen_util.assignMetaData(document.getElementById(id), metaDataDict[id], false);
+					vscreen_util.assignMetaData(document.getElementById(id), metaDataDict[id], false, groupDict);
 				}
 			}
 		}
@@ -721,7 +721,7 @@
 		console.log("updatePreviewAreaVisible", previewArea, elem);
 		if (previewArea) {
 			if (isVisible(json)) {
-				vscreen_util.assignMetaData(previewArea, json, false);
+				vscreen_util.assignMetaData(previewArea, json, false, groupDict);
 				previewArea.style.display = "block";
 			} else {
 				previewArea.style.display = "none";
@@ -729,7 +729,7 @@
 		}
 		if (elem) {
 			if (isVisible(json)) {
-				vscreen_util.assignMetaData(elem, json, false);
+				vscreen_util.assignMetaData(elem, json, false, groupDict);
 				elem.style.display = "block";
 			} else {
 				elem.style.display = "none";
@@ -885,7 +885,7 @@
 			} else {
 				if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
 					if (isVisible(json)) {
-						vscreen_util.assignMetaData(elem, json, false);
+						vscreen_util.assignMetaData(elem, json, false, groupDict);
 						elem.style.display = "block";
 					} else {
 						elem.style.display = "none";
@@ -901,7 +901,7 @@
 						});
 					}
 					elem = document.getElementById(json.id);
-					vscreen_util.assignMetaData(elem, json, false);
+					vscreen_util.assignMetaData(elem, json, false, groupDict);
 				}
 				if (isWindow) {
 					resizeViewport(windowData);

@@ -119,8 +119,9 @@
 	 * @param {Element} elem エレメント
 	 * @param {Object} metaData メタデータ
 	 * @param {Object} useOrg 初期座標系を使うかどうか
+	 * @param {Object} groupDict グループ辞書
 	 */
-	function assignMetaData(elem, metaData, useOrg) {
+	function assignMetaData(elem, metaData, useOrg, groupDict) {
 		var rect;
 		if (useOrg) {
 			rect = vscreen.transformOrg(toIntRect(metaData));
@@ -137,6 +138,15 @@
 			if (isVisible(metaData)) {
 				//console.log("isvisible");
 				elem.style.display = "block";
+				if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
+					if (metaData.group === "default") {
+						elem.style.borderColor = "rgb(54,187,68)";
+					} else {
+						elem.style.borderColor = groupDict[metaData.group].color;
+					}
+				} else {
+					elem.style.borderColor = "rgb(54,187,68)";
+				}
 			} else {
 				console.log("not isvisible");
 				elem.style.display = "none";

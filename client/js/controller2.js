@@ -16,6 +16,7 @@
 		mouseDownPos = [],
 		metaDataDict = {},
 		groupList = [],
+		groupDict = {},
 		windowType = "window",
 		wholeWindowID = "whole_window",
 		wholeWindowListID = "onlist:whole_window",
@@ -535,7 +536,7 @@
 					metaData.posy = (lasty - ydiff);
 				}
 				vscreen_util.transInv(metaData);
-				vscreen_util.assignMetaData(elem, metaData, true);
+				vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 				metaDataDict[metaData.id] = metaData;
 				updateMetaData(metaData);
 			}
@@ -776,7 +777,7 @@
 					document.getElementById('content_transform_w').value = metaData.width;
 					updateMetaData(metaData);
 				}
-				vscreen_util.assignMetaData(elem, metaData, true);
+				vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 			}
 			manipulator.removeManipulator();
 		}
@@ -1081,7 +1082,7 @@
 			}
 
 			vscreen_util.transPosInv(metaData);
-			vscreen_util.assignMetaData(elem, metaData, true);
+			vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
@@ -1139,7 +1140,7 @@
 					//console.log("not onContentArea");
 					metaData.visible = true;
 					if (isFreeMode()) {
-						vscreen_util.assignMetaData(elem, metaData, true);
+						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 						updateMetaData(metaData);
 					} else if (isDisplayMode()) {
 						px = rect.left + dragOffsetLeft;
@@ -1149,7 +1150,7 @@
 						if (screen) {
 							snapToScreen(elem, metaData, screen);
 						}
-						vscreen_util.assignMetaData(elem, metaData, true);
+						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 						updateMetaData(metaData);
 						manipulator.moveManipulator(elem);
 					} else {
@@ -1162,7 +1163,7 @@
 						if (splitWhole) {
 							snapToSplitWhole(elem, metaData, splitWhole);
 						}
-						vscreen_util.assignMetaData(elem, metaData, true);
+						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 						updateMetaData(metaData);
 						manipulator.moveManipulator(elem);
 					}
@@ -1260,7 +1261,7 @@
 				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 			if (screenElem) {
-				vscreen_util.assignMetaData(screenElem, windowData, true);
+				vscreen_util.assignMetaData(screenElem, windowData, true, groupDict);
 			}
 		} else {
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
@@ -1274,7 +1275,7 @@
 						if (metaData.type !== windowType) {
 							elem = document.getElementById(metaData.id);
 							if (elem) {
-								vscreen_util.assignMetaData(elem, metaData, true);
+								vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							}
 						}
 					}
@@ -1311,7 +1312,7 @@
 							}
 						}
 						if (screenElem) {
-							vscreen_util.assignMetaData(screenElem, metaData, true);
+							vscreen_util.assignMetaData(screenElem, metaData, true, groupDict);
 							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
 						}
 					}
@@ -1362,7 +1363,7 @@
 							toElem.src = elem.src;
 						}
 						if (!isListContent) {
-							vscreen_util.assignMetaData(toElem, metaData, true);
+							vscreen_util.assignMetaData(toElem, metaData, true, groupDict);
 						}
 					}
 					if (elem && fromElem) {
@@ -1384,8 +1385,8 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContent(metaData, contentData) {
-		window.content_list.import_content(metaDataDict, metaData, contentData);
-		window.content_view.import_content(metaDataDict, metaData, contentData);
+		window.content_list.import_content(metaDataDict, metaData, contentData, groupDict);
+		window.content_view.import_content(metaDataDict, metaData, contentData, groupDict);
 	}
 	
 	function changeWindowBorderColor(windowData) {
@@ -1504,7 +1505,7 @@
 		elem = document.getElementById(metaData.id);
 		if (elem) {
 			if (isVisible(json)) {
-				vscreen_util.assignMetaData(elem, json, true);
+				vscreen_util.assignMetaData(elem, json, true, groupDict);
 				elem.style.display = "block";
 			} else {
 				elem.style.display = "none";
@@ -1792,6 +1793,10 @@
 
 			gui.set_group_list(reply.grouplist);
 			groupList = reply.grouplist;
+			groupDict = {};
+			for (i = 0; i < groupList.length; i = i + 1) {
+				groupDict[groupList[i].name] = groupList[i];
+			} 
 
 			// 元々あったリストエレメントを全部つけなおす
 			for (group in groupToElems) {
