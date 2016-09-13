@@ -1070,8 +1070,12 @@
 			}
 			metaData = metaDataDict[draggingID];
 
-			metaData.posx = evt.clientX - dragOffsetLeft + dragRect[draggingID].left;
-			metaData.posy = evt.clientY - dragOffsetTop + dragRect[draggingID].top;
+			if (dragRect.hasOwnProperty(draggingID)) {
+				metaData.posx = evt.clientX - dragOffsetLeft + dragRect[draggingID].left;
+				metaData.posy = evt.clientY - dragOffsetTop + dragRect[draggingID].top;
+			} else {
+				return;
+			}
 
 			vscreen_util.transPosInv(metaData);
 			vscreen_util.assignMetaData(elem, metaData, true);
