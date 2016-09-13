@@ -1915,7 +1915,7 @@
 				gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
 				setTimeout(function () {
 					var memo  = document.getElementById('_manip_menu_1');
-					if (memo.classList.contains('active')) {
+					if (memo && memo.classList.contains('active')) {
 						memo.classList.remove('active');
 					}
 				}, 8 * 1000);
