@@ -2159,15 +2159,21 @@
 	 * @method on_contentdeletebutton_clicked
 	 */
 	gui.on_contentdeletebutton_clicked = function (evt) {
-		var id = getSelectedID(),
-			metaData;
+		var i,
+			id,
+			metaData,
+			metaDataList = [];
 		
-		if (id) {
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
 				metaData.visible = false;
-				connector.send('DeleteContent', [metaData], doneDeleteContent);
+				metaDataList.push(metaData);
 			}
+		}
+		if (metaDataList.length > 0) {
+			connector.send('DeleteContent', metaDataList, doneDeleteContent);
 		}
 	};
 
