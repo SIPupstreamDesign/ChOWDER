@@ -470,7 +470,6 @@
 	 * テキスト入力ダイアログの表示をトグル
 	 */
 	function toggleTextInput() {
-		console.error("toggleTextInput")
 		var background = document.getElementById("popup_background"),
 			input = document.getElementById("text_input_dialog"),
 			textInput = document.getElementById('text_input');
