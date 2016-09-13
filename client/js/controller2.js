@@ -1545,7 +1545,8 @@
 		var json = reply;
 
 		if (reply.length === 1) {
-			metaDataDict[reply.id] = json;
+			json = reply[0];
+			metaDataDict[json.id] = json;
 			if ( (isDisplayTabSelected() && json.type === windowType) ||
 				(!isDisplayTabSelected() && json.type !== windowType)) {
 					content_property.assign_content_property(json);
