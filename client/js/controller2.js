@@ -830,82 +830,85 @@
 				topElement = null,
 				e;
 			
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
-				if (metaData.type !== windowType) {
-					otherPreviewArea = gui.get_display_preview_area();
+			if (evt.button === 0) {
+				
+				if (metaDataDict.hasOwnProperty(id)) {
+					metaData = metaDataDict[id];
+					if (metaData.type !== windowType) {
+						otherPreviewArea = gui.get_display_preview_area();
+					}
 				}
-			}
 
-			
-			if (metaData) {
-				if (id === wholeWindowID ||
-					(!isDisplayTabSelected() && metaData.type === windowType) ||
-					(isDisplayTabSelected() && metaData.type !== windowType)) {
-					console.log("setupContent", metaData);
-					childs = otherPreviewArea.childNodes;
+				
+				if (metaData) {
+					if (id === wholeWindowID ||
+						(!isDisplayTabSelected() && metaData.type === windowType) ||
+						(isDisplayTabSelected() && metaData.type !== windowType)) {
+						console.log("setupContent", metaData);
+						childs = otherPreviewArea.childNodes;
 
-					for (i = 0; i < childs.length; i = i + 1) {
-						if (childs[i].onmousedown) {
-							if (!topElement || topElement.zIndex < childs[i].zIndex) {
-								if (isInsideElement(childs[i], evt.clientX, evt.clientY)) {
-									topElement = childs[i];
+						for (i = 0; i < childs.length; i = i + 1) {
+							if (childs[i].onmousedown) {
+								if (!topElement || topElement.zIndex < childs[i].zIndex) {
+									if (isInsideElement(childs[i], evt.clientX, evt.clientY)) {
+										topElement = childs[i];
+									}
 								}
 							}
 						}
+						if (topElement) {
+							//console.log("left", elem.offsetLeft - topElement.offsetLeft);
+							//console.log("top", elem.offsetTop - topElement.offsetTop);
+							topElement.onmousedown(evt);
+							dragOffsetTop = evt.clientY - topElement.getBoundingClientRect().top;
+							dragOffsetLeft = evt.clientX - topElement.getBoundingClientRect().left;
+						}
+						return;
 					}
-					if (topElement) {
-						//console.log("left", elem.offsetLeft - topElement.offsetLeft);
-						//console.log("top", elem.offsetTop - topElement.offsetTop);
-						topElement.onmousedown(evt);
-						dragOffsetTop = evt.clientY - topElement.getBoundingClientRect().top;
-						dragOffsetLeft = evt.clientX - topElement.getBoundingClientRect().left;
-					}
-					return;
 				}
-			}
 
-			// erase last border
-			if (!onCtrlDown) {
-				unselectAll(true);
-				select(id, isContentArea(evt));
-			} else if (selectedIDList.indexOf(id) >= 0) {
-				unselect(id);
-			} else {
-				select(id, isContentArea(evt));
-			}
-			
-			evt = (evt) || window.event;
-			mouseDownPos = [
-				rect.left,
-				rect.top
-			];
+				// erase last border
+				if (!onCtrlDown) {
+					unselectAll(true);
+					select(id, isContentArea(evt));
+					window.controller_gui.close_context_menu();
+				} else if (selectedIDList.indexOf(id) >= 0) {
+					unselect(id);
+				} else {
+					select(id, isContentArea(evt));
+					window.controller_gui.close_context_menu();
+				}
+				
+				evt = (evt) || window.event;
+				mouseDownPos = [
+					rect.left,
+					rect.top
+				];
 
-			dragOffsetTop = evt.clientY - rect.top;
-			dragOffsetLeft = evt.clientX - rect.left;
+				dragOffsetTop = evt.clientY - rect.top;
+				dragOffsetLeft = evt.clientX - rect.left;
 
-			if (metaData  && evt.target.id) {
-				// メインビューのコンテンツ
-				for (i = 0; i < draggingIDList.length; i = i + 1) {
-					elem = document.getElementById(draggingIDList[i]);
-					if (elem) {
+				if (metaData  && evt.target.id) {
+					// メインビューのコンテンツ
+					for (i = 0; i < draggingIDList.length; i = i + 1) {
+						elem = document.getElementById(draggingIDList[i]);
+						if (elem) {
+							dragRect[draggingIDList[i]] = {
+								left : elem.getBoundingClientRect().left - rect.left,
+								top : elem.getBoundingClientRect().top - rect.top
+							}
+						}
+					}
+				} else {
+					// リストのコンテンツ
+					for (i = 0; i < draggingIDList.length; i = i + 1) {
 						dragRect[draggingIDList[i]] = {
-							left : elem.getBoundingClientRect().left - rect.left,
-							top : elem.getBoundingClientRect().top - rect.top
+							left : 0,
+							top : 0
 						}
 					}
 				}
-			} else {
-				// リストのコンテンツ
-				for (i = 0; i < draggingIDList.length; i = i + 1) {
-					dragRect[draggingIDList[i]] = {
-						left : 0,
-						top : 0
-					}
-				}
-			}
 			
-			if (evt.button === 0 || evt.button === 2) {
 				evt.stopPropagation();
 				evt.preventDefault();
 			}

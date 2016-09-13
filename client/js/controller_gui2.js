@@ -64,7 +64,6 @@
 
 		add_image_button.onmousedown = function (evt) {
 			document.getElementById('image_file_input').click();
-			//gui.on_file_dropped()
 			menu.style.display = "none";
 		};
 
@@ -155,11 +154,18 @@
 			}
 		};
 
-		document.body.oncontextmenu = function (evt) {
-			if (getSelectedElem()) {
-				var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+		var mouseDownPosX = null,
+			mouseDownPosY = null;
+		document.body.addEventListener("mousedown", function (evt) {
+			mouseDownPosX = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+			mouseDownPosY = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+		});
 
+		document.body.oncontextmenu = function (evt) {
+			var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+
+			if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
 				menu.style.left = px + "px";
 				menu.style.top = py + "px";
 				menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
@@ -830,11 +836,15 @@
 		};
 
 		document.getElementById('content_preview_area').addEventListener("mousedown", function (evt) {
-			gui.on_mousedown_content_preview_area();
+			if (evt.button === 0) {
+				gui.on_mousedown_content_preview_area();
+			}
 		});
 
 		document.getElementById('display_preview_area').addEventListener("mousedown", function (evt) {
-			gui.on_mousedown_display_preview_area();
+			if (evt.button === 0) {
+				gui.on_mousedown_display_preview_area();
+			}
 		});
 	}
 
@@ -930,6 +940,10 @@
 	
 	window.controller_gui.set_search_result = function (search_result) {
 		searchBox.set_search_result(search_result);
+	};
+
+	window.controller_gui.close_context_menu = function () {
+		document.getElementById('context_menu').style.display = "none";
 	};
 
 }());
