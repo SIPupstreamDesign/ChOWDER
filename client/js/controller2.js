@@ -1752,7 +1752,6 @@
 			onlistID,
 			meta,
 			metaData,
-			changeMetaDataList = [],
 			contentArea,
 			selectedGroup;
 
@@ -1792,12 +1791,7 @@
 				if (groupToElems.hasOwnProperty(group)) {
 					contentArea = gui.get_content_area_by_group(group);
 					if (!contentArea) {
-						// グループが見つからない場合、defaultグループに変更する
-						for (i in groupToMeta[group]) {
-							groupToMeta[group][i].group = defaultGroup; 
-						}
 						contentArea = gui.get_content_area_by_group(defaultGroup);
-						changeMetaDataList = changeMetaDataList.concat(groupToMeta[group]);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
 						contentArea.appendChild(groupToElems[group][i]);
@@ -1807,9 +1801,6 @@
 
 			if (selectedGroup && document.getElementById(selectedGroup)) {
 				document.getElementById(selectedGroup).onclick();
-			}
-			if (changeMetaDataList.length > 0) {
-				updateMetaDataMulti(changeMetaDataList);
 			}
 		}
 	};
@@ -2510,13 +2501,19 @@
 	 * Searchテキストが入力された
 	 */
 	gui.on_search_input_changed = function (text, groups) {
-		var id, 
+		var i,
+			id, 
 			metaData,
 			foundContents = [],
+			groupDict = {},
 			elem,
 			copy,
 			child;
 			
+		for (i = 0; i < groupList.length; i = i + 1) {
+			groupDict[groupList[i].name] = groupList[i];
+		}
+
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
@@ -2533,6 +2530,18 @@
 								setupContent(copy, metaData.id);
 								foundContents.push(copy);
 							}
+						}
+					}
+					else if (groups.indexOf(defaultGroup) >= 0 && !groupDict.hasOwnProperty(metaData.group)) {
+						elem = document.getElementById("onlist:" + metaData.id);
+						if (elem) {
+							copy = elem.cloneNode();
+							copy.id = "onsearch:" + metaData.id;
+							child = elem.childNodes[0].cloneNode();
+							child.innerHTML = elem.childNodes[0].innerHTML;
+							copy.appendChild(child);
+							setupContent(copy, metaData.id);
+							foundContents.push(copy);
 						}
 					}
 				}

@@ -629,6 +629,14 @@
 			document.getElementById('bottom_burger_menu_content'),
 			{
 				menu : [{
+						選択コンテンツのグループ移動 : {
+							func : function (evt) { alert("未実装"); }
+						}
+					},{
+						グループ内コンテンツのグループ移動 : {
+							func : function (evt) { alert("未実装"); }
+						}
+					},{
 						選択コンテンツを削除 : {
 							func : function (evt) { gui.on_contentdeletebutton_clicked(evt); }
 						}
