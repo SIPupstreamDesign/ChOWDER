@@ -45,6 +45,8 @@
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
 			change_image_button = document.getElementById('context_menu_change_image'),
 			add_content_submenu = document.getElementById("context_menu_add_content_submenu"),
+			select_all = document.getElementById('context_menu_select_all'),
+			select_group = document.getElementById('context_menu_select_group'),
 			on_change_group = false,
 			on_change_group_item = false,
 			on_add_content = false,
@@ -100,6 +102,16 @@
 			menu.style.display = "none";
 		};
 
+		select_all.onclick = function (evt) {
+			gui.on_select_contents_clicked(false);
+			menu.style.display = "none";
+		};
+
+		select_group.onclick = function (evt) {
+			gui.on_select_contents_clicked(true);
+			menu.style.display = "none";
+		};
+		
 		// コンテンツ追加サブメニュー
 		add_content_button.onmouseover = function () {
 			var container = document.getElementById("context_menu_add_content_submenu");
@@ -792,23 +804,7 @@
 						グループ内全て選択 : {
 							func : function (evt) { gui.on_select_contents_clicked(true); }
 						}
-					}
-										/*
-					{
-						グループ内一括削除 : {
-							func : function (evt) { gui.on_deleteallcontent_clicked(evt); }
-						}
-					}
-					{
-							submenu: true,
-							mouseoverfunc : function (evt) {
-								toggleBurgerSubmenu(true, "87px"); 
-								on_group_change_all = true;
-							},
-							mouseoutfunc : function (evt) {
-								on_group_change_all = false; 
-							}
-						}*/]
+					}]
 			});
 
 		// サブメニュー用
