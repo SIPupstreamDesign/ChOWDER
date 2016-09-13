@@ -56,8 +56,8 @@ pre {
 
 
 .head_menu {
-	background : rgb(14,133,251);
-	height : 50px;
+	background: rgb(112, 180, 239);
+	height: 30px;
 	position: absolute;
 	left: 0px;
 	right: 0px;
@@ -67,7 +67,7 @@ pre {
 
 .head_mode_menu {
 	text-align: center;
-	padding: 8px;
+	/*padding: 8px;*/
 }
 .head_mode_text {
 	color: #EEE;
@@ -93,41 +93,48 @@ pre {
 	color: #EEE;
 	text-decoration: none;
 	position : relative;
-	top : 12px;
-	height : 30px;
-	font-size: 18px;
+	top : 3px;
+	height : 26px;
+	font-size: 16px;
 
 	border-style : solid;
-	padding : 5px 10px 5px 10px;
+/*	padding : 5px 10px 5px 10px;*/
 	border-width: 2px;
-	border-radius: 6px;
+	border-radius: 1px;
 	margin-right : 10px;
 }
 .head_select_menu_text:hover {
 	color: #FFF;
+	cursor : pointer;
 }
 
 .head_id_menu {
 	position:absolute;
-	top : 10px;
+	top : 0px;
 	right : 20px;
 }
 
 .head_id_input {
+	position : relative;
 	height : 20px;
+	top : 3px;
 }
 .head_id_input_button {
 	color: #EEE;
 	text-decoration: none;
 	position : relative;
-	top : 2px;
-	height : 30px;
-	font-size: 18px;
+	top : 3px;
+	height : 26px;
+	font-size: 16px;
 
 	border-style : solid;
-	padding : 5px 10px 5px 10px;
+/*	padding : 5px 10px 5px 10px;*/
 	border-width: 2px;
-	border-radius: 6px;
+	border-radius: 2px;
+}
+.head_id_input_button:hover {
+	color: #FFF;
+	cursor : pointer;
 }
 
 .menu_anim {
