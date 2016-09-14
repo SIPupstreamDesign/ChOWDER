@@ -671,6 +671,16 @@
 								gui.on_virtualdisplaysetting_clicked();
 							}
 						},
+					}, {
+						WindowCursor : [{
+							ON : {
+								func : function () {}
+							}
+						}, {
+							OFF : {
+								func : function () {}
+							}
+						}]	
 					}/*, {
 						Snap : [{
 							Free : {
