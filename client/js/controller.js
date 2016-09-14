@@ -2939,6 +2939,9 @@
 	window.onunload = function () {
 		window.content_property.clear(true);
 	};
+	window.blur = function () {
+		window.content_property.clear(true);
+	};
 	connector.connect(function () {
 		var e = document.getElementById('head_menu_hover_right');
 		if(e){
