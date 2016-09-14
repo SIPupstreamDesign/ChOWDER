@@ -24,6 +24,7 @@ ol, ul {
 .menu > li a {
 	display: block;
 	color : rgb(10, 26, 67);
+    font-size: 14px;
 }
 
 ul.menu_level1 > li a:hover {
