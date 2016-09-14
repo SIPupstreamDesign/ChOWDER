@@ -1142,12 +1142,15 @@
 					Display : [{
 							Controller : {
 								url : "controller2.html"
-							},
+							}
 						}],
 					url : "view2.html"
 				},{
-					Fullscreen : [],
-					func : function(evt) { toggleFullScreen(); }
+					Setting : [{
+						Fullscreen : {
+							func : function(evt) { toggleFullScreen(); }
+						}
+					}]
 				}]
 			});
 // 		document.addEventListener("touchstart", function (evt) {
