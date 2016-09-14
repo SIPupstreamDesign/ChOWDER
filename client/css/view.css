@@ -9,6 +9,9 @@
 	box-sizing: border-box;
 }
 
+html {
+    background-color:rgb(7, 22, 50);
+}
 body {
 	overflow:hidden;
 	background-color: rgb(7, 22, 50);
