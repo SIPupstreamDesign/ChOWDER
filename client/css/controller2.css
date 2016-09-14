@@ -608,14 +608,21 @@ p {
     margin: 5px;
     width: 20px;
     height: 20px;
+	
 }
 #head_menu_hover_right.connect {
     background-color: rgb(82, 210, 150);
     color: darkcyan;
+	background-image:url("../image/connect.png");
+	background-repeat:no-repeat;
+	background-size: contain;
 }
 #head_menu_hover_right.disconnect {
     background-color: rgb(210, 100, 100);
     color: crimson;
+	background-image:url("../image/disconnect.png");
+	background-repeat:no-repeat;
+	background-size: contain;
 }
 
 #text_input_dialog {

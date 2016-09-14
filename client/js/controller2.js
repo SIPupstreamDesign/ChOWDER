@@ -2952,7 +2952,21 @@
 	window.onunload = function () {
 		window.content_property.clear(true);
 	};
-	connector.connect();
+	connector.connect(function () {
+		var e = document.getElementById('head_menu_hover_right');
+		if(e){
+			//e.textContent = '○';
+			e.title = 'サーバーと接続されています';
+			e.className = 'connect';
+		}
+	}, function () {
+		var e = document.getElementById('head_menu_hover_right');
+		if(e){
+			//e.textContent = '×';
+			e.title = 'サーバーと接続できていません';
+			e.className = 'disconnect';
+		}
+	});
 
 }(window.controller_gui, window.content_property, window.content_box, 
 window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

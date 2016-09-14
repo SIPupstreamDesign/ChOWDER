@@ -165,24 +165,18 @@
 	 * 接続する.
 	 * @method connect
 	 */
-	function connect() {
+	function connect(onopenfunc, onclosefunc) {
 		socket = io.connect(url);
 		socket.on('connect', function () {
             console.log("connect");
-            var e = document.getElementById('head_menu_hover_right');
-            if(e){
-                e.textContent = '○';
-                e.title = 'サーバーと接続されています';
-                e.className = 'connect';
-            }
+			if (onopenfunc) {
+				onopenfunc();
+			}
         });
         socket.on('disconnect', function(data){
-            var e = document.getElementById('head_menu_hover_right');
-            if(e){
-                e.textContent = '×';
-                e.title = 'サーバーと接続できていません';
-                e.className = 'disconnect';
-            }
+			if (onclosefunc) {
+				onclosefunc();
+			}
         });
 		socket.on('chowder_response', function (data) {
 			var parsed;
