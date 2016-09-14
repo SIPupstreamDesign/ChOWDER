@@ -662,7 +662,7 @@
 							}
 						},
 					}, {
-						WindowCursor : [{
+						RemoteCursor : [{
 							ON : {
 								func : function () { gui.on_update_cursor_enable(true); }
 							}
