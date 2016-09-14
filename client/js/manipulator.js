@@ -221,11 +221,13 @@
 		};
 
 		// メモのトグルボタン
-		memo.id = "_manip_menu_1";
-		memo.className = "manipulator_menu_memo";
-		memo.style.borderColor = targetElem.style.borderColor;
-		previewArea.appendChild(memo);
-		manipulatorMenus.push(memo);
+		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {
+			memo.id = "_manip_menu_1";
+			memo.className = "manipulator_menu_memo";
+			memo.style.borderColor = targetElem.style.borderColor;
+			previewArea.appendChild(memo);
+			manipulatorMenus.push(memo);
+		}
 		// 初期のトグル設定
 		if (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === "true" || metaData.mark_memo === true)) {
 			memo.classList.add('active');

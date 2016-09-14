@@ -27,13 +27,42 @@
 		return null;
 	}
 
+	function initContextMenuVisible(menu, type) {
+		// 出現タイミング調整.
+		var mouseDownPosX = null,
+			mouseDownPosY = null;
+		document.body.addEventListener("mousedown", function (evt) {
+			mouseDownPosX = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+			mouseDownPosY = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+		});
+
+		document.body.addEventListener("contextmenu", function (evt) {
+			if (window.content_box.is_active(type)) {
+				var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
+					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+
+				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
+					menu.style.left = px + "px";
+					menu.style.top = py + "px";
+					menu.style.display = 'block';
+				}
+				evt.preventDefault();
+			}
+		});
+		window.addEventListener("mousedown", function (evt) {
+			if (evt.target.className !== "context_menu_item") {
+				menu.style.display = "none";
+			}
+		});
+	}
+
 	/**
 	 * コンテキストメニューを初期化する.
 	 */
 	function initContextMenu() {
 		var menu = document.getElementById('context_menu'),
+			hide_button = document.getElementById('context_menu_hide'),
 			delete_button = document.getElementById('context_menu_delete'),
-			delete_from_redis = document.getElementById('context_menu_delete_from_redis'),
 			add_content_button = document.getElementById('context_menu_add_content'),
 			move_front_button = document.getElementById("context_menu_move_front"),
 			move_back_button = document.getElementById("context_menu_move_back"),
@@ -52,37 +81,37 @@
 			on_add_content = false,
 			on_add_content_item = false;
 
-		delete_button.onclick = function (evt) {
+		hide_button.onclick = function (evt) {
 			gui.on_close_item();
 			menu.style.display = "none";
 		};
 
-		delete_from_redis.onclick = function (evt) {
+		delete_button.onclick = function (evt) {
 			gui.on_contentdeletebutton_clicked(evt); 
 			menu.style.display = "none";
 		};
 
-		add_image_button.onmousedown = function (evt) {
+		add_image_button.onclick = function (evt) {
 			document.getElementById('image_file_input').click();
 			menu.style.display = "none";
 		};
 
-		add_text_file_button.onmousedown = function (evt) {
+		add_text_file_button.onclick = function (evt) {
 		 	document.getElementById('text_file_input').click();	
 			menu.style.display = "none";
 		};
 
-		add_url_button.onmousedown = function (evt) {
+		add_url_button.onclick = function (evt) {
 			toggleURLInput();
 			menu.style.display = "none";
 		};
 
-		add_text_button.onmousedown = function (evt) {
+		add_text_button.onclick = function (evt) {
 			toggleTextInput();
 			menu.style.display = "none";
 		};
 
-		change_image_button.onmousedown = function (evt) {
+		change_image_button.onclick = function (evt) {
 			document.getElementById('update_image_input').click();
 			menu.style.display = "none";
 		};
@@ -154,32 +183,39 @@
 			}
 		};
 
-		var mouseDownPosX = null,
-			mouseDownPosY = null;
-		document.body.addEventListener("mousedown", function (evt) {
-			mouseDownPosX = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-			mouseDownPosY = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
-		});
-
-		document.body.oncontextmenu = function (evt) {
-			var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-				py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
-
-			if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
-				menu.style.left = px + "px";
-				menu.style.top = py + "px";
-				menu.style.height = (document.getElementsByClassName("context_menu_item").length * 20) + "px";
-				menu.style.display = 'block';
-			}
-			evt.preventDefault();
-		};
-		window.addEventListener("mousedown", function (evt) {
-			if (evt.target.className !== "context_menu_item") {
-				menu.style.display = "none";
-			}
-		});
+		initContextMenuVisible(menu, "content_tab");
 	}
 
+
+	function initDisplayContextMenu() {
+		var menu = document.getElementById('context_menu_display'),
+			showid_button = document.getElementById("context_menu_display_show_id"),
+			hide_button = document.getElementById("context_menu_display_hide"),
+			delete_button = document.getElementById("context_menu_display_delete"),
+			select_all_button = document.getElementById("context_menu_display_select_all");
+
+		showid_button.onclick = function (evt) {
+			gui.on_showidbutton_clicked(false);
+			menu.style.display = "none";
+		};
+		
+		hide_button.onclick = function (evt) {
+			gui.on_close_item();
+			menu.style.display = "none";
+		};
+
+		delete_button.onclick = function (evt) {
+			gui.on_deletedisplay_clicked(evt); 
+			menu.style.display = "none";
+		};
+		
+		select_all_button.onclick = function (evt) {
+			gui.on_select_display_clicked(false); 
+			menu.style.display = "none";
+		};
+		initContextMenuVisible(menu, "display_tab");
+	}
+	
 	/**
 	 * コンテキストメニューの動的に変化する部分を更新.
 	 */
@@ -631,8 +667,8 @@
 							}
 						}],
 				}, {
-					Edit : [{
-						VirtualDisplaySetting : {
+					Setting : [{
+						VirtualDisplay : {
 							func : function () { 
 								document.getElementById('display_tab_link').click();
 								gui.on_virtualdisplaysetting_clicked();
@@ -654,10 +690,6 @@
 								func : function () { gui.on_snapdropdown_clicked('grid'); }
 							}
 						}],
-					}, {
-						ReplaceImage : {
-							func : function () { document.getElementById('update_image_input').click(); }
-						}
 					}]
 				}]
 			});
@@ -711,6 +743,7 @@
 
 		// コンテキストメニューの初期化.
 		initContextMenu();
+		initDisplayContextMenu();
 
 		// コンテンツ入力の初期化
 		initContentInputs();
@@ -729,23 +762,22 @@
 			document.getElementById('bottom_burger_menu_display'),
 			{
 				menu : [{
-						選択DisplayのIDを表示 : {
+						IDを表示 : {
 							func : function (evt) { gui.on_showidbutton_clicked(false); }
 						}
 					},{
-						全てのDisplayのIDを表示 : {
-							func : function (evt) { gui.on_showidbutton_clicked(true); }
+						非表示 : {
+							func : function (evt) { gui.on_close_item(); }
 						}
 					},{
-						選択Displayを削除 : {
+						削除 : {
 							func : function (evt) { gui.on_deletedisplay_clicked(evt); }
 						}
-					},
-					{
-						全てのDisplayを削除 : {
-							func : function (evt) { gui.on_deletealldisplay_clicked(evt); }
+					},{
+						全て選択 : {
+							func : function (evt) { gui.on_select_display_clicked(false); }
 						}
-					}]
+					},]
 			});
 
 		initBurgerMenuContent();
@@ -862,6 +894,7 @@
 	//window.controller_gui.on_duplicatebutton_clicked = null;
 	window.controller_gui.on_contentdeletebutton_clicked = null;
 	window.controller_gui.on_select_contents_clicked = null;
+	window.controller_gui.on_select_display_clicked = null;
 	window.controller_gui.on_deletedisplay_clicked = null;
 	window.controller_gui.on_deletealldisplay_clicked = null;
 	window.controller_gui.on_deleteallcontent_clicked = null;
@@ -944,6 +977,7 @@
 
 	window.controller_gui.close_context_menu = function () {
 		document.getElementById('context_menu').style.display = "none";
+		document.getElementById('context_menu_display').style.display = "none";
 	};
 
 }());

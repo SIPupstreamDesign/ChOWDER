@@ -1858,18 +1858,19 @@
 	 * @method on_deletedisplay_clicked
 	 */
 	gui.on_deletedisplay_clicked = function () {
-		if (getSelectedID()) {
-			console.log('DeleteWindowMetaData' + getSelectedID());
-			connector.send('DeleteWindowMetaData', metaDataDict[getSelectedID()], doneDeleteWindowMetaData);
+		var i,
+			id,
+			metaDataList = [];
+			
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaDataList.push(metaDataDict[id]);
+			}
 		}
-	};
-	
-	/**
-	 * Displayを全削除するボタンが押された
-	 * @method on_deletealldisplay_clicked
-	 */
-	gui.on_deletealldisplay_clicked = function () {
-		connector.send('DeleteWindowMetaData', {type : "all", id : ""}, doneDeleteWindowMetaData);
+		if (metaDataList.length > 0) {
+			connector.send('DeleteWindowMetaData', metaDataList);
+		}
 	};
 	
 	/**
@@ -1907,24 +1908,18 @@
 	 * @method on_showidbutton_clicked
 	 */
 	gui.on_showidbutton_clicked = function (isAll) {
-		var id = getSelectedID();
-		console.log("ShowWindowID:" + id);
-		if (isAll) {
-			connector.send('ShowWindowID', {type : 'all', id : ""});
-			return;
-		}
-		if (id && id !== "No Content Selected.") {
-			if (metaDataDict[id].type === windowType) {
-				connector.send('ShowWindowID', {id : id});
-				lastSelectWindowID = id;
-				gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
-				setTimeout(function () {
-					var memo  = document.getElementById('_manip_menu_1');
-					if (memo && memo.classList.contains('active')) {
-						memo.classList.remove('active');
-					}
-				}, 8 * 1000);
+		var i,
+			id,
+			targetIDList = [];
+			
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type === windowType) {
+				targetIDList.push({id : id});
 			}
+		}
+		if (targetIDList.length > 0) {
+			connector.send('ShowWindowID', targetIDList);
 		}
 	};
 	
@@ -2450,11 +2445,26 @@
 		unselectAll(true);
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
-				if (onlyCurrentGroup) {
-					if (metaDataDict[id].group === currentGroup) {
+				if (metaDataDict[id].type !== windowType) {
+					if (onlyCurrentGroup) {
+						if (metaDataDict[id].group === currentGroup) {
+							select(id, true);
+						}
+					} else {
 						select(id, true);
 					}
-				} else {
+				}
+			}
+		}
+	};
+
+	gui.on_select_display_clicked = function () {
+		var i,
+			id;
+		unselectAll(true);
+		for (id in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				if (metaDataDict[id].type === windowType) {
 					select(id, true);
 				}
 			}
@@ -2810,9 +2820,12 @@
 	});
 	
 	// ウィンドウが削除されたときにブロードキャストされてくる.
-	connector.on("DeleteWindowMetaData", function (metaData) {
-		console.log("DeleteWindowMetaData", metaData);
-		doneDeleteWindowMetaData(null, metaData);
+	connector.on("DeleteWindowMetaData", function (metaDataList) {
+		console.log("DeleteWindowMetaData", metaDataList);
+		var i;
+		for (i = 0; i < metaDataList.length; i = i + 1) {
+			doneDeleteWindowMetaData(null, metaDataList[i]);
+		}
 	});
 
 	///-------------------------------------------------------------------------------------------------------

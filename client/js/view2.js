@@ -1037,7 +1037,10 @@
 
 		connector.on("ShowWindowID", function (data) {
 			console.log("onShowWindowID", data);
-			showDisplayID(data.id);
+			var i;
+			for (i = 0; i < data.length; i = i + 1) {
+				showDisplayID(data[i].id);	
+			}
 		});
 
 		connector.on("UpdateMetaData", function (data) {

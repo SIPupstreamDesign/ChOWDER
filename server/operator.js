@@ -1169,39 +1169,32 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteWindowMetaData(socketid, json, endCallback) {
-		//console.log(socketid, json);
-		if (json) {
-			if (json.hasOwnProperty('type') && json.type === 'all') {
-				textClient.keys(windowMetaDataPrefix + '*', function (err, replies) {
-					replies.forEach(function (id, index) {
-						console.log(id);
-						textClient.hgetall(id, function (err, data) {
-							if (!err && data) {
-								deleteWindow(data, function (meta) {
-									if (endCallback) {
-										endCallback(null, meta);
-									}
-								});
-							}
-						});
-					});
-				});
-			} else {
-				getWindowMetaData(json, function (metaData) {
-					if (metaData) {
-						deleteWindow(metaData, function (meta) {
-							//console.log("commandDeleteWindowMetaData : " + JSON.stringify(meta));
+		console.log(commandDeleteWindowMetaData);
+		var i,
+			meta,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			meta = json[i];
+			getWindowMetaData(meta, function (metaData) {
+				if (metaData) {
+					deleteWindow(metaData, function (meta) {
+						--all_done;
+						results.push(meta);
+						if (all_done <= 0) {
 							if (endCallback) {
-								endCallback(null, meta);
+								endCallback(null, results);
+								return;
 							}
-						});
-					} else {
-						if (endCallback) {
-							endCallback("not exists window metadata", null);
 						}
+					});
+				} else {
+					if (endCallback) {
+						endCallback("not exists window metadata", null);
 					}
-				});
-			}
+				}
+			});
 		}
 	}
 	
@@ -1442,16 +1435,19 @@
 	function post_deleteWindow(ws, io, ws_connections, resultCallback) {
 		return function (err, reply) {
 			var socketid,
-				id;
+				id,
+				i;
 			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
 			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
 			
 			for (socketid in socketidToHash) {
 				if (socketidToHash.hasOwnProperty(socketid)) {
 					id = socketidToHash[socketid];
-					if (reply.id === id) {
-						if (ws_connections.hasOwnProperty(socketid)) {
-							ws_connector.send(ws_connections[socketid], Command.Disconnect);
+					for (i = 0; i < reply.length; i = i + 1) {
+						if (reply[i].id === id) {
+							if (ws_connections.hasOwnProperty(socketid)) {
+								ws_connector.send(ws_connections[socketid], Command.Disconnect);
+							}
 						}
 					}
 					delete socketidToHash[socketid];
@@ -1532,6 +1528,10 @@
 		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
+
+		ws_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
+			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
+		});
 				
 		ws_connector.on(Command.UpdateMouseCursor, (function(socketid){
             return function(data, resultCallback){
@@ -1568,8 +1568,8 @@
 		});
 
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.ShowWindowID, {id : data.id});
-			io_connector.broadcast(io, Command.ShowWindowID, {id : data.id});
+			ws_connector.broadcast(ws, Command.ShowWindowID, data);
+			io_connector.broadcast(io, Command.ShowWindowID, data);
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -1694,8 +1694,8 @@
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.ShowWindowID, { id : data.id });
-			io_connector.broadcast(io, Command.ShowWindowID, { id : data.id });
+			ws_connector.broadcast(ws, Command.ShowWindowID, data);
+			io_connector.broadcast(io, Command.ShowWindowID, data);
 		});
 
 		io_connector.registerEvent(io, socket);

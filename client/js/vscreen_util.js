@@ -9,7 +9,8 @@
 	 * 仮想スクリーンユーティリティ
 	 * @method VscreenUtil
 	 */
-	var VscreenUtil = function () {};
+	var VscreenUtil = function () {},
+		windowType = "window";
 	
 	/**
 	 * Floatの矩形を作成
@@ -138,14 +139,16 @@
 			if (isVisible(metaData)) {
 				//console.log("isvisible");
 				elem.style.display = "block";
-				if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
-					if (metaData.group === "default") {
-						elem.style.borderColor = "rgb(54,187,68)";
+				if (metaData.type !== windowType) {
+					if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
+						if (metaData.group === "default") {
+							elem.style.borderColor = "rgb(54,187,68)";
+						} else {
+							elem.style.borderColor = groupDict[metaData.group].color;
+						}
 					} else {
-						elem.style.borderColor = groupDict[metaData.group].color;
+						elem.style.borderColor = "rgb(54,187,68)";
 					}
-				} else {
-					elem.style.borderColor = "rgb(54,187,68)";
 				}
 			} else {
 				console.log("not isvisible");
