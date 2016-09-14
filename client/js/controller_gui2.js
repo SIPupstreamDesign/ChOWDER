@@ -671,7 +671,7 @@
 								gui.on_virtualdisplaysetting_clicked();
 							}
 						},
-					}, {
+					}/*, {
 						Snap : [{
 							Free : {
 								func : function () { gui.on_snapdropdown_clicked('free'); }
@@ -687,7 +687,7 @@
 								func : function () { gui.on_snapdropdown_clicked('grid'); }
 							}
 						}],
-					}]
+					}*/]
 				}]
 			});
 

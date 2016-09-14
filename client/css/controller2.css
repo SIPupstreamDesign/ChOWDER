@@ -378,6 +378,14 @@ p {
 	left: 0;
 }
 
+#snap_text {
+	position : absolute;
+	top : 7px;
+	right : 120px;
+	font-size : 14px;
+	color : rgb(10, 26, 67);
+}
+
 .content_dialog {
 	top: 50%;
 	left: 50%;
