@@ -111,7 +111,7 @@
 
 	function is_active(tabID) {
  		var tab = document.getElementById(tabID);
-		return tab.className.indexOf('active') >= 0;
+		return tab && tab.className.indexOf('active') >= 0;
 	}
 
 	window.content_box = {};

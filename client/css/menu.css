@@ -93,6 +93,7 @@ ul.menu_level3 {
 
 .menu > li.menu__multi {
 	position: relative;
+    z-index: 10000000;
 }
 
 li.menu__multi ul.menu_level1 {
@@ -174,9 +175,21 @@ li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover ul.menu_level3 {
 	border-right: 1px solid #111;
 }
 
+#head_menu_hover {
+    z-index: 10000000;
+}
 
 .head_mode_text {
 	color: rgb(10, 26, 67);
 	font-size: 20px;
 	font-weight: 700;
+    text-align: center;
+    width: 100%;
+	position:  absolute;
+    z-index: 10000000;
+}
+
+#chowder_text {
+	cursor : pointer;
+	color: rgb(10, 26, 67);
 }
