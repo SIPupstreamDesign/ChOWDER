@@ -566,7 +566,9 @@
 		if (id === wholeWindowListID || id === wholeWindowID) {
 			content_property.init(id, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			gui.get_whole_window_elem().style.borderColor = getWindowBorderColor(id);
+			if (gui.get_whole_window_elem()) {
+				gui.get_whole_window_elem().style.borderColor = getWindowBorderColor(id);
+			}
 			return;
 		}
 		if (id.indexOf(wholeSubWindowID) >= 0) {

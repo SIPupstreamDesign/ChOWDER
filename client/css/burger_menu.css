@@ -12,7 +12,7 @@ ul, ol {
 	z-index: 1000001;
 	border : 1px solid black;
 	display : none;
-	width : 270px;
+	width : 180px;
 }
 
 .burger_menu_background {
@@ -93,23 +93,21 @@ ul, ol {
 }
 
 .burger_menu_submenu {
-	position : "fixed";
-	bottom : "100px";
-	right : "260px";
-	width : "100px";
-	height : "100px";
-	background : "white";
-	color : "black";
+	position : fixed;
+	right : 190px;
+	width : 150px;
+	background : white;
+	color : black;
 	border : 1px solid black;
 	z-index : 10000000;
 	display: none;
 }
 
 .burger_menu_submenu_add_content {
-	position : "fixed";
+	position : fixed;
 	bottom : 100px;
-	right : 260px;
-	width : 100px;
+	right : 190px;
+	width : 150px;
 	background : white;
 	color : black;
 	border : 1px solid black;

@@ -566,12 +566,7 @@
 		var container = document.getElementById('burger_menu_submenu');
 		if (show) {
 			container.style.display = "block";
-			container.style.position = "fixed";
 			container.style.bottom = bottom;
-			container.style.right = "280px";
-			container.style.width = "150px";
-			container.style.backgroundColor = "white";
-			container.style.color = "black";
 		} else {
 			container.style.display = "none";
 		}
@@ -584,12 +579,7 @@
 		var container = document.getElementById('burger_menu_submenu_add_content');
 		if (show) {
 			container.style.display = "block";
-			container.style.position = "fixed";
 			container.style.bottom = bottom;
-			container.style.right = "280px";
-			container.style.width = "150px";
-			container.style.backgroundColor = "white";
-			container.style.color = "black";
 		} else {
 			container.style.display = "none";
 		}
