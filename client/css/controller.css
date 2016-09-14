@@ -522,6 +522,12 @@ p {
 	height : 200px;
 	margin-left : 10px;
 	margin-right : 10px;
+	-webkit-touch-callout: text;
+	-webkit-user-select: text;
+	-khtml-user-select: text;
+	-moz-user-select: text; 
+	-ms-user-select: text;
+	user-select: text;
 }
 
 .manipulator_menu_star {
