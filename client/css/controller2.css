@@ -133,12 +133,6 @@ p {
 	width : 100%;
 }
 
-.head_mode_text {
-	color: #000;
-	font-size: 20px;
-	font-weight: 700;
-}
-
 .head_menu_content {
 	position:absolute;
 	left : 200px;
@@ -339,15 +333,19 @@ p {
 }
 
 .close_button {
-	width:20px;
-	height:20px;
+	width:23px;
+	height:23px;
 	background-image:url("../image/closebutton.png");
 	background-repeat:no-repeat;
 	background-size: contain;
 	border: none;
 	background-color: transparent;
+	top : -10px;
 }
 
+.close_button:hover {
+	cursor : pointer;
+}
 
 .top_control {
 	width : 800px;

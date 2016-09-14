@@ -541,6 +541,7 @@
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
 				elem.style.position = "absolute";
+				elem.style.color = "white";
 				setupContent(elem, elem.id);
 				insertElementWithDictionarySort(previewArea, elem);
 				//previewArea.appendChild(elem);
@@ -1080,7 +1081,7 @@
 				console.log("onfocus:", onfocus);
 				if (!onfocus) {
 					console.log("hideMenuFunc");
-					document.getElementById('menu').classList.add('hide');
+					document.getElementById('head_menu').classList.add('hide');
 				}
 				registered = false;
 			};
@@ -1098,7 +1099,7 @@
 		};
 
 		window.addEventListener('mousemove', function (evt) {
-			document.getElementById('menu').classList.remove('hide');
+			document.getElementById('head_menu').classList.remove('hide');
 			if (!registered) {
 				registered = true;
 				setTimeout(hideMenuFunc, 3000);
@@ -1106,7 +1107,7 @@
 		});
 
 		document.getElementById('change_id').onclick = changeID;
-		document.getElementById('fullscreen').onclick = toggleFullScreen;
+		//document.getElementById('fullscreen').onclick = toggleFullScreen;
 
 		input_id.onfocus = function (ev) {
 			console.log("onfocus");
@@ -1131,6 +1132,21 @@
 			event.preventDefault();
 		}
 
+		// 上部メニューの初期化.
+		window.menu.init(document.getElementById('head_menu'),
+			{
+				menu : [{
+					Display : [{
+							Controller : {
+								url : "controller2.html"
+							},
+						}],
+					url : "view2.html"
+				},{
+					Fullscreen : [],
+					func : function(evt) { toggleFullScreen(); }
+				}]
+			});
 // 		document.addEventListener("touchstart", function (evt) {
 // 			document.getElementById('menu').classList.remove('hide');
 // 			if (!registered) {

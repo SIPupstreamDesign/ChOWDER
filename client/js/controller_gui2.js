@@ -640,7 +640,7 @@
 			{
 				menu : [{
 					Controller : [{
-							View : {
+							Display : {
 								url : "view2.html"
 							},
 						}],

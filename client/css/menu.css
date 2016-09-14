@@ -10,11 +10,12 @@ ol, ul {
 	max-width: 1000px;
 	margin: 0 auto;
 	text-align: center;
+	top : 0px;
 }
 
 .menu > li {
 	float: left;
-	width: 150px;
+	width: 130px;
 	height: 30px;
 	line-height: 30px;
 	background: rgb(112, 180, 239);
@@ -22,7 +23,7 @@ ol, ul {
 
 .menu > li a {
 	display: block;
-	color : black;
+	color : rgb(10, 26, 67);
 }
 
 ul.menu_level1 > li a:hover {
@@ -170,4 +171,11 @@ li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover ul.menu_level3 {
 
 .menu_init-bottom {
 	border-right: 1px solid #111;
+}
+
+
+.head_mode_text {
+	color: rgb(10, 26, 67);
+	font-size: 20px;
+	font-weight: 700;
 }

@@ -91,8 +91,8 @@
 		manipulators[3].style.left = (left + width) + "px";
 		manipulators[3].style.top = top + "px";
 		// x button
-		manipulators[4].style.left = (left + width - 30) + "px";
-		manipulators[4].style.top = (top + 20) + "px";
+		manipulators[4].style.left = (left + width - 17) + "px";
+		manipulators[4].style.top = (top - 27) + "px";
 
 		if (manipulatorMenus.length > 1) {
 			// ☆

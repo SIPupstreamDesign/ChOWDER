@@ -11,13 +11,17 @@
 
 body {
 	overflow:hidden;
-	background-color: #AAA;
+	background-color: rgb(7, 22, 50);
 	margin: 0px;
 }
 
 div {
 	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
 	white-space: nowrap;
+}
+
+a {
+	text-decoration : none;
 }
 
 pre {
@@ -68,11 +72,6 @@ pre {
 .head_mode_menu {
 	text-align: center;
 	/*padding: 8px;*/
-}
-.head_mode_text {
-	color: #EEE;
-	font-size: 24px;
-	font-weight: 700;
 }
 
 .stopselect{
@@ -171,11 +170,12 @@ pre {
 .memo {
 	position : absolute;
 	color : black;
-	width : 200px;
 	height : 100px;
 	font-size : 1.2em;
-	border : 1px solid orange;
-	background-color: orange
+	background-color: lightgray;
+	border : 1px solid gray;
+	padding : 5px;
+	box-sizing: border-box;
 }
 .hiddenCursor {
     color: transparent;
