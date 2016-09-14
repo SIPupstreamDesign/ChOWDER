@@ -91,27 +91,27 @@
 			menu.style.display = "none";
 		};
 
-		add_image_button.onclick = function (evt) {
+		add_image_button.onmousedown = function (evt) {
 			document.getElementById('image_file_input').click();
 			menu.style.display = "none";
 		};
 
-		add_text_file_button.onclick = function (evt) {
+		add_text_file_button.onmousedown = function (evt) {
 		 	document.getElementById('text_file_input').click();	
 			menu.style.display = "none";
 		};
 
-		add_url_button.onclick = function (evt) {
+		add_url_button.onmousedown = function (evt) {
 			toggleURLInput();
 			menu.style.display = "none";
 		};
 
-		add_text_button.onclick = function (evt) {
+		add_text_button.onmousedown = function (evt) {
 			toggleTextInput();
 			menu.style.display = "none";
 		};
 
-		change_image_button.onclick = function (evt) {
+		change_image_button.onmousedown = function (evt) {
 			document.getElementById('update_image_input').click();
 			menu.style.display = "none";
 		};
