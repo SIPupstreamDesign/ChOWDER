@@ -836,8 +836,10 @@
 			memo =  document.getElementById("memo:" + metaData.id);
 			if (memo) {
 				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-					memo.style.borderColor = groupDict[metaData.group].color;
-					memo.style.backgroundColor = groupDict[metaData.group].color; 
+					memo.style.borderColor = "lightgray";
+					memo.style.backgroundColor = "lightgray"; 
+					//memo.style.borderColor = groupDict[metaData.group].color;
+					//memo.style.backgroundColor = groupDict[metaData.group].color; 
 				}
 				if (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) {
 					memo.style.display = "block";
