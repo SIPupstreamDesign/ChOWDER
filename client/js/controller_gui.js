@@ -664,11 +664,11 @@
 					}, {
 						WindowCursor : [{
 							ON : {
-								func : function () {}
+								func : function () { gui.on_update_cursor_enable(true); }
 							}
 						}, {
 							OFF : {
-								func : function () {}
+								func : function () { gui.on_update_cursor_enable(false); }
 							}
 						}]	
 					}/*, {
@@ -888,7 +888,7 @@
 	window.controller_gui.on_textfileinput_changed = null;
 	window.controller_gui.on_urlsendbuton_clicked = null;
 	window.controller_gui.on_textsendbutton_clicked = null;
-	//window.controller_gui.on_duplicatebutton_clicked = null;
+	window.controller_gui.on_update_cursor_enable = null;
 	window.controller_gui.on_contentdeletebutton_clicked = null;
 	window.controller_gui.on_select_contents_clicked = null;
 	window.controller_gui.on_select_display_clicked = null;

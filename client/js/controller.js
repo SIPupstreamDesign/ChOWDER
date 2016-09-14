@@ -8,6 +8,7 @@
 		draggingIDList = [],
 		selectedIDList = [],
 		onCtrlDown = false, // Ctrlボタンを押してるかどうか
+		isUpdateCursorEnable = false, // マウスカーソル送信が有効かどうか
 		lastSelectContentID = null,
 		lastSelectWindowID = null,
 		dragOffsetTop = 0,
@@ -165,6 +166,7 @@
 		console.log("saveCookie");
 		document.cookie = 'display_scale=' + displayScale;
 		document.cookie = 'snap_setting=' + snapSetting;
+		document.cookie = 'update_cursor_enable=' + String(isUpdateCursorEnable);
 	}
 	
 	/**
@@ -1019,7 +1021,7 @@
 		evt = (evt) || window.event;
 		
         // mouse cursor position
-        if(Date.now() % 2 === 0 && evt.target.id !== ''){
+        if(isUpdateCursorEnable && Date.now() % 2 === 0 && evt.target.id !== ''){
             var obj = {
                 type: 'mouse',
                 id: evt.target.id,
@@ -2825,9 +2827,11 @@
 	function init() {
 		var e, timer = null,
 			display_scale,
+			update_cursor_enable,
 			snap;
 			
 		display_scale = parseFloat(getCookie('display_scale'));
+		update_cursor_enable = getCookie('update_cursor_enable');
 		console.log("cookie - display_scale:" + display_scale);
 		snap = getCookie('snap_setting');
 		console.log("cookie - snap_setting:" + snap);
@@ -2846,7 +2850,12 @@
             }, false);
             window.controller_gui.on_snapdropdown_clicked(snap);
 		}
-		
+		if (update_cursor_enable && update_cursor_enable === "true") {
+			isUpdateCursorEnable = true;
+		} else {
+			isUpdateCursorEnable = false;
+		}
+
 		content_property.on_rect_changed = function () {
 			console.log('on_rect_changed');
 			changeRect(this.id, parseInt(this.value, 10));
@@ -2882,6 +2891,11 @@
 			if (!manipulator.getDraggingManip()) {
 				unselectAll(true);
 			}
+		};
+
+		gui.on_update_cursor_enable = function (isEnable) {
+			isUpdateCursorEnable = isEnable;
+			saveCookie();
 		};
 		
 		gui.on_close_item = function () {
