@@ -30,6 +30,8 @@
 		ShowWindowID : "ShowWindowID",
 		UpdateMouseCursor : "UpdateMouseCursor",
 		
+		SendMessage: "SendMessage",
+
 		// to client
 		Disconnect : "Disconnect"
 	};

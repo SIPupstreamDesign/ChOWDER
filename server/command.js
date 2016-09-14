@@ -29,6 +29,8 @@
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
+
+		SendMessage: "SendMessage",
 		
 		// to client
 		Disconnect : "Disconnect"

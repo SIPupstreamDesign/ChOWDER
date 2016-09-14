@@ -1574,6 +1574,14 @@
 				resultCallback();
 			}
 		});
+
+		ws_connector.on(Command.SendMessage, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.SendMessage, data);
+			io_connector.broadcast(io, Command.SendMessage, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
 		
 		ws_connector.on(Command.AddContent, function (data, resultCallback) {
 			var metaData = data.metaData,
@@ -1696,6 +1704,14 @@
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.ShowWindowID, data);
 			io_connector.broadcast(io, Command.ShowWindowID, data);
+		});
+
+		io_connector.on(Command.SendMessage, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.SendMessage, data);
+			io_connector.broadcast(io, Command.SendMessage, data);
+			if (resultCallback) {
+				resultCallback();
+			}
 		});
 
 		io_connector.registerEvent(io, socket);
