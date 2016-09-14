@@ -639,15 +639,12 @@
 		window.menu.init(document.getElementById('head_menu'),
 			{
 				menu : [{
-					SelectMode : [{
+					Controller : [{
 							View : {
 								url : "view2.html"
 							},
-						}, {
-							Controller : {
-								url : "controller2.html"
-							}
 						}],
+					url : "controller2.html"
 				}, {
 					Add : [{
 							Image : {
