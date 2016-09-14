@@ -210,3 +210,11 @@ pre {
 #hiddenCursor7:before, #hiddenCursor7:after {background-color: rgb( 20,  20,  20);}
 #hiddenCursor8:before, #hiddenCursor8:after {background-color: rgb(100, 100, 100);}
 #hiddenCursor9:before, #hiddenCursor9:after {background-color: rgb(200, 200, 200);}
+
+#change_id_text {
+	position : absolute;
+	top : 7px;
+	right : 180px;
+	font-size : 14px;
+	color : rgb(10, 26, 67);
+}

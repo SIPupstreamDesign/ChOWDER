@@ -2467,7 +2467,7 @@
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				if (metaDataDict[id].type === windowType) {
-					select(id, true);
+					select("onlist:" + id, true);
 				}
 			}
 		}

@@ -1108,7 +1108,7 @@
 			}
 		});
 
-		document.getElementById('change_id').onclick = changeID;
+		//document.getElementById('change_id').onclick = changeID;
 		//document.getElementById('fullscreen').onclick = toggleFullScreen;
 
 		input_id.onfocus = function (ev) {
@@ -1120,11 +1120,12 @@
 		input_id.onblur = function (ev) {
 			console.log("onblur");
 			onfocus = false;
+			changeID();
 		};
 		input_id.onkeypress = function (ev) {
 			console.log(ev.keyCode);
 			if (ev.keyCode === 13) { // enter
-				document.getElementById('change_id').onclick(ev);
+				changeID();
 			}
 		};
 
