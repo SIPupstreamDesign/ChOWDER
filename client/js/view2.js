@@ -1114,7 +1114,7 @@
 		input_id.onfocus = function (ev) {
 			console.log("onfocus");
 			onfocus = true;
-			document.getElementById('menu').classList.remove('hide');
+			document.getElementById('head_menu').classList.remove('hide');
 			clearTimeout(hideMenuFunc);
 		};
 		input_id.onblur = function (ev) {

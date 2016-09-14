@@ -117,6 +117,7 @@ pre {
 	position : relative;
 	height : 20px;
 	top : 3px;
+	z-index: 10000000;
 }
 .head_id_input_button {
 	color: #EEE;
