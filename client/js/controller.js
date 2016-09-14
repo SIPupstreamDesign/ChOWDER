@@ -38,7 +38,6 @@
 		doneGetGroupList,
 		doneDeleteContent,
 		doneAddContent,
-		doneAddMetaData,
 		doneUpdateContent,
 		doneUpdateMetaData,
 		doneUpdateWindowMetaData,
@@ -1704,18 +1703,6 @@
 		}
 		
 		doneGetMetaData(err, reply);
-	};
-	
-	/**
-	 * AddMetaDataを送信した後の終了コールバック.
-	 * @method doneAddMetaData
-	 * @param {String} err エラー. 無ければnull.
-	 * @param {JSON} reply 返信されたメタデータ
-	 */
-	doneAddMetaData = function (err, reply) {
-		console.log("doneAddMetaData", reply);
-		metaDataDict[reply.id] = reply;
-		importContent(reply, null);
 	};
 	
 	/**
