@@ -1869,7 +1869,7 @@
 			}
 		}
 		if (metaDataList.length > 0) {
-			connector.send('DeleteWindowMetaData', metaDataList);
+			connector.send('DeleteWindowMetaData', metaDataList, function () {});
 		}
 	};
 	
