@@ -27,7 +27,7 @@
 		return null;
 	}
 
-	function initContextMenuVisible(menu, type) {
+	function initContextMenuVisible(menu, type, type2) {
 		// 出現タイミング調整.
 		var mouseDownPosX = null,
 			mouseDownPosY = null;
@@ -37,7 +37,7 @@
 		});
 
 		document.body.addEventListener("contextmenu", function (evt) {
-			if (window.content_box.is_active(type)) {
+			if (window.content_box.is_active(type) || window.content_box.is_active(type2)) {
 				var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 
@@ -183,7 +183,7 @@
 			}
 		};
 
-		initContextMenuVisible(menu, "content_tab");
+		initContextMenuVisible(menu, "content_tab", "search_tab");
 	}
 
 
@@ -213,7 +213,7 @@
 			gui.on_select_display_clicked(false); 
 			menu.style.display = "none";
 		};
-		initContextMenuVisible(menu, "display_tab");
+		initContextMenuVisible(menu, "display_tab", "");
 	}
 	
 	/**
