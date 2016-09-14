@@ -4,163 +4,184 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 	<link href="css/controller.css" rel="stylesheet"/>
+	<link href="css/content_box.css" rel="stylesheet" />
+	<link href="css/group_box.css" rel="stylesheet" />
+	<link href="css/context_menu.css" rel="stylesheet" />
 	<link href="css/3rd/bootstrap.css" rel="stylesheet" />
+	<link href="css/search_box.css" rel="stylesheet" />
+	<link href="css/menu.css" rel="stylesheet" />
+	<link href="css/burger_menu.css" rel="stylesheet" />
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
-	<script type="text/javascript" src="js/3rd/qatrix-1.1.js"></script>
 	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
-	<script type="text/javascript" src="js/animtab.js"></script>
 	<script type="text/javascript" src="js/metabinary.js"></script>
 	<script type="text/javascript" src="js/command.js"></script>
 	<script type="text/javascript" src="js/io_connector.js"></script>
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
+	<script type="text/javascript" src="js/colorselector.js"></script>
+	<script type="text/javascript" src="js/input_dialog.js"></script>
 	<script type="text/javascript" src="js/manipulator.js"></script>
+	<script type="text/javascript" src="js/layout.js"></script>
+	<script type="text/javascript" src="js/content_property.js"></script>
+	<script type="text/javascript" src="js/content_box.js"></script>
+	<script type="text/javascript" src="js/group_box.js"></script>
 	<script type="text/javascript" src="js/controller_gui.js"></script>
+	<script type="text/javascript" src="js/window_list.js"></script>
+	<script type="text/javascript" src="js/content_list.js"></script>
+	<script type="text/javascript" src="js/search_box.js"></script>
+	<script type="text/javascript" src="js/window_view.js"></script>
+	<script type="text/javascript" src="js/content_view.js"></script>
 	<script type="text/javascript" src="js/controller.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
+	<script type="text/javascript" src="js/burger_menu.js"></script>
 </head>
 <body>
 
 <div class="bgcolor" ></div>
-			
 		
-<div class="page">
+<div class="page" id="layout">
 
-	<div class="head_menu" >
-		<div class="">
-			<!--
-			<span class="head_title">
-				<a class="head_title_text" href="#">ChOWDER</a>
-			</span>
-			<span class="head_menu_content" id="">
-				<span class="head_menu_content_inner">
-					<span class="active"><a href="#" class="head_menu_content_text active">Controller <span class="sr-only">(current)</span></a></span>
-					<span><a href="view2.html" class="head_menu_content_text" target="_blank">Display</a></span>
-				</span>
-			</span>
-			-->
-			<span class="head_select_mode_menu">
-				<a class="head_select_menu_text" id="select_mode" href="/">
-					Select Mode
-				</a>
-			</span>
-			
-			<span class="head_vdisplay_menu">
-				<a class="head_vdisplay_menu_text" id="virtual_display_setting" href="#">
-					Virtual Display Setting
-				</a>
-			</span>
-			
-			<div class="head_mode_menu">
-				<div class="head_mode_text stopselect">
-					Controller
-				</div>
+	<div id="head_menu" class="head_menu" >
+		<div class="head_mode_menu">
+			<div class="head_mode_text stopselect">
+				ChOWDER
 			</div>
+		</div>
+        <div id="head_menu_hover">
+            <span id="snap_text">Snap:</span>
+			<select id="head_menu_hover_left">
+                <option value="free">free</option>
+                <option value="display">display</option>
+                <option value="grid">grid</option>
+            </select>
+            <div id="head_menu_hover_right"></div>
+        </div>
+	</div>
+
+	<div id="layout2">
+		<div id="preview_area" class="preview_area">
+			<div id="content_preview_area" class="preview_area">
+			</div>
+			<div id="display_preview_area" class="preview_area">
+			</div>
+		</div>
+
+		<div id="rightArea" class="rightArea">
+			<p class="content_id">
+				<span id="content_id_label">Content ID：</span><span id="content_id" >No Content Selected.</span>
+			</p>
+			<p class="group_name">
+				<span id="group_name_label">Group：</span><span id="group_name" >No Content Selected.</span>
+			</p>
+			<div class="transform_input" id="transform_input">
+			</div>
+			<p id="meta_info" class="meta_info" style="color:white">メタ情報</p>
+			<div class="user_data_input" id="user_data_input"></div>
+			<div class="color_picker" id="color_picker"></div>
+			<a type="button" class="download_button" id="download_button"></a>
 		</div>
 	</div>
 
-	<div class="top_control_panel">
-		<div class="top_control">
-			<div class="topmenu1">
-				<span class="dropdown" id="dropdown1">
-					<span class="whitetext bold stopselect">Snap</span>
-					<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
-						<span class="blacktext" id="snap_dropdown_current">Free</span>
-						<span class="caret blacktext"></span>
-					</button>
-					<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-						<li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="dropdown_item1">Free</a></li>
-						<li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="dropdown_item2">Display</a></li>
-						<li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="dropdown_item3">Grid</a></li>
-					</ul>
-				</span>
-			</div>
-			<div class="topmenu2">
-				<span class="dropdown" id="dropdown2">
-					<span class="whitetext bold stopselect">Scale</span>
-					<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-expanded="true">
-						<span class="blacktext" id="scale_dropdown_current">0.5</span>
-						<span class="caret blacktext"></span>
-					</button>
-					<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" id="scale_drop_down">
-					</ul>
-				</span>
-			</div>
-		</div>
+	<div id="bottom_area" class="bottom_area">
+	</div>
+	
+	<div class="popup_background" id="popup_background"></div>
+	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
+	
+</div>
+
+	<div id="bottom_burger_menu_display"></div>
+	<div id="bottom_burger_menu_content">
+		<ul class="burger_menu_submenu" id="burger_menu_submenu">
+			<!--li class="burger_menu_submenu_item" id="burger_menu_submenu_item1">グループ1</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_submenu_item2">グループ2</li-->
+		</ul>
+		<ul class="burger_menu_submenu_add_content" id="burger_menu_submenu_add_content">
+			<li class="burger_menu_submenu_item" id="burger_menu_add_image">画像ファイル</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_text">テキスト</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_text_file">テキストファイル</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_url">URL</li>
+		</ul>
+	</div>
+	<div id="bottom_burger_menu_search"></div>
+	
+	<ul class="context_menu" id="context_menu" style="display:none">
+		<li class="context_menu_item" id="context_menu_move_front">最前面に移動</li>
+		<li class="context_menu_item" id="context_menu_move_back">最背面に移動</li>
+		<li class="context_menu_item" id="context_menu_add_content">コンテンツ追加</li>
+		<li class="context_menu_item" id="context_menu_change_group">グループ変更</li>
+		<li class="context_menu_item" id="context_menu_change_image">画像差し替え</li>
+		<li class="context_menu_item" id="context_menu_hide">非表示</li>
+		<li class="context_menu_item" id="context_menu_delete">削除</li>
+		<li class="context_menu_item" id="context_menu_select_all">全て選択</li>
+		<li class="context_menu_item" id="context_menu_select_group">グループ内全て選択</li>
+
+		<ul class="context_menu_add_content_submenu" id="context_menu_add_content_submenu">
+			<li class="context_menu_add_content_item" id="context_menu_add_image">画像ファイル</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_text">テキスト</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_text_file">テキストファイル</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_url">URL</li>
+		</ul>
+		<ul class="context_menu_change_group_submenu" id="context_menu_change_group_submenu">
+			<!--li class="context_menu_item" id="context_menu_change_group_item">グループ1</li-->
+		</ul>
+	</ul>
+	<ul class="context_menu" id="context_menu_display" style="display:none">
+		<li class="context_menu_item" id="context_menu_display_show_id">IDを表示</li>
+		<li class="context_menu_item" id="context_menu_display_hide">非表示</li>
+		<li class="context_menu_item" id="context_menu_display_delete">削除</li>
+		<li class="context_menu_item" id="context_menu_display_select_all">全て選択</li>
+	</ul>
+
+	<!---ポップアップダイアログ--->
+	<div class="popup_background"></div>
+	<div id="text_input_dialog">
+		<p style="margin-top:20px;margin-left:20px">テキストの追加</p>
+		<textarea  id="text_input" style="margin-left:20px"></textarea>
+		<input class="btn" type="button" value="Send" id="text_send_button" />
+	</div>
+	<div id="input_dialog">
+		<p style="margin-top:20px;margin-left:20px" id="input_dialog_name"></p>
+		<input type="text" id="input_dialog_input" style="margin-left:20px"/>
+		<input class="btn" type="button" value="OK" id="input_ok_button" />
+	</div>
+	<div id="color_dialog">
+		<p style="margin-top:20px;margin-left:20px" id="color_dialog_name"></p>
+		<div id="color_dialog_picker"></div>
+		<input class="btn" type="button" value="OK" id="color_ok_button" />
 	</div>
 
+	<!---グループ設定メニュー--->
+	<ul id="group_setting_menu" class="group_setting_menu" style="display:none">
+		<li class="group_setting_menu_item" id="group_setting_name">名前変更</li>
+		<li class="group_setting_menu_item" id="group_setting_color">色変更</li>
+		<li class="group_setting_menu_item" id="group_setting_delete">削除</li>
+	</ul>
+	
 
-	<div id="leftArea" class="leftArea">
-		<div class="left_tab_area">
-			<span id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></span>
-			<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
-		</div>
-		<div class="left_main_area" id="left_main_area">
-			<div class="display_area" id="display_area">
-			</div>
-
-			<div class="content_area" id="content_area">
-			</div>
-			<div class="content_button_area_container">
-				<div class="content_button_area" id="content_button_area">
-					<div class="content_button btn-group btn-group-justified content_add">
-						<div class="btn btn-success" id="content_add_button">Add</div>
-					</div>
-					<div class="content_button btn-group btn-group-justified">
-						<div class="btn btn-danger disabled" id="content_delete_button">Delete</div>
-						<div class="btn btn-danger" id="content_delete_all_button">Delete All</div>
-					</div>
-				</div>
-				<div class="display_button_area" id="display_button_area">
-					<div class="display_button btn-group btn-group-justified show_display_id">
-						<div class="btn btn-primary" id="show_display_id_button">Show Display ID</div>
-					</div>
-					<div class="display_button btn-group btn-group-justified">
-						<div class="btn btn-primary disabled" id="display_delete_button">Delete</div>
-						<div class="btn btn-danger" id="display_delete_all_button">Delete All</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div id="rightArea" class="rightArea">
-		<p class="content_id">
-			<span id="content_id_label">Content ID：</span><span id="content_id" >No Content Selected.</span>
-		</p>
-		<div class="transform_input" id="transform_input">
-		</div>
-		<a type="button" class="download_button" id="download_button"></a>
-	</div>
-
-	<div id="bottomTab" class="bottomTab" style="display:none;">Add Content</div>
-	<div id="bottomArea" class="bottomArea" style="display:none;">
-		<div>
-			<p style="margin-top:20px;margin-left:20px">テキストの送信</p>
-			<input type="text" id="text_input" style="margin-left:20px"/>
-			<input class="btn" type="button" value="Send" id="text_send_button" />
-		</div>
+	<div style="display:none">
 		<hr>
 		<div>
-			<p style="margin-left:20px">テキストファイルの送信</p>
+			<p style="margin-left:20px">テキストファイルの追加</p>
 			<input type="file" name="filename" id="text_file_input" style="margin-left:20px" />
 		</div>
 		<hr>
 		<div>
-			<p style="margin-left:20px">URLの送信</p>
+			<p style="margin-left:20px">URLの追加</p>
 			<input type="text" id="url_input" style="margin-left:20px"/>
 			<input class="btn" type="button" value="Send" id="url_send_button" />
 		</div>
 		<hr>
 		<div>
-			<p style="margin-left:20px">画像の送信</p>
-			<input type="file" name="filename" id="image_file_input" style="margin-left:20px" />
+			<p style="margin-left:20px">画像の追加</p>
+			<input type="file" name="filename" id="image_file_input" style="margin-left:20px" /-->
 			<!--input type="button" value="Send" id="image_send_button"></input-->
 		</div>
 		<hr>
 		<div>
 			<p style="margin-left:20px">画像差し替え</p>
 			<span style="margin-left:20px">ID:</span><span id="update_content_id" >No Content Selected.</span>
-			<input type="file" value="UpdateImage" id="update_image_input" style="margin-left:20px" disabled />
+			<input type="file" value="UpdateImage" id="update_image_input" style="margin-left:20px" />
 		</div>
 		<!--hr>
 		<div>
@@ -168,22 +189,6 @@
 			<span style="margin-left:20px">ID:</span><span id="update_content_id" >No Content Selected.</span>
 			<input class="btn" type="button" value="Duplicate" id="duplicate_button" />
 		</div-->
-		
 	</div>
-
-	<!--img src="" id="image_preview" /-->
-	<div id="preview_area" class="preview_area">
-		<div id="content_preview_area" class="preview_area">
-		</div>
-		<div id="display_preview_area" class="preview_area">
-		</div>
-	</div>
-	
-	<div class="popup_background" id="popup_background"></div>
-	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
-
-	<div class="overallBlock" id="overall_block" style="display:none;"></div>
-	
-</div>
 </body>
 </html>

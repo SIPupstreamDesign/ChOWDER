@@ -9,11 +9,13 @@
 		timer,
 		windowData = null,
 		metaDataDict = {},
+		groupDict = {},
 		windowType = "window",
 		doneAddWindowMetaData,
 		doneGetWindowMetaData,
 		doneGetContent,
-		doneGetMetaData;
+		doneGetMetaData,
+        controllers = {connectionCount: -1};
 
 	function toggleFullScreen() {
 		if (!document.fullscreenElement &&    // alternative standard method
@@ -39,6 +41,24 @@
 			}
 		}
 	}
+
+    function getTargetEvent(){
+        if(window.ontouchstart !== undefined){
+            return {
+                mode: 'touch',
+                start: 'touchstart',
+                move: 'touchmove',
+                end: 'touchend'
+            };
+        }else{
+            return {
+                mode: 'mouse',
+                start: 'mousedown',
+                move: 'mousemove',
+                end: 'mouseup'
+            };
+        }
+    }
 
 	/**
 	 * メタデータが表示中であるかを判別する
@@ -212,7 +232,14 @@
 		metaData.orgHeight = wh.height;
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 
-		connector.send('UpdateWindowMetaData', windowData, doneAddWindowMetaData);
+		connector.send('UpdateWindowMetaData', [windowData], doneAddWindowMetaData);
+	}
+
+	function updateGroupDict(groupList) {
+		var i;
+		for (i = 0; i < groupList.length; ++i) {
+			groupDict[groupList[i].name] = groupList[i];
+		}
 	}
 
 	/**
@@ -231,17 +258,52 @@
 				doneGetWindowMetaData(err, json);
 				connector.send('GetMetaData', { type: 'all', id: '' }, doneGetMetaData);
 			});
+			connector.send('GetGroupList', {}, function (err, data) {
+				if (!err && data.hasOwnProperty("grouplist")) {
+					updateGroupDict(data.grouplist);
+				}
+			});
 		} else if (updateType === 'window') {
 			if (windowData !== null) {
 				console.log("update winodow", windowData);
 				connector.send('GetWindowMetaData', { id : windowData.id}, doneGetWindowMetaData);
 			}
+		} else if (updateType === 'group') {
+			connector.send('GetGroupList', {}, function (err, data) {
+				if (!err && data.hasOwnProperty("grouplist")) {
+					updateGroupDict(data.grouplist);
+				}
+			});
 		} else {
 			console.log("update transform");
 			if (targetid) {
 				connector.send('GetMetaData', { type: '', id: targetid}, doneGetMetaData);
 			} else {
 				connector.send('GetMetaData', { type: 'all', id: ''}, doneGetMetaData);
+			}
+		}
+	}
+
+	/**
+	 * コンテンツの選択
+	 * @method select
+	 * @param {String} targetid 対象コンテンツID
+	 */
+	function select(targetid) {
+		var metaData,
+			elem;
+		if (metaDataDict.hasOwnProperty(targetid)) {
+			metaData = metaDataDict[targetid];
+			elem = document.getElementById(targetid);
+			elem.style.borderWidth = "1px";
+			elem.style.border = "solid";
+			elem.is_dragging = true;
+			
+			if (elem.classList.contains("mark")) {
+				elem.style.borderWidth = "6px";
+				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+					elem.style.borderColor = groupDict[metaData.group].color; 
+				}
 			}
 		}
 	}
@@ -262,6 +324,183 @@
 	}
 
 	/**
+	 * 現在選択されているContentを非選択状態にする
+	 * @method unselect
+	 */
+	function unselect() {
+		var i,
+			elem;
+		for (i in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(i)) {
+				elem = document.getElementById(metaDataDict[i].id);
+				if (elem && elem.is_dragging) {
+					elem.is_dragging = false;
+					if (!elem.classList.contains("mark")) {
+						elem.style.borderWidth = "0px";
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * 指定Contentを移動させる
+	 * @oaram targetid コンテンツのid
+	 * @param x ページのx座標
+	 * @param y ページのy座標
+	 */
+	function translate(targetid, x, y) {
+		var elem,
+			metaData,
+			i,
+			max = 0;
+		
+		if (metaDataDict.hasOwnProperty(targetid)) {
+			elem = document.getElementById(targetid);
+			metaData = metaDataDict[targetid];
+			metaData.posx = x;
+			metaData.posy = y;
+			
+			vscreen_util.transPosInv(metaData);
+			metaData.posx -= vscreen.getWhole().x;
+			metaData.posy -= vscreen.getWhole().y;
+			
+			connector.send('UpdateMetaData', [metaData], function (err, reply) {
+			});
+		}
+	}
+
+	function translateZ(targetid) {
+		var metaData,
+			i,
+			max = 0;
+		
+		if (metaDataDict.hasOwnProperty(targetid)) {
+			metaData = metaDataDict[targetid];
+			for (i in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(i)) {
+					if (metaDataDict[i].id !== metaData.id && 
+						metaDataDict[i].type !== windowType &&
+						metaDataDict[i].hasOwnProperty("zIndex")) {
+						if (Number.isInteger(parseInt(metaDataDict[i].zIndex, 10))) {
+							max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+						}
+					}
+				}
+			}
+			metaData.zIndex = max + 1;
+			
+			connector.send('UpdateMetaData', [metaData], function (err, reply) {});
+		}
+	}
+
+	/**
+	 * 現在選択されているContentのエレメントを返す. ない場合はnullが返る.
+	 */
+	function getSelectedElem() {
+		var i,
+			elem;
+		for (i in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(i)) {
+				elem = document.getElementById(metaDataDict[i].id);
+				if (elem && elem.is_dragging) {
+					return elem;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * コンテンツにイベント等を設定.
+	 * @param elem コンテンツのelement
+	 * @param targetid コンテンツのid
+	 */
+    function setupContent(elem, targetid) {
+        var d = getTargetEvent();
+        if(d.mode === 'mouse'){
+            elem.addEventListener(d.start, (function (elem) {
+                return function (evt) {
+                    var rect = elem.getBoundingClientRect();
+                    unselect();
+                    select(targetid);
+                    elem.draggingOffsetLeft = evt.clientX - rect.left;
+                    elem.draggingOffsetTop = evt.clientY - rect.top;
+					translateZ(targetid);
+                    evt.preventDefault();
+                };
+            }(elem)), false);
+            window.onmouseup = function () {
+                unselect();
+            };
+            window.onmousemove = function (evt) {
+                var elem = getSelectedElem();
+                if (elem && elem.is_dragging) {
+                    translate(elem.id, evt.pageX - elem.draggingOffsetLeft, evt.pageY - elem.draggingOffsetTop);
+                }
+                evt.preventDefault();
+            };
+        }else{
+            elem.addEventListener(d.start, (function (elem) {
+                return function (evt) {
+                    var rect = elem.getBoundingClientRect();
+                    unselect();
+                    select(targetid);
+                    elem.draggingOffsetLeft = evt.changedTouches[0].clientX - rect.left;
+                    elem.draggingOffsetTop = evt.changedTouches[0].clientY - rect.top;
+					translateZ(targetid);
+                    evt.preventDefault();
+                };
+            }(elem)), false);
+            window.ontouchend = function () {
+                unselect();
+            };
+            window.ontouchmove = function (evt) {
+                var elem = getSelectedElem();
+                if (elem && elem.is_dragging) {
+                    translate(elem.id, evt.changedTouches[0].pageX - elem.draggingOffsetLeft, evt.changedTouches[0].pageY - elem.draggingOffsetTop);
+                }
+                evt.preventDefault();
+            };
+        }
+    };
+
+	function setupMemo(elem, metaData) {
+		var previewArea = document.getElementById('preview_area'),
+			memo = document.getElementById("memo:" + metaData.id),
+			rect;
+		if (elem && metaData.user_data_text) {
+			if (memo) {
+				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+				rect = elem.getBoundingClientRect();
+				memo.style.width = (rect.right - rect.left) + "px";
+				memo.style.left = rect.left + "px";
+				memo.style.top =  rect.bottom + "px";
+				memo.style.zIndex = elem.style.zIndex;
+			} else {
+				memo = document.createElement("pre");
+				memo.id = "memo:" + metaData.id;
+				memo.className = "memo";
+				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+				rect = elem.getBoundingClientRect();
+				memo.style.left = rect.left + "px";
+				memo.style.top = rect.bottom + "px";
+				memo.style.position = "absolute";
+				memo.style.width = (rect.right - rect.left) + "px";
+				memo.style.height = "auto";
+				memo.style.whiteSpace = "pre-line";
+				memo.style.zIndex = elem.style.zIndex;
+				previewArea.appendChild(memo);
+			}
+			
+			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+				memo.style.borderColor = groupDict[metaData.group].color;
+				memo.style.backgroundColor = groupDict[metaData.group].color; 
+			}
+		}
+	}
+
+	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
 	 * @param {JSON} metaData メタデータ
@@ -272,6 +511,7 @@
 			tagName,
 			blob,
 			elem,
+			memo,
 			mime = "image/jpeg",
 			boundElem,
 			id,
@@ -301,6 +541,8 @@
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
 				elem.style.position = "absolute";
+				elem.style.color = "white";
+				setupContent(elem, elem.id);
 				insertElementWithDictionarySort(previewArea, elem);
 				//previewArea.appendChild(elem);
 			}
@@ -318,8 +560,8 @@
 					elem.src = URL.createObjectURL(blob);
 				}
 			}
-			vscreen_util.assignMetaData(elem, metaData, false);
-
+			vscreen_util.assignMetaData(elem, metaData, false, groupDict);
+			
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {
 				for (id in metaDataDict) {
@@ -338,6 +580,8 @@
 					}
 				}
 			}
+
+			setupMemo(elem, metaData);
 		}
 	}
 
@@ -355,6 +599,7 @@
 		elem.id = metaData.id;
 		elem.style.position = "absolute";
 		elem.className = "temporary_bounds";
+		setupContent(elem, elem.id);
 		insertElementWithDictionarySort(previewArea, elem);
 	}
 
@@ -400,18 +645,27 @@
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				if (document.getElementById(id)) {
-					vscreen_util.assignMetaData(document.getElementById(id), metaDataDict[id], false);
+					vscreen_util.assignMetaData(document.getElementById(id), metaDataDict[id], false, groupDict);
 				}
 			}
 		}
 	}
 
-	window.document.addEventListener("mousedown", function () {
-		var displayArea = document.getElementById('displayid_area');
-		if (displayArea.style.display !== "none") {
-			displayArea.style.display = "none";
-		}
-	});
+    if(getTargetEvent().mode === 'mouse'){
+        window.document.addEventListener("mousedown", function () {
+            var displayArea = document.getElementById('displayid_area');
+            if (displayArea.style.display !== "none") {
+                displayArea.style.display = "none";
+            }
+        });
+    }else{
+        window.document.addEventListener("touchstart", function () {
+            var displayArea = document.getElementById('displayid_area');
+            if (displayArea.style.display !== "none") {
+                displayArea.style.display = "none";
+            }
+        });
+    }
 
 	/**
 	 * ディスプレイIDの表示.
@@ -468,7 +722,7 @@
 		console.log("updatePreviewAreaVisible", previewArea, elem);
 		if (previewArea) {
 			if (isVisible(json)) {
-				vscreen_util.assignMetaData(previewArea, json, false);
+				vscreen_util.assignMetaData(previewArea, json, false, groupDict);
 				previewArea.style.display = "block";
 			} else {
 				previewArea.style.display = "none";
@@ -476,7 +730,7 @@
 		}
 		if (elem) {
 			if (isVisible(json)) {
-				vscreen_util.assignMetaData(elem, json, false);
+				vscreen_util.assignMetaData(elem, json, false, groupDict);
 				elem.style.display = "block";
 			} else {
 				elem.style.display = "none";
@@ -507,17 +761,20 @@
 	 */
 	doneAddWindowMetaData = function (err, json) {
 		console.log("doneAddWindowMetaData", json);
+		var i;
 		if (!err) {
-			metaDataDict[json.id] = json;
-			windowData = json;
-			saveCookie();
-			window.parent.document.title = "Display ID:" + json.id;
-			document.getElementById('input_id').value = json.id;
-			document.getElementById('displayid').innerHTML = "ID:" + json.id;
-			updatePreviewAreaVisible(windowData);
-			resizeViewport(windowData);
-			update('all');
+			for (i = 0; i < json.length; i = i + 1) {
+				metaDataDict[json[i].id] = json[i];
+				windowData = json[i];
+				saveCookie();
+				window.parent.document.title = "Display ID:" + json[i].id;
+				document.getElementById('input_id').value = json[i].id;
+				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
+				updatePreviewAreaVisible(windowData);
+				resizeViewport(windowData);
+			}
 		}
+		update('all');
 	};
 
 	/**
@@ -553,11 +810,53 @@
 	};
 
 	/**
+	 * マークによるコンテンツ強調表示のトグル
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	function toggleMark(elem, metaData) {
+		var mark_memo = "mark_memo",
+			mark = "mark",
+			memo = null;
+		if (elem && metaData.hasOwnProperty("id")) {
+			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
+				if (!elem.classList.contains(mark)) {
+					elem.classList.add(mark);
+					if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+						elem.style.borderColor = groupDict[metaData.group].color;
+						elem.style.borderWidth = "6px";
+					}
+				}
+			} else {
+				if (elem.classList.contains(mark)) {
+					elem.classList.remove(mark);
+					elem.style.borderWidth = "0px";
+				}
+			}
+			memo =  document.getElementById("memo:" + metaData.id);
+			if (memo) {
+				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+					memo.style.borderColor = "lightgray";
+					memo.style.backgroundColor = "lightgray"; 
+					//memo.style.borderColor = groupDict[metaData.group].color;
+					//memo.style.backgroundColor = groupDict[metaData.group].color; 
+				}
+				if (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) {
+					memo.style.display = "block";
+				} else {
+					memo.style.display = "none";
+				}
+			}
+		}
+	}
+
+	/**
 	 * GetMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
 	 */
 	doneGetMetaData = function (err, json) {
+		var metaData = json;
 		console.log("doneGetMetaData", json);
 		metaDataDict[json.id] = json;
 		if (!err) {
@@ -589,7 +888,7 @@
 			} else {
 				if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
 					if (isVisible(json)) {
-						vscreen_util.assignMetaData(elem, json, false);
+						vscreen_util.assignMetaData(elem, json, false, groupDict);
 						elem.style.display = "block";
 					} else {
 						elem.style.display = "none";
@@ -599,13 +898,19 @@
 					if (!elem) {
 						createBoundingBox(json);
 						// 新規コンテンツロード.
-						connector.send('GetContent', { type: json.type, id: json.id }, doneGetContent);
+						connector.send('GetContent', { type: json.type, id: json.id }, function (err, reply) {
+							doneGetContent(err, reply);
+							toggleMark(document.getElementById(json.id), metaData);
+						});
 					}
 					elem = document.getElementById(json.id);
-					vscreen_util.assignMetaData(elem, json, false);
+					vscreen_util.assignMetaData(elem, json, false, groupDict);
 				}
 				if (isWindow) {
 					resizeViewport(windowData);
+				} else {
+					setupMemo(elem, metaData);
+					toggleMark(elem, metaData);
 				}
 			}
 		}
@@ -657,13 +962,22 @@
 			});
 		});
 
+		connector.on("UpdateGroup", function (err, data) {
+			update("group", "");
+		});
+
 		connector.on("DeleteContent", function (data) {
 			console.log("onDeleteContent", data);
-			var elem = document.getElementById(data.id),
+			var i,
+				elem,
 				previewArea = document.getElementById('preview_area');
-			if (elem) {
-				previewArea.removeChild(elem);
-				delete metaDataDict[data.id];
+
+			for (i = 0; i < data.length; ++i) {
+				elem = document.getElementById(data[i].id);
+				if (elem) {
+					previewArea.removeChild(elem);
+					delete metaDataDict[data[i].id];
+				}
 			}
 		});
 
@@ -674,24 +988,70 @@
 
 		connector.on("UpdateWindowMetaData", function (data) {
 			console.log("onUpdateWindowMetaData", data);
-			if (data.hasOwnProperty('id') && data.id === getWindowID()) {
-				update('window');
+			var i;
+			for (i = 0; i < data.length; ++i) {
+				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
+					update('window');
+					return;
+				}
 			}
 		});
 
+        connector.on("UpdateMouseCursor", function (res) {
+            var i, a, e, x, y, ww, wh;
+            var ctrlid, idstring;
+            var WAIT_TIME = 1000 * 60 * 5;
+            if (res.hasOwnProperty('data') && res.data.id === getWindowID()) {
+                ctrlid = res.id;
+                if(!controllers.hasOwnProperty(ctrlid)){
+                    ++controllers.connectionCount;
+                    controllers[ctrlid] = {
+                        index: controllers.connectionCount,
+                        lastActive: 0
+                    };
+                }
+                idstring = parseInt(controllers[ctrlid].index % 10, 10);
+                ww = window.innerWidth;
+                wh = window.innerHeight;
+                x = (res.data.x / res.data.w) * ww;
+                y = (res.data.y / res.data.h) * wh;
+                e = document.getElementById('hiddenCursor' + idstring);
+                if(e){
+                    e.style.left = x + 'px';
+                    e.style.top  = y + 'px';
+                    controllers[ctrlid].lastActive = Date.now();
+                }
+            } else {
+                a = Object.keys(controllers);
+                for(i = 0; i < a.length; ++i){
+                    if(a[i] !== 'connectionCount'){
+                        if(Date.now() - controllers[a[i]].lastActive > WAIT_TIME){
+                            idstring = parseInt(controllers[a[i]].index % 10, 10);
+                            e = document.getElementById('hiddenCursor' + idstring);
+                            if(e){
+                                e.style.left = '-9999px';
+                                e.style.top  = '-9999px';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
 		connector.on("ShowWindowID", function (data) {
 			console.log("onShowWindowID", data);
-			showDisplayID(data.id);
+			var i;
+			for (i = 0; i < data.length; i = i + 1) {
+				showDisplayID(data[i].id);	
+			}
 		});
 
 		connector.on("UpdateMetaData", function (data) {
-			console.log("onUpdateMetaData", data);
-			update('', data.id);
-		});
-
-		connector.on("UpdateMouseCursor", function (data) {
-			console.log("onUpdateMouseCursor", data);
-			// update('', data.id);
+			var i;
+			console.log("UpdateMetaData", data);
+			for (i = 0; i < data.length; ++i) {
+				update('', data[i].id);
+			}
 		});
 
 		connector.on("Disconnect", (function (client) {
@@ -723,7 +1083,7 @@
 				console.log("onfocus:", onfocus);
 				if (!onfocus) {
 					console.log("hideMenuFunc");
-					document.getElementById('menu').classList.add('hide');
+					document.getElementById('head_menu').classList.add('hide');
 				}
 				registered = false;
 			};
@@ -741,30 +1101,31 @@
 		};
 
 		window.addEventListener('mousemove', function (evt) {
-			document.getElementById('menu').classList.remove('hide');
+			document.getElementById('head_menu').classList.remove('hide');
 			if (!registered) {
 				registered = true;
 				setTimeout(hideMenuFunc, 3000);
 			}
 		});
 
-		document.getElementById('change_id').onclick = changeID;
-		document.getElementById('fullscreen').onclick = toggleFullScreen;
+		//document.getElementById('change_id').onclick = changeID;
+		//document.getElementById('fullscreen').onclick = toggleFullScreen;
 
 		input_id.onfocus = function (ev) {
 			console.log("onfocus");
 			onfocus = true;
-			document.getElementById('menu').classList.remove('hide');
+			document.getElementById('head_menu').classList.remove('hide');
 			clearTimeout(hideMenuFunc);
 		};
 		input_id.onblur = function (ev) {
 			console.log("onblur");
 			onfocus = false;
+			changeID();
 		};
 		input_id.onkeypress = function (ev) {
 			console.log(ev.keyCode);
 			if (ev.keyCode === 13) { // enter
-				document.getElementById('change_id').onclick(ev);
+				changeID();
 			}
 		};
 
@@ -774,22 +1135,40 @@
 			event.preventDefault();
 		}
 
-		document.addEventListener("touchstart", function (evt) {
-			document.getElementById('menu').classList.remove('hide');
-			if (!registered) {
-				registered = true;
-				setTimeout(hideMenuFunc, 3000);
-			}
-		}, false);
-
-		// タッチイベントの初期化
-		//document.addEventListener("touchstart", preventScroll, false);
-		document.addEventListener("touchmove", preventScroll, false);
-		//document.addEventListener("touchend", preventScroll, false);
-		// ジェスチャーイベントの初期化
-		//document.addEventListener("gesturestart", preventScroll, false);
-		document.addEventListener("gesturechange", preventScroll, false);
-		//document.addEventListener("gestureend", preventScroll, false);
+		// 上部メニューの初期化.
+		window.menu.init(document.getElementById('head_menu'),
+			{
+				menu : [{
+					Display : [{
+							Controller : {
+								url : "controller.html"
+							}
+						}],
+					url : "view.html"
+				},{
+					Setting : [{
+						Fullscreen : {
+							func : function(evt) { toggleFullScreen(); }
+						}
+					}]
+				}]
+			});
+// 		document.addEventListener("touchstart", function (evt) {
+// 			document.getElementById('menu').classList.remove('hide');
+// 			if (!registered) {
+// 				registered = true;
+// 				setTimeout(hideMenuFunc, 3000);
+// 			}
+// 		}, false);
+//
+// 		// タッチイベントの初期化
+// 		//document.addEventListener("touchstart", preventScroll, false);
+// 		document.addEventListener("touchmove", preventScroll, false);
+// 		//document.addEventListener("touchend", preventScroll, false);
+// 		// ジェスチャーイベントの初期化
+// 		//document.addEventListener("gesturestart", preventScroll, false);
+// 		document.addEventListener("gesturechange", preventScroll, false);
+// 		//document.addEventListener("gestureend", preventScroll, false);
 	}
 
 	window.onload = init;
