@@ -14,7 +14,7 @@
 	function restore_options(callback) {
 		chrome.storage.sync.get({
 			interval: 1,
-			url : "ws://localhost:8082"
+			url : "ws://localhost:8081"
 		}, callback);
 	}
 
