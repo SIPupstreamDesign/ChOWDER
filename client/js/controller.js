@@ -2825,7 +2825,7 @@
 	 * @method init
 	 */
 	function init() {
-		var e, timer = null,
+		var timer = null,
 			display_scale,
 			update_cursor_enable,
 			snap;
@@ -2843,13 +2843,13 @@
 			if (snap === 'display') {
 				snapSetting = 'display';
 			}
-            e = document.getElementById('head_menu_hover_left');
-            e.addEventListener('change', function(eve){
-                var f = eve.currentTarget.value;
-                window.controller_gui.on_snapdropdown_clicked(f);
-            }, false);
             window.controller_gui.on_snapdropdown_clicked(snap);
 		}
+		document.getElementById('head_menu_hover_left').addEventListener('change', function(eve){
+			var f = eve.currentTarget.value;
+			window.controller_gui.on_snapdropdown_clicked(f);
+		}, false);
+
 		if (update_cursor_enable && update_cursor_enable === "true") {
 			isUpdateCursorEnable = true;
 		} else {

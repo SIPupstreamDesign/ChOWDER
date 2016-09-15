@@ -671,23 +671,7 @@
 								func : function () { gui.on_update_cursor_enable(false); }
 							}
 						}]	
-					}/*, {
-						Snap : [{
-							Free : {
-								func : function () { gui.on_snapdropdown_clicked('free'); }
-							},
-						}, {
-							Display : {
-								func : function () {
-									gui.on_snapdropdown_clicked('display');
-								}
-							},
-						}, {
-							Grid : {
-								func : function () { gui.on_snapdropdown_clicked('grid'); }
-							}
-						}],
-					}*/]
+					}]
 				}]
 			});
 
