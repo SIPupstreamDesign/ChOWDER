@@ -1146,7 +1146,6 @@
 	// add content mouseup event
 	window.document.addEventListener("mouseup", function (evt) {
 		var i,
-			contentArea = gui.get_content_area(),
 			metaData,
 			elem,
 			px,
@@ -1625,8 +1624,6 @@
 		console.log("doneDeleteContent", err, reply);
 		var func = function (err, reply) {
 			var json = reply,
-				contentArea = gui.get_content_area(),
-				searchArea = gui.get_search_area(),
 				previewArea = gui.get_content_preview_area(),
 				deleted = document.getElementById(json.id);
 			manipulator.removeManipulator();
@@ -1634,10 +1631,10 @@
 				previewArea.removeChild(deleted);
 			}
 			if (gui.get_list_elem(json.id)) {
-				contentArea.removeChild(gui.get_list_elem(json.id));
+				gui.get_list_elem(json.id).parentNode.removeChild(gui.get_list_elem(json.id));
 			}
 			if (gui.get_search_elem(json.id)) {
-				searchArea.removeChild(gui.get_search_elem(json.id));
+				gui.get_search_elem(json.id).parentNode.removeChild(gui.get_search_elem(json.id));
 			}
 			gui.set_update_content_id("No Content Selected.");
 			lastSelectContentID = null;
