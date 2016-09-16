@@ -1025,8 +1025,6 @@
 			mousePos = vscreen.transformOrgInv(vscreen.makeRect(evt.pageX, evt.pageY, 0, 0));
             var obj = {
                 type: 'mouse',
-                id: evt.target.id,
-                target: evt.target.id,
                 x: mousePos.x,
                 y: mousePos.y
             };
@@ -2854,6 +2852,7 @@
 			isUpdateCursorEnable = true;
 		} else {
 			isUpdateCursorEnable = false;
+			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
 		}
 
 		content_property.on_rect_changed = function () {
@@ -2895,6 +2894,9 @@
 
 		gui.on_update_cursor_enable = function (isEnable) {
 			isUpdateCursorEnable = isEnable;
+			if (!isEnable) {
+				connector.send('UpdateMouseCursor', {}, function (err, reply) {});
+			}
 			saveCookie();
 		};
 		

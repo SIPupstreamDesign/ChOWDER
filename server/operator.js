@@ -881,11 +881,10 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function updateMouseCursor(socketid, mouseData, endCallback) {
-		if (!mouseData.hasOwnProperty("id")) { return; }
-        var obj = {data: mouseData, id: socketid};
-        if (endCallback) {
-            endCallback(obj);
-        }
+		var obj = {data: mouseData, id: socketid};
+		if (endCallback) {
+			endCallback(obj);
+		}
 	}
 	
 	/**

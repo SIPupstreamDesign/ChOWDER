@@ -1002,7 +1002,7 @@
 				ctrlid = res.id,
 				idstring;
             var WAIT_TIME = 1000 * 60 * 5;
-            if (res.hasOwnProperty('data')) {
+            if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
                 if(!controllers.hasOwnProperty(ctrlid)){
                     ++controllers.connectionCount;
                     controllers[ctrlid] = {
