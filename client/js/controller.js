@@ -2333,8 +2333,7 @@
 		if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type === windowType) {
 			metaData = metaDataDict[id]; 
 			metaData.color = colorvalue;
-			updateMetaData(metaData, function (err, reply) {
-			});
+			updateMetaData(metaData, function (err, reply) {});
 		}
 	};
 	
@@ -2387,13 +2386,34 @@
 	gui.on_group_delete_clicked = function (groupID) {
 		var i,
 			item;
-
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
 			if (item.id === groupID) {
-				connector.send('DeleteGroup', item, function (err, reply) {
-					console.log("DeleteGroup done", err, reply);
-				});
+				connector.send('DeleteGroup', item, (function (groupName) {
+					return function (err, reply) {
+						console.log("DeleteGroup done", err, reply);
+						var deleteList = [],
+							id,
+							metaData;
+						console.log("UpdateGroup done", err, reply);
+						if (!err) {
+							// コンテンツも削除
+							for (id in metaDataDict) {
+								if (metaDataDict.hasOwnProperty(id)) {
+									metaData = metaDataDict[id];
+									if (metaData.type !== windowType) {
+										if (metaData.group === groupName) {
+											deleteList.push(metaData);
+										}
+									}
+								}
+							}
+							if (deleteList.length > 0) {
+								connector.send('DeleteContent', deleteList, doneDeleteContent);
+							}
+						}
+					};
+				}(item.name)));
 				return;
 			}
 		}

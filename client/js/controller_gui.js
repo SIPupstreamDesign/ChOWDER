@@ -430,9 +430,17 @@
 	 */
 	function initGroupBoxEvents(groupBox) {
 		groupBox.on_group_delete = function (groupID) {
-			if (window.controller_gui.on_group_delete_clicked) {
-				window.controller_gui.on_group_delete_clicked(groupID);
-			}
+			window.input_dialog.okcancel_input({
+					name : "グループ内のコンテンツも削除されます. よろしいですか?"
+				}, (function (groupID) {
+					return function (value) {
+						if (value) {
+							if (window.controller_gui.on_group_delete_clicked) {
+								window.controller_gui.on_group_delete_clicked(groupID);
+							}
+						}
+					};
+				}(groupID)));
 		};
 
 		groupBox.on_group_append = function (groupName) {

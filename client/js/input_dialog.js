@@ -14,6 +14,17 @@
 		background.onclick = toggleTextInput;
 	}
 
+	/**
+	 * Group名入力ダイアログの表示をトグル
+	 */
+	function toggleOKCancelInput() {
+		var background = document.getElementById("popup_background"),
+			input = document.getElementById("okcancel_dialog");
+		input.style.display = (input.style.display === "block") ? "none" : "block";
+		background.style.display = input.style.display; 
+		background.onclick = toggleOKCancelInput;
+	}
+
 	function toggleColorInput() {
 		var background = document.getElementById("popup_background"),
 			color_picker = document.getElementById('color_dialog_picker'),
@@ -83,7 +94,27 @@
 		toggleColorInput();
 	}
 
+	function okcancel_input(setting, callback) {
+		var dialog = document.getElementById('okcancel_dialog_name'),
+			ok_button = document.getElementById('okcancel_dialog_ok_button'),
+			cancel_button = document.getElementById("okcancel_dialog_cancel_button");
+
+		dialog.textContent = setting.name;
+
+		ok_button.onclick = function (evt) {
+			if (callback) { callback(true); }
+			toggleOKCancelInput();
+		};
+		cancel_button.onclick = function (evt) {
+			if (callback) { callback(false); }
+			toggleOKCancelInput();
+		};
+
+		toggleOKCancelInput();
+	}
+
 	window.input_dialog = {}
 	window.input_dialog.text_input = init_text_input;
 	window.input_dialog.color_input = init_color_input;
+	window.input_dialog.okcancel_input = okcancel_input;
 }());
