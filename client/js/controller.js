@@ -292,19 +292,33 @@
 	 * グループリストの更新(再取得)
 	 * @method updateGroupList
 	 */
-	function updateGroupList() {
-		connector.send('GetGroupList', {}, doneGetGroupList);
+	function updateGroupList(endCallback) {
+		connector.send('GetGroupList', {}, function (err, reply) {
+			doneGetGroupList(err, reply);
+			if (endCallback) {
+				endCallback();
+			}
+		});
 	}
 	
 	/**
 	 * コンテンツとウィンドウの更新(再取得).
 	 * @method update
 	 */
-	function update() {
+	function update(endCallback) {
 		vscreen.clearScreenAll();
 		connector.send('GetMetaData', {type: "all", id: ""}, function (err, reply) {
+			var last = reply.last; 
+			delete reply.last;
 			doneGetMetaData(err, reply, function (err) {
 				updateGroupList();
+				if (last) {
+					updateGroupList(function () {
+						if (endCallback) {
+							endCallback();
+						}
+					});
+				}
 			});
 		});
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
@@ -1761,7 +1775,8 @@
 			meta,
 			metaData,
 			contentArea,
-			selectedGroup;
+			selectedGroup,
+			searchTargetGroups;
 
 		selectedGroup = getSelectedGroup();
 
@@ -1791,6 +1806,10 @@
 				}
 			}
 
+			// 一旦チェックされているSearch対象グループを取得
+			searchTargetGroups = gui.get_search_target_groups();
+
+			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.set_group_list(reply.grouplist);
 			groupList = reply.grouplist;
 			groupDict = {};
@@ -1814,6 +1833,9 @@
 			if (selectedGroup && document.getElementById(selectedGroup)) {
 				document.getElementById(selectedGroup).onclick();
 			}
+
+			// Search対象グループをチェックし直す
+			gui.check_search_target_groups(searchTargetGroups, true);
 		}
 	};
 	
@@ -2833,10 +2855,19 @@
 	});
 
 	// すべての更新が必要なときにブロードキャストされてくる.
+	var isInitialUpdate = true;
 	connector.on('Update', function () {
 		console.log("on update");
 		manipulator.removeManipulator();
-		update();
+		update(function () {
+			if (isInitialUpdate) {
+				var checkbox = document.getElementById('all_check_');
+				if (checkbox) {
+					checkbox.onclick();
+				}
+				isInitialUpdate = false;
+			}
+		});
 		clearWindowList();
 		addWholeWindowToList();
 		updateScreen();

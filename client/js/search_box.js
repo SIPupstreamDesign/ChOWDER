@@ -8,6 +8,7 @@
 		this.container = containerElem;
 		this.setting = setting;
 		this.item_area = null;
+        this.group_to_elem = {};
 		this.init();
 
 		// 検索ボックスに入力されたときのイベント
@@ -136,7 +137,8 @@
 			f.className = "search_group_label";
             
             checkbox.onclick = group_div.onclick;
-            f .onclick = group_div.onclick;
+            f.onclick = group_div.onclick;
+            this.group_to_elem[this.setting.groups[i]] = f;
 
             group_div.appendChild(f);
             group_div.className = "search_group_div";
@@ -155,6 +157,12 @@
 		// search tab generate
 		this.gen_search_tab_box();
 	};
+
+	SearchBox.prototype.check = function (groupName, isChecked) {
+        if (this.group_to_elem.hasOwnProperty(groupName)) {
+            this.group_to_elem[groupName].onclick();
+        }
+    };
 
 	SearchBox.prototype.set_search_result = function (result) {
 		//console.error("set_search_result", result, this.item_area)

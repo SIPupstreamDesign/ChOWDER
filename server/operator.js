@@ -306,9 +306,12 @@
 	function getMetaData(type, id, endCallback) {
 		if (type === 'all') {
 			textClient.keys(metadataPrefix + '*', function (err, replies) {
+				var results = [],
+					all_done = replies.length;
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
 						if (endCallback) {
+							data.last = ((replies.length - 1) === index);
 							endCallback(data);
 						}
 					});

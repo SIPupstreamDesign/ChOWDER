@@ -963,6 +963,10 @@
 		return document.getElementById('update_content_id').innerHTML;
 	};
 	
+	window.controller_gui.get_search_target_groups = function () {
+		return JSON.parse(JSON.stringify(searchBox.check_groups));
+	};
+	
 	// Setter.
 	window.controller_gui.set_update_content_id = function (id) {
 		document.getElementById('update_content_id').innerHTML = id;
@@ -975,9 +979,17 @@
 	window.controller_gui.set_group_list = function (grouplist) {
 		setGroupList(grouplist);
 	};
-	
+
 	window.controller_gui.set_search_result = function (search_result) {
 		searchBox.set_search_result(search_result);
+	};
+
+	// other
+	window.controller_gui.check_search_target_groups = function (check_groups, isChecked) {
+		var i;
+		for (i = 0; i < check_groups.length; ++i) {
+			searchBox.check(check_groups[i], isChecked);
+		}
 	};
 
 	window.controller_gui.close_context_menu = function () {
