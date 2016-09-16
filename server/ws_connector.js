@@ -71,9 +71,9 @@
 		} else {
 			// clientからmasterにメッセージが来た
 			if (recievers.hasOwnProperty(metaData.method)) {
-				recievers[metaData.method](metaData.params, (function (ws_connection) {
+				recievers[metaData.method](metaData.params,(function (ws_connection) {
 					return sendResponse(ws_connection, metaData);
-				}(ws_connection)));
+				}(ws_connection)),  ws_connection.id);
 			}
 		}
 	}
@@ -113,7 +113,7 @@
 				// 完了後のコールバックでclientにメッセージを返す.
 				recievers[metaData.method](data, (function (ws_connection) {
 					return sendResponse(ws_connection, metaData);
-				}(ws_connection)));
+				}(ws_connection)), ws_connection.id);
 			}
 		}
 	}

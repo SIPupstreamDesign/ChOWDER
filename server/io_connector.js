@@ -73,7 +73,7 @@
 			if (recievers.hasOwnProperty(metaData.method)) {
 				recievers[metaData.method](metaData.params, (function (socket) {
 					return sendResponse(socket, metaData);
-				}(socket)));
+				}(socket)), socket.id);
 			}
 		}
 	}
@@ -113,7 +113,7 @@
 				// 完了後のコールバックでclientにメッセージを返す.
 				recievers[metaData.method](data, (function (socket) {
 					return sendResponse(socket, metaData);
-				}(socket)));
+				}(socket)), socket.id);
 			}
 		}
 	}

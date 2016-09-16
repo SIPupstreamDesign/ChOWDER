@@ -113,7 +113,7 @@ ws2.on('request', function (request) {
 	ws2_connections[id_counter] = connection;
 	id_counter = id_counter + 1;
 	
-	operator.registerWSEvent(connection.id, connection, io, ws2);
+	operator.registerWSEvent(connection, io, ws2);
 	
 	connection.on('close', (function (connection) {
 		return function () {
@@ -196,7 +196,7 @@ io.on('connection', (function (ws2_connections) {
 	return function (socket) {
 		console.log("[CONNECT] ID=" + socket.id);
 
-		operator.registerEvent(socket.id, io, socket, ws2, ws2_connections);
+		operator.registerEvent(io, socket, ws2, ws2_connections);
 		io_connector.broadcast(io, Command.Update);
 
 		socket.on('disconnect', function () {

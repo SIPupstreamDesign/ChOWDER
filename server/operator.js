@@ -1496,7 +1496,7 @@
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerWSEvent(socketid, ws_connection, io, ws) {
+	function registerWSEvent(ws_connection, io, ws) {
 		var methods = {};
 
 		console.log("registerWSEvent");
@@ -1517,33 +1517,31 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback, socketid) {
 			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
-		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback, socketid) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback, socketid) {
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
-				
-		ws_connector.on(Command.UpdateMouseCursor, (function(socketid){
-            return function(data, resultCallback){
-                commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
-            };
-        }(socketid)));
+
+		ws_connector.on(Command.UpdateMouseCursor, function(data, resultCallback, socketid){
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+		});
 		
-		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
+		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
 			commandGetVirtualDisplay(socketid, data, resultCallback);
 		});
 
@@ -1610,12 +1608,11 @@
 	/**
 	 * socketioイベントの登録を行う.
 	 * @method registerEvent
-	 * @param {String} socketid ソケットID
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerEvent(socketid, io, socket, ws, ws_connections) {
+	function registerEvent(io, socket, ws, ws_connections) {
 		var methods = {};
 
 		io_connector.on(Command.AddContent, function (data, resultCallback) {
@@ -1651,33 +1648,31 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback, socketid) {
 			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 
-		io_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback, socketid) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback, socketid) {
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateMouseCursor, (function(socketid){
-            return function(data, resultCallback){
-                commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
-            };
-        }(socketid)));
+		io_connector.on(Command.UpdateMouseCursor, function(data, resultCallback, socketid){
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+		});
 
-        io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
+        io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
+		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
 			commandGetVirtualDisplay(socketid, data, resultCallback);
 		});
 		
