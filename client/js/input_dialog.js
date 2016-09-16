@@ -15,13 +15,19 @@
 	}
 
 	/**
-	 * Group名入力ダイアログの表示をトグル
+	 * OK Cancelダイアログの表示をトグル
 	 */
 	function toggleOKCancelInput() {
 		var background = document.getElementById("popup_background"),
 			input = document.getElementById("okcancel_dialog");
-		input.style.display = (input.style.display === "block") ? "none" : "block";
-		background.style.display = input.style.display; 
+			
+		if (!input.style.display || input.style.display === "none") {
+			background.style.display = "block";
+			input.style.display = "block";
+		} else {
+			background.style.display = "none";
+			input.style.display = "none";
+		}
 		background.onclick = toggleOKCancelInput;
 	}
 

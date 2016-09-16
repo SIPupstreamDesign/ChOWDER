@@ -231,11 +231,11 @@
 					}(menu));
 
 					delete_button.onclick = function () {
+						background.style.display = "none";
+						menu.style.display = "none"
 						if (self.on_group_delete) {
 							self.on_group_delete(groupID);
 						}
-						background.style.display = "none";
-						menu.style.display = "none"
 					};
 
 					name_button.onclick = function () {
