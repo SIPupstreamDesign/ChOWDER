@@ -1011,30 +1011,30 @@
 			rect = evt.target.getBoundingClientRect(),
 			rect2 = null,
 			orgPos,
+			mousePos,
 			splitWhole,
 			draggingID,
 			selectedID,
 			targetMetaDatas = [],
 			screen;
-		if (evt.button !== 0) { return; } // 左ドラッグのみ
-		
+			
 		evt = (evt) || window.event;
 		
         // mouse cursor position
         if(isUpdateCursorEnable && Date.now() % 2 === 0 && evt.target.id !== ''){
+			mousePos = vscreen.transformOrgInv(vscreen.makeRect(evt.pageX, evt.pageY, 0, 0));
             var obj = {
                 type: 'mouse',
                 id: evt.target.id,
                 target: evt.target.id,
-                x: evt.clientX - rect.left,
-                y: evt.clientY - rect.top,
-                w: rect.width,
-                h: rect.height,
+                x: mousePos.x,
+                y: mousePos.y
             };
             updateMetaData(obj);
         }
 
-
+		if (evt.button !== 0) { return; } // 左ドラッグのみ
+		
 		
 		for (i = 0; i < draggingIDList.length; i = i + 1) {
 			draggingID = draggingIDList[i];

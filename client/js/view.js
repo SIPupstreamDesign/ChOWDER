@@ -998,10 +998,10 @@
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-            var i, a, e, x, y, ww, wh;
+            var i, a, e, x, y, p;
             var ctrlid, idstring;
             var WAIT_TIME = 1000 * 60 * 5;
-            if (res.hasOwnProperty('data') && res.data.id === getWindowID()) {
+            if (res.hasOwnProperty('data')) {
                 ctrlid = res.id;
                 if(!controllers.hasOwnProperty(ctrlid)){
                     ++controllers.connectionCount;
@@ -1010,15 +1010,12 @@
                         lastActive: 0
                     };
                 }
+				p = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
                 idstring = parseInt(controllers[ctrlid].index % 10, 10);
-                ww = window.innerWidth;
-                wh = window.innerHeight;
-                x = (res.data.x / res.data.w) * ww;
-                y = (res.data.y / res.data.h) * wh;
                 e = document.getElementById('hiddenCursor' + idstring);
-                if(e){
-                    e.style.left = x + 'px';
-                    e.style.top  = y + 'px';
+                if (e) {
+                    e.style.left = Math.round(p.x) + 'px';
+                    e.style.top  = Math.round(p.y) + 'px';
                     controllers[ctrlid].lastActive = Date.now();
                 }
             } else {
