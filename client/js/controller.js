@@ -405,6 +405,17 @@
 		});
 	}
 	
+	/**
+	 * リモートカーソルの有効状態を更新
+	 * @method updateRemoteCursor
+	 */
+	function updateRemoteCursorEnable(isEnable) {
+		isUpdateCursorEnable = isEnable;
+		if (!isEnable) {
+			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
+		}
+		saveCookie();
+	}
 	
 	/**
 	 * VirualDisplay分割設定
@@ -2849,10 +2860,9 @@
 		}, false);
 
 		if (update_cursor_enable && update_cursor_enable === "true") {
-			isUpdateCursorEnable = true;
+			updateRemoteCursorEnable(true);
 		} else {
-			isUpdateCursorEnable = false;
-			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
+			updateRemoteCursorEnable(false);
 		}
 
 		content_property.on_rect_changed = function () {
@@ -2892,13 +2902,7 @@
 			}
 		};
 
-		gui.on_update_cursor_enable = function (isEnable) {
-			isUpdateCursorEnable = isEnable;
-			if (!isEnable) {
-				connector.send('UpdateMouseCursor', {}, function (err, reply) {});
-			}
-			saveCookie();
-		};
+		gui.on_update_cursor_enable = updateRemoteCursorEnable;
 		
 		gui.on_close_item = function () {
 			var i,
