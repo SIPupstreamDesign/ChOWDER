@@ -2536,10 +2536,10 @@
 				connector.send('UpdateGroup', item, (function (oldName, newName) {
 					return function (err, reply) {
 						var id,
-							metaData, 
-							k;
+							metaData;
 						console.log("UpdateGroup done", err, reply);
 						if (!err) {
+							// コンテンツのグループ名も変更
 							for (id in metaDataDict) {
 								if (metaDataDict.hasOwnProperty(id)) {
 									metaData = metaDataDict[id];
@@ -2823,15 +2823,7 @@
 	});
 	
 	// windowが更新されたときにブロードキャストされてくる.
-	connector.on('UpdateMouseCursor', function (metaData) {
-        // console.log('UpdateMouseCursor', metaData);
-
-        // if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
-        //     if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
-        //         changeWindowBorderColor(metaData);
-        //     }
-        // }
-	});
+	connector.on('UpdateMouseCursor', function (metaData) {});
 	
 	// コンテンツが削除されたときにブロードキャストされてくる.
 	connector.on("DeleteContent", function (data) {

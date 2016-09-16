@@ -838,8 +838,6 @@
 				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
 					memo.style.borderColor = "lightgray";
 					memo.style.backgroundColor = "lightgray"; 
-					//memo.style.borderColor = groupDict[metaData.group].color;
-					//memo.style.backgroundColor = groupDict[metaData.group].color; 
 				}
 				if (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) {
 					memo.style.display = "block";
@@ -1109,9 +1107,6 @@
 			}
 		});
 
-		//document.getElementById('change_id').onclick = changeID;
-		//document.getElementById('fullscreen').onclick = toggleFullScreen;
-
 		input_id.onfocus = function (ev) {
 			console.log("onfocus");
 			onfocus = true;
@@ -1154,22 +1149,7 @@
 					}]
 				}]
 			});
-// 		document.addEventListener("touchstart", function (evt) {
-// 			document.getElementById('menu').classList.remove('hide');
-// 			if (!registered) {
-// 				registered = true;
-// 				setTimeout(hideMenuFunc, 3000);
-// 			}
-// 		}, false);
-//
-// 		// タッチイベントの初期化
-// 		//document.addEventListener("touchstart", preventScroll, false);
-// 		document.addEventListener("touchmove", preventScroll, false);
-// 		//document.addEventListener("touchend", preventScroll, false);
-// 		// ジェスチャーイベントの初期化
-// 		//document.addEventListener("gesturestart", preventScroll, false);
-// 		document.addEventListener("gesturechange", preventScroll, false);
-// 		//document.addEventListener("gestureend", preventScroll, false);
+			
 	}
 
 	window.onload = init;
