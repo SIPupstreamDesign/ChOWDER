@@ -39,12 +39,28 @@
 		document.body.addEventListener("contextmenu", function (evt) {
 			if (window.content_box.is_active(type) || window.content_box.is_active(type2)) {
 				var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop),
+					width,
+					height,
+					rect;
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
-					menu.style.left = px + "px";
-					menu.style.top = py + "px";
 					menu.style.display = 'block';
+					if (type === "display_tab") {
+						rect = document.getElementById('context_menu_display').getBoundingClientRect();
+					} else {
+						rect = document.getElementById('context_menu').getBoundingClientRect();
+					}
+					width = rect.right - rect.left;
+					height = rect.bottom - rect.top;
+					if (px > (document.getElementById("layout").offsetWidth - width)) {
+						px -= width;
+					}
+					if (py > (document.getElementById("layout").offsetHeight - height)) {
+						py -= height;
+					}
+					menu.style.top = py + "px";
+					menu.style.left = px + "px";
 				}
 				evt.preventDefault();
 			}
