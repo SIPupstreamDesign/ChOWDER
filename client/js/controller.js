@@ -2524,15 +2524,36 @@
 	 */
 	window.controller_gui.on_group_edit_name =　function (groupID, groupName) {
 		var i,
+			oldName,
+			targetMetaDataList = [],
 			item;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
 			if (item.id === groupID) {
+				oldName = item.name;
 				item.name = groupName;
-				connector.send('UpdateGroup', item, function (err, reply) {
-					console.log("UpdateGroup done", err, reply);
-				});
+				connector.send('UpdateGroup', item, (function (oldName, newName) {
+					return function (err, reply) {
+						var id,
+							metaData, 
+							k;
+						console.log("UpdateGroup done", err, reply);
+						if (!err) {
+							for (id in metaDataDict) {
+								if (metaDataDict.hasOwnProperty(id)) {
+									metaData = metaDataDict[id];
+									if (metaData.type !== windowType) {
+										if (metaData.group === oldName) {
+											metaData.group = newName;
+											updateMetaData(metaData);
+										}
+									}
+								}
+							}
+						}
+					};
+				}(oldName, groupName)));
 			}
 		}
 	};
