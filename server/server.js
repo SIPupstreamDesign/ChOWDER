@@ -201,6 +201,7 @@ io.on('connection', (function (ws2_connections) {
 
 		socket.on('disconnect', function () {
 			console.log("disconnect:" + socket.id);
+			ws_connector.broadcast(ws2, Command.UpdateMouseCursor, { id : socket.id });
 		});
 		socket.on('error', function (err) {
 			console.log('trace.. ' + err.stack);

@@ -998,11 +998,11 @@
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-            var i, a, e, x, y, p;
-            var ctrlid, idstring;
+            var i, a, e, x, y, p,
+				ctrlid = res.id,
+				idstring;
             var WAIT_TIME = 1000 * 60 * 5;
             if (res.hasOwnProperty('data')) {
-                ctrlid = res.id;
                 if(!controllers.hasOwnProperty(ctrlid)){
                     ++controllers.connectionCount;
                     controllers[ctrlid] = {
@@ -1019,19 +1019,14 @@
                     controllers[ctrlid].lastActive = Date.now();
                 }
             } else {
-                a = Object.keys(controllers);
-                for(i = 0; i < a.length; ++i){
-                    if(a[i] !== 'connectionCount'){
-                        if(Date.now() - controllers[a[i]].lastActive > WAIT_TIME){
-                            idstring = parseInt(controllers[a[i]].index % 10, 10);
-                            e = document.getElementById('hiddenCursor' + idstring);
-                            if(e){
-                                e.style.left = '-9999px';
-                                e.style.top  = '-9999px';
-                            }
-                        }
-                    }
-                }
+                if (controllers.hasOwnProperty(ctrlid)) {
+					idstring = parseInt(controllers[ctrlid].index % 10, 10);
+					e = document.getElementById('hiddenCursor' + idstring);
+					if(e){
+						e.style.left = '-9999px';
+						e.style.top  = '-9999px';
+					}
+				}
             }
         });
 
