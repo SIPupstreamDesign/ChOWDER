@@ -412,7 +412,8 @@
 			contentPreviewArea = document.getElementById('content_preview_area'),
 			contentMenu = document.getElementById('bottom_burger_menu_content'),
 			displayMenu = document.getElementById('bottom_burger_menu_display'),
-			searchMenu = document.getElementById('bottom_burger_menu_search');
+			searchMenu = document.getElementById('bottom_burger_menu_search'),
+			content_icon = document.getElementById("bottom_burger_menu_content_icon");
 
 		if (tabName === 'Display') {
 			displayPreviewArea.style.opacity = 1.0;
@@ -430,14 +431,16 @@
 			displayMenu.style.display = "none";
 			contentMenu.style.display = "block";
 			searchMenu.style.display = "none";
+			content_icon.className = "burger_menu_icon bottom_burger_menu_content_icon";
 		} else if (tabName === 'Search') {
 			displayPreviewArea.style.opacity = 0.3;
 			contentPreviewArea.style.opacity = 1.0;
 			displayPreviewArea.style.zIndex = -1000;
 			contentPreviewArea.style.zIndex = 10;
 			displayMenu.style.display = "none";
-			contentMenu.style.display = "none";
+			contentMenu.style.display = "block";
 			searchMenu.style.display = "block";
+			content_icon.className = "burger_menu_icon bottom_burger_menu_search_icon"; //色だけ変更
 		}
 	}
 

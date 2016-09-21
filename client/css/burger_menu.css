@@ -52,16 +52,20 @@ ul, ol {
 	background-color: rgb(46, 109, 224);
 }
 
-#bottom_burger_menu_content_icon {
+.bottom_burger_menu_content_icon {
 	background-color: rgb(54,187,68);
 }
 
-#bottom_burger_menu_content_icon:hover {
+.bottom_burger_menu_content_icon:hover {
 	background-color: rgb(34,167,48);
 }
 
-.burger_menu_icon:hover {
-	background-color: lightgray;
+.bottom_burger_menu_search_icon {
+	background-color: #FF8055
+}
+
+.bottom_burger_menu_search_icon:hover {
+	background-color: #CC6035
 }
 
 .burger_menu_checkbox {
