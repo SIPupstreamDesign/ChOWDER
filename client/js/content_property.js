@@ -184,7 +184,7 @@
 				}
 			};
 			downloadButton.style.display = "none";
-			metalabel.style.display = "block";
+			metalabel.style.display = "none";
 			document.getElementById('color_picker').style.display = "none";
 		} else if (type === "multi_display" || type === "multi_content") {
 			idlabel.innerHTML = "Content ID:";
