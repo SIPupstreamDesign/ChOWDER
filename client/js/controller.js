@@ -901,9 +901,7 @@
 					unselectAll(true);
 					select(id, isContentArea(evt));
 					window.controller_gui.close_context_menu();
-				} else if (selectedIDList.indexOf(id) >= 0) {
-					unselect(id);
-				} else {
+				} else  {
 					select(id, isContentArea(evt));
 					window.controller_gui.close_context_menu();
 				}
