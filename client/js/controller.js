@@ -2202,7 +2202,7 @@
 	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
 	 */
 	gui.on_content_index_changed = function (isFront) {
-		var id = getSelectedID(),
+		var id,
 			i,
 			k,
 			max = 0,
