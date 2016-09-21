@@ -158,7 +158,7 @@
 			addInputProperty('whole_height', 'h', 'px', '900');
 			addInputProperty('whole_split_x', 'split x', '', '1');
 			addInputProperty('whole_split_y', 'split y', '', '1');
-			addTextInputProperty('content_text', "");
+			//addTextInputProperty('content_text', "");
 			wholeW = document.getElementById('whole_width');
 			wholeH = document.getElementById('whole_height');
 			wholeSplitX = document.getElementById('whole_split_x');
