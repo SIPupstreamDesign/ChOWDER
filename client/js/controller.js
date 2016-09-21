@@ -1636,6 +1636,10 @@
 			}
 			gui.set_update_content_id("No Content Selected.");
 			lastSelectContentID = null;
+
+			if (metaDataDict.hasOwnProperty(json.id)) {
+				delete metaDataDict[json.id];
+			}
 		}
 
 		var i;
