@@ -3018,8 +3018,9 @@
 	window.onunload = function () {
 		window.content_property.clear(true);
 	};
-	window.blur = function () {
+	window.onblur = function () {
 		window.content_property.clear(true);
+		onCtrlDown = false;
 	};
 	connector.connect(function () {
 		var e = document.getElementById('head_menu_hover_right');
