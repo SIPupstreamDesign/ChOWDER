@@ -2204,11 +2204,14 @@
 	gui.on_content_index_changed = function (isFront) {
 		var id = getSelectedID(),
 			i,
+			k,
 			max = 0,
 			min = 0,
-			metaData;
+			metaData,
+			metaDataList = [];
 		
-		if (id) {
+		for (k = 0; k < selectedIDList.length; k = k + 1) {
+			id = selectedIDList[k];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
 				for (i in metaDataDict) {
@@ -2226,8 +2229,11 @@
 				} else {
 					metaData.zIndex = min - 1;
 				}
-				updateMetaData(metaData, function (err, reply) {});
+				metaDataList.push(metaData);
 			}
+		}
+		if (metaDataList.length > 0) {
+			updateMetaDataMulti(metaDataList);
 		}
 	}
 
