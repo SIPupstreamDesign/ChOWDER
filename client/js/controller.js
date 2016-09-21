@@ -705,7 +705,7 @@
 		elem = getElem(id, true);
 		if (elem) {
 			metaData = metaDataDict[id];
-			if (metaData.type !== windowType && isVisible(metaData)) {
+			if (metaData.type !== windowType && isVisible(metaData) && String(metaData.mark) !== "true") {
 				elem.style.border = "";
 			}
 			if (gui.get_list_elem(elem.id)) {
@@ -725,7 +725,7 @@
 					}
 				}
 			}
-			elem.style.borderColor = "";
+			//elem.style.borderColor = "";
 		}
 		content_property.clear(updateText);
 		selectedIDList.splice(selectedIDList.indexOf(id), 1);
