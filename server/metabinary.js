@@ -112,7 +112,7 @@
 		
 		version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0);
 		metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);
-		metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString('ascii'));
+		metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString());
 		
 		if (metaData.hasOwnProperty('params')) {
 			params = metaData.params;

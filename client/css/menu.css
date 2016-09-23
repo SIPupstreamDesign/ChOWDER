@@ -107,7 +107,7 @@ li.menu__multi ul.menu_level1 {
 
 li.menu__multi:hover ul.menu_level1 {
 	top: 30px;
-	display : block;
+	/*display : block;*/
 	opacity: 1;
 }
 

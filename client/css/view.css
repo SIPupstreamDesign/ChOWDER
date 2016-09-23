@@ -221,3 +221,17 @@ pre {
 	font-size : 14px;
 	color : rgb(10, 26, 67);
 }
+
+.popup_background2 {
+	min-height: 100%;
+	min-width: 800px;
+	width: 100%;
+	height: auto;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background-color:#555555;
+	opacity: 0.0;
+	z-index: 3;
+	display: none;
+}
