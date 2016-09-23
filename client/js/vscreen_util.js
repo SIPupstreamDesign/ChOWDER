@@ -146,7 +146,7 @@
 						} else {
 							elem.style.borderColor = groupDict[metaData.group].color;
 						}
-					} else {
+					} else if (!useOrg) {
 						elem.style.borderColor = "rgb(54,187,68)";
 					}
 				}
