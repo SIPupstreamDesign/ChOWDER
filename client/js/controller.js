@@ -327,12 +327,40 @@
 	}
 	
 	/**
+	 * コンテンツのzindexの習得.
+	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
+	 * */
+	function getZIndex(metaData, isFront) {
+		var i,
+			max = 0,
+			min = 0;
+		for (i in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(i)) {
+				if (metaDataDict[i].id !== metaData.id && 
+					metaDataDict[i].type !== windowType &&
+					metaDataDict[i].hasOwnProperty("zIndex")) {
+					max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+					min = Math.min(min, parseInt(metaDataDict[i].zIndex, 10));
+				}
+			}
+		}
+		if (isFront) {
+			return max + 1;
+		} else {
+			return min - 1;
+		}
+	}
+
+	/**
 	 * Content追加
 	 * @method addContent
 	 * @param {JSON} metaData コンテンツのメタデータ
 	 * @param {BLOB} binary コンテンツのバイナリデータ
 	 */
 	function addContent(metaData, binary) {
+		if (!metaData.hasOwnProperty("zIndex")) {
+			metaData.zIndex = getZIndex(metaData, true);
+		}
 		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
 	}
 	
@@ -2209,8 +2237,6 @@
 		var id,
 			i,
 			k,
-			max = 0,
-			min = 0,
 			metaData,
 			metaDataList = [];
 		
@@ -2218,21 +2244,7 @@
 			id = selectedIDList[k];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				for (i in metaDataDict) {
-					if (metaDataDict.hasOwnProperty(i)) {
-						if (metaDataDict[i].id !== metaData.id && 
-							metaDataDict[i].type !== windowType &&
-							metaDataDict[i].hasOwnProperty("zIndex")) {
-							max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
-							min = Math.min(min, parseInt(metaDataDict[i].zIndex, 10));
-						}
-					}
-				}
-				if (isFront) {
-					metaData.zIndex = max + 1;
-				} else {
-					metaData.zIndex = min - 1;
-				}
+				metaData.zIndex = getZIndex(metaData, isFront);
 				metaDataList.push(metaData);
 			}
 		}
