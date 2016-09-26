@@ -1702,7 +1702,7 @@
 		}
 	
 		if (endCallback) {
-			endCallback(null);
+			endCallback(null, reply);
 		}
 	};
 	
@@ -2887,7 +2887,7 @@
 						metaData.width = h * orgAspect;
 					}
 					isCorrect = false;
-					connector.send('UpdateMetaData', metaData, function (err, metaData) {
+					updateMetaData(metaData, function (err, metaData) {
 						if (endCallback) {
 							endCallback(err, metaData);
 						}
