@@ -119,7 +119,16 @@
 					if (w > 200) {
 						divElem.style.width = "200px";
 						h = 200 / aspect;
-						divElem.style.paddingBottom = (150 - h) + "px" 
+						divElem.style.paddingBottom = (150 - h) + "px"; 
+						if (150 - h > 140.0) {
+							divElem.style.paddingBottom = "140px";
+						}
+					} else if (w < 50) {
+						divElem.style.width = "50px";
+						divElem.style.paddingRight = (50 - w) + "px";
+						if (50 - w > 40.0) {
+							divElem.style.paddingRight = "40px";
+						}
 					}
 				}
 			}
