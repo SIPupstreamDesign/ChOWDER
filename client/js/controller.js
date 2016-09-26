@@ -3145,6 +3145,10 @@
 				updateMetaDataMulti(metaDataList);
 			}
 		};
+
+		gui.get_whole_scale = function () {
+			return vscreen.getWholeScale();
+		};
 		
 		gui.init();
 		window.window_view.init(vscreen);
@@ -3171,6 +3175,35 @@
 				updateScreen();
 			}, 200);
 		};
+
+		// wheel event
+		var mousewheelevent = 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll';
+		try{
+			document.addEventListener (mousewheelevent, onWheel, false);
+		}catch(e){
+			document.attachEvent ("onmousewheel", onWheel); //for legacy IE
+		}
+		function onWheel(e) {
+			if(!e) e = window.event; //for legacy IE
+			var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
+			var display_scale = vscreen.getWholeScale();
+			e.preventDefault();
+			if (delta < 0){
+				//下にスクロールした場合の処理
+				display_scale = display_scale + 0.05;
+			} else if (delta > 0){
+				//上にスクロールした場合の処理
+				display_scale = display_scale - 0.05;
+			}
+			
+			if (display_scale < 0.05) {
+				display_scale = 0.05
+			}
+			if (display_scale > 2) {
+				display_scale = 2;
+			}
+			gui.on_display_scale_changed(display_scale);
+		}
 
 		updateScreen();
 		vscreen.dump();

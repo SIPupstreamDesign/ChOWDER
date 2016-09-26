@@ -358,6 +358,9 @@
 		});
 
 		displayPreviewArea.addEventListener('mousedown', function (evt) {
+			if (window.controller_gui.get_whole_scale) {
+				display_scale = window.controller_gui.get_whole_scale();
+			}
 			if (evt.button === 2) {
 				var rect = displayPreviewArea.getBoundingClientRect();
 				mouseDownPosY = evt.clientY - rect.top;
@@ -989,6 +992,8 @@
 	window.controller_gui.get_search_target_groups = function () {
 		return JSON.parse(JSON.stringify(searchBox.check_groups));
 	};
+
+	window.controller_gui.get_whole_scale = null;
 	
 	// Setter.
 	window.controller_gui.set_update_content_id = function (id) {
