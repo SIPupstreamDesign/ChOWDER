@@ -94,7 +94,7 @@
 			if (metaData.type === 'text') {
 				// contentData is text
 				contentElem.innerHTML = contentData;
-				divElem.style.width = "200px";
+				divElem.style.width = "150px";
 				divElem.style.height = "150px";
 				divElem.style.color = textColor;
 			} else {
@@ -103,25 +103,14 @@
 					mime = metaData.mime;
 					//console.log("mime:" + mime);
 				}
-				divElem.style.width = "200px";
+				divElem.style.height = "150px";
+				aspect = metaData.orgWidth / metaData.orgHeight;
+				divElem.style.width = 150 * aspect + "px";
+
 				blob = new Blob([contentData], {type: mime});
 				if (contentElem && blob) {
 					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
-
-					if (contentElem.offsetHeight <= 0 || contentElem.offsetHeight > 150) {
-						aspect = contentElem.offsetWidth / contentElem.offsetHeight;
-						divElem.style.height = "150px";
-						divElem.style.width = 150 * aspect;
-					}
-					contentElem.onload = function () {
-						var aspect;
-						if (contentElem.offsetHeight <= 0 || contentElem.offsetHeight > 150) {
-							aspect = contentElem.offsetWidth / contentElem.offsetHeight;
-							divElem.style.height = "150px";
-							divElem.style.width = 150 * aspect;
-						}
-					};
 				}
 			}
 		}
