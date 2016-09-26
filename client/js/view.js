@@ -373,6 +373,7 @@
 	function translateZ(targetid) {
 		var metaData,
 			i,
+			index,
 			max = 0;
 		
 		if (metaDataDict.hasOwnProperty(targetid)) {
@@ -382,14 +383,14 @@
 					if (metaDataDict[i].id !== metaData.id && 
 						metaDataDict[i].type !== windowType &&
 						metaDataDict[i].hasOwnProperty("zIndex")) {
-						if (Number.isInteger(parseInt(metaDataDict[i].zIndex, 10))) {
+						index = parseInt(metaDataDict[i].zIndex, 10);
+						if (!isNaN(index)) {
 							max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
 						}
 					}
 				}
 			}
 			metaData.zIndex = max + 1;
-			
 			connector.send('UpdateMetaData', [metaData], function (err, reply) {});
 		}
 	}
