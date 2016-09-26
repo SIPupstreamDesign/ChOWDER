@@ -103,7 +103,14 @@
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(), 
 			//px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
-			py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+			clientY = evt.clientY,
+			py;
+
+		if (evt.changedTouches) {
+			// タッチ
+			clientY = evt.changedTouches[0].clientY;
+		}
+		py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
 			return false;
 		}
@@ -541,7 +548,18 @@
 			elem = null,
 			metaData,
 			draggingManip = manipulator.getDraggingManip(),
-			invAspect;
+			invAspect,
+			pageX = evt.pageX,
+			pageY = evt.pageY,
+			clientX = evt.clientX,
+			clientY = evt.clientY;
+
+		if (evt.changedTouches) {
+			pageX = evt.changedTouches[0].pageX,
+			pageY = evt.changedTouches[0].pageY,
+			clientX = evt.changedTouches[0].clientX;
+			clientY = evt.changedTouches[0].clientY;
+		}
 		
 		if (draggingManip) {
 			elem = document.getElementById(getSelectedID());
@@ -560,12 +578,12 @@
 
 
 				if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
-					px = evt.clientX - dragOffsetLeft;
-					py = evt.clientY - dragOffsetTop;
+					px = clientX - dragOffsetLeft;
+					py = clientY - dragOffsetTop;
 					currentw = lastw - (px - lastx);
 				} else {
-					px = evt.clientX - lastw - dragOffsetLeft;
-					py = evt.clientY - dragOffsetTop;
+					px = clientX - lastw - dragOffsetLeft;
+					py = clientY - dragOffsetTop;
 					currentw = lastw + (px - lastx);
 				}
 				if (isNaN(invAspect)) {
@@ -877,7 +895,7 @@
 				onCtrlDown = false;
 			}
 		};
-		elem.onmousedown = function (evt) {
+		function mousedownFunc(evt) {
 			var rect = evt.target.getBoundingClientRect(),
 				metaData = null,
 				otherPreviewArea = gui.get_content_preview_area(),
@@ -885,89 +903,119 @@
 				i,
 				elem,
 				topElement = null,
-				e;
+				e,
+				pageX = evt.pageX,
+				pageY = evt.pageY,
+				clientX = evt.clientX,
+				clientY = evt.clientY,
+				target = evt.taget;
 			
-			if (evt.button === 0) {
-				
-				if (metaDataDict.hasOwnProperty(id)) {
-					metaData = metaDataDict[id];
-					if (metaData.type !== windowType) {
-						otherPreviewArea = gui.get_display_preview_area();
-					}
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+				rect = evt.changedTouches[0].target.getBoundingClientRect();
+				pageX = evt.changedTouches[0].pageX,
+				pageY = evt.changedTouches[0].pageY,
+				clientX = evt.changedTouches[0].clientX;
+				clientY = evt.changedTouches[0].clientY;
+			} else {
+				// マウス
+				if (evt.button !== 0) { return; } // 左ドラッグのみ
+			}
+			
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				if (metaData.type !== windowType) {
+					otherPreviewArea = gui.get_display_preview_area();
 				}
+			}
 
-				
-				if (metaData) {
-					if (id === wholeWindowID ||
-						(!isDisplayTabSelected() && metaData.type === windowType) ||
-						(isDisplayTabSelected() && metaData.type !== windowType)) {
-						console.log("setupContent", metaData);
-						childs = otherPreviewArea.childNodes;
+			
+			if (metaData) {
+				if (id === wholeWindowID ||
+					(!isDisplayTabSelected() && metaData.type === windowType) ||
+					(isDisplayTabSelected() && metaData.type !== windowType)) {
+					console.log("setupContent", metaData);
+					childs = otherPreviewArea.childNodes;
 
-						for (i = 0; i < childs.length; i = i + 1) {
-							if (childs[i].onmousedown) {
-								if (!topElement || topElement.zIndex < childs[i].zIndex) {
-									if (isInsideElement(childs[i], evt.clientX, evt.clientY)) {
-										topElement = childs[i];
-									}
+					for (i = 0; i < childs.length; i = i + 1) {
+						if (childs[i].onmousedown) {
+							if (!topElement || topElement.zIndex < childs[i].zIndex) {
+								if (isInsideElement(childs[i], clientX, clientY)) {
+									topElement = childs[i];
 								}
 							}
 						}
-						if (topElement) {
-							//console.log("left", elem.offsetLeft - topElement.offsetLeft);
-							//console.log("top", elem.offsetTop - topElement.offsetTop);
-							topElement.onmousedown(evt);
-							dragOffsetTop = evt.clientY - topElement.getBoundingClientRect().top;
-							dragOffsetLeft = evt.clientX - topElement.getBoundingClientRect().left;
-						}
-						return;
 					}
-				}
-
-				// erase last border
-				if (!onCtrlDown) {
-					unselectAll(true);
-					select(id, isContentArea(evt));
-					window.controller_gui.close_context_menu();
-				} else  {
-					select(id, isContentArea(evt));
-					window.controller_gui.close_context_menu();
-				}
-				
-				evt = (evt) || window.event;
-				mouseDownPos = [
-					rect.left,
-					rect.top
-				];
-
-				dragOffsetTop = evt.clientY - rect.top;
-				dragOffsetLeft = evt.clientX - rect.left;
-
-				if (metaData  && evt.target.id) {
-					// メインビューのコンテンツ
-					for (i = 0; i < draggingIDList.length; i = i + 1) {
-						elem = document.getElementById(draggingIDList[i]);
-						if (elem) {
-							dragRect[draggingIDList[i]] = {
-								left : elem.getBoundingClientRect().left - rect.left,
-								top : elem.getBoundingClientRect().top - rect.top
-							}
-						}
+					if (topElement) {
+						//console.log("left", elem.offsetLeft - topElement.offsetLeft);
+						//console.log("top", elem.offsetTop - topElement.offsetTop);
+						topElement.onmousedown(evt);
+						dragOffsetTop = clientY - topElement.getBoundingClientRect().top;
+						dragOffsetLeft = clientX - topElement.getBoundingClientRect().left;
 					}
-				} else {
-					// リストのコンテンツ
-					for (i = 0; i < draggingIDList.length; i = i + 1) {
-						dragRect[draggingIDList[i]] = {
-							left : 0,
-							top : 0
-						}
-					}
+					return;
 				}
-			
-				evt.stopPropagation();
-				evt.preventDefault();
 			}
+
+			// erase last border
+			if (!onCtrlDown) {
+				unselectAll(true);
+				select(id, isContentArea(evt));
+				window.controller_gui.close_context_menu();
+			} else  {
+				select(id, isContentArea(evt));
+				window.controller_gui.close_context_menu();
+			}
+			
+			evt = (evt) || window.event;
+			mouseDownPos = [
+				rect.left,
+				rect.top
+			];
+
+
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+			} else {
+				// マウス
+				target = evt.target;
+			}
+
+			dragOffsetTop = clientY - rect.top;
+			dragOffsetLeft = clientX - rect.left;
+
+			if (metaData  && target.id) {
+				// メインビューのコンテンツ
+				for (i = 0; i < draggingIDList.length; i = i + 1) {
+					elem = document.getElementById(draggingIDList[i]);
+					if (elem) {
+						dragRect[draggingIDList[i]] = {
+							left : elem.getBoundingClientRect().left - rect.left,
+							top : elem.getBoundingClientRect().top - rect.top
+						}
+					}
+				}
+			} else {
+				// リストのコンテンツ
+				for (i = 0; i < draggingIDList.length; i = i + 1) {
+					dragRect[draggingIDList[i]] = {
+						left : 0,
+						top : 0
+					}
+				}
+			}
+		
+			evt.stopPropagation();
+			evt.preventDefault();
 		};
+
+		if (window.ontouchstart !== undefined) {
+			elem.ontouchstart = mousedownFunc;
+		} else {
+			elem.onmousedown = mousedownFunc;
+		}
 	};
 	
 	/**
@@ -1048,8 +1096,7 @@
 		}
 	}
 	
-	// add content mousemove event
-	window.document.addEventListener("mousemove", function (evt) {
+	function mousemoveFunc(evt) {
 		var i,
 			metaData,
 			metaTemp,
@@ -1067,23 +1114,37 @@
 			draggingID,
 			selectedID,
 			targetMetaDatas = [],
-			screen;
+			screen,
+			pageX = evt.pageX,
+			pageY = evt.pageY,
+			clientX = evt.clientX,
+			clientY = evt.clientY;
 			
 		evt = (evt) || window.event;
 		
-        // mouse cursor position
-        if(isUpdateCursorEnable && Date.now() % 2 === 0 && evt.target.id !== ''){
-			mousePos = vscreen.transformOrgInv(vscreen.makeRect(evt.pageX, evt.pageY, 0, 0));
-            var obj = {
-                type: 'mouse',
-                x: mousePos.x,
-                y: mousePos.y
-            };
-            updateMetaData(obj);
-        }
 
-		if (evt.button !== 0) { return; } // 左ドラッグのみ
-		
+		if (evt.changedTouches) {
+			// タッチ
+			rect = evt.changedTouches[0].target.getBoundingClientRect();
+			pageX = evt.changedTouches[0].pageX,
+			pageY = evt.changedTouches[0].pageY,
+			clientX = evt.changedTouches[0].clientX;
+			clientY = evt.changedTouches[0].clientY;
+		} else {
+			// マウス
+			if (evt.button !== 0) { return; } // 左ドラッグのみ
+		}
+
+		// mouse cursor position
+		if(isUpdateCursorEnable && Date.now() % 2 === 0 && evt.target.id !== ''){
+			mousePos = vscreen.transformOrgInv(vscreen.makeRect(pageX, pageY, 0, 0));
+			var obj = {
+				type: 'mouse',
+				x: mousePos.x,
+				y: mousePos.y
+			};
+			updateMetaData(obj);
+		}
 		
 		for (i = 0; i < draggingIDList.length; i = i + 1) {
 			draggingID = draggingIDList[i];
@@ -1102,7 +1163,7 @@
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-				console.log("px py whole", px, py, splitWhole);
+				//console.log("px py whole", px, py, splitWhole);
 				if (splitWhole) {
 					document.getElementById(splitWhole.id).style.background = "red";
 				}
@@ -1113,7 +1174,7 @@
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
-				console.log("px py whole", px, py, screen);
+				//console.log("px py whole", px, py, screen);
 				if (screen && document.getElementById(screen.id)) {
 					document.getElementById(screen.id).style.background = "red";
 				}
@@ -1127,8 +1188,8 @@
 			metaData = metaDataDict[draggingID];
 
 			if (dragRect.hasOwnProperty(draggingID)) {
-				metaData.posx = evt.clientX - dragOffsetLeft + dragRect[draggingID].left;
-				metaData.posy = evt.clientY - dragOffsetTop + dragRect[draggingID].top;
+				metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
+				metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 			} else {
 				return;
 			}
@@ -1166,11 +1227,9 @@
 			evt.stopPropagation();
 			evt.preventDefault();
 		}
+	}
 
-	});
-	
-	// add content mouseup event
-	window.document.addEventListener("mouseup", function (evt) {
+	function mouseupFunc(evt) {
 		var i,
 			metaData,
 			elem,
@@ -1226,8 +1285,38 @@
 			dragOffsetLeft= 0;
 		}
 		manipulator.clearDraggingManip();
-	});
+	}
+
 	
+	// スクロールを抑止する関数
+	function preventScroll(event) {
+		event.preventDefault();
+	}
+	
+	// add content mousemove event
+	if(window.ontouchstart !== undefined) {
+
+		// タッチイベントの初期化
+		document.addEventListener("touchstart", function (evt) {
+			mousemoveFunc(evt);
+		}, false);
+		document.addEventListener("touchmove", function (evt) {
+			mousemoveFunc(evt);
+			evt.preventDefault();
+		}, false);
+		document.addEventListener("touchend", mouseupFunc, false); 
+		// ジェスチャーイベントの初期化
+		/*
+		document.addEventListener("gesturestart", preventScroll, false);
+		document.addEventListener("gesturechange", preventScroll, false);
+		document.addEventListener("gestureend", preventScroll, false);
+		*/
+	} else {
+		window.document.addEventListener("mousemove", mousemoveFunc);	
+		// add content mouseup event
+		window.document.addEventListener("mouseup", mouseupFunc);
+	}
+
 	/**
 	 * テキストデータ送信
 	 * @method sendText

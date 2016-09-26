@@ -109,6 +109,34 @@
 		}
 	}
 	
+	function mousedownFunc(manip) {
+		return function (evt) {
+			var rect = evt.target.getBoundingClientRect(),
+				pageX = evt.pageX,
+				pageY = evt.pageY,
+				clientX = evt.clientX,
+				clientY = evt.clientY;
+
+			if (evt.changedTouches) {
+				rect = evt.changedTouches[0].target.getBoundingClientRect();
+				pageX = evt.changedTouches[0].pageX,
+				pageY = evt.changedTouches[0].pageY,
+				clientX = evt.changedTouches[0].clientX;
+				clientY = evt.changedTouches[0].clientY;
+			}
+			if (draggingOffsetFunc) {
+				draggingOffsetFunc(clientY - rect.top, clientX - rect.left);
+			}
+			draggingManip = manip;
+		};
+	};
+
+	function mousemoveFunc(manip, cursor) {
+		return function (evt) {
+			manip.style.cursor = cursor;
+		};
+	};
+	
 	/**
 	 * マニピュレータのセットアップ
 	 * @method setupManipulator
@@ -149,16 +177,13 @@
 				}
 			};
 		} else {
-			manip.onmousedown = function (evt) {
-				var rect = evt.target.getBoundingClientRect();
-				if (draggingOffsetFunc) {
-					draggingOffsetFunc(evt.clientY - rect.top, evt.clientX - rect.left);
-				}
-				draggingManip = manip;
-			};
-			manip.onmousemove = function (evt) {
-				manip.style.cursor = cursor;
-			};
+			if(window.ontouchstart !== undefined) {
+				manip.ontouchstart = mousedownFunc(manip);
+				manip.ontouchmove = mousemoveFunc(manip, cursor);
+			} else {
+				manip.onmousedown = mousedownFunc(manip);
+				manip.onmousemove = mousemoveFunc(manip, cursor);
+			}
 		}
 	}
 	
