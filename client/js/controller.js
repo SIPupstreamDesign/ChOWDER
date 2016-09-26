@@ -1372,6 +1372,8 @@
 		metaData.group = gui.get_current_group_name();
 		previewArea.removeChild(elem);
 		metaData.type = "text";
+		// テキストのときはメタデータにもテキストをつっこむ
+		metaData.user_data_text = JSON.stringify({ text: text });
 
 		//currentContent = elem;
 		addContent(metaData, text);
@@ -2129,7 +2131,7 @@
 			updateWindowData();
 		}
 	};
-	
+
 	/**
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
@@ -2192,7 +2194,6 @@
 			i,
 			fileReader = new FileReader();
 
-				console.error();
 		fileReader.onload = (function (name) {
 			return function (e) {
 				var data = e.target.result,
@@ -2919,7 +2920,7 @@
 					isCorrect = false;
 					updateMetaData(metaData, function (err, metaData) {
 						if (endCallback) {
-							endCallback(err, metaData);
+							endCallback(err, metaData[0]);
 						}
 					});
 				}
@@ -3069,6 +3070,14 @@
 			console.log('on_rect_changed');
 			changeRect(this.id, parseInt(this.value, 10));
 		};
+		function getTextWidth(text, font) {
+			// re-use canvas object for better performance
+			var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+			var context = canvas.getContext("2d");
+			context.font = font;
+			var metrics = context.measureText(text);
+			return metrics.width;
+		}
 
 		content_property.on_metainfo_changed = function (text, endCallback) {
 			var id = getSelectedID(),
@@ -3076,13 +3085,25 @@
 			
 			if (id && metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				metaDataDict[id] = metaData;
 				metaData.user_data_text = JSON.stringify({ text: text });
-				updateMetaData(metaData, function (err, reply) {
-					if (endCallback) {
-						endCallback(null);
-					}
-				});
+				if (metaData.type === "text") {
+					var previewArea = gui.get_content_preview_area(),
+						elem = document.createElement('pre');
+					elem.className = "text_content";
+					elem.innerHTML = text;
+					previewArea.appendChild(elem);
+					metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
+					metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
+					previewArea.removeChild(elem);
+
+					updateContent(metaData, text);
+				} else {
+					updateMetaData(metaData, function (err, reply) {
+						if (endCallback) {
+							endCallback(null);
+						}
+					});
+				}
 			} else {
 				if (endCallback) {
 					endCallback(null);
