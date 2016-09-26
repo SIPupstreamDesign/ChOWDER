@@ -46,6 +46,8 @@
 			contentElem,
 			id,
 			elem,
+			w,
+			h,
 			sourceElem,
 			divElem,
 			aspect,
@@ -103,14 +105,22 @@
 					mime = metaData.mime;
 					//console.log("mime:" + mime);
 				}
+
 				divElem.style.height = "150px";
 				aspect = metaData.orgWidth / metaData.orgHeight;
-				divElem.style.width = 150 * aspect + "px";
+				w = 150 * aspect;
+				divElem.style.width = w + "px";
 
 				blob = new Blob([contentData], {type: mime});
 				if (contentElem && blob) {
 					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
+
+					if (w > 200) {
+						divElem.style.width = "200px";
+						h = 200 / aspect;
+						divElem.style.paddingBottom = (150 - h) + "px" 
+					}
 				}
 			}
 		}
