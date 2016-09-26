@@ -1287,34 +1287,64 @@
 		manipulator.clearDraggingManip();
 	}
 
-	
-	// スクロールを抑止する関数
-	function preventScroll(event) {
-		event.preventDefault();
-	}
-	
-	// add content mousemove event
-	if(window.ontouchstart !== undefined) {
+	var isGesture = false;
+	var gestureScale,
+		dx,dy;
 
+	if(window.ontouchstart !== undefined) {
 		// タッチイベントの初期化
 		document.addEventListener("touchstart", function (evt) {
-			mousemoveFunc(evt);
+			if (!isGesture) {
+				mousemoveFunc(evt);
+			}
+			//mouseDownPos[0] = evt.changedTouches[0].target.clientX;
+			//mouseDownPos[1] = evt.changedTouches[0].target.clientY;
 		}, false);
 		document.addEventListener("touchmove", function (evt) {
-			mousemoveFunc(evt);
-			evt.preventDefault();
+			if (!isGesture) {
+				mousemoveFunc(evt);
+				evt.preventDefault();
+			} else {
+				/*
+				var rect = evt.changedTouches[0].target.getBoundingClientRect();
+				dx = evt.changedTouches[0].clientX - mouseDownPos[0];
+				dy = evt.changedTouches[0].clientY - mouseDownPos[1];
+				alert(dx + ":" + mouseDownPos[0]);
+				*/
+			}
 		}, false);
-		document.addEventListener("touchend", mouseupFunc, false); 
-		// ジェスチャーイベントの初期化
-		/*
-		document.addEventListener("gesturestart", preventScroll, false);
-		document.addEventListener("gesturechange", preventScroll, false);
-		document.addEventListener("gestureend", preventScroll, false);
-		*/
+		document.addEventListener("touchend", mouseupFunc, false);
 	} else {
+		// マウスイベントの初期化
 		window.document.addEventListener("mousemove", mousemoveFunc);	
-		// add content mouseup event
 		window.document.addEventListener("mouseup", mouseupFunc);
+	}
+
+	function gesturestartFunc(e) {
+		isGesture = true;
+		gestureScale = vscreen.getWholeScale();
+		e.stopPropagation();
+		e.preventDefault();
+	}
+
+	function gesturechangeFunc(e) {
+		if (!isGesture) { return false; }
+		var scale_current = document.getElementById('scale_dropdown_current');
+		gui.on_display_scale_changed(gestureScale * e.scale);
+		//gui.on_display_trans_changed(dx, dy);
+		e.stopPropagation();
+		e.preventDefault();
+	}
+	
+	function gestureendFunc() {
+		isGesture = false;
+	}
+
+	if (window.ongesturestart !== undefined) {
+		// ジェスチャーイベントの初期化
+		document.addEventListener("gesturestart", gesturestartFunc, false);
+		document.addEventListener("gesturechange", gesturechangeFunc, false);
+		document.addEventListener("gestureend", gestureendFunc, false);
 	}
 
 	/**
