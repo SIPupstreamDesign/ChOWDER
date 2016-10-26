@@ -1625,7 +1625,9 @@
 	 */
 	function clearWindowList() {
 		var displayArea = gui.get_display_area();
-		displayArea.innerHTML = "";
+		if (displayArea) {
+			displayArea.innerHTML = "";
+		}
 	}
 	
 	/**
@@ -3095,28 +3097,32 @@
 
 		content_property.on_metainfo_changed = function (text, endCallback) {
 			var id = getSelectedID(),
+				newData,
 				metaData;
 			
 			if (id && metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				metaData.user_data_text = JSON.stringify({ text: text });
-				if (metaData.type === "text") {
-					var previewArea = gui.get_content_preview_area(),
-						elem = document.createElement('pre');
-					elem.className = "text_content";
-					elem.innerHTML = text;
-					previewArea.appendChild(elem);
-					metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
-					metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
-					previewArea.removeChild(elem);
+				newData = JSON.stringify({ text: text });
+				if (newData !== metaData.user_data_text) {
+					metaData.user_data_text = newData;
+					if (metaData.type === "text") {
+						var previewArea = gui.get_content_preview_area(),
+							elem = document.createElement('pre');
+						elem.className = "text_content";
+						elem.innerHTML = text;
+						previewArea.appendChild(elem);
+						metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
+						metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
+						previewArea.removeChild(elem);
 
-					updateContent(metaData, text);
-				} else {
-					updateMetaData(metaData, function (err, reply) {
-						if (endCallback) {
-							endCallback(null);
-						}
-					});
+						updateContent(metaData, text);
+					} else {
+						updateMetaData(metaData, function (err, reply) {
+							if (endCallback) {
+								endCallback(null);
+							}
+						});
+					}
 				}
 			} else {
 				if (endCallback) {

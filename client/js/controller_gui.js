@@ -90,6 +90,7 @@
 			if (evt.target.className !== "context_menu_item") {
 				menu.style.display = "none";
 			}
+			window.content_property.submit_text();
 		});
 	}
 

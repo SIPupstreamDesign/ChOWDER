@@ -246,6 +246,13 @@
 		}
 	}
 
+	function submit_text(endcallback) {
+		var content_text = document.getElementById('content_text');
+		if (content_text) {
+			window.content_property.on_metainfo_changed(content_text.value, endcallback);
+		}
+	}
+
 	/**
 	 * Propertyエリアパラメータ消去
 	 * @method clearProperty
@@ -253,7 +260,9 @@
 	function clear(updateText) {
 		var content_text = document.getElementById('content_text');
 		if (content_text && updateText) {
-			window.content_property.on_metainfo_changed(content_text.value);
+			submit_text(function () {
+				clear(false);
+			});
 		}
 
 		var transx = document.getElementById('content_transform_x'),
@@ -263,13 +272,14 @@
 			transz = document.getElementById('content_transform_z'),
 			dlbtn  = document.getElementById('download_button'),
 			content_id = document.getElementById('content_id');
-		if (transx) { transx.value = 0; }
-		if (transy) { transy.value = 0; }
-		if (transw) { transw.value = 0; }
-		if (transh) { transh.value = 0; }
-		if (transz) { transz.value = 0; }
+		if (transx) { transx.value = 0; transx.disabled = true; }
+		if (transy) { transy.value = 0; transy.disabled = true; }
+		if (transw) { transw.value = 0; transw.disabled = true; }
+		if (transh) { transh.value = 0; transh.disabled = true; }
+		if (transz) { transz.value = 0; transz.disabled = true; }
 		if (content_id) { content_id.innerHTML = ""; }
 		if (dlbtn) { dlbtn.style.display = 'none'; }
+		if (content_text) { content_text.value = ""; content_text.disabled = true; }
 	}
 
 	function init(id, group, type, mime) {
@@ -371,6 +381,7 @@
 	window.content_property = {}
 	window.content_property.init = init;
 	window.content_property.clear = clear;
+	window.content_property.submit_text = submit_text;
 	window.content_property.assign_virtual_display = assignVirtualDisplayProperty;
 	window.content_property.on_change_zindex = null;
 	window.content_property.on_rect_changed = null;
