@@ -751,6 +751,10 @@
 		elem = getElem(id, true);
 		if (elem) {
 			metaData = metaDataDict[id];
+			if (metaData.type === windowType) {
+				elem.style.border = "";
+				elem.style.borderStyle = "solid";
+			}
 			if (metaData.type !== windowType && isVisible(metaData) && String(metaData.mark) !== "true") {
 				elem.style.border = "";
 			}
@@ -1417,6 +1421,7 @@
 			wholeElem,
 			previewArea = gui.get_display_preview_area(),
 			elem,
+			idElem,
 			screenElem,
 			metaData;
 		
@@ -1424,7 +1429,10 @@
 			screenElem = document.getElementById(windowData.id);
 			if (!screenElem && isVisible(windowData)) {
 				screenElem = document.createElement('div');
-				screenElem.innerHTML = "ID:" + windowData.id;
+				idElem = document.createElement('div');
+				idElem.innerHTML = "ID:" + windowData.id;
+				idElem.className = "screen_id";
+				screenElem.appendChild(idElem);
 				screenElem.className = "screen";
 				screenElem.id = windowData.id;
 				screenElem.style.borderStyle = 'solid';
@@ -1474,10 +1482,12 @@
 						if (!screenElem) {
 							if (isVisible(metaData)) {
 								screenElem = document.createElement('div');
-								screenElem.innerHTML = "ID:" + s;
+								idElem = document.createElement('div');
+								idElem.innerHTML = "ID:" + s;
+								idElem.className = "screen_id";
+								screenElem.appendChild(idElem);
 								screenElem.className = "screen";
 								screenElem.id = s;
-								console.log("screenElemID:" + JSON.stringify(screens[s]));
 								screenElem.style.borderStyle = 'solid';
 								previewArea.appendChild(screenElem);
 								setupWindow(screenElem, s);
@@ -1579,15 +1589,20 @@
 	}
 	
 	/**
-	 * 全Windowをリストビューに追加する
+	 * wholeWindowをリストビューに追加する
 	 * @method addWholeWindowToList
 	 */
 	function addWholeWindowToList() {
 		var displayArea = gui.get_display_area(),
 			divElem = document.createElement("div"),
-			onlistID = wholeWindowListID;
+			onlistID = wholeWindowListID,
+			idElem;
 		
-		divElem.innerHTML = "Virtual Display";
+		idElem = document.createElement('div');
+		idElem.innerHTML = "Virtual Display";
+		idElem.className = "screen_id";
+		divElem.appendChild(idElem);
+
 		divElem.id = onlistID;
 		divElem.style.position = "relative";
 		divElem.style.top = "5px";
@@ -1889,6 +1904,7 @@
 		var windowData = reply,
 			elem;
 		importWindow(windowData);
+		changeWindowBorderColor(windowData);
 		if ( (isDisplayTabSelected() && reply.type === windowType) ||
 			(!isDisplayTabSelected() && reply.type !== windowType)) {
 				if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
@@ -2969,14 +2985,17 @@
 		console.log("onUpdateWindowMetaData", data);
 		var i,
 			metaData;
-		for (i = 0; i < data.length; ++i) {
-			metaData = data[i];
-			if (metaDataDict.hasOwnProperty(metaData.id) && metaDataDict[metaData.id].hasOwnProperty('reference_count')) {
-				if (metaDataDict[metaData.id].reference_count !== metaData.reference_count) {
-					changeWindowBorderColor(metaData);
-				}
+
+		if (data instanceof Array) {
+			for (i = 0; i < data.length; ++i) {
+				metaData = data[i];
+				doneGetWindowMetaData(null, metaData);
+				changeWindowBorderColor(metaData);
 			}
+		} else {
+			metaData = data;
 			doneGetWindowMetaData(null, metaData);
+			changeWindowBorderColor(metaData);
 		}
 	});
 

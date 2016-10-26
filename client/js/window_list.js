@@ -12,6 +12,7 @@
 		console.log("importWindowToList");
 		var displayArea = gui.get_display_area(),
 			divElem,
+			idElem,
 			onlistID = "onlist:" + windowData.id;
 		
 		divElem = gui.get_list_elem(windowData.id);
@@ -20,7 +21,12 @@
 		}
 		
 		divElem = document.createElement("div");
-		divElem.innerHTML = "ID:" + windowData.id;
+
+		idElem = document.createElement('div');
+		idElem.innerHTML = "ID:" + windowData.id;
+		idElem.className = "screen_id";
+		divElem.appendChild(idElem);
+
 		divElem.id = onlistID;
 		divElem.className = "screen";
 		divElem.style.position = "relative";

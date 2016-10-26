@@ -32,18 +32,31 @@
 		var mouseDownPosX = null,
 			mouseDownPosY = null,
 			openContextMenu = false;
+
 		document.body.addEventListener("mousedown", function (evt) {
 			mouseDownPosX = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			mouseDownPosY = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+			openContextMenu = false;
 		});
 
 		document.body.addEventListener("contextmenu", function (evt) {
 			if (window.content_box.is_active(type) || window.content_box.is_active(type2)) {
-				openContextMenu = true;
+				if (evt.button === 2) {
+					openContextMenu = true;
+				}
 				evt.preventDefault();
 			}
 		});
+		
 		document.body.addEventListener("mouseup", function (evt) {
+			if (window.content_box.is_active(type) || window.content_box.is_active(type2)) {
+				if (evt.button === 2) {
+					openContextMenu = true;
+				}
+			}
+		});
+		
+		window.addEventListener("mouseup", function (evt) {
 			if (openContextMenu) {
 				var px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop),
