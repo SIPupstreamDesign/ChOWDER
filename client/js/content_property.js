@@ -164,7 +164,7 @@
 			wholeSplitX = document.getElementById('whole_split_x');
 			wholeSplitY = document.getElementById('whole_split_y');
 			wholeW.onchange = function () {
-				if (window.content_property.on_display_value_change) {
+				if (window.content_property.on_display_value_changed) {
 					window.content_property.on_display_value_changed();
 				}
 			};

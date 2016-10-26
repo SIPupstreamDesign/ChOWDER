@@ -2439,15 +2439,14 @@
 			wholeHeight = document.getElementById('whole_height'),
 			wholeSplitX = document.getElementById('whole_split_x'),
 			wholeSplitY = document.getElementById('whole_split_y'),
-			scale_current = document.getElementById('scale_dropdown_current'),
 			w,
 			h,
-			s = parseFloat(scale_current.innerHTML),
+			s = Number(vscreen.getWholeScale()),
 			ix = parseInt(wholeSplitX.value, 10),
 			iy = parseInt(wholeSplitY.value, 10),
 			cx = window.innerWidth / 2,
 			cy = window.innerHeight / 2;
-
+			
 		if (!wholeWidth || !whole.hasOwnProperty('w')) {
 			w = initialWholeWidth;
 		} else {
@@ -2467,10 +2466,6 @@
 			}
 		}
 		
-		if (s <= 0) {
-			s = 0.1;
-			scale_current.innerHTML = 0.1;
-		}
 		console.log("changeDisplayValue", w, h, s);
 		if (w && h && s) {
 			vscreen.assignWhole(w, h, cx, cy, s);
