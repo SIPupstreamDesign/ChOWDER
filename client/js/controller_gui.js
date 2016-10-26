@@ -393,12 +393,12 @@
 				var dy = evt.clientY - rect.top - mouseDownPosY,
 					ds = dy;
 				if (ds > 0) {
-					display_scale += 0.005 * Math.abs(ds + 0.5);
+					display_scale += 0.002 * Math.abs(ds + 0.5);
 				} else {
 					if (display_scale < 1.0) {
-						display_scale -= 0.002 * Math.abs(ds - 0.5);
+						display_scale -= 0.001 * Math.abs(ds - 0.5);
 					} else {
-						display_scale -= 0.005 * Math.abs(ds - 0.5);
+						display_scale -= 0.002 * Math.abs(ds - 0.5);
 					}
 				}
 				if (display_scale < 0.05) {
