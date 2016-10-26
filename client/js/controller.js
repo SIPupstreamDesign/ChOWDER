@@ -2015,10 +2015,10 @@
 		var windowData = reply,
 			whole = vscreen.getWhole(),
 			split = vscreen.getSplitCount(),
-			cx = window.innerWidth / 2,
-			cy = window.innerHeight / 2;
+			panel = document.getElementById('preview_area_panel__'),
+			cx = (panel.getBoundingClientRect().right - panel.getBoundingClientRect().left) / 2,
+			cy = (panel.getBoundingClientRect().bottom - panel.getBoundingClientRect().top) / 2 + 28;
 		
-		console.log('doneGetVirtualDisplay', reply, whole);
 		if (windowData.hasOwnProperty('orgWidth')) {
 			// set virtual displays
 			if (!windowData.orgHeight || isNaN(windowData.orgWidth)) {
@@ -2336,9 +2336,7 @@
 	gui.on_display_trans_changed = function (dx, dy) {
 		manipulator.removeManipulator();
 		var center = vscreen.getCenter();
-		var whole = vscreen.getWhole(),
-			cx = window.innerWidth / 2,
-			cy = window.innerHeight / 2;
+		var whole = vscreen.getWhole();
 		
 		vscreen.assignWhole(whole.orgW, whole.orgH, center.x + dx, center.y + dy, vscreen.getWholeScale());
 		updateScreen();
@@ -3186,9 +3184,10 @@
 				clearTimeout(timer);
 			}
 			timer = setTimeout(function () {
-				var whole = vscreen.getWhole(),
-					cx = window.innerWidth / 2,
-					cy = window.innerHeight / 2;
+				var panel = document.getElementById('preview_area_panel__'),
+					cx = (panel.getBoundingClientRect().right - panel.getBoundingClientRect().left) / 2,
+					cy = (panel.getBoundingClientRect().bottom - panel.getBoundingClientRect().top) / 2 + 28,
+					whole = vscreen.getWhole();
 				
 				vscreen.assignWhole(whole.orgW, whole.orgH, cx, cy, vscreen.getWholeScale());
 				manipulator.removeManipulator();

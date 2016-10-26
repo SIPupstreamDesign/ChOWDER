@@ -277,6 +277,10 @@
 		var i,
 			screen,
 			rect;
+		
+		if (cx === undefined || cy === undefined) {
+			return;
+		}
 		center_x = parseFloat(cx);
 		center_y = parseFloat(cy);
 		vscreen_scale = parseFloat(s);
