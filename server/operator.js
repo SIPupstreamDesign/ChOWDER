@@ -1353,32 +1353,41 @@
 		}
 	}
 
-	/**
-	 * mouseコマンドを実行する.
+    /**
+     * mouseコマンドを実行する.
      * リモートマウスカーソル表示のために HSV カラーを新規接続に応じて生成する
-	 * @method commandUpdateMouseCursor
-	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function commandUpdateMouseCursor(socketid, json, endCallback) {
+     * @method commandUpdateMouseCursor
+     * @param {String} socketid ソケットID
+     * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
+     */
+    function commandUpdateMouseCursor(socketid, json, endCallback) {
+        var c, i, j;
         if(!connectionId.hasOwnProperty(socketid)){
             connectionId[socketid] = connectionCount;
             ++connectionCount;
         }
         json.connectionCount = connectionId[socketid];
-        var c = hsv(49.21875 * connectionId[socketid], 0.9, 1.0);
+        i = connectionId[socketid] % 14;
+        // hsv は約 7 分割されるような循環
+        // 奇数回周目は v を半減させ視認性を上げる
+        if(i < 7){
+            j = 1.0;
+        }else{
+            j = 0.5;
+        }
+        c = hsv(49.21875 * connectionId[socketid], 1.0, j);
         if(c){
             c[0] = Math.floor(c[0] * 255);
             c[1] = Math.floor(c[1] * 255);
             c[2] = Math.floor(c[2] * 255);
             json.hsv = 'rgb(' + (c.join(',')) + ')';
         }
-		updateMouseCursor(socketid, json, function (windowData) {
-			endCallback(null, windowData);
-		});
-	}
-	
+        updateMouseCursor(socketid, json, function (windowData) {
+            endCallback(null, windowData);
+        });
+    }
+
 	/**
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
