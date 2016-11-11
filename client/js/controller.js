@@ -2175,7 +2175,14 @@
 			console.error(value)
 			return;
 		}
-		addContent({type : "url", user_data_text : JSON.stringify({ text: value }) }, value);
+
+		try {
+			value = decodeURI(value);
+			addContent({type : "url", user_data_text : JSON.stringify({ text: value }) }, value);
+		} catch (e) {
+			console.error(e);
+		}
+
 	};
 	
 	/** 
