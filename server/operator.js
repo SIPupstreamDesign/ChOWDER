@@ -49,12 +49,10 @@
 			command[2] = output;
 		}
 		util.launchApp(command, null, function () {
-				console.log("aaa found");
 			if (fs.existsSync(output)) {
 				image_size(output, function (err, dimensions) {
 					if (endCallback) {
 						if (dimensions.height > 4000) {
-							console.log("height", dimensions.height)
 							command.push(dimensions.width);
 							command.push(4000);
 							renderURLInternal(command, endCallback);
