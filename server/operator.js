@@ -38,6 +38,45 @@
 	client.on('error', function (err) {
 		console.log('Error ' + err);
 	});
+
+	function renderURLInternal(command, endCallback) {
+		var command;
+		var output = "out.png";
+		if (command.length > 4) {
+			output = "out" + command[5] + ".png";
+			command[2] = output;
+		}
+		util.launchApp(command, null, function () {
+				console.log("aaa found");
+			if (fs.existsSync(output)) {
+				image_size(output, function (err, dimensions) {
+					if (endCallback) {
+						if (dimensions.height > 4000) {
+							console.log("height", dimensions.height)
+							command.push(dimensions.width);
+							command.push(4000);
+							renderURLInternal(command, endCallback);
+							/*
+							var i = 0;
+							for (; i < dimensions.height; i = i + 4000) {
+								command[5] = i;
+								renderURLInternal(command, endCallback);
+							}
+							var last = dimensions.height - i;
+							if (last > 0) {
+								renderURLInternal(command, endCallback);
+							}
+							*/
+						} else {
+							endCallback(fs.readFileSync(output), dimensions);
+						}
+					}
+				});
+			} else if (endCallback) {
+				endCallback(null);
+			}
+		});
+	}
 	
 	/**
 	 * 指定されたURLをレンダリングする
@@ -53,19 +92,7 @@
 				url ];
 		console.dir("Phantomjs:" + JSON.stringify(phantomjs));
 		console.log("Phantomjs path:" + phantomjs.path);
-		
-		util.launchApp(command, null, function () {
-			if (fs.existsSync(output)) {
-				console.log("output found");
-				image_size(output, function (err, dimensions) {
-					if (endCallback) {
-						endCallback(fs.readFileSync(output), dimensions);
-					}
-				});
-			} else if (endCallback) {
-				endCallback(null);
-			}
-		});
+		renderURLInternal(command, endCallback);
 	}
 	
 	function generateID(prefix, endCallback) {
