@@ -33,7 +33,9 @@
 		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
-		methods;
+		methods,
+        connectionId = {},
+        connectionCount = 0;
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
@@ -1097,7 +1099,7 @@
 						});
 					}
 				}
-			}
+			};
 
 			syncDelete(results, all_done);
 	}
@@ -1378,19 +1380,41 @@
 		}
 	}
 
-	/**
-	 * mouseコマンドを実行する.
-	 * @method commandUpdateMouseCursor
-	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function commandUpdateMouseCursor(socketid, json, endCallback) {
-		updateMouseCursor(socketid, json, function (windowData) {
-			endCallback(null, windowData);
-		});
-	}
-	
+    /**
+     * mouseコマンドを実行する.
+     * リモートマウスカーソル表示のために HSV カラーを新規接続に応じて生成する
+     * @method commandUpdateMouseCursor
+     * @param {String} socketid ソケットID
+     * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
+     */
+    function commandUpdateMouseCursor(socketid, json, endCallback) {
+        var c, i, j;
+        if(!connectionId.hasOwnProperty(socketid)){
+            connectionId[socketid] = connectionCount;
+            ++connectionCount;
+        }
+        json.connectionCount = connectionId[socketid];
+        i = connectionId[socketid] % 14;
+        // hsv は約 7 分割されるような循環
+        // 奇数回周目は v を半減させ視認性を上げる
+        if(i < 7){
+            j = 1.0;
+        }else{
+            j = 0.5;
+        }
+        c = hsv(49.21875 * connectionId[socketid], 1.0, j);
+        if(c){
+            c[0] = Math.floor(c[0] * 255);
+            c[1] = Math.floor(c[1] * 255);
+            c[2] = Math.floor(c[2] * 255);
+            json.hsv = 'rgb(' + (c.join(',')) + ')';
+        }
+        updateMouseCursor(socketid, json, function (windowData) {
+            endCallback(null, windowData);
+        });
+    }
+
 	/**
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
@@ -1766,7 +1790,34 @@
 		console.log("idstr:" + groupListPrefix);
 		addGroup("group_defalut", "default", function (err, reply) {} );
 	}
-	
+
+	/**
+	 * HSV 色空間の値から RGB を生成して返す.
+	 * @method hsv
+	 * @param {number} h hue
+	 * @param {number} s saturation
+	 * @param {number} v value
+	 */
+    function hsv(h, s, v){
+        if(s > 1 || v > 1){return;}
+        var th = h % 360;
+        var i = Math.floor(th / 60);
+        var f = th / 60 - i;
+        var m = v * (1 - s);
+        var n = v * (1 - s * f);
+        var k = v * (1 - s * (1 - f));
+        var color = new Array();
+        if(!s > 0 && !s < 0){
+            color.push(v, v, v);
+        } else {
+            var r = new Array(v, n, m, m, k, v);
+            var g = new Array(k, v, v, n, m, m);
+            var b = new Array(m, m, k, v, v, n);
+            color.push(r[i], g[i], b[i]);
+        }
+        return color;
+    }
+
 	Operator.prototype.getContent = getContent;
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;

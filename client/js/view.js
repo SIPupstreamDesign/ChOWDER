@@ -997,19 +997,7 @@
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-            var i, a, e, x, y, p,
-				ctrlid = res.id,
-				idstring,
-				hash;
-            var WAIT_TIME = 1000 * 60 * 5;
-
-			if (!ctrlid || ctrlid.length < 5) { return; }
-			hash = ctrlid.charCodeAt(ctrlid.length - 1)
-				+ ctrlid.charCodeAt(ctrlid.length - 2)
-				+ ctrlid.charCodeAt(ctrlid.length - 3)
-				+ ctrlid.charCodeAt(ctrlid.length - 4)
-				+ ctrlid.charCodeAt(ctrlid.length - 5);
-
+            var i, a, e, f, x, y, p, ctrlid = res.id;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
                 if(!controllers.hasOwnProperty(ctrlid)){
                     ++controllers.connectionCount;
@@ -1018,23 +1006,37 @@
                         lastActive: 0
                     };
                 }
-				p = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
-                idstring = parseInt(hash % 10, 10);
-                e = document.getElementById('hiddenCursor' + idstring);
-                if (e) {
-                    e.style.left = Math.round(p.x) + 'px';
-                    e.style.top  = Math.round(p.y) + 'px';
-                    controllers[ctrlid].lastActive = Date.now();
+                p = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
+                e = document.getElementById('hiddenCursor' + ctrlid);
+                if(!e){
+                    e = document.createElement('div');
+                    e.id = 'hiddenCursor' + ctrlid;
+                    e.className = 'hiddenCursor';
+                    e.style.backgroundColor = 'transparent';
+                    f = document.createElement('div');
+                    f.className = 'before';
+                    f.style.backgroundColor = res.data.hsv;
+                    e.appendChild(f);
+                    f = document.createElement('div');
+                    f.className = 'after';
+                    f.style.backgroundColor = res.data.hsv;
+                    e.appendChild(f);
+                    document.body.appendChild(e);
+                    console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.hsv);
                 }
+                e.style.left = Math.round(p.x) + 'px';
+                e.style.top  = Math.round(p.y) + 'px';
+                controllers[ctrlid].lastActive = Date.now();
             } else {
                 if (controllers.hasOwnProperty(ctrlid)) {
-					idstring = parseInt(hash % 10, 10);
-					e = document.getElementById('hiddenCursor' + idstring);
-					if(e){
-						e.style.left = '-9999px';
-						e.style.top  = '-9999px';
-					}
-				}
+                    e = document.getElementById('hiddenCursor' + ctrlid);
+                    if(e){
+                        e.style.left = '-9999px';
+                        e.style.top  = '-9999px';
+                    }
+                    f = e.parentNode;
+                    if(f){e.removeChild(e);}
+                }
             }
         });
 
@@ -1042,7 +1044,7 @@
 			console.log("onShowWindowID", data);
 			var i;
 			for (i = 0; i < data.length; i = i + 1) {
-				showDisplayID(data[i].id);	
+				showDisplayID(data[i].id);
 			}
 		});
 
