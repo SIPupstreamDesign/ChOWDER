@@ -1,15 +1,17 @@
 /*jslint devel:true*/
 /*global Float32Array */
-(function (gui) {
+(function () {
 	"use strict";
 	var ContentBox;
 
 	ContentBox = function (containerElem, setting) {
+		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
 		this.tabIDs = [];
 		this.init();
 	};
+	ContentBox.prototype = Object.create(EventEmitter.prototype);
 
 	/*
 		<div class="left_tab_area" id="left_tab_area">
@@ -84,9 +86,9 @@
 			elem.onclick = function () {
 				var i,
 					tabElem;
-				if (window.content_box.on_tab_changed_pre) {
-					window.content_box.on_tab_changed_pre();
-				}
+
+				this.emit(ContentBox.EVENT_TAB_CHANGED_PRE, null);
+				
 				for (i = 0; i < this.tabIDs.length; i = i + 1) {
 					document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
 					tabElem = document.getElementById(this.tabIDs[i]); 
@@ -96,28 +98,21 @@
 				tabElem.className = tabElem.className + " active";
 				document.getElementById(tabContent.id + "_box").style.display = "block";
 				tabContent.func();
-				if (window.content_box.on_tab_changed_post) {
-					window.content_box.on_tab_changed_post();
-				}
+				
+				this.emit(ContentBox.EVENT_TAB_CHANGED_POST, null);
 			}.bind(this);
 		}
 		elem.appendChild(link);
 		return elem;
 	};
 
-	function init(containerElem, setting) {
-		return new ContentBox(containerElem, setting);
-	}
-
-	function is_active(tabID) {
+	ContentBox.prototype.is_active = function (tabID) {
  		var tab = document.getElementById(tabID);
 		return tab && tab.className.indexOf('active') >= 0;
 	}
 
-	window.content_box = {};
-	window.content_box.init = init;
-	window.content_box.on_tab_changed_pre = null;
-	window.content_box.on_tab_changed_post = null;
-	window.content_box.is_active = is_active;
+	ContentBox.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
+	ContentBox.EVENT_TAB_CHANGED_POST = "tab_changed_post";
+	window.ContentBox = ContentBox;
 
-}(window.controller_gui));
+}());

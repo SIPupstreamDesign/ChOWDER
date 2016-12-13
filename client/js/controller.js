@@ -136,7 +136,7 @@
 	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isDisplayTabSelected() {
-		return content_box.is_active("display_tab");
+		return gui.contentBox.is_active("display_tab");
 	}
 	
 	/**
@@ -2779,12 +2779,12 @@
 	/**
 	 * タブが切り替えられた.
 	 */
-	content_box.on_tab_changed_pre = function () {
+	gui.on("tab_changed_pre", function () {
 		manipulator.removeManipulator();
 		unselectAll(true);
-	};
+	});
 
-	content_box.on_tab_changed_post = function () {
+	gui.on("tab_changed_post", function () {
 		var id;
 		if (isDisplayTabSelected()) {
 			content_property.init("", "", "display");
@@ -2805,7 +2805,7 @@
 			select(id, false);
 		}
 		draggingIDList = [];
-	}
+	});
 
 	/**
 	 * マニピュレータの星がトグルされた

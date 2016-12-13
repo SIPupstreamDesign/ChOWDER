@@ -88,7 +88,7 @@
 
 
 		// 下部コンテンツボックスの初期化.
-		window.content_box.init(document.getElementById('bottom_area'),
+		this.contentBox = new ContentBox(document.getElementById('bottom_area'),
 			{
 				tabs : [{
 						Display : {
@@ -108,6 +108,13 @@
 						}
 					}]
 			});
+		this.contentBox.on('tab_changed_pre', function (err, data) {
+			this.emit(window.ControllerGUI.EVENT_TAB_CHANGED_PRE, err, data);
+		}.bind(this));
+
+		this.contentBox.on('tab_changed_post', function (err, data) {
+			this.emit(window.ControllerGUI.EVENT_TAB_CHANGED_POST, err, data);
+		}.bind(this));
 
 		// コンテンツボックスにグループボックスを埋め込み.
 		this.groupBox = new GroupBox(document.getElementById('content_tab_box'),
@@ -301,21 +308,21 @@
 		});
 
 		document.body.addEventListener("contextmenu", function (evt) {
-			if (window.content_box.is_active(type) || window.content_box.is_active(type2)) {
+			if (this.contentBox.is_active(type) || this.contentBox.is_active(type2)) {
 				if (evt.button === 2) {
 					openContextMenu = true;
 				}
 				evt.preventDefault();
 			}
-		});
+		}.bind(this));
 		
 		document.body.addEventListener("mouseup", function (evt) {
-			if (window.content_box.is_active(type) || window.content_box.is_active(type2)) {
+			if (this.contentBox.is_active(type) || this.contentBox.is_active(type2)) {
 				if (evt.button === 2) {
 					openContextMenu = true;
 				}
 			}
-		});
+		}.bind(this));
 		
 		window.addEventListener("mouseup", function (evt) {
 			if (openContextMenu) {
@@ -950,6 +957,8 @@
 	window.ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
 	window.ControllerGUI.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
 	window.ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
+	window.ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
+	window.ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
 	
 	ControllerGUI.prototype.get_bottom_area = function () {
 		return document.getElementById('bottom_area');
