@@ -1,5 +1,5 @@
 
-(function (gui) {
+(function () {
 	// colorselector insert ui
 	var colorselector = null;
 	
@@ -401,4 +401,4 @@
 	};
 	
 
-}(window.controller_gui));
+}());

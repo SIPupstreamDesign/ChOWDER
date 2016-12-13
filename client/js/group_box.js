@@ -1,25 +1,35 @@
 /*jslint devel:true*/
 /*global Float32Array */
-(function (gui) {
+(function () {
 	"use strict";
 	var GroupBox,
 		defaultGroup = "default";
 
 	GroupBox = function (containerElem, setting) {
+		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
 		this.tabIDs = [];
 		this.tabGroupToElems = {};
 		this.currentTab = null;
 		this.init();
-
-		this.on_group_changed = null; // タブが切り替わった時呼ばれるイベント関数をしこむ 
-		this.on_group_delete = null; // タブのxを押したときに呼ばれるイベント関数をしこむ
-		this.on_group_append = null; // タブの+を押したときに呼ばれるイベント関数をしこむ
-
-		this.on_group_up = null;  //タブを1つ上に移動
-		this.on_group_down = null; // タブを1つ下に移動
 	};
+	GroupBox.prototype = Object.create(EventEmitter.prototype);
+
+	// タブが切り替わった時呼ばれるイベント
+	GroupBox.EVENT_GROUP_CHANGED = "group_changed";
+	// タブのxを押したときに呼ばれるイベント
+	GroupBox.EVENT_GROUP_DELETE = "group_delete";
+	// タブの+を押したときに呼ばれるイベント
+	GroupBox.EVENT_GROUP_APPEND = "group_append";
+	//タブを1つ上に移動
+	GroupBox.EVENT_GROUP_UP = "group_up";
+	// タブを1つ下に移動
+	GroupBox.EVENT_GROUP_DOWN = "group_down";
+	// グループ色変更
+	GroupBox.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
+	// グループ名変更
+	GroupBox.EVENT_GROUP_EDIT_NAME = "group_edit_name";
 
 	/*
 		<div class="left_tab_area" id="left_tab_area">
@@ -98,9 +108,7 @@
 			elem.setAttribute("title", "1つ上に移動");
 			elem.appendChild(span);
 			elem.onclick = function () {
-				if (this.on_group_up) {
-					this.on_group_up(this.currentGroupName);
-				}
+				this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupName);
 			}.bind(this);
 			tabArea.appendChild(elem);
 
@@ -112,9 +120,7 @@
 			elem.setAttribute("title", "1つ下に移動");
 			elem.appendChild(span);
 			elem.onclick = function () {
-				if (this.on_group_down) {
-					this.on_group_down(this.currentGroupName);
-				}
+				this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupName);
 			}.bind(this);
 			tabArea.appendChild(elem);
 
@@ -132,9 +138,7 @@
 						initialValue :  "",
 						okButtonName : "OK",
 					}, function (value) {
-						if (this.on_group_append) {
-							this.on_group_append(value);
-						}
+						this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
 					}.bind(this));
 			}.bind(this);
 			tabArea.appendChild(elem);
@@ -200,9 +204,7 @@
 			if (tabContent.hasOwnProperty('func')) {
 				tabContent.func();
 			}
-			if (this.on_group_changed) {
-				this.on_group_changed(evt);
-			}
+			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
 			this.currentTab = document.getElementById(tabContent.id + "_box");
 			this.currentGroupName = groupName;
 		}.bind(this);
@@ -233,10 +235,8 @@
 					delete_button.onclick = function () {
 						background.style.display = "none";
 						menu.style.display = "none"
-						if (self.on_group_delete) {
-							self.on_group_delete(groupID);
-						}
-					};
+						this.emit(GroupBox.EVENT_GROUP_DELETE, null, groupID);
+					}.bind(self);
 
 					name_button.onclick = function () {
 						window.input_dialog.text_input({
@@ -244,12 +244,10 @@
 								initialValue :  groupName,
 								okButtonName : "OK",
 							}, function (value) {
-								if (self.on_group_edit_name) {
-									self.on_group_edit_name(groupID, value);
-								}
-							});
+								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null, groupID, value);
+							}.bind(this));
 						menu.style.display = "none"
-					};
+					}.bind(self);
 
 					color_button.onclick = function () {
 						window.input_dialog.color_input({
@@ -257,12 +255,10 @@
 								initialValue : groupColor,
 								okButtonName : "OK"
 							}, function (value) {
-								if (self.on_group_edit_color) {
-									self.on_group_edit_color(groupID, value);
-								}
-							});
+								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null, groupID, value);
+							}.bind(this));
 						menu.style.display = "none"
-					};
+					}.bind(self);
 
 				};
 			}(this, groupName));
@@ -339,4 +335,4 @@
 	window.group_box.init = init;
 	window.group_box.is_active = is_active;
 
-}(window.controller_gui));
+}());

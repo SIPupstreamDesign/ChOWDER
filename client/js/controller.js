@@ -2041,61 +2041,6 @@
 	
 	///-------------------------------------------------------------------------------------------------------
 	
-	
-	/**
-	 * Displayを削除するボタンが押された.
-	 * @method on_deletedisplay_clicked
-	 */
-	/*
-	gui.on_deletedisplay_clicked = function () {
-		var i,
-			id,
-			metaDataList = [];
-			
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaDataList.push(metaDataDict[id]);
-			}
-		}
-		if (metaDataList.length > 0) {
-			connector.send('DeleteWindowMetaData', metaDataList, function () {});
-		}
-	};
-	*/
-
-	/**
-	 * Group内のコンテンツ全て削除.
-	 */
-	/*
-	gui.on_deleteallcontent_clicked = function () {
-		var i,
-			metaData,
-			selectedGroup = getSelectedGroup(),
-			targetList = [],
-			groupToID = {};
-
-		for (i = 0; i < groupList.length; ++i) {
-			groupToID[groupList[i].name] = groupList[i].id;
-		}
-		
-		if (selectedGroup) {
-			for (i in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(i)) {
-					if (metaDataDict[i] !== windowType) {
-						if (groupToID[metaDataDict[i].group] === selectedGroup) {
-							targetList.push(metaDataDict[i]);
-						}
-					}
-				}
-			}
-		}
-		if (targetList.length > 0) {
-			connector.send('DeleteContent', targetList, doneDeleteContent);
-		}
-	};
-	*/
-	
 	/**
 	 * Show Display ID ボタンが押された.
 	 * @method on_showidbutton_clicked
@@ -2188,29 +2133,6 @@
 			console.error(e);
 		}
 	});
-	
-	/** 
-	 * 複製ボタンが押された
-	 * @method on_duplicatebutton_clicked
-	 * @param {Object} evt ボタンイベント.
-	 */
-	/*
-	gui.on_duplicatebutton_clicked = function (evt) {
-		console.log('duplicate', getSelectedID());
-		var id = getSelectedID(),
-			metaData,
-			metaDataCopy;
-		
-		if (id) {
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
-				metaDataCopy = JSON.parse(JSON.stringify(metaData));
-				delete metaDataCopy.id;
-				addMetaData(metaDataCopy);
-			}
-		}
-	};
-	*/
 	
 	/**
 	 * 画像ファイルFileOpenハンドラ

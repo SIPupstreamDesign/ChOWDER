@@ -13,8 +13,6 @@
 	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
 
 	ControllerGUI.prototype.init = function () {
-		
-
 		this.groupBox = null;
 		this.searchBox = null;
 		this.displayMenu = null;
@@ -732,7 +730,7 @@
 	 * グループのタブに対するイベントを設定. 
 	 */
 	ControllerGUI.prototype.initGroupBoxEvents = function (groupBox) {
-		groupBox.on_group_delete = function (groupID) {
+		groupBox.on("group_delete", function (err, groupID) {
 			window.input_dialog.okcancel_input({
 					name : "グループ内のコンテンツも削除されます. よろしいですか?"
 				}, (function (groupID, self) {
@@ -742,26 +740,27 @@
 						}
 					}.bind(self);
 				}(groupID, this)));
-		}.bind(this);
+		}.bind(this));
 
-		groupBox.on_group_append = function (groupName) {
+		groupBox.on("group_append", function (err, groupName) {
 			this.emit(window.ControllerGUI.EVENT_GROUP_APPEND_CLICKED, null, groupName);
-		}.bind(this);
+		}.bind(this));
 
-		groupBox.on_group_up = function (groupName) {
+		groupBox.on("group_up", function (err, groupName) {
 			this.emit(window.ControllerGUI.EVENT_GROUP_UP, null, groupName);
-		}.bind(this);
+		}.bind(this));
 		
-		groupBox.on_group_down = function (groupName) {
+		groupBox.on("group_down", function (err, groupName) {
 			this.emit(window.ControllerGUI.EVENT_GROUP_DOWN, null, groupName);
-		}.bind(this);
+		}.bind(this));
 
-		groupBox.on_group_edit_name = function (groupID, groupName) {
+		groupBox.on("group_edit_name", function (err, groupID, groupName) {
 			this.emit(window.ControllerGUI.EVENT_GROUP_EDIT_NANE, null, groupID, groupName);
-		}.bind(this);
-		groupBox.on_group_edit_color = function (groupID, color) {
+		}.bind(this));
+
+		groupBox.on("group_edit_color", function (err, groupID, color) {
 			this.emit(window.ControllerGUI.EVENT_GROUP_EDIT_COLOR, null, groupID, color);
-		}.bind(this);
+		}.bind(this));
 	};
 
 	/**
@@ -936,11 +935,7 @@
 	window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED = "select_contents_clicked";
 	window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
 	window.ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
-	//window.ControllerGUI.EVENT_DELETEALLDISPLAY_CLICKED = "deletealldisplay_clicked";
-	//window.ControllerGUI.EVENT_DELETEALLCONTENT_CLICKED = "deleteallcontent_clicked";
 	window.ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED = "showidbutton_clicked";
-	//window.ControllerGUI.EVENT_SNAPDROPDOWN_CLICKED = "snapdropdown_clicked";
-	//window.ControllerGUI.EVENT_SNAPDROPDOWN_CLICKED = "snapdropdown_clicked";
 	window.ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED = "virtualdisplaysetting_clicked";
 	window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED = "display_scale_changed";
 	window.ControllerGUI.EVENT_DISPLAY_TRANS_CHANGED = "display_trans_changed";
@@ -955,41 +950,6 @@
 	window.ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
 	window.ControllerGUI.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
 	window.ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
-
-	// イベントコールバック.
-	//window.controller_gui.on_mousedown_content_preview_area = null;
-	//window.controller_gui.on_mousedown_display_preview_area = null;
-	//window.controller_gui.on_updateimageinput_changed = null;
-	//window.controller_gui.on_imagefileinput_changed = null;
-	//window.controller_gui.on_textfileinput_changed = null;
-	//window.controller_gui.on_urlsendbuton_clicked = null;
-	//window.controller_gui.on_textsendbutton_clicked = null;
-	//window.controller_gui.on_update_cursor_enable = null;
-	//window.controller_gui.on_contentdeletebutton_clicked = null;
-	//window.controller_gui.on_select_contents_clicked = null;
-	//window.controller_gui.on_select_display_clicked = null;
-	//window.controller_gui.on_deletedisplay_clicked = null;
-	//window.controller_gui.on_deletealldisplay_clicked = null;
-	//window.controller_gui.on_deleteallcontent_clicked = null;
-	//window.controller_gui.on_showidbutton_clicked = null;
-	//window.controller_gui.on_snapdropdown_clicked = null;
-	//window.controller_gui.on_virtualdisplaysetting_clicked　= null;
-	//window.controller_gui.on_display_scale_changed = null;
-	//window.controller_gui.on_display_trans_changed = null;
-	//window.controller_gui.on_content_index_changed = null;
-	//window.controller_gui.on_close_item = null;
-	//window.controller_gui.on_file_dropped = null;
-	//window.controller_gui.on_group_append_clicked = null;
-	//window.controller_gui.on_group_delete_clicked = null;
-	//window.controller_gui.on_group_change_clicked = null;
-	//window.controller_gui.on_group_down = null;
-	//window.controller_gui.on_group_up = null;
-	//window.controller_gui.on_group_edit_name = null;
-	//window.controller_gui.on_group_edit_color = null;
-	//window.controller_gui.on_search_input_changed = null;
-	
-	// Getter.
-	//ControllerGUI.prototype.get_selected_elem = this.getSelectedElem;
 	
 	ControllerGUI.prototype.get_bottom_area = function () {
 		return document.getElementById('bottom_area');
