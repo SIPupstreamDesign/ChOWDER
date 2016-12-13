@@ -110,7 +110,7 @@
 			});
 
 		// コンテンツボックスにグループボックスを埋め込み.
-		this.groupBox = window.group_box.init(document.getElementById('content_tab_box'),
+		this.groupBox = new GroupBox(document.getElementById('content_tab_box'),
 			{
 				tabs : [{
 						default : {
@@ -124,7 +124,7 @@
 		this.initGroupBoxEvents(this.groupBox);
 
 		// Searchエリアの中身を作成
-		this.searchBox = window.search_box.init(document.getElementById('search_tab_box'),
+		this.searchBox = new SearchBox(document.getElementById('search_tab_box'),
 			{
 				groups : ["default"],
 				colors : ["rgb(54,187,68)"]
@@ -767,9 +767,9 @@
 	 * Searchのタブに対するイベントを設定.
 	 */
 	ControllerGUI.prototype.initSearchBoxEvents = function (searchBox) {
-		searchBox.on_input_changed = function (value, groups) {
+		searchBox.on("input_changed", function (err, value, groups) {
 			this.emit(window.ControllerGUI.EVENT_SEARCH_INPUT_CHANGED, null, value, groups);
-		}.bind(this);
+		}.bind(this));
 	};
 
 	/**
@@ -804,7 +804,7 @@
 		}
 
 		document.getElementById('content_tab_box').innerHTML = "";
-		this.groupBox = window.group_box.init(document.getElementById('content_tab_box'), contentSetting);
+		this.groupBox = new GroupBox(document.getElementById('content_tab_box'), contentSetting);
 		this.initGroupBoxEvents(this.groupBox);
 
 		// コンテキストメニューを刷新
@@ -812,7 +812,7 @@
 		// バーガーメニューを刷新
 		this.updateBurgerMenu();
 
-		this.searchBox = window.search_box.init(document.getElementById('search_tab_box'), searchSetting);
+		this.searchBox = new SearchBox(document.getElementById('search_tab_box'), searchSetting);
 		this.initSearchBoxEvents(this.searchBox);
 	};
 

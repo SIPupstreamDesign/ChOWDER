@@ -1,22 +1,21 @@
 /*jslint devel:true*/
 /*global Float32Array */
-(function (gui) {
+(function () {
 	"use strict";
 	var SearchBox;
 
 	SearchBox = function (containerElem, setting) {
+		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
 		this.item_area = null;
         this.group_to_elem = {};
 		this.init();
 
-		// 検索ボックスに入力されたときのイベント
-		this.on_input_changed = null;
-
         // チェックされているグループリスト
         this.check_groups = [];
 	};
+	SearchBox.prototype = Object.create(EventEmitter.prototype);
 
     SearchBox.prototype.gen_search_tab_box = function (){
         var d, e, f, g, h, i, j,
@@ -52,14 +51,10 @@
 		text_input.className = "search_text_input";
         text_input.setAttribute('placeholder', '🔍  search');
 		text_input.oninput = function (evt) {
-			if (this.on_input_changed) {
-				this.on_input_changed(evt.target.value, this.check_groups);
-			}
+            this.emit(SearchBox.EVENT_INPUT_CHANGED, null, evt.target.value, this.check_groups);
 		}.bind(this);
 		text_input.onclick = function (evt) {
-			if (this.on_input_changed) {
-				this.on_input_changed(evt.target.value, this.check_groups);
-			}
+            this.emit(SearchBox.EVENT_INPUT_CHANGED, null, evt.target.value, this.check_groups);
 		}.bind(this);
         d.appendChild(text_input);
         f.appendChild(d);
@@ -95,15 +90,13 @@
             group_div.onclick = function (evt) {
                 var checkbox = document.getElementById('all_check_');
                 checkbox.checked = !checkbox.checked; 
-                for (i = 0; i < self.setting.groups.length; i = i + 1) {
+                for (i = 0; i < this.setting.groups.length; i = i + 1) {
                     target = document.getElementById('search_check_' + i); 
                     target.checked = checkbox.checked;
-                    checkFunction(self, target, i);
+                    checkFunction(this, target, i);
                 }
-                if (self.on_input_changed) {
-                    self.on_input_changed(text_input.value, self.check_groups);
-                }
-            };
+                this.emit(SearchBox.EVENT_INPUT_CHANGED, null, text_input.value, this.check_groups);
+            }.bind(self);
             all_checkbox.onclick = group_div.onclick;
 
             group_div.appendChild(all_checkbox);
@@ -125,9 +118,7 @@
                     var checkbox = document.getElementById('search_check_' + i);
                     checkbox.checked = !checkbox.checked; 
                     checkFunction(self, checkbox, i);
-                    if (self.on_input_changed) {
-                        self.on_input_changed(text_input.value, self.check_groups);
-                    }
+                    self.emit(SearchBox.EVENT_INPUT_CHANGED, null, text_input.value, self.check_groups);
                 };
             }(this, text_input, i));
 
@@ -176,11 +167,9 @@
 		}
 	};
 
-	function init(containerElem, setting) {
-		return new SearchBox(containerElem, setting);
-	}
+    // 検索ボックスに入力されたときのイベント
+    SearchBox.EVENT_INPUT_CHANGED = "input_changed";
 
-	window.search_box = {};
-	window.search_box.init = init;
+	window.SearchBox = SearchBox;
 
-}(window.controller_gui));
+}());

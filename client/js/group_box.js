@@ -16,21 +16,6 @@
 	};
 	GroupBox.prototype = Object.create(EventEmitter.prototype);
 
-	// タブが切り替わった時呼ばれるイベント
-	GroupBox.EVENT_GROUP_CHANGED = "group_changed";
-	// タブのxを押したときに呼ばれるイベント
-	GroupBox.EVENT_GROUP_DELETE = "group_delete";
-	// タブの+を押したときに呼ばれるイベント
-	GroupBox.EVENT_GROUP_APPEND = "group_append";
-	//タブを1つ上に移動
-	GroupBox.EVENT_GROUP_UP = "group_up";
-	// タブを1つ下に移動
-	GroupBox.EVENT_GROUP_DOWN = "group_down";
-	// グループ色変更
-	GroupBox.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
-	// グループ名変更
-	GroupBox.EVENT_GROUP_EDIT_NAME = "group_edit_name";
-
 	/*
 		<div class="left_tab_area" id="left_tab_area">
 			<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
@@ -322,17 +307,25 @@
 		return null;
 	};
 
-	function init(containerElem, setting) {
-		return new GroupBox(containerElem, setting);
-	}
-
-	function is_active(tabID) {
+	GroupBox.prototype.is_active = function (tabID) {
 		var tab = document.getElementById(tabID);
 		return tab.className.indexOf('active') >= 0;
 	}
 
-	window.group_box = {};
-	window.group_box.init = init;
-	window.group_box.is_active = is_active;
+	// タブが切り替わった時呼ばれるイベント
+	GroupBox.EVENT_GROUP_CHANGED = "group_changed";
+	// タブのxを押したときに呼ばれるイベント
+	GroupBox.EVENT_GROUP_DELETE = "group_delete";
+	// タブの+を押したときに呼ばれるイベント
+	GroupBox.EVENT_GROUP_APPEND = "group_append";
+	//タブを1つ上に移動
+	GroupBox.EVENT_GROUP_UP = "group_up";
+	// タブを1つ下に移動
+	GroupBox.EVENT_GROUP_DOWN = "group_down";
+	// グループ色変更
+	GroupBox.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
+	// グループ名変更
+	GroupBox.EVENT_GROUP_EDIT_NAME = "group_edit_name";
 
+	window.GroupBox = GroupBox;
 }());
