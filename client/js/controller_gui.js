@@ -18,6 +18,7 @@
 		this.displayMenu = null;
 		this.contentMenu = null;
 		this.display_scale = 1.0;
+		this.snapType = "free";
 
 		// 全体のレイアウトの初期化.
 		window.layout.init();
@@ -927,39 +928,6 @@
 		return s4() + s4() + s4().slice(-2);
 	};
 
-	window.ControllerGUI = ControllerGUI;
-
-	// イベント
-	window.ControllerGUI.EVENT_MOUSEDOWN_CONTENT_PREVIEW_AREA = "mousedown_content_preview_area";
-	window.ControllerGUI.EVENT_MOUSEDOWN_DISPLAY_PREVIEW_AREA = "mousedown_display_preview_area";
-	window.ControllerGUI.EVENT_UPDATEIMAGEINPUT_CHANGED = "updateimageinput_changed";
-	window.ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED = "imagefileinput_changed";
-	window.ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED = "textfileinput_changed";
-	window.ControllerGUI.EVENT_URLSENDBUTTON_CLICKED = "urlsendbuton_clicked";
-	window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED = "textsendbutton_clicked";
-	window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE = "update_cursor_enable";
-	window.ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED = "contentdeletebutton_clicked";
-	window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED = "select_contents_clicked";
-	window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
-	window.ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
-	window.ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED = "showidbutton_clicked";
-	window.ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED = "virtualdisplaysetting_clicked";
-	window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED = "display_scale_changed";
-	window.ControllerGUI.EVENT_DISPLAY_TRANS_CHANGED = "display_trans_changed";
-	window.ControllerGUI.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
-	window.ControllerGUI.EVENT_CLOSE_ITEM = "close_item";
-	window.ControllerGUI.EVENT_FILE_DROPPED = "file_dropped";
-	window.ControllerGUI.EVENT_GROUP_APPEND_CLICKED = "group_append_clicked";
-	window.ControllerGUI.EVENT_GROUP_DELETE_CLICKED = "group_delete_clicked";
-	window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED = "group_change_clicked";
-	window.ControllerGUI.EVENT_GROUP_DOWN = "group_down";
-	window.ControllerGUI.EVENT_GROUP_UP = "group_up";
-	window.ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
-	window.ControllerGUI.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
-	window.ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
-	window.ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
-	window.ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
-	
 	ControllerGUI.prototype.get_bottom_area = function () {
 		return document.getElementById('bottom_area');
 	};
@@ -1023,6 +991,39 @@
 		this.searchBox.set_search_result(search_result);
 	};
 
+	ControllerGUI.prototype.get_snap_type = function () {
+		return this.snapType;
+	};
+
+	/**
+	 * スナップ設定
+	 * @method set_snap_type
+	 * @param {String} snapType スナップタイプ
+	 */
+	ControllerGUI.prototype.set_snap_type = function (snapType) {
+		this.snapType = snapType;
+        var e = document.getElementById('head_menu_hover_left');
+        if(e){
+            var i, o;
+            o = e.options;
+            for(i = 0; i < o.length; ++i){
+                if(snapType === o[i].value){
+                    e.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+	};
+
+	// Update
+	ControllerGUI.prototype.update_display_scale = function (scale) {
+		this.emit(ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED, null, scale);
+	};
+
+	ControllerGUI.prototype.toggle_display_id_show = function (isShow) {
+		this.emit(ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, isShow);
+	};
+
 	// other
 	ControllerGUI.prototype.check_search_target_groups = function (check_groups, isChecked) {
 		var i;
@@ -1036,4 +1037,36 @@
 		document.getElementById('context_menu_display').style.display = "none";
 	};
 
+	// イベント
+	ControllerGUI.EVENT_MOUSEDOWN_CONTENT_PREVIEW_AREA = "mousedown_content_preview_area";
+	ControllerGUI.EVENT_MOUSEDOWN_DISPLAY_PREVIEW_AREA = "mousedown_display_preview_area";
+	ControllerGUI.EVENT_UPDATEIMAGEINPUT_CHANGED = "updateimageinput_changed";
+	ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED = "imagefileinput_changed";
+	ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED = "textfileinput_changed";
+	ControllerGUI.EVENT_URLSENDBUTTON_CLICKED = "urlsendbuton_clicked";
+	ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED = "textsendbutton_clicked";
+	ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE = "update_cursor_enable";
+	ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED = "contentdeletebutton_clicked";
+	ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED = "select_contents_clicked";
+	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
+	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
+	ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED = "showidbutton_clicked";
+	ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED = "virtualdisplaysetting_clicked";
+	ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED = "display_scale_changed";
+	ControllerGUI.EVENT_DISPLAY_TRANS_CHANGED = "display_trans_changed";
+	ControllerGUI.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
+	ControllerGUI.EVENT_CLOSE_ITEM = "close_item";
+	ControllerGUI.EVENT_FILE_DROPPED = "file_dropped";
+	ControllerGUI.EVENT_GROUP_APPEND_CLICKED = "group_append_clicked";
+	ControllerGUI.EVENT_GROUP_DELETE_CLICKED = "group_delete_clicked";
+	ControllerGUI.EVENT_GROUP_CHANGE_CLICKED = "group_change_clicked";
+	ControllerGUI.EVENT_GROUP_DOWN = "group_down";
+	ControllerGUI.EVENT_GROUP_UP = "group_up";
+	ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
+	ControllerGUI.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
+	ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
+	ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
+	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
+	window.ControllerGUI = ControllerGUI;
+	
 }());

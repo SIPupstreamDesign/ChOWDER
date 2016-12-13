@@ -26,7 +26,6 @@
 		initialWholeWidth = 1000,
 		initialWholeHeight = 900,
 		initialDisplayScale = 0.5,
-		snapSetting = "free",
 		contentSelectColor = "#04B431",
 		contentBorderColor = "rgba(0,0,0,0)",
 		defaultGroup = "default",
@@ -63,7 +62,7 @@
 	 * @return {bool} FreeModeであればtrueを返す.
 	 */
 	function isFreeMode() {
-		return snapSetting === 'free';
+		return gui.get_snap_type() === 'free';
 	}
 	
 	/**
@@ -72,7 +71,7 @@
 	 * @return {bool} GridModeであればtrueを返す.
 	 */
 	function isGridMode() {
-		return snapSetting === 'grid';
+		return gui.get_snap_type() === 'grid';
 	}
 	
 	/**
@@ -81,7 +80,7 @@
 	 * @return {bool} DisplayModeであればtrueを返す.
 	 */
 	function isDisplayMode() {
-		return snapSetting === 'display';
+		return gui.get_snap_type() === 'display';
 	}
 	
 	/**
@@ -173,7 +172,7 @@
 		var displayScale = vscreen.getWholeScale();
 		console.log("saveCookie");
 		document.cookie = 'display_scale=' + displayScale;
-		document.cookie = 'snap_setting=' + snapSetting;
+		document.cookie = 'snap_setting=' + gui.get_snap_type();
 		document.cookie = 'update_cursor_enable=' + String(isUpdateCursorEnable);
 	}
 	
@@ -1335,8 +1334,7 @@
 	function gesturechangeFunc(e) {
 		if (!isGesture) { return false; }
 		var scale_current = document.getElementById('scale_dropdown_current');
-		gui.emit("display_scale_changed", null, (gestureScale * e.scale));
-		//gui.on_display_trans_changed(dx, dy);
+		gui.update_display_scale(gestureScale * e.scale);
 		e.stopPropagation();
 		e.preventDefault();
 	}
@@ -2490,26 +2488,6 @@
 		}
 	});
 	
-	/**
-	 * スナップ設定のドロップダウンがクリックされた.
-	 * @method on_snapdropdown_clicked
-	 * @param {String} snapType スナップタイプ
-	 */
-	gui.on("snapdropdown_clicked", function (err, snapType) {
-		snapSetting = snapType;
-		saveCookie();
-        var e = document.getElementById('head_menu_hover_left');
-        if(e){
-            var i, o;
-            o = e.options;
-            for(i = 0; i < o.length; ++i){
-                if(snapType === o[i].value){
-                    e.selectedIndex = i;
-                    break;
-                }
-            }
-        }
-	});
 	
 	/**
 	 * Virtual Dsiplay Settingボタンがクリックされた.
@@ -2879,7 +2857,7 @@
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
 			if (metaData.type === windowType) {
-				gui.emit("showidbutton_clicked", null, false);
+				gui.toggle_display_id_show(false);
 			} else {
 				metaData.mark_memo = is_active;
 				updateMetaData(metaData);
@@ -3049,14 +3027,13 @@
 			gui.set_display_scale(display_scale);
 		}
 		if (snap) {
-			if (snap === 'display') {
-				snapSetting = 'display';
-			}
-            gui.emit("snapdropdown_clicked", null, snap);
+            gui.set_snap_type(snap);
+			saveCookie();
 		}
 		document.getElementById('head_menu_hover_left').addEventListener('change', function(eve){
 			var f = eve.currentTarget.value;
-			gui.emit("snapdropdown_clicked", null, f);
+			gui.set_snap_type(f);
+			saveCookie();
 		}, false);
 
 		if (update_cursor_enable && update_cursor_enable === "true") {
@@ -3206,7 +3183,7 @@
 			if (display_scale > 2) {
 				display_scale = 2;
 			}
-			gui.emit("display_scale_changed", null, display_scale);
+			gui.update_display_scale(display_scale);
 		}
 
 		updateScreen();
