@@ -2,9 +2,15 @@
 (function () {
 	"use strict";
 	
-	var contentBorderColor = "rgba(0,0,0,0)",
+	var ContentList,
+		contentBorderColor = "rgba(0,0,0,0)",
 		defaultGroup = "default",
 		textColor = "white";
+
+	ContentList = function () {
+		EventEmitter.call(this);
+	};
+	ContentList.prototype = Object.create(EventEmitter.prototype);
 
 	/**
 	 * コンテンツタイプから適切なクラス名を取得する.
@@ -41,7 +47,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	function importContentToList(gui, metaDataDict, metaData, contentData) {
+	ContentList.prototype.import_content = function (gui, metaDataDict, metaData, contentData) {
 		var contentArea = null,
 			contentElem,
 			id,
@@ -82,9 +88,9 @@
 			contentElem = document.createElement(tagName);
 			divElem = document.createElement('div');
 			divElem.id = onlistID;
-			if (window.content_list.on_setup_content) {
-				window.content_list.on_setup_content(divElem, onlistID);
-			}
+
+			this.emit(ContentList.EVENT_SETUP_CONTENT, null, divElem, onlistID);
+
 			//setupContent(divElem, onlistID);
 			divElem.appendChild(contentElem);
 			contentArea.appendChild(divElem);
@@ -146,9 +152,7 @@
 		
 		// 同じコンテンツを参照しているメタデータがあれば更新
 		if (!contentData && contentElem) {
-			if (window.content_list.on_copy_content) {
-				window.content_list.on_copy_content(null, contentElem, metaData, true);
-			}
+			this.emit(ContentList.EVENT_COPY_CONTENT, null, null, contentElem, metaData, true);
 			//copyContentData(null, contentElem, metaData, true);
 			divElem.style.width = "200px";
 			if (contentElem.offsetHeight > 200) {
@@ -157,18 +161,16 @@
 				divElem.style.width = 100 * aspect;
 			}
 		} else {
-			if (window.content_list.on_copy_content) {
-				window.content_list.on_copy_content(contentElem, null, metaData, true);
-			}
+			this.emit(ContentList.EVENT_COPY_CONTENT, null, contentElem, null, metaData, true);
 			//copyContentData(contentElem, null, metaData, true);
 		}
 	}
 	
-	window.content_list = {};
-	window.content_list.import_content = function (gui, metaDataDict, metaData, contentData) {
-		importContentToList(gui, metaDataDict, metaData, contentData);
-	};
-	window.content_list.on_setup_content = null;
-	window.content_list.on_copy_content = null;
+
+	ContentList.EVENT_SETUP_CONTENT = "setup_content";
+	ContentList.EVENT_COPY_CONTENT = "copy_content";
+
+	// singleton
+	window.content_list = new ContentList();
 
 }());

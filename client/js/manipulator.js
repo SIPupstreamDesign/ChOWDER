@@ -9,57 +9,63 @@
 	 * マニピュレータ
 	 * @method Manipulator
 	 */
-	var Manipulator = function () {},
-		draggingManip = null,
-		windowType = "window",
-		manipulators = [],
-		manipulatorMenus = [],
-		draggingOffsetFunc = null,
-		closeFunc = null,
-		parent = null;
+	var Manipulator,
+		windowType = "window";
 	
+	Manipulator = function () {
+		EventEmitter.call(this);
+		this.draggingManip = null;
+		this.manipulators = [];
+		this.manipulatorMenus = [];
+		this.draggingOffsetFunc = null;
+		this.closeFunc = null;
+		this.parent = null;
+	};
+	Manipulator.prototype = Object.create(EventEmitter.prototype);
+
 	/**
 	 * ドラッグ中のマニピュレータを返す.
 	 * @method getDraggingManip
 	 * @return ドラッグ中のマニピュレータ
 	 */
-	function getDraggingManip() {
-		return draggingManip;
-	}
+	Manipulator.prototype.getDraggingManip = function () {
+		return this.draggingManip;
+	};
 	
 	/**
 	 * ドラッグ中のオフセットコールバックの設定
 	 * @method setDraggingOffsetFunc
 	 * @param {Function} func ドラッグ中のオフセットコールバック
 	 */
-	function setDraggingOffsetFunc(func) {
-		draggingOffsetFunc = func;
-	}
+	Manipulator.prototype.setDraggingOffsetFunc = function (func) {
+		this.draggingOffsetFunc = func;
+	};
 	
 	/**
 	 * クローズコールバックの設定
 	 * @method setCloseFunc
 	 * @param {Function} func クローズコールバック
 	 */
-	function setCloseFunc(func) {
-		closeFunc = func;
-	}
+	Manipulator.prototype.setCloseFunc = function (func) {
+		this.closeFunc = func;
+	};
 	
 	/**
 	 * ドラッグ中のマニピュレータをクリア
 	 * @method clearDraggingManip
 	 */
-	function clearDraggingManip() {
-		draggingManip = null;
-	}
+	Manipulator.prototype.clearDraggingManip = function () {
+		this.draggingManip = null;
+	};
 
 	/**
 	 * マニピュレータを移動させる
 	 * @method moveManipulator
 	 * @param {Element} targetElem 移動したエレメント
 	 */
-	function moveManipulator(targetElem) {
-		if (manipulators.length < 3) {
+	Manipulator.prototype.moveManipulator = function (targetElem) {
+		console.log("moveManipulator:", targetElem);
+		if (this.manipulators.length < 3) {
 			//console.log("manipulators:", manipulators);
 			return;
 		}
@@ -79,37 +85,37 @@
 		height = targetElem.offsetHeight;
 		
 		// left top
-		manipulators[0].style.left = left + "px";
-		manipulators[0].style.top = top + "px";
+		this.manipulators[0].style.left = left + "px";
+		this.manipulators[0].style.top = top + "px";
 		// left bottom
-		manipulators[1].style.left = left + "px";
-		manipulators[1].style.top = (top + height) + "px";
+		this.manipulators[1].style.left = left + "px";
+		this.manipulators[1].style.top = (top + height) + "px";
 		// right bottom
-		manipulators[2].style.left = (left + width) + "px";
-		manipulators[2].style.top = (top + height) + "px";
+		this.manipulators[2].style.left = (left + width) + "px";
+		this.manipulators[2].style.top = (top + height) + "px";
 		// right top
-		manipulators[3].style.left = (left + width) + "px";
-		manipulators[3].style.top = top + "px";
+		this.manipulators[3].style.left = (left + width) + "px";
+		this.manipulators[3].style.top = top + "px";
 		// x button
-		manipulators[4].style.left = (left + width - 17) + "px";
-		manipulators[4].style.top = (top - 27) + "px";
+		this.manipulators[4].style.left = (left + width - 17) + "px";
+		this.manipulators[4].style.top = (top - 27) + "px";
 
-		if (manipulatorMenus.length > 1) {
+		if (this.manipulatorMenus.length > 1) {
 			// ☆
-			manipulatorMenus[0].style.left = (left + 5) + "px";
-			manipulatorMenus[0].style.top = (top - 30) + "px";
+			this.manipulatorMenus[0].style.left = (left + 5) + "px";
+			this.manipulatorMenus[0].style.top = (top - 30) + "px";
 			// memo
-			manipulatorMenus[1].style.left = (left + 35) + "px";
-			manipulatorMenus[1].style.top = (top - 30) + "px";
+			this.manipulatorMenus[1].style.left = (left + 35) + "px";
+			this.manipulatorMenus[1].style.top = (top - 30) + "px";
 		}
-		else if (manipulatorMenus.length === 1) {
+		else if (this.manipulatorMenus.length === 1) {
 			// memo
-			manipulatorMenus[0].style.left = (left + 5) + "px";
-			manipulatorMenus[0].style.top = (top - 30) + "px";
+			this.manipulatorMenus[0].style.left = (left + 5) + "px";
+			this.manipulatorMenus[0].style.top = (top - 30) + "px";
 		}
-	}
+	};
 	
-	function mousedownFunc(manip) {
+	Manipulator.prototype.mousedownFunc = function (manip) {
 		return function (evt) {
 			var rect = evt.target.getBoundingClientRect(),
 				pageX = evt.pageX,
@@ -124,14 +130,14 @@
 				clientX = evt.changedTouches[0].clientX;
 				clientY = evt.changedTouches[0].clientY;
 			}
-			if (draggingOffsetFunc) {
-				draggingOffsetFunc(clientY - rect.top, clientX - rect.left);
+			if (this.draggingOffsetFunc) {
+				this.draggingOffsetFunc(clientY - rect.top, clientX - rect.left);
 			}
-			draggingManip = manip;
-		};
+			this.draggingManip = manip;
+		}.bind(this);
 	};
 
-	function mousemoveFunc(manip, cursor) {
+	Manipulator.prototype.mousemoveFunc = function (manip, cursor) {
 		return function (evt) {
 			manip.style.cursor = cursor;
 		};
@@ -142,7 +148,7 @@
 	 * @method setupManipulator
 	 * @param {Element} manip マニピュレータエレメント
 	 */
-	function setupManipulator(manip, targetElem) {
+	Manipulator.prototype.setupManipulator = function (manip, targetElem) {
 		var manipHalfWidth = 5,
 			manipHalfHeight = 5,
 			cursor,
@@ -172,40 +178,40 @@
 		}
 		if (manip.id === '_manip_4') {
 			manip.onmousedown = function (evt) {
-				if (closeFunc) {
-					closeFunc();
+				if (this.closeFunc) {
+					this.closeFunc();
 				}
-			};
+			}.bind(this);
 		} else {
 			if(window.ontouchstart !== undefined) {
-				manip.ontouchstart = mousedownFunc(manip);
-				manip.ontouchmove = mousemoveFunc(manip, cursor);
+				manip.ontouchstart = this.mousedownFunc(manip);
+				manip.ontouchmove = this.mousemoveFunc(manip, cursor);
 			} else {
-				manip.onmousedown = mousedownFunc(manip);
-				manip.onmousemove = mousemoveFunc(manip, cursor);
+				manip.onmousedown = this.mousedownFunc(manip);
+				manip.onmousemove = this.mousemoveFunc(manip, cursor);
 			}
 		}
-	}
+	};
 	
 	/**
 	 * マニピュレータを取り除く
 	 * @method removeManipulator
 	 */
-	function removeManipulator() {
+	Manipulator.prototype.removeManipulator = function () {
 		var i,
-			previewArea = parent;
+			previewArea = this.parent;
 		if (previewArea) {
-			for (i = 0; i < manipulators.length; i = i + 1) {
-				previewArea.removeChild(manipulators[i]);
+			for (i = 0; i < this.manipulators.length; i = i + 1) {
+				previewArea.removeChild(this.manipulators[i]);
 			}
-			for (i = 0; i < manipulatorMenus.length; i = i + 1) {
-				previewArea.removeChild(manipulatorMenus[i]);
+			for (i = 0; i < this.manipulatorMenus.length; i = i + 1) {
+				previewArea.removeChild(this.manipulatorMenus[i]);
 			}
 		}
-		manipulators = [];
-		manipulatorMenus = [];
-		parent = null;
-	}
+		this.manipulators = [];
+		this.manipulatorMenus = [];
+		this.parent = null;
+	};
 	
 	/**
 	 * マニピュレータのセットアップ
@@ -214,7 +220,7 @@
 	 * @param {Element} targetElem ターゲットエレメント(imgなど)
 	 * @param {Element} metaData メタデータ
 	 */
-	function setupManipulatorMenus(previewArea, targetElem, metaData) {
+	Manipulator.prototype.setupManipulatorMenus = function (previewArea, targetElem, metaData) {
 		var star = document.createElement('div'),
 			memo = document.createElement('div');
 
@@ -224,7 +230,7 @@
 			star.className = "manipulator_menu_star";
 			star.style.borderColor = targetElem.style.borderColor;
 			previewArea.appendChild(star);
-			manipulatorMenus.push(star);
+			this.manipulatorMenus.push(star);
 		}
 		// 初期のトグル設定
 		if (metaData.hasOwnProperty('mark') && (metaData.mark === "true" || metaData.mark === true)) {
@@ -233,14 +239,10 @@
 		star.onmousedown = function (evt) {
 			if (star.classList.contains('active')) {
 				star.classList.remove('active');
-				if (window.manipulator.on_toggle_star) {
-					window.manipulator.on_toggle_star(false);
-				}
+				this.emit(Manipulator.EVENT_TOGGLE_STAR, null, false);
 			} else {
 				star.classList.add('active');
-				if (window.manipulator.on_toggle_star) {
-					window.manipulator.on_toggle_star(true);
-				}
+				this.emit(Manipulator.EVENT_TOGGLE_STAR, null, true);
 			}
 			evt.stopPropagation();
 		};
@@ -251,7 +253,7 @@
 			memo.className = "manipulator_menu_memo";
 			memo.style.borderColor = targetElem.style.borderColor;
 			previewArea.appendChild(memo);
-			manipulatorMenus.push(memo);
+			this.manipulatorMenus.push(memo);
 		}
 		// 初期のトグル設定
 		if (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === "true" || metaData.mark_memo === true)) {
@@ -260,20 +262,15 @@
 		memo.onmousedown = function (evt) {
 			if (memo.classList.contains('active')) {
 				memo.classList.remove('active');
-				if (window.manipulator.on_toggle_memo) {
-					window.manipulator.on_toggle_memo(false);
-				}
+				this.emit(Manipulator.EVENT_TOGGLE_MEMO, null, false);
 			} else {
 				memo.classList.add('active');
-				if (window.manipulator.on_toggle_memo) {
-					window.manipulator.on_toggle_memo(true);
-				}
+				this.emit(Manipulator.EVENT_TOGGLE_MEMO, null, true);
 			}
 			evt.stopPropagation();
-		};
-	}
+		}.bind(this);
+	};
 	
-
 	/**
 	 * マニピュレータを表示
 	 * @method showManipulator
@@ -281,7 +278,7 @@
 	 * @param {Element} previewArea 表示先エレメント
 	 * @param {Element} metaData メタデータ
 	 */
-	function showManipulator(targetElem, previewArea, metaData) {
+	Manipulator.prototype.showManipulator = function (targetElem, previewArea, metaData) {
 		var manips = [
 				document.createElement('span'),
 				document.createElement('span'),
@@ -292,34 +289,39 @@
 			manip,
 			i;
 		
-		moveManipulator(targetElem);
-		removeManipulator();
-		parent = previewArea;
+		this.moveManipulator(targetElem);
+		this.removeManipulator();
+		this.parent = previewArea;
 		
 		for (i = 0; i < manips.length; i = i + 1) {
 			manip = manips[i];
 			manip.id = "_manip_" + i;
-			setupManipulator(manip, targetElem);
+			this.setupManipulator(manip, targetElem);
 			previewArea.appendChild(manip);
-			manipulators.push(manip);
+			this.manipulators.push(manip);
 		}
-		setupManipulatorMenus(previewArea, targetElem, metaData);
-	}
+		this.setupManipulatorMenus(previewArea, targetElem, metaData);
+	};
 	
-	function isShowManipulator() {
+	Manipulator.prototype.isShowManipulator = function () {
 		return (document.getElementById("_manip_0") !== null);
-	}
+	};
 	
+
+	Manipulator.EVENT_TOGGLE_STAR = "toggle_star";
+	Manipulator.EVENT_TOGGLE_MEMO = "toggle_memo";
+
+	// signleton
 	window.manipulator = new Manipulator();
-	window.manipulator.moveManipulator = moveManipulator;
-	window.manipulator.setupManipulator = setupManipulator;
-	window.manipulator.removeManipulator = removeManipulator;
-	window.manipulator.showManipulator = showManipulator;
-	window.manipulator.isShowManipulator = isShowManipulator;
-	window.manipulator.getDraggingManip = getDraggingManip;
-	window.manipulator.clearDraggingManip = clearDraggingManip;
-	window.manipulator.setDraggingOffsetFunc = setDraggingOffsetFunc;
-	window.manipulator.setCloseFunc = setCloseFunc;
-	window.manipulator.on_toggle_star = null;
-	window.manipulator.on_toggle_memo = null;
+	//window.manipulator.moveManipulator = moveManipulator;
+	//window.manipulator.setupManipulator = setupManipulator;
+	//window.manipulator.removeManipulator = removeManipulator;
+	//window.manipulator.showManipulator = showManipulator;
+	//window.manipulator.isShowManipulator = isShowManipulator;
+	//window.manipulator.getDraggingManip = getDraggingManip;
+	//window.manipulator.clearDraggingManip = clearDraggingManip;
+	//window.manipulator.setDraggingOffsetFunc = setDraggingOffsetFunc;
+	//window.manipulator.setCloseFunc = setCloseFunc;
+	//window.manipulator.on_toggle_star = null;
+	//window.manipulator.on_toggle_memo = null;
 }());

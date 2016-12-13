@@ -2,13 +2,17 @@
 (function () {
 	"use strict";
 
+	var WindowList = function () {
+		EventEmitter.call(this);
+	};
+	WindowList.prototype = Object.create(EventEmitter.prototype);
 
 	/**
 	 * Displayをリストビューにインポートする。
 	 * @method importWindowToList
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	function importWindowToList(gui, metaDataDict, windowData, displayArea, listElem) {
+	WindowList.prototype.import_window = function (gui, metaDataDict, windowData, displayArea, listElem) {
 		console.log("importWindowToList");
 		var displayArea = gui.get_display_area(),
 			divElem,
@@ -37,25 +41,12 @@
 		divElem.style.border = "solid";
 		divElem.style.margin = "5px";
 		divElem.style.float = "left";
-		if (window.window_list.on_setup_content) {
-			window.window_list.on_setup_content(divElem, onlistID);
-		}
-		//setupContent(divElem, onlistID);
+		this.emit(WindowList.prototype.EVENT_SETUP_CONTENT, null, divElem, onlistID);
 		displayArea.appendChild(divElem);
-		if (window.window_list.on_change_border_color) {
-			window.window_list.on_change_border_color(windowData);
-		}
-		//changeWindowBorderColor(windowData);
 	}
 	
+	WindowList.prototype.EVENT_SETUP_CONTENT = "setup_content";
+	// singleton
+	window.window_list = new WindowList();
 
-
-	window.window_list = {};
-	window.window_list.import_window = function (gui, metaDataDict, windowData) {
-		importWindowToList(gui, metaDataDict, windowData);
-	};
-	window.window_list.on_setup_content = null;
-	//window.window_list.on_copy_content = null;
-	window.window_list.on_change_border_color = null;
-
-}(window.controller_gui));
+}());

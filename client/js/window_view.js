@@ -2,8 +2,14 @@
 (function (gui) {
 	"use strict";
 
-	var vscreenInstance = null, // 外部から初期時に設定する.
+	var WindowView,
 		windowType = "window";
+
+	WindowView = function () {
+		EventEmitter.call(this);
+		this.vscreenInstance = null; // 外部からinitで設定する.
+	};
+	WindowView.prototype = Object.create(EventEmitter.prototype);
 
 	/**
 	 * メタデータが表示中かを判定する
@@ -20,7 +26,7 @@
 	 * @method importWindowToView
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	function importWindowToView(gui, metaDataDict, windowData) {
+	WindowView.prototype.import_window = function (gui, metaDataDict, windowData) {
 		var displayArea,
 			screen;
 		if (windowData.type !== windowType) {
@@ -39,15 +45,11 @@
 		metaDataDict[windowData.id] = windowData;
 		if (isVisible(windowData)) {
 			console.log("import window:" + JSON.stringify(windowData));
-			vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-			vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
-			vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
-			//console.log("import windowsc:", vscreen.getScreen(windowData.id));
+			this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
+			this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
+			this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 
-			if (window.window_view.on_update_screen) {
-				window.window_view.on_update_screen(windowData);
-			}
-			//updateScreen(windowData);
+			this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
 		} else {
 			displayArea = document.getElementById("display_preview_area");
 			screen = document.getElementById(windowData.id);
@@ -61,14 +63,13 @@
 				screen.style.borderColor = windowData.color;
 			}
 		}
-	}
-	window.window_view = {};
-	window.window_view.init = function (vscreen) {
-		vscreenInstance = vscreen;
 	};
-	window.window_view.import_window = function (gui, metaDataDict, windowData) {
-		importWindowToView(gui, metaDataDict, windowData);
-	};
-	window.window_view.on_update_screen = null;
 
+	WindowView.prototype.init = function (vscreen) {
+		this.vscreenInstance = vscreen;
+	}; 
+
+	WindowView.EVENT_UPDATE_SCREEN = "update_screen";
+	// singleton
+	window.window_view = new WindowView();
 }());

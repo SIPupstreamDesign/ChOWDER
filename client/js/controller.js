@@ -2042,6 +2042,56 @@
 	///-------------------------------------------------------------------------------------------------------
 	
 	/**
+	 * Displayを削除するボタンが押された.
+	 * @method on_deletedisplay_clicked
+	 */
+	gui.on("deletedisplay_clicked", function (err) {
+		var i,
+			id,
+			metaDataList = [];
+			
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaDataList.push(metaDataDict[id]);
+			}
+		}
+		if (metaDataList.length > 0) {
+			connector.send('DeleteWindowMetaData', metaDataList, function () {});
+		}
+	});
+	
+	/**
+	 * Group内のコンテンツ全て削除.
+	 */
+	gui.on("deleteallcontent_clicked", function (err) {
+		var i,
+			metaData,
+			selectedGroup = getSelectedGroup(),
+			targetList = [],
+			groupToID = {};
+
+		for (i = 0; i < groupList.length; ++i) {
+			groupToID[groupList[i].name] = groupList[i].id;
+		}
+		
+		if (selectedGroup) {
+			for (i in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(i)) {
+					if (metaDataDict[i] !== windowType) {
+						if (groupToID[metaDataDict[i].group] === selectedGroup) {
+							targetList.push(metaDataDict[i]);
+						}
+					}
+				}
+			}
+		}
+		if (targetList.length > 0) {
+			connector.send('DeleteContent', targetList, doneDeleteContent);
+		}
+	});
+	
+	/**
 	 * Show Display ID ボタンが押された.
 	 * @method on_showidbutton_clicked
 	 */
@@ -2325,9 +2375,16 @@
 	/**
 	 * コンテンツリストでセットアップコンテンツが呼ばれた
 	 */
-	window.content_list.on_setup_content = function (elem, uid) {
+	window.content_list.on("setup_content", function (err, elem, uid) {
 		setupContent(elem, uid);
-	};
+	});
+
+	/**
+	 * コンテンツリストでコピーコンテンツが呼ばれた
+	 */
+	window.content_list.on("copy_content", function (err, fromElem, toElem, metaData, isListContent) {
+		copyContentData(fromElem, toElem, metaData, isListContent);
+	});
 
 	/**
 	 * コンテンツビューでセットアップコンテンツが呼ばれた
@@ -2335,13 +2392,6 @@
 	window.content_view.on("setup_content", function (err, elem, uid) {
 		setupContent(elem, uid);
 	});
-
-	/**
-	 * コンテンツリストでコピーコンテンツが呼ばれた
-	 */
-	window.content_list.on_copy_content = function (fromElem, toElem, metaData, isListContent) {
-		copyContentData(fromElem, toElem, metaData, isListContent);
-	};
 
 	/**
 	 * コンテンツビューでコピーコンテンツが呼ばれた
@@ -2367,16 +2417,16 @@
 	/**
 	 * ウィンドウリストでセットアップコンテンツが呼ばれた
 	 */
-	window.window_list.on_setup_content = function (elem, uid) {
+	window.window_list.on("setup_content", function (err, elem, uid) {
 		setupContent(elem, uid);
-	};
+	});
 
 	/**
 	 * ウィンドウリストでスクリーン更新が呼ばれた
 	 */
-	window.window_view.on_update_screen = function (windowData) {
+	window.window_view.on("update_screen", function (windowData) {
 		updateScreen(windowData);
-	};
+	});
 
 	/**
 	 * PropertyのDisplayパラメータ更新ハンドル
@@ -2810,7 +2860,7 @@
 	/**
 	 * マニピュレータの星がトグルされた
 	 */
-	manipulator.on_toggle_star = function (is_active) {
+	manipulator.on("toggle_star", function (err, is_active) {
 		var id = getSelectedID(),
 			metaData;
 		if (metaDataDict.hasOwnProperty(id)) {
@@ -2818,12 +2868,12 @@
 			metaData.mark = is_active;
 			updateMetaData(metaData);
 		}
-	};
+	});
 
 	/**
 	 * マニピュレータのmemoがトグルされた
 	 */
-	manipulator.on_toggle_memo = function (is_active) {
+	manipulator.on("toggle_memo", function (err, is_active) {
 		var id = getSelectedID(),
 			metaData;
 		if (metaDataDict.hasOwnProperty(id)) {
@@ -2835,7 +2885,7 @@
 				updateMetaData(metaData);
 			}
 		}
-	};
+	});
 
 	/**
 	 * orgWidth,orgHeightを元にアスペクト比を調整

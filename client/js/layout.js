@@ -3,10 +3,10 @@
 (function () {
 	"use strict";
 	var Layout,
-		panels = {},
 		layout;
 
 	Layout = function (setting) {
+		this.panels = {};
 		this.setting = setting;
 		this.splitterSize = 2;
 		this.layout(null, setting);
@@ -50,11 +50,11 @@
 			direction,
 			size;
 
-		for (id in panels) {
+		for (id in this.panels) {
 			panel = document.getElementById(id);
-			setting = panels[id].setting;
-			direction = panels[id].direction;
-			parent = panels[id].parent;
+			setting = this.panels[id].setting;
+			direction = this.panels[id].direction;
+			parent = this.panels[id].parent;
 
 			fitPosition(parent, setting, panel);
 		}
@@ -72,11 +72,11 @@
 			direction,
 			size;
 
-		for (id in panels) {
+		for (id in this.panels) {
 			panel = document.getElementById(id);
-			setting = panels[id].setting;
-			direction = panels[id].direction;
-			parent = panels[id].parent;
+			setting = this.panels[id].setting;
+			direction = this.panels[id].direction;
+			parent = this.panels[id].parent;
 			if (setting.hasOwnProperty('zIndex')) {
 				panel.style.zIndex = setting['zIndex'];
 			}
@@ -180,7 +180,7 @@
 				panel = document.createElement('div');
 				panel.id = setting.id + "_panel__";
 				panel.style.position = "absolute";
-				panels[setting.id + "_panel__"] = {
+				this.panels[setting.id + "_panel__"] = {
 					direction : parent.direction,
 					parent : parent,
 					setting : setting
@@ -207,7 +207,7 @@
 				}
 				this.setSplitBehavior(parent.contents, splitter, i);
 				setting.id = splitter.id;
-				panels[splitter.id] = {
+				this.panels[splitter.id] = {
 					direction : parent.direction,
 					parent : parent,
 					setting : setting
@@ -281,6 +281,5 @@
 
 	window.layout = {};
 	window.layout.init = init;
-	window.layout.Layout = Layout;
 
 }());
