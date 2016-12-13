@@ -1,5 +1,5 @@
 /*jslint devel:true*/
-(function (gui) {
+(function () {
 	"use strict";
 
 
@@ -8,7 +8,7 @@
 	 * @method importWindowToList
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	function importWindowToList(metaDataDict, windowData) {
+	function importWindowToList(gui, metaDataDict, windowData, displayArea, listElem) {
 		console.log("importWindowToList");
 		var displayArea = gui.get_display_area(),
 			divElem,
@@ -51,8 +51,8 @@
 
 
 	window.window_list = {};
-	window.window_list.import_window = function (metaDataDict, windowData) {
-		importWindowToList(metaDataDict, windowData);
+	window.window_list.import_window = function (gui, metaDataDict, windowData) {
+		importWindowToList(gui, metaDataDict, windowData);
 	};
 	window.window_list.on_setup_content = null;
 	//window.window_list.on_copy_content = null;

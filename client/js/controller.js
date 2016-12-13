@@ -1,10 +1,11 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (gui, content_property, content_box, vscreen, vscreen_util, manipulator, connector) {
+(function (content_property, content_box, vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
-	var currentContent = null,
+	var gui = new ControllerGUI(),
+		currentContent = null,
 		draggingIDList = [],
 		selectedIDList = [],
 		onCtrlDown = false, // Ctrlボタンを押してるかどうか
@@ -966,10 +967,10 @@
 			if (!onCtrlDown) {
 				unselectAll(true);
 				select(id, isContentArea(evt));
-				window.controller_gui.close_context_menu();
+				gui.close_context_menu();
 			} else  {
 				select(id, isContentArea(evt));
-				window.controller_gui.close_context_menu();
+				gui.close_context_menu();
 			}
 			
 			evt = (evt) || window.event;
@@ -1334,7 +1335,7 @@
 	function gesturechangeFunc(e) {
 		if (!isGesture) { return false; }
 		var scale_current = document.getElementById('scale_dropdown_current');
-		gui.on_display_scale_changed(gestureScale * e.scale);
+		gui.emit("display_scale_changed", null, (gestureScale * e.scale));
 		//gui.on_display_trans_changed(dx, dy);
 		e.stopPropagation();
 		e.preventDefault();
@@ -1567,8 +1568,8 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContent(metaData, contentData) {
-		window.content_list.import_content(metaDataDict, metaData, contentData, groupDict);
-		window.content_view.import_content(metaDataDict, metaData, contentData, groupDict);
+		window.content_list.import_content(gui, metaDataDict, metaData, contentData, groupDict);
+		window.content_view.import_content(gui, metaDataDict, metaData, contentData, groupDict);
 	}
 	
 	function changeWindowBorderColor(windowData) {
@@ -1637,8 +1638,8 @@
 	 */
 	function importWindow(windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
-		window.window_view.import_window(metaDataDict, windowData);
-		window.window_list.import_window(metaDataDict, windowData);
+		window.window_view.import_window(gui, metaDataDict, windowData);
+		window.window_list.import_window(gui, metaDataDict, windowData);
 	}
 	
 	///-------------------------------------------------------------------------------------------------------
@@ -2045,6 +2046,7 @@
 	 * Displayを削除するボタンが押された.
 	 * @method on_deletedisplay_clicked
 	 */
+	/*
 	gui.on_deletedisplay_clicked = function () {
 		var i,
 			id,
@@ -2060,10 +2062,12 @@
 			connector.send('DeleteWindowMetaData', metaDataList, function () {});
 		}
 	};
-	
+	*/
+
 	/**
 	 * Group内のコンテンツ全て削除.
 	 */
+	/*
 	gui.on_deleteallcontent_clicked = function () {
 		var i,
 			metaData,
@@ -2090,12 +2094,13 @@
 			connector.send('DeleteContent', targetList, doneDeleteContent);
 		}
 	};
+	*/
 	
 	/**
 	 * Show Display ID ボタンが押された.
 	 * @method on_showidbutton_clicked
 	 */
-	gui.on_showidbutton_clicked = function (isAll) {
+	gui.on("showidbutton_clicked", function (err, isAll) {
 		var i,
 			id,
 			targetIDList = [];
@@ -2109,7 +2114,7 @@
 		if (targetIDList.length > 0) {
 			connector.send('ShowWindowID', targetIDList);
 		}
-	};
+	});
 	
 	/**
 	 * VirualDisplay分割数変更
@@ -2154,19 +2159,19 @@
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
 	 */
-	gui.on_textsendbutton_clicked = function (evt) {
+	gui.on("textsendbutton_clicked", function (err, evt) {
 		var textInput = document.getElementById('text_input'),
 			text = textInput.value;
 		
 		textInput.value = "";
 		sendText(text, { posx : 0, posy : 0 });
-	};
+	});
 	
 	/**
 	 * URLデータ送信ボタンが押された.
 	 * @method on_sendbuton_clicked
 	 */
-	gui.on_urlsendbuton_clicked = function (value) {
+	gui.on("urlsendbuton_clicked", function (err, value) {
 		console.log("sendurl");
 		var previewArea = gui.get_content_preview_area();
 
@@ -2182,8 +2187,7 @@
 		} catch (e) {
 			console.error(e);
 		}
-
-	};
+	});
 	
 	/** 
 	 * 複製ボタンが押された
@@ -2213,7 +2217,7 @@
 	 * @method on_imagefileinput_changed
 	 * @param {Object} evt FileOpenイベント
 	 */
-	gui.on_imagefileinput_changed = function (evt) {
+	gui.on("imagefileinput_changed", function (err, evt) {
 		var files = evt.target.files,
 			file,
 			i,
@@ -2234,13 +2238,13 @@
 				fileReader.readAsArrayBuffer(file);
 			}
 		}
-	};
+	});
 
 	/**
 	 *  ファイルドロップハンドラ
 	 * @param {Object} evt FileDropイベント
 	 */
-	gui.on_file_dropped = function (evt) {
+	gui.on("file_dropped", function (err, evt) {
 		var i,
 			file,
 			files = evt.dataTransfer.files,
@@ -2265,14 +2269,14 @@
 				fileReader.readAsText(file);
 			}
 		}
-	};
+	});
 
 	/**
 	 * テキストファイルFileOpenハンドラ
 	 * @method openText
 	 * @param {Object} evt FileOpenイベント
 	 */
-	gui.on_textfileinput_changed = function (evt) {
+	gui.on("textfileinput_changed", function (err, evt) {
 		var files = evt.target.files,
 			file,
 			i,
@@ -2289,14 +2293,14 @@
 				fileReader.readAsText(file);
 			}
 		}
-	};
+	});
 	
 	/**
 	 * 画像イメージ差し替えFileOpenハンドラ
 	 * @method on_updateimageinput_changed
 	 * @param {Object} evt FileOpenイベント
 	 */
-	gui.on_updateimageinput_changed = function (evt) {
+	gui.on("updateimageinput_changed", function (err, evt) {
 		var files = evt.target.files,
 			file,
 			i,
@@ -2325,35 +2329,35 @@
 				fileReader.readAsArrayBuffer(file);
 			}
 		}
-	};
+	});
 
 	/**
 	 * ディスプレイスケールが変更された.
 	 */
-	gui.on_display_scale_changed = function (displayScale) {
+	gui.on("display_scale_changed", function (err, displayScale) {
 		manipulator.removeManipulator();
 		vscreen.setWholeScale(displayScale, true);
 		saveCookie();
 		updateScreen();
-	};
+	});
 
 	/**
 	 * ディスプレイトランスが変更された.
 	 */
-	gui.on_display_trans_changed = function (dx, dy) {
+	gui.on("display_trans_changed", function (err, dx, dy) {
 		manipulator.removeManipulator();
 		var center = vscreen.getCenter();
 		var whole = vscreen.getWhole();
 		
 		vscreen.assignWhole(whole.orgW, whole.orgH, center.x + dx, center.y + dy, vscreen.getWholeScale());
 		updateScreen();
-	};
+	});
 
 	/**
 	 * コンテンツの削除ボタンが押された.
 	 * @method on_contentdeletebutton_clicked
 	 */
-	gui.on_contentdeletebutton_clicked = function (evt) {
+	gui.on("contentdeletebutton_clicked", function (err, evt) {
 		var i,
 			id,
 			metaData,
@@ -2370,13 +2374,13 @@
 		if (metaDataList.length > 0) {
 			connector.send('DeleteContent', metaDataList, doneDeleteContent);
 		}
-	};
+	});
 
 	/**
 	 * コンテンツのzindex変更が要求された
 	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
 	 */
-	gui.on_content_index_changed = function (isFront) {
+	gui.on("content_index_changed", function (err, isFront) {
 		var id,
 			i,
 			k,
@@ -2394,7 +2398,7 @@
 		if (metaDataList.length > 0) {
 			updateMetaDataMulti(metaDataList);
 		}
-	}
+	});
 
 	/**
 	 * コンテンツリストでセットアップコンテンツが呼ばれた
@@ -2519,7 +2523,7 @@
 	 * @method on_snapdropdown_clicked
 	 * @param {String} snapType スナップタイプ
 	 */
-	gui.on_snapdropdown_clicked = function (snapType) {
+	gui.on("snapdropdown_clicked", function (err, snapType) {
 		snapSetting = snapType;
 		saveCookie();
         var e = document.getElementById('head_menu_hover_left');
@@ -2533,21 +2537,21 @@
                 }
             }
         }
-	};
+	});
 	
 	/**
 	 * Virtual Dsiplay Settingボタンがクリックされた.
 	 * @method on_virtualdisplaysetting_clicked
 	 */
-	gui.on_virtualdisplaysetting_clicked = function () {
+	gui.on("virtualdisplaysetting_clicked", function () {
 		unselectAll(true);
 		select(wholeWindowListID);
-	};
+	});
 
 	/**
 	 * Group追加ボタンがクリックされた
 	 */
-	gui.on_group_append_clicked = function (groupName) {
+	gui.on("group_append_clicked", function (err, groupName) {
 		var groupColor = "rgb("+ Math.floor(Math.random() * 128 + 127) + "," 
 				+ Math.floor(Math.random() * 128 + 127) + "," 
 				+ Math.floor(Math.random() * 128 + 127) + ")";
@@ -2555,12 +2559,12 @@
 		connector.send('AddGroup', { name : groupName, color : groupColor }, function (err, reply) {
 			console.log("AddGroup done", err, reply);
 		});
-	};
+	});
 
 	/**
 	 * Group削除ボタンがクリックされた
 	 */
-	gui.on_group_delete_clicked = function (groupID) {
+	gui.on("group_delete_clicked", function (err, groupID) {
 		var i,
 			item;
 		for (i = 0; i < groupList.length; i = i + 1) {
@@ -2594,13 +2598,13 @@
 				return;
 			}
 		}
-	};
+	});
 
 	/**
 	 * Group変更がクリックされた
 	 * @param {String} groupName 変更先のグループ名
 	 */
-	gui.on_group_change_clicked = function (groupName) {
+	gui.on("group_change_clicked", function (err, groupName) {
 		var i,
 			k,
 			id,
@@ -2632,9 +2636,9 @@
 				};
 			}(group)));
 		}
-	};
+	});
 
-	gui.on_select_contents_clicked = function (onlyCurrentGroup) {
+	gui.on("select_contents_clicked", function (err, onlyCurrentGroup) {
 		var i,
 			id,
 			currentGroup = gui.get_current_group_name();
@@ -2653,9 +2657,9 @@
 				}
 			}
 		}
-	};
+	});
 
-	gui.on_select_display_clicked = function () {
+	gui.on("select_display_clicked", function () {
 		var i,
 			id;
 		unselectAll(true);
@@ -2666,13 +2670,13 @@
 				}
 			}
 		}
-	};
+	});
 
 	/**
 	 * Groupを１つ下に
 	 * @param {String} groupName 変更先のグループ名
 	 */
-	gui.on_group_down = function (groupName) {
+	gui.on("group_down", function (err, groupName) {
 		var i,
 			target;
 
@@ -2690,13 +2694,13 @@
 				}
 			}
 		}
-	};
+	});
 
 	/**
 	 * Groupを１つ上に
 	 * @param {String} groupName 変更先のグループ名
 	 */
-	gui.on_group_up = function (groupName) {
+	gui.on("group_up", function (err, groupName) {
 		var i,
 			target;
 
@@ -2714,12 +2718,12 @@
 				}
 			}
 		}
-	};
+	});
 
 	/**
 	 * Group名変更
 	 */
-	window.controller_gui.on_group_edit_name =　function (groupID, groupName) {
+	gui.on("group_edit_name", function (err, groupID, groupName) {
 		var i,
 			oldName,
 			targetMetaDataList = [],
@@ -2753,12 +2757,12 @@
 				}(oldName, groupName)));
 			}
 		}
-	};
+	});
 	
 	/**
 	 * Group色変更
 	 */
-	window.controller_gui.on_group_edit_color = function (groupID, color) {
+	gui.on("group_edit_color", function (err, groupID, color) {
 		var i,
 			item;
 
@@ -2772,12 +2776,12 @@
 				return;
 			}
 		}
-	};
+	});
 
 	/**
 	 * Searchテキストが入力された
 	 */
-	gui.on_search_input_changed = function (text, groups) {
+	gui.on("search_input_changed", function (err, text, groups) {
 		var i,
 			id, 
 			metaData,
@@ -2825,7 +2829,7 @@
 			}
 		}
 		gui.set_search_result(foundContents);
-	};
+	});
 	
 	/**
 	 * 選択中のコンテンツのzIndexを変更する
@@ -2903,7 +2907,7 @@
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
 			if (metaData.type === windowType) {
-				gui.on_showidbutton_clicked(false);
+				gui.emit("showidbutton_clicked", null, false);
 			} else {
 				metaData.mark_memo = is_active;
 				updateMetaData(metaData);
@@ -3060,7 +3064,9 @@
 			display_scale,
 			update_cursor_enable,
 			snap;
-			
+
+		gui.init();
+
 		display_scale = parseFloat(getCookie('display_scale'));
 		update_cursor_enable = getCookie('update_cursor_enable');
 		console.log("cookie - display_scale:" + display_scale);
@@ -3074,11 +3080,11 @@
 			if (snap === 'display') {
 				snapSetting = 'display';
 			}
-            window.controller_gui.on_snapdropdown_clicked(snap);
+            gui.emit("snapdropdown_clicked", null, snap);
 		}
 		document.getElementById('head_menu_hover_left').addEventListener('change', function(eve){
 			var f = eve.currentTarget.value;
-			window.controller_gui.on_snapdropdown_clicked(f);
+			gui.emit("snapdropdown_clicked", null, f);
 		}, false);
 
 		if (update_cursor_enable && update_cursor_enable === "true") {
@@ -3136,21 +3142,21 @@
 			}
 		};
 		
-		gui.on_mousedown_content_preview_area = function () {
+		gui.on("mousedown_content_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
 				unselectAll(true);
 			}
-		};
+		});
 		
-		gui.on_mousedown_display_preview_area = function () {
+		gui.on("mousedown_display_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
 				unselectAll(true);
 			}
-		};
+		});
 
-		gui.on_update_cursor_enable = updateRemoteCursorEnable;
+		//gui.on("update_cursor_enable = updateRemoteCursorEnable;
 		
-		gui.on_close_item = function () {
+		gui.on("close_item", function () {
 			var i,
 				id,
 				metaData,
@@ -3169,13 +3175,12 @@
 			if (metaDataList.length > 0) {
 				updateMetaDataMulti(metaDataList);
 			}
-		};
+		});
 
 		gui.get_whole_scale = function () {
 			return vscreen.getWholeScale();
 		};
 		
-		gui.init();
 		window.window_view.init(vscreen);
 		connector = window.io_connector;
 		
@@ -3228,7 +3233,7 @@
 			if (display_scale > 2) {
 				display_scale = 2;
 			}
-			gui.on_display_scale_changed(display_scale);
+			gui.emit("display_scale_changed", null, display_scale);
 		}
 
 		updateScreen();
@@ -3259,5 +3264,5 @@
 		}
 	});
 
-}(window.controller_gui, window.content_property, window.content_box, 
+}(window.content_property, window.content_box, 
 window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

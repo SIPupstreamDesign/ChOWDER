@@ -20,7 +20,7 @@
 	 * @method importWindowToView
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	function importWindowToView(metaDataDict, windowData) {
+	function importWindowToView(gui, metaDataDict, windowData) {
 		var displayArea,
 			screen;
 		if (windowData.type !== windowType) {
@@ -66,9 +66,9 @@
 	window.window_view.init = function (vscreen) {
 		vscreenInstance = vscreen;
 	};
-	window.window_view.import_window = function (metaDataDict, windowData) {
-		importWindowToView(metaDataDict, windowData);
+	window.window_view.import_window = function (gui, metaDataDict, windowData) {
+		importWindowToView(gui, metaDataDict, windowData);
 	};
 	window.window_view.on_update_screen = null;
 
-}(window.controller_gui));
+}());

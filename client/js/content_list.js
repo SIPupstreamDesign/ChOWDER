@@ -1,5 +1,5 @@
 /*jslint devel:true*/
-(function (gui) {
+(function () {
 	"use strict";
 	
 	var contentBorderColor = "rgba(0,0,0,0)",
@@ -41,7 +41,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	function importContentToList(metaDataDict, metaData, contentData) {
+	function importContentToList(gui, metaDataDict, metaData, contentData) {
 		var contentArea = null,
 			contentElem,
 			id,
@@ -165,10 +165,10 @@
 	}
 	
 	window.content_list = {};
-	window.content_list.import_content = function (metaDataDict, metaData, contentData) {
-		importContentToList(metaDataDict, metaData, contentData);
+	window.content_list.import_content = function (gui, metaDataDict, metaData, contentData) {
+		importContentToList(gui, metaDataDict, metaData, contentData);
 	};
 	window.content_list.on_setup_content = null;
 	window.content_list.on_copy_content = null;
 
-}(window.controller_gui));
+}());
