@@ -245,7 +245,7 @@
 				this.emit(Manipulator.EVENT_TOGGLE_STAR, null, true);
 			}
 			evt.stopPropagation();
-		};
+		}.bind(this);
 
 		// メモのトグルボタン
 		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {

@@ -2118,7 +2118,7 @@
 	 * @param {String} y y軸分割数
 	 * @param {bool} withoutUpdate 設定後各Displayの更新をするかのフラグ
 	 */
-	content_property.on_change_whole_split = function (x, y, withoutUpdate) {
+	content_property.on("change_whole_split", function (err, x, y, withoutUpdate) {
 		var ix = parseInt(x, 10),
 			iy = parseInt(y, 10),
 			splitWholes,
@@ -2148,7 +2148,7 @@
 			updateScreen();
 			updateWindowData();
 		}
-	};
+	});
 
 	/**
 	 * テキスト送信ボタンが押された.
@@ -2432,7 +2432,7 @@
 	 * PropertyのDisplayパラメータ更新ハンドル
 	 * @method on_display_value_changed
 	 */
-	content_property.on_display_value_changed = function () {
+	content_property.on("display_value_changed", function (err) {
 		var whole = vscreen.getWhole(),
 			wholeWidth = document.getElementById('whole_width'),
 			wholeHeight = document.getElementById('whole_height'),
@@ -2475,12 +2475,12 @@
 		updateWindowData();
 		updateScreen();
 		content_property.update_whole_split(ix, iy, true);
-	};
+	});
 
 	/**
 	 *  ディスプレイ枠色変更
 	 */
-	content_property.on_display_color_changed = function (colorvalue) {
+	content_property.on("display_color_changed", function (err, colorvalue) {
 		var id = getSelectedID(),
 			metaData;
 		if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type === windowType) {
@@ -2488,7 +2488,7 @@
 			metaData.color = colorvalue;
 			updateMetaData(metaData, function (err, reply) {});
 		}
-	};
+	});
 	
 	/**
 	 * スナップ設定のドロップダウンがクリックされた.
@@ -2808,7 +2808,7 @@
 	 * @method on_change_zindex
 	 * @param {String} index 設定するzIndex
 	 */
-	content_property.on_change_zindex = function (index) {
+	content_property.on("change_zindex", function (err, index) {
 		var i,
 			id,
 			elem,
@@ -2824,7 +2824,7 @@
 				console.log("change zindex:" + index, id);
 			}
 		}
-	};
+	});
 	
 	/**
 	 * タブが切り替えられた.
@@ -3065,10 +3065,11 @@
 			updateRemoteCursorEnable(false);
 		}
 
-		content_property.on_rect_changed = function () {
+		content_property.on("rect_changed", function (err, id, value) {
 			console.log('on_rect_changed');
-			changeRect(this.id, parseInt(this.value, 10));
-		};
+			changeRect(id, parseInt(value, 10));
+		});
+
 		function getTextWidth(text, font) {
 			// re-use canvas object for better performance
 			var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
@@ -3078,7 +3079,7 @@
 			return metrics.width;
 		}
 
-		content_property.on_metainfo_changed = function (text, endCallback) {
+		content_property.on("metainfo_changed", function (err, text, endCallback) {
 			var id = getSelectedID(),
 				newData,
 				metaData;
@@ -3112,7 +3113,7 @@
 					endCallback(null);
 				}
 			}
-		};
+		});
 		
 		gui.on("mousedown_content_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {

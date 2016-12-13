@@ -1,8 +1,14 @@
 
 (function () {
 	// colorselector insert ui
-	var colorselector = null;
+	var ContentProperty;
 	
+	ContentProperty = function () {
+		EventEmitter.call(this);
+		this.colorselector = null;
+	};
+	ContentProperty.prototype = Object.create(EventEmitter.prototype);
+
 	/**
 	 * Propertyタブに入力プロパティを追加する
 	 * @method addInputProperty
@@ -94,7 +100,7 @@
 	 * @param {String} type 設定タイプ
 	 * @param {String} mime mime
 	 */
-	function initPropertyArea(id, group, type, mime) {
+	ContentProperty.prototype.initPropertyArea = function (id, group, type, mime) {
 		var contentX,
 			contentY,
 			contentW,
@@ -118,7 +124,9 @@
 			downloadButton = document.getElementById('download_button'),
 			metalabel = document.getElementById("meta_info"),
 			extension,
-			rectChangeFunc = window.content_property.on_rect_changed;
+			rectChangeFunc = function (evt) {
+				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
+			}.bind(this);
 		console.log("initPropertyArea");
 		if (id) {
 			document.getElementById('content_id').innerHTML = id;
@@ -164,25 +172,17 @@
 			wholeSplitX = document.getElementById('whole_split_x');
 			wholeSplitY = document.getElementById('whole_split_y');
 			wholeW.onchange = function () {
-				if (window.content_property.on_display_value_changed) {
-					window.content_property.on_display_value_changed();
-				}
-			};
+				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
+			}.bind(this);
 			wholeH.onchange = function () {
-				if (window.content_property.on_display_value_changed) {
-					window.content_property.on_display_value_changed();
-				}
-			};
+				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
+			}.bind(this);
 			wholeSplitX.onchange = function () {
-				if (window.content_property.on_change_whole_split) {
-					window.content_property.on_change_whole_split(this.value, wholeSplitY.value);
-				}
-			};
+				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.value, wholeSplitY.value);
+			}.bind(this);
 			wholeSplitY.onchange = function () {
-				if (window.content_property.on_change_whole_split) {
-					window.content_property.on_change_whole_split(wholeSplitX.value, this.value);
-				}
-			};
+				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, wholeSplitX.value, this.value);
+			}.bind(this);
 			downloadButton.style.display = "none";
 			metalabel.style.display = "none";
 			document.getElementById('color_picker').style.display = "none";
@@ -194,10 +194,8 @@
 			multiZ = document.getElementById('multi_transform_z');
 			multiZ.onchange = function () {
 				var val = parseInt(multiZ.value, 10);
-				if (window.content_property.on_change_zindex) {
-					window.content_property.on_change_zindex(val);
-				}
-			};
+				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
+			}.bind(this);
 			downloadButton.style.display = "none";
 			metalabel.style.display = "none";
 			document.getElementById('color_picker').style.display = "none";
@@ -221,10 +219,8 @@
 			contentH.onchange = rectChangeFunc;
 			contentZ.onchange = function () {
 				var val = parseInt(contentZ.value, 10);
-				if (window.content_property.on_change_zindex) {
-					window.content_property.on_change_zindex(val);
-				}
-			};
+				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
+			}.bind(this);
 			downloadButton.style.display = "block";
 			downloadButton.href = "download?" + id;
 			downloadButton.target = "_blank";
@@ -246,23 +242,23 @@
 		}
 	}
 
-	function submit_text(endcallback) {
+	ContentProperty.prototype.submit_text = function (endcallback) {
 		var content_text = document.getElementById('content_text');
 		if (content_text) {
-			window.content_property.on_metainfo_changed(content_text.value, endcallback);
+			this.emit(ContentProperty.EVENT_METAINFO_CHANGED, null, content_text.value, endcallback);
 		}
-	}
+	};
 
 	/**
 	 * Propertyエリアパラメータ消去
 	 * @method clearProperty
 	 */
-	function clear(updateText) {
+	ContentProperty.prototype.clear = function (updateText) {
 		var content_text = document.getElementById('content_text');
 		if (content_text && updateText) {
-			submit_text(function () {
-				clear(false);
-			});
+			this.submit_text(function () {
+				this.clear(false);
+			}.bind(this));
 		}
 
 		var transx = document.getElementById('content_transform_x'),
@@ -280,16 +276,14 @@
 		if (content_id) { content_id.innerHTML = ""; }
 		if (dlbtn) { dlbtn.style.display = 'none'; }
 		if (content_text) { content_text.value = ""; content_text.disabled = true; }
-	}
+	};
 
-	function init(id, group, type, mime) {
-		if (!colorselector) {
-			colorselector = new ColorSelector(function(colorvalue){
+	ContentProperty.prototype.init = function (id, group, type, mime) {
+		if (!this.colorselector) {
+			this.colorselector = new ColorSelector(function(colorvalue){
 				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")"; 
 				// ディスプレイ枠色変更
-				if (window.content_property.on_display_color_changed) {
-					window.content_property.on_display_color_changed(colorstr);
-				}
+				this.emit(ContentProperty.EVENT_DISPLAY_COLOR_CHANGED, null, colorstr);
 				console.log(colorvalue);
 			}, 234, 120); // 幅、高さ
 			var color_picker = document.getElementById('color_picker');
@@ -297,17 +291,17 @@
 			// カラーセレクタの一番外側の DOM を取得できます。
 			// インスタンス化の際に渡しているコールバックには配列で 0 〜 255 の
 			// レンジの RGB と 0 〜 1 のレンジのアルファが引数で渡されてきます
-			color_picker.appendChild(colorselector.elementWrapper);
+			color_picker.appendChild(this.colorselector.elementWrapper);
 		}
 
-		initPropertyArea(id, group, type, mime);
-	}
+		this.initPropertyArea(id, group, type, mime);
+	};
 
 	/**
 	 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
-	 * @method assignVirtualDisplayProperty
+	 * @method assign_virtual_display
 	 */
-	function assignVirtualDisplayProperty(whole, splitCount) {
+	ContentProperty.prototype.assign_virtual_display = function (whole, splitCount) {
 		var wholeWidth = document.getElementById('whole_width'),
 			wholeHeight = document.getElementById('whole_height'),
 			wholeSplitX = document.getElementById('whole_split_x'),
@@ -325,15 +319,15 @@
 		if (wholeSplitY) {
 			wholeSplitY.value = splitCount.y;
 		}
-	}
+	};
 	
 	/**
 	 * メタデータをPropertyエリアに反映
-	 * @method assignContentProperty
+	 * @method assign_content_property
 	 * @param {JSON} metaData メタデータ
 	 */
-	function assignContentProperty(metaData) {
-		console.log("assignContentProperty:" + JSON.stringify(metaData));
+	ContentProperty.prototype.assign_content_property = function (metaData) {
+		console.log("assign_content_property:" + JSON.stringify(metaData));
 		var transx = document.getElementById('content_transform_x'),
 			transy = document.getElementById('content_transform_y'),
 			transw = document.getElementById('content_transform_w'),
@@ -370,35 +364,28 @@
 			}
 		}
 
-		if (metaData.hasOwnProperty('color') && colorselector) {
+		if (metaData.hasOwnProperty('color') && this.colorselector) {
 			var col = metaData.color.split('rgb(').join("");
 			col = col.split(")").join("");
 			col = col.split(",");
-			colorselector.setColor(col[0], col[1], col[2], 1, true);
-		}
-	}
-
-	window.content_property = {}
-	window.content_property.init = init;
-	window.content_property.clear = clear;
-	window.content_property.submit_text = submit_text;
-	window.content_property.assign_virtual_display = assignVirtualDisplayProperty;
-	window.content_property.on_change_zindex = null;
-	window.content_property.on_rect_changed = null;
-	window.content_property.on_display_value_changed = null;
-	window.content_property.on_display_color_changed = null;
-	window.content_property.on_change_whole_split = null;
-	window.content_property.on_metainfo_changed = null;
-	window.content_property.assign_content_property = assignContentProperty;
-
-	window.content_property.update_display_value = function () {
-		if (window.content_property.on_display_value_change) {
-			window.content_property.on_display_value_change();
+			this.colorselector.setColor(col[0], col[1], col[2], 1, true);
 		}
 	};
-	window.content_property.update_whole_split = function (x, y, flag) {
-		window.content_property.on_change_whole_split(x, y, flag);
-	};
-	
 
+	ContentProperty.prototype.update_display_value = function () {
+		this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
+	};
+	ContentProperty.prototype.update_whole_split = function (x, y, flag) {
+		this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, x, y, flag);
+	};
+
+	ContentProperty.EVENT_CHANGE_ZINDEX = "change_zindex";
+	ContentProperty.EVENT_RECT_CHANGED = "rect_changed";
+	ContentProperty.EVENT_DISPLAY_VALUE_CHANGED = "display_value_changed";
+	ContentProperty.EVENT_DISPLAY_COLOR_CHANGED = "display_color_changed";
+	ContentProperty.EVENT_CHANGE_WHOLE_SPLIT = "change_whole_split";
+	ContentProperty.EVENT_METAINFO_CHANGED = "metainfo_changed";
+
+	// singleton
+	window.content_property = new ContentProperty();
 }());
