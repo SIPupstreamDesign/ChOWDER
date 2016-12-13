@@ -1158,11 +1158,11 @@
 			if (elems) {
 				for (var i = 0; i < elems.length; ++i) {
 					if (!elems[i].contains(evt.target)) {
-						window.menu.toggle_popup(elems[i], false);
+						this.menu.toggle_popup(elems[i], false);
 					}
 				}
 			}
-		};
+		}.bind(this);
 
 	}
 

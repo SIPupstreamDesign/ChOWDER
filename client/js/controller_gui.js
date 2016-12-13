@@ -23,7 +23,7 @@
 		window.layout.init();
 
 		// 上部メニューの初期化.
-		window.menu.init(document.getElementById('head_menu'),
+		this.menu = new Menu(document.getElementById('head_menu'),
 			{
 				menu : [{
 					Controller : [{
@@ -80,11 +80,11 @@
 			if (elems) {
 				for (var i = 0; i < elems.length; ++i) {
 					if (!elems[i].contains(evt.target)) {
-						window.menu.toggle_popup(elems[i], false);
+						this.menu.toggle_popup(elems[i], false);
 					}
 				}
 			}
-		};
+		}.bind(this);
 
 
 		// 下部コンテンツボックスの初期化.

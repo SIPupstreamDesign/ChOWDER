@@ -7,28 +7,9 @@
 
 	var Menu;
 
-	function togglePopup(ul, isShow) {
-		var elem = document.getElementById('popup_background2');
-		if (isShow) {
-			elem.style.display = "block";
-			ul.style.display = "block";
-			ul.style.opacity = "1";
-			ul.style.top = "30px";
-		} else {
-			elem.style.display = "none";
-			ul.style.display = "none";
-			ul.style.opacity = "0";
-			ul.style.top = "30px";
-		}
-		elem.onclick = (function (ul, isShow) {
-			return function () {
-				togglePopup(ul, isShow);
-			};
-		}(ul, !isShow));
-	}
-	
 	// コンストラクタ
 	Menu = function (containerElem, setting) {
+		EventEmitter.call(this);
 /*
 		<ul class="menu">
 			<li class="menu__multi">
@@ -110,12 +91,12 @@
 							return function () {
 								if (ul.style.display.toLowerCase().indexOf("block") >= 0) {
 									//ul.classList.remove("menu_hover")
-									togglePopup(ul, false);
+									this.togglePopup(ul, false);
 								} else {
 									//ul.classList.add("menu_hover")
-									togglePopup(ul, true);
+									this.togglePopup(ul, true);
 								}
-							}
+							}.bind(this)
 						}(ul2));
 					}
 						
@@ -151,13 +132,28 @@
 		}
 		createMenu(setting.menu, ul, 1);
 	};
+	Menu.prototype = Object.create(EventEmitter.prototype);
 
-	// 初期化
-	function init(containerElem, menuSetting) {
-		var menu = new Menu(containerElem, menuSetting);
-	}
+	Menu.prototype.toggle_popup = function () {
+		var elem = document.getElementById('popup_background2');
+		if (isShow) {
+			elem.style.display = "block";
+			ul.style.display = "block";
+			ul.style.opacity = "1";
+			ul.style.top = "30px";
+		} else {
+			elem.style.display = "none";
+			ul.style.display = "none";
+			ul.style.opacity = "0";
+			ul.style.top = "30px";
+		}
+		elem.onclick = (function (ul, isShow) {
+			return function () {
+				togglePopup(ul, isShow);
+			};
+		}(ul, !isShow));
+	};
 
-	window.menu = {};
-	window.menu.init = init;
-	window.menu.toggle_popup = togglePopup;
+	window.Menu = Menu;
+	
 }(window.controller_gui));
