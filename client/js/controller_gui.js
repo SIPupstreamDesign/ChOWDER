@@ -42,7 +42,7 @@
 							}
 						}, {
 							Text : {
-								func : function () { this.toggleTextInput(); }
+								func : function () { this.toggleTextInput(); }.bind(this)
 							},
 						}, {
 							TextFile : {
@@ -50,7 +50,7 @@
 							},
 						}, {
 							URL : {
-								func : function () { this.toggleURLInput(); }
+								func : function () { this.toggleURLInput(); }.bind(this)
 							}
 						}],
 				}, {
@@ -151,7 +151,7 @@
 		this.initTextInputDialog();
 
 		// 下部バーガーメニューの初期化	
-		this.displayMenu = window.burger_menu.init(
+		this.displayMenu = new BurgerMenu(
 			document.getElementById('bottom_burger_menu_display'),
 			{
 				menu : [{
@@ -181,7 +181,7 @@
 			on_burger_submenu_add_content = false,
 			on_add_content = false;
 
-		this.contentMenu = window.burger_menu.init(
+		this.contentMenu = new BurgerMenu(
 			document.getElementById('bottom_burger_menu_content'),
 			{
 				menu : [{
@@ -198,7 +198,7 @@
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenuAddContent(true, "170px"); 
 								on_add_content = true;
-							},
+							}.bind(this),
 							mouseoutfunc : function (evt) {
 								on_add_content = false;
 							}
@@ -209,7 +209,7 @@
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenu(true, "150px"); 
 								on_group_change = true;
-							},
+							}.bind(this),
 							mouseoutfunc : function (evt) {
 								on_group_change = false;
 							}
@@ -403,7 +403,7 @@
 		add_url_button.onmousedown = function (evt) {
 			this.toggleURLInput();
 			menu.style.display = "none";
-		};
+		}.bind(this);
 
 		add_text_button.onmousedown = function (evt) {
 			this.toggleTextInput();
@@ -836,7 +836,7 @@
 		var textSendButton = document.getElementById('text_send_button');
 		
 		textSendButton.onclick = function (evt) {
-			this.emit(window.ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED, null, evt);
+			this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, evt);
 			this.toggleTextInput();
 		}.bind(this);
 	};
@@ -851,7 +851,7 @@
 				okButtonName : "Send",
 			}, function (value) {
 				this.emit(window.ControllerGUI.EVENT_URLSENDBUTTON_CLICKED, null, value);
-			});
+			}.bind(this));
 	};
 
 	/**

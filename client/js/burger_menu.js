@@ -2,13 +2,14 @@
 /*global io, socket, FileReader, Uint8Array, Blob, URL, event */
 
 /// burger_menu
-(function (gui) {
+(function () {
 	"use strict";
 
 	var BurgerMenu;
 
 	// コンストラクタ
 	BurgerMenu = function (containerElem, setting) {
+		EventEmitter.call(this);
 /*
 	<div id="burger_menu">
 		<label id="burger_menu_icon" class="burger_menu_icon" for="burger_menu_checkbox">≡</label>
@@ -117,12 +118,8 @@
 		}
 		createBurgerMenu(setting.menu, ul, 1);
 	};
+	BurgerMenu.prototype = Object.create(EventEmitter.prototype);
 
-	// 初期化
-	function init(containerElem, menuSetting) {
-		return new BurgerMenu(containerElem, menuSetting);
-	}
-
-	window.burger_menu = {};
-	window.burger_menu.init = init;
-}(window.controller_gui));
+	window.BurgerMenu = BurgerMenu;
+	
+}());
