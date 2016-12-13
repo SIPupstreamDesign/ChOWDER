@@ -41,11 +41,11 @@
 		divElem.style.border = "solid";
 		divElem.style.margin = "5px";
 		divElem.style.float = "left";
-		this.emit(WindowList.prototype.EVENT_SETUP_CONTENT, null, divElem, onlistID);
+		this.emit(WindowList.EVENT_SETUP_CONTENT, null, divElem, onlistID);
 		displayArea.appendChild(divElem);
 	}
 	
-	WindowList.prototype.EVENT_SETUP_CONTENT = "setup_content";
+	WindowList.EVENT_SETUP_CONTENT = "setup_content";
 	// singleton
 	window.window_list = new WindowList();
 
