@@ -1135,7 +1135,7 @@
 		}
 
 		// 上部メニューの初期化.
-		window.menu.init(document.getElementById('head_menu'),
+		var menu = new Menu(document.getElementById('head_menu'),
 			{
 				menu : [{
 					Display : [{

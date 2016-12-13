@@ -102,7 +102,6 @@
 	function isContentArea(evt) {
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(), 
-			//px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			clientY = evt.clientY,
 			py;
 
@@ -121,7 +120,6 @@
 		if (mouseDownPos.length < 2) { return false; }
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(),
-			//px = mouseDownPos[0] + (document.body.scrollLeft || document.documentElement.scrollLeft),
 			py = mouseDownPos[1] + (document.body.scrollTop || document.documentElement.scrollTop);
 		if (!contentArea) {
 			return false;
@@ -952,8 +950,6 @@
 						}
 					}
 					if (topElement) {
-						//console.log("left", elem.offsetLeft - topElement.offsetLeft);
-						//console.log("top", elem.offsetTop - topElement.offsetTop);
 						topElement.onmousedown(evt);
 						dragOffsetTop = clientY - topElement.getBoundingClientRect().top;
 						dragOffsetLeft = clientX - topElement.getBoundingClientRect().left;
@@ -1051,12 +1047,10 @@
 			// content is wider than split area
 			metaData.width = splitWhole.w;
 			metaData.height = splitWhole.w / aspect;
-			//console.log("a", metaData, aspect);
 		} else {
 			// content is highter than split area
 			metaData.height = splitWhole.h;
 			metaData.width = splitWhole.h * aspect;
-			//console.log("b", metaData, aspect);
 		}
 		manipulator.moveManipulator(elem);
 	}
@@ -1081,7 +1075,6 @@
 			i,
 			screens;
 		splitWholes = vscreen.getSplitWholes();
-		//console.log("splitWholes", splitWholes);
 		for (i in splitWholes) {
 			if (splitWholes.hasOwnProperty(i)) {
 				if (document.getElementById(splitWholes[i].id)) {
@@ -1167,7 +1160,6 @@
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-				//console.log("px py whole", px, py, splitWhole);
 				if (splitWhole) {
 					document.getElementById(splitWhole.id).style.background = "red";
 				}
@@ -1178,7 +1170,6 @@
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
-				//console.log("px py whole", px, py, screen);
 				if (screen && document.getElementById(screen.id)) {
 					document.getElementById(screen.id).style.background = "red";
 				}
@@ -1204,7 +1195,6 @@
 			if (metaData.type === windowType || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
 				targetMetaDatas.push(metaData);
-				//updateMetaData(metaData);
 			}
 		}
 
@@ -1251,7 +1241,6 @@
 				elem = document.getElementById(draggingID);
 				metaData = metaDataDict[draggingID];
 				if (!isContentArea(evt)) {
-					//console.log("not onContentArea");
 					metaData.visible = true;
 					if (isFreeMode()) {
 						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
@@ -1273,7 +1262,6 @@
 						py = rect.top + dragOffsetTop;
 						orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 						splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-						//console.log(splitWhole);
 						if (splitWhole) {
 							snapToSplitWhole(elem, metaData, splitWhole);
 						}
@@ -1301,20 +1289,11 @@
 			if (!isGesture) {
 				mousemoveFunc(evt);
 			}
-			//mouseDownPos[0] = evt.changedTouches[0].target.clientX;
-			//mouseDownPos[1] = evt.changedTouches[0].target.clientY;
 		}, false);
 		document.addEventListener("touchmove", function (evt) {
 			if (!isGesture) {
 				mousemoveFunc(evt);
 				evt.preventDefault();
-			} else {
-				/*
-				var rect = evt.changedTouches[0].target.getBoundingClientRect();
-				dx = evt.changedTouches[0].clientX - mouseDownPos[0];
-				dy = evt.changedTouches[0].clientY - mouseDownPos[1];
-				alert(dx + ":" + mouseDownPos[0]);
-				*/
 			}
 		}, false);
 		document.addEventListener("touchend", mouseupFunc, false);
@@ -1378,7 +1357,6 @@
 		// テキストのときはメタデータにもテキストをつっこむ
 		metaData.user_data_text = JSON.stringify({ text: text });
 
-		//currentContent = elem;
 		addContent(metaData, text);
 	}
 	
@@ -1444,7 +1422,6 @@
 			}
 		} else {
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			//content_property.assign_view_setting(vscreen.getWholeScale(), isFreeMode(), isDisplayMode());
 			
 			// 全可視コンテンツの配置を再計算.
 			for (i in metaDataDict) {
@@ -1679,8 +1656,6 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
-		//vscreen_util.assignMetaData(document.getElementById(json.id), json, true);
-
 		if ( (isDisplayTabSelected() && json.type === windowType) ||
 			(!isDisplayTabSelected() && json.type !== windowType)) {
 				if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
@@ -1913,14 +1888,6 @@
 				}
 			}
 
-/*
-		if (lastSelectWindowID) {
-			elem = document.getElementById(lastSelectWindowID);
-			if (elem) {
-				manipulator.moveManipulator(elem);
-			}
-		}
-		*/
 	};
 
 	/**
@@ -3047,15 +3014,6 @@
 			changeRect(id, parseInt(value, 10));
 		});
 
-		function getTextWidth(text, font) {
-			// re-use canvas object for better performance
-			var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
-			var context = canvas.getContext("2d");
-			context.font = font;
-			var metrics = context.measureText(text);
-			return metrics.width;
-		}
-
 		content_property.on("metainfo_changed", function (err, text, endCallback) {
 			var id = getSelectedID(),
 				newData,
@@ -3092,6 +3050,10 @@
 			}
 		});
 		
+		gui.on('update_cursor_enable', function (err, value) {
+			updateRemoteCursorEnable(value);
+		});
+
 		gui.on("mousedown_content_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
 				unselectAll(true);
@@ -3104,8 +3066,6 @@
 			}
 		});
 
-		//gui.on("update_cursor_enable = updateRemoteCursorEnable;
-		
 		gui.on("close_item", function () {
 			var i,
 				id,
