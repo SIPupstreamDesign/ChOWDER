@@ -2332,9 +2332,9 @@
 	/**
 	 * コンテンツビューでセットアップコンテンツが呼ばれた
 	 */
-	window.content_view.on_setup_content = function (elem, uid) {
+	window.content_view.on("setup_content", function (err, elem, uid) {
 		setupContent(elem, uid);
-	};
+	});
 
 	/**
 	 * コンテンツリストでコピーコンテンツが呼ばれた
@@ -2346,23 +2346,23 @@
 	/**
 	 * コンテンツビューでコピーコンテンツが呼ばれた
 	 */
-	window.content_view.on_copy_content = function (fromElem, toElem, metaData, isListContent) {
+	window.content_view.on("copy_content", function (err, fromElem, toElem, metaData, isListContent) {
 		copyContentData(fromElem, toElem, metaData, isListContent);
-	};
+	});
 
 	/**
 	 * コンテンツビューでinsertコンテンツが呼ばれた
 	 */
-	window.content_view.on_insert_content = function (area, elem) {
+	window.content_view.on("insert_content", function (err, area, elem) {
 		insertElementWithDictionarySort(area, elem);
-	};
+	});
 	
 	/**
 	 * コンテンツビューで強調トグルが必要になった
 	 */
-	window.content_view.on_toggle_mark = function (contentElem, metaData) {
+	window.content_view.on("toggle_mark", function (err, contentElem, metaData) {
 		toggleMark(contentElem, metaData);
-	};
+	});
 
 	/**
 	 * ウィンドウリストでセットアップコンテンツが呼ばれた

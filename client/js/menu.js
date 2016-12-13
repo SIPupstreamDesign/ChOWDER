@@ -56,7 +56,7 @@
 			*/
 		}
 
-		function createMenu(setting, ul, n) {
+		var createMenu = function (setting, ul, n) {
 			var i,
 				ul2,
 				key,
@@ -87,17 +87,17 @@
 					ul2.className = "menu_level" + n;
 					
 					if (n === 1) {
-						li.onclick = (function (ul) {
+						li.onclick = (function (ul, self) {
 							return function () {
 								if (ul.style.display.toLowerCase().indexOf("block") >= 0) {
 									//ul.classList.remove("menu_hover")
-									this.togglePopup(ul, false);
+									this.toggle_popup(ul, false);
 								} else {
 									//ul.classList.add("menu_hover")
-									this.togglePopup(ul, true);
+									this.toggle_popup(ul, true);
 								}
-							}.bind(this)
-						}(ul2));
+							}.bind(self)
+						}(ul2, this));
 					}
 						
 					li.appendChild(ul2);
@@ -129,12 +129,13 @@
 					ul.appendChild(li);
 				}
 			}
-		}
+		}.bind(this);
+
 		createMenu(setting.menu, ul, 1);
 	};
 	Menu.prototype = Object.create(EventEmitter.prototype);
 
-	Menu.prototype.toggle_popup = function () {
+	Menu.prototype.toggle_popup = function (ul, isShow) {
 		var elem = document.getElementById('popup_background2');
 		if (isShow) {
 			elem.style.display = "block";
@@ -147,11 +148,11 @@
 			ul.style.opacity = "0";
 			ul.style.top = "30px";
 		}
-		elem.onclick = (function (ul, isShow) {
+		elem.onclick = (function (ul, isShow, self) {
 			return function () {
-				togglePopup(ul, isShow);
-			};
-		}(ul, !isShow));
+				this.toggle_popup(ul, isShow);
+			}.bind(self);
+		}(ul, !isShow, this));
 	};
 
 	window.Menu = Menu;

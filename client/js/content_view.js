@@ -2,8 +2,14 @@
 (function () {
 	"use strict";
 	
-	var contentBorderColor = "rgba(0,0,0,0)",
+	var ContentView,
+		contentBorderColor = "rgba(0,0,0,0)",
 		textColor = "white";
+
+	ContentView = function () {
+		EventEmitter.call(this);
+	};
+	ContentView.prototype = Object.create(EventEmitter.prototype);
 
 	/**
 	 * コンテンツタイプから適切なクラス名を取得する.
@@ -40,7 +46,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	function importContentToView(gui, metaDataDict, metaData, contentData, groupDict) {
+	ContentView.prototype.import_content = function (gui, metaDataDict, metaData, contentData, groupDict) {
 		var previewArea = gui.get_content_preview_area(),
 			id,
 			contentElem,
@@ -66,17 +72,9 @@
 			contentElem = document.createElement(tagName);
 			contentElem.id = metaData.id;
 			contentElem.style.position = "absolute";
-			if (window.content_view.on_setup_content) {
-				window.content_view.on_setup_content(contentElem, metaData.id);
-			}
-			//setupContent(contentElem, metaData.id);
-			
-			if (window.content_view.on_insert_content) {
-				window.content_view.on_insert_content(previewArea, contentElem);
-			}
-			//insertElementWithDictionarySort(previewArea, contentElem);
 
-			//previewArea.appendChild(contentElem);
+			this.emit(ContentView.EVENT_SETUP_CONTENT, null, contentElem, metaData.id);
+			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, contentElem);
 		}
 
 		console.log("id=" + metaData.id);
@@ -111,32 +109,22 @@
 					};
 				}
 			}
-			if (window.content_view.on_toggle_mark) {
-				window.content_view.on_toggle_mark(contentElem, metaData);
-			}
-			//toggleMark(contentElem, metaData);
+			this.emit(ContentView.EVENT_TOGGLE_MARK, null, contentElem, metaData);
 		}
 		
 		// 同じコンテンツを参照しているメタデータがあれば更新
 		if (!contentData && contentElem) {
-			if (window.content_view.on_copy_content) {
-				window.content_view.on_copy_content(null, contentElem, metaData, false);
-			}
+			this.emit(ContentView.EVENT_COPY_CONTENT, null, null, contentElem, metaData, false);
 		} else {
-			if (window.content_view.on_copy_content) {
-				window.content_view.on_copy_content(contentElem, null, metaData, false);
-			}
+			this.emit(ContentView.EVENT_COPY_CONTENT, null, contentElem, null, metaData, false);
 		}
 	}
-	
-	
-	window.content_view = {};
-	window.content_view.import_content = function (gui, metaDataDict, metaData, contentData, groupDict) {
-		importContentToView(gui, metaDataDict, metaData, contentData, groupDict);
-	};
-	window.content_view.on_setup_content = null;
-	window.content_view.on_copy_content = null;
-	window.content_view.on_insert_content = null;
-	window.content_view.on_toggle_mark = null;
 
+	ContentView.EVENT_SETUP_CONTENT = "setup_content";
+	ContentView.EVENT_COPY_CONTENT = "copy_content";
+	ContentView.EVENT_INSERT_CONTENT = "insert_content";
+	ContentView.EVENT_TOGGLE_MARK = "toggle_mark";
+	
+	// singleton
+	window.content_view = new ContentView();
 }());
