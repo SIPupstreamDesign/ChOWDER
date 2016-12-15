@@ -285,7 +285,7 @@
 				// ディスプレイ枠色変更
 				this.emit(ContentProperty.EVENT_DISPLAY_COLOR_CHANGED, null, colorstr);
 				console.log(colorvalue);
-			}, 234, 120); // 幅、高さ
+			}.bind(this), 234, 120); // 幅、高さ
 			var color_picker = document.getElementById('color_picker');
 			// ColorSelector を new でインスタンス化後、elementWrapper を参照すると、
 			// カラーセレクタの一番外側の DOM を取得できます。
