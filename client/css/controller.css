@@ -629,53 +629,6 @@ p {
 	background-size: contain;
 }
 
-#text_input_dialog {
-	top: 50%;
-	left: 50%;
-	padding-right : 15px;
-	margin-top:-53px;
-	margin-left:-145px;
-	position: fixed;
-	z-index: 100000000;
-	display: none;
-	background-color: rgb(83, 83, 83);
-	border-radius: 5px;
-}
-
-#text_input {
-	width: 250px;
-	border: 2px solid rgb(112, 180, 239);
-	border-radius: 3px;
-}
-
-#text_send_button {
-	background-color: rgb(112, 180, 239);
-	color: black;
-	margin-left: 5px;
-	margin-bottom: 23px;
-}
-
-
-#input_dialog {
-	top: 50%;
-	left: 50%;
-	width: 340px;
-	height: 116px;
-	margin-top:-53px;
-	margin-left:-145px;
-	position: fixed;
-	z-index: 100000000;
-	display: none;
-	background-color: rgb(83, 83, 83);
-	border-radius: 5px;
-}
-
-#input_ok_button {
-	background-color: rgb(112, 180, 239);
-	color: black;
-	margin-left: 5px;
-}
-
 #rightArea_panel__ {
 	background:linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 }

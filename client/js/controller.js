@@ -1334,12 +1334,9 @@
 	 * @method sendText
 	 * @param {String} text 送信するテキスト.
 	 */
-	function sendText(text, metaData) {
+	function sendText(text, metaData, width, height) {
 		var previewArea = gui.get_content_preview_area(),
-			textInput = document.getElementById('text_input'),
-			elem = document.createElement('pre'),
-			width = (textInput.clientWidth + 1),
-			height = (textInput.clientHeight + 1);
+			elem = document.createElement('pre');
 		
 		if (!text) {
 			text = "";
@@ -2123,12 +2120,9 @@
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
 	 */
-	gui.on("textsendbutton_clicked", function (err, evt) {
-		var textInput = document.getElementById('text_input'),
-			text = textInput.value;
-		
-		textInput.value = "";
-		sendText(text, { posx : 0, posy : 0 });
+	gui.on("textsendbutton_clicked", function (err, value, width, height) {
+		var text = value;
+		sendText(text, { posx : 0, posy : 0 }, width, height);
 	});
 	
 	/**

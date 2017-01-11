@@ -865,22 +865,14 @@
 	 * テキスト入力ダイアログの表示をトグル
 	 */
 	ControllerGUI.prototype.openTextInput = function () {
-		var background = new PopupBackground(),
-			input = document.getElementById("text_input_dialog"),
-			textInput = document.getElementById('text_input'),
-			textSendButton = document.getElementById('text_send_button');
-		
-		textSendButton.onclick = function (evt) {
-			this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, evt);
-			background.close();
-			input.style.display = "none";
-		}.bind(this);
+		window.input_dialog.init_multi_text_input({
+				name : "テキストの追加",
+				okButtonName : "Send"
+			}, function (value, w, h) {
+				this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, value, w, h);
+			}.bind(this)
+		);
 
-		background.show();
-		background.on('close', function () {
-			input.style.display = "none";
-		});
-		input.style.display = "block";
 	};
 
 	/**

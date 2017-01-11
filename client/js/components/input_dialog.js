@@ -40,7 +40,7 @@
 		okbutton = document.createElement("input");
 		okbutton.type = "button";
 		okbutton.value = "OK";
-		okbutton.className = "btn";
+		okbutton.className = "btn input_ok_button";
 		input_dialog.appendChild(okbutton);
 		document.body.appendChild(input_dialog);
 
@@ -59,6 +59,71 @@
 		okbutton.onclick = function (evt) {
 			if (okCallback) {
 				okCallback(input_dialog_input.value);
+			}
+			background.close();
+			closeFunc();
+		};
+		background.show();
+		background.on('close', closeFunc);
+	}
+
+	/**
+	 * 複数行の入力ダイアログを表示
+	 * @param setting.name ダイアログタイトル
+	 * @param setting.initialValue 初期値
+	 * @param setting.okButtonName OKボタン表示名
+	 */
+	function init_multi_text_input(setting, callback) {
+		var text_input_dialog,
+			dialog_label,
+			textarea,
+			ok_button,
+			background = new PopupBackground(),
+			closeFunc;
+		/*
+		<div id="text_input_dialog">
+			<p style="margin-top:20px;margin-left:20px">テキストの追加</p>
+			<textarea  id="text_input" style="margin-left:20px"></textarea>
+			<input class="btn" type="button" value="Send" id="text_send_button" />
+		</div>
+		*/
+		text_input_dialog = document.createElement('div');
+		text_input_dialog.className = "text_input_dialog";
+
+		dialog_label = document.createElement('p');
+		dialog_label.style.marginTop = "20px";
+		dialog_label.style.marginLeft = "20px";
+		text_input_dialog.appendChild(dialog_label);
+
+		textarea = document.createElement('textarea');
+		textarea.style.marginLeft = "20px";
+		textarea.className = "text_input";
+		text_input_dialog.appendChild(textarea);
+
+		ok_button = document.createElement("input");
+		ok_button.type = "button";
+		ok_button.value = "Send";
+		ok_button.className = "btn text_send_button";
+		text_input_dialog.appendChild(ok_button);
+		document.body.appendChild(text_input_dialog);
+
+		dialog_label.textContent = setting.name;
+		if (setting.initialValue) {
+			textarea.value = setting.initialValue;
+		}
+
+		closeFunc = (function (text_input_dialog) {
+			return function () {
+				document.body.removeChild(text_input_dialog);
+			};
+		}(text_input_dialog));
+
+		ok_button.value = setting.okButtonName;
+		ok_button.onclick = function (evt) {
+			if (callback) { 
+				var width = (textarea.clientWidth + 1);
+				var height = (textarea.clientHeight + 1);
+				callback(textarea.value, width, height);
 			}
 			background.close();
 			closeFunc();
@@ -206,6 +271,7 @@
 
 	window.input_dialog = {}
 	window.input_dialog.text_input = init_text_input;
+	window.input_dialog.init_multi_text_input = init_multi_text_input;
 	window.input_dialog.color_input = init_color_input;
 	window.input_dialog.okcancel_input = okcancel_input;
 }());
