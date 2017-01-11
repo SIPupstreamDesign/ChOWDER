@@ -485,14 +485,6 @@ p {
     border-color: #a9100c;
 }
 
-.ns_splitter:hover {
-	cursor : ns-resize;
-}
-
-.ew_splitter:hover {
-	cursor : ew-resize;
-}
-
 .page {
 	width: 100%;
 	height: 100%;
@@ -650,19 +642,6 @@ p {
 	border-radius: 5px;
 }
 
-#okcancel_dialog {
-	top: 50%;
-	left: 50%;
-	padding-right : 15px;
-	margin-top:-53px;
-	margin-left:-145px;
-	position: fixed;
-	z-index: 100000000;
-	display: none;
-	background-color: rgb(83, 83, 83);
-	border-radius: 5px;
-}
-
 #text_input {
 	width: 250px;
 	border: 2px solid rgb(112, 180, 239);
@@ -676,27 +655,6 @@ p {
 	margin-bottom: 23px;
 }
 
-#okcancel_dialog_ok_button {
-	background-color: rgb(112, 180, 239);
-	color: black;
-	margin-left: 250px;
-	margin-bottom: 23px;
-	width : 60px;
-}
-#okcancel_dialog_ok_button:hover {
-	background-color: rgb(82, 150, 209);
-}
-
-#okcancel_dialog_cancel_button {
-	background-color: rgb(112, 180, 239);
-	color: black;
-	margin-left: 5px;
-	margin-bottom: 23px;
-	width : 60px;
-}
-#okcancel_dialog_cancel_button:hover {
-	background-color: rgb(82, 150, 209);
-}
 
 #input_dialog {
 	top: 50%;
@@ -712,38 +670,10 @@ p {
 	border-radius: 5px;
 }
 
-#input_dialog_input {
-	width : 250px;
-	margin-left : 10px;
-	border: 2px solid rgb(112, 180, 239);
-	border-radius: 3px;
-}
-
 #input_ok_button {
 	background-color: rgb(112, 180, 239);
 	color: black;
 	margin-left: 5px;
-}
-#color_dialog {
-	top: 50%;
-	left: 50%;
-	width: 320px;
-	height: 230px;
-	margin-top:-53px;
-	margin-left:-145px;
-	position: fixed;
-	z-index: 100000000;
-	display: none;
-	background-color: rgb(83, 83, 83);
-	border-radius: 5px;
-}
-
-#color_ok_button {
-	background-color: rgb(112, 180, 239);
-	color: black;
-	position: absolute;
-    right: 15px;
-    bottom: 15px;
 }
 
 #rightArea_panel__ {
