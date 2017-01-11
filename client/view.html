@@ -5,19 +5,30 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<link href="css/menu.css" rel="stylesheet"/>
 	<link href="css/view.css" rel="stylesheet"/>
 	<script type="text/javascript" src="js/metabinary.js"></script>
 	<script type="text/javascript" src="js/command.js"></script>
 	<script type="text/javascript" src="js/ws_connector.js"></script>
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
 	<script type="text/javascript" src="js/view.js"></script>
 </head>
 <body>
 
 
-	<div class="head_menu menu_anim hide" id="menu">
-		<div class="">
+	<div class="head_menu menu_anim hide" id="head_menu">
+		<div class="head_mode_menu">
+			<div class="head_mode_text stopselect">
+				<a href="index.html" id="chowder_text">ChOWDER</a>
+			</div>
+		</div>
+		<span class="head_id_menu">
+			<span id="change_id_text">Display ID:</span>
+			<input type="text" class="head_id_input" id="input_id"></input>
+		</span>
+		<!--div class="">
 			<span class="head_select_mode_menu">
 				<a class="head_select_menu_text" id="select_mode" href="/">
 					Select Mode
@@ -34,7 +45,7 @@
 				<div class="head_mode_text stopselect">
 					Display
 				</div>
-			</div>
+			</div-->
 		</div>
 	</div>
 
@@ -47,5 +58,7 @@
 	</div>
 
 	<div id="disconnected_text" class="disconnected_text">Disconnected</div>
+    <!-- <div id="hiddenCursor0" class="hiddenCursor"></div> -->
+	<div class="popup_background2" id="popup_background2"></div>
 </body>
 </html>

@@ -1,0 +1,169 @@
+
+
+.group_tab_area {
+	width : 170px;
+	height : calc(100% - 60px);
+	position : absolute;
+	overflow-y  : auto;
+	overflow-x : hidden;
+}
+
+.group_box_area {
+	height : 100%;
+	overflow : hidden;
+	margin-left : 170px;
+}
+
+
+.group_tab {
+	text-align: center;
+	background: rgb(54,187,68);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	top: 5px;
+	left : 4px;
+	width : 170px;
+	height : 30px;
+	padding-left : 2px;
+	padding-right : 2px;
+	font-size: 14px;
+	float : left;
+}
+
+.group_tab_setting {
+	border: 1px solid gray;
+	border-radius: 2px;
+	width : 16px;
+	height : 16px;
+	background :rgb(54,187,68);
+	float : right;
+	position : relative;
+	right: 10px;
+	top : 7px;
+	background-image:url("../image/setting.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_setting:hover {
+	background : rgb(24,137,38);
+	background-image:url("../image/setting2.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_setting_label {
+	color : white;
+	position : relative;
+	top : -3px;
+}
+
+.group_tab_append {
+	border: 1px solid rgb(100, 250, 100);
+	border-radius: 16px;
+	width : 16px;
+	height : 16px;
+	background :rgb(100, 250, 100);
+	position : fixed;
+	bottom : 7px;
+	left : 150px;
+	cursor : pointer;
+	margin : auto auto;
+	font-size : 16px;
+	text-align: center;
+}
+
+.group_tab_append:hover {
+	background :rgb(54,187,68);
+}
+
+.group_tab_append_label {
+	color : black;
+	position : relative;
+	top : -3px;
+}
+
+.group_tab_up {
+	border: 1px solid rgb(100, 250, 100);
+	border-radius: 16px;
+	width : 16px;
+	height : 16px;
+	background :rgb(100, 250, 100);
+	position : fixed;
+	bottom : 7px;
+	left : 10px;
+	cursor : pointer;
+	margin : auto auto;
+	font-size : 16px;
+	text-align: center;
+	background-image:url("../image/group_up.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_up:hover {
+	background :rgb(54,187,68);
+	background-image:url("../image/group_up.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_down {
+	border: 1px solid rgb(100, 250, 100);
+	border-radius: 16px;
+	width : 16px;
+	height : 16px;
+	background :rgb(100, 250, 100);
+	position : fixed;
+	bottom : 7px;
+	left : 30px;
+	cursor : pointer;
+	margin : auto auto;
+	font-size : 16px;
+	text-align: center;
+	background-image:url("../image/group_down.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab_down:hover {
+	background :rgb(54,187,68);
+	background-image:url("../image/group_down.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.group_tab.active {
+	border: 3px solid white;
+}
+
+.group_tab_box {
+	border: 2px solid rgb(54,187,68);
+}
+
+.group_tab_link {
+	position : relative;
+	top : 5px;
+}
+
+.group_setting_menu {
+	width : 100px;
+	height : 60px;
+	background : rgb(255,255,255);
+	border : 1px solid rgb(186, 186, 186);
+	color : black;
+	position : absolute;
+	box-shadow: 2px 4px 5px black;
+	z-index: 1000000;
+}
+
+.group_setting_menu_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+}
+
+.group_setting_menu_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}

@@ -6,17 +6,25 @@
 	-ms-user-select: none;
 	user-select: none;
 	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	box-sizing: border-box;
 }
 
+html {
+    background-color:rgb(7, 22, 50);
+}
 body {
 	overflow:hidden;
-	background-color: #AAA;
+	background-color: rgb(7, 22, 50);
 	margin: 0px;
 }
 
 div {
 	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
 	white-space: nowrap;
+}
+
+a {
+	text-decoration : none;
 }
 
 pre {
@@ -37,8 +45,12 @@ pre {
 	left: 0;
 	background-color:#555555;
 	opacity: 0.9;
-	z-index: 1000;
+	z-index: 1000000;
 	display: none;
+}
+
+#preview_area {
+	z-index : -1000000;
 }
 
 .displayid {
@@ -51,23 +63,18 @@ pre {
 
 
 .head_menu {
-	background : rgb(14,133,251);
-	height : 50px;
+	background: rgb(112, 180, 239);
+	height: 30px;
 	position: absolute;
 	left: 0px;
 	right: 0px;
-	z-index: 20000;
+	z-index: 1000000;
 }
 
 
 .head_mode_menu {
 	text-align: center;
-	padding: 8px;
-}
-.head_mode_text {
-	color: #EEE;
-	font-size: 24px;
-	font-weight: 700;
+	/*padding: 8px;*/
 }
 
 .stopselect{
@@ -88,41 +95,49 @@ pre {
 	color: #EEE;
 	text-decoration: none;
 	position : relative;
-	top : 12px;
-	height : 30px;
-	font-size: 18px;
+	top : 3px;
+	height : 26px;
+	font-size: 16px;
 
 	border-style : solid;
-	padding : 5px 10px 5px 10px;
+/*	padding : 5px 10px 5px 10px;*/
 	border-width: 2px;
-	border-radius: 6px;
+	border-radius: 1px;
 	margin-right : 10px;
 }
 .head_select_menu_text:hover {
 	color: #FFF;
+	cursor : pointer;
 }
 
 .head_id_menu {
 	position:absolute;
-	top : 10px;
+	top : 0px;
 	right : 20px;
 }
 
 .head_id_input {
+	position : relative;
 	height : 20px;
+	top : 3px;
+	z-index: 10000000;
 }
 .head_id_input_button {
 	color: #EEE;
 	text-decoration: none;
 	position : relative;
-	top : 2px;
-	height : 30px;
-	font-size: 18px;
+	top : 3px;
+	height : 26px;
+	font-size: 16px;
 
 	border-style : solid;
-	padding : 5px 10px 5px 10px;
+/*	padding : 5px 10px 5px 10px;*/
 	border-width: 2px;
-	border-radius: 6px;
+	border-radius: 2px;
+}
+.head_id_input_button:hover {
+	color: #FFF;
+	cursor : pointer;
 }
 
 .menu_anim {
@@ -149,4 +164,66 @@ pre {
 	color : white;
 	font-size: 50px;
 	display : none;
+}
+
+.mark {
+	border-width : 6px;
+	border-style: solid;
+}
+
+.memo {
+	position : absolute;
+	color : black;
+	height : 100px;
+	font-size : 1.2em;
+	background-color: lightgray;
+	border : 1px solid gray;
+	padding : 5px;
+	box-sizing: border-box;
+}
+.hiddenCursor {
+    color: transparent;
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: -9999px;
+    overflow: hidden;
+}
+.hiddenCursor .before {
+    background-color: white;
+    content: '　';
+    width: 50px;
+    height: 50px;
+    display: inline-block;
+    transform: rotate(45deg) translate(-40px,0px);
+}
+.hiddenCursor .after {
+    background-color: white;
+    content: '　';
+    width: 20px;
+    height: 50px;
+    display: inline-block;
+    transform: rotate(-45deg) translate(-25px,-40px);
+}
+
+#change_id_text {
+	position : absolute;
+	top : 7px;
+	right : 180px;
+	font-size : 14px;
+	color : rgb(10, 26, 67);
+}
+
+.popup_background2 {
+	min-height: 100%;
+	min-width: 800px;
+	width: 100%;
+	height: auto;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background-color:#555555;
+	opacity: 0.0;
+	z-index: 3;
+	display: none;
 }

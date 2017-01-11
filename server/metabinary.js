@@ -6,6 +6,51 @@
 	
 	var headerStr = "MetaBin:";
 	
+	/**
+	 * UTF8文字列をArrayBufferに変換して返す
+	 * @method utf8StringToArray
+	 * @param {String} str UTF8文字列
+	 * @return ArrayBuffer
+	 */
+	function utf8StringToArray(str) {
+		var n = str.length,
+			idx = 0,
+			bytes = [],
+			i,
+			j,
+			c;
+		
+		for (i = 0; i < n; i = i + 1) {
+			c = str.charCodeAt(i);
+			if (c <= 0x7F) {
+				bytes[idx] = c;
+				idx = idx + 1;
+			} else if (c <= 0x7FF) {
+				bytes[idx] = 0xC0 | (c >>> 6);
+				idx = idx + 1;
+				bytes[idx] = 0x80 | (c & 0x3F);
+				idx = idx + 1;
+			} else if (c <= 0xFFFF) {
+				bytes[idx] = 0xE0 | (c >>> 12);
+				idx = idx + 1;
+				bytes[idx] = 0x80 | ((c >>> 6) & 0x3F);
+				idx = idx + 1;
+				bytes[idx] = 0x80 | (c & 0x3F);
+				idx = idx + 1;
+			} else {
+				bytes[idx] = 0xF0 | (c >>> 18);
+				idx = idx + 1;
+				bytes[idx] = 0x80 | ((c >>> 12) & 0x3F);
+				idx = idx + 1;
+				bytes[idx] = 0x80 | ((c >>> 6) & 0x3F);
+				idx = idx + 1;
+				bytes[idx] = 0x80 | (c & 0x3F);
+				idx = idx + 1;
+			}
+		}
+		return bytes;
+	}
+	
 	/// create binarydata with metadata
 	/// format -------------------------------------------------
 	/// -  "MetaBin:"           - header string (string)
@@ -24,7 +69,7 @@
 	function createMetaBinary(metaData, binary) {
 		var buffer,
 			pos = 0,
-			metaStr = JSON.stringify(metaData);
+			metaStr = new Buffer(utf8StringToArray(JSON.stringify(metaData)));
 		if (!metaStr || !binary) { return; }
 		//console.log('binary size:' + binary.length);
 		//console.log('meta size:' + metaStr.length);
@@ -40,7 +85,7 @@
 		buffer.writeUInt32LE(metaStr.length, pos);
 		pos = pos + 4;
 		// metadata
-		buffer.write(metaStr, pos, metaStr.length, 'ascii');
+		metaStr.copy(buffer, pos, 0, metaStr.length);
 		pos = pos + metaStr.length;
 		// binary
 		binary.copy(buffer, pos, 0, binary.length);
@@ -67,14 +112,16 @@
 		
 		version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0);
 		metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);
-		metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString('ascii'));
+		metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString());
 		
 		if (metaData.hasOwnProperty('params')) {
 			params = metaData.params;
 		} else if (metaData.hasOwnProperty('result')) {
 			params = metaData.result;
+		} else if (metaData.hasOwnProperty('param')) {
+			params = metaData.param;
 		}
-		//console.log(metaData);
+		console.log(metaData);
 
 		content = binary.slice(headerStr.length + 8 + metaSize);
 		

@@ -1,0 +1,81 @@
+
+.context_menu {
+	width : 200px;
+	background : rgb(255,255,255);
+	border : 1px solid rgb(186, 186, 186);
+	color : black;
+	position : absolute;
+	box-shadow: 2px 4px 5px black;
+	z-index: 1000000;
+}
+
+.context_menu_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+}
+
+.context_menu_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+	width: 200px;
+}
+
+.context_menu_change_group_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+	position : relative;
+	left : 200px;
+	top : -120px;
+}
+
+.context_menu_change_group_submenu {
+	display : none;
+	height : 0px;
+}
+
+.context_menu_change_group_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}
+
+.context_menu_add_content_submenu {
+	display : none;
+	height : 0px;
+}
+
+.context_menu_add_content_item {
+	background : white;
+	cursor: default;
+	font-size : 14px;
+	color : black;
+	position : relative;
+	left : 200px;
+	top : -160px;
+}
+
+.context_menu_add_content_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}
+
+#context_menu_change_group:after, #context_menu_add_content:after {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin: 0 0 0 15px;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+#context_menu_change_group:hover:after, #context_menu_add_content:hover:after {
+	border-right: 1px solid white;
+	border-top: 1px solid white;
+}

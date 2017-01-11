@@ -9,7 +9,8 @@
 	 * 仮想スクリーンユーティリティ
 	 * @method VscreenUtil
 	 */
-	var VscreenUtil = function () {};
+	var VscreenUtil = function () {},
+		windowType = "window";
 	
 	/**
 	 * Floatの矩形を作成
@@ -118,9 +119,10 @@
 	 * @method assignMetaData
 	 * @param {Element} elem エレメント
 	 * @param {Object} metaData メタデータ
-	 * @param {Object} useOrg ユーザーデータ
+	 * @param {Object} useOrg 初期座標系を使うかどうか
+	 * @param {Object} groupDict グループ辞書
 	 */
-	function assignMetaData(elem, metaData, useOrg) {
+	function assignMetaData(elem, metaData, useOrg, groupDict) {
 		var rect;
 		if (useOrg) {
 			rect = vscreen.transformOrg(toIntRect(metaData));
@@ -137,6 +139,17 @@
 			if (isVisible(metaData)) {
 				//console.log("isvisible");
 				elem.style.display = "block";
+				if (metaData.type !== windowType) {
+					if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
+						if (metaData.group === "default") {
+							elem.style.borderColor = "rgb(54,187,68)";
+						} else {
+							elem.style.borderColor = groupDict[metaData.group].color;
+						}
+					} else if (!useOrg) {
+						elem.style.borderColor = "rgb(54,187,68)";
+					}
+				}
 			} else {
 				console.log("not isvisible");
 				elem.style.display = "none";
@@ -153,10 +166,10 @@
 	function assignScreenRect(elem, rect) {
 		if (elem && rect) {
 			elem.style.position = 'absolute';
-			elem.style.left = Math.round(rect.x) + 'px';
-			elem.style.top = Math.round(rect.y) + 'px';
-			elem.style.width = Math.round(rect.w) + 'px';
-			elem.style.height = Math.round(rect.h) + 'px';
+			elem.style.left = String(rect.x) + 'px';
+			elem.style.top = String(rect.y) + 'px';
+			elem.style.width = String(rect.w + 0.5) + 'px';
+			elem.style.height = String(rect.h + 0.5) + 'px';
 			console.log("assignScreenRect:" + JSON.stringify(rect));
 		}
 	}
@@ -191,8 +204,24 @@
 		return metaData;
 	}
 	
+	
 	/**
-	 * 指定されたメタデータのザ行位置を逆変換
+	 * 指定されたメタデータの位置を初期仮想スクリーンに変換
+	 * @method trans
+	 * @param {Object} metaData メタデータ
+	 * @return metaData メタデータ
+	 */
+	function transPos(metaData) {
+		var rect = vscreen.transformOrg(
+			vscreen.makeRect(parseFloat(metaData.posx, 10), parseFloat(metaData.posy, 10), 0, 0)
+		);
+		metaData.posx = rect.x;
+		metaData.posy = rect.y;
+		return metaData;
+	}
+	
+	/**
+	 * 指定されたメタデータの位置を逆変換
 	 * @method transPosInv
 	 * @param {Object} metaData メタデータ
 	 */
@@ -253,6 +282,7 @@
 	window.vscreen_util.isVisible = isVisible;
 	window.vscreen_util.trans = trans;
 	window.vscreen_util.transInv = transInv;
+	window.vscreen_util.transPos = transPos;
 	window.vscreen_util.transPosInv = transPosInv;
 	window.vscreen_util.isInsideWindow = isInsideWindow;
 	window.vscreen_util.isOutsideWindow = isOutsideWindow;

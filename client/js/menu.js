@@ -2,11 +2,31 @@
 /*global io, socket, FileReader, Uint8Array, Blob, URL, event */
 
 /// menu
-(function () {
+(function (gui) {
 	"use strict";
 
 	var Menu;
 
+	function togglePopup(ul, isShow) {
+		var elem = document.getElementById('popup_background2');
+		if (isShow) {
+			elem.style.display = "block";
+			ul.style.display = "block";
+			ul.style.opacity = "1";
+			ul.style.top = "30px";
+		} else {
+			elem.style.display = "none";
+			ul.style.display = "none";
+			ul.style.opacity = "0";
+			ul.style.top = "30px";
+		}
+		elem.onclick = (function (ul, isShow) {
+			return function () {
+				togglePopup(ul, isShow);
+			};
+		}(ul, !isShow));
+	}
+	
 	// コンストラクタ
 	Menu = function (containerElem, setting) {
 /*
@@ -15,10 +35,10 @@
 				<a href="#" class="init-bottom">Menu multi level</a>
 				<ul class="menu_level1">
 					<li>
-						<a href="#" class="init-right">Child Menu</a>
+						<a href="#" class="menu_init-right">Child Menu</a>
 						<ul class="menu_level2">
 							<li>
-								<a href="#" class="init-right">Grandchild Menu</a>
+								<a href="#" class="menu_init-right">Grandchild Menu</a>
 								<ul class="menu_level3">
 									<li><a href="#">Great-Grandchild Menu</a></li>
 									<li><a href="#">Great-Grandchild Menu</a></li>
@@ -35,6 +55,7 @@
 		</ul>
 */
 		var i,
+			k,
 			head,
 			link,
 			li,
@@ -44,6 +65,15 @@
 		ul = document.createElement('ul');
 		ul.className = "menu";
 		containerElem.appendChild(ul);
+
+		ul.onmouseover = function () {
+			var elems = document.getElementsByClassName('menu_level1');
+			/*
+			for (k = 0; k < elems.length; k = k + 1) {
+				elems[k].style.display = "block";
+			}
+			*/
+		}
 
 		function createMenu(setting, ul, n) {
 			var i,
@@ -63,17 +93,32 @@
 				if (value instanceof Array) {
 					// 子有り.
 					if (n === 1) {
-						link.className = "init-bottom";
+						link.className = "menu_init-bottom";
 					} else {
-						link.className = "init-right";
+						link.className = "menu_init-right";
 					}
 					li = document.createElement('li');
 					li.className = "menu__multi";
 					li.appendChild(link);
 					ul.appendChild(li);
-						
+
 					ul2 = document.createElement('ul');
 					ul2.className = "menu_level" + n;
+					
+					if (n === 1) {
+						li.onclick = (function (ul) {
+							return function () {
+								if (ul.style.display.toLowerCase().indexOf("block") >= 0) {
+									//ul.classList.remove("menu_hover")
+									togglePopup(ul, false);
+								} else {
+									//ul.classList.add("menu_hover")
+									togglePopup(ul, true);
+								}
+							}
+						}(ul2));
+					}
+						
 					li.appendChild(ul2);
 					li = document.createElement('li');
 					ul2.appendChild(li);
@@ -86,7 +131,15 @@
 						link.href = value.url;
 					}
 					if (value.hasOwnProperty('func')) {
-						link.onclick = value.func;
+						link.onclick = (function (ul, value) {
+							return function (evt) {
+								var elems = document.getElementsByClassName('menu_level1');
+								for (k = 0; k < elems.length; k = k + 1) {
+									elems[k].style.display = "none";
+								}
+								value.func(evt);
+							};
+						}(ul, value));
 					}
 					link.className = "";
 					li = document.createElement('li');
@@ -100,103 +153,11 @@
 	};
 
 	// 初期化
-	function init(containerElem) {
-		var menuSetting = {
-				menu : [{
-					SelectMode : [{
-							View : {
-								url : "view.html"
-							},
-						}, {
-							Controller : {
-								url : "controller.html"
-							}
-						}],
-				}, {
-					Add : [{
-							Image : {
-								func : function () { document.getElementById('image_file_input').click() }
-							}
-						}, {
-							Text : {
-								func : function () { document.getElementById('text_file_input').click(); }
-							},
-						}, {
-							URL : {
-								func : function () { console.log("todo"); }
-							}
-						}],
-				}, {
-					Edit : [{
-							VirtualDisplaySetting : {
-								func : function () { document.getElementById('virtual_display_setting').click(); }
-							},
-						}, {
-							Snap : [{
-								Free : {
-									func : function () {}
-								},
-							}, {
-								Display : {
-									func : function () {}
-								},
-							}, {
-								Grid : {
-									func : function () {}
-								}
-							}],
-						}, {
-							Scale : [{
-								0.1 : {
-									func : function () {}
-								}
-							}, {
-								0.2 : {
-									func : function () {}
-								}
-							}, {
-								0.3 : {
-									func : function () {}
-								}
-							}, {
-								0.4 : {
-									func : function () {}
-								}
-							}, {
-								0.5 : {
-									func : function () {}
-								}
-							}, {
-								0.6 : {
-									func : function () {}
-								}
-							}, {
-								0.7 : {
-									func : function () {}
-								}
-							}, {
-								0.8 : {
-									func : function () {}
-								}
-							}, {
-								0.9 : {
-									func : function () {}
-								}
-							}, {
-								1.0 : {
-									func : function () {}
-								}
-							}],
-						}, {
-							ReplaceImage : {
-								func : function () { document.getElementById('update_image_input').click(); }
-							}
-						}]
-					}]
-				};
+	function init(containerElem, menuSetting) {
 		var menu = new Menu(containerElem, menuSetting);
 	}
 
 	window.menu = {};
 	window.menu.init = init;
-}());
+	window.menu.toggle_popup = togglePopup;
+}(window.controller_gui));

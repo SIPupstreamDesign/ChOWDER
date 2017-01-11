@@ -30,6 +30,7 @@ if (process.argv.length > 2) {
 //----------------------------------------------------------------------------------------
 // websocket sender
 //----------------------------------------------------------------------------------------
+/*
 /// http server instance for sender
 var seserver = http.createServer(function (req, res) {
 	'use strict';
@@ -78,6 +79,57 @@ ws.on('request', (function (ws_connections) {
 
 	};
 }(ws_connections)));
+*/
+
+//----------------------------------------------------------------------------------------
+// websocket operator
+//----------------------------------------------------------------------------------------
+/// http server instance for websocket operator
+var wsopserver = http.createServer(function (req, res) {
+	'use strict';
+	console.log('REQ>', req.url);
+	res.end("websocket operator");
+});
+wsopserver.listen(port + 1);
+
+/// web socket server instance
+ws2 = new WebSocket.server({ httpServer : wsopserver,
+		maxReceivedFrameSize : 0x1000000, // more receive buffer!! default 65536B
+		autoAcceptConnections : false});
+
+ws2.on('request', function (request) {
+	"use strict";
+	var connection = null;
+	if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
+		console.log('invalid version');
+		return;
+	}
+	
+	connection = request.accept(null, request.origin);
+	console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
+	
+	// save connection with id
+	connection.id = id_counter;
+	ws2_connections[id_counter] = connection;
+	id_counter = id_counter + 1;
+	
+	operator.registerWSEvent(connection, io, ws2);
+	
+	connection.on('close', (function (connection) {
+		return function () {
+			delete ws2_connections[connection.id];
+
+			operator.decrWindowReferenceCount(connection.id, function (err, meta) {
+				io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
+				//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
+			});
+
+			console.log('connection closed :' + connection.id);
+		};
+	}(connection)));
+	
+});
+
 
 //----------------------------------------------------------------------------------------
 // socket.io operator
@@ -101,7 +153,10 @@ var opsever = http.createServer(function (req, res) {
 		if (temp.length > 1) {
 			contentID = temp[1];
 			if (contentID.length === 8) {
-				operator.getContent(null, contentID, function (reply) {
+				operator.commandGetContent({
+					id : contentID,
+					type : null
+				}, function (err, meta, reply) {
 					res.end(reply);
 				});
 			} else {
@@ -136,73 +191,25 @@ opsever.listen(port);
 /// socekt.io server instance
 io = require('socket.io').listen(opsever).of(currentVersion);
 
-io.on('connection', (function (ws_connections) {
+io.on('connection', (function (ws2_connections) {
 	"use strict";
 	return function (socket) {
 		console.log("[CONNECT] ID=" + socket.id);
 
-		operator.registerEvent(socket.id, io, socket, ws, ws_connections);
+		operator.registerEvent(io, socket, ws2, ws2_connections);
 		io_connector.broadcast(io, Command.Update);
 
 		socket.on('disconnect', function () {
 			console.log("disconnect:" + socket.id);
+			ws_connector.broadcast(ws2, Command.UpdateMouseCursor, { id : socket.id });
 		});
 		socket.on('error', function (err) {
 			console.log('trace.. ' + err.stack);
 			console.error('trace.. ' + err.stack);
 		});
 	};
-}(ws_connections)));
+}(ws2_connections)));
 
-
-//----------------------------------------------------------------------------------------
-// websocket operator
-//----------------------------------------------------------------------------------------
-/// http server instance for websocket operator
-var wsopserver = http.createServer(function (req, res) {
-	'use strict';
-	console.log('REQ>', req.url);
-	res.end("websocket operator");
-});
-wsopserver.listen(port + 2);
-
-/// web socket server instance
-ws2 = new WebSocket.server({ httpServer : wsopserver,
-		maxReceivedFrameSize : 0x1000000, // more receive buffer!! default 65536B
-		autoAcceptConnections : false});
-
-ws2.on('request', function (request) {
-	"use strict";
-	var connection = null;
-	if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
-		console.log('invalid version');
-		return;
-	}
-	
-	connection = request.accept(null, request.origin);
-	console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
-	
-	// save connection with id
-	connection.id = id_counter;
-	ws2_connections[id_counter] = connection;
-	id_counter = id_counter + 1;
-	
-	operator.registerWSEvent(connection.id, connection, io, ws);
-	
-	connection.on('close', (function (connection) {
-		return function () {
-			delete ws2_connections[connection.id];
-
-			operator.decrWindowReferenceCount(connection.id, function (err, meta) {
-				io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
-				//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
-			});
-
-			console.log('connection closed :' + connection.id);
-		};
-	}(connection)));
-	
-});
 
 //----------------------------------------------------------------------------------------
 
@@ -241,6 +248,6 @@ process.on('SIGINT', function () {
 //----------------------------------------------------------------------------------------
 
 console.log('start server "http://localhost:' + port + '/"');
-console.log('start ws sender server "ws://localhost:' + (port + 1) + '/"');
-console.log('start ws operate server "ws://localhost:' + (port + 2) + '/"');
+console.log('start ws operate server "ws://localhost:' + (port + 1) + '/"');
+//console.log('start ws operate server "ws://localhost:' + (port + 2) + '/"');
 

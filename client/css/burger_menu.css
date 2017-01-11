@@ -1,0 +1,138 @@
+ul, ol {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.burger_menu_contents {
+	background-color: white;
+	box-sizing: border-box;
+	position: fixed;
+	right: 12px;
+	bottom: 41px;
+	z-index: 1000001;
+	border : 1px solid black;
+	display : none;
+	width : 180px;
+}
+
+.burger_menu_background {
+	background-color: #333;
+	display: block;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	height: 100%;
+	opacity: 0;
+	width: 100%;
+	z-index: -1;
+}
+
+.burger_menu_icon {
+	/*background-color: white;*/
+	border-radius: 2px;
+	color: #333;
+	cursor: pointer;
+	display: block;
+	font-size: 30px;
+	height: 28px;
+	line-height: 30px;
+	position: fixed;
+	text-align: center;
+	right: 12px;
+	bottom: 8px;
+	width: 28px;
+	z-index: 1000001;
+}
+
+#bottom_burger_menu_display_icon {
+	background-color: rgb(66, 129, 244);
+}
+
+#bottom_burger_menu_display_icon:hover {
+	background-color: rgb(46, 109, 224);
+}
+
+.bottom_burger_menu_content_icon {
+	background-color: rgb(54,187,68);
+}
+
+.bottom_burger_menu_content_icon:hover {
+	background-color: rgb(34,167,48);
+}
+
+.bottom_burger_menu_search_icon {
+	background-color: #FF8055
+}
+
+.bottom_burger_menu_search_icon:hover {
+	background-color: #CC6035
+}
+
+.burger_menu_checkbox {
+	display: none; /*チェックボックス本体は消しておく*/
+}
+
+.burger_menu_content {
+	background : white;
+	color : black;
+	font-size : 14px;
+	padding: 1px 5px;
+}
+
+.burger_menu_content:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}
+
+#bottom_burger_menu_content {
+	display : none;
+}
+
+#bottom_burger_menu_display {
+	display : block;
+}
+
+#bottom_burger_menu_search {
+	display : none;
+}
+
+.burger_menu_submenu {
+	position : fixed;
+	right : 190px;
+	width : 150px;
+	background : white;
+	color : black;
+	border : 1px solid black;
+	z-index : 10000000;
+	display: none;
+}
+
+.burger_menu_submenu_add_content {
+	position : fixed;
+	bottom : 100px;
+	right : 190px;
+	width : 150px;
+	background : white;
+	color : black;
+	border : 1px solid black;
+	z-index : 10000000;
+	display : none;
+}
+
+.burger_menu_content_submenu:before {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin: 0 5px 0 5px;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	-webkit-transform: rotate(-135deg);
+	-ms-transform: rotate(-135deg);
+	transform: rotate(-135deg);
+}
+
+.burger_menu_submenu_item:hover {
+	background : rgb(66, 129, 244);
+	color : white;
+}

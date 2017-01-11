@@ -35,6 +35,34 @@
 	}
 	
 	/**
+	 * updateMetaData処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMetaData
+	 */
+	function post_updateMetaData(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
+			io_connector.broadcast(io, Command.UpdateMetaData, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
+	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMouseCursor
+	 */
+	function post_updateMouseCursor(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMouseCursor, reply);
+			io_connector.broadcast(io, Command.UpdateMouseCursor, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
+	/**
 	 * WebSocketイベント登録
 	 * @method registerWSEvent
 	 * @param {String} socketid ソケットID
@@ -57,6 +85,10 @@
 			operator.commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
+		ws_connector.on(Command.GetGroupList, function (data, resultCallback) {
+			operator.commandGetGroupList(resultCallback);
+		});
+		
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
 			operator.commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
@@ -65,6 +97,14 @@
 			operator.commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
+		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
+			operator.commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.UpdateMouseCursor, function (data, resultCallback) {
+			operator.commandUpdateMouseCursor(data, post_updateMouseCursor(ws, io, resultCallback));
+		});
+
 		ws_connector.registerEvent(ws, ws_connection);
 	}
 	

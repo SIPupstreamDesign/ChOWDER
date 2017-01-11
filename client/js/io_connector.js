@@ -88,7 +88,7 @@
 		if (command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
-			console.log('[Info] chowder_request', reqdata);
+			if(method !== 'UpdateMouseCursor'){console.log('[Info] chowder_request', reqdata);}
 			socket.emit('chowder_request', reqdata);
 		} else {
 			console.log('[Error] Not found the method in connector: ', method);
@@ -165,20 +165,28 @@
 	 * 接続する.
 	 * @method connect
 	 */
-	function connect() {
+	function connect(onopenfunc, onclosefunc) {
 		socket = io.connect(url);
 		socket.on('connect', function () {
-			console.log("connect");
-		});
+            console.log("connect");
+			if (onopenfunc) {
+				onopenfunc();
+			}
+        });
+        socket.on('disconnect', function(data){
+			if (onclosefunc) {
+				onclosefunc();
+			}
+        });
 		socket.on('chowder_response', function (data) {
 			var parsed;
-			console.log('chowder_response', data);
+			if(!(typeof data === 'string' && data.match(/UpdateMouseCursor/))){console.log('chowder_response', data);}
 			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);
 					eventTextMessage(socket, parsed);
 				} catch (e) {
-					console.error('[Error] Recieve invalid JSON :', e);
+					console.error('[Error] Recieve invalid JSON :', e, parsed);
 				}
 			} else {
 				console.log("load meta binary", data);

@@ -10,11 +10,12 @@ ol, ul {
 	max-width: 1000px;
 	margin: 0 auto;
 	text-align: center;
+	top : 0px;
 }
 
 .menu > li {
 	float: left;
-	width: 150px;
+	width: 130px;
 	height: 30px;
 	line-height: 30px;
 	background: rgb(112, 180, 239);
@@ -22,7 +23,8 @@ ol, ul {
 
 .menu > li a {
 	display: block;
-	color : black;
+	color : rgb(10, 26, 67);
+    font-size: 14px;
 }
 
 ul.menu_level1 > li a:hover {
@@ -91,6 +93,7 @@ ul.menu_level3 {
 
 .menu > li.menu__multi {
 	position: relative;
+    z-index: 10000000;
 }
 
 li.menu__multi ul.menu_level1 {
@@ -104,7 +107,7 @@ li.menu__multi ul.menu_level1 {
 
 li.menu__multi:hover ul.menu_level1 {
 	top: 30px;
-	display : block;
+	/*display : block;*/
 	opacity: 1;
 }
 
@@ -150,19 +153,43 @@ li.menu__multi ul.menu_level1 li ul.menu_level2 li:hover ul.menu_level3 {
 	opacity: 1;
 }
 
-.init-right:after {
+.menu_init-right:after {
 	content: '';
 	display: inline-block;
 	width: 6px;
 	height: 6px;
 	margin: 0 0 0 15px;
-	border-right: 1px solid #fff;
-	border-top: 1px solid #fff;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
 	-webkit-transform: rotate(45deg);
 	-ms-transform: rotate(45deg);
 	transform: rotate(45deg);
 }
 
-.init-bottom {
+.menu_init-right:hover:after {
+	border-right: 1px solid #999;
+	border-top: 1px solid #999;
+}
+
+.menu_init-bottom {
 	border-right: 1px solid #111;
+}
+
+#head_menu_hover {
+    z-index: 10000000;
+}
+
+.head_mode_text {
+	color: rgb(10, 26, 67);
+	font-size: 20px;
+	font-weight: 700;
+    text-align: center;
+    width: 100%;
+	position:  absolute;
+    z-index: 10000000;
+}
+
+#chowder_text {
+	cursor : pointer;
+	color: rgb(10, 26, 67);
 }

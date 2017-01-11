@@ -71,9 +71,9 @@
 		} else {
 			// clientからmasterにメッセージが来た
 			if (recievers.hasOwnProperty(metaData.method)) {
-				recievers[metaData.method](metaData.params, (function (ws_connection) {
+				recievers[metaData.method](metaData.params,(function (ws_connection) {
 					return sendResponse(ws_connection, metaData);
-				}(ws_connection)));
+				}(ws_connection)),  ws_connection.id);
 			}
 		}
 	}
@@ -113,7 +113,7 @@
 				// 完了後のコールバックでclientにメッセージを返す.
 				recievers[metaData.method](data, (function (ws_connection) {
 					return sendResponse(ws_connection, metaData);
-				}(ws_connection)));
+				}(ws_connection)), ws_connection.id);
 			}
 		}
 	}
@@ -249,7 +249,7 @@
 			
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
-				console.log("chowder_response broadcast ws", method);
+				if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast ws", method);}
 				ws.broadcast(data);
 			} else {
 				console.log('[Error] Not found the method in connector: ', data);

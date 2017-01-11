@@ -22,6 +22,7 @@
 		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
+		groupListPrefix = "grouplist",
 		io_connector = require('./io_connector.js'),
 		ws_connector = require('./ws_connector.js'),
 		util = require('./util.js'),
@@ -32,11 +33,50 @@
 		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
-		methods;
+		methods,
+        connectionId = {},
+        connectionCount = 0;
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
 	});
+
+	function renderURLInternal(command, endCallback) {
+		var command;
+		var output = "out.png";
+		if (command.length > 4) {
+			output = "out" + command[5] + ".png";
+			command[2] = output;
+		}
+		util.launchApp(command, null, function () {
+			if (fs.existsSync(output)) {
+				image_size(output, function (err, dimensions) {
+					if (endCallback) {
+						if (dimensions.height > 4000) {
+							command.push(dimensions.width);
+							command.push(4000);
+							renderURLInternal(command, endCallback);
+							/*
+							var i = 0;
+							for (; i < dimensions.height; i = i + 4000) {
+								command[5] = i;
+								renderURLInternal(command, endCallback);
+							}
+							var last = dimensions.height - i;
+							if (last > 0) {
+								renderURLInternal(command, endCallback);
+							}
+							*/
+						} else {
+							endCallback(fs.readFileSync(output), dimensions);
+						}
+					}
+				});
+			} else if (endCallback) {
+				endCallback(null);
+			}
+		});
+	}
 	
 	/**
 	 * 指定されたURLをレンダリングする
@@ -52,19 +92,7 @@
 				url ];
 		console.dir("Phantomjs:" + JSON.stringify(phantomjs));
 		console.log("Phantomjs path:" + phantomjs.path);
-		
-		util.launchApp(command, null, function () {
-			if (fs.existsSync(output)) {
-				console.log("output found");
-				image_size(output, function (err, dimensions) {
-					if (endCallback) {
-						endCallback(fs.readFileSync(output), dimensions);
-					}
-				});
-			} else if (endCallback) {
-				endCallback(null);
-			}
-		});
+		renderURLInternal(command, endCallback);
 	}
 	
 	function generateID(prefix, endCallback) {
@@ -118,6 +146,143 @@
 	function generateWindowContentID(endCallback) {
 		generateID(windowContentPrefix, endCallback);
 	}
+
+	/**
+	 * グループリストの取得. ない場合は空がendcallbackにわたる.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function getGroupList(endCallback) {
+		textClient.get(groupListPrefix, function (err, reply) {
+			var data = reply;
+			if (!reply) {
+				data = { grouplist : [] };
+			} else {
+				try {
+					data = JSON.parse(data);
+				} catch (e) {
+					return false;
+				}
+			}
+			endCallback(err, data);
+		});
+	}
+
+	function getGroupIndex(groupList, id) {
+		var i;
+		for (i = 0; i < groupList.length; i = i + 1) {
+			if (groupList[i].id === id) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	function getGroupIndexByName(groupList, name) {
+		var i;
+		for (i = 0; i < groupList.length; i = i + 1) {
+			if (groupList[i].name === name) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * グループリストにgroupを追加
+	 * @param {String} id グループid. nullの場合自動割り当て.
+	 * @param {String} groupName グループ名.
+	 * @param {String} color グループ色.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addGroup(groupID, groupName, color, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndexByName(data.grouplist, groupName);
+			if (index >= 0) {
+				if (endCallback) {
+					endCallback("Detect same group name");
+				}
+				return;
+			}
+			if (groupID) {
+				data.grouplist.push({ name : groupName, color : color, id : groupID });
+			} else {
+				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+			}
+			textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+			if (endCallback) {
+				endCallback(null, null);
+			}
+		});
+	}
+
+	/**
+	 * グループリストからgroupの削除
+	 * @param {String} id グループid.
+	 * @param {String} groupName グループ名.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function deleteGroup(id, groupName, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndex(data.grouplist, id);
+			if (index >= 0) { 
+				data.grouplist.splice(index, 1);
+				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				return true;
+			} else {
+				endCallback("not found");
+				return false;
+			}
+		});
+	}
+
+	/**
+	 * グループ更新
+	 * @param {String} groupName グループ名.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function updateGroup(id, json, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndex(data.grouplist, id);
+			if (index >= 0) {
+				data.grouplist[index] = json;
+				textClient.set(groupListPrefix, JSON.stringify(data), function () {
+					endCallback(null, json);
+				});
+				return true;
+			} else {
+				if (endCallback) {
+					endCallback("Not Found Group:" + id + ":" + groupName);
+					return false;
+				}
+			}
+		});
+	}
+
+	/**
+	 * グループリストのgroupのインデックスを変更する
+	 * @param {String} id グループid.
+	 * @param {Integer} insertIndex 新規に割り当てるインデックス.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function changeGroupIndex(id, insertIndex, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndex(data.grouplist, id),
+				item;
+			if (index >= 0) {
+				item = data.grouplist[index];
+				data.grouplist.splice(index, 1);
+				if (insertIndex > 0 && insertIndex >= index) {
+					insertIndex -= 1;
+				}
+				data.grouplist.splice(insertIndex, 0, item);
+				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				return true;
+			} else {
+				endCallback("not found");
+				return false;
+			}
+		});
+	}
 	
 	/**
 	 * 指定されたタイプ、idのメタデータ設定
@@ -148,6 +313,7 @@
 		if (metaData.hasOwnProperty('command')) {
 			delete metaData.command;
 		}
+	
 		textClient.hmset(metadataPrefix + id, metaData, function (err) {
 			if (err) {
 				console.error(err);
@@ -167,9 +333,12 @@
 	function getMetaData(type, id, endCallback) {
 		if (type === 'all') {
 			textClient.keys(metadataPrefix + '*', function (err, replies) {
+				var results = [],
+					all_done = replies.length;
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
 						if (endCallback) {
+							data.last = ((replies.length - 1) === index);
 							endCallback(data);
 						}
 					});
@@ -386,7 +555,7 @@
 		textClient.exists(metadataPrefix + metaData.id, function (err, doesExist) {
 			if (!err &&  doesExist === 1) {
 				textClient.del(metadataPrefix + metaData.id, function (err) {
-					console.log("deleteMetadata");
+					console.log("deleteMetadata", metaData.id);
 					if (endCallback) {
 						endCallback(err, metaData);
 					}
@@ -735,6 +904,20 @@
 	}
 	
 	/**
+	 * cursor更新
+	 * @method updateMouseCursor
+	 * @param {BLOB} socketid socket id
+	 * @param {JSON} mouseData mouseメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function updateMouseCursor(socketid, mouseData, endCallback) {
+		var obj = {data: mouseData, id: socketid};
+		if (endCallback) {
+			endCallback(obj);
+		}
+	}
+	
+	/**
 	 * セッションリスト取得。registerWSEventにてコールされる。
 	 * @method getSessionList
 	 */
@@ -870,39 +1053,55 @@
 	/**
 	 * コンテンツの削除を行うコマンドを実行する.
 	 * @method commandDeleteContent
-	 * @param {JSON} json socket.io.on:DeleteContent時JSONデータ
+	 * @param {JSON} json メタデータリスト
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteContent(json, endCallback) {
-		console.log("commandDeleteContent:" + json.id);
-		
-		if (json) {
-			if (json.hasOwnProperty('type') && json.type === 'all') {
-				textClient.keys(metadataPrefix + '*', function (err, replies) {
-					replies.forEach(function (id, index) {
-						console.log(id);
-						textClient.hgetall(id, function (err, data) {
-							if (!err && data) {
-								deleteContent(data, function (meta) {
-									if (endCallback) {
-										endCallback(null, meta);
+		console.log("commandDeleteContent:", json.length);
+		var i,
+			metaData,
+			results = [],
+			all_done = json.length,
+			syncDelete = function (results, all_done) {
+				if (all_done <= 0) {
+					if (endCallback) {
+						endCallback(null, results);
+						return;
+					}
+				} else {
+					var metaData = json[all_done - 1];
+					if (metaData.hasOwnProperty('type') && metaData.type === 'all') {
+						textClient.keys(metadataPrefix + '*', function (err, replies) {
+							replies.forEach(function (id, index) {
+								console.log(id);
+								textClient.hgetall(id, function (err, data) {
+									if (!err && data) {
+										deleteContent(data, function (meta) {
+											if (endCallback) {
+												endCallback(null, meta);
+											}
+										});
 									}
 								});
-							}
+							});
 						});
-					});
-				});
-			} else {
-				deleteContent(json, function (metaData) {
-					//socket.emit(Command.doneDeleteContent, JSON.stringify({"id" : id}));
-					if (endCallback) {
-						endCallback(null, metaData);
+						all_done = 0;
+						if (endCallback) {
+							endCallback(null, results);
+							return;
+						}
+					} else {
+						deleteContent(metaData, function (meta) {
+							results.push(meta);
+							syncDelete(results, all_done - 1);
+						});
 					}
-				});
-			}
-		}
+				}
+			};
+
+			syncDelete(results, all_done);
 	}
-	
+
 	/**
 	 * コンテンツの更新を行うコマンドを実行する.
 	 * @method commandUpdateContent
@@ -926,15 +1125,55 @@
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
+	/*
 	function commandUpdateMetaData(json, endCallback) {
 		//console.log("commandUpdateMetaData:" + json.id);
-		setMetaData(json.type, json.id, json, function (meta) {
-			if (endCallback) {
-				endCallback(null, meta);
+		textClient.exists(metadataPrefix + json.id, function (err, doesExists) {
+			if (!err && doesExists === 1) {
+				setMetaData(json.type, json.id, json, function (meta) {
+					if (endCallback) {
+						endCallback(null, meta);
+					}
+				});
 			}
 		});
 	}
+	*/
 	
+	/**
+	 * メタデータの更新を行うコマンドを実行する.
+	 * @method commandUpdateMetaData
+	 * @param {JSON} json windowメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateMetaData(json, endCallback) {
+		console.log("commandUpdateMetaData:", json.length);
+		var i,
+			metaData,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			metaData = json[i];
+			textClient.exists(metadataPrefix + json[i].id, (function (metaData) {
+				return function (err, doesExists) {
+					if (!err && doesExists === 1) {
+						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+							--all_done;
+							results.push(meta);
+							if (all_done <= 0) {
+								if (endCallback) {
+									endCallback(null, results);
+									return;
+								}
+							}
+						});
+					}
+				};
+			}(metaData)));
+		}
+	}
+
 	/**
 	 * ウィンドウの追加を行うコマンドを実行する.
 	 * @method commandAddWindowMetaData
@@ -946,7 +1185,7 @@
 		console.log("commandAddWindowMetaData : " + JSON.stringify(json));
 		addWindow(socketid, json, function (windowData) {
 			if (endCallback) {
-				endCallback(null, windowData);
+				endCallback(null, [windowData]);
 			}
 		});
 	}
@@ -959,39 +1198,32 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteWindowMetaData(socketid, json, endCallback) {
-		//console.log(socketid, json);
-		if (json) {
-			if (json.hasOwnProperty('type') && json.type === 'all') {
-				textClient.keys(windowMetaDataPrefix + '*', function (err, replies) {
-					replies.forEach(function (id, index) {
-						console.log(id);
-						textClient.hgetall(id, function (err, data) {
-							if (!err && data) {
-								deleteWindow(data, function (meta) {
-									if (endCallback) {
-										endCallback(null, meta);
-									}
-								});
-							}
-						});
-					});
-				});
-			} else {
-				getWindowMetaData(json, function (metaData) {
-					if (metaData) {
-						deleteWindow(metaData, function (meta) {
-							//console.log("commandDeleteWindowMetaData : " + JSON.stringify(meta));
+		console.log(commandDeleteWindowMetaData);
+		var i,
+			meta,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			meta = json[i];
+			getWindowMetaData(meta, function (metaData) {
+				if (metaData) {
+					deleteWindow(metaData, function (meta) {
+						--all_done;
+						results.push(meta);
+						if (all_done <= 0) {
 							if (endCallback) {
-								endCallback(null, meta);
+								endCallback(null, results);
+								return;
 							}
-						});
-					} else {
-						if (endCallback) {
-							endCallback("not exists window metadata", null);
 						}
+					});
+				} else {
+					if (endCallback) {
+						endCallback("not exists window metadata", null);
 					}
-				});
-			}
+				}
+			});
 		}
 	}
 	
@@ -1027,7 +1259,61 @@
 			}
 		});
 	}
+
+	/**
+	 *  グループリストを取得する.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandGetGroupList(endCallback) {
+		getGroupList(endCallback);
+	}
 	
+	/**
+	 *  グループを追加する.
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandAddGroup(json, endCallback) {
+		var groupColor = "";
+		if (json.hasOwnProperty("name") && json.name !== "") {
+			if (json.hasOwnProperty("color")) {
+				groupColor = json.color;
+			}
+			addGroup(null, json.name, groupColor, endCallback);
+		}
+	}
+
+	/**
+	 *  グループを削除する.
+	 * @param {JSON} json 対象のid, nameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandDeleteGroup(json, endCallback) {
+		if (json.hasOwnProperty("id") && json.hasOwnProperty("name") && json.name !== "") {
+			deleteGroup(json.id, json.name, endCallback);
+		}
+	}
+
+	/**
+	 * グループを更新する
+	 * @param {JSON} json 対象のid, nameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateGroup(json, endCallback) {
+		if (json.hasOwnProperty("id")) {
+			updateGroup(json.id, json, endCallback);
+		}
+	}
+
+	/**
+	 * グループインデックスを変更する.
+	 */
+	function commandChangeGroupIndex(json, endCallback) {
+		if (json.hasOwnProperty("id") && json.hasOwnProperty("index")) {
+			changeGroupIndex(json.id, json.index, endCallback);
+		}
+	}
+
 	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
@@ -1055,12 +1341,78 @@
 	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
+	/*
 	function commandUpdateWindowMetaData(socketid, json, endCallback) {
 		updateWindowMetaData(socketid, json, function (windowData) {
 			endCallback(null, windowData);
 		});
 	}
-	
+	*/
+
+	/**
+	 * ウィンドウの更新を行うコマンドを実行する.
+	 * @method commandUpdateWindowMetaData
+	 * @param {String} socketid ソケットID
+	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandUpdateWindowMetaData(socketid, json, endCallback) {
+		console.log("commandUpdateWindowMetaData:", json.length);
+		var i,
+			metaData,
+			results = [],
+			all_done = json.length;
+
+		for (i = 0; i < json.length; i = i + 1) {
+			metaData = json[i];
+			updateWindowMetaData(socketid, metaData, function (meta) {
+				--all_done;
+				results.push(meta);
+				if (all_done <= 0) {
+					if (endCallback) {
+						endCallback(null, results);
+						return;
+					}
+				}
+			});
+		}
+	}
+
+    /**
+     * mouseコマンドを実行する.
+     * リモートマウスカーソル表示のために HSV カラーを新規接続に応じて生成する
+     * @method commandUpdateMouseCursor
+     * @param {String} socketid ソケットID
+     * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
+     */
+    function commandUpdateMouseCursor(socketid, json, endCallback) {
+        var c, i, j;
+        if(!connectionId.hasOwnProperty(socketid)){
+            connectionId[socketid] = connectionCount;
+            ++connectionCount;
+        }
+        json.connectionCount = connectionId[socketid];
+        i = connectionId[socketid] % 14;
+        // hsv は約 7 分割されるような循環
+        // 奇数回周目は v を半減させ視認性を上げる
+        if(i < 7){
+            j = 1.0;
+        }else{
+            j = 0.5;
+        }
+        c = hsv(49.21875 * connectionId[socketid], 1.0, j);
+        if(c){
+            c[0] = Math.floor(c[0] * 255);
+            c[1] = Math.floor(c[1] * 255);
+            c[2] = Math.floor(c[2] * 255);
+            json.hsv = 'rgb(' + (c.join(',')) + ')';
+        }
+        updateMouseCursor(socketid, json, function (windowData) {
+            endCallback(null, windowData);
+        });
+    }
+
 	/**
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
@@ -1089,6 +1441,16 @@
 		};
 	}
 	
+	function post_updateGroup(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateGroup, reply);
+			io_connector.broadcast(io, Command.UpdateGroup, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
 	/**
 	 * updateContent処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateContent
@@ -1116,7 +1478,7 @@
 			}
 		};
 	}
-	
+
 	/**
 	 * deleteWindow処理実行後のブロードキャスト用ラッパー.
 	 * @method post_deleteWindow
@@ -1124,16 +1486,19 @@
 	function post_deleteWindow(ws, io, ws_connections, resultCallback) {
 		return function (err, reply) {
 			var socketid,
-				id;
+				id,
+				i;
 			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
 			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
 			
 			for (socketid in socketidToHash) {
 				if (socketidToHash.hasOwnProperty(socketid)) {
 					id = socketidToHash[socketid];
-					if (reply.id === id) {
-						if (ws_connections.hasOwnProperty(socketid)) {
-							ws_connector.send(ws_connections[socketid], Command.Disconnect);
+					for (i = 0; i < reply.length; i = i + 1) {
+						if (reply[i].id === id) {
+							if (ws_connections.hasOwnProperty(socketid)) {
+								ws_connector.send(ws_connections[socketid], Command.Disconnect);
+							}
 						}
 					}
 					delete socketidToHash[socketid];
@@ -1160,6 +1525,20 @@
 	}
 	
 	/**
+	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateMouseCursor
+	 */
+	function post_updateMouseCursor(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateMouseCursor, reply);
+			io_connector.broadcast(io, Command.UpdateMouseCursor, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+	
+	/**
 	 * websocketイベントの登録を行う.
 	 * register websockets events
 	 * @method registerWSEvent
@@ -1168,7 +1547,7 @@
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerWSEvent(socketid, ws_connection, io, ws) {
+	function registerWSEvent(ws_connection, io, ws) {
 		var methods = {};
 
 		console.log("registerWSEvent");
@@ -1189,29 +1568,65 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback, socketid) {
 			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 		
-		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback, socketid) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
+
+		ws_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback, socketid) {
+			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
+		});
+
+		ws_connector.on(Command.UpdateMouseCursor, function(data, resultCallback, socketid){
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+		});
 		
-		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
+		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
 			commandGetVirtualDisplay(socketid, data, resultCallback);
 		});
+
+		ws_connector.on(Command.GetGroupList, function (data, resultCallback) {
+			commandGetGroupList(resultCallback);
+		});
 		
+		ws_connector.on(Command.AddGroup, function (data, resultCallback) {
+			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
+		ws_connector.on(Command.DeleteGroup, function (data, resultCallback) {
+			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
+		ws_connector.on(Command.UpdateGroup, function (data, resultCallback) {
+			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
+			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
+		});
+
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.ShowWindowID, {id : data.id});
-			io_connector.broadcast(io, Command.ShowWindowID, {id : data.id});
+			ws_connector.broadcast(ws, Command.ShowWindowID, data);
+			io_connector.broadcast(io, Command.ShowWindowID, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+
+		ws_connector.on(Command.SendMessage, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.SendMessage, data);
+			io_connector.broadcast(io, Command.SendMessage, data);
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -1227,7 +1642,7 @@
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
 			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
 		});
-		
+
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
@@ -1244,12 +1659,11 @@
 	/**
 	 * socketioイベントの登録を行う.
 	 * @method registerEvent
-	 * @param {String} socketid ソケットID
 	 * @param {BLOB} socket socket.ioオブジェクト
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerEvent(socketid, io, socket, ws, ws_connections) {
+	function registerEvent(io, socket, ws, ws_connections) {
 		var methods = {};
 
 		io_connector.on(Command.AddContent, function (data, resultCallback) {
@@ -1285,33 +1699,65 @@
 			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
 			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback, socketid) {
 			commandGetWindowMetaData(socketid, data, resultCallback);
 		});
 
-		io_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback, socketid) {
 			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback) {
+		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback, socketid) {
 			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback) {
+		io_connector.on(Command.UpdateMouseCursor, function(data, resultCallback, socketid){
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+		});
+
+        io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
 			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback) {
+		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
 			commandGetVirtualDisplay(socketid, data, resultCallback);
+		});
+		
+		io_connector.on(Command.GetGroupList, function (data, resultCallback) {
+			commandGetGroupList(resultCallback);
+		});
+
+		io_connector.on(Command.AddGroup, function (data, resultCallback) {
+			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.DeleteGroup, function (data, resultCallback) {
+			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.UpdateGroup, function (data, resultCallback) {
+			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
+			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.ShowWindowID, { id : data.id });
-			io_connector.broadcast(io, Command.ShowWindowID, { id : data.id });
+			ws_connector.broadcast(ws, Command.ShowWindowID, data);
+			io_connector.broadcast(io, Command.ShowWindowID, data);
+		});
+
+		io_connector.on(Command.SendMessage, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.SendMessage, data);
+			io_connector.broadcast(io, Command.SendMessage, data);
+			if (resultCallback) {
+				resultCallback();
+			}
 		});
 
 		io_connector.registerEvent(io, socket);
@@ -1332,14 +1778,44 @@
 		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
 		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
+		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);
 		console.log("idstr:" + windowMetaDataPrefix);
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
+		console.log("idstr:" + groupListPrefix);
+		addGroup("group_defalut", "default", function (err, reply) {} );
 	}
-	
+
+	/**
+	 * HSV 色空間の値から RGB を生成して返す.
+	 * @method hsv
+	 * @param {number} h hue
+	 * @param {number} s saturation
+	 * @param {number} v value
+	 */
+    function hsv(h, s, v){
+        if(s > 1 || v > 1){return;}
+        var th = h % 360;
+        var i = Math.floor(th / 60);
+        var f = th / 60 - i;
+        var m = v * (1 - s);
+        var n = v * (1 - s * f);
+        var k = v * (1 - s * (1 - f));
+        var color = new Array();
+        if(!s > 0 && !s < 0){
+            color.push(v, v, v);
+        } else {
+            var r = new Array(v, n, m, m, k, v);
+            var g = new Array(k, v, v, n, m, m);
+            var b = new Array(m, m, k, v, v, n);
+            color.push(r[i], g[i], b[i]);
+        }
+        return color;
+    }
+
 	Operator.prototype.getContent = getContent;
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;
@@ -1348,7 +1824,10 @@
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;
+	Operator.prototype.commandGetGroupList = commandGetGroupList;
 	Operator.prototype.commandAddWindowMetaData = commandAddWindowMetaData;
 	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
+	Operator.prototype.commandUpdateMouseCursor = commandUpdateMouseCursor;
+	Operator.prototype.commandUpdateMetaData = commandUpdateMetaData;
 	module.exports = new Operator();
 }());

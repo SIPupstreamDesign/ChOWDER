@@ -20,7 +20,11 @@
 		for (i = 0; i < chars.length; i = i + 1) {
 			encodedString = encodedString + String.fromCharCode(chars[i]);
 		}
-		decodedString = decodeURIComponent(escape(encodedString));
+		try {
+			decodedString = decodeURIComponent(escape(encodedString));
+		} catch (e) {
+			decodedString = decodeURIComponent(encodedString);
+		}
 		return decodedString;
 	}
 	
@@ -146,6 +150,7 @@
 			pos = 0,
 			i,
 			c,
+			chars = new Uint8Array(utf8StringToArray(metaDataStr)),
 			params;
 		
 		if (metaData.hasOwnProperty('params')) {
@@ -156,13 +161,13 @@
 		
 		if (params.type === 'url') {
 			binary = utf8StringToArray(encodeURI(data));
-			dstBufferSize = head.length + 8 + metaDataStr.length + binary.length;
+			dstBufferSize = head.length + 8 + chars.length + binary.length;
 		} else if (params.type === 'text') {
 			binary = utf8StringToArray(data);
-			dstBufferSize = head.length + 8 + metaDataStr.length + binary.length;
+			dstBufferSize = head.length + 8 + chars.length + binary.length;
 		} else {
 			binary = data;
-			dstBufferSize = head.length + 8 + metaDataStr.length + binary.byteLength;
+			dstBufferSize = head.length + 8 + chars.length + binary.byteLength;
 		}
 		dstBuffer = new ArrayBuffer(dstBufferSize);
 		view = new DataView(dstBuffer);
@@ -176,16 +181,16 @@
 		// version
 		view.setUint32(pos, 1, true);
 		pos = pos + 4;
-		
+
 		// metadata size
-		view.setUint32(pos, metaDataStr.length, true);
+		view.setUint32(pos, chars.length, true);
 		pos = pos + 4;
 		
 		// metadata
-		for (i = pos; i < (pos + metaDataStr.length); i = i + 1) {
-			view.setUint8(i, metaDataStr.charCodeAt(i - pos), true);
+		for (i = pos; i < (pos + chars.length); i = i + 1) {
+			view.setUint8(i, chars[i - pos], true);
 		}
-		pos = pos + metaDataStr.length;
+		pos = pos + chars.length;
 		
 		if (params.type === 'text' || params.type === 'url') {
 			for (i = pos; i < dstBufferSize; i = i + 1) {
