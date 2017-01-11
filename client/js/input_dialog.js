@@ -6,50 +6,12 @@
 	/**
 	 * Group名入力ダイアログの表示をトグル
 	 */
-	function toggleTextInput() {
-		var background = document.getElementById("popup_background"),
-			input = document.getElementById("input_dialog");
-		input.style.display = (input.style.display === "block") ? "none" : "block";
-		background.style.display = input.style.display; 
-		background.onclick = toggleTextInput;
-	}
-
-	/**
-	 * OK Cancelダイアログの表示をトグル
-	 */
-	function toggleOKCancelInput() {
-		var background = document.getElementById("popup_background"),
-			input = document.getElementById("okcancel_dialog");
-			
-		if (!input.style.display || input.style.display === "none") {
-			background.style.display = "block";
-			input.style.display = "block";
-		} else {
-			background.style.display = "none";
-			input.style.display = "none";
-		}
-		background.onclick = toggleOKCancelInput;
-	}
-
-	function toggleColorInput() {
-		var background = document.getElementById("popup_background"),
-			color_picker = document.getElementById('color_dialog_picker'),
-			color_dialog = document.getElementById('color_dialog');
-		if (!color_dialog.style.display || color_dialog.style.display === "none") {
-			background.style.display = "block";
-			color_dialog.style.display = "block";
-		} else {
-			color_picker.innerHTML = "";
-			background.style.display = "none";
-			color_dialog.style.display = "none";
-		}
-		background.onclick = toggleColorInput;
-	}
-
 	function init_text_input(setting, okCallback) {
 		var okbutton = document.getElementById('input_ok_button'),
 			dialogname = document.getElementById('input_dialog_name'),
-			input = document.getElementById("input_dialog_input");
+			input = document.getElementById("input_dialog_input"),
+			background = new PopupBackground(),
+			inputCover = document.getElementById("input_dialog");
 
 		dialogname.textContent = setting.name;
 		if (setting.initialValue) {
@@ -63,16 +25,23 @@
 				okCallback(input.value);
 			}
 			input.value = "";
-			toggleTextInput();
+			background.close();
+			inputCover.style.display = "none";
 		};
-
-		toggleTextInput();
+		
+		background.show();
+		background.on('close', function () {
+			inputCover.style.display = "none";
+		});
+		inputCover.style.display = "block";
 	}
 
 	function init_color_input(setting, okCallback) {
 		var okbutton = document.getElementById('color_ok_button'),
 			dialogname = document.getElementById('color_dialog_name'),
-			color_picker = document.getElementById('color_dialog_picker');
+			color_picker = document.getElementById('color_dialog_picker'),
+			background = new PopupBackground(),
+			color_dialog = document.getElementById('color_dialog');
 
 		dialogname.textContent = setting.name;
 
@@ -94,29 +63,45 @@
 			if (okCallback) {
 				okCallback(colorstr);
 			}
-			toggleColorInput();
+			background.close();
+			color_picker.style.display = "none";
+			color_dialog.style.display = "none";
 		};
 
-		toggleColorInput();
+		background.show();
+		background.on('close', function () {
+			color_picker.style.display = "none";
+			color_dialog.style.display = "none";
+		});
+		color_picker.style.display = "block";
+		color_dialog.style.display = "block";
 	}
 
 	function okcancel_input(setting, callback) {
 		var dialog = document.getElementById('okcancel_dialog_name'),
 			ok_button = document.getElementById('okcancel_dialog_ok_button'),
-			cancel_button = document.getElementById("okcancel_dialog_cancel_button");
+			cancel_button = document.getElementById("okcancel_dialog_cancel_button"),
+			input = document.getElementById("okcancel_dialog"),
+			background = new PopupBackground();
 
 		dialog.textContent = setting.name;
 
 		ok_button.onclick = function (evt) {
 			if (callback) { callback(true); }
-			toggleOKCancelInput();
+			background.close();
+			input.style.display = "none";
 		};
 		cancel_button.onclick = function (evt) {
 			if (callback) { callback(false); }
-			toggleOKCancelInput();
+			background.close();
+			input.style.display = "none";
 		};
 
-		toggleOKCancelInput();
+		background.show();
+		background.on('close', function () {
+			input.style.display = "none";
+		});
+		input.style.display = "block";
 	}
 
 	window.input_dialog = {}

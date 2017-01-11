@@ -698,35 +698,6 @@ p {
 	background-color: rgb(82, 150, 209);
 }
 
-
-.popup_background {
-	min-height: 100%;
-	min-width: 800px;
-	width: 100%;
-	height: auto;
-	position: fixed;
-	top: 0;
-	left: 0;
-	background-color:#555555;
-	opacity: 0.5;
-	z-index: 3;
-	display: none;
-}
-
-.popup_background2 {
-	min-height: 100%;
-	min-width: 800px;
-	width: 100%;
-	height: auto;
-	position: fixed;
-	top: 0;
-	left: 0;
-	background-color:#555555;
-	opacity: 0.0;
-	z-index: 3;
-	display: none;
-}
-
 #input_dialog {
 	top: 50%;
 	left: 50%;

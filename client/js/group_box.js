@@ -201,7 +201,7 @@
 			setting_button.onclick = (function (self, groupName) {
 				return function (evt) {
 					var menu = document.getElementById('group_setting_menu'),
-						background = document.getElementById("popup_background"),
+						background = new window.PopupBackground(),
 						delete_button = document.getElementById('group_setting_delete'),
 						name_button = document.getElementById('group_setting_name'),
 						color_button = document.getElementById('group_setting_color');
@@ -209,17 +209,17 @@
 					menu.style.display = "block";
 					menu.style.top = evt.clientY + "px";
 					menu.style.left = evt.clientX + "px";
-					background.style.display = "block";
-					background.onclick = (function (menu) {
+					background.show();
+					
+					background.on('close', (function (menu) {
 						return function () {
-							menu.style.display = "none"
-							background.style.display = "none";
-						};
-					}(menu));
+							menu.style.display = "none";
+						}
+					}(menu)));
 
 					delete_button.onclick = function () {
-						background.style.display = "none";
-						menu.style.display = "none"
+						menu.style.display = "none";
+						background.close();
 						this.emit(GroupBox.EVENT_GROUP_DELETE, null, groupID);
 					}.bind(self);
 
@@ -231,7 +231,8 @@
 							}, function (value) {
 								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null, groupID, value);
 							}.bind(this));
-						menu.style.display = "none"
+						menu.style.display = "none";
+						background.close();
 					}.bind(self);
 
 					color_button.onclick = function () {
@@ -242,7 +243,8 @@
 							}, function (value) {
 								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null, groupID, value);
 							}.bind(this));
-						menu.style.display = "none"
+						menu.style.display = "none";
+						background.close();
 					}.bind(self);
 
 				};

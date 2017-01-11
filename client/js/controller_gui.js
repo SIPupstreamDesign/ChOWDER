@@ -43,7 +43,7 @@
 							}
 						}, {
 							Text : {
-								func : function () { this.toggleTextInput(); }.bind(this)
+								func : function () { this.openTextInput(); }.bind(this)
 							},
 						}, {
 							TextFile : {
@@ -72,22 +72,16 @@
 								func : function () { this.emit(window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE, null, false); }.bind(this)
 							}
 						}]	
+					}, {
+						Management : {
+							func : function () {
+
+							}.bind(this)
+						}
 					}]
 				}]
 			});
-
-		document.getElementById('head_menu_panel__').onmouseup = function (evt) {
-			var elems = document.getElementsByClassName('menu_level1');
-			if (elems) {
-				for (var i = 0; i < elems.length; ++i) {
-					if (!elems[i].contains(evt.target)) {
-						this.menu.toggle_popup(elems[i], false);
-					}
-				}
-			}
-		}.bind(this);
-
-
+		
 		// 下部コンテンツボックスの初期化.
 		this.contentBox = new ContentBox(document.getElementById('bottom_area'),
 			{
@@ -154,9 +148,6 @@
 
 		// メインビューの拡大縮小の初期化
 		this.initMainViewScaling();
-
-		// テキスト入力ダイアログの初期化
-		this.initTextInputDialog();
 
 		// 下部バーガーメニューの初期化	
 		this.displayMenu = new BurgerMenu(
@@ -414,7 +405,7 @@
 		}.bind(this);
 
 		add_text_button.onmousedown = function (evt) {
-			this.toggleTextInput();
+			this.openTextInput();
 			menu.style.display = "none";
 		}.bind(this);
 
@@ -827,26 +818,23 @@
 	/**
 	 * テキスト入力ダイアログの表示をトグル
 	 */
-	ControllerGUI.prototype.toggleTextInput = function () {
-		var background = document.getElementById("popup_background"),
+	ControllerGUI.prototype.openTextInput = function () {
+		var background = new PopupBackground(),
 			input = document.getElementById("text_input_dialog"),
-			textInput = document.getElementById('text_input');
-
-		background.style.display = (background.style.display === "block") ? "none" : "block";
-		input.style.display = background.style.display;
-		background.onclick = this.toggleTextInput;
-	};
-
-	/**
-	 *  テキスト入力ダイアログの初期化
-	 */
-	ControllerGUI.prototype.initTextInputDialog = function () {
-		var textSendButton = document.getElementById('text_send_button');
+			textInput = document.getElementById('text_input'),
+			textSendButton = document.getElementById('text_send_button');
 		
 		textSendButton.onclick = function (evt) {
 			this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, evt);
-			this.toggleTextInput();
+			background.close();
+			input.style.display = "none";
 		}.bind(this);
+
+		background.show();
+		background.on('close', function () {
+			input.style.display = "none";
+		});
+		input.style.display = "block";
 	};
 
 	/**
@@ -915,7 +903,7 @@
 		add_text_button.onmousedown = function (evt) {
 			this.toggleBurgerSubmenuAddContent(false);
 			this.contentMenu.toggle();
-			this.toggleTextInput();
+			this.openTextInput();
 		}.bind(this);
 	};
 

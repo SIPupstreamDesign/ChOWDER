@@ -10,6 +10,8 @@
 	// コンストラクタ
 	Menu = function (containerElem, setting) {
 		EventEmitter.call(this);
+
+		this.background = null;
 /*
 		<ul class="menu">
 			<li class="menu__multi">
@@ -87,19 +89,22 @@
 					ul2.className = "menu_level" + n;
 					
 					if (n === 1) {
-						li.onclick = (function (ul, self) {
-							return function () {
-								if (ul.style.display.toLowerCase().indexOf("block") >= 0) {
-									//ul.classList.remove("menu_hover")
-									this.toggle_popup(ul, false);
+						li.onclick = (function (self, ul) {
+							return function (evt) {
+								if (this.background !== null) { 
+									if (evt.target.classList.contains("menu_init-bottom")) {
+										this.close();
+										this.show(ul);
+									} else {
+										this.close();
+									}
 								} else {
-									//ul.classList.add("menu_hover")
-									this.toggle_popup(ul, true);
+									this.show(ul);
 								}
-							}.bind(self)
-						}(ul2, this));
+							}.bind(self);
+						}(this, ul2));
 					}
-						
+
 					li.appendChild(ul2);
 					li = document.createElement('li');
 					ul2.appendChild(li);
@@ -112,15 +117,11 @@
 						link.href = value.url;
 					}
 					if (value.hasOwnProperty('func')) {
-						link.onclick = (function (ul, value) {
+						link.onclick = (function (value) {
 							return function (evt) {
-								var elems = document.getElementsByClassName('menu_level1');
-								for (k = 0; k < elems.length; k = k + 1) {
-									elems[k].style.display = "none";
-								}
 								value.func(evt);
 							};
-						}(ul, value));
+						}(value));
 					}
 					link.className = "";
 					li = document.createElement('li');
@@ -135,24 +136,35 @@
 	};
 	Menu.prototype = Object.create(EventEmitter.prototype);
 
-	Menu.prototype.toggle_popup = function (ul, isShow) {
-		var elem = document.getElementById('popup_background2');
-		if (isShow) {
-			elem.style.display = "block";
-			ul.style.display = "block";
-			ul.style.opacity = "1";
-			ul.style.top = "30px";
-		} else {
-			elem.style.display = "none";
-			ul.style.display = "none";
-			ul.style.opacity = "0";
-			ul.style.top = "30px";
+
+	Menu.prototype.close =  function () {
+		if (this.background !== null) {
+			this.background.close();
+			this.background = null;
 		}
-		elem.onclick = (function (ul, isShow, self) {
-			return function () {
-				this.toggle_popup(ul, isShow);
-			}.bind(self);
-		}(ul, !isShow, this));
+		if (this.openMenuElem) {
+			this.openMenuElem.style.display = "none";
+			this.openMenuElem.style.opacity = "0";
+			this.openMenuElem.style.top = "30px";
+			this.openMenuElem = null;
+		}
+	};
+
+	Menu.prototype.show = function (ul) {
+		if (this.background !== null) {
+			this.close();
+		}
+		var background = new PopupBackground();
+		background.show(0.0);
+		background.on('close', function () {
+			this.close();
+		}.bind(this));
+		this.background = background;
+	
+		ul.style.display = "block";
+		ul.style.opacity = "1";
+		ul.style.top = "30px";
+		this.openMenuElem = ul;
 	};
 
 	window.Menu = Menu;

@@ -1153,17 +1153,6 @@
 				}]
 			});
 			
-		document.getElementById('head_menu').onmouseup = function (evt) {
-			var elems = document.getElementsByClassName('menu_level1');
-			if (elems) {
-				for (var i = 0; i < elems.length; ++i) {
-					if (!elems[i].contains(evt.target)) {
-						this.menu.toggle_popup(elems[i], false);
-					}
-				}
-			}
-		}.bind(this);
-
 	}
 
 	window.onload = init;
