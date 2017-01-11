@@ -18,15 +18,15 @@
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
 	<script type="text/javascript" src="js/components/popup_background.js"></script>
+	<script type="text/javascript" src="js/components/colorselector.js"></script>
+	<script type="text/javascript" src="js/components/layout.js"></script>
 	<script type="text/javascript" src="js/metabinary.js"></script>
 	<script type="text/javascript" src="js/command.js"></script>
 	<script type="text/javascript" src="js/io_connector.js"></script>
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
-	<script type="text/javascript" src="js/colorselector.js"></script>
 	<script type="text/javascript" src="js/input_dialog.js"></script>
 	<script type="text/javascript" src="js/manipulator.js"></script>
-	<script type="text/javascript" src="js/layout.js"></script>
 	<script type="text/javascript" src="js/content_property.js"></script>
 	<script type="text/javascript" src="js/content_box.js"></script>
 	<script type="text/javascript" src="js/group_box.js"></script>
@@ -143,7 +143,7 @@
 		<li class="context_menu_item" id="context_menu_display_select_all">全て選択</li>
 	</ul>
 
-	<!---ポップアップダイアログ--->
+	<!-- ポップアップダイアログ -->
 	<div id="text_input_dialog">
 		<p style="margin-top:20px;margin-left:20px">テキストの追加</p>
 		<textarea  id="text_input" style="margin-left:20px"></textarea>
@@ -165,14 +165,13 @@
 		<input class="btn" type="button" value="Cancel" id="okcancel_dialog_cancel_button" />
 	</div>
 
-	<!---グループ設定メニュー--->
+	<!-- グループ設定メニュー -->
 	<ul id="group_setting_menu" class="group_setting_menu" style="display:none">
 		<li class="group_setting_menu_item" id="group_setting_name">名前変更</li>
 		<li class="group_setting_menu_item" id="group_setting_color">色変更</li>
 		<li class="group_setting_menu_item" id="group_setting_delete">削除</li>
 	</ul>
 	
-
 	<div style="display:none">
 		<hr>
 		<div>
@@ -197,12 +196,6 @@
 			<span style="margin-left:20px">ID:</span><span id="update_content_id" >No Content Selected.</span>
 			<input type="file" value="UpdateImage" id="update_image_input" style="margin-left:20px" />
 		</div>
-		<!--hr>
-		<div>
-			<p style="margin-left:20px">コンテンツ複製</p>
-			<span style="margin-left:20px">ID:</span><span id="update_content_id" >No Content Selected.</span>
-			<input class="btn" type="button" value="Duplicate" id="duplicate_button" />
-		</div-->
 	</div>
 </body>
 </html>

@@ -21,7 +21,53 @@
 		this.snapType = "free";
 
 		// 全体のレイアウトの初期化.
-		window.layout.init();
+		var bigZIndex = 10000;
+		new window.Layout(
+			{
+				id : 'layout',
+				direction : 'horizontal',
+				color : 'rgb(112, 180, 239)',
+				contents : [
+					{
+						id : 'head_menu',
+						position : 'top',
+						size : "30px",
+						minSize : "30px",
+						zIndex : 1000000
+					},
+					{
+						id : 'layout2',
+						size : "-253px",
+						direction : 'vertical',
+						contents : [
+							{
+								id : 'preview_area',
+								size : "-263px"
+							},
+							{
+								size : "3px",
+								splitter : "3px",
+								zIndex : bigZIndex
+							},
+							{
+								id : 'rightArea',
+								position : 'right',
+								size : "260px",
+								minSize : "150px"
+							}
+						]
+					},
+					{
+						size : "3px",
+						splitter : "3px",
+						zIndex : bigZIndex
+					},
+					{
+						id : 'bottom_area',
+						size : "220px",
+						minSize : "100px"
+					}]
+			});
 
 		// 上部メニューの初期化.
 		this.menu = new Menu(document.getElementById('head_menu'),

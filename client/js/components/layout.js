@@ -1,17 +1,21 @@
-/*jslint devel:true*/
-/*global Float32Array */
 (function () {
 	"use strict";
-	var Layout,
-		layout;
-
-	Layout = function (setting) {
+	
+	/**
+	 *  画面分割レイアウト
+	 */
+	var Layout = function (setting) {
 		this.panels = {};
 		this.setting = setting;
 		this.splitterSize = 2;
 		this.layout(null, setting);
 		this.resize();
 		this.relocate();
+		
+		window.addEventListener('resize', function () {
+			this.resize();
+			this.relocate();
+		}.bind(this));
 	};
 
 	function fitPosition(parent, setting, target) {
@@ -223,63 +227,5 @@
 		}
 	};
 
-	function init() {
-		var bigZIndex = 10000;
-		var setting = {
-			id : 'layout',
-			direction : 'horizontal',
-			color : 'rgb(112, 180, 239)',
-			contents : [
-				{
-					id : 'head_menu',
-					position : 'top',
-					size : "30px",
-					minSize : "30px",
-					zIndex : 1000000
-				},
-				{
-					id : 'layout2',
-					size : "-253px",
-					direction : 'vertical',
-					contents : [
-						{
-							id : 'preview_area',
-							size : "-263px"
-						},
-						{
-							size : "3px",
-							splitter : "3px",
-							zIndex : bigZIndex
-						},
-						{
-							id : 'rightArea',
-							position : 'right',
-							size : "260px",
-							minSize : "150px"
-						}
-					]
-				},
-				{
-					size : "3px",
-					splitter : "3px",
-					zIndex : bigZIndex
-				},
-				{
-					id : 'bottom_area',
-					size : "220px",
-					minSize : "100px"
-				}]
-			};
-
-		layout = new Layout(setting)
-
-		window.addEventListener('resize', function () {
-			layout.resize();
-			layout.relocate();
-		});
-	}
-
-	window.layout = {};
-	window.layout.init = init;
-
+	window.Layout = Layout;
 }());
