@@ -1679,7 +1679,11 @@
 			toggleMark(elem, metaData);
 		} else {
 			// 新規コンテンツロード.
-			connector.send('GetContent', { type: json.type, id: json.id }, function (err, data) {
+			var request = { type: json.type, id: json.id };
+			if (json.hasOwnProperty('restore_index')) {
+				request.restore_index = json.restore_index;
+			}
+			connector.send('GetContent', request, function (err, data) {
 				doneGetContent(err, data, endCallback);
 				toggleMark(elem, metaData);
 			});
@@ -2452,6 +2456,27 @@
 			metaData = metaDataDict[id]; 
 			metaData.color = colorvalue;
 			updateMetaData(metaData, function (err, reply) {});
+		}
+	});
+	
+	/**
+	 * コンテンツ復元
+	 */
+	content_property.on("restore_content", function (err, restoreIndex) {
+		var id = getSelectedID(),
+			metaData;
+		if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type !== windowType) {
+			metaData = metaDataDict[id]; 
+			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
+				metaData.restore_index = restoreIndex;
+				connector.send('GetContent', metaData, function (err, reply) {
+					correctAspect(reply.metaData, function (err, meta) {
+						console.log(reply, meta)
+						doneGetContent(err, reply);
+						updateMetaData(metaData);
+					});
+				});
+			}
 		}
 	});
 	

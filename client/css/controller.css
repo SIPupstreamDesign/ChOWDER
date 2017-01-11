@@ -778,3 +778,19 @@ p {
 #rightArea_panel__ {
 	background:linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 }
+
+.backup_list_content {
+	color : black;
+}
+
+.backup_list {
+	padding-left : 15px;
+}
+
+.backup_restore {
+	margin-left : 15px;
+}
+
+.backup_area {
+	display : none;
+}

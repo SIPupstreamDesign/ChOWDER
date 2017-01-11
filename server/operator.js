@@ -17,7 +17,9 @@
 		windowIDStr = "window_id",
 		virtualDisplayIDStr = "virtual_display",
 		metadataPrefix = "metadata:",
+		metadataBackupPrefix = "metadata_backup:",
 		contentPrefix = "content:",
+		contentBackupPrefix = "content_backup:",
 		contentRefPrefix = "contentref:",
 		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
@@ -56,17 +58,6 @@
 							command.push(dimensions.width);
 							command.push(4000);
 							renderURLInternal(command, endCallback);
-							/*
-							var i = 0;
-							for (; i < dimensions.height; i = i + 4000) {
-								command[5] = i;
-								renderURLInternal(command, endCallback);
-							}
-							var last = dimensions.height - i;
-							if (last > 0) {
-								renderURLInternal(command, endCallback);
-							}
-							*/
 						} else {
 							endCallback(fs.readFileSync(output), dimensions);
 						}
@@ -529,6 +520,7 @@
 					content_id = metaData.content_id;
 				}
 				metaData.content_id = content_id;
+				metaData.date = new Date().toISOString();
 				
 				textClient.set(contentPrefix + content_id, contentData, function (err, reply) {
 					if (err) {
@@ -607,6 +599,29 @@
 			}
 		});
 	}
+
+	/**
+	 * コンテンツとメタデータのバックアップ(元データは移動される)
+	 */
+	function backupContent(metaData, endCallback) {
+		getMetaData(metaData.type, metaData.id, function (meta) {
+			var backupMetaData = {};
+			backupMetaData[metaData.date] = JSON.stringify(metaData);
+			client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {
+				getContent(metaData.type, metaData.content_id, function (reply) {
+					if (reply) {
+						var backupContentData = {};
+						backupContentData[metaData.date] = reply;
+						client.hmset(contentBackupPrefix + metaData.content_id, backupContentData, function (err, reply) {
+							if (endCallback) {
+								endCallback(err, reply);
+							}
+						});
+					}
+				});
+			});
+		});
+	}
 	
 	/**
 	 * コンテンツ更新
@@ -633,15 +648,18 @@
 		
 		textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 			if (!err && doesExist === 1) {
-				setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-					textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
-						if (err) {
-							console.error("Error on updateContent:" + err);
-						} else {
-							if (endCallback) {
-								endCallback(meta);
+				backupContent(metaData, function (err, reply) {
+					metaData.date = new Date().toISOString();
+					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+						textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
+							if (err) {
+								console.error("Error on updateContent:" + err);
+							} else {
+								if (endCallback) {
+									endCallback(meta);
+								}
 							}
-						}
+						});
 					});
 				});
 			}
@@ -1010,12 +1028,20 @@
 		getMetaData(json.type, json.id, function (meta) {
 			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
 				//meta.command = Command.doneGetContent;
-				getContent(meta.type, meta.content_id, function (reply) {
-					if (reply === null) {
-						reply = "";
-					}
-					endCallback(null, meta, reply);
-				});
+				if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
+					var backupList = JSON.parse(meta.backup_list);
+					var backup_date = backupList[Number(json.restore_index)];
+					client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
+						endCallback(null, meta, reply[0]);
+					});
+				} else {
+					getContent(meta.type, meta.content_id, function (reply) {
+						if (reply === null) {
+							reply = "";
+						}
+						endCallback(null, meta, reply);
+					});
+				}
 			}
 		});
 	}
@@ -1044,9 +1070,23 @@
 	function commandGetMetaData(json, endCallback) {
 		console.log("commandGetMetaData:" + json.type + "/" + json.id);
 		getMetaData(json.type, json.id, function (metaData) {
-			if (endCallback) {
-				endCallback(null, metaData);
-			}
+			textClient.exists(metadataBackupPrefix + metaData.id, (function (metaData) {
+				return function (err, doesExists) {
+					if (doesExists) {
+						// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
+						textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
+							metaData.backup_list = JSON.stringify(reply);
+							if (endCallback) {
+								endCallback(null, metaData);
+							}
+						});
+					} else {
+						if (endCallback) {
+							endCallback(null, metaData);
+						}
+					}
+				}
+			}(metaData)));
 		});
 	}
 	
@@ -1773,7 +1813,9 @@
 		textClient.sadd(frontPrefix + 'sessions', id);
 		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
+		contentBackupPrefix = frontPrefix + uuidPrefix + contentBackupPrefix;
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
+		metadataBackupPrefix = frontPrefix + uuidPrefix + metadataBackupPrefix;
 		windowMetaDataPrefix = frontPrefix + uuidPrefix + windowMetaDataPrefix;
 		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
 		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
@@ -1786,6 +1828,8 @@
 		console.log("idstr:" + windowContentPrefix);
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
+		console.log("idstr:" + contentBackupPrefix);
+		console.log("idstr:" + metadataBackupPrefix);
 		addGroup("group_defalut", "default", function (err, reply) {} );
 	}
 

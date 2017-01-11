@@ -17,7 +17,7 @@
 	 * @param {String} rightLabel 右ラベル
 	 * @param {String} value 初期入力値
 	 */
-	function addInputProperty(id, leftLabel, rightLabel, value) {
+	function addInputProperty(id, leftLabel, rightLabel, value, changeCallback) {
 		/*
 			<div class="input-group">
 				<span class="input-group-addon">x</span>
@@ -25,7 +25,7 @@
 				<span class="input-group-addon">px</span>
 			</div>
 		*/
-		var transInput = document.getElementById('transform_input'),
+		var transform_input = document.getElementById('transform_input'),
 			group = document.createElement('div'),
 			leftSpan = document.createElement('span'),
 			rightSpan = document.createElement('span'),
@@ -39,6 +39,7 @@
 		input.className = "form-control";
 		input.id = id;
 		input.value = value;
+		input.onchange = changeCallback;
 		//input.nodeType = "text";
 		
 		group.appendChild(leftSpan);
@@ -46,7 +47,7 @@
 		if (rightLabel) {
 			group.appendChild(rightSpan);
 		}
-		transInput.appendChild(group);
+		transform_input.appendChild(group);
 	}
 
 	/**
@@ -101,144 +102,113 @@
 	 * @param {String} mime mime
 	 */
 	ContentProperty.prototype.initPropertyArea = function (id, group, type, mime) {
-		var contentX,
-			contentY,
-			contentW,
-			contentH,
-			contentZ,
-			multiX,
-			multiY,
-			multiW,
-			multiH,
-			multiZ,
-			wholeW,
-			wholeH,
-			wholeSplitX,
-			wholeSplitY,
-			transInput = document.getElementById('transform_input'),
+		var transform_input = document.getElementById('transform_input'),
 			user_data_input = document.getElementById('user_data_input'),
 			idlabel = document.getElementById('content_id_label'),
 			grouplabel = document.getElementById('group_name_label'),
 			idtext = document.getElementById('content_id'),
 			group_name = document.getElementById('group_name'),
-			downloadButton = document.getElementById('download_button'),
+			download_button = document.getElementById('download_button'),
 			metalabel = document.getElementById("meta_info"),
+			backup_area = document.getElementById("backup_area"),
+			content_id = document.getElementById('content_id'),
+			group_name = document.getElementById('group_name'),
+			color_picker = document.getElementById('color_picker'),
 			extension,
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
 			}.bind(this);
+
 		console.log("initPropertyArea");
 		if (id) {
-			document.getElementById('content_id').innerHTML = id;
+			content_id.innerHTML = id;
 		} else {
-			document.getElementById('content_id').innerHTML = "";
+			content_id.innerHTML = "";
 		}
 		if (group) {
-			document.getElementById('group_name').innerHTML = group;
+			group_name.innerHTML = group;
 		} else {
-			document.getElementById('group_name').innerHTML = "";
+			group_name.innerHTML = "";
 		}
-		transInput.innerHTML = "";
+		transform_input.innerHTML = "";
 		user_data_input.innerHTML = "";
 		if (type === "display") {
 			idlabel.innerHTML = "Display ID:";
-			addInputProperty('content_transform_x', 'x', 'px', '0');
-			addInputProperty('content_transform_y', 'y', 'px', '0');
-			addInputProperty('content_transform_w', 'w', 'px', '0');
-			addInputProperty('content_transform_h', 'h', 'px', '0');
+			addInputProperty('content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_h', 'h', 'px', '0', rectChangeFunc);
 			addTextInputProperty('content_text', "");
-			contentX = document.getElementById('content_transform_x');
-			contentY = document.getElementById('content_transform_y');
-			contentW = document.getElementById('content_transform_w');
-			contentH = document.getElementById('content_transform_h');
-			contentX.onchange = rectChangeFunc;
-			contentY.onchange = rectChangeFunc;
-			contentW.onchange = rectChangeFunc;
-			contentH.onchange = rectChangeFunc;
-			downloadButton.style.display = "none";
+			download_button.style.display = "none";
 			metalabel.style.display = "block";
-			document.getElementById('color_picker').style.display = "block";
+			backup_area.style.display = "none";
+			color_picker.style.display = "block";
 		} else if (type === "whole_window") {
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
-			addInputProperty('whole_width', 'w', 'px', '1000');
-			addInputProperty('whole_height', 'h', 'px', '900');
-			addInputProperty('whole_split_x', 'split x', '', '1');
-			addInputProperty('whole_split_y', 'split y', '', '1');
+			addInputProperty('whole_width', 'w', 'px', '1000', function () {
+				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
+			}.bind(this));
+			addInputProperty('whole_height', 'h', 'px', '900', function () {
+				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
+			}.bind(this));
+			addInputProperty('whole_split_x', 'split x', '', '1', function () {
+				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.value, this.wholeSplitY.value);
+			}.bind(this));
+			addInputProperty('whole_split_y', 'split y', '', '1', function () {
+				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.wholeSplitX.value, this.value);
+			}.bind(this));
 			//addTextInputProperty('content_text', "");
-			wholeW = document.getElementById('whole_width');
-			wholeH = document.getElementById('whole_height');
-			wholeSplitX = document.getElementById('whole_split_x');
-			wholeSplitY = document.getElementById('whole_split_y');
-			wholeW.onchange = function () {
-				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
-			}.bind(this);
-			wholeH.onchange = function () {
-				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
-			}.bind(this);
-			wholeSplitX.onchange = function () {
-				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.value, wholeSplitY.value);
-			}.bind(this);
-			wholeSplitY.onchange = function () {
-				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, wholeSplitX.value, this.value);
-			}.bind(this);
-			downloadButton.style.display = "none";
+			download_button.style.display = "none";
 			metalabel.style.display = "none";
-			document.getElementById('color_picker').style.display = "none";
+			backup_area.style.display = "none";
+			color_picker.style.display = "none";
 		} else if (type === "multi_display" || type === "multi_content") {
 			idlabel.innerHTML = "Content ID:";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
-			addInputProperty('multi_transform_z', 'z', 'index', '');
-			multiZ = document.getElementById('multi_transform_z');
-			multiZ.onchange = function () {
+			addInputProperty('multi_transform_z', 'z', 'index', '', function () {
 				var val = parseInt(multiZ.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
-			}.bind(this);
-			downloadButton.style.display = "none";
+			}.bind(this));
+			download_button.style.display = "none";
 			metalabel.style.display = "none";
-			document.getElementById('color_picker').style.display = "none";
+			backup_area.style.display = "none";
+			color_picker.style.display = "none";
 		} else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
 			grouplabel.innerHTML = "Group:";
-			addInputProperty('content_transform_x', 'x', 'px', '0');
-			addInputProperty('content_transform_y', 'y', 'px', '0');
-			addInputProperty('content_transform_w', 'w', 'px', '0');
-			addInputProperty('content_transform_h', 'h', 'px', '0');
-			addInputProperty('content_transform_z', 'z', 'index', '0');
-			addTextInputProperty('content_text', "");
-			contentX = document.getElementById('content_transform_x');
-			contentY = document.getElementById('content_transform_y');
-			contentW = document.getElementById('content_transform_w');
-			contentH = document.getElementById('content_transform_h');
-			contentZ = document.getElementById('content_transform_z');
-			contentX.onchange = rectChangeFunc;
-			contentY.onchange = rectChangeFunc;
-			contentW.onchange = rectChangeFunc;
-			contentH.onchange = rectChangeFunc;
-			contentZ.onchange = function () {
+			addInputProperty('content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addInputProperty('content_transform_z', 'z', 'index', '0', function () {
 				var val = parseInt(contentZ.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
-			}.bind(this);
-			downloadButton.style.display = "block";
-			downloadButton.href = "download?" + id;
-			downloadButton.target = "_blank";
+			}.bind(this));
+			addTextInputProperty('content_text', "");
+			download_button.style.display = "block";
+			download_button.href = "download?" + id;
+			download_button.target = "_blank";
 			if (type === "text") {
-				downloadButton.download = id + ".txt";
+				download_button.download = id + ".txt";
 			} else {
 				// image or url
 				if (mime) {
 					extension = mime.split('/')[1];
-					downloadButton.download = id + "." + extension;
+					download_button.download = id + "." + extension;
 				} else {
-					downloadButton.download = id + ".img";
+					download_button.download = id + ".img";
 				}
 			}
 			if (metalabel) {
 				metalabel.style.display = "block";
 			}
-			document.getElementById('color_picker').style.display = "none";
+			if (type !== "content") {
+				backup_area.style.display = "block";
+			}
+			color_picker.style.display = "none";
 		}
 	}
 
@@ -267,7 +237,9 @@
 			transh = document.getElementById('content_transform_h'),
 			transz = document.getElementById('content_transform_z'),
 			dlbtn  = document.getElementById('download_button'),
-			content_id = document.getElementById('content_id');
+			content_id = document.getElementById('content_id'),
+			backup_area = document.getElementById("backup_area");
+
 		if (transx) { transx.value = 0; transx.disabled = true; }
 		if (transy) { transy.value = 0; transy.disabled = true; }
 		if (transw) { transw.value = 0; transw.disabled = true; }
@@ -276,6 +248,7 @@
 		if (content_id) { content_id.innerHTML = ""; }
 		if (dlbtn) { dlbtn.style.display = 'none'; }
 		if (content_text) { content_text.value = ""; content_text.disabled = true; }
+		if (backup_area) { backup_area.style.display = "none" }
 	};
 
 	ContentProperty.prototype.init = function (id, group, type, mime) {
@@ -293,6 +266,13 @@
 			// レンジの RGB と 0 〜 1 のレンジのアルファが引数で渡されてきます
 			color_picker.appendChild(this.colorselector.elementWrapper);
 		}
+
+		// 復元ボタン
+		var restoreButton = document.getElementById('backup_restore');
+		restoreButton.onclick = function () {
+			var index = document.getElementById('backup_list_content').selectedIndex;
+			this.emit(ContentProperty.EVENT_RESTORE_CONTENT, null, index);
+		}.bind(this);
 
 		this.initPropertyArea(id, group, type, mime);
 	};
@@ -333,8 +313,10 @@
 			transw = document.getElementById('content_transform_w'),
 			transh = document.getElementById('content_transform_h'),
 			transz = document.getElementById('content_transform_z'),
-			text = document.getElementById('content_text');
+			text = document.getElementById('content_text'),
+			i;
 		
+		// x, y, w, h, z
 		if (transx) {
 			transx.value = parseInt(metaData.posx, 10);
 		}
@@ -351,6 +333,7 @@
 			transz.value = parseInt(metaData.zIndex, 10);
 		}
 
+		// メタ情報
 		if (metaData.hasOwnProperty('user_data_text')) {
 			var parsed = null;
 			try {
@@ -364,11 +347,33 @@
 			}
 		}
 
+		// 色変更
 		if (metaData.hasOwnProperty('color') && this.colorselector) {
 			var col = metaData.color.split('rgb(').join("");
 			col = col.split(")").join("");
 			col = col.split(",");
 			this.colorselector.setColor(col[0], col[1], col[2], 1, true);
+		}
+
+		// 差し替え履歴
+		if (metaData.type !== "window") {
+			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
+				var backups = JSON.parse(metaData.backup_list);
+				var backup_list = document.getElementById('backup_list');
+				var select = document.createElement('select');
+				select.className = "backup_list_content";
+				select.id = "backup_list_content";
+				select.size = 5;
+				for (i = 0; i < backups.length; i = i + 1) {
+					var option = document.createElement('option');
+					option.value = backups[i];
+					option.innerText = backups[i];
+					select.appendChild(option);
+				}
+				select.value = backups[0]
+				backup_list.innerHTML = "";
+				backup_list.appendChild(select);
+			}
 		}
 	};
 
@@ -385,6 +390,7 @@
 	ContentProperty.EVENT_DISPLAY_COLOR_CHANGED = "display_color_changed";
 	ContentProperty.EVENT_CHANGE_WHOLE_SPLIT = "change_whole_split";
 	ContentProperty.EVENT_METAINFO_CHANGED = "metainfo_changed";
+	ContentProperty.EVENT_RESTORE_CONTENT = "restore_content";
 
 	// singleton
 	window.content_property = new ContentProperty();
