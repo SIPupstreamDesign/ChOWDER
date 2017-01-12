@@ -636,11 +636,13 @@
 	 */
 	ControllerGUI.prototype.initDragAndDrop = function () {
 		window.addEventListener('dragover', function(evt) {
+			if (this.isOpenDialog) { return; }
 			var  e = evt || event;
 			e.preventDefault();
 			evt.dataTransfer.dropEffect = 'copy';
 		});
 		window.addEventListener('drop', function(evt) {
+			if (this.isOpenDialog) { return; }
 			var  e = evt || event;
 			e.preventDefault();
 			e.stopPropagation();
@@ -662,6 +664,7 @@
 			mouseDownPosY = 0;
 		
 		contentPreviewArea.addEventListener('mousedown', function (evt) {
+			if (this.isOpenDialog) { return; }
 			if (evt.button === 2) {
 				var rect = contentPreviewArea.getBoundingClientRect();
 				mouseDownPosY = evt.clientY - rect.top;
@@ -675,6 +678,7 @@
 		});
 
 		displayPreviewArea.addEventListener('mousedown', function (evt) {
+			if (this.isOpenDialog) { return; }
 			if (this.get_whole_scale) {
 				this.display_scale = this.get_whole_scale();
 			}
@@ -691,6 +695,7 @@
 		}.bind(this));
 
 		window.addEventListener('mousemove', function (evt) {
+			if (this.isOpenDialog) { return; }
 			var rect = contentPreviewArea.getBoundingClientRect();
 			if (is_right_dragging) {
 				var dy = evt.clientY - rect.top - mouseDownPosY,
@@ -870,6 +875,10 @@
 		managementPage.show({
 			dblist : this.dblist
 		});
+		this.isOpenDialog = true;
+		managementPage.on('close', function () {
+			this.isOpenDialog = false;
+		}.bind(this));
 		managementPage.on('newdb', function (err, name) {
 			this.emit(window.ControllerGUI.EVENT_NEWDB, null, name);
 		}.bind(this));

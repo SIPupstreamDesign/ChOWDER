@@ -3169,6 +3169,7 @@
 			document.attachEvent ("onmousewheel", onWheel); //for legacy IE
 		}
 		function onWheel(e) {
+			if (gui.isOpenDialog) { return; }
 			if(!e) e = window.event; //for legacy IE
 			var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
 			var display_scale = vscreen.getWholeScale();
