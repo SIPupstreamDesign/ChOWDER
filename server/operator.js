@@ -275,7 +275,9 @@
 		});
 	}
 
-	function changeUUIDPrefix(uuidPrefix) {
+	function changeUUIDPrefix(dbname) {
+		textClient.sadd(frontPrefix + 'dblist', dbname);
+		uuidPrefix = dbname + ":";
 		contentPrefix = frontPrefix + uuidPrefix + "content:";
 		contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
 		contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
@@ -293,8 +295,7 @@
 			textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
 				if (!err && doesExists !== 1) {
 					// 存在しない場合のみ作って切り替え
-					uuidPrefix = name + ":";
-					changeUUIDPrefix(uuidPrefix);
+					changeUUIDPrefix(name);
 					addGroup("group_defalut", "default", function (err, reply) {} );
 					endCallback(null);
 				} else {
@@ -314,8 +315,7 @@
 					endCallback("Failed to change db: not exists db name");
 					return;
 				}
-				uuidPrefix = name + ":";
-				changeUUIDPrefix(uuidPrefix);
+				changeUUIDPrefix(name);
 				endCallback(null);
 			});
 		}
@@ -326,6 +326,7 @@
 			if (name === "default") {
 				endCallback("Unauthorized name for deleting")
 			} else {
+				textClient.srem(frontPrefix + 'dblist', name);
 				textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
 					if (!err && doesExists == 1) {
 						textClient.keys(frontPrefix + name + "*", function (err, replies) {
@@ -1463,6 +1464,13 @@
 	}
 
 	/**
+	 * DBの保存領域のリストを取得
+	 */
+	function commandGetDBList(resultCallback) {
+		textClient.smembers(frontPrefix + 'dblist', resultCallback);
+	}
+
+	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
 	 * @param {String} socketid ソケットID
@@ -1820,6 +1828,9 @@
 		ws_connector.on(Command.DeleteDB, function (data, resultCallback) {
 			commandDeleteDB(data, post_update(ws, io, resultCallback));
 		});
+		ws_connector.on(Command.GetDBList, function (data, resultCallback) {
+			commandGetDBList(resultCallback);
+		});
 
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
@@ -1941,6 +1952,9 @@
 		io_connector.on(Command.DeleteDB, function (data, resultCallback) {
 			commandDeleteDB(data, post_update(ws, io, resultCallback));
 		});
+		io_connector.on(Command.GetDBList, function (data, resultCallback) {
+			commandGetDBList(resultCallback);
+		});
 
 		io_connector.registerEvent(io, socket);
 	}
@@ -1952,7 +1966,7 @@
 	 */
 	function registerUUID(id) {
 		uuidPrefix = id + ":";
-		textClient.sadd(frontPrefix + 'sessions', id);
+		textClient.sadd(frontPrefix + 'dblist', id);
 		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
 		contentBackupPrefix = frontPrefix + uuidPrefix + contentBackupPrefix;

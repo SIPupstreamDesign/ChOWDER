@@ -17,6 +17,7 @@
 		this.searchBox = null;
 		this.displayMenu = null;
 		this.contentMenu = null;
+		this.dblist = [];
 		this.display_scale = 1.0;
 		this.snapType = "free";
 
@@ -866,7 +867,9 @@
 	 */
 	ControllerGUI.prototype.openManagement = function () {
 		var managementPage = new Management();
-		managementPage.show();
+		managementPage.show({
+			dblist : this.dblist
+		});
 		managementPage.on('newdb', function (err, name) {
 			this.emit(window.ControllerGUI.EVENT_NEWDB, null, name);
 		}.bind(this));
@@ -878,6 +881,10 @@
 		managementPage.on('deletedb', function (err, name) {
 			this.emit(window.ControllerGUI.EVENT_DELETEDB, null, name);
 		}.bind(this));
+	};
+
+	ControllerGUI.prototype.setDBList = function (dblist) {
+		this.dblist = dblist;
 	};
 
 	/**

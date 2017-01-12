@@ -38,7 +38,8 @@
 		// DB管理コマンド
 		NewDB : "NewDB",
 		DeleteDB : "DeleteDB",
-		ChangeDB : "ChangeDB"
+		ChangeDB : "ChangeDB",
+		GetDBList : "GetDBList"
 	};
 	
 	window.command = Command;

@@ -3022,6 +3022,12 @@
 
 		gui.init();
 
+		connector.send('GetDBList', {}, function (err, reply) {
+			if (!err) {
+				gui.setDBList(reply);
+			}
+		});
+
 		display_scale = parseFloat(getCookie('display_scale'));
 		update_cursor_enable = getCookie('update_cursor_enable');
 		console.log("cookie - display_scale:" + display_scale);
