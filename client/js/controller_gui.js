@@ -121,7 +121,7 @@
 					}, {
 						Management : {
 							func : function () {
-
+								this.openManagement();
 							}.bind(this)
 						}
 					}]
@@ -862,6 +862,21 @@
 	};
 
 	/**
+	 * 管理ページを表示
+	 */
+	ControllerGUI.prototype.openManagement = function () {
+		var managementPage = new Management();
+		managementPage.show();
+		managementPage.on('newdb', function (err, name) {
+			this.emit(window.ControllerGUI.EVENT_NEWDB, null, name);
+		}.bind(this));
+		
+		managementPage.on('changedb', function (err, name) {
+			this.emit(window.ControllerGUI.EVENT_CHANGEDB, null, name);
+		}.bind(this));
+	};
+
+	/**
 	 * テキスト入力ダイアログの表示をトグル
 	 */
 	ControllerGUI.prototype.openTextInput = function () {
@@ -1093,6 +1108,8 @@
 	ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 	ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
 	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
+	ControllerGUI.EVENT_NEWDB = "newdb";
+	ControllerGUI.EVENT_CHANGEDB = "changedb";
 	window.ControllerGUI = ControllerGUI;
 	
 }());

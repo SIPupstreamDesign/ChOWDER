@@ -29,11 +29,15 @@
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
-
 		SendMessage: "SendMessage",
 		
 		// to client
-		Disconnect : "Disconnect"
+		Disconnect : "Disconnect",
+
+		// DB管理コマンド
+		NewDB : "NewDB",
+		DeleteDB : "DeleteDB",
+		ChangeDB : "ChangeDB"
 	};
 	
 	module.exports = Command;

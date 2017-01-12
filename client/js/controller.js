@@ -2116,6 +2116,19 @@
 		}
 	});
 
+	gui.on("newdb", function (err, name) {
+		console.error("newdb", name);
+		connector.send("NewDB", { name : name }, function () {
+			window.location.reload(true);
+		});
+	});
+
+	gui.on("changedb", function (err, name) {
+		connector.send("ChangeDB", { name : name }, function () {
+			window.location.reload(true);
+		});
+	});
+
 	/**
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.

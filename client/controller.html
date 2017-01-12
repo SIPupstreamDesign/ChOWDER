@@ -8,6 +8,7 @@
 	<link href="css/components/popup_background.css" rel="stylesheet"/>
 	<link href="css/components/layout.css" rel="stylesheet"/>
 	<link href="css/components/input_dialog.css" rel="stylesheet"/>
+	<link href="css/management.css" rel="stylesheet" />
 	<link href="css/controller.css" rel="stylesheet"/>
 	<link href="css/content_box.css" rel="stylesheet" />
 	<link href="css/group_box.css" rel="stylesheet" />
@@ -32,6 +33,7 @@
 	<script type="text/javascript" src="js/content_property.js"></script>
 	<script type="text/javascript" src="js/content_box.js"></script>
 	<script type="text/javascript" src="js/group_box.js"></script>
+	<script type="text/javascript" src="js/management.js"></script>
 	<script type="text/javascript" src="js/controller_gui.js"></script>
 	<script type="text/javascript" src="js/window_list.js"></script>
 	<script type="text/javascript" src="js/content_list.js"></script>
@@ -151,6 +153,19 @@
 		<li class="group_setting_menu_item" id="group_setting_color">色変更</li>
 		<li class="group_setting_menu_item" id="group_setting_delete">削除</li>
 	</ul>
+	
+	<div id="management" class="management" style="display:none">
+		<h3>管理</h3>
+		<h4>DB管理</h4>
+		<p>DB切り替え</p>
+		<select id="db_select" style="color:black">
+			<option value="default">default</option>
+			<option value="testaa">testaa</option>
+		</select>
+		<input id="newdb_button" type="button" class="btn" style="color:black" value="新規" />
+		<input id="deletedb_button" type="button" class="btn" style="color:black" value="削除" />
+		<input id="changedb_button" type="button" class="btn" style="color:black" value="切り替え" />
+	</div>
 	
 	<div style="display:none">
 		<hr>

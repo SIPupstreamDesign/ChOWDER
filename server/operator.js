@@ -274,6 +274,49 @@
 			}
 		});
 	}
+
+	function changeUUIDPrefix(uuidPrefix) {
+		contentPrefix = frontPrefix + uuidPrefix + "content:";
+		contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
+		contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
+		metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
+		metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
+		windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
+		windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
+		windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
+		virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
+		groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
+	}
+
+	function newDB(name, endCallback) {
+		if (name.length > 0) {
+			textClient.exists(frontPrefix + name, function (err, doesExists) {
+				if (!err && doesExists !== 1) {
+					// 存在しない場合のみ作って切り替え
+					uuidPrefix = name + ":";
+					changeUUIDPrefix(uuidPrefix);
+					addGroup("group_defalut", "default", function (err, reply) {} );
+					endCallback(null);
+				} else {
+					endCallback("already exists");
+				}
+			});
+		} else {
+			endCallback("invalid db name");
+		}
+	}
+
+	function changeDB(name, endCallback) {
+		if (name.length > 0) {
+			uuidPrefix = name + ":";
+			changeUUIDPrefix(uuidPrefix);
+			endCallback(null);
+		}
+	}
+
+	function deleteDB(name, endCallback) {
+		// TODO
+	}
 	
 	/**
 	 * 指定されたタイプ、idのメタデータ設定
@@ -1355,6 +1398,33 @@
 	}
 
 	/**
+	 * 新しい保存領域を作成
+	 */
+	function commandNewDB(json, endCallback) {
+		if (json.hasOwnProperty("name")) {
+			newDB(json.name, endCallback);
+		}
+	}
+
+	/**
+	 * DBの参照先保存領域の変更
+	 */
+	function commandChangeDB(json, endCallback) {
+		if (json.hasOwnProperty("name")) {
+			changeDB(json.name, endCallback);
+		}
+	}
+	
+	/**
+	 * DBの保存領域の削除
+	 */
+	function commandDeleteDB(json, endCallback) {
+		if (json.hasOwnProperty("name")) {
+			deleteDB(json.name, endCallback);
+		}
+	}
+
+	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
 	 * @param {String} socketid ソケットID
@@ -1496,6 +1566,20 @@
 	 * @method post_updateContent
 	 */
 	function post_updateContent(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateContent, reply);
+			io_connector.broadcast(io, Command.UpdateContent, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
+	/**
+	 * updateDB処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateContent
+	 */
+	function post_updateDB(ws, io, resultCallback) {
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.UpdateContent, reply);
 			io_connector.broadcast(io, Command.UpdateContent, reply);
@@ -1689,6 +1773,16 @@
 			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
+		ws_connector.on(Command.NewDB, function (data, resultCallback) {
+			commandNewDB(data, post_update(ws, io, resultCallback));
+		});
+		ws_connector.on(Command.ChangeDB, function (data, resultCallback) {
+			commandChangeDB(data, post_update(ws, io, resultCallback));
+		});
+		ws_connector.on(Command.DeleteDB, function (data, resultCallback) {
+			commandDeleteDB(data, post_update(ws, io, resultCallback));
+		});
+
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
 
@@ -1798,6 +1892,16 @@
 			if (resultCallback) {
 				resultCallback();
 			}
+		});
+
+		io_connector.on(Command.NewDB, function (data, resultCallback) {
+			commandNewDB(data, post_update(ws, io, resultCallback));
+		});
+		io_connector.on(Command.ChangeDB, function (data, resultCallback) {
+			commandChangeDB(data, post_update(ws, io, resultCallback));
+		});
+		io_connector.on(Command.DeleteDB, function (data, resultCallback) {
+			commandDeleteDB(data, post_update(ws, io, resultCallback));
 		});
 
 		io_connector.registerEvent(io, socket);

@@ -16,10 +16,10 @@
 			closeFunc;
 
 		/*
-		<div id="input_dialog">
-			<p style="margin-top:20px;margin-left:20px" id="input_dialog_name"></p>
-			<input type="text" id="input_dialog_input" style="margin-left:20px"/>
-			<input class="btn" type="button" value="OK" id="input_ok_button" />
+		<div class="input_dialog">
+			<p style="margin-top:20px;margin-left:20px" class="input_dialog_name"></p>
+			<input type="text" class="input_dialog_input" style="margin-left:20px"/>
+			<input class="btn input_ok_button" type="button" value="OK" />
 		</div>
 		*/
 		input_dialog = document.createElement('div');
@@ -147,10 +147,10 @@
 			closeFunc;
 
 		/*
-		<div id="color_dialog">
-			<p style="margin-top:20px;margin-left:20px" id="color_dialog_name"></p>
-			<div id="color_dialog_picker"></div>
-			<input class="btn" type="button" value="OK" id="color_ok_button" />
+		<div class="color_dialog">
+			<p style="margin-top:20px;margin-left:20px" class="color_dialog_name"></p>
+			<div class="color_dialog_picker"></div>
+			<input class="btn color_ok_button" type="button" value="OK" />
 		</div>
 		*/
 		color_dialog = document.createElement('div');
@@ -218,10 +218,10 @@
 			closeFunc;
 
 		/*
-		<div id="okcancel_dialog">
-			<p style="margin-top:20px;margin-left:20px" id="okcancel_dialog_name"></p>
-			<input class="btn" type="button" value="OK" id="okcancel_dialog_ok_button" />
-			<input class="btn" type="button" value="Cancel" id="okcancel_dialog_cancel_button" />
+		<div class="okcancel_dialog">
+			<p style="margin-top:20px;margin-left:20px" class="okcancel_dialog_name"></p>
+			<input class="btn okcancel_dialog_ok_button" type="button" value="OK"  />
+			<input class="btn okcancel_dialog_cancel_button" type="button" value="Cancel"  />
 		</div>
 		*/
 		dialog_div = document.createElement('div');

@@ -33,7 +33,12 @@
 		SendMessage: "SendMessage",
 
 		// to client
-		Disconnect : "Disconnect"
+		Disconnect : "Disconnect",
+		
+		// DB管理コマンド
+		NewDB : "NewDB",
+		DeleteDB : "DeleteDB",
+		ChangeDB : "ChangeDB"
 	};
 	
 	window.command = Command;
