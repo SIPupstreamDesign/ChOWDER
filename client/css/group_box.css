@@ -153,7 +153,7 @@
 	color : black;
 	position : absolute;
 	box-shadow: 2px 4px 5px black;
-	z-index: 1000000;
+	z-index: 10000003;
 }
 
 .group_setting_menu_item {

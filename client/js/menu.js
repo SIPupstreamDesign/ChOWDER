@@ -155,7 +155,7 @@
 			this.close();
 		}
 		var background = new PopupBackground();
-		background.show(0.0);
+		background.show(0.0, 3);
 		background.on('close', function () {
 			this.close();
 		}.bind(this));
