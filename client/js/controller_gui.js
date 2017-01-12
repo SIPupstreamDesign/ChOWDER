@@ -874,6 +874,10 @@
 		managementPage.on('changedb', function (err, name) {
 			this.emit(window.ControllerGUI.EVENT_CHANGEDB, null, name);
 		}.bind(this));
+
+		managementPage.on('deletedb', function (err, name) {
+			this.emit(window.ControllerGUI.EVENT_DELETEDB, null, name);
+		}.bind(this));
 	};
 
 	/**
@@ -1110,6 +1114,7 @@
 	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
 	ControllerGUI.EVENT_NEWDB = "newdb";
 	ControllerGUI.EVENT_CHANGEDB = "changedb";
+	ControllerGUI.EVENT_DELETEDB = "deletedb";
 	window.ControllerGUI = ControllerGUI;
 	
 }());

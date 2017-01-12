@@ -2129,6 +2129,12 @@
 		});
 	});
 
+	gui.on("deletedb", function (err, name) {
+		connector.send("DeleteDB", { name : name }, function () {
+			window.location.reload(true);
+		});
+	});
+
 	/**
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.

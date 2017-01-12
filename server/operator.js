@@ -290,7 +290,7 @@
 
 	function newDB(name, endCallback) {
 		if (name.length > 0) {
-			textClient.exists(frontPrefix + name, function (err, doesExists) {
+			textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
 				if (!err && doesExists !== 1) {
 					// 存在しない場合のみ作って切り替え
 					uuidPrefix = name + ":";
@@ -308,14 +308,52 @@
 
 	function changeDB(name, endCallback) {
 		if (name.length > 0) {
-			uuidPrefix = name + ":";
-			changeUUIDPrefix(uuidPrefix);
-			endCallback(null);
+			textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
+				if (doesExists !== 1) {
+					// 存在しないdbnameが指定された
+					endCallback("Failed to change db: not exists db name");
+					return;
+				}
+				uuidPrefix = name + ":";
+				changeUUIDPrefix(uuidPrefix);
+				endCallback(null);
+			});
 		}
 	}
 
 	function deleteDB(name, endCallback) {
-		// TODO
+		if (name.length > 0) {
+			if (name === "default") {
+				endCallback("Unauthorized name for deleting")
+			} else {
+				textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
+					if (!err && doesExists == 1) {
+						textClient.keys(frontPrefix + name + "*", function (err, replies) {
+							var i;
+							console.log("deletedb : ", name);
+							if (!err) {
+								for (i = 0; i < replies.length; i = i + 1) {
+									console.log("delete : ", replies[i]);
+									textClient.del(replies[i]);
+								}
+
+								if (uuidPrefix === (name + ":")) {
+									// 現在使用中のDBが消去された.
+									// defaultに戻す.
+									changeDB("default", endCallback);
+								} else {
+									endCallback(null);
+								}
+							} else {
+								endCallback("Failed deleteDB:" + err)
+							}
+						});
+					} else {
+						endCallback("Failed deleteDB: not exists db name")
+					}
+				});
+			}
+		}
 	}
 	
 	/**
