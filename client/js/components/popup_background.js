@@ -8,12 +8,15 @@
 	};
 	PopupBackground.prototype = Object.create(EventEmitter.prototype);
 
-	PopupBackground.prototype.show = function (opacity) {
+	PopupBackground.prototype.show = function (opacity, zindex) {
 		this.background = document.createElement('div');
 		this.background.className = "popup_background";
 		this.background.style.display = "block";
 		if (opacity !== undefined) {
 			this.background.style.opacity = opacity;
+		}
+		if (zindex !== undefined) {
+			this.background.style.zIndex = zindex;
 		}
 
 		document.body.appendChild(this.background);

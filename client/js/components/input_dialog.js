@@ -6,6 +6,9 @@
 	 * @param setting.name ダイアログタイトル
 	 * @param setting.initialValue 初期値
 	 * @param setting.okButtonName OKボタン表示名
+	 * @param setting.opacity  背景のopacity
+	 * @param setting.zIndex 背景のzIndex
+	 * @param setting.backgroundColor 背景色
 	 */
 	function init_text_input(setting, okCallback) {
 		var input_dialog,
@@ -24,6 +27,9 @@
 		*/
 		input_dialog = document.createElement('div');
 		input_dialog.className = "input_dialog";
+		if (setting.backgroundColor) {
+			input_dialog.style.backgroundColor = setting.backgroundColor;
+		}
 
 		input_dialog_name = document.createElement('p');
 		input_dialog_name.style.marginTop = "20px";
@@ -63,7 +69,7 @@
 			background.close();
 			closeFunc();
 		};
-		background.show();
+		background.show(setting.opacity, setting.zIndex);
 		background.on('close', closeFunc);
 	}
 
