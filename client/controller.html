@@ -157,14 +157,47 @@
 	<div id="management" class="management" style="display:none">
 		<h3>管理</h3>
 		<h4>DB管理</h4>
-		<p>DB切り替え</p>
-		<select id="db_select" style="color:black">
-			<option value="default">default</option>
-			<option value="testaa">testaa</option>
-		</select>
-		<input id="newdb_button" type="button" class="btn" style="color:black" value="新規" />
-		<input id="deletedb_button" type="button" class="btn" style="color:black" value="削除" />
-		<input id="changedb_button" type="button" class="btn" style="color:black" value="切り替え" />
+		<div class="frame">
+			<p>DB切り替え</p>
+			<select id="db_select" class="db_select">
+				<option value="default">default</option>
+				<option value="testaa">testaa</option>
+			</select>
+			<input id="newdb_button" type="button" class="btn" style="color:black" value="新規" />
+			<input id="deletedb_button" type="button" class="btn" style="color:black" value="削除" />
+			<input id="changedb_button" type="button" class="btn" style="color:black" value="切り替え" />
+		</div>
+		
+		<h4>履歴管理</h4>
+		<div class="frame">
+			<p>最大履歴保存数</p>
+			<input id="history_number" type="text" style="color:black" value="10" />
+			<input id="apply_history_number_button" type="button" class="btn" style="color:black" value="適用" />
+		</div>
+		
+		<h4>閲覧・編集権限の設定</h4>
+		<div class="frame">
+			<p>設定対象</p>
+			<select id="auth_select" class="auth_select">
+				<option value="default">default</option>
+				<option value="GroupA">GroupA</option>
+			</select>
+			<input id="apply_auth_button" type="button" class="btn" style="color:black" value="適用" />
+		</div>
+		
+		<h4>パスワードの設定</h4>
+		<div class="frame">
+			<p>設定対象</p>
+			<select id="auth_select" class="auth_select">
+				<option value="default">default</option>
+				<option value="GroupA">GroupA</option>
+			</select>
+			<p>変更前のパスワード</p>
+			<input id="old_password" type="password" style="color:black" value="10" />
+			<p>新規パスワード</p>
+			<input id="new_password" type="password" style="color:black" value="10" />
+			<input id="apply_auth_button" type="button" class="btn" style="color:black" value="適用" />
+		</div>
 	</div>
 	
 	<div style="display:none">
