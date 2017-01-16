@@ -148,6 +148,11 @@
 							id : "search_tab",
 							func : function () { this.changeTab('Search'); }.bind(this)
 						}
+					}, {
+						Layout : {
+							id : "layout_tab",
+							func : function () { this.changeTab('Layout'); }.bind(this)
+						}
 					}]
 			});
 		this.contentBox.on('tab_changed_pre', function (err, data) {
@@ -179,6 +184,21 @@
 				colors : ["rgb(54,187,68)"]
 			});
 		this.initSearchBoxEvents(this.searchBox);
+
+		// レイアウトボックスにグループボックスを埋め込み.
+		this.layoutBox = new GroupBox(document.getElementById('layout_tab_box'),
+			{
+				tabs : [{
+						default : {
+							id : "layout_default",
+							className : "layout_tab",
+							func : function () {},
+							active : false
+						}
+					}]
+			});
+		this.initGroupBoxEvents(this.layoutBox);
+
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.init(wholeWindowListID, "", "whole_window");
@@ -746,6 +766,7 @@
 			contentMenu = document.getElementById('bottom_burger_menu_content'),
 			displayMenu = document.getElementById('bottom_burger_menu_display'),
 			searchMenu = document.getElementById('bottom_burger_menu_search'),
+			layoutMenu = document.getElementById('bottom_burger_menu_layout'),
 			content_icon = document.getElementById("bottom_burger_menu_content_icon");
 
 		if (tabName === 'Display') {
@@ -774,6 +795,16 @@
 			contentMenu.style.display = "block";
 			searchMenu.style.display = "block";
 			content_icon.className = "burger_menu_icon bottom_burger_menu_search_icon"; //色だけ変更
+		} else if (tabName === "Layout") {
+			displayPreviewArea.style.opacity = 0.3;
+			contentPreviewArea.style.opacity = 1.0;
+			displayPreviewArea.style.zIndex = -1000;
+			contentPreviewArea.style.zIndex = 10;
+			displayMenu.style.display = "none";
+			contentMenu.style.display = "none";
+			searchMenu.style.display = "none";
+			layoutMenu.style.display = "block";
+			content_icon.className = "burger_menu_icon bottom_burger_menu_layout_icon"; //色だけ変更		
 		}
 	};
 
@@ -826,14 +857,16 @@
 	/**
 	 * グループリストをセットする。
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
-	 * サーチタブにもグループを追加。
+	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
 	ControllerGUI.prototype.setGroupList = function (groupList) {
 		var activeTab = this.groupBox.get_active_tab_name(),
 			contentSetting = { tabs : [] },
 			searchSetting = { groups : [], colors : [] },
+			layoutSetting = { tabs : [] },
 			groupName,
 			tab = {},
+			layoutGroupTab = {},
 			groupColor,
 			groupID,
 			i;
@@ -849,9 +882,17 @@
 				color : groupColor,
 				active : true
 			};
+			layoutGroupTab = {};
+			layoutGroupTab[groupName] = {
+				id : groupID,
+				className : "layout_tab",
+				color : groupColor,
+				active : true
+			};
 			contentSetting.tabs.push(tab);
 			searchSetting.groups.push(groupName);
 			searchSetting.colors.push(groupColor);
+			layoutSetting.tabs.push(layoutGroupTab);
 		}
 
 		document.getElementById('content_tab_box').innerHTML = "";
@@ -865,6 +906,10 @@
 
 		this.searchBox = new SearchBox(document.getElementById('search_tab_box'), searchSetting);
 		this.initSearchBoxEvents(this.searchBox);
+
+		document.getElementById('layout_tab_box').innerHTML = "";
+		this.layoutBox = new GroupBox(document.getElementById('layout_tab_box'), layoutSetting);
+		this.initGroupBoxEvents(this.layoutBox);
 	};
 
 	/**

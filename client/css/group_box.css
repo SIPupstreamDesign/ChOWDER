@@ -29,6 +29,20 @@
 	float : left;
 }
 
+.layout_tab {
+	text-align: center;
+	background: rgb(54,187,68);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	top: 5px;
+	left : 4px;
+	width : 170px;
+	height : 30px;
+	padding-left : 2px;
+	padding-right : 2px;
+	font-size: 14px;
+	float : left;
+}
+
 .group_tab_setting {
 	border: 1px solid gray;
 	border-radius: 2px;
@@ -136,8 +150,16 @@
 	border: 3px solid white;
 }
 
+.layout_tab.active {
+	border: 3px solid white;
+}
+
 .group_tab_box {
 	border: 2px solid rgb(54,187,68);
+}
+
+.layout_tab_box {
+	border: 2px solid lightgray;
 }
 
 .group_tab_link {
