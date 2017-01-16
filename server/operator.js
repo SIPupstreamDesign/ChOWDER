@@ -330,6 +330,37 @@
 	}
 
 	/**
+	 * 新規保存領域の作成
+	 * @param name 保存領域の名前
+	 * @param endCallback 終了コールバック
+	 */
+	function renameDB(name, newName, endCallback) {
+		if (name.length > 0 && newName.length > 0) {
+			if (name === "default" || newName === "default") {
+				endCallback("cannot change default db name");
+				return;
+			}
+			textClient.hexists(frontPrefix + 'dblist', name, function (err, doesExists) {
+				if (!err && doesExists === 1) {
+					textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
+						if (!err) {
+							textClient.hdel(frontPrefix + 'dblist', name);
+							textClient.hset(frontPrefix + 'dblist', newName, reply);
+							endCallback(null);
+						} else {
+							endCallback("failed to rename db");
+						}
+					});
+				} else {
+					endCallback("failed to rename db - invalid db name");
+				}
+			});
+		} else {
+			endCallback("failed to rename db - invalid db name");
+		}
+	}
+
+	/**
 	 * DBの参照先の変更
 	 * @param name 保存領域の名前
 	 * @param endCallback 終了コールバック
@@ -1502,6 +1533,15 @@
 	}
 
 	/**
+	 * 保存領域の名前を変更
+	 */
+	function commandRenameDB(json, endCallback) {
+		if (json.hasOwnProperty('name') && json.hasOwnProperty('new_name')) {
+			renameDB(json.name, json.new_name, endCallback);
+		}
+	}
+
+	/**
 	 * DBの参照先保存領域の変更
 	 */
 	function commandChangeDB(json, endCallback) {
@@ -1885,6 +1925,9 @@
 		ws_connector.on(Command.NewDB, function (data, resultCallback) {
 			commandNewDB(data, post_update(ws, io, resultCallback));
 		});
+		ws_connector.on(Command.RenameDB, function (data, resultCallback) {
+			commandRenameDB(data, post_update(ws, io, resultCallback));
+		});
 		ws_connector.on(Command.ChangeDB, function (data, resultCallback) {
 			commandChangeDB(data, post_update(ws, io, resultCallback));
 		});
@@ -2012,6 +2055,9 @@
 
 		io_connector.on(Command.NewDB, function (data, resultCallback) {
 			commandNewDB(data, post_update(ws, io, resultCallback));
+		});
+		io_connector.on(Command.RenameDB, function (data, resultCallback) {
+			commandRenameDB(data, post_update(ws, io, resultCallback));
 		});
 		io_connector.on(Command.ChangeDB, function (data, resultCallback) {
 			commandChangeDB(data, post_update(ws, io, resultCallback));

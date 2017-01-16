@@ -37,6 +37,7 @@
 		
 		// DB管理コマンド
 		NewDB : "NewDB",
+		RenameDB : "RenameDB",
 		DeleteDB : "DeleteDB",
 		ChangeDB : "ChangeDB",
 		GetDBList : "GetDBList"

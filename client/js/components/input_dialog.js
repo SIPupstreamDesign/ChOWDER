@@ -78,6 +78,9 @@
 	 * @param setting.name ダイアログタイトル
 	 * @param setting.initialValue 初期値
 	 * @param setting.okButtonName OKボタン表示名
+	 * @param setting.opacity  背景のopacity
+	 * @param setting.zIndex 背景のzIndex
+	 * @param setting.backgroundColor 背景色
 	 */
 	function init_multi_text_input(setting, callback) {
 		var text_input_dialog,
@@ -95,6 +98,9 @@
 		*/
 		text_input_dialog = document.createElement('div');
 		text_input_dialog.className = "text_input_dialog";
+		if (setting.backgroundColor) {
+			text_input_dialog.style.backgroundColor = setting.backgroundColor;
+		}
 
 		dialog_label = document.createElement('p');
 		dialog_label.style.marginTop = "20px";
@@ -134,7 +140,7 @@
 			background.close();
 			closeFunc();
 		};
-		background.show();
+		background.show(setting.opacity, setting.zIndex);
 		background.on('close', closeFunc);
 	}
 
@@ -143,6 +149,9 @@
 	 * @param setting.name ダイアログタイトル
 	 * @param setting.initialValue 初期値
 	 * @param setting.okButtonName OKボタン表示名
+	 * @param setting.opacity  背景のopacity
+	 * @param setting.zIndex 背景のzIndex
+	 * @param setting.backgroundColor 背景色
 	 */
 	function init_color_input(setting, okCallback) {
 		var color_dialog,
@@ -207,13 +216,16 @@
 			closeFunc();
 		};
 
-		background.show();
+		background.show(setting.opacity, setting.zIndex);
 		background.on('close', closeFunc);
 	}
 
 	/**
 	 * OK Cancel ダイアログを表示
 	 * @param setting.name ダイアログタイトル
+	 * @param setting.opacity  背景のopacity
+	 * @param setting.zIndex 背景のzIndex
+	 * @param setting.backgroundColor 背景色
 	 */
 	function okcancel_input(setting, callback) {
 		var dialog,
@@ -232,6 +244,9 @@
 		*/
 		dialog_div = document.createElement('div');
 		dialog_div.className = "okcancel_dialog";
+		if (setting.backgroundColor) {
+			dialog_div.style.backgroundColor = setting.backgroundColor;
+		}
 
 		dialog = document.createElement('p');
 		dialog.style.marginTop = "20px";
@@ -271,7 +286,64 @@
 			closeFunc();
 		};
 
-		background.show();
+		background.show(setting.opacity, setting.zIndex);
+		background.on('close', closeFunc);
+	}
+
+	/**
+	 * OK Cancel ダイアログを表示
+	 * @param setting.name ダイアログタイトル
+	 * @param setting.opacity  背景のopacity
+	 * @param setting.zIndex 背景のzIndex
+	 * @param setting.backgroundColor 背景色
+	 */
+	function ok_input(setting, callback) {
+		var dialog,
+			ok_button,
+			dialog_div,
+			background = new PopupBackground(),
+			closeFunc;
+
+		/*
+		<div class="okcancel_dialog">
+			<p style="margin-top:20px;margin-left:20px" class="okcancel_dialog_name"></p>
+			<input class="btn okcancel_dialog_ok_button" type="button" value="OK"  />
+		</div>
+		*/
+		dialog_div = document.createElement('div');
+		dialog_div.className = "okcancel_dialog";
+		if (setting.backgroundColor) {
+			dialog_div.style.backgroundColor = setting.backgroundColor;
+		}
+
+		dialog = document.createElement('p');
+		dialog.style.marginTop = "20px";
+		dialog.style.marginLeft = "20px";
+		dialog.className = "okcancel_dialog_name";
+		dialog_div.appendChild(dialog);
+
+		ok_button = document.createElement("input");
+		ok_button.type = "button";
+		ok_button.value = "OK";
+		ok_button.className = "btn okcancel_dialog_ok_button";
+		dialog_div.appendChild(ok_button);
+		document.body.appendChild(dialog_div);
+
+		dialog.textContent = setting.name;
+
+		closeFunc = (function (dialog_div) {
+			return function () {
+				document.body.removeChild(dialog_div);
+			};
+		}(dialog_div));
+
+		ok_button.onclick = function (evt) {
+			if (callback) { callback(true); }
+			background.close();
+			closeFunc();
+		};
+
+		background.show(setting.opacity, setting.zIndex);
 		background.on('close', closeFunc);
 	}
 
@@ -280,4 +352,5 @@
 	window.input_dialog.init_multi_text_input = init_multi_text_input;
 	window.input_dialog.color_input = init_color_input;
 	window.input_dialog.okcancel_input = okcancel_input;
+	window.input_dialog.ok_input = ok_input;
 }());

@@ -2123,6 +2123,13 @@
 		});
 	});
 
+	gui.on("renamedb", function (err, preName, name) {
+		console.error("renamedb", preName, name)
+		connector.send("RenameDB", { name : preName, new_name : name }, function () {
+			window.location.reload(true);
+		});
+	});
+
 	gui.on("changedb", function (err, name) {
 		connector.send("ChangeDB", { name : name }, function () {
 			window.location.reload(true);
