@@ -2135,6 +2135,11 @@
 		});
 	});
 
+	gui.on("change_history_num", function (err, value) {
+		connector.send("ChangeSetting", { max_history_num : value }, function () {
+		});
+	});
+
 	/**
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
@@ -3024,7 +3029,7 @@
 
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
-				gui.setDBList(reply);
+				gui.setDBList(Object.keys(reply));
 			}
 		});
 

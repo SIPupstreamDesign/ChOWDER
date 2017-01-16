@@ -25,6 +25,7 @@
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
 		groupListPrefix = "grouplist",
+		settingPrefix = "global_setting",
 		io_connector = require('./io_connector.js'),
 		ws_connector = require('./ws_connector.js'),
 		util = require('./util.js'),
@@ -275,29 +276,50 @@
 		});
 	}
 
-	function changeUUIDPrefix(dbname) {
-		textClient.sadd(frontPrefix + 'dblist', dbname);
-		uuidPrefix = dbname + ":";
-		contentPrefix = frontPrefix + uuidPrefix + "content:";
-		contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
-		contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
-		metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
-		metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
-		windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
-		windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
-		windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
-		virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
-		groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
+	function changeUUIDPrefix(dbname, endCallback) {
+		textClient.hget(frontPrefix + 'dblist', dbname, function (err, reply) {
+			if (!err) {
+				var id = reply;
+				console.log("DB ID:", reply);
+				uuidPrefix = id + ":";
+				contentPrefix = frontPrefix + uuidPrefix + "content:";
+				contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
+				contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
+				metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
+				metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
+				windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
+				windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
+				windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
+				virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
+				groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
+				endCallback(null);
+			} else {
+				endCallback("failed to get dblist");
+			}
+		});
 	}
 
+	/**
+	 * 新規保存領域の作成
+	 * @param name 保存領域の名前
+	 * @param endCallback 終了コールバック
+	 */
 	function newDB(name, endCallback) {
 		if (name.length > 0) {
-			textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
+			textClient.hexists(frontPrefix + 'dblist', name, function (err, doesExists) {
 				if (!err && doesExists !== 1) {
 					// 存在しない場合のみ作って切り替え
-					changeUUIDPrefix(name);
-					addGroup("group_defalut", "default", function (err, reply) {} );
-					endCallback(null);
+					var id = util.generateUUID8();
+					textClient.hset(frontPrefix + 'dblist', name, id, function (err, reply) {
+						if (!err) {
+							changeUUIDPrefix(name, function (err, reply) {
+								addGroup("group_defalut", "default", function (err, reply) {} );
+								endCallback(err);
+							});
+						} else {
+							endCallback("failed to create new db");
+						}
+					});
 				} else {
 					endCallback("already exists");
 				}
@@ -307,46 +329,70 @@
 		}
 	}
 
+	/**
+	 * DBの参照先の変更
+	 * @param name 保存領域の名前
+	 * @param endCallback 終了コールバック
+	 */
 	function changeDB(name, endCallback) {
 		if (name.length > 0) {
-			textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
-				if (doesExists !== 1) {
+			textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
+				if (!err) {
+					var id = reply;
+					textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
+						if (doesExists !== 1) {
+							// 存在しないdbnameが指定された
+							endCallback("Failed to change db: not exists db name");
+							return;
+						}
+						changeUUIDPrefix(name, endCallback);
+					});
+				} else {
 					// 存在しないdbnameが指定された
 					endCallback("Failed to change db: not exists db name");
-					return;
 				}
-				changeUUIDPrefix(name);
-				endCallback(null);
 			});
 		}
 	}
 
+	/**
+	 * DBの指定したデータ保存領域を削除
+	 * @param name 保存領域の名前
+	 * @param endCallback 終了コールバック
+	 */
 	function deleteDB(name, endCallback) {
 		if (name.length > 0) {
 			if (name === "default") {
 				endCallback("Unauthorized name for deleting")
 			} else {
-				textClient.srem(frontPrefix + 'dblist', name);
-				textClient.exists(frontPrefix + name + ":grouplist", function (err, doesExists) {
-					if (!err && doesExists == 1) {
-						textClient.keys(frontPrefix + name + "*", function (err, replies) {
-							var i;
-							console.log("deletedb : ", name);
-							if (!err) {
-								for (i = 0; i < replies.length; i = i + 1) {
-									console.log("delete : ", replies[i]);
-									textClient.del(replies[i]);
-								}
+				textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
+					if (!err) {
+						var id = reply;
+						textClient.hdel(frontPrefix + 'dblist', name);
+						textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
+							if (!err && doesExists == 1) {
+								textClient.keys(frontPrefix + name + "*", function (err, replies) {
+									var i;
+									console.log("deletedb : ", name);
+									if (!err) {
+										for (i = 0; i < replies.length; i = i + 1) {
+											console.log("delete : ", replies[i]);
+											textClient.del(replies[i]);
+										}
 
-								if (uuidPrefix === (name + ":")) {
-									// 現在使用中のDBが消去された.
-									// defaultに戻す.
-									changeDB("default", endCallback);
-								} else {
-									endCallback(null);
-								}
+										if (uuidPrefix === (name + ":")) {
+											// 現在使用中のDBが消去された.
+											// defaultに戻す.
+											changeDB("default", endCallback);
+										} else {
+											endCallback(null);
+										}
+									} else {
+										endCallback("Failed deleteDB:" + err)
+									}
+								});
 							} else {
-								endCallback("Failed deleteDB:" + err)
+								endCallback("Failed deleteDB: not exists db name")
 							}
 						});
 					} else {
@@ -357,6 +403,16 @@
 		}
 	}
 	
+	function changeSetting(json, endCallback) {
+		textClient.hmset(settingPrefix, json, function (err) {
+			if (err) {
+				console.error(err);
+			} else if (endCallback) {
+				endCallback(json);
+			}
+		});
+	}
+
 	/**
 	 * 指定されたタイプ、idのメタデータ設定
 	 * @method setMetaData
@@ -1467,7 +1523,14 @@
 	 * DBの保存領域のリストを取得
 	 */
 	function commandGetDBList(resultCallback) {
-		textClient.smembers(frontPrefix + 'dblist', resultCallback);
+		textClient.hgetall(frontPrefix + 'dblist', resultCallback);
+	}
+
+	/**
+	 * 各種設定の変更
+	 */
+	function commandChangeSetting(json, endCallback) {
+		changeSetting(json, endCallback);
 	}
 
 	/**
@@ -1832,6 +1895,10 @@
 			commandGetDBList(resultCallback);
 		});
 
+		ws_connector.on(Command.ChangeSetting, function (data, resultCallback) {
+			commandChangeSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
 
@@ -1956,6 +2023,10 @@
 			commandGetDBList(resultCallback);
 		});
 
+		io_connector.on(Command.ChangeSetting, function (data, resultCallback) {
+			commandChangeSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+
 		io_connector.registerEvent(io, socket);
 	}
 	
@@ -1966,7 +2037,7 @@
 	 */
 	function registerUUID(id) {
 		uuidPrefix = id + ":";
-		textClient.sadd(frontPrefix + 'dblist', id);
+		textClient.hset(frontPrefix + 'dblist', "default", id);
 		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
 		contentBackupPrefix = frontPrefix + uuidPrefix + contentBackupPrefix;
@@ -1977,6 +2048,7 @@
 		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
+		settingPrefix = frontPrefix + uuidPrefix + settingPrefix;
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);

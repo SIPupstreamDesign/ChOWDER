@@ -38,7 +38,11 @@
 		NewDB : "NewDB",
 		DeleteDB : "DeleteDB",
 		ChangeDB : "ChangeDB",
-		GetDBList : "GetDBList"
+		GetDBList : "GetDBList",
+
+		// 各種設定変更
+		ChangeSetting : "ChangeSetting",
+		GetSetting : "GetSetting"
 	};
 	
 	module.exports = Command;

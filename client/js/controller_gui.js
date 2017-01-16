@@ -890,6 +890,10 @@
 		managementPage.on('deletedb', function (err, name) {
 			this.emit(window.ControllerGUI.EVENT_DELETEDB, null, name);
 		}.bind(this));
+
+		managementPage.on('change_history_num', function (err, value) {
+			this.emit(window.ControllerGUI.EVENT_CHANGE_HISTORY_NUM, null, value);
+		});
 	};
 
 	ControllerGUI.prototype.setDBList = function (dblist) {
@@ -1131,6 +1135,7 @@
 	ControllerGUI.EVENT_NEWDB = "newdb";
 	ControllerGUI.EVENT_CHANGEDB = "changedb";
 	ControllerGUI.EVENT_DELETEDB = "deletedb";
+	ControllerGUI.EVENT_CHANGE_HISTORY_NUM = "change_history_num";
 	window.ControllerGUI = ControllerGUI;
 	
 }());
