@@ -43,7 +43,13 @@
 		doneUpdateMetaData,
 		doneUpdateWindowMetaData,
 		doneGetMetaData,
-		doneDeleteWindowMetaData;
+		doneDeleteWindowMetaData,
+		isWindowType = function (meta) {
+			return (meta.type === windowType)
+		},
+		isContentType = function (meta) {
+			return (meta.type !== windowType && meta.type !== "layout")
+		};
 	
 	
 	/**
@@ -342,7 +348,7 @@
 		for (i in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(i)) {
 				if (metaDataDict[i].id !== metaData.id && 
-					metaDataDict[i].type !== windowType &&
+					isContentType(metaDataDict[i].type) &&
 					metaDataDict[i].hasOwnProperty("zIndex")) {
 					max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
 					min = Math.min(min, parseInt(metaDataDict[i].zIndex, 10));
@@ -375,7 +381,7 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	function updateMetaData(metaData, endCallback) {
-		if (metaData.type === windowType) {
+		if (isWindowType(metaData)) {
 			// window
 			connector.send('UpdateWindowMetaData', [metaData], function (err, reply) {
 				doneUpdateWindowMetaData(err, reply, endCallback);
@@ -399,7 +405,7 @@
 	 */
 	function updateMetaDataMulti(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
-			if (metaDataList[0].type === windowType) {
+			if (isWindowType(metaDataList[0])) {
 				connector.send('UpdateWindowMetaData', metaDataList, function (err, reply) {
 					doneUpdateWindowMetaData(err, reply, endCallback);
 				});
@@ -563,7 +569,7 @@
 			elem = document.getElementById(getSelectedID());
 			if (elem) {
 				metaData = metaDataDict[elem.id];
-				if (metaData.type !== windowType && !isVisible(metaData)) {
+				if (isContentType(metaData) && !isVisible(metaData)) {
 					// 非表示コンテンツ
 					return;
 				}
@@ -671,7 +677,7 @@
 		} else if (selectedIDList.length > 1) {
 			// 複数選択.
 			manipulator.removeManipulator();
-			if (metaData.type === windowType) {
+			if (isWindowType(metaData)) {
 				content_property.init(id, "", "multi_display", mime);
 				if (gui.get_list_elem(id)) {
 					gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
@@ -693,7 +699,7 @@
 			}
 		} else {
 			// 単一選択.
-			if (metaData.type === windowType) {
+			if (isWindowType(metaData)) {
 				content_property.init(id, "", "display", mime);
 				content_property.assign_content_property(metaDataDict[id]);
 				if (gui.get_list_elem(id)) {
@@ -749,18 +755,18 @@
 		elem = getElem(id, true);
 		if (elem) {
 			metaData = metaDataDict[id];
-			if (metaData.type === windowType) {
+			if (isWindowType(metaData)) {
 				elem.style.border = "";
 				elem.style.borderStyle = "solid";
 			}
-			if (metaData.type !== windowType && isVisible(metaData) && String(metaData.mark) !== "true") {
+			if (isContentType(metaData) && isVisible(metaData) && String(metaData.mark) !== "true") {
 				elem.style.border = "";
 			}
 			if (gui.get_list_elem(elem.id)) {
 				if (metaData.hasOwnProperty('reference_count') && parseInt(metaData.reference_count, 10) <= 0) {
 					gui.get_list_elem(elem.id).style.borderColor = "gray";
 				} else {
-					if (metaData.type !== windowType) {
+					if (isContentType(metaData)) {
 						gui.get_list_elem(elem.id).style.borderColor = contentBorderColor;
 						if (gui.get_search_elem(elem.id)) {
 							gui.get_search_elem(elem.id).style.borderColor = contentBorderColor;
@@ -927,7 +933,7 @@
 			
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				if (metaData.type !== windowType) {
+				if (isContentType(metaData)) {
 					otherPreviewArea = gui.get_display_preview_area();
 				}
 			}
@@ -935,8 +941,8 @@
 			
 			if (metaData) {
 				if (id === wholeWindowID ||
-					(!isDisplayTabSelected() && metaData.type === windowType) ||
-					(isDisplayTabSelected() && metaData.type !== windowType)) {
+					(!isDisplayTabSelected() && isWindowType(metaData)) ||
+					(isDisplayTabSelected() && isContentType(metaData))) {
 					console.log("setupContent", metaData);
 					childs = otherPreviewArea.childNodes;
 
@@ -1192,7 +1198,7 @@
 			vscreen_util.transPosInv(metaData);
 			vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 
-			if (metaData.type === windowType || isVisible(metaData)) {
+			if (isWindowType(metaData) || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
 				targetMetaDatas.push(metaData);
 			}
@@ -1208,9 +1214,9 @@
 			elem = document.getElementById(getSelectedID());
 			if (elem) {
 				metaData = metaDataDict[elem.id];
-				if (metaData.type === windowType || isVisible(metaData)) {
-					onManipulatorMove(evt);
+				if (isWindowType(metaData) || isVisible(metaData)) {
 					manipulator.moveManipulator(elem);
+					onManipulatorMove(evt);
 				}
 			}
 			evt.stopPropagation();
@@ -1425,7 +1431,7 @@
 				if (metaDataDict.hasOwnProperty(i)) {
 					metaData = metaDataDict[i];
 					if (isVisible(metaData)) {
-						if (metaData.type !== windowType) {
+						if (isContentType(metaData)) {
 							elem = document.getElementById(metaData.id);
 							if (elem) {
 								vscreen_util.assignMetaData(elem, metaData, true, groupDict);
@@ -1653,15 +1659,15 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
-		if ( (isDisplayTabSelected() && json.type === windowType) ||
-			(!isDisplayTabSelected() && json.type !== windowType)) {
+		if ( (isDisplayTabSelected() && isWindowType(json)) ||
+			(!isDisplayTabSelected() && isContentType(json))) {
 				if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
 					content_property.assign_content_property(json);
 				}
 			}
 
 		
-		if (json.type === windowType) { return; }
+		if (isWindowType(json)) { return; }
 		elem = document.getElementById(metaData.id);
 		if (elem) {
 			if (isVisible(json)) {
@@ -1719,8 +1725,8 @@
 		if (reply.length === 1) {
 			json = reply[0];
 			metaDataDict[json.id] = json;
-			if ( (isDisplayTabSelected() && json.type === windowType) ||
-				(!isDisplayTabSelected() && json.type !== windowType)) {
+			if ( (isDisplayTabSelected() && isWindowType(json)) ||
+				(!isDisplayTabSelected() && isContentType(json))) {
 					content_property.assign_content_property(json);
 				}
 		}
@@ -1822,7 +1828,7 @@
 			for (id in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(id)) {
 					windowData = metaDataDict[id];
-					if (windowData.type === windowType) {
+					if (isWindowType(windowData)) {
 						elem = document.getElementById(id);
 						if (elem) {
 							previewArea.removeChild(elem);
@@ -1882,8 +1888,8 @@
 			elem;
 		importWindow(windowData);
 		changeWindowBorderColor(windowData);
-		if ( (isDisplayTabSelected() && reply.type === windowType) ||
-			(!isDisplayTabSelected() && reply.type !== windowType)) {
+		if ( (isDisplayTabSelected() && isWindowType(reply)) ||
+			(!isDisplayTabSelected() && isContentType(reply))) {
 				if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
 					content_property.assign_content_property(windowData);
 				}
@@ -1918,7 +1924,7 @@
 			for (meta in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(meta)) {
 					metaData = metaDataDict[meta];
-					if (metaData.type !== windowType) {
+					if (isContentType(metaData)) {
 						onlistID = "onlist:" + metaData.id;
 						elem = document.getElementById(onlistID);
 						if (elem) {
@@ -2044,7 +2050,7 @@
 		if (selectedGroup) {
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
-					if (metaDataDict[i] !== windowType) {
+					if (isContentType(metaDataDict[i])) {
 						if (groupToID[metaDataDict[i].group] === selectedGroup) {
 							targetList.push(metaDataDict[i]);
 						}
@@ -2068,7 +2074,7 @@
 			
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type === windowType) {
+			if (metaDataDict.hasOwnProperty(id) && isWindowType(metaDataDict[id])) {
 				targetIDList.push({id : id});
 			}
 		}
@@ -2477,7 +2483,7 @@
 	content_property.on("display_color_changed", function (err, colorvalue) {
 		var id = getSelectedID(),
 			metaData;
-		if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type === windowType) {
+		if (metaDataDict.hasOwnProperty(id) && isWindowType(metaDataDict[id])) {
 			metaData = metaDataDict[id]; 
 			metaData.color = colorvalue;
 			updateMetaData(metaData, function (err, reply) {});
@@ -2490,7 +2496,7 @@
 	content_property.on("restore_content", function (err, restoreIndex) {
 		var id = getSelectedID(),
 			metaData;
-		if (metaDataDict.hasOwnProperty(id) && metaDataDict[id].type !== windowType) {
+		if (metaDataDict.hasOwnProperty(id) && isContentType(metaDataDict[id])) {
 			metaData = metaDataDict[id]; 
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
 				metaData.restore_index = restoreIndex;
@@ -2549,7 +2555,7 @@
 							for (id in metaDataDict) {
 								if (metaDataDict.hasOwnProperty(id)) {
 									metaData = metaDataDict[id];
-									if (metaData.type !== windowType) {
+									if (isContentType(metaData)) {
 										if (metaData.group === groupName) {
 											deleteList.push(metaData);
 										}
@@ -2613,7 +2619,7 @@
 		unselectAll(true);
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
-				if (metaDataDict[id].type !== windowType) {
+				if (isContentType(metaDataDict[id])) {
 					if (onlyCurrentGroup) {
 						if (metaDataDict[id].group === currentGroup) {
 							select(id, true);
@@ -2632,7 +2638,7 @@
 		unselectAll(true);
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
-				if (metaDataDict[id].type === windowType) {
+				if (isWindowType(metaDataDict[id])) {
 					select("onlist:" + id, true);
 				}
 			}
@@ -2711,7 +2717,7 @@
 							for (id in metaDataDict) {
 								if (metaDataDict.hasOwnProperty(id)) {
 									metaData = metaDataDict[id];
-									if (metaData.type !== windowType) {
+									if (isContentType(metaData)) {
 										if (metaData.group === oldName) {
 											metaData.group = newName;
 											updateMetaData(metaData);
@@ -2765,7 +2771,7 @@
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				if (metaData.type !== windowType) {
+				if (isContentType(metaData)) {
 					if (groups.indexOf(metaData.group) >= 0) {
 						if (text === "" || JSON.stringify(metaData).indexOf(text) >= 0) {
 							elem = document.getElementById("onlist:" + metaData.id);
@@ -2873,7 +2879,7 @@
 			metaData;
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
-			if (metaData.type === windowType) {
+			if (isWindowType(metaData)) {
 				gui.toggle_display_id_show(false);
 			} else {
 				metaData.mark_memo = is_active;
