@@ -123,7 +123,7 @@
 			}
 			
 			binary = buf.slice(pos, buf.byteLength);
-			if (params !== null && params.type === 'text') {
+			if (params !== null && (params.type === 'text' || params.type === "layout")) {
 				binary = arrayBufferToString(binary);
 			}
 			endCallback(metaData, binary);
@@ -162,7 +162,7 @@
 		if (params.type === 'url') {
 			binary = utf8StringToArray(encodeURI(data));
 			dstBufferSize = head.length + 8 + chars.length + binary.length;
-		} else if (params.type === 'text') {
+		} else if (params.type === 'text' || params.type === 'layout') {
 			binary = utf8StringToArray(data);
 			dstBufferSize = head.length + 8 + chars.length + binary.length;
 		} else {
@@ -192,7 +192,7 @@
 		}
 		pos = pos + chars.length;
 		
-		if (params.type === 'text' || params.type === 'url') {
+		if (params.type === 'text' || params.type === 'url' || params.type === 'layout') {
 			for (i = pos; i < dstBufferSize; i = i + 1) {
 				view.setUint8(i, binary[i - pos], false);
 			}

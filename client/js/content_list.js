@@ -1,7 +1,10 @@
 /*jslint devel:true*/
 (function () {
 	"use strict";
-	
+	/**
+	 * コンテンツリストビュー
+	 */
+
 	var ContentList,
 		contentBorderColor = "rgba(0,0,0,0)",
 		defaultGroup = "default",
@@ -41,7 +44,7 @@
 	}
 
 	/**
-	 * 受領したメタデータから左側コンテンツエリアに反映する。
+	 * コンテンツをリストビューにインポートする。
 	 * doneGetContent時にコールされる。
 	 * @method importContentToList
 	 * @param {JSON} metaData メタデータ
@@ -62,6 +65,10 @@
 			blob,
 			mime = "image/jpeg",
 			onlistID = "onlist:" + metaData.id;
+
+		if (metaData.type === "layout") {
+			return;
+		}
 
 		// メタデータはGetMetaDataで取得済のものを使う.
 		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.

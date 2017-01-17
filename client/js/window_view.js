@@ -1,6 +1,9 @@
 /*jslint devel:true*/
 (function (gui) {
 	"use strict";
+	/**
+	 * Display枠を追加できるメインビュー
+	 */
 
 	var WindowView,
 		windowType = "window";
@@ -22,7 +25,7 @@
 	}
 
 	/**
-	 * Displayをリストビューにインポートする。
+	 * Displayをメインビューにインポートする。
 	 * @method importWindowToView
 	 * @param {JSON} windowData ウィンドウデータ
 	 */

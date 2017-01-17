@@ -805,7 +805,10 @@
 		if (!err) {
 			var metaData = data.metaData,
 				contentData = data.contentData;
-
+			
+			// レイアウトは無視
+			if (metaData.type === "layout") { return; }
+			// コンテンツ登録&表示
 			assignMetaBinary(metaData, contentData);
 		}
 	};
@@ -857,6 +860,9 @@
 	doneGetMetaData = function (err, json) {
 		var metaData = json;
 		console.log("doneGetMetaData", json);
+		// レイアウトは無視
+		if (metaData.type === "layout") { return; }
+		
 		metaDataDict[json.id] = json;
 		if (!err) {
 			var elem = document.getElementById(json.id),

@@ -1,6 +1,9 @@
 /*jslint devel:true*/
 (function () {
 	"use strict";
+	/**
+	 * Dispalyリストビュー
+	 */
 
 	var WindowList = function () {
 		EventEmitter.call(this);

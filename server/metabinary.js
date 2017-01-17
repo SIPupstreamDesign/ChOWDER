@@ -125,7 +125,7 @@
 
 		content = binary.slice(headerStr.length + 8 + metaSize);
 		
-		if (params.type === 'text' || params.type === 'url') {
+		if (params.type === 'text' || params.type === 'url' || params.type === 'layout') {
 			content = content.toString('utf8');
 		}
 		if (metaData && content) {

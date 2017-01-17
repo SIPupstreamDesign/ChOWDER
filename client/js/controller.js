@@ -59,6 +59,13 @@
 	}
 	
 	/**
+	 * メタデータがレイアウトタイプであるか返す
+	 */
+	function isLayoutType(meta) {
+		return (meta.type === "layout");
+	}
+
+	/**
 	 * メタデータが表示中かを判定する
 	 * @method isVisible
 	 * @param {Object} metaData メタデータ
@@ -147,7 +154,7 @@
 	function isDisplayTabSelected() {
 		return gui.contentBox.is_active("display_tab");
 	}
-	
+
 	/**
 	 * cookie取得
 	 * @method getCookie
@@ -1522,7 +1529,7 @@
 						elem = document.getElementById(id);
 					}
 					if (elem && toElem) {
-						if (metaData.type === 'text') {
+						if (metaData.type === 'text' || metaData.type === 'layout') {
 							if (elem.innerHTML !== "") {
 								toElem.innerHTML = elem.innerHTML;
 							}
@@ -1534,7 +1541,7 @@
 						}
 					}
 					if (elem && fromElem) {
-						if (metaData.type === 'text') {
+						if (metaData.type === 'text' || metaData.type === 'layout') {
 							elem.innerHTML = fromElem.innerHTML;
 						} else {
 							elem.src = fromElem.src;
@@ -1552,6 +1559,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContent(metaData, contentData) {
+		window.layout_list.import_content(gui, metaDataDict, metaData, contentData, groupDict);
 		window.content_list.import_content(gui, metaDataDict, metaData, contentData, groupDict);
 		window.content_view.import_content(gui, metaDataDict, metaData, contentData, groupDict);
 	}
@@ -1665,12 +1673,12 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
-		if ( (isDisplayTabSelected() && isWindowType(json)) ||
-			(!isDisplayTabSelected() && isContentType(json))) {
-				if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
+		//if ( (isDisplayTabSelected() && isWindowType(json)) ||
+		//	(!isDisplayTabSelected() && isContentType(json))) {
+		//		if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
 					content_property.assign_content_property(json);
-				}
-			}
+		//		}
+		//	}
 
 		
 		if (isWindowType(json)) { return; }
@@ -1707,7 +1715,6 @@
 	 * @param {Object} reply 返信されたコンテンツ
 	 */
 	doneGetContent = function (err, reply, endCallback) {
-		console.log("doneGetContent", reply);
 		if (!err) {
 			importContent(reply.metaData, reply.contentData);
 			if (endCallback) {
@@ -1914,12 +1921,15 @@
 		var i,
 			groupToElems = { default : [] },
 			groupToMeta = { default : [] },
+			groupToLayoutElems = { default : [] },
+			groupToLayoutMeta = { default : [] },
 			group,
 			elem,
 			onlistID,
 			meta,
 			metaData,
 			contentArea,
+			layoutArea,
 			selectedGroup,
 			searchTargetGroups;
 
@@ -1948,6 +1958,24 @@
 							}
 						}
 					}
+					if (isLayoutType(metaData)) {
+						onlistID = "onlist:" + metaData.id;
+						elem = document.getElementById(onlistID);
+						if (elem) {
+							elem.parentNode.removeChild(elem);
+							if (metaData.hasOwnProperty('group')) {
+								if (!groupToLayoutElems.hasOwnProperty(metaData.group)) {
+									groupToLayoutElems[metaData.group] = [];
+									groupToLayoutMeta[metaData.group] = [];
+								}
+								groupToLayoutElems[metaData.group].push(elem);
+								groupToLayoutMeta[metaData.group].push(metaData);
+							} else {
+								groupToLayoutElems[defaultGroup].push(elem);
+								groupToLayoutMeta[defaultGroup].push(metaData);
+							}
+						}
+					}
 				}
 			}
 
@@ -1971,6 +1999,19 @@
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
 						contentArea.appendChild(groupToElems[group][i]);
+					}
+				}
+			}
+
+			// 元々あったリストエレメントを全部つけなおす
+			for (group in groupToLayoutElems) {
+				if (groupToLayoutElems.hasOwnProperty(group)) {
+					layoutArea = gui.get_layout_area_by_group(group);
+					if (!layoutArea) {
+						layoutArea = gui.get_content_area_by_group(defaultGroup);
+					}
+					for (i = 0; i < groupToLayoutElems[group].length; i = i + 1) {
+						layoutArea.appendChild(groupToLayoutElems[group][i]);
 					}
 				}
 			}
@@ -2218,6 +2259,27 @@
 		}
 	});
 
+	gui.on("add_layout", function (err, memo) {
+		var id,
+			metaData,
+			layout = {
+				contents: {}
+			};
+
+		// コンテンツのメタデータを全部コピー
+		for (id in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				if (isContentType(metaData)) {
+					layout.contents[id] = metaData;
+				}
+			}
+		}
+
+		layout = JSON.stringify(layout);
+		addContent({type : "layout", user_data_text : JSON.stringify({ text: memo }) }, layout);
+	});
+
 	/**
 	 *  ファイルドロップハンドラ
 	 * @param {Object} evt FileDropイベント
@@ -2390,6 +2452,21 @@
 	 */
 	window.content_list.on("copy_content", function (err, fromElem, toElem, metaData, isListContent) {
 		copyContentData(fromElem, toElem, metaData, isListContent);
+	});
+
+	/**
+	 * レイアウトリストでセットアップコンテンツが呼ばれた
+	 */
+	window.layout_list.on("setup_layout", function (err, elem, uid) {
+		//setupLayout()
+		//setupContent(elem, uid);
+	});
+
+	/**
+	 * レイアウトリストでコピーコンテンツが呼ばれた
+	 */
+	window.layout_list.on("copy_layout", function (err, fromElem, toElem, metaData, isListContent) {
+		//copyContentData(fromElem, toElem, metaData, isListContent);
 	});
 
 	/**

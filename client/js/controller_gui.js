@@ -17,6 +17,7 @@
 		this.searchBox = null;
 		this.displayMenu = null;
 		this.contentMenu = null;
+		this.layoutMenu = null;
 		this.dblist = [];
 		this.display_scale = 1.0;
 		this.snapType = "free";
@@ -237,6 +238,23 @@
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); }.bind(this)
 						}
 					},]
+			});
+
+		this.layoutMenu = new BurgerMenu(
+			document.getElementById('bottom_burger_menu_layout'),
+			{
+				menu : [{
+					レイアウト追加 : {
+						func : function (evt) {
+							window.input_dialog.init_multi_text_input({
+								name : "メモ",
+								okButtonName : "OK"
+							}, function (value) {
+								this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD, null, value);
+							}.bind(this));
+						}.bind(this)
+					}
+				}]
 			});
 
 		this.initBurgerMenuContent();
@@ -777,6 +795,7 @@
 			displayMenu.style.display = "block";
 			contentMenu.style.display = "none";
 			searchMenu.style.display = "none";
+			layoutMenu.style.display = "none";
 		} else if (tabName === 'Content') {
 			displayPreviewArea.style.opacity = 0.3;
 			contentPreviewArea.style.opacity = 1.0;
@@ -785,6 +804,7 @@
 			displayMenu.style.display = "none";
 			contentMenu.style.display = "block";
 			searchMenu.style.display = "none";
+			layoutMenu.style.display = "none";
 			content_icon.className = "burger_menu_icon bottom_burger_menu_content_icon";
 		} else if (tabName === 'Search') {
 			displayPreviewArea.style.opacity = 0.3;
@@ -794,6 +814,7 @@
 			displayMenu.style.display = "none";
 			contentMenu.style.display = "block";
 			searchMenu.style.display = "block";
+			layoutMenu.style.display = "none";
 			content_icon.className = "burger_menu_icon bottom_burger_menu_search_icon"; //色だけ変更
 		} else if (tabName === "Layout") {
 			displayPreviewArea.style.opacity = 0.3;
@@ -870,7 +891,6 @@
 			groupColor,
 			groupID,
 			i;
-
 		for (i = 0; i < groupList.length; i = i + 1) {
 			groupName = groupList[i].name;
 			groupColor = groupList[i].color;
@@ -1060,8 +1080,14 @@
 	ControllerGUI.prototype.get_search_area = function () {
 		return this.searchBox ? document.getElementsByClassName('search_item_wrapper')[0] : null;
 	};
+	ControllerGUI.prototype.get_layout_area = function () {
+		return this.layoutBox ? this.layoutBox.get_current_tab() : null;
+	};
 	ControllerGUI.prototype.get_content_area_by_group = function (group) {
 		return this.groupBox ? this.groupBox.get_tab(group) : null;
+	};
+	ControllerGUI.prototype.get_layout_area_by_group = function (group) {
+		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
 	ControllerGUI.prototype.get_current_group_name = function () {
 		return this.groupBox ? this.groupBox.get_current_group_name() : null;
@@ -1179,6 +1205,7 @@
 	ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
 	ControllerGUI.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
 	ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
+	ControllerGUI.EVENT_LAYOUT_ADD = "add_layout";
 	ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
 	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
 	ControllerGUI.EVENT_NEWDB = "newdb";

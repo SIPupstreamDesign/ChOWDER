@@ -1,6 +1,9 @@
 /*jslint devel:true*/
 (function () {
 	"use strict";
+	/**
+	 * コンテンツを追加できるメインビュー
+	 */
 	
 	var ContentView,
 		contentBorderColor = "rgba(0,0,0,0)",
@@ -40,7 +43,7 @@
 	}
 
 	/**
-	 * 受領したメタデータからプレビューツリーにコンテンツを反映する。
+	 * コンテンツをメインビューにインポートする。
 	 * doneGetContent時にコールされる。
 	 * @method importContentToView
 	 * @param {JSON} metaData メタデータ
@@ -55,6 +58,10 @@
 			blob,
 			mime = "image/jpeg";
 		
+		if (metaData.type === "layout") {
+			return;
+		}
+
 		console.log("importContentToView:" + JSON.stringify(metaData));
 		tagName = getTagName(metaData.type);
 		

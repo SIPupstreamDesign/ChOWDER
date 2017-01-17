@@ -52,6 +52,14 @@ ul, ol {
 	background-color: rgb(46, 109, 224);
 }
 
+#bottom_burger_menu_layout_icon {
+	background-color: lightgray;
+}
+
+#bottom_burger_menu_layout_icon:hover {
+	background-color: gray;
+}
+
 .bottom_burger_menu_content_icon {
 	background-color: rgb(54,187,68);
 }
@@ -93,6 +101,10 @@ ul, ol {
 }
 
 #bottom_burger_menu_search {
+	display : none;
+}
+
+#bottom_burger_menu_layout {
 	display : none;
 }
 

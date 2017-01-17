@@ -61,13 +61,13 @@
 					groupColor = tabItem.color;
 				}
 				if (tabItem.hasOwnProperty('id')) {
-					id = tabItem.id;
+					id = this.tabID(tabItem.id);
 				}
 				elem.appendChild(this.create_tab(id, groupName, groupColor, tabItem, i === 0));
-				this.tabIDs.push(tabItem.id);
+				this.tabIDs.push(id);
 
 				box = document.createElement('div');
-				box.id = tabItem.id + "_box";
+				box.id = id + "_box";
 				box.className = tabItem.className + "_box";
 				box.style.width = "100%";
 				box.style.height = "100%";
@@ -142,7 +142,7 @@
 			tab = this.setting.tabs[i];
 			if (Object.keys(tab)[0] === group) {
 				tabItem = tab[Object.keys(tab)[0]]; 
-				return document.getElementById(tabItem.id + "_box");
+				return document.getElementById(this.tabID(tabItem.id) + "_box");
 			} 
 		}
 		return null;
@@ -150,6 +150,10 @@
 
 	GroupBox.prototype.get_current_group_name = function () {
 		return this.currentGroupName;
+	};
+
+	GroupBox.prototype.tabID = function (id) {
+		return this.container.id + "_" + id;
 	};
 
 	/*
@@ -163,7 +167,7 @@
 			setting_button,
 			span;
 		elem = document.createElement('div');
-		elem.id = tabContent.id;
+		elem.id = groupID;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
 		elem.style.cursor = "pointer";
 		if (groupColor) {
@@ -172,7 +176,7 @@
 		this.tabGroupToElems[groupName].push(elem);
 		link = document.createElement('a');
 		link.href = "#";
-		link.id = tabContent.id + "_link";
+		link.id = groupID + "_link";
 		link.className = "group_tab_link";
 		link.innerHTML = groupName;
 		elem.onclick = function (evt) {
@@ -180,17 +184,17 @@
 				tabElem;
 			for (i = 0; i < this.tabIDs.length; i = i + 1) {
 				document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
-				tabElem = document.getElementById(this.tabIDs[i]); 
+				tabElem = document.getElementById(this.tabIDs[i]);
 				tabElem.className = tabElem.className.split(" active").join("");
 			}
-			tabElem = document.getElementById(tabContent.id); 
+			tabElem = document.getElementById(groupID); 
 			tabElem.className = tabElem.className + " active";
-			document.getElementById(tabContent.id + "_box").style.display = "block";
+			document.getElementById(groupID + "_box").style.display = "block";
 			if (tabContent.hasOwnProperty('func')) {
 				tabContent.func();
 			}
 			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
-			this.currentTab = document.getElementById(tabContent.id + "_box");
+			this.currentTab = document.getElementById(groupID + "_box");
 			this.currentGroupName = groupName;
 		}.bind(this);
 		elem.appendChild(link);
