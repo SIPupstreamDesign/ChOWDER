@@ -19,7 +19,6 @@
 		metaDataDict = {},
 		groupList = [],
 		groupDict = {},
-		windowType = "window",
 		wholeWindowID = "whole_window",
 		wholeWindowListID = "onlist:whole_window",
 		wholeSubWindowID = "whole_sub_window",
@@ -43,14 +42,21 @@
 		doneUpdateMetaData,
 		doneUpdateWindowMetaData,
 		doneGetMetaData,
-		doneDeleteWindowMetaData,
-		isWindowType = function (meta) {
-			return (meta.type === windowType)
-		},
-		isContentType = function (meta) {
-			return (meta.type !== windowType && meta.type !== "layout")
-		};
+		doneDeleteWindowMetaData;
 	
+	/**
+	 * メタデータがwindowタイプであるか返す
+	 */
+	function isWindowType(meta) {
+		return (meta.type === "window");
+	}
+
+	/**
+	 * メタデータがimage/url/textなどのコンテンツタイプであるか返す
+	 */
+	function isContentType(meta) {
+		return (meta.type !== "window" && meta.type !== "layout");
+	}
 	
 	/**
 	 * メタデータが表示中かを判定する
@@ -813,7 +819,7 @@
 			metaData = metaDataDict[id];
 			metaData.visible = false;
 			
-			if (metaData.type === "window") {
+			if (isWindowType(metaData)) {
 				previewArea = gui.get_display_preview_area();
 			} else {
 				previewArea = gui.get_content_preview_area();
