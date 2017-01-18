@@ -1244,6 +1244,19 @@
 							var layoutDatas = JSON.parse(data.contentData);
 							if (layoutDatas.hasOwnProperty('contents')) {
 								for (meta in layoutDatas.contents) {
+									if (meta.hasOwnProperty('backup_list') && metaDataDict.hasOwnProperty(meta.id)) {
+										// コンテンツは過去レイアウト作成時のものにする
+										if (meta.resture_index > 0) {
+											var oldContent = meta.backup_list[meta.resture_index];
+											for (i = 0; i < metaDataDict[meta.id].backup_list.length; i = i + 1) {
+												if (metaDataDict[meta.id].backup_list[i] === oldContent) {
+													meta.restore_index = i;
+												}
+											}
+										}
+										// 履歴リストは最新にする.
+										meta.backup_list = metaDataDict[meta.id].backup_list;
+									}
 									metaDatas.push(layoutDatas.contents[meta]);
 								}
 								updateMetaDataMulti(metaDatas);
@@ -1813,8 +1826,12 @@
 		console.log('doneGetMetaData', reply);
 		var json = reply,
 			elem,
-			metaData = json;
+			metaData = json,
+			isUpdateContent = false;
 		if (!json.hasOwnProperty('id')) { return; }
+		if (metaDataDict.hasOwnProperty(json.id)) {
+			isUpdateContent = metaDataDict[json.id].restore_index !== reply.restore_index;
+		}
 		metaDataDict[json.id] = json;
 		
 		if (isCurrentTabMetaData(json)) {
@@ -1826,7 +1843,7 @@
 		
 		if (isWindowType(json)) { return; }
 		elem = document.getElementById(metaData.id);
-		if (elem) {
+		if (elem && !isUpdateContent) {
 			if (isVisible(json)) {
 				vscreen_util.assignMetaData(elem, json, true, groupDict);
 				elem.style.display = "block";
