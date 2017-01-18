@@ -1115,7 +1115,12 @@
 		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
 	ControllerGUI.prototype.get_current_group_name = function () {
-		return this.groupBox ? this.groupBox.get_current_group_name() : null;
+		if (this.contentBox.is_active("content_tab") && this.groupBox) {
+			return this.groupBox.get_current_group_name();
+		} else if (this.contentBox.is_active("layout_tab") && this.layoutBox) {
+			return this.layoutBox.get_current_group_name();
+		}
+		return null;
 	};
 	ControllerGUI.prototype.get_display_area = function () {
 		return document.getElementById('display_tab_box');

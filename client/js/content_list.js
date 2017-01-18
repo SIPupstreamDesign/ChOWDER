@@ -36,7 +36,7 @@
 	function getTagName(contentType) {
 		var tagName;
 		if (contentType === 'text') {
-			tagName = 'pre';
+			tagName = 'div';
 		} else {
 			tagName = 'img';
 		}

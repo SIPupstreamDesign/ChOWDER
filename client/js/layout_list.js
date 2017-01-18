@@ -49,7 +49,7 @@
 		if (!layoutArea) {
 			layoutArea = gui.get_layout_area_by_group(defaultGroup);
 		}
-		tagName = "pre";
+		tagName = "div";
 		classname = "layoutcontent";
 		
 		if (gui.get_list_elem(metaData.id)) {
@@ -75,7 +75,7 @@
 			// layoutData is text
 			data = JSON.parse(layoutData);
 			memo = JSON.parse(metaData.user_data_text);
-			layoutElem.innerHTML = "Layout : " + metaData.id + "\n" + String(memo.text);
+			layoutElem.innerHTML = "Layout : " + metaData.id + "<br>" + String(memo.text);
 			divElem.style.width = "150px";
 			divElem.style.height = "150px";
 			divElem.style.color = textColor;
