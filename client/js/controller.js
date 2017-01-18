@@ -1244,20 +1244,25 @@
 							var layoutDatas = JSON.parse(data.contentData);
 							if (layoutDatas.hasOwnProperty('contents')) {
 								for (meta in layoutDatas.contents) {
-									if (meta.hasOwnProperty('backup_list') && metaDataDict.hasOwnProperty(meta.id)) {
-										// コンテンツは過去レイアウト作成時のものにする
-										if (meta.resture_index > 0) {
-											var oldContent = meta.backup_list[meta.resture_index];
-											for (i = 0; i < metaDataDict[meta.id].backup_list.length; i = i + 1) {
-												if (metaDataDict[meta.id].backup_list[i] === oldContent) {
-													meta.restore_index = i;
+									var oldData = layoutDatas.contents[meta];
+									if (metaDataDict.hasOwnProperty(oldData.id)) {
+										if (oldData.hasOwnProperty('backup_list')) {
+											// コンテンツは過去レイアウト作成時のものにする
+											if (meta.resture_index > 0) {
+												var oldContent = meta.backup_list[meta.resture_index];
+												for (i = 0; i < metaDataDict[meta.id].backup_list.length; i = i + 1) {
+													if (metaDataDict[meta.id].backup_list[i] === oldContent) {
+														meta.restore_index = i;
+													}
 												}
 											}
+											// 履歴リストは最新にする.
+											oldData.backup_list = metaDataDict[oldData.id].backup_list;
 										}
-										// 履歴リストは最新にする.
-										meta.backup_list = metaDataDict[meta.id].backup_list;
+										// メモは最新にする.
+										oldData.user_data_text = metaDataDict[oldData.id].user_data_text;
 									}
-									metaDatas.push(layoutDatas.contents[meta]);
+									metaDatas.push(oldData);
 								}
 								updateMetaDataMulti(metaDatas);
 							}

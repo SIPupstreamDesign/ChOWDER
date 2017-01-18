@@ -223,7 +223,7 @@
 
 	ContentProperty.prototype.submit_text = function (endcallback) {
 		var content_text = document.getElementById('content_text');
-		if (content_text) {
+		if (content_text && !content_text.disabled) {
 			this.emit(ContentProperty.EVENT_METAINFO_CHANGED, null, content_text.value, endcallback);
 		}
 	};
