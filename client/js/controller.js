@@ -26,7 +26,6 @@
 		initialWholeHeight = 900,
 		initialDisplayScale = 0.5,
 		contentSelectColor = "#04B431",
-		contentBorderColor = "rgba(0,0,0,0)",
 		defaultGroup = "default",
 		setupContent = function () {},
 		setupLayout = function () {},
@@ -64,6 +63,26 @@
 	 */
 	function isLayoutType(meta) {
 		return (meta.type === "layout");
+	}
+	
+	/**
+	 * リストエレメントのボーダーカラーをタイプ別に返す
+	 */
+	function getListBorderColor(meta) {
+		if (isWindowType(meta)) {
+			if (meta.hasOwnProperty('reference_count') && parseInt(meta.reference_count, 10) <= 0) {
+				return "gray";
+			} else {
+				return "white";
+			}
+		}
+		if (isContentType(meta)) {
+			return "rgba(0,0,0,0)";
+		}
+		if (isLayoutType(meta)) {
+			return "lightgray";
+		}
+		return "white";
 	}
 
 	/**
@@ -777,20 +796,9 @@
 				elem.style.border = "";
 			}
 			if (gui.get_list_elem(elem.id)) {
-				if (metaData.hasOwnProperty('reference_count') && parseInt(metaData.reference_count, 10) <= 0) {
-					gui.get_list_elem(elem.id).style.borderColor = "gray";
-				} else {
-					if (isContentType(metaData)) {
-						gui.get_list_elem(elem.id).style.borderColor = contentBorderColor;
-						if (gui.get_search_elem(elem.id)) {
-							gui.get_search_elem(elem.id).style.borderColor = contentBorderColor;
-						}
-					} else {
-						gui.get_list_elem(elem.id).style.borderColor = "white";
-						if (gui.get_search_elem(elem.id)) {
-							gui.get_list_elem(elem.id).style.borderColor = "white";
-						}
-					}
+				gui.get_list_elem(elem.id).style.borderColor = getListBorderColor(metaData);
+				if (gui.get_search_elem(elem.id)) {
+					gui.get_search_elem(elem.id).style.borderColor = getListBorderColor(metaData);
 				}
 			}
 			//elem.style.borderColor = "";

@@ -6,7 +6,7 @@
 	 */
 
 	var LayoutList,
-		layoutBorderColor = "rgba(0,0,0,0)",
+		layoutBorderColor = "lightgray",
 		defaultGroup = "default",
 		textColor = "white";
 
