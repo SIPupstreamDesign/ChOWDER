@@ -497,10 +497,24 @@
 					all_done = replies.length;
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
-						if (endCallback) {
-							data.last = ((replies.length - 1) === index);
-							endCallback(data);
-						}
+						textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
+							return function (err, doesExists) {
+								if (doesExists) {
+									// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
+									textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
+										metaData.backup_list = JSON.stringify(reply);
+										if (endCallback) {
+											endCallback(metaData);
+										}
+									});
+									return;
+								}
+								if (endCallback) {
+									metaData.last = ((replies.length - 1) === index);
+									endCallback(metaData);
+								}
+							};
+						}(data)));
 					});
 				});
 			});
@@ -518,9 +532,23 @@
 		} else {
 			textClient.hgetall(metadataPrefix + id, function (err, data) {
 				if (data) {
-					if (endCallback) {
-						endCallback(data);
-					}
+					textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
+						return function (err, doesExists) {
+							if (doesExists) {
+								// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
+								textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
+									metaData.backup_list = JSON.stringify(reply);
+									if (endCallback) {
+										endCallback(metaData);
+									}
+								});
+								return;
+							}
+							if (endCallback) {
+								endCallback(metaData);
+							}
+						};
+					}(data)));
 				}
 			});
 		}
@@ -1246,23 +1274,9 @@
 	function commandGetMetaData(json, endCallback) {
 		console.log("commandGetMetaData:" + json.type + "/" + json.id);
 		getMetaData(json.type, json.id, function (metaData) {
-			textClient.exists(metadataBackupPrefix + metaData.id, (function (metaData) {
-				return function (err, doesExists) {
-					if (doesExists) {
-						// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
-						textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
-							metaData.backup_list = JSON.stringify(reply);
-							if (endCallback) {
-								endCallback(null, metaData);
-							}
-						});
-					} else {
-						if (endCallback) {
-							endCallback(null, metaData);
-						}
-					}
-				}
-			}(metaData)));
+			if (endCallback) {
+				endCallback(null, metaData);
+			}
 		});
 	}
 	
@@ -1375,14 +1389,16 @@
 				return function (err, doesExists) {
 					if (!err && doesExists === 1) {
 						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-							--all_done;
-							results.push(meta);
-							if (all_done <= 0) {
-								if (endCallback) {
-									endCallback(null, results);
-									return;
+							getMetaData(meta.type, meta.id, function (meta) {
+								--all_done;
+								results.push(meta);
+								if (all_done <= 0) {
+									if (endCallback) {
+										endCallback(null, results);
+										return;
+									}
 								}
-							}
+							});
 						});
 					}
 				};
