@@ -96,7 +96,7 @@
 	
 
 	LayoutList.EVENT_SETUP_LAYOUT = "setup_layout";
-	LayoutList.EVENT_COPY_LAYOUT = "copy_content";
+	LayoutList.EVENT_COPY_LAYOUT = "copy_layout";
 
 	// singleton
 	window.layout_list = new LayoutList();

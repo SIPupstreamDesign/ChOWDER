@@ -29,6 +29,7 @@
 		contentBorderColor = "rgba(0,0,0,0)",
 		defaultGroup = "default",
 		setupContent = function () {},
+		setupLayout = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
 		changeRect = function () {},
@@ -114,11 +115,11 @@
 	
 	/**
 	 * 発生したイベントがリストビュー領域で発生しているかを判別する
-	 * @method isContentArea
+	 * @method isListViewArea
 	 * @param {Object} evt イベント.
 	 * @return {bool} 発生したイベントがリストビュー領域で発生していたらtrueを返す.
 	 */
-	function isContentArea(evt) {
+	function isListViewArea(evt) {
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(), 
 			clientY = evt.clientY,
@@ -135,7 +136,7 @@
 		return py > rect.top;
 	}
 	
-	function isContentArea2(evt) {
+	function isListViewArea2(evt) {
 		if (mouseDownPos.length < 2) { return false; }
 		var contentArea = gui.get_bottom_area(),
 			rect = contentArea.getBoundingClientRect(),
@@ -227,10 +228,10 @@
 	 * 選択されたIDからElement取得
 	 * @method getElem
 	 * @param {String} id コンテンツID
-	 * @param {bool} isContentArea コンテンツエリアか
+	 * @param {bool} isListViewArea リストビュー上のエレメントか
 	 * @return {Object} Element
 	 */
-	function getElem(id, isContentArea) {
+	function getElem(id, isListViewArea) {
 		var elem,
 			uid,
 			previewArea,
@@ -255,7 +256,7 @@
 				} else {
 					previewArea = gui.get_content_preview_area();
 				}
-				if (isContentArea) {
+				if (isListViewArea) {
 					elem.style.display = "none";
 				}
 
@@ -636,9 +637,9 @@
 	 * ContentかDisplayを選択する。
 	 * @method select
 	 * @param {String} id 選択したID
-	 * @parma {bool} コンテンツエリアを対象にするかどうか.
+	 * @parma {bool} isListViewArea リストビューを対象にするかどうか.
 	 */
-	function select(id, isContentArea) {
+	function select(id, isListViewArea) {
 		var elem,
 			metaData,
 			initialVisible,
@@ -666,7 +667,7 @@
 		if (gui.get_whole_window_elem()) {
 			gui.get_whole_window_elem().style.borderColor = "white";
 		}
-		elem = getElem(id, isContentArea);
+		elem = getElem(id, isListViewArea);
 		if (elem.id !== id) {
 			id = elem.id;
 		}
@@ -980,10 +981,111 @@
 			// erase last border
 			if (!onCtrlDown) {
 				unselectAll(true);
-				select(id, isContentArea(evt));
+				select(id, isListViewArea(evt));
 				gui.close_context_menu();
 			} else  {
-				select(id, isContentArea(evt));
+				select(id, isListViewArea(evt));
+				gui.close_context_menu();
+			}
+			
+			evt = (evt) || window.event;
+			mouseDownPos = [
+				rect.left,
+				rect.top
+			];
+
+
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+			} else {
+				// マウス
+				target = evt.target;
+			}
+
+			dragOffsetTop = clientY - rect.top;
+			dragOffsetLeft = clientX - rect.left;
+
+			if (metaData  && target.id) {
+				// メインビューのコンテンツ
+				for (i = 0; i < draggingIDList.length; i = i + 1) {
+					elem = document.getElementById(draggingIDList[i]);
+					if (elem) {
+						dragRect[draggingIDList[i]] = {
+							left : elem.getBoundingClientRect().left - rect.left,
+							top : elem.getBoundingClientRect().top - rect.top
+						}
+					}
+				}
+			} else {
+				// リストのコンテンツ
+				for (i = 0; i < draggingIDList.length; i = i + 1) {
+					dragRect[draggingIDList[i]] = {
+						left : 0,
+						top : 0
+					}
+				}
+			}
+		
+			evt.stopPropagation();
+			evt.preventDefault();
+		};
+
+		if (window.ontouchstart !== undefined) {
+			elem.ontouchstart = mousedownFunc;
+		} else {
+			elem.onmousedown = mousedownFunc;
+		}
+	};
+	
+	/**
+	 * Layout設定
+	 * @method setupLayout
+	 * @param {Object} elem 設定対象Object
+	 * @param {String} id ContentID
+	 */
+	setupLayout = function (elem, id) {
+		window.onkeydown = function (evt) {
+			if (evt.keyCode === 17) {
+				onCtrlDown = true;
+			}
+		};
+		window.onkeyup = function (evt) {
+			if (evt.keyCode === 17) {
+				onCtrlDown = false;
+			}
+		};
+		function mousedownFunc(evt) {
+			var rect = evt.target.getBoundingClientRect(),
+				metaData = null,
+				i,
+				elem,
+				pageX = evt.pageX,
+				pageY = evt.pageY,
+				clientX = evt.clientX,
+				clientY = evt.clientY,
+				target = evt.taget;
+			
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+				rect = evt.changedTouches[0].target.getBoundingClientRect();
+				pageX = evt.changedTouches[0].pageX,
+				pageY = evt.changedTouches[0].pageY,
+				clientX = evt.changedTouches[0].clientX;
+				clientY = evt.changedTouches[0].clientY;
+			} else {
+				// マウス
+				if (evt.button !== 0) { return; } // 左ドラッグのみ
+			}
+			
+			// erase last border
+			if (!onCtrlDown) {
+				unselectAll(true);
+				select(id, isListViewArea(evt));
+				gui.close_context_menu();
+			} else  {
+				select(id, isListViewArea(evt));
 				gui.close_context_menu();
 			}
 			
@@ -1112,6 +1214,38 @@
 		}
 	}
 	
+	/**
+	 * レイアウト適用
+	 * @method applyLayout
+	 * @param {JSON} metaData 対象メタデータ
+	 */
+	function applyLayout(metaData) {
+		window.input_dialog.okcancel_input({
+			name : "Layoutを適用します。よろしいですか?"
+		}, function (isOK) {
+			if (isOK) {
+				var request = { type: metaData.type, id: metaData.id };
+				connector.send('GetContent', request, function (err, data) {
+					var meta,
+						metaDatas = [];
+					if (!err) {
+						try {
+							var layoutDatas = JSON.parse(data.contentData);
+							if (layoutDatas.hasOwnProperty('contents')) {
+								for (meta in layoutDatas.contents) {
+									metaDatas.push(layoutDatas.contents[meta]);
+								}
+								updateMetaDataMulti(metaDatas);
+							}
+						} catch (e) {
+							console.error(e);
+						}
+					}
+				});
+			}
+		});
+	}
+	
 	function mousemoveFunc(evt) {
 		var i,
 			metaData,
@@ -1128,7 +1262,6 @@
 			mousePos,
 			splitWhole,
 			draggingID,
-			selectedID,
 			targetMetaDatas = [],
 			screen,
 			pageX = evt.pageX,
@@ -1151,7 +1284,7 @@
 			if (evt.button !== 0) { return; } // 左ドラッグのみ
 		}
 
-		// mouse cursor position
+		// リモートカーソル位置の更新.
 		if(isUpdateCursorEnable && Date.now() % 2 === 0 && evt.target.id !== ''){
 			mousePos = vscreen.transformOrgInv(vscreen.makeRect(pageX, pageY, 0, 0));
 			var obj = {
@@ -1166,7 +1299,7 @@
 			draggingID = draggingIDList[i];
 
 			// detect content list area
-			if (isContentArea2(evt) && isContentArea(evt)) {
+			if (isListViewArea2(evt) && isListViewArea(evt)) {
 				return;
 			}
 
@@ -1259,34 +1392,39 @@
 			if (metaDataDict.hasOwnProperty(draggingID)) {
 				elem = document.getElementById(draggingID);
 				metaData = metaDataDict[draggingID];
-				if (!isContentArea(evt)) {
-					metaData.visible = true;
-					if (isFreeMode()) {
-						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-						updateMetaData(metaData);
-					} else if (isDisplayMode()) {
-						px = rect.left + dragOffsetLeft;
-						py = rect.top + dragOffsetTop;
-						orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-						screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
-						if (screen) {
-							snapToScreen(elem, metaData, screen);
-						}
-						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-						updateMetaData(metaData);
-						manipulator.moveManipulator(elem);
+				if (!isListViewArea(evt)) {
+					// リストビューの項目がリストビューからメインビューにドラッグされた
+					if (isLayoutType(metaData)) {
+						applyLayout(metaData);
 					} else {
-						// grid mode
-						px = rect.left + dragOffsetLeft;
-						py = rect.top + dragOffsetTop;
-						orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-						splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-						if (splitWhole) {
-							snapToSplitWhole(elem, metaData, splitWhole);
+						metaData.visible = true;
+						if (isFreeMode()) {
+							vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+							updateMetaData(metaData);
+						} else if (isDisplayMode()) {
+							px = rect.left + dragOffsetLeft;
+							py = rect.top + dragOffsetTop;
+							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+							screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
+							if (screen) {
+								snapToScreen(elem, metaData, screen);
+							}
+							vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+							updateMetaData(metaData);
+							manipulator.moveManipulator(elem);
+						} else {
+							// grid mode
+							px = rect.left + dragOffsetLeft;
+							py = rect.top + dragOffsetTop;
+							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+							splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+							if (splitWhole) {
+								snapToSplitWhole(elem, metaData, splitWhole);
+							}
+							vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+							updateMetaData(metaData);
+							manipulator.moveManipulator(elem);
 						}
-						vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-						updateMetaData(metaData);
-						manipulator.moveManipulator(elem);
 					}
 				}
 				clearSnapHightlight();
@@ -1673,12 +1811,12 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
-		//if ( (isDisplayTabSelected() && isWindowType(json)) ||
-		//	(!isDisplayTabSelected() && isContentType(json))) {
-		//		if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
+		if ( (isDisplayTabSelected() && isWindowType(json)) ||
+			(!isDisplayTabSelected() && isContentType(json))) {
+				if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
 					content_property.assign_content_property(json);
-		//		}
-		//	}
+				}
+			}
 
 		
 		if (isWindowType(json)) { return; }
@@ -1707,7 +1845,6 @@
 		}
 	};
 	
-	/// content data updated
 	/**
 	 * GetContentを送信した後の終了コールバック.
 	 * @method doneGetContent
@@ -2458,15 +2595,14 @@
 	 * レイアウトリストでセットアップコンテンツが呼ばれた
 	 */
 	window.layout_list.on("setup_layout", function (err, elem, uid) {
-		//setupLayout()
-		//setupContent(elem, uid);
+		setupContent(elem, uid);
 	});
 
 	/**
 	 * レイアウトリストでコピーコンテンツが呼ばれた
 	 */
 	window.layout_list.on("copy_layout", function (err, fromElem, toElem, metaData, isListContent) {
-		//copyContentData(fromElem, toElem, metaData, isListContent);
+		copyContentData(fromElem, toElem, metaData, isListContent);
 	});
 
 	/**
