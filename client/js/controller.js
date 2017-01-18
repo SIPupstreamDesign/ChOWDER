@@ -559,16 +559,18 @@
 	}
 
 	/**
-	 * windowの枠色を返す
+	 * 枠色を返す
 	 */
-	function getWindowBorderColor(id) {
-		if (metaDataDict.hasOwnProperty(id)) {
-			if (metaDataDict[id].hasOwnProperty("color")) {
-				return metaDataDict[id].color;
+	function getBorderColor(meta) {
+		if (isWindowType(meta)) {
+			if (meta.hasOwnProperty('color')) {
+				return meta.color;
 			}
+			return "#0080FF";
 		}
-		return "#0080FF";
+		return getGroupColor(meta.group);
 	}
+
 	
 	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
@@ -676,7 +678,7 @@
 			content_property.init(id, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem()) {
-				gui.get_whole_window_elem().style.borderColor = getWindowBorderColor(id);
+				gui.get_whole_window_elem().style.borderColor = getBorderColor(metaDataDict[id]);
 			}
 			return;
 		}
@@ -705,57 +707,35 @@
 		}
 		draggingIDList = JSON.parse(JSON.stringify(selectedIDList));
 		
+		// 選択ボーダー色設定
+		if (gui.get_list_elem(id)) {
+			gui.get_list_elem(id).style.borderColor = getBorderColor(metaData);
+		}
+		if (gui.get_search_elem(id)) {
+			gui.get_search_elem(id).style.borderColor = getBorderColor(metaData);
+		}
+		elem.style.borderColor = getBorderColor(metaData);
+
 		if (selectedIDList.length <= 0) {
 			manipulator.removeManipulator();
 		} else if (selectedIDList.length > 1) {
-			// 複数選択.
+			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (isWindowType(metaData)) {
 				content_property.init(id, "", "multi_display", mime);
-				if (gui.get_list_elem(id)) {
-					gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
-				}
-				if (gui.get_search_elem(id)) {
-					gui.get_search_elem(id).style.borderColor = getWindowBorderColor(id);
-				}
-				elem.style.borderColor = getWindowBorderColor(id);
 			} else {
 				content_property.init(id, "", "multi_content", mime);
-				col = getGroupColor(metaDataDict[id].group);
-				if (gui.get_list_elem(id)) {
-					gui.get_list_elem(id).style.borderColor = col;
-				}
-				if (gui.get_search_elem(id)) {
-					gui.get_search_elem(id).style.borderColor = col;
-				}
-				elem.style.borderColor = col;
 			}
 		} else {
-			// 単一選択.
+			// 単一選択.マニピュレーター, プロパティ設定
 			if (isWindowType(metaData)) {
 				content_property.init(id, "", "display", mime);
-				content_property.assign_content_property(metaDataDict[id]);
-				if (gui.get_list_elem(id)) {
-					gui.get_list_elem(id).style.borderColor = getWindowBorderColor(id);
-				}
-				if (gui.get_search_elem(id)) {
-					gui.get_search_elem(id).style.borderColor = getWindowBorderColor(id);
-				}
-				elem.style.borderColor = getWindowBorderColor(id);
+				content_property.assign_content_property(metaData);
 				manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
 			} else {
 				content_property.init(id, metaData.group, metaData.type, mime);
-				content_property.assign_content_property(metaDataDict[id]);
+				content_property.assign_content_property(metaData);
 				gui.set_update_content_id(id);
-				col = getGroupColor(metaDataDict[id].group);
-				if (gui.get_list_elem(id)) {
-					gui.get_list_elem(id).style.borderColor = col;
-				}
-				if (gui.get_search_elem(id)) {
-					gui.get_search_elem(id).style.borderColor = col;
-				}
-				//elem.style.borderColor = contentSelectColor;
-				elem.style.borderColor = col;
 				manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
 			}
 		}
@@ -801,7 +781,6 @@
 					gui.get_search_elem(elem.id).style.borderColor = getListBorderColor(metaData);
 				}
 			}
-			//elem.style.borderColor = "";
 		}
 		content_property.clear(updateText);
 		selectedIDList.splice(selectedIDList.indexOf(id), 1);
