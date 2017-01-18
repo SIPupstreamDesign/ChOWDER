@@ -858,10 +858,22 @@
 	 * @param {JSON} json メタデータ
 	 */
 	doneGetMetaData = function (err, json) {
-		var metaData = json;
+		var metaData = json,
+			isUpdateContent;
 		console.log("doneGetMetaData", json);
 		// レイアウトは無視
 		if (metaData.type === "layout") { return; }
+
+		// 履歴からのコンテンツ復元.
+		if (metaDataDict.hasOwnProperty(json.id) && json.hasOwnProperty('restore_index')) {
+			if (metaDataDict[json.id].restore_index !== json.restore_index) {
+				var request = { type: json.type, id: json.id, restore_index : json.restore_index };
+				connector.send('GetContent', request, function (err, reply) {
+					doneGetContent(err, reply);
+					toggleMark(document.getElementById(json.id), metaData);
+				});
+			}
+		}
 		
 		metaDataDict[json.id] = json;
 		if (!err) {
@@ -898,12 +910,12 @@
 					} else {
 						elem.style.display = "none";
 					}
-				} else if (!isWindow && isVisible(json)) {
+				} else if (isUpdateContent || (!isWindow && isVisible(json))) {
 					// コンテンツがロードされるまで枠を表示しておく.
 					if (!elem) {
 						createBoundingBox(json);
 						// 新規コンテンツロード.
-						connector.send('GetContent', { type: json.type, id: json.id }, function (err, reply) {
+						connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
 							doneGetContent(err, reply);
 							toggleMark(document.getElementById(json.id), metaData);
 						});
