@@ -176,6 +176,30 @@
 	}
 
 	/**
+	 * リストでレイアウトタブが選択されているかを判別する。
+	 * @method isLayoutTabSelected
+	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
+	 */
+	function isLayoutTabSelected() {
+		return gui.contentBox.is_active("layout_tab");
+	}
+
+	/**
+	 * メタデータのtypeが現在開いているタブに合致するか返す
+	 */
+	function isCurrentTabMetaData(meta) {
+		if (isDisplayTabSelected() && isWindowType(meta)) {
+			return true;
+		} else if (isLayoutTabSelected() && isLayoutType(meta)) {
+			return true;
+		} else if ((gui.contentBox.is_active("content_tab") || gui.contentBox.is_active("search_tab"))
+					 && isContentType(meta)) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * cookie取得
 	 * @method getCookie
 	 * @param {String} key cookieIDキー
@@ -677,7 +701,7 @@
 		if (id === wholeWindowListID || id === wholeWindowID) {
 			content_property.init(id, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			if (gui.get_whole_window_elem()) {
+			if (gui.get_whole_window_elem() && metaDataDict[id]) {
 				gui.get_whole_window_elem().style.borderColor = getBorderColor(metaDataDict[id]);
 			}
 			return;
@@ -1236,21 +1260,16 @@
 	function mousemoveFunc(evt) {
 		var i,
 			metaData,
-			metaTemp,
 			elem,
 			pos,
 			px,
 			py,
-			elemOnPos,
-			onInvisibleContent,
 			rect = evt.target.getBoundingClientRect(),
-			rect2 = null,
 			orgPos,
 			mousePos,
 			splitWhole,
 			draggingID,
 			targetMetaDatas = [],
-			screen,
 			pageX = evt.pageX,
 			pageY = evt.pageY,
 			clientX = evt.clientX,
@@ -1798,12 +1817,11 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		metaDataDict[json.id] = json;
 		
-		if ( (isDisplayTabSelected() && isWindowType(json)) ||
-			(!isDisplayTabSelected() && isContentType(json))) {
-				if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
-					content_property.assign_content_property(json);
-				}
+		if (isCurrentTabMetaData(json)) {
+			if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
+				content_property.assign_content_property(json);
 			}
+		}
 
 		
 		if (isWindowType(json)) { return; }
@@ -1862,10 +1880,9 @@
 		if (reply.length === 1) {
 			json = reply[0];
 			metaDataDict[json.id] = json;
-			if ( (isDisplayTabSelected() && isWindowType(json)) ||
-				(!isDisplayTabSelected() && isContentType(json))) {
-					content_property.assign_content_property(json);
-				}
+			if (isCurrentTabMetaData(json)) {
+				content_property.assign_content_property(json);
+			}
 		}
 	
 		if (endCallback) {
@@ -2025,13 +2042,11 @@
 			elem;
 		importWindow(windowData);
 		changeWindowBorderColor(windowData);
-		if ( (isDisplayTabSelected() && isWindowType(reply)) ||
-			(!isDisplayTabSelected() && isContentType(reply))) {
-				if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
-					content_property.assign_content_property(windowData);
-				}
+		if (isCurrentTabMetaData(reply)) {
+			if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
+				content_property.assign_content_property(windowData);
 			}
-
+		}
 	};
 
 	/**
@@ -2204,6 +2219,26 @@
 		}
 	});
 	
+	/**
+	 * Layoutを削除するボタンが押された.
+	 * @method on_deletedisplay_clicked
+	 */
+	gui.on("deletelayout_clicked", function (err) {
+		var i,
+			id,
+			metaDataList = [];
+			
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaDataList.push(metaDataDict[id]);
+			}
+		}
+		if (metaDataList.length > 0) {
+			connector.send('DeleteContent', metaDataList, doneDeleteContent);
+		}
+	});
+
 	/**
 	 * Group内のコンテンツ全て削除.
 	 */
@@ -2383,25 +2418,34 @@
 		}
 	});
 
-	gui.on("add_layout", function (err, memo) {
-		var id,
-			metaData,
-			layout = {
-				contents: {}
-			};
+	gui.on("add_layout", function (err) {
+		window.input_dialog.init_multi_text_input({
+			name : "メモ",
+			okButtonName : "OK"
+		}, function (memo) {
+			var id,
+				metaData,
+				layout = {
+					contents: {}
+				};
 
-		// コンテンツのメタデータを全部コピー
-		for (id in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
-				if (isContentType(metaData)) {
-					layout.contents[id] = metaData;
+			// コンテンツのメタデータを全部コピー
+			for (id in metaDataDict) {
+				if (metaDataDict.hasOwnProperty(id)) {
+					metaData = metaDataDict[id];
+					if (isContentType(metaData)) {
+						layout.contents[id] = metaData;
+					}
 				}
 			}
-		}
 
-		layout = JSON.stringify(layout);
-		addContent({type : "layout", user_data_text : JSON.stringify({ text: memo }) }, layout);
+			layout = JSON.stringify(layout);
+			addContent({type : "layout",
+				user_data_text : JSON.stringify({ text: memo }),
+				visible: false,
+				group : gui.get_current_group_name()
+			}, layout);
+		});
 	});
 
 	/**
@@ -2851,6 +2895,19 @@
 		}
 	});
 
+	gui.on('select_layout_clicked', function () {
+		var i,
+			id;
+		unselectAll(true);
+		for (id in metaDataDict) {
+			if (metaDataDict.hasOwnProperty(id)) {
+				if (isLayoutType(metaDataDict[id])) {
+					select("onlist:" + id, true);
+				}
+			}
+		}
+	});
+
 	/**
 	 * Groupを１つ下に
 	 * @param {String} groupName 変更先のグループ名
@@ -3045,6 +3102,8 @@
 		var id;
 		if (isDisplayTabSelected()) {
 			content_property.init("", "", "display");
+		} else if (isLayoutTabSelected()) {
+			content_property.init("", "", "layout");
 		} else {
 			content_property.init("", "", "content");
 		}
@@ -3301,7 +3360,6 @@
 						metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
 						metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
 						previewArea.removeChild(elem);
-
 						updateContent(metaData, text);
 					} else {
 						updateMetaData(metaData, function (err, reply) {

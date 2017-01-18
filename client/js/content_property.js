@@ -112,7 +112,6 @@
 			metalabel = document.getElementById("meta_info"),
 			backup_area = document.getElementById("backup_area"),
 			content_id = document.getElementById('content_id'),
-			group_name = document.getElementById('group_name'),
 			color_picker = document.getElementById('color_picker'),
 			extension,
 			rectChangeFunc = function (evt) {
@@ -174,6 +173,16 @@
 			}.bind(this));
 			download_button.style.display = "none";
 			metalabel.style.display = "none";
+			backup_area.style.display = "none";
+			color_picker.style.display = "none";
+		} else if (type === "layout") {
+			idlabel.innerHTML = "Layout ID:";
+			download_button.style.display = "none";
+			grouplabel.innerHTML = "Group:";
+			if (metalabel) {
+				metalabel.style.display = "block";
+			}
+			addTextInputProperty('content_text', "");
 			backup_area.style.display = "none";
 			color_picker.style.display = "none";
 		} else { // content (text, image, url... )

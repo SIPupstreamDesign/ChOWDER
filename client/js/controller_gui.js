@@ -207,6 +207,7 @@
 		// コンテキストメニューの初期化.
 		this.initContextMenu();
 		this.initDisplayContextMenu();
+		this.initLayoutContextMenu();
 
 		// コンテンツ入力の初期化
 		this.initContentInputs();
@@ -245,16 +246,17 @@
 			{
 				menu : [{
 					レイアウト追加 : {
-						func : function (evt) {
-							window.input_dialog.init_multi_text_input({
-								name : "メモ",
-								okButtonName : "OK"
-							}, function (value) {
-								this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD, null, value);
-							}.bind(this));
-						}.bind(this)
-					}
-				}]
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null); }.bind(this)
+						}
+					},{
+						削除 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETELAYOUT_CLICKED, null, evt); }.bind(this)
+						}
+					},{
+						全て選択 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, false); }.bind(this)
+						}
+					}]
 			});
 
 		this.initBurgerMenuContent();
@@ -593,6 +595,29 @@
 			menu.style.display = "none";
 		}.bind(this);
 		this.initContextMenuVisible(menu, "display_tab", "");
+	};
+
+	ControllerGUI.prototype.initLayoutContextMenu = function () {
+		var menu = document.getElementById('context_menu_layout'),
+			add_button = document.getElementById("context_menu_layout_add"),
+			delete_button = document.getElementById("context_menu_layout_delete"),
+			select_all_button = document.getElementById("context_menu_layout_select_all");
+
+		add_button.onclick = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null, evt); 
+			menu.style.display = "none";
+		}.bind(this);
+
+		delete_button.onclick = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_DELETELAYOUT_CLICKED, null, evt); 
+			menu.style.display = "none";
+		}.bind(this);
+		
+		select_all_button.onclick = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, false); 
+			menu.style.display = "none";
+		}.bind(this);
+		this.initContextMenuVisible(menu, "layout_tab", "");
 	};
 	
 	/**
@@ -1189,7 +1214,10 @@
 	ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED = "contentdeletebutton_clicked";
 	ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED = "select_contents_clicked";
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
+	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
+	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
 	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
+	ControllerGUI.EVENT_DELETELAYOUT_CLICKED = "deletelayout_clicked";
 	ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED = "showidbutton_clicked";
 	ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED = "virtualdisplaysetting_clicked";
 	ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED = "display_scale_changed";
@@ -1205,7 +1233,6 @@
 	ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
 	ControllerGUI.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
 	ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
-	ControllerGUI.EVENT_LAYOUT_ADD = "add_layout";
 	ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
 	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
 	ControllerGUI.EVENT_NEWDB = "newdb";
