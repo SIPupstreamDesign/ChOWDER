@@ -366,9 +366,10 @@
 
 		// 差し替え履歴
 		if (metaData.type !== "window") {
+			var backup_list = document.getElementById('backup_list');
+			backup_list.innerHTML = "";
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
 				var backups = JSON.parse(metaData.backup_list);
-				var backup_list = document.getElementById('backup_list');
 				var select = document.createElement('select');
 				select.className = "backup_list_content";
 				select.id = "backup_list_content";
@@ -380,7 +381,6 @@
 					select.appendChild(option);
 				}
 				select.value = backups[0]
-				backup_list.innerHTML = "";
 				backup_list.appendChild(select);
 			}
 		}

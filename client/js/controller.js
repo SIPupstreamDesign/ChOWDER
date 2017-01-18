@@ -2528,6 +2528,7 @@
 				if (metaDataDict.hasOwnProperty(id)) {
 					metaData = metaDataDict[id];
 					metaData.type = "image";
+					metaData.restore_index = -1;
 					updateContent(metaData, e.target.result);
 				}
 			}

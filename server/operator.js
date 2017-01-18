@@ -1197,20 +1197,27 @@
 		getMetaData(json.type, json.id, function (meta) {
 			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
 				//meta.command = Command.doneGetContent;
+
+				// 履歴から復元して取得
 				if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
 					var backupList = JSON.parse(meta.backup_list);
-					var backup_date = backupList[Number(json.restore_index)];
-					client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
-						endCallback(null, meta, reply[0]);
-					});
-				} else {
-					getContent(meta.type, meta.content_id, function (reply) {
-						if (reply === null) {
-							reply = "";
-						}
-						endCallback(null, meta, reply);
-					});
+					var restore_index = Number(json.restore_index);
+					if (restore_index > 0 && backupList.length > restore_index) {
+						var backup_date = backupList[restore_index];
+						client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
+							endCallback(null, meta, reply[0]);
+						});
+						return;
+					}
 				}
+
+				// 通常の取得
+				getContent(meta.type, meta.content_id, function (reply) {
+					if (reply === null) {
+						reply = "";
+					}
+					endCallback(null, meta, reply);
+				});
 			}
 		});
 	}
