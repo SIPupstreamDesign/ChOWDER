@@ -934,7 +934,6 @@
 				if (id === wholeWindowID ||
 					(!isDisplayTabSelected() && isWindowType(metaData)) ||
 					(isDisplayTabSelected() && isContentType(metaData))) {
-					console.log("setupContent", metaData);
 					childs = otherPreviewArea.childNodes;
 
 					for (i = 0; i < childs.length; i = i + 1) {

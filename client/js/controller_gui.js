@@ -1133,7 +1133,7 @@
 		return null;
 	};
 	ControllerGUI.prototype.is_active_tab = function (tabname) {
-		return this.tabs.is_active("tabname");
+		return this.tabs.is_active(tabname);
 	};
 	ControllerGUI.prototype.get_display_area = function () {
 		return document.getElementById('display_tab_box');
