@@ -131,40 +131,6 @@
 	function isUnvisibleID(id) {
 		return (id.indexOf("onlist:") >= 0);
 	}
-	
-	/**
-	 * 発生したイベントがリストビュー領域で発生しているかを判別する
-	 * @method isListViewArea
-	 * @param {Object} evt イベント.
-	 * @return {bool} 発生したイベントがリストビュー領域で発生していたらtrueを返す.
-	 */
-	function isListViewArea(evt) {
-		var contentArea = gui.get_bottom_area(),
-			rect = contentArea.getBoundingClientRect(), 
-			clientY = evt.clientY,
-			py;
-
-		if (evt.changedTouches) {
-			// タッチ
-			clientY = evt.changedTouches[0].clientY;
-		}
-		py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
-		if (!contentArea) {
-			return false;
-		}
-		return py > rect.top;
-	}
-	
-	function isListViewArea2(evt) {
-		if (mouseDownPos.length < 2) { return false; }
-		var contentArea = gui.get_bottom_area(),
-			rect = contentArea.getBoundingClientRect(),
-			py = mouseDownPos[1] + (document.body.scrollTop || document.documentElement.scrollTop);
-		if (!contentArea) {
-			return false;
-		}
-		return py > rect.top;
-	}
 
 	/**
 	 * リストでディスプレイタブが選択されているかを判別する。
@@ -992,10 +958,10 @@
 			// erase last border
 			if (!onCtrlDown) {
 				unselectAll(true);
-				select(id, isListViewArea(evt));
+				select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
 			} else  {
-				select(id, isListViewArea(evt));
+				select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
 			}
 			
@@ -1323,7 +1289,7 @@
 			draggingID = draggingIDList[i];
 
 			// detect content list area
-			if (isListViewArea2(evt) && isListViewArea(evt)) {
+			if (gui.is_listview_area2(evt, mouseDownPos) && gui.is_listview_area(evt)) {
 				return;
 			}
 
@@ -1416,7 +1382,7 @@
 			if (metaDataDict.hasOwnProperty(draggingID)) {
 				elem = document.getElementById(draggingID);
 				metaData = metaDataDict[draggingID];
-				if (!isListViewArea(evt)) {
+				if (!gui.is_listview_area(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
 					if (isLayoutType(metaData)) {
 						applyLayout(metaData);
@@ -2442,7 +2408,7 @@
 
 	gui.on("add_layout", function (err) {
 		window.input_dialog.init_multi_text_input({
-			name : "メモ",
+			name : "レイアウト追加 - メモ",
 			okButtonName : "OK"
 		}, function (memo) {
 			var id,

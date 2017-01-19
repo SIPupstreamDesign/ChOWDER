@@ -378,7 +378,8 @@
 		// 出現タイミング調整.
 		var mouseDownPosX = null,
 			mouseDownPosY = null,
-			openContextMenu = false;
+			openContextMenu = false,
+			menuElem = menu;
 
 		document.body.addEventListener("mousedown", function (evt) {
 			mouseDownPosX = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
@@ -412,7 +413,15 @@
 					rect;
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
-					menu.style.display = 'block';
+					
+					if (type == "layout_tab" && !this.is_listview_area(evt)) {
+						// レイアウトタブはメインビューのエリア内であればコンテンツメニューを開く
+						menuElem = document.getElementById('context_menu');
+					} else {
+						menuElem = menu;
+					}
+
+					menuElem.style.display = 'block';
 					if (type === "display_tab") {
 						rect = document.getElementById('context_menu_display').getBoundingClientRect();
 					} else {
@@ -426,16 +435,16 @@
 					if (py > (document.getElementById("layout").offsetHeight - height)) {
 						py -= height;
 					}
-					menu.style.top = py + "px";
-					menu.style.left = px + "px";
+					menuElem.style.top = py + "px";
+					menuElem.style.left = px + "px";
 				}
 			}
 			openContextMenu = false;
-		});
+		}.bind(this));
 
-		window.addEventListener("mousedown", function (evt) {
+		window.addEventListener("mousedown",function (evt) {
 			if (evt.target.className !== "context_menu_item") {
-				menu.style.display = "none";
+				menuElem.style.display = "none";
 			}
 			window.content_property.submit_text();
 		});
@@ -1086,6 +1095,7 @@
 		}
 		return s4() + s4() + s4().slice(-2);
 	};
+	
 
 	ControllerGUI.prototype.get_bottom_area = function () {
 		return document.getElementById('bottom_area');
@@ -1144,6 +1154,40 @@
 	ControllerGUI.prototype.get_search_target_groups = function () {
 		return JSON.parse(JSON.stringify(this.searchBox.check_groups));
 	};
+
+	/**
+	 * 発生したイベントがリストビュー領域で発生しているかを判別する
+	 * @method isListViewArea
+	 * @param {Object} evt イベント.
+	 * @return {bool} 発生したイベントがリストビュー領域で発生していたらtrueを返す.
+	 */
+	ControllerGUI.prototype.is_listview_area = function (evt) {
+		var contentArea = this.get_bottom_area(),
+			rect = contentArea.getBoundingClientRect(), 
+			clientY = evt.clientY,
+			py;
+
+		if (evt.changedTouches) {
+			// タッチ
+			clientY = evt.changedTouches[0].clientY;
+		}
+		py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop);
+		if (!contentArea) {
+			return false;
+		}
+		return py > rect.top;
+	}
+
+	ControllerGUI.prototype.is_listview_area2 = function (evt, mouseDownPos) {
+		if (mouseDownPos.length < 2) { return false; }
+		var contentArea = this.get_bottom_area(),
+			rect = contentArea.getBoundingClientRect(),
+			py = mouseDownPos[1] + (document.body.scrollTop || document.documentElement.scrollTop);
+		if (!contentArea) {
+			return false;
+		}
+		return py > rect.top;
+	}
 
 	ControllerGUI.prototype.get_whole_scale = null;
 	
