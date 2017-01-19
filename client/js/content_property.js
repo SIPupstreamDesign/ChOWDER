@@ -280,7 +280,9 @@
 		var restoreButton = document.getElementById('backup_restore');
 		restoreButton.onclick = function () {
 			var index = document.getElementById('backup_list_content').selectedIndex;
-			this.emit(ContentProperty.EVENT_RESTORE_CONTENT, null, index);
+			if (index >= 0) {
+				this.emit(ContentProperty.EVENT_RESTORE_CONTENT, null, index);
+			}
 		}.bind(this);
 
 		this.initPropertyArea(id, group, type, mime);
@@ -371,13 +373,28 @@
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
 				var backups = JSON.parse(metaData.backup_list);
 				var select = document.createElement('select');
+				var restore_index = 0;
 				select.className = "backup_list_content";
 				select.id = "backup_list_content";
 				select.size = 5;
-				for (i = 0; i < backups.length; i = i + 1) {
-					var option = document.createElement('option');
-					option.value = backups[i];
-					option.innerText = backups[i];
+
+				// 現在表示中のコンテンツのインデックス
+				if (metaData.hasOwnProperty("restore_index")) {
+					restoreIndex = Number(metaData.restore_index);
+					if (restoreIndex < 0) {
+						restoreIndex = 0;
+					}
+				}
+
+				for (i = 0; i <  backups.length; i = i + 1) {
+					option = document.createElement('option');
+					text = new Date(backups[i]).toLocaleString();
+					option.value = text;
+					if (i === restoreIndex) {
+						option.innerText = "●" + text;
+					} else {
+						option.innerText = text;
+					}
 					select.appendChild(option);
 				}
 				select.value = backups[0]

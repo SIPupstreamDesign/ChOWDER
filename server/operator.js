@@ -482,6 +482,13 @@
 			}
 		});
 	}
+
+	function sortBackupList(backupList) {
+		backupList.sort(function (a, b) {
+			return new Date(b) - new Date(a);
+		});
+		return backupList;
+	}
 	
 	/**
 	 * 指定されたタイプ、idのメタデータ取得
@@ -502,7 +509,7 @@
 								if (doesExists) {
 									// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 									textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
-										metaData.backup_list = JSON.stringify(reply);
+										metaData.backup_list = JSON.stringify(sortBackupList(reply));
 										if (endCallback) {
 											endCallback(metaData);
 										}
@@ -537,7 +544,7 @@
 							if (doesExists) {
 								// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 								textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
-									metaData.backup_list = JSON.stringify(reply);
+									metaData.backup_list = JSON.stringify(sortBackupList(reply));
 									if (endCallback) {
 										endCallback(metaData);
 									}
@@ -845,20 +852,50 @@
 		
 		textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 			if (!err && doesExist === 1) {
-				backupContent(metaData, function (err, reply) {
+				var backupList = [];
+				if (metaData.hasOwnProperty('backup_list')) {
+					backupList = JSON.parse(metaData.backup_list);
+				}
+				// 復元時に初回復元の場合、バックアップリストに更新前コンテンツと更新後コンテンツを両方格納する.
+				if (backupList.length === 0) {
+					// 更新前コンテンツ
+					backupContent(metaData, function (err, reply) {
+						metaData.date = new Date().toISOString();
+						metaData.restore_index = -1;
+						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+							textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
+								if (err) {
+									console.error("Error on updateContent:" + err);
+								} else {
+									// 更新後コンテンツ
+									backupContent(meta, function (err, reply) {
+										if (endCallback) {
+											endCallback(meta);
+										}
+									});
+								}
+							});
+						});
+					});
+				} else {
+					// 更新後コンテンツのみバックアップ
 					metaData.date = new Date().toISOString();
+					metaData.restore_index = -1;
 					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 						textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
 							if (err) {
 								console.error("Error on updateContent:" + err);
 							} else {
-								if (endCallback) {
-									endCallback(meta);
-								}
+								// 更新後コンテンツ
+								backupContent(meta, function (err, reply) {
+									if (endCallback) {
+										endCallback(meta);
+									}
+								});
 							}
 						});
 					});
-				});
+				}
 			}
 		});
 	}

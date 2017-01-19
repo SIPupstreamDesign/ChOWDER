@@ -2739,11 +2739,22 @@
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
 				metaData.restore_index = restoreIndex;
 				connector.send('GetContent', metaData, function (err, reply) {
-					correctAspect(reply.metaData, function (err, meta) {
-						console.log(reply, meta)
-						doneGetContent(err, reply);
-						updateMetaData(metaData);
-					});
+					if (reply.metaData.type === "text") {
+						var elem = document.createElement('pre');
+						var previewArea = gui.get_content_preview_area();
+						elem.className = "text_content";
+						elem.innerHTML = reply.contentData;
+						previewArea.appendChild(elem);
+						reply.metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
+						reply.metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
+						var aspect = reply.metaData.orgWidth / reply.metaData.orgHeight;
+						previewArea.removeChild(elem);
+						metaData.user_data_text = JSON.stringify({ text: reply.contentData });
+						metaData.height = metaData.width / aspect;
+					}
+					doneGetContent(err, reply);
+					updateMetaData(metaData);
+					manipulator.removeManipulator();
 				});
 			}
 		}
@@ -3347,6 +3358,7 @@
 						previewArea.appendChild(elem);
 						metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
 						metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
+						metaData.restore_index = -1;
 						previewArea.removeChild(elem);
 						updateContent(metaData, text);
 					} else {

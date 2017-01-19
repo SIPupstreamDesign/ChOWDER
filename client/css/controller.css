@@ -511,13 +511,13 @@ p {
 
 .user_data_input {
 	text-align: center;
+	padding-left : 15px;
+	padding-right : 15px;
 }
 
 .user_data_text_input {
-	width : 90%;
+	width : 100%;
 	height : 200px;
-	margin-left : 10px;
-	margin-right : 10px;
 	-webkit-touch-callout: text;
 	-webkit-user-select: text;
 	-khtml-user-select: text;
@@ -635,14 +635,21 @@ p {
 
 .backup_list_content {
 	color : black;
+	width : 100%;
+}
+
+.backup_info {
+	padding-left: 30px;
 }
 
 .backup_list {
 	padding-left : 15px;
+	padding-right : 15px;
 }
 
 .backup_restore {
 	margin-left : 15px;
+	width : 80px;
 }
 
 .backup_area {
