@@ -2,16 +2,16 @@
 /*global Float32Array */
 (function () {
 	"use strict";
-	var ContentBox;
+	var Tabs;
 
-	ContentBox = function (containerElem, setting) {
+	Tabs = function (containerElem, setting) {
 		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
 		this.tabIDs = [];
 		this.init();
 	};
-	ContentBox.prototype = Object.create(EventEmitter.prototype);
+	Tabs.prototype = Object.create(EventEmitter.prototype);
 
 	/*
 		<div class="left_tab_area" id="left_tab_area">
@@ -19,7 +19,7 @@
 			<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
 		</div>
 	*/
-	ContentBox.prototype.init = function () {
+	Tabs.prototype.init = function () {
 		var i,
 			tabArea,
 			boxArea,
@@ -71,7 +71,7 @@
 		<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
 		..
 	*/
-	ContentBox.prototype.create_tab = function (tabName, tabContent, is_active) {
+	Tabs.prototype.create_tab = function (tabName, tabContent, is_active) {
 		var elem,
 			link;
 		elem = document.createElement('span');
@@ -87,7 +87,7 @@
 				var i,
 					tabElem;
 
-				this.emit(ContentBox.EVENT_TAB_CHANGED_PRE, null);
+				this.emit(Tabs.EVENT_TAB_CHANGED_PRE, null);
 				
 				for (i = 0; i < this.tabIDs.length; i = i + 1) {
 					document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
@@ -99,20 +99,20 @@
 				document.getElementById(tabContent.id + "_box").style.display = "block";
 				tabContent.func();
 				
-				this.emit(ContentBox.EVENT_TAB_CHANGED_POST, null);
+				this.emit(Tabs.EVENT_TAB_CHANGED_POST, null);
 			}.bind(this);
 		}
 		elem.appendChild(link);
 		return elem;
 	};
 
-	ContentBox.prototype.is_active = function (tabID) {
+	Tabs.prototype.is_active = function (tabID) {
  		var tab = document.getElementById(tabID);
 		return tab && tab.className.indexOf('active') >= 0;
 	}
 
-	ContentBox.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
-	ContentBox.EVENT_TAB_CHANGED_POST = "tab_changed_post";
-	window.ContentBox = ContentBox;
+	Tabs.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
+	Tabs.EVENT_TAB_CHANGED_POST = "tab_changed_post";
+	window.Tabs = Tabs;
 
 }());

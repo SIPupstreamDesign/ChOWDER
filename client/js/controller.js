@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (content_property, content_box, vscreen, vscreen_util, manipulator, connector) {
+(function (content_property, vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
 	var gui = new ControllerGUI(),
@@ -172,7 +172,7 @@
 	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isDisplayTabSelected() {
-		return gui.contentBox.is_active("display_tab");
+		return gui.is_active_tab("display_tab");
 	}
 
 	/**
@@ -181,7 +181,7 @@
 	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isLayoutTabSelected() {
-		return gui.contentBox.is_active("layout_tab");
+		return gui.is_active_tab("layout_tab");
 	}
 
 	/**
@@ -192,7 +192,7 @@
 			return true;
 		} else if (isLayoutTabSelected() && isLayoutType(meta)) {
 			return true;
-		} else if ((gui.contentBox.is_active("content_tab") || gui.contentBox.is_active("search_tab"))
+		} else if ((gui.is_active_tab("content_tab") || gui.is_active_tab("search_tab"))
 					 && isContentType(meta)) {
 			return true;
 		}
@@ -3524,5 +3524,4 @@
 		}
 	});
 
-}(window.content_property, window.content_box, 
-window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.content_property, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

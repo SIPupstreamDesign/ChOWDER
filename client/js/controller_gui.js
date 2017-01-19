@@ -130,8 +130,8 @@
 				}]
 			});
 		
-		// 下部コンテンツボックスの初期化.
-		this.contentBox = new ContentBox(document.getElementById('bottom_area'),
+		// 下部タブの初期化.
+		this.tabs = new Tabs(document.getElementById('bottom_area'),
 			{
 				tabs : [{
 						Display : {
@@ -156,11 +156,11 @@
 						}
 					}]
 			});
-		this.contentBox.on('tab_changed_pre', function (err, data) {
+		this.tabs.on('tab_changed_pre', function (err, data) {
 			this.emit(window.ControllerGUI.EVENT_TAB_CHANGED_PRE, err, data);
 		}.bind(this));
 
-		this.contentBox.on('tab_changed_post', function (err, data) {
+		this.tabs.on('tab_changed_post', function (err, data) {
 			this.emit(window.ControllerGUI.EVENT_TAB_CHANGED_POST, err, data);
 		}.bind(this));
 
@@ -387,7 +387,7 @@
 		});
 
 		document.body.addEventListener("contextmenu", function (evt) {
-			if (this.contentBox.is_active(type) || this.contentBox.is_active(type2)) {
+			if (this.tabs.is_active(type) || this.tabs.is_active(type2)) {
 				if (evt.button === 2) {
 					openContextMenu = true;
 				}
@@ -396,7 +396,7 @@
 		}.bind(this));
 		
 		document.body.addEventListener("mouseup", function (evt) {
-			if (this.contentBox.is_active(type) || this.contentBox.is_active(type2)) {
+			if (this.tabs.is_active(type) || this.tabs.is_active(type2)) {
 				if (evt.button === 2) {
 					openContextMenu = true;
 				}
@@ -1115,12 +1115,15 @@
 		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
 	ControllerGUI.prototype.get_current_group_name = function () {
-		if (this.contentBox.is_active("content_tab") && this.groupBox) {
+		if (this.tabs.is_active("content_tab") && this.groupBox) {
 			return this.groupBox.get_current_group_name();
-		} else if (this.contentBox.is_active("layout_tab") && this.layoutBox) {
+		} else if (this.tabs.is_active("layout_tab") && this.layoutBox) {
 			return this.layoutBox.get_current_group_name();
 		}
 		return null;
+	};
+	ControllerGUI.prototype.is_active_tab = function (tabname) {
+		return this.tabs.is_active("tabname");
 	};
 	ControllerGUI.prototype.get_display_area = function () {
 		return document.getElementById('display_tab_box');
