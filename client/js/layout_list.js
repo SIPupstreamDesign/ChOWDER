@@ -75,7 +75,9 @@
 			// layoutData is text
 			data = JSON.parse(layoutData);
 			memo = JSON.parse(metaData.user_data_text);
-			layoutElem.innerHTML = "Layout : " + metaData.id + "<br>" + String(memo.text);
+			layoutElem.innerHTML = "Layout : " + metaData.id + "<br>"
+			 + String(new Date(metaData.date).toLocaleString()) + "<br><br>"
+			 + String(memo.text);
 			divElem.style.width = "150px";
 			divElem.style.height = "150px";
 			divElem.style.color = textColor;
