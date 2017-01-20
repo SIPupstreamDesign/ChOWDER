@@ -3535,10 +3535,12 @@
 					userselect = document.getElementById('loginuser'),
 					option;
 				for (i = 0; i <  reply.length; i = i + 1) {
-					option = document.createElement('option');
-					option.value = reply[i];
-					option.innerText = reply[i];
-					userselect.appendChild(option);
+					if (reply[i] !== "Display") {
+						option = document.createElement('option');
+						option.value = reply[i];
+						option.innerText = reply[i];
+						userselect.appendChild(option);
+					}
 				}
 				document.getElementById('loginbutton').onclick = submitFunc(reply);
 				loginpass.onkeypress = function (e) {
