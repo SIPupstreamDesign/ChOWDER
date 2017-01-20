@@ -3255,12 +3255,10 @@
 		updateGroupList();
 	});
 
-	// すべての更新が必要なときにブロードキャストされてくる.
+	// 全てリロードする
 	var isInitialUpdate = true;
-	connector.on('Update', function () {
-		if (!isInitialized) { return; }
-		console.log("on update");
-		manipulator.removeManipulator();
+	function reloadAll() {
+		console.log("on reloadAll");
 		update(function () {
 			if (isInitialUpdate) {
 				var checkbox = document.getElementById('all_check_');
@@ -3273,6 +3271,12 @@
 		clearWindowList();
 		addWholeWindowToList();
 		updateScreen();
+	}
+
+	// すべての更新が必要なときにブロードキャストされてくる.
+	connector.on('Update', function () {
+		if (!isInitialized) { return; }
+		reloadAll();
 	});
 	
 	// windowが更新されたときにブロードキャストされてくる.
@@ -3495,25 +3499,56 @@
 	}
 	
 	function login() {
-		document.getElementById('loginmenu_background').style.display = "block";
-		document.getElementById('loginmenu').style.display = "block";
+		var loginmenuBackground = document.getElementById('loginmenu_background');
+		var loginmenu = document.getElementById('loginmenu');
+		var loginpass = document.getElementById('loginpass');
+		var submitFunc = function (userlist) {
+			return function () {
+				var userselect = document.getElementById('loginuser');
+				if (userselect.selectedIndex >= 0) {
+					var username = userlist[userselect.selectedIndex],
+						password = loginpass.value;
+
+					connector.send('Login', { username : username, password : password }, function (err, reply) {
+						var invalidLabel = document.getElementById('invalid_login');
+						if (err || reply !== "success") {
+							invalidLabel.style.display = "block";
+						} else {
+							invalidLabel.style.display = "none";
+							loginmenuBackground.style.display = "none";
+							loginmenu.style.display = "none";
+							init();
+							reloadAll();
+						}
+					});
+				}
+			}
+		};
+
+		loginmenuBackground.style.display = "block";
+		loginmenu.style.display = "block";
 		connector.send('GetUserList', {}, function (err, reply) {
 			if (!err) {
 				var i,
 					userselect = document.getElementById('loginuser'),
 					option;
-
 				for (i = 0; i <  reply.length; i = i + 1) {
 					option = document.createElement('option');
 					option.value = reply[i];
 					option.innerText = reply[i];
 					userselect.appendChild(option);
 				}
+				document.getElementById('loginbutton').onclick = submitFunc(reply);
+				loginpass.onkeypress = function (e) {
+					if (e.which == 13) {
+						submitFunc(reply)();
+					}
+				};
 			}
 		});
 	}
 
-	window.onload = init;
+	window.onload = login;
 	window.onunload = function () {
 		window.content_property.clear(true);
 	};

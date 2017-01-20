@@ -46,6 +46,7 @@
 		GetGlobalSetting : "GetGlobalSetting",
 
 		// ユーザー管理
+		Login : "Login",
 		GetUserList :  "GetUserList",
 		GetGroupUserSetting : "GetGroupUserSetting",
 		ChangeGroupUserSetting : "ChangeGroupUserSetting",

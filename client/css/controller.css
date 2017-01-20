@@ -705,3 +705,9 @@ p {
 .loginbutton {
 	margin-left : 5px;
 }
+
+#invalid_login {
+	padding-top : 10px;
+	display : none;
+	color : black;
+}

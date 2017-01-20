@@ -583,6 +583,60 @@
 		});
 	}
 
+	function validatePassword(master, pass) {
+		return master === util.encrypt(pass, cryptkey);
+	}
+
+	/**
+	 * ログインする
+	 */
+	function login(username, password, endCallback) {
+		getAdminUserSetting(function (err, data) {
+			if (data.hasOwnProperty(username)) {
+				// 管理ユーザー
+				var isValid = validatePassword(data[username].password, password);
+				endCallback(null, isValid ? "success" : "failed");
+			} else {
+				getGroupList(function (err, groupData) {
+					var i,
+						isFoundName = false;
+					for (i = 0; i < groupData.grouplist.length; i = i + 1) {
+						if (groupData.grouplist[i].name === username) {
+							isFoundName = true;
+							break;
+						}
+					}
+					if (isFoundName) {
+						getGroupUserSetting(function (err, setting) {
+							if (!err) {
+								if (setting.hasOwnProperty(username)) {
+									// グループユーザー設定登録済グループユーザー
+									var isValid = validatePassword(setting[username].password, password);
+									endCallback(null, isValid ? "success" : "failed");
+								} else {
+									// グループユーザー設定に登録されていないグループ
+									endCallback(null, "success");
+								}
+							} else {
+								endCallback(err, "failed");
+							}
+						});
+					} else if (username === "Guest") {
+						// ゲストユーザー
+						console.log("Login as Guest");
+						endCallback(null, "success");
+					} else if (username === "Display") {
+						// Displayユーザー
+						console.log("Login as Display");
+						endCallback(null, "success");
+					} else {
+						endCallback(null, "failed");
+					}
+				});
+			}
+		});
+	}
+
 	/**
 	 * 指定されたタイプ、idのメタデータ設定
 	 * @method setMetaData
@@ -1919,6 +1973,17 @@
 	}
 
 	/**
+	 * ログインコマンドを実行する
+	 */
+	function commandLogin(data, endCallback) {
+		if (data.hasOwnProperty('username') && data.hasOwnProperty('password')) {
+			login(data.username, data.password, endCallback);
+		} else {
+			endCallback("ユーザ名またはパスワードが正しくありません.");
+		}
+	}
+
+	/**
 	 * 管理者ユーザーの初期設定.
 	 */
 	function initAdminUser() {
@@ -2209,6 +2274,9 @@
 			commandGetDBList(resultCallback);
 		});
 
+		ws_connector.on(Command.Login, function (data, resultCallback) {
+			commandLogin(data, resultCallback);
+		});
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
@@ -2355,6 +2423,9 @@
 			commandGetDBList(resultCallback);
 		});
 
+		io_connector.on(Command.Login, function (data, resultCallback) {
+			commandLogin(data, resultCallback);
+		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
