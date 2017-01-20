@@ -1794,6 +1794,7 @@
 
 	/**
 	 *  グループリストを取得する.
+	 * @method commandGetGroupList
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetGroupList(endCallback) {
@@ -1802,6 +1803,7 @@
 	
 	/**
 	 *  グループを追加する.
+	 * @method commandAddGroup
 	 * @param {JSON} json 対象のnameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -1817,6 +1819,7 @@
 
 	/**
 	 *  グループを削除する.
+	 * @method commandDeleteGroup
 	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -1828,6 +1831,7 @@
 
 	/**
 	 * グループを更新する
+	 * @method commandUpdateGroup
 	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -1839,6 +1843,9 @@
 
 	/**
 	 * グループインデックスを変更する.
+	 * @method commandChangeGroupIndex
+	 * @param {JSON} json 対象のid, indexを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandChangeGroupIndex(json, endCallback) {
 		if (json.hasOwnProperty("id") && json.hasOwnProperty("index")) {
@@ -1848,6 +1855,9 @@
 
 	/**
 	 * 新しい保存領域を作成
+	 * @method commandChangeGroupIndex
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandNewDB(json, endCallback) {
 		if (json.hasOwnProperty("name")) {
@@ -1857,6 +1867,9 @@
 
 	/**
 	 * 保存領域の名前を変更
+	 * @method commandRenameDB
+	 * @param {JSON} json 対象のname, new_nameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandRenameDB(json, endCallback) {
 		if (json.hasOwnProperty('name') && json.hasOwnProperty('new_name')) {
@@ -1866,6 +1879,9 @@
 
 	/**
 	 * DBの参照先保存領域の変更
+	 * @method commandChangeDB
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandChangeDB(json, endCallback) {
 		if (json.hasOwnProperty("name")) {
@@ -1875,6 +1891,9 @@
 	
 	/**
 	 * DBの保存領域の削除
+	 * @method commandChangeDB
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteDB(json, endCallback) {
 		if (json.hasOwnProperty("name")) {
@@ -1884,6 +1903,8 @@
 
 	/**
 	 * DBの保存領域のリストを取得
+	 * @method commandGetDBList
+	 * @param {Function} resultCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetDBList(resultCallback) {
 		textClient.hgetall(frontPrefix + 'dblist', resultCallback);
@@ -1891,6 +1912,8 @@
 
 	/**
 	 * 各種設定の変更
+	 * @method commandChangeGlobalSetting
+	 * TODO
 	 */
 	function commandChangeGlobalSetting(json, endCallback) {
 		changeGlobalSetting(json, endCallback);
@@ -1900,7 +1923,7 @@
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
 	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:GetWindow時JSONデータ
+	 * @param {JSON} json 対象のid, typeを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetWindowMetaData(socketid, json, endCallback) {
@@ -1935,7 +1958,7 @@
 	 * ウィンドウの更新を行うコマンドを実行する.
 	 * @method commandUpdateWindowMetaData
 	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
+	 * @param {JSON} json 対象のjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandUpdateWindowMetaData(socketid, json, endCallback) {
@@ -1965,7 +1988,7 @@
      * リモートマウスカーソル表示のために HSV カラーを新規接続に応じて生成する
      * @method commandUpdateMouseCursor
      * @param {String} socketid ソケットID
-     * @param {JSON} json socket.io.on:UpdateMouseCursor時JSONデータ,
+	 * @param {JSON} json mouse情報を含んだjson
      * @param {Function} endCallback 終了時に呼ばれるコールバック
      */
     function commandUpdateMouseCursor(socketid, json, endCallback) {
@@ -1997,6 +2020,9 @@
 
 	/**
 	 * グループユーザー設定変更コマンドを実行する
+     * @method commandUpdateMouseCursor
+	 * @param {JSON} data 対象のnameを含むjson
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandChangeGroupUserSetting(data, endCallback) {
 		var setting,
@@ -2010,6 +2036,9 @@
 
 	/**
 	 * グループユーザー設定取得コマンドを実行する
+     * @method commandGetGroupUserSetting
+	 * @param {JSON} data 対象のnameを含むjson
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetGroupUserSetting(data, endCallback) {
 		if (data.hasOwnProperty('name')) {
@@ -2019,6 +2048,9 @@
 	
 	/**
 	 *　管理ユーザー設定変更コマンドを実行する
+     * @method commandChangeAdminUserSetting
+	 * @param {JSON} data 対象のnameを含むjson
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandChangeAdminUserSetting(data, endCallback) {
 		if (data.hasOwnProperty('name')) {
@@ -2028,6 +2060,9 @@
 	
 	/**
 	 *　管理ユーザー設定取得コマンドを実行する
+     * @method commandGetAdminUserSetting
+	 * @param {JSON} data 対象のnameを含むjson
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetAdminUserSetting(data, endCallback) {
 		if (data.hasOwnProperty('name')) {
@@ -2037,6 +2072,8 @@
 
 	/**
 	 * ユーザーリスト取得コマンドを実行する
+     * @method commandGetUserList
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetUserList(endCallback) {
 		getUserList(endCallback);
@@ -2044,6 +2081,10 @@
 
 	/**
 	 * ログインコマンドを実行する
+     * @method commandLogin
+	 * @param {JSON} data 対象のusername, passwordを含むjson
+	 * @param {String} socketid ソケットID
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandLogin(data, socketid, endCallback) {
 		console.log("----------------------------" , socketid, "----------------------------")
@@ -2056,6 +2097,7 @@
 
 	/**
 	 * 管理者ユーザーの初期設定.
+     * @method initAdminUser
 	 */
 	function initAdminUser() {
 		// 試しに作る(仮
@@ -2093,6 +2135,10 @@
 		};
 	}
 	
+	/**
+	 * updateGroup処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateGroup
+	 */
 	function post_updateGroup(ws, io, resultCallback) {
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.UpdateGroup, reply);
