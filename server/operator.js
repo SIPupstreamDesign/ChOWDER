@@ -39,6 +39,8 @@
 		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
+		socketidToAccessAuthority = {},
+		socketidToUserName = {},
 		methods,
         connectionId = {},
         connectionCount = 0;
@@ -493,7 +495,12 @@
 			if (setting.hasOwnProperty('viewable')) {
 				data[groupName].viewable = setting.viewable;
 			}
-			textClient.set(groupUserPrefix, JSON.stringify(data), endCallback);
+			textClient.set(groupUserPrefix, JSON.stringify(data), function (err, reply) {
+				updateAuthority(null, data);
+				if (endCallback) {
+					endCallback(err, reply)
+				}
+			});
 		});
 	}
 
@@ -537,7 +544,12 @@
 					}
 					if (data[groupName].pre_password === prePass) {
 						data[groupName].password = util.encrypt(setting.password, cryptkey);
-						textClient.set(adminUserPrefix, JSON.stringify(data), endCallback);
+						textClient.set(adminUserPrefix, JSON.stringify(data), function (err, reply) {
+							updateAuthority(data, null);
+							if (endCallback) {
+								endCallback(err, reply)
+							}
+						});
 						return;
 					} else {
 						if (endCallback) {
@@ -588,13 +600,66 @@
 	}
 
 	/**
-	 * ログインする
+	 * socketidごとの権限情報キャッシュを全て更新する
 	 */
-	function login(username, password, endCallback) {
+	function updateAuthority(adminSetting, groupSetting) {
+		var i,
+			socketid,
+			authority;
+
+		for (socketid in socketidToAccessAuthority) {
+			authority = socketidToAccessAuthority[socketid];
+			if (socketidToUserName.hasOwnProperty(socketid)) {
+				var name = socketidToUserName[socketid];
+				if (adminSetting) {
+					if (adminSetting.hasOwnProperty(name)) {
+						authority.viewable = "all";
+						authority.editable = "all";
+						socketidToAccessAuthority[socketid] = authority;
+					}
+				} else if (groupSetting) {
+					if (groupSetting.hasOwnProperty(name)) {
+						authority.viewable = groupSetting[name].viewable;
+						authority.editable = groupSetting[name].editable;
+						socketidToAccessAuthority[socketid] = authority;
+					}
+				}
+			}
+		}
+		console.log("-----updateAuthority------")
+		console.log(socketidToAccessAuthority)
+	}
+
+	/**
+	 * ログイン情報の一時的な保存. ログイン成功した場合に必ず呼ぶ.
+	 */
+	function saveLoginInfo(socketid, username, adminSetting, groupSetting) {
+		if (!socketidToUserName.hasOwnProperty(socketid)) {
+			socketidToUserName[socketid] = username;
+		}
+		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			socketidToAccessAuthority[socketid] = {};
+	 		// socketidごとの権限情報キャッシュを全て更新する
+			updateAuthority(adminSetting, groupSetting);
+		}
+	}
+
+	/**
+	 * ログインする
+	 * @method login
+	 * @param {String} username ユーザー名
+	 * @param {String} password パスワード
+	 * @param {String} socketid socketID
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function login(username, password, socketid, endCallback) {
 		getAdminUserSetting(function (err, data) {
 			if (data.hasOwnProperty(username)) {
 				// 管理ユーザー
 				var isValid = validatePassword(data[username].password, password);
+				if (isValid) {
+					saveLoginInfo(socketid, username, data);
+				}
 				endCallback(null, isValid ? "success" : "failed");
 			} else {
 				getGroupList(function (err, groupData) {
@@ -612,6 +677,9 @@
 								if (setting.hasOwnProperty(username)) {
 									// グループユーザー設定登録済グループユーザー
 									var isValid = validatePassword(setting[username].password, password);
+									if (isValid) {
+										saveLoginInfo(socketid, username, null, setting);
+									}
 									endCallback(null, isValid ? "success" : "failed");
 								} else {
 									// グループユーザー設定に登録されていないグループ
@@ -624,10 +692,12 @@
 					} else if (username === "Guest") {
 						// ゲストユーザー
 						console.log("Login as Guest");
+						saveLoginInfo(socketid, username);
 						endCallback(null, "success");
 					} else if (username === "Display") {
 						// Displayユーザー
 						console.log("Login as Display");
+						saveLoginInfo(socketid, username);
 						endCallback(null, "success");
 					} else {
 						endCallback(null, "failed");
@@ -1975,9 +2045,10 @@
 	/**
 	 * ログインコマンドを実行する
 	 */
-	function commandLogin(data, endCallback) {
+	function commandLogin(data, socketid, endCallback) {
+		console.log("----------------------------" , socketid, "----------------------------")
 		if (data.hasOwnProperty('username') && data.hasOwnProperty('password')) {
-			login(data.username, data.password, endCallback);
+			login(data.username, data.password, socketid, endCallback);
 		} else {
 			endCallback("ユーザ名またはパスワードが正しくありません.");
 		}
@@ -2274,8 +2345,8 @@
 			commandGetDBList(resultCallback);
 		});
 
-		ws_connector.on(Command.Login, function (data, resultCallback) {
-			commandLogin(data, resultCallback);
+		ws_connector.on(Command.Login, function (data, resultCallback, socketid) {
+			commandLogin(data, socketid, resultCallback);
 		});
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -2423,8 +2494,8 @@
 			commandGetDBList(resultCallback);
 		});
 
-		io_connector.on(Command.Login, function (data, resultCallback) {
-			commandLogin(data, resultCallback);
+		io_connector.on(Command.Login, function (data, resultCallback, socketid) {
+			commandLogin(data, socketid, resultCallback);
 		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
