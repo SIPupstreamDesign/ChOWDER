@@ -40,7 +40,18 @@
 		RenameDB : "RenameDB",
 		DeleteDB : "DeleteDB",
 		ChangeDB : "ChangeDB",
-		GetDBList : "GetDBList"
+		GetDBList : "GetDBList",
+		
+		// 各種設定変更
+		ChangeGlobalSetting : "ChangeGlobalSetting",
+		GetGlobalSetting : "GetGlobalSetting",
+		
+		// ユーザー管理
+		GetUserList :  "GetUserList",
+		GetGroupUserSetting : "GetGroupUserSetting",
+		ChangeGroupUserSetting : "ChangeGroupUserSetting",
+		GetAdminUserSetting : "GetAdminUserSetting",
+		ChangeAdminUserSetting : "ChangeAdminUserSetting"
 	};
 	
 	window.command = Command;

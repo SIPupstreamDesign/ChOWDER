@@ -42,7 +42,9 @@
 		doneUpdateMetaData,
 		doneUpdateWindowMetaData,
 		doneGetMetaData,
-		doneDeleteWindowMetaData;
+		doneDeleteWindowMetaData,
+		isInitialized = false;
+		
 	
 	/**
 	 * メタデータがwindowタイプであるか返す
@@ -3256,6 +3258,7 @@
 	// すべての更新が必要なときにブロードキャストされてくる.
 	var isInitialUpdate = true;
 	connector.on('Update', function () {
+		if (!isInitialized) { return; }
 		console.log("on update");
 		manipulator.removeManipulator();
 		update(function () {
@@ -3488,8 +3491,28 @@
 
 		updateScreen();
 		vscreen.dump();
+		isInitialized = true;
 	}
 	
+	function login() {
+		document.getElementById('loginmenu_background').style.display = "block";
+		document.getElementById('loginmenu').style.display = "block";
+		connector.send('GetUserList', {}, function (err, reply) {
+			if (!err) {
+				var i,
+					userselect = document.getElementById('loginuser'),
+					option;
+
+				for (i = 0; i <  reply.length; i = i + 1) {
+					option = document.createElement('option');
+					option.value = reply[i];
+					option.innerText = reply[i];
+					userselect.appendChild(option);
+				}
+			}
+		});
+	}
+
 	window.onload = init;
 	window.onunload = function () {
 		window.content_property.clear(true);

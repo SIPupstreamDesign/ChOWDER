@@ -265,6 +265,27 @@ function detectImageType(binary) {
 	}
 	return "unknown";
 }
+
+/**
+ * 複号する
+ */
+function decrypt(text, key) {
+	var decipher = crypto.createDecipher('aes-256-ctr', key),
+		dec = decipher.update(text, 'hex', 'utf8');
+	dec += decipher.final('utf8');
+	return dec;
+}
+
+/**
+ * 暗号化する
+ */
+function encrypt(text, key) {
+	var cipher = crypto.createCipher('aes-256-ctr', key),
+		crypted = cipher.update(text, 'utf8', 'hex');
+	crypted += cipher.final('hex');
+	return crypted;
+}
+
 module.exports.generateUUID = generateUUID;
 module.exports.generateUUID8 = generateUUID8;
 module.exports.getExtention = getExtention;
@@ -275,4 +296,6 @@ module.exports.mkdirSync = mkdirSync;
 module.exports.launchApp = launchApp;
 module.exports.isRelative = isRelative;
 module.exports.kill = kill;
+module.exports.decrypt = decrypt;
+module.exports.encrypt = encrypt;
 module.exports.detectImageType = detectImageType;

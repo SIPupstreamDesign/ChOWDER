@@ -42,8 +42,15 @@
 		GetDBList : "GetDBList",
 
 		// 各種設定変更
-		ChangeSetting : "ChangeSetting",
-		GetSetting : "GetSetting"
+		ChangeGlobalSetting : "ChangeGlobalSetting",
+		GetGlobalSetting : "GetGlobalSetting",
+
+		// ユーザー管理
+		GetUserList :  "GetUserList",
+		GetGroupUserSetting : "GetGroupUserSetting",
+		ChangeGroupUserSetting : "ChangeGroupUserSetting",
+		GetAdminUserSetting : "GetAdminUserSetting",
+		ChangeAdminUserSetting : "ChangeAdminUserSetting"
 	};
 	
 	module.exports = Command;

@@ -9,6 +9,7 @@
 	 * @method Operator
 	 */
 	var Operator = function () {},
+		cryptkey = "ChOWDERCRYPTKEY",
 		redis = require("redis"),
 		image_size = require('image-size'),
 		client = redis.createClient(6379, '127.0.0.1', {'return_buffers': true}),
@@ -25,7 +26,9 @@
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
 		groupListPrefix = "grouplist",
-		settingPrefix = "global_setting",
+		globalSettingPrefix = "global_setting",
+		groupUserPrefix = "group_user",
+		adminUserPrefix = "admin_user",
 		io_connector = require('./io_connector.js'),
 		ws_connector = require('./ws_connector.js'),
 		util = require('./util.js'),
@@ -147,13 +150,12 @@
 		textClient.get(groupListPrefix, function (err, reply) {
 			var data = reply;
 			if (!reply) {
-				data = { grouplist : [] };
-			} else {
-				try {
-					data = JSON.parse(data);
-				} catch (e) {
-					return false;
-				}
+				data = "{ grouplist : [] }";
+			}
+			try {
+				data = JSON.parse(data);
+			} catch (e) {
+				return false;
 			}
 			endCallback(err, data);
 		});
@@ -434,13 +436,150 @@
 		}
 	}
 	
-	function changeSetting(json, endCallback) {
-		textClient.hmset(settingPrefix, json, function (err) {
+	/**
+	 * グローバル設定の変更
+	 */
+	function changeGlobalSetting(json, endCallback) {
+		textClient.hmset(globalSettingPrefix, json, function (err) {
 			if (err) {
 				console.error(err);
 			} else if (endCallback) {
 				endCallback(json);
 			}
+		});
+	}
+
+	/**
+	 * グループユーザー設定情報の取得.
+	 */
+	function getGroupUserSetting(endCallback) {
+		textClient.exists(groupUserPrefix,  function (err, doesExists) {
+			if (!err && doesExists === 1) {
+				textClient.get(groupUserPrefix, function (err, reply) {
+					var data = reply;
+					if (!reply) {
+						data = {};
+					} else {
+						try {
+							data = JSON.parse(data);
+						} catch (e) {
+							return false;
+						}
+					}
+					endCallback(err, data);
+				});
+			} else {
+				endCallback("not found group user setting");
+			}
+		});
+	}
+
+	/**
+	 * グループユーザー設定の変更.
+	 */
+	function changeGroupUserSetting(groupName, setting, endCallback) {
+		getGroupUserSetting(function (err, data) {
+			var groupSetting;
+			if (!data.hasOwnProperty(groupName)) {
+				// 新規.
+				data[groupName] = {};
+			}
+			if (setting.hasOwnProperty('password')) {
+				data[groupName].password = setting.password;
+			}
+			if (setting.hasOwnProperty('editable')) {
+				data[groupName].editable = setting.editable;
+			}
+			if (setting.hasOwnProperty('viewable')) {
+				data[groupName].viewable = setting.viewable;
+			}
+			textClient.set(groupUserPrefix, JSON.stringify(data), endCallback);
+		});
+	}
+
+	/**
+	 * 管理ユーザー設定情報の取得.
+	 */
+	function getAdminUserSetting(endCallback) {
+		textClient.get(adminUserPrefix, function (err, reply) {
+			var data = reply;
+			if (!reply) {
+				data = "{}";
+			}
+			try {
+				data = JSON.parse(data);
+			} catch (e) {
+				endCallback("getAdminUserSetting failed");
+				return;
+			}
+			endCallback(err, data);
+		});
+	}
+
+	/**
+	 * 管理ユーザー設定の変更.
+	 */
+	function changeAdminUserSetting(groupName, setting, endCallback) {
+		getAdminUserSetting(function (err, data) {
+			if (!err) {
+				if (setting.hasOwnProperty('password')) {
+					var prePass;
+					if (!data.hasOwnProperty(groupName)) {
+						data[groupName] = {};
+					}
+					if (data[groupName].hasOwnProperty('pre_password')) {
+						prePass = util.encrypt(setting.pre_password, cryptkey);
+					} else {
+						// 初回追加時.
+						var pass = util.encrypt(setting.password, cryptkey);
+						data[groupName].pre_password = pass;
+						prePass = pass;
+					}
+					if (data[groupName].pre_password === prePass) {
+						data[groupName].password = util.encrypt(setting.password, cryptkey);
+						textClient.set(adminUserPrefix, JSON.stringify(data), endCallback);
+						return;
+					} else {
+						if (endCallback) {
+							endCallback("invalid password");
+							return;
+						}
+					}
+				} 
+				
+				if (endCallback) {
+					endCallback("invalid admin setting");
+				}
+			} else {
+				if (endCallback) {
+					endCallback(err);
+				}
+			}
+		});
+	}
+
+	/**
+	 * ユーザーリストの取得
+	 * 全グループ名と、guest, display, 全管理者名が返る.
+	 */
+	function getUserList(endCallback) {
+		getAdminUserSetting(function (err, data) {
+			var userList = Object.keys(data);
+			getGroupList(function (err, groupData) {
+				if (groupData.hasOwnProperty("grouplist")) {
+					var i;
+					for (i = 0; i < groupData.grouplist.length; i = i + 1) {
+						userList.push(groupData.grouplist[i].name);
+					}
+				}
+				if (userList.indexOf('Display') < 0) {
+					userList.push("Display");
+				}
+				userList.push("Guest");
+				if (endCallback) {
+					endCallback(null, userList);
+				}
+			});
 		});
 	}
 
@@ -1629,8 +1768,8 @@
 	/**
 	 * 各種設定の変更
 	 */
-	function commandChangeSetting(json, endCallback) {
-		changeSetting(json, endCallback);
+	function commandChangeGlobalSetting(json, endCallback) {
+		changeGlobalSetting(json, endCallback);
 	}
 
 	/**
@@ -1732,6 +1871,64 @@
         });
     }
 
+	/**
+	 * グループユーザー設定変更コマンドを実行する
+	 */
+	function commandChangeGroupUserSetting(data, endCallback) {
+		var setting,
+			name;
+		if (data.hasOwnProperty('name')) {
+			name = data.name;
+			delete data.name;
+			changeGroupUserSetting(data.name, data, endCallback);
+		}
+	}
+
+	/**
+	 * グループユーザー設定取得コマンドを実行する
+	 */
+	function commandGetGroupUserSetting(data, endCallback) {
+		if (data.hasOwnProperty('name')) {
+			getGroupUserSetting(data.name, endCallback);
+		}
+	}
+	
+	/**
+	 *　管理ユーザー設定変更コマンドを実行する
+	 */
+	function commandChangeAdminUserSetting(data, endCallback) {
+		if (data.hasOwnProperty('name')) {
+			changeAdminUserSetting(data.name, data, endCallback);
+		}
+	}
+	
+	/**
+	 *　管理ユーザー設定取得コマンドを実行する
+	 */
+	function commandGetAdminUserSetting(data, endCallback) {
+		if (data.hasOwnProperty('name')) {
+			getAdminUserSetting(data.name, endCallback);
+		}
+	}
+
+	/**
+	 * ユーザーリスト取得コマンドを実行する
+	 */
+	function commandGetUserList(endCallback) {
+		getUserList(endCallback);
+	}
+
+	/**
+	 * 管理者ユーザーの初期設定.
+	 */
+	function initAdminUser() {
+		// 試しに作る(仮
+		changeAdminUserSetting("管理者", {
+			pre_password : "hogehoge",
+			password : "hogehoge"
+		});
+	}
+	
 	/**
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
@@ -1870,6 +2067,20 @@
 			}
 		};
 	}
+
+	/**
+	 * group変更処理終了後のブロードキャスト用ラッパー.
+	 * @method post_updateSetting
+	 */
+	function post_updateSetting(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateSetting, reply);
+			io_connector.broadcast(io, Command.UpdateSetting, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
 	
 	/**
 	 * websocketイベントの登録を行う.
@@ -1998,8 +2209,23 @@
 			commandGetDBList(resultCallback);
 		});
 
-		ws_connector.on(Command.ChangeSetting, function (data, resultCallback) {
-			commandChangeSetting(data, post_updateSetting(ws, io, resultCallback));
+		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
+			commandGetUserList(resultCallback);
+		});
+		ws_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
+			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+		ws_connector.on(Command.GetGroupUserSetting, function (data, resultCallback) {
+			commandGetGroupUserSetting(data, resultCallback);
+		});
+		ws_connector.on(Command.ChangeAdminUserSetting, function (data, resultCallback) {
+			commandChangeAdminUserSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+		ws_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
+			commandGetAdminUserSetting(data, resultCallback);
+		});
+		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
+			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 
 		getSessionList();
@@ -2129,8 +2355,23 @@
 			commandGetDBList(resultCallback);
 		});
 
-		io_connector.on(Command.ChangeSetting, function (data, resultCallback) {
-			commandChangeSetting(data, post_updateSetting(ws, io, resultCallback));
+		io_connector.on(Command.GetUserList, function (data, resultCallback) {
+			commandGetUserList(resultCallback);
+		});
+		io_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
+			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+		io_connector.on(Command.GetGroupUserSetting, function (data, resultCallback) {
+			commandGetGroupUserSetting(data, resultCallback);
+		});
+		io_connector.on(Command.ChangeAdminUserSetting, function (data, resultCallback) {
+			commandChangeAdminUserSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+		io_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
+			commandGetAdminUserSetting(data, resultCallback);
+		});
+		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
+			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 
 		io_connector.registerEvent(io, socket);
@@ -2154,7 +2395,9 @@
 		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
-		settingPrefix = frontPrefix + uuidPrefix + settingPrefix;
+		globalSettingPrefix = frontPrefix + globalSettingPrefix;
+		adminUserPrefix = frontPrefix + adminUserPrefix; // 管理ユーザー設定
+		groupUserPrefix = frontPrefix + uuidPrefix + groupUserPrefix; // グループユーザー設定
 		console.log("idstr:" + contentPrefix);
 		console.log("idstr:" + contentRefPrefix);
 		console.log("idstr:" + metadataPrefix);
@@ -2164,6 +2407,7 @@
 		console.log("idstr:" + groupListPrefix);
 		console.log("idstr:" + contentBackupPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
+		initAdminUser();
 		addGroup("group_defalut", "default", function (err, reply) {} );
 	}
 

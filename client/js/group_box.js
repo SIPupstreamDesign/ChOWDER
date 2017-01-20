@@ -156,6 +156,10 @@
 		return this.container.id + "_" + id;
 	};
 
+	GroupBox.prototype.fromTabID = function (tabid) {
+		return tabid.split(this.container.id + "_").join("");
+	}
+
 	/*
 		<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
 		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
@@ -224,7 +228,7 @@
 					delete_button.onclick = function () {
 						menu.style.display = "none";
 						background.close();
-						this.emit(GroupBox.EVENT_GROUP_DELETE, null, groupID);
+						this.emit(GroupBox.EVENT_GROUP_DELETE, null, this.fromTabID(groupID));
 					}.bind(self);
 
 					name_button.onclick = function () {
@@ -233,7 +237,7 @@
 								initialValue :  groupName,
 								okButtonName : "OK",
 							}, function (value) {
-								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null, groupID, value);
+								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null,  this.fromTabID(groupID), value);
 							}.bind(this));
 						menu.style.display = "none";
 						background.close();
@@ -245,7 +249,7 @@
 								initialValue : groupColor,
 								okButtonName : "OK"
 							}, function (value) {
-								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null, groupID, value);
+								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null,  this.fromTabID(groupID), value);
 							}.bind(this));
 						menu.style.display = "none";
 						background.close();
