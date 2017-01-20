@@ -1800,7 +1800,7 @@
 			isUpdateContent = false;
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
-			isUpdateContent = metaDataDict[json.id].restore_index !== reply.restore_index;
+			isUpdateContent = (metaDataDict[json.id].restore_index !== reply.restore_index);
 		}
 		metaDataDict[json.id] = json;
 		
@@ -3340,6 +3340,7 @@
 			changeRect(id, parseInt(value, 10));
 		});
 
+		// メタ情報(メモ)変更.
 		content_property.on("metainfo_changed", function (err, text, endCallback) {
 			var id = getSelectedID(),
 				newData,
@@ -3351,6 +3352,8 @@
 				if (newData !== metaData.user_data_text) {
 					metaData.user_data_text = newData;
 					if (metaData.type === "text") {
+						// テキストのメモ変更.
+						// テキストはコンテンツ部分にも同じテキストがあるので更新.
 						var previewArea = gui.get_content_preview_area(),
 							elem = document.createElement('pre');
 						elem.className = "text_content";
@@ -3361,7 +3364,17 @@
 						metaData.restore_index = -1;
 						previewArea.removeChild(elem);
 						updateContent(metaData, text);
+					} else if (metaData.type === "layout") {
+						// レイアウトのメモ変更.
+						// レイアウトコンテンツを取得し直しリストを更新する.
+						updateMetaData(metaData, function (err, reply) {
+							connector.send('GetContent', metaData, function (err, data) {
+								doneGetContent(err, data, endCallback);
+							});
+						});
 					} else {
+						// その他コンテンツのメモ変更.
+						// リストの更新は必要なし
 						updateMetaData(metaData, function (err, reply) {
 							if (endCallback) {
 								endCallback(null);
