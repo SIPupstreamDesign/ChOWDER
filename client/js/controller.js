@@ -5,7 +5,8 @@
 	"use strict";
 	
 	var gui = new ControllerGUI(),
-		loginkey = "",
+		loginkey = "", // ログインキー
+		authority = null, // アクセス権限
 		currentContent = null,
 		draggingIDList = [],
 		selectedIDList = [],
@@ -3515,9 +3516,11 @@
 				var invalidLabel = document.getElementById('invalid_login');
 				if (err || reply === "failed") {
 					loginkey = "";
+					authority = null;
 					invalidLabel.style.display = "block";
 				} else {
-					loginkey = reply;
+					loginkey = reply.loginkey;
+					authority = reply.authority;
 					saveCookie();
 					invalidLabel.style.display = "none";
 					loginmenuBackground.style.display = "none";

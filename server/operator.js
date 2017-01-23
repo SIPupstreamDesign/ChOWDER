@@ -634,14 +634,12 @@
 	 * socketidの権限情報キャッシュを削除する
 	 */
 	function removeAuthority(socketid) {
-		/*
 		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			delete socketidToAccessAuthority[socketid];
 		}
 		if (socketidToUserName.hasOwnProperty(socketid)) {
 			delete socketidToUserName[socketid];
 		}
-		*/
 	}
 
 	/**
@@ -667,6 +665,19 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function login(username, password, socketid, endCallback) {
+		var getLoginResult = function () {
+			if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+				return {
+					loginkey : socketid,
+					authority : socketidToAccessAuthority[socketid]
+				};
+			} else {
+				return {
+					loginkey : socketid,
+					authority : null,
+				};
+			}
+		};
 		getAdminUserSetting(function (err, data) {
 			if (data.hasOwnProperty(username)) {
 				// 管理ユーザー
@@ -675,7 +686,7 @@
 					saveLoginInfo(socketid, username, data);
 				}
 				// 成功したらsocketidを返す
-				endCallback(null, isValid ? socketid : "failed");
+				endCallback(null, isValid ? getLoginResult() : "failed");
 			} else {
 				getGroupList(function (err, groupData) {
 					var i,
@@ -695,10 +706,10 @@
 									if (isValid) {
 										saveLoginInfo(socketid, username, null, setting);
 									}
-									endCallback(null, isValid ? socketid : "failed");
+									endCallback(null, isValid ? getLoginResult() : "failed");
 								} else {
 									// グループユーザー設定に登録されていないグループ
-									endCallback(null, socketid);
+									endCallback(null, getLoginResult());
 								}
 							} else {
 								endCallback(err, "failed");
@@ -708,12 +719,12 @@
 						// ゲストユーザー
 						console.log("Login as Guest");
 						saveLoginInfo(socketid, username);
-						endCallback(null, socketid);
+						endCallback(null, getLoginResult());
 					} else if (username === "Display") {
 						// Displayユーザー
 						console.log("Login as Display");
 						saveLoginInfo(socketid, username);
-						endCallback(null, socketid);
+						endCallback(null, getLoginResult());
 					} else {
 						endCallback(null, "failed");
 					}
@@ -2111,7 +2122,11 @@
 				if (socketidToUserName.hasOwnProperty(socketid) &&
 					socketidToAccessAuthority.hasOwnProperty(socketid)) 
 				{
-					endCallback(null, socketid);
+					var result = {
+						loginkey : socketid,
+						authority : socketidToAccessAuthority[socketid]
+					}
+					endCallback(null, result);
 					return;
 				}
 			}
