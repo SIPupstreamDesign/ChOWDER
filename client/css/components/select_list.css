@@ -2,7 +2,7 @@
 .select_list_frame {
 	border : 1px solid white;
 	width : 180px;
-	height : 100px;
+	height : 150px;
 	overflow-y : auto;
 	display : inline-block;
 	margin : 5px;

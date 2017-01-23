@@ -8,21 +8,8 @@
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
-	/**
-	 * @param contents.dblist dbリスト
-	 */
-	Management.prototype.show = function (contents) {
-		var i, k;
-		var background = new PopupBackground();
-		background.show();
-		background.on('close', function () {
-			management.style.display = "none";
-			this.emit(window.Management.EVENT_CLOSE, null);
-		}.bind(this));
-
-		var management = document.getElementById('management');
-		management.style.display = "block";
-
+	// DBの操作GUIの初期化
+	Management.prototype.initDBGUI = function (contents) {
 		// DBリスト初期化
 		var db_select = document.getElementById("db_select");
 		var option;
@@ -132,13 +119,58 @@
 				this.emit(Management.EVENT_DELETEDB, null, name);
 			}
 		}.bind(this);
+	};
 
+	// 履歴管理GUIの初期化
+	Management.prototype.initHistoryGUI = function (contents) {
 		// 最大履歴保存数の適用
 		var history_num_button = document.getElementById("apply_history_number_button");
 		history_num_button.onclick = function () {
 			var input = document.getElementById('history_number');
 			this.emit(Management.EVENT_CHANGE_HISTORY_NUM, null, input.value);
 		}.bind(this);
+	};
+
+	// 閲覧・編集権限GUIの初期化
+	Management.prototype.initAuthorityGUI = function (contents) {
+		// 閲覧・編集権限の設定のリスト
+		this.editableSelect = new window.SelectList();
+		this.viewableSelect = new window.SelectList();
+		var authTargetFrame = document.getElementById('auth_target_frame');
+		authTargetFrame.innerHTML = "";
+		for (i = 0; i < this.userList.length; i = i + 1) {
+			this.editableSelect.add(this.userList[i]);
+			this.viewableSelect.add(this.userList[i]);
+		}
+		authTargetFrame.appendChild(this.editableSelect.getDOM());
+		authTargetFrame.appendChild(this.viewableSelect.getDOM());
+	};
+
+	// パスワード設定GUIの初期化
+	Management.prototype.initPasswordGUI = function (contents) {
+		
+	};
+
+	/**
+	 * @param contents.dblist dbリスト
+	 */
+	Management.prototype.show = function (contents) {
+		var i, k;
+		var background = new PopupBackground();
+		background.show();
+		background.on('close', function () {
+			management.style.display = "none";
+			this.emit(window.Management.EVENT_CLOSE, null);
+		}.bind(this));
+
+		var management = document.getElementById('management');
+		management.style.display = "block";
+
+		// DBの操作GUIの初期化
+		this.initDBGUI(contents);
+
+		// 履歴管理GUIの初期化
+		this.initHistoryGUI(contents);
 
 		// ユーザー名リストの設定
 		if (this.userList) {
@@ -158,17 +190,13 @@
 			}
 		}
 
-		// 閲覧・編集権限の設定のリスト
-		this.editableSelect = new window.SelectList();
-		this.viewableSelect = new window.SelectList();
-		var authTargetFrame = document.getElementById('auth_target_frame');
-		authTargetFrame.innerHTML = "";
-		for (i = 0; i < this.userList.length; i = i + 1) {
-			this.editableSelect.add(this.userList[i]);
-			this.viewableSelect.add(this.userList[i]);
-		}
-		authTargetFrame.appendChild(this.editableSelect.getDOM());
-		authTargetFrame.appendChild(this.viewableSelect.getDOM());
+		// 閲覧・編集権限GUIの初期化
+		this.initAuthorityGUI(contents);
+
+		// パスワード設定GUIの初期化
+		this.initPasswordGUI(contents);
+
+		// 権限情報をGUIに反映.
 	};
 
 	Management.prototype.setAuthority = function (authority) {

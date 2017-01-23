@@ -2,10 +2,10 @@
 .management {
 	top: 50%;
 	left: 50%;
-	width: 500px;
-	height: 500px;
-	margin-top: calc(-500px / 2);
-	margin-left: calc(-400px / 2);
+	width: 60vw;
+	height: 80vh;
+	margin-top: calc(-80vh / 2);
+	margin-left: calc(-60vw / 2);
 	position: fixed;
 	z-index: 90000000;
 	background-color: rgb(83, 83, 83);
@@ -40,4 +40,23 @@
 .auth_target_label {
 	display : inline-block;
 	width : 190px;
+}
+
+.passinput_frame {
+	display : inline-block;
+}
+
+#passinputs {
+	margin : 5px;
+}
+
+.passinput {
+	margin : 3px;
+	width : 160px;
+	text-align: center;
+}
+
+.management_apply_button {
+	margin : 10px;
+	width : 100px;
 }

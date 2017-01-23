@@ -215,19 +215,28 @@
 			<div id="auth_target_frame">
 				<!-- 閲覧権限、編集権限のリスト -->
 			</div>
-			<input id="apply_auth_button" type="button" class="btn" style="color:black" value="適用" />
+			<input id="apply_auth_button" type="button" class="btn management_apply_button" style="color:black" value="適用" />
 		</div>
 		
 		<h4>パスワードの設定</h4>
 		<div class="frame">
-			<p>設定対象</p>
-			<select id="auth_select_pass" class="auth_select">
-			</select>
-			<p>変更前のパスワード</p>
-			<input id="old_password" type="password" style="color:black" value="10" />
-			<p>新規パスワード</p>
-			<input id="new_password" type="password" style="color:black" value="10" />
-			<input id="apply_auth_button" type="button" class="btn" style="color:black" value="適用" />
+			<div class="passinput_frame">
+				<div>設定対象</div>
+				<select id="auth_select_pass" class="auth_select"></select>
+			</div>
+			<div>
+				<div class="passinput_frame">
+					<div>変更前のパスワード</div>
+					<input class="passinput" id="old_password" type="password" style="color:black" value="" />
+				</div>
+				<div class="passinput_frame">
+					<div>新規パスワード</div>
+					<input class="passinput" id="new_password" type="password" style="color:black" value="" />
+				</div>
+			</div>
+			<div>
+				<input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" value="適用" />
+			</div>
 		</div>
 	</div>
 	
