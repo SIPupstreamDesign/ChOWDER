@@ -385,9 +385,14 @@ p {
 #snap_text {
 	position : absolute;
 	top : 7px;
-	right : 120px;
+	right : 180px;
 	font-size : 14px;
 	color : rgb(10, 26, 67);
+}
+
+#logout_button {
+	width : 60px;
+	height : 24px;
 }
 
 .content_dialog {
@@ -570,31 +575,16 @@ p {
 #head_menu_hover {
     background-color: transparent;
     color: #222;
-    /* line-height: 30px; */
-    width: 120px;
+    width: 180px;
     height: 30px;
-    /*display: flex;
-    flex-direction: row;*/
     position: absolute;
     top: 0px;
     right: 0px;
+	display : none;
 }
 #head_menu_hover_left {
-    /* background-color: rgb(70, 140, 200);                          */
-    /* border-top:    1px solid #779;                                */
-    /* border-left:   1px solid #779;                                */
-    /* border-bottom: 1px solid #bbf;                                */
-    /* border-right:  1px solid #bbf;                                */
-    /* border-radius: 5px;                                           */
-    /* color: whitesmoke;                                            */
-    /* font-family: 'ＭＳ ゴシック', Monaco, Ricty, monospace; */
-    /* font-size: smaller;                                           */
-    /* font-weight: bold;                                            */
-    /* line-height: 20px;                                            */
-    /* text-align: center;                                           */
     margin: 3px;
     width: 70px;
-    /* text-shadow: 0px 0px 2px navy;                                */
 }
 #head_menu_hover_right {
     background-color: rgb(82, 150, 210);

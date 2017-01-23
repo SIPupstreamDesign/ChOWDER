@@ -3507,6 +3507,7 @@
 			var loginmenuBackground = document.getElementById('loginmenu_background');
 			var loginmenu = document.getElementById('loginmenu');
 			var loginpass = document.getElementById('loginpass');
+			var logoutButton = document.getElementById('head_menu_hover');
 			var request = { username : username, password : password };
 			if (key && key.length > 0) {
 				request.loginkey = key;
@@ -3516,6 +3517,7 @@
 				var invalidLabel = document.getElementById('invalid_login');
 				if (err || reply === "failed") {
 					loginkey = "";
+					saveCookie();
 					management = new Management();
 					management.setUserList(null);
 					management.setAuthority(null);
@@ -3530,6 +3532,18 @@
 					management = new Management();
 					management.setUserList(userList);
 					management.setAuthority(reply.authority);
+					// ログアウトボタンを設定.
+					logoutButton.style.display = "block";
+					logoutButton.onclick = (function (key) {
+						return function () {
+							var request = { loginkey : key };
+							loginkey = "";
+							saveCookie();
+							connector.send('Logout', request, function () {
+								window.location.reload(true);
+							});
+						};
+					}(reply.loginkey));
 					init(management);
 					reloadAll();
 				}
@@ -3571,17 +3585,17 @@
 						userselect = document.getElementById('loginuser'),
 						option;
 					for (i = 0; i <  userList.length; i = i + 1) {
-						if (userList[i] !== "Display") {
+						if (userList[i].type !== "display") {
 							option = document.createElement('option');
-							option.value = userList[i];
-							option.innerText = userList[i];
+							option.value = userList[i].name;
+							option.innerText = userList[i].name;
 							userselect.appendChild(option);
 						}
 					}
 					document.getElementById('loginbutton').onclick = function () {
 						var userselect = document.getElementById('loginuser');
 						if (userselect.selectedIndex >= 0) {
-							var username = userList[userselect.selectedIndex],
+							var username = userList[userselect.selectedIndex].name,
 								password = loginpass.value;
 							submitFunc(userList, username, password, "")();
 						}
@@ -3590,7 +3604,7 @@
 						if (e.which == 13) {
 							var userselect = document.getElementById('loginuser');
 							if (userselect.selectedIndex >= 0) {
-								var username = userList[userselect.selectedIndex],
+								var username = userList[userselect.selectedIndex].name,
 									password = loginpass.value;
 								submitFunc(userList, username, password, "")();
 							}

@@ -48,6 +48,7 @@
 		
 		// ユーザー管理
 		Login : "Login",
+		Logout : "Logout",
 		GetUserList :  "GetUserList",
 		GetGroupUserSetting : "GetGroupUserSetting",
 		ChangeGroupUserSetting : "ChangeGroupUserSetting",

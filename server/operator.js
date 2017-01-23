@@ -576,18 +576,22 @@
 	 */
 	function getUserList(endCallback) {
 		getAdminUserSetting(function (err, data) {
-			var userList = Object.keys(data);
+			var i,
+				userList = [];
+			for (i = 0; i < Object.keys(data).length; i = i + 1) {
+				userList.push({ name : Object.keys(data)[i], type : "admin"});;
+			}
 			getGroupList(function (err, groupData) {
 				if (groupData.hasOwnProperty("grouplist")) {
 					var i;
 					for (i = 0; i < groupData.grouplist.length; i = i + 1) {
-						userList.push(groupData.grouplist[i].name);
+						userList.push({ name : groupData.grouplist[i].name, type : "group"});
 					}
 				}
 				if (userList.indexOf('Display') < 0) {
-					userList.push("Display");
+					userList.push({ name : "Display", type : "display"});
 				}
-				userList.push("Guest");
+				userList.push({ name : "Guest", type : "guest"});
 				if (endCallback) {
 					endCallback(null, userList);
 				}
@@ -2137,6 +2141,19 @@
 	}
 
 	/**
+	 * ログアウトコマンドを実行する
+	 */
+	function commandLogout(data, socketid, endCallback) {
+		if (data.hasOwnProperty('loginkey')) {
+		console.log("Logout", data.loginkey)
+			removeAuthority(data.loginkey);
+			endCallback(null);
+		} else {
+			endCallback(null);
+		}
+	}
+
+	/**
 	 * 管理者ユーザーの初期設定.
      * @method initAdminUser
 	 */
@@ -2432,6 +2449,9 @@
 			commandGetDBList(resultCallback);
 		});
 
+		ws_connector.on(Command.Logout, function (data, resultCallback, socketid) {
+			commandLogout(data, socketid, resultCallback);
+		});
 		ws_connector.on(Command.Login, function (data, resultCallback, socketid) {
 			commandLogin(data, socketid, resultCallback);
 		});
@@ -2581,6 +2601,9 @@
 			commandGetDBList(resultCallback);
 		});
 
+		io_connector.on(Command.Logout, function (data, resultCallback, socketid) {
+			commandLogout(data, socketid, resultCallback);
+		});
 		io_connector.on(Command.Login, function (data, resultCallback, socketid) {
 			commandLogin(data, socketid, resultCallback);
 		});

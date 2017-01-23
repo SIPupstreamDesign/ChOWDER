@@ -139,8 +139,8 @@
 		var authTargetFrame = document.getElementById('auth_target_frame');
 		authTargetFrame.innerHTML = "";
 		for (i = 0; i < this.userList.length; i = i + 1) {
-			this.editableSelect.add(this.userList[i]);
-			this.viewableSelect.add(this.userList[i]);
+			this.editableSelect.add(this.userList[i].name);
+			this.viewableSelect.add(this.userList[i].name);
 		}
 		authTargetFrame.appendChild(this.editableSelect.getDOM());
 		authTargetFrame.appendChild(this.viewableSelect.getDOM());
@@ -148,7 +148,30 @@
 
 	// パスワード設定GUIの初期化
 	Management.prototype.initPasswordGUI = function (contents) {
-		
+		var authSelect = document.getElementById('auth_select_pass');
+		authSelect.onchange = function () {
+			var prePass = document.getElementById('old_password');
+			var pass = document.getElementById('new_password');
+			var index = authSelect.selectedIndex;
+			prePass.value = "";
+			pass.value = "";
+			var type;
+			if (index >= 0) {
+				if (this.userList.length > index) {
+					type = this.userList[index].type;
+					if (type === "admin") {
+						prePass.disabled = false;
+						pass.disabled = false;
+					} else if (type === "group") {
+						prePass.disabled = true;
+						pass.disabled = false;
+					} else {
+						prePass.disabled = true;
+						pass.disabled = true;
+					}
+				}
+			}
+		}.bind(this);
 	};
 
 	/**
@@ -183,8 +206,8 @@
 				for (k = 0; k < selects.length; k = k + 1) {
 					var select = selects[k];
 					option = document.createElement('option');
-					option.value = this.userList[i];
-					option.innerText = this.userList[i];
+					option.value = this.userList[i].name;
+					option.innerText = this.userList[i].name;
 					select.appendChild(option);
 				}
 			}
