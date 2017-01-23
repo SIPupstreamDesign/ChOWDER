@@ -17,10 +17,14 @@
 		this.dblist = [];
 		this.display_scale = 1.0;
 		this.snapType = "free";
+		this.management = null;
+		this.authority = null;
 	};
 	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
 
-	ControllerGUI.prototype.init = function (authority) {
+	ControllerGUI.prototype.init = function (management) {
+		this.management = management;
+		var authority = management.getAuthority();
 
 		// 全体のレイアウトの初期化.
 		var bigZIndex = 10000;
@@ -978,7 +982,10 @@
 	 * 管理ページを表示
 	 */
 	ControllerGUI.prototype.openManagement = function () {
-		var managementPage = new Management();
+		var managementPage = this.management;
+		if (!managementPage) {
+			return;
+		}
 		managementPage.show({
 			dblist : this.dblist
 		});

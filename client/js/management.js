@@ -2,6 +2,9 @@
 
 	var Management = function () {
 		EventEmitter.call(this);
+
+		this.authority = null;
+		this.userList = null;
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
@@ -9,7 +12,7 @@
 	 * @param contents.dblist dbリスト
 	 */
 	Management.prototype.show = function (contents) {
-		var i;
+		var i, k;
 		var background = new PopupBackground();
 		background.show();
 		background.on('close', function () {
@@ -136,6 +139,36 @@
 			var input = document.getElementById('history_number');
 			this.emit(Management.EVENT_CHANGE_HISTORY_NUM, null, input.value);
 		}.bind(this);
+
+		// ユーザー名リストの設定
+		if (this.userList) {
+			var selects = document.getElementsByClassName('auth_select');
+			for (k = 0; k < selects.length; k = k + 1) {
+				var select = selects[k];
+				select.innerHTML = "";
+			}
+			for (i = 0; i < this.userList.length; i = i + 1) {
+				for (k = 0; k < selects.length; k = k + 1) {
+					var select = selects[k];
+					option = document.createElement('option');
+					option.value = this.userList[i];
+					option.innerText = this.userList[i];
+					select.appendChild(option);
+				}
+			}
+		}
+	};
+
+	Management.prototype.setAuthority = function (authority) {
+		this.authority = authority;
+	};
+
+	Management.prototype.getAuthority = function () {
+		return this.authority;
+	};
+
+	Management.prototype.setUserList = function (userList) {
+		this.userList = userList;
 	};
 	
 	// 新規DB保存領域作成&切り替え

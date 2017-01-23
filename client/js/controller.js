@@ -6,7 +6,6 @@
 	
 	var gui = new ControllerGUI(),
 		loginkey = "", // ログインキー
-		authority = null, // アクセス権限
 		currentContent = null,
 		draggingIDList = [],
 		selectedIDList = [],
@@ -3306,13 +3305,13 @@
 	 * コントローラ初期化
 	 * @method init
 	 */
-	function init() {
+	function init(management) {
 		var timer = null,
 			display_scale,
 			update_cursor_enable,
 			snap;
 
-		gui.init(authority);
+		gui.init(management);
 
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
@@ -3503,7 +3502,7 @@
 		isInitialized = true;
 	}
 
-	function submitFunc(username, password, key, callback) {
+	function submitFunc(userList, username, password, key, callback) {
 		return function () {
 			var loginmenuBackground = document.getElementById('loginmenu_background');
 			var loginmenu = document.getElementById('loginmenu');
@@ -3513,19 +3512,25 @@
 				request.loginkey = key;
 			}
 			connector.send('Login', request, function (err, reply) {
+				var management;
 				var invalidLabel = document.getElementById('invalid_login');
 				if (err || reply === "failed") {
 					loginkey = "";
-					authority = null;
+					management = new Management();
+					management.setUserList(null);
+					management.setAuthority(null);
 					invalidLabel.style.display = "block";
 				} else {
+					// ログイン成功
 					loginkey = reply.loginkey;
-					authority = reply.authority;
 					saveCookie();
 					invalidLabel.style.display = "none";
 					loginmenuBackground.style.display = "none";
 					loginmenu.style.display = "none";
-					init();
+					management = new Management();
+					management.setUserList(userList);
+					management.setAuthority(reply.authority);
+					init(management);
 					reloadAll();
 				}
 				if (callback) {
@@ -3535,11 +3540,11 @@
 		}
 	};
 
-	function relogin(endCallback) {
+	function relogin(userList, endCallback) {
 		var loginkey = getCookie("loginkey");
 		if (loginkey.length > 0) {
 			// リロード時などの再ログイン.
-			submitFunc("", "", loginkey, function (err, reply) {
+			submitFunc(userList, "", "", loginkey, function (err, reply) {
 				endCallback(err, reply);
 			})();
 			return;
@@ -3559,42 +3564,40 @@
 		loginmenu.style.display = "block";
 
 		// 最初に再ログインを試行する
-		relogin(function (err, reply) {
-			if (err || reply === "failed") {
-				connector.send('GetUserList', {}, function (err, reply) {
-					if (!err) {
-						var i,
-							userselect = document.getElementById('loginuser'),
-							option;
-						for (i = 0; i <  reply.length; i = i + 1) {
-							if (reply[i] !== "Display") {
-								option = document.createElement('option');
-								option.value = reply[i];
-								option.innerText = reply[i];
-								userselect.appendChild(option);
-							}
+		connector.send('GetUserList', {}, function (err, userList) {
+			relogin(userList,  function (err, reply) {
+				if (err || reply === "failed") {
+					var i,
+						userselect = document.getElementById('loginuser'),
+						option;
+					for (i = 0; i <  userList.length; i = i + 1) {
+						if (userList[i] !== "Display") {
+							option = document.createElement('option');
+							option.value = userList[i];
+							option.innerText = userList[i];
+							userselect.appendChild(option);
 						}
-						document.getElementById('loginbutton').onclick = function () {
+					}
+					document.getElementById('loginbutton').onclick = function () {
+						var userselect = document.getElementById('loginuser');
+						if (userselect.selectedIndex >= 0) {
+							var username = userList[userselect.selectedIndex],
+								password = loginpass.value;
+							submitFunc(userList, username, password, "")();
+						}
+					}
+					loginpass.onkeypress = function (e) {
+						if (e.which == 13) {
 							var userselect = document.getElementById('loginuser');
 							if (userselect.selectedIndex >= 0) {
-								var username = reply[userselect.selectedIndex],
+								var username = userList[userselect.selectedIndex],
 									password = loginpass.value;
-								submitFunc(username, password, "")();
+								submitFunc(userList, username, password, "")();
 							}
 						}
-						loginpass.onkeypress = function (e) {
-							if (e.which == 13) {
-								var userselect = document.getElementById('loginuser');
-								if (userselect.selectedIndex >= 0) {
-									var username = reply[userselect.selectedIndex],
-										password = loginpass.value;
-									submitFunc(username, password, "")();
-								}
-							}
-						};
-					}
-				});
-			}
+					};
+				}
+			});
 		});
 	}
 
