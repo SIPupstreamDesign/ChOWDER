@@ -20,7 +20,7 @@
 	};
 	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
 
-	ControllerGUI.prototype.init = function () {
+	ControllerGUI.prototype.init = function (authority) {
 
 		// 全体のレイアウトの初期化.
 		var bigZIndex = 10000;
@@ -71,6 +71,37 @@
 					}]
 			});
 
+		var settingMenu = [{
+				VirtualDisplay : {
+					func : function () { 
+						document.getElementById('display_tab_link').click();
+						this.emit(window.ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED, null);
+					}.bind(this)
+				},
+			}, {
+				RemoteCursor : [{
+					ON : {
+						func : function () { this.emit(window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE, null, true); }.bind(this)
+					}
+				}, {
+					OFF : {
+						func : function () { this.emit(window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE, null, false); }.bind(this)
+					}
+				}]	
+			}];
+
+		if (authority && authority.hasOwnProperty('viewable') && authority.hasOwnProperty('editable')) {
+			if (authority.viewable === "all" && authority.editable === "all") {
+				settingMenu.push( {
+					Management : {
+						func : function () {
+							this.openManagement();
+						}.bind(this)
+					}
+				});
+			}
+		}
+
 		// 上部メニューの初期化.
 		this.menu = new Menu(document.getElementById('head_menu'),
 			{
@@ -103,30 +134,7 @@
 							}
 						}],
 				}, {
-					Setting : [{
-						VirtualDisplay : {
-							func : function () { 
-								document.getElementById('display_tab_link').click();
-								this.emit(window.ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED, null);
-							}.bind(this)
-						},
-					}, {
-						RemoteCursor : [{
-							ON : {
-								func : function () { this.emit(window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE, null, true); }.bind(this)
-							}
-						}, {
-							OFF : {
-								func : function () { this.emit(window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE, null, false); }.bind(this)
-							}
-						}]	
-					}, {
-						Management : {
-							func : function () {
-								this.openManagement();
-							}.bind(this)
-						}
-					}]
+					Setting : settingMenu
 				}]
 			});
 		

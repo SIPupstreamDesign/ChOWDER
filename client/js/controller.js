@@ -3312,7 +3312,7 @@
 			update_cursor_enable,
 			snap;
 
-		gui.init();
+		gui.init(authority);
 
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
@@ -3574,7 +3574,14 @@
 								userselect.appendChild(option);
 							}
 						}
-						document.getElementById('loginbutton').onclick = submitFunc(reply);
+						document.getElementById('loginbutton').onclick = function () {
+							var userselect = document.getElementById('loginuser');
+							if (userselect.selectedIndex >= 0) {
+								var username = reply[userselect.selectedIndex],
+									password = loginpass.value;
+								submitFunc(username, password, "")();
+							}
+						}
 						loginpass.onkeypress = function (e) {
 							if (e.which == 13) {
 								var userselect = document.getElementById('loginuser');
