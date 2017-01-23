@@ -157,6 +157,18 @@
 				}
 			}
 		}
+
+		// 閲覧・編集権限の設定のリスト
+		this.editableSelect = new window.SelectList();
+		this.viewableSelect = new window.SelectList();
+		var authTargetFrame = document.getElementById('auth_target_frame');
+		authTargetFrame.innerHTML = "";
+		for (i = 0; i < this.userList.length; i = i + 1) {
+			this.editableSelect.add(this.userList[i]);
+			this.viewableSelect.add(this.userList[i]);
+		}
+		authTargetFrame.appendChild(this.editableSelect.getDOM());
+		authTargetFrame.appendChild(this.viewableSelect.getDOM());
 	};
 
 	Management.prototype.setAuthority = function (authority) {

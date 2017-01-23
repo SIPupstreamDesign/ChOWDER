@@ -9,6 +9,7 @@
 	<link href="css/components/layout.css" rel="stylesheet"/>
 	<link href="css/components/input_dialog.css" rel="stylesheet"/>
 	<link href="css/components/menu.css" rel="stylesheet" />
+	<link href="css/components/select_list.css" rel="stylesheet" />
 	<link href="css/management.css" rel="stylesheet" />
 	<link href="css/controller.css" rel="stylesheet"/>
 	<link href="css/tabs.css" rel="stylesheet" />
@@ -25,6 +26,7 @@
 	<script type="text/javascript" src="js/components/layout.js"></script>
 	<script type="text/javascript" src="js/components/input_dialog.js"></script>
 	<script type="text/javascript" src="js/components/menu.js"></script>
+	<script type="text/javascript" src="js/components/select_list.js"></script>
 	<script type="text/javascript" src="js/metabinary.js"></script>
 	<script type="text/javascript" src="js/command.js"></script>
 	<script type="text/javascript" src="js/io_connector.js"></script>
@@ -206,6 +208,13 @@
 			<p>設定対象</p>
 			<select id="auth_select" class="auth_select">
 			</select>
+			<div>
+				<div class="auth_target_label">編集可能</div>
+				<div class="auth_target_label">閲覧可能</div>
+			</div>
+			<div id="auth_target_frame">
+				<!-- 閲覧権限、編集権限のリスト -->
+			</div>
 			<input id="apply_auth_button" type="button" class="btn" style="color:black" value="適用" />
 		</div>
 		
