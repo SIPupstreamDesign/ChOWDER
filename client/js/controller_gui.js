@@ -9,10 +9,6 @@
 	// コンストラクタ
 	ControllerGUI = function () {
 		EventEmitter.call(this);
-	};
-	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
-
-	ControllerGUI.prototype.init = function () {
 		this.groupBox = null;
 		this.searchBox = null;
 		this.displayMenu = null;
@@ -21,6 +17,10 @@
 		this.dblist = [];
 		this.display_scale = 1.0;
 		this.snapType = "free";
+	};
+	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
+
+	ControllerGUI.prototype.init = function () {
 
 		// 全体のレイアウトの初期化.
 		var bigZIndex = 10000;

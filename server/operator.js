@@ -631,6 +631,20 @@
 	}
 
 	/**
+	 * socketidの権限情報キャッシュを削除する
+	 */
+	function removeAuthority(socketid) {
+		/*
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			delete socketidToAccessAuthority[socketid];
+		}
+		if (socketidToUserName.hasOwnProperty(socketid)) {
+			delete socketidToUserName[socketid];
+		}
+		*/
+	}
+
+	/**
 	 * ログイン情報の一時的な保存. ログイン成功した場合に必ず呼ぶ.
 	 */
 	function saveLoginInfo(socketid, username, adminSetting, groupSetting) {
@@ -660,7 +674,8 @@
 				if (isValid) {
 					saveLoginInfo(socketid, username, data);
 				}
-				endCallback(null, isValid ? "success" : "failed");
+				// 成功したらsocketidを返す
+				endCallback(null, isValid ? socketid : "failed");
 			} else {
 				getGroupList(function (err, groupData) {
 					var i,
@@ -680,10 +695,10 @@
 									if (isValid) {
 										saveLoginInfo(socketid, username, null, setting);
 									}
-									endCallback(null, isValid ? "success" : "failed");
+									endCallback(null, isValid ? socketid : "failed");
 								} else {
 									// グループユーザー設定に登録されていないグループ
-									endCallback(null, "success");
+									endCallback(null, socketid);
 								}
 							} else {
 								endCallback(err, "failed");
@@ -693,12 +708,12 @@
 						// ゲストユーザー
 						console.log("Login as Guest");
 						saveLoginInfo(socketid, username);
-						endCallback(null, "success");
+						endCallback(null, socketid);
 					} else if (username === "Display") {
 						// Displayユーザー
 						console.log("Login as Display");
 						saveLoginInfo(socketid, username);
-						endCallback(null, "success");
+						endCallback(null, socketid);
 					} else {
 						endCallback(null, "failed");
 					}
@@ -2083,12 +2098,23 @@
 	 * ログインコマンドを実行する
      * @method commandLogin
 	 * @param {JSON} data 対象のusername, passwordを含むjson
+	 *               再ログインする場合はコールバックで返ってくる値を loginkey としてjsonに入れる.
 	 * @param {String} socketid ソケットID
      * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandLogin(data, socketid, endCallback) {
 		console.log("----------------------------" , socketid, "----------------------------")
 		if (data.hasOwnProperty('username') && data.hasOwnProperty('password')) {
+			// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
+			if (data.hasOwnProperty('loginkey')) {
+				socketid = data.loginkey;
+				if (socketidToUserName.hasOwnProperty(socketid) &&
+					socketidToAccessAuthority.hasOwnProperty(socketid)) 
+				{
+					endCallback(null, socketid);
+					return;
+				}
+			}
 			login(data.username, data.password, socketid, endCallback);
 		} else {
 			endCallback("ユーザ名またはパスワードが正しくありません.");
@@ -2631,6 +2657,7 @@
 	Operator.prototype.registerWSEvent = registerWSEvent;
 	Operator.prototype.registerUUID = registerUUID;
 	Operator.prototype.decrWindowReferenceCount = decrWindowReferenceCount;
+	Operator.prototype.removeAuthority = removeAuthority;
 	Operator.prototype.commandGetContent = commandGetContent;
 	Operator.prototype.commandGetMetaData = commandGetMetaData;
 	Operator.prototype.commandGetWindowMetaData = commandGetWindowMetaData;

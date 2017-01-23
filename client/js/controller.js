@@ -5,6 +5,7 @@
 	"use strict";
 	
 	var gui = new ControllerGUI(),
+		loginkey = "",
 		currentContent = null,
 		draggingIDList = [],
 		selectedIDList = [],
@@ -203,6 +204,7 @@
 		document.cookie = 'display_scale=' + displayScale;
 		document.cookie = 'snap_setting=' + gui.get_snap_type();
 		document.cookie = 'update_cursor_enable=' + String(isUpdateCursorEnable);
+		document.cookie = 'loginkey='+String(loginkey);
 	}
 	
 	/**
@@ -3499,55 +3501,89 @@
 		vscreen.dump();
 		isInitialized = true;
 	}
+
+	function submitFunc(username, password, key, callback) {
+		return function () {
+			var loginmenuBackground = document.getElementById('loginmenu_background');
+			var loginmenu = document.getElementById('loginmenu');
+			var loginpass = document.getElementById('loginpass');
+			var request = { username : username, password : password };
+			if (key && key.length > 0) {
+				request.loginkey = key;
+			}
+			connector.send('Login', request, function (err, reply) {
+				var invalidLabel = document.getElementById('invalid_login');
+				if (err || reply === "failed") {
+					loginkey = "";
+					invalidLabel.style.display = "block";
+				} else {
+					loginkey = reply;
+					saveCookie();
+					invalidLabel.style.display = "none";
+					loginmenuBackground.style.display = "none";
+					loginmenu.style.display = "none";
+					init();
+					reloadAll();
+				}
+				if (callback) {
+					callback(err, reply);
+				}
+			});
+		}
+	};
+
+	function relogin(endCallback) {
+		var loginkey = getCookie("loginkey");
+		if (loginkey.length > 0) {
+			// リロード時などの再ログイン.
+			submitFunc("", "", loginkey, function (err, reply) {
+				endCallback(err, reply);
+			})();
+			return;
+		} else {
+			if (endCallback) {
+				endCallback(null, "failed");
+			}
+		}
+	}
 	
 	function login() {
 		var loginmenuBackground = document.getElementById('loginmenu_background');
 		var loginmenu = document.getElementById('loginmenu');
 		var loginpass = document.getElementById('loginpass');
-		var submitFunc = function (userlist) {
-			return function () {
-				var userselect = document.getElementById('loginuser');
-				if (userselect.selectedIndex >= 0) {
-					var username = userlist[userselect.selectedIndex],
-						password = loginpass.value;
-
-					connector.send('Login', { username : username, password : password }, function (err, reply) {
-						var invalidLabel = document.getElementById('invalid_login');
-						if (err || reply !== "success") {
-							invalidLabel.style.display = "block";
-						} else {
-							invalidLabel.style.display = "none";
-							loginmenuBackground.style.display = "none";
-							loginmenu.style.display = "none";
-							init();
-							reloadAll();
-						}
-					});
-				}
-			}
-		};
 
 		loginmenuBackground.style.display = "block";
 		loginmenu.style.display = "block";
-		connector.send('GetUserList', {}, function (err, reply) {
-			if (!err) {
-				var i,
-					userselect = document.getElementById('loginuser'),
-					option;
-				for (i = 0; i <  reply.length; i = i + 1) {
-					if (reply[i] !== "Display") {
-						option = document.createElement('option');
-						option.value = reply[i];
-						option.innerText = reply[i];
-						userselect.appendChild(option);
+
+		// 最初に再ログインを試行する
+		relogin(function (err, reply) {
+			if (err || reply === "failed") {
+				connector.send('GetUserList', {}, function (err, reply) {
+					if (!err) {
+						var i,
+							userselect = document.getElementById('loginuser'),
+							option;
+						for (i = 0; i <  reply.length; i = i + 1) {
+							if (reply[i] !== "Display") {
+								option = document.createElement('option');
+								option.value = reply[i];
+								option.innerText = reply[i];
+								userselect.appendChild(option);
+							}
+						}
+						document.getElementById('loginbutton').onclick = submitFunc(reply);
+						loginpass.onkeypress = function (e) {
+							if (e.which == 13) {
+								var userselect = document.getElementById('loginuser');
+								if (userselect.selectedIndex >= 0) {
+									var username = reply[userselect.selectedIndex],
+										password = loginpass.value;
+									submitFunc(username, password, "")();
+								}
+							}
+						};
 					}
-				}
-				document.getElementById('loginbutton').onclick = submitFunc(reply);
-				loginpass.onkeypress = function (e) {
-					if (e.which == 13) {
-						submitFunc(reply)();
-					}
-				};
+				});
 			}
 		});
 	}
