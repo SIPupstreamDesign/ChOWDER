@@ -3311,6 +3311,19 @@
 			update_cursor_enable,
 			snap;
 
+		management.on('change_password', function (userName, prePass, pass) {
+			var request = {
+					username : userName,
+					pre_password : prePass,
+					password : pass,
+				},
+				loginkey = getCookie("loginkey");
+			if (loginkey.length > 0) {
+				request.loginkey = loginkey;
+			}
+			connector.send('ChangePassword', request, function () {});
+		});
+
 		gui.init(management);
 
 		connector.send('GetDBList', {}, function (err, reply) {

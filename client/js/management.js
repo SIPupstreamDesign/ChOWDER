@@ -149,9 +149,9 @@
 	// パスワード設定GUIの初期化
 	Management.prototype.initPasswordGUI = function (contents) {
 		var authSelect = document.getElementById('auth_select_pass');
+		var prePass = document.getElementById('old_password');
+		var pass = document.getElementById('new_password');
 		authSelect.onchange = function () {
-			var prePass = document.getElementById('old_password');
-			var pass = document.getElementById('new_password');
 			var index = authSelect.selectedIndex;
 			prePass.value = "";
 			pass.value = "";
@@ -170,6 +170,17 @@
 						pass.disabled = true;
 					}
 				}
+			}
+		}.bind(this);
+
+		var applyPassButton = document.getElementById('apply_pass_button');
+		applyPassButton.onclick = function () {
+			var index = authSelect.selectedIndex;
+			if (index >= 0) {
+				var name = this.userList[index].name;
+				this.emit(Management.EVENT_CHANGE_PASSWORD, name, prePass.value, pass.value, function () {
+
+				});
 			}
 		}.bind(this);
 	};
@@ -239,6 +250,9 @@
 	Management.EVENT_CHANGEDB = "changedb";
 	Management.EVENT_RENAMEDB = "renamedb";
 	Management.EVENT_DELETEDB = "deletedb";
+
+	// パスワード変更
+	Management.EVENT_CHANGE_PASSWORD = "change_password";
 
 	// ダイアログ閉じた
 	Management.EVENT_CLOSE = "close";

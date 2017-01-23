@@ -49,6 +49,7 @@
 		// ユーザー管理
 		Login : "Login",
 		Logout : "Logout",
+		ChangePassword : "ChangePassword",
 		GetUserList :  "GetUserList",
 		GetGroupUserSetting : "GetGroupUserSetting",
 		ChangeGroupUserSetting : "ChangeGroupUserSetting",

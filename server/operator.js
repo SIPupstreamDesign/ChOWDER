@@ -482,12 +482,13 @@
 	function changeGroupUserSetting(groupName, setting, endCallback) {
 		getGroupUserSetting(function (err, data) {
 			var groupSetting;
-			if (!data.hasOwnProperty(groupName)) {
+			if (!data || !data.hasOwnProperty(groupName)) {
 				// 新規.
+				data = {};
 				data[groupName] = {};
 			}
 			if (setting.hasOwnProperty('password')) {
-				data[groupName].password = setting.password;
+				data[groupName].password = util.encrypt(setting.password, cryptkey);
 			}
 			if (setting.hasOwnProperty('editable')) {
 				data[groupName].editable = setting.editable;
@@ -2141,6 +2142,50 @@
 	}
 
 	/**
+	 * パスワードを変更する
+     * @method commandChangePassword
+	 */
+	function commandChangePassword(data, socketid, endCallback) {
+		var authority;
+		// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
+		if (data.hasOwnProperty('loginkey')) {
+			socketid = data.loginkey;
+		}
+		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			endCallback("failed to change password");
+			return;
+		}
+		authority = socketidToAccessAuthority[socketid];
+		if (authority.editable !== 'all') {
+			endCallback("failed to change password");
+			return;
+		}
+		if (data.hasOwnProperty('username') && data.hasOwnProperty('pre_password') && data.hasOwnProperty('password'))
+		{
+			getUserList(function (err, userList) {
+				var i;
+				for (i = 0; i < userList.length; i = i + 1) {
+					if (userList[i].name === data.username) {
+						if (userList[i].type === "admin") {
+							changeAdminUserSetting(data.username, {
+								pre_password : data.pre_password,
+								password : data.password
+							}, endCallback);
+						} else if (userList[i].type === "group") {
+							changeGroupUserSetting(data.username, {
+								password : data.password
+							}, endCallback);
+						} else {
+							endCallback("failed to change password");
+						}
+						break;
+					}
+				}
+			});
+		}
+	}
+
+	/**
 	 * ログアウトコマンドを実行する
 	 */
 	function commandLogout(data, socketid, endCallback) {
@@ -2455,6 +2500,9 @@
 		ws_connector.on(Command.Login, function (data, resultCallback, socketid) {
 			commandLogin(data, socketid, resultCallback);
 		});
+		ws_connector.on(Command.ChangePassword, function (data, resultCallback, socketid) {
+			commandChangePassword(data, socketid, resultCallback);
+		});
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
@@ -2606,6 +2654,9 @@
 		});
 		io_connector.on(Command.Login, function (data, resultCallback, socketid) {
 			commandLogin(data, socketid, resultCallback);
+		});
+		io_connector.on(Command.ChangePassword, function (data, resultCallback, socketid) {
+			commandChangePassword(data, socketid, resultCallback);
 		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);

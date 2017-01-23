@@ -1,3 +1,7 @@
+input[disabled] {
+	background-color : gray;
+	border : none;
+}
 
 .management {
 	top: 50%;
