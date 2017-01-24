@@ -3302,15 +3302,11 @@
 
 	///-------------------------------------------------------------------------------------------------------
 	/**
-	 * コントローラ初期化
-	 * @method init
+	 * 管理ページのイベント初期化.
+	 * @method initManagementEvents
 	 */
-	function init(management) {
-		var timer = null,
-			display_scale,
-			update_cursor_enable,
-			snap;
-
+	function initManagementEvents(management) {
+		// 管理ページでパスワードが変更された
 		management.on('change_password', function (userName, prePass, pass) {
 			var request = {
 					username : userName,
@@ -3323,6 +3319,30 @@
 			}
 			connector.send('ChangePassword', request, function () {});
 		});
+	
+		// 
+		management.on('change_authority', function (userName, editable, viewable) {
+			var request = {
+				username : userName,
+				editable : editable,
+				viewable : viewable
+			};
+			connector.send('ChangeAuthority', request, function () {});
+		});
+
+	}
+
+	/**
+	 * コントローラ初期化
+	 * @method init
+	 */
+	function init(management) {
+		var timer = null,
+			display_scale,
+			update_cursor_enable,
+			snap;
+
+		initManagementEvents(management);
 
 		gui.init(management);
 

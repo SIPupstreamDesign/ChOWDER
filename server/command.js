@@ -49,6 +49,7 @@
 		Login : "Login",
 		Logout : "Logout",
 		ChangePassword : "ChangePassword",
+		ChangeAuthority : "ChangeAuthority",
 		GetUserList :  "GetUserList",
 		GetGroupUserSetting : "GetGroupUserSetting",
 		ChangeGroupUserSetting : "ChangeGroupUserSetting",

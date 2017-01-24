@@ -24,6 +24,17 @@
 		this.dom.appendChild(row);
 	};
 
+	SelectList.prototype.getSelected = function () {
+		var i;
+		var selected = [];
+		for (i = 0; i < this.contents.length; i = i + 1) {
+			if (this.contents[i].classList.contains('selectlist_selected')) {
+				selected.push(this.contents[i].innerText);
+			}
+		}
+		return selected;
+	};
+
 	SelectList.prototype.getDOM = function () {
 		return this.dom;
 	};

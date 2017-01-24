@@ -144,6 +144,19 @@
 		}
 		authTargetFrame.appendChild(this.editableSelect.getDOM());
 		authTargetFrame.appendChild(this.viewableSelect.getDOM());
+
+		var authSelect = document.getElementById('auth_select');
+		var applyButton = document.getElementById('apply_auth_button');
+		applyButton.onclick = function () {
+			var index = authSelect.selectedIndex;
+			if (index >= 0) {
+				var name = this.userList[index].name;
+				var editables = this.editableSelect.getSelected();
+				var viewables = this.viewableSelect.getSelected();
+				console.error(editables, viewables)
+				this.emit(Management.EVENT_CHANGE_AUTHORITY, name, editables, viewables);
+			}
+		}.bind(this);
 	};
 
 	// パスワード設定GUIの初期化
@@ -253,6 +266,9 @@
 
 	// パスワード変更
 	Management.EVENT_CHANGE_PASSWORD = "change_password";
+
+	// 権限変更変更
+	Management.EVENT_CHANGE_AUTHORITY = "change_authority";
 
 	// ダイアログ閉じた
 	Management.EVENT_CLOSE = "close";
