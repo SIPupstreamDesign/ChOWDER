@@ -5,6 +5,7 @@
 	"use strict";
 	
 	var gui = new ControllerGUI(),
+		management, // 管理情報
 		loginkey = "", // ログインキー
 		currentContent = null,
 		draggingIDList = [],
@@ -1806,6 +1807,11 @@
 		if (metaDataDict.hasOwnProperty(json.id)) {
 			isUpdateContent = (metaDataDict[json.id].restore_index !== reply.restore_index);
 		}
+		if (json.hasOwnProperty('group')) {
+			if (!management.getAuthorityObject().isViewable(json.group)) {
+				return;
+			}
+		}
 		metaDataDict[json.id] = json;
 		
 		if (isCurrentTabMetaData(json)) {
@@ -3546,7 +3552,6 @@
 				request.loginkey = key;
 			}
 			connector.send('Login', request, function (err, reply) {
-				var management;
 				var invalidLabel = document.getElementById('invalid_login');
 				if (err || reply === "failed") {
 					loginkey = "";
@@ -3612,6 +3617,7 @@
 
 		// 最初に再ログインを試行する
 		connector.send('GetUserList', {}, function (err, userList) {
+//			console.error(userList)
 			relogin(userList,  function (err, reply) {
 				if (err || reply === "failed") {
 					var i,

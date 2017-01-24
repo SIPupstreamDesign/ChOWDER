@@ -131,32 +131,92 @@
 		}.bind(this);
 	};
 
+
+	Management.prototype.getUser = function (name) {
+		var i;
+		for (i = 0; i < this.userList.length; i = i + 1) {
+			if (this.userList[i].name === name) {
+				return this.userList[i];
+			}
+		}
+		return null;
+	};
+
 	// 閲覧・編集権限GUIの初期化
 	Management.prototype.initAuthorityGUI = function (contents) {
 		// 閲覧・編集権限の設定のリスト
 		this.editableSelect = new window.SelectList();
 		this.viewableSelect = new window.SelectList();
 		var authTargetFrame = document.getElementById('auth_target_frame');
+		var authSelect = document.getElementById('auth_select');
+		var applyButton = document.getElementById('apply_auth_button');
+		
+		// ユーザー名リストの設定
+		if (this.userList) {
+			var select = authSelect;
+			select.innerHTML = "";
+			for (i = 0; i < this.userList.length; i = i + 1) {
+				if (this.userList[i].type !== "admin") {
+					option = document.createElement('option');
+					option.value = this.userList[i].name;
+					option.innerText = this.userList[i].name;
+					select.appendChild(option);	
+				}
+			}
+		}
+
+		// セレクト変更された
+		authSelect.onchange = function () {
+			// 編集可能、閲覧可能のリストを選択する.
+			var index = authSelect.selectedIndex;
+			var name = authSelect.childNodes[index].value;
+			var listContentName;
+			var user = this.getUser(name);
+			this.viewableSelect.deselectAll();
+			this.editableSelect.deselectAll();
+			if (user) {
+				for (i = 0; i < this.userList.length; i = i + 1) {
+					if (this.userList[i].type !== "admin" &&
+						this.userList[i].type !== "display" &&
+						this.userList[i].type !== "guest")
+					{
+						listContentName = this.userList[i].name;
+						if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
+							this.viewableSelect.select(listContentName);
+						}
+						if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
+							this.editableSelect.select(listContentName);
+						}
+					}
+				}
+			}
+		}.bind(this);
+
 		authTargetFrame.innerHTML = "";
 		for (i = 0; i < this.userList.length; i = i + 1) {
-			this.editableSelect.add(this.userList[i].name);
-			this.viewableSelect.add(this.userList[i].name);
+			if (this.userList[i].type !== "admin" &&
+				this.userList[i].type !== "display" &&
+				this.userList[i].type !== "guest")
+			{
+				this.editableSelect.add(this.userList[i].name);
+				this.viewableSelect.add(this.userList[i].name);
+			}
 		}
 		authTargetFrame.appendChild(this.editableSelect.getDOM());
 		authTargetFrame.appendChild(this.viewableSelect.getDOM());
 
-		var authSelect = document.getElementById('auth_select');
-		var applyButton = document.getElementById('apply_auth_button');
 		applyButton.onclick = function () {
 			var index = authSelect.selectedIndex;
-			if (index >= 0) {
-				var name = this.userList[index].name;
+			if (index >= 0 && authSelect.childNodes.length > index) {
+				var name = authSelect.childNodes[index].value;
 				var editables = this.editableSelect.getSelected();
 				var viewables = this.viewableSelect.getSelected();
-				console.error(editables, viewables)
 				this.emit(Management.EVENT_CHANGE_AUTHORITY, name, editables, viewables);
 			}
 		}.bind(this);
+
+		// 初回の選択.
+		authSelect.onchange();
 	};
 	
 	// パスワード設定GUIの初期化
@@ -164,13 +224,34 @@
 		var authSelect = document.getElementById('auth_select_pass');
 		var prePass = document.getElementById('old_password');
 		var pass = document.getElementById('new_password');
+		
+		// ユーザー名リストの設定
+		if (this.userList) {
+			var select = authSelect;
+			select.innerHTML = "";
+			for (i = 0; i < this.userList.length; i = i + 1) {
+				option = document.createElement('option');
+				option.value = this.userList[i].name;
+				option.innerText = this.userList[i].name;
+				select.appendChild(option);
+			}
+		}
+
 		authSelect.onchange = function () {
-			var index = authSelect.selectedIndex;
+			var i,
+				type;
 			prePass.value = "";
 			pass.value = "";
-			var type;
-			if (index >= 0) {
-				if (this.userList.length > index) {
+			if (authSelect.selectedIndex >= 0) {
+				var index = -1;
+				var name = authSelect.childNodes[authSelect.selectedIndex].value;
+				for (i = 0; i < this.userList.length; i = i + 1) {
+					if (this.userList[i].name === name) {
+						index = i;
+						break;
+					}
+				}
+				if (index >= 0 && this.userList.length > index) {
 					type = this.userList[index].type;
 					if (type === "admin") {
 						prePass.disabled = false;
@@ -218,24 +299,6 @@
 
 		// 履歴管理GUIの初期化
 		this.initHistoryGUI(contents);
-
-		// ユーザー名リストの設定
-		if (this.userList) {
-			var selects = document.getElementsByClassName('auth_select');
-			for (k = 0; k < selects.length; k = k + 1) {
-				var select = selects[k];
-				select.innerHTML = "";
-			}
-			for (i = 0; i < this.userList.length; i = i + 1) {
-				for (k = 0; k < selects.length; k = k + 1) {
-					var select = selects[k];
-					option = document.createElement('option');
-					option.value = this.userList[i].name;
-					option.innerText = this.userList[i].name;
-					select.appendChild(option);
-				}
-			}
-		}
 
 		// 閲覧・編集権限GUIの初期化
 		this.initAuthorityGUI(contents);

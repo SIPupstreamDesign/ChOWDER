@@ -35,6 +35,22 @@
 		return selected;
 	};
 
+	SelectList.prototype.select = function (text) {
+		var i;
+		for (i = 0; i < this.contents.length; i = i + 1) {
+			if (this.contents[i].innerText === text) {
+				this.contents[i].classList.toggle('selectlist_selected');
+			}
+		}
+	};
+
+	SelectList.prototype.deselectAll = function () {
+		var i;
+		for (i = 0; i < this.contents.length; i = i + 1) {
+			this.contents[i].classList.remove('selectlist_selected');
+		}
+	};
+
 	SelectList.prototype.getDOM = function () {
 		return this.dom;
 	};

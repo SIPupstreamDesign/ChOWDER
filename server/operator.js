@@ -594,17 +594,20 @@
 						for (i = 0; i < groupData.grouplist.length; i = i + 1) {
 							groupSetting = {};
 							name = groupData.grouplist[i].name;
-							userListData = { name : name, type : "group"};
-							if (setting.hasOwnProperty(name)) {
-								groupSetting = setting[name];
+							// defaultグループは特殊扱いでユーザー無し
+							if (name !== "default") {
+								userListData = { name : name, type : "group"};
+								if (setting.hasOwnProperty(name)) {
+									groupSetting = setting[name];
+								}
+								if (groupSetting.hasOwnProperty("viewable")) {
+									userListData.viewable = groupSetting.viewable;
+								}
+								if (groupSetting.hasOwnProperty("editable")) {
+									userListData.editable = groupSetting.editable;
+								}
+								userList.push(userListData);
 							}
-							if (groupSetting.hasOwnProperty("viewable")) {
-								userListData.viewable = groupSetting.viewable;
-							}
-							if (groupSetting.hasOwnProperty("editable")) {
-								userListData.editable = groupSetting.editable;
-							}
-							userList.push(userListData);
 						}
 					}
 					if (userList.indexOf('Display') < 0) {
