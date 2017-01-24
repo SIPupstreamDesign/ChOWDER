@@ -584,20 +584,37 @@
 			for (i = 0; i < Object.keys(data).length; i = i + 1) {
 				userList.push({ name : Object.keys(data)[i], type : "admin"});;
 			}
-			getGroupList(function (err, groupData) {
-				if (groupData.hasOwnProperty("grouplist")) {
-					var i;
-					for (i = 0; i < groupData.grouplist.length; i = i + 1) {
-						userList.push({ name : groupData.grouplist[i].name, type : "group"});
+			getGroupUserSetting(function (err, setting) {
+				getGroupList(function (err, groupData) {
+					if (groupData.hasOwnProperty("grouplist")) {
+						var i,
+							name,
+							userListData,
+							groupSetting;
+						for (i = 0; i < groupData.grouplist.length; i = i + 1) {
+							groupSetting = {};
+							userListData = { name : name, type : "group"};
+							name = groupData.grouplist[i].name;
+							if (setting.hasOwnProperty(name)) {
+								groupSetting = setting[name];
+							}
+							if (groupSetting.hasOwnProperty("viewable")) {
+								userListData.viewable = groupSetting.viewable;
+							}
+							if (groupSetting.hasOwnProperty("editable")) {
+								userListData.editable = groupSetting.editable;
+							}
+							userList.push(userListData);
+						}
 					}
-				}
-				if (userList.indexOf('Display') < 0) {
-					userList.push({ name : "Display", type : "display"});
-				}
-				userList.push({ name : "Guest", type : "guest"});
-				if (endCallback) {
-					endCallback(null, userList);
-				}
+					if (userList.indexOf('Display') < 0) {
+						userList.push({ name : "Display", type : "display"});
+					}
+					userList.push({ name : "Guest", type : "guest"});
+					if (endCallback) {
+						endCallback(null, userList);
+					}
+				});
 			});
 		});
 	}
