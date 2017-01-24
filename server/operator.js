@@ -480,6 +480,7 @@
 	 * グループユーザー設定の変更.
 	 */
 	function changeGroupUserSetting(groupName, setting, endCallback) {
+		console.log("changeGroupUserSetting", groupName, setting)
 		getGroupUserSetting(function (err, data) {
 			var groupSetting;
 			if (!data) {
@@ -498,12 +499,14 @@
 			if (setting.hasOwnProperty('viewable')) {
 				data[groupName].viewable = setting.viewable;
 			}
-			textClient.set(groupUserPrefix, JSON.stringify(data), function (err, reply) {
-				updateAuthority(null, data);
-				if (endCallback) {
-					endCallback(err, reply)
-				}
-			});
+			textClient.set(groupUserPrefix, JSON.stringify(data), (function (data) {
+				return function (err, reply) {
+					updateAuthority(null, data);
+					if (endCallback) {
+						endCallback(err, data)
+					}
+				};
+			}(data)));
 		});
 	}
 
@@ -644,7 +647,8 @@
 						authority.editable = "all";
 						socketidToAccessAuthority[socketid] = authority;
 					}
-				} else if (groupSetting) {
+				}
+				if (groupSetting) {
 					if (groupSetting.hasOwnProperty(name)) {
 						authority.viewable = groupSetting[name].viewable;
 						authority.editable = groupSetting[name].editable;
@@ -2569,6 +2573,7 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		/*
 		ws_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
 			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -2581,6 +2586,7 @@
 		ws_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
 			commandGetAdminUserSetting(data, resultCallback);
 		});
+		*/
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -2727,6 +2733,7 @@
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		/*
 		io_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
 			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -2739,6 +2746,7 @@
 		io_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
 			commandGetAdminUserSetting(data, resultCallback);
 		});
+		*/
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});

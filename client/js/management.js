@@ -150,6 +150,7 @@
 		var authTargetFrame = document.getElementById('auth_target_frame');
 		var authSelect = document.getElementById('auth_select');
 		var applyButton = document.getElementById('apply_auth_button');
+		var allAccessText = "全て";
 		
 		// ユーザー名リストの設定
 		if (this.userList) {
@@ -189,10 +190,18 @@
 						}
 					}
 				}
+				if (user.viewable && user.viewable === "all") {
+					this.viewableSelect.select(allAccessText);
+				}
+				if (user.viewable && user.editable === "all") {
+					this.editableSelect.select(allAccessText);
+				}
 			}
 		}.bind(this);
 
 		authTargetFrame.innerHTML = "";
+		this.editableSelect.add(allAccessText);
+		this.viewableSelect.add(allAccessText);
 		for (i = 0; i < this.userList.length; i = i + 1) {
 			if (this.userList[i].type !== "admin" &&
 				this.userList[i].type !== "display" &&
@@ -211,6 +220,12 @@
 				var name = authSelect.childNodes[index].value;
 				var editables = this.editableSelect.getSelected();
 				var viewables = this.viewableSelect.getSelected();
+				if (editables.indexOf(allAccessText) >= 0) {
+					editables = "all";
+				}
+				if (viewables.indexOf(allAccessText) >= 0) {
+					viewables = "all";
+				}
 				this.emit(Management.EVENT_CHANGE_AUTHORITY, name, editables, viewables);
 			}
 		}.bind(this);

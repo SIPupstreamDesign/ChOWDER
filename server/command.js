@@ -50,11 +50,7 @@
 		Logout : "Logout",
 		ChangePassword : "ChangePassword",
 		ChangeAuthority : "ChangeAuthority",
-		GetUserList :  "GetUserList",
-		GetGroupUserSetting : "GetGroupUserSetting",
-		ChangeGroupUserSetting : "ChangeGroupUserSetting",
-		GetAdminUserSetting : "GetAdminUserSetting",
-		ChangeAdminUserSetting : "ChangeAdminUserSetting"
+		GetUserList :  "GetUserList"
 	};
 	
 	module.exports = Command;

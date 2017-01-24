@@ -3333,7 +3333,11 @@
 				editable : editable,
 				viewable : viewable
 			};
-			connector.send('ChangeAuthority', request, function () {});
+			connector.send('ChangeAuthority', request, function (err, data) {
+				connector.send('GetUserList', {}, function (err, userList) {
+					management.setUserList(userList);
+				});
+			});
 		});
 
 	}
