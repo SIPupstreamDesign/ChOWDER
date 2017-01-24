@@ -2211,7 +2211,6 @@
 				for (i = 0; i < userList.length; i = i + 1) {
 					if (userList[i].name === data.username) {
 						if (userList[i].type === "group") {
-							console.log("Hogehoge")
 							changeGroupUserSetting(data.username, {
 								viewable : data.viewable,
 								editable : data.editable
