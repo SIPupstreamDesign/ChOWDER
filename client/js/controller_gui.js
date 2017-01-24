@@ -990,25 +990,6 @@
 		managementPage.on('close', function () {
 			this.isOpenDialog = false;
 		}.bind(this));
-		managementPage.on('newdb', function (err, name) {
-			this.emit(window.ControllerGUI.EVENT_NEWDB, null, name);
-		}.bind(this));
-
-		managementPage.on('renamedb', function (err, preName, name) {
-			this.emit(window.ControllerGUI.EVENT_RENAMEDB, null, preName, name);
-		}.bind(this));
-		
-		managementPage.on('changedb', function (err, name) {
-			this.emit(window.ControllerGUI.EVENT_CHANGEDB, null, name);
-		}.bind(this));
-
-		managementPage.on('deletedb', function (err, name) {
-			this.emit(window.ControllerGUI.EVENT_DELETEDB, null, name);
-		}.bind(this));
-
-		managementPage.on('change_history_num', function (err, value) {
-			this.emit(window.ControllerGUI.EVENT_CHANGE_HISTORY_NUM, null, value);
-		});
 	};
 
 	ControllerGUI.prototype.setDBList = function (dblist) {
@@ -1299,11 +1280,6 @@
 	ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 	ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
 	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
-	ControllerGUI.EVENT_NEWDB = "newdb";
-	ControllerGUI.EVENT_CHANGEDB = "changedb";
-	ControllerGUI.EVENT_RENAMEDB = "renamedb";
-	ControllerGUI.EVENT_DELETEDB = "deletedb";
-	ControllerGUI.EVENT_CHANGE_HISTORY_NUM = "change_history_num";
 	window.ControllerGUI = ControllerGUI;
 	
 }());

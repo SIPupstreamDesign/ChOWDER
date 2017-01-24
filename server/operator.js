@@ -452,6 +452,13 @@
 	}
 
 	/**
+	 * グローバル設定の取得
+	 */
+	function getGlobalSetting(endCallback) {
+		textClient.hgetall(globalSettingPrefix, endCallback);
+	}
+
+	/**
 	 * グループユーザー設定情報の取得.
 	 */
 	function getGroupUserSetting(endCallback) {
@@ -1125,10 +1132,31 @@
 	}
 
 	/**
+	 * 古いバックアップをnum個削除
+	 */
+	function removeOldBackup(metaData, num, endCallback) {
+		textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, keys) {
+			var i;
+			var backupList = sortBackupList(keys);
+			if (backupList.length > num) {
+				for (i = 0; i < num; i = i + 1) {
+					var last = backupList[backupList.length - i - 1];
+					textClient.hdel(metadataBackupPrefix + metaData.id, last);
+					client.hdel(contentBackupPrefix + metaData.content_id, last);
+					console.log("removeOldBackup", last);
+				}
+			}
+			if (endCallback) {
+				endCallback();
+			}
+		});
+	}
+
+	/**
 	 * コンテンツとメタデータのバックアップ(元データは移動される)
 	 */
 	function backupContent(metaData, endCallback) {
-		getMetaData(metaData.type, metaData.id, function (meta) {
+		var backupFunc = function () {
 			var backupMetaData = {};
 			backupMetaData[metaData.date] = JSON.stringify(metaData);
 			client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {
@@ -1141,6 +1169,24 @@
 								endCallback(err, reply);
 							}
 						});
+					}
+				});
+			});
+		};
+		getMetaData(metaData.type, metaData.id, function (meta) {
+			getGlobalSetting(function (err, setting) {
+				var maxHistorySetting = 0;
+				if (setting.hasOwnProperty('max_history_num')) {
+					maxHistorySetting = setting.max_history_num;
+				}
+				client.hlen(metadataBackupPrefix + metaData.id, function (err, num) {
+					if (!err) {
+						if (maxHistorySetting !== 0 && num > maxHistorySetting) {
+							// 履歴保存数を超えたので、古いものを削除
+							removeOldBackup(metaData, num - maxHistorySetting, backupFunc);
+						} else {
+							backupFunc();
+						}
 					}
 				});
 			});
@@ -1977,6 +2023,13 @@
 	}
 
 	/**
+	 * 各種設定の取得
+	 */
+	function commandGetGlobalSetting(json, endCallback) {
+		getGlobalSetting(endCallback);
+	}
+
+	/**
 	 * ウィンドウの取得を行うコマンドを実行する.
 	 * @method commandGetWindowMetaData
 	 * @param {String} socketid ソケットID
@@ -2590,6 +2643,9 @@
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
+		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
+			commandGetGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
 
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
@@ -2749,6 +2805,9 @@
 		*/
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
+		});
+		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
+			commandGetGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 
 		io_connector.registerEvent(io, socket);

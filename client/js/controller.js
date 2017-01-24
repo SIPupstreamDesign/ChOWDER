@@ -2325,37 +2325,6 @@
 		}
 	});
 
-	gui.on("newdb", function (err, name) {
-		console.error("newdb", name);
-		connector.send("NewDB", { name : name }, function () {
-			window.location.reload(true);
-		});
-	});
-
-	gui.on("renamedb", function (err, preName, name) {
-		console.error("renamedb", preName, name)
-		connector.send("RenameDB", { name : preName, new_name : name }, function () {
-			window.location.reload(true);
-		});
-	});
-
-	gui.on("changedb", function (err, name) {
-		connector.send("ChangeDB", { name : name }, function () {
-			window.location.reload(true);
-		});
-	});
-
-	gui.on("deletedb", function (err, name) {
-		connector.send("DeleteDB", { name : name }, function () {
-			window.location.reload(true);
-		});
-	});
-
-	gui.on("change_history_num", function (err, value) {
-		connector.send("ChangeSetting", { max_history_num : value }, function () {
-		});
-	});
-
 	/**
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
@@ -3312,6 +3281,14 @@
 	 * @method initManagementEvents
 	 */
 	function initManagementEvents(management) {
+		var updateGlobalSettingFunc = function () {
+			connector.send('GetGlobalSetting', {}, function (err, reply) {
+				if (reply.hasOwnProperty('max_history_num')) {
+					management.setMaxHistoryNum(reply.max_history_num);
+				}
+			});
+		}
+
 		// 管理ページでパスワードが変更された
 		management.on('change_password', function (userName, prePass, pass) {
 			var request = {
@@ -3340,6 +3317,37 @@
 			});
 		});
 
+		management.on("change_history_num", function (err, value) {
+			connector.send("ChangeGlobalSetting", { max_history_num : value }, function () {
+				updateGlobalSettingFunc();
+			});
+		});
+		
+		management.on('newdb', function (err, name) {
+			connector.send("NewDB", { name : name }, function () {
+				window.location.reload(true);
+			});
+		}.bind(this));
+
+		management.on('renamedb', function (err, preName, name) {
+			connector.send("RenameDB", { name : preName, new_name : name }, function () {
+				window.location.reload(true);
+			});
+		}.bind(this));
+		
+		management.on('changedb', function (err, name) {
+			connector.send("ChangeDB", { name : name }, function () {
+				window.location.reload(true);
+			});
+		}.bind(this));
+
+		management.on('deletedb', function (err, name) {
+			connector.send("DeleteDB", { name : name }, function () {
+				window.location.reload(true);
+			});
+		}.bind(this));
+
+		updateGlobalSettingFunc();
 	}
 
 	/**

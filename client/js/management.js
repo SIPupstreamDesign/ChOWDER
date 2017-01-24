@@ -5,6 +5,7 @@
 
 		this.authority = null;
 		this.userList = null;
+		this.maxHistoryNum = 10;
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
@@ -125,10 +126,11 @@
 	Management.prototype.initHistoryGUI = function (contents) {
 		// 最大履歴保存数の適用
 		var history_num_button = document.getElementById("apply_history_number_button");
+		var input = document.getElementById('history_number');
 		history_num_button.onclick = function () {
-			var input = document.getElementById('history_number');
 			this.emit(Management.EVENT_CHANGE_HISTORY_NUM, null, input.value);
 		}.bind(this);
+		input.value = this.maxHistoryNum;
 	};
 
 
@@ -330,6 +332,14 @@
 
 	Management.prototype.getAuthority = function () {
 		return this.authority;
+	};
+
+	Management.prototype.setMaxHistoryNum = function (num) {
+		this.maxHistoryNum = num;
+	};
+
+	Management.prototype.getMaxHistoryNum = function () {
+		return this.maxHistoryNum;
 	};
 
 	Management.prototype.getAuthorityObject = function () {
