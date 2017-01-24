@@ -1703,7 +1703,7 @@
 					}
 				} else {
 					var metaData = json[all_done - 1];
-					if (metaData.hasOwnProperty('type') && metaData.type === 'all') {
+					if (metaData && metaData.hasOwnProperty('type') && metaData.type === 'all') {
 						textClient.keys(metadataPrefix + '*', function (err, replies) {
 							replies.forEach(function (id, index) {
 								console.log(id);
