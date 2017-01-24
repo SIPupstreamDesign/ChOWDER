@@ -5,13 +5,14 @@
 	var GroupBox,
 		defaultGroup = "default";
 
-	GroupBox = function (containerElem, setting) {
+	GroupBox = function (authority, containerElem, setting) {
 		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
 		this.tabIDs = [];
 		this.tabGroupToElems = {};
 		this.currentTab = null;
+		this.authority = authority;
 		this.init();
 	};
 	GroupBox.prototype = Object.create(EventEmitter.prototype);
@@ -53,37 +54,39 @@
 		
 			for (i = 0; i < tabs.length; i = i + 1) {
 				groupName = Object.keys(tabs[i])[0];
-				if (!this.tabGroupToElems.hasOwnProperty(groupName)) {
-					this.tabGroupToElems[groupName] = [];
-				}
-				tabItem = tabs[i][groupName];
-				if (tabItem.hasOwnProperty('color')) {
-					groupColor = tabItem.color;
-				}
-				if (tabItem.hasOwnProperty('id')) {
-					id = this.tabID(tabItem.id);
-				}
-				elem.appendChild(this.create_tab(id, groupName, groupColor, tabItem, i === 0));
-				this.tabIDs.push(id);
+				if (this.authority.isViewable(groupName)) {
+					if (!this.tabGroupToElems.hasOwnProperty(groupName)) {
+						this.tabGroupToElems[groupName] = [];
+					}
+					tabItem = tabs[i][groupName];
+					if (tabItem.hasOwnProperty('color')) {
+						groupColor = tabItem.color;
+					}
+					if (tabItem.hasOwnProperty('id')) {
+						id = this.tabID(tabItem.id);
+					}
+					elem.appendChild(this.create_tab(id, groupName, groupColor, tabItem, i === 0));
+					this.tabIDs.push(id);
 
-				box = document.createElement('div');
-				box.id = id + "_box";
-				box.className = tabItem.className + "_box";
-				box.style.width = "100%";
-				box.style.height = "100%";
-				box.style.overflow = "auto";
-				if (tabItem.hasOwnProperty('active') && tabItem['active']) {
-					box.style.display = "block";
-				} else {
-					box.style.display = "none";
+					box = document.createElement('div');
+					box.id = id + "_box";
+					box.className = tabItem.className + "_box";
+					box.style.width = "100%";
+					box.style.height = "100%";
+					box.style.overflow = "auto";
+					if (tabItem.hasOwnProperty('active') && tabItem['active']) {
+						box.style.display = "block";
+					} else {
+						box.style.display = "none";
+					}
+					boxArea.appendChild(box);
+					if (this.currentTab === null) {
+						this.currentTab = box;
+						this.currentGroupName = groupName;
+					}
+					
+					this.tabGroupToElems[groupName].push(box);
 				}
-				boxArea.appendChild(box);
-				if (this.currentTab === null) {
-					this.currentTab = box;
-					this.currentGroupName = groupName;
-				}
-				
-				this.tabGroupToElems[groupName].push(box);
 			}
 			// 上へボタン
 			elem = document.createElement('div');

@@ -24,7 +24,6 @@
 
 	ControllerGUI.prototype.init = function (management) {
 		this.management = management;
-		var authority = management.getAuthority();
 
 		// 全体のレイアウトの初期化.
 		var bigZIndex = 10000;
@@ -94,16 +93,14 @@
 				}]	
 			}];
 
-		if (authority && authority.hasOwnProperty('viewable') && authority.hasOwnProperty('editable')) {
-			if (authority.viewable === "all" && authority.editable === "all") {
-				settingMenu.push( {
-					Management : {
-						func : function () {
-							this.openManagement();
-						}.bind(this)
-					}
-				});
-			}
+		if (management.getAuthorityObject().isAdmin()) {
+			settingMenu.push( {
+				Management : {
+					func : function () {
+						this.openManagement();
+					}.bind(this)
+				}
+			});
 		}
 
 		// 上部メニューの初期化.
@@ -177,7 +174,7 @@
 		}.bind(this));
 
 		// コンテンツボックスにグループボックスを埋め込み.
-		this.groupBox = new GroupBox(document.getElementById('content_tab_box'),
+		this.groupBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('content_tab_box'),
 			{
 				tabs : [{
 						default : {
@@ -191,7 +188,7 @@
 		this.initGroupBoxEvents(this.groupBox);
 
 		// Searchエリアの中身を作成
-		this.searchBox = new SearchBox(document.getElementById('search_tab_box'),
+		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'),
 			{
 				groups : ["default"],
 				colors : ["rgb(54,187,68)"]
@@ -199,7 +196,7 @@
 		this.initSearchBoxEvents(this.searchBox);
 
 		// レイアウトボックスにグループボックスを埋め込み.
-		this.layoutBox = new GroupBox(document.getElementById('layout_tab_box'),
+		this.layoutBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('layout_tab_box'),
 			{
 				tabs : [{
 						default : {
@@ -962,7 +959,7 @@
 		}
 
 		document.getElementById('content_tab_box').innerHTML = "";
-		this.groupBox = new GroupBox(document.getElementById('content_tab_box'), contentSetting);
+		this.groupBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('content_tab_box'), contentSetting);
 		this.initGroupBoxEvents(this.groupBox);
 
 		// コンテキストメニューを刷新
@@ -970,11 +967,11 @@
 		// バーガーメニューを刷新
 		this.updateBurgerMenu();
 
-		this.searchBox = new SearchBox(document.getElementById('search_tab_box'), searchSetting);
+		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'), searchSetting);
 		this.initSearchBoxEvents(this.searchBox);
 
 		document.getElementById('layout_tab_box').innerHTML = "";
-		this.layoutBox = new GroupBox(document.getElementById('layout_tab_box'), layoutSetting);
+		this.layoutBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('layout_tab_box'), layoutSetting);
 		this.initGroupBoxEvents(this.layoutBox);
 	};
 

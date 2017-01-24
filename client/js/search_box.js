@@ -4,25 +4,27 @@
 	"use strict";
 	var SearchBox;
 
-	SearchBox = function (containerElem, setting) {
+	SearchBox = function (authority, containerElem, setting) {
 		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
 		this.item_area = null;
         this.group_to_elem = {};
+        this.authority = authority;
 		this.init();
-
+        
         // チェックされているグループリスト
         this.check_groups = [];
 	};
 	SearchBox.prototype = Object.create(EventEmitter.prototype);
 
-    SearchBox.prototype.gen_search_tab_box = function (){
+    SearchBox.prototype.gen_search_tab_box = function () {
         var d, e, f, g, h, i, j,
             text_input,
             group_div,
             checkbox,
-            box = this.container;
+            box = this.container,
+            groupName;
 
         // 既に該当 ID が存在する場合は一度 DOM を削除して再生成する
         e = document.getElementById('search_tab_box_wrapper');
@@ -91,9 +93,12 @@
                 var checkbox = document.getElementById('all_check_');
                 checkbox.checked = !checkbox.checked; 
                 for (i = 0; i < this.setting.groups.length; i = i + 1) {
-                    target = document.getElementById('search_check_' + i); 
-                    target.checked = checkbox.checked;
-                    checkFunction(this, target, i);
+                    groupName = this.setting.groups[i];
+                    if (this.authority.isViewable(groupName)) {
+                        target = document.getElementById('search_check_' + i); 
+                        target.checked = checkbox.checked;
+                        checkFunction(this, target, i);
+                    }
                 }
                 this.emit(SearchBox.EVENT_INPUT_CHANGED, null, text_input.value, this.check_groups);
             }.bind(self);
@@ -106,39 +111,42 @@
         }(this, text_input));
 
         // group チェックボックス
-        for(i = 0; i < this.setting.groups.length; i++){
-            group_div = document.createElement('div');
-            checkbox = document.createElement('input');
-            checkbox.id = 'search_check_' + i;
-			checkbox.className = "search_group_checkbox";
-            checkbox.type = 'checkbox';
-            group_div.appendChild(checkbox);
-            group_div.onclick = (function (self, text_input, i) {
-                return function (evt) {
-                    var checkbox = document.getElementById('search_check_' + i);
-                    checkbox.checked = !checkbox.checked; 
-                    checkFunction(self, checkbox, i);
-                    self.emit(SearchBox.EVENT_INPUT_CHANGED, null, text_input.value, self.check_groups);
-                };
-            }(this, text_input, i));
+        for (i = 0; i < this.setting.groups.length; i++){
+            groupName = this.setting.groups[i];
+            if (this.authority.isViewable(groupName)) {
+                group_div = document.createElement('div');
+                checkbox = document.createElement('input');
+                checkbox.id = 'search_check_' + i;
+                checkbox.className = "search_group_checkbox";
+                checkbox.type = 'checkbox';
+                group_div.appendChild(checkbox);
+                group_div.onclick = (function (self, text_input, i) {
+                    return function (evt) {
+                        var checkbox = document.getElementById('search_check_' + i);
+                        checkbox.checked = !checkbox.checked; 
+                        checkFunction(self, checkbox, i);
+                        self.emit(SearchBox.EVENT_INPUT_CHANGED, null, text_input.value, self.check_groups);
+                    };
+                }(this, text_input, i));
 
-            f = document.createElement('label');
-            f.setAttribute('for', 'search_check_' + i);
-            f.textContent = this.setting.groups[i];
-			f.className = "search_group_label";
-            
-            checkbox.onclick = group_div.onclick;
-            f.onclick = group_div.onclick;
-            this.group_to_elem[this.setting.groups[i]] = f;
+                f = document.createElement('label');
+                f.setAttribute('for', 'search_check_' + i);
+                f.textContent = groupName;
+                f.className = "search_group_label";
+                
+                checkbox.onclick = group_div.onclick;
+                f.onclick = group_div.onclick;
+                this.group_to_elem[this.setting.groups[i]] = f;
 
-            group_div.appendChild(f);
-            group_div.className = "search_group_div";
-            if (this.setting.colors[i]) {
-                group_div.style.backgroundColor = this.setting.colors[i];
-            } else {
-                group_div.style.backgroundColor = "rgb(54,187,68)";
+                group_div.appendChild(f);
+                group_div.className = "search_group_div";
+                if (this.setting.colors[i]) {
+                    group_div.style.backgroundColor = this.setting.colors[i];
+                } else {
+                    group_div.style.backgroundColor = "rgb(54,187,68)";
+                }
+                h.appendChild(group_div);
             }
-            h.appendChild(group_div);
         }
 
 		this.item_area = g;

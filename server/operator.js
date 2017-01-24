@@ -593,8 +593,8 @@
 							groupSetting;
 						for (i = 0; i < groupData.grouplist.length; i = i + 1) {
 							groupSetting = {};
-							userListData = { name : name, type : "group"};
 							name = groupData.grouplist[i].name;
+							userListData = { name : name, type : "group"};
 							if (setting.hasOwnProperty(name)) {
 								groupSetting = setting[name];
 							}

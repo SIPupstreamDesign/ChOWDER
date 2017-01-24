@@ -158,7 +158,7 @@
 			}
 		}.bind(this);
 	};
-
+	
 	// パスワード設定GUIの初期化
 	Management.prototype.initPasswordGUI = function (contents) {
 		var authSelect = document.getElementById('auth_select_pass');
@@ -252,6 +252,42 @@
 
 	Management.prototype.getAuthority = function () {
 		return this.authority;
+	};
+
+	Management.prototype.getAuthorityObject = function () {
+		var authority = this.authority;
+		return {
+			isAdmin : function () {
+				if (authority && authority.hasOwnProperty('viewable') && authority.hasOwnProperty('editable')) {
+					if (authority.viewable === "all" && authority.editable === "all") {
+						return true;
+					}
+				}
+				return false;
+			},
+			isViewable : function (groupName) {
+				if (groupName === "default") {
+					return true;
+				}
+				if (authority && authority.hasOwnProperty('viewable')) {
+					if (authority.viewable === "all" || authority.viewable.indexOf(groupName) >= 0) {
+						return true;
+					}
+				}
+				return false;
+			},
+			isEditable : function (groupName) {
+				if (groupName === "default") {
+					return true;
+				}
+				if (authority && authority.hasOwnProperty('editable')) {
+					if (authority.editable === "all" || authority.editable.indexOf(groupName) >= 0) {
+						return true;
+					}
+				}
+				return false;
+			}
+		}
 	};
 
 	Management.prototype.setUserList = function (userList) {
