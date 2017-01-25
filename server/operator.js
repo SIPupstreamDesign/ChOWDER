@@ -41,6 +41,7 @@
 		socketidToHash = {},
 		socketidToAccessAuthority = {},
 		socketidToUserName = {},
+		socketidToLoginKey = {},
 		methods,
         connectionId = {},
         connectionCount = 0;
@@ -1778,6 +1779,9 @@
 		if (groupName === undefined || groupName === "") {
 			return true;
 		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
 		var authority;
 		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			authority = socketidToAccessAuthority[socketid];
@@ -2225,10 +2229,12 @@
 		if (data.hasOwnProperty('username') && data.hasOwnProperty('password')) {
 			// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
 			if (data.hasOwnProperty('loginkey')) {
-				socketid = data.loginkey;
-				if (socketidToUserName.hasOwnProperty(socketid) &&
-					socketidToAccessAuthority.hasOwnProperty(socketid)) 
+				if (socketidToUserName.hasOwnProperty(data.loginkey) &&
+					socketidToAccessAuthority.hasOwnProperty(data.loginkey)) 
 				{
+					// 対応関係を保存
+					socketidToLoginKey[socketid] = data.loginkey;
+					socketid = data.loginkey;
 					var result = {
 						loginkey : socketid,
 						authority : socketidToAccessAuthority[socketid]
