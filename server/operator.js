@@ -41,6 +41,7 @@
 		socketidToHash = {},
 		socketidToAccessAuthority = {},
 		socketidToUserName = {},
+		socketidToLoginKey = {},
 		methods,
         connectionId = {},
         connectionCount = 0;
@@ -487,7 +488,7 @@
 					endCallback(err, data);
 				});
 			} else {
-				endCallback("not found group user setting", {});
+				endCallback("getGroupUserSetting failed");
 			}
 		});
 	}
@@ -600,11 +601,28 @@
 		getAdminUserSetting(function (err, data) {
 			var i,
 				userList = [];
+			
+			// 管理ユーザー
 			for (i = 0; i < Object.keys(data).length; i = i + 1) {
 				userList.push({ name : Object.keys(data)[i], type : "admin"});;
 			}
 			getGroupUserSetting(function (err, setting) {
 				getGroupList(function (err, groupData) {
+					var isFoundGuest = false;
+
+					// Guestユーザー
+					var guestUserData = { name : "Guest", type : "guest"};
+					if (setting.hasOwnProperty("Guest")) {
+						if (setting.Guest.hasOwnProperty("viewable")) {
+							guestUserData.viewable = setting.Guest.viewable;
+						}
+						if (setting.Guest.hasOwnProperty("editable")) {
+							guestUserData.editable = setting.Guest.editable;
+						}
+					}
+					userList.push(guestUserData);
+
+					// 通常のグループユーザー
 					if (groupData.hasOwnProperty("grouplist")) {
 						var i,
 							name,
@@ -629,10 +647,10 @@
 							}
 						}
 					}
+					// Displayユーザー
 					if (userList.indexOf('Display') < 0) {
 						userList.push({ name : "Display", type : "display"});
 					}
-					userList.push({ name : "Guest", type : "guest"});
 					if (endCallback) {
 						endCallback(null, userList);
 					}
@@ -659,6 +677,7 @@
 				var name = socketidToUserName[socketid];
 				if (adminSetting) {
 					if (adminSetting.hasOwnProperty(name)) {
+						authority.name = name;
 						authority.viewable = "all";
 						authority.editable = "all";
 						socketidToAccessAuthority[socketid] = authority;
@@ -666,6 +685,7 @@
 				}
 				if (groupSetting) {
 					if (groupSetting.hasOwnProperty(name)) {
+						authority.name = name;
 						authority.viewable = groupSetting[name].viewable;
 						authority.editable = groupSetting[name].editable;
 						socketidToAccessAuthority[socketid] = authority;
@@ -715,11 +735,13 @@
 		var getLoginResult = function () {
 			if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 				return {
+					username : username,
 					loginkey : socketid,
 					authority : socketidToAccessAuthority[socketid]
 				};
 			} else {
 				return {
+					username : username,
 					loginkey : socketid,
 					authority : null,
 				};
@@ -731,49 +753,32 @@
 				var isValid = validatePassword(data[username].password, password);
 				if (isValid) {
 					saveLoginInfo(socketid, username, data);
+					// 成功したらsocketidを返す
+					endCallback(null, getLoginResult());
+				} else {
+					endCallback("failed to login");
 				}
-				// 成功したらsocketidを返す
-				endCallback(null, isValid ? getLoginResult() : "failed");
 			} else {
-				getGroupList(function (err, groupData) {
-					var i,
-						isFoundName = false;
-					for (i = 0; i < groupData.grouplist.length; i = i + 1) {
-						if (groupData.grouplist[i].name === username) {
-							isFoundName = true;
-							break;
-						}
-					}
-					if (isFoundName) {
-						getGroupUserSetting(function (err, setting) {
-							if (!err) {
-								if (setting.hasOwnProperty(username)) {
-									// グループユーザー設定登録済グループユーザー
-									var isValid = validatePassword(setting[username].password, password);
-									if (isValid) {
-										saveLoginInfo(socketid, username, null, setting);
-									}
-									endCallback(null, isValid ? getLoginResult() : "failed");
-								} else {
-									// グループユーザー設定に登録されていないグループ
-									endCallback(null, getLoginResult());
-								}
-							} else {
-								endCallback(err, "failed");
+				getGroupUserSetting(function (err, setting) {
+					if (!err) {
+						if (setting.hasOwnProperty(username)) {
+							// グループユーザー設定登録済グループユーザー
+							var isValid = validatePassword(setting[username].password, password);
+							if (username === "Guest" || username === "Display") {
+								isValid = true;
 							}
-						});
-					} else if (username === "Guest") {
-						// ゲストユーザー
-						console.log("Login as Guest");
-						saveLoginInfo(socketid, username);
-						endCallback(null, getLoginResult());
-					} else if (username === "Display") {
-						// Displayユーザー
-						console.log("Login as Display");
-						saveLoginInfo(socketid, username);
-						endCallback(null, getLoginResult());
+							if (isValid) {
+								saveLoginInfo(socketid, username, null, setting);
+								endCallback(null, getLoginResult());
+							} else {
+								endCallback("failed to login");
+							}
+						} else {
+							// グループユーザー設定に登録されていないグループ
+							endCallback(null, getLoginResult());
+						}
 					} else {
-						endCallback(null, "failed");
+						endCallback("failed to login");
 					}
 				});
 			}
@@ -1762,25 +1767,34 @@
 	}
 	
 	/**
-	 * メタデータの更新を行うコマンドを実行する.
-	 * @method commandUpdateMetaData
-	 * @param {JSON} json windowメタデータ
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 * socketidユーザーがgroupを編集可能かどうか返す
+	 * @method isEditable
+	 * @param {String} socketid socketid
+	 * @param {String} group group
 	 */
-	/*
-	function commandUpdateMetaData(json, endCallback) {
-		//console.log("commandUpdateMetaData:" + json.id);
-		textClient.exists(metadataPrefix + json.id, function (err, doesExists) {
-			if (!err && doesExists === 1) {
-				setMetaData(json.type, json.id, json, function (meta) {
-					if (endCallback) {
-						endCallback(null, meta);
-					}
-				});
+	function isEditable(socketid, groupName) {
+		if (groupName === "default") {
+			return true;
+		}
+		if (groupName === undefined || groupName === "") {
+			return true;
+		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			if (authority.editable === "all") {
+				return true;
 			}
-		});
+			if (authority.editable.indexOf(groupName) >= 0) {
+				console.error("piyoe");
+				return true;
+			}
+		}
+		return false;
 	}
-	*/
 	
 	/**
 	 * メタデータの更新を行うコマンドを実行する.
@@ -1788,7 +1802,7 @@
 	 * @param {JSON} json windowメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateMetaData(json, endCallback) {
+	function commandUpdateMetaData(socketid, json, endCallback) {
 		console.log("commandUpdateMetaData:", json.length);
 		var i,
 			metaData,
@@ -1797,24 +1811,28 @@
 
 		for (i = 0; i < json.length; i = i + 1) {
 			metaData = json[i];
-			textClient.exists(metadataPrefix + json[i].id, (function (metaData) {
-				return function (err, doesExists) {
-					if (!err && doesExists === 1) {
-						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-							getMetaData(meta.type, meta.id, function (meta) {
-								--all_done;
-								results.push(meta);
-								if (all_done <= 0) {
-									if (endCallback) {
-										endCallback(null, results);
-										return;
+			if (isEditable(socketid, metaData.group)) {
+				textClient.exists(metadataPrefix + json[i].id, (function (metaData) {
+					return function (err, doesExists) {
+						if (!err && doesExists === 1) {
+							setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+								getMetaData(meta.type, meta.id, function (meta) {
+									--all_done;
+									results.push(meta);
+									if (all_done <= 0) {
+										if (endCallback) {
+											endCallback(null, results);
+											return;
+										}
 									}
-								}
+								});
 							});
-						});
-					}
-				};
-			}(metaData)));
+						}
+					};
+				}(metaData)));
+			} else {
+				--all_done;
+			}
 		}
 	}
 
@@ -2211,10 +2229,12 @@
 		if (data.hasOwnProperty('username') && data.hasOwnProperty('password')) {
 			// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
 			if (data.hasOwnProperty('loginkey')) {
-				socketid = data.loginkey;
-				if (socketidToUserName.hasOwnProperty(socketid) &&
-					socketidToAccessAuthority.hasOwnProperty(socketid)) 
+				if (socketidToUserName.hasOwnProperty(data.loginkey) &&
+					socketidToAccessAuthority.hasOwnProperty(data.loginkey)) 
 				{
+					// 対応関係を保存
+					socketidToLoginKey[socketid] = data.loginkey;
+					socketid = data.loginkey;
 					var result = {
 						loginkey : socketid,
 						authority : socketidToAccessAuthority[socketid]
@@ -2291,15 +2311,20 @@
 			endCallback("failed to change authority");
 			return;
 		}
-		if (data.hasOwnProperty('username') && data.hasOwnProperty('editable') && data.hasOwnProperty('viewable')) {
+		if (data.hasOwnProperty('username') 
+			&& data.hasOwnProperty('editable') 
+			&& data.hasOwnProperty('viewable')
+			&& data.hasOwnProperty('group_manipulatable'))
+		{
 			getUserList(function (err, userList) {
 				var i;
 				for (i = 0; i < userList.length; i = i + 1) {
 					if (userList[i].name === data.username) {
-						if (userList[i].type === "group") {
+						if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
 							changeGroupUserSetting(data.username, {
 								viewable : data.viewable,
-								editable : data.editable
+								editable : data.editable,
+								group_manipulatable : data.group_manipulatable
 							}, endCallback);	
 						}
 						break;
@@ -2519,8 +2544,8 @@
 			commandGetContent(data, resultCallback);
 		});
 		
-		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
+		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
+			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
@@ -2702,8 +2727,8 @@
 			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateMetaData, function (data, resultCallback) {
-			commandUpdateMetaData(data, post_updateMetaData(ws, io, resultCallback));
+		io_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
+			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
@@ -2854,6 +2879,17 @@
 		console.log("idstr:" + metadataBackupPrefix);
 		initAdminUser();
 		addGroup("group_defalut", "default", function (err, reply) {} );
+		
+		textClient.exists(groupUserPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				// group設定の初期登録
+				changeGroupUserSetting("Guest", {
+					viewable : [],
+					editable : [],
+					group_manipulatable : false
+				});
+			}
+		});
 	}
 
 	/**

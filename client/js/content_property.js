@@ -6,6 +6,7 @@
 	ContentProperty = function () {
 		EventEmitter.call(this);
 		this.colorselector = null;
+		this.authority = null;
 	};
 	ContentProperty.prototype = Object.create(EventEmitter.prototype);
 
@@ -17,7 +18,7 @@
 	 * @param {String} rightLabel 右ラベル
 	 * @param {String} value 初期入力値
 	 */
-	function addInputProperty(id, leftLabel, rightLabel, value, changeCallback) {
+	function addInputProperty(isEditable, id, leftLabel, rightLabel, value, changeCallback) {
 		/*
 			<div class="input-group">
 				<span class="input-group-addon">x</span>
@@ -41,6 +42,7 @@
 		input.value = value;
 		input.onchange = changeCallback;
 		//input.nodeType = "text";
+		input.disabled = !isEditable;
 		
 		group.appendChild(leftSpan);
 		group.appendChild(input);
@@ -51,40 +53,12 @@
 	}
 
 	/**
- 	 * Propertyタブにボタン追加
- 	 * @method addButtonProperty
- 	 * @param {String} id ボタンID
- 	 * @param {String} value ボタンinnerHTML
- 	 * @param {Function} func onclick時コールバック
- 	 */
- 	function addSubmitButton(id, value, is_display, func) {
- 		/*
- 			<div class="btn btn-success" id="content_add_button">Add</div>
- 		*/
- 		var user_data_input = document.getElementById('user_data_input'),
- 			group = document.createElement('div'),
- 			button = document.createElement('div');
- 		
- 		group.className = "input-group";
-		if (is_display) {
- 			button.className = "btn btn-primary property_button";
-		} else {
-			button.className = "btn btn-success property_button";
-		}
- 		button.innerHTML = value;
- 		button.id = id;
- 		button.onclick = func;
- 		group.appendChild(button);
- 		user_data_input.appendChild(group);
- 	}
-
-	/**
 	 * Propertyタブに入力プロパティを追加する
 	 * @method addInputProperty
 	 * @param {Object} input element id
 	 * @param {String} value 初期入力値
 	 */
-	function addTextInputProperty(id, value) {
+	function addTextInputProperty(isEditable, id, value) {
 		var user_data_input = document.getElementById('user_data_input'),
 			input = document.createElement('textarea');
 
@@ -92,6 +66,7 @@
 		input.value = value;
 		input.className = "user_data_text_input";
 		user_data_input.appendChild(input);
+		input.disabled = !isEditable;
 	}
 
 	/**
@@ -113,12 +88,15 @@
 			backup_area = document.getElementById("backup_area"),
 			content_id = document.getElementById('content_id'),
 			color_picker = document.getElementById('color_picker'),
+			restoreButton = document.getElementById('backup_restore'),
 			extension,
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
-			}.bind(this);
+			}.bind(this),
+			isEditableContent = this.authority.isEditable(group);
+		
+		restoreButton.disabled = !isEditableContent;
 
-		console.log("initPropertyArea");
 		if (id) {
 			content_id.innerHTML = id;
 		} else {
@@ -133,11 +111,11 @@
 		user_data_input.innerHTML = "";
 		if (type === "display") {
 			idlabel.innerHTML = "Display ID:";
-			addInputProperty('content_transform_x', 'x', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_y', 'y', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_w', 'w', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_h', 'h', 'px', '0', rectChangeFunc);
-			addTextInputProperty('content_text', "");
+			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addTextInputProperty(isEditableContent, 'content_text', "");
 			download_button.style.display = "none";
 			metalabel.style.display = "block";
 			backup_area.style.display = "none";
@@ -146,16 +124,16 @@
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
-			addInputProperty('whole_width', 'w', 'px', '1000', function () {
+			addInputProperty(isEditableContent, 'whole_width', 'w', 'px', '1000', function () {
 				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
 			}.bind(this));
-			addInputProperty('whole_height', 'h', 'px', '900', function () {
+			addInputProperty(isEditableContent, 'whole_height', 'h', 'px', '900', function () {
 				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
 			}.bind(this));
-			addInputProperty('whole_split_x', 'split x', '', '1', function () {
+			addInputProperty(isEditableContent, 'whole_split_x', 'split x', '', '1', function () {
 				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.value, this.wholeSplitY.value);
 			}.bind(this));
-			addInputProperty('whole_split_y', 'split y', '', '1', function () {
+			addInputProperty(isEditableContent, 'whole_split_y', 'split y', '', '1', function () {
 				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.wholeSplitX.value, this.value);
 			}.bind(this));
 			//addTextInputProperty('content_text', "");
@@ -167,7 +145,7 @@
 			idlabel.innerHTML = "Content ID:";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
-			addInputProperty('multi_transform_z', 'z', 'index', '', function () {
+			addInputProperty(isEditableContent, 'multi_transform_z', 'z', 'index', '', function () {
 				var val = parseInt(multiZ.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
 			}.bind(this));
@@ -182,21 +160,21 @@
 			if (metalabel) {
 				metalabel.style.display = "block";
 			}
-			addTextInputProperty('content_text', "");
+			addTextInputProperty(isEditableContent, 'content_text', "");
 			backup_area.style.display = "none";
 			color_picker.style.display = "none";
 		} else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
 			grouplabel.innerHTML = "Group:";
-			addInputProperty('content_transform_x', 'x', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_y', 'y', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_w', 'w', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_h', 'h', 'px', '0', rectChangeFunc);
-			addInputProperty('content_transform_z', 'z', 'index', '0', function () {
+			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditableContent, 'content_transform_z', 'z', 'index', '0', function () {
 				var val = parseInt(contentZ.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
 			}.bind(this));
-			addTextInputProperty('content_text', "");
+			addTextInputProperty(isEditableContent, 'content_text', "");
 			download_button.style.display = "block";
 			download_button.href = "download?" + id;
 			download_button.target = "_blank";
@@ -310,6 +288,10 @@
 		if (wholeSplitY) {
 			wholeSplitY.value = splitCount.y;
 		}
+	};
+
+	ContentProperty.prototype.setAuthority = function (authority) {
+		this.authority = authority;
 	};
 	
 	/**

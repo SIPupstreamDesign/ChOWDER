@@ -603,6 +603,10 @@
 					// 非表示コンテンツ
 					return;
 				}
+				if (!management.getAuthorityObject().isEditable(metaData.group)) {
+					// 編集不可コンテンツ
+					return;
+				}
 				vscreen_util.trans(metaData);
 				lastx = metaData.posx;
 				lasty = metaData.posy;
@@ -642,7 +646,7 @@
 					metaData.posy = (lasty - ydiff);
 				}
 				vscreen_util.transInv(metaData);
-				vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+				//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 				metaDataDict[metaData.id] = metaData;
 				updateMetaData(metaData);
 			}
@@ -832,6 +836,10 @@
 			aspect = 1.0;
 		if (elem) {
 			metaData = metaDataDict[elem.id];
+			if (!management.getAuthorityObject().isEditable(metaData.group)) {
+				// 編集不可コンテンツ
+				return;
+			}
 			if (metaData) {
 				if (metaData.orgHeight) {
 					aspect = metaData.orgHeight / metaData.orgWidth;
@@ -855,7 +863,7 @@
 					document.getElementById('content_transform_w').value = metaData.width;
 					updateMetaData(metaData);
 				}
-				vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+				//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 			}
 			manipulator.removeManipulator();
 		}
@@ -1143,6 +1151,10 @@
 			vaspect = splitWhole.w / splitWhole.h,
 			aspect = orgWidth / orgHeight;
 		
+		if (!management.getAuthorityObject().isEditable(metaData.group)) {
+			// 編集不可コンテンツ
+			return;
+		}
 		metaData.posx = splitWhole.x;
 		metaData.posy = splitWhole.y;
 		if (aspect > vaspect) {
@@ -1329,14 +1341,15 @@
 			metaData = metaDataDict[draggingID];
 
 			if (dragRect.hasOwnProperty(draggingID)) {
-				metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
-				metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
+				if (management.getAuthorityObject().isEditable(metaData.group)) {
+					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
+					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
+					vscreen_util.transPosInv(metaData);
+					vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+				}
 			} else {
 				return;
 			}
-
-			vscreen_util.transPosInv(metaData);
-			vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 
 			if (isWindowType(metaData) || isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
@@ -1393,7 +1406,7 @@
 					} else {
 						metaData.visible = true;
 						if (isFreeMode()) {
-							vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
 						} else if (isDisplayMode()) {
 							px = rect.left + dragOffsetLeft;
@@ -1403,7 +1416,7 @@
 							if (screen) {
 								snapToScreen(elem, metaData, screen);
 							}
-							vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
 							manipulator.moveManipulator(elem);
 						} else {
@@ -1415,7 +1428,7 @@
 							if (splitWhole) {
 								snapToSplitWhole(elem, metaData, splitWhole);
 							}
-							vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
 							manipulator.moveManipulator(elem);
 						}
@@ -3303,12 +3316,14 @@
 			connector.send('ChangePassword', request, function () {});
 		});
 	
-		// 
-		management.on('change_authority', function (userName, editable, viewable) {
+		// 権限の変更
+		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable) {
 			var request = {
 				username : userName,
 				editable : editable,
-				viewable : viewable
+				viewable : viewable,
+				group_manipulatable : group_manipulatable,
+				display_manipulatable : display_manipulatable
 			};
 			connector.send('ChangeAuthority', request, function (err, data) {
 				connector.send('GetUserList', {}, function (err, userList) {
@@ -3317,30 +3332,35 @@
 			});
 		});
 
+		// 履歴保存数の変更
 		management.on("change_history_num", function (err, value) {
 			connector.send("ChangeGlobalSetting", { max_history_num : value }, function () {
 				updateGlobalSettingFunc();
 			});
 		});
 		
+		// 新規DB
 		management.on('newdb', function (err, name) {
 			connector.send("NewDB", { name : name }, function () {
 				window.location.reload(true);
 			});
 		}.bind(this));
 
+		// DB名変更
 		management.on('renamedb', function (err, preName, name) {
 			connector.send("RenameDB", { name : preName, new_name : name }, function () {
 				window.location.reload(true);
 			});
 		}.bind(this));
 		
+		// DBの切り替え
 		management.on('changedb', function (err, name) {
 			connector.send("ChangeDB", { name : name }, function () {
 				window.location.reload(true);
 			});
 		}.bind(this));
 
+		// DBの削除
 		management.on('deletedb', function (err, name) {
 			connector.send("DeleteDB", { name : name }, function () {
 				window.location.reload(true);
@@ -3678,6 +3698,10 @@
 		var e = document.getElementById('head_menu_hover_right');
 		if(e){
 			//e.textContent = '○';
+			if (e.className === "disconnect") {
+				// 再ログイン
+				// TODO
+			}
 			e.title = 'サーバーと接続されています';
 			e.className = 'connect';
 		}
