@@ -1,3 +1,4 @@
+
 const electron = require('electron')
 // Module to control application life.
 const app = electron.app
@@ -13,7 +14,7 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 800})
+  mainWindow = new BrowserWindow({width: 1600, height: 900})
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -21,6 +22,24 @@ function createWindow () {
     protocol: 'file:',
     slashes: true
   }))
+
+  const Screen = require('screen')
+
+  const size = Screen.getPrimaryDisplay().size
+
+  anotherWindow = new BrowserWindow({
+    left: 0,
+    top: 0,
+    width: size.width,
+    height: size.height,
+    frame: false,
+    show: true,
+    transparent: true,
+    resizable: false,
+    'always-on-top': true
+  })
+
+  anotherWindow.maximize()
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
@@ -55,6 +74,3 @@ app.on('activate', function () {
     createWindow()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
