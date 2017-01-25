@@ -150,7 +150,7 @@
 	 */
 	function getGroupList(endCallback) {
 		textClient.exists(groupListPrefix, function (err, doesExists) {
-			if (!err && doesExists !== 1)  {
+			if (!err && doesExists !== 0)  {
 				textClient.get(groupListPrefix, function (err, reply) {
 					var data = reply;
 					if (!reply) {
