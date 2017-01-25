@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <body>
+  <video autoplay></video>
+        <script>
+    "use strict";
+    // In the renderer process.
+    var desktopCapturer = require('electron').desktopCapturer;
+    let gWinNum = 0;
+desktopCapturer.getSources({types: ['window', 'screen']}, function(error, sources) {
+    if (error) throw error;
+    for (var i = 0; i < sources.length; ++i) {
+        console.log("sources[i].name = "+ sources[i].name);
+        addImage(sources[i].thumbnail);
+        if (sources[i].name == "Entire screen") {
+            navigator.webkitGetUserMedia({
+                audio: false,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: 'desktop',
+                        chromeMediaSourceId: sources[i].id,
+                        minWidth: 1280,
+                        maxWidth: 1280,
+                        minHeight: 720,
+                        maxHeight: 720
+                    }
+                }
+            }, gotStream, getUserMediaError);
+            //return;
+        }
+    }
+});
+
+function addImage(image) {
+    const elm = document.createElement("img");
+    elm.src = image.toDataURL();
+    document.body.appendChild(elm);
+}
+
+function gotStream(stream) {
+    document.querySelector('video').src = URL.createObjectURL(stream);
+}
+
+function getUserMediaError(e) {
+    console.log('getUserMediaError');
+}
+</script>
+</body>
