@@ -3283,7 +3283,7 @@
 	function initManagementEvents(management) {
 		var updateGlobalSettingFunc = function () {
 			connector.send('GetGlobalSetting', {}, function (err, reply) {
-				if (reply.hasOwnProperty('max_history_num')) {
+				if (reply && reply.hasOwnProperty('max_history_num')) {
 					management.setMaxHistoryNum(reply.max_history_num);
 				}
 			});

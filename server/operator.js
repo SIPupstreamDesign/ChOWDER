@@ -149,17 +149,26 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function getGroupList(endCallback) {
-		textClient.get(groupListPrefix, function (err, reply) {
-			var data = reply;
-			if (!reply) {
-				data = "{ grouplist : [] }";
+		textClient.exists(groupListPrefix, function (err, doesExists) {
+			if (!err && doesExists !== 0)  {
+				textClient.get(groupListPrefix, function (err, reply) {
+					var data = reply;
+					if (!reply) {
+						data = { "grouplist" : [] };
+						endCallback(err, data);
+						return;
+					}
+					try {
+						data = JSON.parse(data);
+					} catch (e) {
+						return false;
+					}
+					endCallback(err, data);
+				});
+			} else {
+				var data = { "grouplist" : [] };
+				endCallback(null, data);
 			}
-			try {
-				data = JSON.parse(data);
-			} catch (e) {
-				return false;
-			}
-			endCallback(err, data);
 		});
 	}
 
@@ -478,7 +487,7 @@
 					endCallback(err, data);
 				});
 			} else {
-				endCallback("not found group user setting");
+				endCallback("not found group user setting", {});
 			}
 		});
 	}
