@@ -154,11 +154,18 @@
 		var applyButton = document.getElementById('apply_auth_button');
 		var groupApplyDeleteCheck = document.getElementById('group_add_delete_check');
 		var groupApplyDeleteLabel = document.getElementById('group_add_delete_label');
+		var displayManipulateCheck = document.getElementById('display_manipulate_check');
+		var displayManipulateLabel = document.getElementById('display_manipulate_label');
 		var allAccessText = "全て";
 
 		// グループの追加削除を許可のチェック
 		groupApplyDeleteLabel.onclick = function () {
 			groupApplyDeleteCheck.click();
+		};
+		
+		// ディスプレイの操作を許可のチェック
+		displayManipulateLabel.onclick = function () {
+			displayManipulateCheck.click();
 		};
 		
 		// ユーザー名リストの設定
@@ -230,13 +237,15 @@
 				var editable = this.editableSelect.getSelected();
 				var viewable = this.viewableSelect.getSelected();
 				var group_manipulatable = groupApplyDeleteCheck.checked;
+				var display_manipulate = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
 					editable = "all";
 				}
 				if (viewable.indexOf(allAccessText) >= 0) {
 					viewable = "all";
 				}
-				this.emit(Management.EVENT_CHANGE_AUTHORITY, name, editable, viewable, group_manipulatable);
+				this.emit(Management.EVENT_CHANGE_AUTHORITY,
+					name, editable, viewable, group_manipulatable, display_manipulate);
 			}
 		}.bind(this);
 

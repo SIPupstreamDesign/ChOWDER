@@ -71,3 +71,10 @@ input[disabled] {
 	vertical-align: middle;
 	margin-left : 10px;
 }
+
+#display_manipulate_check {
+	width : 18px;
+	height : 18px;
+	vertical-align: middle;
+	margin-left : 10px;
+}

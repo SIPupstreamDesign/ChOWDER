@@ -3316,13 +3316,14 @@
 			connector.send('ChangePassword', request, function () {});
 		});
 	
-		// 
-		management.on('change_authority', function (userName, editable, viewable, group_manipulatable) {
+		// 権限の変更
+		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable) {
 			var request = {
 				username : userName,
 				editable : editable,
 				viewable : viewable,
-				group_manipulatable : group_manipulatable
+				group_manipulatable : group_manipulatable,
+				display_manipulatable : display_manipulatable
 			};
 			connector.send('ChangeAuthority', request, function (err, data) {
 				connector.send('GetUserList', {}, function (err, userList) {
@@ -3331,30 +3332,35 @@
 			});
 		});
 
+		// 履歴保存数の変更
 		management.on("change_history_num", function (err, value) {
 			connector.send("ChangeGlobalSetting", { max_history_num : value }, function () {
 				updateGlobalSettingFunc();
 			});
 		});
 		
+		// 新規DB
 		management.on('newdb', function (err, name) {
 			connector.send("NewDB", { name : name }, function () {
 				window.location.reload(true);
 			});
 		}.bind(this));
 
+		// DB名変更
 		management.on('renamedb', function (err, preName, name) {
 			connector.send("RenameDB", { name : preName, new_name : name }, function () {
 				window.location.reload(true);
 			});
 		}.bind(this));
 		
+		// DBの切り替え
 		management.on('changedb', function (err, name) {
 			connector.send("ChangeDB", { name : name }, function () {
 				window.location.reload(true);
 			});
 		}.bind(this));
 
+		// DBの削除
 		management.on('deletedb', function (err, name) {
 			connector.send("DeleteDB", { name : name }, function () {
 				window.location.reload(true);
