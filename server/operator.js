@@ -154,9 +154,9 @@
 				textClient.get(groupListPrefix, function (err, reply) {
 					var data = reply;
 					if (!reply) {
-						data = {}
-						data.grouplist = [];
+						data = { "grouplist" : [] };
 						endCallback(err, data);
+						return;
 					}
 					try {
 						data = JSON.parse(data);
@@ -166,8 +166,7 @@
 					endCallback(err, data);
 				});
 			} else {
-				var data = {};
-				data.grouplist = [];
+				var data = { "grouplist" : [] };
 				endCallback(null, data);
 			}
 		});
@@ -488,7 +487,7 @@
 					endCallback(err, data);
 				});
 			} else {
-				endCallback("not found group user setting");
+				endCallback("not found group user setting", {});
 			}
 		});
 	}
