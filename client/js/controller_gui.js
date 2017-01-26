@@ -18,7 +18,6 @@
 		this.display_scale = 1.0;
 		this.snapType = "free";
 		this.management = null;
-		this.authority = null;
 	};
 	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
 
@@ -384,6 +383,29 @@
 		return null;
 	};
 
+
+	ControllerGUI.prototype.updateContextMenuAccess = function () {
+		// コンテキストメニューのアクセス制限による表示非表示
+		var i;
+		var authority = this.management.getAuthorityObject();
+		var editableMenus = [
+			document.getElementById('context_menu_add_content'),
+			document.getElementById("context_menu_move_front"),
+			document.getElementById("context_menu_move_back"),
+			document.getElementById('context_menu_change_group'),
+			document.getElementById('context_menu_change_image')
+		];
+		if (authority.isEditable(this.get_current_group_name())) {
+			for (i = 0; i < editableMenus.length; i = i + 1) {
+				editableMenus[i].style.display = "block";
+			}
+		} else {
+			for (i = 0; i < editableMenus.length; i = i + 1) {
+				editableMenus[i].style.display = "none";
+			}
+		}
+	}
+
 	ControllerGUI.prototype.initContextMenuVisible = function (menu, type, type2) {
 		// 出現タイミング調整.
 		var mouseDownPosX = null,
@@ -420,7 +442,12 @@
 					py = evt.clientY + (document.body.scrollTop || document.documentElement.scrollTop),
 					width,
 					height,
-					rect;
+					rect,
+					i;
+
+				// コンテキストメニューを刷新
+				this.updateContextMenu();
+				this.updateContextMenuAccess();
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
 					
@@ -646,21 +673,29 @@
 		var groupToElems = this.groupBox.get_tabgroup_to_elems(),
 			container = document.getElementById('context_menu_change_group_submenu'),
 			item,
-			gname;
+			gname,
+			authority = this.management.getAuthorityObject();
 		container.innerHTML = "";
+
+		if (!authority.isEditable(this.get_current_group_name())) {
+			return;
+		}
 
 		for (gname in groupToElems) {
 			if (groupToElems.hasOwnProperty(gname)) {
-				item = document.createElement('li');
-				item.className = "context_menu_change_group_item";
-				item.innerHTML = gname;
-				item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
-				container.appendChild(item);
-				item.onmousedown = (function (gname, self) {
-					return function (evt) {
-						this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, gname);
-					}.bind(self);
-				}(gname, this));
+				// グループ変更内のアクセス権限による表示非表示
+				if (authority.isEditable(gname)) {
+					item = document.createElement('li');
+					item.className = "context_menu_change_group_item";
+					item.innerHTML = gname;
+					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
+					container.appendChild(item);
+					item.onmousedown = (function (gname, self) {
+						return function (evt) {
+							this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, gname);
+						}.bind(self);
+					}(gname, this));
+				}
 			}
 		}
 	};
@@ -712,7 +747,7 @@
 			updateImageInput.value = "";
 		}.bind(this), false);
 	};
-	
+
 	/**
 	 * ドラッグアンドドロップの初期化
 	 */

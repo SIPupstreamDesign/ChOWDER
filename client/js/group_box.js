@@ -88,48 +88,50 @@
 					this.tabGroupToElems[groupName].push(box);
 				}
 			}
-			// 上へボタン
-			elem = document.createElement('div');
-			elem.className = "group_tab_up";
-			span = document.createElement('span');
-			span.className = "group_tab_up_label";
-			elem.setAttribute("title", "1つ上に移動");
-			elem.appendChild(span);
-			elem.onclick = function () {
-				this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupName);
-			}.bind(this);
-			tabArea.appendChild(elem);
+			if (this.authority.canGroupManipulate()) {
+				// 上へボタン
+				elem = document.createElement('div');
+				elem.className = "group_tab_up";
+				span = document.createElement('span');
+				span.className = "group_tab_up_label";
+				elem.setAttribute("title", "1つ上に移動");
+				elem.appendChild(span);
+				elem.onclick = function () {
+					this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupName);
+				}.bind(this);
+				tabArea.appendChild(elem);
 
-			// 下へボタン
-			elem = document.createElement('div');
-			elem.className = "group_tab_down";
-			span = document.createElement('span');
-			span.className = "group_tab_down_label";
-			elem.setAttribute("title", "1つ下に移動");
-			elem.appendChild(span);
-			elem.onclick = function () {
-				this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupName);
-			}.bind(this);
-			tabArea.appendChild(elem);
+				// 下へボタン
+				elem = document.createElement('div');
+				elem.className = "group_tab_down";
+				span = document.createElement('span');
+				span.className = "group_tab_down_label";
+				elem.setAttribute("title", "1つ下に移動");
+				elem.appendChild(span);
+				elem.onclick = function () {
+					this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupName);
+				}.bind(this);
+				tabArea.appendChild(elem);
 
-			// 追加ボタン
-			elem = document.createElement('div');
-			elem.className = "group_tab_append";
-			span = document.createElement('span');
-			span.className = "group_tab_append_label";
-			span.innerHTML = "+";
-			elem.setAttribute("title", "新規グループの追加");
-			elem.appendChild(span);
-			elem.onclick = function () {
-				window.input_dialog.text_input({
-						name : "新規グループ",
-						initialValue :  "",
-						okButtonName : "OK",
-					}, function (value) {
-						this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
-					}.bind(this));
-			}.bind(this);
-			tabArea.appendChild(elem);
+				// 追加ボタン
+				elem = document.createElement('div');
+				elem.className = "group_tab_append";
+				span = document.createElement('span');
+				span.className = "group_tab_append_label";
+				span.innerHTML = "+";
+				elem.setAttribute("title", "新規グループの追加");
+				elem.appendChild(span);
+				elem.onclick = function () {
+					window.input_dialog.text_input({
+							name : "新規グループ",
+							initialValue :  "",
+							okButtonName : "OK",
+						}, function (value) {
+							this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
+						}.bind(this));
+				}.bind(this);
+				tabArea.appendChild(elem);
+			}
 		}
 	};
 
@@ -206,7 +208,7 @@
 		}.bind(this);
 		elem.appendChild(link);
 		
-		if (groupName !== defaultGroup) {
+		if (groupName !== defaultGroup && this.authority.canGroupManipulate()) {
 			setting_button = document.createElement('div');
 			setting_button.className = "group_tab_setting";
 			setting_button.onclick = (function (self, groupName) {

@@ -44,7 +44,13 @@
 		socketidToLoginKey = {},
 		methods,
         connectionId = {},
-        connectionCount = 0;
+        connectionCount = 0,
+		userSettingKeys = [
+			"viewable",
+			"editable",
+			"group_manipulatable",
+			"display_manipulatable"
+		];
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
@@ -510,11 +516,11 @@
 			if (setting.hasOwnProperty('password')) {
 				data[groupName].password = util.encrypt(setting.password, cryptkey);
 			}
-			if (setting.hasOwnProperty('editable')) {
-				data[groupName].editable = setting.editable;
-			}
-			if (setting.hasOwnProperty('viewable')) {
-				data[groupName].viewable = setting.viewable;
+			for (var i = 0; i < userSettingKeys.length; i = i + 1) {
+				var key = userSettingKeys[i];
+				if (setting.hasOwnProperty(key)) {
+					data[groupName][key] = setting[key];
+				}
 			}
 			textClient.set(groupUserPrefix, JSON.stringify(data), (function (data) {
 				return function (err, reply) {
@@ -613,11 +619,11 @@
 					// Guestユーザー
 					var guestUserData = { name : "Guest", type : "guest"};
 					if (setting.hasOwnProperty("Guest")) {
-						if (setting.Guest.hasOwnProperty("viewable")) {
-							guestUserData.viewable = setting.Guest.viewable;
-						}
-						if (setting.Guest.hasOwnProperty("editable")) {
-							guestUserData.editable = setting.Guest.editable;
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (setting.Guest.hasOwnProperty(key)) {
+								guestUserData[key] = setting.Guest[key];
+							}
 						}
 					}
 					userList.push(guestUserData);
@@ -637,11 +643,11 @@
 								if (setting.hasOwnProperty(name)) {
 									groupSetting = setting[name];
 								}
-								if (groupSetting.hasOwnProperty("viewable")) {
-									userListData.viewable = groupSetting.viewable;
-								}
-								if (groupSetting.hasOwnProperty("editable")) {
-									userListData.editable = groupSetting.editable;
+								for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+									var key = userSettingKeys[k];
+									if (groupSetting.hasOwnProperty(key)) {
+										userListData[key] = groupSetting[key];
+									}
 								}
 								userList.push(userListData);
 							}
@@ -680,14 +686,20 @@
 						authority.name = name;
 						authority.viewable = "all";
 						authority.editable = "all";
+						authority.group_manipulatable = true;
+						authority.display_manipulatable = true;
 						socketidToAccessAuthority[socketid] = authority;
 					}
 				}
 				if (groupSetting) {
 					if (groupSetting.hasOwnProperty(name)) {
 						authority.name = name;
-						authority.viewable = groupSetting[name].viewable;
-						authority.editable = groupSetting[name].editable;
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (groupSetting[name].hasOwnProperty(key)) {
+								authority[key] = groupSetting[name][key];
+							}
+						}
 						socketidToAccessAuthority[socketid] = authority;
 					}
 				}
@@ -701,6 +713,10 @@
 	 * socketidの権限情報キャッシュを削除する
 	 */
 	function removeAuthority(socketid) {
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+			delete socketidToLoginKey[socketid];
+		}
 		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			delete socketidToAccessAuthority[socketid];
 		}
@@ -1588,6 +1604,63 @@
 	}
 	
 	/**
+	 * socketidユーザーがgroupを編集可能かどうか返す
+	 * @method isEditable
+	 * @param {String} socketid socketid
+	 * @param {String} group group
+	 */
+	function isEditable(socketid, groupName) {
+		if (groupName === "default") {
+			return true;
+		}
+		if (groupName === undefined || groupName === "") {
+			return true;
+		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			if (authority.editable === "all") {
+				return true;
+			}
+			if (authority.editable.indexOf(groupName) >= 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function isGroupManipulatable(socketid, groupID, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndex(data.grouplist, groupID);
+			if (index >= 0) {
+				var groupName = data.grouplist[index].name;
+				if (groupName === "default") {
+					endCallback(true);
+					return;
+				}
+				if (groupName === undefined || groupName === "") {
+					endCallback(true);
+					return;
+				}
+				if (socketidToLoginKey.hasOwnProperty(socketid)) {
+					socketid = socketidToLoginKey[socketid];
+				}
+				var authority;
+				if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+					authority = socketidToAccessAuthority[socketid];
+					endCallback(authority.group_manipulatable);
+					return;
+				}
+			}
+			endCallback(false);
+			return;
+		});
+	}
+
+	/**
 	 * コンテンツの追加を行うコマンドを実行する.
 	 * @method commandAddContent
 	 * @param {Object} metaData メタデータ
@@ -1595,39 +1668,44 @@
 	 * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
 	 * @param {Function} updateEndCallback コンテンツ差し替えした場合に終了時に呼ばれるコールバック
 	 */
-	function commandAddContent(metaData, binaryData, endCallback, updateEndCallback) {
+	function commandAddContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
 		console.log("commandAddContent", metaData, binaryData);
 		
-		if (metaData.hasOwnProperty('id') && metaData.id !== "") {
-			textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
-				if (!err && doesExists === 1) {
-					getMetaData('', metaData.id, function (meta) {
-						var oldContentID,
-							newContentID;
-						if (metaData.hasOwnProperty('content_id')) {
-							oldContentID = metaData.content_id;
-						}
-						if (meta.hasOwnProperty('content_id')) {
-							newContentID = meta.content_id;
-						}
-						
-						
-						if (newContentID !== '' && oldContentID === newContentID) {
-							updateContent(metaData, binaryData, function (reply) {
-								if (updateEndCallback) {
-									updateEndCallback(null, reply);
-								}
-							});
-						} else {
-							addContentCore(meta, binaryData, endCallback);
-						}
-					});
-				} else {
-					addContentCore(metaData, binaryData, endCallback);
-				}
-			});
+		if (isEditable(socketid, metaData.group)) {
+			if (metaData.hasOwnProperty('id') && metaData.id !== "") {
+				textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+					if (!err && doesExists === 1) {
+						getMetaData('', metaData.id, function (meta) {
+							var oldContentID,
+								newContentID;
+							if (metaData.hasOwnProperty('content_id')) {
+								oldContentID = metaData.content_id;
+							}
+							if (meta.hasOwnProperty('content_id')) {
+								newContentID = meta.content_id;
+							}
+							
+							if (newContentID !== '' && oldContentID === newContentID) {
+								updateContent(metaData, binaryData, function (reply) {
+									if (updateEndCallback) {
+										updateEndCallback(null, reply);
+									}
+								});
+							} else {
+								addContentCore(meta, binaryData, endCallback);
+							}
+						});
+					} else {
+						addContentCore(metaData, binaryData, endCallback);
+					}
+				});
+			} else {
+				addContentCore(metaData, binaryData, endCallback);
+			}
 		} else {
-			addContentCore(metaData, binaryData, endCallback);
+			if (endCallback) {
+				endCallback("access denied");
+			}
 		}
 	}
 	
@@ -1703,7 +1781,7 @@
 	 * @param {JSON} json メタデータリスト
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandDeleteContent(json, endCallback) {
+	function commandDeleteContent(socketid, json, endCallback) {
 		console.log("commandDeleteContent:", json.length);
 		var i,
 			metaData,
@@ -1717,31 +1795,35 @@
 					}
 				} else {
 					var metaData = json[all_done - 1];
-					if (metaData && metaData.hasOwnProperty('type') && metaData.type === 'all') {
-						textClient.keys(metadataPrefix + '*', function (err, replies) {
-							replies.forEach(function (id, index) {
-								console.log(id);
-								textClient.hgetall(id, function (err, data) {
-									if (!err && data) {
-										deleteContent(data, function (meta) {
-											if (endCallback) {
-												endCallback(null, meta);
-											}
-										});
-									}
+					if (isEditable(socketid, metaData.group)) {
+						if (metaData && metaData.hasOwnProperty('type') && metaData.type === 'all') {
+							textClient.keys(metadataPrefix + '*', function (err, replies) {
+								replies.forEach(function (id, index) {
+									console.log(id);
+									textClient.hgetall(id, function (err, data) {
+										if (!err && data) {
+											deleteContent(data, function (meta) {
+												if (endCallback) {
+													endCallback(null, meta);
+												}
+											});
+										}
+									});
 								});
 							});
-						});
-						all_done = 0;
-						if (endCallback) {
-							endCallback(null, results);
-							return;
+							all_done = 0;
+							if (endCallback) {
+								endCallback(null, results);
+								return;
+							}
+						} else {
+							deleteContent(metaData, function (meta) {
+								results.push(meta);
+								syncDelete(results, all_done - 1);
+							});
 						}
 					} else {
-						deleteContent(metaData, function (meta) {
-							results.push(meta);
-							syncDelete(results, all_done - 1);
-						});
+						syncDelete(results, all_done - 1);
 					}
 				}
 			};
@@ -1756,44 +1838,18 @@
 	 * @param {BLOB} binaryData loadMetaBinaryから受領したバイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateContent(metaData, binaryData, endCallback) {
+	function commandUpdateContent(socketid, metaData, binaryData, endCallback) {
 		//console.log("commandUpdateContent");
-		updateContent(metaData, binaryData, function (meta) {
-			// socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
-			if (endCallback) {
-				endCallback(null, meta);
-			}
-		});
-	}
-	
-	/**
-	 * socketidユーザーがgroupを編集可能かどうか返す
-	 * @method isEditable
-	 * @param {String} socketid socketid
-	 * @param {String} group group
-	 */
-	function isEditable(socketid, groupName) {
-		if (groupName === "default") {
-			return true;
+		if (isEditable(socketid, metaData.group)) {
+			updateContent(metaData, binaryData, function (meta) {
+				// socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
+				if (endCallback) {
+					endCallback(null, meta);
+				}
+			});
+		} else {
+			endCallback("access denied");
 		}
-		if (groupName === undefined || groupName === "") {
-			return true;
-		}
-		if (socketidToLoginKey.hasOwnProperty(socketid)) {
-			socketid = socketidToLoginKey[socketid];
-		}
-		var authority;
-		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			authority = socketidToAccessAuthority[socketid];
-			if (authority.editable === "all") {
-				return true;
-			}
-			if (authority.editable.indexOf(groupName) >= 0) {
-				console.error("piyoe");
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	/**
@@ -1937,13 +1993,19 @@
 	 * @param {JSON} json 対象のnameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandAddGroup(json, endCallback) {
+	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
 		if (json.hasOwnProperty("name") && json.name !== "") {
-			if (json.hasOwnProperty("color")) {
-				groupColor = json.color;
-			}
-			addGroup(null, json.name, groupColor, endCallback);
+			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
+				if (isManipulatable) {
+					if (json.hasOwnProperty("color")) {
+						groupColor = json.color;
+					}
+					addGroup(null, json.name, groupColor, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -1953,9 +2015,15 @@
 	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandDeleteGroup(json, endCallback) {
+	function commandDeleteGroup(socketid, json, endCallback) {
 		if (json.hasOwnProperty("id") && json.hasOwnProperty("name") && json.name !== "") {
-			deleteGroup(json.id, json.name, endCallback);
+			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
+				if (isManipulatable) {
+					deleteGroup(json.id, json.name, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -1965,9 +2033,15 @@
 	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateGroup(json, endCallback) {
+	function commandUpdateGroup(socketid, json, endCallback) {
 		if (json.hasOwnProperty("id")) {
-			updateGroup(json.id, json, endCallback);
+			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
+				if (isManipulatable) {
+					updateGroup(json.id, json, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -1977,9 +2051,15 @@
 	 * @param {JSON} json 対象のid, indexを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandChangeGroupIndex(json, endCallback) {
+	function commandChangeGroupIndex(socketid, json, endCallback) {
 		if (json.hasOwnProperty("id") && json.hasOwnProperty("index")) {
-			changeGroupIndex(json.id, json.index, endCallback);
+			isGroupManipulatable(socketid, json.id,  function (isManipulatable) {
+				if (isManipulatable) {
+					changeGroupIndex(json.id, json.index, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -2075,21 +2155,6 @@
 			});
 		}
 	}
-	
-	/**
-	 * ウィンドウの更新を行うコマンドを実行する.
-	 * @method commandUpdateWindowMetaData
-	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	/*
-	function commandUpdateWindowMetaData(socketid, json, endCallback) {
-		updateWindowMetaData(socketid, json, function (windowData) {
-			endCallback(null, windowData);
-		});
-	}
-	*/
 
 	/**
 	 * ウィンドウの更新を行うコマンドを実行する.
@@ -2241,6 +2306,9 @@
 					}
 					endCallback(null, result);
 					return;
+				} else {
+					endCallback("ログアウトしました", false);
+					return;
 				}
 			}
 			login(data.username, data.password, socketid, endCallback);
@@ -2255,17 +2323,16 @@
 	 */
 	function commandChangePassword(data, socketid, endCallback) {
 		var authority;
-		// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
-		if (data.hasOwnProperty('loginkey')) {
-			socketid = data.loginkey;
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
 		}
 		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			endCallback("failed to change password");
+			endCallback("failed to change password (1)");
 			return;
 		}
 		authority = socketidToAccessAuthority[socketid];
 		if (authority.editable !== 'all') {
-			endCallback("failed to change password");
+			endCallback("failed to change password (2)");
 			return;
 		}
 		if (data.hasOwnProperty('username') && data.hasOwnProperty('pre_password') && data.hasOwnProperty('password'))
@@ -2284,7 +2351,7 @@
 								password : data.password
 							}, endCallback);
 						} else {
-							endCallback("failed to change password");
+							endCallback("failed to change password (3)");
 						}
 						break;
 					}
@@ -2298,23 +2365,23 @@
 	 */
 	function commandChangeAuthority(data, socketid, endCallback) {
 		var authority;
-		// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
-		if (data.hasOwnProperty('loginkey')) {
-			socketid = data.loginkey;
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
 		}
 		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			endCallback("failed to change authority");
+			endCallback("failed to change authority (1)");
 			return;
 		}
 		authority = socketidToAccessAuthority[socketid];
 		if (authority.editable !== 'all') {
-			endCallback("failed to change authority");
+			endCallback("failed to change authority (2)");
 			return;
 		}
 		if (data.hasOwnProperty('username') 
 			&& data.hasOwnProperty('editable') 
 			&& data.hasOwnProperty('viewable')
-			&& data.hasOwnProperty('group_manipulatable'))
+			&& data.hasOwnProperty('group_manipulatable')
+			&& data.hasOwnProperty('display_manipulatable'))
 		{
 			getUserList(function (err, userList) {
 				var i;
@@ -2324,7 +2391,8 @@
 							changeGroupUserSetting(data.username, {
 								viewable : data.viewable,
 								editable : data.editable,
-								group_manipulatable : data.group_manipulatable
+								group_manipulatable : data.group_manipulatable,
+								display_manipulatable : data.display_manipulatable
 							}, endCallback);	
 						}
 						break;
@@ -2332,7 +2400,7 @@
 				}
 			});
 		} else {
-			endCallback("failed to change authority");
+			endCallback("failed to change authority (3)");
 		}
 	}
 
@@ -2343,7 +2411,7 @@
 		if (data.hasOwnProperty('loginkey')) {
 		console.log("Logout", data.loginkey)
 			removeAuthority(data.loginkey);
-			endCallback(null);
+			endCallback(null, data.loginkey);
 		} else {
 			endCallback(null);
 		}
@@ -2580,20 +2648,20 @@
 			commandGetGroupList(resultCallback);
 		});
 		
-		ws_connector.on(Command.AddGroup, function (data, resultCallback) {
-			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.AddGroup, function (data, resultCallback, socketid) {
+			commandAddGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.DeleteGroup, function (data, resultCallback) {
-			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.DeleteGroup, function (data, resultCallback, socketid) {
+			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.UpdateGroup, function (data, resultCallback) {
-			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.UpdateGroup, function (data, resultCallback, socketid) {
+			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
-			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback, socketid) {
+			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
@@ -2612,21 +2680,21 @@
 			}
 		});
 		
-		ws_connector.on(Command.AddContent, function (data, resultCallback) {
+		ws_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			console.log(Command.AddContent, data);
-			commandAddContent(metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
+		ws_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
+			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
+			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.NewDB, function (data, resultCallback) {
@@ -2660,20 +2728,6 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
-		/*
-		ws_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
-			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		ws_connector.on(Command.GetGroupUserSetting, function (data, resultCallback) {
-			commandGetGroupUserSetting(data, resultCallback);
-		});
-		ws_connector.on(Command.ChangeAdminUserSetting, function (data, resultCallback) {
-			commandChangeAdminUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		ws_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
-			commandGetAdminUserSetting(data, resultCallback);
-		});
-		*/
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -2698,10 +2752,10 @@
 	function registerEvent(io, socket, ws, ws_connections) {
 		var methods = {};
 
-		io_connector.on(Command.AddContent, function (data, resultCallback) {
+		io_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddContent(metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.AddMetaData, function (data, resultCallback) {
@@ -2716,15 +2770,15 @@
 			commandGetMetaData(data, resultCallback);
 		});
 
-		io_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
+		io_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
+			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateContent, function (data, resultCallback) {
+		io_connector.on(Command.UpdateContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			
-			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
+			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
@@ -2763,20 +2817,20 @@
 			commandGetGroupList(resultCallback);
 		});
 
-		io_connector.on(Command.AddGroup, function (data, resultCallback) {
-			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.AddGroup, function (data, resultCallback, socketid) {
+			commandAddGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteGroup, function (data, resultCallback) {
-			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.DeleteGroup, function (data, resultCallback, socketid) {
+			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateGroup, function (data, resultCallback) {
-			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.UpdateGroup, function (data, resultCallback, socketid) {
+			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
-			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback, socketid) {
+			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
@@ -2823,20 +2877,6 @@
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
-		/*
-		io_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
-			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		io_connector.on(Command.GetGroupUserSetting, function (data, resultCallback) {
-			commandGetGroupUserSetting(data, resultCallback);
-		});
-		io_connector.on(Command.ChangeAdminUserSetting, function (data, resultCallback) {
-			commandChangeAdminUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		io_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
-			commandGetAdminUserSetting(data, resultCallback);
-		});
-		*/
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -2886,7 +2926,8 @@
 				changeGroupUserSetting("Guest", {
 					viewable : [],
 					editable : [],
-					group_manipulatable : false
+					group_manipulatable : false,
+					display_manipulatable : true
 				});
 			}
 		});

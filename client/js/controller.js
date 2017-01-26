@@ -420,9 +420,11 @@
                 // console.log(err, reply);
             });
 		} else {
-			connector.send('UpdateMetaData', [metaData], function (err, reply) {
-				doneUpdateMetaData(err, reply, endCallback);
-			});
+			if (management.isEditable(metaData.group)) {
+				connector.send('UpdateMetaData', [metaData], function (err, reply) {
+					doneUpdateMetaData(err, reply, endCallback);
+				});
+			}
 		}
 	}
 	
@@ -438,9 +440,17 @@
 					doneUpdateWindowMetaData(err, reply, endCallback);
 				});
 			} else {
-				connector.send('UpdateMetaData', metaDataList, function (err, reply) {
-					doneUpdateMetaData(err, reply, endCallback);
-				});
+				// １つでも変更可能なデータが含まれていたら送る.
+				var isEditable = false;
+				var i;
+				for (i = 0; i < metaDataList.length; i = i + 1) {
+					isEditable = isEditable || management.isEditable(metaDataList[i].group);
+				}
+				if (isEditable) {
+					connector.send('UpdateMetaData', metaDataList, function (err, reply) {
+						doneUpdateMetaData(err, reply, endCallback);
+					});
+				}
 			}
 		}
 	}
@@ -603,7 +613,7 @@
 					// 非表示コンテンツ
 					return;
 				}
-				if (!management.getAuthorityObject().isEditable(metaData.group)) {
+				if (!management.isEditable(metaData.group)) {
 					// 編集不可コンテンツ
 					return;
 				}
@@ -730,12 +740,12 @@
 			if (isWindowType(metaData)) {
 				content_property.init(id, "", "display", mime);
 				content_property.assign_content_property(metaData);
-				manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
+				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
 				content_property.init(id, metaData.group, metaData.type, mime);
 				content_property.assign_content_property(metaData);
 				gui.set_update_content_id(id);
-				manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
+				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
 			}
 		}
 
@@ -811,6 +821,11 @@
 			elem = getElem(id, false);
 			
 			metaData = metaDataDict[id];
+			if (!management.isEditable(metaData.group)) {
+				// 編集不可コンテンツ
+				return;
+			}
+			
 			metaData.visible = false;
 			
 			if (isWindowType(metaData)) {
@@ -836,7 +851,7 @@
 			aspect = 1.0;
 		if (elem) {
 			metaData = metaDataDict[elem.id];
-			if (!management.getAuthorityObject().isEditable(metaData.group)) {
+			if (!management.isEditable(metaData.group)) {
 				// 編集不可コンテンツ
 				return;
 			}
@@ -1151,7 +1166,7 @@
 			vaspect = splitWhole.w / splitWhole.h,
 			aspect = orgWidth / orgHeight;
 		
-		if (!management.getAuthorityObject().isEditable(metaData.group)) {
+		if (!management.isEditable(metaData.group)) {
 			// 編集不可コンテンツ
 			return;
 		}
@@ -1341,7 +1356,7 @@
 			metaData = metaDataDict[draggingID];
 
 			if (dragRect.hasOwnProperty(draggingID)) {
-				if (management.getAuthorityObject().isEditable(metaData.group)) {
+				if (management.isEditable(metaData.group)) {
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 					vscreen_util.transPosInv(metaData);
@@ -1404,7 +1419,9 @@
 					if (isLayoutType(metaData)) {
 						applyLayout(metaData);
 					} else {
-						metaData.visible = true;
+						if (management.isEditable(metaData.group)) {
+							metaData.visible = true;
+						}
 						if (isFreeMode()) {
 							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
@@ -2555,6 +2572,10 @@
 			id = selectedIDList[i];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
+				if (!management.isEditable(metaData.group)) {
+					// 編集不可コンテンツ
+					continue;
+				}
 				metaData.visible = false;
 				metaDataList.push(metaData);
 			}
@@ -3497,6 +3518,10 @@
 				id = selectedIDList[i]; 
 				if (metaDataDict.hasOwnProperty(id)) {
 					metaData = metaDataDict[id];
+					if (!management.isEditable(metaData.group)) {
+						// 編集不可コンテンツ
+						continue;
+					}
 					metaData.visible = false;
 					metaDataList.push(metaData);
 				}
@@ -3586,6 +3611,9 @@
 			connector.send('Login', request, function (err, reply) {
 				var invalidLabel = document.getElementById('invalid_login');
 				if (err || reply === "failed") {
+					if (err) {
+						invalidLabel.textContent = err;
+					}
 					loginkey = "";
 					saveCookie();
 					management = new Management();

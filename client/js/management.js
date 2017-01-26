@@ -9,7 +9,9 @@
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
-	// DBの操作GUIの初期化
+	/**
+	 *  DBの操作GUIの初期化
+	 */
 	Management.prototype.initDBGUI = function (contents) {
 		// DBリスト初期化
 		var db_select = document.getElementById("db_select");
@@ -122,7 +124,9 @@
 		}.bind(this);
 	};
 
-	// 履歴管理GUIの初期化
+	/**
+	 *  履歴管理GUIの初期化
+	 */
 	Management.prototype.initHistoryGUI = function (contents) {
 		// 最大履歴保存数の適用
 		var history_num_button = document.getElementById("apply_history_number_button");
@@ -133,7 +137,9 @@
 		input.value = this.maxHistoryNum;
 	};
 
-
+	/**
+	 * ユーザーの権限データを返す
+	 */
 	Management.prototype.getUser = function (name) {
 		var i;
 		for (i = 0; i < this.userList.length; i = i + 1) {
@@ -144,7 +150,9 @@
 		return null;
 	};
 
-	// 閲覧・編集権限GUIの初期化
+	/**
+	 * 閲覧・編集権限GUIの初期化
+	 */
 	Management.prototype.initAuthorityGUI = function (contents) {
 		// 閲覧・編集権限の設定のリスト
 		this.editableSelect = new window.SelectList();
@@ -152,15 +160,15 @@
 		var authTargetFrame = document.getElementById('auth_target_frame');
 		var authSelect = document.getElementById('auth_select');
 		var applyButton = document.getElementById('apply_auth_button');
-		var groupApplyDeleteCheck = document.getElementById('group_add_delete_check');
-		var groupApplyDeleteLabel = document.getElementById('group_add_delete_label');
+		var groupManipulateCheck = document.getElementById('group_add_delete_check');
+		var groupManipulateLabel = document.getElementById('group_add_delete_label');
 		var displayManipulateCheck = document.getElementById('display_manipulate_check');
 		var displayManipulateLabel = document.getElementById('display_manipulate_label');
 		var allAccessText = "全て";
 
 		// グループの追加削除を許可のチェック
-		groupApplyDeleteLabel.onclick = function () {
-			groupApplyDeleteCheck.click();
+		groupManipulateLabel.onclick = function () {
+			groupManipulateCheck.click();
 		};
 		
 		// ディスプレイの操作を許可のチェック
@@ -171,12 +179,14 @@
 		// ユーザー名リストの設定
 		if (this.userList) {
 			var select = authSelect;
+			var user;
 			select.innerHTML = "";
 			for (i = 0; i < this.userList.length; i = i + 1) {
-				if (this.userList[i].type !== "admin") {
+				user = this.userList[i];
+				if (user.type !== "admin") {
 					option = document.createElement('option');
-					option.value = this.userList[i].name;
-					option.innerText = this.userList[i].name;
+					option.value = user.name;
+					option.innerText = user.name;
 					select.appendChild(option);	
 				}
 			}
@@ -193,9 +203,7 @@
 			this.editableSelect.deselectAll();
 			if (user) {
 				for (i = 0; i < this.userList.length; i = i + 1) {
-					if (this.userList[i].type !== "admin" &&
-						this.userList[i].type !== "display" &&
-						this.userList[i].type !== "guest")
+					if (this.userList[i].type !== "admin")
 					{
 						listContentName = this.userList[i].name;
 						if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
@@ -211,6 +219,12 @@
 				}
 				if (user.viewable && user.editable === "all") {
 					this.editableSelect.select(allAccessText);
+				}
+				if (user.hasOwnProperty('group_manipulatable')) {
+					groupManipulateCheck.checked = user.group_manipulatable;
+				}
+				if (user.hasOwnProperty('display_manipulatable')) {
+					displayManipulateCheck.checked = user.display_manipulatable;
 				}
 			}
 		}.bind(this);
@@ -236,8 +250,8 @@
 				var name = authSelect.childNodes[index].value;
 				var editable = this.editableSelect.getSelected();
 				var viewable = this.viewableSelect.getSelected();
-				var group_manipulatable = groupApplyDeleteCheck.checked;
-				var display_manipulate = displayManipulateCheck.checked;
+				var group_manipulatable = groupManipulateCheck.checked;
+				var display_manipulatable = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
 					editable = "all";
 				}
@@ -245,7 +259,7 @@
 					viewable = "all";
 				}
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					name, editable, viewable, group_manipulatable, display_manipulate);
+					name, editable, viewable, group_manipulatable, display_manipulatable);
 			}
 		}.bind(this);
 
@@ -253,7 +267,9 @@
 		authSelect.onchange();
 	};
 	
-	// パスワード設定GUIの初期化
+	/**
+	 *  パスワード設定GUIの初期化
+	 */
 	Management.prototype.initPasswordGUI = function (contents) {
 		var authSelect = document.getElementById('auth_select_pass');
 		var prePass = document.getElementById('old_password');
@@ -314,6 +330,7 @@
 	};
 
 	/**
+	 * 管理GUIを表示する
 	 * @param contents.dblist dbリスト
 	 */
 	Management.prototype.show = function (contents) {
@@ -407,6 +424,10 @@
 				return false;
 			}
 		}
+	};
+
+	Management.prototype.isEditable = function (group) {
+		return this.getAuthorityObject().isEditable(group);
 	};
 
 	Management.prototype.setUserList = function (userList) {
