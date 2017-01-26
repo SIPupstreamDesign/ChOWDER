@@ -1,4 +1,7 @@
 "use strict";
+const electron = require('electron');
+const app = electron.app;
+
 let desktopCapturer = require('electron').desktopCapturer;
 let gWinNum = 0;
 // エレクトロンだと必要ない？
@@ -16,8 +19,8 @@ window.URL = window.URL || window.webkitURL;
         desktopCapturer.getSources({types: ['window', 'screen']}, function(error, sources) {
             if (error) throw error;
             for (let i = 0; i < sources.length; ++i) {
-                console.log("sources[i].name = "+ sources[i].name);
-                if(sources[i].name != "Entire screen" && sources[i].name != "electron-capture") {
+                console.log("sources["+i+"].name = "+ sources[i].name);
+                if(sources[i].name != "Entire screen" && sources[i].name != "desktop-capture") {
                     addImage(sources[i].thumbnail);
                 }
                 if (sources[i].name == "Entire screen") {
@@ -49,6 +52,15 @@ window.URL = window.URL || window.webkitURL;
 
     function gotStream(stream) {
         document.querySelector('video').src = URL.createObjectURL(stream);
+        let video = document.getElementById("video");
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, );
+    }
+
+
+    function sendImage(){
+
     }
 
     function getUserMediaError(e) {

@@ -1,6 +1,7 @@
 
 const electron = require('electron');
 // Module to control application life.
+
 const app = electron.app;
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
@@ -10,11 +11,40 @@ const url = require('url');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
+
+
+let virtualWindow;
 let mainWindow;
 
+
 function createWindow () {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({width: 1600, height: 900});
+
+  // Screen APIの読み込み
+  const screen = electron.screen;
+  const size = screen.getPrimaryDisplay().size;
+
+  // 仮想ウィンドウ。デスクトップ全体。
+  virtualWindow = new BrowserWindow({
+    left: 0,
+    top: 0,
+    width: size.width,
+    height: size.height,
+    frame: false,
+    show: false,
+    transparent: true,
+    resizable: false,
+    'always-on-top': false
+  });
+
+  // 子ウィンドウ。メインのウィンドウ。
+  mainWindow = new BrowserWindow({
+    width: 1600, 
+    height: 900,
+    parent: virtualWindow,
+    autoHideMenuBar: true
+  });
+  // メインウィンドウのみ可視
+  mainWindow.show();
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -23,12 +53,14 @@ function createWindow () {
     slashes: true
   }));
 
+
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     mainWindow = null;
+    virtualWindow = null;
   });
 }
 
@@ -49,7 +81,7 @@ app.on('window-all-closed', function () {
 app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) {
+  if (mainWindow === null && virtualWindow === null) {
     createWindow();
   }
 });
