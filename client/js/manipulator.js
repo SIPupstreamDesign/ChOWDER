@@ -20,6 +20,7 @@
 		this.draggingOffsetFunc = null;
 		this.closeFunc = null;
 		this.parent = null;
+		this.authority = null;
 	};
 	Manipulator.prototype = Object.create(EventEmitter.prototype);
 
@@ -278,7 +279,7 @@
 	 * @param {Element} previewArea 表示先エレメント
 	 * @param {Element} metaData メタデータ
 	 */
-	Manipulator.prototype.showManipulator = function (targetElem, previewArea, metaData) {
+	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaData) {
 		var manips = [
 				document.createElement('span'),
 				document.createElement('span'),
@@ -289,18 +290,21 @@
 			manip,
 			i;
 		
+		this.authority = authority;
 		this.moveManipulator(targetElem);
 		this.removeManipulator();
 		this.parent = previewArea;
 		
-		for (i = 0; i < manips.length; i = i + 1) {
-			manip = manips[i];
-			manip.id = "_manip_" + i;
-			this.setupManipulator(manip, targetElem);
-			previewArea.appendChild(manip);
-			this.manipulators.push(manip);
+		if (this.authority.isEditable(metaData.group)) {
+			for (i = 0; i < manips.length; i = i + 1) {
+				manip = manips[i];
+				manip.id = "_manip_" + i;
+				this.setupManipulator(manip, targetElem);
+				previewArea.appendChild(manip);
+				this.manipulators.push(manip);
+			}
+			this.setupManipulatorMenus(previewArea, targetElem, metaData);
 		}
-		this.setupManipulatorMenus(previewArea, targetElem, metaData);
 	};
 	
 	Manipulator.prototype.isShowManipulator = function () {

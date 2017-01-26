@@ -730,12 +730,12 @@
 			if (isWindowType(metaData)) {
 				content_property.init(id, "", "display", mime);
 				content_property.assign_content_property(metaData);
-				manipulator.showManipulator(elem, gui.get_display_preview_area(), metaData);
+				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
 				content_property.init(id, metaData.group, metaData.type, mime);
 				content_property.assign_content_property(metaData);
 				gui.set_update_content_id(id);
-				manipulator.showManipulator(elem, gui.get_content_preview_area(), metaData);
+				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
 			}
 		}
 
@@ -811,6 +811,11 @@
 			elem = getElem(id, false);
 			
 			metaData = metaDataDict[id];
+			if (!management.getAuthorityObject().isEditable(metaData.group)) {
+				// 編集不可コンテンツ
+				return;
+			}
+			
 			metaData.visible = false;
 			
 			if (isWindowType(metaData)) {
@@ -1404,7 +1409,9 @@
 					if (isLayoutType(metaData)) {
 						applyLayout(metaData);
 					} else {
-						metaData.visible = true;
+						if (management.getAuthorityObject().isEditable(metaData.group)) {
+							metaData.visible = true;
+						}
 						if (isFreeMode()) {
 							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
@@ -2555,6 +2562,10 @@
 			id = selectedIDList[i];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
+				if (!management.getAuthorityObject().isEditable(metaData.group)) {
+					// 編集不可コンテンツ
+					continue;
+				}
 				metaData.visible = false;
 				metaDataList.push(metaData);
 			}
@@ -3497,6 +3508,10 @@
 				id = selectedIDList[i]; 
 				if (metaDataDict.hasOwnProperty(id)) {
 					metaData = metaDataDict[id];
+					if (!management.getAuthorityObject().isEditable(metaData.group)) {
+						// 編集不可コンテンツ
+						continue;
+					}
 					metaData.visible = false;
 					metaDataList.push(metaData);
 				}
