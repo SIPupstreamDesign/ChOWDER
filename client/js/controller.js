@@ -420,9 +420,11 @@
                 // console.log(err, reply);
             });
 		} else {
-			connector.send('UpdateMetaData', [metaData], function (err, reply) {
-				doneUpdateMetaData(err, reply, endCallback);
-			});
+			if (management.isEditable(metaData.group)) {
+				connector.send('UpdateMetaData', [metaData], function (err, reply) {
+					doneUpdateMetaData(err, reply, endCallback);
+				});
+			}
 		}
 	}
 	
@@ -438,9 +440,17 @@
 					doneUpdateWindowMetaData(err, reply, endCallback);
 				});
 			} else {
-				connector.send('UpdateMetaData', metaDataList, function (err, reply) {
-					doneUpdateMetaData(err, reply, endCallback);
-				});
+				// １つでも変更可能なデータが含まれていたら送る.
+				var isEditable = false;
+				var i;
+				for (i = 0; i < metaDataList.length; i = i + 1) {
+					isEditable = isEditable || management.isEditable(metaDataList[i].group);
+				}
+				if (isEditable) {
+					connector.send('UpdateMetaData', metaDataList, function (err, reply) {
+						doneUpdateMetaData(err, reply, endCallback);
+					});
+				}
 			}
 		}
 	}
@@ -603,7 +613,7 @@
 					// 非表示コンテンツ
 					return;
 				}
-				if (!management.getAuthorityObject().isEditable(metaData.group)) {
+				if (!management.isEditable(metaData.group)) {
 					// 編集不可コンテンツ
 					return;
 				}
@@ -811,7 +821,7 @@
 			elem = getElem(id, false);
 			
 			metaData = metaDataDict[id];
-			if (!management.getAuthorityObject().isEditable(metaData.group)) {
+			if (!management.isEditable(metaData.group)) {
 				// 編集不可コンテンツ
 				return;
 			}
@@ -841,7 +851,7 @@
 			aspect = 1.0;
 		if (elem) {
 			metaData = metaDataDict[elem.id];
-			if (!management.getAuthorityObject().isEditable(metaData.group)) {
+			if (!management.isEditable(metaData.group)) {
 				// 編集不可コンテンツ
 				return;
 			}
@@ -1156,7 +1166,7 @@
 			vaspect = splitWhole.w / splitWhole.h,
 			aspect = orgWidth / orgHeight;
 		
-		if (!management.getAuthorityObject().isEditable(metaData.group)) {
+		if (!management.isEditable(metaData.group)) {
 			// 編集不可コンテンツ
 			return;
 		}
@@ -1346,7 +1356,7 @@
 			metaData = metaDataDict[draggingID];
 
 			if (dragRect.hasOwnProperty(draggingID)) {
-				if (management.getAuthorityObject().isEditable(metaData.group)) {
+				if (management.isEditable(metaData.group)) {
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 					vscreen_util.transPosInv(metaData);
@@ -1409,7 +1419,7 @@
 					if (isLayoutType(metaData)) {
 						applyLayout(metaData);
 					} else {
-						if (management.getAuthorityObject().isEditable(metaData.group)) {
+						if (management.isEditable(metaData.group)) {
 							metaData.visible = true;
 						}
 						if (isFreeMode()) {
@@ -2562,7 +2572,7 @@
 			id = selectedIDList[i];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				if (!management.getAuthorityObject().isEditable(metaData.group)) {
+				if (!management.isEditable(metaData.group)) {
 					// 編集不可コンテンツ
 					continue;
 				}
@@ -3508,7 +3518,7 @@
 				id = selectedIDList[i]; 
 				if (metaDataDict.hasOwnProperty(id)) {
 					metaData = metaDataDict[id];
-					if (!management.getAuthorityObject().isEditable(metaData.group)) {
+					if (!management.isEditable(metaData.group)) {
 						// 編集不可コンテンツ
 						continue;
 					}

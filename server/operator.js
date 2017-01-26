@@ -1588,6 +1588,36 @@
 	}
 	
 	/**
+	 * socketidユーザーがgroupを編集可能かどうか返す
+	 * @method isEditable
+	 * @param {String} socketid socketid
+	 * @param {String} group group
+	 */
+	function isEditable(socketid, groupName) {
+		if (groupName === "default") {
+			return true;
+		}
+		if (groupName === undefined || groupName === "") {
+			return true;
+		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			if (authority.editable === "all") {
+				return true;
+			}
+			if (authority.editable.indexOf(groupName) >= 0) {
+				console.error("piyoe");
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * コンテンツの追加を行うコマンドを実行する.
 	 * @method commandAddContent
 	 * @param {Object} metaData メタデータ
@@ -1595,39 +1625,44 @@
 	 * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
 	 * @param {Function} updateEndCallback コンテンツ差し替えした場合に終了時に呼ばれるコールバック
 	 */
-	function commandAddContent(metaData, binaryData, endCallback, updateEndCallback) {
+	function commandAddContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
 		console.log("commandAddContent", metaData, binaryData);
 		
-		if (metaData.hasOwnProperty('id') && metaData.id !== "") {
-			textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
-				if (!err && doesExists === 1) {
-					getMetaData('', metaData.id, function (meta) {
-						var oldContentID,
-							newContentID;
-						if (metaData.hasOwnProperty('content_id')) {
-							oldContentID = metaData.content_id;
-						}
-						if (meta.hasOwnProperty('content_id')) {
-							newContentID = meta.content_id;
-						}
-						
-						
-						if (newContentID !== '' && oldContentID === newContentID) {
-							updateContent(metaData, binaryData, function (reply) {
-								if (updateEndCallback) {
-									updateEndCallback(null, reply);
-								}
-							});
-						} else {
-							addContentCore(meta, binaryData, endCallback);
-						}
-					});
-				} else {
-					addContentCore(metaData, binaryData, endCallback);
-				}
-			});
+		if (isEditable(socketid, metaData.group)) {
+			if (metaData.hasOwnProperty('id') && metaData.id !== "") {
+				textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+					if (!err && doesExists === 1) {
+						getMetaData('', metaData.id, function (meta) {
+							var oldContentID,
+								newContentID;
+							if (metaData.hasOwnProperty('content_id')) {
+								oldContentID = metaData.content_id;
+							}
+							if (meta.hasOwnProperty('content_id')) {
+								newContentID = meta.content_id;
+							}
+							
+							if (newContentID !== '' && oldContentID === newContentID) {
+								updateContent(metaData, binaryData, function (reply) {
+									if (updateEndCallback) {
+										updateEndCallback(null, reply);
+									}
+								});
+							} else {
+								addContentCore(meta, binaryData, endCallback);
+							}
+						});
+					} else {
+						addContentCore(metaData, binaryData, endCallback);
+					}
+				});
+			} else {
+				addContentCore(metaData, binaryData, endCallback);
+			}
 		} else {
-			addContentCore(metaData, binaryData, endCallback);
+			if (endCallback) {
+				endCallback("access denied");
+			}
 		}
 	}
 	
@@ -1703,7 +1738,7 @@
 	 * @param {JSON} json メタデータリスト
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandDeleteContent(json, endCallback) {
+	function commandDeleteContent(socketid, json, endCallback) {
 		console.log("commandDeleteContent:", json.length);
 		var i,
 			metaData,
@@ -1717,31 +1752,35 @@
 					}
 				} else {
 					var metaData = json[all_done - 1];
-					if (metaData && metaData.hasOwnProperty('type') && metaData.type === 'all') {
-						textClient.keys(metadataPrefix + '*', function (err, replies) {
-							replies.forEach(function (id, index) {
-								console.log(id);
-								textClient.hgetall(id, function (err, data) {
-									if (!err && data) {
-										deleteContent(data, function (meta) {
-											if (endCallback) {
-												endCallback(null, meta);
-											}
-										});
-									}
+					if (isEditable(socketid, metaData.group)) {
+						if (metaData && metaData.hasOwnProperty('type') && metaData.type === 'all') {
+							textClient.keys(metadataPrefix + '*', function (err, replies) {
+								replies.forEach(function (id, index) {
+									console.log(id);
+									textClient.hgetall(id, function (err, data) {
+										if (!err && data) {
+											deleteContent(data, function (meta) {
+												if (endCallback) {
+													endCallback(null, meta);
+												}
+											});
+										}
+									});
 								});
 							});
-						});
-						all_done = 0;
-						if (endCallback) {
-							endCallback(null, results);
-							return;
+							all_done = 0;
+							if (endCallback) {
+								endCallback(null, results);
+								return;
+							}
+						} else {
+							deleteContent(metaData, function (meta) {
+								results.push(meta);
+								syncDelete(results, all_done - 1);
+							});
 						}
 					} else {
-						deleteContent(metaData, function (meta) {
-							results.push(meta);
-							syncDelete(results, all_done - 1);
-						});
+						syncDelete(results, all_done - 1);
 					}
 				}
 			};
@@ -1756,44 +1795,18 @@
 	 * @param {BLOB} binaryData loadMetaBinaryから受領したバイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateContent(metaData, binaryData, endCallback) {
+	function commandUpdateContent(socketid, metaData, binaryData, endCallback) {
 		//console.log("commandUpdateContent");
-		updateContent(metaData, binaryData, function (meta) {
-			// socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
-			if (endCallback) {
-				endCallback(null, meta);
-			}
-		});
-	}
-	
-	/**
-	 * socketidユーザーがgroupを編集可能かどうか返す
-	 * @method isEditable
-	 * @param {String} socketid socketid
-	 * @param {String} group group
-	 */
-	function isEditable(socketid, groupName) {
-		if (groupName === "default") {
-			return true;
+		if (isEditable(socketid, metaData.group)) {
+			updateContent(metaData, binaryData, function (meta) {
+				// socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
+				if (endCallback) {
+					endCallback(null, meta);
+				}
+			});
+		} else {
+			endCallback("access denied");
 		}
-		if (groupName === undefined || groupName === "") {
-			return true;
-		}
-		if (socketidToLoginKey.hasOwnProperty(socketid)) {
-			socketid = socketidToLoginKey[socketid];
-		}
-		var authority;
-		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			authority = socketidToAccessAuthority[socketid];
-			if (authority.editable === "all") {
-				return true;
-			}
-			if (authority.editable.indexOf(groupName) >= 0) {
-				console.error("piyoe");
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	/**
@@ -2599,21 +2612,21 @@
 			}
 		});
 		
-		ws_connector.on(Command.AddContent, function (data, resultCallback) {
+		ws_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			console.log(Command.AddContent, data);
-			commandAddContent(metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
+		ws_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
+			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.UpdateContent, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
+			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.NewDB, function (data, resultCallback) {
@@ -2685,10 +2698,10 @@
 	function registerEvent(io, socket, ws, ws_connections) {
 		var methods = {};
 
-		io_connector.on(Command.AddContent, function (data, resultCallback) {
+		io_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddContent(metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.AddMetaData, function (data, resultCallback) {
@@ -2703,15 +2716,15 @@
 			commandGetMetaData(data, resultCallback);
 		});
 
-		io_connector.on(Command.DeleteContent, function (data, resultCallback) {
-			commandDeleteContent(data, post_deleteContent(ws, io, resultCallback));
+		io_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
+			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateContent, function (data, resultCallback) {
+		io_connector.on(Command.UpdateContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			
-			commandUpdateContent(metaData, binaryData, post_updateContent(ws, io, resultCallback));
+			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {

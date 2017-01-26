@@ -409,6 +409,10 @@
 		}
 	};
 
+	Management.prototype.isEditable = function (group) {
+		return this.getAuthorityObject().isEditable(group);
+	};
+
 	Management.prototype.setUserList = function (userList) {
 		this.userList = userList;
 	};
