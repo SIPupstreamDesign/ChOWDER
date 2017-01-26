@@ -3611,6 +3611,9 @@
 			connector.send('Login', request, function (err, reply) {
 				var invalidLabel = document.getElementById('invalid_login');
 				if (err || reply === "failed") {
+					if (err) {
+						invalidLabel.textContent = err;
+					}
 					loginkey = "";
 					saveCookie();
 					management = new Management();

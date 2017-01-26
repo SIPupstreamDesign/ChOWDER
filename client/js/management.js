@@ -9,7 +9,9 @@
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
-	// DBの操作GUIの初期化
+	/**
+	 *  DBの操作GUIの初期化
+	 */
 	Management.prototype.initDBGUI = function (contents) {
 		// DBリスト初期化
 		var db_select = document.getElementById("db_select");
@@ -122,7 +124,9 @@
 		}.bind(this);
 	};
 
-	// 履歴管理GUIの初期化
+	/**
+	 *  履歴管理GUIの初期化
+	 */
 	Management.prototype.initHistoryGUI = function (contents) {
 		// 最大履歴保存数の適用
 		var history_num_button = document.getElementById("apply_history_number_button");
@@ -133,7 +137,9 @@
 		input.value = this.maxHistoryNum;
 	};
 
-
+	/**
+	 * ユーザーの権限データを返す
+	 */
 	Management.prototype.getUser = function (name) {
 		var i;
 		for (i = 0; i < this.userList.length; i = i + 1) {
@@ -144,7 +150,9 @@
 		return null;
 	};
 
-	// 閲覧・編集権限GUIの初期化
+	/**
+	 * 閲覧・編集権限GUIの初期化
+	 */
 	Management.prototype.initAuthorityGUI = function (contents) {
 		// 閲覧・編集権限の設定のリスト
 		this.editableSelect = new window.SelectList();
@@ -204,12 +212,6 @@
 						if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
 							this.editableSelect.select(listContentName);
 						}
-						if (user.hasOwnProperty('group_manipulatable')) {
-							groupManipulateCheck.checked = user.group_manipulatable;
-						}
-						if (user.hasOwnProperty('display_manipulatable')) {
-							displayManipulateCheck.checked = user.display_manipulatable;
-						}
 					}
 				}
 				if (user.viewable && user.viewable === "all") {
@@ -217,6 +219,12 @@
 				}
 				if (user.viewable && user.editable === "all") {
 					this.editableSelect.select(allAccessText);
+				}
+				if (user.hasOwnProperty('group_manipulatable')) {
+					groupManipulateCheck.checked = user.group_manipulatable;
+				}
+				if (user.hasOwnProperty('display_manipulatable')) {
+					displayManipulateCheck.checked = user.display_manipulatable;
 				}
 			}
 		}.bind(this);
@@ -259,7 +267,9 @@
 		authSelect.onchange();
 	};
 	
-	// パスワード設定GUIの初期化
+	/**
+	 *  パスワード設定GUIの初期化
+	 */
 	Management.prototype.initPasswordGUI = function (contents) {
 		var authSelect = document.getElementById('auth_select_pass');
 		var prePass = document.getElementById('old_password');
@@ -320,6 +330,7 @@
 	};
 
 	/**
+	 * 管理GUIを表示する
 	 * @param contents.dblist dbリスト
 	 */
 	Management.prototype.show = function (contents) {

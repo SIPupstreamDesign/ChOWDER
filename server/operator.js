@@ -713,6 +713,10 @@
 	 * socketidの権限情報キャッシュを削除する
 	 */
 	function removeAuthority(socketid) {
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+			delete socketidToLoginKey[socketid];
+		}
 		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			delete socketidToAccessAuthority[socketid];
 		}
@@ -2302,6 +2306,9 @@
 					}
 					endCallback(null, result);
 					return;
+				} else {
+					endCallback("ログアウトしました", false);
+					return;
 				}
 			}
 			login(data.username, data.password, socketid, endCallback);
@@ -2321,7 +2328,7 @@
 		}
 		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			endCallback("failed to change password (1)");
-			returnc;
+			return;
 		}
 		authority = socketidToAccessAuthority[socketid];
 		if (authority.editable !== 'all') {
@@ -2404,7 +2411,7 @@
 		if (data.hasOwnProperty('loginkey')) {
 		console.log("Logout", data.loginkey)
 			removeAuthority(data.loginkey);
-			endCallback(null);
+			endCallback(null, data.loginkey);
 		} else {
 			endCallback(null);
 		}
