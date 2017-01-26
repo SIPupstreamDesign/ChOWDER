@@ -417,9 +417,15 @@
 				}
 				return false;
 			},
-			canGroupManipulate : function () {
+			isGroupManipulable : function () {
 				if (authority && authority.hasOwnProperty('group_manipulatable')) {
 					return authority.group_manipulatable;
+				}
+				return false;
+			},
+			isDisplayManipulatable : function () {
+				if (authority && authority.hasOwnProperty('display_manipulatable')) {
+					return authority.display_manipulatable;
 				}
 				return false;
 			}
@@ -428,6 +434,10 @@
 
 	Management.prototype.isEditable = function (group) {
 		return this.getAuthorityObject().isEditable(group);
+	};
+
+	Management.prototype.isDisplayManipulatable = function () {
+		return this.getAuthorityObject().isDisplayManipulatable();
 	};
 
 	Management.prototype.setUserList = function (userList) {

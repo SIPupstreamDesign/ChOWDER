@@ -1356,7 +1356,14 @@
 			metaData = metaDataDict[draggingID];
 
 			if (dragRect.hasOwnProperty(draggingID)) {
-				if (management.isEditable(metaData.group)) {
+				if (isWindowType(metaData) && management.isDisplayManipulatable()) {
+					// display操作可能
+					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
+					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
+					vscreen_util.transPosInv(metaData);
+					vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+				} else if (!isWindowType(metaData) && management.isEditable(metaData.group)) {
+					// content編集可能
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 					vscreen_util.transPosInv(metaData);

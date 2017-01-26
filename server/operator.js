@@ -1678,6 +1678,18 @@
 		});
 	}
 
+	function isDisplayManipulatable(socketid, endCallback) {
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			endCallback(authority.display_manipulatable);
+			return;
+		}
+	}
+
 	/**
 	 * コンテンツの追加を行うコマンドを実行する.
 	 * @method commandAddContent
@@ -1940,27 +1952,31 @@
 			results = [],
 			all_done = json.length;
 
-		for (i = 0; i < json.length; i = i + 1) {
-			meta = json[i];
-			getWindowMetaData(meta, function (metaData) {
-				if (metaData) {
-					deleteWindow(metaData, function (meta) {
-						--all_done;
-						results.push(meta);
-						if (all_done <= 0) {
+		isDisplayManipulatable(socketid, function (isManipulatable) {
+			if (isManipulatable) {
+				for (i = 0; i < json.length; i = i + 1) {
+					meta = json[i];
+					getWindowMetaData(meta, function (metaData) {
+						if (metaData) {
+							deleteWindow(metaData, function (meta) {
+								--all_done;
+								results.push(meta);
+								if (all_done <= 0) {
+									if (endCallback) {
+										endCallback(null, results);
+										return;
+									}
+								}
+							});
+						} else {
 							if (endCallback) {
-								endCallback(null, results);
-								return;
+								endCallback("not exists window metadata", null);
 							}
 						}
 					});
-				} else {
-					if (endCallback) {
-						endCallback("not exists window metadata", null);
-					}
 				}
-			});
-		}
+			}
+		});
 	}
 	
 	/**
@@ -2188,19 +2204,23 @@
 			results = [],
 			all_done = json.length;
 
-		for (i = 0; i < json.length; i = i + 1) {
-			metaData = json[i];
-			updateWindowMetaData(socketid, metaData, function (meta) {
-				--all_done;
-				results.push(meta);
-				if (all_done <= 0) {
-					if (endCallback) {
-						endCallback(null, results);
-						return;
-					}
+		isDisplayManipulatable(socketid, function (isManipulatable) {
+			if (isManipulatable) {
+				for (i = 0; i < json.length; i = i + 1) {
+					metaData = json[i];
+					updateWindowMetaData(socketid, metaData, function (meta) {
+						--all_done;
+						results.push(meta);
+						if (all_done <= 0) {
+							if (endCallback) {
+								endCallback(null, results);
+								return;
+							}
+						}
+					});
 				}
-			});
-		}
+			}
+		});
 	}
 
     /**

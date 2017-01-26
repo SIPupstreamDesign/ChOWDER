@@ -88,7 +88,7 @@
 					this.tabGroupToElems[groupName].push(box);
 				}
 			}
-			if (this.authority.canGroupManipulate()) {
+			if (this.authority.isGroupManipulable()) {
 				// 上へボタン
 				elem = document.createElement('div');
 				elem.className = "group_tab_up";
@@ -208,7 +208,7 @@
 		}.bind(this);
 		elem.appendChild(link);
 		
-		if (groupName !== defaultGroup && this.authority.canGroupManipulate()) {
+		if (groupName !== defaultGroup && this.authority.isGroupManipulable()) {
 			setting_button = document.createElement('div');
 			setting_button.className = "group_tab_setting";
 			setting_button.onclick = (function (self, groupName) {

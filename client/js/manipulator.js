@@ -295,7 +295,9 @@
 		this.removeManipulator();
 		this.parent = previewArea;
 		
-		if (this.authority.isEditable(metaData.group)) {
+		if ( (metaData.type !== "window" && this.authority.isEditable(metaData.group))
+		|| (metaData.type === "window" && this.authority.isDisplayManipulatable())) 
+		{
 			for (i = 0; i < manips.length; i = i + 1) {
 				manip = manips[i];
 				manip.id = "_manip_" + i;
