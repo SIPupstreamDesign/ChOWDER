@@ -383,6 +383,29 @@
 		return null;
 	};
 
+
+	ControllerGUI.prototype.updateContextMenuAccess = function () {
+		// コンテキストメニューのアクセス制限による表示非表示
+		var i;
+		var authority = this.management.getAuthorityObject();
+		var editableMenus = [
+			document.getElementById('context_menu_add_content'),
+			document.getElementById("context_menu_move_front"),
+			document.getElementById("context_menu_move_back"),
+			document.getElementById('context_menu_change_group'),
+			document.getElementById('context_menu_change_image')
+		];
+		if (authority.isEditable(this.get_current_group_name())) {
+			for (i = 0; i < editableMenus.length; i = i + 1) {
+				editableMenus[i].style.display = "block";
+			}
+		} else {
+			for (i = 0; i < editableMenus.length; i = i + 1) {
+				editableMenus[i].style.display = "none";
+			}
+		}
+	}
+
 	ControllerGUI.prototype.initContextMenuVisible = function (menu, type, type2) {
 		// 出現タイミング調整.
 		var mouseDownPosX = null,
@@ -422,24 +445,7 @@
 					rect,
 					i;
 
-				// コンテキストメニューのアクセス制限による表示非表示
-				var authority = this.management.getAuthorityObject();
-				var editableMenus = [
-					document.getElementById('context_menu_add_content'),
-					document.getElementById("context_menu_move_front"),
-					document.getElementById("context_menu_move_back"),
-					document.getElementById('context_menu_change_group'),
-					document.getElementById('context_menu_change_image')
-				];
-				if (authority.isEditable(this.get_current_group_name())) {
-					for (i = 0; i < editableMenus.length; i = i + 1) {
-						editableMenus[i].style.display = "block";
-					}
-				} else {
-					for (i = 0; i < editableMenus.length; i = i + 1) {
-						editableMenus[i].style.display = "none";
-					}
-				}
+				this.updateContextMenuAccess();
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
 					

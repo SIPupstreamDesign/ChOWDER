@@ -44,7 +44,13 @@
 		socketidToLoginKey = {},
 		methods,
         connectionId = {},
-        connectionCount = 0;
+        connectionCount = 0,
+		userSettingKeys = [
+			"viewable",
+			"editable",
+			"group_manipulatable",
+			"display_manipulatable"
+		];
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
@@ -510,11 +516,11 @@
 			if (setting.hasOwnProperty('password')) {
 				data[groupName].password = util.encrypt(setting.password, cryptkey);
 			}
-			if (setting.hasOwnProperty('editable')) {
-				data[groupName].editable = setting.editable;
-			}
-			if (setting.hasOwnProperty('viewable')) {
-				data[groupName].viewable = setting.viewable;
+			for (var i = 0; i < userSettingKeys.length; i = i + 1) {
+				var key = userSettingKeys[i];
+				if (setting.hasOwnProperty(key)) {
+					data[groupName][key] = setting[key];
+				}
 			}
 			textClient.set(groupUserPrefix, JSON.stringify(data), (function (data) {
 				return function (err, reply) {
@@ -613,11 +619,11 @@
 					// Guestユーザー
 					var guestUserData = { name : "Guest", type : "guest"};
 					if (setting.hasOwnProperty("Guest")) {
-						if (setting.Guest.hasOwnProperty("viewable")) {
-							guestUserData.viewable = setting.Guest.viewable;
-						}
-						if (setting.Guest.hasOwnProperty("editable")) {
-							guestUserData.editable = setting.Guest.editable;
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (setting.Guest.hasOwnProperty(key)) {
+								guestUserData[key] = setting.Guest[key];
+							}
 						}
 					}
 					userList.push(guestUserData);
@@ -637,11 +643,11 @@
 								if (setting.hasOwnProperty(name)) {
 									groupSetting = setting[name];
 								}
-								if (groupSetting.hasOwnProperty("viewable")) {
-									userListData.viewable = groupSetting.viewable;
-								}
-								if (groupSetting.hasOwnProperty("editable")) {
-									userListData.editable = groupSetting.editable;
+								for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+									var key = userSettingKeys[k];
+									if (groupSetting.hasOwnProperty(key)) {
+										userListData[key] = groupSetting[key];
+									}
 								}
 								userList.push(userListData);
 							}
@@ -688,8 +694,12 @@
 				if (groupSetting) {
 					if (groupSetting.hasOwnProperty(name)) {
 						authority.name = name;
-						authority.viewable = groupSetting[name].viewable;
-						authority.editable = groupSetting[name].editable;
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (groupSetting[name].hasOwnProperty(key)) {
+								authority[key] = groupSetting[name][key];
+							}
+						}
 						socketidToAccessAuthority[socketid] = authority;
 					}
 				}

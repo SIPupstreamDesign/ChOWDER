@@ -152,15 +152,15 @@
 		var authTargetFrame = document.getElementById('auth_target_frame');
 		var authSelect = document.getElementById('auth_select');
 		var applyButton = document.getElementById('apply_auth_button');
-		var groupApplyDeleteCheck = document.getElementById('group_add_delete_check');
-		var groupApplyDeleteLabel = document.getElementById('group_add_delete_label');
+		var groupManipulateCheck = document.getElementById('group_add_delete_check');
+		var groupManipulateLabel = document.getElementById('group_add_delete_label');
 		var displayManipulateCheck = document.getElementById('display_manipulate_check');
 		var displayManipulateLabel = document.getElementById('display_manipulate_label');
 		var allAccessText = "全て";
 
 		// グループの追加削除を許可のチェック
-		groupApplyDeleteLabel.onclick = function () {
-			groupApplyDeleteCheck.click();
+		groupManipulateLabel.onclick = function () {
+			groupManipulateCheck.click();
 		};
 		
 		// ディスプレイの操作を許可のチェック
@@ -177,6 +177,7 @@
 					option = document.createElement('option');
 					option.value = this.userList[i].name;
 					option.innerText = this.userList[i].name;
+					console.error(this.userList[i]);
 					select.appendChild(option);	
 				}
 			}
@@ -236,7 +237,7 @@
 				var name = authSelect.childNodes[index].value;
 				var editable = this.editableSelect.getSelected();
 				var viewable = this.viewableSelect.getSelected();
-				var group_manipulatable = groupApplyDeleteCheck.checked;
+				var group_manipulatable = groupManipulateCheck.checked;
 				var display_manipulate = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
 					editable = "all";
