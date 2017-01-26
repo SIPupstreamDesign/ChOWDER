@@ -2728,20 +2728,6 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
-		/*
-		ws_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
-			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		ws_connector.on(Command.GetGroupUserSetting, function (data, resultCallback) {
-			commandGetGroupUserSetting(data, resultCallback);
-		});
-		ws_connector.on(Command.ChangeAdminUserSetting, function (data, resultCallback) {
-			commandChangeAdminUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		ws_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
-			commandGetAdminUserSetting(data, resultCallback);
-		});
-		*/
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -2891,20 +2877,6 @@
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
-		/*
-		io_connector.on(Command.ChangeGroupUserSetting, function (data, resultCallback) {
-			commandChangeGroupUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		io_connector.on(Command.GetGroupUserSetting, function (data, resultCallback) {
-			commandGetGroupUserSetting(data, resultCallback);
-		});
-		io_connector.on(Command.ChangeAdminUserSetting, function (data, resultCallback) {
-			commandChangeAdminUserSetting(data, post_updateSetting(ws, io, resultCallback));
-		});
-		io_connector.on(Command.GetAdminUserSetting, function (data, resultCallback) {
-			commandGetAdminUserSetting(data, resultCallback);
-		});
-		*/
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback) {
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});

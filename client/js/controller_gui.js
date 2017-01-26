@@ -445,6 +445,8 @@
 					rect,
 					i;
 
+				// コンテキストメニューを刷新
+				this.updateContextMenu();
 				this.updateContextMenuAccess();
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
@@ -674,6 +676,10 @@
 			gname,
 			authority = this.management.getAuthorityObject();
 		container.innerHTML = "";
+
+		if (!authority.isEditable(this.get_current_group_name())) {
+			return;
+		}
 
 		for (gname in groupToElems) {
 			if (groupToElems.hasOwnProperty(gname)) {
