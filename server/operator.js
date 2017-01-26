@@ -680,6 +680,8 @@
 						authority.name = name;
 						authority.viewable = "all";
 						authority.editable = "all";
+						authority.group_manipulatable = true;
+						authority.display_manipulatable = true;
 						socketidToAccessAuthority[socketid] = authority;
 					}
 				}
@@ -1610,11 +1612,38 @@
 				return true;
 			}
 			if (authority.editable.indexOf(groupName) >= 0) {
-				console.error("piyoe");
 				return true;
 			}
 		}
 		return false;
+	}
+
+	function isGroupManipulatable(socketid, groupID, endCallback) {
+		getGroupList(function (err, data) {
+			var index = getGroupIndex(data.grouplist, groupID);
+			if (index >= 0) {
+				var groupName = data.grouplist[index].name;
+				if (groupName === "default") {
+					endCallback(true);
+					return;
+				}
+				if (groupName === undefined || groupName === "") {
+					endCallback(true);
+					return;
+				}
+				if (socketidToLoginKey.hasOwnProperty(socketid)) {
+					socketid = socketidToLoginKey[socketid];
+				}
+				var authority;
+				if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+					authority = socketidToAccessAuthority[socketid];
+					endCallback(authority.group_manipulatable);
+					return;
+				}
+			}
+			endCallback(false);
+			return;
+		});
 	}
 
 	/**
@@ -1950,13 +1979,19 @@
 	 * @param {JSON} json 対象のnameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandAddGroup(json, endCallback) {
+	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
 		if (json.hasOwnProperty("name") && json.name !== "") {
-			if (json.hasOwnProperty("color")) {
-				groupColor = json.color;
-			}
-			addGroup(null, json.name, groupColor, endCallback);
+			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
+				if (isManipulatable) {
+					if (json.hasOwnProperty("color")) {
+						groupColor = json.color;
+					}
+					addGroup(null, json.name, groupColor, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -1966,9 +2001,15 @@
 	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandDeleteGroup(json, endCallback) {
+	function commandDeleteGroup(socketid, json, endCallback) {
 		if (json.hasOwnProperty("id") && json.hasOwnProperty("name") && json.name !== "") {
-			deleteGroup(json.id, json.name, endCallback);
+			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
+				if (isManipulatable) {
+					deleteGroup(json.id, json.name, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -1978,9 +2019,15 @@
 	 * @param {JSON} json 対象のid, nameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandUpdateGroup(json, endCallback) {
+	function commandUpdateGroup(socketid, json, endCallback) {
 		if (json.hasOwnProperty("id")) {
-			updateGroup(json.id, json, endCallback);
+			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
+				if (isManipulatable) {
+					updateGroup(json.id, json, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -1990,9 +2037,15 @@
 	 * @param {JSON} json 対象のid, indexを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandChangeGroupIndex(json, endCallback) {
+	function commandChangeGroupIndex(socketid, json, endCallback) {
 		if (json.hasOwnProperty("id") && json.hasOwnProperty("index")) {
-			changeGroupIndex(json.id, json.index, endCallback);
+			isGroupManipulatable(socketid, json.id,  function (isManipulatable) {
+				if (isManipulatable) {
+					changeGroupIndex(json.id, json.index, endCallback);
+				} else {
+					endCallback("access denied");
+				}
+			});
 		}
 	}
 
@@ -2580,20 +2633,20 @@
 			commandGetGroupList(resultCallback);
 		});
 		
-		ws_connector.on(Command.AddGroup, function (data, resultCallback) {
-			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.AddGroup, function (data, resultCallback, socketid) {
+			commandAddGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.DeleteGroup, function (data, resultCallback) {
-			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.DeleteGroup, function (data, resultCallback, socketid) {
+			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		ws_connector.on(Command.UpdateGroup, function (data, resultCallback) {
-			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.UpdateGroup, function (data, resultCallback, socketid) {
+			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 		
-		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
-			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
+		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback, socketid) {
+			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
@@ -2763,20 +2816,20 @@
 			commandGetGroupList(resultCallback);
 		});
 
-		io_connector.on(Command.AddGroup, function (data, resultCallback) {
-			commandAddGroup(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.AddGroup, function (data, resultCallback, socketid) {
+			commandAddGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.DeleteGroup, function (data, resultCallback) {
-			commandDeleteGroup(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.DeleteGroup, function (data, resultCallback, socketid) {
+			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.UpdateGroup, function (data, resultCallback) {
-			commandUpdateGroup(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.UpdateGroup, function (data, resultCallback, socketid) {
+			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
-		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback) {
-			commandChangeGroupIndex(data, post_updateGroup(ws, io, resultCallback));
+		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback, socketid) {
+			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
