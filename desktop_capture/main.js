@@ -23,8 +23,17 @@ function createWindow () {
   const screen = electron.screen;
   const size = screen.getPrimaryDisplay().size;
 
+  // 親ウィンドウ。メインのウィンドウ。
+  mainWindow = new BrowserWindow({
+    width: 1600, 
+    height: 900,
+    autoHideMenuBar: true
+  });
+
   // 仮想ウィンドウ。デスクトップ全体。
+  
   virtualWindow = new BrowserWindow({
+    parent: mainWindow,
     left: 0,
     top: 0,
     width: size.width,
@@ -35,14 +44,8 @@ function createWindow () {
     resizable: false,
     'always-on-top': false
   });
+  
 
-  // 子ウィンドウ。メインのウィンドウ。
-  mainWindow = new BrowserWindow({
-    width: 1600, 
-    height: 900,
-    parent: virtualWindow,
-    autoHideMenuBar: true
-  });
   // メインウィンドウのみ可視
   mainWindow.show();
 

@@ -3,7 +3,6 @@ const electron = require('electron');
 const app = electron.app;
 
 let desktopCapturer = require('electron').desktopCapturer;
-let gWinNum = 0;
 // エレクトロンだと必要ない？
 window.navigator.getUserMedia = navigator.getUserMedia       ||
                                 navigator.webkitGetUserMedia ||
@@ -11,16 +10,21 @@ window.navigator.getUserMedia = navigator.getUserMedia       ||
 
 window.URL = window.URL || window.webkitURL;
 
-(function(){
+(window.onload = function(){
+    
+    let capButton = document.getElementById('capture');
+    capButton.addEventListener('onclick', captureImage, false);
+    
+    
 
     captureInit();
-    
+
     function captureInit(){
         desktopCapturer.getSources({types: ['window', 'screen']}, function(error, sources) {
             if (error) throw error;
             for (let i = 0; i < sources.length; ++i) {
                 console.log("sources["+i+"].name = "+ sources[i].name);
-                if(sources[i].name != "Entire screen" && sources[i].name != "desktop-capture") {
+                if(sources[i].name != "Entire screen" && sources[i].name != "electron-capture") {
                     addImage(sources[i].thumbnail);
                 }
                 if (sources[i].name == "Entire screen") {
@@ -52,15 +56,13 @@ window.URL = window.URL || window.webkitURL;
 
     function gotStream(stream) {
         document.querySelector('video').src = URL.createObjectURL(stream);
+    }
+
+    function captureImage(){
         let video = document.getElementById("video");
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, );
-    }
-
-
-    function sendImage(){
-
+        ctx.drawImage(video, 0, 0, 260, 260);
     }
 
     function getUserMediaError(e) {
