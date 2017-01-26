@@ -247,15 +247,33 @@
 		});
 	}
 
+	// コンテンツメタデータ中のグループ名の変更
+	function changeContentGroupName(oldName, newName) {
+		var metaDatas = [];
+		getMetaData('all', null, function (metaData) {
+			if (metaData && metaData.group === oldName) {
+				metaData.group = newName;
+				setMetaData(metaData.type, metaData.id, metaData, function (meta) {});
+			}
+		});
+	}
+
 	/**
 	 * グループ更新
-	 * @param {String} groupName グループ名.
+	 * @param {String} id グループid.
+	 * @param {String} json グループメタデータ.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function updateGroup(id, json, endCallback) {
 		getGroupList(function (err, data) {
 			var index = getGroupIndex(data.grouplist, id);
 			if (index >= 0) {
+				var group = data.grouplist[index];
+				if (group.name !== json.name) {
+					// グループ名が変更された.
+					// 全てのコンテンツのメタデータのグループ名も変更する
+					changeContentGroupName(group.name, json.name);
+				}
 				data.grouplist[index] = json;
 				textClient.set(groupListPrefix, JSON.stringify(data), function () {
 					endCallback(null, json);

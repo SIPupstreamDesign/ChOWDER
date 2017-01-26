@@ -15,6 +15,7 @@
 		doneGetWindowMetaData,
 		doneGetContent,
 		doneGetMetaData,
+		authority = null,
         controllers = {connectionCount: -1};
 
 	function toggleFullScreen() {
@@ -863,6 +864,14 @@
 		console.log("doneGetMetaData", json);
 		// レイアウトは無視
 		if (metaData.type === "layout") { return; }
+		// 権限情報があるか
+		if (!authority) {
+			return;
+		}
+		// 閲覧許可があるか
+		if (authority.viewable !== "all" && authority.viewable.indexOf(json.group) < 0) {
+			return;
+		}
 
 		// 履歴からのコンテンツ復元.
 		if (metaDataDict.hasOwnProperty(json.id) && json.hasOwnProperty('restore_index')) {
@@ -946,7 +955,11 @@
 				}
 				if (!windowData) {
 					console.log("registerWindow");
-					registerWindow();
+					var request = { username : "Display", password : "" };
+					connector.send('Login', request, function (err, reply) {
+						authority = reply.authority;
+						registerWindow();
+					});
 				}
 			}, (function () {
 				return function (ev) {
