@@ -2316,17 +2316,16 @@
 	 */
 	function commandChangePassword(data, socketid, endCallback) {
 		var authority;
-		// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
-		if (data.hasOwnProperty('loginkey')) {
-			socketid = data.loginkey;
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
 		}
 		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			endCallback("failed to change password");
-			return;
+			endCallback("failed to change password (1)");
+			returnc;
 		}
 		authority = socketidToAccessAuthority[socketid];
 		if (authority.editable !== 'all') {
-			endCallback("failed to change password");
+			endCallback("failed to change password (2)");
 			return;
 		}
 		if (data.hasOwnProperty('username') && data.hasOwnProperty('pre_password') && data.hasOwnProperty('password'))
@@ -2345,7 +2344,7 @@
 								password : data.password
 							}, endCallback);
 						} else {
-							endCallback("failed to change password");
+							endCallback("failed to change password (3)");
 						}
 						break;
 					}
@@ -2359,17 +2358,16 @@
 	 */
 	function commandChangeAuthority(data, socketid, endCallback) {
 		var authority;
-		// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
-		if (data.hasOwnProperty('loginkey')) {
-			socketid = data.loginkey;
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
 		}
 		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			endCallback("failed to change authority");
+			endCallback("failed to change authority (1)");
 			return;
 		}
 		authority = socketidToAccessAuthority[socketid];
 		if (authority.editable !== 'all') {
-			endCallback("failed to change authority");
+			endCallback("failed to change authority (2)");
 			return;
 		}
 		if (data.hasOwnProperty('username') 
@@ -2395,7 +2393,7 @@
 				}
 			});
 		} else {
-			endCallback("failed to change authority");
+			endCallback("failed to change authority (3)");
 		}
 	}
 

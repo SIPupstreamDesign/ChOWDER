@@ -171,13 +171,14 @@
 		// ユーザー名リストの設定
 		if (this.userList) {
 			var select = authSelect;
+			var user;
 			select.innerHTML = "";
 			for (i = 0; i < this.userList.length; i = i + 1) {
-				if (this.userList[i].type !== "admin") {
+				user = this.userList[i];
+				if (user.type !== "admin") {
 					option = document.createElement('option');
-					option.value = this.userList[i].name;
-					option.innerText = this.userList[i].name;
-					console.error(this.userList[i]);
+					option.value = user.name;
+					option.innerText = user.name;
 					select.appendChild(option);	
 				}
 			}
@@ -194,9 +195,7 @@
 			this.editableSelect.deselectAll();
 			if (user) {
 				for (i = 0; i < this.userList.length; i = i + 1) {
-					if (this.userList[i].type !== "admin" &&
-						this.userList[i].type !== "display" &&
-						this.userList[i].type !== "guest")
+					if (this.userList[i].type !== "admin")
 					{
 						listContentName = this.userList[i].name;
 						if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
@@ -204,6 +203,12 @@
 						}
 						if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
 							this.editableSelect.select(listContentName);
+						}
+						if (user.hasOwnProperty('group_manipulatable')) {
+							groupManipulateCheck.checked = user.group_manipulatable;
+						}
+						if (user.hasOwnProperty('display_manipulatable')) {
+							displayManipulateCheck.checked = user.display_manipulatable;
 						}
 					}
 				}
@@ -238,7 +243,7 @@
 				var editable = this.editableSelect.getSelected();
 				var viewable = this.viewableSelect.getSelected();
 				var group_manipulatable = groupManipulateCheck.checked;
-				var display_manipulate = displayManipulateCheck.checked;
+				var display_manipulatable = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
 					editable = "all";
 				}
@@ -246,7 +251,7 @@
 					viewable = "all";
 				}
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					name, editable, viewable, group_manipulatable, display_manipulate);
+					name, editable, viewable, group_manipulatable, display_manipulatable);
 			}
 		}.bind(this);
 
