@@ -1,9 +1,9 @@
-
+"use strict";
 const electron = require('electron');
-// Module to control application life.
 
+// モジュールの追加
 const app = electron.app;
-// Module to create native browser window.
+const ipcMain = electron.ipcMain;
 const BrowserWindow = electron.BrowserWindow;
 
 const path = require('path');
@@ -12,10 +12,8 @@ const url = require('url');
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 
-
 let virtualWindow;
 let mainWindow;
-
 
 function createWindow () {
 
@@ -30,8 +28,8 @@ function createWindow () {
     autoHideMenuBar: true
   });
 
+  /*
   // 仮想ウィンドウ。デスクトップ全体。
-  
   virtualWindow = new BrowserWindow({
     parent: mainWindow,
     left: 0,
@@ -42,9 +40,10 @@ function createWindow () {
     show: false,
     transparent: true,
     resizable: false,
-    'always-on-top': false
+    'always-on-top': true,
+    title: "fullscreen"
   });
-  
+  */
 
   // メインウィンドウのみ可視
   mainWindow.show();
@@ -80,6 +79,7 @@ app.on('window-all-closed', function () {
     app.quit();
   }
 });
+
 
 app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the

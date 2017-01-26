@@ -1,8 +1,10 @@
 "use strict";
 const electron = require('electron');
-const app = electron.app;
 
-let desktopCapturer = require('electron').desktopCapturer;
+// モジュールの追加
+const desktopCapturer = electron.desktopCapturer;
+const remote = electron.remote;
+
 // エレクトロンだと必要ない？
 window.navigator.getUserMedia = navigator.getUserMedia       ||
                                 navigator.webkitGetUserMedia ||
@@ -10,13 +12,8 @@ window.navigator.getUserMedia = navigator.getUserMedia       ||
 
 window.URL = window.URL || window.webkitURL;
 
-(window.onload = function(){
+(function(){
     
-    let capButton = document.getElementById('capture');
-    capButton.addEventListener('onclick', captureImage, false);
-    
-    
-
     captureInit();
 
     function captureInit(){
@@ -27,6 +24,7 @@ window.URL = window.URL || window.webkitURL;
                 if(sources[i].name != "Entire screen" && sources[i].name != "electron-capture") {
                     addImage(sources[i].thumbnail);
                 }
+                // ストリーミング。後ほどアクティブなウィンドウを対象に切り替え。
                 if (sources[i].name == "Entire screen") {
                     navigator.getUserMedia({
                         audio: false,
@@ -47,6 +45,24 @@ window.URL = window.URL || window.webkitURL;
         });
     }
 
+    // canvas2dへ書き出す行程
+
+    onload = function(){
+        let capButton = document.getElementById('capture');
+        capButton.addEventListener('click',function(eve){
+            
+            setInterval(function(){
+                
+                let video = document.getElementById('world');
+                let canvas = document.getElementById('canvas');
+                let ctx = canvas.getContext("2d");
+                ctx.width = 250;
+                ctx.height = 250;
+                ctx.drawImage(video, 0, 0, 250, 250);
+            }, false)
+        },)
+    }
+
     function addImage(image) {
         const elm = document.createElement("img");
         elm.className = "sumbnaile";
@@ -58,12 +74,6 @@ window.URL = window.URL || window.webkitURL;
         document.querySelector('video').src = URL.createObjectURL(stream);
     }
 
-    function captureImage(){
-        let video = document.getElementById("video");
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, 260, 260);
-    }
 
     function getUserMediaError(e) {
         console.log('getUserMediaError');
