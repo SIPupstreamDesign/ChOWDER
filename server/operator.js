@@ -2075,21 +2075,6 @@
 			});
 		}
 	}
-	
-	/**
-	 * ウィンドウの更新を行うコマンドを実行する.
-	 * @method commandUpdateWindowMetaData
-	 * @param {String} socketid ソケットID
-	 * @param {JSON} json socket.io.on:UpdateWindowMetaData時JSONデータ,
-	 * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	/*
-	function commandUpdateWindowMetaData(socketid, json, endCallback) {
-		updateWindowMetaData(socketid, json, function (windowData) {
-			endCallback(null, windowData);
-		});
-	}
-	*/
 
 	/**
 	 * ウィンドウの更新を行うコマンドを実行する.
@@ -2314,7 +2299,8 @@
 		if (data.hasOwnProperty('username') 
 			&& data.hasOwnProperty('editable') 
 			&& data.hasOwnProperty('viewable')
-			&& data.hasOwnProperty('group_manipulatable'))
+			&& data.hasOwnProperty('group_manipulatable')
+			&& data.hasOwnProperty('display_manipulatable'))
 		{
 			getUserList(function (err, userList) {
 				var i;
@@ -2324,7 +2310,8 @@
 							changeGroupUserSetting(data.username, {
 								viewable : data.viewable,
 								editable : data.editable,
-								group_manipulatable : data.group_manipulatable
+								group_manipulatable : data.group_manipulatable,
+								display_manipulatable : data.display_manipulatable
 							}, endCallback);	
 						}
 						break;
@@ -2886,7 +2873,8 @@
 				changeGroupUserSetting("Guest", {
 					viewable : [],
 					editable : [],
-					group_manipulatable : false
+					group_manipulatable : false,
+					display_manipulatable : true
 				});
 			}
 		});

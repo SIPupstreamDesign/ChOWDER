@@ -45,6 +45,7 @@
 		// 各種設定変更
 		ChangeGlobalSetting : "ChangeGlobalSetting",
 		GetGlobalSetting : "GetGlobalSetting",
+		UpdateSetting : "UpdateSetting",
 		
 		// ユーザー管理
 		Login : "Login",
