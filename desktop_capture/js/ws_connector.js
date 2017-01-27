@@ -7,9 +7,11 @@
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
-		client,
+		client = null,
+		is_connected = false,
 		currentVersion = "v2",
-		url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+		//url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+		url = "ws://localhost:8081/" + currentVersion + "/";
 
 	/**
 	 * テキストメッセージの処理.
@@ -100,6 +102,11 @@
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(method, args, resultCallback) {
+		if (client && client.readyState !== 1) {
+			console.error("client.readyState", client.readyState);
+			resultCallback(-1, null);
+			return; 
+		}
 		var reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',
@@ -125,21 +132,29 @@
 	 * @param {ArrayBuffer} binary バイナリデータ
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
-	function sendBinary(method, binary, resultCallback) {
+	function sendBinary(method, metaData, binary, resultCallback) {
+		if (client && client.readyState !== 1) {
+			console.error("client.readyState", client.readyState);
+			resultCallback(-1, null);
+			return; 
+		}
 		var data = {
 			jsonrpc: '2.0',
 			type : 'binary',
 			id: messageID,
 			method: method,
-			params: binary,
+			params: metaData,
 			to: 'master'
-		};
+		}, metabin;
 		
 		messageID = messageID + 1;
 		
 		try {
+			console.log(data, binary);
+			metabin = metabinary.createMetaBinary(data, binary);
+			console.log(metabin);
 			//data = JSON.stringify(reqjson);
-			sendWrapper(data.id, data.method, data, resultCallback);
+			sendWrapper(data.id, data.method, metabin, resultCallback);
 		} catch (e) {
 			console.error(e);
 		}
@@ -172,11 +187,18 @@
 				console.log("onopen");
 				onopen();
 			}
+			is_connected = true;
 		};
 	
-		client.onclose = onclose;
+		client.onclose = function (ev) {
+			if (onclose) {
+				onclose(ev);
+			}
+			is_connected = false;
+		};
 		
 		client.onmessage = function (message) {
+			console.log("ws chowder_request : ", message);
 			var data = message.data,
 				parsed,
 				result;
@@ -197,11 +219,29 @@
 		};
 		return client;
 	}
+
+	function close () {
+		if (client) {
+			client.close();
+		}
+	}
 	
 	window.ws_connector = ws_connector;
 	window.ws_connector.connect = connect;
 	window.ws_connector.on = on;
 	window.ws_connector.send = send;
 	window.ws_connector.sendBinary = sendBinary;
+	window.ws_connector.close = close;
+	window.ws_connector.isConnected = function () { return is_connected; }
+	window.ws_connector.setURL = function (wsurl) {
+		if (wsurl[wsurl.length - 1] !== '/') {
+			wsurl = wsurl + '/';
+		}
+		wsurl = wsurl + currentVersion + "/";
+		url = wsurl;
+	};
+	window.ws_connector.getURL = function () {
+		return url;
+	};
 	
 }(window.command, window.metabinary));
