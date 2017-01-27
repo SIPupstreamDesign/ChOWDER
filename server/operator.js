@@ -1246,6 +1246,8 @@
 							}
 						}
 					});
+				} else {
+					endCallback(null);
 				}
 			});
 		});
