@@ -672,9 +672,17 @@
 						}
 					}
 					// Displayユーザー
-					if (userList.indexOf('Display') < 0) {
-						userList.push({ name : "Display", type : "display"});
+					var displayUserData = { name : "Display", type : "display"};
+					if (setting.hasOwnProperty("Display")) {
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (setting.Display.hasOwnProperty(key)) {
+								displayUserData[key] = setting.Display[key];
+							}
+						}
 					}
+					userList.push(displayUserData);
+
 					if (endCallback) {
 						endCallback(null, userList);
 					}
@@ -2964,6 +2972,13 @@
 				changeGroupUserSetting("Guest", {
 					viewable : [],
 					editable : [],
+					group_manipulatable : false,
+					display_manipulatable : true
+				});
+				// Display設定の初期登録
+				changeGroupUserSetting("Display", {
+					viewable : "all",
+					editable : "all",
 					group_manipulatable : false,
 					display_manipulatable : true
 				});
