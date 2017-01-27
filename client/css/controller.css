@@ -95,6 +95,12 @@ p {
 
 .textcontent {
 	padding: 0px;
+	overflow: auto;
+}
+
+.layoutcontent {
+	padding: 0px;
+	overflow: auto;
 }
 
 .screen {
