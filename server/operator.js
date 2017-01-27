@@ -227,7 +227,7 @@
 					editable : [groupName],
 					group_manipulatable : false,
 					display_manipulatable : true
-				});
+				}, endCallback);
 			});
 		});
 	}
@@ -1680,15 +1680,15 @@
 					endCallback(true);
 					return;
 				}
-				if (socketidToLoginKey.hasOwnProperty(socketid)) {
-					socketid = socketidToLoginKey[socketid];
-				}
-				var authority;
-				if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
-					authority = socketidToAccessAuthority[socketid];
-					endCallback(authority.group_manipulatable);
-					return;
-				}
+			}
+			if (socketidToLoginKey.hasOwnProperty(socketid)) {
+				socketid = socketidToLoginKey[socketid];
+			}
+			var authority;
+			if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+				authority = socketidToAccessAuthority[socketid];
+				endCallback(authority.group_manipulatable);
+				return;
 			}
 			endCallback(false);
 			return;
