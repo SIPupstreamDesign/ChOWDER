@@ -2,3 +2,8 @@
     display:inline;
     margin:2px;
 }
+
+video{
+    margin: 10px;
+    background-color: red;
+}

@@ -16,52 +16,53 @@ window.URL = window.URL || window.webkitURL;
 
     function init(){
         
-        // 初期動作--------------------------------------------------------------------------------
-        initCapturing();
-        //ws_connector.connect();
-        
-        // 初期化----------------------------------------------------------------------------------
-        let video = document.getElementById('world');
+        // 初期化------------------------------------------------------------------------------
+        let video = document.getElementById('video');
         let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext("2d");
+        let ctx = canvas.getContext("2d"); 
 
-        ctx.width = 800;
-        ctx.height = 600;
+        let vw = video.offsetWidth;
+        let vh = video.offsetHeight;
+        let cw = vw;
+        let ch = vh;
 
         let cap = false;
         let defCap = true;
         let capButton = document.getElementById('capture');
         let drawInterval;
+        let capSource;
         
-        // キャプチャー対象周り-----------------------------------------------------------------    
+        // 初期動作----------------------------------------------------------------------------
+        initCapturing();
+        //ws_connector.connect();
+                
+        // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
             desktopCapturer.getSources({types: ['window', 'screen']}, function(error, sources) {
                 //console.log(sources);
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
-                    //console.log("sources["+i+"].name = "+ sources[i].name);
+                    // electronの画面は除外
                     if(sources[i].name != "electron-capture") {
                         addImage(sources[i].thumbnail);
+                        console.log("sources["+i+"].id = "+ sources[i].id);
+                        console.log(sources[i].id.width);
                     }
-                    // ストリーミング。後ほど非同期にウィンドウの切り替えを実装
-                    //addEventListener('onclick',viewer,false);
-                    viewer(sources[0]);
+                    mainViewer(sources[0]);
                     //return
                 }
             });
         }
 
-        function refresh(){
+        console.log(capSource);
 
-        }
-
-        // canvas2dへイメージとして送る-----------------------------------------------------------------
+        // canvas2dへイメージとして送る------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
                 cap = true;
                 capButton.value = "Capture Stop";
-                drawInterval = setInterval(drawCanvas,1000);
+                drawInterval = setInterval(drawCanvas,100);
             }
             // フラグがオンであれば
             else if(cap === true){
@@ -72,11 +73,11 @@ window.URL = window.URL || window.webkitURL;
         },false);
 
         addEventListener('click',function(eve){
-
+            
         }, false);
 
         // sourcesに関する関数--------------------------------------------------------------------
-        // bodyへのhtmlタグ埋め込み
+        // bodyへのサムネイル埋め込み
         function addImage(image) {
             const elm = document.createElement("img");
             elm.className = "sumbnaile";
@@ -87,7 +88,7 @@ window.URL = window.URL || window.webkitURL;
 
         // キャンバスへ描画
         function drawCanvas(){
-            ctx.drawImage(video, 0, 0, video.width, video.height, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, vw, vh, 0, 0, cw, ch);
             console.log(video.width);
             console.log(video.height);
             /* 送信
@@ -99,7 +100,7 @@ window.URL = window.URL || window.webkitURL;
             */
         }
         
-        function viewer(source){
+        function mainViewer(source){
             let media;
             if (source.name == "Entire screen") {
                 media = 'desktop';
@@ -112,7 +113,8 @@ window.URL = window.URL || window.webkitURL;
                 video: {
                     mandatory: {
                         chromeMediaSource: media,
-                        chromeMediaSourceId: source.id,
+                        // idを切り替えることでキャプチャー対象を選ぶことができる
+                        chromeMediaSourceId: source.id, 
                         minWidth: 800,
                         maxWidth: 800,
                         minHeight: 450,
@@ -124,7 +126,6 @@ window.URL = window.URL || window.webkitURL;
 
         // デスクトップ情報の取得が成功したとき
         function gotStream(stream) {
-
             document.querySelector('video').src = URL.createObjectURL(stream);
         }
 
