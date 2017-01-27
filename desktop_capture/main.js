@@ -17,33 +17,33 @@ let mainWindow;
 
 function createWindow () {
 
-  // Screen APIの読み込み
-  const screen = electron.screen;
-  const size = screen.getPrimaryDisplay().size;
+    // Screen APIの読み込み
+    const screen = electron.screen;
+    const size = screen.getPrimaryDisplay().size;
 
-  // 親ウィンドウ。メインのウィンドウ。
-  mainWindow = new BrowserWindow({
-    width: 1600, 
-    height: 900,
-    autoHideMenuBar: true
-  });
+    // 親ウィンドウ。メインのウィンドウ。
+    mainWindow = new BrowserWindow({
+        width: 1600, 
+        height: 900,
+        autoHideMenuBar: true
+    });
 
-  /*
-  // 仮想ウィンドウ。
-  virtualWindow = new BrowserWindow({
-    parent: mainWindow,
-    left: 0,
-    top: 0,
-    width: size.width,
-    height: size.height,
-    frame: false,
-    show: false,
-    transparent: true,
-    resizable: false,
-    'always-on-top': true,
-    title: "fullscreen"
-  });
-  */
+    /*
+    // 仮想ウィンドウ。
+    virtualWindow = new BrowserWindow({
+        parent: mainWindow,
+        left: 0,
+        top: 0,
+        width: size.width,
+        height: size.height,
+        frame: false,
+        show: false,
+        transparent: true,
+        resizable: false,
+        'always-on-top': true,
+        title: "fullscreen"
+    });
+    */
 
   // メインウィンドウのみ可視
   mainWindow.show();

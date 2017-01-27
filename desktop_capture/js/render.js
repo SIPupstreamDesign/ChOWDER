@@ -15,55 +15,47 @@ window.URL = window.URL || window.webkitURL;
 (function(){
 
     function init(){
-        // 初期動作
-        initCapturing();
-        console.log(ws_connector);
-        ws_connector.connect();
         
-        // デスクトップ取得--------------------------------------------------------------------------------------
-    
+        // 初期動作--------------------------------------------------------------------------------
+        initCapturing();
+        //ws_connector.connect();
+        
+        // 初期化----------------------------------------------------------------------------------
+        let video = document.getElementById('world');
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext("2d");
+
+        ctx.width = 800;
+        ctx.height = 600;
+
+        let cap = false;
+        let defCap = true;
+        let capButton = document.getElementById('capture');
+        let drawInterval;
+        
+        // キャプチャー対象周り-----------------------------------------------------------------    
         function initCapturing(){
             desktopCapturer.getSources({types: ['window', 'screen']}, function(error, sources) {
+                //console.log(sources);
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
-                    console.log("sources["+i+"].name = "+ sources[i].name);
-                    console.log(sources);
+                    //console.log("sources["+i+"].name = "+ sources[i].name);
                     if(sources[i].name != "electron-capture") {
                         addImage(sources[i].thumbnail);
                     }
-                    // ストリーミング。後ほどアクティブなウィンドウを対象に切り替えていく。
-                    if (sources[i].name == "Entire screen") {
-                        navigator.getUserMedia({
-                            audio: false,
-                            video: {
-                                mandatory: {
-                                    chromeMediaSource: 'desktop',
-                                    chromeMediaSourceId: sources[i].id,
-                                    minWidth: 960,
-                                    maxWidth: 960,
-                                    minHeight: 540,
-                                    maxHeight: 540
-                                }
-                            }
-                        }, gotStream, getUserMediaError);
-                        //return;
-                    }
+                    // ストリーミング。後ほど非同期にウィンドウの切り替えを実装
+                    //addEventListener('onclick',viewer,false);
+                    viewer(sources[0]);
+                    //return
                 }
             });
         }
 
-        // canvas2dへイメージとして送る--------------------------------------------------------------------
-        let video = document.getElementById('world');
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext("2d");
-        
-        ctx.width = 640;
-        ctx.height = 450;
+        function refresh(){
 
-        let cap = false;
-        let capButton = document.getElementById('capture');
-        let drawInterval;
+        }
 
+        // canvas2dへイメージとして送る-----------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
@@ -76,11 +68,14 @@ window.URL = window.URL || window.webkitURL;
                 cap = false;
                 capButton.value = "Capture Start";
                 clearInterval(drawInterval);
-                ctx.clearRect(0, 0, ctx.width, ctx.height);
             }
         },false);
 
-        // 送受信や描画に関する関数群-----------------------------------------------------------------------
+        addEventListener('click',function(eve){
+
+        }, false);
+
+        // sourcesに関する関数--------------------------------------------------------------------
         // bodyへのhtmlタグ埋め込み
         function addImage(image) {
             const elm = document.createElement("img");
@@ -89,22 +84,55 @@ window.URL = window.URL || window.webkitURL;
             document.body.appendChild(elm);
         }
 
+
         // キャンバスへ描画
         function drawCanvas(){
-            ctx.drawImage(video, 0, 0, 960, 540, 0, 0, ctx.width, ctx.height);
-            //console.log(canvas.toDataURL("image/jpeg"));
+            ctx.drawImage(video, 0, 0, video.width, video.height, 0, 0, canvas.width, canvas.height);
+            console.log(video.width);
+            console.log(video.height);
+            /* 送信
             ws_connector.sendBinary('AddContent', {
-                "id" : "videotest", // 特定のID に固定する.
-                "content_id" : "videotest", // 特定のID に固定する.
+                "id" : sources[i].id, // 特定のID に固定する.
+                "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
                 },getImageBinary(canvas));
+            */
+        }
+        
+        function viewer(source){
+            let media;
+            if (source.name == "Entire screen") {
+                media = 'desktop';
+            }
+            else {
+                media = 'screen';
+            }
+            navigator.getUserMedia({
+                audio: false,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: media,
+                        chromeMediaSourceId: source.id,
+                        minWidth: 800,
+                        maxWidth: 800,
+                        minHeight: 450,
+                        maxHeight: 450
+                    }
+                }
+            }, gotStream, getUserMediaError);
         }
 
         // デスクトップ情報の取得が成功したとき
         function gotStream(stream) {
+
             document.querySelector('video').src = URL.createObjectURL(stream);
         }
-        
+
+        // デスクトップ情報の取得に失敗したとき
+        function getUserMediaError(e) {
+            console.log('getUserMediaError');
+        }
+
         // キャプチャーデータの入れ替え（未検証）
         function replaceSources(sources1, sources2){
             let tmpId;
@@ -123,10 +151,7 @@ window.URL = window.URL || window.webkitURL;
             source2.name = tmpName;
             source2.thumbnail = tmpThumbnail;
         }
-        // デスクトップ情報の取得に失敗したとき
-        function getUserMediaError(e) {
-            console.log('getUserMediaError');
-        }
+
 
         function getImageBinary(canvas) {
             var base64 = canvas.toDataURL('image/png');
