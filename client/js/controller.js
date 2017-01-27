@@ -1232,6 +1232,7 @@
 			name : "Layoutを適用します。よろしいですか?"
 		}, function (isOK) {
 			if (isOK) {
+				// レイアウトのコンテンツ(適用対象のメタデータが詰まっている)を取得する
 				var request = { type: metaData.type, id: metaData.id };
 				connector.send('GetContent', request, function (err, data) {
 					var meta,
