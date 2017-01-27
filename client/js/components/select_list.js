@@ -9,6 +9,7 @@
 		EventEmitter.call(this);
 		this.dom = document.createElement('div');
 		this.dom.className = "select_list_frame";
+		this.selectClassName = 'selectlist_selected';
 		this.contents = [];
 	};
 	SelectList.prototype = Object.create(EventEmitter.prototype);
@@ -18,7 +19,9 @@
 		row.innerText = text;
 		row.className = "select_list_content";
 		row.onclick = function (index) {
-			this.contents[index].classList.toggle('selectlist_selected');
+			this.contents[index].classList.toggle(this.selectClassName);
+			this.emit(SelectList.EVENT_CHANGE, null, this.contents[index].innerText,
+				this.contents[index].classList.contains(this.selectClassName));
 		}.bind(this, this.contents.length);
 		this.contents.push(row);
 		this.dom.appendChild(row);
@@ -28,7 +31,7 @@
 		var i;
 		var selected = [];
 		for (i = 0; i < this.contents.length; i = i + 1) {
-			if (this.contents[i].classList.contains('selectlist_selected')) {
+			if (this.contents[i].classList.contains(this.selectClassName)) {
 				selected.push(this.contents[i].innerText);
 			}
 		}
@@ -39,7 +42,16 @@
 		var i;
 		for (i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].innerText === text) {
-				this.contents[i].classList.toggle('selectlist_selected');
+				this.contents[i].classList.toggle(this.selectClassName);
+			}
+		}
+	};
+
+	SelectList.prototype.selectAll = function () {
+		var i;
+		for (i = 0; i < this.contents.length; i = i + 1) {
+			if (!this.contents[i].classList.contains(this.selectClassName)) {
+				this.contents[i].classList.add(this.selectClassName);
 			}
 		}
 	};
@@ -47,13 +59,15 @@
 	SelectList.prototype.deselectAll = function () {
 		var i;
 		for (i = 0; i < this.contents.length; i = i + 1) {
-			this.contents[i].classList.remove('selectlist_selected');
+			this.contents[i].classList.remove(this.selectClassName);
 		}
 	};
 
 	SelectList.prototype.getDOM = function () {
 		return this.dom;
 	};
+
+	SelectList.EVENT_CHANGE = "change";
 	
 	window.SelectList = SelectList;
 }());

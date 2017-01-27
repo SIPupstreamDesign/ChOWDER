@@ -220,10 +220,15 @@
 			} else {
 				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
 			}
-			textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
-			if (endCallback) {
-				endCallback(null, null);
-			}
+			textClient.set(groupListPrefix, JSON.stringify(data), function () {
+				// グループ設定を追加する.
+				changeGroupUserSetting(groupName, {
+					viewable : [groupName],
+					editable : [groupName],
+					group_manipulatable : false,
+					display_manipulatable : true
+				});
+			});
 		});
 	}
 
@@ -2985,6 +2990,14 @@
 					editable : "all",
 					group_manipulatable : false,
 					display_manipulatable : true
+				});
+			}
+		});
+		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				// global設定の初期登録
+				changeGlobalSetting({
+					max_history_num : 10
 				});
 			}
 		});
