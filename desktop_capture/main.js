@@ -29,7 +29,7 @@ function createWindow () {
   });
 
   /*
-  // 仮想ウィンドウ。デスクトップ全体。
+  // 仮想ウィンドウ。
   virtualWindow = new BrowserWindow({
     parent: mainWindow,
     left: 0,
