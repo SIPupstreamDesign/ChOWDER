@@ -1231,20 +1231,22 @@
 		};
 		getMetaData(metaData.type, metaData.id, function (meta) {
 			getGlobalSetting(function (err, setting) {
-				var maxHistorySetting = 0;
-				if (setting.hasOwnProperty('max_history_num')) {
-					maxHistorySetting = setting.max_history_num;
-				}
-				client.hlen(metadataBackupPrefix + metaData.id, function (err, num) {
-					if (!err) {
-						if (maxHistorySetting !== 0 && num > maxHistorySetting) {
-							// 履歴保存数を超えたので、古いものを削除
-							removeOldBackup(metaData, num - maxHistorySetting, backupFunc);
-						} else {
-							backupFunc();
-						}
+				if (!err && setting) {
+					var maxHistorySetting = 0;
+					if (setting.hasOwnProperty('max_history_num')) {
+						maxHistorySetting = setting.max_history_num;
 					}
-				});
+					client.hlen(metadataBackupPrefix + metaData.id, function (err, num) {
+						if (!err) {
+							if (maxHistorySetting !== 0 && num > maxHistorySetting) {
+								// 履歴保存数を超えたので、古いものを削除
+								removeOldBackup(metaData, num - maxHistorySetting, backupFunc);
+							} else {
+								backupFunc();
+							}
+						}
+					});
+				}
 			});
 		});
 	}
