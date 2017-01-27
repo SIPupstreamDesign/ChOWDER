@@ -229,6 +229,26 @@
 			}
 		}.bind(this);
 
+		// 全てが選択された場合
+		this.editableSelect.on('change', function (err, text, isSelected) {
+			if (text === allAccessText) {
+				if (isSelected) {
+					this.editableSelect.selectAll();
+				} else {
+					this.editableSelect.deselectAll();
+				}
+			}
+		}.bind(this));
+		this.viewableSelect.on('change', function (err, text, isSelected) {
+			if (text === allAccessText) {
+				if (isSelected) {
+					this.viewableSelect.selectAll();
+				} else {
+					this.viewableSelect.deselectAll();
+				}
+			}
+		}.bind(this));
+
 		authTargetFrame.innerHTML = "";
 		this.editableSelect.add(allAccessText);
 		this.viewableSelect.add(allAccessText);
