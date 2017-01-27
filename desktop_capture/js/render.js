@@ -69,7 +69,7 @@ window.URL = window.URL || window.webkitURL;
             if(cap === false){
                 cap = true;
                 capButton.value = "Capture Stop";
-                setInterval(drawCanvas(),2000);
+                drawInterval = setInterval(drawCanvas,1000);
             }
             // フラグがオンであれば
             else if(cap === true){
@@ -90,7 +90,7 @@ window.URL = window.URL || window.webkitURL;
         }
 
         // キャンバスへ描画
-        function drawCanvas(){     
+        function drawCanvas(){
             ctx.drawImage(video, 0, 0, 960, 540, 0, 0, ctx.width, ctx.height);
             //console.log(canvas.toDataURL("image/jpeg"));
             ws_connector.sendBinary('AddContent', {
@@ -104,6 +104,7 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             document.querySelector('video').src = URL.createObjectURL(stream);
         }
+        
         // キャプチャーデータの入れ替え（未検証）
         function replaceSources(sources1, sources2){
             let tmpId;
