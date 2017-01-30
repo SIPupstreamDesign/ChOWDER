@@ -19,18 +19,23 @@ window.URL = window.URL || window.webkitURL;
         // 初期化------------------------------------------------------------------------------
         let video = document.getElementById('video');
         let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext("2d"); 
+        let ctx = canvas.getContext("2d");
+        canvas.style.display = "none";
 
-        let vw = video.offsetWidth;
-        let vh = video.offsetHeight;
-        let cw = vw;
-        let ch = vh;
+        let localStream;
+        let browserId = 0;
+
+        let vw = 800;
+        let vh = 450;
+        canvas.width = vw;
+        canvas.height = vh;
 
         let cap = false;
         let defCap = true;
         let capButton = document.getElementById('capture');
         let drawInterval;
         let capSource;
+        let selected = 0;
         
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
@@ -38,23 +43,26 @@ window.URL = window.URL || window.webkitURL;
                 
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
-            desktopCapturer.getSources({types: ['window', 'screen']}, function(error, sources) {
+            desktopCapturer.getSources({types: ['window', 'screen']}, 
+            function(error, sources) {
                 //console.log(sources);
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
                     // electronの画面は除外
                     if(sources[i].name != "electron-capture") {
                         addImage(sources[i].thumbnail);
-                        console.log("sources["+i+"].id = "+ sources[i].id);
-                        console.log(sources[i].id.width);
+                        //console.log("sources["+i+"].id = "+ sources[i].id);
+                        //console.log("sources["+i+"].name = "+ sources[i].name);
                     }
-                    mainViewer(sources[0]);
-                    //return
+                   
                 }
+                mainViewer(sources[selected]);
+                //return
+                capSource = sources;
             });
         }
 
-        console.log(capSource);
+
 
         // canvas2dへイメージとして送る------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
@@ -72,14 +80,22 @@ window.URL = window.URL || window.webkitURL;
             }
         },false);
 
+        // キャプチャー対象の切り替え
         addEventListener('click',function(eve){
-            
+            let id;
+            if(id = eve.target.id){
+                console.log(id);
+                selected = id;
+                console.log(selected);
+            }
         }, false);
 
         // sourcesに関する関数--------------------------------------------------------------------
         // bodyへのサムネイル埋め込み
         function addImage(image) {
             const elm = document.createElement("img");
+            elm.id = browserId;
+            browserId++;
             elm.className = "sumbnaile";
             elm.src = image.toDataURL();
             document.body.appendChild(elm);
@@ -88,9 +104,10 @@ window.URL = window.URL || window.webkitURL;
 
         // キャンバスへ描画
         function drawCanvas(){
-            ctx.drawImage(video, 0, 0, vw, vh, 0, 0, cw, ch);
-            console.log(video.width);
-            console.log(video.height);
+            ctx.drawImage(video, 0, 0, video.width, video.height, 
+                                 0, 0, canvas.width, canvas.height);
+            //console.log(video.width);
+            //console.log(video.height);
             /* 送信
             ws_connector.sendBinary('AddContent', {
                 "id" : sources[i].id, // 特定のID に固定する.
@@ -115,10 +132,10 @@ window.URL = window.URL || window.webkitURL;
                         chromeMediaSource: media,
                         // idを切り替えることでキャプチャー対象を選ぶことができる
                         chromeMediaSourceId: source.id, 
-                        minWidth: 800,
-                        maxWidth: 800,
-                        minHeight: 450,
-                        maxHeight: 450
+                        minWidth: vw,
+                        maxWidth: vw,
+                        minHeight: vh,
+                        maxHeight: vh
                     }
                 }
             }, gotStream, getUserMediaError);
@@ -126,33 +143,15 @@ window.URL = window.URL || window.webkitURL;
 
         // デスクトップ情報の取得が成功したとき
         function gotStream(stream) {
+            localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(stream);
+           
         }
 
         // デスクトップ情報の取得に失敗したとき
         function getUserMediaError(e) {
             console.log('getUserMediaError');
         }
-
-        // キャプチャーデータの入れ替え（未検証）
-        function replaceSources(sources1, sources2){
-            let tmpId;
-            let tmpName;
-            let tmpThumbnail;
-
-            tmpId = sources1.id;
-            tmpName = source1.name;
-            tmpThumbnail = source1.thumbnail;
-
-            source1.id = source2.id;
-            source1.name = source2.name;
-            source1.thumbnail = source2.thumbnail;
-
-            source2.id = tmpId;
-            source2.name = tmpName;
-            source2.thumbnail = tmpThumbnail;
-        }
-
 
         function getImageBinary(canvas) {
             var base64 = canvas.toDataURL('image/png');
