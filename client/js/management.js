@@ -205,12 +205,12 @@
 				for (i = 0; i < this.userList.length; i = i + 1) {
 					if (this.userList[i].type !== "admin")
 					{
-						listContentName = this.userList[i].name;
+						listContentName = this.userList[i].id;
 						if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
-							this.viewableSelect.select(listContentName);
+							this.viewableSelect.select(this.userList[i].name);
 						}
 						if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
-							this.editableSelect.select(listContentName);
+							this.editableSelect.select(this.userList[i].name);
 						}
 					}
 				}
@@ -407,30 +407,30 @@
 				}
 				return false;
 			},
-			isViewable : function (groupName) {
-				if (groupName === "default") {
+			isViewable : function (groupID) {
+				if (groupID === "group_default") {
 					return true;
 				}
-				if (groupName === undefined || groupName === "") {
+				if (groupID === undefined || groupID === "") {
 					return true;
 				}
 				if (authority && authority.hasOwnProperty('viewable')) {
-					if (authority.viewable === "all" || authority.viewable.indexOf(groupName) >= 0) {
+					if (authority.viewable === "all" || authority.viewable.indexOf(groupID) >= 0) {
 						return true;
 					}
 				}
 				return false;
 			},
-			isEditable : function (groupName) {
-				if (groupName === "default") {
+			isEditable : function (groupID) {
+				if (groupID === "group_default") {
 					return true;
 				}
-				if (groupName === undefined || groupName === "") {
+				if (groupID === undefined || groupID === "") {
 					return true;
 				}
 				if (authority) {
 					if (authority.hasOwnProperty('editable')) {
-						if (authority.editable === "all" || authority.editable.indexOf(groupName) >= 0) {
+						if (authority.editable === "all" || authority.editable.indexOf(groupID) >= 0) {
 							return true;
 						}
 					}

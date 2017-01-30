@@ -62,7 +62,7 @@
 			return;
 		}
 
-		console.log("importContentToView:" + JSON.stringify(metaData));
+		//console.log("importContentToView:" + JSON.stringify(metaData));
 		tagName = getTagName(metaData.type);
 		
 		// メタデータはGetMetaDataで取得済のものを使う.

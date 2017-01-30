@@ -9,7 +9,7 @@
 		this.container = containerElem;
 		this.setting = setting;
 		this.item_area = null;
-        this.group_to_elem = {};
+        this.groupid_to_elem = {};
         this.authority = authority;
 		this.init();
         
@@ -24,7 +24,8 @@
             group_div,
             checkbox,
             box = this.container,
-            groupName;
+            groupName,
+            groupID;
 
         // 既に該当 ID が存在する場合は一度 DOM を削除して再生成する
         e = document.getElementById('search_tab_box_wrapper');
@@ -67,11 +68,11 @@
 
         function checkFunction(self, target, i) {
             if (target.checked) {
-                if (self.check_groups.indexOf(self.setting.groups[i]) < 0) {
-                    self.check_groups.push(self.setting.groups[i]);
+                if (self.check_groups.indexOf(self.setting.groups[i].id) < 0) {
+                    self.check_groups.push(self.setting.groups[i].id);
                 }
             } else {
-                self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i]), 1);
+                self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i].id), 1);
             }
         }
 
@@ -93,8 +94,8 @@
                 var checkbox = document.getElementById('all_check_');
                 checkbox.checked = !checkbox.checked; 
                 for (i = 0; i < this.setting.groups.length; i = i + 1) {
-                    groupName = this.setting.groups[i];
-                    if (this.authority.isViewable(groupName)) {
+                    groupID = this.setting.groups[i].id;
+                    if (this.authority.isViewable(groupID)) {
                         target = document.getElementById('search_check_' + i); 
                         target.checked = checkbox.checked;
                         checkFunction(this, target, i);
@@ -112,8 +113,9 @@
 
         // group チェックボックス
         for (i = 0; i < this.setting.groups.length; i++){
-            groupName = this.setting.groups[i];
-            if (this.authority.isViewable(groupName)) {
+            groupID = this.setting.groups[i].id;
+            groupName = this.setting.groups[i].name;
+            if (this.authority.isViewable(groupID)) {
                 group_div = document.createElement('div');
                 checkbox = document.createElement('input');
                 checkbox.id = 'search_check_' + i;
@@ -136,7 +138,7 @@
                 
                 checkbox.onclick = group_div.onclick;
                 f.onclick = group_div.onclick;
-                this.group_to_elem[this.setting.groups[i]] = f;
+                this.groupid_to_elem[this.setting.groups[i].id] = f;
 
                 group_div.appendChild(f);
                 group_div.className = "search_group_div";
@@ -157,9 +159,9 @@
 		this.gen_search_tab_box();
 	};
 
-	SearchBox.prototype.check = function (groupName, isChecked) {
-        if (this.group_to_elem.hasOwnProperty(groupName)) {
-            this.group_to_elem[groupName].onclick();
+	SearchBox.prototype.check = function (groupID, isChecked) {
+        if (this.groupid_to_elem.hasOwnProperty(groupID)) {
+            this.groupid_to_elem[groupID].onclick();
         }
     };
 

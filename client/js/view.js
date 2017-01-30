@@ -239,7 +239,7 @@
 	function updateGroupDict(groupList) {
 		var i;
 		for (i = 0; i < groupList.length; ++i) {
-			groupDict[groupList[i].name] = groupList[i];
+			groupDict[groupList[i].id] = groupList[i];
 		}
 	}
 
@@ -869,8 +869,14 @@
 			return;
 		}
 		// 閲覧許可があるか
-		if (authority.viewable !== "all" && authority.viewable.indexOf(json.group) < 0) {
+		if (json.group !== "" && !groupDict.hasOwnProperty(json.group)) {
+			console.error("hoge", groupDict, json.group)
 			return;
+		}
+		if (groupDict.hasOwnProperty(json.group)) {
+			if (authority.viewable !== "all" && authority.viewable.indexOf(groupDict[json.group].id) < 0) {
+				return;
+			}
 		}
 
 		// 履歴からのコンテンツ復元.
@@ -955,7 +961,7 @@
 				}
 				if (!windowData) {
 					console.log("registerWindow");
-					var request = { username : "Display", password : "" };
+					var request = { id : "Display", password : "" };
 					connector.send('Login', request, function (err, reply) {
 						authority = reply.authority;
 						registerWindow();

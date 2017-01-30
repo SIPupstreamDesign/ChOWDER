@@ -26,6 +26,7 @@
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
 		groupListPrefix = "grouplist",
+		adminListPrefix = "adminlist",
 		globalSettingPrefix = "global_setting",
 		groupUserPrefix = "group_user",
 		adminUserPrefix = "admin_user",
@@ -40,7 +41,7 @@
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
 		socketidToAccessAuthority = {},
-		socketidToUserName = {},
+		socketidToUserID = {},
 		socketidToLoginKey = {},
 		methods,
         connectionId = {},
@@ -179,6 +180,30 @@
 		});
 	}
 
+	function getAdminList(endCallback) {
+		textClient.exists(adminListPrefix, function (err, doesExists) {
+			if (!err && doesExists !== 0)  {
+				textClient.get(adminListPrefix, function (err, reply) {
+					var data = reply;
+					if (!reply) {
+						data = { "adminlist" : [] };
+						endCallback(err, data);
+						return;
+					}
+					try {
+						data = JSON.parse(data);
+					} catch (e) {
+						return false;
+					}
+					endCallback(err, data);
+				});
+			} else {
+				var data = { "adminlist" : [] };
+				endCallback(null, data);
+			}
+		});
+	}
+
 	function getGroupIndex(groupList, id) {
 		var i;
 		for (i = 0; i < groupList.length; i = i + 1) {
@@ -221,12 +246,36 @@
 				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
-				// グループ設定を追加する.
-				changeGroupUserSetting(groupName, {
-					viewable : [groupName],
-					editable : [groupName],
-					group_manipulatable : false,
-					display_manipulatable : true
+				getGroupID(groupName, function (id) {
+					// グループ設定を追加する.
+					changeGroupUserSetting(id, {
+						viewable : [id],
+						editable : [id],
+						group_manipulatable : false,
+						display_manipulatable : true
+					}, endCallback);
+				})
+			});
+		});
+	}
+
+	/**
+	 * 管理者リストにadminを追加
+	 * @param {String} id 管理id. nullの場合自動割り当て.
+	 * @param {String} adminName 管理者名.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addAdmin(adminID, adminName, password, endCallback) {
+		getAdminList(function (err, data) {
+			if (adminID) {
+				data.adminlist.push({ name : adminName, id : adminID });
+			} else {
+				data.adminlist.push({ name : adminName, id : util.generateUUID8() });
+			}
+			textClient.set(adminListPrefix, JSON.stringify(data), function () {
+				changeAdminUserSetting(adminID, {
+					pre_password : password,
+					password : password
 				}, endCallback);
 			});
 		});
@@ -257,8 +306,10 @@
 		var metaDatas = [];
 		getMetaData('all', null, function (metaData) {
 			if (metaData && metaData.group === oldName) {
-				metaData.group = newName;
-				setMetaData(metaData.type, metaData.id, metaData, function (meta) {});
+				getGroupID(newName, function (id) {
+					metaData.group = id;
+					setMetaData(metaData.type, metaData.id, metaData, function (meta) {});
+				});
 			}
 		});
 	}
@@ -356,7 +407,7 @@
 					textClient.hset(frontPrefix + 'dblist', name, id, function (err, reply) {
 						if (!err) {
 							changeUUIDPrefix(name, function (err, reply) {
-								addGroup("group_defalut", "default", function (err, reply) {} );
+								addGroup("group_default", "default", function (err, reply) {} );
 								endCallback(err);
 							});
 						} else {
@@ -525,24 +576,24 @@
 	/**
 	 * グループユーザー設定の変更.
 	 */
-	function changeGroupUserSetting(groupName, setting, endCallback) {
-		console.log("changeGroupUserSetting", groupName, setting)
+	function changeGroupUserSetting(groupID, setting, endCallback) {
+		console.log("changeGroupUserSetting", groupID, setting)
 		getGroupUserSetting(function (err, data) {
 			var groupSetting;
 			if (!data) {
 				// 新規.
 				data = {};
 			}
-			if (!data.hasOwnProperty(groupName)) {
-				data[groupName] = {};
+			if (!data.hasOwnProperty(groupID)) {
+				data[groupID] = {};
 			}
 			if (setting.hasOwnProperty('password')) {
-				data[groupName].password = util.encrypt(setting.password, cryptkey);
+				data[groupID].password = util.encrypt(setting.password, cryptkey);
 			}
 			for (var i = 0; i < userSettingKeys.length; i = i + 1) {
 				var key = userSettingKeys[i];
 				if (setting.hasOwnProperty(key)) {
-					data[groupName][key] = setting[key];
+					data[groupID][key] = setting[key];
 				}
 			}
 			textClient.set(groupUserPrefix, JSON.stringify(data), (function (data) {
@@ -578,24 +629,24 @@
 	/**
 	 * 管理ユーザー設定の変更.
 	 */
-	function changeAdminUserSetting(groupName, setting, endCallback) {
+	function changeAdminUserSetting(id, setting, endCallback) {
 		getAdminUserSetting(function (err, data) {
 			if (!err) {
 				if (setting.hasOwnProperty('password')) {
 					var prePass;
-					if (!data.hasOwnProperty(groupName)) {
-						data[groupName] = {};
+					if (!data.hasOwnProperty(id)) {
+						data[id] = {};
 					}
-					if (data[groupName].hasOwnProperty('pre_password')) {
+					if (data[id].hasOwnProperty('pre_password')) {
 						prePass = util.encrypt(setting.pre_password, cryptkey);
 					} else {
 						// 初回追加時.
 						var pass = util.encrypt(setting.password, cryptkey);
-						data[groupName].pre_password = pass;
+						data[id].pre_password = pass;
 						prePass = pass;
 					}
-					if (data[groupName].pre_password === prePass) {
-						data[groupName].password = util.encrypt(setting.password, cryptkey);
+					if (data[id].pre_password === prePass) {
+						data[id].password = util.encrypt(setting.password, cryptkey);
 						textClient.set(adminUserPrefix, JSON.stringify(data), function (err, reply) {
 							updateAuthority(data, null);
 							if (endCallback) {
@@ -627,20 +678,20 @@
 	 * 全グループ名と、guest, display, 全管理者名が返る.
 	 */
 	function getUserList(endCallback) {
-		getAdminUserSetting(function (err, data) {
+		getAdminList(function (err, data) {
 			var i,
 				userList = [];
 			
 			// 管理ユーザー
-			for (i = 0; i < Object.keys(data).length; i = i + 1) {
-				userList.push({ name : Object.keys(data)[i], type : "admin"});;
+			for (i = 0; i < data.adminlist.length; i = i + 1) {
+				userList.push({ name : data.adminlist[i].name, id : data.adminlist[i].id, type : "admin"});;
 			}
 			getGroupUserSetting(function (err, setting) {
 				getGroupList(function (err, groupData) {
 					var isFoundGuest = false;
 
 					// Guestユーザー
-					var guestUserData = { name : "Guest", type : "guest"};
+					var guestUserData = { name : "Guest", id : "Guest", type : "guest"};
 					if (setting.hasOwnProperty("Guest")) {
 						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
 							var key = userSettingKeys[k];
@@ -656,15 +707,17 @@
 						var i,
 							name,
 							userListData,
-							groupSetting;
+							groupSetting,
+							id;
 						for (i = 0; i < groupData.grouplist.length; i = i + 1) {
 							groupSetting = {};
 							name = groupData.grouplist[i].name;
+							id = groupData.grouplist[i].id;
 							// defaultグループは特殊扱いでユーザー無し
-							if (name !== "default") {
-								userListData = { name : name, type : "group"};
-								if (setting.hasOwnProperty(name)) {
-									groupSetting = setting[name];
+							if (id !== "group_default") {
+								userListData = { name : name, id : id, type : "group"};
+								if (setting.hasOwnProperty(id)) {
+									groupSetting = setting[id];
 								}
 								for (var k = 0; k < userSettingKeys.length; k = k + 1) {
 									var key = userSettingKeys[k];
@@ -677,7 +730,7 @@
 						}
 					}
 					// Displayユーザー
-					var displayUserData = { name : "Display", type : "display"};
+					var displayUserData = { name : "Display", id : "Display", type : "display"};
 					if (setting.hasOwnProperty("Display")) {
 						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
 							var key = userSettingKeys[k];
@@ -710,11 +763,11 @@
 
 		for (socketid in socketidToAccessAuthority) {
 			authority = socketidToAccessAuthority[socketid];
-			if (socketidToUserName.hasOwnProperty(socketid)) {
-				var name = socketidToUserName[socketid];
+			if (socketidToUserID.hasOwnProperty(socketid)) {
+				var id = socketidToUserID[socketid];
 				if (adminSetting) {
-					if (adminSetting.hasOwnProperty(name)) {
-						authority.name = name;
+					if (adminSetting.hasOwnProperty(id)) {
+						authority.id = id;
 						authority.viewable = "all";
 						authority.editable = "all";
 						authority.group_manipulatable = true;
@@ -723,12 +776,12 @@
 					}
 				}
 				if (groupSetting) {
-					if (groupSetting.hasOwnProperty(name)) {
-						authority.name = name;
+					if (groupSetting.hasOwnProperty(id)) {
+						authority.id = id;
 						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
 							var key = userSettingKeys[k];
-							if (groupSetting[name].hasOwnProperty(key)) {
-								authority[key] = groupSetting[name][key];
+							if (groupSetting[id].hasOwnProperty(key)) {
+								authority[key] = groupSetting[id][key];
 							}
 						}
 						socketidToAccessAuthority[socketid] = authority;
@@ -751,17 +804,17 @@
 		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			delete socketidToAccessAuthority[socketid];
 		}
-		if (socketidToUserName.hasOwnProperty(socketid)) {
-			delete socketidToUserName[socketid];
+		if (socketidToUserID.hasOwnProperty(socketid)) {
+			delete socketidToUserID[socketid];
 		}
 	}
 
 	/**
 	 * ログイン情報の一時的な保存. ログイン成功した場合に必ず呼ぶ.
 	 */
-	function saveLoginInfo(socketid, username, adminSetting, groupSetting) {
-		if (!socketidToUserName.hasOwnProperty(socketid)) {
-			socketidToUserName[socketid] = username;
+	function saveLoginInfo(socketid, id, adminSetting, groupSetting) {
+		if (!socketidToUserID.hasOwnProperty(socketid)) {
+			socketidToUserID[socketid] = id;
 		}
 		if (!socketidToAccessAuthority.hasOwnProperty(socketid)) {
 			socketidToAccessAuthority[socketid] = {};
@@ -773,33 +826,33 @@
 	/**
 	 * ログインする
 	 * @method login
-	 * @param {String} username ユーザー名
+	 * @param {String} id ユーザーid
 	 * @param {String} password パスワード
 	 * @param {String} socketid socketID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function login(username, password, socketid, endCallback) {
+	function login(id, password, socketid, endCallback) {
 		var getLoginResult = function () {
 			if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 				return {
-					username : username,
+					id : id,
 					loginkey : socketid,
 					authority : socketidToAccessAuthority[socketid]
 				};
 			} else {
 				return {
-					username : username,
+					id : id,
 					loginkey : socketid,
 					authority : null,
 				};
 			}
 		};
 		getAdminUserSetting(function (err, data) {
-			if (data.hasOwnProperty(username)) {
+			if (data.hasOwnProperty(id)) {
 				// 管理ユーザー
-				var isValid = validatePassword(data[username].password, password);
+				var isValid = validatePassword(data[id].password, password);
 				if (isValid) {
-					saveLoginInfo(socketid, username, data);
+					saveLoginInfo(socketid, id, data);
 					// 成功したらsocketidを返す
 					endCallback(null, getLoginResult());
 				} else {
@@ -808,14 +861,14 @@
 			} else {
 				getGroupUserSetting(function (err, setting) {
 					if (!err) {
-						if (setting.hasOwnProperty(username)) {
+						if (setting.hasOwnProperty(id)) {
 							// グループユーザー設定登録済グループユーザー
-							var isValid = validatePassword(setting[username].password, password);
-							if (username === "Guest" || username === "Display") {
+							var isValid = validatePassword(setting[id].password, password);
+							if (id === "Guest" || id === "Display") {
 								isValid = true;
 							}
 							if (isValid) {
-								saveLoginInfo(socketid, username, null, setting);
+								saveLoginInfo(socketid, id, null, setting);
 								endCallback(null, getLoginResult());
 							} else {
 								endCallback("failed to login");
@@ -1644,11 +1697,11 @@
 	 * @param {String} socketid socketid
 	 * @param {String} group group
 	 */
-	function isEditable(socketid, groupName) {
-		if (groupName === "default") {
+	function isEditable(socketid, groupID) {
+		if (groupID === "group_default") {
 			return true;
 		}
-		if (groupName === undefined || groupName === "") {
+		if (groupID === undefined || groupID === "") {
 			return true;
 		}
 		if (socketidToLoginKey.hasOwnProperty(socketid)) {
@@ -1660,7 +1713,7 @@
 			if (authority.editable === "all") {
 				return true;
 			}
-			if (authority.editable.indexOf(groupName) >= 0) {
+			if (authority.editable.indexOf(groupID) >= 0) {
 				return true;
 			}
 		}
@@ -1671,12 +1724,12 @@
 		getGroupList(function (err, data) {
 			var index = getGroupIndex(data.grouplist, groupID);
 			if (index >= 0) {
-				var groupName = data.grouplist[index].name;
-				if (groupName === "default") {
+				var groupID = data.grouplist[index].id;
+				if (groupID === "group_default") {
 					endCallback(true);
 					return;
 				}
-				if (groupName === undefined || groupName === "") {
+				if (groupID === undefined || groupID === "") {
 					endCallback(true);
 					return;
 				}
@@ -2287,7 +2340,9 @@
 		if (data.hasOwnProperty('name')) {
 			name = data.name;
 			delete data.name;
-			changeGroupUserSetting(data.name, data, endCallback);
+			getGroupID(data.name, function (id) {
+				changeGroupUserSetting(id, data, endCallback);
+			});
 		}
 	}
 
@@ -2339,17 +2394,17 @@
 	/**
 	 * ログインコマンドを実行する
      * @method commandLogin
-	 * @param {JSON} data 対象のusername, passwordを含むjson
+	 * @param {JSON} data 対象のid, passwordを含むjson
 	 *               再ログインする場合はコールバックで返ってくる値を loginkey としてjsonに入れる.
 	 * @param {String} socketid ソケットID
      * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandLogin(data, socketid, endCallback) {
 		console.log("----------------------------" , socketid, "----------------------------")
-		if (data.hasOwnProperty('username') && data.hasOwnProperty('password')) {
+		if (data.hasOwnProperty('id') && data.hasOwnProperty('password')) {
 			// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
 			if (data.hasOwnProperty('loginkey')) {
-				if (socketidToUserName.hasOwnProperty(data.loginkey) &&
+				if (socketidToUserID.hasOwnProperty(data.loginkey) &&
 					socketidToAccessAuthority.hasOwnProperty(data.loginkey)) 
 				{
 					// 対応関係を保存
@@ -2366,7 +2421,7 @@
 					return;
 				}
 			}
-			login(data.username, data.password, socketid, endCallback);
+			login(data.id, data.password, socketid, endCallback);
 		} else {
 			endCallback("ユーザ名またはパスワードが正しくありません.");
 		}
@@ -2397,12 +2452,12 @@
 				for (i = 0; i < userList.length; i = i + 1) {
 					if (userList[i].name === data.username) {
 						if (userList[i].type === "admin") {
-							changeAdminUserSetting(data.username, {
+							changeAdminUserSetting(userList[i].id, {
 								pre_password : data.pre_password,
 								password : data.password
 							}, endCallback);
 						} else if (userList[i].type === "group") {
-							changeGroupUserSetting(data.username, {
+							changeGroupUserSetting(userList[i].id, {
 								password : data.password
 							}, endCallback);
 						} else {
@@ -2413,6 +2468,28 @@
 				}
 			});
 		}
+	}
+
+	function getGroupID(groupName, endCallback) {
+		getGroupList(function (err, groupList) {
+			var k;
+			for (k = 0; k < groupList.grouplist.length; k = k + 1) {
+				if (groupList.grouplist[k].name === groupName) {
+					endCallback(groupList.grouplist[k].id);
+				}
+			}
+		});
+	}
+
+	function getAdminID(adminName, endCallback) {
+		getAdminList(function (err, adminList) {
+			var k;
+			for (k = 0; k < adminList.adminlist.length; k = k + 1) {
+				if (adminList.adminlist[k].name === groupName) {
+					endCallback(adminList.adminlist[k].id);
+				}
+			}
+		});
 	}
 
 	/**
@@ -2439,20 +2516,37 @@
 			&& data.hasOwnProperty('display_manipulatable'))
 		{
 			getUserList(function (err, userList) {
-				var i;
-				for (i = 0; i < userList.length; i = i + 1) {
-					if (userList[i].name === data.username) {
-						if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
-							changeGroupUserSetting(data.username, {
-								viewable : data.viewable,
-								editable : data.editable,
-								group_manipulatable : data.group_manipulatable,
-								display_manipulatable : data.display_manipulatable
-							}, endCallback);	
+				var i,
+					k,
+					n;
+				getGroupList(function (err, groupList) {
+					for (i = 0; i < userList.length; i = i + 1) {
+						if (userList[i].name === data.username) {
+							if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
+								var setting = {
+									viewable : [],
+									editable : [],
+									group_manipulatable : data.group_manipulatable,
+									display_manipulatable : data.display_manipulatable
+								};
+								for (k = 0; k < groupList.grouplist.length; k = k + 1) {
+									for (n = 0; n < data.viewable.length; n = n + 1) {
+										if (groupList.grouplist[k].name === data.viewable[n]) {
+											setting.viewable.push(groupList.grouplist[k].id);
+										}
+									}
+									for (n = 0; n < data.editable.length; n = n + 1) {
+										if (groupList.grouplist[k].name === data.editable[n]) {
+											setting.editable.push(groupList.grouplist[k].id);
+										}
+									}
+								}
+								changeGroupUserSetting(userList[i].id, setting, endCallback);	
+							}
+							break;
 						}
-						break;
 					}
-				}
+				});
 			});
 		} else {
 			endCallback("failed to change authority (3)");
@@ -2472,18 +2566,6 @@
 		}
 	}
 
-	/**
-	 * 管理者ユーザーの初期設定.
-     * @method initAdminUser
-	 */
-	function initAdminUser() {
-		// 試しに作る(仮
-		changeAdminUserSetting("管理者", {
-			pre_password : "hogehoge",
-			password : "hogehoge"
-		});
-	}
-	
 	/**
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
@@ -2960,6 +3042,7 @@
 		windowContentRefPrefix = frontPrefix + uuidPrefix + windowContentRefPrefix;
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
+		adminListPrefix = frontPrefix + adminListPrefix;
 		globalSettingPrefix = frontPrefix + globalSettingPrefix;
 		adminUserPrefix = frontPrefix + adminUserPrefix; // 管理ユーザー設定
 		groupUserPrefix = frontPrefix + uuidPrefix + groupUserPrefix; // グループユーザー設定
@@ -2972,8 +3055,15 @@
 		console.log("idstr:" + groupListPrefix);
 		console.log("idstr:" + contentBackupPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
-		initAdminUser();
-		addGroup("group_defalut", "default", function (err, reply) {} );
+
+		// 管理者の初期登録
+		
+		textClient.exists(adminUserPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				addAdmin(util.generateUUID8(), "管理者", "hogehoge", function (err, reply) {});
+			}
+		});
+		addGroup("group_default", "default", function (err, reply) {} );
 		
 		textClient.exists(groupUserPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {

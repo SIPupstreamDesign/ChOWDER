@@ -11,9 +11,11 @@
 		this.setting = setting;
 		this.tabIDs = [];
 		this.tabGroupToElems = {};
+		this.groupIDToName = {};
 		this.currentTab = null;
 		this.authority = authority;
 		this.init();
+		this.currentGroupName = "";
 	};
 	GroupBox.prototype = Object.create(EventEmitter.prototype);
 
@@ -29,8 +31,9 @@
 			boxArea,
 			box,
 			tabs,
-			id,
+			tabID,
 			groupName,
+			groupID,
 			groupColor = null,
 			tabItem,
 			elem,
@@ -53,23 +56,24 @@
 			tabArea.appendChild(elem);
 		
 			for (i = 0; i < tabs.length; i = i + 1) {
-				groupName = Object.keys(tabs[i])[0];
-				if (this.authority.isViewable(groupName)) {
-					if (!this.tabGroupToElems.hasOwnProperty(groupName)) {
-						this.tabGroupToElems[groupName] = [];
+				groupID = Object.keys(tabs[i])[0];
+				if (this.authority.isViewable(groupID)) {
+					if (!this.tabGroupToElems.hasOwnProperty(groupID)) {
+						this.tabGroupToElems[groupID] = [];
 					}
-					tabItem = tabs[i][groupName];
+					tabItem = tabs[i][groupID];
+					groupName = tabItem.name;
 					if (tabItem.hasOwnProperty('color')) {
 						groupColor = tabItem.color;
 					}
 					if (tabItem.hasOwnProperty('id')) {
-						id = this.tabID(tabItem.id);
+						tabID = this.tabID(groupID);
 					}
-					elem.appendChild(this.create_tab(id, groupName, groupColor, tabItem, i === 0));
-					this.tabIDs.push(id);
+					elem.appendChild(this.create_tab(tabID, groupName, groupColor, tabItem, i === 0));
+					this.tabIDs.push(tabID);
 
 					box = document.createElement('div');
-					box.id = id + "_box";
+					box.id = tabID + "_box";
 					box.className = tabItem.className + "_box";
 					box.style.width = "100%";
 					box.style.height = "100%";
@@ -83,9 +87,10 @@
 					if (this.currentTab === null) {
 						this.currentTab = box;
 						this.currentGroupName = groupName;
+						this.currentGroupID = groupID;
+						this.groupIDToName[groupID] = groupName;
 					}
-					
-					this.tabGroupToElems[groupName].push(box);
+					this.tabGroupToElems[groupID].push(box);
 				}
 			}
 			if (this.authority.isGroupManipulable()) {
@@ -97,7 +102,7 @@
 				elem.setAttribute("title", "1つ上に移動");
 				elem.appendChild(span);
 				elem.onclick = function () {
-					this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupName);
+					this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupID);
 				}.bind(this);
 				tabArea.appendChild(elem);
 
@@ -109,7 +114,7 @@
 				elem.setAttribute("title", "1つ下に移動");
 				elem.appendChild(span);
 				elem.onclick = function () {
-					this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupName);
+					this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupID);
 				}.bind(this);
 				tabArea.appendChild(elem);
 
@@ -153,8 +158,8 @@
 		return null;
 	};
 
-	GroupBox.prototype.get_current_group_name = function () {
-		return this.currentGroupName;
+	GroupBox.prototype.get_current_group_id = function () {
+		return this.currentGroupID;
 	};
 
 	GroupBox.prototype.tabID = function (id) {
@@ -170,22 +175,23 @@
 		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
 		..
 	*/
-	GroupBox.prototype.create_tab = function (groupID, groupName, groupColor, tabContent, is_active) {
+	GroupBox.prototype.create_tab = function (tabID, groupName, groupColor, tabContent, is_active) {
 		var elem,
 			link,
 			setting_button,
 			span;
 		elem = document.createElement('div');
-		elem.id = groupID;
+		elem.id = tabID;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
 		elem.style.cursor = "pointer";
 		if (groupColor) {
 			elem.style.backgroundColor = groupColor;
 		}
-		this.tabGroupToElems[groupName].push(elem);
+		this.tabGroupToElems[this.fromTabID(tabID)].push(elem);
+		this.groupIDToName[ this.fromTabID(tabID)] = groupName;
 		link = document.createElement('a');
 		link.href = "#";
-		link.id = groupID + "_link";
+		link.id = tabID + "_link";
 		link.className = "group_tab_link";
 		link.innerHTML = groupName;
 		elem.onclick = function (evt) {
@@ -196,15 +202,16 @@
 				tabElem = document.getElementById(this.tabIDs[i]);
 				tabElem.className = tabElem.className.split(" active").join("");
 			}
-			tabElem = document.getElementById(groupID); 
+			tabElem = document.getElementById(tabID); 
 			tabElem.className = tabElem.className + " active";
-			document.getElementById(groupID + "_box").style.display = "block";
+			document.getElementById(tabID + "_box").style.display = "block";
 			if (tabContent.hasOwnProperty('func')) {
 				tabContent.func();
 			}
 			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
-			this.currentTab = document.getElementById(groupID + "_box");
+			this.currentTab = document.getElementById(tabID + "_box");
 			this.currentGroupName = groupName;
+			this.currentGroupID = this.fromTabID(tabID);
 		}.bind(this);
 		elem.appendChild(link);
 		
@@ -233,7 +240,7 @@
 					delete_button.onclick = function () {
 						menu.style.display = "none";
 						background.close();
-						this.emit(GroupBox.EVENT_GROUP_DELETE, null, this.fromTabID(groupID));
+						this.emit(GroupBox.EVENT_GROUP_DELETE, null, this.fromTabID(tabID));
 					}.bind(self);
 
 					name_button.onclick = function () {
@@ -242,7 +249,7 @@
 								initialValue :  groupName,
 								okButtonName : "OK",
 							}, function (value) {
-								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null,  this.fromTabID(groupID), value);
+								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null,  this.fromTabID(tabID), value);
 							}.bind(this));
 						menu.style.display = "none";
 						background.close();
@@ -254,7 +261,7 @@
 								initialValue : groupColor,
 								okButtonName : "OK"
 							}, function (value) {
-								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null,  this.fromTabID(groupID), value);
+								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null,  this.fromTabID(tabID), value);
 							}.bind(this));
 						menu.style.display = "none";
 						background.close();
@@ -270,48 +277,8 @@
 		return elem;
 	};
 
-	GroupBox.prototype.close_tab = function(groupName) {
-		var i,
-			div,
-			elem,
-			parent = null;
-		
-		if (groupName === defaultGroup) {
-			return;
-		}
-		if (this.tabGroupToElems.hasOwnProperty(groupName)) {
-			parent = this.container.getElementsByClassName("group_box_area")[0];
-			div = this.container.getElementsByClassName("group_tab_div")[0];
-			if (parent && div) {
-				for (i = 0; i < this.tabGroupToElems[groupName].length; ++i) {
-					elem = this.tabGroupToElems[groupName][i];
-					if(parent.contains(elem)) {
-						parent.removeChild(elem);
-					}
-					if(div.contains(elem)) {
-						div.removeChild(elem);
-					}
-				}
-				this.currentTab = this.get_tab(defaultGroup);
-				this.currentTab.style.display = "block";
-			}
-		}
-	};
-
 	GroupBox.prototype.get_tabgroup_to_elems = function () {
 		return this.tabGroupToElems;
-	};
-
-	GroupBox.prototype.get_active_tab_name = function () {
-		var gname;
-		for (gname in this.tabGroupToElems) {
-			if (this.tabGroupToElems.hasOwnProperty(gname)) {
-				if (this.tabGroupToElems[gname][0].className.indexOf('active') >= 0) {
-					return gname;
-				}
-			}
-		}
-		return null;
 	};
 
 	GroupBox.prototype.select_tab = function (groupName) {
@@ -321,6 +288,10 @@
 		}
 		return null;
 	};
+
+	GroupBox.prototype.get_group_name = function (groupID) {
+		return this.groupIDToName[groupID];
+	}
 
 	GroupBox.prototype.is_active = function (tabID) {
 		var tab = document.getElementById(tabID);

@@ -303,14 +303,7 @@
 	 * @return {String} グループID
 	 */
 	function getSelectedGroup() {
-		var i,
-			groupElem = document.getElementsByClassName('group_tab');
-		for (i = 0; i < groupElem.length; ++i) {
-			if (groupElem[i].className.indexOf("active") >= 0) {
-				return groupElem[i].id;
-			}
-		}
-		return groupList[0].id;//contentID.innerHTML;
+		return gui.get_current_group_id();
 	}
 
 	/**
@@ -548,13 +541,13 @@
 	/**
 	 * グループの色を返す
 	 */
-	function getGroupColor(groupName) {
+	function getGroupColor(groupID) {
 		var i,
 			item;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
-			if (item.name === groupName) {
+			if (item.id === groupID) {
 				if (item.color) {
 					return item.color;
 				}
@@ -742,7 +735,12 @@
 				content_property.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
-				content_property.init(id, metaData.group, metaData.type, mime);
+				if (groupDict.hasOwnProperty(metaData.group)) {
+					content_property.init(id, groupDict[metaData.group].name, metaData.type, mime);
+				} else {
+					console.error("not found group")
+					content_property.init(id, "", metaData.type, mime);
+				}
 				content_property.assign_content_property(metaData);
 				gui.set_update_content_id(id);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
@@ -1537,7 +1535,7 @@
 		vscreen_util.transPosInv(metaData);
 		metaData.width = elem.offsetWidth / vscreen.getWholeScale();
 		metaData.height = elem.offsetHeight / vscreen.getWholeScale();
-		metaData.group = gui.get_current_group_name();
+		metaData.group = gui.get_current_group_id();
 		previewArea.removeChild(elem);
 		metaData.type = "text";
 		// テキストのときはメタデータにもテキストをつっこむ
@@ -1559,7 +1557,7 @@
 				metaData.type = "image";
 				metaData.width = img.naturalWidth;
 				metaData.height = img.naturalHeight;
-				metaData.group = gui.get_current_group_name();
+				metaData.group = gui.get_current_group_id();
 				vscreen_util.transPosInv(metaData);
 				img.style.width = img.naturalWidth + "px";
 				img.style.height = img.naturalHeight + "px";
@@ -1836,6 +1834,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetMetaData = function (err, reply, endCallback) {
+		if (!isInitialized) { return; }
+
 		console.log('doneGetMetaData', reply);
 		var json = reply,
 			elem,
@@ -1892,6 +1892,8 @@
 	 * @param {Object} reply 返信されたコンテンツ
 	 */
 	doneGetContent = function (err, reply, endCallback) {
+		if (!isInitialized) { return; }
+
 		if (!err) {
 			importContent(reply.metaData, reply.contentData);
 			if (endCallback) {
@@ -1909,6 +1911,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneUpdateMetaData = function (err, reply, endCallback) {
+		if (!isInitialized) { return; }
+
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 
@@ -1932,6 +1936,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneUpdateWindowMetaData = function (err, reply, endCallback) {
+		if (!isInitialized) { return; }
+
 		console.log("doneUpdateWindowMetaData");
 		var i,
 			windowData,
@@ -1955,6 +1961,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneDeleteContent = function (err, reply) {
+		if (!isInitialized) { return; }
+
 		console.log("doneDeleteContent", err, reply);
 		var func = function (err, reply) {
 			var json = reply,
@@ -1993,6 +2001,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneDeleteWindowMetaData = function (err, reply) {
+		if (!isInitialized) { return; }
+
 		console.log("doneDeleteWindowMetaData", reply);
 		var elem,
 			id,
@@ -2041,6 +2051,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneUpdateContent = function (err, reply) {
+		if (!isInitialized) { return; }
+
 		console.log("doneUpdateContent");
 
 		gui.set_update_content_id("No Content Selected.");
@@ -2053,6 +2065,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneAddContent = function (err, reply) {
+		if (!isInitialized) { return; }
+
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
 		
@@ -2072,6 +2086,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetWindowMetaData = function (err, reply) {
+		if (!isInitialized) { return; }
+
 		console.log('doneGetWindowMetaData:');
 		var windowData = reply,
 			elem;
@@ -2091,6 +2107,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetGroupList = function (err, reply) {
+		if (!isInitialized) { return; }
+
 		console.log("doneGetGroupList", reply);
 		var i,
 			groupToElems = { default : [] },
@@ -2161,7 +2179,7 @@
 			groupList = reply.grouplist;
 			groupDict = {};
 			for (i = 0; i < groupList.length; i = i + 1) {
-				groupDict[groupList[i].name] = groupList[i];
+				groupDict[groupList[i].id] = groupList[i];
 			} 
 
 			// 元々あったリストエレメントを全部つけなおす
@@ -2206,6 +2224,8 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetVirtualDisplay = function (err, reply) {
+		if (!isInitialized) { return; }
+		
 		var windowData = reply,
 			whole = vscreen.getWhole(),
 			split = vscreen.getSplitCount(),
@@ -2281,18 +2301,13 @@
 		var i,
 			metaData,
 			selectedGroup = getSelectedGroup(),
-			targetList = [],
-			groupToID = {};
-
-		for (i = 0; i < groupList.length; ++i) {
-			groupToID[groupList[i].name] = groupList[i].id;
-		}
+			targetList = [];
 		
 		if (selectedGroup) {
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
 					if (isContentType(metaDataDict[i])) {
-						if (groupToID[metaDataDict[i].group] === selectedGroup) {
+						if (metaDataDict[i].group === selectedGroup) {
 							targetList.push(metaDataDict[i]);
 						}
 					}
@@ -2447,7 +2462,7 @@
 			addContent({type : "layout",
 				user_data_text : JSON.stringify({ text: memo }),
 				visible: false,
-				group : gui.get_current_group_name()
+				group : gui.get_current_group_id()
 			}, layout);
 		});
 	});
@@ -2800,7 +2815,11 @@
 				+ Math.floor(Math.random() * 128 + 127) + ")";
 				
 		connector.send('AddGroup', { name : groupName, color : groupColor }, function (err, reply) {
-			console.log("AddGroup done", err, reply);
+			// UserList再取得
+			connector.send('GetUserList', {}, function (err, userList) {
+				management.setUserList(userList);
+				console.log("AddGroup done", err, reply);
+			});
 		});
 	});
 
@@ -2813,31 +2832,33 @@
 		for (i = 0; i < groupList.length; i = i + 1) {
 			item = groupList[i];
 			if (item.id === groupID) {
-				connector.send('DeleteGroup', item, (function (groupName) {
-					return function (err, reply) {
-						console.log("DeleteGroup done", err, reply);
-						var deleteList = [],
-							id,
-							metaData;
-						console.log("UpdateGroup done", err, reply);
-						if (!err) {
-							// コンテンツも削除
-							for (id in metaDataDict) {
-								if (metaDataDict.hasOwnProperty(id)) {
-									metaData = metaDataDict[id];
-									if (isContentType(metaData)) {
-										if (metaData.group === groupName) {
-											deleteList.push(metaData);
-										}
+				connector.send('DeleteGroup', item, function (err, reply) {
+					console.log("DeleteGroup done", err, reply);
+					var deleteList = [],
+						id,
+						metaData;
+					console.log("UpdateGroup done", err, reply);
+					if (!err) {
+						// コンテンツも削除
+						for (id in metaDataDict) {
+							if (metaDataDict.hasOwnProperty(id)) {
+								metaData = metaDataDict[id];
+								if (isContentType(metaData)) {
+									if (metaData.group === groupID) {
+										deleteList.push(metaData);
 									}
 								}
 							}
-							if (deleteList.length > 0) {
-								connector.send('DeleteContent', deleteList, doneDeleteContent);
-							}
 						}
-					};
-				}(item.name)));
+						if (deleteList.length > 0) {
+							connector.send('DeleteContent', deleteList, doneDeleteContent);
+						}
+					}
+					// UserList再取得
+					connector.send('GetUserList', {}, function (err, userList) {
+						management.setUserList(userList);
+					});
+				});
 				return;
 			}
 		}
@@ -2845,9 +2866,9 @@
 
 	/**
 	 * Group変更がクリックされた
-	 * @param {String} groupName 変更先のグループ名
+	 * @param {String} groupID 変更先のグループID
 	 */
-	gui.on("group_change_clicked", function (err, groupName) {
+	gui.on("group_change_clicked", function (err, groupID) {
 		var i,
 			k,
 			id,
@@ -2859,10 +2880,10 @@
 			id = selectedIDList[i];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				metaData.group = groupName;
+				metaData.group = groupID;
 
 				for (k = 0; k < groupList.length; k = k + 1) {
-					if (groupList[k].name === groupName) {
+					if (groupList[k].id === groupID) {
 						targetMetaDataList.push(metaData);
 						group = groupList[k];
 						break;
@@ -2884,7 +2905,7 @@
 	gui.on("select_contents_clicked", function (err, onlyCurrentGroup) {
 		var i,
 			id,
-			currentGroup = gui.get_current_group_name();
+			currentGroup = gui.get_current_group_id();
 
 		unselectAll(true);
 		for (id in metaDataDict) {
@@ -2930,14 +2951,14 @@
 
 	/**
 	 * Groupを１つ下に
-	 * @param {String} groupName 変更先のグループ名
+	 * @param {String} groupID 変更先のグループID
 	 */
-	gui.on("group_down", function (err, groupName) {
+	gui.on("group_down", function (err, groupID) {
 		var i,
 			target;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
-			if (groupList[i].name === groupName) {
+			if (groupList[i].id === groupID) {
 				if (i > 0 && i < (groupList.length - 1)) {
 					target = {
 						id : groupList[i].id,
@@ -2954,14 +2975,14 @@
 
 	/**
 	 * Groupを１つ上に
-	 * @param {String} groupName 変更先のグループ名
+	 * @param {String} groupID 変更先のグループID
 	 */
-	gui.on("group_up", function (err, groupName) {
+	gui.on("group_up", function (err, groupID) {
 		var i,
 			target;
 
 		for (i = 0; i < groupList.length; i = i + 1) {
-			if (groupList[i].name === groupName) {
+			if (groupList[i].id === groupID) {
 				if (i > 1 && i <= (groupList.length - 1)) {
 					target = {
 						id : groupList[i].id,
@@ -2996,18 +3017,10 @@
 							metaData;
 						console.log("UpdateGroup done", err, reply);
 						if (!err) {
-							// コンテンツのグループ名も変更
-							for (id in metaDataDict) {
-								if (metaDataDict.hasOwnProperty(id)) {
-									metaData = metaDataDict[id];
-									if (isContentType(metaData)) {
-										if (metaData.group === oldName) {
-											metaData.group = newName;
-											updateMetaData(metaData);
-										}
-									}
-								}
-							}
+							// グループリスト更新
+							connector.send('GetUserList', {}, function (err, userList) {
+								management.setUserList(userList);
+							});
 						}
 					};
 				}(oldName, groupName)));
@@ -3048,7 +3061,7 @@
 			child;
 			
 		for (i = 0; i < groupList.length; i = i + 1) {
-			groupDict[groupList[i].name] = groupList[i];
+			groupDict[groupList[i].id] = groupList[i];
 		}
 
 		for (id in metaDataDict) {
@@ -3606,13 +3619,13 @@
 		isInitialized = true;
 	}
 
-	function submitFunc(userList, username, password, key, callback) {
+	function submitFunc(userList, id, password, key, callback) {
 		return function () {
 			var loginmenuBackground = document.getElementById('loginmenu_background');
 			var loginmenu = document.getElementById('loginmenu');
 			var loginpass = document.getElementById('loginpass');
 			var logoutButton = document.getElementById('head_menu_hover');
-			var request = { username : username, password : password };
+			var request = { id : id, password : password };
 			if (key && key.length > 0) {
 				request.loginkey = key;
 			}
@@ -3682,7 +3695,6 @@
 
 		// 最初に再ログインを試行する
 		connector.send('GetUserList', {}, function (err, userList) {
-//			console.error(userList)
 			relogin(userList,  function (err, reply) {
 				if (err || reply === "failed") {
 					var i,
@@ -3699,18 +3711,18 @@
 					document.getElementById('loginbutton').onclick = function () {
 						var userselect = document.getElementById('loginuser');
 						if (userselect.selectedIndex >= 0) {
-							var username = userList[userselect.selectedIndex].name,
+							var userid = userList[userselect.selectedIndex].id,
 								password = loginpass.value;
-							submitFunc(userList, username, password, "")();
+							submitFunc(userList, userid, password, "")();
 						}
 					}
 					loginpass.onkeypress = function (e) {
 						if (e.which == 13) {
 							var userselect = document.getElementById('loginuser');
 							if (userselect.selectedIndex >= 0) {
-								var username = userList[userselect.selectedIndex].name,
+								var userid = userList[userselect.selectedIndex].id,
 									password = loginpass.value;
-								submitFunc(userList, username, password, "")();
+								submitFunc(userList, userid, password, "")();
 							}
 						}
 					};

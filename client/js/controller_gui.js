@@ -176,8 +176,9 @@
 		this.groupBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('content_tab_box'),
 			{
 				tabs : [{
-						default : {
+						"group_default" : {
 							id : "group_default",
+							name : "default",
 							className : "group_tab",
 							func : function () {},
 							active : true
@@ -189,7 +190,10 @@
 		// Searchエリアの中身を作成
 		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'),
 			{
-				groups : ["default"],
+				groups : [{
+					id : "group_default",
+					name : "default"
+				}],
 				colors : ["rgb(54,187,68)"]
 			});
 		this.initSearchBoxEvents(this.searchBox);
@@ -198,8 +202,9 @@
 		this.layoutBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('layout_tab_box'),
 			{
 				tabs : [{
-						default : {
-							id : "layout_default",
+						"group_default" : {
+							id : "group_default",
+							name : "default",
 							className : "layout_tab",
 							func : function () {},
 							active : false
@@ -395,7 +400,7 @@
 			document.getElementById('context_menu_change_group'),
 			document.getElementById('context_menu_change_image')
 		];
-		if (authority.isEditable(this.get_current_group_name())) {
+		if (authority.isEditable(this.get_current_group_id())) {
 			for (i = 0; i < editableMenus.length; i = i + 1) {
 				editableMenus[i].style.display = "block";
 			}
@@ -673,28 +678,29 @@
 		var groupToElems = this.groupBox.get_tabgroup_to_elems(),
 			container = document.getElementById('context_menu_change_group_submenu'),
 			item,
+			groupID,
 			gname,
 			authority = this.management.getAuthorityObject();
 		container.innerHTML = "";
 
-		if (!authority.isEditable(this.get_current_group_name())) {
+		if (!authority.isEditable(this.get_current_group_id())) {
 			return;
 		}
-
-		for (gname in groupToElems) {
-			if (groupToElems.hasOwnProperty(gname)) {
+		
+		for (groupID in groupToElems) {
+			if (groupToElems.hasOwnProperty(groupID)) {
 				// グループ変更内のアクセス権限による表示非表示
-				if (authority.isEditable(gname)) {
+				if (authority.isEditable(groupID)) {
 					item = document.createElement('li');
 					item.className = "context_menu_change_group_item";
-					item.innerHTML = gname;
+					item.innerHTML = this.groupBox.get_group_name(groupID);
 					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
 					container.appendChild(item);
-					item.onmousedown = (function (gname, self) {
+					item.onmousedown = (function (groupID, self) {
 						return function (evt) {
-							this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, gname);
+							this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, groupID);
 						}.bind(self);
-					}(gname, this));
+					}(groupID, this));
 				}
 			}
 		}
@@ -704,22 +710,23 @@
 		var groupToElems = this.groupBox.get_tabgroup_to_elems(),
 			container = document.getElementById('burger_menu_submenu'),
 			item,
-			gname;
+			gname,
+			groupID;
 		container.innerHTML = "";
 
-		for (gname in groupToElems) {
-			if (groupToElems.hasOwnProperty(gname)) {
+		for (groupID in groupToElems) {
+			if (groupToElems.hasOwnProperty(groupID)) {
 				item = document.createElement('li');
 				item.className = "burger_menu_submenu_item";
-				item.innerHTML = gname;
+				item.innerHTML = this.groupBox.get_group_name(groupID);
 				container.appendChild(item);
-				item.onmousedown = (function (gname, self) {
+				item.onmousedown = (function (groupID, self) {
 					return function (evt) {
-						this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, gname);
+						this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, groupID);
 						this.toggleBurgerSubmenu(false);
 						this.contentMenu.toggle();
 					}.bind(self);
-				}(gname, this));
+				}(groupID, this));
 			}
 		}
 	};
@@ -928,12 +935,12 @@
 			this.emit(window.ControllerGUI.EVENT_GROUP_APPEND_CLICKED, null, groupName);
 		}.bind(this));
 
-		groupBox.on("group_up", function (err, groupName) {
-			this.emit(window.ControllerGUI.EVENT_GROUP_UP, null, groupName);
+		groupBox.on("group_up", function (err, groupID) {
+			this.emit(window.ControllerGUI.EVENT_GROUP_UP, null, groupID);
 		}.bind(this));
 		
-		groupBox.on("group_down", function (err, groupName) {
-			this.emit(window.ControllerGUI.EVENT_GROUP_DOWN, null, groupName);
+		groupBox.on("group_down", function (err, groupID) {
+			this.emit(window.ControllerGUI.EVENT_GROUP_DOWN, null, groupID);
 		}.bind(this));
 
 		groupBox.on("group_edit_name", function (err, groupID, groupName) {
@@ -960,8 +967,7 @@
 	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
 	ControllerGUI.prototype.setGroupList = function (groupList) {
-		var activeTab = this.groupBox.get_active_tab_name(),
-			contentSetting = { tabs : [] },
+		var contentSetting = { tabs : [] },
 			searchSetting = { groups : [], colors : [] },
 			layoutSetting = { tabs : [] },
 			groupName,
@@ -975,21 +981,26 @@
 			groupColor = groupList[i].color;
 			groupID = groupList[i].id;
 			tab = {};
-			tab[groupName] = {
+			tab[groupID] = {
 				id : groupID,
+				name : groupName,
 				className : "group_tab",
 				color : groupColor,
 				active : true
 			};
 			layoutGroupTab = {};
-			layoutGroupTab[groupName] = {
+			layoutGroupTab[groupID] = {
 				id : groupID,
+				name : groupName,
 				className : "layout_tab",
 				color : groupColor,
 				active : true
 			};
 			contentSetting.tabs.push(tab);
-			searchSetting.groups.push(groupName);
+			searchSetting.groups.push({
+				id : groupID,
+				name : groupName
+			});
 			searchSetting.colors.push(groupColor);
 			layoutSetting.tabs.push(layoutGroupTab);
 		}
@@ -1153,11 +1164,11 @@
 	ControllerGUI.prototype.get_layout_area_by_group = function (group) {
 		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
-	ControllerGUI.prototype.get_current_group_name = function () {
+	ControllerGUI.prototype.get_current_group_id = function () {
 		if (this.tabs.is_active("content_tab") && this.groupBox) {
-			return this.groupBox.get_current_group_name();
+			return this.groupBox.get_current_group_id();
 		} else if (this.tabs.is_active("layout_tab") && this.layoutBox) {
-			return this.layoutBox.get_current_group_name();
+			return this.layoutBox.get_current_group_id();
 		}
 		return null;
 	};

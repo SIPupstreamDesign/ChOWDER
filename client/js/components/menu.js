@@ -89,6 +89,9 @@
 					ul2.className = "menu_level" + n;
 					
 					if (n === 1) {
+						li.onmousedown = function (evt) {
+								evt.preventDefault();
+						};
 						li.onclick = (function (self, ul) {
 							return function (evt) {
 								if (this.background !== null) { 
@@ -117,6 +120,9 @@
 						link.href = value.url;
 					}
 					if (value.hasOwnProperty('func')) {
+						link.onmousedown = function (evt) {
+							evt.preventDefault();
+						};
 						link.onclick = (function (value) {
 							return function (evt) {
 								value.func(evt);

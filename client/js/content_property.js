@@ -300,7 +300,7 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	ContentProperty.prototype.assign_content_property = function (metaData) {
-		console.log("assign_content_property:" + JSON.stringify(metaData));
+		//console.log("assign_content_property:" + JSON.stringify(metaData));
 		var transx = document.getElementById('content_transform_x'),
 			transy = document.getElementById('content_transform_y'),
 			transw = document.getElementById('content_transform_w'),

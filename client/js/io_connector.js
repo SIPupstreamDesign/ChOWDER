@@ -88,7 +88,7 @@
 		if (command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
 
-			if(method !== 'UpdateMouseCursor'){console.log('[Info] chowder_request', reqdata);}
+			//if(method !== 'UpdateMouseCursor'){console.log('[Info] chowder_request', reqdata);}
 			socket.emit('chowder_request', reqdata);
 		} else {
 			console.log('[Error] Not found the method in connector: ', method);
@@ -180,7 +180,7 @@
         });
 		socket.on('chowder_response', function (data) {
 			var parsed;
-			if(!(typeof data === 'string' && data.match(/UpdateMouseCursor/))){console.log('chowder_response', data);}
+			//if(!(typeof data === 'string' && data.match(/UpdateMouseCursor/))){console.log('chowder_response', data);}
 			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);
