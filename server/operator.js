@@ -1343,21 +1343,27 @@
 				// 復元時に初回復元の場合、バックアップリストに更新前コンテンツと更新後コンテンツを両方格納する.
 				if (backupList.length === 0) {
 					// 更新前コンテンツ
-					backupContent(metaData, function (err, reply) {
-						metaData.date = new Date().toISOString();
-						metaData.restore_index = -1;
-						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-							textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
-								if (err) {
-									console.error("Error on updateContent:" + err);
-								} else {
-									// 更新後コンテンツ
-									backupContent(meta, function (err, reply) {
-										if (endCallback) {
-											endCallback(meta);
-										}
-									});
-								}
+					// メタデータ初期設定.
+					getMetaData(metaData.type, metaData.id, function (oldMeta) {
+						backupContent(oldMeta, function (err, reply) {
+							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+								initialMetaDataSetting(metaData, contentData);
+							}
+							metaData.date = new Date().toISOString();
+							metaData.restore_index = -1;
+							setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+								textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
+									if (err) {
+										console.error("Error on updateContent:" + err);
+									} else {
+										// 更新後コンテンツ
+										backupContent(meta, function (err, reply) {
+											if (endCallback) {
+												endCallback(meta);
+											}
+										});
+									}
+								});
 							});
 						});
 					});
@@ -1365,6 +1371,10 @@
 					// 更新後コンテンツのみバックアップ
 					metaData.date = new Date().toISOString();
 					metaData.restore_index = -1;
+					// メタデータ初期設定.
+					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+						initialMetaDataSetting(metaData, contentData);
+					}
 					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 						textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
 							if (err) {
@@ -1823,13 +1833,15 @@
 
 				// 履歴から復元して取得
 				if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
-					var backupList = JSON.parse(meta.backup_list);
+					var backupList = sortBackupList(JSON.parse(meta.backup_list));
 					var restore_index = Number(json.restore_index);
-					if (restore_index > 0 && backupList.length > restore_index) {
+					if (restore_index >= 0 && backupList.length > restore_index) {
 						var backup_date = backupList[restore_index];
-						client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
-							endCallback(null, meta, reply[0]);
-						});
+						textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
+							client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
+								endCallback(null, JSON.parse(metaData), reply[0]);
+							});
+						})
 						return;
 					}
 				}
@@ -1971,18 +1983,38 @@
 				textClient.exists(metadataPrefix + json[i].id, (function (metaData) {
 					return function (err, doesExists) {
 						if (!err && doesExists === 1) {
-							setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-								getMetaData(meta.type, meta.id, function (meta) {
-									--all_done;
-									results.push(meta);
-									if (all_done <= 0) {
-										if (endCallback) {
-											endCallback(null, results);
-											return;
-										}
-									}
+							
+							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+								// メタデータ初期設定.
+								getContent(metaData.type, metaData.content_id, function (reply) {
+									initialMetaDataSetting(metaData, reply);
+									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+										getMetaData(meta.type, meta.id, function (meta) {
+											--all_done;
+											results.push(meta);
+											if (all_done <= 0) {
+												if (endCallback) {
+													endCallback(null, results);
+													return;
+												}
+											}
+										});
+									});
 								});
-							});
+							} else {
+								setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+									getMetaData(meta.type, meta.id, function (meta) {
+										--all_done;
+										results.push(meta);
+										if (all_done <= 0) {
+											if (endCallback) {
+												endCallback(null, results);
+												return;
+											}
+										}
+									});
+								});
+							}
 						}
 					};
 				}(metaData)));
