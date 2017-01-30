@@ -28,23 +28,6 @@ function createWindow () {
         autoHideMenuBar: true
     });
 
-    /*
-    // 仮想ウィンドウ。
-    virtualWindow = new BrowserWindow({
-        parent: mainWindow,
-        left: 0,
-        top: 0,
-        width: size.width,
-        height: size.height,
-        frame: false,
-        show: false,
-        transparent: true,
-        resizable: false,
-        'always-on-top': true,
-        title: "fullscreen"
-    });
-    */
-
   // メインウィンドウのみ可視
   mainWindow.show();
 

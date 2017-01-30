@@ -16,6 +16,7 @@ window.URL = window.URL || window.webkitURL;
         let video = document.getElementById('video');
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext("2d");
+        let num = document.getElementById('interval');
         
         // キャプチャー情報
         let capSource;
@@ -32,14 +33,19 @@ window.URL = window.URL || window.webkitURL;
         video.height = 450;
 
         let cap = false;
-        let defCap = true;
         let capButton = document.getElementById('capture');
-        let drawInterval;
+
+        let drawInterval = 0;
         let selected = 0;
         
+        let setArea = document.getElementById('setarea');
+        let areaFlag = false;
+        let areaX;
+        let areaY;
+
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect();
+        //ws_connector.connect();
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
@@ -61,25 +67,12 @@ window.URL = window.URL || window.webkitURL;
                 console.log(capSource);
             });
         }
+        
+        // 送信インターバル変更
+        num.addEventListener("change",function(eve){
+            drawIntarval = eve.target.value;
+        },false);
 
-        // メインリソースの切り替え
-        function replaceResources(id, selected){
-            let tmpId;
-            let tmpName;
-            let tmpThumbnail;
-
-            tmpId = capSource[id].id;
-            tmpName = capSource[id].name;
-            tmpThumbnail = capSource[id].thumbnail;
-
-            capSource[id].id = capSource[selected].id;
-            capSource[id].name = capSource[selected].name;
-            capSource[id].thumbnail = capSource[selected].thumbnail;
-
-            capSource[selected].id = tmpId;
-            capSource[selected].name = tmpName;
-            capSource[selected].thumbnail = tmpThumbnail;
-        }
 
         // canvas2dへイメージとして送る------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
@@ -87,7 +80,7 @@ window.URL = window.URL || window.webkitURL;
             if(cap === false){
                 cap = true;
                 capButton.value = "Capture Stop";
-                drawInterval = setInterval(drawCanvas, 100);
+                drawInterval = setInterval(drawCanvas, drawInterval*100);
             }
             // フラグがオンであれば
             else if(cap === true){
@@ -96,7 +89,6 @@ window.URL = window.URL || window.webkitURL;
                 clearInterval(drawInterval);
             }
         },false);
-
 
         // sourcesに関する関数--------------------------------------------------------------------
         // bodyへのサムネイル埋め込み
@@ -109,30 +101,31 @@ window.URL = window.URL || window.webkitURL;
             document.body.appendChild(elm);
         }
 
-        // キャンバスへ描画
+        // キャンバスへ描画-------------------------------------------------------------------------------
         function drawCanvas(){
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             console.log(video.videoWidth, video.videoHeight);
             ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             // 送信
+            /*
             ws_connector.sendBinary('AddContent', {
-                "id" : "captured", // 特定のID に固定する.
+                "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
             },getImageBinary(canvas), function(){});
-            
+            */
         }
         
-        // キャプチャー対象の切り替え
-        addEventListener('click',function(eve){
+        
+        // キャプチャー対象の切り替え------------------------------------------------------------------
+        addEventListener('click', function(eve){
             let id = eve.target.id;
             if(id != 'video' && id >=0){
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
                 //replaceResources(id, selected);
-                console.log(capSource[selected].name);
                 mainViewer(capSource[selected]);
             }
         }, false);
