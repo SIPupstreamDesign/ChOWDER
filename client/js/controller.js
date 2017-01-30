@@ -2792,20 +2792,8 @@
 				metaData.restore_index = restoreIndex;
 				connector.send('GetContent', metaData, function (err, reply) {
 					if (reply.metaData.type === "text") {
-						var elem = document.createElement('pre');
-						var previewArea = gui.get_content_preview_area();
-						elem.className = "text_content";
-						elem.innerHTML = reply.contentData;
-						previewArea.appendChild(elem);
-						reply.metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
-						reply.metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
-						var aspect = reply.metaData.orgWidth / reply.metaData.orgHeight;
-						previewArea.removeChild(elem);
 						metaData.user_data_text = JSON.stringify({ text: reply.contentData });
-						metaData.height = metaData.width / aspect;
 					}
-					delete reply.metaData.orgWidth;
-					delete reply.metaData.orgHeight;
 					reply.metaData.restore_index = restoreIndex;
 					updateMetaData(reply.metaData);
 					manipulator.removeManipulator();
@@ -3501,9 +3489,12 @@
 						previewArea.appendChild(elem);
 						metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
 						metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
-						metaData.restore_index = -1;
+						correctAspect(metaData, function () {
+							console.error("metaData", metaData)
+							metaData.restore_index = -1;
+							updateContent(metaData, text);
+						})
 						previewArea.removeChild(elem);
-						updateContent(metaData, text);
 					} else if (metaData.type === "layout") {
 						// レイアウトのメモ変更.
 						// レイアウトコンテンツを取得し直しリストを更新する.

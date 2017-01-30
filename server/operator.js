@@ -1092,6 +1092,36 @@
 		}
 	}
 	
+	function initialOrgWidthHeight(metaData, contentData) {
+		var dimensions;
+		if (metaData.hasOwnProperty('width')) {
+			metaData.orgWidth = metaData.width;
+		}
+		if (metaData.hasOwnProperty('height')) {
+			metaData.orgHeight = metaData.height;
+		}
+		if (metaData.type === 'text') {
+			metaData.mime = "text/plain";
+		} else if (metaData.type === 'image') {
+			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === 'url') {
+			metaData.mime = util.detectImageType(contentData);
+		} else {
+			console.error("Error undefined type:" + metaData.type);
+		}
+		if (metaData.type === 'image') {
+			if (isInvalidImageSize(metaData)) {
+				dimensions = image_size(contentData);
+				if (!metaData.hasOwnProperty('orgWidth')) {
+					metaData.orgWidth = dimensions.width;
+				}
+				if (!metaData.hasOwnProperty('orgHeight')) {
+					metaData.orgHeight = dimensions.height;
+				}
+			}
+		}
+	}
+
 	/**
 	 * メタデータ追加
 	 * @method addMetaData
@@ -1347,7 +1377,7 @@
 					getMetaData(metaData.type, metaData.id, function (oldMeta) {
 						backupContent(oldMeta, function (err, reply) {
 							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
-								initialMetaDataSetting(metaData, contentData);
+								initialOrgWidthHeight(metaData, contentData);
 							}
 							metaData.date = new Date().toISOString();
 							metaData.restore_index = -1;
@@ -1373,7 +1403,7 @@
 					metaData.restore_index = -1;
 					// メタデータ初期設定.
 					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
-						initialMetaDataSetting(metaData, contentData);
+						initialOrgWidthHeight(metaData, contentData);
 					}
 					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 						textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
@@ -1987,7 +2017,7 @@
 							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
 								// メタデータ初期設定.
 								getContent(metaData.type, metaData.content_id, function (reply) {
-									initialMetaDataSetting(metaData, reply);
+									initialOrgWidthHeight(metaData, reply);
 									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 										getMetaData(meta.type, meta.id, function (meta) {
 											--all_done;
