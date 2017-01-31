@@ -14,9 +14,10 @@
 	};
 	SelectList.prototype = Object.create(EventEmitter.prototype);
 
-	SelectList.prototype.add = function (text) {
+	SelectList.prototype.add = function (text, value) {
 		var row = document.createElement('div');
 		row.innerText = text;
+		row.value = value;
 		row.className = "select_list_content";
 		row.onclick = function (index) {
 			this.contents[index].classList.toggle(this.selectClassName);
@@ -33,6 +34,17 @@
 		for (i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].classList.contains(this.selectClassName)) {
 				selected.push(this.contents[i].innerText);
+			}
+		}
+		return selected;
+	};
+
+	SelectList.prototype.getSelectedValues = function () {
+		var i;
+		var selected = [];
+		for (i = 0; i < this.contents.length; i = i + 1) {
+			if (this.contents[i].classList.contains(this.selectClassName)) {
+				selected.push(this.contents[i].value);
 			}
 		}
 		return selected;

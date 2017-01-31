@@ -1252,6 +1252,8 @@
 									console.log("reference count zero. delete content");
 									textClient.del(contentPrefix + metaData.content_id, function (err) {
 										if (!err) {
+											textClient.del(metadataBackupPrefix + metaData.id);
+											textClient.del(contentBackupPrefix + metaData.content_id);
 											textClient.del(contentRefPrefix + metaData.content_id);
 											if (endCallback) {
 												endCallback(metaData);
@@ -2586,23 +2588,11 @@
 						if (userList[i].name === data.username) {
 							if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
 								var setting = {
-									viewable : [],
-									editable : [],
+									viewable : data.viewable,
+									editable : data.editable,
 									group_manipulatable : data.group_manipulatable,
 									display_manipulatable : data.display_manipulatable
 								};
-								for (k = 0; k < groupList.grouplist.length; k = k + 1) {
-									for (n = 0; n < data.viewable.length; n = n + 1) {
-										if (groupList.grouplist[k].name === data.viewable[n]) {
-											setting.viewable.push(groupList.grouplist[k].id);
-										}
-									}
-									for (n = 0; n < data.editable.length; n = n + 1) {
-										if (groupList.grouplist[k].name === data.editable[n]) {
-											setting.editable.push(groupList.grouplist[k].id);
-										}
-									}
-								}
 								changeGroupUserSetting(userList[i].id, setting, endCallback);	
 							}
 							break;

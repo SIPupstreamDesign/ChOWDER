@@ -250,15 +250,15 @@
 		}.bind(this));
 
 		authTargetFrame.innerHTML = "";
-		this.editableSelect.add(allAccessText);
-		this.viewableSelect.add(allAccessText);
+		this.editableSelect.add(allAccessText, allAccessText);
+		this.viewableSelect.add(allAccessText, allAccessText);
 		for (i = 0; i < this.userList.length; i = i + 1) {
 			if (this.userList[i].type !== "admin" &&
 				this.userList[i].type !== "display" &&
 				this.userList[i].type !== "guest")
 			{
-				this.editableSelect.add(this.userList[i].name);
-				this.viewableSelect.add(this.userList[i].name);
+				this.editableSelect.add(this.userList[i].name, this.userList[i].id);
+				this.viewableSelect.add(this.userList[i].name, this.userList[i].id);
 			}
 		}
 		authTargetFrame.appendChild(this.editableSelect.getDOM());
@@ -268,8 +268,8 @@
 			var index = authSelect.selectedIndex;
 			if (index >= 0 && authSelect.childNodes.length > index) {
 				var name = authSelect.childNodes[index].value;
-				var editable = this.editableSelect.getSelected();
-				var viewable = this.viewableSelect.getSelected();
+				var editable = this.editableSelect.getSelectedValues();
+				var viewable = this.viewableSelect.getSelectedValues();
 				var group_manipulatable = groupManipulateCheck.checked;
 				var display_manipulatable = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
