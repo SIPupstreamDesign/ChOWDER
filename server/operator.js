@@ -2053,9 +2053,19 @@
 						if (!err && doesExists === 1) {
 							
 							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
-								// メタデータ初期設定.
 								getContent(metaData.type, metaData.content_id, function (reply) {
+									// メタデータ初期設定.
 									initialOrgWidthHeight(metaData, reply);
+									
+									if (metaData.hasOwnProperty('restore_index')) {
+										var restore_index = Number(metaData.restore_index);
+										if (restore_index >= 0) {
+											var backupMetaData = {};
+											backupMetaData[metaData.date] = JSON.stringify(metaData);
+											client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
+										}
+									}
+									
 									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 										getMetaData(meta.type, meta.id, function (meta) {
 											--all_done;
@@ -2070,6 +2080,15 @@
 									});
 								});
 							} else {
+								
+								if (metaData.hasOwnProperty('restore_index')) {
+									var restore_index = Number(metaData.restore_index);
+									if (restore_index >= 0) {
+										var backupMetaData = {};
+										backupMetaData[metaData.date] = JSON.stringify(metaData);
+										client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
+									}
+								}
 								setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 									getMetaData(meta.type, meta.id, function (meta) {
 										--all_done;
