@@ -69,17 +69,19 @@ window.URL = window.URL || window.webkitURL;
             });
         }
         
-        // 送信インターバル変更
-        num.addEventListener("change",function(eve){
-            drawTime = eve.target.value;
-        },false);
-
+        // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
             let areaFunc = remote.require('./main.js');
             areaFunc.areaSelector();
         }, false);
 
-        // canvas2dへイメージとして送る------------------------------------------------------------
+        // canvas2dへイメージとして送る---------------------------------------------------------
+        // 送信インターバル変更
+        num.addEventListener("change",function(eve){
+            drawTime = eve.target.value;
+        },false);
+
+        // キャプチャーイベント
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
@@ -106,7 +108,7 @@ window.URL = window.URL || window.webkitURL;
             document.body.appendChild(elm);
         }
 
-        // キャンバスへ描画-------------------------------------------------------------------------------
+        // キャンバスへ描画-----------------------------------------------------------------------
         function drawCanvas(){
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -123,10 +125,10 @@ window.URL = window.URL || window.webkitURL;
         }
         
         
-        // キャプチャー対象の切り替え------------------------------------------------------------------
+        // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
             let id = eve.target.id;
-            if(id != 'video' && id){
+            if(id != 'video' && id != 'setarea' && id ){
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
@@ -136,7 +138,7 @@ window.URL = window.URL || window.webkitURL;
         }, false);
 
 
-        // viewer------------------------------------------------------------------------------------
+        // viewer-------------------------------------------------------------------------------
         function mainViewer(source){
             let media;
             console.log(source.id, source.name);
