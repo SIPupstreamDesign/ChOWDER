@@ -281,10 +281,10 @@
 		return this.tabGroupToElems;
 	};
 
-	GroupBox.prototype.select_tab = function (groupName) {
+	GroupBox.prototype.select_tab = function (groupID) {
 		var gname;
-		if (this.tabGroupToElems.hasOwnProperty(groupName)) {
-			this.tabGroupToElems[groupName][0].onclick();
+		if (this.tabGroupToElems.hasOwnProperty(groupID)) {
+			this.tabGroupToElems[groupID][0].onclick();
 		}
 		return null;
 	};

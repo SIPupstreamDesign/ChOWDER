@@ -1302,6 +1302,10 @@
 		}
 		return null;
 	};
+	ControllerGUI.prototype.select_group = function (group_id) {
+		this.groupBox.select_tab(group_id);
+		this.layoutBox.select_tab(group_id);
+	};
 	ControllerGUI.prototype.is_active_tab = function (tabname) {
 		return this.tabs.is_active(tabname);
 	};

@@ -304,7 +304,10 @@
 	// コンテンツメタデータ中のグループ名の変更
 	function changeContentGroupName(oldName, newName) {
 		var metaDatas = [];
-		getMetaData('all', null, function (metaData) {
+		getMetaData('all', null, function (err, metaData) {
+			if (err) {
+				return;
+			}
 			if (metaData && metaData.group === oldName) {
 				getGroupID(newName, function (id) {
 					metaData.group = id;
@@ -974,28 +977,32 @@
 	 * @param {String} id ContentsID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function getMetaData(type, id, endCallback) {
+	function getMetaData(socketid, type, id, endCallback) {
 		if (type === 'all') {
 			textClient.keys(metadataPrefix + '*', function (err, replies) {
-				var results = [],
-					all_done = replies.length;
+				var all_done = replies.length;
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
 						textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
 							return function (err, doesExists) {
+								if (!isViewable(socketid, data.group)) {
+									endCallback("access denied", {});
+									return;
+								}
 								if (doesExists) {
+
 									// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 									textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
 										metaData.backup_list = JSON.stringify(sortBackupList(reply));
 										if (endCallback) {
-											endCallback(metaData);
+											endCallback(null, metaData);
 										}
 									});
 									return;
 								}
 								if (endCallback) {
 									metaData.last = ((replies.length - 1) === index);
-									endCallback(metaData);
+									endCallback(null, metaData);
 								}
 							};
 						}(data)));
@@ -1019,17 +1026,22 @@
 					textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
 						return function (err, doesExists) {
 							if (doesExists) {
+								if (!isViewable(socketid, metaData.group)) {
+									endCallback("access denied", {});
+									console.log("access denied2")
+									return;
+								}
 								// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 								textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
 									metaData.backup_list = JSON.stringify(sortBackupList(reply));
 									if (endCallback) {
-										endCallback(metaData);
+										endCallback(null, metaData);
 									}
 								});
 								return;
 							}
 							if (endCallback) {
-								endCallback(metaData);
+								endCallback(null, metaData);
 							}
 						};
 					}(data)));
@@ -1337,7 +1349,7 @@
 	/**
 	 * コンテンツとメタデータのバックアップ(元データは移動される)
 	 */
-	function backupContent(metaData, endCallback) {
+	function backupContent(socketid, metaData, endCallback) {
 		var backupFunc = function () {
 			var backupMetaData = {};
 			backupMetaData[metaData.date] = JSON.stringify(metaData);
@@ -1355,7 +1367,11 @@
 				});
 			});
 		};
-		getMetaData(metaData.type, metaData.id, function (meta) {
+		getMetaData(metaData.type, metaData.id, function (err, meta) {
+			if (err) {
+				endCallback(err);
+				return;
+			}
 			getGlobalSetting(function (err, setting) {
 				if (!err && setting) {
 					var maxHistorySetting = 0;
@@ -1386,7 +1402,7 @@
 	 * @param {BLOB} data     バイナリデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function updateContent(metaData, data, endCallback) {
+	function updateContent(socketid, metaData, data, endCallback) {
 		var contentData = null;
 		console.log("updateContent:" + metaData.id + ":" + metaData.content_id);
 		if (metaData.type === 'text') {
@@ -1412,8 +1428,12 @@
 				if (backupList.length === 0) {
 					// 更新前コンテンツ
 					// メタデータ初期設定.
-					getMetaData(metaData.type, metaData.id, function (oldMeta) {
-						backupContent(oldMeta, function (err, reply) {
+					getMetaData(metaData.type, metaData.id, function (err, oldMeta) {
+						if (err) {
+							endCallback(err);
+							return;
+						}
+						backupContent(socketid, oldMeta, function (err, reply) {
 							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
 								initialOrgWidthHeight(metaData, contentData);
 							}
@@ -1425,7 +1445,7 @@
 										console.error("Error on updateContent:" + err);
 									} else {
 										// 更新後コンテンツ
-										backupContent(meta, function (err, reply) {
+										backupContent(socketid, meta, function (err, reply) {
 											if (endCallback) {
 												endCallback(meta);
 											}
@@ -1445,7 +1465,7 @@
 							textClient.hdel(contentBackupPrefix + metaData.content_id, date);
 						}
 					}
-					
+
 					// 更新後コンテンツのみバックアップ
 					metaData.date = new Date().toISOString();
 					metaData.restore_index = -1;
@@ -1459,7 +1479,7 @@
 								console.error("Error on updateContent:" + err);
 							} else {
 								// 更新後コンテンツ
-								backupContent(meta, function (err, reply) {
+								backupContent(socketid, meta, function (err, reply) {
 									if (endCallback) {
 										endCallback(meta);
 									}
@@ -1780,6 +1800,35 @@
 	}
 	
 	/**
+	 * socketidユーザーがgroupを閲覧可能かどうか返す
+	 * @method isEditable
+	 * @param {String} socketid socketid
+	 * @param {String} group group
+	 */
+	function isViewable(socketid, groupID) {
+		if (groupID === "group_default") {
+			return true;
+		}
+		if (groupID === undefined || groupID === "") {
+			return true;
+		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			if (authority.viewable === "all") {
+				return true;
+			}
+			if (authority.viewable.indexOf(groupID) >= 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * socketidユーザーがgroupを編集可能かどうか返す
 	 * @method isEditable
 	 * @param {String} socketid socketid
@@ -1863,7 +1912,11 @@
 			if (metaData.hasOwnProperty('id') && metaData.id !== "") {
 				textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
 					if (!err && doesExists === 1) {
-						getMetaData('', metaData.id, function (meta) {
+						getMetaData(socketid, '', metaData.id, function (err, meta) {
+							if (err) {
+								endCallback(err);
+								return;
+							}
 							var oldContentID,
 								newContentID;
 							if (metaData.hasOwnProperty('content_id')) {
@@ -1874,7 +1927,7 @@
 							}
 							
 							if (newContentID !== '' && oldContentID === newContentID) {
-								updateContent(metaData, binaryData, function (reply) {
+								updateContent(socketid, metaData, binaryData, function (reply) {
 									if (updateEndCallback) {
 										updateEndCallback(null, reply);
 									}
@@ -1903,9 +1956,17 @@
 	 * @param {JSON} json contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandGetContent(json, endCallback) {
+	function commandGetContent(socketid, json, endCallback) {
 		console.log("commandGetContent:" + json.id);
-		getMetaData(json.type, json.id, function (meta) {
+		if (!isViewable(socketid, json.group)) {
+			endCallback("access denied");
+			return;
+		}
+		getMetaData(socketid, json.type, json.id, function (err, meta) {
+			if (err) {
+				endCallback(err);
+				return;
+			}
 			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
 				//meta.command = Command.doneGetContent;
 
@@ -1956,11 +2017,11 @@
 	 * @param {JSON} json contentメタデータ
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function commandGetMetaData(json, endCallback) {
+	function commandGetMetaData(socketid, json, endCallback) {
 		console.log("commandGetMetaData:" + json.type + "/" + json.id);
-		getMetaData(json.type, json.id, function (metaData) {
+		getMetaData(socketid, json.type, json.id, function (err, metaData) {
 			if (endCallback) {
-				endCallback(null, metaData);
+				endCallback(err, metaData);
 			}
 		});
 	}
@@ -2031,7 +2092,7 @@
 	function commandUpdateContent(socketid, metaData, binaryData, endCallback) {
 		//console.log("commandUpdateContent");
 		if (isEditable(socketid, metaData.group)) {
-			updateContent(metaData, binaryData, function (meta) {
+			updateContent(socketid, metaData, binaryData, function (meta) {
 				// socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
 				if (endCallback) {
 					endCallback(null, meta);
@@ -2077,9 +2138,11 @@
 									}
 									
 									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-										getMetaData(meta.type, meta.id, function (meta) {
+										getMetaData(socketid, meta.type, meta.id, function (err, meta) {
 											--all_done;
-											results.push(meta);
+											if (!err) {
+												results.push(meta);
+											}
 											if (all_done <= 0) {
 												if (endCallback) {
 													endCallback(null, results);
@@ -2100,9 +2163,11 @@
 									}
 								}
 								setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-									getMetaData(meta.type, meta.id, function (meta) {
+									getMetaData(socketid, meta.type, meta.id, function (err, meta) {
 										--all_done;
-										results.push(meta);
+										if (!err) {
+											results.push(meta);
+										}
 										if (all_done <= 0) {
 											if (endCallback) {
 												endCallback(null, results);
@@ -2858,12 +2923,12 @@
 			commandAddMetaData(data, resultCallback);
 		});
 		
-		ws_connector.on(Command.GetMetaData, function (data, resultCallback) {
-			commandGetMetaData(data, resultCallback);
+		ws_connector.on(Command.GetMetaData, function (data, resultCallback, socketid) {
+			commandGetMetaData(socketid, data, resultCallback);
 		});
 
-		ws_connector.on(Command.GetContent, function (data, resultCallback) {
-			commandGetContent(data, resultCallback);
+		ws_connector.on(Command.GetContent, function (data, resultCallback, socketid) {
+			commandGetContent(socketid, data, resultCallback);
 		});
 		
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
@@ -3016,12 +3081,12 @@
 			commandAddMetaData(data, resultCallback);
 		});
 		
-		io_connector.on(Command.GetContent, function (data, resultCallback) {
-			commandGetContent(data, resultCallback);
+		io_connector.on(Command.GetContent, function (data, resultCallback, socketid) {
+			commandGetContent(socketid, data, resultCallback);
 		});
 
-		io_connector.on(Command.GetMetaData, function (data, resultCallback) {
-			commandGetMetaData(data, resultCallback);
+		io_connector.on(Command.GetMetaData, function (data, resultCallback, socketid) {
+			commandGetMetaData(socketid, data, resultCallback);
 		});
 
 		io_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {

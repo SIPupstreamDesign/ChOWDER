@@ -340,18 +340,20 @@
 	function update(endCallback) {
 		vscreen.clearScreenAll();
 		connector.send('GetMetaData', {type: "all", id: ""}, function (err, reply) {
-			var last = reply.last; 
-			delete reply.last;
-			doneGetMetaData(err, reply, function (err) {
-				updateGroupList();
-				if (last) {
-					updateGroupList(function () {
-						if (endCallback) {
-							endCallback();
-						}
-					});
-				}
-			});
+			if (!err) {
+				var last = reply.last; 
+				delete reply.last;
+				doneGetMetaData(err, reply, function (err) {
+					updateGroupList();
+					if (last) {
+						updateGroupList(function () {
+							if (endCallback) {
+								endCallback();
+							}
+						});
+					}
+				});
+			}
 		});
 		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
 		connector.send('GetWindowMetaData', {type: "all", id: ""}, doneGetWindowMetaData);
@@ -2127,6 +2129,7 @@
 			metaData,
 			contentArea,
 			layoutArea,
+			currentGroup,
 			selectedGroup,
 			searchTargetGroups;
 
@@ -2178,6 +2181,7 @@
 
 			// 一旦チェックされているSearch対象グループを取得
 			searchTargetGroups = gui.get_search_target_groups();
+			currentGroup = gui.get_current_group_id();
 
 			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.set_group_list(reply.grouplist);
@@ -2219,6 +2223,8 @@
 
 			// Search対象グループをチェックし直す
 			gui.check_search_target_groups(searchTargetGroups, true);
+			// カレントグループを選択し直す.
+			gui.select_group(currentGroup);
 		}
 	};
 	
@@ -2883,7 +2889,8 @@
 			id,
 			targetMetaDataList = [],
 			group,
-			metaData;
+			metaData,
+			currentGroup = gui.get_current_group_id();
 
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
@@ -2900,12 +2907,12 @@
 				}
 			}
 		}
-
+		
 		if (targetMetaDataList.length > 0) {
 			updateMetaDataMulti(targetMetaDataList, (function (group) {
 				return function (err, data) {
-					connector.send('UpdateGroup', group, function (err, reply) {});
-					//updateGroupList();
+					connector.send('UpdateGroup', group, function (err, reply) {
+					});
 				};
 			}(group)));
 		}
@@ -3049,7 +3056,6 @@
 			if (item.id === groupID) {
 				item.color = color;
 				connector.send('UpdateGroup', item, function (err, reply) {
-					console.log("UpdateGroup done", err, reply);
 				});
 				return;
 			}
@@ -3244,12 +3250,14 @@
 		for (i = 0; i < data.length; ++i) {
 			metaData = data[i];
 			id = metaData.id;
-			if (id) {
-				doneGetMetaData(null, metaData);
-				if (getSelectedID()) {
-					elem = document.getElementById(getSelectedID());
-					if (elem) {
-						manipulator.moveManipulator(elem);
+			if (management.isViewable(metaData.group)) {
+				if (id) {
+					doneGetMetaData(null, metaData);
+					if (getSelectedID()) {
+						elem = document.getElementById(getSelectedID());
+						if (elem) {
+							manipulator.moveManipulator(elem);
+						}
 					}
 				}
 			}

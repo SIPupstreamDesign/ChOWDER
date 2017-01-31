@@ -463,6 +463,9 @@
 			}
 		}
 	};
+	Management.prototype.isViewable = function (group) {
+		return this.getAuthorityObject().isViewable(group);
+	};
 
 	Management.prototype.isEditable = function (group) {
 		return this.getAuthorityObject().isEditable(group);
