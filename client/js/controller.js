@@ -2483,6 +2483,62 @@
 		});
 	});
 
+	gui.on("overwrite_layout", function (err) {
+		var i,
+			id,
+			metaData,
+			isLayoutSelected = false;
+		for (i = 0; i < selectedIDList.length; i = i + 1) {
+			id = selectedIDList[i];
+			if (metaDataDict.hasOwnProperty(id)) {
+				metaData = metaDataDict[id];
+				if (isLayoutType(metaData)) {
+					isLayoutSelected = true;
+					break;
+				}
+			}
+		}
+		if (!isLayoutSelected) {
+			window.input_dialog.ok_input({
+				name : "上書き対象のレイアウトを選択してください"
+			}, function () {});
+			return;
+		}
+		window.input_dialog.okcancel_input({
+			name : "選択中のレイアウトを上書きします。よろしいですか？",
+			okButtonName : "OK"
+		}, function (isOK) {
+			if (isOK) {
+				var metaDataList = [],
+					layout = {
+						contents: {}
+					},
+					layoutData;
+
+				// コンテンツのメタデータを全部コピー
+				for (id in metaDataDict) {
+					if (metaDataDict.hasOwnProperty(id)) {
+						metaData = metaDataDict[id];
+						if (isContentType(metaData)) {
+							layout.contents[id] = metaData;
+						}
+					}
+				}
+				layoutData = JSON.stringify(layout);
+
+				for (i = 0; i < selectedIDList.length; i = i + 1) {
+					id = selectedIDList[i];
+					if (metaDataDict.hasOwnProperty(id)) {
+						metaData = metaDataDict[id];
+						if (isLayoutType(metaData)) {
+							updateContent(metaData, layoutData);
+						}
+					}
+				}
+			}
+		});
+	});
+
 	/**
 	 *  ファイルドロップハンドラ
 	 * @param {Object} evt FileDropイベント

@@ -1411,7 +1411,7 @@
 	function updateContent(socketid, metaData, data, endCallback) {
 		var contentData = null;
 		console.log("updateContent:" + metaData.id + ":" + metaData.content_id);
-		if (metaData.type === 'text') {
+		if (metaData.type === 'text' || metaData.type === 'layout') {
 			contentData = data;
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {

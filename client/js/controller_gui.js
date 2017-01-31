@@ -263,6 +263,10 @@
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null); }.bind(this)
 						}
 					},{
+					レイアウト上書き : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED, null); }.bind(this)
+						}
+					},{
 						グループ変更 : {
 							submenu: true,
 							mouseoverfunc : function (evt) {
@@ -674,6 +678,7 @@
 	ControllerGUI.prototype.initLayoutContextMenu = function () {
 		var menu = document.getElementById('context_menu_layout'),
 			add_button = document.getElementById("context_menu_layout_add"),
+			overwrite_button = document.getElementById("context_menu_layout_overwrite"),
 			delete_button = document.getElementById("context_menu_layout_delete"),
 			select_all_button = document.getElementById("context_menu_layout_select_all"),
 			change_group_button = document.getElementById('context_menu_layout_change_group'),
@@ -683,6 +688,11 @@
 
 		add_button.onclick = function (evt) {
 			this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null, evt); 
+			menu.style.display = "none";
+		}.bind(this);
+
+		overwrite_button.onclick = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED, null, evt); 
 			menu.style.display = "none";
 		}.bind(this);
 
@@ -1465,6 +1475,7 @@
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
 	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
 	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
+	ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED = "overwrite_layout";
 	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
 	ControllerGUI.EVENT_DELETELAYOUT_CLICKED = "deletelayout_clicked";
 	ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED = "showidbutton_clicked";
