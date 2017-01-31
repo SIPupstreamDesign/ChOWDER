@@ -5,6 +5,7 @@ const electron = require('electron');
 const desktopCapturer = electron.desktopCapturer;
 const remote = electron.remote;
 const screen = electron.screen;
+const ipc = electron.ipcRenderer;
 
 window.URL = window.URL || window.webkitURL;
 
@@ -46,7 +47,7 @@ window.URL = window.URL || window.webkitURL;
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        //ws_connector.connect();
+        ws_connector.connect();
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
@@ -58,8 +59,8 @@ window.URL = window.URL || window.webkitURL;
                     // electronの画面は除外したい
                     //if(sources[i].name != "electron-capture") {
                         addImage(sources[i].thumbnail);
-                        console.log("sources["+i+"].id = "+ sources[i].id);
-                        console.log("sources["+i+"].name = "+ sources[i].name);
+                        //console.log("sources["+i+"].id = "+ sources[i].id);
+                        //console.log("sources["+i+"].name = "+ sources[i].name);
                     //}
                 }
                 mainViewer(sources[selected]);
@@ -74,6 +75,22 @@ window.URL = window.URL || window.webkitURL;
             let areaFunc = remote.require('./main.js');
             areaFunc.areaSelector();
         }, false);
+
+        ipc.on('testData', function(event, data){
+            console.log(data);
+            mainViewer(capSource[0]);
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, data.x, data.y, data.x + data.width, data.y + data.height);
+            // 送信
+            ws_connector.sendBinary('AddContent', {
+                "id" : "captured",         // 特定のID に固定する.
+                "content_id" : "captured", // 特定のID に固定する.
+                "type" : "image"
+            },getImageBinary(canvas), function(){});
+        });
+            
+        
 
         // canvas2dへイメージとして送る---------------------------------------------------------
         // 送信インターバル変更
@@ -115,13 +132,13 @@ window.URL = window.URL || window.webkitURL;
             console.log(video.videoWidth, video.videoHeight);
             ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             // 送信
-            /*
+            
             ws_connector.sendBinary('AddContent', {
                 "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
             },getImageBinary(canvas), function(){});
-            */
+            
         }
         
         
@@ -141,7 +158,7 @@ window.URL = window.URL || window.webkitURL;
         // viewer-------------------------------------------------------------------------------
         function mainViewer(source){
             let media;
-            console.log(source.id, source.name);
+            //console.log(source.id, source.name);
             if (source.name == "Entire screen") {
                 media = 'screen';
             }
@@ -193,5 +210,6 @@ window.URL = window.URL || window.webkitURL;
     };
 
     window.onload = init;
+
     
 })();

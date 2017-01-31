@@ -1,5 +1,6 @@
 'use strict'
-//const electron = require('electron');
+const electron = require('electron');
+const remote = electron.remote;
 
 function createRect (a, b) {
   return {
@@ -17,22 +18,18 @@ function createRect (a, b) {
     let cropping = false;
     let downPoint = {};
     let rect = {};
+    let rectFlag = false;
 
     function setArea(){
         
-        /*
-        // 矩形描画
-        const rectElm = document.getElementsByClassName('rect');
-        rectElm.style.left = this.rect.x; 
-        rectElm.style.top = this.rect.y;
-        rectElm.style.width = this.rect.width;
-        rectElm.style.height = this.rect.height;
-        */
         // カーソル位置
         let cursorElm = document.getElementsByClassName("cursor");
-        console.log(cursorElm);
+        
         // カーソル修飾
         let indElm = window.document.getElementsByClassName("indicator");
+        
+        // 矩形
+        let rectElm = document.getElementsByClassName('rect');
         
         function chngElm(x, y){
             let lx = x.toString(10) + 'px';
@@ -42,27 +39,44 @@ function createRect (a, b) {
             indElm[0].textContent = lx + '\n' + ly;
         }
 
+        function chngRect(dRect){
+            rectElm[0].style.left = dRect.x.toString(10) + 'px'; 
+            rectElm[0].style.top = dRect.y.toString(10) + 'px';
+            rectElm[0].style.width = dRect.width.toString(10) + 'px';
+            rectElm[0].style.height = dRect.height.toString(10) + 'px';
+        }
+
         // マウスイベント全般を管理
         addEventListener('mousemove',function(eve){
             x = eve.clientX;
             y = eve.clientY;
             chngElm(x, y);
-            if (!this.cropping) return
-            eve.rect = createRect(eve.downPoint.x, eve.downPoint.y);
+            if (!cropping) return;
+            rect = createRect(downPoint, {x, y});
+            chngRect(rect);
         }, false);
 
         addEventListener('mouseup', function (eve) {
-            this.cropping = false;
-            this.rect = {};
+            cropping = false;
+            rectFlag = true;
+            getRect(rectFlag);
+            rect = {};
         }, false);
 
         addEventListener('mousedown', function (eve) {
-            this.downPoint.x = eve.clientX;
-            this.downPoint.y = eve.clientY;
-            console.log(this.downPoint.x, this.downPoint.y);
-            this.cropping = true;
+            downPoint.x = eve.clientX;
+            downPoint.y = eve.clientY;
+            cropping = true;
         }, false);
 
+    }
+
+    function getRect(rectF){
+        if(rectF === true){
+            let main = remote.require("./main.js");
+            console.log("call closer");
+            main.windowCloser(rect);
+        }
     }
 
     window.onload = setArea;

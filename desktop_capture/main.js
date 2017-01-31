@@ -19,8 +19,8 @@ function createWindow () {
 
     // 親ウィンドウ。メインのウィンドウ。
     mainWindow = new BrowserWindow({
-        width: 1600, 
-        height: 900,
+        width: 1440, 
+        height: 810,
         autoHideMenuBar: true
     });
 
@@ -47,11 +47,14 @@ function createWindow () {
 
 exports.areaSelector = function() {
     
+    // MainWindowを自動的に最小化
+    mainWindow.minimize();
+
     // Screen APIの読み込み
     const screen = electron.screen;
     const size = screen.getPrimaryDisplay().size;
     
-    // 
+    // 仮想ウィンドウ
     virtualWindow = new BrowserWindow({
       left: 0,
       top: 0,
@@ -81,7 +84,17 @@ exports.areaSelector = function() {
     mainWindow.on('closed', function () {
       virtualWindow = null;
     });
+
+
 }
+
+exports.windowCloser = function(rect){
+    virtualWindow.close();
+    mainWindow.focus();
+    //console.log("window closer called");
+    mainWindow.webContents.send('testData', rect);
+}
+
 
 
 // This method will be called when Electron has finished
