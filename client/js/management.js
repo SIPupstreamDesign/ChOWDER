@@ -140,7 +140,13 @@
 		var history_num_button = document.getElementById("apply_history_number_button");
 		var input = document.getElementById('history_number');
 		history_num_button.onclick = function () {
-			this.emit(Management.EVENT_CHANGE_HISTORY_NUM, null, input.value);
+			this.emit(Management.EVENT_CHANGE_HISTORY_NUM, null, input.value, function () {
+				var message = document.getElementById('apply_history_message');
+				message.style.visibility = "visible";
+				setTimeout(function () {
+					message.style.visibility = "hidden";
+				}, 2000);
+			});
 		}.bind(this);
 		input.value = this.maxHistoryNum;
 	};
@@ -287,7 +293,14 @@
 					viewable = "all";
 				}
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					name, editable, viewable, group_manipulatable, display_manipulatable);
+					name, editable, viewable, group_manipulatable, display_manipulatable, function () {
+						
+					var message = document.getElementById('apply_auth_message');
+					message.style.visibility = "visible";
+					setTimeout(function () {
+						message.style.visibility = "hidden";
+					}, 2000);
+				});
 			}
 		}.bind(this);
 
@@ -351,7 +364,11 @@
 			if (index >= 0) {
 				var name = this.userList[index].name;
 				this.emit(Management.EVENT_CHANGE_PASSWORD, name, prePass.value, pass.value, function () {
-
+					var message = document.getElementById('apply_pass_message');
+					message.style.visibility = "visible";
+					setTimeout(function () {
+						message.style.visibility = "hidden";
+					}, 2000);
 				});
 			}
 		}.bind(this);

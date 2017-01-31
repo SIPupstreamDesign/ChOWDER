@@ -3437,7 +3437,7 @@
 		}
 
 		// 管理ページでパスワードが変更された
-		management.on('change_password', function (userName, prePass, pass) {
+		management.on('change_password', function (userName, prePass, pass, callback) {
 			var request = {
 					username : userName,
 					pre_password : prePass,
@@ -3447,11 +3447,11 @@
 			if (loginkey.length > 0) {
 				request.loginkey = loginkey;
 			}
-			connector.send('ChangePassword', request, function () {});
+			connector.send('ChangePassword', request, callback);
 		});
 	
 		// 権限の変更
-		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable) {
+		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable, callback) {
 			var request = {
 				username : userName,
 				editable : editable,
@@ -3462,14 +3462,20 @@
 			connector.send('ChangeAuthority', request, function (err, data) {
 				connector.send('GetUserList', {}, function (err, userList) {
 					management.setUserList(userList);
+					if (callback) {
+						callback();
+					}
 				});
 			});
 		});
 
 		// 履歴保存数の変更
-		management.on("change_history_num", function (err, value) {
+		management.on("change_history_num", function (err, value, callback) {
 			connector.send("ChangeGlobalSetting", { max_history_num : value }, function () {
 				updateGlobalSettingFunc();
+				if (callback) {
+					callback();
+				}
 			});
 		});
 		
