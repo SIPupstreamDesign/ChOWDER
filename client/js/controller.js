@@ -2118,10 +2118,10 @@
 
 		console.log("doneGetGroupList", reply);
 		var i,
-			groupToElems = { default : [] },
-			groupToMeta = { default : [] },
-			groupToLayoutElems = { default : [] },
-			groupToLayoutMeta = { default : [] },
+			groupToElems = {},
+			groupToMeta = {},
+			groupToLayoutElems = {},
+			groupToLayoutMeta = {},
 			group,
 			elem,
 			onlistID,
@@ -2132,6 +2132,11 @@
 			currentGroup,
 			selectedGroup,
 			searchTargetGroups;
+
+		groupToElems[defaultGroup] = [];
+		groupToMeta[defaultGroup] = [];
+		groupToLayoutElems[defaultGroup] = [];
+		groupToLayoutMeta[defaultGroup] = [];
 
 		selectedGroup = getSelectedGroup();
 
