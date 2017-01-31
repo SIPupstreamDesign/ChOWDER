@@ -17,10 +17,6 @@ let mainWindow;
 
 function createWindow () {
 
-    // Screen APIの読み込み
-    const screen = electron.screen;
-    const size = screen.getPrimaryDisplay().size;
-
     // 親ウィンドウ。メインのウィンドウ。
     mainWindow = new BrowserWindow({
         width: 1600, 
@@ -48,6 +44,45 @@ function createWindow () {
     virtualWindow = null;
   });
 }
+
+exports.areaSelector = function() {
+    
+    // Screen APIの読み込み
+    const screen = electron.screen;
+    const size = screen.getPrimaryDisplay().size;
+    
+    // 
+    virtualWindow = new BrowserWindow({
+      left: 0,
+      top: 0,
+      width: size.width,
+      height: size.height,
+      frame: false,
+      show: true,
+      transparent: true,
+      resizable: false,
+      'always-on-top': true
+    });
+
+    virtualWindow.maximize();
+
+    // and load the index.html of the app.
+    virtualWindow.loadURL(url.format({
+      pathname: path.join(__dirname, 'js/select.html'),
+      protocol: 'file:',
+      slashes: true
+    }));
+
+
+    // Open the DevTools.
+    //mainWindow.webContents.openDevTools()
+
+    // Emitted when the window is closed.
+    mainWindow.on('closed', function () {
+      virtualWindow = null;
+    });
+}
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

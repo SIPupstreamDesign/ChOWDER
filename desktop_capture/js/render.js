@@ -14,16 +14,16 @@ window.URL = window.URL || window.webkitURL;
         
         // 初期化------------------------------------------------------------------------------
         let video = document.getElementById('video');
+        let localStream;
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext("2d");
         let num = document.getElementById('interval');
         
         // キャプチャー情報
         let capSource;
-        // 解像度を保つためキャンバスは非表示
+        // キャンバスは非表示
         canvas.style.display = "none";
 
-        let localStream;
         let browserId = 0;
         
         let vw = screen.getPrimaryDisplay().size.width;
@@ -35,7 +35,8 @@ window.URL = window.URL || window.webkitURL;
         let cap = false;
         let capButton = document.getElementById('capture');
 
-        let drawInterval = 0;
+        let drawInterval;
+        let drawTime;
         let selected = 0;
         
         let setArea = document.getElementById('setarea');
@@ -70,9 +71,13 @@ window.URL = window.URL || window.webkitURL;
         
         // 送信インターバル変更
         num.addEventListener("change",function(eve){
-            drawIntarval = eve.target.value;
+            drawTime = eve.target.value;
         },false);
 
+        setArea.addEventListener('click', function(eve){
+            let areaFunc = remote.require('./main.js');
+            areaFunc.areaSelector();
+        }, false);
 
         // canvas2dへイメージとして送る------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
@@ -80,7 +85,7 @@ window.URL = window.URL || window.webkitURL;
             if(cap === false){
                 cap = true;
                 capButton.value = "Capture Stop";
-                drawInterval = setInterval(drawCanvas, drawInterval*100);
+                drawInterval = setInterval(drawCanvas, drawTime*1000);
             }
             // フラグがオンであれば
             else if(cap === true){
@@ -121,7 +126,7 @@ window.URL = window.URL || window.webkitURL;
         // キャプチャー対象の切り替え------------------------------------------------------------------
         addEventListener('click', function(eve){
             let id = eve.target.id;
-            if(id != 'video' && id >=0){
+            if(id != 'video' && id){
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
@@ -129,6 +134,7 @@ window.URL = window.URL || window.webkitURL;
                 mainViewer(capSource[selected]);
             }
         }, false);
+
 
         // viewer------------------------------------------------------------------------------------
         function mainViewer(source){
@@ -161,11 +167,6 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
-
-            video.onresize = function () {
-                console.log(video.videoWidth, video.videoHeight);
-            };
-
         }
 
         // デスクトップ情報の取得に失敗したとき
