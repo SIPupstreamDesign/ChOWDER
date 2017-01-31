@@ -254,7 +254,9 @@
 						group_manipulatable : false,
 						display_manipulatable : true
 					}, function (err, reply) {
-						endCallback(err, id);
+						if (endCallback) {
+							endCallback(err, id);
+						}
 					});
 				})
 			});
