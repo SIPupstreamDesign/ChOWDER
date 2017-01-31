@@ -7,7 +7,7 @@
 
 	var ContentList,
 		contentBorderColor = "rgba(0,0,0,0)",
-		defaultGroup = "default",
+		defaultGroup = "group_default",
 		textColor = "white";
 
 	ContentList = function () {

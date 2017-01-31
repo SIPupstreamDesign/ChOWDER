@@ -28,7 +28,7 @@
 		initialWholeHeight = 900,
 		initialDisplayScale = 0.5,
 		contentSelectColor = "#04B431",
-		defaultGroup = "default",
+		defaultGroup = "group_default",
 		setupContent = function () {},
 		setupLayout = function () {},
 		updateScreen = function () {},
@@ -2858,7 +2858,7 @@
 						for (id in metaDataDict) {
 							if (metaDataDict.hasOwnProperty(id)) {
 								metaData = metaDataDict[id];
-								if (isContentType(metaData)) {
+								if (isContentType(metaData) || isLayoutType(metaData)) {
 									if (metaData.group === groupID) {
 										deleteList.push(metaData);
 									}

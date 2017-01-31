@@ -7,7 +7,7 @@
 
 	var LayoutList,
 		layoutBorderColor = "lightgray",
-		defaultGroup = "default",
+		defaultGroup = "group_default",
 		textColor = "white";
 
 	LayoutList = function () {

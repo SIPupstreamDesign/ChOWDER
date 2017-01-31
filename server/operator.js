@@ -253,7 +253,9 @@
 						editable : [id],
 						group_manipulatable : false,
 						display_manipulatable : true
-					}, endCallback);
+					}, function (err, reply) {
+						endCallback(err, id);
+					});
 				})
 			});
 		});
@@ -281,6 +283,23 @@
 		});
 	}
 
+
+	// コンテンツメタデータ中のグループ名の変更
+	function changeContentGroupName(oldID, newID) {
+		var metaDatas = [];
+		getMetaData('all', null, function (err, metaData) {
+			if (err) {
+				return;
+			}
+			if (metaData && metaData.group === oldID) {
+				getGroupID(newID, function (id) {
+					metaData.group = id;
+					setMetaData(metaData.type, metaData.id, metaData, function (meta) {});
+				});
+			}
+		});
+	}
+
 	/**
 	 * グループリストからgroupの削除
 	 * @param {String} id グループid.
@@ -297,22 +316,6 @@
 			} else {
 				endCallback("not found");
 				return false;
-			}
-		});
-	}
-
-	// コンテンツメタデータ中のグループ名の変更
-	function changeContentGroupName(oldName, newName) {
-		var metaDatas = [];
-		getMetaData('all', null, function (err, metaData) {
-			if (err) {
-				return;
-			}
-			if (metaData && metaData.group === oldName) {
-				getGroupID(newName, function (id) {
-					metaData.group = id;
-					setMetaData(metaData.type, metaData.id, metaData, function (meta) {});
-				});
 			}
 		});
 	}
@@ -2294,16 +2297,46 @@
 	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
 		if (json.hasOwnProperty("name") && json.name !== "") {
-			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
-				if (isManipulatable) {
-					if (json.hasOwnProperty("color")) {
-						groupColor = json.color;
+			if (socketidToUserID.hasOwnProperty(socketid)) {
+				var userid = socketidToUserID[socketid];
+				isGroupManipulatable(socketid, userid, function (isManipulatable) {
+					if (isManipulatable) {
+						if (json.hasOwnProperty("color")) {
+							groupColor = json.color;
+						}
+						addGroup(null, json.name, groupColor, function (err, groupID) {
+							// グループユーザーの権限情報に、グループを追加する.
+							if (!err) {
+								getGroupUserSetting(function (err, setting) {
+									if (setting.hasOwnProperty(userid)) {
+										if (setting[userid].viewable !== "all") {
+											setting[userid].viewable.push(groupID);
+										}
+										if (setting[userid].editable !== "all") {
+											setting[userid].editable.push(groupID);
+										}
+										changeGroupUserSetting(userid, setting[userid], function () {
+											if (endCallback) {
+												endCallback(err, groupID);
+											}
+										});
+									} else {
+										if (endCallback) {
+											endCallback(err, groupID);
+										}
+									}
+								});
+							} else {
+								endCallback("faild to add group");
+							}
+						});
+					} else {
+						endCallback("access denied");
 					}
-					addGroup(null, json.name, groupColor, endCallback);
-				} else {
-					endCallback("access denied");
-				}
-			});
+				});
+			} else {
+				endCallback("access denied");
+			}
 		}
 	}
 
@@ -2539,43 +2572,7 @@
 			});
 		}
 	}
-
-	/**
-	 * グループユーザー設定取得コマンドを実行する
-     * @method commandGetGroupUserSetting
-	 * @param {JSON} data 対象のnameを含むjson
-     * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function commandGetGroupUserSetting(data, endCallback) {
-		if (data.hasOwnProperty('name')) {
-			getGroupUserSetting(data.name, endCallback);
-		}
-	}
 	
-	/**
-	 *　管理ユーザー設定変更コマンドを実行する
-     * @method commandChangeAdminUserSetting
-	 * @param {JSON} data 対象のnameを含むjson
-     * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function commandChangeAdminUserSetting(data, endCallback) {
-		if (data.hasOwnProperty('name')) {
-			changeAdminUserSetting(data.name, data, endCallback);
-		}
-	}
-	
-	/**
-	 *　管理ユーザー設定取得コマンドを実行する
-     * @method commandGetAdminUserSetting
-	 * @param {JSON} data 対象のnameを含むjson
-     * @param {Function} endCallback 終了時に呼ばれるコールバック
-	 */
-	function commandGetAdminUserSetting(data, endCallback) {
-		if (data.hasOwnProperty('name')) {
-			getAdminUserSetting(data.name, endCallback);
-		}
-	}
-
 	/**
 	 * ユーザーリスト取得コマンドを実行する
      * @method commandGetUserList
@@ -3248,7 +3245,7 @@
 		groupInitialSettting();
 
 		getGlobalSetting(function (err, setting) {
-			if (!err && setting.current_db) {
+			if (!err && setting && setting.current_db) {
 				commandGetDBList(function (err, dblist) {
 					var name;
 					for (name in dblist) {

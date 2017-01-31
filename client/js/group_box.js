@@ -3,7 +3,7 @@
 (function () {
 	"use strict";
 	var GroupBox,
-		defaultGroup = "default";
+		defaultGroup = "group_default";
 
 	GroupBox = function (authority, containerElem, setting) {
 		EventEmitter.call(this);
