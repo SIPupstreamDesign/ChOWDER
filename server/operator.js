@@ -2610,6 +2610,7 @@
 					socketidToLoginKey[socketid] = data.loginkey;
 					socketid = data.loginkey;
 					var result = {
+						id : socketidToUserID[socketid],
 						loginkey : socketid,
 						authority : socketidToAccessAuthority[socketid]
 					}
@@ -2728,7 +2729,13 @@
 									group_manipulatable : data.group_manipulatable,
 									display_manipulatable : data.display_manipulatable
 								};
-								changeGroupUserSetting(userList[i].id, setting, endCallback);	
+								changeGroupUserSetting(userList[i].id, setting, function (err, reply) {
+									if (!err) {
+										endCallback(err, userList[i].id);
+									} else {
+										endCallback(err);
+									}
+								});	
 							}
 							break;
 						}
@@ -2909,7 +2916,27 @@
 			}
 		};
 	}
-	
+
+	function post_db_change(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.ChangeDB, reply);
+			io_connector.broadcast(io, Command.ChangeDB, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
+	function post_updateAuthority(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.ChangeAuthority, reply);
+			io_connector.broadcast(io, Command.ChangeAuthority, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
 	/**
 	 * websocketイベントの登録を行う.
 	 * register websockets events
@@ -3022,16 +3049,16 @@
 		});
 
 		ws_connector.on(Command.NewDB, function (data, resultCallback) {
-			commandNewDB(data, post_update(ws, io, resultCallback));
+			commandNewDB(data, post_db_change(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.RenameDB, function (data, resultCallback) {
-			commandRenameDB(data, post_update(ws, io, resultCallback));
+			commandRenameDB(data, post_updateSetting(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.ChangeDB, function (data, resultCallback) {
-			commandChangeDB(data, post_update(ws, io, resultCallback));
+			commandChangeDB(data, post_db_change(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.DeleteDB, function (data, resultCallback) {
-			commandDeleteDB(data, post_update(ws, io, resultCallback));
+			commandDeleteDB(data, post_db_change(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.GetDBList, function (data, resultCallback) {
 			commandGetDBList(resultCallback);
@@ -3047,7 +3074,7 @@
 			commandChangePassword(data, socketid, resultCallback);
 		});
 		ws_connector.on(Command.ChangeAuthority, function (data, resultCallback, socketid) {
-			commandChangeAuthority(data, socketid, resultCallback);
+			commandChangeAuthority(data, socketid, post_updateAuthority(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -3056,7 +3083,7 @@
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
-			commandGetGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
+			commandGetGlobalSetting(data, resultCallback);
 		});
 
 		getSessionList();
@@ -3171,16 +3198,16 @@
 		});
 
 		io_connector.on(Command.NewDB, function (data, resultCallback) {
-			commandNewDB(data, post_update(ws, io, resultCallback));
+			commandNewDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.RenameDB, function (data, resultCallback) {
-			commandRenameDB(data, post_update(ws, io, resultCallback));
+			commandRenameDB(data, post_updateSetting(ws, io, resultCallback));
 		});
 		io_connector.on(Command.ChangeDB, function (data, resultCallback) {
-			commandChangeDB(data, post_update(ws, io, resultCallback));
+			commandChangeDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.DeleteDB, function (data, resultCallback) {
-			commandDeleteDB(data, post_update(ws, io, resultCallback));
+			commandDeleteDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetDBList, function (data, resultCallback) {
 			commandGetDBList(resultCallback);
@@ -3196,7 +3223,7 @@
 			commandChangePassword(data, socketid, resultCallback);
 		});
 		io_connector.on(Command.ChangeAuthority, function (data, resultCallback, socketid) {
-			commandChangeAuthority(data, socketid, resultCallback);
+			commandChangeAuthority(data, socketid, post_updateAuthority(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -3205,7 +3232,7 @@
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
-			commandGetGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
+			commandGetGlobalSetting(data, resultCallback);
 		});
 
 		io_connector.registerEvent(io, socket);
