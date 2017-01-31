@@ -373,20 +373,25 @@
 	function changeUUIDPrefix(dbname, endCallback) {
 		textClient.hget(frontPrefix + 'dblist', dbname, function (err, reply) {
 			if (!err) {
-				var id = reply;
-				console.log("DB ID:", reply);
-				uuidPrefix = id + ":";
-				contentPrefix = frontPrefix + uuidPrefix + "content:";
-				contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
-				contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
-				metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
-				metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
-				windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
-				windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
-				windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
-				virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
-				groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
-				endCallback(null);
+				getGlobalSetting(function (err, setting) {
+					setting.current_db = reply;
+					changeGlobalSetting(setting, function () {
+						var id = setting.current_db;
+						console.log("DB ID:", setting.current_db);
+						uuidPrefix = id + ":";
+						contentPrefix = frontPrefix + uuidPrefix + "content:";
+						contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
+						contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
+						metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
+						metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
+						windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
+						windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
+						windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
+						virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
+						groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
+						endCallback(null);
+					});
+				});
 			} else {
 				endCallback("failed to get dblist");
 			}
@@ -3140,6 +3145,19 @@
 				// global設定の初期登録
 				changeGlobalSetting({
 					max_history_num : 10
+				});
+			}
+		});
+		
+		getGlobalSetting(function (err, setting) {
+			if (!err && setting.current_db) {
+				commandGetDBList(function (err, dblist) {
+					var name;
+					for (name in dblist) {
+						if (dblist[name] === setting.current_db) {
+							changeDB(name, function () {});
+						}
+					}
 				});
 			}
 		});
