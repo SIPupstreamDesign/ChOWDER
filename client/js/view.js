@@ -520,8 +520,7 @@
 			duplicatedElem;
 
 		console.log("assignMetaBinary", "id=" + metaData.id);
-
-		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && metaData.visible === "true")) {
+		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
 			tagName = getTagName(metaData.type);
 
 			// 既に読み込み済みのコンテンツかどうか
@@ -853,6 +852,25 @@
 		}
 	}
 
+	function isViewable(group) {
+		// 権限情報があるか
+		if (!authority) {
+			return false;
+		}
+		if (groupDict.hasOwnProperty(group)) {
+			if (group === "group_default") {
+				return true;
+			}
+			if (authority.viewable === "all") {
+				return true;
+			}
+			if (authority.viewable.indexOf(group) >= 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * GetMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -860,23 +878,23 @@
 	 */
 	doneGetMetaData = function (err, json) {
 		var metaData = json,
-			isUpdateContent;
+			isUpdateContent = false;
 		console.log("doneGetMetaData", json);
+		if (!json) { return; }
 		// レイアウトは無視
 		if (metaData.type === "layout") { return; }
-		// 権限情報があるか
-		if (!authority) {
-			return;
-		}
 		// 閲覧許可があるか
 		if (json.group !== "" && !groupDict.hasOwnProperty(json.group)) {
-			console.error("hoge", groupDict, json.group)
 			return;
 		}
-		if (groupDict.hasOwnProperty(json.group)) {
-			if (authority.viewable !== "all" && authority.viewable.indexOf(groupDict[json.group].id) < 0) {
-				return;
-			}
+		// 復元したコンテンツか
+		if (!json.hasOwnProperty('id')) { return; }
+		if (metaDataDict.hasOwnProperty(json.id)) {
+			isUpdateContent = (metaDataDict[json.id].restore_index !== json.restore_index);
+		}
+		// 閲覧可能か
+		if (!isViewable(json.group)) {
+			return;
 		}
 
 		// 履歴からのコンテンツ復元.
@@ -1087,8 +1105,19 @@
 
 		connector.on("UpdateMetaData", function (data) {
 			var i;
-			console.log("UpdateMetaData", data);
+			var previewArea = document.getElementById("preview_area");
+			
 			for (i = 0; i < data.length; ++i) {
+				if (!isViewable(data[i].group)) {
+					var elem = document.getElementById(data[i].id);
+					if (elem) {
+						previewArea.removeChild(elem);
+					}
+					var memo =  document.getElementById("memo:" + data[i].id);
+					if (memo) {
+						previewArea.removeChild(memo);
+					}
+				}
 				update('', data[i].id);
 			}
 		});
