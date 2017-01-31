@@ -1868,17 +1868,13 @@
 
 	function isGroupManipulatable(socketid, groupID, endCallback) {
 		getGroupList(function (err, data) {
-			var index = getGroupIndex(data.grouplist, groupID);
-			if (index >= 0) {
-				var groupID = data.grouplist[index].id;
-				if (groupID === "group_default") {
-					endCallback(true);
-					return;
-				}
-				if (groupID === undefined || groupID === "") {
-					endCallback(true);
-					return;
-				}
+			if (groupID === "group_default") {
+				endCallback(true);
+				return;
+			}
+			if (groupID === undefined || groupID === "") {
+				endCallback(true);
+				return;
 			}
 			if (socketidToLoginKey.hasOwnProperty(socketid)) {
 				socketid = socketidToLoginKey[socketid];
