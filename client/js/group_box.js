@@ -215,7 +215,7 @@
 		}.bind(this);
 		elem.appendChild(link);
 		
-		if (groupName !== defaultGroup && this.authority.isGroupManipulable()) {
+		if ( this.fromTabID(tabID) !== defaultGroup && this.authority.isGroupManipulable()) {
 			setting_button = document.createElement('div');
 			setting_button.className = "group_tab_setting";
 			setting_button.onclick = (function (self, groupName) {

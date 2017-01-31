@@ -740,7 +740,7 @@
 				if (groupDict.hasOwnProperty(metaData.group)) {
 					content_property.init(id, groupDict[metaData.group].name, metaData.type, mime);
 				} else {
-					console.error("not found group")
+					console.warn("not found group")
 					content_property.init(id, "", metaData.type, mime);
 				}
 				content_property.assign_content_property(metaData);
