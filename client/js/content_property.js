@@ -352,7 +352,9 @@
 		if (metaData.type !== "window") {
 			var backup_list = document.getElementById('backup_list');
 			backup_list.innerHTML = "";
+			 document.getElementById('backup_restore').disabled = true;
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
+			 	document.getElementById('backup_restore').disabled = false;
 				var backups = JSON.parse(metaData.backup_list);
 				var select = document.createElement('select');
 				var restore_index = 0;
