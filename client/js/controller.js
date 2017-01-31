@@ -2856,8 +2856,8 @@
 	content_property.on("restore_content", function (err, restoreIndex) {
 		window.input_dialog.yesnocancel_input({
 			name : "コンテンツを復元します",
-			yesButtonName : "全て復元",
-			noButtonName : "位置以外",
+			yesButtonName : "復元",
+			noButtonName : "現在位置に復元",
 			cancelButtonName : "Cancel",
 		}, function (res) {
 			if (res === "yes" || res === "no") {
