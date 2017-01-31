@@ -389,11 +389,42 @@
 						windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
 						virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
 						groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
+						groupUserPrefix = frontPrefix + uuidPrefix + "group_user"; // グループユーザー設定
 						endCallback(null);
 					});
 				});
 			} else {
 				endCallback("failed to get dblist");
+			}
+		});
+	}
+
+	function groupInitialSettting() {
+		addGroup("group_default", "default", function (err, reply) {} );
+		textClient.exists(groupUserPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				// group設定の初期登録
+				changeGroupUserSetting("Guest", {
+					viewable : [],
+					editable : [],
+					group_manipulatable : false,
+					display_manipulatable : true
+				});
+				// Display設定の初期登録
+				changeGroupUserSetting("Display", {
+					viewable : "all",
+					editable : "all",
+					group_manipulatable : false,
+					display_manipulatable : true
+				});
+			}
+		});
+		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				// global設定の初期登録
+				changeGlobalSetting({
+					max_history_num : 10
+				});
 			}
 		});
 	}
@@ -412,7 +443,7 @@
 					textClient.hset(frontPrefix + 'dblist', name, id, function (err, reply) {
 						if (!err) {
 							changeUUIDPrefix(name, function (err, reply) {
-								addGroup("group_default", "default", function (err, reply) {} );
+								groupInitialSettting();
 								endCallback(err);
 							});
 						} else {
@@ -3120,35 +3151,8 @@
 				addAdmin(util.generateUUID8(), "管理者", "hogehoge", function (err, reply) {});
 			}
 		});
-		addGroup("group_default", "default", function (err, reply) {} );
-		
-		textClient.exists(groupUserPrefix,  function (err, doesExists) {
-			if (doesExists !== 1) {
-				// group設定の初期登録
-				changeGroupUserSetting("Guest", {
-					viewable : [],
-					editable : [],
-					group_manipulatable : false,
-					display_manipulatable : true
-				});
-				// Display設定の初期登録
-				changeGroupUserSetting("Display", {
-					viewable : "all",
-					editable : "all",
-					group_manipulatable : false,
-					display_manipulatable : true
-				});
-			}
-		});
-		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
-			if (doesExists !== 1) {
-				// global設定の初期登録
-				changeGlobalSetting({
-					max_history_num : 10
-				});
-			}
-		});
-		
+		groupInitialSettting();
+
 		getGlobalSetting(function (err, setting) {
 			if (!err && setting.current_db) {
 				commandGetDBList(function (err, dblist) {
