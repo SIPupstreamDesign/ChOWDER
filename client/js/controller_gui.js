@@ -263,6 +263,17 @@
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null); }.bind(this)
 						}
 					},{
+						グループ変更 : {
+							submenu: true,
+							mouseoverfunc : function (evt) {
+								this.toggleBurgerSubmenuLayout(true, "90px"); 
+								on_group_change = true;
+							}.bind(this),
+							mouseoutfunc : function (evt) {
+								on_group_change = false;
+							}
+						}
+					},{
 						削除 : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETELAYOUT_CLICKED, null, evt); }.bind(this)
 						}
@@ -346,6 +357,12 @@
 		document.getElementById('burger_menu_submenu').onmouseout = function (evt) {
 			on_burger_submenu = false;
 		};
+		document.getElementById('burger_menu_layout_submenu').onmouseover = function (evt) {
+			on_burger_submenu = true;
+		};
+		document.getElementById('burger_menu_layout_submenu').onmouseout = function (evt) {
+			on_burger_submenu = false;
+		};
 		document.getElementById('burger_menu_submenu_add_content').onmouseover = function (evt) {
 			on_burger_submenu_add_content = true;
 		};
@@ -358,6 +375,11 @@
 			}
 			if (!on_burger_submenu_add_content && !on_add_content) {
 				this.toggleBurgerSubmenuAddContent(false);
+			}
+		}.bind(this);
+		document.getElementById('bottom_burger_menu_layout').onmousemove = function (evt) {
+			if (!on_burger_submenu && !on_group_change) {
+				this.toggleBurgerSubmenuLayout(false);
 			}
 		}.bind(this);
 
@@ -452,6 +474,7 @@
 
 				// コンテキストメニューを刷新
 				this.updateContextMenu();
+				this.updateLayoutContextMenu();
 				this.updateContextMenuAccess();
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
@@ -652,7 +675,11 @@
 		var menu = document.getElementById('context_menu_layout'),
 			add_button = document.getElementById("context_menu_layout_add"),
 			delete_button = document.getElementById("context_menu_layout_delete"),
-			select_all_button = document.getElementById("context_menu_layout_select_all");
+			select_all_button = document.getElementById("context_menu_layout_select_all"),
+			change_group_button = document.getElementById('context_menu_layout_change_group'),
+			change_group_submenu = document.getElementById('context_menu_layout_change_group_submenu'),
+			on_change_group = false,
+			on_change_group_item = false;
 
 		add_button.onclick = function (evt) {
 			this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null, evt); 
@@ -668,6 +695,29 @@
 			this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, false); 
 			menu.style.display = "none";
 		}.bind(this);
+		
+		// グループ変更サブメニュー
+		change_group_button.onmouseover = function () {
+			var container = document.getElementById('context_menu_layout_change_group_submenu');
+			container.style.display = "block";
+			on_change_group = true;
+		};
+		change_group_button.onmouseout = function () {
+			on_change_group = false;
+		};
+		change_group_submenu.onmouseover = function () {
+			on_change_group_item = true;
+		};
+		change_group_submenu.onmouseout = function () {
+			on_change_group_item = false;
+		};
+		menu.onmousemove = function () {
+			if (!on_change_group && !on_change_group_item) {
+				var container = document.getElementById('context_menu_layout_change_group_submenu');
+				container.style.display = "none";
+			}
+		};
+
 		this.initContextMenuVisible(menu, "layout_tab", "");
 	};
 	
@@ -705,10 +755,70 @@
 			}
 		}
 	};
+
+	/**
+	 * コンテキストメニューの動的に変化する部分を更新.
+	 */
+	ControllerGUI.prototype.updateLayoutContextMenu = function () {
+		var groupToElems = this.groupBox.get_tabgroup_to_elems(),
+			container = document.getElementById('context_menu_layout_change_group_submenu'),
+			item,
+			groupID,
+			gname,
+			authority = this.management.getAuthorityObject();
+		container.innerHTML = "";
+
+		if (!authority.isEditable(this.get_current_group_id())) {
+			return;
+		}
+		
+		for (groupID in groupToElems) {
+			if (groupToElems.hasOwnProperty(groupID)) {
+				// グループ変更内のアクセス権限による表示非表示
+				if (authority.isEditable(groupID)) {
+					item = document.createElement('li');
+					item.className = "context_menu_change_group_item";
+					item.innerHTML = this.groupBox.get_group_name(groupID);
+					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
+					container.appendChild(item);
+					item.onmousedown = (function (groupID, self) {
+						return function (evt) {
+							this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, groupID);
+						}.bind(self);
+					}(groupID, this));
+				}
+			}
+		}
+	};
 	
 	ControllerGUI.prototype.updateBurgerMenu = function () {
 		var groupToElems = this.groupBox.get_tabgroup_to_elems(),
 			container = document.getElementById('burger_menu_submenu'),
+			item,
+			gname,
+			groupID;
+		container.innerHTML = "";
+
+		for (groupID in groupToElems) {
+			if (groupToElems.hasOwnProperty(groupID)) {
+				item = document.createElement('li');
+				item.className = "burger_menu_submenu_item";
+				item.innerHTML = this.groupBox.get_group_name(groupID);
+				container.appendChild(item);
+				item.onmousedown = (function (groupID, self) {
+					return function (evt) {
+						this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, groupID);
+						this.toggleBurgerSubmenu(false);
+						this.contentMenu.toggle();
+					}.bind(self);
+				}(groupID, this));
+			}
+		}
+	};
+
+	ControllerGUI.prototype.updateBurgerMenuLayout = function () {
+		var groupToElems = this.groupBox.get_tabgroup_to_elems(),
+			container = document.getElementById('burger_menu_layout_submenu'),
 			item,
 			gname,
 			groupID;
@@ -1011,8 +1121,11 @@
 
 		// コンテキストメニューを刷新
 		this.updateContextMenu();
+		// コンテキストメニューを刷新
+		this.updateLayoutContextMenu();
 		// バーガーメニューを刷新
 		this.updateBurgerMenu();
+		this.updateBurgerMenuLayout();
 
 		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'), searchSetting);
 		this.initSearchBoxEvents(this.searchBox);
@@ -1075,6 +1188,20 @@
 	 */
 	ControllerGUI.prototype.toggleBurgerSubmenu = function (show, bottom) {
 		var container = document.getElementById('burger_menu_submenu');
+		if (show) {
+			container.style.display = "block";
+			container.style.bottom = bottom;
+		} else {
+			container.style.display = "none";
+		}
+	};
+
+	/**
+	 * バーガーメニューのサブメニュー
+	 */
+	ControllerGUI.prototype.toggleBurgerSubmenuLayout = function (show, bottom) {
+		var container = document.getElementById('burger_menu_layout_submenu');
+		
 		if (show) {
 			container.style.display = "block";
 			container.style.bottom = bottom;
