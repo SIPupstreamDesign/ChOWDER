@@ -75,6 +75,27 @@ window.URL = window.URL || window.webkitURL;
             areaFunc.areaSelector();
         }, false);
 
+        /* 受け取り後処理
+        function() = {
+            if (localStream) localStream.getTracks()[0].stop();
+            localStream = null;
+            navigator.getUserMedia({
+                audio: false,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: 'screen',
+                        chromeMediaSourceId: 'screen:0:0', 
+                        minWidth: 0,
+                        maxWidth: vw,
+                        minHeight: 0,
+                        maxHeight: vh
+                    }
+                }
+            }, gotStream, getUserMediaError);
+
+        }
+        */
+
         // canvas2dへイメージとして送る---------------------------------------------------------
         // 送信インターバル変更
         num.addEventListener("change",function(eve){
@@ -193,5 +214,6 @@ window.URL = window.URL || window.webkitURL;
     };
 
     window.onload = init;
+
     
 })();

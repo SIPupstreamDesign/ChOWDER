@@ -1,5 +1,6 @@
 'use strict'
-//const electron = require('electron');
+const electron = require('electron');
+const remote = electron.remote;
 
 function createRect (a, b) {
   return {
@@ -17,6 +18,7 @@ function createRect (a, b) {
     let cropping = false;
     let downPoint = {};
     let rect = {};
+    let rectFlag = false;
 
     function setArea(){
         
@@ -56,6 +58,8 @@ function createRect (a, b) {
 
         addEventListener('mouseup', function (eve) {
             cropping = false;
+            rectFlag = true;
+            getRect(rectFlag);
             rect = {};
         }, false);
 
@@ -65,6 +69,14 @@ function createRect (a, b) {
             cropping = true;
         }, false);
 
+    }
+
+    function getRect(rectF){
+        if(rectF === true){
+            let main = remote.require("./main.js");
+            console.log("call closer");
+            main.windowCloser(rect);
+        }
     }
 
     window.onload = setArea;
