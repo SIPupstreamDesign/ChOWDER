@@ -1847,6 +1847,10 @@
 		}
 		if (json.hasOwnProperty('group')) {
 			if (!management.getAuthorityObject().isViewable(json.group)) {
+				elem = document.getElementById(metaData.id);
+				if (elem) {
+					elem.style.display = "none"
+				}
 				return;
 			}
 		}
