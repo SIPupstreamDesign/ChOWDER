@@ -51,7 +51,7 @@ function createRect (a, b) {
             x = eve.clientX;
             y = eve.clientY;
             chngElm(x, y);
-            if (!cropping) return
+            if (!cropping) return;
             rect = createRect(downPoint, {x, y});
             chngRect(rect);
         }, false);

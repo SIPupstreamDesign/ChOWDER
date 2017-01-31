@@ -19,8 +19,8 @@ function createWindow () {
 
     // 親ウィンドウ。メインのウィンドウ。
     mainWindow = new BrowserWindow({
-        width: 1600, 
-        height: 900,
+        width: 1440, 
+        height: 810,
         autoHideMenuBar: true
     });
 
@@ -91,8 +91,10 @@ exports.areaSelector = function() {
 exports.windowCloser = function(rect){
     virtualWindow.close();
     mainWindow.focus();
-    //mainWindow.webContents.send('closed', rect);
+    //console.log("window closer called");
+    mainWindow.webContents.send('testData', rect);
 }
+
 
 
 // This method will be called when Electron has finished
