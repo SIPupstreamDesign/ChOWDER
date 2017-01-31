@@ -862,6 +862,7 @@
 		var metaData = json,
 			isUpdateContent;
 		console.log("doneGetMetaData", json);
+		if (!json) { return; }
 		// レイアウトは無視
 		if (metaData.type === "layout") { return; }
 		// 権限情報があるか
@@ -870,11 +871,10 @@
 		}
 		// 閲覧許可があるか
 		if (json.group !== "" && !groupDict.hasOwnProperty(json.group)) {
-			console.error("hoge", groupDict, json.group)
 			return;
 		}
 		if (groupDict.hasOwnProperty(json.group)) {
-			if (authority.viewable !== "all" && authority.viewable.indexOf(groupDict[json.group].id) < 0) {
+			if (authority.viewable !== "all" && authority.viewable.indexOf(json.group) < 0) {
 				return;
 			}
 		}
