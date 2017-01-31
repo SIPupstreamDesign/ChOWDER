@@ -408,7 +408,6 @@
 	}
 
 	function groupInitialSettting() {
-		addGroup("group_default", "default", function (err, reply) {} );
 		textClient.exists(groupUserPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
 				// group設定の初期登録
@@ -417,15 +416,17 @@
 					editable : [],
 					group_manipulatable : false,
 					display_manipulatable : true
-				});
-				// Display設定の初期登録
-				changeGroupUserSetting("Display", {
-					viewable : "all",
-					editable : "all",
-					group_manipulatable : false,
-					display_manipulatable : true
+				}, function () {
+					// Display設定の初期登録
+					changeGroupUserSetting("Display", {
+						viewable : "all",
+						editable : "all",
+						group_manipulatable : false,
+						display_manipulatable : true
+					});
 				});
 			}
+			addGroup("group_default", "default", function (err, reply) {} );
 		});
 		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
@@ -2317,11 +2318,14 @@
 										if (setting[userid].editable !== "all") {
 											setting[userid].editable.push(groupID);
 										}
-										changeGroupUserSetting(userid, setting[userid], function () {
-											if (endCallback) {
-												endCallback(err, groupID);
-											}
-										});
+										// defaultグループは特殊扱いでユーザー無し
+										if (userid !== "group_default") {
+											changeGroupUserSetting(userid, setting[userid], function () {
+												if (endCallback) {
+													endCallback(err, groupID);
+												}
+											});
+										}
 									} else {
 										if (endCallback) {
 											endCallback(err, groupID);
@@ -2597,8 +2601,7 @@
 		if (data.hasOwnProperty('id') && data.hasOwnProperty('password')) {
 			// 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
 			if (data.hasOwnProperty('loginkey')) {
-				if (socketidToUserID.hasOwnProperty(data.loginkey) &&
-					socketidToAccessAuthority.hasOwnProperty(data.loginkey)) 
+				if (socketidToAccessAuthority.hasOwnProperty(data.loginkey)) 
 				{
 					// 対応関係を保存
 					socketidToLoginKey[socketid] = data.loginkey;
