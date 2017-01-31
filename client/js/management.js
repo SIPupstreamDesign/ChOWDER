@@ -6,6 +6,7 @@
 		this.authority = null;
 		this.userList = null;
 		this.maxHistoryNum = 10;
+		this.current_db = null;
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
@@ -16,12 +17,19 @@
 		// DBリスト初期化
 		var db_select = document.getElementById("db_select");
 		var option;
+		var dbname, dbid;
 		db_select.innerHTML = "";
-		for (i = 0; i < contents.dblist.length; i = i + 1) {
+		var i = 0;
+		for (dbname in contents.dblist) {
+			dbid = contents.dblist[dbname];
 			option = document.createElement('option');
-			option.value = contents.dblist[i];
-			option.textContent = contents.dblist[i];
+			option.value = dbname;
+			option.textContent = dbname;
 			db_select.appendChild(option);
+			if (this.current_db === dbid) {
+				db_select.selectedIndex = i;
+			}
+			++i;
 		}
 
 		var changeDisableFunc = function () {
@@ -390,6 +398,10 @@
 
 	Management.prototype.setMaxHistoryNum = function (num) {
 		this.maxHistoryNum = num;
+	};
+
+	Management.prototype.setCurrentDB = function (dbid) {
+		this.current_db = dbid;
 	};
 
 	Management.prototype.getMaxHistoryNum = function () {

@@ -3346,6 +3346,7 @@
 			connector.send('GetGlobalSetting', {}, function (err, reply) {
 				if (reply && reply.hasOwnProperty('max_history_num')) {
 					management.setMaxHistoryNum(reply.max_history_num);
+					management.setCurrentDB(reply.current_db);
 				}
 			});
 		}
@@ -3434,7 +3435,7 @@
 
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
-				gui.setDBList(Object.keys(reply));
+				gui.setDBList(reply);
 			}
 		});
 
