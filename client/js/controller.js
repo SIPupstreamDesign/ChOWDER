@@ -3605,7 +3605,7 @@
 		}
 		function onWheel(e) {
 			if (gui.isOpenDialog) { return; }
-			if (!gui.is_listview_area(e)) {
+			if (!gui.is_listview_area(e) && !gui.is_property_area(e)) {
 				if(!e) e = window.event; //for legacy IE
 				var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
 				var display_scale = vscreen.getWholeScale();

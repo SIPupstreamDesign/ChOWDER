@@ -1267,6 +1267,9 @@
 	ControllerGUI.prototype.get_bottom_area = function () {
 		return document.getElementById('bottom_area');
 	};
+	ControllerGUI.prototype.get_right_area = function () {
+		return document.getElementById('rightArea');
+	};
 	ControllerGUI.prototype.get_display_tab_link = function () {
 		return document.getElementById('display_tab_link');
 	};
@@ -1354,6 +1357,29 @@
 			return false;
 		}
 		return py > rect.top;
+	}
+
+	/**
+	 * 発生したイベントがプロパティ領域で発生しているかを判別する
+	 * @method isListViewArea
+	 * @param {Object} evt イベント.
+	 * @return {bool} 発生したイベントがリストビュー領域で発生していたらtrueを返す.
+	 */
+	ControllerGUI.prototype.is_property_area = function (evt) {
+		var propertyArea = this.get_right_area(),
+			rect = propertyArea.getBoundingClientRect(),
+			clientX = evt.clientX,
+			px;
+
+		if (evt.changedTouches) {
+			// タッチ
+			clientX = evt.changedTouches[0].clientX;
+		}
+		px = evt.clientX;
+		if (!propertyArea) {
+			return false;
+		}
+		return px > rect.left;
 	}
 
 	ControllerGUI.prototype.get_whole_scale = null;
