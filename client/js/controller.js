@@ -1847,6 +1847,10 @@
 		}
 		if (json.hasOwnProperty('group')) {
 			if (!management.getAuthorityObject().isViewable(json.group)) {
+				elem = document.getElementById(metaData.id);
+				if (elem) {
+					elem.style.display = "none"
+				}
 				return;
 			}
 		}
@@ -3346,6 +3350,7 @@
 			connector.send('GetGlobalSetting', {}, function (err, reply) {
 				if (reply && reply.hasOwnProperty('max_history_num')) {
 					management.setMaxHistoryNum(reply.max_history_num);
+					management.setCurrentDB(reply.current_db);
 				}
 			});
 		}
@@ -3434,7 +3439,7 @@
 
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
-				gui.setDBList(Object.keys(reply));
+				gui.setDBList(reply);
 			}
 		});
 
@@ -3600,7 +3605,7 @@
 		}
 		function onWheel(e) {
 			if (gui.isOpenDialog) { return; }
-			if (!gui.is_listview_area(e)) {
+			if (!gui.is_listview_area(e) && !gui.is_property_area(e)) {
 				if(!e) e = window.event; //for legacy IE
 				var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
 				var display_scale = vscreen.getWholeScale();
