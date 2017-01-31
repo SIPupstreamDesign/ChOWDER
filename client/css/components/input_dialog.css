@@ -102,3 +102,37 @@
 	margin-left: 5px;
 	margin-bottom: 23px;
 }
+
+
+.yesnocancel_dialog_yes_button {
+	background-color: rgb(112, 180, 239);
+	color: black;
+	margin-left: 200px;
+	margin-bottom: 23px;
+	width : 60px;
+}
+.yesnocancel_dialog_yes_button:hover {
+	background-color: rgb(82, 150, 209);
+}
+
+.yesnocancel_dialog_no_button {
+	background-color: rgb(112, 180, 239);
+	color: black;
+	margin-left: 5px;
+	margin-bottom: 23px;
+	width : 60px;
+}
+.yesnocancel_dialog_no_button:hover {
+	background-color: rgb(82, 150, 209);
+}
+
+.yesnocancel_dialog_cancel_button {
+	background-color: rgb(112, 180, 239);
+	color: black;
+	margin-left: 5px;
+	margin-bottom: 23px;
+	width : 60px;
+}
+.yesnocancel_dialog_cancel_button:hover {
+	background-color: rgb(82, 150, 209);
+}

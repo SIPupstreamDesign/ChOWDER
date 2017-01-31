@@ -2854,22 +2854,35 @@
 	 * コンテンツ復元
 	 */
 	content_property.on("restore_content", function (err, restoreIndex) {
-		var id = getSelectedID(),
-			metaData;
-		if (metaDataDict.hasOwnProperty(id) && isContentType(metaDataDict[id])) {
-			metaData = metaDataDict[id]; 
-			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
-				metaData.restore_index = restoreIndex;
-				connector.send('GetContent', metaData, function (err, reply) {
-					if (reply.metaData.type === "text") {
-						metaData.user_data_text = JSON.stringify({ text: reply.contentData });
+		window.input_dialog.yesnocancel_input({
+			name : "コンテンツを復元します",
+			yesButtonName : "全て復元",
+			noButtonName : "位置以外",
+			cancelButtonName : "Cancel",
+		}, function (res) {
+			if (res === "yes" || res === "no") {
+				var id = getSelectedID(),
+					metaData;
+				if (metaDataDict.hasOwnProperty(id) && isContentType(metaDataDict[id])) {
+					metaData = metaDataDict[id]; 
+					if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
+						metaData.restore_index = restoreIndex;
+						connector.send('GetContent', metaData, function (err, reply) {
+							if (reply.metaData.type === "text") {
+								metaData.user_data_text = JSON.stringify({ text: reply.contentData });
+							}
+							reply.metaData.restore_index = restoreIndex;
+							if (res === "no") {
+								reply.metaData.posx = metaData.posx;
+								reply.metaData.posy = metaData.posy;
+							}
+							updateMetaData(reply.metaData);
+							manipulator.removeManipulator();
+						});
 					}
-					reply.metaData.restore_index = restoreIndex;
-					updateMetaData(reply.metaData);
-					manipulator.removeManipulator();
-				});
+				}
 			}
-		}
+		});
 	});
 	
 	

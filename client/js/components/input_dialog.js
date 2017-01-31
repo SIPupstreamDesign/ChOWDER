@@ -291,6 +291,101 @@
 	}
 
 	/**
+	 * YES NO Cancel ダイアログを表示
+	 * @param setting.name ダイアログタイトル
+	 * @param setting.yesButtonName
+	 * @param setting.noButtonName
+	 * @param setting.cancelButtonName
+	 * @param setting.opacity  背景のopacity
+	 * @param setting.zIndex 背景のzIndex
+	 * @param setting.backgroundColor 背景色
+	 */
+	function yesnocancel_input(setting, callback) {
+		var dialog,
+			yes_button,
+			no_button,
+			cancel_button,
+			dialog_div,
+			background = new PopupBackground(),
+			closeFunc;
+
+		/*
+		<div class="okcancel_dialog">
+			<p style="margin-top:20px;margin-left:20px" class="okcancel_dialog_name"></p>
+			<input class="btn okcancel_dialog_yes_button" type="button" value="Yes"  />
+			<input class="btn okcancel_dialog_no_button" type="button" value="No"  />
+			<input class="btn okcancel_dialog_cancel_button" type="button" value="Cancel"  />
+		</div>
+		*/
+		dialog_div = document.createElement('div');
+		dialog_div.className = "okcancel_dialog";
+		if (setting.backgroundColor) {
+			dialog_div.style.backgroundColor = setting.backgroundColor;
+		}
+
+		dialog = document.createElement('p');
+		dialog.style.marginTop = "20px";
+		dialog.style.marginLeft = "20px";
+		dialog.className = "yesnocancel_dialog_name";
+		dialog_div.appendChild(dialog);
+
+		yes_button = document.createElement("input");
+		yes_button.type = "button";
+		yes_button.value = "YES";
+		yes_button.className = "btn yesnocancel_dialog_yes_button";
+		dialog_div.appendChild(yes_button);
+		if (setting.yesButtonName) {
+			yes_button.value = setting.yesButtonName;
+		}
+		
+		no_button = document.createElement("input");
+		no_button.type = "button";
+		no_button.value = "NO";
+		no_button.className = "btn yesnocancel_dialog_no_button";
+		dialog_div.appendChild(no_button);
+		if (setting.noButtonName) {
+			no_button.value = setting.noButtonName;
+		}
+
+		cancel_button = document.createElement("input");
+		cancel_button.type = "button";
+		cancel_button.value = "Cancel";
+		cancel_button.className = "btn yesnocancel_dialog_cancel_button";
+		dialog_div.appendChild(cancel_button);
+		if (setting.cancelButtonName) {
+			cancel_button.value = setting.cancelButtonName;
+		}
+		document.body.appendChild(dialog_div);
+
+		dialog.textContent = setting.name;
+
+		closeFunc = (function (dialog_div) {
+			return function () {
+				document.body.removeChild(dialog_div);
+			};
+		}(dialog_div));
+
+		yes_button.onclick = function (evt) {
+			if (callback) { callback("yes"); }
+			background.close();
+			closeFunc();
+		};
+		no_button.onclick = function (evt) {
+			if (callback) { callback("no"); }
+			background.close();
+			closeFunc();
+		};
+		cancel_button.onclick = function (evt) {
+			if (callback) { callback("cancel"); }
+			background.close();
+			closeFunc();
+		};
+
+		background.show(setting.opacity, setting.zIndex);
+		background.on('close', closeFunc);
+	}
+
+	/**
 	 * OK Cancel ダイアログを表示
 	 * @param setting.name ダイアログタイトル
 	 * @param setting.opacity  背景のopacity
@@ -352,5 +447,6 @@
 	window.input_dialog.init_multi_text_input = init_multi_text_input;
 	window.input_dialog.color_input = init_color_input;
 	window.input_dialog.okcancel_input = okcancel_input;
+	window.input_dialog.yesnocancel_input = yesnocancel_input;
 	window.input_dialog.ok_input = ok_input;
 }());
