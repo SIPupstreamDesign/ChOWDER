@@ -2056,6 +2056,7 @@
 		console.log("doneUpdateContent");
 
 		gui.set_update_content_id("No Content Selected.");
+		manipulator.removeManipulator();
 	};
 	
 	/**
@@ -2225,7 +2226,7 @@
 	 */
 	doneGetVirtualDisplay = function (err, reply) {
 		if (!isInitialized) { return; }
-		
+
 		var windowData = reply,
 			whole = vscreen.getWhole(),
 			split = vscreen.getSplitCount(),
@@ -2538,6 +2539,7 @@
 			metaData;
 
 		fileReader.onloadend = function (e) {
+			var buffer, blob, img;
 			if (e.target.result) {
 				console.log("update_content_id", id);
 				elem = document.getElementById(id);
@@ -2546,10 +2548,24 @@
 				}
 				if (metaDataDict.hasOwnProperty(id)) {
 					metaData = metaDataDict[id];
-					metaData.type = "image";
-					metaData.restore_index = -1;
-					updateContent(metaData, e.target.result);
-				}
+
+					buffer = new Uint8Array(e.target.result);
+					blob = new Blob([buffer], {type: "image/jpeg"});
+					img = document.createElement('img');
+					img.src = URL.createObjectURL(blob);
+					img.className = "image_content";
+					img.onload = (function (metaData) {
+						return function () {
+							metaData.type = "image";
+							metaData.restore_index = -1;
+							metaData.width = img.naturalWidth;
+							metaData.height = img.naturalHeight;
+							delete metaData.orgWidth;
+							delete metaData.orgHeight;
+							updateContent(metaData, e.target.result);
+						};
+					}(metaData));
+				}	
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -2776,20 +2792,10 @@
 				metaData.restore_index = restoreIndex;
 				connector.send('GetContent', metaData, function (err, reply) {
 					if (reply.metaData.type === "text") {
-						var elem = document.createElement('pre');
-						var previewArea = gui.get_content_preview_area();
-						elem.className = "text_content";
-						elem.innerHTML = reply.contentData;
-						previewArea.appendChild(elem);
-						reply.metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
-						reply.metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
-						var aspect = reply.metaData.orgWidth / reply.metaData.orgHeight;
-						previewArea.removeChild(elem);
 						metaData.user_data_text = JSON.stringify({ text: reply.contentData });
-						metaData.height = metaData.width / aspect;
 					}
-					doneGetContent(err, reply);
-					updateMetaData(metaData);
+					reply.metaData.restore_index = restoreIndex;
+					updateMetaData(reply.metaData);
 					manipulator.removeManipulator();
 				});
 			}
@@ -3483,9 +3489,12 @@
 						previewArea.appendChild(elem);
 						metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
 						metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
-						metaData.restore_index = -1;
+						correctAspect(metaData, function () {
+							console.error("metaData", metaData)
+							metaData.restore_index = -1;
+							updateContent(metaData, text);
+						})
 						previewArea.removeChild(elem);
-						updateContent(metaData, text);
 					} else if (metaData.type === "layout") {
 						// レイアウトのメモ変更.
 						// レイアウトコンテンツを取得し直しリストを更新する.

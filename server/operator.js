@@ -373,22 +373,58 @@
 	function changeUUIDPrefix(dbname, endCallback) {
 		textClient.hget(frontPrefix + 'dblist', dbname, function (err, reply) {
 			if (!err) {
-				var id = reply;
-				console.log("DB ID:", reply);
-				uuidPrefix = id + ":";
-				contentPrefix = frontPrefix + uuidPrefix + "content:";
-				contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
-				contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
-				metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
-				metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
-				windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
-				windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
-				windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
-				virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
-				groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
-				endCallback(null);
+				getGlobalSetting(function (err, setting) {
+					setting.current_db = reply;
+					changeGlobalSetting(setting, function () {
+						var id = setting.current_db;
+						console.log("DB ID:", setting.current_db);
+						uuidPrefix = id + ":";
+						contentPrefix = frontPrefix + uuidPrefix + "content:";
+						contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
+						contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
+						metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
+						metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
+						windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
+						windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
+						windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
+						virtualDisplayIDStr = frontPrefix + uuidPrefix + "virtual_display";
+						groupListPrefix = frontPrefix + uuidPrefix + "grouplist";
+						groupUserPrefix = frontPrefix + uuidPrefix + "group_user"; // グループユーザー設定
+						endCallback(null);
+					});
+				});
 			} else {
 				endCallback("failed to get dblist");
+			}
+		});
+	}
+
+	function groupInitialSettting() {
+		addGroup("group_default", "default", function (err, reply) {} );
+		textClient.exists(groupUserPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				// group設定の初期登録
+				changeGroupUserSetting("Guest", {
+					viewable : [],
+					editable : [],
+					group_manipulatable : false,
+					display_manipulatable : true
+				});
+				// Display設定の初期登録
+				changeGroupUserSetting("Display", {
+					viewable : "all",
+					editable : "all",
+					group_manipulatable : false,
+					display_manipulatable : true
+				});
+			}
+		});
+		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
+			if (doesExists !== 1) {
+				// global設定の初期登録
+				changeGlobalSetting({
+					max_history_num : 10
+				});
 			}
 		});
 	}
@@ -407,7 +443,7 @@
 					textClient.hset(frontPrefix + 'dblist', name, id, function (err, reply) {
 						if (!err) {
 							changeUUIDPrefix(name, function (err, reply) {
-								addGroup("group_default", "default", function (err, reply) {} );
+								groupInitialSettting();
 								endCallback(err);
 							});
 						} else {
@@ -1092,6 +1128,36 @@
 		}
 	}
 	
+	function initialOrgWidthHeight(metaData, contentData) {
+		var dimensions;
+		if (metaData.hasOwnProperty('width')) {
+			metaData.orgWidth = metaData.width;
+		}
+		if (metaData.hasOwnProperty('height')) {
+			metaData.orgHeight = metaData.height;
+		}
+		if (metaData.type === 'text') {
+			metaData.mime = "text/plain";
+		} else if (metaData.type === 'image') {
+			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === 'url') {
+			metaData.mime = util.detectImageType(contentData);
+		} else {
+			console.error("Error undefined type:" + metaData.type);
+		}
+		if (metaData.type === 'image') {
+			if (isInvalidImageSize(metaData)) {
+				dimensions = image_size(contentData);
+				if (!metaData.hasOwnProperty('orgWidth')) {
+					metaData.orgWidth = dimensions.width;
+				}
+				if (!metaData.hasOwnProperty('orgHeight')) {
+					metaData.orgHeight = dimensions.height;
+				}
+			}
+		}
+	}
+
 	/**
 	 * メタデータ追加
 	 * @method addMetaData
@@ -1222,6 +1288,8 @@
 									console.log("reference count zero. delete content");
 									textClient.del(contentPrefix + metaData.content_id, function (err) {
 										if (!err) {
+											textClient.del(metadataBackupPrefix + metaData.id);
+											textClient.del(contentBackupPrefix + metaData.content_id);
 											textClient.del(contentRefPrefix + metaData.content_id);
 											if (endCallback) {
 												endCallback(metaData);
@@ -1343,21 +1411,27 @@
 				// 復元時に初回復元の場合、バックアップリストに更新前コンテンツと更新後コンテンツを両方格納する.
 				if (backupList.length === 0) {
 					// 更新前コンテンツ
-					backupContent(metaData, function (err, reply) {
-						metaData.date = new Date().toISOString();
-						metaData.restore_index = -1;
-						setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-							textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
-								if (err) {
-									console.error("Error on updateContent:" + err);
-								} else {
-									// 更新後コンテンツ
-									backupContent(meta, function (err, reply) {
-										if (endCallback) {
-											endCallback(meta);
-										}
-									});
-								}
+					// メタデータ初期設定.
+					getMetaData(metaData.type, metaData.id, function (oldMeta) {
+						backupContent(oldMeta, function (err, reply) {
+							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+								initialOrgWidthHeight(metaData, contentData);
+							}
+							metaData.date = new Date().toISOString();
+							metaData.restore_index = -1;
+							setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+								textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
+									if (err) {
+										console.error("Error on updateContent:" + err);
+									} else {
+										// 更新後コンテンツ
+										backupContent(meta, function (err, reply) {
+											if (endCallback) {
+												endCallback(meta);
+											}
+										});
+									}
+								});
 							});
 						});
 					});
@@ -1365,6 +1439,10 @@
 					// 更新後コンテンツのみバックアップ
 					metaData.date = new Date().toISOString();
 					metaData.restore_index = -1;
+					// メタデータ初期設定.
+					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+						initialOrgWidthHeight(metaData, contentData);
+					}
 					setMetaData(metaData.type, metaData.id, metaData, function (meta) {
 						textClient.set(contentPrefix + meta.content_id, contentData, function (err, reply) {
 							if (err) {
@@ -1823,13 +1901,15 @@
 
 				// 履歴から復元して取得
 				if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
-					var backupList = JSON.parse(meta.backup_list);
+					var backupList = sortBackupList(JSON.parse(meta.backup_list));
 					var restore_index = Number(json.restore_index);
-					if (restore_index > 0 && backupList.length > restore_index) {
+					if (restore_index >= 0 && backupList.length > restore_index) {
 						var backup_date = backupList[restore_index];
-						client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
-							endCallback(null, meta, reply[0]);
-						});
+						textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
+							client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
+								endCallback(null, JSON.parse(metaData), reply[0]);
+							});
+						})
 						return;
 					}
 				}
@@ -1971,18 +2051,38 @@
 				textClient.exists(metadataPrefix + json[i].id, (function (metaData) {
 					return function (err, doesExists) {
 						if (!err && doesExists === 1) {
-							setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-								getMetaData(meta.type, meta.id, function (meta) {
-									--all_done;
-									results.push(meta);
-									if (all_done <= 0) {
-										if (endCallback) {
-											endCallback(null, results);
-											return;
-										}
-									}
+							
+							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+								// メタデータ初期設定.
+								getContent(metaData.type, metaData.content_id, function (reply) {
+									initialOrgWidthHeight(metaData, reply);
+									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+										getMetaData(meta.type, meta.id, function (meta) {
+											--all_done;
+											results.push(meta);
+											if (all_done <= 0) {
+												if (endCallback) {
+													endCallback(null, results);
+													return;
+												}
+											}
+										});
+									});
 								});
-							});
+							} else {
+								setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+									getMetaData(meta.type, meta.id, function (meta) {
+										--all_done;
+										results.push(meta);
+										if (all_done <= 0) {
+											if (endCallback) {
+												endCallback(null, results);
+												return;
+											}
+										}
+									});
+								});
+							}
 						}
 					};
 				}(metaData)));
@@ -2524,23 +2624,11 @@
 						if (userList[i].name === data.username) {
 							if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
 								var setting = {
-									viewable : [],
-									editable : [],
+									viewable : data.viewable,
+									editable : data.editable,
 									group_manipulatable : data.group_manipulatable,
 									display_manipulatable : data.display_manipulatable
 								};
-								for (k = 0; k < groupList.grouplist.length; k = k + 1) {
-									for (n = 0; n < data.viewable.length; n = n + 1) {
-										if (groupList.grouplist[k].name === data.viewable[n]) {
-											setting.viewable.push(groupList.grouplist[k].id);
-										}
-									}
-									for (n = 0; n < data.editable.length; n = n + 1) {
-										if (groupList.grouplist[k].name === data.editable[n]) {
-											setting.editable.push(groupList.grouplist[k].id);
-										}
-									}
-								}
 								changeGroupUserSetting(userList[i].id, setting, endCallback);	
 							}
 							break;
@@ -3063,31 +3151,17 @@
 				addAdmin(util.generateUUID8(), "管理者", "hogehoge", function (err, reply) {});
 			}
 		});
-		addGroup("group_default", "default", function (err, reply) {} );
-		
-		textClient.exists(groupUserPrefix,  function (err, doesExists) {
-			if (doesExists !== 1) {
-				// group設定の初期登録
-				changeGroupUserSetting("Guest", {
-					viewable : [],
-					editable : [],
-					group_manipulatable : false,
-					display_manipulatable : true
-				});
-				// Display設定の初期登録
-				changeGroupUserSetting("Display", {
-					viewable : "all",
-					editable : "all",
-					group_manipulatable : false,
-					display_manipulatable : true
-				});
-			}
-		});
-		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
-			if (doesExists !== 1) {
-				// global設定の初期登録
-				changeGlobalSetting({
-					max_history_num : 10
+		groupInitialSettting();
+
+		getGlobalSetting(function (err, setting) {
+			if (!err && setting.current_db) {
+				commandGetDBList(function (err, dblist) {
+					var name;
+					for (name in dblist) {
+						if (dblist[name] === setting.current_db) {
+							changeDB(name, function () {});
+						}
+					}
 				});
 			}
 		});
