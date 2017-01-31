@@ -287,9 +287,9 @@
 
 
 	// コンテンツメタデータ中のグループ名の変更
-	function changeContentGroupName(oldID, newID) {
+	function changeContentGroupName(socketid, oldID, newID) {
 		var metaDatas = [];
-		getMetaData('all', null, function (err, metaData) {
+		getMetaData(socketid, 'all', null, function (err, metaData) {
 			if (err) {
 				return;
 			}
@@ -328,7 +328,7 @@
 	 * @param {String} json グループメタデータ.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function updateGroup(id, json, endCallback) {
+	function updateGroup(socketid, id, json, endCallback) {
 		getGroupList(function (err, data) {
 			var index = getGroupIndex(data.grouplist, id);
 			if (index >= 0) {
@@ -336,7 +336,7 @@
 				if (group.name !== json.name) {
 					// グループ名が変更された.
 					// 全てのコンテンツのメタデータのグループ名も変更する
-					changeContentGroupName(group.name, json.name);
+					changeContentGroupName(socketid. group.name, json.name);
 				}
 				data.grouplist[index] = json;
 				textClient.set(groupListPrefix, JSON.stringify(data), function () {
@@ -1373,7 +1373,7 @@
 				});
 			});
 		};
-		getMetaData(metaData.type, metaData.id, function (err, meta) {
+		getMetaData(socketid, metaData.type, metaData.id, function (err, meta) {
 			if (err) {
 				endCallback(err);
 				return;
@@ -1423,18 +1423,21 @@
 		} else {
 			console.error("Error undefined type:" + metaData.type);
 		}
-		
 		textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 			if (!err && doesExist === 1) {
 				var backupList = [];
 				if (metaData.hasOwnProperty('backup_list')) {
-					backupList = JSON.parse(metaData.backup_list);
+					try {
+						backupList = JSON.parse(metaData.backup_list);
+					} catch (e) {
+
+					}
 				}
 				// 復元時に初回復元の場合、バックアップリストに更新前コンテンツと更新後コンテンツを両方格納する.
 				if (backupList.length === 0) {
 					// 更新前コンテンツ
 					// メタデータ初期設定.
-					getMetaData(metaData.type, metaData.id, function (err, oldMeta) {
+					getMetaData(socketid, metaData.type, metaData.id, function (err, oldMeta) {
 						if (err) {
 							endCallback(err);
 							return;
@@ -2374,7 +2377,7 @@
 		if (json.hasOwnProperty("id")) {
 			isGroupManipulatable(socketid, json.id, function (isManipulatable) {
 				if (isManipulatable) {
-					updateGroup(json.id, json, endCallback);
+					updateGroup(socketid, json.id, json, endCallback);
 				} else {
 					endCallback("access denied");
 				}
