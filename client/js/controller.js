@@ -2561,7 +2561,6 @@
 					img.onload = (function (metaData) {
 						return function () {
 							metaData.type = "image";
-							metaData.restore_index = -1;
 							metaData.width = img.naturalWidth;
 							metaData.height = img.naturalHeight;
 							delete metaData.orgWidth;

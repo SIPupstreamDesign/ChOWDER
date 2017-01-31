@@ -1436,6 +1436,16 @@
 						});
 					});
 				} else {
+					// 現在のコンテンツより新しいものを削除する.
+					if (Number(metaData.restore_index) > 0 && metaData.hasOwnProperty('backup_list')) {
+						var backupList = sortBackupList(JSON.parse(metaData.backup_list));
+						for (var i = 0; i < Number(metaData.restore_index); i = i + 1) {
+							var date = backupList[i];
+							textClient.hdel(metadataBackupPrefix + metaData.id, date);
+							textClient.hdel(contentBackupPrefix + metaData.content_id, date);
+						}
+					}
+					
 					// 更新後コンテンツのみバックアップ
 					metaData.date = new Date().toISOString();
 					metaData.restore_index = -1;
@@ -2080,7 +2090,7 @@
 									});
 								});
 							} else {
-								
+
 								if (metaData.hasOwnProperty('restore_index')) {
 									var restore_index = Number(metaData.restore_index);
 									if (restore_index >= 0) {
