@@ -6,6 +6,7 @@ const desktopCapturer = electron.desktopCapturer;
 const remote = electron.remote;
 const screen = electron.screen;
 const ipc = electron.ipcRenderer;
+const main = remote.require('./main.js');
 
 window.URL = window.URL || window.webkitURL;
 
@@ -23,7 +24,7 @@ window.URL = window.URL || window.webkitURL;
         // キャプチャー情報
         let capSource;
         // キャンバスは非表示
-        canvas.style.display = "none";
+        //canvas.style.display = "none";
 
         let browserId = 0;
         
@@ -66,30 +67,44 @@ window.URL = window.URL || window.webkitURL;
                 mainViewer(sources[selected]);
                 // キャプチャー情報の保持
                 capSource = sources;
-                console.log(capSource);
+                //console.log(capSource);
             });
         }
-        
+       
+        // sourcesに関する関数--------------------------------------------------------------------
+        // bodyへのサムネイル埋め込み
+        function addImage(image) {
+            const elm = document.createElement("img");
+            elm.id = browserId;
+            browserId++;
+            elm.className = "sumbnaile";
+            elm.src = image.toDataURL();
+            document.body.appendChild(elm);
+        }
+
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
-            let areaFunc = remote.require('./main.js');
-            areaFunc.areaSelector();
+            main.areaSelector();
         }, false);
-
+        
         ipc.on('testData', function(event, data){
             console.log(data);
+            // video を "none"に切り替えてキャンバスを表示するか？
             mainViewer(capSource[0]);
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, data.x, data.y, data.x + data.width, data.y + data.height);
+            canvas.width = data.width;
+            canvas.height = data.height;
+            ctx.drawImage(video, data.x, data.y, 
+                        (video.videoWidth - data.width), 
+                        (video.videoHeight - data.height),
+                         0, 0, data.width, data.height);
             // 送信
             ws_connector.sendBinary('AddContent', {
                 "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
             },getImageBinary(canvas), function(){});
+
         });
-            
         
 
         // canvas2dへイメージとして送る---------------------------------------------------------
@@ -114,38 +129,25 @@ window.URL = window.URL || window.webkitURL;
             }
         },false);
 
-        // sourcesに関する関数--------------------------------------------------------------------
-        // bodyへのサムネイル埋め込み
-        function addImage(image) {
-            const elm = document.createElement("img");
-            elm.id = browserId;
-            browserId++;
-            elm.className = "sumbnaile";
-            elm.src = image.toDataURL();
-            document.body.appendChild(elm);
-        }
-
-        // キャンバスへ描画-----------------------------------------------------------------------
+        // キャンバスへ描画、送信---------------------------------------------------------------
         function drawCanvas(){
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            console.log(video.videoWidth, video.videoHeight);
+            //console.log(video.videoWidth, video.videoHeight);
             ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             // 送信
-            
             ws_connector.sendBinary('AddContent', {
                 "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
             },getImageBinary(canvas), function(){});
-            
         }
         
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
             let id = eve.target.id;
-            if(id != 'video' && id != 'setarea' && id ){
+            if(id != 'video' && id != 'setarea' && id != 'capture' && id != 'interval' && id ){
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
@@ -193,7 +195,7 @@ window.URL = window.URL || window.webkitURL;
             console.log('getUserMediaError');
         }
         
-
+        // バイナリデータへ変換
         function getImageBinary(canvas) {
             var base64 = canvas.toDataURL('image/png');
             // Base64からバイナリへ変換

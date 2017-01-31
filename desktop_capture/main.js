@@ -85,16 +85,19 @@ exports.areaSelector = function() {
       virtualWindow = null;
     });
 
-
 }
 
 exports.windowCloser = function(rect){
     virtualWindow.close();
+    virtualWindow = null;
     mainWindow.focus();
-    //console.log("window closer called");
-    mainWindow.webContents.send('testData', rect);
+    //console.log("window closer called")
+    
+    function getClosed(){
+      mainWindow.webContents.send('testData', rect);
+    }
+    getClosed();
 }
-
 
 
 // This method will be called when Electron has finished
