@@ -23,9 +23,6 @@ window.URL = window.URL || window.webkitURL;
         
         // キャプチャー情報
         let capSource;
-        // キャンバス非表示
-        canvas.style.display = "none";
-
         let browserId = 0;
         
         let vw = screen.getPrimaryDisplay().size.width;
@@ -54,20 +51,13 @@ window.URL = window.URL || window.webkitURL;
         function initCapturing(){
             desktopCapturer.getSources({types: ['window', 'screen']}, 
             function(error, sources) {
-                //console.log(sources);
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
-                    // electronの画面は除外したい
-                    //if(sources[i].name != "electron-capture") {
                         addImage(sources[i].thumbnail);
-                        //console.log("sources["+i+"].id = "+ sources[i].id);
-                        //console.log("sources["+i+"].name = "+ sources[i].name);
-                    //}
                 }
                 mainViewer(sources[selected]);
                 // キャプチャー情報の保持
                 capSource = sources;
-                //console.log(capSource);
             });
         }
         
@@ -89,30 +79,20 @@ window.URL = window.URL || window.webkitURL;
         }, false);
         
         ipc.on('rectData', function(event, data){
-            console.log(data);
-            // video を "none"に切り替えてキャンバスを表示するか？
+            // video を "none"に切り替えてキャンバスを表示する？
             canvas.width = data.width;
             canvas.height = data.height;
             let subX = video.videoWidth - data.width;
             let subY = video.videoHeight - data.height;
-            let promise = getAsyncPromise(
-                ctx.drawImage(video, data.x+8, data.y, 
-                          (video.videoWidth - subX), 
-                          (video.videoHeight - subY),
-                           0, 0, data.width, data.height));
+            
+            video.style.display = "none";
+            canvas.style.display = "inline";
             // windowのフレーム(8px)分のずれがある
-            promise.then(function(resulet){
-                localStream.getTracks()[0].stop();
-                localStream = ctx;
-            }).catch(function(error){});
-            /*
-            // 送信
-            ws_connector.sendBinary('AddContent', {
-                "id" : "captured",         // 特定のID に固定する.
-                "content_id" : "captured", // 特定のID に固定する.
-                "type" : "image"
-            },getImageBinary(canvas), function(){});
-            */
+            ctx.drawImage(video, data.x+8, data.y, 
+                        (video.videoWidth - subX), 
+                        (video.videoHeight - subY),
+                        0, 0, data.width, data.height);
+                
         });
 
         // canvas2dへイメージとして送る---------------------------------------------------------
@@ -137,40 +117,42 @@ window.URL = window.URL || window.webkitURL;
             }
         },false);
 
-        // キャンバスへ描画、送信---------------------------------------------------------------
+
+        // キャンバスへ描画----------------------------------------------------------------------
         function drawCanvas(){
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            //console.log(video.videoWidth, video.videoHeight);
             ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-            /*
-            // 送信
+            //sendImage(canvas);
+        }
+        
+        function sendImage(getCanvas){
             ws_connector.sendBinary('AddContent', {
                 "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
-            },getImageBinary(canvas), function(){});
-            */
-        }
-        
+            },getImageBinary(getCanvas), function(){});
+        }        
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
+            if(canvas.style.display === "inline"){
+                video.style.display = "inline";
+                canvas.style.display = "none";
+            }
             let id = eve.target.id;
             if(id != 'video' && id != 'setarea' && id != 'capture' && 
                id != 'interval' && id != 'canvas' && id){
                 selected = id;
-                if (localStream && localStream != canvas) localStream.getTracks()[0].stop();
+                if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
                 mainViewer(capSource[selected]);
             }
         }, false);
 
-
         // viewer-------------------------------------------------------------------------------
         function mainViewer(source){
             let media;
-            //console.log(source.id, source.name);
             if (source.name == "Entire screen") {
                 media = 'screen';
             }
@@ -182,7 +164,6 @@ window.URL = window.URL || window.webkitURL;
                 video: {
                     mandatory: {
                         chromeMediaSource: media,
-                        // idを切り替えることでキャプチャー対象を選ぶことができる
                         chromeMediaSourceId: source.id, 
                         minWidth: 0,
                         maxWidth: vw,
@@ -191,7 +172,6 @@ window.URL = window.URL || window.webkitURL;
                     }
                 }
             }, gotStream, getUserMediaError);
-            
         }
 
         // デスクトップ情報の取得が成功したとき

@@ -67,7 +67,7 @@ function createRect (a, b) {
             cropping = false;
             let sRect = rect;
             rect = {};
-            return closer(sRect);
+            closer(sRect);
         }, false);
 
         addEventListener('mousedown', function (eve) {

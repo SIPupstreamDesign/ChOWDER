@@ -1,6 +1,11 @@
 .sumbnaile{
     display:inline;
-    margin:2px;
+    margin:4px;
+}
+
+canvas{
+    display: none;
+    margin: 10px;
 }
 
 video{

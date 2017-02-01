@@ -32,6 +32,6 @@ html, body, .window {
   width: 0;
   height: 0;
 
-  background-color: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  background-color: rgba(0, 0, 0, 0);
+  border: 1px solid rgba(0, 0, 0, 1);
 }
