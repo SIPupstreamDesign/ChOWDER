@@ -78,3 +78,40 @@ input[disabled] {
 	vertical-align: middle;
 	margin-left : 10px;
 }
+
+.apply_pass_frame {
+	display : inline-block;
+	width : 300px;
+}
+
+#apply_pass_button {
+	width : 100px;
+}
+
+#apply_pass_message {
+	visibility: hidden;
+	width : 180px;
+	position : relative;
+	top : 5px;
+}
+
+.apply_auth_frame {
+	display : inline-block;
+	width : 300px;
+}
+
+#apply_auth_button {
+	width : 100px;
+}
+
+#apply_auth_message {
+	visibility: hidden;
+	width : 180px;
+	position : relative;
+	top : 5px;
+}
+
+#apply_history_message {
+	visibility: hidden;
+	margin-left : 5px;
+}

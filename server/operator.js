@@ -314,6 +314,19 @@
 			if (index >= 0) { 
 				data.grouplist.splice(index, 1);
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				
+				getGroupUserSetting(function (err, data) {
+					if (!err && data) {
+						if (data.hasOwnProperty(id)) {
+							delete data[id];
+							textClient.set(groupUserPrefix, JSON.stringify(data), (function (data) {
+								return function (err, reply) {
+									updateAuthority(null, data);
+								}
+							}(data)));
+						}
+					}
+				});
 				return true;
 			} else {
 				endCallback("not found");
@@ -449,6 +462,9 @@
 				if (!err && doesExists !== 1) {
 					// 存在しない場合のみ作って切り替え
 					var id = util.generateUUID8();
+					if (name === "default") {
+						id = "default";
+					}
 					textClient.hset(frontPrefix + 'dblist', name, id, function (err, reply) {
 						if (!err) {
 							changeUUIDPrefix(name, function (err, reply) {
@@ -532,44 +548,65 @@
 	 */
 	function deleteDB(name, endCallback) {
 		if (name.length > 0) {
-			if (name === "default") {
-				endCallback("Unauthorized name for deleting")
-			} else {
-				textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
-					if (!err) {
-						var id = reply;
-						textClient.hdel(frontPrefix + 'dblist', name);
-						textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
-							if (!err && doesExists == 1) {
-								textClient.keys(frontPrefix + name + "*", function (err, replies) {
-									var i;
-									console.log("deletedb : ", name);
-									if (!err) {
-										for (i = 0; i < replies.length; i = i + 1) {
-											console.log("delete : ", replies[i]);
-											textClient.del(replies[i]);
-										}
-
-										if (uuidPrefix === (name + ":")) {
-											// 現在使用中のDBが消去された.
-											// defaultに戻す.
-											changeDB("default", endCallback);
-										} else {
-											endCallback(null);
-										}
-									} else {
-										endCallback("Failed deleteDB:" + err)
+			textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
+				if (!err) {
+					var id = reply;
+					textClient.hdel(frontPrefix + 'dblist', name);
+					textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
+						if (!err && doesExists == 1) {
+							textClient.keys(frontPrefix + id + "*", function (err, replies) {
+								var i;
+								console.log("deletedb : ", name);
+								if (!err) {
+									for (i = 0; i < replies.length; i = i + 1) {
+										console.log("delete : ", replies[i]);
+										textClient.del(replies[i]);
 									}
-								});
-							} else {
-								endCallback("Failed deleteDB: not exists db name")
-							}
-						});
-					} else {
-						endCallback("Failed deleteDB: not exists db name")
-					}
-				});
-			}
+
+									if (uuidPrefix === (id + ":") && name !== "default") {
+										// 現在使用中のDBが消去された.
+										// defaultに戻す.
+										changeDB("default", endCallback);
+									} else {
+										endCallback(null);
+									}
+								} else {
+									endCallback("Failed deleteDB:" + err)
+								}
+							});
+						} else {
+							endCallback("Failed deleteDB: not exists db name")
+						}
+					});
+				} else {
+					endCallback("Failed deleteDB: not exists db name")
+				}
+			});
+		} else {
+			endCallback("Failed deleteDB: invalid parameter")
+		}
+	}
+
+	/**
+	 * DBの指定したデータ保存領域を初期化
+	 * @param name 保存領域の名前
+	 * @param endCallback 終了コールバック
+	 */
+	function initDB(name, endCallback) {
+		if (name.length > 0) {
+			deleteDB(name, function (err, reply) {
+				if (!err) {
+					newDB(name, function (err, reply) {
+						if (endCallback) {
+							endCallback(err, reply)
+						}
+					});
+				} else {
+					endCallback("Failed initDB");
+				}
+			});
+		} else {
+			endCallback("Failed initDB: invalid parameter");
 		}
 	}
 	
@@ -732,6 +769,10 @@
 				userList.push({ name : data.adminlist[i].name, id : data.adminlist[i].id, type : "admin"});;
 			}
 			getGroupUserSetting(function (err, setting) {
+				if (!setting) { 
+					endCallback(null, userList);
+					return;
+				}
 				getGroupList(function (err, groupData) {
 					var isFoundGuest = false;
 
@@ -1868,17 +1909,13 @@
 
 	function isGroupManipulatable(socketid, groupID, endCallback) {
 		getGroupList(function (err, data) {
-			var index = getGroupIndex(data.grouplist, groupID);
-			if (index >= 0) {
-				var groupID = data.grouplist[index].id;
-				if (groupID === "group_default") {
-					endCallback(true);
-					return;
-				}
-				if (groupID === undefined || groupID === "") {
-					endCallback(true);
-					return;
-				}
+			if (groupID === "group_default") {
+				endCallback(true);
+				return;
+			}
+			if (groupID === undefined || groupID === "") {
+				endCallback(true);
+				return;
 			}
 			if (socketidToLoginKey.hasOwnProperty(socketid)) {
 				socketid = socketidToLoginKey[socketid];
@@ -2303,49 +2340,50 @@
 	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
 		if (json.hasOwnProperty("name") && json.name !== "") {
-			if (socketidToUserID.hasOwnProperty(socketid)) {
-				var userid = socketidToUserID[socketid];
-				isGroupManipulatable(socketid, userid, function (isManipulatable) {
-					if (isManipulatable) {
-						if (json.hasOwnProperty("color")) {
-							groupColor = json.color;
-						}
-						addGroup(null, json.name, groupColor, function (err, groupID) {
-							// グループユーザーの権限情報に、グループを追加する.
-							if (!err) {
-								getGroupUserSetting(function (err, setting) {
-									if (setting.hasOwnProperty(userid)) {
-										if (setting[userid].viewable !== "all") {
-											setting[userid].viewable.push(groupID);
-										}
-										if (setting[userid].editable !== "all") {
-											setting[userid].editable.push(groupID);
-										}
-										// defaultグループは特殊扱いでユーザー無し
-										if (userid !== "group_default") {
-											changeGroupUserSetting(userid, setting[userid], function () {
-												if (endCallback) {
-													endCallback(err, groupID);
-												}
-											});
-										}
-									} else {
-										if (endCallback) {
-											endCallback(err, groupID);
-										}
-									}
-								});
-							} else {
-								endCallback("faild to add group");
-							}
-						});
-					} else {
-						endCallback("access denied");
-					}
-				});
-			} else {
-				endCallback("access denied");
+			if (socketidToLoginKey.hasOwnProperty(socketid)) {
+				socketid = socketidToLoginKey[socketid];
 			}
+			var userid = socketidToUserID[socketid];
+			isGroupManipulatable(socketid, userid, function (isManipulatable) {
+				if (isManipulatable) {
+					if (json.hasOwnProperty("color")) {
+						groupColor = json.color;
+					}
+					addGroup(null, json.name, groupColor, function (err, groupID) {
+						// グループユーザーの権限情報に、グループを追加する.
+						if (!err) {
+							getGroupUserSetting(function (err, setting) {
+								if (setting.hasOwnProperty(userid)) {
+									if (setting[userid].viewable !== "all") {
+										setting[userid].viewable.push(groupID);
+									}
+									if (setting[userid].editable !== "all") {
+										setting[userid].editable.push(groupID);
+									}
+									// defaultグループは特殊扱いでユーザー無し
+									if (userid !== "group_default") {
+										changeGroupUserSetting(userid, setting[userid], function () {
+											if (endCallback) {
+												endCallback(err, groupID);
+											}
+										});
+									}
+								} else {
+									if (endCallback) {
+										endCallback(err, groupID);
+									}
+								}
+							});
+						} else {
+							endCallback("faild to add group");
+						}
+					});
+				} else {
+					endCallback("access denied");
+				}
+			});
+		} else {
+			endCallback("faild to add group : invalid parameter");
 		}
 	}
 
@@ -2447,7 +2485,23 @@
 	 */
 	function commandDeleteDB(json, endCallback) {
 		if (json.hasOwnProperty("name")) {
-			deleteDB(json.name, endCallback);
+			if (json.name === "default") {
+				endCallback("Unauthorized name for deleting")
+			} else {
+				deleteDB(json.name, endCallback);
+			}
+		}
+	}
+
+	/**
+	 * DBの保存領域の初期化
+	 * @method commandChangeDB
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandInitDB(json, endCallback) {
+		if (json.hasOwnProperty("name")) {
+			initDB(json.name, endCallback);
 		}
 	}
 
@@ -2610,6 +2664,7 @@
 					socketidToLoginKey[socketid] = data.loginkey;
 					socketid = data.loginkey;
 					var result = {
+						id : socketidToUserID[socketid],
 						loginkey : socketid,
 						authority : socketidToAccessAuthority[socketid]
 					}
@@ -2728,7 +2783,13 @@
 									group_manipulatable : data.group_manipulatable,
 									display_manipulatable : data.display_manipulatable
 								};
-								changeGroupUserSetting(userList[i].id, setting, endCallback);	
+								changeGroupUserSetting(userList[i].id, setting, function (err, reply) {
+									if (!err) {
+										endCallback(err, userList[i].id);
+									} else {
+										endCallback(err);
+									}
+								});	
 							}
 							break;
 						}
@@ -2909,7 +2970,27 @@
 			}
 		};
 	}
-	
+
+	function post_db_change(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.ChangeDB, reply);
+			io_connector.broadcast(io, Command.ChangeDB, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
+	function post_updateAuthority(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.ChangeAuthority, reply);
+			io_connector.broadcast(io, Command.ChangeAuthority, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
+	}
+
 	/**
 	 * websocketイベントの登録を行う.
 	 * register websockets events
@@ -3022,16 +3103,19 @@
 		});
 
 		ws_connector.on(Command.NewDB, function (data, resultCallback) {
-			commandNewDB(data, post_update(ws, io, resultCallback));
+			commandNewDB(data, post_db_change(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.RenameDB, function (data, resultCallback) {
-			commandRenameDB(data, post_update(ws, io, resultCallback));
+			commandRenameDB(data, post_updateSetting(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.ChangeDB, function (data, resultCallback) {
-			commandChangeDB(data, post_update(ws, io, resultCallback));
+			commandChangeDB(data, post_db_change(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.DeleteDB, function (data, resultCallback) {
-			commandDeleteDB(data, post_update(ws, io, resultCallback));
+			commandDeleteDB(data, post_db_change(ws, io, resultCallback));
+		});
+		ws_connector.on(Command.InitDB, function (data, resultCallback) {
+			commandInitDB(data, post_db_change(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.GetDBList, function (data, resultCallback) {
 			commandGetDBList(resultCallback);
@@ -3047,7 +3131,7 @@
 			commandChangePassword(data, socketid, resultCallback);
 		});
 		ws_connector.on(Command.ChangeAuthority, function (data, resultCallback, socketid) {
-			commandChangeAuthority(data, socketid, resultCallback);
+			commandChangeAuthority(data, socketid, post_updateAuthority(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -3056,7 +3140,7 @@
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
-			commandGetGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
+			commandGetGlobalSetting(data, resultCallback);
 		});
 
 		getSessionList();
@@ -3171,16 +3255,19 @@
 		});
 
 		io_connector.on(Command.NewDB, function (data, resultCallback) {
-			commandNewDB(data, post_update(ws, io, resultCallback));
+			commandNewDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.RenameDB, function (data, resultCallback) {
-			commandRenameDB(data, post_update(ws, io, resultCallback));
+			commandRenameDB(data, post_updateSetting(ws, io, resultCallback));
 		});
 		io_connector.on(Command.ChangeDB, function (data, resultCallback) {
-			commandChangeDB(data, post_update(ws, io, resultCallback));
+			commandChangeDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.DeleteDB, function (data, resultCallback) {
-			commandDeleteDB(data, post_update(ws, io, resultCallback));
+			commandDeleteDB(data, post_db_change(ws, io, resultCallback));
+		});
+		io_connector.on(Command.InitDB, function (data, resultCallback) {
+			commandInitDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetDBList, function (data, resultCallback) {
 			commandGetDBList(resultCallback);
@@ -3196,7 +3283,7 @@
 			commandChangePassword(data, socketid, resultCallback);
 		});
 		io_connector.on(Command.ChangeAuthority, function (data, resultCallback, socketid) {
-			commandChangeAuthority(data, socketid, resultCallback);
+			commandChangeAuthority(data, socketid, post_updateAuthority(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -3205,7 +3292,7 @@
 			commandChangeGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
-			commandGetGlobalSetting(data, post_updateSetting(ws, io, resultCallback));
+			commandGetGlobalSetting(data, resultCallback);
 		});
 
 		io_connector.registerEvent(io, socket);

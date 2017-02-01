@@ -6,6 +6,7 @@
 	
 	var gui = new ControllerGUI(),
 		management, // 管理情報
+		loginUserID = "", // ID
 		loginkey = "", // ログインキー
 		currentContent = null,
 		draggingIDList = [],
@@ -3421,6 +3422,40 @@
 		}
 	});
 
+	// DB切り替え時にブロードキャストされてくる
+	connector.on("ChangeDB", function () {
+		if (!isInitialized) { return; }
+		window.location.reload(true);
+	});
+
+	// 権限変更時に送られてくる
+	connector.on("ChangeAuthority", function (userID) {
+		if (!isInitialized) { return; }
+		if (loginUserID === userID) {
+			window.location.reload(true);
+		}
+	});
+
+	// 官営ページでの設定変更時にブロードキャストされてくる
+	connector.on("UpdateSetting", function () {
+		if (!isInitialized) { return; }
+		// ユーザーリスト再取得
+		connector.send('GetUserList', {}, function (err, userList) {
+			management.setUserList(userList);
+		});
+		connector.send('GetGlobalSetting', {}, function (err, reply) {
+			if (reply && reply.hasOwnProperty('max_history_num')) {
+				management.setMaxHistoryNum(reply.max_history_num);
+				management.setCurrentDB(reply.current_db);
+			}
+		});
+		connector.send('GetDBList', {}, function (err, reply) {
+			if (!err) {
+				gui.setDBList(reply);
+			}
+		});
+	});
+
 	///-------------------------------------------------------------------------------------------------------
 	/**
 	 * 管理ページのイベント初期化.
@@ -3437,7 +3472,7 @@
 		}
 
 		// 管理ページでパスワードが変更された
-		management.on('change_password', function (userName, prePass, pass) {
+		management.on('change_password', function (userName, prePass, pass, callback) {
 			var request = {
 					username : userName,
 					pre_password : prePass,
@@ -3447,11 +3482,11 @@
 			if (loginkey.length > 0) {
 				request.loginkey = loginkey;
 			}
-			connector.send('ChangePassword', request, function () {});
+			connector.send('ChangePassword', request, callback);
 		});
 	
 		// 権限の変更
-		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable) {
+		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable, callback) {
 			var request = {
 				username : userName,
 				editable : editable,
@@ -3462,43 +3497,69 @@
 			connector.send('ChangeAuthority', request, function (err, data) {
 				connector.send('GetUserList', {}, function (err, userList) {
 					management.setUserList(userList);
+					if (callback) {
+						callback();
+					}
 				});
 			});
 		});
 
 		// 履歴保存数の変更
-		management.on("change_history_num", function (err, value) {
+		management.on("change_history_num", function (err, value, callback) {
 			connector.send("ChangeGlobalSetting", { max_history_num : value }, function () {
 				updateGlobalSettingFunc();
+				if (callback) {
+					callback();
+				}
 			});
 		});
 		
 		// 新規DB
 		management.on('newdb', function (err, name) {
 			connector.send("NewDB", { name : name }, function () {
-				window.location.reload(true);
 			});
 		}.bind(this));
 
 		// DB名変更
 		management.on('renamedb', function (err, preName, name) {
 			connector.send("RenameDB", { name : preName, new_name : name }, function () {
-				window.location.reload(true);
 			});
 		}.bind(this));
 		
 		// DBの切り替え
 		management.on('changedb', function (err, name) {
 			connector.send("ChangeDB", { name : name }, function () {
-				window.location.reload(true);
 			});
 		}.bind(this));
 
 		// DBの削除
 		management.on('deletedb', function (err, name) {
-			connector.send("DeleteDB", { name : name }, function () {
-				window.location.reload(true);
-			});
+			window.input_dialog.okcancel_input({
+				name : "DB: " + name + " を削除します。よろしいですか?",
+				opacity : 0.7,
+				zIndex : 90000001,
+				backgroundColor : "#888"
+			}, function (isOK) {
+				if (isOK) {
+					connector.send("DeleteDB", { name : name }, function () {
+					});
+				}
+			})
+		}.bind(this));
+
+		// DBの初期化
+		management.on('initdb', function (err, name) {
+			window.input_dialog.okcancel_input({
+				name : "DB: " + name + " を初期化します。よろしいですか?",
+				opacity : 0.7,
+				zIndex : 90000001,
+				backgroundColor : "#888"
+			}, function (isOK) {
+				if (isOK) {
+					connector.send("InitDB", { name : name }, function () {
+					});
+				}
+			})
 		}.bind(this));
 
 		updateGlobalSettingFunc();
@@ -3735,6 +3796,7 @@
 					invalidLabel.style.display = "block";
 				} else {
 					// ログイン成功
+					loginUserID = reply.id;
 					loginkey = reply.loginkey;
 					saveCookie();
 					invalidLabel.style.display = "none";
