@@ -1,13 +1,33 @@
-.sumbnaile{
-    display:inline;
+.sumbnaile{/*
+    position: absolute;
+    top: 450px;
+    */
+    display: inline;
     margin:4px;
 }
-
-canvas{
+/*
+.bt{
+    position: absolute;
+    top: 450;
+    margin:10px;
+    display: block;
+}
+*/
+#canvas{
+    /*
+    position: absolute;
+    */
     display: none;
     margin: 10px;
 }
 
-video{
+#selectedcanvas{
+    display: none;
+}
+
+#video{
+    /*
+    position: absolute;
+    */
     margin: 10px;
 }
