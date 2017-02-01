@@ -1020,6 +1020,15 @@
 			update("group", "");
 		});
 
+		// 権限変更時に送られてくる
+		connector.on("ChangeAuthority",function () {
+			var request = { id : "Display", password : "" };
+			connector.send('Login', request, function (err, reply) {
+				authority = reply.authority;
+				update('all');
+			});
+		});
+
 		connector.on("DeleteContent", function (data) {
 			console.log("onDeleteContent", data);
 			var i,
