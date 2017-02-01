@@ -3784,7 +3784,9 @@
 			var loginmenuBackground = document.getElementById('loginmenu_background');
 			var loginmenu = document.getElementById('loginmenu');
 			var loginpass = document.getElementById('loginpass');
-			var logoutButton = document.getElementById('head_menu_hover');
+			var head_menu_hover = document.getElementById('head_menu_hover');
+			var logoutButton = document.getElementById('logout_button');
+			var user_text  = document.getElementById('user_text');
 			var request = { id : id, password : password };
 			if (key && key.length > 0) {
 				request.loginkey = key;
@@ -3802,6 +3804,12 @@
 					// ログイン成功
 					loginUserID = reply.id;
 					loginkey = reply.loginkey;
+					for (var i = 0; i < userList.length; i = i + 1) {
+						if (userList[i].id === reply.id) {
+							user_text.innerText = userList[i].name;
+							break;
+						}
+					}
 					saveCookie();
 					invalidLabel.style.display = "none";
 					loginmenuBackground.style.display = "none";
@@ -3810,7 +3818,7 @@
 					management.setUserList(userList);
 					management.setAuthority(reply.authority);
 					// ログアウトボタンを設定.
-					logoutButton.style.display = "block";
+					head_menu_hover.style.display = "block";
 					logoutButton.onclick = (function (key) {
 						return function () {
 							var request = { loginkey : key };
