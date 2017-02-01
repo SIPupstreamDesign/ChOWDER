@@ -251,6 +251,12 @@
 				} else {
 					this.editableSelect.deselectAll();
 				}
+			} else {
+				// 全てが選択された状態で全て以外が選択解除された. 全てを選択解除する.
+				var editable = this.editableSelect.getSelectedValues();
+				if (!isSelected && text !== allAccessText && editable.indexOf(allAccessText) >= 0) {
+					this.editableSelect.deselect(allAccessText);
+				}
 			}
 		}.bind(this));
 		this.viewableSelect.on('change', function (err, text, isSelected) {
@@ -259,6 +265,12 @@
 					this.viewableSelect.selectAll();
 				} else {
 					this.viewableSelect.deselectAll();
+				}
+			} else {
+				// 全てが選択された状態で全て以外が選択解除された. 全てを選択解除する.
+				var viewable = this.viewableSelect.getSelectedValues();
+				if (!isSelected && text !== allAccessText && viewable.indexOf(allAccessText) >= 0) {
+					this.viewableSelect.deselect(allAccessText);
 				}
 			}
 		}.bind(this));

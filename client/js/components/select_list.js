@@ -54,7 +54,20 @@
 		var i;
 		for (i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].innerText === text) {
-				this.contents[i].classList.toggle(this.selectClassName);
+				if (!this.contents[i].classList.contains(this.selectClassName)) {
+					this.contents[i].classList.toggle(this.selectClassName);
+				}
+			}
+		}
+	};
+
+	SelectList.prototype.deselect = function (text) {
+		var i;
+		for (i = 0; i < this.contents.length; i = i + 1) {
+			if (this.contents[i].innerText === text) {
+				if (this.contents[i].classList.contains(this.selectClassName)) {
+					this.contents[i].classList.toggle(this.selectClassName);
+				}
 			}
 		}
 	};
