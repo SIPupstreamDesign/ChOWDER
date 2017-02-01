@@ -12,6 +12,7 @@
     "socket.io": "*",
     "websocket": "*",
     "phantomjs": "*",
-    "image-size": "*"
+    "image-size": "*",
+    "bson": "*"
   }
 }
