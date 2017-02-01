@@ -967,6 +967,22 @@
 	};
 
 	/**
+	 * 読み込み済コンテンツの全削除
+	 */
+	function deleteAllElements() {
+		var id,
+			elem,
+			previewArea = document.getElementById('preview_area');
+		for (id in metaDataDict) {
+			elem = document.getElementById(id);
+			if (elem) {
+				previewArea.removeChild(elem);
+				delete metaDataDict[id];
+			}
+		}
+	}
+
+	/**
 	 * 再接続.
 	 * @method reconnect
 	 */
@@ -1025,6 +1041,17 @@
 			var request = { id : "Display", password : "" };
 			connector.send('Login', request, function (err, reply) {
 				authority = reply.authority;
+				update('all');
+			});
+		});
+
+
+		// DB切り替え時にブロードキャストされてくる
+		connector.on("ChangeDB", function () {
+			var request = { id : "Display", password : "" };
+			connector.send('Login', request, function (err, reply) {
+				authority = reply.authority;
+				deleteAllElements();
 				update('all');
 			});
 		});
