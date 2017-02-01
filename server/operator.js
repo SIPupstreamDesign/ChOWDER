@@ -314,6 +314,19 @@
 			if (index >= 0) { 
 				data.grouplist.splice(index, 1);
 				textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+				
+				getGroupUserSetting(function (err, data) {
+					if (!err && data) {
+						if (data.hasOwnProperty(id)) {
+							delete data[id];
+							textClient.set(groupUserPrefix, JSON.stringify(data), (function (data) {
+								return function (err, reply) {
+									updateAuthority(null, data);
+								}
+							}(data)));
+						}
+					}
+				});
 				return true;
 			} else {
 				endCallback("not found");
@@ -541,7 +554,7 @@
 						textClient.hdel(frontPrefix + 'dblist', name);
 						textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
 							if (!err && doesExists == 1) {
-								textClient.keys(frontPrefix + name + "*", function (err, replies) {
+								textClient.keys(frontPrefix + id + "*", function (err, replies) {
 									var i;
 									console.log("deletedb : ", name);
 									if (!err) {
@@ -550,7 +563,7 @@
 											textClient.del(replies[i]);
 										}
 
-										if (uuidPrefix === (name + ":")) {
+										if (uuidPrefix === (id + ":")) {
 											// 現在使用中のDBが消去された.
 											// defaultに戻す.
 											changeDB("default", endCallback);
@@ -732,6 +745,10 @@
 				userList.push({ name : data.adminlist[i].name, id : data.adminlist[i].id, type : "admin"});;
 			}
 			getGroupUserSetting(function (err, setting) {
+				if (!setting) { 
+					endCallback(null, userList);
+					return;
+				}
 				getGroupList(function (err, groupData) {
 					var isFoundGuest = false;
 
@@ -2299,49 +2316,50 @@
 	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
 		if (json.hasOwnProperty("name") && json.name !== "") {
-			if (socketidToUserID.hasOwnProperty(socketid)) {
-				var userid = socketidToUserID[socketid];
-				isGroupManipulatable(socketid, userid, function (isManipulatable) {
-					if (isManipulatable) {
-						if (json.hasOwnProperty("color")) {
-							groupColor = json.color;
-						}
-						addGroup(null, json.name, groupColor, function (err, groupID) {
-							// グループユーザーの権限情報に、グループを追加する.
-							if (!err) {
-								getGroupUserSetting(function (err, setting) {
-									if (setting.hasOwnProperty(userid)) {
-										if (setting[userid].viewable !== "all") {
-											setting[userid].viewable.push(groupID);
-										}
-										if (setting[userid].editable !== "all") {
-											setting[userid].editable.push(groupID);
-										}
-										// defaultグループは特殊扱いでユーザー無し
-										if (userid !== "group_default") {
-											changeGroupUserSetting(userid, setting[userid], function () {
-												if (endCallback) {
-													endCallback(err, groupID);
-												}
-											});
-										}
-									} else {
-										if (endCallback) {
-											endCallback(err, groupID);
-										}
-									}
-								});
-							} else {
-								endCallback("faild to add group");
-							}
-						});
-					} else {
-						endCallback("access denied");
-					}
-				});
-			} else {
-				endCallback("access denied");
+			if (socketidToLoginKey.hasOwnProperty(socketid)) {
+				socketid = socketidToLoginKey[socketid];
 			}
+			var userid = socketidToUserID[socketid];
+			isGroupManipulatable(socketid, userid, function (isManipulatable) {
+				if (isManipulatable) {
+					if (json.hasOwnProperty("color")) {
+						groupColor = json.color;
+					}
+					addGroup(null, json.name, groupColor, function (err, groupID) {
+						// グループユーザーの権限情報に、グループを追加する.
+						if (!err) {
+							getGroupUserSetting(function (err, setting) {
+								if (setting.hasOwnProperty(userid)) {
+									if (setting[userid].viewable !== "all") {
+										setting[userid].viewable.push(groupID);
+									}
+									if (setting[userid].editable !== "all") {
+										setting[userid].editable.push(groupID);
+									}
+									// defaultグループは特殊扱いでユーザー無し
+									if (userid !== "group_default") {
+										changeGroupUserSetting(userid, setting[userid], function () {
+											if (endCallback) {
+												endCallback(err, groupID);
+											}
+										});
+									}
+								} else {
+									if (endCallback) {
+										endCallback(err, groupID);
+									}
+								}
+							});
+						} else {
+							endCallback("faild to add group");
+						}
+					});
+				} else {
+					endCallback("access denied");
+				}
+			});
+		} else {
+			endCallback("faild to add group : invalid parameter");
 		}
 	}
 
