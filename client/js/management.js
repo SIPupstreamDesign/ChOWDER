@@ -130,6 +130,16 @@
 				this.emit(Management.EVENT_DELETEDB, null, name);
 			}
 		}.bind(this);
+		
+		// DB初期化
+		var initdb_button = document.getElementById('initdb_button');
+		initdb_button.onclick = function () {
+			var e = document.getElementById("db_select");
+			if (e.options.length > e.selectedIndex) {
+				var name = e.options[e.selectedIndex].value;
+				this.emit(Management.EVENT_INITDB, null, name);
+			}
+		}.bind(this);
 	};
 
 	/**
@@ -513,6 +523,7 @@
 	Management.EVENT_CHANGEDB = "changedb";
 	Management.EVENT_RENAMEDB = "renamedb";
 	Management.EVENT_DELETEDB = "deletedb";
+	Management.EVENT_INITDB = "initdb";
 
 	// パスワード変更
 	Management.EVENT_CHANGE_PASSWORD = "change_password";

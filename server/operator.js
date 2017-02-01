@@ -462,6 +462,9 @@
 				if (!err && doesExists !== 1) {
 					// 存在しない場合のみ作って切り替え
 					var id = util.generateUUID8();
+					if (name === "default") {
+						id = "default";
+					}
 					textClient.hset(frontPrefix + 'dblist', name, id, function (err, reply) {
 						if (!err) {
 							changeUUIDPrefix(name, function (err, reply) {
@@ -545,44 +548,65 @@
 	 */
 	function deleteDB(name, endCallback) {
 		if (name.length > 0) {
-			if (name === "default") {
-				endCallback("Unauthorized name for deleting")
-			} else {
-				textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
-					if (!err) {
-						var id = reply;
-						textClient.hdel(frontPrefix + 'dblist', name);
-						textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
-							if (!err && doesExists == 1) {
-								textClient.keys(frontPrefix + id + "*", function (err, replies) {
-									var i;
-									console.log("deletedb : ", name);
-									if (!err) {
-										for (i = 0; i < replies.length; i = i + 1) {
-											console.log("delete : ", replies[i]);
-											textClient.del(replies[i]);
-										}
-
-										if (uuidPrefix === (id + ":")) {
-											// 現在使用中のDBが消去された.
-											// defaultに戻す.
-											changeDB("default", endCallback);
-										} else {
-											endCallback(null);
-										}
-									} else {
-										endCallback("Failed deleteDB:" + err)
+			textClient.hget(frontPrefix + 'dblist', name, function (err, reply) {
+				if (!err) {
+					var id = reply;
+					textClient.hdel(frontPrefix + 'dblist', name);
+					textClient.exists(frontPrefix + id + ":grouplist", function (err, doesExists) {
+						if (!err && doesExists == 1) {
+							textClient.keys(frontPrefix + id + "*", function (err, replies) {
+								var i;
+								console.log("deletedb : ", name);
+								if (!err) {
+									for (i = 0; i < replies.length; i = i + 1) {
+										console.log("delete : ", replies[i]);
+										textClient.del(replies[i]);
 									}
-								});
-							} else {
-								endCallback("Failed deleteDB: not exists db name")
-							}
-						});
-					} else {
-						endCallback("Failed deleteDB: not exists db name")
-					}
-				});
-			}
+
+									if (uuidPrefix === (id + ":") && name !== "default") {
+										// 現在使用中のDBが消去された.
+										// defaultに戻す.
+										changeDB("default", endCallback);
+									} else {
+										endCallback(null);
+									}
+								} else {
+									endCallback("Failed deleteDB:" + err)
+								}
+							});
+						} else {
+							endCallback("Failed deleteDB: not exists db name")
+						}
+					});
+				} else {
+					endCallback("Failed deleteDB: not exists db name")
+				}
+			});
+		} else {
+			endCallback("Failed deleteDB: invalid parameter")
+		}
+	}
+
+	/**
+	 * DBの指定したデータ保存領域を初期化
+	 * @param name 保存領域の名前
+	 * @param endCallback 終了コールバック
+	 */
+	function initDB(name, endCallback) {
+		if (name.length > 0) {
+			deleteDB(name, function (err, reply) {
+				if (!err) {
+					newDB(name, function (err, reply) {
+						if (endCallback) {
+							endCallback(err, reply)
+						}
+					});
+				} else {
+					endCallback("Failed initDB");
+				}
+			});
+		} else {
+			endCallback("Failed initDB: invalid parameter");
 		}
 	}
 	
@@ -2461,7 +2485,23 @@
 	 */
 	function commandDeleteDB(json, endCallback) {
 		if (json.hasOwnProperty("name")) {
-			deleteDB(json.name, endCallback);
+			if (json.name === "default") {
+				endCallback("Unauthorized name for deleting")
+			} else {
+				deleteDB(json.name, endCallback);
+			}
+		}
+	}
+
+	/**
+	 * DBの保存領域の初期化
+	 * @method commandChangeDB
+	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandInitDB(json, endCallback) {
+		if (json.hasOwnProperty("name")) {
+			initDB(json.name, endCallback);
 		}
 	}
 
@@ -3074,6 +3114,9 @@
 		ws_connector.on(Command.DeleteDB, function (data, resultCallback) {
 			commandDeleteDB(data, post_db_change(ws, io, resultCallback));
 		});
+		ws_connector.on(Command.InitDB, function (data, resultCallback) {
+			commandInitDB(data, post_db_change(ws, io, resultCallback));
+		});
 		ws_connector.on(Command.GetDBList, function (data, resultCallback) {
 			commandGetDBList(resultCallback);
 		});
@@ -3222,6 +3265,9 @@
 		});
 		io_connector.on(Command.DeleteDB, function (data, resultCallback) {
 			commandDeleteDB(data, post_db_change(ws, io, resultCallback));
+		});
+		io_connector.on(Command.InitDB, function (data, resultCallback) {
+			commandInitDB(data, post_db_change(ws, io, resultCallback));
 		});
 		io_connector.on(Command.GetDBList, function (data, resultCallback) {
 			commandGetDBList(resultCallback);

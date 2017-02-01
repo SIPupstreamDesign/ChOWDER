@@ -3534,8 +3534,32 @@
 
 		// DBの削除
 		management.on('deletedb', function (err, name) {
-			connector.send("DeleteDB", { name : name }, function () {
-			});
+			window.input_dialog.okcancel_input({
+				name : "DB: " + name + " を削除します。よろしいですか?",
+				opacity : 0.7,
+				zIndex : 90000001,
+				backgroundColor : "#888"
+			}, function (isOK) {
+				if (isOK) {
+					connector.send("DeleteDB", { name : name }, function () {
+					});
+				}
+			})
+		}.bind(this));
+
+		// DBの初期化
+		management.on('initdb', function (err, name) {
+			window.input_dialog.okcancel_input({
+				name : "DB: " + name + " を初期化します。よろしいですか?",
+				opacity : 0.7,
+				zIndex : 90000001,
+				backgroundColor : "#888"
+			}, function (isOK) {
+				if (isOK) {
+					connector.send("InitDB", { name : name }, function () {
+					});
+				}
+			})
 		}.bind(this));
 
 		updateGlobalSettingFunc();
