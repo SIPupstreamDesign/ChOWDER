@@ -55,7 +55,7 @@ window.URL = window.URL || window.webkitURL;
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect();
+        ws_connector.connect(function(){});
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
@@ -132,34 +132,35 @@ window.URL = window.URL || window.webkitURL;
 
         // キャンバスへ描画----------------------------------------------------------------------
         function drawCanvas(){
+                /*
             if(areaFlag === true){
-                sCnvs.width = areaData.width;
-                sCnvs.height = areaData.height;
+                mainViewer(capSource[0]);
                 
                 sctx.drawImage(video, data.x+8,           data.y, 
                               (video.videoWidth - subX), (video.videoHeight - subY),
                                0,                         0, 
                                areaData.width,                areaData.height);
-                sendImage(canvas);
-            }else{
+                sendImage(sCnvs);
+            }else if(areaFlag === false){
+                */
+                
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
                 sendImage(canvas);
-            }
         }
         
         function sendImage(getCanvas){
             ws_connector.sendBinary('AddContent', {
-                "id" : "captured",         // 特定のID に固定する.
+                "id" :         "captured", // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
-                "type" : "image"
+                "type" :       "image"
             },getImageBinary(getCanvas), function(){});
         }        
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
-            if(areaFlag) areaFlag = false;
+            //if(areaFlag) areaFlag = false;
             if(canvas.style.display === "inline"){
                 video.style.display = "inline";
                 canvas.style.display = "none";
@@ -202,6 +203,7 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
+            //位置が悪い　この場所ではサーバー側が落ちてしまった
         }
 
         // デスクトップ情報の取得に失敗したとき
