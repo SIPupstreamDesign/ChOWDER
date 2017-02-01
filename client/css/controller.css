@@ -391,12 +391,26 @@ p {
 #snap_text {
 	position : absolute;
 	top : 7px;
-	right : 180px;
+	right : 280px;
 	font-size : 14px;
 	color : rgb(10, 26, 67);
 }
 
+#user_label {
+	top : 7px;
+	right : 135px;
+	font-size : 14px;
+	color : rgb(10, 26, 67);
+}
+
+#user_text {
+	color : rgb(10, 26, 67);
+}
+
 #logout_button {
+	position : absolute;
+	top : 3px;
+	right : 40px;
 	width : 60px;
 	height : 24px;
 }
@@ -581,7 +595,7 @@ p {
 #head_menu_hover {
     background-color: transparent;
     color: #222;
-    width: 180px;
+    width: 280px;
     height: 30px;
     position: absolute;
     top: 0px;
