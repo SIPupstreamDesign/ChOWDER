@@ -89,14 +89,9 @@ exports.areaSelector = function() {
 
 exports.windowCloser = function(rect){
     virtualWindow.close();
-    virtualWindow = null;
     mainWindow.focus();
+    mainWindow.webContents.send('rectData', rect);
     //console.log("window closer called")
-    
-    function getClosed(){
-      mainWindow.webContents.send('testData', rect);
-    }
-    getClosed();
 }
 
 

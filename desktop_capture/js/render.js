@@ -23,8 +23,8 @@ window.URL = window.URL || window.webkitURL;
         
         // キャプチャー情報
         let capSource;
-        // キャンバスは非表示
-        //canvas.style.display = "none";
+        // キャンバス非表示
+        canvas.style.display = "none";
 
         let browserId = 0;
         
@@ -48,11 +48,11 @@ window.URL = window.URL || window.webkitURL;
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect();
+        //ws_connector.connect();
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
-            desktopCapturer.getSources({types: ['window', 'screen'], thumbnailSize:{width:150, height:150}}, 
+            desktopCapturer.getSources({types: ['window', 'screen']}, 
             function(error, sources) {
                 //console.log(sources);
                 if (error) throw error;
@@ -70,7 +70,7 @@ window.URL = window.URL || window.webkitURL;
                 //console.log(capSource);
             });
         }
-       
+        
         // sourcesに関する関数--------------------------------------------------------------------
         // bodyへのサムネイル埋め込み
         function addImage(image) {
@@ -84,28 +84,36 @@ window.URL = window.URL || window.webkitURL;
 
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
+            mainViewer(capSource[0]);
             main.areaSelector();
         }, false);
         
-        ipc.on('testData', function(event, data){
+        ipc.on('rectData', function(event, data){
             console.log(data);
             // video を "none"に切り替えてキャンバスを表示するか？
-            mainViewer(capSource[0]);
             canvas.width = data.width;
             canvas.height = data.height;
-            ctx.drawImage(video, data.x, data.y, 
-                        (video.videoWidth - data.width), 
-                        (video.videoHeight - data.height),
-                         0, 0, data.width, data.height);
+            let subX = video.videoWidth - data.width;
+            let subY = video.videoHeight - data.height;
+            let promise = getAsyncPromise(
+                ctx.drawImage(video, data.x+8, data.y, 
+                          (video.videoWidth - subX), 
+                          (video.videoHeight - subY),
+                           0, 0, data.width, data.height));
+            // windowのフレーム(8px)分のずれがある
+            promise.then(function(resulet){
+                localStream.getTracks()[0].stop();
+                localStream = ctx;
+            }).catch(function(error){});
+            /*
             // 送信
             ws_connector.sendBinary('AddContent', {
                 "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
             },getImageBinary(canvas), function(){});
-
+            */
         });
-        
 
         // canvas2dへイメージとして送る---------------------------------------------------------
         // 送信インターバル変更
@@ -135,23 +143,25 @@ window.URL = window.URL || window.webkitURL;
             canvas.height = video.videoHeight;
             //console.log(video.videoWidth, video.videoHeight);
             ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            /*
             // 送信
             ws_connector.sendBinary('AddContent', {
                 "id" : "captured",         // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" : "image"
             },getImageBinary(canvas), function(){});
+            */
         }
         
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
             let id = eve.target.id;
-            if(id != 'video' && id != 'setarea' && id != 'capture' && id != 'interval' && id ){
+            if(id != 'video' && id != 'setarea' && id != 'capture' && 
+               id != 'interval' && id != 'canvas' && id){
                 selected = id;
-                if (localStream) localStream.getTracks()[0].stop();
+                if (localStream && localStream != canvas) localStream.getTracks()[0].stop();
                 localStream = null;
-                //replaceResources(id, selected);
                 mainViewer(capSource[selected]);
             }
         }, false);
