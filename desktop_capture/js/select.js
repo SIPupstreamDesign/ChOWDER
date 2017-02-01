@@ -1,6 +1,7 @@
 'use strict'
 const electron = require('electron');
 const remote = electron.remote;
+const main = remote.require("./main.js");
 
 function createRect (a, b) {
   return {
@@ -13,20 +14,26 @@ function createRect (a, b) {
 
 (function(){
 
-    let x = 0;
-    let y = 0;
-    let cropping = false;
-    let downPoint = {};
-    let rect = {};
-    let rectFlag = false;
-
     function setArea(){
+        let x = 0;
+        let y = 0;
+        let cropping = false;
+        let downPoint = {};
+        let rect = {};
         
+        function createRect (a, b) {
+            return {
+                x: Math.min(a.x, b.x),
+                y: Math.min(a.y, b.y),
+                width: Math.abs(a.x - b.x),
+                height: Math.abs(a.y - b.y)
+            }
+        }
         // カーソル位置
         let cursorElm = document.getElementsByClassName("cursor");
         
         // カーソル修飾
-        let indElm = window.document.getElementsByClassName("indicator");
+        let indElm = document.getElementsByClassName("indicator");
         
         // 矩形
         let rectElm = document.getElementsByClassName('rect');
@@ -58,9 +65,9 @@ function createRect (a, b) {
 
         addEventListener('mouseup', function (eve) {
             cropping = false;
-            rectFlag = true;
-            getRect(rectFlag);
+            let sRect = rect;
             rect = {};
+            return closer(sRect);
         }, false);
 
         addEventListener('mousedown', function (eve) {
@@ -68,14 +75,10 @@ function createRect (a, b) {
             downPoint.y = eve.clientY;
             cropping = true;
         }, false);
+        
 
-    }
-
-    function getRect(rectF){
-        if(rectF === true){
-            let main = remote.require("./main.js");
-            console.log("call closer");
-            main.windowCloser(rect);
+        function closer(sRect){
+            main.windowCloser(sRect);
         }
     }
 
