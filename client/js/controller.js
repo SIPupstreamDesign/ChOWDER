@@ -3436,7 +3436,7 @@
 		}
 	});
 
-	// 官営ページでの設定変更時にブロードキャストされてくる
+	// 管理ページでの設定変更時にブロードキャストされてくる
 	connector.on("UpdateSetting", function () {
 		if (!isInitialized) { return; }
 		// ユーザーリスト再取得
@@ -3452,6 +3452,10 @@
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
 				gui.setDBList(reply);
+				// 開きなおす
+				management.close();
+				management.removeListener('close');
+				gui.openManagement();
 			}
 		});
 	});
@@ -3472,9 +3476,9 @@
 		}
 
 		// 管理ページでパスワードが変更された
-		management.on('change_password', function (userName, prePass, pass, callback) {
+		management.on('change_password', function (userID, prePass, pass, callback) {
 			var request = {
-					username : userName,
+					id : userID,
 					pre_password : prePass,
 					password : pass,
 				},
@@ -3486,9 +3490,9 @@
 		});
 	
 		// 権限の変更
-		management.on('change_authority', function (userName, editable, viewable, group_manipulatable, display_manipulatable, callback) {
+		management.on('change_authority', function (userID, editable, viewable, group_manipulatable, display_manipulatable, callback) {
 			var request = {
-				username : userName,
+				id : userID,
 				editable : editable,
 				viewable : viewable,
 				group_manipulatable : group_manipulatable,

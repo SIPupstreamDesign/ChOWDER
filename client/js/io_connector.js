@@ -34,7 +34,7 @@
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				resultCallbacks[metaData.id](null, metaData.result);
 			} else {
-				console.error('[Error] ArgumentError in connector.js');
+				console.error('[Error] ArgumentError in connector.js', metaData);
 				if (metaData.hasOwnProperty('id')) {
 					resultCallbacks[metaData.id]('ArgumentError', null);
 				}

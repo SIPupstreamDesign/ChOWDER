@@ -1156,6 +1156,7 @@
 		managementPage.show({
 			dblist : this.dblist
 		});
+		managementPage.removeListener('close');
 		this.isOpenDialog = true;
 		managementPage.on('close', function () {
 			this.isOpenDialog = false;

@@ -164,10 +164,10 @@
 	/**
 	 * ユーザーの権限データを返す
 	 */
-	Management.prototype.getUser = function (name) {
+	Management.prototype.getUser = function (id) {
 		var i;
 		for (i = 0; i < this.userList.length; i = i + 1) {
-			if (this.userList[i].name === name) {
+			if (this.userList[i].id === id) {
 				return this.userList[i];
 			}
 		}
@@ -209,7 +209,7 @@
 				user = this.userList[i];
 				if (user.type !== "admin") {
 					option = document.createElement('option');
-					option.value = user.name;
+					option.value = user.id;
 					option.innerText = user.name;
 					select.appendChild(option);	
 				}
@@ -220,9 +220,9 @@
 		authSelect.onchange = function () {
 			// 編集可能、閲覧可能のリストを選択する.
 			var index = authSelect.selectedIndex;
-			var name = authSelect.childNodes[index].value;
+			var id = authSelect.childNodes[index].value;
 			var listContentName;
-			var user = this.getUser(name);
+			var user = this.getUser(id);
 			this.viewableSelect.deselectAll();
 			this.editableSelect.deselectAll();
 			if (user) {
@@ -303,7 +303,7 @@
 		applyButton.onclick = function () {
 			var index = authSelect.selectedIndex;
 			if (index >= 0 && authSelect.childNodes.length > index) {
-				var name = authSelect.childNodes[index].value;
+				var id = authSelect.childNodes[index].value;
 				var editable = this.editableSelect.getSelectedValues();
 				var viewable = this.viewableSelect.getSelectedValues();
 				var group_manipulatable = groupManipulateCheck.checked;
@@ -314,8 +314,9 @@
 				if (viewable.indexOf(allAccessText) >= 0) {
 					viewable = "all";
 				}
+				
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					name, editable, viewable, group_manipulatable, display_manipulatable, function () {
+					id, editable, viewable, group_manipulatable, display_manipulatable, function () {
 						
 					var message = document.getElementById('apply_auth_message');
 					message.style.visibility = "visible";
@@ -344,7 +345,7 @@
 			select.innerHTML = "";
 			for (i = 0; i < this.userList.length; i = i + 1) {
 				option = document.createElement('option');
-				option.value = this.userList[i].name;
+				option.value = this.userList[i].id;
 				option.innerText = this.userList[i].name;
 				select.appendChild(option);
 			}
@@ -357,9 +358,9 @@
 			pass.value = "";
 			if (authSelect.selectedIndex >= 0) {
 				var index = -1;
-				var name = authSelect.childNodes[authSelect.selectedIndex].value;
+				var id = authSelect.childNodes[authSelect.selectedIndex].value;
 				for (i = 0; i < this.userList.length; i = i + 1) {
-					if (this.userList[i].name === name) {
+					if (this.userList[i].id === id) {
 						index = i;
 						break;
 					}
@@ -384,8 +385,42 @@
 		applyPassButton.onclick = function () {
 			var index = authSelect.selectedIndex;
 			if (index >= 0) {
-				var name = this.userList[index].name;
-				this.emit(Management.EVENT_CHANGE_PASSWORD, name, prePass.value, pass.value, function () {
+				var id = this.userList[index].id;
+				if (pass.value <= 0) {
+					if (name === "Display" || name === "Gueset") {
+						window.input_dialog.ok_input({
+							name : "このユーザーにはパスワードは設定できません",
+							opacity : 0.7,
+							zIndex : 90000001,
+							backgroundColor : "#888"
+						}, function () {
+							return;
+						});
+					} else {
+						window.input_dialog.ok_input({
+							name : "有効なパスワードを入力してください",
+							opacity : 0.7,
+							zIndex : 90000001,
+							backgroundColor : "#888"
+						}, function () {
+							return;
+						});
+					}
+					return;
+				}
+
+				this.emit(Management.EVENT_CHANGE_PASSWORD, id, prePass.value, pass.value, function (err, reply) {
+					console.error(err, reply)
+					if (err) {
+						window.input_dialog.ok_input({
+							name : "有効なパスワードを入力してください",
+							opacity : 0.7,
+							zIndex : 90000001,
+							backgroundColor : "#888"
+						}, function () {
+							return;
+						});
+					}
 					var message = document.getElementById('apply_pass_message');
 					message.style.visibility = "visible";
 					setTimeout(function () {
@@ -402,9 +437,10 @@
 	 */
 	Management.prototype.show = function (contents) {
 		var i, k;
-		var background = new PopupBackground();
-		background.show();
-		background.on('close', function () {
+		this.contents = contents;
+		this.background = new PopupBackground();
+		this.background.show();
+		this.background.on('close', function () {
 			management.style.display = "none";
 			this.emit(window.Management.EVENT_CLOSE, null);
 		}.bind(this));
@@ -425,6 +461,12 @@
 		this.initPasswordGUI(contents);
 
 		// 権限情報をGUIに反映.
+	};
+
+	Management.prototype.close = function (authority) {
+		if (this.background) {
+			this.background.close();
+		}
 	};
 
 	Management.prototype.setAuthority = function (authority) {
@@ -451,8 +493,8 @@
 		var authority = this.authority;
 		return {
 			isAdmin : function () {
-				if (authority && authority.hasOwnProperty('viewable') && authority.hasOwnProperty('editable')) {
-					if (authority.viewable === "all" && authority.editable === "all") {
+				if (authority && authority.hasOwnProperty('is_admin')) {
+					if (String(authority.is_admin) === "true") {
 						return true;
 					}
 				}
