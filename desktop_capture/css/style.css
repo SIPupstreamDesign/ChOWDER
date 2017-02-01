@@ -14,9 +14,7 @@
 }
 */
 #canvas{
-    /*
     position: absolute;
-    */
     display: none;
     margin: 10px;
 }
