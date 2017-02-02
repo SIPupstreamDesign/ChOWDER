@@ -102,11 +102,11 @@
 			setTimeout( function () { deleteCapture(tabId); }, 100);
 			return;
 		}
-		connector.send(Command.DeleteContent, {
+		connector.send(Command.DeleteContent, [{
 			id : "chrome_extension_" + tabId,
 			content_id : "chrome_extension_" + tabId,
 			visible : false
-		}, function (err, reply) {
+		}], function (err, reply) {
 			console.log("delete capture", err, reply);
 		});
 	}
