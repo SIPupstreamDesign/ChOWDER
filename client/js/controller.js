@@ -2634,6 +2634,7 @@
 							delete metaData.orgWidth;
 							delete metaData.orgHeight;
 							updateContent(metaData, e.target.result);
+							URL.revokeObjectURL(img.src);
 						};
 					}(metaData));
 				}	
