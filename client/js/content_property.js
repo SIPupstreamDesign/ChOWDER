@@ -130,11 +130,13 @@
 			addInputProperty(isEditableContent, 'whole_height', 'h', 'px', '900', function () {
 				this.emit(ContentProperty.EVENT_DISPLAY_VALUE_CHANGED, null);
 			}.bind(this));
-			addInputProperty(isEditableContent, 'whole_split_x', 'split x', '', '1', function () {
-				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.value, this.wholeSplitY.value);
+			addInputProperty(isEditableContent, 'whole_split_x', 'split x', '', '1', function (evt) {
+				var wholeSplitY = document.getElementById('whole_split_y');
+				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, evt.target.value, wholeSplitY.value);
 			}.bind(this));
-			addInputProperty(isEditableContent, 'whole_split_y', 'split y', '', '1', function () {
-				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, this.wholeSplitX.value, this.value);
+			addInputProperty(isEditableContent, 'whole_split_y', 'split y', '', '1', function (evt) {
+				var wholeSplitX = document.getElementById('whole_split_x');
+				this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, wholeSplitX.value, evt.target.value);
 			}.bind(this));
 			//addTextInputProperty('content_text', "");
 			download_button.style.display = "none";
