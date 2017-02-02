@@ -1016,8 +1016,16 @@
 			}()));
 
 		connector.on("Update", function (data) {
+			/*
 			console.log("onUpdate", data);
-			update('all');
+			if (data && data.hasOwnProperty('id') && data.hasOwnProperty('type')) {
+				if (data.type !== "layout") {
+					update(data.type, data.id);
+				}
+			} else {
+				update('all');
+			}
+			*/
 		});
 
 		connector.on("UpdateContent", function (data) {
