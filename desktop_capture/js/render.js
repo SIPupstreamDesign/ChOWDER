@@ -60,6 +60,7 @@ window.URL = window.URL || window.webkitURL;
         let selected = 0;
 
         let areaData;
+        let calcData;
         let subX;
         let subY;
 
@@ -137,11 +138,13 @@ window.URL = window.URL || window.webkitURL;
             subX = video.videoWidth - areaData.width;
             subY = video.videoHeight - areaData.height;
 
-            resizeCalc(areaData.width, areaData.height);
+            // Preview用データ
+            calcData = resizeCalc(areaData);
+            console.log(calcData);
             sctx.drawImage(video, areaData.x+8,              areaData.y, 
                                　(video.videoWidth - subX), (video.videoHeight - subY),
                                 　0,                         0, 
-                                　data.width, data.height);
+                                　calcData.width, calcData.height);
             sCnvs.style.display = 'inline';
             video.style.display = 'none';
         });
@@ -190,6 +193,7 @@ window.URL = window.URL || window.webkitURL;
         function drawCall(){
             // 範囲選択時
             if(areaFlag === true){
+                console.log("area capture");
                 ctx.drawImage(video, areaData.x+8,           areaData.y, 
                               (video.videoWidth - subX), (video.videoHeight - subY),
                                0,                         0, 
@@ -198,6 +202,7 @@ window.URL = window.URL || window.webkitURL;
             }
             // 非範囲選択時
             else if(areaFlag === false){
+                console.log("selected capture");
                 onResize();
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
                 sendImage(canvas);
@@ -207,10 +212,10 @@ window.URL = window.URL || window.webkitURL;
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
-            if(areaFlag) areaFlag = false;
             let id = eve.target.id;
             let cs = eve.target.className;
             if(cs === 'thumbnaile' && id){
+                if(areaFlag) areaFlag = false;
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
@@ -269,19 +274,18 @@ window.URL = window.URL || window.webkitURL;
         }
 
         // 範囲選択時プレビュー作成用
-        function resizeCalc(w, h){
-            let aW;
-            let aH;
-            let aspect = w/h;
+        function resizeCalc(data){
+
+            let aspect = data.width/data.height;
             let ratio;
             
-            if(aspect>=1)     ratio = WIDTH/w;
-            else if(aspect<1) ratio = HEIGHT/h;
+            if(aspect>=1)     ratio = WIDTH/data.width;
+            else if(aspect<1) ratio = HEIGHT/data.height;
             
-            aW = w*ratio;
-            aH = h*ratio;
+            data.width = data.width * ratio;
+            data.height = data.height * ratio;
 
-            return aW, aH;
+            return data;
         }
         
     };

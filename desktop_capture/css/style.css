@@ -20,7 +20,6 @@
 }
 
 #selectedcanvas{
-    position: absolute;
     display: none;
     margin: 10px;
 }

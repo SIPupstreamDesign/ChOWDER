@@ -54,27 +54,27 @@ function createRect (a, b) {
         }
 
         // マウスイベント全般を管理
-        addEventListener('mousemove',function(eve){
+        window.onmousemove = function(eve){
             x = eve.clientX;
             y = eve.clientY;
             chngElm(x, y);
             if (!cropping) return;
             rect = createRect(downPoint, {x, y});
             chngRect(rect);
-        }, false);
+        };
 
-        addEventListener('mouseup', function (eve) {
+        window.onmouseup = function (eve) {
             cropping = false;
             let sRect = rect;
             rect = {};
             closer(sRect);
-        }, false);
+        };
 
-        addEventListener('mousedown', function (eve) {
+        window.onmousedown = function (eve) {
             downPoint.x = eve.clientX;
             downPoint.y = eve.clientY;
             cropping = true;
-        }, false);
+        };
         
 
         function closer(sRect){
