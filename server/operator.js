@@ -2322,7 +2322,7 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandDeleteWindowMetaData(socketid, json, endCallback) {
-		console.log(commandDeleteWindowMetaData);
+		console.log("commandDeleteWindowMetaData");
 		var i,
 			meta,
 			results = [],

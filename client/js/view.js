@@ -1016,8 +1016,16 @@
 			}()));
 
 		connector.on("Update", function (data) {
+			/*
 			console.log("onUpdate", data);
-			update('all');
+			if (data && data.hasOwnProperty('id') && data.hasOwnProperty('type')) {
+				if (data.type !== "layout") {
+					update(data.type, data.id);
+				}
+			} else {
+				update('all');
+			}
+			*/
 		});
 
 		connector.on("UpdateContent", function (data) {
@@ -1026,7 +1034,11 @@
 			connector.send('GetMetaData', data, function (err, json) {
 				if (!err) {
 					doneGetMetaData(err, json);
-					connector.send('GetContent', json, doneGetContent);
+					connector.send('GetContent', json, function (err, reply) {
+						if (metaDataDict.hasOwnProperty(json.id)) {
+							doneGetContent(err, reply);
+						}
+					} );
 				}
 			});
 		});
