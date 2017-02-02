@@ -26,6 +26,8 @@ window.URL = window.URL || window.webkitURL;
 
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext("2d");
+        canvas.width = 0;
+        canvas.height = 0;
         let sCnvs = document.getElementById('selectedcanvas');
         let sctx = sCnvs.getContext("2d");
 
@@ -41,7 +43,7 @@ window.URL = window.URL || window.webkitURL;
         let vh = screen.getPrimaryDisplay().size.height;
         
         let drawInterval;
-        let drawTime = 1.0;
+        let drawTime = 1;
         let selected = 0;
 
         let areaData;
@@ -51,11 +53,17 @@ window.URL = window.URL || window.webkitURL;
         // フラグ系
         let cap = false;
         let areaFlag = false;
+        let resizeTimer;
+        let resizeInterval = 1000; //
 
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect(function(){});
+        ws_connector.connect(function(){
+            console.log("Connected");
+        },function(){
+            console.log("Disconected");
+        });
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
@@ -77,7 +85,7 @@ window.URL = window.URL || window.webkitURL;
             const elm = document.createElement("img");
             elm.id = browserId;
             browserId++;
-            elm.className = "sumbnaile";
+            elm.className = "thumbnaile";
             elm.src = image.toDataURL();
             document.body.appendChild(elm);
         }
@@ -86,6 +94,7 @@ window.URL = window.URL || window.webkitURL;
         setArea.addEventListener('click', function(eve){
             mainViewer(capSource[0]);
             main.areaSelector();
+            eve.value = "Get area";
         }, false);
         
         ipc.on('rectData', function(event, data){
@@ -96,17 +105,9 @@ window.URL = window.URL || window.webkitURL;
             canvas.height = areaData.height;
             subX = video.videoWidth - areaData.width;
             subY = video.videoHeight - areaData.height;
-        
-            // windowのフレーム(8px)分のずれがある
-            ctx.drawImage(video, data.x+8,          data.y, 
-                         (video.videoWidth - subX), (video.videoHeight - subY),
-                          0,                          0, 
-                          data.width,                 data.height);
 
-            canvas.style.display = "inline";
-            video.style.display = "none";
         });
-
+        
         // canvas2dへイメージとして送る---------------------------------------------------------
         // 送信インターバル変更
         num.addEventListener("change",function(eve){
@@ -117,61 +118,70 @@ window.URL = window.URL || window.webkitURL;
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
+                drawInterval = setInterval(drawCall,drawTime*1000);
                 cap = true;
                 capButton.value = "Capture Stop";
-                drawInterval = setInterval(drawCanvas, drawTime*1000);
             }
             // フラグがオンであれば
             else if(cap === true){
+                clearInterval(drawInterval);
                 cap = false;
                 capButton.value = "Capture Start";
-                clearInterval(drawInterval);
             }
         },false);
 
 
-        // キャンバスへ描画----------------------------------------------------------------------
-        function drawCanvas(){
-                /*
-            if(areaFlag === true){
-                mainViewer(capSource[0]);
-                
-                sctx.drawImage(video, data.x+8,           data.y, 
-                              (video.videoWidth - subX), (video.videoHeight - subY),
-                               0,                         0, 
-                               areaData.width,                areaData.height);
-                sendImage(sCnvs);
-            }else if(areaFlag === false){
-                */
-                
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-                sendImage(canvas);
-        }
-        
+        // 同期描画、送信イベント----------------------------------------------------------------
+        // Canvasをバイナリ変換後送信
         function sendImage(getCanvas){
             ws_connector.sendBinary('AddContent', {
                 "id" :         "captured", // 特定のID に固定する.
                 "content_id" : "captured", // 特定のID に固定する.
                 "type" :       "image"
             },getImageBinary(getCanvas), function(){});
-        }        
+        }
+
+        function onResize(){
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            
+            setInterval(function () {
+                if( canvas.height !== video.videoHeight || canvas.width !== video.videoWidth ){
+                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoHeight;
+                }
+            }, resizeInterval);
+        }
+
+        // 描画呼び出し
+        function drawCall(){
+            if(areaFlag === true){
+                ctx.drawImage(video, areaData.x+8,           areaData.y, 
+                              (video.videoWidth - subX), (video.videoHeight - subY),
+                               0,                         0, 
+                               areaData.width,                areaData.height);
+                sendImage(canvas);
+            }else if(areaFlag === false){
+            
+                onResize();
+                ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+                sendImage(canvas);
+            }
+        }
+        
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
             //if(areaFlag) areaFlag = false;
-            if(canvas.style.display === "inline"){
-                video.style.display = "inline";
-                canvas.style.display = "none";
-            }
             let id = eve.target.id;
-            if(id != 'video' && id != 'setarea' && id != 'capture' && 
-               id != 'interval' && id != 'canvas' && id){
+            let cs = eve.target.className;
+            if(cs === 'thumbnaile' && id){
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
+                //console.log(capSource[selected].name);
                 mainViewer(capSource[selected]);
+                main.activeW()
             }
         }, false);
 
@@ -203,7 +213,7 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
-            //位置が悪い　この場所ではサーバー側が落ちてしまった
+            setTimeout(main.activeW(),100);
         }
 
         // デスクトップ情報の取得に失敗したとき

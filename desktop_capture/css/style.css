@@ -1,4 +1,4 @@
-.sumbnaile{/*
+.thumbnaile{/*
     position: absolute;
     top: 450px;
     */
@@ -28,4 +28,8 @@
     position: absolute;
     */
     margin: 10px;
+}
+
+body{
+    position:relative;
 }

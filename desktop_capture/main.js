@@ -17,15 +17,14 @@ let mainWindow;
 
 function createWindow () {
 
-    // 親ウィンドウ。メインのウィンドウ。
+    // メインのウィンドウ。
     mainWindow = new BrowserWindow({
         width: 1440, 
         height: 810,
-        autoHideMenuBar: true
+        show: true,
+        autoHideMenuBar: true,
+        'always-on-top': true
     });
-
-  // メインウィンドウのみ可視
-  mainWindow.show();
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -94,6 +93,9 @@ exports.windowCloser = function(rect){
     //console.log("window closer called")
 }
 
+exports.activeW = function(){
+    mainWindow.show();
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
