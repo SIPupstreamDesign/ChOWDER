@@ -856,14 +856,14 @@
 		if (group === undefined || group === "") {
 			return true;
 		}
+		if (group === "group_default") {
+			return true;
+		}
 		// 権限情報があるか
 		if (!authority) {
 			return false;
 		}
 		if (groupDict.hasOwnProperty(group)) {
-			if (group === "group_default") {
-				return true;
-			}
 			if (authority.viewable === "all") {
 				return true;
 			}
