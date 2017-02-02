@@ -94,7 +94,8 @@ wsopserver.listen(port + 1);
 
 /// web socket server instance
 ws2 = new WebSocket.server({ httpServer : wsopserver,
-		maxReceivedFrameSize : 0x1000000, // more receive buffer!! default 65536B
+		maxReceivedMessageSize: 64*1024*1024, // 64MB
+		maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
 		autoAcceptConnections : false});
 
 ws2.on('request', function (request) {
