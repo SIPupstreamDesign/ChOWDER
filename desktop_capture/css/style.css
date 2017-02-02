@@ -1,3 +1,5 @@
+
+
 .thumbnaile{/*
     position: absolute;
     top: 450px;
@@ -14,22 +16,15 @@
 }
 */
 #canvas{
-    position: absolute;
     display: none;
-    margin: 10px;
 }
 
 #selectedcanvas{
-    display: none;
-}
-
-#video{
-    /*
     position: absolute;
-    */
+    display: none;
     margin: 10px;
 }
 
-body{
-    position:relative;
+#video{
+    margin: 10px;
 }

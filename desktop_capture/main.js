@@ -22,8 +22,7 @@ function createWindow () {
         width: 1440, 
         height: 810,
         show: true,
-        autoHideMenuBar: true,
-        'always-on-top': true
+        autoHideMenuBar: true
     });
 
   // and load the index.html of the app.

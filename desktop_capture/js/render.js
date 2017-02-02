@@ -10,6 +10,7 @@ const main = remote.require('./main.js');
 
 const WIDTH = 800;
 const HEIGHT = 450;
+const SEND_INTERVAL = 1.0;
 const DEFAULT_URL = 'ws://localhost:8081/';
 
 window.URL = window.URL || window.webkitURL;
@@ -19,21 +20,32 @@ window.URL = window.URL || window.webkitURL;
     function init(){
         
         // 要素初期化---------------------------------------------------------------------------
+        // video
         let video = document.getElementById('video');
         video.width = WIDTH;
         video.height = HEIGHT;
         let localStream;
-
+        
+        // canvas
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext("2d");
-        canvas.width = 0;
-        canvas.height = 0;
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
         let sCnvs = document.getElementById('selectedcanvas');
         let sctx = sCnvs.getContext("2d");
+        sCnvs.width = WIDTH;
+        sCnvs.height = HEIGHT;
 
+        // ボタン
         let num = document.getElementById('interval');
         let capButton = document.getElementById('capture');
         let setArea = document.getElementById('setarea');
+        let timeSet = document.getElementById('timeapply');
+        let timeReset = document.getElementById('timereset');
+        let urlDest = document.getElementById('sendurl');
+        let urlSet = document.getElementById('urlapply');
+        let urlReset = document.getElementById('urlreset');
+        
 
         // キャプチャー情報
         let capSource;
@@ -44,6 +56,7 @@ window.URL = window.URL || window.webkitURL;
         
         let drawInterval;
         let drawTime = 1;
+        let sendUrl = DEFAULT_URL;
         let selected = 0;
 
         let areaData;
@@ -59,11 +72,7 @@ window.URL = window.URL || window.webkitURL;
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect(function(){
-            console.log("Connected");
-        },function(){
-            console.log("Disconected");
-        });
+        ws_connector.connect();
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
@@ -90,31 +99,55 @@ window.URL = window.URL || window.webkitURL;
             document.body.appendChild(elm);
         }
 
+        // ボタン周り--------------------------------------------------------------------------
+        // 送信インターバル変更
+        timeSet.addEventListener('click',function(eve){
+            drawTime = num.value;
+            console.log("Capture interval applied.")
+        },false);
+
+        // 送信インターバルリセット
+        timeReset.addEventListener('click',function(eve){
+            num.value = SEND_INTERVAL;
+            console.log("Reset capture intarval.")
+        }, false);
+
+        // 送信先変更
+        urlSet.addEventListener('click',function(){
+            urlDest.value = this.value;
+        }, false);
+
+        // 送信先リセット
+        urlReset.addEventListener('click', function(){
+            urlDest.value = DEFAULT_URL;
+        }, false);
+
+
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
+            areaFlag = true;
             mainViewer(capSource[0]);
             main.areaSelector();
-            eve.value = "Get area";
         }, false);
         
         ipc.on('rectData', function(event, data){
             areaData = data;
-            areaFlag = true;
-
             canvas.width = areaData.width;
             canvas.height = areaData.height;
             subX = video.videoWidth - areaData.width;
             subY = video.videoHeight - areaData.height;
 
+            resizeCalc(areaData.width, areaData.height);
+            sctx.drawImage(video, areaData.x+8,              areaData.y, 
+                               　(video.videoWidth - subX), (video.videoHeight - subY),
+                                　0,                         0, 
+                                　data.width, data.height);
+            sCnvs.style.display = 'inline';
+            video.style.display = 'none';
         });
-        
-        // canvas2dへイメージとして送る---------------------------------------------------------
-        // 送信インターバル変更
-        num.addEventListener("change",function(eve){
-            drawTime = eve.target.value;
-        },false);
 
-        // キャプチャーイベント
+
+        // キャプチャーイベント-----------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
@@ -155,14 +188,16 @@ window.URL = window.URL || window.webkitURL;
 
         // 描画呼び出し
         function drawCall(){
+            // 範囲選択時
             if(areaFlag === true){
                 ctx.drawImage(video, areaData.x+8,           areaData.y, 
                               (video.videoWidth - subX), (video.videoHeight - subY),
                                0,                         0, 
                                areaData.width,                areaData.height);
                 sendImage(canvas);
-            }else if(areaFlag === false){
-            
+            }
+            // 非範囲選択時
+            else if(areaFlag === false){
                 onResize();
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
                 sendImage(canvas);
@@ -172,16 +207,14 @@ window.URL = window.URL || window.webkitURL;
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
-            //if(areaFlag) areaFlag = false;
+            if(areaFlag) areaFlag = false;
             let id = eve.target.id;
             let cs = eve.target.className;
             if(cs === 'thumbnaile' && id){
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
-                //console.log(capSource[selected].name);
                 mainViewer(capSource[selected]);
-                main.activeW()
             }
         }, false);
 
@@ -213,7 +246,7 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
-            setTimeout(main.activeW(),100);
+            //if(areaFlag !== true) main.activeW();
         }
 
         // デスクトップ情報の取得に失敗したとき
@@ -235,13 +268,20 @@ window.URL = window.URL || window.webkitURL;
             return array;
         }
 
+        // 範囲選択時プレビュー作成用
         function resizeCalc(w, h){
             let aW;
             let aH;
             let aspect = w/h;
-            if(aspect>=1){
-                
-            }
+            let ratio;
+            
+            if(aspect>=1)     ratio = WIDTH/w;
+            else if(aspect<1) ratio = HEIGHT/h;
+            
+            aW = w*ratio;
+            aH = h*ratio;
+
+            return aW, aH;
         }
         
     };
