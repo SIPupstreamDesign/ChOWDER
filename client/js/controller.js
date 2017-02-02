@@ -3346,11 +3346,13 @@
 		var id = metaData.id;
 		if (id) {
 			connector.send('GetContent', metaData, function (err, reply) {
-				correctAspect(reply.metaData, function (err, meta) {
-					reply.metaData = meta;
-					doneGetContent(err, reply);
-					doneGetMetaData(err, meta);
-				});
+				if (metaDataDict.hasOwnProperty(metaData.id)) {
+					correctAspect(reply.metaData, function (err, meta) {
+						reply.metaData = meta;
+						doneGetContent(err, reply);
+						doneGetMetaData(err, meta);
+					});
+				}
 			});
 		}
 	});
