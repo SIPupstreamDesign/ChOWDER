@@ -853,6 +853,9 @@
 	}
 
 	function isViewable(group) {
+		if (group === undefined || group === "") {
+			return true;
+		}
 		// 権限情報があるか
 		if (!authority) {
 			return false;
@@ -883,10 +886,6 @@
 		if (!json) { return; }
 		// レイアウトは無視
 		if (metaData.type === "layout") { return; }
-		// 閲覧許可があるか
-		if (json.group !== "" && !groupDict.hasOwnProperty(json.group)) {
-			return;
-		}
 		// 復元したコンテンツか
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
