@@ -1034,7 +1034,11 @@
 			connector.send('GetMetaData', data, function (err, json) {
 				if (!err) {
 					doneGetMetaData(err, json);
-					connector.send('GetContent', json, doneGetContent);
+					connector.send('GetContent', json, function (err, reply) {
+						if (metaDataDict.hasOwnProperty(json.id)) {
+							doneGetContent(err, reply);
+						}
+					} );
 				}
 			});
 		});
