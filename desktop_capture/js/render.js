@@ -122,7 +122,7 @@ window.URL = window.URL || window.webkitURL;
             ws_connector.setURL(urlDest.value);
             ws_connector.close();
             ws_connector.connect();
-            console.log("change URL :" + ws_connector.getURL());
+            console.log("URL apply :" + ws_connector.getURL());
         }, false);
 
         // 送信先リセット
@@ -161,7 +161,7 @@ window.URL = window.URL || window.webkitURL;
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
-                setArea.diabled = true;
+                setArea.disabled = true;
                 drawInterval = setInterval(drawCall,drawTime*1000);
                 cap = true;
                 capButton.value = "Capture Stop";
@@ -202,12 +202,15 @@ window.URL = window.URL || window.webkitURL;
             // 範囲選択時
             if(areaFlag === true){
                 // sctxはPreviewCanvasコンテキスト
+                
                 sctx.clearRect(0, 0, WIDTH, HEIGHT)
                 sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
                                 　0, 0, cw, ch);
                 console.log("calc:" + cw, ch);
                 console.log("area:" + areaData.width, areaData.height);
                 console.log("Area captured.");
+                canvas.width = areaData.width;
+                canvas.height = areaData.height;
                 ctx.drawImage(video, areaData.x+8, areaData.y, 
                                      subX, subY,
                                      0, 0, areaData.width, areaData.height);
