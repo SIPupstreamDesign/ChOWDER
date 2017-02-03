@@ -22,8 +22,10 @@
 #selectedcanvas{
     display: none;
     margin: 10px;
+    border: 5px solid rgba(80, 200, 141, 0.9);
 }
 
 #video{
-    margin: 10px;
+    margin: 10px ;
+    border: 5px solid rgba(80, 200, 141, 0.9);
 }

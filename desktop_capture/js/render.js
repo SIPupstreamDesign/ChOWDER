@@ -48,7 +48,6 @@ window.URL = window.URL || window.webkitURL;
         let urlSet = document.getElementById('urlapply');
         let urlReset = document.getElementById('urlreset');
         
-
         // キャプチャー情報
         let capSource;
         let browserId = 0;
@@ -61,6 +60,7 @@ window.URL = window.URL || window.webkitURL;
         let sendUrl = DEFAULT_URL;
         let selected = 0;
 
+        // 範囲選択
         let areaData;
         let calcData;
         let cw;
@@ -136,6 +136,7 @@ window.URL = window.URL || window.webkitURL;
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
             areaFlag = true;
+            sctx.clearRect(0, 0, WIDTH, HEIGHT);
             mainViewer(capSource[0]);
             main.areaSelector();
         }, false);
@@ -160,12 +161,14 @@ window.URL = window.URL || window.webkitURL;
         capButton.addEventListener('click',function(eve){
             // フラグがオフであれば
             if(cap === false){
+                setArea.diabled = true;
                 drawInterval = setInterval(drawCall,drawTime*1000);
                 cap = true;
                 capButton.value = "Capture Stop";
             }
             // フラグがオンであれば
             else if(cap === true){
+                setArea.disabled = false;
                 clearInterval(drawInterval);
                 cap = false;
                 capButton.value = "Capture Start";
@@ -298,7 +301,6 @@ window.URL = window.URL || window.webkitURL;
             cw = nData.width * ratio;
             ch = nData.height * ratio;
         }
-        
     };
 
     window.onload = init;

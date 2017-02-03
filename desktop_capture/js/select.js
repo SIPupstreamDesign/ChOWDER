@@ -54,7 +54,7 @@ function createRect (a, b) {
         }
 
         // マウスイベント全般を管理
-        window.onmousemove = function(eve){
+        window.onmousemove = function f(eve){
             x = eve.clientX;
             y = eve.clientY;
             chngElm(x, y);
@@ -63,20 +63,19 @@ function createRect (a, b) {
             chngRect(rect);
         };
 
-        window.onmouseup = function (eve) {
+        window.onmouseup = function f(eve) {
             cropping = false;
             let sRect = rect;
             rect = {};
             closer(sRect);
         };
 
-        window.onmousedown = function (eve) {
+        window.onmousedown = function f(eve) {
             downPoint.x = eve.clientX;
             downPoint.y = eve.clientY;
             cropping = true;
         };
         
-
         function closer(sRect){
             main.windowCloser(sRect);
         }
@@ -85,4 +84,3 @@ function createRect (a, b) {
     window.onload = setArea;
     
 })();
-
