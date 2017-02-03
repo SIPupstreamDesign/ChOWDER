@@ -63,6 +63,8 @@ window.URL = window.URL || window.webkitURL;
 
         let areaData;
         let calcData;
+        let cw;
+        let ch;
         let subX;
         let subY;
 
@@ -106,7 +108,7 @@ window.URL = window.URL || window.webkitURL;
         // 送信インターバル変更
         timeSet.addEventListener('click',function(eve){
             drawTime = num.value;
-            console.log("Capture interval applied.")
+            console.log("Capture interval : " + drawTime + "sec")
         },false);
 
         // 送信インターバルリセット
@@ -116,13 +118,18 @@ window.URL = window.URL || window.webkitURL;
         }, false);
 
         // 送信先変更
-        urlSet.addEventListener('click',function(){
-            urlDest.value = this.value;
+        urlSet.addEventListener('click',function(eve){
+            ws_connector.setURL(urlDest.value);
+            ws_connector.close();
+            ws_connector.connect();
+            console.log("change URL :" + ws_connector.getURL());
         }, false);
 
         // 送信先リセット
         urlReset.addEventListener('click', function(){
+            ws_connector.setURL(DEFAULT_URL);
             urlDest.value = DEFAULT_URL;
+            console.log("URL reset :" + ws_connector.getURL())
         }, false);
 
 
@@ -140,16 +147,14 @@ window.URL = window.URL || window.webkitURL;
             subX = video.videoWidth - (video.videoWidth - areaData.width);
             subY = video.videoHeight - (video.videoHeight - areaData.height);
             
-
             // Preview用データ
-            calcData = resizeCalc(areaData);
-            sctx.drawImage(video, areaData.x+8, areaData.y, sbuX, subY,
-                                　0,            0,          calcData.width, calcData.height);
+            resizeCalc(areaData);
+            sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
+                                　0,            0,          cw, ch);
             sCnvs.style.display = 'inline';
             video.style.display = 'none';
             
         });
-
 
         // キャプチャーイベント-----------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
@@ -166,7 +171,6 @@ window.URL = window.URL || window.webkitURL;
                 capButton.value = "Capture Start";
             }
         },false);
-
 
         // 同期描画、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
@@ -196,24 +200,24 @@ window.URL = window.URL || window.webkitURL;
             if(areaFlag === true){
                 // sctxはPreviewCanvasコンテキスト
                 sctx.clearRect(0, 0, WIDTH, HEIGHT)
-                sctx.drawImage(video, areaData.x+8, areaData.y, sbuX, subY,
-                                　0,            0,          calcData.width, calcData.height);
-                console.log("area capture");
-                ctx.drawImage(video, areaData.x+8,           areaData.y, 
-                              (video.videoWidth - subX), (video.videoHeight - subY),
-                               0,                         0, 
-                               areaData.width,                areaData.height);
+                sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
+                                　0, 0, cw, ch);
+                console.log("calc:" + cw, ch);
+                console.log("area:" + areaData.width, areaData.height);
+                console.log("Area captured.");
+                ctx.drawImage(video, areaData.x+8, areaData.y, 
+                                     subX, subY,
+                                     0, 0, areaData.width, areaData.height);
                 sendImage(canvas);
             }
             // 非範囲選択時
             else if(areaFlag === false){
-                console.log("selected capture");
+                console.log("Select captured.");
                 onResize();
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
                 sendImage(canvas);
             }
         }
-        
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
         addEventListener('click', function(eve){
@@ -260,6 +264,7 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
+            // いいタイミングでアクティブにならない
             //if(areaFlag !== true) main.activeW();
         }
 
@@ -283,18 +288,15 @@ window.URL = window.URL || window.webkitURL;
         }
 
         // 範囲選択時プレビュー作成用
-        function resizeCalc(data){
-
-            let aspect = data.width/data.height;
+        function resizeCalc(nData){
+            let aspect = nData.width/nData.height;
             let ratio;
             
-            if(aspect>=1)     ratio = WIDTH/data.width;
-            else if(aspect<1) ratio = HEIGHT/data.height;
+            if(aspect>=1)     ratio = WIDTH/nData.width;
+            else if(aspect<1) ratio = HEIGHT/nData.height;
             
-            data.width = data.width * ratio;
-            data.height = data.height * ratio;
-
-            return data;
+            cw = nData.width * ratio;
+            ch = nData.height * ratio;
         }
         
     };
