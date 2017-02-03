@@ -60,7 +60,6 @@ window.URL = window.URL || window.webkitURL;
 
         // 範囲選択
         let areaData;
-        let calcData;
         let cw;
         let ch;
         let subX;
@@ -69,7 +68,6 @@ window.URL = window.URL || window.webkitURL;
         // フラグ系
         let cap = false;
         let areaFlag = false;
-        let resizeTimer;
         let resizeInterval = 100; //
 
 
