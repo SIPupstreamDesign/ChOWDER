@@ -270,8 +270,10 @@ window.URL = window.URL || window.webkitURL;
         function gotStream(stream) {
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
-            // いいタイミングでアクティブにならない
-            //if(areaFlag !== true) main.activeW();
+            // windowを手前する
+            document.querySelector('video').oncanplay = function () {
+                if(areaFlag !== true) main.activeW();
+            }
         }
 
         // デスクトップ情報の取得に失敗したとき
