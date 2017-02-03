@@ -281,7 +281,7 @@ p {
 	/*left: 50%;*/
 	/*margin-left:-400px;*/
 	overflow: hidden;
-	/*z-index: 100002;*/
+	z-index: 10;
 }
 
 .leftTab {
@@ -642,6 +642,7 @@ p {
 #rightArea_panel__ {
 	background:linear-gradient(rgb(5, 18, 35), rgb(10, 26, 67));
 	overflow-y : auto;
+	z-index: 10;
 }
 
 .backup_list_content {
