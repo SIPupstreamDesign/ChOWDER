@@ -345,7 +345,7 @@
 				var last = reply.last; 
 				delete reply.last;
 				doneGetMetaData(err, reply, function (err) {
-					updateGroupList();
+					//updateGroupList();
 					if (last) {
 						updateGroupList(function () {
 							if (endCallback) {
