@@ -42,10 +42,8 @@ window.URL = window.URL || window.webkitURL;
         let num = document.getElementById('interval');
         let capButton = document.getElementById('capture');
         let setArea = document.getElementById('setarea');
-        let timeSet = document.getElementById('timeapply');
         let timeReset = document.getElementById('timereset');
         let urlDest = document.getElementById('sendurl');
-        let urlSet = document.getElementById('urlapply');
         let urlReset = document.getElementById('urlreset');
         
         // キャプチャー情報
@@ -106,7 +104,7 @@ window.URL = window.URL || window.webkitURL;
 
         // ボタン周り--------------------------------------------------------------------------
         // 送信インターバル変更
-        timeSet.addEventListener('click',function(eve){
+        num.addEventListener('change',function(eve){
             drawTime = num.value;
             console.log("Capture interval : " + drawTime + "sec")
         },false);
@@ -118,7 +116,7 @@ window.URL = window.URL || window.webkitURL;
         }, false);
 
         // 送信先変更
-        urlSet.addEventListener('click',function(eve){
+        urlDest.addEventListener('change',function(eve){
             ws_connector.setURL(urlDest.value);
             ws_connector.close();
             ws_connector.connect();
@@ -159,21 +157,32 @@ window.URL = window.URL || window.webkitURL;
 
         // キャプチャーイベント-----------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
-            // フラグがオフであれば
+            // フラグを立てる
             if(cap === false){
-                setArea.disabled = true;
+                // キャプチャー以外の操作の拒否
+                disableI(true);
                 drawInterval = setInterval(drawCall,drawTime*1000);
                 cap = true;
                 capButton.value = "Capture Stop";
             }
-            // フラグがオンであれば
+            // フラグを下ろす
             else if(cap === true){
-                setArea.disabled = false;
+                // キャプチャー以外の操作許可
+                disableI(false);
                 clearInterval(drawInterval);
                 cap = false;
                 capButton.value = "Capture Start";
             }
         },false);
+
+        // キャプチャー中の入力系一括disabled関数
+        function disableI(bool){
+            setArea.disabled = bool;
+            num.disabled = bool;
+            timeReset.disabled = bool;
+            urlDest.disabled = bool;
+            urlReset.disabled = bool;
+        }
 
         // 同期描画、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
@@ -201,16 +210,13 @@ window.URL = window.URL || window.webkitURL;
         function drawCall(){
             // 範囲選択時
             if(areaFlag === true){
-                // sctxはPreviewCanvasコンテキスト
-                
+                console.log("Area captured.");
                 sctx.clearRect(0, 0, WIDTH, HEIGHT)
                 sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
                                 　0, 0, cw, ch);
-                console.log("calc:" + cw, ch);
-                console.log("area:" + areaData.width, areaData.height);
-                console.log("Area captured.");
                 canvas.width = areaData.width;
                 canvas.height = areaData.height;
+                console.log();
                 ctx.drawImage(video, areaData.x+8, areaData.y, 
                                      subX, subY,
                                      0, 0, areaData.width, areaData.height);
@@ -219,6 +225,7 @@ window.URL = window.URL || window.webkitURL;
             // 非範囲選択時
             else if(areaFlag === false){
                 console.log("Select captured.");
+                console.log(video.videoWidth, video.videoHeight);
                 onResize();
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
                 sendImage(canvas);
@@ -236,8 +243,8 @@ window.URL = window.URL || window.webkitURL;
                     video.style.display = 'inline';
                 }
                 selected = id;
-                if (localStream) localStream.getTracks()[0].stop();
-                localStream = null;
+                //if (localStream) localStream.getTracks()[0].stop();
+                //localStream = null;
                 mainViewer(capSource[selected]);
             }
         }, false);
@@ -268,6 +275,7 @@ window.URL = window.URL || window.webkitURL;
 
         // デスクトップ情報の取得が成功したとき
         function gotStream(stream) {
+            if(localStream) URL.revokeObjectURL(localStream);
             localStream = stream;
             document.querySelector('video').src = URL.createObjectURL(localStream);
             // windowを手前する
@@ -303,8 +311,8 @@ window.URL = window.URL || window.webkitURL;
             if(aspect>=1)     ratio = WIDTH/nData.width;
             else if(aspect<1) ratio = HEIGHT/nData.height;
             
-            cw = nData.width * ratio;
-            ch = nData.height * ratio;
+            cw = Math.round(nData.width * ratio);
+            ch = Math.round(nData.height * ratio);
         }
     };
 
