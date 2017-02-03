@@ -32,6 +32,23 @@ function createWindow () {
     slashes: true
   }));
 
+    // 仮想ウィンドウ
+    virtualWindow = new BrowserWindow({
+      left: 0,
+      top: 0,
+      frame: false,
+      show: false,
+      transparent: true,
+      resizable: false,
+      'always-on-top': true
+    });
+
+    // and load the index.html of the app.
+    virtualWindow.loadURL(url.format({
+      pathname: path.join(__dirname, 'js/select.html'),
+      protocol: 'file:',
+      slashes: true
+    }));
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
@@ -45,34 +62,16 @@ function createWindow () {
 
 exports.areaSelector = function() {
     
-    // MainWindowを自動的に最小化
-    mainWindow.minimize();
-
     // Screen APIの読み込み
     const screen = electron.screen;
     const size = screen.getPrimaryDisplay().size;
     
-    // 仮想ウィンドウ
-    virtualWindow = new BrowserWindow({
-      left: 0,
-      top: 0,
-      width: size.width,
-      height: size.height,
-      frame: false,
-      show: true,
-      transparent: true,
-      resizable: false,
-      'always-on-top': true
-    });
+    // MainWindowを自動的に最小化
+    mainWindow.minimize();
+    virtualWindow.show();
+    virtualWindow.setKiosk(true);
 
-    virtualWindow.maximize();
-
-    // and load the index.html of the app.
-    virtualWindow.loadURL(url.format({
-      pathname: path.join(__dirname, 'js/select.html'),
-      protocol: 'file:',
-      slashes: true
-    }));
+    //virtualWindow.maximize();
 
 
     // Open the DevTools.
@@ -86,7 +85,8 @@ exports.areaSelector = function() {
 }
 
 exports.windowCloser = function(rect){
-    virtualWindow.close();
+    virtualWindow.hide();
+    virtualWindow.reload();
     mainWindow.focus();
     mainWindow.webContents.send('rectData', rect);
     //console.log("window closer called")
