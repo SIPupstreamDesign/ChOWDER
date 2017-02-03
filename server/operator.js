@@ -479,6 +479,19 @@
 				});
 			}
 		});
+		// virtualdisplayの初期設定
+		textClient.exists(virtualDisplayIDStr, function (err, doesExists) {
+			if (doesExists !== 1) {
+				var windowData = {
+					orgWidth : 1000,
+					orgHeight : 1000,
+					splitX : 1,
+					splitY : 1,
+					scale : 1.0
+				};
+				setVirtualDisplay(windowData);
+			}
+		});
 	}
 
 	/**
