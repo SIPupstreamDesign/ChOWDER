@@ -3020,7 +3020,8 @@
 	}
 
 	/**
-	 * group変更処理終了後のブロードキャスト用ラッパー.
+	 * 設定変更処理終了後のブロードキャスト用ラッパー.
+	 * カレントDBが変更された場合も設定変更であるので通知される.
 	 * @method post_updateSetting
 	 */
 	function post_updateSetting(ws, io, resultCallback) {
@@ -3033,6 +3034,10 @@
 		};
 	}
 
+	/**
+	 * DBが変更されたことを通知する
+	 * @method post_db_change
+	 */
 	function post_db_change(ws, io, resultCallback) {
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.ChangeDB, reply);
@@ -3043,6 +3048,10 @@
 		};
 	}
 
+	/**
+	 * 権限が変更されたことを通知する
+	 * @method post_updateAuthority
+	 */
 	function post_updateAuthority(ws, io, resultCallback) {
 		return function (err, reply) {
 			ws_connector.broadcast(ws, Command.ChangeAuthority, reply);
