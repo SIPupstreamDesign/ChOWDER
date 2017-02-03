@@ -27,10 +27,12 @@ window.URL = window.URL || window.webkitURL;
         let localStream;
         
         // canvas
+        // 描画、送信用キャンバス
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext("2d");
         canvas.width = WIDTH;
         canvas.height = HEIGHT;
+        // 範囲選択時プレビュー用キャンバス
         let sCnvs = document.getElementById('selectedcanvas');
         let sctx = sCnvs.getContext("2d");
         sCnvs.width = WIDTH;
@@ -68,7 +70,7 @@ window.URL = window.URL || window.webkitURL;
         let cap = false;
         let areaFlag = false;
         let resizeTimer;
-        let resizeInterval = 1000; //
+        let resizeInterval = 100; //
 
 
         // 初期動作----------------------------------------------------------------------------
@@ -135,18 +137,17 @@ window.URL = window.URL || window.webkitURL;
             areaData = data;
             canvas.width = areaData.width;
             canvas.height = areaData.height;
-            subX = video.videoWidth - areaData.width;
-            subY = video.videoHeight - areaData.height;
+            subX = video.videoWidth - (video.videoWidth - areaData.width);
+            subY = video.videoHeight - (video.videoHeight - areaData.height);
+            
 
             // Preview用データ
             calcData = resizeCalc(areaData);
-            console.log(calcData);
-            sctx.drawImage(video, areaData.x+8,              areaData.y, 
-                               　(video.videoWidth - subX), (video.videoHeight - subY),
-                                　0,                         0, 
-                                　calcData.width, calcData.height);
+            sctx.drawImage(video, areaData.x+8, areaData.y, sbuX, subY,
+                                　0,            0,          calcData.width, calcData.height);
             sCnvs.style.display = 'inline';
             video.style.display = 'none';
+            
         });
 
 
@@ -193,6 +194,10 @@ window.URL = window.URL || window.webkitURL;
         function drawCall(){
             // 範囲選択時
             if(areaFlag === true){
+                // sctxはPreviewCanvasコンテキスト
+                sctx.clearRect(0, 0, WIDTH, HEIGHT)
+                sctx.drawImage(video, areaData.x+8, areaData.y, sbuX, subY,
+                                　0,            0,          calcData.width, calcData.height);
                 console.log("area capture");
                 ctx.drawImage(video, areaData.x+8,           areaData.y, 
                               (video.videoWidth - subX), (video.videoHeight - subY),
@@ -215,7 +220,11 @@ window.URL = window.URL || window.webkitURL;
             let id = eve.target.id;
             let cs = eve.target.className;
             if(cs === 'thumbnaile' && id){
-                if(areaFlag) areaFlag = false;
+                if(areaFlag) {
+                    areaFlag = false;
+                    sCnvs.style.display = 'none';
+                    video.style.display = 'inline';
+                }
                 selected = id;
                 if (localStream) localStream.getTracks()[0].stop();
                 localStream = null;
