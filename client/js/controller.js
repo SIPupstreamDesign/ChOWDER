@@ -680,7 +680,7 @@
 		}
 		
 		if (id === wholeWindowListID || id === wholeWindowID) {
-			content_property.init(id, "", "whole_window", mime);
+			content_property.init(id, null, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem() && metaDataDict[id]) {
 				gui.get_whole_window_elem().style.borderColor = getBorderColor(metaDataDict[id]);
@@ -727,22 +727,22 @@
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (isWindowType(metaData)) {
-				content_property.init(id, "", "multi_display", mime);
+				content_property.init(id, null, "", "multi_display", mime);
 			} else {
-				content_property.init(id, "", "multi_content", mime);
+				content_property.init(id, null,"", "multi_content", mime);
 			}
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (isWindowType(metaData)) {
-				content_property.init(id, "", "display", mime);
+				content_property.init(id, null,"", "display", mime);
 				content_property.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
 				if (groupDict.hasOwnProperty(metaData.group)) {
-					content_property.init(id, groupDict[metaData.group].name, metaData.type, mime);
+					content_property.init(id, metaData.group, groupDict[metaData.group].name, metaData.type, mime);
 				} else {
 					console.warn("not found group")
-					content_property.init(id, "", metaData.type, mime);
+					content_property.init(id, null,"", metaData.type, mime);
 				}
 				content_property.assign_content_property(metaData);
 				gui.set_update_content_id(id);
@@ -3225,11 +3225,11 @@
 	gui.on("tab_changed_post", function () {
 		var id;
 		if (isDisplayTabSelected()) {
-			content_property.init("", "", "display");
+			content_property.init("", null, "", "display");
 		} else if (isLayoutTabSelected()) {
-			content_property.init("", "", "layout");
+			content_property.init("", null, "", "layout");
 		} else {
-			content_property.init("", "", "content");
+			content_property.init("", null, "", "content");
 		}
 		if (isDisplayTabSelected()) {
 			id = lastSelectWindowID;

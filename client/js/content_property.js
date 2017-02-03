@@ -76,7 +76,7 @@
 	 * @param {String} type 設定タイプ
 	 * @param {String} mime mime
 	 */
-	ContentProperty.prototype.initPropertyArea = function (id, group, type, mime) {
+	ContentProperty.prototype.initPropertyArea = function (id, groupID, group, type, mime) {
 		var transform_input = document.getElementById('transform_input'),
 			user_data_input = document.getElementById('user_data_input'),
 			idlabel = document.getElementById('content_id_label'),
@@ -93,7 +93,7 @@
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
 			}.bind(this),
-			isEditableContent = this.authority.isEditable(group);
+			isEditableContent = this.authority.isEditable(groupID);
 		
 		restoreButton.disabled = !isEditableContent;
 
@@ -240,7 +240,7 @@
 		if (backup_area) { backup_area.style.display = "none" }
 	};
 
-	ContentProperty.prototype.init = function (id, group, type, mime) {
+	ContentProperty.prototype.init = function (id, groupID, group, type, mime) {
 		if (!this.colorselector) {
 			this.colorselector = new ColorSelector(function(colorvalue){
 				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")"; 
@@ -265,7 +265,7 @@
 			}
 		}.bind(this);
 
-		this.initPropertyArea(id, group, type, mime);
+		this.initPropertyArea(id, groupID, group, type, mime);
 	};
 
 	/**
@@ -356,7 +356,9 @@
 			backup_list.innerHTML = "";
 			 document.getElementById('backup_restore').disabled = true;
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
-			 	document.getElementById('backup_restore').disabled = false;
+				if (this.authority.isEditable(metaData.group)) {
+			 		document.getElementById('backup_restore').disabled = false;
+				}
 				var backups = JSON.parse(metaData.backup_list);
 				var select = document.createElement('select');
 				var restore_index = 0;
