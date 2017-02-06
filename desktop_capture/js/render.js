@@ -57,6 +57,7 @@ window.URL = window.URL || window.webkitURL;
         let drawTime ;
         let sendUrl = DEFAULT_URL;
         let selected = 0;
+        let addID;
 
         // 範囲選択
         let areaData;
@@ -81,14 +82,18 @@ window.URL = window.URL || window.webkitURL;
             function(error, sources) {
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
-                        addImage(sources[i].thumbnail);
+                    console.log(sources[i].id);
+                    console.log(sources[i].name);
+                    addImage(sources[i].thumbnail);
                 }
                 mainViewer(sources[selected]);
                 // キャプチャー情報の保持
                 capSource = sources;
+                // 範囲選択の情報追加
             });
 
             // 前回起動時の設定読み込み
+            
             if(localStorage.getItem("sendInterval")){
                 let t = localStorage.getItem("sendInterval");
                 drawTime = t;
@@ -107,6 +112,8 @@ window.URL = window.URL || window.webkitURL;
                 urlDest.value = DEFAULT_URL;
                 ws_connector.setURL(urlDest.value);
             }
+            
+            console.log("Initialized.");
         }
         
         // sourcesに関する関数--------------------------------------------------------------------
@@ -132,7 +139,7 @@ window.URL = window.URL || window.webkitURL;
         timeReset.addEventListener('click',function(eve){
             num.value = SEND_INTERVAL;
             darawTime = SEND_INTERVAL;
-            localStorage.setItem("capInterval", num.value);
+            localStorage.setItem("capInterval", drawTime);
             console.log("Reset capture intarval.")
         }, false);
 
@@ -141,13 +148,15 @@ window.URL = window.URL || window.webkitURL;
             ws_connector.setURL(urlDest.value);
             ws_connector.close();
             ws_connector.connect();
+            localStorage.setItem("sendUrl", urlDest.value); 
             console.log("URL apply :" + ws_connector.getURL());
         }, false);
 
         // 送信先リセット
         urlReset.addEventListener('click', function(){
-            ws_connector.setURL(DEFAULT_URL);
             urlDest.value = DEFAULT_URL;
+            ws_connector.setURL(urlDest.value);
+            localStorage.setItem("sendUrl", urlDest.value);
             console.log("URL reset :" + ws_connector.getURL())
         }, false);
 
@@ -161,6 +170,7 @@ window.URL = window.URL || window.webkitURL;
         }, false);
         
         ipc.on('rectData', function(event, data){
+            console.log(selected);
             areaData = data;
             canvas.width = areaData.width;
             canvas.height = areaData.height;
@@ -208,11 +218,20 @@ window.URL = window.URL || window.webkitURL;
         // 同期描画、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
         function sendImage(getCanvas){
-            ws_connector.sendBinary('AddContent', {
-                "id" :         "captured", // 特定のID に固定する.
-                "content_id" : "captured", // 特定のID に固定する.
-                "type" :       "image"
-            },getImageBinary(getCanvas), function(){});
+            if(areaFlag === true){
+                ws_connector.sendBinary('AddContent', {
+                    "id" :         "selected:0:1", // 特定のID に固定する.
+                    "content_id" : "Area Selected", // 特定のID に固定する.
+                    "type" :       "image"
+                },getImageBinary(getCanvas), function(){});
+            }
+            else if(areaFlag !== true){
+                ws_connector.sendBinary('AddContent', {
+                    "id" :         capSource[selected].id, // 特定のID に固定する.
+                    "content_id" : capSource[selected].name, // 特定のID に固定する.
+                    "type" :       "image"
+                },getImageBinary(getCanvas), function(){});
+            }
         }
 
         function onResize(){
@@ -328,25 +347,19 @@ window.URL = window.URL || window.webkitURL;
             console.log("aspect :" + aspect);
             let ratio;
             
-            if(aspect>=1){
-                ratio = WIDTH/nData.width;
-                console.log(ratio);
-            }
-            else if(aspect<1) {
-                ratio = HEIGHT/nData.height;
-                console.log(ratio);
-            }
-
+            if(aspect>=1)   ratio = WIDTH/nData.width;
+            else if(aspect<1) ratio = HEIGHT/nData.height;
+            
             cw = Math.round(nData.width * ratio);
             ch = Math.round(nData.height * ratio);
 
             // リサイズ後も条件に満たなかった場合
-            if(ch>450 && aspect>=1){
+            if(ch>HEIGHT && aspect>=1){
                 ratio = HEIGHT/ch;
                 cw = Math.round(cw * ratio);
                 ch = Math.round(ch * ratio);
             }
-            else if(cw>800 && aspect<1){
+            else if(cw>WIDTH && aspect<1){
                 ratio = WIDTH/cw;
                 cw = Math.round(cw * ratio);
                 ch = Math.round(ch * ratio);
@@ -354,15 +367,8 @@ window.URL = window.URL || window.webkitURL;
             console.log(cw, ch);
         }
 
-
     };
 
     window.onload = init;
 
-    ipc.on('dataStorage', function(){
-        localStorage.setItem("capInterval", drawTime);
-        localStorage.setItem("sendUrl", urlDest.value);
-    });
-
-    
 })();

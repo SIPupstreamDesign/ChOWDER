@@ -55,6 +55,7 @@ function createWindow () {
     // Open the DevTools.
     //mainWindow.webContents.openDevTools()
 
+    
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     if (!virtualWindow.isDestroyed()) {
@@ -93,10 +94,6 @@ exports.windowCloser = function(rect){
 exports.activeW = function(){
     mainWindow.show();
 }
-
-app.on('quit', function(){
-  mainWindow.webContents.send('dataStorage');
-})
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
