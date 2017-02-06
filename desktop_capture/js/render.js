@@ -60,7 +60,6 @@ window.URL = window.URL || window.webkitURL;
 
         // 範囲選択
         let areaData;
-        let calcData;
         let cw;
         let ch;
         let subX;
@@ -69,7 +68,6 @@ window.URL = window.URL || window.webkitURL;
         // フラグ系
         let cap = false;
         let areaFlag = false;
-        let resizeTimer;
         let resizeInterval = 100; //
 
 
@@ -243,8 +241,6 @@ window.URL = window.URL || window.webkitURL;
                     video.style.display = 'inline';
                 }
                 selected = id;
-                //if (localStream) localStream.getTracks()[0].stop();
-                //localStream = null;
                 mainViewer(capSource[selected]);
             }
         }, false);
