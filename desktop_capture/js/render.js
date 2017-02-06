@@ -86,8 +86,6 @@ window.URL = window.URL || window.webkitURL;
             function(error, sources) {
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
-                    //console.log(sources[i].id);
-                    console.log(sources[i].id, sources[i].name);
                     addImage(sources[i].thumbnail);
                 }
                 mainViewer(sources[selected]);
@@ -135,15 +133,15 @@ window.URL = window.URL || window.webkitURL;
         // 送信インターバル変更
         num.addEventListener('change',function(eve){
             drawTime = num.value;
-            localStorage.setItem("capInterval", drawTime);
+            localStorage.setItem("sendInterval", drawTime);
             console.log("Capture interval : " + drawTime + "sec")
         },false);
 
         // 送信インターバルリセット
         timeReset.addEventListener('click',function(eve){
             num.value = SEND_INTERVAL;
-            darwTime = SEND_INTERVAL;
-            localStorage.setItem("capInterval", drawTime);
+            drawTime = SEND_INTERVAL;
+            localStorage.setItem("sendInterval", drawTime);
             console.log("Reset capture intarval.")
         }, false);
 
@@ -222,20 +220,9 @@ window.URL = window.URL || window.webkitURL;
         // 同期描画、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
         function sendImage(getCanvas){
-            // content id 判別
-            let content = generateUUID8();
-            console.log(content);
-            /*
-            if(areaFlag === true){
-                content = "selected area";
-            }
-            else if(areaFlag !== true){
-                content = capSource[selected].name;
-            }
-            */
             ws_connector.sendBinary('AddContent', {
                 "id" :         selfID,  // 起動時、特定のID に固定する.
-                "content_id" : selfID, // 特定のID に固定する.
+                "content_id" : selfID,  // 特定のID に固定する.
                 "type" :       "image"
             },getImageBinary(getCanvas), function(){});
     
