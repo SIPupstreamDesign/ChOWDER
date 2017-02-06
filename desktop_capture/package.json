@@ -1,13 +1,11 @@
 {
-  "name": "electron-capture",
+  "name": "ChOWDER Desktop Capture",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "description": "ChOWDER Desktop Capture",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
   },
-  "author": "GitHub",
-  "license": "CC0-1.0",
   "devDependencies": {
     "devtron": "^1.4.0",
     "electron": "^1.4.1"

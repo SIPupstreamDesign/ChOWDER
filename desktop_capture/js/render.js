@@ -192,11 +192,25 @@ window.URL = window.URL || window.webkitURL;
         capButton.addEventListener('click',function(eve){
             // フラグを立てる
             if(cap === false){
-                // キャプチャー以外の操作の拒否
-                disableI(true);
-                drawInterval = setInterval(drawCall, drawTime*1000);
-                cap = true;
-                capButton.value = "Capture Stop";
+                let startCapture = function () {
+                    // キャプチャー以外の操作の拒否
+                    disableI(true);
+                    drawInterval = setInterval(drawCall, drawTime*1000);
+                    cap = true;
+                    capButton.value = "Capture Stop";
+                };
+
+                if (!ws_connector.isConnected()) {
+                    ws_connector.connect(function () {
+                        this();
+                    }.bind(startCapture), function () {
+                        // 繋がらないか切断された
+                        window.alert("ChOWDERに接続できませんでした");
+                    });
+                    return;
+                } else {
+                    startCapture();
+                }
             }
             // フラグを下ろす
             else if(cap === true){
