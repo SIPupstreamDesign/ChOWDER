@@ -87,6 +87,7 @@ window.URL = window.URL || window.webkitURL;
                 const div = document.createElement("div");
                 div.setAttribute('class', 'added');
                 document.body.appendChild(div);
+                div.style.overflowY = 'scroll';
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
                     addImage(sources[i].thumbnail);
