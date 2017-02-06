@@ -273,10 +273,24 @@
 		isAdmin(socketid, function (err, isAdmin) {
 			if (!err && isAdmin) {
 				getAdminList(function (err, data) {
-					if (adminID) {
-						data.adminlist.push({ name : adminName, id : adminID });
-					} else {
-						data.adminlist.push({ name : adminName, id : util.generateUUID8() });
+					var i,
+						isSameNameFound = false;
+					for (i = 0; i < data.adminlist.length; i = i + 1) {
+						if (data.adminlist[i].name === adminName) {
+							adminID = data.adminlist[i].id;
+							isSameNameFound = true;
+							changeAdminUserSetting(socketid, adminID, {
+								password : password
+							}, endCallback);
+							return;
+						}
+					}
+					if (!isSameNameFound) {
+						if (adminID) {
+							data.adminlist.push({ name : adminName, id : adminID });
+						} else {
+							data.adminlist.push({ name : adminName, id : util.generateUUID8() });
+						}
 					}
 					textClient.set(adminListPrefix, JSON.stringify(data), function () {
 						changeAdminUserSetting(socketid, adminID, {
@@ -291,6 +305,42 @@
 		});	
 	}
 
+	function deleteAdmin(socketid, adminName, endCallback) {
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				getAdminList(function (err, data) {
+					var i;
+					
+					if (!data.hasOwnProperty('adminlist')) {
+						endCallback("not found adminlist");
+						return;
+					}
+					for (i = 0; i < data.adminlist.length; i = i + 1) {
+						if (data.adminlist[i].name === adminName) {
+							var id = data.adminlist[i].id;
+							data.adminlist.splice(i, 1);
+							textClient.set(adminListPrefix, JSON.stringify(data), endCallback);
+							
+							getAdminUserSetting((function (adminid) {
+								return function (err, adminSetting) {
+									if (adminSetting && adminSetting.hasOwnProperty(adminid)) {
+										delete adminSetting[adminid];
+										textClient.set(adminUserPrefix, JSON.stringify(adminSetting), function (err, reply) {
+											updateAuthority(adminSetting, null);
+											if (endCallback) {
+												endCallback(err, reply)
+											}
+										});
+									}
+								};
+							}(id)));	
+							return;
+						}
+					}
+				});
+			}
+		});
+	}
 
 	// コンテンツメタデータ中のグループ名の変更
 	function changeContentGroupName(socketid, oldID, newID) {
@@ -780,15 +830,15 @@
 					if (!data.hasOwnProperty(id)) {
 						data[id] = {};
 					}
-					if (data[id].hasOwnProperty('pre_password')) {
+					if (data[id].hasOwnProperty('pre_password') && setting.hasOwnProperty('pre_password')) {
 						prePass = util.encrypt(setting.pre_password, cryptkey);
 					} else {
-						// 初回追加時.
+						// 初回追加時.またはjsonから追加時.
 						var pass = util.encrypt(setting.password, cryptkey);
 						data[id].pre_password = pass;
 						prePass = pass;
 					}
-					if (data[id].pre_password === prePass) {
+					if (data[id].pre_password === prePass || socketid === "master") {
 						data[id].password = util.encrypt(setting.password, cryptkey);
 						textClient.set(adminUserPrefix, JSON.stringify(data), function (err, reply) {
 							updateAuthority(data, null);
@@ -938,7 +988,7 @@
 			}
 		}
 		console.log("-----updateAuthority------")
-		console.log(socketidToAccessAuthority)
+		//console.log(socketidToAccessAuthority)
 	}
 
 	/**
@@ -3414,12 +3464,46 @@
 		console.log("idstr:" + contentBackupPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
 
-		// 管理者の初期登録
+		/// 管理者の初期登録
 		
 		textClient.exists(adminUserPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
-				addAdmin("master", util.generateUUID8(), "管理者", "hogehoge", function (err, reply) {});
+				addAdmin("master", util.generateUUID8(), "管理者", "admin", function (err, reply) {});
 			}
+			// jsonから追加.
+			fs.readFile("../admin.json", function (err, reply) {
+				var name, data;
+				if (!err) {
+					try {
+						var admins = JSON.parse(reply);
+						for (name in admins) {
+							data = admins[name];
+							if (data.hasOwnProperty('command') && data.command === "add") {
+								if (data.hasOwnProperty('password') && data.password.length > 0) {
+									addAdmin("master", util.generateUUID8(), name, admins[name].password, (function (name) {
+										return function (err, reply) {
+											if (!err) {
+												console.log(name, "を上書きしました");
+											}
+										};
+									}(name)));
+								}
+							}
+							else if (data.hasOwnProperty('command') && data.command === "delete") {
+								deleteAdmin("master", name, (function (name) {
+									return function (err, reply) {
+										if (!err) {
+											console.log(name, "を削除しました");
+										}
+									};
+								}(name)));
+							}
+						}
+					} catch (e) {
+						console.error(e);
+					}
+				}
+			});
 		});
 		groupInitialSettting();
 

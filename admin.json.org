@@ -1,0 +1,10 @@
+{
+	"管理者" : {
+		"command" : "add",
+		"password" : "admin"
+	},
+	"管理者2" : {
+		"command" : "delete",
+		"password" : "admin2"
+	}
+}
