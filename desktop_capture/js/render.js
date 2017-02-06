@@ -78,7 +78,7 @@ window.URL = window.URL || window.webkitURL;
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect();
+        //ws_connector.connect();
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
@@ -190,23 +190,30 @@ window.URL = window.URL || window.webkitURL;
 
         // キャプチャーイベント-----------------------------------------------------------------
         capButton.addEventListener('click',function(eve){
+            let startCapture = function () {
+                // キャプチャー以外の操作の拒否
+                disableI(true);
+                drawInterval = setInterval(drawCall, drawTime*1000);
+                cap = true;
+                capButton.value = "Capture Stop";
+            };
+            let stopCapture = function () {
+                // キャプチャー以外の操作許可
+                disableI(false);
+                clearInterval(drawInterval);
+                cap = false;
+                capButton.value = "Capture Start";
+            };
             // フラグを立てる
             if(cap === false){
-                let startCapture = function () {
-                    // キャプチャー以外の操作の拒否
-                    disableI(true);
-                    drawInterval = setInterval(drawCall, drawTime*1000);
-                    cap = true;
-                    capButton.value = "Capture Stop";
-                };
-
                 if (!ws_connector.isConnected()) {
                     ws_connector.connect(function () {
                         this();
                     }.bind(startCapture), function () {
                         // 繋がらないか切断された
                         window.alert("ChOWDERに接続できませんでした");
-                    });
+                        this();
+                    }.bind(stopCapture));
                     return;
                 } else {
                     startCapture();
@@ -214,11 +221,7 @@ window.URL = window.URL || window.webkitURL;
             }
             // フラグを下ろす
             else if(cap === true){
-                // キャプチャー以外の操作許可
-                disableI(false);
-                clearInterval(drawInterval);
-                cap = false;
-                capButton.value = "Capture Start";
+                stopCapture();
             }
         }, false);
 
