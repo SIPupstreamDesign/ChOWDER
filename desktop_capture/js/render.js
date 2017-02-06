@@ -6,6 +6,7 @@ const desktopCapturer = electron.desktopCapturer;
 const remote = electron.remote;
 const screen = electron.screen;
 const ipc = electron.ipcRenderer;
+const crypto = require('crypto');
 const main = remote.require('./main.js');
 
 const WIDTH = 800;
@@ -16,6 +17,9 @@ const DEFAULT_URL = 'ws://localhost:8081/';
 window.URL = window.URL || window.webkitURL;
 
 (function(){
+
+    let selfID = generateUUID8();
+    console.log(selfID);
 
     function init(){
         
@@ -82,8 +86,8 @@ window.URL = window.URL || window.webkitURL;
             function(error, sources) {
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
-                    console.log(sources[i].id);
-                    console.log(sources[i].name);
+                    //console.log(sources[i].id);
+                    console.log(sources[i].id, sources[i].name);
                     addImage(sources[i].thumbnail);
                 }
                 mainViewer(sources[selected]);
@@ -138,7 +142,7 @@ window.URL = window.URL || window.webkitURL;
         // 送信インターバルリセット
         timeReset.addEventListener('click',function(eve){
             num.value = SEND_INTERVAL;
-            darawTime = SEND_INTERVAL;
+            darwTime = SEND_INTERVAL;
             localStorage.setItem("capInterval", drawTime);
             console.log("Reset capture intarval.")
         }, false);
@@ -192,7 +196,7 @@ window.URL = window.URL || window.webkitURL;
             if(cap === false){
                 // キャプチャー以外の操作の拒否
                 disableI(true);
-                drawInterval = setInterval(drawCall,drawTime*1000);
+                drawInterval = setInterval(drawCall, drawTime*1000);
                 cap = true;
                 capButton.value = "Capture Stop";
             }
@@ -204,7 +208,7 @@ window.URL = window.URL || window.webkitURL;
                 cap = false;
                 capButton.value = "Capture Start";
             }
-        },false);
+        }, false);
 
         // キャプチャー中の入力系一括disabled関数
         function disableI(bool){
@@ -218,20 +222,23 @@ window.URL = window.URL || window.webkitURL;
         // 同期描画、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
         function sendImage(getCanvas){
+            // content id 判別
+            let content = generateUUID8();
+            console.log(content);
+            /*
             if(areaFlag === true){
-                ws_connector.sendBinary('AddContent', {
-                    "id" :         "selected:0:1", // 特定のID に固定する.
-                    "content_id" : "Area Selected", // 特定のID に固定する.
-                    "type" :       "image"
-                },getImageBinary(getCanvas), function(){});
+                content = "selected area";
             }
             else if(areaFlag !== true){
-                ws_connector.sendBinary('AddContent', {
-                    "id" :         capSource[selected].id, // 特定のID に固定する.
-                    "content_id" : capSource[selected].name, // 特定のID に固定する.
-                    "type" :       "image"
-                },getImageBinary(getCanvas), function(){});
+                content = capSource[selected].name;
             }
+            */
+            ws_connector.sendBinary('AddContent', {
+                "id" :         selfID,  // 起動時、特定のID に固定する.
+                "content_id" : selfID, // 特定のID に固定する.
+                "type" :       "image"
+            },getImageBinary(getCanvas), function(){});
+    
         }
 
         function onResize(){
@@ -368,6 +375,46 @@ window.URL = window.URL || window.webkitURL;
         }
 
     };
+    /**
+     * 指定されたバイト列からUUID生成
+     * @method uuidFromBytes
+     * @param {Bytes} rnd バイト列
+     * @return {String} UUID UUID
+     */
+    function uuidFromBytes(rnd) {
+        "use strict";
+        rnd[6] = (rnd[6] & 0x0f) | 0x40;
+        rnd[8] = (rnd[8] & 0x3f) | 0x80;
+        rnd = rnd.toString('hex').match(/(.{8})(.{4})(.{4})(.{4})(.{12})/);
+        rnd.shift();
+        return rnd.join('-');
+    }
+
+    /**
+     * UUID生成。callbackの指定が存在しない場合は無作為な乱数列から生成
+     * @method generateUUID
+     * @param {Function} callback 暗号化する場合に指定するコールバック関数
+     */
+    function generateUUID(callback) {
+        "use strict";
+        if (typeof (callback) !== 'function') {
+            return uuidFromBytes(crypto.randomBytes(16));
+        }
+        crypto.randomBytes(16, function (err, rnd) {
+            if (err) { return callback(err); }
+            callback(null, uuidFromBytes(rnd));
+        });
+    }
+
+    /**
+     * 8ケタのUUID生成
+     * @method generateUUID8
+     * @return {String} UUID 8ケタのUUID
+     */
+    function generateUUID8() {
+        'use strict';
+        return generateUUID().slice(0, 8);
+    }
 
     window.onload = init;
 
