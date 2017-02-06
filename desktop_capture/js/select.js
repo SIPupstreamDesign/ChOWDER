@@ -37,6 +37,9 @@ function createRect (a, b) {
         
         // 矩形
         let rectElm = document.getElementsByClassName('rect');
+
+        // 選択可能な領域
+        let select_area = document.getElementById("select_area");
         
         function chngElm(x, y){
             let lx = x.toString(10) + 'px';
@@ -54,13 +57,14 @@ function createRect (a, b) {
         }
 
         // マウスイベント全般を管理
-        window.onmousemove = function f(eve){
-            x = eve.clientX;
-            y = eve.clientY;
+        select_area.onmousemove = function f(eve){
+            x = eve.clientX - select_area.getBoundingClientRect().left;
+            y = eve.clientY - select_area.getBoundingClientRect().top;
             chngElm(x, y);
             if (!cropping) return;
             rect = createRect(downPoint, {x, y});
             chngRect(rect);
+            eve.preventDefault();
         };
 
         window.onmouseup = function f(eve) {
@@ -70,10 +74,11 @@ function createRect (a, b) {
             closer(sRect);
         };
 
-        window.onmousedown = function f(eve) {
-            downPoint.x = eve.clientX;
-            downPoint.y = eve.clientY;
+        select_area.onmousedown = function f(eve) {
+            downPoint.x = eve.clientX - select_area.getBoundingClientRect().left;
+            downPoint.y = eve.clientY - select_area.getBoundingClientRect().top;
             cropping = true;
+            eve.preventDefault();
         };
         
         function closer(sRect){
