@@ -217,12 +217,13 @@ window.URL = window.URL || window.webkitURL;
             urlReset.disabled = bool;
         }
 
-        // 同期描画、送信イベント----------------------------------------------------------------
+        // 描画同期、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
-        function sendImage(getCanvas){
+        function sendImage(getCanvas, sid){
+            
             ws_connector.sendBinary('AddContent', {
                 "id" :         selfID,  // 起動時、特定のID に固定する.
-                "content_id" : selfID,  // 特定のID に固定する.
+                "content_id" : sid,     // 特定のID に固定する.
                 "type" :       "image"
             },getImageBinary(getCanvas), function(){});
     
@@ -242,8 +243,12 @@ window.URL = window.URL || window.webkitURL;
 
         // 描画呼び出し
         function drawCall(){
+            // 送信用個別id代入
+            let sid;
+            
             // 範囲選択時
             if(areaFlag === true){
+                sid = 'selected area';
                 console.log("Area captured.");
                 sctx.clearRect(0, 0, WIDTH, HEIGHT)
                 sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
@@ -254,16 +259,18 @@ window.URL = window.URL || window.webkitURL;
                 ctx.drawImage(video, areaData.x+8, areaData.y, 
                                      subX, subY,
                                      0, 0, areaData.width, areaData.height);
-                sendImage(canvas);
+                sendImage(canvas, sid);
             }
             // 非範囲選択時
             else if(areaFlag === false){
+                sid = capSource[selected].name;
                 console.log("Select captured.");
                 console.log(video.videoWidth, video.videoHeight);
                 onResize();
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-                sendImage(canvas);
+                sendImage(canvas, sid);
             }
+            console.log("sid :" + sid);
         }
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
@@ -360,8 +367,8 @@ window.URL = window.URL || window.webkitURL;
             }
             console.log(cw, ch);
         }
+    }
 
-    };
     /**
      * 指定されたバイト列からUUID生成
      * @method uuidFromBytes
