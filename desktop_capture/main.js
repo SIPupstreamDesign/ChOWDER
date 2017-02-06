@@ -40,6 +40,8 @@ function createWindow () {
       show: false,
       transparent: true,
       resizable: false,
+      toolbar: false,
+      enableLargerThanScreen : true,
       'always-on-top': true
     });
 
@@ -53,17 +55,18 @@ function createWindow () {
     // Open the DevTools.
     //mainWindow.webContents.openDevTools()
 
-    // Emitted when the window is closed.
-    mainWindow.on('closed', function () {
-      //mainWindow.webContents.send('dataStorage');
-      mainWindow = null;
-      virtualWindow = null;
-      app.quit();
-    });
+  // Emitted when the window is closed.
+  mainWindow.on('closed', function () {
+    if (!virtualWindow.isDestroyed()) {
+        virtualWindow.close();
+    }
+    mainWindow = null;
+    virtualWindow = null;
+  });
 }
 
 exports.areaSelector = function() {
-    
+    var offset = 50;
     // Screen APIの読み込み
     const screen = electron.screen;
     const size = screen.getPrimaryDisplay().size;
@@ -72,6 +75,8 @@ exports.areaSelector = function() {
     mainWindow.minimize();
     virtualWindow.show();
     virtualWindow.setKiosk(true);
+    virtualWindow.setPosition(-offset, -offset);
+    virtualWindow.setSize(size.width + offset * 2, size.height + offset * 2)
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools()
