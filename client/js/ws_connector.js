@@ -151,7 +151,7 @@
 		try {
 			console.log(data, binary);
 			metabin = metabinary.createMetaBinary(data, binary);
-			console.log(metabin);
+			//console.log(metabin);
 			//data = JSON.stringify(reqjson);
 			sendWrapper(data.id, data.method, metabin, resultCallback);
 		} catch (e) {
