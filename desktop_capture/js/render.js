@@ -84,10 +84,13 @@ window.URL = window.URL || window.webkitURL;
         function initCapturing(){
             desktopCapturer.getSources({types: ['window', 'screen']}, 
             function(error, sources) {
+                const div = document.createElement("div");
+                div.setAttribute('class', 'added');
+                document.body.appendChild(div);
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
                     addImage(sources[i].thumbnail);
-                }
+                }                
                 mainViewer(sources[selected]);
                 // キャプチャー情報の保持
                 capSource = sources;
@@ -126,7 +129,7 @@ window.URL = window.URL || window.webkitURL;
             browserId++;
             elm.className = "thumbnaile";
             elm.src = image.toDataURL();
-            document.body.appendChild(elm);
+            document.getElementsByClassName('added')[0].appendChild(elm);
         }
 
         // ボタン周り--------------------------------------------------------------------------
@@ -239,7 +242,7 @@ window.URL = window.URL || window.webkitURL;
         function sendImage(getCanvas, sid){
             
             ws_connector.sendBinary('AddContent', {
-                "id" :         selfID,  // 起動時、特定のID に固定する.
+                "id" :         sid,  // 起動時、特定のID に固定する.
                 "content_id" : sid,     // 特定のID に固定する.
                 "type" :       "image"
             },getImageBinary(getCanvas), function(){});

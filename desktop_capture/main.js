@@ -19,8 +19,8 @@ function createWindow () {
 
     // メインのウィンドウ。
     mainWindow = new BrowserWindow({
-        width: 1440, 
-        height: 810,
+        width: 840, 
+        height: 910,
         show: true,
         autoHideMenuBar: true
     });

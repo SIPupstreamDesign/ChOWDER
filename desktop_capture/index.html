@@ -3,32 +3,36 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="css/3rd/bootstrap.css">
         <script src="js/command.js"></script>
         <script src="js/metabinary.js"></script>
         <script src="js/ws_connector.js"></script>
         <script src="js/render.js"></script>
+        <script src="css/3rd/bootstrap-without-jquery.min.js"></script>
     </head>
     <body>
-        <div>
-            <video id="video" autoplay></video>
-            <canvas id="canvas"></canvas>
-            <canvas id="selectedcanvas"></canvas>
-        </div>
-        <div>
-            <input type="button" class="bt" id="capture" value="Capture Start">
-            <input type="button" class="bt" id="setarea" value="Set Capture Area">
-        </div>
-        <div>
-            <p>Capture Interval(sec) : 
-                <input type="number" id="interval"  value="1.0" min="1.0" max="10.0" step="0.1">
-                <input type="button" id="timereset" value="Reset">
-            </p>
-        </div>
-        <div>
-            <p>ChOWDER Destination : 
-                <input type="text" id="sendurl">
-                <input type="button" id="urlreset" value="Reset">
-            </p>
+        <div class="default">
+            <div>
+                <video id="video" autoplay></video>
+                <canvas id="canvas"></canvas>
+                <canvas id="selectedcanvas"></canvas>
+            </div>
+            <div class="if">
+                <input type="button" class="btn btn-primary" id="capture" value="Capture Start">
+                <input type="button" class="btn btn-primary" id="setarea" value="Set Capture Area">
+            </div>
+            <div class="if">
+                <p>Capture Interval(sec) : 
+                    <input type="number" class="form-control" id="interval"  value="1.0" min="1.0" max="10.0" step="0.1">
+                    <input type="button" class="btn btn-primary" id="timereset" value="Reset">
+                </p>
+            </div>
+            <div class="if">
+                <p>ChOWDER Destination : 
+                    <input type="text" class="form-control" id="sendurl">
+                    <input type="button" class="btn btn-primary" id="urlreset" value="Reset">
+                </p>
+            </div>
         </div>
     </body>
 </html>
