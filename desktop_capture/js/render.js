@@ -241,8 +241,6 @@ window.URL = window.URL || window.webkitURL;
                     video.style.display = 'inline';
                 }
                 selected = id;
-                //if (localStream) localStream.getTracks()[0].stop();
-                //localStream = null;
                 mainViewer(capSource[selected]);
             }
         }, false);
