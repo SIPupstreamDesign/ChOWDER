@@ -325,13 +325,33 @@ window.URL = window.URL || window.webkitURL;
         // 範囲選択時プレビュー作成用
         function resizeCalc(nData){
             let aspect = nData.width/nData.height;
+            console.log("aspect :" + aspect);
             let ratio;
             
-            if(aspect>=1)     ratio = WIDTH/nData.width;
-            else if(aspect<1) ratio = HEIGHT/nData.height;
-            
+            if(aspect>=1){
+                ratio = WIDTH/nData.width;
+                console.log(ratio);
+            }
+            else if(aspect<1) {
+                ratio = HEIGHT/nData.height;
+                console.log(ratio);
+            }
+
             cw = Math.round(nData.width * ratio);
             ch = Math.round(nData.height * ratio);
+
+            // リサイズ後も条件に満たなかった場合
+            if(ch>450 && aspect>=1){
+                ratio = HEIGHT/ch;
+                cw = Math.round(cw * ratio);
+                ch = Math.round(ch * ratio);
+            }
+            else if(cw>800 && aspect<1){
+                ratio = WIDTH/cw;
+                cw = Math.round(cw * ratio);
+                ch = Math.round(ch * ratio);
+            }
+            console.log(cw, ch);
         }
 
 
