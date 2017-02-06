@@ -54,7 +54,7 @@ window.URL = window.URL || window.webkitURL;
         let vh = screen.getPrimaryDisplay().size.height;
         
         let drawInterval;
-        let drawTime = 1;
+        let drawTime ;
         let sendUrl = DEFAULT_URL;
         let selected = 0;
 
@@ -87,6 +87,26 @@ window.URL = window.URL || window.webkitURL;
                 // キャプチャー情報の保持
                 capSource = sources;
             });
+
+            // 前回起動時の設定読み込み
+            if(localStorage.getItem("sendInterval")){
+                let t = localStorage.getItem("sendInterval");
+                drawTime = t;
+                num.value = t;
+            } 
+            else{
+                drawTime = SEND_INTERVAL;
+                num.value = SEND_INTERVAL;
+            }
+            if(localStorage.getItem("sendUrl")){
+                let u = localStorage.getItem("sendUrl");
+                urlDest.value = u;
+                ws_connector.setURL(urlDest.value);
+            }
+            else{
+                urlDest.value = DEFAULT_URL;
+                ws_connector.setURL(urlDest.value);
+            }
         }
         
         // sourcesに関する関数--------------------------------------------------------------------
@@ -104,12 +124,15 @@ window.URL = window.URL || window.webkitURL;
         // 送信インターバル変更
         num.addEventListener('change',function(eve){
             drawTime = num.value;
+            localStorage.setItem("capInterval", drawTime);
             console.log("Capture interval : " + drawTime + "sec")
         },false);
 
         // 送信インターバルリセット
         timeReset.addEventListener('click',function(eve){
             num.value = SEND_INTERVAL;
+            darawTime = SEND_INTERVAL;
+            localStorage.setItem("capInterval", num.value);
             console.log("Reset capture intarval.")
         }, false);
 
@@ -310,9 +333,16 @@ window.URL = window.URL || window.webkitURL;
             cw = Math.round(nData.width * ratio);
             ch = Math.round(nData.height * ratio);
         }
+
+
     };
 
     window.onload = init;
+
+    ipc.on('dataStorage', function(){
+        localStorage.setItem("capInterval", drawTime);
+        localStorage.setItem("sendUrl", urlDest.value);
+    });
 
     
 })();

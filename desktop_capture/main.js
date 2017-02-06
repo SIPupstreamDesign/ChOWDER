@@ -25,12 +25,12 @@ function createWindow () {
         autoHideMenuBar: true
     });
 
-  // and load the index.html of the app.
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
+    // and load the index.html of the app.
+    mainWindow.loadURL(url.format({
+      pathname: path.join(__dirname, 'index.html'),
+      protocol: 'file:',
+      slashes: true
+    }));
 
     // 仮想ウィンドウ
     virtualWindow = new BrowserWindow({
@@ -50,14 +50,16 @@ function createWindow () {
       slashes: true
     }));
 
-  // Open the DevTools.
-  //mainWindow.webContents.openDevTools()
+    // Open the DevTools.
+    //mainWindow.webContents.openDevTools()
 
-  // Emitted when the window is closed.
-  mainWindow.on('closed', function () {
-    mainWindow = null;
-    virtualWindow = null;
-  });
+    // Emitted when the window is closed.
+    mainWindow.on('closed', function () {
+      //mainWindow.webContents.send('dataStorage');
+      mainWindow = null;
+      virtualWindow = null;
+      app.quit();
+    });
 }
 
 exports.areaSelector = function() {
@@ -70,9 +72,6 @@ exports.areaSelector = function() {
     mainWindow.minimize();
     virtualWindow.show();
     virtualWindow.setKiosk(true);
-
-    //virtualWindow.maximize();
-
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools()
@@ -90,6 +89,10 @@ exports.activeW = function(){
     mainWindow.show();
 }
 
+app.on('quit', function(){
+  mainWindow.webContents.send('dataStorage');
+})
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -99,7 +102,6 @@ app.on('ready', createWindow);
 app.on('window-all-closed', function () {
     app.quit();
 });
-
 
 app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
