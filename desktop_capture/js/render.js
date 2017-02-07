@@ -24,7 +24,7 @@
     let osDisplay;
     if(ostype === 'W'){
         osDisplay = 8;
-    }else if(ostype ==='M'){
+    }else if(ostype !=='W'){
         osDisplay = 0;
     }
     console.log(osIs, osDisplay);
