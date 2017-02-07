@@ -27,8 +27,8 @@
     }else if(ostype !=='W'){
         osDisplay = 0;
     }
-    console.log(osIs, osDisplay);
-    console.log(selfID);
+    console.log("OS: " + osIs, osDisplay);
+    console.log("ID: " + selfID);
 
     function init(){
         
@@ -164,6 +164,9 @@
         // ボタン周り--------------------------------------------------------------------------
         // 送信インターバル変更
         num.addEventListener('change',function(eve){
+            if(num.value<0.05){
+                num.value = 0.05;
+            }
             drawTime = num.value;
             localStorage.setItem("sendInterval", drawTime);
             console.log("Capture interval : " + drawTime + "sec")
@@ -304,7 +307,6 @@
                                 　0, 0, cw, ch);
                 canvas.width = areaData.width;
                 canvas.height = areaData.height;
-                console.log();
                 ctx.drawImage(video, areaData.x+osDisplay, areaData.y, 
                                      subX, subY,
                                      0, 0, areaData.width, areaData.height);
@@ -319,7 +321,6 @@
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
                 sendImage(canvas, sid);
             }
-            console.log("sid :" + sid);
         }
         
         // キャプチャー対象の切り替え-------------------------------------------------------------
