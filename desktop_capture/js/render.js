@@ -298,16 +298,18 @@
             timeReset.disabled = bool;
             urlDest.disabled = bool;
             urlReset.disabled = bool;
+            groupReload.disabled = bool;
+            groupSelect.disabled = bool;
         }
 
         // 描画同期、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
-        function sendImage(getCanvas, sid){
+        function sendImage(getCanvas, id){
             let group = groupSelect.options[groupSelect.selectedIndex].value;
 
             ws_connector.sendBinary('AddContent', {
-                "id" :         sid,  // 起動時、特定のID に固定する.
-                "content_id" : sid,     // 特定のID に固定する.
+                "id" :         id,  // 起動時、特定のID に固定する.
+                "content_id" : id,     // 特定のID に固定する.
                 "type" :       "image",
                 "group" : group
             },getImageBinary(getCanvas), function(){});
