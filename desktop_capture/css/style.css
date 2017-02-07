@@ -28,6 +28,8 @@ body{
 }
 
 .txt{
+    display: inline-block;
+    width: 150px;
     line-height: 30px;
     margin-right: 10px
 }
@@ -37,12 +39,15 @@ body{
 }
 
 .form-control--extend{
-    width:30%;
+    display: inline-block;
+    width: 200px;
+
 }
 
 .int{
-    display: flex;
+    display: inline-block;
     margin: 10px;
+    width: 800px;
     color: #ffffff;
 }
 
