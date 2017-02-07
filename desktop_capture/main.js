@@ -78,8 +78,6 @@ exports.areaSelector = function() {
     virtualWindow.setPosition(-offset, -offset);
     virtualWindow.setSize(size.width + offset * 2, size.height + offset * 2)
 
-    // Open the DevTools.
-    //mainWindow.webContents.openDevTools()
 }
 
 exports.windowCloser = function(rect){
