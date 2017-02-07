@@ -60,3 +60,7 @@ body{
     margin: 10px ;
     border: 2px solid rgba(80, 200, 141, 0.9);
 }
+
+#groupselect {
+    color : black;
+}
