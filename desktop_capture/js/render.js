@@ -173,10 +173,9 @@ window.URL = window.URL || window.webkitURL;
         }, false);
         
         ipc.on('rectData', function(event, data){
-            areaFlag = true;
-            sctx.clearRect(0, 0, WIDTH, HEIGHT);
             mainViewer(capSource[0], function () {
-
+                areaFlag = true;
+                sctx.clearRect(0, 0, WIDTH, HEIGHT);
                 console.log(selected);
                 areaData = data;
                 canvas.width = areaData.width;
@@ -190,9 +189,7 @@ window.URL = window.URL || window.webkitURL;
                                     　0,            0,          cw, ch);
                 sCnvs.style.display = 'inline';
                 video.style.display = 'none';
-                
             });
-            
         });
 
         // キャプチャーイベント-----------------------------------------------------------------
