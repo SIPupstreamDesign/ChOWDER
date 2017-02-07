@@ -74,7 +74,7 @@
         let drawTime ;
         let sendUrl = DEFAULT_URL;
         let selected = 0;
-        let addID;
+        let mapID = {};
 
         // 範囲選択
         let areaData;
@@ -142,11 +142,12 @@
                 if (error) throw error;
                 for (let i = 0; i < sources.length; ++i) {
                     addImage(sources[i].thumbnail);
+                    
                 }                
                 mainViewer(sources[selected]);
                 // キャプチャー情報の保持
                 capSource = sources;
-                // 範囲選択の情報追加
+
             });
 
             // 前回起動時の設定読み込み
@@ -329,12 +330,19 @@
         function drawCall(){
             // 送信用個別id代入
             let sid;
-            
+            let nid;
             // 範囲選択時
             if(areaFlag === true){
                 sid = 'selected area';
+                if(mapID[sid]){ 
+                    nid = mapID[sid];
+                }else{
+                    mapID[sid] = generateUUID8();
+                    nid = mapID[sid];
+                }
+                console.log(mapID[sid]);
                 console.log("Area captured.");
-                sctx.clearRect(0, 0, WIDTH, HEIGHT)
+                sctx.clearRect(0, 0, WIDTH, HEIGHT);
                 sctx.drawImage(video, areaData.x+osDisplay, areaData.y, subX, subY,
                                 　0, 0, cw, ch);
                 canvas.width = areaData.width;
@@ -342,16 +350,22 @@
                 ctx.drawImage(video, areaData.x+osDisplay, areaData.y, 
                                      subX, subY,
                                      0, 0, areaData.width, areaData.height);
-                sendImage(canvas, sid);
+                sendImage(canvas, nid);
             }
             // 非範囲選択時
             else if(areaFlag === false){
                 sid = capSource[selected].name;
+                if(mapID[sid]){ 
+                    nid = mapID[sid];
+                }else{
+                    mapID[sid] = generateUUID8();
+                    nid = mapID[sid];
+                }
                 console.log("Select captured.");
-                console.log(video.videoWidth, video.videoHeight);
+                console.log("ID :" + mapID[sid]);
                 onResize();
                 ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-                sendImage(canvas, sid);
+                sendImage(canvas, nid);
             }
         }
         
