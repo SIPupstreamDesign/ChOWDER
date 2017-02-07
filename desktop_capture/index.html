@@ -21,7 +21,7 @@
                 <input type="button" class="btn btn-primary" id="capture" value="Capture Start">
                 <input type="button" class="btn btn-primary" id="setarea" value="Set Capture Area">
             </div>
-            <div class="int" style="height: 40px">
+            <div class="int">
                 <span class="txt">Capture Interval(sec) : </span>
                 <input type="number" class="form-control form-control--extend" id="interval"  value="1.0" min="0.05" step="0.01">
                 <input type="button" class="btn btn-primary" id="timereset" value="Reset">
@@ -32,8 +32,9 @@
                 <input type="button" class="btn btn-primary" id="urlreset" value="Reset">
             </div>
             <div class="int">
-                <span class="txt">Group : </span>
+                <span class="txt">Target Group : </span>
                 <select style="width:200px" id="groupselect"></select>
+                <input type="button" class="btn btn-primary" id="groupreload" value="Reload">
             </div>
         </div>
     </body>

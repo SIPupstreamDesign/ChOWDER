@@ -33,7 +33,27 @@
 		SendMessage: "SendMessage",
 
 		// to client
-		Disconnect : "Disconnect"
+		Disconnect : "Disconnect",
+		
+		// DB管理コマンド
+		NewDB : "NewDB",
+		InitDB : "InitDB",
+		RenameDB : "RenameDB",
+		DeleteDB : "DeleteDB",
+		ChangeDB : "ChangeDB",
+		GetDBList : "GetDBList",
+		
+		// 各種設定変更
+		ChangeGlobalSetting : "ChangeGlobalSetting",
+		GetGlobalSetting : "GetGlobalSetting",
+		UpdateSetting : "UpdateSetting",
+		
+		// ユーザー管理
+		Login : "Login",
+		Logout : "Logout",
+		ChangePassword : "ChangePassword",
+		ChangeAuthority : "ChangeAuthority",
+		GetUserList :  "GetUserList"
 	};
 	
 	window.command = Command;

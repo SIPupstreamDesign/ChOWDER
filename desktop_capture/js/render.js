@@ -51,6 +51,9 @@
         sCnvs.width = WIDTH;
         sCnvs.height = HEIGHT;
 
+        // グループ選択
+        let groupSelect = document.getElementById('groupselect');
+
         // ボタン
         let num = document.getElementById('interval');
         let capButton = document.getElementById('capture');
@@ -58,6 +61,7 @@
         let timeReset = document.getElementById('timereset');
         let urlDest = document.getElementById('sendurl');
         let urlReset = document.getElementById('urlreset');
+        let groupReload = document.getElementById('groupreload');
         
         // キャプチャー情報
         let capSource;
@@ -88,14 +92,32 @@
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        ws_connector.connect(function () {
-                initGroupSelect(groupList);
+        connect(function () {
+            initGroupSelect();
+        });
+
+        // 接続してログイン
+        function connect(callback) {
+            ws_connector.connect(function () {
+                    login(function () {
+                        if (callback) { callback(); }
+                    });
+                });
+        }
+
+        // ログイン
+        function login(callback) {
+            var request = { id : "Display", password : "" };
+            ws_connector.send('Login', request, function (err, reply) {
+                if (callback) { callback(); }
             });
+        }
         
-        function initGroupSelect(groupList) {
+        // グループセレクトを初期化
+        function initGroupSelect(callback) {
+            if (!groupSelect) return;
             ws_connector.send("GetGroupList", {}, function (err, groupList) {
                 if (!err) {
-                    let groupSelect = document.getElementById('groupselect');
                     groupSelect.innerHTML = "";
                     for (let i = 0; i < groupList.grouplist.length; i = i + 1) {
                         let option = document.createElement('option');
@@ -104,6 +126,7 @@
                         groupSelect.appendChild(option);
                     }
                     groupSelect.selectedIndex = 0;
+                    if (callback) { callback(); }
                 }
             });
         }
@@ -184,7 +207,7 @@
         urlDest.addEventListener('change',function(eve){
             ws_connector.setURL(urlDest.value);
             ws_connector.close();
-            ws_connector.connect();
+            connect();
             localStorage.setItem("sendUrl", urlDest.value); 
             console.log("URL apply :" + ws_connector.getURL());
         }, false);
@@ -197,6 +220,13 @@
             console.log("URL reset :" + ws_connector.getURL())
         }, false);
 
+        // グループリストリロード
+        groupReload.addEventListener('click', function () {
+            if (!ws_connector.isConnected()) {
+                connect();
+            }
+            initGroupSelect();
+        });
 
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
@@ -272,11 +302,13 @@
         // 描画同期、送信イベント----------------------------------------------------------------
         // Canvasをバイナリ変換後送信
         function sendImage(getCanvas, sid){
-            
+            let group = groupSelect.options[groupSelect.selectedIndex].value;
+
             ws_connector.sendBinary('AddContent', {
                 "id" :         sid,  // 起動時、特定のID に固定する.
                 "content_id" : sid,     // 特定のID に固定する.
-                "type" :       "image"
+                "type" :       "image",
+                "group" : group
             },getImageBinary(getCanvas), function(){});
     
         }
