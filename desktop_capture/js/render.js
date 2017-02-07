@@ -88,7 +88,25 @@
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
-        //ws_connector.connect();
+        ws_connector.connect(function () {
+            ws_connector.send("GetGroupList", {}, function (err, groupList) {
+                if (!err) {
+                    initGroupSelect(groupList);
+                }
+            });
+        });
+        
+        function initGroupSelect(groupList) {
+            let groupSelect = document.getElementById('groupselect');
+            groupSelect.innerHTML = "";
+            for (let i = 0; i < groupList.grouplist.length; i = i + 1) {
+                let option = document.createElement('option');
+                option.value = groupList.grouplist[i].id;
+                option.innerHTML = groupList.grouplist[i].name;
+                groupSelect.appendChild(option);
+            }
+            groupSelect.selectedIndex = 0;
+        }
         
         // 起動時のキャプチャー-----------------------------------------------------------------    
         function initCapturing(){
