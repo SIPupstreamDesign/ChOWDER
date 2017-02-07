@@ -6,30 +6,43 @@ html  {
 body{
   width: 100%;
   height: 100%;
-    overflow: hidden;
+  overflow: hidden;
 }
 
 .default{
     overflow: hidden;
     background-color: #000033;
-    height: 700px;
+    height: 630px;
 }
 
 .added{
     overflow-y: auto;
     background-color: #000033;
-    height: calc(100% - 700px);
+    height: calc(100% - 630px);
 }
+
 
 .thumbnaile{
     display: inline;
     margin:5px;
 }
 
-.if{
+.txt{
+    line-height: 30px;
+    margin-right: 10px
+}
+
+.cap{
     margin-left: 10px;
-    margin-right: 500px;
-    margin-top: 5px;
+}
+
+.form-control--extend{
+    width:30%;
+}
+
+.int{
+    display: flex;
+    margin: 10px;
     color: #ffffff;
 }
 
