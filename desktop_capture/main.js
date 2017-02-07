@@ -15,6 +15,28 @@ const url = require('url');
 let virtualWindow;
 let mainWindow;
 
+function createVirtualWindow() {
+    // 仮想ウィンドウ
+    virtualWindow = new BrowserWindow({
+        left: 0,
+        top: 0,
+        frame: false,
+        show: false,
+        transparent: true,
+        resizable: false,
+        toolbar: false,
+        enableLargerThanScreen : true,
+        'always-on-top': true
+    });
+
+    // and load the index.html of the app.
+    virtualWindow.loadURL(url.format({
+        pathname: path.join(__dirname, 'js/select.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
+}
+
 function createWindow () {
 
     // メインのウィンドウ。
@@ -32,38 +54,16 @@ function createWindow () {
       slashes: true
     }));
 
-    // 仮想ウィンドウ
-    virtualWindow = new BrowserWindow({
-      left: 0,
-      top: 0,
-      frame: false,
-      show: false,
-      transparent: true,
-      resizable: false,
-      toolbar: false,
-      enableLargerThanScreen : true,
-      'always-on-top': true
+    // Emitted when the window is closed.
+    mainWindow.on('closed', function () {
+        if (!virtualWindow.isDestroyed()) {
+            virtualWindow.close();
+        }
+        mainWindow = null;
+        virtualWindow = null;
     });
 
-    // and load the index.html of the app.
-    virtualWindow.loadURL(url.format({
-      pathname: path.join(__dirname, 'js/select.html'),
-      protocol: 'file:',
-      slashes: true
-    }));
-
-    // Open the DevTools.
-    //mainWindow.webContents.openDevTools()
-
-    
-  // Emitted when the window is closed.
-  mainWindow.on('closed', function () {
-    if (!virtualWindow.isDestroyed()) {
-        virtualWindow.close();
-    }
-    mainWindow = null;
-    virtualWindow = null;
-  });
+    createVirtualWindow();
 }
 
 exports.areaSelector = function() {
@@ -75,7 +75,6 @@ exports.areaSelector = function() {
     // MainWindowを自動的に最小化
     mainWindow.minimize();
     virtualWindow.show();
-    virtualWindow.setKiosk(true);
     virtualWindow.setPosition(-offset, -offset);
     virtualWindow.setSize(size.width + offset * 2, size.height + offset * 2)
 
@@ -84,10 +83,13 @@ exports.areaSelector = function() {
 }
 
 exports.windowCloser = function(rect){
-    virtualWindow.hide();
-    virtualWindow.reload();
-    mainWindow.focus();
-    mainWindow.webContents.send('rectData', rect);
+    virtualWindow.once('closed', function () {
+        createVirtualWindow();
+        mainWindow.show();
+        mainWindow.webContents.send('rectData', rect);
+    })
+    virtualWindow.close();
+
     //console.log("window closer called")
 }
 
