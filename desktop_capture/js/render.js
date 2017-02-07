@@ -1,24 +1,33 @@
-"use strict";
-
-// エレクトロン依存のモジュールの追加
-const electron = require('electron');
-const desktopCapturer = electron.desktopCapturer;
-const remote = electron.remote;
-const screen = electron.screen;
-const ipc = electron.ipcRenderer;
-const crypto = require('crypto');
-const main = remote.require('./main.js');
-
-const WIDTH = 800;
-const HEIGHT = 450;
-const SEND_INTERVAL = 1.0;
-const DEFAULT_URL = 'ws://localhost:8081/';
-
-window.URL = window.URL || window.webkitURL;
-
 (function(){
+    "use strict";
+
+    // エレクトロン依存のモジュールの追加
+    const electron = require('electron');
+    const desktopCapturer = electron.desktopCapturer;
+    const remote = electron.remote;
+    const screen = electron.screen;
+    const ipc = electron.ipcRenderer;
+    const crypto = require('crypto');
+    const main = remote.require('./main.js');
+    const os = require('os');
+
+    const WIDTH = 800;
+    const HEIGHT = 450;
+    const SEND_INTERVAL = 1.0;
+    const DEFAULT_URL = 'ws://localhost:8081/';
+
+    window.URL = window.URL || window.webkitURL;
 
     let selfID = generateUUID8();
+    let osIs = os.type();
+    let ostype = osIs[0];
+    let osDisplay;
+    if(ostype === 'W'){
+        osDisplay = 8;
+    }else if(ostype ==='M'){
+        osDisplay = 0;
+    }
+    console.log(osIs, osDisplay);
     console.log(selfID);
 
     function init(){
@@ -69,12 +78,13 @@ window.URL = window.URL || window.webkitURL;
         let ch;
         let subX;
         let subY;
+        
 
         // フラグ系
         let cap = false;
         let areaFlag = false;
-        let resizeInterval = 100; //
-
+        let resizeInterval = 10; //
+        let isMacOrWindows;
 
         // 初期動作----------------------------------------------------------------------------
         initCapturing();
@@ -185,7 +195,7 @@ window.URL = window.URL || window.webkitURL;
                 
                 // Preview用データ
                 resizeCalc(areaData);
-                sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
+                sctx.drawImage(video, areaData.x+osDisplay, areaData.y, subX, subY,
                                     　0,            0,          cw, ch);
                 sCnvs.style.display = 'inline';
                 video.style.display = 'none';
@@ -272,12 +282,12 @@ window.URL = window.URL || window.webkitURL;
                 sid = 'selected area';
                 console.log("Area captured.");
                 sctx.clearRect(0, 0, WIDTH, HEIGHT)
-                sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
+                sctx.drawImage(video, areaData.x+osDisplay, areaData.y, subX, subY,
                                 　0, 0, cw, ch);
                 canvas.width = areaData.width;
                 canvas.height = areaData.height;
                 console.log();
-                ctx.drawImage(video, areaData.x+8, areaData.y, 
+                ctx.drawImage(video, areaData.x+osDisplay, areaData.y, 
                                      subX, subY,
                                      0, 0, areaData.width, areaData.height);
                 sendImage(canvas, sid);

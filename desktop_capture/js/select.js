@@ -1,19 +1,17 @@
-'use strict'
-const electron = require('electron');
-const remote = electron.remote;
-const main = remote.require("./main.js");
-
-function createRect (a, b) {
-  return {
-    x: Math.min(a.x, b.x),
-    y: Math.min(a.y, b.y),
-    width: Math.abs(a.x - b.x),
-    height: Math.abs(a.y - b.y)
-  }
-}
-
 (function(){
+    'use strict'
+    const electron = require('electron');
+    const remote = electron.remote;
+    const main = remote.require("./main.js");
 
+    function createRect (a, b) {
+    return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(a.x - b.x),
+        height: Math.abs(a.y - b.y)
+    }
+    }
     function setArea(){
         let x = 0;
         let y = 0;
