@@ -169,26 +169,29 @@ window.URL = window.URL || window.webkitURL;
 
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
-            areaFlag = true;
-            sctx.clearRect(0, 0, WIDTH, HEIGHT);
-            mainViewer(capSource[0]);
             main.areaSelector();
         }, false);
         
         ipc.on('rectData', function(event, data){
-            console.log(selected);
-            areaData = data;
-            canvas.width = areaData.width;
-            canvas.height = areaData.height;
-            subX = video.videoWidth - (video.videoWidth - areaData.width);
-            subY = video.videoHeight - (video.videoHeight - areaData.height);
-            
-            // Preview用データ
-            resizeCalc(areaData);
-            sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
-                                　0,            0,          cw, ch);
-            sCnvs.style.display = 'inline';
-            video.style.display = 'none';
+            areaFlag = true;
+            sctx.clearRect(0, 0, WIDTH, HEIGHT);
+            mainViewer(capSource[0], function () {
+
+                console.log(selected);
+                areaData = data;
+                canvas.width = areaData.width;
+                canvas.height = areaData.height;
+                subX = video.videoWidth - (video.videoWidth - areaData.width);
+                subY = video.videoHeight - (video.videoHeight - areaData.height);
+                
+                // Preview用データ
+                resizeCalc(areaData);
+                sctx.drawImage(video, areaData.x+8, areaData.y, subX, subY,
+                                    　0,            0,          cw, ch);
+                sCnvs.style.display = 'inline';
+                video.style.display = 'none';
+                
+            });
             
         });
 
@@ -310,7 +313,7 @@ window.URL = window.URL || window.webkitURL;
         }, false);
 
         // viewer-------------------------------------------------------------------------------
-        function mainViewer(source){
+        function mainViewer(source, canPlayCallback){
             let media;
             if (source.name == "Entire screen") {
                 media = 'screen';
@@ -330,17 +333,24 @@ window.URL = window.URL || window.webkitURL;
                         maxHeight: vh
                     }
                 }
-            }, gotStream, getUserMediaError);
+            }, gotStream(canPlayCallback), getUserMediaError);
         }
 
         // デスクトップ情報の取得が成功したとき
-        function gotStream(stream) {
-            if(localStream) URL.revokeObjectURL(localStream);
-            localStream = stream;
-            document.querySelector('video').src = URL.createObjectURL(localStream);
-            // windowを手前する
-            document.querySelector('video').oncanplay = function () {
-                if(areaFlag !== true) main.activeW();
+        function gotStream(canPlayCallback) {
+            return function (stream) {
+                if(localStream) URL.revokeObjectURL(localStream);
+                localStream = stream;
+                document.querySelector('video').src = URL.createObjectURL(localStream);
+                // windowを手前する
+                document.querySelector('video').oncanplaythrough = function () {
+                    if(areaFlag !== true) {
+                        main.activeW();
+                    }
+                    if (canPlayCallback) { 
+                        canPlayCallback();
+                    }
+                }
             }
         }
 
