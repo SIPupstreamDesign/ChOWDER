@@ -375,7 +375,7 @@
         addEventListener('click', function(eve){
             let id = eve.target.id;
             let cs = eve.target.className;
-            if(cs === 'thumbnaile' && id){
+            if(cs === 'thumbnaile' && id && cap !== true){
                 if(areaFlag) {
                     areaFlag = false;
                     sCnvs.style.display = 'none';
