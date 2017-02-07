@@ -83,12 +83,12 @@ exports.areaSelector = function() {
 }
 
 exports.windowCloser = function(rect){
-    virtualWindow.close();
     virtualWindow.once('closed', function () {
         createVirtualWindow();
         mainWindow.show();
         mainWindow.webContents.send('rectData', rect);
     })
+    virtualWindow.close();
 
     //console.log("window closer called")
 }
