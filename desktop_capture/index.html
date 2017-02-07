@@ -2,13 +2,13 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="css/style.css">
         <link rel="stylesheet" href="css/3rd/bootstrap.css">
+        <link rel="stylesheet" href="css/style.css">
+        <script src="js/3rd/bootstrap-without-jquery.min.js"></script>
         <script src="js/command.js"></script>
         <script src="js/metabinary.js"></script>
         <script src="js/ws_connector.js"></script>
         <script src="js/render.js"></script>
-        <script src="js/3rd/bootstrap-without-jquery.min.js"></script>
     </head>
     <body>
         <div class="default">
@@ -17,21 +17,19 @@
                 <canvas id="canvas"></canvas>
                 <canvas id="selectedcanvas"></canvas>
             </div>
-            <div class="if">
+            <div class="cap">
                 <input type="button" class="btn btn-primary" id="capture" value="Capture Start">
                 <input type="button" class="btn btn-primary" id="setarea" value="Set Capture Area">
             </div>
-            <div class="if">
-                <p>Capture Interval(sec) : 
-                    <input type="number" class="form-control" id="interval"  value="1.0" min="1.0" max="10.0" step="0.1">
-                    <input type="button" class="btn btn-primary" id="timereset" value="Reset">
-                </p>
+            <div class="int">
+                <div class="txt">Capture Interval(sec) : </div>
+                <input type="number" class="form-control form-control--extend" id="interval"  value="1.0" min="1.0" max="10.0" step="0.1">
+                <input type="button" class="btn btn-primary" id="timereset" value="Reset">
             </div>
-            <div class="if">
-                <p>ChOWDER Destination : 
-                    <input type="text" class="form-control" id="sendurl">
-                    <input type="button" class="btn btn-primary" id="urlreset" value="Reset">
-                </p>
+            <div class="int">
+                <div class="txt">ChOWDER Destination : </div>
+                <input type="text" class="form-control form-control--extend" id="sendurl">
+                <input type="button" class="btn btn-primary" id="urlreset" value="Reset">
             </div>
         </div>
     </body>
