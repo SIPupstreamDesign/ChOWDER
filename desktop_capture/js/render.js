@@ -232,6 +232,11 @@
         // 範囲選択用イベント-------------------------------------------------------------------
         setArea.addEventListener('click', function(eve){
             main.areaSelector();
+            if(window.onkeydown){
+                window.onkeydown = function(e){
+                    e.preventDefault();
+                }
+            }
         }, false);
         
         ipc.on('rectData', function(event, data){
@@ -514,6 +519,7 @@
         'use strict';
         return generateUUID().slice(0, 8);
     }
+
 
     window.onload = init;
 
