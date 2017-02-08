@@ -21,7 +21,7 @@ html, body,  {
   height: 24px;
   margin-top: -12px;
   margin-left: -12px;
-  background-image: url("cursor.png");
+  background-image: url("../img/cursor.png");
   background-size: 24px 24px;
 }
 

@@ -31,7 +31,7 @@ function createVirtualWindow() {
 
     // and load the index.html of the app.
     virtualWindow.loadURL(url.format({
-        pathname: path.join(__dirname, 'js/select.html'),
+        pathname: path.join(__dirname, 'select.html'),
         protocol: 'file:',
         slashes: true
     }));
