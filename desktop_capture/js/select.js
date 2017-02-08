@@ -85,13 +85,6 @@
 
         
     }
-    
-    window.onkeydown = function(e){
-        if(e.keyCode === 122){
-            console.log('not allowed key.');
-            e.preventDefault();
-        }
-    };
             
     window.onload = setArea;
     
