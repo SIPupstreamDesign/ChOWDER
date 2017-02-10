@@ -1286,6 +1286,7 @@
 			mousePos,
 			splitWhole,
 			draggingID,
+			screen,
 			targetMetaDatas = [],
 			pageX = evt.pageX,
 			pageY = evt.pageY,
@@ -1345,6 +1346,7 @@
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
+				screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 				if (screen && document.getElementById(screen.id)) {
 					document.getElementById(screen.id).style.background = "red";
 				}
@@ -1438,7 +1440,7 @@
 							px = rect.left + dragOffsetLeft;
 							py = rect.top + dragOffsetTop;
 							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-							screen = vscreen.getScreeByPos(orgPos.x, orgPos.y, draggingID);
+							screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 							if (screen) {
 								snapToScreen(elem, metaData, screen);
 							}

@@ -187,15 +187,16 @@
 	
 	/**
 	 * 位置から、スクリーンを取得する.
-	 * @method getScreeByPos
+	 * @method getScreenByPos
 	 * @param {Number} px x座標
 	 * @param {Number} py y座標
 	 * @param {String} withoutID このIDのものを除く
 	 * @return スクリーン
 	 */
-	function getScreeByPos(px, py, withoutID) {
+	function getScreenByPos(px, py, withoutID) {
 		var i,
 			w;
+
 		for (i in screens) {
 			if (screens.hasOwnProperty(i)) {
 				w = screens[i];
@@ -482,7 +483,7 @@
 	window.vscreen.setScreenSize = setScreenSize;
 	window.vscreen.setScreenPos = setScreenPos;
 	window.vscreen.clearScreenAll = clearScreenAll;
-	window.vscreen.getScreeByPos = getScreeByPos;
+	window.vscreen.getScreenByPos = getScreenByPos;
 	// transform
 	window.vscreen.transform = transform;
 	window.vscreen.transformOrg = transformOrg;

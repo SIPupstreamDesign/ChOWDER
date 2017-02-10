@@ -107,6 +107,7 @@
 	};
 
 	Tabs.prototype.is_active = function (tabID) {
+		if (!tabID) return false;
  		var tab = document.getElementById(tabID);
 		return tab && tab.className.indexOf('active') >= 0;
 	}
