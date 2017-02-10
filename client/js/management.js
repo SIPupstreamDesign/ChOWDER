@@ -210,7 +210,7 @@
 				if (user.type !== "admin") {
 					option = document.createElement('option');
 					option.value = user.id;
-					option.innerText = user.name;
+					option.innerHTML = user.name;
 					select.appendChild(option);	
 				}
 			}
@@ -346,7 +346,7 @@
 			for (i = 0; i < this.userList.length; i = i + 1) {
 				option = document.createElement('option');
 				option.value = this.userList[i].id;
-				option.innerText = this.userList[i].name;
+				option.innerHTML = this.userList[i].name;
 				select.appendChild(option);
 			}
 		}

@@ -3809,7 +3809,7 @@
 					loginkey = reply.loginkey;
 					for (var i = 0; i < userList.length; i = i + 1) {
 						if (userList[i].id === reply.id) {
-							user_text.innerText = userList[i].name;
+							user_text.innerHTML = userList[i].name;
 							break;
 						}
 					}
@@ -3876,7 +3876,7 @@
 						if (userList[i].type !== "display") {
 							option = document.createElement('option');
 							option.value = userList[i].name;
-							option.innerText = userList[i].name;
+							option.innerHTML = userList[i].name;
 							userselect.appendChild(option);
 						}
 					}

@@ -379,9 +379,9 @@
 					text = new Date(backups[i]).toLocaleString();
 					option.value = text;
 					if (i === restoreIndex) {
-						option.innerText = "●" + text;
+						option.innerHTML = "●" + text;
 					} else {
-						option.innerText = text;
+						option.innerHTML = text;
 					}
 					select.appendChild(option);
 				}
