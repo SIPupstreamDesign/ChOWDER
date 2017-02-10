@@ -2540,6 +2540,13 @@
 		});
 	});
 
+    function offsetX(eve) {
+        return eve.offsetX || eve.pageX - eve.target.getBoundingClientRect().left;
+    }
+    function offsetY(eve) {
+        return eve.offsetY || eve.pageY - eve.target.getBoundingClientRect().top;
+    }
+	
 	/**
 	 *  ファイルドロップハンドラ
 	 * @param {Object} evt FileDropイベント
@@ -2550,8 +2557,8 @@
 			files = evt.dataTransfer.files,
 			fileReader = new FileReader(),
 			rect = evt.target.getBoundingClientRect(),
-			px = rect.left + evt.offsetX,
-			py = rect.top + evt.offsetY;
+			px = rect.left + offsetX(evt),
+			py = rect.top + offsetY(evt);
 
 		fileReader.onloadend = function (e) {
 			var data = e.target.result;

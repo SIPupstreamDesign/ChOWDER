@@ -17,9 +17,17 @@
         if(callback){this.setColorCallback = callback;}
         this.generate();
     }
+    
+    function offsetX(eve) {
+        return eve.offsetX || eve.pageX - eve.target.getBoundingClientRect().left;
+    }
+    function offsetY(eve) {
+        return eve.offsetY || eve.pageY - eve.target.getBoundingClientRect().top;
+    }
+    
     ColorSelector.prototype.click = function(eve){
-        var x = parseInt(eve.offsetX, 10);
-        var y = parseInt(eve.offsetY, 10);
+        var x = parseInt(offsetX(eve), 10);
+        var y = parseInt(offsetY(eve), 10);
         var i = y * this.canvasWidth + x;
         var j = i * 4;
         if(!isNaN(x) && !isNaN(y)){
@@ -32,8 +40,8 @@
         }
     };
     ColorSelector.prototype.move = function(eve){
-        var x = parseInt(eve.offsetX, 10);
-        var y = parseInt(eve.offsetY, 10);
+        var x = parseInt(offsetX(eve), 10);
+        var y = parseInt(offsetY(eve), 10);
         var i = y * this.canvasWidth + x;
         var j = i * 4;
         if(!isNaN(x) && !isNaN(y)){
