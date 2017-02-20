@@ -94,6 +94,12 @@
 	width: 250px;
 	border: 2px solid rgb(112, 180, 239);
 	border-radius: 3px;
+	-webkit-touch-callout: text;
+	-webkit-user-select: text;
+	-khtml-user-select: text;
+	-moz-user-select: text; 
+	-ms-user-select: text;
+	user-select: text;
 }
 
 .text_send_button {
