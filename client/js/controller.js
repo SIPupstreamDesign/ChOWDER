@@ -2400,9 +2400,14 @@
 	 * テキスト送信ボタンが押された.
 	 * @param {Object} evt ボタンイベント.
 	 */
-	gui.on("textsendbutton_clicked", function (err, value, width, height) {
+	gui.on("textsendbutton_clicked", function (err, value, posx, posy, width, height) {
 		var text = value;
-		sendText(text, { posx : 0, posy : 0 }, width, height);
+		if (posx === 0 && posy === 0) {
+			// メニューから追加したときなど. wholescreenの左上端に置く.
+			posx = vscreen.getWhole().x;
+			posy = vscreen.getWhole().y;
+		}
+		sendText(text, { posx : posx, posy : posy, visible : true }, width, height);
 	});
 	
 	/**
@@ -2432,18 +2437,24 @@
 	 * @method on_imagefileinput_changed
 	 * @param {Object} evt FileOpenイベント
 	 */
-	gui.on("imagefileinput_changed", function (err, evt) {
+	gui.on("imagefileinput_changed", function (err, evt, posx, posy) {
 		var files = evt.target.files,
 			file,
 			i,
 			fileReader = new FileReader();
+
+		if (posx === 0 && posy === 0) {
+			// メニューから追加したときなど. wholescreenの左上端に置く.
+			posx = vscreen.getWhole().x;
+			posy = vscreen.getWhole().y;
+		}
 
 		fileReader.onload = (function (name) {
 			return function (e) {
 				var data = e.target.result,
 					img;
 				if (data && data instanceof ArrayBuffer) {
-					sendImage(data,  { posx : 0, posy : 0, visible : true, 
+					sendImage(data,  { posx : posx, posy : posy, visible : true, 
 						user_data_text : JSON.stringify({ text: name }) });
 				}
 			};
@@ -2584,16 +2595,22 @@
 	 * @method openText
 	 * @param {Object} evt FileOpenイベント
 	 */
-	gui.on("textfileinput_changed", function (err, evt) {
+	gui.on("textfileinput_changed", function (err, evt, posx, posy) {
 		var files = evt.target.files,
 			file,
 			i,
 			fileReader = new FileReader();
 		
+		if (posx === 0 && posy === 0) {
+			// メニューから追加したときなど. wholescreenの左上端に置く.
+			posx = vscreen.getWhole().x;
+			posy = vscreen.getWhole().y;
+		}
+		
 		fileReader.onloadend = function (e) {
 			var data = e.target.result;
 			if (data) {
-				sendText(data, { posx : 0, posy : 0 });
+				sendText(data, { posx : posx, posy : posy, visible : true });
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -3652,7 +3669,7 @@
 						metaData.orgWidth = elem.offsetWidth / vscreen.getWholeScale();
 						metaData.orgHeight = elem.offsetHeight / vscreen.getWholeScale();
 						correctAspect(metaData, function () {
-							console.error("metaData", metaData)
+							//console.error("metaData", metaData)
 							metaData.restore_index = -1;
 							updateContent(metaData, text);
 						})

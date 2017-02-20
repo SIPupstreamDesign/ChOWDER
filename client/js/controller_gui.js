@@ -18,8 +18,15 @@
 		this.display_scale = 1.0;
 		this.snapType = "free";
 		this.management = null;
+		this.contextPosX = 0;
+		this.contextPosY = 0;
 	};
 	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
+
+	ControllerGUI.prototype.initContextPos = function () {
+		this.contextPosX = 0;
+		this.contextPosY = 0;
+	};
 
 	ControllerGUI.prototype.init = function (management) {
 		this.management = management;
@@ -118,19 +125,31 @@
 				}, {
 					Add : [{
 							Image : {
-								func : function () { document.getElementById('image_file_input').click() }
+								func : function () { 
+									this.initContextPos();
+									document.getElementById('image_file_input').click();
+								}.bind(this)
 							}
 						}, {
 							Text : {
-								func : function () { this.openTextInput(); }.bind(this)
+								func : function () { 
+									this.initContextPos();
+									this.openTextInput();
+								}.bind(this)
 							},
 						}, {
 							TextFile : {
-								func : function () { document.getElementById('text_file_input').click(); }
+								func : function () {
+									this.initContextPos();
+									document.getElementById('text_file_input').click();
+								}.bind(this)
 							},
 						}, {
 							URL : {
-								func : function () { this.toggleURLInput(); }.bind(this)
+								func : function () {
+									this.initContextPos();
+									this.toggleURLInput();
+								}.bind(this)
 							}
 						}],
 				}, {
@@ -504,6 +523,8 @@
 					if (py > (document.getElementById("layout").offsetHeight - height)) {
 						py -= height;
 					}
+					this.contextPosX = px;
+					this.contextPosY = py;
 					menuElem.style.top = py + "px";
 					menuElem.style.left = px + "px";
 				}
@@ -516,7 +537,7 @@
 				menuElem.style.display = "none";
 			}
 			window.content_property.submit_text();
-		});
+		}.bind(this));
 	};
 
 	/**
@@ -539,6 +560,7 @@
 			add_content_submenu = document.getElementById("context_menu_add_content_submenu"),
 			select_all = document.getElementById('context_menu_select_all'),
 			select_group = document.getElementById('context_menu_select_group'),
+			contentPreviewArea = document.getElementById('content_preview_area'),
 			on_change_group = false,
 			on_change_group_item = false,
 			on_add_content = false,
@@ -860,12 +882,12 @@
 			updateImageInput = document.getElementById('update_image_input');
 
 		imageFileInput.addEventListener('change', function (evt) {
-			this.emit(window.ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED, null, evt);
+			this.emit(window.ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
 			imageFileInput.value = "";
 		}.bind(this), false);
 		
 		textFileInput.addEventListener('change', function (evt) {
-			this.emit(window.ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED, null, evt);
+			this.emit(window.ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
 			textFileInput.value = "";
 		}.bind(this), false);
 
@@ -1175,7 +1197,7 @@
 				name : "テキストの追加",
 				okButtonName : "Send"
 			}, function (value, w, h) {
-				this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, value, w, h);
+				this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, value, this.contextPosX, this.contextPosY, w, h);
 			}.bind(this)
 		);
 
@@ -1200,6 +1222,7 @@
 	ControllerGUI.prototype.toggleBurgerSubmenu = function (show, bottom) {
 		var container = document.getElementById('burger_menu_submenu');
 		if (show) {
+			this.initContextPos();
 			container.style.display = "block";
 			container.style.bottom = bottom;
 		} else {
@@ -1214,6 +1237,7 @@
 		var container = document.getElementById('burger_menu_layout_submenu');
 		
 		if (show) {
+			this.initContextPos();
 			container.style.display = "block";
 			container.style.bottom = bottom;
 		} else {
@@ -1227,6 +1251,7 @@
 	ControllerGUI.prototype.toggleBurgerSubmenuAddContent = function (show, bottom) {
 		var container = document.getElementById('burger_menu_submenu_add_content');
 		if (show) {
+			this.initContextPos();
 			container.style.display = "block";
 			container.style.bottom = bottom;
 		} else {

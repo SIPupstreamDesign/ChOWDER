@@ -353,6 +353,7 @@
 		// 差し替え履歴
 		if (metaData.type !== "window") {
 			var backup_list = document.getElementById('backup_list');
+			var restoreIndex = 0;
 			backup_list.innerHTML = "";
 			 document.getElementById('backup_restore').disabled = true;
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
