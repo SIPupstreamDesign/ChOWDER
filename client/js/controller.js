@@ -2930,11 +2930,10 @@
 				+ Math.floor(Math.random() * 128 + 127) + "," 
 				+ Math.floor(Math.random() * 128 + 127) + ")";
 				
-		connector.send('AddGroup', { name : groupName, color : groupColor }, function (err, reply) {
+		connector.send('AddGroup', { name : groupName, color : groupColor }, function (err, groupID) {
 			// UserList再取得
 			connector.send('GetUserList', {}, function (err, userList) {
 				management.setUserList(userList);
-				console.log("AddGroup done", err, reply);
 			});
 		});
 	});
@@ -3340,6 +3339,28 @@
 		}
 	}
 	
+	/** */
+	function updateAuthority(endCallback) {
+		var key = getCookie("loginkey");
+		if (key.length > 0) {
+			var request = { id : "", password : "", loginkey : key };
+			connector.send('Login', request, function (err, reply) {
+				if (err || reply === "failed") {
+					// ログインに失敗した。リロードする.
+					window.location.reload(true);
+				}
+				management.setAuthority(reply.authority);
+				if (endCallback) {
+					endCallback();
+				}
+			});
+		} else {
+			if (endCallback) {
+				endCallback();
+			}
+		}
+	}
+
 	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
 	connector.on("UpdateMetaData", function (data) {
@@ -3404,7 +3425,9 @@
 	// グループが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateGroup', function (metaData) {
 		console.log("onUpdateGroup")
-		updateGroupList();
+		updateAuthority(function () {
+			updateGroupList();
+		});
 	});
 
 	// 全てリロードする
