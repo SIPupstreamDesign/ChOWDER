@@ -116,7 +116,7 @@
 					Controller : [{
 							Display : {
 								func : function () {
-									var viewURL = "view.html#" + guid10();
+									var viewURL = "view.html";// + guid10();
 									window.open(viewURL);
 								}
 							},
