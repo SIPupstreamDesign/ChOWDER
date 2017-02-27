@@ -1016,8 +1016,10 @@
 			}()));
 
 		connector.on("Update", function (data) {
+			if (data === undefined) {
+				update('all');
+			}
 			/*
-			console.log("onUpdate", data);
 			if (data && data.hasOwnProperty('id') && data.hasOwnProperty('type')) {
 				if (data.type !== "layout") {
 					update(data.type, data.id);
