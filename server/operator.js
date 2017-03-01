@@ -2669,9 +2669,13 @@
 			isIdentityType = json.hasOwnProperty('id') && json.id !== undefined && json.id !== "undefined" && json.id !== "";
 		if (isAllType || isIdentityType) {
 			getWindowMetaData(json, function (windowData) {
-				console.log("doneGetWindow:", windowData);
-				if (endCallback) {
-					endCallback(null, windowData);
+				if (windowData) {
+					console.log("doneGetWindow:", windowData);
+					if (endCallback) {
+						endCallback(null, windowData);
+					}
+				} else {
+					endCallback("not found window metadata", null);
 				}
 			});
 		}

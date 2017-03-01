@@ -693,7 +693,7 @@
 	 * @method changeID
 	 * @param {Event} e イベント
 	 */
-	function changeID(e, id) {
+	function changeID(e, id, noReload) {
 		var elem = document.getElementById('input_id'),
 			val,
 			url;
@@ -705,10 +705,14 @@
 			val = elem.value.split(' ').join('');
 			val = val.split('　').join('');
 			location.hash = fixedEncodeURIComponent(val);
-			location.reload(true);
+			if (!noReload) {
+				location.reload(true);
+			}
 		} else if (id) {
 			location.hash = fixedEncodeURIComponent(id);
-			location.reload(true);
+			if (!noReload) {
+				location.reload(true);
+			}
 		}
 	}
 
@@ -792,6 +796,11 @@
 			updatePreviewAreaVisible(windowData);
 			resizeViewport(windowData);
 			updateContentVisible();
+		} else if (err) {
+			changeID(null, windowData.id, true);
+			windowData = null;
+			updatePreviewAreaVisible({ visible : false});
+			registerWindow();
 		}
 	};
 
@@ -1017,17 +1026,10 @@
 
 		connector.on("Update", function (data) {
 			if (data === undefined) {
-				update('all');
+				update('window');
+				update('group');
+				update('content');
 			}
-			/*
-			if (data && data.hasOwnProperty('id') && data.hasOwnProperty('type')) {
-				if (data.type !== "layout") {
-					update(data.type, data.id);
-				}
-			} else {
-				update('all');
-			}
-			*/
 		});
 
 		connector.on("UpdateContent", function (data) {
@@ -1054,7 +1056,9 @@
 			var request = { id : "Display", password : "" };
 			connector.send('Login', request, function (err, reply) {
 				authority = reply.authority;
-				update('all');
+				update('window');
+				update('group');
+				update('content');
 			});
 		});
 
@@ -1065,7 +1069,9 @@
 			connector.send('Login', request, function (err, reply) {
 				authority = reply.authority;
 				deleteAllElements();
-				update('all');
+				update('window');
+				update('group');
+				update('content');
 			});
 		});
 
