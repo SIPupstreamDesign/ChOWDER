@@ -2596,7 +2596,7 @@
 	
 	/**
 	 * DBの保存領域の削除
-	 * @method commandChangeDB
+	 * @method commandDeleteDB
 	 * @param {JSON} json 対象のnameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -2614,7 +2614,7 @@
 
 	/**
 	 * DBの保存領域の初期化
-	 * @method commandChangeDB
+	 * @method commandInitDB
 	 * @param {JSON} json 対象のnameを含むjson
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
@@ -2935,11 +2935,13 @@
 	 */
 	function commandLogout(data, socketid, endCallback) {
 		if (data.hasOwnProperty('loginkey')) {
-		console.log("Logout", data.loginkey)
+			console.log("Logout", data.loginkey)
 			removeAuthority(data.loginkey);
 			endCallback(null, data.loginkey);
 		} else {
-			endCallback(null);
+			console.log("Logout", socketid)
+			removeAuthority(socketid);
+			endCallback(null, socketid);
 		}
 	}
 

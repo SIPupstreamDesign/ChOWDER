@@ -797,11 +797,17 @@
 			resizeViewport(windowData);
 			updateContentVisible();
 		} else if (err) {
+			authority = null;
+			connector.send('Logout', {}, function () {
+			});
+		}
+		/*else if (err) {
 			changeID(null, windowData.id, true);
 			windowData = null;
 			updatePreviewAreaVisible({ visible : false});
 			registerWindow();
 		}
+		*/
 	};
 
 	/**
@@ -814,7 +820,11 @@
 		if (!err) {
 			var metaData = data.metaData,
 				contentData = data.contentData;
-			
+		
+			// 閲覧可能か
+			if (!isViewable(metaData.group)) {
+				return;
+			}
 			// レイアウトは無視
 			if (metaData.type === "layout") { return; }
 			// コンテンツ登録&表示
@@ -862,15 +872,15 @@
 	}
 
 	function isViewable(group) {
+		// 権限情報があるか
+		if (!authority) {
+			return false;
+		}
 		if (group === undefined || group === "") {
 			return true;
 		}
 		if (group === "group_default") {
 			return true;
-		}
-		// 権限情報があるか
-		if (!authority) {
-			return false;
 		}
 		if (groupDict.hasOwnProperty(group)) {
 			if (authority.viewable === "all") {
@@ -1036,6 +1046,10 @@
 			console.log("onUpdateContent", data);
 
 			connector.send('GetMetaData', data, function (err, json) {
+				// 閲覧可能か
+				if (!isViewable(json.group)) {
+					return;
+				}
 				if (!err) {
 					doneGetMetaData(err, json);
 					connector.send('GetContent', json, function (err, reply) {
