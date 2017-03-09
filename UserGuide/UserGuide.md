@@ -194,7 +194,7 @@ ChOWDERへのアクセスは、前述のアプリケーション起動を行っ�
 
 コントローラは下図の通りとなっております.
 
-<img src="image/cont_1.PNG" alt="コントローラ画面概要" width="585" />
+<img src="image/cont_1.png" alt="コントローラ画面概要" width="585" />
 *コントローラ画面概要*
 
 接続状態について
@@ -202,10 +202,10 @@ ChOWDERへのアクセスは、前述のアプリケーション起動を行っ�
 
 画面右上部分には、サーバーとの接続状態がアイコンで表示されます.
 
-<img src="image/connect.PNG" alt="サーバーとの接続ありの状態" width="283" />
+<img src="image/connect.png" alt="サーバーとの接続ありの状態" width="283" />
 *サーバーとの接続ありの状態*
 
-<img src="image/disconnect.PNG" alt="サーバーとの接続が無い状態" width="283" />
+<img src="image/disconnect.png" alt="サーバーとの接続が無い状態" width="283" />
 *サーバーとの接続が無い状態*
 
 コントローラの操作 : Virtual Display Screenについて
@@ -213,13 +213,13 @@ ChOWDERへのアクセスは、前述のアプリケーション起動を行っ�
 
 中央はVirtual Display Screenと呼ばれ、ChOWDERに接続された ディスプレイの操作、Contentsの移動、操作、削除等を行う 汎用スペースとなっております.
 
-<img src="image/TDD_View.PNG" alt="VirtualDisplayScreenの凡例" width="585" />
+<img src="image/TDD_View.png" alt="VirtualDisplayScreenの凡例" width="585" />
 *VirtualDisplayScreenの凡例*
 
 コントローラの操作 : Displayタブ
 --------------------------------
 
-<img src="image/Display_TAB_2conn.PNG" alt="image" width="207" />
+<img src="image/Display_TAB_2conn.png" alt="image" width="207" />
 *Displayタブ*
 
 VirtualDisplayと、ChOWDERサーバーに接続されているDisplayの一覧を表示します.
@@ -231,7 +231,7 @@ Displayはマウスドラッグドロップにより、VirtualDisplaySpaceに配
 Virtual Displayの設定
 ---------------------
 
-<img src="image/VirtualDisplaySetting.PNG" alt="image" width="207" />
+<img src="image/VirtualDisplaySetting.png" alt="image" width="207" />
 *Virtual Displayの設定*
 
 ### 分割数の設定
@@ -243,7 +243,7 @@ Displayタブにて, Virtual Display を選択すると, Property ウィンド�
 Displayを正確に区画に配置するための機能として「snap機能」があります.
 下図のドロップダウンリストからモードの変更が行えます.
 
-<img src="image/MIGIUE_Disp.PNG" alt="Snap機能の設定プルダウンボタン" width="207" />
+<img src="image/MIGIUE_Disp.png" alt="Snap機能の設定プルダウンボタン" width="207" />
 *Snap機能の設定プルダウンボタン*
 
 * Free : 自由配置となります.
@@ -258,7 +258,7 @@ Displayを正確に区画に配置するための機能として「snap機能」
 またVirtualDisplaySpaceの拡大縮小オプションとして、Scale機能があります.
 画面内でマウスの右ボタンを押しながらドラッグ操作することで、画面全体を拡大縮小することができます.
 
-<img src="image/MIGIUE_Scale.PNG" alt="scale後の例（コンテンツが小さく表示されている）" width="377" />
+<img src="image/MIGIUE_Scale.png" alt="scale後の例（コンテンツが小さく表示されている）" width="377" />
 *scale後の例（コンテンツが小さく表示されている）*
 
 ### ディスプレイとID
@@ -266,14 +266,14 @@ Displayを正確に区画に配置するための機能として「snap機能」
 接続されたDisplayのIDを各接続されたDisplay上に表示し、識別できるようにします.
 尚、IDは、接続された端末固有であり、1端末につき1IDが割り当てられます.
 
-<img src="image/3Button1.PNG" alt="Display ID" width="283" />
+<img src="image/3Button1.png" alt="Display ID" width="283" />
 *Display ID*
 
 ### 削除ボタン
 
 選択したDisplayを削除(ChOWDERサーバーから切断)します.
 
-<img src="image/3Button2.PNG" alt="削除ボタン" width="377" />
+<img src="image/3Button2.png" alt="削除ボタン" width="377" />
 *削除ボタン*
 
 ※尚、VirtualDisplayは削除することはできません.
@@ -282,7 +282,7 @@ Displayを正確に区画に配置するための機能として「snap機能」
 
 接続されているDisplayすべてを選択状態にします.
 
-<img src="image/3Button3.PNG" alt="全選択ボタン" width="377" />
+<img src="image/3Button3.png" alt="全選択ボタン" width="377" />
 *全選択ボタン*
 
 コントローラの操作 : Contentタブ
@@ -321,12 +321,12 @@ Contentsの追加を行います.
 右下のメニューから、指定されたURLのサイトの画像をContentsに追加します.
 以下例となります.
 
-<img src="image/AddContent_URL.PNG" alt="URL送信ボタン" width="472" />
+<img src="image/AddContent_URL.png" alt="URL送信ボタン" width="472" />
 *URL送信ボタン*
 
 追加すると以下の通りとなります.
 
-<img src="image/AddContent_URL_View.PNG" alt="URL追加後の様子" width="472" />
+<img src="image/AddContent_URL_View.png" alt="URL追加後の様子" width="472" />
 *URL追加後の様子*
 
 ### 画像の送信
@@ -341,7 +341,7 @@ Contentsの追加を行います.
 
 以下は、画像をContentsとして追加したあとの表示例となります.
 
-<img src="image/AddContent_Picture_View.PNG" alt="画像の追加例" width="434" />
+<img src="image/AddContent_Picture_View.png" alt="画像の追加例" width="434" />
 *画像の追加例*
 
 ### 画像の差し替え
@@ -349,15 +349,15 @@ Contentsの追加を行います.
 Contentsタブにて選択している画像の差し替えを行います.
 差し替え例を以下に示します.
 
-<img src="image/SASHI.PNG" alt="画像の差し替えボタン" width="434" />
+<img src="image/SASHI.png" alt="画像の差し替えボタン" width="434" />
 *画像の差し替えボタン*
 
 下図の通り指定すると、Contentsタブに存在するContentsが差し替わります。
 
-<img src="image/YUMUSHI.PNG" alt="画像の差し替えし指定" width="434" />
+<img src="image/YUMUSHI.png" alt="画像の差し替えし指定" width="434" />
 *画像の差し替え指定*
 
-<img src="image/SASHI2.PNG" alt="画像の差し替え結果" width="434" />
+<img src="image/SASHI2.png" alt="画像の差し替え結果" width="434" />
 *画像の差し替え結果*
 
 ### コンテンツの操作
@@ -412,7 +412,7 @@ Searchタブにあるテキストボックスからは、メタデータの検�
 コントローラの操作 : Propertyウィンドウ
 ========================================
 
-<img src="image/Prop_Down.PNG" alt="image" width="188" />
+<img src="image/Prop_Down.png" alt="image" width="188" />
 
 Propertyウィンドウは選択されたContents、Display、ContentsID、 およびそれぞれのPropertyを表示します.
 Propertyは以下の通りID以外を編集し、座標、表示の優先順位( Zindex )を 指定することができます.
@@ -425,14 +425,14 @@ Propertyは以下の通りID以外を編集し、座標、表示の優先順位(
 
 画面上部に配置されたメニューから各種操作が行えます.
 
-<img src="image/Upper.PNG" alt="画面上部領域" width="415" />
+<img src="image/Upper.png" alt="画面上部領域" width="415" />
 *画面上部領域*
 
 ### Displayボタン
 
 下図に示すとおり、Displayボタンを押下すると、 Displayウィンドウを開くことができます.
 
-<img src="image/Left_Display.PNG" alt="Displayボタン押下時" width="415" />
+<img src="image/Left_Display.png" alt="Displayボタン押下時" width="415" />
 *Displayボタン押下時*
 
 ### Addメニュー
@@ -440,26 +440,26 @@ Propertyは以下の通りID以外を編集し、座標、表示の優先順位(
 Addメニューからは各種コンテンツを追加することができます.
 操作方法の詳細については [コントローラの操作 : Contentタブ](#コントローラの操作-contentタブ) を参照してください.
 
-<img src="image/header01.PNG" alt="Addメニュー展開時" width="415" />
+<img src="image/header01.png" alt="Addメニュー展開時" width="415" />
 *Addメニュー展開時*
 
 ### Settingメニュー
 
 Settingメニューからはリモートカーソルの表示状態切替が行えます.
 
-<img src="image/SettingMenu.PNG" alt="Settingメニュー展開時" width="415" />
+<img src="image/SettingMenu.png" alt="Settingメニュー展開時" width="415" />
 *Settingメニュー展開時*
 
 リモートカーソルは以下のように表示されます。
 
-<img src="image/remotecursor.PNG" alt="リモートカーソル" width="415" />
+<img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *リモートカーソル*
 
 ### ホームに戻る
 
 下図のように、ChOWDERと書かれた部分をクリックすると、 ホームに戻ることができます.
 
-<img src="image/home_return.PNG" alt="タイトル名のクリックでホームに戻る" width="415" />
+<img src="image/home_return.png" alt="タイトル名のクリックでホームに戻る" width="415" />
 *タイトル名のクリックでホームに戻る*
 
 ディスプレイ画面の操作
