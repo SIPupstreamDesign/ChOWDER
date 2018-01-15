@@ -35,7 +35,7 @@
 	 */
 	function getTagName(contentType) {
 		var tagName;
-		if (contentType === 'text') {
+		if (contentType === 'text' || contentType === "video") {
 			tagName = 'div';
 		} else {
 			tagName = 'img';
@@ -109,6 +109,12 @@
 			if (metaData.type === 'text') {
 				// contentData is text
 				contentElem.innerHTML = contentData;
+				divElem.style.width = "150px";
+				divElem.style.height = "150px";
+				divElem.style.color = textColor;
+			} else if (metaData.type === 'video') {
+				// contentData is video(text)
+				contentElem.innerHTML = "video";
 				divElem.style.width = "150px";
 				divElem.style.height = "150px";
 				divElem.style.color = textColor;

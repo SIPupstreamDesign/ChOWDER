@@ -63,6 +63,16 @@
 			elem.style.height = rect.h + 'px';
 		}
 	}
+
+	/**
+	 * 動画のリサイズ
+	 */
+	function resizeVideo(elem, rect) {
+		if (elem && rect) {
+			elem.setAttribute("width", String(rect.w));
+			elem.setAttribute("height", String(rect.w));
+		}
+	}
 	
 	/**
 	 * 矩形を割り当て
@@ -133,6 +143,8 @@
 			assignZIndex(elem, metaData);
 			if (metaData.type === "text") {
 				resizeText(elem, rect);
+			} else if (metaData.type === "video") {
+				resizeVideo(elem, rect);
 			}
 			
 			if (isVisible(metaData)) {

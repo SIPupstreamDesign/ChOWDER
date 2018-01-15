@@ -1275,7 +1275,9 @@
 		} else if (metaData.hasOwnProperty('height')) {
 			metaData.orgHeight = metaData.height;
 		}
-		if (metaData.type === 'text') {
+		if (metaData.type === "video") {
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
@@ -1307,7 +1309,9 @@
 		if (metaData.hasOwnProperty('height')) {
 			metaData.orgHeight = metaData.height;
 		}
-		if (metaData.type === 'text') {
+		if (metaData.type === "video") {
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
@@ -1384,7 +1388,9 @@
 	 */
 	function addContent(metaData, data, endCallback) {
 		var contentData = data;
-		if (metaData.type === 'text') {
+		if (metaData.type === "video") {
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
@@ -1564,7 +1570,10 @@
 	function updateContent(socketid, metaData, data, endCallback) {
 		var contentData = null;
 		console.log("updateContent:" + metaData.id + ":" + metaData.content_id);
-		if (metaData.type === 'text' || metaData.type === 'layout') {
+		if (metaData.type === "video") {
+			contentData = data;
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text' || metaData.type === 'layout') {
 			contentData = data;
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {

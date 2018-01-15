@@ -46,8 +46,8 @@
 		doneUpdateWindowMetaData,
 		doneGetMetaData,
 		doneDeleteWindowMetaData,
-		isInitialized = false;
-		
+		isInitialized = false,
+		video = document.createElement('video'); // TODO 複数に対応
 	
 	/**
 	 * メタデータがwindowタイプであるか返す
@@ -741,8 +741,8 @@
 				if (groupDict.hasOwnProperty(metaData.group)) {
 					content_property.init(id, metaData.group, groupDict[metaData.group].name, metaData.type, mime);
 				} else {
-					console.warn("not found group")
-					content_property.init(id, null,"", metaData.type, mime);
+					console.warn("not found group", metaData)
+					content_property.init(id, null, "", metaData.type, mime);
 				}
 				content_property.assign_content_property(metaData);
 				gui.set_update_content_id(id);
@@ -1572,6 +1572,27 @@
 		}(metaData));
 	}
 
+	function fixedEncodeURIComponent(str) {
+		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
+	}
+
+	function sendMovie(data, metaData) {
+		// 動画は実体は送らずメタデータのみ送る
+		// データとしてSDPを送る
+		var blob = new Blob([data], {type: "video/mp4"});
+		video.src = URL.createObjectURL(blob);
+		var stream = video.captureStream();
+		var webRTC = new WebRTC();
+		webRTC.offer(function (sdp) {
+			webRTC.addStream(stream);
+			metaData.type = "video";
+			metaData.width = 1920;
+			metaData.height = 1080;
+			metaData.group = gui.get_current_group_id();
+			addContent(metaData, sdp);
+		});
+	}
+
 	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
@@ -1886,10 +1907,17 @@
 			if (json.hasOwnProperty('restore_index')) {
 				request.restore_index = json.restore_index;
 			}
-			connector.send('GetContent', request, function (err, data) {
-				doneGetContent(err, data, endCallback);
-				toggleMark(elem, metaData);
-			});
+			console.log("新規コンテンツロード", json);
+			if (json.type === "video") {
+				if (video.src) {
+					importContent(json, video.src);
+				}
+			} else {
+				connector.send('GetContent', request, function (err, data) {
+					doneGetContent(err, data, endCallback);
+					toggleMark(elem, metaData);
+				});
+			}
 		}
 	};
 	
@@ -2568,6 +2596,7 @@
 			file,
 			files = evt.dataTransfer.files,
 			fileReader = new FileReader(),
+			movieReader = new FileReader(),
 			rect = evt.target.getBoundingClientRect(),
 			px = rect.left + offsetX(evt),
 			py = rect.top + offsetY(evt);
@@ -2580,12 +2609,22 @@
 				sendText(data, { posx : px, posy : py, visible : true });
 			}
 		};
+		movieReader.onloadend = function (e) {
+			var data = e.target.result;
+			if (data && data instanceof ArrayBuffer) {
+				sendMovie(data,  { posx : px, posy : py, visible : true });
+			}
+		};
+
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
 			if (file.type.match('image.*')) {
 				fileReader.readAsArrayBuffer(file);
 			}
 			if (file.type.match('text.*')) {
 				fileReader.readAsText(file);
+			}
+			if (file.type.match('video.*')) {
+				movieReader.readAsArrayBuffer(file);
 			}
 		}
 	});

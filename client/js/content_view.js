@@ -36,6 +36,8 @@
 		var tagName;
 		if (contentType === 'text') {
 			tagName = 'pre';
+		} else if (contentType === 'video') {
+			tagName = 'video';
 		} else {
 			tagName = 'img';
 		}
@@ -91,6 +93,11 @@
 				contentElem.innerHTML = contentData;
 				contentElem.style.color = textColor;
 				contentElem.style.overflow = "visible"; // Show all text
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+			} else if (metaData.type === 'video') {
+				contentElem.src = contentData;
+				contentElem.setAttribute("controls", "");
+				contentElem.style.color = textColor;
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			} else {
 				// contentData is blob

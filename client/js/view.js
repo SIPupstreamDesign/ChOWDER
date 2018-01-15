@@ -316,7 +316,7 @@
 	 */
 	function getTagName(contentType) {
 		var tagName;
-		if (contentType === 'text') {
+		if (contentType === 'text' || contentType === 'video') {
 			tagName = 'pre';
 		} else {
 			tagName = 'img';
@@ -547,7 +547,9 @@
 				insertElementWithDictionarySort(previewArea, elem);
 				//previewArea.appendChild(elem);
 			}
-			if (metaData.type === 'text') {
+			if (metaData.type === 'video') {
+				console.error(contentData)
+			} else if (metaData.type === 'text') {
 				// contentData is text
 				elem.innerHTML = contentData;
 			} else {
@@ -966,10 +968,12 @@
 					if (!elem) {
 						createBoundingBox(json);
 						// 新規コンテンツロード.
-						connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
-							doneGetContent(err, reply);
-							toggleMark(document.getElementById(json.id), metaData);
-						});
+						if (json.type !== "video") {
+							connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
+								doneGetContent(err, reply);
+								toggleMark(document.getElementById(json.id), metaData);
+							});
+						}
 					}
 					elem = document.getElementById(json.id);
 					vscreen_util.assignMetaData(elem, json, false, groupDict);

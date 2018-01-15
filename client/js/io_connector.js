@@ -51,7 +51,6 @@
 	 */
 	function eventBinaryMessage(socket, metaData, contentData) {
 		var data;
-		console.log(metaData);
 		if (metaData.to === "client") {
 			// masterからメッセージがきた
 			data = {
@@ -76,7 +75,7 @@
 					resultCallbacks[metaData.id](null, data);
 				}
 			} else {
-				console.error('[Error] ArgumentError in connector.js');
+				console.error('[Error] ArgumentError in connector.js', metaData, contentData);
 				if (metaData.id && resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id]('ArgumentError', null);
 				}
