@@ -7,7 +7,6 @@
 
 	var ContentList,
 		contentBorderColor = "rgba(0,0,0,0)",
-		defaultGroup = "group_default",
 		textColor = "white";
 
 	ContentList = function () {
@@ -66,7 +65,7 @@
 			mime = "image/jpeg",
 			onlistID = "onlist:" + metaData.id;
 
-		if (metaData.type === "layout") {
+		if (Validator.isLayoutType(metaData)) {
 			return;
 		}
 
@@ -80,7 +79,7 @@
 			contentArea = gui.get_content_area_by_group(metaData.group);
 		}
 		if (!contentArea) {
-			contentArea = gui.get_content_area_by_group(defaultGroup);
+			contentArea = gui.get_content_area_by_group(Constants.DefaultGroup);
 		}
 
 		tagName = getTagName(metaData.type);

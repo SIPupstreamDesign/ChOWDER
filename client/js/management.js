@@ -501,7 +501,7 @@
 				return false;
 			},
 			isViewable : function (groupID) {
-				if (groupID === "group_default") {
+				if (groupID === Constants.DefaultGroup) {
 					return true;
 				}
 				if (groupID === undefined || groupID === "") {
@@ -515,7 +515,7 @@
 				return false;
 			},
 			isEditable : function (groupID) {
-				if (groupID === "group_default") {
+				if (groupID === Constants.DefaultGroup) {
 					return true;
 				}
 				if (groupID === undefined || groupID === "") {

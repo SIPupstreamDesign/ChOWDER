@@ -36,6 +36,13 @@
 	}
 	
 	/**
+	 * メタデータがテキストタイプであるか返す
+	 */
+	Validator.prototype.isTextType = function (meta) {
+		return (meta.type === Constants.TypeText);
+	}
+
+	/**
 	 * メタデータが表示中かを判定する
 	 * @method isVisible
 	 * @param {Object} metaData メタデータ

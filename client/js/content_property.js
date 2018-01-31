@@ -180,7 +180,7 @@
 			download_button.style.display = "block";
 			download_button.href = "download?" + id;
 			download_button.target = "_blank";
-			if (type === "text") {
+			if (type === Constants.PropertyTypeText) {
 				download_button.download = id + ".txt";
 			} else {
 				// image or url
@@ -194,7 +194,7 @@
 			if (metalabel) {
 				metalabel.style.display = "block";
 			}
-			if (type !== "content") {
+			if (type !== Constants.PropertTypeContent) {
 				backup_area.style.display = "block";
 			}
 			color_picker.style.display = "none";
@@ -351,7 +351,7 @@
 		}
 
 		// 差し替え履歴
-		if (metaData.type !== "window") {
+		if (!Validator.isWindowType(metaData)) {
 			var backup_list = document.getElementById('backup_list');
 			var restoreIndex = 0;
 			backup_list.innerHTML = "";

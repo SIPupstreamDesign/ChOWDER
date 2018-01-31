@@ -7,7 +7,6 @@
 
 	var LayoutList,
 		layoutBorderColor = "lightgray",
-		defaultGroup = "group_default",
 		textColor = "white";
 
 	LayoutList = function () {
@@ -33,7 +32,7 @@
 			memo,
 			onlistID = "onlist:" + metaData.id;
 
-		if (metaData.type !== "layout") {
+		if (!Validator.isLayoutType(metaData)) {
 			return;
 		}
 		
@@ -47,7 +46,7 @@
 			layoutArea = gui.get_layout_area_by_group(metaData.group);
 		}
 		if (!layoutArea) {
-			layoutArea = gui.get_layout_area_by_group(defaultGroup);
+			layoutArea = gui.get_layout_area_by_group(Constants.DefaultGroup);
 		}
 		tagName = "div";
 		classname = "layoutcontent";

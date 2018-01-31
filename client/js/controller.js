@@ -2724,7 +2724,7 @@
 					if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
 						metaData.restore_index = restoreIndex;
 						connector.send('GetContent', metaData, function (err, reply) {
-							if (reply.metaData.type === "text") {
+							if (Validator.isTextType(reply.metaData)) {
 								metaData.user_data_text = JSON.stringify({ text: reply.contentData });
 							}
 							reply.metaData.restore_index = restoreIndex;
@@ -3510,7 +3510,7 @@
 				newData = JSON.stringify({ text: text });
 				if (newData !== metaData.user_data_text) {
 					metaData.user_data_text = newData;
-					if (metaData.type === "text") {
+					if (Validator.isTextType(metaData)) {
 						// テキストのメモ変更.
 						// テキストはコンテンツ部分にも同じテキストがあるので更新.
 						var previewArea = gui.get_content_preview_area(),

@@ -9,8 +9,7 @@
 	 * 仮想スクリーンユーティリティ
 	 * @method VscreenUtil
 	 */
-	var VscreenUtil = function () {},
-		windowType = "window";
+	var VscreenUtil = function () {};
 	
 	/**
 	 * Floatの矩形を作成
@@ -141,7 +140,7 @@
 		if (elem && metaData) {
 			assignRect(elem, rect, (metaData.width < 10), (metaData.height < 10));
 			assignZIndex(elem, metaData);
-			if (metaData.type === "text") {
+			if (Validator.isTextType(metaData)) {
 				resizeText(elem, rect);
 			} else if (metaData.type === "video") {
 				resizeVideo(elem, rect);
@@ -150,7 +149,7 @@
 			if (isVisible(metaData)) {
 				//console.log("isvisible");
 				elem.style.display = "block";
-				if (metaData.type !== windowType) {
+				if (!Validator.isWindowType(metaData)) {
 					if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
 						if (metaData.group === "default") {
 							elem.style.borderColor = "rgb(54,187,68)";

@@ -9,8 +9,7 @@
 	 * マニピュレータ
 	 * @method Manipulator
 	 */
-	var Manipulator,
-		windowType = "window";
+	var Manipulator;
 	
 	Manipulator = function () {
 		EventEmitter.call(this);
@@ -226,7 +225,7 @@
 			memo = document.createElement('div');
 
 		// 星のトグルボタン
-		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {
+		if (!Validator.isWindowType(metaData)) {
 			star.id = "_manip_menu_0";
 			star.className = "manipulator_menu_star";
 			star.style.borderColor = targetElem.style.borderColor;
@@ -249,7 +248,7 @@
 		}.bind(this);
 
 		// メモのトグルボタン
-		if (metaData.hasOwnProperty('type') && metaData.type !== "window") {
+		if (!Validator.isWindowType(metaData)) {
 			memo.id = "_manip_menu_1";
 			memo.className = "manipulator_menu_memo";
 			memo.style.borderColor = targetElem.style.borderColor;
@@ -295,8 +294,8 @@
 		this.removeManipulator();
 		this.parent = previewArea;
 		
-		if ( (metaData.type !== "window" && this.authority.isEditable(metaData.group))
-		|| (metaData.type === "window" && this.authority.isDisplayManipulatable())) 
+		if ( (!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
+		|| (Validator.isWindowType(metaData) && this.authority.isDisplayManipulatable())) 
 		{
 			for (i = 0; i < manips.length; i = i + 1) {
 				manip = manips[i];

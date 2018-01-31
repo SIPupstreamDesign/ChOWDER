@@ -196,7 +196,7 @@
 			{
 				tabs : [{
 						"group_default" : {
-							id : "group_default",
+							id : Constants.DefaultGroup,
 							name : "default",
 							className : "group_tab",
 							func : function () {},
@@ -210,7 +210,7 @@
 		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'),
 			{
 				groups : [{
-					id : "group_default",
+					id : Constants.DefaultGroup,
 					name : "default"
 				}],
 				colors : ["rgb(54,187,68)"]
@@ -222,7 +222,7 @@
 			{
 				tabs : [{
 						"group_default" : {
-							id : "group_default",
+							id : Constants.DefaultGroup,
 							name : "default",
 							className : Constants.TabIDLayout,
 							func : function () {},
@@ -235,7 +235,7 @@
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.setAuthority(this.management.getAuthorityObject());
-		window.content_property.init(wholeWindowListID, "", "whole_window");
+		window.content_property.init(wholeWindowListID, "", Constants.PropertyTypeWholeWindow);
 
 		// コンテキストメニューの初期化.
 		this.initContextMenu();

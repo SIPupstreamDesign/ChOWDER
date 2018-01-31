@@ -10,7 +10,6 @@
 		windowData = null,
 		metaDataDict = {},
 		groupDict = {},
-		windowType = "window",
 		doneAddWindowMetaData,
 		doneGetWindowMetaData,
 		doneGetContent,
@@ -382,7 +381,7 @@
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
 					if (metaDataDict[i].id !== metaData.id && 
-						metaDataDict[i].type !== windowType &&
+						!Validator.isWindowType(metaDataDict[i]) &&
 						metaDataDict[i].hasOwnProperty("zIndex")) {
 						index = parseInt(metaDataDict[i].zIndex, 10);
 						if (!isNaN(index)) {
@@ -520,7 +519,7 @@
 			duplicatedElem;
 
 		console.log("assignMetaBinary", "id=" + metaData.id);
-		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
+		if (Validator.isWindowType(metaData) || (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
 			tagName = getTagName(metaData.type);
 
 			// 既に読み込み済みのコンテンツかどうか
@@ -828,7 +827,7 @@
 				return;
 			}
 			// レイアウトは無視
-			if (metaData.type === "layout") { return; }
+			if (Validator.isLayoutType(metaData)) { return; }
 			// コンテンツ登録&表示
 			assignMetaBinary(metaData, contentData);
 		}
@@ -881,7 +880,7 @@
 		if (group === undefined || group === "") {
 			return true;
 		}
-		if (group === "group_default") {
+		if (group === Constants.DefaultGroup) {
 			return true;
 		}
 		if (groupDict.hasOwnProperty(group)) {
@@ -906,7 +905,7 @@
 		console.log("doneGetMetaData", json);
 		if (!json) { return; }
 		// レイアウトは無視
-		if (metaData.type === "layout") { return; }
+		if (Validator.isLayoutType(metaData)) { return; }
 		// 復元したコンテンツか
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
@@ -931,7 +930,7 @@
 		metaDataDict[json.id] = json;
 		if (!err) {
 			var elem = document.getElementById(json.id),
-				isWindow = (json.type === windowType),
+				isWindow = Validator.isWindowType(json),
 				isOutside = false,
 				whole,
 				w,

@@ -60,7 +60,7 @@
 			blob,
 			mime = "image/jpeg";
 		
-		if (metaData.type === "layout") {
+		if (Validator.isLayoutType(metaData)) {
 			return;
 		}
 
