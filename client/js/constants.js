@@ -25,7 +25,9 @@
 		TabIDLayout : "layout_tab",
 		SnapTypeFree : "free",
 		SnapTypeGrid : "grid",
-		SnapTypeDisplay : "display"
+		SnapTypeDisplay : "display",
+		InitialWholeWidth : 1000,
+		InitialWholeHeight : 900
 	};
 	
 	window.Constants = Constants;

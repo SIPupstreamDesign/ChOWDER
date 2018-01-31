@@ -8,7 +8,6 @@
 		management, // 管理情報
 		loginUserID = "", // ID
 		loginkey = "", // ログインキー
-		currentContent = null,
 		draggingIDList = [],
 		selectedIDList = [],
 		onCtrlDown = false, // Ctrlボタンを押してるかどうか
@@ -22,9 +21,6 @@
 		metaDataDict = {},
 		groupList = [],
 		groupDict = {},
-		initialWholeWidth = 1000,
-		initialWholeHeight = 900,
-		initialDisplayScale = 0.5,
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
@@ -375,10 +371,10 @@
 			scale : vscreen.getWholeScale()
 		};
 		if (!windowData.orgWidth || isNaN(windowData.orgWidth)) {
-			windowData.orgWidth = initialWholeWidth;
+			windowData.orgWidth = Constants.InitialWholeWidth;
 		}
 		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
-			windowData.orgHeight = initialWholeHeight;
+			windowData.orgHeight = Constants.InitialWholeHeight;
 		}
 		connector.send('UpdateVirtualDisplay', windowData, function (err, res) {
 			if (!err) {
@@ -622,9 +618,9 @@
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (Validator.isWindowType(metaData)) {
-				content_property.init(id, null, "", "multi_display", mime);
+				content_property.init(id, null, "", Constants.PropertyTypeMultiDisplay, mime);
 			} else {
-				content_property.init(id, null,"", "multi_content", mime);
+				content_property.init(id, null,"", Constants.PropertyTypeMultiContent, mime);
 			}
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
@@ -2076,10 +2072,10 @@
 		if (windowData.hasOwnProperty('orgWidth')) {
 			// set virtual displays
 			if (!windowData.orgHeight || isNaN(windowData.orgWidth)) {
-				windowData.orgWidth = initialWholeWidth;
+				windowData.orgWidth = Constants.InitialWholeWidth;
 			}
 			if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
-				windowData.orgWidth = initialWholeHeight;
+				windowData.orgWidth = Constants.InitialWholeHeight;
 			}
 			vscreen.assignWhole(windowData.orgWidth, windowData.orgHeight, cx, cy, vscreen.getWholeScale());
 			vscreen.splitWhole(windowData.splitX, windowData.splitY);
@@ -2667,7 +2663,7 @@
 			cy = window.innerHeight / 2;
 			
 		if (!wholeWidth || !whole.hasOwnProperty('w')) {
-			w = initialWholeWidth;
+			w = Constants.InitialWholeWidth;
 		} else {
 			w = parseInt(wholeWidth.value, 10);
 			if (w <= 1) {
@@ -2676,7 +2672,7 @@
 			}
 		}
 		if (!wholeHeight || !whole.hasOwnProperty('h')) {
-			h = initialWholeHeight;
+			h = Constants.InitialWholeHeight;
 		} else {
 			h = parseInt(wholeHeight.value, 10);
 			if (h <= 1) {
