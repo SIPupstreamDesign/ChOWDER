@@ -5,9 +5,7 @@
 	 * コンテンツリストビュー
 	 */
 
-	var ContentList,
-		contentBorderColor = "rgba(0,0,0,0)",
-		textColor = "white";
+	var ContentList;
 
 	ContentList = function () {
 		EventEmitter.call(this);
@@ -110,13 +108,13 @@
 				contentElem.innerHTML = contentData;
 				divElem.style.width = "150px";
 				divElem.style.height = "150px";
-				divElem.style.color = textColor;
+				divElem.style.color = "white";
 			} else if (metaData.type === 'video') {
 				// contentData is video(text)
 				contentElem.innerHTML = "video";
 				divElem.style.width = "150px";
 				divElem.style.height = "150px";
-				divElem.style.color = textColor;
+				divElem.style.color = "white";
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -157,7 +155,7 @@
 		divElem.style.top = "5px";
 		divElem.style.left = "20px";
 		divElem.style.border = "solid";
-		divElem.style.borderColor = contentBorderColor;
+		divElem.style.borderColor = "rgba(0,0,0,0)";
 		divElem.style.margin = "5px";
 		divElem.style.color = "white";
 		divElem.style.float = "left";

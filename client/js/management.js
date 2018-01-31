@@ -1,4 +1,5 @@
 (function () {
+	"use strict";
 
 	var Management = function () {
 		EventEmitter.call(this);

@@ -1,5 +1,6 @@
 
 (function () {
+	"use strict";
 	// colorselector insert ui
 	var ContentProperty;
 	
@@ -309,7 +310,8 @@
 			transh = document.getElementById('content_transform_h'),
 			transz = document.getElementById('content_transform_z'),
 			text = document.getElementById('content_text'),
-			i;
+			i,
+			option;
 		
 		// x, y, w, h, z
 		if (transx) {

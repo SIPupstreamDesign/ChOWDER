@@ -5,9 +5,7 @@
 	 * コンテンツを追加できるメインビュー
 	 */
 	
-	var ContentView,
-		contentBorderColor = "rgba(0,0,0,0)",
-		textColor = "white";
+	var ContentView;
 
 	ContentView = function () {
 		EventEmitter.call(this);
@@ -91,13 +89,13 @@
 			if (metaData.type === 'text') {
 				// contentData is text
 				contentElem.innerHTML = contentData;
-				contentElem.style.color = textColor;
+				contentElem.style.color = "white";
 				contentElem.style.overflow = "visible"; // Show all text
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			} else if (metaData.type === 'video') {
 				contentElem.src = contentData;
 				contentElem.setAttribute("controls", "");
-				contentElem.style.color = textColor;
+				contentElem.style.color = "white";
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			} else {
 				// contentData is blob
