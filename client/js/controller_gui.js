@@ -162,23 +162,23 @@
 			{
 				tabs : [{
 						Display : {
-							id : "display_tab",
+							id : Constants.TabIDDisplay,
 							func : function () { this.changeTab('Display'); }.bind(this),
 							active : true,
 						},
 					}, {
 						Content : {
-							id : "content_tab",
+							id : Constants.TabIDContent,
 							func : function () { this.changeTab('Content'); }.bind(this)
 						},
 					}, {
 						Search : {
-							id : "search_tab",
+							id : Constants.TabIDSearch,
 							func : function () { this.changeTab('Search'); }.bind(this)
 						}
 					}, {
 						Layout : {
-							id : "layout_tab",
+							id : Constants.TabIDLayout,
 							func : function () { this.changeTab('Layout'); }.bind(this)
 						}
 					}]
@@ -224,7 +224,7 @@
 						"group_default" : {
 							id : "group_default",
 							name : "default",
-							className : "layout_tab",
+							className : Constants.TabIDLayout,
 							func : function () {},
 							active : false
 						}
@@ -502,7 +502,7 @@
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
 					
-					if (type == "layout_tab" && !this.is_listview_area(evt)) {
+					if (type == Constants.TabIDLayout && !this.is_listview_area(evt)) {
 						// レイアウトタブはメインビューのエリア内であればコンテンツメニューを開く
 						menuElem = document.getElementById('context_menu');
 					} else {
@@ -510,7 +510,7 @@
 					}
 
 					menuElem.style.display = 'block';
-					if (type === "display_tab") {
+					if (type === Constants.TabIDDisplay) {
 						rect = document.getElementById('context_menu_display').getBoundingClientRect();
 					} else {
 						rect = document.getElementById('context_menu').getBoundingClientRect();
@@ -664,7 +664,7 @@
 			}
 		};
 
-		this.initContextMenuVisible(menu, "content_tab", "search_tab");
+		this.initContextMenuVisible(menu, Constants.TabIDContent, Constants.TabIDSearch);
 	}
 
 
@@ -694,7 +694,7 @@
 			this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); 
 			menu.style.display = "none";
 		}.bind(this);
-		this.initContextMenuVisible(menu, "display_tab", "");
+		this.initContextMenuVisible(menu, Constants.TabIDDisplay, "");
 	};
 
 	ControllerGUI.prototype.initLayoutContextMenu = function () {
@@ -750,7 +750,7 @@
 			}
 		};
 
-		this.initContextMenuVisible(menu, "layout_tab", "");
+		this.initContextMenuVisible(menu, Constants.TabIDLayout, "");
 	};
 	
 	/**
@@ -1134,7 +1134,7 @@
 			layoutGroupTab[groupID] = {
 				id : groupID,
 				name : groupName,
-				className : "layout_tab",
+				className : Constants.TabIDLayout,
 				color : groupColor,
 				active : true
 			};
@@ -1331,9 +1331,9 @@
 		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
 	ControllerGUI.prototype.get_current_group_id = function () {
-		if (this.tabs.is_active("content_tab") && this.groupBox) {
+		if (this.tabs.is_active(Constants.TabIDContent) && this.groupBox) {
 			return this.groupBox.get_current_group_id();
-		} else if (this.tabs.is_active("layout_tab") && this.layoutBox) {
+		} else if (this.tabs.is_active(Constants.TabIDLayout) && this.layoutBox) {
 			return this.layoutBox.get_current_group_id();
 		}
 		return null;

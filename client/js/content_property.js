@@ -109,7 +109,7 @@
 		}
 		transform_input.innerHTML = "";
 		user_data_input.innerHTML = "";
-		if (type === "display") {
+		if (type === Constants.PropertyTypeDisplay) {
 			idlabel.innerHTML = "Display ID:";
 			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
@@ -120,7 +120,7 @@
 			metalabel.style.display = "block";
 			backup_area.style.display = "none";
 			color_picker.style.display = "block";
-		} else if (type === "whole_window") {
+		} else if (type === Constants.PropertyTypeWholeWindow) {
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
@@ -143,7 +143,7 @@
 			metalabel.style.display = "none";
 			backup_area.style.display = "none";
 			color_picker.style.display = "none";
-		} else if (type === "multi_display" || type === "multi_content") {
+		} else if (type === Constants.PropertyTypeMultiDisplay || type === Constants.PropertyTypeMultiContent) {
 			idlabel.innerHTML = "Content ID:";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
@@ -155,7 +155,7 @@
 			metalabel.style.display = "none";
 			backup_area.style.display = "none";
 			color_picker.style.display = "none";
-		} else if (type === "layout") {
+		} else if (type === Constants.PropertyTypeLayout) {
 			idlabel.innerHTML = "Layout ID:";
 			download_button.style.display = "none";
 			grouplabel.innerHTML = "Group:";

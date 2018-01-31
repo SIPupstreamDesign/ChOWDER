@@ -22,14 +22,9 @@
 		metaDataDict = {},
 		groupList = [],
 		groupDict = {},
-		wholeWindowID = "whole_window",
-		wholeWindowListID = "onlist:whole_window",
-		wholeSubWindowID = "whole_sub_window",
 		initialWholeWidth = 1000,
 		initialWholeHeight = 900,
 		initialDisplayScale = 0.5,
-		contentSelectColor = "#04B431",
-		defaultGroup = "group_default",
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
@@ -52,21 +47,21 @@
 	 * メタデータがwindowタイプであるか返す
 	 */
 	function isWindowType(meta) {
-		return (meta.type === "window");
+		return (meta.type === Constants.TypeWindow);
 	}
 
 	/**
 	 * メタデータがimage/url/textなどのコンテンツタイプであるか返す
 	 */
 	function isContentType(meta) {
-		return (meta.type !== "window" && meta.type !== "layout");
+		return (meta.type !== Constants.TypeWindow && meta.type !== Constants.TypeLayout);
 	}
 	
 	/**
 	 * メタデータがレイアウトタイプであるか返す
 	 */
 	function isLayoutType(meta) {
-		return (meta.type === "layout");
+		return (meta.type === Constants.TypeLayout);
 	}
 	
 	/**
@@ -105,7 +100,7 @@
 	 * @return {bool} FreeModeであればtrueを返す.
 	 */
 	function isFreeMode() {
-		return gui.get_snap_type() === 'free';
+		return gui.get_snap_type() === Constants.SnapTypeFree;
 	}
 	
 	/**
@@ -114,7 +109,7 @@
 	 * @return {bool} GridModeであればtrueを返す.
 	 */
 	function isGridMode() {
-		return gui.get_snap_type() === 'grid';
+		return gui.get_snap_type() === Constants.SnapTypeGrid;
 	}
 	
 	/**
@@ -123,7 +118,7 @@
 	 * @return {bool} DisplayModeであればtrueを返す.
 	 */
 	function isDisplayMode() {
-		return gui.get_snap_type() === 'display';
+		return gui.get_snap_type() === Constants.SnapTypeDisplay;;
 	}
 	
 	/**
@@ -142,7 +137,7 @@
 	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isDisplayTabSelected() {
-		return gui.is_active_tab("display_tab");
+		return gui.is_active_tab(Constants.TabIDDisplay);
 	}
 
 	/**
@@ -151,7 +146,7 @@
 	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
 	 */
 	function isLayoutTabSelected() {
-		return gui.is_active_tab("layout_tab");
+		return gui.is_active_tab(Constants.TabIDLayout);
 	}
 
 	/**
@@ -162,7 +157,7 @@
 			return true;
 		} else if (isLayoutTabSelected() && isLayoutType(meta)) {
 			return true;
-		} else if ((gui.is_active_tab("content_tab") || gui.is_active_tab("search_tab"))
+		} else if ((gui.is_active_tab(Constants.TabIDContent) || gui.is_active_tab(Constants.TabIDSearch))
 					 && isContentType(meta)) {
 			return true;
 		}
@@ -252,7 +247,7 @@
 			child,
 			srcElem;
 		
-		if (id === wholeWindowListID) { return null; }
+		if (id === Constants.WholeWindowListID) { return null; }
 		if (isUnvisibleID(id)) {
 			uid = id.split('onlist:').join('');
 			if (document.getElementById(uid)) {
@@ -555,7 +550,7 @@
 				}
 			}
 		}
-		return contentSelectColor;
+		return Constants.ContentSelectColor;
 	}
 
 	/**
@@ -678,7 +673,7 @@
 			}
 		}
 		
-		if (id === wholeWindowListID || id === wholeWindowID) {
+		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
 			content_property.init(id, null, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem() && metaDataDict[id]) {
@@ -686,7 +681,7 @@
 			}
 			return;
 		}
-		if (id.indexOf(wholeSubWindowID) >= 0) {
+		if (id.indexOf(Constants.WholeSubWindowID) >= 0) {
 			return;
 		}
 		if (gui.get_whole_window_elem()) {
@@ -733,7 +728,7 @@
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (isWindowType(metaData)) {
-				content_property.init(id, null,"", "display", mime);
+				content_property.init(id, null,"", Constants.DisplayTabType, mime);
 				content_property.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
@@ -959,7 +954,7 @@
 
 			
 			if (metaData) {
-				if (id === wholeWindowID ||
+				if (id === Constants.WholeWindowID ||
 					(!isDisplayTabSelected() && isWindowType(metaData)) ||
 					(isDisplayTabSelected() && isContentType(metaData))) {
 					childs = otherPreviewArea.childNodes;
@@ -1546,11 +1541,11 @@
 			}
 			
 			// Virtual Displayを生成して配置.
-			wholeElem = document.getElementById(wholeWindowID);
+			wholeElem = document.getElementById(Constants.WholeWindowID);
 			if (!wholeElem) {
 				wholeElem = document.createElement('span');
 				wholeElem.className = "whole_screen_elem";
-				wholeElem.id = wholeWindowID;
+				wholeElem.id = Constants.WholeWindowID;
 				setupWindow(wholeElem, wholeElem.id);
 				previewArea.appendChild(wholeElem);
 			}
@@ -1679,7 +1674,7 @@
 	function addWholeWindowToList() {
 		var displayArea = gui.get_display_area(),
 			divElem = document.createElement("div"),
-			onlistID = wholeWindowListID,
+			onlistID = Constants.WholeWindowListID,
 			idElem;
 		
 		idElem = document.createElement('div');
@@ -2061,10 +2056,10 @@
 			selectedGroup,
 			searchTargetGroups;
 
-		groupToElems[defaultGroup] = [];
-		groupToMeta[defaultGroup] = [];
-		groupToLayoutElems[defaultGroup] = [];
-		groupToLayoutMeta[defaultGroup] = [];
+		groupToElems[Constants.DefaultGroup] = [];
+		groupToMeta[Constants.DefaultGroup] = [];
+		groupToLayoutElems[Constants.DefaultGroup] = [];
+		groupToLayoutMeta[Constants.DefaultGroup] = [];
 
 		selectedGroup = getSelectedGroup();
 
@@ -2086,8 +2081,8 @@
 								groupToElems[metaData.group].push(elem);
 								groupToMeta[metaData.group].push(metaData);
 							} else {
-								groupToElems[defaultGroup].push(elem);
-								groupToMeta[defaultGroup].push(metaData);
+								groupToElems[Constants.DefaultGroup].push(elem);
+								groupToMeta[Constants.DefaultGroup].push(metaData);
 							}
 						}
 					}
@@ -2104,8 +2099,8 @@
 								groupToLayoutElems[metaData.group].push(elem);
 								groupToLayoutMeta[metaData.group].push(metaData);
 							} else {
-								groupToLayoutElems[defaultGroup].push(elem);
-								groupToLayoutMeta[defaultGroup].push(metaData);
+								groupToLayoutElems[Constants.DefaultGroup].push(elem);
+								groupToLayoutMeta[Constants.DefaultGroup].push(metaData);
 							}
 						}
 					}
@@ -2129,7 +2124,7 @@
 				if (groupToElems.hasOwnProperty(group)) {
 					contentArea = gui.get_content_area_by_group(group);
 					if (!contentArea) {
-						contentArea = gui.get_content_area_by_group(defaultGroup);
+						contentArea = gui.get_content_area_by_group(Constants.DefaultGroup);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
 						contentArea.appendChild(groupToElems[group][i]);
@@ -2142,7 +2137,7 @@
 				if (groupToLayoutElems.hasOwnProperty(group)) {
 					layoutArea = gui.get_layout_area_by_group(group);
 					if (!layoutArea) {
-						layoutArea = gui.get_content_area_by_group(defaultGroup);
+						layoutArea = gui.get_content_area_by_group(Constants.DefaultGroup);
 					}
 					for (i = 0; i < groupToLayoutElems[group].length; i = i + 1) {
 						layoutArea.appendChild(groupToLayoutElems[group][i]);
@@ -2414,7 +2409,7 @@
 			}
 
 			layout = JSON.stringify(layout);
-			addContent({type : "layout",
+			addContent({type : Constants.TypeLayout,
 				user_data_text : JSON.stringify({ text: memo }),
 				visible: false,
 				group : gui.get_current_group_id()
@@ -2856,7 +2851,7 @@
 	 */
 	gui.on("virtualdisplaysetting_clicked", function () {
 		unselectAll(true);
-		select(wholeWindowListID);
+		select(Constants.WholeWindowListID);
 	});
 
 	/**
@@ -3134,7 +3129,7 @@
 							}
 						}
 					}
-					else if (groups.indexOf(defaultGroup) >= 0 && !groupDict.hasOwnProperty(metaData.group)) {
+					else if (groups.indexOf(Constants.DefaultGroup) >= 0 && !groupDict.hasOwnProperty(metaData.group)) {
 						elem = document.getElementById("onlist:" + metaData.id);
 						if (elem) {
 							copy = elem.cloneNode();
@@ -3186,16 +3181,16 @@
 	gui.on("tab_changed_post", function () {
 		var id;
 		if (isDisplayTabSelected()) {
-			content_property.init("", null, "", "display");
+			content_property.init("", null, "", Constants.PropertyTypeDisplay);
 		} else if (isLayoutTabSelected()) {
-			content_property.init("", null, "", "layout");
+			content_property.init("", null, "", Constants.PropertyTypeLayout);
 		} else {
-			content_property.init("", null, "", "content");
+			content_property.init("", null, "", Constants.PropertyTypeContent);
 		}
 		if (isDisplayTabSelected()) {
 			id = lastSelectWindowID;
 			if (!id) {
-				id = wholeWindowListID;
+				id = Constants.WholeWindowListID;
 			}
 		} else {
 			id = lastSelectContentID;
@@ -3634,7 +3629,7 @@
 							updateContent(metaData, text);
 						})
 						previewArea.removeChild(elem);
-					} else if (metaData.type === "layout") {
+					} else if (metaData.type === Constants.TypeLayout) {
 						// レイアウトのメモ変更.
 						// レイアウトコンテンツを取得し直しリストを更新する.
 						updateMetaData(metaData, function (err, reply) {
@@ -3858,7 +3853,7 @@
 						userselect = document.getElementById('loginuser'),
 						option;
 					for (i = 0; i <  userList.length; i = i + 1) {
-						if (userList[i].type !== "display") {
+						if (userList[i].type !== Constants.DisplayTabType) {
 							option = document.createElement('option');
 							option.value = userList[i].name;
 							option.innerHTML = userList[i].name;
