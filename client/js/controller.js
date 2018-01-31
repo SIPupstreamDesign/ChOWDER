@@ -43,125 +43,26 @@
 		isInitialized = false,
 		video = document.createElement('video'); // TODO 複数に対応
 	
-	/**
-	 * メタデータがwindowタイプであるか返す
-	 */
-	function isWindowType(meta) {
-		return (meta.type === Constants.TypeWindow);
-	}
+	Validator.init(gui);
 
-	/**
-	 * メタデータがimage/url/textなどのコンテンツタイプであるか返す
-	 */
-	function isContentType(meta) {
-		return (meta.type !== Constants.TypeWindow && meta.type !== Constants.TypeLayout);
-	}
-	
-	/**
-	 * メタデータがレイアウトタイプであるか返す
-	 */
-	function isLayoutType(meta) {
-		return (meta.type === Constants.TypeLayout);
-	}
-	
 	/**
 	 * リストエレメントのボーダーカラーをタイプ別に返す
 	 */
 	function getListBorderColor(meta) {
-		if (isWindowType(meta)) {
+		if (Validator.isWindowType(meta)) {
 			if (meta.hasOwnProperty('reference_count') && parseInt(meta.reference_count, 10) <= 0) {
 				return "gray";
 			} else {
 				return "white";
 			}
 		}
-		if (isContentType(meta)) {
+		if (Validator.isContentType(meta)) {
 			return "rgba(0,0,0,0)";
 		}
-		if (isLayoutType(meta)) {
+		if (Validator.isLayoutType(meta)) {
 			return "lightgray";
 		}
 		return "white";
-	}
-
-	/**
-	 * メタデータが表示中かを判定する
-	 * @method isVisible
-	 * @param {Object} metaData メタデータ
-	 * @return {bool} 表示中であればtrue
-	 */
-	function isVisible(metaData) {
-		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
-	}
-	
-	/**
-	 * VirtualDisplayのモードがFreeModeかを判別する
-	 * @method isFreeMode
-	 * @return {bool} FreeModeであればtrueを返す.
-	 */
-	function isFreeMode() {
-		return gui.get_snap_type() === Constants.SnapTypeFree;
-	}
-	
-	/**
-	 * VirtualDisplayのモードがGridModeかを判別する
-	 * @method isGridMode
-	 * @return {bool} GridModeであればtrueを返す.
-	 */
-	function isGridMode() {
-		return gui.get_snap_type() === Constants.SnapTypeGrid;
-	}
-	
-	/**
-	 * VirtualDisplayのモードがDisplayModeかを判別する
-	 * @method isDisplayMode
-	 * @return {bool} DisplayModeであればtrueを返す.
-	 */
-	function isDisplayMode() {
-		return gui.get_snap_type() === Constants.SnapTypeDisplay;;
-	}
-	
-	/**
-	 * リスト表示中かをIDから判別する
-	 * @method isUnvisibleID
-	 * @param {String} id コンテンツID
-	 * @return {bool} リストに表示されているコンテンツのIDであればtrueを返す.
-	 */
-	function isUnvisibleID(id) {
-		return (id.indexOf("onlist:") >= 0);
-	}
-
-	/**
-	 * リストでディスプレイタブが選択されているかを判別する。
-	 * @method isDisplayTabSelected
-	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
-	 */
-	function isDisplayTabSelected() {
-		return gui.is_active_tab(Constants.TabIDDisplay);
-	}
-
-	/**
-	 * リストでレイアウトタブが選択されているかを判別する。
-	 * @method isLayoutTabSelected
-	 * @return {bool} リストでディスプレイタブが選択されていたらtrueを返す.
-	 */
-	function isLayoutTabSelected() {
-		return gui.is_active_tab(Constants.TabIDLayout);
-	}
-
-	/**
-	 * メタデータのtypeが現在開いているタブに合致するか返す
-	 */
-	function isCurrentTabMetaData(meta) {
-		if (isDisplayTabSelected() && isWindowType(meta)) {
-			return true;
-		} else if (isLayoutTabSelected() && isLayoutType(meta)) {
-			return true;
-		} else if ((gui.is_active_tab(Constants.TabIDContent) || gui.is_active_tab(Constants.TabIDSearch))
-					 && isContentType(meta)) {
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -248,7 +149,7 @@
 			srcElem;
 		
 		if (id === Constants.WholeWindowListID) { return null; }
-		if (isUnvisibleID(id)) {
+		if (Validator.isUnvisibleID(id)) {
 			uid = id.split('onlist:').join('');
 			if (document.getElementById(uid)) {
 				return document.getElementById(uid);
@@ -260,7 +161,7 @@
 				child.innerHTML = srcElem.childNodes[0].innerHTML;
 				elem.appendChild(child);
 				
-				if (isDisplayTabSelected()) {
+				if (Validator.isDisplayTabSelected()) {
 					previewArea = gui.get_display_preview_area();
 				} else {
 					previewArea = gui.get_content_preview_area();
@@ -366,7 +267,7 @@
 		for (i in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(i)) {
 				if (metaDataDict[i].id !== metaData.id && 
-					isContentType(metaDataDict[i].type) &&
+					Validator.isContentType(metaDataDict[i].type) &&
 					metaDataDict[i].hasOwnProperty("zIndex")) {
 					max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
 					min = Math.min(min, parseInt(metaDataDict[i].zIndex, 10));
@@ -399,7 +300,7 @@
 	 * @param {JSON} metaData メタデータ
 	 */
 	function updateMetaData(metaData, endCallback) {
-		if (isWindowType(metaData)) {
+		if (Validator.isWindowType(metaData)) {
 			// window
 			connector.send('UpdateWindowMetaData', [metaData], function (err, reply) {
 				doneUpdateWindowMetaData(err, reply, endCallback);
@@ -425,7 +326,7 @@
 	 */
 	function updateMetaDataMulti(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
-			if (isWindowType(metaDataList[0])) {
+			if (Validator.isWindowType(metaDataList[0])) {
 				connector.send('UpdateWindowMetaData', metaDataList, function (err, reply) {
 					doneUpdateWindowMetaData(err, reply, endCallback);
 				});
@@ -557,7 +458,7 @@
 	 * 枠色を返す
 	 */
 	function getBorderColor(meta) {
-		if (isWindowType(meta)) {
+		if (Validator.isWindowType(meta)) {
 			if (meta.hasOwnProperty('color')) {
 				return meta.color;
 			}
@@ -599,7 +500,7 @@
 			elem = document.getElementById(getSelectedID());
 			if (elem) {
 				metaData = metaDataDict[elem.id];
-				if (isContentType(metaData) && !isVisible(metaData)) {
+				if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
 					// 非表示コンテンツ
 					return;
 				}
@@ -720,14 +621,14 @@
 		} else if (selectedIDList.length > 1) {
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
-			if (isWindowType(metaData)) {
+			if (Validator.isWindowType(metaData)) {
 				content_property.init(id, null, "", "multi_display", mime);
 			} else {
 				content_property.init(id, null,"", "multi_content", mime);
 			}
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
-			if (isWindowType(metaData)) {
+			if (Validator.isWindowType(metaData)) {
 				content_property.init(id, null,"", Constants.DisplayTabType, mime);
 				content_property.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
@@ -744,7 +645,7 @@
 			}
 		}
 
-		if (isDisplayTabSelected()) {
+		if (Validator.isDisplayTabSelected()) {
 			lastSelectWindowID = id;
 		} else {
 			lastSelectContentID = id;
@@ -772,11 +673,11 @@
 		elem = getElem(id, true);
 		if (elem) {
 			metaData = metaDataDict[id];
-			if (isWindowType(metaData)) {
+			if (Validator.isWindowType(metaData)) {
 				elem.style.border = "";
 				elem.style.borderStyle = "solid";
 			}
-			if (isContentType(metaData) && isVisible(metaData) && String(metaData.mark) !== "true") {
+			if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
 				elem.style.border = "";
 			}
 			if (gui.get_list_elem(elem.id)) {
@@ -823,7 +724,7 @@
 			
 			metaData.visible = false;
 			
-			if (isWindowType(metaData)) {
+			if (Validator.isWindowType(metaData)) {
 				previewArea = gui.get_display_preview_area();
 			} else {
 				previewArea = gui.get_content_preview_area();
@@ -947,7 +848,7 @@
 			
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				if (isContentType(metaData)) {
+				if (Validator.isContentType(metaData)) {
 					otherPreviewArea = gui.get_display_preview_area();
 				}
 			}
@@ -955,8 +856,8 @@
 			
 			if (metaData) {
 				if (id === Constants.WholeWindowID ||
-					(!isDisplayTabSelected() && isWindowType(metaData)) ||
-					(isDisplayTabSelected() && isContentType(metaData))) {
+					(!Validator.isDisplayTabSelected() && Validator.isWindowType(metaData)) ||
+					(Validator.isDisplayTabSelected() && Validator.isContentType(metaData))) {
 					childs = otherPreviewArea.childNodes;
 
 					for (i = 0; i < childs.length; i = i + 1) {
@@ -1224,7 +1125,7 @@
 			clearSnapHightlight();
 			
 			// detect spilt screen area
-			if (isGridMode()) {
+			if (Validator.isGridMode()) {
 				px = rect.left + dragOffsetLeft;
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
@@ -1234,7 +1135,7 @@
 				}
 			}
 			
-			if (isDisplayMode()) {
+			if (Validator.isDisplayMode()) {
 				px = rect.left + dragOffsetLeft;
 				py = rect.top + dragOffsetTop;
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
@@ -1252,13 +1153,13 @@
 			metaData = metaDataDict[draggingID];
 
 			if (dragRect.hasOwnProperty(draggingID)) {
-				if (isWindowType(metaData) && management.isDisplayManipulatable()) {
+				if (Validator.isWindowType(metaData) && management.isDisplayManipulatable()) {
 					// display操作可能
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-				} else if (!isWindowType(metaData) && management.isEditable(metaData.group)) {
+				} else if (!Validator.isWindowType(metaData) && management.isEditable(metaData.group)) {
 					// content編集可能
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
@@ -1269,7 +1170,7 @@
 				return;
 			}
 
-			if (isWindowType(metaData) || isVisible(metaData)) {
+			if (Validator.isWindowType(metaData) || Validator.isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
 				targetMetaDatas.push(metaData);
 			}
@@ -1285,7 +1186,7 @@
 			elem = document.getElementById(getSelectedID());
 			if (elem) {
 				metaData = metaDataDict[elem.id];
-				if (isWindowType(metaData) || isVisible(metaData)) {
+				if (Validator.isWindowType(metaData) || Validator.isVisible(metaData)) {
 					manipulator.moveManipulator(elem);
 					onManipulatorMove(evt);
 				}
@@ -1319,16 +1220,16 @@
 				metaData = metaDataDict[draggingID];
 				if (!gui.is_listview_area(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
-					if (isLayoutType(metaData)) {
+					if (Validator.isLayoutType(metaData)) {
 						applyLayout(metaData);
 					} else {
 						if (management.isEditable(metaData.group)) {
 							metaData.visible = true;
 						}
-						if (isFreeMode()) {
+						if (Validator.isFreeMode()) {
 							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
-						} else if (isDisplayMode()) {
+						} else if (Validator.isDisplayMode()) {
 							px = rect.left + dragOffsetLeft;
 							py = rect.top + dragOffsetTop;
 							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
@@ -1506,7 +1407,7 @@
 		
 		if (windowData && windowData !== undefined) {
 			screenElem = document.getElementById(windowData.id);
-			if (!screenElem && isVisible(windowData)) {
+			if (!screenElem && Validator.isVisible(windowData)) {
 				screenElem = document.createElement('div');
 				idElem = document.createElement('div');
 				idElem.innerHTML = "ID:" + windowData.id;
@@ -1529,8 +1430,8 @@
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
 					metaData = metaDataDict[i];
-					if (isVisible(metaData)) {
-						if (isContentType(metaData)) {
+					if (Validator.isVisible(metaData)) {
+						if (Validator.isContentType(metaData)) {
 							elem = document.getElementById(metaData.id);
 							if (elem) {
 								vscreen_util.assignMetaData(elem, metaData, true, groupDict);
@@ -1558,7 +1459,7 @@
 					if (metaDataDict.hasOwnProperty(s)) {
 						metaData = metaDataDict[s];
 						if (!screenElem) {
-							if (isVisible(metaData)) {
+							if (Validator.isVisible(metaData)) {
 								screenElem = document.createElement('div');
 								idElem = document.createElement('div');
 								idElem.innerHTML = "ID:" + s;
@@ -1774,17 +1675,17 @@
 		}
 		metaDataDict[json.id] = json;
 		
-		if (isCurrentTabMetaData(json)) {
+		if (Validator.isCurrentTabMetaData(json)) {
 			if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
 				content_property.assign_content_property(json);
 			}
 		}
 
 		
-		if (isWindowType(json)) { return; }
+		if (Validator.isWindowType(json)) { return; }
 		elem = document.getElementById(metaData.id);
 		if (elem && !isUpdateContent) {
-			if (isVisible(json)) {
+			if (Validator.isVisible(json)) {
 				vscreen_util.assignMetaData(elem, json, true, groupDict);
 				elem.style.display = "block";
 			} else {
@@ -1848,7 +1749,7 @@
 		if (reply.length === 1) {
 			json = reply[0];
 			metaDataDict[json.id] = json;
-			if (isCurrentTabMetaData(json)) {
+			if (Validator.isCurrentTabMetaData(json)) {
 				content_property.assign_content_property(json);
 			}
 		}
@@ -1956,7 +1857,7 @@
 			for (id in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(id)) {
 					windowData = metaDataDict[id];
-					if (isWindowType(windowData)) {
+					if (Validator.isWindowType(windowData)) {
 						elem = document.getElementById(id);
 						if (elem) {
 							previewArea.removeChild(elem);
@@ -2023,7 +1924,7 @@
 			elem;
 		importWindow(windowData);
 		changeWindowBorderColor(windowData);
-		if (isCurrentTabMetaData(reply)) {
+		if (Validator.isCurrentTabMetaData(reply)) {
 			if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
 				content_property.assign_content_property(windowData);
 			}
@@ -2068,7 +1969,7 @@
 			for (meta in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(meta)) {
 					metaData = metaDataDict[meta];
-					if (isContentType(metaData)) {
+					if (Validator.isContentType(metaData)) {
 						onlistID = "onlist:" + metaData.id;
 						elem = document.getElementById(onlistID);
 						if (elem) {
@@ -2086,7 +1987,7 @@
 							}
 						}
 					}
-					if (isLayoutType(metaData)) {
+					if (Validator.isLayoutType(metaData)) {
 						onlistID = "onlist:" + metaData.id;
 						elem = document.getElementById(onlistID);
 						if (elem) {
@@ -2245,7 +2146,7 @@
 		if (selectedGroup) {
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
-					if (isContentType(metaDataDict[i])) {
+					if (Validator.isContentType(metaDataDict[i])) {
 						if (metaDataDict[i].group === selectedGroup) {
 							targetList.push(metaDataDict[i]);
 						}
@@ -2269,7 +2170,7 @@
 			
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id) && isWindowType(metaDataDict[id])) {
+			if (metaDataDict.hasOwnProperty(id) && Validator.isWindowType(metaDataDict[id])) {
 				targetIDList.push({id : id});
 			}
 		}
@@ -2402,7 +2303,7 @@
 			for (id in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(id)) {
 					metaData = metaDataDict[id];
-					if (isContentType(metaData)) {
+					if (Validator.isContentType(metaData)) {
 						layout.contents[id] = metaData;
 					}
 				}
@@ -2426,7 +2327,7 @@
 			id = selectedIDList[i];
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				if (isLayoutType(metaData)) {
+				if (Validator.isLayoutType(metaData)) {
 					isLayoutSelected = true;
 					break;
 				}
@@ -2453,7 +2354,7 @@
 				for (id in metaDataDict) {
 					if (metaDataDict.hasOwnProperty(id)) {
 						metaData = metaDataDict[id];
-						if (isContentType(metaData)) {
+						if (Validator.isContentType(metaData)) {
 							layout.contents[id] = metaData;
 						}
 					}
@@ -2464,7 +2365,7 @@
 					id = selectedIDList[i];
 					if (metaDataDict.hasOwnProperty(id)) {
 						metaData = metaDataDict[id];
-						if (isLayoutType(metaData)) {
+						if (Validator.isLayoutType(metaData)) {
 							updateContent(metaData, layoutData);
 						}
 					}
@@ -2802,7 +2703,7 @@
 	content_property.on("display_color_changed", function (err, colorvalue) {
 		var id = getSelectedID(),
 			metaData;
-		if (metaDataDict.hasOwnProperty(id) && isWindowType(metaDataDict[id])) {
+		if (metaDataDict.hasOwnProperty(id) && Validator.isWindowType(metaDataDict[id])) {
 			metaData = metaDataDict[id]; 
 			metaData.color = colorvalue;
 			updateMetaData(metaData, function (err, reply) {});
@@ -2822,7 +2723,7 @@
 			if (res === "yes" || res === "no") {
 				var id = getSelectedID(),
 					metaData;
-				if (metaDataDict.hasOwnProperty(id) && isContentType(metaDataDict[id])) {
+				if (metaDataDict.hasOwnProperty(id) && Validator.isContentType(metaDataDict[id])) {
 					metaData = metaDataDict[id]; 
 					if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
 						metaData.restore_index = restoreIndex;
@@ -2890,7 +2791,7 @@
 						for (id in metaDataDict) {
 							if (metaDataDict.hasOwnProperty(id)) {
 								metaData = metaDataDict[id];
-								if (isContentType(metaData) || isLayoutType(metaData)) {
+								if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
 									if (metaData.group === groupID) {
 										deleteList.push(metaData);
 									}
@@ -2958,7 +2859,7 @@
 		unselectAll(true);
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
-				if (isContentType(metaDataDict[id])) {
+				if (Validator.isContentType(metaDataDict[id])) {
 					if (onlyCurrentGroup) {
 						if (metaDataDict[id].group === currentGroup) {
 							select(id, true);
@@ -2977,7 +2878,7 @@
 		unselectAll(true);
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
-				if (isWindowType(metaDataDict[id])) {
+				if (Validator.isWindowType(metaDataDict[id])) {
 					select("onlist:" + id, true);
 				}
 			}
@@ -2990,7 +2891,7 @@
 		unselectAll(true);
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
-				if (isLayoutType(metaDataDict[id])) {
+				if (Validator.isLayoutType(metaDataDict[id])) {
 					select("onlist:" + id, true);
 				}
 			}
@@ -3114,7 +3015,7 @@
 		for (id in metaDataDict) {
 			if (metaDataDict.hasOwnProperty(id)) {
 				metaData = metaDataDict[id];
-				if (isContentType(metaData)) {
+				if (Validator.isContentType(metaData)) {
 					if (groups.indexOf(metaData.group) >= 0) {
 						if (text === "" || JSON.stringify(metaData).indexOf(text) >= 0) {
 							elem = document.getElementById("onlist:" + metaData.id);
@@ -3180,14 +3081,14 @@
 
 	gui.on("tab_changed_post", function () {
 		var id;
-		if (isDisplayTabSelected()) {
+		if (Validator.isDisplayTabSelected()) {
 			content_property.init("", null, "", Constants.PropertyTypeDisplay);
-		} else if (isLayoutTabSelected()) {
+		} else if (Validator.isLayoutTabSelected()) {
 			content_property.init("", null, "", Constants.PropertyTypeLayout);
 		} else {
 			content_property.init("", null, "", Constants.PropertyTypeContent);
 		}
-		if (isDisplayTabSelected()) {
+		if (Validator.isDisplayTabSelected()) {
 			id = lastSelectWindowID;
 			if (!id) {
 				id = Constants.WholeWindowListID;
@@ -3224,7 +3125,7 @@
 			metaData;
 		if (metaDataDict.hasOwnProperty(id)) {
 			metaData = metaDataDict[id];
-			if (isWindowType(metaData)) {
+			if (Validator.isWindowType(metaData)) {
 				gui.toggle_display_id_show(false);
 			} else {
 				metaData.mark_memo = is_active;
