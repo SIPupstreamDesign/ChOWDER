@@ -3,8 +3,7 @@
 
 (function () {
 	"use strict";
-	var ControllerGUI,
-		wholeWindowListID = "onlist:whole_window";
+	var ControllerGUI;
 	
 	// コンストラクタ
 	ControllerGUI = function () {
@@ -235,7 +234,7 @@
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.setAuthority(this.management.getAuthorityObject());
-		window.content_property.init(wholeWindowListID, "", Constants.PropertyTypeWholeWindow);
+		window.content_property.init(Constants.WholeWindowListID, "", Constants.PropertyTypeWholeWindow);
 
 		// コンテキストメニューの初期化.
 		this.initContextMenu();
@@ -1355,7 +1354,7 @@
 		return document.getElementById("onsearch:" + id);
 	};
 	ControllerGUI.prototype.get_whole_window_elem = function () {
-		return document.getElementById(wholeWindowListID);
+		return document.getElementById(Constants.WholeWindowListID);
 	};
 	ControllerGUI.prototype.get_update_content_id = function () {
 		return document.getElementById('update_content_id').innerHTML;
