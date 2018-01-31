@@ -3526,7 +3526,7 @@
 							updateContent(metaData, text);
 						})
 						previewArea.removeChild(elem);
-					} else if (metaData.type === Constants.TypeLayout) {
+					} else if (Validator.isLayoutType(metaData)) {
 						// レイアウトのメモ変更.
 						// レイアウトコンテンツを取得し直しリストを更新する.
 						updateMetaData(metaData, function (err, reply) {
