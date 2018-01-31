@@ -31,7 +31,6 @@
 		contentSelectColor = "#04B431",
 		defaultGroup = "group_default",
 		setupContent = function () {},
-		setupLayout = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
 		changeRect = function () {},
@@ -990,107 +989,6 @@
 				gui.close_context_menu();
 			} else  {
 				select(id, gui.is_listview_area(evt));
-				gui.close_context_menu();
-			}
-			
-			evt = (evt) || window.event;
-			mouseDownPos = [
-				rect.left,
-				rect.top
-			];
-
-
-			if (evt.changedTouches) {
-				// タッチ
-				target = evt.changedTouches[0].target;
-			} else {
-				// マウス
-				target = evt.target;
-			}
-
-			dragOffsetTop = clientY - rect.top;
-			dragOffsetLeft = clientX - rect.left;
-
-			if (metaData  && target.id) {
-				// メインビューのコンテンツ
-				for (i = 0; i < draggingIDList.length; i = i + 1) {
-					elem = document.getElementById(draggingIDList[i]);
-					if (elem) {
-						dragRect[draggingIDList[i]] = {
-							left : elem.getBoundingClientRect().left - rect.left,
-							top : elem.getBoundingClientRect().top - rect.top
-						}
-					}
-				}
-			} else {
-				// リストのコンテンツ
-				for (i = 0; i < draggingIDList.length; i = i + 1) {
-					dragRect[draggingIDList[i]] = {
-						left : 0,
-						top : 0
-					}
-				}
-			}
-		
-			evt.stopPropagation();
-			evt.preventDefault();
-		};
-
-		if (window.ontouchstart !== undefined) {
-			elem.ontouchstart = mousedownFunc;
-		} else {
-			elem.onmousedown = mousedownFunc;
-		}
-	};
-	
-	/**
-	 * Layout設定
-	 * @method setupLayout
-	 * @param {Object} elem 設定対象Object
-	 * @param {String} id ContentID
-	 */
-	setupLayout = function (elem, id) {
-		window.onkeydown = function (evt) {
-			if (evt.keyCode === 17) {
-				onCtrlDown = true;
-			}
-		};
-		window.onkeyup = function (evt) {
-			if (evt.keyCode === 17) {
-				onCtrlDown = false;
-			}
-		};
-		function mousedownFunc(evt) {
-			var rect = evt.target.getBoundingClientRect(),
-				metaData = null,
-				i,
-				elem,
-				pageX = evt.pageX,
-				pageY = evt.pageY,
-				clientX = evt.clientX,
-				clientY = evt.clientY,
-				target = evt.taget;
-			
-			if (evt.changedTouches) {
-				// タッチ
-				target = evt.changedTouches[0].target;
-				rect = evt.changedTouches[0].target.getBoundingClientRect();
-				pageX = evt.changedTouches[0].pageX,
-				pageY = evt.changedTouches[0].pageY,
-				clientX = evt.changedTouches[0].clientX;
-				clientY = evt.changedTouches[0].clientY;
-			} else {
-				// マウス
-				if (evt.button !== 0) { return; } // 左ドラッグのみ
-			}
-			
-			// erase last border
-			if (!onCtrlDown) {
-				unselectAll(true);
-				select(id, isListViewArea(evt));
-				gui.close_context_menu();
-			} else  {
-				select(id, isListViewArea(evt));
 				gui.close_context_menu();
 			}
 			
