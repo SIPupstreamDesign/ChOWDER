@@ -71,7 +71,9 @@
 		var i;
 		for (i in this.metaDataDict) {
 			if (this.metaDataDict.hasOwnProperty(i)) {
-				func(i, this.metaDataDict[i]);
+				if (func(i, this.metaDataDict[i]) === true) {
+					break;
+				}
 			}
 		}
 	};

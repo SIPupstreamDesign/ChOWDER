@@ -5,14 +5,11 @@
 	"use strict";
 	
 	var store = new Store(),
+		state = new State(),
 		gui = new ControllerGUI(),
 		login = new Login(connector, Cookie),
 		management, // 管理情報
-		draggingIDList = [],
-		selectedIDList = [],
 		onCtrlDown = false, // Ctrlボタンを押してるかどうか
-		lastSelectContentID = null,
-		lastSelectWindowID = null,
 		dragOffsetTop = 0,
 		dragOffsetLeft = 0,
 		dragRect = {},
@@ -139,8 +136,8 @@
 	 */
 	function getSelectedID() {
 		//var contentID = document.getElementById('content_id');
-		if (selectedIDList.length > 0) {
-			return selectedIDList[0];
+		if (state.get_selected_id_list().length > 0) {
+			return state.get_selected_id_list()[0];
 		}
 		return null;//contentID.innerHTML;
 	}
@@ -546,10 +543,10 @@
 		initialVisible = metaData.visible;
 		elem.style.border = "solid 2px";
 		
-		if (selectedIDList.indexOf(id) < 0) {
-			selectedIDList.push(id);
+		if (state.get_selected_id_list().indexOf(id) < 0) {
+			state.get_selected_id_list().push(id);
 		}
-		draggingIDList = JSON.parse(JSON.stringify(selectedIDList));
+		state.set_dragging_id_list(JSON.parse(JSON.stringify(state.get_selected_id_list())));
 		
 		// 選択ボーダー色設定
 		if (gui.get_list_elem(id)) {
@@ -560,9 +557,9 @@
 		}
 		elem.style.borderColor = getBorderColor(metaData);
 
-		if (selectedIDList.length <= 0) {
+		if (state.get_selected_id_list().length <= 0) {
 			manipulator.removeManipulator();
-		} else if (selectedIDList.length > 1) {
+		} else if (state.get_selected_id_list().length > 1) {
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (Validator.isWindowType(metaData)) {
@@ -590,9 +587,9 @@
 		}
 
 		if (Validator.isDisplayTabSelected()) {
-			lastSelectWindowID = id;
+			state.set_last_select_window_id(id);
 		} else {
-			lastSelectContentID = id;
+			state.set_last_select_content_id(id);
 		}
 		
 		if (elem.style.zIndex === "") {
@@ -632,14 +629,14 @@
 			}
 		}
 		content_property.clear(updateText);
-		selectedIDList.splice(selectedIDList.indexOf(id), 1);
+		state.get_selected_id_list().splice(state.get_selected_id_list().indexOf(id), 1);
 		manipulator.removeManipulator();
 	}
 	
 	function unselectAll(updateText) {
 		var i;
-		for (i = selectedIDList.length - 1; i >= 0; i = i - 1) {
-			unselect(selectedIDList[i], updateText);
+		for (i = state.get_selected_id_list().length - 1; i >= 0; i = i - 1) {
+			unselect(state.get_selected_id_list()[i], updateText);
 		}
 		dragRect = {};
 	}
@@ -851,23 +848,23 @@
 
 			if (metaData  && target.id) {
 				// メインビューのコンテンツ
-				for (i = 0; i < draggingIDList.length; i = i + 1) {
-					elem = document.getElementById(draggingIDList[i]);
+				state.for_each_dragging_id(function (i, id) {
+					elem = document.getElementById(id);
 					if (elem) {
-						dragRect[draggingIDList[i]] = {
+						dragRect[id] = {
 							left : elem.getBoundingClientRect().left - rect.left,
 							top : elem.getBoundingClientRect().top - rect.top
 						}
 					}
-				}
+				});
 			} else {
 				// リストのコンテンツ
-				for (i = 0; i < draggingIDList.length; i = i + 1) {
-					dragRect[draggingIDList[i]] = {
+				state.for_each_dragging_id(function (i, id) {
+					dragRect[id] = {
 						left : 0,
 						top : 0
 					}
-				}
+				});
 			}
 		
 			evt.stopPropagation();
@@ -1056,9 +1053,7 @@
 			updateMetaData(obj);
 		}
 		
-		for (i = 0; i < draggingIDList.length; i = i + 1) {
-			draggingID = draggingIDList[i];
-
+		state.for_each_dragging_id(function (i, draggingID) {
 			// detect content list area
 			if (gui.is_listview_area2(evt, mouseDownPos) && gui.is_listview_area(evt)) {
 				return;
@@ -1117,7 +1112,7 @@
 				manipulator.moveManipulator(elem);
 				targetMetaDatas.push(metaData);
 			}
-		}
+		});
 
 		if (targetMetaDatas.length > 0) {
 			updateMetaDataMulti(targetMetaDatas);
@@ -1138,7 +1133,7 @@
 			evt.preventDefault();
 		}
 
-		if (draggingIDList.length > 0) {
+		if (state.get_dragging_id_list().length > 0) {
 			evt.stopPropagation();
 			evt.preventDefault();
 		}
@@ -1154,7 +1149,8 @@
 			draggingID,
 			orgPos,
 			splitWhole,
-			screen;
+			screen,
+			draggingIDList = state.get_dragging_id_list();
 
 		for (i = draggingIDList.length - 1; i >= 0; i = i - 1) {
 			draggingID = draggingIDList[i];
@@ -1201,6 +1197,7 @@
 			dragOffsetTop = 0;
 			dragOffsetLeft= 0;
 		}
+		state.set_dragging_id_list(draggingIDList);
 		manipulator.clearDraggingManip();
 	}
 
@@ -1561,7 +1558,7 @@
 		store.set_metadata(json.id, json);
 		
 		if (Validator.isCurrentTabMetaData(json)) {
-			if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
+			if (state.get_last_select_content_id() === json.id || (manipulator.isShowManipulator() && state.get_last_select_content_id() === json.id)) {
 				content_property.assign_content_property(json);
 			}
 		}
@@ -1694,7 +1691,7 @@
 				gui.get_search_elem(json.id).parentNode.removeChild(gui.get_search_elem(json.id));
 			}
 			gui.set_update_content_id("No Content Selected.");
-			lastSelectContentID = null;
+			state.set_last_select_content_id(null);
 
 			if (store.has_metadata(json.id)) {
 				store.delete_metadata(json.id);
@@ -1753,7 +1750,8 @@
 				store.delete_metadata(id);
 			});
 		}
-		lastSelectWindowID = null;
+		
+		state.set_last_select_window_id(null);
 	};
 	
 	/**
@@ -1807,7 +1805,7 @@
 		importWindow(windowData);
 		changeWindowBorderColor(windowData);
 		if (Validator.isCurrentTabMetaData(reply)) {
-			if (lastSelectWindowID === windowData.id || (manipulator.getDraggingManip() && lastSelectWindowID === windowData.id)) {
+			if (state.get_last_select_window_id() === windowData.id || (manipulator.getDraggingManip() && state.get_last_select_window_id() === windowData.id)) {
 				content_property.assign_content_property(windowData);
 			}
 		}
@@ -1979,16 +1977,13 @@
 	 * @method on_deletedisplay_clicked
 	 */
 	gui.on("deletedisplay_clicked", function (err) {
-		var i,
-			id,
-			metaDataList = [];
+		var metaDataList = [];
 			
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaDataList.push(store.get_metadata(id));
 			}
-		}
+		});
 		if (metaDataList.length > 0) {
 			connector.send('DeleteWindowMetaData', metaDataList, function () {});
 		}
@@ -1999,16 +1994,13 @@
 	 * @method on_deletedisplay_clicked
 	 */
 	gui.on("deletelayout_clicked", function (err) {
-		var i,
-			id,
-			metaDataList = [];
+		var metaDataList = [];
 			
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaDataList.push(store.get_metadata(id));
 			}
-		}
+		});
 		if (metaDataList.length > 0) {
 			connector.send('DeleteContent', metaDataList, doneDeleteContent);
 		}
@@ -2042,16 +2034,13 @@
 	 * @method on_showidbutton_clicked
 	 */
 	gui.on("showidbutton_clicked", function (err, isAll) {
-		var i,
-			id,
-			targetIDList = [];
+		var targetIDList = [];
 			
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id) && Validator.isWindowType(store.get_metadata(id))) {
 				targetIDList.push({id : id});
 			}
-		}
+		});
 		if (targetIDList.length > 0) {
 			connector.send('ShowWindowID', targetIDList);
 		}
@@ -2194,20 +2183,18 @@
 	});
 
 	gui.on("overwrite_layout", function (err) {
-		var i,
-			id,
-			metaData,
+		var metaData,
 			isLayoutSelected = false;
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaData = store.get_metadata(id);
 				if (Validator.isLayoutType(metaData)) {
 					isLayoutSelected = true;
-					break;
+					return true;
 				}
 			}
-		}
+		});
 		if (!isLayoutSelected) {
 			window.input_dialog.ok_input({
 				name : "上書き対象のレイアウトを選択してください"
@@ -2233,15 +2220,14 @@
 				});
 				layoutData = JSON.stringify(layout);
 
-				for (i = 0; i < selectedIDList.length; i = i + 1) {
-					id = selectedIDList[i];
+				state.for_each_selected_id(function (i, id) {
 					if (store.has_metadata(id)) {
 						metaData = store.get_metadata(id);
 						if (Validator.isLayoutType(metaData)) {
 							updateContent(metaData, layoutData);
 						}
 					}
-				}
+				});
 			}
 		});
 	});
@@ -2404,23 +2390,20 @@
 	 * @method on_contentdeletebutton_clicked
 	 */
 	gui.on("contentdeletebutton_clicked", function (err, evt) {
-		var i,
-			id,
-			metaData,
+		var metaData,
 			metaDataList = [];
 		
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaData = store.get_metadata(id);
 				if (!management.isEditable(metaData.group)) {
 					// 編集不可コンテンツ
-					continue;
+					return true;
 				}
 				metaData.visible = false;
 				metaDataList.push(metaData);
 			}
-		}
+		});
 		if (metaDataList.length > 0) {
 			connector.send('DeleteContent', metaDataList, doneDeleteContent);
 		}
@@ -2431,20 +2414,16 @@
 	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
 	 */
 	gui.on("content_index_changed", function (err, isFront) {
-		var id,
-			i,
-			k,
-			metaData,
+		var metaData,
 			metaDataList = [];
 		
-		for (k = 0; k < selectedIDList.length; k = k + 1) {
-			id = selectedIDList[k];
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaData = store.get_metadata(id);
 				metaData.zIndex = getZIndex(metaData, isFront);
 				metaDataList.push(metaData);
 			}
-		}
+		});
 		if (metaDataList.length > 0) {
 			updateMetaDataMulti(metaDataList);
 		}
@@ -2683,16 +2662,11 @@
 	 * @param {String} groupID 変更先のグループID
 	 */
 	gui.on("group_change_clicked", function (err, groupID) {
-		var i,
-			k,
-			id,
-			targetMetaDataList = [],
+		var targetMetaDataList = [],
 			group,
-			metaData,
-			currentGroup = gui.get_current_group_id();
+			metaData;
 
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaData = store.get_metadata(id);
 				metaData.group = groupID;
@@ -2705,7 +2679,7 @@
 					}
 				});
 			}
-		}
+		});
 		
 		if (targetMetaDataList.length > 0) {
 			updateMetaDataMulti(targetMetaDataList, (function (group) {
@@ -2718,9 +2692,7 @@
 	});
 
 	gui.on("select_contents_clicked", function (err, onlyCurrentGroup) {
-		var i,
-			id,
-			currentGroup = gui.get_current_group_id();
+		var currentGroup = gui.get_current_group_id();
 
 		unselectAll(true);
 		store.for_each_metadata(function (id, meta) {
@@ -2897,12 +2869,10 @@
 	 * @param {String} index 設定するzIndex
 	 */
 	content_property.on("change_zindex", function (err, index) {
-		var i,
-			id,
-			elem,
+		var elem,
 			metaData;
-		for (i = 0; i < selectedIDList.length; i = i + 1) {
-			id = selectedIDList[i];
+			
+		state.for_each_selected_id(function (i, id) {
 			metaData = store.get_metadata(id);
 			elem = document.getElementById(id);
 			if (metaData && elem) {
@@ -2911,7 +2881,7 @@
 				updateMetaData(metaData);
 				console.log("change zindex:" + index, id);
 			}
-		}
+		});
 	});
 	
 	/**
@@ -2932,19 +2902,19 @@
 			content_property.init("", null, "", Constants.PropertyTypeContent);
 		}
 		if (Validator.isDisplayTabSelected()) {
-			id = lastSelectWindowID;
+			id = state.get_last_select_window_id();
 			if (!id) {
 				id = Constants.WholeWindowListID;
 			}
 		} else {
-			id = lastSelectContentID;
+			id = state.get_last_select_content_id();
 		}
-		selectedIDList = [];
+		state.set_selected_id_list([]);
 		// 以前選択していたものを再選択する.
 		if (id) {
 			select(id, false);
 		}
-		draggingIDList = [];
+		state.set_dragging_id_list([]);
 	});
 
 	/**
@@ -3302,25 +3272,23 @@
 		});
 
 		gui.on("close_item", function () {
-			var i,
-				id,
-				metaData,
+			var metaData,
 				elem,
 				metaDataList = [];
 
 			manipulator.removeManipulator();
-			for (i = 0; i < selectedIDList.length; i = i + 1) {
-				id = selectedIDList[i]; 
+
+			state.for_each_selected_id(function (i, id) {
 				if (store.has_metadata(id)) {
 					metaData = store.get_metadata(id);
 					if (!management.isEditable(metaData.group)) {
 						// 編集不可コンテンツ
-						continue;
+						return;
 					}
 					metaData.visible = false;
 					metaDataList.push(metaData);
 				}
-			}
+			});
 			if (metaDataList.length > 0) {
 				updateMetaDataMulti(metaDataList);
 			}
