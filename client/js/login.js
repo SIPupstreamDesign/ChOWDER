@@ -139,6 +139,10 @@
 		return this.cookie.getLoginKey();
 	};
 
+	Login.prototype.getLoginUserID = function () {
+		return this.loginUserID;
+	};
+
 	Login.EVENT_LOGIN_SUCCESS = "success";
 	Login.EVENT_LOGIN_FAILED = "failed";
 	Login.EVENT_LOGOUT = "logout";

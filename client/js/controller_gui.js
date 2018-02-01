@@ -1557,6 +1557,27 @@
         }
 	};
 
+	/**
+	 * マークによるコンテンツ強調表示のトグル
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	ControllerGUI.prototype.toggle_mark = function (elem, metaData) {
+		var mark_memo = "mark_memo",
+			mark = "mark";
+		if (elem && metaData.hasOwnProperty("id")) {
+			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
+				if (!elem.classList.contains(mark)) {
+					elem.classList.add(mark);
+				}
+			} else {
+				if (elem.classList.contains(mark)) {
+					elem.classList.remove(mark);
+				}
+			}
+		}
+	}
+
 	// Update
 	ControllerGUI.prototype.update_display_scale = function (scale) {
 		this.emit(ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED, null, scale);
@@ -1573,6 +1594,23 @@
 			this.searchBox.check(check_groups[i], isChecked);
 		}
 	};
+
+	ControllerGUI.prototype.change_window_border_color = function (windowData) {
+		var divElem = this.get_list_elem(windowData.id);
+		if (divElem) {
+			if (windowData.hasOwnProperty('reference_count') && parseInt(windowData.reference_count, 10) <= 0) {
+				if (divElem.style.borderColor !== "gray") {
+					divElem.style.borderColor = "gray";
+					divElem.style.color = "gray";
+				}
+			} else {
+				if (divElem.style.borderColor !== "white") {
+					divElem.style.borderColor = "white";
+					divElem.style.color = "white";
+				}
+			}
+		}
+	};	
 
 	ControllerGUI.prototype.close_context_menu = function () {
 		document.getElementById('context_menu').style.display = "none";

@@ -11,22 +11,48 @@
 		management, // 管理情報
 		setupContent = function () {},
 		setupWindow = function () {},
+		setupSplit = function () {},
 		updateScreen = function () {},
 		onChangeRect = function () {},
-		doneGetVirtualDisplay,
-		doneGetContent,
-		doneGetWindowMetaData,
-		doneGetGroupList,
-		doneDeleteContent,
-		doneAddContent,
-		doneUpdateContent,
-		doneUpdateMetaData,
-		doneUpdateWindowMetaData,
-		doneGetMetaData,
-		doneDeleteWindowMetaData,
+		onManipulatorMove = function () {},
+		onMouseMove = function () {},
+		onMouseUp = function () {},
+		onUpdateAuthority = function () {},
+		doneGetVirtualDisplay = function () {},
+		doneGetContent = function () {},
+		doneGetWindowMetaData = function () {},
+		doneGetGroupList = function () {},
+		doneDeleteContent = function () {},
+		doneAddContent = function () {},
+		doneUpdateContent = function () {},
+		doneUpdateMetaData = function () {},
+		doneUpdateWindowMetaData = function () {},
+		doneGetMetaData = function () {},
+		doneDeleteWindowMetaData = function () {},
 		video = document.createElement('video'); // TODO 複数に対応
 	
 	Validator.init(gui);
+
+	/**
+	 * 指定された座標がelementの内部に存在するかを判定する
+	 * @method isInsideElement
+	 * @param {Element} element
+	 * @param {String} x x座標値
+	 * @param {String} y y座標値
+	 */
+	function isInsideElement(elem, x, y) {
+		var posx = parseInt(elem.style.left.split("px").join(''), 10),
+			posy = parseInt(elem.style.top.split("px").join(''), 10),
+			width = parseInt(elem.style.width.split("px").join(''), 10),
+			height = parseInt(elem.style.height.split("px").join(''), 10);
+		
+		if (store.has_metadata(elem.id)) {
+			return (posx <= x && posy <= y &&
+					(posx + width) > x &&
+					(posy + height) > y);
+		}
+		return false;
+	}
 
 	/**
 	 * 辞書順でElementをareaに挿入.
@@ -58,6 +84,70 @@
 		}
 	}
 	
+	/**
+	 * エレメント間でコンテントデータをコピーする.
+	 */
+	function copyContentData(fromElem, toElem, metaData, isListContent) {
+		store.for_each_metadata(function (id, meta) {
+			var elem;
+			if (id !== metaData.id) {
+				if (meta.content_id === metaData.content_id) {
+					if (isListContent) {
+						elem = gui.get_list_elem(id);
+						if (elem) {
+							elem = elem.childNodes[0];
+						}
+					} else {
+						elem = document.getElementById(id);
+					}
+					if (elem && toElem) {
+						if (metaData.type === 'text' || metaData.type === 'layout') {
+							if (elem.innerHTML !== "") {
+								toElem.innerHTML = elem.innerHTML;
+							}
+						} else if (elem.src) {
+							toElem.src = elem.src;
+						}
+						if (!isListContent) {
+							vscreen_util.assignMetaData(toElem, metaData, true, store.get_group_dict());
+						}
+					}
+					if (elem && fromElem) {
+						if (metaData.type === 'text' || metaData.type === 'layout') {
+							elem.innerHTML = fromElem.innerHTML;
+						} else {
+							elem.src = fromElem.src;
+						}
+					}
+				}
+			}
+		});
+	}
+
+	function createWholeWindow() {
+		var divElem = document.createElement("div"),
+			onlistID = Constants.WholeWindowListID,
+			idElem;
+		
+		idElem = document.createElement('div');
+		idElem.innerHTML = "Virtual Display";
+		idElem.className = "screen_id";
+		divElem.appendChild(idElem);
+		divElem.id = onlistID;
+		divElem.style.position = "relative";
+		divElem.style.top = "5px";
+		divElem.style.left = "20px";
+		divElem.style.width = "200px";
+		divElem.style.height = "50px";
+		divElem.style.border = "solid";
+		divElem.style.borderColor = "white";
+		divElem.style.margin = "5px";
+		divElem.style.float = "left";
+		divElem.style.color = "white";
+		divElem.classList.add("screen");
+		return divElem;
+	}
+
 	/**
 	 * 選択されたIDからElement取得
 	 * @method getElem
@@ -93,7 +183,6 @@
 				if (isListViewArea) {
 					elem.style.display = "none";
 				}
-
 				insertElementWithDictionarySort(previewArea, elem);
 				setupContent(elem, uid);
 				elem.style.marginTop = "0px";
@@ -105,229 +194,11 @@
 	}
 	
 	/**
-	 * 選択されているGroupIDを返却する
-	 * @method getSelectedGroup
-	 * @return {String} グループID
-	 */
-	function getSelectedGroup() {
-		return gui.get_current_group_id();
-	}
-
-	/**
-	 * メタデータの位置情報、サイズ情報をString -> Intへ変換する
-	 * @method toIntMetaData
-	 * @param {JSON} metaData メタデータ
-	 * @return {JSON} metaData
-	 */
-	function toIntMetaData(metaData) {
-		metaData.posx = parseInt(metaData.posx, 10);
-		metaData.posy = parseInt(metaData.posy, 10);
-		metaData.width = parseInt(metaData.width, 10);
-		metaData.height = parseInt(metaData.height, 10);
-		return metaData;
-	}
-
-	/**
-	 * グループリストの更新(再取得)
-	 * @method updateGroupList
-	 */
-	function updateGroupList(endCallback) {
-		connector.send('GetGroupList', {}, function (err, reply) {
-			doneGetGroupList(err, reply);
-			if (endCallback) {
-				endCallback();
-			}
-		});
-	}
-	
-	/**
-	 * コンテンツとウィンドウの更新(再取得).
-	 * @method update
-	 */
-	function update(endCallback) {
-		vscreen.clearScreenAll();
-		connector.send('GetMetaData', {type: "all", id: ""}, function (err, reply) {
-			if (!err) {
-				var last = reply.last; 
-				delete reply.last;
-				doneGetMetaData(err, reply, function (err) {
-					//updateGroupList();
-					if (last) {
-						updateGroupList(function () {
-							if (endCallback) {
-								endCallback();
-							}
-						});
-					}
-				});
-			}
-		});
-		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
-		connector.send('GetWindowMetaData', {type: "all", id: ""}, doneGetWindowMetaData);
-		updateGroupList();
-	}
-	
-	/**
-	 * Content追加
-	 * @method addContent
-	 * @param {JSON} metaData コンテンツのメタデータ
-	 * @param {BLOB} binary コンテンツのバイナリデータ
-	 */
-	function addContent(metaData, binary) {
-		if (!metaData.hasOwnProperty("zIndex")) {
-			metaData.zIndex = store.get_zindex(metaData, true);
-		}
-		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
-	}
-	
-	/**
-	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
-	 * @method updateMetaData
-	 * @param {JSON} metaData メタデータ
-	 */
-	function updateMetaData(metaData, endCallback) {
-		if (Validator.isWindowType(metaData)) {
-			// window
-			connector.send('UpdateWindowMetaData', [metaData], function (err, reply) {
-				doneUpdateWindowMetaData(err, reply, endCallback);
-			});
-        } else if (metaData.type === 'mouse') {
-            // mouse cursor
-            connector.send('UpdateMouseCursor', metaData, function (err, reply) {
-                // console.log(err, reply);
-            });
-		} else {
-			if (management.isEditable(metaData.group)) {
-				connector.send('UpdateMetaData', [metaData], function (err, reply) {
-					doneUpdateMetaData(err, reply, endCallback);
-				});
-			}
-		}
-	}
-	
-	/**
-	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
-	 * @method updateMetaData
-	 * @param {JSON} metaData メタデータ
-	 */
-	function updateMetaDataMulti(metaDataList, endCallback) {
-		if (metaDataList.length > 0) {
-			if (Validator.isWindowType(metaDataList[0])) {
-				connector.send('UpdateWindowMetaData', metaDataList, function (err, reply) {
-					doneUpdateWindowMetaData(err, reply, endCallback);
-				});
-			} else {
-				// １つでも変更可能なデータが含まれていたら送る.
-				var isEditable = false;
-				var i;
-				for (i = 0; i < metaDataList.length; i = i + 1) {
-					isEditable = isEditable || management.isEditable(metaDataList[i].group);
-				}
-				if (isEditable) {
-					connector.send('UpdateMetaData', metaDataList, function (err, reply) {
-						doneUpdateMetaData(err, reply, endCallback);
-					});
-				}
-			}
-		}
-	}
-
-	/**
-	 * コンテンツ更新要求送信
-	 * @method updateContent
-	 * @param {JSON} metaData 更新するコンテンツのメタデータ
-	 * @param {Blob} binary 更新するコンテンツのバイナリ
-	 */
-	function updateContent(metaData, binary) {
-		connector.sendBinary('UpdateContent', metaData, binary, doneUpdateContent);
-	}
-	
-	/**
-	 * VirtualDisplay情報更新要求送信
-	 * @method updateWindowData
-	 */
-	function updateWindowData() {
-		var windowData,
-			whole = vscreen.getWhole(),
-			split = vscreen.getSplitCount();
-		
-		console.log("updateWindowData");
-		
-		windowData = {
-			orgWidth : whole.orgW,
-			orgHeight : whole.orgH,
-			splitX : split.x,
-			splitY : split.y,
-			scale : vscreen.getWholeScale()
-		};
-		if (!windowData.orgWidth || isNaN(windowData.orgWidth)) {
-			windowData.orgWidth = Constants.InitialWholeWidth;
-		}
-		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
-			windowData.orgHeight = Constants.InitialWholeHeight;
-		}
-		connector.send('UpdateVirtualDisplay', windowData, function (err, res) {
-			if (!err) {
-				doneGetVirtualDisplay(null, res);
-			}
-		});
-	}
-	
-	/**
-	 * リモートカーソルの有効状態を更新
-	 * @method updateRemoteCursor
-	 */
-	function updateRemoteCursorEnable(isEnable) {
-		Cookie.setUpdateCursorEnable(isEnable);
-		if (!isEnable) {
-			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
-		}
-	}
-	
-	/**
-	 * VirualDisplay分割設定
-	 * @method assignSplitWholes
-	 * @param {Object} splitWholes VirtualDisplayの分割情報.
-	 */
-	function assignSplitWholes(splitWholes) {
-		var screenElem,
-			i,
-			w,
-			previewArea = gui.get_display_preview_area();
-			
-		console.log("assignSplitWholes");
-		
-		//console.log(splitWholes);
-		for (i in splitWholes) {
-			if (splitWholes.hasOwnProperty(i)) {
-				w = splitWholes[i];
-				console.log(w);
-				screenElem = document.getElementById(w.id);
-				if (!screenElem) {
-					console.log("create_new_window", w);
-					screenElem = document.createElement('div');
-					screenElem.style.position = "absolute";
-					screenElem.className = "screen";
-					screenElem.id = w.id;
-					screenElem.style.border = 'solid';
-					screenElem.style.borderWidth = '1px';
-					screenElem.style.borderColor = "gray";
-					screenElem.style.zIndex = -100000;
-					previewArea.appendChild(screenElem);
-					setupWindow(screenElem, w.id);
-				}
-				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(w));
-			}
-		}
-	}
-
-	
-	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
 	 * @method onManipulatorMove
 	 * @param {Object} evt マウスイベント
 	 */
-	function onManipulatorMove(evt) {
+	onManipulatorMove = function (evt) {
 		var px, py,
 			lastx, lasty,
 			lastw, lasth,
@@ -402,189 +273,8 @@
 				}
 				vscreen_util.transInv(metaData);
 				store.set_metadata(metaData.id, metaData);
-				updateMetaData(metaData);
+				controller.update_metadata(metaData);
 			}
-		}
-	}
-	
-	/**
-	 * ContentかDisplayを選択する。
-	 * @method select
-	 * @param {String} id 選択したID
-	 * @parma {bool} isListViewArea リストビューを対象にするかどうか.
-	 */
-	function select(id, isListViewArea) {
-		var elem,
-			metaData,
-			initialVisible,
-			mime = null,
-			col;
-		
-		console.log("selectid", id);
-		if (store.has_metadata(id)) {
-			metaData = store.get_metadata(id);
-			if (metaData.hasOwnProperty('mime')) {
-				mime = metaData.mime;
-			}
-		}
-		
-		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
-			content_property.init(id, null, "", "whole_window", mime);
-			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			if (gui.get_whole_window_elem() && metaData) {
-				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
-			}
-			return;
-		}
-		if (id.indexOf(Constants.WholeSubWindowID) >= 0) {
-			return;
-		}
-		if (gui.get_whole_window_elem()) {
-			gui.get_whole_window_elem().style.borderColor = "white";
-		}
-		elem = getElem(id, isListViewArea);
-		if (elem.id !== id) {
-			id = elem.id;
-		}
-		metaData = store.get_metadata(id);
-		if (metaData.hasOwnProperty('mime')) {
-			mime = metaData.mime;
-		}
-		
-		console.log("metaData", metaData);
-		initialVisible = metaData.visible;
-		elem.style.border = "solid 2px";
-		
-		if (state.get_selected_id_list().indexOf(id) < 0) {
-			state.get_selected_id_list().push(id);
-		}
-		state.set_dragging_id_list(JSON.parse(JSON.stringify(state.get_selected_id_list())));
-		
-		// 選択ボーダー色設定
-		if (gui.get_list_elem(id)) {
-			gui.get_list_elem(id).style.borderColor = store.get_border_color(metaData);
-		}
-		if (gui.get_search_elem(id)) {
-			gui.get_search_elem(id).style.borderColor = store.get_border_color(metaData);
-		}
-		elem.style.borderColor = store.get_border_color(metaData);
-
-		if (state.get_selected_id_list().length <= 0) {
-			manipulator.removeManipulator();
-		} else if (state.get_selected_id_list().length > 1) {
-			// 複数選択. マニピュレーター, プロパティ設定
-			manipulator.removeManipulator();
-			if (Validator.isWindowType(metaData)) {
-				content_property.init(id, null, "", Constants.PropertyTypeMultiDisplay, mime);
-			} else {
-				content_property.init(id, null,"", Constants.PropertyTypeMultiContent, mime);
-			}
-		} else {
-			// 単一選択.マニピュレーター, プロパティ設定
-			if (Validator.isWindowType(metaData)) {
-				content_property.init(id, null,"", Constants.DisplayTabType, mime);
-				content_property.assign_content_property(metaData);
-				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
-			} else {
-				if (store.has_group(metaData.group)) {
-					content_property.init(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime);
-				} else {
-					console.warn("not found group", metaData)
-					content_property.init(id, null, "", metaData.type, mime);
-				}
-				content_property.assign_content_property(metaData);
-				gui.set_update_content_id(id);
-				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
-			}
-		}
-
-		if (Validator.isDisplayTabSelected()) {
-			state.set_last_select_window_id(id);
-		} else {
-			state.set_last_select_content_id(id);
-		}
-		
-		if (elem.style.zIndex === "") {
-			elem.style.zIndex = 0;
-		}
-		if (initialVisible === "true" || initialVisible === true) {
-			manipulator.moveManipulator(elem);
-		} else {
-			manipulator.removeManipulator();
-		}
-	}
-	
-	/**
-	 * 現在選択されているContents, もしくはVirtualDisplayを非選択状態にする
-	 * @method unselect
-	 */
-	function unselect(id, updateText) {
-		var elem = null,
-			metaData,
-			i;
-
-		elem = getElem(id, true);
-		if (elem) {
-			metaData = store.get_metadata(id);
-			if (Validator.isWindowType(metaData)) {
-				elem.style.border = "";
-				elem.style.borderStyle = "solid";
-			}
-			if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
-				elem.style.border = "";
-			}
-			if (gui.get_list_elem(elem.id)) {
-				gui.get_list_elem(elem.id).style.borderColor = store.get_list_border_color(metaData);
-				if (gui.get_search_elem(elem.id)) {
-					gui.get_search_elem(elem.id).style.borderColor = store.get_list_border_color(metaData);
-				}
-			}
-		}
-		content_property.clear(updateText);
-		state.get_selected_id_list().splice(state.get_selected_id_list().indexOf(id), 1);
-		manipulator.removeManipulator();
-	}
-	
-	function unselectAll(updateText) {
-		var i;
-		for (i = state.get_selected_id_list().length - 1; i >= 0; i = i - 1) {
-			unselect(state.get_selected_id_list()[i], updateText);
-		}
-		state.clear_drag_rect();
-	}
-
-	/**
-	 * クローズボタンハンドル。選択されているcontent or windowを削除する。
-	 * その後クローズされた結果をupdateMetaDataにて各Windowに通知する。
-	 * @method closeFunc
-	 */
-	function closeFunc() {
-		var id = state.get_selected_id(),
-			metaData = null,
-			elem,
-			previewArea;
-		
-		console.log("closeFunc");
-		if (store.has_metadata(id)) {
-			unselect(id);
-			elem = getElem(id, false);
-			
-			metaData = store.get_metadata(id);
-			if (!management.isEditable(metaData.group)) {
-				// 編集不可コンテンツ
-				return;
-			}
-			
-			metaData.visible = false;
-			
-			if (Validator.isWindowType(metaData)) {
-				previewArea = gui.get_display_preview_area();
-			} else {
-				previewArea = gui.get_content_preview_area();
-			}
-			previewArea.removeChild(elem);
-			
-			updateMetaData(metaData);
 		}
 	}
 	
@@ -612,46 +302,25 @@
 				}
 				if (id === 'content_transform_x') {
 					metaData.posx = value;
-					updateMetaData(metaData);
+					controller.update_metadata(metaData);
 				} else if (id === 'content_transform_y') {
 					metaData.posy = value;
-					updateMetaData(metaData);
+					controller.update_metadata(metaData);
 				} else if (id === 'content_transform_w' && value > 10) {
 					metaData.width = value;
 					metaData.height = value * aspect;
 					document.getElementById('content_transform_h').value = metaData.height;
-					updateMetaData(metaData);
+					controller.update_metadata(metaData);
 				} else if (id === 'content_transform_h' && value > 10) {
 					metaData.width = value / aspect;
 					metaData.height = value;
 					document.getElementById('content_transform_w').value = metaData.width;
-					updateMetaData(metaData);
+					controller.update_metadata(metaData);
 				}
 			}
 			manipulator.removeManipulator();
 		}
 	};
-
-	/**
-	 * 指定された座標がContentまたはDisplayの内部に存在するかを判定する。setupContentsにて使用されている。
-	 * @method isInsideElement
-	 * @param {String} id ContentまたはDisplay ID
-	 * @param {String} x x座標値
-	 * @param {String} y y座標値
-	 */
-	function isInsideElement(elem, x, y) {
-		var posx = parseInt(elem.style.left.split("px").join(''), 10),
-			posy = parseInt(elem.style.top.split("px").join(''), 10),
-			width = parseInt(elem.style.width.split("px").join(''), 10),
-			height = parseInt(elem.style.height.split("px").join(''), 10);
-		
-		if (store.has_metadata(elem.id)) {
-			return (posx <= x && posy <= y &&
-					(posx + width) > x &&
-					(posy + height) > y);
-		}
-		return false;
-	}
 
 	/**
 	 * Content設定
@@ -732,11 +401,11 @@
 
 			// erase last border
 			if (!state.is_ctrl_down()) {
-				unselectAll(true);
-				select(id, gui.is_listview_area(evt));
+				controller.unselect_all(true);
+				controller.select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
 			} else  {
-				select(id, gui.is_listview_area(evt));
+				controller.select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
 			}
 			
@@ -745,7 +414,6 @@
 					rect.left,
 					rect.top
 				]);
-
 
 			if (evt.changedTouches) {
 				// タッチ
@@ -778,7 +446,6 @@
 					});
 				});
 			}
-		
 			evt.stopPropagation();
 			evt.preventDefault();
 		};
@@ -799,128 +466,45 @@
 	setupWindow = function (elem, id) {
 		setupContent(elem, id);
 	};
-	
+
 	/**
-	 * ContentまたはDisplayのスナップ処理
-	 * @method snapToSplitWhole
-	 * @param {Object} elem スナップ対象Object
-	 * @param {JSON} metaData メタデータ
-	 * @param {Object} splitWhole スナップ先Object
+	 * VirualDisplay分割設定
+	 * @method setupSplit
+	 * @param {Object} splitWholes VirtualDisplayの分割情報.
 	 */
-	function snapToSplitWhole(elem, metaData, splitWhole) {
-		var orgWidth = parseFloat(metaData.orgWidth),
-			orgHeight = parseFloat(metaData.orgHeight),
-			vaspect = splitWhole.w / splitWhole.h,
-			aspect = orgWidth / orgHeight;
-		
-		if (!management.isEditable(metaData.group)) {
-			// 編集不可コンテンツ
-			return;
-		}
-		metaData.posx = splitWhole.x;
-		metaData.posy = splitWhole.y;
-		if (aspect > vaspect) {
-			// content is wider than split area
-			metaData.width = splitWhole.w;
-			metaData.height = splitWhole.w / aspect;
-		} else {
-			// content is highter than split area
-			metaData.height = splitWhole.h;
-			metaData.width = splitWhole.h * aspect;
-		}
-		manipulator.moveManipulator(elem);
-	}
-	
-	/**
-	 * Screenへスナップさせる.
-	 * @method snapToScreen
-	 * @param {Element} elem 対象エレメント
-	 * @param {JSON} metaData 対象メタデータ
-	 * @param {Object} screen スナップ先スクリーン
-	 */
-	function snapToScreen(elem, metaData, screen) {
-		return snapToSplitWhole(elem, metaData, screen);
-	}
-	
-	/**
-	 * Snapハイライト解除
-	 * @method clearSnapHightlight
-	 */
-	function clearSnapHightlight() {
-		var splitWholes,
+	setupSplit = function (splitWholes) {
+		var screenElem,
 			i,
-			screens;
-		splitWholes = vscreen.getSplitWholes();
+			w,
+			previewArea = gui.get_display_preview_area();
+			
+		console.log("setupSplit");
+		
+		//console.log(splitWholes);
 		for (i in splitWholes) {
 			if (splitWholes.hasOwnProperty(i)) {
-				if (document.getElementById(splitWholes[i].id)) {
-					document.getElementById(splitWholes[i].id).style.background = "transparent";
+				w = splitWholes[i];
+				console.log(w);
+				screenElem = document.getElementById(w.id);
+				if (!screenElem) {
+					console.log("create_new_window", w);
+					screenElem = document.createElement('div');
+					screenElem.style.position = "absolute";
+					screenElem.className = "screen";
+					screenElem.id = w.id;
+					screenElem.style.border = 'solid';
+					screenElem.style.borderWidth = '1px';
+					screenElem.style.borderColor = "gray";
+					screenElem.style.zIndex = -100000;
+					previewArea.appendChild(screenElem);
+					setupWindow(screenElem, w.id);
 				}
-			}
-		}
-		
-		screens = vscreen.getScreenAll();
-		for (i in screens) {
-			if (screens.hasOwnProperty(i)) {
-				if (document.getElementById(screens[i].id)) {
-					document.getElementById(screens[i].id).style.background = "transparent";
-				}
+				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(w));
 			}
 		}
 	}
-	
-	/**
-	 * レイアウト適用
-	 * @method applyLayout
-	 * @param {JSON} metaData 対象メタデータ
-	 */
-	function applyLayout(metaData) {
-		window.input_dialog.okcancel_input({
-			name : "Layoutを適用します。よろしいですか?"
-		}, function (isOK) {
-			if (isOK) {
-				// レイアウトのコンテンツ(適用対象のメタデータが詰まっている)を取得する
-				var request = { type: metaData.type, id: metaData.id };
-				connector.send('GetContent', request, function (err, data) {
-					var meta,
-						metaDatas = [];
-					if (!err) {
-						try {
-							var layoutDatas = JSON.parse(data.contentData);
-							if (layoutDatas.hasOwnProperty('contents')) {
-								for (meta in layoutDatas.contents) {
-									var oldData = layoutDatas.contents[meta];
-									if (store.get_metadata(oldData.id)) {
-										if (oldData.hasOwnProperty('backup_list')) {
-											// コンテンツは過去レイアウト作成時のものにする
-											if (meta.resture_index > 0) {
-												var oldContent = meta.backup_list[meta.resture_index];
-												for (i = 0; i < store.get_metadata(meta.id).backup_list.length; i = i + 1) {
-													if (store.get_metadata(meta.id).backup_list[i] === oldContent) {
-														meta.restore_index = i;
-													}
-												}
-											}
-											// 履歴リストは最新にする.
-											oldData.backup_list = store.get_metadata(oldData.id).backup_list;
-										}
-										// メモは最新にする.
-										oldData.user_data_text = store.get_metadata(oldData.id).user_data_text;
-									}
-									metaDatas.push(oldData);
-								}
-								updateMetaDataMulti(metaDatas);
-							}
-						} catch (e) {
-							console.error(e);
-						}
-					}
-				});
-			}
-		});
-	}
-	
-	function mousemoveFunc(evt) {
+
+	onMouseMove = function (evt) {
 		var i,
 			metaData,
 			elem,
@@ -962,7 +546,7 @@
 				x: mousePos.x,
 				y: mousePos.y
 			};
-			updateMetaData(obj);
+			controller.update_metadata(obj);
 		}
 		
 		state.for_each_dragging_id(function (i, draggingID) {
@@ -972,7 +556,7 @@
 			}
 
 			// clear splitwhole colors
-			clearSnapHightlight();
+			controller.clear_snap_hightlight();
 			
 			// detect spilt screen area
 			if (Validator.isGridMode()) {
@@ -1027,7 +611,7 @@
 		});
 
 		if (targetMetaDatas.length > 0) {
-			updateMetaDataMulti(targetMetaDatas);
+			controller.update_metadata_multi(targetMetaDatas);
 		}
 
 		if (manipulator.getDraggingManip()) {
@@ -1051,7 +635,7 @@
 		}
 	}
 
-	function mouseupFunc(evt) {
+	onMouseUp = function (evt) {
 		var i,
 			metaData,
 			elem,
@@ -1072,22 +656,22 @@
 				if (!gui.is_listview_area(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
 					if (Validator.isLayoutType(metaData)) {
-						applyLayout(metaData);
+						controller.apply_layout(metaData);
 					} else {
 						if (management.isEditable(metaData.group)) {
 							metaData.visible = true;
 						}
 						if (Validator.isFreeMode()) {
-							updateMetaData(metaData);
+							controller.update_metadata(metaData);
 						} else if (Validator.isDisplayMode()) {
 							px = rect.left + state.get_drag_offset_left();
 							py = rect.top + state.get_drag_offset_top();
 							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 							screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 							if (screen) {
-								snapToScreen(elem, metaData, screen);
+								controller.snap_to_screen(elem, metaData, screen);
 							}
-							updateMetaData(metaData);
+							controller.update_metadata(metaData);
 							manipulator.moveManipulator(elem);
 						} else {
 							// grid mode
@@ -1096,14 +680,14 @@
 							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 							splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
 							if (splitWhole) {
-								snapToSplitWhole(elem, metaData, splitWhole);
+								controller.snap_to_screen(elem, metaData, splitWhole);
 							}
-							updateMetaData(metaData);
+							controller.update_metadata(metaData);
 							manipulator.moveManipulator(elem);
 						}
 					}
 				}
-				clearSnapHightlight();
+				controller.clear_snap_hightlight();
 			}
 			draggingIDList.splice(i, 1);
 			state.set_drag_offset_top(0);
@@ -1113,78 +697,6 @@
 		manipulator.clearDraggingManip();
 	}
 
-	/**
-	 * テキストデータ送信
-	 * @method sendText
-	 * @param {String} text 送信するテキスト.
-	 */
-	function sendText(text, metaData, width, height) {
-		var previewArea = gui.get_content_preview_area(),
-			elem = document.createElement('pre');
-		
-		if (!text) {
-			text = "";
-		}
-		elem.className = "text_content";
-		elem.innerHTML = text;
-		previewArea.appendChild(elem);
-		
-		vscreen_util.transPosInv(metaData);
-		metaData.width = elem.offsetWidth / vscreen.getWholeScale();
-		metaData.height = elem.offsetHeight / vscreen.getWholeScale();
-		metaData.group = gui.get_current_group_id();
-		previewArea.removeChild(elem);
-		metaData.type = "text";
-		// テキストのときはメタデータにもテキストをつっこむ
-		metaData.user_data_text = JSON.stringify({ text: text });
-
-		addContent(metaData, text);
-	}
-	
-	function sendImage(data, metaData) {
-		var img = document.createElement('img'),
-			buffer,
-			blob,
-		buffer = new Uint8Array(data);
-		blob = new Blob([buffer], {type: "image/jpeg"});
-		img.src = URL.createObjectURL(blob);
-		img.className = "image_content";
-		img.onload = (function (metaData) {
-			return function () {
-				metaData.type = "image";
-				metaData.width = img.naturalWidth;
-				metaData.height = img.naturalHeight;
-				metaData.group = gui.get_current_group_id();
-				vscreen_util.transPosInv(metaData);
-				img.style.width = img.naturalWidth + "px";
-				img.style.height = img.naturalHeight + "px";
-				URL.revokeObjectURL(img.src);
-				console.log("sendImage");
-				addContent(metaData, data);
-			};
-		}(metaData));
-	}
-
-	function fixedEncodeURIComponent(str) {
-		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
-	}
-
-	function sendMovie(data, metaData) {
-		// 動画は実体は送らずメタデータのみ送る
-		// データとしてSDPを送る
-		var blob = new Blob([data], {type: "video/mp4"});
-		video.src = URL.createObjectURL(blob);
-		var stream = video.captureStream();
-		var webRTC = new WebRTC();
-		webRTC.offer(function (sdp) {
-			webRTC.addStream(stream);
-			metaData.type = "video";
-			metaData.width = 1920;
-			metaData.height = 1080;
-			metaData.group = gui.get_current_group_id();
-			addContent(metaData, sdp);
-		});
-	}
 
 	/**
 	 * VirtualScreen更新
@@ -1275,170 +787,623 @@
 					}
 				}
 			}
-			assignSplitWholes(vscreen.getSplitWholes());
+			setupSplit(vscreen.getSplitWholes());
 		}
 	};
 	
-	/**
-	 * コンテンツタイプから適切なタグ名を取得する.
-	 * @parma {String} contentType コンテンツタイプ
-	 */
-	function getTagName(contentType) {
-		var tagName;
-		if (contentType === 'text') {
-			tagName = 'pre';
+	// 権限情報が更新された
+	onUpdateAuthority = function (endCallback) {
+		var key = login.getLoginKey();
+		if (key.length > 0) {
+			var request = { id : "", password : "", loginkey : key };
+			connector.send('Login', request, function (err, reply) {
+				if (err || reply === "failed") {
+					// ログインに失敗した。リロードする.
+					window.location.reload(true);
+				}
+				management.setAuthority(reply.authority);
+				if (endCallback) {
+					endCallback();
+				}
+			});
 		} else {
-			tagName = 'img';
-		}
-		return tagName;
-	}
-
-	/**
-	 * エレメント間でコンテントデータをコピーする.
-	 */
-	function copyContentData(fromElem, toElem, metaData, isListContent) {
-		store.for_each_metadata(function (id, meta) {
-			var elem;
-			if (id !== metaData.id) {
-				if (meta.content_id === metaData.content_id) {
-					if (isListContent) {
-						elem = gui.get_list_elem(id);
-						if (elem) {
-							elem = elem.childNodes[0];
-						}
-					} else {
-						elem = document.getElementById(id);
-					}
-					if (elem && toElem) {
-						if (metaData.type === 'text' || metaData.type === 'layout') {
-							if (elem.innerHTML !== "") {
-								toElem.innerHTML = elem.innerHTML;
-							}
-						} else if (elem.src) {
-							toElem.src = elem.src;
-						}
-						if (!isListContent) {
-							vscreen_util.assignMetaData(toElem, metaData, true, store.get_group_dict());
-						}
-					}
-					if (elem && fromElem) {
-						if (metaData.type === 'text' || metaData.type === 'layout') {
-							elem.innerHTML = fromElem.innerHTML;
-						} else {
-							elem.src = fromElem.src;
-						}
-					}
-				}
-			}
-		});
-	}
-
-	/**
-	 * メタデータからコンテンツをインポートする
-	 * @method importContent
-	 * @param {JSON} metaData メタデータ
-	 * @param {BLOB} contentData コンテンツデータ
-	 */
-	function importContent(metaData, contentData) {
-		window.layout_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
-		window.content_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
-		window.content_view.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
-	}
-	
-	function changeWindowBorderColor(windowData) {
-		var divElem = gui.get_list_elem(windowData.id);
-		if (divElem) {
-			if (windowData.hasOwnProperty('reference_count') && parseInt(windowData.reference_count, 10) <= 0) {
-				if (divElem.style.borderColor !== "gray") {
-					divElem.style.borderColor = "gray";
-					divElem.style.color = "gray";
-				}
-			} else {
-				if (divElem.style.borderColor !== "white") {
-					divElem.style.borderColor = "white";
-					divElem.style.color = "white";
-				}
+			if (endCallback) {
+				endCallback();
 			}
 		}
 	}
 	
-	/**
-	 * wholeWindowをリストビューに追加する
-	 * @method addWholeWindowToList
-	 */
-	function addWholeWindowToList() {
-		var displayArea = gui.get_display_area(),
-			divElem = document.createElement("div"),
-			onlistID = Constants.WholeWindowListID,
-			idElem;
-		
-		idElem = document.createElement('div');
-		idElem.innerHTML = "Virtual Display";
-		idElem.className = "screen_id";
-		divElem.appendChild(idElem);
+	///-------------------------------------------------------------------------------------------------------
+	var Controller = function () {
+		this.isInitialUpdate = true;
+	};
 
-		divElem.id = onlistID;
-		divElem.style.position = "relative";
-		divElem.style.top = "5px";
-		divElem.style.left = "20px";
-		divElem.style.width = "200px";
-		divElem.style.height = "50px";
-		divElem.style.border = "solid";
-		divElem.style.borderColor = "white";
-		divElem.style.margin = "5px";
-		divElem.style.float = "left";
-		divElem.style.color = "white";
-		divElem.classList.add("screen");
-		setupContent(divElem, onlistID);
+	// 全てリロードする
+	Controller.prototype.reload_all = function () {
+		console.log("on reloadAll");
+		this.update(function () {
+			if (this.isInitialUpdate) {
+				var checkbox = document.getElementById('all_check_');
+				if (checkbox) {
+					checkbox.onclick();
+				}
+				this.isInitialUpdate = false;
+			}
+		}.bind(this));
+		this.clear_window_list();
+
+		var divElem = createWholeWindow();
+		var displayArea = gui.get_display_area();
 		displayArea.appendChild(divElem);
-	}
-	
+		setupContent(divElem, divElem.id);
+
+		updateScreen();
+	};
+
 	/**
 	 * リストビュー領域をクリアする
 	 * @method clearWindowList
 	 */
-	function clearWindowList() {
+	Controller.prototype.clear_window_list = function () {
 		var displayArea = gui.get_display_area();
 		if (displayArea) {
 			displayArea.innerHTML = "";
 		}
 	}
-	
+
 	/**
 	 * 指定されたWindowをリストビューにインポートする
-	 * @method importWindow
+	 * @method import_window
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	function importWindow(windowData) {
+	Controller.prototype.import_window = function (windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
 		window.window_view.import_window(gui, store.get_metadata_dict(), windowData);
 		window.window_list.import_window(gui, store.get_metadata_dict(), windowData);
 	}
-	
-	///-------------------------------------------------------------------------------------------------------
-	
-	/// meta data updated
+
+	/**
+	 * メタデータからコンテンツをインポートする
+	 * @method import_content
+	 * @param {JSON} metaData メタデータ
+	 * @param {BLOB} contentData コンテンツデータ
+	 */
+	Controller.prototype.import_content = function (metaData, contentData) {
+		window.layout_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+		window.content_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+		window.content_view.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+	}
+	/**
+	 * テキストデータ送信
+	 * @method sendText
+	 * @param {String} text 送信するテキスト.
+	 */
+	Controller.prototype.send_text = function (text, metaData, width, height) {
+		var previewArea = gui.get_content_preview_area(),
+			elem = document.createElement('pre');
+		
+		if (!text) {
+			text = "";
+		}
+		elem.className = "text_content";
+		elem.innerHTML = text;
+		previewArea.appendChild(elem);
+		
+		vscreen_util.transPosInv(metaData);
+		metaData.width = elem.offsetWidth / vscreen.getWholeScale();
+		metaData.height = elem.offsetHeight / vscreen.getWholeScale();
+		metaData.group = gui.get_current_group_id();
+		previewArea.removeChild(elem);
+		metaData.type = "text";
+		// テキストのときはメタデータにもテキストをつっこむ
+		metaData.user_data_text = JSON.stringify({ text: text });
+		controller.add_content(metaData, text);
+	};
 	
 	/**
-	 * マークによるコンテンツ強調表示のトグル
-	 * @param {Element} elem 対象エレメント
+	 * 画像データ送信
+	 * @param {*} data 
+	 * @param {*} metaData 
+	 */
+	Controller.prototype.send_image = function (data, metaData) {
+		var img = document.createElement('img'),
+			buffer,
+			blob,
+		buffer = new Uint8Array(data);
+		blob = new Blob([buffer], {type: "image/jpeg"});
+		img.src = URL.createObjectURL(blob);
+		img.className = "image_content";
+		img.onload = (function (metaData) {
+			return function () {
+				metaData.type = "image";
+				metaData.width = img.naturalWidth;
+				metaData.height = img.naturalHeight;
+				metaData.group = gui.get_current_group_id();
+				vscreen_util.transPosInv(metaData);
+				img.style.width = img.naturalWidth + "px";
+				img.style.height = img.naturalHeight + "px";
+				URL.revokeObjectURL(img.src);
+				console.log("sendImage");
+				controller.add_content(metaData, data);
+			};
+		}(metaData));
+	}
+
+	/**
+	 * 動画データ送信
+	 * @param {*} data 
+	 * @param {*} metaData 
+	 */
+	Controller.prototype.send_movie = function (data, metaData) {
+		// 動画は実体は送らずメタデータのみ送る
+		// データとしてSDPを送る
+		var blob = new Blob([data], {type: "video/mp4"});
+		video.src = URL.createObjectURL(blob);
+		var stream = video.captureStream();
+		var webRTC = new WebRTC();
+		webRTC.offer(function (sdp) {
+			webRTC.addStream(stream);
+			metaData.type = "video";
+			metaData.width = 1920;
+			metaData.height = 1080;
+			metaData.group = gui.get_current_group_id();
+			controller.add_content(metaData, sdp);
+		});
+	};
+	
+	/**
+	 * レイアウト適用
+	 * @method apply_layout
+	 * @param {JSON} metaData 対象メタデータ
+	 */
+	Controller.prototype.apply_layout = function (metaData) {
+		window.input_dialog.okcancel_input({
+			name : "Layoutを適用します。よろしいですか?"
+		}, function (isOK) {
+			if (isOK) {
+				// レイアウトのコンテンツ(適用対象のメタデータが詰まっている)を取得する
+				var request = { type: metaData.type, id: metaData.id };
+				connector.send('GetContent', request, function (err, data) {
+					var meta,
+						metaDatas = [];
+					if (!err) {
+						try {
+							var layoutDatas = JSON.parse(data.contentData);
+							if (layoutDatas.hasOwnProperty('contents')) {
+								for (meta in layoutDatas.contents) {
+									var oldData = layoutDatas.contents[meta];
+									if (store.get_metadata(oldData.id)) {
+										if (oldData.hasOwnProperty('backup_list')) {
+											// コンテンツは過去レイアウト作成時のものにする
+											if (meta.resture_index > 0) {
+												var oldContent = meta.backup_list[meta.resture_index];
+												for (i = 0; i < store.get_metadata(meta.id).backup_list.length; i = i + 1) {
+													if (store.get_metadata(meta.id).backup_list[i] === oldContent) {
+														meta.restore_index = i;
+													}
+												}
+											}
+											// 履歴リストは最新にする.
+											oldData.backup_list = store.get_metadata(oldData.id).backup_list;
+										}
+										// メモは最新にする.
+										oldData.user_data_text = store.get_metadata(oldData.id).user_data_text;
+									}
+									metaDatas.push(oldData);
+								}
+								controller.update_metadata_multi(metaDatas);
+							}
+						} catch (e) {
+							console.error(e);
+						}
+					}
+				});
+			}
+		});
+	};
+
+	/**
+	 * Snapハイライト解除
+	 * @method clear_snap_hightlight
+	 */
+	Controller.prototype.clear_snap_hightlight = function () {
+		var splitWholes,
+			i,
+			screens;
+		splitWholes = vscreen.getSplitWholes();
+		for (i in splitWholes) {
+			if (splitWholes.hasOwnProperty(i)) {
+				if (document.getElementById(splitWholes[i].id)) {
+					document.getElementById(splitWholes[i].id).style.background = "transparent";
+				}
+			}
+		}
+		
+		screens = vscreen.getScreenAll();
+		for (i in screens) {
+			if (screens.hasOwnProperty(i)) {
+				if (document.getElementById(screens[i].id)) {
+					document.getElementById(screens[i].id).style.background = "transparent";
+				}
+			}
+		}
+	};
+	
+	/**
+	 * ContentまたはDisplayのスナップ処理
+	 * @method snap_to_screen
+	 * @param {Object} elem スナップ対象Object
+	 * @param {JSON} metaData メタデータ
+	 * @param {Object} splitWhole スナップ先Object
+	 */
+	Controller.prototype.snap_to_screen = function (elem, metaData, splitWhole) {
+		var orgWidth = parseFloat(metaData.orgWidth),
+			orgHeight = parseFloat(metaData.orgHeight),
+			vaspect = splitWhole.w / splitWhole.h,
+			aspect = orgWidth / orgHeight;
+		
+		if (!management.isEditable(metaData.group)) {
+			// 編集不可コンテンツ
+			return;
+		}
+		metaData.posx = splitWhole.x;
+		metaData.posy = splitWhole.y;
+		if (aspect > vaspect) {
+			// content is wider than split area
+			metaData.width = splitWhole.w;
+			metaData.height = splitWhole.w / aspect;
+		} else {
+			// content is highter than split area
+			metaData.height = splitWhole.h;
+			metaData.width = splitWhole.h * aspect;
+		}
+		manipulator.moveManipulator(elem);
+	};
+	
+	/**
+	 * ContentかDisplayを選択する。
+	 * @method select
+	 * @param {String} id 選択したID
+	 * @parma {bool} isListViewArea リストビューを対象にするかどうか.
+	 */
+	Controller.prototype.select = function (id, isListViewArea) {
+		var elem,
+			metaData,
+			initialVisible,
+			mime = null,
+			col;
+		
+		console.log("selectid", id);
+		if (store.has_metadata(id)) {
+			metaData = store.get_metadata(id);
+			if (metaData.hasOwnProperty('mime')) {
+				mime = metaData.mime;
+			}
+		}
+		
+		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
+			content_property.init(id, null, "", "whole_window", mime);
+			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
+			if (gui.get_whole_window_elem() && metaData) {
+				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
+			}
+			return;
+		}
+		if (id.indexOf(Constants.WholeSubWindowID) >= 0) {
+			return;
+		}
+		if (gui.get_whole_window_elem()) {
+			gui.get_whole_window_elem().style.borderColor = "white";
+		}
+		elem = getElem(id, isListViewArea);
+		if (!elem) {
+			return;
+		}
+		
+		if (elem.id !== id) {
+			id = elem.id;
+		}
+		metaData = store.get_metadata(id);
+		if (metaData.hasOwnProperty('mime')) {
+			mime = metaData.mime;
+		}
+		
+		console.log("metaData", metaData);
+		initialVisible = metaData.visible;
+		elem.style.border = "solid 2px";
+		
+		if (state.get_selected_id_list().indexOf(id) < 0) {
+			state.get_selected_id_list().push(id);
+		}
+		state.set_dragging_id_list(JSON.parse(JSON.stringify(state.get_selected_id_list())));
+		
+		// 選択ボーダー色設定
+		if (gui.get_list_elem(id)) {
+			gui.get_list_elem(id).style.borderColor = store.get_border_color(metaData);
+		}
+		if (gui.get_search_elem(id)) {
+			gui.get_search_elem(id).style.borderColor = store.get_border_color(metaData);
+		}
+		elem.style.borderColor = store.get_border_color(metaData);
+
+		if (state.get_selected_id_list().length <= 0) {
+			manipulator.removeManipulator();
+		} else if (state.get_selected_id_list().length > 1) {
+			// 複数選択. マニピュレーター, プロパティ設定
+			manipulator.removeManipulator();
+			if (Validator.isWindowType(metaData)) {
+				content_property.init(id, null, "", Constants.PropertyTypeMultiDisplay, mime);
+			} else {
+				content_property.init(id, null,"", Constants.PropertyTypeMultiContent, mime);
+			}
+		} else {
+			// 単一選択.マニピュレーター, プロパティ設定
+			if (Validator.isWindowType(metaData)) {
+				content_property.init(id, null,"", Constants.DisplayTabType, mime);
+				content_property.assign_content_property(metaData);
+				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
+			} else {
+				if (store.has_group(metaData.group)) {
+					content_property.init(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime);
+				} else {
+					console.warn("not found group", metaData)
+					content_property.init(id, null, "", metaData.type, mime);
+				}
+				content_property.assign_content_property(metaData);
+				gui.set_update_content_id(id);
+				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
+			}
+		}
+
+		if (Validator.isDisplayTabSelected()) {
+			state.set_last_select_window_id(id);
+		} else {
+			state.set_last_select_content_id(id);
+		}
+		
+		if (elem.style.zIndex === "") {
+			elem.style.zIndex = 0;
+		}
+		if (initialVisible === "true" || initialVisible === true) {
+			manipulator.moveManipulator(elem);
+		} else {
+			manipulator.removeManipulator();
+		}
+	}
+	
+	/**
+	 * 現在選択されているContents, もしくはVirtualDisplayを非選択状態にする
+	 * @method unselect
+	 */
+	Controller.prototype.unselect = function (id, updateText) {
+		var elem = null,
+			metaData,
+			i;
+
+		elem = getElem(id, true);
+		if (elem) {
+			metaData = store.get_metadata(id);
+			if (Validator.isWindowType(metaData)) {
+				elem.style.border = "";
+				elem.style.borderStyle = "solid";
+			}
+			if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
+				elem.style.border = "";
+			}
+			if (gui.get_list_elem(elem.id)) {
+				gui.get_list_elem(elem.id).style.borderColor = store.get_list_border_color(metaData);
+				if (gui.get_search_elem(elem.id)) {
+					gui.get_search_elem(elem.id).style.borderColor = store.get_list_border_color(metaData);
+				}
+			}
+		}
+		content_property.clear(updateText);
+		state.get_selected_id_list().splice(state.get_selected_id_list().indexOf(id), 1);
+		manipulator.removeManipulator();
+	}
+	
+	Controller.prototype.unselect_all = function (updateText) {
+		var i;
+		for (i = state.get_selected_id_list().length - 1; i >= 0; i = i - 1) {
+			this.unselect(state.get_selected_id_list()[i], updateText);
+		}
+		state.clear_drag_rect();
+	}
+
+	/**
+	 * クローズボタンハンドル。選択されているcontent or windowを削除する。
+	 * その後クローズされた結果をupdateMetaDataにて各Windowに通知する。
+	 * @method on_close_content
+	 */
+	Controller.prototype.on_close_content = function () {
+		var id = state.get_selected_id(),
+			metaData = null,
+			elem,
+			previewArea;
+		
+		console.log("on_close_content");
+		if (store.has_metadata(id)) {
+			this.unselect(id);
+			elem = getElem(id, false);
+			
+			metaData = store.get_metadata(id);
+			if (!management.isEditable(metaData.group)) {
+				// 編集不可コンテンツ
+				return;
+			}
+			metaData.visible = false;
+			
+			if (Validator.isWindowType(metaData)) {
+				previewArea = gui.get_display_preview_area();
+			} else {
+				previewArea = gui.get_content_preview_area();
+			}
+			previewArea.removeChild(elem);
+			this.update_metadata(metaData);
+		}
+	}
+	/**
+	 * グループリストの更新(再取得)
+	 * @method update_group_list
+	 */
+	Controller.prototype.update_group_list = function (endCallback) {
+		connector.send('GetGroupList', {}, function (err, reply) {
+			doneGetGroupList(err, reply);
+			if (endCallback) {
+				endCallback();
+			}
+		});
+	}
+	
+	/**
+	 * コンテンツとウィンドウの更新(再取得).
+	 * @method update
+	 */
+	Controller.prototype.update = function (endCallback) {
+		vscreen.clearScreenAll();
+		connector.send('GetMetaData', {type: "all", id: ""}, function (err, reply) {
+			if (!err) {
+				var last = reply.last; 
+				delete reply.last;
+				doneGetMetaData(err, reply, function (err) {
+					if (last) {
+						this.update_group_list(function () {
+							if (endCallback) {
+								endCallback();
+							}
+						});
+					}
+				}.bind(this));
+			}
+		}.bind(this));
+		connector.send('GetVirtualDisplay', {type: "all", id: ""}, doneGetVirtualDisplay);
+		connector.send('GetWindowMetaData', {type: "all", id: ""}, doneGetWindowMetaData);
+		this.update_group_list();
+	}
+	
+	/**
+	 * Content追加
+	 * @method add_content
+	 * @param {JSON} metaData コンテンツのメタデータ
+	 * @param {BLOB} binary コンテンツのバイナリデータ
+	 */
+	Controller.prototype.add_content = function (metaData, binary) {
+		if (!metaData.hasOwnProperty("zIndex")) {
+			metaData.zIndex = store.get_zindex(metaData, true);
+		}
+		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
+	}
+	
+	/**
+	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
+	 * @method update_metadata
 	 * @param {JSON} metaData メタデータ
 	 */
-	function toggleMark(elem, metaData) {
-		var mark_memo = "mark_memo",
-			mark = "mark";
-		if (elem && metaData.hasOwnProperty("id")) {
-			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
-				if (!elem.classList.contains(mark)) {
-					elem.classList.add(mark);
-				}
+	Controller.prototype.update_metadata = function (metaData, endCallback) {
+		if (Validator.isWindowType(metaData)) {
+			// window
+			connector.send('UpdateWindowMetaData', [metaData], function (err, reply) {
+				doneUpdateWindowMetaData(err, reply, endCallback);
+			});
+        } else if (metaData.type === 'mouse') {
+            // mouse cursor
+            connector.send('UpdateMouseCursor', metaData, function (err, reply) {
+                // console.log(err, reply);
+            });
+		} else {
+			if (management.isEditable(metaData.group)) {
+				connector.send('UpdateMetaData', [metaData], function (err, reply) {
+					doneUpdateMetaData(err, reply, endCallback);
+				});
+			}
+		}
+	}
+	
+	/**
+	 * メタデータ(Display, 他コンテンツ)の幾何情報の更新通知を行う。
+	 * @method update_metadata_multi
+	 * @param {JSON} metaData メタデータ
+	 */
+	Controller.prototype.update_metadata_multi = function (metaDataList, endCallback) {
+		if (metaDataList.length > 0) {
+			if (Validator.isWindowType(metaDataList[0])) {
+				connector.send('UpdateWindowMetaData', metaDataList, function (err, reply) {
+					doneUpdateWindowMetaData(err, reply, endCallback);
+				});
 			} else {
-				if (elem.classList.contains(mark)) {
-					elem.classList.remove(mark);
+				// １つでも変更可能なデータが含まれていたら送る.
+				var isEditable = false;
+				var i;
+				for (i = 0; i < metaDataList.length; i = i + 1) {
+					isEditable = isEditable || management.isEditable(metaDataList[i].group);
+				}
+				if (isEditable) {
+					connector.send('UpdateMetaData', metaDataList, function (err, reply) {
+						doneUpdateMetaData(err, reply, endCallback);
+					});
 				}
 			}
 		}
 	}
+
+	/**
+	 * コンテンツ更新要求送信
+	 * @method update_content
+	 * @param {JSON} metaData 更新するコンテンツのメタデータ
+	 * @param {Blob} binary 更新するコンテンツのバイナリ
+	 */
+	Controller.prototype.update_content = function (metaData, binary) {
+		connector.sendBinary('UpdateContent', metaData, binary, doneUpdateContent);
+	}
+	
+	/**
+	 * VirtualDisplay情報更新要求送信
+	 * @method update_window_data
+	 */
+	Controller.prototype.update_window_data = function () {
+		var windowData,
+			whole = vscreen.getWhole(),
+			split = vscreen.getSplitCount();
+		
+		console.log("update_window_data");
+		
+		windowData = {
+			orgWidth : whole.orgW,
+			orgHeight : whole.orgH,
+			splitX : split.x,
+			splitY : split.y,
+			scale : vscreen.getWholeScale()
+		};
+		if (!windowData.orgWidth || isNaN(windowData.orgWidth)) {
+			windowData.orgWidth = Constants.InitialWholeWidth;
+		}
+		if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
+			windowData.orgHeight = Constants.InitialWholeHeight;
+		}
+		connector.send('UpdateVirtualDisplay', windowData, function (err, res) {
+			if (!err) {
+				doneGetVirtualDisplay(null, res);
+			}
+		});
+	}
+	
+	/**
+	 * リモートカーソルの有効状態を更新
+	 * @method update_remote_cursor_enable
+	 */
+	Controller.prototype.update_remote_cursor_enable = function (isEnable) {
+		Cookie.setUpdateCursorEnable(isEnable);
+		if (!isEnable) {
+			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
+		}
+	}
+	
+	
+	var controller = new Controller();
+
+	///-------------------------------------------------------------------------------------------------------
+	
+	/// meta data updated
 
 	/**
 	 * GetMetaDataを送信した後の終了コールバック.
@@ -1487,7 +1452,7 @@
 			if (endCallback) {
 				endCallback(null);
 			}
-			toggleMark(elem, metaData);
+			gui.toggle_mark(elem, metaData);
 		} else {
 			// 新規コンテンツロード.
 			var request = { type: json.type, id: json.id };
@@ -1497,12 +1462,12 @@
 			console.log("新規コンテンツロード", json);
 			if (json.type === "video") {
 				if (video.src) {
-					importContent(json, video.src);
+					controller.import_content(json, video.src);
 				}
 			} else {
 				connector.send('GetContent', request, function (err, data) {
 					doneGetContent(err, data, endCallback);
-					toggleMark(elem, metaData);
+					gui.toggle_mark(elem, metaData);
 				});
 			}
 		}
@@ -1518,7 +1483,7 @@
 		if (!store.is_initialized()) { return; }
 
 		if (!err) {
-			importContent(reply.metaData, reply.contentData);
+			controller.import_content(reply.metaData, reply.contentData);
 			if (endCallback) {
 				endCallback(null);
 			}
@@ -1713,8 +1678,9 @@
 		console.log('doneGetWindowMetaData:');
 		var windowData = reply,
 			elem;
-		importWindow(windowData);
-		changeWindowBorderColor(windowData);
+
+		controller.import_window(windowData);
+		gui.change_window_border_color(windowData);
 		if (Validator.isCurrentTabMetaData(reply)) {
 			if (state.get_last_select_window_id() === windowData.id || (manipulator.getDraggingManip() && state.get_last_select_window_id() === windowData.id)) {
 				content_property.assign_content_property(windowData);
@@ -1752,7 +1718,7 @@
 		groupToLayoutElems[Constants.DefaultGroup] = [];
 		groupToLayoutMeta[Constants.DefaultGroup] = [];
 
-		selectedGroup = getSelectedGroup();
+		selectedGroup = gui.get_current_group_id();
 
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
@@ -1871,17 +1837,16 @@
 		} else {
 			// running first time
 			content_property.update_display_value();
-			updateWindowData();
+			controller.update_window_data();
 		}
 	};
-	
 	///-------------------------------------------------------------------------------------------------------
 	
 	/**
 	 * マウスイベントの登録
 	 */
-	gui.on('mousemove', mousemoveFunc);
-	gui.on('mouseup', mouseupFunc);
+	gui.on('mousemove', onMouseMove);
+	gui.on('mouseup', onMouseUp);
 
 	/**
 	 * Displayを削除するボタンが押された.
@@ -1923,7 +1888,7 @@
 	gui.on("deleteallcontent_clicked", function (err) {
 		var i,
 			metaData,
-			selectedGroup = getSelectedGroup(),
+			selectedGroup = gui.get_current_group_id(),
 			targetList = [];
 		
 		if (selectedGroup) {
@@ -1989,10 +1954,10 @@
 		
 		vscreen.clearSplitWholes();
 		vscreen.splitWhole(ix, iy);
-		assignSplitWholes(vscreen.getSplitWholes());
+		setupSplit(vscreen.getSplitWholes());
 		if (!withoutUpdate) {
 			updateScreen();
-			updateWindowData();
+			controller.update_window_data();
 		}
 	});
 
@@ -2007,7 +1972,7 @@
 			posx = vscreen.getWhole().x;
 			posy = vscreen.getWhole().y;
 		}
-		sendText(text, { posx : posx, posy : posy, visible : true }, width, height);
+		controller.send_text(text, { posx : posx, posy : posy, visible : true }, width, height);
 	});
 	
 	/**
@@ -2026,7 +1991,7 @@
 
 		try {
 			value = decodeURI(value);
-			addContent({type : "url", user_data_text : JSON.stringify({ text: value }) }, value);
+			controller.add_content({type : "url", user_data_text : JSON.stringify({ text: value }) }, value);
 		} catch (e) {
 			console.error(e);
 		}
@@ -2054,7 +2019,7 @@
 				var data = e.target.result,
 					img;
 				if (data && data instanceof ArrayBuffer) {
-					sendImage(data,  { posx : posx, posy : posy, visible : true, 
+					controller.send_image(data,  { posx : posx, posy : posy, visible : true, 
 						user_data_text : JSON.stringify({ text: name }) });
 				}
 			};
@@ -2085,7 +2050,7 @@
 			});
 
 			layout = JSON.stringify(layout);
-			addContent({type : Constants.TypeLayout,
+			controller.add_content({type : Constants.TypeLayout,
 				user_data_text : JSON.stringify({ text: memo }),
 				visible: false,
 				group : gui.get_current_group_id()
@@ -2135,7 +2100,7 @@
 					if (store.has_metadata(id)) {
 						metaData = store.get_metadata(id);
 						if (Validator.isLayoutType(metaData)) {
-							updateContent(metaData, layoutData);
+							controller.update_content(metaData, layoutData);
 						}
 					}
 				});
@@ -2167,15 +2132,15 @@
 		fileReader.onloadend = function (e) {
 			var data = e.target.result;
 			if (data && data instanceof ArrayBuffer) {
-				sendImage(data,  { posx : px, posy : py, visible : true });
+				controller.send_image(data,  { posx : px, posy : py, visible : true });
 			} else {
-				sendText(data, { posx : px, posy : py, visible : true });
+				controller.send_text(data, { posx : px, posy : py, visible : true });
 			}
 		};
 		movieReader.onloadend = function (e) {
 			var data = e.target.result;
 			if (data && data instanceof ArrayBuffer) {
-				sendMovie(data,  { posx : px, posy : py, visible : true });
+				controller.send_movie(data,  { posx : px, posy : py, visible : true });
 			}
 		};
 
@@ -2212,7 +2177,7 @@
 		fileReader.onloadend = function (e) {
 			var data = e.target.result;
 			if (data) {
-				sendText(data, { posx : posx, posy : posy, visible : true });
+				controller.send_text(data, { posx : posx, posy : posy, visible : true });
 			}
 		};
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
@@ -2260,7 +2225,7 @@
 							metaData.height = img.naturalHeight;
 							delete metaData.orgWidth;
 							delete metaData.orgHeight;
-							updateContent(metaData, e.target.result);
+							controller.update_content(metaData, e.target.result);
 							URL.revokeObjectURL(img.src);
 						};
 					}(metaData));
@@ -2393,7 +2358,7 @@
 	 * コンテンツビューで強調トグルが必要になった
 	 */
 	window.content_view.on("toggle_mark", function (err, contentElem, metaData) {
-		toggleMark(contentElem, metaData);
+		gui.toggle_mark(contentElem, metaData);
 	});
 
 	/**
@@ -2454,7 +2419,7 @@
 		if (ix && iy) {
 			vscreen.splitWhole(ix, iy);
 		}
-		updateWindowData();
+		controller.update_window_data();
 		updateScreen();
 		content_property.update_whole_split(ix, iy, true);
 	});
@@ -2468,7 +2433,7 @@
 		if (store.has_metadata(id) && Validator.isWindowType(store.get_metadata(id))) {
 			metaData = store.get_metadata(id);
 			metaData.color = colorvalue;
-			updateMetaData(metaData, function (err, reply) {});
+			controller.update_metadata(metaData, function (err, reply) {});
 		}
 	});
 	
@@ -2498,7 +2463,7 @@
 								reply.metaData.posx = metaData.posx;
 								reply.metaData.posy = metaData.posy;
 							}
-							updateMetaData(reply.metaData);
+							controller.update_metadata(reply.metaData);
 							manipulator.removeManipulator();
 						});
 					}
@@ -2513,8 +2478,8 @@
 	 * @method on_virtualdisplaysetting_clicked
 	 */
 	gui.on("virtualdisplaysetting_clicked", function () {
-		unselectAll(true);
-		select(Constants.WholeWindowListID);
+		controller.unselect_all(true);
+		controller.select(Constants.WholeWindowListID);
 	});
 
 	/**
@@ -2593,7 +2558,7 @@
 		});
 		
 		if (targetMetaDataList.length > 0) {
-			updateMetaDataMulti(targetMetaDataList, (function (group) {
+			controller.update_metadata_multi(targetMetaDataList, (function (group) {
 				return function (err, data) {
 					connector.send('UpdateGroup', group, function (err, reply) {
 					});
@@ -2605,15 +2570,15 @@
 	gui.on("select_contents_clicked", function (err, onlyCurrentGroup) {
 		var currentGroup = gui.get_current_group_id();
 
-		unselectAll(true);
+		controller.unselect_all(true);
 		store.for_each_metadata(function (id, meta) {
 			if (Validator.isContentType(meta)) {
 				if (onlyCurrentGroup) {
 					if (meta.group === currentGroup) {
-						select(id, true);
+						controller.select(id, true);
 					}
 				} else {
-					select(id, true);
+					controller.select(id, true);
 				}
 			}
 		});
@@ -2622,10 +2587,10 @@
 	gui.on("select_display_clicked", function () {
 		var i,
 			id;
-		unselectAll(true);
+		controller.unselect_all(true);
 		store.for_each_metadata(function (id, meta) {
 			if (Validator.isWindowType(meta)) {
-				select("onlist:" + id, true);
+				controller.select("onlist:" + id, true);
 			}
 		});
 	});
@@ -2633,10 +2598,10 @@
 	gui.on('select_layout_clicked', function () {
 		var i,
 			id;
-		unselectAll(true);
+		controller.unselect_all(true);
 		store.for_each_metadata(function (id, meta) {
 			if (Validator.isLayoutType(meta)) {
-				select("onlist:" + id, true);
+				controller.select("onlist:" + id, true);
 			}
 		});
 	});
@@ -2789,7 +2754,7 @@
 			if (metaData && elem) {
 				elem.style.zIndex = index;
 				metaData.zIndex = index;
-				updateMetaData(metaData);
+				controller.update_metadata(metaData);
 				console.log("change zindex:" + index, id);
 			}
 		});
@@ -2800,7 +2765,7 @@
 	 */
 	gui.on("tab_changed_pre", function () {
 		manipulator.removeManipulator();
-		unselectAll(true);
+		controller.unselect_all(true);
 	});
 
 	gui.on("tab_changed_post", function () {
@@ -2823,7 +2788,7 @@
 		state.set_selected_id_list([]);
 		// 以前選択していたものを再選択する.
 		if (id) {
-			select(id, false);
+			controller.select(id, false);
 		}
 		state.set_dragging_id_list([]);
 	});
@@ -2837,7 +2802,7 @@
 		if (store.has_metadata(id)) {
 			metaData = store.get_metadata(id);
 			metaData.mark = is_active;
-			updateMetaData(metaData);
+			controller.update_metadata(metaData);
 		}
 	});
 
@@ -2853,7 +2818,7 @@
 				gui.toggle_display_id_show(false);
 			} else {
 				metaData.mark_memo = is_active;
-				updateMetaData(metaData);
+				controller.update_metadata(metaData);
 			}
 		}
 	});
@@ -2883,7 +2848,7 @@
 						metaData.width = h * orgAspect;
 					}
 					isCorrect = false;
-					updateMetaData(metaData, function (err, metaData) {
+					controller.update_metadata(metaData, function (err, metaData) {
 						if (endCallback) {
 							endCallback(err, metaData[0]);
 						}
@@ -2897,27 +2862,6 @@
 	}
 	
 	/** */
-	function updateAuthority(endCallback) {
-		var key = login.getLoginKey();
-		if (key.length > 0) {
-			var request = { id : "", password : "", loginkey : key };
-			connector.send('Login', request, function (err, reply) {
-				if (err || reply === "failed") {
-					// ログインに失敗した。リロードする.
-					window.location.reload(true);
-				}
-				management.setAuthority(reply.authority);
-				if (endCallback) {
-					endCallback();
-				}
-			});
-		} else {
-			if (endCallback) {
-				endCallback();
-			}
-		}
-	}
-
 	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
 	connector.on("UpdateMetaData", function (data) {
@@ -2970,45 +2914,27 @@
 			for (i = 0; i < data.length; ++i) {
 				metaData = data[i];
 				doneGetWindowMetaData(null, metaData);
-				changeWindowBorderColor(metaData);
+				gui.change_window_border_color(metaData);
 			}
 		} else {
 			metaData = data;
 			doneGetWindowMetaData(null, metaData);
-			changeWindowBorderColor(metaData);
+			gui.change_window_border_color(metaData);
 		}
 	});
 
 	// グループが更新されたときにブロードキャストされてくる.
 	connector.on('UpdateGroup', function (metaData) {
 		console.log("onUpdateGroup")
-		updateAuthority(function () {
-			updateGroupList();
+		onUpdateAuthority(function () {
+			controller.update_group_list();
 		});
 	});
-
-	// 全てリロードする
-	var isInitialUpdate = true;
-	function reloadAll() {
-		console.log("on reloadAll");
-		update(function () {
-			if (isInitialUpdate) {
-				var checkbox = document.getElementById('all_check_');
-				if (checkbox) {
-					checkbox.onclick();
-				}
-				isInitialUpdate = false;
-			}
-		});
-		clearWindowList();
-		addWholeWindowToList();
-		updateScreen();
-	}
 
 	// すべての更新が必要なときにブロードキャストされてくる.
 	connector.on('Update', function () {
 		if (!store.is_initialized()) { return; }
-		reloadAll();
+		controller.reload_all();
 	});
 	
 	// windowが更新されたときにブロードキャストされてくる.
@@ -3039,7 +2965,7 @@
 	// 権限変更時に送られてくる
 	connector.on("ChangeAuthority", function (userID) {
 		if (!store.is_initialized()) { return; }
-		if (loginUserID === userID) {
+		if (login.getLoginUserID() === userID) {
 			window.location.reload(true);
 		}
 	});
@@ -3106,7 +3032,7 @@
 		}, false);
 
 		// リモートカーソルの有効状態を更新
-		updateRemoteCursorEnable(Cookie.isUpdateCursorEnable());
+		controller.update_remote_cursor_enable(Cookie.isUpdateCursorEnable());
 
 		// プロパティの座標変更
 		content_property.on("rect_changed", function (err, id, value) {
@@ -3138,13 +3064,13 @@
 						correctAspect(metaData, function () {
 							//console.error("metaData", metaData)
 							metaData.restore_index = -1;
-							updateContent(metaData, text);
+							controller.update_content(metaData, text);
 						})
 						previewArea.removeChild(elem);
 					} else if (Validator.isLayoutType(metaData)) {
 						// レイアウトのメモ変更.
 						// レイアウトコンテンツを取得し直しリストを更新する.
-						updateMetaData(metaData, function (err, reply) {
+						controller.update_metadata(metaData, function (err, reply) {
 							connector.send('GetContent', metaData, function (err, data) {
 								doneGetContent(err, data, endCallback);
 							});
@@ -3152,7 +3078,7 @@
 					} else {
 						// その他コンテンツのメモ変更.
 						// リストの更新は必要なし
-						updateMetaData(metaData, function (err, reply) {
+						controller.update_metadata(metaData, function (err, reply) {
 							if (endCallback) {
 								endCallback(null);
 							}
@@ -3167,18 +3093,18 @@
 		});
 		
 		gui.on('update_cursor_enable', function (err, value) {
-			updateRemoteCursorEnable(value);
+			controller.update_remote_cursor_enable(value);
 		});
 
 		gui.on("mousedown_content_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
-				unselectAll(true);
+				controller.unselect_all(true);
 			}
 		});
 		
 		gui.on("mousedown_display_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
-				unselectAll(true);
+				controller.unselect_all(true);
 			}
 		});
 
@@ -3201,7 +3127,7 @@
 				}
 			});
 			if (metaDataList.length > 0) {
-				updateMetaDataMulti(metaDataList);
+				controller.update_metadata_multi(metaDataList);
 			}
 		});
 
@@ -3216,7 +3142,7 @@
 			state.set_drag_offset_top(top);
 			state.set_drag_offset_left(left);
 		});
-		manipulator.setCloseFunc(closeFunc);
+		manipulator.setCloseFunc(controller.on_close_content);
 		
 		// resize event
 		window.onresize = function () {
@@ -3250,7 +3176,7 @@
 	login.on('success', function (err, data) {
 		management = data.management;
 		init(management);
-		reloadAll();
+		controller.reload_all();
 	});
 
 	login.on('logout', function (err, data) {
