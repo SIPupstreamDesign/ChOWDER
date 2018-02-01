@@ -1260,56 +1260,6 @@
 		manipulator.clearDraggingManip();
 	}
 
-	var isGesture = false;
-	var gestureScale,
-		dx,dy;
-
-	if(window.ontouchstart !== undefined) {
-		// タッチイベントの初期化
-		document.addEventListener("touchstart", function (evt) {
-			if (!isGesture) {
-				mousemoveFunc(evt);
-			}
-		}, false);
-		document.addEventListener("touchmove", function (evt) {
-			if (!isGesture) {
-				mousemoveFunc(evt);
-				evt.preventDefault();
-			}
-		}, false);
-		document.addEventListener("touchend", mouseupFunc, false);
-	} else {
-		// マウスイベントの初期化
-		window.document.addEventListener("mousemove", mousemoveFunc);	
-		window.document.addEventListener("mouseup", mouseupFunc);
-	}
-
-	function gesturestartFunc(e) {
-		isGesture = true;
-		gestureScale = vscreen.getWholeScale();
-		e.stopPropagation();
-		e.preventDefault();
-	}
-
-	function gesturechangeFunc(e) {
-		if (!isGesture) { return false; }
-		var scale_current = document.getElementById('scale_dropdown_current');
-		gui.update_display_scale(gestureScale * e.scale);
-		e.stopPropagation();
-		e.preventDefault();
-	}
-	
-	function gestureendFunc() {
-		isGesture = false;
-	}
-
-	if (window.ongesturestart !== undefined) {
-		// ジェスチャーイベントの初期化
-		document.addEventListener("gesturestart", gesturestartFunc, false);
-		document.addEventListener("gesturechange", gesturechangeFunc, false);
-		document.addEventListener("gestureend", gestureendFunc, false);
-	}
-
 	/**
 	 * テキストデータ送信
 	 * @method sendText
@@ -2090,6 +2040,12 @@
 	
 	///-------------------------------------------------------------------------------------------------------
 	
+	/**
+	 * マウスイベントの登録
+	 */
+	gui.on('mousemove', mousemoveFunc);
+	gui.on('mouseup', mouseupFunc);
+
 	/**
 	 * Displayを削除するボタンが押された.
 	 * @method on_deletedisplay_clicked
