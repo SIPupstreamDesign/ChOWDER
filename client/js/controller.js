@@ -3084,7 +3084,7 @@
 	
 	/** */
 	function updateAuthority(endCallback) {
-		var key = login.getLoginKey(); //getCookie("loginkey");
+		var key = login.getLoginKey();
 		if (key.length > 0) {
 			var request = { id : "", password : "", loginkey : key };
 			connector.send('Login', request, function (err, reply) {
@@ -3276,7 +3276,7 @@
 					pre_password : prePass,
 					password : pass,
 				},
-				loginkey = login.getLoginKey(); //Cookie.getLoginKey(); //getCookie("loginkey");
+				loginkey = login.getLoginKey();
 			if (loginkey.length > 0) {
 				request.loginkey = loginkey;
 			}
@@ -3398,12 +3398,10 @@
 			Cookie.setSnapType(f);
 		}, false);
 
-		if (Cookie.isUpdateCursorEnable()) {
-			updateRemoteCursorEnable(true);
-		} else {
-			updateRemoteCursorEnable(false);
-		}
+		// リモートカーソルの有効状態を更新
+		updateRemoteCursorEnable(Cookie.isUpdateCursorEnable());
 
+		// プロパティの座標変更
 		content_property.on("rect_changed", function (err, id, value) {
 			console.log('on_rect_changed');
 			changeRect(id, parseInt(value, 10));
@@ -3531,38 +3529,6 @@
 				updateScreen();
 			}, 200);
 		};
-
-		// wheel event
-		var mousewheelevent = 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll';
-		try{
-			document.addEventListener (mousewheelevent, onWheel, false);
-		}catch(e){
-			document.attachEvent ("onmousewheel", onWheel); //for legacy IE
-		}
-		function onWheel(e) {
-			if (gui.isOpenDialog) { return; }
-			if (!gui.is_listview_area(e) && !gui.is_property_area(e)) {
-				if(!e) e = window.event; //for legacy IE
-				var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
-				var display_scale = vscreen.getWholeScale();
-				e.preventDefault();
-				if (delta < 0){
-					//下にスクロールした場合の処理
-					display_scale = display_scale + 0.05;
-				} else if (delta > 0){
-					//上にスクロールした場合の処理
-					display_scale = display_scale - 0.05;
-				}
-				
-				if (display_scale < 0.05) {
-					display_scale = 0.05
-				}
-				if (display_scale > 2) {
-					display_scale = 2;
-				}
-				gui.update_display_scale(display_scale);
-			}
-		}
 
 		updateScreen();
 		vscreen.dump();

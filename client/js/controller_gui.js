@@ -242,7 +242,7 @@
 		this.initLayoutContextMenu();
 		
 		// マウスイベントの初期化
-		this.iniMouseEvent();
+		this.initMouseEvent();
 
 		// コンテンツ入力の初期化
 		this.initContentInputs();
@@ -458,7 +458,7 @@
 		}
 	}
 
-	ControllerGUI.prototype.iniMouseEvent = function () {
+	ControllerGUI.prototype.initMouseEvent = function () {
 		var isGesture = false;
 		var gestureScale,
 			dx,dy;
@@ -513,6 +513,38 @@
 			document.addEventListener("gesturestart", gesturestartFunc, false);
 			document.addEventListener("gesturechange", gesturechangeFunc, false);
 			document.addEventListener("gestureend", gestureendFunc, false);
+		}
+
+		// ホイールイベント
+		var onWheel = function (e) {
+			if (this.isOpenDialog) { return; }
+			if (!this.is_listview_area(e) && !this.is_property_area(e)) {
+				if(!e) e = window.event; //for legacy IE
+				var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
+				var display_scale = vscreen.getWholeScale();
+				e.preventDefault();
+				if (delta < 0){
+					//下にスクロールした場合の処理
+					display_scale = display_scale + 0.05;
+				} else if (delta > 0){
+					//上にスクロールした場合の処理
+					display_scale = display_scale - 0.05;
+				}
+				
+				if (display_scale < 0.05) {
+					display_scale = 0.05
+				}
+				if (display_scale > 2) {
+					display_scale = 2;
+				}
+				this.update_display_scale(display_scale);
+			}
+		}.bind(this);
+		var mousewheelevent = 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll';
+		try{
+			document.addEventListener (mousewheelevent, onWheel, false);
+		}catch(e){
+			document.attachEvent ("onmousewheel", onWheel); //for legacy IE
 		}
 	};
 
