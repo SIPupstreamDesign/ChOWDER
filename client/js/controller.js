@@ -5,13 +5,11 @@
 	"use strict";
 	
 	var gui = new ControllerGUI(),
-		login = new Login(connector),
+		login = new Login(connector, Cookie),
 		management, // 管理情報
-		loginkey = "", // ログインキー
 		draggingIDList = [],
 		selectedIDList = [],
 		onCtrlDown = false, // Ctrlボタンを押してるかどうか
-		isUpdateCursorEnable = false, // マウスカーソル送信が有効かどうか
 		lastSelectContentID = null,
 		lastSelectWindowID = null,
 		dragOffsetTop = 0,
@@ -59,45 +57,6 @@
 			return "lightgray";
 		}
 		return "white";
-	}
-
-	/**
-	 * cookie取得
-	 * @method getCookie
-	 * @param {String} key cookieIDキー
-	 * @return {String} cookie
-	 */
-	function getCookie(key) {
-		var i,
-			pos,
-			cookies;
-		if (document.cookie.length > 0) {
-			console.log("all cookie", document.cookie);
-			cookies = [document.cookie];
-			if (document.cookie.indexOf(';') >= 0) {
-				cookies = document.cookie.split(';');
-			}
-			for (i = 0; i < cookies.length; i = i + 1) {
-				pos = cookies[i].indexOf(key + "=");
-				if (pos >= 0) {
-					return unescape(cookies[i].substring(pos + key.length + 1));
-				}
-			}
-		}
-		return "";
-	}
-	
-	/**
-	 * cookie保存
-	 * @method saveCookie
-	 */
-	function saveCookie() {
-		var displayScale = vscreen.getWholeScale();
-		console.log("saveCookie");
-		document.cookie = 'display_scale=' + displayScale;
-		document.cookie = 'snap_setting=' + gui.get_snap_type();
-		document.cookie = 'update_cursor_enable=' + String(isUpdateCursorEnable);
-		document.cookie = 'loginkey='+String(loginkey);
 	}
 	
 	/**
@@ -388,11 +347,10 @@
 	 * @method updateRemoteCursor
 	 */
 	function updateRemoteCursorEnable(isEnable) {
-		isUpdateCursorEnable = isEnable;
+		Cookie.setUpdateCursorEnable(isEnable);
 		if (!isEnable) {
 			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
 		}
-		saveCookie();
 	}
 	
 	/**
@@ -1099,7 +1057,7 @@
 		}
 
 		// リモートカーソル位置の更新.
-		if(isUpdateCursorEnable && Date.now() % 2 === 0 && evt.target.id !== ''){
+		if (Cookie.isUpdateCursorEnable(true) && Date.now() % 2 === 0 && evt.target.id !== ''){
 			mousePos = vscreen.transformOrgInv(vscreen.makeRect(pageX, pageY, 0, 0));
 			var obj = {
 				type: 'mouse',
@@ -2463,7 +2421,7 @@
 	gui.on("display_scale_changed", function (err, displayScale) {
 		manipulator.removeManipulator();
 		vscreen.setWholeScale(displayScale, true);
-		saveCookie();
+		Cookie.setDisplayScale(displayScale);
 		updateScreen();
 	});
 
@@ -3126,7 +3084,7 @@
 	
 	/** */
 	function updateAuthority(endCallback) {
-		var key = getCookie("loginkey");
+		var key = login.getLoginKey(); //getCookie("loginkey");
 		if (key.length > 0) {
 			var request = { id : "", password : "", loginkey : key };
 			connector.send('Login', request, function (err, reply) {
@@ -3318,7 +3276,7 @@
 					pre_password : prePass,
 					password : pass,
 				},
-				loginkey = getCookie("loginkey");
+				loginkey = login.getLoginKey(); //Cookie.getLoginKey(); //getCookie("loginkey");
 			if (loginkey.length > 0) {
 				request.loginkey = loginkey;
 			}
@@ -3412,7 +3370,6 @@
 	function init(management) {
 		var timer = null,
 			display_scale,
-			update_cursor_enable,
 			snap;
 
 		initManagementEvents(management);
@@ -3425,26 +3382,23 @@
 			}
 		});
 
-		display_scale = parseFloat(getCookie('display_scale'));
-		update_cursor_enable = getCookie('update_cursor_enable');
-		console.log("cookie - display_scale:" + display_scale);
-		snap = getCookie('snap_setting');
-		console.log("cookie - snap_setting:" + snap);
-		if (!isNaN(display_scale) && display_scale > 0) {
-			vscreen.setWholeScale(display_scale, true);
-			gui.set_display_scale(display_scale);
-		}
+		display_scale = Cookie.getDisplayScale();
+		snap = Cookie.getSnapType();
+		
+		vscreen.setWholeScale(display_scale, true);
+		gui.set_display_scale(display_scale);
+		
 		if (snap) {
             gui.set_snap_type(snap);
-			saveCookie();
+			Cookie.setSnapType(snap);
 		}
 		document.getElementById('head_menu_hover_left').addEventListener('change', function(eve){
 			var f = eve.currentTarget.value;
 			gui.set_snap_type(f);
-			saveCookie();
+			Cookie.setSnapType(f);
 		}, false);
 
-		if (update_cursor_enable && update_cursor_enable === "true") {
+		if (Cookie.isUpdateCursorEnable()) {
 			updateRemoteCursorEnable(true);
 		} else {
 			updateRemoteCursorEnable(false);
@@ -3615,29 +3569,20 @@
 		isInitialized = true;
 	}
 
-	// TODO なんとかする
-	Login.getCookie = getCookie;
-
 	/**
 	 * ログイン処理
 	 */
 	login.on('failed', function (err, data) {
 		management = data.management;
-		loginkey = data.loginkey;
-		saveCookie();
 	});
 
 	login.on('success', function (err, data) {
 		management = data.management;
-		loginkey = data.loginkey;
-		saveCookie();
 		init(management);
 		reloadAll();
 	});
 
 	login.on('logout', function (err, data) {
-		loginkey = "";
-		saveCookie();
 		connector.send('Logout', data, function () {
 			window.location.reload(true);
 		});

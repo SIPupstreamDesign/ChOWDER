@@ -4,8 +4,9 @@
 (function () {
 	"use strict";
 
-	var Login = function (connector) {
+	var Login = function (connector, cookie) {
 		this.connector = connector;
+		this.cookie = cookie;
 		this.login = this.login.bind(this);
 		this.submitFunc = this.submitFunc.bind(this);
 		this.loginUserID = "";
@@ -31,6 +32,7 @@
 				var management = new Management();
 				management.setUserList(null);
 				management.setAuthority(null);
+				this.cookie.setLoginKey(loginkey);
 				this.emit(Login.EVENT_LOGIN_FAILED, null, {
 					loginkey : loginkey,
 					management : management
@@ -40,6 +42,7 @@
 				// ログイン成功
 				this.loginUserID = reply.id;
 				var loginkey = reply.loginkey;
+				this.cookie.setLoginKey(loginkey);
 				for (var i = 0; i < userList.length; i = i + 1) {
 					if (userList[i].id === reply.id) {
 						user_text.innerHTML = userList[i].name;
@@ -55,6 +58,7 @@
 				// ログアウトボタンを設定.
 				head_menu_hover.style.display = "block";
 				logoutButton.onclick = function () {
+					this.cookie.setLoginKey(reply.loginkey);
 					this.emit('logout', null, {
 						loginkey : reply.loginkey
 					});
@@ -71,7 +75,7 @@
 	};
 
 	Login.prototype.relogin = function (userList, endCallback) {
-		var loginkey = Login.getCookie("loginkey");
+		var loginkey = this.cookie.getLoginKey();
 		if (loginkey.length > 0) {
 			// リロード時などの再ログイン.
 			this.submitFunc(userList, "", "", loginkey, function (err, reply) {
@@ -129,7 +133,11 @@
 				}
 			}.bind(this));
 		}.bind(this));
-	}
+	};
+
+	Login.prototype.getLoginKey = function () {
+		return this.cookie.getLoginKey();
+	};
 
 	Login.EVENT_LOGIN_SUCCESS = "success";
 	Login.EVENT_LOGIN_FAILED = "failed";

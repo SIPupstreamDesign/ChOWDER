@@ -240,6 +240,9 @@
 		this.initContextMenu();
 		this.initDisplayContextMenu();
 		this.initLayoutContextMenu();
+		
+		// マウスイベントの初期化
+		this.iniMouseEvent();
 
 		// コンテンツ入力の初期化
 		this.initContentInputs();
@@ -416,8 +419,6 @@
 				this.emit(window.ControllerGUI.EVENT_MOUSEDOWN_DISPLAY_PREVIEW_AREA, null);
 			}
 		}.bind(this));
-		
-		this.iniMouseEvent();
 	};
 
 	/**
