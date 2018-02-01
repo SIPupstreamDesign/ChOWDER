@@ -564,7 +564,7 @@
 	Management.prototype.setUserList = function (userList) {
 		this.userList = userList;
 	};
-	
+
 	// 新規DB保存領域作成&切り替え
 	Management.EVENT_NEWDB = "newdb";
 	Management.EVENT_CHANGEDB = "changedb";
@@ -584,6 +584,115 @@
 	// 最大履歴保存数の適用
 	Management.EVENT_CHANGE_HISTORY_NUM = "change_history_num";
 
+	/**
+	 * 管理ページのイベント初期化.
+	 * @method initManagementEvents
+	 */
+	function initManagementEvents(connector, login, management) {
+		var updateGlobalSettingFunc = function () {
+			connector.send('GetGlobalSetting', {}, function (err, reply) {
+				if (reply && reply.hasOwnProperty('max_history_num')) {
+					management.setMaxHistoryNum(reply.max_history_num);
+					management.setCurrentDB(reply.current_db);
+				}
+			});
+		}
+
+		// 管理ページでパスワードが変更された
+		management.on('change_password', function (userID, prePass, pass, callback) {
+			var request = {
+					id : userID,
+					pre_password : prePass,
+					password : pass,
+				},
+				loginkey = login.getLoginKey();
+			if (loginkey.length > 0) {
+				request.loginkey = loginkey;
+			}
+			connector.send('ChangePassword', request, callback);
+		});
+	
+		// 権限の変更
+		management.on('change_authority', function (userID, editable, viewable, group_manipulatable, display_manipulatable, callback) {
+			var request = {
+				id : userID,
+				editable : editable,
+				viewable : viewable,
+				group_manipulatable : group_manipulatable,
+				display_manipulatable : display_manipulatable
+			};
+			connector.send('ChangeAuthority', request, function (err, data) {
+				connector.send('GetUserList', {}, function (err, userList) {
+					management.setUserList(userList);
+					if (callback) {
+						callback();
+					}
+				});
+			});
+		});
+
+		// 履歴保存数の変更
+		management.on("change_history_num", function (err, value, callback) {
+			connector.send("ChangeGlobalSetting", { max_history_num : value }, function () {
+				updateGlobalSettingFunc();
+				if (callback) {
+					callback();
+				}
+			});
+		});
+		
+		// 新規DB
+		management.on('newdb', function (err, name) {
+			connector.send("NewDB", { name : name }, function () {
+			});
+		}.bind(this));
+
+		// DB名変更
+		management.on('renamedb', function (err, preName, name) {
+			connector.send("RenameDB", { name : preName, new_name : name }, function () {
+			});
+		}.bind(this));
+		
+		// DBの切り替え
+		management.on('changedb', function (err, name) {
+			connector.send("ChangeDB", { name : name }, function () {
+			});
+		}.bind(this));
+
+		// DBの削除
+		management.on('deletedb', function (err, name) {
+			window.input_dialog.okcancel_input({
+				name : "DB: " + name + " を削除します。よろしいですか?",
+				opacity : 0.7,
+				zIndex : 90000001,
+				backgroundColor : "#888"
+			}, function (isOK) {
+				if (isOK) {
+					connector.send("DeleteDB", { name : name }, function () {
+					});
+				}
+			})
+		}.bind(this));
+
+		// DBの初期化
+		management.on('initdb', function (err, name) {
+			window.input_dialog.okcancel_input({
+				name : "DB: " + name + " を初期化します。よろしいですか?",
+				opacity : 0.7,
+				zIndex : 90000001,
+				backgroundColor : "#888"
+			}, function (isOK) {
+				if (isOK) {
+					connector.send("InitDB", { name : name }, function () {
+					});
+				}
+			})
+		}.bind(this));
+
+		updateGlobalSettingFunc();
+	}
+	
 	window.Management = Management;
+	window.Management.initManagementEvents = initManagementEvents;
 
 }());
