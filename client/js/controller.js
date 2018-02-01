@@ -4,7 +4,8 @@
 (function (content_property, vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
-	var gui = new ControllerGUI(),
+	var store = new Store(),
+		gui = new ControllerGUI(),
 		login = new Login(connector, Cookie),
 		management, // 管理情報
 		draggingIDList = [],
@@ -16,9 +17,6 @@
 		dragOffsetLeft = 0,
 		dragRect = {},
 		mouseDownPos = [],
-		metaDataDict = {},
-		groupList = [],
-		groupDict = {},
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
@@ -34,7 +32,6 @@
 		doneUpdateWindowMetaData,
 		doneGetMetaData,
 		doneDeleteWindowMetaData,
-		isInitialized = false,
 		video = document.createElement('video'); // TODO 複数に対応
 	
 	Validator.init(gui);
@@ -216,19 +213,17 @@
 	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
 	 * */
 	function getZIndex(metaData, isFront) {
-		var i,
-			max = 0,
+		var max = 0,
 			min = 0;
-		for (i in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(i)) {
-				if (metaDataDict[i].id !== metaData.id && 
-					Validator.isContentType(metaDataDict[i].type) &&
-					metaDataDict[i].hasOwnProperty("zIndex")) {
-					max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
-					min = Math.min(min, parseInt(metaDataDict[i].zIndex, 10));
-				}
+
+		store.for_each_metadata(function (i, meta) {
+			if (meta.id !== metaData.id && 
+				Validator.isContentType(meta.type) &&
+				meta.hasOwnProperty("zIndex")) {
+				max = Math.max(max, parseInt(meta.zIndex, 10));
+				min = Math.min(min, parseInt(meta.zIndex, 10));
 			}
-		}
+		});
 		if (isFront) {
 			return max + 1;
 		} else {
@@ -394,17 +389,13 @@
 	 * グループの色を返す
 	 */
 	function getGroupColor(groupID) {
-		var i,
-			item;
-
-		for (i = 0; i < groupList.length; i = i + 1) {
-			item = groupList[i];
-			if (item.id === groupID) {
-				if (item.color) {
-					return item.color;
+		store.for_each_group(function (i, group) {
+			if (group.id === groupID) {
+				if (group.color) {
+					return group.color;
 				}
 			}
-		}
+		});
 		return Constants.ContentSelectColor;
 	}
 
@@ -453,7 +444,7 @@
 		if (draggingManip) {
 			elem = document.getElementById(getSelectedID());
 			if (elem) {
-				metaData = metaDataDict[elem.id];
+				metaData = store.get_metadata(elem.id);
 				if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
 					// 非表示コンテンツ
 					return;
@@ -501,8 +492,7 @@
 					metaData.posy = (lasty - ydiff);
 				}
 				vscreen_util.transInv(metaData);
-				//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-				metaDataDict[metaData.id] = metaData;
+				store.set_metadata(metaData.id, metaData);
 				updateMetaData(metaData);
 			}
 		}
@@ -522,17 +512,18 @@
 			col;
 		
 		console.log("selectid", id);
-		if (metaDataDict.hasOwnProperty(id)) {
-			if (metaDataDict[id].hasOwnProperty('mime')) {
-				mime = metaDataDict[id].mime;
+		if (store.has_metadata(id)) {
+			metaData = store.get_metadata(id);
+			if (metaData.hasOwnProperty('mime')) {
+				mime = metaData.mime;
 			}
 		}
 		
 		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
 			content_property.init(id, null, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
-			if (gui.get_whole_window_elem() && metaDataDict[id]) {
-				gui.get_whole_window_elem().style.borderColor = getBorderColor(metaDataDict[id]);
+			if (gui.get_whole_window_elem() && metaData) {
+				gui.get_whole_window_elem().style.borderColor = getBorderColor(metaData);
 			}
 			return;
 		}
@@ -546,8 +537,7 @@
 		if (elem.id !== id) {
 			id = elem.id;
 		}
-		//elem.style.visibility = "visible";
-		metaData = metaDataDict[id];
+		metaData = store.get_metadata(id);
 		if (metaData.hasOwnProperty('mime')) {
 			mime = metaData.mime;
 		}
@@ -587,8 +577,8 @@
 				content_property.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
-				if (groupDict.hasOwnProperty(metaData.group)) {
-					content_property.init(id, metaData.group, groupDict[metaData.group].name, metaData.type, mime);
+				if (store.has_group(metaData.group)) {
+					content_property.init(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime);
 				} else {
 					console.warn("not found group", metaData)
 					content_property.init(id, null, "", metaData.type, mime);
@@ -626,7 +616,7 @@
 
 		elem = getElem(id, true);
 		if (elem) {
-			metaData = metaDataDict[id];
+			metaData = store.get_metadata(id);
 			if (Validator.isWindowType(metaData)) {
 				elem.style.border = "";
 				elem.style.borderStyle = "solid";
@@ -666,11 +656,11 @@
 			previewArea;
 		
 		console.log("closeFunc");
-		if (metaDataDict.hasOwnProperty(id)) {
+		if (store.has_metadata(id)) {
 			unselect(id);
 			elem = getElem(id, false);
 			
-			metaData = metaDataDict[id];
+			metaData = store.get_metadata(id);
 			if (!management.isEditable(metaData.group)) {
 				// 編集不可コンテンツ
 				return;
@@ -700,7 +690,7 @@
 			metaData,
 			aspect = 1.0;
 		if (elem) {
-			metaData = metaDataDict[elem.id];
+			metaData = store.get_metadata(elem.id);
 			if (!management.isEditable(metaData.group)) {
 				// 編集不可コンテンツ
 				return;
@@ -728,7 +718,6 @@
 					document.getElementById('content_transform_w').value = metaData.width;
 					updateMetaData(metaData);
 				}
-				//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 			}
 			manipulator.removeManipulator();
 		}
@@ -747,7 +736,7 @@
 			width = parseInt(elem.style.width.split("px").join(''), 10),
 			height = parseInt(elem.style.height.split("px").join(''), 10);
 		
-		if (metaDataDict.hasOwnProperty(elem.id)) {
+		if (store.has_metadata(elem.id)) {
 			return (posx <= x && posy <= y &&
 					(posx + width) > x &&
 					(posy + height) > y);
@@ -800,8 +789,8 @@
 				if (evt.button !== 0) { return; } // 左ドラッグのみ
 			}
 			
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
+			if (store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
 				if (Validator.isContentType(metaData)) {
 					otherPreviewArea = gui.get_display_preview_area();
 				}
@@ -992,22 +981,22 @@
 							if (layoutDatas.hasOwnProperty('contents')) {
 								for (meta in layoutDatas.contents) {
 									var oldData = layoutDatas.contents[meta];
-									if (metaDataDict.hasOwnProperty(oldData.id)) {
+									if (store.get_metadata(oldData.id)) {
 										if (oldData.hasOwnProperty('backup_list')) {
 											// コンテンツは過去レイアウト作成時のものにする
 											if (meta.resture_index > 0) {
 												var oldContent = meta.backup_list[meta.resture_index];
-												for (i = 0; i < metaDataDict[meta.id].backup_list.length; i = i + 1) {
-													if (metaDataDict[meta.id].backup_list[i] === oldContent) {
+												for (i = 0; i < store.get_metadata(meta.id).backup_list.length; i = i + 1) {
+													if (store.get_metadata(meta.id).backup_list[i] === oldContent) {
 														meta.restore_index = i;
 													}
 												}
 											}
 											// 履歴リストは最新にする.
-											oldData.backup_list = metaDataDict[oldData.id].backup_list;
+											oldData.backup_list = store.get_metadata(oldData.id).backup_list;
 										}
 										// メモは最新にする.
-										oldData.user_data_text = metaDataDict[oldData.id].user_data_text;
+										oldData.user_data_text = store.get_metadata(oldData.id).user_data_text;
 									}
 									metaDatas.push(oldData);
 								}
@@ -1104,7 +1093,7 @@
 			if (elem.style.display === "none") {
 				elem.style.display = "block";
 			}
-			metaData = metaDataDict[draggingID];
+			metaData = store.get_metadata(draggingID);
 
 			if (dragRect.hasOwnProperty(draggingID)) {
 				if (Validator.isWindowType(metaData) && management.isDisplayManipulatable()) {
@@ -1112,13 +1101,13 @@
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 					vscreen_util.transPosInv(metaData);
-					vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				} else if (!Validator.isWindowType(metaData) && management.isEditable(metaData.group)) {
 					// content編集可能
 					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
 					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
 					vscreen_util.transPosInv(metaData);
-					vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				}
 			} else {
 				return;
@@ -1139,7 +1128,7 @@
 			// scaling
 			elem = document.getElementById(getSelectedID());
 			if (elem) {
-				metaData = metaDataDict[elem.id];
+				metaData = store.get_metadata(elem.id);
 				if (Validator.isWindowType(metaData) || Validator.isVisible(metaData)) {
 					manipulator.moveManipulator(elem);
 					onManipulatorMove(evt);
@@ -1169,9 +1158,9 @@
 
 		for (i = draggingIDList.length - 1; i >= 0; i = i - 1) {
 			draggingID = draggingIDList[i];
-			if (metaDataDict.hasOwnProperty(draggingID)) {
+			if (store.has_metadata(draggingID)) {
 				elem = document.getElementById(draggingID);
-				metaData = metaDataDict[draggingID];
+				metaData = store.get_metadata(draggingID);
 				if (!gui.is_listview_area(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
 					if (Validator.isLayoutType(metaData)) {
@@ -1181,7 +1170,6 @@
 							metaData.visible = true;
 						}
 						if (Validator.isFreeMode()) {
-							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
 						} else if (Validator.isDisplayMode()) {
 							px = rect.left + dragOffsetLeft;
@@ -1191,7 +1179,6 @@
 							if (screen) {
 								snapToScreen(elem, metaData, screen);
 							}
-							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
 							manipulator.moveManipulator(elem);
 						} else {
@@ -1203,7 +1190,6 @@
 							if (splitWhole) {
 								snapToSplitWhole(elem, metaData, splitWhole);
 							}
-							//vscreen_util.assignMetaData(elem, metaData, true, groupDict);
 							updateMetaData(metaData);
 							manipulator.moveManipulator(elem);
 						}
@@ -1325,25 +1311,22 @@
 				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 			if (screenElem) {
-				vscreen_util.assignMetaData(screenElem, windowData, true, groupDict);
+				vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
 			}
 		} else {
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			
 			// 全可視コンテンツの配置を再計算.
-			for (i in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(i)) {
-					metaData = metaDataDict[i];
-					if (Validator.isVisible(metaData)) {
-						if (Validator.isContentType(metaData)) {
-							elem = document.getElementById(metaData.id);
-							if (elem) {
-								vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-							}
+			store.for_each_metadata(function (i, metaData) {
+				if (Validator.isVisible(metaData)) {
+					if (Validator.isContentType(metaData)) {
+						elem = document.getElementById(metaData.id);
+						if (elem) {
+							vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 						}
 					}
 				}
-			}
+			});
 			
 			// Virtual Displayを生成して配置.
 			wholeElem = document.getElementById(Constants.WholeWindowID);
@@ -1360,8 +1343,8 @@
 			for (s in screens) {
 				if (screens.hasOwnProperty(s)) {
 					screenElem = document.getElementById(s);
-					if (metaDataDict.hasOwnProperty(s)) {
-						metaData = metaDataDict[s];
+					if (store.has_metadata(s)) {
+						metaData = store.get_metadata(s);
 						if (!screenElem) {
 							if (Validator.isVisible(metaData)) {
 								screenElem = document.createElement('div');
@@ -1377,7 +1360,7 @@
 							}
 						}
 						if (screenElem) {
-							vscreen_util.assignMetaData(screenElem, metaData, true, groupDict);
+							vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
 							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
 						}
 					}
@@ -1405,12 +1388,10 @@
 	 * エレメント間でコンテントデータをコピーする.
 	 */
 	function copyContentData(fromElem, toElem, metaData, isListContent) {
-		var elem,
-			id;
-		
-		for (id in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(id) && id !== metaData.id) {
-				if (metaData.content_id === metaDataDict[id].content_id) {
+		store.for_each_metadata(function (id, meta) {
+			var elem;
+			if (id !== metaData.id) {
+				if (meta.content_id === metaData.content_id) {
 					if (isListContent) {
 						elem = gui.get_list_elem(id);
 						if (elem) {
@@ -1428,7 +1409,7 @@
 							toElem.src = elem.src;
 						}
 						if (!isListContent) {
-							vscreen_util.assignMetaData(toElem, metaData, true, groupDict);
+							vscreen_util.assignMetaData(toElem, metaData, true, store.get_group_dict());
 						}
 					}
 					if (elem && fromElem) {
@@ -1440,7 +1421,7 @@
 					}
 				}
 			}
-		}
+		});
 	}
 
 	/**
@@ -1450,9 +1431,9 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	function importContent(metaData, contentData) {
-		window.layout_list.import_content(gui, metaDataDict, metaData, contentData, groupDict);
-		window.content_list.import_content(gui, metaDataDict, metaData, contentData, groupDict);
-		window.content_view.import_content(gui, metaDataDict, metaData, contentData, groupDict);
+		window.layout_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+		window.content_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+		window.content_view.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
 	}
 	
 	function changeWindowBorderColor(windowData) {
@@ -1521,8 +1502,8 @@
 	 */
 	function importWindow(windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
-		window.window_view.import_window(gui, metaDataDict, windowData);
-		window.window_list.import_window(gui, metaDataDict, windowData);
+		window.window_view.import_window(gui, store.get_metadata_dict(), windowData);
+		window.window_list.import_window(gui, store.get_metadata_dict(), windowData);
 	}
 	
 	///-------------------------------------------------------------------------------------------------------
@@ -1557,7 +1538,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetMetaData = function (err, reply, endCallback) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log('doneGetMetaData', reply);
 		var json = reply,
@@ -1565,8 +1546,8 @@
 			metaData = json,
 			isUpdateContent = false;
 		if (!json.hasOwnProperty('id')) { return; }
-		if (metaDataDict.hasOwnProperty(json.id)) {
-			isUpdateContent = (metaDataDict[json.id].restore_index !== reply.restore_index);
+		if (store.has_metadata(json.id)) {
+			isUpdateContent = (store.get_metadata(json.id).restore_index !== reply.restore_index);
 		}
 		if (json.hasOwnProperty('group')) {
 			if (!management.getAuthorityObject().isViewable(json.group)) {
@@ -1577,7 +1558,7 @@
 				return;
 			}
 		}
-		metaDataDict[json.id] = json;
+		store.set_metadata(json.id, json);
 		
 		if (Validator.isCurrentTabMetaData(json)) {
 			if (lastSelectContentID === json.id || (manipulator.isShowManipulator() && lastSelectContentID === json.id)) {
@@ -1590,7 +1571,7 @@
 		elem = document.getElementById(metaData.id);
 		if (elem && !isUpdateContent) {
 			if (Validator.isVisible(json)) {
-				vscreen_util.assignMetaData(elem, json, true, groupDict);
+				vscreen_util.assignMetaData(elem, json, true, store.get_group_dict());
 				elem.style.display = "block";
 			} else {
 				elem.style.display = "none";
@@ -1626,7 +1607,7 @@
 	 * @param {Object} reply 返信されたコンテンツ
 	 */
 	doneGetContent = function (err, reply, endCallback) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		if (!err) {
 			importContent(reply.metaData, reply.contentData);
@@ -1645,14 +1626,14 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneUpdateMetaData = function (err, reply, endCallback) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
 
 		if (reply.length === 1) {
 			json = reply[0];
-			metaDataDict[json.id] = json;
+			store.set_metadata(json.id, json);
 			if (Validator.isCurrentTabMetaData(json)) {
 				content_property.assign_content_property(json);
 			}
@@ -1670,7 +1651,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneUpdateWindowMetaData = function (err, reply, endCallback) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log("doneUpdateWindowMetaData");
 		var i,
@@ -1695,7 +1676,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneDeleteContent = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log("doneDeleteContent", err, reply);
 		var func = function (err, reply) {
@@ -1715,8 +1696,8 @@
 			gui.set_update_content_id("No Content Selected.");
 			lastSelectContentID = null;
 
-			if (metaDataDict.hasOwnProperty(json.id)) {
-				delete metaDataDict[json.id];
+			if (store.has_metadata(json.id)) {
+				store.delete_metadata(json.id);
 			}
 		}
 
@@ -1735,7 +1716,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneDeleteWindowMetaData = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log("doneDeleteWindowMetaData", reply);
 		var elem,
@@ -1754,26 +1735,23 @@
 			if (elem) {
 				displayArea.removeChild(elem);
 			}
-			delete metaDataDict[reply.id];
+			store.delete_metadata(reply.id);
 		} else {
 			// 全部消された.
-			console.log(metaDataDict);
-			for (id in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(id)) {
-					windowData = metaDataDict[id];
-					if (Validator.isWindowType(windowData)) {
-						elem = document.getElementById(id);
-						if (elem) {
-							previewArea.removeChild(elem);
-						}
-						elem = gui.get_list_elem(id);
-						if (elem) {
-							displayArea.removeChild(elem);
-						}
+			store.for_each_metadata(function (id, metaData) {
+				windowData = metaData;
+				if (Validator.isWindowType(windowData)) {
+					elem = document.getElementById(id);
+					if (elem) {
+						previewArea.removeChild(elem);
 					}
-					delete metaDataDict[id];
+					elem = gui.get_list_elem(id);
+					if (elem) {
+						displayArea.removeChild(elem);
+					}
 				}
-			}
+				store.delete_metadata(id);
+			});
 		}
 		lastSelectWindowID = null;
 	};
@@ -1785,7 +1763,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneUpdateContent = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log("doneUpdateContent");
 
@@ -1800,13 +1778,13 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneAddContent = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
 		
 		// 新規追加ではなく差し替えだった場合.
-		if (metaDataDict.hasOwnProperty(json.id)) {
+		if (store.has_metadata(json.id)) {
 			doneUpdateContent(err, reply);
 			return;
 		}
@@ -1821,7 +1799,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetWindowMetaData = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log('doneGetWindowMetaData:');
 		var windowData = reply,
@@ -1842,7 +1820,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetGroupList = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		console.log("doneGetGroupList", reply);
 		var i,
@@ -1854,7 +1832,6 @@
 			elem,
 			onlistID,
 			meta,
-			metaData,
 			contentArea,
 			layoutArea,
 			currentGroup,
@@ -1870,59 +1847,52 @@
 
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
-			for (meta in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(meta)) {
-					metaData = metaDataDict[meta];
-					if (Validator.isContentType(metaData)) {
-						onlistID = "onlist:" + metaData.id;
-						elem = document.getElementById(onlistID);
-						if (elem) {
-							elem.parentNode.removeChild(elem);
-							if (metaData.hasOwnProperty('group')) {
-								if (!groupToElems.hasOwnProperty(metaData.group)) {
-									groupToElems[metaData.group] = [];
-									groupToMeta[metaData.group] = [];
-								}
-								groupToElems[metaData.group].push(elem);
-								groupToMeta[metaData.group].push(metaData);
-							} else {
-								groupToElems[Constants.DefaultGroup].push(elem);
-								groupToMeta[Constants.DefaultGroup].push(metaData);
+			store.for_each_metadata(function (id, metaData) {
+				if (Validator.isContentType(metaData)) {
+					onlistID = "onlist:" + id;
+					elem = document.getElementById(onlistID);
+					if (elem) {
+						elem.parentNode.removeChild(elem);
+						if (metaData.hasOwnProperty('group')) {
+							if (!groupToElems.hasOwnProperty(metaData.group)) {
+								groupToElems[metaData.group] = [];
+								groupToMeta[metaData.group] = [];
 							}
-						}
-					}
-					if (Validator.isLayoutType(metaData)) {
-						onlistID = "onlist:" + metaData.id;
-						elem = document.getElementById(onlistID);
-						if (elem) {
-							elem.parentNode.removeChild(elem);
-							if (metaData.hasOwnProperty('group')) {
-								if (!groupToLayoutElems.hasOwnProperty(metaData.group)) {
-									groupToLayoutElems[metaData.group] = [];
-									groupToLayoutMeta[metaData.group] = [];
-								}
-								groupToLayoutElems[metaData.group].push(elem);
-								groupToLayoutMeta[metaData.group].push(metaData);
-							} else {
-								groupToLayoutElems[Constants.DefaultGroup].push(elem);
-								groupToLayoutMeta[Constants.DefaultGroup].push(metaData);
-							}
+							groupToElems[metaData.group].push(elem);
+							groupToMeta[metaData.group].push(metaData);
+						} else {
+							groupToElems[Constants.DefaultGroup].push(elem);
+							groupToMeta[Constants.DefaultGroup].push(metaData);
 						}
 					}
 				}
-			}
-
+				if (Validator.isLayoutType(metaData)) {
+					onlistID = "onlist:" + id;
+					elem = document.getElementById(onlistID);
+					if (elem) {
+						elem.parentNode.removeChild(elem);
+						if (metaData.hasOwnProperty('group')) {
+							if (!groupToLayoutElems.hasOwnProperty(metaData.group)) {
+								groupToLayoutElems[metaData.group] = [];
+								groupToLayoutMeta[metaData.group] = [];
+							}
+							groupToLayoutElems[metaData.group].push(elem);
+							groupToLayoutMeta[metaData.group].push(metaData);
+						} else {
+							groupToLayoutElems[Constants.DefaultGroup].push(elem);
+							groupToLayoutMeta[Constants.DefaultGroup].push(metaData);
+						}
+					}
+				}
+	
+			});
 			// 一旦チェックされているSearch対象グループを取得
 			searchTargetGroups = gui.get_search_target_groups();
 			currentGroup = gui.get_current_group_id();
 
 			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.set_group_list(reply.grouplist);
-			groupList = reply.grouplist;
-			groupDict = {};
-			for (i = 0; i < groupList.length; i = i + 1) {
-				groupDict[groupList[i].id] = groupList[i];
-			} 
+			store.set_group_list(reply.grouplist);
 
 			// 元々あったリストエレメントを全部つけなおす
 			for (group in groupToElems) {
@@ -1968,7 +1938,7 @@
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
 	doneGetVirtualDisplay = function (err, reply) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 
 		var windowData = reply,
 			whole = vscreen.getWhole(),
@@ -2015,8 +1985,8 @@
 			
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaDataList.push(metaDataDict[id]);
+			if (store.has_metadata(id)) {
+				metaDataList.push(store.get_metadata(id));
 			}
 		}
 		if (metaDataList.length > 0) {
@@ -2035,8 +2005,8 @@
 			
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaDataList.push(metaDataDict[id]);
+			if (store.has_metadata(id)) {
+				metaDataList.push(store.get_metadata(id));
 			}
 		}
 		if (metaDataList.length > 0) {
@@ -2054,15 +2024,13 @@
 			targetList = [];
 		
 		if (selectedGroup) {
-			for (i in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(i)) {
-					if (Validator.isContentType(metaDataDict[i])) {
-						if (metaDataDict[i].group === selectedGroup) {
-							targetList.push(metaDataDict[i]);
-						}
+			store.for_each_metadata(function (i, metaData) {
+				if (Validator.isContentType(metaData)) {
+					if (metaData.group === selectedGroup) {
+						targetList.push(metaData);
 					}
 				}
-			}
+			});
 		}
 		if (targetList.length > 0) {
 			connector.send('DeleteContent', targetList, doneDeleteContent);
@@ -2080,7 +2048,7 @@
 			
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id) && Validator.isWindowType(metaDataDict[id])) {
+			if (store.has_metadata(id) && Validator.isWindowType(store.get_metadata(id))) {
 				targetIDList.push({id : id});
 			}
 		}
@@ -2210,14 +2178,11 @@
 				};
 
 			// コンテンツのメタデータを全部コピー
-			for (id in metaDataDict) {
-				if (metaDataDict.hasOwnProperty(id)) {
-					metaData = metaDataDict[id];
-					if (Validator.isContentType(metaData)) {
-						layout.contents[id] = metaData;
-					}
+			store.for_each_metadata(function (id, metaData) {
+				if (Validator.isContentType(metaData)) {
+					layout.contents[id] = metaData;
 				}
-			}
+			});
 
 			layout = JSON.stringify(layout);
 			addContent({type : Constants.TypeLayout,
@@ -2235,8 +2200,8 @@
 			isLayoutSelected = false;
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
+			if (store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
 				if (Validator.isLayoutType(metaData)) {
 					isLayoutSelected = true;
 					break;
@@ -2261,20 +2226,17 @@
 					layoutData;
 
 				// コンテンツのメタデータを全部コピー
-				for (id in metaDataDict) {
-					if (metaDataDict.hasOwnProperty(id)) {
-						metaData = metaDataDict[id];
-						if (Validator.isContentType(metaData)) {
-							layout.contents[id] = metaData;
-						}
+				store.for_each_metadata(function (id, metaData) {
+					if (Validator.isContentType(metaData)) {
+						layout.contents[id] = metaData;
 					}
-				}
+				});
 				layoutData = JSON.stringify(layout);
 
 				for (i = 0; i < selectedIDList.length; i = i + 1) {
 					id = selectedIDList[i];
-					if (metaDataDict.hasOwnProperty(id)) {
-						metaData = metaDataDict[id];
+					if (store.has_metadata(id)) {
+						metaData = store.get_metadata(id);
 						if (Validator.isLayoutType(metaData)) {
 							updateContent(metaData, layoutData);
 						}
@@ -2386,8 +2348,8 @@
 				if (elem) {
 					previewArea.removeChild(elem);
 				}
-				if (metaDataDict.hasOwnProperty(id)) {
-					metaData = metaDataDict[id];
+				if (store.has_metadata(id)) {
+					metaData = store.get_metadata(id);
 
 					buffer = new Uint8Array(e.target.result);
 					blob = new Blob([buffer], {type: "image/jpeg"});
@@ -2449,8 +2411,8 @@
 		
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
+			if (store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
 				if (!management.isEditable(metaData.group)) {
 					// 編集不可コンテンツ
 					continue;
@@ -2477,8 +2439,8 @@
 		
 		for (k = 0; k < selectedIDList.length; k = k + 1) {
 			id = selectedIDList[k];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
+			if (store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
 				metaData.zIndex = getZIndex(metaData, isFront);
 				metaDataList.push(metaData);
 			}
@@ -2613,8 +2575,8 @@
 	content_property.on("display_color_changed", function (err, colorvalue) {
 		var id = getSelectedID(),
 			metaData;
-		if (metaDataDict.hasOwnProperty(id) && Validator.isWindowType(metaDataDict[id])) {
-			metaData = metaDataDict[id]; 
+		if (store.has_metadata(id) && Validator.isWindowType(store.get_metadata(id))) {
+			metaData = store.get_metadata(id);
 			metaData.color = colorvalue;
 			updateMetaData(metaData, function (err, reply) {});
 		}
@@ -2633,8 +2595,8 @@
 			if (res === "yes" || res === "no") {
 				var id = getSelectedID(),
 					metaData;
-				if (metaDataDict.hasOwnProperty(id) && Validator.isContentType(metaDataDict[id])) {
-					metaData = metaDataDict[id]; 
+				if (store.has_metadata(id) && Validator.isContentType(store.get_metadata(id))) {
+					metaData = store.get_metadata(id); 
 					if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
 						metaData.restore_index = restoreIndex;
 						connector.send('GetContent', metaData, function (err, reply) {
@@ -2685,12 +2647,9 @@
 	 * Group削除ボタンがクリックされた
 	 */
 	gui.on("group_delete_clicked", function (err, groupID) {
-		var i,
-			item;
-		for (i = 0; i < groupList.length; i = i + 1) {
-			item = groupList[i];
-			if (item.id === groupID) {
-				connector.send('DeleteGroup', item, function (err, reply) {
+		store.for_each_group(function (i, group) {
+			if (group.id === groupID) {
+				connector.send('DeleteGroup', group, function (err, reply) {
 					console.log("DeleteGroup done", err, reply);
 					var deleteList = [],
 						id,
@@ -2698,16 +2657,13 @@
 					console.log("UpdateGroup done", err, reply);
 					if (!err) {
 						// コンテンツも削除
-						for (id in metaDataDict) {
-							if (metaDataDict.hasOwnProperty(id)) {
-								metaData = metaDataDict[id];
-								if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
-									if (metaData.group === groupID) {
-										deleteList.push(metaData);
-									}
+						store.for_each_metadata(function (id, metaData) {
+							if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+								if (metaData.group === groupID) {
+									deleteList.push(metaData);
 								}
 							}
-						}
+						});
 						if (deleteList.length > 0) {
 							connector.send('DeleteContent', deleteList, doneDeleteContent);
 						}
@@ -2717,9 +2673,9 @@
 						management.setUserList(userList);
 					});
 				});
-				return;
+				return true; // break
 			}
-		}
+		});
 	});
 
 	/**
@@ -2737,17 +2693,17 @@
 
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
+			if (store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
 				metaData.group = groupID;
 
-				for (k = 0; k < groupList.length; k = k + 1) {
-					if (groupList[k].id === groupID) {
+				store.for_each_group(function (k, group_) {
+					if (group_.id === groupID) {
 						targetMetaDataList.push(metaData);
-						group = groupList[k];
-						break;
+						group = group_;
+						return true; // break
 					}
-				}
+				});
 			}
 		}
 		
@@ -2767,45 +2723,39 @@
 			currentGroup = gui.get_current_group_id();
 
 		unselectAll(true);
-		for (id in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(id)) {
-				if (Validator.isContentType(metaDataDict[id])) {
-					if (onlyCurrentGroup) {
-						if (metaDataDict[id].group === currentGroup) {
-							select(id, true);
-						}
-					} else {
+		store.for_each_metadata(function (id, meta) {
+			if (Validator.isContentType(meta)) {
+				if (onlyCurrentGroup) {
+					if (meta.group === currentGroup) {
 						select(id, true);
 					}
+				} else {
+					select(id, true);
 				}
 			}
-		}
+		});
 	});
 
 	gui.on("select_display_clicked", function () {
 		var i,
 			id;
 		unselectAll(true);
-		for (id in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(id)) {
-				if (Validator.isWindowType(metaDataDict[id])) {
-					select("onlist:" + id, true);
-				}
+		store.for_each_metadata(function (id, meta) {
+			if (Validator.isWindowType(meta)) {
+				select("onlist:" + id, true);
 			}
-		}
+		});
 	});
 
 	gui.on('select_layout_clicked', function () {
 		var i,
 			id;
 		unselectAll(true);
-		for (id in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(id)) {
-				if (Validator.isLayoutType(metaDataDict[id])) {
-					select("onlist:" + id, true);
-				}
+		store.for_each_metadata(function (id, meta) {
+			if (Validator.isLayoutType(meta)) {
+				select("onlist:" + id, true);
 			}
-		}
+		});
 	});
 
 	/**
@@ -2813,23 +2763,21 @@
 	 * @param {String} groupID 変更先のグループID
 	 */
 	gui.on("group_down", function (err, groupID) {
-		var i,
-			target;
-
-		for (i = 0; i < groupList.length; i = i + 1) {
-			if (groupList[i].id === groupID) {
-				if (i > 0 && i < (groupList.length - 1)) {
+		store.for_each_group(function (i, group) {
+			var target;
+			if (group.id === groupID) {
+				if (i > 0 && i < (store.get_group_list().length - 1)) {
 					target = {
-						id : groupList[i].id,
+						id : group.id,
 						index : i + 2
 					};
 					connector.send('ChangeGroupIndex', target, function (err, reply) {
 						console.log("ChangeGroupIndex done", err, reply);
 					});
-					return;
+					return true;
 				}
 			}
-		}
+		});
 	});
 
 	/**
@@ -2837,40 +2785,34 @@
 	 * @param {String} groupID 変更先のグループID
 	 */
 	gui.on("group_up", function (err, groupID) {
-		var i,
-			target;
-
-		for (i = 0; i < groupList.length; i = i + 1) {
-			if (groupList[i].id === groupID) {
-				if (i > 1 && i <= (groupList.length - 1)) {
+		store.for_each_group(function (i, group) {
+			var target;
+			if (group.id === groupID) {
+				if (i > 1 && i <= (store.get_group_list().length - 1)) {
 					target = {
-						id : groupList[i].id,
+						id : group.id,
 						index : i - 1
 					};
 					connector.send('ChangeGroupIndex', target, function (err, reply) {
 						console.log("ChangeGroupIndex done", err, reply);
 					});
-					return;
+					return true;
 				}
 			}
-		}
+		});
 	});
 
 	/**
 	 * Group名変更
 	 */
 	gui.on("group_edit_name", function (err, groupID, groupName) {
-		var i,
-			oldName,
-			targetMetaDataList = [],
-			item;
-
-		for (i = 0; i < groupList.length; i = i + 1) {
-			item = groupList[i];
-			if (item.id === groupID) {
-				oldName = item.name;
-				item.name = groupName;
-				connector.send('UpdateGroup', item, (function (oldName, newName) {
+		store.for_each_group(function (i, group) {
+			var oldName,
+				targetMetaDataList = [];
+			if (group.id === groupID) {
+				oldName = group.name;
+				group.name = groupName;
+				connector.send('UpdateGroup', group, (function (oldName, newName) {
 					return function (err, reply) {
 						var id,
 							metaData;
@@ -2884,25 +2826,21 @@
 					};
 				}(oldName, groupName)));
 			}
-		}
+		});
 	});
 	
 	/**
 	 * Group色変更
 	 */
 	gui.on("group_edit_color", function (err, groupID, color) {
-		var i,
-			item;
-
-		for (i = 0; i < groupList.length; i = i + 1) {
-			item = groupList[i];
-			if (item.id === groupID) {
-				item.color = color;
-				connector.send('UpdateGroup', item, function (err, reply) {
+		store.for_each_group(function (i, group) {
+			if (group.id === groupID) {
+				group.color = color;
+				connector.send('UpdateGroup', group, function (err, reply) {
 				});
-				return;
+				return true;
 			}
-		}
+		});
 	});
 
 	/**
@@ -2910,37 +2848,20 @@
 	 */
 	gui.on("search_input_changed", function (err, text, groups) {
 		var i,
-			id, 
-			metaData,
 			foundContents = [],
 			groupDict = {},
 			elem,
 			copy,
 			child;
 			
-		for (i = 0; i < groupList.length; i = i + 1) {
-			groupDict[groupList[i].id] = groupList[i];
-		}
+		store.for_each_group(function (i, group) {
+			groupDict[group.id] = group;
+		});
 
-		for (id in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
-				if (Validator.isContentType(metaData)) {
-					if (groups.indexOf(metaData.group) >= 0) {
-						if (text === "" || JSON.stringify(metaData).indexOf(text) >= 0) {
-							elem = document.getElementById("onlist:" + metaData.id);
-							if (elem) {
-								copy = elem.cloneNode();
-								copy.id = "onsearch:" + metaData.id;
-								child = elem.childNodes[0].cloneNode();
-								child.innerHTML = elem.childNodes[0].innerHTML;
-								copy.appendChild(child);
-								setupContent(copy, metaData.id);
-								foundContents.push(copy);
-							}
-						}
-					}
-					else if (groups.indexOf(Constants.DefaultGroup) >= 0 && !groupDict.hasOwnProperty(metaData.group)) {
+		store.for_each_metadata(function (id, metaData) {
+			if (Validator.isContentType(metaData)) {
+				if (groups.indexOf(metaData.group) >= 0) {
+					if (text === "" || JSON.stringify(metaData).indexOf(text) >= 0) {
 						elem = document.getElementById("onlist:" + metaData.id);
 						if (elem) {
 							copy = elem.cloneNode();
@@ -2953,8 +2874,20 @@
 						}
 					}
 				}
+				else if (groups.indexOf(Constants.DefaultGroup) >= 0 && !groupDict.hasOwnProperty(metaData.group)) {
+					elem = document.getElementById("onlist:" + metaData.id);
+					if (elem) {
+						copy = elem.cloneNode();
+						copy.id = "onsearch:" + metaData.id;
+						child = elem.childNodes[0].cloneNode();
+						child.innerHTML = elem.childNodes[0].innerHTML;
+						copy.appendChild(child);
+						setupContent(copy, metaData.id);
+						foundContents.push(copy);
+					}
+				}
 			}
-		}
+		});
 		gui.set_search_result(foundContents);
 	});
 	
@@ -2970,7 +2903,7 @@
 			metaData;
 		for (i = 0; i < selectedIDList.length; i = i + 1) {
 			id = selectedIDList[i];
-			metaData = metaDataDict[id];
+			metaData = store.get_metadata(id);
 			elem = document.getElementById(id);
 			if (metaData && elem) {
 				elem.style.zIndex = index;
@@ -3020,8 +2953,8 @@
 	manipulator.on("toggle_star", function (err, is_active) {
 		var id = getSelectedID(),
 			metaData;
-		if (metaDataDict.hasOwnProperty(id)) {
-			metaData = metaDataDict[id];
+		if (store.has_metadata(id)) {
+			metaData = store.get_metadata(id);
 			metaData.mark = is_active;
 			updateMetaData(metaData);
 		}
@@ -3033,8 +2966,8 @@
 	manipulator.on("toggle_memo", function (err, is_active) {
 		var id = getSelectedID(),
 			metaData;
-		if (metaDataDict.hasOwnProperty(id)) {
-			metaData = metaDataDict[id];
+		if (store.has_metadata(id)) {
+			metaData = store.get_metadata(id);
 			if (Validator.isWindowType(metaData)) {
 				gui.toggle_display_id_show(false);
 			} else {
@@ -3135,7 +3068,7 @@
 		var id = metaData.id;
 		if (id) {
 			connector.send('GetContent', metaData, function (err, reply) {
-				if (metaDataDict.hasOwnProperty(metaData.id)) {
+				if (store.has_metadata(metaData.id)) {
 					correctAspect(reply.metaData, function (err, meta) {
 						reply.metaData = meta;
 						doneGetContent(err, reply);
@@ -3193,7 +3126,7 @@
 
 	// すべての更新が必要なときにブロードキャストされてくる.
 	connector.on('Update', function () {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 		reloadAll();
 	});
 	
@@ -3218,13 +3151,13 @@
 
 	// DB切り替え時にブロードキャストされてくる
 	connector.on("ChangeDB", function () {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 		window.location.reload(true);
 	});
 
 	// 権限変更時に送られてくる
 	connector.on("ChangeAuthority", function (userID) {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 		if (loginUserID === userID) {
 			window.location.reload(true);
 		}
@@ -3232,7 +3165,7 @@
 
 	// 管理ページでの設定変更時にブロードキャストされてくる
 	connector.on("UpdateSetting", function () {
-		if (!isInitialized) { return; }
+		if (!store.is_initialized()) { return; }
 		// ユーザーリスト再取得
 		connector.send('GetUserList', {}, function (err, userList) {
 			management.setUserList(userList);
@@ -3306,8 +3239,8 @@
 				newData,
 				metaData;
 			
-			if (id && metaDataDict.hasOwnProperty(id)) {
-				metaData = metaDataDict[id];
+			if (id && store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
 				newData = JSON.stringify({ text: text });
 				if (newData !== metaData.user_data_text) {
 					metaData.user_data_text = newData;
@@ -3378,8 +3311,8 @@
 			manipulator.removeManipulator();
 			for (i = 0; i < selectedIDList.length; i = i + 1) {
 				id = selectedIDList[i]; 
-				if (metaDataDict.hasOwnProperty(id)) {
-					metaData = metaDataDict[id];
+				if (store.has_metadata(id)) {
+					metaData = store.get_metadata(id);
 					if (!management.isEditable(metaData.group)) {
 						// 編集不可コンテンツ
 						continue;
@@ -3425,7 +3358,7 @@
 
 		updateScreen();
 		vscreen.dump();
-		isInitialized = true;
+		store.init();
 	}
 
 	/**
