@@ -5,8 +5,8 @@
 	"use strict";
 	
 	var gui = new ControllerGUI(),
+		login = new Login(connector),
 		management, // 管理情報
-		loginUserID = "", // ID
 		loginkey = "", // ログインキー
 		draggingIDList = [],
 		selectedIDList = [],
@@ -3615,128 +3615,35 @@
 		isInitialized = true;
 	}
 
-	function submitFunc(userList, id, password, key, callback) {
-		return function () {
-			var loginmenuBackground = document.getElementById('loginmenu_background');
-			var loginmenu = document.getElementById('loginmenu');
-			var loginpass = document.getElementById('loginpass');
-			var head_menu_hover = document.getElementById('head_menu_hover');
-			var logoutButton = document.getElementById('logout_button');
-			var user_text  = document.getElementById('user_text');
-			var request = { id : id, password : password };
-			if (key && key.length > 0) {
-				request.loginkey = key;
-			}
-			connector.send('Login', request, function (err, reply) {
-				var invalidLabel = document.getElementById('invalid_login');
-				if (err || reply === "failed") {
-					loginkey = "";
-					saveCookie();
-					management = new Management();
-					management.setUserList(null);
-					management.setAuthority(null);
-					invalidLabel.style.display = "block";
-				} else {
-					// ログイン成功
-					loginUserID = reply.id;
-					loginkey = reply.loginkey;
-					for (var i = 0; i < userList.length; i = i + 1) {
-						if (userList[i].id === reply.id) {
-							user_text.innerHTML = userList[i].name;
-							break;
-						}
-					}
-					saveCookie();
-					invalidLabel.style.display = "none";
-					loginmenuBackground.style.display = "none";
-					loginmenu.style.display = "none";
-					management = new Management();
-					management.setUserList(userList);
-					management.setAuthority(reply.authority);
-					// ログアウトボタンを設定.
-					head_menu_hover.style.display = "block";
-					logoutButton.onclick = (function (key) {
-						return function () {
-							var request = { loginkey : key };
-							loginkey = "";
-							saveCookie();
-							connector.send('Logout', request, function () {
-								window.location.reload(true);
-							});
-						};
-					}(reply.loginkey));
-					init(management);
-					reloadAll();
-				}
-				if (callback) {
-					callback(err, reply);
-				}
-			});
-		}
-	};
+	// TODO なんとかする
+	Login.getCookie = getCookie;
 
-	function relogin(userList, endCallback) {
-		var loginkey = getCookie("loginkey");
-		if (loginkey.length > 0) {
-			// リロード時などの再ログイン.
-			submitFunc(userList, "", "", loginkey, function (err, reply) {
-				endCallback(err, reply);
-			})();
-			return;
-		} else {
-			if (endCallback) {
-				endCallback(null, "failed");
-			}
-		}
-	}
-	
-	function login() {
-		var loginmenuBackground = document.getElementById('loginmenu_background');
-		var loginmenu = document.getElementById('loginmenu');
-		var loginpass = document.getElementById('loginpass');
+	/**
+	 * ログイン処理
+	 */
+	login.on('failed', function (err, data) {
+		management = data.management;
+		loginkey = data.loginkey;
+		saveCookie();
+	});
 
-		loginmenuBackground.style.display = "block";
-		loginmenu.style.display = "block";
+	login.on('success', function (err, data) {
+		management = data.management;
+		loginkey = data.loginkey;
+		saveCookie();
+		init(management);
+		reloadAll();
+	});
 
-		// 最初に再ログインを試行する
-		connector.send('GetUserList', {}, function (err, userList) {
-			relogin(userList,  function (err, reply) {
-				if (err || reply === "failed") {
-					var i,
-						userselect = document.getElementById('loginuser'),
-						option;
-					for (i = 0; i <  userList.length; i = i + 1) {
-						if (userList[i].type !== Constants.DisplayTabType) {
-							option = document.createElement('option');
-							option.value = userList[i].name;
-							option.innerHTML = userList[i].name;
-							userselect.appendChild(option);
-						}
-					}
-					document.getElementById('loginbutton').onclick = function () {
-						var userselect = document.getElementById('loginuser');
-						if (userselect.selectedIndex >= 0) {
-							var userid = userList[userselect.selectedIndex].id,
-								password = loginpass.value;
-							submitFunc(userList, userid, password, "")();
-						}
-					}
-					loginpass.onkeypress = function (e) {
-						if (e.which == 13) {
-							var userselect = document.getElementById('loginuser');
-							if (userselect.selectedIndex >= 0) {
-								var userid = userList[userselect.selectedIndex].id,
-									password = loginpass.value;
-								submitFunc(userList, userid, password, "")();
-							}
-						}
-					};
-				}
-			});
+	login.on('logout', function (err, data) {
+		loginkey = "";
+		saveCookie();
+		connector.send('Logout', data, function () {
+			window.location.reload(true);
 		});
-	}
+	})
 
-	window.onload = login;
+	window.onload = login.login;
 	window.onunload = function () {
 		window.content_property.clear(true);
 	};

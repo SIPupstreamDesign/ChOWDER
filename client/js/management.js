@@ -180,6 +180,8 @@
 	 */
 	Management.prototype.initAuthorityGUI = function (contents) {
 		// 閲覧・編集権限の設定のリスト
+		var i;
+		var option;
 		this.editableSelect = new window.SelectList();
 		this.viewableSelect = new window.SelectList();
 		var authTargetFrame = document.getElementById('auth_target_frame');
@@ -339,6 +341,8 @@
 		var authSelect = document.getElementById('auth_select_pass');
 		var prePass = document.getElementById('old_password');
 		var pass = document.getElementById('new_password');
+		var i;
+		var option;
 		
 		// ユーザー名リストの設定
 		if (this.userList) {
