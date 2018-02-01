@@ -8,6 +8,11 @@
 		this.lastSelectWindowID = null;
 		this.draggingIDList = [];
 		this.selectedIDList = [];
+		this.isCtrlDown = false; // Ctrlボタンを押してるかどうか
+		this.dragOffsetTop = 0;
+		this.dragOffsetLeft = 0;
+		this.mouseDownPos = [];
+		this.dragRect = {};
 	};
 
 	// lastSelectContentID
@@ -56,6 +61,52 @@
 				break;
 			}
 		}
+	};
+
+	// isCtrlDown
+	State.prototype.set_ctrl_down = function (is_down) {
+		this.isCtrlDown = is_down;
+	};
+	State.prototype.is_ctrl_down = function () {
+		return this.isCtrlDown;
+	};
+
+	// dragOffsetTop
+	State.prototype.set_drag_offset_top = function (offset) {
+		this.dragOffsetTop = offset;
+	};
+	State.prototype.get_drag_offset_top = function () {
+		return this.dragOffsetTop;
+	};
+
+	// dragOffsetLeft
+	State.prototype.set_drag_offset_left = function (offset) {
+		this.dragOffsetLeft = offset;
+	};
+	State.prototype.get_drag_offset_left = function () {
+		return this.dragOffsetLeft;
+	};
+	
+	// mouseDownPos
+	State.prototype.set_mousedown_pos = function (pos) {
+		this.mouseDownPos = pos;
+	};
+	State.prototype.get_mousedown_pos = function () {
+		return this.mouseDownPos;
+	};
+
+	// dragRect
+	State.prototype.clear_drag_rect = function () {
+		this.dragRect = {};
+	};
+	State.prototype.set_drag_rect = function (id, rect) {
+		this.dragRect[id] = rect;
+	};
+	State.prototype.get_drag_rect = function (id) {
+		return this.dragRect[id];
+	};
+	State.prototype.has_drag_rect = function (id) {
+		return this.dragRect.hasOwnProperty(id);
 	};
 
 	window.State = State;

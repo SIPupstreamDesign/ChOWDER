@@ -9,11 +9,6 @@
 		gui = new ControllerGUI(),
 		login = new Login(connector, Cookie),
 		management, // 管理情報
-		onCtrlDown = false, // Ctrlボタンを押してるかどうか
-		dragOffsetTop = 0,
-		dragOffsetLeft = 0,
-		dragRect = {},
-		mouseDownPos = [],
 		setupContent = function () {},
 		updateScreen = function () {},
 		setupWindow = function () {},
@@ -459,12 +454,12 @@
 
 
 				if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
-					px = clientX - dragOffsetLeft;
-					py = clientY - dragOffsetTop;
+					px = clientX - state.get_drag_offset_left();
+					py = clientY - state.get_drag_offset_top();
 					currentw = lastw - (px - lastx);
 				} else {
-					px = clientX - lastw - dragOffsetLeft;
-					py = clientY - dragOffsetTop;
+					px = clientX - lastw - state.get_drag_offset_left();
+					py = clientY - state.get_drag_offset_top();
 					currentw = lastw + (px - lastx);
 				}
 				if (isNaN(invAspect)) {
@@ -638,7 +633,7 @@
 		for (i = state.get_selected_id_list().length - 1; i >= 0; i = i - 1) {
 			unselect(state.get_selected_id_list()[i], updateText);
 		}
-		dragRect = {};
+		state.clear_drag_rect();
 	}
 
 	/**
@@ -750,12 +745,12 @@
 	setupContent = function (elem, id) {
 		window.onkeydown = function (evt) {
 			if (evt.keyCode === 17) {
-				onCtrlDown = true;
+				state.set_ctrl_down(true);
 			}
 		};
 		window.onkeyup = function (evt) {
 			if (evt.keyCode === 17) {
-				onCtrlDown = false;
+				state.set_ctrl_down(false);
 			}
 		};
 		function mousedownFunc(evt) {
@@ -811,15 +806,15 @@
 					}
 					if (topElement) {
 						topElement.onmousedown(evt);
-						dragOffsetTop = clientY - topElement.getBoundingClientRect().top;
-						dragOffsetLeft = clientX - topElement.getBoundingClientRect().left;
+						state.set_drag_offset_top(clientY - topElement.getBoundingClientRect().top);
+						state.set_drag_offset_left(clientX - topElement.getBoundingClientRect().left);
 					}
 					return;
 				}
 			}
 
 			// erase last border
-			if (!onCtrlDown) {
+			if (!state.is_ctrl_down()) {
 				unselectAll(true);
 				select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
@@ -829,10 +824,10 @@
 			}
 			
 			evt = (evt) || window.event;
-			mouseDownPos = [
-				rect.left,
-				rect.top
-			];
+			state.set_mousedown_pos([
+					rect.left,
+					rect.top
+				]);
 
 
 			if (evt.changedTouches) {
@@ -843,27 +838,27 @@
 				target = evt.target;
 			}
 
-			dragOffsetTop = clientY - rect.top;
-			dragOffsetLeft = clientX - rect.left;
+			state.set_drag_offset_top(clientY - rect.top);
+			state.set_drag_offset_left(clientX - rect.left);
 
 			if (metaData  && target.id) {
 				// メインビューのコンテンツ
 				state.for_each_dragging_id(function (i, id) {
 					elem = document.getElementById(id);
 					if (elem) {
-						dragRect[id] = {
+						state.set_drag_rect(id, {
 							left : elem.getBoundingClientRect().left - rect.left,
 							top : elem.getBoundingClientRect().top - rect.top
-						}
+						});
 					}
 				});
 			} else {
 				// リストのコンテンツ
 				state.for_each_dragging_id(function (i, id) {
-					dragRect[id] = {
+					state.set_drag_rect(id, {
 						left : 0,
 						top : 0
-					}
+					});
 				});
 			}
 		
@@ -1055,7 +1050,7 @@
 		
 		state.for_each_dragging_id(function (i, draggingID) {
 			// detect content list area
-			if (gui.is_listview_area2(evt, mouseDownPos) && gui.is_listview_area(evt)) {
+			if (gui.is_listview_area2(evt, state.get_mousedown_pos()) && gui.is_listview_area(evt)) {
 				return;
 			}
 
@@ -1064,8 +1059,8 @@
 			
 			// detect spilt screen area
 			if (Validator.isGridMode()) {
-				px = rect.left + dragOffsetLeft;
-				py = rect.top + dragOffsetTop;
+				px = rect.left + state.get_drag_offset_left();
+				py = rect.top + state.get_drag_offset_top();
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
 				if (splitWhole) {
@@ -1074,8 +1069,8 @@
 			}
 			
 			if (Validator.isDisplayMode()) {
-				px = rect.left + dragOffsetLeft;
-				py = rect.top + dragOffsetTop;
+				px = rect.left + state.get_drag_offset_left();
+				py = rect.top + state.get_drag_offset_top();
 				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 				screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 				if (screen && document.getElementById(screen.id)) {
@@ -1090,17 +1085,17 @@
 			}
 			metaData = store.get_metadata(draggingID);
 
-			if (dragRect.hasOwnProperty(draggingID)) {
+			if (state.has_drag_rect(draggingID)) {
 				if (Validator.isWindowType(metaData) && management.isDisplayManipulatable()) {
 					// display操作可能
-					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
-					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
+					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(draggingID).left;
+					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(draggingID).top;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				} else if (!Validator.isWindowType(metaData) && management.isEditable(metaData.group)) {
 					// content編集可能
-					metaData.posx = clientX - dragOffsetLeft + dragRect[draggingID].left;
-					metaData.posy = clientY - dragOffsetTop + dragRect[draggingID].top;
+					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(draggingID).left;
+					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(draggingID).top;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				}
@@ -1168,8 +1163,8 @@
 						if (Validator.isFreeMode()) {
 							updateMetaData(metaData);
 						} else if (Validator.isDisplayMode()) {
-							px = rect.left + dragOffsetLeft;
-							py = rect.top + dragOffsetTop;
+							px = rect.left + state.get_drag_offset_left();
+							py = rect.top + state.get_drag_offset_top();
 							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 							screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 							if (screen) {
@@ -1179,8 +1174,8 @@
 							manipulator.moveManipulator(elem);
 						} else {
 							// grid mode
-							px = rect.left + dragOffsetLeft;
-							py = rect.top + dragOffsetTop;
+							px = rect.left + state.get_drag_offset_left();
+							py = rect.top + state.get_drag_offset_top();
 							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
 							splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
 							if (splitWhole) {
@@ -1194,8 +1189,8 @@
 				clearSnapHightlight();
 			}
 			draggingIDList.splice(i, 1);
-			dragOffsetTop = 0;
-			dragOffsetLeft= 0;
+			state.set_drag_offset_top(0);
+			state.set_drag_offset_left(0);
 		}
 		state.set_dragging_id_list(draggingIDList);
 		manipulator.clearDraggingManip();
@@ -1563,7 +1558,6 @@
 			}
 		}
 
-		
 		if (Validator.isWindowType(json)) { return; }
 		elem = document.getElementById(metaData.id);
 		if (elem && !isUpdateContent) {
@@ -3302,8 +3296,8 @@
 		connector = window.io_connector;
 		
 		manipulator.setDraggingOffsetFunc(function (top, left) {
-			dragOffsetTop = top;
-			dragOffsetLeft = left;
+			state.set_drag_offset_top(top);
+			state.set_drag_offset_left(left);
 		});
 		manipulator.setCloseFunc(closeFunc);
 		
@@ -3354,7 +3348,7 @@
 	};
 	window.onblur = function () {
 		window.content_property.clear(true);
-		onCtrlDown = false;
+		state.set_ctrl_down(false);
 	};
 	connector.connect(function () {
 		var e = document.getElementById('head_menu_hover_right');
