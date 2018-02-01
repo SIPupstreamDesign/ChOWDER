@@ -108,6 +108,20 @@
 	State.prototype.has_drag_rect = function (id) {
 		return this.dragRect.hasOwnProperty(id);
 	};
+	
+	//----------------------------------
+	/**
+	 * 選択されているContentIDを返却する
+	 * @method getSelectedID
+	 * @return {String} コンテンツID
+	 */
+	State.prototype.get_selected_id = function () {
+		//var contentID = document.getElementById('content_id');
+		if (this.get_selected_id_list().length > 0) {
+			return this.get_selected_id_list()[0];
+		}
+		return null;//contentID.innerHTML;
+	}
 
 	window.State = State;
 }());

@@ -10,9 +10,9 @@
 		login = new Login(connector, Cookie),
 		management, // 管理情報
 		setupContent = function () {},
-		updateScreen = function () {},
 		setupWindow = function () {},
-		changeRect = function () {},
+		updateScreen = function () {},
+		onChangeRect = function () {},
 		doneGetVirtualDisplay,
 		doneGetContent,
 		doneGetWindowMetaData,
@@ -28,26 +28,6 @@
 	
 	Validator.init(gui);
 
-	/**
-	 * リストエレメントのボーダーカラーをタイプ別に返す
-	 */
-	function getListBorderColor(meta) {
-		if (Validator.isWindowType(meta)) {
-			if (meta.hasOwnProperty('reference_count') && parseInt(meta.reference_count, 10) <= 0) {
-				return "gray";
-			} else {
-				return "white";
-			}
-		}
-		if (Validator.isContentType(meta)) {
-			return "rgba(0,0,0,0)";
-		}
-		if (Validator.isLayoutType(meta)) {
-			return "lightgray";
-		}
-		return "white";
-	}
-	
 	/**
 	 * 辞書順でElementをareaに挿入.
 	 * @method insertElementWithDictionarySort
@@ -125,19 +105,6 @@
 	}
 	
 	/**
-	 * 選択されているContentIDを返却する
-	 * @method getSelectedID
-	 * @return {String} コンテンツID
-	 */
-	function getSelectedID() {
-		//var contentID = document.getElementById('content_id');
-		if (state.get_selected_id_list().length > 0) {
-			return state.get_selected_id_list()[0];
-		}
-		return null;//contentID.innerHTML;
-	}
-	
-	/**
 	 * 選択されているGroupIDを返却する
 	 * @method getSelectedGroup
 	 * @return {String} グループID
@@ -201,29 +168,6 @@
 	}
 	
 	/**
-	 * コンテンツのzindexの習得.
-	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
-	 * */
-	function getZIndex(metaData, isFront) {
-		var max = 0,
-			min = 0;
-
-		store.for_each_metadata(function (i, meta) {
-			if (meta.id !== metaData.id && 
-				Validator.isContentType(meta.type) &&
-				meta.hasOwnProperty("zIndex")) {
-				max = Math.max(max, parseInt(meta.zIndex, 10));
-				min = Math.min(min, parseInt(meta.zIndex, 10));
-			}
-		});
-		if (isFront) {
-			return max + 1;
-		} else {
-			return min - 1;
-		}
-	}
-
-	/**
 	 * Content追加
 	 * @method addContent
 	 * @param {JSON} metaData コンテンツのメタデータ
@@ -231,7 +175,7 @@
 	 */
 	function addContent(metaData, binary) {
 		if (!metaData.hasOwnProperty("zIndex")) {
-			metaData.zIndex = getZIndex(metaData, true);
+			metaData.zIndex = store.get_zindex(metaData, true);
 		}
 		connector.sendBinary('AddContent', metaData, binary, doneAddContent);
 	}
@@ -377,33 +321,6 @@
 		}
 	}
 
-	/**
-	 * グループの色を返す
-	 */
-	function getGroupColor(groupID) {
-		store.for_each_group(function (i, group) {
-			if (group.id === groupID) {
-				if (group.color) {
-					return group.color;
-				}
-			}
-		});
-		return Constants.ContentSelectColor;
-	}
-
-	/**
-	 * 枠色を返す
-	 */
-	function getBorderColor(meta) {
-		if (Validator.isWindowType(meta)) {
-			if (meta.hasOwnProperty('color')) {
-				return meta.color;
-			}
-			return "#0080FF";
-		}
-		return getGroupColor(meta.group);
-	}
-
 	
 	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
@@ -434,7 +351,7 @@
 		}
 		
 		if (draggingManip) {
-			elem = document.getElementById(getSelectedID());
+			elem = document.getElementById(state.get_selected_id());
 			if (elem) {
 				metaData = store.get_metadata(elem.id);
 				if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
@@ -515,7 +432,7 @@
 			content_property.init(id, null, "", "whole_window", mime);
 			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem() && metaData) {
-				gui.get_whole_window_elem().style.borderColor = getBorderColor(metaData);
+				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
 			}
 			return;
 		}
@@ -545,12 +462,12 @@
 		
 		// 選択ボーダー色設定
 		if (gui.get_list_elem(id)) {
-			gui.get_list_elem(id).style.borderColor = getBorderColor(metaData);
+			gui.get_list_elem(id).style.borderColor = store.get_border_color(metaData);
 		}
 		if (gui.get_search_elem(id)) {
-			gui.get_search_elem(id).style.borderColor = getBorderColor(metaData);
+			gui.get_search_elem(id).style.borderColor = store.get_border_color(metaData);
 		}
-		elem.style.borderColor = getBorderColor(metaData);
+		elem.style.borderColor = store.get_border_color(metaData);
 
 		if (state.get_selected_id_list().length <= 0) {
 			manipulator.removeManipulator();
@@ -617,9 +534,9 @@
 				elem.style.border = "";
 			}
 			if (gui.get_list_elem(elem.id)) {
-				gui.get_list_elem(elem.id).style.borderColor = getListBorderColor(metaData);
+				gui.get_list_elem(elem.id).style.borderColor = store.get_list_border_color(metaData);
 				if (gui.get_search_elem(elem.id)) {
-					gui.get_search_elem(elem.id).style.borderColor = getListBorderColor(metaData);
+					gui.get_search_elem(elem.id).style.borderColor = store.get_list_border_color(metaData);
 				}
 			}
 		}
@@ -642,7 +559,7 @@
 	 * @method closeFunc
 	 */
 	function closeFunc() {
-		var id = getSelectedID(),
+		var id = state.get_selected_id(),
 			metaData = null,
 			elem,
 			previewArea;
@@ -673,11 +590,11 @@
 	
 	/**
 	 * ContentかDisplayの矩形サイズ変更時ハンドラ。initPropertyAreaのコールバックとして指定されている。
-	 * @method changeRect
+	 * @method onChangeRect
 	 * @param {String} id ContentまたはDisplay ID
 	 * @param {String} value 変更値
 	 */
-	changeRect = function (id, value) {
+	onChangeRect = function (id, value) {
 		var elem = gui.get_selected_elem(),
 			metaData,
 			aspect = 1.0;
@@ -1116,7 +1033,7 @@
 		if (manipulator.getDraggingManip()) {
 			console.log("iscontentarea");
 			// scaling
-			elem = document.getElementById(getSelectedID());
+			elem = document.getElementById(state.get_selected_id());
 			if (elem) {
 				metaData = store.get_metadata(elem.id);
 				if (Validator.isWindowType(metaData) || Validator.isVisible(metaData)) {
@@ -2414,7 +2331,7 @@
 		state.for_each_selected_id(function (i, id) {
 			if (store.has_metadata(id)) {
 				metaData = store.get_metadata(id);
-				metaData.zIndex = getZIndex(metaData, isFront);
+				metaData.zIndex = store.get_zindex(metaData, isFront);
 				metaDataList.push(metaData);
 			}
 		});
@@ -2546,7 +2463,7 @@
 	 *  ディスプレイ枠色変更
 	 */
 	content_property.on("display_color_changed", function (err, colorvalue) {
-		var id = getSelectedID(),
+		var id = state.get_selected_id(),
 			metaData;
 		if (store.has_metadata(id) && Validator.isWindowType(store.get_metadata(id))) {
 			metaData = store.get_metadata(id);
@@ -2566,7 +2483,7 @@
 			cancelButtonName : "Cancel",
 		}, function (res) {
 			if (res === "yes" || res === "no") {
-				var id = getSelectedID(),
+				var id = state.get_selected_id(),
 					metaData;
 				if (store.has_metadata(id) && Validator.isContentType(store.get_metadata(id))) {
 					metaData = store.get_metadata(id); 
@@ -2915,7 +2832,7 @@
 	 * マニピュレータの星がトグルされた
 	 */
 	manipulator.on("toggle_star", function (err, is_active) {
-		var id = getSelectedID(),
+		var id = state.get_selected_id(),
 			metaData;
 		if (store.has_metadata(id)) {
 			metaData = store.get_metadata(id);
@@ -2928,7 +2845,7 @@
 	 * マニピュレータのmemoがトグルされた
 	 */
 	manipulator.on("toggle_memo", function (err, is_active) {
-		var id = getSelectedID(),
+		var id = state.get_selected_id(),
 			metaData;
 		if (store.has_metadata(id)) {
 			metaData = store.get_metadata(id);
@@ -3015,8 +2932,8 @@
 			if (management.isViewable(metaData.group)) {
 				if (id) {
 					doneGetMetaData(null, metaData);
-					if (getSelectedID()) {
-						elem = document.getElementById(getSelectedID());
+					if (state.get_selected_id()) {
+						elem = document.getElementById(state.get_selected_id());
 						if (elem) {
 							manipulator.moveManipulator(elem);
 						}
@@ -3194,12 +3111,12 @@
 		// プロパティの座標変更
 		content_property.on("rect_changed", function (err, id, value) {
 			console.log('on_rect_changed');
-			changeRect(id, parseInt(value, 10));
+			onChangeRect(id, parseInt(value, 10));
 		});
 
 		// メタ情報(メモ)変更.
 		content_property.on("metainfo_changed", function (err, text, endCallback) {
-			var id = getSelectedID(),
+			var id = state.get_selected_id(),
 				newData,
 				metaData;
 			

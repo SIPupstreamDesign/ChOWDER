@@ -81,5 +81,78 @@
 		return this.metaDataDict;
 	};
 
+	// --------------------------
+	// colors
+
+	/**
+	 * グループの色を返す
+	 */
+	Store.prototype.get_group_color = function (groupID) {
+		this.for_each_group(function (i, group) {
+			if (group.id === groupID) {
+				if (group.color) {
+					return group.color;
+				}
+			}
+		});
+		return Constants.ContentSelectColor;
+	};
+
+	/**
+	 * 枠色を返す
+	 */
+	Store.prototype.get_border_color = function (meta) {
+		if (Validator.isWindowType(meta)) {
+			if (meta.hasOwnProperty('color')) {
+				return meta.color;
+			}
+			return "#0080FF";
+		}
+		return this.get_group_color(meta.group);
+	};
+
+	/**
+	 * リストエレメントのボーダーカラーをタイプ別に返す
+	 */
+	Store.prototype.get_list_border_color = function (meta) {
+		if (Validator.isWindowType(meta)) {
+			if (meta.hasOwnProperty('reference_count') && parseInt(meta.reference_count, 10) <= 0) {
+				return "gray";
+			} else {
+				return "white";
+			}
+		}
+		if (Validator.isContentType(meta)) {
+			return "rgba(0,0,0,0)";
+		}
+		if (Validator.isLayoutType(meta)) {
+			return "lightgray";
+		}
+		return "white";
+	};
+	
+	/**
+	 * コンテンツのzindexの習得.
+	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
+	 * */
+	Store.prototype.get_zindex = function (metaData, isFront) {
+		var max = 0,
+			min = 0;
+
+		this.for_each_metadata(function (i, meta) {
+			if (meta.id !== metaData.id && 
+				Validator.isContentType(meta.type) &&
+				meta.hasOwnProperty("zIndex")) {
+				max = Math.max(max, parseInt(meta.zIndex, 10));
+				min = Math.min(min, parseInt(meta.zIndex, 10));
+			}
+		});
+		if (isFront) {
+			return max + 1;
+		} else {
+			return min - 1;
+		}
+	};
+
 	window.Store = Store;
 }());
