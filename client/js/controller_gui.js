@@ -130,6 +130,13 @@
 								}.bind(this)
 							}
 						}, {
+							Movie : {
+								func : function () { 
+									this.initContextPos();
+									document.getElementById('video_file_input').click();
+								}.bind(this)
+							}
+						}, {
 							Text : {
 								func : function () { 
 									this.initContextPos();
@@ -150,7 +157,14 @@
 									this.toggleURLInput();
 								}.bind(this)
 							}
-						}],
+						}, {
+							ScreenShare : {
+								func : function () { 
+									this.initContextPos();
+									this.emit(window.ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null);
+								}.bind(this)
+							}
+						},],
 				}, {
 					Setting : settingMenu
 				}]
@@ -643,6 +657,7 @@
 			move_front_button = document.getElementById("context_menu_move_front"),
 			move_back_button = document.getElementById("context_menu_move_back"),
 			add_image_button = document.getElementById('context_menu_add_image'),
+			add_video_button = document.getElementById('context_menu_add_video'),
 			add_text_button = document.getElementById('context_menu_add_text'),
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
 			add_url_button = document.getElementById('context_menu_add_url'),
@@ -670,6 +685,11 @@
 
 		add_image_button.onmousedown = function (evt) {
 			document.getElementById('image_file_input').click();
+			menu.style.display = "none";
+		};
+
+		add_video_button.onmousedown = function (evt) {
+			document.getElementById('video_file_input').click();
 			menu.style.display = "none";
 		};
 
@@ -971,7 +991,8 @@
 	ControllerGUI.prototype.initContentInputs = function () {
 		var imageFileInput = document.getElementById('image_file_input'),
 			textFileInput = document.getElementById('text_file_input'),
-			updateImageInput = document.getElementById('update_image_input');
+			updateImageInput = document.getElementById('update_image_input'),
+			videoFileInput = document.getElementById('video_file_input');
 
 		imageFileInput.addEventListener('change', function (evt) {
 			this.emit(window.ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
@@ -986,6 +1007,11 @@
 		updateImageInput.addEventListener('change', function (evt) {
 			this.emit(window.ControllerGUI.EVENT_UPDATEIMAGEINPUT_CHANGED, null, evt);
 			updateImageInput.value = "";
+		}.bind(this), false);
+
+		videoFileInput.addEventListener('change', function (evt) {
+			this.emit(window.ControllerGUI.EVENT_VIDEOFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
+			videoFileInput.value = "";
 		}.bind(this), false);
 	};
 
@@ -1355,7 +1381,9 @@
 		var add_image_button = document.getElementById('burger_menu_add_image'),
 			add_text_button = document.getElementById('burger_menu_add_text'),
 			add_text_file_button = document.getElementById('burger_menu_add_text_file'),
-			add_url_button = document.getElementById('burger_menu_add_url');
+			add_url_button = document.getElementById('burger_menu_add_url'),
+			add_video_button = document.getElementById('burger_menu_add_video'),
+			add_screenshare_button = document.getElementById('burger_menu_add_screenshare');
 		
 		add_image_button.onmousedown = function (evt) {
 			this.toggleBurgerSubmenuAddContent(false);
@@ -1380,6 +1408,19 @@
 			this.contentMenu.toggle();
 			this.openTextInput();
 		}.bind(this);
+
+		add_video_button.onmousedown = function (evt) {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+			document.getElementById('video_file_input').click();
+		}.bind(this);
+
+		add_screenshare_button.onmousedown = function (evt) {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+			this.emit(ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null);
+		}.bind(this);
+
 	};
 
 	function guid10() {
@@ -1622,6 +1663,7 @@
 	ControllerGUI.EVENT_MOUSEDOWN_DISPLAY_PREVIEW_AREA = "mousedown_display_preview_area";
 	ControllerGUI.EVENT_UPDATEIMAGEINPUT_CHANGED = "updateimageinput_changed";
 	ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED = "imagefileinput_changed";
+	ControllerGUI.EVENT_VIDEOFILEINPUT_CHANGED = "videofileinput_changed";
 	ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED = "textfileinput_changed";
 	ControllerGUI.EVENT_URLSENDBUTTON_CLICKED = "urlsendbuton_clicked";
 	ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED = "textsendbutton_clicked";
@@ -1631,6 +1673,8 @@
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
 	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
 	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
+	ControllerGUI.EVENT_ADD_VIDEO_CLICKED = "add_video";
+	ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED = "add_screenshare";
 	ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED = "overwrite_layout";
 	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
 	ControllerGUI.EVENT_DELETELAYOUT_CLICKED = "deletelayout_clicked";

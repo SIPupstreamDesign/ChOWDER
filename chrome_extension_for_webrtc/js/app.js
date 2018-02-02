@@ -1,8 +1,6 @@
 (function () {
 
 	window.onload = function () {
-
-		//const EXTENSION_ID = 'elpljfkdapfmcbhlkidibdpheipocfgo';
 		const video = document.getElementById('screen-view');
 		const start_button = document.getElementById('start_button');
 		const stop_button = document.getElementById('stop_button');
@@ -13,7 +11,6 @@
 			const EXTENSION_ID = document.getElementById('extensionid_input').value;
 
 			chrome.runtime.sendMessage(EXTENSION_ID, request, function (response) {
-				console.log(response)
 				if (response && response.type === 'success') {
 					navigator.mediaDevices.getUserMedia({
 						video: {

@@ -4,6 +4,8 @@
 (function () {
 	"use strict";
 	
+	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || window.navigator.mozGetUserMedia;
+
 	var Constants = {
 		WholeWindowID : "whole_window",
 		WholeWindowListID : "onlist:whole_window",

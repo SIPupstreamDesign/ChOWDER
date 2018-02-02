@@ -943,16 +943,15 @@
 	 * @param {*} data 
 	 * @param {*} metaData 
 	 */
-	Controller.prototype.send_movie = function (data, metaData) {
+	Controller.prototype.send_movie = function (blob, metaData) {
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
 		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
 		// IDはクライアントで作成する
-		var video = document.createElement('video'); // TODO 複数に対応
-		var blob = new Blob([data], {type: "video/mp4"});
 		metaData.id = generateID();
 		var videoData = URL.createObjectURL(blob);
 		store.set_video_data(metaData.id, videoData);
+		var video = document.createElement('video');
 		video.src = videoData;
 		var stream = video.captureStream();
 		var webRTC = new WebRTC();
@@ -2048,6 +2047,38 @@
 		}
 	});
 
+	gui.on("videofileinput_changed", function (err, evt, posx, posy) {
+		var files = evt.target.files,
+			file,
+			i,
+			fileReader = new FileReader();
+
+		if (posx === 0 && posy === 0) {
+			// メニューから追加したときなど. wholescreenの左上端に置く.
+			posx = vscreen.getWhole().x;
+			posy = vscreen.getWhole().y;
+		}
+
+		fileReader.onload = (function (name) {
+			return function (e) {
+				var data = e.target.result,
+					img;
+				if (data && data instanceof ArrayBuffer) {
+					var blob = new Blob([data], {type: "video/mp4"});
+					controller.send_movie(blob,  { 
+						group : gui.get_current_group_id(),
+						posx : posy, posy : posy, visible : true,
+						user_data_text : JSON.stringify({ text: name }) });
+				}
+			};
+		}(files[0].name));
+		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+			if (file.type.match('video.*')) {
+				fileReader.readAsArrayBuffer(file);
+			}
+		}
+	});
+
 	gui.on("add_layout", function (err) {
 		window.input_dialog.init_multi_text_input({
 			name : "レイアウト追加 - メモ",
@@ -2072,6 +2103,35 @@
 				visible: false,
 				group : gui.get_current_group_id()
 			}, layout);
+		});
+	});
+
+	gui.on("add_screenshare", function (err) {
+		window.input_dialog.text_input({
+			name : "ExtensionIDを入力してください",
+			okButtonName : "OK"
+		}, function (extensionID) {
+			var request = { sources: ['screen', 'window', 'tab'] };
+			chrome.runtime.sendMessage(extensionID, request, function (response) {
+				if (response && response.type === 'success') {
+					navigator.getUserMedia({
+						video: {
+							mandatory: {
+								chromeMediaSource: 'desktop',
+								chromeMediaSourceId: response.streamId,
+							}
+						}
+					}, function (stream) {
+						controller.send_movie(stream,  { 
+							group : gui.get_current_group_id(),
+							posx : vscreen.getWhole().x, posy : vscreen.getWhole().y, visible : true });
+					}, function (err) {
+						console.error('Could not get stream: ', err);
+					});
+				} else {
+					console.error('Could not get stream');
+				}
+			});
 		});
 	});
 
@@ -2158,7 +2218,10 @@
 			return function (e) {
 				var data = e.target.result;
 				if (data && data instanceof ArrayBuffer) {
-					controller.send_movie(data,  { posx : px, posy : py, visible : true,
+					var blob = new Blob([data], {type: "video/mp4"});
+					controller.send_movie(blob,  { 
+						group : gui.get_current_group_id(),
+						posx : px, posy : py, visible : true,
 						user_data_text : JSON.stringify({ text: name }) });
 				}
 			};
