@@ -115,7 +115,7 @@
 				var name = "video";
 				if (metaData.hasOwnProperty("user_data_text")) {
 					try {
-						JSON.parse(metaData.user_data_text).text;
+						name = JSON.parse(metaData.user_data_text).text;
 					} catch (e) {
 						console.error(e);
 					}
