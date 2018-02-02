@@ -28,11 +28,20 @@
 		doneUpdateMetaData = function () {},
 		doneUpdateWindowMetaData = function () {},
 		doneGetMetaData = function () {},
-		doneDeleteWindowMetaData = function () {},
-		video = document.createElement('video'); // TODO 複数に対応
+		doneDeleteWindowMetaData = function () {};
 	
 	Validator.init(gui);
 
+    /**
+     * random ID (8 chars)
+     */
+    function generateID() {
+        function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000000).toString(16).substring(1);
+		}
+		return s4() + s4();
+	}
+	
 	/**
 	 * 指定された座標がelementの内部に存在するかを判定する
 	 * @method isInsideElement
@@ -937,8 +946,14 @@
 	Controller.prototype.send_movie = function (data, metaData) {
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
+		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
+		// IDはクライアントで作成する
+		var video = document.createElement('video'); // TODO 複数に対応
 		var blob = new Blob([data], {type: "video/mp4"});
-		video.src = URL.createObjectURL(blob);
+		metaData.id = generateID();
+		var videoData = URL.createObjectURL(blob);
+		store.set_video_data(metaData.id, videoData);
+		video.src = videoData;
 		var stream = video.captureStream();
 		var webRTC = new WebRTC();
 		webRTC.offer(function (sdp) {
@@ -1461,8 +1476,10 @@
 			}
 			console.log("新規コンテンツロード", json);
 			if (json.type === "video") {
-				if (video.src) {
-					controller.import_content(json, video.src);
+				if (store.has_video_data(json.id)) {
+					controller.import_content(json, store.get_video_data(json.id));
+				} else {
+					controller.import_content(json, "ローカルに保持していない動画コンテンツ");
 				}
 			} else {
 				connector.send('GetContent', request, function (err, data) {
@@ -1656,7 +1673,7 @@
 
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
-		
+
 		// 新規追加ではなく差し替えだった場合.
 		if (store.has_metadata(json.id)) {
 			doneUpdateContent(err, reply);
@@ -3188,6 +3205,7 @@
 	window.onload = login.login;
 	window.onunload = function () {
 		window.content_property.clear(true);
+		store.release();
 	};
 	window.onblur = function () {
 		window.content_property.clear(true);

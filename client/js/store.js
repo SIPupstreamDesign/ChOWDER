@@ -8,6 +8,7 @@
 		this.groupList = [];
 		this.groupDict = {};
 		this.metaDataDict = {};
+		this.videoDict = {};
 	};
 	
 	// isInitialized
@@ -16,6 +17,13 @@
 	};
 	Store.prototype.is_initialized = function () {
 		return this.isInitialized;
+	};
+
+	Store.prototype.release = function () {
+		var i;
+		for (i in this.videoDict) {
+			URL.revokeObjectURL(this.videoDict(i));
+		}
 	};
 
 	// group
@@ -79,6 +87,17 @@
 	};
 	Store.prototype.get_metadata_dict = function () {
 		return this.metaDataDict;
+	};
+
+	// video data
+	Store.prototype.set_video_data = function (id, data) {
+		this.videoDict[id] = data;
+	};
+	Store.prototype.get_video_data = function (id, data) {
+		return this.videoDict[id];
+	};
+	Store.prototype.has_video_data = function (id) {
+		return this.videoDict.hasOwnProperty(id);
 	};
 
 	// --------------------------

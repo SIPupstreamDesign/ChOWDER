@@ -14,6 +14,7 @@
 		TypeLayout : "layout",
 		TypeContent : "content",
 		TypeText : "text",
+		TypeVideo : "video",
 		PropertyTypeDisplay : "display",
 		PropertyTypeWholeWindow : "whole_window",
 		PropertyTypeLayout : "layout",
