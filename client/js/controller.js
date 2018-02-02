@@ -2154,12 +2154,15 @@
 				controller.send_text(data, { posx : px, posy : py, visible : true });
 			}
 		};
-		movieReader.onloadend = function (e) {
-			var data = e.target.result;
-			if (data && data instanceof ArrayBuffer) {
-				controller.send_movie(data,  { posx : px, posy : py, visible : true });
-			}
-		};
+		movieReader.onloadend = (function (name) {
+			return function (e) {
+				var data = e.target.result;
+				if (data && data instanceof ArrayBuffer) {
+					controller.send_movie(data,  { posx : px, posy : py, visible : true,
+						user_data_text : JSON.stringify({ text: name }) });
+				}
+			};
+		}(files[0].name));
 
 		for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
 			if (file.type.match('image.*')) {

@@ -20,6 +20,8 @@
 		var classname;
 		if (contentType === 'text') {
 			classname = 'textcontent';
+		} else if (contentType === 'video') {
+			classname = 'videocontent';
 		} else {
 			classname = 'imagecontent';
 		}
@@ -110,8 +112,15 @@
 				divElem.style.height = "150px";
 				divElem.style.color = "white";
 			} else if (metaData.type === 'video') {
-				// contentData is video(text)
-				contentElem.innerHTML = "video";
+				var name = "video";
+				if (metaData.hasOwnProperty("user_data_text")) {
+					try {
+						JSON.parse(metaData.user_data_text).text;
+					} catch (e) {
+						console.error(e);
+					}
+				}
+				contentElem.innerHTML = name;
 				divElem.style.width = "150px";
 				divElem.style.height = "150px";
 				divElem.style.color = "white";
