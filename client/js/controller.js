@@ -316,9 +316,9 @@
 		};
 
 		if (window.ontouchstart !== undefined) {
-			elem.ontouchstart = this.onMouseDown.bind(this, id);
+			elem.ontouchstart = this.onMouseDown(id);
 		} else {
-			elem.onmousedown = this.onMouseDown.bind(this, id);
+			elem.onmousedown = this.onMouseDown(id);
 		}
 	};
 	
@@ -500,116 +500,118 @@
 		}
 	};
 	
-	Controller.prototype.onMouseDown = function (id, evt) {
-		var rect = evt.target.getBoundingClientRect(),
-			metaData = null,
-			otherPreviewArea = gui.get_content_preview_area(),
-			childs,
-			i,
-			elem,
-			topElement = null,
-			e,
-			pageX = evt.pageX,
-			pageY = evt.pageY,
-			clientX = evt.clientX,
-			clientY = evt.clientY,
-			target = evt.taget;
-		
-		if (evt.changedTouches) {
-			// タッチ
-			target = evt.changedTouches[0].target;
-			rect = evt.changedTouches[0].target.getBoundingClientRect();
-			pageX = evt.changedTouches[0].pageX,
-			pageY = evt.changedTouches[0].pageY,
-			clientX = evt.changedTouches[0].clientX;
-			clientY = evt.changedTouches[0].clientY;
-		} else {
-			// マウス
-			if (evt.button !== 0) { return; } // 左ドラッグのみ
-		}
-		
-		if (store.has_metadata(id)) {
-			metaData = store.get_metadata(id);
-			if (Validator.isContentType(metaData)) {
-				otherPreviewArea = gui.get_display_preview_area();
+	Controller.prototype.onMouseDown = function (id) {
+		return function (evt) {
+			var rect = evt.target.getBoundingClientRect(),
+				metaData = null,
+				otherPreviewArea = gui.get_content_preview_area(),
+				childs,
+				i,
+				elem,
+				topElement = null,
+				e,
+				pageX = evt.pageX,
+				pageY = evt.pageY,
+				clientX = evt.clientX,
+				clientY = evt.clientY,
+				target = evt.taget;
+			
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+				rect = evt.changedTouches[0].target.getBoundingClientRect();
+				pageX = evt.changedTouches[0].pageX,
+				pageY = evt.changedTouches[0].pageY,
+				clientX = evt.changedTouches[0].clientX;
+				clientY = evt.changedTouches[0].clientY;
+			} else {
+				// マウス
+				if (evt.button !== 0) { return; } // 左ドラッグのみ
 			}
-		}
+			
+			if (store.has_metadata(id)) {
+				metaData = store.get_metadata(id);
+				if (Validator.isContentType(metaData)) {
+					otherPreviewArea = gui.get_display_preview_area();
+				}
+			}
 
-		
-		if (metaData) {
-			if (id === Constants.WholeWindowID ||
-				(!Validator.isDisplayTabSelected() && Validator.isWindowType(metaData)) ||
-				(Validator.isDisplayTabSelected() && Validator.isContentType(metaData))) {
-				childs = otherPreviewArea.childNodes;
+			
+			if (metaData) {
+				if (id === Constants.WholeWindowID ||
+					(!Validator.isDisplayTabSelected() && Validator.isWindowType(metaData)) ||
+					(Validator.isDisplayTabSelected() && Validator.isContentType(metaData))) {
+					childs = otherPreviewArea.childNodes;
 
-				for (i = 0; i < childs.length; i = i + 1) {
-					if (childs[i].onmousedown) {
-						if (!topElement || topElement.zIndex < childs[i].zIndex) {
-							if (isInsideElement(childs[i], clientX, clientY)) {
-								topElement = childs[i];
+					for (i = 0; i < childs.length; i = i + 1) {
+						if (childs[i].onmousedown) {
+							if (!topElement || topElement.zIndex < childs[i].zIndex) {
+								if (isInsideElement(childs[i], clientX, clientY)) {
+									topElement = childs[i];
+								}
 							}
 						}
 					}
+					if (topElement) {
+						topElement.onmousedown(evt);
+						state.set_drag_offset_top(clientY - topElement.getBoundingClientRect().top);
+						state.set_drag_offset_left(clientX - topElement.getBoundingClientRect().left);
+					}
+					return;
 				}
-				if (topElement) {
-					topElement.onmousedown(evt);
-					state.set_drag_offset_top(clientY - topElement.getBoundingClientRect().top);
-					state.set_drag_offset_left(clientX - topElement.getBoundingClientRect().left);
-				}
-				return;
 			}
-		}
 
-		// erase last border
-		if (!state.is_ctrl_down()) {
-			this.unselect_all(true);
-			this.select(id, gui.is_listview_area(evt));
-			gui.close_context_menu();
-		} else  {
-			this.select(id, gui.is_listview_area(evt));
-			gui.close_context_menu();
-		}
-		
-		evt = (evt) || window.event;
-		state.set_mousedown_pos([
-				rect.left,
-				rect.top
-			]);
+			// erase last border
+			if (!state.is_ctrl_down()) {
+				this.unselect_all(true);
+				this.select(id, gui.is_listview_area(evt));
+				gui.close_context_menu();
+			} else  {
+				this.select(id, gui.is_listview_area(evt));
+				gui.close_context_menu();
+			}
+			
+			evt = (evt) || window.event;
+			state.set_mousedown_pos([
+					rect.left,
+					rect.top
+				]);
 
-		if (evt.changedTouches) {
-			// タッチ
-			target = evt.changedTouches[0].target;
-		} else {
-			// マウス
-			target = evt.target;
-		}
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+			} else {
+				// マウス
+				target = evt.target;
+			}
 
-		state.set_drag_offset_top(clientY - rect.top);
-		state.set_drag_offset_left(clientX - rect.left);
+			state.set_drag_offset_top(clientY - rect.top);
+			state.set_drag_offset_left(clientX - rect.left);
 
-		if (metaData  && target.id) {
-			// メインビューのコンテンツ
-			state.for_each_dragging_id(function (i, id) {
-				elem = document.getElementById(id);
-				if (elem) {
-					state.set_drag_rect(id, {
-						left : elem.getBoundingClientRect().left - rect.left,
-						top : elem.getBoundingClientRect().top - rect.top
-					});
-				}
-			});
-		} else {
-			// リストのコンテンツ
-			state.for_each_dragging_id(function (i, id) {
-				state.set_drag_rect(id, {
-					left : 0,
-					top : 0
+			if (metaData  && target.id) {
+				// メインビューのコンテンツ
+				state.for_each_dragging_id(function (i, id) {
+					elem = document.getElementById(id);
+					if (elem) {
+						state.set_drag_rect(id, {
+							left : elem.getBoundingClientRect().left - rect.left,
+							top : elem.getBoundingClientRect().top - rect.top
+						});
+					}
 				});
-			});
-		}
-		evt.stopPropagation();
-		evt.preventDefault();
-	}
+			} else {
+				// リストのコンテンツ
+				state.for_each_dragging_id(function (i, id) {
+					state.set_drag_rect(id, {
+						left : 0,
+						top : 0
+					});
+				});
+			}
+			evt.stopPropagation();
+			evt.preventDefault();
+		}.bind(this);
+	};
 
 	Controller.prototype.onMouseUp = function (evt) {
 		var i,
