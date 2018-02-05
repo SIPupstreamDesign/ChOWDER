@@ -1691,7 +1691,6 @@
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
 	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
 	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
-	ControllerGUI.EVENT_ADD_VIDEO_CLICKED = "add_video";
 	ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED = "add_screenshare";
 	ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED = "overwrite_layout";
 	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
