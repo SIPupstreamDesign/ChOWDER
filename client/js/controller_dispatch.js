@@ -79,7 +79,7 @@
 				}
 			});
 			if (metaDataList.length > 0) {
-				connector.send('DeleteContent', metaDataList, doneDeleteContent);
+				connector.send('DeleteContent', metaDataList, controller.doneDeleteContent);
 			}
 		});
 
@@ -100,7 +100,7 @@
 				});
 			}
 			if (targetList.length > 0) {
-				connector.send('DeleteContent', targetList, doneDeleteContent);
+				connector.send('DeleteContent', targetList, controller.doneDeleteContent);
 			}
 		});
 
@@ -553,7 +553,7 @@
 				}
 			});
 			if (metaDataList.length > 0) {
-				connector.send('DeleteContent', metaDataList, doneDeleteContent);
+				connector.send('DeleteContent', metaDataList, controller.doneDeleteContent);
 			}
 		});
 
@@ -792,7 +792,7 @@
 								}
 							});
 							if (deleteList.length > 0) {
-								connector.send('DeleteContent', deleteList, doneDeleteContent);
+								connector.send('DeleteContent', deleteList, controller.doneDeleteContent);
 							}
 						}
 						// UserList再取得

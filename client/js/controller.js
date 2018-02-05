@@ -830,8 +830,7 @@
 	 */
 	Controller.prototype.import_window = function (windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
-		window.window_view.import_window(gui, store.get_metadata_dict(), windowData);
-		window.window_list.import_window(gui, store.get_metadata_dict(), windowData);
+		gui.import_window(store.get_metadata_dict(), windowData);
 	};
 
 	/**
@@ -841,9 +840,7 @@
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
 	Controller.prototype.import_content = function (metaData, contentData) {
-		window.layout_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
-		window.content_list.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
-		window.content_view.import_content(gui, store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+		gui.import_content(store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
 	};
 
 	/**

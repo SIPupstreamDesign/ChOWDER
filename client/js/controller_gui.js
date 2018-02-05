@@ -1633,6 +1633,19 @@
 		this.emit(ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, isShow);
 	};
 
+	// windowコンテンツのインポート
+	ControllerGUI.prototype.import_window = function (metadataDict, windowData) {
+		window.window_view.import_window(this, metadataDict, windowData);
+		window.window_list.import_window(this, metadataDict, windowData);
+	};
+
+	// コンテンツのインポート
+	ControllerGUI.prototype.import_content = function (metadataDict, metaData, contentData, groupDict) {
+		window.layout_list.import_content(this, metadataDict, metaData, contentData, groupDict);
+		window.content_list.import_content(this, metadataDict, metaData, contentData, groupDict);
+		window.content_view.import_content(this, metadataDict, metaData, contentData, groupDict);
+	}
+
 	// other
 	ControllerGUI.prototype.check_search_target_groups = function (check_groups, isChecked) {
 		var i;
