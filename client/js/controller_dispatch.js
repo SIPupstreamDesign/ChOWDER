@@ -1414,7 +1414,7 @@
 			state.set_drag_offset_top(top);
 			state.set_drag_offset_left(left);
 		});
-		manipulator.setCloseFunc(controller.on_close_content);
+		manipulator.setCloseFunc(controller.onCloseContent);
 
 		// gui events etc
 		initGUIEvents(controller,  gui,store, state, management, login);

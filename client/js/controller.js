@@ -1,7 +1,7 @@
 /*jslint devel:true */
 /*global FileReader, Uint8Array, Blob, URL, event, unescape, $, $show, $hide */
 
-(function (content_property, vscreen, vscreen_util, manipulator, connector) {
+(function (vscreen, vscreen_util, manipulator, connector) {
 	"use strict";
 	
 	var store = new Store(),
@@ -24,6 +24,7 @@
 		this.onMouseUp = this.onMouseUp.bind(this);
 		this.onMouseDown = this.onMouseDown.bind(this);
 		this.onUpdateAuthority = this.onUpdateAuthority.bind(this);
+		this.onCloseContent = this.onCloseContent.bind(this);
 		this.doneGetVirtualDisplay = this.doneGetVirtualDisplay.bind(this);
 		this.doneGetContent = this.doneGetContent.bind(this);
 		this.doneGetWindowMetaData = this.doneGetWindowMetaData.bind(this);
@@ -710,7 +711,7 @@
 				vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
 			}
 		} else {
-			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
+			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
 			
 			// 全可視コンテンツの配置を再計算.
 			store.for_each_metadata(function (i, metaData) {
@@ -1055,8 +1056,8 @@
 		}
 		
 		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
-			content_property.init(id, null, "", "whole_window", mime);
-			content_property.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
+			gui.init_content_property(id, null, "", "whole_window", mime);
+			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem() && metaData) {
 				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
 			}
@@ -1105,24 +1106,24 @@
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (Validator.isWindowType(metaData)) {
-				content_property.init(id, null, "", Constants.PropertyTypeMultiDisplay, mime);
+				gui.init_content_property(id, null, "", Constants.PropertyTypeMultiDisplay, mime);
 			} else {
-				content_property.init(id, null,"", Constants.PropertyTypeMultiContent, mime);
+				gui.init_content_property(id, null,"", Constants.PropertyTypeMultiContent, mime);
 			}
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (Validator.isWindowType(metaData)) {
-				content_property.init(id, null,"", Constants.DisplayTabType, mime);
-				content_property.assign_content_property(metaData);
+				gui.init_content_property(id, null,"", Constants.DisplayTabType, mime);
+				gui.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
 				if (store.has_group(metaData.group)) {
-					content_property.init(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime);
+					gui.init_content_property(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime);
 				} else {
 					console.warn("not found group", metaData)
-					content_property.init(id, null, "", metaData.type, mime);
+					gui.init_content_property(id, null, "", metaData.type, mime);
 				}
-				content_property.assign_content_property(metaData);
+				gui.assign_content_property(metaData);
 				gui.set_update_content_id(id);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
 			}
@@ -1170,7 +1171,7 @@
 				}
 			}
 		}
-		content_property.clear(updateText);
+		gui.clear_content_property(updateText);
 		state.get_selected_id_list().splice(state.get_selected_id_list().indexOf(id), 1);
 		manipulator.removeManipulator();
 	}
@@ -1186,15 +1187,15 @@
 	/**
 	 * クローズボタンハンドル。選択されているcontent or windowを削除する。
 	 * その後クローズされた結果をupdateMetaDataにて各Windowに通知する。
-	 * @method on_close_content
+	 * @method onCloseContent
 	 */
-	Controller.prototype.on_close_content = function () {
+	Controller.prototype.onCloseContent = function () {
 		var id = state.get_selected_id(),
 			metaData = null,
 			elem,
 			previewArea;
 		
-		console.log("on_close_content");
+		console.log("onCloseContent");
 		if (store.has_metadata(id)) {
 			this.unselect(id);
 			elem = this.getElem(id, false);
@@ -1407,7 +1408,7 @@
 		
 		if (Validator.isCurrentTabMetaData(json)) {
 			if (state.get_last_select_content_id() === json.id || (manipulator.isShowManipulator() && state.get_last_select_content_id() === json.id)) {
-				content_property.assign_content_property(json);
+				gui.assign_content_property(json);
 			}
 		}
 
@@ -1481,7 +1482,7 @@
 			json = reply[0];
 			store.set_metadata(json.id, json);
 			if (Validator.isCurrentTabMetaData(json)) {
-				content_property.assign_content_property(json);
+				gui.assign_content_property(json);
 			}
 		}
 	
@@ -1656,7 +1657,7 @@
 		gui.change_window_border_color(windowData);
 		if (Validator.isCurrentTabMetaData(reply)) {
 			if (state.get_last_select_window_id() === windowData.id || (manipulator.getDraggingManip() && state.get_last_select_window_id() === windowData.id)) {
-				content_property.assign_content_property(windowData);
+				gui.assign_content_property(windowData);
 			}
 		}
 	};
@@ -1809,7 +1810,7 @@
 			this.updateScreen();
 		} else {
 			// running first time
-			content_property.update_display_value();
+			gui.update_display_property();
 			this.update_window_data();
 		}
 	};
@@ -1834,15 +1835,15 @@
 		connector.send('Logout', data, function () {
 			window.location.reload(true);
 		});
-	})
+	});
 
 	window.onload = login.login;
 	window.onunload = function () {
-		window.content_property.clear(true);
+		gui.clear_content_property(true);
 		store.release();
 	};
 	window.onblur = function () {
-		window.content_property.clear(true);
+		gui.clear_content_property(true);
 		state.set_ctrl_down(false);
 	};
 	connector.connect(function () {
@@ -1865,4 +1866,4 @@
 		}
 	});
 	
-}(window.content_property, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));

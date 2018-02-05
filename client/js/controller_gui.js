@@ -1676,6 +1676,23 @@
 		document.getElementById('context_menu_display').style.display = "none";
 	};
 
+	// content_property
+	ControllerGUI.prototype.clear_content_property = function (updateText) {
+		content_property.clear(updateText);
+	};
+	ControllerGUI.prototype.assign_content_property = function (json) {
+		content_property.assign_content_property(json);
+	};
+	ControllerGUI.prototype.assign_display_property = function (whole, splitCount) {
+		content_property.assign_virtual_display(whole, splitCount);	
+	};
+	content_property.update_display_property = function () {
+		content_property.update_display_value();
+	};
+	ControllerGUI.prototype.init_content_property = function (id, groupID, group, type, mime) {
+		content_property.init(id, groupID, group, type, mime);
+	};
+
 	// イベント
 	ControllerGUI.EVENT_MOUSEDOWN_CONTENT_PREVIEW_AREA = "mousedown_content_preview_area";
 	ControllerGUI.EVENT_MOUSEDOWN_DISPLAY_PREVIEW_AREA = "mousedown_display_preview_area";
