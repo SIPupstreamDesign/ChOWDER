@@ -41,6 +41,10 @@
 			stop_button.style.display = "none";
 			start_button.style.display = "inline";
 		});
+
+		if (location.hostname.length === 32) {
+			document.getElementById('extensionid_input').value = location.hostname;
+		}
 	};
 
 }());

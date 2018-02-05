@@ -661,6 +661,7 @@
 			add_text_button = document.getElementById('context_menu_add_text'),
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
 			add_url_button = document.getElementById('context_menu_add_url'),
+			add_screenshare_button = document.getElementById('context_menu_add_screenshare'),
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
 			change_image_button = document.getElementById('context_menu_change_image'),
@@ -701,6 +702,10 @@
 		add_url_button.onmousedown = function (evt) {
 			this.toggleURLInput();
 			menu.style.display = "none";
+		}.bind(this);
+
+		add_screenshare_button.onmousedown = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null, evt); 
 		}.bind(this);
 
 		add_text_button.onmousedown = function (evt) {
