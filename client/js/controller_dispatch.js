@@ -298,7 +298,7 @@
 				name: "ExtensionIDを入力してください",
 				okButtonName: "OK"
 			}, function (extensionID) {
-				var request = { sources: ['screen', 'window', 'tab'] };
+				var request = { sources: ['screen', 'window', 'tab', 'audio'] };
 				chrome.runtime.sendMessage(extensionID, request, function (response) {
 					if (response && response.type === 'success') {
 						navigator.getUserMedia({
@@ -307,7 +307,13 @@
 									chromeMediaSource: 'desktop',
 									chromeMediaSourceId: response.streamId,
 								}
-							}
+							},
+							audio: {
+								mandatory: {
+									chromeMediaSource: 'desktop',
+									chromeMediaSourceId: response.streamId,
+								}
+							},
 						}, function (stream) {
 							controller.send_movie(stream, {
 								group: gui.get_current_group_id(),

@@ -561,12 +561,19 @@
 					webRTCDict[metaData.id] = webRTC;
 
 					webRTC.on('addstream', function (evt) {
+						// console.error("WebRTC: on addstream")
 						var stream = evt.stream;
 						elem.src = URL.createObjectURL(stream);
 						elem.play();
+
+						var ctx = new AudioContext();
+						var source = ctx.createMediaStreamSource(stream);
+						source.connect(ctx.destination);
 					});
 					webRTC.answer(sdp, function (answer) {
+						// console.error("WebRTC: send answer")
 						connector.sendBinary('RTCAnswer', metaData, JSON.stringify(answer), function () {});
+						//connector.sendBinary('RTCAnswer', metaData, JSON.stringify(answer), function () {});
 					});
 					elem.setAttribute("controls", "");
 					elem.setAttribute('autoplay', '')
@@ -1225,8 +1232,10 @@
 				return;
 			}
 			// console.error("WebRTC: on RTCIceCandidate", ice)
-			for (var i = 0; i < ice.candidates.length; ++i) {
-				webRTCDict[data.metaData.id].addIceCandidate(ice.candidates[i]);
+			if (webRTCDict[data.metaData.id]) {
+				for (var i = 0; i < ice.candidates.length; ++i) {
+					webRTCDict[data.metaData.id].addIceCandidate(ice.candidates[i]);
+				}
 			}
 		});
 

@@ -921,11 +921,6 @@
 			var webRTC = new WebRTC(video);
 			this.webRTC[metaData.id] = webRTC;
 	
-			webRTC.on('icecandidate', function () {
-				var candidates = webRTC.getIceCandidates();
-				connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({ candidates: candidates }), function (err, reply) {
-				});
-			});
 
 			var stream = video.captureStream();
 			webRTC.addStream(stream);
@@ -939,6 +934,13 @@
 					//console.error("reply", reply);
 				}.bind(this));
 			}.bind(this));
+			
+			webRTC.on('icecandidate', function () {
+				var candidates = webRTC.getIceCandidates();
+				if (candidates.length > 0) {
+					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({ candidates: candidates }), function (err, reply) {});
+				}
+			});
 		 }.bind(this), false);
 	};
 	

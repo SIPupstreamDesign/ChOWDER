@@ -4,8 +4,8 @@
 		const video = document.getElementById('screen-view');
 		const start_button = document.getElementById('start_button');
 		const stop_button = document.getElementById('stop_button');
-		const request = { sources: ['screen', 'window', 'tab'] };
-		
+		const request = { sources: ['screen', 'window', 'tab', 'audio'] };
+
 		let stream;
 		start_button.addEventListener('click', function (evt) {
 			const EXTENSION_ID = document.getElementById('extensionid_input').value;
@@ -18,7 +18,13 @@
 								chromeMediaSource: 'desktop',
 								chromeMediaSourceId: response.streamId,
 							}
-						}
+						},
+						audio: {
+							mandatory: {
+								chromeMediaSource: 'desktop',
+								chromeMediaSourceId: streamId
+							}
+						},
 					}).then(returnedStream => {
 						stream = returnedStream;
 						video.src = URL.createObjectURL(stream);
