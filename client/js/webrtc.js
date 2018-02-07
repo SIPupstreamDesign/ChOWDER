@@ -1,91 +1,146 @@
 (function () {
 	"use strict";
+	
+    navigator.getUserMedia = navigator.getUserMedia || 
+                             navigator.webkitGetUserMedia || 
+                             navigator.mozGetUserMedia;
+    window.RTCPeerConnection = window.RTCPeerConnection ||
+                               window.webkitRTCPeerConnection ||
+                               window.mozRTCPeerConnection;
+    window.RTCSessionDescription = window.RTCSessionDescription ||
+                                   window.mozRTCSessionDescription;
+    window.RTCIceCandidate = window.RTCIceCandidate || 
+							 window.mozRTCIceCandidate;
+							 
+
+	function printError(e) {
+		if (e) {
+			console.error(e);
+		}
+	}
+
+	function printDebug(a, b, c) {
+		//console.error("WebRTC:", a ? a : "", b ? b : "", c ? c : "")
+	}
 
 	var MediaOptions = { 
 		'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true }
 	};
 
-	var WebRTC = function () {
-		this.onAddStream = this.onAddStream.bind(this);
-		this.onRemoveStream = this.onRemoveStream.bind(this);
-		this.onIceCandidate = this.onIceCandidate.bind(this);
+	var WebRTC = function (videoElem) {
+		EventEmitter.call(this);
+		this.peer = this.prepareNewConnection();
+		this.candidates = [];
+		this.video = videoElem;
 	}
+	WebRTC.prototype = Object.create(EventEmitter.prototype);
 
 	WebRTC.prototype.prepareNewConnection = function () {
-		console.log("prepareNewConnection")
+		printDebug("prepareNewConnection")
 		var pc_config = { "iceServers": [] };
 		this.peer = null;
 		try {
-			this.peer = new webkitRTCPeerConnection(pc_config);
+			this.peer = new RTCPeerConnection(null);
 		} catch (e) {
-			console.log("Failed to create peerConnection, exception: " + e.message);
+			printDebug("Failed to create peerConnection, exception: " + e.message);
 			return;
 		}
-		this.peer.addEventListener('icecandidate', this.onIceCandidate);
-		this.peer.addEventListener("addstream", this.onAddStream);
-		this.peer.addEventListener("removestream", this.onRemoveStream);
+		this.peer.onicecandidate = function (evt) {
+			printDebug("icecandidate", evt);
+			if (evt.candidate) {
+				this.candidates.push(evt.candidate);
+			}
+			this.emit(WebRTC.EVENT_ICECANDIDATE, evt)
+		}.bind(this);
+
+		this.peer.onnegotiationneeded = function (evt) {
+			printDebug("onnegotiationneeded", evt);
+			//this.offer();
+		}.bind(this);
+		
+		if ('ontrack' in this.peer) {
+			this.peer.addEventListener('track', function (evt) {
+				printDebug("Added remote stream", evt);
+				this.emit(WebRTC.EVENT_ADD_STREAM, evt)
+			}.bind(this));
+			this.peer.addEventListener("removetrack", function (evt) {
+				printDebug("Removed remote stream", evt);
+				this.emit(WebRTC.EVENT_REMOVE_STREAM, evt)
+			}.bind(this));
+		} else {
+			this.peer.addEventListener("addstream", function (evt) {
+				printDebug("Added remote stream", evt);
+				this.emit(WebRTC.EVENT_ADD_STREAM, evt)
+			}.bind(this));
+			this.peer.addEventListener("removestream", function (evt) {
+				printDebug("Removed remote stream", evt);
+				this.emit(WebRTC.EVENT_REMOVE_STREAM, evt)
+			}.bind(this));
+		}
 		return this.peer;
-	}
+	};
 
 	WebRTC.prototype.addStream = function (stream) {
-		console.log('Adding local stream...');
+		printDebug('Adding local stream...', stream);
 		this.peer.addStream(stream);
-	}
+	};
 
 	WebRTC.prototype.offer = function (callback) {
-		var peer = this.prepareNewConnection();
-		peer.createOffer(
+		printDebug('offer');
+		this.peer.createOffer(
 			function (sdp) {
 				// 成功
-				console.log("setLocalDescription")
-				peer.setLocalDescription(sdp); // 自分で覚える
+				//printDebug("setLocalDescription", JSON.stringify(sdp))
+				this.peer.setLocalDescription(sdp); // 自分で覚える
 				callback(sdp); // コールバックで返す
 			}.bind(this),
 			function () {
-				console.log("Create Offer failed");
+				printDebug("Create Offer failed");
 			},
 			MediaOptions);
 	}
 
-	WebRTC.prototype.sendSDP = function (sdp) {
-		var text = JSON.stringify(sdp);
-		console.log("---sending sdp text ---");
-		//console.log(text);
-		//textForSendSDP.value = text;
-	}
+    WebRTC.prototype.answer = function(sdp, callback) {
+		printDebug("WebRTC answer", sdp)
+		this.peer.setRemoteDescription(new RTCSessionDescription(sdp), 
+			function () {
+				this.peer.createAnswer(function (answer) {
+					this.peer.setLocalDescription(answer, function () {
+						callback(answer);
+					}, printError);
+				}.bind(this), printError);
+			}.bind(this), 
+			printError,
+			MediaOptions);
+	};
+	
+    WebRTC.prototype.setAnswer = function(sdp, callback) {
+		printDebug("setAnswer", sdp)
+        this.peer.setRemoteDescription(new RTCSessionDescription(sdp));/*, callback, function (e) {
+			printDebug('setAnswer ERROR: ');
+			printError(e)
+			callback(e);
+		});*/
+    };
 
-	WebRTC.prototype.sendCandidate = function (candidate) {
-		var text = JSON.stringify(candidate);
-		console.log("---sending candidate text ---");
-		console.log(text);
-		//textForSendICE.value = (textForSendICE.value + CR + iceSeparator + CR + text + CR);
-		//textForSendICE.scrollTop = textForSendICE.scrollHeight;
-	}
+	WebRTC.prototype.getIceCandidates = function () {
+		return this.candidates;
+	};
 
-	WebRTC.prototype.onIceCandidate = function (evt) {
-			console.log("onIceCandidate")
-			if (evt.candidate) {
-				console.log(evt.candidate);
-				this.sendCandidate({
-					type: "candidate",
-					sdpMLineIndex: evt.candidate.sdpMLineIndex,
-					sdpMid: evt.candidate.sdpMid,
-					candidate: evt.candidate.candidate
-				});
-			} else {
-				console.log("End of candidates. ------------------- phase=" + evt.eventPhase);
-			}
-		}
+	WebRTC.prototype.addIceCandidate = function (iceCandidate) {
+		var candidate = new RTCIceCandidate(iceCandidate);
+		printDebug("Received Candidate...", candidate)
+		this.peer.addIceCandidate(candidate);
+	};
 
-	WebRTC.prototype.onAddStream = function () {
-		console.log("Added remote stream");
-		//remoteVideo.src = window.webkitURL.createObjectURL(event.stream);
-	}
+	WebRTC.prototype.getVideoElem = function () {
+		return this.video;
+	};
 
-	WebRTC.prototype.onRemoveStream = function () {
-		console.log("Remove remote stream");
-		//remoteVideo.src = "";
-	}
+	WebRTC.EVENT_ADD_STREAM = "addstream";
+	WebRTC.EVENT_REMOVE_STREAM = "removestream";
+	WebRTC.EVENT_ICECANDIDATE = "icecandidate";
+	WebRTC.EVENT_NEGOTIATION_NEEDED = "negotiationneeded";
 
 	window.WebRTC = WebRTC;
 

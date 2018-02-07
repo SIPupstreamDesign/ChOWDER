@@ -13,6 +13,7 @@
 	Validator.init(gui);
 
 	var Controller = function () {
+		this.webRTC = {};
 		this.isInitialUpdate = true;
 		this.setupContent = this.setupContent.bind(this);
 		this.setupWindow = this.setupWindow.bind(this);
@@ -842,8 +843,8 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	Controller.prototype.import_content = function (metaData, contentData) {
-		gui.import_content(store.get_metadata_dict(), metaData, contentData, store.get_group_dict());
+	Controller.prototype.import_content = function (metaData, contentData, video) {
+		gui.import_content(store.get_metadata_dict(), metaData, contentData, store.get_group_dict(), video);
 	};
 
 	/**
@@ -915,16 +916,30 @@
 		store.set_video_data(metaData.id, videoData);
 		var video = document.createElement('video');
 		video.src = videoData;
-		var stream = video.captureStream();
-		var webRTC = new WebRTC();
-		webRTC.offer(function (sdp) {
+		video.load();
+		video.addEventListener('loadeddata', function() {
+			var webRTC = new WebRTC(video);
+			this.webRTC[metaData.id] = webRTC;
+	
+			webRTC.on('icecandidate', function () {
+				var candidates = webRTC.getIceCandidates();
+				connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({ candidates: candidates }), function (err, reply) {
+				});
+			});
+
+			var stream = video.captureStream();
 			webRTC.addStream(stream);
-			metaData.type = "video";
-			metaData.width = 1920;
-			metaData.height = 1080;
-			metaData.group = gui.get_current_group_id();
-			this.add_content(metaData, sdp);
-		}.bind(this));
+
+			webRTC.offer(function (sdp) {
+				metaData.type = "video";
+				metaData.width = 1920;
+				metaData.height = 1080;
+				metaData.group = gui.get_current_group_id();
+				this.add_content(metaData, JSON.stringify(sdp), function (err, reply) {
+					//console.error("reply", reply);
+				}.bind(this));
+			}.bind(this));
+		 }.bind(this), false);
 	};
 	
 	/**
@@ -1263,11 +1278,16 @@
 	 * @param {JSON} metaData コンテンツのメタデータ
 	 * @param {BLOB} binary コンテンツのバイナリデータ
 	 */
-	Controller.prototype.add_content = function (metaData, binary) {
+	Controller.prototype.add_content = function (metaData, binary, endCallback) {
 		if (!metaData.hasOwnProperty("zIndex")) {
 			metaData.zIndex = store.get_zindex(metaData, true);
 		}
-		connector.sendBinary('AddContent', metaData, binary, this.doneAddContent);
+		connector.sendBinary('AddContent', metaData, binary, function (err, reply) {
+			this.doneAddContent(err, reply);
+			if (endCallback) {
+				endCallback(err, reply);
+			}
+		}.bind(this));
 	}
 	
 	/**
@@ -1435,10 +1455,14 @@
 			}
 			console.log("新規コンテンツロード", json);
 			if (json.type === "video") {
+				var webRTC;
+				if (this.webRTC && this.webRTC.hasOwnProperty(json.id)) {
+					webRTC = this.webRTC[json.id];
+				}
 				if (store.has_video_data(json.id)) {
-					this.import_content(json, store.get_video_data(json.id));
+					this.import_content(json, store.get_video_data(json.id), webRTC.getVideoElem());
 				} else {
-					this.import_content(json, "ローカルに保持していない動画コンテンツ");
+					this.import_content(json, "ローカルに保持していない動画コンテンツ", document.createElement('video'));
 				}
 			} else {
 				connector.send('GetContent', request, function (err, data) {

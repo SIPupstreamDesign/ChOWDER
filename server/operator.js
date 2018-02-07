@@ -3291,6 +3291,20 @@
 		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
+		ws_connector.on(Command.RTCAnswer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCAnswer, data);
+			io_connector.broadcast(io, Command.RTCAnswer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
 
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
@@ -3443,7 +3457,21 @@
 		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
-
+		io_connector.on(Command.RTCAnswer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCAnswer, data);
+			io_connector.broadcast(io, Command.RTCAnswer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		
 		io_connector.registerEvent(io, socket);
 	}
 	

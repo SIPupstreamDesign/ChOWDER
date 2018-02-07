@@ -6,28 +6,6 @@
 	
 	var metabinary = {};
 	
-	/**
-	 * arrayBufferをStringに変換して返す
-	 * @method arrayBufferToString
-	 * @param {ArrayBuffer} arraybuf arrayBuffer
-	 * @return URLデコードした文字列
-	 */
-	function arrayBufferToString(arraybuf) {
-		var chars = new Uint8Array(arraybuf),
-			encodedString = "",
-			decodedString = "",
-			i;
-		for (i = 0; i < chars.length; i = i + 1) {
-			encodedString = encodedString + String.fromCharCode(chars[i]);
-		}
-		try {
-			decodedString = decodeURIComponent(escape(encodedString));
-		} catch (e) {
-			decodedString = decodeURIComponent(encodedString);
-		}
-		return decodedString;
-	}
-	
 	//
 	// String To ArrayBuffer funciton
 	//
@@ -99,7 +77,7 @@
 			
 			if (!buf) { return; }
 			if (buf.byteLength < headstr.length) { return; }
-			head = arrayBufferToString(buf.slice(pos, pos + headstr.length));
+			head = StringUtil.arrayBufferToString(buf.slice(pos, pos + headstr.length));
 			pos = pos + headstr.length;
 			if (head !== 'MetaBin:') { return; }
 			
@@ -112,7 +90,7 @@
 			pos = pos + 4;
 			
 			if (buf.byteLength < pos + metasize) { return; }
-			metaData = arrayBufferToString(buf.slice(pos, pos + metasize));
+			metaData = StringUtil.arrayBufferToString(buf.slice(pos, pos + metasize));
 			metaData = JSON.parse(metaData);
 			pos = pos + metasize;
 			
@@ -124,7 +102,7 @@
 			
 			binary = buf.slice(pos, buf.byteLength);
 			if (params !== null && (params.type === 'text' || params.type === "layout" ||  params.type === "video")) {
-				binary = arrayBufferToString(binary);
+				binary = StringUtil.arrayBufferToString(binary);
 			}
 			endCallback(metaData, binary);
 		});
@@ -150,7 +128,7 @@
 			pos = 0,
 			i,
 			c,
-			chars = new Uint8Array(utf8StringToArray(metaDataStr)),
+			chars = new Uint8Array(StringUtil.utf8StringToArray(metaDataStr)),
 			params;
 		
 		if (metaData.hasOwnProperty('params')) {
@@ -160,10 +138,10 @@
 		}
 		
 		if (params.type === 'url') {
-			binary = utf8StringToArray(encodeURI(data));
+			binary = StringUtil.utf8StringToArray(encodeURI(data));
 			dstBufferSize = head.length + 8 + chars.length + binary.length;
 		} else if (params.type === 'text' || params.type === 'layout' || params.type === "video") {
-			binary = utf8StringToArray(data);
+			binary = StringUtil.utf8StringToArray(data);
 			dstBufferSize = head.length + 8 + chars.length + binary.length;
 		} else {
 			binary = data;

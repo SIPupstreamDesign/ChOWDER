@@ -1265,7 +1265,27 @@
 				}
 			});
 		});
-		
+
+		// WebRTCのAnswerが返ってきた
+		connector.on("RTCAnswer", function (data) {
+			var answer = null;
+			try {
+				var sdpStr = StringUtil.arrayBufferToString(data.contentData.data);
+				answer = JSON.parse(sdpStr);
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			if (controller.webRTC) {
+				controller.webRTC[data.metaData.id].setAnswer(answer, function (e) {
+					if (!e) {
+						// TODO
+						//connector.send('RTCIceCandidate')
+					}
+				});
+			}
+		});
+
 		// プロパティの座標変更
 		content_property.on("rect_changed", function (err, id, value) {
 			console.log('on_rect_changed');

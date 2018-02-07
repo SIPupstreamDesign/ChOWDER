@@ -1474,7 +1474,7 @@
 		} else if (this.tabs.is_active(Constants.TabIDLayout) && this.layoutBox) {
 			return this.layoutBox.get_current_group_id();
 		}
-		return null;
+		return Constants.DefaultGroup;
 	};
 	ControllerGUI.prototype.select_group = function (group_id) {
 		this.groupBox.select_tab(group_id);
@@ -1640,10 +1640,10 @@
 	};
 
 	// コンテンツのインポート
-	ControllerGUI.prototype.import_content = function (metadataDict, metaData, contentData, groupDict) {
+	ControllerGUI.prototype.import_content = function (metadataDict, metaData, contentData, groupDict, videoElem) {
 		window.layout_list.import_content(this, metadataDict, metaData, contentData, groupDict);
 		window.content_list.import_content(this, metadataDict, metaData, contentData, groupDict);
-		window.content_view.import_content(this, metadataDict, metaData, contentData, groupDict);
+		window.content_view.import_content(this, metadataDict, metaData, contentData, groupDict, videoElem);
 	}
 
 	// other

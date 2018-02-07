@@ -151,7 +151,7 @@
 				elem.style.display = "block";
 				if (!Validator.isWindowType(metaData)) {
 					if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
-						if (metaData.group === "default") {
+						if (metaData.group === Constants.DefaultGroup) {
 							elem.style.borderColor = "rgb(54,187,68)";
 						} else {
 							elem.style.borderColor = groupDict[metaData.group].color;

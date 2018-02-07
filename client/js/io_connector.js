@@ -34,9 +34,13 @@
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				resultCallbacks[metaData.id](null, metaData.result);
 			} else {
-				console.error('[Error] ArgumentError in connector.js', metaData);
-				if (metaData.hasOwnProperty('id')) {
-					resultCallbacks[metaData.id]('ArgumentError', null);
+				if (metaData.hasOwnProperty('id') && resultCallbacks.hasOwnProperty(metaData.id)) {
+					resultCallbacks[metaData.id](null);
+				} else {
+					console.error('[Error] ArgumentError in connector.js', metaData);
+					if (metaData.hasOwnProperty('id')) {
+						resultCallbacks[metaData.id]('ArgumentError', null);
+					}
 				}
 			}
 		}
@@ -140,7 +144,7 @@
 		
 		messageID = messageID + 1;
 		try {
-			console.log(data, binary);
+			//console.log(data, binary);
 			metabin = metabinary.createMetaBinary(data, binary);
 			console.log(metabin);
 			//data = JSON.stringify(reqjson);

@@ -49,7 +49,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	ContentView.prototype.import_content = function (gui, metaDataDict, metaData, contentData, groupDict) {
+	ContentView.prototype.import_content = function (gui, metaDataDict, metaData, contentData, groupDict, videoElem) {
 		var previewArea = gui.get_content_preview_area(),
 			id,
 			contentElem,
@@ -75,13 +75,19 @@
 			contentElem = document.getElementById(metaData.id);
 		}
 		
-		if (!contentElem) {
+		if (!contentElem && !videoElem) {
 			contentElem = document.createElement(tagName);
 			contentElem.id = metaData.id;
 			contentElem.style.position = "absolute";
 
 			this.emit(ContentView.EVENT_SETUP_CONTENT, null, contentElem, metaData.id);
 			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, contentElem);
+		}
+		if (videoElem) {
+			videoElem.id = metaData.id;
+			videoElem.style.position = "absolute";
+			this.emit(ContentView.EVENT_SETUP_CONTENT, null, videoElem, metaData.id);
+			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, videoElem);
 		}
 
 		console.log("id=" + metaData.id);
@@ -93,10 +99,10 @@
 				contentElem.style.overflow = "visible"; // Show all text
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			} else if (metaData.type === 'video') {
-				contentElem.src = contentData;
-				contentElem.setAttribute("controls", "");
-				contentElem.style.color = "white";
-				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+				//contentElem.src = contentData;
+				videoElem.setAttribute("controls", "");
+				videoElem.style.color = "white";
+				vscreen_util.assignMetaData(videoElem, metaData, true, groupDict);
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {

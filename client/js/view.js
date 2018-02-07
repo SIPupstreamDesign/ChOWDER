@@ -15,7 +15,8 @@
 		doneGetContent,
 		doneGetMetaData,
 		authority = null,
-        controllers = {connectionCount: -1};
+		controllers = {connectionCount: -1},
+		webRTCDict = {};
 
 	function toggleFullScreen() {
 		if (!document.fullscreenElement &&    // alternative standard method
@@ -315,8 +316,10 @@
 	 */
 	function getTagName(contentType) {
 		var tagName;
-		if (contentType === 'text' || contentType === 'video') {
+		if (contentType === 'text') {
 			tagName = 'pre';
+		} else if (contentType === 'video') {
+			tagName = 'video'
 		} else {
 			tagName = 'img';
 		}
@@ -547,7 +550,27 @@
 				//previewArea.appendChild(elem);
 			}
 			if (metaData.type === 'video') {
-				console.error(contentData)
+				var sdp = null;
+				try {
+					sdp = JSON.parse(contentData);
+				} catch (e) {
+
+				}
+				if (sdp) {
+					var webRTC = new WebRTC();
+					webRTCDict[metaData.id] = webRTC;
+
+					webRTC.on('addstream', function (evt) {
+						var stream = evt.stream;
+						elem.src = URL.createObjectURL(stream);
+						elem.play();
+					});
+					webRTC.answer(sdp, function (answer) {
+						connector.sendBinary('RTCAnswer', metaData, JSON.stringify(answer), function () {});
+					});
+					elem.setAttribute("controls", "");
+					elem.setAttribute('autoplay', '')
+				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
 				elem.innerHTML = contentData;
@@ -967,12 +990,10 @@
 					if (!elem) {
 						createBoundingBox(json);
 						// 新規コンテンツロード.
-						if (json.type !== "video") {
-							connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
-								doneGetContent(err, reply);
-								toggleMark(document.getElementById(json.id), metaData);
-							});
-						}
+						connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
+							doneGetContent(err, reply);
+							toggleMark(document.getElementById(json.id), metaData);
+						});
 					}
 					elem = document.getElementById(json.id);
 					vscreen_util.assignMetaData(elem, json, false, groupDict);
@@ -1191,6 +1212,21 @@
 					}
 				}
 				update('', data[i].id);
+			}
+		});
+
+		connector.on("RTCIceCandidate", function (data) {
+			var ice = null;
+			try {
+				var iceStr = StringUtil.arrayBufferToString(data.contentData.data);
+				ice = JSON.parse(iceStr);
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			// console.error("WebRTC: on RTCIceCandidate", ice)
+			for (var i = 0; i < ice.candidates.length; ++i) {
+				webRTCDict[data.metaData.id].addIceCandidate(ice.candidates[i]);
 			}
 		});
 
