@@ -579,7 +579,7 @@
 				}
 			});
 			if (metaDataList.length > 0) {
-				controller.updateMetaDataMulti(metaDataList);
+				controller.update_metadata_multi(metaDataList);
 			}
 		});
 
