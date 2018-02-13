@@ -55,6 +55,8 @@
 		GetUserList :  "GetUserList",
 
 		// WebRTC
+		RTCRequest : "RTCRequest",
+		RTCOffer : "RTCOffer",
 		RTCAnswer : "RTCAnswer",
 		RTCIceCandidate : "RTCIceCandidate",
 	};

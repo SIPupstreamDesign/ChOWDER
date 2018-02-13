@@ -74,7 +74,7 @@
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](metaData.error, null);
 				}
-			} else if (metaData.id && contentData) {
+			} else if (metaData.id) {
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](null, data);
 				}

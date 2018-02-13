@@ -46,7 +46,7 @@
 			return;
 		}
 		this.peer.onicecandidate = function (evt) {
-			printDebug("icecandidate", evt);
+			printDebug("icecandidate", evt, this.peer);
 			if (evt.candidate) {
 				this.candidates.push(evt.candidate);
 			}
@@ -55,7 +55,7 @@
 
 		this.peer.onnegotiationneeded = function (evt) {
 			printDebug("onnegotiationneeded", evt);
-			//this.offer();
+			this.emit(WebRTC.EVENT_NEGOTIATION_NEEDED, evt);
 		}.bind(this);
 		
 		if ('ontrack' in this.peer) {

@@ -9,6 +9,7 @@
 		this.groupDict = {};
 		this.metaDataDict = {};
 		this.videoDict = {};
+		this.videoElemDict = {};
 	};
 	
 	// isInitialized
@@ -98,6 +99,17 @@
 	};
 	Store.prototype.has_video_data = function (id) {
 		return this.videoDict.hasOwnProperty(id);
+	};
+
+	// video elem
+	Store.prototype.set_video_elem = function (id, elem) {
+		this.videoElemDict[id] = elem;
+	};
+	Store.prototype.get_video_elem = function (id, elem) {
+		return this.videoElemDict[id];
+	};
+	Store.prototype.has_video_elem = function (id) {
+		return this.videoElemDict.hasOwnProperty(id);
 	};
 
 	// --------------------------

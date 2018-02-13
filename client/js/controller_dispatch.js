@@ -1272,18 +1272,40 @@
 			});
 		});
 
+		// WebRTC接続要求が来た
+		connector.on('RTCRequest', function (data) {
+			var metaData = data.metaData;
+			var key = null;
+			try {
+				keyStr = StringUtil.arrayBufferToString(data.contentData.data);
+				key = JSON.parse(keyStr).key;
+			}  catch (e) {
+				console.error(e);
+				return;
+			}
+			if (key) {
+				if (store.has_video_data(metaData.id)) {
+					controller.connect_webrtc(metaData, key);
+				}
+			}
+		});
+
 		// WebRTCのAnswerが返ってきた
 		connector.on("RTCAnswer", function (data) {
+			var parsed = null;
 			var answer = null;
+			var key = null;
 			try {
 				var sdpStr = StringUtil.arrayBufferToString(data.contentData.data);
-				answer = JSON.parse(sdpStr);
+				parsed = JSON.parse(sdpStr);
+				key = parsed.key;
+				answer = parsed.answer;
 			} catch (e) {
 				console.error(e);
 				return;
 			}
 			if (controller.webRTC) {
-				controller.webRTC[data.metaData.id].setAnswer(answer, function (e) {
+				controller.webRTC[key].setAnswer(answer, function (e) {
 					if (!e) {
 						// TODO
 						//connector.send('RTCIceCandidate')

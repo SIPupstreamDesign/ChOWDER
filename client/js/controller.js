@@ -913,35 +913,21 @@
 		// IDはクライアントで作成する
 		metaData.id = generateID();
 		var videoData = URL.createObjectURL(blob);
-		store.set_video_data(metaData.id, videoData);
 		var video = document.createElement('video');
+		store.set_video_data(metaData.id, videoData);
+		store.set_video_elem(metaData.id, video);
 		video.src = videoData;
 		video.load();
+		video.addEventListener( "loadedmetadata", function (e) {
+			metaData.type = "video";
+			metaData.width = Number(this.videoWidth);
+			metaData.height = Number(this.videoHeight);
+			metaData.group = gui.get_current_group_id();
+		});
 		video.addEventListener('loadeddata', function() {
-			var webRTC = new WebRTC(video);
-			this.webRTC[metaData.id] = webRTC;
-	
-
-			var stream = video.captureStream();
-			webRTC.addStream(stream);
-
-			webRTC.offer(function (sdp) {
-				metaData.type = "video";
-				metaData.width = 1920;
-				metaData.height = 1080;
-				metaData.group = gui.get_current_group_id();
-				this.add_content(metaData, JSON.stringify(sdp), function (err, reply) {
-					//console.error("reply", reply);
-				}.bind(this));
+			this.add_content(metaData, "", function (err, reply) {
 			}.bind(this));
-			
-			webRTC.on('icecandidate', function () {
-				var candidates = webRTC.getIceCandidates();
-				if (candidates.length > 0) {
-					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({ candidates: candidates }), function (err, reply) {});
-				}
-			});
-		 }.bind(this), false);
+		}.bind(this), false);
 	};
 	
 	/**
@@ -1395,6 +1381,44 @@
 			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
 		}
 	}
+
+	
+	/**
+	 * WebRTC接続開始
+	 * @method connect_webrtc
+	 */
+	Controller.prototype.connect_webrtc = function (metaData, keyStr) {
+		var video = store.get_video_elem(metaData.id);
+		var webRTC;
+		if (!this.webRTC.hasOwnProperty(keyStr)) {
+			webRTC = new WebRTC(video);
+			this.webRTC[keyStr] = webRTC;
+			var stream = video.captureStream();
+			webRTC.addStream(stream);
+		} else {
+			webRTC = this.webRTC[keyStr];
+		}
+
+		webRTC.offer(function (sdp) {
+			connector.sendBinary('RTCOffer', metaData, JSON.stringify(sdp), function (err, reply) {
+			}.bind(this));
+		}.bind(this));
+		
+		webRTC.on('icecandidate', function () {
+			var candidates = webRTC.getIceCandidates();
+			if (candidates.length > 0) {
+				console.error("icecandidate")
+				connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({ candidates: candidates }), function (err, reply) {});
+			}
+		});
+
+		webRTC.on('negotiationneeded', function () {
+			webRTC.offer(function (sdp) {
+				connector.sendBinary('RTCOffer', metaData, JSON.stringify(sdp), function (err, reply) {
+				}.bind(this));
+			}.bind(this));
+		}.bind(this));
+	}
 	
 	
 	///-------------------------------------------------------------------------------------------------------
@@ -1457,12 +1481,8 @@
 			}
 			console.log("新規コンテンツロード", json);
 			if (json.type === "video") {
-				var webRTC;
-				if (this.webRTC && this.webRTC.hasOwnProperty(json.id)) {
-					webRTC = this.webRTC[json.id];
-				}
 				if (store.has_video_data(json.id)) {
-					this.import_content(json, store.get_video_data(json.id), webRTC.getVideoElem());
+					this.import_content(json, store.get_video_data(json.id), store.get_video_elem(json.id));
 				} else {
 					this.import_content(json, "ローカルに保持していない動画コンテンツ", document.createElement('video'));
 				}
@@ -1485,7 +1505,15 @@
 		if (!store.is_initialized()) { return; }
 
 		if (!err) {
-			this.import_content(reply.metaData, reply.contentData);
+			if (reply.metaData.type === "video") {
+				if (store.has_video_data(reply.metaData.id)) {
+					this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
+				} else {
+					this.import_content(reply.metaData, "ローカルに保持していない動画コンテンツ", document.createElement('video'));
+				}
+			} else {
+				this.import_content(reply.metaData, reply.contentData);
+			}
 			if (endCallback) {
 				endCallback(null);
 			}

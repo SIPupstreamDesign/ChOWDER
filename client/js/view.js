@@ -550,33 +550,24 @@
 				//previewArea.appendChild(elem);
 			}
 			if (metaData.type === 'video') {
-				var sdp = null;
-				try {
-					sdp = JSON.parse(contentData);
-				} catch (e) {
-
-				}
-				if (sdp) {
-					var webRTC = new WebRTC();
-					webRTCDict[metaData.id] = webRTC;
-
-					webRTC.on('addstream', function (evt) {
-						// console.error("WebRTC: on addstream")
-						var stream = evt.stream;
-						elem.src = URL.createObjectURL(stream);
-						elem.play();
-
-						var ctx = new AudioContext();
-						var source = ctx.createMediaStreamSource(stream);
-						source.connect(ctx.destination);
+				elem.setAttribute("controls", "");
+				elem.setAttribute('autoplay', '')
+				elem.setAttribute('preload', "metadata")
+				
+				var rtcKey = metaData.id + "_" + windowData.id;
+				if (!webRTCDict.hasOwnProperty(rtcKey)) {
+					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
+						var webRTC = new WebRTC();
+						webRTCDict[rtcKey] = webRTC;
+						webRTC.on('addstream', function (evt) {
+							var stream = evt.stream ? evt.stream : evt.streams[0];
+							elem.src = URL.createObjectURL(stream);
+	
+							var ctx = new AudioContext();
+							var source = ctx.createMediaStreamSource(stream);
+							source.connect(ctx.destination);
+						})
 					});
-					webRTC.answer(sdp, function (answer) {
-						// console.error("WebRTC: send answer")
-						connector.sendBinary('RTCAnswer', metaData, JSON.stringify(answer), function () {});
-						//connector.sendBinary('RTCAnswer', metaData, JSON.stringify(answer), function () {});
-					});
-					elem.setAttribute("controls", "");
-					elem.setAttribute('autoplay', '')
 				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
@@ -1222,6 +1213,31 @@
 			}
 		});
 
+		connector.on("RTCOffer", function (data) {
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			if (!windowData) return;
+			var rtcKey = metaData.id + "_" + windowData.id;
+			var sdp = null;
+			try {
+				var sdpStr = StringUtil.arrayBufferToString(data.contentData.data);
+				sdp = JSON.parse(sdpStr);
+			} catch (e) {
+			}
+
+			if (sdp) {
+				if (webRTCDict.hasOwnProperty(rtcKey)) {
+					var webRTC = webRTCDict[rtcKey];
+					webRTC.answer(sdp, function (answer) {
+						connector.sendBinary('RTCAnswer', metaData, JSON.stringify({
+							key : rtcKey,
+							answer : answer
+						}), function () {});
+					});
+				}
+			}
+		});
+		
 		connector.on("RTCIceCandidate", function (data) {
 			var ice = null;
 			try {

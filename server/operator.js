@@ -3291,6 +3291,19 @@
 		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
+		ws_connector.on(Command.RTCOffer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCOffer, data);
+			io_connector.broadcast(io, Command.RTCOffer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		ws_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			io_connector.broadcast(io, Command.RTCRequest, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
 		ws_connector.on(Command.RTCAnswer, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCAnswer, data);
 			io_connector.broadcast(io, Command.RTCAnswer, data);
@@ -3456,6 +3469,19 @@
 		});
 		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
+		});
+		io_connector.on(Command.RTCOffer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCOffer, data);
+			io_connector.broadcast(io, Command.RTCOffer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		io_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			io_connector.broadcast(io, Command.RTCRequest, data);
+			if (resultCallback) {
+				resultCallback();
+			}
 		});
 		io_connector.on(Command.RTCAnswer, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCAnswer, data);
