@@ -27,11 +27,10 @@
 		'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true }
 	};
 
-	var WebRTC = function (videoElem) {
+	var WebRTC = function () {
 		EventEmitter.call(this);
 		this.peer = this.prepareNewConnection();
 		this.candidates = [];
-		this.video = videoElem;
 	}
 	WebRTC.prototype = Object.create(EventEmitter.prototype);
 
@@ -131,10 +130,6 @@
 		var candidate = new RTCIceCandidate(iceCandidate);
 		printDebug("Received Candidate...", candidate)
 		this.peer.addIceCandidate(candidate);
-	};
-
-	WebRTC.prototype.getVideoElem = function () {
-		return this.video;
 	};
 
 	WebRTC.EVENT_ADD_STREAM = "addstream";

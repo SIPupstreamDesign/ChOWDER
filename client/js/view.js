@@ -11,6 +11,7 @@
 		metaDataDict = {},
 		groupDict = {},
 		doneAddWindowMetaData,
+		doneUpdateWindowMetaData,
 		doneGetWindowMetaData,
 		doneGetContent,
 		doneGetMetaData,
@@ -233,7 +234,7 @@
 		metaData.orgHeight = wh.height;
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 
-		connector.send('UpdateWindowMetaData', [windowData], doneAddWindowMetaData);
+		connector.send('UpdateWindowMetaData', [windowData], doneUpdateWindowMetaData);
 	}
 
 	function updateGroupDict(groupList) {
@@ -541,6 +542,7 @@
 			}
 
 			if (!elem) {
+				console.error("new element")
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
 				elem.style.position = "absolute";
@@ -550,11 +552,10 @@
 				//previewArea.appendChild(elem);
 			}
 			if (metaData.type === 'video') {
+				var rtcKey = metaData.id + "_" + windowData.id;
 				elem.setAttribute("controls", "");
 				elem.setAttribute('autoplay', '')
 				elem.setAttribute('preload', "metadata")
-				
-				var rtcKey = metaData.id + "_" + windowData.id;
 				if (!webRTCDict.hasOwnProperty(rtcKey)) {
 					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
 						var webRTC = new WebRTC();
@@ -567,6 +568,9 @@
 							var source = ctx.createMediaStreamSource(stream);
 							source.connect(ctx.destination);
 						})
+					});
+				} else {
+					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
 					});
 				}
 			} else if (metaData.type === 'text') {
@@ -802,6 +806,23 @@
 			}
 		}
 		update('all');
+	};
+
+	doneUpdateWindowMetaData = function (err, json) {
+		console.log("doneUpdateWindowMetaData", json);
+		var i;
+		if (!err) {
+			for (i = 0; i < json.length; i = i + 1) {
+				metaDataDict[json[i].id] = json[i];
+				windowData = json[i];
+				saveCookie();
+				window.parent.document.title = "Display ID:" + json[i].id;
+				document.getElementById('input_id').value = json[i].id;
+				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
+				updatePreviewAreaVisible(windowData);
+				resizeViewport(windowData);
+			}
+		}
 	};
 
 	/**
