@@ -1393,29 +1393,43 @@
 		if (!this.webRTC.hasOwnProperty(keyStr)) {
 			webRTC = new WebRTC(video);
 			this.webRTC[keyStr] = webRTC;
-			var stream = video.captureStream();
+
+			var stream = null;
+			if (store.has_video_stream(metaData.id)) {
+				stream = store.get_video_stream(metaData.id);
+			} else {
+				stream = video.captureStream();
+				store.set_video_stream(metaData.id, stream);
+			}
 			webRTC.addStream(stream);
 		} else {
 			webRTC = this.webRTC[keyStr];
 		}
 
 		webRTC.offer(function (sdp) {
-			connector.sendBinary('RTCOffer', metaData, JSON.stringify(sdp), function (err, reply) {
-			}.bind(this));
-		}.bind(this));
+			connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+				key : keyStr,
+				sdp : sdp
+			}), function (err, reply) {});
+		});
 		
 		webRTC.on('icecandidate', function () {
 			var candidates = webRTC.getIceCandidates();
 			if (candidates.length > 0) {
-				console.error("icecandidate")
-				connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({ candidates: candidates }), function (err, reply) {});
+				connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+					key : keyStr,
+					candidates: candidates
+				}), function (err, reply) {});
 			}
 		});
 
 		webRTC.on('negotiationneeded', function () {
+			console.error("negotiationneeded")
 			webRTC.offer(function (sdp) {
-				connector.sendBinary('RTCOffer', metaData, JSON.stringify(sdp), function (err, reply) {
-				}.bind(this));
+				connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					key : keyStr,
+					sdp : sdp
+				}), function (err, reply) {});
 			}.bind(this));
 		}.bind(this));
 	}

@@ -542,7 +542,6 @@
 			}
 
 			if (!elem) {
-				console.error("new element")
 				elem = document.createElement(tagName);
 				elem.id = metaData.id;
 				elem.style.position = "absolute";
@@ -570,8 +569,8 @@
 						})
 					});
 				} else {
-					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
-					});
+					//connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
+					//});
 				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
@@ -1235,24 +1234,31 @@
 		});
 
 		connector.on("RTCOffer", function (data) {
+			//console.error("RTCOffer")
+			if (!windowData) return;
 			var metaData = data.metaData;
 			var contentData = data.contentData;
-			if (!windowData) return;
-			var rtcKey = metaData.id + "_" + windowData.id;
+			var parsed = null;
 			var sdp = null;
+			var rtcKey = null;
 			try {
-				var sdpStr = StringUtil.arrayBufferToString(data.contentData.data);
-				sdp = JSON.parse(sdpStr);
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				rtcKey = parsed.key;
+				sdp = parsed.sdp;
 			} catch (e) {
+				console.error(e);
+				return;
 			}
 
 			if (sdp) {
 				if (webRTCDict.hasOwnProperty(rtcKey)) {
 					var webRTC = webRTCDict[rtcKey];
 					webRTC.answer(sdp, function (answer) {
+						//console.error("WebRTC: send answer")
 						connector.sendBinary('RTCAnswer', metaData, JSON.stringify({
 							key : rtcKey,
-							answer : answer
+							sdp : answer
 						}), function () {});
 					});
 				}
@@ -1260,18 +1266,25 @@
 		});
 		
 		connector.on("RTCIceCandidate", function (data) {
-			var ice = null;
+			console.error("RTCOffer")
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			var parsed = null;
+			var candidates = null;
+			var rtcKey = null;
 			try {
-				var iceStr = StringUtil.arrayBufferToString(data.contentData.data);
-				ice = JSON.parse(iceStr);
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				rtcKey = parsed.key;
+				candidates = parsed.candidates;
 			} catch (e) {
 				console.error(e);
 				return;
 			}
 			// console.error("WebRTC: on RTCIceCandidate", ice)
-			if (webRTCDict[data.metaData.id]) {
-				for (var i = 0; i < ice.candidates.length; ++i) {
-					webRTCDict[data.metaData.id].addIceCandidate(ice.candidates[i]);
+			if (webRTCDict.hasOwnProperty(rtcKey)) {
+				for (var i = 0; i < candidates.length; ++i) {
+					webRTCDict[rtcKey].addIceCandidate(candidates[i]);
 				}
 			}
 		});

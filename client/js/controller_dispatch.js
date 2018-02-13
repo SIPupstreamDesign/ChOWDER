@@ -1299,7 +1299,7 @@
 				var sdpStr = StringUtil.arrayBufferToString(data.contentData.data);
 				parsed = JSON.parse(sdpStr);
 				key = parsed.key;
-				answer = parsed.answer;
+				answer = parsed.sdp;
 			} catch (e) {
 				console.error(e);
 				return;
