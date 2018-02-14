@@ -36,10 +36,14 @@
 
 	WebRTC.prototype.prepareNewConnection = function () {
 		printDebug("prepareNewConnection")
-		var pc_config = { "iceServers": [] };
+		var pc_config = { "iceServers": [
+			{"urls": "stun:stun.l.google.com:19302"},
+			{"urls": "stun:stun1.l.google.com:19302"},
+			{"urls": "stun:stun2.l.google.com:19302"}
+		] };
 		this.peer = null;
 		try {
-			this.peer = new RTCPeerConnection(null);
+			this.peer = new RTCPeerConnection(pc_config);
 		} catch (e) {
 			printDebug("Failed to create peerConnection, exception: " + e.message);
 			return;
