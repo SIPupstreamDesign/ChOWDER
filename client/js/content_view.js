@@ -35,7 +35,7 @@
 		if (contentType === 'text') {
 			tagName = 'pre';
 		} else if (contentType === 'video') {
-			tagName = 'video';
+			tagName = 'img'; // videoでvideoを保持してない場合用
 		} else {
 			tagName = 'img';
 		}
@@ -86,6 +86,8 @@
 		if (videoElem) {
 			videoElem.id = metaData.id;
 			videoElem.style.position = "absolute";
+			videoElem.setAttribute("controls", "");
+			videoElem.style.color = "white";
 			this.emit(ContentView.EVENT_SETUP_CONTENT, null, videoElem, metaData.id);
 			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, videoElem);
 		}
@@ -100,9 +102,22 @@
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			} else if (metaData.type === 'video') {
 				//contentElem.src = contentData;
-				videoElem.setAttribute("controls", "");
-				videoElem.style.color = "white";
-				vscreen_util.assignMetaData(videoElem, metaData, true, groupDict);
+				if (videoElem) {
+					vscreen_util.assignMetaData(videoElem, metaData, true, groupDict);
+				} else {
+					contentElem.src = contentData;
+					contentElem.onload = function () {
+						if (metaData.width < 10) {
+							console.log("naturalWidth:" + contentElem.naturalWidth);
+							metaData.width = contentElem.naturalWidth;
+						}
+						if (metaData.height < 10) {
+							console.log("naturalHeight:" + contentElem.naturalHeight);
+							metaData.height = contentElem.naturalHeight;
+						}
+						vscreen_util.assignMetaData(contentElem, metaData, true,groupDict);
+					};
+				}
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {

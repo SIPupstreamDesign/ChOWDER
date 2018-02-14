@@ -925,7 +925,14 @@
 			metaData.group = gui.get_current_group_id();
 		});
 		video.addEventListener('loadeddata', function() {
-			this.add_content(metaData, "", function (err, reply) {
+			var canvas = document.createElement('canvas');
+			var context = canvas.getContext("2d");
+			canvas.width = metaData.width;
+			canvas.height = metaData.height;
+			context.drawImage(video, 0, 0);
+			var data = canvas.toDataURL("image/jpeg");
+
+			this.add_content(metaData, data, function (err, reply) {
 			}.bind(this));
 		}.bind(this), false);
 	};
@@ -1424,7 +1431,7 @@
 		});
 
 		webRTC.on('negotiationneeded', function () {
-			console.error("negotiationneeded")
+			console.log("negotiationneeded")
 			webRTC.offer(function (sdp) {
 				connector.sendBinary('RTCOffer', metaData, JSON.stringify({
 					key : keyStr,
@@ -1497,8 +1504,12 @@
 			if (json.type === "video") {
 				if (store.has_video_data(json.id)) {
 					this.import_content(json, store.get_video_data(json.id), store.get_video_elem(json.id));
+					gui.toggle_mark(elem, metaData);
 				} else {
-					this.import_content(json, "ローカルに保持していない動画コンテンツ", document.createElement('video'));
+					connector.send('GetContent', request, function (err, data) {
+						this.import_content(json, data.contentData);
+						gui.toggle_mark(elem, metaData);
+					}.bind(this));
 				}
 			} else {
 				connector.send('GetContent', request, function (err, data) {
