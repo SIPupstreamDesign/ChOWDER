@@ -34,12 +34,32 @@
 	 */
 	function getTagName(contentType) {
 		var tagName;
-		if (contentType === 'text' || contentType === "video") {
+		if (contentType === 'text') {
 			tagName = 'div';
+		} else if (contentType === "video") {
+			tagName = 'img';
 		} else {
 			tagName = 'img';
 		}
 		return tagName;
+	}
+
+	function fixDivSize(divElem, w, aspect) {
+		var h;
+		if (w > 200) {
+			divElem.style.width = "200px";
+			h = 200 / aspect;
+			divElem.style.paddingBottom = (150 - h) + "px"; 
+			if (150 - h > 140.0) {
+				divElem.style.paddingBottom = "140px";
+			}
+		} else if (w < 50) {
+			divElem.style.width = "50px";
+			divElem.style.paddingRight = (50 - w) + "px";
+			if (50 - w > 40.0) {
+				divElem.style.paddingRight = "40px";
+			}
+		}
 	}
 
 	/**
@@ -112,18 +132,13 @@
 				divElem.style.height = "150px";
 				divElem.style.color = "white";
 			} else if (metaData.type === 'video') {
-				var name = "video";
-				if (metaData.hasOwnProperty("user_data_text")) {
-					try {
-						name = JSON.parse(metaData.user_data_text).text;
-					} catch (e) {
-						console.error(e);
-					}
-				}
-				contentElem.innerHTML = name;
-				divElem.style.width = "150px";
 				divElem.style.height = "150px";
-				divElem.style.color = "white";
+				aspect = metaData.orgWidth / metaData.orgHeight;
+				w = 150 * aspect;
+				divElem.style.width = w + "px";
+
+				contentElem.src = contentData;
+				fixDivSize(divElem, w, aspect);
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -140,21 +155,7 @@
 				if (contentElem && blob) {
 					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
-
-					if (w > 200) {
-						divElem.style.width = "200px";
-						h = 200 / aspect;
-						divElem.style.paddingBottom = (150 - h) + "px"; 
-						if (150 - h > 140.0) {
-							divElem.style.paddingBottom = "140px";
-						}
-					} else if (w < 50) {
-						divElem.style.width = "50px";
-						divElem.style.paddingRight = (50 - w) + "px";
-						if (50 - w > 40.0) {
-							divElem.style.paddingRight = "40px";
-						}
-					}
+					fixDivSize(divElem, w, aspect);
 				}
 			}
 		}

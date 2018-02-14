@@ -1503,8 +1503,10 @@
 			console.log("新規コンテンツロード", json);
 			if (json.type === "video") {
 				if (store.has_video_data(json.id)) {
-					this.import_content(json, store.get_video_data(json.id), store.get_video_elem(json.id));
-					gui.toggle_mark(elem, metaData);
+					connector.send('GetContent', request, function (err, data) {
+						this.import_content(json, data.contentData, store.get_video_elem(json.id));
+						gui.toggle_mark(elem, metaData);
+					}.bind(this));
 				} else {
 					connector.send('GetContent', request, function (err, data) {
 						this.import_content(json, data.contentData);
@@ -1534,7 +1536,8 @@
 				if (store.has_video_data(reply.metaData.id)) {
 					this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
 				} else {
-					this.import_content(reply.metaData, "ローカルに保持していない動画コンテンツ", document.createElement('video'));
+					// ローカルに保持していない動画コンテンツ
+					this.import_content(reply.metaData, reply.contentData);
 				}
 			} else {
 				this.import_content(reply.metaData, reply.contentData);
