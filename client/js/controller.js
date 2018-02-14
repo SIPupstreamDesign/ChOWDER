@@ -1409,6 +1409,26 @@
 				store.set_video_stream(metaData.id, stream);
 			}
 			webRTC.addStream(stream);
+		
+			webRTC.on('icecandidate', function () {
+				var candidates = webRTC.getIceCandidates();
+				if (candidates.length > 0) {
+					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+						key : keyStr,
+						candidates: candidates
+					}), function (err, reply) {});
+				}
+			});
+	
+			webRTC.on('negotiationneeded', function () {
+				console.log("negotiationneeded")
+				webRTC.offer(function (sdp) {
+					connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+						key : keyStr,
+						sdp : sdp
+					}), function (err, reply) {});
+				}.bind(this));
+			}.bind(this));
 		} else {
 			webRTC = this.webRTC[keyStr];
 		}
@@ -1419,26 +1439,6 @@
 				sdp : sdp
 			}), function (err, reply) {});
 		});
-		
-		webRTC.on('icecandidate', function () {
-			var candidates = webRTC.getIceCandidates();
-			if (candidates.length > 0) {
-				connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
-					key : keyStr,
-					candidates: candidates
-				}), function (err, reply) {});
-			}
-		});
-
-		webRTC.on('negotiationneeded', function () {
-			console.log("negotiationneeded")
-			webRTC.offer(function (sdp) {
-				connector.sendBinary('RTCOffer', metaData, JSON.stringify({
-					key : keyStr,
-					sdp : sdp
-				}), function (err, reply) {});
-			}.bind(this));
-		}.bind(this));
 	}
 	
 	
