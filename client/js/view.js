@@ -563,9 +563,11 @@
 							var stream = evt.stream ? evt.stream : evt.streams[0];
 							elem.src = URL.createObjectURL(stream);
 	
-							var ctx = new AudioContext();
-							var source = ctx.createMediaStreamSource(stream);
-							source.connect(ctx.destination);
+							if (stream.getAudioTracks().length) {
+								var ctx = new AudioContext();
+								var source = ctx.createMediaStreamSource(stream);
+								source.connect(ctx.destination);
+							}
 						})
 					});
 				} else {
