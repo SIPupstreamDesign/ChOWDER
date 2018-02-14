@@ -87,6 +87,7 @@
 			videoElem.id = metaData.id;
 			videoElem.style.position = "absolute";
 			videoElem.setAttribute("controls", "");
+			videoElem.setAttribute("controlslist", "nodownload")
 			videoElem.style.color = "white";
 			this.emit(ContentView.EVENT_SETUP_CONTENT, null, videoElem, metaData.id);
 			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, videoElem);
