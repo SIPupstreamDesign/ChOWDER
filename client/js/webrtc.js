@@ -9,7 +9,7 @@
 	}
 
 	function printDebug(a, b, c) {
-		console.error("WebRTC:", a ? a : "", b ? b : "", c ? c : "")
+		//console.error("WebRTC:", a ? a : "", b ? b : "", c ? c : "")
 	}
 
 	var MediaOptions = { 
@@ -19,7 +19,6 @@
 	var WebRTC = function () {
 		EventEmitter.call(this);
 		this.peer = this.prepareNewConnection();
-		this.candidates = [];
 	}
 	WebRTC.prototype = Object.create(EventEmitter.prototype);
 
@@ -38,11 +37,12 @@
 			return;
 		}
 		this.peer.onicecandidate = function (evt) {
-			printDebug("icecandidate", evt, this.peer);
+			printDebug("icecandidate");//, evt, this.peer);
 			if (evt.candidate) {
-				this.candidates.push(evt.candidate);
+				this.emit(WebRTC.EVENT_ICECANDIDATE, "tincle", evt.candidate);
+			} else {
+				this.emit(WebRTC.EVENT_ICECANDIDATE, "vanilla", this.peer.localDescription);
 			}
-			this.emit(WebRTC.EVENT_ICECANDIDATE, evt)
 		}.bind(this);
 
 		this.peer.onnegotiationneeded = function (evt) {
@@ -99,7 +99,9 @@
 				this.peer.createAnswer(function (answer) {
 					this.peer.setLocalDescription(answer, function () {
 						callback(answer);
-					}, printError);
+					}, function (e) {
+						printError(e)
+					});
 				}.bind(this), printError);
 			}.bind(this), 
 			printError,
@@ -108,20 +110,15 @@
 	
     WebRTC.prototype.setAnswer = function(sdp, callback) {
 		printDebug("setAnswer", sdp)
-        this.peer.setRemoteDescription(new RTCSessionDescription(sdp));/*, callback, function (e) {
-			printDebug('setAnswer ERROR: ');
+        this.peer.setRemoteDescription(new RTCSessionDescription(sdp), callback, function (e) {
 			printError(e)
 			callback(e);
-		});*/
-    };
-
-	WebRTC.prototype.getIceCandidates = function () {
-		return this.candidates;
+		});
 	};
-
+	
 	WebRTC.prototype.addIceCandidate = function (iceCandidate) {
 		var candidate = new RTCIceCandidate(iceCandidate);
-		printDebug("Received Candidate...", candidate)
+		printDebug("Received Candidate...");//, candidate)
 		this.peer.addIceCandidate(candidate);
 	};
 

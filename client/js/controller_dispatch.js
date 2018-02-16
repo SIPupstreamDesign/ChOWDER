@@ -1336,13 +1336,30 @@
 				console.error(e);
 				return;
 			}
-			if (controller.webRTC) {
-				controller.webRTC[key].setAnswer(answer, function (e) {
-					if (!e) {
-						// TODO
-						//connector.send('RTCIceCandidate')
-					}
-				});
+			if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
+				controller.webRTC[key].setAnswer(answer, function () {});
+			}
+		});
+
+		connector.on("RTCIceCandidate", function (data) {
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			var parsed = null;
+			var candidate = null;
+			var key = null;
+			try {
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				key = parsed.key;
+				candidate = parsed.candidate;
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
+				if (candidate) {
+					controller.webRTC[key].addIceCandidate(candidate);
+				}
 			}
 		});
 

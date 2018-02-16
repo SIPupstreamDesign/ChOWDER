@@ -3312,7 +3312,7 @@
 			}
 		});
 		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			//ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
 			io_connector.broadcast(io, Command.RTCIceCandidate, data);
 			if (resultCallback) {
 				resultCallback();
@@ -3492,7 +3492,7 @@
 		});
 		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
-			io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			//io_connector.broadcast(io, Command.RTCIceCandidate, data);
 			if (resultCallback) {
 				resultCallback();
 			}

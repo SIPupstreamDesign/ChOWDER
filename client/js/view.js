@@ -568,7 +568,15 @@
 								var source = ctx.createMediaStreamSource(stream);
 								source.connect(ctx.destination);
 							}
-						})
+						});
+						webRTC.on('icecandidate', function (type, data) {
+							if (type === "tincle") {
+								connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+									key : rtcKey,
+									candidate: data
+								}), function (err, reply) {});
+							}
+						});
 					});
 				} else {
 					//connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
@@ -1268,25 +1276,24 @@
 		});
 		
 		connector.on("RTCIceCandidate", function (data) {
-			console.error("RTCOffer")
+			//console.error("on RTCIceCandidate")
 			var metaData = data.metaData;
 			var contentData = data.contentData;
 			var parsed = null;
-			var candidates = null;
+			var candidate = null;
 			var rtcKey = null;
 			try {
 				var dataStr = StringUtil.arrayBufferToString(contentData.data);
 				parsed = JSON.parse(dataStr);
 				rtcKey = parsed.key;
-				candidates = parsed.candidates;
+				candidate = parsed.candidate;
 			} catch (e) {
 				console.error(e);
 				return;
 			}
-			// console.error("WebRTC: on RTCIceCandidate", ice)
 			if (webRTCDict.hasOwnProperty(rtcKey)) {
-				for (var i = 0; i < candidates.length; ++i) {
-					webRTCDict[rtcKey].addIceCandidate(candidates[i]);
+				if (candidate) {
+					webRTCDict[rtcKey].addIceCandidate(candidate);
 				}
 			}
 		});

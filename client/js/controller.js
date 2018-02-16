@@ -917,7 +917,7 @@
 		store.set_video_data(metaData.id, videoData);
 		store.set_video_elem(metaData.id, video);
         if ('srcObject' in video) {
-			video.srcObject = blob;
+			video.src = videoData;
 			video.load();
 			video.play();
 		} else {
@@ -1421,12 +1421,11 @@
 			this.webRTC[keyStr] = webRTC;
 			webRTC.addStream(stream);
 		
-			webRTC.on('icecandidate', function () {
-				var candidates = webRTC.getIceCandidates();
-				if (candidates.length > 0) {
+			webRTC.on('icecandidate', function (type, data) {
+				if (type === "tincle") {
 					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
 						key : keyStr,
-						candidates: candidates
+						candidate: data
 					}), function (err, reply) {});
 				}
 			});
