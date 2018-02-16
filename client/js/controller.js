@@ -1395,6 +1395,14 @@
 		}
 	}
 
+	function captureStream(video) {
+		if (video.captureStream) {
+			return video.captureStream();
+		} else if (video.mozCaptureStream) {
+			return video.mozCaptureStream();
+		}
+	}
+
 	/**
 	 * WebRTC接続開始
 	 * @method connect_webrtc
@@ -1404,23 +1412,30 @@
 		var webRTC;
 		if (!this.webRTC.hasOwnProperty(keyStr)) {
 			var stream = null;
+			/*
 			if (store.has_video_stream(metaData.id)) {
 				stream = store.get_video_stream(metaData.id);
 			} else {
-				if (video.captureStream) {
-					stream = video.captureStream();
-				} else if (video.mozCaptureStream) {
-					stream = video.mozCaptureStream();
-				} else {
-					console.error("video.captureStream() is not supported in this browser")
-					return false;
-				}
+				stream = captureStream(video);
 				store.set_video_stream(metaData.id, stream);
 			}
+			*/
+			stream = captureStream(video);
+
 			webRTC = new WebRTC(video);
 			this.webRTC[keyStr] = webRTC;
 			webRTC.addStream(stream);
 		
+			video.onseeked = function () {
+				if (video.isEnded) {
+					webRTC.addStream(captureStream(video));
+					video.isEnded = false;
+				}
+			}
+			video.onended = function () {
+				video.isEnded = true;
+			}
+
 			webRTC.on('icecandidate', function (type, data) {
 				if (type === "tincle") {
 					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
