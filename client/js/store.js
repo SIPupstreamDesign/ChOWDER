@@ -24,7 +24,7 @@
 	Store.prototype.release = function () {
 		var i;
 		for (i in this.videoDict) {
-			URL.revokeObjectURL(this.videoDict(i));
+			URL.revokeObjectURL(this.videoDict[i]);
 		}
 	};
 

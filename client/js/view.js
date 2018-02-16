@@ -561,7 +561,7 @@
 						webRTCDict[rtcKey] = webRTC;
 						webRTC.on('addstream', function (evt) {
 							var stream = evt.stream ? evt.stream : evt.streams[0];
-							elem.src = URL.createObjectURL(stream);
+							elem.srcObject = stream;
 	
 							if (stream.getAudioTracks().length) {
 								var ctx = new AudioContext();

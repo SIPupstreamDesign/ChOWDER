@@ -294,14 +294,16 @@
 		});
 
 		gui.on("add_screenshare", function (err) {
-			window.input_dialog.text_input({
-				name: "ExtensionIDを入力してください",
-				okButtonName: "OK"
-			}, function (extensionID) {
-				var request = { sources: ['screen', 'window', 'tab', 'audio'] };
-				chrome.runtime.sendMessage(extensionID, request, function (response) {
-					if (response && response.type === 'success') {
-						navigator.getUserMedia({
+			var request = { sources: ['screen', 'window', 'tab', 'audio'] };
+			var userAgent = window.navigator.userAgent.toLowerCase();
+			if (userAgent.indexOf('chrome') != -1) {
+				// chrome
+				window.input_dialog.text_input({
+					name: "ExtensionIDを入力してください",
+					okButtonName: "OK"
+				}, function (extensionID) {
+					chrome.runtime.sendMessage(extensionID, request, function (response) {
+						var target = {
 							video: {
 								mandatory: {
 									chromeMediaSource: 'desktop',
@@ -313,20 +315,50 @@
 									chromeMediaSource: 'desktop',
 									chromeMediaSourceId: response.streamId,
 								}
-							},
-						}, function (stream) {
-							controller.send_movie(stream, {
-								group: gui.get_current_group_id(),
-								posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
+							}
+						};
+						if (response && response.type === 'success') {
+							navigator.getUserMedia(target, function (stream) {
+								controller.send_movie(stream, {
+									group: gui.get_current_group_id(),
+									posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
+								});
+							}, function (err) {
+								console.error('Could not get stream: ', err);
 							});
-						}, function (err) {
-							console.error('Could not get stream: ', err);
-						});
-					} else {
-						console.error('Could not get stream');
-					}
+						} else {
+							console.error('Could not get stream');
+						}
+					});
 				});
-			});
+			} else {
+				var mediaConstraints = {
+					video: {
+						mediaSource: "screen"
+					},
+				};
+				navigator.mediaDevices.getUserMedia(mediaConstraints).then(function (stream) {
+					controller.send_movie(stream, {
+						group: gui.get_current_group_id(),
+						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
+					});
+				}).catch(function (err) {
+					console.error('Could not get stream: ', err);
+				});
+			}
+		});
+
+		gui.on("add_camerashare", function (err) {
+			navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(
+				function (stream) {
+					controller.send_movie(stream, {
+						group: gui.get_current_group_id(),
+						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
+					});
+				},
+				function (err) {
+					console.error('Could not get stream: ', err);
+				});
 		});
 
 		gui.on("overwrite_layout", function (err) {

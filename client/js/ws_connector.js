@@ -3,6 +3,15 @@
 
 (function (command, metabinary) {
 	'use strict';
+	function get_protocol() {
+		var u = document.URL;
+		if (u.substring(0, 5) == "https") {
+			return "wss://";
+		} else {
+			return "ws://";
+		}
+	}
+
 	var ws_connector = {},
 		resultCallbacks = {},
 		recievers = {},
@@ -10,7 +19,7 @@
 		client = null,
 		is_connected = false,
 		currentVersion = "v2",
-		url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+		url = get_protocol() + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
 
 	/**
 	 * テキストメッセージの処理.

@@ -916,8 +916,14 @@
 		var video = document.createElement('video');
 		store.set_video_data(metaData.id, videoData);
 		store.set_video_elem(metaData.id, video);
-		video.src = videoData;
-		video.load();
+        if ('srcObject' in video) {
+			video.srcObject = blob;
+			video.load();
+			video.play();
+		} else {
+			video.src = videoData;
+			video.load();
+		}
 		video.addEventListener( "loadedmetadata", function (e) {
 			metaData.type = "video";
 			metaData.width = Number(this.videoWidth);
@@ -1389,7 +1395,6 @@
 		}
 	}
 
-	
 	/**
 	 * WebRTC接続開始
 	 * @method connect_webrtc
@@ -1398,16 +1403,22 @@
 		var video = store.get_video_elem(metaData.id);
 		var webRTC;
 		if (!this.webRTC.hasOwnProperty(keyStr)) {
-			webRTC = new WebRTC(video);
-			this.webRTC[keyStr] = webRTC;
-
 			var stream = null;
 			if (store.has_video_stream(metaData.id)) {
 				stream = store.get_video_stream(metaData.id);
 			} else {
-				stream = video.captureStream();
+				if (video.captureStream) {
+					stream = video.captureStream();
+				} else if (video.mozCaptureStream) {
+					stream = video.mozCaptureStream();
+				} else {
+					console.error("video.captureStream() is not supported in this browser")
+					return false;
+				}
 				store.set_video_stream(metaData.id, stream);
 			}
+			webRTC = new WebRTC(video);
+			this.webRTC[keyStr] = webRTC;
 			webRTC.addStream(stream);
 		
 			webRTC.on('icecandidate', function () {

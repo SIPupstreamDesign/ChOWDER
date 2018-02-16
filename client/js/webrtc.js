@@ -1,17 +1,6 @@
 (function () {
 	"use strict";
 	
-    navigator.getUserMedia = navigator.getUserMedia || 
-                             navigator.webkitGetUserMedia || 
-                             navigator.mozGetUserMedia;
-    window.RTCPeerConnection = window.RTCPeerConnection ||
-                               window.webkitRTCPeerConnection ||
-                               window.mozRTCPeerConnection;
-    window.RTCSessionDescription = window.RTCSessionDescription ||
-                                   window.mozRTCSessionDescription;
-    window.RTCIceCandidate = window.RTCIceCandidate || 
-							 window.mozRTCIceCandidate;
-							 
 
 	function printError(e) {
 		if (e) {
@@ -20,7 +9,7 @@
 	}
 
 	function printDebug(a, b, c) {
-		//console.error("WebRTC:", a ? a : "", b ? b : "", c ? c : "")
+		console.error("WebRTC:", a ? a : "", b ? b : "", c ? c : "")
 	}
 
 	var MediaOptions = { 
@@ -71,14 +60,14 @@
 				this.emit(WebRTC.EVENT_REMOVE_STREAM, evt)
 			}.bind(this));
 		} else {
-			this.peer.addEventListener("addstream", function (evt) {
+			this.peer.onaddstream = function (evt) {
 				printDebug("Added remote stream", evt);
 				this.emit(WebRTC.EVENT_ADD_STREAM, evt)
-			}.bind(this));
-			this.peer.addEventListener("removestream", function (evt) {
+			}.bind(this);
+			this.peer.onremovestream = function (evt) {
 				printDebug("Removed remote stream", evt);
 				this.emit(WebRTC.EVENT_REMOVE_STREAM, evt)
-			}.bind(this));
+			}.bind(this);
 		}
 		return this.peer;
 	};

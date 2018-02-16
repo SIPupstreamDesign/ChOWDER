@@ -164,7 +164,14 @@
 									this.emit(window.ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null);
 								}.bind(this)
 							}
-						},],
+						}, {
+							CameraShare : {
+								func : function () { 
+									this.initContextPos();
+									this.emit(window.ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED, null);
+								}.bind(this)
+							}
+						}],
 				}, {
 					Setting : settingMenu
 				}]
@@ -662,6 +669,7 @@
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
 			add_url_button = document.getElementById('context_menu_add_url'),
 			add_screenshare_button = document.getElementById('context_menu_add_screenshare'),
+			add_camerashare_button = document.getElementById('context_menu_add_camerashare'),
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
 			change_image_button = document.getElementById('context_menu_change_image'),
@@ -706,6 +714,10 @@
 
 		add_screenshare_button.onmousedown = function (evt) {
 			this.emit(window.ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null, evt); 
+		}.bind(this);
+
+		add_camerashare_button.onmousedown = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED, null, evt); 
 		}.bind(this);
 
 		add_text_button.onmousedown = function (evt) {
@@ -1388,7 +1400,8 @@
 			add_text_file_button = document.getElementById('burger_menu_add_text_file'),
 			add_url_button = document.getElementById('burger_menu_add_url'),
 			add_video_button = document.getElementById('burger_menu_add_video'),
-			add_screenshare_button = document.getElementById('burger_menu_add_screenshare');
+			add_screenshare_button = document.getElementById('burger_menu_add_screenshare'),
+			add_camerashare_button = document.getElementById('burger_menu_add_camerashare');
 		
 		add_image_button.onmousedown = function (evt) {
 			this.toggleBurgerSubmenuAddContent(false);
@@ -1424,6 +1437,12 @@
 			this.toggleBurgerSubmenuAddContent(false);
 			this.contentMenu.toggle();
 			this.emit(ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null);
+		}.bind(this);
+
+		add_camerashare_button.onmnousedown = function (evt) {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+			this.emit(ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED, null);
 		}.bind(this);
 
 	};
@@ -1709,6 +1728,7 @@
 	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
 	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
 	ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED = "add_screenshare";
+	ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED = "add_camerashare";
 	ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED = "overwrite_layout";
 	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
 	ControllerGUI.EVENT_DELETELAYOUT_CLICKED = "deletelayout_clicked";

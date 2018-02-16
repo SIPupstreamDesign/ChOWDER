@@ -3,12 +3,21 @@
 
 (function (command, metabinary) {
 	'use strict';
+	function get_protocol() {
+		var u = document.URL;
+		if (u.substring(0, 5) == "https") {
+			return "https://";
+		} else {
+			return "http://";
+		}
+	}
+
 	var io_connector = {},
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
 		currentVersion = "v2",
-		url = "http://" + location.hostname + ":" + location.port + "/" + currentVersion,
+		url = get_protocol() + location.hostname + ":" + location.port + "/" + currentVersion,
 		socket;
 	
 	/**
