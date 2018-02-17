@@ -51,13 +51,14 @@
 		}.bind(this);
 
 		this.peer.oniceconnectionstatechange = function (evt) {
-			printDebug("oniceconnectionstatechange", this.peer.iceConnectionState);
-			if (this.peer.iceConnectionState === "disconnected") {
+			var state = this.peer.iceConnectionState;
+			printDebug("oniceconnectionstatechange", state);
+			if (state === "disconnected") {
 				// 相手から切断された.
 				this.peer.close();
-			} else if (this.peer.iceConnectionState === "closed") {
+			} else if (state === "closed" || state === "failed") {
 				this.emit(WebRTC.EVENT_CLOSED, null);
-			} else if (this.peer.iceConnectionState === "connected") {
+			} else if (state === "connected") {
 				this.emit(WebRTC.EVENT_CONNECTED, null);
 			}
 		}.bind(this);
