@@ -916,6 +916,7 @@
 		var video = document.createElement('video');
 		store.set_video_data(metaData.id, videoData);
 		store.set_video_elem(metaData.id, video);
+
         if ('srcObject' in video) {
 			video.src = videoData;
 			video.load();
@@ -924,6 +925,10 @@
 			video.src = videoData;
 			video.load();
 		}
+		
+		video.addEventListener("ended", function () {
+			this.isEnded = true;
+		});
 		video.addEventListener( "loadedmetadata", function (e) {
 			metaData.type = "video";
 			metaData.width = Number(this.videoWidth);
@@ -1418,15 +1423,11 @@
 			webRTC.addStream(stream);
 		
 			video.onseeked = function () {
-				if (video.isEnded) {
+				if (this.isEnded) {
 					webRTC.addStream(captureStream(video));
-					video.isEnded = false;
+					this.isEnded = false;
 				}
 			}
-			video.onended = function () {
-				video.isEnded = true;
-			}
-
 			webRTC.on('icecandidate', function (type, data) {
 				if (type === "tincle") {
 					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
@@ -1437,13 +1438,16 @@
 			});
 	
 			webRTC.on('negotiationneeded', function () {
-				console.log("negotiationneeded")
 				webRTC.offer(function (sdp) {
 					connector.sendBinary('RTCOffer', metaData, JSON.stringify({
 						key : keyStr,
 						sdp : sdp
 					}), function (err, reply) {});
 				}.bind(this));
+			}.bind(this));
+
+			webRTC.on('closed', function () {
+				delete this.webRTC[keyStr];
 			}.bind(this));
 		} else {
 			webRTC = this.webRTC[keyStr];
@@ -1550,7 +1554,7 @@
 		if (!err) {
 			if (reply.metaData.type === "video") {
 				if (store.has_video_data(reply.metaData.id)) {
-					this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
+					this.import_content(reply.metaData, reply.contentData, store.get_videovideo_elem(reply.metaData.id));
 				} else {
 					// ローカルに保持していない動画コンテンツ
 					this.import_content(reply.metaData, reply.contentData);

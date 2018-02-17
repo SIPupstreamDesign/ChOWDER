@@ -49,16 +49,28 @@
 			printDebug("onnegotiationneeded", evt);
 			this.emit(WebRTC.EVENT_NEGOTIATION_NEEDED, evt);
 		}.bind(this);
+
+		this.peer.oniceconnectionstatechange = function (evt) {
+			printDebug("oniceconnectionstatechange", this.peer.iceConnectionState);
+			if (this.peer.iceConnectionState === "disconnected") {
+				// 相手から切断された.
+				this.peer.close();
+			} else if (this.peer.iceConnectionState === "closed") {
+				this.emit(WebRTC.EVENT_CLOSED, null);
+			} else if (this.peer.iceConnectionState === "connected") {
+				this.emit(WebRTC.EVENT_CONNECTED, null);
+			}
+		}.bind(this);
 		
 		if ('ontrack' in this.peer) {
-			this.peer.addEventListener('track', function (evt) {
+			this.peer.ontrack = function (evt) {
 				printDebug("Added remote stream", evt);
 				this.emit(WebRTC.EVENT_ADD_STREAM, evt)
-			}.bind(this));
-			this.peer.addEventListener("removetrack", function (evt) {
+			}.bind(this);
+			this.peer.onremovetrack = function (evt) {
 				printDebug("Removed remote stream", evt);
 				this.emit(WebRTC.EVENT_REMOVE_STREAM, evt)
-			}.bind(this));
+			}.bind(this);
 		} else {
 			this.peer.onaddstream = function (evt) {
 				printDebug("Added remote stream", evt);
@@ -122,6 +134,15 @@
 		this.peer.addIceCandidate(candidate);
 	};
 
+	WebRTC.prototype.close = function () {
+		if (this.peer) {
+			this.peer.close();
+		}
+	};
+
+
+	WebRTC.EVENT_CONNECTED = "connected";
+	WebRTC.EVENT_CLOSED = "closed";
 	WebRTC.EVENT_ADD_STREAM = "addstream";
 	WebRTC.EVENT_REMOVE_STREAM = "removestream";
 	WebRTC.EVENT_ICECANDIDATE = "icecandidate";

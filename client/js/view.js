@@ -1408,4 +1408,10 @@
 	}
 
 	window.onload = init;
+	window.onunload = function () {
+		var i;
+		for (i in webRTCDict) {
+			webRTCDict[i].close();
+		}
+	}
 }(window.vscreen, window.vscreen_util, window.ws_connector));
