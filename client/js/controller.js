@@ -39,6 +39,14 @@
 		this.doneDeleteWindowMetaData = this.doneDeleteWindowMetaData.bind(this);
 	};
 
+	Controller.prototype.release = function () {
+		var i;
+		for (i in this.webRTC) {
+			this.webRTC[i].close();
+		}
+		this.webRTC = {};
+	};
+
     /**
      * random ID (8 chars)
      */
@@ -906,25 +914,41 @@
 	 * @param {*} data 
 	 * @param {*} metaData 
 	 */
-	Controller.prototype.send_movie = function (blob, metaData) {
+	Controller.prototype.send_movie = function (type, blob, metaData) {
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
 		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
 		// IDはクライアントで作成する
 		metaData.id = generateID();
-		var videoData = URL.createObjectURL(blob);
 		var video = document.createElement('video');
-		store.set_video_data(metaData.id, videoData);
 		store.set_video_elem(metaData.id, video);
 
-        if ('srcObject' in video) {
+		var videoData;
+        if (type === "file") {
+			videoData = URL.createObjectURL(blob);
 			video.src = videoData;
+			video.load();
+		} else {
+			// stream
+        	if ('srcObject' in video) {
+				videoData = blob;
+				video.srcObject = blob;
+			} else {
+				videoData = URL.createObjectURL(blob);
+				video.src = videoData;
+			}
 			video.load();
 			video.play();
-		} else {
-			video.src = videoData;
-			video.load();
 		}
+		store.set_video_data(metaData.id, videoData);
+
+		video.oncanplaythrough = function () {
+			if (type !== "file") {
+				window.setTimeout(function(){
+					this.play()
+				}.bind(this), 500); // for chrome
+			}
+		};
 		
 		video.addEventListener("ended", function () {
 			this.isEnded = true;
@@ -1421,7 +1445,7 @@
 			webRTC = new WebRTC(video);
 			this.webRTC[keyStr] = webRTC;
 			webRTC.addStream(stream);
-		
+			
 			video.onseeked = function () {
 				if (this.isEnded) {
 					webRTC.addStream(captureStream(video));
@@ -1633,7 +1657,11 @@
 		var func = function (err, reply) {
 			var json = reply,
 				previewArea = gui.get_content_preview_area(),
-				deleted = document.getElementById(json.id);
+				deleted = document.getElementById(json.id),
+				elem,
+				videoData,
+				k;
+
 			manipulator.removeManipulator();
 			if (deleted) {
 				previewArea.removeChild(deleted);
@@ -1650,7 +1678,21 @@
 			if (store.has_metadata(json.id)) {
 				store.delete_metadata(json.id);
 			}
-		}
+
+			// delete webrtc with video
+			for (k in this.webRTC) {
+				if (k.indexOf(json.id) >= 0) {
+					this.webRTC[k].close();
+					delete this.webRTC[k];
+				}
+			}
+			if (store.has_video_data(json.id)) {
+				store.delete_video_data(json.id);
+			}
+			if (store.has_video_elem(json.id)) {
+				store.delete_video_elem(json.id);
+			}
+		}.bind(this);
 
 		var i;
 
@@ -1944,6 +1986,7 @@
 	window.onload = login.login;
 	window.onunload = function () {
 		gui.clear_content_property(true);
+		controller.release();
 		store.release();
 	};
 	window.onblur = function () {

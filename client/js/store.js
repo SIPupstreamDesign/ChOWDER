@@ -10,7 +10,6 @@
 		this.metaDataDict = {};
 		this.videoDict = {};
 		this.videoElemDict = {};
-		this.videoStreamDict = {};
 	};
 	
 	// isInitialized
@@ -24,7 +23,10 @@
 	Store.prototype.release = function () {
 		var i;
 		for (i in this.videoDict) {
-			URL.revokeObjectURL(this.videoDict[i]);
+			this.delete_video_data(i);
+		}
+		for (i in this.videoElemDict) {
+			this.delete_video_elem(i);
 		}
 	};
 
@@ -101,6 +103,20 @@
 	Store.prototype.has_video_data = function (id) {
 		return this.videoDict.hasOwnProperty(id);
 	};
+	Store.prototype.delete_video_data = function (id) {
+		var videoData = this.videoDict[id];
+		if (videoData.getVideoTracks) {
+			videoData.getVideoTracks().forEach(function (track) {
+				track.stop();
+			});
+		}
+		if (videoData.getAudioTracks) {
+			videoData.getAudioTracks().forEach(function (track) {
+				track.stop();
+			});
+		}
+		delete this.videoDict[id];
+	};
 
 	// video elem
 	Store.prototype.set_video_elem = function (id, elem) {
@@ -111,6 +127,16 @@
 	};
 	Store.prototype.has_video_elem = function (id) {
 		return this.videoElemDict.hasOwnProperty(id);
+	};
+	Store.prototype.delete_video_elem = function (id) {
+		var elem = this.videoElemDict[id];
+		elem.pause();
+		elem.srcObject = null;
+		if (elem.src) {
+			URL.revokeObjectURL(elem.src);
+		}
+		elem.src = "";
+		delete this.videoElemDict[id];
 	};
 
 	// --------------------------

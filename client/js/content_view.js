@@ -86,7 +86,7 @@
 		if (videoElem) {
 			videoElem.id = metaData.id;
 			videoElem.style.position = "absolute";
-			//videoElem.setAttribute('autoplay', '')
+			videoElem.setAttribute('autoplay', '')
 			videoElem.setAttribute("controls", "");
 			videoElem.setAttribute("controlslist", "nodownload")
 			videoElem.style.color = "white";

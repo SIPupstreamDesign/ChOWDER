@@ -250,7 +250,7 @@
 						img;
 					if (data && data instanceof ArrayBuffer) {
 						var blob = new Blob([data], { type: "video/mp4" });
-						controller.send_movie(blob, {
+						controller.send_movie("file", blob, {
 							group: gui.get_current_group_id(),
 							posx: posy, posy: posy, visible: true,
 							user_data_text: JSON.stringify({ text: name })
@@ -319,7 +319,7 @@
 						};
 						if (response && response.type === 'success') {
 							navigator.getUserMedia(target, function (stream) {
-								controller.send_movie(stream, {
+								controller.send_movie("screen", stream, {
 									group: gui.get_current_group_id(),
 									posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
 								});
@@ -338,7 +338,7 @@
 					},
 				};
 				navigator.mediaDevices.getUserMedia(mediaConstraints).then(function (stream) {
-					controller.send_movie(stream, {
+					controller.send_movie("screen", stream, {
 						group: gui.get_current_group_id(),
 						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
 					});
@@ -349,9 +349,9 @@
 		});
 
 		gui.on("add_camerashare", function (err) {
-			navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(
+			navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(
 				function (stream) {
-					controller.send_movie(stream, {
+					controller.send_movie("camera", stream, {
 						group: gui.get_current_group_id(),
 						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
 					});
@@ -445,7 +445,7 @@
 					var data = e.target.result;
 					if (data && data instanceof ArrayBuffer) {
 						var blob = new Blob([data], { type: "video/mp4" });
-						controller.send_movie(blob, {
+						controller.send_movie("file", blob, {
 							group: gui.get_current_group_id(),
 							posx: px, posy: py, visible: true,
 							user_data_text: JSON.stringify({ text: name })
