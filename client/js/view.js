@@ -27,7 +27,8 @@
 		doneGetMetaData,
 		authority = null,
 		controllers = {connectionCount: -1},
-		webRTCDict = {};
+		webRTCDict = {},
+		random_id_for_webrtc = generateID();
 
 	function toggleFullScreen() {
 		if (!document.fullscreenElement &&    // alternative standard method
@@ -515,6 +516,13 @@
 		}
 	}
 
+	// このページのwebRTC用のキーを取得.
+	// ディスプレイIDが同じでもページごとに異なるキーとなる.
+	// (ページをリロードするたびに代わる)
+	function getRTCKey(metaData) {
+		return metaData.id + "_" + windowData.id + "_" + random_id_for_webrtc;
+	}
+
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -561,7 +569,7 @@
 				//previewArea.appendChild(elem);
 			}
 			if (metaData.type === 'video') {
-				var rtcKey = metaData.id + "_" + windowData.id + "_" + generateID();
+				var rtcKey = getRTCKey(metaData);
 				elem.setAttribute("controls", "");
 				elem.setAttribute('autoplay', '')
 				elem.setAttribute('preload', "metadata")
@@ -1013,7 +1021,17 @@
 
 			if (isOutside) {
 				if (elem) {
+					// コンテンツが画面外にいった
 					elem.style.display = "none";
+					// webrtcコンテンツが画面外にいったら切断して削除しておく.
+					var rtcKey = getRTCKey(json);
+					if (webRTCDict.hasOwnProperty(rtcKey)) {
+						webRTCDict[rtcKey].close();
+						delete webRTCDict[rtcKey];
+						if (elem.parentNode) {
+							elem.parentNode.removeChild(elem);
+						}
+					}
 				}
 			} else {
 				if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
