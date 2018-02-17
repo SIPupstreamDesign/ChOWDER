@@ -1,6 +1,6 @@
 (function () {
 	"use strict";
-	
+
 
 	function printError(e) {
 		if (e) {
@@ -12,8 +12,9 @@
 		//console.error("WebRTC:", a ? a : "", b ? b : "", c ? c : "")
 	}
 
-	var MediaOptions = { 
-		'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true }
+	var MediaOptions = {
+		'offerToReceiveAudio': true,
+		'offerToReceiveVideo': true
 	};
 
 	var WebRTC = function () {
@@ -24,11 +25,13 @@
 
 	WebRTC.prototype.prepareNewConnection = function () {
 		printDebug("prepareNewConnection")
-		var pc_config = { "iceServers": [
-			{"urls": "stun:stun.l.google.com:19302"},
-			{"urls": "stun:stun1.l.google.com:19302"},
-			{"urls": "stun:stun2.l.google.com:19302"}
-		] };
+		var pc_config = {
+			"iceServers": [
+				{ "urls": "stun:stun.l.google.com:19302" },
+				{ "urls": "stun:stun1.l.google.com:19302" },
+				{ "urls": "stun:stun2.l.google.com:19302" }
+			]
+		};
 		this.peer = null;
 		try {
 			this.peer = new RTCPeerConnection(pc_config);
@@ -62,7 +65,7 @@
 				this.emit(WebRTC.EVENT_CONNECTED, null);
 			}
 		}.bind(this);
-		
+
 		if ('ontrack' in this.peer) {
 			this.peer.ontrack = function (evt) {
 				printDebug("Added remote stream", evt);
@@ -82,6 +85,16 @@
 				this.emit(WebRTC.EVENT_REMOVE_STREAM, evt)
 			}.bind(this);
 		}
+
+		if (Constants.IsSafari) {
+			if (MediaOptions.offerToReceiveAudio) {
+				this.peer.addTransceiver('audio')
+			}
+			if (MediaOptions.offerToReceiveVideo) {
+				this.peer.addTransceiver('video')
+			}
+		}
+
 		return this.peer;
 	};
 
@@ -105,9 +118,9 @@
 			MediaOptions);
 	}
 
-    WebRTC.prototype.answer = function(sdp, callback) {
+	WebRTC.prototype.answer = function (sdp, callback) {
 		printDebug("WebRTC answer", sdp)
-		this.peer.setRemoteDescription(new RTCSessionDescription(sdp), 
+		this.peer.setRemoteDescription(new RTCSessionDescription(sdp),
 			function () {
 				this.peer.createAnswer(function (answer) {
 					this.peer.setLocalDescription(answer, function () {
@@ -116,19 +129,18 @@
 						printError(e)
 					});
 				}.bind(this), printError);
-			}.bind(this), 
-			printError,
-			MediaOptions);
+			}.bind(this),
+			printError);
 	};
-	
-    WebRTC.prototype.setAnswer = function(sdp, callback) {
+
+	WebRTC.prototype.setAnswer = function (sdp, callback) {
 		printDebug("setAnswer", sdp)
-        this.peer.setRemoteDescription(new RTCSessionDescription(sdp), callback, function (e) {
+		this.peer.setRemoteDescription(new RTCSessionDescription(sdp), callback, function (e) {
 			printError(e)
 			callback(e);
 		});
 	};
-	
+
 	WebRTC.prototype.addIceCandidate = function (iceCandidate) {
 		var candidate = new RTCIceCandidate(iceCandidate);
 		printDebug("Received Candidate...");//, candidate)

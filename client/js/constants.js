@@ -32,8 +32,18 @@
 		SnapTypeGrid : "grid",
 		SnapTypeDisplay : "display",
 		InitialWholeWidth : 1000,
-		InitialWholeHeight : 900
+		InitialWholeHeight : 900,
+		// Firefox 1.0+
+		IsFirefox : typeof InstallTrigger !== 'undefined',
+		// Safari 3.0+ "[object HTMLElementConstructor]" 
+		IsSafari : /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
+		// Internet Explorer 6-11
+		IsIE : /*@cc_on!@*/false || !!document.documentMode,
+		// Edge 20+
+		IsEdge : !(/*@cc_on!@*/false || !!document.documentMode) && !!window.StyleMedia,
+		// Chrome 1+
+		IsChrome : !!window.chrome && !!window.chrome.webstore
 	};
-	
+
 	window.Constants = Constants;
 }());
