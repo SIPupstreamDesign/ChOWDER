@@ -4,6 +4,16 @@
 (function (vscreen, vscreen_util, connector) {
 	"use strict";
 
+    /**
+     * random ID (8 chars)
+     */
+    function generateID() {
+        function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000000).toString(16).substring(1);
+		}
+		return s4() + s4();
+	}
+
 	console.log(location);
 	var reconnectTimeout = 2000,
 		timer,
@@ -551,7 +561,7 @@
 				//previewArea.appendChild(elem);
 			}
 			if (metaData.type === 'video') {
-				var rtcKey = metaData.id + "_" + windowData.id;
+				var rtcKey = metaData.id + "_" + windowData.id + "_" + generateID();
 				elem.setAttribute("controls", "");
 				elem.setAttribute('autoplay', '')
 				elem.setAttribute('preload', "metadata")

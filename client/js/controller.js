@@ -1411,17 +1411,8 @@
 		var video = store.get_video_elem(metaData.id);
 		var webRTC;
 		if (!this.webRTC.hasOwnProperty(keyStr)) {
-			var stream = null;
-			/*
-			if (store.has_video_stream(metaData.id)) {
-				stream = store.get_video_stream(metaData.id);
-			} else {
-				stream = captureStream(video);
-				store.set_video_stream(metaData.id, stream);
-			}
-			*/
-			stream = captureStream(video);
-
+			// 初回読み込み時
+			var stream = captureStream(video);
 			webRTC = new WebRTC(video);
 			this.webRTC[keyStr] = webRTC;
 			webRTC.addStream(stream);

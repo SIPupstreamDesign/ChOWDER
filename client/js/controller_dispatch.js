@@ -1316,7 +1316,9 @@
 				return;
 			}
 			if (key) {
+				// このコントローラが動画データを持っているか判別
 				if (store.has_video_data(metaData.id)) {
+					// webrtc接続開始
 					controller.connect_webrtc(metaData, key);
 				}
 			}

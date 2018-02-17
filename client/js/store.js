@@ -113,17 +113,6 @@
 		return this.videoElemDict.hasOwnProperty(id);
 	};
 
-	// video stream
-	Store.prototype.set_video_stream = function (id, stream) {
-		this.videoStreamDict[id] = stream;
-	};
-	Store.prototype.get_video_stream = function (id, stream) {
-		return this.videoStreamDict[id];
-	};
-	Store.prototype.has_video_stream = function (id) {
-		return this.videoStreamDict.hasOwnProperty(id);
-	};
-
 	// --------------------------
 	// colors
 
