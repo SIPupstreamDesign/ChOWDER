@@ -1164,11 +1164,17 @@
 				gui.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
+				// 動画の場合は所有しているかどうか調べる
+				var isOwnVideo = false;
+				if (metaData.type === Constants.PropertTypeVideo) {
+					isOwnVideo = store.has_video_data(metaData.id);
+				}
+
 				if (store.has_group(metaData.group)) {
-					gui.init_content_property(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime);
+					gui.init_content_property(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime, isOwnVideo);
 				} else {
 					console.warn("not found group", metaData)
-					gui.init_content_property(id, null, "", metaData.type, mime);
+					gui.init_content_property(id, null, "", metaData.type, mime, isOwnVideo);
 				}
 				gui.assign_content_property(metaData);
 				gui.set_update_content_id(id);

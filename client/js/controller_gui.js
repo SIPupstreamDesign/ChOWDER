@@ -255,7 +255,7 @@
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.setAuthority(this.management.getAuthorityObject());
-		window.content_property.init(Constants.WholeWindowListID, "", Constants.PropertyTypeWholeWindow);
+		this.init_content_property(Constants.WholeWindowListID, "", Constants.PropertyTypeWholeWindow);
 
 		// コンテキストメニューの初期化.
 		this.initContextMenu();
@@ -1708,8 +1708,9 @@
 	content_property.update_display_property = function () {
 		content_property.update_display_value();
 	};
-	ControllerGUI.prototype.init_content_property = function (id, groupID, group, type, mime) {
-		content_property.init(id, groupID, group, type, mime);
+	// isOwnVideo このコントローラページで所有する動画かどうか. typeがvideoではない場合は無視される.
+	ControllerGUI.prototype.init_content_property = function (id, groupID, group, type, mime, isOwnVideo) {
+		content_property.init(id, groupID, group, type, mime, isOwnVideo);
 	};
 
 	// イベント

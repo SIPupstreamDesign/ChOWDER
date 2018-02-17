@@ -22,6 +22,7 @@
 		PropertyTypeLayout : "layout",
 		PropertyTypeContent : "content",
 		PropertyTypeText : "text",
+		PropertTypeVideo : "video",
 		PropertyTypeMultiDisplay : "multi_display",
 		PropertyTypeMultiContent : "multi_content",
 		TabIDDisplay : "display_tab",

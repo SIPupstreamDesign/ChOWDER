@@ -306,18 +306,17 @@ p {
 
 .content_id {
 	margin: 10px;
-	padding-left : 30px;
+	padding-left : 3px;
 }
 
 .group_name {
-
 	margin: 10px;
-	padding-left : 30px;
+	padding-left : 3px;
  }
 
 .meta_info {
 	margin: 10px;
-	padding-left : 30px;
+	padding-left : 3px;
 }
 
 .input-group {
@@ -723,4 +722,24 @@ p {
 	padding-top : 10px;
 	display : none;
 	color : black;
+}
+
+.property_text_label {
+    margin: 5px;
+    padding-left: 10px;
+	font-size : 11px;
+}
+.video_select_input {
+	width: 230px;
+	height : 30px;
+    margin-left: 10px;
+}
+.video_info {
+    width: 250px;
+    margin: 5px;
+	border: 1px solid rgb(56, 90, 123);
+}
+.video_info_title {
+	margin: 10px;
+	padding-left: 3px;
 }

@@ -1081,11 +1081,11 @@
 		gui.on("tab_changed_post", function () {
 			var id;
 			if (Validator.isDisplayTabSelected()) {
-				content_property.init("", null, "", Constants.PropertyTypeDisplay);
+				gui.init_content_property("", null, "", Constants.PropertyTypeDisplay);
 			} else if (Validator.isLayoutTabSelected()) {
-				content_property.init("", null, "", Constants.PropertyTypeLayout);
+				gui.init_content_property("", null, "", Constants.PropertyTypeLayout);
 			} else {
-				content_property.init("", null, "", Constants.PropertyTypeContent);
+				gui.init_content_property("", null, "", Constants.PropertyTypeContent);
 			}
 			if (Validator.isDisplayTabSelected()) {
 				id = state.get_last_select_window_id();
