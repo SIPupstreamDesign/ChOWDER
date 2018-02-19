@@ -93,7 +93,7 @@
 	 * @param {Object} input element id
 	 * @param {String} items 初期入力値 items { keys : [...] , values : [....] }
 	 */
-	function addVideoSelectProperty(isEditable, id, items, value) {
+	function addVideoSelectProperty(isEditable, id, items, value, changeCallback) {
 		var video_input = document.getElementById('video_input'),
 			select = document.createElement('select'),
 			i,
@@ -103,6 +103,9 @@
 
 		select.id = id;
 		select.className = "video_select_input";
+		select.onchange = function () {
+			changeCallback(select.value);
+		};
 		for (i = 0; i < items.keys.length; ++i) {
 			key = items.keys[i];
 			val = items.values[i];
@@ -267,13 +270,13 @@
 				if (isOwnVideo) {
 					// 設定エリアを表示
 					video_info.style.display = "block";
-					this.initVideoPropertyArea(isEditableContent, type);
+					this.initVideoPropertyArea(isEditableContent, id, type);
 				}
 			}
 		}
 	}
 
-	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, type) {
+	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metadataID, type) {
 		navigator.mediaDevices.enumerateDevices()
 			.then(function (devices) { // 成功時
 				var i;
@@ -291,12 +294,18 @@
 					}
 				}
 				addVideoTextLabel('video_select_video_title', "ビデオ入力")
-				addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos);
+				addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, null, function (deviceID) {
+					this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metadataID, deviceID);
+				}.bind(this));
 				addVideoTextLabel('video_select_audio_title', "オーディオ入力")
-				addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios);
+				addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, null, function (deviceID) {
+					this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metadataID, deviceID);
+				}.bind(this));
 				addVideoTextLabel('video_select_quality_title', "品質")
-				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities);
-			}).catch(function (err) { // エラー発生時
+				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, null, function (deviceID) {
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metadataID, deviceID);
+				}.bind(this));
+			}.bind(this)).catch(function (err) { // エラー発生時
 				console.error('enumerateDevide ERROR:', err);
 			});
 	}
@@ -502,6 +511,9 @@
 
 	ContentProperty.EVENT_CHANGE_ZINDEX = "change_zindex";
 	ContentProperty.EVENT_RECT_CHANGED = "rect_changed";
+	ContentProperty.EVENT_VIDEODEVICE_CHANGED = "videodevice_changed";
+	ContentProperty.EVENT_AUDIODEVICE_CHANGED = "audiodevice_changed";
+	ContentProperty.EVENT_VIDEOQUALITY_CHANGED = "videoquality_changed";
 	ContentProperty.EVENT_DISPLAY_VALUE_CHANGED = "display_value_changed";
 	ContentProperty.EVENT_DISPLAY_COLOR_CHANGED = "display_color_changed";
 	ContentProperty.EVENT_CHANGE_WHOLE_SPLIT = "change_whole_split";

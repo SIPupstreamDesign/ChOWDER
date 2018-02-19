@@ -1423,6 +1423,26 @@
 			}
 		});
 
+		content_property.on("videodevice_changed", function (err, metadataID, deviceID) {
+			if (store.has_video_elem(metadataID)) {
+				store.get_video_elem(metadataID).setSinkId(deviceID).then(function () {
+					console.log("videodevice_changed", deviceID);
+				});
+			}
+		});
+
+		content_property.on("audiodevice_changed", function (err, metadataID, deviceID) {
+			if (store.has_video_elem(metadataID)) {
+				store.get_video_elem(metadataID).setSinkId(deviceID).then(function () {
+					console.log("audiodevice_changed", deviceID);
+				});
+			}
+		});
+
+		content_property.on("videoquality_changed", function (err, metadataID, deviceID) {
+			//console.error("videoquality_changed");
+		});
+
 		gui.on('update_cursor_enable', function (err, value) {
 			controller.update_remote_cursor_enable(value);
 		});
