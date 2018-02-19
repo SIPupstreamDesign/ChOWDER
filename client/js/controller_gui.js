@@ -1709,8 +1709,8 @@
 		content_property.update_display_value();
 	};
 	// isOwnVideo このコントローラページで所有する動画かどうか. typeがvideoではない場合は無視される.
-	ControllerGUI.prototype.init_content_property = function (id, groupID, group, type, mime, isOwnVideo) {
-		content_property.init(id, groupID, group, type, mime, isOwnVideo);
+	ControllerGUI.prototype.init_content_property = function (id, groupID, group, type, mime, isOwnVideo, subtype) {
+		content_property.init(id, groupID, group, type, mime, isOwnVideo, subtype);
 	};
 
 	// イベント

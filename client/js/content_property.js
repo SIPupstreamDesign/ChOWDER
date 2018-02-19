@@ -131,8 +131,9 @@
 	 * @param {String} type 設定タイプ
 	 * @param {String} mime mime
 	 * @param {Boolean} isOwnVideo 動画を所有しているかどうか(optional)
+	 * @param {Boolean} subtype subtype(optional)
 	 */
-	ContentProperty.prototype.initPropertyArea = function (id, groupID, group, type, mime, isOwnVideo) {
+	ContentProperty.prototype.initPropertyArea = function (id, groupID, group, type, mime, isOwnVideo, subtype) {
 		var transform_input = document.getElementById('transform_input'),
 			user_data_input = document.getElementById('user_data_input'),
 			video_info = document.getElementById('video_info'),
@@ -261,7 +262,7 @@
 			color_picker.style.display = "none";
 
 
-			if (type === Constants.PropertTypeVideo) {
+			if (type === Constants.PropertTypeVideo && subtype) {
 				// 動画の場合、差し替え履歴、ダウンロード非表示
 				backup_area.style.display = "none";
 				download_button.style.display = "none";
@@ -270,13 +271,13 @@
 				if (isOwnVideo) {
 					// 設定エリアを表示
 					video_info.style.display = "block";
-					this.initVideoPropertyArea(isEditableContent, id, type);
+					this.initVideoPropertyArea(isEditableContent, id, type, subtype);
 				}
 			}
 		}
 	}
 
-	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metadataID, type) {
+	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metadataID, type, subtype) {
 		navigator.mediaDevices.enumerateDevices()
 			.then(function (devices) { // 成功時
 				var i;
@@ -293,14 +294,16 @@
 						videos.values.push(devices[i].deviceId);
 					}
 				}
-				addVideoTextLabel('video_select_video_title', "ビデオ入力")
-				addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, null, function (deviceID) {
-					this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metadataID, deviceID);
-				}.bind(this));
-				addVideoTextLabel('video_select_audio_title', "オーディオ入力")
-				addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, null, function (deviceID) {
-					this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metadataID, deviceID);
-				}.bind(this));
+				if (subtype === "camera") {
+					addVideoTextLabel('video_select_video_title', "ビデオ入力")
+					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, null, function (deviceID) {
+						this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metadataID, deviceID);
+					}.bind(this));
+					addVideoTextLabel('video_select_audio_title', "オーディオ入力")
+					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, null, function (deviceID) {
+						this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metadataID, deviceID);
+					}.bind(this));
+				}
 				addVideoTextLabel('video_select_quality_title', "品質")
 				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, null, function (deviceID) {
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metadataID, deviceID);
@@ -349,7 +352,7 @@
 		if (backup_area) { backup_area.style.display = "none" }
 	};
 
-	ContentProperty.prototype.init = function (id, groupID, group, type, mime, isOwnVideo) {
+	ContentProperty.prototype.init = function (id, groupID, group, type, mime, isOwnVideo, subtype) {
 		if (!this.colorselector) {
 			this.colorselector = new ColorSelector(function (colorvalue) {
 				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
@@ -374,7 +377,7 @@
 			}
 		}.bind(this);
 
-		this.initPropertyArea(id, groupID, group, type, mime, isOwnVideo);
+		this.initPropertyArea(id, groupID, group, type, mime, isOwnVideo, subtype);
 	};
 
 	/**

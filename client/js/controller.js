@@ -955,6 +955,7 @@
 		});
 		video.addEventListener( "loadedmetadata", function (e) {
 			metaData.type = "video";
+			metaData.subtype = type;
 			metaData.width = Number(this.videoWidth);
 			metaData.height = Number(this.videoHeight);
 			metaData.group = gui.get_current_group_id();
@@ -1166,15 +1167,17 @@
 			} else {
 				// 動画の場合は所有しているかどうか調べる
 				var isOwnVideo = false;
+				var subtype = null;
 				if (metaData.type === Constants.PropertTypeVideo) {
 					isOwnVideo = store.has_video_data(metaData.id);
+					subtype = metaData.subtype;
 				}
 
 				if (store.has_group(metaData.group)) {
-					gui.init_content_property(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime, isOwnVideo);
+					gui.init_content_property(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime, isOwnVideo, subtype);
 				} else {
 					console.warn("not found group", metaData)
-					gui.init_content_property(id, null, "", metaData.type, mime, isOwnVideo);
+					gui.init_content_property(id, null, "", metaData.type, mime, isOwnVideo, subtype);
 				}
 				gui.assign_content_property(metaData);
 				gui.set_update_content_id(id);
