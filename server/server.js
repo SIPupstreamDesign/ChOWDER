@@ -188,11 +188,11 @@ function io_request(io, ws2) {
 	};
 }
 
-ws2.on('request', ws_request(io, ws2));
-ws2_s.on('request', ws_request(io_s, ws2_s));
+ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));
 
-io.on('connection', io_request(io, ws2));
-io_s.on('connection', io_request(io_s, ws2_s));
+io.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+io_s.on('connection', io_request([io, io_s], [ws2, ws2_s]));
 
 
 //----------------------------------------------------------------------------------------
