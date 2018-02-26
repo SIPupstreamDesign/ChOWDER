@@ -631,6 +631,28 @@
 		});
 
 		/**
+		 * コンテンツリストでカメラ有効状態が変わった
+		 */
+		content_list.on("camera_onoff_changed", function (err, metaData, isCameraOn) {
+			if (metaData.hasOwnProperty("subtype")) {
+				if (metaData.subtype === "camera") {
+					restart_camera(metaData.id);
+				}
+			}
+		});
+
+		/**
+		 * コンテンツリストでマイク有効状態が変わった
+		 */
+		content_list.on("mic_onoff_changed", function (err, metaData, isMicOn) {
+			if (metaData.hasOwnProperty("subtype")) {
+				if (metaData.subtype === "camera") {
+					restart_camera(metaData.id);
+				}
+			}
+		});
+
+		/**
 		 * レイアウトリストでセットアップコンテンツが呼ばれた
 		 */
 		layout_list.on("setup_layout", function (err, elem, uid) {
@@ -1425,28 +1447,57 @@
 		});
 
 		function restart_camera(metadataID) {
+			var isCameraOn = content_list.is_camera_on(metadataID);
+			var isMicOn = content_list.is_mic_on(metadataID);
 			var audioDeviceID = content_property.get_audio_device_id();
 			var videoDeviceID = content_property.get_video_device_id();
 			var constraints = {};
+			var saveDeviceID = {
+				video_device : videoDeviceID,
+				audio_device : audioDeviceID
+			}
 			if (videoDeviceID) {
 				constraints.video = { deviceId : videoDeviceID }
 			} else {
-				constraints.video = false;
+				constraints.video = true;
+				saveDeviceID.video_device = true;
 			}
 			if (audioDeviceID) {
 				constraints.audio = { deviceId : audioDeviceID }
 			} else {
-				constraints.audio = false;
+				constraints.audio = true;
+				saveDeviceID.audio_device = true;
 			}
 			
+			if (!isCameraOn) {
+				constraints.video = false;
+				saveDeviceID.video_device = false;
+			}
+			if (!isMicOn) {
+				constraints.audio = false;
+				saveDeviceID.audio_device = false;
+			}
+			if (!constraints.video && !constraints.audio) {
+				// どちらか有効にしないといけない
+				constraints.audio = true;
+				saveDeviceID.audio_device = audioDeviceID;
+			}
+
 			navigator.mediaDevices.getUserMedia(constraints).then(
 				function (stream) {
+					if (store.has_metadata(metadataID)) {
+						// カメラマイク有効情報を保存
+						var meta = store.get_metadata(metadataID)
+						meta.video_device = this.video_device,
+						meta.audio_device = this.audio_device,
+						store.set_metadata(metadataID, meta)
+					}
 					controller.send_movie("camera", stream, {
 						id : metadataID,
 						group: gui.get_current_group_id(),
 						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
 					});
-				},
+				}.bind(saveDeviceID),
 				function (err) {
 					console.error('Could not get stream: ', err);
 				});
@@ -1465,7 +1516,9 @@
 		});
 
 		content_property.on("videoquality_changed", function (err, metadataID, deviceID) {
-			//console.error("videoquality_changed");
+			if (store.has_video_elem(metadataID)) {
+				restart_camera(metadataID);
+			}
 		});
 
 		gui.on('update_cursor_enable', function (err, value) {

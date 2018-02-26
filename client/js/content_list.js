@@ -61,6 +61,41 @@
 			}
 		}
 	}
+	
+	ContentList.prototype.createMicCameraButton = function (divElem, metaData) {
+		var cameraButton = document.createElement('div');
+		var micButton  = document.createElement('div');
+		cameraButton.className = "video_camera_button";
+		micButton.className = "video_mic_button";
+		if (metaData.hasOwnProperty('video_device') && String(metaData.video_device) === "false") {
+			cameraButton.classList.add("video_camera_button_off");  // offにする
+		}
+		if (metaData.hasOwnProperty('audio_device') && String(metaData.audio_device) === "false") {
+			micButton.classList.add("video_mic_button_off");  // offにする
+		}
+		divElem.appendChild(cameraButton);
+		divElem.appendChild(micButton);
+		cameraButton.onclick = function () {
+			var preCameraIsOff = cameraButton.classList.contains("video_camera_button_off");
+			var nowCameraIsOn = preCameraIsOff;
+			if (preCameraIsOff) {
+				cameraButton.classList.remove("video_camera_button_off"); // onにする
+			} else {
+				cameraButton.classList.add("video_camera_button_off");  // offにする
+			}
+			this.emit(ContentList.EVENT_CAMERA_ONOFF_CHANGED, null, metaData, nowCameraIsOn);
+		}.bind(this);
+		micButton.onclick = function () {
+			var preMicIsOff = micButton.classList.contains("video_mic_button_off");
+			var nowMicIsOn = preMicIsOff;
+			if (preMicIsOff) {
+				micButton.classList.remove("video_mic_button_off"); // onにする
+			} else {
+				micButton.classList.add("video_mic_button_off");  // offにする
+			}
+			this.emit(ContentList.EVENT_MIC_ONOFF_CHANGED, null, metaData, nowMicIsOn);
+		}.bind(this);
+	}
 
 	/**
 	 * コンテンツをリストビューにインポートする。
@@ -69,7 +104,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	ContentList.prototype.import_content = function (gui, metaDataDict, metaData, contentData) {
+	ContentList.prototype.import_content = function (gui, metaDataDict, metaData, contentData, groupDict, videoElem) {
 		var contentArea = null,
 			contentElem,
 			id,
@@ -132,6 +167,9 @@
 				divElem.style.height = "150px";
 				divElem.style.color = "white";
 			} else if (metaData.type === 'video') {
+				divElem.innerHTML = "";
+				divElem.appendChild(contentElem);
+
 				divElem.style.height = "150px";
 				aspect = metaData.orgWidth / metaData.orgHeight;
 				w = 150 * aspect;
@@ -139,6 +177,10 @@
 
 				contentElem.src = contentData;
 				fixDivSize(divElem, w, aspect);
+				if (videoElem && metaData.hasOwnProperty("subtype")) {
+					// マイク、カメラボタン
+					this.createMicCameraButton(divElem, metaData);
+				}
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -185,8 +227,33 @@
 			//copyContentData(contentElem, null, metaData, true);
 		}
 	}
-	
 
+	ContentList.prototype.is_camera_on = function (metadataID) {
+		var onlistID = "onlist:" + metadataID;
+		var listElem = document.getElementById(onlistID);
+		if (listElem) {
+			var buttons = listElem.getElementsByClassName('video_camera_button');
+			if (buttons.length > 0) {
+				return !buttons[0].classList.contains('video_camera_button_off');
+			}
+		}
+		return false;
+	}
+	
+	ContentList.prototype.is_mic_on = function (metadataID) {
+		var onlistID = "onlist:" + metadataID;
+		var listElem = document.getElementById(onlistID);
+		if (listElem) {
+			var buttons = listElem.getElementsByClassName('video_mic_button');
+			if (buttons.length > 0) {
+				return !buttons[0].classList.contains('video_mic_button_off');
+			}
+		}
+		return false;
+	}
+
+	ContentList.EVENT_CAMERA_ONOFF_CHANGED = "camera_onoff_changed";
+	ContentList.EVENT_MIC_ONOFF_CHANGED = "mic_onoff_changed";
 	ContentList.EVENT_SETUP_CONTENT = "setup_content";
 	ContentList.EVENT_COPY_CONTENT = "copy_content";
 

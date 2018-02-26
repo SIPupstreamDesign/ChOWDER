@@ -117,8 +117,10 @@
 				select.value = val;
 			}
 		}
-		if (value) {
-			select.value = value;
+		if (value !== undefined && value && value !== "false") {
+			if (items.values.indexOf(value) >= 0) {
+				select.value = value;
+			}
 		}
 		video_input.appendChild(select);
 		select.disabled = !isEditable;
@@ -127,13 +129,12 @@
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
 	 * @method initPropertyArea
-	 * @param {String} id ContentもしくはDisplay ID
-	 * @param {String} type 設定タイプ
-	 * @param {String} mime mime
+	 * @param {String} metaData metaData
+	 * @param {String} group group名
+	 * @param {String} type PropertyType
 	 * @param {Boolean} isOwnVideo 動画を所有しているかどうか(optional)
-	 * @param {Boolean} subtype subtype(optional)
 	 */
-	ContentProperty.prototype.initPropertyArea = function (id, groupID, group, type, mime, isOwnVideo, subtype) {
+	ContentProperty.prototype.initPropertyArea = function (metaData, groupName, type, isOwnVideo) {
 		var transform_input = document.getElementById('transform_input'),
 			user_data_input = document.getElementById('user_data_input'),
 			video_info = document.getElementById('video_info'),
@@ -152,17 +153,17 @@
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
 			}.bind(this),
-			isEditableContent = this.authority.isEditable(groupID);
+			isEditableContent = this.authority.isEditable(metaData.group);
 
 		restoreButton.disabled = !isEditableContent;
 
-		if (id) {
-			content_id.innerHTML = id;
+		if (metaData.id) {
+			content_id.innerHTML = metaData.id;
 		} else {
 			content_id.innerHTML = "";
 		}
-		if (group) {
-			group_name.innerHTML = group;
+		if (groupName) {
+			group_name.innerHTML = groupName;
 		} else {
 			group_name.innerHTML = "";
 		}
@@ -240,17 +241,17 @@
 			}.bind(this));
 			addTextInputProperty(isEditableContent, 'content_text', "");
 			download_button.style.display = "block";
-			download_button.href = "download?" + id;
+			download_button.href = "download?" + metaData.id;
 			download_button.target = "_blank";
 			if (type === Constants.PropertyTypeText) {
-				download_button.download = id + ".txt";
+				download_button.download = metaData.id + ".txt";
 			} else {
 				// image or url
-				if (mime) {
-					extension = mime.split('/')[1];
-					download_button.download = id + "." + extension;
+				if (metaData.mime) {
+					extension = metaData.mime.split('/')[1];
+					download_button.download = metaData.id + "." + extension;
 				} else {
-					download_button.download = id + ".img";
+					download_button.download = metaData.id + ".img";
 				}
 			}
 			if (metalabel) {
@@ -262,7 +263,7 @@
 			color_picker.style.display = "none";
 
 
-			if (type === Constants.PropertTypeVideo && subtype) {
+			if (type === Constants.PropertTypeVideo && metaData.subtype) {
 				// 動画の場合、差し替え履歴、ダウンロード非表示
 				backup_area.style.display = "none";
 				download_button.style.display = "none";
@@ -271,13 +272,13 @@
 				if (isOwnVideo) {
 					// 設定エリアを表示
 					video_info.style.display = "block";
-					this.initVideoPropertyArea(isEditableContent, id, type, subtype);
+					this.initVideoPropertyArea(isEditableContent, metaData, type);
 				}
 			}
 		}
 	}
 
-	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metadataID, type, subtype) {
+	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metaData, type) {
 		navigator.mediaDevices.enumerateDevices()
 			.then(function (devices) { // 成功時
 				var i;
@@ -294,19 +295,20 @@
 						videos.values.push(devices[i].deviceId);
 					}
 				}
-				if (subtype === "camera") {
+
+				if (metaData.subtype === "camera") {
 					addVideoTextLabel('video_select_video_title', "ビデオ入力")
-					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, null, function (deviceID) {
-						this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metadataID, deviceID);
+					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, metaData.video_device, function (deviceID) {
+						this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metaData.id, deviceID);
 					}.bind(this));
 					addVideoTextLabel('video_select_audio_title', "オーディオ入力")
-					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, null, function (deviceID) {
-						this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metadataID, deviceID);
+					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, metaData.audio_device, function (deviceID) {
+						this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metaData.id, deviceID);
 					}.bind(this));
 				}
 				addVideoTextLabel('video_select_quality_title', "品質")
-				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, null, function (deviceID) {
-					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metadataID, deviceID);
+				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, metaData.quality, function (deviceID) {
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id, deviceID);
 				}.bind(this));
 			}.bind(this)).catch(function (err) { // エラー発生時
 				console.error('enumerateDevide ERROR:', err);
@@ -352,7 +354,7 @@
 		if (backup_area) { backup_area.style.display = "none" }
 	};
 
-	ContentProperty.prototype.init = function (id, groupID, group, type, mime, isOwnVideo, subtype) {
+	ContentProperty.prototype.init = function (metaData, groupName, type, isOwnVideo) {
 		if (!this.colorselector) {
 			this.colorselector = new ColorSelector(function (colorvalue) {
 				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
@@ -377,7 +379,7 @@
 			}
 		}.bind(this);
 
-		this.initPropertyArea(id, groupID, group, type, mime, isOwnVideo, subtype);
+		this.initPropertyArea(metaData, groupName, type, isOwnVideo);
 	};
 
 	/**

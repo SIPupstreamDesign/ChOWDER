@@ -973,13 +973,19 @@
 			metaData.group = gui.get_current_group_id();
 		};
 		video.onloadeddata = function() {
-			var canvas = document.createElement('canvas');
-			var context = canvas.getContext("2d");
-			canvas.width = video.videoWidth;
-			canvas.height = video.videoHeight;
-			context.drawImage(video, 0, 0);
-			var data = canvas.toDataURL("image/jpeg");
-
+			var data;
+			if (!metaData.hasOwnProperty('video_device') || 
+				metaData.hasOwnProperty('video_device') && String(metaData.video_device) !== "false")
+			{
+				var canvas = document.createElement('canvas');
+				var context = canvas.getContext("2d");
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				context.drawImage(video, 0, 0);
+				data = canvas.toDataURL("image/jpeg");
+			} else {
+				data = this.getElem(metaData.id, true).src;
+			}
 			this.add_content(metaData, data, function (err, reply) {
 			}.bind(this));
 		}.bind(this);
@@ -1116,7 +1122,7 @@
 		}
 		
 		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
-			gui.init_content_property(id, null, "", "whole_window", mime);
+			gui.init_content_property(metaData, "", "whole_window");
 			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem() && metaData) {
 				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
@@ -1166,30 +1172,27 @@
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (Validator.isWindowType(metaData)) {
-				gui.init_content_property(id, null, "", Constants.PropertyTypeMultiDisplay, mime);
+				gui.init_content_property(metaData, "", Constants.PropertyTypeMultiDisplay);
 			} else {
-				gui.init_content_property(id, null,"", Constants.PropertyTypeMultiContent, mime);
+				gui.init_content_property(metaData,"", Constants.PropertyTypeMultiContent);
 			}
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (Validator.isWindowType(metaData)) {
-				gui.init_content_property(id, null,"", Constants.DisplayTabType, mime);
+				gui.init_content_property(metaData,"", Constants.DisplayTabType);
 				gui.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
 				// 動画の場合は所有しているかどうか調べる
 				var isOwnVideo = false;
-				var subtype = null;
 				if (metaData.type === Constants.PropertTypeVideo) {
 					isOwnVideo = store.has_video_data(metaData.id);
-					subtype = metaData.subtype;
 				}
-
 				if (store.has_group(metaData.group)) {
-					gui.init_content_property(id, metaData.group, store.get_group(metaData.group).name, metaData.type, mime, isOwnVideo, subtype);
+					gui.init_content_property(metaData, store.get_group(metaData.group).name, metaData.type, isOwnVideo);
 				} else {
 					console.warn("not found group", metaData)
-					gui.init_content_property(id, null, "", metaData.type, mime, isOwnVideo, subtype);
+					gui.init_content_property(metaData, "", metaData.type, isOwnVideo);
 				}
 				gui.assign_content_property(metaData);
 				gui.set_update_content_id(id);

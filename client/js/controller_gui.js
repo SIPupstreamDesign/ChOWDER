@@ -1661,7 +1661,7 @@
 	// コンテンツのインポート
 	ControllerGUI.prototype.import_content = function (metadataDict, metaData, contentData, groupDict, videoElem) {
 		window.layout_list.import_content(this, metadataDict, metaData, contentData, groupDict);
-		window.content_list.import_content(this, metadataDict, metaData, contentData, groupDict);
+		window.content_list.import_content(this, metadataDict, metaData, contentData, groupDict, videoElem);
 		window.content_view.import_content(this, metadataDict, metaData, contentData, groupDict, videoElem);
 	}
 
@@ -1709,8 +1709,8 @@
 		content_property.update_display_value();
 	};
 	// isOwnVideo このコントローラページで所有する動画かどうか. typeがvideoではない場合は無視される.
-	ControllerGUI.prototype.init_content_property = function (id, groupID, group, type, mime, isOwnVideo, subtype) {
-		content_property.init(id, groupID, group, type, mime, isOwnVideo, subtype);
+	ControllerGUI.prototype.init_content_property = function (metaData, group, type, isOwnVideo) {
+		content_property.init(metaData, group, type, isOwnVideo);
 	};
 
 	// イベント

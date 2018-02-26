@@ -743,3 +743,50 @@ p {
 	margin: 10px;
 	padding-left: 3px;
 }
+
+.video_camera_button {
+	background-color : #04B431;
+	width : 24px;
+	height : 24px;
+	background-image:url("../image/camera_on.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	border: none;
+	position : absolute;
+	bottom : 0px;
+	left : 0px;
+}
+.video_camera_button:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
+.video_camera_button_off {
+	background-image:url("../image/camera_off.png");
+}
+.video_camera_button_off:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
+.video_mic_button {
+	background-color : #04B431;
+	width : 24px;
+	height : 24px;
+	background-image:url("../image/mic_on.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	border: none;
+	position : absolute;
+	bottom : 0px;
+	right : 0px;
+}
+.video_mic_button:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
+.video_mic_button_off {
+	background-image:url("../image/mic_off.png");
+}
+.video_mic_button_off:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
