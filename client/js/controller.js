@@ -919,9 +919,18 @@
 		// データとしてSDPを送る
 		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
 		// IDはクライアントで作成する
-		metaData.id = generateID();
-		var video = document.createElement('video');
-		store.set_video_elem(metaData.id, video);
+		if (metaData.hasOwnProperty("id") && store.has_metadata(metaData.id)) {
+			metaData = store.get_metadata(metaData.id);
+		} else {
+			metaData.id = generateID();
+		}
+		var video;
+		if (store.has_video_elem(metaData.id)) {
+			video = store.get_video_elem(metaData.id);
+		} else {
+			video = document.createElement('video');
+			store.set_video_elem(metaData.id, video);
+		}
 
 		var videoData;
         if (type === "file") {
@@ -949,28 +958,31 @@
 				}.bind(this), 500); // for chrome
 			}
 		};
-		
-		video.addEventListener("ended", function () {
+		video.onended = function () {
 			this.isEnded = true;
-		});
-		video.addEventListener( "loadedmetadata", function (e) {
+		};
+		video.onloadedmetadata = function (e) {
 			metaData.type = "video";
 			metaData.subtype = type;
-			metaData.width = Number(this.videoWidth);
-			metaData.height = Number(this.videoHeight);
+			if (!metaData.hasOwnProperty("width")) {
+				metaData.width = Number(this.videoWidth);
+			}
+			if (!metaData.hasOwnProperty("height")) {
+				metaData.height = Number(this.videoHeight);
+			}
 			metaData.group = gui.get_current_group_id();
-		});
-		video.addEventListener('loadeddata', function() {
+		};
+		video.onloadeddata = function() {
 			var canvas = document.createElement('canvas');
 			var context = canvas.getContext("2d");
-			canvas.width = metaData.width;
-			canvas.height = metaData.height;
+			canvas.width = video.videoWidth;
+			canvas.height = video.videoHeight;
 			context.drawImage(video, 0, 0);
 			var data = canvas.toDataURL("image/jpeg");
 
 			this.add_content(metaData, data, function (err, reply) {
 			}.bind(this));
-		}.bind(this), false);
+		}.bind(this);
 	};
 	
 	/**
@@ -1587,7 +1599,7 @@
 		if (!err) {
 			if (reply.metaData.type === "video") {
 				if (store.has_video_data(reply.metaData.id)) {
-					this.import_content(reply.metaData, reply.contentData, store.get_videovideo_elem(reply.metaData.id));
+					this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
 				} else {
 					// ローカルに保持していない動画コンテンツ
 					this.import_content(reply.metaData, reply.contentData);

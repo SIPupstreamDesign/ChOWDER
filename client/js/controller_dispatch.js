@@ -349,7 +349,8 @@
 		});
 
 		gui.on("add_camerashare", function (err) {
-			navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(
+			var constraints = {video: true, audio: true};
+			navigator.mediaDevices.getUserMedia(constraints).then(
 				function (stream) {
 					controller.send_movie("camera", stream, {
 						group: gui.get_current_group_id(),
@@ -1423,19 +1424,43 @@
 			}
 		});
 
+		function restart_camera(metadataID) {
+			var audioDeviceID = content_property.get_audio_device_id();
+			var videoDeviceID = content_property.get_video_device_id();
+			var constraints = {};
+			if (videoDeviceID) {
+				constraints.video = { deviceId : videoDeviceID }
+			} else {
+				constraints.video = false;
+			}
+			if (audioDeviceID) {
+				constraints.audio = { deviceId : audioDeviceID }
+			} else {
+				constraints.audio = false;
+			}
+			
+			navigator.mediaDevices.getUserMedia(constraints).then(
+				function (stream) {
+					controller.send_movie("camera", stream, {
+						id : metadataID,
+						group: gui.get_current_group_id(),
+						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
+					});
+				},
+				function (err) {
+					console.error('Could not get stream: ', err);
+				});
+		}
+
 		content_property.on("videodevice_changed", function (err, metadataID, deviceID) {
 			if (store.has_video_elem(metadataID)) {
-				store.get_video_elem(metadataID).setSinkId(deviceID).then(function () {
-					console.log("videodevice_changed", deviceID);
-				});
+				restart_camera(metadataID);
 			}
 		});
 
 		content_property.on("audiodevice_changed", function (err, metadataID, deviceID) {
 			if (store.has_video_elem(metadataID)) {
-				store.get_video_elem(metadataID).setSinkId(deviceID).then(function () {
-					console.log("audiodevice_changed", deviceID);
-				});
+				restart_camera(metadataID);
 			}
 		});
 

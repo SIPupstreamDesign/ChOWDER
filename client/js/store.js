@@ -95,6 +95,9 @@
 
 	// video data
 	Store.prototype.set_video_data = function (id, data) {
+		if (this.has_video_data(id)) {
+			this.delete_video_data(id);
+		}
 		this.videoDict[id] = data;
 	};
 	Store.prototype.get_video_data = function (id, data) {

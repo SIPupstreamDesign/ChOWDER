@@ -584,6 +584,7 @@
 							if (stream.getAudioTracks().length) {
 								var ctx = new AudioContext();
 								var source = ctx.createMediaStreamSource(stream);
+								source.disconnect();
 								source.connect(ctx.destination);
 							}
 						});
@@ -596,9 +597,6 @@
 							}
 						});
 					});
-				} else {
-					//connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
-					//});
 				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
@@ -1129,6 +1127,13 @@
 				// 閲覧可能か
 				if (!isViewable(json.group)) {
 					return;
+				}
+				if (json.type === "video") {
+					var rtcKey = getRTCKey(json);
+					if (webRTCDict.hasOwnProperty(rtcKey)) {
+						webRTCDict[rtcKey].close();
+						delete webRTCDict[rtcKey];
+					}
 				}
 				if (!err) {
 					doneGetMetaData(err, json);

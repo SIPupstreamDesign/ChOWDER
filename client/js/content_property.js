@@ -512,6 +512,31 @@
 		this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, x, y, flag);
 	};
 
+	ContentProperty.prototype.get_video_device_id = function () {
+		var elem = document.getElementById('video_select_input_video');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value;
+		}
+		return null;
+	};
+
+	ContentProperty.prototype.get_audio_device_id = function () {
+		var elem = document.getElementById('video_select_input_audio');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value;
+		}
+		return null;
+	};
+	
+	ContentProperty.prototype.get_video_quality = function () {
+		var elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value;
+		}
+		return null;
+	};
+	
+
 	ContentProperty.EVENT_CHANGE_ZINDEX = "change_zindex";
 	ContentProperty.EVENT_RECT_CHANGED = "rect_changed";
 	ContentProperty.EVENT_VIDEODEVICE_CHANGED = "videodevice_changed";
