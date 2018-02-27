@@ -197,6 +197,10 @@
 		return this.isScreenSharing;
 	};
 
+	WebRTC.prototype.getStatus = function (callback) {
+		getStats(this.peer, callback);
+	}
+
 	WebRTC.EVENT_CONNECTED = "connected";
 	WebRTC.EVENT_CLOSED = "closed";
 	WebRTC.EVENT_ADD_STREAM = "addstream";

@@ -88,6 +88,23 @@
 	}
 
 	/**
+	 * Propertyタブに入力プロパティを追加する
+	 * @method addInputProperty
+	 * @param {Object} input element id
+	 * @param {String} value 初期入力値
+	 */
+	function addVideoQualityTextProperty(isEditable, id, value) {
+		var video_input = document.getElementById('video_input'),
+			input = document.createElement('textarea');
+
+		input.id = id;
+		input.value = value;
+		input.className = "user_data_text_input";
+		video_input.appendChild(input);
+		input.disabled = !isEditable;
+	}
+
+	/**
 	 * Propertyタブに選択力プロパティを追加する
 	 * @method addInputProperty
 	 * @param {Object} input element id
@@ -376,6 +393,21 @@
 				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", "最大bitrate", "kbps", "300", function () {
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
 				}.bind(this));
+
+				if (metaData.hasOwnProperty('webrtc_status')) {
+					addVideoTextLabel('video_select_quality_title', "品質情報");
+					var qtext = "";
+					var quality = JSON.parse(metaData.webrtc_status);
+					qtext += "width: \n    " + quality.resolution.width + "\n";
+					qtext += "height: \n    " + quality.resolution.height + "\n";
+					qtext += "ビデオコーデック: \n    " + quality.video_codec + "\n";
+					qtext += "オーディオコーデック: \n    " + quality.audio_codec + "\n";
+					qtext += "利用可能な送信バンド幅: \n    " + quality.bandwidth.availableSendBandwidth + "\n";
+					qtext += "ターゲットエンコードビットレート: \n    " + quality.bandwidth.targetEncBitrate + "\n";
+					qtext += "実際のエンコードビットレート: \n    " + quality.bandwidth.actualEncBitrate + "\n";
+					qtext += "伝送ビットレート: \n    " + quality.bandwidth.actualEncBitrate + "\n";
+					addVideoQualityTextProperty(false, "video_quality_text", qtext);
+				}
 			}.bind(this)).catch(function (err) { // エラー発生時
 				console.error('enumerateDevide ERROR:', err);
 			});

@@ -1512,6 +1512,26 @@
 				}.bind(this));
 			});
 
+			webRTC.on('connected', function () {
+				setTimeout(function () {
+					webRTC.getStatus(function (status) {
+						var meta = store.get_metadata(metaData.id);
+						meta.webrtc_status = JSON.stringify({
+							bandwidth : {
+								availableSendBandwidth : status.bandwidth.availableSendBandwidth,
+								actualEncBitrate : status.bandwidth.googActualEncBitrate,
+								targetEncBitrate : status.bandwidth.googTargetEncBitrate,
+								transmitBitrate : status.bandwidth.googTransmitBitrate,
+							},
+							resolution : status.resolutions.send,
+							video_codec : status.video.send.codecs[0],
+							audio_codec : status.video.send.codecs[0]
+						});
+						this.update_metadata(meta);
+					}.bind(this));
+				}.bind(this), 5000);
+			}.bind(this));
+
 		} else {
 			webRTC = this.webRTC[keyStr];
 		}
