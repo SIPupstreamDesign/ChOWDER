@@ -1523,26 +1523,26 @@
 			var k;
 			if (store.has_video_elem(metadataID)) {
 				var quality = {
-					screen : content_property.get_video_quality(metadataID).max,
-					video : content_property.get_video_quality(metadataID).max,
-					audio : content_property.get_audio_quality(metadataID).max,
-					video_min : content_property.get_video_quality(metadataID).min,
-					audio_min : content_property.get_audio_quality(metadataID).min
+					screen : content_property.get_video_quality(metadataID).min,
+					video : content_property.get_video_quality(metadataID).min,
+					audio : content_property.get_audio_quality(metadataID).min,
+					video_max : content_property.get_video_quality(metadataID).max,
+					audio_max : content_property.get_audio_quality(metadataID).max
 				};
-				if (quality.video < quality.video_min) {
-					quality.video = quality.video_min;
+				if (quality.video_max < quality.video) {
+					quality.video_max = quality.video;
 				}
-				if (quality.audio < quality.audio_min) {
-					quality.audio = quality.audio_min;
+				if (quality.audio_max < quality.audio) {
+					quality.audio_max = quality.audio;
 				}
 				if (!content_property.is_video_quality_enable()) {
 					delete quality["screen"];
 					delete quality["video"];
-					delete quality["video_min"];
+					delete quality["video_max"];
 				}
 				if (!content_property.is_audio_quality_enable()) {
 					delete quality["audio"];
-					delete quality["audio_min"];
+					delete quality["audio_max"];
 				}
 				if (Object.keys(quality).length === 0) {
 					quality = null;

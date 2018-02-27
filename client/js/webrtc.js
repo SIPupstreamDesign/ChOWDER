@@ -128,14 +128,14 @@
 		sdp = BandwidthHandler.setApplicationSpecificBandwidth(sdp, this.bandwidth, this.isScreenSharing)
 		if (this.bandwidth && this.bandwidth.hasOwnProperty('video')) {
 			sdp = BandwidthHandler.setVideoBitrates(sdp, {
-				min : this.bandwidth.video_min,
-				max : this.bandwidth.video,
+				min : this.bandwidth.video,
+				max : this.bandwidth.video_max,
 			});
 		}
 		if (this.bandwidth && this.bandwidth.hasOwnProperty('audio')) {
 			sdp = BandwidthHandler.setOpusAttributes(sdp, {
-				"maxplaybackrate" : this.bandwidth.audio,
-				"maxaveragebitrate" : this.bandwidth.audio
+				"maxplaybackrate" : this.bandwidth.audio_max * 1024 * 8,
+				"maxaveragebitrate" : this.bandwidth.audio_max * 1024 * 8
 			});
 		}
 		return sdp;
