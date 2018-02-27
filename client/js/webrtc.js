@@ -1,7 +1,5 @@
 (function () {
 	"use strict";
-
-
 	function printError(e) {
 		if (e) {
 			console.error(e);
@@ -20,6 +18,8 @@
 	var WebRTC = function () {
 		EventEmitter.call(this);
 		this.peer = this.prepareNewConnection();
+		this.bandwidth = null;
+		this.isScreenSharing = false;
 	}
 	WebRTC.prototype = Object.create(EventEmitter.prototype);
 
@@ -58,9 +58,14 @@
 			printDebug("oniceconnectionstatechange", state);
 			if (state === "disconnected") {
 				// 相手から切断された.
-				this.peer.close();
-			} else if (state === "closed" || state === "failed") {
-				this.emit(WebRTC.EVENT_CLOSED, null);
+				// 30秒待って閉じる
+				setTimeout(function () {
+					if (this.peer.iceConnectionState === "disconnected") {
+						this.close(true);
+					}
+				}.bind(this), 1000*30);
+			} else if (state === "failed") {
+				this.emit(WebRTC.EVENT_NEED_RESTART, null);
 			} else if (state === "connected") {
 				this.emit(WebRTC.EVENT_CONNECTED, null);
 			}
@@ -108,6 +113,7 @@
 		this.peer.createOffer(
 			function (sdp) {
 				// 成功
+				sdp.sdp = this.setQuality(sdp.sdp);
 				//printDebug("setLocalDescription", JSON.stringify(sdp))
 				this.peer.setLocalDescription(sdp); // 自分で覚える
 				callback(sdp); // コールバックで返す
@@ -118,11 +124,29 @@
 			MediaOptions);
 	}
 
+	WebRTC.prototype.setQuality = function (sdp) {
+		sdp = BandwidthHandler.setApplicationSpecificBandwidth(sdp, this.bandwidth, this.isScreenSharing)
+		if (this.bandwidth && this.bandwidth.hasOwnProperty('video')) {
+			sdp = BandwidthHandler.setVideoBitrates(sdp, {
+				min : this.bandwidth.video_min,
+				max : this.bandwidth.video,
+			});
+		}
+		if (this.bandwidth && this.bandwidth.hasOwnProperty('audio')) {
+			sdp = BandwidthHandler.setOpusAttributes(sdp, {
+				"maxplaybackrate" : this.bandwidth.audio,
+				"maxaveragebitrate" : this.bandwidth.audio
+			});
+		}
+		return sdp;
+	}
+
 	WebRTC.prototype.answer = function (sdp, callback) {
 		printDebug("WebRTC answer", sdp)
 		this.peer.setRemoteDescription(new RTCSessionDescription(sdp),
 			function () {
 				this.peer.createAnswer(function (answer) {
+					answer.sdp = this.setQuality(answer.sdp);
 					this.peer.setLocalDescription(answer, function () {
 						callback(answer);
 					}, function (e) {
@@ -147,16 +171,36 @@
 		this.peer.addIceCandidate(candidate);
 	};
 
-	WebRTC.prototype.close = function () {
+	WebRTC.prototype.close = function (isEmit) {
 		if (this.peer) {
 			this.peer.close();
+			if (isEmit) {
+				this.emit(WebRTC.EVENT_CLOSED, null);
+			}
 		}
 	};
 
+	WebRTC.prototype.setBandWidth = function (bandwidth) {
+		this.bandwidth = bandwidth;
+		this.emit(WebRTC.EVENT_NEED_RESTART, null);
+	};
+
+	WebRTC.prototype.getBandWidth = function () {
+		return this.bandwidth;
+	};
+
+	WebRTC.prototype.setIsScreenSharing = function (isScreenSharing) {
+		this.isScreenSharing = isScreenSharing;
+	};
+	
+	WebRTC.prototype.IsScreenSharing = function () {
+		return this.isScreenSharing;
+	};
 
 	WebRTC.EVENT_CONNECTED = "connected";
 	WebRTC.EVENT_CLOSED = "closed";
 	WebRTC.EVENT_ADD_STREAM = "addstream";
+	WebRTC.EVENT_NEED_RESTART = "need_restart";
 	WebRTC.EVENT_REMOVE_STREAM = "removestream";
 	WebRTC.EVENT_ICECANDIDATE = "icecandidate";
 	WebRTC.EVENT_NEGOTIATION_NEEDED = "negotiationneeded";

@@ -1362,7 +1362,11 @@
 				return;
 			}
 			if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
-				controller.webRTC[key].setAnswer(answer, function () {});
+				controller.webRTC[key].setAnswer(answer, function (e) {
+					if (e) {
+						console.error(e);
+					}
+				});
 			}
 		});
 
@@ -1516,8 +1520,40 @@
 		});
 
 		content_property.on("videoquality_changed", function (err, metadataID, deviceID) {
+			var k;
 			if (store.has_video_elem(metadataID)) {
-				restart_camera(metadataID);
+				var quality = {
+					screen : content_property.get_video_quality(metadataID).max,
+					video : content_property.get_video_quality(metadataID).max,
+					audio : content_property.get_audio_quality(metadataID).max,
+					video_min : content_property.get_video_quality(metadataID).min,
+					audio_min : content_property.get_audio_quality(metadataID).min
+				};
+				if (quality.video < quality.video_min) {
+					quality.video = quality.video_min;
+				}
+				if (quality.audio < quality.audio_min) {
+					quality.audio = quality.audio_min;
+				}
+				if (!content_property.is_video_quality_enable()) {
+					delete quality["screen"];
+					delete quality["video"];
+					delete quality["video_min"];
+				}
+				if (!content_property.is_audio_quality_enable()) {
+					delete quality["audio"];
+					delete quality["audio_min"];
+				}
+				if (Object.keys(quality).length === 0) {
+					quality = null;
+				}
+				if (controller.webRTC) {
+					for (k in controller.webRTC) {
+						if (k.indexOf(metadataID) >= 0) {
+							controller.webRTC[k].setBandWidth(quality);
+						}
+					}
+				}
 			}
 		});
 

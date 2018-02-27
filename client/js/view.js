@@ -3,6 +3,7 @@
 
 (function (vscreen, vscreen_util, connector) {
 	"use strict";
+	var audioContext = null;
 
     /**
      * random ID (8 chars)
@@ -582,10 +583,12 @@
 							elem.srcObject = stream;
 	
 							if (stream.getAudioTracks().length) {
-								var ctx = new AudioContext();
-								var source = ctx.createMediaStreamSource(stream);
+								if (!audioContext) {
+									audioContext = new AudioContext()
+								}
+								var source = audioContext.createMediaStreamSource(stream);
 								source.disconnect();
-								source.connect(ctx.destination);
+								source.connect(audioContext.destination);
 							}
 						});
 						webRTC.on('icecandidate', function (type, data) {

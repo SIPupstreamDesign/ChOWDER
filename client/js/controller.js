@@ -42,7 +42,7 @@
 	Controller.prototype.release = function () {
 		var i;
 		for (i in this.webRTC) {
-			this.webRTC[i].close();
+			this.webRTC[i].close(true);
 		}
 		this.webRTC = {};
 	};
@@ -947,7 +947,6 @@
 				video.src = videoData;
 			}
 			video.load();
-			video.play();
 		}
 		store.set_video_data(metaData.id, videoData);
 
@@ -955,7 +954,7 @@
 			if (type !== "file") {
 				window.setTimeout(function(){
 					this.play()
-				}.bind(this), 500); // for chrome
+				}.bind(this), 1000); // for chrome
 			}
 		};
 		video.onended = function () {
@@ -1122,7 +1121,10 @@
 		}
 		
 		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
-			gui.init_content_property(metaData, "", "whole_window");
+			gui.init_content_property(metaData ? metaData : {
+				id : id,
+				group : "",
+			}, "", "whole_window");
 			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
 			if (gui.get_whole_window_elem() && metaData) {
 				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
@@ -1467,6 +1469,7 @@
 			// 初回読み込み時
 			var stream = captureStream(video);
 			webRTC = new WebRTC(video);
+			webRTC.setIsScreenSharing(metaData.subtype === "screen");
 			this.webRTC[keyStr] = webRTC;
 			webRTC.addStream(stream);
 			
@@ -1497,6 +1500,18 @@
 			webRTC.on('closed', function () {
 				delete this.webRTC[keyStr];
 			}.bind(this));
+
+			webRTC.on('need_restart', function () {
+				webRTC.peer.removeStream(stream);
+				webRTC.addStream(stream);
+				webRTC.offer(function (sdp) {
+					connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+						key : keyStr,
+						sdp : sdp
+					}), function (err, reply) {});
+				}.bind(this));
+			});
+
 		} else {
 			webRTC = this.webRTC[keyStr];
 		}
@@ -1706,7 +1721,7 @@
 			// delete webrtc with video
 			for (k in this.webRTC) {
 				if (k.indexOf(json.id) >= 0) {
-					this.webRTC[k].close();
+					this.webRTC[k].close(true);
 					delete this.webRTC[k];
 				}
 			}
