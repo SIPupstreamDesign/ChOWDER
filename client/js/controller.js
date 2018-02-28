@@ -947,6 +947,7 @@
 				video.src = videoData;
 			}
 			video.load();
+			video.play();
 		}
 		store.set_video_data(metaData.id, videoData);
 
