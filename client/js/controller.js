@@ -1457,6 +1457,7 @@
 		} else if (video.mozCaptureStream) {
 			return video.mozCaptureStream();
 		}
+		return null;
 	}
 
 	/**
@@ -1472,6 +1473,10 @@
 			webRTC = new WebRTC(video);
 			webRTC.setIsScreenSharing(metaData.subtype === "screen");
 			this.webRTC[keyStr] = webRTC;
+			if (!stream) {
+				// for safari
+				stream = video.srcObject;
+			}
 			webRTC.addStream(stream);
 			
 			video.onseeked = function () {
