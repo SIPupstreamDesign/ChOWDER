@@ -395,17 +395,17 @@
 				}.bind(this));
 
 				if (metaData.hasOwnProperty('webrtc_status')) {
-					addVideoTextLabel('video_select_quality_title', "品質情報");
+					addVideoTextLabel('video_select_quality_title', "初期品質情報");
 					var qtext = "";
 					var quality = JSON.parse(metaData.webrtc_status);
-					qtext += "width: \n    " + quality.resolution.width + "\n";
-					qtext += "height: \n    " + quality.resolution.height + "\n";
+					qtext += "動画ソースの幅: \n    " + quality.resolution.width + "\n";
+					qtext += "動画ソースの高さ: \n    " + quality.resolution.height + "\n";
 					qtext += "ビデオコーデック: \n    " + quality.video_codec + "\n";
 					qtext += "オーディオコーデック: \n    " + quality.audio_codec + "\n";
-					qtext += "利用可能な送信バンド幅: \n    " + quality.bandwidth.availableSendBandwidth + "\n";
-					qtext += "ターゲットエンコードビットレート: \n    " + quality.bandwidth.targetEncBitrate + "\n";
-					qtext += "実際のエンコードビットレート: \n    " + quality.bandwidth.actualEncBitrate + "\n";
-					qtext += "伝送ビットレート: \n    " + quality.bandwidth.actualEncBitrate + "\n";
+					qtext += "利用可能な送信バンド幅: \n    " + Math.round(quality.bandwidth.availableSendBandwidth / 100) + "kbps\n";
+					qtext += "ターゲットエンコードビットレート: \n    " + Math.round(quality.bandwidth.targetEncBitrate / 100) + "kbps\n";
+					qtext += "実際のエンコードビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
+					qtext += "伝送ビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
 					addVideoQualityTextProperty(false, "video_quality_text", qtext);
 				}
 			}.bind(this)).catch(function (err) { // エラー発生時
