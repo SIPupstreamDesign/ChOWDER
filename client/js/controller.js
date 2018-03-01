@@ -1748,7 +1748,9 @@
 			for (k in this.webRTC) {
 				if (k.indexOf(json.id) >= 0) {
 					this.webRTC[k].close(true);
-					delete this.webRTC[k];
+					connector.sendBinary('RTCClose', json, JSON.stringify({
+						key : k
+					}), function (err, reply) {});
 				}
 			}
 			if (store.has_video_data(json.id)) {

@@ -599,6 +599,11 @@
 								}), function (err, reply) {});
 							}
 						});
+						webRTC.on('closed', function () {
+							if (webRTCDict.hasOwnProperty(this)) {
+								delete webRTCDict[this];
+							}
+						}.bind(rtcKey))
 					});
 				}
 			} else if (metaData.type === 'text') {
@@ -1027,11 +1032,13 @@
 					// webrtcコンテンツが画面外にいったら切断して削除しておく.
 					var rtcKey = getRTCKey(json);
 					if (webRTCDict.hasOwnProperty(rtcKey)) {
-						webRTCDict[rtcKey].close();
-						delete webRTCDict[rtcKey];
+						webRTCDict[rtcKey].close(true);
 						if (elem.parentNode) {
 							elem.parentNode.removeChild(elem);
 						}
+						connector.sendBinary('RTCClose', metaData, JSON.stringify({
+							key : rtcKey
+						}), function (err, reply) {});
 					}
 				}
 			} else {
@@ -1135,7 +1142,6 @@
 					var rtcKey = getRTCKey(json);
 					if (webRTCDict.hasOwnProperty(rtcKey)) {
 						webRTCDict[rtcKey].close();
-						delete webRTCDict[rtcKey];
 					}
 				}
 				if (!err) {
@@ -1311,6 +1317,24 @@
 			}
 		});
 		
+		connector.on("RTCClose", function (data) {
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			var parsed = null;
+			var rtcKey = null;
+			try {
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				rtcKey = parsed.key;
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			if (webRTCDict.hasOwnProperty(rtcKey)) {
+				webRTCDict[rtcKey].close(true);
+			}
+		});
+
 		connector.on("RTCIceCandidate", function (data) {
 			//console.error("on RTCIceCandidate")
 			var metaData = data.metaData;

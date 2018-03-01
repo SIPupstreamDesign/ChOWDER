@@ -1347,6 +1347,25 @@
 			}
 		});
 
+		// WebRTC切断要求が来た
+		connector.on('RTCClose', function (data) {
+			var metaData = data.metaData;
+			var key = null;
+			try {
+				keyStr = StringUtil.arrayBufferToString(data.contentData.data);
+				key = JSON.parse(keyStr).key;
+			}  catch (e) {
+				console.error(e);
+				return;
+			}
+			if (key) {
+				// このコントローラが接続を持っているか判別
+				if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
+					controller.webRTC[key].close(true);
+				}
+			}
+		});
+
 		// WebRTCのAnswerが返ってきた
 		connector.on("RTCAnswer", function (data) {
 			var parsed = null;

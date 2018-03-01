@@ -59,11 +59,13 @@
 			if (state === "disconnected") {
 				// 相手から切断された.
 				// 30秒待って閉じる
+				/*
 				setTimeout(function () {
 					if (this.peer.iceConnectionState === "disconnected") {
 						this.close(true);
 					}
 				}.bind(this), 1000*30);
+				*/
 			} else if (state === "failed") {
 				this.emit(WebRTC.EVENT_NEED_RESTART, null);
 			} else if (state === "connected") {

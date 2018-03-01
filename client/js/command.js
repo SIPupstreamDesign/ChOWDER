@@ -60,6 +60,7 @@
 		RTCOffer : "RTCOffer",
 		RTCAnswer : "RTCAnswer",
 		RTCIceCandidate : "RTCIceCandidate",
+		RTCClose : "RTCClose",
 	};
 	
 	window.command = Command;

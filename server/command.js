@@ -59,6 +59,7 @@
 		RTCOffer : "RTCOffer",
 		RTCAnswer : "RTCAnswer",
 		RTCIceCandidate : "RTCIceCandidate",
+		RTCClose : "RTCClose",
 	};
 	
 	module.exports = Command;
