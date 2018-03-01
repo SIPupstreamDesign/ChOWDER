@@ -1141,7 +1141,10 @@
 				if (json.type === "video") {
 					var rtcKey = getRTCKey(json);
 					if (webRTCDict.hasOwnProperty(rtcKey)) {
-						webRTCDict[rtcKey].close();
+						webRTCDict[rtcKey].close(true);
+						connector.sendBinary('RTCClose', json, JSON.stringify({
+							key : rtcKey
+						}), function (err, reply) {});
 					}
 				}
 				if (!err) {
