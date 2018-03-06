@@ -252,7 +252,7 @@
 						var blob = new Blob([data], { type: "video/mp4" });
 						controller.send_movie("file", blob, {
 							group: gui.get_current_group_id(),
-							posx: posy, posy: posy, visible: true,
+							posx: posx, posy: posy, visible: true,
 							user_data_text: JSON.stringify({ text: name })
 						});
 					}
@@ -633,22 +633,22 @@
 		/**
 		 * コンテンツリストでカメラ有効状態が変わった
 		 */
-		content_list.on("camera_onoff_changed", function (err, metaData, isCameraOn) {
+		content_list.on("camera_onoff_changed", function (err, metaData) {
 			if (metaData.hasOwnProperty("subtype")) {
-				if (metaData.subtype === "camera") {
-					restart_camera(metaData.id);
-				}
+				var isCameraOn = content_list.is_camera_on(metaData.id);
+				var isMicOn = content_list.is_mic_on(metaData.id);
+				controller.set_enable_video(metaData.id, isCameraOn, isMicOn);
 			}
 		});
 
 		/**
 		 * コンテンツリストでマイク有効状態が変わった
 		 */
-		content_list.on("mic_onoff_changed", function (err, metaData, isMicOn) {
+		content_list.on("mic_onoff_changed", function (err, metaData) {
 			if (metaData.hasOwnProperty("subtype")) {
-				if (metaData.subtype === "camera") {
-					restart_camera(metaData.id);
-				}
+				var isCameraOn = content_list.is_camera_on(metaData.id);
+				var isMicOn = content_list.is_mic_on(metaData.id);
+				controller.set_enable_video(metaData.id, isCameraOn, isMicOn);
 			}
 		});
 
@@ -1492,14 +1492,6 @@
 				saveDeviceID.audio_device = true;
 			}
 			
-			if (!isCameraOn) {
-				constraints.video = false;
-				saveDeviceID.video_device = false;
-			}
-			if (!isMicOn) {
-				constraints.audio = false;
-				saveDeviceID.audio_device = false;
-			}
 			if (!constraints.video && !constraints.audio) {
 				// どちらか有効にしないといけない
 				constraints.audio = true;
@@ -1513,12 +1505,15 @@
 						var meta = store.get_metadata(metadataID)
 						meta.video_device = this.video_device,
 						meta.audio_device = this.audio_device,
+						meta.is_video_on = isCameraOn,
+						meta.is_audio_on = isMicOn,
 						store.set_metadata(metadataID, meta)
 					}
 					controller.send_movie("camera", stream, {
 						id : metadataID,
 						group: gui.get_current_group_id(),
 						posx: vscreen.getWhole().x, posy: vscreen.getWhole().y, visible: true
+					}, function () {
 					});
 				}.bind(saveDeviceID),
 				function (err) {

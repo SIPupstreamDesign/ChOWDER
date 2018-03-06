@@ -931,6 +931,7 @@
 			video = document.createElement('video');
 			store.set_video_elem(metaData.id, video);
 			
+			// カメラは追加したコントローラではmuteにする
 			if (type === "camera") {
 				video.muted = true;
 			}
@@ -978,9 +979,10 @@
 		};
 		video.onloadeddata = function() {
 			var data;
-			if (!metaData.hasOwnProperty('video_device') || 
-				metaData.hasOwnProperty('video_device') && String(metaData.video_device) !== "false")
+			if (!metaData.hasOwnProperty('is_video_on') || 
+				metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) !== "false")
 			{
+				// サムネイル生成
 				var canvas = document.createElement('canvas');
 				var context = canvas.getContext("2d");
 				canvas.width = video.videoWidth;
@@ -1464,6 +1466,29 @@
 		return null;
 	}
 
+	Controller.prototype.set_enable_video = function (metadataID, isCameraOn, isMicOn) {
+		var i, k, n;
+		var streams;
+		var videos;
+		var audios;
+		
+		for (i in this.webRTC) {
+			if (i.indexOf(metadataID) >= 0) {
+				streams = this.webRTC[i].peer.getLocalStreams();
+				for (k = 0; k < streams.length; ++k) {
+					videos = streams[k].getVideoTracks();
+					for (n = 0; n < videos.length; ++n) {
+						videos[n].enabled = String(isCameraOn) !== "false";
+					}
+					audios = streams[k].getAudioTracks();
+					for (n = 0; n < audios.length; ++n) {
+						audios[n].enabled = String(isMicOn) !== "false";
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * WebRTC接続開始
 	 * @method connect_webrtc
@@ -1474,7 +1499,7 @@
 		if (!this.webRTC.hasOwnProperty(keyStr)) {
 			// 初回読み込み時
 			var stream = captureStream(video);
-			webRTC = new WebRTC(video);
+			webRTC = new WebRTC();
 			webRTC.setIsScreenSharing(metaData.subtype === "screen");
 			this.webRTC[keyStr] = webRTC;
 			if (!stream) {
@@ -1505,6 +1530,7 @@
 						sdp : sdp
 					}), function (err, reply) {});
 				}.bind(this));
+				this.set_enable_video(metaData.id, metaData.is_video_on, metaData.is_audio_on);
 			}.bind(this));
 
 			webRTC.on('closed', function () {

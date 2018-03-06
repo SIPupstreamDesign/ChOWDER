@@ -67,10 +67,10 @@
 		var micButton  = document.createElement('div');
 		cameraButton.className = "video_camera_button";
 		micButton.className = "video_mic_button";
-		if (metaData.hasOwnProperty('video_device') && String(metaData.video_device) === "false") {
+		if (metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) === "false") {
 			cameraButton.classList.add("video_camera_button_off");  // offにする
 		}
-		if (metaData.hasOwnProperty('audio_device') && String(metaData.audio_device) === "false") {
+		if (metaData.hasOwnProperty('is_audio_on') && String(metaData.is_audio_on) === "false") {
 			micButton.classList.add("video_mic_button_off");  // offにする
 		}
 		divElem.appendChild(cameraButton);
