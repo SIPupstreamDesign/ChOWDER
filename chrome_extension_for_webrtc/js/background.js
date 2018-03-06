@@ -26,11 +26,15 @@
 	chrome.runtime.onMessageExternal.addListener(onMessageFunc);
 	
 	// for test
+	/*
 	chrome.browserAction.onClicked.addListener(function () {
 		chrome.windows.create({
 			url: "index.html",
 			focused: true,
-			type: "popup"
+			type: "popup",
+			width : 400,
+			height : 100
 		});
 	});
+	*/
 }());

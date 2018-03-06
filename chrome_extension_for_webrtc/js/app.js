@@ -2,6 +2,8 @@
 
 	window.onload = function () {
 		const video = document.getElementById('screen-view');
+		const copy_button = document.getElementById('copy_button');
+		/*
 		const start_button = document.getElementById('start_button');
 		const stop_button = document.getElementById('stop_button');
 		const request = { sources: ['screen', 'window', 'tab', 'audio'] };
@@ -47,9 +49,18 @@
 			stop_button.style.display = "none";
 			start_button.style.display = "inline";
 		});
+		*/
 
 		if (location.hostname.length === 32) {
 			document.getElementById('extensionid_input').value = location.hostname;
+		}
+
+		copy_button.onclick = function () {
+			var input = document.getElementById('extensionid_input');
+			input.disabled = false;
+			input.select();
+			document.execCommand('copy');
+			input.disabled = true;
 		}
 	};
 

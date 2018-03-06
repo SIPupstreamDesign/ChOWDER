@@ -8,14 +8,15 @@
   },
   "browser_action": {
     "default_icon": "img/chowder.png",
-    "default_title": "ChOWDER"
+    "default_title": "ChOWDER",
+	  "default_popup": "index.html"
   },
   "permissions": [
     "desktopCapture",
     "tabs",
     "activeTab",
     "<all_urls>",
-    "storage"
+    "clipboardRead"
   ],
   "externally_connectable": {
     "matches": ["*://127.0.0.1/*", "*://localhost/*"]
