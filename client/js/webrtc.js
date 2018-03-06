@@ -183,8 +183,11 @@
 	};
 
 	WebRTC.prototype.setBandWidth = function (bandwidth) {
+		var preQuality = JSON.stringify(this.bandwidth);
 		this.bandwidth = bandwidth;
-		this.emit(WebRTC.EVENT_NEED_RESTART, null);
+		if (preQuality !== JSON.stringify(bandwidth)) {
+			this.emit(WebRTC.EVENT_NEED_RESTART, null);
+		}
 	};
 
 	WebRTC.prototype.getBandWidth = function () {

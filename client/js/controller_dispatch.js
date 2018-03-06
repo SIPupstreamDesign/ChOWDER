@@ -1537,6 +1537,8 @@
 			var k;
 			if (store.has_video_elem(metadataID)) {
 				var quality = {
+					video_quality_enable : content_property.is_video_quality_enable(),
+					audio_quality_enable : content_property.is_audio_quality_enable(),
 					screen : content_property.get_video_quality(metadataID).min,
 					video : content_property.get_video_quality(metadataID).min,
 					audio : content_property.get_audio_quality(metadataID).min,
@@ -1549,24 +1551,22 @@
 				if (quality.audio_max < quality.audio) {
 					quality.audio_max = quality.audio;
 				}
-				if (!content_property.is_video_quality_enable()) {
+				if (!quality.video_quality_enable) {
 					delete quality["screen"];
 					delete quality["video"];
 					delete quality["video_max"];
 				}
-				if (!content_property.is_audio_quality_enable()) {
+				if (!quality.audio_quality_enable) {
 					delete quality["audio"];
 					delete quality["audio_max"];
 				}
 				if (Object.keys(quality).length === 0) {
 					quality = null;
 				}
-				if (controller.webRTC) {
-					for (k in controller.webRTC) {
-						if (k.indexOf(metadataID) >= 0) {
-							controller.webRTC[k].setBandWidth(quality);
-						}
-					}
+				if (store.has_metadata(metadataID)) {
+					var meta = store.get_metadata(metadataID);
+					meta.quality = JSON.stringify(quality);
+					controller.update_metadata(meta);
 				}
 			}
 		});

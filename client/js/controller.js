@@ -1700,12 +1700,28 @@
 
 		console.log("doneUpdateMetaData", reply);
 		var json = reply;
+		var k;
+		var quality;
 
 		if (reply.length === 1) {
 			json = reply[0];
 			store.set_metadata(json.id, json);
 			if (Validator.isCurrentTabMetaData(json)) {
 				gui.assign_content_property(json);
+			}
+			if (json.hasOwnProperty('quality')) {
+				try {
+					quality = JSON.parse(json.quality);
+					if (this.webRTC) {
+						for (k in this.webRTC) {
+							if (k.indexOf(json.id) >= 0) {
+								this.webRTC[k].setBandWidth(quality);
+							}
+						}
+					}
+				} catch (e) {
+					console.error(e);
+				}
 			}
 		}
 	

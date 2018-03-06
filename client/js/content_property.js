@@ -321,7 +321,6 @@
 			}
 			color_picker.style.display = "none";
 
-
 			if (type === Constants.PropertTypeVideo && metaData.subtype) {
 				// 動画の場合、差し替え履歴、ダウンロード非表示
 				backup_area.style.display = "none";
@@ -366,11 +365,8 @@
 					}.bind(this));
 				}
 				addVideoTextLabel('video_select_quality_title', "ビデオ品質");
-				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, metaData.quality, function (val) {
-					var elems = document.getElementsByClassName('video_quality');
-					for (var i = 0; i < elems.length; ++i) {
-						elems[i].style.display = (val === "auto") ? "none" : "block";
-					}
+				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, 50, function (val) {
+					this.update_quality_display();
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
 				}.bind(this));
 				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", "最小bitrate", "kbps", "300", function () {
@@ -380,11 +376,8 @@
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
 				}.bind(this));
 				addVideoTextLabel('video_select_quality_title', "オーディオ品質");
-				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, metaData.quality, function (val) {
-					var elems = document.getElementsByClassName('audio_quality');
-					for (var i = 0; i < elems.length; ++i) {
-						elems[i].style.display = (val === "auto") ? "none" : "block";
-					}
+				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, 100, function (val) {
+					this.update_quality_display();
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
 				}.bind(this));
 				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", "最小bitrate", "kbps", "50", function () {
@@ -407,6 +400,16 @@
 					qtext += "実際のエンコードビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
 					qtext += "伝送ビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
 					addVideoQualityTextProperty(false, "video_quality_text", qtext);
+				}
+
+				// ビデオ品質
+				if (metaData.hasOwnProperty('quality')) {
+					try {
+						var quality = JSON.parse(metaData.quality);
+						this.set_quality(quality);
+					} catch(e) {
+						console.error(e);
+					}
 				}
 			}.bind(this)).catch(function (err) { // エラー発生時
 				console.error('enumerateDevide ERROR:', err);
@@ -603,6 +606,16 @@
 				backup_list.appendChild(select);
 			}
 		}
+
+		// ビデオ品質
+		if (metaData.hasOwnProperty('quality')) {
+			try {
+				var quality = JSON.parse(metaData.quality);
+				this.set_quality(quality);
+			} catch(e) {
+				console.error(e);
+			}
+		}
 	};
 
 	ContentProperty.prototype.update_display_value = function () {
@@ -644,12 +657,32 @@
 		return false;
 	};
 
+	// ビデオオーディオ品質の有効状態の変更による表示切り替え
+	ContentProperty.prototype.update_quality_display = function () {
+		var elem;
+		var elems;
+		elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			elems = document.getElementsByClassName('video_quality');
+			for (var i = 0; i < elems.length; ++i) {
+				elems[i].style.display = (elem.value === "auto") ? "none" : "block";
+			}
+		}
+		elem = document.getElementById('audio_select_input_quality');
+		if (elem) {
+			elems = document.getElementsByClassName('audio_quality');
+			for (var i = 0; i < elems.length; ++i) {
+				elems[i].style.display = (elem.value === "auto") ? "none" : "block";
+			}	
+		}
+	}
+
 	ContentProperty.prototype.get_video_quality = function () {
 		var elems = document.getElementsByClassName('video_quality');
 		if (elems.length > 0) {
 			return {
-				min : document.getElementById('video_quality_min').value,
-				max : document.getElementById('video_quality_max').value
+				min : Number(document.getElementById('video_quality_min').value),
+				max : Number(document.getElementById('video_quality_max').value)
 			}
 		}
 		return null;
@@ -659,12 +692,57 @@
 		var elems = document.getElementsByClassName('audio_quality');
 		if (elems.length > 0) {
 			return {
-				min : document.getElementById('audio_quality_min').value,
-				max : document.getElementById('audio_quality_max').value
+				min : Number(document.getElementById('audio_quality_min').value),
+				max : Number(document.getElementById('audio_quality_max').value)
 			}
 		}
 		return null;
 	};
+
+	ContentProperty.prototype.set_quality = function (quality) {
+		//console.error("set_quality", quality)
+		var elem;
+		/*
+		screen : content_property.get_video_quality(metadataID).min,
+		video : content_property.get_video_quality(metadataID).min,
+		audio : content_property.get_audio_quality(metadataID).min,
+		video_max : content_property.get_video_quality(metadataID).max,
+		audio_max : content_property.get_audio_quality(metadataID).max
+		*/
+		elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			if (quality.hasOwnProperty('video_quality_enable') && String(quality.video_quality_enable) !== "false") {
+				elem.value = "custom";
+			} else {
+				elem.value = "auto";
+			}
+		}
+		elem = document.getElementById('audio_select_input_quality');
+		if (elem) {
+			if (quality.hasOwnProperty('audio_quality_enable') && String(quality.audio_quality_enable) !== "false") {
+				elem.value = "custom";
+			} else {
+				elem.value = "auto";
+			}
+		}
+		if (quality.hasOwnProperty('video')) {
+			var vmin = document.getElementById('video_quality_min');
+			if (vmin) { vmin.value = Number(quality.video); }
+		}
+		if (quality.hasOwnProperty('video_max')) {
+			var vmax = document.getElementById('video_quality_max');
+			if (vmax) { vmax.value = Number(quality.video_max); }
+		}
+		if (quality.hasOwnProperty('audio')) {
+			var amin = document.getElementById('audio_quality_min');
+			if (amin) { amin.value = Number(quality.audio); }
+		}
+		if (quality.hasOwnProperty('audio_max')) {
+			var amax = document.getElementById('audio_quality_max');
+			if (amax) { amax.value = Number(quality.audio_max); }
+		}
+		this.update_quality_display();
+	}
 
 	ContentProperty.EVENT_CHANGE_ZINDEX = "change_zindex";
 	ContentProperty.EVENT_RECT_CHANGED = "rect_changed";
