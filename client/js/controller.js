@@ -931,8 +931,8 @@
 			video = document.createElement('video');
 			store.set_video_elem(metaData.id, video);
 			
-			// カメラは追加したコントローラではmuteにする
-			if (type === "camera") {
+			// カメラ,スクリーン共有は追加したコントローラではmuteにする
+			if (type === "camera" || type === "screen") {
 				video.muted = true;
 			}
 		}
