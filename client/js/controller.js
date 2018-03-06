@@ -930,6 +930,10 @@
 		} else {
 			video = document.createElement('video');
 			store.set_video_elem(metaData.id, video);
+			
+			if (type === "camera") {
+				video.muted = true;
+			}
 		}
 
 		var videoData;
