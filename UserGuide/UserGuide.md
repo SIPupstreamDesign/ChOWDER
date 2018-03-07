@@ -246,7 +246,7 @@ ChOWDERへのアクセスは、前述のアプリケーション起動を行っ�
 
 <img src="image/connect.png" alt="サーバーとの接続ありの状態" width="283" />
 *サーバーとの接続ありの状態*
-
+<br>
 <img src="image/disconnect.png" alt="サーバーとの接続が無い状態" width="283" />
 *サーバーとの接続が無い状態*
 
@@ -367,7 +367,7 @@ WebRTCの詳細については  [動画コンテンツの操作](#動画コン�
 
 <img src="image/AddContent_TextFile_Select.png" alt="テキストファイルを選択" width="434" />
 *テキストファイルを選択*
-
+<br>
 <img src="image/AddContent_TextFile_View.png" alt="テキストファイルのVirtualScreenへの追加" width="585" />
 *テキストファイルのVirtualScreenへの追加*
 
@@ -540,7 +540,7 @@ Contentsタブにて選択している画像の差し替えを行います.
 
 <img src="image/YUMUSHI.png" alt="画像の差し替えし指定" width="434" />
 *画像の差し替え指定*
-
+<br>
 <img src="image/SASHI2.png" alt="画像の差し替え結果" width="434" />
 *画像の差し替え結果*
 
@@ -552,7 +552,7 @@ Contentタブでは, コンテンツに割り当てるGroupの設定が行えま
 
 <img src="image/group1.png" alt="Groupの追加, 順序変更" height="321" />
 *Groupの追加, 順序変更*
-
+<br>
 <img src="image/group2.png" alt="Groupの設定" height="321" />
 *Groupの設定*
 
@@ -645,28 +645,30 @@ Propertyは以下の通りID以外を編集し、座標、表示の優先順位(
 
 <img src="image/management1.png" alt="管理者ログイン時のメニュー" width="585" />
 *管理者ログイン時のメニュー*
-
--
-<img src="image/management2.png" alt="管理画面" width="585" />
+<br>
+<img src="image/management2.png" alt="管理画面" width="585" height="auto" />
 *管理画面*
 
 ### DB 管理
 DB 管理では, 保存領域の新規作成, 切り替え, 名前変更, 削除, 初期化, を行えます.ただし, 最初に自動で作ら
 れるdefault という保存領域については, 名前変更及び削除は行えません.
 
-<img src="image/management3.png" alt=" DB 管理" width="585" />*DB 管理*
+<img src="image/management3.png" alt=" DB 管理" width="585" />
+*DB 管理*
 
 ### 履歴管理
 履歴管理では, コンテンツの差し替え履歴の最大保存数を設定できます. 各コンテンツごとに, ここで設定した数だけ,
 履歴が保存されます. この値は, グローバルな設定値で, DB を変更した場合でも同じ値が適用されます.
 
-<img src="image/management4.png" alt=" 履歴管理" width="585" />*履歴管理*
+<img src="image/management4.png" alt=" 履歴管理" width="585" />
+*履歴管理*
 
 
 ### 閲覧・編集権限の設定
 閲覧・編集権限の設定では, ユーザーごとの権限の設定が行えます.
 
-<img src="image/management5.png" alt=" 閲覧・編集権限の設定" width="585" />*閲覧・編集権限の設定*
+<img src="image/management5.png" alt=" 閲覧・編集権限の設定" width="585" />
+*閲覧・編集権限の設定*
 
  1. 設定対象ユーザーを選択します.
  2. 選択中のユーザーが, 編集可能なユーザー, 及び, 閲覧可能なユーザーを選択します.「全て」を選択した場合は, 新規に作成されたグループも閲覧・編集対象となります.
@@ -676,7 +678,8 @@ DB 管理では, 保存領域の新規作成, 切り替え, 名前変更, 削除
 パスワードの設定では, ユーザーのパスワード変更を行えます. 
 管理者のパスワードを変更する場合のみ, 変更前のパスワードが必要となります.
 
-<img src="image/management6.png" alt="パスワードの設定" width="585" />*パスワードの設定*
+<img src="image/management6.png" alt="パスワードの設定" width="585" />
+*パスワードの設定*
 
 
 ディスプレイ画面の操作
@@ -730,7 +733,7 @@ HIVEのインタラクティブレンダリング時に, グラフィクス画�
 
 <img src="image/hive1.png" alt="ChOWDER接続用メニュー項目" width="321" />
 *ChOWDER接続用メニュー項目*
-
+<br>
 <img src="image/hive2.png" alt="URL設定" width="321" />
 *URL設定*
 
@@ -771,7 +774,7 @@ Chromeに拡張機能をインストールし追加するには、下図に示�
 
 <img src="image/extension01.png" alt="拡張機能ページを開くメニュー" width="585" />
 *拡張機能ページを開くメニュー*
-
+<br>
 <img src="image/extension02.png" alt="Extensionファイルのドラッグアンドドロップ" width="585" />
 *Extensionファイルのドラッグアンドドロップ*
 
@@ -790,7 +793,7 @@ Extensionを追加したら、アイコンをクリックしてキャプチャ�
 
 <img src="image/extension03.png" alt="Extensionのメニュー" width="207" />
 *Extensionのメニュー*
-
+<br>
 <img src="image/extension04.png" alt="AutoCapture開始後" width="207" />
 *AutoCapture開始後*
 
@@ -799,7 +802,7 @@ Extensionを追加したら、アイコンをクリックしてキャプチャ�
     -   URL … ChOWDERへ接続するためのURLを設定します.
 
     -   Interval … AutoCaptureで使用される, キャプチャ間隔を設定します.
-
+  
 <img src="image/extension_setting.png" alt="Extensionの設定" width="207" />
 *Extensionの設定*
 
@@ -852,20 +855,21 @@ ChOWDER Desktop Capture は起動時に
 * アクティブなウィンドウ
 をサムネイル化し、画面下部に表示します。
 
-<img src="image/dc_cap01.png" alt="サムネイル一覧" width="600" />
+<img src="image/dc_cap01.png" alt="サムネイル一覧" width="400" />
 
 キャプチャ対象の変更はサムネイルをクリックすることで行うことができます。クリックされた対象は画面上部にプ
 レビューとして映し出されキャプチャ待機状態となります。
 
-
-<img src="image/dc_cap02.png" alt="キャプチャ対象のプレビュー" width="300" />*キャプチャ対象のプレビュー*
+<img src="image/dc_cap02.png" alt="キャプチャ対象のプレビュー" width="300" />
+*キャプチャ対象のプレビュー*
 
 キャプチャ対象を選択した後に「Capture Start」ボタンを押下することでChOWDER への画像送信が開始されます。
 
-
-<img src="image/dc_cap03.png" alt="Capture Start ボタン" width="600" />*Capture Start ボタン*
-
-<img src="image/dc_cap04.png" alt="Capture Start ボタンを押した時" width="600" />*Capture Start ボタンを押した時*
+<img src="image/dc_cap03.png" alt="Capture Start ボタン" width="600" />
+*Capture Start ボタン*
+<br>
+<img src="image/dc_cap04.png" alt="Capture Start ボタンを押した時" width="600" />
+*Capture Start ボタンを押した時*
 
 #### キャプチャ範囲の選択
 ChOWDER Desktop Capture では範囲選択を行うことで、画面の一部をChOWDER に画像として送信することがで
@@ -875,11 +879,14 @@ ChOWDER Desktop Capture では範囲選択を行うことで、画面の一部�
 のインジケータに変化します。この状態でマウスを押下すると範囲選択状態に移行するので、キャプチャを行いたい範
 囲までドラッグした後、マウスを離すことでキャプチャ範囲を指定することができます。
 
-<img src="image/dc_cap05.png" alt="Set Capture Area ボタン" width="600" />*Set Capture Area ボタン*
-
-<img src="image/dc_cap06.png" alt="範囲選択状態" width="600" />*範囲選択状態*
-
-<img src="image/dc_cap07.png" alt="範囲選択プレビュー" width="600" />*範囲選択プレビュー*
+<img src="image/dc_cap05.png" alt="Set Capture Area ボタン" width="600" />
+*Set Capture Area ボタン*
+<br>
+<img src="image/dc_cap06.png" alt="範囲選択状態" width="600" />
+*範囲選択状態*
+<br>
+<img src="image/dc_cap07.png" alt="範囲選択プレビュー" width="600" />
+*範囲選択プレビュー*
 
 画像の送信は「キャプチャ対象の選択」と同様に、「Capture Start」ボタンを押下することで開始されます。
 
@@ -888,7 +895,8 @@ ChOWDER Desktop Capture では、ChOWDER への画像送信の送信間隔を設
 Interval(sec) の右側のフォームに数値を入力するか、上下ボタンを押すことで変更されます。最低間隔は0.05(sec) で
 す。「Reset」ボタンを押すことで初期値(1sec) が入力されます。
 
-<img src="image/dc_cap08.png" alt="キャプチャ間隔設定フォーム" width="600" />*キャプチャ間隔設定フォーム*
+<img src="image/dc_cap08.png" alt="キャプチャ間隔設定フォーム" width="600" />
+*キャプチャ間隔設定フォーム*
 
 Capture Interval、ChOWDER URL、Target Group の値は、本アプリケーションを終了しても次回起動時に保持され
 ます。
@@ -898,13 +906,15 @@ ChOWDER Desktop Capture では、画像の送信先（ChOWDER）のURL を設定
 URL の右側のフォームに送信先のURL を入力することで変更されます。「Reset」ボタンを押すことで初期値が入力さ
 れます。
 
-<img src="image/dc_cap09.png" alt="送信先URL 設定フォーム" width="600" />*送信先URL 設定フォーム*
+<img src="image/dc_cap09.png" alt="送信先URL 設定フォーム" width="600" />
+*送信先URL 設定フォーム*
 
 ### キャプチャ画像のグループの設定
 ChOWDER Desktop Capture では、キャプチャ画像の送信先グループを設定することができます。Target Group の右
 側のドロップダウンリストから選択することができます。「Reload」ボタンを押すことで初期値が入力されます。
 
-<img src="image/dc_cap10.png" alt="送信先グループ設定フォーム" width="600" />*送信先グループ設定フォーム*
+<img src="image/dc_cap10.png" alt="送信先グループ設定フォーム" width="600" />
+*送信先グループ設定フォーム*
 
 
 Google Chrome Extension for WebRTCの利用
@@ -932,7 +942,8 @@ Extensionでキャプチャする
 
 Extensionを追加したら、Add→ScreenShareを実行し、ダイアログにExtensionIDを入力することでキャプチャを開始できます。
 
-<img src="image/AddContent_ScreenShare_View2.png" alt="ScreenShare開始時のExtensionIDの入力" width="600" />*ScreenShare開始時のExtensionIDの入力*
+<img src="image/AddContent_ScreenShare_View2.png" alt="ScreenShare開始時のExtensionIDの入力" width="600" />
+*ScreenShare開始時のExtensionIDの入力*
 
 
 HTTPSの利用
