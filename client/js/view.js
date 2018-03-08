@@ -1202,6 +1202,8 @@
 			for (i = 0; i < data.length; ++i) {
 				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
 					update('window');
+					updatePreviewAreaVisible( data[0]);
+					resizeViewport( data[0])
 					return;
 				}
 			}
