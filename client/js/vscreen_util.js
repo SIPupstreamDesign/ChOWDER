@@ -9,8 +9,7 @@
 	 * 仮想スクリーンユーティリティ
 	 * @method VscreenUtil
 	 */
-	var VscreenUtil = function () {},
-		windowType = "window";
+	var VscreenUtil = function () {};
 	
 	/**
 	 * Floatの矩形を作成
@@ -61,6 +60,16 @@
 			}
 			elem.style.width = rect.w + 'px';
 			elem.style.height = rect.h + 'px';
+		}
+	}
+
+	/**
+	 * 動画のリサイズ
+	 */
+	function resizeVideo(elem, rect) {
+		if (elem && rect) {
+			elem.setAttribute("width", String(rect.w));
+			elem.setAttribute("height", String(rect.w));
 		}
 	}
 	
@@ -131,16 +140,18 @@
 		if (elem && metaData) {
 			assignRect(elem, rect, (metaData.width < 10), (metaData.height < 10));
 			assignZIndex(elem, metaData);
-			if (metaData.type === "text") {
+			if (Validator.isTextType(metaData)) {
 				resizeText(elem, rect);
+			} else if (metaData.type === "video") {
+				resizeVideo(elem, rect);
 			}
 			
 			if (isVisible(metaData)) {
 				//console.log("isvisible");
 				elem.style.display = "block";
-				if (metaData.type !== windowType) {
+				if (!Validator.isWindowType(metaData)) {
 					if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
-						if (metaData.group === "default") {
+						if (metaData.group === Constants.DefaultGroup) {
 							elem.style.borderColor = "rgb(54,187,68)";
 						} else {
 							elem.style.borderColor = groupDict[metaData.group].color;
@@ -167,8 +178,8 @@
 			elem.style.position = 'absolute';
 			elem.style.left = String(rect.x) + 'px';
 			elem.style.top = String(rect.y) + 'px';
-			elem.style.width = String(rect.w + 0.5) + 'px';
-			elem.style.height = String(rect.h + 0.5) + 'px';
+			elem.style.width = String(rect.w) + 'px';
+			elem.style.height = String(rect.h) + 'px';
 			console.log("assignScreenRect:" + JSON.stringify(rect));
 		}
 	}

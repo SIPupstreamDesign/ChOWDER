@@ -250,7 +250,9 @@
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
 				if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast ws", method);}
-				ws.broadcast(data);
+				for (var i = 0; i < ws.length; ++i) {
+					ws[i].broadcast(data);
+				}
 			} else {
 				console.log('[Error] Not found the method in connector: ', data);
 			}

@@ -53,7 +53,14 @@
 		Logout : "Logout",
 		ChangePassword : "ChangePassword",
 		ChangeAuthority : "ChangeAuthority",
-		GetUserList :  "GetUserList"
+		GetUserList :  "GetUserList",
+
+		// WebRTC
+		RTCRequest : "RTCRequest",
+		RTCOffer : "RTCOffer",
+		RTCAnswer : "RTCAnswer",
+		RTCIceCandidate : "RTCIceCandidate",
+		RTCClose : "RTCClose",
 	};
 	
 	window.command = Command;

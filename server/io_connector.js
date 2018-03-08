@@ -254,7 +254,9 @@
 		try {
 			data = JSON.stringify(reqjson);
 			if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast io", method);}
-			io.emit('chowder_response', data);
+			for (var i = 0; i < io.length; ++i) {
+				io[i].emit('chowder_response', data);
+			}
 		} catch (e) {
 			console.error(e);
 		}

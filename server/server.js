@@ -3,6 +3,7 @@
 
 var fs = require('fs'),
 	http = require('http'),
+	https = require('https'),
 	WebSocket = require('websocket'),
 	util = require('./util'),
 	operator = require('./operator.js'),
@@ -10,14 +11,15 @@ var fs = require('fs'),
 	ws_connector = require('./ws_connector.js'),
 	io_connector = require('./io_connector.js'),
 	port = 8080,
+	sslport = 9090,
 	currentVersion = "v2",
-	ws_connections = {},
 	ws2_connections = {},
 	id_counter = 0,
 	Command = require('./command.js'),
 	io,   // socket io server operator instance
-	ws,   // web socket server sender instance
-	ws2;  // web socket server operator instance
+	io_s,
+	ws2, // web socket server operator instance
+	ws2_s;  
 
 console.log(operator);
 
@@ -26,60 +28,17 @@ operator.registerUUID("default");
 
 if (process.argv.length > 2) {
 	port = parseInt(process.argv[2], 10);
+	if (process.argv.length > 3) {
+		sslport = parseInt(process.argv[3], 10);
+	}
 }
 //----------------------------------------------------------------------------------------
 // websocket sender
 //----------------------------------------------------------------------------------------
-/*
-/// http server instance for sender
-var seserver = http.createServer(function (req, res) {
-	'use strict';
-	console.log('REQ>', req.url);
-	res.end("websocket sender");
-});
-seserver.listen(port + 1);
-
-/// web socket server instance
-ws = new WebSocket.server({ httpServer : seserver,
-		maxReceivedFrameSize : 0x1000000, // more receive buffer!! default 65536B
-		autoAcceptConnections : false});
-
-ws.on('request', (function (ws_connections) {
-	"use strict";
-	return function (request) {
-		var connection = null;
-		if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
-			console.log('invalid version');
-			return;
-		}
-		connection = request.accept(null, request.origin);
-		console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
-
-		// save connection with id
-		connection.id = id_counter;
-		ws_connections[id_counter] = connection;
-		id_counter = id_counter + 1;
-
-		sender.setOperator(operator);
-		sender.registerWSEvent(connection.id, connection, io, ws);
-		//ws_connector.broadcast(ws, Command.Update);
-
-		connection.on('close', (function (connection) {
-			return function () {
-				delete ws_connections[connection.id];
-
-				operator.decrWindowReferenceCount(connection.id, function (err, meta) {
-					io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
-					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
-				});
-
-				console.log('connection closed :' + connection.id);
-			};
-		}(connection)));
-
-	};
-}(ws_connections)));
-*/
+var options= {
+	key: fs.readFileSync('server.key'),
+	cert: fs.readFileSync('server.crt')
+};
 
 //----------------------------------------------------------------------------------------
 // websocket operator
@@ -92,51 +51,62 @@ var wsopserver = http.createServer(function (req, res) {
 });
 wsopserver.listen(port + 1);
 
+var wsopserver_s = https.createServer(options, function (req, res) {
+	'use strict';
+	console.log('REQ>', req.url);
+	res.end("websocket operator");
+});
+wsopserver_s.listen(sslport + 1);
+
 /// web socket server instance
 ws2 = new WebSocket.server({ httpServer : wsopserver,
 		maxReceivedMessageSize: 64*1024*1024, // 64MB
 		maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
 		autoAcceptConnections : false});
+		
+ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+	maxReceivedMessageSize: 64*1024*1024, // 64MB
+	maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+	autoAcceptConnections : false});
 
-ws2.on('request', function (request) {
-	"use strict";
-	var connection = null;
-	if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
-		console.log('invalid version');
-		return;
+function ws_request(io, ws2) { // for http or https
+	return function (request) {
+		"use strict";
+		var connection = null;
+		if (request.resourceURL.pathname.indexOf(currentVersion) < 0) {
+			console.log('invalid version');
+			return;
+		}
+		
+		connection = request.accept(null, request.origin);
+		console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
+		
+		// save connection with id
+		connection.id = id_counter;
+		ws2_connections[id_counter] = connection;
+		id_counter = id_counter + 1;
+		
+		operator.registerWSEvent(connection, io, ws2);
+		
+		connection.on('close', (function (connection) {
+			return function () {
+				delete ws2_connections[connection.id];
+	
+				operator.decrWindowReferenceCount(connection.id, function (err, meta) {
+					io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
+					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
+				});
+	
+				console.log('connection closed :' + connection.id);
+			};
+		}(connection)));
 	}
-	
-	connection = request.accept(null, request.origin);
-	console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
-	
-	// save connection with id
-	connection.id = id_counter;
-	ws2_connections[id_counter] = connection;
-	id_counter = id_counter + 1;
-	
-	operator.registerWSEvent(connection, io, ws2);
-	
-	connection.on('close', (function (connection) {
-		return function () {
-			delete ws2_connections[connection.id];
-
-			operator.decrWindowReferenceCount(connection.id, function (err, meta) {
-				io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
-				//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
-			});
-
-			console.log('connection closed :' + connection.id);
-		};
-	}(connection)));
-	
-});
-
+}
 
 //----------------------------------------------------------------------------------------
 // socket.io operator
 //----------------------------------------------------------------------------------------
-/// http server instance for operation
-var opsever = http.createServer(function (req, res) {
+function opserver_http_request(req, res) {
 	'use strict';
 	console.log('REQ>', req.url);
 	var file,
@@ -186,13 +156,20 @@ var opsever = http.createServer(function (req, res) {
 			res.end(data);
 		}); // fs.readFile
 	}
-});
+}
+
+/// http server instance for operation
+var opsever = http.createServer(opserver_http_request);
 opsever.listen(port);
+
+var opsever_s = https.createServer(options, opserver_http_request);
+opsever_s.listen(sslport);
 
 /// socekt.io server instance
 io = require('socket.io').listen(opsever).of(currentVersion);
+io_s = require('socket.io').listen(opsever_s, options).of(currentVersion);
 
-io.on('connection', (function (ws2_connections) {
+function io_request(io, ws2) {
 	"use strict";
 	return function (socket) {
 		console.log("[CONNECT] ID=" + socket.id);
@@ -209,7 +186,13 @@ io.on('connection', (function (ws2_connections) {
 			console.error('trace.. ' + err.stack);
 		});
 	};
-}(ws2_connections)));
+}
+
+ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+
+io.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+io_s.on('connection', io_request([io, io_s], [ws2, ws2_s]));
 
 
 //----------------------------------------------------------------------------------------
@@ -250,5 +233,7 @@ process.on('SIGINT', function () {
 
 console.log('start server "http://localhost:' + port + '/"');
 console.log('start ws operate server "ws://localhost:' + (port + 1) + '/"');
+console.log('start server "https://localhost:' + sslport + '/"');
+console.log('start ws operate server "wss://localhost:' + (sslport + 1) + '/"');
 //console.log('start ws operate server "ws://localhost:' + (port + 2) + '/"');
 

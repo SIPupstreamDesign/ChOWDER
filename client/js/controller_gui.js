@@ -3,8 +3,7 @@
 
 (function () {
 	"use strict";
-	var ControllerGUI,
-		wholeWindowListID = "onlist:whole_window";
+	var ControllerGUI;
 	
 	// コンストラクタ
 	ControllerGUI = function () {
@@ -131,6 +130,13 @@
 								}.bind(this)
 							}
 						}, {
+							Movie : {
+								func : function () { 
+									this.initContextPos();
+									document.getElementById('video_file_input').click();
+								}.bind(this)
+							}
+						}, {
 							Text : {
 								func : function () { 
 									this.initContextPos();
@@ -151,6 +157,20 @@
 									this.toggleURLInput();
 								}.bind(this)
 							}
+						}, {
+							ScreenShare : {
+								func : function () { 
+									this.initContextPos();
+									this.emit(window.ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null);
+								}.bind(this)
+							}
+						}, {
+							CameraShare : {
+								func : function () { 
+									this.initContextPos();
+									this.emit(window.ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED, null);
+								}.bind(this)
+							}
 						}],
 				}, {
 					Setting : settingMenu
@@ -162,23 +182,23 @@
 			{
 				tabs : [{
 						Display : {
-							id : "display_tab",
+							id : Constants.TabIDDisplay,
 							func : function () { this.changeTab('Display'); }.bind(this),
 							active : true,
 						},
 					}, {
 						Content : {
-							id : "content_tab",
+							id : Constants.TabIDContent,
 							func : function () { this.changeTab('Content'); }.bind(this)
 						},
 					}, {
 						Search : {
-							id : "search_tab",
+							id : Constants.TabIDSearch,
 							func : function () { this.changeTab('Search'); }.bind(this)
 						}
 					}, {
 						Layout : {
-							id : "layout_tab",
+							id : Constants.TabIDLayout,
 							func : function () { this.changeTab('Layout'); }.bind(this)
 						}
 					}]
@@ -196,7 +216,7 @@
 			{
 				tabs : [{
 						"group_default" : {
-							id : "group_default",
+							id : Constants.DefaultGroup,
 							name : "default",
 							className : "group_tab",
 							func : function () {},
@@ -210,7 +230,7 @@
 		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'),
 			{
 				groups : [{
-					id : "group_default",
+					id : Constants.DefaultGroup,
 					name : "default"
 				}],
 				colors : ["rgb(54,187,68)"]
@@ -222,9 +242,9 @@
 			{
 				tabs : [{
 						"group_default" : {
-							id : "group_default",
+							id : Constants.DefaultGroup,
 							name : "default",
-							className : "layout_tab",
+							className : Constants.TabIDLayout,
 							func : function () {},
 							active : false
 						}
@@ -235,12 +255,15 @@
 
 		// 右部コンテンツプロパティの初期化.
 		window.content_property.setAuthority(this.management.getAuthorityObject());
-		window.content_property.init(wholeWindowListID, "", "whole_window");
+		this.init_content_property(Constants.WholeWindowListID, "", Constants.PropertyTypeWholeWindow);
 
 		// コンテキストメニューの初期化.
 		this.initContextMenu();
 		this.initDisplayContextMenu();
 		this.initLayoutContextMenu();
+		
+		// マウスイベントの初期化
+		this.initMouseEvent();
 
 		// コンテンツ入力の初期化
 		this.initContentInputs();
@@ -456,6 +479,96 @@
 		}
 	}
 
+	ControllerGUI.prototype.initMouseEvent = function () {
+		var isGesture = false;
+		var gestureScale,
+			dx,dy;
+
+		if(window.ontouchstart !== undefined) {
+			// タッチイベントの初期化
+			document.addEventListener("touchstart", function (evt) {
+				if (!isGesture) {
+					this.emit('mousemove', evt);
+				}
+			}.bind(this), false);
+			document.addEventListener("touchmove", function (evt) {
+				if (!isGesture) {
+					this.emit('mousemove', evt);
+					evt.preventDefault();
+				}
+			}.bind(this), false);
+			document.addEventListener("touchend",  function (evt) {
+				this.emit('mouseup', evt);
+			}.bind(this), false);
+		} else {
+			// マウスイベントの初期化
+			window.document.addEventListener("mousemove", function (evt) {
+				this.emit('mousemove', evt);
+			}.bind(this));	
+			window.document.addEventListener("mouseup", function (evt) {
+				this.emit('mouseup', evt);
+			}.bind(this));
+		}
+
+		function gesturestartFunc(e) {
+			isGesture = true;
+			gestureScale = vscreen.getWholeScale();
+			e.stopPropagation();
+			e.preventDefault();
+		}
+
+		function gesturechangeFunc(e) {
+			if (!isGesture) { return false; }
+			var scale_current = document.getElementById('scale_dropdown_current');
+			gui.update_display_scale(gestureScale * e.scale);
+			e.stopPropagation();
+			e.preventDefault();
+		}
+		
+		function gestureendFunc() {
+			isGesture = false;
+		}
+
+		if (window.ongesturestart !== undefined) {
+			// ジェスチャーイベントの初期化
+			document.addEventListener("gesturestart", gesturestartFunc, false);
+			document.addEventListener("gesturechange", gesturechangeFunc, false);
+			document.addEventListener("gestureend", gestureendFunc, false);
+		}
+
+		// ホイールイベント
+		var onWheel = function (e) {
+			if (this.isOpenDialog) { return; }
+			if (!this.is_listview_area(e) && !this.is_property_area(e)) {
+				if(!e) e = window.event; //for legacy IE
+				var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
+				var display_scale = vscreen.getWholeScale();
+				e.preventDefault();
+				if (delta < 0){
+					//下にスクロールした場合の処理
+					display_scale = display_scale + 0.05;
+				} else if (delta > 0){
+					//上にスクロールした場合の処理
+					display_scale = display_scale - 0.05;
+				}
+				
+				if (display_scale < 0.05) {
+					display_scale = 0.05
+				}
+				if (display_scale > 2) {
+					display_scale = 2;
+				}
+				this.update_display_scale(display_scale);
+			}
+		}.bind(this);
+		var mousewheelevent = 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll';
+		try{
+			document.addEventListener (mousewheelevent, onWheel, false);
+		}catch(e){
+			document.attachEvent ("onmousewheel", onWheel); //for legacy IE
+		}
+	};
+
 	ControllerGUI.prototype.initContextMenuVisible = function (menu, type, type2) {
 		// 出現タイミング調整.
 		var mouseDownPosX = null,
@@ -502,7 +615,7 @@
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
 					
-					if (type == "layout_tab" && !this.is_listview_area(evt)) {
+					if (type == Constants.TabIDLayout && !this.is_listview_area(evt)) {
 						// レイアウトタブはメインビューのエリア内であればコンテンツメニューを開く
 						menuElem = document.getElementById('context_menu');
 					} else {
@@ -510,7 +623,7 @@
 					}
 
 					menuElem.style.display = 'block';
-					if (type === "display_tab") {
+					if (type === Constants.TabIDDisplay) {
 						rect = document.getElementById('context_menu_display').getBoundingClientRect();
 					} else {
 						rect = document.getElementById('context_menu').getBoundingClientRect();
@@ -551,9 +664,12 @@
 			move_front_button = document.getElementById("context_menu_move_front"),
 			move_back_button = document.getElementById("context_menu_move_back"),
 			add_image_button = document.getElementById('context_menu_add_image'),
+			add_video_button = document.getElementById('context_menu_add_video'),
 			add_text_button = document.getElementById('context_menu_add_text'),
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
 			add_url_button = document.getElementById('context_menu_add_url'),
+			add_screenshare_button = document.getElementById('context_menu_add_screenshare'),
+			add_camerashare_button = document.getElementById('context_menu_add_camerashare'),
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
 			change_image_button = document.getElementById('context_menu_change_image'),
@@ -581,6 +697,11 @@
 			menu.style.display = "none";
 		};
 
+		add_video_button.onmousedown = function (evt) {
+			document.getElementById('video_file_input').click();
+			menu.style.display = "none";
+		};
+
 		add_text_file_button.onmousedown = function (evt) {
 		 	document.getElementById('text_file_input').click();	
 			menu.style.display = "none";
@@ -589,6 +710,14 @@
 		add_url_button.onmousedown = function (evt) {
 			this.toggleURLInput();
 			menu.style.display = "none";
+		}.bind(this);
+
+		add_screenshare_button.onmousedown = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null, evt); 
+		}.bind(this);
+
+		add_camerashare_button.onmousedown = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED, null, evt); 
 		}.bind(this);
 
 		add_text_button.onmousedown = function (evt) {
@@ -664,7 +793,7 @@
 			}
 		};
 
-		this.initContextMenuVisible(menu, "content_tab", "search_tab");
+		this.initContextMenuVisible(menu, Constants.TabIDContent, Constants.TabIDSearch);
 	}
 
 
@@ -694,7 +823,7 @@
 			this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); 
 			menu.style.display = "none";
 		}.bind(this);
-		this.initContextMenuVisible(menu, "display_tab", "");
+		this.initContextMenuVisible(menu, Constants.TabIDDisplay, "");
 	};
 
 	ControllerGUI.prototype.initLayoutContextMenu = function () {
@@ -750,7 +879,7 @@
 			}
 		};
 
-		this.initContextMenuVisible(menu, "layout_tab", "");
+		this.initContextMenuVisible(menu, Constants.TabIDLayout, "");
 	};
 	
 	/**
@@ -879,7 +1008,8 @@
 	ControllerGUI.prototype.initContentInputs = function () {
 		var imageFileInput = document.getElementById('image_file_input'),
 			textFileInput = document.getElementById('text_file_input'),
-			updateImageInput = document.getElementById('update_image_input');
+			updateImageInput = document.getElementById('update_image_input'),
+			videoFileInput = document.getElementById('video_file_input');
 
 		imageFileInput.addEventListener('change', function (evt) {
 			this.emit(window.ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
@@ -894,6 +1024,11 @@
 		updateImageInput.addEventListener('change', function (evt) {
 			this.emit(window.ControllerGUI.EVENT_UPDATEIMAGEINPUT_CHANGED, null, evt);
 			updateImageInput.value = "";
+		}.bind(this), false);
+
+		videoFileInput.addEventListener('change', function (evt) {
+			this.emit(window.ControllerGUI.EVENT_VIDEOFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
+			videoFileInput.value = "";
 		}.bind(this), false);
 	};
 
@@ -1134,7 +1269,7 @@
 			layoutGroupTab[groupID] = {
 				id : groupID,
 				name : groupName,
-				className : "layout_tab",
+				className : Constants.TabIDLayout,
 				color : groupColor,
 				active : true
 			};
@@ -1263,7 +1398,10 @@
 		var add_image_button = document.getElementById('burger_menu_add_image'),
 			add_text_button = document.getElementById('burger_menu_add_text'),
 			add_text_file_button = document.getElementById('burger_menu_add_text_file'),
-			add_url_button = document.getElementById('burger_menu_add_url');
+			add_url_button = document.getElementById('burger_menu_add_url'),
+			add_video_button = document.getElementById('burger_menu_add_video'),
+			add_screenshare_button = document.getElementById('burger_menu_add_screenshare'),
+			add_camerashare_button = document.getElementById('burger_menu_add_camerashare');
 		
 		add_image_button.onmousedown = function (evt) {
 			this.toggleBurgerSubmenuAddContent(false);
@@ -1288,6 +1426,25 @@
 			this.contentMenu.toggle();
 			this.openTextInput();
 		}.bind(this);
+
+		add_video_button.onmousedown = function (evt) {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+			document.getElementById('video_file_input').click();
+		}.bind(this);
+
+		add_screenshare_button.onmousedown = function (evt) {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+			this.emit(ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED, null);
+		}.bind(this);
+
+		add_camerashare_button.onmnousedown = function (evt) {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+			this.emit(ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED, null);
+		}.bind(this);
+
 	};
 
 	function guid10() {
@@ -1331,12 +1488,12 @@
 		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
 	ControllerGUI.prototype.get_current_group_id = function () {
-		if (this.tabs.is_active("content_tab") && this.groupBox) {
+		if (this.tabs.is_active(Constants.TabIDContent) && this.groupBox) {
 			return this.groupBox.get_current_group_id();
-		} else if (this.tabs.is_active("layout_tab") && this.layoutBox) {
+		} else if (this.tabs.is_active(Constants.TabIDLayout) && this.layoutBox) {
 			return this.layoutBox.get_current_group_id();
 		}
-		return null;
+		return Constants.DefaultGroup;
 	};
 	ControllerGUI.prototype.select_group = function (group_id) {
 		this.groupBox.select_tab(group_id);
@@ -1355,7 +1512,7 @@
 		return document.getElementById("onsearch:" + id);
 	};
 	ControllerGUI.prototype.get_whole_window_elem = function () {
-		return document.getElementById(wholeWindowListID);
+		return document.getElementById(Constants.WholeWindowListID);
 	};
 	ControllerGUI.prototype.get_update_content_id = function () {
 		return document.getElementById('update_content_id').innerHTML;
@@ -1465,6 +1622,27 @@
         }
 	};
 
+	/**
+	 * マークによるコンテンツ強調表示のトグル
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	ControllerGUI.prototype.toggle_mark = function (elem, metaData) {
+		var mark_memo = "mark_memo",
+			mark = "mark";
+		if (elem && metaData.hasOwnProperty("id")) {
+			if (metaData.hasOwnProperty(mark) && (metaData[mark] === 'true' || metaData[mark] === true)) {
+				if (!elem.classList.contains(mark)) {
+					elem.classList.add(mark);
+				}
+			} else {
+				if (elem.classList.contains(mark)) {
+					elem.classList.remove(mark);
+				}
+			}
+		}
+	}
+
 	// Update
 	ControllerGUI.prototype.update_display_scale = function (scale) {
 		this.emit(ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED, null, scale);
@@ -1474,6 +1652,19 @@
 		this.emit(ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, isShow);
 	};
 
+	// windowコンテンツのインポート
+	ControllerGUI.prototype.import_window = function (metadataDict, windowData) {
+		window.window_view.import_window(this, metadataDict, windowData);
+		window.window_list.import_window(this, metadataDict, windowData);
+	};
+
+	// コンテンツのインポート
+	ControllerGUI.prototype.import_content = function (metadataDict, metaData, contentData, groupDict, videoElem) {
+		window.layout_list.import_content(this, metadataDict, metaData, contentData, groupDict);
+		window.content_list.import_content(this, metadataDict, metaData, contentData, groupDict, videoElem);
+		window.content_view.import_content(this, metadataDict, metaData, contentData, groupDict, videoElem);
+	}
+
 	// other
 	ControllerGUI.prototype.check_search_target_groups = function (check_groups, isChecked) {
 		var i;
@@ -1482,9 +1673,44 @@
 		}
 	};
 
+	ControllerGUI.prototype.change_window_border_color = function (windowData) {
+		var divElem = this.get_list_elem(windowData.id);
+		if (divElem) {
+			if (windowData.hasOwnProperty('reference_count') && parseInt(windowData.reference_count, 10) <= 0) {
+				if (divElem.style.borderColor !== "gray") {
+					divElem.style.borderColor = "gray";
+					divElem.style.color = "gray";
+				}
+			} else {
+				if (divElem.style.borderColor !== "white") {
+					divElem.style.borderColor = "white";
+					divElem.style.color = "white";
+				}
+			}
+		}
+	};	
+
 	ControllerGUI.prototype.close_context_menu = function () {
 		document.getElementById('context_menu').style.display = "none";
 		document.getElementById('context_menu_display').style.display = "none";
+	};
+
+	// content_property
+	ControllerGUI.prototype.clear_content_property = function (updateText) {
+		content_property.clear(updateText);
+	};
+	ControllerGUI.prototype.assign_content_property = function (json) {
+		content_property.assign_content_property(json);
+	};
+	ControllerGUI.prototype.assign_display_property = function (whole, splitCount) {
+		content_property.assign_virtual_display(whole, splitCount);	
+	};
+	content_property.update_display_property = function () {
+		content_property.update_display_value();
+	};
+	// isOwnVideo このコントローラページで所有する動画かどうか. typeがvideoではない場合は無視される.
+	ControllerGUI.prototype.init_content_property = function (metaData, group, type, isOwnVideo) {
+		content_property.init(metaData, group, type, isOwnVideo);
 	};
 
 	// イベント
@@ -1492,6 +1718,7 @@
 	ControllerGUI.EVENT_MOUSEDOWN_DISPLAY_PREVIEW_AREA = "mousedown_display_preview_area";
 	ControllerGUI.EVENT_UPDATEIMAGEINPUT_CHANGED = "updateimageinput_changed";
 	ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED = "imagefileinput_changed";
+	ControllerGUI.EVENT_VIDEOFILEINPUT_CHANGED = "videofileinput_changed";
 	ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED = "textfileinput_changed";
 	ControllerGUI.EVENT_URLSENDBUTTON_CLICKED = "urlsendbuton_clicked";
 	ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED = "textsendbutton_clicked";
@@ -1501,6 +1728,8 @@
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
 	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
 	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
+	ControllerGUI.EVENT_ADD_SCREENSHARE_CLICKED = "add_screenshare";
+	ControllerGUI.EVENT_ADD_CAMERASHARE_CLICKED = "add_camerashare";
 	ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED = "overwrite_layout";
 	ControllerGUI.EVENT_DELETEDISPLAY_CLICKED = "deletedisplay_clicked";
 	ControllerGUI.EVENT_DELETELAYOUT_CLICKED = "deletelayout_clicked";

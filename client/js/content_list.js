@@ -5,10 +5,7 @@
 	 * コンテンツリストビュー
 	 */
 
-	var ContentList,
-		contentBorderColor = "rgba(0,0,0,0)",
-		defaultGroup = "group_default",
-		textColor = "white";
+	var ContentList;
 
 	ContentList = function () {
 		EventEmitter.call(this);
@@ -23,6 +20,8 @@
 		var classname;
 		if (contentType === 'text') {
 			classname = 'textcontent';
+		} else if (contentType === 'video') {
+			classname = 'videocontent';
 		} else {
 			classname = 'imagecontent';
 		}
@@ -37,10 +36,65 @@
 		var tagName;
 		if (contentType === 'text') {
 			tagName = 'div';
+		} else if (contentType === "video") {
+			tagName = 'img';
 		} else {
 			tagName = 'img';
 		}
 		return tagName;
+	}
+
+	function fixDivSize(divElem, w, aspect) {
+		var h;
+		if (w > 200) {
+			divElem.style.width = "200px";
+			h = 200 / aspect;
+			divElem.style.paddingBottom = (150 - h) + "px"; 
+			if (150 - h > 140.0) {
+				divElem.style.paddingBottom = "140px";
+			}
+		} else if (w < 50) {
+			divElem.style.width = "50px";
+			divElem.style.paddingRight = (50 - w) + "px";
+			if (50 - w > 40.0) {
+				divElem.style.paddingRight = "40px";
+			}
+		}
+	}
+	
+	ContentList.prototype.createMicCameraButton = function (divElem, metaData) {
+		var cameraButton = document.createElement('div');
+		var micButton  = document.createElement('div');
+		cameraButton.className = "video_camera_button";
+		micButton.className = "video_mic_button";
+		if (metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) === "false") {
+			cameraButton.classList.add("video_camera_button_off");  // offにする
+		}
+		if (metaData.hasOwnProperty('is_audio_on') && String(metaData.is_audio_on) === "false") {
+			micButton.classList.add("video_mic_button_off");  // offにする
+		}
+		divElem.appendChild(cameraButton);
+		divElem.appendChild(micButton);
+		cameraButton.onclick = function () {
+			var preCameraIsOff = cameraButton.classList.contains("video_camera_button_off");
+			var nowCameraIsOn = preCameraIsOff;
+			if (preCameraIsOff) {
+				cameraButton.classList.remove("video_camera_button_off"); // onにする
+			} else {
+				cameraButton.classList.add("video_camera_button_off");  // offにする
+			}
+			this.emit(ContentList.EVENT_CAMERA_ONOFF_CHANGED, null, metaData, nowCameraIsOn);
+		}.bind(this);
+		micButton.onclick = function () {
+			var preMicIsOff = micButton.classList.contains("video_mic_button_off");
+			var nowMicIsOn = preMicIsOff;
+			if (preMicIsOff) {
+				micButton.classList.remove("video_mic_button_off"); // onにする
+			} else {
+				micButton.classList.add("video_mic_button_off");  // offにする
+			}
+			this.emit(ContentList.EVENT_MIC_ONOFF_CHANGED, null, metaData, nowMicIsOn);
+		}.bind(this);
 	}
 
 	/**
@@ -50,7 +104,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	ContentList.prototype.import_content = function (gui, metaDataDict, metaData, contentData) {
+	ContentList.prototype.import_content = function (gui, metaDataDict, metaData, contentData, groupDict, videoElem) {
 		var contentArea = null,
 			contentElem,
 			id,
@@ -66,7 +120,7 @@
 			mime = "image/jpeg",
 			onlistID = "onlist:" + metaData.id;
 
-		if (metaData.type === "layout") {
+		if (Validator.isLayoutType(metaData)) {
 			return;
 		}
 
@@ -80,7 +134,7 @@
 			contentArea = gui.get_content_area_by_group(metaData.group);
 		}
 		if (!contentArea) {
-			contentArea = gui.get_content_area_by_group(defaultGroup);
+			contentArea = gui.get_content_area_by_group(Constants.DefaultGroup);
 		}
 
 		tagName = getTagName(metaData.type);
@@ -111,7 +165,22 @@
 				contentElem.innerHTML = contentData;
 				divElem.style.width = "150px";
 				divElem.style.height = "150px";
-				divElem.style.color = textColor;
+				divElem.style.color = "white";
+			} else if (metaData.type === 'video') {
+				divElem.innerHTML = "";
+				divElem.appendChild(contentElem);
+
+				divElem.style.height = "150px";
+				aspect = metaData.orgWidth / metaData.orgHeight;
+				w = 150 * aspect;
+				divElem.style.width = w + "px";
+
+				contentElem.src = contentData;
+				fixDivSize(divElem, w, aspect);
+				if (videoElem && metaData.hasOwnProperty("subtype")) {
+					// マイク、カメラボタン
+					this.createMicCameraButton(divElem, metaData);
+				}
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -128,21 +197,7 @@
 				if (contentElem && blob) {
 					URL.revokeObjectURL(contentElem.src);
 					contentElem.src = URL.createObjectURL(blob);
-
-					if (w > 200) {
-						divElem.style.width = "200px";
-						h = 200 / aspect;
-						divElem.style.paddingBottom = (150 - h) + "px"; 
-						if (150 - h > 140.0) {
-							divElem.style.paddingBottom = "140px";
-						}
-					} else if (w < 50) {
-						divElem.style.width = "50px";
-						divElem.style.paddingRight = (50 - w) + "px";
-						if (50 - w > 40.0) {
-							divElem.style.paddingRight = "40px";
-						}
-					}
+					fixDivSize(divElem, w, aspect);
 				}
 			}
 		}
@@ -152,7 +207,7 @@
 		divElem.style.top = "5px";
 		divElem.style.left = "20px";
 		divElem.style.border = "solid";
-		divElem.style.borderColor = contentBorderColor;
+		divElem.style.borderColor = "rgba(0,0,0,0)";
 		divElem.style.margin = "5px";
 		divElem.style.color = "white";
 		divElem.style.float = "left";
@@ -172,8 +227,33 @@
 			//copyContentData(contentElem, null, metaData, true);
 		}
 	}
-	
 
+	ContentList.prototype.is_camera_on = function (metadataID) {
+		var onlistID = "onlist:" + metadataID;
+		var listElem = document.getElementById(onlistID);
+		if (listElem) {
+			var buttons = listElem.getElementsByClassName('video_camera_button');
+			if (buttons.length > 0) {
+				return !buttons[0].classList.contains('video_camera_button_off');
+			}
+		}
+		return false;
+	}
+	
+	ContentList.prototype.is_mic_on = function (metadataID) {
+		var onlistID = "onlist:" + metadataID;
+		var listElem = document.getElementById(onlistID);
+		if (listElem) {
+			var buttons = listElem.getElementsByClassName('video_mic_button');
+			if (buttons.length > 0) {
+				return !buttons[0].classList.contains('video_mic_button_off');
+			}
+		}
+		return false;
+	}
+
+	ContentList.EVENT_CAMERA_ONOFF_CHANGED = "camera_onoff_changed";
+	ContentList.EVENT_MIC_ONOFF_CHANGED = "mic_onoff_changed";
 	ContentList.EVENT_SETUP_CONTENT = "setup_content";
 	ContentList.EVENT_COPY_CONTENT = "copy_content";
 

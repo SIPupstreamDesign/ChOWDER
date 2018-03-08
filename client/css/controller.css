@@ -98,6 +98,7 @@ p {
 	overflow: auto;
 }
 
+
 .layoutcontent {
 	padding: 0px;
 	overflow: auto;
@@ -305,18 +306,17 @@ p {
 
 .content_id {
 	margin: 10px;
-	padding-left : 30px;
+	padding-left : 3px;
 }
 
 .group_name {
-
 	margin: 10px;
-	padding-left : 30px;
+	padding-left : 3px;
  }
 
 .meta_info {
 	margin: 10px;
-	padding-left : 30px;
+	padding-left : 3px;
 }
 
 .input-group {
@@ -722,4 +722,71 @@ p {
 	padding-top : 10px;
 	display : none;
 	color : black;
+}
+
+.property_text_label {
+    margin: 5px;
+    padding-left: 10px;
+	font-size : 11px;
+}
+.video_select_input {
+	width: 230px;
+	height : 30px;
+    margin-left: 10px;
+}
+.video_info {
+    width: 250px;
+    margin: 5px;
+	border: 1px solid rgb(56, 90, 123);
+}
+.video_info_title {
+	margin: 10px;
+	padding-left: 3px;
+}
+
+.video_camera_button {
+	background-color : #04B431;
+	width : 24px;
+	height : 24px;
+	background-image:url("../image/camera_on.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	border: none;
+	position : absolute;
+	bottom : 0px;
+	left : 0px;
+}
+.video_camera_button:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
+.video_camera_button_off {
+	background-image:url("../image/camera_off.png");
+}
+.video_camera_button_off:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
+.video_mic_button {
+	background-color : #04B431;
+	width : 24px;
+	height : 24px;
+	background-image:url("../image/mic_on.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	border: none;
+	position : absolute;
+	bottom : 0px;
+	right : 0px;
+}
+.video_mic_button:hover {
+	opacity : 0.5;
+	cursor : pointer;
+}
+.video_mic_button_off {
+	background-image:url("../image/mic_off.png");
+}
+.video_mic_button_off:hover {
+	opacity : 0.5;
+	cursor : pointer;
 }

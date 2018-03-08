@@ -3,12 +3,21 @@
 
 (function (command, metabinary) {
 	'use strict';
+	function get_protocol() {
+		var u = document.URL;
+		if (u.substring(0, 5) == "https") {
+			return "https://";
+		} else {
+			return "http://";
+		}
+	}
+
 	var io_connector = {},
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1,
 		currentVersion = "v2",
-		url = "http://" + location.hostname + ":" + location.port + "/" + currentVersion,
+		url = get_protocol() + location.hostname + ":" + location.port + "/" + currentVersion,
 		socket;
 	
 	/**
@@ -34,9 +43,13 @@
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				resultCallbacks[metaData.id](null, metaData.result);
 			} else {
-				console.error('[Error] ArgumentError in connector.js', metaData);
-				if (metaData.hasOwnProperty('id')) {
-					resultCallbacks[metaData.id]('ArgumentError', null);
+				if (metaData.hasOwnProperty('id') && resultCallbacks.hasOwnProperty(metaData.id)) {
+					resultCallbacks[metaData.id](null);
+				} else {
+					console.error('[Error] ArgumentError in connector.js', metaData);
+					if (metaData.hasOwnProperty('id')) {
+						resultCallbacks[metaData.id]('ArgumentError', null);
+					}
 				}
 			}
 		}
@@ -51,7 +64,6 @@
 	 */
 	function eventBinaryMessage(socket, metaData, contentData) {
 		var data;
-		console.log(metaData);
 		if (metaData.to === "client") {
 			// masterからメッセージがきた
 			data = {
@@ -71,12 +83,12 @@
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](metaData.error, null);
 				}
-			} else if (metaData.id && contentData) {
+			} else if (metaData.id) {
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](null, data);
 				}
 			} else {
-				console.error('[Error] ArgumentError in connector.js');
+				console.error('[Error] ArgumentError in connector.js', metaData, contentData);
 				if (metaData.id && resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id]('ArgumentError', null);
 				}
@@ -141,7 +153,7 @@
 		
 		messageID = messageID + 1;
 		try {
-			console.log(data, binary);
+			//console.log(data, binary);
 			metabin = metabinary.createMetaBinary(data, binary);
 			console.log(metabin);
 			//data = JSON.stringify(reqjson);

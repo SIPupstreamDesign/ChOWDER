@@ -5,10 +5,7 @@
 	 * レイアウトリストビュー
 	 */
 
-	var LayoutList,
-		layoutBorderColor = "lightgray",
-		defaultGroup = "group_default",
-		textColor = "white";
+	var LayoutList;
 
 	LayoutList = function () {
 		EventEmitter.call(this);
@@ -33,7 +30,7 @@
 			memo,
 			onlistID = "onlist:" + metaData.id;
 
-		if (metaData.type !== "layout") {
+		if (!Validator.isLayoutType(metaData)) {
 			return;
 		}
 		
@@ -47,7 +44,7 @@
 			layoutArea = gui.get_layout_area_by_group(metaData.group);
 		}
 		if (!layoutArea) {
-			layoutArea = gui.get_layout_area_by_group(defaultGroup);
+			layoutArea = gui.get_layout_area_by_group(Constants.DefaultGroup);
 		}
 		tagName = "div";
 		classname = "layoutcontent";
@@ -80,7 +77,7 @@
 			 + String(memo.text);
 			divElem.style.width = "150px";
 			divElem.style.height = "150px";
-			divElem.style.color = textColor;
+			divElem.style.color = "white";
 		}
 		layoutElem.style.width = "100%";
 		layoutElem.style.height = "100%";
@@ -88,7 +85,7 @@
 		divElem.style.top = "5px";
 		divElem.style.left = "20px";
 		divElem.style.border = "solid";
-		divElem.style.borderColor = layoutBorderColor;
+		divElem.style.borderColor = "lightgray";
 		divElem.style.margin = "5px";
 		divElem.style.color = "white";
 		divElem.style.float = "left";

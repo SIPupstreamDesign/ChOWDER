@@ -2,8 +2,7 @@
 /*global Float32Array */
 (function () {
 	"use strict";
-	var GroupBox,
-		defaultGroup = "group_default";
+	var GroupBox;
 
 	GroupBox = function (authority, containerElem, setting) {
 		EventEmitter.call(this);
@@ -215,7 +214,7 @@
 		}.bind(this);
 		elem.appendChild(link);
 		
-		if ( this.fromTabID(tabID) !== defaultGroup && this.authority.isGroupManipulable()) {
+		if ( this.fromTabID(tabID) !== Constants.DefaultGroup && this.authority.isGroupManipulable()) {
 			setting_button = document.createElement('div');
 			setting_button.className = "group_tab_setting";
 			setting_button.onclick = (function (self, groupName) {

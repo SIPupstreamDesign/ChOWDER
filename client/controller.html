@@ -19,6 +19,9 @@
 	<link href="css/search_box.css" rel="stylesheet" />
 	<link href="css/burger_menu.css" rel="stylesheet" />
 	<script type="text/javascript" src="js/3rd/eventemitter3/index.js"></script>
+	<script type="text/javascript" src="js/3rd/getStats/getStats.js"></script>
+	<script type="text/javascript" src="js/3rd/BandwidthHandler/BandwidthHandler.js"></script>
+	<script type="text/javascript" src="js/3rd/adapter/adapter.js"></script>
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
 	<script type="text/javascript" src="js/components/popup_background.js"></script>
@@ -27,8 +30,14 @@
 	<script type="text/javascript" src="js/components/input_dialog.js"></script>
 	<script type="text/javascript" src="js/components/menu.js"></script>
 	<script type="text/javascript" src="js/components/select_list.js"></script>
+	<script type="text/javascript" src="js/constants.js"></script>
+	<script type="text/javascript" src="js/validator.js"></script>
+	<script type="text/javascript" src="js/string_util.js"></script>
 	<script type="text/javascript" src="js/metabinary.js"></script>
 	<script type="text/javascript" src="js/command.js"></script>
+	<script type="text/javascript" src="js/cookie.js"></script>
+	<script type="text/javascript" src="js/login.js"></script>
+	<script type="text/javascript" src="js/webrtc.js"></script>
 	<script type="text/javascript" src="js/io_connector.js"></script>
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
@@ -44,7 +53,10 @@
 	<script type="text/javascript" src="js/search_box.js"></script>
 	<script type="text/javascript" src="js/window_view.js"></script>
 	<script type="text/javascript" src="js/content_view.js"></script>
+	<script type="text/javascript" src="js/store.js"></script>
+	<script type="text/javascript" src="js/state.js"></script>
 	<script type="text/javascript" src="js/controller.js"></script>
+	<script type="text/javascript" src="js/controller_dispatch.js"></script>
 	<script type="text/javascript" src="js/burger_menu.js"></script>
 </head>
 <body>
@@ -111,6 +123,10 @@
 			</div>
 			<p id="meta_info" class="meta_info" style="color:white">メタ情報</p>
 			<div class="user_data_input" id="user_data_input"></div>
+			<div class="video_info" id="video_info">
+				<p id="video_info_title" class="video_info_title" style="color:white">動画設定</p>
+				<div class="video_input" id="video_input"></div>
+			</div>
 			<div class="color_picker" id="color_picker"></div>
 			<div class="backup_area" id="backup_area">
 				<p id="backup_info" class="backup_info" style="color:white">差し替え履歴</p>
@@ -136,9 +152,12 @@
 		</ul>
 		<ul class="burger_menu_submenu_add_content" id="burger_menu_submenu_add_content">
 			<li class="burger_menu_submenu_item" id="burger_menu_add_image">画像ファイル</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_video">動画ファイル</li>
 			<li class="burger_menu_submenu_item" id="burger_menu_add_text">テキスト</li>
 			<li class="burger_menu_submenu_item" id="burger_menu_add_text_file">テキストファイル</li>
 			<li class="burger_menu_submenu_item" id="burger_menu_add_url">URL</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_screenshare">スクリーン共有</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_camerashare">カメラ共有</li>
 		</ul>
 	</div>
 	<div id="bottom_burger_menu_search"></div>
@@ -162,9 +181,12 @@
 
 		<ul class="context_menu_add_content_submenu" id="context_menu_add_content_submenu">
 			<li class="context_menu_add_content_item" id="context_menu_add_image">画像ファイル</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_video">動画ファイル</li>
 			<li class="context_menu_add_content_item" id="context_menu_add_text">テキスト</li>
 			<li class="context_menu_add_content_item" id="context_menu_add_text_file">テキストファイル</li>
 			<li class="context_menu_add_content_item" id="context_menu_add_url">URL</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_screenshare">スクリーン共有</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_camerashare">カメラ共有</li>
 		</ul>
 		<ul class="context_menu_change_group_submenu" id="context_menu_change_group_submenu">
 			<!--li class="context_menu_item" id="context_menu_change_group_item">グループ1</li-->
@@ -288,6 +310,12 @@
 			<p style="margin-left:20px">画像差し替え</p>
 			<span style="margin-left:20px">ID:</span><span id="update_content_id" >No Content Selected.</span>
 			<input type="file" value="UpdateImage" id="update_image_input" style="margin-left:20px" />
+		</div>
+		<hr>
+		<div>
+			<p style="margin-left:20px">動画の追加</p>
+			<input type="file" name="filename" id="video_file_input" style="margin-left:20px" /-->
+			<!--input type="button" value="Send" id="image_send_button"></input-->
 		</div>
 	</div>
 </body>

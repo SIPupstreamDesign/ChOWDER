@@ -1275,7 +1275,9 @@
 		} else if (metaData.hasOwnProperty('height')) {
 			metaData.orgHeight = metaData.height;
 		}
-		if (metaData.type === 'text') {
+		if (metaData.type === "video") {
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
@@ -1307,7 +1309,9 @@
 		if (metaData.hasOwnProperty('height')) {
 			metaData.orgHeight = metaData.height;
 		}
-		if (metaData.type === 'text') {
+		if (metaData.type === "video") {
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
@@ -1384,7 +1388,9 @@
 	 */
 	function addContent(metaData, data, endCallback) {
 		var contentData = data;
-		if (metaData.type === 'text') {
+		if (metaData.type === "video") {
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text') {
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
@@ -1564,7 +1570,10 @@
 	function updateContent(socketid, metaData, data, endCallback) {
 		var contentData = null;
 		console.log("updateContent:" + metaData.id + ":" + metaData.content_id);
-		if (metaData.type === 'text' || metaData.type === 'layout') {
+		if (metaData.type === "video") {
+			contentData = data;
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text' || metaData.type === 'layout') {
 			contentData = data;
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
@@ -3282,6 +3291,39 @@
 		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
+		ws_connector.on(Command.RTCOffer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCOffer, data);
+			io_connector.broadcast(io, Command.RTCOffer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		ws_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			io_connector.broadcast(io, Command.RTCRequest, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		ws_connector.on(Command.RTCAnswer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCAnswer, data);
+			io_connector.broadcast(io, Command.RTCAnswer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
+			//ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		ws_connector.on(Command.RTCClose, function (data, resultCallback) {
+			io_connector.broadcast(io, Command.RTCClose, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
 
 		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
@@ -3434,7 +3476,40 @@
 		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
-
+		io_connector.on(Command.RTCOffer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCOffer, data);
+			io_connector.broadcast(io, Command.RTCOffer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		io_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			io_connector.broadcast(io, Command.RTCRequest, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		io_connector.on(Command.RTCAnswer, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCAnswer, data);
+			io_connector.broadcast(io, Command.RTCAnswer, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			//io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		io_connector.on(Command.RTCClose, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCClose, data);
+			if (resultCallback) {
+				resultCallback();
+			}
+		});
+		
 		io_connector.registerEvent(io, socket);
 	}
 	

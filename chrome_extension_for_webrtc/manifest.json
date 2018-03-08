@@ -1,0 +1,27 @@
+{
+  "name": "ChOWDER client extension for WebRTC",
+  "version": "0.1",
+  "description": "chowder client extension for webrtc.",
+  "background": {
+    "scripts": ["js/background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_icon": "img/chowder.png",
+    "default_title": "ChOWDER",
+	  "default_popup": "index.html"
+  },
+  "permissions": [
+    "desktopCapture",
+    "tabs",
+    "activeTab",
+    "<all_urls>",
+    "clipboardRead"
+  ],
+  "externally_connectable": {
+    "matches": ["*://127.0.0.1/*", "*://localhost/*"]
+  },
+  "icons" : {
+  },
+  "manifest_version": 2
+}

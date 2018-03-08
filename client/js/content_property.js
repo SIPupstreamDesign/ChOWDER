@@ -1,8 +1,9 @@
 
 (function () {
+	"use strict";
 	// colorselector insert ui
 	var ContentProperty;
-	
+
 	ContentProperty = function () {
 		EventEmitter.call(this);
 		this.colorselector = null;
@@ -31,7 +32,7 @@
 			leftSpan = document.createElement('span'),
 			rightSpan = document.createElement('span'),
 			input = document.createElement('input');
-		
+
 		group.className = "input-group";
 		leftSpan.className = "input-group-addon";
 		leftSpan.innerHTML = leftLabel;
@@ -43,7 +44,7 @@
 		input.onchange = changeCallback;
 		//input.nodeType = "text";
 		input.disabled = !isEditable;
-		
+
 		group.appendChild(leftSpan);
 		group.appendChild(input);
 		if (rightLabel) {
@@ -69,16 +70,134 @@
 		input.disabled = !isEditable;
 	}
 
+
+	/**
+	 * Propertyタブに入力プロパティを追加する
+	 * @method addInputProperty
+	 * @param {Object} input element id
+	 * @param {String} value 初期入力値
+	 */
+	function addVideoTextLabel(id, txt) {
+		var video_input = document.getElementById('video_input'),
+			text = document.createElement('p');
+
+		text.id = id;
+		text.innerText = txt;
+		text.className = "property_text_label";
+		video_input.appendChild(text);
+	}
+
+	/**
+	 * Propertyタブに入力プロパティを追加する
+	 * @method addInputProperty
+	 * @param {Object} input element id
+	 * @param {String} value 初期入力値
+	 */
+	function addVideoQualityTextProperty(isEditable, id, value) {
+		var video_input = document.getElementById('video_input'),
+			input = document.createElement('textarea');
+
+		input.id = id;
+		input.value = value;
+		input.className = "user_data_text_input";
+		video_input.appendChild(input);
+		input.disabled = !isEditable;
+	}
+
+	/**
+	 * Propertyタブに選択力プロパティを追加する
+	 * @method addInputProperty
+	 * @param {Object} input element id
+	 * @param {String} items 初期入力値 items { keys : [...] , values : [....] }
+	 */
+	function addVideoSelectProperty(isEditable, id, items, value, changeCallback) {
+		var video_input = document.getElementById('video_input'),
+			select = document.createElement('select'),
+			i,
+			key,
+			val,
+			option;
+
+		select.id = id;
+		select.className = "video_select_input";
+		select.onchange = function () {
+			changeCallback(select.value);
+		};
+		for (i = 0; i < items.keys.length; ++i) {
+			key = items.keys[i];
+			val = items.values[i];
+			option = document.createElement('option');
+			option.value = val;
+			option.innerText = key;
+			select.appendChild(option);
+			if (i === 0) {
+				select.value = val;
+			}
+		}
+		if (value !== undefined && value && value !== "false") {
+			if (items.values.indexOf(value) >= 0) {
+				select.value = value;
+			}
+		}
+		video_input.appendChild(select);
+		select.disabled = !isEditable;
+	}
+	
+	/**
+	 * Propertyタブに入力プロパティを追加する
+	 * @method addInputProperty
+	 * @param {Object} input element id
+	 * @param {String} leftLabel 左ラベル
+	 * @param {String} rightLabel 右ラベル
+	 * @param {String} value 初期入力値
+	 */
+	function addVideoQualityProperty(isEditable, containerClassName, id, leftLabel, rightLabel, value, changeCallback) {
+		var video_input = document.getElementById('video_input'),
+			container = document.createElement('div'),
+			group = document.createElement('div'),
+			leftSpan = document.createElement('span'),
+			rightSpan = document.createElement('span'),
+			input = document.createElement('input');
+
+		group.className = "input-group";
+		leftSpan.className = "input-group-addon";
+		leftSpan.innerHTML = leftLabel;
+		rightSpan.className = "input-group-addon";
+		rightSpan.innerHTML = rightLabel;
+		//input.className = "form-control";
+		input.style.width = "100%"
+		input.style.height = "28px";
+		input.style.textAlign = "center";
+		input.id = id;
+		input.value = value;
+		input.onchange = changeCallback;
+		input.setAttribute("type", "number");
+		input.disabled = !isEditable;
+
+		group.appendChild(leftSpan);
+		group.appendChild(input);
+		if (rightLabel) {
+			group.appendChild(rightSpan);
+		}
+		container.className = containerClassName
+		container.appendChild(group);
+		container.style.display = "none"
+		video_input.appendChild(container);
+	}
+
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
 	 * @method initPropertyArea
-	 * @param {String} id ContentもしくはDisplay ID
-	 * @param {String} type 設定タイプ
-	 * @param {String} mime mime
+	 * @param {String} metaData metaData
+	 * @param {String} group group名
+	 * @param {String} type PropertyType
+	 * @param {Boolean} isOwnVideo 動画を所有しているかどうか(optional)
 	 */
-	ContentProperty.prototype.initPropertyArea = function (id, groupID, group, type, mime) {
+	ContentProperty.prototype.initPropertyArea = function (metaData, groupName, type, isOwnVideo) {
 		var transform_input = document.getElementById('transform_input'),
 			user_data_input = document.getElementById('user_data_input'),
+			video_info = document.getElementById('video_info'),
+			video_input = document.getElementById('video_input'),
 			idlabel = document.getElementById('content_id_label'),
 			grouplabel = document.getElementById('group_name_label'),
 			idtext = document.getElementById('content_id'),
@@ -93,23 +212,26 @@
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
 			}.bind(this),
-			isEditableContent = this.authority.isEditable(groupID);
-		
+			isEditableContent = this.authority.isEditable(metaData.group);
+
 		restoreButton.disabled = !isEditableContent;
 
-		if (id) {
-			content_id.innerHTML = id;
+		if (metaData.id) {
+			content_id.innerHTML = metaData.id;
 		} else {
 			content_id.innerHTML = "";
 		}
-		if (group) {
-			group_name.innerHTML = group;
+		if (groupName) {
+			group_name.innerHTML = groupName;
 		} else {
 			group_name.innerHTML = "";
 		}
 		transform_input.innerHTML = "";
 		user_data_input.innerHTML = "";
-		if (type === "display") {
+		video_input.innerHTML = "";
+		video_info.style.display = "none";
+
+		if (type === Constants.PropertyTypeDisplay) {
 			idlabel.innerHTML = "Display ID:";
 			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
@@ -120,7 +242,7 @@
 			metalabel.style.display = "block";
 			backup_area.style.display = "none";
 			color_picker.style.display = "block";
-		} else if (type === "whole_window") {
+		} else if (type === Constants.PropertyTypeWholeWindow) {
 			idlabel.innerHTML = "Virtual Display Setting";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
@@ -143,7 +265,7 @@
 			metalabel.style.display = "none";
 			backup_area.style.display = "none";
 			color_picker.style.display = "none";
-		} else if (type === "multi_display" || type === "multi_content") {
+		} else if (type === Constants.PropertyTypeMultiDisplay || type === Constants.PropertyTypeMultiContent) {
 			idlabel.innerHTML = "Content ID:";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
@@ -155,7 +277,7 @@
 			metalabel.style.display = "none";
 			backup_area.style.display = "none";
 			color_picker.style.display = "none";
-		} else if (type === "layout") {
+		} else if (type === Constants.PropertyTypeLayout) {
 			idlabel.innerHTML = "Layout ID:";
 			download_button.style.display = "none";
 			grouplabel.innerHTML = "Group:";
@@ -178,27 +300,120 @@
 			}.bind(this));
 			addTextInputProperty(isEditableContent, 'content_text', "");
 			download_button.style.display = "block";
-			download_button.href = "download?" + id;
+			download_button.href = "download?" + metaData.id;
 			download_button.target = "_blank";
-			if (type === "text") {
-				download_button.download = id + ".txt";
+			if (type === Constants.PropertyTypeText) {
+				download_button.download = metaData.id + ".txt";
 			} else {
 				// image or url
-				if (mime) {
-					extension = mime.split('/')[1];
-					download_button.download = id + "." + extension;
+				if (metaData.mime) {
+					extension = metaData.mime.split('/')[1];
+					download_button.download = metaData.id + "." + extension;
 				} else {
-					download_button.download = id + ".img";
+					download_button.download = metaData.id + ".img";
 				}
 			}
 			if (metalabel) {
 				metalabel.style.display = "block";
 			}
-			if (type !== "content") {
+			if (type !== Constants.PropertTypeContent) {
 				backup_area.style.display = "block";
 			}
 			color_picker.style.display = "none";
+
+			if (type === Constants.PropertTypeVideo && metaData.subtype) {
+				// 動画の場合、差し替え履歴、ダウンロード非表示
+				backup_area.style.display = "none";
+				download_button.style.display = "none";
+
+				// 動画専用プロパティを追加設定
+				if (isOwnVideo) {
+					// 設定エリアを表示
+					video_info.style.display = "block";
+					this.initVideoPropertyArea(isEditableContent, metaData, type);
+				}
+			}
 		}
+	}
+
+	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metaData, type) {
+		navigator.mediaDevices.enumerateDevices()
+			.then(function (devices) { // 成功時
+				var i;
+				var audios = { keys: [], values : [] };
+				var videos = { keys: [], values : [] };
+				var qualities = { keys: ["自動", "手動"], values : ["auto", "custom"] };
+				for (i = 0; i < devices.length; ++i) {
+					if (devices[i].kind === "audioinput") {
+						audios.keys.push(devices[i].label);
+						audios.values.push(devices[i].deviceId);
+					}
+					if (devices[i].kind === "videoinput") {
+						videos.keys.push(devices[i].label);
+						videos.values.push(devices[i].deviceId);
+					}
+				}
+
+				if (metaData.subtype === "camera") {
+					addVideoTextLabel('video_select_video_title', "ビデオ入力")
+					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, metaData.video_device, function (deviceID) {
+						this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metaData.id, deviceID);
+					}.bind(this));
+					addVideoTextLabel('video_select_audio_title', "オーディオ入力")
+					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, metaData.audio_device, function (deviceID) {
+						this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metaData.id, deviceID);
+					}.bind(this));
+				}
+				addVideoTextLabel('video_select_quality_title', "ビデオ品質");
+				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, 50, function (val) {
+					this.update_quality_display();
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
+				}.bind(this));
+				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", "最小bitrate", "kbps", "300", function () {
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
+				}.bind(this));
+				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", "最大bitrate", "kbps", "1000", function () {
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
+				}.bind(this));
+				addVideoTextLabel('video_select_quality_title', "オーディオ品質");
+				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, 100, function (val) {
+					this.update_quality_display();
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
+				}.bind(this));
+				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", "最小bitrate", "kbps", "50", function () {
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
+				}.bind(this));
+				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", "最大bitrate", "kbps", "300", function () {
+					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
+				}.bind(this));
+
+				if (metaData.hasOwnProperty('webrtc_status')) {
+					addVideoTextLabel('video_select_quality_title', "初期品質情報");
+					var qtext = "";
+					var quality = JSON.parse(metaData.webrtc_status);
+					qtext += "動画ソースの幅: \n    " + quality.resolution.width + "\n";
+					qtext += "動画ソースの高さ: \n    " + quality.resolution.height + "\n";
+					qtext += "ビデオコーデック: \n    " + quality.video_codec + "\n";
+					qtext += "オーディオコーデック: \n    " + quality.audio_codec + "\n";
+					qtext += "利用可能な送信バンド幅: \n    " + Math.round(quality.bandwidth.availableSendBandwidth / 100) + "kbps\n";
+					qtext += "ターゲットエンコードビットレート: \n    " + Math.round(quality.bandwidth.targetEncBitrate / 100) + "kbps\n";
+					qtext += "実際のエンコードビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
+					qtext += "伝送ビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
+					addVideoQualityTextProperty(false, "video_quality_text", qtext);
+				}
+
+				// ビデオ品質
+				if (metaData.hasOwnProperty('quality')) {
+					try {
+						var quality = JSON.parse(metaData.quality);
+						this.set_quality(quality);
+					} catch(e) {
+						console.error(e);
+					}
+				}
+			}.bind(this)).catch(function (err) { // エラー発生時
+				console.error('enumerateDevide ERROR:', err);
+			});
 	}
 
 	ContentProperty.prototype.submit_text = function (endcallback) {
@@ -225,7 +440,7 @@
 			transw = document.getElementById('content_transform_w'),
 			transh = document.getElementById('content_transform_h'),
 			transz = document.getElementById('content_transform_z'),
-			dlbtn  = document.getElementById('download_button'),
+			dlbtn = document.getElementById('download_button'),
 			content_id = document.getElementById('content_id'),
 			backup_area = document.getElementById("backup_area");
 
@@ -240,10 +455,10 @@
 		if (backup_area) { backup_area.style.display = "none" }
 	};
 
-	ContentProperty.prototype.init = function (id, groupID, group, type, mime) {
+	ContentProperty.prototype.init = function (metaData, groupName, type, isOwnVideo) {
 		if (!this.colorselector) {
-			this.colorselector = new ColorSelector(function(colorvalue){
-				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")"; 
+			this.colorselector = new ColorSelector(function (colorvalue) {
+				var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
 				// ディスプレイ枠色変更
 				this.emit(ContentProperty.EVENT_DISPLAY_COLOR_CHANGED, null, colorstr);
 				console.log(colorvalue);
@@ -265,7 +480,7 @@
 			}
 		}.bind(this);
 
-		this.initPropertyArea(id, groupID, group, type, mime);
+		this.initPropertyArea(metaData, groupName, type, isOwnVideo);
 	};
 
 	/**
@@ -295,7 +510,7 @@
 	ContentProperty.prototype.setAuthority = function (authority) {
 		this.authority = authority;
 	};
-	
+
 	/**
 	 * メタデータをPropertyエリアに反映
 	 * @method assign_content_property
@@ -309,8 +524,9 @@
 			transh = document.getElementById('content_transform_h'),
 			transz = document.getElementById('content_transform_z'),
 			text = document.getElementById('content_text'),
-			i;
-		
+			i,
+			option;
+
 		// x, y, w, h, z
 		if (transx) {
 			transx.value = parseInt(metaData.posx, 10);
@@ -351,14 +567,14 @@
 		}
 
 		// 差し替え履歴
-		if (metaData.type !== "window") {
+		if (!Validator.isWindowType(metaData)) {
 			var backup_list = document.getElementById('backup_list');
 			var restoreIndex = 0;
 			backup_list.innerHTML = "";
-			 document.getElementById('backup_restore').disabled = true;
+			document.getElementById('backup_restore').disabled = true;
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length > 0) {
 				if (this.authority.isEditable(metaData.group)) {
-			 		document.getElementById('backup_restore').disabled = false;
+					document.getElementById('backup_restore').disabled = false;
 				}
 				var backups = JSON.parse(metaData.backup_list);
 				var select = document.createElement('select');
@@ -375,7 +591,7 @@
 					}
 				}
 
-				for (i = 0; i <  backups.length; i = i + 1) {
+				for (i = 0; i < backups.length; i = i + 1) {
 					option = document.createElement('option');
 					text = new Date(backups[i]).toLocaleString();
 					option.value = text;
@@ -390,6 +606,16 @@
 				backup_list.appendChild(select);
 			}
 		}
+
+		// ビデオ品質
+		if (metaData.hasOwnProperty('quality')) {
+			try {
+				var quality = JSON.parse(metaData.quality);
+				this.set_quality(quality);
+			} catch(e) {
+				console.error(e);
+			}
+		}
 	};
 
 	ContentProperty.prototype.update_display_value = function () {
@@ -399,8 +625,130 @@
 		this.emit(ContentProperty.EVENT_CHANGE_WHOLE_SPLIT, null, x, y, flag);
 	};
 
+	ContentProperty.prototype.get_video_device_id = function () {
+		var elem = document.getElementById('video_select_input_video');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value;
+		}
+		return null;
+	};
+
+	ContentProperty.prototype.get_audio_device_id = function () {
+		var elem = document.getElementById('video_select_input_audio');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value;
+		}
+		return null;
+	};
+	
+	ContentProperty.prototype.is_video_quality_enable = function () {
+		var elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value === "custom";
+		}
+		return false;
+	};
+
+	ContentProperty.prototype.is_audio_quality_enable = function () {
+		var elem = document.getElementById('audio_select_input_quality');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value === "custom";
+		}
+		return false;
+	};
+
+	// ビデオオーディオ品質の有効状態の変更による表示切り替え
+	ContentProperty.prototype.update_quality_display = function () {
+		var elem;
+		var elems;
+		elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			elems = document.getElementsByClassName('video_quality');
+			for (var i = 0; i < elems.length; ++i) {
+				elems[i].style.display = (elem.value === "auto") ? "none" : "block";
+			}
+		}
+		elem = document.getElementById('audio_select_input_quality');
+		if (elem) {
+			elems = document.getElementsByClassName('audio_quality');
+			for (var i = 0; i < elems.length; ++i) {
+				elems[i].style.display = (elem.value === "auto") ? "none" : "block";
+			}	
+		}
+	}
+
+	ContentProperty.prototype.get_video_quality = function () {
+		var elems = document.getElementsByClassName('video_quality');
+		if (elems.length > 0) {
+			return {
+				min : Number(document.getElementById('video_quality_min').value),
+				max : Number(document.getElementById('video_quality_max').value)
+			}
+		}
+		return null;
+	};
+	
+	ContentProperty.prototype.get_audio_quality = function () {
+		var elems = document.getElementsByClassName('audio_quality');
+		if (elems.length > 0) {
+			return {
+				min : Number(document.getElementById('audio_quality_min').value),
+				max : Number(document.getElementById('audio_quality_max').value)
+			}
+		}
+		return null;
+	};
+
+	ContentProperty.prototype.set_quality = function (quality) {
+		//console.error("set_quality", quality)
+		var elem;
+		/*
+		screen : content_property.get_video_quality(metadataID).min,
+		video : content_property.get_video_quality(metadataID).min,
+		audio : content_property.get_audio_quality(metadataID).min,
+		video_max : content_property.get_video_quality(metadataID).max,
+		audio_max : content_property.get_audio_quality(metadataID).max
+		*/
+		elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			if (quality.hasOwnProperty('video_quality_enable') && String(quality.video_quality_enable) !== "false") {
+				elem.value = "custom";
+			} else {
+				elem.value = "auto";
+			}
+		}
+		elem = document.getElementById('audio_select_input_quality');
+		if (elem) {
+			if (quality.hasOwnProperty('audio_quality_enable') && String(quality.audio_quality_enable) !== "false") {
+				elem.value = "custom";
+			} else {
+				elem.value = "auto";
+			}
+		}
+		if (quality.hasOwnProperty('video')) {
+			var vmin = document.getElementById('video_quality_min');
+			if (vmin) { vmin.value = Number(quality.video); }
+		}
+		if (quality.hasOwnProperty('video_max')) {
+			var vmax = document.getElementById('video_quality_max');
+			if (vmax) { vmax.value = Number(quality.video_max); }
+		}
+		if (quality.hasOwnProperty('audio')) {
+			var amin = document.getElementById('audio_quality_min');
+			if (amin) { amin.value = Number(quality.audio); }
+		}
+		if (quality.hasOwnProperty('audio_max')) {
+			var amax = document.getElementById('audio_quality_max');
+			if (amax) { amax.value = Number(quality.audio_max); }
+		}
+		this.update_quality_display();
+	}
+
 	ContentProperty.EVENT_CHANGE_ZINDEX = "change_zindex";
 	ContentProperty.EVENT_RECT_CHANGED = "rect_changed";
+	ContentProperty.EVENT_VIDEODEVICE_CHANGED = "videodevice_changed";
+	ContentProperty.EVENT_AUDIODEVICE_CHANGED = "audiodevice_changed";
+	ContentProperty.EVENT_VIDEOQUALITY_CHANGED = "videoquality_changed";
 	ContentProperty.EVENT_DISPLAY_VALUE_CHANGED = "display_value_changed";
 	ContentProperty.EVENT_DISPLAY_COLOR_CHANGED = "display_color_changed";
 	ContentProperty.EVENT_CHANGE_WHOLE_SPLIT = "change_whole_split";

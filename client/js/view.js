@@ -4,19 +4,31 @@
 (function (vscreen, vscreen_util, connector) {
 	"use strict";
 
+    /**
+     * random ID (8 chars)
+     */
+    function generateID() {
+        function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000000).toString(16).substring(1);
+		}
+		return s4() + s4();
+	}
+
 	console.log(location);
 	var reconnectTimeout = 2000,
 		timer,
 		windowData = null,
 		metaDataDict = {},
 		groupDict = {},
-		windowType = "window",
 		doneAddWindowMetaData,
+		doneUpdateWindowMetaData,
 		doneGetWindowMetaData,
 		doneGetContent,
 		doneGetMetaData,
 		authority = null,
-        controllers = {connectionCount: -1};
+		controllers = {connectionCount: -1},
+		webRTCDict = {},
+		random_id_for_webrtc = generateID();
 
 	function toggleFullScreen() {
 		if (!document.fullscreenElement &&    // alternative standard method
@@ -233,7 +245,7 @@
 		metaData.orgHeight = wh.height;
 		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
 
-		connector.send('UpdateWindowMetaData', [windowData], doneAddWindowMetaData);
+		connector.send('UpdateWindowMetaData', [windowData], doneUpdateWindowMetaData);
 	}
 
 	function updateGroupDict(groupList) {
@@ -318,6 +330,8 @@
 		var tagName;
 		if (contentType === 'text') {
 			tagName = 'pre';
+		} else if (contentType === 'video') {
+			tagName = 'video'
 		} else {
 			tagName = 'img';
 		}
@@ -382,7 +396,7 @@
 			for (i in metaDataDict) {
 				if (metaDataDict.hasOwnProperty(i)) {
 					if (metaDataDict[i].id !== metaData.id && 
-						metaDataDict[i].type !== windowType &&
+						!Validator.isWindowType(metaDataDict[i]) &&
 						metaDataDict[i].hasOwnProperty("zIndex")) {
 						index = parseInt(metaDataDict[i].zIndex, 10);
 						if (!isNaN(index)) {
@@ -502,6 +516,13 @@
 		}
 	}
 
+	// このページのwebRTC用のキーを取得.
+	// ディスプレイIDが同じでもページごとに異なるキーとなる.
+	// (ページをリロードするたびに代わる)
+	function getRTCKey(metaData) {
+		return metaData.id + "_" + windowData.id + "_" + random_id_for_webrtc;
+	}
+
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -520,7 +541,7 @@
 			duplicatedElem;
 
 		console.log("assignMetaBinary", "id=" + metaData.id);
-		if (metaData.type === windowType || (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
+		if (Validator.isWindowType(metaData) || (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
 			tagName = getTagName(metaData.type);
 
 			// 既に読み込み済みのコンテンツかどうか
@@ -547,7 +568,35 @@
 				insertElementWithDictionarySort(previewArea, elem);
 				//previewArea.appendChild(elem);
 			}
-			if (metaData.type === 'text') {
+			if (metaData.type === 'video') {
+				var rtcKey = getRTCKey(metaData);
+				elem.setAttribute("controls", "");
+				elem.setAttribute('autoplay', '')
+				elem.setAttribute('preload', "metadata")
+				if (!webRTCDict.hasOwnProperty(rtcKey)) {
+					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
+						var webRTC = new WebRTC();
+						webRTCDict[rtcKey] = webRTC;
+						webRTC.on('addstream', function (evt) {
+							var stream = evt.stream ? evt.stream : evt.streams[0];
+							elem.srcObject = stream;
+						});
+						webRTC.on('icecandidate', function (type, data) {
+							if (type === "tincle") {
+								connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+									key : rtcKey,
+									candidate: data
+								}), function (err, reply) {});
+							}
+						});
+						webRTC.on('closed', function () {
+							if (webRTCDict.hasOwnProperty(this)) {
+								delete webRTCDict[this];
+							}
+						}.bind(rtcKey))
+					});
+				}
+			} else if (metaData.type === 'text') {
 				// contentData is text
 				elem.innerHTML = contentData;
 			} else {
@@ -782,6 +831,23 @@
 		update('all');
 	};
 
+	doneUpdateWindowMetaData = function (err, json) {
+		console.log("doneUpdateWindowMetaData", json);
+		var i;
+		if (!err) {
+			for (i = 0; i < json.length; i = i + 1) {
+				metaDataDict[json[i].id] = json[i];
+				windowData = json[i];
+				saveCookie();
+				window.parent.document.title = "Display ID:" + json[i].id;
+				document.getElementById('input_id').value = json[i].id;
+				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
+				updatePreviewAreaVisible(windowData);
+				resizeViewport(windowData);
+			}
+		}
+	};
+
 	/**
 	 * GetWindowMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -826,7 +892,7 @@
 				return;
 			}
 			// レイアウトは無視
-			if (metaData.type === "layout") { return; }
+			if (Validator.isLayoutType(metaData)) { return; }
 			// コンテンツ登録&表示
 			assignMetaBinary(metaData, contentData);
 		}
@@ -879,7 +945,7 @@
 		if (group === undefined || group === "") {
 			return true;
 		}
-		if (group === "group_default") {
+		if (group === Constants.DefaultGroup) {
 			return true;
 		}
 		if (groupDict.hasOwnProperty(group)) {
@@ -904,7 +970,7 @@
 		console.log("doneGetMetaData", json);
 		if (!json) { return; }
 		// レイアウトは無視
-		if (metaData.type === "layout") { return; }
+		if (Validator.isLayoutType(metaData)) { return; }
 		// 復元したコンテンツか
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
@@ -929,7 +995,7 @@
 		metaDataDict[json.id] = json;
 		if (!err) {
 			var elem = document.getElementById(json.id),
-				isWindow = (json.type === windowType),
+				isWindow = Validator.isWindowType(json),
 				isOutside = false,
 				whole,
 				w,
@@ -951,7 +1017,19 @@
 
 			if (isOutside) {
 				if (elem) {
+					// コンテンツが画面外にいった
 					elem.style.display = "none";
+					// webrtcコンテンツが画面外にいったら切断して削除しておく.
+					var rtcKey = getRTCKey(json);
+					if (webRTCDict.hasOwnProperty(rtcKey)) {
+						webRTCDict[rtcKey].close(true);
+						if (elem.parentNode) {
+							elem.parentNode.removeChild(elem);
+						}
+						connector.sendBinary('RTCClose', metaData, JSON.stringify({
+							key : rtcKey
+						}), function (err, reply) {});
+					}
 				}
 			} else {
 				if (elem && elem.tagName.toLowerCase() === getTagName(json.type)) {
@@ -1050,6 +1128,15 @@
 				if (!isViewable(json.group)) {
 					return;
 				}
+				if (json.type === "video") {
+					var rtcKey = getRTCKey(json);
+					if (webRTCDict.hasOwnProperty(rtcKey)) {
+						webRTCDict[rtcKey].close(true);
+						connector.sendBinary('RTCClose', json, JSON.stringify({
+							key : rtcKey
+						}), function (err, reply) {});
+					}
+				}
 				if (!err) {
 					doneGetMetaData(err, json);
 					connector.send('GetContent', json, function (err, reply) {
@@ -1115,6 +1202,8 @@
 			for (i = 0; i < data.length; ++i) {
 				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
 					update('window');
+					updatePreviewAreaVisible( data[0]);
+					resizeViewport( data[0])
 					return;
 				}
 			}
@@ -1188,6 +1277,79 @@
 					}
 				}
 				update('', data[i].id);
+			}
+		});
+
+		connector.on("RTCOffer", function (data) {
+			//console.error("RTCOffer")
+			if (!windowData) return;
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			var parsed = null;
+			var sdp = null;
+			var rtcKey = null;
+			try {
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				rtcKey = parsed.key;
+				sdp = parsed.sdp;
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+
+			if (sdp) {
+				if (webRTCDict.hasOwnProperty(rtcKey)) {
+					var webRTC = webRTCDict[rtcKey];
+					webRTC.answer(sdp, function (answer) {
+						//console.error("WebRTC: send answer")
+						connector.sendBinary('RTCAnswer', metaData, JSON.stringify({
+							key : rtcKey,
+							sdp : answer
+						}), function () {});
+					});
+				}
+			}
+		});
+		
+		connector.on("RTCClose", function (data) {
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			var parsed = null;
+			var rtcKey = null;
+			try {
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				rtcKey = parsed.key;
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			if (webRTCDict.hasOwnProperty(rtcKey)) {
+				webRTCDict[rtcKey].close(true);
+			}
+		});
+
+		connector.on("RTCIceCandidate", function (data) {
+			//console.error("on RTCIceCandidate")
+			var metaData = data.metaData;
+			var contentData = data.contentData;
+			var parsed = null;
+			var candidate = null;
+			var rtcKey = null;
+			try {
+				var dataStr = StringUtil.arrayBufferToString(contentData.data);
+				parsed = JSON.parse(dataStr);
+				rtcKey = parsed.key;
+				candidate = parsed.candidate;
+			} catch (e) {
+				console.error(e);
+				return;
+			}
+			if (webRTCDict.hasOwnProperty(rtcKey)) {
+				if (candidate) {
+					webRTCDict[rtcKey].addIceCandidate(candidate);
+				}
 			}
 		});
 
@@ -1291,4 +1453,10 @@
 	}
 
 	window.onload = init;
+	window.onunload = function () {
+		var i;
+		for (i in webRTCDict) {
+			webRTCDict[i].close();
+		}
+	}
 }(window.vscreen, window.vscreen_util, window.ws_connector));

@@ -5,8 +5,7 @@
 	 * Display枠を追加できるメインビュー
 	 */
 
-	var WindowView,
-		windowType = "window";
+	var WindowView;
 
 	WindowView = function () {
 		EventEmitter.call(this);
@@ -32,7 +31,7 @@
 	WindowView.prototype.import_window = function (gui, metaDataDict, windowData) {
 		var displayArea,
 			screen;
-		if (windowData.type !== windowType) {
+		if (!Validator.isWindowType(windowData)) {
 			return;
 		}
 		if (windowData.hasOwnProperty('posx')) {

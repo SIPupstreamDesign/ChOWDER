@@ -22,7 +22,7 @@
 			idElem,
 			onlistID = "onlist:" + windowData.id;
 		
-		if (windowData.type !== "window") {
+		if (!Validator.isWindowType(windowData)) {
 			return;
 		}
 		divElem = gui.get_list_elem(windowData.id);

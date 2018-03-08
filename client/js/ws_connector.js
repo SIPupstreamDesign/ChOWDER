@@ -3,6 +3,15 @@
 
 (function (command, metabinary) {
 	'use strict';
+	function get_protocol() {
+		var u = document.URL;
+		if (u.substring(0, 5) == "https") {
+			return "wss://";
+		} else {
+			return "ws://";
+		}
+	}
+
 	var ws_connector = {},
 		resultCallbacks = {},
 		recievers = {},
@@ -10,7 +19,7 @@
 		client = null,
 		is_connected = false,
 		currentVersion = "v2",
-		url = "ws://" + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+		url = get_protocol() + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
 
 	/**
 	 * テキストメッセージの処理.
@@ -32,9 +41,13 @@
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				resultCallbacks[metaData.id](null, metaData.result);
 			} else {
-				console.error('[Error] ArgumentError in connector.js');
-				if (metaData.hasOwnProperty('id')) {
-					resultCallbacks[metaData.id]('ArgumentError', null);
+				if (metaData.hasOwnProperty('id') && resultCallbacks.hasOwnProperty(metaData.id)) {
+					resultCallbacks[metaData.id](null);
+				} else {
+					console.error('[Error] ArgumentError in connector.js', metaData);
+					if (metaData.hasOwnProperty('id')) {
+						resultCallbacks[metaData.id]('ArgumentError', null);
+					}
 				}
 			}
 		}
@@ -68,7 +81,7 @@
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](metaData.error, null);
 				}
-			} else if (metaData.id && contentData) {
+			} else if (metaData.id) {
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](null, data);
 				}
@@ -149,7 +162,7 @@
 		messageID = messageID + 1;
 		
 		try {
-			console.log(data, binary);
+			//console.log(data, binary);
 			metabin = metabinary.createMetaBinary(data, binary);
 			//console.log(metabin);
 			//data = JSON.stringify(reqjson);
