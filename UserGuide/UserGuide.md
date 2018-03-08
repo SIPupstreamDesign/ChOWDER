@@ -11,8 +11,8 @@
     -   [インストール](#インストール)
     -   [インストールスクリプトの実行](#インストールスクリプトの実行)
 -   [アプリケーションの起動方法](#アプリケーションの起動方法)
-    -   [Mac/Linuxの場合](#maclinuxの場合-1)
-    -   [Windowsの場合](#windowsの場合-1)
+    -   [Mac/Linuxの場合](#maclinuxの場合)
+    -   [Windowsの場合](#windowsの場合)
     -   [起動確認](#起動確認)
     -   [コントローラへアクセス](#コントローラへアクセス)
 -   [アプリケーションの終了方法](#アプリケーションの終了方法)
@@ -25,20 +25,20 @@
 -   [コントローラ画面の操作](#コントローラ画面の操作)
     -   [概要](#概要)
     -   [接続状態について](#接続状態について)
-    -   [Virtual Display Screenについて](#コントローラの操作-virtual-display-screenについて)
+    -   [Virtual Display Screenについて](#virtual-display-screenについて)
     -   [メインメニュー](#メインメニュー)
     -   [コンテンツの追加](#コンテンツの追加)
-    -   [Displayタブ](#コントローラの操作-displayタブ)
-    -   [Contentタブ](#コントローラの操作-contentタブ)
-    -   [Searchタブ](#コントローラの操作-searchタブ)
-    -   [Propertyウィンドウ](#Propertyウィンドウ)
+    -   [Displayタブ](#displayタブ)
+    -   [Contentタブ](#contentタブ)
+    -   [Searchタブ](#searchタブ)
+    -   [Propertyウィンドウ](#propertyウィンドウ)
     -   [動画コンテンツの操作](#動画コンテンツの操作)
 -   [ユーザー権限と管理画面](#ユーザー権限と管理画面)
     -   [ユーザー権限](#ユーザー権限)
     -   [管理画面](#管理画面)
 -   [ディスプレイ画面の操作](#ディスプレイ画面の操作)
     -   [概要](#概要-1)
-    -   [ディスプレイの操作：メニュー](#ディスプレイの操作メニュー)
+    -   [ディスプレイの操作：メニュー](#ディスプレイの操作：メニュー)
 -   [HIVEとの連携](#hiveとの連携)
     -   [インタラクティブレンダリング](#インタラクティブレンダリング)
     -   [SceneNodeEditor](#scenenodeeditor)
@@ -47,12 +47,12 @@
     -   [概要](#概要-2)
     -   [Extensionのインストール](#extensionのインストール)
     -   [Extensionでキャプチャする](#extensionでキャプチャする)
--   [ChWODER Desktop Captureの利用](#chowder-desktop-captureの利用)
+-   [ChOWDER Desktop Captureの利用](#chowder-desktop-captureの利用)
     -   [概要](#概要-3)
-    -   [ChWODER Desktop Captureの使い方](#chowder-desktop-captureの使い方)
+    -   [ChOWDER Desktop Captureの使い方](#chowder-desktop-captureの使い方)
 -   [Google Chrome Extension for WebRTCの利用](#google-chrome-extension-for-webrtcの利用)
     -   [概要](#概要-4)
-    -   [Extensionのインストール](#extensionのインストール-1)
+    -   [Extensionのインストール](#extensionのインストール-2)
     -   [Extensionでキャプチャする](#extensionでキャプチャする-1)
 -   [HTTPSの利用](#httpsの利用)
     -   [概要](#概要-5)
@@ -806,8 +806,7 @@ Extensionを追加したら、アイコンをクリックしてキャプチャ�
 <img src="image/extension_setting.png" alt="Extensionの設定" width="207" />
 *Extensionの設定*
 
-
-ChWODER Desktop Captureの利用
+ChOWDER Desktop Captureの利用
 ========================================================================================
 
 概要
@@ -836,7 +835,7 @@ desktop capture 配下の以下のファイルを実行します。
 
 OS : Windows7, MacOSX 10.10
 
-ChWODER Desktop Captureの使い方
+ChOWDER Desktop Captureの使い方
 ---------------------------------------------------
 
 ChOWDER Desktop Capture では
