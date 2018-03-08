@@ -178,8 +178,8 @@
 			elem.style.position = 'absolute';
 			elem.style.left = String(rect.x) + 'px';
 			elem.style.top = String(rect.y) + 'px';
-			elem.style.width = String(rect.w + 0.5) + 'px';
-			elem.style.height = String(rect.h + 0.5) + 'px';
+			elem.style.width = String(rect.w) + 'px';
+			elem.style.height = String(rect.h) + 'px';
 			console.log("assignScreenRect:" + JSON.stringify(rect));
 		}
 	}

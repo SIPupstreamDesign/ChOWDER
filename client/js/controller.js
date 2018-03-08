@@ -166,10 +166,12 @@
 				}
 				if (isListViewArea) {
 					elem.style.display = "none";
+					elem.style.margin = "5px";
+				} else {
+					elem.style.margin = "0px";
 				}
 				this.insertElementWithDictionarySort(previewArea, elem);
 				this.setupContent(elem, uid);
-				elem.style.marginTop = "0px";
 				
 				return elem;
 			}
@@ -642,6 +644,7 @@
 				metaData = store.get_metadata(draggingID);
 				if (!gui.is_listview_area(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
+					elem.style.margin = "0px";
 					if (Validator.isLayoutType(metaData)) {
 						this.apply_layout(metaData);
 					} else {
@@ -720,6 +723,7 @@
 			}
 			if (screenElem) {
 				vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
+				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 		} else {
 			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
@@ -1749,6 +1753,8 @@
 			vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
 			vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 			this.updateScreen(windowData);
+			var elem = this.getElem(windowData.id);
+			manipulator.moveManipulator(elem);
 		}
 		if (endCallback) {
 			endCallback(null);
