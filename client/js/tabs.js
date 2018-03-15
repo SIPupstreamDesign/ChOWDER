@@ -105,6 +105,13 @@
 		elem.appendChild(link);
 		return elem;
 	};
+	
+	Tabs.prototype.change_tab = function (tabID) {
+		var elem = document.getElementById(tabID);
+		if (elem) {
+			elem.onclick();
+		}
+	};
 
 	Tabs.prototype.is_active = function (tabID) {
 		if (!tabID) return false;

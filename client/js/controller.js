@@ -1649,11 +1649,17 @@
 					connector.send('GetContent', request, function (err, data) {
 						this.import_content(json, data.contentData, store.get_video_elem(json.id));
 						gui.toggle_mark(elem, metaData);
+						if (endCallback) {
+							endCallback(null);
+						}
 					}.bind(this));
 				} else {
 					connector.send('GetContent', request, function (err, data) {
 						this.import_content(json, data.contentData);
 						gui.toggle_mark(elem, metaData);
+						if (endCallback) {
+							endCallback(null);
+						}
 					}.bind(this));
 				}
 			} else {
@@ -1896,13 +1902,23 @@
 		var json = reply;
 		console.log("doneAddContent:" + json.id + ":" + json.type);
 
+		// DisplayタブだったらContentタブに変更する.
+		if (gui.is_active_tab(Constants.TabIDDisplay)) {
+			gui.change_tab(Constants.TabIDContent);
+		}
+
 		// 新規追加ではなく差し替えだった場合.
 		if (store.has_metadata(json.id)) {
 			this.doneUpdateContent(err, reply);
+			this.unselect_all(true);
+			this.select(json.id, true);
 			return;
 		}
 		
-		this.doneGetMetaData(err, reply);
+		this.doneGetMetaData(err, reply, function () {		
+			this.unselect_all(true);
+			this.select(json.id, true);
+		}.bind(this));
 	};
 	
 	/**
