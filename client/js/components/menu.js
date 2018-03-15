@@ -10,6 +10,7 @@
 	// コンストラクタ
 	Menu = function (containerElem, setting) {
 		EventEmitter.call(this);
+		this.containerElem = containerElem;
 
 		this.background = null;
 /*
@@ -72,6 +73,7 @@
 				link = document.createElement('a');
 				link.href = "#";
 				link.innerHTML = key;
+				link.id = "_menu_" + key;
 
 				if (value instanceof Array) {
 					// 子有り.
@@ -125,9 +127,9 @@
 						};
 						link.onclick = (function (value) {
 							return function (evt) {
-								value.func(evt);
-							};
-						}(value));
+								value.func(evt, this);
+							}.bind(this);
+						}.bind(this, value)());
 					}
 					link.className = "";
 					li = document.createElement('li');
@@ -153,6 +155,15 @@
 			this.openMenuElem.style.opacity = "0";
 			this.openMenuElem.style.top = "30px";
 			this.openMenuElem = null;
+		}
+	};
+
+	Menu.prototype.changeName =  function (pre, post) {
+		var elem = document.getElementById("_menu_" + pre);
+		console.error(pre, elem)
+		if (elem) {
+			elem.id = "_menu_" + post;
+			elem.innerHTML = post;
 		}
 	};
 

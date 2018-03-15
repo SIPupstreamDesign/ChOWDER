@@ -1499,8 +1499,11 @@
 		this.groupBox.select_tab(group_id);
 		this.layoutBox.select_tab(group_id);
 	};
-	ControllerGUI.prototype.is_active_tab = function (tabname) {
-		return this.tabs.is_active(tabname);
+	ControllerGUI.prototype.is_active_tab = function (tabid) {
+		return this.tabs.is_active(tabid);
+	};
+	ControllerGUI.prototype.change_tab = function (tabid) {
+		this.tabs.change_tab(tabid);
 	};
 	ControllerGUI.prototype.get_display_area = function () {
 		return document.getElementById('display_tab_box');
