@@ -30,9 +30,13 @@
 		webRTCDict = {},
 		random_id_for_webrtc = generateID();
 
+	function isFullScreen() {
+		return !(!document.fullscreenElement &&    // alternative standard method
+			!document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement );
+	}
+
 	function toggleFullScreen() {
-		if (!document.fullscreenElement &&    // alternative standard method
-				!document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {  // current working methods
+		if (!isFullScreen()) {
 			if (document.documentElement.requestFullscreen) {
 				document.documentElement.requestFullscreen();
 			} else if (document.documentElement.msRequestFullscreen) {
@@ -1444,7 +1448,14 @@
 				},{
 					Setting : [{
 						Fullscreen : {
-							func : function(evt) { toggleFullScreen(); }
+							func : function(evt, menu) { 
+								if (!isFullScreen()) {
+									menu.changeName("Fullscreen", "CancelFullscreen")
+								} else {
+									menu.changeName("CancelFullscreen", "Fullscreen")
+								}
+								toggleFullScreen();
+							}
 						}
 					}]
 				}]
