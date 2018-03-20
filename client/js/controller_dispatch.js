@@ -1115,8 +1115,15 @@
 				if (!id) {
 					id = Constants.WholeWindowListID;
 				}
+				// スナップのdisplayを無効にする
+				document.getElementById('snap_display_option').style.display = "none";
+				if (gui.get_snap_type() == "display") {
+					gui.set_snap_type("free");
+				}
 			} else {
 				id = state.get_last_select_content_id();
+				// スナップのdisplayを有効にする
+				document.getElementById('snap_display_option').style.display = "block";
 			}
 			state.set_selected_id_list([]);
 			// 以前選択していたものを再選択する.

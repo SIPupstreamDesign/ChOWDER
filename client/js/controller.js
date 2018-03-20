@@ -1512,12 +1512,18 @@
 			}
 			webRTC.addStream(stream);
 			
-			video.onseeked = function () {
-				if (this.isEnded) {
-					webRTC.addStream(captureStream(video));
-					this.isEnded = false;
-				}
-			}
+			video.onseeked = (function (controller) {
+				return function () {
+					if (this.isEnded) {
+						for (var i in controller.webRTC) {
+							if (i.indexOf(metaData.id) >= 0) {
+								controller.webRTC[i].addStream(captureStream(video));
+							}
+						}
+						this.isEnded = false;
+					}
+				};
+			}(this));
 			webRTC.on('icecandidate', function (type, data) {
 				if (type === "tincle") {
 					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
