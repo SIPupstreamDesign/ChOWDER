@@ -283,18 +283,20 @@
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, false); }.bind(this)
 						}
 					},{
+						全て選択 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); }.bind(this)
+						}
+					},{
 						非表示 : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CLOSE_ITEM, null); }.bind(this)
 						}
 					},{
+						hr : {}
+					},{
 						削除 : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETEDISPLAY_CLICKED, null, evt); }.bind(this)
 						}
-					},{
-						全て選択 : {
-							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); }.bind(this)
-						}
-					},]
+					}]
 			});
 
 		this.layoutMenu = new BurgerMenu(
@@ -320,12 +322,14 @@
 							}
 						}
 					},{
-						削除 : {
-							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETELAYOUT_CLICKED, null, evt); }.bind(this)
-						}
-					},{
 						全て選択 : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, false); }.bind(this)
+						}
+					},{
+						hr : {}
+					},{
+						削除 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETELAYOUT_CLICKED, null, evt); }.bind(this)
 						}
 					}]
 			});
@@ -378,20 +382,22 @@
 							}
 						}
 					},{
-						非表示 : {
-							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CLOSE_ITEM, null); }.bind(this)
-						}
-					},{
-						削除 : {
-							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED, null, evt); }.bind(this)
+						グループ内全て選択 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED, null, true); }.bind(this)
 						}
 					},{
 						全て選択 : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED, null, false); }.bind(this)
 						}
 					},{
-						グループ内全て選択 : {
-							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED, null, true); }.bind(this)
+						非表示 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CLOSE_ITEM, null); }.bind(this)
+						}
+					},{
+						hr : {}
+					},{
+						削除 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED, null, evt); }.bind(this)
 						}
 					}]
 			});
