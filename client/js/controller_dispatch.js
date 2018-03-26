@@ -928,13 +928,20 @@
 			});
 		});
 
-		gui.on('select_layout_clicked', function () {
+		gui.on('select_layout_clicked', function (err, onlyCurrentGroup) {
+			var currentGroup = gui.get_current_group_id();
 			var i,
 				id;
 			controller.unselect_all(true);
 			store.for_each_metadata(function (id, meta) {
 				if (Validator.isLayoutType(meta)) {
-					controller.select("onlist:" + id, true);
+					if (onlyCurrentGroup) {
+						if (meta.group === currentGroup) {
+							controller.select("onlist:" + id, true);
+						}
+					} else {
+						controller.select("onlist:" + id, true);
+					}
 				}
 			});
 		});

@@ -430,6 +430,10 @@
 			if (gui.is_listview_area2(evt, state.get_mousedown_pos()) && gui.is_listview_area(evt)) {
 				return;
 			}
+			metaData = store.get_metadata(draggingID);
+			if (metaData && !Validator.isVisible(metaData)) {
+				return;
+			}
 
 			// clear splitwhole colors
 			this.clear_snap_hightlight();
