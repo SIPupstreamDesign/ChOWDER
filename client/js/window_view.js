@@ -34,14 +34,10 @@
 		if (!Validator.isWindowType(windowData)) {
 			return;
 		}
-		if (windowData.hasOwnProperty('posx')) {
-			windowData.posx = parseInt(windowData.posx, 10);
-		} else {
+		if (!windowData.hasOwnProperty('posx')) {
 			windowData.posx = 0;
 		}
-		if (windowData.hasOwnProperty('posy')) {
-			windowData.posy = parseInt(windowData.posy, 10);
-		} else {
+		if (!windowData.hasOwnProperty('posy')) {
 			windowData.posy = 0;
 		}
 		metaDataDict[windowData.id] = windowData;

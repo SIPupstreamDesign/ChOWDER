@@ -723,7 +723,7 @@
 			}
 			if (screenElem) {
 				vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
-				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
+				//vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 		} else {
 			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
