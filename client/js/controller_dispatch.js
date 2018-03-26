@@ -704,7 +704,7 @@
 		/**
 		 * ウィンドウリストでスクリーン更新が呼ばれた
 		 */
-		window_view.on("update_screen", function (windowData) {
+		window_view.on("update_screen", function (err, windowData) {
 			controller.updateScreen(windowData);
 		});
 

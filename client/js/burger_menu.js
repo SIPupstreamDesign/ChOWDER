@@ -74,12 +74,19 @@
 			var i,
 				ul2,
 				key,
-				value;
+				value,
+				hr;
 
 			for (i = 0; i < setting.length; i = i + 1) {
 				head = setting[i];
 				key = Object.keys(setting[i])[0];
 				value = setting[i][key];
+				if (key === 'hr') {
+					hr = document.createElement('hr');
+					hr.className = "context_menu_margin";
+					ul.appendChild(hr);
+					continue;
+				}
 				
 				li = document.createElement('li');
 				li.className = "burger_menu_content";
@@ -113,6 +120,7 @@
 						};
 					}(value));
 				}
+				
 				ul.appendChild(li);
 			}
 		}

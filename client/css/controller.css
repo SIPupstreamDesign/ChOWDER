@@ -790,3 +790,8 @@ p {
 	opacity : 0.5;
 	cursor : pointer;
 }
+
+.context_menu_margin {
+	margin : 2px;
+	border-color : gray;
+}
