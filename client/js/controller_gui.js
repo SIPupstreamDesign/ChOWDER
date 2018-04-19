@@ -322,6 +322,10 @@
 							}
 						}
 					},{
+						グループ内全て選択 : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, true); }.bind(this)
+						}
+					},{
 						全て選択 : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, false); }.bind(this)
 						}
@@ -838,6 +842,7 @@
 			overwrite_button = document.getElementById("context_menu_layout_overwrite"),
 			delete_button = document.getElementById("context_menu_layout_delete"),
 			select_all_button = document.getElementById("context_menu_layout_select_all"),
+			select_group_button = document.getElementById("context_menu_layout_select_group"),
 			change_group_button = document.getElementById('context_menu_layout_change_group'),
 			change_group_submenu = document.getElementById('context_menu_layout_change_group_submenu'),
 			on_change_group = false,
@@ -863,6 +868,11 @@
 			menu.style.display = "none";
 		}.bind(this);
 		
+		select_group_button.onclick = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, true);
+			menu.style.display = "none";
+		}.bind(this);
+
 		// グループ変更サブメニュー
 		change_group_button.onmouseover = function () {
 			var container = document.getElementById('context_menu_layout_change_group_submenu');
