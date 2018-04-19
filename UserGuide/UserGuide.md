@@ -578,6 +578,34 @@ Searchタブにあるテキストボックスからは、メタデータの検�
 <img src="image/searchcheck.png" alt="対象となるグループの選択" width="434" />
 *対象となるグループの選択*
 
+Layoutタブ
+-------------------------------
+
+Layout タブでは、現在のコンテンツの表示状態を、Layout として保存することができます. 
+
+### Layoutの追加
+
+Layout の追加は画面下部Layout リスト内の右クリックメニュー, または画面右下のメニューから行えます. 追加は、
+チェックボックスにチェックが入っているグループに対して行われます.
+
+### Layoutの上書き
+
+選択中のレイアウトに, 現在のコンテンツの表示状態を上書きします.
+
+<img src="image/layout_tab.png" alt="Layoutタブ" width="434" />
+*Layoutタブ*
+
+### Groupの変更
+
+Layout が所属するグループを変更します.
+
+<img src="image/layoutmenu1.png" alt="Layoutメニュー" width="434" />
+*Layout メニュー*
+
+### Layoutの適用
+
+画面下部Layout リスト内のLayout コンテンツを画面にドラッグアンドドロップすることで適用されます.
+
 Propertyウィンドウ
 -------------------------------
 
