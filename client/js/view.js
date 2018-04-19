@@ -932,11 +932,30 @@
 					memo.style.borderColor = "lightgray";
 					memo.style.backgroundColor = "lightgray"; 
 				}
-				if (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) {
+				if ( (metaData[mark_memo] === 'true' || metaData[mark_memo] === true) && 
+					 (metaData["visible"] === 'true' || metaData["visible"] === true) )
+				{
 					memo.style.display = "block";
 				} else {
 					memo.style.display = "none";
 				}
+			}
+		}
+	}
+
+	function deleteMark(elem, metaData) {
+		var mark_memo = "mark_memo",
+			mark = "mark",
+			memo = null;
+
+		if (elem && metaData.hasOwnProperty("id")) {
+			memo =  document.getElementById("memo:" + metaData.id);
+			if (memo) {
+				memo.style.display = "none";
+				if (memo.parentNode) {
+					memo.parentNode.removeChild(memo);
+				}
+				delete metaData[mark_memo];
 			}
 		}
 	}
@@ -1189,6 +1208,7 @@
 			for (i = 0; i < data.length; ++i) {
 				elem = document.getElementById(data[i].id);
 				if (elem) {
+					deleteMark(elem, metaDataDict[data[i].id]);
 					previewArea.removeChild(elem);
 					delete metaDataDict[data[i].id];
 				}
