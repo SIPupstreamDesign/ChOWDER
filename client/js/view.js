@@ -584,7 +584,25 @@
 						webRTC.on('addstream', function (evt) {
 							var stream = evt.stream ? evt.stream : evt.streams[0];
 							elem.srcObject = stream;
-						});
+
+							if (!webRTC.statusHandle) {
+								var t = 0;
+								webRTC.statusHandle = setInterval( function (rtcKey, webRTC) {
+									t += 1;
+									webRTC.getStatus(function (status) {
+										var bytes = 0;
+										if (status.video && status.video.bytesReceived) {
+											bytes += status.video.bytesReceived;
+										}
+										if (status.audio && status.audio.bytesReceived) {
+											bytes += status.audio.bytesReceived;
+										}
+										console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
+									}.bind(t));
+								}.bind(this, rtcKey, webRTCDict[rtcKey]), 1000);
+							}
+						}.bind(rtcKey));
+
 						webRTC.on('icecandidate', function (type, data) {
 							if (type === "tincle") {
 								connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
@@ -593,8 +611,13 @@
 								}), function (err, reply) {});
 							}
 						});
+						
 						webRTC.on('closed', function () {
 							if (webRTCDict.hasOwnProperty(this)) {
+								if (webRTCDict[this].statusHandle) {
+									clearInterval(webRTCDict[this].statusHandle);
+									webRTCDict[this].statusHandle = null;
+								}
 								delete webRTCDict[this];
 							}
 						}.bind(rtcKey))
