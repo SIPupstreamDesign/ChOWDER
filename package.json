@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "redis": "*",
-    "socket.io": "*",
+    "socket.io": "2.0.4",
     "websocket": "*",
     "phantomjs": "*",
     "image-size": "*",
