@@ -5,6 +5,7 @@ var fs = require('fs'),
 	http = require('http'),
 	https = require('https'),
 	WebSocket = require('websocket'),
+	path = require('path'),
 	util = require('./util'),
 	operator = require('./operator.js'),
 	sender = require('./sender.js'),
@@ -35,9 +36,9 @@ if (process.argv.length > 2) {
 //----------------------------------------------------------------------------------------
 // websocket sender
 //----------------------------------------------------------------------------------------
-var options= {
-	key: fs.readFileSync('server.key'),
-	cert: fs.readFileSync('server.crt')
+var options = {
+	key: fs.readFileSync(path.join(__dirname, 'server.key')),
+	cert: fs.readFileSync(path.join(__dirname, 'server.crt'))
 };
 
 //----------------------------------------------------------------------------------------
@@ -60,9 +61,9 @@ wsopserver_s.listen(sslport + 1);
 
 /// web socket server instance
 ws2 = new WebSocket.server({ httpServer : wsopserver,
-		maxReceivedMessageSize: 64*1024*1024, // 64MB
-		maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
-		autoAcceptConnections : false});
+	maxReceivedMessageSize: 64*1024*1024, // 64MB
+	maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+	autoAcceptConnections : false});
 		
 ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
 	maxReceivedMessageSize: 64*1024*1024, // 64MB
@@ -117,7 +118,7 @@ function opserver_http_request(req, res) {
 		data = "",
 		contentID;
 	if (url === '/') {
-		file = fs.readFileSync('../client/index.html');
+		file = fs.readFileSync(path.join(__dirname, '../client/index.html'));
 		res.end(file);
 	} else if (url.indexOf('/download?') === 0) {
 		temp = url.split('?');
@@ -137,7 +138,8 @@ function opserver_http_request(req, res) {
 			res.end(data);
 		}
 	} else {
-		fs.readFile('../client/' + url, function (err, data) {
+		fs.readFile(path.join(__dirname, '../client', path.join('/', url)), function (err, data) {
+			//                                          ^^^^^^^^^^^^^ it's traversal safe!
 			if (err) {
 				res.writeHead(404, {'Content-Type': 'text/html', charaset: 'UTF-8'});
 				res.end("<h1>not found<h1>");
