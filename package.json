@@ -8,11 +8,12 @@
     "hiredis": "*"
   },
   "dependencies": {
+    "bson": "*",
+    "image-size": "*",
+    "phantomjs": "*",
+    "puppeteer": "^1.5.0",
     "redis": "*",
     "socket.io": "*",
-    "websocket": "*",
-    "phantomjs": "*",
-    "image-size": "*",
-    "bson": "*"
+    "websocket": "*"
   }
 }

@@ -36,7 +36,7 @@
 		Command = require('./command.js'),
 		path = require('path'),
 		fs = require('fs'),
-		phantomjs = require('phantomjs'),
+		puppeteer = require('puppeteer'),
 		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
@@ -56,32 +56,6 @@
 	client.on('error', function (err) {
 		console.log('Error ' + err);
 	});
-
-	function renderURLInternal(command, endCallback) {
-		var command;
-		var output = "out.png";
-		if (command.length > 4) {
-			output = "out" + command[5] + ".png";
-			command[2] = output;
-		}
-		util.launchApp(command, null, function () {
-			if (fs.existsSync(output)) {
-				image_size(output, function (err, dimensions) {
-					if (endCallback) {
-						if (dimensions.height > 4000) {
-							command.push(dimensions.width);
-							command.push(4000);
-							renderURLInternal(command, endCallback);
-						} else {
-							endCallback(fs.readFileSync(output), dimensions);
-						}
-					}
-				});
-			} else if (endCallback) {
-				endCallback(null);
-			}
-		});
-	}
 	
 	/**
 	 * 指定されたURLをレンダリングする
@@ -90,14 +64,27 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function renderURL(url, endCallback) {
-		var output = "out.png",
-			command = [ phantomjs.path,
-				path.normalize("./capture.js"),
-				output,
-				url ];
-		console.dir("Phantomjs:" + JSON.stringify(phantomjs));
-		console.log("Phantomjs path:" + phantomjs.path);
-		renderURLInternal(command, endCallback);
+		puppeteer.launch().then( function( browser ) {
+			browser.newPage().then( function( page ) {
+				page.goto( url ).then( function() {
+					page.evaluate( function() {
+						return {
+							width: document.body.scrollWidth,
+							height: document.body.scrollHeight,
+							deviceScaleFactor: window.devicePixelRatio
+						};
+					} ).then( function( dim ) {
+						page.screenshot( {
+							width: dim.width,
+							height: dim.height,
+							fullPage: true
+						} ).then( function( buffer ) {
+							endCallback( buffer, image_size( buffer ) );
+						} );
+					} );
+				} );
+			} );
+		} );
 	}
 	
 	function generateID(prefix, endCallback) {
