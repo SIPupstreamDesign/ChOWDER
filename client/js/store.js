@@ -10,6 +10,7 @@
 		this.metaDataDict = {};
 		this.videoDict = {};
 		this.videoElemDict = {};
+		this.cursorColor = 'rgb(255, 255, 255)';
 	};
 	
 	// isInitialized
@@ -190,6 +191,21 @@
 			return "lightgray";
 		}
 		return "white";
+	};
+
+	/**
+	 * リモートカーソルの色を返す
+	 * TODO:コントローラーセッションと紐づけて保存復元
+	 */
+	Store.prototype.get_cursor_color = function () {
+		return this.cursorColor;
+	};
+	
+	/**
+	 * リモートカーソルの色を設定する
+	 */
+	Store.prototype.set_cursor_color = function (color) {
+		this.cursorColor = color;
 	};
 	
 	/**

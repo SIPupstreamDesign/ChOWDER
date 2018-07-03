@@ -420,7 +420,8 @@
 			var obj = {
 				type: 'mouse',
 				x: mousePos.x,
-				y: mousePos.y
+				y: mousePos.y,
+				rgb : Cookie.getCursorColor()
 			};
 			this.update_metadata(obj);
 		}
@@ -1196,7 +1197,7 @@
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (Validator.isWindowType(metaData)) {
-				gui.init_content_property(metaData,"", Constants.DisplayTabType);
+				gui.init_content_property(metaData,"", Constants.PropertyTypeDisplay);
 				gui.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
@@ -1463,6 +1464,15 @@
 		if (!isEnable) {
 			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
 		}
+	}
+
+	/**
+	 * リモートカーソルの有効状態を更新
+	 * @method update_remote_cursor_color
+	 */
+	Controller.prototype.update_remote_cursor_color = function (color) {
+		Cookie.setCursorColor(color);
+		store.set_cursor_color(color);
 	}
 
 	function captureStream(video) {

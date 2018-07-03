@@ -1265,7 +1265,7 @@
                         index: controllers.connectionCount,
                         lastActive: 0
                     };
-                }
+				}
                 p = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
                 e = document.getElementById('hiddenCursor' + ctrlid);
                 if(!e){
@@ -1275,15 +1275,18 @@
                     e.style.backgroundColor = 'transparent';
                     f = document.createElement('div');
                     f.className = 'before';
-                    f.style.backgroundColor = res.data.hsv;
+                    f.style.backgroundColor = res.data.rgb;
                     e.appendChild(f);
                     f = document.createElement('div');
                     f.className = 'after';
-                    f.style.backgroundColor = res.data.hsv;
+                    f.style.backgroundColor = res.data.rgb;
                     e.appendChild(f);
                     document.body.appendChild(e);
-                    console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.hsv);
-                }
+                    console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
+                } else {
+					e.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
+					e.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
+				}
                 e.style.left = Math.round(p.x) + 'px';
                 e.style.top  = Math.round(p.y) + 'px';
                 controllers[ctrlid].lastActive = Date.now();

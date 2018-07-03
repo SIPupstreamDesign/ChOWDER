@@ -9,6 +9,7 @@
 		this.displayScale = 1;
 		this.updateCursorEnable = false;// マウスカーソル送信が有効かどうか 
 		this.loginkey = ""
+		this.cursorColor = 'rgb(255, 255, 255)';
 	};
 
 
@@ -43,6 +44,7 @@
 		this.getSnapType(true);
 		this.getSnapType(false);
 		this.isUpdateCursorEnable();
+		this.getCursorColor();
 		this.getLoginKey();
 	};
 
@@ -57,6 +59,7 @@
 		document.cookie = 'content_snap_type=' + this.contentSnapType; //gui.get_snap_type();
 		document.cookie = 'display_snap_type=' + this.displaySnapType; //gui.get_snap_type();
 		document.cookie = 'update_cursor_enable=' + String(this.updateCursorEnable);
+		document.cookie = 'cursor_color=' + String(this.cursorColor);
 		document.cookie = 'loginkey='+String(this.loginkey);
 	};
 
@@ -116,6 +119,21 @@
 		}
 		return this.updateCursorEnable;
 	};
+
+	Cookie.prototype.setCursorColor = function (color) {
+		this.load();
+		this.cursorColor = color;
+		this.save();
+	};
+	
+	Cookie.prototype.getCursorColor = function (withoutLoad) {
+		if (!withoutLoad) {
+			var color = getCookie("cursor_color");
+			this.cursorColor = color;
+		}
+		return this.cursorColor;
+	};
+	
 
 	Cookie.prototype.setLoginKey = function (key) {
 		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする

@@ -2737,8 +2737,9 @@
             connectionId[socketid] = connectionCount;
             ++connectionCount;
         }
-        json.connectionCount = connectionId[socketid];
-        i = connectionId[socketid] % 14;
+		json.connectionCount = connectionId[socketid];
+		/*
+		i = connectionId[socketid] % 14;
         // hsv は約 7 分割されるような循環
         // 奇数回周目は v を半減させ視認性を上げる
         if(i < 7){
@@ -2752,7 +2753,8 @@
             c[1] = Math.floor(c[1] * 255);
             c[2] = Math.floor(c[2] * 255);
             json.hsv = 'rgb(' + (c.join(',')) + ')';
-        }
+		}
+		*/
         updateMouseCursor(socketid, json, function (windowData) {
             endCallback(null, windowData);
         });

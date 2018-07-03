@@ -95,6 +95,28 @@
 					OFF : {
 						func : function () { this.emit(window.ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE, null, false); }.bind(this)
 					}
+				}, {
+					Color : {
+						// カーソルカラーの変更
+						func : function () {
+							var background = new window.PopupBackground(0.5);
+							var pickerDOM = document.getElementById('forcolorpicker');
+							var colorselector = new ColorSelector(function (colorvalue) {
+								var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
+								this.emit(ControllerGUI.EVENT_UPDATE_CURSOR_COLOR, null, colorstr);
+							}.bind(this), 234, 120); // 幅、高さ
+
+							background.on('close', function (colorselector, pickerDOM) {
+								pickerDOM.removeChild(colorselector.elementWrapper);
+								pickerDOM.style.display = "none";
+							}.bind(this, colorselector, pickerDOM));
+							
+							pickerDOM.appendChild(colorselector.elementWrapper);
+							pickerDOM.style.display = "inline";
+							background.show();
+							
+						}.bind(this)
+					}
 				}]	
 			}];
 
@@ -1742,6 +1764,7 @@
 	ControllerGUI.EVENT_URLSENDBUTTON_CLICKED = "urlsendbuton_clicked";
 	ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED = "textsendbutton_clicked";
 	ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE = "update_cursor_enable";
+	ControllerGUI.EVENT_UPDATE_CURSOR_COLOR = "update_cursor_color";
 	ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED = "contentdeletebutton_clicked";
 	ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED = "select_contents_clicked";
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";

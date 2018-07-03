@@ -167,8 +167,8 @@
 
         this.canvasImageData = h.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
 
-        this.elementCanvas.addEventListener('click', this.click.bind(this), false);
-        this.elementCanvas.addEventListener('mousemove', this.move.bind(this), false);
+        this.elementCanvas.onclick = this.click.bind(this);
+        this.elementCanvas.onmousemove = this.move.bind(this);
 
         return e;
     };

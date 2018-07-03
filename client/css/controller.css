@@ -396,6 +396,19 @@ p {
 	color : rgb(10, 26, 67);
 }
 
+#cursor_text {
+	position : absolute;
+	top : 7px;
+	right : 350px;
+	font-size : 14px;
+	color : rgb(10, 26, 67);
+}
+
+#cursor_color {
+    margin: 3px;
+    width: 70px;
+}
+
 #user_label {
 	top : 7px;
 	right : 135px;
@@ -794,4 +807,16 @@ p {
 .context_menu_margin {
 	margin : 2px;
 	border-color : gray;
+}
+
+#forcolorpicker {
+	min-height: 160px;
+    min-width: 250px;
+	position: fixed;
+	top: calc(50% - 80px);
+	left: calc(50% - 125px);
+	background-color:transparent;
+	z-index: 10000002;
+	display: none;
+	text-align: center;
 }

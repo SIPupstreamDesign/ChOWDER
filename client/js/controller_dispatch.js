@@ -1590,6 +1590,10 @@
 		gui.on('update_cursor_enable', function (err, value) {
 			controller.update_remote_cursor_enable(value);
 		});
+		
+		gui.on('update_cursor_color', function (err, value) {
+			controller.update_remote_cursor_color(value);
+		});
 
 		gui.on("mousedown_content_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
