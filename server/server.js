@@ -2,6 +2,7 @@
 /*global process, require, socket */
 
 var fs = require('fs'),
+	path  = require('path'),
 	http = require('http'),
 	https = require('https'),
 	WebSocket = require('websocket'),
@@ -19,9 +20,8 @@ var fs = require('fs'),
 	io,   // socket io server operator instance
 	io_s,
 	ws2, // web socket server operator instance
-	ws2_s;  
-
-console.log(operator);
+	ws2_s,
+	settings;
 
 // register server id
 operator.registerUUID("default");
@@ -57,17 +57,6 @@ var wsopserver_s = https.createServer(options, function (req, res) {
 	res.end("websocket operator");
 });
 wsopserver_s.listen(sslport + 1);
-
-/// web socket server instance
-ws2 = new WebSocket.server({ httpServer : wsopserver,
-		maxReceivedMessageSize: 64*1024*1024, // 64MB
-		maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
-		autoAcceptConnections : false});
-		
-ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
-	maxReceivedMessageSize: 64*1024*1024, // 64MB
-	maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
-	autoAcceptConnections : false});
 
 function ws_request(io, ws2) { // for http or https
 	return function (request) {
@@ -188,12 +177,44 @@ function io_request(io, ws2) {
 	};
 }
 
-ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
-ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+fs.readFile(path.join(__dirname, 'setting.json'), function (err, data) {
+	if (!err) {
+		try {
+			settings = JSON.parse(String(data));
+			
+			/// web socket server instance
+			ws2 = new WebSocket.server({ httpServer : wsopserver,
+					maxReceivedMessageSize: Number(settings.maxReceivedMessageSize),
+					maxReceivedFrameSize :Number(settings.maxReceivedFrameSize),
+					autoAcceptConnections : false});
+					
+			ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+				maxReceivedMessageSize: Number(settings.maxReceivedMessageSize),
+				maxReceivedFrameSize : Number(settings.maxReceivedFrameSize),
+				autoAcceptConnections : false});
+		} catch (e) {
+			console.error(e);
+		}
+	}
+	if (!ws2) {
+		ws2 = new WebSocket.server({ httpServer : wsopserver,
+			maxReceivedMessageSize: 64*1024*1024, // 64MB
+			maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+			autoAcceptConnections : false});
+	}
+	if (!ws2_s)	{
+		ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+			maxReceivedMessageSize: 64*1024*1024, // 64MB
+			maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+			autoAcceptConnections : false});
+	}
+	// finally
+	ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+	ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));
 
-io.on('connection', io_request([io, io_s], [ws2, ws2_s]));
-io_s.on('connection', io_request([io, io_s], [ws2, ws2_s]));
-
+	io.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+	io_s.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+});
 
 //----------------------------------------------------------------------------------------
 
