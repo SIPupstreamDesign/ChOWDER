@@ -72,6 +72,8 @@
 		</div>
 		<div>
 			<p class="loginmenu_label">パスワード</p>
+			<input style="display:none" type="text" name="faketext"/>
+			<input style="display:none" type="password" name="faketext"/>
 			<input type="password" class="loginpass" id="loginpass"></input>
 			<input type="button" class="btn loginbutton  btn-primary" id="loginbutton" value="ログイン"></input>
 		</div>
@@ -282,7 +284,7 @@
 				</div>
 				<div class="passinput_frame">
 					<div>新規パスワード</div>
-					<input class="passinput" id="new_password" type="password" style="color:black" value="" />
+					<input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
 				</div>
 			</div>
 			<div class="apply_pass_frame">
