@@ -94,9 +94,15 @@
 		if (!withoutLoad) {
 			if (isDisplay) {
 				this.displaySnapType = getCookie("display_snap_type");
+				if (!this.displaySnapType) {
+					this.displaySnapType = "free";
+				}
 				console.log("cookie - display_snap_type:" + this.displaySnapType);
 			} else {
 				this.contentSnapType = getCookie("content_snap_type");
+				if (!this.contentSnapType) {
+					this.contentSnapType = "free";
+				}
 				console.log("cookie - content_snap_type:" + this.contentSnapType);
 			}
 		}
