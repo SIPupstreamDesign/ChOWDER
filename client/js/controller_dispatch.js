@@ -432,6 +432,7 @@
 				rect = evt.target.getBoundingClientRect(),
 				px = rect.left + offsetX(evt),
 				py = rect.top + offsetY(evt);
+			if (!files[0]) return;
 
 			fileReader.onloadend = function (e) {
 				var data = e.target.result;

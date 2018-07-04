@@ -233,6 +233,21 @@
 			this.emit(window.ControllerGUI.EVENT_TAB_CHANGED_POST, err, data);
 		}.bind(this));
 
+		// Displayボックスにグループボックスを埋め込み.
+		this.displayBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('display_tab_box'),
+			{
+				tabs : [{
+						"group_default" : {
+							id : Constants.DefaultGroup,
+							name : "default",
+							className : "display",
+							func : function () {},
+							active : true
+						}
+					}]
+			}, GroupBox.TYPE_DISPLAY);
+		this.initGroupBoxEvents(this.displayBox);
+
 		// コンテンツボックスにグループボックスを埋め込み.
 		this.groupBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('content_tab_box'),
 			{
@@ -245,7 +260,7 @@
 							active : true
 						}
 					}]
-			});
+			}, GroupBox.TYPE_CONTENT);
 		this.initGroupBoxEvents(this.groupBox);
 
 		// Searchエリアの中身を作成
@@ -256,7 +271,7 @@
 					name : "default"
 				}],
 				colors : ["rgb(54,187,68)"]
-			});
+			}, GroupBox.TYPE_CONTENT);
 		this.initSearchBoxEvents(this.searchBox);
 
 		// レイアウトボックスにグループボックスを埋め込み.
@@ -271,7 +286,7 @@
 							active : false
 						}
 					}]
-			});
+			}, GroupBox.TYPE_CONTENT);
 		this.initGroupBoxEvents(this.layoutBox);
 
 
@@ -1283,11 +1298,13 @@
 	 */
 	ControllerGUI.prototype.setGroupList = function (groupList) {
 		var contentSetting = { tabs : [] },
+			displaySetting = { tabs : [] },
 			searchSetting = { groups : [], colors : [] },
 			layoutSetting = { tabs : [] },
 			groupName,
 			tab = {},
 			layoutGroupTab = {},
+			displayGroupTab = {},
 			groupColor,
 			groupID,
 			i;
@@ -1318,10 +1335,24 @@
 			});
 			searchSetting.colors.push(groupColor);
 			layoutSetting.tabs.push(layoutGroupTab);
+			
+			displayGroupTab = {};
+			displayGroupTab[groupID] = {
+				id : groupID,
+				name : groupName,
+				className : Constants.TabIDDisplay,
+				color : groupColor,
+				active : true
+			};
+			displaySetting.tabs.push(displayGroupTab);
 		}
 
+		document.getElementById('display_tab_box').innerHTML = "";
+		this.displayBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('display_tab_box'), displaySetting, GroupBox.TYPE_DISPLAY);
+		this.initGroupBoxEvents(this.displayBox);
+
 		document.getElementById('content_tab_box').innerHTML = "";
-		this.groupBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('content_tab_box'), contentSetting);
+		this.groupBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('content_tab_box'), contentSetting, GroupBox.TYPE_CONTENT);
 		this.initGroupBoxEvents(this.groupBox);
 
 		// コンテキストメニューを刷新
@@ -1332,11 +1363,11 @@
 		this.updateBurgerMenu();
 		this.updateBurgerMenuLayout();
 
-		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'), searchSetting);
+		this.searchBox = new SearchBox(this.management.getAuthorityObject(), document.getElementById('search_tab_box'), searchSetting, GroupBox.TYPE_CONTENT);
 		this.initSearchBoxEvents(this.searchBox);
 
 		document.getElementById('layout_tab_box').innerHTML = "";
-		this.layoutBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('layout_tab_box'), layoutSetting);
+		this.layoutBox = new GroupBox(this.management.getAuthorityObject(), document.getElementById('layout_tab_box'), layoutSetting, GroupBox.TYPE_CONTENT);
 		this.initGroupBoxEvents(this.layoutBox);
 	};
 
@@ -1525,6 +1556,9 @@
 	ControllerGUI.prototype.get_layout_area_by_group = function (group) {
 		return this.layoutBox ? this.layoutBox.get_tab(group) : null;
 	};
+	ControllerGUI.prototype.get_display_area_by_group = function (group) {
+		return this.displayBox ? this.displayBox.get_tab(group) : null;
+	};
 	ControllerGUI.prototype.get_current_group_id = function () {
 		if (this.tabs.is_active(Constants.TabIDContent) && this.groupBox) {
 			return this.groupBox.get_current_group_id();
@@ -1544,7 +1578,7 @@
 		this.tabs.change_tab(tabid);
 	};
 	ControllerGUI.prototype.get_display_area = function () {
-		return document.getElementById('display_tab_box');
+		return this.displayBox ? this.displayBox.get_current_tab() : null;
 	};
 	ControllerGUI.prototype.get_list_elem = function (id) {
 		return document.getElementById("onlist:" + id);

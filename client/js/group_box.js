@@ -4,7 +4,7 @@
 	"use strict";
 	var GroupBox;
 
-	GroupBox = function (authority, containerElem, setting) {
+	GroupBox = function (authority, containerElem, setting, type) {
 		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
@@ -13,6 +13,7 @@
 		this.groupIDToName = {};
 		this.currentTab = null;
 		this.authority = authority;
+		this.type = type;
 		this.init();
 		this.currentGroupName = "";
 	};
@@ -95,7 +96,7 @@
 			if (this.authority.isGroupManipulable()) {
 				// 上へボタン
 				elem = document.createElement('div');
-				elem.className = "group_tab_up";
+				elem.className = "group_tab_up" + " " + "group_tab_up_" + this.type;
 				span = document.createElement('span');
 				span.className = "group_tab_up_label";
 				elem.setAttribute("title", "1つ上に移動");
@@ -107,7 +108,7 @@
 
 				// 下へボタン
 				elem = document.createElement('div');
-				elem.className = "group_tab_down";
+				elem.className = "group_tab_down" + " " + "group_tab_down_" + this.type;
 				span = document.createElement('span');
 				span.className = "group_tab_down_label";
 				elem.setAttribute("title", "1つ下に移動");
@@ -119,7 +120,7 @@
 
 				// 追加ボタン
 				elem = document.createElement('div');
-				elem.className = "group_tab_append";
+				elem.className = "group_tab_append" + " " + "group_tab_down_" + this.type;
 				span = document.createElement('span');
 				span.className = "group_tab_append_label";
 				span.innerHTML = "+";
@@ -169,29 +170,64 @@
 		return tabid.split(this.container.id + "_").join("");
 	}
 
+	GroupBox.prototype.addcheckbox = function (group_div, tabID) {
+		var checkbox = document.createElement('input');
+		checkbox.id = 'display_check_' + tabID;
+		checkbox.className = "display_group_checkbox";
+		checkbox.type = 'checkbox';
+		group_div.appendChild(checkbox);
+		checkbox.onchange = function (tabID) {
+			this.emit(GroupBox.EVENT_DISPLAYCHECK_CHANGED, null, tabID, checkbox.checked);
+		}.bind(this, tabID);
+		// group_div.onclick = (function (tabID) {
+		// 	return function (evt) {
+		// 		var checkbox = document.getElementById('display_check_' + tabID);
+		// 		checkbox.checked = !checkbox.checked; 
+		// 		//checkFunction(self, checkbox, tabID);
+		// 		this.emit(GroupBox.EVENT_DISPLAYCHECK_CHANGED, null, tabID, checkbox.checked);
+		// 	}.bind(this);
+		// }.bind(this, tabID)());
+	}
+
 	/*
 		<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
 		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
 		..
 	*/
 	GroupBox.prototype.create_tab = function (tabID, groupName, groupColor, tabContent, is_active) {
-		var elem,
+		var inner_group_div,
+			elem,
 			link,
 			setting_button,
 			span;
+		inner_group_div = document.createElement('div');
+		inner_group_div.className = "inner_group_div"
 		elem = document.createElement('div');
+		elem.appendChild(inner_group_div)
 		elem.id = tabID;
 		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
 		elem.style.cursor = "pointer";
+		if (!groupColor) {
+			if (this.type === GroupBox.TYPE_DISPLAY) {
+				elem.style.backgroundColor = "#0080FF";
+			} else {
+				elem.style.backgroundColor = "rgb(54,187,68)";
+			}
+		}
 		if (groupColor) {
 			elem.style.backgroundColor = groupColor;
 		}
+
+		if (this.type === GroupBox.TYPE_DISPLAY) {
+			this.addcheckbox(inner_group_div, tabID);
+		}
+		
 		this.tabGroupToElems[this.fromTabID(tabID)].push(elem);
 		this.groupIDToName[ this.fromTabID(tabID)] = groupName;
 		link = document.createElement('a');
 		link.href = "#";
 		link.id = tabID + "_link";
-		link.className = "group_tab_link";
+		link.className = "group_tab_link" + " " + "group_tab_link_" + this.type;
 		link.innerHTML = groupName;
 		elem.onclick = function (evt) {
 			var i,
@@ -212,8 +248,8 @@
 			this.currentGroupName = groupName;
 			this.currentGroupID = this.fromTabID(tabID);
 		}.bind(this);
-		elem.appendChild(link);
-		
+		inner_group_div.appendChild(link);
+
 		if ( this.fromTabID(tabID) !== Constants.DefaultGroup && this.authority.isGroupManipulable()) {
 			setting_button = document.createElement('div');
 			setting_button.className = "group_tab_setting";
@@ -271,7 +307,7 @@
 			span = document.createElement('span');
 			span.className = "group_tab_setting_label";
 			setting_button.appendChild(span);
-			elem.appendChild(setting_button);
+			inner_group_div.appendChild(setting_button);
 		}
 		return elem;
 	};
@@ -311,6 +347,10 @@
 	GroupBox.EVENT_GROUP_EDIT_COLOR = "group_edit_color";
 	// グループ名変更
 	GroupBox.EVENT_GROUP_EDIT_NAME = "group_edit_name";
+
+	GroupBox.TYPE_CONTENT = "content";
+	GroupBox.TYPE_DISPLAY = "display";
+	GroupBox.EVENT_DISPLAYCHECK_CHANGED = "display_check_changed";
 
 	window.GroupBox = GroupBox;
 }());

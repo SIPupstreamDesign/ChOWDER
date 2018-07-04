@@ -16,39 +16,50 @@
 
 
 .group_tab {
-	text-align: center;
 	background: rgb(54,187,68);
 	border: 1px solid rgba(255, 255, 255, 0.3);
 	top: 5px;
 	left : 4px;
 	width : 170px;
 	height : 30px;
-	padding-left : 2px;
+	padding-left : 5px;
 	padding-right : 2px;
 	font-size: 14px;
 	float : left;
 }
 
 .layout_tab {
-	text-align: center;
 	background: rgb(54,187,68);
 	border: 1px solid rgba(255, 255, 255, 0.3);
 	top: 5px;
 	left : 4px;
 	width : 170px;
 	height : 30px;
-	padding-left : 2px;
+	padding-left : 5px;
+	padding-right : 2px;
+	font-size: 14px;
+	float : left;
+}
+
+.display_tab {
+	background: rgb(54,187,68);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	top: 5px;
+	left : 4px;
+	width : 170px;
+	height : 30px;
+	padding-left : 5px;
 	padding-right : 2px;
 	font-size: 14px;
 	float : left;
 }
 
 .group_tab_setting {
-	border: 1px solid gray;
+	border: 1px solid #0080FF;
 	border-radius: 2px;
 	width : 16px;
 	height : 16px;
-	background :rgb(54,187,68);
+	background :#0080FF;
 	float : right;
 	position : relative;
 	right: 10px;
@@ -72,11 +83,9 @@
 }
 
 .group_tab_append {
-	border: 1px solid rgb(100, 250, 100);
 	border-radius: 16px;
 	width : 16px;
 	height : 16px;
-	background :rgb(100, 250, 100);
 	position : fixed;
 	bottom : 7px;
 	left : 150px;
@@ -86,8 +95,19 @@
 	text-align: center;
 }
 
-.group_tab_append:hover {
+.group_tab_append_content {
+	border: 1px solid rgb(100, 250, 100);
+	background-color :rgb(100, 250, 100);
+}
+.group_tab_append_display {
+	border: 1px solid #0080FF;
+	background-color :#0080FF;
+}
+.group_tab_append_content:hover {
 	background :rgb(54,187,68);
+}
+.group_tab_append_display:hover {
+	background-color :rgb(21, 89, 156);
 }
 
 .group_tab_append_label {
@@ -97,11 +117,9 @@
 }
 
 .group_tab_up {
-	border: 1px solid rgb(100, 250, 100);
 	border-radius: 16px;
 	width : 16px;
 	height : 16px;
-	background :rgb(100, 250, 100);
 	position : fixed;
 	bottom : 7px;
 	left : 10px;
@@ -113,20 +131,26 @@
 	background-repeat:no-repeat;
 	background-size: contain;
 }
+.group_tab_up_content {
+	border: 1px solid rgb(100, 250, 100);
+	background-color :rgb(100, 250, 100);
+}
+.group_tab_up_content:hover {
+	background-color :rgb(54,187,68);
+}
 
-.group_tab_up:hover {
-	background :rgb(54,187,68);
-	background-image:url("../image/group_up.png");
-	background-repeat:no-repeat;
-	background-size: contain;
+.group_tab_up_display {
+	border: 1px solid #0080FF;
+	background-color :#0080FF;
+}
+.group_tab_up_display:hover {
+	background-color :rgb(21, 89, 156);
 }
 
 .group_tab_down {
-	border: 1px solid rgb(100, 250, 100);
 	border-radius: 16px;
 	width : 16px;
 	height : 16px;
-	background :rgb(100, 250, 100);
 	position : fixed;
 	bottom : 7px;
 	left : 30px;
@@ -138,12 +162,20 @@
 	background-repeat:no-repeat;
 	background-size: contain;
 }
-
-.group_tab_down:hover {
+.group_tab_down_content {
+	border: 1px solid rgb(100, 250, 100);
+	background-color :rgb(100, 250, 100);
+}
+.group_tab_down_content:hover {
 	background :rgb(54,187,68);
-	background-image:url("../image/group_down.png");
-	background-repeat:no-repeat;
-	background-size: contain;
+}
+
+.group_tab_down_display {
+	border: 1px solid #0080FF;
+	background-color :#0080FF;
+}
+.group_tab_down_display:hover {
+	background-color :rgb(21, 89, 156);
 }
 
 .group_tab.active {
@@ -158,17 +190,23 @@
 	border: 2px solid rgb(54,187,68);
 }
 
+.display_tab_box {
+	border: 2px solid #0080FF;
+}
+.display_tab.active {
+	border: 3px solid white;
+}
+
 .layout_tab_box {
 	border: 2px solid lightgray;
 }
 
-#layout_tab_box {
-	background-color : rgba(255, 255, 255, 0.1);
+#display_tab_box {
+	border: 2px solid #0080FF;
 }
 
-.group_tab_link {
-	position : relative;
-	top : 5px;
+#layout_tab_box {
+	background-color : rgba(255, 255, 255, 0.1);
 }
 
 .group_setting_menu {
@@ -192,4 +230,23 @@
 .group_setting_menu_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
+}
+
+.display_group_checkbox {
+	display : inline-block;
+	width : 20px;
+	height: 20px;
+}
+.group_tab_link {
+	display: inline-block;
+	margin: 4px;
+}
+.group_tab_link_display {
+	position : relative;
+	top : -4px;
+}
+.inner_group_div {
+	position: absolute;
+	height: 25px;
+    width: 100%;
 }
