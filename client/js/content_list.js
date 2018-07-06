@@ -22,6 +22,8 @@
 			classname = 'textcontent';
 		} else if (contentType === 'video') {
 			classname = 'videocontent';
+		} else if (contentType === 'pdf') {
+			classname = 'pdfcontent';
 		} else {
 			classname = 'imagecontent';
 		}
@@ -38,6 +40,8 @@
 			tagName = 'div';
 		} else if (contentType === "video") {
 			tagName = 'img';
+		} else if (contentType === "pdf") {
+			tagName = 'canvas';
 		} else {
 			tagName = 'img';
 		}
@@ -181,6 +185,27 @@
 					// マイク、カメラボタン
 					this.createMicCameraButton(divElem, metaData);
 				}
+			} else if (metaData.type === 'pdf') {
+				var context = contentElem.getContext('2d');
+
+				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+				pdfjsLib.getDocument(contentData).then(function (pdf) {
+					pdf.getPage(1).then(function (page) {
+						var width = 640;
+						var viewport = page.getViewport(width / page.getViewport(1).width);
+
+						contentElem.width = viewport.width;
+						contentElem.height = viewport.height;
+
+						page.render({
+							canvasContext: context,
+							viewport: viewport
+						}).then(function () {
+							fixDivSize(divElem, viewport.width, viewport.width / viewport.height);
+						});
+					}.bind(this));
+				}.bind(this));
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
