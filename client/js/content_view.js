@@ -109,25 +109,43 @@
 					};
 				}
 			} else if (metaData.type === 'pdf') {
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 				var context = contentElem.getContext('2d');
 
 				var pdfjsLib = window['pdfjs-dist/build/pdf'];
 
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
-					pdf.getPage(1).then(function (page) {
-						var width = 640;
-						var viewport = page.getViewport(width / page.getViewport(1).width);
+					var loadPage = function (pn) {
+						pdf.getPage(pn).then(function (page) {
+							var width = 640;
+							var viewport = page.getViewport(width / page.getViewport(1).width);
+	
+							contentElem.width = viewport.width;
+							contentElem.height = viewport.height;
+	
+							page.render({
+								canvasContext: context,
+								viewport: viewport
+							}).then(function () {
+							});
+						}.bind(this));
+					}.bind(this);
 
-						contentElem.width = viewport.width;
-						contentElem.height = viewport.height;
+					var pn = 1;
+					loadPage(pn);
 
-						page.render({
-							canvasContext: context,
-							viewport: viewport
-						}).then(function () {
-							vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-						});
-					}.bind(this));
+					contentElem.addEventListener('click', function (event) {
+						// マウスクリック位置の把握
+						var rect = contentElem.getBoundingClientRect();
+						var x = event.clientX - rect.x;
+
+						if (x < rect.width / 2.0) { // もしクリック位置が半分より左なら
+							pn = Math.max(pn - 1, 1); // ページを1つ前に戻す
+						} else { // もしクリック位置が半分より右なら
+							pn = Math.min(pn + 1, pdf.numPages); // ページを1つ次に進める
+						}
+						loadPage(pn);
+					});
 				}.bind(this));
 			} else {
 				// contentData is blob
