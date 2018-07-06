@@ -13,20 +13,6 @@
 	ContentView.prototype = Object.create(EventEmitter.prototype);
 
 	/**
-	 * コンテンツタイプから適切なクラス名を取得する.
-	 * @parma {String} contentType コンテンツタイプ
-	 */
-	function getClassName(contentType) {
-		var classname;
-		if (contentType === 'text') {
-			classname = 'textcontent';
-		} else {
-			classname = 'imagecontent';
-		}
-		return classname;
-	}
-
-	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
 	 * @parma {String} contentType コンテンツタイプ
 	 */
@@ -36,6 +22,8 @@
 			tagName = 'pre';
 		} else if (contentType === 'video') {
 			tagName = 'img'; // videoでvideoを保持してない場合用
+		} else if (contentType === 'pdf') {
+			tagName = 'canvas';
 		} else {
 			tagName = 'img';
 		}
@@ -120,6 +108,27 @@
 						vscreen_util.assignMetaData(contentElem, metaData, true,groupDict);
 					};
 				}
+			} else if (metaData.type === 'pdf') {
+				var context = contentElem.getContext('2d');
+
+				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+				pdfjsLib.getDocument(contentData).then(function (pdf) {
+					pdf.getPage(1).then(function (page) {
+						var width = 640;
+						var viewport = page.getViewport(width / page.getViewport(1).width);
+
+						contentElem.width = viewport.width;
+						contentElem.height = viewport.height;
+
+						page.render({
+							canvasContext: context,
+							viewport: viewport
+						}).then(function () {
+							vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+						});
+					}.bind(this));
+				}.bind(this));
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {

@@ -909,8 +909,6 @@
 			metaData.height = img.naturalHeight;
 			metaData.group = gui.get_current_group_id();
 			vscreen_util.transPosInv(metaData);
-			img.style.width = img.naturalWidth + "px";
-			img.style.height = img.naturalHeight + "px";
 			URL.revokeObjectURL(img.src);
 			console.log("sendImage");
 			this.add_content(metaData, data);
@@ -1003,6 +1001,29 @@
 			this.add_content(metaData, data, function (err, reply) {
 			}.bind(this));
 		}.bind(this);
+	};
+
+	/**
+	 * PDFデータ送信
+	 */
+	Controller.prototype.send_pdf = function (data) {
+		var pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+		pdfjsLib.getDocument(data).then(function (pdf) {
+			pdf.getPage(1).then(function (page) {
+				var width = 640;
+				var viewport = page.getViewport(width / page.getViewport(1).width);
+
+				var metaData = {
+					type: 'pdf',
+					width: viewport.width,
+					height: viewport.height,
+					group: gui.get_current_group_id()
+				};
+				vscreen_util.transPosInv(metaData);
+				this.add_content(metaData, data);
+			}.bind(this));
+		}.bind(this));
 	};
 	
 	/**

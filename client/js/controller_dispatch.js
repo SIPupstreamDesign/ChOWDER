@@ -423,48 +423,53 @@
 		 *  ファイルドロップハンドラ
 		 * @param {Object} evt FileDropイベント
 		 */
-		gui.on("file_dropped", function (err, evt) {
-			var i,
-				file,
-				files = evt.dataTransfer.files,
-				fileReader = new FileReader(),
-				movieReader = new FileReader(),
-				rect = evt.target.getBoundingClientRect(),
-				px = rect.left + offsetX(evt),
-				py = rect.top + offsetY(evt);
+		gui.on('file_dropped', function (err, evt) {
+			var rect = evt.target.getBoundingClientRect();
+			var px = rect.left + offsetX(evt);
+			var py = rect.top + offsetY(evt);
 
-			fileReader.onloadend = function (e) {
-				var data = e.target.result;
-				if (data && data instanceof ArrayBuffer) {
-					controller.send_image(data, { posx: px, posy: py, visible: true });
-				} else {
-					controller.send_text(data, { posx: px, posy: py, visible: true });
-				}
-			};
-			movieReader.onloadend = (function (name) {
-				return function (e) {
-					var data = e.target.result;
-					if (data && data instanceof ArrayBuffer) {
-						var blob = new Blob([data], { type: "video/mp4" });
-						controller.send_movie("file", blob, {
-							group: gui.get_current_group_id(),
-							posx: px, posy: py, visible: true,
-							user_data_text: JSON.stringify({ text: name })
-						});
+			var files = evt.dataTransfer.files;
+			for (var i = 0; i < files.length; i ++) {
+				(function () {
+					var file = files[i];
+					var reader = new FileReader();
+
+					if (file.type.match('image.*')) {
+						reader.onloadend = function (evt) {
+							var data = evt.target.result;
+							controller.send_image(data, { posx: px, posy: py, visible: true});
+						};
+						reader.readAsArrayBuffer(file);
+
+					} else if (file.type.match('text.*')) {
+						reader.onloadend = function (evt) {
+							var data = evt.target.result;
+							controller.send_text(data, { posx: px, posy: py, visible: true });
+						};
+						reader.readAsText(file);
+
+					} else if (file.type.match('video.*')) {
+						reader.onloadend = function (evt) {
+							var data = evt.target.result;
+							var blob = new Blob([data], { type: 'video/mp4' });
+							controller.send_movie('file', blob, {
+								group: gui.get_current_group_id(),
+								posx: px,
+								posy: py,
+								visible: true,
+								user_data_text: JSON.stringify({ text:  file.name })
+							});
+						};
+						reader.readAsArrayBuffer(file);
+
+					} else if (file.type.match('application/pdf')) {
+						reader.onloadend = function (evt) {
+							var data = evt.target.result;
+							controller.send_pdf(data);
+						};
+						reader.readAsArrayBuffer(file);
 					}
-				};
-			}(files[0].name));
-
-			for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
-				if (file.type.match('image.*')) {
-					fileReader.readAsArrayBuffer(file);
-				}
-				if (file.type.match('text.*')) {
-					fileReader.readAsText(file);
-				}
-				if (file.type.match('video.*')) {
-					movieReader.readAsArrayBuffer(file);
-				}
+				})();
 			}
 		});
 

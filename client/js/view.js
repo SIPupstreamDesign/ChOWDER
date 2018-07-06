@@ -335,7 +335,9 @@
 		if (contentType === 'text') {
 			tagName = 'pre';
 		} else if (contentType === 'video') {
-			tagName = 'video'
+			tagName = 'video';
+		} else if (contentType === 'pdf') {
+			tagName = 'canvas';
 		} else {
 			tagName = 'img';
 		}
@@ -534,6 +536,7 @@
 	 * @param {Object} contentData コンテンツデータ(テキストまたはバイナリデータ)
 	 */
 	function assignMetaBinary(metaData, contentData) {
+		console.log(metaData);
 		var previewArea = document.getElementById('preview_area'),
 			tagName,
 			blob,
@@ -597,12 +600,33 @@
 							if (webRTCDict.hasOwnProperty(this)) {
 								delete webRTCDict[this];
 							}
-						}.bind(rtcKey))
+						}.bind(rtcKey));
 					});
 				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
 				elem.innerHTML = contentData;
+			} else if (metaData.type === 'pdf') {
+				var context = elem.getContext('2d');
+
+				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+				pdfjsLib.getDocument(contentData).then(function (pdf) {
+					pdf.getPage(1).then(function (page) {
+						var width = 640;
+						var viewport = page.getViewport(width / page.getViewport(1).width);
+
+						elem.width = viewport.width;
+						elem.height = viewport.height;
+
+						page.render({
+							canvasContext: context,
+							viewport: viewport
+						}).then( function () {
+							// do nothing
+						});
+					}.bind(this));
+				}.bind(this));
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
