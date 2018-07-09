@@ -700,6 +700,17 @@
 		});
 
 		/**
+		 * コンテンツビューでPDFページが切り替えられた
+		 */
+		content_view.on("move_pdf_page", function (err, id, delta, max) {
+			var metaData = store.get_metadata(id);
+			var page = metaData.pdfPage ? parseInt(metaData.pdfPage) : 1;
+			page = Math.min(Math.max(page + delta, 1), max);
+			metaData.pdfPage = page;
+			controller.update_metadata(metaData);
+		});
+
+		/**
 		 * ウィンドウリストでセットアップコンテンツが呼ばれた
 		 */
 		window_list.on("setup_content", function (err, elem, uid) {

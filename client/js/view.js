@@ -612,20 +612,27 @@
 				var pdfjsLib = window['pdfjs-dist/build/pdf'];
 
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
-					pdf.getPage(1).then(function (page) {
-						var width = 640;
-						var viewport = page.getViewport(width / page.getViewport(1).width);
+					var renderTask = Promise.resolve();
+					metaData.pdfNumPages = pdf.numPages;
 
-						elem.width = viewport.width;
-						elem.height = viewport.height;
+					var current = 0;
+					elem.loadPage = function (p) {
+						if (current === p) { return; }
+						current = p;
 
-						page.render({
-							canvasContext: context,
-							viewport: viewport
-						}).then( function () {
-							// do nothing
-						});
-					}.bind(this));
+						pdf.getPage(p).then(function (page) {
+							var width = 640;
+							var viewport = page.getViewport(width / page.getViewport(1).width);
+	
+							elem.width = viewport.width;
+							elem.height = viewport.height;
+
+							renderTask = renderTask.then(page.render({
+								canvasContext: context,
+								viewport: viewport
+							}));
+						}.bind(this));
+					}.bind(this);
 				}.bind(this));
 			} else {
 				// contentData is blob
@@ -1083,6 +1090,11 @@
 					if (isVisible(json)) {
 						vscreen_util.assignMetaData(elem, json, false, groupDict);
 						elem.style.display = "block";
+
+						// pdfページの切り替え
+						if (json.type === 'pdf') {
+							elem.loadPage(parseInt(json.pdfPage));
+						}
 					} else {
 						elem.style.display = "none";
 					}

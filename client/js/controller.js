@@ -1662,6 +1662,11 @@
 			if (Validator.isVisible(json)) {
 				vscreen_util.assignMetaData(elem, json, true, store.get_group_dict());
 				elem.style.display = "block";
+
+				// pdfページの切り替え
+				if (json.type === 'pdf') {
+					elem.loadPage(parseInt(json.pdfPage));
+				}
 			} else {
 				elem.style.display = "none";
 			}
