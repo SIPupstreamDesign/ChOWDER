@@ -830,6 +830,7 @@
 		this.setupContent(divElem, divElem.id);
 
 		this.updateScreen();
+		Translation();
 	};
 
 	/**

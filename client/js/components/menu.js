@@ -74,6 +74,7 @@
 				link.href = "#";
 				link.innerHTML = key;
 				link.id = "_menu_" + key;
+				link.setAttribute("data-key", key);
 
 				if (value instanceof Array) {
 					// 子有り.
