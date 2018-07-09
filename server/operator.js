@@ -36,7 +36,7 @@
 		Command = require('./command.js'),
 		path = require('path'),
 		fs = require('fs'),
-		puppeteer = require('puppeteer'),
+		phantom = require('phantom'),
 		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
@@ -64,27 +64,40 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function renderURL(url, endCallback) {
-		puppeteer.launch().then( function( browser ) {
-			browser.newPage().then( function( page ) {
-				page.goto( url ).then( function() {
-					page.evaluate( function() {
-						return {
-							width: document.body.scrollWidth,
-							height: document.body.scrollHeight,
-							deviceScaleFactor: window.devicePixelRatio
-						};
-					} ).then( function( dim ) {
-						page.screenshot( {
-							width: dim.width,
-							height: dim.height,
-							fullPage: true
-						} ).then( function( buffer ) {
-							endCallback( buffer, image_size( buffer ) );
-						} );
-					} );
-				} );
-			} );
-		} );
+		phantom.create().then(function (instance) {
+			instance.createPage().then(function (page) {
+				page.property('viewportSize', {width: 1024, height: 600}).then(function () {
+					page.open(url).then(function (status) {
+						if (status !== 'success') {
+							console.error('renderURL: Page open failed: ' + status);
+							return;
+						}
+
+						page.evaluate(function () {
+							return { /* eslint-disable */
+								width: document.body.scrollWidth,
+								height: document.body.scrollHeight,
+								deviceScaleFactor: window.devicePixelRatio
+							}; /* eslint-enable */
+						}).then(function (dim) {
+							page.property('viewportSize', {width: dim.width, height: dim.height}).then(function () {
+								var filename = path.resolve('/tmp', Date.now().toString() + '.png');
+								page.render(filename).then(function () {
+									fs.readFile(filename, function (err, data) {
+										if (err) {
+											console.error(err);
+											return;
+										}
+										endCallback(data, image_size(data));
+										instance.exit();
+									});
+								});
+							});
+						});
+					});
+				});
+			});
+		});
 	}
 	
 	function generateID(prefix, endCallback) {
