@@ -115,37 +115,39 @@
 				var pdfjsLib = window['pdfjs-dist/build/pdf'];
 
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
-					var loadPage = function (pn) {
-						pdf.getPage(pn).then(function (page) {
+					var renderTask = Promise.resolve();
+					var current = 0;
+					contentElem.loadPage = function (p) {
+						if (current === p) { return; }
+						current = p;
+
+						pdf.getPage(p).then(function (page) {
 							var width = 640;
 							var viewport = page.getViewport(width / page.getViewport(1).width);
 	
 							contentElem.width = viewport.width;
 							contentElem.height = viewport.height;
-	
-							page.render({
+
+							renderTask = renderTask.then(page.render({
 								canvasContext: context,
 								viewport: viewport
-							}).then(function () {
-							});
+							}));
 						}.bind(this));
 					}.bind(this);
 
-					var pn = 1;
-					loadPage(pn);
+					this.emit('move_pdf_page', null, metaData.id, 0, pdf.numPages); // ページ初期化
 
-					contentElem.addEventListener('click', function (event) {
+					contentElem.onclick = function (event) {
 						// マウスクリック位置の把握
 						var rect = contentElem.getBoundingClientRect();
 						var x = event.clientX - rect.x;
 
 						if (x < rect.width / 2.0) { // もしクリック位置が半分より左なら
-							pn = Math.max(pn - 1, 1); // ページを1つ前に戻す
+							this.emit('move_pdf_page', null, metaData.id, -1, pdf.numPages); // ページを1つ前に戻す
 						} else { // もしクリック位置が半分より右なら
-							pn = Math.min(pn + 1, pdf.numPages); // ページを1つ次に進める
+							this.emit('move_pdf_page', null, metaData.id, 1, pdf.numPages); // ページを1つ次に進める
 						}
-						loadPage(pn);
-					});
+					}.bind(this);
 				}.bind(this));
 			} else {
 				// contentData is blob
