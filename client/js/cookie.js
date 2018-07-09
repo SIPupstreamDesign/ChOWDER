@@ -5,10 +5,11 @@
 	"use strict";
 
 	var Cookie = function() {
-		this.snapType = "free";
+		this.contentSnapType = "free";
 		this.displayScale = 1;
 		this.updateCursorEnable = false;// マウスカーソル送信が有効かどうか 
 		this.loginkey = ""
+		this.cursorColor = 'rgb(255, 255, 255)';
 	};
 
 
@@ -40,8 +41,10 @@
 
 	Cookie.prototype.load = function () {
 		this.getDisplayScale();
-		this.getSnapType();
+		this.getSnapType(true);
+		this.getSnapType(false);
 		this.isUpdateCursorEnable();
+		this.getCursorColor();
 		this.getLoginKey();
 	};
 
@@ -53,8 +56,10 @@
 		var displayScale = vscreen.getWholeScale();
 		console.log("save_cookie");
 		document.cookie = 'display_scale=' + String(this.displayScale);
-		document.cookie = 'snap_setting=' + this.snapType; //gui.get_snap_type();
+		document.cookie = 'content_snap_type=' + this.contentSnapType; //gui.get_snap_type();
+		document.cookie = 'display_snap_type=' + this.displaySnapType; //gui.get_snap_type();
 		document.cookie = 'update_cursor_enable=' + String(this.updateCursorEnable);
+		document.cookie = 'cursor_color=' + String(this.cursorColor);
 		document.cookie = 'loginkey='+String(this.loginkey);
 	};
 
@@ -76,17 +81,36 @@
 		return this.displayScale;
 	};
 	
-	Cookie.prototype.setSnapType = function (type) {
+	Cookie.prototype.setSnapType = function (isDisplay, type) {
 		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする
-		this.snapType = type;
+		if (isDisplay) {
+			this.displaySnapType = type;
+		} else {
+			this.contentSnapType = type;
+		}
 		this.save();
 	};
-	Cookie.prototype.getSnapType = function (withoutLoad) {
+	Cookie.prototype.getSnapType = function (isDisplay, withoutLoad) {
 		if (!withoutLoad) {
-			this.snapType = getCookie("snap_setting");
+			if (isDisplay) {
+				this.displaySnapType = getCookie("display_snap_type");
+				if (!this.displaySnapType) {
+					this.displaySnapType = "free";
+				}
+				console.log("cookie - display_snap_type:" + this.displaySnapType);
+			} else {
+				this.contentSnapType = getCookie("content_snap_type");
+				if (!this.contentSnapType) {
+					this.contentSnapType = "free";
+				}
+				console.log("cookie - content_snap_type:" + this.contentSnapType);
+			}
 		}
-		console.log("cookie - snap_setting:" + this.snapType);
-		return this.snapType;
+		if (isDisplay) {
+			return this.displaySnapType;
+		} else {
+			return this.contentSnapType;
+		}
 	};
 
 	Cookie.prototype.setUpdateCursorEnable = function (enable) {
@@ -101,6 +125,21 @@
 		}
 		return this.updateCursorEnable;
 	};
+
+	Cookie.prototype.setCursorColor = function (color) {
+		this.load();
+		this.cursorColor = color;
+		this.save();
+	};
+	
+	Cookie.prototype.getCursorColor = function (withoutLoad) {
+		if (!withoutLoad) {
+			var color = getCookie("cursor_color");
+			this.cursorColor = color;
+		}
+		return this.cursorColor;
+	};
+	
 
 	Cookie.prototype.setLoginKey = function (key) {
 		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする

@@ -12,7 +12,7 @@
     "image-size": "*",
     "phantom": "^6.0.3",
     "redis": "*",
-    "socket.io": "*",
+    "socket.io": "2.0.4",
     "websocket": "*"
   }
 }

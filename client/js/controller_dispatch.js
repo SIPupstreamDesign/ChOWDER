@@ -1140,14 +1140,16 @@
 				}
 				// スナップのdisplayを無効にする
 				document.getElementById('snap_display_option').style.display = "none";
-				if (gui.get_snap_type() == "display") {
-					gui.set_snap_type("free");
-				}
+				
+				gui.set_snap_type(Cookie.getSnapType(true));
 			} else {
 				id = state.get_last_select_content_id();
 				// スナップのdisplayを有効にする
 				document.getElementById('snap_display_option').style.display = "block";
+				
+				gui.set_snap_type(Cookie.getSnapType(false));
 			}
+
 			state.set_selected_id_list([]);
 			// 以前選択していたものを再選択する.
 			if (id) {
@@ -1604,6 +1606,10 @@
 		gui.on('update_cursor_enable', function (err, value) {
 			controller.update_remote_cursor_enable(value);
 		});
+		
+		gui.on('update_cursor_color', function (err, value) {
+			controller.update_remote_cursor_color(value);
+		});
 
 		gui.on("mousedown_content_preview_area", function () {
 			if (!manipulator.getDraggingManip()) {
@@ -1662,19 +1668,19 @@
 		});
 
 		display_scale = Cookie.getDisplayScale();
-		snap = Cookie.getSnapType();
+		snap = Cookie.getSnapType(Validator.isDisplayTabSelected());
 
 		vscreen.setWholeScale(display_scale, true);
 		gui.set_display_scale(display_scale);
 
 		if (snap) {
 			gui.set_snap_type(snap);
-			Cookie.setSnapType(snap);
+			Cookie.setSnapType(Validator.isDisplayTabSelected(), snap);
 		}
 		document.getElementById('head_menu_hover_left').addEventListener('change', function (eve) {
 			var f = eve.currentTarget.value;
 			gui.set_snap_type(f);
-			Cookie.setSnapType(f);
+			Cookie.setSnapType(Validator.isDisplayTabSelected(), f);
 		}, false);
 
 		// リモートカーソルの有効状態を更新

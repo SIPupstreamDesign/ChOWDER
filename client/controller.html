@@ -76,6 +76,8 @@
 		</div>
 		<div>
 			<p class="loginmenu_label">パスワード</p>
+			<input style="display:none" type="text" name="faketext"/>
+			<input style="display:none" type="password" name="faketext"/>
 			<input type="password" class="loginpass" id="loginpass"></input>
 			<input type="button" class="btn loginbutton  btn-primary" id="loginbutton" value="ログイン"></input>
 		</div>
@@ -105,7 +107,12 @@
 			<input id="logout_button" type="button" class="" value="Logout" />
             <div id="head_menu_hover_right"></div>
 			<img style="display:none" src="../image/disconnect.png"/><!--←キャッシュ-->
+			<span class="head_id_menu">
+				<span id="change_id_text">Controller ID:</span>
+				<input type="text" class="head_id_input" id="controller_id"></input>
+			</span>
         </div>
+			
 	</div>
 
 	<div id="layout2">
@@ -286,7 +293,7 @@
 				</div>
 				<div class="passinput_frame">
 					<div>新規パスワード</div>
-					<input class="passinput" id="new_password" type="password" style="color:black" value="" />
+					<input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
 				</div>
 			</div>
 			<div class="apply_pass_frame">
@@ -326,6 +333,9 @@
 			<input type="file" name="filename" id="video_file_input" style="margin-left:20px" /-->
 			<!--input type="button" value="Send" id="image_send_button"></input-->
 		</div>
+	</div>
+	<div style="display:none" id="forcolorpicker">
+		<h4 style="color:white">Remote Cursor Color Setting</h4>
 	</div>
 </body>
 </html>

@@ -390,14 +390,27 @@ p {
 
 #snap_text {
 	position : absolute;
-	top : 7px;
+	top : 5px;
 	right : 280px;
 	font-size : 14px;
 	color : rgb(10, 26, 67);
 }
 
+#cursor_text {
+	position : absolute;
+	top : 5px;
+	right : 350px;
+	font-size : 14px;
+	color : rgb(10, 26, 67);
+}
+
+#cursor_color {
+    margin: 3px;
+    width: 70px;
+}
+
 #user_label {
-	top : 7px;
+	top : 5px;
 	right : 135px;
 	font-size : 14px;
 	color : rgb(10, 26, 67);
@@ -794,4 +807,52 @@ p {
 .context_menu_margin {
 	margin : 2px;
 	border-color : gray;
+}
+
+#forcolorpicker {
+	min-height: 160px;
+    min-width: 250px;
+	position: fixed;
+	top: calc(50% - 80px);
+	left: calc(50% - 125px);
+	background-color:transparent;
+	z-index: 10000002;
+	display: none;
+	text-align: center;
+}
+
+#change_id_text {
+	color:black;
+
+}
+.head_id_menu {
+	position:absolute;
+	margin: 2px;
+	right : 330px;
+	height: 100%;
+	width: 180px;
+}
+.head_id_input {
+	color: black;
+	position : relative;
+	width : 80px;
+	height : 25px;
+	z-index: 10000000;
+}
+.head_id_input_button {
+	color: #EEE;
+	text-decoration: none;
+	position : relative;
+	top : 3px;
+	height : 25px;
+	font-size: 16px;
+
+	border-style : solid;
+/*	padding : 5px 10px 5px 10px;*/
+	border-width: 2px;
+	border-radius: 2px;
+}
+.head_id_input_button:hover {
+	color: #FFF;
+	cursor : pointer;
 }

@@ -420,7 +420,8 @@
 			var obj = {
 				type: 'mouse',
 				x: mousePos.x,
-				y: mousePos.y
+				y: mousePos.y,
+				rgb : Cookie.getCursorColor()
 			};
 			this.update_metadata(obj);
 		}
@@ -1218,7 +1219,7 @@
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (Validator.isWindowType(metaData)) {
-				gui.init_content_property(metaData,"", Constants.DisplayTabType);
+				gui.init_content_property(metaData,"", Constants.PropertyTypeDisplay);
 				gui.assign_content_property(metaData);
 				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
 			} else {
@@ -1485,6 +1486,15 @@
 		if (!isEnable) {
 			connector.send('UpdateMouseCursor', {}, function (err, reply) {});
 		}
+	}
+
+	/**
+	 * リモートカーソルの有効状態を更新
+	 * @method update_remote_cursor_color
+	 */
+	Controller.prototype.update_remote_cursor_color = function (color) {
+		Cookie.setCursorColor(color);
+		store.set_cursor_color(color);
 	}
 
 	function captureStream(video) {
@@ -1993,29 +2003,27 @@
 		var i,
 			groupToElems = {},
 			groupToMeta = {},
-			groupToLayoutElems = {},
-			groupToLayoutMeta = {},
 			group,
 			elem,
+			wholeWindowElem,
 			onlistID,
-			meta,
+			metaData,
 			contentArea,
 			layoutArea,
+			displayArea,
 			currentGroup,
 			selectedGroup,
 			searchTargetGroups;
 
 		groupToElems[Constants.DefaultGroup] = [];
 		groupToMeta[Constants.DefaultGroup] = [];
-		groupToLayoutElems[Constants.DefaultGroup] = [];
-		groupToLayoutMeta[Constants.DefaultGroup] = [];
 
 		selectedGroup = gui.get_current_group_id();
 
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
 			store.for_each_metadata(function (id, metaData) {
-				if (Validator.isContentType(metaData)) {
+				if (Validator.isContentType(metaData) || Validator.isWindowType(metaData) || Validator.isLayoutType(metaData)) {
 					onlistID = "onlist:" + id;
 					elem = document.getElementById(onlistID);
 					if (elem) {
@@ -2033,26 +2041,9 @@
 						}
 					}
 				}
-				if (Validator.isLayoutType(metaData)) {
-					onlistID = "onlist:" + id;
-					elem = document.getElementById(onlistID);
-					if (elem) {
-						elem.parentNode.removeChild(elem);
-						if (metaData.hasOwnProperty('group')) {
-							if (!groupToLayoutElems.hasOwnProperty(metaData.group)) {
-								groupToLayoutElems[metaData.group] = [];
-								groupToLayoutMeta[metaData.group] = [];
-							}
-							groupToLayoutElems[metaData.group].push(elem);
-							groupToLayoutMeta[metaData.group].push(metaData);
-						} else {
-							groupToLayoutElems[Constants.DefaultGroup].push(elem);
-							groupToLayoutMeta[Constants.DefaultGroup].push(metaData);
-						}
-					}
-				}
-	
 			});
+			wholeWindowElem = document.getElementById(Constants.WholeWindowListID); // 仮
+
 			// 一旦チェックされているSearch対象グループを取得
 			searchTargetGroups = gui.get_search_target_groups();
 			currentGroup = gui.get_current_group_id();
@@ -2062,27 +2053,30 @@
 			store.set_group_list(reply.grouplist);
 
 			// 元々あったリストエレメントを全部つけなおす
+			gui.get_display_area_by_group(Constants.DefaultGroup).appendChild(wholeWindowElem); // 仮
 			for (group in groupToElems) {
 				if (groupToElems.hasOwnProperty(group)) {
 					contentArea = gui.get_content_area_by_group(group);
 					if (!contentArea) {
 						contentArea = gui.get_content_area_by_group(Constants.DefaultGroup);
 					}
-					for (i = 0; i < groupToElems[group].length; i = i + 1) {
-						contentArea.appendChild(groupToElems[group][i]);
-					}
-				}
-			}
-
-			// 元々あったリストエレメントを全部つけなおす
-			for (group in groupToLayoutElems) {
-				if (groupToLayoutElems.hasOwnProperty(group)) {
 					layoutArea = gui.get_layout_area_by_group(group);
 					if (!layoutArea) {
-						layoutArea = gui.get_content_area_by_group(Constants.DefaultGroup);
+						layoutArea = gui.get_layout_area_by_group(Constants.DefaultGroup);
 					}
-					for (i = 0; i < groupToLayoutElems[group].length; i = i + 1) {
-						layoutArea.appendChild(groupToLayoutElems[group][i]);
+					displayArea = gui.get_display_area_by_group(group);
+					if (!displayArea) {
+						displayArea = gui.get_display_area_by_group(Constants.DefaultGroup);
+					}
+					for (i = 0; i < groupToElems[group].length; i = i + 1) {
+						metaData = groupToMeta[group][i];
+						if (Validator.isContentType(metaData)) {
+							contentArea.appendChild(groupToElems[group][i]);
+						} else if (Validator.isLayoutType(metaData)) {
+							layoutArea.appendChild(groupToElems[group][i]);
+						} else if (Validator.isWindowType(metaData)) {
+							displayArea.appendChild(groupToElems[group][i]);
+						}
 					}
 				}
 			}

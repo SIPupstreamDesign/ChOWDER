@@ -587,7 +587,25 @@
 						webRTC.on('addstream', function (evt) {
 							var stream = evt.stream ? evt.stream : evt.streams[0];
 							elem.srcObject = stream;
-						});
+
+							if (!webRTC.statusHandle) {
+								var t = 0;
+								webRTC.statusHandle = setInterval( function (rtcKey, webRTC) {
+									t += 1;
+									webRTC.getStatus(function (status) {
+										var bytes = 0;
+										if (status.video && status.video.bytesReceived) {
+											bytes += status.video.bytesReceived;
+										}
+										if (status.audio && status.audio.bytesReceived) {
+											bytes += status.audio.bytesReceived;
+										}
+										console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
+									}.bind(t));
+								}.bind(this, rtcKey, webRTCDict[rtcKey]), 1000);
+							}
+						}.bind(rtcKey));
+
 						webRTC.on('icecandidate', function (type, data) {
 							if (type === "tincle") {
 								connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
@@ -596,8 +614,13 @@
 								}), function (err, reply) {});
 							}
 						});
+						
 						webRTC.on('closed', function () {
 							if (webRTCDict.hasOwnProperty(this)) {
+								if (webRTCDict[this].statusHandle) {
+									clearInterval(webRTCDict[this].statusHandle);
+									webRTCDict[this].statusHandle = null;
+								}
 								delete webRTCDict[this];
 							}
 						}.bind(rtcKey));
@@ -1138,6 +1161,20 @@
 	}
 
 	/**
+	 * リモートカーソルの自動リサイズ
+	 */
+	function autoResizeCursor(elem) {
+		//var ratio = Number(window.devicePixelRatio);
+		var width = Number(screen.width);
+		var height = Number(screen.height);
+		var w = width;
+		var h = height;
+		var area = w * h;
+		var mul = area / 100000.0 / 40.0;
+		elem.style.transform = "scale(" + mul + ")";
+	}
+
+	/**
 	 * 再接続.
 	 * @method reconnect
 	 */
@@ -1270,45 +1307,50 @@
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-            var i, a, e, f, x, y, p, ctrlid = res.id;
+			var i, elem, pos, ctrlid = res.id,
+				before, after,
+				parent;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                if(!controllers.hasOwnProperty(ctrlid)){
+                if (!controllers.hasOwnProperty(ctrlid)) {
                     ++controllers.connectionCount;
                     controllers[ctrlid] = {
                         index: controllers.connectionCount,
                         lastActive: 0
                     };
-                }
-                p = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
-                e = document.getElementById('hiddenCursor' + ctrlid);
-                if(!e){
-                    e = document.createElement('div');
-                    e.id = 'hiddenCursor' + ctrlid;
-                    e.className = 'hiddenCursor';
-                    e.style.backgroundColor = 'transparent';
-                    f = document.createElement('div');
-                    f.className = 'before';
-                    f.style.backgroundColor = res.data.hsv;
-                    e.appendChild(f);
-                    f = document.createElement('div');
-                    f.className = 'after';
-                    f.style.backgroundColor = res.data.hsv;
-                    e.appendChild(f);
-                    document.body.appendChild(e);
-                    console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.hsv);
-                }
-                e.style.left = Math.round(p.x) + 'px';
-                e.style.top  = Math.round(p.y) + 'px';
+				}
+                pos = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
+                elem = document.getElementById('hiddenCursor' + ctrlid);
+                if (!elem) {
+                    elem = document.createElement('div');
+                    elem.id = 'hiddenCursor' + ctrlid;
+                    elem.className = 'hiddenCursor';
+                    elem.style.backgroundColor = 'transparent';
+                    before = document.createElement('div');
+                    before.className = 'before';
+                    before.style.backgroundColor = res.data.rgb;
+                    elem.appendChild(before);
+                    after = document.createElement('div');
+                    after.className = 'after';
+                    after.style.backgroundColor = res.data.rgb;
+                    elem.appendChild(after);
+                    document.body.appendChild(elem);
+					console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
+                } else {
+					elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
+					elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
+				}
+				autoResizeCursor(elem);
+                elem.style.left = Math.round(pos.x) + 'px';
+                elem.style.top  = Math.round(pos.y) + 'px';
                 controllers[ctrlid].lastActive = Date.now();
             } else {
                 if (controllers.hasOwnProperty(ctrlid)) {
-                    e = document.getElementById('hiddenCursor' + ctrlid);
-                    if(e){
-                        e.style.left = '-9999px';
-                        e.style.top  = '-9999px';
+                    elem = document.getElementById('hiddenCursor' + ctrlid);
+                    if (elem) {
+                        elem.style.left = '-9999px';
+                        elem.style.top  = '-9999px';
                     }
-                    f = e.parentNode;
-                    if(f){e.removeChild(e);}
+                    if (elem.parentNode) { elem.removeChild(elem); }
                 }
             }
         });
