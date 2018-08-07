@@ -3,13 +3,12 @@
 
 (function () {
 	"use strict";
+	
+	var DEFAULT_CONTROLLER_ID = "__default";
 
 	var Cookie = function() {
-		this.contentSnapType = "free";
-		this.displayScale = 1;
-		this.updateCursorEnable = false;// マウスカーソル送信が有効かどうか 
-		this.loginkey = ""
-		this.cursorColor = 'rgb(255, 255, 255)';
+		this.loginkey = {}
+		this.language = 'en-US';
 	};
 
 
@@ -40,11 +39,6 @@
 	}
 
 	Cookie.prototype.load = function () {
-		this.getDisplayScale();
-		this.getSnapType(true);
-		this.getSnapType(false);
-		this.isUpdateCursorEnable();
-		this.getCursorColor();
 		this.getLoginKey();
 	};
 
@@ -53,104 +47,52 @@
 	 * @method save
 	 */
 	Cookie.prototype.save = function () {
-		var displayScale = vscreen.getWholeScale();
-		console.log("save_cookie");
-		document.cookie = 'display_scale=' + String(this.displayScale);
-		document.cookie = 'content_snap_type=' + this.contentSnapType; //gui.get_snap_type();
-		document.cookie = 'display_snap_type=' + this.displaySnapType; //gui.get_snap_type();
-		document.cookie = 'update_cursor_enable=' + String(this.updateCursorEnable);
-		document.cookie = 'cursor_color=' + String(this.cursorColor);
-		document.cookie = 'loginkey='+String(this.loginkey);
+		document.cookie = 'controller_id_to_session='+JSON.stringify(this.loginkey);
+		document.cookie = 'controller_language='+String(this.language);
 	};
 
-	Cookie.prototype.setDisplayScale = function (scale) {
+	Cookie.prototype.setLoginKey = function (controllerID, key) {
 		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする
-		console.log("setDisplayScale", scale)
-		this.displayScale = scale;
+		if (controllerID && controllerID.length > 0) {
+			this.loginkey[controllerID] = key;
+		} else {
+			this.loginkey[DEFAULT_CONTROLLER_ID] = key;
+		}
 		this.save();
 	};
-	Cookie.prototype.getDisplayScale = function (withoutLoad) {
+
+	Cookie.prototype.getLoginKey = function (controllerID, withoutLoad) {
+		var key = controllerID;
+		if (!controllerID || controllerID.length === 0) {
+			key = DEFAULT_CONTROLLER_ID
+		}
 		if (!withoutLoad) {
-			var scale = getCookie("display_scale");
-			scale = parseFloat(scale);
-			if (!isNaN(scale) && scale > 0) {
-				this.displayScale = scale;
+			try {
+				this.loginkey = JSON.parse(getCookie("controller_id_to_session"));
+			} catch (e) {
+				this.loginkey = {};
 			}
 		}
-		console.log("cookie - display_scale:" + this.displayScale);
-		return this.displayScale;
-	};
-	
-	Cookie.prototype.setSnapType = function (isDisplay, type) {
-		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする
-		if (isDisplay) {
-			this.displaySnapType = type;
+		
+		if (this.loginkey.hasOwnProperty(key)) {
+			return this.loginkey[key];
 		} else {
-			this.contentSnapType = type;
-		}
-		this.save();
-	};
-	Cookie.prototype.getSnapType = function (isDisplay, withoutLoad) {
-		if (!withoutLoad) {
-			if (isDisplay) {
-				this.displaySnapType = getCookie("display_snap_type");
-				if (!this.displaySnapType) {
-					this.displaySnapType = "free";
-				}
-				console.log("cookie - display_snap_type:" + this.displaySnapType);
-			} else {
-				this.contentSnapType = getCookie("content_snap_type");
-				if (!this.contentSnapType) {
-					this.contentSnapType = "free";
-				}
-				console.log("cookie - content_snap_type:" + this.contentSnapType);
-			}
-		}
-		if (isDisplay) {
-			return this.displaySnapType;
-		} else {
-			return this.contentSnapType;
+			return "not found"
 		}
 	};
-
-	Cookie.prototype.setUpdateCursorEnable = function (enable) {
+	
+	Cookie.prototype.setLanguage = function (lang) {
 		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする
-		this.updateCursorEnable = enable;
-		this.save();
-	};
-	Cookie.prototype.isUpdateCursorEnable = function (withoutLoad) {
-		if (!withoutLoad) {
-			var enable = getCookie("update_cursor_enable");
-			this.updateCursorEnable = (enable && enable === "true");
-		}
-		return this.updateCursorEnable;
-	};
-
-	Cookie.prototype.setCursorColor = function (color) {
-		this.load();
-		this.cursorColor = color;
+		this.language = lang;
 		this.save();
 	};
 	
-	Cookie.prototype.getCursorColor = function (withoutLoad) {
-		if (!withoutLoad) {
-			var color = getCookie("cursor_color");
-			this.cursorColor = color;
+	Cookie.prototype.getLanguage = function () {
+		var lang = getCookie("controller_language");
+		if (lang) {
+			this.language = lang;
 		}
-		return this.cursorColor;
-	};
-	
-
-	Cookie.prototype.setLoginKey = function (key) {
-		this.load(); // 最初に全部読み込んでから対象のものだけ上書きする
-		this.loginkey = key;
-		this.save();
-	};
-	Cookie.prototype.getLoginKey = function (withoutLoad) {
-		if (!withoutLoad) {
-			this.loginkey = getCookie("loginkey");
-		}
-		return this.loginkey;
+		return this.language;
 	};
 
 	window.Cookie = new Cookie;

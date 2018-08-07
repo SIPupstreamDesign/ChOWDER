@@ -21,8 +21,8 @@
 
 	/*
 		<div class="left_tab_area" id="left_tab_area">
-			<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
-			<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
+			<div id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></div>
+			<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
 		</div>
 	*/
 	GroupBox.prototype.init = function () {
@@ -99,7 +99,7 @@
 				elem.className = "group_tab_up" + " " + "group_tab_up_" + this.type;
 				span = document.createElement('span');
 				span.className = "group_tab_up_label";
-				elem.setAttribute("title", "1つ上に移動");
+				elem.setAttribute("title", i18next.t("move_up"));
 				elem.appendChild(span);
 				elem.onclick = function () {
 					this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupID);
@@ -111,7 +111,7 @@
 				elem.className = "group_tab_down" + " " + "group_tab_down_" + this.type;
 				span = document.createElement('span');
 				span.className = "group_tab_down_label";
-				elem.setAttribute("title", "1つ下に移動");
+				elem.setAttribute("title",  i18next.t("move_down"));
 				elem.appendChild(span);
 				elem.onclick = function () {
 					this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupID);
@@ -124,11 +124,11 @@
 				span = document.createElement('span');
 				span.className = "group_tab_append_label";
 				span.innerHTML = "+";
-				elem.setAttribute("title", "新規グループの追加");
+				elem.setAttribute("title", i18next.t('add_new_group'));
 				elem.appendChild(span);
 				elem.onclick = function () {
 					window.input_dialog.text_input({
-							name : "新規グループ",
+							name : i18next.t('new_group'),
 							initialValue :  "",
 							okButtonName : "OK",
 						}, function (value) {
@@ -190,8 +190,8 @@
 	}
 
 	/*
-		<div id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></div>
-		<div id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></div>
+		<div id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></div>
+		<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
 		..
 	*/
 	GroupBox.prototype.create_tab = function (tabID, groupName, groupColor, tabContent, is_active) {
@@ -224,8 +224,7 @@
 		
 		this.tabGroupToElems[this.fromTabID(tabID)].push(elem);
 		this.groupIDToName[ this.fromTabID(tabID)] = groupName;
-		link = document.createElement('a');
-		link.href = "#";
+		link = document.createElement('span');
 		link.id = tabID + "_link";
 		link.className = "group_tab_link" + " " + "group_tab_link_" + this.type;
 		link.innerHTML = groupName;
@@ -280,7 +279,7 @@
 
 					name_button.onclick = function () {
 						window.input_dialog.text_input({
-								name : "グループ名変更",
+								name : i18next.t('change_group_name'),
 								initialValue :  groupName,
 								okButtonName : "OK",
 							}, function (value) {
@@ -292,7 +291,7 @@
 
 					color_button.onclick = function () {
 						window.input_dialog.color_input({
-								name : "グループ色変更",
+								name : i18next.t('change_group_color'),
 								initialValue : groupColor,
 								okButtonName : "OK"
 							}, function (value) {

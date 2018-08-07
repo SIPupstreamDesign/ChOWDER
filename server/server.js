@@ -9,7 +9,6 @@ var fs = require('fs'),
 	path = require('path'),
 	util = require('./util'),
 	operator = require('./operator.js'),
-	sender = require('./sender.js'),
 	ws_connector = require('./ws_connector.js'),
 	io_connector = require('./io_connector.js'),
 	port = 8080,
@@ -33,6 +32,7 @@ if (process.argv.length > 2) {
 		sslport = parseInt(process.argv[3], 10);
 	}
 }
+
 //----------------------------------------------------------------------------------------
 // websocket sender
 //----------------------------------------------------------------------------------------
@@ -127,7 +127,8 @@ function opserver_http_request(req, res) {
 			res.end(data);
 		}
 	} else {
-		fs.readFile(path.join(__dirname, '../client', path.join('/', url)), function (err, data) {
+		var p = path.join(__dirname, '../client', path.join('/', url.match(/^[^?]+/)[0]));
+		fs.readFile(p, function (err, data) {
 			//                                          ^^^^^^^^^^^^^ it's traversal safe!
 			if (err) {
 				res.writeHead(404, {'Content-Type': 'text/html', charaset: 'UTF-8'});
@@ -183,17 +184,19 @@ fs.readFile(path.join(__dirname, 'setting.json'), function (err, data) {
 	if (!err) {
 		try {
 			settings = JSON.parse(String(data));
-			
+			operator.setSettingJSON(settings);
+						
 			/// web socket server instance
 			ws2 = new WebSocket.server({ httpServer : wsopserver,
-					maxReceivedMessageSize: Number(settings.maxReceivedMessageSize),
-					maxReceivedFrameSize :Number(settings.maxReceivedFrameSize),
+					maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
+					maxReceivedFrameSize :Number(settings.wsMaxMessageSize),
 					autoAcceptConnections : false});
 					
 			ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
-				maxReceivedMessageSize: Number(settings.maxReceivedMessageSize),
-				maxReceivedFrameSize : Number(settings.maxReceivedFrameSize),
+				maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
+				maxReceivedFrameSize : Number(settings.wsMaxMessageSize),
 				autoAcceptConnections : false});
+
 		} catch (e) {
 			console.error(e);
 		}
@@ -210,6 +213,7 @@ fs.readFile(path.join(__dirname, 'setting.json'), function (err, data) {
 			maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
 			autoAcceptConnections : false});
 	}
+	
 	// finally
 	ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
 	ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));

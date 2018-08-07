@@ -49,19 +49,21 @@
 	}
 
 	function fixDivSize(divElem, w, aspect) {
+		console.log( w, aspect );
+		console.log( divElem );
 		var h;
 		if (w > 200) {
-			divElem.style.width = "200px";
+			divElem.style.width = '200px';
 			h = 200 / aspect;
-			divElem.style.paddingBottom = (150 - h) + "px"; 
+			divElem.style.paddingBottom = (150 - h) + 'px'; 
 			if (150 - h > 140.0) {
-				divElem.style.paddingBottom = "140px";
+				divElem.style.paddingBottom = '140px';
 			}
 		} else if (w < 50) {
-			divElem.style.width = "50px";
-			divElem.style.paddingRight = (50 - w) + "px";
+			divElem.style.width = '50px';
+			divElem.style.paddingRight = (50 - w) + 'px';
 			if (50 - w > 40.0) {
-				divElem.style.paddingRight = "40px";
+				divElem.style.paddingRight = '40px';
 			}
 		}
 	}
@@ -185,27 +187,36 @@
 					// マイク、カメラボタン
 					this.createMicCameraButton(divElem, metaData);
 				}
-			} else if (metaData.type === 'pdf') {
+			} else if (metaData.type === 'pdf' && contentElem.getContext) {
 				var context = contentElem.getContext('2d');
-
 				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+				contentElem.renderTask = contentElem.renderTask || Promise.resolve();
 
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
 					pdf.getPage(1).then(function (page) {
-						var width = 640;
-						var viewport = page.getViewport(width / page.getViewport(1).width);
+						var viewport = page.getViewport(1);
 
 						contentElem.width = viewport.width;
 						contentElem.height = viewport.height;
 
-						page.render({
-							canvasContext: context,
-							viewport: viewport
+						contentElem.renderTask = contentElem.renderTask.then(function () {
+							return page.render({
+								canvasContext: context,
+								viewport: viewport
+							});
 						}).then(function () {
-							fixDivSize(divElem, viewport.width, viewport.width / viewport.height);
+							divElem.style.height = '150px';
+							var aspect = viewport.width / viewport.height;
+							w = 150.0 * aspect;
+							divElem.style.width = w + 'px';
+
+							fixDivSize(divElem, 150.0 / aspect, aspect);
+
+							return Promise.resolve();
 						});
-					}.bind(this));
-				}.bind(this));
+					});
+				});
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -217,6 +228,16 @@
 				aspect = metaData.orgWidth / metaData.orgHeight;
 				w = 150 * aspect;
 				divElem.style.width = w + "px";
+
+				if (metaData.type === Constants.TypeTileImage) {
+					// アイコンを設置
+					if (divElem.getElementsByClassName('tileimage_icon_for_list').length === 0) {
+						var icon = document.createElement('div');
+						icon.className = 'tileimage_icon_for_list';
+						divElem.appendChild(icon);
+						icon.title = "Tiled Image";
+					}
+				}
 
 				blob = new Blob([contentData], {type: mime});
 				if (contentElem && blob) {

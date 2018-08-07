@@ -1,7 +1,8 @@
 @echo off
 
-cd %~dp0..\redis
+pushd %~dp0..
+cd redis
 start redis-server.exe
-
 cd ..\server
 node server.js
+popd

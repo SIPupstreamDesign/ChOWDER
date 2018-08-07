@@ -24,6 +24,8 @@
 			tagName = 'img'; // videoでvideoを保持してない場合用
 		} else if (contentType === 'pdf') {
 			tagName = 'canvas';
+		} else if (contentType === 'tileimage') {
+		 	tagName = 'div';
 		} else {
 			tagName = 'img';
 		}
@@ -110,45 +112,88 @@
 				}
 			} else if (metaData.type === 'pdf') {
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-				var context = contentElem.getContext('2d');
 
-				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+				if (!contentElem.pdfSetupCompleted) {
+					contentElem.pdfSetupCompleted = true;
+					var context = contentElem.getContext('2d');
 
-				pdfjsLib.getDocument(contentData).then(function (pdf) {
-					var renderTask = Promise.resolve();
-					var current = 0;
-					contentElem.loadPage = function (p) {
-						if (current === p) { return; }
-						current = p;
+					var pdfjsLib = window['pdfjs-dist/build/pdf'];
 
-						pdf.getPage(p).then(function (page) {
-							var width = 640;
-							var viewport = page.getViewport(width / page.getViewport(1).width);
-	
-							contentElem.width = viewport.width;
-							contentElem.height = viewport.height;
+					pdfjsLib.getDocument(contentData).then(function (pdf) {
+						metaData.pdfPage = parseInt(metaData.pdfPage) || 1;
+						metaData.pdfNumPages = pdf.numPages;
 
-							renderTask = renderTask.then(page.render({
-								canvasContext: context,
-								viewport: viewport
-							}));
-						}.bind(this));
-					}.bind(this);
+						var lastTask = Promise.resolve();
+						var lastDate = 0;
+						var lastPage = 0;
+						var lastWidth = 0;
+						contentElem.loadPage = function (p, width) {
+							var date = Date.now();
+							lastDate = date;
 
-					this.emit('move_pdf_page', null, metaData.id, 0, pdf.numPages); // ページ初期化
+							if (lastPage === p && lastWidth === width) { return; }
 
-					contentElem.onclick = function (event) {
-						// マウスクリック位置の把握
-						var rect = contentElem.getBoundingClientRect();
-						var x = event.clientX - rect.x;
+							setTimeout(function () {
+								if (lastDate !== date) { return; }
+								lastPage = p;
+								lastWidth = width;
 
-						if (x < rect.width / 2.0) { // もしクリック位置が半分より左なら
-							this.emit('move_pdf_page', null, metaData.id, -1, pdf.numPages); // ページを1つ前に戻す
-						} else { // もしクリック位置が半分より右なら
-							this.emit('move_pdf_page', null, metaData.id, 1, pdf.numPages); // ページを1つ次に進める
+								pdf.getPage(p).then(function (page) {
+									var viewport = page.getViewport(width / page.getViewport(1).width);
+			
+									contentElem.width = viewport.width;
+									contentElem.height = viewport.height;
+
+									lastTask = lastTask.then(page.render({
+										canvasContext: context,
+										viewport: viewport
+									}));
+								});
+							}, lastPage === p ? 500 : 0);
+						};
+						contentElem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
+					});
+				}
+			} else if (metaData.type === Constants.TypeTileImage) {
+				if (metaData.hasOwnProperty('mime')) {
+					mime = metaData.mime;
+					console.log("mime:" + mime);
+				}
+				blob = new Blob([contentData], {type: mime});
+				if (contentElem && blob) {
+					// アイコンを設置
+					if (contentElem.getElementsByClassName('tileimage_icon').length === 0) {
+						var icon = document.createElement('div');
+						icon.className = 'tileimage_icon';
+						contentElem.appendChild(icon);
+						icon.title = "Tiled Image";
+					}
+
+					var img = contentElem.getElementsByTagName('img')[0];
+					if (img) {
+						URL.revokeObjectURL(img.src);
+						contentElem.removeChild(img);
+					}
+
+					var image = document.createElement('img');
+					contentElem.appendChild(image);
+					
+					image.src = URL.createObjectURL(blob);
+					image.style.width = "100%";
+					image.style.height = "100%";
+
+					image.onload = function () {
+						if (metaData.width < 10) {
+							console.log("naturalWidth:" + image.naturalWidth);
+							metaData.width = image.naturalWidth;
 						}
-					}.bind(this);
-				}.bind(this));
+						if (metaData.height < 10) {
+							console.log("naturalHeight:" + image.naturalHeight);
+							metaData.height = image.naturalHeight;
+						}
+						vscreen_util.assignMetaData(contentElem, metaData, true,groupDict);
+					};
+				}
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -173,6 +218,7 @@
 					};
 				}
 			}
+
 			this.emit(ContentView.EVENT_TOGGLE_MARK, null, contentElem, metaData);
 		}
 		

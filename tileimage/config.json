@@ -1,0 +1,10 @@
+{
+	"id": "Display",
+	"password": "",
+	"url": "http://localhost:8081/v2",
+	"xsplit": 8,
+	"ysplit": 8,
+	"contentid": "contentid",
+	"contentgrp": "default",
+	"token": "token"
+}

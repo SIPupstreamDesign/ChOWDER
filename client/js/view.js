@@ -88,7 +88,8 @@
 	}
 
 	/**
-	 * クライアントサイズを取得する
+	 * クライアントサイズを取得する.
+	 * ただの `{width: window.innerWidth, height: window.innerHeight}`.
 	 * @method getWindowSize
 	 * @return {Object} クライアントサイズ
 	 */
@@ -140,59 +141,51 @@
 	}
 
 	/**
-	 * cookie取得
-	 * @method getCookie
-	 * @param {String} key cookieキー
-	 * @return Literal cookieデータ
-	 */
-	function getCookie(key) {
-		var i,
-			pos,
-			cookies;
-		if (document.cookie.length > 0) {
-			console.log("all cookie", document.cookie);
-			cookies = [document.cookie];
-			if (document.cookie.indexOf(';') >= 0) {
-				cookies = document.cookie.split(';');
-			}
-			for (i = 0; i < cookies.length; i = i + 1) {
-				pos = cookies[i].indexOf(key + "=");
-				if (pos >= 0) {
-					return unescape(cookies[i].substring(pos + key.length + 1));
-				}
-			}
-		}
-		return "";
-	}
-
-	/**
-	 * cookie保存
-	 * @method saveCookie
-	 */
-	function saveCookie() {
-		if (windowData) {
-			console.log("saveCookie", windowData);
-			document.cookie = 'window_id=' + windowData.id;
-			document.cookie = windowData.id + '_x=' + windowData.posx;
-			document.cookie = windowData.id + '_y=' + windowData.posy;
-			document.cookie = windowData.id + '_visible=' + windowData.visible;
-		}
-	}
-
-	/**
 	 * window idの取得.
 	 * @method getWindowID
 	 */
 	function getWindowID() {
-		var window_id = getCookie('window_id'),
-			hashid = location.hash.split("#").join("");
-		if (hashid.length > 0) {
-			window_id = decodeURIComponent(hashid);
+		return getQueryParams().id;
+	}
+
+	/**
+	 * Parse `location.search` and return it as object.
+	 * @returns {Object} result
+	 */
+	function getQueryParams() {
+		var re = /[?&]([^=]+)=([^&]*)/g;
+		var ret = {};
+		var match;
+		while ((match = re.exec(location.search)) !== null) { // while `re` is not depleted
+			ret[match[1]] = match[2];
 		}
-		if (!window_id || window_id === undefined || window_id === "undefined") {
-			window_id = '';
+		return ret;
+	}
+
+	/**
+	 * Convert map into query params string.
+	 * @param {Object} map Map of parameters you want to convert into
+	 * @return {string} result
+	 */
+	function mapToQueryString(map) {
+		var str = '?';
+		for (var key in map) {
+			if (map[key] !== undefined) {
+				str += key + '=' + map[key] + '&';
+			}
 		}
-		return window_id;
+		str = str.substring( 0, str.length - 1 ); // remove the last '&'
+
+		return str;
+	}
+
+	/**
+	 * Parse `location.search` and return it as object.
+	 * @param {Object} map Map of parameters you want to set
+	 */
+	function setQueryParams(map) {
+		var query = mapToQueryString(map);
+		history.replaceState(null, '', location.href.match(/^[^?]+/)[0] + query);
 	}
 
 	/**
@@ -200,35 +193,58 @@
 	 * @method registerWindow
 	 */
 	function registerWindow() {
-		var wh = getWindowSize(),
-			cx = wh.width / 2.0,
-			cy = wh.height / 2.0,
-			window_id = getCookie('window_id'),
-			hashid = location.hash.split("#").join("");
+		var wh = getWindowSize();
 
-		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
+		vscreen.assignWhole(wh.width, wh.height, wh.width / 2.0, wh.height / 2.0, 1.0);
 
-		if (hashid.length > 0) {
-			window_id = decodeURIComponent(hashid);
-		} else if (window_id) {
-			changeID(null, window_id);
-			return;
-		}
+		var window_id = '';
 
-		if (window_id !== "") {
+		(function() { // since the variable `hash` is pretty local
+			var hash = location.hash.substring(1); // legacy
+			if (hash !== '') {
+				window_id = decodeURIComponent(hash);
+			}
+		})();
+
+		var query = getQueryParams(location.search) || {};
+		window_id = query.id ? decodeURIComponent(query.id) : window_id;
+
+		if (window_id !== '') {
 			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
 				if (!err && metaData) {
-					metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
-					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+					var scale = parseFloat(query.scale) || parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
+					metaData.width = wh.width / scale;
+					metaData.height = wh.height / scale;
 					metaData.orgWidth = wh.width;
 					metaData.orgHeight = wh.height;
+					metaData.posx = query.posx || metaData.posx;
+					metaData.posy = query.posy || metaData.posy;
 					connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
 				} else {
-					connector.send('AddWindowMetaData', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
+					scale = parseFloat(query.scale) || 1.0;
+					connector.send('AddWindowMetaData', {
+						id: window_id,
+						posx: query.posx || 0,
+						posy: query.posy || 0,
+						width: wh.width / scale,
+						height: wh.height / scale,
+						orgWidth: wh.width,
+						orgHeight: wh.height,
+						visible: true
+					}, doneAddWindowMetaData);
 				}
 			});
 		} else {
-			connector.send('AddWindowMetaData', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
+			var scale = parseFloat(query.scale) || 1.0;
+			connector.send('AddWindowMetaData', {
+				posx: query.posx || 0,
+				posy: query.posy || 0,
+				width: wh.width / scale,
+				height: wh.height / scale,
+				orgWidth: wh.width,
+				orgHeight: wh.height,
+				visible: true
+			}, doneAddWindowMetaData);
 		}
 	}
 
@@ -338,6 +354,8 @@
 			tagName = 'video';
 		} else if (contentType === 'pdf') {
 			tagName = 'canvas';
+		} else if (contentType === 'tileimage') {
+			tagName = 'div';
 		} else {
 			tagName = 'img';
 		}
@@ -529,6 +547,48 @@
 		return metaData.id + "_" + windowData.id + "_" + random_id_for_webrtc;
 	}
 
+	
+	/**
+	 * タイルデータの登録
+	 * @param {*} elem 
+	 * @param {*} metaData 
+	 * @param {*} contentData 
+	 */
+	function assignTile(elem, metaData, contentData) {
+		var mime = "image/jpeg";
+		if (metaData.hasOwnProperty('mime')) {
+			mime = metaData.mime;
+		}
+		var tile;
+		var image;
+		var blob;
+		// 各タイルを求める
+		var count = 0;
+		for (var i = 0; i < contentData.tiles.length; ++i) {
+			tile = contentData.tiles[i];
+			blob = new Blob([tile.contentData], {type: mime});
+			image = new Image();
+
+			image.onload = (function (image, i, tile, elem) {
+				return function () {
+					image.style.position = "absolute";
+					image.style.display = "none";
+					image.className = "tile_index_" + String(i);
+					elem.appendChild(image);
+					++count;
+					if (count === contentData.tiles.length) {
+						vscreen_util.resizeTileImages(elem, metaData);
+						for (var k = 0; k < elem.children.length; ++k) {
+							elem.children[k].style.display = "inline";
+						}
+					}
+				}
+			}(image, i, tile, elem));
+			image.src = URL.createObjectURL(blob);
+		}
+		vscreen_util.assignMetaData(elem, metaData, true, groupDict);
+	}
+
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -630,33 +690,49 @@
 				// contentData is text
 				elem.innerHTML = contentData;
 			} else if (metaData.type === 'pdf') {
-				var context = elem.getContext('2d');
+				if (!elem.pdfSetupCompleted) {
+					elem.pdfSetupCompleted = true;
+					var context = elem.getContext('2d');
 
-				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+					var pdfjsLib = window['pdfjs-dist/build/pdf'];
 
-				pdfjsLib.getDocument(contentData).then(function (pdf) {
-					var renderTask = Promise.resolve();
-					metaData.pdfNumPages = pdf.numPages;
+					pdfjsLib.getDocument(contentData).then(function (pdf) {
+						metaData.pdfNumPages = pdf.numPages;
 
-					var current = 0;
-					elem.loadPage = function (p) {
-						if (current === p) { return; }
-						current = p;
+						var lastTask = Promise.resolve();
+						var lastDate = 0;
+						var lastPage = 0;
+						var lastWidth = 0;
+						elem.loadPage = function (p, width) {
+							var date = Date.now();
+							lastDate = date;
 
-						pdf.getPage(p).then(function (page) {
-							var width = 640;
-							var viewport = page.getViewport(width / page.getViewport(1).width);
-	
-							elem.width = viewport.width;
-							elem.height = viewport.height;
+							if (lastPage === p && lastWidth === width) { return; }
 
-							renderTask = renderTask.then(page.render({
-								canvasContext: context,
-								viewport: viewport
-							}));
-						}.bind(this));
-					}.bind(this);
-				}.bind(this));
+							setTimeout(function () {
+								if (lastDate !== date) { return; }
+								lastPage = p;
+								lastWidth = width;
+
+								pdf.getPage(p).then(function (page) {
+									var viewport = page.getViewport(width / page.getViewport(1).width);
+			
+									elem.width = viewport.width;
+									elem.height = viewport.height;
+
+									lastTask = lastTask.then(page.render({
+										canvasContext: context,
+										viewport: viewport
+									}));
+								});
+							}, lastPage === p ? 500 : 0);
+						};
+						elem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
+					});
+				}
+			} else if (metaData.type === 'tileimage') {
+				elem.innerHTML = "";
+				assignTile(elem, metaData, contentData);
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -798,29 +874,33 @@
 	/**
 	 * ディスプレイIDの変更.
 	 * @method changeID
-	 * @param {Event} e イベント
+	 * @param {string} id 新しいディスプレイID
 	 */
-	function changeID(e, id, noReload) {
-		var elem = document.getElementById('input_id'),
-			val,
-			url;
-		if (e) {
-			e.preventDefault();
-		}
-		if (elem && elem.value) {
-			console.log(elem.value);
-			val = elem.value.split(' ').join('');
-			val = val.split('　').join('');
-			location.hash = fixedEncodeURIComponent(val);
-			if (!noReload) {
-				location.reload(true);
+	function changeID(id) {
+		var newId = id.replace(' ', '_');
+		var params = {id: newId};
+
+		connector.send('GetWindowMetaData', {id : getWindowID()}, function (err, metaDataCur) {
+			if (!err && metaDataCur) {
+				connector.send('GetWindowMetaData', {id : newId}, function (err, metaDataDst) {
+					if (!err && metaDataDst) {
+						params.posx = metaDataDst.posx;
+						params.posy = metaDataDst.posy;
+						params.scale = parseFloat(metaDataDst.orgWidth) / parseFloat(metaDataDst.width);
+					} else {
+						params.posx = metaDataCur.posx;
+						params.posy = metaDataCur.posy;
+						params.scale = parseFloat(metaDataCur.orgWidth) / parseFloat(metaDataCur.width);
+					}
+		
+					setQueryParams(params);
+					location.reload();
+				});
+			} else {
+				console.error('Something weird is happening');
+				console.error(err);
 			}
-		} else if (id) {
-			location.hash = fixedEncodeURIComponent(id);
-			if (!noReload) {
-				location.reload(true);
-			}
-		}
+		});
 	}
 
 	/**
@@ -878,10 +958,10 @@
 			for (i = 0; i < json.length; i = i + 1) {
 				metaDataDict[json[i].id] = json[i];
 				windowData = json[i];
-				saveCookie();
 				window.parent.document.title = "Display ID:" + json[i].id;
 				document.getElementById('input_id').value = json[i].id;
 				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
+				setQueryParams({id: json[i].id});
 				updatePreviewAreaVisible(windowData);
 				resizeViewport(windowData);
 			}
@@ -896,7 +976,6 @@
 			for (i = 0; i < json.length; i = i + 1) {
 				metaDataDict[json[i].id] = json[i];
 				windowData = json[i];
-				saveCookie();
 				window.parent.document.title = "Display ID:" + json[i].id;
 				document.getElementById('input_id').value = json[i].id;
 				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
@@ -916,7 +995,6 @@
 		if (!err && json) {
 			metaDataDict[json.id] = json;
 			windowData = json;
-			saveCookie();
 			updatePreviewAreaVisible(windowData);
 			resizeViewport(windowData);
 			updateContentVisible();
@@ -951,8 +1029,36 @@
 			}
 			// レイアウトは無視
 			if (Validator.isLayoutType(metaData)) { return; }
-			// コンテンツ登録&表示
-			assignMetaBinary(metaData, contentData);
+
+			if (metaData.type === 'tileimage') {
+				var i, k;
+				var tileIndex = 0;
+				var request = JSON.parse(JSON.stringify(metaData));
+				var tileImageData = {
+					content : null, // {metadata : ~, contentData : ~}
+					tiles : [] // [{metadata : ~, contentData : ~}, ... ]
+				};
+				var count = 0;
+				tileImageData.content = contentData;
+				for (i = 0; i < Number(metaData.ysplit); ++i) {
+					for (k = 0; k < Number(metaData.xsplit); ++k) {
+						request.tile_index = tileIndex;
+						connector.send('GetTileContent', request, function (err, data) {
+							if (err) { console.error(err); return; }
+							tileImageData.tiles[Number(data.metaData.tile_index)] = data;
+							++count;
+							if (count === (Number(metaData.ysplit) * Number(metaData.xsplit))) {
+								// コンテンツ登録&表示
+								assignMetaBinary(metaData, tileImageData);
+							}
+						});
+						++tileIndex;
+					}
+				}
+			} else {
+				// コンテンツ登録&表示
+				assignMetaBinary(metaData, contentData);
+			}
 		}
 	};
 
@@ -1052,6 +1158,7 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
 			isUpdateContent = (metaDataDict[json.id].restore_index !== json.restore_index);
+			isUpdateContent = (metaDataDict[json.id].keyvalue !== json.keyvalue);
 		}
 		// 閲覧可能か
 		if (!isViewable(json.group)) {
@@ -1074,9 +1181,7 @@
 			var elem = document.getElementById(json.id),
 				isWindow = Validator.isWindowType(json),
 				isOutside = false,
-				whole,
-				w,
-				h;
+				whole;
 
 			if (isWindow) {
 				console.log(json.id, getWindowID());
@@ -1115,18 +1220,25 @@
 						elem.style.display = "block";
 
 						// pdfページの切り替え
-						if (json.type === 'pdf') {
-							elem.loadPage(parseInt(json.pdfPage));
+						if (json.type === 'pdf' && elem.loadPage) {
+							elem.loadPage(parseInt(json.pdfPage), parseInt(json.width));
 						}
 					} else {
 						elem.style.display = "none";
 					}
-				} else if (isUpdateContent || (!isWindow && isVisible(json))) {
-					// コンテンツがロードされるまで枠を表示しておく.
-					if (!elem) {
+				}
+				if (isUpdateContent || (!isWindow && isVisible(json))) {
+					if (isUpdateContent) {
+						// updatecontentの場合はelemがあっても更新
+						connector.send('GetContent', json, function (err, reply) {
+							doneGetContent(err, reply);
+							toggleMark(document.getElementById(json.id), metaData);
+						});
+					} else if (!elem) {
+						// コンテンツがロードされるまで枠を表示しておく.
 						createBoundingBox(json);
 						// 新規コンテンツロード.
-						connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
+						connector.send('GetContent', json, function (err, reply) {
 							doneGetContent(err, reply);
 							toggleMark(document.getElementById(json.id), metaData);
 						});
@@ -1163,7 +1275,7 @@
 	/**
 	 * リモートカーソルの自動リサイズ
 	 */
-	function autoResizeCursor(elem) {
+	function autoResizeCursor(elems) {
 		//var ratio = Number(window.devicePixelRatio);
 		var width = Number(screen.width);
 		var height = Number(screen.height);
@@ -1171,7 +1283,9 @@
 		var h = height;
 		var area = w * h;
 		var mul = area / 100000.0 / 40.0;
-		elem.style.transform = "scale(" + mul + ")";
+		for (var i = 0; i < elems.length; ++i) {
+			elems[i].style.transform = "scale(" + mul + ")";
+		}
 	}
 
 	/**
@@ -1309,6 +1423,7 @@
         connector.on("UpdateMouseCursor", function (res) {
 			var i, elem, pos, ctrlid = res.id,
 				before, after,
+				controllerID,
 				parent;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
                 if (!controllers.hasOwnProperty(ctrlid)) {
@@ -1319,7 +1434,8 @@
                     };
 				}
                 pos = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
-                elem = document.getElementById('hiddenCursor' + ctrlid);
+				elem = document.getElementById('hiddenCursor' + ctrlid);
+				controllerID = document.getElementById('controllerID' + ctrlid);
                 if (!elem) {
                     elem = document.createElement('div');
                     elem.id = 'hiddenCursor' + ctrlid;
@@ -1332,25 +1448,42 @@
                     after = document.createElement('div');
                     after.className = 'after';
                     after.style.backgroundColor = res.data.rgb;
-                    elem.appendChild(after);
+					elem.appendChild(after);
+					
+                    controllerID = document.createElement('div');
+                    controllerID.id = 'controllerID' + ctrlid;
+                    controllerID.className = 'controller_id';
+					controllerID.style.color = "white";
+					controllerID.style.position = "absolute"
+					controllerID.style.fontSize = "10px";
+					controllerID.innerText = res.data.controllerID;
+					document.body.appendChild(controllerID);
+					
                     document.body.appendChild(elem);
 					console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
                 } else {
+					controllerID.innerText = res.data.controllerID;
 					elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
 					elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
 				}
-				autoResizeCursor(elem);
+				autoResizeCursor([elem, controllerID]);
                 elem.style.left = Math.round(pos.x) + 'px';
                 elem.style.top  = Math.round(pos.y) + 'px';
+                controllerID.style.left = Math.round(pos.x) + 'px';
+                controllerID.style.top  = Math.round(pos.y + 40) + 'px';
                 controllers[ctrlid].lastActive = Date.now();
             } else {
                 if (controllers.hasOwnProperty(ctrlid)) {
-                    elem = document.getElementById('hiddenCursor' + ctrlid);
+					elem = document.getElementById('hiddenCursor' + ctrlid);
+					controllerID = document.getElementById('controllerID' + ctrlid);
                     if (elem) {
-                        elem.style.left = '-9999px';
-                        elem.style.top  = '-9999px';
+                        elem.style.left = '-999999px';
+						elem.style.top  = '-999999px';
+						controllerID.style.left = '-999999px';
+						controllerID.style.top  = '-999999px';
                     }
                     if (elem.parentNode) { elem.removeChild(elem); }
+                    if (controllerID.parentNode) { controllerID.removeChild(controllerID); }
                 }
             }
         });
@@ -1518,12 +1651,12 @@
 		input_id.onblur = function (ev) {
 			console.log("onblur");
 			onfocus = false;
-			changeID();
+			changeID(input_id.value);
 		};
 		input_id.onkeypress = function (ev) {
 			console.log(ev.keyCode);
 			if (ev.keyCode === 13) { // enter
-				changeID();
+				changeID(input_id.value);
 			}
 		};
 

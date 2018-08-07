@@ -41,7 +41,6 @@
 		});
 	}
 
-
 	function initGUIEvents(controller, gui, store, state, management, login) {
 
 		/**
@@ -267,7 +266,7 @@
 
 		gui.on("add_layout", function (err) {
 			window.input_dialog.init_multi_text_input({
-				name: "レイアウト追加 - メモ",
+				name: i18next.t('add_layout_memo'),
 				okButtonName: "OK"
 			}, function (memo) {
 				var id,
@@ -299,7 +298,7 @@
 			if (userAgent.indexOf('chrome') != -1) {
 				// chrome
 				window.input_dialog.text_input({
-					name: "ExtensionIDを入力してください",
+					name: i18next.t('input_extension_id'),
 					okButtonName: "OK"
 				}, function (extensionID) {
 					chrome.runtime.sendMessage(extensionID, request, function (response) {
@@ -377,12 +376,12 @@
 			});
 			if (!isLayoutSelected) {
 				window.input_dialog.ok_input({
-					name: "上書き対象のレイアウトを選択してください"
+					name: i18next.t('select_target_layout')
 				}, function () { });
 				return;
 			}
 			window.input_dialog.okcancel_input({
-				name: "選択中のレイアウトを上書きします。よろしいですか？",
+				name: i18next.t('layout_overwrite_is_ok'),
 				okButtonName: "OK"
 			}, function (isOK) {
 				if (isOK) {
@@ -465,7 +464,7 @@
 					} else if (file.type.match('application/pdf')) {
 						reader.onloadend = function (evt) {
 							var data = evt.target.result;
-							controller.send_pdf(data);
+							controller.send_pdf(data, { posx: px, posy: py, visible: true });
 						};
 						reader.readAsArrayBuffer(file);
 					}
@@ -504,6 +503,34 @@
 		});
 
 		/**
+		 * PDFファイルOpenハンドラ
+		 */
+		gui.on("pdffileinput_changed", function (err, evt, posx, posy) {
+			var files = evt.target.files,
+				file,
+				i,
+				fileReader = new FileReader();
+
+			if (posx === 0 && posy === 0) {
+				// メニューから追加したときなど. wholescreenの左上端に置く.
+				posx = vscreen.getWhole().x;
+				posy = vscreen.getWhole().y;
+			}
+
+			fileReader.onloadend = function (e) {
+				var data = e.target.result;
+				if (data) {
+					controller.send_pdf(data, { posx: posx, posy: posy, visible: true });
+				}
+			};
+			for (i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+				if (file.type.match('application/pdf')) {
+					fileReader.readAsArrayBuffer(file);
+				}
+			}
+		});
+
+		/**
 		 * 画像イメージ差し替えFileOpenハンドラ
 		 * @method on_updateimageinput_changed
 		 * @param {Object} evt FileOpenイベント
@@ -521,6 +548,10 @@
 			fileReader.onloadend = function (e) {
 				var buffer, blob, img;
 				if (e.target.result) {
+					if (!controller.checkCapacity(e.target.result.byteLength)) {
+						return;
+					}
+			
 					console.log("update_content_id", id);
 					elem = document.getElementById(id);
 					if (elem) {
@@ -561,7 +592,16 @@
 		gui.on("display_scale_changed", function (err, displayScale) {
 			manipulator.removeManipulator();
 			vscreen.setWholeScale(displayScale, true);
-			Cookie.setDisplayScale(displayScale);
+			controller.getControllerData().setDisplayScale(displayScale);
+			controller.updateScreen();
+		});
+
+		/**
+		 * ディスプレイスケールが変更中（確定前）
+		 */
+		gui.on("display_scale_changing", function (err, displayScale) {
+			manipulator.removeManipulator();
+			vscreen.setWholeScale(displayScale, true);
 			controller.updateScreen();
 		});
 
@@ -700,17 +740,6 @@
 		});
 
 		/**
-		 * コンテンツビューでPDFページが切り替えられた
-		 */
-		content_view.on("move_pdf_page", function (err, id, delta, max) {
-			var metaData = store.get_metadata(id);
-			var page = metaData.pdfPage ? parseInt(metaData.pdfPage) : 1;
-			page = Math.min(Math.max(page + delta, 1), max);
-			metaData.pdfPage = page;
-			controller.update_metadata(metaData);
-		});
-
-		/**
 		 * ウィンドウリストでセットアップコンテンツが呼ばれた
 		 */
 		window_list.on("setup_content", function (err, elem, uid) {
@@ -791,9 +820,9 @@
 		 */
 		content_property.on("restore_content", function (err, restoreIndex) {
 			window.input_dialog.yesnocancel_input({
-				name: "コンテンツを復元します",
-				yesButtonName: "復元",
-				noButtonName: "現在位置に復元",
+				name: i18next.t('restore_content'),
+				yesButtonName: i18next.t('restore'),
+				noButtonName: i18next.t('restore_here'),
 				cancelButtonName: "Cancel",
 			}, function (res) {
 				if (res === "yes" || res === "no") {
@@ -821,6 +850,48 @@
 			});
 		});
 
+		/**
+		 * 時系列データ復元
+		 */
+		content_property.on("restore_history_content", function (err, restoreKey, restoreValue) {
+			var id = state.get_selected_id(),
+				metaData;
+			if (store.has_metadata(id) && Validator.isContentType(store.get_metadata(id))) {
+				metaData = store.get_metadata(id);
+				if (metaData.hasOwnProperty('history_data')) {
+					var history_data = JSON.parse(metaData.history_data);
+					if (history_data && history_data.hasOwnProperty(restoreKey)) {
+						metaData.restore_key = restoreKey;
+						metaData.restore_value = restoreValue;
+						connector.send('GetContent', metaData, function (err, reply) {
+							reply.metaData.restore_key = restoreKey;
+							reply.metaData.restore_value = restoreValue;
+							reply.metaData.posx = metaData.posx;
+							reply.metaData.posy = metaData.posy;
+							
+							controller.update_metadata(reply.metaData);
+							manipulator.removeManipulator();
+						});
+
+					}
+				}
+			}
+		});
+
+		/**
+		 * 時系列データ同期
+		 */
+		content_property.on("sync_content", function (err, isSync) {
+			var id = state.get_selected_id(),
+				metaData;
+			if (store.has_metadata(id) && Validator.isContentType(store.get_metadata(id))) {
+				metaData = store.get_metadata(id);
+				if (metaData.hasOwnProperty('history_data')) {
+					metaData.history_sync = isSync;
+					controller.update_metadata(metaData);
+				}
+			}
+		});
 
 		/**
 		 * Virtual Dsiplay Settingボタンがクリックされた.
@@ -913,6 +984,52 @@
 						});
 					};
 				}(group)));
+			}
+		});
+
+		gui.on('control_videos_clicked', function (err) {
+			document.getElementById( 'video_controller' ).style.display = 'block';
+		});
+
+		gui.on('video_controller_rewind_clicked', function (err) {
+			var groupID = gui.get_current_group_id();
+			var sendIds = [];
+			store.for_each_metadata(function (id, metaData) {
+				if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+					if (
+						(metaData.group === groupID) &&
+						(metaData.type === 'video')
+					) {
+						sendIds.push(metaData.id);
+					}
+				}
+			});
+
+			if (sendIds.length !== 0) {
+				connector.send('SendMessage', {ids: sendIds, command: 'rewindVideo'}, function (err, reply) {
+					// do nothing
+				}.bind(this));
+			}
+		});
+
+		gui.on('video_controller_play_clicked', function (err, play) {
+			var groupID = gui.get_current_group_id();
+			var sendIds = [];
+			store.for_each_metadata(function (id, metaData) {
+				if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+					if (
+						(metaData.group === groupID) &&
+						(metaData.type === 'video')
+					) {
+						sendIds.push(metaData.id);
+					}
+				}
+			});
+
+			if (sendIds.length !== 0) {
+				connector.send('SendMessage', {ids: sendIds, command: 'playVideo', play: play}, function (err, reply) {
+					// do nothing
+				}.bind(this));
 			}
 		});
 
@@ -1141,13 +1258,13 @@
 				// スナップのdisplayを無効にする
 				document.getElementById('snap_display_option').style.display = "none";
 				
-				gui.set_snap_type(Cookie.getSnapType(true));
+				gui.set_snap_type(controller.getControllerData().getSnapType(true));
 			} else {
 				id = state.get_last_select_content_id();
 				// スナップのdisplayを有効にする
 				document.getElementById('snap_display_option').style.display = "block";
 				
-				gui.set_snap_type(Cookie.getSnapType(false));
+				gui.set_snap_type(controller.getControllerData().getSnapType(false));
 			}
 
 			state.set_selected_id_list([]);
@@ -1186,6 +1303,27 @@
 					controller.update_metadata(metaData);
 				}
 			}
+		});
+
+		/**
+		 * マニピュレータ: pdfページ送り
+		 */
+		manipulator.on('move_pdf_page', function (err, id, delta, func) {
+			var metaData = store.get_metadata(id);
+			var page = metaData.pdfPage ? parseInt(metaData.pdfPage) : 1;
+			page = Math.min(Math.max(page + delta, 1), parseInt(metaData.pdfNumPages));
+			metaData.pdfPage = page;
+			controller.update_metadata(metaData);
+			if (func) { func(page); }
+		});
+
+		/**
+		 * マニピュレータ: pdfページ送り
+		 */
+		manipulator.on('play_video', function (err, id, play) {
+			connector.send('SendMessage', {ids: [id], command: 'playVideo', play: play}, function (err, reply) {
+				// do nothing
+			});
 		});
 
 		/**
@@ -1318,6 +1456,33 @@
 			var i;
 			for (i = 0; i < metaDataList.length; i = i + 1) {
 				controller.doneDeleteWindowMetaData(null, metaDataList[i]);
+			}
+		});
+
+		// Video Controllerで使う.
+		connector.on('SendMessage', function (data) {
+			if (data.command === 'playVideo') {
+				data.ids.forEach(function (id) {
+					var el = document.getElementById(id);
+					if (el && el.play) {
+						data.play ? el.play() : el.pause();
+
+						var metaData = store.get_metadata(id);
+						metaData.isPlaying = data.play;
+						controller.update_metadata(metaData, function(err, reply) {
+							// do nothing
+						});
+					}
+				});
+			}
+
+			if (data.command === 'rewindVideo') {
+				data.ids.forEach(function (id) {
+					var el = document.getElementById(id);
+					if (el && el.play) {
+						el.currentTime = 0.0;
+					}
+				});
 			}
 		});
 
@@ -1646,20 +1811,29 @@
 			}
 		});
 
+		gui.on("controller_id_changed", function (err, id) {
+			if (err || !id) {
+				console.error(err, id);
+				return;
+			}
+			login.changeControllerID(id);
+		});
 	}
 
 	/**
-	 * コントローラ初期化
+	 * GUI/Dispacher/controller初期化
 	 * @method init
 	 */
 	function init(controller, gui, store, state, management, login) {
 		var timer = null,
 			display_scale,
-			snap;
+			snap,
+			controllerData = controller.getControllerData();
 
 		Management.initManagementEvents(connector, login, management);
 
 		gui.init(management);
+		gui.set_controller_id(login.getControllerID());
 
 		connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
@@ -1667,24 +1841,24 @@
 			}
 		});
 
-		display_scale = Cookie.getDisplayScale();
-		snap = Cookie.getSnapType(Validator.isDisplayTabSelected());
+		display_scale = controllerData.getDisplayScale();
+		snap = controllerData.getSnapType(Validator.isDisplayTabSelected());
 
 		vscreen.setWholeScale(display_scale, true);
 		gui.set_display_scale(display_scale);
 
 		if (snap) {
 			gui.set_snap_type(snap);
-			Cookie.setSnapType(Validator.isDisplayTabSelected(), snap);
+			//controllerData.setSnapType(Validator.isDisplayTabSelected(), snap);
 		}
 		document.getElementById('head_menu_hover_left').addEventListener('change', function (eve) {
 			var f = eve.currentTarget.value;
 			gui.set_snap_type(f);
-			Cookie.setSnapType(Validator.isDisplayTabSelected(), f);
+			controllerData.setSnapType(Validator.isDisplayTabSelected(), f);
 		}, false);
 
 		// リモートカーソルの有効状態を更新
-		controller.update_remote_cursor_enable(Cookie.isUpdateCursorEnable());
+		controller.update_remote_cursor_enable(controllerData.isUpdateCursorEnable());
 
 		gui.get_whole_scale = function () {
 			return vscreen.getWholeScale();

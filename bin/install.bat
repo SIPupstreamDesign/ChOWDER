@@ -1,6 +1,10 @@
 @echo off
+pushd %~dp0
 
-cd %~dp0..\
+cd ..
 npm install
-echo "Install complete."
-pause
+
+cd standalone-electron
+npm install
+
+popd

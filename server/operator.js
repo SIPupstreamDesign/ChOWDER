@@ -14,19 +14,21 @@
 		image_size = require('image-size'),
 		client = redis.createClient(6379, '127.0.0.1', {'return_buffers': true}),
 		textClient = redis.createClient(6379, '127.0.0.1', {'return_buffers': false}),
-		contentIDStr = "content_id",
-		windowIDStr = "window_id",
 		virtualDisplayIDStr = "virtual_display",
 		metadataPrefix = "metadata:",
 		metadataBackupPrefix = "metadata_backup:",
+		metadataHistoryPrefix = "metadata_history:",
 		contentPrefix = "content:",
 		contentBackupPrefix = "content_backup:",
+		contentHistoryPrefix = "content_history:",
+		contentHistoryDataPrefix = "content_history_data:",
 		contentRefPrefix = "contentref:",
 		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
 		groupListPrefix = "grouplist",
 		adminListPrefix = "adminlist",
+		controllerDataPrefix = "controller_data",
 		globalSettingPrefix = "global_setting",
 		groupUserPrefix = "group_user",
 		adminUserPrefix = "admin_user",
@@ -43,9 +45,8 @@
 		socketidToAccessAuthority = {},
 		socketidToUserID = {},
 		socketidToLoginKey = {},
-		methods,
         connectionId = {},
-        connectionCount = 0,
+		connectionCount = 0,
 		userSettingKeys = [
 			"viewable",
 			"editable",
@@ -342,6 +343,47 @@
 		});
 	}
 
+	/**
+	 *  コントローラデータを上書き
+	 * @param {String} controllerID Session ID. nullの場合自動割り当て.
+	 * @param {String} controllerData コントローラデータ.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function updateControllerData(controllerID, controllerData, endCallback) {
+		textClient.set(controllerDataPrefix + ":" + controllerID, JSON.stringify(controllerData), function (err, data) {
+			if (err) {
+				console.error(err);
+			} else if (endCallback) {
+				endCallback("success");
+			}
+		});
+	}
+	
+	/**
+	 * コントローラデータを取得
+	 * @param {*} controllerID 
+	 * @param {*} endCallback (err, data)の形式. なかったらdataはnullとなる.
+	 */
+	function getControllerData(controllerID, endCallback) {
+		var parsed = null;
+		if (controllerID !== undefined && controllerID.length > 0) {
+			textClient.get(controllerDataPrefix + ":" + controllerID, function (err, data) {
+				if (err) {
+					console.error(err);
+					endCallback(null, null);
+				} else if (endCallback) {
+					try {
+						parsed = JSON.parse(data);
+					} catch(e) {
+					}
+					endCallback(null, parsed);
+				}
+			});
+		} else {
+			endCallback(null, null);
+		}
+	}
+
 	// コンテンツメタデータ中のグループ名の変更
 	function changeContentGroupName(socketid, oldID, newID) {
 		var metaDatas = [];
@@ -479,8 +521,11 @@
 								contentPrefix = frontPrefix + uuidPrefix + "content:";
 								contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
 								contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
+								contentHistoryPrefix = frontPrefix + uuidPrefix + "content_history:";
+								contentHistoryDataPrefix = frontPrefix + uuidPrefix + "content_history_data:";
 								metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
 								metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
+								metadataHistoryPrefix = frontPrefix + uuidPrefix + "metadata_history:";
 								windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
 								windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
 								windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
@@ -1024,62 +1069,66 @@
 	/**
 	 * ログインする
 	 * @method login
-	 * @param {String} id ユーザーid
+	 * @param {String} id グループID
 	 * @param {String} password パスワード
 	 * @param {String} socketid socketID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function login(id, password, socketid, endCallback) {
-		var getLoginResult = function () {
+	function login(id, password, socketid, controllerid, endCallback) {
+		var getLoginResult = function (controllerData) {
 			if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 				return {
 					id : id,
 					loginkey : socketid,
-					authority : socketidToAccessAuthority[socketid]
+					authority : socketidToAccessAuthority[socketid],
+					controllerData : controllerData
 				};
 			} else {
 				return {
 					id : id,
 					loginkey : socketid,
 					authority : null,
+					controllerData : controllerData
 				};
 			}
 		};
-		getAdminUserSetting(function (err, data) {
-			if (data.hasOwnProperty(id)) {
-				// 管理ユーザー
-				var isValid = validatePassword(data[id].password, password);
-				if (isValid) {
-					saveLoginInfo(socketid, id, data);
-					// 成功したらsocketidを返す
-					endCallback(null, getLoginResult());
-				} else {
-					endCallback("failed to login");
-				}
-			} else {
-				getGroupUserSetting(function (err, setting) {
-					if (!err) {
-						if (setting.hasOwnProperty(id)) {
-							// グループユーザー設定登録済グループユーザー
-							var isValid = validatePassword(setting[id].password, password);
-							if (id === "Guest" || id === "Display") {
-								isValid = true;
-							}
-							if (isValid) {
-								saveLoginInfo(socketid, id, null, setting);
-								endCallback(null, getLoginResult());
-							} else {
-								endCallback("failed to login");
-							}
-						} else {
-							// グループユーザー設定に登録されていないグループ
-							endCallback(null, getLoginResult());
-						}
+		getControllerData(controllerid, function (err, controllerData) {
+			getAdminUserSetting(function (err, data) {
+				if (data.hasOwnProperty(id)) {
+					// 管理ユーザー
+					var isValid = validatePassword(data[id].password, password);
+					if (isValid) {
+						saveLoginInfo(socketid, id, data);
+						// 成功したらsocketidを返す
+						endCallback(null, getLoginResult(controllerData));
 					} else {
 						endCallback("failed to login");
 					}
-				});
-			}
+				} else {
+					getGroupUserSetting(function (err, setting) {
+						if (!err) {
+							if (setting.hasOwnProperty(id)) {
+								// グループユーザー設定登録済グループユーザー
+								var isValid = validatePassword(setting[id].password, password);
+								if (id === "Guest" || id === "Display") {
+									isValid = true;
+								}
+								if (isValid) {
+									saveLoginInfo(socketid, id, null, setting);
+									endCallback(null, getLoginResult(controllerData));
+								} else {
+									endCallback("failed to login");
+								}
+							} else {
+								// グループユーザー設定に登録されていないグループ
+								endCallback(null, getLoginResult(controllerData));
+							}
+						} else {
+							endCallback("failed to login");
+						}
+					});
+				}
+			});
 		});
 	}
 
@@ -1140,8 +1189,15 @@
 		if (type === 'all') {
 			textClient.keys(metadataPrefix + '*', function (err, replies) {
 				var all_done = replies.length;
+				if (err || replies.length === 0) {
+					if (endCallback) {
+						endCallback("Error not found metadata");
+					}
+					return;
+				}
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
+						// バックアップデータをチェック
 						textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
 							return function (err, doesExists) {
 								if (!isViewable(socketid, data.group)) {
@@ -1149,7 +1205,6 @@
 									return;
 								}
 								if (doesExists) {
-
 									// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 									textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
 										metaData.backup_list = JSON.stringify(sortBackupList(reply));
@@ -1159,37 +1214,46 @@
 									});
 									return;
 								}
-								if (endCallback) {
-									metaData.last = ((replies.length - 1) === index);
-									endCallback(null, metaData);
-								}
+								// historyデデータがあった. キーリストをmetadataに追加しておく.
+								textClient.keys(metadataHistoryPrefix + metaData.id + ":*", function (err, keys) {
+									if (keys.length > 0) {
+										metaData.history_data = {};
+										keys.forEach(function (id, index) {
+											var splits = id.split(':');
+											var key = splits[splits.length - 1];
+											textClient.hkeys(id, function (err, reply) {
+												metaData.history_data[key] = reply;
+												if (index === keys.length - 1) {
+													if (endCallback) {
+														metaData.history_data = JSON.stringify(metaData.history_data);
+														endCallback(null, metaData);
+													}
+												}
+											});
+										});
+									} else {
+										if (endCallback) {
+											endCallback(null, metaData);
+										}
+									}
+								});
 							};
 						}(data)));
 					});
 				});
 			});
-			/*
-			textClient.keys(metadataPrefix + '*', function (err, replies) {
-				var multi = textClient.multi();
-				replies.forEach(function (reply, index) {
-					multi.hgetall(reply);
-				});
-				multi.exec(function (err, data) {
-					endCallback(data);
-				});
-			});
-			*/
 		} else {
 			textClient.hgetall(metadataPrefix + id, function (err, data) {
 				if (data) {
+					// バックアップデータをチェック
 					textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
 						return function (err, doesExists) {
+							if (!isViewable(socketid, metaData.group)) {
+								endCallback("access denied", {});
+								console.log("access denied2")
+								return;
+							}
 							if (doesExists) {
-								if (!isViewable(socketid, metaData.group)) {
-									endCallback("access denied", {});
-									console.log("access denied2")
-									return;
-								}
 								// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 								textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
 									metaData.backup_list = JSON.stringify(sortBackupList(reply));
@@ -1199,11 +1263,36 @@
 								});
 								return;
 							}
-							if (endCallback) {
-								endCallback(null, metaData);
-							}
+							// historyデデータがあった. キーリストをmetadataに追加しておく.
+							textClient.keys(metadataHistoryPrefix + metaData.id + ":*", function (err, keys) {
+								if (keys.length > 0) {
+									metaData.history_data = {};
+									keys.forEach(function (id, index) {
+										var splits = id.split(':');
+										var key = splits[splits.length - 1];
+										textClient.hkeys(id, function (err, reply) {
+											metaData.history_data[key] = reply;
+											if (index === keys.length - 1) {
+												if (endCallback) {
+													metaData.history_data = JSON.stringify(metaData.history_data);
+													endCallback(null, metaData);
+												}
+											}
+										});
+									});
+								} else {
+									if (endCallback) {
+										endCallback(null, metaData);
+									}
+								}
+							});
 						};
 					}(data)));
+				} else {
+					if (endCallback) {
+						endCallback("Error not found metadata");
+					}
+					return;
 				}
 			});
 		}
@@ -1233,16 +1322,40 @@
 		if (type === 'all') {
 			client.keys(contentPrefix + '*', function (err, replies) {
 				replies.forEach(function (id, index) {
-					client.get(id, function (err, reply) {
-						if (!err) {
-							if (endCallback) {
-								endCallback(reply);
-							}
-						} else {
-							console.error(err);
+					client.type(id, function (err, reply) {
+						if (reply === "set") {
+							client.get(id, function (err, reply) {
+								if (!err) {
+									if (endCallback) {
+										endCallback(reply);
+									}
+								} else {
+									console.error(err);
+								}
+							});
+						} else if (reply === "hash") {
+							client.hmget(id, "preview", function (err, reply) {
+								if (!err) {
+									if (endCallback) {
+										endCallback(reply[0]);
+									}
+								} else {
+									console.error(err);
+								}
+							});
 						}
 					});
 				});
+			});
+		} else if (type === "tileimage") {
+			client.hmget(contentPrefix + id, "preview", function (err, reply) {
+				if (!err) {
+					if (endCallback) {
+						endCallback(reply[0]);
+					}
+				} else {
+					console.error(err);
+				}
 			});
 		} else {
 			client.get(contentPrefix + id, function (err, reply) {
@@ -1308,6 +1421,10 @@
 		}
 		if (metaData.hasOwnProperty('height')) {
 			metaData.orgHeight = metaData.height;
+		}
+		if (metaData.type === "tileimage") {
+			// タイルイメージの場合は画像バイナリからサイズを求めない.
+			return;
 		}
 		if (metaData.type === "video") {
 			metaData.mime = "video/mp4";
@@ -1394,6 +1511,8 @@
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === 'tileimage' && data instanceof Buffer) {
+			metaData.mime = util.detectImageType(contentData);
 		} else if (metaData.type === 'url') {
 			metaData.mime = util.detectImageType(contentData);
 		} else {
@@ -1410,27 +1529,92 @@
 				metaData.content_id = content_id;
 				metaData.date = new Date().toISOString();
 				
-				textClient.set(contentPrefix + content_id, contentData, function (err, reply) {
-					if (err) {
-						console.error("Error on addContent:" + err);
-					} else {
-						// 参照カウント.
-						textClient.setnx(contentRefPrefix + content_id, 0);
-						textClient.incr(contentRefPrefix + content_id);
-						
-						// メタデータを初回設定.
-						initialMetaDataSetting(metaData, contentData);
-						setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
-							if (endCallback) {
-								endCallback(metaData, contentData);
-							}
-						});
+				if (metaData.type === "tileimage") {
+					let kv = {
+						preview : contentData
 					}
-				});
+					client.hmset(contentPrefix + content_id, kv, function (err, reply) {
+						if (err) {
+							console.error("Error on addContent:" + err);
+						} else {
+							// 参照カウント.
+							textClient.setnx(contentRefPrefix + content_id, 0);
+							textClient.incr(contentRefPrefix + content_id);
+							
+							// メタデータを初回設定.
+							initialMetaDataSetting(metaData, contentData);
+							setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
+								if (endCallback) {
+									endCallback(metaData, contentData);
+								}
+							});
+						}
+					});
+				} else {
+					textClient.set(contentPrefix + content_id, contentData, function (err, reply) {
+						if (err) {
+							console.error("Error on addContent:" + err);
+						} else {
+							// 参照カウント.
+							textClient.setnx(contentRefPrefix + content_id, 0);
+							textClient.incr(contentRefPrefix + content_id);
+							
+							// メタデータを初回設定.
+							initialMetaDataSetting(metaData, contentData);
+							setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
+								if (endCallback) {
+									endCallback(metaData, contentData);
+								}
+							});
+						}
+					});
+				}
 			});
 		});
 	}
 	
+	/**
+	 * タイルコンテンツ追加
+	 * @method addContent
+	 * @param {JSON} metaData contentメタデータ
+	 * @param {BLOB} data バイナリデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addTileContent(metaData, data, endCallback) {
+		console.log("addTileContent", metaData);
+		var contentData = data;
+		if (!metaData.hasOwnProperty('history_id')) {
+			if (endCallback) {
+				endCallback("Error not found history_id in metadata");
+			}
+			return;
+		}
+		var content_id = metaData.content_id;
+		var history_id = metaData.history_id;
+		
+		let kv = {}
+		kv[String(metaData.tile_index)] = contentData;
+
+		textClient.hkeys(contentHistoryPrefix + content_id, function (err, keys) {
+			if (keys.length > 0 && keys.indexOf(history_id) >= 0) {
+
+				client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+					if (err) {
+						console.error("Error on addContent:" + err);
+					} else {
+						endCallback(err, metaData, contentData);
+					}
+				});
+
+			} else {
+				if (endCallback) {
+					endCallback("Error not found history_id content");
+				}
+				return;
+			}
+		});
+	}
+
 	function deleteMetaData(metaData, endCallback) {
 		textClient.exists(metadataPrefix + metaData.id, function (err, doesExist) {
 			if (!err &&  doesExist === 1) {
@@ -1468,6 +1652,21 @@
 											textClient.del(metadataBackupPrefix + metaData.id);
 											textClient.del(contentBackupPrefix + metaData.content_id);
 											textClient.del(contentRefPrefix + metaData.content_id);
+											textClient.hkeys(contentHistoryPrefix + metaData.content_id, function (err, replies) {
+												replies.forEach(function (key, index) {
+													var history_id = key.split(":");
+													history_id = history_id[history_id.length - 1];
+													textClient.del(contentHistoryDataPrefix + history_id);
+													if (index == replies.length - 1) {
+														textClient.del(contentHistoryPrefix + metaData.content_id);
+													}
+												});
+											});
+											textClient.keys(metadataHistoryPrefix + metaData.id + ':*', function (err, replies) {
+												replies.forEach(function (key, index) {
+													textClient.del(key);
+												});
+											});
 											if (endCallback) {
 												endCallback(metaData);
 											}
@@ -1561,6 +1760,52 @@
 	}
 	
 	/**
+	 * 時系列データの保存(元データは移動される)
+	 */
+	function storeHistoricalData(socketid, metaData, endCallback) {
+		if (!metaData.hasOwnProperty('keyvalue')) {
+			console.error("Error : not found keyvalue")
+			return false;
+		}
+		var keyvalue ;
+		try {
+			keyvalue = JSON.parse(metaData.keyvalue);
+		} catch(e) {
+			console.error("Error : keyvalue parse failed")
+			return false;
+		}
+		var kvLen = Object.keys(keyvalue).length;
+		if (kvLen <= 0) {
+			console.error("Error : not found keyvalue")
+			return false;
+		}
+		if (!metaData.hasOwnProperty('history_id')) {
+			metaData.history_id = util.generateUUID8();
+		}
+
+		var historyIDtoID = {};
+		historyIDtoID[metaData.history_id] = metaData.id;
+		client.hmset(contentHistoryPrefix + metaData.content_id, historyIDtoID, function (err, reply) {
+			var key;
+			var historyMetaData = {};
+			var count = 0;
+			for (key in keyvalue) {
+				var value = keyvalue[key];
+				historyMetaData = {};
+				historyMetaData[value] = JSON.stringify(metaData);
+				client.hmset(metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, function (err) {
+					++count;
+					if (count >= kvLen) {
+						if (endCallback) {
+							endCallback(err, reply, metaData.history_id);
+						}
+					}
+				});
+			}
+		});
+	}
+	
+	/**
 	 * コンテンツ更新
 	 * @method updateContent
 	 * @param {JSON} metaData メタデータ
@@ -1582,6 +1827,9 @@
 		} else if (metaData.type === 'url') {
 			contentData = data;
 			metaData.mime = util.detectImageType(data);
+		} else if (metaData.type === 'tileimage') {
+			console.error("Error not supported updating:" + metaData.type);
+			return;
 		} else {
 			console.error("Error undefined type:" + metaData.type);
 		}
@@ -1655,6 +1903,80 @@
 										endCallback(meta);
 									}
 								});
+							}
+						});
+					});
+				}
+			}
+		});
+	}
+	
+	/**
+	 * 時系列データの追加
+	 * @method addHistoricalContent
+	 * @param {JSON} metaData メタデータ
+	 *    content_idとして追加先コンテンツのIDを入れる.
+	 * @param {BLOB} data  バイナリデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addHistoricalContent(socketid, metaData, data, endCallback) {
+		var contentData = null;
+		console.log("addHistoricalContent:" + metaData.id + ":" + metaData.content_id);
+		if (metaData.type === "video") {
+			contentData = data;
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text' || metaData.type === 'layout') {
+			contentData = data;
+			metaData.mime = "text/plain";
+		} else if (metaData.type === 'image' || metaData.type === 'tileimage') {
+			contentData = data;
+			metaData.mime = util.detectImageType(data);
+		} else if (metaData.type === 'url') {
+			contentData = data;
+			metaData.mime = util.detectImageType(data);
+		} else {
+			console.error("Error undefined type:" + metaData.type);
+		}
+		textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
+			if (!err) {
+				if (doesExist <= 0) {
+					// 最初のコンテンツ
+					metaData.history_id = util.generateUUID8();
+					addContent(metaData, contentData, function (err, reply) {
+						metaData.date = new Date().toISOString(); //登録時間を保存
+						// メタデータ初期設定.
+						if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+							initialOrgWidthHeight(metaData, contentData);
+						}
+						// 追加historyコンテンツ
+						storeHistoricalData(socketid, metaData, function (err, reply, history_id) {
+							var kv = {
+								preview : contentData
+							}
+							client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+								metaData.history_id = history_id;
+								if (endCallback) {
+									endCallback(err, metaData);
+								}
+							});
+						});
+					});
+				} else {
+					// 2つめ以降追加のコンテンツ
+					metaData.date = new Date().toISOString(); //登録時間を保存
+					// メタデータ初期設定.
+					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+						initialOrgWidthHeight(metaData, contentData);
+					}
+					// 追加historyコンテンツ
+					storeHistoricalData(socketid, metaData, function (err, reply, history_id) {
+						var kv = {
+							preview : contentData
+						}
+						client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+							metaData.history_id = history_id;
+							if (endCallback) {
+								endCallback(err, metaData);
 							}
 						});
 					});
@@ -1931,19 +2253,7 @@
 			endCallback(obj);
 		}
 	}
-	
-	/**
-	 * セッションリスト取得。registerWSEventにてコールされる。
-	 * @method getSessionList
-	 */
-	function getSessionList() {
-		textClient.smembers('sessions', function (err, replies) {
-			replies.forEach(function (id, index) {
-				console.log(id + ":" + index);
-			});
-		});
-	}
-	
+		
 	function addContentCore(metaData, binaryData, endCallback) {
 		if (metaData.type === 'url') {
 			renderURL(binaryData, function (image, dimension) {
@@ -2110,6 +2420,7 @@
 								newContentID = meta.content_id;
 							}
 							
+							// 既に存在するコンテンツの上書き
 							if (newContentID !== '' && oldContentID === newContentID) {
 								updateContent(socketid, metaData, binaryData, function (reply) {
 									if (updateEndCallback) {
@@ -2134,6 +2445,79 @@
 		}
 	}
 	
+	/**
+	 * タイルコンテンツの追加を行うコマンドを実行する.
+	 * @method commandAddTileContent
+	 * @param {Object} metaData メタデータ
+	 * @param {BLOB} binaryData バイナリデータ
+	 * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
+	 */
+	function commandAddTileContent(socketid, metaData, binaryData, endCallback) {
+		console.log("commandAddTileContent", metaData);
+		
+		if (isEditable(socketid, metaData.group)) {
+			if (metaData.hasOwnProperty('id') && metaData.id !== "") {
+				// タイル用のコンテンツが登録されている必要がある
+				textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+					if (!err && doesExists === 1) {
+						getMetaData(socketid, '', metaData.id, function (err, meta) {
+							if (err) {
+								endCallback(err);
+								return;
+							}
+							meta.tile_index = metaData.tile_index;
+							meta.history_id = metaData.history_id;
+							addTileContent(meta, binaryData, endCallback);
+						});
+					} else {
+						if (endCallback) {
+							endCallback("not found content");
+						}
+					}
+				});
+			} else {
+				if (endCallback) {
+					endCallback("not found content");
+				}
+			}
+		} else {
+			if (endCallback) {
+				endCallback("access denied");
+			}
+		}
+	}
+
+	/**
+	 * historicalコンテンツの追加を行うコマンドを実行する.
+	 * @param {Object} metaData メタデータ
+	 * @param {BLOB} binaryData バイナリデータ
+	 * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
+	 */
+	function commandAddHistoricalContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
+		console.log("commandAddHistoricalContent", metaData);
+		
+		if (isEditable(socketid, metaData.group)) {
+			// タイル用のコンテンツが登録されている必要がある
+			textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+				if (!err && doesExists === 1) {
+					getMetaData(socketid, '', metaData.id, function (err, meta) {
+						if (err) {
+							endCallback(err);
+							return;
+						}
+						addHistoricalContent(socketid, metaData, binaryData, endCallback);
+					});
+				} else {
+					addHistoricalContent(socketid, metaData, binaryData, endCallback);
+				}
+			});
+		} else {
+			if (endCallback) {
+				endCallback("access denied");
+			}
+		}
+	}
+
 	/**
 	 * コンテンツの取得を行うコマンドを実行する.
 	 * @method commandGetContent
@@ -2169,12 +2553,60 @@
 					}
 				}
 
+				// Historyから復元して取得
+				if (meta.hasOwnProperty('history_id')) {
+					client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, reply) {
+						endCallback(null, meta, reply[0]);
+					});
+					return;
+				}
+
 				// 通常の取得
 				getContent(meta.type, meta.content_id, function (reply) {
 					if (reply === null) {
 						reply = "";
 					}
 					endCallback(null, meta, reply);
+				});
+			}
+		});
+	}
+
+	/**
+	 * タイルコンテンツの取得を行うコマンドを実行する.
+	 * @method commandGetTileContent
+	 * @param {JSON} json contentメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandGetTileContent(socketid, json, endCallback) {
+		console.log("commandGetTileContent:" + json.id);
+		if (!isViewable(socketid, json.group)) {
+			endCallback("access denied");
+			return;
+		}
+		getMetaData(socketid, "tileimage", json.id, function (err, meta) {
+			if (err) {
+				endCallback(err);
+				return;
+			}
+			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== ''
+					&& json.hasOwnProperty('tile_index') && json.hasOwnProperty("history_id")) {
+
+				meta.tile_index = json.tile_index;
+				meta.history_id = json.history_id;
+				client.hmget(contentHistoryDataPrefix + meta.history_id, meta.tile_index, function (err, reply) {
+					if (!err) {
+						if (endCallback) {
+							if (reply[0]) {
+								endCallback(null, meta, reply[0]);
+							} else {
+								endCallback("Error : not found tileindex " + meta.tile_index);
+							}
+						}
+					} else {
+						console.error(err);
+					}
+
 				});
 			}
 		});
@@ -2298,7 +2730,82 @@
 		var i,
 			metaData,
 			results = [],
-			all_done = json.length;
+			all_done = json.length
+
+		var registerFunc = function (metaData, endCallback) {
+			// バックアップ有りの場合は、バックアップメタデータと通常メタデータ両方更新する
+			if (metaData.hasOwnProperty('restore_index')) {
+				var restore_index = Number(metaData.restore_index);
+				if (restore_index >= 0) {
+					var backupMetaData = {};
+					backupMetaData[metaData.date] = JSON.stringify(metaData);
+					client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
+				}
+			}
+			
+			setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+				getMetaData(socketid, meta.type, meta.id, function (err, meta) {
+					--all_done;
+					if (!err) {
+						results.push(meta);
+					}
+					if (all_done <= 0) {
+						endCallback(null, results);
+						return;
+					}
+				});
+			});
+		};
+
+		var updateByHistoryFunc = function (metaData, endCallback) {
+			// historyメタデータを取得し、通常のメタデータに上書きする
+			textClient.hmget(metadataHistoryPrefix + metaData.id + ":" + metaData.restore_key, metaData.restore_value, function (err, meta) {
+				
+				if (!err && meta.length > 0 && meta[0]) {
+					var hmeta = JSON.parse(meta[0]);
+					// 現在のメタデータに対して、切り替えに必要な部分のみ上書きする
+					metaData.keyvalue = hmeta.keyvalue;
+					metaData.history_id = hmeta.history_id;
+					metaData.id = hmeta.id;
+					metaData.content_id = hmeta.content_id;
+					metaData.date = hmeta.date;
+					metaData.mime = hmeta.mime;
+					endCallback(null, metaData);
+				} else {
+					// 見つからなかった場合は通常処理
+					endCallback(null, metaData);
+				}
+			});
+		}
+
+		var syncFunc = function (metaData, endCallback) {
+			// 同じgroupのsync付きのメタデータリストを取得.
+			if (metaData.hasOwnProperty('history_sync') && String(metaData.history_sync) === "true") {
+				var group = metaData.group;
+				textClient.keys(metadataPrefix + '*', function (err, replies) {
+					var all_done = replies.length;
+					if (err || replies.length === 0) {
+						endCallback("Error not found metadata");
+						return;
+					}
+					replies.forEach(function (id, index) {
+						textClient.hgetall(id, function (err, data) {
+							if (data.type === "tileimage" &&
+								data.hasOwnProperty('history_sync') && String(data.history_sync) === "true" &&
+								data.hasOwnProperty('group') && data.group === group) 
+							{
+								// 同期対象メタデータを発見. 同期させる
+								data.restore_key = metaData.restore_key;
+								data.restore_value = metaData.restore_value;
+								updateByHistoryFunc(data, function (err, metaData) {
+									registerFunc(metaData, endCallback);
+								});
+							}
+						});
+					});
+				});
+			}
+		}
 
 		for (i = 0; i < json.length; i = i + 1) {
 			metaData = json[i];
@@ -2308,58 +2815,22 @@
 						if (!err && doesExists === 1) {
 							
 							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+								// 初期幅高さが入ってないのが来た. 入れておく.
 								getContent(metaData.type, metaData.content_id, function (reply) {
-									// メタデータ初期設定.
 									initialOrgWidthHeight(metaData, reply);
-									
-									if (metaData.hasOwnProperty('restore_index')) {
-										var restore_index = Number(metaData.restore_index);
-										if (restore_index >= 0) {
-											var backupMetaData = {};
-											backupMetaData[metaData.date] = JSON.stringify(metaData);
-											client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
-										}
-									}
-									
-									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-										getMetaData(socketid, meta.type, meta.id, function (err, meta) {
-											--all_done;
-											if (!err) {
-												results.push(meta);
-											}
-											if (all_done <= 0) {
-												if (endCallback) {
-													endCallback(null, results);
-													return;
-												}
-											}
-										});
-									});
+									registerFunc(metaData, endCallback);
+								});
+							} else if (metaData.hasOwnProperty('restore_key') && metaData.hasOwnProperty('restore_value')) {
+								// historyデータが指定されているのが来た.
+								// historyによるmetadataの更新.
+								updateByHistoryFunc(metaData, function (err, metaData) {
+									// 更新したメタデータの登録.
+									registerFunc(metaData, endCallback);
+									// 同期させる. endCallback(metadataの更新broadcast)が複数回呼ばれる.
+									syncFunc(metaData, endCallback);
 								});
 							} else {
-
-								if (metaData.hasOwnProperty('restore_index')) {
-									var restore_index = Number(metaData.restore_index);
-									if (restore_index >= 0) {
-										var backupMetaData = {};
-										backupMetaData[metaData.date] = JSON.stringify(metaData);
-										client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
-									}
-								}
-								setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-									getMetaData(socketid, meta.type, meta.id, function (err, meta) {
-										--all_done;
-										if (!err) {
-											results.push(meta);
-										}
-										if (all_done <= 0) {
-											if (endCallback) {
-												endCallback(null, results);
-												return;
-											}
-										}
-									});
-								});
+								registerFunc(metaData, endCallback);
 							}
 						}
 					};
@@ -2679,7 +3150,7 @@
 		if (isAllType || isIdentityType) {
 			getWindowMetaData(json, function (windowData) {
 				if (windowData) {
-					console.log("doneGetWindow:", windowData);
+					//console.log("doneGetWindow:", windowData);
 					if (endCallback) {
 						endCallback(null, windowData);
 					}
@@ -2725,7 +3196,6 @@
 
     /**
      * mouseコマンドを実行する.
-     * リモートマウスカーソル表示のために HSV カラーを新規接続に応じて生成する
      * @method commandUpdateMouseCursor
      * @param {String} socketid ソケットID
 	 * @param {JSON} json mouse情報を含んだjson
@@ -2738,9 +3208,10 @@
             ++connectionCount;
         }
 		json.connectionCount = connectionId[socketid];
-        updateMouseCursor(socketid, json, function (windowData) {
-            endCallback(null, windowData);
-        });
+		
+		updateMouseCursor(socketid, json, function (windowData) {
+			endCallback(null, windowData);
+		});
     }
 
 	/**
@@ -2793,14 +3264,19 @@
 						loginkey : socketid,
 						authority : socketidToAccessAuthority[socketid]
 					}
-					endCallback(null, result);
+					getControllerData(data.controllerID, (function (result) {
+						return function (err, controllerData) {
+							result.controllerData = controllerData;
+							endCallback(null, result);
+						};
+					}(result)));
 					return;
 				} else {
 					endCallback("ログアウトしました", false);
 					return;
 				}
 			}
-			login(data.id, data.password, socketid, endCallback);
+			login(data.id, data.password, socketid, data.controllerID, endCallback);
 		} else {
 			endCallback("ユーザ名またはパスワードが正しくありません.");
 		}
@@ -2847,6 +3323,35 @@
 				}
 			});
 		}
+	}
+
+	/**
+	 * コントローラデータを更新する
+	 * @param {*} socketid 
+	 * @param {*} data 
+	 * @param {*} endCallback 
+	 */
+	function commandUpdateControllerData(socketid, data, endCallback) {
+		if (data.hasOwnProperty('controllerID') && data.hasOwnProperty('controllerData')) {
+			updateControllerData(data.controllerID, data.controllerData, endCallback);
+		} else {
+			endCallback("failed");
+		}
+	}
+
+	/**
+	 * コントローラデータを取得する.
+	 * @param {*} socketid 
+	 * @param {*} data 
+	 * @param {*} resultCallback 
+	 */
+	function commandGetControllerData(socketid, data, resultCallback) {
+		if (data.hasOwnProperty('controllerID')) {
+			getControllerData(data.controllerID, endCallback);
+		} else {
+			endCallback("failed");
+		}
+
 	}
 
 	function getGroupID(groupName, endCallback) {
@@ -3151,6 +3656,10 @@
 			commandGetContent(socketid, data, resultCallback);
 		});
 		
+		ws_connector.on(Command.GetTileContent, function (data, resultCallback, socketid) {
+			commandGetTileContent(socketid, data, resultCallback);
+		});
+
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
 			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
 		});
@@ -3226,6 +3735,19 @@
 			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 		
+		ws_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			console.log(Command.AddTileContent, data);
+			commandAddTileContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+
+		ws_connector.on(Command.AddHistoricalContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+		
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
 			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
 		});
@@ -3270,6 +3792,12 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		ws_connector.on(Command.UpdateControllerData, function (data, resultCallback) {
+			commandUpdateControllerData(socketid, data, resultCallback);
+		});
+		ws_connector.on(Command.GetControllerData, function (data, resultCallback) {
+			commandGetControllerData(socketid, data, resultCallback);
+		});
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
 			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -3310,7 +3838,6 @@
 			}
 		});
 
-		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
 
 		
@@ -3333,12 +3860,28 @@
 			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 
+		io_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandTileAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.AddHistoricalContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+
 		io_connector.on(Command.AddMetaData, function (data, resultCallback) {
 			commandAddMetaData(data, resultCallback);
 		});
 		
 		io_connector.on(Command.GetContent, function (data, resultCallback, socketid) {
 			commandGetContent(socketid, data, resultCallback);
+		});
+		
+		io_connector.on(Command.GetTileContent, function (data, resultCallback, socketid) {
+			commandGetTileContent(socketid, data, resultCallback);
 		});
 
 		io_connector.on(Command.GetMetaData, function (data, resultCallback, socketid) {
@@ -3455,6 +3998,12 @@
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		io_connector.on(Command.UpdateControllerData, function (data, resultCallback, socketid) {
+			commandUpdateControllerData(socketid, data, resultCallback);
+		});
+		io_connector.on(Command.GetControllerData, function (data, resultCallback, socketid) {
+			commandGetControllerData(socketid, data, resultCallback);
+		});
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
 			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -3509,7 +4058,10 @@
 		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
 		contentBackupPrefix = frontPrefix + uuidPrefix + contentBackupPrefix;
+		contentHistoryPrefix = frontPrefix + uuidPrefix + contentHistoryPrefix;
+		contentHistoryDataPrefix = frontPrefix + uuidPrefix + contentHistoryDataPrefix;
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
+		metadataHistoryPrefix = frontPrefix + uuidPrefix + metadataHistoryPrefix;
 		metadataBackupPrefix = frontPrefix + uuidPrefix + metadataBackupPrefix;
 		windowMetaDataPrefix = frontPrefix + uuidPrefix + windowMetaDataPrefix;
 		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
@@ -3517,6 +4069,7 @@
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
 		adminListPrefix = frontPrefix + adminListPrefix;
+		controllerDataPrefix = frontPrefix + controllerDataPrefix;
 		globalSettingPrefix = frontPrefix + globalSettingPrefix;
 		adminUserPrefix = frontPrefix + adminUserPrefix; // 管理ユーザー設定
 		groupUserPrefix = frontPrefix + uuidPrefix + groupUserPrefix; // グループユーザー設定
@@ -3528,7 +4081,10 @@
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
 		console.log("idstr:" + contentBackupPrefix);
+		console.log("idstr:" + contentHistoryPrefix);
+		console.log("idstr:" + contentHistoryDataPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
+		console.log("idstr:" + metadataHistoryPrefix);
 
 		/// 管理者の初期登録
 		
@@ -3587,6 +4143,11 @@
 		});
 	}
 
+	// setting.jsonを設定
+	Operator.prototype.setSettingJSON = function (json) {
+		// 毎回上書きするglobal設定
+		changeGlobalSetting("master", json);
+	}
 	Operator.prototype.getContent = getContent;
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;
@@ -3601,5 +4162,6 @@
 	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
 	Operator.prototype.commandUpdateMouseCursor = commandUpdateMouseCursor;
 	Operator.prototype.commandUpdateMetaData = commandUpdateMetaData;
+
 	module.exports = new Operator();
 }());

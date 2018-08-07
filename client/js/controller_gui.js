@@ -118,6 +118,24 @@
 						}.bind(this)
 					}
 				}]	
+			}, {
+				Language : [{
+					Japanese : {
+						func : function () { 
+							Cookie.setLanguage("ja-JP");
+							ChangeLanguage("ja-JP");
+							Translation();
+						}
+					}
+				}, { 
+					English : {
+						func : function () {
+							Cookie.setLanguage("en-US");
+							ChangeLanguage("en-US");
+							Translation();
+						}
+					}
+				}]
 			}];
 
 		if (management.getAuthorityObject().isAdmin()) {
@@ -170,6 +188,13 @@
 								func : function () {
 									this.initContextPos();
 									document.getElementById('text_file_input').click();
+								}.bind(this)
+							},
+						}, {
+							PDF : {
+								func : function () {
+									this.initContextPos();
+									document.getElementById('pdf_file_input').click();
 								}.bind(this)
 							},
 						}, {
@@ -298,7 +323,10 @@
 		this.initContextMenu();
 		this.initDisplayContextMenu();
 		this.initLayoutContextMenu();
-		
+
+		// ビデオコントローラの初期化
+		this.initVideoController();
+
 		// マウスイベントの初期化
 		this.initMouseEvent();
 
@@ -311,26 +339,29 @@
 		// メインビューの拡大縮小の初期化
 		this.initMainViewScaling();
 
+		// コントローラーID入力の初期化
+		this.initControllerIDInput();
+
 		// 下部バーガーメニューの初期化	
 		this.displayMenu = new BurgerMenu(
 			document.getElementById('bottom_burger_menu_display'),
 			{
 				menu : [{
-						IDを表示 : {
+					show_id : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, false); }.bind(this)
 						}
 					},{
-						全て選択 : {
+						select_all : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); }.bind(this)
 						}
 					},{
-						非表示 : {
+						hide : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CLOSE_ITEM, null); }.bind(this)
 						}
 					},{
 						hr : {}
 					},{
-						削除 : {
+						delete : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETEDISPLAY_CLICKED, null, evt); }.bind(this)
 						}
 					}]
@@ -340,15 +371,15 @@
 			document.getElementById('bottom_burger_menu_layout'),
 			{
 				menu : [{
-					レイアウト追加 : {
+					add_layout : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_ADD_CLICKED, null); }.bind(this)
 						}
 					},{
-					レイアウト上書き : {
+					overwrite_layout : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED, null); }.bind(this)
 						}
 					},{
-						グループ変更 : {
+						chagne_group : {
 							submenu: true,
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenuLayout(true, "90px"); 
@@ -359,17 +390,17 @@
 							}
 						}
 					},{
-						グループ内全て選択 : {
+						select_all_in_a_group : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, true); }.bind(this)
 						}
 					},{
-						全て選択 : {
+						select_all : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED, null, false); }.bind(this)
 						}
 					},{
 						hr : {}
 					},{
-						削除 : {
+						delete : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_DELETELAYOUT_CLICKED, null, evt); }.bind(this)
 						}
 					}]
@@ -387,15 +418,15 @@
 			document.getElementById('bottom_burger_menu_content'),
 			{
 				menu : [{
-						最前面に移動 : {
+						move_to_front : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CONTENT_INDEX_CHANGED, null, true); }.bind(this)
 						}
 					},{
-						最背面に移動 : {
+						move_to_back : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CONTENT_INDEX_CHANGED, null, false); }.bind(this)
 						}
 					},{
-						コンテンツ追加: {
+						add_content: {
 							submenu: true,
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenuAddContent(true, "170px"); 
@@ -406,7 +437,7 @@
 							}
 						}
 					},{
-						グループ変更 : {
+						chagne_group : {
 							submenu: true,
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenu(true, "150px"); 
@@ -417,27 +448,27 @@
 							}
 						}
 					},{
-						画像差し替え : {
+						swap_image : {
 							func : function (evt) {
 								document.getElementById('update_image_input').click()
 							}
 						}
 					},{
-						グループ内全て選択 : {
+						select_all_in_a_group : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED, null, true); }.bind(this)
 						}
 					},{
-						全て選択 : {
+						select_all : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED, null, false); }.bind(this)
 						}
 					},{
-						非表示 : {
+						hide : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CLOSE_ITEM, null); }.bind(this)
 						}
 					},{
 						hr : {}
 					},{
-						削除 : {
+						delete : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED, null, evt); }.bind(this)
 						}
 					}]
@@ -531,6 +562,18 @@
 		var gestureScale,
 			dx,dy;
 
+		// 一定間隔同じイベントが来なかったら実行するための関数
+		var debounceChangeDisplayScale = (function() {
+			var interval = 250;
+			var timer;
+			return function() {
+				clearTimeout(timer);
+				timer = setTimeout(function() {
+					this.update_display_scale(this.display_scale);
+				}.bind(this), interval);
+			}.bind(this);
+		}.bind(this)());
+	
 		if(window.ontouchstart !== undefined) {
 			// タッチイベントの初期化
 			document.addEventListener("touchstart", function (evt) {
@@ -564,13 +607,15 @@
 			e.preventDefault();
 		}
 
-		function gesturechangeFunc(e) {
+		this.onGestureChange = function (e) {
 			if (!isGesture) { return false; }
 			var scale_current = document.getElementById('scale_dropdown_current');
-			gui.update_display_scale(gestureScale * e.scale);
+			this.display_scale = gestureScale * e.scale;
+			this.emit(window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGING, null, this.display_scale);
+			debounceChangeDisplayScale();
 			e.stopPropagation();
 			e.preventDefault();
-		}
+		}.bind(this);
 		
 		function gestureendFunc() {
 			isGesture = false;
@@ -579,7 +624,7 @@
 		if (window.ongesturestart !== undefined) {
 			// ジェスチャーイベントの初期化
 			document.addEventListener("gesturestart", gesturestartFunc, false);
-			document.addEventListener("gesturechange", gesturechangeFunc, false);
+			document.addEventListener("gesturechange", this.onGestureChange, false);
 			document.addEventListener("gestureend", gestureendFunc, false);
 		}
 
@@ -589,23 +634,23 @@
 			if (!this.is_listview_area(e) && !this.is_property_area(e)) {
 				if(!e) e = window.event; //for legacy IE
 				var delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
-				var display_scale = vscreen.getWholeScale();
 				e.preventDefault();
 				if (delta < 0){
 					//下にスクロールした場合の処理
-					display_scale = display_scale + 0.05;
+					this.display_scale = this.display_scale + 0.05;
 				} else if (delta > 0){
 					//上にスクロールした場合の処理
-					display_scale = display_scale - 0.05;
+					this.display_scale = this.display_scale - 0.05;
 				}
 				
-				if (display_scale < 0.05) {
-					display_scale = 0.05
+				if (this.display_scale < 0.05) {
+					this.display_scale = 0.05
 				}
-				if (display_scale > 2) {
-					display_scale = 2;
+				if (this.display_scale > 2) {
+					this.display_scale = 2;
 				}
-				this.update_display_scale(display_scale);
+				this.emit(window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGING, null, this.display_scale);
+				debounceChangeDisplayScale();
 			}
 		}.bind(this);
 		var mousewheelevent = 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll';
@@ -714,12 +759,14 @@
 			add_video_button = document.getElementById('context_menu_add_video'),
 			add_text_button = document.getElementById('context_menu_add_text'),
 			add_text_file_button = document.getElementById('context_menu_add_text_file'),
+			add_pdf_file_button = document.getElementById('context_menu_add_pdf_file'),
 			add_url_button = document.getElementById('context_menu_add_url'),
 			add_screenshare_button = document.getElementById('context_menu_add_screenshare'),
 			add_camerashare_button = document.getElementById('context_menu_add_camerashare'),
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
 			change_image_button = document.getElementById('context_menu_change_image'),
+			control_videos = document.getElementById('context_menu_control_videos'),
 			add_content_submenu = document.getElementById("context_menu_add_content_submenu"),
 			select_all = document.getElementById('context_menu_select_all'),
 			select_group = document.getElementById('context_menu_select_group'),
@@ -754,6 +801,11 @@
 			menu.style.display = "none";
 		};
 
+		add_pdf_file_button.onmousedown = function () {
+		 	document.getElementById('pdf_file_input').click();	
+			menu.style.display = 'none';
+		};
+
 		add_url_button.onmousedown = function (evt) {
 			this.toggleURLInput();
 			menu.style.display = "none";
@@ -774,6 +826,15 @@
 
 		change_image_button.onmousedown = function (evt) {
 			document.getElementById('update_image_input').click();
+			menu.style.display = "none";
+		};
+
+		context_menu_control_videos.onclick = function (evt) {
+			if ( document.getElementById( 'video_controller' ).style.display === 'block' ) {
+				document.getElementById( 'video_controller' ).style.display = 'none';
+			} else {
+				document.getElementById( 'video_controller' ).style.display = 'block';
+			}
 			menu.style.display = "none";
 		};
 
@@ -934,6 +995,28 @@
 
 		this.initContextMenuVisible(menu, Constants.TabIDLayout, "");
 	};
+
+	ControllerGUI.prototype.initVideoController = function () {
+		var elParent = document.getElementById( 'video_controller' );
+		var elClose = document.getElementById( 'video_controller_close' );
+		var elRewind = document.getElementById( 'video_controller_rewind' );
+		var elPlay = document.getElementById( 'video_controller_play' );
+
+		elClose.onclick = function (evt) {
+			elParent.style.display = 'none';
+		};
+
+		elRewind.onclick = function (evt) {
+			this.emit('video_controller_rewind_clicked', null);
+		}.bind(this);
+
+		var if_this_variable_is_true_elPlay_will_be_play_otherwise_that_will_be_pause = true;
+		elPlay.onclick = function (evt) {
+			this.emit('video_controller_play_clicked', null, if_this_variable_is_true_elPlay_will_be_play_otherwise_that_will_be_pause);
+			if_this_variable_is_true_elPlay_will_be_play_otherwise_that_will_be_pause = !if_this_variable_is_true_elPlay_will_be_play_otherwise_that_will_be_pause;
+			elPlay.src = if_this_variable_is_true_elPlay_will_be_play_otherwise_that_will_be_pause ? '../image/video_play.png' : '../image/video_pause.png';
+		}.bind(this);
+	};
 	
 	/**
 	 * コンテキストメニューの動的に変化する部分を更新.
@@ -1061,6 +1144,7 @@
 	ControllerGUI.prototype.initContentInputs = function () {
 		var imageFileInput = document.getElementById('image_file_input'),
 			textFileInput = document.getElementById('text_file_input'),
+			pdfFileInput = document.getElementById('pdf_file_input'),
 			updateImageInput = document.getElementById('update_image_input'),
 			videoFileInput = document.getElementById('video_file_input');
 
@@ -1072,6 +1156,11 @@
 		textFileInput.addEventListener('change', function (evt) {
 			this.emit(window.ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
 			textFileInput.value = "";
+		}.bind(this), false);
+		
+		pdfFileInput.addEventListener('change', function (evt) {
+			this.emit(window.ControllerGUI.EVENT_PDFFILEINPUT_CHANGED, null, evt, this.contextPosX, this.contextPosY);
+			pdfFileInput.value = '';
 		}.bind(this), false);
 
 		updateImageInput.addEventListener('change', function (evt) {
@@ -1169,7 +1258,7 @@
 				if (this.display_scale > 2) {
 					this.display_scale = 2;
 				}
-				this.emit(window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED, null, this.display_scale);
+				this.emit(window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGING, null, this.display_scale);
 			} else if (is_middle_dragging) {
 				var dx = evt.clientX - rect.left - mouseDownPosX,
 					dy = evt.clientY - rect.top - mouseDownPosY;
@@ -1182,13 +1271,37 @@
 
 		window.addEventListener('mouseup', function (evt) {
 			if (evt.button === 2) {
+				this.emit(window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED, null, this.display_scale);
 				is_right_dragging = false;
 			} else if (evt.button === 1) {
 				is_middle_dragging = false;
 			}
-		})
+		}.bind(this));
 
 	};
+
+	/**
+	 * コントローラID入力の初期化
+	 */
+	ControllerGUI.prototype.initControllerIDInput = function () {
+		var elem = document.getElementById('controller_id');
+		var controllerID;
+		elem.onblur = function (ev) {
+			console.log("onblur");
+			ev.preventDefault();
+			controllerID = elem.value.split(' ').join('');
+			controllerID = controllerID.split('　').join('');
+			this.emit(ControllerGUI.EVENT_CONTROLLER_ID_CHANGED, null, controllerID);
+		}.bind(this);
+		elem.onkeypress = function (ev) {
+			if (ev.keyCode === 13) { // enter
+				ev.preventDefault();
+				controllerID = elem.value.split(' ').join('');
+				controllerID = controllerID.split('　').join('');
+				this.emit(ControllerGUI.EVENT_CONTROLLER_ID_CHANGED, null, controllerID);
+			}
+		}.bind(this);
+	}
 
 	/**
 	 *  タブが変更された
@@ -1251,7 +1364,7 @@
 	ControllerGUI.prototype.initGroupBoxEvents = function (groupBox) {
 		groupBox.on("group_delete", function (err, groupID) {
 			window.input_dialog.okcancel_input({
-					name : "グループ内のコンテンツも削除されます. よろしいですか?"
+					name : i18next.t('delete_content_in_group_is_ok')
 				}, (function (groupID, self) {
 					return function (value) {
 						if (value) {
@@ -1398,7 +1511,7 @@
 	 */
 	ControllerGUI.prototype.openTextInput = function () {
 		window.input_dialog.init_multi_text_input({
-				name : "テキストの追加",
+				name : i18next.t('add_text'),
 				okButtonName : "Send"
 			}, function (value, w, h) {
 				this.emit(window.ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED, null, value, this.contextPosX, this.contextPosY, w, h);
@@ -1412,7 +1525,7 @@
 	 */
 	ControllerGUI.prototype.toggleURLInput = function () {
 		window.input_dialog.text_input({
-				name : "URLの追加",
+				name : i18next.t('add_url'),
 				initialName :  "",
 				okButtonName : "Send",
 			}, function (value) {
@@ -1467,6 +1580,7 @@
 		var add_image_button = document.getElementById('burger_menu_add_image'),
 			add_text_button = document.getElementById('burger_menu_add_text'),
 			add_text_file_button = document.getElementById('burger_menu_add_text_file'),
+			add_pdf_file_button = document.getElementById('burger_menu_add_pdf_file'),
 			add_url_button = document.getElementById('burger_menu_add_url'),
 			add_video_button = document.getElementById('burger_menu_add_video'),
 			add_screenshare_button = document.getElementById('burger_menu_add_screenshare'),
@@ -1482,6 +1596,12 @@
 			this.toggleBurgerSubmenuAddContent(false);
 			this.contentMenu.toggle();
 		 	document.getElementById('text_file_input').click();	
+		}.bind(this);
+
+		add_pdf_file_button.onmousedown = function () {
+			this.toggleBurgerSubmenuAddContent(false);
+			this.contentMenu.toggle();
+		 	document.getElementById('pdf_file_input').click();	
 		}.bind(this);
 
 		add_url_button.onmousedown = function (evt) {
@@ -1657,6 +1777,9 @@
 	ControllerGUI.prototype.get_whole_scale = null;
 	
 	// Setter.
+	ControllerGUI.prototype.set_controller_id = function (id) {
+		document.getElementById('controller_id').value = id;
+	};
 	ControllerGUI.prototype.set_update_content_id = function (id) {
 		document.getElementById('update_content_id').innerHTML = id;
 	};
@@ -1714,6 +1837,37 @@
 				if (elem.classList.contains(mark)) {
 					elem.classList.remove(mark);
 				}
+			}
+		}
+	}
+
+	/**
+	 * アイコンの更新
+	 * @param {*} elem 
+	 * @param {*} metaData 
+	 * @param {*} groupDict 
+	 */
+	ControllerGUI.prototype.update_icon = function (elem, listElem, metaData, groupDict) {
+		if (metaData.type !== Constants.TypeTileImage) return;
+		var icons = [
+			elem.getElementsByClassName('tileimage_icon')[0],
+			listElem.getElementsByClassName('tileimage_icon_for_list')[0]
+		];
+		var bgcolor = "lightgray" // 同期していない場合の色
+		if (metaData.hasOwnProperty('history_sync')) {
+			if (String(metaData.history_sync) === "true") {
+				if (groupDict && groupDict.hasOwnProperty(metaData.group)) {
+					if (groupDict[metaData.group].hasOwnProperty('color')) {
+						bgcolor = groupDict[metaData.group].color;
+					} else {
+						bgcolor = Constants.DefaultTileIconColor; // default group
+					}
+				}
+			}
+		}
+		for (var i = 0; i < icons.length; ++i) {
+			if (icons[i]) {
+				icons[i].style.backgroundColor = bgcolor;
 			}
 		}
 	}
@@ -1795,12 +1949,14 @@
 	ControllerGUI.EVENT_IMAGEFILEINPUT_CHANGED = "imagefileinput_changed";
 	ControllerGUI.EVENT_VIDEOFILEINPUT_CHANGED = "videofileinput_changed";
 	ControllerGUI.EVENT_TEXTFILEINPUT_CHANGED = "textfileinput_changed";
+	ControllerGUI.EVENT_PDFFILEINPUT_CHANGED = "pdffileinput_changed";
 	ControllerGUI.EVENT_URLSENDBUTTON_CLICKED = "urlsendbuton_clicked";
 	ControllerGUI.EVENT_TEXTSENDBUTTON_CLICKED = "textsendbutton_clicked";
 	ControllerGUI.EVENT_UPDATE_CURSOR_ENABLE = "update_cursor_enable";
 	ControllerGUI.EVENT_UPDATE_CURSOR_COLOR = "update_cursor_color";
 	ControllerGUI.EVENT_CONTENTDELETEBUTTON_CLICKED = "contentdeletebutton_clicked";
 	ControllerGUI.EVENT_SELECT_CONTENTS_CLICKED = "select_contents_clicked";
+	ControllerGUI.EVENT_CONTROL_VIDEOS_CLICKED = "control_videos_clicked";
 	ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED = "select_display_clicked";
 	ControllerGUI.EVENT_SELECT_LAYOUT_CLICKED = "select_layout_clicked";
 	ControllerGUI.EVENT_LAYOUT_ADD_CLICKED = "add_layout";
@@ -1811,6 +1967,7 @@
 	ControllerGUI.EVENT_DELETELAYOUT_CLICKED = "deletelayout_clicked";
 	ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED = "showidbutton_clicked";
 	ControllerGUI.EVENT_VIRTUALDISPLAYSETTING_CLICKED = "virtualdisplaysetting_clicked";
+	ControllerGUI.EVENT_DISPLAY_SCALE_CHANGING = "display_scale_changing";
 	ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED = "display_scale_changed";
 	ControllerGUI.EVENT_DISPLAY_TRANS_CHANGED = "display_trans_changed";
 	ControllerGUI.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
@@ -1826,6 +1983,7 @@
 	ControllerGUI.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 	ControllerGUI.EVENT_TAB_CHANGED_PRE = "tab_changed_pre";
 	ControllerGUI.EVENT_TAB_CHANGED_POST = "tab_changed_post";
+	ControllerGUI.EVENT_CONTROLLER_ID_CHANGED = "controller_id_changed";
 	window.ControllerGUI = ControllerGUI;
 	
 }());

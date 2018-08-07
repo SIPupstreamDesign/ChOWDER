@@ -7,11 +7,14 @@
 	var Command = {
 		// request command
 		AddContent : "AddContent",
+		AddTileContent : "AddTileContent",
+		AddHistoricalContent : "AddHistoricalContent",
 		AddMetaData : "AddMetaData",
 		AddWindowMetaData : "AddWindowMetaData",
 		AddGroup : "AddGroup",
 		DeleteGroup : "DeleteGroup",
 		GetContent : "GetContent",
+		GetTileContent : "GetTileContent",
 		GetMetaData : "GetMetaData",
 		GetWindowMetaData : "GetWindowMetaData",
 		UpdateVirtualDisplay : "UpdateVirtualDisplay",
@@ -55,6 +58,10 @@
 		ChangeAuthority : "ChangeAuthority",
 		GetUserList :  "GetUserList",
 
+		// コントローラデータ
+		UpdateControllerData : "UpdateControllerData",
+		GetControllerData : "GetControllerData",
+		
 		// WebRTC
 		RTCRequest : "RTCRequest",
 		RTCOffer : "RTCOffer",

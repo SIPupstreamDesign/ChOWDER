@@ -167,7 +167,7 @@
 	background-color :rgb(100, 250, 100);
 }
 .group_tab_down_content:hover {
-	background :rgb(54,187,68);
+	background-color :rgb(54,187,68);
 }
 
 .group_tab_down_display {
@@ -240,6 +240,7 @@
 .group_tab_link {
 	display: inline-block;
 	margin: 4px;
+	color : black;
 }
 .group_tab_link_display {
 	position : relative;

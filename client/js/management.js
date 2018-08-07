@@ -8,6 +8,7 @@
 		this.userList = null;
 		this.maxHistoryNum = 10;
 		this.current_db = null;
+		this.maxMesageSize = null;
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
@@ -50,8 +51,8 @@
 		var newdb_button = document.getElementById('newdb_button');
 		newdb_button.onclick = function () {
 			window.input_dialog.text_input({
-				name : "新規保存名",
-				okButtonName : "作成",
+				name : i18next.t("save_name"),
+				okButtonName : i18next.t("create"),
 				opacity : 0.7,
 				zIndex : 90000001,
 				backgroundColor : "#888"
@@ -79,7 +80,7 @@
 			if (e.options.length > e.selectedIndex) {
 				var name = e.options[e.selectedIndex].value;
 				window.input_dialog.text_input({
-					name : "保存名の変更",
+					name : i18next.t('change_saving_name'),
 					okButtonName : "OK",
 					initialValue : name,
 					opacity : 0.7,
@@ -89,7 +90,7 @@
 					var k;
 					if (name === value) {
 						window.input_dialog.ok_input({
-							name : "既に存在する名前です",
+							name : i18next.t("already_exists"),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -99,7 +100,7 @@
 						for (k = 0; k < e.options.length; k = k + 1) {
 							if (option.value === value) {
 								window.input_dialog.ok_input({
-									name : "既に存在する名前です",
+									name : i18next.t("already_exists"),
 									opacity : 0.7,
 									zIndex : 90000001,
 									backgroundColor : "#888"
@@ -110,7 +111,7 @@
 					}
 					if (value.length === 0) {
 						window.input_dialog.ok_input({
-							name : "空の名前にはできません",
+							name : i18next.t("cannot_empty"),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -191,7 +192,7 @@
 		var groupManipulateLabel = document.getElementById('group_add_delete_label');
 		var displayManipulateCheck = document.getElementById('display_manipulate_check');
 		var displayManipulateLabel = document.getElementById('display_manipulate_label');
-		var allAccessText = "全て";
+		var allAccessText = i18next.t("all");
 
 		// グループの追加削除を許可のチェック
 		groupManipulateLabel.onclick = function () {
@@ -394,7 +395,7 @@
 				if (pass.value <= 0) {
 					if (name === "Display" || name === "Gueset") {
 						window.input_dialog.ok_input({
-							name : "このユーザーにはパスワードは設定できません",
+							name : i18next.t('cannot_set_to_this_user'),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -403,7 +404,7 @@
 						});
 					} else {
 						window.input_dialog.ok_input({
-							name : "有効なパスワードを入力してください",
+							name : i18next.t('input_valid_password'),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -418,7 +419,7 @@
 					console.error(err, reply)
 					if (err) {
 						window.input_dialog.ok_input({
-							name : "有効なパスワードを入力してください",
+							name : i18next.t('input_valid_password'),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -564,6 +565,14 @@
 	Management.prototype.setUserList = function (userList) {
 		this.userList = userList;
 	};
+	
+	Management.prototype.setMaxMessageSize = function (size) {
+		this.maxMesageSize = size;
+	}
+	
+	Management.prototype.getMaxMessageSize = function () {
+		return this.maxMesageSize;
+	}
 
 	// 新規DB保存領域作成&切り替え
 	Management.EVENT_NEWDB = "newdb";
@@ -594,6 +603,9 @@
 				if (reply && reply.hasOwnProperty('max_history_num')) {
 					management.setMaxHistoryNum(reply.max_history_num);
 					management.setCurrentDB(reply.current_db);
+					if (reply.wsMaxMessageSize) {
+						management.setMaxMessageSize(reply.wsMaxMessageSize)
+					}
 				}
 			});
 		}
@@ -662,7 +674,7 @@
 		// DBの削除
 		management.on('deletedb', function (err, name) {
 			window.input_dialog.okcancel_input({
-				name : "DB: " + name + " を削除します。よろしいですか?",
+				name : "DB: " + name + " " + i18next.t('delete_is_ok'),
 				opacity : 0.7,
 				zIndex : 90000001,
 				backgroundColor : "#888"
@@ -677,7 +689,7 @@
 		// DBの初期化
 		management.on('initdb', function (err, name) {
 			window.input_dialog.okcancel_input({
-				name : "DB: " + name + " を初期化します。よろしいですか?",
+				name : "DB: " + name + " " + i18next.t('init_is_ok'),
 				opacity : 0.7,
 				zIndex : 90000001,
 				backgroundColor : "#888"

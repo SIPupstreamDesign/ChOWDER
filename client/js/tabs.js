@@ -15,8 +15,8 @@
 
 	/*
 		<div class="left_tab_area" id="left_tab_area">
-			<span id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></span>
-			<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
+			<span id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></span>
+			<span id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></span>
 		</div>
 	*/
 	Tabs.prototype.init = function () {
@@ -67,8 +67,8 @@
 	};
 
 	/*
-		<span id="display_tab_title" class="display_tab_title"><a href="#" class="active" id="display_tab_link">Display</a></span>
-		<span id="content_tab_title" class="content_tab_title active"><a href="#" id="content_tab_link">Content</a></span>
+		<span id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></span>
+		<span id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></span>
 		..
 	*/
 	Tabs.prototype.create_tab = function (tabName, tabContent, is_active) {
@@ -78,8 +78,8 @@
 		elem.id = tabContent.id;
 		elem.className = is_active ? tabContent.id + " active" : tabContent.id;
 		elem.style.cursor = "pointer";
-		link = document.createElement('a');
-		link.href = "#";
+		link = document.createElement('span');
+		link.className = "tab_title"
 		link.id = tabContent.id + "_link";
 		link.innerHTML = tabName;
 		if (tabContent.hasOwnProperty('func')) {

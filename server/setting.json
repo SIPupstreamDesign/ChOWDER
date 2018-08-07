@@ -1,4 +1,4 @@
 {
     "wsMaxMessageSize": 67108864,
-	"wsMaxFrameSize" : 67108864
+    "sessionTime" : 60
 }

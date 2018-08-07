@@ -16,6 +16,7 @@
 		TypeLayout : "layout",
 		TypeContent : "content",
 		TypeText : "text",
+		TypeTileImage : "tileimage",
 		TypeVideo : "video",
 		PropertyTypeDisplay : "display",
 		PropertyTypeWholeWindow : "whole_window",
@@ -43,7 +44,9 @@
 		// Edge 20+
 		IsEdge : !(/*@cc_on!@*/false || !!document.documentMode) && !!window.StyleMedia,
 		// Chrome 1+
-		IsChrome : !!window.chrome && !!window.chrome.webstore
+		IsChrome : !!window.chrome && !!window.chrome.webstore,
+		DefaultCursorColor : "rgb(255, 255, 255)",
+		DefaultTileIconColor : "rgb(54, 187, 68)"
 	};
 
 	window.Constants = Constants;

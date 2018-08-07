@@ -72,6 +72,37 @@
 			elem.setAttribute("height", String(rect.w));
 		}
 	}
+
+	function resizeTileImages(elem, metaData, rect) {
+		if (!rect) {
+			rect = vscreen.transformOrg(toIntRect(metaData));
+		}
+		var mw = rect.w;
+		var mh = rect.h;
+		var ow = Number(metaData.orgWidth);
+		var oh = Number(metaData.orgHeight);
+		var posx = 0;
+		var posy = 0;
+		for (var i = 0; i < elem.children.length; ++i) {
+			var image = elem.getElementsByClassName("tile_index_" + String(i))[0];
+			if (image && image.tagName.toLowerCase() === "img") {
+				var w = image.naturalWidth;
+				var h = image.naturalHeight;
+				var width = Math.round(w / ow * mw);
+				var height = Math.round(h / oh * mh);
+				image.style.left = posx + "px";
+				image.style.top = posy + "px";
+				image.style.width = Math.round(w / ow * mw) + "px";
+				image.style.height = Math.round(h / oh * mh) + "px";
+				if ( (i % Number(metaData.xsplit)) === Number(metaData.xsplit) - 1) {
+					posx = 0;
+					posy += height;
+				} else {
+					posx += width;
+				}
+			}
+		}
+	}
 	
 	/**
 	 * 矩形を割り当て
@@ -144,6 +175,8 @@
 				resizeText(elem, rect);
 			} else if (metaData.type === "video") {
 				resizeVideo(elem, rect);
+			} else if (metaData.type === "tileimage") {
+				resizeTileImages(elem, metaData, rect);
 			}
 			
 			if (isVisible(metaData)) {
@@ -296,4 +329,5 @@
 	window.vscreen_util.transPosInv = transPosInv;
 	window.vscreen_util.isInsideWindow = isInsideWindow;
 	window.vscreen_util.isOutsideWindow = isOutsideWindow;
+	window.vscreen_util.resizeTileImages = resizeTileImages;
 }(window.vscreen));
