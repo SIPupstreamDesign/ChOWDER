@@ -720,10 +720,12 @@
 									elem.width = viewport.width;
 									elem.height = viewport.height;
 
-									lastTask = lastTask.then(page.render({
-										canvasContext: context,
-										viewport: viewport
-									}));
+									lastTask = lastTask.then(function () {
+										return page.render({
+											canvasContext: context,
+											viewport: viewport
+										});
+									});
 								});
 							}, lastPage === p ? 500 : 0);
 						};
