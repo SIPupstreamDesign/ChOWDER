@@ -4090,7 +4090,7 @@
 		
 		textClient.exists(adminUserPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
-				addAdmin("master", util.generateUUID8(), "管理者", "admin", function (err, reply) {});
+				addAdmin("master", util.generateUUID8(), "Admin", "admin", function (err, reply) {});
 			}
 			// jsonから追加.
 			fs.readFile("../admin.json", function (err, reply) {
