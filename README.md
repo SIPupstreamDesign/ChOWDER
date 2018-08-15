@@ -3,5 +3,5 @@
 Cooperative workspace driver
 
 ## User Guide
-
-[./UserGuide/UserGuide.md](./UserGuide/UserGuide.md)
+### Japanese
+[./UserGuide/jp/UserGuide.md](./UserGuide/jp/UserGuide.md)
