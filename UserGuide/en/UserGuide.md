@@ -4,57 +4,57 @@ User Guide
 Table of Contents
 ---------------------------------------------------
 
-- [Getting Started](#Getting%20Started )
-  - [System Requirements and Installation](#System%20Requirements%20and%20Installation)
-- [Extracting the Application](#Extracting%20the%20Application)
-- [Installing the Application](#Installing%20the%20Application)
+- [Getting Started](#Getting-Started)
+  - [System Requirements and Installation](#System-Requirements-and-Installation)
+- [Extracting the Application](#Extracting-the-Application)
+- [Installing the Application](#Installing-the-Application)
   - [Installation](#Installation)
-  - [Run Install Script](#Run%20Install%20Script)
-- [Launching the Application](#Launching%20the%20Application)
-  - [For Mac/Linux](#For%20Mac/Linux)
-  - [For Windows](#For%20Windows)
-  - [Launch Confirmation](#Launch%20Confirmation)
-  - [Accessing Controller(s)](#Accessing%20Controller\(s\))
-- [How to Quit the Application](#How%20to%20Quit%20the%20Application)
-  - [Shut Down the Server Program](#Shut%20Down%20the%20Server%20Program)
-  - [Shut Down Redis](#Shut%20Down%20Redis)
-- [Initial Setup for Administrator](#Initial%20Setup%20for%20Administrator)
-  - [Administrator Setup File](#Administrator%20Setup%20File)
-- [The Home Screen of ChOWDER](#The%20Home%20Screen%20of%20ChOWDER)
-  - [What’s On Your Home Screen](#What’s%20On%20Your%20Home%20Screen)
-- [Navigating the Controller Screen](#Navigating%20the%20Controller%20Screen)
+  - [Run Install Script](#Run-Install-Script)
+- [Launching the Application](#Launching-the-Application)
+  - [For Mac/Linux](#For-Mac/Linux)
+  - [For Windows](#For-Windows)
+  - [Launch Confirmation](#Launch-Confirmation)
+  - [Accessing Controller(s)](#Accessing-Controller\(s\))
+- [How to Quit the Application](#How-to-Quit-the-Application)
+  - [Shut Down the Server Program](#Shut-Down-the-Server-Program)
+  - [Shut Down Redis](#Shut-Down-Redis)
+- [Initial Setup for Administrator](#Initial-Setup-for-Administrator)
+  - [Administrator Setup File](#Administrator-Setup-File)
+- [The Home Screen of ChOWDER](#The-Home-Screen-of-ChOWDER)
+  - [What’s On Your Home Screen](#What’s-On-Your-Home-Screen)
+- [Navigating the Controller Screen](#Navigating-the-Controller-Screen)
   - <a href="#Overview_navi">Overview</a>
-  - [Connection Status](#Connection%20Status)
-  - [The Virtual Display Screen](#The%20Virtual%20Display%20Screen)
-  - [Main Menu](#Main%20Menu)
-  - [Adding Contents](#Adding%20Contents)
-  - [Display Tab](#Display%20Tab)
-  - [Content Tab](#Content%20Tab)
-  - [Search Tab](#Search%20Tab)
-  - [Property Window](#Property%20Window)
-  - [Working with Video Content](#Working%20with%20Video%20Content)
-- [User Permissions and Administrator Screen](#User%20Permissions%20and%20Administrator%20Screen)
-  - [User Permissions](#User%20Permissions)
-  - [Administrator Screen](#Administrator%20Screen)
-- [Working with Display Screen](#Working%20with%20Display%20Screen)
+  - [Connection Status](#Connection-Status)
+  - [The Virtual Display Screen](#The-Virtual-Display-Screen)
+  - [Main Menu](#Main-Menu)
+  - [Adding Contents](#Adding-Contents)
+  - [Display Tab](#Display-Tab)
+  - [Content Tab](#Content-Tab)
+  - [Search Tab](#Search-Tab)
+  - [Property Window](#Property-Window)
+  - [Working with Video Content](#Working-with-Video-Content)
+- [User Permissions and Administrator Screen](#User-Permissions-and-Administrator-Screen)
+  - [User Permissions](#User-Permissions)
+  - [Administrator Screen](#Administrator-Screen)
+- [Working with Display Screen](#Working-with-Display-Screen)
   - <a href="#Overview_work_with_disp">Overview</a>
-  - [Working with Display: Menu](#Working%20with%20Display:%20Menu)
-- [Coordinating with HIVE](#Coordinating%20with%20HIVE)
-  - [Interactive Rendering](#Interactive%20Rendering)
+  - [Working with Display: Menu](#Working-with-Display:-Menu)
+- [Coordinating with HIVE](#Coordinating-with-HIVE)
+  - [Interactive Rendering](#Interactive-Rendering)
   - [SceneNodeEditor](#SceneNodeEditor)
-  - [Module System](#Module%20System)
-- [Using Google Chrome Extension](#Using%20Google%20Chrome%20Extension)
+  - [Module System](#Module-System)
+- [Using Google Chrome Extension](#Using-Google-Chrome-Extension)
   - <a href="#Overview_chrome_extension">Overview</a>
-  - [Installing Extension](#Installing%20Extension)
-  - [Use Extension to Capture](#Use%20Extension%20to%20Capture)
-- [Using Desktop Capture on ChOWDER](#Using%20Desktop%20Capture%20on%20ChOWDER)
+  - [Installing Extension](#Installing-Extension)
+  - [Use Extension to Capture](#Use-Extension-to-Capture)
+- [Using Desktop Capture on ChOWDER](#Using-Desktop-Capture-on-ChOWDER)
   - <a href="#Overview_desktop_capture">Overview</a>
-  - [How to Use ChOWDER Desktop Capture](#How%20to%20Use%20ChOWDER%20Desktop%20Capture)
-- [Using Google Chrome Extension for WebRTC](#Using%20Google%20Chrome%20Extension%20for%20WebRTC)
+  - [How to Use ChOWDER Desktop Capture](#How-to-Use-ChOWDER-Desktop-Capture)
+- [Using Google Chrome Extension for WebRTC](#Using-Google-Chrome-Extension-for-WebRTC)
   - <a href="#Overview_chrome_extension_WebRTC">Overview</a>
   - <a href="#Installing_Extension_WebRTC">Installing Extension</a>
-  - [Capture Using Extension](#Capture%20Using%20Extension)
-- [Using HTTPS](#Using%20HTTPS)
+  - [Capture Using Extension](#Capture-Using-Extension)
+- [Using HTTPS](#Using-HTTPS)
   - <a href="#Overview_https">Overview</a>
 
 Getting Started
@@ -274,7 +274,7 @@ You can open the Display window by clicking on the Display button, as shown belo
 ### Add Menu
 
 You can add various contents using the Add menu.
-For details, refer to [Adding Contents](#Adding%20Contents).
+For details, refer to [Adding Contents](#Adding-Contents).
 
 <img src="image/header01.png" alt="Addメニュー展開時" width="415" />
 *Menu when Add is Selected*
@@ -332,7 +332,7 @@ Add a video file of your choice to Contents by any of the following methods.
 - Right-click within the Content Tab -> Add Content -> Video File
 
 MP4 file formats are accepted.
-Once video files are imported, they are streamed via WebRTC. For details on WebRTC, refer to [Working with Video Content](#Working%20with%20Video%20Content).
+Once video files are imported, they are streamed via WebRTC. For details on WebRTC, refer to [Working with Video Content](#Working-with-Video-Content).
 
 The example below shows the screen after adding a video as a Content.
 
@@ -390,7 +390,7 @@ Add a shared screen to Contents by any of the following methods.
 -   Right-click within the Content Tab -> Add Content -> ScreenShare
 
 Captured videos are streamed via WebRTC.
-For instructions on working with video contents, refer to [Working with Video Contents](#Working%20with%20Video%20Contents).
+For instructions on working with video contents, refer to [Working with Video Contents](#Working-with-Video-Contents).
 
 The example below shows the screen after adding a shared screen.
 
@@ -406,7 +406,7 @@ Add a shared camera to Contents by any of the following methods.
 -   Right-click within the Content Tab -> Add Content -> CameraShare
 
 Captured videos are streamed via WebRTC.
-For instructions on working with video contents, refer to [Working with Video Contents](#Working%20with%20Video%20Contents).
+For instructions on working with video contents, refer to [Working with Video Contents](#Working-with-Video-Contents).
 
 The example below shows the screen after adding a shared camera to contents.
 
