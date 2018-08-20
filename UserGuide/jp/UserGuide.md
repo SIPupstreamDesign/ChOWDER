@@ -538,7 +538,7 @@ Contentsタブにて選択している画像の差し替えを行います.
 
 下図の通り指定すると、Contentsタブに存在するContentsが差し替わります。
 
-<img src="image/YUMUSHI.png" alt="画像の差し替えし指定" width="434" />
+<img src="image/YUMUSHI.PNG" alt="画像の差し替えし指定" width="434" />
 *画像の差し替え指定*
 <br>
 <img src="image/SASHI2.png" alt="画像の差し替え結果" width="434" />

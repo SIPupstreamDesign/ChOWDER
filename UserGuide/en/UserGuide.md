@@ -519,7 +519,7 @@ The example below shows how to replace images selected within the Contents tab.
 
 Follow the example below to replace the Contents in the Contents tab.
 
-<img src="image/YUMUSHI.png" alt="画像の差し替えし指定" width="434" />
+<img src="image/YUMUSHI.PNG" alt="画像の差し替えし指定" width="434" />
 *Select Replacement Image*
 <br>
 <img src="image/SASHI2.png" alt="画像の差し替え結果" width="434" />
