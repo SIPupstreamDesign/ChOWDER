@@ -4,58 +4,58 @@ User Guide
 Table of Contents
 ---------------------------------------------------
 
--   [はじめに]
-    -   [動作環境とインストール]
--   [アプリケーションの展開方法]
--   [アプリケーションのインストール方法]
-    -   [インストール](#インストール)
-    -   [インストールスクリプトの実行]
--   [アプリケーションの起動方法]
-    -   [Mac/Linuxの場合]
-    -   [Windowsの場合]
-    -   [起動確認]
-    -   [コントローラへアクセス]
--   [アプリケーションの終了方法]
-    -   [サーバープログラムの終了]
-    -   [redisの終了]
--   [管理者初期設定]
-    -   [管理者設定ファイル]
--   [ChOWDERのホーム画面]
-    -   [ホーム画面説明]
--   [コントローラ画面の操作]
-    -   [概要]
-    -   [接続状態について]
-    -   [Virtual Display Screenについて]
-    -   [メインメニュー]
-    -   [コンテンツの追加]
-    -   [Displayタブ]
-    -   [Contentタブ]
-    -   [Searchタブ]
-    -   [Propertyウィンドウ]
-    -   [動画コンテンツの操作]
--   [ユーザー権限と管理画面]
-    -   [ユーザー権限]
-    -   [管理画面]
--   [ディスプレイ画面の操作]
-    -   [概要]
-    -   [ディスプレイの操作：メニュー]
--   [HIVEとの連携]
-    -   [インタラクティブレンダリング]
-    -   [SceneNodeEditor]
-    -   [Module System]
--   [Google Chrome Extensionの利用]
-    -   [概要]
-    -   [Extensionのインストール]
-    -   [Extensionでキャプチャする]
--   [ChOWDER Desktop Captureの利用]
-    -   [概要]
-    -   [ChOWDER Desktop Captureの使い方]
--   [Google Chrome Extension for WebRTCの利用]
-    -   [概要]
-    -   [Extensionのインストール]
-    -   [Extensionでキャプチャする]
--   [HTTPSの利用]
-    -   [概要]
+- [Getting Started](#Getting\ Started)
+  - [System Requirements and Installation](#System\ Requirements\ and\ Installation)
+- [Extracting the Application](#Extracting\ the\ Application)
+- [Installing the Application](#Installing\ the\ Application)
+  - [Installation](#Installation)
+  - [Run Install Script](#Run\ Install\ Script)
+- [Launching the Application](#Launching\ the\ Application)
+  - [For Mac/Linux](#For\ Mac/Linux)
+  - [For Windows](#For\ Windows)
+  - [Launch Confirmation](#Launch\ Confirmation)
+  - [Accessing Controller(s)](#Accessing\ Controller\(s\))
+- [How to Quit the Application](#How\ to\ Quit\ the\ Application)
+  - [Shut Down the Server Program](#Shut\ Down\ the\ Server\ Program)
+  - [Shut Down Redis](#Shut\ Down\ Redis)
+- [Initial Setup for Administrator](#Initial\ Setup\ for\ Administrator)
+  - [Administrator Setup File](#Administrator\ Setup\ File)
+- [The Home Screen of ChOWDER](#The\ Home\ Screen\ of\ ChOWDER)
+  - [What’s On Your Home Screen](#What’s\ On\ Your\ Home\ Screen)
+- [Navigating the Controller Screen](#Navigating\ the\ Controller\ Screen)
+  - <a href="#Overview_navi">Overview</a>
+  - [Connection Status](#Connection\ Status)
+  - [The Virtual Display Screen](#The\ Virtual\ Display\ Screen)
+  - [Main Menu](#Main\ Menu)
+  - [Adding Contents](#Adding\ Contents)
+  - [Display Tab](#Display\ Tab)
+  - [Content Tab](#Content\ Tab)
+  - [Search Tab](#Search\ Tab)
+  - [Property Window](#Property\ Window)
+  - [Working with Video Content](#Working\ with\ Video\ Content)
+- [User Permissions and Administrator Screen](#User\ Permissions\ and\ Administrator\ Screen)
+  - [User Permissions](#User\ Permissions)
+  - [Administrator Screen](#Administrator\ Screen)
+- [Working with Display Screen](#Working\ with\ Display\ Screen)
+  - <a href="#Overview_work_with_disp">Overview</a>
+  - [Working with Display: Menu](#Working\ with\ Display:\ Menu)
+- [Coordinating with HIVE](#Coordinating\ with\ HIVE)
+  - [Interactive Rendering](#Interactive\ Rendering)
+  - [SceneNodeEditor](#SceneNodeEditor)
+  - [Module System](#Module\ System)
+- [Using Google Chrome Extension](#Using\ Google\ Chrome\ Extension)
+  - <a href="#Overview_chrome_extension">Overview</a>
+  - [Installing Extension](#Installing\ Extension)
+  - [Use Extension to Capture](#Use\ Extension\ to\ Capture)
+- [Using Desktop Capture on ChOWDER](#Using\ Desktop\ Capture\ on\ ChOWDER)
+  - <a href="#Overview_desktop_capture">Overview</a>
+  - [How to Use ChOWDER Desktop Capture](#How\ to\ Use\ ChOWDER\ Desktop\ Capture)
+- [Using Google Chrome Extension for WebRTC](#Using\ Google\ Chrome\ Extension\ for\ WebRTC)
+  - <a href="#Overview_chrome_extension_WebRTC">Overview</a>
+  - <a href="#Installing_Extension_WebRTC">Installing Extension</a>
+  - [Capture Using Extension](#Capture\ Using\ Extension)
+- [Using HTTPS](#Using\ HTTPS)
+  - <a href="#Overview_https">Overview</a>
 
 Getting Started
 ==================================================================
@@ -65,32 +65,32 @@ This user guide contains information on how to operate ChOWDER.
 System Requirements and Installation
 ---------------------------------------------------
 
-The following operating systems and web browsers are supported by ChOWDER. 
+The following operating systems and web browsers are supported by ChOWDER.
 
-* OS
-    * Linux(CentOS6)
-    * Windows7
-    * MacOSX 10.10
+- OS
+  - Linux(CentOS6)
+  - Windows7
+  - MacOSX 10.10
 
-* Web Browsers
-    * Apple Safari 9.x
-    * Firefox 48.0
-    * Chrome 53
-    * Internet Explorer 11
+- Web Browsers
+  - Apple Safari 9.x
+  - Firefox 48.0
+  - Chrome 53
+  - Internet Explorer 11
 
-Opening the Application
+Extracting the Application
 ==================================================================
 
 Extract the archive files.
 The extracted files will be organized as follows
 
-* bin : Run Script Folder
-* client : Client Application Folder
-* doc : Document Folder
-* redis : Redis Application Folder
-* server : Server Application Folder
-* chrome_extension : Google Chrome Extensions Folder
-* package.json
+- bin : Run Script Folder
+- client : Client Application Folder
+- doc : Document Folder
+- redis : Redis Application Folder
+- server : Server Application Folder
+- chrome_extension : Google Chrome Extensions Folder
+- package.json
 
 Use the script located in the bin folder to start the Collaborative workspace driver. 
 
@@ -102,14 +102,14 @@ Installation
 
 ### Installing Node.js
 
-The GUI Portal requires the installation of Node.js. Download the latest version from the official website (http://nodejs.org/). (See image below)
+The GUI Portal requires the installation of Node.js. Download the latest version from the official website (`http://nodejs.org/`). (See image below)
 
 <img src="image/NodeJS.png" alt="node.jsのinstall画面" width="377" />
-*Screenshot of node.js*
+*Screenshot of Node.js*
 
 ### Installing the Submodule for Node.js 
 
-Install the third-party module for Node.js required to run ChOWDER in the application’s directory. 
+Install the third-party modules for Node.js required to run ChOWDER in the application’s directory. 
 
 Run Install Script
 ---------------------------------------------------
@@ -125,8 +125,8 @@ Run the shell script located in the bin folder.
 
 Run the following batch file located in the bin directory. 
 
-      >cd bin
-      >install.bat
+        >cd bin
+        >install.bat
 
 Launching the Application
 ==================================================================
@@ -143,11 +143,10 @@ For Windows
 
 Run the following batch file located in the bin directory. 
 
-       >cd bin
-       >run.bat
+        >cd bin
+        >run.bat
 
-* Redis may not run properly in Windows if the Virtual Memory is set to 0 Kbyte. To avoid this issue, temporarily enable Virtual Memory. 
-
+- Redis may not run properly in Windows if the Virtual Memory is set to 0 Kbyte. To avoid this issue, temporarily enable Virtual Memory. 
 
 Launch Confirmation
 ---------------------------------------------------
@@ -160,23 +159,23 @@ Run the startup script to launch the ChOWDER server.
 Accessing Controller(s)
 ---------------------------------------------------
 
-Type http://localhost:8080 in the address bar of the web browser to access ChOWDER. 
-Once you access ChOWDER and see the image below, the installation is complete. 
+Type http://localhost:8080 in the address bar of the web browser to access ChOWDER.
+Once you access ChOWDER and see the image below, the installation is complete.
 
 <img src="image/home.png" alt="install終了後ホーム画面" width="585" />
-*Screenshot of home screen after installation is complete*
+*Screenshot of Home Screen after Installation is Complete*
 
 How to Quit the Application
 ==================================================================
 
-There are two ways to quit.
+There are two steps to quit.
 
 Shut Down the Server Program
 ---------------------------------------------------
 
-Use CTRL+C to close the terminal launched by run.sh(bat) or kill the server program.
+Use CTRL+C to close the terminal launched by `run.sh(bat)` or kill the server program.
 
-Shutdown Redis
+Shut Down Redis
 ---------------------------------------------------
 
 Close the terminal that redis is running on. 
@@ -215,24 +214,26 @@ The Home Screen of ChOWDER
 What’s On Your Home Screen
 ---------------------------------------------------
 
-ChOWDER has two types of controllers, a Display/Controller control and Display.  After launching the application, type http://localhost:8080 in the address bar of the web browser to access ChOWDER. You will see the home screen above.
+Once the application is launched per above, type http://localhost:8080 in the address bar of the web browser to access ChOWDER. When you establish access, you will see the Home Screen mentioned above. ChOWDER has two modes (Display, Controller) whereby you decide which one to use from the Home Screen. 
 
--   Controller:  You will be directed to the controller screen.
+- Controller:  You will be directed to the controller screen.
 
--   Display : You will be directed to the display screen.
+- Display : You will be directed to the display screen.
 
-You have a choice to use the computer you are accessing between “controller” and “display” modes. 
+You have a choice to use the computer you are accessing between “controller” and “display” modes.
 
 Navigating the Controller Screen
 =================================================================
 
-Summary
+<a id="Overview_navi"></a>
+
+Overview
 ---------------------------------------------------
 
 The controller is set up per below.
 
 <img src="image/cont_1.png" alt="コントローラ画面概要" width="585" />
-*Screenshot of controller screen*
+*Screenshot of Controller Screen*
 
 Connection Status
 ---------------------------------------------------
@@ -240,10 +241,10 @@ Connection Status
 The icon on the upper right hand of the screen indicates the connection status with the server.
 
 <img src="image/connect.png" alt="サーバーとの接続ありの状態" width="283" />
-*Connected to the server*
+*Connected to the Server*
 <br>
 <img src="image/disconnect.png" alt="サーバーとの接続が無い状態" width="283" />
-*Not connected to the server*
+*Not Connected to the Server*
 
 The Virtual Display Screen
 ---------------------------------------------------
@@ -271,8 +272,9 @@ You can open the Display window by clicking on the Display button, as shown belo
 *Menu when Display Button is Selected*
 
 ### Add Menu
+
 You can add various contents using the Add menu.
-For details, refer to Adding Contents.
+For details, refer to [Adding Contents](#Adding\ Contents).
 
 <img src="image/header01.png" alt="Addメニュー展開時" width="415" />
 *Menu when Add is Selected*
@@ -286,35 +288,35 @@ Under Setting, you can turn the Remote Cursor on or off.
 
 The Remote Cursor appears as below.
 
-<imgsrc="image/remotecursor.png" alt="リモートカーソル" width="415" />
+<img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *Remote Cursor*
 
 ### Return Home
 
 You can return Home by clicking on the ChOWDER link as shown below.
 
-<imgsrc="image/home_return.png" alt="タイトル名のクリックでホームに戻る" width="415" />
+<img src="image/home_return.png" alt="タイトル名のクリックでホームに戻る" width="415" />
 *Click on Title to Return Home*
 
 Adding Contents
 ---------------------------------------------------
 
-You can add various contents by selecting Add in the Main Menu or using the Content Tab from the Menu located on the lower right part of the page. 
+You can add various contents by selecting Add in the Main Menu or using the Menu located on the lower right part of the Content Tab. 
 
 ### Adding an Image File
 
 Add an image file of your choice to Contents by any of the following methods. 
 
--   Main Menu ? Add ? Image
--   Content Tab (lower right menu) ? Add Content ? Image File
--   Right-click within the Content Tab ? Add Content ? Image File
+- Main Menu -> Add -> Image
+- Content Tab (lower right menu) -> Add Content -> Image File
+- Right-click within the Content Tab -> Add Content -> Image File
 
 The following image formats are accepted.
 
--   PNG format
--   JPEG format
--   GIF format
--   BMP format
+- PNG format
+- JPEG format
+- GIF format
+- BMP format
 
 The example below shows the screen after adding an image as a Content.
 
@@ -322,14 +324,15 @@ The example below shows the screen after adding an image as a Content.
 *Example of an Added Image File*
 
 ### Adding Video Files
+
 Add a video file of your choice to Contents by any of the following methods. 
 
--   Main Menu ? Add ? Movie
--   Content Tab (lower right menu) ? Add Content ? Video File
--   Right-click within the Content Tab ? Add Content ? Video File
+- Main Menu -> Add -> Movie
+- Content Tab (lower right menu) -> Add Content -> Video File
+- Right-click within the Content Tab -> Add Content -> Video File
 
 MP4 file formats are accepted.
-Once video files are imported, they are streamed via WebRTC. For details on WebRTC, refer to Working with Video Content.
+Once video files are imported, they are streamed via WebRTC. For details on WebRTC, refer to [Working with Video Content](#Working\ with\ Video\ Content).
 
 The example below shows the screen after adding a video as a Content.
 
@@ -340,17 +343,17 @@ The example below shows the screen after adding a video as a Content.
 
 Add text of your choice to Contents by any of the following methods. 
 
--   Main Menu ? Add ? Text
--   Content Tab (lower right menu) ? Add Content ? Text
--   Right-click within the Content Tab ? Add Content ? Text
+- Main Menu -> Add -> Text
+- Content Tab (lower right menu) -> Add Content -> Text
+- Right-click within the Content Tab -> Add Content -> Text
 
 ### Adding Text Files
 
 Add a text file of your choice to Contents by any of the following methods. 
 
--   Main Menu ? Add ?TextFile
--   Content Tab (lower right menu) ? Add Content ?TextFile
--   Right-click within the Content Tab ? Add Content ?TextFile
+- Main Menu -> Add -> TextFile
+- Content Tab (lower right menu) -> Add Content -> TextFile
+- Right-click within the Content Tab -> Add Content -> TextFile
 
 The example below shows adding a text file
 
@@ -364,9 +367,9 @@ Add Textfile to VirtualScreen
 
 Add an image from the specified URL to Contents by any of the following methods. 
 
--   Main Menu ? Add ? URL
--   Content Tab (lower right menu) ? Add Content ? URL
--   Right-click within the Content Tab ? Add Content ? URL
+- Main Menu -> Add -> URL
+- Content Tab (lower right menu) -> Add Content -> URL
+- Right-click within the Content Tab -> Add Content -> URL
 
 See example below.
 
@@ -382,12 +385,12 @@ Adding an URL looks like below.
 
 Add a shared screen to Contents by any of the following methods. 
 
--   Main Menu ? Add ?ScreenShare
--   Content Tab (lower right menu) ? Add Content ?ScreenShare
--   Right-click within the Content Tab ? Add Content ?ScreenShare
+-   Main Menu -> Add -> ScreenShare
+-   Content Tab (lower right menu) -> Add Content -> ScreenShare
+-   Right-click within the Content Tab -> Add Content -> ScreenShare
 
 Captured videos are streamed via WebRTC.
-For instructions on working with/ video contents, refer to Working with Video Contents.
+For instructions on working with video contents, refer to [Working with Video Contents](#Working\ with\ Video\ Contents).
 
 The example below shows the screen after adding a shared screen.
 
@@ -398,12 +401,12 @@ The example below shows the screen after adding a shared screen.
 
 Add a shared camera to Contents by any of the following methods. 
 
--   Main Menu ? Add ?CameraShare
--   Content Tab (lower right menu) ? Add Content ?CameraShare
--   Right-click within the Content Tab ? Add Content ?CameraShare
+-   Main Menu -> Add -> CameraShare
+-   Content Tab (lower right menu) -> Add Content -> CameraShare
+-   Right-click within the Content Tab -> Add Content -> CameraShare
 
 Captured videos are streamed via WebRTC.
-For instructions on working with video contents, refer to Working with Video Contents.
+For instructions on working with video contents, refer to [Working with Video Contents](#Working\ with\ Video\ Contents).
 
 The example below shows the screen after adding a shared camera to contents.
 
@@ -416,16 +419,16 @@ Display Tab
 <img src="image/Display_TAB_2conn.png" alt="image" width="207" />
 *Display Tab*
 
-The Display tab shows the VirtualDisplay and all Display connected to the ChOWDER server. The Controller allows you to move the Display within VirtualDisplay. Adding Contents to the arranged Display enables a shared workspace. Use the mouse to drag and drop the Display into the VirtualDisplaySpace. 
-The example above shows the environment once a client is connected. 
+The Display tab shows the VirtualDisplay and all Display connected to the ChOWDER server. The Controller allows you to move Display within VirtualDisplay. Adding Contents to the arranged Display enables a shared workspace. Use the mouse to drag and drop Display into the VirtualDisplaySpace.
+The example above shows the environment when a client is connected. 
 
-Setting Up Virtual Display
+Virtual Display Setup
 ---------------------
 
 <img src="image/VirtualDisplaySetting.png" alt="image" width="207" />
-*Setting Up Virtual Display*
+*Virtual Display Setup*
 
-### Setting up Splits (Sub-Divisions)
+### Splits (Sub-Divisions) Setup
 
 Go to the Display tab and select Virtual Display to set up Virtual Display in the Property window. In the example above, the Virtual Display settings are 1500 pixels for width, 1500 pixels for height, horizontal split (sub-division) 2, and vertical split (sub-division) 2. 
 
@@ -437,16 +440,16 @@ You can switch between modes using the dropdown list seen below.
 <img src="image/MIGIUE_Disp.png" alt="Snap機能の設定プルダウンボタン" width="207" />
 *Pulldown Button for the Snap Function*
 
-* Free: No restrictions
-* Display: Display and Contents snap in alignment with the laid out Display
-* Grid: Display and Contents snap in alignment with the split (sub-division) specified by VirtualDisplaySetting
+- Free: No restrictions
+- Display: Display and Contents snap in alignment with the laid out Display
+- Grid: Display and Contents snap in alignment with the split (sub-division) specified by VirtualDisplaySetting
 
-The example below demonstrates using the snap function for layout purposes. 
+The example below demonstrates using the snap function for layout purposes.
 
 <img src="image/Snap1.png" alt="Snap機能ドラッグ時凡例" width="585" />
 *Example of Drag Function with Snap*
 
-You can enlarge and reduce the VirtualDisplaySpace using the Scale function. 
+You can enlarge and reduce the VirtualDisplaySpace using the Scale function.
 Place the mouse inside the screen to right-click and drag to enlarge or reduce the screen.
 
 <img src="image/MIGIUE_Scale.png" alt="scale後の例（コンテンツが小さく表示されている）" width="377" />
@@ -454,7 +457,7 @@ Place the mouse inside the screen to right-click and drag to enlarge or reduce t
 
 ### Display and ID
 
-You can differentiate between all the connected Display by the Display ID shown above each Display. 
+You can differentiate between all connected Display by the Display ID shown above each Display. 
 IDs are specific to the connected terminal whereby each terminal is assigned one ID. 
 
 <img src="image/3Button1.png" alt="Display ID" width="283" />
@@ -467,7 +470,7 @@ The Delete button deletes the selected Display (by disconnecting from the ChOWDE
 <img src="image/3Button2.png" alt="削除ボタン" width="377" />
 *Delete Button*
 
-Note you will not be able to delete the VirtualDisplay
+Note you will not be able to delete VirtualDisplay
 
 ### Select All Button
 
@@ -478,26 +481,25 @@ The Select All button selects all connected Display.
 
 Content Tab
 --------------------------------
-
-To view Contents in Display, go to the Contents tab on the bottom of the page and drag and drop Contents into Display. 
+To view Contents in Display, go to the Contents tab on the bottom of the page and drag and drop Contents into Display.
 
 ### View Contents 
 
-Select Content from the list and drag and drop to the VirtualScreen area in the middle to view Content. 
+Select Content from the list and drag and drop to the VirtualScreen area in the middle of view Content.
 <img src="image/DragAndDropContent.png" alt="Contentsの表示" width="434" />
 *View Content(s)*
 
 ### Working with Content(s)
 
 Once added, you can select Content by left-clicking the mouse, or by pressing Ctrl and left-clicking the mouse to select multiple Contents. 
-After selecting, you will see the Content Manipulator and editing buttons (see below image). 
+After selecting, you will see the Content Manipulator and editing buttons (see image below). 
 
--   Selection buttons
-    -   Highlight button ? highlights selected contents
-                         Highlighted contents appear in Display with thick borders according to Group color.
-    -   Metadata button ? Metadata of Contents appear in Display
-    -   Hide button ? Hides Contents from the VirtualDisplaySpace
-                       Hidden contents can be viewed again by going to Contents and dragging and dropping.
+- Editing buttons
+  - Highlight button — highlights selected contents
+                       Highlighted contents appear in Display with thick borders according to Group color.
+  - Metadata button — Metadata of Contents appear in Display
+  - Hide button — Hides Contents from VirtualDisplaySpace
+                  Hidden contents can be viewed again by going to Contents and dragging and dropping.
 
 <img src="image/manip.png" alt="コンテンツ操作用マニピュレータ" height="321" />
 *Contents Manipulator*
@@ -511,6 +513,7 @@ You will find various editing tools in the dropdown list by selecting the menu b
 
 ### Replacing Images
 
+You can replace the image selected in Contents tab.
 The example below shows how to replace images selected within the Contents tab.
 
 <img src="image/SASHI.png" alt="画像の差し替えボタン" width="434" />
@@ -533,7 +536,7 @@ You can make changes to the settings of the Group assigned to Contents in the Co
 
 <br>
 <img src="image/group2.png" alt="Groupの設定" height="321" />
-*Group Setting*
+*Group Setup*
 
 ### Assigning Groups
 
@@ -564,7 +567,7 @@ The Layout tab allows you to save the current view of Contents as a Layout.
 
 ### Adding Layout
 
-You can add to Layout by right-clicking the Layout list on the bottom of the screen or through the menu on the lower right side of the screen. Adding to Layout will apply to Groups that have a check mark in the check box. 
+You can add a Layout by right-clicking the Layout list on the bottom of the screen or through the menu on the lower right side of the screen. Adding to Layout will apply to Groups that have a check mark in the check box. 
 
 ### Saving Layout
 
@@ -584,17 +587,15 @@ Change the Group composition of the Layout
 
 To apply a Layout, select Layout Contents from the Layout list on the bottom of the screen and drag and drop to the screen. 
 
-PropertyWindow
+Property Window
 -------------------------------
 
 <img src="image/Prop_Down.png" alt="image" width="188" />
 
-The Property Window shows the selected Contents, Display, ContentsID and other properties. Property allows you to edit items other than ID and set coordinates as well as the stacking order (Z-index). You can also download the selected Contents from the Download Button located on the bottom of the Property Window. 
+The Property Window shows selected Contents, Display, ContentsID and other properties. Property allows you to edit items other than ID and set coordinates as well as the stacking order (Z-index). You can also download the selected Contents from the Download Button located on the bottom of the Property Window. 
 
 Working with Video Content
 -------------------------------
-
-### Working with Video Content
 
 In addition to regular content control, by selecting video content while using a Controller connected to video data, you can view control (commands) pertaining to motion.  
 
@@ -607,345 +608,357 @@ The controls for video contents using the Controller connected to video can be s
 
 The function of each control is as follows:  
 
--   i. Play or Pause Video
--   ii. Seekbar for Video
--   iii. Volume control for the computer’s controller
--   iv. ON/OFF switch for transmitting video
--   v. ON/OFF switch for transmitting sound
+1. Play or Pause Video
+2. Seekbar for Video
+3. Volume control for the Controller
+4. ON/OFF switch for transmitting video
+5. ON/OFF switch for transmitting sound
 
-# Video Setup
-動画を保持しているコントローラで、動画コンテンツを選択すると、Propertyウィンドウで、キャプチャデバイスの切り替えや、配信設定を行うことができます.
+### Video Setup
+
+While using the Controller connected to video, you can select video content and switch between capture devices and change streaming settings in the Property Window. 
 
 <img src="image/movie_setting.png" alt="動画設定" width="434" />
-*動画設定*
+*Video Setup*
 
-以下の設定を行うことができます.
+You can configure the settings per below:
 
--   i. ビデオ入力デバイスを変更できます（カメラによる動画コンテンツの場合のみ設定可能）
--   ii. オーディオ入力デバイスを変更できます（カメラによる動画コンテンツの場合のみ設定可能）
--   iii. ビデオ品質の設定。WebRTCでストリーミングされるビデオのビットレートを設定できます.
--   ix. オーディオ品質の設定。WebRTCでストリーミングされるオーディオのビットレートを設定できます.
--   x. コンテンツのメタデータに保存されているWebRTC品質情報を参照できます.
+1. Change video input device (only video contents from the camera can be set up)
+2. Change audio input device (only video contents from the camera can be set up)
+3. Set video quality. You can set the bitrate of the video streamed via WebRTC.
+4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.
+5. You can look up information on WebRTC quality saved in the metadata of Contents.
 
-
-ユーザー権限と管理画面
+User Permissions and Administrator Screen
 ==================================================================
 
-ユーザー権限
+User Permissions 
 ---------------------------------------------------
-ユーザー以下の種別があり, 各ユーザーごとにパスワード及びアクセス権限を設定することができます.
+There are different categories of users as described below. You can set passwords and level of access per user. 
 
-|ユーザー|概要|アクセス|
-|管理者|全ての機能にアクセスできる管理者|管理画面を含む全ての機能|
-|グループユーザー|各グループごとのユーザー|管理者画面で設定したアクセス制限に従うデフォルトでは, 自グループとdefault のみの編集閲覧が可能　|
-|Display| Display 接続時のユーザー|管理者画面で設定したアクセス制限に従うデフォルトでは, 全てのグループの編集閲覧が可能　|
-|Guest| パスワード無しで入れるGuestユーザー|管理者画面で設定したアクセス制限に従うデフォルトでは, default のみ編集閲覧が可能　|
+|User| Overview |Access Level|
+| ---- | ---- | ---- |
+|Administrator| Administrator can access all functions | All functions including Administrator Screen |
+|Group User| User per Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
+|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
+|Guest| Guest User without Password | Default setting of access restrictions of the Administrator Screen permits editing and viewing for default setting only |
 
-管理画面
+Administrator Screen
 ---------------------------------------------------
-コントローラーに, 管理者でログインすることで、Management メニューから, 管理画面にアクセスすることができます. 管理画面では, ユーザー権限や, 各種設定を行うことができます.
+Log into Controller as an Administrator to access the Administrator Screen via Management Menu. You can set user permissions and various other settings in the Administrator Screen.
 
 <img src="image/management1.png" alt="管理者ログイン時のメニュー" width="585" />
-*管理者ログイン時のメニュー*
+*Menu for Administrator Login*
 <br>
 <img src="image/management2.png" alt="管理画面" width="585" height="auto" />
-*管理画面*
+*Administrator Screen*
 
-DB 管理
-DB 管理では, 保存領域の新規作成, 切り替え, 名前変更, 削除, 初期化, を行えます.ただし, 最初に自動で作られるdefault という保存領域については, 名前変更及び削除は行えません.
+### DB Administration
+
+You can create, switch, rename, delete and initialize storage space within DB Administration. Note you will not be able to rename or delete the default storage area that is automatically created in the beginning. 
 
 <img src="image/management3.png" alt=" DB 管理" width="585" />
-*DB 管理*
+*DB Administration*
 
-履歴管理
-履歴管理では, コンテンツの差し替え履歴の最大保存数を設定できます. 各コンテンツごとに, ここで設定した数だけ, 履歴が保存されます. この値は, グローバルな設定値で, DB を変更した場合でも同じ値が適用されます.
+### Change History Administration
+
+You can set the maximum number of historical changes to contents in Change History Administration. Historical changes per content will be saved up to the maximum number you designate here. This is a globally set value where the same value will be applied even when changing DB.  
 
 <img src="image/management4.png" alt=" 履歴管理" width="585" />
-*履歴管理*
+*Change History Administration*
 
+### Viewing/Editing Permission Setup
 
-閲覧・編集権限の設定
-閲覧・編集権限の設定では, ユーザーごとの権限の設定が行えます.
+You can set up each user’s permission in Viewing/Editing Rights Settings.
 
 <img src="image/management5.png" alt=" 閲覧・編集権限の設定" width="585" />
-*閲覧・編集権限の設定*
+*Viewing/Editing Permission Setup*
 
- 1. 設定対象ユーザーを選択します.
- 2. 選択中のユーザーが, 編集可能なユーザー, 及び, 閲覧可能なユーザーを選択します.「全て」を選択した場合は, 新規に作成されたグループも閲覧・編集対象となります.
- 3. 選択中のユーザーに対して, グループの編集やDisplay の操作を許可するかどうか設定します.
+ 1. Select user to set up.
+ 2. Choose whether selected user has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
+ 3. Set up selected user with permission levels for editing groups and working with Display.
 
-パスワードの設定
-パスワードの設定では, ユーザーのパスワード変更を行えます. 
-管理者のパスワードを変更する場合のみ, 変更前のパスワードが必要となります.
+### Password Setup
+
+You can change a user’s password in Password Setup
+The previous password will be required only for changing the Administrator’s password. 
 
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
-*パスワードの設定*
+*Password Setup*
 
 
-ディスプレイ画面の操作
+Working with Display Screen
 ==================================================================
 
-概要
+<a id="Overview_work_with_disp"></a>
+
+Overview
 ---------------------------------------------------
 
 <img src="image/display.png" alt="ディスプレイ画面概要" width="585" />
 
-ディスプレイの操作方法について解説します。それぞれのタブ、ウィンドウ等、機能について解説します.
+We describe how to work with Display including its tabs, windows and functions. 
 
-ディスプレイの操作：メニュー
+Working with Display: Menu
 ---------------------------------------------------
 
-ディスプレイでは、マウスもしくはタブレットの場合は画面へのタッチを行うと、メニューが表示されます。メニューではいくつかの操作を行うことができます。
+Menu will appear by using a mouse or by touching the screen of a tablet in Display. There are a number of things you can do in Menu.
 
-コントローラ画面への切り替え
+### Switch to Controller Screen
 
-ディスプレイモードからコントローラモードへ切り替えることができます。
+You can switch from Display mode to Controller mode.
 
 <img src="image/displaymenu1.png" alt="コントローラ画面への切り替え" width="207" />
-*コントローラ画面への切り替え*
+*Switching to Controller Screen*
 
-フルスクリーンへの切り替え
+### Switch to Full Screen
 
-ウインドウモードとウインドウモードの切り替えが可能です。フルスリーンからウインドウモードに戻る場合は、同じメニューを再度選択またはESCキーを押すことで戻ることができます。
+You can switch between full screen and window mode.  You can return from full screen to window mode by selecting the same menu or by pressing the ESC key. 
 
 <img src="image/displaymenu2.png" alt="フルスリーンへの切り替え" width="207" />
-*フルスリーンへの切り替え*
+*Switch to Full Screen*
 
-Display IDの設定
+### Display ID Setup
 
-コントローラで認識可能なディスプレイのIDを設定することができます。任意の文字列を入力後、エンターキーを押すことで、設定することができます。
+You can set up a recognizable Display ID in Controller. Type out the word (or letter combination) of your choice and press enter to set the ID. 
 
 <img src="image/displaymenu3.png" alt="ディスプレイIDの設定" width="207" />
-*ディスプレイIDの設定*
+*Display ID Setup*
 
-HIVEとの連携
+Coordinating with HIVE
 ==================================================================
 
-インタラクティブレンダリング
+Interactive Rendering
 ---------------------------------------------------
 
-HIVEのインタラクティブレンダリング時に, グラフィクス画面をChOWDERに送信し, 表示させることができます (下図)
+You can transmit the graphics screen during HIVE’s interactive rendering to view in ChOWDER (see image below).
 
 <img src="image/hive.png" alt="HIVEインタラクティブレンダリングの送信例" width="600" />
-*HIVEインタラクティブレンダリングの送信例*
+*Example of Transmission from HIVE Interactive Rendering*
 
-送信するには, HIVEの上部メニューにあるChOWDERボタンを押し, ChOWDERのURLを設定します.URLは, 初期状態では ws://localhost:8081/v2/ となっています. localhostの部分をChOWDERが動作しているPCのIPアドレスに変更して接続します. 接続中は, 上手のようにChOWDERボタンの色が変わります.
+Select the ChOWDER button in the menu located at the top of HIVE and designate ChOWDER’s URL to transmit. The URL’s initial setting is ws://localhost:8081/v2/. To connect, replace localhost with the IP address of the computer ChOWDER is running on. The ChOWDER button changes colors when connected. 
 
 <img src="image/hive1.png" alt="ChOWDER接続用メニュー項目" width="321" />
-*ChOWDER接続用メニュー項目*
+*Menu Item to Connect to ChOWDER *
 <br>
 <img src="image/hive2.png" alt="URL設定" width="321" />
-*URL設定*
+*URL Setting*
 
 SceneNodeEditor
 ---------------------------------------------------
 
-HIVEのSceneNodeEditorで, RenderForSIPノードを使用することで, レンダリング画像をChOWDERに送信し, 表示させることができます. プロパティのSEND先のURLは初期状態では ws://localhost:8081/v2/ となっています.
+You can transmit a rendered image using the RenderForSIP node in HIVE’s SceneNodeEditor to view in ChOWDER. The URL’s initial setting for SEND in Property is ws://localhost:8081/v2/.
 
 <img src="image/scene_node_editor.png" alt="SceneNodeEditorでの送信例" width="600" />
-*SceneNodeEditorでの送信例*
+*Example of Transmission from SceneNodeEditor*
 
 Module System
 ---------------------------------------------------
 
-HIVEのModuleSystemで, ChOWDERノードを使用することで, レンダリング画像をChOWDERに送信し, 表示させることができます. ChOWDERノードはBufferImageData形式の出力をもつノードと接続できるため、接続可能な様々なノードの情報をChOWDERに送信することができます。
+You can transmit a rendered image using the ChOWDER node in HIVE’s ModuleSystem to view in ChOWDER. Since the ChOWDER node is able to connect with nodes that output BufferImageData format, you can send information of a variety of connectable nodes to ChOWDER.  
 
-ChOWDERノードのプロパティでは、ChOWDERのコンテンツ送信先アドレス指定します。デフォルトでは、 ws://localhost:8081/v2/ です。ここでは、ChOWDERサーバーのアドレスを指定してください。
+You can designate the address ChOWDER contents are transmitted to in Property of ChOWDER’s node. Default address is ws://localhost:8081/v2/. Use the ChOWDER server address instead. 
 
 <img src="image/hivemodulesystem.png" alt="ModuleSystemでの送信例" width="600" />
-*ModuleSystemでの送信例*
+*Example of Transmission Using ModuleSystem *
 
-Google Chrome Extensionの利用
+Using Google Chrome Extension
 ==================================================================
 
-概要
+<a id="Overview_chrome_extension"></a>
+
+Overview
 ---------------------------------------------------
 
-Google ChromeにはExtensionと呼ばれる機能を拡張する仕組みがあります。 Google Chromeに専用のChOWDER用Extensionを追加することで、ウェブブラウザの画面をリアルタイムにキャプチャし、コンテンツとして追加することができます。
+Google Chrome allows adding functions and features in what is called Extension. By adding the specific ChOWDER Extension to Google Chrome, you can capture a web browser screen in real-time and add to Contents. 
 
-Extensionのインストール
+Installing Extension
 ---------------------------------------------------
 
-プロジェクトルートにあるbinディレクトリのなかにchrome_extention.crxという名前のファイルがあり、これがGoogle Chrome用のExtensionファイルです.
+The Extension file for Google Chrome named chrome\_extention.crx is located in the bin directory of Project root.
 
-Chromeに拡張機能をインストールし追加するには、下図に示したようにブラウザの拡張機能のページを開きます.
+To install the Extension for Chrome, open the browser page for Extension per below. 
 
-そこにExtensionファイルをドラッグアンドドロップし、インストールします.
+Drag and drop the Extension file to the page and install.
 
 <img src="image/extension01.png" alt="拡張機能ページを開くメニュー" width="585" />
-*拡張機能ページを開くメニュー*
+*Menu to Open Extension Page*
 <br>
 <img src="image/extension02.png" alt="Extensionファイルのドラッグアンドドロップ" width="585" />
-*Extensionファイルのドラッグアンドドロップ*
+*Drag and Drop the Extension File*
 
-Extensionでキャプチャする
+Use Extension to Capture
 ---------------------------------------------------
 
-Extensionを追加したら、アイコンをクリックしてキャプチャを開始できます。
+Once Extension is added, you can click the icon to begin Capture.
 
--   Extensionのメニュー
+- Extension Menu
+  - Capture — Captures web page currently in view and transmits to ChOWDER
 
-    -   Capture …現在表示しているウェブページをキャプチャして, ChOWDERへ送信します.
+  - AutoCapture — Captures web page currently in view at pre-set intervals and continuously transmits to ChOWDER
 
-    -   AutoCapture…設定された時間間隔ごとに, 現在表示しているウェブページをキャプチャして, ChOWDERへ連続送信します.
-
-    -   Setting …設定メニューを開きます.
+  - Setting — Opens Setup Menu
 
 <img src="image/extension03.png" alt="Extensionのメニュー" width="207" />
-*Extensionのメニュー*	
+*Extension Menu*
 <br>
 <img src="image/extension04.png" alt="AutoCapture開始後" width="207" />
-*AutoCapture開始後*
+*After Starting AutoCapture*
 
--   Extensionの設定
+- Extension Setup
 
-    -   URL …ChOWDERへ接続するためのURLを設定します.
+- URL — Sets URL to connect to ChOWDER
 
-    -   Interval …AutoCaptureで使用される, キャプチャ間隔を設定します.
+- Interval — Sets interval used in AutoCapture
 
 <img src="image/extension_setting.png" alt="Extensionの設定" width="207" />
-*Extensionの設定*
+*Extension Setup*
 
-ChOWDER Desktop Captureの利用
+Using Desktop Capture on ChOWDER
 ==================================================================
 
-概要
+<a id="Overview_desktop_capture"></a>
+
+Overview
 ---------------------------------------------------
-ChOWDER Desktop Capture を用いることで、デスクトップ全体、アクティブなアプリケーションウィンドウ、選択した範囲を画像コンテンツとしてChOWDERへ追加することができます。
+You can use ChOWDER Desktop Capture to select an entire desktop, an active application window, or any selected area to add as an image content to ChOWDER.
 
-インストールと動作環境
+Installing and Operating Environment
 ---------------------------------------------------
 
-インストールスクリプトの実行
+### Running the Install Script
 
-Mac の場合
-desktop capture 配下の以下のシェルスクリプトを実行します。
+For Mac  
+Run the shell script below located in desktop capture.
 
        $cd desktop_capture
        $sh make$app.sh
 
-Windows の場合
-desktop capture 配下の以下のファイルを実行します。
+For Windows  
+Run the file below located in desktop capture.
 
->cd desktop_capture
->make$_app.bat
+        >cd desktop_capture
+        >make$_app.bat
 
-動作環境
+### Operating Environment
 
-OS : Windows7, MacOSX 10.10
+OS: Windows7, MacOSX 10.10
 
-ChOWDER Desktop Captureの使い方
+How to Use ChOWDER Desktop Capture
 ---------------------------------------------------
 
-ChOWDER Desktop Capture では
+You can do the following things using ChOWDER Desktop Capture:
 
-* キャプチャ対象/範囲の選択、送信
-* キャプチャ画像の送信間隔の設定
-* キャプチャ画像の送信先のURL の設定
-* キャプチャ画像の送信先のグループの設定
+- Select capture target/area and transmit
+- Set interval for transmission of captured image
+- Set destination URL of captured image
+- Set group captured image is transmitted to
 
-を行うことができます。
+### Select Capture Target/Area
 
-キャプチャ対象/範囲の選択
-キャプチャ対象の選択
-ChOWDER Desktop Capture は起動時に
-* デスクトップ全体
-* アクティブなウィンドウ
-をサムネイル化し、画面下部に表示します。
+#### Select Capture Target
+
+During launch, ChOWDER Desktop Capture creates thumbnails of the following items that appear on the bottom of the page:
+- Entire desktop
+- Active window(s)
 
 <img src="image/dc_cap01.png" alt="サムネイル一覧" width="400" />
 
-キャプチャ対象の変更はサムネイルをクリックすることで行うことができます。クリックされた対象は画面上部にプレビューとして映し出されキャプチャ待機状態となります。
+Click on the thumbnail to change the capture target. The clicked target appears on the top of the screen in preview mode waiting to be captured. 
 
 <img src="image/dc_cap02.png" alt="キャプチャ対象のプレビュー" width="300" />
-*キャプチャ対象のプレビュー*
+*Preview of Capture Target*
 
-キャプチャ対象を選択した後に「Capture Start」ボタンを押下することでChOWDERへの画像送信が開始されます。
+Once the capture target is selected, press the “Capture Start” button to begin transmission to ChOWDER. 
 
 <img src="image/dc_cap03.png" alt="Capture Start ボタン" width="600" />
-*Capture Start ボタン*
+*Capture Start Button*
 <br>
 <img src="image/dc_cap04.png" alt="Capture Start ボタンを押した時" width="600" />
-*Capture Start ボタンを押した時*
+*Pressing the Capture Start Button*
 
-#### キャプチャ範囲の選択
-ChOWDER Desktop Capture では範囲選択を行うことで、画面の一部をChOWDERに画像として送信することができます。
+#### Selecting Capture Area
+You can transmit a portion of the screen as an image to ChOWDER by selecting the capture area using ChOWDER Desktop Capture.
 
-「Set Capture Area」ボタンを押下した後にChOWDER Desktop Capture が最小化され、マウスカーソルが範囲選択用のインジケータに変化します。この状態でマウスを押下すると範囲選択状態に移行するので、キャプチャを行いたい範囲までドラッグした後、マウスを離すことでキャプチャ範囲を指定することができます。
+Pressing the “Set Capture Area” minimizes ChOWDER Desktop Capture and switches the mouse from cursor to indicator to select an area. In this state, you can select an area by pressing the mouse, so click and drag the mouse to the end of the area you want to capture and then release the mouse to complete the capture.
 
 <img src="image/dc_cap05.png" alt="Set Capture Area ボタン" width="600" />
-*Set Capture Area ボタン*
+*Set Capture Area Button*
 <br>
 <img src="image/dc_cap06.png" alt="範囲選択状態" width="600" />
-*範囲選択状態*
+*Area Selection State*
 <br>
 <img src="image/dc_cap07.png" alt="範囲選択プレビュー" width="600" />
-*範囲選択プレビュー*
+*Preview of Selected Area*
 
-画像の送信は「キャプチャ対象の選択」と同様に、「Capture Start」ボタンを押下することで開始されます。
+Similar to “Select Capture Target,” you can begin transmission of images by pressing the “Capture Start” button.
 
-キャプチャ間隔の設定
-ChOWDER Desktop Capture では、ChOWDERへの画像送信の送信間隔を設定することができます。Capture Interval(sec) の右側のフォームに数値を入力するか、上下ボタンを押すことで変更されます。最低間隔は0.05(sec) です。「Reset」ボタンを押すことで初期値(1sec) が入力されます。
+### Set Capture Interval
+
+You can set the interval for image transmission using ChOWDER Desktop Capture. You can input a numerical value for Capture Interval(sec) on the form on the right or use the up and down arrows. The minimum interval is 0.05 seconds. When you press the “Reset” button, the value goes back to its initial value of 1 second.
 
 <img src="image/dc_cap08.png" alt="キャプチャ間隔設定フォーム" width="600" />
-*キャプチャ間隔設定フォーム*
+*Form to Set Capture Interval*
 
-Capture Interval、ChOWDER URL、Target Group の値は、本アプリケーションを終了しても次回起動時に保持され
-ます。
+Values for Capture Interval, ChOWDER URL and Target Group are kept even after quitting the application for the next time the application is launched. 
 
-キャプチャ画像の送信先のURL の設定
-ChOWDER Desktop Capture では、画像の送信先（ChOWDER）のURL を設定することができます。ChOWDER URL の右側のフォームに送信先のURL を入力することで変更されます。「Reset」ボタンを押すことで初期値が入力されます。
+### Setting the URL Destination of Captured Image
+
+You can set the URL destination (ChOWDER) an image is transmitted to using ChOWDER Desktop Capture. You can overwrite the form on the right of ChOWDER URL with the URL destination. Pressing the “Reset” button returns it to its initial value. 
 
 <img src="image/dc_cap09.png" alt="送信先URL 設定フォーム" width="600" />
-*送信先URL 設定フォーム*
+*Form to Set URL Destination*
 
-キャプチャ画像のグループの設定
-ChOWDER Desktop Capture では、キャプチャ画像の送信先グループを設定することができます。Target Group の右側のドロップダウンリストから選択することができます。「Reload」ボタンを押すことで初期値が入力されます。
+### Set Up Capture Image Group
 
+You can set the group the captured image is transmitted to by using ChOWDER Desktop Capture. Select from dropdown list on the right side of Target Group. Pressing the “Reload” button returns it to its initial value.
 <img src="image/dc_cap10.png" alt="送信先グループ設定フォーム" width="600" />
-*送信先グループ設定フォーム*
+*Form to Set Group for Image Transmission*
 
 
-Google Chrome Extension for WebRTCの利用
+Using Google Chrome Extension for WebRTC
 ==================================================================
 
-概要
+<a id="Overview_chrome_extension_WebRTC"></a>
+
+Overview
 ---------------------------------------------------
 
-HTML5の機能であるWebRTCを利用して,スクリーン共有による動画コンテンツの配信行うことができます。
-GoogleChromeではセキュリティー制限によりスクリーン共有することは通常できませんが、ChromeExtensionをインストールすることで、動画配信することが可能です。
+You can stream video content from screen sharing by using HTML5’s WebRTC function.
+While screen sharing is usually not possible in Google Chrome due to security restrictions, installing Chrome Extension allows you to stream video.
 
+<a id="Installing_Extension_WebRTC"></a>
 
-Extensionのインストール
+Installing Extension
 ---------------------------------------------------
 
-プロジェクトルートにあるbinディレクトリのなかにchrome\_extention\_for\_webrtc.crxという名前のファイルがあり、これがGoogle Chrome用のExtensionファイルです.
+The file named chrome\_extention\_for\_webrtc.crx located in the bin directory of Project root is the Extension file for Google Chrome. 
 
-Chromeに拡張機能をインストールし追加するには、[Extensionのインストール](#extensionのインストール) に示したようにブラウザの拡張機能のページを開きます.
+To install and add the Extension for Chrome, open the browser page for Extension as previously described in Installing Extension. 
 
-そこにExtensionファイルをドラッグアンドドロップし、インストールします.
+Drag and drop the Extension file to the page and install.
 
-Extensionでキャプチャする
+
+Capture Using Extension
 ---------------------------------------------------
 
-Extensionを追加したら、Add→ScreenShareを実行し、ダイアログにExtensionIDを入力することでキャプチャを開始できます。
+Once you add Extension, run Add -> ScreenShare and input ExtensionID in the dialogue to start capture. 
 
 <img src="image/AddContent_ScreenShare_View2.png" alt="ScreenShare開始時のExtensionIDの入力" width="600" />
-*ScreenShare開始時のExtensionIDの入力*
+*Inputting ExtensionID when Starting ScreenShare*
 
 
-HTTPSの利用
+Using HTTPS
 ==================================================================
 
-Summary
-概要
+<a id="Overview_https"></a>
+
+Overview
 ---------------------------------------------------
 
-FireFox及びGoogleChromeでは、セキュリティー制限により、HTTPSを使用したときのみ、スクリーン共有やカメラ共有が有効となる場合があります.
-ChOWDERでは標準でHTTPSサーバーも立ち上がっていて、仮の証明書を備えています.
-デフォルトでは以下のURLにアクセスし、例外に追加することで、HTTPSを使用したページを使用することができます.
+There may be occasions screen sharing and camera sharing are activated only when using HTTPS in Firefox and Google Chrome due to security restrictions. 
 
--   HTTPS用URL … https://localhost:9090
--   HTTPS用WebSocketポート… https://localhost:9091
+ChOWDER has a built-in HTTPS server as well as a temporary SSL certificate. Under default settings, you can access the URL below and add it as a one-off exception to use a page using HTTPS. 
 
-
+- URL for HTTPS — https://localhost:9090
+- WebSocket Port for HTTPS — https://localhost:9091
