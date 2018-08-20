@@ -11,19 +11,19 @@ Table of Contents
   - [Installation](#installation)
   - [Run Install Script](#run-install-script)
 - [Launching the Application](#launching-the-application)
-  - [For Mac/Linux](#for-mac/linux)
+  - [For Mac/Linux](#for-maclinux)
   - [For Windows](#for-windows)
   - [Launch Confirmation](#launch-confirmation)
-  - [Accessing Controller(s)](#accessing-controller\(s\))
+  - [Accessing Controller(s)](#accessing-controllers)
 - [How to Quit the Application](#how-to-quit-the-application)
   - [Shut Down the Server Program](#shut-down-the-server-program)
   - [Shut Down Redis](#shut-down-redis)
 - [Initial Setup for Administrator](#initial-setup-for-administrator)
   - [Administrator Setup File](#administrator-setup-file)
-- [The Home Screen of ChOWDER](#the-home-Screen-of-ChOWDER)
-  - [What’s On Your Home Screen](#what’s-on-your-home-screen)
+- [The Home Screen of ChOWDER](#the-home-screen-of-chowder)
+  - [What’s On Your Home Screen](#whats-on-your-home-screen)
 - [Navigating the Controller Screen](#navigating-the-controller-screen)
-  - <a href="#Overview_navi">Overview</a>
+  - [Overview](#overview)
   - [Connection Status](#connection-status)
   - [The Virtual Display Screen](#the-virtual-display-screen)
   - [Main Menu](#main-menu)
@@ -37,25 +37,25 @@ Table of Contents
   - [User Permissions](#user-permissions)
   - [Administrator Screen](#administrator-screen)
 - [Working with Display Screen](#working-with-display-screen)
-  - <a href="#Overview_work_with_disp">Overview</a>
+  - [Overview](#overview-1)
   - [Working with Display: Menu](#working-with-display:-menu)
 - [Coordinating with HIVE](#coordinating-with-hive)
   - [Interactive Rendering](#interactive-rendering)
   - [SceneNodeEditor](#scenenodeeditor)
   - [Module System](#module-system)
 - [Using Google Chrome Extension](#using-google-chrome-extension)
-  - <a href="#Overview_chrome_extension">Overview</a>
+  - [Overview](overview-2)
   - [Installing Extension](#installing-extension)
   - [Use Extension to Capture](#use-extension-to-capture)
 - [Using Desktop Capture on ChOWDER](#using-desktop-capture-on-chowder)
-  - <a href="#Overview_desktop_capture">Overview</a>
+  - [Overview](overview-3)
   - [How to Use ChOWDER Desktop Capture](#how-to-use-chowder-desktop-capture)
 - [Using Google Chrome Extension for WebRTC](#using-google-chrome-extension-for-webrtc)
-  - <a href="#Overview_chrome_extension_WebRTC">Overview</a>
-  - <a href="#Installing_Extension_WebRTC">Installing Extension</a>
+  - [Overview](overview-4)
+  - [Installing Extension](install-extension-1)
   - [Capture Using Extension](#capture-using-extension)
 - [Using HTTPS](#using-https)
-  - <a href="#Overview_https">Overview</a>
+  - [Overview](overview-5)
 
 Getting Started
 ==================================================================
@@ -224,8 +224,6 @@ You have a choice to use the computer you are accessing between “controller”
 
 Navigating the Controller Screen
 =================================================================
-
-<a id="Overview_navi"></a>
 
 Overview
 ---------------------------------------------------
@@ -690,8 +688,6 @@ The previous password will be required only for changing the Administrator’s p
 Working with Display Screen
 ==================================================================
 
-<a id="Overview_work_with_disp"></a>
-
 Overview
 ---------------------------------------------------
 
@@ -765,8 +761,6 @@ You can designate the address ChOWDER contents are transmitted to in Property of
 Using Google Chrome Extension
 ==================================================================
 
-<a id="Overview_chrome_extension"></a>
-
 Overview
 ---------------------------------------------------
 
@@ -816,8 +810,6 @@ Once Extension is added, you can click the icon to begin Capture.
 
 Using Desktop Capture on ChOWDER
 ==================================================================
-
-<a id="Overview_desktop_capture"></a>
 
 Overview
 ---------------------------------------------------
@@ -919,15 +911,11 @@ You can set the group the captured image is transmitted to by using ChOWDER Desk
 Using Google Chrome Extension for WebRTC
 ==================================================================
 
-<a id="Overview_chrome_extension_WebRTC"></a>
-
 Overview
 ---------------------------------------------------
 
 You can stream video content from screen sharing by using HTML5’s WebRTC function.
 While screen sharing is usually not possible in Google Chrome due to security restrictions, installing Chrome Extension allows you to stream video.
-
-<a id="Installing_Extension_WebRTC"></a>
 
 Installing Extension
 ---------------------------------------------------
@@ -950,8 +938,6 @@ Once you add Extension, run Add -> ScreenShare and input ExtensionID in the dial
 
 Using HTTPS
 ==================================================================
-
-<a id="Overview_https"></a>
 
 Overview
 ---------------------------------------------------
