@@ -4,7 +4,7 @@ User Guide
 Table of Contents
 ---------------------------------------------------
 
-- [Getting Started](#Getting%20Started)
+- [Getting Started](#Getting%20Started )
   - [System Requirements and Installation](#System%20Requirements%20and%20Installation)
 - [Extracting the Application](#Extracting%20the%20Application)
 - [Installing the Application](#Installing%20the%20Application)
