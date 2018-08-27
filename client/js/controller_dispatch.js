@@ -301,6 +301,7 @@
 					name: i18next.t('input_extension_id'),
 					okButtonName: "OK"
 				}, function (extensionID) {
+					console.log(extensionID);
 					chrome.runtime.sendMessage(extensionID, request, function (response) {
 						var target = {
 							video: {

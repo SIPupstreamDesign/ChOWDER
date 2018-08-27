@@ -283,7 +283,7 @@
 		}.bind(this);
 
 		// ビデオ再生・停止
-		if (metaData.type === 'video' && !targetElem.play) {
+		if (metaData.type === 'video' && metaData.subtype === 'file' && !targetElem.play) {
 			var button = document.createElement('div');
 			button.className = 'manipulator_video';
 			previewArea.appendChild(button);

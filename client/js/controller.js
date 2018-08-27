@@ -989,18 +989,21 @@
 		};
 
 		video.onplay = function () {
+			if (type !== 'file') { return; }
 			metaData = store.get_metadata(metaData.id);
 			metaData.isPlaying = true;
 			this.update_metadata(metaData);
 		}.bind(this);
 
 		video.onpause = function () {
+			if (type !== 'file') { return; }
 			metaData = store.get_metadata(metaData.id);
 			metaData.isPlaying = false;
 			this.update_metadata(metaData);
 		}.bind(this);
 
 		video.onended = function () {
+			if (type !== 'file') { return; }
 			this.isEnded = true;
 
 			metaData = store.get_metadata(metaData.id);
