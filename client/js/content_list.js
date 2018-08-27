@@ -215,7 +215,7 @@
 							w = 150.0 * aspect;
 							divElem.style.width = w + 'px';
 
-							fixDivSize(divElem, 150.0 / aspect, aspect);
+							fixDivSize(divElem, w, aspect);
 
 							return Promise.resolve();
 						});
