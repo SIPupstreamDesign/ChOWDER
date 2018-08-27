@@ -248,7 +248,6 @@
 					if (contentElem) {
 						URL.revokeObjectURL(contentElem.src);
 						contentElem.src = "data:image/png;base64," + thumbnail;
-						console.log(contentElem.src)
 						fixDivSize(divElem, w, aspect);
 					}
 				} else {
