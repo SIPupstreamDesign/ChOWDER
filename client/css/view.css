@@ -215,8 +215,8 @@ pre {
 }
 .hiddenCursor {
     color: transparent;
-    width: 50px;
-    height: 50px;
+    width: 100px;
+    height: 100px;
     position: absolute;
     top: -9999px;
     overflow: hidden;
@@ -224,18 +224,18 @@ pre {
 .hiddenCursor .before {
     background-color: white;
     content: '　';
-    width: 50px;
-    height: 50px;
-    display: inline-block;
-    transform: rotate(45deg) translate(-40px,0px);
+    width: 100px;
+    height: 100px;
+	display: inline-block;
+    transform: rotate(45deg) translate(-80px,0px);
 }
 .hiddenCursor .after {
     background-color: white;
     content: '　';
-    width: 20px;
-    height: 50px;
-    display: inline-block;
-    transform: rotate(-45deg) translate(-25px,-40px);
+    width: 40px;
+    height: 100px;
+	display: inline-block;
+    transform: rotate(-45deg) translate(-50px,-80px);
 }
 
 #change_id_text {

@@ -1287,7 +1287,9 @@
 		var mul = area / 100000.0 / 40.0;
 		for (var i = 0; i < elems.length; ++i) {
 			elems[i].style.transform = "scale(" + mul + ")";
+			elems[i].style.transformOrigin = "left top 0";
 		}
+		return mul;
 	}
 
 	/**
@@ -1454,10 +1456,10 @@
 					
                     controllerID = document.createElement('div');
                     controllerID.id = 'controllerID' + ctrlid;
-                    controllerID.className = 'controller_id';
-					controllerID.style.color = "white";
+					controllerID.className = 'controller_id';
+					controllerID.style.color = res.data.rgb;
 					controllerID.style.position = "absolute"
-					controllerID.style.fontSize = "10px";
+					controllerID.style.fontSize = "20px";
 					controllerID.innerText = res.data.controllerID;
 					document.body.appendChild(controllerID);
 					
@@ -1472,7 +1474,7 @@
                 elem.style.left = Math.round(pos.x) + 'px';
                 elem.style.top  = Math.round(pos.y) + 'px';
                 controllerID.style.left = Math.round(pos.x) + 'px';
-                controllerID.style.top  = Math.round(pos.y + 40) + 'px';
+                controllerID.style.top  = Math.round(pos.y + 100) + 'px';
                 controllers[ctrlid].lastActive = Date.now();
             } else {
                 if (controllers.hasOwnProperty(ctrlid)) {
