@@ -70,9 +70,14 @@
 				version,
 				head,
 				metasize,
+				metabinarycount,
 				metaData,
+				tempMetaData,
 				params = null,
 				binary,
+				binarySize,
+				metaList = [],
+				binaryList = [],
 				pos = 0;
 			
 			if (!buf) { return; }
@@ -84,27 +89,72 @@
 			if (buf.byteLength < pos + 4) { return; }
 			version = new Uint32Array(buf.slice(pos, pos + 4))[0];
 			pos = pos + 4;
+
+			if (version === 1) {
+				if (buf.byteLength < pos + 4) { return; }
+				metasize = new Uint32Array(buf.slice(pos, pos + 4))[0];
+				pos = pos + 4;
 				
-			if (buf.byteLength < pos + 4) { return; }
-			metasize = new Uint32Array(buf.slice(pos, pos + 4))[0];
-			pos = pos + 4;
-			
-			if (buf.byteLength < pos + metasize) { return; }
-			metaData = StringUtil.arrayBufferToString(buf.slice(pos, pos + metasize));
-			metaData = JSON.parse(metaData);
-			pos = pos + metasize;
-			
-			if (metaData.hasOwnProperty('params')) {
-				params = metaData.params;
-			} else if (metaData.hasOwnProperty('result')) {
-				params = metaData.result;
+				if (buf.byteLength < pos + metasize) { return; }
+				metaData = StringUtil.arrayBufferToString(buf.slice(pos, pos + metasize));
+				metaData = JSON.parse(metaData);
+				pos = pos + metasize;
+				
+				if (metaData.hasOwnProperty('params')) {
+					params = metaData.params;
+				} else if (metaData.hasOwnProperty('result')) {
+					params = metaData.result;
+				}
+				
+				binary = buf.slice(pos, buf.byteLength);
+				if (params !== null && (params.type === 'text' || params.type === "layout" ||  params.type === "video")) {
+					binary = StringUtil.arrayBufferToString(binary);
+				}
+				endCallback(metaData, binary);
+			} else if (version === 2) {
+				if (buf.byteLength < pos + 4) { return; }
+				metasize = new Uint32Array(buf.slice(pos, pos + 4))[0];
+				pos = pos + 4;
+				
+				if (buf.byteLength < pos + metasize) { return; }
+				metaData = StringUtil.arrayBufferToString(buf.slice(pos, pos + metasize));
+				metaData = JSON.parse(metaData);
+				pos = pos + metasize;
+
+
+				if (buf.byteLength < pos + 4) { return; }
+				metabinarycount = new Uint32Array(buf.slice(pos, pos + 4))[0];
+				pos = pos + 4;
+
+				if (buf.byteLength < pos + 4) { return; }
+				for (var i = 0; i < metabinarycount; ++i) {
+					metasize = new Uint32Array(buf.slice(pos, pos + 4))[0];
+					pos = pos + 4;
+					
+					if (buf.byteLength < pos + metasize) { return; }
+					tempMetaData = StringUtil.arrayBufferToString(buf.slice(pos, pos + metasize));
+					tempMetaData = JSON.parse(tempMetaData);
+					pos = pos + metasize;
+
+					if (tempMetaData.hasOwnProperty('params')) {
+						params = tempMetaData.params;
+					} else if (tempMetaData.hasOwnProperty('result')) {
+						params = tempMetaData.result;
+					}
+					
+					binarySize = new Uint32Array(buf.slice(pos, pos + 4))[0];
+					pos = pos + 4;
+
+					binary = buf.slice(pos, pos + binarySize);
+					pos = pos + binarySize;
+					if (params !== null && (params.type === 'text' || params.type === "layout" ||  params.type === "video")) {
+						binary = StringUtil.arrayBufferToString(binary);
+					}
+					metaList.push(tempMetaData);
+					binaryList.push(binary);
+				}
+				endCallback(metaData, [metaList, binaryList]);
 			}
-			
-			binary = buf.slice(pos, buf.byteLength);
-			if (params !== null && (params.type === 'text' || params.type === "layout" ||  params.type === "video")) {
-				binary = StringUtil.arrayBufferToString(binary);
-			}
-			endCallback(metaData, binary);
 		});
 		reader.readAsArrayBuffer(binary);
 	}

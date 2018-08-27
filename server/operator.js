@@ -2564,8 +2564,13 @@
 				//meta.command = Command.doneGetContent;
 				// thumbnail取得
 				client.get(contentThumbnailPrefix + meta.content_id, function (err, reply) {
+					var metaList = [];
+					var binaryList = [];
 					if (!err && reply) {
-						meta.thumbnail = reply.toString('base64');
+						metaList[1] = {
+							type : "thumbnail"
+						};
+						binaryList[1] = reply;
 					}
 
 					// 履歴から復元して取得
@@ -2576,7 +2581,12 @@
 							var backup_date = backupList[restore_index];
 							textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
 								client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
-									endCallback(null, JSON.parse(metaData), reply[0]);
+									if (binaryList.length > 0) {
+										metaList[0] = JSON.parse(metaData);
+										binaryList[0] = reply[0];
+									} else {
+										endCallback(null, JSON.parse(metaData), reply[0]);
+									}
 								});
 							})
 							return;
@@ -2586,7 +2596,13 @@
 					// Historyから復元して取得
 					if (meta.hasOwnProperty('history_id')) {
 						client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, reply) {
-							endCallback(null, meta, reply[0]);
+							if (binaryList.length > 0) {
+								metaList[0] = meta;
+								binaryList[0] = reply[0];
+								endCallback(null, metaList, binaryList);
+							} else {
+								endCallback(null, meta, reply[0]);
+							}
 						});
 						return;
 					}
@@ -2596,7 +2612,13 @@
 						if (reply === null) {
 							reply = "";
 						}
-						endCallback(null, meta, reply);
+						if (binaryList.length > 0) {
+							metaList[0] = meta;
+							binaryList[0] = reply;
+							endCallback(null, metaList, binaryList);
+						} else {
+							endCallback(null, meta, reply);
+						}
 					});
 				});
 			}

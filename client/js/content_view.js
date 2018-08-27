@@ -51,6 +51,15 @@
 		if (Validator.isLayoutType(metaData)) {
 			return;
 		}
+		
+		// サムネイルなどの複数バイナリが入っている場合
+		// contentData[0]はmetaDataのリスト.
+		// contentData[1]はbinaryDataのリスト.
+		// contentData[n][0]がコンテンツ本体
+		if (contentData instanceof Array) {
+			metaData = contentData[0][0];
+			contentData = contentData[1][0];
+		}
 
 		//console.log("importContentToView:" + JSON.stringify(metaData));
 		tagName = getTagName(metaData.type);

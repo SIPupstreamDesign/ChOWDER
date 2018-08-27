@@ -17,13 +17,23 @@
 				result;
 			//console.log("isBinary", binary);
 			if (binary !== undefined && binary !== null) {
-				result = {
-					jsonrpc: "2.0",
-					id: injson.id,
-					method : injson.method,
-					result : res
-				};
-				metabin = metabinary.createMetaBinary(result, binary);
+				if (res instanceof Array) {
+					result = {
+						jsonrpc: "2.0",
+						id: injson.id,
+						method : injson.method,
+						result : res[0]
+					};
+					metabin = metabinary.createMetaBinaryMulti(result, res, binary);
+				} else {
+					result = {
+						jsonrpc: "2.0",
+						id: injson.id,
+						method : injson.method,
+						result : res
+					};
+					metabin = metabinary.createMetaBinary(result, binary);
+				}
 				if (metabin === null || metabin === undefined) {
 					result.error = 'Failed to create Metabinary';
 					console.log('Failed to create Metabinary');

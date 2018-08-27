@@ -70,9 +70,6 @@
 		return this.metaDataDict[id];
 	};
 	Store.prototype.set_metadata = function (id, metaData) {
-		if (metaData.hasOwnProperty('thumbnail')) {
-			delete metaData.thumbnail;
-		}
 		this.metaDataDict[id] = metaData;
 	};
 	Store.prototype.has_metadata = function (id) {

@@ -601,9 +601,7 @@
 			tagName,
 			blob,
 			elem,
-			memo,
 			mime = "image/jpeg",
-			boundElem,
 			id,
 			duplicatedElem;
 
@@ -1024,6 +1022,14 @@
 		if (!err) {
 			var metaData = data.metaData,
 				contentData = data.contentData;
+
+			// サムネイルなどの複数バイナリが入っている場合
+			// contentData[0]はmetaDataのリスト.
+			// contentData[1]はbinaryDataのリスト.
+			// contentData[n][0]がコンテンツ本体
+			if (data.contentData instanceof Array) {
+				contentData = data.contentData[1][0];
+			}
 		
 			// 閲覧可能か
 			if (!isViewable(metaData.group)) {

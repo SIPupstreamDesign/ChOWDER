@@ -131,8 +131,20 @@
 			return;
 		}
 
-		// 縮小サムネイルデータ
-		thumbnail = metaData.thumbnail;
+		// サムネイルなどの複数バイナリが入っている場合
+		// contentData[0]はmetaDataのリスト.
+		// contentData[1]はbinaryDataのリスト.
+		// contentData[n][0]がコンテンツ本体
+		if (contentData instanceof Array) {
+			for (var i = 0; i < contentData[0].length; ++i) {
+				if (contentData[0][i].type === "thumbnail") {
+					thumbnail = contentData[1][i];
+					break;
+				}
+			}
+			metaData = contentData[0][0];
+			contentData = contentData[1][0];
+		}
 
 		// メタデータはGetMetaDataで取得済のものを使う.
 		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
@@ -244,10 +256,11 @@
 				}
 
 				if (thumbnail !== undefined && thumbnail) {
+					blob = new Blob([thumbnail], {type: "image/png"});
 					// 縮小サムネイルデータがあった場合
 					if (contentElem) {
 						URL.revokeObjectURL(contentElem.src);
-						contentElem.src = "data:image/png;base64," + thumbnail;
+						contentElem.src = URL.createObjectURL(blob);
 						fixDivSize(divElem, w, aspect);
 					}
 				} else {
