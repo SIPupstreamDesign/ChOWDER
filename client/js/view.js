@@ -1466,6 +1466,7 @@
 					console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
                 } else {
 					controllerID.innerText = res.data.controllerID;
+					controllerID.style.color = res.data.rgb;
 					elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
 					elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
 				}
