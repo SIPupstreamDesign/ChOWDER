@@ -228,6 +228,7 @@ pre {
     height: 100px;
 	display: inline-block;
     transform: rotate(45deg) translate(-80px,0px);
+	border :  1px solid white;
 }
 .hiddenCursor .after {
     background-color: white;
@@ -235,7 +236,8 @@ pre {
     width: 40px;
     height: 100px;
 	display: inline-block;
-    transform: rotate(-45deg) translate(-50px,-80px);
+	transform: rotate(-45deg) translate(-50px,-80px);
+	border-bottom : 1px solid white;
 }
 
 #change_id_text {

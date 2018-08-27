@@ -1427,8 +1427,7 @@
         connector.on("UpdateMouseCursor", function (res) {
 			var i, elem, pos, ctrlid = res.id,
 				before, after,
-				controllerID,
-				parent;
+				controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
                 if (!controllers.hasOwnProperty(ctrlid)) {
                     ++controllers.connectionCount;
@@ -1470,9 +1469,15 @@
 					elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
 					elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
 				}
+				controllerID.style.textShadow = 
+						"1px 1px 0 white,"
+						+ "-1px 1px 0 white,"
+						+ " 1px -1px 0 white,"
+						+ "-1px -1px 0 white";
+
 				autoResizeCursor([elem, controllerID]);
                 elem.style.left = Math.round(pos.x) + 'px';
-                elem.style.top  = Math.round(pos.y) + 'px';
+				elem.style.top  = Math.round(pos.y) + 'px';
                 controllerID.style.left = Math.round(pos.x) + 'px';
                 controllerID.style.top  = Math.round(pos.y + 100) + 'px';
                 controllers[ctrlid].lastActive = Date.now();
