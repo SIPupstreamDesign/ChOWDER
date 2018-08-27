@@ -124,11 +124,15 @@
 			classname,
 			blob,
 			mime = "image/jpeg",
-			onlistID = "onlist:" + metaData.id;
+			onlistID = "onlist:" + metaData.id,
+			thumbnail;
 
 		if (Validator.isLayoutType(metaData)) {
 			return;
 		}
+
+		// 縮小サムネイルデータ
+		thumbnail = metaData.thumbnail;
 
 		// メタデータはGetMetaDataで取得済のものを使う.
 		// GetContent送信した後にさらにGetMetaDataしてる場合があるため.
@@ -239,11 +243,21 @@
 					}
 				}
 
-				blob = new Blob([contentData], {type: mime});
-				if (contentElem && blob) {
-					URL.revokeObjectURL(contentElem.src);
-					contentElem.src = URL.createObjectURL(blob);
-					fixDivSize(divElem, w, aspect);
+				if (thumbnail !== undefined && thumbnail) {
+					// 縮小サムネイルデータがあった場合
+					if (contentElem) {
+						URL.revokeObjectURL(contentElem.src);
+						contentElem.src = "data:image/png;base64," + thumbnail;
+						console.log(contentElem.src)
+						fixDivSize(divElem, w, aspect);
+					}
+				} else {
+					blob = new Blob([contentData], {type: mime});
+					if (contentElem && blob) {
+						URL.revokeObjectURL(contentElem.src);
+						contentElem.src = URL.createObjectURL(blob);
+						fixDivSize(divElem, w, aspect);
+					}
 				}
 			}
 		}

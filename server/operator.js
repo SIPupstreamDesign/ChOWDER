@@ -12,6 +12,7 @@
 		cryptkey = "ChOWDERCRYPTKEY",
 		redis = require("redis"),
 		image_size = require('image-size'),
+		Thumbnail = require('./thumbnail.js'),
 		client = redis.createClient(6379, '127.0.0.1', {'return_buffers': true}),
 		textClient = redis.createClient(6379, '127.0.0.1', {'return_buffers': false}),
 		virtualDisplayIDStr = "virtual_display",
@@ -22,6 +23,7 @@
 		contentBackupPrefix = "content_backup:",
 		contentHistoryPrefix = "content_history:",
 		contentHistoryDataPrefix = "content_history_data:",
+		contentThumbnailPrefix = "content_thumbnail:",
 		contentRefPrefix = "contentref:",
 		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
@@ -523,6 +525,7 @@
 								contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
 								contentHistoryPrefix = frontPrefix + uuidPrefix + "content_history:";
 								contentHistoryDataPrefix = frontPrefix + uuidPrefix + "content_history_data:";
+								contentThumbnailPrefix = frontPrefix + uuidPrefix + "content_thumbnail:";
 								metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
 								metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
 								metadataHistoryPrefix = frontPrefix + uuidPrefix + "metadata_history:";
@@ -1651,6 +1654,7 @@
 										if (!err) {
 											textClient.del(metadataBackupPrefix + metaData.id);
 											textClient.del(contentBackupPrefix + metaData.content_id);
+											textClient.del(contentThumbnailPrefix + metaData.content_id);
 											textClient.del(contentRefPrefix + metaData.content_id);
 											textClient.hkeys(contentHistoryPrefix + metaData.content_id, function (err, replies) {
 												replies.forEach(function (key, index) {
@@ -2272,11 +2276,32 @@
 				}
 			});
 		} else {
-			addContent(metaData, binaryData, function (metaData, contentData) {
-				if (endCallback) {
-					endCallback(null, metaData);
-				}
-			});
+			if (metaData.type === "image" || metaData.type === "tileimage") {
+				// サムネイルを作成
+				addContent(metaData, binaryData, function (metaData, contentData) {
+					Thumbnail.createThumbnail(metaData, binaryData, function (err, thumbnail) {
+						if (thumbnail) {
+							// 作成したサムネイルを登録
+							client.set(contentThumbnailPrefix + metaData.content_id, thumbnail, function (err, reply) {
+								if (endCallback) {
+									endCallback(null, metaData);
+								}
+							});
+						} else {
+							// サムネイルなし
+							if (endCallback) {
+								endCallback(null, metaData);
+							}
+						}
+					});
+				});
+			} else {
+				addContent(metaData, binaryData, function (metaData, contentData) {
+					if (endCallback) {
+						endCallback(null, metaData);
+					}
+				});
+			}
 		}
 	}
 	
@@ -2537,36 +2562,42 @@
 			}
 			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
 				//meta.command = Command.doneGetContent;
+				// thumbnail取得
+				client.get(contentThumbnailPrefix + meta.content_id, function (err, reply) {
+					if (!err && reply) {
+						meta.thumbnail = reply.toString('base64');
+					}
 
-				// 履歴から復元して取得
-				if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
-					var backupList = sortBackupList(JSON.parse(meta.backup_list));
-					var restore_index = Number(json.restore_index);
-					if (restore_index >= 0 && backupList.length > restore_index) {
-						var backup_date = backupList[restore_index];
-						textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
-							client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
-								endCallback(null, JSON.parse(metaData), reply[0]);
-							});
-						})
+					// 履歴から復元して取得
+					if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
+						var backupList = sortBackupList(JSON.parse(meta.backup_list));
+						var restore_index = Number(json.restore_index);
+						if (restore_index >= 0 && backupList.length > restore_index) {
+							var backup_date = backupList[restore_index];
+							textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
+								client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
+									endCallback(null, JSON.parse(metaData), reply[0]);
+								});
+							})
+							return;
+						}
+					}
+
+					// Historyから復元して取得
+					if (meta.hasOwnProperty('history_id')) {
+						client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, reply) {
+							endCallback(null, meta, reply[0]);
+						});
 						return;
 					}
-				}
 
-				// Historyから復元して取得
-				if (meta.hasOwnProperty('history_id')) {
-					client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, reply) {
-						endCallback(null, meta, reply[0]);
+					// 通常の取得
+					getContent(meta.type, meta.content_id, function (reply) {
+						if (reply === null) {
+							reply = "";
+						}
+						endCallback(null, meta, reply);
 					});
-					return;
-				}
-
-				// 通常の取得
-				getContent(meta.type, meta.content_id, function (reply) {
-					if (reply === null) {
-						reply = "";
-					}
-					endCallback(null, meta, reply);
 				});
 			}
 		});
@@ -4060,6 +4091,7 @@
 		contentBackupPrefix = frontPrefix + uuidPrefix + contentBackupPrefix;
 		contentHistoryPrefix = frontPrefix + uuidPrefix + contentHistoryPrefix;
 		contentHistoryDataPrefix = frontPrefix + uuidPrefix + contentHistoryDataPrefix;
+		contentThumbnailPrefix = frontPrefix + uuidPrefix + contentThumbnailPrefix;
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
 		metadataHistoryPrefix = frontPrefix + uuidPrefix + metadataHistoryPrefix;
 		metadataBackupPrefix = frontPrefix + uuidPrefix + metadataBackupPrefix;
@@ -4083,6 +4115,7 @@
 		console.log("idstr:" + contentBackupPrefix);
 		console.log("idstr:" + contentHistoryPrefix);
 		console.log("idstr:" + contentHistoryDataPrefix);
+		console.log("idstr:" + contentThumbnailPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
 		console.log("idstr:" + metadataHistoryPrefix);
 
