@@ -1717,7 +1717,7 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		if (store.has_metadata(json.id)) {
 			isUpdateContent = (store.get_metadata(json.id).restore_index !== reply.restore_index);
-			isUpdateContent = (store.get_metadata(json.id).keyvalue !== reply.keyvalue);
+			isUpdateContent = isUpdateContent || (store.get_metadata(json.id).keyvalue !== reply.keyvalue);
 		}
 		if (json.hasOwnProperty('group')) {
 			if (!management.getAuthorityObject().isViewable(json.group)) {

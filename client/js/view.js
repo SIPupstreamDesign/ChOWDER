@@ -1166,7 +1166,7 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
 			isUpdateContent = (metaDataDict[json.id].restore_index !== json.restore_index);
-			isUpdateContent = (metaDataDict[json.id].keyvalue !== json.keyvalue);
+			isUpdateContent = isUpdateContent || (metaDataDict[json.id].keyvalue !== json.keyvalue);
 		}
 		// 閲覧可能か
 		if (!isViewable(json.group)) {

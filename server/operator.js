@@ -2584,6 +2584,7 @@
 									if (binaryList.length > 0) {
 										metaList[0] = JSON.parse(metaData);
 										binaryList[0] = reply[0];
+										endCallback(null, metaList, binaryList);
 									} else {
 										endCallback(null, JSON.parse(metaData), reply[0]);
 									}
