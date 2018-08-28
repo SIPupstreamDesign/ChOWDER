@@ -166,9 +166,6 @@
 				child.id = uid;
 				child.innerHTML = srcElem.childNodes[0].innerHTML;
 				delete srcElem.childNodes[0];
-				if (srcElem.parentNode) {
-					srcElem.parentNode.removeChild(srcElem);
-				}
 				
 				if (Validator.isDisplayTabSelected()) {
 					previewArea = gui.get_display_preview_area();
