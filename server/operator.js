@@ -1336,29 +1336,9 @@
 									console.error(err);
 								}
 							});
-						} else if (reply === "hash") {
-							client.hmget(id, "preview", function (err, reply) {
-								if (!err) {
-									if (endCallback) {
-										endCallback(reply[0]);
-									}
-								} else {
-									console.error(err);
-								}
-							});
 						}
 					});
 				});
-			});
-		} else if (type === "tileimage") {
-			client.hmget(contentPrefix + id, "preview", function (err, reply) {
-				if (!err) {
-					if (endCallback) {
-						endCallback(reply[0]);
-					}
-				} else {
-					console.error(err);
-				}
 			});
 		} else {
 			client.get(contentPrefix + id, function (err, reply) {
@@ -1533,10 +1513,7 @@
 				metaData.date = new Date().toISOString();
 				
 				if (metaData.type === "tileimage") {
-					let kv = {
-						preview : contentData
-					}
-					client.hmset(contentPrefix + content_id, kv, function (err, reply) {
+					client.set(contentPrefix + content_id, "tileimage", function (err, reply) {
 						if (err) {
 							console.error("Error on addContent:" + err);
 						} else {
@@ -1954,14 +1931,19 @@
 						}
 						// 追加historyコンテンツ
 						storeHistoricalData(socketid, metaData, function (err, reply, history_id) {
-							var kv = {
-								preview : contentData
-							}
-							client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
-								metaData.history_id = history_id;
-								if (endCallback) {
-									endCallback(err, metaData);
+							Thumbnail.createThumbnail(metaData, contentData, function (err, thumbnail) {
+								var kv = {
+									preview : contentData
 								}
+								if (!err && thumbnail) {
+									kv.thumbnail = thumbnail
+								}
+								client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+									metaData.history_id = history_id;
+									if (endCallback) {
+										endCallback(err, metaData);
+									}
+								});
 							});
 						});
 					});
@@ -1974,14 +1956,19 @@
 					}
 					// 追加historyコンテンツ
 					storeHistoricalData(socketid, metaData, function (err, reply, history_id) {
-						var kv = {
-							preview : contentData
-						}
-						client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
-							metaData.history_id = history_id;
-							if (endCallback) {
-								endCallback(err, metaData);
+						Thumbnail.createThumbnail(metaData, contentData, function (err, thumbnail) {
+							var kv = {
+								preview : contentData
 							}
+							if (!err && thumbnail) {
+								kv.thumbnail = thumbnail
+							}
+							client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+								metaData.history_id = history_id;
+								if (endCallback) {
+									endCallback(err, metaData);
+								}
+							});
 						});
 					});
 				}
@@ -2276,13 +2263,20 @@
 				}
 			});
 		} else {
-			if (metaData.type === "image" || metaData.type === "tileimage") {
+			if (metaData.type === "image") {
 				// サムネイルを作成
 				addContent(metaData, binaryData, function (metaData, contentData) {
-					Thumbnail.createThumbnail(metaData, binaryData, function (err, thumbnail) {
+					Thumbnail.create(metaData, binaryData, function (err, thumbnail, preview) {
+						// 作成したサムネイルを登録
+						var kv = {}
 						if (thumbnail) {
-							// 作成したサムネイルを登録
-							client.set(contentThumbnailPrefix + metaData.content_id, thumbnail, function (err, reply) {
+							kv.thumbnail = thumbnail;
+						}
+						if (preview) {
+							kv.preview = preview;
+						}
+						if (thumbnail || preview) {
+							client.hmset(contentThumbnailPrefix + metaData.content_id, kv, function (err, reply) {
 								if (endCallback) {
 									endCallback(null, metaData);
 								}
@@ -2561,16 +2555,54 @@
 				return;
 			}
 			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
-				//meta.command = Command.doneGetContent;
-				// thumbnail取得
-				client.get(contentThumbnailPrefix + meta.content_id, function (err, reply) {
+				// Historyから復元して取得
+				if (meta.hasOwnProperty('history_id')) {
+
+					// Historyの場合はpreview画像をバイナリに入れて返す.
+					// サムネイル画像がある場合はリストに入れて返す
+					// その後タイル画像リクエストが複数回client→serverにくる.
+					client.hmget(contentHistoryDataPrefix + meta.history_id, "thumbnail", function (err, thumbnail) {
+						var metaList = [];
+						var binaryList = [];
+						if (!err && thumbnail[0]) {
+							metaList.push({
+								type : "thumbnail"
+							});
+							binaryList.push(thumbnail[0]);
+						}
+						client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, preview) {
+							if (binaryList.length > 0) {
+								if (!err && preview[0]) {
+									metaList.unshift(meta);
+									binaryList.unshift(preview[0]);
+								}
+								endCallback(null, metaList, binaryList);
+							} else {
+								endCallback(null, meta, preview[0]);
+							}
+						});
+					});
+					return;
+				}
+				
+				// コンテンツの返却.
+				// サムネイルやプレビュー用画像がある場合はリストに入れて返す
+				client.hgetall(contentThumbnailPrefix + meta.content_id, function (err, thumbnailData) {
 					var metaList = [];
 					var binaryList = [];
-					if (!err && reply) {
-						metaList[1] = {
-							type : "thumbnail"
-						};
-						binaryList[1] = reply;
+					if (!err) {
+						if (thumbnailData.hasOwnProperty('thumbnail')) {
+							metaList.push({
+								type : "thumbnail"
+							});
+							binaryList.push(thumbnailData.thumbnail);
+						}
+						if (thumbnailData.hasOwnProperty('preview')) {
+							metaList.push({
+								type : "preview"
+							});
+							binaryList.push(thumbnailData.preview);
+						}
 					}
 
 					// 履歴から復元して取得
@@ -2582,8 +2614,8 @@
 							textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
 								client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
 									if (binaryList.length > 0) {
-										metaList[0] = JSON.parse(metaData);
-										binaryList[0] = reply[0];
+										metaList.unshift(JSON.parse(metaData));
+										binaryList.unshift(reply[0]);
 										endCallback(null, metaList, binaryList);
 									} else {
 										endCallback(null, JSON.parse(metaData), reply[0]);
@@ -2594,28 +2626,14 @@
 						}
 					}
 
-					// Historyから復元して取得
-					if (meta.hasOwnProperty('history_id')) {
-						client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, reply) {
-							if (binaryList.length > 0) {
-								metaList[0] = meta;
-								binaryList[0] = reply[0];
-								endCallback(null, metaList, binaryList);
-							} else {
-								endCallback(null, meta, reply[0]);
-							}
-						});
-						return;
-					}
-
 					// 通常の取得
 					getContent(meta.type, meta.content_id, function (reply) {
 						if (reply === null) {
 							reply = "";
 						}
 						if (binaryList.length > 0) {
-							metaList[0] = meta;
-							binaryList[0] = reply;
+							metaList.unshift(meta);
+							binaryList.unshift(reply);
 							endCallback(null, metaList, binaryList);
 						} else {
 							endCallback(null, meta, reply);
