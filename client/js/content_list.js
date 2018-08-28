@@ -256,7 +256,7 @@
 				}
 
 				if (thumbnail !== undefined && thumbnail) {
-					blob = new Blob([thumbnail], {type: "image/png"});
+					blob = new Blob([thumbnail], {type: "image/jpeg"});
 					// 縮小サムネイルデータがあった場合
 					if (contentElem) {
 						URL.revokeObjectURL(contentElem.src);
