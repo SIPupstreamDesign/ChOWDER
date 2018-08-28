@@ -171,8 +171,7 @@
 										return page.render({
 											canvasContext: context,
 											viewport: viewport,
-											transform: transform,
-											background: 'rgb(0, 0, 0)'
+											transform: transform
 										});
 									});
 								});
