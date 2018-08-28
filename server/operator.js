@@ -2590,7 +2590,7 @@
 				client.hgetall(contentThumbnailPrefix + meta.content_id, function (err, thumbnailData) {
 					var metaList = [];
 					var binaryList = [];
-					if (!err) {
+					if (!err && thumbnailData) {
 						if (thumbnailData.hasOwnProperty('thumbnail')) {
 							metaList.push({
 								type : "thumbnail"
