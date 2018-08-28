@@ -910,8 +910,17 @@
 			var groupColor = "rgb(" + Math.floor(Math.random() * 128 + 127) + ","
 				+ Math.floor(Math.random() * 128 + 127) + ","
 				+ Math.floor(Math.random() * 128 + 127) + ")";
+			var metaData = { name: groupName, color: groupColor };
 
-			connector.send('AddGroup', { name: groupName, color: groupColor }, function (err, groupID) {
+			// Displayタブの追加ボタン押したときはDisplayグループとして追加する
+			if (Validator.isDisplayTabSelected()) {
+				metaData.type = "display";
+			} else {
+				// それ以外のタブではContentグループ.
+				metaData.type = "content";
+			}
+
+			connector.send('AddGroup', metaData, function (err, groupID) {
 				// UserList再取得
 				connector.send('GetUserList', {}, function (err, userList) {
 					management.setUserList(userList);

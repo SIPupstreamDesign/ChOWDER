@@ -1409,7 +1409,7 @@
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
 	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
-	ControllerGUI.prototype.setGroupList = function (groupList) {
+	ControllerGUI.prototype.setGroupList = function (groupList, displayGroupList) {
 		var contentSetting = { tabs : [] },
 			displaySetting = { tabs : [] },
 			searchSetting = { groups : [], colors : [] },
@@ -1448,6 +1448,19 @@
 			});
 			searchSetting.colors.push(groupColor);
 			layoutSetting.tabs.push(layoutGroupTab);
+		}
+		for (i = 0; i < displayGroupList.length; i = i + 1) {
+			groupName = displayGroupList[i].name;
+			groupColor = displayGroupList[i].color;
+			groupID = displayGroupList[i].id;
+			tab = {};
+			tab[groupID] = {
+				id : groupID,
+				name : groupName,
+				className : "group_tab",
+				color : groupColor,
+				active : true
+			};
 			
 			displayGroupTab = {};
 			displayGroupTab[groupID] = {
@@ -1788,8 +1801,8 @@
 		this.display_scale = scale; 
 	};
 
-	ControllerGUI.prototype.set_group_list = function (grouplist) {
-		this.setGroupList(grouplist);
+	ControllerGUI.prototype.set_group_list = function (grouplist, displayGroupList) {
+		this.setGroupList(grouplist, displayGroupList);
 	};
 
 	ControllerGUI.prototype.set_search_result = function (search_result) {

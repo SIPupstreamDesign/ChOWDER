@@ -165,7 +165,7 @@
 				textClient.get(groupListPrefix, function (err, reply) {
 					var data = reply;
 					if (!reply) {
-						data = { "grouplist" : [] };
+						data = { "grouplist" : [], "displaygrouplist" : [] };
 						endCallback(err, data);
 						return;
 					}
@@ -177,7 +177,7 @@
 					endCallback(err, data);
 				});
 			} else {
-				var data = { "grouplist" : [] };
+				var data = { "grouplist" : [], "displaygrouplist" : [] };
 				endCallback(null, data);
 			}
 		});
@@ -219,6 +219,9 @@
 
 	function getGroupIndexByName(groupList, name) {
 		var i;
+		if (!groupList) {
+			return -1;
+		}
 		for (i = 0; i < groupList.length; i = i + 1) {
 			if (groupList[i].name === name) {
 				return i;
@@ -261,6 +264,40 @@
 							endCallback(err, id);
 						}
 					});
+				})
+			});
+		});
+	}
+
+	/**
+	 * ディスプレイグループリストにgroupを追加
+	 * @param {String} id グループid. nullの場合自動割り当て.
+	 * @param {String} groupName グループ名.
+	 * @param {String} color グループ色.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addDisplayGroup(socketid, groupID, groupName, color, endCallback) {
+		getGroupList(function (err, data) {
+			if (!data.displaygrouplist) {
+				data.displaygrouplist = [];
+			}
+			var index = getGroupIndexByName(data.displaygrouplist, groupName);
+			if (index >= 0) {
+				if (endCallback) {
+					endCallback("Detect same group name");
+				}
+				return;
+			}
+			if (groupID) {
+				data.displaygrouplist.push({ name : groupName, color : color, id : groupID });
+			} else {
+				data.displaygrouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+			}
+			textClient.set(groupListPrefix, JSON.stringify(data), function () {
+				getGroupID(groupName, function (id) {
+					if (endCallback) {
+						endCallback(err, id);
+					}
 				})
 			});
 		});
@@ -388,7 +425,6 @@
 
 	// コンテンツメタデータ中のグループ名の変更
 	function changeContentGroupName(socketid, oldID, newID) {
-		var metaDatas = [];
 		getMetaData(socketid, 'all', null, function (err, metaData) {
 			if (err) {
 				return;
@@ -400,6 +436,22 @@
 				});
 			}
 		});
+	}
+
+	// Windowメタデータ中のディスプレイグループ名の変更
+	function changeDisplayGroupName(socketid, oldID, newID) {
+		getWindowMetaData({ type : 'all' },
+			function (err, metaData) {
+				if (err) {
+					return;
+				}
+				if (metaData && metaData.group === oldID) {
+					getGroupID(newID, function (id) {
+						metaData.group = id;
+						textClient.hmset(windowMetaDataPrefix + metaData.id, metaData, function (meta) {});
+					});
+				}
+			});
 	}
 
 	/**
@@ -431,8 +483,15 @@
 						});
 						return true;
 					} else {
-						endCallback("not found");
-						return false;
+						index = getGroupIndex(data.displaygrouplist, id);
+						if (index >= 0) { 
+							data.displaygrouplist.splice(index, 1);
+							textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+							return true;
+						} else {
+							endCallback("not found");
+							return false;
+						}
 					}
 				});
 			} else {
@@ -465,9 +524,24 @@
 						});
 						return true;
 					} else {
-						if (endCallback) {
-							endCallback("Not Found Group:" + id + ":" + groupName);
-							return false;
+						index = getGroupIndex(data.displaygrouplist, id);
+						if (index >= 0) {
+							var group = data.displaygrouplist[index];
+							if (group.name !== json.name) {
+								// グループ名が変更された.
+								// 全てのコンテンツのメタデータのグループ名も変更する
+								changeDisplayGroupName(socketid, group.id, json.id);
+							}
+							data.displaygrouplist[index] = json;
+							textClient.set(groupListPrefix, JSON.stringify(data), function () {
+								endCallback(null, json);
+							});
+							return true;
+						} else {
+							if (endCallback) {
+								endCallback("Not Found Group:" + id + ":" + groupName);
+								return false;
+							}
 						}
 					}
 				});
@@ -499,8 +573,21 @@
 						textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 						return true;
 					} else {
-						endCallback("not found");
-						return false;
+						index = getGroupIndex(data.displaygrouplist, id),
+						item;
+						if (index >= 0) {
+							item = data.displaygrouplist[index];
+							data.displaygrouplist.splice(index, 1);
+							if (insertIndex > 0 && insertIndex >= index) {
+								insertIndex -= 1;
+							}
+							data.displaygrouplist.splice(insertIndex, 0, item);
+							textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+							return true;
+						} else {
+							endCallback("not found");
+							return false;
+						}
 					}
 				});
 			} else {
@@ -568,6 +655,7 @@
 				});
 			}
 			addGroup("master", "group_default", "default", function (err, reply) {} );
+			addDisplayGroup("master", "group_default", "default", function (err, reply) {} );
 		});
 		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
@@ -3015,11 +3103,13 @@
 	/**
 	 *  グループを追加する.
 	 * @method commandAddGroup
-	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {JSON} json 対象のname, typeを含むjson
+	 *                    typeは"content"か"display"で、ない場合は"content"のグループとなる
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
+		var type = "content";
 		if (json.hasOwnProperty("name") && json.name !== "") {
 			if (socketidToLoginKey.hasOwnProperty(socketid)) {
 				socketid = socketidToLoginKey[socketid];
@@ -3030,35 +3120,46 @@
 					if (json.hasOwnProperty("color")) {
 						groupColor = json.color;
 					}
-					addGroup(socketid, null, json.name, groupColor, function (err, groupID) {
-						// グループユーザーの権限情報に、グループを追加する.
-						if (!err) {
-							getGroupUserSetting(function (err, setting) {
-								if (setting.hasOwnProperty(userid)) {
-									if (setting[userid].viewable !== "all") {
-										setting[userid].viewable.push(groupID);
+					if (json.hasOwnProperty("type")) {
+						type = json.type;
+					}
+					if (type === "content") {
+						addGroup(socketid, null, json.name, groupColor, function (err, groupID) {
+							// グループユーザーの権限情報に、グループを追加する.
+							if (!err) {
+								getGroupUserSetting(function (err, setting) {
+									if (setting.hasOwnProperty(userid)) {
+										if (setting[userid].viewable !== "all") {
+											setting[userid].viewable.push(groupID);
+										}
+										if (setting[userid].editable !== "all") {
+											setting[userid].editable.push(groupID);
+										}
+										// defaultグループは特殊扱いでユーザー無し
+										if (userid !== "group_default") {
+											changeGroupUserSetting(socketid, userid, setting[userid], function () {
+												if (endCallback) {
+													endCallback(err, groupID);
+												}
+											});
+										}
+									} else {
+										if (endCallback) {
+											endCallback(err, groupID);
+										}
 									}
-									if (setting[userid].editable !== "all") {
-										setting[userid].editable.push(groupID);
-									}
-									// defaultグループは特殊扱いでユーザー無し
-									if (userid !== "group_default") {
-										changeGroupUserSetting(socketid, userid, setting[userid], function () {
-											if (endCallback) {
-												endCallback(err, groupID);
-											}
-										});
-									}
-								} else {
-									if (endCallback) {
-										endCallback(err, groupID);
-									}
-								}
-							});
-						} else {
-							endCallback("faild to add group");
-						}
-					});
+								});
+							} else {
+								endCallback("faild to add group");
+							}
+						});
+					} else if (type === "display") {
+						addDisplayGroup(socketid, null, json.name, groupColor, function (err, groupID) {
+							if (endCallback) {
+								endCallback(err, groupID);
+							}
+						});
+					}
 				} else {
 					endCallback("access denied");
 				}
@@ -3432,6 +3533,13 @@
 			for (k = 0; k < groupList.grouplist.length; k = k + 1) {
 				if (groupList.grouplist[k].name === groupName) {
 					endCallback(groupList.grouplist[k].id);
+					return;
+				}
+			}
+			for (k = 0; k < groupList.displaygrouplist.length; k = k + 1) {
+				if (groupList.displaygrouplist[k].name === groupName) {
+					endCallback(groupList.displaygrouplist[k].id);
+					return;
 				}
 			}
 		});

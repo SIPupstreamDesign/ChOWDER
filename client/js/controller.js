@@ -2123,8 +2123,11 @@
 			currentGroup = gui.get_current_group_id();
 
 			// groupリストを新たにセットして, Searchタブ等を初期化
-			gui.set_group_list(reply.grouplist);
-			store.set_group_list(reply.grouplist);
+			gui.set_group_list(reply.grouplist, reply.displaygrouplist);
+			var groupListMerged = [];
+			Array.prototype.push.apply(groupListMerged, reply.grouplist);
+			Array.prototype.push.apply(groupListMerged, reply.displaygrouplist);
+			store.set_group_list(groupListMerged);
 
 			// 元々あったリストエレメントを全部つけなおす
 			gui.get_display_area_by_group(Constants.DefaultGroup).appendChild(wholeWindowElem); // 仮
