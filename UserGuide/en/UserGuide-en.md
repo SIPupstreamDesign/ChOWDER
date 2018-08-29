@@ -1,195 +1,156 @@
-User Guide
+User Guide for ChOWDER
 =============================================================
+
+{>>一般論として，日本語で読むと自然な文でも英語にしてみると前後文との重複が際立って気が散ることがあります．これらは必要に応じて消してしまいました．<<}
+{>>日本語版にない情報が書いてあった場合は，なるべく残しました．<<}
+{>>tiled displays という用語は，田の字のように，全体で矩形領域を構成するディスプレイ構成に聞こえます．ChOWDERはせっかく田の字以外の構成を許しているので，より広範な用語を探すと良いかもしれません．<<}
 
 Table of Contents
 ---------------------------------------------------
+{>>TODO: ToC作成<<}
 
-- [Getting Started](#getting-started)
-  - [System Requirements and Installation](#system-requirements-and-installation)
-- [Extracting the Application](#extracting-the-application)
-- [Installing the Application](#installing-the-application)
-  - [Installation](#installation)
-  - [Run Install Script](#run-install-script)
-- [Launching the Application](#launching-the-application)
-  - [For Mac/Linux](#for-maclinux)
-  - [For Windows](#for-windows)
-  - [Launch Confirmation](#launch-confirmation)
-  - [Accessing Controller(s)](#accessing-controllers)
-- [How to Quit the Application](#how-to-quit-the-application)
-  - [Shut Down the Server Program](#shut-down-the-server-program)
-  - [Shut Down Redis](#shut-down-redis)
-- [Initial Setup for Administrator](#initial-setup-for-administrator)
-  - [Administrator Setup File](#administrator-setup-file)
-- [The Home Screen of ChOWDER](#the-home-screen-of-chowder)
-  - [What’s On Your Home Screen](#whats-on-your-home-screen)
-- [Navigating the Controller Screen](#navigating-the-controller-screen)
-  - [Overview](#overview)
-  - [Connection Status](#connection-status)
-  - [The Virtual Display Screen](#the-virtual-display-screen)
-  - [Main Menu](#main-menu)
-  - [Adding Contents](#adding-contents)
-  - [Display Tab](#display-tab)
-  - [Content Tab](#content-tab)
-  - [Search Tab](#search-tab)
-  - [Property Window](#property-window)
-  - [Working with Video Content](#working-with-video-content)
-- [User Permissions and Administrator Screen](#user-permissions-and-administrator-screen)
-  - [User Permissions](#user-permissions)
-  - [Administrator Screen](#administrator-screen)
-- [Working with Display Screen](#working-with-display-screen)
-  - [Overview](#overview-1)
-  - [Working with Display: Menu](#working-with-display-menu)
-- [Coordinating with HIVE](#coordinating-with-hive)
-  - [Interactive Rendering](#interactive-rendering)
-  - [SceneNodeEditor](#scenenodeeditor)
-  - [Module System](#module-system)
-- [Using Google Chrome Extension](#using-google-chrome-extension)
-  - [Overview](#overview-2)
-  - [Installing Extension](#installing-extension)
-  - [Use Extension to Capture](#use-extension-to-capture)
-- [Using Desktop Capture on ChOWDER](#using-desktop-capture-on-chowder)
-  - [Overview](#overview-3)
-  - [How to Use ChOWDER Desktop Capture](#how-to-use-chowder-desktop-capture)
-- [Using Google Chrome Extension for WebRTC](#using-google-chrome-extension-for-webrtc)
-  - [Overview](#overview-4)
-  - [Installing Extension](install-extension-1)
-  - [Capture Using Extension](#capture-using-extension)
-- [Using HTTPS](#using-https)
-  - [Overview](#overview-5)
+{>>Getting Startedの項目は文章構造上不要なので消しました<<}
 
-Getting Started
+About ChOWDER
 ==================================================================
 
-This user guide contains information on how to operate ChOWDER. 
+{>>導入が必要なので追加<<}
+ChOWDER is a tiled displays manager designed especially for collaborations among different locations. Each location can have different physical configuration, i.e. different screen resolutions and tiling setup. Tiles may also have different resolutions within its tiled displays. New locations can be added during the meeting session in an *ad hoc* manner.
+Contents resides in a single display area, or the *virtual display area*, and are rendered in your tiled displays. In the virtual display area, each tile is mapped to its rectangular region. This region can be modified interactively depending on the physical configuration and following the course of the meeting.
 
-System Requirements and Installation
----------------------------------------------------
+For example, members of two groups from different locations can co-work on a shared screen while another person can independently work on a separated issue and include the contents in a later stage. {>>あまり自信がないですが説得力のある事例ありますか？<<} For efficient network usage, the contents are firstly distributed to each display before being rendered, and then the coordinates in the virtual display area are communicated through the network. 
 
-The following operating systems and web browsers are supported by ChOWDER.
+The rest of this user guide documents how you can set up and use ChOWDER.
 
-- OS
-  - Linux(CentOS6)
-  - Windows7
-  - MacOSX 10.10
+System Requirements
+==================================================================
 
-- Web Browsers
-  - Apple Safari 9.x
-  - Firefox 48.0
-  - Chrome 53
-  - Internet Explorer 11
+ChOWDER requires a computer on which a single server program will run. Each tile of your tiled displays shall display a web browser window. The browser  renders a webpage, which is actually a client which renders the contents received from the server.
 
-Extracting the Application
+ChOWDER supports the following evironments.
+
+Operating systems to run the server program:
+  - Linux (CentOS 6 {>>or higher?<<})
+  - Windows7 {>>or higher?<<}
+  - MacOSX 10.10 {>>or higher?<<}
+
+Web browsers to render client pages:
+  - Safari 9.x {>>or higher<<}
+  - Firefox 48.0 {>>or higher<<}
+  - Google Chrome 53 {>>or higher<<}
+  - Internet Explorer 11 {>>or higher<<}
+
+Each tile must display a web browser in full screen mode.
+
+Unarchiving the Source
 ==================================================================
 
 Extract the archive files.
-The extracted files will be organized as follows
+The top directory shall contain the following directories and file
 
-- bin : Run Script Folder
-- client : Client Application Folder
-- doc : Document Folder
-- redis : Redis Application Folder
-- server : Server Application Folder
-- chrome_extension : Google Chrome Extensions Folder
-- package.json
+- bin: Executables
+- client: Client Applications
+- doc: Documentations
+- redis: Components for [Redis](https://redis.io)
+- server: ChOWDER's Server
+- chrome_extension: Google Chrome Extensions
+- package.json: {>>Package configuration?<<}
 
-Use the script located in the bin folder to start the Collaborative workspace driver. 
-
-Installing the Application
-==================================================================
+{--Use the script located in the bin folder to start the Collaborative workspace driver. --} {>>後ろへ移動？<<}
 
 Installation
+==================================================================
+
+Setting up Node.js
 ---------------------------------------------------
 
 ### Installing Node.js
 
-The GUI Portal requires the installation of Node.js. Download the latest version from the official website (`http://nodejs.org/`). (See image below)
+The GUI Portal {>>GUI Portalとはなんですか？ChOWDER serverではだめでしょうか？<<} depends on Node.js. Download the latest version of Node.js from [the official website] (`http://nodejs.org/`). {>>Set it up following [which page]()???<<}
 
 <img src="image/NodeJS.png" alt="node.jsのinstall画面" width="377" />
-*Screenshot of Node.js*
+*The download page of Node.js, screen-captured at the time of writing this document.*
 
-### Installing the Submodule for Node.js 
+### Installing Submodules for Node.js 
 
-Install the third-party modules for Node.js required to run ChOWDER in the application’s directory. 
+Install in the {>>server?<<} application directory the third-party modules of Node.js required by ChOWDER. 
+{>>how?<<}
 
-Run Install Script
+Installing ChOWDER-Specific Components
 ---------------------------------------------------
 
-### For Mac/Linux
+### On Macs or Linux
 
-Run the shell script located in the bin folder.
+Run the installation shell script in the `bin` directory.
 
-       $cd bin
-       $sh install.sh
+~~~
+  $ cd bin
+  $ sh install.sh {>>./install.sh じゃだめですか？<<}
+~~~
 
-### For Windows
+### On Windows
 
-Run the following batch file located in the bin directory. 
+Run the installation batch script in the `bin` directory. 
 
-        >cd bin
-        >install.bat
+~~~
+  > cd bin
+  > install.bat
+~~~
 
-Launching the Application
+Launching ChOWDER's Server
 ==================================================================
 
-For Mac/Linux
+On Macs or Linux
 ---------------------------------------------------
 
-Run the shell script located in the bin folder.
+Run the execution script in the `bin` directory.
 
-       ./run.sh
+~~~
+	$ cd bin
+	$ ./run.sh
+~~~
 
-For Windows
+On Windows
 ---------------------------------------------------
 
-Run the following batch file located in the bin directory. 
+Run the execution script in the `bin` directory. 
 
-        >cd bin
-        >run.bat
+~~~
+  > cd bin
+  > run.bat
+~~~
 
-- Redis may not run properly in Windows if the Virtual Memory is set to 0 Kbyte. To avoid this issue, temporarily enable Virtual Memory. 
+- Redis may not run properly on Windows if the virtual memory is set to 0 kb. {>>To avoid this issue, set it to non-zero...は冗長なので削除<<}{>>このvirtual memoryというのはWindowsの機能でしょうか？それともretis?Node.js?<<}
 
-Launch Confirmation
+Accessing ChOWDER from a Web Browser
 ---------------------------------------------------
 
-Run the startup script to launch the ChOWDER server.
-
-       $sh run.sh
-       (run.bat for Windows)
-
-Accessing Controller(s)
----------------------------------------------------
-
-Type http://localhost:8080 in the address bar of the web browser to access ChOWDER.
-Once you access ChOWDER and see the image below, the installation is complete.
+{>>ChOWDER uses the same URL for the access to both the server and clients<<}
+Enter ChOWDER's URL (`http://localhost:8080` by default) in the address bar of a web browser.
+{--Once you see ChOWDER's startup page (see the image below), the server should be configured properly.--}{>>この文は，まず不要なのと，それとControllerのアクセスの説明そのものではないので，ここから削除します．<<}
 
 <img src="image/home.png" alt="install終了後ホーム画面" width="585" />
-*Screenshot of Home Screen after Installation is Complete*
+*The home screen of ChOWDER's client page*
 
-How to Quit the Application
+Quitting the Application
 ==================================================================
 
-There are two steps to quit.
+Kill the ChOWDER server and redis (e.g. by hitting CTRL+C in the terminal). {>>Redis may require manually killing its subprocess. You can, for example, use `ps` to find their process IDs and `kill` to kill them. 信じがたいのですが，本当でしょうか?　Windowsのみ？<<}
 
-Shut Down the Server Program
----------------------------------------------------
-
-Use CTRL+C to close the terminal launched by `run.sh(bat)` or kill the server program.
-
-Shut Down Redis
----------------------------------------------------
-
-Close the terminal that redis is running on. 
-If redis server is running a process, locate the process using the ps command and then kill. 
-
-Initial Setup for Administrator
+Managing Administrative Users
 ==================================================================
+{>>原文のInitial setup for administratorは長くて意味が取れなかったので<<}
+{>>Administratorには何をする権限があるのでしょうか？<<}
 
-You can add an administrator user during start-up. 
-Default password for the administrator is “admin”.
+{>>ChOWDER keeps the information of administrators in a redis database.<<}
+You can modify the administrator configurations by starting up ChOWDER.
+{>>デフォルトの管理者名はなんでしょうか？<<}
+The default password for the administrator is “admin”. {>>administrator とは何をする人でしょうか？<<}
+{>>この作業はファイルをパースするよりもGUIの方が利便的なのですがセキュリティ上の理由があるのでしょうか？<<}
 
-Administrator Setup File
+The Administrator Configuration File
 ---------------------------------------------------
-To add or remove an administrator during start-up, create an admin.json file in the first folder of ChOWDER (the same folder that README.md is located in.) The admin.json format is as follows (you can also find this inside the admin.json.org file).
+To add or remove an administrator during the startup, create an `admin.json` file directly under the root directory of ChOWDER (the same directory under which `README.md` is placed.) See below for an example `admin.json` (`admin.json.org` under the root directory has the same file contents).
 
     {
         "administrator" : {
@@ -202,206 +163,195 @@ To add or remove an administrator during start-up, create an admin.json file in 
         }
     }
 
-In this example, the “administrator” user is added (by overwriting/saving) and “administrator2” user is deleted. 
+In this example, the user "administrator" is added  and “administrator2” is deleted. {>>add コマンドでoverwriteするのはちょっと非直感的なので，この文では言及しません．<<}In fact, the name, "administrator" or "administrator2", can be an arbitrary character string.
 
-Type the administrator’s name followed by “command” : “add” to add and “command” : “delete” to remove an administrator. You will need a password when adding an administrator.
-This json file will be read when launching ChOWDER and the administrator will be added or removed at that time. 
-Once ChOWDER is launched and registered with the DB, there is no longer a need for the admin.json file. 
+The entry `“command” : “add”` adds an administrator (actually, the same command can be used for overwriting an existing administrator configuration).  `“command” : “delete”` deletes an administrator. The `"password"` entry is mandatory when adding an administrator.
+The `admin.json` file will be processed when launching ChOWDER and administrators will be added or removed at that time. 
+Once ChOWDER is launched, and thus the administrator configuration is reflected in the database, `admin.json` should be removed manually.{>>この挙動は修正されないのでしょうか？自動で消すなど．<<}
 
 The Home Screen of ChOWDER
 ==================================================================
 
-What’s On Your Home Screen
+What’s on Your Home Screen?
 ---------------------------------------------------
 
-Once the application is launched per above, type http://localhost:8080 in the address bar of the web browser to access ChOWDER. When you establish access, you will see the Home Screen mentioned above. ChOWDER has two modes (Display, Controller) whereby you decide which one to use from the Home Screen. 
+To access ChOWDER, run the server and visit `http://localhost:8080` with a web browser to open the home screen. The screen offers two modes, *display* and *controller*.
 
-- Controller:  You will be directed to the controller screen.
+- **Controller mode** lets you set the screen configuration and move the displayed contents.
 
-- Display : You will be directed to the display screen.
+- **Display mode** renders the content in the browser window.
 
-You have a choice to use the computer you are accessing between “controller” and “display” modes.
+Usually, you want to choose the controller mode on a computer screen and the display mode on tiled displays.
 
-Navigating the Controller Screen
+Navigating through the Controller Screen
 =================================================================
 
 Overview
 ---------------------------------------------------
 
-The controller is set up per below.
+In the controller screen, you can control what is displayed on the tiled displays and manage the tiling setup. The visual contents are added into a special area in the control screen, the [Contents] tab, to ease the contents management. You add files to this tab and toggle its visibility in the tiled displays (or in the virtual display area, to be more precise).
 
 <img src="image/cont_1.png" alt="コントローラ画面概要" width="585" />
-*Screenshot of Controller Screen*
+*Screenshot of the controller screen*
 
 Connection Status
 ---------------------------------------------------
 
-The icon on the upper right hand of the screen indicates the connection status with the server.
+The icon in the upper right of the screen indicates the status of the connection to the server.
 
 <img src="image/connect.png" alt="サーバーとの接続ありの状態" width="283" />
-*Connected to the Server*
+*Status icon when connected to the server*
 <br>
 <img src="image/disconnect.png" alt="サーバーとの接続が無い状態" width="283" />
-*Not Connected to the Server*
+*Status icon when not connected to the server*
 
-The Virtual Display Screen
+The Virtual Display Area
 ---------------------------------------------------
 
-The Virtual Display Screen is located in the center of the page and is used for general purposes to manage the display connected to ChOWDER as well as moving, managing and deleting Contents. 
+The virtual display area is located in the center of the browser page. It shows how tiles are arranged together with the displayed visual contents such as images, documents, and videos. Use it for arranging the display tiling. You can also add, move, interact with, and delete visual contents.
 
 <img src="image/TDD_View.png" alt="VirtualDisplayScreenの凡例" width="585" />
-*Example of the Virtual Display Screen*
+*Example of the virtual display area*
 
-Main Menu
+ChOWDER's Menubar
 ---------------------------------------------------
 
-### Menu at Top of the Page
-
-The menu at the top of the page contains various commands.
+The menubar at the top of the browser page lists various actions that ChOWDER offers.
 
 <img src="image/Upper.png" alt="画面上部領域" width="415" />
 *Area at the Top of the Page*
 
-### The Display Button
+### [Display]
 
-You can open the Display window by clicking on the Display button, as shown below. 
+You can add a display tile by clicking on the [Controller]>[Display] menu. 
 
 <img src="image/Left_Display.png" alt="Displayボタン押下時" width="415" />
-*Menu when Display Button is Selected*
+*Clicking on the [Display] menu*
 
-### Add Menu
+### [Add]
 
-You can add various contents using the Add menu.
-For details, refer to [Adding Contents](#Adding-Contents).
+This action adds various visual contents.
+For details, see [Adding Contents](#Adding-Contents).
 
 <img src="image/header01.png" alt="Addメニュー展開時" width="415" />
-*Menu when Add is Selected*
+*The [Add] menu*
 
-### Setting Menu
+### [Settings]
 
-Under Setting, you can turn the Remote Cursor on or off.
+{>>メニュー項目のSettingをSettingsに修正すべきです．<<}
+
+Under [Settings], you can toggle the appearance of ChOWDER's *remote cursor*. {>>The remote cursor is a cursor that appears on the tiled displays... <<}
 
 <img src="image/SettingMenu.png" alt="Settingメニュー展開時" width="415" />
-*Menu when Setting is Selected*
-
-The Remote Cursor appears as below.
+*Selecting [Settings]*
+{>>[VirtualDisplay]は何をするのでしょうか？<<}
 
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
-*Remote Cursor*
+*The remote cursor*
 
-### Return Home
+### Returning to the Home Screen
 
-You can return Home by clicking on the ChOWDER link as shown below.
+You can return to ChOWDER's home screen by clicking on [ChOWDER].
 
 <img src="image/home_return.png" alt="タイトル名のクリックでホームに戻る" width="415" />
-*Click on Title to Return Home*
+*Returning to the home screen*
 
-Adding Contents
+Displaying Visual Contents
 ---------------------------------------------------
 
-You can add various contents by selecting Add in the Main Menu or using the Menu located on the lower right part of the Content Tab. 
+You can display various contents by clicking on the [Add] action in the menubar on the top or using the menu button (looking like [三]) at the lower right corner inside the [Contents] tab. 
 
-### Adding an Image File
+### Displaying Images
 
-Add an image file of your choice to Contents by any of the following methods. 
+Display images by following one of the methods below. 
 
-- Main Menu -> Add -> Image
-- Content Tab (lower right menu) -> Add Content -> Image File
-- Right-click within the Content Tab -> Add Content -> Image File
+- Menubar >[Add]>[Image]
+- [Contents] tab>[Add Contents]>[Image File]
+- Right-click inside the [Contents] tab and select [Add Contents]>[Image File]
+
+Images added will be listed in the [Contents] tab.
 
 The following image formats are accepted.
 
-- PNG format
-- JPEG format
-- GIF format
-- BMP format
-
-The example below shows the screen after adding an image as a Content.
+- PNG
+- JPEG
+- GIF
+- BMP
 
 <img src="image/AddContent_Picture_View.png" alt="画像ファイルの追加例" width="434" />
-*Example of an Added Image File*
+*Opening an image*
 
-### Adding Video Files
+### Displaying Videos
 
-Add a video file of your choice to Contents by any of the following methods. 
+Display video files by following one of the methods below. 
 
-- Main Menu -> Add -> Movie
-- Content Tab (lower right menu) -> Add Content -> Video File
-- Right-click within the Content Tab -> Add Content -> Video File
+- Menubar >[Add]>[Movie]
+- [Contents] tab >[三]>[Add Content]>[Video File]
+- Right-click inside the [Content] tab >[Add Content]>[Video File]
 
-MP4 file formats are accepted.
-Once video files are imported, they are streamed via WebRTC. For details on WebRTC, refer to [Working with Video Content](#Working-with-Video-Content).
-
-The example below shows the screen after adding a video as a Content.
+The MP4 video format is accepted by ChOWDER.
+Once video files are imported, they are streamed via WebRTC. For more on WebRTC, see [Working with Video Contents](#Working-with-Video-Content).
 
 <img src="image/AddContent_Movie_View.png" alt="動画ファイルの追加例" width="434" />
-*Example of an Added Video File*
+*Adding a Video*
 
-### Adding Text
+### Displaying Text
 
-Add text of your choice to Contents by any of the following methods. 
+Display text by following one of the methods below. 
 
-- Main Menu -> Add -> Text
-- Content Tab (lower right menu) -> Add Content -> Text
-- Right-click within the Content Tab -> Add Content -> Text
+- Menubar >[Add]>[Text]
+- [Content] tab >[三]>[Add Content]>[Text]
+- Right-click inside the [Content] tab >[Add Content]>[Text]
 
-### Adding Text Files
+### Displaying Text Files
 
-Add a text file of your choice to Contents by any of the following methods. 
+Display a text file by following one of the methods below. 
 
-- Main Menu -> Add -> TextFile
-- Content Tab (lower right menu) -> Add Content -> TextFile
-- Right-click within the Content Tab -> Add Content -> TextFile
-
-The example below shows adding a text file
+- Menubar >[Add]>[Text File]
+- [Content] tab > [三]>[Add Content]>[Text File]
+- Right-click inside the [Content] tab > [Add Content]>[Text File]
 
 <img src="image/AddContent_TextFile_Select.png" alt="テキストファイルを選択" width="434" />
 *Select TextFile*
 <br>
 <img src="image/AddContent_TextFile_View.png" alt="テキストファイルのVirtualScreenへの追加" width="585" />
-Add Textfile to VirtualScreen
+Adding a text file in the virtual display area
 
-### Adding URL
+### Displaying Webpages
 
-Add an image from the specified URL to Contents by any of the following methods. 
+Display webpages by following one of the methods below.
 
-- Main Menu -> Add -> URL
-- Content Tab (lower right menu) -> Add Content -> URL
-- Right-click within the Content Tab -> Add Content -> URL
-
-See example below.
+- Menubar >[Add]>[URL]
+- [Contents] tab >[三]>[Add Content]>[URL]
+- Right-click inside the [Contents] Tab >[Add Content]>[URL]
 
 <img src="image/AddContent_URL.png" alt="URL送信ボタン" width="472" />
-*Submit URL Button*
-
-Adding an URL looks like below.
+*The URL Button*
 
 <img src="image/AddContent_URL_View.png" alt="URL追加後の様子" width="472" />
-*Screen after Adding URL*
+*Displaying a webpage*
 
-### Adding a Shared Screen
+### Sharing Screens
 
-Add a shared screen to Contents by any of the following methods. 
+Share screens by following one of the methods below. 
 
 -   Main Menu -> Add -> ScreenShare
 -   Content Tab (lower right menu) -> Add Content -> ScreenShare
--   Right-click within the Content Tab -> Add Content -> ScreenShare
+-   Right-click inside the Content Tab -> Add Content -> ScreenShare
 
 Captured videos are streamed via WebRTC.
 For instructions on working with video contents, refer to [Working with Video Contents](#Working-with-Video-Contents).
 
-The example below shows the screen after adding a shared screen.
-
 <img src="image/AddContent_ScreenShare_View.png" alt="スクリーン共有の追加例" width="434" />
-*Example of an Added Shared Screen*
+*Displaying Screens*
 
-### Shared Camera
+### Sharing Cameras
 
-Add a shared camera to Contents by any of the following methods. 
+Share cameras by following one of the methods below. 
 
 -   Main Menu -> Add -> CameraShare
 -   Content Tab (lower right menu) -> Add Content -> CameraShare
--   Right-click within the Content Tab -> Add Content -> CameraShare
+-   Right-click inside the Content Tab -> Add Content -> CameraShare
 
 Captured videos are streamed via WebRTC.
 For instructions on working with video contents, refer to [Working with Video Contents](#Working-with-Video-Contents).
@@ -651,9 +601,9 @@ Log into Controller as an Administrator to access the Administrator Screen via M
 <img src="image/management2.png" alt="管理画面" width="585" height="auto" />
 *Administrator Screen*
 
-### DB Administration
+### Database Administration
 
-You can create, switch, rename, delete and initialize storage space within DB Administration. Note you will not be able to rename or delete the default storage area that is automatically created in the beginning. 
+You can create, switch, rename, delete and initialize storage space within the database administration ("DB Administration" in ChOWDER's GUI). Note that you will not be able to rename or delete the default storage area that is automatically created in the beginning. 
 
 <img src="image/management3.png" alt=" DB 管理" width="585" />
 *DB Administration*
@@ -820,13 +770,13 @@ Installing and Operating Environment
 
 ### Running the Install Script
 
-For Mac  
+On Macs or Linux
 Run the shell script below located in desktop capture.
 
        $cd desktop_capture
        $sh make$app.sh
 
-For Windows  
+On Windows  
 Run the file below located in desktop capture.
 
         >cd desktop_capture
