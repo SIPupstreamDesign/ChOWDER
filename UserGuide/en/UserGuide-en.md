@@ -81,7 +81,7 @@ Installing ChOWDER-Specific Components
 
 ### On Macs or Linux
 
-Run the installation shell script in the `bin` directory.
+Run the installation script in the `bin` directory.
 
 ~~~
   $ cd bin
@@ -90,7 +90,7 @@ Run the installation shell script in the `bin` directory.
 
 ### On Windows
 
-Run the installation batch script in the `bin` directory. 
+Run the installation script in the `bin` directory. 
 
 ~~~
   > cd bin
@@ -106,8 +106,8 @@ On Macs or Linux
 Run the execution script in the `bin` directory.
 
 ~~~
-	$ cd bin
-	$ ./run.sh
+  $ cd bin
+  $ ./run.sh
 ~~~
 
 On Windows
