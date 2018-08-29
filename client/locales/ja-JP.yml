@@ -6,7 +6,7 @@ ja-JP:
     delete: 削除
     add_layout: レイアウト追加
     overwrite_layout: レイアウト上書き
-    chagne_group: グループ変更
+    change_group: グループ変更
     select_all_in_a_group: グループ内全て選択
     move_to_front: 最前面に移動
     move_to_back: 最背面に移動

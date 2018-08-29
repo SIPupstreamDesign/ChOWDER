@@ -242,10 +242,10 @@
 			if (tabContent.hasOwnProperty('func')) {
 				tabContent.func();
 			}
-			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
 			this.currentTab = document.getElementById(tabID + "_box");
 			this.currentGroupName = groupName;
 			this.currentGroupID = this.fromTabID(tabID);
+			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
 		}.bind(this);
 		inner_group_div.appendChild(link);
 

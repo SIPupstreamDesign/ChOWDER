@@ -79,29 +79,6 @@
 		return false;
 	}
 
-	function createWholeWindow() {
-		var divElem = document.createElement("div"),
-			onlistID = Constants.WholeWindowListID,
-			idElem;
-		
-		idElem = document.createElement('div');
-		idElem.innerHTML = "Virtual Display";
-		idElem.className = "screen_id";
-		divElem.appendChild(idElem);
-		divElem.id = onlistID;
-		divElem.style.position = "relative";
-		divElem.style.top = "5px";
-		divElem.style.left = "20px";
-		divElem.style.width = "200px";
-		divElem.style.height = "50px";
-		divElem.style.border = "solid";
-		divElem.style.borderColor = "white";
-		divElem.style.margin = "5px";
-		divElem.style.float = "left";
-		divElem.style.color = "white";
-		divElem.classList.add("screen");
-		return divElem;
-	}
 
 	/**
 	 * コントローラデータインスタンスを返す
@@ -820,6 +797,30 @@
 	
 	///-------------------------------------------------------------------------------------------------------
 
+	Controller.prototype.create_whole_window = function (groupID) {
+		var divElem = document.createElement("div"),
+			idElem;
+		
+		idElem = document.createElement('div');
+		idElem.innerHTML = "Virtual Display";
+		idElem.className = "screen_id";
+		divElem.appendChild(idElem);
+		divElem.id = Constants.WholeWindowListID + "_" + groupID;
+		divElem.style.position = "relative";
+		divElem.style.top = "5px";
+		divElem.style.left = "20px";
+		divElem.style.width = "200px";
+		divElem.style.height = "50px";
+		divElem.style.border = "solid";
+		divElem.style.borderColor = "white";
+		divElem.style.margin = "5px";
+		divElem.style.float = "left";
+		divElem.style.color = "white";
+		divElem.classList.add("screen");
+		this.setupContent(divElem, divElem.id);
+		return divElem;
+	}
+
 	// 全てリロードする
 	Controller.prototype.reload_all = function () {
 		console.log("on reloadAll");
@@ -834,10 +835,11 @@
 		}.bind(this));
 		this.clear_window_list();
 
-		var divElem = createWholeWindow();
+		var divElem = this.create_whole_window(Constants.DefaultGroup);
 		var displayArea = gui.get_display_area();
-		displayArea.appendChild(divElem);
-		this.setupContent(divElem, divElem.id);
+		if (!document.getElementById(Constants.WholeWindowListID + "_" + Constants.DefaultGroup)) {
+			displayArea.appendChild(divElem);
+		}
 
 		this.updateScreen();
 
@@ -1193,7 +1195,7 @@
 			}
 		}
 		
-		if (id === Constants.WholeWindowListID || id === Constants.WholeWindowID) {
+		if (id.indexOf(Constants.WholeWindowListID) === 0 || id.indexOf(Constants.WholeWindowID) === 0) {
 			gui.init_content_property(metaData ? metaData : {
 				id : id,
 				group : "",
@@ -2116,11 +2118,12 @@
 					}
 				}
 			});
-			wholeWindowElem = document.getElementById(Constants.WholeWindowListID); // 仮
 
 			// 一旦チェックされているSearch対象グループを取得
 			searchTargetGroups = gui.get_search_target_groups();
 			currentGroup = gui.get_current_group_id();
+			
+			wholeWindowElem = document.getElementById(Constants.WholeWindowListID + "_" + currentGroup); // 仮
 
 			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.set_group_list(reply.grouplist, reply.displaygrouplist);

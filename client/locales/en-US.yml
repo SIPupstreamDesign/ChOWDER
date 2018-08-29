@@ -6,7 +6,7 @@ en-US:
     delete: Delete
     add_layout: 'Add Layout'
     overwrite_layout: 'Overwrite Layout'
-    chagne_group: 'Change Group'
+    change_group: 'Change Group'
     select_all_in_a_group: 'Select All in a Group'
     move_to_front: 'Move to front'
     move_to_back: 'Move to back'

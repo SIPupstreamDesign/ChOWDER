@@ -22,7 +22,7 @@
 	width: 200px;
 }
 
-.context_menu_change_group_item {
+.context_menu_change_group_item, .context_menu_change_displaygroup_item {
 	background : white;
 	cursor: default;
 	font-size : 14px;
@@ -37,7 +37,12 @@
 	height : 0px;
 }
 
-.context_menu_change_group_item:hover {
+.context_menu_change_displaygroup_submenu {
+	display : none;
+	height : 0px;
+}
+
+.context_menu_change_group_item:hover, .context_menu_change_displaygroup_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
 }
@@ -62,7 +67,9 @@
 	color : white;
 }
 
-#context_menu_change_group:after, #context_menu_add_content:after {
+#context_menu_change_group:after,
+#context_menu_change_displaygroup:after,
+#context_menu_add_content:after {
 	content: '';
 	display: inline-block;
 	width: 6px;
@@ -75,7 +82,9 @@
 	transform: rotate(45deg);
 }
 
-#context_menu_change_group:hover:after, #context_menu_add_content:hover:after {
+#context_menu_change_group:hover:after,
+#context_menu_change_displaygroup:hover:after,
+#context_menu_add_content:hover:after {
 	border-right: 1px solid white;
 	border-top: 1px solid white;
 }

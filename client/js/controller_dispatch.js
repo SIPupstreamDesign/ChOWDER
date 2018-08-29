@@ -1090,6 +1090,20 @@
 		});
 
 		/**
+		 * Groupの選択が変更された
+		 */
+		gui.on("group_select_changed", function (err, groupID) {
+			if (gui.is_active_tab(Constants.TabIDDisplay)) {
+				var elem = document.getElementById(Constants.WholeWindowListID + "_" + groupID);
+				if (!elem) {
+					var divElem = controller.create_whole_window(groupID);
+					var displayArea = gui.get_display_area();
+					displayArea.insertBefore(divElem, displayArea.firstChild);
+				}
+			}
+		});
+
+		/**
 		 * Groupを１つ下に
 		 * @param {String} groupID 変更先のグループID
 		 */

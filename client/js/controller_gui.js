@@ -351,6 +351,17 @@
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, false); }.bind(this)
 						}
 					},{
+						change_displaygroup : {
+							submenu: true,
+							mouseoverfunc : function (evt) {
+								this.toggleBurgerSubmenuLayout(true, "90px"); 
+								on_group_change = true;
+							}.bind(this),
+							mouseoutfunc : function (evt) {
+								on_group_change = false;
+							}
+						}
+					},{
 						select_all : {
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); }.bind(this)
 						}
@@ -379,7 +390,7 @@
 							func : function (evt) { this.emit(window.ControllerGUI.EVENT_LAYOUT_OVERWRITE_CLICKED, null); }.bind(this)
 						}
 					},{
-						chagne_group : {
+						change_group : {
 							submenu: true,
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenuLayout(true, "90px"); 
@@ -437,7 +448,7 @@
 							}
 						}
 					},{
-						chagne_group : {
+						change_group : {
 							submenu: true,
 							mouseoverfunc : function (evt) {
 								this.toggleBurgerSubmenu(true, "137px"); 
@@ -702,6 +713,7 @@
 
 				// コンテキストメニューを刷新
 				this.updateContextMenu();
+				this.updateDisplayContextMenu();
 				this.updateLayoutContextMenu();
 				this.updateContextMenuAccess();
 
@@ -766,11 +778,9 @@
 			change_group_button = document.getElementById('context_menu_change_group'),
 			change_group_submenu = document.getElementById('context_menu_change_group_submenu'),
 			change_image_button = document.getElementById('context_menu_change_image'),
-			control_videos = document.getElementById('context_menu_control_videos'),
 			add_content_submenu = document.getElementById("context_menu_add_content_submenu"),
 			select_all = document.getElementById('context_menu_select_all'),
 			select_group = document.getElementById('context_menu_select_group'),
-			contentPreviewArea = document.getElementById('content_preview_area'),
 			on_change_group = false,
 			on_change_group_item = false,
 			on_add_content = false,
@@ -895,11 +905,16 @@
 				var container = document.getElementById('context_menu_change_group_submenu');
 				container.style.display = "none";
 			}
+			if (!on_change_displaygroup && !on_change_displaygroup_item) {
+				var container = document.getElementById('context_menu_change_displaygroup_submenu');
+				container.style.display = "none";
+			}
 			if (!on_add_content && !on_add_content_item) {
 				var container = document.getElementById('context_menu_add_content_submenu');
 				container.style.display = "none";
 			}
 		};
+
 
 		this.initContextMenuVisible(menu, Constants.TabIDContent, Constants.TabIDSearch);
 	}
@@ -910,7 +925,11 @@
 			showid_button = document.getElementById("context_menu_display_show_id"),
 			hide_button = document.getElementById("context_menu_display_hide"),
 			delete_button = document.getElementById("context_menu_display_delete"),
-			select_all_button = document.getElementById("context_menu_display_select_all");
+			select_all_button = document.getElementById("context_menu_display_select_all"),
+			change_displaygroup_button = document.getElementById('context_menu_change_displaygroup'),
+			change_displaygroup_submenu = document.getElementById('context_menu_change_displaygroup_submenu'),
+			on_change_displaygroup = false,
+			on_change_displaygroup_item = false;
 
 		showid_button.onclick = function (evt) {
 			this.emit(window.ControllerGUI.EVENT_SHOWIDBUTTON_CLICKED, null, false);
@@ -931,6 +950,29 @@
 			this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); 
 			menu.style.display = "none";
 		}.bind(this);
+		
+		// グループ変更サブメニュー
+		change_displaygroup_button.onmouseover = function () {
+			var container = document.getElementById('context_menu_change_displaygroup_submenu');
+			container.style.display = "block";
+			on_change_displaygroup = true;
+		};
+		change_displaygroup_button.onmouseout = function () {
+			on_change_displaygroup = false;
+		};
+		change_displaygroup_submenu.onmouseover = function () {
+			on_change_displaygroup_item = true;
+		};
+		change_displaygroup_submenu.onmouseout = function () {
+			on_change_displaygroup_item = false;
+		};
+		menu.onmousemove = function () {
+			if (!on_change_displaygroup && !on_change_displaygroup_item) {
+				var container = document.getElementById('context_menu_change_displaygroup_submenu');
+				container.style.display = "none";
+			}
+		};
+
 		this.initContextMenuVisible(menu, Constants.TabIDDisplay, "");
 	};
 
@@ -1026,7 +1068,6 @@
 			container = document.getElementById('context_menu_change_group_submenu'),
 			item,
 			groupID,
-			gname,
 			authority = this.management.getAuthorityObject();
 		container.innerHTML = "";
 
@@ -1042,6 +1083,40 @@
 					item.className = "context_menu_change_group_item";
 					item.innerHTML = this.groupBox.get_group_name(groupID);
 					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 104) + "px";
+					container.appendChild(item);
+					item.onmousedown = (function (groupID, self) {
+						return function (evt) {
+							this.emit(window.ControllerGUI.EVENT_GROUP_CHANGE_CLICKED, null, groupID);
+						}.bind(self);
+					}(groupID, this));
+				}
+			}
+		}
+	};
+
+	/**
+	 * コンテキストメニューの動的に変化する部分を更新.
+	 */
+	ControllerGUI.prototype.updateDisplayContextMenu = function () {
+		var groupToElems = this.displayBox.get_tabgroup_to_elems(),
+			container = document.getElementById('context_menu_change_displaygroup_submenu'),
+			item,
+			groupID,
+			authority = this.management.getAuthorityObject();
+		container.innerHTML = "";
+
+		if (!authority.isEditable(this.get_current_group_id())) {
+			return;
+		}
+		
+		for (groupID in groupToElems) {
+			if (groupToElems.hasOwnProperty(groupID)) {
+				// グループ変更内のアクセス権限による表示非表示
+				if (authority.isEditable(groupID)) {
+					item = document.createElement('li');
+					item.className = "context_menu_change_displaygroup_item";
+					item.innerHTML = this.displayBox.get_group_name(groupID);
+					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 44) + "px";
 					container.appendChild(item);
 					item.onmousedown = (function (groupID, self) {
 						return function (evt) {
@@ -1393,6 +1468,11 @@
 		groupBox.on("group_edit_color", function (err, groupID, color) {
 			this.emit(window.ControllerGUI.EVENT_GROUP_EDIT_COLOR, null, groupID, color);
 		}.bind(this));
+
+		groupBox.on('group_changed', function (err) {
+			var id = groupBox.get_current_group_id();
+			this.emit(window.ControllerGUI.EVENT_GROUP_SELECT_CHANGED, null, id);
+		}.bind(this));
 	};
 
 	/**
@@ -1483,6 +1563,7 @@
 
 		// コンテキストメニューを刷新
 		this.updateContextMenu();
+		this.updateDisplayContextMenu();
 		// コンテキストメニューを刷新
 		this.updateLayoutContextMenu();
 		// バーガーメニューを刷新
@@ -1697,6 +1778,8 @@
 			return this.groupBox.get_current_group_id();
 		} else if (this.tabs.is_active(Constants.TabIDLayout) && this.layoutBox) {
 			return this.layoutBox.get_current_group_id();
+		} else if (this.tabs.is_active(Constants.TabIDDisplay) && this.displayBox) {
+			return this.displayBox.get_current_group_id();
 		}
 		return Constants.DefaultGroup;
 	};
@@ -1989,6 +2072,7 @@
 	ControllerGUI.EVENT_GROUP_APPEND_CLICKED = "group_append_clicked";
 	ControllerGUI.EVENT_GROUP_DELETE_CLICKED = "group_delete_clicked";
 	ControllerGUI.EVENT_GROUP_CHANGE_CLICKED = "group_change_clicked";
+	ControllerGUI.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
 	ControllerGUI.EVENT_GROUP_DOWN = "group_down";
 	ControllerGUI.EVENT_GROUP_UP = "group_up";
 	ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";
