@@ -429,7 +429,7 @@
 						add_content: {
 							submenu: true,
 							mouseoverfunc : function (evt) {
-								this.toggleBurgerSubmenuAddContent(true, "170px"); 
+								this.toggleBurgerSubmenuAddContent(true, "39px"); 
 								on_add_content = true;
 							}.bind(this),
 							mouseoutfunc : function (evt) {
@@ -440,7 +440,7 @@
 						chagne_group : {
 							submenu: true,
 							mouseoverfunc : function (evt) {
-								this.toggleBurgerSubmenu(true, "150px"); 
+								this.toggleBurgerSubmenu(true, "137px"); 
 								on_group_change = true;
 							}.bind(this),
 							mouseoutfunc : function (evt) {
@@ -1041,7 +1041,7 @@
 					item = document.createElement('li');
 					item.className = "context_menu_change_group_item";
 					item.innerHTML = this.groupBox.get_group_name(groupID);
-					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
+					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 104) + "px";
 					container.appendChild(item);
 					item.onmousedown = (function (groupID, self) {
 						return function (evt) {
@@ -1076,7 +1076,7 @@
 					item = document.createElement('li');
 					item.className = "context_menu_change_group_item";
 					item.innerHTML = this.groupBox.get_group_name(groupID);
-					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 60) + "px";
+					item.style.top = "-" + (Object.keys(groupToElems).length * 20 + 44) + "px";
 					container.appendChild(item);
 					item.onmousedown = (function (groupID, self) {
 						return function (evt) {
