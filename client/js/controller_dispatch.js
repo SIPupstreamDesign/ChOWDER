@@ -1096,10 +1096,20 @@
 			if (gui.is_active_tab(Constants.TabIDDisplay)) {
 				var elem = document.getElementById(Constants.WholeWindowListID + "_" + groupID);
 				if (!elem) {
-					var divElem = controller.create_whole_window(groupID);
-					var displayArea = gui.get_display_area();
-					displayArea.insertBefore(divElem, displayArea.firstChild);
+					// var divElem = controller.create_whole_window(groupID);
+					// var displayArea = gui.get_display_area();
+					// displayArea.insertBefore(divElem, displayArea.firstChild);
 				}
+			}
+		});
+
+		/**
+		 * Groupのチェックが変更された
+		 */
+		gui.on("group_check_changed", function (err, groupID, checked) {
+			if (gui.is_active_tab(Constants.TabIDDisplay)) {
+				controller.getControllerData().setGroupCheck(groupID, checked);
+				controller.updateScreen();
 			}
 		});
 

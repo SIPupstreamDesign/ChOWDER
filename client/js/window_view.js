@@ -28,7 +28,7 @@
 	 * @method importWindowToView
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	WindowView.prototype.import_window = function (gui, metaDataDict, windowData) {
+	WindowView.prototype.import_window = function (gui, metaDataDict, windowData, groupCheckDict) {
 		var displayArea,
 			screen;
 		if (!Validator.isWindowType(windowData)) {
@@ -40,8 +40,20 @@
 		if (!windowData.hasOwnProperty('posy')) {
 			windowData.posy = 0;
 		}
+
 		metaDataDict[windowData.id] = windowData;
-		if (isVisible(windowData)) {
+
+		var visible = true;
+		if (windowData.hasOwnProperty("group")) {
+			if (!groupCheckDict.hasOwnProperty(windowData.group)) {
+				visible = false;
+			}
+			if (groupCheckDict[windowData.group] === false) {
+				visible = false;
+			}
+		}
+
+		if (visible && isVisible(windowData)) {
 			console.log("import window:" + JSON.stringify(windowData));
 			this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
 			this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);

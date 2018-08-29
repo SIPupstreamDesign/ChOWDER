@@ -691,6 +691,7 @@
 			split_wholes = vscreen.getSplitWholes(),
 			s,
 			wholeElem,
+			controllerData = this.getControllerData(),
 			previewArea = gui.get_display_preview_area(),
 			elem,
 			idElem,
@@ -713,6 +714,11 @@
 				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 			if (screenElem) {
+				if (controllerData.isGroupChecked(Constants.DefaultGroup)) {
+					screenElem.style.display = "block";
+				} else {
+					screenElem.style.display = "none";
+				}
 				vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
 				//vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
@@ -732,13 +738,18 @@
 			});
 			
 			// Virtual Displayを生成して配置.
-			wholeElem = document.getElementById(Constants.WholeWindowID);
+			wholeElem = document.getElementById(Constants.WholeWindowID + "_" + Constants.DefaultGroup);
 			if (!wholeElem) {
 				wholeElem = document.createElement('span');
 				wholeElem.className = "whole_screen_elem";
-				wholeElem.id = Constants.WholeWindowID;
+				wholeElem.id = Constants.WholeWindowID + "_" + Constants.DefaultGroup;
 				this.setupWindow(wholeElem, wholeElem.id);
 				previewArea.appendChild(wholeElem);
+			}
+			if (controllerData.isGroupChecked(Constants.DefaultGroup)) {
+				wholeElem.style.display = "block";
+			} else {
+				wholeElem.style.display = "none";
 			}
 			vscreen_util.assignScreenRect(wholeElem, whole);
 			
@@ -763,8 +774,19 @@
 							}
 						}
 						if (screenElem) {
+							var isvisible = true;
+							if (controllerData.isGroupChecked(metaData.group) && Validator.isVisible(metaData)) {
+								isvisible = true;
+							} else {
+								isvisible = false;
+							}
 							vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
 							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
+							if (isvisible) {
+								screenElem.style.display = "block";
+							} else {
+								screenElem.style.display = "none";
+							}
 						}
 					}
 				}
@@ -800,7 +822,7 @@
 	Controller.prototype.create_whole_window = function (groupID) {
 		var divElem = document.createElement("div"),
 			idElem;
-		
+
 		idElem = document.createElement('div');
 		idElem.innerHTML = "Virtual Display";
 		idElem.className = "screen_id";
@@ -867,7 +889,7 @@
 	 */
 	Controller.prototype.import_window = function (windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
-		gui.import_window(store.get_metadata_dict(), windowData);
+		gui.import_window(store.get_metadata_dict(), windowData, this.getControllerData().getGroupCheckDict());
 	};
 
 	/**
@@ -2123,17 +2145,21 @@
 			searchTargetGroups = gui.get_search_target_groups();
 			currentGroup = gui.get_current_group_id();
 			
-			wholeWindowElem = document.getElementById(Constants.WholeWindowListID + "_" + currentGroup); // 仮
+			wholeWindowElem = document.getElementById(Constants.WholeWindowListID + "_" +  Constants.DefaultGroup); // 仮
 
+			// Displayタブのグループチェック用の処理
+			this.getControllerData().initGroupCheck(reply.displaygrouplist);
 			// groupリストを新たにセットして, Searchタブ等を初期化
-			gui.set_group_list(reply.grouplist, reply.displaygrouplist);
+			gui.set_group_list(reply.grouplist, reply.displaygrouplist, this.getControllerData().getGroupCheckDict());
 			var groupListMerged = [];
 			Array.prototype.push.apply(groupListMerged, reply.grouplist);
 			Array.prototype.push.apply(groupListMerged, reply.displaygrouplist);
 			store.set_group_list(groupListMerged);
 
 			// 元々あったリストエレメントを全部つけなおす
-			gui.get_display_area_by_group(Constants.DefaultGroup).appendChild(wholeWindowElem); // 仮
+			if (wholeWindowElem) {
+				gui.get_display_area_by_group(Constants.DefaultGroup).appendChild(wholeWindowElem); // 仮
+			}
 			for (group in groupToElems) {
 				if (groupToElems.hasOwnProperty(group)) {
 					contentArea = gui.get_content_area_by_group(group);

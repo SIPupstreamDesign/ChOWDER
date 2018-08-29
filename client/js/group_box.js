@@ -69,7 +69,7 @@
 					if (tabItem.hasOwnProperty('id')) {
 						tabID = this.tabID(groupID);
 					}
-					elem.appendChild(this.create_tab(tabID, groupName, groupColor, tabItem, i === 0));
+					elem.appendChild(this.create_tab(tabID, groupName, groupColor, tabItem, i === 0, tabItem.checked));
 					this.tabIDs.push(tabID);
 
 					box = document.createElement('div');
@@ -170,15 +170,22 @@
 		return tabid.split(this.container.id + "_").join("");
 	}
 
-	GroupBox.prototype.addcheckbox = function (group_div, tabID) {
+	GroupBox.prototype.addcheckbox = function (group_div, tabID, is_checked) {
 		var checkbox = document.createElement('input');
 		checkbox.id = 'display_check_' + tabID;
 		checkbox.className = "display_group_checkbox";
 		checkbox.type = 'checkbox';
 		group_div.appendChild(checkbox);
 		checkbox.onchange = function (tabID) {
-			this.emit(GroupBox.EVENT_DISPLAYCHECK_CHANGED, null, tabID, checkbox.checked);
+			this.emit(GroupBox.EVENT_GROUP_CHECK_CAHNGED, null, this.fromTabID(tabID), checkbox.checked);
 		}.bind(this, tabID);
+		
+		checkbox.onclick = function (evt) { 
+			evt.stopPropagation();
+		};
+
+		checkbox.checked = is_checked;
+
 		// group_div.onclick = (function (tabID) {
 		// 	return function (evt) {
 		// 		var checkbox = document.getElementById('display_check_' + tabID);
@@ -194,7 +201,7 @@
 		<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
 		..
 	*/
-	GroupBox.prototype.create_tab = function (tabID, groupName, groupColor, tabContent, is_active) {
+	GroupBox.prototype.create_tab = function (tabID, groupName, groupColor, tabContent, is_active, is_checked) {
 		var inner_group_div,
 			elem,
 			link,
@@ -219,7 +226,7 @@
 		}
 
 		if (this.type === GroupBox.TYPE_DISPLAY) {
-			this.addcheckbox(inner_group_div, tabID);
+			this.addcheckbox(inner_group_div, tabID, is_checked);
 		}
 		
 		this.tabGroupToElems[this.fromTabID(tabID)].push(elem);
@@ -334,6 +341,8 @@
 
 	// タブが切り替わった時呼ばれるイベント
 	GroupBox.EVENT_GROUP_CHANGED = "group_changed";
+	// グループのチェックの変更
+	GroupBox.EVENT_GROUP_CHECK_CAHNGED = "group_check_changed";
 	// タブのxを押したときに呼ばれるイベント
 	GroupBox.EVENT_GROUP_DELETE = "group_delete";
 	// タブの+を押したときに呼ばれるイベント
@@ -349,7 +358,6 @@
 
 	GroupBox.TYPE_CONTENT = "content";
 	GroupBox.TYPE_DISPLAY = "display";
-	GroupBox.EVENT_DISPLAYCHECK_CHANGED = "display_check_changed";
 
 	window.GroupBox = GroupBox;
 }());
