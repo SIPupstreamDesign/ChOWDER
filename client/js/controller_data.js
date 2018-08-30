@@ -12,8 +12,6 @@
 		this.updateCursorEnable = false;// マウスカーソル送信が有効かどうか 
 		this.cursorColor = 'rgb(255, 255, 255)';
 		this.groupCheck = {}; // グループがチェックされているかどうか. { groupID : true, groupID2 : false }の形式
-		// this.contentSelectedGroup = "group_default"; //選択中のグループ
-		// this.displaySelectedGroup = "group_default";
 	};
 	ControllerData.prototype = Object.create(EventEmitter.prototype);
     
@@ -39,12 +37,12 @@
 					this.groupCheck[i] = Boolean(data.groupCheck[i])
 				}
 			}
-			// if (data.hasOwnProperty('contentSelectedGroup')) {
-            //     this.contentSelectedGroup = String(data.contentSelectedGroup);
-			// }
-			// if (data.hasOwnProperty('displaySelectedGroup')) {
-            //     this.displaySelectedGroup = String(data.displaySelectedGroup);
-			// }
+			if (data.hasOwnProperty('contentSelectedGroup')) {
+                this.contentSelectedGroup = String(data.contentSelectedGroup);
+			}
+			if (data.hasOwnProperty('displaySelectedGroup')) {
+                this.displaySelectedGroup = String(data.displaySelectedGroup);
+			}
         }
         this.emit('update', null, this.get());
     };
@@ -57,8 +55,8 @@
             updateCursorEnable : this.updateCursorEnable,
 			cursorColor : this.cursorColor,
 			groupCheck : this.groupCheck,
-			// contentSelectedGroup : this.contentSelectedGroup,
-			// displaySelectedGroup : this.displaySelectedGroup
+			contentSelectedGroup : this.contentSelectedGroup,
+			displaySelectedGroup : this.displaySelectedGroup
         };
     };
 
@@ -136,24 +134,6 @@
 		if (groupID === undefined) return true;
 		return this.groupCheck[groupID] === true;
 	};
-
-	// ControllerData.prototype.setContentSelectedGroup = function (groupID) {
-	// 	this.contentSelectedGroup = groupID;
-    //     this.emit('update', null, this.get());
-	// }
-	// ControllerData.prototype.getContentSelectedGroup = function () {
-	// 	return this.contentSelectedGroup;
-	// }
-
-	// ControllerData.prototype.setDisplaySelectedGroup = function (groupID) {
-	// 	this.displaySelectedGroup = groupID;
-    //     this.emit('update', null, this.get());
-	// }
-	// ControllerData.prototype.getDisplaySelectedGroup = function () {
-	// 	return this.displaySelectedGroup;
-	// }
-
-	
 
     ControllerData.EVENT_UPDATE = "update";
     window.ControllerData = ControllerData;

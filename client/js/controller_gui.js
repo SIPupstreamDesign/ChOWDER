@@ -1489,7 +1489,9 @@
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
 	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
-	ControllerGUI.prototype.setGroupList = function (groupList, displayGroupList, groupCheckDict) {
+	ControllerGUI.prototype.setGroupList = function (
+		groupList, displayGroupList, groupCheckDict, contentSelectedGroup, displaySelectedGroup
+	) {
 		var contentSetting = { tabs : [] },
 			displaySetting = { tabs : [] },
 			searchSetting = { groups : [], colors : [] },
@@ -1511,7 +1513,7 @@
 				name : groupName,
 				className : Constants.TabIDContent,
 				color : groupColor,
-				active : true
+				selected : contentSelectedGroup === groupID
 			};
 			layoutGroupTab = {};
 			layoutGroupTab[groupID] = {
@@ -1519,7 +1521,7 @@
 				name : groupName,
 				className : Constants.TabIDLayout,
 				color : groupColor,
-				active : true
+				selected : contentSelectedGroup === groupID
 			};
 			contentSetting.tabs.push(contentGroupTab);
 			searchSetting.groups.push({
@@ -1539,7 +1541,7 @@
 				name : groupName,
 				className : Constants.TabIDDisplay,
 				color : groupColor,
-				active : true,
+				selected : displaySelectedGroup === groupID,
 				checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
 			};
 			displaySetting.tabs.push(displayGroupTab);
@@ -1876,8 +1878,8 @@
 		this.display_scale = scale; 
 	};
 
-	ControllerGUI.prototype.set_group_list = function (grouplist, displayGroupList, groupCheckDict) {
-		this.setGroupList(grouplist, displayGroupList, groupCheckDict);
+	ControllerGUI.prototype.set_group_list = function (grouplist, displayGroupList, groupCheckDict, contentSelectedGroup, displaySelectedGroup) {
+		this.setGroupList(grouplist, displayGroupList, groupCheckDict, contentSelectedGroup, displaySelectedGroup);
 	};
 
 	ControllerGUI.prototype.set_search_result = function (search_result) {

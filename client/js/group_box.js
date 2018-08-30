@@ -138,7 +138,7 @@
 	 *	<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
 	 *	..
 	 */
-	GroupBox.prototype._add_tab = function (parent, tabID, tabItem, is_active) {
+	GroupBox.prototype._add_tab = function (parent, tabID, tabItem) {
 		var inner_group_div,
 			elem,
 			groupName = tabItem.name,
@@ -150,7 +150,7 @@
 		elem = document.createElement('div');
 		elem.appendChild(inner_group_div)
 		elem.id = tabID;
-		elem.className = is_active ? tabItem.className + " active" : tabItem.className;
+		elem.className = tabItem.selected ? tabItem.className + " active" : tabItem.className;
 		elem.style.cursor = "pointer";
 		if (!groupColor) {
 			if (this.type === GroupBox.TYPE_DISPLAY) {
@@ -257,7 +257,7 @@
 		box.style.width = "100%";
 		box.style.height = "100%";
 		box.style.overflow = "auto";
-		if (tabItem.hasOwnProperty('active') && tabItem['active']) {
+		if (tabItem.hasOwnProperty('selected') && tabItem['selected']) {
 			box.style.display = "block";
 		} else {
 			box.style.display = "none";
@@ -278,6 +278,7 @@
 			tabArea,
 			boxArea,
 			box,
+			tab,
 			tabs,
 			tabID,
 			groupID,
@@ -310,7 +311,7 @@
 					if (tabItem.hasOwnProperty('id')) {
 						tabID = this.IDtoTabID(groupID);
 					}
-					this._add_tab(tabWrap, tabID, tabItem, i === 0);
+					this._add_tab(tabWrap, tabID, tabItem);
 					this.tabIDs.push(tabID);
 
 					box = this._add_box(boxArea, tabID, tabItem);
@@ -319,8 +320,10 @@
 					if (this.currentBoxArea === null) {
 						this.currentBoxArea = box;
 						this.currentGroupName = tabItem.name;
-						this.currentGroupID = groupID;
 						this.groupIDToName[groupID] = tabItem.name;
+					}
+					if (tabItem.selected) {
+						this.currentGroupID = groupID;
 					}
 				}
 			}
@@ -377,7 +380,7 @@
 		return this.groupIDToName[groupID];
 	}
 
-	GroupBox.prototype.is_active = function (tabID) {
+	GroupBox.prototype.is_selected = function (tabID) {
 		var tab = document.getElementById(tabID);
 		return tab.className.indexOf('active') >= 0;
 	}

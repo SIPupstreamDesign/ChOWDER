@@ -13,6 +13,9 @@
 		this.dragOffsetLeft = 0;
 		this.mouseDownPos = [];
 		this.dragRect = {};
+
+		this.contentSelectedGroup = Constants.DefaultGroup; //選択中のグループ
+		this.displaySelectedGroup = Constants.DefaultGroup;
 	};
 
 	// lastSelectContentID
@@ -109,6 +112,20 @@
 		return this.dragRect.hasOwnProperty(id);
 	};
 	
+	// group selection
+	State.prototype.set_content_selected_group = function (groupID) {
+		this.contentSelectedGroup = groupID;
+	}
+	State.prototype.get_content_selected_group = function () {
+		return this.contentSelectedGroup;
+	}
+
+	State.prototype.set_display_selected_group = function (groupID) {
+		this.displaySelectedGroup = groupID;
+	}
+	State.prototype.get_display_selected_group = function () {
+		return this.displaySelectedGroup;
+	}
 	//----------------------------------
 	/**
 	 * 選択されているContentIDを返却する

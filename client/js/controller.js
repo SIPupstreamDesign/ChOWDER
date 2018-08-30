@@ -2111,7 +2111,8 @@
 			displayArea,
 			currentGroup,
 			selectedGroup,
-			searchTargetGroups;
+			searchTargetGroups,
+			controllerData = this.getControllerData();
 
 		groupToElems[Constants.DefaultGroup] = [];
 		groupToMeta[Constants.DefaultGroup] = [];
@@ -2150,7 +2151,10 @@
 			// Displayタブのグループチェック用の処理
 			this.getControllerData().initGroupCheck(reply.displaygrouplist);
 			// groupリストを新たにセットして, Searchタブ等を初期化
-			gui.set_group_list(reply.grouplist, reply.displaygrouplist, this.getControllerData().getGroupCheckDict());
+			gui.set_group_list(reply.grouplist, reply.displaygrouplist, 
+				controllerData.getGroupCheckDict(),
+				state.get_content_selected_group(),
+				state.get_display_selected_group());
 			store.set_group_list(reply.grouplist, reply.displaygrouplist);
 
 			// 元々あったリストエレメントを全部つけなおす
