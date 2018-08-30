@@ -8,6 +8,7 @@
 		EventEmitter.call(this);
 		this.container = containerElem;
 		this.setting = setting;
+		this.groupIDs = [];
 		this.tabIDs = [];
 		this.tabGroupToElems = {};
 		this.groupIDToName = {};
@@ -313,6 +314,7 @@
 					}
 					this._add_tab(tabWrap, tabID, tabItem);
 					this.tabIDs.push(tabID);
+					this.groupIDs.push(groupID);
 
 					box = this._add_box(boxArea, tabID, tabItem);
 					this.tabGroupToElems[groupID].push(box);
@@ -362,6 +364,10 @@
 
 	GroupBox.prototype.get_current_group_id = function () {
 		return this.currentGroupID;
+	};
+
+	GroupBox.prototype.get_group_ids = function () {
+		return this.groupIDs;
 	};
 
 	GroupBox.prototype.get_tabgroup_to_elems = function () {
