@@ -155,6 +155,16 @@
 		generateID(windowContentPrefix, endCallback);
 	}
 
+	function getInitialVirtualDisplayData() {
+		return {
+			orgWidth : 1000,
+			orgHeight : 1000,
+			splitX : 1,
+			splitY : 1,
+			scale : 1.0
+		};
+	}
+
 	/**
 	 * グループリストの取得. ない場合は空がendcallbackにわたる.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
@@ -295,8 +305,19 @@
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
 				getGroupID(groupName, function (id) {
-					if (endCallback) {
-						endCallback(err, id);
+					if (id === "group_default") {
+						if (endCallback) {
+							endCallback(err, id);
+						}
+					} else {
+						// Virtual Displayの追加
+						var vdisplay = getInitialVirtualDisplayData();
+						vdisplay.group = id;
+						setVirtualDisplay(vdisplay, function (data) {
+							if (endCallback) {
+								endCallback(err, id);
+							}
+						});
 					}
 				})
 			});
@@ -487,6 +508,9 @@
 						if (index >= 0) { 
 							data.displaygrouplist.splice(index, 1);
 							textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+							if (id !== "group_default") {
+								textClient.del(virtualDisplayIDStr + ":" + id);
+							}
 							return true;
 						} else {
 							endCallback("not found");
@@ -672,14 +696,7 @@
 		// virtualdisplayの初期設定
 		textClient.exists(virtualDisplayIDStr, function (err, doesExists) {
 			if (doesExists !== 1) {
-				var windowData = {
-					orgWidth : 1000,
-					orgHeight : 1000,
-					splitX : 1,
-					splitY : 1,
-					scale : 1.0
-				};
-				setVirtualDisplay(windowData);
+				setVirtualDisplay(getInitialVirtualDisplayData());
 			}
 		});
 	}
@@ -2157,11 +2174,19 @@
 	 */
 	function setVirtualDisplay(windowData, endCallback) {
 		if (windowData) {
-			textClient.hmset(virtualDisplayIDStr, windowData, function (err, reply) {
-				if (endCallback) {
-					endCallback(windowData);
-				}
-			});
+			if (windowData.hasOwnProperty('group') && windowData.group !== "group_default") {
+				textClient.hmset(virtualDisplayIDStr + ":" + windowData.group, windowData, function (err, reply) {
+					if (endCallback) {
+						endCallback(windowData);
+					}
+				});
+			} else {
+				textClient.hmset(virtualDisplayIDStr, windowData, function (err, reply) {
+					if (endCallback) {
+						endCallback(windowData);
+					}
+				});
+			}
 		}
 	}
 	
@@ -2170,16 +2195,28 @@
 	 * @method getVirtualDisplay
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function getVirtualDisplay(endCallback) {
-		textClient.hgetall(virtualDisplayIDStr, function (err, data) {
-			if (endCallback) {
-				if (data) {
-					endCallback(data);
-				} else {
-					endCallback({});
+	function getVirtualDisplay(json, endCallback) {
+		if (json && json.hasOwnProperty('group') && json.group !== "group_default") {
+			textClient.hgetall(virtualDisplayIDStr + ":" + json.group, function (err, data) {
+				if (endCallback) {
+					if (data) {
+						endCallback(data);
+					} else {
+						endCallback({});
+					}
 				}
-			}
-		});
+			});
+		} else {
+			textClient.hgetall(virtualDisplayIDStr, function (err, data) {
+				if (endCallback) {
+					if (data) {
+						endCallback(data);
+					} else {
+						endCallback({});
+					}
+				}
+			});
+		}
 	}
 	
 	/**
@@ -3087,7 +3124,7 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetVirtualDisplay(socketid, json, endCallback) {
-		getVirtualDisplay(function (data) {
+		getVirtualDisplay(json, function (data) {
 			console.log("commandGetVirtualDisplay", data);
 			if (endCallback) {
 				endCallback(null, data);
