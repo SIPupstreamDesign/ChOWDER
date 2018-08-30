@@ -2151,10 +2151,7 @@
 			this.getControllerData().initGroupCheck(reply.displaygrouplist);
 			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.set_group_list(reply.grouplist, reply.displaygrouplist, this.getControllerData().getGroupCheckDict());
-			var groupListMerged = [];
-			Array.prototype.push.apply(groupListMerged, reply.grouplist);
-			Array.prototype.push.apply(groupListMerged, reply.displaygrouplist);
-			store.set_group_list(groupListMerged);
+			store.set_group_list(reply.grouplist, reply.displaygrouplist);
 
 			// 元々あったリストエレメントを全部つけなおす
 			if (wholeWindowElem) {

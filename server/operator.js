@@ -558,6 +558,10 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function changeGroupIndex(socketid, id, insertIndex, endCallback) {
+		if (id === "group_default") {
+			endCallback("default can not allow changing index");
+			return;
+		}
 		isGroupManipulatable(socketid, id,  function (isManipulatable) {
 			if (isManipulatable) {
 				getGroupList(function (err, data) {

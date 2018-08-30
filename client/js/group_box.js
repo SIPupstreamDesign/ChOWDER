@@ -11,33 +11,278 @@
 		this.tabIDs = [];
 		this.tabGroupToElems = {};
 		this.groupIDToName = {};
-		this.currentTab = null;
+		this.currentBoxArea = null;
 		this.authority = authority;
 		this.type = type;
-		this.init();
+		this._init();
 		this.currentGroupName = "";
 	};
 	GroupBox.prototype = Object.create(EventEmitter.prototype);
 
+	GroupBox.prototype.IDtoTabID = function (id) {
+		return this.container.id + "_" + id;
+	};
+
+	GroupBox.prototype.TabIDtoID = function (tabid) {
+		return tabid.split(this.container.id + "_").join("");
+	}
+
+	/**
+	 * チェックボックスを追加. 
+	 * @param {*} group_div 
+	 * @param {*} tabID 
+	 * @param {*} is_checked 
+	 */
+	GroupBox.prototype._add_checkbox = function (group_div, tabID, is_checked) {
+		var checkbox = document.createElement('input');
+		checkbox.id = 'display_check_' + tabID;
+		checkbox.className = "display_group_checkbox";
+		checkbox.type = 'checkbox';
+		group_div.appendChild(checkbox);
+		checkbox.onchange = function (tabID) {
+			this.emit(GroupBox.EVENT_GROUP_CHECK_CAHNGED, null, this.TabIDtoID(tabID), checkbox.checked);
+		}.bind(this, tabID);
+		
+		checkbox.onclick = function (evt) { 
+			evt.stopPropagation();
+		};
+		checkbox.checked = is_checked;
+	}
+
+	/**
+	 * 設定ボタンの追加
+	 * @param {*} parent 
+	 * @param {*} tabID 
+	 * @param {*} groupName 
+	 * @param {*} groupColor 
+	 */
+	GroupBox.prototype._add_setting_button = function (parent, tabID, groupName, groupColor) {
+		var span;
+		var setting_button = document.createElement('div');
+		setting_button.className = "group_tab_setting";
+		setting_button.onclick = (function (self, groupName) {
+			return function (evt) {
+				var menu = document.getElementById('group_setting_menu'),
+					background = new window.PopupBackground(),
+					delete_button = document.getElementById('group_setting_delete'),
+					name_button = document.getElementById('group_setting_name'),
+					color_button = document.getElementById('group_setting_color');
+
+				menu.style.display = "block";
+				menu.style.top = evt.clientY + "px";
+				menu.style.left = evt.clientX + "px";
+				background.show();
+				
+				background.on('close', (function (menu) {
+					return function () {
+						menu.style.display = "none";
+					}
+				}(menu)));
+
+				delete_button.onclick = function () {
+					menu.style.display = "none";
+					background.close();
+					this.emit(GroupBox.EVENT_GROUP_DELETE, null, this.TabIDtoID(tabID));
+				}.bind(self);
+
+				name_button.onclick = function () {
+					window.input_dialog.text_input({
+							name : i18next.t('change_group_name'),
+							initialValue :  groupName,
+							okButtonName : "OK",
+						}, function (value) {
+							this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null,  this.TabIDtoID(tabID), value);
+						}.bind(this));
+					menu.style.display = "none";
+					background.close();
+				}.bind(self);
+
+				color_button.onclick = function () {
+					window.input_dialog.color_input({
+							name : i18next.t('change_group_color'),
+							initialValue : groupColor,
+							okButtonName : "OK"
+						}, function (value) {
+							this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null,  this.TabIDtoID(tabID), value);
+						}.bind(this));
+					menu.style.display = "none";
+					background.close();
+				}.bind(self);
+
+			};
+		}(this, groupName));
+		span = document.createElement('span');
+		span.className = "group_tab_setting_label";
+		setting_button.appendChild(span);
+		parent.appendChild(setting_button);
+		return setting_button;
+	};
+
+	/**
+	 * ラベルの追加
+	 * @param {*} parent 
+	 * @param {*} tabID 
+	 * @param {*} text 
+	 */
+	GroupBox.prototype._add_label = function (parent, tabID, text) {
+		var label = document.createElement('span');
+		label.id = tabID + "_link";
+		label.className = "group_tab_link" + " " + "group_tab_link_" + this.type;
+		label.innerHTML = text;
+		parent.appendChild(label);
+	}
+
+	/**
+	 * タブの追加
+	 *	<div id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></div>
+	 *	<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
+	 *	..
+	 */
+	GroupBox.prototype._add_tab = function (parent, tabID, tabItem, is_active) {
+		var inner_group_div,
+			elem,
+			groupName = tabItem.name,
+			groupColor = tabItem.hasOwnProperty('color') ? tabItem.color : null;
+
+		inner_group_div = document.createElement('div');
+		inner_group_div.className = "inner_group_div";
+
+		elem = document.createElement('div');
+		elem.appendChild(inner_group_div)
+		elem.id = tabID;
+		elem.className = is_active ? tabItem.className + " active" : tabItem.className;
+		elem.style.cursor = "pointer";
+		if (!groupColor) {
+			if (this.type === GroupBox.TYPE_DISPLAY) {
+				elem.style.backgroundColor = "#0080FF";
+			} else {
+				elem.style.backgroundColor = "rgb(54,187,68)";
+			}
+		}
+		if (groupColor) {
+			elem.style.backgroundColor = groupColor;
+		}
+		elem.onclick = function (evt) {
+			var i,
+				tabElem;
+			for (i = 0; i < this.tabIDs.length; i = i + 1) {
+				document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
+				tabElem = document.getElementById(this.tabIDs[i]);
+				tabElem.className = tabElem.className.split(" active").join("");
+			}
+			tabElem = document.getElementById(tabID); 
+			tabElem.className = tabElem.className + " active";
+			document.getElementById(tabID + "_box").style.display = "block";
+			if (tabItem.hasOwnProperty('func')) {
+				tabItem.func();
+			}
+			this.currentBoxArea = document.getElementById(tabID + "_box");
+			this.currentGroupName = groupName;
+			this.currentGroupID = this.TabIDtoID(tabID);
+			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
+		}.bind(this);
+		this.tabGroupToElems[this.TabIDtoID(tabID)].push(elem);
+		this.groupIDToName[ this.TabIDtoID(tabID)] = groupName;
+
+		if (this.type === GroupBox.TYPE_DISPLAY) {
+			this._add_checkbox(inner_group_div, tabID, tabItem.checked);
+		}
+		
+		this._add_label(inner_group_div, tabID, groupName);
+
+		if ( this.TabIDtoID(tabID) !== Constants.DefaultGroup && this.authority.isGroupManipulable()) {
+			this._add_setting_button(inner_group_div, tabID, groupName, groupColor);
+		}
+		parent.appendChild(elem);
+		return elem;
+	};
+
+	/**
+	 * 上下移動ボタンの追加
+	 * @param {*} parent 
+	 * @param {*} direction "up" or "down"
+	 */
+	GroupBox.prototype._add_updown_button = function (parent, direction) {
+		var elem = document.createElement('div');
+		var span = document.createElement('span');
+		span.className = "group_tab_" +direction+ "_label";
+		elem.className = "group_tab_" +direction+ " " + "group_tab_" + direction + "_" + this.type;
+		elem.setAttribute("title",  i18next.t("move_" + direction));
+		elem.appendChild(span);
+		elem.onclick = function () {
+			if (direction === "up") {
+				this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupID);
+			} else {
+				this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupID);
+			}
+		}.bind(this);
+		parent.appendChild(elem);
+	};
+
+	/**
+	 * 追加ボタンの追加
+	 * @param {*} parent 
+	 */
+	GroupBox.prototype._add_append_button = function (parent) {
+		var elem = document.createElement('div');
+		var span = document.createElement('span');
+		elem.className = "group_tab_append" + " " + "group_tab_down_" + this.type;
+		span.className = "group_tab_append_label";
+		span.innerHTML = "+";
+		elem.setAttribute("title", i18next.t('add_new_group'));
+		elem.appendChild(span);
+		elem.onclick = function () {
+			window.input_dialog.text_input({
+					name : i18next.t('new_group'),
+					initialValue :  "",
+					okButtonName : "OK",
+				}, function (value) {
+					this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
+				}.bind(this));
+		}.bind(this);
+		parent.appendChild(elem);
+		return elem;
+	};
+
+	/**
+	 * 
+	 * @param {*} parent 
+	 * @param {*} tabID 
+	 * @param {*} tabItem 
+	 */
+	GroupBox.prototype._add_box = function (parent, tabID, tabItem) {
+		var box = document.createElement('div');
+		box.id = tabID + "_box";
+		box.className = tabItem.className + "_box";
+		box.style.width = "100%";
+		box.style.height = "100%";
+		box.style.overflow = "auto";
+		if (tabItem.hasOwnProperty('active') && tabItem['active']) {
+			box.style.display = "block";
+		} else {
+			box.style.display = "none";
+		}
+		
+		parent.appendChild(box);
+		return box;
+	};
+	
 	/*
 		<div class="left_tab_area" id="left_tab_area">
 			<div id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></div>
 			<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
 		</div>
 	*/
-	GroupBox.prototype.init = function () {
+	GroupBox.prototype._init = function () {
 		var i,
 			tabArea,
 			boxArea,
 			box,
 			tabs,
 			tabID,
-			groupName,
 			groupID,
-			groupColor = null,
 			tabItem,
-			elem,
-			span;
+			tabWrap;
 
 		// tabArea
 		tabArea = document.createElement('div');
@@ -51,9 +296,9 @@
 
 		if (this.setting.hasOwnProperty("tabs")) {
 			tabs = this.setting["tabs"];
-			elem = document.createElement('div');
-			elem.className = "group_tab_div";
-			tabArea.appendChild(elem);
+			tabWrap = document.createElement('div');
+			tabWrap.className = "group_tab_div";
+			tabArea.appendChild(tabWrap);
 		
 			for (i = 0; i < tabs.length; i = i + 1) {
 				groupID = Object.keys(tabs[i])[0];
@@ -62,86 +307,40 @@
 						this.tabGroupToElems[groupID] = [];
 					}
 					tabItem = tabs[i][groupID];
-					groupName = tabItem.name;
-					if (tabItem.hasOwnProperty('color')) {
-						groupColor = tabItem.color;
-					}
 					if (tabItem.hasOwnProperty('id')) {
-						tabID = this.tabID(groupID);
+						tabID = this.IDtoTabID(groupID);
 					}
-					elem.appendChild(this.create_tab(tabID, groupName, groupColor, tabItem, i === 0, tabItem.checked));
+					this._add_tab(tabWrap, tabID, tabItem, i === 0);
 					this.tabIDs.push(tabID);
 
-					box = document.createElement('div');
-					box.id = tabID + "_box";
-					box.className = tabItem.className + "_box";
-					box.style.width = "100%";
-					box.style.height = "100%";
-					box.style.overflow = "auto";
-					if (tabItem.hasOwnProperty('active') && tabItem['active']) {
-						box.style.display = "block";
-					} else {
-						box.style.display = "none";
-					}
-					boxArea.appendChild(box);
-					if (this.currentTab === null) {
-						this.currentTab = box;
-						this.currentGroupName = groupName;
-						this.currentGroupID = groupID;
-						this.groupIDToName[groupID] = groupName;
-					}
+					box = this._add_box(boxArea, tabID, tabItem);
 					this.tabGroupToElems[groupID].push(box);
+
+					if (this.currentBoxArea === null) {
+						this.currentBoxArea = box;
+						this.currentGroupName = tabItem.name;
+						this.currentGroupID = groupID;
+						this.groupIDToName[groupID] = tabItem.name;
+					}
 				}
 			}
 			if (this.authority.isGroupManipulable()) {
 				// 上へボタン
-				elem = document.createElement('div');
-				elem.className = "group_tab_up" + " " + "group_tab_up_" + this.type;
-				span = document.createElement('span');
-				span.className = "group_tab_up_label";
-				elem.setAttribute("title", i18next.t("move_up"));
-				elem.appendChild(span);
-				elem.onclick = function () {
-					this.emit(GroupBox.EVENT_GROUP_UP, null, this.currentGroupID);
-				}.bind(this);
-				tabArea.appendChild(elem);
+				this._add_updown_button(tabArea, "up");
 
 				// 下へボタン
-				elem = document.createElement('div');
-				elem.className = "group_tab_down" + " " + "group_tab_down_" + this.type;
-				span = document.createElement('span');
-				span.className = "group_tab_down_label";
-				elem.setAttribute("title",  i18next.t("move_down"));
-				elem.appendChild(span);
-				elem.onclick = function () {
-					this.emit(GroupBox.EVENT_GROUP_DOWN, null, this.currentGroupID);
-				}.bind(this);
-				tabArea.appendChild(elem);
+				this._add_updown_button(tabArea, "down");
 
 				// 追加ボタン
-				elem = document.createElement('div');
-				elem.className = "group_tab_append" + " " + "group_tab_down_" + this.type;
-				span = document.createElement('span');
-				span.className = "group_tab_append_label";
-				span.innerHTML = "+";
-				elem.setAttribute("title", i18next.t('add_new_group'));
-				elem.appendChild(span);
-				elem.onclick = function () {
-					window.input_dialog.text_input({
-							name : i18next.t('new_group'),
-							initialValue :  "",
-							okButtonName : "OK",
-						}, function (value) {
-							this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
-						}.bind(this));
-				}.bind(this);
-				tabArea.appendChild(elem);
+				this._add_append_button(tabArea);
 			}
 		}
 	};
 
-	GroupBox.prototype.get_current_tab = function () {
-		return this.currentTab;
+
+
+	GroupBox.prototype.get_current_box_area = function () {
+		return this.currentBoxArea;
 	};
 
 	GroupBox.prototype.get_tab = function (group) {
@@ -152,7 +351,7 @@
 			tab = this.setting.tabs[i];
 			if (Object.keys(tab)[0] === group) {
 				tabItem = tab[Object.keys(tab)[0]]; 
-				return document.getElementById(this.tabID(tabItem.id) + "_box");
+				return document.getElementById(this.IDtoTabID(tabItem.id) + "_box");
 			} 
 		}
 		return null;
@@ -160,162 +359,6 @@
 
 	GroupBox.prototype.get_current_group_id = function () {
 		return this.currentGroupID;
-	};
-
-	GroupBox.prototype.tabID = function (id) {
-		return this.container.id + "_" + id;
-	};
-
-	GroupBox.prototype.fromTabID = function (tabid) {
-		return tabid.split(this.container.id + "_").join("");
-	}
-
-	GroupBox.prototype.addcheckbox = function (group_div, tabID, is_checked) {
-		var checkbox = document.createElement('input');
-		checkbox.id = 'display_check_' + tabID;
-		checkbox.className = "display_group_checkbox";
-		checkbox.type = 'checkbox';
-		group_div.appendChild(checkbox);
-		checkbox.onchange = function (tabID) {
-			this.emit(GroupBox.EVENT_GROUP_CHECK_CAHNGED, null, this.fromTabID(tabID), checkbox.checked);
-		}.bind(this, tabID);
-		
-		checkbox.onclick = function (evt) { 
-			evt.stopPropagation();
-		};
-
-		checkbox.checked = is_checked;
-
-		// group_div.onclick = (function (tabID) {
-		// 	return function (evt) {
-		// 		var checkbox = document.getElementById('display_check_' + tabID);
-		// 		checkbox.checked = !checkbox.checked; 
-		// 		//checkFunction(self, checkbox, tabID);
-		// 		this.emit(GroupBox.EVENT_DISPLAYCHECK_CHANGED, null, tabID, checkbox.checked);
-		// 	}.bind(this);
-		// }.bind(this, tabID)());
-	}
-
-	/*
-		<div id="display_tab_title" class="display_tab_title"><span class="active" id="display_tab_link">Display</span></div>
-		<div id="content_tab_title" class="content_tab_title active"><span id="content_tab_link">Content</span></div>
-		..
-	*/
-	GroupBox.prototype.create_tab = function (tabID, groupName, groupColor, tabContent, is_active, is_checked) {
-		var inner_group_div,
-			elem,
-			link,
-			setting_button,
-			span;
-		inner_group_div = document.createElement('div');
-		inner_group_div.className = "inner_group_div"
-		elem = document.createElement('div');
-		elem.appendChild(inner_group_div)
-		elem.id = tabID;
-		elem.className = is_active ? tabContent.className + " active" : tabContent.className;
-		elem.style.cursor = "pointer";
-		if (!groupColor) {
-			if (this.type === GroupBox.TYPE_DISPLAY) {
-				elem.style.backgroundColor = "#0080FF";
-			} else {
-				elem.style.backgroundColor = "rgb(54,187,68)";
-			}
-		}
-		if (groupColor) {
-			elem.style.backgroundColor = groupColor;
-		}
-
-		if (this.type === GroupBox.TYPE_DISPLAY) {
-			this.addcheckbox(inner_group_div, tabID, is_checked);
-		}
-		
-		this.tabGroupToElems[this.fromTabID(tabID)].push(elem);
-		this.groupIDToName[ this.fromTabID(tabID)] = groupName;
-		link = document.createElement('span');
-		link.id = tabID + "_link";
-		link.className = "group_tab_link" + " " + "group_tab_link_" + this.type;
-		link.innerHTML = groupName;
-		elem.onclick = function (evt) {
-			var i,
-				tabElem;
-			for (i = 0; i < this.tabIDs.length; i = i + 1) {
-				document.getElementById(this.tabIDs[i] + "_box").style.display = "none";
-				tabElem = document.getElementById(this.tabIDs[i]);
-				tabElem.className = tabElem.className.split(" active").join("");
-			}
-			tabElem = document.getElementById(tabID); 
-			tabElem.className = tabElem.className + " active";
-			document.getElementById(tabID + "_box").style.display = "block";
-			if (tabContent.hasOwnProperty('func')) {
-				tabContent.func();
-			}
-			this.currentTab = document.getElementById(tabID + "_box");
-			this.currentGroupName = groupName;
-			this.currentGroupID = this.fromTabID(tabID);
-			this.emit(GroupBox.EVENT_GROUP_CHANGED, null, evt);
-		}.bind(this);
-		inner_group_div.appendChild(link);
-
-		if ( this.fromTabID(tabID) !== Constants.DefaultGroup && this.authority.isGroupManipulable()) {
-			setting_button = document.createElement('div');
-			setting_button.className = "group_tab_setting";
-			setting_button.onclick = (function (self, groupName) {
-				return function (evt) {
-					var menu = document.getElementById('group_setting_menu'),
-						background = new window.PopupBackground(),
-						delete_button = document.getElementById('group_setting_delete'),
-						name_button = document.getElementById('group_setting_name'),
-						color_button = document.getElementById('group_setting_color');
-
-					menu.style.display = "block";
-					menu.style.top = evt.clientY + "px";
-					menu.style.left = evt.clientX + "px";
-					background.show();
-					
-					background.on('close', (function (menu) {
-						return function () {
-							menu.style.display = "none";
-						}
-					}(menu)));
-
-					delete_button.onclick = function () {
-						menu.style.display = "none";
-						background.close();
-						this.emit(GroupBox.EVENT_GROUP_DELETE, null, this.fromTabID(tabID));
-					}.bind(self);
-
-					name_button.onclick = function () {
-						window.input_dialog.text_input({
-								name : i18next.t('change_group_name'),
-								initialValue :  groupName,
-								okButtonName : "OK",
-							}, function (value) {
-								this.emit(GroupBox.EVENT_GROUP_EDIT_NAME, null,  this.fromTabID(tabID), value);
-							}.bind(this));
-						menu.style.display = "none";
-						background.close();
-					}.bind(self);
-
-					color_button.onclick = function () {
-						window.input_dialog.color_input({
-								name : i18next.t('change_group_color'),
-								initialValue : groupColor,
-								okButtonName : "OK"
-							}, function (value) {
-								this.emit(GroupBox.EVENT_GROUP_EDIT_COLOR, null,  this.fromTabID(tabID), value);
-							}.bind(this));
-						menu.style.display = "none";
-						background.close();
-					}.bind(self);
-
-				};
-			}(this, groupName));
-			span = document.createElement('span');
-			span.className = "group_tab_setting_label";
-			setting_button.appendChild(span);
-			inner_group_div.appendChild(setting_button);
-		}
-		return elem;
 	};
 
 	GroupBox.prototype.get_tabgroup_to_elems = function () {
@@ -339,17 +382,17 @@
 		return tab.className.indexOf('active') >= 0;
 	}
 
-	// タブが切り替わった時呼ばれるイベント
+	// グループ選択が切り替わった時呼ばれるイベント
 	GroupBox.EVENT_GROUP_CHANGED = "group_changed";
 	// グループのチェックの変更
 	GroupBox.EVENT_GROUP_CHECK_CAHNGED = "group_check_changed";
-	// タブのxを押したときに呼ばれるイベント
+	// グループ削除イベント
 	GroupBox.EVENT_GROUP_DELETE = "group_delete";
-	// タブの+を押したときに呼ばれるイベント
+	// グループ追加イベント
 	GroupBox.EVENT_GROUP_APPEND = "group_append";
-	//タブを1つ上に移動
+	// グループを1つ上に移動
 	GroupBox.EVENT_GROUP_UP = "group_up";
-	// タブを1つ下に移動
+	// グループを1つ下に移動
 	GroupBox.EVENT_GROUP_DOWN = "group_down";
 	// グループ色変更
 	GroupBox.EVENT_GROUP_EDIT_COLOR = "group_edit_color";

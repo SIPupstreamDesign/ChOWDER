@@ -1118,15 +1118,22 @@
 		 * @param {String} groupID 変更先のグループID
 		 */
 		gui.on("group_down", function (err, groupID) {
-			store.for_each_group(function (i, group) {
+			var iterateGroupFunc = store.for_each_content_group.bind(store),
+				targetGroupList = store.get_content_group_list();
+			if (Validator.isDisplayTabSelected()) {
+				iterateGroupFunc = store.for_each_display_group.bind(store);
+				targetGroupList = store.get_display_group_list();
+			}
+			iterateGroupFunc(function (i, group) {
 				var target;
-				if (group.id === groupID) {
-					if (i > 0 && i < (store.get_group_list().length - 1)) {
+				if (group.id === groupID && groupID !== Constants.DefaultGroup) {
+					if (i > 0 && i < (targetGroupList.length - 1)) {
 						target = {
 							id: group.id,
 							index: i + 2
 						};
 						connector.send('ChangeGroupIndex', target, function (err, reply) {
+							if (err) { console.error(err); }
 							console.log("ChangeGroupIndex done", err, reply);
 						});
 						return true;
@@ -1140,15 +1147,22 @@
 		 * @param {String} groupID 変更先のグループID
 		 */
 		gui.on("group_up", function (err, groupID) {
-			store.for_each_group(function (i, group) {
+			var iterateGroupFunc = store.for_each_content_group.bind(store),
+				targetGroupList = store.get_content_group_list();
+			if (Validator.isDisplayTabSelected()) {
+				iterateGroupFunc = store.for_each_display_group.bind(store);
+				targetGroupList = store.get_display_group_list();
+			}
+			iterateGroupFunc(function (i, group) {
 				var target;
-				if (group.id === groupID) {
-					if (i > 1 && i <= (store.get_group_list().length - 1)) {
+				if (group.id === groupID && groupID !== Constants.DefaultGroup) {
+					if (i > 1 && i <= (targetGroupList.length - 1)) {
 						target = {
 							id: group.id,
 							index: i - 1
 						};
 						connector.send('ChangeGroupIndex', target, function (err, reply) {
+							if (err) { console.error(err); }
 							console.log("ChangeGroupIndex done", err, reply);
 						});
 						return true;
@@ -1162,8 +1176,7 @@
 		 */
 		gui.on("group_edit_name", function (err, groupID, groupName) {
 			store.for_each_group(function (i, group) {
-				var oldName,
-					targetMetaDataList = [];
+				var oldName;
 				if (group.id === groupID) {
 					oldName = group.name;
 					group.name = groupName;

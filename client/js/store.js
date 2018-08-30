@@ -11,6 +11,9 @@
 		this.videoDict = {};
 		this.videoElemDict = {};
 		this.cursorColor = 'rgb(255, 255, 255)';
+
+		this.contentGroupList = [];
+		this.displayGroupList = [];
 	};
 	
 	// isInitialized
@@ -40,8 +43,14 @@
 	};
 
 	// group List
-	Store.prototype.set_group_list = function (grouplist) {
-		this.groupList = grouplist;
+	Store.prototype.set_group_list = function (grouplist, displayGroupList) {
+		this.contentGroupList = grouplist;
+		this.displayGroupList = displayGroupList;
+
+		var groupListMerged = [];
+		Array.prototype.push.apply(groupListMerged, grouplist);
+		Array.prototype.push.apply(groupListMerged, displayGroupList);
+		this.groupList = groupListMerged;
 		this.groupDict = {};
 		this.for_each_group(function (i, group) {
 			this.groupDict[group.id] = group;
@@ -49,6 +58,12 @@
 	};
 	Store.prototype.get_group_list = function () {
 		return this.groupList;
+	};
+	Store.prototype.get_content_group_list = function () {
+		return this.contentGroupList;
+	};
+	Store.prototype.get_display_group_list = function () {
+		return this.displayGroupList;
 	};
 
 	// group Dict
@@ -60,6 +75,22 @@
 		var i;
 		for (i = 0; i < this.groupList.length; ++i) {
 			if (func(i, this.groupList[i]) === true) {
+				break;
+			}
+		}
+	};
+	Store.prototype.for_each_content_group = function (func) {
+		var i;
+		for (i = 0; i < this.contentGroupList.length; ++i) {
+			if (func(i, this.contentGroupList[i]) === true) {
+				break;
+			}
+		}
+	};
+	Store.prototype.for_each_display_group = function (func) {
+		var i;
+		for (i = 0; i < this.displayGroupList.length; ++i) {
+			if (func(i, this.displayGroupList[i]) === true) {
 				break;
 			}
 		}

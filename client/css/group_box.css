@@ -15,7 +15,7 @@
 }
 
 
-.group_tab {
+.content_tab {
 	background: rgb(54,187,68);
 	border: 1px solid rgba(255, 255, 255, 0.3);
 	top: 5px;
@@ -178,7 +178,7 @@
 	background-color :rgb(21, 89, 156);
 }
 
-.group_tab.active {
+.content_tab.active {
 	border: 3px solid white;
 }
 

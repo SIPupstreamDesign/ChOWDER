@@ -280,7 +280,7 @@
 						"group_default" : {
 							id : Constants.DefaultGroup,
 							name : "default",
-							className : "group_tab",
+							className : Constants.TabIDContent,
 							func : function () {},
 							active : true
 						}
@@ -905,10 +905,6 @@
 				var container = document.getElementById('context_menu_change_group_submenu');
 				container.style.display = "none";
 			}
-			if (!on_change_displaygroup && !on_change_displaygroup_item) {
-				var container = document.getElementById('context_menu_change_displaygroup_submenu');
-				container.style.display = "none";
-			}
 			if (!on_add_content && !on_add_content_item) {
 				var container = document.getElementById('context_menu_add_content_submenu');
 				container.style.display = "none";
@@ -1499,7 +1495,7 @@
 			searchSetting = { groups : [], colors : [] },
 			layoutSetting = { tabs : [] },
 			groupName,
-			tab = {},
+			contentGroupTab = {},
 			layoutGroupTab = {},
 			displayGroupTab = {},
 			groupColor,
@@ -1509,11 +1505,11 @@
 			groupName = groupList[i].name;
 			groupColor = groupList[i].color;
 			groupID = groupList[i].id;
-			tab = {};
-			tab[groupID] = {
+			contentGroupTab = {};
+			contentGroupTab[groupID] = {
 				id : groupID,
 				name : groupName,
-				className : "group_tab",
+				className : Constants.TabIDContent,
 				color : groupColor,
 				active : true
 			};
@@ -1525,7 +1521,7 @@
 				color : groupColor,
 				active : true
 			};
-			contentSetting.tabs.push(tab);
+			contentSetting.tabs.push(contentGroupTab);
 			searchSetting.groups.push({
 				id : groupID,
 				name : groupName
@@ -1752,13 +1748,13 @@
 		return document.getElementById('content_preview_area');
 	};
 	ControllerGUI.prototype.get_content_area = function () {
-		return this.groupBox ? this.groupBox.get_current_tab() : null;
+		return this.groupBox ? this.groupBox.get_current_box_area() : null;
 	};
 	ControllerGUI.prototype.get_search_area = function () {
 		return this.searchBox ? document.getElementsByClassName('search_item_wrapper')[0] : null;
 	};
 	ControllerGUI.prototype.get_layout_area = function () {
-		return this.layoutBox ? this.layoutBox.get_current_tab() : null;
+		return this.layoutBox ? this.layoutBox.get_current_box_area() : null;
 	};
 	ControllerGUI.prototype.get_content_area_by_group = function (group) {
 		return this.groupBox ? this.groupBox.get_tab(group) : null;
@@ -1790,7 +1786,7 @@
 		this.tabs.change_tab(tabid);
 	};
 	ControllerGUI.prototype.get_display_area = function () {
-		return this.displayBox ? this.displayBox.get_current_tab() : null;
+		return this.displayBox ? this.displayBox.get_current_box_area() : null;
 	};
 	ControllerGUI.prototype.get_list_elem = function (id) {
 		return document.getElementById("onlist:" + id);
