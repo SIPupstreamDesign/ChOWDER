@@ -1,6 +1,7 @@
 #!/bin/sh
 
-pushd $(dirname $0)
+ORIGIN=`pwd`
+cd `dirname $0`
 
 OSNAME=`uname`
 if [ ${OSNAME} = "Linux" ]; then
@@ -19,4 +20,4 @@ npm install
 cd tileimage
 npm install
 
-popd
+cd $ORIGIN
