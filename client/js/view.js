@@ -734,14 +734,29 @@
 
 								pdf.getPage(p).then(function (page) {
 									var viewport = page.getViewport(width / page.getViewport(1).width);
-			
-									elem.width = viewport.width;
-									elem.height = viewport.height;
+
+									var orgAspect = metaData.orgWidth / metaData.orgHeight;
+									var pageAspect = viewport.width / viewport.height;
+
+									elem.width = width;
+									elem.height = width / orgAspect;
+
+									var transform = [ 1, 0, 0, 1, 0, 0 ];
+									if ( orgAspect < pageAspect ) {
+										var margin = ( 1.0 / orgAspect - 1.0 / pageAspect ) * width;
+										transform[ 5 ] = margin / 2;
+									} else {
+										margin = ( orgAspect - pageAspect ) * width;
+										transform[ 4 ] = margin / 2;
+										transform[ 0 ] = ( width - margin ) / width;
+										transform[ 3 ] = transform[ 0 ];
+									}
 
 									lastTask = lastTask.then(function () {
 										return page.render({
 											canvasContext: context,
-											viewport: viewport
+											viewport: viewport,
+											transform: transform
 										});
 									});
 								});
