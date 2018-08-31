@@ -72,8 +72,8 @@ function ws_request(io, ws2) { // for http or https
 		console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
 		
 		// save connection with id
-		connection.id = id_counter;
-		ws2_connections[id_counter] = connection;
+		connection.id = util.generateUUID8() + String(id_counter);
+		ws2_connections[connection.id] = connection;
 		id_counter = id_counter + 1;
 		
 		operator.registerWSEvent(connection, io, ws2);
