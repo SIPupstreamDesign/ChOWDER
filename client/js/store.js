@@ -5,6 +5,7 @@
 
 	var Store = function () {
 		this.isInitialized = false;
+		this.virtualDisplayDict = {};
 		this.groupList = [];
 		this.groupDict = {};
 		this.metaDataDict = {};
@@ -32,6 +33,14 @@
 		for (i in this.videoElemDict) {
 			this.delete_video_elem(i);
 		}
+	};
+
+	// virtual display
+	Store.prototype.set_virtual_display_metadata = function (groupID, metaData) {
+		this.virtualDisplayDict[groupID] = metaData;
+	};
+	Store.prototype.get_virutal_display_metadata = function (groupID) {
+		return this.virtualDisplayDict[groupID];
 	};
 
 	// group
@@ -180,7 +189,8 @@
 	/**
 	 * グループの色を返す
 	 */
-	Store.prototype.get_group_color = function (groupID) {
+	Store.prototype.get_group_color = function (meta) {
+		var groupID = meta.group;
 		this.for_each_group(function (i, group) {
 			if (group.id === groupID) {
 				if (group.color) {
@@ -188,6 +198,9 @@
 				}
 			}
 		});
+		if (meta.type === Constants.TypeContent) {
+			return Constants.ContentSelectColor;
+		}
 		return Constants.ContentSelectColor;
 	};
 
@@ -195,19 +208,25 @@
 	 * 枠色を返す
 	 */
 	Store.prototype.get_border_color = function (meta) {
+		if (Validator.isVirtualDisplayType(meta)) {
+			return Constants.WindowSelectColor;
+		}
 		if (Validator.isWindowType(meta)) {
 			if (meta.hasOwnProperty('color')) {
 				return meta.color;
 			}
 			return "#0080FF";
 		}
-		return this.get_group_color(meta.group);
+		return this.get_group_color(meta);
 	};
 
 	/**
 	 * リストエレメントのボーダーカラーをタイプ別に返す
 	 */
 	Store.prototype.get_list_border_color = function (meta) {
+		if (Validator.isVirtualDisplayType(meta)) {
+			return "white";
+		}
 		if (Validator.isWindowType(meta)) {
 			if (meta.hasOwnProperty('reference_count') && parseInt(meta.reference_count, 10) <= 0) {
 				return "gray";

@@ -15,31 +15,46 @@
 	};
 
 	/**
+	 * メタデータがVirtualDisplayタイプであるか返す
+	 */
+	Validator.prototype.isVirtualDisplayType = function (meta) {
+		return (meta.type === Constants.TypeVirtualDisplay);
+	}
+
+	/**
 	 * メタデータがwindowタイプであるか返す
 	 */
 	Validator.prototype.isWindowType = function (meta) {
-		return (meta.type === Constants.TypeWindow);
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeWindow);
 	}
 
 	/**
 	 * メタデータがimage/url/textなどのコンテンツタイプであるか返す
 	 */
 	Validator.prototype.isContentType = function (meta) {
-		return (meta.type !== Constants.TypeWindow && meta.type !== Constants.TypeLayout);
+		return (meta.hasOwnProperty('type') && 
+			(meta.type !== Constants.TypeWindow && meta.type !== Constants.TypeLayout && meta.type !== Constants.TypeVirtualDisplay));
 	}
 	
 	/**
 	 * メタデータがレイアウトタイプであるか返す
 	 */
 	Validator.prototype.isLayoutType = function (meta) {
-		return (meta.type === Constants.TypeLayout);
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeLayout);
 	}
 	
 	/**
 	 * メタデータがテキストタイプであるか返す
 	 */
 	Validator.prototype.isTextType = function (meta) {
-		return (meta.type === Constants.TypeText);
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeText);
+	}
+
+	/**
+	 * メタデータがVirtualDisplayであるか返す
+	 */
+	Validator.prototype.isVirtualDisplayID = function (id) {
+		return (id.indexOf(Constants.WholeWindowListID) === 0 || id.indexOf(Constants.WholeWindowID) === 0);
 	}
 
 	/**

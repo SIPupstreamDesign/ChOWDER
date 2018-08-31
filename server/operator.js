@@ -161,7 +161,8 @@
 			orgHeight : 1000,
 			splitX : 1,
 			splitY : 1,
-			scale : 1.0
+			scale : 1.0,
+			type : "virtual_display"
 		};
 	}
 
@@ -2208,6 +2209,10 @@
 			});
 		} else {
 			textClient.hgetall(virtualDisplayIDStr, function (err, data) {
+				if (!err && !data.hasOwnProperty('type')) {
+					data.type = "virtual_display";
+					setVirtualDisplay(data);
+				}
 				if (endCallback) {
 					if (data) {
 						endCallback(data);
@@ -3792,6 +3797,20 @@
 				resultCallback(err, reply);
 			}
 		};
+	};
+	
+	/**
+	 * updateVirtualDisplay処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateVirtualDisplay
+	 */
+	function post_updateVirtualDisplay(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateVirtualDisplay, reply);
+			io_connector.broadcast(io, Command.UpdateVirtualDisplay, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
 	}
 	
 	/**
@@ -3906,7 +3925,7 @@
 		});
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
@@ -4147,7 +4166,7 @@
 		});
 
         io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {

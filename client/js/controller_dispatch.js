@@ -1094,13 +1094,11 @@
 		 */
 		gui.on("group_select_changed", function (err, groupID) {
 			if (gui.is_active_tab(Constants.TabIDDisplay)) {
-				var elem = document.getElementById(Constants.WholeWindowListID + "_" + groupID);
-				if (!elem) {
+				connector.send('GetVirtualDisplay', {group : groupID}, function (err, data) {
 					state.set_display_selected_group(groupID);
-					// var divElem = controller.create_whole_window(groupID);
-					// var displayArea = gui.get_display_area();
-					// displayArea.insertBefore(divElem, displayArea.firstChild);
-				}
+					controller.removeVirtualDisplay();
+					controller.doneGetVirtualDisplay(err, data);
+				});
 			}
 		});
 
@@ -1472,6 +1470,12 @@
 				controller.doneGetWindowMetaData(null, metaData);
 				gui.change_window_border_color(metaData);
 			}
+		});
+
+		// virtual displayが更新されたときにブロードキャストされてくる.
+		connector.on("UpdateVirtualDisplay", function (data) {
+			controller.removeVirtualDisplay();
+			controller.doneGetVirtualDisplay(null, data);
 		});
 
 		// グループが更新されたときにブロードキャストされてくる.

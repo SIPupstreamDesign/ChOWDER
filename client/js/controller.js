@@ -340,7 +340,6 @@
 			previewArea = gui.get_display_preview_area();
 			
 		console.log("setupSplit");
-		
 		//console.log(splitWholes);
 		for (i in splitWholes) {
 			if (splitWholes.hasOwnProperty(i)) {
@@ -413,6 +412,8 @@
 		}
 		
 		state.for_each_dragging_id(function (i, draggingID) {
+			if (Validator.isVirtualDisplayID(draggingID)) return;
+
 			// detect content list area
 			if (gui.is_listview_area2(evt, state.get_mousedown_pos()) && gui.is_listview_area(evt)) {
 				return;
@@ -540,7 +541,7 @@
 
 			
 			if (metaData) {
-				if (id === Constants.WholeWindowID ||
+				if (id.indexOf(Constants.WholeWindowID) === 0 ||
 					(!Validator.isDisplayTabSelected() && Validator.isWindowType(metaData)) ||
 					(Validator.isDisplayTabSelected() && Validator.isContentType(metaData))) {
 					childs = otherPreviewArea.childNodes;
@@ -678,6 +679,21 @@
 		manipulator.clearDraggingManip();
 	}
 
+	Controller.prototype.removeVirtualDisplay = function () {
+		var i,
+			previewArea = gui.get_display_preview_area(),
+			preWhole = document.getElementsByClassName("whole_screen_elem"),
+			screenElems = document.getElementsByClassName("screen");
+
+		if (preWhole[0]) {
+			previewArea.removeChild(preWhole[0]);
+		}
+		for (i = screenElems.length - 1; i >= 0; --i) {
+			if (screenElems[i].id.indexOf("whole_sub_window") >= 0) {
+				previewArea.removeChild(screenElems[i]);
+			}
+		}
+	}
 
 	/**
 	 * VirtualScreen更新
@@ -688,7 +704,6 @@
 		var i,
 			whole = vscreen.getWhole(),
 			screens = vscreen.getScreenAll(),
-			split_wholes = vscreen.getSplitWholes(),
 			s,
 			wholeElem,
 			controllerData = this.getControllerData(),
@@ -714,7 +729,16 @@
 				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 			if (screenElem) {
-				if (controllerData.isGroupChecked(Constants.DefaultGroup)) {
+				var isvisible = false;
+				if (Validator.isVisible(windowData)) {
+					if (controllerData.isGroupChecked(windowData.group)) {
+						isvisible = true;
+					}
+					if (!store.get_group_dict().hasOwnProperty(windowData.group)) {
+						isvisible = true;
+					}
+				}
+				if (isvisible) {
 					screenElem.style.display = "block";
 				} else {
 					screenElem.style.display = "none";
@@ -723,7 +747,7 @@
 				//vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 		} else {
-			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
+			gui.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
 			
 			// 全可視コンテンツの配置を再計算.
 			store.for_each_metadata(function (i, metaData) {
@@ -738,18 +762,13 @@
 			});
 			
 			// Virtual Displayを生成して配置.
-			wholeElem = document.getElementById(Constants.WholeWindowID + "_" + Constants.DefaultGroup);
+			wholeElem = document.getElementById(Constants.WholeWindowID + "_" + state.get_display_selected_group());
 			if (!wholeElem) {
 				wholeElem = document.createElement('span');
 				wholeElem.className = "whole_screen_elem";
-				wholeElem.id = Constants.WholeWindowID + "_" + Constants.DefaultGroup;
+				wholeElem.id = Constants.WholeWindowID + "_" + state.get_display_selected_group();
 				this.setupWindow(wholeElem, wholeElem.id);
 				previewArea.appendChild(wholeElem);
-			}
-			if (controllerData.isGroupChecked(Constants.DefaultGroup)) {
-				wholeElem.style.display = "block";
-			} else {
-				wholeElem.style.display = "none";
 			}
 			vscreen_util.assignScreenRect(wholeElem, whole);
 			
@@ -774,11 +793,14 @@
 							}
 						}
 						if (screenElem) {
-							var isvisible = true;
-							if (controllerData.isGroupChecked(metaData.group) && Validator.isVisible(metaData)) {
-								isvisible = true;
-							} else {
-								isvisible = false;
+							var isvisible = false;
+							if (Validator.isVisible(metaData)) {
+								if (controllerData.isGroupChecked(metaData.group)) {
+									isvisible = true;
+								}
+								if (!store.get_group_dict().hasOwnProperty(metaData.group)) {
+									isvisible = true;
+								}
 							}
 							vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
 							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
@@ -857,13 +879,9 @@
 		}.bind(this));
 		this.clear_window_list();
 
-		var divElem = this.create_whole_window(Constants.DefaultGroup);
-		var displayArea = gui.get_display_area();
-		if (!document.getElementById(Constants.WholeWindowListID + "_" + Constants.DefaultGroup)) {
-			displayArea.appendChild(divElem);
-		}
-
-		this.updateScreen();
+		this.update_group_list(function () {
+			this.updateScreen();
+		}.bind(this));
 
 		setTimeout(function () {
 			ChangeLanguage(Cookie.getLanguage());
@@ -1205,9 +1223,10 @@
 	Controller.prototype.select = function (id, isListViewArea) {
 		var elem,
 			metaData,
+			mime,
+			wholeMetaData,
 			initialVisible,
-			mime = null,
-			col;
+			groupID;
 		
 		console.log("selectid", id);
 		if (store.has_metadata(id)) {
@@ -1217,22 +1236,26 @@
 			}
 		}
 		
-		if (id.indexOf(Constants.WholeWindowListID) === 0 || id.indexOf(Constants.WholeWindowID) === 0) {
-			gui.init_content_property(metaData ? metaData : {
-				id : id,
-				group : "",
-			}, "", "whole_window");
-			gui.assign_display_property(vscreen.getWhole(), vscreen.getSplitCount());
-			if (gui.get_whole_window_elem() && metaData) {
-				gui.get_whole_window_elem().style.borderColor = store.get_border_color(metaData);
+		if (Validator.isVirtualDisplayID(id)) {
+			groupID = state.get_display_selected_group();
+			wholeMetaData = store.get_virutal_display_metadata(groupID);
+			if (wholeMetaData) {
+				gui.init_content_property(wholeMetaData, "", "whole_window");
+				gui.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
+				if (gui.get_whole_window_elem(groupID)) {
+					gui.get_whole_window_elem(groupID).style.borderColor = store.get_border_color(wholeMetaData);
+				}
+			}
+			if (state.get_selected_id_list().indexOf(id) < 0) {
+				state.get_selected_id_list().push(id);
 			}
 			return;
 		}
 		if (id.indexOf(Constants.WholeSubWindowID) >= 0) {
 			return;
 		}
-		if (gui.get_whole_window_elem()) {
-			gui.get_whole_window_elem().style.borderColor = "white";
+		if (gui.get_whole_window_elem(groupID)) {
+			gui.get_whole_window_elem(groupID).style.borderColor = "white";
 		}
 		elem = this.getElem(id, isListViewArea);
 		if (!elem) {
@@ -1322,11 +1345,22 @@
 	Controller.prototype.unselect = function (id, updateText) {
 		var elem = null,
 			metaData,
-			i;
+			groupID;
 
 		elem = this.getElem(id, true);
 		if (elem) {
+			// 選択されていたメタデータの特定
+			// 通常データ
 			metaData = store.get_metadata(id);
+			if (!metaData) {
+				if (Validator.isVirtualDisplayID(id)) {
+					// VirtualDisplayのデータ
+					groupID = id.split("onlist:").join("");
+					groupID = groupID.split(Constants.WholeWindowListID + "_").join("");
+					groupID = groupID.split(Constants.WholeWindowID + "_").join("");
+					metaData = store.get_virutal_display_metadata(groupID);
+				}
+			}
 			if (Validator.isWindowType(metaData)) {
 				elem.style.border = "";
 				elem.style.borderStyle = "solid";
@@ -1420,7 +1454,7 @@
 				}.bind(this));
 			}
 		}.bind(this));
-		connector.send('GetVirtualDisplay', {type: "all", id: ""}, this.doneGetVirtualDisplay);
+		connector.send('GetVirtualDisplay', {group: Constants.DefaultGroup}, this.doneGetVirtualDisplay);
 		connector.send('GetWindowMetaData', {type: "all", id: ""}, this.doneGetWindowMetaData);
 		this.update_group_list();
 	}
@@ -1546,7 +1580,9 @@
 			orgHeight : whole.orgH,
 			splitX : split.x,
 			splitY : split.y,
-			scale : vscreen.getWholeScale()
+			scale : vscreen.getWholeScale(),
+			type : "virtual_display",
+			group : state.get_display_selected_group()
 		};
 		if (!windowData.orgWidth || isNaN(windowData.orgWidth)) {
 			windowData.orgWidth = Constants.InitialWholeWidth;
@@ -2108,7 +2144,6 @@
 			groupToMeta = {},
 			group,
 			elem,
-			wholeWindowElem,
 			onlistID,
 			metaData,
 			contentArea,
@@ -2150,8 +2185,6 @@
 			// 一旦チェックされているSearch対象グループを取得
 			searchTargetGroups = gui.get_search_target_groups();
 			currentGroup = gui.get_current_group_id();
-			
-			wholeWindowElem = document.getElementById(Constants.WholeWindowListID + "_" +  Constants.DefaultGroup); // 仮
 
 			// Displayタブのグループチェック用の処理
 			this.getControllerData().initGroupCheck(reply.displaygrouplist);
@@ -2162,10 +2195,13 @@
 				state.get_display_selected_group());
 			store.set_group_list(reply.grouplist, reply.displaygrouplist);
 
+			// Virtual Displayはすべてに追加しなおす.
+			store.for_each_display_group(function (i, group) {
+				elem = this.create_whole_window(group.id);
+				gui.get_display_area_by_group(group.id).appendChild(elem);
+			}.bind(this));
+
 			// 元々あったリストエレメントを全部つけなおす
-			if (wholeWindowElem) {
-				gui.get_display_area_by_group(Constants.DefaultGroup).appendChild(wholeWindowElem); // 仮
-			}
 			for (group in groupToElems) {
 				if (groupToElems.hasOwnProperty(group)) {
 					contentArea = gui.get_content_area_by_group(group);
@@ -2214,12 +2250,16 @@
 		if (!store.is_initialized()) { return; }
 
 		var windowData = reply,
-			whole = vscreen.getWhole(),
-			split = vscreen.getSplitCount(),
 			panel = document.getElementById('preview_area_panel__'),
 			cx = (panel.getBoundingClientRect().right - panel.getBoundingClientRect().left) / 2,
 			cy = (panel.getBoundingClientRect().bottom - panel.getBoundingClientRect().top) / 2 + 28;
 		
+		if (windowData.hasOwnProperty('group')) {
+			store.set_virtual_display_metadata(windowData.group, windowData);
+		} else {
+			store.set_virtual_display_metadata(Constants.DefaultGroup, windowData);
+		}
+
 		if (windowData.hasOwnProperty('orgWidth')) {
 			// set virtual displays
 			if (!windowData.orgHeight || isNaN(windowData.orgWidth)) {
@@ -2228,9 +2268,10 @@
 			if (!windowData.orgHeight || isNaN(windowData.orgHeight)) {
 				windowData.orgWidth = Constants.InitialWholeHeight;
 			}
+
 			vscreen.assignWhole(windowData.orgWidth, windowData.orgHeight, cx, cy, vscreen.getWholeScale());
+			vscreen.clearSplitWholes();
 			vscreen.splitWhole(windowData.splitX, windowData.splitY);
-			console.log("doneGetVirtualDisplay", vscreen.getWhole());
 			this.updateScreen();
 		} else {
 			// running first time

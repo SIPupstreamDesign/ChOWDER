@@ -1832,8 +1832,8 @@
 	ControllerGUI.prototype.get_search_elem = function (id) {
 		return document.getElementById("onsearch:" + id);
 	};
-	ControllerGUI.prototype.get_whole_window_elem = function () {
-		return document.getElementById(Constants.WholeWindowListID);
+	ControllerGUI.prototype.get_whole_window_elem = function (groupID) {
+		return document.getElementById(Constants.WholeWindowListID + "_" + groupID);
 	};
 	ControllerGUI.prototype.get_update_content_id = function () {
 		return document.getElementById('update_content_id').innerHTML;
@@ -2057,7 +2057,7 @@
 	ControllerGUI.prototype.assign_content_property = function (json) {
 		content_property.assign_content_property(json);
 	};
-	ControllerGUI.prototype.assign_display_property = function (whole, splitCount) {
+	ControllerGUI.prototype.assign_virtual_display = function (whole, splitCount) {
 		content_property.assign_virtual_display(whole, splitCount);	
 	};
 	content_property.update_display_property = function () {
