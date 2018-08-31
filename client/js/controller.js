@@ -1411,7 +1411,7 @@
 				delete reply.last;
 				this.doneGetMetaData(err, reply, function (err) {
 					if (last) {
-						this.update_group_list(function () {
+						this.update_group_list(function () { // TODO 必要か要調査
 							if (endCallback) {
 								endCallback();
 							}
@@ -1646,10 +1646,12 @@
 			}(this));
 			webRTC.on('icecandidate', function (type, data) {
 				if (type === "tincle") {
+					metaData.from = "controller";
 					connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
 						key : keyStr,
 						candidate: data
 					}), function (err, reply) {});
+					delete metaData.from;
 				}
 			});
 	
@@ -1951,9 +1953,12 @@
 			for (k in this.webRTC) {
 				if (k.indexOf(json.id) >= 0) {
 					this.webRTC[k].close(true);
+					
+					json.from = "controller";
 					connector.sendBinary('RTCClose', json, JSON.stringify({
 						key : k
 					}), function (err, reply) {});
+					delete json.from;
 				}
 			}
 			if (store.has_video_data(json.id)) {

@@ -4013,10 +4013,10 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
-		ws_connector.on(Command.UpdateControllerData, function (data, resultCallback) {
+		ws_connector.on(Command.UpdateControllerData, function (data, resultCallback, socketid) {
 			commandUpdateControllerData(socketid, data, resultCallback);
 		});
-		ws_connector.on(Command.GetControllerData, function (data, resultCallback) {
+		ws_connector.on(Command.GetControllerData, function (data, resultCallback, socketid) {
 			commandGetControllerData(socketid, data, resultCallback);
 		});
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
@@ -4033,6 +4033,7 @@
 			}
 		});
 		ws_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCRequest, data);
 			io_connector.broadcast(io, Command.RTCRequest, data);
 			if (resultCallback) {
 				resultCallback();
@@ -4046,13 +4047,14 @@
 			}
 		});
 		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
-			//ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
 			io_connector.broadcast(io, Command.RTCIceCandidate, data);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 		ws_connector.on(Command.RTCClose, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCClose, data);
 			io_connector.broadcast(io, Command.RTCClose, data);
 			if (resultCallback) {
 				resultCallback();
@@ -4239,6 +4241,7 @@
 			}
 		});
 		io_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCRequest, data);
 			io_connector.broadcast(io, Command.RTCRequest, data);
 			if (resultCallback) {
 				resultCallback();
@@ -4253,13 +4256,14 @@
 		});
 		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
-			//io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 		io_connector.on(Command.RTCClose, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCClose, data);
+			io_connector.broadcast(io, Command.RTCClose, data);
 			if (resultCallback) {
 				resultCallback();
 			}

@@ -659,6 +659,7 @@
 				elem.setAttribute('autoplay', '')
 				elem.setAttribute('preload', "metadata")
 				if (!webRTCDict.hasOwnProperty(rtcKey)) {
+					metaData.from = "view";
 					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
 						var webRTC = new WebRTC();
 						webRTCDict[rtcKey] = webRTC;
@@ -686,10 +687,12 @@
 
 						webRTC.on('icecandidate', function (type, data) {
 							if (type === "tincle") {
+								metaData.from = "view";
 								connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
 									key : rtcKey,
 									candidate: data
 								}), function (err, reply) {});
+								delete metaData.from;
 							}
 						});
 						
@@ -703,6 +706,7 @@
 							}
 						}.bind(rtcKey));
 					});
+					delete metaData.from;
 				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
@@ -1236,9 +1240,12 @@
 						if (elem.parentNode) {
 							elem.parentNode.removeChild(elem);
 						}
+
+						metaData.from = "view";
 						connector.sendBinary('RTCClose', metaData, JSON.stringify({
 							key : rtcKey
 						}), function (err, reply) {});
+						delete metaData.from;
 					}
 				}
 			} else {
@@ -1372,9 +1379,12 @@
 					var rtcKey = getRTCKey(json);
 					if (webRTCDict.hasOwnProperty(rtcKey)) {
 						webRTCDict[rtcKey].close(true);
+
+						json.from = "view";
 						connector.sendBinary('RTCClose', json, JSON.stringify({
 							key : rtcKey
 						}), function (err, reply) {});
+						delete json.from;
 					}
 				}
 				if (!err) {
@@ -1585,6 +1595,7 @@
 		
 		connector.on("RTCClose", function (data) {
 			var metaData = data.metaData;
+			if (metaData.from === "view") { return; }
 			var contentData = data.contentData;
 			var parsed = null;
 			var rtcKey = null;
@@ -1604,6 +1615,7 @@
 		connector.on("RTCIceCandidate", function (data) {
 			//console.error("on RTCIceCandidate")
 			var metaData = data.metaData;
+			if (metaData.from === "view") { return; }
 			var contentData = data.contentData;
 			var parsed = null;
 			var candidate = null;
