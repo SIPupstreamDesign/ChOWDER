@@ -208,43 +208,63 @@
 
 		var query = getQueryParams(location.search) || {};
 		window_id = query.id ? decodeURIComponent(query.id) : window_id;
+		var groupId = undefined;
 
-		if (window_id !== '') {
-			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
-				if (!err && metaData) {
-					var scale = parseFloat(query.scale) || parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
-					metaData.width = wh.width / scale;
-					metaData.height = wh.height / scale;
-					metaData.orgWidth = wh.width;
-					metaData.orgHeight = wh.height;
-					metaData.posx = query.posx || metaData.posx;
-					metaData.posy = query.posy || metaData.posy;
-					connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
-				} else {
-					scale = parseFloat(query.scale) || 1.0;
-					connector.send('AddWindowMetaData', {
-						id: window_id,
-						posx: query.posx || 0,
-						posy: query.posy || 0,
-						width: wh.width / scale,
-						height: wh.height / scale,
-						orgWidth: wh.width,
-						orgHeight: wh.height,
-						visible: true
-					}, doneAddWindowMetaData);
+		var f = function() {
+			if (window_id !== '') {
+				connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
+					if (!err && metaData) {
+						var scale = parseFloat(query.scale) || parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
+						metaData.group = groupId || metaData.group,
+						metaData.width = wh.width / scale;
+						metaData.height = wh.height / scale;
+						metaData.orgWidth = wh.width;
+						metaData.orgHeight = wh.height;
+						metaData.posx = query.posx || metaData.posx;
+						metaData.posy = query.posy || metaData.posy;
+						connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
+					} else {
+						scale = parseFloat(query.scale) || 1.0;
+						connector.send('AddWindowMetaData', {
+							id: window_id,
+							group: groupId,
+							posx: query.posx || 0,
+							posy: query.posy || 0,
+							width: wh.width / scale,
+							height: wh.height / scale,
+							orgWidth: wh.width,
+							orgHeight: wh.height,
+							visible: true
+						}, doneAddWindowMetaData);
+					}
+				});
+			} else {
+				var scale = parseFloat(query.scale) || 1.0;
+				connector.send('AddWindowMetaData', {
+					group: groupId,
+					posx: query.posx || 0,
+					posy: query.posy || 0,
+					width: wh.width / scale,
+					height: wh.height / scale,
+					orgWidth: wh.width,
+					orgHeight: wh.height,
+					visible: true
+				}, doneAddWindowMetaData);
+			}
+		};
+
+		var groupName = decodeURIComponent(query.group || '');
+		if (groupName) {
+			connector.send('GetGroupList', {}, function (err, data) {
+				for (var i = 0; i < data.displaygrouplist.length; i ++) {
+					if (data.displaygrouplist[i].name === groupName) {
+						groupId = data.displaygrouplist[i].id;
+					}
 				}
+				f();
 			});
 		} else {
-			var scale = parseFloat(query.scale) || 1.0;
-			connector.send('AddWindowMetaData', {
-				posx: query.posx || 0,
-				posy: query.posy || 0,
-				width: wh.width / scale,
-				height: wh.height / scale,
-				orgWidth: wh.width,
-				orgHeight: wh.height,
-				visible: true
-			}, doneAddWindowMetaData);
+			f();
 		}
 	}
 
