@@ -1913,7 +1913,7 @@
 		};
 
 		window_view.init(vscreen);
-		connector = window.io_connector;
+		connector = window.ws_connector;
 
 		manipulator.setDraggingOffsetFunc(function (top, left) {
 			state.set_drag_offset_top(top);
@@ -1951,4 +1951,4 @@
 	};
 	///-------------------------------------------------------------------------------------------------------
 
-}(content_property, window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(content_property, window.vscreen, window.vscreen_util, window.manipulator, window.ws_connector));

@@ -2299,4 +2299,4 @@
 		}
 	});
 	
-}(window.vscreen, window.vscreen_util, window.manipulator, window.io_connector));
+}(window.vscreen, window.vscreen_util, window.manipulator, window.ws_connector));
