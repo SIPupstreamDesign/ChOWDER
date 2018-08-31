@@ -3860,7 +3860,7 @@
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerWSEvent(ws_connection, io, ws) {
+	function registerWSEvent(ws_connection, io, ws, ws_connections) {
 		var methods = {};
 
 		console.log("registerWSEvent");

@@ -76,7 +76,7 @@ function ws_request(io, ws2) { // for http or https
 		ws2_connections[connection.id] = connection;
 		id_counter = id_counter + 1;
 		
-		operator.registerWSEvent(connection, io, ws2);
+		operator.registerWSEvent(connection, io, ws2, ws2_connections);
 		
 		connection.on('close', (function (connection) {
 			return function () {
