@@ -1575,6 +1575,7 @@
 		// WebRTC接続要求が来た
 		connector.on('RTCRequest', function (data) {
 			var metaData = data.metaData;
+			if (metaData.from === "controller") { return; }
 			var key = null;
 			try {
 				keyStr = StringUtil.arrayBufferToString(data.contentData.data);
@@ -1595,6 +1596,7 @@
 		// WebRTC切断要求が来た
 		connector.on('RTCClose', function (data) {
 			var metaData = data.metaData;
+			if (metaData.from === "controller") { return; }
 			var key = null;
 			try {
 				keyStr = StringUtil.arrayBufferToString(data.contentData.data);
@@ -1636,6 +1638,7 @@
 
 		connector.on("RTCIceCandidate", function (data) {
 			var metaData = data.metaData;
+			if (metaData.from == "controller") { return; }
 			var contentData = data.contentData;
 			var parsed = null;
 			var candidate = null;
