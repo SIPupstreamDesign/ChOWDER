@@ -731,7 +731,7 @@
 			if (screenElem) {
 				var isvisible = false;
 				if (Validator.isVisible(windowData)) {
-					if (controllerData.isGroupChecked(windowData.group)) {
+					if (windowData.group === state.get_display_selected_group()) {
 						isvisible = true;
 					}
 					if (!store.get_group_dict().hasOwnProperty(windowData.group)) {
@@ -795,7 +795,7 @@
 						if (screenElem) {
 							var isvisible = false;
 							if (Validator.isVisible(metaData)) {
-								if (controllerData.isGroupChecked(metaData.group)) {
+								if (metaData.group === state.get_display_selected_group()) {
 									isvisible = true;
 								}
 								if (!store.get_group_dict().hasOwnProperty(metaData.group)) {
@@ -2279,6 +2279,7 @@
 			gui.update_display_property();
 			this.update_window_data();
 		}
+		manipulator.removeManipulator();
 	};
 	///-------------------------------------------------------------------------------------------------------
 

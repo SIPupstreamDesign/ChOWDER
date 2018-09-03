@@ -242,10 +242,10 @@
 	margin: 4px;
 	color : black;
 }
-.group_tab_link_display {
+/* .group_tab_link_display {
 	position : relative;
 	top : -4px;
-}
+} */
 .inner_group_div {
 	position: absolute;
 	height: 25px;

@@ -185,9 +185,9 @@
 		this.tabGroupToElems[this.TabIDtoID(tabID)].push(elem);
 		this.groupIDToName[ this.TabIDtoID(tabID)] = groupName;
 
-		if (this.type === GroupBox.TYPE_DISPLAY) {
-			this._add_checkbox(inner_group_div, tabID, tabItem.checked);
-		}
+		// if (this.type === GroupBox.TYPE_DISPLAY) {
+		// 	this._add_checkbox(inner_group_div, tabID, tabItem.checked);
+		// }
 		
 		this._add_label(inner_group_div, tabID, groupName);
 

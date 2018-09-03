@@ -44,14 +44,14 @@
 		metaDataDict[windowData.id] = windowData;
 
 		var visible = true;
-		if (windowData.hasOwnProperty("group")) {
-			if (!groupCheckDict.hasOwnProperty(windowData.group)) {
-				visible = false;
-			}
-			if (groupCheckDict[windowData.group] === false) {
-				visible = false;
-			}
-		}
+		// if (windowData.hasOwnProperty("group")) {
+		// 	if (!groupCheckDict.hasOwnProperty(windowData.group)) {
+		// 		visible = false;
+		// 	}
+		// 	if (groupCheckDict[windowData.group] === false) {
+		// 		visible = false;
+		// 	}
+		// }
 
 		if (visible && isVisible(windowData)) {
 			console.log("import window:" + JSON.stringify(windowData));
