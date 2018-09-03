@@ -1457,6 +1457,7 @@
 		connector.on("UpdateWindowMetaData", function (data) {
 			console.log("onUpdateWindowMetaData", data);
 			var i,
+				elem,
 				metaData;
 
 			if (data instanceof Array) {
@@ -1464,11 +1465,19 @@
 					metaData = data[i];
 					controller.doneGetWindowMetaData(null, metaData);
 					gui.change_window_border_color(metaData);
+					if (state.get_selected_id()) {
+						elem = document.getElementById(state.get_selected_id());
+						manipulator.moveManipulator(elem);
+					}
 				}
 			} else {
 				metaData = data;
 				controller.doneGetWindowMetaData(null, metaData);
 				gui.change_window_border_color(metaData);
+				if (state.get_selected_id()) {
+					elem = document.getElementById(state.get_selected_id());
+					manipulator.moveManipulator(elem);
+				}
 			}
 		});
 

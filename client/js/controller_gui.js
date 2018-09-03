@@ -2037,9 +2037,11 @@
 					divElem.style.color = "gray";
 				}
 			} else {
-				if (divElem.style.borderColor !== "white") {
-					divElem.style.borderColor = "white";
-					divElem.style.color = "white";
+				if (divElem.style.borderColor.indexOf("rgb") < 0) { // 選択中だった場合は変更しない
+					if (divElem.style.borderColor !== "white") {
+						divElem.style.borderColor = "white";
+						divElem.style.color = "white";
+					}
 				}
 			}
 		}
