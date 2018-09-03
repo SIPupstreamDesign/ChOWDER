@@ -1249,6 +1249,7 @@
 			if (state.get_selected_id_list().indexOf(id) < 0) {
 				state.get_selected_id_list().push(id);
 			}
+			state.set_last_select_window_id(id);
 			return;
 		}
 		if (id.indexOf(Constants.WholeSubWindowID) >= 0) {
