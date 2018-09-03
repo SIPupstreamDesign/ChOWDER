@@ -1490,9 +1490,9 @@
 			this.emit(window.ControllerGUI.EVENT_GROUP_SELECT_CHANGED, null, id);
 		}.bind(this));
 		
-		groupBox.on('group_check_changed', function (err, groupID, checked) {
-			this.emit(window.ControllerGUI.EVENT_GROUP_CHECK_CHANGED, null, groupID, checked);
-		}.bind(this));
+		// groupBox.on('group_check_changed', function (err, groupID, checked) {
+		// 	this.emit(window.ControllerGUI.EVENT_GROUP_CHECK_CHANGED, null, groupID, checked);
+		// }.bind(this));
 	};
 
 	/**
@@ -1510,7 +1510,7 @@
 	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
 	ControllerGUI.prototype.setGroupList = function (
-		groupList, displayGroupList, groupCheckDict, contentSelectedGroup, displaySelectedGroup
+		groupList, displayGroupList/*, groupCheckDict*/, contentSelectedGroup, displaySelectedGroup
 	) {
 		var contentSetting = { tabs : [] },
 			displaySetting = { tabs : [] },
@@ -1561,8 +1561,8 @@
 				name : groupName,
 				className : Constants.TabIDDisplay,
 				color : groupColor,
-				selected : displaySelectedGroup === groupID,
-				checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
+				selected : displaySelectedGroup === groupID
+				//checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
 			};
 			displaySetting.tabs.push(displayGroupTab);
 		}
@@ -1914,8 +1914,8 @@
 		this.display_scale = scale; 
 	};
 
-	ControllerGUI.prototype.set_group_list = function (grouplist, displayGroupList, groupCheckDict, contentSelectedGroup, displaySelectedGroup) {
-		this.setGroupList(grouplist, displayGroupList, groupCheckDict, contentSelectedGroup, displaySelectedGroup);
+	ControllerGUI.prototype.set_group_list = function (grouplist, displayGroupList/*, groupCheckDict*/, contentSelectedGroup, displaySelectedGroup) {
+		this.setGroupList(grouplist, displayGroupList/*, groupCheckDict*/, contentSelectedGroup, displaySelectedGroup);
 	};
 
 	ControllerGUI.prototype.set_search_result = function (search_result) {
@@ -2008,8 +2008,8 @@
 	};
 
 	// windowコンテンツのインポート
-	ControllerGUI.prototype.import_window = function (metadataDict, windowData, groupCheckDict) {
-		window.window_view.import_window(this, metadataDict, windowData, groupCheckDict);
+	ControllerGUI.prototype.import_window = function (metadataDict, windowData/*, groupCheckDict*/) {
+		window.window_view.import_window(this, metadataDict, windowData/*, groupCheckDict*/);
 		window.window_list.import_window(this, metadataDict, windowData);
 	};
 
@@ -2103,7 +2103,7 @@
 	ControllerGUI.EVENT_GROUP_DELETE_CLICKED = "group_delete_clicked";
 	ControllerGUI.EVENT_GROUP_CHANGE_CLICKED = "group_change_clicked";
 	ControllerGUI.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
-	ControllerGUI.EVENT_GROUP_CHECK_CHANGED = "group_check_changed";
+	//ControllerGUI.EVENT_GROUP_CHECK_CHANGED = "group_check_changed";
 	ControllerGUI.EVENT_GROUP_DOWN = "group_down";
 	ControllerGUI.EVENT_GROUP_UP = "group_up";
 	ControllerGUI.EVENT_GROUP_EDIT_NANE = "group_edit_name";

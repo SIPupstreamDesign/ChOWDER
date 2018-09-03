@@ -28,27 +28,27 @@
 		return tabid.split(this.container.id + "_").join("");
 	}
 
-	/**
-	 * チェックボックスを追加. 
-	 * @param {*} group_div 
-	 * @param {*} tabID 
-	 * @param {*} is_checked 
-	 */
-	GroupBox.prototype._add_checkbox = function (group_div, tabID, is_checked) {
-		var checkbox = document.createElement('input');
-		checkbox.id = 'display_check_' + tabID;
-		checkbox.className = "display_group_checkbox";
-		checkbox.type = 'checkbox';
-		group_div.appendChild(checkbox);
-		checkbox.onchange = function (tabID) {
-			this.emit(GroupBox.EVENT_GROUP_CHECK_CAHNGED, null, this.TabIDtoID(tabID), checkbox.checked);
-		}.bind(this, tabID);
+	// /**
+	//  * チェックボックスを追加. 
+	//  * @param {*} group_div 
+	//  * @param {*} tabID 
+	//  * @param {*} is_checked 
+	//  */
+	// GroupBox.prototype._add_checkbox = function (group_div, tabID, is_checked) {
+	// 	var checkbox = document.createElement('input');
+	// 	checkbox.id = 'display_check_' + tabID;
+	// 	checkbox.className = "display_group_checkbox";
+	// 	checkbox.type = 'checkbox';
+	// 	group_div.appendChild(checkbox);
+	// 	checkbox.onchange = function (tabID) {
+	// 		this.emit(GroupBox.EVENT_GROUP_CHECK_CAHNGED, null, this.TabIDtoID(tabID), checkbox.checked);
+	// 	}.bind(this, tabID);
 		
-		checkbox.onclick = function (evt) { 
-			evt.stopPropagation();
-		};
-		checkbox.checked = is_checked;
-	}
+	// 	checkbox.onclick = function (evt) { 
+	// 		evt.stopPropagation();
+	// 	};
+	// 	checkbox.checked = is_checked;
+	// }
 
 	/**
 	 * 設定ボタンの追加
@@ -394,7 +394,7 @@
 	// グループ選択が切り替わった時呼ばれるイベント
 	GroupBox.EVENT_GROUP_CHANGED = "group_changed";
 	// グループのチェックの変更
-	GroupBox.EVENT_GROUP_CHECK_CAHNGED = "group_check_changed";
+	//GroupBox.EVENT_GROUP_CHECK_CAHNGED = "group_check_changed";
 	// グループ削除イベント
 	GroupBox.EVENT_GROUP_DELETE = "group_delete";
 	// グループ追加イベント

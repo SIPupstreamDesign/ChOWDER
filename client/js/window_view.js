@@ -28,7 +28,7 @@
 	 * @method importWindowToView
 	 * @param {JSON} windowData ウィンドウデータ
 	 */
-	WindowView.prototype.import_window = function (gui, metaDataDict, windowData, groupCheckDict) {
+	WindowView.prototype.import_window = function (gui, metaDataDict, windowData/*, groupCheckDict*/) {
 		var displayArea,
 			screen;
 		if (!Validator.isWindowType(windowData)) {

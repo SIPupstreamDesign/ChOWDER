@@ -1102,15 +1102,15 @@
 			}
 		});
 
-		/**
-		 * Groupのチェックが変更された
-		 */
-		gui.on("group_check_changed", function (err, groupID, checked) {
-			if (gui.is_active_tab(Constants.TabIDDisplay)) {
-				controller.getControllerData().setGroupCheck(groupID, checked);
-				controller.updateScreen();
-			}
-		});
+		// /**
+		//  * Groupのチェックが変更された
+		//  */
+		// gui.on("group_check_changed", function (err, groupID, checked) {
+		// 	if (gui.is_active_tab(Constants.TabIDDisplay)) {
+		// 		controller.getControllerData().setGroupCheck(groupID, checked);
+		// 		controller.updateScreen();
+		// 	}
+		// });
 
 		/**
 		 * Groupを１つ下に

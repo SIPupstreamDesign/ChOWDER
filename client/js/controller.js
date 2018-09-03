@@ -907,7 +907,7 @@
 	 */
 	Controller.prototype.import_window = function (windowData) {
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) { return; }
-		gui.import_window(store.get_metadata_dict(), windowData, this.getControllerData().getGroupCheckDict());
+		gui.import_window(store.get_metadata_dict(), windowData/*, this.getControllerData().getGroupCheckDict()*/);
 	};
 
 	/**
@@ -2188,10 +2188,10 @@
 			currentGroup = gui.get_current_group_id();
 
 			// Displayタブのグループチェック用の処理
-			this.getControllerData().initGroupCheck(reply.displaygrouplist);
+			//this.getControllerData().initGroupCheck(reply.displaygrouplist);
 			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.set_group_list(reply.grouplist, reply.displaygrouplist, 
-				controllerData.getGroupCheckDict(),
+				//controllerData.getGroupCheckDict(),
 				state.get_content_selected_group(),
 				state.get_display_selected_group());
 			store.set_group_list(reply.grouplist, reply.displaygrouplist);

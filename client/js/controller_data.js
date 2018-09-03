@@ -102,38 +102,38 @@
 		return this.cursorColor;
 	};
 
-	ControllerData.prototype.initGroupCheck = function (groupList) {
-		var i,
-			id,
-			groupIDDict = {};
+	// ControllerData.prototype.initGroupCheck = function (groupList) {
+	// 	var i,
+	// 		id,
+	// 		groupIDDict = {};
 			
-		for (i = 0; i < groupList.length; i = i + 1) {
-			groupIDDict[groupList[i].id] = true;
-		}
-		// 存在しないグループがcontrollerDataにあったら消しておく
-		for (id in this.groupCheck) {
-			if (!groupIDDict.hasOwnProperty(id)) {
-				delete this.groupCheck[id];
-			}
-		}
-		// 新規に追加されたグループ分を追加
-		for (i = 0; i < groupList.length; i = i + 1) {
-			if (!this.groupCheck.hasOwnProperty(groupList[i].id)) {
-				this.groupCheck[groupList[i].id] = false;
-			}
-		}
-	};
-	ControllerData.prototype.setGroupCheck = function (groupID, checked) {
-		this.groupCheck[groupID] = checked;
-        this.emit('update', null, this.get());
-	};
-	ControllerData.prototype.getGroupCheckDict = function () {
-		return this.groupCheck;
-	};
-	ControllerData.prototype.isGroupChecked = function (groupID) {
-		if (groupID === undefined) return true;
-		return this.groupCheck[groupID] === true;
-	};
+	// 	for (i = 0; i < groupList.length; i = i + 1) {
+	// 		groupIDDict[groupList[i].id] = true;
+	// 	}
+	// 	// 存在しないグループがcontrollerDataにあったら消しておく
+	// 	for (id in this.groupCheck) {
+	// 		if (!groupIDDict.hasOwnProperty(id)) {
+	// 			delete this.groupCheck[id];
+	// 		}
+	// 	}
+	// 	// 新規に追加されたグループ分を追加
+	// 	for (i = 0; i < groupList.length; i = i + 1) {
+	// 		if (!this.groupCheck.hasOwnProperty(groupList[i].id)) {
+	// 			this.groupCheck[groupList[i].id] = false;
+	// 		}
+	// 	}
+	// };
+	// ControllerData.prototype.setGroupCheck = function (groupID, checked) {
+	// 	this.groupCheck[groupID] = checked;
+    //     this.emit('update', null, this.get());
+	// };
+	// ControllerData.prototype.getGroupCheckDict = function () {
+	// 	return this.groupCheck;
+	// };
+	// ControllerData.prototype.isGroupChecked = function (groupID) {
+	// 	if (groupID === undefined) return true;
+	// 	return this.groupCheck[groupID] === true;
+	// };
 
     ControllerData.EVENT_UPDATE = "update";
     window.ControllerData = ControllerData;
