@@ -1010,32 +1010,6 @@
 
 
 	/**
-	 * 適切な分割サイズを求める. ※tileimageから持ってきた
-	 * @param {number} resolution 解像度
-	 * @param {number} split 分割数
-	 * @returns {number} 分割サイズ
-	 */
-	function calcSplitSize(resolution, split) {
-		var JPEG_BLOCK = 8;
-		var size = resolution / split;
-		return Math.ceil(size / JPEG_BLOCK) * JPEG_BLOCK;
-	};
-
-	function getTileRect(metaData, xindex, yindex) {
-		var rect = {};
-		var width = Number(metaData.orgWidth);
-		var height = Number(metaData.orgHeight);
-		var sizex = calcSplitSize(width, Number(metaData.xsplit));
-		var sizey = calcSplitSize(height, Number(metaData.ysplit));
-		var scale = Number(metaData.width) / width;
-		rect.posx = Number(metaData.posx) + xindex * sizex * scale;
-		rect.posy = Number(metaData.posy) + yindex * sizey * scale;
-		rect.width = Math.min(sizex, width);
-		rect.height = Math.min(sizey, height);
-		return rect;
-	}
-
-	/**
 	 * GetContent終了コールバック
 	 * @param {String} err エラー.なければnull
 	 * @param {Object} data コンテンツデータ
@@ -1206,7 +1180,7 @@
 		for (i = 0; i < Number(metaData.ysplit); ++i) {
 			for (k = 0; k < Number(metaData.xsplit); ++k) {
 				request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
-				rect = getTileRect(metaData, k, i);
+				rect = vscreen_util.getTileRect(metaData, k, i);
 				visible = !vscreen_util.isOutsideWindow(rect, whole);
 				var tileClassName = 'tile_index_' + String(tileIndex);
 
@@ -1220,7 +1194,7 @@
 						// 最初の1個が見つからない場合はimageエレメントを全部作り直す
 						regenerateTileElements(elem, metaData);
 						elem = document.getElementById(metaData.id);
-						vscreen_util.resizeTileImages(elem, metaData, rect.width, rect.height, null);
+						vscreen_util.resizeTileImages(elem, metaData);
 					}
 					
 					if (!previousImage || isReload) {
