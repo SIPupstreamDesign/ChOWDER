@@ -40,6 +40,7 @@
 
 	Cookie.prototype.load = function () {
 		this.getLoginKey();
+		this.getLanguage();
 	};
 
 	/**
