@@ -46,6 +46,16 @@
 			this.webRTC[i].close(true);
 		}
 		this.webRTC = {};
+
+		var metaDataList = [];
+		for (i in store.videoDict) {
+			if (store.has_metadata(i)) {
+				metaDataList.push(store.get_metadata(i));
+			}
+		}
+		if (metaDataList.length > 0) {
+			connector.send('DeleteContent', metaDataList, function () { });
+		}
 	};
 
     /**
