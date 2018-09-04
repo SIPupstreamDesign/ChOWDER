@@ -566,49 +566,7 @@
 	function getRTCKey(metaData) {
 		return metaData.id + "_" + windowData.id + "_" + random_id_for_webrtc;
 	}
-
 	
-	/**
-	 * タイルデータの登録
-	 * @param {*} elem 
-	 * @param {*} metaData 
-	 * @param {*} contentData 
-	 */
-	function assignTile(elem, metaData, contentData) {
-		var mime = "image/jpeg";
-		if (metaData.hasOwnProperty('mime')) {
-			mime = metaData.mime;
-		}
-		var tile;
-		var image;
-		var blob;
-		// 各タイルを求める
-		var count = 0;
-		for (var i = 0; i < contentData.tiles.length; ++i) {
-			tile = contentData.tiles[i];
-			blob = new Blob([tile.contentData], {type: mime});
-			image = new Image();
-
-			image.onload = (function (image, i, tile, elem) {
-				return function () {
-					image.style.position = "absolute";
-					image.style.display = "none";
-					image.className = "tile_index_" + String(i);
-					elem.appendChild(image);
-					++count;
-					if (count === contentData.tiles.length) {
-						vscreen_util.resizeTileImages(elem, metaData);
-						for (var k = 0; k < elem.children.length; ++k) {
-							elem.children[k].style.display = "inline";
-						}
-					}
-				}
-			}(image, i, tile, elem));
-			image.src = URL.createObjectURL(blob);
-		}
-		vscreen_util.assignMetaData(elem, metaData, true, groupDict);
-	}
-
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -770,8 +728,7 @@
 					});
 				}
 			} else if (metaData.type === 'tileimage') {
-				elem.innerHTML = "";
-				assignTile(elem, metaData, contentData);
+				// nothing to do
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -1051,6 +1008,33 @@
 		*/
 	};
 
+
+	/**
+	 * 適切な分割サイズを求める. ※tileimageから持ってきた
+	 * @param {number} resolution 解像度
+	 * @param {number} split 分割数
+	 * @returns {number} 分割サイズ
+	 */
+	function calcSplitSize(resolution, split) {
+		var JPEG_BLOCK = 8;
+		var size = resolution / split;
+		return Math.ceil(size / JPEG_BLOCK) * JPEG_BLOCK;
+	};
+
+	function getTileRect(metaData, xindex, yindex) {
+		var rect = {};
+		var width = Number(metaData.orgWidth);
+		var height = Number(metaData.orgHeight);
+		var sizex = calcSplitSize(width, Number(metaData.xsplit));
+		var sizey = calcSplitSize(height, Number(metaData.ysplit));
+		var scale = Number(metaData.width) / width;
+		rect.posx = Number(metaData.posx) + xindex * sizex * scale;
+		rect.posy = Number(metaData.posy) + yindex * sizey * scale;
+		rect.width = Math.min(sizex, width);
+		rect.height = Math.min(sizey, height);
+		return rect;
+	}
+
 	/**
 	 * GetContent終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -1078,30 +1062,7 @@
 			if (Validator.isLayoutType(metaData)) { return; }
 
 			if (metaData.type === 'tileimage') {
-				var i, k;
-				var tileIndex = 0;
-				var request = JSON.parse(JSON.stringify(metaData));
-				var tileImageData = {
-					content : null, // {metadata : ~, contentData : ~}
-					tiles : [] // [{metadata : ~, contentData : ~}, ... ]
-				};
-				var count = 0;
-				tileImageData.content = contentData;
-				for (i = 0; i < Number(metaData.ysplit); ++i) {
-					for (k = 0; k < Number(metaData.xsplit); ++k) {
-						request.tile_index = tileIndex;
-						connector.send('GetTileContent', request, function (err, data) {
-							if (err) { console.error(err); return; }
-							tileImageData.tiles[Number(data.metaData.tile_index)] = data;
-							++count;
-							if (count === (Number(metaData.ysplit) * Number(metaData.xsplit))) {
-								// コンテンツ登録&表示
-								assignMetaBinary(metaData, tileImageData);
-							}
-						});
-						++tileIndex;
-					}
-				}
+				assignTileImage(metaData, true);
 			} else {
 				// コンテンツ登録&表示
 				assignMetaBinary(metaData, contentData);
@@ -1188,6 +1149,95 @@
 		}
 		return false;
 	}
+
+	/**
+	 * タイル画像の枠を全部再生成する。中身の画像(image.src)は作らない。
+	 * @param {*} elem 
+	 * @param {*} metaData 
+	 */
+	function regenerateTileElements(elem, metaData) {
+		var i, k;
+		var image;
+		var tileIndex = 0;
+		var previewArea = document.getElementById('preview_area');
+		if (!elem) {
+			elem = document.createElement(getTagName(metaData));
+			elem.id = metaData.id;
+			elem.style.position = "absolute";
+			elem.style.color = "white";
+			setupContent(elem, elem.id);
+			insertElementWithDictionarySort(previewArea, elem);
+		}
+		elem.innerHTML = "";
+		for (i = 0; i < Number(metaData.ysplit); ++i) {
+			for (k = 0; k < Number(metaData.xsplit); ++k) {
+				image = new Image();
+				image.style.position = "absolute";
+				image.style.display = "inline";
+				image.className = "tile_index_" + String(tileIndex);
+				elem.appendChild(image);
+				++tileIndex;
+			}
+		}
+	}
+
+	/**
+	 * タイル画像はassignMetaBinaryではなくこちらでコンテンツ生成を行う。
+	 * @param {*} metaData 
+	 * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
+	 */
+	function assignTileImage(metaData, isReload) {
+		var elem = document.getElementById(metaData.id);
+		var i, k;
+		var tileIndex = 0;
+		var request = JSON.parse(JSON.stringify(metaData));
+
+		// ウィンドウ枠内に入っているか判定用
+		var whole = vscreen.transformOrgInv(vscreen.getWhole());
+		whole.x = vscreen.getWhole().x;
+		whole.y = vscreen.getWhole().y;
+
+		var rect;
+		var mime = "image/jpeg";
+		var previousElem = null;
+		var previousImage = null;
+		var visible;
+
+		for (i = 0; i < Number(metaData.ysplit); ++i) {
+			for (k = 0; k < Number(metaData.xsplit); ++k) {
+				request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
+				rect = getTileRect(metaData, k, i);
+				visible = !vscreen_util.isOutsideWindow(rect, whole);
+				var tileClassName = 'tile_index_' + String(tileIndex);
+
+				if (visible) {
+					if (elem && elem.getElementsByClassName(tileClassName).length > 0) {
+						previousElem = elem.getElementsByClassName(tileClassName)[0]
+					}
+					if (previousElem) {
+						previousImage = previousElem.src.length > 0;
+					} else {
+						// 最初の1個が見つからない場合はimageエレメントを全部作り直す
+						regenerateTileElements(elem, metaData);
+						elem = document.getElementById(metaData.id);
+						vscreen_util.resizeTileImages(elem, metaData, rect.width, rect.height, null);
+					}
+					
+					if (!previousImage || isReload) {
+						connector.send('GetTileContent', request, function (err, data) {
+							if (err) { console.error(err); return; }
+							var tileClassName = 'tile_index_' + String(data.metaData.tile_index);
+							var blob = new Blob([data.contentData], {type: mime});
+							var image = elem.getElementsByClassName(tileClassName)[0];
+							image.src = URL.createObjectURL(blob);
+						});
+					}
+				}
+				++tileIndex;
+			}
+		}
+	}
+
 
 	/**
 	 * GetMetaData終了コールバック
@@ -1292,6 +1342,11 @@
 							doneGetContent(err, reply);
 							toggleMark(document.getElementById(json.id), metaData);
 						});
+					}
+					if (json.type === "tileimage") {
+						// window範囲外で非表示になっているタイルが
+						// window範囲内に来ていた場合は、その部分のタイルを読み込む
+						assignTileImage(json, false);
 					}
 					elem = document.getElementById(json.id);
 					vscreen_util.assignMetaData(elem, json, false, groupDict);

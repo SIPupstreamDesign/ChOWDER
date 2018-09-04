@@ -73,7 +73,7 @@
 		}
 	}
 
-	function resizeTileImages(elem, metaData, rect) {
+	function resizeTileImages(elem, metaData, naturalWidth, naturalHeight, rect) {
 		if (!rect) {
 			rect = vscreen.transformOrg(toIntRect(metaData));
 		}
@@ -86,8 +86,8 @@
 		for (var i = 0; i < elem.children.length; ++i) {
 			var image = elem.getElementsByClassName("tile_index_" + String(i))[0];
 			if (image && image.tagName.toLowerCase() === "img") {
-				var w = image.naturalWidth;
-				var h = image.naturalHeight;
+				var w = naturalWidth;
+				var h = naturalHeight;
 				var width = Math.round(w / ow * mw);
 				var height = Math.round(h / oh * mh);
 				image.style.left = posx + "px";
@@ -175,8 +175,6 @@
 				resizeText(elem, rect);
 			} else if (metaData.type === "video") {
 				resizeVideo(elem, rect);
-			} else if (metaData.type === "tileimage") {
-				resizeTileImages(elem, metaData, rect);
 			}
 			
 			if (isVisible(metaData)) {
@@ -330,4 +328,5 @@
 	window.vscreen_util.isInsideWindow = isInsideWindow;
 	window.vscreen_util.isOutsideWindow = isOutsideWindow;
 	window.vscreen_util.resizeTileImages = resizeTileImages;
+	window.vscreen_util.toIntRect = toIntRect;
 }(window.vscreen));
