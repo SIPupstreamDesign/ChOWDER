@@ -4393,7 +4393,8 @@
 	Operator.prototype.setSettingJSON = function (json) {
 		// 毎回上書きするglobal設定
 		changeGlobalSetting("master", json);
-	}
+		Thumbnail.setPreviewWH(Number(json.reductionResolution));
+	};
 	Operator.prototype.getContent = getContent;
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;

@@ -5,7 +5,7 @@ var sharp = require('sharp');
 var ThumbnailW = 200;
 var ThumbnailH = 150;
 
-var PreviewWH = 1920;
+var previewWH = 1920;
 
 function createThumbnail(metaData, inputBuffer, callback) {
     var w = Number(metaData.width);
@@ -49,7 +49,7 @@ function createPreview(metaData, inputBuffer, callback) {
         callback("Invalid Image Size", null);
         return;
     }
-    if (w <= PreviewWH && h <= PreviewWH) {
+    if (w <= previewWH && h <= previewWH) {
         // not need thumbnail
         callback(null, null);
         return;
@@ -57,10 +57,10 @@ function createPreview(metaData, inputBuffer, callback) {
 
     var aspect = w / h;
     if (w > h) {
-        w = Math.min(PreviewWH, w);
+        w = Math.min(previewWH, w);
         h = w / aspect;
     } else {
-        h = Math.min(PreviewWH, h);
+        h = Math.min(previewWH, h);
         w = h * aspect;
     }
     w = Math.floor(w);
@@ -99,7 +99,12 @@ function create(metaData, inputBuffer, callback) {
     });
 }
 
+function setPreviewWH(wh) {
+    previewWH = wh;
+}
+
 module.exports = {
+    setPreviewWH : setPreviewWH,
     createThumbnail : createThumbnail,
     createPreview : createPreview,
     create : create
