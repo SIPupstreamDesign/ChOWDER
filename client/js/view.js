@@ -1735,7 +1735,9 @@
 				menu : [{
 					Display : [{
 							Controller : {
-								url : "controller.html"
+								func : function () {
+									window.open("controller.html"); // TODO コントローラIDの設定どうするか
+								}
 							}
 						}],
 					url : "view.html"

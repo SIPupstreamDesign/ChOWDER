@@ -56,8 +56,12 @@
 				key = Object.keys(setting[i])[0];
 				value = setting[i][key];
 				
-				link = document.createElement('a');
-				link.href = location.hash ? location.hash : "#";
+				if (setting[i].hasOwnProperty('url')) {
+					link = document.createElement('a');
+					link.href = location.hash ? location.hash : "#";
+				} else {
+					link = document.createElement('div');
+				}
 				link.innerHTML = key;
 				link.id = "_menu_" + key;
 				link.setAttribute("data-key", key);
