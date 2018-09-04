@@ -2199,7 +2199,9 @@
 			// Virtual Displayはすべてに追加しなおす.
 			store.for_each_display_group(function (i, group) {
 				elem = this.create_whole_window(group.id);
-				gui.get_display_area_by_group(group.id).appendChild(elem);
+				if (gui.get_display_area_by_group(group.id)) {
+					gui.get_display_area_by_group(group.id).appendChild(elem);
+				}
 			}.bind(this));
 
 			// 元々あったリストエレメントを全部つけなおす
@@ -2214,7 +2216,7 @@
 						layoutArea = gui.get_layout_area_by_group(Constants.DefaultGroup);
 					}
 					displayArea = gui.get_display_area_by_group(group);
-					if (!displayArea) {
+					if (!displayArea && management.isEditable(group)) {
 						displayArea = gui.get_display_area_by_group(Constants.DefaultGroup);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
