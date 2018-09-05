@@ -778,7 +778,7 @@
 
 		elem.id = metaData.id;
 		elem.style.position = "absolute";
-		elem.className = "temporary_bounds";
+		elem.className = Constants.TemporaryBoundClass;
 		setupContent(elem, elem.id);
 		insertElementWithDictionarySort(previewArea, elem);
 	}
@@ -1136,7 +1136,7 @@
 		var previewArea = document.getElementById('preview_area');
 		if (elem) {
 			// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
-			if (elem.className === "temporary_bounds") {
+			if (elem.className === Constants.TemporaryBoundClass) {
 				previewArea.removeChild(elem);
 				elem = null;
 			}

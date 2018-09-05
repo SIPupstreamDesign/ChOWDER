@@ -57,6 +57,7 @@
 		ChangePassword : "ChangePassword",
 		ChangeAuthority : "ChangeAuthority",
 		GetUserList :  "GetUserList",
+		GenerateControllerID : "GenerateControllerID",
 
 		// コントローラデータ
 		UpdateControllerData : "UpdateControllerData",

@@ -24,7 +24,7 @@
 	};
 	Login.prototype = Object.create(EventEmitter.prototype);
 
-	Login.prototype.submitFunc = function (userList, id, password, key, callback) {
+	Login.prototype.submitFunc = function (userList, id, password, key, callback, onetime) {
 		var loginmenuBackground = document.getElementById('loginmenu_background');
 		var loginmenu = document.getElementById('loginmenu');
 		var loginpass = document.getElementById('loginpass');
@@ -32,9 +32,15 @@
 		var logoutButton = document.getElementById('logout_button');
 		var user_text  = document.getElementById('user_text');
 		var controllerID = this.getControllerID();
-		if (!controllerID || controllerID.length === 0) {
-			controllerID = "user" + Math.floor(Math.random() * 100);
-			location.hash = controllerID;
+		if ((!controllerID || controllerID.length === 0) && !onetime) {
+			this.connector.send('GenerateControllerID', {}, function (err, reply) {
+				if (!err) {
+					this.controllerID = reply;
+					location.hash = this.controllerID;
+					this.submitFunc(userList, id, password, key, callback, true);
+				}
+			}.bind(this));
+			return;
 		}
 		var request = { id : id, password : password, controllerID : controllerID };
 		if (key && key.length > 0) {

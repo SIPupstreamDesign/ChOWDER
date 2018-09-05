@@ -1104,6 +1104,24 @@
 		});
 	}
 
+	function generateCOntrollerID(endCallback) {
+		textClient.keys(controllerDataPrefix + "*", function (err, replies) {
+			var i;
+			var prefix = "user";
+			var number = 1;
+			var splits;
+			var existsIDDict = {};
+			for (i = 0; i < replies.length; ++i) {
+				splits = replies[i].split(":");
+				existsIDDict[splits[splits.length - 1]] = i;
+			}
+			while (existsIDDict.hasOwnProperty(prefix + number)) {
+				number += 1;
+			}
+			endCallback(null, String(prefix + number));
+		});
+	}
+
 	function validatePassword(master, pass) {
 		return master === util.encrypt(pass, cryptkey);
 	}
@@ -3461,6 +3479,15 @@
 	}
 
 	/**
+	 * ユニークなコントローラIDを生成して返す
+     * @method commandGenerateCOntrollerID
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandGenerateControllerID(endCallback) {
+		generateCOntrollerID(endCallback);
+	}
+	
+	/**
 	 * ログインコマンドを実行する
      * @method commandLogin
 	 * @param {JSON} data 対象のid, passwordを含むjson
@@ -4032,6 +4059,9 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		ws_connector.on(Command.GenerateControllerID, function (data, resultCallback) {
+			commandGenerateControllerID(resultCallback);
+		});
 		ws_connector.on(Command.UpdateControllerData, function (data, resultCallback, socketid) {
 			commandUpdateControllerData(socketid, data, resultCallback);
 		});
@@ -4239,6 +4269,9 @@
 		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
+		});
+		io_connector.on(Command.GenerateControllerID, function (data, resultCallback) {
+			commandGenerateControllerID(resultCallback);
 		});
 		io_connector.on(Command.UpdateControllerData, function (data, resultCallback, socketid) {
 			commandUpdateControllerData(socketid, data, resultCallback);

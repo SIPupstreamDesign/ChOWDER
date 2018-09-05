@@ -37,6 +37,7 @@
 		SnapTypeDisplay : "display",
 		InitialWholeWidth : 1000,
 		InitialWholeHeight : 900,
+		TemporaryBoundClass : "temporary_bounds",
 		// Firefox 1.0+
 		IsFirefox : typeof InstallTrigger !== 'undefined',
 		// Safari 3.0+ "[object HTMLElementConstructor]" 
