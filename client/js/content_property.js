@@ -673,10 +673,14 @@
 			var history_slider_area = document.getElementById('history_slider_area');
 			var history_slider = document.getElementById('history_slider');
 			var history_slider_label = document.getElementById('history_slider_label');
+			var history_slider_memori = document.getElementById('history_slider_memori');
+
+			var sliderRect = history_slider.getBoundingClientRect();
 
 			// 中身の登録
 			history_list.innerHTML = "";
 			history_select.innerHTML = "";
+			history_slider_memori.innerHTML = "";
 			history_area.disabled = true;
 			history_slider_area.disabled = true;
 			if (metaData.hasOwnProperty('history_data')) {
@@ -721,6 +725,7 @@
 				history_slider.max = values.length - 1;
 
 				var selectedIndex = 0;
+				var memoriSpan = 100 / (values.length - 1) * (sliderRect.right-sliderRect.left) / document.body.clientWidth;
 				for (i = 0; i < values.length; i = i + 1) {
 					option = document.createElement('option');
 					text = values[i];
@@ -735,6 +740,19 @@
 						option.innerHTML = text;
 					}
 					select.appendChild(option);
+					
+					var sliderMemori = document.createElement('div');
+					sliderMemori.title = text;
+					sliderMemori.style.position = "absolute";
+					sliderMemori.style.marginLeft = sliderRect.left /  document.body.clientWidth * 100  + "%"
+					sliderMemori.style.left = memoriSpan * i + "%";
+					sliderMemori.style.top = "30px";
+					sliderMemori.style.width = "4px";
+					sliderMemori.style.height = "30px";
+					sliderMemori.style.borderRadius = "4px"
+					sliderMemori.style.backgroundColor = "lightgray"
+					sliderMemori.style.zIndex = -1;
+					history_slider_memori.appendChild(sliderMemori);
 				}
 				select.value = values[0];
 				history_list.appendChild(select);
