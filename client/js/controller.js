@@ -310,17 +310,6 @@
 	 * @param {String} id ContentID
 	 */
 	Controller.prototype.setupContent = function (elem, id) {
-		window.onkeydown = function (evt) {
-			if (evt.keyCode === 17) {
-				state.set_ctrl_down(true);
-			}
-		};
-		window.onkeyup = function (evt) {
-			if (evt.keyCode === 17) {
-				state.set_ctrl_down(false);
-			}
-		};
-
 		if (window.ontouchstart !== undefined) {
 			elem.ontouchstart = this.onMouseDown(id);
 		} else {
@@ -2336,6 +2325,29 @@
 		gui.clear_content_property(true);
 		state.set_ctrl_down(false);
 	};
+	window.onkeydown = function (evt) {
+		if (evt.keyCode === 17) {
+			state.set_ctrl_down(true);
+		}
+		if (evt.keyCode === 37) { // ←
+			var history_up = document.getElementById('history_up');
+			if (history_up && history_up.style.display !== "none") {
+				history_up.click();
+			}
+		}
+		if (evt.keyCode === 39) {
+			var history_down  = document.getElementById('history_down');
+			if (history_down && history_down.style.display !== "none") {
+				history_down.click();
+			}
+		}
+	};
+	window.onkeyup = function (evt) {
+		if (evt.keyCode === 17) {
+			state.set_ctrl_down(false);
+		}
+	};
+
 	connector.connect(function () {
 		ChangeLanguage(Cookie.getLanguage());
 		Translation(function () {
