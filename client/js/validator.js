@@ -33,7 +33,9 @@
 	 */
 	Validator.prototype.isContentType = function (meta) {
 		return (meta.hasOwnProperty('type') && 
-			(meta.type !== Constants.TypeWindow && meta.type !== Constants.TypeLayout && meta.type !== Constants.TypeVirtualDisplay));
+			(meta.type !== Constants.TypeWindow 
+				&& meta.type !== Constants.TypeLayout 
+				&& meta.type !== Constants.TypeVirtualDisplay));
 	}
 	
 	/**

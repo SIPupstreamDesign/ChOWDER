@@ -268,7 +268,7 @@
 
 		this.for_each_metadata(function (i, meta) {
 			if (meta.id !== metaData.id && 
-				Validator.isContentType(meta.type) &&
+				Validator.isContentType(meta) &&
 				meta.hasOwnProperty("zIndex")) {
 				max = Math.max(max, parseInt(meta.zIndex, 10));
 				min = Math.min(min, parseInt(meta.zIndex, 10));

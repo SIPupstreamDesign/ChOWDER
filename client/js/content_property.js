@@ -278,6 +278,7 @@
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
 			addInputProperty(isEditableContent, 'multi_transform_z', 'z', 'index', '', function () {
+				var multiZ = document.getElementById('multi_transform_z');
 				var val = parseInt(multiZ.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
 			}.bind(this));
@@ -307,7 +308,8 @@
 			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_z', 'z', 'index', '0', function () {
-				var val = parseInt(contentZ.value, 10);
+				var transz = document.getElementById('content_transform_z');
+				var val = parseInt(transz.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
 			}.bind(this));
 			addTextInputProperty(isEditableContent, 'content_text', "");
