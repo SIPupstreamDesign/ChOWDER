@@ -316,7 +316,10 @@
 			download_button.style.display = "block";
 			download_button.href = "download?" + metaData.id;
 			download_button.target = "_blank";
-			if (type === Constants.PropertyTypeText) {
+			
+			if (type === Constants.PropertyTypePDF) {
+				download_button.download = metaData.id + ".pdf";
+			} else if (type === Constants.PropertyTypeText) {
 				download_button.download = metaData.id + ".txt";
 			} else {
 				// image or url
@@ -334,6 +337,7 @@
 				backup_area.style.display = "block";
 			}
 			if (metaData.type === Constants.TypeTileImage) {
+				download_button.style.display = "none";
 				history_area.style.display = "block";
 				history_slider_area.style.display = "block";
 			} else {

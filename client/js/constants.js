@@ -26,6 +26,7 @@
 		PropertyTypeContent : "content",
 		PropertyTypeText : "text",
 		PropertTypeVideo : "video",
+		PropertyTypePDF : "pdf",
 		PropertyTypeMultiDisplay : "multi_display",
 		PropertyTypeMultiContent : "multi_content",
 		TabIDDisplay : "display_tab",
