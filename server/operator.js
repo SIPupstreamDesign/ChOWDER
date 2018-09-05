@@ -2051,6 +2051,11 @@
 				if (doesExist <= 0) {
 					// 最初のコンテンツ
 					metaData.history_id = util.generateUUID8();
+					if (!metaData.hasOwnProperty('reductionWidth')) {
+						var dimensions = image_size(contentData);
+						metaData.reductionWidth = dimensions.width;
+						metaData.reductionHeight = dimensions.width;
+					}
 					addContent(metaData, contentData, function (err, reply) {
 						metaData.date = new Date().toISOString(); //登録時間を保存
 						// メタデータ初期設定.
@@ -2078,6 +2083,11 @@
 				} else {
 					// 2つめ以降追加のコンテンツ
 					metaData.date = new Date().toISOString(); //登録時間を保存
+					if (!metaData.hasOwnProperty('reductionWidth')) {
+						var dimensions = image_size(contentData);
+						metaData.reductionWidth = dimensions.width;
+						metaData.reductionHeight = dimensions.width;
+					}
 					// メタデータ初期設定.
 					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
 						initialOrgWidthHeight(metaData, contentData);

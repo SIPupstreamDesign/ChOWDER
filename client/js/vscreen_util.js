@@ -159,6 +159,11 @@
 		var posx = 0;
 		var posy = 0;
 		var tileIndex = 0;
+
+		// タイル全体の幅高さ。実際のmetaData.widthとは小数点の関係で少し違う値になる
+		var tileWholeWidth = Number(metaData.width);
+		var tileWholeHeight = Number(metaData.height);
+
 		for (i = 0; i < Number(metaData.ysplit); ++i) {
 			for (k = 0; k < Number(metaData.xsplit); ++k) {
 				var image = elem.getElementsByClassName("tile_index_" + String(tileIndex))[0];
@@ -171,9 +176,11 @@
 					if (width === 0 || height === 0) { return; }
 					image.style.left = posx + "px";
 					image.style.top = posy + "px";
-					image.style.width = Math.round(w / ow * mw) + "px";
-					image.style.height = Math.round(h / oh * mh) + "px";
+					image.style.width = width + "px";
+					image.style.height = height + "px";
 					if ( (k % Number(metaData.xsplit)) === Number(metaData.xsplit) - 1) {
+						tileWholeWidth = posx + width;
+						tileWholeHeight = posy + height;
 						posx = 0;
 						posy += height;
 					} else {
@@ -182,6 +189,15 @@
 				}
 				++tileIndex;
 			}
+		}
+
+		var reductionElems = elem.getElementsByClassName('reduction_image');
+		if (reductionElems.length > 0) {
+			var reductionElem = reductionElems[0];
+			reductionElem.style.left = "0px";
+			reductionElem.style.top = "0px";
+			reductionElem.style.width = tileWholeWidth + "px";
+			reductionElem.style.height = tileWholeHeight + "px";
 		}
 	}
 

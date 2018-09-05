@@ -1036,7 +1036,7 @@
 			if (Validator.isLayoutType(metaData)) { return; }
 
 			if (metaData.type === 'tileimage') {
-				assignTileImage(metaData, true);
+				assignTileImage(metaData, contentData, true);
 			} else {
 				// コンテンツ登録&表示
 				assignMetaBinary(metaData, contentData);
@@ -1150,6 +1150,14 @@
 			insertElementWithDictionarySort(previewArea, elem);
 		}
 		elem.innerHTML = "";
+		// reduction image用
+		image = new Image();
+		image.style.position = "absolute";
+		image.style.display = "inline";
+		image.className = "reduction_image";
+		elem.appendChild(image);
+
+		// tile用
 		for (i = 0; i < Number(metaData.ysplit); ++i) {
 			for (k = 0; k < Number(metaData.xsplit); ++k) {
 				image = new Image();
@@ -1167,7 +1175,7 @@
 	 * @param {*} metaData 
 	 * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
 	 */
-	function assignTileImage(metaData, isReload) {
+	function assignTileImage(metaData, contentData, isReload) {
 		var elem = document.getElementById(metaData.id);
 		var i, k;
 		var tileIndex = 0;
@@ -1183,6 +1191,7 @@
 		var previousElem = null;
 		var previousImage = null;
 		var visible;
+		var isInitial = true;
 
 		for (i = 0; i < Number(metaData.ysplit); ++i) {
 			for (k = 0; k < Number(metaData.xsplit); ++k) {
@@ -1204,15 +1213,58 @@
 						vscreen_util.resizeTileImages(elem, metaData);
 					}
 					
+					if (isInitial
+						&& metaData.hasOwnProperty('reductionWidth')
+						&& metaData.hasOwnProperty('reductionHeight')) {
+
+						var reductionElem = elem.getElementsByClassName('reduction_image')[0];
+						
+						// metadataの解像度がcontentData（縮小版画像）より小さいか調べる
+						if (Number(metaData.width) <= Number(metaData.reductionWidth)
+							&& Number(metaData.height) <= Number(metaData.reductionHeight)) {
+
+							// reductionを表示、タイルを非表示に
+							reductionElem.style.display = "inline";
+							for (var n = 0; n < elem.children.length; ++n) {
+								if (elem.children[n].className !== "reduction_image") {
+									elem.children[n].style.display = "none"
+								}
+							}
+
+							// 小さかった。tileimageではなくて、contentDataを表示する
+							if (reductionElem.src.length === 0 || isReload) {
+								if (!reductionElem.src.length === 0) {
+									URL.revokeObjectURL(reductionElem.src);	
+								}
+								var blob = new Blob([contentData], {type: mime});
+								reductionElem.src = URL.createObjectURL(blob);
+								return;
+							}
+						} else {
+							// reductionを非表示、タイルを表示
+							reductionElem.style.display = "none";
+							for (var n = 0; n < elem.children.length; ++n) {
+								if (elem.children[n].className !== "reduction_image") {
+									elem.children[n].style.display = "inline"
+								}
+							}
+						}
+					}
+					
 					if (!previousImage || isReload) {
 						connector.send('GetTileContent', request, function (err, data) {
 							if (err) { console.error(err); return; }
 							var tileClassName = 'tile_index_' + String(data.metaData.tile_index);
 							var blob = new Blob([data.contentData], {type: mime});
 							var image = elem.getElementsByClassName(tileClassName)[0];
+							if (!previousImage) {
+								URL.revokeObjectURL(image.src);	
+							}
 							image.src = URL.createObjectURL(blob);
 						});
 					}
+
+					isInitial = false;
 				}
 				++tileIndex;
 			}
@@ -1327,7 +1379,7 @@
 					if (json.type === "tileimage") {
 						// window範囲外で非表示になっているタイルが
 						// window範囲内に来ていた場合は、その部分のタイルを読み込む
-						assignTileImage(json, false);
+						assignTileImage(json, null, false);
 					}
 					elem = document.getElementById(json.id);
 					vscreen_util.assignMetaData(elem, json, false, groupDict);
