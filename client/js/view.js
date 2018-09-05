@@ -1218,7 +1218,17 @@
 						&& metaData.hasOwnProperty('reductionHeight')) {
 
 						var reductionElem = elem.getElementsByClassName('reduction_image')[0];
-						
+					
+						// contentData(reduction data)を生成
+						// 解像度によらず生成する
+						if (reductionElem.src.length === 0 || isReload) {
+							if (!reductionElem.src.length === 0) {
+								URL.revokeObjectURL(reductionElem.src);	
+							}
+							var blob = new Blob([contentData], {type: mime});
+							reductionElem.src = URL.createObjectURL(blob);
+						}
+
 						// metadataの解像度がcontentData（縮小版画像）より小さいか調べる
 						if (Number(metaData.width) <= Number(metaData.reductionWidth)
 							&& Number(metaData.height) <= Number(metaData.reductionHeight)) {
@@ -1230,16 +1240,7 @@
 									elem.children[n].style.display = "none"
 								}
 							}
-
-							// 小さかった。tileimageではなくて、contentDataを表示する
-							if (reductionElem.src.length === 0 || isReload) {
-								if (!reductionElem.src.length === 0) {
-									URL.revokeObjectURL(reductionElem.src);	
-								}
-								var blob = new Blob([contentData], {type: mime});
-								reductionElem.src = URL.createObjectURL(blob);
-								return;
-							}
+							return;
 						} else {
 							// reductionを非表示、タイルを表示
 							reductionElem.style.display = "none";
