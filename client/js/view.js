@@ -1134,8 +1134,15 @@
 		var image;
 		var tileIndex = 0;
 		var previewArea = document.getElementById('preview_area');
+		if (elem) {
+			// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
+			if (elem.className === "temporary_bounds") {
+				previewArea.removeChild(elem);
+				elem = null;
+			}
+		}
 		if (!elem) {
-			elem = document.createElement(getTagName(metaData));
+			elem = document.createElement(getTagName(metaData.type));
 			elem.id = metaData.id;
 			elem.style.position = "absolute";
 			elem.style.color = "white";
