@@ -206,6 +206,8 @@
 				i,
 				fileReader = new FileReader();
 
+			var time = new Date().toISOString();
+	
 			if (posx === 0 && posy === 0) {
 				// メニューから追加したときなど. wholescreenの左上端に置く.
 				posx = vscreen.getWhole().x;
@@ -219,6 +221,7 @@
 					if (data && data instanceof ArrayBuffer) {
 						controller.send_image(data, {
 							posx: posx, posy: posy, visible: true,
+							timestamp : time,
 							user_data_text: JSON.stringify({ text: name })
 						});
 					}
@@ -428,6 +431,8 @@
 			var px = rect.left + offsetX(evt);
 			var py = rect.top + offsetY(evt);
 
+			var time = new Date().toISOString();
+
 			var files = evt.dataTransfer.files;
 			for (var i = 0; i < files.length; i ++) {
 				(function () {
@@ -437,7 +442,7 @@
 					if (file.type.match('image.*')) {
 						reader.onloadend = function (evt) {
 							var data = evt.target.result;
-							controller.send_image(data, { posx: px, posy: py, visible: true});
+							controller.send_image(data, { posx: px, posy: py, visible: true, timestamp : time});
 						};
 						reader.readAsArrayBuffer(file);
 

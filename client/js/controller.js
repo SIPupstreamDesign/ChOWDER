@@ -942,6 +942,7 @@
 			buffer,
 			blob,
 		buffer = new Uint8Array(data);
+
 		blob = new Blob([buffer], {type: "image/jpeg"});
 		img.src = URL.createObjectURL(blob);
 		img.className = "image_content";
@@ -1494,7 +1495,6 @@
 			reurn;
 		}
 
-		metaData.timestamp = new Date().toISOString();
 		connector.sendBinary('AddContent', metaData, binary, function (err, reply) {
 			this.doneAddContent(err, reply);
 			if (endCallback) {
