@@ -304,7 +304,7 @@
 		
 			for (i = 0; i < tabs.length; i = i + 1) {
 				groupID = Object.keys(tabs[i])[0];
-				if (this.authority.isViewable(groupID)) {
+				if (this.authority.isViewable(groupID) || this.type === GroupBox.TYPE_DISPLAY) {
 					if (!this.tabGroupToElems.hasOwnProperty(groupID)) {
 						this.tabGroupToElems[groupID] = [];
 					}

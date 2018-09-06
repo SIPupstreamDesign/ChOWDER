@@ -361,6 +361,7 @@
 				}
 			}
 		}
+		color_picker.style.display = isEditableContent ? "block" : "none";
 	}
 
 	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metaData, type) {

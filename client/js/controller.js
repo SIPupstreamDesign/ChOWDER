@@ -454,7 +454,7 @@
 			metaData = store.get_metadata(draggingID);
 
 			if (state.has_drag_rect(draggingID)) {
-				if (Validator.isWindowType(metaData) && management.isDisplayManipulatable()) {
+				if (Validator.isWindowType(metaData) && management.isDisplayEditable(state.get_display_selected_group())) {
 					// display操作可能
 					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(draggingID).left;
 					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(draggingID).top;
@@ -733,7 +733,8 @@
 					if (windowData.group === state.get_display_selected_group()) {
 						isvisible = true;
 					}
-					if (!store.get_group_dict().hasOwnProperty(windowData.group)) {
+					if (state.get_display_selected_group() === Constants.DefaultGroup
+						&& !store.get_group_dict().hasOwnProperty(windowData.group)) {
 						isvisible = true;
 					}
 				}
@@ -797,13 +798,14 @@
 								if (metaData.group === state.get_display_selected_group()) {
 									isvisible = true;
 								}
-								if (!store.get_group_dict().hasOwnProperty(metaData.group)) {
+								if (state.get_display_selected_group() === Constants.DefaultGroup
+									&& !store.get_group_dict().hasOwnProperty(metaData.group)) {
 									isvisible = true;
 								}
 							}
-							vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
-							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
 							if (isvisible) {
+								vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
+								vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
 								screenElem.style.display = "block";
 							} else {
 								screenElem.style.display = "none";
@@ -1305,7 +1307,12 @@
 			if (Validator.isWindowType(metaData)) {
 				gui.init_content_property(metaData,"", Constants.PropertyTypeDisplay);
 				gui.assign_content_property(metaData);
-				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_display_preview_area(), metaData);
+				manipulator.showManipulator(
+					management.getAuthorityObject(), 
+					elem, 
+					gui.get_display_preview_area(), 
+					metaData,
+					state.get_display_selected_group());
 			} else {
 				// 動画の場合は所有しているかどうか調べる
 				var isOwnVideo = false;
@@ -1320,7 +1327,11 @@
 				}
 				gui.assign_content_property(metaData);
 				gui.set_update_content_id(id);
-				manipulator.showManipulator(management.getAuthorityObject(), elem, gui.get_content_preview_area(), metaData);
+				manipulator.showManipulator(
+					management.getAuthorityObject(), 
+					elem, 
+					gui.get_content_preview_area(), 
+					metaData);
 			}
 		}
 
@@ -1456,9 +1467,9 @@
 				}.bind(this));
 			}
 		}.bind(this));
+		this.update_group_list();
 		connector.send('GetVirtualDisplay', {group: Constants.DefaultGroup}, this.doneGetVirtualDisplay);
 		connector.send('GetWindowMetaData', {type: "all", id: ""}, this.doneGetWindowMetaData);
-		this.update_group_list();
 	}
 	
 	/**
@@ -2218,7 +2229,7 @@
 						layoutArea = gui.get_layout_area_by_group(Constants.DefaultGroup);
 					}
 					displayArea = gui.get_display_area_by_group(group);
-					if (!displayArea && management.isEditable(group)) {
+					if (!displayArea && management.isDisplayEditable(group)) {
 						displayArea = gui.get_display_area_by_group(Constants.DefaultGroup);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {

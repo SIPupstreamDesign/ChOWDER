@@ -1105,14 +1105,14 @@
 			authority = this.management.getAuthorityObject();
 		container.innerHTML = "";
 
-		if (!authority.isEditable(this.get_current_group_id())) {
+		if (!authority.isDisplayEditable(this.get_current_display_group_id())) {
 			return;
 		}
 		
 		for (var i = 0; i < groupIDs.length; ++i) {
 			groupID = groupIDs[i];
 			// グループ変更内のアクセス権限による表示非表示
-			if (authority.isEditable(groupID)) {
+			if (authority.isDisplayEditable(groupID)) {
 				item = document.createElement('li');
 				item.className = "context_menu_change_displaygroup_item";
 				item.innerHTML = this.displayBox.get_group_name(groupID);
@@ -1813,6 +1813,12 @@
 		}
 		return Constants.DefaultGroup;
 	};
+	ControllerGUI.prototype.get_current_display_group_id = function () {
+		if (this.tabs.is_active(Constants.TabIDDisplay) && this.displayBox) {
+			return this.displayBox.get_current_group_id();
+		}
+		return Constants.DefaultGroup;
+	};
 	ControllerGUI.prototype.select_group = function (group_id) {
 		this.groupBox.select_tab(group_id);
 		this.layoutBox.select_tab(group_id);
@@ -1825,6 +1831,17 @@
 	};
 	ControllerGUI.prototype.get_display_area = function () {
 		return this.displayBox ? this.displayBox.get_current_box_area() : null;
+	};
+	ControllerGUI.prototype.get_display_area_for_insert = function (groupID) {
+		var authority = this.management.getAuthorityObject();
+		if (this.displayBox) {
+			var elems = this.displayBox.get_tabgroup_to_elems();
+			if (elems.hasOwnProperty(groupID)) {
+				return elems[groupID][1];
+			}
+			return elems[Constants.DefaultGroup][1]
+		}
+		return null;
 	};
 	ControllerGUI.prototype.get_list_elem = function (id) {
 		return document.getElementById("onlist:" + id);

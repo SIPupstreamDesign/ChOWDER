@@ -604,6 +604,11 @@
 			}
 		}
 	};
+	
+	Management.prototype.isAdmin = function () {
+		return this.getAuthorityObject().isAdmin();
+	};
+
 	Management.prototype.isViewable = function (group) {
 		return this.getAuthorityObject().isViewable(group);
 	};
@@ -611,9 +616,14 @@
 	Management.prototype.isEditable = function (group) {
 		return this.getAuthorityObject().isEditable(group);
 	};
-
+	
 	Management.prototype.isDisplayEditable = function (group) {
-		return this.getAuthorityObject().isDisplayEditable(group);
+		var editable =  this.getAuthorityObject().isDisplayEditable(group);
+		return editable;
+	};
+
+	Management.prototype.isGroupManipulable = function () {
+		return this.getAuthorityObject().isGroupManipulable();
 	};
 
 	Management.prototype.isDisplayManipulatable = function () {

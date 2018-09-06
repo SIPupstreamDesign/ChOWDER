@@ -348,7 +348,7 @@
 	 * @param {Element} previewArea 表示先エレメント
 	 * @param {Element} metaData メタデータ
 	 */
-	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaData) {
+	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaData, displayGroup) {
 		var manips = [
 				document.createElement('span'), // 左上
 				document.createElement('span'), // 左下
@@ -365,7 +365,7 @@
 		this.parent = previewArea;
 		
 		if ( (!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
-		|| (Validator.isWindowType(metaData) && this.authority.isDisplayManipulatable())) 
+		|| (Validator.isWindowType(metaData) && this.authority.isDisplayEditable(displayGroup))) 
 		{
 			for (i = 0; i < manips.length; i = i + 1) {
 				manip = manips[i];

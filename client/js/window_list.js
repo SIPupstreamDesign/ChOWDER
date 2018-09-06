@@ -17,7 +17,7 @@
 	 */
 	WindowList.prototype.import_window = function (gui, metaDataDict, windowData, displayArea, listElem) {
 		console.log("importWindowToList");
-		var displayArea = gui.get_display_area(),
+		var displayArea = gui.get_display_area_for_insert(windowData.group),
 			divElem,
 			idElem,
 			onlistID = "onlist:" + windowData.id;
@@ -29,7 +29,7 @@
 		if (divElem) {
 			return;
 		}
-		
+
 		divElem = document.createElement("div");
 
 		idElem = document.createElement('div');

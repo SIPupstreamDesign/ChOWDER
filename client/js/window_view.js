@@ -43,34 +43,28 @@
 
 		metaDataDict[windowData.id] = windowData;
 
-		var visible = true;
-		// if (windowData.hasOwnProperty("group")) {
-		// 	if (!groupCheckDict.hasOwnProperty(windowData.group)) {
-		// 		visible = false;
-		// 	}
-		// 	if (groupCheckDict[windowData.group] === false) {
-		// 		visible = false;
-		// 	}
-		// }
+		if (gui.get_current_display_group_id() === Constants.DefaultGroup ||
+			gui.get_current_display_group_id() === windowData.group)
+		{
+			if (isVisible(windowData)) {
+				console.log("import window:" + JSON.stringify(windowData));
+				this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
+				this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
+				this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 
-		if (visible && isVisible(windowData)) {
-			console.log("import window:" + JSON.stringify(windowData));
-			this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-			this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
-			this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
-
-			this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
-		} else {
-			displayArea = document.getElementById("display_preview_area");
-			screen = document.getElementById(windowData.id);
-			if (displayArea && screen) {
-				screen.style.display = "none";
+				this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
+			} else {
+				displayArea = document.getElementById("display_preview_area");
+				screen = document.getElementById(windowData.id);
+				if (displayArea && screen) {
+					screen.style.display = "none";
+				}
 			}
-		}
-		if (windowData.hasOwnProperty("color")) {
-			screen = document.getElementById(windowData.id);
-			if (screen) {
-				screen.style.borderColor = windowData.color;
+			if (windowData.hasOwnProperty("color")) {
+				screen = document.getElementById(windowData.id);
+				if (screen) {
+					screen.style.borderColor = windowData.color;
+				}
 			}
 		}
 	};
