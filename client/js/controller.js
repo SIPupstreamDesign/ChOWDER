@@ -10,7 +10,7 @@
 		login = new Login(connector, Cookie),
 		management; // 管理情報
 		
-	Validator.init(gui);
+	Validator.init(store, gui, state);
 
 	var Controller = function () {
 		this.webRTC = {};
@@ -471,7 +471,7 @@
 				return;
 			}
 
-			if (Validator.isWindowType(metaData) || Validator.isVisible(metaData)) {
+			if (Validator.isVisibleWindow(metaData) || Validator.isVisible(metaData)) {
 				manipulator.moveManipulator(elem);
 				targetMetaDatas.push(metaData);
 			}
@@ -487,7 +487,7 @@
 			elem = document.getElementById(state.get_selected_id());
 			if (elem) {
 				metaData = store.get_metadata(elem.id);
-				if (Validator.isWindowType(metaData) || Validator.isVisible(metaData)) {
+				if (Validator.isVisibleWindow(metaData) || Validator.isVisible(metaData)) {
 					manipulator.moveManipulator(elem);
 					this.onManipulatorMove(evt);
 				}
@@ -639,8 +639,12 @@
 					if (Validator.isLayoutType(metaData)) {
 						this.apply_layout(metaData);
 					} else {
-						if (management.isEditable(metaData.group)) {
-							metaData.visible = true;
+						if (Validator.isWindowType(metaData)) {
+							metaData.visible = Validator.isVisibleWindow(metaData);
+						} else {
+							if (management.isEditable(metaData.group)) {
+								metaData.visible = true;
+							}
 						}
 						if (Validator.isFreeMode()) {
 							this.update_metadata(metaData);
@@ -728,17 +732,7 @@
 				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
 			}
 			if (screenElem) {
-				var isvisible = false;
-				if (Validator.isVisible(windowData)) {
-					if (windowData.group === state.get_display_selected_group()) {
-						isvisible = true;
-					}
-					if (state.get_display_selected_group() === Constants.DefaultGroup
-						&& !store.get_group_dict().hasOwnProperty(windowData.group)) {
-						isvisible = true;
-					}
-				}
-				if (isvisible) {
+				if (Validator.isVisibleWindow(windowData)) {
 					screenElem.style.display = "block";
 				} else {
 					screenElem.style.display = "none";
@@ -793,17 +787,7 @@
 							}
 						}
 						if (screenElem) {
-							var isvisible = false;
-							if (Validator.isVisible(metaData)) {
-								if (metaData.group === state.get_display_selected_group()) {
-									isvisible = true;
-								}
-								if (state.get_display_selected_group() === Constants.DefaultGroup
-									&& !store.get_group_dict().hasOwnProperty(metaData.group)) {
-									isvisible = true;
-								}
-							}
-							if (isvisible) {
+							if (Validator.isVisibleWindow(metaData)) {
 								vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
 								vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
 								screenElem.style.display = "block";
@@ -1199,9 +1183,16 @@
 			vaspect = splitWhole.w / splitWhole.h,
 			aspect = orgWidth / orgHeight;
 		
-		if (!management.isEditable(metaData.group)) {
-			// 編集不可コンテンツ
-			return;
+		if (Validator.isWindowType(metaData)) {
+			if (!management.isDisplayEditable(metaData.group)) {
+				// 編集不可コンテンツ
+				return;
+			}
+		} else {
+			if (!management.isEditable(metaData.group)) {
+				// 編集不可コンテンツ
+				return;
+			}
 		}
 		metaData.posx = splitWhole.x;
 		metaData.posy = splitWhole.y;
@@ -2130,8 +2121,7 @@
 		if (!store.is_initialized()) { return; }
 
 		console.log('doneGetWindowMetaData:');
-		var windowData = reply,
-			elem;
+		var windowData = reply;
 
 		this.import_window(windowData);
 		gui.change_window_border_color(windowData);

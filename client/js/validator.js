@@ -10,9 +10,24 @@
 	 * Validator初期設定
 	 * @param {*} gui 
 	 */
-	Validator.prototype.init = function (gui) {
+	Validator.prototype.init = function (store, gui, state) {
+		this.store = store;
 		this.gui = gui;
+		this.state = state;
 	};
+
+	Validator.prototype.isVisibleWindow = function (windowData) {
+		if (this.isVisible(windowData)) {
+			if (windowData.group === this.state.get_display_selected_group()) {
+				return true;
+			}
+			if (this.state.get_display_selected_group() === Constants.DefaultGroup
+				&& !this.store.get_group_dict().hasOwnProperty(windowData.group)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * メタデータがVirtualDisplayタイプであるか返す
