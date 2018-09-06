@@ -102,15 +102,31 @@
 							var background = new window.PopupBackground(0.5);
 							var pickerDOM = document.getElementById('forcolorpicker');
 							var colorselector = new ColorSelector(function (colorvalue) {
-								var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
-								this.emit(ControllerGUI.EVENT_UPDATE_CURSOR_COLOR, null, colorstr);
 							}.bind(this), 234, 120); // 幅、高さ
 
 							background.on('close', function (colorselector, pickerDOM) {
 								pickerDOM.removeChild(colorselector.elementWrapper);
 								pickerDOM.style.display = "none";
 							}.bind(this, colorselector, pickerDOM));
+
+							var ok = document.getElementById('cursor_color_ok');
+							var cancel = document.getElementById('cursor_color_cancel');
+							cancel.onclick = function () {
+								background.close();
+								pickerDOM.removeChild(colorselector.elementWrapper);
+								pickerDOM.style.display = "none";
+							};
+							ok.onclick = function () {
+								var colorvalue = colorselector.getColor();
+								var colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
+								this.emit(ControllerGUI.EVENT_UPDATE_CURSOR_COLOR, null, colorstr);
+								cancel.click();
+							}.bind(this)
+							ok.ontouchend = ok.click();
+							cancel.ontouchstart = cancel.click();
 							
+							pickerDOM.style.borderRadius = "10px";
+							pickerDOM.style.background = "rgb(83, 83, 83)";
 							pickerDOM.appendChild(colorselector.elementWrapper);
 							pickerDOM.style.display = "inline";
 							background.show();
