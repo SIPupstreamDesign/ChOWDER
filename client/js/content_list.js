@@ -206,6 +206,8 @@
 			} else if (metaData.type === 'pdf' && contentElem.getContext) {
 				var context = contentElem.getContext('2d');
 				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+				window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+				window.PDFJS.cMapPacked = true;
 
 				contentElem.renderTask = contentElem.renderTask || Promise.resolve();
 

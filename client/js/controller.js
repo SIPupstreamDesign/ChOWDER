@@ -1086,6 +1086,8 @@
 	 */
 	Controller.prototype.send_pdf = function (data, metaData) {
 		var pdfjsLib = window['pdfjs-dist/build/pdf'];
+		window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+		window.PDFJS.cMapPacked = true;
 
 		pdfjsLib.getDocument(data).then(function (pdf) {
 			pdf.getPage(1).then(function (page) {
