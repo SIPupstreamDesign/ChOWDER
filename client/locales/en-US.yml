@@ -7,16 +7,17 @@ en-US:
     add_layout: 'Add Layout'
     overwrite_layout: 'Overwrite Layout'
     change_group: 'Change Group'
+    change_displaygroup: 'Change Display Group'
     select_all_in_a_group: 'Select All in a Group'
     move_to_front: 'Move to front'
     move_to_back: 'Move to back'
     add_content: 'Add Content'
     swap_image: 'Change Image'
-    control_videos_in_a_group: 'Control All Videos in a Group'
     image_file: 'Image File'
     movie_file: 'Movie File'
     text: Text
     text_file: 'Text File'
+    pdf_file: 'PDF File'
     url: URL
     screenshare: 'Share Screen'
     camerashare: 'Share Camera'
@@ -49,6 +50,7 @@ en-US:
     add_url: 'Add URL'
     add_image: 'Add Image'
     add_movie: 'Add Movie'
+    add_pdf: 'Add PDF'
     all: All
     change: Change
     new: New
@@ -93,4 +95,5 @@ en-US:
     delete_content_in_group_is_ok: 'Contents in the group will also be deleted, is it OK?'
     add_text: 'Add Text'
     change_saving_name: 'Change name'
+    control_videos_in_a_group: 'Control All Videos in a Group'
     video_controller: 'Video Controller'

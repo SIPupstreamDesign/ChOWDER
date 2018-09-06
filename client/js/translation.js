@@ -3,6 +3,12 @@
 
     let language = 'ja-JP';
 
+    function checkExistence(key, value) {
+        if (!value || key === value) {
+            console.error("not found translation key", key)
+        }
+    }
+
     function translate(callback) {
         i18next
             .use(window.i18nextXHRBackend)
@@ -30,6 +36,7 @@
                     v = elems[i];
                     if (v.dataset.key) {
                         v.innerText = i18next.t(v.dataset.key)
+                        checkExistence(v.dataset.key, v.innerText);
                     }
                 }
                 elems = document.querySelectorAll('p');
@@ -37,6 +44,7 @@
                     v = elems[i];
                     if (v.dataset.key) {
                         v.innerText = i18next.t(v.dataset.key)
+                        checkExistence(v.dataset.key, v.innerText);
                     }
                 }
                 elems = document.querySelectorAll('h3');
@@ -44,6 +52,7 @@
                     v = elems[i];
                     if (v.dataset.key) {
                         v.innerText = i18next.t(v.dataset.key)
+                        checkExistence(v.dataset.key, v.innerText);
                     }
                 }
                 elems = document.querySelectorAll('h4');
@@ -51,6 +60,7 @@
                     v = elems[i];
                     if (v.dataset.key) {
                         v.innerText = i18next.t(v.dataset.key)
+                        checkExistence(v.dataset.key, v.innerText);
                     }
                 }
                 elems = document.querySelectorAll('span');
@@ -58,6 +68,7 @@
                     v = elems[i];
                     if (v.dataset.key) {
                         v.innerText = i18next.t(v.dataset.key)
+                        checkExistence(v.dataset.key, v.innerText);
                     }
                 }
                 elems = document.querySelectorAll('input');
@@ -65,6 +76,7 @@
                     v = elems[i];
                     if (v.dataset.key) {
                         v.value = i18next.t(v.dataset.key)
+                        checkExistence(v.dataset.key, v.value);
                     }
                 }
                 if (callback) { callback(); }
