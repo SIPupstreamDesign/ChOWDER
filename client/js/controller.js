@@ -2219,7 +2219,7 @@
 						layoutArea = gui.get_layout_area_by_group(Constants.DefaultGroup);
 					}
 					displayArea = gui.get_display_area_by_group(group);
-					if (!displayArea && management.isDisplayEditable(group)) {
+					if (!displayArea) {
 						displayArea = gui.get_display_area_by_group(Constants.DefaultGroup);
 					}
 					for (i = 0; i < groupToElems[group].length; i = i + 1) {
