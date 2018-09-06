@@ -2578,18 +2578,6 @@
 		});
 	}
 
-	function isDisplayManipulatable(socketid, endCallback) {
-		if (socketidToLoginKey.hasOwnProperty(socketid)) {
-			socketid = socketidToLoginKey[socketid];
-		}
-		var authority;
-		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			authority = socketidToAccessAuthority[socketid];
-			endCallback(authority.display_manipulatable);
-			return;
-		}
-	}
-
 	function isAdmin(socketid, endCallback) {
 		var userid;
 		if (socketidToLoginKey.hasOwnProperty(socketid)) {
@@ -3135,15 +3123,14 @@
 	 */
 	function commandDeleteWindowMetaData(socketid, json, endCallback) {
 		console.log("commandDeleteWindowMetaData");
-		var i,
-			meta,
-			results = [],
+		var deleteWindowFunc = function (isAdmin) {
+			var i,
+				meta,
+				results = [],
 			all_done = json.length;
-
-		isDisplayManipulatable(socketid, function (isManipulatable) {
-			if (isManipulatable) {
-				for (i = 0; i < json.length; i = i + 1) {
-					meta = json[i];
+			for (i = 0; i < json.length; i = i + 1) {
+				meta = json[i];
+				if (isAdmin || isDisplayEditable(socketid, meta.group)) {
 					getWindowMetaData(meta, function (metaData) {
 						if (metaData) {
 							deleteWindow(metaData, function (meta) {
@@ -3162,9 +3149,21 @@
 							}
 						}
 					});
+				} else {
+					if (endCallback) {
+						endCallback("the authority is not enough", null);
+					}
 				}
 			}
-		});
+		};
+
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				deleteWindowFunc(isAdmin);
+			} else {
+				deleteWindowFunc(false);
+			}
+		});	
 	}
 	
 	/**
@@ -3475,15 +3474,15 @@
 	 */
 	function commandUpdateWindowMetaData(socketid, json, endCallback) {
 		console.log("commandUpdateWindowMetaData:", json.length);
-		var i,
-			metaData,
-			results = [],
-			all_done = json.length;
+		var updateWindowFunc = function (isAdmin) {
+			var i,
+				metaData,
+				results = [],
+				all_done = json.length;
 
-		isDisplayManipulatable(socketid, function (isManipulatable) {
-			if (isManipulatable) {
-				for (i = 0; i < json.length; i = i + 1) {
-					metaData = json[i];
+			for (i = 0; i < json.length; i = i + 1) {
+				metaData = json[i];
+				if (isAdmin || isDisplayEditable(socketid, metaData.group)) {
 					updateWindowMetaData(socketid, metaData, function (meta) {
 						--all_done;
 						results.push(meta);
@@ -3494,9 +3493,19 @@
 							}
 						}
 					});
+				} else {
+					--alldone;
 				}
 			}
-		});
+		};
+		
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				updateWindowFunc(isAdmin);
+			} else {
+				updateWindowFunc(false);
+			}
+		});	
 	}
 
     /**
