@@ -675,6 +675,8 @@
 					var context = elem.getContext('2d');
 
 					var pdfjsLib = window['pdfjs-dist/build/pdf'];
+					window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+					window.PDFJS.cMapPacked = true;
 
 					pdfjsLib.getDocument(contentData).then(function (pdf) {
 						metaData.pdfNumPages = pdf.numPages;
