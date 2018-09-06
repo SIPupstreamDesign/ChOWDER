@@ -46,14 +46,13 @@
 		// エレメントがなかった場合はグループに関係なく、エレメントを作る
 		displayArea = document.getElementById("display_preview_area");
 		screen = document.getElementById(windowData.id);
-		if (!screen) {
-			console.log("import window:" + JSON.stringify(windowData));
-			this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-			this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
-			this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
+		
+		console.log("import window:" + JSON.stringify(windowData));
+		this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
+		this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
+		this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 
-			this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
-		}
+		this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
 
 		// 非表示だったら非表示に.
 		if (!Validator.isVisibleWindow(windowData))
