@@ -7,16 +7,17 @@ ja-JP:
     add_layout: レイアウト追加
     overwrite_layout: レイアウト上書き
     change_group: グループ変更
+    change_displaygroup: ディスプレイグループ変更
     select_all_in_a_group: グループ内全て選択
     move_to_front: 最前面に移動
     move_to_back: 最背面に移動
     add_content: コンテンツ追加
     swap_image: 画像差し替え
-    control_videos_in_a_group: グループ内動画の一括操作
     image_file: 画像ファイル
     movie_file: 動画ファイル
     text: テキスト
     text_file: テキストファイル
+    pdf_file: PDFファイル
     url: URL
     screenshare: スクリーン共有
     camerashare: カメラ共有
@@ -49,6 +50,7 @@ ja-JP:
     add_url: URLの追加
     add_image: 画像の追加
     add_movie: 動画の追加
+    add_pdf: PDFの追加
     all: 全て
     change: 切り替え
     new: 新規
@@ -93,4 +95,5 @@ ja-JP:
     delete_content_in_group_is_ok: 'グループ内のコンテンツも削除されます. よろしいですか?'
     add_text: テキストの追加
     change_saving_name: 保存名の変更
+    control_videos_in_a_group: グループ内動画の一括操作
     video_controller: 動画一括制御
