@@ -185,6 +185,7 @@
 		var option;
 		this.editableSelect = new window.SelectList();
 		this.viewableSelect = new window.SelectList();
+		this.displayEditableSelect = new window.SelectList();
 		var authTargetFrame = document.getElementById('auth_target_frame');
 		var authSelect = document.getElementById('auth_select');
 		var applyButton = document.getElementById('apply_auth_button');
@@ -229,6 +230,7 @@
 			var user = this.getUser(id);
 			this.viewableSelect.deselectAll();
 			this.editableSelect.deselectAll();
+			this.displayEditableSelect.deselectAll();
 			if (user) {
 				for (i = 0; i < this.userList.length; i = i + 1) {
 					if (this.userList[i].type !== "admin")
@@ -242,11 +244,20 @@
 						}
 					}
 				}
+				for (i = 0; i < this.displayGroupList.length; i = i + 1) {
+					listContentName = this.displayGroupList[i].id;
+					if (user.displayEditable && (user.displayEditable === "all" || user.displayEditable.indexOf(listContentName) >= 0)) {
+						this.displayEditableSelect.select(this.displayGroupList[i].name);
+					}
+				}
 				if (user.viewable && user.viewable === "all") {
 					this.viewableSelect.select(allAccessText);
 				}
 				if (user.viewable && user.editable === "all") {
 					this.editableSelect.select(allAccessText);
+				}
+				if (user.displayEditable && user.displayEditable === "all") {
+					this.displayEditableSelect.select(allAccessText);
 				}
 				if (user.hasOwnProperty('group_manipulatable')) {
 					groupManipulateCheck.checked = user.group_manipulatable;
@@ -288,10 +299,26 @@
 				}
 			}
 		}.bind(this));
+		this.displayEditableSelect.on('change', function (err, text, isSelected) {
+			if (text === allAccessText) {
+				if (isSelected) {
+					this.displayEditableSelect.selectAll();
+				} else {
+					this.displayEditableSelect.deselectAll();
+				}
+			} else {
+				// 全てが選択された状態で全て以外が選択解除された. 全てを選択解除する.
+				var displayEditable = this.displayEditableSelect.getSelectedValues();
+				if (!isSelected && text !== allAccessText && displayEditable.indexOf(allAccessText) >= 0) {
+					this.displayEditableSelect.deselect(allAccessText);
+				}
+			}
+		}.bind(this));
 
 		authTargetFrame.innerHTML = "";
 		this.editableSelect.add(allAccessText, allAccessText);
 		this.viewableSelect.add(allAccessText, allAccessText);
+		this.displayEditableSelect.add(allAccessText, allAccessText);
 		for (i = 0; i < this.userList.length; i = i + 1) {
 			if (this.userList[i].type !== "admin" &&
 				this.userList[i].type !== "display" &&
@@ -301,8 +328,14 @@
 				this.viewableSelect.add(this.userList[i].name, this.userList[i].id);
 			}
 		}
+		for (i = 0; i < this.displayGroupList.length; ++i) {
+			if (this.displayGroupList[i].id !== Constants.DefaultGroup) {
+				this.displayEditableSelect.add(this.displayGroupList[i].name, this.displayGroupList[i].id);
+			}
+		}
 		authTargetFrame.appendChild(this.editableSelect.getDOM());
 		authTargetFrame.appendChild(this.viewableSelect.getDOM());
+		authTargetFrame.appendChild(this.displayEditableSelect.getDOM());
 
 		applyButton.onclick = function () {
 			var index = authSelect.selectedIndex;
@@ -310,6 +343,7 @@
 				var id = authSelect.childNodes[index].value;
 				var editable = this.editableSelect.getSelectedValues();
 				var viewable = this.viewableSelect.getSelectedValues();
+				var displayEditable = this.displayEditableSelect.getSelectedValues();
 				var group_manipulatable = groupManipulateCheck.checked;
 				var display_manipulatable = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
@@ -318,9 +352,13 @@
 				if (viewable.indexOf(allAccessText) >= 0) {
 					viewable = "all";
 				}
+				if (displayEditable.indexOf(allAccessText) >= 0) {
+					displayEditable = "all";
+				}
+				console.error(displayEditable)
 				
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					id, editable, viewable, group_manipulatable, display_manipulatable, function () {
+					id, editable, viewable, displayEditable, group_manipulatable, display_manipulatable, function () {
 						
 					var message = document.getElementById('apply_auth_message');
 					message.style.visibility = "visible";
@@ -536,6 +574,22 @@
 				}
 				return false;
 			},
+			isDisplayEditable : function (groupID) {
+				if (groupID === Constants.DefaultGroup) {
+					return true;
+				}
+				if (groupID === undefined || groupID === "") {
+					return true;
+				}
+				if (authority) {
+					if (authority.hasOwnProperty('displayEditable')) {
+						if (authority.displayEditable === "all" || authority.displayEditable.indexOf(groupID) >= 0) {
+							return true;
+						}
+					}
+				}
+				return false;
+			},
 			isGroupManipulable : function () {
 				if (authority && authority.hasOwnProperty('group_manipulatable')) {
 					return authority.group_manipulatable;
@@ -558,12 +612,20 @@
 		return this.getAuthorityObject().isEditable(group);
 	};
 
+	Management.prototype.isDisplayEditable = function (group) {
+		return this.getAuthorityObject().isDisplayEditable(group);
+	};
+
 	Management.prototype.isDisplayManipulatable = function () {
 		return this.getAuthorityObject().isDisplayManipulatable();
 	};
 
 	Management.prototype.setUserList = function (userList) {
 		this.userList = userList;
+	};
+
+	Management.prototype.setDisplayGroupList = function (groupList) {
+		this.displayGroupList = groupList;
 	};
 	
 	Management.prototype.setMaxMessageSize = function (size) {
@@ -625,11 +687,15 @@
 		});
 	
 		// 権限の変更
-		management.on('change_authority', function (userID, editable, viewable, group_manipulatable, display_manipulatable, callback) {
+		management.on('change_authority', function (
+			userID, editable, viewable, displayEditable,
+			group_manipulatable, display_manipulatable, callback)
+		{
 			var request = {
 				id : userID,
 				editable : editable,
 				viewable : viewable,
+				displayEditable : displayEditable,
 				group_manipulatable : group_manipulatable,
 				display_manipulatable : display_manipulatable
 			};

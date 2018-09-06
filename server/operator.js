@@ -52,6 +52,7 @@
 		userSettingKeys = [
 			"viewable",
 			"editable",
+			"displayEditable",
 			"group_manipulatable",
 			"display_manipulatable"
 		];
@@ -671,6 +672,7 @@
 				changeGroupUserSetting("master", "Guest", {
 					viewable : [],
 					editable : [],
+					displayEditable : [],
 					group_manipulatable : false,
 					display_manipulatable : true
 				}, function () {
@@ -678,6 +680,7 @@
 					changeGroupUserSetting("master", "Display", {
 						viewable : "all",
 						editable : "all",
+						displayEditable : [],
 						group_manipulatable : false,
 						display_manipulatable : true
 					});
@@ -1143,6 +1146,7 @@
 						authority.id = id;
 						authority.viewable = "all";
 						authority.editable = "all";
+						authority.displayEditable = [];
 						authority.group_manipulatable = true;
 						authority.display_manipulatable = true;
 						authority.is_admin = true;
@@ -2519,6 +2523,37 @@
 		return false;
 	}
 
+	/**
+	 * socketidユーザーがdisplaygroupを編集可能かどうか返す
+	 * @method isDisplayEditable
+	 * @param {String} socketid socketid
+	 * @param {String} group group
+	 */
+	function isDisplayEditable(socketid, groupID) {
+		if (groupID === "group_default") {
+			return true;
+		}
+		if (groupID === undefined || groupID === "") {
+			return true;
+		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			if (authority.hasOwnProperty('displayEditable')) {
+				if (authority.displayEditable === "all") {
+					return true;
+				}
+				if (authority.displayEditable.indexOf(groupID) >= 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	function isGroupManipulatable(socketid, groupID, endCallback) {
 		getGroupList(function (err, data) {
 			if (groupID === "group_default") {
@@ -3229,8 +3264,31 @@
 						});
 					} else if (type === "display") {
 						addDisplayGroup(socketid, null, json.name, groupColor, function (err, groupID) {
-							if (endCallback) {
-								endCallback(err, groupID);
+							// グループユーザーの権限情報に、グループを追加する.
+							if (!err) {
+								getGroupUserSetting(function (err, setting) {
+									if (setting.hasOwnProperty(userid)) {
+										if (!setting[userid].hasOwnProperty('displayEditable')) {
+											setting[userid].displayEditable = [];
+										}
+										if (setting[userid].displayEditable !== "all") {
+											setting[userid].displayEditable.push(groupID);
+										}
+										if (userid !== "group_default") {
+											changeGroupUserSetting(socketid, userid, setting[userid], function () {
+												if (endCallback) {
+													endCallback(err, groupID);
+												}
+											});
+										}
+									} else {
+										if (endCallback) {
+											endCallback(err, groupID);
+										}
+									}
+								});
+							} else {
+								endCallback("faild to add group");
 							}
 						});
 					}
@@ -3673,6 +3731,9 @@
 									editable : data.editable,
 									group_manipulatable : data.group_manipulatable,
 									display_manipulatable : data.display_manipulatable
+								};
+								if (data.hasOwnProperty('displayEditable')) {
+									setting.displayEditable = data.displayEditable
 								};
 								changeGroupUserSetting(socketid, userList[i].id, setting, function (err, reply) {
 									if (!err) {

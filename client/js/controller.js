@@ -2196,6 +2196,7 @@
 				state.get_content_selected_group(),
 				state.get_display_selected_group());
 			store.set_group_list(reply.grouplist, reply.displaygrouplist);
+			management.setDisplayGroupList(reply.displaygrouplist);
 
 			// Virtual Displayはすべてに追加しなおす.
 			store.for_each_display_group(function (i, group) {
