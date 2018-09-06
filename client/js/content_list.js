@@ -40,8 +40,6 @@
 			tagName = 'div';
 		} else if (contentType === "video") {
 			tagName = 'img';
-		} else if (contentType === "pdf") {
-			tagName = 'canvas';
 		} else {
 			tagName = 'img';
 		}
@@ -203,35 +201,38 @@
 					// マイク、カメラボタン
 					this.createMicCameraButton(divElem, metaData);
 				}
-			} else if (metaData.type === 'pdf' && contentElem.getContext) {
-				var context = contentElem.getContext('2d');
+			} else if (metaData.type === 'pdf') {
+				var canvas = document.createElement('canvas');
+				canvas.width = contentElem.clientWidth;
+				canvas.height = contentElem.clientHeight;
+
+				var context = canvas.getContext('2d');
+
 				var pdfjsLib = window['pdfjs-dist/build/pdf'];
 				window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
 				window.PDFJS.cMapPacked = true;
-
-				contentElem.renderTask = contentElem.renderTask || Promise.resolve();
 
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
 					pdf.getPage(1).then(function (page) {
 						var viewport = page.getViewport(1);
 
-						contentElem.width = viewport.width;
-						contentElem.height = viewport.height;
+						canvas.width = viewport.width;
+						canvas.height = viewport.height;
 
-						contentElem.renderTask = contentElem.renderTask.then(function () {
-							return page.render({
-								canvasContext: context,
-								viewport: viewport
-							});
+						return page.render({
+							canvasContext: context,
+							viewport: viewport
 						}).then(function () {
 							divElem.style.height = '150px';
 							var aspect = viewport.width / viewport.height;
 							w = 150.0 * aspect;
 							divElem.style.width = w + 'px';
 
-							fixDivSize(divElem, w, aspect);
-
-							return Promise.resolve();
+							canvas.toBlob(function (blob) {
+								URL.revokeObjectURL(contentElem.src);
+								contentElem.src = URL.createObjectURL(blob);
+								fixDivSize(divElem, w, aspect);
+							});
 						});
 					});
 				});
