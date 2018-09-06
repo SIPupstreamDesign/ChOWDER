@@ -1,0 +1,9 @@
+{
+  "name": "translation",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "csv": "*",
+    "iconv-lite": "*"
+  }
+}
