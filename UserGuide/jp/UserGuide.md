@@ -398,6 +398,20 @@ WebRTCの詳細については  [動画コンテンツの操作](#動画コン�
 <img src="image/AddContent_URL_View.png" alt="URL追加後の様子" width="472" />
 *URL追加後の様子*
 
+### PDFの追加
+
+任意のPDFドキュメントをContentsに追加します.
+以下のいずれかの方法で追加できます.
+
+-   メインメニュー → Add → PDF.
+-   Contentタブ右下メニュー → コンテンツ追加 → PDFファイル.
+-   Contentタブで右クリック → コンテンツ追加 → PDFファイル.
+
+以下は、PDFをContentsとして追加したあとの表示例となります.
+
+<img src="image/AddContent_PDF_View.png" alt="PDFファイルの追加例" width="434" />
+*PDFファイルの追加例*
+
 ### スクリーン共有の追加
 
 スクリーン共有をContentsに追加します.
