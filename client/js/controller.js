@@ -640,7 +640,7 @@
 						this.apply_layout(metaData);
 					} else {
 						if (Validator.isWindowType(metaData)) {
-							metaData.visible = Validator.isVisibleWindow(metaData);
+							metaData.visible = management.isDisplayEditable(metaData.group);
 						} else {
 							if (management.isEditable(metaData.group)) {
 								metaData.visible = true;
