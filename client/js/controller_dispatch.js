@@ -1098,6 +1098,8 @@
 					state.set_display_selected_group(groupID);
 					controller.removeVirtualDisplay();
 					controller.doneGetVirtualDisplay(err, data);
+					controller.unselect_all();
+					controller.select('whole_window_' + groupID, true)
 				});
 			}
 		});
