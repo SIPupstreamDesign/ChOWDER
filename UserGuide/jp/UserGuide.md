@@ -679,7 +679,7 @@ Propertyは以下の通りID以外を編集し、座標、表示の優先順位(
 -   1. Contentタブで右クリック → グループ内動画の一括操作
 -   2. 画面下に表示された動画一括制御コントローラより操作
 
-<img src="image/movie_setting.png" alt="動画設定" width="434" />
+<img src="image/movie_bulk.png" alt="動画設定" width="434" />
 *動画の一括操作*
 
 ユーザー権限と管理画面
