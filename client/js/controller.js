@@ -1494,6 +1494,7 @@
 			reurn;
 		}
 
+		metaData.timestamp = new Date().toISOString();
 		connector.sendBinary('AddContent', metaData, binary, function (err, reply) {
 			this.doneAddContent(err, reply);
 			if (endCallback) {
