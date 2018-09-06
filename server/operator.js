@@ -53,8 +53,7 @@
 			"viewable",
 			"editable",
 			"displayEditable",
-			"group_manipulatable",
-			"display_manipulatable"
+			"group_manipulatable"
 		];
 	
 	client.on('error', function (err) {
@@ -269,8 +268,7 @@
 					changeGroupUserSetting(socketid, id, {
 						viewable : [id],
 						editable : [id],
-						group_manipulatable : false,
-						display_manipulatable : true
+						group_manipulatable : false
 					}, function (err, reply) {
 						if (endCallback) {
 							endCallback(err, id);
@@ -673,16 +671,14 @@
 					viewable : [],
 					editable : [],
 					displayEditable : [],
-					group_manipulatable : false,
-					display_manipulatable : true
+					group_manipulatable : false
 				}, function () {
 					// Display設定の初期登録
 					changeGroupUserSetting("master", "Display", {
 						viewable : "all",
 						editable : "all",
 						displayEditable : [],
-						group_manipulatable : false,
-						display_manipulatable : true
+						group_manipulatable : false
 					});
 				});
 			}
@@ -1148,7 +1144,6 @@
 						authority.editable = "all";
 						authority.displayEditable = [];
 						authority.group_manipulatable = true;
-						authority.display_manipulatable = true;
 						authority.is_admin = true;
 						socketidToAccessAuthority[socketid] = authority;
 					}
@@ -3494,7 +3489,7 @@
 						}
 					});
 				} else {
-					--alldone;
+					--all_done;
 				}
 			}
 		};
@@ -3726,8 +3721,7 @@
 		if (data.hasOwnProperty('id') 
 			&& data.hasOwnProperty('editable') 
 			&& data.hasOwnProperty('viewable')
-			&& data.hasOwnProperty('group_manipulatable')
-			&& data.hasOwnProperty('display_manipulatable'))
+			&& data.hasOwnProperty('group_manipulatable'))
 		{
 			getUserList(function (err, userList) {
 				var i;
@@ -3738,8 +3732,7 @@
 								var setting = {
 									viewable : data.viewable,
 									editable : data.editable,
-									group_manipulatable : data.group_manipulatable,
-									display_manipulatable : data.display_manipulatable
+									group_manipulatable : data.group_manipulatable
 								};
 								if (data.hasOwnProperty('displayEditable')) {
 									setting.displayEditable = data.displayEditable
