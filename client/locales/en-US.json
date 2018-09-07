@@ -37,10 +37,10 @@
  "authority_setting": "Authority Settings",
  "applied": "The setting is applied.",
  "setting_target": "Setting Target",
- "editable": "Editable",
- "viewable": "Viewable",
+ "editable_content": "Editable Content",
+ "viewable_content": "Viewable Content",
  "allow_editting_group": "Allow Edit of Groups",
- "allow_editting_display": "Allow Edit of Displays",
+ "editable_display": "Editable Display",
  "setting_password": "Password Settings",
  "old_password": "Old Password",
  "new_password": "New Password",
@@ -95,5 +95,7 @@
  "add_text": "Add Text",
  "change_saving_name": "Change name",
  "control_videos_in_a_group": "Control All Videos in a Group",
- "video_controller": "Video Controller"
+ "video_controller": "Video Controller",
+ "change_timeseries_key": "Change timeseries",
+ "sync": "Sync"
 }

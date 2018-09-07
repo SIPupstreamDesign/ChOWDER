@@ -37,10 +37,10 @@
  "authority_setting": "閲覧・編集権限の設定",
  "applied": "設定を適用しました",
  "setting_target": "設定対象",
- "editable": "編集可能",
- "viewable": "閲覧可能",
+ "editable_content": "編集可能コンテンツ",
+ "viewable_content": "閲覧可能コンテンツ",
  "allow_editting_group": "グループの編集を許可",
- "allow_editting_display": "Displayの操作を許可",
+ "editable_display": "編集可能ディスプレイ",
  "setting_password": "パスワードの設定",
  "old_password": "変更前のパスワード",
  "new_password": "新規パスワード",
@@ -95,5 +95,7 @@
  "add_text": "テキストの追加",
  "change_saving_name": "保存名の変更",
  "control_videos_in_a_group": "グループ内動画の一括操作",
- "video_controller": "動画一括制御"
+ "video_controller": "動画一括制御",
+ "change_timeseries_key": "時系列データの切り替え",
+ "sync": "同期"
 }
