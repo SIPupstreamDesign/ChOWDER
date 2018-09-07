@@ -54,6 +54,9 @@
         }
     };
     ColorSelector.prototype.convertCSSColor = function(){
+        if (!this.hoverColor) {
+            return "#FFFFFF"
+        }
         var r = this.zeroPad(this.hoverColor[0].toString(16));
         var g = this.zeroPad(this.hoverColor[1].toString(16));
         var b = this.zeroPad(this.hoverColor[2].toString(16));
@@ -61,6 +64,36 @@
     };
     ColorSelector.prototype.zeroPad = function(v){
         return v.length % 2 ? '0' + v : v;
+    };
+    ColorSelector.prototype.setColorStr = function (colorstr) {
+        if (colorstr.indexOf('rgba') >= 0) {
+            var color = colorstr.split('rgba').join("");
+            color = color.split('(').join("");
+            color = color.split(')').join("");
+            color = color.split('"').join("");
+            color = color.split("'").join("");
+            color = color.split(",");
+            if (color.length > 3) {
+                this.currentColor[0] = Number(color[0]);
+                this.currentColor[1] = Number(color[1]);
+                this.currentColor[2] = Number(color[2]);
+                this.currentColor[3] = Number(color[3]);
+            }
+        } else if (colorstr.indexOf('rgb') >= 0) {
+            var color = colorstr.split('rgb').join("");
+            color = color.split('(').join("");
+            color = color.split(')').join("");
+            color = color.split('"').join("");
+            color = color.split("'").join("");
+            color = color.split(",");
+            if (color.length > 2) {
+                this.currentColor[0] = Number(color[0]);
+                this.currentColor[1] = Number(color[1]);
+                this.currentColor[2] = Number(color[2]);
+            }
+        }
+
+        this.elementCurrentColor.style.backgroundColor = 'rgba(' + this.currentColor.join(',') + ')';
     };
     ColorSelector.prototype.setColor = function(r, g, b, a, cancel){
         this.currentColor[0] = r;
@@ -71,6 +104,7 @@
         if(cancel !== true){this.setColorCallback(this.currentColor.concat());}
     };
     ColorSelector.prototype.setHoverColor = function(r, g, b, a){
+        if (r === undefined || g === undefined || b === undefined || a === undefined) return;
         this.hoverColor[0] = r;
         this.hoverColor[1] = g;
         this.hoverColor[2] = b;

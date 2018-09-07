@@ -1903,7 +1903,7 @@
 
 		Management.initManagementEvents(connector, login, management);
 
-		gui.init(management);
+		gui.init(management, controllerData);
 		gui.set_controller_id(login.getControllerID());
 
 		connector.send('GetDBList', {}, function (err, reply) {

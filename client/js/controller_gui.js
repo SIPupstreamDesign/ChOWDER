@@ -27,7 +27,7 @@
 		this.contextPosY = 0;
 	};
 
-	ControllerGUI.prototype.init = function (management) {
+	ControllerGUI.prototype.init = function (management, controllerData) {
 		this.management = management;
 
 		// 全体のレイアウトの初期化.
@@ -104,16 +104,21 @@
 							var colorselector = new ColorSelector(function (colorvalue) {
 							}.bind(this), 234, 120); // 幅、高さ
 
+							colorselector.setColorStr(controllerData.getCursorColor());
+
 							background.on('close', function (colorselector, pickerDOM) {
 								pickerDOM.removeChild(colorselector.elementWrapper);
 								pickerDOM.style.display = "none";
 							}.bind(this, colorselector, pickerDOM));
 
+
 							var ok = document.getElementById('cursor_color_ok');
 							var cancel = document.getElementById('cursor_color_cancel');
 							cancel.onclick = function () {
 								background.close();
-								pickerDOM.removeChild(colorselector.elementWrapper);
+								if (colorselector.elementWrapper.parentNode) {
+									colorselector.elementWrapper.parentNode.removeChild(colorselector.elementWrapper);
+								}
 								pickerDOM.style.display = "none";
 							};
 							ok.onclick = function () {
@@ -122,8 +127,8 @@
 								this.emit(ControllerGUI.EVENT_UPDATE_CURSOR_COLOR, null, colorstr);
 								cancel.click();
 							}.bind(this)
-							ok.ontouchend = ok.click();
-							cancel.ontouchstart = cancel.click();
+							ok.ontouchend = ok.click;
+							cancel.ontouchend = cancel.click;
 							
 							pickerDOM.style.borderRadius = "10px";
 							pickerDOM.style.background = "rgb(83, 83, 83)";
