@@ -870,6 +870,10 @@
 						metaData.restore_key = restoreKey;
 						metaData.restore_value = restoreValue;
 						connector.send('GetContent', metaData, function (err, reply) {
+							if (err) {
+								console.error(err)
+								return;
+							}
 							reply.metaData.restore_key = restoreKey;
 							reply.metaData.restore_value = restoreValue;
 							reply.metaData.posx = metaData.posx;

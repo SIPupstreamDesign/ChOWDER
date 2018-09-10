@@ -3,7 +3,7 @@
 
 (function () {
 	"use strict";
-	
+
 	/**
 	 * Operator生成
 	 * @method Operator
@@ -54,7 +54,8 @@
 			"editable",
 			"displayEditable",
 			"group_manipulatable"
-		];
+		],
+		expireTime = 60 * 60 * 24 * 365 * 100; // 100years
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
@@ -1517,6 +1518,8 @@
 			metaData.mime = util.detectImageType(contentData);
 		} else if (metaData.type === 'url') {
 			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === "tileimage") {
+			metaData.mime = util.detectImageType(contentData);
 		} else {
 			console.error("Error undefined type:" + metaData.type);
 		}
@@ -1720,10 +1723,11 @@
 					if (err) {
 						console.error("Error on addContent:" + err);
 					} else {
-						endCallback(err, metaData, contentData);
+						client.expire(contentHistoryDataPrefix + history_id, expireTime, function () {
+							endCallback(err, metaData, contentData);
+						});
 					}
 				});
-
 			} else {
 				if (endCallback) {
 					endCallback("Error not found history_id content");
@@ -2767,9 +2771,9 @@
 									metaList.unshift(meta);
 									binaryList.unshift(preview[0]);
 								}
-								endCallback(null, metaList, binaryList);
+								endCallback(err, metaList, binaryList);
 							} else {
-								endCallback(null, meta, preview[0]);
+								endCallback(err, meta, preview[0]);
 							}
 						});
 					});
@@ -2807,9 +2811,9 @@
 									if (binaryList.length > 0) {
 										metaList.unshift(JSON.parse(metaData));
 										binaryList.unshift(reply[0]);
-										endCallback(null, metaList, binaryList);
+										endCallback(err, metaList, binaryList);
 									} else {
-										endCallback(null, JSON.parse(metaData), reply[0]);
+										endCallback(err, JSON.parse(metaData), reply[0]);
 									}
 								});
 							})
@@ -4448,6 +4452,7 @@
 		console.log("idstr:" + contentThumbnailPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
 		console.log("idstr:" + metadataHistoryPrefix);
+		client.CONFIG('SET', 'maxmemory-policy', 'volatile-ttl');
 
 		/// 管理者の初期登録
 		

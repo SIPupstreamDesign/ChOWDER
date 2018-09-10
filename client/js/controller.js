@@ -1755,8 +1755,10 @@
 	
 	
 	Controller.prototype.update_mark_icon = function (elem, metaData) {
-		gui.toggle_mark(elem, metaData);
-		gui.update_icon(elem, document.getElementById("onlist:" + metaData.id), metaData, store.get_group_dict());
+		if (metaData) {
+			gui.toggle_mark(elem, metaData);
+			gui.update_icon(elem, document.getElementById("onlist:" + metaData.id), metaData, store.get_group_dict());
+		}
 	}
 
 
@@ -1862,15 +1864,17 @@
 		if (!store.is_initialized()) { return; }
 
 		if (!err) {
-			if (reply.metaData.type === "video") {
-				if (store.has_video_data(reply.metaData.id)) {
-					this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
+			if (reply.hasOwnProperty('metaData')) {
+				if (reply.metaData.type === "video") {
+					if (store.has_video_data(reply.metaData.id)) {
+						this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
+					} else {
+						// ローカルに保持していない動画コンテンツ
+						this.import_content(reply.metaData, reply.contentData);
+					}
 				} else {
-					// ローカルに保持していない動画コンテンツ
 					this.import_content(reply.metaData, reply.contentData);
 				}
-			} else {
-				this.import_content(reply.metaData, reply.contentData);
 			}
 			if (endCallback) {
 				endCallback(null);
@@ -1893,6 +1897,11 @@
 		var json;
 		var k;
 		var quality;
+
+		if (err) {
+			console.error(err);
+			return;
+		}
 
 		if (reply.length === 1) {
 			json = reply[0];
