@@ -43,28 +43,30 @@
 
 		metaDataDict[windowData.id] = windowData;
 
-		if (gui.get_current_display_group_id() === Constants.DefaultGroup ||
-			gui.get_current_display_group_id() === windowData.group)
-		{
-			if (isVisible(windowData)) {
-				console.log("import window:" + JSON.stringify(windowData));
-				this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-				this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
-				this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
+		// エレメントがなかった場合はグループに関係なく、エレメントを作る
+		displayArea = document.getElementById("display_preview_area");
+		screen = document.getElementById(windowData.id);
+		
+		console.log("import window:" + JSON.stringify(windowData));
+		this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
+		this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
+		this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 
-				this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
-			} else {
-				displayArea = document.getElementById("display_preview_area");
-				screen = document.getElementById(windowData.id);
-				if (displayArea && screen) {
-					screen.style.display = "none";
-				}
+		this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
+
+		// 非表示だったら非表示に.
+		if (!Validator.isVisibleWindow(windowData))
+		{
+			displayArea = document.getElementById("display_preview_area");
+			screen = document.getElementById(windowData.id);
+			if (displayArea && screen) {
+				screen.style.display = "none";
 			}
-			if (windowData.hasOwnProperty("color")) {
-				screen = document.getElementById(windowData.id);
-				if (screen) {
-					screen.style.borderColor = windowData.color;
-				}
+		}
+		if (windowData.hasOwnProperty("color")) {
+			screen = document.getElementById(windowData.id);
+			if (screen) {
+				screen.style.borderColor = windowData.color;
 			}
 		}
 	};

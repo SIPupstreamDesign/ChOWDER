@@ -154,7 +154,7 @@
 				<input type="button" class="btn backup_restore" id="backup_restore" data-key="restore" value="" />
 			</div>
 			<div class="history_area" id="history_area">
-				<p id="history_info" class="history_info" style="color:white">時系列データ切り替え</p>
+				<p id="history_info" class="history_info" style="color:white" data-key="change_timeseries_key"></p>
 				<span style="margin-left:15px">key</span>
 				<select id="history_select" class="history_select">
 				</select>
@@ -164,7 +164,7 @@
 					<span id="history_up" class="history_up"></span>
 					<span id="history_down" class="history_down"></span>
 				</div>
-				<div class="btn btn-primary history_sync_button" id="history_sync_button">同期</div>
+				<span class="btn btn-primary history_sync_button" id="history_sync_button" data-key="sync"></span>
 			</div>
 			<a type="button" class="download_button" id="download_button"></a>
 		</div>
@@ -305,9 +305,9 @@
 			<select id="auth_select" class="auth_select">
 			</select>
 			<div>
-				<span class="auth_target_label" data-key="editable"></span>
-				<span class="auth_target_label" data-key="viewable"></span>
-				<input id="display_manipulate_check" type="checkbox" /><span id="display_manipulate_label" data-key="allow_editting_display"></span>
+				<span class="auth_target_label" data-key="editable_content"></span>
+				<span class="auth_target_label" data-key="viewable_content"></span>
+				<span id="display_manipulate_label" data-key="editable_display"></span>
 			</div>
 			<div id="auth_target_frame">
 				<!-- 閲覧権限、編集権限、ディスプレイ編集権限のリスト -->
@@ -382,6 +382,8 @@
 	</div>
 	<div style="display:none" id="forcolorpicker">
 		<h4 style="color:white">Remote Cursor Color Setting</h4>
+		<input type="button" class="btn  btn-primary" id="cursor_color_ok" value="OK" />
+		<input type="button" class="btn  btn-primary" id="cursor_color_cancel" value="Cancel" />
 	</div>
 </body>
 </html>

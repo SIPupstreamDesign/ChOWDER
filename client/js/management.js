@@ -191,18 +191,12 @@
 		var applyButton = document.getElementById('apply_auth_button');
 		var groupManipulateCheck = document.getElementById('group_add_delete_check');
 		var groupManipulateLabel = document.getElementById('group_add_delete_label');
-		var displayManipulateCheck = document.getElementById('display_manipulate_check');
 		var displayManipulateLabel = document.getElementById('display_manipulate_label');
 		var allAccessText = i18next.t("all");
 
 		// グループの追加削除を許可のチェック
 		groupManipulateLabel.onclick = function () {
 			groupManipulateCheck.click();
-		};
-		
-		// ディスプレイの操作を許可のチェック
-		displayManipulateLabel.onclick = function () {
-			displayManipulateCheck.click();
 		};
 		
 		// ユーザー名リストの設定
@@ -261,9 +255,6 @@
 				}
 				if (user.hasOwnProperty('group_manipulatable')) {
 					groupManipulateCheck.checked = user.group_manipulatable;
-				}
-				if (user.hasOwnProperty('display_manipulatable')) {
-					displayManipulateCheck.checked = user.display_manipulatable;
 				}
 			}
 		}.bind(this);
@@ -345,7 +336,6 @@
 				var viewable = this.viewableSelect.getSelectedValues();
 				var displayEditable = this.displayEditableSelect.getSelectedValues();
 				var group_manipulatable = groupManipulateCheck.checked;
-				var display_manipulatable = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
 					editable = "all";
 				}
@@ -358,7 +348,7 @@
 				console.error(displayEditable)
 				
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					id, editable, viewable, displayEditable, group_manipulatable, display_manipulatable, function () {
+					id, editable, viewable, displayEditable, group_manipulatable, function () {
 						
 					var message = document.getElementById('apply_auth_message');
 					message.style.visibility = "visible";
@@ -575,6 +565,11 @@
 				return false;
 			},
 			isDisplayEditable : function (groupID) {
+				if (authority && authority.hasOwnProperty('is_admin')) {
+					if (String(authority.is_admin) === "true") {
+						return true;
+					}
+				}
 				if (groupID === Constants.DefaultGroup) {
 					return true;
 				}
@@ -593,12 +588,6 @@
 			isGroupManipulable : function () {
 				if (authority && authority.hasOwnProperty('group_manipulatable')) {
 					return authority.group_manipulatable;
-				}
-				return false;
-			},
-			isDisplayManipulatable : function () {
-				if (authority && authority.hasOwnProperty('display_manipulatable')) {
-					return authority.display_manipulatable;
 				}
 				return false;
 			}
@@ -625,11 +614,6 @@
 	Management.prototype.isGroupManipulable = function () {
 		return this.getAuthorityObject().isGroupManipulable();
 	};
-
-	Management.prototype.isDisplayManipulatable = function () {
-		return this.getAuthorityObject().isDisplayManipulatable();
-	};
-
 	Management.prototype.setUserList = function (userList) {
 		this.userList = userList;
 	};
@@ -699,15 +683,14 @@
 		// 権限の変更
 		management.on('change_authority', function (
 			userID, editable, viewable, displayEditable,
-			group_manipulatable, display_manipulatable, callback)
+			group_manipulatable, callback)
 		{
 			var request = {
 				id : userID,
 				editable : editable,
 				viewable : viewable,
 				displayEditable : displayEditable,
-				group_manipulatable : group_manipulatable,
-				display_manipulatable : display_manipulatable
+				group_manipulatable : group_manipulatable
 			};
 			connector.send('ChangeAuthority', request, function (err, data) {
 				connector.send('GetUserList', {}, function (err, userList) {

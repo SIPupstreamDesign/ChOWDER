@@ -53,8 +53,7 @@
 			"viewable",
 			"editable",
 			"displayEditable",
-			"group_manipulatable",
-			"display_manipulatable"
+			"group_manipulatable"
 		];
 	
 	client.on('error', function (err) {
@@ -258,10 +257,15 @@
 				}
 				return;
 			}
+			var groupData;
 			if (groupID) {
-				data.grouplist.push({ name : groupName, color : color, id : groupID });
+				groupData = { name : groupName, id : groupID }
+				if (color) { groupData.color = color; }
+				data.grouplist.push(groupData);
 			} else {
-				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+				groupData = { name : groupName, id : util.generateUUID8() }
+				if (color) { groupData.color = color; }
+				data.grouplist.push(groupData);
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
 				getGroupID(groupName, function (id) {
@@ -269,8 +273,7 @@
 					changeGroupUserSetting(socketid, id, {
 						viewable : [id],
 						editable : [id],
-						group_manipulatable : false,
-						display_manipulatable : true
+						group_manipulatable : false
 					}, function (err, reply) {
 						if (endCallback) {
 							endCallback(err, id);
@@ -300,10 +303,15 @@
 				}
 				return;
 			}
+			var groupData;
 			if (groupID) {
-				data.displaygrouplist.push({ name : groupName, color : color, id : groupID });
+				groupData = { name : groupName, id : groupID }
+				if (color) { groupData.color = color; }
+				data.displaygrouplist.push(groupData);
 			} else {
-				data.displaygrouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+				groupData = { name : groupName, id : util.generateUUID8() }
+				if (color) { groupData.color = color; }
+				data.displaygrouplist.push(groupData);
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
 				getGroupID(groupName, function (id) {
@@ -673,21 +681,20 @@
 					viewable : [],
 					editable : [],
 					displayEditable : [],
-					group_manipulatable : false,
-					display_manipulatable : true
+					group_manipulatable : false
 				}, function () {
 					// Display設定の初期登録
 					changeGroupUserSetting("master", "Display", {
 						viewable : "all",
 						editable : "all",
 						displayEditable : [],
-						group_manipulatable : false,
-						display_manipulatable : true
+						group_manipulatable : false
 					});
 				});
 			}
-			addGroup("master", "group_default", "default", function (err, reply) {} );
-			addDisplayGroup("master", "group_default", "default", function (err, reply) {} );
+			addGroup("master", "group_default", "default", null, function (err, reply) {
+				addDisplayGroup("master", "group_default", "default", null,  function (err, reply) {} );
+			} );
 		});
 		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
@@ -1148,7 +1155,6 @@
 						authority.editable = "all";
 						authority.displayEditable = [];
 						authority.group_manipulatable = true;
-						authority.display_manipulatable = true;
 						authority.is_admin = true;
 						socketidToAccessAuthority[socketid] = authority;
 					}
@@ -2058,7 +2064,7 @@
 					if (!metaData.hasOwnProperty('reductionWidth')) {
 						var dimensions = image_size(contentData);
 						metaData.reductionWidth = dimensions.width;
-						metaData.reductionHeight = dimensions.width;
+						metaData.reductionHeight = dimensions.height;
 					}
 					addContent(metaData, contentData, function (err, reply) {
 						metaData.date = new Date().toISOString(); //登録時間を保存
@@ -2090,7 +2096,7 @@
 					if (!metaData.hasOwnProperty('reductionWidth')) {
 						var dimensions = image_size(contentData);
 						metaData.reductionWidth = dimensions.width;
-						metaData.reductionHeight = dimensions.width;
+						metaData.reductionHeight = dimensions.height;
 					}
 					// メタデータ初期設定.
 					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
@@ -2576,18 +2582,6 @@
 			endCallback(false);
 			return;
 		});
-	}
-
-	function isDisplayManipulatable(socketid, endCallback) {
-		if (socketidToLoginKey.hasOwnProperty(socketid)) {
-			socketid = socketidToLoginKey[socketid];
-		}
-		var authority;
-		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			authority = socketidToAccessAuthority[socketid];
-			endCallback(authority.display_manipulatable);
-			return;
-		}
 	}
 
 	function isAdmin(socketid, endCallback) {
@@ -3135,15 +3129,14 @@
 	 */
 	function commandDeleteWindowMetaData(socketid, json, endCallback) {
 		console.log("commandDeleteWindowMetaData");
-		var i,
-			meta,
-			results = [],
+		var deleteWindowFunc = function (isAdmin) {
+			var i,
+				meta,
+				results = [],
 			all_done = json.length;
-
-		isDisplayManipulatable(socketid, function (isManipulatable) {
-			if (isManipulatable) {
-				for (i = 0; i < json.length; i = i + 1) {
-					meta = json[i];
+			for (i = 0; i < json.length; i = i + 1) {
+				meta = json[i];
+				if (isAdmin || isDisplayEditable(socketid, meta.group)) {
 					getWindowMetaData(meta, function (metaData) {
 						if (metaData) {
 							deleteWindow(metaData, function (meta) {
@@ -3162,9 +3155,21 @@
 							}
 						}
 					});
+				} else {
+					if (endCallback) {
+						endCallback("the authority is not enough", null);
+					}
 				}
 			}
-		});
+		};
+
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				deleteWindowFunc(isAdmin);
+			} else {
+				deleteWindowFunc(false);
+			}
+		});	
 	}
 	
 	/**
@@ -3475,15 +3480,15 @@
 	 */
 	function commandUpdateWindowMetaData(socketid, json, endCallback) {
 		console.log("commandUpdateWindowMetaData:", json.length);
-		var i,
-			metaData,
-			results = [],
-			all_done = json.length;
+		var updateWindowFunc = function (isAdmin) {
+			var i,
+				metaData,
+				results = [],
+				all_done = json.length;
 
-		isDisplayManipulatable(socketid, function (isManipulatable) {
-			if (isManipulatable) {
-				for (i = 0; i < json.length; i = i + 1) {
-					metaData = json[i];
+			for (i = 0; i < json.length; i = i + 1) {
+				metaData = json[i];
+				if (isAdmin || isDisplayEditable(socketid, metaData.group)) {
 					updateWindowMetaData(socketid, metaData, function (meta) {
 						--all_done;
 						results.push(meta);
@@ -3494,9 +3499,19 @@
 							}
 						}
 					});
+				} else {
+					--all_done;
 				}
 			}
-		});
+		};
+		
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				updateWindowFunc(isAdmin);
+			} else {
+				updateWindowFunc(false);
+			}
+		});	
 	}
 
     /**
@@ -3717,8 +3732,7 @@
 		if (data.hasOwnProperty('id') 
 			&& data.hasOwnProperty('editable') 
 			&& data.hasOwnProperty('viewable')
-			&& data.hasOwnProperty('group_manipulatable')
-			&& data.hasOwnProperty('display_manipulatable'))
+			&& data.hasOwnProperty('group_manipulatable'))
 		{
 			getUserList(function (err, userList) {
 				var i;
@@ -3729,8 +3743,7 @@
 								var setting = {
 									viewable : data.viewable,
 									editable : data.editable,
-									group_manipulatable : data.group_manipulatable,
-									display_manipulatable : data.display_manipulatable
+									group_manipulatable : data.group_manipulatable
 								};
 								if (data.hasOwnProperty('displayEditable')) {
 									setting.displayEditable = data.displayEditable

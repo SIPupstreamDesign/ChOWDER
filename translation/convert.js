@@ -31,8 +31,28 @@ fs.readdir(config.inputDirectory, (err, files) => {
             .pipe(iconv.decodeStream('SJIS'))
             .pipe(iconv.encodeStream('UTF-8'))
             .pipe(csv.parse())
+            .on('error', () => {
+                console.log("error")
+            })
+            .on('end', () => {
+                console.log("end")
+            })
+            .on('close', () => {
+                console.log("close")
+            })
+            .on('finish', () => {
+                for (let k = 0; k < result.length; ++k) {
+                    let outFile =  path.join(config.outputDirectory, result[k].lang + '.json');
+                    let outBuffer = JSON.stringify(result[k].json, null, " ");
+                    console.log("writting.. ", outFile)
+                    fs.writeFileSync(outFile, outBuffer);
+                }
+                console.log("done")
+            })
             .pipe(csv.transform(function(record, callback){
                 if (index === 0) {
+                    console.log("start")
+
                     for (let k = 1; k < record.length; ++k) {
                         result.push({
                             lang : record[k],
@@ -47,15 +67,6 @@ fs.readdir(config.inputDirectory, (err, files) => {
                 }
                 ++index;
             }))
-            .on('finish', () => {
-                for (let k = 0; k < result.length; ++k) {
-                    let outFile =  path.join(config.outputDirectory, result[k].lang + '.json');
-                    let outBuffer = JSON.stringify(result[k].json, null, " ");
-                    console.log("writting.. ", outFile)
-                    fs.writeFileSync(outFile, outBuffer);
-                }
-                console.log("done")
-            });
     }
 });
 

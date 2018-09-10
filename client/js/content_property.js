@@ -214,7 +214,13 @@
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
 			}.bind(this),
-			isEditableContent = this.authority.isEditable(metaData.group);
+			isEditableContent;
+		
+		if (Validator.isWindowType(metaData)) {
+			isEditableContent = this.authority.isDisplayEditable(metaData.group)
+		} else {
+			isEditableContent = this.authority.isEditable(metaData.group)
+		}
 
 		restore_button.disabled = !isEditableContent;
 		history_area.disabled = !isEditableContent;
@@ -247,9 +253,11 @@
 			backup_area.style.display = "none";
 			history_area.style.display = "none";
 			history_slider_area.style.display = "none";
-			color_picker.style.display = "block";
-		} else if (type === Constants.PropertyTypeWholeWindow) {
+			color_picker.style.display = isEditableContent ? "block" : "none";
+		} else if (Validator.isVirtualDisplayType(metaData)) {
+			isEditableContent = this.authority.isDisplayEditable(metaData.group)
 			idlabel.innerHTML = "Virtual Display Setting";
+			
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
 			addInputProperty(isEditableContent, 'whole_width', 'w', 'px', '1000', function () {
@@ -361,7 +369,6 @@
 				}
 			}
 		}
-		color_picker.style.display = isEditableContent ? "block" : "none";
 	}
 
 	ContentProperty.prototype.initVideoPropertyArea = function (isEditableContent, metaData, type) {
