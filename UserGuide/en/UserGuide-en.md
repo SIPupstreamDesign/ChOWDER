@@ -137,8 +137,23 @@ Quitting the Application
 
 Kill the ChOWDER server and redis (e.g. by hitting CTRL+C in the terminal). {>>Redis may require manually killing its subprocess. You can, for example, use `ps` to find their process IDs and `kill` to kill them. 信じがたいのですが，本当でしょうか?　Windowsのみ？<<}
 
-Managing Administrative Users
+Managing Permissions
 ==================================================================
+ChOWDER has 4 permission types. An *administrator* permission lets one access and edit all the functionalities of ChOWDER.
+A *display* 
+In a typical scenario, many users work in a group in front of a tiled displays system. A *group user* permission is designed for this purpose. By default, this permission lets one view and edit the contents of her belonging group from their own computers.
+
+|User Categpry| Overview |Access Level|
+| ---- | ---- | ---- |
+|Administrator| Administrator can access all functions | All functions including Administrator Screen |
+|Group User| User per Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
+|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
+|Guest| Guest User without Password | Default setting of access restrictions of the Administrator Screen permits editing and viewing for default setting only |
+
+You can set password and level of access per user. 
+
+Managing Administrative Users
+---------------------------------------------------
 {>>原文のInitial setup for administratorは長くて意味が取れなかったので<<}
 {>>Administratorには何をする権限があるのでしょうか？<<}
 
@@ -147,6 +162,8 @@ You can modify the administrator configurations by starting up ChOWDER.
 {>>デフォルトの管理者名はなんでしょうか？<<}
 The default password for the administrator is “admin”. {>>administrator とは何をする人でしょうか？<<}
 {>>この作業はファイルをパースするよりもGUIの方が利便的なのですがセキュリティ上の理由があるのでしょうか？<<}
+
+The section "User Permissions and Administrator Screen" in this document gives a more 
 
 The Administrator Configuration File
 ---------------------------------------------------
@@ -335,11 +352,11 @@ Display webpages by following one of the methods below.
 
 Share screens by following one of the methods below. 
 
--   Main Menu -> Add -> ScreenShare
--   Content Tab (lower right menu) -> Add Content -> ScreenShare
--   Right-click inside the Content Tab -> Add Content -> ScreenShare
+-   Menubar >[Add]>[Shared Screen]
+-   [Content] tab >[三]>[Add Content]>[Shared Screen]
+-   Right-click inside the [Content] tab >[Add Content]>[Shared Screen]
 
-Captured videos are streamed via WebRTC.
+Captured videos are streamed using WebRTC.
 For instructions on working with video contents, refer to [Working with Video Contents](#Working-with-Video-Contents).
 
 <img src="image/AddContent_ScreenShare_View.png" alt="スクリーン共有の追加例" width="434" />
@@ -349,25 +366,23 @@ For instructions on working with video contents, refer to [Working with Video Co
 
 Share cameras by following one of the methods below. 
 
--   Main Menu -> Add -> CameraShare
--   Content Tab (lower right menu) -> Add Content -> CameraShare
--   Right-click inside the Content Tab -> Add Content -> CameraShare
+-   Menubar >[Add]>[Shared Camera]
+-   [Contents] tab >[三]>[Add Content]>[Shared Camera]
+-   Right-click inside the [Contents] Tab>[Add Content]>[Shared Camera]
 
-Captured videos are streamed via WebRTC.
-For instructions on working with video contents, refer to [Working with Video Contents](#Working-with-Video-Contents).
-
-The example below shows the screen after adding a shared camera to contents.
+Captured videos are streamed using WebRTC.
+For instructions on working with video contents, see [Working with Video Contents](#Working-with-Video-Contents).
 
 <img src="image/AddContent_CameraShare_View.png" alt="カメラ共有の追加例" width="434" />
-*Example of an Added Shared Camera*
+*Shared a camera*
 
-Display Tab
+The [Display] Tab
 ---------------------------------------------------
 
 <img src="image/Display_TAB_2conn.png" alt="image" width="207" />
 *Display Tab*
 
-The Display tab shows the VirtualDisplay and all Display connected to the ChOWDER server. The Controller allows you to move Display within VirtualDisplay. Adding Contents to the arranged Display enables a shared workspace. Use the mouse to drag and drop Display into the VirtualDisplaySpace.
+The [Display] tab shows the virtual display area and all display tiles connected to the ChOWDER server. ChOWDER's controller page allows you to move tiles in the virtual display areas. Adding Contents to the arranged Display enables a shared workspace. Use the mouse to drag and drop Display into the VirtualDisplaySpace.
 The example above shows the environment when a client is connected. 
 
 Virtual Display Setup
@@ -577,21 +592,7 @@ You can configure the settings per below:
 4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.
 5. You can look up information on WebRTC quality saved in the metadata of Contents.
 
-User Permissions and Administrator Screen
-==================================================================
-
-User Permissions 
----------------------------------------------------
-There are different categories of users as described below. You can set passwords and level of access per user. 
-
-|User| Overview |Access Level|
-| ---- | ---- | ---- |
-|Administrator| Administrator can access all functions | All functions including Administrator Screen |
-|Group User| User per Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
-|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
-|Guest| Guest User without Password | Default setting of access restrictions of the Administrator Screen permits editing and viewing for default setting only |
-
-Administrator Screen
+The Administrator Screen
 ---------------------------------------------------
 Log into Controller as an Administrator to access the Administrator Screen via Management Menu. You can set user permissions and various other settings in the Administrator Screen.
 
