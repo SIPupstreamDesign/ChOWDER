@@ -674,7 +674,8 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 
  1. Select user to set up.
  2. Choose whether selected user has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
- 3. Set up selected user with permission levels for editing groups and working with Display.
+ 3. 
+ 4. Set up selected user with permission levels for editing groups and working with Display.
 
 ### Password Setup
 
