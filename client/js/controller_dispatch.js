@@ -839,16 +839,18 @@
 						if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
 							metaData.restore_index = restoreIndex;
 							connector.send('GetContent', metaData, function (err, reply) {
-								if (Validator.isTextType(reply.metaData)) {
-									metaData.user_data_text = JSON.stringify({ text: reply.contentData });
+								if (reply.hasOwnProperty('metaData')) {
+									if (Validator.isTextType(reply.metaData)) {
+										metaData.user_data_text = JSON.stringify({ text: reply.contentData });
+									}
+									reply.metaData.restore_index = restoreIndex;
+									if (res === "no") {
+										reply.metaData.posx = metaData.posx;
+										reply.metaData.posy = metaData.posy;
+									}
+									controller.update_metadata(reply.metaData);
+									manipulator.removeManipulator();
 								}
-								reply.metaData.restore_index = restoreIndex;
-								if (res === "no") {
-									reply.metaData.posx = metaData.posx;
-									reply.metaData.posy = metaData.posy;
-								}
-								controller.update_metadata(reply.metaData);
-								manipulator.removeManipulator();
 							});
 						}
 					}
@@ -874,13 +876,15 @@
 								console.error(err)
 								return;
 							}
-							reply.metaData.restore_key = restoreKey;
-							reply.metaData.restore_value = restoreValue;
-							reply.metaData.posx = metaData.posx;
-							reply.metaData.posy = metaData.posy;
-							
-							controller.update_metadata(reply.metaData);
-							manipulator.removeManipulator();
+							if (reply.hasOwnProperty('metaData')) {
+								reply.metaData.restore_key = restoreKey;
+								reply.metaData.restore_value = restoreValue;
+								reply.metaData.posx = metaData.posx;
+								reply.metaData.posy = metaData.posy;
+								
+								controller.update_metadata(reply.metaData);
+								manipulator.removeManipulator();
+							}
 						});
 
 					}
@@ -1453,12 +1457,14 @@
 			var id = metaData.id;
 			if (id) {
 				connector.send('GetContent', metaData, function (err, reply) {
-					if (store.has_metadata(metaData.id)) {
-						correctAspect(reply.metaData, function (err, meta) {
-							reply.metaData = meta;
-							controller.doneGetContent(err, reply);
-							controller.doneGetMetaData(err, meta);
-						});
+					if (reply.hasOwnProperty('metaData')) {
+						if (store.has_metadata(metaData.id)) {
+							correctAspect(reply.metaData, function (err, meta) {
+								reply.metaData = meta;
+								controller.doneGetContent(err, reply);
+								controller.doneGetMetaData(err, meta);
+							});
+						}
 					}
 				});
 			}
