@@ -79,7 +79,7 @@ video_src_width,動画ソースの幅,Video Src Width
 video_src_height,動画ソースの高さ,Video Src Height
 video_codec,ビデオコーデック,Video Codec
 audio_codec,オーディオコーデック,Audio Codec
-available_send_band_width,利用可能な送信バンド幅,Available sending bandwidth
+available_send_band_width,利用可能な送信バンド幅,Available transmission bandwidth
 target_enc_bitrate,ターゲットエンコードビットレート,Target encoding bitrate
 actual_enc_bitrate,実際のエンコードビットレート,Actual encoding bitrate
 transmit_bitrate,伝送ビットレート,Transmission bitrate

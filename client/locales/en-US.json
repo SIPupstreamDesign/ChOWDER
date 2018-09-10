@@ -79,7 +79,7 @@
  "video_src_height": "Video Src Height",
  "video_codec": "Video Codec",
  "audio_codec": "Audio Codec",
- "available_send_band_width": "Available sending bandwidth",
+ "available_send_band_width": "Available transmission bandwidth",
  "target_enc_bitrate": "Target encoding bitrate",
  "actual_enc_bitrate": "Actual encoding bitrate",
  "transmit_bitrate": "Transmission bitrate",
