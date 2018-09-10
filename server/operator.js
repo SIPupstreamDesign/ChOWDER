@@ -257,10 +257,15 @@
 				}
 				return;
 			}
+			var groupData;
 			if (groupID) {
-				data.grouplist.push({ name : groupName, color : color, id : groupID });
+				groupData = { name : groupName, id : groupID }
+				if (color) { groupData.color = color; }
+				data.grouplist.push(groupData);
 			} else {
-				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+				groupData = { name : groupName, id : util.generateUUID8() }
+				if (color) { groupData.color = color; }
+				data.grouplist.push(groupData);
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
 				getGroupID(groupName, function (id) {
@@ -298,10 +303,15 @@
 				}
 				return;
 			}
+			var groupData;
 			if (groupID) {
-				data.displaygrouplist.push({ name : groupName, color : color, id : groupID });
+				groupData = { name : groupName, id : groupID }
+				if (color) { groupData.color = color; }
+				data.displaygrouplist.push(groupData);
 			} else {
-				data.displaygrouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+				groupData = { name : groupName, id : util.generateUUID8() }
+				if (color) { groupData.color = color; }
+				data.displaygrouplist.push(groupData);
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
 				getGroupID(groupName, function (id) {
@@ -682,8 +692,9 @@
 					});
 				});
 			}
-			addGroup("master", "group_default", "default", function (err, reply) {} );
-			addDisplayGroup("master", "group_default", "default", function (err, reply) {} );
+			addGroup("master", "group_default", "default", null, function (err, reply) {
+				addDisplayGroup("master", "group_default", "default", null,  function (err, reply) {} );
+			} );
 		});
 		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
@@ -2053,7 +2064,7 @@
 					if (!metaData.hasOwnProperty('reductionWidth')) {
 						var dimensions = image_size(contentData);
 						metaData.reductionWidth = dimensions.width;
-						metaData.reductionHeight = dimensions.width;
+						metaData.reductionHeight = dimensions.height;
 					}
 					addContent(metaData, contentData, function (err, reply) {
 						metaData.date = new Date().toISOString(); //登録時間を保存
@@ -2085,7 +2096,7 @@
 					if (!metaData.hasOwnProperty('reductionWidth')) {
 						var dimensions = image_size(contentData);
 						metaData.reductionWidth = dimensions.width;
-						metaData.reductionHeight = dimensions.width;
+						metaData.reductionHeight = dimensions.height;
 					}
 					// メタデータ初期設定.
 					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
