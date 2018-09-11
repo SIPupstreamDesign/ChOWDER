@@ -85,9 +85,22 @@
 		if (videoElem) {
 			videoElem.id = metaData.id;
 			videoElem.style.position = "absolute";
-			videoElem.setAttribute('autoplay', '')
-			videoElem.setAttribute("controls", "");
-			videoElem.setAttribute("controlslist", "nodownload")
+			videoElem.setAttribute('autoplay', '');
+
+			if (Constants.IsFirefox) {
+				videoElem.addEventListener('dblclick', function () {
+					videoElem.setAttribute('controls', '');
+					videoElem.setAttribute('controlslist', 'nodownload');
+				});
+				videoElem.addEventListener('mouseleave', function () {
+					videoElem.removeAttribute('controls');
+					videoElem.removeAttribute('controlslist');
+				});
+			} else {
+				videoElem.setAttribute('controls', '');
+				videoElem.setAttribute('controlslist', 'nodownload');
+			}
+
 			videoElem.style.color = "white";
 			this.emit(ContentView.EVENT_SETUP_CONTENT, null, videoElem, metaData.id);
 			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, videoElem);
