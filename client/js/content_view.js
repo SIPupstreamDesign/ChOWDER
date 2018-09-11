@@ -88,14 +88,14 @@
 			videoElem.setAttribute('autoplay', '');
 
 			if (Constants.IsFirefox) {
-				videoElem.addEventListener('dblclick', function () {
+				videoElem.ondblclick = function () {
 					videoElem.setAttribute('controls', '');
 					videoElem.setAttribute('controlslist', 'nodownload');
-				});
-				videoElem.addEventListener('mouseleave', function () {
+				};
+				videoElem.onmouseleave = function () {
 					videoElem.removeAttribute('controls');
 					videoElem.removeAttribute('controlslist');
-				});
+				};
 			} else {
 				videoElem.setAttribute('controls', '');
 				videoElem.setAttribute('controlslist', 'nodownload');
