@@ -586,11 +586,14 @@
 				// マウス
 				target = evt.target;
 			}
+			if (target && !target.hasOwnProperty('id')) {
+				target = target.parentNode;
+			}
 
 			state.set_drag_offset_top(clientY - rect.top);
 			state.set_drag_offset_left(clientX - rect.left);
 
-			if (metaData  && target.id) {
+			if (metaData  && target && target.id) {
 				// メインビューのコンテンツ
 				state.for_each_dragging_id(function (i, id) {
 					elem = document.getElementById(id);
