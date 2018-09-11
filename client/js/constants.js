@@ -50,7 +50,8 @@
 		// Chrome 1+
 		IsChrome : !!window.chrome && !!window.chrome.webstore,
 		DefaultCursorColor : "rgb(255, 255, 255)",
-		DefaultTileIconColor : "rgb(54, 187, 68)"
+		DefaultTileIconColor : "rgb(54, 187, 68)",
+		ReconnectTimeout : 2000
 	};
 
 	window.Constants = Constants;

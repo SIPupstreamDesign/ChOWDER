@@ -2329,7 +2329,50 @@
 		});
 	});
 
-	window.onload = login.login;
+	var isDisconnect = false;
+	function reconnect() {
+		var client;
+
+		connector.on("Disconnect", (function (client) {
+			return function () {
+				isDisconnect = true;
+				client.close();
+			};
+		}(client)));
+
+		client = connector.connect(function () {
+			if (isDisconnect) {
+				location.reload();
+				return;
+			}
+			login.login();
+			ChangeLanguage(Cookie.getLanguage());
+			Translation(function () {
+				var e = document.getElementById('head_menu_hover_right');
+				if(e){
+					//e.textContent = '×';
+					e.title = i18next.t('connected_to_server');
+					e.className = 'connect';
+				}
+			});
+		}, function () {
+			var e = document.getElementById('head_menu_hover_right');
+			if(e){
+				//e.textContent = '×';
+				e.title = i18next.t('cannot_connect_to_server');
+				e.className = 'disconnect';
+			}
+			// 再ログイン
+			if (!isDisconnect) {
+				isDisconnect = true;
+				setTimeout(function () {
+					reconnect();
+				}, Constants.ReconnectTimeout);
+			}
+		});
+	}
+
+	window.onload = reconnect;
 	window.onunload = function () {
 		gui.clear_content_property(true);
 		controller.release();
@@ -2361,28 +2404,5 @@
 			state.set_ctrl_down(false);
 		}
 	};
-
-	connector.connect(function () {
-		ChangeLanguage(Cookie.getLanguage());
-		Translation(function () {
-			var e = document.getElementById('head_menu_hover_right');
-			if(e){
-				//e.textContent = '○';
-				if (e.className === "disconnect") {
-					// 再ログイン
-					// TODO
-				}
-				e.title = i18next.t('connected_to_server');
-				e.className = 'connect';
-			}
-		});
-	}, function () {
-		var e = document.getElementById('head_menu_hover_right');
-		if(e){
-			//e.textContent = '×';
-			e.title = i18next.t('cannot_connect_to_server');
-			e.className = 'disconnect';
-		}
-	});
 	
 }(window.vscreen, window.vscreen_util, window.manipulator, window.ws_connector));
