@@ -1237,8 +1237,8 @@
 						}
 
 						// metadataの解像度がcontentData（縮小版画像）より小さいか調べる
-						if (Number(metaData.width) <= Number(metaData.reductionWidth)
-							&& Number(metaData.height) <= Number(metaData.reductionHeight)) {
+						if (Number(reductionElem.style.width.split("px").join("")) <= Number(metaData.reductionWidth)
+							&& Number(reductionElem.style.height.split("px").join("")) <= Number(metaData.reductionHeight)) {
 
 							// reductionを表示、タイルを非表示に
 							reductionElem.style.display = "inline";
