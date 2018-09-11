@@ -384,8 +384,8 @@
 							}
 						}
 					},{
-						select_all : {
-							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); }.bind(this)
+						select_all_in_a_group : {
+							func : function (evt) { this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, true); }.bind(this)
 						}
 					},{
 						hide : {
@@ -954,7 +954,7 @@
 			showid_button = document.getElementById("context_menu_display_show_id"),
 			hide_button = document.getElementById("context_menu_display_hide"),
 			delete_button = document.getElementById("context_menu_display_delete"),
-			select_all_button = document.getElementById("context_menu_display_select_all"),
+			select_group_button = document.getElementById("context_menu_display_select_group"),
 			change_displaygroup_button = document.getElementById('context_menu_change_displaygroup'),
 			change_displaygroup_submenu = document.getElementById('context_menu_change_displaygroup_submenu'),
 			on_change_displaygroup = false,
@@ -975,8 +975,8 @@
 			menu.style.display = "none";
 		}.bind(this);
 		
-		select_all_button.onclick = function (evt) {
-			this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, false); 
+		select_group_button.onclick = function (evt) {
+			this.emit(window.ControllerGUI.EVENT_SELECT_DISPLAY_CLICKED, null, true); 
 			menu.style.display = "none";
 		}.bind(this);
 		
