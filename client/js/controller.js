@@ -370,13 +370,13 @@
 			pos,
 			px,
 			py,
-			rect = evt.target.getBoundingClientRect(),
+			rect,
 			orgPos,
 			mousePos,
 			splitWhole,
-			draggingID,
 			screen,
 			targetMetaDatas = [],
+			target,
 			pageX = evt.pageX,
 			pageY = evt.pageY,
 			clientX = evt.clientX,
@@ -384,10 +384,10 @@
 			
 		evt = (evt) || window.event;
 		
-
 		if (evt.changedTouches) {
 			// タッチ
-			rect = evt.changedTouches[0].target.getBoundingClientRect();
+			target = evt.changedTouches[0].target;
+			rect = target.getBoundingClientRect();
 			pageX = evt.changedTouches[0].pageX,
 			pageY = evt.changedTouches[0].pageY,
 			clientX = evt.changedTouches[0].clientX;
@@ -395,10 +395,19 @@
 		} else {
 			// マウス
 			if (evt.button !== 0) { return; } // 左ドラッグのみ
+			target = evt.target;
+			rect = target.getBoundingClientRect()
+			pageX = evt.pageX;
+			pageY = evt.pageY;
+			clientX = evt.clientX;
+			clientY = evt.clientY;
+		}
+		if (target && !target.hasOwnProperty('id')) {
+			target = target.parentNode;
 		}
 
 		// リモートカーソル位置の更新.
-		if (this.controllerData.isUpdateCursorEnable(true) && Date.now() % 2 === 0 && evt.target.id !== ''){
+		if (this.controllerData.isUpdateCursorEnable(true) && Date.now() % 2 === 0 && target.id !== ''){
 			mousePos = vscreen.transformOrgInv(vscreen.makeRect(pageX, pageY, 0, 0));
 			var obj = {
 				type: 'mouse',
@@ -504,31 +513,34 @@
 	
 	Controller.prototype.onMouseDown = function (id) {
 		return function (evt) {
-			var rect = evt.target.getBoundingClientRect(),
+			var rect,
 				metaData = null,
 				otherPreviewArea = gui.get_content_preview_area(),
 				childs,
 				i,
 				elem,
 				topElement = null,
-				e,
-				pageX = evt.pageX,
-				pageY = evt.pageY,
-				clientX = evt.clientX,
-				clientY = evt.clientY,
-				target = evt.taget;
+				clientX,
+				clientY,
+				target;
 			
+			evt = (evt) || window.event;
 			if (evt.changedTouches) {
 				// タッチ
 				target = evt.changedTouches[0].target;
 				rect = evt.changedTouches[0].target.getBoundingClientRect();
-				pageX = evt.changedTouches[0].pageX,
-				pageY = evt.changedTouches[0].pageY,
 				clientX = evt.changedTouches[0].clientX;
 				clientY = evt.changedTouches[0].clientY;
 			} else {
 				// マウス
 				if (evt.button !== 0) { return; } // 左ドラッグのみ
+				target = evt.target;
+				rect = evt.target.getBoundingClientRect();
+				clientX = evt.clientX;
+				clientY = evt.clientY;
+			}
+			if (target && !target.hasOwnProperty('id')) {
+				target = target.parentNode;
 			}
 			
 			if (store.has_metadata(id)) {
@@ -538,7 +550,6 @@
 				}
 			}
 
-			
 			if (metaData) {
 				if (id.indexOf(Constants.WholeWindowID) === 0 ||
 					(!Validator.isDisplayTabSelected() && Validator.isWindowType(metaData)) ||
@@ -573,22 +584,11 @@
 				gui.close_context_menu();
 			}
 			
-			evt = (evt) || window.event;
 			state.set_mousedown_pos([
 					rect.left,
 					rect.top
 				]);
 
-			if (evt.changedTouches) {
-				// タッチ
-				target = evt.changedTouches[0].target;
-			} else {
-				// マウス
-				target = evt.target;
-			}
-			if (target && !target.hasOwnProperty('id')) {
-				target = target.parentNode;
-			}
 
 			state.set_drag_offset_top(clientY - rect.top);
 			state.set_drag_offset_left(clientX - rect.left);
@@ -1518,7 +1518,7 @@
 				this.doneUpdateWindowMetaData(err, reply, endCallback);
 			}.bind(this));
         } else if (metaData.type === 'mouse') {
-            // mouse cursor
+			// mouse cursor
             connector.send('UpdateMouseCursor', metaData, function (err, reply) {
                 // console.log(err, reply);
             });
