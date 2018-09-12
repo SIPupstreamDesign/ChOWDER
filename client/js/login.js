@@ -127,7 +127,7 @@
 						userselect = document.getElementById('loginuser'),
 						option;
 					for (i = 0; i <  userList.length; i = i + 1) {
-						if (userList[i].type !== "display") {
+						if (userList[i].type !== "display" && userList[i].type !== "api") {
 							option = document.createElement('option');
 							option.value = userList[i].name;
 							option.innerHTML = userList[i].name;

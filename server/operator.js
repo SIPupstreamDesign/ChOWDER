@@ -690,6 +690,14 @@
 						editable : "all",
 						displayEditable : [],
 						group_manipulatable : false
+					}, function () {
+						// APIUser設定の初期登録
+						changeGroupUserSetting("master", "APIUser", {
+							viewable : "all",
+							editable : "all",
+							displayEditable : [],
+							group_manipulatable : false
+						});
 					});
 				});
 			}
@@ -1106,6 +1114,18 @@
 						}
 					}
 					userList.push(displayUserData);
+
+					// APIUser
+					var apiUserData = { name : "APIUser", id : "APIUser", type : "api"};
+					if (setting.hasOwnProperty("APIUser")) {
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (setting.APIUser.hasOwnProperty(key)) {
+								apiUserData[key] = setting.APIUser[key];
+							}
+						}
+					}
+					userList.push(apiUserData);
 
 					if (endCallback) {
 						endCallback(null, userList);
@@ -3648,7 +3668,11 @@
 							changeGroupUserSetting(socketid, userList[i].id, {
 								password : data.password
 							}, endCallback);
-						} else {
+						} else if (userList[i].type === "api") {
+							changeGroupUserSetting(socketid, userList[i].id, {
+								password : data.password
+							}, endCallback);
+						}  else {
 							endCallback("failed to change password (3)");
 						}
 						break;

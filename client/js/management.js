@@ -206,7 +206,7 @@
 			select.innerHTML = "";
 			for (i = 0; i < this.userList.length; i = i + 1) {
 				user = this.userList[i];
-				if (user.type !== "admin") {
+				if (user.type !== "admin" && user.type !== "api") {
 					option = document.createElement('option');
 					option.value = user.id;
 					option.innerHTML = user.name;
@@ -227,7 +227,7 @@
 			this.displayEditableSelect.deselectAll();
 			if (user) {
 				for (i = 0; i < this.userList.length; i = i + 1) {
-					if (this.userList[i].type !== "admin")
+					if (this.userList[i].type !== "admin" && this.userList[i].type !== "api")
 					{
 						listContentName = this.userList[i].id;
 						if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
@@ -313,7 +313,8 @@
 		for (i = 0; i < this.userList.length; i = i + 1) {
 			if (this.userList[i].type !== "admin" &&
 				this.userList[i].type !== "display" &&
-				this.userList[i].type !== "guest")
+				this.userList[i].type !== "guest" &&
+				this.userList[i].type !== "api")
 			{
 				this.editableSelect.add(this.userList[i].name, this.userList[i].id);
 				this.viewableSelect.add(this.userList[i].name, this.userList[i].id);
@@ -404,7 +405,7 @@
 					if (type === "admin") {
 						prePass.disabled = false;
 						pass.disabled = false;
-					} else if (type === "group") {
+					} else if (type === "group" || type === "api") {
 						prePass.disabled = true;
 						pass.disabled = false;
 					} else {
@@ -421,7 +422,7 @@
 			if (index >= 0) {
 				var id = this.userList[index].id;
 				if (pass.value <= 0) {
-					if (name === "Display" || name === "Gueset") {
+					if (id === "Display" || id === "Guest") {
 						window.input_dialog.ok_input({
 							name : i18next.t('cannot_set_to_this_user'),
 							opacity : 0.7,
@@ -444,8 +445,8 @@
 				}
 
 				this.emit(Management.EVENT_CHANGE_PASSWORD, id, prePass.value, pass.value, function (err, reply) {
-					console.error(err, reply)
 					if (err) {
+						console.error(err, reply)
 						window.input_dialog.ok_input({
 							name : i18next.t('input_valid_password'),
 							opacity : 0.7,
@@ -454,6 +455,7 @@
 						}, function () {
 							return;
 						});
+						return;
 					}
 					var message = document.getElementById('apply_pass_message');
 					message.style.visibility = "visible";
