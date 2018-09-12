@@ -1572,7 +1572,7 @@
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-			var i, elem, pos, ctrlid = res.id,
+			var i, elem, pos, ctrlid = res.controllerID,
 				before, after,
 				controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
