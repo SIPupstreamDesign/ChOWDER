@@ -234,7 +234,7 @@
 							height: wh.height / scale,
 							orgWidth: wh.width,
 							orgHeight: wh.height,
-							visible: false
+							visible: true
 						}, doneAddWindowMetaData);
 					}
 				});
@@ -248,7 +248,7 @@
 					height: wh.height / scale,
 					orgWidth: wh.width,
 					orgHeight: wh.height,
-					visible: false
+					visible: true
 				}, doneAddWindowMetaData);
 			}
 		};
