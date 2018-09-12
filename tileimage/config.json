@@ -1,5 +1,5 @@
 {
-	"id": "apiuser",
+	"id": "APIUser",
 	"password": "password",
 	"url": "http://localhost:8081/v2",
 	"xsplit": 8,
