@@ -1080,14 +1080,13 @@ CLIアプリケーション経由で、巨大な画像データをChOWDERサー�
 設定ファイルの書式は以下の通りです:
 
     {
-        "id": "Display",
-        "password": "",
+        "id": "apiuser",
+        "password": "password",
         "url": "http://localhost:8081/v2",
         "xsplit": 8,
         "ysplit": 8,
         "contentid": "contentid",
-        "contentgrp": "default",
-        "token": "token"
+        "contentgrp": "default"
     }
 
 

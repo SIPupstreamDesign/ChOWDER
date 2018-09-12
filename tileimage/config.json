@@ -1,10 +1,9 @@
 {
-	"id": "Display",
-	"password": "",
+	"id": "apiuser",
+	"password": "password",
 	"url": "http://localhost:8081/v2",
 	"xsplit": 8,
 	"ysplit": 8,
 	"contentid": "contentid",
-	"contentgrp": "default",
-	"token": "token"
+	"contentgrp": "default"
 }
