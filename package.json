@@ -5,7 +5,8 @@
   "description": "redis test",
   "main": "server/server.js",
   "optionalDependencies": {
-    "hiredis": "*"
+    "hiredis": "*",
+    "nanomsg": "digirea/node-nanomsg#digirea"
   },
   "dependencies": {
     "argv": "0.0.2",

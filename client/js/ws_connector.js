@@ -19,7 +19,8 @@
 		client = null,
 		is_connected = false,
 		currentVersion = "v2",
-		url = get_protocol() + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+		url = get_protocol() + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/",
+		socket = null; // for nanomsg
 
 	/**
 	 * テキストメッセージの処理.
@@ -100,7 +101,11 @@
 
 			console.log('[Info] chowder_request', reqdata);
 			//socket.emit('chowder_request', reqdata);
-			client.send(reqdata);
+			if (socket) {
+				socket.send(reqdata);
+			} else {
+				client.send(reqdata);
+			}
 		} else {
 			console.log('[Error] Not found the method in connector: ', method);
 		}
@@ -195,6 +200,55 @@
 		 * @method onopen
 		 */
 		client.onopen = function () {
+			if (window && window.process && window.process.type) {
+				var nano = process.mainModule.require('nanomsg');
+				socket = nano.socket('pair');
+				var ipcAddress = 'ipc:///tmp/CHOWDER_IPC_' + currentVersion;
+				var ret = socket.connect(ipcAddress);
+				console.log('IPC connect = ', ret, ipcAddress);
+
+				socket.on('data', function (data) {
+					var parsed;
+					
+					// 最初が"{" かつ 最後が"}"だったらJSONと認識.	
+					if (data !== undefined && data[0] === 123 && data[data.length-1] === 125) {
+						console.log("ipc chowder_request : ", String(data));
+						try {
+							//console.error(String(data))
+							parsed = JSON.parse(String(data));
+							eventTextMessage(parsed);
+						} catch (e) {
+							console.error("failed to parse json : ", e);
+						}
+					} else {
+						console.log("load meta binary", data);
+						metabinary.loadMetaBinary(data, function (metaData, contentData) {
+							eventBinaryMessage(metaData, contentData);
+						});
+					}
+				});
+				socket.send("connect");
+			} else {
+				client.onmessage = function (message) {
+					console.log("ws chowder_request : ", message);
+					var data = message.data,
+						parsed;
+					
+					if (typeof data === "string") {
+						try {
+							parsed = JSON.parse(data);
+							eventTextMessage(parsed);
+						} catch (e) {
+							console.error("failed to parse json : ", e);
+						}
+					} else {
+						console.log("load meta binary", data);
+						metabinary.loadMetaBinary(data, function (metaData, contentData) {
+							eventBinaryMessage(metaData, contentData);
+						});
+					}
+				};
+			}
 			if (onopen) {
 				console.log("onopen");
 				onopen();
@@ -209,26 +263,6 @@
 			is_connected = false;
 		};
 		
-		client.onmessage = function (message) {
-			console.log("ws chowder_request : ", message);
-			var data = message.data,
-				parsed,
-				result;
-			
-			if (typeof data === "string") {
-				try {
-					parsed = JSON.parse(data);
-					eventTextMessage(parsed);
-				} catch (e) {
-					console.error("failed to parse json : ", e);
-				}
-			} else {
-				console.log("load meta binary", data);
-				metabinary.loadMetaBinary(data, function (metaData, contentData) {
-					eventBinaryMessage(metaData, contentData);
-				});
-			}
-		};
 		return client;
 	}
 

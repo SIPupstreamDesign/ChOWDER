@@ -5,9 +5,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "install": "node install.js",
     "start": "electron ."
   },
   "dependencies": {
-    "electron": "^2.0.2"
+    "electron": "2.0.2",
+    "nanomsg": "digirea/node-nanomsg#digirea"
   }
 }

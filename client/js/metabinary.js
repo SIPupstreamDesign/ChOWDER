@@ -64,9 +64,9 @@
 	 */
 	function loadMetaBinary(binary, endCallback) {
 		var reader = new FileReader();
-		reader.addEventListener('loadend', function (e) {
-			var buf = e.target.result,
-				headstr = "MetaBin:",
+
+		var loadBuffer = function (buf) {
+			var headstr = "MetaBin:",
 				version,
 				head,
 				metasize,
@@ -155,8 +155,18 @@
 				}
 				endCallback(metaData, [metaList, binaryList]);
 			}
+		}
+
+		reader.addEventListener('loadend', function (e) {
+			var buf = e.target.result;
+			loadBuffer(buf);
 		});
-		reader.readAsArrayBuffer(binary);
+
+		if (window && window.process && window.process.type) {
+			loadBuffer(binary.buffer)
+		} else {
+			reader.readAsArrayBuffer(binary);
+		}
 	}
 	
 	/**

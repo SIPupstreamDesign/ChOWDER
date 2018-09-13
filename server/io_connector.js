@@ -250,7 +250,7 @@
 	 * @param {JSON} args パラメータ
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
-	function broadcast(io, method, args, resultCallback) {
+	function broadcast(io, method, args, resultCallback, socketid) {
 		var reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',

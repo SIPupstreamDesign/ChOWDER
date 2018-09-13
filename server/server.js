@@ -23,6 +23,8 @@ var fs = require('fs'),
 	ws2_s,
 	settings;
 
+	var nano = require('nanomsg');
+
 // register server id
 operator.registerUUID("default");
 
@@ -76,9 +78,19 @@ function ws_request(io, ws2) { // for http or https
 		ws2_connections[connection.id] = connection;
 		id_counter = id_counter + 1;
 		
+		// for ipc
+		var socket = nano.socket('pair');
+		var ipcAddress = 'ipc:///tmp/CHOWDER_IPC_' + currentVersion;
+		socket.bind(ipcAddress);
+
+		socket.once('data', function (data) {
+			ws_connector.addIPCSocket(socket, connection.id);
+			ws_connector.registerIPCEvent(ws2, connection);
+		});
+
 		operator.registerWSEvent(connection, io, ws2, ws2_connections);
-		
-		connection.on('close', (function (connection) {
+
+		connection.on('close', (function (connection, socket) {
 			return function () {
 				delete ws2_connections[connection.id];
 	
@@ -87,9 +99,14 @@ function ws_request(io, ws2) { // for http or https
 					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 				});
 	
+				if (socket) {
+					socket.close();
+					ws_connector.removeIPCSocket(socket, connection.id)
+				}
+				
 				console.log('connection closed :' + connection.id);
 			};
-		}(connection)));
+		}(connection, socket)));
 	}
 }
 
@@ -213,7 +230,7 @@ fs.readFile(path.join(__dirname, 'setting.json'), function (err, data) {
 			maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
 			autoAcceptConnections : false});
 	}
-	
+
 	// finally
 	ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
 	ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));

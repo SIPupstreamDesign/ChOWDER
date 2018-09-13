@@ -3813,10 +3813,10 @@
 	 * update処理実行後のブロードキャスト用ラッパー.
 	 * @method post_update
 	 */
-	function post_update(ws, io, resultCallback) {
+	function post_update(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.Update);
-			io_connector.broadcast(io, Command.Update);
+			ws_connector.broadcast(ws, Command.Update, reply, socketid);
+			io_connector.broadcast(io, Command.Update, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3827,10 +3827,10 @@
 	 * updateMetaData処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateMetaData
 	 */
-	function post_updateMetaData(ws, io, resultCallback) {
+	function post_updateMetaData(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
-			io_connector.broadcast(io, Command.UpdateMetaData, reply);
+			ws_connector.broadcast(ws, Command.UpdateMetaData, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateMetaData, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3841,10 +3841,10 @@
 	 * updateGroup処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateGroup
 	 */
-	function post_updateGroup(ws, io, resultCallback) {
+	function post_updateGroup(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateGroup, reply);
-			io_connector.broadcast(io, Command.UpdateGroup, reply);
+			ws_connector.broadcast(ws, Command.UpdateGroup, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateGroup, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3855,10 +3855,10 @@
 	 * updateContent処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateContent
 	 */
-	function post_updateContent(ws, io, resultCallback) {
+	function post_updateContent(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateContent, reply);
-			io_connector.broadcast(io, Command.UpdateContent, reply);
+			ws_connector.broadcast(ws, Command.UpdateContent, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateContent, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3869,10 +3869,10 @@
 	 * updateDB処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateContent
 	 */
-	function post_updateDB(ws, io, resultCallback) {
+	function post_updateDB(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateContent, reply);
-			io_connector.broadcast(io, Command.UpdateContent, reply);
+			ws_connector.broadcast(ws, Command.UpdateContent, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateContent, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3883,10 +3883,10 @@
 	 * deletecontent処理実行後のブロードキャスト用ラッパー.
 	 * @method post_deleteContent
 	 */
-	function post_deleteContent(ws, io, resultCallback) {
+	function post_deleteContent(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.DeleteContent, reply);
-			io_connector.broadcast(io, Command.DeleteContent, reply);
+			ws_connector.broadcast(ws, Command.DeleteContent, reply, socketid);
+			io_connector.broadcast(io, Command.DeleteContent, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3897,13 +3897,13 @@
 	 * deleteWindow処理実行後のブロードキャスト用ラッパー.
 	 * @method post_deleteWindow
 	 */
-	function post_deleteWindow(ws, io, ws_connections, resultCallback) {
+	function post_deleteWindow(ws, io, ws_connections, socketid_, resultCallback) {
 		return function (err, reply) {
 			var socketid,
 				id,
 				i;
-			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply);
-			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply);
+			ws_connector.broadcast(ws, Command.DeleteWindowMetaData, reply, socketid_);
+			io_connector.broadcast(io, Command.DeleteWindowMetaData, reply, socketid_);
 			
 			for (socketid in socketidToHash) {
 				if (socketidToHash.hasOwnProperty(socketid)) {
@@ -3928,10 +3928,10 @@
 	 * updateWindowMetaData処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateWindowMetaData
 	 */
-	function post_updateWindowMetaData(ws, io, resultCallback) {
+	function post_updateWindowMetaData(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateWindowMetaData, reply);
-			io_connector.broadcast(io, Command.UpdateWindowMetaData, reply);
+			ws_connector.broadcast(ws, Command.UpdateWindowMetaData, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateWindowMetaData, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3942,10 +3942,10 @@
 	 * updateVirtualDisplay処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateVirtualDisplay
 	 */
-	function post_updateVirtualDisplay(ws, io, resultCallback) {
+	function post_updateVirtualDisplay(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateVirtualDisplay, reply);
-			io_connector.broadcast(io, Command.UpdateVirtualDisplay, reply);
+			ws_connector.broadcast(ws, Command.UpdateVirtualDisplay, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateVirtualDisplay, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3956,10 +3956,10 @@
 	 * updateMouseCursor処理実行後のブロードキャスト用ラッパー.
 	 * @method post_updateMouseCursor
 	 */
-	function post_updateMouseCursor(ws, io, resultCallback) {
+	function post_updateMouseCursor(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateMouseCursor, reply);
-			io_connector.broadcast(io, Command.UpdateMouseCursor, reply);
+			ws_connector.broadcast(ws, Command.UpdateMouseCursor, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateMouseCursor, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3971,10 +3971,10 @@
 	 * カレントDBが変更された場合も設定変更であるので通知される.
 	 * @method post_updateSetting
 	 */
-	function post_updateSetting(ws, io, resultCallback) {
+	function post_updateSetting(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.UpdateSetting, reply);
-			io_connector.broadcast(io, Command.UpdateSetting, reply);
+			ws_connector.broadcast(ws, Command.UpdateSetting, reply, socketid);
+			io_connector.broadcast(io, Command.UpdateSetting, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3985,10 +3985,10 @@
 	 * DBが変更されたことを通知する
 	 * @method post_db_change
 	 */
-	function post_db_change(ws, io, resultCallback) {
+	function post_db_change(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.ChangeDB, reply);
-			io_connector.broadcast(io, Command.ChangeDB, reply);
+			ws_connector.broadcast(ws, Command.ChangeDB, reply, socketid);
+			io_connector.broadcast(io, Command.ChangeDB, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -3999,10 +3999,10 @@
 	 * 権限が変更されたことを通知する
 	 * @method post_updateAuthority
 	 */
-	function post_updateAuthority(ws, io, resultCallback) {
+	function post_updateAuthority(ws, io, socketid, resultCallback) {
 		return function (err, reply) {
-			ws_connector.broadcast(ws, Command.ChangeAuthority, reply);
-			io_connector.broadcast(io, Command.ChangeAuthority, reply);
+			ws_connector.broadcast(ws, Command.ChangeAuthority, reply, socketid);
+			io_connector.broadcast(io, Command.ChangeAuthority, reply, socketid);
 			if (resultCallback) {
 				resultCallback(err, reply);
 			}
@@ -4040,11 +4040,11 @@
 		});
 
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
-			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
+			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
-			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetWindowMetaData, function (data, resultCallback, socketid) {
@@ -4052,19 +4052,19 @@
 		});
 		
 		ws_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback, socketid) {
-			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback, socketid) {
-			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
+			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.UpdateMouseCursor, function(data, resultCallback, socketid){
-			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
@@ -4076,32 +4076,32 @@
 		});
 		
 		ws_connector.on(Command.AddGroup, function (data, resultCallback, socketid) {
-			commandAddGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandAddGroup(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.DeleteGroup, function (data, resultCallback, socketid) {
-			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.UpdateGroup, function (data, resultCallback, socketid) {
-			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.ChangeGroupIndex, function (data, resultCallback, socketid) {
-			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
-		ws_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.ShowWindowID, data);
-			io_connector.broadcast(io, Command.ShowWindowID, data);
+		ws_connector.on(Command.ShowWindowID, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.ShowWindowID, data, socketid);
+			io_connector.broadcast(io, Command.ShowWindowID, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 
-		ws_connector.on(Command.SendMessage, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.SendMessage, data);
-			io_connector.broadcast(io, Command.SendMessage, data);
+		ws_connector.on(Command.SendMessage, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.SendMessage, data, socketid);
+			io_connector.broadcast(io, Command.SendMessage, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -4111,46 +4111,46 @@
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			console.log(Command.AddContent, data);
-			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, socketid, resultCallback), post_updateContent(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			console.log(Command.AddTileContent, data);
-			commandAddTileContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+			commandAddTileContent(socketid, metaData, binaryData, post_update(ws, io, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.AddHistoricalContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, socketid, resultCallback));
 		});
 		
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
-			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
+			commandDeleteContent(socketid, data, post_deleteContent(ws, io, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.UpdateContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, resultCallback));
+			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, socketid, resultCallback));
 		});
 
 		ws_connector.on(Command.NewDB, function (data, resultCallback, socketid) {
-			commandNewDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandNewDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.RenameDB, function (data, resultCallback, socketid) {
-			commandRenameDB(socketid, data, post_updateSetting(ws, io, resultCallback));
+			commandRenameDB(socketid, data, post_updateSetting(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.ChangeDB, function (data, resultCallback, socketid) {
-			commandChangeDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandChangeDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.DeleteDB, function (data, resultCallback, socketid) {
-			commandDeleteDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandDeleteDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.InitDB, function (data, resultCallback, socketid) {
-			commandInitDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandInitDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.GetDBList, function (data, resultCallback, socketid) {
 			commandGetDBList(socketid, resultCallback);
@@ -4166,7 +4166,7 @@
 			commandChangePassword(socketid, data, resultCallback);
 		});
 		ws_connector.on(Command.ChangeAuthority, function (data, resultCallback, socketid) {
-			commandChangeAuthority(socketid, data, post_updateAuthority(ws, io, resultCallback));
+			commandChangeAuthority(socketid, data, post_updateAuthority(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -4181,42 +4181,42 @@
 			commandGetControllerData(socketid, data, resultCallback);
 		});
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
-			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, resultCallback));
+			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, socketid, resultCallback));
 		});
 		ws_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
-		ws_connector.on(Command.RTCOffer, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCOffer, data);
-			io_connector.broadcast(io, Command.RTCOffer, data);
+		ws_connector.on(Command.RTCOffer, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCOffer, data, socketid);
+			io_connector.broadcast(io, Command.RTCOffer, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		ws_connector.on(Command.RTCRequest, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCRequest, data);
-			io_connector.broadcast(io, Command.RTCRequest, data);
+		ws_connector.on(Command.RTCRequest, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCRequest, data, socketid);
+			io_connector.broadcast(io, Command.RTCRequest, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		ws_connector.on(Command.RTCAnswer, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCAnswer, data);
-			io_connector.broadcast(io, Command.RTCAnswer, data);
+		ws_connector.on(Command.RTCAnswer, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCAnswer, data, socketid);
+			io_connector.broadcast(io, Command.RTCAnswer, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
-			io_connector.broadcast(io, Command.RTCIceCandidate, data);
+		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data, socketid);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		ws_connector.on(Command.RTCClose, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCClose, data);
-			io_connector.broadcast(io, Command.RTCClose, data);
+		ws_connector.on(Command.RTCClose, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCClose, data, socketid);
+			io_connector.broadcast(io, Command.RTCClose, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -4241,19 +4241,19 @@
 		io_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, socketid, resultCallback), post_updateContent(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandTileAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+			commandTileAddContent(socketid, metaData, binaryData, post_update(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.AddHistoricalContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.AddMetaData, function (data, resultCallback) {
@@ -4273,22 +4273,22 @@
 		});
 
 		io_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
-			commandDeleteContent(socketid, data, post_deleteContent(ws, io, resultCallback));
+			commandDeleteContent(socketid, data, post_deleteContent(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
 			
-			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, resultCallback));
+			commandUpdateContent(socketid, metaData, binaryData, post_updateContent(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
-			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
+			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.AddWindowMetaData, function (data, resultCallback, socketid) {
-			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandAddWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.GetWindowMetaData, function (data, resultCallback, socketid) {
@@ -4296,19 +4296,19 @@
 		});
 
 		io_connector.on(Command.UpdateWindowMetaData, function (data, resultCallback, socketid) {
-			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandUpdateWindowMetaData(socketid, data, post_updateWindowMetaData(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.DeleteWindowMetaData, function (data, resultCallback, socketid) {
-			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, resultCallback));
+			commandDeleteWindowMetaData(socketid, data, post_deleteWindow(ws, io, ws_connections, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateMouseCursor, function(data, resultCallback, socketid){
-			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, resultCallback));
+			commandUpdateMouseCursor(socketid, data, post_updateMouseCursor(ws, io, socketid, resultCallback));
 		});
 
         io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
@@ -4320,48 +4320,48 @@
 		});
 
 		io_connector.on(Command.AddGroup, function (data, resultCallback, socketid) {
-			commandAddGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandAddGroup(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.DeleteGroup, function (data, resultCallback, socketid) {
-			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandDeleteGroup(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.UpdateGroup, function (data, resultCallback, socketid) {
-			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandUpdateGroup(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
 		io_connector.on(Command.ChangeGroupIndex, function (data, resultCallback, socketid) {
-			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, resultCallback));
+			commandChangeGroupIndex(socketid, data, post_updateGroup(ws, io, socketid, resultCallback));
 		});
 
-		io_connector.on(Command.ShowWindowID, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.ShowWindowID, data);
-			io_connector.broadcast(io, Command.ShowWindowID, data);
+		io_connector.on(Command.ShowWindowID, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.ShowWindowID, data, socketid);
+			io_connector.broadcast(io, Command.ShowWindowID, data, socketid);
 		});
 
-		io_connector.on(Command.SendMessage, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.SendMessage, data);
-			io_connector.broadcast(io, Command.SendMessage, data);
+		io_connector.on(Command.SendMessage, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.SendMessage, data, socketid);
+			io_connector.broadcast(io, Command.SendMessage, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 
 		io_connector.on(Command.NewDB, function (data, resultCallback, socketid) {
-			commandNewDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandNewDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.RenameDB, function (data, resultCallback, socketid) {
-			commandRenameDB(socketid, data, post_updateSetting(ws, io, resultCallback));
+			commandRenameDB(socketid, data, post_updateSetting(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.ChangeDB, function (data, resultCallback, socketid) {
-			commandChangeDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandChangeDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.DeleteDB, function (data, resultCallback, socketid) {
-			commandDeleteDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandDeleteDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.InitDB, function (data, resultCallback, socketid) {
-			commandInitDB(socketid, data, post_db_change(ws, io, resultCallback));
+			commandInitDB(socketid, data, post_db_change(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.GetDBList, function (data, resultCallback, socketid) {
 			commandGetDBList(socketid, resultCallback);
@@ -4377,7 +4377,7 @@
 			commandChangePassword(socketid, data, resultCallback);
 		});
 		io_connector.on(Command.ChangeAuthority, function (data, resultCallback, socketid) {
-			commandChangeAuthority(socketid, data, post_updateAuthority(ws, io, resultCallback));
+			commandChangeAuthority(socketid, data, post_updateAuthority(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
@@ -4392,42 +4392,42 @@
 			commandGetControllerData(socketid, data, resultCallback);
 		});
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
-			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, resultCallback));
+			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, socketid, resultCallback));
 		});
 		io_connector.on(Command.GetGlobalSetting, function (data, resultCallback) {
 			commandGetGlobalSetting(data, resultCallback);
 		});
-		io_connector.on(Command.RTCOffer, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCOffer, data);
-			io_connector.broadcast(io, Command.RTCOffer, data);
+		io_connector.on(Command.RTCOffer, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCOffer, data, socketid);
+			io_connector.broadcast(io, Command.RTCOffer, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		io_connector.on(Command.RTCRequest, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCRequest, data);
-			io_connector.broadcast(io, Command.RTCRequest, data);
+		io_connector.on(Command.RTCRequest, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCRequest, data, socketid);
+			io_connector.broadcast(io, Command.RTCRequest, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		io_connector.on(Command.RTCAnswer, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCAnswer, data);
-			io_connector.broadcast(io, Command.RTCAnswer, data);
+		io_connector.on(Command.RTCAnswer, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCAnswer, data, socketid);
+			io_connector.broadcast(io, Command.RTCAnswer, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
-			io_connector.broadcast(io, Command.RTCIceCandidate, data);
+		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data, socketid);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
-		io_connector.on(Command.RTCClose, function (data, resultCallback) {
-			ws_connector.broadcast(ws, Command.RTCClose, data);
-			io_connector.broadcast(io, Command.RTCClose, data);
+		io_connector.on(Command.RTCClose, function (data, resultCallback, socketid) {
+			ws_connector.broadcast(ws, Command.RTCClose, data, socketid);
+			io_connector.broadcast(io, Command.RTCClose, data, socketid);
 			if (resultCallback) {
 				resultCallback();
 			}

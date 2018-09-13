@@ -10,8 +10,8 @@
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1;
-	
-	function sendResponse(ws_connection, injson) {
+
+	function sendResponse(self, ws_connection, injson) {
 		return function (err, res, binary) {
 			var metabin = null,
 				result;
@@ -37,10 +37,18 @@
 				if (metabin === null || metabin === undefined) {
 					result.error = 'Failed to create Metabinary';
 					console.log('Failed to create Metabinary');
-					ws_connection.sendUTF(JSON.stringify(result));
+					if (self.socket && self.socket.hasOwnProperty(ws_connection.id)) {
+						self.socket[ws_connection.id].send(JSON.stringify(result));
+					} else {
+						ws_connection.sendUTF(JSON.stringify(result));
+					}
 				} else {
 					console.log("chowder_response", result.method);
-					ws_connection.sendBytes(metabin);
+					if (self.socket && self.socket.hasOwnProperty(ws_connection.id)) {
+						self.socket[ws_connection.id].send(metabin);
+					} else {
+						ws_connection.sendBytes(metabin);
+					}
 				}
 			} else {
 				result = {
@@ -53,9 +61,13 @@
 				}
 				result.result = res;
 				console.log("chowder_response", result.method);
-				ws_connection.sendUTF(JSON.stringify(result));
+				if (self.socket && self.socket.hasOwnProperty(ws_connection.id)) {
+					self.socket[ws_connection.id].send(JSON.stringify(result));
+				} else {
+					ws_connection.sendUTF(JSON.stringify(result));
+				}
 			}
-		};
+		}
 	}
 
 	/**
@@ -63,7 +75,7 @@
 	 * @method eventTextMessage
 	 * @param {JSON} metaData メタデータ
 	 */
-	function eventTextMessage(ws_connection, metaData) {
+	function eventTextMessage(self, ws_connection, metaData) {
 		if (metaData.to === "client") {
 			// masterからclientに送ったメッセージが返ってきた.
 			if (metaData.error) {
@@ -82,7 +94,7 @@
 			// clientからmasterにメッセージが来た
 			if (recievers.hasOwnProperty(metaData.method)) {
 				recievers[metaData.method](metaData.params,(function (ws_connection) {
-					return sendResponse(ws_connection, metaData);
+					return sendResponse(self, ws_connection, metaData);
 				}(ws_connection)),  ws_connection.id);
 			}
 		}
@@ -95,7 +107,7 @@
 	 * @param {JSON} metaData メタデータ
 	 * @param {Blob} contentData バイナリデータ
 	 */
-	function eventBinaryMessage(ws_connection, metaData, contentData) {
+	function eventBinaryMessage(self, ws_connection, metaData, contentData) {
 		var data = {
 			metaData : metaData.params,
 			contentData : contentData
@@ -122,7 +134,7 @@
 				// onで登録していたrecieverを呼び出し
 				// 完了後のコールバックでclientにメッセージを返す.
 				recievers[metaData.method](data, (function (ws_connection) {
-					return sendResponse(ws_connection, metaData);
+					return sendResponse(self, ws_connection, metaData);
 				}(ws_connection)), ws_connection.id);
 			}
 		}
@@ -136,9 +148,11 @@
 	 */
 	function registerEvent(ws, ws_connection) {
 		ws_connection.on('message', function (data) {
+			if (this.socket && this.socket.hasOwnProperty(ws_connection.id)) {
+				return;
+			}
 			console.log("ws chowder_request : ", data);
-			var parsed,
-				result;
+			var parsed;
 			
 			if (!data.type || data.type === 'utf8') {
 				try {
@@ -147,7 +161,7 @@
 					if (!parsed.hasOwnProperty('id')) {
 						parsed.id = util.generateUUID8();
 					}
-					eventTextMessage(ws_connection, parsed);
+					eventTextMessage(this, ws_connection, parsed);
 				} catch (e) {
 					console.error("failed to parse json : ", e);
 				}
@@ -159,12 +173,50 @@
 					if (!metaData.hasOwnProperty('id')) {
 						metaData.id = util.generateUUID8();
 					}
-					eventBinaryMessage(ws_connection, metaData, contentData);
+					eventBinaryMessage(this, ws_connection, metaData, contentData);
 				});
 			}
-		});
+		}.bind(this));
 	}
 	
+	function registerIPCEvent(ws, ws_connection) {
+		if (this.socket && this.socket.hasOwnProperty(ws_connection.id)) {
+			this.socket[ws_connection.id].on('data', function (data) {
+				if (data !== undefined && data[0] == 99 && data.length === 7) {
+					if (String(data) === "connect" ) {
+						return;
+					}
+				}
+				var parsed;
+				
+				if (data !== undefined && data[0] === 123 && data[data.length-1] === 125) {
+					try {
+						parsed = JSON.parse(String(data));
+						// JSONRPCのidがなかった場合は適当なidを割り当てておく.
+						if (!parsed.hasOwnProperty('id')) {
+							parsed.id = util.generateUUID8();
+						}
+						eventTextMessage(this, ws_connection, parsed);
+					} catch (e) {
+						console.error("failed to parse json : ", e);
+					}
+				} else {
+					console.log("ws chowder_request2 : ", String(data));
+					//console.log("load meta binary", data);
+					metabinary.loadMetaBinary(data, function (metaData, contentData) {
+						// JSONRPCのidがなかった場合は適当なidを割り当てておく.
+						if (!metaData.hasOwnProperty('id')) {
+							metaData.id = util.generateUUID8();
+						}
+						console.log("eventBinaryMessage")
+						eventBinaryMessage(this, ws_connection, metaData, contentData);
+					});
+				}
+			}.bind(this));
+		}
+	}
+	
+
 	/**
 	 * テキストメッセージをclientへ送信する
 	 * @method send
@@ -191,7 +243,11 @@
 				resultCallbacks[reqjson.id] = resultCallback;
 
 				console.log('[Info] chowder_request', data);
-				ws_connection.sendUTF(data);
+				if (this.socket && this.socket.hasOwnProperty(ws_connection.id)) {
+					this.socket[ws_connection.id].send(data);
+				} else {
+					ws_connection.sendUTF(data);
+				}
 
 			} else {
 				console.log('[Error] Not found the method in connector: ', data);
@@ -225,7 +281,11 @@
 				resultCallbacks[data.id] = resultCallback;
 
 				console.log('[Info] chowder_request binary', data);
-				ws_connection.sendBytes(data);
+				if (this.socket && this.socket.hasOwnProperty(ws_connection.id)) {
+					this.socket[ws_connection.id].send(data);
+				} else {
+					ws_connection.sendBytes(data);
+				}
 
 			} else {
 				console.log('[Error] Not found the method in connector: ', data);
@@ -243,7 +303,7 @@
 	 * @param {JSON} args パラメータ
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
-	function broadcast(ws, method, args, resultCallback) {
+	function broadcast(ws, method, args, resultCallback, socketid) {
 		var reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',
@@ -260,6 +320,11 @@
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
 				if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast ws", method);}
+				if (this.socket) {
+					for (var id in this.socket) {
+						this.socket[id].send(data);
+					}
+				}
 				for (var i = 0; i < ws.length; ++i) {
 					ws[i].broadcast(data);
 				}
@@ -276,9 +341,23 @@
 	}
 	
 	WSConnector.prototype.registerEvent = registerEvent;
+	WSConnector.prototype.registerIPCEvent = registerIPCEvent;
 	WSConnector.prototype.on = on;
 	WSConnector.prototype.broadcast = broadcast;
 	WSConnector.prototype.send = send;
 	WSConnector.prototype.sendBinary = sendBinary;
+	WSConnector.prototype.addIPCSocket = function (socket, enableID) {
+		if (!this.socket) {
+			this.socket = {};
+		}
+		this.socket[enableID] = socket;
+	};
+	WSConnector.prototype.removeIPCSocket = function (socket, disableID) {
+		if (this.socket) {
+			if (this.socket.hasOwnProperty(disableID)) {
+				delete this.socket[disableID];
+			}
+		}
+	};
 	module.exports = new WSConnector();
 }());
