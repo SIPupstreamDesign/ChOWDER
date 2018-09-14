@@ -14,6 +14,9 @@
 		this.mouseDownPos = [];
 		this.dragRect = {};
 
+		this.isSelectionRectDragging = false
+		this.isSelectionRectShown = false;
+
 		this.contentSelectedGroup = Constants.DefaultGroup; //選択中のグループ
 		this.displaySelectedGroup = Constants.DefaultGroup;
 	};
@@ -56,6 +59,9 @@
 	};
 	State.prototype.get_selected_id_list = function () {
 		return this.selectedIDList;
+	};
+	State.prototype.add_selected_id = function (id) {
+		this.selectedIDList.push(id);
 	};
 	State.prototype.for_each_selected_id = function (func) {
 		var i;
@@ -126,6 +132,24 @@
 	State.prototype.get_display_selected_group = function () {
 		return this.displaySelectedGroup;
 	}
+
+	// isSelectionRectDragging
+	State.prototype.set_selection_rect_dragging = function (isDragging) {
+		this.isSelectionRectDragging = isDragging;
+	}
+	State.prototype.is_selection_rect_dragging = function () {
+		return this.isSelectionRectDragging;
+	}
+	
+	State.prototype.set_selection_rect_shown = function (isShown) {
+		this.isSelectionRectShown = isShown;
+	}
+	State.prototype.is_selection_rect_shown = function () {
+		return this.isSelectionRectShown;
+	}
+	
+	
+
 	//----------------------------------
 	/**
 	 * 選択されているContentIDを返却する

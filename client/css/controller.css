@@ -1074,3 +1074,26 @@ p {
 	color: #FFF;
 	cursor : pointer;
 }
+
+#selection_rect {
+	position : absolute;
+	left : 100px;
+	top : 100px;
+	width : 100px;
+	height : 100px;
+	background : rgba(1, 1, 1, 0.1);
+	z-index: 10000000;
+	border : 4px solid;
+	border-color :  rgb(4, 180, 49);
+}
+#display_selection_rect {
+	position : absolute;
+	left : 100px;
+	top : 100px;
+	width : 100px;
+	height : 100px;
+	background : rgba(1, 1, 1, 0.1);
+	z-index: 10000000;
+	border : 4px solid;
+	border-color :  rgb(0, 128, 255);
+}

@@ -18,6 +18,9 @@
 		this.setupContent = this.setupContent.bind(this);
 		this.setupWindow = this.setupWindow.bind(this);
 		this.setupSplit = this.setupSplit.bind(this);
+		this.setupSelectionRect = this.setupSelectionRect.bind(this);
+		this.showSelectionRect = this.showSelectionRect.bind(this);
+		this.updateSelectionRect = this.updateSelectionRect.bind(this);
 		this.updateScreen = this.updateScreen.bind(this);
 		this.onChangeRect = this.onChangeRect.bind(this);
 		this.onManipulatorMove = this.onManipulatorMove.bind(this);
@@ -181,13 +184,18 @@
 	 */
 	Controller.prototype.onManipulatorMove = function (evt) {
 		var px, py,
+			i,
 			lastx, lasty,
 			lastw, lasth,
+			totalRect = { 
+				left : Number.MAX_VALUE, top : Number.MAX_VALUE, 
+				right : -Number.MIN_VALUE, bottom : -Number.MIN_VALUE },
 			currentw,
 			currenth,
 			ydiff,
 			elem = null,
 			metaData,
+			targetMetaDatas = [],
 			draggingManip = manipulator.getDraggingManip(),
 			invAspect,
 			pageX = evt.pageX,
@@ -203,58 +211,82 @@
 		}
 		
 		if (draggingManip) {
-			elem = document.getElementById(state.get_selected_id());
-			if (elem) {
-				metaData = store.get_metadata(elem.id);
-				if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
-					// 非表示コンテンツ
-					return;
+			for (i = 0; i < state.get_selected_id_list().length; ++i) {
+				elem = document.getElementById(state.get_selected_id_list()[i]);
+				if (elem) {
+					metaData = store.get_metadata(elem.id);
+					if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
+						// 非表示コンテンツ
+						continue;
+					}
+					if (!management.isEditable(metaData.group)) {
+						// 編集不可コンテンツ
+						continue;
+					}
+					vscreen_util.trans(metaData);
+					totalRect.left = Math.min(totalRect.left, metaData.posx);
+					totalRect.top = Math.min(totalRect.top, metaData.posy);
+					totalRect.right = Math.max(totalRect.right, metaData.posx + metaData.width);
+					totalRect.bottom = Math.max(totalRect.bottom, metaData.posy + metaData.height);
 				}
-				if (!management.isEditable(metaData.group)) {
-					// 編集不可コンテンツ
-					return;
-				}
-				vscreen_util.trans(metaData);
-				lastx = metaData.posx;
-				lasty = metaData.posy;
-				lastw = metaData.width;
-				lasth = metaData.height;
-				invAspect = metaData.orgHeight / metaData.orgWidth;
+			}
+			lastx = totalRect.left; // metaData.posx;
+			lasty = totalRect.top; //metaData.posy;
+			lastw = totalRect.right - totalRect.left; //metaData.width;
+			lasth = totalRect.bottom - totalRect.top; //metaData.height;
+			
+			if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
+				px = clientX - state.get_drag_offset_left();
+				py = clientY - state.get_drag_offset_top();
+				currentw = lastw - (px - lastx);
+			} else {
+				px = clientX - lastw - state.get_drag_offset_left();
+				py = clientY - state.get_drag_offset_top();
+				currentw = lastw + (px - lastx);
+			}
+			if (currentw < 20) {
+				currentw = 20;
+			}
 
-
-				if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
-					px = clientX - state.get_drag_offset_left();
-					py = clientY - state.get_drag_offset_top();
-					currentw = lastw - (px - lastx);
-				} else {
-					px = clientX - lastw - state.get_drag_offset_left();
-					py = clientY - state.get_drag_offset_top();
-					currentw = lastw + (px - lastx);
+			for (i = 0; i < state.get_selected_id_list().length; ++i) {
+				elem = document.getElementById(state.get_selected_id_list()[i]);
+				if (elem) {
+					metaData = store.get_metadata(elem.id);
+					if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
+						// 非表示コンテンツ
+						continue;
+					}
+					if (!management.isEditable(metaData.group)) {
+						// 編集不可コンテンツ
+						continue;
+					}
+					invAspect = metaData.height / metaData.width;
+					currenth = currentw * invAspect;
+					ydiff = currentw * invAspect - lasth;
+	
+					if (isNaN(invAspect)) {
+						//invAspect = lasth / lastw;
+						console.log("aspect NaN" + invAspect);
+						return;
+					}
+	
+					metaData.width = currentw;
+					metaData.height = currentw * invAspect;
+					 if (draggingManip.id === '_manip_0') {
+					 	metaData.posx = px;
+					 	metaData.posy = (lasty - ydiff);
+					 } else if (draggingManip.id === '_manip_1') {
+					 	metaData.posx = px;
+					 } else if (draggingManip.id === '_manip_3') {
+					 	metaData.posy = (lasty - ydiff);
+					 }
+					vscreen_util.transInv(metaData);
+					store.set_metadata(metaData.id, metaData);
+					targetMetaDatas.push(metaData);
 				}
-				if (isNaN(invAspect)) {
-					invAspect = lasth / lastw;
-					console.log("aspect NaN" + invAspect);
-				}
-
-				if (currentw < 20) {
-					currentw = 20;
-				}
-				currenth = currentw * invAspect;
-				ydiff = currentw * invAspect - lasth;
-
-				metaData.width = currentw;
-				metaData.height = currentw * invAspect;
-				if (draggingManip.id === '_manip_0') {
-					metaData.posx = px;
-					metaData.posy = (lasty - ydiff);
-				} else if (draggingManip.id === '_manip_1') {
-					metaData.posx = px;
-				} else if (draggingManip.id === '_manip_3') {
-					metaData.posy = (lasty - ydiff);
-				}
-				vscreen_util.transInv(metaData);
-				store.set_metadata(metaData.id, metaData);
-				this.update_metadata(metaData);
+			}
+			if (targetMetaDatas.length > 0) {
+				this.update_metadata_multi(targetMetaDatas);
 			}
 		}
 	};
@@ -300,6 +332,7 @@
 				}
 			}
 			manipulator.removeManipulator();
+			this.showSelectionRect(false);
 		}
 	};
 
@@ -381,6 +414,11 @@
 			pageY = evt.pageY,
 			clientX = evt.clientX,
 			clientY = evt.clientY;
+		
+		if (state.is_selection_rect_dragging()) {
+			this.onMultiMove(evt);
+			return;
+		}
 			
 		evt = (evt) || window.event;
 		
@@ -488,17 +526,23 @@
 
 		if (targetMetaDatas.length > 0) {
 			this.update_metadata_multi(targetMetaDatas);
+			this.updateSelectionRect();
 		}
 
 		if (manipulator.getDraggingManip()) {
-			console.log("iscontentarea");
-			// scaling
-			elem = document.getElementById(state.get_selected_id());
-			if (elem) {
-				metaData = store.get_metadata(elem.id);
-				if (Validator.isVisibleWindow(metaData) || Validator.isVisible(metaData)) {
-					manipulator.moveManipulator(elem);
-					this.onManipulatorMove(evt);
+			if (state.is_selection_rect_shown()) {
+				this.updateSelectionRect();
+				this.onManipulatorMove(evt);
+			} else {
+				console.log("iscontentarea");
+				// scaling
+				elem = document.getElementById(state.get_selected_id());
+				if (elem) {
+					metaData = store.get_metadata(elem.id);
+					if (Validator.isVisibleWindow(metaData) || Validator.isVisible(metaData)) {
+						manipulator.moveManipulator(elem);
+						this.onManipulatorMove(evt);
+					}
 				}
 			}
 			evt.stopPropagation();
@@ -678,11 +722,12 @@
 				this.clear_snap_hightlight();
 			}
 			draggingIDList.splice(i, 1);
-			state.set_drag_offset_top(0);
-			state.set_drag_offset_left(0);
 		}
+		state.set_drag_offset_top(0);
+		state.set_drag_offset_left(0);
 		state.set_dragging_id_list(draggingIDList);
 		manipulator.clearDraggingManip();
+		state.set_selection_rect_dragging(false);
 	}
 
 	Controller.prototype.removeVirtualDisplay = function () {
@@ -803,6 +848,8 @@
 			}
 			this.setupSplit(vscreen.getSplitWholes());
 		}
+
+		this.updateSelectionRect();
 	};
 	
 	// 権限情報が更新された
@@ -856,6 +903,8 @@
 	// 全てリロードする
 	Controller.prototype.reload_all = function () {
 		console.log("on reloadAll");
+		this.setupSelectionRect();
+
 		this.update(function () {
 			if (this.isInitialUpdate) {
 				var checkbox = document.getElementById('all_check_');
@@ -1211,7 +1260,225 @@
 		}
 		manipulator.moveManipulator(elem);
 	};
+
+	Controller.prototype.getSelectedMetaDataList = function () {
+		var metaDataList = [],
+			metaData,
+			i;
+		for (i = 0; i < state.get_selected_id_list().length; ++i) {
+			metaData = store.get_metadata( state.get_selected_id_list()[i]);
+			if (metaData) {
+				metaDataList.push(metaData);
+			}
+		}
+		return metaDataList;
+	}
+
+	Controller.prototype.updateSelectionRect = function () {
+		var i,
+			elem,
+			id,
+			rect,
+			rectB,
+			selectionRect = getSelectionRectElem();
+
+		if (!state.is_selection_rect_shown()) {
+			return;
+		}
+
+		function Union(rectA, rectB) {
+			if (!rectA) {
+				return rectB;
+			}
+			var left = Math.min(rectA.left, rectB.left)
+			var top = Math.min(rectA.top, rectB.top)
+			var right = Math.max(rectA.right, rectB.right)
+			var bottom = Math.max(rectA.bottom, rectB.bottom)
+			return {
+				left : left,
+				top : top,
+				right : right,
+				bottom : bottom
+			};
+		}
+
+		for (i = 0; i < state.get_selected_id_list().length; ++i) {
+			id = state.get_selected_id_list()[i];
+			elem = this.getElem(id, false);
+			if (elem) {
+				rectB = elem.getBoundingClientRect();
+				rect = Union(rect, rectB);
+			}
+		}
+
+		if (rect) {
+			selectionRect.style.left = rect.left + "px";
+			selectionRect.style.top = rect.top + "px";
+			selectionRect.style.width = (rect.right - rect.left)+ "px";
+			selectionRect.style.height =  (rect.bottom - rect.top) + "px";
+		}
+		manipulator.moveManipulator(selectionRect);
+		
+		if (!manipulator.isShowManipulator()) {
+			if (Validator.isDisplayTabSelected()) {
+				manipulator.showManipulator(
+					management.getAuthorityObject(), 
+					selectionRect, 
+					gui.get_display_preview_area(), 
+					this.getSelectedMetaDataList(),
+					state.get_display_selected_group());
+			} else {
+				manipulator.showManipulator(
+					management.getAuthorityObject(), 
+					selectionRect, 
+					gui.get_content_preview_area(), 
+					this.getSelectedMetaDataList(),
+					state.get_content_selected_group());
+			}
+			manipulator.moveManipulator(selectionRect);
+		}
+	}
 	
+	Controller.prototype.showSelectionRect = function (show, metaData) {
+		var selectionRect = getSelectionRectElem();
+
+		if (show) {
+			selectionRect.style.display = "block"
+			state.set_selection_rect_shown(true);
+		} else {
+			selectionRect.style.display = "none"
+			state.set_selection_rect_shown(false);
+		}
+
+		this.updateSelectionRect();
+	}
+	
+	Controller.prototype.onMultiMove = function (evt) {
+		if (!state.is_selection_rect_dragging()) return;
+		var selectionRect = document.getElementById('selection_rect');
+		var i,
+			id,
+			metaData,
+			elem,
+			clientX = evt.clientX,
+			clientY = evt.clientY,
+			targetMetaDatas = [];
+			
+		for (i = 0; i < state.get_selected_id_list().length; ++i) {
+			id = state.get_selected_id_list()[i];
+			if (Validator.isVirtualDisplayID(id)) return;
+			// detect content list area
+			if (gui.is_listview_area2(evt, state.get_mousedown_pos()) && gui.is_listview_area(evt)) {
+				return;
+			}
+			metaData = store.get_metadata(id);
+			if (metaData && !Validator.isVisible(metaData)) {
+				return;
+			}
+			
+			elem = this.getElem(id, false);
+				
+			if (state.has_drag_rect(id)) {
+				if (Validator.isWindowType(metaData) && management.isDisplayEditable(state.get_display_selected_group())) {
+					// display操作可能
+					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(id).left;
+					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(id).top;
+					vscreen_util.transPosInv(metaData);
+					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
+				} else if (!Validator.isWindowType(metaData) && management.isEditable(metaData.group)) {
+					// content編集可能
+					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(id).left;
+					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(id).top;
+					vscreen_util.transPosInv(metaData);
+					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
+				}
+			}
+
+			if (Validator.isVisibleWindow(metaData) || Validator.isVisible(metaData)) {
+				targetMetaDatas.push(metaData);
+			}
+		}
+		
+		if (targetMetaDatas.length > 0) {
+			this.update_metadata_multi(targetMetaDatas);
+		}
+		
+		this.updateSelectionRect();
+	}
+
+	function getSelectionRectElem() {
+		if (Validator.isDisplayTabSelected()) {
+			return document.getElementById('display_selection_rect');
+		} else {
+			return document.getElementById('selection_rect');
+		}
+	}
+
+	Controller.prototype.setupSelectionRect = function () {
+		var selectionRect = document.getElementById('selection_rect');
+		var displaySelectionRect = document.getElementById('display_selection_rect');
+		selectionRect.style.borderColor = "rgb(4, 180, 49)";
+		displaySelectionRect.style.borderColor = "rgb(50, 200, 255)";
+		
+		var onSelectionRectMouseDown = function (evt) {
+			var selectionRect = getSelectionRectElem();
+			var i,
+				id,
+				elem,
+				clientX,
+				clientY,
+				target,
+				rect;
+
+			evt = (evt) || window.event;
+			if (evt.changedTouches) {
+				// タッチ
+				target = evt.changedTouches[0].target;
+				rect = evt.changedTouches[0].target.getBoundingClientRect();
+				clientX = evt.changedTouches[0].clientX;
+				clientY = evt.changedTouches[0].clientY;
+			} else {
+				// マウス
+				if (evt.button !== 0) {
+					state.set_selection_rect_dragging(false);
+					 return;
+				} // 左ドラッグのみ
+				target = evt.target;
+				rect = selectionRect.getBoundingClientRect();
+				clientX = evt.clientX;
+				clientY = evt.clientY;
+			}
+			state.set_selection_rect_dragging(true);
+
+			state.set_mousedown_pos([
+					rect.left,
+					rect.top
+				]);
+			state.set_drag_offset_top(clientY - rect.top);
+			state.set_drag_offset_left(clientX - rect.left);
+			if (target) {
+				// メインビューのコンテンツ
+				for (i = 0; i < state.get_selected_id_list().length; ++i) {
+					id = state.get_selected_id_list()[i];
+					elem = document.getElementById(id);
+					if (elem) {
+						state.set_drag_rect(id, {
+							left : elem.getBoundingClientRect().left - rect.left,
+							top : elem.getBoundingClientRect().top - rect.top
+						});
+					}
+				}
+			}
+			evt.preventDefault();
+			evt.stopPropagation();
+		}.bind(this);
+
+		selectionRect.ontouchstart = onSelectionRectMouseDown;
+		selectionRect.onmousedown = onSelectionRectMouseDown;
+		displaySelectionRect.ontouchstart = onSelectionRectMouseDown;
+		displaySelectionRect.onmousedown = onSelectionRectMouseDown;
+	}
+
 	/**
 	 * ContentかDisplayを選択する。
 	 * @method select
@@ -1245,7 +1512,7 @@
 				}
 			}
 			if (state.get_selected_id_list().indexOf(id) < 0) {
-				state.get_selected_id_list().push(id);
+				state.add_selected_id(id);
 			}
 			state.set_last_select_window_id(id);
 			return;
@@ -1274,7 +1541,7 @@
 		elem.style.border = "solid 2px";
 		
 		if (state.get_selected_id_list().indexOf(id) < 0) {
-			state.get_selected_id_list().push(id);
+			state.add_selected_id(id);
 		}
 		state.set_dragging_id_list(JSON.parse(JSON.stringify(state.get_selected_id_list())));
 		
@@ -1288,7 +1555,9 @@
 		elem.style.borderColor = store.get_border_color(metaData);
 
 		if (state.get_selected_id_list().length <= 0) {
+			// 選択されているものがなかった.
 			manipulator.removeManipulator();
+			this.showSelectionRect(false);
 		} else if (state.get_selected_id_list().length > 1) {
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
@@ -1297,6 +1566,9 @@
 			} else {
 				gui.init_content_property(metaData,"", Constants.PropertyTypeMultiContent);
 			}
+			// まとめて移動/拡縮するための枠を表示
+			this.showSelectionRect(true, metaData);
+			return;
 		} else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (Validator.isWindowType(metaData)) {
@@ -1306,7 +1578,7 @@
 					management.getAuthorityObject(), 
 					elem, 
 					gui.get_display_preview_area(), 
-					metaData,
+					this.getSelectedMetaDataList(),
 					state.get_display_selected_group());
 			} else {
 				// 動画の場合は所有しているかどうか調べる
@@ -1326,7 +1598,7 @@
 					management.getAuthorityObject(), 
 					elem, 
 					gui.get_content_preview_area(), 
-					metaData);
+					this.getSelectedMetaDataList());
 			}
 		}
 
@@ -1343,6 +1615,7 @@
 			manipulator.moveManipulator(elem);
 		} else {
 			manipulator.removeManipulator();
+			this.showSelectionRect(false);
 		}
 	}
 	
@@ -1385,6 +1658,10 @@
 		}
 		gui.clear_content_property(updateText);
 		state.get_selected_id_list().splice(state.get_selected_id_list().indexOf(id), 1);
+		if (state.get_selected_id_list().length === 0) {
+			// まとめて移動/拡縮するための枠を非表示
+			this.showSelectionRect(false, metaData);
+		}
 		manipulator.removeManipulator();
 	}
 	
@@ -1960,7 +2237,12 @@
 			vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
 			this.updateScreen(windowData);
 			var elem = this.getElem(windowData.id);
-			manipulator.moveManipulator(elem);
+			if (!state.is_selection_rect_shown()) {
+				manipulator.moveManipulator(elem);
+			}
+		}
+		if (state.is_selection_rect_shown() && windowDataList.length > 0) {
+			this.updateSelectionRect();
 		}
 		if (endCallback) {
 			endCallback(null);
@@ -1986,6 +2268,7 @@
 				k;
 
 			manipulator.removeManipulator();
+			this.showSelectionRect(false);
 			if (deleted) {
 				previewArea.removeChild(deleted);
 			}
@@ -2047,6 +2330,8 @@
 			previewArea = gui.get_display_preview_area();
 		
 		manipulator.removeManipulator();
+		this.showSelectionRect(false);
+
 		if (reply.hasOwnProperty('id')) {
 			elem = document.getElementById(reply.id);
 			if (elem) {
@@ -2091,6 +2376,7 @@
 
 		gui.set_update_content_id("No Content Selected.");
 		manipulator.removeManipulator();
+		this.showSelectionRect(false);
 	};
 	
 	/**
@@ -2298,6 +2584,7 @@
 			this.update_window_data();
 		}
 		manipulator.removeManipulator();
+		this.showSelectionRect(false);
 	};
 	///-------------------------------------------------------------------------------------------------------
 

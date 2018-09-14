@@ -84,7 +84,7 @@ function ws_request(io, ws2) { // for http or https
 	
 				operator.decrWindowReferenceCount(connection.id, function (err, meta) {
 					io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
-					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
+					ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 				});
 	
 				console.log('connection closed :' + connection.id);

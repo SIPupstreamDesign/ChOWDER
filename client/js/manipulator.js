@@ -348,7 +348,7 @@
 	 * @param {Element} previewArea 表示先エレメント
 	 * @param {Element} metaData メタデータ
 	 */
-	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaData, displayGroup) {
+	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaDataList, displayGroup) {
 		var manips = [
 				document.createElement('span'), // 左上
 				document.createElement('span'), // 左下
@@ -357,16 +357,25 @@
 				document.createElement('span') // バッテン
 			],
 			manip,
-			i;
-		
+			i,
+			k,
+			metaData,
+			editableCount = 0;
 		this.authority = authority;
 		this.moveManipulator(targetElem);
 		this.removeManipulator();
 		this.parent = previewArea;
-		
-		if ( (!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
-		|| (Validator.isWindowType(metaData) && this.authority.isDisplayEditable(displayGroup))) 
-		{
+
+		for (k = 0; k < metaDataList.length; ++k) {
+			metaData = metaDataList[k];
+			if ( (!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
+			|| (Validator.isWindowType(metaData) && this.authority.isDisplayEditable(displayGroup))) 
+			{
+				++editableCount;
+			}
+		}
+		if (editableCount > 0) {
+			// 1つでも編集可能なのがあった
 			for (i = 0; i < manips.length; i = i + 1) {
 				manip = manips[i];
 				manip.id = "_manip_" + i;
@@ -374,7 +383,10 @@
 				previewArea.appendChild(manip);
 				this.manipulators.push(manip);
 			}
-			this.setupManipulatorMenus(previewArea, targetElem, metaData);
+			if (editableCount === 1) {
+				// 1つだけ選択されてたときはサブメニューを表示
+				this.setupManipulatorMenus(previewArea, targetElem, metaData);
+			}
 		}
 	};
 	
