@@ -219,7 +219,8 @@
 						// 非表示コンテンツ
 						continue;
 					}
-					if (!management.isEditable(metaData.group)) {
+					if (!management.isEditable(metaData.group) &&
+						!management.isDisplayEditable(metaData.group)) {
 						// 編集不可コンテンツ
 						continue;
 					}
@@ -256,7 +257,8 @@
 						// 非表示コンテンツ
 						continue;
 					}
-					if (!management.isEditable(metaData.group)) {
+					if (!management.isEditable(metaData.group) && 
+						!management.isDisplayEditable(metaData.group)) {
 						// 編集不可コンテンツ
 						continue;
 					}
