@@ -5,7 +5,7 @@ cd `dirname $0`
 
 OSNAME=`uname`
 if [ ${OSNAME} = "Linux" ]; then
-	wget http://download.redis.io/redis-stable.tar.gz
+	curl -O http://download.redis.io/redis-stable.tar.gz
 	tar xf redis-stable.tar.gz
 	cd redis-stable
 	make
