@@ -157,7 +157,7 @@
 		var ret = {};
 		var match;
 		while ((match = re.exec(location.search)) !== null) { // while `re` is not depleted
-			ret[match[1]] = match[2];
+			ret[match[1]] = decodeURIComponent(match[2]);
 		}
 		return ret;
 	}
