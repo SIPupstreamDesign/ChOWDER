@@ -1,6 +1,18 @@
+var sharp;
+try {
+    sharp = require('sharp');
+} catch (e) {
+    // do nothing
+}
 
-
-var sharp = require('sharp');
+var images;
+try {
+    images = require('images');
+} catch (e) {
+    if (!sharp && !images) {
+        throw 'It seems both `images` and `sharp` are failed to be installed, one of these two is required at least';
+    }
+}
 
 var ThumbnailW = 200;
 var ThumbnailH = 150;
@@ -30,16 +42,23 @@ function createThumbnail(metaData, inputBuffer, callback) {
     w = Math.floor(w);
     h = Math.floor(h);
 
-    sharp(inputBuffer)
-        .resize(w, h)
-        .jpeg()
-        .toBuffer()
-        .then( (data) => {
-            callback(null, data);
-        })
-        .catch( (err) => {
-            callback(err, null);
-        });
+    if (sharp) {
+        sharp(inputBuffer)
+            .resize(w, h)
+            .jpeg()
+            .toBuffer()
+            .then( (data) => {
+                callback(null, data);
+            })
+            .catch( (err) => {
+                callback(err, null);
+            });
+    } else if (images) {
+        var data = images(inputBuffer)
+            .resize(w, h)
+            .encode('jpg');
+        callback(null, data);
+    }
 }
 
 function createPreview(metaData, inputBuffer, callback) {
@@ -66,16 +85,23 @@ function createPreview(metaData, inputBuffer, callback) {
     w = Math.floor(w);
     h = Math.floor(h);
 
-    sharp(inputBuffer)
-        .resize(w, h)
-        .jpeg()
-        .toBuffer()
-        .then( (data) => {
-            callback(null, data);
-        })
-        .catch( (err) => {
-            callback(err, null);
-        });
+    if (sharp) {
+        sharp(inputBuffer)
+            .resize(w, h)
+            .jpeg()
+            .toBuffer()
+            .then( (data) => {
+                callback(null, data);
+            })
+            .catch( (err) => {
+                callback(err, null);
+            });
+    } else if (images) {
+        var data = images(inputBuffer)
+            .resize(w, h)
+            .encode('jpg');
+        callback(null, data);
+    }
 }
 
 /**
