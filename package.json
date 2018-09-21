@@ -5,7 +5,9 @@
   "description": "redis test",
   "main": "server/server.js",
   "optionalDependencies": {
-    "hiredis": "*"
+    "hiredis": "*",
+    "images": "^3.0.1",
+    "sharp": "^0.20.5"
   },
   "dependencies": {
     "argv": "0.0.2",
@@ -13,7 +15,6 @@
     "image-size": "*",
     "phantom": "^6.0.3",
     "redis": "*",
-    "sharp": "^0.20.5",
     "socket.io": "2.0.4",
     "websocket": "*"
   }
