@@ -14,6 +14,7 @@
 
 		this.isSelectionRectDragging = false
 		this.isSelectionRectShown = false;
+		this.isMouseDownOnList = false;
 
 		this.contentSelectedGroup = Constants.DefaultGroup; //選択中のグループ
 		this.displaySelectedGroup = Constants.DefaultGroup;
@@ -130,7 +131,13 @@
 		return this.isSelectionRectShown;
 	}
 	
-	
+	// isMouseDownOnList
+	State.prototype.set_mousedown_on_list = function (onList) {
+		this.isMouseDownOnList = onList;
+	}
+	State.prototype.is_mousedown_on_list = function () {
+		return this.isMouseDownOnList;
+	}
 
 	//----------------------------------
 	/**

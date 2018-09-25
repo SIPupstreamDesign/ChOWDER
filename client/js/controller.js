@@ -263,11 +263,11 @@
 							scale = nextW / width;
 						}
 						if (draggingManip.id === '_manip_0') {
-							// 左上 OK 
+							// 左上
 							posx = totalRect.right - (totalRect.right - state.get_drag_rect(id).left) * scale;
 							posy = totalRect.bottom - (totalRect.bottom - state.get_drag_rect(id).top) * scale;
 						} else {
-							// 左下OK 
+							// 左下
 							posx = totalRect.right - (totalRect.right - state.get_drag_rect(id).left) * scale;
 							posy = totalRect.top + (state.get_drag_rect(id).top - totalRect.top) * scale;
 						}
@@ -280,7 +280,7 @@
 							scale = nextW / width;
 						}
 						if (draggingManip.id === '_manip_3') {
-							// 右上 OK
+							// 右上
 							posx = totalRect.left + (state.get_drag_rect(id).left - totalRect.left) * scale;
 							posy = totalRect.bottom - (totalRect.bottom - state.get_drag_rect(id).top) * scale;
 						} else {
@@ -433,10 +433,6 @@
 		var i,
 			metaData,
 			elem,
-			pos,
-			px,
-			py,
-			rect,
 			orgPos,
 			mousePos,
 			splitWhole,
@@ -458,7 +454,6 @@
 		if (evt.changedTouches) {
 			// タッチ
 			target = evt.changedTouches[0].target;
-			rect = target.getBoundingClientRect();
 			pageX = evt.changedTouches[0].pageX,
 			pageY = evt.changedTouches[0].pageY,
 			clientX = evt.changedTouches[0].clientX;
@@ -467,7 +462,6 @@
 			// マウス
 			if (evt.button !== 0) { return; } // 左ドラッグのみ
 			target = evt.target;
-			rect = target.getBoundingClientRect()
 			pageX = evt.pageX;
 			pageY = evt.pageY;
 			clientX = evt.clientX;
@@ -502,7 +496,12 @@
 			}
 			metaData = store.get_metadata(draggingID);
 			if (metaData && !Validator.isVisible(metaData)) {
-				return;
+				if (state.isListViewAreaMouseDown && !gui.is_listview_area(evt)) {
+					// リストからビューへドラッグ中のパターン
+					metaData.visible = "true";
+				} else {
+					return;
+				}
 			}
 
 			// clear splitwhole colors
@@ -589,8 +588,8 @@
 	
 	Controller.prototype.onMouseDown = function (id) {
 		return function (evt) {
-			var rect,
-				metaData = null,
+			var metaData = null,
+				meta = null,
 				otherPreviewArea = gui.get_content_preview_area(),
 				childs,
 				i,
@@ -604,14 +603,12 @@
 			if (evt.changedTouches) {
 				// タッチ
 				target = evt.changedTouches[0].target;
-				rect = evt.changedTouches[0].target.getBoundingClientRect();
 				clientX = evt.changedTouches[0].clientX;
 				clientY = evt.changedTouches[0].clientY;
 			} else {
 				// マウス
 				if (evt.button !== 0) { return; } // 左ドラッグのみ
 				target = evt.target;
-				rect = evt.target.getBoundingClientRect();
 				clientX = evt.clientX;
 				clientY = evt.clientY;
 			}
@@ -663,25 +660,26 @@
 				clientY
 				]);
 
-			if (metaData  && target && target.id) {
-				// メインビューのコンテンツ
-				state.for_each_dragging_id(function (i, id) {
-					id = state.get_selected_id_list()[i];
-					elem = document.getElementById(id);
-					if (elem) {
-						state.set_drag_rect(id, elem.getBoundingClientRect());
+			// メインビューまたはリストビューのコンテンツ
+			var isListViewArea = gui.is_listview_area(evt);
+			state.set_mousedown_on_list(isListViewArea);
+			state.for_each_dragging_id(function (i, id) {
+				id = state.get_selected_id_list()[i];
+				elem = document.getElementById(id);
+				meta = store.get_metadata(id);
+				if (elem) {
+					if (Validator.isVisibleWindow(meta) || Validator.isVisible(meta)) {
+						if (isListViewArea) {
+							state.set_drag_rect(id, evt.target.getBoundingClientRect());
+						} else {
+							state.set_drag_rect(id, elem.getBoundingClientRect());
+						}
+					} else {
+						state.set_drag_rect(id, evt.target.getBoundingClientRect());
 					}
-				});
-			} else {
-				// リストのコンテンツ
-				state.for_each_dragging_id(function (i, id) {
-					id = state.get_selected_id_list()[i];
-					elem = document.getElementById(id);
-					if (elem) {
-						state.set_drag_rect(id, elem.getBoundingClientRect());
-					}
-				});
-			}
+				}
+			});
+
 			evt.stopPropagation();
 			evt.preventDefault();
 		}.bind(this);
@@ -715,7 +713,7 @@
 			if (store.has_metadata(draggingID)) {
 				elem = document.getElementById(draggingID);
 				metaData = store.get_metadata(draggingID);
-				if (!gui.is_listview_area(evt)) {
+				if (state.is_mousedown_on_list() && !gui.is_listview_area(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
 					elem.style.margin = "0px";
 					if (Validator.isLayoutType(metaData)) {
@@ -761,6 +759,7 @@
 		state.set_dragging_id_list(draggingIDList);
 		manipulator.clearDraggingManip();
 		state.set_selection_rect_dragging(false);
+		state.set_mousedown_on_list(false);
 	}
 
 	Controller.prototype.removeVirtualDisplay = function () {
@@ -1313,6 +1312,7 @@
 			id,
 			rect,
 			rectB,
+			meta,
 			selectionRect = getSelectionRectElem();
 
 		if (!state.is_selection_rect_shown()) {
@@ -1338,7 +1338,8 @@
 		for (i = 0; i < state.get_selected_id_list().length; ++i) {
 			id = state.get_selected_id_list()[i];
 			elem = this.getElem(id, false);
-			if (elem) {
+			meta = store.get_metadata(id);
+			if (elem && (Validator.isVisible(meta) || Validator.isVisibleWindow(meta))) {
 				rectB = elem.getBoundingClientRect();
 				rect = Union(rect, rectB);
 			}
@@ -1388,7 +1389,6 @@
 	
 	Controller.prototype.onMultiMove = function (evt) {
 		if (!state.is_selection_rect_dragging()) return;
-		var selectionRect = document.getElementById('selection_rect');
 		var i,
 			id,
 			metaData,
@@ -1416,7 +1416,7 @@
 			}
 			metaData = store.get_metadata(id);
 			if (metaData && !Validator.isVisible(metaData)) {
-				return;
+				continue;
 			}
 			
 			elem = this.getElem(id, false);
@@ -1525,9 +1525,10 @@
 	 * @parma {bool} isListViewArea リストビューを対象にするかどうか.
 	 */
 	Controller.prototype.select = function (id, isListViewArea) {
-		var elem,
+		var i,
+			id, 
+			elem,
 			metaData,
-			mime,
 			wholeMetaData,
 			initialVisible,
 			groupID;
@@ -1535,9 +1536,6 @@
 		console.log("selectid", id);
 		if (store.has_metadata(id)) {
 			metaData = store.get_metadata(id);
-			if (metaData.hasOwnProperty('mime')) {
-				mime = metaData.mime;
-			}
 		}
 		
 		if (Validator.isVirtualDisplayID(id)) {
@@ -1571,9 +1569,6 @@
 			id = elem.id;
 		}
 		metaData = store.get_metadata(id);
-		if (metaData.hasOwnProperty('mime')) {
-			mime = metaData.mime;
-		}
 		
 		console.log("metaData", metaData);
 		initialVisible = metaData.visible;

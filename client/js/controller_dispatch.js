@@ -1081,7 +1081,7 @@
 			store.for_each_metadata(function (id, meta) {
 				if (Validator.isWindowType(meta)) {
 					if (onlyCurrentGroup) {
-						if (meta.group === currentGroup || !meta.group) {
+						if (Validator.isVisibleWindow(meta)) {
 							controller.select("onlist:" + id, true);
 						}
 					} else {
@@ -1099,7 +1099,7 @@
 			store.for_each_metadata(function (id, meta) {
 				if (Validator.isLayoutType(meta)) {
 					if (onlyCurrentGroup) {
-						if (meta.group === currentGroup) {
+						if (Validator.isVisibleWindow(meta)) {
 							controller.select("onlist:" + id, true);
 						}
 					} else {
@@ -1371,6 +1371,7 @@
 				rect = elem.getBoundingClientRect();
 				state.set_drag_rect(id, rect);
 			}
+			state.set_dragging_id_list([]);
 		});
 
 		/**
