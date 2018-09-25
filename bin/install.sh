@@ -14,7 +14,7 @@ rm -rf redis-*
 cd ..
 npm install
 
-cd tileimage
+cd standalone-electron
 npm install
 
 cd $ORIGIN
