@@ -1343,6 +1343,36 @@
 			state.set_dragging_id_list([]);
 		});
 
+		manipulator.on("mouse_down", function (err, evt) {
+			var i,
+				id,
+				elem,
+				rect = evt.target.getBoundingClientRect(),
+				clientX = evt.clientX,
+				clientY = evt.clientY;
+
+			if (evt.changedTouches) {
+				rect = evt.changedTouches[0].target.getBoundingClientRect();
+				clientX = evt.changedTouches[0].clientX;
+				clientY = evt.changedTouches[0].clientY;
+			} else {
+				rect = evt.target.getBoundingClientRect();
+				clientX = evt.clientX;
+				clientY = evt.clientY;
+			}
+			state.set_mousedown_pos([
+				clientX,
+				clientY
+				]);
+
+			for (i = 0; i < state.get_selected_id_list().length; ++i) {
+				id = state.get_selected_id_list()[i];
+				elem = document.getElementById(id);
+				rect = elem.getBoundingClientRect();
+				state.set_drag_rect(id, rect);
+			}
+		});
+
 		/**
 		 * マニピュレータの星がトグルされた
 		 */
@@ -1964,11 +1994,6 @@
 
 		window_view.init(vscreen);
 		connector = window.ws_connector;
-
-		manipulator.setDraggingOffsetFunc(function (top, left) {
-			state.set_drag_offset_top(top);
-			state.set_drag_offset_left(left);
-		});
 		manipulator.setCloseFunc(controller.onCloseContent);
 
 		// gui events etc

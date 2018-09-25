@@ -121,30 +121,16 @@
 	
 	Manipulator.prototype.mousedownFunc = function (manip) {
 		return function (evt) {
-			var rect = evt.target.getBoundingClientRect(),
-				pageX = evt.pageX,
-				pageY = evt.pageY,
-				clientX = evt.clientX,
-				clientY = evt.clientY;
-
-			if (evt.changedTouches) {
-				rect = evt.changedTouches[0].target.getBoundingClientRect();
-				pageX = evt.changedTouches[0].pageX,
-				pageY = evt.changedTouches[0].pageY,
-				clientX = evt.changedTouches[0].clientX;
-				clientY = evt.changedTouches[0].clientY;
-			}
-			if (this.draggingOffsetFunc) {
-				this.draggingOffsetFunc(clientY - rect.top, clientX - rect.left);
-			}
 			this.draggingManip = manip;
+			this.emit(Manipulator.EVENT_MOUSE_DOWN, null, evt);
 		}.bind(this);
 	};
 
 	Manipulator.prototype.mousemoveFunc = function (manip, cursor) {
 		return function (evt) {
 			manip.style.cursor = cursor;
-		};
+			this.emit(Manipulator.EVENT_MOUSE_MOVE, null, evt)
+		}.bind(this);
 	};
 	
 	/**
@@ -188,7 +174,7 @@
 			}.bind(this);
 		} else {
 			if(window.ontouchstart !== undefined) {
-				manip.ontouchstart = this.mousedownFunc(manip);
+				manip.ontouchstart = this.mousedownFunc(manip)
 				manip.ontouchmove = this.mousemoveFunc(manip, cursor);
 			} else {
 				manip.onmousedown = this.mousedownFunc(manip);
@@ -397,6 +383,8 @@
 
 	Manipulator.EVENT_TOGGLE_STAR = "toggle_star";
 	Manipulator.EVENT_TOGGLE_MEMO = "toggle_memo";
+	Manipulator.EVENT_MOUSE_DOWN = "mouse_down";
+	Manipulator.EVENT_MOUSE_MOVE = "mouse_move";
 
 	// signleton
 	window.manipulator = new Manipulator();

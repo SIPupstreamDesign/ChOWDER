@@ -176,23 +176,56 @@
 		}
 		return document.getElementById(id);
 	}
-	
+
+	Controller.prototype.getTotalSelectionRect = function () {
+		var i,
+			elem,
+			metaData,
+			id,
+			totalRect = { 
+				left : Number.MAX_VALUE, top : Number.MAX_VALUE, 
+				right : -Number.MIN_VALUE, bottom : -Number.MIN_VALUE };
+
+		for (i = 0; i < state.get_selected_id_list().length; ++i) {
+			id = state.get_selected_id_list()[i];
+			elem = document.getElementById(id);
+			if (elem) {
+				metaData = store.get_metadata(elem.id);
+				if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
+					// 非表示コンテンツ
+					continue;
+				}
+				if (!management.isEditable(metaData.group) &&
+					!management.isDisplayEditable(metaData.group)) {
+					// 編集不可コンテンツ
+					continue;
+				}
+				vscreen_util.trans(metaData);
+				totalRect.left = Math.min(totalRect.left, state.get_drag_rect(id).left);
+				totalRect.top = Math.min(totalRect.top, state.get_drag_rect(id).top);
+				totalRect.right = Math.max(totalRect.right, state.get_drag_rect(id).right);
+				totalRect.bottom = Math.max(totalRect.bottom, state.get_drag_rect(id).bottom);
+			}
+		}
+		return totalRect;
+	}
+
 	/**
 	 * コンテンツの四隅マニピュレーター移動。マウスmove時にコールされる
 	 * @method onManipulatorMove
 	 * @param {Object} evt マウスイベント
 	 */
 	Controller.prototype.onManipulatorMove = function (evt) {
-		var px, py,
+		var mx,
 			i,
-			lastx, lasty,
-			lastw, lasth,
-			totalRect = { 
-				left : Number.MAX_VALUE, top : Number.MAX_VALUE, 
-				right : -Number.MIN_VALUE, bottom : -Number.MIN_VALUE },
-			currentw,
-			currenth,
-			ydiff,
+			id,
+			width,
+			totalRect,
+			nextW,
+			totalW,
+			posx,
+			posy,
+			scale,
 			elem = null,
 			metaData,
 			targetMetaDatas = [],
@@ -211,47 +244,52 @@
 		}
 		
 		if (draggingManip) {
-			for (i = 0; i < state.get_selected_id_list().length; ++i) {
-				elem = document.getElementById(state.get_selected_id_list()[i]);
-				if (elem) {
-					metaData = store.get_metadata(elem.id);
-					if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
-						// 非表示コンテンツ
-						continue;
-					}
-					if (!management.isEditable(metaData.group) &&
-						!management.isDisplayEditable(metaData.group)) {
-						// 編集不可コンテンツ
-						continue;
-					}
-					vscreen_util.trans(metaData);
-					totalRect.left = Math.min(totalRect.left, metaData.posx);
-					totalRect.top = Math.min(totalRect.top, metaData.posy);
-					totalRect.right = Math.max(totalRect.right, metaData.posx + metaData.width);
-					totalRect.bottom = Math.max(totalRect.bottom, metaData.posy + metaData.height);
-				}
-			}
-			lastx = totalRect.left; // metaData.posx;
-			lasty = totalRect.top; //metaData.posy;
-			lastw = totalRect.right - totalRect.left; //metaData.width;
-			lasth = totalRect.bottom - totalRect.top; //metaData.height;
-			
-			if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
-				px = clientX - state.get_drag_offset_left();
-				py = clientY - state.get_drag_offset_top();
-				currentw = lastw - (px - lastx);
-			} else {
-				px = clientX - lastw - state.get_drag_offset_left();
-				py = clientY - state.get_drag_offset_top();
-				currentw = lastw + (px - lastx);
-			}
-			if (currentw < 20) {
-				currentw = 20;
-			}
 
+			totalRect = this.getTotalSelectionRect();
+			mx = clientX - state.get_mousedown_pos()[0];
+			totalW = totalRect.right - totalRect.left;
+			
 			for (i = 0; i < state.get_selected_id_list().length; ++i) {
-				elem = document.getElementById(state.get_selected_id_list()[i]);
+				id = state.get_selected_id_list()[i];
+				elem = document.getElementById(id);
 				if (elem) {
+					width = state.get_drag_rect(id).right - state.get_drag_rect(id).left;
+					if (draggingManip.id === '_manip_0' || draggingManip.id === '_manip_1') {
+						scale = totalW / (totalW - mx);
+						scale = 1.0 / scale;
+						nextW = width * scale;
+						if (nextW < 20) {
+							nextW = 20;
+							scale = nextW / width;
+						}
+						if (draggingManip.id === '_manip_0') {
+							// 左上 OK 
+							posx = totalRect.right - (totalRect.right - state.get_drag_rect(id).left) * scale;
+							posy = totalRect.bottom - (totalRect.bottom - state.get_drag_rect(id).top) * scale;
+						} else {
+							// 左下OK 
+							posx = totalRect.right - (totalRect.right - state.get_drag_rect(id).left) * scale;
+							posy = totalRect.top + (state.get_drag_rect(id).top - totalRect.top) * scale;
+						}
+					} else {
+						scale = totalW / (totalW + mx);
+						scale = 1.0 / scale;
+						nextW = width * scale;
+						if (nextW < 20) {
+							nextW = 20;
+							scale = nextW / width;
+						}
+						if (draggingManip.id === '_manip_3') {
+							// 右上 OK
+							posx = totalRect.left + (state.get_drag_rect(id).left - totalRect.left) * scale;
+							posy = totalRect.bottom - (totalRect.bottom - state.get_drag_rect(id).top) * scale;
+						} else {
+							// 右下
+							posx = totalRect.left + (state.get_drag_rect(id).left - totalRect.left) * scale;
+							posy = totalRect.top - (totalRect.top - state.get_drag_rect(id).top) * scale;
+						}
+					}
+
 					metaData = store.get_metadata(elem.id);
 					if (Validator.isContentType(metaData) && !Validator.isVisible(metaData)) {
 						// 非表示コンテンツ
@@ -263,8 +301,6 @@
 						continue;
 					}
 					invAspect = metaData.height / metaData.width;
-					currenth = currentw * invAspect;
-					ydiff = currentw * invAspect - lasth;
 	
 					if (isNaN(invAspect)) {
 						//invAspect = lasth / lastw;
@@ -272,16 +308,11 @@
 						return;
 					}
 	
-					metaData.width = currentw;
-					metaData.height = currentw * invAspect;
-					 if (draggingManip.id === '_manip_0') {
-					 	metaData.posx = px;
-					 	metaData.posy = (lasty - ydiff);
-					 } else if (draggingManip.id === '_manip_1') {
-					 	metaData.posx = px;
-					 } else if (draggingManip.id === '_manip_3') {
-					 	metaData.posy = (lasty - ydiff);
-					 }
+					metaData.posx = posx;
+					metaData.posy = posy;
+					metaData.width = nextW;
+					metaData.height = nextW * invAspect;
+					
 					vscreen_util.transInv(metaData);
 					store.set_metadata(metaData.id, metaData);
 					targetMetaDatas.push(metaData);
@@ -458,6 +489,9 @@
 			};
 			this.update_metadata(obj);
 		}
+
+		var mx = clientX - state.get_mousedown_pos()[0];
+		var my = clientY - state.get_mousedown_pos()[1];
 		
 		state.for_each_dragging_id(function (i, draggingID) {
 			if (Validator.isVirtualDisplayID(draggingID)) return;
@@ -475,20 +509,16 @@
 			this.clear_snap_hightlight();
 			
 			// detect spilt screen area
-			if (Validator.isGridMode()) {
-				px = rect.left + state.get_drag_offset_left();
-				py = rect.top + state.get_drag_offset_top();
-				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+			if (Validator.isGridMode() && state.get_dragging_id_list().length === 1) {
+				orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
 				splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
 				if (splitWhole) {
 					document.getElementById(splitWhole.id).style.background = "red";
 				}
 			}
 			
-			if (Validator.isDisplayMode()) {
-				px = rect.left + state.get_drag_offset_left();
-				py = rect.top + state.get_drag_offset_top();
-				orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
+			if (Validator.isDisplayMode() && state.get_dragging_id_list().length === 1) {
+				orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
 				screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 				if (screen && document.getElementById(screen.id)) {
 					document.getElementById(screen.id).style.background = "red";
@@ -505,14 +535,14 @@
 			if (state.has_drag_rect(draggingID)) {
 				if (Validator.isWindowType(metaData) && management.isDisplayEditable(state.get_display_selected_group())) {
 					// display操作可能
-					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(draggingID).left;
-					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(draggingID).top;
+					metaData.posx = state.get_drag_rect(draggingID).left + mx;
+					metaData.posy = state.get_drag_rect(draggingID).top + my;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				} else if (!Validator.isWindowType(metaData) && management.isEditable(metaData.group)) {
 					// content編集可能
-					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(draggingID).left;
-					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(draggingID).top;
+					metaData.posx = state.get_drag_rect(draggingID).left + mx;
+					metaData.posy = state.get_drag_rect(draggingID).top + my;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				}
@@ -525,7 +555,7 @@
 				targetMetaDatas.push(metaData);
 			}
 		}.bind(this));
-
+		
 		if (targetMetaDatas.length > 0) {
 			this.update_metadata_multi(targetMetaDatas);
 			this.updateSelectionRect();
@@ -613,8 +643,6 @@
 					}
 					if (topElement) {
 						topElement.onmousedown(evt);
-						state.set_drag_offset_top(clientY - topElement.getBoundingClientRect().top);
-						state.set_drag_offset_left(clientX - topElement.getBoundingClientRect().left);
 					}
 					return;
 				}
@@ -629,34 +657,29 @@
 				this.select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
 			}
-			
+
 			state.set_mousedown_pos([
-					rect.left,
-					rect.top
+				clientX,
+				clientY
 				]);
-
-
-			state.set_drag_offset_top(clientY - rect.top);
-			state.set_drag_offset_left(clientX - rect.left);
 
 			if (metaData  && target && target.id) {
 				// メインビューのコンテンツ
 				state.for_each_dragging_id(function (i, id) {
+					id = state.get_selected_id_list()[i];
 					elem = document.getElementById(id);
 					if (elem) {
-						state.set_drag_rect(id, {
-							left : elem.getBoundingClientRect().left - rect.left,
-							top : elem.getBoundingClientRect().top - rect.top
-						});
+						state.set_drag_rect(id, elem.getBoundingClientRect());
 					}
 				});
 			} else {
 				// リストのコンテンツ
 				state.for_each_dragging_id(function (i, id) {
-					state.set_drag_rect(id, {
-						left : 0,
-						top : 0
-					});
+					id = state.get_selected_id_list()[i];
+					elem = document.getElementById(id);
+					if (elem) {
+						state.set_drag_rect(id, elem.getBoundingClientRect());
+					}
 				});
 			}
 			evt.stopPropagation();
@@ -668,14 +691,24 @@
 		var i,
 			metaData,
 			elem,
-			px,
-			py,
-			rect = evt.target.getBoundingClientRect(),
 			draggingID,
 			orgPos,
 			splitWhole,
 			screen,
-			draggingIDList = state.get_dragging_id_list();
+			draggingIDList = state.get_dragging_id_list(),
+			clientX,
+			clientY;
+		
+		evt = (evt) || window.event;
+		if (evt.changedTouches) {
+			// タッチ
+			clientX = evt.changedTouches[0].clientX;
+			clientY = evt.changedTouches[0].clientY;
+		} else {
+			// マウス
+			clientX = evt.clientX;
+			clientY = evt.clientY;
+		}
 
 		for (i = draggingIDList.length - 1; i >= 0; i = i - 1) {
 			draggingID = draggingIDList[i];
@@ -698,26 +731,26 @@
 						if (Validator.isFreeMode()) {
 							this.update_metadata(metaData);
 						} else if (Validator.isDisplayMode()) {
-							px = rect.left + state.get_drag_offset_left();
-							py = rect.top + state.get_drag_offset_top();
-							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-							screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
-							if (screen) {
-								this.snap_to_screen(elem, metaData, screen);
+							if (draggingIDList.length === 1) {
+								orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
+								screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
+								if (screen) {
+									this.snap_to_screen(elem, metaData, screen);
+								}
+								this.update_metadata(metaData);
+								manipulator.moveManipulator(elem);
 							}
-							this.update_metadata(metaData);
-							manipulator.moveManipulator(elem);
 						} else {
 							// grid mode
-							px = rect.left + state.get_drag_offset_left();
-							py = rect.top + state.get_drag_offset_top();
-							orgPos = vscreen.transformOrgInv(vscreen.makeRect(px, py, 0, 0));
-							splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-							if (splitWhole) {
-								this.snap_to_screen(elem, metaData, splitWhole);
+							if (draggingIDList.length === 1) {
+								orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
+								splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+								if (splitWhole) {
+									this.snap_to_screen(elem, metaData, splitWhole);
+								}
+								this.update_metadata(metaData);
+								manipulator.moveManipulator(elem);
 							}
-							this.update_metadata(metaData);
-							manipulator.moveManipulator(elem);
 						}
 					}
 				}
@@ -725,8 +758,6 @@
 			}
 			draggingIDList.splice(i, 1);
 		}
-		state.set_drag_offset_top(0);
-		state.set_drag_offset_left(0);
 		state.set_dragging_id_list(draggingIDList);
 		manipulator.clearDraggingManip();
 		state.set_selection_rect_dragging(false);
@@ -1366,6 +1397,16 @@
 			clientY = evt.clientY,
 			targetMetaDatas = [];
 			
+		if (evt.changedTouches) {
+			// タッチ
+			clientX = evt.changedTouches[0].clientX;
+			clientY = evt.changedTouches[0].clientY;
+		}
+		
+		//totalRect = this.getTotalSelectionRect();
+		var mx = clientX - state.get_mousedown_pos()[0];
+		var my = clientY - state.get_mousedown_pos()[1];
+	
 		for (i = 0; i < state.get_selected_id_list().length; ++i) {
 			id = state.get_selected_id_list()[i];
 			if (Validator.isVirtualDisplayID(id)) return;
@@ -1379,18 +1420,18 @@
 			}
 			
 			elem = this.getElem(id, false);
-				
+			
 			if (state.has_drag_rect(id)) {
 				if (Validator.isWindowType(metaData) && management.isDisplayEditable(state.get_display_selected_group())) {
 					// display操作可能
-					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(id).left;
-					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(id).top;
+					metaData.posx = state.get_drag_rect(id).left + mx;
+					metaData.posy = state.get_drag_rect(id).top + my;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				} else if (!Validator.isWindowType(metaData) && management.isEditable(metaData.group)) {
 					// content編集可能
-					metaData.posx = clientX - state.get_drag_offset_left() + state.get_drag_rect(id).left;
-					metaData.posy = clientY - state.get_drag_offset_top() + state.get_drag_rect(id).top;
+					metaData.posx = state.get_drag_rect(id).left + mx;
+					metaData.posy = state.get_drag_rect(id).top + my;
 					vscreen_util.transPosInv(metaData);
 					vscreen_util.assignMetaData(elem, metaData, true, store.get_group_dict());
 				}
@@ -1453,21 +1494,17 @@
 			state.set_selection_rect_dragging(true);
 
 			state.set_mousedown_pos([
-					rect.left,
-					rect.top
+				clientX,
+				clientY
 				]);
-			state.set_drag_offset_top(clientY - rect.top);
-			state.set_drag_offset_left(clientX - rect.left);
+			
 			if (target) {
 				// メインビューのコンテンツ
 				for (i = 0; i < state.get_selected_id_list().length; ++i) {
 					id = state.get_selected_id_list()[i];
 					elem = document.getElementById(id);
 					if (elem) {
-						state.set_drag_rect(id, {
-							left : elem.getBoundingClientRect().left - rect.left,
-							top : elem.getBoundingClientRect().top - rect.top
-						});
+						state.set_drag_rect(id, elem.getBoundingClientRect());
 					}
 				}
 			}

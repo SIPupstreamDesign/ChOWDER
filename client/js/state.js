@@ -9,9 +9,7 @@
 		this.draggingIDList = [];
 		this.selectedIDList = [];
 		this.isCtrlDown = false; // Ctrlボタンを押してるかどうか
-		this.dragOffsetTop = 0;
-		this.dragOffsetLeft = 0;
-		this.mouseDownPos = [];
+		this.mouseDownPos = [0, 0];
 		this.dragRect = {};
 
 		this.isSelectionRectDragging = false
@@ -80,22 +78,6 @@
 		return this.isCtrlDown;
 	};
 
-	// dragOffsetTop
-	State.prototype.set_drag_offset_top = function (offset) {
-		this.dragOffsetTop = offset;
-	};
-	State.prototype.get_drag_offset_top = function () {
-		return this.dragOffsetTop;
-	};
-
-	// dragOffsetLeft
-	State.prototype.set_drag_offset_left = function (offset) {
-		this.dragOffsetLeft = offset;
-	};
-	State.prototype.get_drag_offset_left = function () {
-		return this.dragOffsetLeft;
-	};
-	
 	// mouseDownPos
 	State.prototype.set_mousedown_pos = function (pos) {
 		this.mouseDownPos = pos;
