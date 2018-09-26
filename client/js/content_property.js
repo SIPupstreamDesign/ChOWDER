@@ -690,6 +690,7 @@
 			var history_slider_memori = document.getElementById('history_slider_memori');
 
 			var sliderRect = history_slider.getBoundingClientRect();
+			var kv;
 
 			// 中身の登録
 			history_list.innerHTML = "";
@@ -745,7 +746,12 @@
 					text = values[i];
 					option.value = text;
 					// 現在表示中のコンテンツかどうか
-					if (metaData.keyvalue.indexOf(text) >= 0) {
+					try {
+						kv = JSON.parse(metaData.keyvalue);
+					} catch(e) {
+						console.error("tileimage history key parse error")
+					}
+					if (kv && String(kv[history_select.value]) === text) {
 						option.innerHTML = "●" + text;
 						selectedIndex = i;
 						history_slider.value = i;
