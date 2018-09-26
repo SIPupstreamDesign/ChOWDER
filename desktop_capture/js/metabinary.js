@@ -1,3 +1,8 @@
+/**
+ * This software was developed by the Tokyo University of Science - Space Education Program (T-SEP), which was funded by the 
+ * Aerospace Science and Technology Promotion Program of the Ministry of Education, Culture, Sports, Science, and Technology (MEXT).
+ */
+
 /*jslint devel:true bitwise:true */
 /*global io, socket, WebSocket, Blob, URL, FileReader, DataView, Uint8Array, module, Uint32Array, ArrayBuffer, escape */
 
