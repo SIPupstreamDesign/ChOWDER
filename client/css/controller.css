@@ -1,8 +1,8 @@
-/*body {
+body {
+	position: fixed;
 	width:100%;
 	height:100%;
-	overflow:hidden;
-}*/
+}
 
 *:not(input) {
 	-webkit-touch-callout: none;
@@ -824,6 +824,7 @@ p {
 
 .history_area {
 	display : none;
+	height : 400px;
 }
 
 .history_select {
