@@ -181,6 +181,25 @@ Shut Down Redis
 Close the terminal that redis is running on. 
 If redis server is running a process, locate the process using the ps command and then kill. 
 
+
+Server Setup
+========================================================================================
+
+Basic Setup for Server
+---------------------------------------------------
+The server program reads the `server/setting.json` file while launching to configure various settings. 
+
+
+    {
+        "wsMaxMessageSize": 67108864,
+        "reductionResolution" : 1920
+    }
+
+-   wsMaxMessageSize sets the maximum size of a single message that the server transmits. 
+-   reductionResolution sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
+
+
+
 Initial Setup for Administrator
 ==================================================================
 
@@ -279,7 +298,8 @@ For details, refer to [Adding Contents](#Adding-Contents).
 
 ### Setting Menu
 
-Under Setting, you can turn the Remote Cursor on or off.
+Under the Setting menu, you can turn the remote cursor on or off, change languages, and pull up the Administrator Screen. The Administrator Screen is accessible only to the Administrator.
+For information on the Administrator Screen, please refer to [User Permissions and Administrator Screen](#UserPermissionsandAdministratorScreen)
 
 <img src="image/SettingMenu.png" alt="Settingメニュー展開時" width="415" />
 *Menu when Setting is Selected*
@@ -289,12 +309,27 @@ The Remote Cursor appears as below.
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *Remote Cursor*
 
+You can change languages in the menu below.
+
+<img src="image/SettingMenu_language.png" alt="言語切り替え" width="415" />
+*Change Language*
+
 ### Return Home
 
 You can return Home by clicking on the ChOWDER link as shown below.
 
 <img src="image/home_return.png" alt="タイトル名のクリックでホームに戻る" width="415" />
 *Click on Title to Return Home*
+
+### Controller ID Setup
+
+You can set up the Controller ID in the section shown in the image below.
+You may be prompted for a password when changing the Controller ID as it is recognized as a different Controller. 
+
+<img src="image/controller_id.png" alt="コントローラIDの設定" width="415" />
+*Controller ID Setup*
+
+
 
 Adding Contents
 ---------------------------------------------------
@@ -378,6 +413,19 @@ Adding an URL looks like below.
 
 <img src="image/AddContent_URL_View.png" alt="URL追加後の様子" width="472" />
 *Screen after Adding URL*
+
+### Adding PDF
+
+You can add PDF documents to Contents by any of the following methods. 
+
+-   Main Menu → Add → PDF
+-   Menu on the lower right side of Content Tab → Add Content → PDF File
+-   Right-click within the Content Tab → Add Content → PDF File
+
+The example below shows the screen adding a PDF as a Content.
+
+<img src="image/AddContent_PDF_View.png" alt="PDFファイルの追加例" width="434" />
+*Example of an Added PDF File*
 
 ### Adding a Shared Screen
 
@@ -476,6 +524,30 @@ The Select All button selects all connected Display.
 
 <img src="image/3Button3.png" alt="全選択ボタン" width="377" />
 *Select All Button*
+
+### DisplayGroup Setup
+
+You can set the DisplayGroup assigned to the display within the Display tab.
+You can set one Virtual Display per DisplayGroup.
+
+You can add a group or change the order of a created group by using the button.
+In the settings menu, you can change the name of the group, the color of the group, and delete the group. 
+
+<img src="image/display_group1.png" alt="DisplayGroupの追加, 順序変更" height="321" />
+*Adding and Changing the Order of the DisplayGroup*
+<br>
+<img src="image/display_group2.png" alt="DisplayGroupの設定" height="321" />
+*DisplayGroup Setup*
+
+### Assigning the DisplayGroup
+
+You can make changes to the group assigned to Display by right-clicking menu in Display or through the menu on the lower right of the screen. Changes cannot be made to Groups in VirtualDisplay. 
+
+<img src="image/display_group3.png" alt="DisplayGroupの変更" height="321" />
+*Make Changes to DisplayGroup*
+ 
+
+
 
 Content Tab
 --------------------------------
@@ -627,6 +699,18 @@ You can configure the settings per below:
 4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.
 5. You can look up information on WebRTC quality saved in the metadata of Contents.
 
+### Bulk Operation of Video
+
+Video content in the same group can be bulk processed for playing, pausing and cueing. 
+The operation is as follows.
+
+1. Right-click within the Content tab → Control All Videos in a group
+2. Use the Video Bulk Controller on the bottom of the screen
+
+<img src="image/movie_bulk.png" alt="動画設定" width="434" />
+*Bulk operation of video*
+
+
 User Permissions and Administrator Screen
 ==================================================================
 
@@ -672,10 +756,11 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 <img src="image/management5.png" alt=" 閲覧・編集権限の設定" width="585" />
 *Viewing/Editing Permission Setup*
 
- 1. Select user to set up.
- 2. Choose whether selected user has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
- 3. 
- 4. Set up selected user with permission levels for editing groups and working with Display.
+1. Select user to set up.
+2. Select the content group the user has permission to edit and the content group the user has permission to view. Users with permission for “all” are able to edit/view newly created groups as well. 
+3. Select the display group the user has permission to edit. Users with permission for “all” are able to edit/view newly created groups as well.
+4. Set up selected user with permission levels for editing groups and working with Display.
+
 
 ### Password Setup
 
@@ -935,6 +1020,140 @@ Once you add Extension, run Add -> ScreenShare and input ExtensionID in the dial
 
 <img src="image/AddContent_ScreenShare_View2.png" alt="ScreenShare開始時のExtensionIDの入力" width="600" />
 *Inputting ExtensionID when Starting ScreenShare*
+
+
+Using the Large Scale Image Data Transmission Application
+==================================================================
+Overview
+--------------------------------------------------------------------------------
+
+You can send vast amounts of image data to the ChOWDER server using the CLI application.
+
+Application Setup
+--------------------------------------------------------------------------------
+In setup file, you can set the number of splits (sub-divisions) and the Content ID/Group. 
+The setup file is named “config.json” located in the “tileimage” directory. 
+The format of the setup file is as follows:
+
+    {
+        "id": "APIUser",
+        "password": "password",
+        "url": "ws://localhost:8081/v2/",
+        "xsplit": 8,
+        "ysplit": 8,
+        "contentid": "contentid",
+        "contentgrp": "default"
+    }
+
+-	 `id` is fixed as `APIUser`
+-	Set the password for `APIUser` in `password`. Passwords can be changed in password setup found on the [Administrator Screen](#administratorscreen).
+-	Use the URL of the ChOWDER WebSocket server for 'url'
+-	Set the number of horizontal and vertical image splits (sub-divisions) in `xplit` / `ysplit`.
+	Designate Content ID and Content Group each in `contentid` / `contentgrp`
+
+Using the Application
+--------------------------------------------------------------------------------
+
+Run the following command from either the command prompt or terminal.
+Set the path of the image to transmit using the command argument.
+
+### For Mac/Linux
+
+Run the shell script below located in the `bin` directory.
+
+    ./tileimage.sh
+
+### For Windows
+
+Run the command below located in the `bin` directory
+
+    tileimage.bat
+
+### Command Option
+
+Set the path of the setup file using the `--config` option. The default path is `tileimage/tileimage.js`.
+Set the meta data of images using `--metadata` option.
+
+See below example of command:
+
+    ./tileimage.sh --config conf.json --metadata "{\"key\":\"value\"}" image.jpg
+
+
+
+Displaying and Managing Large Scale Image Data
+==================================================================
+Large scale image data registered using the large scale image data transmission application appear in the Controller with an icon like the one below.
+Image appearing in Controller will be reduced from its original size.
+
+<img src="image/bigimage1.jpg" alt="大規模画像" width="500" />
+
+It will appear the same as other image contents in Display.
+
+<img src="image/bigimage2.jpg" alt="大規模画像" width="500" />
+
+The following commands are available by selecting large scale image in Controller.
+
+<img src="image/bigimage3.jpg" alt="大規模画像データ操作" width="600" />
+
+1. Switch `key` registered as `metadata` of the large scale image data.
+2. Switch `value` registered as `metadata` of the large scale image data. Switching `value` changes the appearance of the large scale image data to the corresponding image data.
+3. Synching of selected large scale image data begins upon pressing the Sync button. All contents in sync within the same group will switch to the corresponding image data according to the selection of `key` and `value` in `metadata`.
+4. The slider may also be used to switch `value` as described in item 2 above.
+
+
+Using the Display Application for the Electron version of ChOWDER
+==================================================================
+
+Overview
+--------------------------------------------------------------------------------
+You can automatically position a frameless window on the screen using the display application for the Electron version of ChOWDER.
+
+Application Setup
+---------------------------------------------------
+Set up the application using the setup file in JSON format.
+Create the setup file named `conf.json` in the `standalone-electron` directory. 
+
+The format for the setup file is as follows:
+
+    {
+        "url": "http://localhost:8080/view.html",
+        "windows": {
+            "tile1": {
+                "group": "hoge",
+                "rect": [0, 0, 500, 500],
+                "position": [0, 0],
+                "scale": 1.0,
+                "fullscreen": false,
+                "frame": false
+            },
+            "tile2": {
+                "group": "hoge",
+                "rect": [500, 0, 500, 500],
+                "position": [500, 0],
+                "scale": 1.0,
+                "fullscreen": false,
+                "frame": false
+            }
+        }
+    }
+
+-	Use the URL of the ChOWDER server for `url`.
+-	`windows` is the object that has the Display ID as key and display setup as value.
+    -	Designate the display group in `Group`.
+    -	Set the position and size of the window in `rect`.
+    -	Set the position within VDA in `position`.
+    -	Set the enlargement factor within VDA in `scale`.
+    -	Designate whether to display or to not display the full screen of the window in `fullscreen`.
+    -	Designate whether to display or to not display the window frame in `frame`. 
+
+
+Launching the Application
+---------------------------------------------------
+
+Run the shell script below located in the `standalone-electron` directory
+
+    electron .
+
 
 
 Using HTTPS
