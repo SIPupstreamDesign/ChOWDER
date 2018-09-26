@@ -201,7 +201,7 @@ The server program reads the `server/setting.json` file while launching to confi
 
 
 Initial Setup for Administrator
-==================================================================
+---------------------------------------------------
 
 You can add an administrator user during start-up. 
 Default password for the administrator is “admin”.
@@ -223,7 +223,7 @@ To add or remove an administrator during start-up, create an admin.json file in 
 
 In this example, the “administrator” user is added (by overwriting/saving) and “administrator2” user is deleted. 
 
-Type the administrator’s name followed by “command” : “add” to add and “command” : “delete” to remove an administrator. You will need a password when adding an administrator.
+Set the administrator’s name as key followed by “command” : “add” to add and “command” : “delete” to remove an administrator. You will need a password when adding an administrator.
 This json file will be read when launching ChOWDER and the administrator will be added or removed at that time. 
 Once ChOWDER is launched and registered with the DB, there is no longer a need for the admin.json file. 
 
@@ -1085,15 +1085,15 @@ Displaying and Managing Large Scale Image Data
 Large scale image data registered using the large scale image data transmission application appear in the Controller with an icon like the one below.
 Image appearing in Controller will be reduced from its original size.
 
-<img src="image/bigimage1.jpg" alt="大規模画像" width="500" />
+<img src="image/bigimage1.png" alt="大規模画像" width="500" />
 
 It will appear the same as other image contents in Display.
 
-<img src="image/bigimage2.jpg" alt="大規模画像" width="500" />
+<img src="image/bigimage2.png" alt="大規模画像" width="500" />
 
 The following commands are available by selecting large scale image in Controller.
 
-<img src="image/bigimage3.jpg" alt="大規模画像データ操作" width="600" />
+<img src="image/bigimage3.png" alt="大規模画像データ操作" width="600" />
 
 1. Switch `key` registered as `metadata` of the large scale image data.
 2. Switch `value` registered as `metadata` of the large scale image data. Switching `value` changes the appearance of the large scale image data to the corresponding image data.
