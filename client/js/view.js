@@ -1562,10 +1562,10 @@
 			console.log("onUpdateWindowMetaData", data);
 			var i;
 			for (i = 0; i < data.length; ++i) {
-				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
+				if (data[i].hasOwnProperty('id') && data[i].id === getWindowID()) {
 					update('window');
-					updatePreviewAreaVisible( data[0]);
-					resizeViewport( data[0])
+					updatePreviewAreaVisible( data[i]);
+					resizeViewport( data[i])
 					return;
 				}
 			}
