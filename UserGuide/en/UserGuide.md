@@ -56,7 +56,7 @@ Table of Contents
   - [How to Use ChOWDER Desktop Capture](#how-to-use-chowder-desktop-capture)
 - [Using Google Chrome Extension for WebRTC](#using-google-chrome-extension-for-webrtc)
   - [Overview](#overview-4)
-  - [Installing Extension](install-extension-1)
+  - [Installing Extension](installing-extension-1)
   - [In case of ChOWDER server is running on the other PC](#in-case-of-chowder-server-is-running-on-the-other-pc)
   - [Capture Using Extension](#capture-using-extension)
 - [Using the Large Scale Image Data Transmission Application](#using-the-large-scale-image-data-transmission-application)
@@ -67,7 +67,7 @@ Table of Contents
 - [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
   - [Overview](#overview-6)
   - [Application Setup](#application-setup-1)
-  - [Launching the Application](#launching-the-application)
+  - [Launching the Application](#launching-the-application-1)
 - [Using HTTPS](#using-https)
   - [Overview](#overview-7)
 
@@ -237,7 +237,7 @@ To add or remove an administrator during start-up, create an admin.json file in 
 
 In this example, the “administrator” user is added (by overwriting/saving) and “administrator2” user is deleted. 
 
-Set the administrator’s name as key followed by “command” : “add” to add and “command” : “delete” to remove an administrator. You will need a password when adding an administrator.
+Set the administrator’s name as key followed by “command” : “add” to add and “command” : “delete” to remove an administrator. You will need a password when adding an administrator.
 This json file will be read when launching ChOWDER and the administrator will be added or removed at that time. 
 Once ChOWDER is launched and registered with the DB, there is no longer a need for the admin.json file. 
 
@@ -872,7 +872,7 @@ Installing Extension
 To install the Extension for Chrome, open the browser page for Extension and turn Developer mode on.
 
 1. Open the browser page for Extension per below.
-2. Turn on Developer mode toggle switch to enter Developer mode.
+2. Turn on Developer mode toggle switch to enter Developer mode.
 3. Reboot Chrome and open the browser page for Extension again.
 4. Click `Load unpacked` and select `ChOWDER/chrome_extension` directory, then the Extension is going to be installed.
 
