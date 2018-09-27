@@ -1056,6 +1056,27 @@ Chromeに拡張機能をインストールし追加するには、Chromeの拡�
  4. 拡張機能ページの、パッケージ化されていない拡張機能を読み込む、というメニューをクリックし、
   `ChOWDER/chrome_extension_for_webrtc`ディレクトリを選択することで、追加されます。
 
+ChOWDERサーバーが別PCで動作している場合
+---------------------------------------------------
+
+chrome_extension_for_webrtc/manifest.jsonの"matches"にサーバーURLを追加する必要があります.
+変更した際はエクステンションの再インストールが必要です.
+
+```
+[before]
+  "externally_connectable": {
+    "matches": ["*://127.0.0.1/*", "*://localhost/*"]
+  },
+```
+
+```
+[after]
+  "externally_connectable": {
+    "matches": ["*://127.0.0.1/*", "*://localhost/*", "*://any.somedomain.co.jp/*"]
+  },
+```
+
+
 Extensionでキャプチャする
 ---------------------------------------------------
 
