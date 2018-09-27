@@ -18,6 +18,8 @@ Table of Contents
 - [Quitting the Application](#quitting-the-application)
   - [Shut Down the Server Program](#shut-down-the-server-program)
   - [Shut Down Redis](#shut-down-redis)
+- [Server Setup](#server-setup)
+  - [Basic Setup for Server](#basic-setup-for-server)
 - [Initial Setup for Administrator](#initial-setup-for-administrator)
   - [The Administrator Setup File](#the-administrator-setup-file)
 - [The Home Screen of ChOWDER](#the-home-screen-of-chowder)
@@ -29,8 +31,10 @@ Table of Contents
   - [ChOWDER's Menubar](#chowder's-menubar)
   - [Displaying Visual Contents](#displaying-visual-contents)
   - [Display Tab](#display-tab)
+  - [Virtual Display Setup](#virtual-display-setup)
   - [Content Tab](#content-tab)
   - [Search Tab](#search-tab)
+  - [Layout Tab](#layout-tab)
   - [Property Window](#property-window)
   - [Working with Video Content](#working-with-video-content)
 - [User Permissions and Administrator Screen](#user-permissions-and-administrator-screen)
@@ -52,10 +56,20 @@ Table of Contents
   - [How to Use ChOWDER Desktop Capture](#how-to-use-chowder-desktop-capture)
 - [Using Google Chrome Extension for WebRTC](#using-google-chrome-extension-for-webrtc)
   - [Overview](#overview-4)
-  - [Installing Extension](install-extension-1)
+  - [Installing Extension](#installing-extension-1)
+  - [In case of ChOWDER server is running on the other PC](#in-case-of-chowder-server-is-running-on-the-other-pc)
   - [Capture Using Extension](#capture-using-extension)
-- [Using HTTPS](#using-https)
+- [Using the Large Scale Image Data Transmission Application](#using-the-large-scale-image-data-transmission-application)
   - [Overview](#overview-5)
+  - [Application Setup](#application-setup)
+  - [Using the Application](#using-the-application)
+- [Displaying and Managing Large Scale Image Data](#displaying-and-managing-large-scale-image-data)
+- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+  - [Overview](#overview-6)
+  - [Application Setup](#application-setup-1)
+  - [Launching the Application](#launching-the-application-1)
+- [Using HTTPS](#using-https)
+  - [Overview](#overview-7)
 
 About ChOWDER
 ==================================================================
@@ -849,17 +863,18 @@ Google Chrome allows adding functions and features in what is called Extension. 
 Installing Extension
 ---------------------------------------------------
 
-The Extension file for Google Chrome named chrome\_extention.crx is located in the bin directory of Project root.
+To install the Extension for Chrome, open the browser page for Extension and turn Developer mode on.
 
-To install the Extension for Chrome, open the browser page for Extension per below. 
-
-Drag and drop the Extension file to the page and install.
+1. Open the browser page for Extension per below.
+2. Turn on Developer mode toggle switch to enter Developer mode.
+3. Reboot Chrome and open the browser page for Extension again.
+4. Click `Load unpacked` and select `ChOWDER/chrome_extension` directory, then the Extension is going to be installed.
 
 <img src="image/extension01.png" alt="拡張機能ページを開くメニュー" width="585" />
 *Menu to Open Extension Page*
 <br>
-<img src="image/extension02.png" alt="Extensionファイルのドラッグアンドドロップ" width="585" />
-*Drag and Drop the Extension File*
+<img src="image/extension02.png" alt="デベロッパーモードをトグル" width="585" />
+*Turn Developer mode on and load unpacked extension*
 
 Use Extension to Capture
 ---------------------------------------------------
@@ -881,9 +896,9 @@ Once Extension is added, you can click the icon to begin Capture.
 
 - Extension Setup
 
-- URL — Sets URL to connect to ChOWDER
+    - URL — Sets URL to connect to ChOWDER
 
-- Interval — Sets interval used in AutoCapture
+    - Interval — Sets interval used in AutoCapture
 
 <img src="image/extension_setting.png" alt="Extensionの設定" width="207" />
 *Extension Setup*
@@ -1001,12 +1016,33 @@ While screen sharing is usually not possible in Google Chrome due to security re
 Installing Extension
 ---------------------------------------------------
 
-The file named chrome\_extention\_for\_webrtc.crx located in the bin directory of Project root is the Extension file for Google Chrome. 
 
-To install and add the Extension for Chrome, open the browser page for Extension as previously described in Installing Extension. 
+To install the Extension for Chrome, open the browser page for Extension and turn Developer mode on.
 
-Drag and drop the Extension file to the page and install.
+1. Open the browser page for Extension per below as shown in [Installing Extension](#installing-extension).
+2. Turn on Developer mode toggle switch to enter Developer mode.
+3. Reboot Chrome and open the browser page for Extension again.
+4. Click `Load unpacked` and select `ChOWDER/chrome_extension_for_webrtc` directory, then the Extension is going to be installed.
 
+In case of ChOWDER server is running on the other PC
+---------------------------------------------------
+
+You need to add the URL of ChOWDER server to value of "matches" in `chrome_extension_for_webrtc/manifest.json` file.
+If you modify the URL, you need to re-install the extension.
+
+```
+[before]
+  "externally_connectable": {
+    "matches": ["*://127.0.0.1/*", "*://localhost/*"]
+  },
+```
+
+```
+[after]
+  "externally_connectable": {
+    "matches": ["*://127.0.0.1/*", "*://localhost/*", "*://any.somedomain.co.jp/*"]
+  },
+```
 
 Capture Using Extension
 ---------------------------------------------------
