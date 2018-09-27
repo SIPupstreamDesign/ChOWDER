@@ -72,7 +72,7 @@ About ChOWDER
 ChOWDER is a tiled displays manager designed especially for collaborations among different locations. Each location can have different physical configuration, i.e. different screen resolutions and tiling setup. Tiles may also have different resolutions within its tiled displays. New locations can be added during the meeting session in an *ad hoc* manner.
 Contents resides in a single display area, or the *virtual display area*, and are rendered in your tiled displays. In the virtual display area, each tile is mapped to its rectangular region. This region can be modified interactively depending on the physical configuration and following the course of the meeting.
 
-For example, members of two groups from different locations can co-work on a shared screen while another person can independently work on a separated issue and include the contents in a later stage. {>>あまり自信がないですが説得力のある事例ありますか？<<} For efficient network usage, the contents are firstly distributed to each display before being rendered, and then the coordinates in the virtual display area are communicated through the network. 
+For example, members of two groups from different locations can co-work on a shared screen while another person can independently work on a separated issue and include the contents in a later stage. For efficient network usage, the contents are firstly distributed to each display before being rendered, and then the coordinates in the virtual display area are communicated through the network. 
 
 The rest of this user guide documents how you can set up and use ChOWDER.
 
@@ -108,7 +108,7 @@ The top directory shall contain the following directories and file
 - redis: Components for [Redis](https://redis.io)
 - server: ChOWDER's Server
 - chrome_extension: Google Chrome Extensions
-- package.json: {>>Package configuration?<<}
+- package.json: Package configuration
 
 Use the script located in the bin folder to start the Collaborative workspace driver. 
 
