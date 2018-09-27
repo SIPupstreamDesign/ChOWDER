@@ -9,12 +9,8 @@ Table of Contents
 - [Unarchiving the Source](#unarchiving-the-source)
 - [Installing the Application](#installing-the-application)
   - [Installation](#installation)
-  - [Run Install Script](#run-install-script)
-- [Accessing ChOWDER from a Web Browser](#accessing-chowder-from-a-web-browser)
-  - [For Mac/Linux](#for-maclinux)
-  - [For Windows](#for-windows)
-  - [Launch Confirmation](#launch-confirmation)
-  - [Accessing Controller(s)](#accessing-controllers)
+- [Launching ChOWDER's Server](#launching-chowder's-server)
+  - [Accessing ChOWDER from a Web Browser](#accessing-chowder-from-a-web-browser)
 - [Quitting the Application](#quitting-the-application)
   - [Shut Down the Server Program](#shut-down-the-server-program)
   - [Shut Down Redis](#shut-down-redis)
@@ -215,7 +211,7 @@ The server program reads the `server/setting.json` file while launching to confi
 Managing Administrative Users
 ---------------------------------------------------
 You can modify the administrator configurations by starting up ChOWDER.
-The default password for the administrator is “admin”. {>>administrator とは何をする人でしょうか？<<}
+The default password for the administrator is “admin”.
 
 The section "User Permissions and Administrator Screen" in this document gives a more 
 
