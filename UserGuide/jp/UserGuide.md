@@ -55,6 +55,7 @@
 -   [Google Chrome Extension for WebRTCの利用](#google-chrome-extension-for-webrtcの利用)
     -   [概要](#概要-4)
     -   [Extensionのインストール](#extensionのインストール-2)
+    -   [ChOWDERサーバーが別PCで動作している場合](#chowderサーバーが別pcで動作している場合)
     -   [Extensionでキャプチャする](#extensionでキャプチャする-1)
 -   [大規模画像データ送信アプリケーションの利用](#大規模画像データ送信アプリケーションの利用)
     -   [概要](#概要-5)
