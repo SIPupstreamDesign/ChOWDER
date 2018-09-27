@@ -56,7 +56,7 @@ Table of Contents
   - [How to Use ChOWDER Desktop Capture](#how-to-use-chowder-desktop-capture)
 - [Using Google Chrome Extension for WebRTC](#using-google-chrome-extension-for-webrtc)
   - [Overview](#overview-4)
-  - [Installing Extension](installing-extension-1)
+  - [Installing Extension](#installing-extension-1)
   - [In case of ChOWDER server is running on the other PC](#in-case-of-chowder-server-is-running-on-the-other-pc)
   - [Capture Using Extension](#capture-using-extension)
 - [Using the Large Scale Image Data Transmission Application](#using-the-large-scale-image-data-transmission-application)
@@ -1025,7 +1025,7 @@ Installing Extension
 To install the Extension for Chrome, open the browser page for Extension and turn Developer mode on.
 
 1. Open the browser page for Extension per below as shown in [Installing Extension](#installing-extension).
-2. Turn on Developer mode toggle switch to enter Developer mode.
+2. Turn on Developer mode toggle switch to enter Developer mode.
 3. Reboot Chrome and open the browser page for Extension again.
 4. Click `Load unpacked` and select `ChOWDER/chrome_extension_for_webrtc` directory, then the Extension is going to be installed.
 
