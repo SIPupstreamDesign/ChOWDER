@@ -617,7 +617,6 @@
 				}
 				var backups = JSON.parse(metaData.backup_list);
 				var select = document.createElement('select');
-				var restore_index = 0;
 				select.className = "backup_list_content";
 				select.id = "backup_list_content";
 				select.size = 5;
@@ -728,7 +727,7 @@
 						keyName = metaData.restore_key;
 					}
 				}
-				
+
 				// 前回と同様のデータかつ選択されたkeyも同じ場合は、更新しない
 				if (history_area.pre_id && history_area.pre_id === metaData.id
 					&& history_area.pre_history_data && history_area.pre_history_data === metaData.history_data
@@ -782,7 +781,7 @@
 				history_slider.max = values.length - 1;
 
 				var selectedIndex = 0;
-				var memoriSpan = 100 / (values.length - 1) * (sliderRect.right-sliderRect.left) / document.body.clientWidth;
+				var memoriSpan = 100 / (values.length - 1) * (sliderRect.right-sliderRect.left - 16) / document.body.clientWidth;
 				for (i = 0; i < values.length; i = i + 1) {
 					option = document.createElement('option');
 					text = values[i];
@@ -806,9 +805,13 @@
 					var sliderMemori = document.createElement('div');
 					sliderMemori.title = text;
 					sliderMemori.style.position = "absolute";
-					sliderMemori.style.marginLeft = sliderRect.left /  document.body.clientWidth * 100  + "%"
+					sliderMemori.style.marginLeft = (sliderRect.left + 6) /  document.body.clientWidth * 100  + "%"
 					sliderMemori.style.left = memoriSpan * i + "%";
-					sliderMemori.style.top = "30px";
+					if (Constants.IsFirefox) {
+						sliderMemori.style.top = "34px";
+					} else {
+						sliderMemori.style.top = "30px";
+					}
 					sliderMemori.style.width = "4px";
 					sliderMemori.style.height = "30px";
 					sliderMemori.style.borderRadius = "4px"
