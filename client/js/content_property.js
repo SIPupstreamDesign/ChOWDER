@@ -660,10 +660,32 @@
 		}
 	};
 
+	function isNumber(x){ 
+		if( typeof(x) != 'number' && typeof(x) != 'string' )
+			return false;
+		else 
+			return (x == parseFloat(x) && isFinite(x));
+	}
+
 	function sortHistory(values) {
 		try {
 			values.sort(function (a, b) {
-				return b < a;
+				if (isNumber(a)) {
+					a = Number(a);
+				} else {
+					a = a.toString().toLowerCase();
+				}
+				if (isNumber(b)) {
+					b = Number(b);
+				} else {
+					b = b.toString().toLowerCase();
+				}
+				if (a < b){
+					return -1;
+				}else if (a > b){
+					return 1;
+				}
+				return 0;
 			});
 		} catch (e) {
 
