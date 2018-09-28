@@ -715,9 +715,6 @@
 			var kv;
 
 			// 中身の登録
-			history_list.innerHTML = "";
-			history_select.innerHTML = "";
-			history_slider_memori.innerHTML = "";
 			history_area.disabled = true;
 			history_slider_area.disabled = true;
 			if (metaData.hasOwnProperty('history_data')) {
@@ -725,6 +722,31 @@
 					history_area.disabled = false;
 					history_slider_area.disabled = false;
 				}
+
+				if (!keyName) {
+					if (metaData.hasOwnProperty('restore_key')) {
+						keyName = metaData.restore_key;
+					}
+				}
+				
+				// 前回と同様のデータかつ選択されたkeyも同じ場合は、更新しない
+				if (history_area.pre_id && history_area.pre_id === metaData.id
+					&& history_area.pre_history_data && history_area.pre_history_data === metaData.history_data
+					&& history_area.pre_keyname && history_area.pre_keyname === keyName
+					&& history_area.pre_keyvalue && history_area.pre_keyvalue === metaData.keyvalue) 
+				{
+					return;
+				}
+				history_area.pre_id = metaData.id;
+				history_area.pre_history_data = metaData.history_data;
+				history_area.pre_keyname = keyName;
+				history_area.pre_keyvalue = metaData.keyvalue;
+
+				history_list.innerHTML = "";
+				history_select.innerHTML = "";
+				history_slider_memori.innerHTML = "";
+
+				
 				var history_data;
 				try {
 					history_data = JSON.parse(metaData.history_data);
@@ -740,8 +762,6 @@
 				// 現在表示中のキー
 				if (keyName) {
 					history_select.value = keyName;
-				} else if (metaData.hasOwnProperty('restore_key')) {
-					history_select.value = metaData.restore_key;
 				} else {
 					history_select.value = Object.keys(history_data)[0];
 				}
@@ -804,7 +824,8 @@
 				history_select.onchange = function (evt) {
 					var historyContent = document.getElementById('history_list_content');
 					var key = history_select.options[history_select.selectedIndex].value;
-					this.update_history_area(metaData, key);
+					var value = historyContent.value;
+					this.emit(ContentProperty.EVENT_RESTORE_HISTORY_CONTENT, null, key, value);
 				}.bind(this);
 
 				// データ切り替えイベントの登録
