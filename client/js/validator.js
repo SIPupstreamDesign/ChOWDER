@@ -18,13 +18,18 @@
 
 	Validator.prototype.isVisibleWindow = function (windowData) {
 		if (this.isVisible(windowData)) {
-			if (windowData.group === this.state.get_display_selected_group()) {
-				return true;
-			}
-			if (this.state.get_display_selected_group() === Constants.DefaultGroup
-				&& !this.store.get_group_dict().hasOwnProperty(windowData.group)) {
-				return true;
-			}
+			return this.isCurrentGroupWindow(windowData);
+		}
+		return false;
+	}
+
+	Validator.prototype.isCurrentGroupWindow = function (windowData) {
+		if (windowData.group === this.state.get_display_selected_group()) {
+			return true;
+		}
+		if (this.state.get_display_selected_group() === Constants.DefaultGroup
+			&& !this.store.get_group_dict().hasOwnProperty(windowData.group)) {
+			return true;
 		}
 		return false;
 	}

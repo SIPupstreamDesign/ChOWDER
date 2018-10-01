@@ -726,29 +726,32 @@
 								metaData.visible = true;
 							}
 						}
-						if (Validator.isFreeMode()) {
+					}
+				}
+				if (!gui.is_listview_area(evt)) {
+					// スナップ
+					if (Validator.isFreeMode()) {
+						this.update_metadata(metaData);
+					} else if (Validator.isDisplayMode()) {
+						if (draggingIDList.length === 1) {
+							orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
+							screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
+							if (screen) {
+								this.snap_to_screen(elem, metaData, screen);
+							}
 							this.update_metadata(metaData);
-						} else if (Validator.isDisplayMode()) {
-							if (draggingIDList.length === 1) {
-								orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
-								screen = vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
-								if (screen) {
-									this.snap_to_screen(elem, metaData, screen);
-								}
-								this.update_metadata(metaData);
-								manipulator.moveManipulator(elem);
+							manipulator.moveManipulator(elem);
+						}
+					} else {
+						// grid mode
+						if (draggingIDList.length === 1) {
+							orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
+							splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+							if (splitWhole) {
+								this.snap_to_screen(elem, metaData, splitWhole);
 							}
-						} else {
-							// grid mode
-							if (draggingIDList.length === 1) {
-								orgPos = vscreen.transformOrgInv(vscreen.makeRect(clientX, clientY, 0, 0));
-								splitWhole = vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
-								if (splitWhole) {
-									this.snap_to_screen(elem, metaData, splitWhole);
-								}
-								this.update_metadata(metaData);
-								manipulator.moveManipulator(elem);
-							}
+							this.update_metadata(metaData);
+							manipulator.moveManipulator(elem);
 						}
 					}
 				}
@@ -786,7 +789,8 @@
 	Controller.prototype.updateScreen = function (windowData) {
 		var i,
 			whole = vscreen.getWhole(),
-			screens = vscreen.getScreenAll(),
+			screen,
+			screens,
 			s,
 			wholeElem,
 			controllerData = this.getControllerData(),
@@ -797,28 +801,36 @@
 			metaData;
 		
 		if (windowData && windowData !== undefined) {
-			screenElem = document.getElementById(windowData.id);
-			if (!screenElem && Validator.isVisible(windowData)) {
-				screenElem = document.createElement('div');
-				idElem = document.createElement('div');
-				idElem.innerHTML = "ID:" + windowData.id;
-				idElem.className = "screen_id";
-				screenElem.appendChild(idElem);
-				screenElem.className = "screen";
-				screenElem.id = windowData.id;
-				screenElem.style.borderStyle = 'solid';
-				previewArea.appendChild(screenElem);
-				this.setupWindow(screenElem, windowData.id);
-				vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
-			}
-			if (screenElem) {
-				if (Validator.isVisibleWindow(windowData)) {
-					screenElem.style.display = "block";
-				} else {
-					screenElem.style.display = "none";
+			// Screenを登録
+			vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight, windowData.visible, windowData.group);
+			vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
+			vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
+
+			screen = vscreen.getScreen(windowData.id);
+			if (screen) {
+				screenElem = document.getElementById(windowData.id);
+				if (!screenElem && Validator.isVisible(windowData)) {
+					// 新規Screen Element作成
+					screenElem = document.createElement('div');
+					idElem = document.createElement('div');
+					idElem.innerHTML = "ID:" + windowData.id;
+					idElem.className = "screen_id";
+					screenElem.appendChild(idElem);
+					screenElem.className = "screen";
+					screenElem.id = windowData.id;
+					screenElem.style.borderStyle = 'solid';
+					previewArea.appendChild(screenElem);
+					this.setupWindow(screenElem, windowData.id);
+					vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screen));
 				}
-				vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
-				//vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[windowData.id]));
+				if (screenElem) {
+					if (Validator.isVisibleWindow(windowData)) {
+						screenElem.style.display = "block";
+					} else {
+						screenElem.style.display = "none";
+					}
+					vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
+				}
 			}
 		} else {
 			gui.assign_virtual_display(vscreen.getWhole(), vscreen.getSplitCount());
@@ -846,38 +858,45 @@
 			}
 			vscreen_util.assignScreenRect(wholeElem, whole);
 			
-			// 保持しているscreen座標情報から枠を生成して配置.
-			for (s in screens) {
-				if (screens.hasOwnProperty(s)) {
-					screenElem = document.getElementById(s);
-					if (store.has_metadata(s)) {
-						metaData = store.get_metadata(s);
-						if (!screenElem) {
-							if (Validator.isVisible(metaData)) {
-								screenElem = document.createElement('div');
-								idElem = document.createElement('div');
-								idElem.innerHTML = "ID:" + s;
-								idElem.className = "screen_id";
-								screenElem.appendChild(idElem);
-								screenElem.className = "screen";
-								screenElem.id = s;
-								screenElem.style.borderStyle = 'solid';
-								previewArea.appendChild(screenElem);
-								this.setupWindow(screenElem, s);
-							}
+			// 保持しているmetadataから枠を生成して配置.
+			store.for_each_metadata(function (i, metaData) {
+				if (Validator.isWindowType(metaData)) {
+					// Screenを登録
+					vscreen.assignScreen(metaData.id, metaData.orgX, metaData.orgY, metaData.orgWidth, metaData.orgHeight, metaData.visible, metaData.group);
+					vscreen.setScreenSize(metaData.id, metaData.width, metaData.height);
+					vscreen.setScreenPos(metaData.id, metaData.posx, metaData.posy);
+
+					screen = vscreen.getScreen(metaData.id);
+					if (!screen) {
+						console.error("update screen failed");
+						return;
+					}
+					screenElem = document.getElementById(metaData.id);
+					if (!screenElem) {
+						if (Validator.isVisibleWindow(metaData)) {
+							screenElem = document.createElement('div');
+							idElem = document.createElement('div');
+							idElem.innerHTML = "ID:" + metaData.id;
+							idElem.className = "screen_id";
+							screenElem.appendChild(idElem);
+							screenElem.className = "screen";
+							screenElem.id = metaData.id;
+							screenElem.style.borderStyle = 'solid';
+							previewArea.appendChild(screenElem);
+							this.setupWindow(screenElem, metaData.id);
 						}
-						if (screenElem) {
-							if (Validator.isVisibleWindow(metaData)) {
-								vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
-								vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screens[s]));
-								screenElem.style.display = "block";
-							} else {
-								screenElem.style.display = "none";
-							}
+					}
+					if (screenElem) {
+						if (Validator.isVisibleWindow(metaData)) {
+							vscreen_util.assignMetaData(screenElem, metaData, true, store.get_group_dict());
+							vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screen));
+							screenElem.style.display = "block";
+						} else {
+							screenElem.style.display = "none";
 						}
 					}
 				}
-			}
+			}.bind(this));
 			this.setupSplit(vscreen.getSplitWholes());
 		}
 
@@ -1267,7 +1286,7 @@
 			orgHeight = parseFloat(metaData.orgHeight),
 			vaspect = splitWhole.w / splitWhole.h,
 			aspect = orgWidth / orgHeight;
-		
+
 		if (Validator.isWindowType(metaData)) {
 			if (!management.isDisplayEditable(metaData.group)) {
 				// 編集不可コンテンツ
@@ -1290,6 +1309,7 @@
 			metaData.height = splitWhole.h;
 			metaData.width = splitWhole.h * aspect;
 		}
+	
 		manipulator.moveManipulator(elem);
 	};
 
@@ -1677,8 +1697,7 @@
 				}
 			}
 			if (Validator.isWindowType(metaData)) {
-				elem.style.border = "";
-				elem.style.borderStyle = "solid";
+				elem.style.border = "2px solid lightslategray";
 			}
 			if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
 				elem.style.border = "";
@@ -2266,9 +2285,7 @@
 			windowDataList = reply;
 		for (i = 0; i < windowDataList.length; ++i) {
 			windowData = windowDataList[i];
-			vscreen.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
-			vscreen.setScreenSize(windowData.id, windowData.width, windowData.height);
-			vscreen.setScreenPos(windowData.id, windowData.posx, windowData.posy);
+			store.set_metadata(windowData.id, windowData);
 			this.updateScreen(windowData);
 			var elem = this.getElem(windowData.id);
 			if (!state.is_selection_rect_shown()) {
@@ -2455,6 +2472,8 @@
 
 		console.log('doneGetWindowMetaData:');
 		var windowData = reply;
+
+		store.set_metadata(windowData.id, windowData);
 
 		this.import_window(windowData);
 		gui.change_window_border_color(windowData);

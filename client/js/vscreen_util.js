@@ -242,7 +242,6 @@
 					}
 				}
 			} else {
-				console.log("not isvisible");
 				elem.style.display = "none";
 			}
 		}

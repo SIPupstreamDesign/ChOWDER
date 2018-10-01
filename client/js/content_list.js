@@ -137,6 +137,7 @@
 			for (var i = 0; i < contentData[0].length; ++i) {
 				if (contentData[0][i].type === "thumbnail") {
 					thumbnail = contentData[1][i];
+					//console.error(thumbnail)
 					break;
 				}
 			}

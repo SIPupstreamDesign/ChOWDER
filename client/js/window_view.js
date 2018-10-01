@@ -46,25 +46,29 @@
 		// エレメントがなかった場合はグループに関係なく、エレメントを作る
 		displayArea = document.getElementById("display_preview_area");
 		screen = document.getElementById(windowData.id);
-		
 		console.log("import window:" + JSON.stringify(windowData));
-		this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight);
+		this.vscreenInstance.assignScreen(windowData.id, windowData.orgX, windowData.orgY, windowData.orgWidth, windowData.orgHeight, windowData.visible);
 		this.vscreenInstance.setScreenSize(windowData.id, windowData.width, windowData.height);
 		this.vscreenInstance.setScreenPos(windowData.id, windowData.posx, windowData.posy);
-
-		this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
-
-		// 非表示だったら非表示に.
-		if (!Validator.isVisibleWindow(windowData))
-		{
+		
+		if (!Validator.isVisibleWindow(windowData)) {
+			// 非表示だったら非表示に.
 			displayArea = document.getElementById("display_preview_area");
-			screen = document.getElementById(windowData.id);
 			if (displayArea && screen) {
 				screen.style.display = "none";
 			}
 		}
+		if (screen) {
+			// リストをドラッグしてviewに持ってきた場合クラス名を変更する
+			if (screen.className === "screen_id") {
+				screen.className = "screen";
+			}
+		}
+
+		this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
+		
+		// ボーダー色の設定
 		if (windowData.hasOwnProperty("color")) {
-			screen = document.getElementById(windowData.id);
 			if (screen) {
 				screen.style.borderColor = windowData.color;
 			}

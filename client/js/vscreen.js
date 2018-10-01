@@ -200,7 +200,7 @@
 		for (i in screens) {
 			if (screens.hasOwnProperty(i)) {
 				w = screens[i];
-				if (w.id !== withoutID) {
+				if (Validator.isVisibleWindow(w) && w.id !== withoutID) {
 					if (w.x <= px && px < (w.x + w.w)) {
 						if (w.y <= py && py < (w.y + w.h)) {
 							return w;
@@ -347,7 +347,7 @@
 	 * @param {Number} w 幅
 	 * @param {Number} h 高さ
 	 */
-	function assignScreen(id, x, y, w, h) {
+	function assignScreen(id, x, y, w, h, visible, group) {
 		screens[id] = {
 			id : id,
 			x : parseFloat(x),
@@ -357,7 +357,9 @@
 			orgX : parseFloat(x),
 			orgY : parseFloat(y),
 			orgW : parseFloat(w),
-			orgH : parseFloat(h)
+			orgH : parseFloat(h),
+			visible : visible,
+			group : group
 		};
 	}
 	
