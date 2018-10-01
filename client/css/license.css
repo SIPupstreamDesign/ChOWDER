@@ -43,11 +43,10 @@ div {
 	position: absolute;
 	left: 0px;
 	top: 200px;
-	height: 230px;
+	height: 800px;
 	right: 0px;
 	background-color: #7e7e7e;
 }
-
 .title {
 	margin: 80px;
 	text-align: center;
