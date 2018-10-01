@@ -53,19 +53,18 @@
 		
 		if (!Validator.isVisibleWindow(windowData)) {
 			// 非表示だったら非表示に.
-			displayArea = document.getElementById("display_preview_area");
-			if (displayArea && screen) {
+			if (screen) {
 				screen.style.display = "none";
 			}
-		}
-		if (screen) {
-			// リストをドラッグしてviewに持ってきた場合クラス名を変更する
-			if (screen.className === "screen_id") {
-				screen.className = "screen";
+		} else {
+			if (screen) {
+				// リストをドラッグしてviewに持ってきた場合クラス名を変更する
+				if (screen.className === "screen_id") {
+					screen.className = "screen";
+				}
 			}
+			this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
 		}
-
-		this.emit(WindowView.EVENT_UPDATE_SCREEN, null, windowData);
 		
 		// ボーダー色の設定
 		if (windowData.hasOwnProperty("color")) {

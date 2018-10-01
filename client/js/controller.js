@@ -787,18 +787,13 @@
 	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが更新される.
 	 */
 	Controller.prototype.updateScreen = function (windowData) {
-		var i,
-			whole = vscreen.getWhole(),
+		var whole = vscreen.getWhole(),
 			screen,
-			screens,
-			s,
 			wholeElem,
-			controllerData = this.getControllerData(),
 			previewArea = gui.get_display_preview_area(),
 			elem,
 			idElem,
-			screenElem,
-			metaData;
+			screenElem;
 		
 		if (windowData && windowData !== undefined) {
 			// Screenを登録
@@ -809,7 +804,7 @@
 			screen = vscreen.getScreen(windowData.id);
 			if (screen) {
 				screenElem = document.getElementById(windowData.id);
-				if (!screenElem && Validator.isVisible(windowData)) {
+				if (!screenElem && Validator.isVisibleWindow(windowData)) {
 					// 新規Screen Element作成
 					screenElem = document.createElement('div');
 					idElem = document.createElement('div');
@@ -821,15 +816,15 @@
 					screenElem.style.borderStyle = 'solid';
 					previewArea.appendChild(screenElem);
 					this.setupWindow(screenElem, windowData.id);
-					vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screen));
 				}
 				if (screenElem) {
 					if (Validator.isVisibleWindow(windowData)) {
+						vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
+						vscreen_util.assignScreenRect(screenElem, vscreen.transformScreen(screen));
 						screenElem.style.display = "block";
 					} else {
 						screenElem.style.display = "none";
 					}
-					vscreen_util.assignMetaData(screenElem, windowData, true, store.get_group_dict());
 				}
 			}
 		} else {
