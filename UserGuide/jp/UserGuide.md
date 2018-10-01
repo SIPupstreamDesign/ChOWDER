@@ -1224,7 +1224,7 @@ Electron版ChOWDERディスプレイアプリケーションを利用して、�
 
 `standalone-electron` ディレクトリ下で以下のシェルスクリプトを実行します。
 
-    electron .
+    npm start
 
 
 HTTPSの利用

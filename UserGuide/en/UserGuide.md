@@ -1178,7 +1178,7 @@ Launching the Application
 
 Run the shell script below located in the `standalone-electron` directory
 
-    electron .
+    npm start
 
 
 
