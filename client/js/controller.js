@@ -1127,10 +1127,10 @@
 
 		video.onended = function () {
 			if (type !== 'file') { return; }
-			this.isEnded = true;
 
 			metaData = store.get_metadata(metaData.id);
 			metaData.isPlaying = false;
+			metaData.isEnded = true;
 			this.update_metadata(metaData);
 		}.bind(this);
 
@@ -2001,15 +2001,19 @@
 			}
 			webRTC.addStream(stream);
 			
-			video.onseeked = (function (controller) {
+			video.ontimeupdate = (function (controller) {
 				return function () {
-					if (this.isEnded) {
+					metaData = store.get_metadata(metaData.id);
+					if (metaData.isEnded === 'true') {
 						for (var i in controller.webRTC) {
 							if (i.indexOf(metaData.id) >= 0) {
+								controller.webRTC[i].removeStream();
 								controller.webRTC[i].addStream(captureStream(video));
 							}
 						}
-						this.isEnded = false;
+
+						metaData.isEnded = false;
+						controller.update_metadata(metaData);
 					}
 				};
 			}(this));
@@ -2039,7 +2043,7 @@
 			}.bind(this));
 
 			webRTC.on('need_restart', function () {
-				webRTC.peer.removeStream(stream);
+				webRTC.removeStream();
 				webRTC.addStream(stream);
 				webRTC.offer(function (sdp) {
 					connector.sendBinary('RTCOffer', metaData, JSON.stringify({
