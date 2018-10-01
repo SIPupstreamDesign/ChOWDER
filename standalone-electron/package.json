@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "electron ."
+    "start": "cd .. && npm run standalone-electron"
   },
   "dependencies": {
     "electron": "^2.0.2"
