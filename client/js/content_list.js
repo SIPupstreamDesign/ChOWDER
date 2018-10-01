@@ -135,6 +135,10 @@
 		// contentData[n][0]がコンテンツ本体
 		if (contentData instanceof Array) {
 			for (var i = 0; i < contentData[0].length; ++i) {
+				if (metaData.hasOwnProperty('restore_index')) {
+					// 差し替え履歴ありの場合はサムネイルは動的に生成
+					continue;
+				}
 				if (contentData[0][i].type === "thumbnail") {
 					thumbnail = contentData[1][i];
 					//console.error(thumbnail)
