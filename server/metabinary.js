@@ -215,7 +215,7 @@
 		} else if (metaData.hasOwnProperty('param')) {
 			params = metaData.param;
 		}
-		console.log(metaData);
+		//console.log(metaData);
 
 		content = binary.slice(headerStr.length + 8 + metaSize);
 		

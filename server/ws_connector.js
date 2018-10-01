@@ -136,13 +136,14 @@
 	 */
 	function registerEvent(ws, ws_connection) {
 		ws_connection.on('message', function (data) {
-			console.log("ws chowder_request : ", data);
+			//console.log("ws chowder_request : ", data);
 			var parsed,
 				result;
 			
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data.utf8Data);
+					console.log("ws chowder_request : ", parsed.method);
 					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!parsed.hasOwnProperty('id')) {
 						parsed.id = util.generateUUID8();
@@ -159,6 +160,7 @@
 					if (!metaData.hasOwnProperty('id')) {
 						metaData.id = util.generateUUID8();
 					}
+					console.log("ws chowder_request : ", metaData.method);
 					eventBinaryMessage(ws_connection, metaData, contentData);
 				});
 			}

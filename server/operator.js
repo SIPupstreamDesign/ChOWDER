@@ -1722,7 +1722,7 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function addTileContent(metaData, data, endCallback) {
-		console.log("addTileContent", metaData);
+		console.log("addTileContent", metaData.id + ":" + metaData.content_id);
 		var contentData = data;
 		if (!metaData.hasOwnProperty('history_id')) {
 			if (endCallback) {
@@ -1781,7 +1781,7 @@
 	function deleteContent(metaData, endCallback) {
 		deleteMetaData(metaData, function (err, metaData) {
 			if (!err) {
-				console.log("deleteContent", metaData);
+				console.log("deleteContent", metaData.id);
 				if (metaData.hasOwnProperty('content_id') && metaData.content_id !== '') {
 					textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 						if (!err && doesExist === 1) {
@@ -3222,7 +3222,7 @@
 	 */
 	function commandGetVirtualDisplay(socketid, json, endCallback) {
 		getVirtualDisplay(json, function (data) {
-			console.log("commandGetVirtualDisplay", data);
+			console.log("commandGetVirtualDisplay");//, data);
 			if (endCallback) {
 				endCallback(null, data);
 			}
@@ -4110,14 +4110,14 @@
 		ws_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			console.log(Command.AddContent, data);
+			console.log(Command.AddContent);//, data);
 			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			console.log(Command.AddTileContent, data);
+			console.log(Command.AddTileContent);//, data);
 			commandAddTileContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
 		});
 
@@ -4497,7 +4497,7 @@
 									addAdmin("master", util.generateUUID8(), name, admins[name].password, (function (name) {
 										return function (err, reply) {
 											if (!err) {
-												console.log(name, "を上書きしました");
+												console.log(name, "overwritten");
 											}
 										};
 									}(name)));
@@ -4507,7 +4507,7 @@
 								deleteAdmin("master", name, (function (name) {
 									return function (err, reply) {
 										if (!err) {
-											console.log(name, "を削除しました");
+											console.log(name, "deleted");
 										}
 									};
 								}(name)));

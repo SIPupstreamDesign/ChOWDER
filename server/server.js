@@ -98,7 +98,7 @@ function ws_request(io, ws2) { // for http or https
 //----------------------------------------------------------------------------------------
 function opserver_http_request(req, res) {
 	'use strict';
-	console.log('REQ>', req.url);
+	//console.log('REQ>', req.url);
 	var file,
 		fname,
 		ext,
