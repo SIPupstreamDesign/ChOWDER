@@ -118,9 +118,9 @@
 		vscreen_rect.y = scalePos(center_y - h * 0.5, center_y);
 		vscreen_rect.w = parseFloat(w * s);
 		vscreen_rect.h = parseFloat(h * s);
-		console.log("w:" + w);
-		console.log("s:" + s);
-		console.log("vscreen_rect" + JSON.stringify(vscreen_rect));
+		// console.log("w:" + w);
+		// console.log("s:" + s);
+		// console.log("vscreen_rect" + JSON.stringify(vscreen_rect));
 	}
 	
 	/**

@@ -404,7 +404,7 @@
 			w,
 			previewArea = gui.get_display_preview_area();
 			
-		console.log("setupSplit");
+		//console.log("setupSplit");
 		//console.log(splitWholes);
 		for (i in splitWholes) {
 			if (splitWholes.hasOwnProperty(i)) {

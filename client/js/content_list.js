@@ -47,8 +47,8 @@
 	}
 
 	function fixDivSize(divElem, w, aspect) {
-		console.log( w, aspect );
-		console.log( divElem );
+		// console.log( w, aspect );
+		// console.log( divElem );
 		var h;
 		if (w > 200) {
 			divElem.style.width = '200px';
