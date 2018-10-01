@@ -443,6 +443,17 @@
 					}
 					return;
 				}
+				if (!pass.value.match("^[a-zA-Z0-9 -/:-@\[-\`\{-\~]+$")) {
+					window.input_dialog.ok_input({
+						name : i18next.t('input_valid_password'),
+						opacity : 0.7,
+						zIndex : 90000001,
+						backgroundColor : "#888"
+					}, function () {
+						return;
+					});
+					return;
+				}
 
 				this.emit(Management.EVENT_CHANGE_PASSWORD, id, prePass.value, pass.value, function (err, reply) {
 					if (err) {
