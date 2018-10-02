@@ -147,7 +147,7 @@
 		manip.style.position = "absolute";
 		manip.style.border = "solid 2px rgb(4, 180, 49)";
 		manip.style.borderColor = targetElem.style.borderColor;
-		manip.style.zIndex = '1000000';
+		manip.style.zIndex = '10000001';
 		manip.style.width = manipHalfWidth * 2 + "px";
 		manip.style.height = manipHalfHeight * 2 + "px";
 		manip.style.background = targetElem.style.borderColor;//"rgb(4, 180, 49)";
