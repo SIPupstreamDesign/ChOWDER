@@ -2193,20 +2193,28 @@
 	 * @param {Object} reply 返信されたコンテンツ
 	 */
 	Controller.prototype.doneGetContent = function (err, reply, endCallback) {
+		var metaData;
+		var contentData;
 		if (!store.is_initialized()) { return; }
 
 		if (!err) {
 			if (reply.hasOwnProperty('metaData')) {
-				if (reply.metaData.type === "video") {
-					if (store.has_video_data(reply.metaData.id)) {
-						this.import_content(reply.metaData, reply.contentData, store.get_video_elem(reply.metaData.id));
-					} else {
-						// ローカルに保持していない動画コンテンツ
-						this.import_content(reply.metaData, reply.contentData);
-					}
+				metaData = reply.metaData;
+				contentData = reply.contentData;
+			} else if (reply.hasOwnProperty("id") && reply.type === Constants.TypeTileImage) {
+				metaData = reply;
+				contentData = "removed by the capacity limit";
+			}
+
+			if (metaData.type === "video") {
+				if (store.has_video_data(metaData.id)) {
+					this.import_content(metaData, contentData, store.get_video_elem(metaData.id));
 				} else {
-					this.import_content(reply.metaData, reply.contentData);
+					// ローカルに保持していない動画コンテンツ
+					this.import_content(metaData, contentData);
 				}
+			} else {
+				this.import_content(metaData, contentData);
 			}
 			if (endCallback) {
 				endCallback(null);

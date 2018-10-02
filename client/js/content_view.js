@@ -210,13 +210,23 @@
 						icon.title = "Tiled Image";
 					}
 
-					var img = contentElem.getElementsByTagName('img')[0];
+					var img = contentElem.getElementsByClassName('tileimage_image')[0];
 					if (img) {
 						URL.revokeObjectURL(img.src);
 						contentElem.removeChild(img);
 					}
 
 					var image = document.createElement('img');
+					image.className = "tileimage_image"
+					if (typeof(contentData) === "string") {
+						image = document.createElement('div');
+						image.className = "tileimage_image"
+						image.innerHTML = "image removed by capacity limit";
+						image.style.width = "100%"
+						image.style.textAlign = "center"
+						image.style.color = "gray"
+						image.style.border = "1px solid gray"
+					}
 					contentElem.appendChild(image);
 					
 					image.src = URL.createObjectURL(blob);

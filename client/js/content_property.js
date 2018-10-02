@@ -794,6 +794,18 @@
 					}
 					if (kv && String(kv[history_select.value]) === text) {
 						option.innerHTML = "●" + text;
+
+						// // 何とか削除されたことを表示したいがうまくいかない
+						// var imageWrapDiv = document.getElementById(metaData.id);
+						// if (imageWrapDiv) {
+						// 	var tileimageElems = imageWrapDiv.getElementsByClassName('tileimage_image');
+						// 	if (tileimageElems.length > 0) {
+						// 		if (tileimageElems[0].innerText.indexOf("removed") === 0) {
+						// 			option.innerHTML += " - removed"
+						// 		}
+						// 	}
+						// }
+
 						selectedIndex = i;
 						history_slider.value = i;
 						history_slider_label.innerText = text;
