@@ -1,9 +1,7 @@
 #!/bin/sh
 
-cd `dirname $0`/../redis
-open ./redis-server
-
-cd ../server
-node server.js
-
-
+ORIGIN=`pwd`
+cd `dirname $0`/..
+cd redis && ./redis-server &\
+sleep 3s ; cd server && node ./server.js && fg
+cd $ORIGIN

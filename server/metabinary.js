@@ -93,6 +93,100 @@
 		return buffer;
 	}
 	
+	/// create binarydata with metadata
+	/// format -------------------------------------------------
+	/// -  "MetaBin:"           - header string (string)
+	/// -  1                      - version (uint32)
+	/// -  78                      - metadata's length (uint32)
+	/// -  { id: 1, posx: 0, ...}  - metadata (json string)
+	///
+	/// -  2                      - metadata/binarydata count (uint32)
+	/// -  78                      - metadataA's length (uint32)
+	/// -  { id: 1, posx: 0, ...}  - metadata (json string)
+	/// -  12345                   - binarydataA's length (uint32)
+	/// -  0xfefefe                - binarydataA (blob)
+	/// -  86                      - metadataB's length (uint32)
+	/// -  { id: 2, posx: 0, ...}  - metadataB (json string)
+	/// -  34567                   - binarydataB's length (uint32)
+	/// -  0xfefefe                - binarydataB (blob)
+	/// --------------------------------------------------------
+	/**
+	 * メタバイナリの作成　複数対応 (ver2)
+	 * @method createMetaBinary
+	 * @param {Object} metaData メタデータ
+	 * @param {BLOB} binary   バイナリデータ
+	 * @return buffer
+	 */
+	function createMetaBinaryMulti(metaData, metaDataList, binaryList) {
+		var buffer,
+			pos = 0,
+			metaStr = new Buffer(utf8StringToArray(JSON.stringify(metaData))),
+			tmpStr,
+			metaStrList = [],
+			binary,
+			totalMetaSize = 0,
+			totalBinarySize = 0;
+		if (!metaDataList || metaDataList.length <= 0 
+			|| !binaryList || binaryList.length <= 0
+			|| metaDataList.length !== binaryList.length) { console.error("wrong metabinary multi input"); return; }
+
+		for (var i = 0; i < binaryList.length; ++i) {
+			totalBinarySize = totalBinarySize + binaryList[i].length;
+		}
+
+		for (var i = 0; i < metaDataList.length; ++i) {
+			tmpStr = new Buffer(utf8StringToArray(JSON.stringify(metaDataList[i])));
+			metaStrList.push(tmpStr);
+			totalMetaSize = totalMetaSize + metaStrList[i].length;
+		}
+		
+		buffer = new Buffer(headerStr.length
+			+ 4 // version
+			+ 4 // metaStr.length
+			+ metaStr.length
+			+ 4 // metaDataList/binaryListのサイズ
+			+ 4 * metaStrList.length
+			+ totalMetaSize
+			+ 4 * binaryList.length
+			+ totalBinarySize);
+
+		// headerStr
+		buffer.write(headerStr, pos, headerStr.length, 'ascii');
+		pos = pos + headerStr.length;
+		// version
+		buffer.writeUInt32LE(2, pos);
+		pos = pos + 4;
+		// metadata length
+		buffer.writeUInt32LE(metaStr.length, pos);
+		pos = pos + 4;
+		// metadata
+		metaStr.copy(buffer, pos, 0, metaStr.length);
+		pos = pos + metaStr.length;
+
+		// metaDataList/binaryList count
+		buffer.writeUInt32LE(metaDataList.length, pos);
+		pos = pos + 4;
+		// binaryList
+		for (var i = 0; i < binaryList.length; ++i) {
+			metaStr = metaStrList[i];
+			binary = binaryList[i];
+
+			// metadata length
+			buffer.writeUInt32LE(metaStr.length, pos);
+			pos = pos + 4;
+			// metadata
+			metaStr.copy(buffer, pos, 0, metaStr.length);
+			pos = pos + metaStr.length;
+
+			// binary length
+			buffer.writeUInt32LE(binary.length, pos);
+			pos = pos + 4;
+			binary.copy(buffer, pos, 0, binary.length);
+			pos = pos + binary.length;
+		}
+		return buffer;
+	}
+
 	/**
 	 * メタバイナリのロード
 	 * @method loadMetaBinary
@@ -121,7 +215,7 @@
 		} else if (metaData.hasOwnProperty('param')) {
 			params = metaData.param;
 		}
-		console.log(metaData);
+		//console.log(metaData);
 
 		content = binary.slice(headerStr.length + 8 + metaSize);
 		
@@ -134,5 +228,6 @@
 	}
 	
 	module.exports.loadMetaBinary = loadMetaBinary;
-	module.exports.createMetaBinary = createMetaBinary;
+	module.exports.createMetaBinary = createMetaBinary; // version 1
+	module.exports.createMetaBinaryMulti = createMetaBinaryMulti; // version 2
 }());

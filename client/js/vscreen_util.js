@@ -122,6 +122,85 @@
 		return (metaData.hasOwnProperty('visible') && (metaData.visible === "true" || metaData.visible === true));
 	}
 	
+
+	/**
+	 * 適切な分割サイズを求める. ※tileimageから持ってきた
+	 * @param {number} resolution 解像度
+	 * @param {number} split 分割数
+	 * @returns {number} 分割サイズ
+	 */
+	function calcSplitSize(resolution, split) {
+		var JPEG_BLOCK = 8;
+		var size = resolution / split;
+		return Math.ceil(size / JPEG_BLOCK) * JPEG_BLOCK;
+	};
+
+	function getTileRect(metaData, xindex, yindex) {
+		var rect = {};
+		var width = Number(metaData.orgWidth);
+		var height = Number(metaData.orgHeight);
+		var sizex = calcSplitSize(width, Number(metaData.xsplit));
+		var sizey = calcSplitSize(height, Number(metaData.ysplit));
+		var scale = Number(metaData.width) / width;
+		rect.posx = Number(metaData.posx) + xindex * sizex * scale;
+		rect.posy = Number(metaData.posy) + yindex * sizey * scale;
+		rect.width = Math.min(sizex, width);
+		rect.height = Math.min(sizey, height);
+		return rect;
+	}
+
+	function resizeTileImages(elem, metaData) {
+		var i, k;
+		var rect = vscreen.transformOrg(toIntRect(metaData));
+		var mw = rect.w;
+		var mh = rect.h;
+		var ow = Number(metaData.orgWidth);
+		var oh = Number(metaData.orgHeight);
+		var posx = 0;
+		var posy = 0;
+		var tileIndex = 0;
+
+		// タイル全体の幅高さ。実際のmetaData.widthとは小数点の関係で少し違う値になる
+		var tileWholeWidth = Number(metaData.width);
+		var tileWholeHeight = Number(metaData.height);
+
+		for (i = 0; i < Number(metaData.ysplit); ++i) {
+			for (k = 0; k < Number(metaData.xsplit); ++k) {
+				var image = elem.getElementsByClassName("tile_index_" + String(tileIndex))[0];
+				var tileRect = getTileRect(metaData, k, i);
+				if (image && image.tagName.toLowerCase() === "img") {
+					var w = tileRect.width;
+					var h = tileRect.height;
+					var width = Math.round(w / ow * mw);
+					var height = Math.round(h / oh * mh);
+					if (width === 0 || height === 0) { return; }
+					image.style.left = posx + "px";
+					image.style.top = posy + "px";
+					image.style.width = width + "px";
+					image.style.height = height + "px";
+					if ( (k % Number(metaData.xsplit)) === Number(metaData.xsplit) - 1) {
+						tileWholeWidth = posx + width;
+						tileWholeHeight = posy + height;
+						posx = 0;
+						posy += height;
+					} else {
+						posx += width;
+					}
+				}
+				++tileIndex;
+			}
+		}
+
+		var reductionElems = elem.getElementsByClassName('reduction_image');
+		if (reductionElems.length > 0) {
+			var reductionElem = reductionElems[0];
+			reductionElem.style.left = "0px";
+			reductionElem.style.top = "0px";
+			reductionElem.style.width = tileWholeWidth + "px";
+			reductionElem.style.height = tileWholeHeight + "px";
+		}
+	}
+
 	/**
 	 * メタデータを割り当て
 	 * @method assignMetaData
@@ -144,6 +223,8 @@
 				resizeText(elem, rect);
 			} else if (metaData.type === "video") {
 				resizeVideo(elem, rect);
+			} else if (metaData.type === "tileimage") {
+				resizeTileImages(elem, metaData);
 			}
 			
 			if (isVisible(metaData)) {
@@ -161,7 +242,6 @@
 					}
 				}
 			} else {
-				console.log("not isvisible");
 				elem.style.display = "none";
 			}
 		}
@@ -296,4 +376,6 @@
 	window.vscreen_util.transPosInv = transPosInv;
 	window.vscreen_util.isInsideWindow = isInsideWindow;
 	window.vscreen_util.isOutsideWindow = isOutsideWindow;
+	window.vscreen_util.resizeTileImages = resizeTileImages;
+	window.vscreen_util.getTileRect = getTileRect;
 }(window.vscreen));

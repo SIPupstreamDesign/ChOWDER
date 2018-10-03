@@ -1,14 +1,20 @@
 #!/bin/sh
 
-OSNAME=`uname`
-if [ ${OSNAME} = "Linux" ]; then
-	wget http://download.redis.io/redis-stable.tar.gz
-	tar xvzf redis-stable.tar.gz
-	cd `dirname $0`/redis-stable
-	make
-	cp src/redis-server ../../redis/
-fi
+ORIGIN=`pwd`
+cd `dirname $0`
 
-cd `dirname $0`/../
+curl -O http://download.redis.io/redis-stable.tar.gz
+tar xf redis-stable.tar.gz
+cd redis-stable
+make
+cp src/redis-server ../../redis/
+cd ..
+rm -rf redis-*
+
+cd ..
 npm install
 
+cd standalone-electron
+npm install
+
+cd $ORIGIN

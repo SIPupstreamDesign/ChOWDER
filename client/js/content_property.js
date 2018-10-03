@@ -207,14 +207,24 @@
 			backup_area = document.getElementById("backup_area"),
 			content_id = document.getElementById('content_id'),
 			color_picker = document.getElementById('color_picker'),
-			restoreButton = document.getElementById('backup_restore'),
+			restore_button = document.getElementById('backup_restore'),
+			history_area = document.getElementById('history_area'),
+			history_slider_area = document.getElementById('history_slider_area'),
 			extension,
 			rectChangeFunc = function (evt) {
 				this.emit(ContentProperty.EVENT_RECT_CHANGED, null, evt.target.id, evt.target.value);
 			}.bind(this),
-			isEditableContent = this.authority.isEditable(metaData.group);
+			isEditableContent;
+		
+		if (Validator.isWindowType(metaData)) {
+			isEditableContent = this.authority.isDisplayEditable(metaData.group)
+		} else {
+			isEditableContent = this.authority.isEditable(metaData.group)
+		}
 
-		restoreButton.disabled = !isEditableContent;
+		restore_button.disabled = !isEditableContent;
+		history_area.disabled = !isEditableContent;
+		history_slider_area.disabled = !isEditableContent;
 
 		if (metaData.id) {
 			content_id.innerHTML = metaData.id;
@@ -241,9 +251,13 @@
 			download_button.style.display = "none";
 			metalabel.style.display = "block";
 			backup_area.style.display = "none";
-			color_picker.style.display = "block";
-		} else if (type === Constants.PropertyTypeWholeWindow) {
+			history_area.style.display = "none";
+			history_slider_area.style.display = "none";
+			color_picker.style.display = isEditableContent ? "block" : "none";
+		} else if (Validator.isVirtualDisplayType(metaData)) {
+			isEditableContent = this.authority.isDisplayEditable(metaData.group)
 			idlabel.innerHTML = "Virtual Display Setting";
+			
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
 			addInputProperty(isEditableContent, 'whole_width', 'w', 'px', '1000', function () {
@@ -264,18 +278,23 @@
 			download_button.style.display = "none";
 			metalabel.style.display = "none";
 			backup_area.style.display = "none";
+			history_area.style.display = "none";
+			history_slider_area.style.display = "none";
 			color_picker.style.display = "none";
 		} else if (type === Constants.PropertyTypeMultiDisplay || type === Constants.PropertyTypeMultiContent) {
 			idlabel.innerHTML = "Content ID:";
 			idtext.innerHTML = "";
 			grouplabel.innerHTML = "";
 			addInputProperty(isEditableContent, 'multi_transform_z', 'z', 'index', '', function () {
+				var multiZ = document.getElementById('multi_transform_z');
 				var val = parseInt(multiZ.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
 			}.bind(this));
 			download_button.style.display = "none";
 			metalabel.style.display = "none";
 			backup_area.style.display = "none";
+			history_area.style.display = "none";
+			history_slider_area.style.display = "none";
 			color_picker.style.display = "none";
 		} else if (type === Constants.PropertyTypeLayout) {
 			idlabel.innerHTML = "Layout ID:";
@@ -286,6 +305,8 @@
 			}
 			addTextInputProperty(isEditableContent, 'content_text', "");
 			backup_area.style.display = "none";
+			history_area.style.display = "none";
+			history_slider_area.style.display = "none";
 			color_picker.style.display = "none";
 		} else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
@@ -295,14 +316,18 @@
 			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_z', 'z', 'index', '0', function () {
-				var val = parseInt(contentZ.value, 10);
+				var transz = document.getElementById('content_transform_z');
+				var val = parseInt(transz.value, 10);
 				this.emit(ContentProperty.EVENT_CHANGE_ZINDEX, null, val);
 			}.bind(this));
 			addTextInputProperty(isEditableContent, 'content_text', "");
 			download_button.style.display = "block";
 			download_button.href = "download?" + metaData.id;
 			download_button.target = "_blank";
-			if (type === Constants.PropertyTypeText) {
+			
+			if (type === Constants.PropertyTypePDF) {
+				download_button.download = metaData.id + ".pdf";
+			} else if (type === Constants.PropertyTypeText) {
 				download_button.download = metaData.id + ".txt";
 			} else {
 				// image or url
@@ -316,14 +341,24 @@
 			if (metalabel) {
 				metalabel.style.display = "block";
 			}
-			if (type !== Constants.PropertTypeContent) {
+			if (type !== "" && type !== Constants.PropertTypeContent && metaData.type !== Constants.TypeTileImage) {
 				backup_area.style.display = "block";
+			}
+			if (metaData.type === Constants.TypeTileImage) {
+				download_button.style.display = "none";
+				history_area.style.display = "block";
+				history_slider_area.style.display = "block";
+			} else {
+				history_area.style.display = "none";
+				history_slider_area.style.display = "none";
 			}
 			color_picker.style.display = "none";
 
 			if (type === Constants.PropertTypeVideo && metaData.subtype) {
 				// 動画の場合、差し替え履歴、ダウンロード非表示
 				backup_area.style.display = "none";
+				history_area.style.display = "none";
+				history_slider_area.style.display = "none";
 				download_button.style.display = "none";
 
 				// 動画専用プロパティを追加設定
@@ -355,16 +390,16 @@
 				}
 
 				if (metaData.subtype === "camera") {
-					addVideoTextLabel('video_select_video_title', "ビデオ入力")
+					addVideoTextLabel('video_select_video_title', i18next.t('video_input'))
 					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, metaData.video_device, function (deviceID) {
 						this.emit(ContentProperty.EVENT_VIDEODEVICE_CHANGED, null, metaData.id, deviceID);
 					}.bind(this));
-					addVideoTextLabel('video_select_audio_title', "オーディオ入力")
+					addVideoTextLabel('video_select_audio_title', i18next.t('audio_input'))
 					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, metaData.audio_device, function (deviceID) {
 						this.emit(ContentProperty.EVENT_AUDIODEVICE_CHANGED, null, metaData.id, deviceID);
 					}.bind(this));
 				}
-				addVideoTextLabel('video_select_quality_title', "ビデオ品質");
+				addVideoTextLabel('video_select_quality_title', i18next.t('video_quality'));
 				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, 50, function (val) {
 					this.update_quality_display();
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
@@ -375,7 +410,7 @@
 				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", "最大bitrate", "kbps", "1000", function () {
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
 				}.bind(this));
-				addVideoTextLabel('video_select_quality_title', "オーディオ品質");
+				addVideoTextLabel('video_select_quality_title', i18next.t('audio_quality'));
 				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, 100, function (val) {
 					this.update_quality_display();
 					this.emit(ContentProperty.EVENT_VIDEOQUALITY_CHANGED, null, metaData.id);
@@ -388,17 +423,17 @@
 				}.bind(this));
 
 				if (metaData.hasOwnProperty('webrtc_status')) {
-					addVideoTextLabel('video_select_quality_title', "初期品質情報");
+					addVideoTextLabel('video_select_quality_title', i18next.t('initial_quality_info'));
 					var qtext = "";
 					var quality = JSON.parse(metaData.webrtc_status);
-					qtext += "動画ソースの幅: \n    " + quality.resolution.width + "\n";
-					qtext += "動画ソースの高さ: \n    " + quality.resolution.height + "\n";
-					qtext += "ビデオコーデック: \n    " + quality.video_codec + "\n";
-					qtext += "オーディオコーデック: \n    " + quality.audio_codec + "\n";
-					qtext += "利用可能な送信バンド幅: \n    " + Math.round(quality.bandwidth.availableSendBandwidth / 100) + "kbps\n";
-					qtext += "ターゲットエンコードビットレート: \n    " + Math.round(quality.bandwidth.targetEncBitrate / 100) + "kbps\n";
-					qtext += "実際のエンコードビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
-					qtext += "伝送ビットレート: \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
+					qtext += i18next.t('video_src_width') + ": \n    " + quality.resolution.width + "\n";
+					qtext += i18next.t('video_src_height') + ": \n    " + quality.resolution.height + "\n";
+					qtext += i18next.t('video_codec') + ": \n    " + quality.video_codec + "\n";
+					qtext += i18next.t('audio_codec') + ": \n    " + quality.audio_codec + "\n";
+					qtext += i18next.t('vailable_send_band_width') + ": \n    " + Math.round(quality.bandwidth.availableSendBandwidth / 100) + "kbps\n";
+					qtext += i18next.t('target_enc_bitrate') + ": \n    " + Math.round(quality.bandwidth.targetEncBitrate / 100) + "kbps\n";
+					qtext += i18next.t('actual_enc_bitrate') + ": \n    " + Math.round(quality.bandwidth.actualEncBitrate / 100) + "kbps\n";
+					qtext += i18next.t('transmit_bitrate') + ": \n    " + Math.round(quality.bandwidth.transmitBitrate / 100) + "kbps\n";
 					addVideoQualityTextProperty(false, "video_quality_text", qtext);
 				}
 
@@ -442,7 +477,9 @@
 			transz = document.getElementById('content_transform_z'),
 			dlbtn = document.getElementById('download_button'),
 			content_id = document.getElementById('content_id'),
-			backup_area = document.getElementById("backup_area");
+			backup_area = document.getElementById("backup_area"),
+			history_area = document.getElementById("history_area"),
+			history_slider_area = document.getElementById("history_slider_area");
 
 		if (transx) { transx.value = 0; transx.disabled = true; }
 		if (transy) { transy.value = 0; transy.disabled = true; }
@@ -453,6 +490,8 @@
 		if (dlbtn) { dlbtn.style.display = 'none'; }
 		if (content_text) { content_text.value = ""; content_text.disabled = true; }
 		if (backup_area) { backup_area.style.display = "none" }
+		if (history_area) { history_area.style.display = "none" }
+		if (history_slider_area) { history_slider_area.style.display = "none" }
 	};
 
 	ContentProperty.prototype.init = function (metaData, groupName, type, isOwnVideo) {
@@ -472,8 +511,8 @@
 		}
 
 		// 復元ボタン
-		var restoreButton = document.getElementById('backup_restore');
-		restoreButton.onclick = function () {
+		var restore_button = document.getElementById('backup_restore');
+		restore_button.onclick = function () {
 			var index = document.getElementById('backup_list_content').selectedIndex;
 			if (index >= 0) {
 				this.emit(ContentProperty.EVENT_RESTORE_CONTENT, null, index);
@@ -567,7 +606,7 @@
 		}
 
 		// 差し替え履歴
-		if (!Validator.isWindowType(metaData)) {
+		if (!Validator.isWindowType(metaData) && metaData.type !== Constants.TypeTileImage) {
 			var backup_list = document.getElementById('backup_list');
 			var restoreIndex = 0;
 			backup_list.innerHTML = "";
@@ -578,7 +617,6 @@
 				}
 				var backups = JSON.parse(metaData.backup_list);
 				var select = document.createElement('select');
-				var restore_index = 0;
 				select.className = "backup_list_content";
 				select.id = "backup_list_content";
 				select.size = 5;
@@ -607,6 +645,9 @@
 			}
 		}
 
+		// 時系列データ（仮）
+		this.update_history_area(metaData);
+
 		// ビデオ品質
 		if (metaData.hasOwnProperty('quality')) {
 			try {
@@ -614,6 +655,238 @@
 				this.set_quality(quality);
 			} catch(e) {
 				console.error(e);
+			}
+		}
+	};
+
+	function isNumber(x){ 
+		if( typeof(x) != 'number' && typeof(x) != 'string' )
+			return false;
+		else 
+			return (x == parseFloat(x) && isFinite(x));
+	}
+
+	function sortHistory(values) {
+		try {
+			values.sort(function (a, b) {
+				if (isNumber(a)) {
+					a = Number(a);
+				} else {
+					a = a.toString().toLowerCase();
+				}
+				if (isNumber(b)) {
+					b = Number(b);
+				} else {
+					b = b.toString().toLowerCase();
+				}
+				if (a < b){
+					return -1;
+				}else if (a > b){
+					return 1;
+				}
+				return 0;
+			});
+		} catch (e) {
+
+		}
+		return values;
+	}
+
+	ContentProperty.prototype.update_history_area = function (metaData, keyName) {
+		var i,
+			option,
+			text;
+			
+		if (!Validator.isWindowType(metaData) && metaData.type === Constants.TypeTileImage) {
+			var history_area = document.getElementById('history_area');
+			var history_list = document.getElementById('history_list');
+			var history_select  = document.getElementById('history_select');
+			var history_up = document.getElementById('history_up');
+			var history_down  = document.getElementById('history_down');
+			var history_sync_button = document.getElementById('history_sync_button');
+
+			var history_slider_area = document.getElementById('history_slider_area');
+			var history_slider = document.getElementById('history_slider');
+			var history_slider_label = document.getElementById('history_slider_label');
+			var history_slider_memori = document.getElementById('history_slider_memori');
+
+			var sliderRect = history_slider.getBoundingClientRect();
+			var kv;
+
+			// 中身の登録
+			history_area.disabled = true;
+			history_slider_area.disabled = true;
+			if (metaData.hasOwnProperty('history_data')) {
+				if (this.authority.isEditable(metaData.group)) {
+					history_area.disabled = false;
+					history_slider_area.disabled = false;
+				}
+
+				if (!keyName) {
+					if (metaData.hasOwnProperty('restore_key')) {
+						keyName = metaData.restore_key;
+					}
+				}
+
+				// 前回と同様のデータかつ選択されたkeyも同じ場合は、更新しない
+				if (history_area.pre_id && history_area.pre_id === metaData.id
+					&& history_area.pre_history_data && history_area.pre_history_data === metaData.history_data
+					&& history_area.pre_keyname && history_area.pre_keyname === keyName
+					&& history_area.pre_keyvalue && history_area.pre_keyvalue === metaData.keyvalue) 
+				{
+					return;
+				}
+				history_area.pre_id = metaData.id;
+				history_area.pre_history_data = metaData.history_data;
+				history_area.pre_keyname = keyName;
+				history_area.pre_keyvalue = metaData.keyvalue;
+
+				history_list.innerHTML = "";
+				history_select.innerHTML = "";
+				history_slider_memori.innerHTML = "";
+
+				
+				var history_data;
+				try {
+					history_data = JSON.parse(metaData.history_data);
+				} catch(e) {
+				}
+				// キーの切り替えボックスの中身を入れる
+				for (var key in history_data) {
+					var keyTitle = document.createElement('option');
+					keyTitle.value = key;
+					keyTitle.innerText = key;
+					history_select.appendChild(keyTitle);
+				}
+				// 現在表示中のキー
+				if (keyName) {
+					history_select.value = keyName;
+				} else {
+					history_select.value = Object.keys(history_data)[0];
+				}
+
+				var values = history_data[history_select.value];
+				try {
+					values = sortHistory(values);
+				} catch(e) {
+
+				}
+				var select = document.createElement('select');
+
+				select.className = "history_list_content";
+				select.id = "history_list_content";
+				select.size = 5;
+				select.restore_key = key;
+
+				history_slider.max = values.length - 1;
+
+				var selectedIndex = 0;
+				var memoriSpan = 100 / (values.length - 1) * (sliderRect.right-sliderRect.left - 16) / document.body.clientWidth;
+				for (i = 0; i < values.length; i = i + 1) {
+					option = document.createElement('option');
+					text = values[i];
+					option.value = text;
+					// 現在表示中のコンテンツかどうか
+					try {
+						kv = JSON.parse(metaData.keyvalue);
+					} catch(e) {
+						console.error("tileimage history key parse error")
+					}
+					if (kv && String(kv[history_select.value]) === text) {
+						option.innerHTML = "●" + text;
+
+						// // 何とか削除されたことを表示したいがうまくいかない
+						// var imageWrapDiv = document.getElementById(metaData.id);
+						// if (imageWrapDiv) {
+						// 	var tileimageElems = imageWrapDiv.getElementsByClassName('tileimage_image');
+						// 	if (tileimageElems.length > 0) {
+						// 		if (tileimageElems[0].innerText.indexOf("removed") === 0) {
+						// 			option.innerHTML += " - removed"
+						// 		}
+						// 	}
+						// }
+
+						selectedIndex = i;
+						history_slider.value = i;
+						history_slider_label.innerText = text;
+					} else {
+						option.innerHTML = text;
+					}
+					select.appendChild(option);
+					
+					var sliderMemori = document.createElement('div');
+					sliderMemori.title = text;
+					sliderMemori.style.position = "absolute";
+					sliderMemori.style.marginLeft = (sliderRect.left + 6) /  document.body.clientWidth * 100  + "%"
+					sliderMemori.style.left = memoriSpan * i + "%";
+					if (Constants.IsFirefox) {
+						sliderMemori.style.top = "34px";
+					} else {
+						sliderMemori.style.top = "30px";
+					}
+					sliderMemori.style.width = "4px";
+					sliderMemori.style.height = "30px";
+					sliderMemori.style.borderRadius = "4px"
+					sliderMemori.style.backgroundColor = "lightgray"
+					sliderMemori.style.zIndex = -1;
+					history_slider_memori.appendChild(sliderMemori);
+				}
+				select.value = values[0];
+				history_list.appendChild(select);
+				select.selectedIndex = selectedIndex;
+				
+				// キーの切り替えイベントの登録
+				history_select.onchange = function (evt) {
+					var historyContent = document.getElementById('history_list_content');
+					var key = history_select.options[history_select.selectedIndex].value;
+					var value = historyContent.value;
+					this.emit(ContentProperty.EVENT_RESTORE_HISTORY_CONTENT, null, key, value);
+				}.bind(this);
+
+				// データ切り替えイベントの登録
+				select.onchange = function (evt) {
+					var historyContent = document.getElementById('history_list_content');
+					var key = history_select.value;
+					var value = historyContent.value;
+					this.emit(ContentProperty.EVENT_RESTORE_HISTORY_CONTENT, null, key, value);
+				}.bind(this);
+				
+				history_up.onclick = function () {
+					var index = select.selectedIndex - 1;
+					if (index >= 0) {
+						select.selectedIndex = index;
+						select.onchange();
+					}
+				};
+				history_down.onclick = function () {
+					var index = select.selectedIndex + 1;
+					if (index < select.options.length) {
+						select.selectedIndex = index;
+						select.onchange();
+					}
+				};
+				history_sync_button.classList.remove('history_sync_on');
+				if (metaData.hasOwnProperty('history_sync')) {
+					if (String(metaData.history_sync) === "true") {
+						history_sync_button.classList.add('history_sync_on');
+					}
+				}
+				history_sync_button.onclick = function () {
+					if (history_sync_button.classList.contains('history_sync_on')) {
+						history_sync_button.classList.remove('history_sync_on');
+						this.emit(ContentProperty.EVENT_SYNC_CONTENT, null, false);
+					} else {
+						history_sync_button.classList.add('history_sync_on');
+						this.emit(ContentProperty.EVENT_SYNC_CONTENT, null, true);
+					}
+				}.bind(this);
+
+				history_slider.onchange = function () {
+					var historyContent = document.getElementById('history_list_content');
+					var key = history_select.value;
+					var value = historyContent.options[Number(history_slider.value)].value;
+					this.emit(ContentProperty.EVENT_RESTORE_HISTORY_CONTENT, null, key, value);
+				}.bind(this);
 			}
 		}
 	};
@@ -754,6 +1027,8 @@
 	ContentProperty.EVENT_CHANGE_WHOLE_SPLIT = "change_whole_split";
 	ContentProperty.EVENT_METAINFO_CHANGED = "metainfo_changed";
 	ContentProperty.EVENT_RESTORE_CONTENT = "restore_content";
+	ContentProperty.EVENT_RESTORE_HISTORY_CONTENT = "restore_history_content";
+	ContentProperty.EVENT_SYNC_CONTENT = "sync_content";
 
 	// singleton
 	window.content_property = new ContentProperty();

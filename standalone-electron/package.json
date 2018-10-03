@@ -1,0 +1,13 @@
+{
+  "name": "standalone-electron",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd .. && npm run standalone-electron"
+  },
+  "dependencies": {
+    "electron": "^2.0.2"
+  }
+}

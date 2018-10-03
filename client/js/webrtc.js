@@ -20,6 +20,7 @@
 		this.peer = this.prepareNewConnection();
 		this.bandwidth = null;
 		this.isScreenSharing = false;
+		this.peer.currentStream = null;
 	}
 	WebRTC.prototype = Object.create(EventEmitter.prototype);
 
@@ -108,6 +109,11 @@
 	WebRTC.prototype.addStream = function (stream) {
 		printDebug('Adding local stream...', stream);
 		this.peer.addStream(stream);
+		this.peer.currentStream = stream;
+	};
+
+	WebRTC.prototype.removeStream = function () {
+		this.peer.removeStream(this.peer.currentStream);
 	};
 
 	WebRTC.prototype.offer = function (callback) {

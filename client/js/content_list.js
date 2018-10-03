@@ -22,6 +22,8 @@
 			classname = 'textcontent';
 		} else if (contentType === 'video') {
 			classname = 'videocontent';
+		} else if (contentType === 'pdf') {
+			classname = 'pdfcontent';
 		} else {
 			classname = 'imagecontent';
 		}
@@ -45,19 +47,21 @@
 	}
 
 	function fixDivSize(divElem, w, aspect) {
+		// console.log( w, aspect );
+		// console.log( divElem );
 		var h;
 		if (w > 200) {
-			divElem.style.width = "200px";
+			divElem.style.width = '200px';
 			h = 200 / aspect;
-			divElem.style.paddingBottom = (150 - h) + "px"; 
+			divElem.style.paddingBottom = (150 - h) + 'px'; 
 			if (150 - h > 140.0) {
-				divElem.style.paddingBottom = "140px";
+				divElem.style.paddingBottom = '140px';
 			}
 		} else if (w < 50) {
-			divElem.style.width = "50px";
-			divElem.style.paddingRight = (50 - w) + "px";
+			divElem.style.width = '50px';
+			divElem.style.paddingRight = (50 - w) + 'px';
 			if (50 - w > 40.0) {
-				divElem.style.paddingRight = "40px";
+				divElem.style.paddingRight = '40px';
 			}
 		}
 	}
@@ -118,10 +122,31 @@
 			classname,
 			blob,
 			mime = "image/jpeg",
-			onlistID = "onlist:" + metaData.id;
+			onlistID = "onlist:" + metaData.id,
+			thumbnail;
 
 		if (Validator.isLayoutType(metaData)) {
 			return;
+		}
+
+		// サムネイルなどの複数バイナリが入っている場合
+		// contentData[0]はmetaDataのリスト.
+		// contentData[1]はbinaryDataのリスト.
+		// contentData[n][0]がコンテンツ本体
+		if (contentData instanceof Array) {
+			for (var i = 0; i < contentData[0].length; ++i) {
+				if (metaData.hasOwnProperty('restore_index')) {
+					// 差し替え履歴ありの場合はサムネイルは動的に生成
+					continue;
+				}
+				if (contentData[0][i].type === "thumbnail") {
+					thumbnail = contentData[1][i];
+					//console.error(thumbnail)
+					break;
+				}
+			}
+			metaData = contentData[0][0];
+			contentData = contentData[1][0];
 		}
 
 		// メタデータはGetMetaDataで取得済のものを使う.
@@ -181,6 +206,41 @@
 					// マイク、カメラボタン
 					this.createMicCameraButton(divElem, metaData);
 				}
+			} else if (metaData.type === 'pdf') {
+				var canvas = document.createElement('canvas');
+				canvas.width = contentElem.clientWidth;
+				canvas.height = contentElem.clientHeight;
+
+				var context = canvas.getContext('2d');
+
+				var pdfjsLib = window['pdfjs-dist/build/pdf'];
+				window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+				window.PDFJS.cMapPacked = true;
+
+				pdfjsLib.getDocument(contentData).then(function (pdf) {
+					pdf.getPage(1).then(function (page) {
+						var viewport = page.getViewport(1);
+
+						canvas.width = viewport.width;
+						canvas.height = viewport.height;
+
+						return page.render({
+							canvasContext: context,
+							viewport: viewport
+						}).then(function () {
+							divElem.style.height = '150px';
+							var aspect = viewport.width / viewport.height;
+							w = 150.0 * aspect;
+							divElem.style.width = w + 'px';
+
+							canvas.toBlob(function (blob) {
+								URL.revokeObjectURL(contentElem.src);
+								contentElem.src = URL.createObjectURL(blob);
+								fixDivSize(divElem, w, aspect);
+							});
+						});
+					});
+				});
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -193,11 +253,31 @@
 				w = 150 * aspect;
 				divElem.style.width = w + "px";
 
-				blob = new Blob([contentData], {type: mime});
-				if (contentElem && blob) {
-					URL.revokeObjectURL(contentElem.src);
-					contentElem.src = URL.createObjectURL(blob);
-					fixDivSize(divElem, w, aspect);
+				if (metaData.type === Constants.TypeTileImage) {
+					// アイコンを設置
+					if (divElem.getElementsByClassName('tileimage_icon_for_list').length === 0) {
+						var icon = document.createElement('div');
+						icon.className = 'tileimage_icon_for_list';
+						divElem.appendChild(icon);
+						icon.title = "Tiled Image";
+					}
+				}
+
+				if (thumbnail !== undefined && thumbnail) {
+					blob = new Blob([thumbnail], {type: "image/jpeg"});
+					// 縮小サムネイルデータがあった場合
+					if (contentElem) {
+						URL.revokeObjectURL(contentElem.src);
+						contentElem.src = URL.createObjectURL(blob);
+						fixDivSize(divElem, w, aspect);
+					}
+				} else {
+					blob = new Blob([contentData], {type: mime});
+					if (contentElem && blob) {
+						URL.revokeObjectURL(contentElem.src);
+						contentElem.src = URL.createObjectURL(blob);
+						fixDivSize(divElem, w, aspect);
+					}
 				}
 			}
 		}

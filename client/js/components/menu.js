@@ -38,26 +38,13 @@
 			<!-- 他メニュー-->
 		</ul>
 */
-		var i,
-			k,
-			head,
-			link,
+		var link,
 			li,
-			ul,
-			menu;
+			ul;
 
 		ul = document.createElement('ul');
-		ul.className = "menu";
+		ul.className = 'menu';
 		containerElem.appendChild(ul);
-
-		ul.onmouseover = function () {
-			var elems = document.getElementsByClassName('menu_level1');
-			/*
-			for (k = 0; k < elems.length; k = k + 1) {
-				elems[k].style.display = "block";
-			}
-			*/
-		}
 
 		var createMenu = function (setting, ul, n) {
 			var i,
@@ -66,14 +53,18 @@
 				value;
 
 			for (i = 0; i < setting.length; i = i + 1) {
-				head = setting[i];
 				key = Object.keys(setting[i])[0];
 				value = setting[i][key];
 				
-				link = document.createElement('a');
-				link.href = "#";
+				if (setting[i].hasOwnProperty('url')) {
+					link = document.createElement('a');
+					link.href = location.hash ? location.hash : "#";
+				} else {
+					link = document.createElement('div');
+				}
 				link.innerHTML = key;
 				link.id = "_menu_" + key;
+				link.setAttribute("data-key", key);
 
 				if (value instanceof Array) {
 					// 子有り.
@@ -92,7 +83,7 @@
 					
 					if (n === 1) {
 						li.onmousedown = function (evt) {
-								evt.preventDefault();
+							evt.preventDefault();
 						};
 						li.onclick = (function (self, ul) {
 							return function (evt) {
@@ -114,7 +105,6 @@
 					li = document.createElement('li');
 					ul2.appendChild(li);
 
-					var count = value.length;
 					createMenu(value, ul2, n + 1);
 				} else {
 					// 末端.

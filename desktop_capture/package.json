@@ -4,7 +4,7 @@
   "description": "ChOWDER Desktop Capture",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "cd .. && npm run desktop-capture"
   },
   "devDependencies": {
     "devtron": "^1.4.0",

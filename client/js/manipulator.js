@@ -16,6 +16,7 @@
 		this.draggingManip = null;
 		this.manipulators = [];
 		this.manipulatorMenus = [];
+		this.manipulatorPDFPage = null;
 		this.draggingOffsetFunc = null;
 		this.closeFunc = null;
 		this.parent = null;
@@ -64,7 +65,7 @@
 	 * @param {Element} targetElem 移動したエレメント
 	 */
 	Manipulator.prototype.moveManipulator = function (targetElem) {
-		console.log("moveManipulator:", targetElem);
+		//console.log("moveManipulator:", targetElem);
 		if (this.manipulators.length < 3) {
 			//console.log("manipulators:", manipulators);
 			return;
@@ -100,47 +101,36 @@
 		this.manipulators[4].style.left = (left + width - 17) + "px";
 		this.manipulators[4].style.top = (top - 27) + "px";
 
-		if (this.manipulatorMenus.length > 1) {
-			// ☆
-			this.manipulatorMenus[0].style.left = (left + 5) + "px";
-			this.manipulatorMenus[0].style.top = (top - 30) + "px";
-			// memo
-			this.manipulatorMenus[1].style.left = (left + 35) + "px";
-			this.manipulatorMenus[1].style.top = (top - 30) + "px";
+		if (this.manipulatorMenus.length !== 0) {
+			this.manipulatorMenus.forEach(function (menu, i) {
+				menu.style.left = (left + 5 + 30 * i) + 'px';
+				menu.style.top = (top - 30) + 'px';
+			});
 		}
-		else if (this.manipulatorMenus.length === 1) {
-			// memo
-			this.manipulatorMenus[0].style.left = (left + 5) + "px";
-			this.manipulatorMenus[0].style.top = (top - 30) + "px";
+
+		if (this.manipulatorVideoPlay) {
+			this.manipulatorVideoPlay.style.left = (left + 5 + width / 2 - 32) + 'px';
+			this.manipulatorVideoPlay.style.top = (top + 5 + height / 2 - 32) + 'px';
+		}
+
+		if (this.manipulatorPDFPage) {
+			this.manipulatorPDFPage.style.left = (left + 5 + width / 2 - 50) + 'px';
+			this.manipulatorPDFPage.style.top = (top + 5 + height - 30) + 'px';
 		}
 	};
 	
 	Manipulator.prototype.mousedownFunc = function (manip) {
 		return function (evt) {
-			var rect = evt.target.getBoundingClientRect(),
-				pageX = evt.pageX,
-				pageY = evt.pageY,
-				clientX = evt.clientX,
-				clientY = evt.clientY;
-
-			if (evt.changedTouches) {
-				rect = evt.changedTouches[0].target.getBoundingClientRect();
-				pageX = evt.changedTouches[0].pageX,
-				pageY = evt.changedTouches[0].pageY,
-				clientX = evt.changedTouches[0].clientX;
-				clientY = evt.changedTouches[0].clientY;
-			}
-			if (this.draggingOffsetFunc) {
-				this.draggingOffsetFunc(clientY - rect.top, clientX - rect.left);
-			}
 			this.draggingManip = manip;
+			this.emit(Manipulator.EVENT_MOUSE_DOWN, null, evt);
 		}.bind(this);
 	};
 
 	Manipulator.prototype.mousemoveFunc = function (manip, cursor) {
 		return function (evt) {
 			manip.style.cursor = cursor;
-		};
+			this.emit(Manipulator.EVENT_MOUSE_MOVE, null, evt)
+		}.bind(this);
 	};
 	
 	/**
@@ -157,7 +147,7 @@
 		manip.style.position = "absolute";
 		manip.style.border = "solid 2px rgb(4, 180, 49)";
 		manip.style.borderColor = targetElem.style.borderColor;
-		manip.style.zIndex = '1000000';
+		manip.style.zIndex = '10000001';
 		manip.style.width = manipHalfWidth * 2 + "px";
 		manip.style.height = manipHalfHeight * 2 + "px";
 		manip.style.background = targetElem.style.borderColor;//"rgb(4, 180, 49)";
@@ -184,7 +174,7 @@
 			}.bind(this);
 		} else {
 			if(window.ontouchstart !== undefined) {
-				manip.ontouchstart = this.mousedownFunc(manip);
+				manip.ontouchstart = this.mousedownFunc(manip)
 				manip.ontouchmove = this.mousemoveFunc(manip, cursor);
 			} else {
 				manip.onmousedown = this.mousedownFunc(manip);
@@ -207,9 +197,17 @@
 			for (i = 0; i < this.manipulatorMenus.length; i = i + 1) {
 				previewArea.removeChild(this.manipulatorMenus[i]);
 			}
+			if (this.manipulatorPDFPage) {
+				previewArea.removeChild(this.manipulatorPDFPage);
+			}
+			if (this.manipulatorVideoPlay) {
+				previewArea.removeChild(this.manipulatorVideoPlay);
+			}
 		}
 		this.manipulators = [];
 		this.manipulatorMenus = [];
+		this.manipulatorPDFPage = null;
+		this.manipulatorVideoPlay = null;
 		this.parent = null;
 	};
 	
@@ -226,14 +224,14 @@
 
 		// 星のトグルボタン
 		if (!Validator.isWindowType(metaData)) {
-			star.id = "_manip_menu_0";
-			star.className = "manipulator_menu_star";
+			star.id = '_manip_menu_0';
+			star.className = 'manipulator_menu star';
 			star.style.borderColor = targetElem.style.borderColor;
 			previewArea.appendChild(star);
 			this.manipulatorMenus.push(star);
 		}
 		// 初期のトグル設定
-		if (metaData.hasOwnProperty('mark') && (metaData.mark === "true" || metaData.mark === true)) {
+		if (metaData.hasOwnProperty('mark') && (metaData.mark === 'true' || metaData.mark === true)) {
 			star.classList.add('active');
 		}
 		star.onmousedown = function (evt) {
@@ -249,14 +247,14 @@
 
 		// メモのトグルボタン
 		if (!Validator.isWindowType(metaData)) {
-			memo.id = "_manip_menu_1";
-			memo.className = "manipulator_menu_memo";
+			memo.id = '_manip_menu_1';
+			memo.className = 'manipulator_menu memo';
 			memo.style.borderColor = targetElem.style.borderColor;
 			previewArea.appendChild(memo);
 			this.manipulatorMenus.push(memo);
 		}
 		// 初期のトグル設定
-		if (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === "true" || metaData.mark_memo === true)) {
+		if (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === 'true' || metaData.mark_memo === true)) {
 			memo.classList.add('active');
 		}
 		memo.onmousedown = function (evt) {
@@ -269,6 +267,64 @@
 			}
 			evt.stopPropagation();
 		}.bind(this);
+
+		// ビデオ再生・停止
+		if (metaData.type === 'video' && metaData.subtype === 'file' && !targetElem.play) {
+			var button = document.createElement('div');
+			button.className = 'manipulator_video';
+			previewArea.appendChild(button);
+			this.manipulatorVideoPlay = button;
+
+			var isPlaying = metaData.isPlaying === 'true';
+
+			var image = document.createElement('img');
+			image.src = isPlaying ? '../image/video_pause.png' : '../image/video_play.png';
+			image.className = 'manipulator_video_img';
+			button.appendChild(image);
+			this.manipulatorVideoPlayImage = image;
+
+			button.onmousedown = function (evt) {
+				evt.stopPropagation();
+				isPlaying = !isPlaying;
+				this.emit('play_video', null, metaData.id, isPlaying);
+				image.src = isPlaying ? '../image/video_pause.png' : '../image/video_play.png';
+			}.bind(this);
+		}
+
+		// pdfページ送り
+		if (metaData.type === 'pdf') {
+			var parent = document.createElement('div');
+			parent.className = 'manipulator_pdf';
+			previewArea.appendChild(parent);
+			this.manipulatorPDFPage = parent;
+
+			var prev = document.createElement('div');
+			prev.className = 'prev';
+			parent.appendChild(prev);
+
+			prev.onmousedown = function (evt) {
+				evt.stopPropagation();
+				this.emit('move_pdf_page', null, metaData.id, -1, function (p) {
+					page.innerText = p + ' / ' + metaData.pdfNumPages;
+				}); // ページを1つ前に戻す
+			}.bind(this);
+
+			var page = document.createElement('div');
+			page.className = 'page';
+			page.innerText = metaData.pdfPage + ' / ' + metaData.pdfNumPages;
+			parent.appendChild(page);
+
+			var next = document.createElement('div');
+			next.className = 'next';
+			parent.appendChild(next);
+
+			next.onmousedown = function (evt) {
+				evt.stopPropagation();
+				this.emit('move_pdf_page', null, metaData.id, 1, function (p) {
+					page.innerText = p + ' / ' + metaData.pdfNumPages;
+				}); // ページを1つ次に進める
+			}.bind(this);
+		}
 	};
 	
 	/**
@@ -278,25 +334,34 @@
 	 * @param {Element} previewArea 表示先エレメント
 	 * @param {Element} metaData メタデータ
 	 */
-	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaData) {
+	Manipulator.prototype.showManipulator = function (authority, targetElem, previewArea, metaDataList, displayGroup) {
 		var manips = [
-				document.createElement('span'),
-				document.createElement('span'),
-				document.createElement('span'),
-				document.createElement('span'),
-				document.createElement('span')
+				document.createElement('span'), // 左上
+				document.createElement('span'), // 左下
+				document.createElement('span'), // 右下
+				document.createElement('span'), // 右上
+				document.createElement('span') // バッテン
 			],
 			manip,
-			i;
-		
+			i,
+			k,
+			metaData,
+			editableCount = 0;
 		this.authority = authority;
 		this.moveManipulator(targetElem);
 		this.removeManipulator();
 		this.parent = previewArea;
-		
-		if ( (!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
-		|| (Validator.isWindowType(metaData) && this.authority.isDisplayManipulatable())) 
-		{
+
+		for (k = 0; k < metaDataList.length; ++k) {
+			metaData = metaDataList[k];
+			if ( (!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
+			|| (Validator.isWindowType(metaData) && this.authority.isDisplayEditable(displayGroup))) 
+			{
+				++editableCount;
+			}
+		}
+		if (editableCount > 0) {
+			// 1つでも編集可能なのがあった
 			for (i = 0; i < manips.length; i = i + 1) {
 				manip = manips[i];
 				manip.id = "_manip_" + i;
@@ -304,7 +369,10 @@
 				previewArea.appendChild(manip);
 				this.manipulators.push(manip);
 			}
-			this.setupManipulatorMenus(previewArea, targetElem, metaData);
+			if (editableCount === 1) {
+				// 1つだけ選択されてたときはサブメニューを表示
+				this.setupManipulatorMenus(previewArea, targetElem, metaData);
+			}
 		}
 	};
 	
@@ -315,6 +383,8 @@
 
 	Manipulator.EVENT_TOGGLE_STAR = "toggle_star";
 	Manipulator.EVENT_TOGGLE_MEMO = "toggle_memo";
+	Manipulator.EVENT_MOUSE_DOWN = "mouse_down";
+	Manipulator.EVENT_MOUSE_MOVE = "mouse_move";
 
 	// signleton
 	window.manipulator = new Manipulator();

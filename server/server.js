@@ -2,12 +2,13 @@
 /*global process, require, socket */
 
 var fs = require('fs'),
+	path  = require('path'),
 	http = require('http'),
 	https = require('https'),
 	WebSocket = require('websocket'),
+	path = require('path'),
 	util = require('./util'),
 	operator = require('./operator.js'),
-	sender = require('./sender.js'),
 	ws_connector = require('./ws_connector.js'),
 	io_connector = require('./io_connector.js'),
 	port = 8080,
@@ -19,9 +20,8 @@ var fs = require('fs'),
 	io,   // socket io server operator instance
 	io_s,
 	ws2, // web socket server operator instance
-	ws2_s;  
-
-console.log(operator);
+	ws2_s,
+	settings;
 
 // register server id
 operator.registerUUID("default");
@@ -32,12 +32,13 @@ if (process.argv.length > 2) {
 		sslport = parseInt(process.argv[3], 10);
 	}
 }
+
 //----------------------------------------------------------------------------------------
 // websocket sender
 //----------------------------------------------------------------------------------------
-var options= {
-	key: fs.readFileSync('server.key'),
-	cert: fs.readFileSync('server.crt')
+var options = {
+	key: fs.readFileSync(path.join(__dirname, 'server.key')),
+	cert: fs.readFileSync(path.join(__dirname, 'server.crt'))
 };
 
 //----------------------------------------------------------------------------------------
@@ -58,17 +59,6 @@ var wsopserver_s = https.createServer(options, function (req, res) {
 });
 wsopserver_s.listen(sslport + 1);
 
-/// web socket server instance
-ws2 = new WebSocket.server({ httpServer : wsopserver,
-		maxReceivedMessageSize: 64*1024*1024, // 64MB
-		maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
-		autoAcceptConnections : false});
-		
-ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
-	maxReceivedMessageSize: 64*1024*1024, // 64MB
-	maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
-	autoAcceptConnections : false});
-
 function ws_request(io, ws2) { // for http or https
 	return function (request) {
 		"use strict";
@@ -82,11 +72,11 @@ function ws_request(io, ws2) { // for http or https
 		console.log((new Date()) + " ServerImager Connection accepted : " + id_counter);
 		
 		// save connection with id
-		connection.id = id_counter;
-		ws2_connections[id_counter] = connection;
+		connection.id = util.generateUUID8() + String(id_counter);
+		ws2_connections[connection.id] = connection;
 		id_counter = id_counter + 1;
 		
-		operator.registerWSEvent(connection, io, ws2);
+		operator.registerWSEvent(connection, io, ws2, ws2_connections);
 		
 		connection.on('close', (function (connection) {
 			return function () {
@@ -94,7 +84,7 @@ function ws_request(io, ws2) { // for http or https
 	
 				operator.decrWindowReferenceCount(connection.id, function (err, meta) {
 					io_connector.broadcast(io, Command.UpdateWindowMetaData, meta);
-					//ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
+					ws_connector.broadcast(ws2, Command.UpdateWindowMetaData, meta);
 				});
 	
 				console.log('connection closed :' + connection.id);
@@ -108,7 +98,7 @@ function ws_request(io, ws2) { // for http or https
 //----------------------------------------------------------------------------------------
 function opserver_http_request(req, res) {
 	'use strict';
-	console.log('REQ>', req.url);
+	//console.log('REQ>', req.url);
 	var file,
 		fname,
 		ext,
@@ -117,7 +107,7 @@ function opserver_http_request(req, res) {
 		data = "",
 		contentID;
 	if (url === '/') {
-		file = fs.readFileSync('../client/index.html');
+		file = fs.readFileSync(path.join(__dirname, '../client/index.html'));
 		res.end(file);
 	} else if (url.indexOf('/download?') === 0) {
 		temp = url.split('?');
@@ -137,7 +127,9 @@ function opserver_http_request(req, res) {
 			res.end(data);
 		}
 	} else {
-		fs.readFile('../client/' + url, function (err, data) {
+		var p = path.join(__dirname, '../client', path.join('/', url.match(/^[^?]+/)[0]));
+		fs.readFile(p, function (err, data) {
+			//                                          ^^^^^^^^^^^^^ it's traversal safe!
 			if (err) {
 				res.writeHead(404, {'Content-Type': 'text/html', charaset: 'UTF-8'});
 				res.end("<h1>not found<h1>");
@@ -188,12 +180,47 @@ function io_request(io, ws2) {
 	};
 }
 
-ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
-ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+fs.readFile(path.join(__dirname, 'setting.json'), function (err, data) {
+	if (!err) {
+		try {
+			settings = JSON.parse(String(data));
+			operator.setSettingJSON(settings);
+						
+			/// web socket server instance
+			ws2 = new WebSocket.server({ httpServer : wsopserver,
+					maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
+					maxReceivedFrameSize :Number(settings.wsMaxMessageSize),
+					autoAcceptConnections : false});
+					
+			ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+				maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
+				maxReceivedFrameSize : Number(settings.wsMaxMessageSize),
+				autoAcceptConnections : false});
 
-io.on('connection', io_request([io, io_s], [ws2, ws2_s]));
-io_s.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+		} catch (e) {
+			console.error(e);
+		}
+	}
+	if (!ws2) {
+		ws2 = new WebSocket.server({ httpServer : wsopserver,
+			maxReceivedMessageSize: 64*1024*1024, // 64MB
+			maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+			autoAcceptConnections : false});
+	}
+	if (!ws2_s)	{
+		ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+			maxReceivedMessageSize: 64*1024*1024, // 64MB
+			maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+			autoAcceptConnections : false});
+	}
+	
+	// finally
+	ws2.on('request', ws_request([io, io_s], [ws2, ws2_s]));
+	ws2_s.on('request', ws_request([io, io_s], [ws2, ws2_s]));
 
+	io.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+	io_s.on('connection', io_request([io, io_s], [ws2, ws2_s]));
+});
 
 //----------------------------------------------------------------------------------------
 

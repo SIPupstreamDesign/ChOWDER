@@ -119,3 +119,7 @@
 	border: 2px solid darkgray;
 	background : rgba(150, 150, 150, 0.1);
 }
+
+.tab_title {
+	color : black;
+}

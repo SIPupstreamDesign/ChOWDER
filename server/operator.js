@@ -3,7 +3,7 @@
 
 (function () {
 	"use strict";
-	
+
 	/**
 	 * Operator生成
 	 * @method Operator
@@ -12,21 +12,25 @@
 		cryptkey = "ChOWDERCRYPTKEY",
 		redis = require("redis"),
 		image_size = require('image-size'),
+		Thumbnail = require('./thumbnail.js'),
 		client = redis.createClient(6379, '127.0.0.1', {'return_buffers': true}),
 		textClient = redis.createClient(6379, '127.0.0.1', {'return_buffers': false}),
-		contentIDStr = "content_id",
-		windowIDStr = "window_id",
 		virtualDisplayIDStr = "virtual_display",
 		metadataPrefix = "metadata:",
 		metadataBackupPrefix = "metadata_backup:",
+		metadataHistoryPrefix = "metadata_history:",
 		contentPrefix = "content:",
 		contentBackupPrefix = "content_backup:",
+		contentHistoryPrefix = "content_history:",
+		contentHistoryDataPrefix = "content_history_data:",
+		contentThumbnailPrefix = "content_thumbnail:",
 		contentRefPrefix = "contentref:",
 		windowContentRefPrefix = "window_contentref:",
 		windowMetaDataPrefix = "window_metadata:",
 		windowContentPrefix = "window_content:",
 		groupListPrefix = "grouplist",
 		adminListPrefix = "adminlist",
+		controllerDataPrefix = "controller_data",
 		globalSettingPrefix = "global_setting",
 		groupUserPrefix = "group_user",
 		adminUserPrefix = "admin_user",
@@ -36,52 +40,26 @@
 		Command = require('./command.js'),
 		path = require('path'),
 		fs = require('fs'),
-		phantomjs = require('phantomjs'),
+		phantom = require('phantom'),
 		frontPrefix = "tiled_server:t:",
 		uuidPrefix = "invalid:",
 		socketidToHash = {},
 		socketidToAccessAuthority = {},
 		socketidToUserID = {},
 		socketidToLoginKey = {},
-		methods,
         connectionId = {},
-        connectionCount = 0,
+		connectionCount = 0,
 		userSettingKeys = [
 			"viewable",
 			"editable",
-			"group_manipulatable",
-			"display_manipulatable"
-		];
+			"displayEditable",
+			"group_manipulatable"
+		],
+		expireTime = 60 * 60 * 24 * 365 * 100; // 100years
 	
 	client.on('error', function (err) {
 		console.log('Error ' + err);
 	});
-
-	function renderURLInternal(command, endCallback) {
-		var command;
-		var output = "out.png";
-		if (command.length > 4) {
-			output = "out" + command[5] + ".png";
-			command[2] = output;
-		}
-		util.launchApp(command, null, function () {
-			if (fs.existsSync(output)) {
-				image_size(output, function (err, dimensions) {
-					if (endCallback) {
-						if (dimensions.height > 4000) {
-							command.push(dimensions.width);
-							command.push(4000);
-							renderURLInternal(command, endCallback);
-						} else {
-							endCallback(fs.readFileSync(output), dimensions);
-						}
-					}
-				});
-			} else if (endCallback) {
-				endCallback(null);
-			}
-		});
-	}
 	
 	/**
 	 * 指定されたURLをレンダリングする
@@ -90,14 +68,40 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function renderURL(url, endCallback) {
-		var output = "out.png",
-			command = [ phantomjs.path,
-				path.normalize("./capture.js"),
-				output,
-				url ];
-		console.dir("Phantomjs:" + JSON.stringify(phantomjs));
-		console.log("Phantomjs path:" + phantomjs.path);
-		renderURLInternal(command, endCallback);
+		phantom.create().then(function (instance) {
+			instance.createPage().then(function (page) {
+				page.property('viewportSize', {width: 1024, height: 600}).then(function () {
+					page.open(url).then(function (status) {
+						if (status !== 'success') {
+							console.error('renderURL: Page open failed: ' + status);
+							return;
+						}
+
+						page.evaluate(function () {
+							return { /* eslint-disable */
+								width: document.body.scrollWidth,
+								height: document.body.scrollHeight,
+								deviceScaleFactor: window.devicePixelRatio
+							}; /* eslint-enable */
+						}).then(function (dim) {
+							page.property('viewportSize', {width: dim.width, height: dim.height}).then(function () {
+								var filename = path.resolve('/tmp', Date.now().toString() + '.png');
+								page.render(filename).then(function () {
+									fs.readFile(filename, function (err, data) {
+										if (err) {
+											console.error(err);
+											return;
+										}
+										endCallback(data, image_size(data));
+										instance.exit();
+									});
+								});
+							});
+						});
+					});
+				});
+			});
+		});
 	}
 	
 	function generateID(prefix, endCallback) {
@@ -152,6 +156,17 @@
 		generateID(windowContentPrefix, endCallback);
 	}
 
+	function getInitialVirtualDisplayData() {
+		return {
+			orgWidth : 1000,
+			orgHeight : 1000,
+			splitX : 1,
+			splitY : 1,
+			scale : 1.0,
+			type : "virtual_display"
+		};
+	}
+
 	/**
 	 * グループリストの取得. ない場合は空がendcallbackにわたる.
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
@@ -162,7 +177,7 @@
 				textClient.get(groupListPrefix, function (err, reply) {
 					var data = reply;
 					if (!reply) {
-						data = { "grouplist" : [] };
+						data = { "grouplist" : [], "displaygrouplist" : [] };
 						endCallback(err, data);
 						return;
 					}
@@ -174,7 +189,7 @@
 					endCallback(err, data);
 				});
 			} else {
-				var data = { "grouplist" : [] };
+				var data = { "grouplist" : [], "displaygrouplist" : [] };
 				endCallback(null, data);
 			}
 		});
@@ -216,6 +231,9 @@
 
 	function getGroupIndexByName(groupList, name) {
 		var i;
+		if (!groupList) {
+			return -1;
+		}
 		for (i = 0; i < groupList.length; i = i + 1) {
 			if (groupList[i].name === name) {
 				return i;
@@ -240,10 +258,15 @@
 				}
 				return;
 			}
+			var groupData;
 			if (groupID) {
-				data.grouplist.push({ name : groupName, color : color, id : groupID });
+				groupData = { name : groupName, id : groupID }
+				if (color) { groupData.color = color; }
+				data.grouplist.push(groupData);
 			} else {
-				data.grouplist.push({ name : groupName, color : color, id : util.generateUUID8() });
+				groupData = { name : groupName, id : util.generateUUID8() }
+				if (color) { groupData.color = color; }
+				data.grouplist.push(groupData);
 			}
 			textClient.set(groupListPrefix, JSON.stringify(data), function () {
 				getGroupID(groupName, function (id) {
@@ -251,13 +274,62 @@
 					changeGroupUserSetting(socketid, id, {
 						viewable : [id],
 						editable : [id],
-						group_manipulatable : false,
-						display_manipulatable : true
+						group_manipulatable : false
 					}, function (err, reply) {
 						if (endCallback) {
 							endCallback(err, id);
 						}
 					});
+				})
+			});
+		});
+	}
+
+	/**
+	 * ディスプレイグループリストにgroupを追加
+	 * @param {String} id グループid. nullの場合自動割り当て.
+	 * @param {String} groupName グループ名.
+	 * @param {String} color グループ色.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addDisplayGroup(socketid, groupID, groupName, color, endCallback) {
+		getGroupList(function (err, data) {
+			if (!data.displaygrouplist) {
+				data.displaygrouplist = [];
+			}
+			var index = getGroupIndexByName(data.displaygrouplist, groupName);
+			if (index >= 0) {
+				if (endCallback) {
+					endCallback("Detect same group name");
+				}
+				return;
+			}
+			var groupData;
+			if (groupID) {
+				groupData = { name : groupName, id : groupID }
+				if (color) { groupData.color = color; }
+				data.displaygrouplist.push(groupData);
+			} else {
+				groupData = { name : groupName, id : util.generateUUID8() }
+				if (color) { groupData.color = color; }
+				data.displaygrouplist.push(groupData);
+			}
+			textClient.set(groupListPrefix, JSON.stringify(data), function () {
+				getGroupID(groupName, function (id) {
+					if (id === "group_default") {
+						if (endCallback) {
+							endCallback(err, id);
+						}
+					} else {
+						// Virtual Displayの追加
+						var vdisplay = getInitialVirtualDisplayData();
+						vdisplay.group = id;
+						setVirtualDisplay(vdisplay, function (data) {
+							if (endCallback) {
+								endCallback(err, id);
+							}
+						});
+					}
 				})
 			});
 		});
@@ -342,9 +414,49 @@
 		});
 	}
 
+	/**
+	 *  コントローラデータを上書き
+	 * @param {String} controllerID Session ID. nullの場合自動割り当て.
+	 * @param {String} controllerData コントローラデータ.
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function updateControllerData(controllerID, controllerData, endCallback) {
+		textClient.set(controllerDataPrefix + ":" + controllerID, JSON.stringify(controllerData), function (err, data) {
+			if (err) {
+				console.error(err);
+			} else if (endCallback) {
+				endCallback("success");
+			}
+		});
+	}
+	
+	/**
+	 * コントローラデータを取得
+	 * @param {*} controllerID 
+	 * @param {*} endCallback (err, data)の形式. なかったらdataはnullとなる.
+	 */
+	function getControllerData(controllerID, endCallback) {
+		var parsed = null;
+		if (controllerID !== undefined && controllerID.length > 0) {
+			textClient.get(controllerDataPrefix + ":" + controllerID, function (err, data) {
+				if (err) {
+					console.error(err);
+					endCallback(null, null);
+				} else if (endCallback) {
+					try {
+						parsed = JSON.parse(data);
+					} catch(e) {
+					}
+					endCallback(null, parsed);
+				}
+			});
+		} else {
+			endCallback(null, null);
+		}
+	}
+
 	// コンテンツメタデータ中のグループ名の変更
 	function changeContentGroupName(socketid, oldID, newID) {
-		var metaDatas = [];
 		getMetaData(socketid, 'all', null, function (err, metaData) {
 			if (err) {
 				return;
@@ -356,6 +468,22 @@
 				});
 			}
 		});
+	}
+
+	// Windowメタデータ中のディスプレイグループ名の変更
+	function changeDisplayGroupName(socketid, oldID, newID) {
+		getWindowMetaData({ type : 'all' },
+			function (err, metaData) {
+				if (err) {
+					return;
+				}
+				if (metaData && metaData.group === oldID) {
+					getGroupID(newID, function (id) {
+						metaData.group = id;
+						textClient.hmset(windowMetaDataPrefix + metaData.id, metaData, function (meta) {});
+					});
+				}
+			});
 	}
 
 	/**
@@ -387,8 +515,18 @@
 						});
 						return true;
 					} else {
-						endCallback("not found");
-						return false;
+						index = getGroupIndex(data.displaygrouplist, id);
+						if (index >= 0) { 
+							data.displaygrouplist.splice(index, 1);
+							textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+							if (id !== "group_default") {
+								textClient.del(virtualDisplayIDStr + ":" + id);
+							}
+							return true;
+						} else {
+							endCallback("not found");
+							return false;
+						}
 					}
 				});
 			} else {
@@ -421,9 +559,24 @@
 						});
 						return true;
 					} else {
-						if (endCallback) {
-							endCallback("Not Found Group:" + id + ":" + groupName);
-							return false;
+						index = getGroupIndex(data.displaygrouplist, id);
+						if (index >= 0) {
+							var group = data.displaygrouplist[index];
+							if (group.name !== json.name) {
+								// グループ名が変更された.
+								// 全てのコンテンツのメタデータのグループ名も変更する
+								changeDisplayGroupName(socketid, group.id, json.id);
+							}
+							data.displaygrouplist[index] = json;
+							textClient.set(groupListPrefix, JSON.stringify(data), function () {
+								endCallback(null, json);
+							});
+							return true;
+						} else {
+							if (endCallback) {
+								endCallback("Not Found Group:" + id + ":" + groupName);
+								return false;
+							}
 						}
 					}
 				});
@@ -440,6 +593,10 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function changeGroupIndex(socketid, id, insertIndex, endCallback) {
+		if (id === "group_default") {
+			endCallback("default can not allow changing index");
+			return;
+		}
 		isGroupManipulatable(socketid, id,  function (isManipulatable) {
 			if (isManipulatable) {
 				getGroupList(function (err, data) {
@@ -455,8 +612,21 @@
 						textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
 						return true;
 					} else {
-						endCallback("not found");
-						return false;
+						index = getGroupIndex(data.displaygrouplist, id),
+						item;
+						if (index >= 0) {
+							item = data.displaygrouplist[index];
+							data.displaygrouplist.splice(index, 1);
+							if (insertIndex > 0 && insertIndex >= index) {
+								insertIndex -= 1;
+							}
+							data.displaygrouplist.splice(insertIndex, 0, item);
+							textClient.set(groupListPrefix, JSON.stringify(data), endCallback);
+							return true;
+						} else {
+							endCallback("not found");
+							return false;
+						}
 					}
 				});
 			} else {
@@ -479,8 +649,12 @@
 								contentPrefix = frontPrefix + uuidPrefix + "content:";
 								contentRefPrefix = frontPrefix + uuidPrefix + "contentref:";
 								contentBackupPrefix = frontPrefix + uuidPrefix + "content_backup:";
+								contentHistoryPrefix = frontPrefix + uuidPrefix + "content_history:";
+								contentHistoryDataPrefix = frontPrefix + uuidPrefix + "content_history_data:";
+								contentThumbnailPrefix = frontPrefix + uuidPrefix + "content_thumbnail:";
 								metadataPrefix = frontPrefix + uuidPrefix + "metadata:";
 								metadataBackupPrefix = frontPrefix + uuidPrefix + "metadata_backup:";
+								metadataHistoryPrefix = frontPrefix + uuidPrefix + "metadata_history:";
 								windowMetaDataPrefix = frontPrefix + uuidPrefix + "window_metadata:";
 								windowContentPrefix = frontPrefix + uuidPrefix + "window_contentref:";
 								windowContentRefPrefix = frontPrefix + uuidPrefix + "window_content:";
@@ -507,19 +681,29 @@
 				changeGroupUserSetting("master", "Guest", {
 					viewable : [],
 					editable : [],
-					group_manipulatable : false,
-					display_manipulatable : true
+					displayEditable : [],
+					group_manipulatable : false
 				}, function () {
 					// Display設定の初期登録
 					changeGroupUserSetting("master", "Display", {
 						viewable : "all",
 						editable : "all",
-						group_manipulatable : false,
-						display_manipulatable : true
+						displayEditable : [],
+						group_manipulatable : false
+					}, function () {
+						// APIUser設定の初期登録
+						changeGroupUserSetting("master", "APIUser", {
+							viewable : "all",
+							editable : "all",
+							displayEditable : [],
+							group_manipulatable : false
+						});
 					});
 				});
 			}
-			addGroup("master", "group_default", "default", function (err, reply) {} );
+			addGroup("master", "group_default", "default", null, function (err, reply) {
+				addDisplayGroup("master", "group_default", "default", null,  function (err, reply) {} );
+			} );
 		});
 		textClient.exists(globalSettingPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
@@ -532,14 +716,7 @@
 		// virtualdisplayの初期設定
 		textClient.exists(virtualDisplayIDStr, function (err, doesExists) {
 			if (doesExists !== 1) {
-				var windowData = {
-					orgWidth : 1000,
-					orgHeight : 1000,
-					splitX : 1,
-					splitY : 1,
-					scale : 1.0
-				};
-				setVirtualDisplay(windowData);
+				setVirtualDisplay(getInitialVirtualDisplayData());
 			}
 		});
 	}
@@ -938,11 +1115,41 @@
 					}
 					userList.push(displayUserData);
 
+					// APIUser
+					var apiUserData = { name : "APIUser", id : "APIUser", type : "api"};
+					if (setting.hasOwnProperty("APIUser")) {
+						for (var k = 0; k < userSettingKeys.length; k = k + 1) {
+							var key = userSettingKeys[k];
+							if (setting.APIUser.hasOwnProperty(key)) {
+								apiUserData[key] = setting.APIUser[key];
+							}
+						}
+					}
+					userList.push(apiUserData);
+
 					if (endCallback) {
 						endCallback(null, userList);
 					}
 				});
 			});
+		});
+	}
+
+	function generateCOntrollerID(endCallback) {
+		textClient.keys(controllerDataPrefix + "*", function (err, replies) {
+			var i;
+			var prefix = "user";
+			var number = 1;
+			var splits;
+			var existsIDDict = {};
+			for (i = 0; i < replies.length; ++i) {
+				splits = replies[i].split(":");
+				existsIDDict[splits[splits.length - 1]] = i;
+			}
+			while (existsIDDict.hasOwnProperty(prefix + number)) {
+				number += 1;
+			}
+			endCallback(null, String(prefix + number));
 		});
 	}
 
@@ -967,8 +1174,8 @@
 						authority.id = id;
 						authority.viewable = "all";
 						authority.editable = "all";
+						authority.displayEditable = [];
 						authority.group_manipulatable = true;
-						authority.display_manipulatable = true;
 						authority.is_admin = true;
 						socketidToAccessAuthority[socketid] = authority;
 					}
@@ -1024,62 +1231,66 @@
 	/**
 	 * ログインする
 	 * @method login
-	 * @param {String} id ユーザーid
+	 * @param {String} id グループID
 	 * @param {String} password パスワード
 	 * @param {String} socketid socketID
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function login(id, password, socketid, endCallback) {
-		var getLoginResult = function () {
+	function login(id, password, socketid, controllerid, endCallback) {
+		var getLoginResult = function (controllerData) {
 			if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
 				return {
 					id : id,
 					loginkey : socketid,
-					authority : socketidToAccessAuthority[socketid]
+					authority : socketidToAccessAuthority[socketid],
+					controllerData : controllerData
 				};
 			} else {
 				return {
 					id : id,
 					loginkey : socketid,
 					authority : null,
+					controllerData : controllerData
 				};
 			}
 		};
-		getAdminUserSetting(function (err, data) {
-			if (data.hasOwnProperty(id)) {
-				// 管理ユーザー
-				var isValid = validatePassword(data[id].password, password);
-				if (isValid) {
-					saveLoginInfo(socketid, id, data);
-					// 成功したらsocketidを返す
-					endCallback(null, getLoginResult());
-				} else {
-					endCallback("failed to login");
-				}
-			} else {
-				getGroupUserSetting(function (err, setting) {
-					if (!err) {
-						if (setting.hasOwnProperty(id)) {
-							// グループユーザー設定登録済グループユーザー
-							var isValid = validatePassword(setting[id].password, password);
-							if (id === "Guest" || id === "Display") {
-								isValid = true;
-							}
-							if (isValid) {
-								saveLoginInfo(socketid, id, null, setting);
-								endCallback(null, getLoginResult());
-							} else {
-								endCallback("failed to login");
-							}
-						} else {
-							// グループユーザー設定に登録されていないグループ
-							endCallback(null, getLoginResult());
-						}
+		getControllerData(controllerid, function (err, controllerData) {
+			getAdminUserSetting(function (err, data) {
+				if (data.hasOwnProperty(id)) {
+					// 管理ユーザー
+					var isValid = validatePassword(data[id].password, password);
+					if (isValid) {
+						saveLoginInfo(socketid, id, data);
+						// 成功したらsocketidを返す
+						endCallback(null, getLoginResult(controllerData));
 					} else {
 						endCallback("failed to login");
 					}
-				});
-			}
+				} else {
+					getGroupUserSetting(function (err, setting) {
+						if (!err) {
+							if (setting.hasOwnProperty(id)) {
+								// グループユーザー設定登録済グループユーザー
+								var isValid = validatePassword(setting[id].password, password);
+								if (id === "Guest" || id === "Display") {
+									isValid = true;
+								}
+								if (isValid) {
+									saveLoginInfo(socketid, id, null, setting);
+									endCallback(null, getLoginResult(controllerData));
+								} else {
+									endCallback("failed to login");
+								}
+							} else {
+								// グループユーザー設定に登録されていないグループ
+								endCallback(null, getLoginResult(controllerData));
+							}
+						} else {
+							endCallback("failed to login");
+						}
+					});
+				}
+			});
 		});
 	}
 
@@ -1140,8 +1351,15 @@
 		if (type === 'all') {
 			textClient.keys(metadataPrefix + '*', function (err, replies) {
 				var all_done = replies.length;
+				if (err || replies.length === 0) {
+					if (endCallback) {
+						endCallback("Error not found metadata");
+					}
+					return;
+				}
 				replies.forEach(function (id, index) {
 					textClient.hgetall(id, function (err, data) {
+						// バックアップデータをチェック
 						textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
 							return function (err, doesExists) {
 								if (!isViewable(socketid, data.group)) {
@@ -1149,7 +1367,6 @@
 									return;
 								}
 								if (doesExists) {
-
 									// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 									textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
 										metaData.backup_list = JSON.stringify(sortBackupList(reply));
@@ -1159,37 +1376,46 @@
 									});
 									return;
 								}
-								if (endCallback) {
-									metaData.last = ((replies.length - 1) === index);
-									endCallback(null, metaData);
-								}
+								// historyデデータがあった. キーリストをmetadataに追加しておく.
+								textClient.keys(metadataHistoryPrefix + metaData.id + ":*", function (err, keys) {
+									if (keys.length > 0) {
+										metaData.history_data = {};
+										keys.forEach(function (id, index) {
+											var splits = id.split(':');
+											var key = splits[splits.length - 1];
+											textClient.hkeys(id, function (err, reply) {
+												metaData.history_data[key] = reply;
+												if (index === keys.length - 1) {
+													if (endCallback) {
+														metaData.history_data = JSON.stringify(metaData.history_data);
+														endCallback(null, metaData);
+													}
+												}
+											});
+										});
+									} else {
+										if (endCallback) {
+											endCallback(null, metaData);
+										}
+									}
+								});
 							};
 						}(data)));
 					});
 				});
 			});
-			/*
-			textClient.keys(metadataPrefix + '*', function (err, replies) {
-				var multi = textClient.multi();
-				replies.forEach(function (reply, index) {
-					multi.hgetall(reply);
-				});
-				multi.exec(function (err, data) {
-					endCallback(data);
-				});
-			});
-			*/
 		} else {
 			textClient.hgetall(metadataPrefix + id, function (err, data) {
 				if (data) {
+					// バックアップデータをチェック
 					textClient.exists(metadataBackupPrefix + data.id, (function (metaData) {
 						return function (err, doesExists) {
+							if (!isViewable(socketid, metaData.group)) {
+								endCallback("access denied", {});
+								console.log("access denied2")
+								return;
+							}
 							if (doesExists) {
-								if (!isViewable(socketid, metaData.group)) {
-									endCallback("access denied", {});
-									console.log("access denied2")
-									return;
-								}
 								// バックアップがあった. バックアップのキーリストをmetadataに追加しておく.
 								textClient.hkeys(metadataBackupPrefix + metaData.id, function (err, reply) {
 									metaData.backup_list = JSON.stringify(sortBackupList(reply));
@@ -1199,11 +1425,36 @@
 								});
 								return;
 							}
-							if (endCallback) {
-								endCallback(null, metaData);
-							}
+							// historyデデータがあった. キーリストをmetadataに追加しておく.
+							textClient.keys(metadataHistoryPrefix + metaData.id + ":*", function (err, keys) {
+								if (keys.length > 0) {
+									metaData.history_data = {};
+									keys.forEach(function (id, index) {
+										var splits = id.split(':');
+										var key = splits[splits.length - 1];
+										textClient.hkeys(id, function (err, reply) {
+											metaData.history_data[key] = reply;
+											if (index === keys.length - 1) {
+												if (endCallback) {
+													metaData.history_data = JSON.stringify(metaData.history_data);
+													endCallback(null, metaData);
+												}
+											}
+										});
+									});
+								} else {
+									if (endCallback) {
+										endCallback(null, metaData);
+									}
+								}
+							});
 						};
 					}(data)));
+				} else {
+					if (endCallback) {
+						endCallback("Error not found metadata");
+					}
+					return;
 				}
 			});
 		}
@@ -1233,13 +1484,17 @@
 		if (type === 'all') {
 			client.keys(contentPrefix + '*', function (err, replies) {
 				replies.forEach(function (id, index) {
-					client.get(id, function (err, reply) {
-						if (!err) {
-							if (endCallback) {
-								endCallback(reply);
-							}
-						} else {
-							console.error(err);
+					client.type(id, function (err, reply) {
+						if (reply === "set") {
+							client.get(id, function (err, reply) {
+								if (!err) {
+									if (endCallback) {
+										endCallback(reply);
+									}
+								} else {
+									console.error(err);
+								}
+							});
 						}
 					});
 				});
@@ -1283,6 +1538,8 @@
 			metaData.mime = util.detectImageType(contentData);
 		} else if (metaData.type === 'url') {
 			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === "tileimage") {
+			metaData.mime = util.detectImageType(contentData);
 		} else {
 			console.error("Error undefined type:" + metaData.type);
 		}
@@ -1308,6 +1565,10 @@
 		}
 		if (metaData.hasOwnProperty('height')) {
 			metaData.orgHeight = metaData.height;
+		}
+		if (metaData.type === "tileimage") {
+			// タイルイメージの場合は画像バイナリからサイズを求めない.
+			return;
 		}
 		if (metaData.type === "video") {
 			metaData.mime = "video/mp4";
@@ -1394,6 +1655,8 @@
 			metaData.mime = "text/plain";
 		} else if (metaData.type === 'image') {
 			metaData.mime = util.detectImageType(contentData);
+		} else if (metaData.type === 'tileimage' && data instanceof Buffer) {
+			metaData.mime = util.detectImageType(contentData);
 		} else if (metaData.type === 'url') {
 			metaData.mime = util.detectImageType(contentData);
 		} else {
@@ -1410,27 +1673,90 @@
 				metaData.content_id = content_id;
 				metaData.date = new Date().toISOString();
 				
-				textClient.set(contentPrefix + content_id, contentData, function (err, reply) {
-					if (err) {
-						console.error("Error on addContent:" + err);
-					} else {
-						// 参照カウント.
-						textClient.setnx(contentRefPrefix + content_id, 0);
-						textClient.incr(contentRefPrefix + content_id);
-						
-						// メタデータを初回設定.
-						initialMetaDataSetting(metaData, contentData);
-						setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
-							if (endCallback) {
-								endCallback(metaData, contentData);
-							}
-						});
-					}
-				});
+				if (metaData.type === "tileimage") {
+					client.set(contentPrefix + content_id, "tileimage", function (err, reply) {
+						if (err) {
+							console.error("Error on addContent:" + err);
+						} else {
+							// 参照カウント.
+							textClient.setnx(contentRefPrefix + content_id, 0);
+							textClient.incr(contentRefPrefix + content_id);
+							
+							// メタデータを初回設定.
+							initialMetaDataSetting(metaData, contentData);
+							setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
+								if (endCallback) {
+									endCallback(metaData, contentData);
+								}
+							});
+						}
+					});
+				} else {
+					textClient.set(contentPrefix + content_id, contentData, function (err, reply) {
+						if (err) {
+							console.error("Error on addContent:" + err);
+						} else {
+							// 参照カウント.
+							textClient.setnx(contentRefPrefix + content_id, 0);
+							textClient.incr(contentRefPrefix + content_id);
+							
+							// メタデータを初回設定.
+							initialMetaDataSetting(metaData, contentData);
+							setMetaData(metaData.type, metaData.id, metaData, function (metaData) {
+								if (endCallback) {
+									endCallback(metaData, contentData);
+								}
+							});
+						}
+					});
+				}
 			});
 		});
 	}
 	
+	/**
+	 * タイルコンテンツ追加
+	 * @method addContent
+	 * @param {JSON} metaData contentメタデータ
+	 * @param {BLOB} data バイナリデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addTileContent(metaData, data, endCallback) {
+		console.log("addTileContent", metaData.id + ":" + metaData.content_id);
+		var contentData = data;
+		if (!metaData.hasOwnProperty('history_id')) {
+			if (endCallback) {
+				endCallback("Error not found history_id in metadata");
+			}
+			return;
+		}
+		var content_id = metaData.content_id;
+		var history_id = metaData.history_id;
+		
+		let kv = {}
+		kv[String(metaData.tile_index)] = contentData;
+
+		textClient.hkeys(contentHistoryPrefix + content_id, function (err, keys) {
+			if (keys.length > 0 && keys.indexOf(history_id) >= 0) {
+
+				client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+					if (err) {
+						console.error("Error on addContent:" + err);
+					} else {
+						client.expire(contentHistoryDataPrefix + history_id, expireTime, function () {
+							endCallback(err, metaData, contentData);
+						});
+					}
+				});
+			} else {
+				if (endCallback) {
+					endCallback("Error not found history_id content");
+				}
+				return;
+			}
+		});
+	}
+
 	function deleteMetaData(metaData, endCallback) {
 		textClient.exists(metadataPrefix + metaData.id, function (err, doesExist) {
 			if (!err &&  doesExist === 1) {
@@ -1455,7 +1781,7 @@
 	function deleteContent(metaData, endCallback) {
 		deleteMetaData(metaData, function (err, metaData) {
 			if (!err) {
-				console.log("deleteContent", metaData);
+				console.log("deleteContent", metaData.id);
 				if (metaData.hasOwnProperty('content_id') && metaData.content_id !== '') {
 					textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
 						if (!err && doesExist === 1) {
@@ -1467,7 +1793,23 @@
 										if (!err) {
 											textClient.del(metadataBackupPrefix + metaData.id);
 											textClient.del(contentBackupPrefix + metaData.content_id);
+											textClient.del(contentThumbnailPrefix + metaData.content_id);
 											textClient.del(contentRefPrefix + metaData.content_id);
+											textClient.hkeys(contentHistoryPrefix + metaData.content_id, function (err, replies) {
+												replies.forEach(function (key, index) {
+													var history_id = key.split(":");
+													history_id = history_id[history_id.length - 1];
+													textClient.del(contentHistoryDataPrefix + history_id);
+													if (index == replies.length - 1) {
+														textClient.del(contentHistoryPrefix + metaData.content_id);
+													}
+												});
+											});
+											textClient.keys(metadataHistoryPrefix + metaData.id + ':*', function (err, replies) {
+												replies.forEach(function (key, index) {
+													textClient.del(key);
+												});
+											});
 											if (endCallback) {
 												endCallback(metaData);
 											}
@@ -1561,6 +1903,52 @@
 	}
 	
 	/**
+	 * 時系列データの保存(元データは移動される)
+	 */
+	function storeHistoricalData(socketid, metaData, endCallback) {
+		if (!metaData.hasOwnProperty('keyvalue')) {
+			console.error("Error : not found keyvalue")
+			return false;
+		}
+		var keyvalue ;
+		try {
+			keyvalue = JSON.parse(metaData.keyvalue);
+		} catch(e) {
+			console.error("Error : keyvalue parse failed")
+			return false;
+		}
+		var kvLen = Object.keys(keyvalue).length;
+		if (kvLen <= 0) {
+			console.error("Error : not found keyvalue")
+			return false;
+		}
+		if (!metaData.hasOwnProperty('history_id')) {
+			metaData.history_id = util.generateUUID8();
+		}
+
+		var historyIDtoID = {};
+		historyIDtoID[metaData.history_id] = metaData.id;
+		client.hmset(contentHistoryPrefix + metaData.content_id, historyIDtoID, function (err, reply) {
+			var key;
+			var historyMetaData = {};
+			var count = 0;
+			for (key in keyvalue) {
+				var value = keyvalue[key];
+				historyMetaData = {};
+				historyMetaData[value] = JSON.stringify(metaData);
+				client.hmset(metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, function (err) {
+					++count;
+					if (count >= kvLen) {
+						if (endCallback) {
+							endCallback(err, reply, metaData.history_id);
+						}
+					}
+				});
+			}
+		});
+	}
+	
+	/**
 	 * コンテンツ更新
 	 * @method updateContent
 	 * @param {JSON} metaData メタデータ
@@ -1582,6 +1970,9 @@
 		} else if (metaData.type === 'url') {
 			contentData = data;
 			metaData.mime = util.detectImageType(data);
+		} else if (metaData.type === 'tileimage') {
+			console.error("Error not supported updating:" + metaData.type);
+			return;
 		} else {
 			console.error("Error undefined type:" + metaData.type);
 		}
@@ -1656,6 +2047,100 @@
 									}
 								});
 							}
+						});
+					});
+				}
+			}
+		});
+	}
+	
+	/**
+	 * 時系列データの追加
+	 * @method addHistoricalContent
+	 * @param {JSON} metaData メタデータ
+	 *    content_idとして追加先コンテンツのIDを入れる.
+	 * @param {BLOB} data  バイナリデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function addHistoricalContent(socketid, metaData, data, endCallback) {
+		var contentData = null;
+		console.log("addHistoricalContent:" + metaData.id + ":" + metaData.content_id);
+		if (metaData.type === "video") {
+			contentData = data;
+			metaData.mime = "video/mp4";
+		} else if (metaData.type === 'text' || metaData.type === 'layout') {
+			contentData = data;
+			metaData.mime = "text/plain";
+		} else if (metaData.type === 'image' || metaData.type === 'tileimage') {
+			contentData = data;
+			metaData.mime = util.detectImageType(data);
+		} else if (metaData.type === 'url') {
+			contentData = data;
+			metaData.mime = util.detectImageType(data);
+		} else {
+			console.error("Error undefined type:" + metaData.type);
+		}
+		textClient.exists(contentPrefix + metaData.content_id, function (err, doesExist) {
+			if (!err) {
+				if (doesExist <= 0) {
+					// 最初のコンテンツ
+					metaData.history_id = util.generateUUID8();
+					if (!metaData.hasOwnProperty('reductionWidth')) {
+						var dimensions = image_size(contentData);
+						metaData.reductionWidth = dimensions.width;
+						metaData.reductionHeight = dimensions.height;
+					}
+					addContent(metaData, contentData, function (err, reply) {
+						metaData.date = new Date().toISOString(); //登録時間を保存
+						// メタデータ初期設定.
+						if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+							initialOrgWidthHeight(metaData, contentData);
+						}
+						// 追加historyコンテンツ
+						storeHistoricalData(socketid, metaData, function (err, reply, history_id) {
+							Thumbnail.createThumbnail(metaData, contentData, function (err, thumbnail) {
+								var kv = {
+									preview : contentData
+								}
+								if (!err && thumbnail) {
+									kv.thumbnail = thumbnail
+								}
+								client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+									metaData.history_id = history_id;
+									if (endCallback) {
+										endCallback(err, metaData);
+									}
+								});
+							});
+						});
+					});
+				} else {
+					// 2つめ以降追加のコンテンツ
+					metaData.date = new Date().toISOString(); //登録時間を保存
+					if (!metaData.hasOwnProperty('reductionWidth')) {
+						var dimensions = image_size(contentData);
+						metaData.reductionWidth = dimensions.width;
+						metaData.reductionHeight = dimensions.height;
+					}
+					// メタデータ初期設定.
+					if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+						initialOrgWidthHeight(metaData, contentData);
+					}
+					// 追加historyコンテンツ
+					storeHistoricalData(socketid, metaData, function (err, reply, history_id) {
+						Thumbnail.createThumbnail(metaData, contentData, function (err, thumbnail) {
+							var kv = {
+								preview : contentData
+							}
+							if (!err && thumbnail) {
+								kv.thumbnail = thumbnail
+							}
+							client.hmset(contentHistoryDataPrefix + history_id, kv, function (err, reply) {
+								metaData.history_id = history_id;
+								if (endCallback) {
+									endCallback(err, metaData);
+								}
+							});
 						});
 					});
 				}
@@ -1752,11 +2237,19 @@
 	 */
 	function setVirtualDisplay(windowData, endCallback) {
 		if (windowData) {
-			textClient.hmset(virtualDisplayIDStr, windowData, function (err, reply) {
-				if (endCallback) {
-					endCallback(windowData);
-				}
-			});
+			if (windowData.hasOwnProperty('group') && windowData.group !== "group_default") {
+				textClient.hmset(virtualDisplayIDStr + ":" + windowData.group, windowData, function (err, reply) {
+					if (endCallback) {
+						endCallback(windowData);
+					}
+				});
+			} else {
+				textClient.hmset(virtualDisplayIDStr, windowData, function (err, reply) {
+					if (endCallback) {
+						endCallback(windowData);
+					}
+				});
+			}
 		}
 	}
 	
@@ -1765,16 +2258,32 @@
 	 * @method getVirtualDisplay
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
-	function getVirtualDisplay(endCallback) {
-		textClient.hgetall(virtualDisplayIDStr, function (err, data) {
-			if (endCallback) {
-				if (data) {
-					endCallback(data);
-				} else {
-					endCallback({});
+	function getVirtualDisplay(json, endCallback) {
+		if (json && json.hasOwnProperty('group') && json.group !== "group_default") {
+			textClient.hgetall(virtualDisplayIDStr + ":" + json.group, function (err, data) {
+				if (endCallback) {
+					if (data) {
+						endCallback(data);
+					} else {
+						endCallback({});
+					}
 				}
-			}
-		});
+			});
+		} else {
+			textClient.hgetall(virtualDisplayIDStr, function (err, data) {
+				if (!err && !data.hasOwnProperty('type')) {
+					data.type = "virtual_display";
+					setVirtualDisplay(data);
+				}
+				if (endCallback) {
+					if (data) {
+						endCallback(data);
+					} else {
+						endCallback({});
+					}
+				}
+			});
+		}
 	}
 	
 	/**
@@ -1931,19 +2440,7 @@
 			endCallback(obj);
 		}
 	}
-	
-	/**
-	 * セッションリスト取得。registerWSEventにてコールされる。
-	 * @method getSessionList
-	 */
-	function getSessionList() {
-		textClient.smembers('sessions', function (err, replies) {
-			replies.forEach(function (id, index) {
-				console.log(id + ":" + index);
-			});
-		});
-	}
-	
+		
 	function addContentCore(metaData, binaryData, endCallback) {
 		if (metaData.type === 'url') {
 			renderURL(binaryData, function (image, dimension) {
@@ -1962,11 +2459,39 @@
 				}
 			});
 		} else {
-			addContent(metaData, binaryData, function (metaData, contentData) {
-				if (endCallback) {
-					endCallback(null, metaData);
-				}
-			});
+			if (metaData.type === "image") {
+				// サムネイルを作成
+				addContent(metaData, binaryData, function (metaData, contentData) {
+					Thumbnail.create(metaData, binaryData, function (err, thumbnail, preview) {
+						// 作成したサムネイルを登録
+						var kv = {}
+						if (thumbnail) {
+							kv.thumbnail = thumbnail;
+						}
+						if (preview) {
+							kv.preview = preview;
+						}
+						if (thumbnail || preview) {
+							client.hmset(contentThumbnailPrefix + metaData.content_id, kv, function (err, reply) {
+								if (endCallback) {
+									endCallback(null, metaData);
+								}
+							});
+						} else {
+							// サムネイルなし
+							if (endCallback) {
+								endCallback(null, metaData);
+							}
+						}
+					});
+				});
+			} else {
+				addContent(metaData, binaryData, function (metaData, contentData) {
+					if (endCallback) {
+						endCallback(null, metaData);
+					}
+				});
+			}
 		}
 	}
 	
@@ -2028,6 +2553,37 @@
 		return false;
 	}
 
+	/**
+	 * socketidユーザーがdisplaygroupを編集可能かどうか返す
+	 * @method isDisplayEditable
+	 * @param {String} socketid socketid
+	 * @param {String} group group
+	 */
+	function isDisplayEditable(socketid, groupID) {
+		if (groupID === "group_default") {
+			return true;
+		}
+		if (groupID === undefined || groupID === "") {
+			return true;
+		}
+		if (socketidToLoginKey.hasOwnProperty(socketid)) {
+			socketid = socketidToLoginKey[socketid];
+		}
+		var authority;
+		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
+			authority = socketidToAccessAuthority[socketid];
+			if (authority.hasOwnProperty('displayEditable')) {
+				if (authority.displayEditable === "all") {
+					return true;
+				}
+				if (authority.displayEditable.indexOf(groupID) >= 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	function isGroupManipulatable(socketid, groupID, endCallback) {
 		getGroupList(function (err, data) {
 			if (groupID === "group_default") {
@@ -2050,18 +2606,6 @@
 			endCallback(false);
 			return;
 		});
-	}
-
-	function isDisplayManipulatable(socketid, endCallback) {
-		if (socketidToLoginKey.hasOwnProperty(socketid)) {
-			socketid = socketidToLoginKey[socketid];
-		}
-		var authority;
-		if (socketidToAccessAuthority.hasOwnProperty(socketid)) {
-			authority = socketidToAccessAuthority[socketid];
-			endCallback(authority.display_manipulatable);
-			return;
-		}
 	}
 
 	function isAdmin(socketid, endCallback) {
@@ -2110,6 +2654,7 @@
 								newContentID = meta.content_id;
 							}
 							
+							// 既に存在するコンテンツの上書き
 							if (newContentID !== '' && oldContentID === newContentID) {
 								updateContent(socketid, metaData, binaryData, function (reply) {
 									if (updateEndCallback) {
@@ -2135,6 +2680,79 @@
 	}
 	
 	/**
+	 * タイルコンテンツの追加を行うコマンドを実行する.
+	 * @method commandAddTileContent
+	 * @param {Object} metaData メタデータ
+	 * @param {BLOB} binaryData バイナリデータ
+	 * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
+	 */
+	function commandAddTileContent(socketid, metaData, binaryData, endCallback) {
+		console.log("commandAddTileContent", metaData);
+		
+		if (isEditable(socketid, metaData.group)) {
+			if (metaData.hasOwnProperty('id') && metaData.id !== "") {
+				// タイル用のコンテンツが登録されている必要がある
+				textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+					if (!err && doesExists === 1) {
+						getMetaData(socketid, '', metaData.id, function (err, meta) {
+							if (err) {
+								endCallback(err);
+								return;
+							}
+							meta.tile_index = metaData.tile_index;
+							meta.history_id = metaData.history_id;
+							addTileContent(meta, binaryData, endCallback);
+						});
+					} else {
+						if (endCallback) {
+							endCallback("not found content");
+						}
+					}
+				});
+			} else {
+				if (endCallback) {
+					endCallback("not found content");
+				}
+			}
+		} else {
+			if (endCallback) {
+				endCallback("access denied");
+			}
+		}
+	}
+
+	/**
+	 * historicalコンテンツの追加を行うコマンドを実行する.
+	 * @param {Object} metaData メタデータ
+	 * @param {BLOB} binaryData バイナリデータ
+	 * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
+	 */
+	function commandAddHistoricalContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
+		console.log("commandAddHistoricalContent", metaData);
+		
+		if (isEditable(socketid, metaData.group)) {
+			// タイル用のコンテンツが登録されている必要がある
+			textClient.exists(metadataPrefix + metaData.id, function (err, doesExists) {
+				if (!err && doesExists === 1) {
+					getMetaData(socketid, '', metaData.id, function (err, meta) {
+						if (err) {
+							endCallback(err);
+							return;
+						}
+						addHistoricalContent(socketid, metaData, binaryData, endCallback);
+					});
+				} else {
+					addHistoricalContent(socketid, metaData, binaryData, endCallback);
+				}
+			});
+		} else {
+			if (endCallback) {
+				endCallback("access denied");
+			}
+		}
+	}
+
+	/**
 	 * コンテンツの取得を行うコマンドを実行する.
 	 * @method commandGetContent
 	 * @param {JSON} json contentメタデータ
@@ -2152,29 +2770,130 @@
 				return;
 			}
 			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
-				//meta.command = Command.doneGetContent;
+				// Historyから復元して取得
+				if (meta.hasOwnProperty('history_id')) {
 
-				// 履歴から復元して取得
-				if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
-					var backupList = sortBackupList(JSON.parse(meta.backup_list));
-					var restore_index = Number(json.restore_index);
-					if (restore_index >= 0 && backupList.length > restore_index) {
-						var backup_date = backupList[restore_index];
-						textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
-							client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
-								endCallback(null, JSON.parse(metaData), reply[0]);
+					// Historyの場合はpreview画像をバイナリに入れて返す.
+					// サムネイル画像がある場合はリストに入れて返す
+					// その後タイル画像リクエストが複数回client→serverにくる.
+					client.hmget(contentHistoryDataPrefix + meta.history_id, "thumbnail", function (err, thumbnail) {
+						var metaList = [];
+						var binaryList = [];
+						if (!err && thumbnail[0]) {
+							metaList.push({
+								type : "thumbnail"
 							});
-						})
-						return;
-					}
+							binaryList.push(thumbnail[0]);
+						}
+						client.hmget(contentHistoryDataPrefix + meta.history_id, "preview", function (err, preview) {
+							if (binaryList.length > 0) {
+								if (!err && preview[0]) {
+									metaList.unshift(meta);
+									binaryList.unshift(preview[0]);
+								}
+								endCallback(err, metaList, binaryList);
+							} else {
+								endCallback(err, meta, preview[0]);
+							}
+						});
+					});
+					return;
 				}
-
-				// 通常の取得
-				getContent(meta.type, meta.content_id, function (reply) {
-					if (reply === null) {
-						reply = "";
+				
+				// コンテンツの返却.
+				// サムネイルやプレビュー用画像がある場合はリストに入れて返す
+				client.hgetall(contentThumbnailPrefix + meta.content_id, function (err, thumbnailData) {
+					var metaList = [];
+					var binaryList = [];
+					if (!err && thumbnailData) {
+						if (thumbnailData.hasOwnProperty('thumbnail')) {
+							metaList.push({
+								type : "thumbnail"
+							});
+							binaryList.push(thumbnailData.thumbnail);
+						}
+						if (thumbnailData.hasOwnProperty('preview')) {
+							metaList.push({
+								type : "preview"
+							});
+							binaryList.push(thumbnailData.preview);
+						}
 					}
-					endCallback(null, meta, reply);
+
+					// 履歴から復元して取得
+					if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
+						var backupList = sortBackupList(JSON.parse(meta.backup_list));
+						var restore_index = Number(json.restore_index);
+						if (restore_index >= 0 && backupList.length > restore_index) {
+							var backup_date = backupList[restore_index];
+							textClient.hmget(metadataBackupPrefix + meta.id, backup_date, function (err, metaData) {
+								client.hmget(contentBackupPrefix + meta.content_id, backup_date, function (err, reply) {
+									if (binaryList.length > 0) {
+										metaList.unshift(JSON.parse(metaData));
+										binaryList.unshift(reply[0]);
+										endCallback(err, metaList, binaryList);
+									} else {
+										endCallback(err, JSON.parse(metaData), reply[0]);
+									}
+								});
+							})
+							return;
+						}
+					}
+
+					// 通常の取得
+					getContent(meta.type, meta.content_id, function (reply) {
+						if (reply === null) {
+							reply = "";
+						}
+						if (binaryList.length > 0) {
+							metaList.unshift(meta);
+							binaryList.unshift(reply);
+							endCallback(null, metaList, binaryList);
+						} else {
+							endCallback(null, meta, reply);
+						}
+					});
+				});
+			}
+		});
+	}
+
+	/**
+	 * タイルコンテンツの取得を行うコマンドを実行する.
+	 * @method commandGetTileContent
+	 * @param {JSON} json contentメタデータ
+	 * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandGetTileContent(socketid, json, endCallback) {
+		console.log("commandGetTileContent:" + json.id);
+		if (!isViewable(socketid, json.group)) {
+			endCallback("access denied");
+			return;
+		}
+		getMetaData(socketid, "tileimage", json.id, function (err, meta) {
+			if (err) {
+				endCallback(err);
+				return;
+			}
+			if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== ''
+					&& json.hasOwnProperty('tile_index') && json.hasOwnProperty("history_id")) {
+
+				meta.tile_index = json.tile_index;
+				meta.history_id = json.history_id;
+				client.hmget(contentHistoryDataPrefix + meta.history_id, meta.tile_index, function (err, reply) {
+					if (!err) {
+						if (endCallback) {
+							if (reply[0]) {
+								endCallback(null, meta, reply[0]);
+							} else {
+								endCallback("Error : not found tileindex " + meta.tile_index);
+							}
+						}
+					} else {
+						console.error(err);
+					}
+
 				});
 			}
 		});
@@ -2298,7 +3017,82 @@
 		var i,
 			metaData,
 			results = [],
-			all_done = json.length;
+			all_done = json.length
+
+		var registerFunc = function (metaData, endCallback) {
+			// バックアップ有りの場合は、バックアップメタデータと通常メタデータ両方更新する
+			if (metaData.hasOwnProperty('restore_index')) {
+				var restore_index = Number(metaData.restore_index);
+				if (restore_index >= 0) {
+					var backupMetaData = {};
+					backupMetaData[metaData.date] = JSON.stringify(metaData);
+					client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
+				}
+			}
+			
+			setMetaData(metaData.type, metaData.id, metaData, function (meta) {
+				getMetaData(socketid, meta.type, meta.id, function (err, meta) {
+					--all_done;
+					if (!err) {
+						results.push(meta);
+					}
+					if (all_done <= 0) {
+						endCallback(null, results);
+						return;
+					}
+				});
+			});
+		};
+
+		var updateByHistoryFunc = function (metaData, endCallback) {
+			// historyメタデータを取得し、通常のメタデータに上書きする
+			textClient.hmget(metadataHistoryPrefix + metaData.id + ":" + metaData.restore_key, metaData.restore_value, function (err, meta) {
+				
+				if (!err && meta.length > 0 && meta[0]) {
+					var hmeta = JSON.parse(meta[0]);
+					// 現在のメタデータに対して、切り替えに必要な部分のみ上書きする
+					metaData.keyvalue = hmeta.keyvalue;
+					metaData.history_id = hmeta.history_id;
+					metaData.id = hmeta.id;
+					metaData.content_id = hmeta.content_id;
+					metaData.date = hmeta.date;
+					metaData.mime = hmeta.mime;
+					endCallback(null, metaData);
+				} else {
+					// 見つからなかった場合は通常処理
+					endCallback(null, metaData);
+				}
+			});
+		}
+
+		var syncFunc = function (metaData, endCallback) {
+			// 同じgroupのsync付きのメタデータリストを取得.
+			if (metaData.hasOwnProperty('history_sync') && String(metaData.history_sync) === "true") {
+				var group = metaData.group;
+				textClient.keys(metadataPrefix + '*', function (err, replies) {
+					var all_done = replies.length;
+					if (err || replies.length === 0) {
+						endCallback("Error not found metadata");
+						return;
+					}
+					replies.forEach(function (id, index) {
+						textClient.hgetall(id, function (err, data) {
+							if (data.type === "tileimage" &&
+								data.hasOwnProperty('history_sync') && String(data.history_sync) === "true" &&
+								data.hasOwnProperty('group') && data.group === group) 
+							{
+								// 同期対象メタデータを発見. 同期させる
+								data.restore_key = metaData.restore_key;
+								data.restore_value = metaData.restore_value;
+								updateByHistoryFunc(data, function (err, metaData) {
+									registerFunc(metaData, endCallback);
+								});
+							}
+						});
+					});
+				});
+			}
+		}
 
 		for (i = 0; i < json.length; i = i + 1) {
 			metaData = json[i];
@@ -2308,58 +3102,22 @@
 						if (!err && doesExists === 1) {
 							
 							if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+								// 初期幅高さが入ってないのが来た. 入れておく.
 								getContent(metaData.type, metaData.content_id, function (reply) {
-									// メタデータ初期設定.
 									initialOrgWidthHeight(metaData, reply);
-									
-									if (metaData.hasOwnProperty('restore_index')) {
-										var restore_index = Number(metaData.restore_index);
-										if (restore_index >= 0) {
-											var backupMetaData = {};
-											backupMetaData[metaData.date] = JSON.stringify(metaData);
-											client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
-										}
-									}
-									
-									setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-										getMetaData(socketid, meta.type, meta.id, function (err, meta) {
-											--all_done;
-											if (!err) {
-												results.push(meta);
-											}
-											if (all_done <= 0) {
-												if (endCallback) {
-													endCallback(null, results);
-													return;
-												}
-											}
-										});
-									});
+									registerFunc(metaData, endCallback);
+								});
+							} else if (metaData.hasOwnProperty('restore_key') && metaData.hasOwnProperty('restore_value')) {
+								// historyデータが指定されているのが来た.
+								// historyによるmetadataの更新.
+								updateByHistoryFunc(metaData, function (err, metaData) {
+									// 更新したメタデータの登録.
+									registerFunc(metaData, endCallback);
+									// 同期させる. endCallback(metadataの更新broadcast)が複数回呼ばれる.
+									syncFunc(metaData, endCallback);
 								});
 							} else {
-
-								if (metaData.hasOwnProperty('restore_index')) {
-									var restore_index = Number(metaData.restore_index);
-									if (restore_index >= 0) {
-										var backupMetaData = {};
-										backupMetaData[metaData.date] = JSON.stringify(metaData);
-										client.hmset(metadataBackupPrefix + metaData.id, backupMetaData, function (err) {});
-									}
-								}
-								setMetaData(metaData.type, metaData.id, metaData, function (meta) {
-									getMetaData(socketid, meta.type, meta.id, function (err, meta) {
-										--all_done;
-										if (!err) {
-											results.push(meta);
-										}
-										if (all_done <= 0) {
-											if (endCallback) {
-												endCallback(null, results);
-												return;
-											}
-										}
-									});
-								});
+								registerFunc(metaData, endCallback);
 							}
 						}
 					};
@@ -2395,15 +3153,14 @@
 	 */
 	function commandDeleteWindowMetaData(socketid, json, endCallback) {
 		console.log("commandDeleteWindowMetaData");
-		var i,
-			meta,
-			results = [],
+		var deleteWindowFunc = function (isAdmin) {
+			var i,
+				meta,
+				results = [],
 			all_done = json.length;
-
-		isDisplayManipulatable(socketid, function (isManipulatable) {
-			if (isManipulatable) {
-				for (i = 0; i < json.length; i = i + 1) {
-					meta = json[i];
+			for (i = 0; i < json.length; i = i + 1) {
+				meta = json[i];
+				if (isAdmin || isDisplayEditable(socketid, meta.group)) {
 					getWindowMetaData(meta, function (metaData) {
 						if (metaData) {
 							deleteWindow(metaData, function (meta) {
@@ -2422,9 +3179,21 @@
 							}
 						}
 					});
+				} else {
+					if (endCallback) {
+						endCallback("the authority is not enough", null);
+					}
 				}
 			}
-		});
+		};
+
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				deleteWindowFunc(isAdmin);
+			} else {
+				deleteWindowFunc(false);
+			}
+		});	
 	}
 	
 	/**
@@ -2452,8 +3221,8 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandGetVirtualDisplay(socketid, json, endCallback) {
-		getVirtualDisplay(function (data) {
-			console.log("commandGetVirtualDisplay", data);
+		getVirtualDisplay(json, function (data) {
+			console.log("commandGetVirtualDisplay");//, data);
 			if (endCallback) {
 				endCallback(null, data);
 			}
@@ -2472,11 +3241,13 @@
 	/**
 	 *  グループを追加する.
 	 * @method commandAddGroup
-	 * @param {JSON} json 対象のnameを含むjson
+	 * @param {JSON} json 対象のname, typeを含むjson
+	 *                    typeは"content"か"display"で、ない場合は"content"のグループとなる
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function commandAddGroup(socketid, json, endCallback) {
 		var groupColor = "";
+		var type = "content";
 		if (json.hasOwnProperty("name") && json.name !== "") {
 			if (socketidToLoginKey.hasOwnProperty(socketid)) {
 				socketid = socketidToLoginKey[socketid];
@@ -2487,35 +3258,69 @@
 					if (json.hasOwnProperty("color")) {
 						groupColor = json.color;
 					}
-					addGroup(socketid, null, json.name, groupColor, function (err, groupID) {
-						// グループユーザーの権限情報に、グループを追加する.
-						if (!err) {
-							getGroupUserSetting(function (err, setting) {
-								if (setting.hasOwnProperty(userid)) {
-									if (setting[userid].viewable !== "all") {
-										setting[userid].viewable.push(groupID);
+					if (json.hasOwnProperty("type")) {
+						type = json.type;
+					}
+					if (type === "content") {
+						addGroup(socketid, null, json.name, groupColor, function (err, groupID) {
+							// グループユーザーの権限情報に、グループを追加する.
+							if (!err) {
+								getGroupUserSetting(function (err, setting) {
+									if (setting.hasOwnProperty(userid)) {
+										if (setting[userid].viewable !== "all") {
+											setting[userid].viewable.push(groupID);
+										}
+										if (setting[userid].editable !== "all") {
+											setting[userid].editable.push(groupID);
+										}
+										// defaultグループは特殊扱いでユーザー無し
+										if (userid !== "group_default") {
+											changeGroupUserSetting(socketid, userid, setting[userid], function () {
+												if (endCallback) {
+													endCallback(err, groupID);
+												}
+											});
+										}
+									} else {
+										if (endCallback) {
+											endCallback(err, groupID);
+										}
 									}
-									if (setting[userid].editable !== "all") {
-										setting[userid].editable.push(groupID);
+								});
+							} else {
+								endCallback("faild to add group");
+							}
+						});
+					} else if (type === "display") {
+						addDisplayGroup(socketid, null, json.name, groupColor, function (err, groupID) {
+							// グループユーザーの権限情報に、グループを追加する.
+							if (!err) {
+								getGroupUserSetting(function (err, setting) {
+									if (setting.hasOwnProperty(userid)) {
+										if (!setting[userid].hasOwnProperty('displayEditable')) {
+											setting[userid].displayEditable = [];
+										}
+										if (setting[userid].displayEditable !== "all") {
+											setting[userid].displayEditable.push(groupID);
+										}
+										if (userid !== "group_default") {
+											changeGroupUserSetting(socketid, userid, setting[userid], function () {
+												if (endCallback) {
+													endCallback(err, groupID);
+												}
+											});
+										}
+									} else {
+										if (endCallback) {
+											endCallback(err, groupID);
+										}
 									}
-									// defaultグループは特殊扱いでユーザー無し
-									if (userid !== "group_default") {
-										changeGroupUserSetting(socketid, userid, setting[userid], function () {
-											if (endCallback) {
-												endCallback(err, groupID);
-											}
-										});
-									}
-								} else {
-									if (endCallback) {
-										endCallback(err, groupID);
-									}
-								}
-							});
-						} else {
-							endCallback("faild to add group");
-						}
-					});
+								});
+							} else {
+								endCallback("faild to add group");
+							}
+						});
+					}
 				} else {
 					endCallback("access denied");
 				}
@@ -2679,7 +3484,7 @@
 		if (isAllType || isIdentityType) {
 			getWindowMetaData(json, function (windowData) {
 				if (windowData) {
-					console.log("doneGetWindow:", windowData);
+					//console.log("doneGetWindow:", windowData);
 					if (endCallback) {
 						endCallback(null, windowData);
 					}
@@ -2699,15 +3504,15 @@
 	 */
 	function commandUpdateWindowMetaData(socketid, json, endCallback) {
 		console.log("commandUpdateWindowMetaData:", json.length);
-		var i,
-			metaData,
-			results = [],
-			all_done = json.length;
+		var updateWindowFunc = function (isAdmin) {
+			var i,
+				metaData,
+				results = [],
+				all_done = json.length;
 
-		isDisplayManipulatable(socketid, function (isManipulatable) {
-			if (isManipulatable) {
-				for (i = 0; i < json.length; i = i + 1) {
-					metaData = json[i];
+			for (i = 0; i < json.length; i = i + 1) {
+				metaData = json[i];
+				if (isAdmin || isDisplayEditable(socketid, metaData.group)) {
 					updateWindowMetaData(socketid, metaData, function (meta) {
 						--all_done;
 						results.push(meta);
@@ -2718,14 +3523,23 @@
 							}
 						}
 					});
+				} else {
+					--all_done;
 				}
 			}
-		});
+		};
+		
+		isAdmin(socketid, function (err, isAdmin) {
+			if (!err && isAdmin) {
+				updateWindowFunc(isAdmin);
+			} else {
+				updateWindowFunc(false);
+			}
+		});	
 	}
 
     /**
      * mouseコマンドを実行する.
-     * リモートマウスカーソル表示のために HSV カラーを新規接続に応じて生成する
      * @method commandUpdateMouseCursor
      * @param {String} socketid ソケットID
 	 * @param {JSON} json mouse情報を含んだjson
@@ -2737,25 +3551,11 @@
             connectionId[socketid] = connectionCount;
             ++connectionCount;
         }
-        json.connectionCount = connectionId[socketid];
-        i = connectionId[socketid] % 14;
-        // hsv は約 7 分割されるような循環
-        // 奇数回周目は v を半減させ視認性を上げる
-        if(i < 7){
-            j = 1.0;
-        }else{
-            j = 0.5;
-        }
-        c = hsv(49.21875 * connectionId[socketid], 1.0, j);
-        if(c){
-            c[0] = Math.floor(c[0] * 255);
-            c[1] = Math.floor(c[1] * 255);
-            c[2] = Math.floor(c[2] * 255);
-            json.hsv = 'rgb(' + (c.join(',')) + ')';
-        }
-        updateMouseCursor(socketid, json, function (windowData) {
-            endCallback(null, windowData);
-        });
+		json.connectionCount = connectionId[socketid];
+		
+		updateMouseCursor(socketid, json, function (windowData) {
+			endCallback(null, windowData);
+		});
     }
 
 	/**
@@ -2786,6 +3586,15 @@
 	}
 
 	/**
+	 * ユニークなコントローラIDを生成して返す
+     * @method commandGenerateCOntrollerID
+     * @param {Function} endCallback 終了時に呼ばれるコールバック
+	 */
+	function commandGenerateControllerID(endCallback) {
+		generateCOntrollerID(endCallback);
+	}
+	
+	/**
 	 * ログインコマンドを実行する
      * @method commandLogin
 	 * @param {JSON} data 対象のid, passwordを含むjson
@@ -2808,14 +3617,19 @@
 						loginkey : socketid,
 						authority : socketidToAccessAuthority[socketid]
 					}
-					endCallback(null, result);
+					getControllerData(data.controllerID, (function (result) {
+						return function (err, controllerData) {
+							result.controllerData = controllerData;
+							endCallback(null, result);
+						};
+					}(result)));
 					return;
 				} else {
 					endCallback("ログアウトしました", false);
 					return;
 				}
 			}
-			login(data.id, data.password, socketid, endCallback);
+			login(data.id, data.password, socketid, data.controllerID, endCallback);
 		} else {
 			endCallback("ユーザ名またはパスワードが正しくありません.");
 		}
@@ -2854,7 +3668,11 @@
 							changeGroupUserSetting(socketid, userList[i].id, {
 								password : data.password
 							}, endCallback);
-						} else {
+						} else if (userList[i].type === "api") {
+							changeGroupUserSetting(socketid, userList[i].id, {
+								password : data.password
+							}, endCallback);
+						}  else {
 							endCallback("failed to change password (3)");
 						}
 						break;
@@ -2864,12 +3682,48 @@
 		}
 	}
 
+	/**
+	 * コントローラデータを更新する
+	 * @param {*} socketid 
+	 * @param {*} data 
+	 * @param {*} endCallback 
+	 */
+	function commandUpdateControllerData(socketid, data, endCallback) {
+		if (data.hasOwnProperty('controllerID') && data.hasOwnProperty('controllerData')) {
+			updateControllerData(data.controllerID, data.controllerData, endCallback);
+		} else {
+			endCallback("failed");
+		}
+	}
+
+	/**
+	 * コントローラデータを取得する.
+	 * @param {*} socketid 
+	 * @param {*} data 
+	 * @param {*} resultCallback 
+	 */
+	function commandGetControllerData(socketid, data, resultCallback) {
+		if (data.hasOwnProperty('controllerID')) {
+			getControllerData(data.controllerID, endCallback);
+		} else {
+			endCallback("failed");
+		}
+
+	}
+
 	function getGroupID(groupName, endCallback) {
 		getGroupList(function (err, groupList) {
 			var k;
 			for (k = 0; k < groupList.grouplist.length; k = k + 1) {
 				if (groupList.grouplist[k].name === groupName) {
 					endCallback(groupList.grouplist[k].id);
+					return;
+				}
+			}
+			for (k = 0; k < groupList.displaygrouplist.length; k = k + 1) {
+				if (groupList.displaygrouplist[k].name === groupName) {
+					endCallback(groupList.displaygrouplist[k].id);
+					return;
 				}
 			}
 		});
@@ -2906,8 +3760,7 @@
 		if (data.hasOwnProperty('id') 
 			&& data.hasOwnProperty('editable') 
 			&& data.hasOwnProperty('viewable')
-			&& data.hasOwnProperty('group_manipulatable')
-			&& data.hasOwnProperty('display_manipulatable'))
+			&& data.hasOwnProperty('group_manipulatable'))
 		{
 			getUserList(function (err, userList) {
 				var i;
@@ -2918,8 +3771,10 @@
 								var setting = {
 									viewable : data.viewable,
 									editable : data.editable,
-									group_manipulatable : data.group_manipulatable,
-									display_manipulatable : data.display_manipulatable
+									group_manipulatable : data.group_manipulatable
+								};
+								if (data.hasOwnProperty('displayEditable')) {
+									setting.displayEditable = data.displayEditable
 								};
 								changeGroupUserSetting(socketid, userList[i].id, setting, function (err, reply) {
 									if (!err) {
@@ -3081,6 +3936,20 @@
 				resultCallback(err, reply);
 			}
 		};
+	};
+	
+	/**
+	 * updateVirtualDisplay処理実行後のブロードキャスト用ラッパー.
+	 * @method post_updateVirtualDisplay
+	 */
+	function post_updateVirtualDisplay(ws, io, resultCallback) {
+		return function (err, reply) {
+			ws_connector.broadcast(ws, Command.UpdateVirtualDisplay, reply);
+			io_connector.broadcast(io, Command.UpdateVirtualDisplay, reply);
+			if (resultCallback) {
+				resultCallback(err, reply);
+			}
+		};
 	}
 	
 	/**
@@ -3149,7 +4018,7 @@
 	 * @param {BLOB} io socket.ioオブジェクト
 	 * @param {BLOB} ws WebSocketオブジェクト
 	 */
-	function registerWSEvent(ws_connection, io, ws) {
+	function registerWSEvent(ws_connection, io, ws, ws_connections) {
 		var methods = {};
 
 		console.log("registerWSEvent");
@@ -3166,6 +4035,10 @@
 			commandGetContent(socketid, data, resultCallback);
 		});
 		
+		ws_connector.on(Command.GetTileContent, function (data, resultCallback, socketid) {
+			commandGetTileContent(socketid, data, resultCallback);
+		});
+
 		ws_connector.on(Command.UpdateMetaData, function (data, resultCallback, socketid) {
 			commandUpdateMetaData(socketid, data, post_updateMetaData(ws, io, resultCallback));
 		});
@@ -3191,7 +4064,7 @@
 		});
 		
 		ws_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
@@ -3237,8 +4110,21 @@
 		ws_connector.on(Command.AddContent, function (data, resultCallback, socketid) {
 			var metaData = data.metaData,
 				binaryData = data.contentData;
-			console.log(Command.AddContent, data);
+			console.log(Command.AddContent);//, data);
 			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
+		});
+		
+		ws_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			console.log(Command.AddTileContent);//, data);
+			commandAddTileContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+
+		ws_connector.on(Command.AddHistoricalContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
 		});
 		
 		ws_connector.on(Command.DeleteContent, function (data, resultCallback, socketid) {
@@ -3285,6 +4171,15 @@
 		ws_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		ws_connector.on(Command.GenerateControllerID, function (data, resultCallback) {
+			commandGenerateControllerID(resultCallback);
+		});
+		ws_connector.on(Command.UpdateControllerData, function (data, resultCallback, socketid) {
+			commandUpdateControllerData(socketid, data, resultCallback);
+		});
+		ws_connector.on(Command.GetControllerData, function (data, resultCallback, socketid) {
+			commandGetControllerData(socketid, data, resultCallback);
+		});
 		ws_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
 			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -3299,6 +4194,7 @@
 			}
 		});
 		ws_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCRequest, data);
 			io_connector.broadcast(io, Command.RTCRequest, data);
 			if (resultCallback) {
 				resultCallback();
@@ -3312,20 +4208,20 @@
 			}
 		});
 		ws_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
-			//ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
+			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
 			io_connector.broadcast(io, Command.RTCIceCandidate, data);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 		ws_connector.on(Command.RTCClose, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCClose, data);
 			io_connector.broadcast(io, Command.RTCClose, data);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 
-		getSessionList();
 		ws_connector.registerEvent(ws, ws_connection);
 
 		
@@ -3348,12 +4244,28 @@
 			commandAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback), post_updateContent(ws, io, resultCallback));
 		});
 
+		io_connector.on(Command.AddTileContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandTileAddContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+
+		io_connector.on(Command.AddHistoricalContent, function (data, resultCallback, socketid) {
+			var metaData = data.metaData,
+				binaryData = data.contentData;
+			commandAddHistoricalContent(socketid, metaData, binaryData, post_update(ws, io, resultCallback));
+		});
+
 		io_connector.on(Command.AddMetaData, function (data, resultCallback) {
 			commandAddMetaData(data, resultCallback);
 		});
 		
 		io_connector.on(Command.GetContent, function (data, resultCallback, socketid) {
 			commandGetContent(socketid, data, resultCallback);
+		});
+		
+		io_connector.on(Command.GetTileContent, function (data, resultCallback, socketid) {
+			commandGetTileContent(socketid, data, resultCallback);
 		});
 
 		io_connector.on(Command.GetMetaData, function (data, resultCallback, socketid) {
@@ -3396,7 +4308,7 @@
 		});
 
         io_connector.on(Command.UpdateVirtualDisplay, function (data, resultCallback, socketid) {
-			commandUpdateVirtualDisplay(socketid, data, post_updateWindowMetaData(ws, io, resultCallback));
+			commandUpdateVirtualDisplay(socketid, data, post_updateVirtualDisplay(ws, io, resultCallback));
 		});
 
 		io_connector.on(Command.GetVirtualDisplay, function (data, resultCallback, socketid) {
@@ -3470,6 +4382,15 @@
 		io_connector.on(Command.GetUserList, function (data, resultCallback) {
 			commandGetUserList(resultCallback);
 		});
+		io_connector.on(Command.GenerateControllerID, function (data, resultCallback) {
+			commandGenerateControllerID(resultCallback);
+		});
+		io_connector.on(Command.UpdateControllerData, function (data, resultCallback, socketid) {
+			commandUpdateControllerData(socketid, data, resultCallback);
+		});
+		io_connector.on(Command.GetControllerData, function (data, resultCallback, socketid) {
+			commandGetControllerData(socketid, data, resultCallback);
+		});
 		io_connector.on(Command.ChangeGlobalSetting, function (data, resultCallback, socketid) {
 			commandChangeGlobalSetting(socketid, data, post_updateSetting(ws, io, resultCallback));
 		});
@@ -3484,6 +4405,7 @@
 			}
 		});
 		io_connector.on(Command.RTCRequest, function (data, resultCallback) {
+			ws_connector.broadcast(ws, Command.RTCRequest, data);
 			io_connector.broadcast(io, Command.RTCRequest, data);
 			if (resultCallback) {
 				resultCallback();
@@ -3498,13 +4420,14 @@
 		});
 		io_connector.on(Command.RTCIceCandidate, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCIceCandidate, data);
-			//io_connector.broadcast(io, Command.RTCIceCandidate, data);
+			io_connector.broadcast(io, Command.RTCIceCandidate, data);
 			if (resultCallback) {
 				resultCallback();
 			}
 		});
 		io_connector.on(Command.RTCClose, function (data, resultCallback) {
 			ws_connector.broadcast(ws, Command.RTCClose, data);
+			io_connector.broadcast(io, Command.RTCClose, data);
 			if (resultCallback) {
 				resultCallback();
 			}
@@ -3524,7 +4447,11 @@
 		contentPrefix = frontPrefix + uuidPrefix + contentPrefix;
 		contentRefPrefix = frontPrefix + uuidPrefix + contentRefPrefix;
 		contentBackupPrefix = frontPrefix + uuidPrefix + contentBackupPrefix;
+		contentHistoryPrefix = frontPrefix + uuidPrefix + contentHistoryPrefix;
+		contentHistoryDataPrefix = frontPrefix + uuidPrefix + contentHistoryDataPrefix;
+		contentThumbnailPrefix = frontPrefix + uuidPrefix + contentThumbnailPrefix;
 		metadataPrefix = frontPrefix + uuidPrefix + metadataPrefix;
+		metadataHistoryPrefix = frontPrefix + uuidPrefix + metadataHistoryPrefix;
 		metadataBackupPrefix = frontPrefix + uuidPrefix + metadataBackupPrefix;
 		windowMetaDataPrefix = frontPrefix + uuidPrefix + windowMetaDataPrefix;
 		windowContentPrefix = frontPrefix + uuidPrefix + windowContentPrefix;
@@ -3532,6 +4459,7 @@
 		virtualDisplayIDStr = frontPrefix + uuidPrefix + virtualDisplayIDStr;
 		groupListPrefix = frontPrefix + uuidPrefix + groupListPrefix;
 		adminListPrefix = frontPrefix + adminListPrefix;
+		controllerDataPrefix = frontPrefix + controllerDataPrefix;
 		globalSettingPrefix = frontPrefix + globalSettingPrefix;
 		adminUserPrefix = frontPrefix + adminUserPrefix; // 管理ユーザー設定
 		groupUserPrefix = frontPrefix + uuidPrefix + groupUserPrefix; // グループユーザー設定
@@ -3543,13 +4471,18 @@
 		console.log("idstr:" + windowContentRefPrefix);
 		console.log("idstr:" + groupListPrefix);
 		console.log("idstr:" + contentBackupPrefix);
+		console.log("idstr:" + contentHistoryPrefix);
+		console.log("idstr:" + contentHistoryDataPrefix);
+		console.log("idstr:" + contentThumbnailPrefix);
 		console.log("idstr:" + metadataBackupPrefix);
+		console.log("idstr:" + metadataHistoryPrefix);
+		client.CONFIG('SET', 'maxmemory-policy', 'volatile-ttl');
 
 		/// 管理者の初期登録
 		
 		textClient.exists(adminUserPrefix,  function (err, doesExists) {
 			if (doesExists !== 1) {
-				addAdmin("master", util.generateUUID8(), "管理者", "admin", function (err, reply) {});
+				addAdmin("master", util.generateUUID8(), "Admin", "admin", function (err, reply) {});
 			}
 			// jsonから追加.
 			fs.readFile("../admin.json", function (err, reply) {
@@ -3564,7 +4497,7 @@
 									addAdmin("master", util.generateUUID8(), name, admins[name].password, (function (name) {
 										return function (err, reply) {
 											if (!err) {
-												console.log(name, "を上書きしました");
+												console.log(name, "overwritten");
 											}
 										};
 									}(name)));
@@ -3574,7 +4507,7 @@
 								deleteAdmin("master", name, (function (name) {
 									return function (err, reply) {
 										if (!err) {
-											console.log(name, "を削除しました");
+											console.log(name, "deleted");
 										}
 									};
 								}(name)));
@@ -3602,33 +4535,12 @@
 		});
 	}
 
-	/**
-	 * HSV 色空間の値から RGB を生成して返す.
-	 * @method hsv
-	 * @param {number} h hue
-	 * @param {number} s saturation
-	 * @param {number} v value
-	 */
-    function hsv(h, s, v){
-        if(s > 1 || v > 1){return;}
-        var th = h % 360;
-        var i = Math.floor(th / 60);
-        var f = th / 60 - i;
-        var m = v * (1 - s);
-        var n = v * (1 - s * f);
-        var k = v * (1 - s * (1 - f));
-        var color = new Array();
-        if(!s > 0 && !s < 0){
-            color.push(v, v, v);
-        } else {
-            var r = new Array(v, n, m, m, k, v);
-            var g = new Array(k, v, v, n, m, m);
-            var b = new Array(m, m, k, v, v, n);
-            color.push(r[i], g[i], b[i]);
-        }
-        return color;
-    }
-
+	// setting.jsonを設定
+	Operator.prototype.setSettingJSON = function (json) {
+		// 毎回上書きするglobal設定
+		changeGlobalSetting("master", json);
+		Thumbnail.setPreviewWH(Number(json.reductionResolution));
+	};
 	Operator.prototype.getContent = getContent;
 	Operator.prototype.registerEvent = registerEvent;
 	Operator.prototype.registerWSEvent = registerWSEvent;
@@ -3643,5 +4555,6 @@
 	Operator.prototype.commandUpdateWindowMetaData = commandUpdateWindowMetaData;
 	Operator.prototype.commandUpdateMouseCursor = commandUpdateMouseCursor;
 	Operator.prototype.commandUpdateMetaData = commandUpdateMetaData;
+
 	module.exports = new Operator();
 }());

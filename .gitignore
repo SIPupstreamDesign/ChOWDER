@@ -1,28 +1,5 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+/node_modules
+/.vscode
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+# redis dumpfiles
+*.rdb

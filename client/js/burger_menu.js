@@ -91,6 +91,7 @@
 				li = document.createElement('li');
 				li.className = "burger_menu_content";
 				li.innerHTML = key;
+				li.setAttribute('data-key', key)
 				if (value.hasOwnProperty('func')) {
 					li.onclick = (function (value) {
 						return function (evt) {

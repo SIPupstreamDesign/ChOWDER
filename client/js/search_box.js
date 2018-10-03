@@ -1,5 +1,9 @@
 /*jslint devel:true*/
 /*global Float32Array */
+
+// ControllerのSearchタブ（オレンジ色のタブ）
+// ControllerGUI.initより初期化されるシングルトン
+
 (function () {
 	"use strict";
 	var SearchBox;
@@ -71,7 +75,7 @@
                 if (self.check_groups.indexOf(self.setting.groups[i].id) < 0) {
                     self.check_groups.push(self.setting.groups[i].id);
                 }
-            } else {
+            } else if (!(self.check_groups.indexOf(self.setting.groups[i].id) < 0)) {
                 self.check_groups.splice(self.check_groups.indexOf(self.setting.groups[i].id), 1);
             }
         }

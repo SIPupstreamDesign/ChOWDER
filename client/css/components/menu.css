@@ -58,6 +58,7 @@ ul.menu_level3 {
     background: rgb(62, 130, 189);
     -webkit-transition: all .5s;
     transition: all .5s;
+	cursor : pointer;
 }
 
 .menu_level1 li {
@@ -68,16 +69,22 @@ ul.menu_level3 {
     border-top: 1px solid #111;
 }
 
-.menu_level1 li a:hover {
-    background: rgb(62, 130, 189);
+.menu_level1 li a:hover,
+.menu_level1 li div:hover {
+	background: rgb(62, 130, 189);
+	cursor : pointer;
 }
 
-.menu_level2 li a:hover {
+.menu_level2 li a:hover,
+.menu_level2 li div:hover {
     background: rgb(62, 130, 189);
+	cursor : pointer;
 }
 
-.menu_level3 li a:hover {
+.menu_level3 li a:hover,
+.menu_level3 li div:hover {
     background: rgb(62, 130, 189);
+	cursor : pointer;
 }
 
 /* floatクリア */

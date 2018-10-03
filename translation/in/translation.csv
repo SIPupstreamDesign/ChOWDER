@@ -1,0 +1,100 @@
+KEYS,ja-JP,en-US
+show_id,IDを表示,Show ID
+select_all,全て選択,Select All
+hide,非表示,Hide
+delete,削除,Delete
+add_layout,レイアウト追加,Add Layout
+overwrite_layout,レイアウト上書き,Overwrite Layout
+change_group,グループ変更,Change Group
+change_displaygroup,ディスプレイグループ変更,Change Display Group
+select_all_in_a_group,グループ内全て選択,Select All in a Group
+move_to_front,最前面に移動,Move to front
+move_to_back,最背面に移動,Move to back
+add_content,コンテンツ追加,Add Content
+swap_image,画像差し替え,Change Image
+image_file,画像ファイル,Image File
+movie_file,動画ファイル,Movie File
+text,テキスト,Text
+text_file,テキストファイル,Text File
+pdf_file,PDFファイル,PDF File
+url,URL,URL
+screenshare,スクリーン共有,Share Screen
+camerashare,カメラ共有,Share Camera
+change_name,名前変更,Rename
+change_color,色変更,Change Color
+user,ユーザー,User
+password,パスワード,Password
+meta_info,メタ情報,Meta Info
+movie_setting,動画設定,Movie Settings
+change_history,差し替え履歴,Replacement History
+login,ログイン,Login
+invalid_login,ユーザーまたはパスワードが正しくありません,Invalid Login. User or Password isn't correct.
+restore,復元,Restore
+management,管理,Management
+db_management,DB管理,DB Management
+history_management,履歴管理,History Management
+max_history,最大履歴保存数(0で無制限),MAX history (0:unlimited)
+authority_setting,閲覧・編集権限の設定,Authority Settings
+applied,設定を適用しました,The setting is applied.
+setting_target,設定対象,Setting Target
+editable_content,編集可能コンテンツ,Editable Content
+viewable_content,閲覧可能コンテンツ,Viewable Content
+allow_editting_group,グループの編集を許可,Allow Edit of Groups
+editable_display,編集可能ディスプレイ,Editable Display
+setting_password,パスワードの設定,Password Settings
+old_password,変更前のパスワード,Old Password
+new_password,新規パスワード,New Password
+password_changed,パスワードを変更しました,Password was changed successfully.
+add_text_file,テキストファイルの追加,Add Text File
+add_url,URLの追加,Add URL
+add_image,画像の追加,Add Image
+add_movie,動画の追加,Add Movie
+add_pdf,PDFの追加,Add PDF
+all,全て,All
+change,切り替え,Change
+new,新規,New
+initialize,初期化,Initialize
+apply,適用,Apply
+new_group,新規グループ,New Group
+add_new_group,新規グループの追加,Add New Group
+move_up,1つ上に移動,Move Up
+move_down,1つ下に移動,Move Down
+change_group_name,グループ名変更,Change Group Name
+change_group_color,グループ色変更,Change Group Color
+save_name,新規保存名,Name
+create,作成,Create
+already_exists,既に存在する名前です,The name already exists.
+cannot_empty,空の名前にはできません,The name is empty.
+cannot_set_to_this_user,このユーザーにはパスワードは設定できません,Cannot set password to this user.
+input_valid_password,有効なパスワードを入力してください,Input valid password.
+delete_is_ok,を削除します。よろしいですか?,"will be deleted, OK?"
+init_is_ok,を初期化します。よろしいですか?,"will be initialized, OK?"
+layout_apply_is_ok,Layoutを適用します。よろしいですか?,"Layout will be applied, OK?"
+video_input,ビデオ入力,Video Input
+audio_input,オーディオ入力,Audio Input
+video_quality,ビデオ品質,Video Quality
+audio_quality,オーディオ品質,Audio Quality
+initial_quality_info,初期品質情報,Initial Quality Information
+video_src_width,動画ソースの幅,Video Src Width
+video_src_height,動画ソースの高さ,Video Src Height
+video_codec,ビデオコーデック,Video Codec
+audio_codec,オーディオコーデック,Audio Codec
+available_send_band_width,利用可能な送信バンド幅,Available transmission bandwidth
+target_enc_bitrate,ターゲットエンコードビットレート,Target encoding bitrate
+actual_enc_bitrate,実際のエンコードビットレート,Actual encoding bitrate
+transmit_bitrate,伝送ビットレート,Transmission bitrate
+connected_to_server,サーバーと接続されています,Connected to the server.
+cannot_connect_to_server,サーバーと接続できていません,Isn't connected to the server.
+add_layout_memo,レイアウト追加 - メモ,Add Layout - memo
+input_extension_id,ExtensionIDを入力してください,Input ExtensionID
+select_target_layout,上書き対象のレイアウトを選択してください,Select target layout.
+layout_overwrite_is_ok,選択中のレイアウトを上書きします。よろしいですか？,"Overwrite selected Layout, OK?"
+restore_content,コンテンツを復元します,Restore content.
+restore_here,現在位置に復元,Restore to current position.
+delete_content_in_group_is_ok,グループ内のコンテンツも削除されます. よろしいですか?,"Contents in the group will also be deleted, is it OK?"
+add_text,テキストの追加,Add Text
+change_saving_name,保存名の変更,Change name
+control_videos_in_a_group,グループ内動画の一括操作,Control All Videos in a Group
+video_controller,動画一括制御,Video Controller
+change_timeseries_key,時系列データの切り替え,Change timeseries
+sync,同期,Sync

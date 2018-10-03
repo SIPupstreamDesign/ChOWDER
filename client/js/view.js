@@ -88,7 +88,8 @@
 	}
 
 	/**
-	 * クライアントサイズを取得する
+	 * クライアントサイズを取得する.
+	 * ただの `{width: window.innerWidth, height: window.innerHeight}`.
 	 * @method getWindowSize
 	 * @return {Object} クライアントサイズ
 	 */
@@ -140,59 +141,51 @@
 	}
 
 	/**
-	 * cookie取得
-	 * @method getCookie
-	 * @param {String} key cookieキー
-	 * @return Literal cookieデータ
-	 */
-	function getCookie(key) {
-		var i,
-			pos,
-			cookies;
-		if (document.cookie.length > 0) {
-			console.log("all cookie", document.cookie);
-			cookies = [document.cookie];
-			if (document.cookie.indexOf(';') >= 0) {
-				cookies = document.cookie.split(';');
-			}
-			for (i = 0; i < cookies.length; i = i + 1) {
-				pos = cookies[i].indexOf(key + "=");
-				if (pos >= 0) {
-					return unescape(cookies[i].substring(pos + key.length + 1));
-				}
-			}
-		}
-		return "";
-	}
-
-	/**
-	 * cookie保存
-	 * @method saveCookie
-	 */
-	function saveCookie() {
-		if (windowData) {
-			console.log("saveCookie", windowData);
-			document.cookie = 'window_id=' + windowData.id;
-			document.cookie = windowData.id + '_x=' + windowData.posx;
-			document.cookie = windowData.id + '_y=' + windowData.posy;
-			document.cookie = windowData.id + '_visible=' + windowData.visible;
-		}
-	}
-
-	/**
 	 * window idの取得.
 	 * @method getWindowID
 	 */
 	function getWindowID() {
-		var window_id = getCookie('window_id'),
-			hashid = location.hash.split("#").join("");
-		if (hashid.length > 0) {
-			window_id = decodeURIComponent(hashid);
+		return getQueryParams().id;
+	}
+
+	/**
+	 * Parse `location.search` and return it as object.
+	 * @returns {Object} result
+	 */
+	function getQueryParams() {
+		var re = /[?&]([^=]+)=([^&]*)/g;
+		var ret = {};
+		var match;
+		while ((match = re.exec(location.search)) !== null) { // while `re` is not depleted
+			ret[match[1]] = decodeURIComponent(match[2]);
 		}
-		if (!window_id || window_id === undefined || window_id === "undefined") {
-			window_id = '';
+		return ret;
+	}
+
+	/**
+	 * Convert map into query params string.
+	 * @param {Object} map Map of parameters you want to convert into
+	 * @return {string} result
+	 */
+	function mapToQueryString(map) {
+		var str = '?';
+		for (var key in map) {
+			if (map[key] !== undefined) {
+				str += key + '=' + map[key] + '&';
+			}
 		}
-		return window_id;
+		str = str.substring( 0, str.length - 1 ); // remove the last '&'
+
+		return str;
+	}
+
+	/**
+	 * Parse `location.search` and return it as object.
+	 * @param {Object} map Map of parameters you want to set
+	 */
+	function setQueryParams(map) {
+		var query = mapToQueryString(map);
+		history.replaceState(null, '', location.href.match(/^[^?]+/)[0] + query);
 	}
 
 	/**
@@ -200,35 +193,78 @@
 	 * @method registerWindow
 	 */
 	function registerWindow() {
-		var wh = getWindowSize(),
-			cx = wh.width / 2.0,
-			cy = wh.height / 2.0,
-			window_id = getCookie('window_id'),
-			hashid = location.hash.split("#").join("");
+		var wh = getWindowSize();
 
-		vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
+		vscreen.assignWhole(wh.width, wh.height, wh.width / 2.0, wh.height / 2.0, 1.0);
 
-		if (hashid.length > 0) {
-			window_id = decodeURIComponent(hashid);
-		} else if (window_id) {
-			changeID(null, window_id);
-			return;
-		}
+		var window_id = '';
 
-		if (window_id !== "") {
-			connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
-				if (!err && metaData) {
-					metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
-					metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
-					metaData.orgWidth = wh.width;
-					metaData.orgHeight = wh.height;
-					connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
-				} else {
-					connector.send('AddWindowMetaData', {id : window_id, posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
+		(function() { // since the variable `hash` is pretty local
+			var hash = location.hash.substring(1); // legacy
+			if (hash !== '') {
+				window_id = decodeURIComponent(hash);
+			}
+		})();
+
+		var query = getQueryParams(location.search) || {};
+		window_id = query.id ? decodeURIComponent(query.id) : window_id;
+		var groupId = undefined;
+
+		var f = function() {
+			if (window_id !== '') {
+				connector.send('GetWindowMetaData', {id : window_id}, function (err, metaData) {
+					if (!err && metaData) {
+						var scale = parseFloat(query.scale) || parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
+						metaData.group = groupId || metaData.group,
+						metaData.width = wh.width / scale;
+						metaData.height = wh.height / scale;
+						metaData.orgWidth = wh.width;
+						metaData.orgHeight = wh.height;
+						metaData.posx = query.posx || metaData.posx;
+						metaData.posy = query.posy || metaData.posy;
+						connector.send('AddWindowMetaData', metaData, doneAddWindowMetaData);
+					} else {
+						scale = parseFloat(query.scale) || 1.0;
+						connector.send('AddWindowMetaData', {
+							id: window_id,
+							group: groupId,
+							posx: query.posx || 0,
+							posy: query.posy || 0,
+							width: wh.width / scale,
+							height: wh.height / scale,
+							orgWidth: wh.width,
+							orgHeight: wh.height,
+							visible: true
+						}, doneAddWindowMetaData);
+					}
+				});
+			} else {
+				var scale = parseFloat(query.scale) || 1.0;
+				connector.send('AddWindowMetaData', {
+					group: groupId,
+					posx: query.posx || 0,
+					posy: query.posy || 0,
+					width: wh.width / scale,
+					height: wh.height / scale,
+					orgWidth: wh.width,
+					orgHeight: wh.height,
+					visible: true
+				}, doneAddWindowMetaData);
+			}
+		};
+
+		var groupName = decodeURIComponent(query.group || '');
+		if (groupName) {
+			connector.send('GetGroupList', {}, function (err, data) {
+				for (var i = 0; i < data.displaygrouplist.length; i ++) {
+					if (data.displaygrouplist[i].name === groupName) {
+						groupId = data.displaygrouplist[i].id;
+					}
 				}
+				f();
 			});
 		} else {
-			connector.send('AddWindowMetaData', { posx : 0, posy : 0, width : wh.width, height : wh.height, visible : false }, doneAddWindowMetaData);
+			f();
 		}
 	}
 
@@ -335,7 +371,11 @@
 		if (contentType === 'text') {
 			tagName = 'pre';
 		} else if (contentType === 'video') {
-			tagName = 'video'
+			tagName = 'video';
+		} else if (contentType === 'pdf') {
+			tagName = 'canvas';
+		} else if (contentType === 'tileimage') {
+			tagName = 'div';
 		} else {
 			tagName = 'img';
 		}
@@ -526,7 +566,7 @@
 	function getRTCKey(metaData) {
 		return metaData.id + "_" + windowData.id + "_" + random_id_for_webrtc;
 	}
-
+	
 	/**
 	 * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
 	 * @method assignMetaBinary
@@ -534,13 +574,12 @@
 	 * @param {Object} contentData コンテンツデータ(テキストまたはバイナリデータ)
 	 */
 	function assignMetaBinary(metaData, contentData) {
+		console.log(metaData);
 		var previewArea = document.getElementById('preview_area'),
 			tagName,
 			blob,
 			elem,
-			memo,
 			mime = "image/jpeg",
-			boundElem,
 			id,
 			duplicatedElem;
 
@@ -578,6 +617,7 @@
 				elem.setAttribute('autoplay', '')
 				elem.setAttribute('preload', "metadata")
 				if (!webRTCDict.hasOwnProperty(rtcKey)) {
+					metaData.from = "view";
 					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
 						var webRTC = new WebRTC();
 						webRTCDict[rtcKey] = webRTC;
@@ -605,10 +645,12 @@
 
 						webRTC.on('icecandidate', function (type, data) {
 							if (type === "tincle") {
+								metaData.from = "view";
 								connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
 									key : rtcKey,
 									candidate: data
 								}), function (err, reply) {});
+								delete metaData.from;
 							}
 						});
 						
@@ -620,12 +662,75 @@
 								}
 								delete webRTCDict[this];
 							}
-						}.bind(rtcKey))
+						}.bind(rtcKey));
 					});
+					delete metaData.from;
 				}
 			} else if (metaData.type === 'text') {
 				// contentData is text
 				elem.innerHTML = contentData;
+			} else if (metaData.type === 'pdf') {
+				if (!elem.pdfSetupCompleted) {
+					elem.pdfSetupCompleted = true;
+					var context = elem.getContext('2d');
+
+					var pdfjsLib = window['pdfjs-dist/build/pdf'];
+					window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+					window.PDFJS.cMapPacked = true;
+
+					pdfjsLib.getDocument(contentData).then(function (pdf) {
+						metaData.pdfNumPages = pdf.numPages;
+
+						var lastTask = Promise.resolve();
+						var lastDate = 0;
+						var lastPage = 0;
+						var lastWidth = 0;
+						elem.loadPage = function (p, width) {
+							var date = Date.now();
+							lastDate = date;
+
+							if (lastPage === p && lastWidth === width) { return; }
+
+							setTimeout(function () {
+								if (lastDate !== date) { return; }
+								lastPage = p;
+								lastWidth = width;
+
+								pdf.getPage(p).then(function (page) {
+									var viewport = page.getViewport(width / page.getViewport(1).width);
+
+									var orgAspect = metaData.orgWidth / metaData.orgHeight;
+									var pageAspect = viewport.width / viewport.height;
+
+									elem.width = width;
+									elem.height = width / orgAspect;
+
+									var transform = [ 1, 0, 0, 1, 0, 0 ];
+									if ( orgAspect < pageAspect ) {
+										var margin = ( 1.0 / orgAspect - 1.0 / pageAspect ) * width;
+										transform[ 5 ] = margin / 2;
+									} else {
+										margin = ( orgAspect - pageAspect ) * width;
+										transform[ 4 ] = margin / 2;
+										transform[ 0 ] = ( width - margin ) / width;
+										transform[ 3 ] = transform[ 0 ];
+									}
+
+									lastTask = lastTask.then(function () {
+										return page.render({
+											canvasContext: context,
+											viewport: viewport,
+											transform: transform
+										});
+									});
+								});
+							}, lastPage === p ? 500 : 0);
+						};
+						elem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
+					});
+				}
+			} else if (metaData.type === 'tileimage') {
+				// nothing to do
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -634,6 +739,11 @@
 				blob = new Blob([contentData], {type: mime});
 				if (elem && blob) {
 					URL.revokeObjectURL(elem.src);
+					elem.onload = function () {
+						if (this.hasOwnProperty('timestamp')) {
+							console.debug(this.id,　"の登録から表示完了までの時間：",  (new Date() - new Date(this.timestamp)) / 1000 + "秒");
+						}
+					}.bind(metaData);
 					elem.src = URL.createObjectURL(blob);
 				}
 			}
@@ -675,7 +785,7 @@
 
 		elem.id = metaData.id;
 		elem.style.position = "absolute";
-		elem.className = "temporary_bounds";
+		elem.className = Constants.TemporaryBoundClass;
 		setupContent(elem, elem.id);
 		insertElementWithDictionarySort(previewArea, elem);
 	}
@@ -767,29 +877,33 @@
 	/**
 	 * ディスプレイIDの変更.
 	 * @method changeID
-	 * @param {Event} e イベント
+	 * @param {string} id 新しいディスプレイID
 	 */
-	function changeID(e, id, noReload) {
-		var elem = document.getElementById('input_id'),
-			val,
-			url;
-		if (e) {
-			e.preventDefault();
-		}
-		if (elem && elem.value) {
-			console.log(elem.value);
-			val = elem.value.split(' ').join('');
-			val = val.split('　').join('');
-			location.hash = fixedEncodeURIComponent(val);
-			if (!noReload) {
-				location.reload(true);
+	function changeID(id) {
+		var newId = id.replace(' ', '_');
+		var params = {id: newId};
+
+		connector.send('GetWindowMetaData', {id : getWindowID()}, function (err, metaDataCur) {
+			if (!err && metaDataCur) {
+				connector.send('GetWindowMetaData', {id : newId}, function (err, metaDataDst) {
+					if (!err && metaDataDst) {
+						params.posx = metaDataDst.posx;
+						params.posy = metaDataDst.posy;
+						params.scale = parseFloat(metaDataDst.orgWidth) / parseFloat(metaDataDst.width);
+					} else {
+						params.posx = metaDataCur.posx;
+						params.posy = metaDataCur.posy;
+						params.scale = parseFloat(metaDataCur.orgWidth) / parseFloat(metaDataCur.width);
+					}
+		
+					setQueryParams(params);
+					location.reload();
+				});
+			} else {
+				console.error('Something weird is happening');
+				console.error(err);
 			}
-		} else if (id) {
-			location.hash = fixedEncodeURIComponent(id);
-			if (!noReload) {
-				location.reload(true);
-			}
-		}
+		});
 	}
 
 	/**
@@ -847,10 +961,10 @@
 			for (i = 0; i < json.length; i = i + 1) {
 				metaDataDict[json[i].id] = json[i];
 				windowData = json[i];
-				saveCookie();
 				window.parent.document.title = "Display ID:" + json[i].id;
 				document.getElementById('input_id').value = json[i].id;
 				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
+				setQueryParams({id: json[i].id});
 				updatePreviewAreaVisible(windowData);
 				resizeViewport(windowData);
 			}
@@ -865,7 +979,6 @@
 			for (i = 0; i < json.length; i = i + 1) {
 				metaDataDict[json[i].id] = json[i];
 				windowData = json[i];
-				saveCookie();
 				window.parent.document.title = "Display ID:" + json[i].id;
 				document.getElementById('input_id').value = json[i].id;
 				document.getElementById('displayid').innerHTML = "ID:" + json[i].id;
@@ -885,7 +998,6 @@
 		if (!err && json) {
 			metaDataDict[json.id] = json;
 			windowData = json;
-			saveCookie();
 			updatePreviewAreaVisible(windowData);
 			resizeViewport(windowData);
 			updateContentVisible();
@@ -903,6 +1015,7 @@
 		*/
 	};
 
+
 	/**
 	 * GetContent終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -913,6 +1026,14 @@
 		if (!err) {
 			var metaData = data.metaData,
 				contentData = data.contentData;
+
+			// サムネイルなどの複数バイナリが入っている場合
+			// contentData[0]はmetaDataのリスト.
+			// contentData[1]はbinaryDataのリスト.
+			// contentData[n][0]がコンテンツ本体
+			if (data.contentData instanceof Array) {
+				contentData = data.contentData[1][0];
+			}
 		
 			// 閲覧可能か
 			if (!isViewable(metaData.group)) {
@@ -920,8 +1041,13 @@
 			}
 			// レイアウトは無視
 			if (Validator.isLayoutType(metaData)) { return; }
-			// コンテンツ登録&表示
-			assignMetaBinary(metaData, contentData);
+
+			if (metaData.type === 'tileimage') {
+				assignTileImage(metaData, contentData, true);
+			} else {
+				// コンテンツ登録&表示
+				assignMetaBinary(metaData, contentData);
+			}
 		}
 	};
 
@@ -1006,6 +1132,155 @@
 	}
 
 	/**
+	 * タイル画像の枠を全部再生成する。中身の画像(image.src)は作らない。
+	 * @param {*} elem 
+	 * @param {*} metaData 
+	 */
+	function regenerateTileElements(elem, metaData) {
+		var i, k;
+		var image;
+		var tileIndex = 0;
+		var previewArea = document.getElementById('preview_area');
+		if (elem) {
+			// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
+			if (elem.className === Constants.TemporaryBoundClass) {
+				previewArea.removeChild(elem);
+				elem = null;
+			}
+		}
+		if (!elem) {
+			elem = document.createElement(getTagName(metaData.type));
+			elem.id = metaData.id;
+			elem.style.position = "absolute";
+			elem.style.color = "white";
+			setupContent(elem, elem.id);
+			insertElementWithDictionarySort(previewArea, elem);
+		}
+		elem.innerHTML = "";
+		// reduction image用
+		image = new Image();
+		image.style.position = "absolute";
+		image.style.display = "inline";
+		image.className = "reduction_image";
+		elem.appendChild(image);
+
+		// tile用
+		for (i = 0; i < Number(metaData.ysplit); ++i) {
+			for (k = 0; k < Number(metaData.xsplit); ++k) {
+				image = new Image();
+				image.style.position = "absolute";
+				image.style.display = "inline";
+				image.className = "tile_index_" + String(tileIndex);
+				elem.appendChild(image);
+				++tileIndex;
+			}
+		}
+	}
+
+	/**
+	 * タイル画像はassignMetaBinaryではなくこちらでコンテンツ生成を行う。
+	 * @param {*} metaData 
+	 * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
+	 */
+	function assignTileImage(metaData, contentData, isReload) {
+		var elem = document.getElementById(metaData.id);
+		var i, k;
+		var tileIndex = 0;
+		var request = JSON.parse(JSON.stringify(metaData));
+
+		// ウィンドウ枠内に入っているか判定用
+		var whole = vscreen.transformOrgInv(vscreen.getWhole());
+		whole.x = vscreen.getWhole().x;
+		whole.y = vscreen.getWhole().y;
+
+		var rect;
+		var mime = "image/jpeg";
+		var previousElem = null;
+		var previousImage = null;
+		var visible;
+		var isInitial = true;
+
+		for (i = 0; i < Number(metaData.ysplit); ++i) {
+			for (k = 0; k < Number(metaData.xsplit); ++k) {
+				request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
+				rect = vscreen_util.getTileRect(metaData, k, i);
+				visible = !vscreen_util.isOutsideWindow(rect, whole);
+				var tileClassName = 'tile_index_' + String(tileIndex);
+
+				if (visible) {
+					if (elem && elem.getElementsByClassName(tileClassName).length > 0) {
+						previousElem = elem.getElementsByClassName(tileClassName)[0]
+					}
+					if (previousElem) {
+						previousImage = previousElem.src.length > 0;
+					} else {
+						// 最初の1個が見つからない場合はimageエレメントを全部作り直す
+						regenerateTileElements(elem, metaData);
+						elem = document.getElementById(metaData.id);
+						vscreen_util.resizeTileImages(elem, metaData);
+					}
+					
+					if (isInitial
+						&& metaData.hasOwnProperty('reductionWidth')
+						&& metaData.hasOwnProperty('reductionHeight')) {
+
+						var reductionElem = elem.getElementsByClassName('reduction_image')[0];
+					
+						// contentData(reduction data)を生成
+						// 解像度によらず生成する
+						if (reductionElem.src.length === 0 || isReload) {
+							if (!reductionElem.src.length === 0) {
+								URL.revokeObjectURL(reductionElem.src);	
+							}
+							var blob = new Blob([contentData], {type: mime});
+							reductionElem.src = URL.createObjectURL(blob);
+						}
+
+						// metadataの解像度がcontentData（縮小版画像）より小さいか調べる
+						if (Number(reductionElem.style.width.split("px").join("")) <= Number(metaData.reductionWidth)
+							&& Number(reductionElem.style.height.split("px").join("")) <= Number(metaData.reductionHeight)) {
+
+							// reductionを表示、タイルを非表示に
+							reductionElem.style.display = "inline";
+							for (var n = 0; n < elem.children.length; ++n) {
+								if (elem.children[n].className !== "reduction_image") {
+									elem.children[n].style.display = "none"
+								}
+							}
+							return;
+						} else {
+							// reductionを非表示、タイルを表示
+							reductionElem.style.display = "none";
+							for (var n = 0; n < elem.children.length; ++n) {
+								if (elem.children[n].className !== "reduction_image") {
+									elem.children[n].style.display = "inline"
+								}
+							}
+						}
+					}
+					
+					if (!previousImage || isReload) {
+						connector.send('GetTileContent', request, function (err, data) {
+							if (err) { console.error(err); return; }
+							var tileClassName = 'tile_index_' + String(data.metaData.tile_index);
+							var blob = new Blob([data.contentData], {type: mime});
+							var image = elem.getElementsByClassName(tileClassName)[0];
+							if (!previousImage) {
+								URL.revokeObjectURL(image.src);	
+							}
+							image.src = URL.createObjectURL(blob);
+						});
+					}
+
+					isInitial = false;
+				}
+				++tileIndex;
+			}
+		}
+	}
+
+
+	/**
 	 * GetMetaData終了コールバック
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
@@ -1021,6 +1296,7 @@
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
 			isUpdateContent = (metaDataDict[json.id].restore_index !== json.restore_index);
+			isUpdateContent = isUpdateContent || (metaDataDict[json.id].keyvalue !== json.keyvalue);
 		}
 		// 閲覧可能か
 		if (!isViewable(json.group)) {
@@ -1043,9 +1319,7 @@
 			var elem = document.getElementById(json.id),
 				isWindow = Validator.isWindowType(json),
 				isOutside = false,
-				whole,
-				w,
-				h;
+				whole;
 
 			if (isWindow) {
 				console.log(json.id, getWindowID());
@@ -1072,9 +1346,12 @@
 						if (elem.parentNode) {
 							elem.parentNode.removeChild(elem);
 						}
+
+						metaData.from = "view";
 						connector.sendBinary('RTCClose', metaData, JSON.stringify({
 							key : rtcKey
 						}), function (err, reply) {});
+						delete metaData.from;
 					}
 				}
 			} else {
@@ -1082,18 +1359,35 @@
 					if (isVisible(json)) {
 						vscreen_util.assignMetaData(elem, json, false, groupDict);
 						elem.style.display = "block";
+
+						// pdfページの切り替え
+						if (json.type === 'pdf' && elem.loadPage) {
+							elem.loadPage(parseInt(json.pdfPage), parseInt(json.width));
+						}
 					} else {
 						elem.style.display = "none";
 					}
-				} else if (isUpdateContent || (!isWindow && isVisible(json))) {
-					// コンテンツがロードされるまで枠を表示しておく.
-					if (!elem) {
-						createBoundingBox(json);
-						// 新規コンテンツロード.
-						connector.send('GetContent', { type: json.type, id: json.id, restore_index : json.restore_index  }, function (err, reply) {
+				}
+				if (isUpdateContent || (!isWindow && isVisible(json))) {
+					if (isUpdateContent) {
+						// updatecontentの場合はelemがあっても更新
+						connector.send('GetContent', json, function (err, reply) {
 							doneGetContent(err, reply);
 							toggleMark(document.getElementById(json.id), metaData);
 						});
+					} else if (!elem) {
+						// コンテンツがロードされるまで枠を表示しておく.
+						createBoundingBox(json);
+						// 新規コンテンツロード.
+						connector.send('GetContent', json, function (err, reply) {
+							doneGetContent(err, reply);
+							toggleMark(document.getElementById(json.id), metaData);
+						});
+					}
+					if (json.type === "tileimage") {
+						// window範囲外で非表示になっているタイルが
+						// window範囲内に来ていた場合は、その部分のタイルを読み込む
+						assignTileImage(json, null, false);
 					}
 					elem = document.getElementById(json.id);
 					vscreen_util.assignMetaData(elem, json, false, groupDict);
@@ -1122,6 +1416,24 @@
 				delete metaDataDict[id];
 			}
 		}
+	}
+
+	/**
+	 * リモートカーソルの自動リサイズ
+	 */
+	function autoResizeCursor(elems) {
+		//var ratio = Number(window.devicePixelRatio);
+		var width = Number(screen.width);
+		var height = Number(screen.height);
+		var w = width;
+		var h = height;
+		var area = w * h;
+		var mul = area / 100000.0 / 40.0;
+		for (var i = 0; i < elems.length; ++i) {
+			elems[i].style.transform = "scale(" + mul + ")";
+			elems[i].style.transformOrigin = "left top 0";
+		}
+		return mul;
 	}
 
 	/**
@@ -1178,9 +1490,12 @@
 					var rtcKey = getRTCKey(json);
 					if (webRTCDict.hasOwnProperty(rtcKey)) {
 						webRTCDict[rtcKey].close(true);
+
+						json.from = "view";
 						connector.sendBinary('RTCClose', json, JSON.stringify({
 							key : rtcKey
 						}), function (err, reply) {});
+						delete json.from;
 					}
 				}
 				if (!err) {
@@ -1247,55 +1562,85 @@
 			console.log("onUpdateWindowMetaData", data);
 			var i;
 			for (i = 0; i < data.length; ++i) {
-				if (data[0].hasOwnProperty('id') && data[0].id === getWindowID()) {
+				if (data[i].hasOwnProperty('id') && data[i].id === getWindowID()) {
 					update('window');
-					updatePreviewAreaVisible( data[0]);
-					resizeViewport( data[0])
+					updatePreviewAreaVisible( data[i]);
+					resizeViewport( data[i])
 					return;
 				}
 			}
 		});
 
         connector.on("UpdateMouseCursor", function (res) {
-            var i, a, e, f, x, y, p, ctrlid = res.id;
+			var i, elem, pos, ctrlid = res.controllerID,
+				before, after,
+				controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                if(!controllers.hasOwnProperty(ctrlid)){
+                if (!controllers.hasOwnProperty(ctrlid)) {
                     ++controllers.connectionCount;
                     controllers[ctrlid] = {
                         index: controllers.connectionCount,
                         lastActive: 0
                     };
-                }
-                p = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
-                e = document.getElementById('hiddenCursor' + ctrlid);
-                if(!e){
-                    e = document.createElement('div');
-                    e.id = 'hiddenCursor' + ctrlid;
-                    e.className = 'hiddenCursor';
-                    e.style.backgroundColor = 'transparent';
-                    f = document.createElement('div');
-                    f.className = 'before';
-                    f.style.backgroundColor = res.data.hsv;
-                    e.appendChild(f);
-                    f = document.createElement('div');
-                    f.className = 'after';
-                    f.style.backgroundColor = res.data.hsv;
-                    e.appendChild(f);
-                    document.body.appendChild(e);
-                    console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.hsv);
-                }
-                e.style.left = Math.round(p.x) + 'px';
-                e.style.top  = Math.round(p.y) + 'px';
+				}
+                pos = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
+				elem = document.getElementById('hiddenCursor' + ctrlid);
+				controllerID = document.getElementById('controllerID' + ctrlid);
+                if (!elem) {
+                    elem = document.createElement('div');
+                    elem.id = 'hiddenCursor' + ctrlid;
+                    elem.className = 'hiddenCursor';
+                    elem.style.backgroundColor = 'transparent';
+                    before = document.createElement('div');
+                    before.className = 'before';
+                    before.style.backgroundColor = res.data.rgb;
+                    elem.appendChild(before);
+                    after = document.createElement('div');
+                    after.className = 'after';
+                    after.style.backgroundColor = res.data.rgb;
+					elem.appendChild(after);
+					
+                    controllerID = document.createElement('div');
+                    controllerID.id = 'controllerID' + ctrlid;
+					controllerID.className = 'controller_id';
+					controllerID.style.color = res.data.rgb;
+					controllerID.style.position = "absolute"
+					controllerID.style.fontSize = "20px";
+					controllerID.innerText = res.data.controllerID;
+					document.body.appendChild(controllerID);
+					
+                    document.body.appendChild(elem);
+					console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
+                } else {
+					controllerID.innerText = res.data.controllerID;
+					controllerID.style.color = res.data.rgb;
+					elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
+					elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
+				}
+				controllerID.style.textShadow = 
+						"1px 1px 0 white,"
+						+ "-1px 1px 0 white,"
+						+ " 1px -1px 0 white,"
+						+ "-1px -1px 0 white";
+
+				autoResizeCursor([elem, controllerID]);
+                elem.style.left = Math.round(pos.x) + 'px';
+				elem.style.top  = Math.round(pos.y) + 'px';
+                controllerID.style.left = Math.round(pos.x) + 'px';
+                controllerID.style.top  = Math.round(pos.y + 100) + 'px';
                 controllers[ctrlid].lastActive = Date.now();
             } else {
                 if (controllers.hasOwnProperty(ctrlid)) {
-                    e = document.getElementById('hiddenCursor' + ctrlid);
-                    if(e){
-                        e.style.left = '-9999px';
-                        e.style.top  = '-9999px';
+					elem = document.getElementById('hiddenCursor' + ctrlid);
+					controllerID = document.getElementById('controllerID' + ctrlid);
+                    if (elem) {
+                        elem.style.left = '-999999px';
+						elem.style.top  = '-999999px';
+						controllerID.style.left = '-999999px';
+						controllerID.style.top  = '-999999px';
                     }
-                    f = e.parentNode;
-                    if(f){e.removeChild(e);}
+                    if (elem.parentNode) { elem.removeChild(elem); }
+                    if (controllerID.parentNode) { controllerID.removeChild(controllerID); }
                 }
             }
         });
@@ -1361,6 +1706,7 @@
 		
 		connector.on("RTCClose", function (data) {
 			var metaData = data.metaData;
+			if (metaData.from === "view") { return; }
 			var contentData = data.contentData;
 			var parsed = null;
 			var rtcKey = null;
@@ -1380,6 +1726,7 @@
 		connector.on("RTCIceCandidate", function (data) {
 			//console.error("on RTCIceCandidate")
 			var metaData = data.metaData;
+			if (metaData.from === "view") { return; }
 			var contentData = data.contentData;
 			var parsed = null;
 			var candidate = null;
@@ -1463,12 +1810,12 @@
 		input_id.onblur = function (ev) {
 			console.log("onblur");
 			onfocus = false;
-			changeID();
+			changeID(input_id.value);
 		};
 		input_id.onkeypress = function (ev) {
 			console.log(ev.keyCode);
 			if (ev.keyCode === 13) { // enter
-				changeID();
+				changeID(input_id.value);
 			}
 		};
 
@@ -1484,7 +1831,9 @@
 				menu : [{
 					Display : [{
 							Controller : {
-								url : "controller.html"
+								func : function () {
+									window.open("controller.html"); // TODO コントローラIDの設定どうするか
+								}
 							}
 						}],
 					url : "view.html"

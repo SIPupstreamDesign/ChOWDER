@@ -1,0 +1,9 @@
+{
+	"id": "APIUser",
+	"password": "password",
+	"url": "ws://localhost:8081/v2/",
+	"xsplit": 8,
+	"ysplit": 8,
+	"contentid": "contentid",
+	"contentgrp": "default"
+}

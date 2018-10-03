@@ -15,14 +15,21 @@
 	<link href="css/tabs.css" rel="stylesheet" />
 	<link href="css/group_box.css" rel="stylesheet" />
 	<link href="css/context_menu.css" rel="stylesheet" />
+	<link href="css/video_controller.css" rel="stylesheet" />
 	<link href="css/3rd/bootstrap.css" rel="stylesheet" />
 	<link href="css/search_box.css" rel="stylesheet" />
 	<link href="css/burger_menu.css" rel="stylesheet" />
+	<link href="css/3rd/range.css" rel="stylesheet" />
+	<script type="text/javascript" src="js/3rd/i18next/i18next.min.js"></script>
+	<script type="text/javascript" src="js/3rd/i18next/i18nextXHRBackend.min.js"></script>
+	<script type="text/javascript" src="js/3rd/i18next/i18nextBrowserLanguageDetector.min.js"></script>
 	<script type="text/javascript" src="js/3rd/eventemitter3/index.js"></script>
 	<script type="text/javascript" src="js/3rd/getStats/getStats.js"></script>
 	<script type="text/javascript" src="js/3rd/BandwidthHandler/BandwidthHandler.js"></script>
 	<script type="text/javascript" src="js/3rd/adapter/adapter.js"></script>
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="js/translation.js"></script>
+	<script type="text/javascript" src="js/3rd/pdfjs/pdf.js"></script>
 	<script type="text/javascript" src="js/3rd/bootstrap-without-jquery.min.js"></script>
 	<script type="text/javascript" src="js/components/popup_background.js"></script>
 	<script type="text/javascript" src="js/components/colorselector.js"></script>
@@ -36,9 +43,10 @@
 	<script type="text/javascript" src="js/metabinary.js"></script>
 	<script type="text/javascript" src="js/command.js"></script>
 	<script type="text/javascript" src="js/cookie.js"></script>
+	<script type="text/javascript" src="js/controller_data.js"></script>
 	<script type="text/javascript" src="js/login.js"></script>
 	<script type="text/javascript" src="js/webrtc.js"></script>
-	<script type="text/javascript" src="js/io_connector.js"></script>
+	<script type="text/javascript" src="js/ws_connector.js"></script>
 	<script type="text/javascript" src="js/vscreen.js"></script>
 	<script type="text/javascript" src="js/vscreen_util.js"></script>
 	<script type="text/javascript" src="js/manipulator.js"></script>
@@ -67,17 +75,16 @@
 <div class="loginmenu" id="loginmenu">
 	<div class="loginframe">
 		<div>
-			<p class="loginmenu_label">ユーザー</p>
+			<p class="loginmenu_label" data-key="user"></p>
 			<select class="loginuser" id="loginuser"></select>
 		</div>
 		<div>
-			<p class="loginmenu_label">パスワード</p>
-			<input type="password" class="loginpass" id="loginpass"></input>
-			<input type="button" class="btn loginbutton  btn-primary" id="loginbutton" value="ログイン"></input>
+			<p class="loginmenu_label" data-key="password"></p>
+			<input type="password" class="loginpass" id="loginpass" autocomplete="new-password" />
+			<input type="button" class="btn loginbutton  btn-primary" id="loginbutton" data-key="login" value="" />
 		</div>
-		<div id="invalid_login">
-			ユーザーまたはパスワードが正しくありません
-		</div>
+		<p id="invalid_login" data-key="invalid_login">
+		</p>
 	</div>
 </div>
 		
@@ -101,14 +108,29 @@
 			<input id="logout_button" type="button" class="" value="Logout" />
             <div id="head_menu_hover_right"></div>
 			<img style="display:none" src="../image/disconnect.png"/><!--←キャッシュ-->
+			<span class="head_id_menu">
+				<span id="change_id_text">Controller ID:</span>
+				<input type="text" class="head_id_input" id="controller_id" />
+			</span>
         </div>
+			
 	</div>
 
 	<div id="layout2">
+		<div id="history_slider_area" class="history_slider_area">
+			<input name="thumb-roundness" 
+				ng-model="slider['contrast']"
+				class="history_slider" id="history_slider"
+				type="range"  min="0" max="100" step="1" />
+			<label class="history_slider_label"  id="history_slider_label"></label>
+			<div id="history_slider_memori"></div>
+		</div>
 		<div id="preview_area" class="preview_area">
 			<div id="content_preview_area" class="preview_area">
+				<div style="display:none" id="selection_rect"></div>
 			</div>
 			<div id="display_preview_area" class="preview_area">
+				<div style="display:none" id="display_selection_rect"></div>
 			</div>
 		</div>
 
@@ -121,20 +143,42 @@
 			</p>
 			<div class="transform_input" id="transform_input">
 			</div>
-			<p id="meta_info" class="meta_info" style="color:white">メタ情報</p>
+			<p id="meta_info" class="meta_info" style="color:white" data-key="meta_info"></p>
 			<div class="user_data_input" id="user_data_input"></div>
 			<div class="video_info" id="video_info">
-				<p id="video_info_title" class="video_info_title" style="color:white">動画設定</p>
+				<p id="video_info_title" class="video_info_title" style="color:white" data-key="movie_setting"></p>
 				<div class="video_input" id="video_input"></div>
 			</div>
 			<div class="color_picker" id="color_picker"></div>
 			<div class="backup_area" id="backup_area">
-				<p id="backup_info" class="backup_info" style="color:white">差し替え履歴</p>
+				<p id="backup_info" class="backup_info" style="color:white" data-key="change_history"></p>
 				<div id="backup_list" class="backup_list" style="color:white"></div>
-				<input type="button" class="btn backup_restore" id="backup_restore" value="復元" />
+				<input type="button" class="btn backup_restore" id="backup_restore" data-key="restore" value="" />
+			</div>
+			<div class="history_area" id="history_area">
+				<p id="history_info" class="history_info" style="color:white" data-key="change_timeseries_key"></p>
+				<span style="margin-left:15px">key</span>
+				<select id="history_select" class="history_select">
+				</select>
+				<span style="margin-left:15px">value</span>
+				<div id="history_list" class="history_list" style="color:white"></div>
+				<div class="history_buttons">
+					<span id="history_up" class="history_up"></span>
+					<span id="history_down" class="history_down"></span>
+				</div>
+				<span class="btn btn-primary history_sync_button" id="history_sync_button" data-key="sync"></span>
 			</div>
 			<a type="button" class="download_button" id="download_button"></a>
 		</div>
+	</div>
+
+	<div id="video_controller">
+		<div id="video_controller_text">
+			<span data-key="video_controller" />
+		</div>
+		<img id="video_controller_close" src="../image/video_close.png" />
+		<img id="video_controller_rewind" src="../image/video_rewind.png" />
+		<img id="video_controller_play" src="../image/video_play.png" />
 	</div>
 
 	<div id="bottom_area" class="bottom_area">
@@ -144,20 +188,26 @@
 	
 </div>
 
-	<div id="bottom_burger_menu_display"></div>
+	<div id="bottom_burger_menu_display">
+		<ul class="burger_menu_submenu" id="burger_menu_display_submenu">
+			<!--li class="burger_menu_submenu_item" id="burger_menu_submenu_item1">グループ1</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_submenu_item2">グループ2</li-->
+		</ul>
+	</div>
 	<div id="bottom_burger_menu_content">
 		<ul class="burger_menu_submenu" id="burger_menu_submenu">
 			<!--li class="burger_menu_submenu_item" id="burger_menu_submenu_item1">グループ1</li>
 			<li class="burger_menu_submenu_item" id="burger_menu_submenu_item2">グループ2</li-->
 		</ul>
 		<ul class="burger_menu_submenu_add_content" id="burger_menu_submenu_add_content">
-			<li class="burger_menu_submenu_item" id="burger_menu_add_image">画像ファイル</li>
-			<li class="burger_menu_submenu_item" id="burger_menu_add_video">動画ファイル</li>
-			<li class="burger_menu_submenu_item" id="burger_menu_add_text">テキスト</li>
-			<li class="burger_menu_submenu_item" id="burger_menu_add_text_file">テキストファイル</li>
-			<li class="burger_menu_submenu_item" id="burger_menu_add_url">URL</li>
-			<li class="burger_menu_submenu_item" id="burger_menu_add_screenshare">スクリーン共有</li>
-			<li class="burger_menu_submenu_item" id="burger_menu_add_camerashare">カメラ共有</li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_image" data-key="image_file"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_video" data-key="movie_file"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_text" data-key="text"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_text_file" data-key="text_file"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_pdf_file" data-key="pdf_file"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_url" data-key="url"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_screenshare" data-key="screenshare"></li>
+			<li class="burger_menu_submenu_item" id="burger_menu_add_camerashare" data-key="camerashare"></li>
 		</ul>
 	</div>
 	<div id="bottom_burger_menu_search"></div>
@@ -169,45 +219,51 @@
 	</div>
 	
 	<ul class="context_menu" id="context_menu" style="display:none">
-		<li class="context_menu_item" id="context_menu_move_front">最前面に移動</li>
-		<li class="context_menu_item" id="context_menu_move_back">最背面に移動</li>
-		<li class="context_menu_item" id="context_menu_add_content">コンテンツ追加</li>
-		<li class="context_menu_item" id="context_menu_change_group">グループ変更</li>
-		<li class="context_menu_item" id="context_menu_change_image">画像差し替え</li>
-		<li class="context_menu_item" id="context_menu_select_group">グループ内全て選択</li>
-		<li class="context_menu_item" id="context_menu_select_all">全て選択</li>
-		<li class="context_menu_item" id="context_menu_hide">非表示</li>
+		<li class="context_menu_item" id="context_menu_move_front" data-key="move_to_front"></li>
+		<li class="context_menu_item" id="context_menu_move_back" data-key="move_to_back"></li>
+		<li class="context_menu_item" id="context_menu_add_content" data-key="add_content"></li>
+		<li class="context_menu_item" id="context_menu_change_group" data-key="change_group"></li>
+		<li class="context_menu_item" id="context_menu_change_image" data-key="swap_image"></li>
+		<li class="context_menu_item" id="context_menu_control_videos" data-key="control_videos_in_a_group"></li>
+		<li class="context_menu_item" id="context_menu_select_group" data-key="select_all_in_a_group"></li>
+		<li class="context_menu_item" id="context_menu_select_all" data-key="select_all"></li>
+		<li class="context_menu_item" id="context_menu_hide" data-key="hide"></li>
 		<hr class="context_menu_margin">
-		<li class="context_menu_item" id="context_menu_delete">削除</li>
+		<li class="context_menu_item" id="context_menu_delete" data-key="delete"></li>
 
 		<ul class="context_menu_add_content_submenu" id="context_menu_add_content_submenu">
-			<li class="context_menu_add_content_item" id="context_menu_add_image">画像ファイル</li>
-			<li class="context_menu_add_content_item" id="context_menu_add_video">動画ファイル</li>
-			<li class="context_menu_add_content_item" id="context_menu_add_text">テキスト</li>
-			<li class="context_menu_add_content_item" id="context_menu_add_text_file">テキストファイル</li>
-			<li class="context_menu_add_content_item" id="context_menu_add_url">URL</li>
-			<li class="context_menu_add_content_item" id="context_menu_add_screenshare">スクリーン共有</li>
-			<li class="context_menu_add_content_item" id="context_menu_add_camerashare">カメラ共有</li>
+			<li class="context_menu_add_content_item" id="context_menu_add_image" data-key="image_file"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_video" data-key="movie_file"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_text" data-key="text"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_text_file" data-key="text_file"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_pdf_file" data-key="pdf_file"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_url" data-key="url"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_screenshare" data-key="screenshare"></li>
+			<li class="context_menu_add_content_item" id="context_menu_add_camerashare" data-key="camerashare"></li>
 		</ul>
 		<ul class="context_menu_change_group_submenu" id="context_menu_change_group_submenu">
 			<!--li class="context_menu_item" id="context_menu_change_group_item">グループ1</li-->
 		</ul>
 	</ul>
 	<ul class="context_menu" id="context_menu_display" style="display:none">
-		<li class="context_menu_item" id="context_menu_display_show_id">IDを表示</li>
-		<li class="context_menu_item" id="context_menu_display_select_all">全て選択</li>
-		<li class="context_menu_item" id="context_menu_display_hide">非表示</li>
+		<li class="context_menu_item" id="context_menu_display_show_id" data-key="show_id"></li>
+		<li class="context_menu_item" id="context_menu_change_displaygroup" data-key="change_displaygroup"></li>
+		<li class="context_menu_item" id="context_menu_display_select_group" data-key="select_all_in_a_group"></li>
+		<li class="context_menu_item" id="context_menu_display_hide" data-key="hide"></li>
 		<hr class="context_menu_margin">
-		<li class="context_menu_item" id="context_menu_display_delete">削除</li>
+		<li class="context_menu_item" id="context_menu_display_delete" data-key="delete"></li>
+		<ul class="context_menu_change_group_submenu" id="context_menu_change_displaygroup_submenu">
+			<!--li class="context_menu_item" id="context_menu_change_displaygroup_item">グループ1</li-->
+		</ul>
 	</ul>
 	<ul class="context_menu" id="context_menu_layout" style="display:none">
-		<li class="context_menu_item" id="context_menu_layout_add">レイアウト追加</li>
-		<li class="context_menu_item" id="context_menu_layout_overwrite">レイアウト上書き</li>
-		<li class="context_menu_item" id="context_menu_layout_change_group">グループ変更</li>
-		<li class="context_menu_item" id="context_menu_layout_select_group">グループ内全て選択</li>
-		<li class="context_menu_item" id="context_menu_layout_select_all">全て選択</li>
+		<li class="context_menu_item" id="context_menu_layout_add" data-key="add_layout"></li>
+		<li class="context_menu_item" id="context_menu_layout_overwrite" data-key="overwrite_layout"></li>
+		<li class="context_menu_item" id="context_menu_layout_change_group" data-key="change_group"></li>
+		<li class="context_menu_item" id="context_menu_layout_select_group" data-key="select_all_in_a_group"></li>
+		<li class="context_menu_item" id="context_menu_layout_select_all" data-key="select_all"></li>
 		<hr class="context_menu_margin">
-		<li class="context_menu_item" id="context_menu_layout_delete">削除</li>
+		<li class="context_menu_item" id="context_menu_layout_delete" data-key="delete"></li>
 		<ul class="context_menu_change_group_submenu" id="context_menu_layout_change_group_submenu">
 			<!--li class="context_menu_item" id="context_menu_change_group_item">グループ1</li-->
 		</ul>
@@ -215,79 +271,77 @@
 
 	<!-- グループ設定メニュー -->
 	<ul id="group_setting_menu" class="group_setting_menu" style="display:none">
-		<li class="group_setting_menu_item" id="group_setting_name">名前変更</li>
-		<li class="group_setting_menu_item" id="group_setting_color">色変更</li>
+		<li class="group_setting_menu_item" id="group_setting_name" data-key="change_name"></li>
+		<li class="group_setting_menu_item" id="group_setting_color" data-key="change_color"></li>
 		<hr class="context_menu_margin">
-		<li class="group_setting_menu_item" id="group_setting_delete">削除</li>
+		<li class="group_setting_menu_item" id="group_setting_delete" data-key="delete"></li>
 	</ul>
 	
 	<div id="management" class="management" style="display:none">
-		<h3>管理</h3>
-		<h4>DB管理</h4>
+		<h3 data-key="management"></h3>
+		<h4 data-key="db_management"></h4>
 		<div class="frame">
 			<p>DB</p>
 			<select id="db_select" class="db_select">
 				<option value="default">default</option>
 				<option value="testaa">testaa</option>
 			</select>
-			<input id="changedb_button" type="button" class="btn" style="color:black" value="切り替え" />
-			<input id="newdb_button" type="button" class="btn" style="color:black" value="新規" />
-			<input id="renamedb_button" type="button" class="btn" style="color:black" value="名前変更" />
-			<input id="deletedb_button" type="button" class="btn" style="color:black" value="削除" />
-			<input id="initdb_button" type="button" class="btn" style="color:black" value="初期化" />
+			<input id="changedb_button" type="button" class="btn" style="color:black" data-key="change" value="" />
+			<input id="newdb_button" type="button" class="btn" style="color:black" data-key="new" value="" />
+			<input id="renamedb_button" type="button" class="btn" style="color:black" data-key="change_name" value="" />
+			<input id="deletedb_button" type="button" class="btn" style="color:black" data-key="delete" value="" />
+			<input id="initdb_button" type="button" class="btn" style="color:black" data-key="initialize" value="" />
 		</div>
 
-		<h4>履歴管理</h4>
+		<h4 data-key="history_management"></h4>
 		<div class="frame">
-			<p>最大履歴保存数(0で無制限)</p>
+			<p data-key="max_history"></p>
 			<input id="history_number" class="history_number" type="number" min="0" style="color:black" value="10" />
-			<input id="apply_history_number_button" type="button" class="btn" style="color:black" value="適用" />
-			<span id="apply_history_message">設定を適用しました</span>
+			<input id="apply_history_number_button" type="button" class="btn" style="color:black" data-key="apply" value="" />
+			<p id="apply_history_message" data-key="applied"></p>
 		</div>
 		
-		<h4>閲覧・編集権限の設定</h4>
+		<h4 data-key="authority_setting"></h4>
 		<div class="frame">
-			<p>設定対象</p>
+			<p data-key="setting_target"></p>
 			<select id="auth_select" class="auth_select">
 			</select>
 			<div>
-				<div class="auth_target_label">編集可能</div>
-				<div class="auth_target_label">閲覧可能</div>
+				<span class="auth_target_label" data-key="editable_content"></span>
+				<span class="auth_target_label" data-key="viewable_content"></span>
+				<span id="display_manipulate_label" data-key="editable_display"></span>
 			</div>
 			<div id="auth_target_frame">
-				<!-- 閲覧権限、編集権限のリスト -->
+				<!-- 閲覧権限、編集権限、ディスプレイ編集権限のリスト -->
 			</div>
 			<div>
-				<input id="group_add_delete_check" type="checkbox"><span id="group_add_delete_label">グループの編集を許可</span></input>
-			</div>
-			<div>
-				<input id="display_manipulate_check" type="checkbox"><span id="display_manipulate_label">Displayの操作を許可</span></input>
+				<input id="group_add_delete_check" type="checkbox" /><span id="group_add_delete_label" data-key="allow_editting_group"></span>
 			</div>
 			<div class="apply_auth_frame">
-				<input id="apply_auth_button" type="button" class="btn management_apply_button" style="color:black" value="適用" />
-				<span id="apply_auth_message">設定を適用しました</span>
+				<input id="apply_auth_button" type="button" class="btn management_apply_button" style="color:black" data-key="apply" value="" />
+				<span id="apply_auth_message" data-key="applied"></span>
 			</div>
 		</div>
 		
-		<h4>パスワードの設定</h4>
+		<h4 data-key="setting_password"></h4>
 		<div class="frame">
 			<div class="passinput_frame">
-				<div>設定対象</div>
+				<p data-key="setting_target"></p>
 				<select id="auth_select_pass" class="auth_select"></select>
 			</div>
 			<div>
 				<div class="passinput_frame">
-					<div>変更前のパスワード</div>
+					<p data-key="old_password"></p>
 					<input class="passinput" id="old_password" type="password" style="color:black" value="" />
 				</div>
 				<div class="passinput_frame">
-					<div>新規パスワード</div>
-					<input class="passinput" id="new_password" type="password" style="color:black" value="" />
+					<p data-key="new_password"></p>
+					<input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
 				</div>
 			</div>
 			<div class="apply_pass_frame">
-				<input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" value="適用" />
-				<span id="apply_pass_message">パスワードを変更しました</span>
+				<input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" data-key="apply" value="" />
+				<p id="apply_pass_message" data-key="password_changed"></p>
 			</div>
 		</div>
 	</div>
@@ -295,33 +349,43 @@
 	<div style="display:none">
 		<hr>
 		<div>
-			<p style="margin-left:20px">テキストファイルの追加</p>
+			<p style="margin-left:20px" data-key="add_text_file"></p>
 			<input type="file" name="filename" id="text_file_input" style="margin-left:20px" />
 		</div>
 		<hr>
 		<div>
-			<p style="margin-left:20px">URLの追加</p>
+			<p style="margin-left:20px" data-key="add_url"></p>
 			<input type="text" id="url_input" style="margin-left:20px"/>
 			<input class="btn" type="button" value="Send" id="url_send_button" />
 		</div>
 		<hr>
 		<div>
-			<p style="margin-left:20px">画像の追加</p>
-			<input type="file" name="filename" id="image_file_input" style="margin-left:20px" /-->
+			<p style="margin-left:20px" data-key="add_image"></p>
+			<input type="file" name="filename" id="image_file_input" style="margin-left:20px" />
 			<!--input type="button" value="Send" id="image_send_button"></input-->
 		</div>
 		<hr>
 		<div>
-			<p style="margin-left:20px">画像差し替え</p>
+			<p style="margin-left:20px" data-key="swap_image"></p>
 			<span style="margin-left:20px">ID:</span><span id="update_content_id" >No Content Selected.</span>
 			<input type="file" value="UpdateImage" id="update_image_input" style="margin-left:20px" />
 		</div>
 		<hr>
 		<div>
-			<p style="margin-left:20px">動画の追加</p>
-			<input type="file" name="filename" id="video_file_input" style="margin-left:20px" /-->
+			<p style="margin-left:20px" data-key="add_movie"></p>
+			<input type="file" name="filename" id="video_file_input" style="margin-left:20px" />
 			<!--input type="button" value="Send" id="image_send_button"></input-->
 		</div>
+		<hr>
+		<div>
+			<p style="margin-left:20px" data-key="add_pdf"></p>
+			<input type="file" name="filename" id="pdf_file_input" style="margin-left:20px" />
+		</div>
+	</div>
+	<div style="display:none" id="forcolorpicker">
+		<h4 style="color:white">Remote Cursor Color Setting</h4>
+		<input type="button" class="btn  btn-primary" id="cursor_color_ok" value="OK" />
+		<input type="button" class="btn  btn-primary" id="cursor_color_cancel" value="Cancel" />
 	</div>
 </body>
 </html>

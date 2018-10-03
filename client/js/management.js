@@ -8,6 +8,7 @@
 		this.userList = null;
 		this.maxHistoryNum = 10;
 		this.current_db = null;
+		this.maxMesageSize = null;
 	};
 	Management.prototype = Object.create(EventEmitter.prototype);
 
@@ -50,8 +51,8 @@
 		var newdb_button = document.getElementById('newdb_button');
 		newdb_button.onclick = function () {
 			window.input_dialog.text_input({
-				name : "新規保存名",
-				okButtonName : "作成",
+				name : i18next.t("save_name"),
+				okButtonName : i18next.t("create"),
 				opacity : 0.7,
 				zIndex : 90000001,
 				backgroundColor : "#888"
@@ -79,7 +80,7 @@
 			if (e.options.length > e.selectedIndex) {
 				var name = e.options[e.selectedIndex].value;
 				window.input_dialog.text_input({
-					name : "保存名の変更",
+					name : i18next.t('change_saving_name'),
 					okButtonName : "OK",
 					initialValue : name,
 					opacity : 0.7,
@@ -89,7 +90,7 @@
 					var k;
 					if (name === value) {
 						window.input_dialog.ok_input({
-							name : "既に存在する名前です",
+							name : i18next.t("already_exists"),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -99,7 +100,7 @@
 						for (k = 0; k < e.options.length; k = k + 1) {
 							if (option.value === value) {
 								window.input_dialog.ok_input({
-									name : "既に存在する名前です",
+									name : i18next.t("already_exists"),
 									opacity : 0.7,
 									zIndex : 90000001,
 									backgroundColor : "#888"
@@ -110,7 +111,7 @@
 					}
 					if (value.length === 0) {
 						window.input_dialog.ok_input({
-							name : "空の名前にはできません",
+							name : i18next.t("cannot_empty"),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -184,23 +185,18 @@
 		var option;
 		this.editableSelect = new window.SelectList();
 		this.viewableSelect = new window.SelectList();
+		this.displayEditableSelect = new window.SelectList();
 		var authTargetFrame = document.getElementById('auth_target_frame');
 		var authSelect = document.getElementById('auth_select');
 		var applyButton = document.getElementById('apply_auth_button');
 		var groupManipulateCheck = document.getElementById('group_add_delete_check');
 		var groupManipulateLabel = document.getElementById('group_add_delete_label');
-		var displayManipulateCheck = document.getElementById('display_manipulate_check');
 		var displayManipulateLabel = document.getElementById('display_manipulate_label');
-		var allAccessText = "全て";
+		var allAccessText = i18next.t("all");
 
 		// グループの追加削除を許可のチェック
 		groupManipulateLabel.onclick = function () {
 			groupManipulateCheck.click();
-		};
-		
-		// ディスプレイの操作を許可のチェック
-		displayManipulateLabel.onclick = function () {
-			displayManipulateCheck.click();
 		};
 		
 		// ユーザー名リストの設定
@@ -210,7 +206,7 @@
 			select.innerHTML = "";
 			for (i = 0; i < this.userList.length; i = i + 1) {
 				user = this.userList[i];
-				if (user.type !== "admin") {
+				if (user.type !== "admin" && user.type !== "api") {
 					option = document.createElement('option');
 					option.value = user.id;
 					option.innerHTML = user.name;
@@ -228,9 +224,10 @@
 			var user = this.getUser(id);
 			this.viewableSelect.deselectAll();
 			this.editableSelect.deselectAll();
+			this.displayEditableSelect.deselectAll();
 			if (user) {
 				for (i = 0; i < this.userList.length; i = i + 1) {
-					if (this.userList[i].type !== "admin")
+					if (this.userList[i].type !== "admin" && this.userList[i].type !== "api")
 					{
 						listContentName = this.userList[i].id;
 						if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
@@ -241,17 +238,23 @@
 						}
 					}
 				}
+				for (i = 0; i < this.displayGroupList.length; i = i + 1) {
+					listContentName = this.displayGroupList[i].id;
+					if (user.displayEditable && (user.displayEditable === "all" || user.displayEditable.indexOf(listContentName) >= 0)) {
+						this.displayEditableSelect.select(this.displayGroupList[i].name);
+					}
+				}
 				if (user.viewable && user.viewable === "all") {
 					this.viewableSelect.select(allAccessText);
 				}
 				if (user.viewable && user.editable === "all") {
 					this.editableSelect.select(allAccessText);
 				}
+				if (user.displayEditable && user.displayEditable === "all") {
+					this.displayEditableSelect.select(allAccessText);
+				}
 				if (user.hasOwnProperty('group_manipulatable')) {
 					groupManipulateCheck.checked = user.group_manipulatable;
-				}
-				if (user.hasOwnProperty('display_manipulatable')) {
-					displayManipulateCheck.checked = user.display_manipulatable;
 				}
 			}
 		}.bind(this);
@@ -287,21 +290,44 @@
 				}
 			}
 		}.bind(this));
+		this.displayEditableSelect.on('change', function (err, text, isSelected) {
+			if (text === allAccessText) {
+				if (isSelected) {
+					this.displayEditableSelect.selectAll();
+				} else {
+					this.displayEditableSelect.deselectAll();
+				}
+			} else {
+				// 全てが選択された状態で全て以外が選択解除された. 全てを選択解除する.
+				var displayEditable = this.displayEditableSelect.getSelectedValues();
+				if (!isSelected && text !== allAccessText && displayEditable.indexOf(allAccessText) >= 0) {
+					this.displayEditableSelect.deselect(allAccessText);
+				}
+			}
+		}.bind(this));
 
 		authTargetFrame.innerHTML = "";
 		this.editableSelect.add(allAccessText, allAccessText);
 		this.viewableSelect.add(allAccessText, allAccessText);
+		this.displayEditableSelect.add(allAccessText, allAccessText);
 		for (i = 0; i < this.userList.length; i = i + 1) {
 			if (this.userList[i].type !== "admin" &&
 				this.userList[i].type !== "display" &&
-				this.userList[i].type !== "guest")
+				this.userList[i].type !== "guest" &&
+				this.userList[i].type !== "api")
 			{
 				this.editableSelect.add(this.userList[i].name, this.userList[i].id);
 				this.viewableSelect.add(this.userList[i].name, this.userList[i].id);
 			}
 		}
+		for (i = 0; i < this.displayGroupList.length; ++i) {
+			if (this.displayGroupList[i].id !== Constants.DefaultGroup) {
+				this.displayEditableSelect.add(this.displayGroupList[i].name, this.displayGroupList[i].id);
+			}
+		}
 		authTargetFrame.appendChild(this.editableSelect.getDOM());
 		authTargetFrame.appendChild(this.viewableSelect.getDOM());
+		authTargetFrame.appendChild(this.displayEditableSelect.getDOM());
 
 		applyButton.onclick = function () {
 			var index = authSelect.selectedIndex;
@@ -309,17 +335,21 @@
 				var id = authSelect.childNodes[index].value;
 				var editable = this.editableSelect.getSelectedValues();
 				var viewable = this.viewableSelect.getSelectedValues();
+				var displayEditable = this.displayEditableSelect.getSelectedValues();
 				var group_manipulatable = groupManipulateCheck.checked;
-				var display_manipulatable = displayManipulateCheck.checked;
 				if (editable.indexOf(allAccessText) >= 0) {
 					editable = "all";
 				}
 				if (viewable.indexOf(allAccessText) >= 0) {
 					viewable = "all";
 				}
+				if (displayEditable.indexOf(allAccessText) >= 0) {
+					displayEditable = "all";
+				}
+				console.error(displayEditable)
 				
 				this.emit(Management.EVENT_CHANGE_AUTHORITY,
-					id, editable, viewable, group_manipulatable, display_manipulatable, function () {
+					id, editable, viewable, displayEditable, group_manipulatable, function () {
 						
 					var message = document.getElementById('apply_auth_message');
 					message.style.visibility = "visible";
@@ -375,7 +405,7 @@
 					if (type === "admin") {
 						prePass.disabled = false;
 						pass.disabled = false;
-					} else if (type === "group") {
+					} else if (type === "group" || type === "api") {
 						prePass.disabled = true;
 						pass.disabled = false;
 					} else {
@@ -392,9 +422,9 @@
 			if (index >= 0) {
 				var id = this.userList[index].id;
 				if (pass.value <= 0) {
-					if (name === "Display" || name === "Gueset") {
+					if (id === "Display" || id === "Guest") {
 						window.input_dialog.ok_input({
-							name : "このユーザーにはパスワードは設定できません",
+							name : i18next.t('cannot_set_to_this_user'),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -403,7 +433,7 @@
 						});
 					} else {
 						window.input_dialog.ok_input({
-							name : "有効なパスワードを入力してください",
+							name : i18next.t('input_valid_password'),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
@@ -413,18 +443,30 @@
 					}
 					return;
 				}
+				if (!pass.value.match("^[a-zA-Z0-9 -/:-@\[-\`\{-\~]+$")) {
+					window.input_dialog.ok_input({
+						name : i18next.t('input_valid_password'),
+						opacity : 0.7,
+						zIndex : 90000001,
+						backgroundColor : "#888"
+					}, function () {
+						return;
+					});
+					return;
+				}
 
 				this.emit(Management.EVENT_CHANGE_PASSWORD, id, prePass.value, pass.value, function (err, reply) {
-					console.error(err, reply)
 					if (err) {
+						console.error(err, reply)
 						window.input_dialog.ok_input({
-							name : "有効なパスワードを入力してください",
+							name : i18next.t('input_valid_password'),
 							opacity : 0.7,
 							zIndex : 90000001,
 							backgroundColor : "#888"
 						}, function () {
 							return;
 						});
+						return;
 					}
 					var message = document.getElementById('apply_pass_message');
 					message.style.visibility = "visible";
@@ -535,20 +577,40 @@
 				}
 				return false;
 			},
+			isDisplayEditable : function (groupID) {
+				if (authority && authority.hasOwnProperty('is_admin')) {
+					if (String(authority.is_admin) === "true") {
+						return true;
+					}
+				}
+				if (groupID === Constants.DefaultGroup) {
+					return true;
+				}
+				if (groupID === undefined || groupID === "") {
+					return true;
+				}
+				if (authority) {
+					if (authority.hasOwnProperty('displayEditable')) {
+						if (authority.displayEditable === "all" || authority.displayEditable.indexOf(groupID) >= 0) {
+							return true;
+						}
+					}
+				}
+				return false;
+			},
 			isGroupManipulable : function () {
 				if (authority && authority.hasOwnProperty('group_manipulatable')) {
 					return authority.group_manipulatable;
 				}
 				return false;
-			},
-			isDisplayManipulatable : function () {
-				if (authority && authority.hasOwnProperty('display_manipulatable')) {
-					return authority.display_manipulatable;
-				}
-				return false;
 			}
 		}
 	};
+	
+	Management.prototype.isAdmin = function () {
+		return this.getAuthorityObject().isAdmin();
+	};
+
 	Management.prototype.isViewable = function (group) {
 		return this.getAuthorityObject().isViewable(group);
 	};
@@ -556,14 +618,30 @@
 	Management.prototype.isEditable = function (group) {
 		return this.getAuthorityObject().isEditable(group);
 	};
-
-	Management.prototype.isDisplayManipulatable = function () {
-		return this.getAuthorityObject().isDisplayManipulatable();
+	
+	Management.prototype.isDisplayEditable = function (group) {
+		var editable =  this.getAuthorityObject().isDisplayEditable(group);
+		return editable;
 	};
 
+	Management.prototype.isGroupManipulable = function () {
+		return this.getAuthorityObject().isGroupManipulable();
+	};
 	Management.prototype.setUserList = function (userList) {
 		this.userList = userList;
 	};
+
+	Management.prototype.setDisplayGroupList = function (groupList) {
+		this.displayGroupList = groupList;
+	};
+	
+	Management.prototype.setMaxMessageSize = function (size) {
+		this.maxMesageSize = size;
+	}
+	
+	Management.prototype.getMaxMessageSize = function () {
+		return this.maxMesageSize;
+	}
 
 	// 新規DB保存領域作成&切り替え
 	Management.EVENT_NEWDB = "newdb";
@@ -594,6 +672,9 @@
 				if (reply && reply.hasOwnProperty('max_history_num')) {
 					management.setMaxHistoryNum(reply.max_history_num);
 					management.setCurrentDB(reply.current_db);
+					if (reply.wsMaxMessageSize) {
+						management.setMaxMessageSize(reply.wsMaxMessageSize)
+					}
 				}
 			});
 		}
@@ -613,13 +694,16 @@
 		});
 	
 		// 権限の変更
-		management.on('change_authority', function (userID, editable, viewable, group_manipulatable, display_manipulatable, callback) {
+		management.on('change_authority', function (
+			userID, editable, viewable, displayEditable,
+			group_manipulatable, callback)
+		{
 			var request = {
 				id : userID,
 				editable : editable,
 				viewable : viewable,
-				group_manipulatable : group_manipulatable,
-				display_manipulatable : display_manipulatable
+				displayEditable : displayEditable,
+				group_manipulatable : group_manipulatable
 			};
 			connector.send('ChangeAuthority', request, function (err, data) {
 				connector.send('GetUserList', {}, function (err, userList) {
@@ -662,7 +746,7 @@
 		// DBの削除
 		management.on('deletedb', function (err, name) {
 			window.input_dialog.okcancel_input({
-				name : "DB: " + name + " を削除します。よろしいですか?",
+				name : "DB: " + name + " " + i18next.t('delete_is_ok'),
 				opacity : 0.7,
 				zIndex : 90000001,
 				backgroundColor : "#888"
@@ -677,7 +761,7 @@
 		// DBの初期化
 		management.on('initdb', function (err, name) {
 			window.input_dialog.okcancel_input({
-				name : "DB: " + name + " を初期化します。よろしいですか?",
+				name : "DB: " + name + " " + i18next.t('init_is_ok'),
 				opacity : 0.7,
 				zIndex : 90000001,
 				backgroundColor : "#888"

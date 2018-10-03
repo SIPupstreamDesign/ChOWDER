@@ -11,11 +11,14 @@
 		WholeWindowListID : "onlist:whole_window",
 		WholeSubWindowID : "whole_sub_window",
 		ContentSelectColor : "#04B431",
+		WindowSelectColor : "#0080ff",
 		DefaultGroup : "group_default",
+		TypeVirtualDisplay : "virtual_display",
 		TypeWindow : "window",
 		TypeLayout : "layout",
 		TypeContent : "content",
 		TypeText : "text",
+		TypeTileImage : "tileimage",
 		TypeVideo : "video",
 		PropertyTypeDisplay : "display",
 		PropertyTypeWholeWindow : "whole_window",
@@ -23,6 +26,7 @@
 		PropertyTypeContent : "content",
 		PropertyTypeText : "text",
 		PropertTypeVideo : "video",
+		PropertyTypePDF : "pdf",
 		PropertyTypeMultiDisplay : "multi_display",
 		PropertyTypeMultiContent : "multi_content",
 		TabIDDisplay : "display_tab",
@@ -34,6 +38,7 @@
 		SnapTypeDisplay : "display",
 		InitialWholeWidth : 1000,
 		InitialWholeHeight : 900,
+		TemporaryBoundClass : "temporary_bounds",
 		// Firefox 1.0+
 		IsFirefox : typeof InstallTrigger !== 'undefined',
 		// Safari 3.0+ "[object HTMLElementConstructor]" 
@@ -43,7 +48,10 @@
 		// Edge 20+
 		IsEdge : !(/*@cc_on!@*/false || !!document.documentMode) && !!window.StyleMedia,
 		// Chrome 1+
-		IsChrome : !!window.chrome && !!window.chrome.webstore
+		IsChrome : !!window.chrome && !!window.chrome.webstore,
+		DefaultCursorColor : "rgb(255, 255, 255)",
+		DefaultTileIconColor : "rgb(54, 187, 68)",
+		ReconnectTimeout : 2000
 	};
 
 	window.Constants = Constants;

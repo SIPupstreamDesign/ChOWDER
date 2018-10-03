@@ -10,36 +10,73 @@
 	 * Validator初期設定
 	 * @param {*} gui 
 	 */
-	Validator.prototype.init = function (gui) {
+	Validator.prototype.init = function (store, gui, state) {
+		this.store = store;
 		this.gui = gui;
+		this.state = state;
 	};
+
+	Validator.prototype.isVisibleWindow = function (windowData) {
+		if (this.isVisible(windowData)) {
+			return this.isCurrentGroupWindow(windowData);
+		}
+		return false;
+	}
+
+	Validator.prototype.isCurrentGroupWindow = function (windowData) {
+		if (windowData.group === this.state.get_display_selected_group()) {
+			return true;
+		}
+		if (this.state.get_display_selected_group() === Constants.DefaultGroup
+			&& !this.store.get_group_dict().hasOwnProperty(windowData.group)) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * メタデータがVirtualDisplayタイプであるか返す
+	 */
+	Validator.prototype.isVirtualDisplayType = function (meta) {
+		return (meta.type === Constants.TypeVirtualDisplay);
+	}
 
 	/**
 	 * メタデータがwindowタイプであるか返す
 	 */
 	Validator.prototype.isWindowType = function (meta) {
-		return (meta.type === Constants.TypeWindow);
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeWindow);
 	}
 
 	/**
 	 * メタデータがimage/url/textなどのコンテンツタイプであるか返す
 	 */
 	Validator.prototype.isContentType = function (meta) {
-		return (meta.type !== Constants.TypeWindow && meta.type !== Constants.TypeLayout);
+		return (meta.hasOwnProperty('type') && 
+			(meta.type !== Constants.TypeWindow 
+				&& meta.type !== Constants.TypeLayout 
+				&& meta.type !== Constants.TypeVirtualDisplay));
 	}
 	
 	/**
 	 * メタデータがレイアウトタイプであるか返す
 	 */
 	Validator.prototype.isLayoutType = function (meta) {
-		return (meta.type === Constants.TypeLayout);
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeLayout);
 	}
 	
 	/**
 	 * メタデータがテキストタイプであるか返す
 	 */
 	Validator.prototype.isTextType = function (meta) {
-		return (meta.type === Constants.TypeText);
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeText);
+	}
+
+	/**
+	 * メタデータがVirtualDisplayであるか返す
+	 */
+	Validator.prototype.isVirtualDisplayID = function (id) {
+		return (id.indexOf(Constants.WholeWindowListID) === 0 || id.indexOf(Constants.WholeWindowID) === 0);
 	}
 
 	/**

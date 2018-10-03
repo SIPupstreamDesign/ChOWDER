@@ -15,6 +15,20 @@ body {
 	background-color: #444;
 }
 
+.license_wrap {
+	position : absolute;
+	width : 100%;
+	padding-top : 50px;
+	text-align: center;
+	color : gray;
+}
+
+.whitelink,
+.whitelink:link,
+.whitelink:visited {
+	color : #CCC;
+	text-decoration: underline; 
+}
 
 a {
 	text-decoration: none;

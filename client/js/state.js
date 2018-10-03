@@ -9,10 +9,15 @@
 		this.draggingIDList = [];
 		this.selectedIDList = [];
 		this.isCtrlDown = false; // Ctrlボタンを押してるかどうか
-		this.dragOffsetTop = 0;
-		this.dragOffsetLeft = 0;
-		this.mouseDownPos = [];
+		this.mouseDownPos = [0, 0];
 		this.dragRect = {};
+
+		this.isSelectionRectDragging = false
+		this.isSelectionRectShown = false;
+		this.isMouseDownOnList = false;
+
+		this.contentSelectedGroup = Constants.DefaultGroup; //選択中のグループ
+		this.displaySelectedGroup = Constants.DefaultGroup;
 	};
 
 	// lastSelectContentID
@@ -54,6 +59,9 @@
 	State.prototype.get_selected_id_list = function () {
 		return this.selectedIDList;
 	};
+	State.prototype.add_selected_id = function (id) {
+		this.selectedIDList.push(id);
+	};
 	State.prototype.for_each_selected_id = function (func) {
 		var i;
 		for (i = 0; i < this.selectedIDList.length; ++i) {
@@ -71,22 +79,6 @@
 		return this.isCtrlDown;
 	};
 
-	// dragOffsetTop
-	State.prototype.set_drag_offset_top = function (offset) {
-		this.dragOffsetTop = offset;
-	};
-	State.prototype.get_drag_offset_top = function () {
-		return this.dragOffsetTop;
-	};
-
-	// dragOffsetLeft
-	State.prototype.set_drag_offset_left = function (offset) {
-		this.dragOffsetLeft = offset;
-	};
-	State.prototype.get_drag_offset_left = function () {
-		return this.dragOffsetLeft;
-	};
-	
 	// mouseDownPos
 	State.prototype.set_mousedown_pos = function (pos) {
 		this.mouseDownPos = pos;
@@ -109,6 +101,44 @@
 		return this.dragRect.hasOwnProperty(id);
 	};
 	
+	// group selection
+	State.prototype.set_content_selected_group = function (groupID) {
+		this.contentSelectedGroup = groupID;
+	}
+	State.prototype.get_content_selected_group = function () {
+		return this.contentSelectedGroup;
+	}
+
+	State.prototype.set_display_selected_group = function (groupID) {
+		this.displaySelectedGroup = groupID;
+	}
+	State.prototype.get_display_selected_group = function () {
+		return this.displaySelectedGroup;
+	}
+
+	// isSelectionRectDragging
+	State.prototype.set_selection_rect_dragging = function (isDragging) {
+		this.isSelectionRectDragging = isDragging;
+	}
+	State.prototype.is_selection_rect_dragging = function () {
+		return this.isSelectionRectDragging;
+	}
+	
+	State.prototype.set_selection_rect_shown = function (isShown) {
+		this.isSelectionRectShown = isShown;
+	}
+	State.prototype.is_selection_rect_shown = function () {
+		return this.isSelectionRectShown;
+	}
+	
+	// isMouseDownOnList
+	State.prototype.set_mousedown_on_list = function (onList) {
+		this.isMouseDownOnList = onList;
+	}
+	State.prototype.is_mousedown_on_list = function () {
+		return this.isMouseDownOnList;
+	}
+
 	//----------------------------------
 	/**
 	 * 選択されているContentIDを返却する

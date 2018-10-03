@@ -5,14 +5,22 @@
   "description": "redis test",
   "main": "server/server.js",
   "optionalDependencies": {
-    "hiredis": "*"
+    "hiredis": "*",
+    "images": "^3.0.1",
+    "sharp": "^0.20.5"
+  },
+  "scripts": {
+    "standalone-electron": "electron standalone-electron",
+    "desktop-capture": "electron desktop_capture"
   },
   "dependencies": {
+    "argv": "0.0.2",
+    "bson": "*",
+    "image-size": "*",
+    "phantom": "^6.0.3",
     "redis": "*",
     "socket.io": "2.0.4",
     "websocket": "*",
-    "phantomjs": "*",
-    "image-size": "*",
-    "bson": "*"
+    "electron": "^2.0.2"
   }
 }

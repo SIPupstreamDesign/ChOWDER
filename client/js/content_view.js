@@ -13,20 +13,6 @@
 	ContentView.prototype = Object.create(EventEmitter.prototype);
 
 	/**
-	 * コンテンツタイプから適切なクラス名を取得する.
-	 * @parma {String} contentType コンテンツタイプ
-	 */
-	function getClassName(contentType) {
-		var classname;
-		if (contentType === 'text') {
-			classname = 'textcontent';
-		} else {
-			classname = 'imagecontent';
-		}
-		return classname;
-	}
-
-	/**
 	 * コンテンツタイプから適切なタグ名を取得する.
 	 * @parma {String} contentType コンテンツタイプ
 	 */
@@ -36,6 +22,10 @@
 			tagName = 'pre';
 		} else if (contentType === 'video') {
 			tagName = 'img'; // videoでvideoを保持してない場合用
+		} else if (contentType === 'pdf') {
+			tagName = 'canvas';
+		} else if (contentType === 'tileimage') {
+		 	tagName = 'div';
 		} else {
 			tagName = 'img';
 		}
@@ -60,6 +50,15 @@
 		
 		if (Validator.isLayoutType(metaData)) {
 			return;
+		}
+		
+		// サムネイルなどの複数バイナリが入っている場合
+		// contentData[0]はmetaDataのリスト.
+		// contentData[1]はbinaryDataのリスト.
+		// contentData[n][0]がコンテンツ本体
+		if (contentData instanceof Array) {
+			metaData = contentData[0][0];
+			contentData = contentData[1][0];
 		}
 
 		//console.log("importContentToView:" + JSON.stringify(metaData));
@@ -86,9 +85,22 @@
 		if (videoElem) {
 			videoElem.id = metaData.id;
 			videoElem.style.position = "absolute";
-			videoElem.setAttribute('autoplay', '')
-			videoElem.setAttribute("controls", "");
-			videoElem.setAttribute("controlslist", "nodownload")
+			videoElem.setAttribute('autoplay', '');
+
+			if (Constants.IsFirefox) {
+				videoElem.ondblclick = function () {
+					videoElem.setAttribute('controls', '');
+					videoElem.setAttribute('controlslist', 'nodownload');
+				};
+				videoElem.onmouseleave = function () {
+					videoElem.removeAttribute('controls');
+					videoElem.removeAttribute('controlslist');
+				};
+			} else {
+				videoElem.setAttribute('controls', '');
+				videoElem.setAttribute('controlslist', 'nodownload');
+			}
+
 			videoElem.style.color = "white";
 			this.emit(ContentView.EVENT_SETUP_CONTENT, null, videoElem, metaData.id);
 			this.emit(ContentView.EVENT_INSERT_CONTENT, null, previewArea, videoElem);
@@ -120,6 +132,119 @@
 						vscreen_util.assignMetaData(contentElem, metaData, true,groupDict);
 					};
 				}
+			} else if (metaData.type === 'pdf') {
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+
+				if (!contentElem.pdfSetupCompleted) {
+					contentElem.pdfSetupCompleted = true;
+					var context = contentElem.getContext('2d');
+
+					var pdfjsLib = window['pdfjs-dist/build/pdf'];
+					window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+					window.PDFJS.cMapPacked = true;
+
+					pdfjsLib.getDocument(contentData).then(function (pdf) {
+						metaData.pdfPage = parseInt(metaData.pdfPage) || 1;
+						metaData.pdfNumPages = pdf.numPages;
+
+						var lastTask = Promise.resolve();
+						var lastDate = 0;
+						var lastPage = 0;
+						var lastWidth = 0;
+						contentElem.loadPage = function (p, width) {
+							var date = Date.now();
+							lastDate = date;
+
+							if (lastPage === p && lastWidth === width) { return; }
+
+							setTimeout(function () {
+								if (lastDate !== date) { return; }
+								lastPage = p;
+								lastWidth = width;
+
+								pdf.getPage(p).then(function (page) {
+									var viewport = page.getViewport(width / page.getViewport(1).width);
+
+									var orgAspect = metaData.orgWidth / metaData.orgHeight;
+									var pageAspect = viewport.width / viewport.height;
+
+									contentElem.width = width;
+									contentElem.height = width / orgAspect;
+
+									var transform = [ 1, 0, 0, 1, 0, 0 ];
+									if ( orgAspect < pageAspect ) {
+										var margin = ( 1.0 / orgAspect - 1.0 / pageAspect ) * width;
+										transform[ 5 ] = margin / 2;
+									} else {
+										margin = ( orgAspect - pageAspect ) * width;
+										transform[ 4 ] = margin / 2;
+										transform[ 0 ] = ( width - margin ) / width;
+										transform[ 3 ] = transform[ 0 ];
+									}
+
+									lastTask = lastTask.then(function () {
+										return page.render({
+											canvasContext: context,
+											viewport: viewport,
+											transform: transform
+										});
+									});
+								});
+							}, lastPage === p ? 500 : 0);
+						};
+						contentElem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
+					});
+				}
+			} else if (metaData.type === Constants.TypeTileImage) {
+				if (metaData.hasOwnProperty('mime')) {
+					mime = metaData.mime;
+					console.log("mime:" + mime);
+				}
+				blob = new Blob([contentData], {type: mime});
+				if (contentElem && blob) {
+					// アイコンを設置
+					if (contentElem.getElementsByClassName('tileimage_icon').length === 0) {
+						var icon = document.createElement('div');
+						icon.className = 'tileimage_icon';
+						contentElem.appendChild(icon);
+						icon.title = "Tiled Image";
+					}
+
+					var img = contentElem.getElementsByClassName('tileimage_image')[0];
+					if (img) {
+						URL.revokeObjectURL(img.src);
+						contentElem.removeChild(img);
+					}
+
+					var image = document.createElement('img');
+					image.className = "tileimage_image"
+					if (typeof(contentData) === "string") {
+						image = document.createElement('div');
+						image.className = "tileimage_image"
+						image.innerHTML = "image removed by capacity limit";
+						image.style.width = "100%"
+						image.style.textAlign = "center"
+						image.style.color = "gray"
+						image.style.border = "1px solid gray"
+					}
+					contentElem.appendChild(image);
+					
+					image.src = URL.createObjectURL(blob);
+					image.style.width = "100%";
+					image.style.height = "100%";
+
+					image.onload = function () {
+						if (metaData.width < 10) {
+							console.log("naturalWidth:" + image.naturalWidth);
+							metaData.width = image.naturalWidth;
+						}
+						if (metaData.height < 10) {
+							console.log("naturalHeight:" + image.naturalHeight);
+							metaData.height = image.naturalHeight;
+						}
+						vscreen_util.assignMetaData(contentElem, metaData, true,groupDict);
+					};
+				}
 			} else {
 				// contentData is blob
 				if (metaData.hasOwnProperty('mime')) {
@@ -144,6 +269,7 @@
 					};
 				}
 			}
+
 			this.emit(ContentView.EVENT_TOGGLE_MARK, null, contentElem, metaData);
 		}
 		

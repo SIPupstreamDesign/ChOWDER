@@ -1,0 +1,4 @@
+{
+    "wsMaxMessageSize": 67108864,
+    "reductionResolution" : 1920
+}

@@ -4,24 +4,45 @@
 (function () {
 	"use strict";
 
+	/**
+	 * エンコードされた文字列を返す.
+	 * @method fixedEncodeURIComponent
+	 * @param {String} str 文字列.
+	 * @return {String} エンコードされた文字列
+	 */
+	function fixedEncodeURIComponent(str) {
+		return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
+	}
+
 	var Login = function (connector, cookie) {
+		EventEmitter.call(this);
 		this.connector = connector;
 		this.cookie = cookie;
 		this.login = this.login.bind(this);
 		this.submitFunc = this.submitFunc.bind(this);
 		this.loginUserID = "";
-		EventEmitter.call(this);
 	};
 	Login.prototype = Object.create(EventEmitter.prototype);
 
-	Login.prototype.submitFunc = function (userList, id, password, key, callback) {
+	Login.prototype.submitFunc = function (userList, id, password, key, callback, onetime) {
 		var loginmenuBackground = document.getElementById('loginmenu_background');
 		var loginmenu = document.getElementById('loginmenu');
 		var loginpass = document.getElementById('loginpass');
 		var head_menu_hover = document.getElementById('head_menu_hover');
 		var logoutButton = document.getElementById('logout_button');
 		var user_text  = document.getElementById('user_text');
-		var request = { id : id, password : password };
+		var controllerID = this.getControllerID();
+		if ((!controllerID || controllerID.length === 0) && !onetime) {
+			this.connector.send('GenerateControllerID', {}, function (err, reply) {
+				if (!err) {
+					this.controllerID = reply;
+					location.hash = this.controllerID;
+					this.submitFunc(userList, id, password, key, callback, true);
+				}
+			}.bind(this));
+			return;
+		}
+		var request = { id : id, password : password, controllerID : controllerID };
 		if (key && key.length > 0) {
 			request.loginkey = key;
 		}
@@ -32,7 +53,7 @@
 				var management = new Management();
 				management.setUserList(null);
 				management.setAuthority(null);
-				this.cookie.setLoginKey(loginkey);
+				this.cookie.setLoginKey(this.getControllerID(), loginkey);
 				this.emit(Login.EVENT_LOGIN_FAILED, null, {
 					loginkey : loginkey,
 					management : management
@@ -42,7 +63,7 @@
 				// ログイン成功
 				this.loginUserID = reply.id;
 				var loginkey = reply.loginkey;
-				this.cookie.setLoginKey(loginkey);
+				this.cookie.setLoginKey(this.getControllerID(), loginkey);
 				for (var i = 0; i < userList.length; i = i + 1) {
 					if (userList[i].id === reply.id) {
 						user_text.innerHTML = userList[i].name;
@@ -58,14 +79,15 @@
 				// ログアウトボタンを設定.
 				head_menu_hover.style.display = "block";
 				logoutButton.onclick = function () {
-					this.cookie.setLoginKey(reply.loginkey);
+					this.cookie.setLoginKey(this.getControllerID(), reply.loginkey);
 					this.emit('logout', null, {
 						loginkey : reply.loginkey
 					});
 				}.bind(this);
 				this.emit(Login.EVENT_LOGIN_SUCCESS, null,  {
 					loginkey : loginkey,
-					management : management
+					management : management,
+					controllerData : reply.controllerData
 				});
 			}
 			if (callback) {
@@ -75,7 +97,7 @@
 	};
 
 	Login.prototype.relogin = function (userList, endCallback) {
-		var loginkey = this.cookie.getLoginKey();
+		var loginkey = this.cookie.getLoginKey(this.getControllerID());
 		if (loginkey.length > 0) {
 			// リロード時などの再ログイン.
 			this.submitFunc(userList, "", "", loginkey, function (err, reply) {
@@ -105,7 +127,7 @@
 						userselect = document.getElementById('loginuser'),
 						option;
 					for (i = 0; i <  userList.length; i = i + 1) {
-						if (userList[i].type !== Constants.DisplayTabType) {
+						if (userList[i].type !== "display" && userList[i].type !== "api") {
 							option = document.createElement('option');
 							option.value = userList[i].name;
 							option.innerHTML = userList[i].name;
@@ -136,11 +158,38 @@
 	};
 
 	Login.prototype.getLoginKey = function () {
-		return this.cookie.getLoginKey();
+		return this.cookie.getLoginKey(this.getControllerID());
 	};
 
 	Login.prototype.getLoginUserID = function () {
 		return this.loginUserID;
+	};
+
+	/**
+	 * コントローラIDの変更
+	 */
+	Login.prototype.changeControllerID = function (id) {
+		if (id !== this.getControllerID()) {
+			location.hash = fixedEncodeURIComponent(id);
+			location.reload(true);
+		}
+	};
+
+	/**
+	 * コントローラIDの取得.
+	 * @method getControllerID
+	 */
+	Login.prototype.getControllerID = function () {
+		var controller_id,
+			hashid = location.hash.split("#").join("");
+		if (hashid.length > 0) {
+			controller_id = decodeURIComponent(hashid);
+			if (!controller_id || controller_id === undefined || controller_id === "undefined") {
+				controller_id = '';
+			}
+			return controller_id;
+		}
+		return "";
 	};
 
 	Login.EVENT_LOGIN_SUCCESS = "success";
