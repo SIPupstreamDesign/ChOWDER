@@ -890,9 +890,15 @@
 								
 								controller.update_metadata(reply.metaData);
 								manipulator.removeManipulator();
+							} else if (reply.hasOwnProperty('restore_key')) {
+								reply.restore_key = restoreKey;
+								reply.restore_value = restoreValue;
+								reply.posx = metaData.posx;
+								reply.posy = metaData.posy;
+								controller.update_metadata(reply);
+								manipulator.removeManipulator();
 							}
 						});
-
 					}
 				}
 			}
