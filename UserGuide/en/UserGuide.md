@@ -1097,12 +1097,12 @@ Run the command below located in the `bin` directory
 
 ### Command Option
 
-Set the path of the setup file using the `--config` option. The default path is `tileimage/tileimage.js`.
+Set the path of the setup file using the `--config` option. The default path is `tileimage/tileimage.json`.
 Set the meta data of images using `--metadata` option.
 
 See below example of command:
 
-    ./tileimage.sh --config conf.json --metadata "{\"key\":\"value\"}" image.jpg
+    ./tileimage.sh --config=conf.json --metadata="{\"key\":\"value\"}" image.jpg
 
 
 

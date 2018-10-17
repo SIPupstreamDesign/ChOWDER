@@ -1140,12 +1140,12 @@ CLIアプリケーション経由で、巨大な画像データをChOWDERサー�
 
 ### コマンドオプション
 
-`--config` オプションを用いて、設定ファイルのパスを指定できます。デフォルトでは `tileimage/tileimage.js` を使います。
+`--config` オプションを用いて、設定ファイルのパスを指定できます。デフォルトでは `tileimage/tileimage.json` を使います。
 `--metadata` オプションを用いて、画像のメタデータを設定できます。
 
 コマンド例は以下の通りです:
 
-    ./tileimage.sh --config conf.json --metadata "{\"key\":\"value\"}" image.jpg
+    ./tileimage.sh --config=conf.json --metadata="{\"key\":\"value\"}" image.jpg
     
 
 大規模画像データの表示と操作
