@@ -60,6 +60,7 @@ function createWindows() {
 			height: windowProps.rect[3],
 			frame: frame,
 			transparent: !frame,
+			toolbar: false,
 			fullscreen: typeof windowProps.fullscreen !== 'undefined' ? windowProps.fullscreen : true
 		});
 		tileWindows[id] = window;
