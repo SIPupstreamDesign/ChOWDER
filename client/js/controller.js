@@ -2734,7 +2734,7 @@
 		store.release();
 	};
 	window.onblur = function () {
-		gui.clear_content_property(true);
+		//gui.clear_content_property(true);
 		state.set_ctrl_down(false);
 	};
 	window.onkeydown = function (evt) {
