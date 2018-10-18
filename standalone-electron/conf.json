@@ -3,17 +3,19 @@
 	"windows": {
 		"tile1": {
 			"group": "group",
-			"rect": [0, 0, 500, 500],
 			"position": [0, 0],
-			"scale": 1.0,
+			"size" : [500, 500],
+			"vda_position": [0, 0],
+			"vda_scale": 1.0,
 			"fullscreen": false,
 			"frame": false
 		},
 		"tile2": {
 			"group": "group",
-			"rect": [500, 0, 500, 500],
 			"position": [500, 0],
-			"scale": 1.0,
+			"size" : [500, 500],
+			"vda_position": [500, 0],
+			"vda_scale": 1.0,
 			"fullscreen": false,
 			"frame": false
 		}
