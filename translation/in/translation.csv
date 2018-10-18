@@ -11,7 +11,7 @@ select_all_in_a_group,グループ内全て選択,Select All in a Group
 move_to_front,最前面に移動,Move to front
 move_to_back,最背面に移動,Move to back
 add_content,コンテンツ追加,Add Content
-swap_image,画像差し替え,Change Image
+swap_image,画像差し替え,Replace Image
 image_file,画像ファイル,Image File
 movie_file,動画ファイル,Movie File
 text,テキスト,Text
