@@ -14,6 +14,8 @@
 		this.draggingIDList = [];
 		this.selectedIDList = [];
 		this.isCtrlDown = false; // Ctrlボタンを押してるかどうか
+		this.isShiftDown = false; // Shiftボタンを押してるかどうか
+		this.isSpaceDown = false;
 		this.mouseDownPos = [0, 0];
 		this.dragRect = {};
 
@@ -82,6 +84,22 @@
 	};
 	State.prototype.is_ctrl_down = function () {
 		return this.isCtrlDown;
+	};
+
+	// isShiftDown
+	State.prototype.set_shift_down = function (is_down) {
+		this.isShiftDown = is_down;
+	};
+	State.prototype.is_shift_down = function () {
+		return this.isShiftDown;
+	};
+
+	// isSpaceDown
+	State.prototype.set_space_down = function (is_down) {
+		this.isSpaceDown = is_down;
+	};
+	State.prototype.is_space_down = function () {
+		return this.isSpaceDown;
 	};
 
 	// mouseDownPos

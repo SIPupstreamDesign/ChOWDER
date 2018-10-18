@@ -11,7 +11,7 @@
 	
 	var store = new Store(),
 		state = new State(),
-		gui = new ControllerGUI(),
+		gui = new ControllerGUI(state),
 		login = new Login(connector, Cookie),
 		management; // 管理情報
 		
@@ -604,6 +604,8 @@
 				clientY,
 				target;
 			
+			if (state.is_space_down()) { return; }
+
 			evt = (evt) || window.event;
 			if (evt.changedTouches) {
 				// タッチ
@@ -651,7 +653,7 @@
 			}
 
 			// erase last border
-			if (!state.is_ctrl_down()) {
+			if (!state.is_ctrl_down() && !state.is_shift_down()) {
 				this.unselect_all(true);
 				this.select(id, gui.is_listview_area(evt));
 				gui.close_context_menu();
@@ -2736,10 +2738,18 @@
 	window.onblur = function () {
 		//gui.clear_content_property(true);
 		state.set_ctrl_down(false);
+		state.set_shift_down(false);
+		state.set_space_down(false);
 	};
 	window.onkeydown = function (evt) {
 		if (evt.keyCode === 17) {
 			state.set_ctrl_down(true);
+		}
+		if (evt.keyCode === 16) {
+			state.set_shift_down(true);
+		}
+		if (evt.keyCode === 32) {
+			state.set_space_down(true);
 		}
 		if (evt.keyCode === 37) { // ←
 			var history_up = document.getElementById('history_up');
@@ -2757,6 +2767,12 @@
 	window.onkeyup = function (evt) {
 		if (evt.keyCode === 17) {
 			state.set_ctrl_down(false);
+		}
+		if (evt.keyCode === 16) {
+			state.set_shift_down(false);
+		}
+		if (evt.keyCode === 32) {
+			state.set_space_down(false);
 		}
 	};
 	

@@ -12,7 +12,7 @@
 	var ControllerGUI;
 	
 	// コンストラクタ
-	ControllerGUI = function () {
+	ControllerGUI = function (state) {
 		EventEmitter.call(this);
 		this.groupBox = null;
 		this.searchBox = null;
@@ -25,6 +25,7 @@
 		this.management = null;
 		this.contextPosX = 0;
 		this.contextPosY = 0;
+		this.state = state;
 	};
 	ControllerGUI.prototype = Object.create(EventEmitter.prototype);
 
@@ -726,7 +727,7 @@
 
 		document.body.addEventListener("contextmenu", function (evt) {
 			if (this.tabs.is_active(type) || this.tabs.is_active(type2)) {
-				if (evt.button === 2) {
+				if (evt.button === 2 && !this.state.is_shift_down()) {
 					openContextMenu = true;
 				}
 				evt.preventDefault();
@@ -735,7 +736,7 @@
 		
 		document.body.addEventListener("mouseup", function (evt) {
 			if (this.tabs.is_active(type) || this.tabs.is_active(type2)) {
-				if (evt.button === 2) {
+				if (evt.button === 2 && !this.state.is_shift_down()) {
 					openContextMenu = true;
 				}
 			}
@@ -1358,20 +1359,22 @@
 		
 		contentPreviewArea.addEventListener('mousedown', function (evt) {
 			if (this.isOpenDialog) { return; }
+			if (this.state.is_shift_down()) { return; }
 			if (evt.button === 2) {
 				var rect = contentPreviewArea.getBoundingClientRect();
 				mouseDownPosY = evt.clientY - rect.top;
 				is_right_dragging = true;
-			} else if (evt.button === 1) {
+			} else if (evt.button === 1 || this.state.is_space_down()) {
 				var rect = contentPreviewArea.getBoundingClientRect();
 				mouseDownPosX = evt.clientX - rect.left;
 				mouseDownPosY = evt.clientY - rect.top;
 				is_middle_dragging = true;
 			}
-		});
+		}.bind(this));
 
 		displayPreviewArea.addEventListener('mousedown', function (evt) {
 			if (this.isOpenDialog) { return; }
+			if (this.state.is_shift_down()) { return; }
 			if (this.get_whole_scale) {
 				this.display_scale = this.get_whole_scale();
 			}
@@ -1379,7 +1382,7 @@
 				var rect = displayPreviewArea.getBoundingClientRect();
 				mouseDownPosY = evt.clientY - rect.top;
 				is_right_dragging = true;
-			} else if (evt.button === 1) {
+			} else if (evt.button === 1 || this.state.is_space_down()) {
 				var rect = displayPreviewArea.getBoundingClientRect();
 				mouseDownPosX = evt.clientX - rect.left;
 				mouseDownPosY = evt.clientY - rect.top;
@@ -1389,6 +1392,7 @@
 
 		window.addEventListener('mousemove', function (evt) {
 			if (this.isOpenDialog) { return; }
+			if (this.state.is_shift_down()) { return; }
 			var rect = contentPreviewArea.getBoundingClientRect();
 			if (is_right_dragging) {
 				var dy = evt.clientY - rect.top - mouseDownPosY,
@@ -1423,7 +1427,7 @@
 			if (evt.button === 2) {
 				this.emit(window.ControllerGUI.EVENT_DISPLAY_SCALE_CHANGED, null, this.display_scale);
 				is_right_dragging = false;
-			} else if (evt.button === 1) {
+			} else {
 				is_middle_dragging = false;
 			}
 		}.bind(this));
