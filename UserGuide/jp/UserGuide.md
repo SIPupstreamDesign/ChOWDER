@@ -1192,17 +1192,19 @@ Electron版ChOWDERディスプレイアプリケーションを利用して、�
         "windows": {
             "tile1": {
                 "group": "hoge",
-                "rect": [0, 0, 500, 500],
-                "position": [0, 0],
-                "scale": 1.0,
+                "position": [0, 0]
+                "size" : [500, 500],
+                "vda_position": [0, 0],
+                "vda_scale": 1.0,
                 "fullscreen": false,
                 "frame": false
             },
             "tile2": {
                 "group": "hoge",
-                "rect": [500, 0, 500, 500],
                 "position": [500, 0],
-                "scale": 1.0,
+                "size" : [500, 500],
+                "vda_position": [500, 0],
+                "vda_scale": 1.0,
                 "fullscreen": false,
                 "frame": false
             }
@@ -1212,9 +1214,10 @@ Electron版ChOWDERディスプレイアプリケーションを利用して、�
 -   `url` には、ChOWDERサーバのURLを指定します。
 -   `windows` は、ディスプレイIDをキー・ディスプレイ設定を値として持ったオブジェクトとなります。
     -   `group` には、ディスプレイグループを指定します。
-    -   `rect` には、ウインドウの位置およびサイズを指定します。
-    -   `position` には、VDA上における位置を指定します。
-    -   `scale` には、VDA上における拡大率を指定します。
+    -   `position` には、ウインドウの位置を指定します。
+    -   `size` には、ウインドウのサイズを指定します。
+    -   `vda_position` には、VDA上における位置を指定します。
+    -   `vda_scale` には、VDA上における拡大率を指定します。
     -   `fullscreen` には、ウインドウのフルスクリーン表示を行うかどうかを指定します。
     -   `frame` には、ウインドウのフレームを表示するかどうかを指定します。
 

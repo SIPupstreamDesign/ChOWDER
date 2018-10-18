@@ -1146,17 +1146,19 @@ The format for the setup file is as follows:
         "windows": {
             "tile1": {
                 "group": "hoge",
-                "rect": [0, 0, 500, 500],
-                "position": [0, 0],
-                "scale": 1.0,
+                "position": [0, 0]
+                "size" : [500, 500],
+                "vda_position": [0, 0],
+                "vda_scale": 1.0,
                 "fullscreen": false,
                 "frame": false
             },
             "tile2": {
                 "group": "hoge",
-                "rect": [500, 0, 500, 500],
                 "position": [500, 0],
-                "scale": 1.0,
+                "size" : [500, 500],
+                "vda_position": [500, 0],
+                "vda_scale": 1.0,
                 "fullscreen": false,
                 "frame": false
             }
@@ -1166,9 +1168,10 @@ The format for the setup file is as follows:
 -	Use the URL of the ChOWDER server for `url`.
 -	`windows` is the object that has the Display ID as key and display setup as value.
     -	Designate the display group in `Group`.
-    -	Set the position and size of the window in `rect`.
-    -	Set the position within VDA in `position`.
-    -	Set the enlargement factor within VDA in `scale`.
+    -	Set the position of the window in `position`.
+    -	Set the size of the window in `size`.
+    -	Set the position within VDA in `vda_position`.
+    -	Set the enlargement factor within VDA in `vda_scale`.
     -	Designate whether to display or to not display the full screen of the window in `fullscreen`.
     -	Designate whether to display or to not display the window frame in `frame`. 
 
