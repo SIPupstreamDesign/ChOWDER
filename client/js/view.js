@@ -1428,13 +1428,17 @@
 	 * リモートカーソルの自動リサイズ
 	 */
 	function autoResizeCursor(elems) {
-		//var ratio = Number(window.devicePixelRatio);
+		var ratio = Number(window.devicePixelRatio);
+		/*
 		var width = Number(screen.width);
 		var height = Number(screen.height);
 		var w = width;
 		var h = height;
 		var area = w * h;
 		var mul = area / 100000.0 / 40.0;
+		*/
+		var mul = 1.0 / ratio * 2;
+
 		for (var i = 0; i < elems.length; ++i) {
 			elems[i].style.transform = "scale(" + mul + ")";
 			elems[i].style.transformOrigin = "left top 0";
@@ -1589,7 +1593,7 @@
                         lastActive: 0
                     };
 				}
-                pos = vscreen.transform(vscreen.makeRect(res.data.x, res.data.y, 0, 0));
+                pos = vscreen.transform(vscreen.makeRect(Number(res.data.x), Number(res.data.y), 0, 0));
 				elem = document.getElementById('hiddenCursor' + ctrlid);
 				controllerID = document.getElementById('controllerID' + ctrlid);
                 if (!elem) {
@@ -1633,8 +1637,8 @@
                 elem.style.left = Math.round(pos.x) + 'px';
 				elem.style.top  = Math.round(pos.y) + 'px';
                 controllerID.style.left = Math.round(pos.x) + 'px';
-                controllerID.style.top  = Math.round(pos.y + 100) + 'px';
-                controllers[ctrlid].lastActive = Date.now();
+                controllerID.style.top  = Math.round(pos.y + 150 / Number(window.devicePixelRatio)) + 'px';
+				controllers[ctrlid].lastActive = Date.now();
             } else {
                 if (controllers.hasOwnProperty(ctrlid)) {
 					elem = document.getElementById('hiddenCursor' + ctrlid);
