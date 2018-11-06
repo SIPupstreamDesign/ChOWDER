@@ -1145,19 +1145,19 @@ The format for the setup file is as follows:
         "url": "http://localhost:8080/view.html",
         "windows": {
             "tile1": {
-                "group": "hoge",
-                "position": [0, 0]
-                "size" : [500, 500],
+                "group": "sample",
+                "position": [0, 0],
+                "size" : [1920, 1080],
                 "vda_position": [0, 0],
                 "vda_scale": 1.0,
                 "fullscreen": false,
                 "frame": false
             },
             "tile2": {
-                "group": "hoge",
-                "position": [500, 0],
-                "size" : [500, 500],
-                "vda_position": [500, 0],
+                "group": "sample",
+                "position": [1920, 0],
+                "size" : [1920, 1080],
+                "vda_position": [1920, 0],
                 "vda_scale": 1.0,
                 "fullscreen": false,
                 "frame": false
@@ -1168,9 +1168,9 @@ The format for the setup file is as follows:
 -	Use the URL of the ChOWDER server for `url`.
 -	`windows` is the object that has the Display ID as key and display setup as value.
     -	Designate the display group in `Group`.
-    -	Set the position of the window in `position`.
-    -	Set the size of the window in `size`.
-    -	Set the position within VDA in `vda_position`.
+    -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
+    -	Set the size `[width, height]` of the window in `size`.
+    -	Set the position `[Vertical, Horizontal]` within VDA in `vda_position`. The origin is the upper left corner of Virtual Display.
     -	Set the enlargement factor within VDA in `vda_scale`.
     -	Designate whether to display or to not display the full screen of the window in `fullscreen`.
     -	Designate whether to display or to not display the window frame in `frame`. 
