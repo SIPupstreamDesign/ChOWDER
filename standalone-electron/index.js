@@ -56,8 +56,8 @@ function createWindows() {
 		var window = new electron.BrowserWindow({
 			x: windowProps.position[0],
 			y: windowProps.position[1],
-			width: windowProps.size[2],
-			height: windowProps.size[3],
+			width: windowProps.size[0],
+			height: windowProps.size[1],
 			frame: frame,
 			transparent: !frame,
 			toolbar: false,
