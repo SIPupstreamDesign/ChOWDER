@@ -175,6 +175,8 @@ Run the execution script in the `bin` directory.
 
 - Redis may not run properly in Windows if the Virtual Memory is set to 0 Kbyte. To avoid this issue, temporarily enable Virtual Memory. 
 
+- On Windows, hiredis module can not be installed and an error is displayed, but since it is not a required module, it works without problems.
+
 Accessing ChOWDER from a Web Browser
 ---------------------------------------------------
 
