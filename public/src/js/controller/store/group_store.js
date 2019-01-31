@@ -75,7 +75,7 @@ class GroupStore
 			callback = data.callback;
 			delete data.callback;
 		}
-		this.store.operation.getGroupList(data);
+		this.store.operation.getGroupList(callback);
 	}
 
     /**
@@ -105,9 +105,7 @@ class GroupStore
 						}
 					}
 					// UserList再取得
-					this.connector.send('GetUserList', {}, (err, userList) => {
-						this.store.getManagement().setUserList(userList);
-					});
+					this.action.reloadUserList();
 				});
 				return true; // break
 			}
@@ -166,10 +164,10 @@ class GroupStore
 	 */
 	_moveDownGroup(data) {
         let groupID = data.groupID;
-		let iterateGroupFunc = this.for_each_content_group;
+		let iterateGroupFunc = this.for_each_content_group.bind(this);
 		let targetGroupList = this.getContentGroupList();
 		if (Validator.isDisplayTabSelected()) {
-			iterateGroupFunc = this.for_each_display_group;
+			iterateGroupFunc = this.for_each_display_group.bind(this);
 			targetGroupList = this.getDisplayGroupList();
 		}
 		iterateGroupFunc((i, group) => {
@@ -195,10 +193,10 @@ class GroupStore
 	 */
 	_moveUpGroup(data) {
         let groupID = data.groupID;
-		let iterateGroupFunc = this.store.for_each_content_group;
-		let targetGroupList = this.store.getContentGroupList();
+		let iterateGroupFunc = this.for_each_content_group.bind(this);
+		let targetGroupList = this.getContentGroupList();
 		if (Validator.isDisplayTabSelected()) {
-			iterateGroupFunc = this.store.for_each_display_group;
+			iterateGroupFunc = this.for_each_display_group.bind(this);
 			targetGroupList = this.getDisplayGroupList();
 		}
 		iterateGroupFunc((i, group) => {
@@ -221,27 +219,25 @@ class GroupStore
 
 	/**
 	 * Group名変更
+	 * TODO ：バグってる
 	 */
 	_changeGroupName(data) {
         let groupID = data.groupID;
         let groupName = data.groupName;
 
 		this.for_each_group((i, group) => {
-			let oldName;
 			if (group.id === groupID) {
-				oldName = group.name;
+				let oldName = group.name;
 				group.name = groupName;
-				this.connector.send('UpdateGroup', group, ((oldName, newName) => {
-					return (err, reply) => {
-						// console.log("UpdateGroup done", err, reply);
-						if (!err) {
-							// グループリスト更新
-							this.connector.send('GetUserList', {}, (err, userList) => {
-								this.store.getManagement().setUserList(userList);
-							});
-						}
-					};
-				})(oldName, groupName));
+				this.connector.send('UpdateGroup', group, (err, reply) => {
+					// console.log("UpdateGroup done", err, reply);
+					if (!err) {
+						// グループリスト更新
+						this.action.reloadUserList();
+					} else {
+						console.error("Error update group failed", err)
+					}
+				});
 			}
 		});
 	}

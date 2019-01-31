@@ -980,6 +980,7 @@ class Controller {
 		let key = this.store.getLoginStore().getLoginKey();
 		if (key.length > 0) {
 			let request = { id: "", password: "", loginkey: key };
+			
 			Connector.send('Login', request, (err, reply) => {
 				if (err || reply === "failed") {
 					// ログインに失敗した。リロードする.
@@ -1850,7 +1851,6 @@ class Controller {
 		// console.log("doneGetGroupList", reply);
 		let groupToElems = {};
 		let groupToMeta = {};
-		let controllerData = this.getControllerData();
 		groupToElems[Constants.DefaultGroup] = [];
 		groupToMeta[Constants.DefaultGroup] = [];
 		let selectedGroup = gui.getCurrentGroupID();
@@ -1884,7 +1884,6 @@ class Controller {
 			//this.getControllerData().initGroupCheck(reply.displaygrouplist);
 			// groupリストを新たにセットして, Searchタブ等を初期化
 			gui.setGroupList(reply.grouplist, reply.displaygrouplist,
-				//controllerData.getGroupCheckDict(),
 				this.state.getContentSelectedGroup(), this.state.getDisplaySelectedGroup());
 			this.store.getGroupStore().setGroupList(reply.grouplist, reply.displaygrouplist);
 			// Virtual Displayはすべてに追加しなおす.

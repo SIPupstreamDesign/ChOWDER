@@ -46,6 +46,12 @@ class LoginStore {
 	 * ログイン
 	 */
 	_login(data) {
+		let callback;
+		if (data && data.hasOwnProperty('callback')) {
+			callback = data.callback;
+			delete data.callback;
+		}
+
 		let controllerID = this.getControllerID();
 		if ((!controllerID || controllerID.length === 0) && !data.onetime) {
 			this.connector.send('GenerateControllerID', {}, (err, reply) => {
@@ -82,6 +88,9 @@ class LoginStore {
 				this.cookie.setLoginKey(this.getControllerID(), data.loginkey);
 				this.loginUserID = reply.id;
 				this.store.emit(Store.EVENT_LOGIN_SUCCESS, err, data);
+			}
+			if (callback) {
+				callback(err, reply);
 			}
 		});
 	}

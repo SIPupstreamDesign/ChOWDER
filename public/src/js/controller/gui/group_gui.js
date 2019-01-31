@@ -4,6 +4,7 @@ import SearchBox from '../../components/search_box.js';
 import Tabs from '../../components/tabs'
 import Store from '../store/store'
 import Validator from '../../common/validator'
+import InputDialog from '../../components/input_dialog'
 
 class GroupGUI
 {

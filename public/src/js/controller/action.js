@@ -12,6 +12,16 @@ class Action extends EventEmitter
         super();
     }
 
+	// デバッグ用. release版作るときは消す
+	emit() {
+		if (arguments.length > 0) {
+			if (!arguments[0]) {
+				console.error("Not found EVENT NAME!")
+			}
+		}
+		super.emit(...arguments);
+    }
+    
     init(data) {
         this.emit(Action.EVENT_INIT, null, data);
     }
@@ -822,5 +832,7 @@ Action.EVENT_SETUP_CONTENT_ELEMENT = "setupContentElement";
 Action.EVENT_APPLY_CONTENT_LAYOUT = "applyContentLayout";
 Action.EVENT_CORRECT_CONTENT_ASPECT = "correctContentAspect";
 Action.EVENT_SNAP_CONTENT_TO_SCREEN = "snapContentToScreen";
+Action.EVENT_MOVE_UP_GROUP = "moveUpGroup";
+Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 
 export default Action;

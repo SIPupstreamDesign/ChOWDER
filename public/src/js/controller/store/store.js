@@ -522,6 +522,7 @@ Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
 Store.EVENT_DONE_GET_GROUP_LIST = "done_get_group_list";
 Store.EVENT_DONE_GET_METADATA = "done_get_metadata";
+Store.EVENT_DONE_GET_WINDOW_METADATA = "done_get_window_metadata";
 Store.EVENT_DONE_RESTORE_CONTENT = "done_restore_content";
 Store.EVENT_DONE_RESTORE_HISTORY_CONTENT = "done_restore_history_content";
 
@@ -562,6 +563,7 @@ Store.EVENT_CHANGE_DISPLAY_VISIBLE = "change_display_visible";
 Store.EVENT_GROUP_ADDED = "group_added";
 Store.EVENT_TAB_CHANGED_PRE = "tab_change_pre";
 Store.EVENT_TAB_CHANGED_POST = "tab_change_post";
+Store.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
 
 export default Store;
 
