@@ -79,7 +79,7 @@ class ManipulatorStore {
 	/**
 	 * マニピュレータ: pdfページ送り
 	 */
-    _movePDFPageOnManipulator() {
+    _movePDFPageOnManipulator(data) {
         let id = data.id;
         let delta = data.delta;
 		let callback;

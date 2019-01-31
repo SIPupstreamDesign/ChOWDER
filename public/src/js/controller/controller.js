@@ -980,7 +980,7 @@ class Controller {
 		let key = this.store.getLoginStore().getLoginKey();
 		if (key.length > 0) {
 			let request = { id: "", password: "", loginkey: key };
-			Connector.send('Login', request, function (err, reply) {
+			Connector.send('Login', request, (err, reply) => {
 				if (err || reply === "failed") {
 					// ログインに失敗した。リロードする.
 					window.location.reload(true);

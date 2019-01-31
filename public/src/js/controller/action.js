@@ -662,6 +662,11 @@ class Action extends EventEmitter
     /**
      * マニピュレータ: pdfページ送り
      * @param {*} data 
+     * {
+     *    id : メタデータのid
+     *   delta : ページめくり
+     *    callback : 終了時コールバック(option)
+     * }
      */
     movePDFPageOnManipulator(data) {
         this.emit(Action.EVENT_MOVE_PDF_PAGE_ON_MANIPULATOR, null, data);
@@ -725,7 +730,7 @@ class Action extends EventEmitter
      * @param {*} data metaData
      * {
      *   metaData : metaData,
-     *   callback : callback
+     *    callback : 終了時コールバック(option)
      * }
      */
     correctContentAspect(data) {

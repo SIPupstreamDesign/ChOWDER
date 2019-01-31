@@ -313,9 +313,14 @@ class Manipulator extends EventEmitter {
 			parent.appendChild(prev);
 			prev.onmousedown = (evt) => {
 				evt.stopPropagation();
-				this.emit('move_pdf_page', null, metaData.id, -1, function (p) {
-					page.innerText = p + ' / ' + metaData.pdfNumPages;
-				}); // ページを1つ前に戻す
+				// ページを1つ前に戻す
+				this.action.movePDFPageOnManipulator({
+					id : metaData.id,
+					delta : -1,
+					callback : (p) => {
+						page.innerText = p + ' / ' + metaData.pdfNumPages;
+					}
+				});
 			};
 			let page = document.createElement('div');
 			page.className = 'page';
@@ -326,9 +331,14 @@ class Manipulator extends EventEmitter {
 			parent.appendChild(next);
 			next.onmousedown = (evt) => {
 				evt.stopPropagation();
-				this.emit('move_pdf_page', null, metaData.id, 1, function (p) {
-					page.innerText = p + ' / ' + metaData.pdfNumPages;
-				}); // ページを1つ次に進める
+				// ページを1つ次に進める
+				this.action.movePDFPageOnManipulator({
+					id : metaData.id,
+					delta : 1,
+					callback : (p) => {
+						page.innerText = p + ' / ' + metaData.pdfNumPages;
+					}
+				});
 			};
 		}
 	}

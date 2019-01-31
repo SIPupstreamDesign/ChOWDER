@@ -124,7 +124,13 @@ function opserver_http_request(req, res) {
 					id : contentID,
 					type : null
 				}, function (err, meta, reply) {
-					res.end(reply);
+					if (reply && reply instanceof Array && reply.length > 0) {
+						res.end(reply[0]);
+					} else if (reply) {
+						res.end(reply);
+					} else {
+						res.end(data);
+					}
 				});
 			} else {
 				res.end(data);

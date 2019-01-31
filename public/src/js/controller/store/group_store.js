@@ -121,7 +121,7 @@ class GroupStore
 				let metaData = this.store.getMetaData(id);
 				metaData.group = groupID;
 
-				this.store.getState().for_each_group((k, group_) => {
+				this.store.for_each_group((k, group_) => {
 					if (group_.id === groupID) {
 						targetMetaDataList.push(metaData);
 						group = group_;
@@ -132,7 +132,7 @@ class GroupStore
 		});
 
 		if (targetMetaDataList.length > 0) {
-			this.store.operation.updateMetaDataMulti(targetMetaDataList, ((group) => {
+			this.store.operation.updateMetadataMulti(targetMetaDataList, ((group) => {
 				return (err, data) => {
 					this.connector.send('UpdateGroup', group, (err, reply) => {
 					});
