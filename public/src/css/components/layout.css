@@ -1,0 +1,12 @@
+
+.layout_ns_splitter:hover {
+	cursor : ns-resize;
+}
+
+.layout_ew_splitter:hover {
+	cursor : ew-resize;
+}
+
+.right_area_panel__ {
+    background-color: #555;
+}

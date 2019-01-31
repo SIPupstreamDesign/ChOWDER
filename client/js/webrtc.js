@@ -55,6 +55,23 @@
 			}
 		}.bind(this);
 
+		this.peer.ondatachannel = function(evt) {
+			// evt.channelにDataChannelが格納されているのでそれを使う
+			
+			if (evt.channel) {
+				//console.error("hoge", evt.channel)
+				this.datachannel = evt.channel;
+				this.datachannel.onopen = function (event) {
+					//console.error("datachannel.onopen")
+				}
+				this.datachannel.onmessage = function (event) {
+					//console.error("event", event)
+					this.emit(WebRTC.EVENT_DATACHANNEL_MESSAGE, null, event.data);
+				}.bind(this);
+				
+			}
+		}.bind(this)
+
 		this.peer.onnegotiationneeded = function (evt) {
 			printDebug("onnegotiationneeded", evt);
 			this.emit(WebRTC.EVENT_NEGOTIATION_NEEDED, evt);
@@ -123,6 +140,23 @@
 	};
 
 	WebRTC.prototype.offer = function (callback) {
+		//console.error("offer")
+		
+		var dataChannelOptions = {
+			ordered: true,
+			maxRetransmitTime: 100, // ミリ秒
+		};
+		this.datachannel = this.peer.createDataChannel("myLabel", dataChannelOptions);
+		this.datachannel.binaryType = "arraybuffer";
+
+		this.datachannel.onopen = function () {
+			this.emit("datachannel.onopen");
+		}.bind(this);
+		
+		this.datachannel.onclose = function () {
+			printDebug("datachannel.onclose");
+		}.bind(this);
+		
 		printDebug('offer');
 		this.peer.createOffer(
 			function (sdp) {
@@ -169,6 +203,7 @@
 				}.bind(this), printError);
 			}.bind(this),
 			printError);
+		
 	};
 
 	WebRTC.prototype.setAnswer = function (sdp, callback) {
@@ -224,6 +259,7 @@
 	WebRTC.EVENT_NEED_RESTART = "need_restart";
 	WebRTC.EVENT_REMOVE_STREAM = "removestream";
 	WebRTC.EVENT_ICECANDIDATE = "icecandidate";
+	WebRTC.EVENT_DATACHANNEL_MESSAGE = "datachannelmessage";
 	WebRTC.EVENT_NEGOTIATION_NEEDED = "negotiationneeded";
 
 	window.WebRTC = WebRTC;

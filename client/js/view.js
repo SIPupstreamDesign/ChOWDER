@@ -566,6 +566,11 @@
 		}
 	}
 
+	var player = null;
+	function playFragmentVideo(videoElem, data) {
+		player.onVideoFrame(data);
+	}
+
 	// このページのwebRTC用のキーを取得.
 	// ディスプレイIDが同じでもページごとに異なるキーとなる.
 	// (ページをリロードするたびに代わる)
@@ -621,13 +626,14 @@
 				var rtcKey = getRTCKey(metaData);
 				elem.setAttribute("controls", "");
 				elem.setAttribute('autoplay', '')
-				elem.setAttribute('preload', "metadata")
+				//elem.setAttribute('preload', "metadata")
 				if (!webRTCDict.hasOwnProperty(rtcKey)) {
 					metaData.from = "view";
 					connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), function () {
 						var webRTC = new WebRTC();
 						webRTCDict[rtcKey] = webRTC;
 						webRTC.on('addstream', function (evt) {
+							/*
 							var stream = evt.stream ? evt.stream : evt.streams[0];
 							elem.srcObject = stream;
 
@@ -647,6 +653,13 @@
 									}.bind(t));
 								}.bind(this, rtcKey, webRTCDict[rtcKey]), 1000);
 							}
+							*/
+							if (!player) {
+								player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
+								player.on('sourceOpen', function () {
+									player.setDuration(313.47);
+								})
+							}
 						}.bind(rtcKey));
 
 						webRTC.on('icecandidate', function (type, data) {
@@ -658,6 +671,10 @@
 								}), function (err, reply) {});
 								delete metaData.from;
 							}
+						});
+
+						webRTC.on('datachannelmessage', function (err, message) {
+							playFragmentVideo(elem, message);
 						});
 						
 						webRTC.on('closed', function () {

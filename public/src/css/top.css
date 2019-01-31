@@ -1,0 +1,116 @@
+*:not(input) {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+}
+
+body {
+	width:100%;
+	height:100%;
+	overflow:hidden;
+	background-color: #444;
+}
+
+.license_wrap {
+	position : absolute;
+	width : 100%;
+	padding-top : 50px;
+	text-align: center;
+	color : gray;
+}
+
+.whitelink,
+.whitelink:link,
+.whitelink:visited {
+	color : #CCC;
+	text-decoration: underline; 
+}
+
+a {
+	text-decoration: none;
+}
+
+div {
+	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	white-space: nowrap;
+}
+
+.backbar {
+	position: absolute;
+	left: 0px;
+	top: 200px;
+	height: 230px;
+	right: 0px;
+	background-color: #7e7e7e;
+}
+
+.title {
+	margin: 80px;
+	text-align: center;
+	font-size: 30px;
+	color: #FFF;
+}
+
+.caption {
+	margin: 40px;
+	text-align: center;
+	font-size: 30px;
+	color: #FFF;
+}
+
+.list-box {
+	
+	display: table;
+	margin-left: auto;
+	margin-right: auto;
+
+}
+.list-item {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.sizer {
+	margin: 0px;
+	width:30px;
+	height: 30px;
+}
+
+.controller {
+	/*position: absolute;
+	left: 30%;
+	top: 300px;*/
+	color: #FFF;
+	margin: 0px;
+	background-color: rgb(44,177,58);
+	font-size: 26px;
+	text-align: center;
+	padding: 12px;
+	width: 250px;
+	border-radius: 5px;
+}
+.controller:hover {
+	background-color: rgb(81, 191, 93);
+}
+
+
+.display {
+	/*position: absolute;
+	right: 20%;
+	top: 300px;*/
+	color: #FFF;
+	margin: 0px;
+	background-color: rgb(14,133,251);
+	font-size: 26px;
+	text-align: center;
+	padding: 12px;
+	width: 250px;
+	border-radius: 5px;
+}
+.display:hover {
+	background-color: rgb(72, 164, 255);
+}

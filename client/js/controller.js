@@ -1063,6 +1063,102 @@
 		}.bind(this, metaData);
 	};
 
+	let videoSegments = [];
+
+    function processMovieBlob(videoElem, blob) {
+        //let fileSize   = file.size;
+        let offset = 0;
+        let readBlock = null;
+
+		var mp4box = new MP4Box();
+		var player = null;
+		var chunkSize  = 1024 * 1024 * 1024; // bytes
+		mp4box.onReady = function(info) { 
+			videoSegments = [];
+			let videoCodec = 'video/mp4; codecs=\"' + info.tracks[0].codec +  '\"';
+			let audioCodec = null;
+			if (info.tracks.length > 1) {
+				audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
+			} 
+			console.log("codec", videoCodec, audioCodec,
+				MediaSource.isTypeSupported(videoCodec),
+				MediaSource.isTypeSupported(audioCodec)
+			);
+			if (!player) {
+				player = new MediaPlayer(videoElem, videoCodec, audioCodec);
+			}
+			if (info.isFragmented) {
+				console.log("duration fragment", info.fragment_duration/info.timescale)
+				player.setDuration(info.fragment_duration/info.timescale);
+			} else {
+				console.log("duration", info.duration/info.timescale)
+				player.setDuration(info.duration/info.timescale);
+			}
+			player.on("sourceOpen", function () {
+				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
+				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
+				
+				let initSegs = mp4box.initializeSegmentation();
+				videoSegments.push(initSegs[0].buffer);
+				player.onVideoFrame(initSegs[0].buffer);
+				player.onAudioFrame(initSegs[1].buffer);
+	
+				mp4box.start();
+			});
+		}
+
+		mp4box.onSegment = function (id, user, buffer, sampleNum, is_last) {
+			if (user === player.buffer) {
+				videoSegments.push(buffer);
+				console.log("videoseg")
+				player.onVideoFrame(buffer);
+			}
+			if (user === player.audioBuffer) {
+				console.log("audioseg")
+				player.onAudioFrame(buffer);
+			}
+		}
+        let onparsedbuffer = function(mp4box, buffer) {
+            //console.log("Appending buffer with offset "+offset);
+            buffer.fileStart = 0;
+            mp4box.appendBuffer(buffer);
+		}
+		
+		onparsedbuffer(mp4box, blob); // callback for handling read chunk
+
+		/*
+        let onBlockRead = function(evt) {
+            if (evt.target.error == null) {
+                onparsedbuffer(mp4box, evt.target.result); // callback for handling read chunk
+                offset += evt.target.result.byteLength;
+                //progressbar.progressbar({ value: Math.ceil(100*offset/fileSize) });
+            } else {
+                console.log("Read error: " + evt.target.error);
+                //finalizeUI(false);
+                return;
+            }
+            if (offset >= fileSize) {
+                //progressbar.progressbar({ value: 100 });
+                console.log("Done reading file");
+                mp4box.flush();
+                videoElem.play();
+                //finalizeUI(true);
+                return;
+            }
+            readBlock(offset, chunkSize, file);
+        }
+        
+        
+        readBlock = function(_offset, length, _file) {
+            let r = new FileReader();
+            let blob = _file.slice(_offset, length + _offset);
+            r.onload = onBlockRead;
+            r.readAsArrayBuffer(blob);
+        }
+		readBlock(offset, chunkSize, file);
+		*/
+	}
+	
 	/**
 	 * 動画データ送信
 	 * @param {*} data 
@@ -1093,9 +1189,12 @@
 
 		var videoData;
         if (type === "file") {
+			processMovieBlob(video, blob);
+			/*
 			videoData = URL.createObjectURL(blob);
 			video.src = videoData;
 			video.load();
+			*/
 		} else {
 			// stream
         	if ('srcObject' in video) {
@@ -1110,6 +1209,7 @@
 		}
 		store.set_video_data(metaData.id, videoData);
 
+		/*
 		video.oncanplaythrough = function () {
 			if (type !== "file") {
 				window.setTimeout(function(){
@@ -1140,6 +1240,7 @@
 			metaData.isEnded = true;
 			this.update_metadata(metaData);
 		}.bind(this);
+		*/
 
 		video.onloadedmetadata = function (e) {
 			metaData.type = "video";
@@ -1988,7 +2089,7 @@
 			}
 		}
 	}
-
+	
 	/**
 	 * WebRTC接続開始
 	 * @method connect_webrtc
@@ -2076,10 +2177,54 @@
 							audio_codec : status.video.send.codecs[0]
 						});
 						this.update_metadata(meta);
+
 					}.bind(this));
 				}.bind(this), 5000);
 			}.bind(this));
 
+			var currentPos = 0;
+			var maxBytes = 65535;
+
+			let updateLoop = function () {
+				//console.error("updateLoop", videoSegments.length, currentPos)
+				setTimeout(function () {
+					if (videoSegments) {
+						try {
+							if (currentPos === videoSegments.length) return;
+							for (let maxPos = currentPos + 10; currentPos < maxPos && currentPos < videoSegments.length; ++currentPos) {
+								if (videoSegments[currentPos].byteLength >= maxBytes) {
+									var pos = 0;
+									while(true) {
+										if ( (pos + maxBytes) > videoSegments[currentPos].byteLength) {
+											//console.error("slice", pos)
+											let data = videoSegments[currentPos].slice(pos);
+											webRTC.datachannel.send(data);
+										} else {
+											//console.error("slice", pos, pos + maxBytes)
+											webRTC.datachannel.send(videoSegments[currentPos].slice(pos, pos + maxBytes));
+										}
+										pos += maxBytes;
+										if (pos > videoSegments[currentPos].byteLength) {
+											break;
+										}
+									}
+								} else {
+										//console.error(videoSegments[currentPos].byteLength)
+									webRTC.datachannel.send(videoSegments[currentPos]);
+								}
+							}	
+						} catch (e) {
+							console.error(e);
+							webRTC.emit("need_restart", null)
+							return;
+						}
+					}
+					updateLoop();
+				}, 500);
+			}
+			webRTC.on('datachannel.onopen', function () {
+				updateLoop();
+			})
 		} else {
 			webRTC = this.webRTC[keyStr];
 		}

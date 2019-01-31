@@ -462,8 +462,8 @@
 					} else if (file.type.match('video.*')) {
 						reader.onloadend = function (evt) {
 							var data = evt.target.result;
-							var blob = new Blob([data], { type: 'video/mp4' });
-							controller.send_movie('file', blob, {
+							//var blob = new Blob([data], { type: 'video/mp4' });
+							controller.send_movie('file', data, {
 								group: gui.get_current_group_id(),
 								posx: px,
 								posy: py,
@@ -472,7 +472,6 @@
 							});
 						};
 						reader.readAsArrayBuffer(file);
-
 					} else if (file.type.match('application/pdf')) {
 						reader.onloadend = function (evt) {
 							var data = evt.target.result;

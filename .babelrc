@@ -1,0 +1,18 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "modules": true,
+        "targets": {
+          "browsers": [
+            "> 1%",
+            "Firefox >= 52", // last ESR
+            "IE 11"
+          ]
+        },
+        "useBuiltIns": true
+      }
+    ]
+  ]
+}

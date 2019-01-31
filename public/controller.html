@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<link href="3rd/css/bootstrap.css" rel="stylesheet" />
+	<link href="3rd/css/range.css" rel="stylesheet" />
+	<script type="text/javascript" src="3rd/js/i18next/i18next.min.js"></script>
+	<script type="text/javascript" src="3rd/js/i18next/i18nextXHRBackend.min.js"></script>
+	<script type="text/javascript" src="3rd/js/i18next/i18nextBrowserLanguageDetector.min.js"></script>
+	<script type="text/javascript" src="3rd/js/eventemitter3/index.js"></script>
+	<script type="text/javascript" src="3rd/js/getStats/getStats.js"></script>
+	<script type="text/javascript" src="3rd/js/BandwidthHandler/BandwidthHandler.js"></script>
+	<script type="text/javascript" src="3rd/js/adapter/adapter.js"></script>
+	<script type="text/javascript" src="3rd/js/pdfjs/pdf.js"></script>
+	<script type="text/javascript" src="3rd/js/bootstrap-without-jquery.min.js"></script>
+	<script type="text/javascript" src="3rd/js/mp4box.all.js"></script>
+	<script type="text/javascript" src="controller.bundle.js"></script>
+</head>
+<body>
+	
+<div class="page layout" id="layout">
+
+	<div id="head_menu" class="head_menu" >
+	</div>
+
+	<div id="layout2" class="layout2">
+		<div id="history_slider_area" class="history_slider_area">
+			<input name="thumb-roundness" 
+				ng-model="slider['contrast']"
+				class="history_slider" id="history_slider"
+				type="range"  min="0" max="100" step="1" />
+			<label class="history_slider_label"  id="history_slider_label"></label>
+			<div id="history_slider_memori"></div>
+		</div>
+		<div id="preview_area" class="preview_area">
+			<div id="content_preview_area" class="preview_area">
+				<div style="display:none" id="selection_rect"></div>
+			</div>
+			<div id="display_preview_area" class="preview_area">
+				<div style="display:none" id="display_selection_rect"></div>
+			</div>
+		</div>
+
+		<div id="rightArea" class="rightArea">
+			<p class="content_id">
+				<span id="content_id_label">Content ID：</span><span id="content_id" >No Content Selected.</span>
+			</p>
+			<p class="group_name">
+				<span id="group_name_label">Group：</span><span id="group_name" >No Content Selected.</span>
+			</p>
+			<div class="transform_input" id="transform_input">
+			</div>
+			<p id="meta_info" class="meta_info" style="color:white" data-key="meta_info"></p>
+			<div class="user_data_input" id="user_data_input"></div>
+			<div class="video_info" id="video_info">
+				<p id="video_info_title" class="video_info_title" style="color:white" data-key="movie_setting"></p>
+				<div class="video_input" id="video_input"></div>
+			</div>
+			<div class="color_picker" id="color_picker"></div>
+			<div class="backup_area" id="backup_area">
+				<p id="backup_info" class="backup_info" style="color:white" data-key="change_history"></p>
+				<div id="backup_list" class="backup_list" style="color:white"></div>
+				<input type="button" class="btn backup_restore" id="backup_restore" data-key="restore" value="" />
+			</div>
+			<div class="history_area" id="history_area">
+				<p id="history_info" class="history_info" style="color:white" data-key="change_timeseries_key"></p>
+				<span style="margin-left:15px">key</span>
+				<select id="history_select" class="history_select">
+				</select>
+				<span style="margin-left:15px">value</span>
+				<div id="history_list" class="history_list" style="color:white"></div>
+				<div class="history_buttons">
+					<span id="history_up" class="history_up"></span>
+					<span id="history_down" class="history_down"></span>
+				</div>
+				<span class="btn btn-primary history_sync_button" id="history_sync_button" data-key="sync"></span>
+			</div>
+			<a type="button" class="download_button" id="download_button"></a>
+		</div>
+	</div>
+
+	<div id="bottom_area" class="bottom_area">
+	</div>
+	
+	<script type="text/javascript" src="3rd/js/bootstrap-without-jquery.min.js"></script>
+	
+</div>
+
+</body>
+</html>
