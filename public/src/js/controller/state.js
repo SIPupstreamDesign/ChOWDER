@@ -24,6 +24,17 @@ class State {
 		this.isMouseDownOnList_ = false;
 		this.contentSelectedGroup = Constants.DefaultGroup; //選択中のグループ
 		this.displaySelectedGroup = Constants.DefaultGroup;
+		this.contextPos = {
+			x : 0,
+			y : 0
+		}
+	}
+	getContextPos() {
+		return this.contextPos;
+	}
+	setContextPos(x, y) {
+		this.contextPos.x = x;
+		this.contextPos.y = y;
 	}
 	// lastSelectContentID
 	getLastSelectContentID() {

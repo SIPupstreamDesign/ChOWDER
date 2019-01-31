@@ -63,13 +63,13 @@ class Store extends EventEmitter
 			let userList = this.loginStore.getUserList();
 			this.managementStore = new ManagementStore(Connector, state, this, action);
 			this.managementStore.userList = userList;
-			this.managementStore.setAuthority(data.authority);
+			this.managementStore.authority = data.authority;
 		});
 		this.on(Store.EVENT_LOGIN_FAILED, () => {
 			// management新規作成
 			this.managementStore = new ManagementStore(Connector, state, this, action);
 			this.managementStore.userList = null;
-			this.managementStore.setAuthority(null);
+			this.managementStore.authority = null;
 		});
 
 		// controllerデータの何かが更新されたときにサーバーに保存する処理

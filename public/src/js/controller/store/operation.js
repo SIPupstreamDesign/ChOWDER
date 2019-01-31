@@ -120,9 +120,11 @@ class Operation
         this.connector.send('GetContent', request, endCallback);
     }
     
-    getVirtualDisplay(groupID, endCallback) {
+    getVirtualDisplay(groupID, endCallback, preventDefaultEmit) {
         this.connector.send('GetVirtualDisplay', {group : groupID}, (err, reply) => {
-            this.store.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply, endCallback);
+			if (!preventDefaultEmit) {
+				this.store.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply, endCallback);
+			}
             if (endCallback) {
                 endCallback(err, reply);
             }

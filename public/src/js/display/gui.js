@@ -733,7 +733,6 @@ class GUI extends EventEmitter {
 
     /**
      * コンテンツの選択
-     * TODO : storeへ
      * @param {String} targetid 対象コンテンツID
      */
     select(targetid) {
@@ -758,7 +757,6 @@ class GUI extends EventEmitter {
 
     /**
      * 現在選択されているContentを非選択状態にする
-     * TODO : storeへ
      */
     unselect() {
         for (let i in this.store.getMetaDataDict()) {
@@ -776,7 +774,6 @@ class GUI extends EventEmitter {
 
     /**
      * 現在選択されているContentのエレメントを返す. ない場合はnullが返る.
-     * TODO : storeへ
      */
     getSelectedElem() {
         let metaDataDict = this.store.getMetaDataDict();

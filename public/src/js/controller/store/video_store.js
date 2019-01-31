@@ -484,7 +484,7 @@ class VideoStore {
 		};
     }
     
-
+	// TODO
 	restartCamera(metadataID) {
 		let isCameraOn = content_list.isCameraOn(metadataID);
 		let isMicOn = content_list.isMicOn(metadataID);

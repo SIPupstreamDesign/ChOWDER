@@ -48,13 +48,10 @@ class GUI extends EventEmitter
 		this.layoutMenu = null;
 		this.display_scale = 1.0;
 		this.management = null;
-		this.contextPosX = 0;
-		this.contextPosY = 0;
 	}
 
 	initContextPos() {
-		this.contextPosX = 0;
-		this.contextPosY = 0;
+		this.state.setContextPos(0, 0);
 	}
 
 	init(controllerData) {
@@ -79,7 +76,6 @@ class GUI extends EventEmitter
 		this.managementGUI = new ManagementGUI(this.store, this.action);
 
 		// 右部コンテンツプロパティの初期化.
-		this.contentPropertyGUI.setAuthority(this.management.getAuthorityObject());
 		this.initContentProperty(Constants.WholeWindowListID, "", Constants.PropertyTypeWholeWindow);
 
 		// ビデオコントローラの初期化
@@ -772,8 +768,7 @@ class GUI extends EventEmitter
 					if (py > (document.getElementById("layout").offsetHeight - height)) {
 						py -= height;
 					}
-					this.contextPosX = px;
-					this.contextPosY = py;
+					this.state.setContextPos(px, py);
 					menuElem.style.top = py + "px";
 					menuElem.style.left = px + "px";
 				}

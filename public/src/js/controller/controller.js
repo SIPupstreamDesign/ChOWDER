@@ -987,7 +987,8 @@ class Controller {
 					// ログインに失敗した。リロードする.
 					window.location.reload(true);
 				}
-				this.store.getManagement().setAuthority(reply.authority);
+				// todo 何とかする
+				this.store.getManagement().authority = reply.authority;
 				if (endCallback) {
 					endCallback();
 				}

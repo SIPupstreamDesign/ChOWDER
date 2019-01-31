@@ -128,11 +128,6 @@ class ManagementStore {
 		});
 	}
 
-	// todo 何とかして消す
-	setAuthority(authority) {
-		this.authority = authority;
-	}
-
 	getAuthority() {
 		return this.authority;
 	}

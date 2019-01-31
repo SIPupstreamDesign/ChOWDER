@@ -156,7 +156,7 @@ class GroupStore
         this.store.operation.getVirtualDisplay(groupID, (err, data) => {
             this.store.getState().setDisplaySelectedGroup(groupID);
             this.store.emit(Store.EVENT_GROUP_SELECT_CHANGED, err, data);
-        });
+        }, true);
     }
 
 	/**
@@ -309,6 +309,7 @@ class GroupStore
 
 	/**
 	 * グループリストを設定
+	 * TODO 何とかして消す
 	 */
 	setGroupList(grouplist, displayGroupList) {
 		this.contentGroupList = grouplist;

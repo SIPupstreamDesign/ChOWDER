@@ -22,7 +22,7 @@ class ContentInputGUI
 {
     constructor(store, action, previewArea) {
         this.store = store;
-        this.action = action;
+		this.action = action;
         this.previewArea = previewArea;
 
 		this.contentsInput = new ContentsInput();
@@ -303,8 +303,8 @@ class ContentInputGUI
 		elem.className = "text_content";
 		elem.innerHTML = text;
 
-		let posx = this.contextPosX; // TODO
-		let posy = this.contextPosY; // TODO
+		let posx = this.store.getState().getContextPos().x;
+		let posy = this.store.getState().getContextPos().y;
 		if (posx === 0 && posy === 0) {
 			// メニューから追加したときなど. wholescreenの左上端に置く.
 			posx = Vscreen.getWhole().x;

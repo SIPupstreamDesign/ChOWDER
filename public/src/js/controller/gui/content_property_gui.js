@@ -233,7 +233,7 @@ class ContentPropertyGUI extends EventEmitter {
         this.previewArea = previewArea;
 
 		this.colorselector = null;
-		this.authority = null;
+		this.authority = this.store.getManagement().getAuthorityObject();
 
 		this.store.on(Store.EVENT_CONTENT_TRANSFORM_CHANGED, (err, data) => {
 			document.getElementById('content_transform_w').value = data.width;
@@ -671,9 +671,7 @@ class ContentPropertyGUI extends EventEmitter {
 			wholeSplitY.value = splitCount.y;
 		}
 	}
-	setAuthority(authority) {
-		this.authority = authority;
-	}
+	
 	/**
 		 * メタデータをPropertyエリアに反映
 		 * @method assignContentProperty
