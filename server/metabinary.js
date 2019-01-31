@@ -6,11 +6,11 @@
 /*jslint devel:true*/
 /*global require, socket, module, Buffer */
 
-(function () {
+(()=>{
 	"use strict";
-	
-	var headerStr = "MetaBin:";
-	
+
+	let headerStr = "MetaBin:";
+
 	/**
 	 * UTF8文字列をArrayBufferに変換して返す
 	 * @method utf8StringToArray
@@ -18,13 +18,13 @@
 	 * @return ArrayBuffer
 	 */
 	function utf8StringToArray(str) {
-		var n = str.length,
+		let n = str.length,
 			idx = 0,
 			bytes = [],
 			i,
 			j,
 			c;
-		
+
 		for (i = 0; i < n; i = i + 1) {
 			c = str.charCodeAt(i);
 			if (c <= 0x7F) {
@@ -55,7 +55,7 @@
 		}
 		return bytes;
 	}
-	
+
 	/// create binarydata with metadata
 	/// format -------------------------------------------------
 	/// -  "MetaBin:"           - header string (string)
@@ -72,13 +72,13 @@
 	 * @return buffer
 	 */
 	function createMetaBinary(metaData, binary) {
-		var buffer,
+		let buffer,
 			pos = 0,
 			metaStr = new Buffer(utf8StringToArray(JSON.stringify(metaData)));
 		if (!metaStr || !binary) { return; }
 		//console.log('binary size:' + binary.length);
 		//console.log('meta size:' + metaStr.length);
-		
+
 		buffer = new Buffer(headerStr.length + 8 + metaStr.length + binary.length);
 		// headerStr
 		buffer.write(headerStr, pos, headerStr.length, 'ascii');
@@ -97,7 +97,7 @@
 		//console.dir(buffer);
 		return buffer;
 	}
-	
+
 	/// create binarydata with metadata
 	/// format -------------------------------------------------
 	/// -  "MetaBin:"           - header string (string)
@@ -123,7 +123,7 @@
 	 * @return buffer
 	 */
 	function createMetaBinaryMulti(metaData, metaDataList, binaryList) {
-		var buffer,
+		let buffer,
 			pos = 0,
 			metaStr = new Buffer(utf8StringToArray(JSON.stringify(metaData))),
 			tmpStr,
@@ -131,20 +131,20 @@
 			binary,
 			totalMetaSize = 0,
 			totalBinarySize = 0;
-		if (!metaDataList || metaDataList.length <= 0 
+		if (!metaDataList || metaDataList.length <= 0
 			|| !binaryList || binaryList.length <= 0
 			|| metaDataList.length !== binaryList.length) { console.error("wrong metabinary multi input"); return; }
 
-		for (var i = 0; i < binaryList.length; ++i) {
+		for (let i = 0; i < binaryList.length; ++i) {
 			totalBinarySize = totalBinarySize + binaryList[i].length;
 		}
 
-		for (var i = 0; i < metaDataList.length; ++i) {
+		for (let i = 0; i < metaDataList.length; ++i) {
 			tmpStr = new Buffer(utf8StringToArray(JSON.stringify(metaDataList[i])));
 			metaStrList.push(tmpStr);
 			totalMetaSize = totalMetaSize + metaStrList[i].length;
 		}
-		
+
 		buffer = new Buffer(headerStr.length
 			+ 4 // version
 			+ 4 // metaStr.length
@@ -172,7 +172,7 @@
 		buffer.writeUInt32LE(metaDataList.length, pos);
 		pos = pos + 4;
 		// binaryList
-		for (var i = 0; i < binaryList.length; ++i) {
+		for (let i = 0; i < binaryList.length; ++i) {
 			metaStr = metaStrList[i];
 			binary = binaryList[i];
 
@@ -199,20 +199,20 @@
 	 * @param {Function} endCallback 終了時に呼ばれるコールバック
 	 */
 	function loadMetaBinary(binary, endCallback) {
-		var head = binary.slice(0, headerStr.length).toString('ascii'),
+		let head = binary.slice(0, headerStr.length).toString('ascii'),
 			metaSize,
 			metaData,
 			version,
 			content,
 			params;
 		if (head !== headerStr) { return; }
-		
+
 		console.log("metabinary load start");
-		
+
 		version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0);
 		metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);
 		metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString());
-		
+
 		if (metaData.hasOwnProperty('params')) {
 			params = metaData.params;
 		} else if (metaData.hasOwnProperty('result')) {
@@ -223,7 +223,7 @@
 		//console.log(metaData);
 
 		content = binary.slice(headerStr.length + 8 + metaSize);
-		
+
 		if (params.type === 'text' || params.type === 'url' || params.type === 'layout') {
 			content = content.toString('utf8');
 		}
@@ -231,8 +231,8 @@
 			endCallback(metaData, content);
 		}
 	}
-	
+
 	module.exports.loadMetaBinary = loadMetaBinary;
 	module.exports.createMetaBinary = createMetaBinary; // version 1
 	module.exports.createMetaBinaryMulti = createMetaBinaryMulti; // version 2
-}());
+})();

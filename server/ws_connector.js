@@ -6,19 +6,19 @@
 /*jslint node:true, devel: true, nomen: true, indent: 4, maxerr: 100 */
 /*global io, require */
 
-(function () {
+(()=>{
 	"use strict";
-	var WSConnector = function () {},
+	let WSConnector = ()=>{},
 		metabinary = require('./metabinary.js'),
 		Command = require('./command.js'),
 		util = require('./util.js'),
 		resultCallbacks = {},
 		recievers = {},
 		messageID = 1;
-	
+
 	function sendResponse(ws_connection, injson) {
-		return function (err, res, binary) {
-			var metabin = null,
+		return (err, res, binary)=>{
+			let metabin = null,
 				result;
 			//console.log("isBinary", binary);
 			if (binary !== undefined && binary !== null) {
@@ -86,13 +86,13 @@
 		} else {
 			// clientからmasterにメッセージが来た
 			if (recievers.hasOwnProperty(metaData.method)) {
-				recievers[metaData.method](metaData.params,(function (ws_connection) {
+				recievers[metaData.method](metaData.params,((ws_connection)=>{
 					return sendResponse(ws_connection, metaData);
-				}(ws_connection)),  ws_connection.id);
+				})(ws_connection),  ws_connection.id);
 			}
 		}
 	}
-	
+
 	/**
 	 * バイナリメッセージの処理.
 	 * @method eventBinaryMessage
@@ -101,7 +101,7 @@
 	 * @param {Blob} contentData バイナリデータ
 	 */
 	function eventBinaryMessage(ws_connection, metaData, contentData) {
-		var data = {
+		let data = {
 			metaData : metaData.params,
 			contentData : contentData
 		};
@@ -126,13 +126,13 @@
 			if (recievers.hasOwnProperty(metaData.method)) {
 				// onで登録していたrecieverを呼び出し
 				// 完了後のコールバックでclientにメッセージを返す.
-				recievers[metaData.method](data, (function (ws_connection) {
+				recievers[metaData.method](data, ((ws_connection)=>{
 					return sendResponse(ws_connection, metaData);
-				}(ws_connection)), ws_connection.id);
+				})(ws_connection), ws_connection.id);
 			}
 		}
 	}
-	
+
 	/**
 	 * イベントの登録.
 	 * @method registerEvent
@@ -140,11 +140,11 @@
 	 * @param {Object} ws_connection websocketコネクション
 	 */
 	function registerEvent(ws, ws_connection) {
-		ws_connection.on('message', function (data) {
+		ws_connection.on('message', (data)=>{
 			//console.log("ws chowder_request : ", data);
-			var parsed,
+			let parsed,
 				result;
-			
+
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data.utf8Data);
@@ -160,7 +160,7 @@
 			} else if (data.type === 'binary') {
 				data = data.binaryData;
 				//console.log("load meta binary", data);
-				metabinary.loadMetaBinary(data, function (metaData, contentData) {
+				metabinary.loadMetaBinary(data, (metaData, contentData)=>{
 					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!metaData.hasOwnProperty('id')) {
 						metaData.id = util.generateUUID8();
@@ -171,7 +171,7 @@
 			}
 		});
 	}
-	
+
 	/**
 	 * テキストメッセージをclientへ送信する
 	 * @method send
@@ -181,7 +181,7 @@
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function send(ws_connection, method, args, resultCallback) {
-		var reqjson = {
+		let reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',
 			id: messageID,
@@ -189,11 +189,11 @@
 			params: args,
 			to: 'client'
 		}, data;
-		
+
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
-			
+
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
 
@@ -207,7 +207,7 @@
 			console.error(e);
 		}
 	}
-	
+
 	/**
 	 * バイナリメッセージをclientへ送信する
 	 * @method sendBinary
@@ -217,7 +217,7 @@
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function sendBinary(ws_connection, method, binary, resultCallback) {
-		var data = {
+		let data = {
 			jsonrpc: '2.0',
 			type : 'binary',
 			id: messageID,
@@ -225,7 +225,7 @@
 			params: binary,
 			to: 'client'
 		};
-		
+
 		messageID = messageID + 1;
 		try {
 			if (Command.hasOwnProperty(data.method)) {
@@ -241,7 +241,7 @@
 			console.error(e);
 		}
 	}
-	
+
 	/**
 	 * ブロードキャストする.
 	 * @method broadcast
@@ -251,7 +251,7 @@
 	 * @param {Function} resultCallback サーバから返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
 	function broadcast(ws, method, args, resultCallback) {
-		var reqjson = {
+		let reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',
 			id: messageID,
@@ -259,15 +259,15 @@
 			params: args,
 			to: 'client'
 		}, data;
-		
+
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
-			
+
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
 				if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast ws", method);}
-				for (var i = 0; i < ws.length; ++i) {
+				for (let i = 0; i < ws.length; ++i) {
 					ws[i].broadcast(data);
 				}
 			} else {
@@ -277,15 +277,14 @@
 			console.error(e);
 		}
 	}
-	
+
 	function on(method, callback) {
 		recievers[method] = callback;
 	}
-	
-	WSConnector.prototype.registerEvent = registerEvent;
-	WSConnector.prototype.on = on;
-	WSConnector.prototype.broadcast = broadcast;
-	WSConnector.prototype.send = send;
-	WSConnector.prototype.sendBinary = sendBinary;
-	module.exports = new WSConnector();
-}());
+
+	module.exports.registerEvent = registerEvent;
+	module.exports.on = on;
+	module.exports.broadcast = broadcast;
+	module.exports.send = send;
+	module.exports.sendBinary = sendBinary;
+})();
