@@ -82,7 +82,7 @@ class DisplayStore
     _showDisplayID(data) {
 		let targetIDList = [];
 
-		this.store.getState().for_each_selected_id(function (i, id) {
+		this.store.getState().for_each_selected_id((i, id) => {
 			if (this.store.hasMetadata(id) && Validator.isWindowType(this.store.getMetaData(id))) {
 				targetIDList.push({ id: id });
 			}

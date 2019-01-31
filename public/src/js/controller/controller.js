@@ -237,19 +237,20 @@ class Controller {
 		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, this.doneDeleteContent);
 
 		// コンテンツ選択
-		this.store.on(Store.EVENT_SELECT_CONTENT, (err,　data) => {
+		this.store.on(Store.EVENT_SELECT_CONTENT, (err, data) => {
 			if (data.hasOwnProperty('id')) {
 				this.select(data.id, data.isListArea);
 			} else {
 				let currentGroup = this.store.getGroupStore().getCurrentGroupID();
 				this.unselectAll(true);
 				this.store.for_each_metadata((id, meta) => {
-					if (Validator.isContentType(meta) && data.type === Constants.TypeContent ||
-						Validator.isWindowType(meta) && data.type === Constants.TypeWindow ||
-						Validator.isLayoutType(meta) && data.type === Constants.TypeLayout) 
+					if ((Validator.isContentType(meta) && data.type === Constants.TypeContent) ||
+						(Validator.isWindowType(meta) && data.type === Constants.TypeWindow) ||
+						(Validator.isLayoutType(meta) && data.type === Constants.TypeLayout)) 
 					{
 						if (data.onlyCurrentGroup) {
-							if (meta.group === currentGroup) {
+							if ((!meta.hasOwnProperty('group') && currentGroup === Constants.DefaultGroup) || 
+								(meta.group === currentGroup)) {
 								if (Validator.isWindowType(meta)) {
 									if (Validator.isVisibleWindow(meta)) {
 										this.select("onlist:" + id, true);

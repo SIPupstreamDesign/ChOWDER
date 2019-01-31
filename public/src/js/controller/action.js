@@ -834,5 +834,6 @@ Action.EVENT_CORRECT_CONTENT_ASPECT = "correctContentAspect";
 Action.EVENT_SNAP_CONTENT_TO_SCREEN = "snapContentToScreen";
 Action.EVENT_MOVE_UP_GROUP = "moveUpGroup";
 Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
+Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 
 export default Action;

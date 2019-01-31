@@ -21,6 +21,16 @@ import Translation from '../../common/translation'
 
 "use strict";
 
+/**
+ * エンコードされた文字列を返す.
+ * @method fixedEncodeURIComponent
+ * @param {String} str 文字列.
+ * @return {String} エンコードされた文字列
+ */
+function fixedEncodeURIComponent(str) {
+	return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
+}
+
 class Store extends EventEmitter
 {
 	constructor(state, action, cookie)

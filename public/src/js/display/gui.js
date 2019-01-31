@@ -491,7 +491,7 @@ class GUI extends EventEmitter {
      */
     showDisplayID(id) {
         // console.log("showDisplayID:" + id);
-        if (id && store.getWindowData().id === id) {
+        if (id && this.store.getWindowData().id === id) {
             document.getElementById('displayid_area').style.display = "block";
             setTimeout(function () {
                 document.getElementById('displayid_area').style.display = "none";

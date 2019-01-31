@@ -148,7 +148,6 @@ class GUI extends EventEmitter
 		this.store.on(Store.EVENT_TOGGLE_CONTENT_MARK_ICON, (err, data) => {
 			let elem = data.element;
 			let metaData = data.metaData;
-			console.error(data)
 			this.onToggleContentMarkIcon(elem, metaData);
 		});
 	}
@@ -754,7 +753,7 @@ class GUI extends EventEmitter
 					
 					if (type == Constants.TabIDLayout && !this.inListviewArea(evt)) {
 						// レイアウトタブはメインビューのエリア内であればコンテンツメニューを開く
-						menuElem = document.getElementById('context_menu');
+						menuElem = document.getElementsByClassName('context_menu')[0];
 					} else {
 						menuElem = menu;
 					}
