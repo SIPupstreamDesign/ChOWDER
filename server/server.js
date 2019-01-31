@@ -113,7 +113,7 @@ function opserver_http_request(req, res) {
 		data = "",
 		contentID;
 	if (url === '/') {
-		file = fs.readFileSync(path.join(__dirname, '../client/index.html'));
+		file = fs.readFileSync(path.join(__dirname, '../public/index.html'));
 		res.end(file);
 	} else if (url.indexOf('/download?') === 0) {
 		temp = url.split('?');
@@ -133,7 +133,7 @@ function opserver_http_request(req, res) {
 			res.end(data);
 		}
 	} else {
-		var p = path.join(__dirname, '../client', path.join('/', url.match(/^[^?]+/)[0]));
+		var p = path.join(__dirname, '../public', path.join('/', url.match(/^[^?]+/)[0]));
 		fs.readFile(p, function (err, data) {
 			//                                          ^^^^^^^^^^^^^ it's traversal safe!
 			if (err) {
