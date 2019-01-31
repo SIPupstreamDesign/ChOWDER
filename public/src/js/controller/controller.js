@@ -241,7 +241,7 @@ class Controller {
 			if (data.hasOwnProperty('id')) {
 				this.select(data.id, data.isListArea);
 			} else {
-				let currentGroup = this.store.getCurrentGroupID();
+				let currentGroup = this.store.getGroupStore().getCurrentGroupID();
 				this.unselectAll(true);
 				this.store.for_each_metadata((id, meta) => {
 					if (Validator.isContentType(meta) && data.type === Constants.TypeContent ||

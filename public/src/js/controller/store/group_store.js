@@ -355,6 +355,13 @@ class GroupStore
 	}
 
 	/**
+	 * 現在のグループIDを取得
+	 */
+	getCurrentGroupID() {
+		return this.currentGroupID;
+	}
+
+	/**
 	 * グループごとにfuncを実行
 	 * @param {*} func 
 	 */

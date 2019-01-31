@@ -72,6 +72,16 @@ class Store extends EventEmitter
 		});
 	}
 
+	// デバッグ用. release版作るときは消す
+	emit() {
+		if (arguments.length > 0) {
+			if (!arguments[0]) {
+				console.error("Not found EVENT NAME!")
+			}
+		}
+		super.emit(...arguments);
+	}
+
 	initEvents() {
 		for (let i in Action) {
 			if (i.indexOf('EVENT') >= 0) {
@@ -535,6 +545,7 @@ Store.EVENT_CONTENT_METAINFO_CHANGED = "content_metainfo_changed";
 Store.EVENT_SETUP_CONTENT_ELEMENT = "setup_content_element";
 Store.EVENT_TOGGLE_CONTENT_MARK_ICON = "setup_toggle_content_mark_icon";
 Store.EVENT_DONE_SNAP_CONTENT_TO_SCREEN = "done_snap_content_to_screen";
+Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content";
 
 // display_store
 Store.EVENT_DISPLAY_SCALE_CHANGING = "display_scale_changing";
