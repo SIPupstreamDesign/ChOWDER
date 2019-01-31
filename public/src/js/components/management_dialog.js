@@ -313,13 +313,13 @@ class ManagementDialog extends EventEmitter
     /**
      *  DBの操作GUIの初期化
      */
-    initDBGUI(contents) {
+    initDBGUI(contents, currentDB) {
         // DBリスト初期化
         let i = 0;
         for (let dbname in contents.dblist) {
             let dbid = contents.dblist[dbname];
             this.dbSelect.addOption(dbname, dbname);
-            if (this.current_db === dbid) {
+            if (currentDB === dbid) {
                 this.dbSelect.setSelectedIndex(i);
             }
             ++i;
@@ -722,7 +722,7 @@ class ManagementDialog extends EventEmitter
      * 管理GUIを表示する
      * @param contents.dblist dbリスト
      */
-    show(userList, displayGroupList, contents) {
+    show(userList, displayGroupList, contents, currentDB) {
         this.initAll();
         this.userList = userList;
         this.displayGroupList = displayGroupList;
@@ -736,7 +736,7 @@ class ManagementDialog extends EventEmitter
         });
         this.dom.style.display = "block";
         // DBの操作GUIの初期化
-        this.initDBGUI(contents);
+        this.initDBGUI(contents, currentDB);
         // 履歴管理GUIの初期化
         this.initHistoryGUI(contents);
         // 閲覧・編集権限GUIの初期化

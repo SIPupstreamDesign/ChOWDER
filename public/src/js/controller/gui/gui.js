@@ -683,10 +683,7 @@ class GUI extends EventEmitter
 
 	showManagementGUI(isShow) {
 		if (isShow) {
-			this.managementGUI.show(
-				this.management.getUserList(),
-				this.management.getDisplayGroupList()
-			);
+			this.managementGUI.show();
 		} else {
 			this.managementGUI.close();
 		}

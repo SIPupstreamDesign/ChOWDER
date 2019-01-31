@@ -498,7 +498,7 @@ class Action extends EventEmitter
     }
     
     /**
-     * グループ変更
+     * 選択中のコンテンツのグループ変更
      * @param {*} data 
      * {
      *    groupID : グループID

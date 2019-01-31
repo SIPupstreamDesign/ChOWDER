@@ -8,6 +8,7 @@ class ManagementGUI
 	constructor(store, action) {
 		this.store = store;
 		this.action = action;
+		this.management = this.store.getManagement();
 
 		this.dblist = [];
 		this.managementDialog = new ManagementDialog();
@@ -117,8 +118,12 @@ class ManagementGUI
 		return this.managementDialog.isShow();
 	}
 
-	show(userList, displayGroupList) {
-		this.managementDialog.show(userList, displayGroupList, { dblist : this.dblist });
+	show() {
+		let userList = this.management.getUserList();
+		let displayGroupList = this.management.getDisplayGroupList();
+		let contents = { dblist : this.dblist };
+		let currentDB = this.management.getCurrentDB();
+		this.managementDialog.show(userList, displayGroupList, contents, currentDB);
 	}
 
 	close() {

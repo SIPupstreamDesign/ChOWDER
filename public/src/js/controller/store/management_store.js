@@ -21,7 +21,7 @@ class ManagementStore {
 		this.authority = null;
 		this.userList = null;
 		this.maxHistoryNum = 10;
-		this.current_db = null;
+		this.currentDB = null;
 		this.maxMesageSize = null;
 		
 		// 全体設定更新時
@@ -145,7 +145,10 @@ class ManagementStore {
 		this.maxHistoryNum = num;
 	}
 	setCurrentDB(dbid) {
-		this.current_db = dbid;
+		this.currentDB = dbid;
+	}
+	getCurrentDB() {
+		return this.currentDB;
 	}
 	getMaxHistoryNum() {
 		return this.maxHistoryNum;

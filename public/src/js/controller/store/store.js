@@ -260,7 +260,7 @@ class Store extends EventEmitter
 	 * @param {*} data 
 	 */
 	_rewindAllVideo(data) {
-		let groupID = this.getCurrentGroupID();
+		let groupID = this.getGroupStore().getCurrentGroupID();
 		let sendIds = [];
 		this.for_each_metadata((id, metaData) => {
 			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
@@ -285,7 +285,7 @@ class Store extends EventEmitter
 	 * @param {*} data 
 	 */
 	_playAllVideo(data) {
-		let groupID = this.getCurrentGroupID();
+		let groupID = this.getGroupStore().getCurrentGroupID();
 		let sendIds = [];
 		store.for_each_metadata((id, metaData) => {
 			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
@@ -336,14 +336,6 @@ class Store extends EventEmitter
 	 */
 	getVideoStore() {
 		return this.videoStore;
-	}
-
-	/**
-	 * 現在のグループIDを返す
-	 * TODO
-	 */
-	getCurrentGroupID() {
-		return "todo"
 	}
 
 	/**

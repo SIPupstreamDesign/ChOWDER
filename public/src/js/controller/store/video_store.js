@@ -388,7 +388,7 @@ class VideoStore {
 			if (!metaData.hasOwnProperty("height")) {
 				metaData.height = Number(this.videoHeight);
 			}
-			metaData.group = this.store.getCurrentGroupID();
+			metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		};
 		video.onloadeddata = () => {
 			let data;
@@ -463,7 +463,7 @@ class VideoStore {
 			if (!metaData.hasOwnProperty("height")) {
 				metaData.height = Number(this.videoHeight);
 			}
-			metaData.group = this.store.getCurrentGroupID();
+			metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		};
 		video.onloadeddata = () => {
 			let data;
@@ -525,9 +525,10 @@ class VideoStore {
 					meta.is_audio_on = isMicOn,
 					store.setMetaData(metadataID, meta)
 				}
+				// TODO
 				controller.send_movie("camera", stream, {
 					id : metadataID,
-					group: gui.getCurrentGroupID(),
+					group: this.store.getGroupStore().getCurrentGroupID(),
 					posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
 				}, function () {
 				});

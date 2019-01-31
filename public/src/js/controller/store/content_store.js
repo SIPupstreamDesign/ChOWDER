@@ -54,7 +54,7 @@ class ContentStore
 	_inputImageFile(data) {
 		let metaData = data.metaData;
 		metaData.type = "image";
-		metaData.group = this.store.getCurrentGroupID();
+		metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		this.addContent(metaData, data.contentData);
     }
     
@@ -75,7 +75,7 @@ class ContentStore
 				metaData.type = 'pdf';
 				metaData.width = viewport.width;
 				metaData.height = viewport.height;
-				metaData.group = this.store.getCurrentGroupID();
+				metaData.group = this.store.getGroupStore().getCurrentGroupID();
 				metaData.pdfPage = 1;
 				metaData.pdfNumPages = pdf.numPages;
 				VscreenUtil.transPosInv(metaData);
@@ -91,7 +91,7 @@ class ContentStore
     _inputTextFile(data) {
 		let metaData = data.metaData;
 		metaData.type = "text";
-		metaData.group = this.store.getCurrentGroupID();
+		metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		this.addContent(metaData, data.contentData);
     }
 
@@ -122,7 +122,7 @@ class ContentStore
     _inputText(data) {
 		let metaData = data.metaData;
 		metaData.type = "text";
-        metaData.group = this.store.getCurrentGroupID();
+        metaData.group = this.store.getGroupStore().getCurrentGroupID();
         this.addContent(metaData, data.contentData);
     }
 
@@ -133,7 +133,7 @@ class ContentStore
     _inputLayout(data) {
 		let metaData = data.metaData;
 		metaData.type = "layout";
-        metaData.group = this.store.getCurrentGroupID();
+        metaData.group = this.store.getGroupStore().getCurrentGroupID();
         this.addContent(metaData, data.contentData);
     }
 

@@ -3,6 +3,7 @@
 import Action from '../action';
 import Validator from '../../common/validator';
 import Store from './store'
+import Constants from '../../common/constants';
 
 class GroupStore
 {
@@ -11,6 +12,8 @@ class GroupStore
         this.state = state;
         this.store = store;
 		this.action = action;
+
+		this.currentGroupID = Constants.DefaultGroup;
 
 		this.initEvents();
 	}
@@ -145,7 +148,8 @@ class GroupStore
      * Groupの選択が変更された
      */
     _changeGroupSelect(data) {
-        let groupID = data.groupID;
+		let groupID = data.groupID;
+		this.currentGroupID = groupID;
         this.store.operation.getVirtualDisplay(groupID, (err, data) => {
             this.store.getState().setDisplaySelectedGroup(groupID);
             this.store.emit(Store.EVENT_GROUP_SELECT_CHANGED, err, data);

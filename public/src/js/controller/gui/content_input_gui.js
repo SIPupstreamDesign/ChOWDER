@@ -544,6 +544,7 @@ class ContentInputGUI
 				},
 			};
 			navigator.mediaDevices.getUserMedia(mediaConstraints).then(function (stream) {
+				// TODO
 				controller.send_movie("screen", stream, {
 					group: gui.getCurrentGroupID(),
 					posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
