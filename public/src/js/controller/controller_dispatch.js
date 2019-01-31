@@ -188,12 +188,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 		Connector.send('GetUserList', {}, function (err, userList) {
 			store.getManagement().setUserList(userList);
 		});
-		Connector.send('GetGlobalSetting', {}, function (err, reply) {
-			if (reply && reply.hasOwnProperty('max_history_num')) {
-				store.getManagement().setMaxHistoryNum(reply.max_history_num);
-				store.getManagement().setCurrentDB(reply.current_db);
-			}
-		});
+		action.reloadGlobalSetting();
 		Connector.send('GetDBList', {}, function (err, reply) {
 			if (!err) {
 				store.getManagment().setDBList(reply);

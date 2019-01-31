@@ -19,24 +19,15 @@ class ManagementStore {
 		this.store = store;
 
 		this.authority = null;
-		this.userList = null;
-		this.maxHistoryNum = 10;
-		this.currentDB = null;
 		this.maxMesageSize = null;
+
+		this.globalSetting = null;
 		
 		// 全体設定更新時
 		this.store.on(Store.EVENT_GLOBAL_SETTING_RELOADED, (err, data) => {
 			if (data && data.hasOwnProperty('max_history_num')) {
-				this.setMaxHistoryNum(data.max_history_num);
-				this.setCurrentDB(data.current_db);
-				if (data.wsMaxMessageSize) {
-					this.setMaxMessageSize(data.wsMaxMessageSize)
-				}
+				this.globalSetting = data;
 			}
-		});
-		
-		this.store.on(Store.EVENT_GROUP_ADDED, (err ,userList) => {
-			this.setUserList(userList);
 		});
 
 		this.initEvents();
@@ -122,11 +113,13 @@ class ManagementStore {
 	 * @param {*} data 
 	 */
 	_changeAuthority(data) {
-		let callback = data.callback;
-		delete data.callback;
+		let callback;
+		if (data && data.hasOwnProperty('callback')) {
+			callback = data.callback;
+			delete data.callback;
+		}
 		this.connector.send('ChangeAuthority', request, (err, data) => {
-			this.connector.send('GetUserList', {}, (err, userList) => {
-				this.setUserList(userList);
+			this.action.reloadUserList((err, userList) => {
 				if (callback) {
 					callback();
 				}
@@ -135,23 +128,19 @@ class ManagementStore {
 		});
 	}
 
+	// todo 何とかして消す
 	setAuthority(authority) {
 		this.authority = authority;
 	}
+
 	getAuthority() {
 		return this.authority;
 	}
-	setMaxHistoryNum(num) {
-		this.maxHistoryNum = num;
-	}
-	setCurrentDB(dbid) {
-		this.currentDB = dbid;
-	}
 	getCurrentDB() {
-		return this.currentDB;
+		return this.globalSetting.current_db;
 	}
 	getMaxHistoryNum() {
-		return this.maxHistoryNum;
+		return this.globalSetting.max_history_num;
 	}
 	getAuthorityObject() {
 		let authority = this.authority;
@@ -239,23 +228,14 @@ class ManagementStore {
 	isGroupManipulable() {
 		return this.getAuthorityObject().isGroupManipulable();
 	}
-	setUserList(userList) {
-		this.userList = userList;
-	}
-	getUserList() {
-		return this.userList;
-	}
-	setDisplayGroupList(groupList) {
-		this.displayGroupList = groupList;
-	}
 	getDisplayGroupList() {
 		return this.displayGroupList;
 	}
-	setMaxMessageSize(size) {
-		this.maxMesageSize = size;
-	}
 	getMaxMessageSize() {
-		return this.maxMesageSize;
+		if (this.globalSetting.wsMaxMessageSize) {
+			return this.globalSetting.wsMaxMessageSize;
+		}
+		return null;
 	}
 }
 

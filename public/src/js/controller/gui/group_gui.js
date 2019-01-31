@@ -88,7 +88,7 @@ class GroupGUI
         this.store.on(Store.EVENT_SEARCH_INPUT_CHANGED, (err, text, groups) => {
             let foundContents = [];
             let groupDict = {};
-            this.store.for_each_group((i, group) => {
+            this.store.getGroupStore().for_each_group((i, group) => {
                 groupDict[group.id] = group;
             });
 

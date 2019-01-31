@@ -44,12 +44,7 @@ class Store extends EventEmitter
 		this.manipulatorStore = new ManipulatorStore(Connector, state, this, action);
 
 		this.virtualDisplayDict = {};
-		this.groupList = [];
-		this.groupDict = {};
 		this.metaDataDict = {};
-
-		this.contentGroupList = [];
-		this.displayGroupList = [];
 
 		this.initEvents();
 
@@ -57,13 +52,13 @@ class Store extends EventEmitter
 			// management新規作成
 			let userList = this.loginStore.getUserList();
 			this.managementStore = new ManagementStore(Connector, state, this, action);
-			this.managementStore.setUserList(userList);
+			this.managementStore.userList = userList;
 			this.managementStore.setAuthority(data.authority);
 		});
 		this.on(Store.EVENT_LOGIN_FAILED, () => {
 			// management新規作成
 			this.managementStore = new ManagementStore(Connector, state, this, action);
-			this.managementStore.setUserList(null);
+			this.managementStore.userList = null;
 			this.managementStore.setAuthority(null);
 		});
 
@@ -382,104 +377,6 @@ class Store extends EventEmitter
 	}
 
 	/**
-	 * 指定したグループIDのグループがあるかどうか
-	 */
-	hasGroup(groupID) {
-		return this.groupDict.hasOwnProperty(groupID);
-	}
-	
-	/**
-	 * 指定したグループIDのグループ情報を返す
-	 */
-	getGroup(groupID) {
-		return this.groupDict[groupID];
-	}
-
-	/**
-	 * グループリストを設定
-	 */
-	setGroupList(grouplist, displayGroupList) {
-		this.contentGroupList = grouplist;
-		this.displayGroupList = displayGroupList;
-
-		let groupListMerged = [];
-		Array.prototype.push.apply(groupListMerged, grouplist);
-		Array.prototype.push.apply(groupListMerged, displayGroupList);
-		this.groupList = groupListMerged;
-		this.groupDict = {}
-		this.for_each_group((i, group) => {
-			this.groupDict[group.id] = group;
-		});
-	}
-
-	/**
-	 * グループリストを取得
-	 */
-	getGroupList() {
-		return this.groupList;
-	}
-
-	/**
-	 * コンテンツグループリストを取得
-	 */
-	getContentGroupList() {
-		return this.contentGroupList;
-	}
-	
-	/**
-	 * ディスプレイグループリストを取得
-	 */
-	getDisplayGroupList() {
-		return this.displayGroupList;
-	}
-
-	/**
-	 * グループ辞書を取得
-	 */
-	getGroupDict() {
-		return this.groupDict;
-	}
-
-	/**
-	 * グループごとにfuncを実行
-	 * @param {*} func 
-	 */
-	for_each_group(func) {
-		let i;
-		for (i = 0; i < this.groupList.length; ++i) {
-			if (func(i, this.groupList[i]) === true) {
-				break;
-			}
-		}
-	}
-	
-	/**
-	 * コンテンツグループごとにfuncを実行
-	 * @param {*} func 
-	 */
-	for_each_content_group(func) {
-		let i;
-		for (i = 0; i < this.contentGroupList.length; ++i) {
-			if (func(i, this.contentGroupList[i]) === true) {
-				break;
-			}
-		}
-	}
-	
-	/**
-	 * ディスプレイグループごとにfuncを実行
-	 * @param {*} func 
-	 */
-	for_each_display_group(func) {
-		let i;
-		for (i = 0; i < this.displayGroupList.length; ++i) {
-			if (func(i, this.displayGroupList[i]) === true) {
-				break;
-			}
-		}
-	}
-
-	/**
 	 * 指定したIDのメタデータを取得
 	 */
 	getMetaData(id) {
@@ -523,28 +420,17 @@ class Store extends EventEmitter
 	}
 
 	/**
+	 * グループ辞書を取得
+	 */
+	getGroupDict() {
+		return this.getGroupStore().getGroupDict();
+	}
+
+	/**
 	 * メタデータ辞書を取得
 	 */
 	getMetaDataDict() {
 		return this.metaDataDict;
-	}
-
-	/**
-	 * グループの色を返す
-	 */
-	getGroupColor(meta) {
-		let groupID = meta.group;
-		this.for_each_group(function (i, group) {
-			if (group.id === groupID) {
-				if (group.color) {
-					return group.color;
-				}
-			}
-		});
-		if (meta.type === Constants.TypeContent) {
-			return Constants.ContentSelectColor;
-		}
-		return Constants.ContentSelectColor;
 	}
 
 	/**
@@ -560,7 +446,7 @@ class Store extends EventEmitter
 			}
 			return "#0080FF";
 		}
-		return this.getGroupColor(meta);
+		return this.getGroupStore().getGroupColor(meta);
 	}
 
 	/**

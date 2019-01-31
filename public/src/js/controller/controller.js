@@ -1322,8 +1322,8 @@ class Controller {
 				if (metaData.type === Constants.PropertTypeVideo) {
 					isOwnVideo = this.store.getVideoStore().hasVideoData(metaData.id);
 				}
-				if (this.store.hasGroup(metaData.group)) {
-					gui.initContentProperty(metaData, this.store.getGroup(metaData.group).name, metaData.type, isOwnVideo);
+				if (this.store.getGroupStore().hasGroup(metaData.group)) {
+					gui.initContentProperty(metaData, this.store.getGroupStore().getGroup(metaData.group).name, metaData.type, isOwnVideo);
 				}
 				else {
 					console.warn("not found group", metaData);
@@ -1886,10 +1886,9 @@ class Controller {
 			gui.setGroupList(reply.grouplist, reply.displaygrouplist,
 				//controllerData.getGroupCheckDict(),
 				this.state.getContentSelectedGroup(), this.state.getDisplaySelectedGroup());
-			this.store.setGroupList(reply.grouplist, reply.displaygrouplist);
-			this.store.getManagement().setDisplayGroupList(reply.displaygrouplist);
+			this.store.getGroupStore().setGroupList(reply.grouplist, reply.displaygrouplist);
 			// Virtual Displayはすべてに追加しなおす.
-			this.store.for_each_display_group((i, group) => {
+			this.store.getGroupStore().for_each_display_group((i, group) => {
 				let elem = this.createWholeWindow(group.id);
 				if (gui.getBoxArea(Constants.TypeWindow, group.id)) {
 					gui.getBoxArea(Constants.TypeWindow, group.id).appendChild(elem);

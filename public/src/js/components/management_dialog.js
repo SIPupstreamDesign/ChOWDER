@@ -101,8 +101,8 @@ class ManagementDialog extends EventEmitter
             historyFrame.appendChild(this.historyFrameTitle);
 
             this.historyNumberInput = new Input("number");
-            this.historyNumberInput.getDOM().className = "history_number";
-            this.historyNumberInput.setValue(10); // todo
+            this.historyNumberInput.getDOM().className = "history_number";            
+            this.historyNumberInput.setValue(10);
             historyFrame.appendChild(this.historyNumberInput.getDOM());
 
             this.historyNumberButton = new Button();
@@ -435,7 +435,7 @@ class ManagementDialog extends EventEmitter
     /**
      *  履歴管理GUIの初期化
      */
-    initHistoryGUI(contents) {
+    initHistoryGUI(contents, historyNum) {
         // 最大履歴保存数の適用
         this.historyNumberButton.on(Button.EVENT_CLICK, () => {
             this.emit(ManagementDialog.EVENT_CHANGE_HISTORY_NUM, null, this.historyNumberInput.getValue(), function () {
@@ -446,7 +446,7 @@ class ManagementDialog extends EventEmitter
                 }, 2000);
             });
         });
-        this.historyNumberInput.setValue(this.maxHistoryNum)
+        this.historyNumberInput.setValue(historyNum)
     }
 
     /**
@@ -722,7 +722,7 @@ class ManagementDialog extends EventEmitter
      * 管理GUIを表示する
      * @param contents.dblist dbリスト
      */
-    show(userList, displayGroupList, contents, currentDB) {
+    show(userList, displayGroupList, contents, currentDB, maxHistoryNum) {
         this.initAll();
         this.userList = userList;
         this.displayGroupList = displayGroupList;
@@ -738,7 +738,7 @@ class ManagementDialog extends EventEmitter
         // DBの操作GUIの初期化
         this.initDBGUI(contents, currentDB);
         // 履歴管理GUIの初期化
-        this.initHistoryGUI(contents);
+        this.initHistoryGUI(contents, maxHistoryNum);
         // 閲覧・編集権限GUIの初期化
         this.initAuthorityGUI(contents);
         // パスワード設定GUIの初期化

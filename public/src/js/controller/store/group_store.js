@@ -15,6 +15,11 @@ class GroupStore
 
 		this.currentGroupID = Constants.DefaultGroup;
 
+		this.groupList = [];
+		this.groupDict = {};
+		this.contentGroupList = [];
+		this.displayGroupList = [];
+
 		this.initEvents();
 	}
 
@@ -79,7 +84,7 @@ class GroupStore
     _deleteGroup(data) {
         let groupID = data.groupID;
         
-		this.store.for_each_group((i, group) =>{
+		this.for_each_group((i, group) =>{
             console.error(group.id, groupID);
 			if (group.id === groupID) {
 				this.connector.send('DeleteGroup', group, (err, reply) => {
@@ -124,7 +129,7 @@ class GroupStore
 				let metaData = this.store.getMetaData(id);
 				metaData.group = groupID;
 
-				this.store.for_each_group((k, group_) => {
+				this.for_each_group((k, group_) => {
 					if (group_.id === groupID) {
 						targetMetaDataList.push(metaData);
 						group = group_;
@@ -161,11 +166,11 @@ class GroupStore
 	 */
 	_moveDownGroup(data) {
         let groupID = data.groupID;
-		let iterateGroupFunc = this.store.for_each_content_group;
-		let targetGroupList = this.store.getContentGroupList();
+		let iterateGroupFunc = this.for_each_content_group;
+		let targetGroupList = this.getContentGroupList();
 		if (Validator.isDisplayTabSelected()) {
-			iterateGroupFunc = this.store.for_each_display_group;
-			targetGroupList = this.store.getDisplayGroupList();
+			iterateGroupFunc = this.for_each_display_group;
+			targetGroupList = this.getDisplayGroupList();
 		}
 		iterateGroupFunc((i, group) => {
 			let target;
@@ -194,7 +199,7 @@ class GroupStore
 		let targetGroupList = this.store.getContentGroupList();
 		if (Validator.isDisplayTabSelected()) {
 			iterateGroupFunc = this.store.for_each_display_group;
-			targetGroupList = this.store.getDisplayGroupList();
+			targetGroupList = this.getDisplayGroupList();
 		}
 		iterateGroupFunc((i, group) => {
 			let target;
@@ -221,7 +226,7 @@ class GroupStore
         let groupID = data.groupID;
         let groupName = data.groupName;
 
-		this.store.for_each_group((i, group) => {
+		this.for_each_group((i, group) => {
 			let oldName;
 			if (group.id === groupID) {
 				oldName = group.name;
@@ -248,7 +253,7 @@ class GroupStore
         let groupID = data.groupID;
         let color = data.color;
 
-		this.store.for_each_group((i, group) => {
+		this.for_each_group((i, group) => {
 			if (group.id === groupID) {
 				group.color = color;
 				this.connector.send('UpdateGroup', group, (err, reply) => {
@@ -258,6 +263,123 @@ class GroupStore
 		});	
 	}
 
+	/**
+	 * 指定したグループIDのグループがあるかどうか
+	 */
+	hasGroup(groupID) {
+		return this.groupDict.hasOwnProperty(groupID);
+	}
+	
+	/**
+	 * 指定したグループIDのグループ情報を返す
+	 */
+	getGroup(groupID) {
+		return this.groupDict[groupID];
+	}
+
+	/**
+	 * グループリストを取得
+	 */
+	getGroupList() {
+		return this.groupList;
+	}
+
+	/**
+	 * コンテンツグループリストを取得
+	 */
+	getContentGroupList() {
+		return this.contentGroupList;
+	}
+	
+	/**
+	 * ディスプレイグループリストを取得
+	 */
+	getDisplayGroupList() {
+		return this.displayGroupList;
+	}
+
+	/**
+	 * ディスプレイグループごとにfuncを実行
+	 * @param {*} func 
+	 */
+	for_each_display_group(func) {
+		let i;
+		for (i = 0; i < this.displayGroupList.length; ++i) {
+			if (func(i, this.displayGroupList[i]) === true) {
+				break;
+			}
+		}
+	}
+
+	/**
+	 * グループリストを設定
+	 */
+	setGroupList(grouplist, displayGroupList) {
+		this.contentGroupList = grouplist;
+		this.displayGroupList = displayGroupList;
+
+		let groupListMerged = [];
+		Array.prototype.push.apply(groupListMerged, grouplist);
+		Array.prototype.push.apply(groupListMerged, displayGroupList);
+		this.groupList = groupListMerged;
+		this.groupDict = {}
+		this.for_each_group((i, group) => {
+			this.groupDict[group.id] = group;
+		});
+	}
+
+
+	/**
+	 * グループの色を返す
+	 */
+	getGroupColor(meta) {
+		let groupID = meta.group;
+		this.for_each_group(function (i, group) {
+			if (group.id === groupID) {
+				if (group.color) {
+					return group.color;
+				}
+			}
+		});
+		if (meta.type === Constants.TypeContent) {
+			return Constants.ContentSelectColor;
+		}
+		return Constants.ContentSelectColor;
+	}
+
+	/**
+	 * グループ辞書を取得
+	 */
+	getGroupDict() {
+		return this.groupDict;
+	}
+
+	/**
+	 * グループごとにfuncを実行
+	 * @param {*} func 
+	 */
+	for_each_group(func) {
+		let i;
+		for (i = 0; i < this.groupList.length; ++i) {
+			if (func(i, this.groupList[i]) === true) {
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * コンテンツグループごとにfuncを実行
+	 * @param {*} func 
+	 */
+	for_each_content_group(func) {
+		let i;
+		for (i = 0; i < this.contentGroupList.length; ++i) {
+			if (func(i, this.contentGroupList[i]) === true) {
+				break;
+			}
+		}
+	}
+	
 }
 
 export default GroupStore;

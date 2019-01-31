@@ -119,11 +119,12 @@ class ManagementGUI
 	}
 
 	show() {
-		let userList = this.management.getUserList();
-		let displayGroupList = this.management.getDisplayGroupList();
+		let userList = this.store.getLoginStore().getUserList();
+		let displayGroupList = this.store.getGroupStore().getDisplayGroupList();
 		let contents = { dblist : this.dblist };
 		let currentDB = this.management.getCurrentDB();
-		this.managementDialog.show(userList, displayGroupList, contents, currentDB);
+		let maxHistoryNum = this.management.getMaxHistoryNum();
+		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum);
 	}
 
 	close() {

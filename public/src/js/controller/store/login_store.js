@@ -21,6 +21,10 @@ class LoginStore {
 		this.loginUserID = "";
 		this.userList = [];
 
+		this.store.on(Store.EVENT_GROUP_ADDED, (err ,userList) => {
+			this.userList = userList;
+		});
+
 		this.initEvents();
 	}
 
@@ -85,9 +89,18 @@ class LoginStore {
 	/**
 	 * ユーザーリストを最新に更新
 	 */
-	_reloadUserList() {
+	_reloadUserList(data) {
+		let callback;
+		if (data && data.hasOwnProperty('callback')) {
+			callback = data.callback;
+			delete data.callback;
+		}
+
 		this.connector.send('GetUserList', {}, (err, userList) => {
 			this.userList = userList;
+			if (callback) {
+				callback(err, userList);
+			}
 			this.store.emit(Store.EVENT_USERLIST_RELOADED, null);
 		});
 	}
