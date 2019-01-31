@@ -101,7 +101,7 @@ class Validator
 	 * @return {bool} FreeModeであればtrueを返す.
 	 */
 	isFreeMode() {
-		return this.store.getControllerData().getSnapType() === Constants.SnapTypeFree;
+		return this.store.getControllerData().getSnapType(this.isDisplayTabSelected()) === Constants.SnapTypeFree;
 	}
 	
 	/**
@@ -110,7 +110,7 @@ class Validator
 	 * @return {bool} GridModeであればtrueを返す.
 	 */
 	isGridMode() {
-		return this.store.getControllerData().getSnapType() === Constants.SnapTypeGrid;
+		return this.store.getControllerData().getSnapType(this.isDisplayTabSelected()) === Constants.SnapTypeGrid;
 	}
 	
 	/**
@@ -119,7 +119,7 @@ class Validator
 	 * @return {bool} DisplayModeであればtrueを返す.
 	 */
 	isDisplayMode() {
-		return this.store.getControllerData().getSnapType() === Constants.SnapTypeDisplay;
+		return this.store.getControllerData().getSnapType(this.isDisplayTabSelected()) === Constants.SnapTypeDisplay;
 	}
 	
 	/**

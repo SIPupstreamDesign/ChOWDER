@@ -6,7 +6,7 @@
 
 "use strict";
 
-let DEFAULT_CONTROLLER_ID = "__default";
+const DEFAULT_CONTROLLER_ID = "__default";
 
 /**
  * cookie取得

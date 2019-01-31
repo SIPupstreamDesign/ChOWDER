@@ -17,7 +17,6 @@ import manipulator from './manipulator.js';
 import Vscreen from '../common/vscreen.js';
 import VscreenUtil from '../common/vscreen_util.js';
 import Connector from '../common/ws_connector.js';
-import Translation from '../common/translation.js';
 import ContentUtil from './content_util';
 
 "use strict";
@@ -351,7 +350,6 @@ class Controller {
 	 * @return {Object} Element
 	 */
 	getElem(id, isListViewArea) {
-		let previewArea;
 		if (id === Constants.WholeWindowListID) {
 			return null;
 		}
@@ -359,19 +357,18 @@ class Controller {
 			let uid = id.split('onlist:').join('');
 			if (document.getElementById(uid)) {
 				return document.getElementById(uid);
-			}
-			else {
+			} else {
+				let previewArea;
 				let srcElem = document.getElementById(id);
 				let child = srcElem.childNodes[0].cloneNode();
 				child.id = uid;
 				child.innerHTML = srcElem.childNodes[0].innerHTML;
-				delete srcElem.childNodes[0];
 				if (Validator.isDisplayTabSelected()) {
 					previewArea = gui.getDisplayPreviewArea();
-				}
-				else {
+				} else {
 					previewArea = gui.getContentPreviewArea();
 				}
+				delete srcElem.childNodes[0];
 				if (isListViewArea) {
 					child.style.display = "none";
 					child.style.margin = "5px";
@@ -526,12 +523,6 @@ class Controller {
 		}
 	}
 	onMouseMove(evt) {
-		let metaData;
-		let elem;
-		let orgPos;
-		let mousePos;
-		let splitWhole;
-		let screen;
 		let targetMetaDatas = [];
 		let target;
 		let pageX = evt.pageX;
@@ -567,7 +558,7 @@ class Controller {
 		}
 		// リモートカーソル位置の更新.
 		if (this.getControllerData().isUpdateCursorEnable(true) && Date.now() % 2 === 0 && target.id !== '') {
-			mousePos = Vscreen.transformOrgInv(Vscreen.makeRect(pageX, pageY, 0, 0));
+			let mousePos = Vscreen.transformOrgInv(Vscreen.makeRect(pageX, pageY, 0, 0));
 			let cursorMetaData = {
 				x: mousePos.x,
 				y: mousePos.y
@@ -583,7 +574,10 @@ class Controller {
 			if (gui.inListviewArea2(evt, this.state.getMousedownPos()) && gui.inListviewArea(evt)) {
 				return;
 			}
-			metaData = this.store.getMetaData(draggingID);
+			let metaData = this.store.getMetaData(draggingID);
+			if (Validator.isLayoutType(metaData)) {
+				return;
+			}
 			if (metaData && !Validator.isVisible(metaData)) {
 				if (this.state.isMousedownOnList() && !gui.inListviewArea(evt)) {
 					// リストからビューへドラッグ中のパターン
@@ -595,27 +589,26 @@ class Controller {
 			}
 			// clear splitwhole colors
 			gui.clearSnapHighLight();
-			// detect spilt screen area
+			// Snap設定により背景色をハイライト
 			if (Validator.isGridMode() && this.state.getDraggingIDList().length === 1) {
-				orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
-				splitWhole = Vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
+				let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
+				let splitWhole = Vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
 				if (splitWhole) {
 					document.getElementById(splitWhole.id).style.background = "red";
 				}
 			}
 			if (Validator.isDisplayMode() && this.state.getDraggingIDList().length === 1) {
-				orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
-				screen = Vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
+				let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
+				let screen = Vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
 				if (screen && document.getElementById(screen.id)) {
 					document.getElementById(screen.id).style.background = "red";
 				}
 			}
 			// translate
-			elem = document.getElementById(draggingID);
+			let elem = document.getElementById(draggingID);
 			if (elem.style.display === "none") {
 				elem.style.display = "block";
 			}
-			metaData = this.store.getMetaData(draggingID);
 			if (this.state.hasDragRect(draggingID)) {
 				if (Validator.isWindowType(metaData) && this.store.getManagement().isDisplayEditable(this.state.getDisplaySelectedGroup())) {
 					// display操作可能
@@ -652,9 +645,9 @@ class Controller {
 			else {
 				// console.log("iscontentarea");
 				// scaling
-				elem = document.getElementById(this.state.getSelectedID());
+				let elem = document.getElementById(this.state.getSelectedID());
 				if (elem) {
-					metaData = this.store.getMetaData(elem.id);
+					let metaData = this.store.getMetaData(elem.id);
 					if (Validator.isVisibleWindow(metaData) || Validator.isVisible(metaData)) {
 						manipulator.moveManipulator(elem);
 						this.onManipulatorMove(evt);
@@ -790,6 +783,7 @@ class Controller {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
 					elem.style.margin = "0px";
 					if (Validator.isLayoutType(metaData)) {
+						gui.getContentPreviewArea().removeChild(elem);
 						this.applyLayout(metaData);
 					}
 					else {
@@ -1286,6 +1280,12 @@ class Controller {
 			this.state.addSelectedID(id);
 		}
 		this.state.setDraggingIDList(JSON.parse(JSON.stringify(this.state.getSelectedIDList())));
+
+		// レイアウトでは枠を出さない
+		if (Validator.isLayoutType(metaData)) {
+			return;
+		}
+
 		// 選択ボーダー色設定
 		if (gui.getListElem(id)) {
 			gui.getListElem(id).style.borderColor = this.store.getBorderColor(metaData);
@@ -1375,16 +1375,18 @@ class Controller {
 					metaData = this.store.getVirtualDisplayMetaData(groupID);
 				}
 			}
-			if (Validator.isWindowType(metaData)) {
-				elem.style.border = "2px solid lightslategray";
-			}
-			if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
-				elem.style.border = "";
-			}
-			if (gui.getListElem(elem.id)) {
-				gui.getListElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
-				if (gui.getSearchElem(elem.id)) {
-					gui.getSearchElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
+			if (metaData) {
+				if (Validator.isWindowType(metaData)) {
+					elem.style.border = "2px solid lightslategray";
+				}
+				if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
+					elem.style.border = "";
+				}
+				if (gui.getListElem(elem.id)) {
+					gui.getListElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
+					if (gui.getSearchElem(elem.id)) {
+						gui.getSearchElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
+					}
 				}
 			}
 		}
