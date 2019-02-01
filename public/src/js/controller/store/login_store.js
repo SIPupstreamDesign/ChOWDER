@@ -21,10 +21,6 @@ class LoginStore {
 		this.loginUserID = "";
 		this.userList = [];
 
-		this.store.on(Store.EVENT_GROUP_ADDED, (err ,userList) => {
-			this.userList = userList;
-		});
-
 		this.initEvents();
 	}
 

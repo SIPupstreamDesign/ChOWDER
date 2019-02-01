@@ -175,7 +175,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	// 権限変更時に送られてくる
 	Connector.on("ChangeAuthority", function (userID) {
 		if (!store.isInitialized()) { return; }
-		if (login.getLoginUserID() === userID) {
+		if (store.getLoginStore().getLoginUserID() === userID) {
 			window.location.reload(true);
 		}
 	});

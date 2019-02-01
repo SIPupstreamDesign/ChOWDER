@@ -106,27 +106,30 @@ class Controller {
 			this.getControllerData().set(data.controllerData);
 			ControllerDispatch.init(this, gui, this.store, action, state, loginGUI);
 			this.setupSelectionRect();
-			this.action.reloadAll();
 
-			let head_menu_hover = document.getElementsByClassName('head_menu_hover')[0];
-			let logoutButton = document.getElementsByClassName('logout_button')[0];
-			let user_text = document.getElementsByClassName('user_text')[0];
-
-			// ログインユーザ名の設定.
-			user_text.innerHTML = "User:" + data.loginUserName;
-			// ログアウトボタンを設定.
-			head_menu_hover.style.display = "block";
-			logoutButton.onclick = () => {
-				cookie.setLoginKey(this.store.getLoginStore().getControllerID(), data.loginkey);
-				this.action.logout({ loginkey: data.loginkey });
-			};
-			
-			let connectIcon = document.getElementsByClassName('head_menu_hover_right')[0];
-			if (connectIcon){
-				//e.textContent = '×';
-				connectIcon.title = i18next.t('connected_to_server');
-				connectIcon.className = 'head_menu_hover_right connect';
-			}
+			this.action.reloadAll({
+				callback : () => {
+					let head_menu_hover = document.getElementsByClassName('head_menu_hover')[0];
+					let logoutButton = document.getElementsByClassName('logout_button')[0];
+					let user_text = document.getElementsByClassName('user_text')[0];
+		
+					// ログインユーザ名の設定.
+					user_text.innerHTML = "User:" + data.loginUserName;
+					// ログアウトボタンを設定.
+					head_menu_hover.style.display = "block";
+					logoutButton.onclick = () => {
+						cookie.setLoginKey(this.store.getLoginStore().getControllerID(), data.loginkey);
+						this.action.logout({ loginkey: data.loginkey });
+					};
+					
+					let connectIcon = document.getElementsByClassName('head_menu_hover_right')[0];
+					if (connectIcon){
+						//e.textContent = '×';
+						connectIcon.title = i18next.t('connected_to_server');
+						connectIcon.className = 'head_menu_hover_right connect';
+					}
+				}
+			});
 		});
 
 		// websocket接続が確立された
@@ -173,10 +176,8 @@ class Controller {
 			delete reply.last;
 			this.doneGetMetaData(err, reply, (err) => {
 				if (last) {
-					this.getGroupList(function () {
-						if (endCallback) {
-							endCallback();
-						}
+					this.action.getGroupList({
+						callback : endCallback
 					});
 				}
 			});
@@ -321,7 +322,7 @@ class Controller {
 		});
 		
 		// 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
-		store.on(Store.EVENT_DONE_RELOAD_ALL, (err, data) => {
+		this.store.on(Store.EVENT_DONE_RELOAD_ALL, (err, data) => {
 			gui.clearWindowList();
 			
 			if (this.isInitialUpdate) {
@@ -331,7 +332,10 @@ class Controller {
 				}
 				this.isInitialUpdate = false;
 			}
-			//this.updateScreen();
+	
+			this.action.getGroupList(() => {
+				this.updateScreen();
+			});
 		});
 	}
 

@@ -40,17 +40,6 @@ class LoginGUI extends EventEmitter {
 					select.addOption(userList[i].name, userList[i].name);
 				}
 			}
-			
-			// 再ログインを試みる
-			let loginkey = this.loginStore.getLoginKey(this.loginStore.getControllerID());
-			if (loginkey.length > 0) {
-				// リロード時などの再ログイン.
-				this.action.login({
-					userid : "",
-					password : "",
-					loginkey : loginkey
-				});
-			}
 		});
 
 	}
@@ -83,6 +72,18 @@ class LoginGUI extends EventEmitter {
 		
 		// 最初にユーザーリスト取得
 		this.action.reloadUserList();
+		
+		
+		// 再ログインを試みる
+		let loginkey = this.loginStore.getLoginKey(this.loginStore.getControllerID());
+		if (loginkey.length > 0) {
+			// リロード時などの再ログイン.
+			this.action.login({
+				userid : "",
+				password : "",
+				loginkey : loginkey
+			});
+		}
 	}
 }
 

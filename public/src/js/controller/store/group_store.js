@@ -58,9 +58,7 @@ class GroupStore
 
 		this.connector.send('AddGroup', metaData, (err, groupID) => {
 			// UserList再取得
-			this.connector.send('GetUserList', {}, (err, userList) => {
-                this.store.emit(Store.EVENT_GROUP_ADDED, err, userList);
-			});
+			this.action.reloadUserList();
 		});
 
     }

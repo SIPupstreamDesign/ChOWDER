@@ -191,11 +191,7 @@ class Store extends EventEmitter
 	 * 全てのコンテンツ、ディスプレイなどを取得.
 	 */
 	_getAll(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		this.operation.update(callback);
 	}
 
@@ -203,19 +199,17 @@ class Store extends EventEmitter
 	 * 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
 	 */
 	_reloadAll(data) {
-		this._getAll({
-			callback : (err, data) => {
-				this.emit(Store.EVENT_DONE_RELOAD_ALL, null);
-			}
-		});
+		let callback_ = Store.extractCallback(data);
 
-		this.getGroupStore()._getGroupList(() => {
-			
-		});
+		this._getAll();
 		
 		setTimeout(() => {
 			Translation.changeLanguage(this.cookie.getLanguage());
 			Translation.translate();
+			if (callback_) {
+				callback_(null, data);
+			}
+			this.emit(Store.EVENT_DONE_RELOAD_ALL, null);
 		}, 100);
 	}
 
