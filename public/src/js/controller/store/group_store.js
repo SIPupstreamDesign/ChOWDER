@@ -81,23 +81,30 @@ class GroupStore
         let groupID = data.groupID;
         
 		this.for_each_group((i, group) =>{
-            console.error(group.id, groupID);
 			if (group.id === groupID) {
 				this.connector.send('DeleteGroup', group, (err, reply) => {
 					// console.log("DeleteGroup done", err, reply);
-					let deleteList = [];
 					// console.log("UpdateGroup done", err, reply);
 					if (!err) {
-						// コンテンツも削除
+						// コンテンツやDisplayも削除
+						let contentMetaDataList = [];
+						let displayMetaDataList = [];
 						this.store.for_each_metadata((id, metaData) => {
 							if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
 								if (metaData.group === groupID) {
-									deleteList.push(metaData);
+									contentMetaDataList.push(metaData);
+								}
+							} else if (Validator.isWindowType(metaData)) {
+								if (metaData.group === groupID) {
+									displayMetaDataList.push(metaData);
 								}
 							}
 						});
-						if (deleteList.length > 0) {
-							this.connector.send('DeleteContent', deleteList, controller.doneDeleteContent);
+						if (contentMetaDataList.length > 0) {
+							this.store.operation.deleteContent(contentMetaDataList);
+						}
+						if (displayMetaDataList.length > 0) {
+							this.store.operation.deleteWindow(displayMetaDataList);
 						}
 					}
 					// UserList再取得

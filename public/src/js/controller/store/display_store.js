@@ -58,11 +58,7 @@ class DisplayStore
 				metaDataList.push(this.store.getMetaData(id));
 			}
 		});
-		if (metaDataList.length > 0) {
-			this.connector.send('DeleteWindowMetaData', metaDataList, (err, reply) => {
-                this.store.emit(Store.EVENT_DONE_DELETE_DISPLAY, err, reply);
-            });
-		}
+		this.store.operation.deleteWindow(metaDataList);
     }
     
 	/**

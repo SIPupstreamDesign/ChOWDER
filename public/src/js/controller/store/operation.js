@@ -68,11 +68,27 @@ class Operation
         });
     }
     
-    deleteContent(metaDataList) {
-        this.connector.send('DeleteContent', metaDataList, (err, reply) => {
-            this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, err, reply);
-        });
-    }
+    deleteContent(metaDataList, endCallback) {
+		if (metaDataList.length > 0) {
+			this.connector.send('DeleteContent', metaDataList, (err, reply) => {
+				if (endCallback) {
+					endCallback(err, reply);
+				}
+				this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, err, reply);
+			});
+		}
+	}
+	
+	deleteWindow(metaDataList, endCallback) {
+		if (metaDataList.length > 0) {
+			this.connector.send('DeleteWindowMetaData', metaDataList, (err, reply) => {
+				if (endCallback) {
+					endCallback(err, reply);
+				}
+                this.store.emit(Store.EVENT_DONE_DELETE_DISPLAY, err, reply);
+            });
+		}
+	}
 
 	/**
 	 * コンテンツとウィンドウの更新(再取得).

@@ -1177,7 +1177,6 @@ class Controller {
 		selectionRect.style.borderColor = "rgb(4, 180, 49)";
 		displaySelectionRect.style.borderColor = "rgb(50, 200, 255)";
 		let onSelectionRectMouseDown = (evt) => {
-			let selectionRect = getSelectionRectElem();
 			let clientX;
 			let clientY;
 			let target;
