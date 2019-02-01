@@ -1050,17 +1050,6 @@ class Controller {
 		});
 	}
 
-	getSelectedMetaDataList() {
-		let metaDataList = [];
-		for (let i = 0; i < this.state.getSelectedIDList().length; ++i) {
-			let metaData = this.store.getMetaData(this.state.getSelectedIDList()[i]);
-			if (metaData) {
-				metaDataList.push(metaData);
-			}
-		}
-		return metaDataList;
-	}
-
 	updateSelectionRect() {
 		let rect;
 		let selectionRect = getSelectionRectElem();
@@ -1099,10 +1088,14 @@ class Controller {
 		manipulator.moveManipulator(selectionRect);
 		if (!manipulator.isShowManipulator()) {
 			if (Validator.isDisplayTabSelected()) {
-				manipulator.showManipulator(this.store.getManagement().getAuthorityObject(), selectionRect, gui.getDisplayPreviewArea(), this.getSelectedMetaDataList(), this.state.getDisplaySelectedGroup());
+				manipulator.showManipulator(
+					selectionRect, 
+					gui.getDisplayPreviewArea());
 			}
 			else {
-				manipulator.showManipulator(this.store.getManagement().getAuthorityObject(), selectionRect, gui.getContentPreviewArea(), this.getSelectedMetaDataList(), this.state.getContentSelectedGroup());
+				manipulator.showManipulator(
+					selectionRect, 
+					gui.getContentPreviewArea());
 			}
 			manipulator.moveManipulator(selectionRect);
 		}
@@ -1317,7 +1310,7 @@ class Controller {
 			if (Validator.isWindowType(metaData)) {
 				gui.initContentProperty(metaData, "", Constants.PropertyTypeDisplay);
 				gui.assignContentProperty(metaData);
-				manipulator.showManipulator(this.store.getManagement().getAuthorityObject(), elem, gui.getDisplayPreviewArea(), this.getSelectedMetaDataList(), this.state.getDisplaySelectedGroup());
+				manipulator.showManipulator(elem, gui.getDisplayPreviewArea());
 			}
 			else {
 				// 動画の場合は所有しているかどうか調べる
@@ -1334,7 +1327,7 @@ class Controller {
 				}
 				gui.assignContentProperty(metaData);
 				gui.setUpdateContentID(id);
-				manipulator.showManipulator(this.store.getManagement().getAuthorityObject(), elem, gui.getContentPreviewArea(), this.getSelectedMetaDataList());
+				manipulator.showManipulator(elem, gui.getContentPreviewArea());
 			}
 		}
 		if (Validator.isDisplayTabSelected()) {
@@ -1861,11 +1854,16 @@ class Controller {
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
 			this.store.for_each_metadata(function (id, metaData) {
-				if (Validator.isContentType(metaData) || Validator.isWindowType(metaData) || Validator.isLayoutType(metaData)) {
+				if (Validator.isContentType(metaData) || 
+					Validator.isWindowType(metaData) || 
+					Validator.isLayoutType(metaData)) 
+				{
 					const onlistID = "onlist:" + id;
 					let elem = document.getElementById(onlistID);
 					if (elem) {
 						elem.parentNode.removeChild(elem);
+
+						// 外したエレメントとmetadataを覚えておく
 						if (metaData.hasOwnProperty('group')) {
 							if (!groupToElems.hasOwnProperty(metaData.group)) {
 								groupToElems[metaData.group] = [];
@@ -1873,22 +1871,19 @@ class Controller {
 							}
 							groupToElems[metaData.group].push(elem);
 							groupToMeta[metaData.group].push(metaData);
-						}
-						else {
+						} else {
 							groupToElems[Constants.DefaultGroup].push(elem);
 							groupToMeta[Constants.DefaultGroup].push(metaData);
 						}
 					}
 				}
 			});
+			console.error(groupToMeta)
 			// 一旦チェックされているSearch対象グループを取得
 			let searchTargetGroups = gui.getSearchTargetGroups();
 			let currentGroup = gui.getCurrentGroupID();
-			// Displayタブのグループチェック用の処理
-			//this.getControllerData().initGroupCheck(reply.displaygrouplist);
 			// groupリストを新たにセットして, Searchタブ等を初期化
-			gui.setGroupList(reply.grouplist, reply.displaygrouplist,
-				this.state.getContentSelectedGroup(), this.state.getDisplaySelectedGroup());
+			gui.setGroupList(reply.grouplist, reply.displaygrouplist);
 			this.store.getGroupStore().setGroupList(reply.grouplist, reply.displaygrouplist);
 			// Virtual Displayはすべてに追加しなおす.
 			this.store.getGroupStore().for_each_display_group((i, group) => {
@@ -1900,6 +1895,7 @@ class Controller {
 			// 元々あったリストエレメントを全部つけなおす
 			for (let group in groupToElems) {
 				if (groupToElems.hasOwnProperty(group)) {
+					groupToMeta[group]
 					let contentArea = gui.getBoxArea(Constants.TypeContent, group);
 					if (!contentArea) {
 						contentArea = gui.getBoxArea(Constants.TypeContent, Constants.DefaultGroup);

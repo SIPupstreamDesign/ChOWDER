@@ -21,7 +21,6 @@ class Manipulator extends EventEmitter {
 		this.draggingOffsetFunc = null;
 		this.closeFunc = null;
 		this.parent = null;
-		this.authority = null;
 	}
 
 	init(store, action) {
@@ -347,31 +346,37 @@ class Manipulator extends EventEmitter {
 		 * @method showManipulator
 		 * @param {Element} targetElem ターゲットエレメント(imgなど)
 		 * @param {Element} previewArea 表示先エレメント
-		 * @param {Element} metaData メタデータ
+		 * @param {Element} displayGroup 現在のディスプレイグループ
 		 */
-	showManipulator(authority, targetElem, previewArea, metaDataList, displayGroup) {
+	showManipulator(targetElem, previewArea) {
+		let authority = this.store.getManagement().getAuthorityObject();
+		let metaDataList = this.store.getSelectedMetaDataList();
+		let displayGroup = this.store.getState().getDisplaySelectedGroup();
+
 		let manips = [
 			document.createElement('span'),
 			document.createElement('span'),
 			document.createElement('span'),
 			document.createElement('span'),
 			document.createElement('span') // バッテン
-		], manip, i, k, metaData, editableCount = 0;
-		this.authority = authority;
+		];
+		let metaData;
+		let editableCount = 0;
 		this.moveManipulator(targetElem);
 		this.removeManipulator();
 		this.parent = previewArea;
-		for (k = 0; k < metaDataList.length; ++k) {
+
+		for (let k = 0; k < metaDataList.length; ++k) {
 			metaData = metaDataList[k];
-			if ((!Validator.isWindowType(metaData) && this.authority.isEditable(metaData.group))
-				|| (Validator.isWindowType(metaData) && this.authority.isDisplayEditable(displayGroup))) {
+			if ((!Validator.isWindowType(metaData) && authority.isEditable(metaData.group))
+				|| (Validator.isWindowType(metaData) && authority.isDisplayEditable(displayGroup))) {
 				++editableCount;
 			}
 		}
 		if (editableCount > 0) {
 			// 1つでも編集可能なのがあった
-			for (i = 0; i < manips.length; i = i + 1) {
-				manip = manips[i];
+			for (let i = 0; i < manips.length; i = i + 1) {
+				let manip = manips[i];
 				manip.id = "_manip_" + i;
 				this.setupManipulator(manip, targetElem);
 				previewArea.appendChild(manip);

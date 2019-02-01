@@ -109,7 +109,6 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 
 	// グループが更新されたときにブロードキャストされてくる.
 	Connector.on('UpdateGroup', function (metaData) {
-		//console.log("onUpdateGroup")
 		controller.onUpdateAuthority(function () {
 			action.getGroupList();
 		});

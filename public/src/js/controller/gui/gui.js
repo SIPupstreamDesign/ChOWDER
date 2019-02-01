@@ -603,25 +603,19 @@ class GUI extends EventEmitter
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
 	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
-	setGroupList(
-		groupList, displayGroupList/*, groupCheckDict*/, contentSelectedGroup, displaySelectedGroup
-	) {
-		let contentSetting = { tabs : [] },
-			displaySetting = { tabs : [] },
-			searchSetting = { groups : [], colors : [] },
-			layoutSetting = { tabs : [] },
-			groupName,
-			contentGroupTab = {},
-			layoutGroupTab = {},
-			displayGroupTab = {},
-			groupColor,
-			groupID,
-			i;
-		for (i = 0; i < groupList.length; i = i + 1) {
-			groupName = groupList[i].name;
-			groupColor = groupList[i].color;
-			groupID = groupList[i].id;
-			contentGroupTab = {};
+	setGroupList(groupList, displayGroupList) 
+	{
+		let contentSelectedGroup = this.store.getState().getContentSelectedGroup();
+		let displaySelectedGroup = this.store.getState().getDisplaySelectedGroup();
+		let contentSetting = { tabs : [] };
+		let displaySetting = { tabs : [] };
+		let searchSetting = { groups : [], colors : [] };
+		let layoutSetting = { tabs : [] };
+		for (let i = 0; i < groupList.length; i = i + 1) {
+			let groupName = groupList[i].name;
+			let groupColor = groupList[i].color;
+			let groupID = groupList[i].id;
+			let contentGroupTab = {};
 			contentGroupTab[groupID] = {
 				id : groupID,
 				name : groupName,
@@ -629,7 +623,7 @@ class GUI extends EventEmitter
 				color : groupColor,
 				selected : contentSelectedGroup === groupID
 			};
-			layoutGroupTab = {};
+			let layoutGroupTab = {};
 			layoutGroupTab[groupID] = {
 				id : groupID,
 				name : groupName,
@@ -645,11 +639,11 @@ class GUI extends EventEmitter
 			searchSetting.colors.push(groupColor);
 			layoutSetting.tabs.push(layoutGroupTab);
 		}
-		for (i = 0; i < displayGroupList.length; i = i + 1) {
-			groupName = displayGroupList[i].name;
-			groupColor = displayGroupList[i].color;
-			groupID = displayGroupList[i].id;
-			displayGroupTab = {};
+		for (let i = 0; i < displayGroupList.length; i = i + 1) {
+			let groupName = displayGroupList[i].name;
+			let groupColor = displayGroupList[i].color;
+			let groupID = displayGroupList[i].id;
+			let displayGroupTab = {};
 			displayGroupTab[groupID] = {
 				id : groupID,
 				name : groupName,
@@ -848,11 +842,11 @@ class GUI extends EventEmitter
 			return this.groupGUI.getLayoutBox();
 		}
 	}
-	getBoxArea(type, metaData) {
+	getBoxArea(type, groupID) {
 		let box = this.getBox(type);
 		let area;
-		if (metaData.hasOwnProperty('group')) {
-			area = box ? box.getTab(metaData.group) : null;
+		if (groupID) {
+			area = box ? box.getTab(groupID) : null;
 		}
 		if (!area) {
 			area = box ? box.getTab(Constants.DefaultGroup) : null;
@@ -1021,10 +1015,10 @@ class GUI extends EventEmitter
 	importContent(metaData, contentData, videoElem) {
 		let listElem = this.getListElem(metaData.id);
 		
-		let layoutBoxArea = this.getBoxArea(Constants.TypeLayout, metaData);
+		let layoutBoxArea = this.getBoxArea(Constants.TypeLayout, metaData.group);
 		this.layoutListGUI.importContent(layoutBoxArea, listElem, metaData, contentData);
 
-		let contentBoxArea = this.getBoxArea(Constants.TypeContent, metaData);
+		let contentBoxArea = this.getBoxArea(Constants.TypeContent, metaData.group);
 		this.contentListGUI.importContent(contentBoxArea, listElem, metaData, contentData, videoElem);
 		this.contentViewGUI.importContent(this.getContentPreviewArea(), listElem, metaData, contentData, videoElem);
 	}
