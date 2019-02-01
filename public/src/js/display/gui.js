@@ -567,7 +567,7 @@ class GUI extends EventEmitter {
                 this.showVideo(elem, metaData, contentData);
             } else if (metaData.type === 'text') {
                 // contentData is text
-                this.showText(elem, metaData, conetntData);
+                this.showText(elem, metaData, contentData);
             } else if (metaData.type === 'pdf') {
                 this.showPDF(elem, metaData, contentData);
             } else if (metaData.type === 'tileimage') {

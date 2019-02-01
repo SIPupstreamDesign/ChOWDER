@@ -12,6 +12,16 @@ class Action extends EventEmitter
         super();
     }
 
+	// デバッグ用. release版作るときは消す
+	emit() {
+		if (arguments.length > 0) {
+			if (!arguments[0]) {
+				console.error("Not found EVENT NAME!")
+			}
+		}
+		super.emit(...arguments);
+    }
+    
     /**
      * websocket接続
      * @param {*} data 

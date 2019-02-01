@@ -1878,7 +1878,6 @@ class Controller {
 					}
 				}
 			});
-			console.error(groupToMeta)
 			// 一旦チェックされているSearch対象グループを取得
 			let searchTargetGroups = gui.getSearchTargetGroups();
 			let currentGroup = gui.getCurrentGroupID();

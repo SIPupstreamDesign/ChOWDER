@@ -76,6 +76,7 @@ ul, ol {
 .bottom_burger_menu_display {
 	display : block;
 }
+/* ディスプレイメニューだけ少し横長 */
 .bottom_burger_menu_display>.burger_menu_contents {
 	width : 200px;
 }
@@ -85,10 +86,10 @@ ul, ol {
 .bottom_burger_menu_display > .burger_menu_icon:hover {
 	background-color: rgb(46, 109, 224);
 }
+/* ディスプレイサブメニューの位置を調整 */
 .bottom_burger_menu_display>.burger_menu_contents>.burger_menu_submenu {
 	right : 210px;
 }
-
 
 .bottom_burger_menu_search {
 	display : none;
