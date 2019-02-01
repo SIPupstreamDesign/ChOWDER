@@ -78,11 +78,13 @@ class BurgerMenu extends EventEmitter
 					ul.appendChild(hr);
 					continue;
 				}
-				
 				let li = document.createElement('li');
 				li.className = "burger_menu_content";
 				li.classList.add(className);
-				li.setAttribute('data-key', className)
+				li.setAttribute('data-key', className);
+				if (setting[i].hasOwnProperty('dataKey')) {
+					li.setAttribute('data-key', setting[i].dataKey);
+				}
 				if (setting[i].onclick) {
 					li.onclick = (function (func) {
 						return function (evt) {

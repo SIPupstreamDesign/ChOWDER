@@ -44,14 +44,6 @@ ul, ol {
 	z-index: 1000001;
 }
 
-.bottom_burger_menu_display > .burger_menu_icon {
-	background-color: rgb(66, 129, 244);
-}
-
-.bottom_burger_menu_display > .burger_menu_icon:hover {
-	background-color: rgb(46, 109, 224);
-}
-
 .bottom_burger_menu_layout > .burger_menu_icon {
 	background-color: lightgray;
 }
@@ -84,6 +76,19 @@ ul, ol {
 .bottom_burger_menu_display {
 	display : block;
 }
+.bottom_burger_menu_display>.burger_menu_contents {
+	width : 200px;
+}
+.bottom_burger_menu_display > .burger_menu_icon {
+	background-color: rgb(66, 129, 244);
+}
+.bottom_burger_menu_display > .burger_menu_icon:hover {
+	background-color: rgb(46, 109, 224);
+}
+.bottom_burger_menu_display>.burger_menu_contents>.burger_menu_submenu {
+	right : 210px;
+}
+
 
 .bottom_burger_menu_search {
 	display : none;
