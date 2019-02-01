@@ -259,9 +259,12 @@ class Store extends EventEmitter
 	 */
 	_updateRemoteCursor(data) {
 		this.getControllerData().setUpdateCursorEnable(data.isEnable);
+		
 		if (!data.isEnable) {
+			// OFFにする場合
 			Connector.send('UpdateMouseCursor', {}, (err, reply) => { });
 		} else {
+			// ONの場合
 			if (data.hasOwnProperty('rgb')) {
 				this.getControllerData().setCursorColor(data.rgb);
 			}

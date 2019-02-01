@@ -565,7 +565,8 @@ class Controller {
 			let mousePos = Vscreen.transformOrgInv(Vscreen.makeRect(pageX, pageY, 0, 0));
 			let cursorMetaData = {
 				x: mousePos.x,
-				y: mousePos.y
+				y: mousePos.y,
+				isEnable : true
 			};
 			this.action.updateRemoteCursor(cursorMetaData);
 		}
