@@ -454,6 +454,20 @@ class Store extends EventEmitter
 	}
 
 	/**
+	 * 選択中のメタデータのリストを返す
+	 */
+	getSelectedMetaDataList() {
+		let metaDataList = [];
+		for (let i = 0; i < this.state.getSelectedIDList().length; ++i) {
+			let metaData = this.getMetaData(this.state.getSelectedIDList()[i]);
+			if (metaData) {
+				metaDataList.push(metaData);
+			}
+		}
+		return metaDataList;
+	}
+
+	/**
 	 * 枠色を返す
 	 */
 	getBorderColor(meta) {

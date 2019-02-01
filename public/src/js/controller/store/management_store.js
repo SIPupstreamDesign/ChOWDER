@@ -98,11 +98,14 @@ class ManagementStore {
 	 * パスワード更新
 	 */
 	_changePassword(data) {
-		let callback = data.callback;
-		delete data.callback;
+		let callback;
+		if (data && data.hasOwnProperty('callback')) {
+			callback = data.callback;
+			delete data.callback;
+		}
 		this.connector.send('ChangePassword', data, (err, reply) => {
 			if (callback) {
-				callback();
+				callback(err, reply);
 			}
 			this.store.emit(Store.EVENT_PASSWORD_CHANGED, err, reply)
 		});
@@ -118,10 +121,10 @@ class ManagementStore {
 			callback = data.callback;
 			delete data.callback;
 		}
-		this.connector.send('ChangeAuthority', request, (err, data) => {
+		this.connector.send('ChangeAuthority', data, (err, data) => {
 			this.action.reloadUserList((err, userList) => {
 				if (callback) {
-					callback();
+					callback(err, userList);
 				}
 				this.store.emit(Store.EVENT_AUTHORITY_CHANGED, null);
 			});
