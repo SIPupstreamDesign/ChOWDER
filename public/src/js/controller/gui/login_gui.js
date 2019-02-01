@@ -71,19 +71,21 @@ class LoginGUI extends EventEmitter {
 		Translation.translate(function () {});
 		
 		// 最初にユーザーリスト取得
-		this.action.reloadUserList();
+		this.action.reloadUserList({
+			callback : () => {
+				// 再ログインを試みる
+				let loginkey = this.loginStore.getLoginKey(this.loginStore.getControllerID());
+				if (loginkey.length > 0) {
+					// リロード時などの再ログイン.
+					this.action.login({
+						userid : "",
+						password : "",
+						loginkey : loginkey
+					});
+				}
+			}
+		});
 		
-		
-		// 再ログインを試みる
-		let loginkey = this.loginStore.getLoginKey(this.loginStore.getControllerID());
-		if (loginkey.length > 0) {
-			// リロード時などの再ログイン.
-			this.action.login({
-				userid : "",
-				password : "",
-				loginkey : loginkey
-			});
-		}
 	}
 }
 
