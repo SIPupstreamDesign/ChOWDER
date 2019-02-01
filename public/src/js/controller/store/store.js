@@ -88,7 +88,6 @@ class Store extends EventEmitter
 			if (!arguments[0]) {
 				console.error("Not found EVENT NAME!")
 			}
-			console.error(arguments[0])
 		}
 		super.emit(...arguments);
 	}

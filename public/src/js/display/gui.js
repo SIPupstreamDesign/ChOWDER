@@ -803,7 +803,9 @@ class GUI extends EventEmitter {
                     this.select(targetid);
                     elem.draggingOffsetLeft = evt.clientX - rect.left;
                     elem.draggingOffsetTop = evt.clientY - rect.top;
-                    this.action.changeContentIndexToFront(targetid);
+                    this.action.changeContentIndexToFront({
+                        targetID : targetid
+                    });
                     evt.preventDefault();
                 };
             })(elem), false);
@@ -829,7 +831,9 @@ class GUI extends EventEmitter {
                     this.select(targetid);
                     elem.draggingOffsetLeft = evt.changedTouches[0].clientX - rect.left;
                     elem.draggingOffsetTop = evt.changedTouches[0].clientY - rect.top;
-                    this.action.changeContentIndexToFront(targetid);
+                    this.action.changeContentIndexToFront({
+                        targetID : targetid
+                    });
                     evt.preventDefault();
                 };
             })(elem), false);

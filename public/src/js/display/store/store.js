@@ -38,6 +38,16 @@ class Store extends EventEmitter
         this.onUpdateWindowMetaData = this.onUpdateWindowMetaData.bind(this);
     }
 
+	// デバッグ用. release版作るときは消す
+	emit() {
+		if (arguments.length > 0) {
+			if (!arguments[0]) {
+				console.error("Not found EVENT NAME!")
+			}
+		}
+		super.emit(...arguments);
+	}
+
 	initEvents() {
 		for (let i in Action) {
 			if (i.indexOf('EVENT') >= 0) {
