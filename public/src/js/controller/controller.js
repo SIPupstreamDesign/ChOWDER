@@ -131,7 +131,7 @@ class Controller {
 
 		// websocket接続が確立された
 		this.store.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
-			console.error("connected")
+			console.log("websocket connected")
 			loginGUI.login();
 		})
 

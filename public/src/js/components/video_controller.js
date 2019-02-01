@@ -20,13 +20,13 @@ class VideoController extends EventEmitter
 
         this.closeButton = document.createElement('img');
         this.closeButton.className = "video_controller_close";
-        this.closeButton.src = "../image/video_close.png";
+        this.closeButton.src = "src/image/video_close.png";
         this.rewindButton = document.createElement('img');
         this.rewindButton.className = "video_controller_rewind";
-        this.rewindButton.src = "../image/video_rewind.png";
+        this.rewindButton.src = "src/image/video_rewind.png";
         this.playButton = document.createElement('img');
         this.playButton.className = "video_controller_play";
-        this.playButton.src = "../image/video_play.png";
+        this.playButton.src = "src/image/video_play.png";
 
         this.dom.appendChild(this.closeButton);
         this.dom.appendChild(this.rewindButton);
@@ -52,7 +52,7 @@ class VideoController extends EventEmitter
 		elPlay.onclick = (evt) => {
 			this.emit('video_controller_play_clicked', null, isPlayButton);
 			isPlayButton = !isPlayButton;
-			elPlay.src = isPlayButton ? '../image/video_play.png' : '../image/video_pause.png';
+			elPlay.src = isPlayButton ? 'src/image/video_play.png' : 'src/image/video_pause.png';
 		};
     }
     

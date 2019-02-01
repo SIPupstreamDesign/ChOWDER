@@ -203,7 +203,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 		if (metaData.from === "controller") { return; }
 		let key = null;
 		try {
-			keyStr = StringUtil.arrayBufferToString(data.contentData.data);
+			let keyStr = StringUtil.arrayBufferToString(data.contentData.data);
 			key = JSON.parse(keyStr).key;
 		}  catch (e) {
 			console.error(e);
@@ -224,7 +224,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 		if (metaData.from === "controller") { return; }
 		let key = null;
 		try {
-			keyStr = StringUtil.arrayBufferToString(data.contentData.data);
+			let keyStr = StringUtil.arrayBufferToString(data.contentData.data);
 			key = JSON.parse(keyStr).key;
 		}  catch (e) {
 			console.error(e);
@@ -345,9 +345,7 @@ function init(controller, gui, store, action, state, login) {
 
 	controller.updateScreen();
 	Vscreen.dump();
-	//store.init();
 	action.init();
-
 }
 
 window.ControllerDispatch = {

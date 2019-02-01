@@ -8,6 +8,7 @@ import Constants from '../../common/constants.js';
 import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
+import WebRTC from '../../common/webrtc';
 
 "use strict";
 
@@ -181,8 +182,8 @@ class VideoStore {
 			}
 			webRTC.addStream(stream);
 			video.ontimeupdate = () => {
-				metaData = this.tore.getMetaData(metaData.id);
-				if (metaData.isEnded === 'true') {
+				metaData = this.store.getMetaData(metaData.id);
+				if (metaData && metaData.isEnded === 'true') {
 					for (let i in controller.webRTC) {
 						if (i.indexOf(metaData.id) >= 0) {
 							this.webRTC[i].removeStream();
@@ -193,10 +194,10 @@ class VideoStore {
 					this.store.operation.updateMetadata(metaData);
 				}
 			};
-			webRTC.on('icecandidate', function (type, data) {
+			webRTC.on('icecandidate', (type, data) => {
 				if (type === "tincle") {
 					metaData.from = "controller";
-					Connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+					this.connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
 						key: keyStr,
 						candidate: data
 					}), function (err, reply) { });
@@ -205,7 +206,7 @@ class VideoStore {
 			});
 			webRTC.on('negotiationneeded', () => {
 				webRTC.offer((sdp) => {
-					Connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
 						key: keyStr,
 						sdp: sdp
 					}), function (err, reply) { });
@@ -219,11 +220,11 @@ class VideoStore {
 			webRTC.on('closed', () => {
 				delete this.webRTC[keyStr];
 			});
-			webRTC.on('need_restart', function () {
+			webRTC.on('need_restart', () => {
 				webRTC.removeStream();
 				webRTC.addStream(stream);
 				webRTC.offer((sdp) => {
-					Connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
 						key: keyStr,
 						sdp: sdp
 					}), function (err, reply) { });
@@ -298,8 +299,8 @@ class VideoStore {
 		else {
 			webRTC = this.webRTC[keyStr];
 		}
-		webRTC.offer(function (sdp) {
-			Connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+		webRTC.offer((sdp) => {
+			this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
 				key: keyStr,
 				sdp: sdp
 			}), function (err, reply) { });
@@ -383,10 +384,10 @@ class VideoStore {
 			metaData.type = "video";
 			metaData.subtype = type;
 			if (!metaData.hasOwnProperty("width")) {
-				metaData.width = Number(this.videoWidth);
+				metaData.width = Number(video.videoWidth);
 			}
 			if (!metaData.hasOwnProperty("height")) {
-				metaData.height = Number(this.videoHeight);
+				metaData.height = Number(video.videoHeight);
 			}
 			metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		};
@@ -458,10 +459,10 @@ class VideoStore {
 			metaData.type = "video";
 			metaData.subtype = type;
 			if (!metaData.hasOwnProperty("width")) {
-				metaData.width = Number(this.videoWidth);
+				metaData.width = Number(video.videoWidth);
 			}
 			if (!metaData.hasOwnProperty("height")) {
-				metaData.height = Number(this.videoHeight);
+				metaData.height = Number(video.videoHeight);
 			}
 			metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		};
@@ -480,7 +481,7 @@ class VideoStore {
 			else {
 				data = this.getElem(metaData.id, true).src;
 			}
-			this.addContent(metaData, data, (err, reply) => {});
+			this.store.getContentStore().addContent(metaData, data, (err, reply) => {});
 		};
     }
     

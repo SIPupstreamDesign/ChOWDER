@@ -290,7 +290,7 @@ class Manipulator extends EventEmitter {
 			this.manipulatorVideoPlay = button;
 			let isPlaying = metaData.isPlaying === 'true';
 			let image = document.createElement('img');
-			image.src = isPlaying ? '../image/video_pause.png' : '../image/video_play.png';
+			image.src = isPlaying ? 'src/image/video_pause.png' : 'src/image/video_play.png';
 			image.className = 'manipulator_video_img';
 			button.appendChild(image);
 			this.manipulatorVideoPlayImage = image;
@@ -298,7 +298,7 @@ class Manipulator extends EventEmitter {
 				evt.stopPropagation();
 				isPlaying = !isPlaying;
 				this.emit('play_video', null, metaData.id, isPlaying);
-				image.src = isPlaying ? '../image/video_pause.png' : '../image/video_play.png';
+				image.src = isPlaying ? 'src/image/video_pause.png' : 'src/image/video_play.png';
 			};
 		}
 		// pdfページ送り

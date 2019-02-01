@@ -113,7 +113,7 @@ class Menu extends EventEmitter {
 
 			let img = document.createElement('img');
 			img.style.display = "none";
-			img.src = "../image/disconnect.png";
+			img.src = "src/image/disconnect.png";
 			headMenuHover.appendChild(img);
 
 			let headIDMenu = document.createElement('span');
