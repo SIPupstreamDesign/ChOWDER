@@ -397,8 +397,7 @@ class GUI extends EventEmitter
 					item.onmousedown = ((groupID) => {
 						return (evt) => {
 							this.action.changeGroup({ groupID : groupID });
-							//this.contentMenu.showSubMenu(false);
-							//burgerMenu.toggle();
+							burgerMenu.show(false);
 						};
 					})(groupID);
 				}
@@ -412,7 +411,7 @@ class GUI extends EventEmitter
 					item.onmousedown = ((groupID) => {
 						return (evt) => {
 							this.action.changeGroup({ groupID : groupID });
-							//contextMenu.toggle();
+							contextMenu.show(false);
 						};
 					})(groupID);
 				}
