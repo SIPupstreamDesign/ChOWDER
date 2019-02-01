@@ -407,7 +407,7 @@ class GUI extends EventEmitter
 					let item = document.createElement('li');
 					item.className = "context_menu_change_group_item";
 					item.innerHTML = groupBox.getGroupName(groupID);
-					item.style.top = "-" + (groupIDs.length * 20 + 104) + "px";
+					item.style.top = "-" + (groupIDs.length * 20) + "px";
 					contextMenuContainer.appendChild(item);
 					item.onmousedown = ((groupID) => {
 						return (evt) => {

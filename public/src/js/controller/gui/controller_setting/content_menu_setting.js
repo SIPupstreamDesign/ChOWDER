@@ -62,13 +62,13 @@ function ContentMenuSetting()
         {
             className : "move_to_front",
             dataKey : "move_to_front",
-            onclick : (evt) => { this.action.changeContentIndex({ toFront : true }); }
+            onmousedown : (evt) => { this.action.changeContentIndex({ toFront : true }); }
         },
         // 最背面へ
         {
             className : "move_to_back",
             dataKey : "move_to_back",
-            onclick : (evt) => { this.action.changeContentIndex({ toFront : false }); }
+            onmousedown : (evt) => { this.action.changeContentIndex({ toFront : false }); }
         },
         // コンテンツ追加
         {
@@ -87,13 +87,13 @@ function ContentMenuSetting()
         {
             className : "swap_image",
             dataKey : "swap_image",
-            onclick : (evt) => { this.contentInputGUI.inputUpdateImageFile(); }
+            onmousedown : (evt) => { this.contentInputGUI.inputUpdateImageFile(); }
         },
         // 
         {
             className : "context_menu_control_videos",
             dataKey : "control_videos_in_a_group",
-            onclick : (evt) => {
+            onmousedown : (evt) => {
                 this.videoController.show(!this.videoController.isShow());
             }
         },
@@ -101,19 +101,19 @@ function ContentMenuSetting()
         {
             className : "select_all_in_a_group",
             dataKey : "select_all_in_a_group",
-            onclick : (evt) => { this.action.selectContent({ type : Constants.TypeContent, onlyCurrentGroup : true }); }
+            onmousedown : (evt) => { this.action.selectContent({ type : Constants.TypeContent, onlyCurrentGroup : true }); }
         },
         // 全て選択
         {
             className : "select_all",
             dataKey : "select_all",
-            onclick : (evt) => { this.action.selectContent({ type : Constants.TypeContent, onlyCurrentGroup : false }); }
+            onmousedown : (evt) => { this.action.selectContent({ type : Constants.TypeContent, onlyCurrentGroup : false }); }
         },
         // 非表示
         {
             className : "hide",
             dataKey : "hide",
-            onclick : (evt) => { this.action.changeContentVisible({visible : false}); }
+            onmousedown : (evt) => { this.action.changeContentVisible({visible : false}); }
         },
         // -------
         {
@@ -123,7 +123,7 @@ function ContentMenuSetting()
         {
             className : "delete",
             dataKey : "delete",
-            onclick : (evt) => { this.action.deleteContent(); }
+            onmousedown : (evt) => { this.action.deleteContent(); }
         }
     ];
 }

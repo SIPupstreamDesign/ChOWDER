@@ -22,54 +22,52 @@
 	width: 200px;
 }
 
-.context_menu_change_group_item, .context_menu_change_displaygroup_item {
+/* グループ変更サブメニューアイテムの位置 */
+.context_menu_submenu_change_group>.context_menu_change_group_item {
 	background : white;
 	cursor: default;
 	font-size : 14px;
 	color : black;
 	position : relative;
 	left : 200px;
-	top : -120px;
+	top : -120px; /* jsで適宜上書きしている */
 }
 
-.context_menu_change_group_submenu {
+.context_menu_submenu_change_group {
 	display : none;
 	height : 0px;
 }
 
-.context_menu_submenu_change_displaygroup {
-	display : none;
-	height : 0px;
-}
-
-.context_menu_change_group_item:hover, .context_menu_change_displaygroup_item:hover {
+.context_menu_submenu_change_group>.context_menu_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
 }
 
-.context_menu_add_content_submenu {
+.context_menu_submenu_add_content {
 	display : none;
 	height : 0px;
 }
 
-.context_menu_add_content_item {
+/* コンテンツ追加サブメニューアイテムの位置 */
+.context_menu_submenu_add_content>.context_menu_item {
 	background : white;
 	cursor: default;
 	font-size : 14px;
 	color : black;
 	position : relative;
 	left : 200px;
-	top : -164px;
+	top : -164px; /* jsで適宜上書きしている */
 }
 
-.context_menu_add_content_item:hover {
+/* サブメニューアイテム上のマウスオーバーでのハイライト */
+.context_menu_submenu_change_group>.context_menu_change_group_item:hover, 
+.context_menu_submenu_add_content>.context_menu_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
 }
 
-.context_menu_change_group:after,
-.context_menu_change_displaygroup:after,
-.context_menu_add_content:after {
+/* submenu の ">" */
+.context_menu_item.context_menu_content_submenu:after {
 	content: '';
 	display: inline-block;
 	width: 6px;
@@ -82,27 +80,7 @@
 	transform: rotate(45deg);
 }
 
-.context_menu_change_group:hover:after,
-.context_menu_change_displaygroup:hover:after,
-.context_menu_add_content:hover:after {
-	border-right: 1px solid white;
-	border-top: 1px solid white;
-}
-
-.context_menu_layout_change_group:after, .context_menu_add_content:after {
-	content: '';
-	display: inline-block;
-	width: 6px;
-	height: 6px;
-	margin: 0 0 0 15px;
-	border-right: 1px solid black;
-	border-top: 1px solid black;
-	-webkit-transform: rotate(45deg);
-	-ms-transform: rotate(45deg);
-	transform: rotate(45deg);
-}
-
-.context_menu_layout_change_group:hover:after, .context_menu_add_content:hover:after {
+.context_menu_item.context_menu_content_submenu:hover:after {
 	border-right: 1px solid white;
 	border-top: 1px solid white;
 }

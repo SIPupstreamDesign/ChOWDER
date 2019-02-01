@@ -10,13 +10,13 @@ function LayoutMenuSetting() {
         {
             className : "add_layout",
             dataKey : "add_layout",
-            onclick : (evt) => { this.contentInputGUI.inputLayout(); }
+            onmousedown : (evt) => { this.contentInputGUI.inputLayout(); }
         },
         // レイアウト上書き
         {
             className : "overwrite_layout",
             dataKey : "overwrite_layout",
-            onclick : (evt) => { this.contentInputGUI.updateLayout(); }
+            onmousedown : (evt) => { this.contentInputGUI.updateLayout(); }
         },
         // グループ変更
         {
@@ -29,13 +29,13 @@ function LayoutMenuSetting() {
         {
             className : "select_all_in_a_group",
             dataKey : "select_all_in_a_group",
-            onclick : (evt) => { this.action.selectContent({ type : Constants.TypeLayout, onlyCurrentGroup : true}); }
+            onmousedown : (evt) => { this.action.selectContent({ type : Constants.TypeLayout, onlyCurrentGroup : true}); }
         },
         // 全選択
         {
             className : "select_all",
             dataKey : "select_all",
-            onclick : (evt) => { this.action.selectContent({ type : Constants.TypeLayout, onlyCurrentGroup : false }); }
+            onmousedown : (evt) => { this.action.selectContent({ type : Constants.TypeLayout, onlyCurrentGroup : false }); }
         },
         // -------
         {
@@ -45,7 +45,7 @@ function LayoutMenuSetting() {
         {
             className : "delete",
             dataKey : "delete",
-            onclick : (evt) => { this.action.deleteContent(); }
+            onmousedown : (evt) => { this.action.deleteContent(); }
         },
     ];
 }
