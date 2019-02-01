@@ -70,11 +70,7 @@ class GroupStore
 	 * @param {*} data 
 	 */
 	_getGroupList(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		this.store.operation.getGroupList(callback);
 	}
 

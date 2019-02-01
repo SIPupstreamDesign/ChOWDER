@@ -48,6 +48,7 @@ class ManagementStore {
 	};
 
 	_reloadDBList(data) {
+		let callback = Store.extractCallback(data);
 		this.connector.send('GetDBList', {}, (err, reply) => {
 			this.store.emit(Store.EVENT_DBLIST_RELOADED, err, reply);
 		});
@@ -98,11 +99,7 @@ class ManagementStore {
 	 * パスワード更新
 	 */
 	_changePassword(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		this.connector.send('ChangePassword', data, (err, reply) => {
 			if (callback) {
 				callback(err, reply);
@@ -116,11 +113,7 @@ class ManagementStore {
 	 * @param {*} data 
 	 */
 	_changeAuthority(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		this.connector.send('ChangeAuthority', data, (err, data) => {
 			this.action.reloadUserList((err, userList) => {
 				if (callback) {

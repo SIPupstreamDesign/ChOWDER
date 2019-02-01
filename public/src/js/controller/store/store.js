@@ -106,6 +106,15 @@ class Store extends EventEmitter
 		}
 	};
 
+	static extractCallback(data) {
+		let callback;
+		if (data && data.hasOwnProperty('callback')) {
+			callback = data.callback;
+			delete data.callback;
+		}
+		return callback;
+	}
+
 	/**
 	 * 解放処理
 	 */

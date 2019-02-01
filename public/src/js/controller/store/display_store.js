@@ -106,11 +106,7 @@ class DisplayStore
 	 *  ディスプレイ枠色変更
 	 */
 	_changeDisplayColor(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 
 		let id = this.state.getSelectedID();
 		let color = data.color;

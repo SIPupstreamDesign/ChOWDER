@@ -82,11 +82,7 @@ class ManipulatorStore {
     _movePDFPageOnManipulator(data) {
         let id = data.id;
         let delta = data.delta;
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-        }
+		let callback = Store.extractCallback(data);
         
 		let metaData = this.store.getMetaData(id);
 		let page = metaData.pdfPage ? parseInt(metaData.pdfPage) : 1;

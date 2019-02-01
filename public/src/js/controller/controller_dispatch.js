@@ -184,16 +184,15 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	Connector.on("UpdateSetting", function () {
 		if (!store.isInitialized()) { return; }
 		// ユーザーリスト再取得
-		Connector.send('GetUserList', {}, function (err, userList) {
-			store.getManagement().setUserList(userList);
-		});
+		action.reloadUserList();
 		action.reloadGlobalSetting();
-		Connector.send('GetDBList', {}, function (err, reply) {
-			if (!err) {
-				store.getManagment().setDBList(reply);
-				// 開きなおす
-				gui.showManagementGUI(false);
-				gui.showManagementGUI(true);
+		action.reloadDBList({
+			callback : (err, reply) => {
+				if (!err) {
+					// 開きなおす
+					gui.showManagementGUI(false);
+					gui.showManagementGUI(true);
+				}
 			}
 		});
 	});

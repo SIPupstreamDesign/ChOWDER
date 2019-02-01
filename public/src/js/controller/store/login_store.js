@@ -46,11 +46,7 @@ class LoginStore {
 	 * ログイン
 	 */
 	_login(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 
 		let controllerID = this.getControllerID();
 		if ((!controllerID || controllerID.length === 0) && !data.onetime) {
@@ -99,11 +95,7 @@ class LoginStore {
 	 * ユーザーリストを最新に更新
 	 */
 	_reloadUserList(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 
 		this.connector.send('GetUserList', {}, (err, userList) => {
 			this.userList = userList;

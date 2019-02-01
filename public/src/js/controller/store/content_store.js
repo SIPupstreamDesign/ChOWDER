@@ -180,11 +180,7 @@ class ContentStore
 	 * コンテンツ取得.
 	 */
 	_getContent(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		this.store.operation.getContent(data.request, callback);
 	}
 
@@ -411,11 +407,7 @@ class ContentStore
 	 * @param {*} data 
 	 */
 	_changeContentMetaInfo(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		if (!data.metaData) {
 			console.error("not found data.metadata on _changeContentMetaInfo")
 			return;
@@ -529,11 +521,7 @@ class ContentStore
      * アスペクト比の調整
 	 */
 	_correctContentAspect(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
+		let callback = Store.extractCallback(data);
 		let metaData = data.metaData;
 		let isCorrect = true;
 		if (metaData.hasOwnProperty('orgWidth') && metaData.hasOwnProperty('orgHeight')) {

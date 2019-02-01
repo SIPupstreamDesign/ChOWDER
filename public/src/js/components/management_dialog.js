@@ -439,7 +439,7 @@ class ManagementDialog extends EventEmitter
         // 最大履歴保存数の適用
         this.historyNumberButton.on(Button.EVENT_CLICK, () => {
             this.emit(ManagementDialog.EVENT_CHANGE_HISTORY_NUM, null, this.historyNumberInput.getValue(), function () {
-                let message = document.getElementByClassName('apply_history_message')[0];
+                let message = document.getElementsByClassName('apply_history_message')[0];
                 message.style.visibility = "visible";
                 setTimeout(function () {
                     message.style.visibility = "hidden";
