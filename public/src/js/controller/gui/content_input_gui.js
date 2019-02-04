@@ -61,10 +61,10 @@ class ContentInputGUI
 		let files = evt.target.files;
 		let fileReader = new FileReader();
 		let time = new Date().toISOString();
+
 		let posx = x;
 		let posy = y;
-
-		if (posx === 0 && posy === 0) {
+		if (!posx && !posy) {
 			// メニューから追加したときなど. wholescreenの左上端に置く.
 			posx = Vscreen.getWhole().x;
 			posy = Vscreen.getWhole().y;
@@ -116,7 +116,7 @@ class ContentInputGUI
 		let posx = x;
 		let posy = y;
 
-		if (posx === 0 && posy === 0) {
+		if (!posx && !posy) {
 			// メニューから追加したときなど. wholescreenの左上端に置く.
 			posx = Vscreen.getWhole().x;
 			posy = Vscreen.getWhole().y;
@@ -170,7 +170,7 @@ class ContentInputGUI
 		let posx = x;
 		let posy = y;
 
-		if (posx === 0 && posy === 0) {
+		if (!posx && !posy) {
 			// メニューから追加したときなど. wholescreenの左上端に置く.
 			posx = Vscreen.getWhole().x;
 			posy = Vscreen.getWhole().y;
@@ -211,8 +211,7 @@ class ContentInputGUI
 		let posx = x;
 		let posy = y;
 
-
-		if (posx === 0 && posy === 0) {
+		if (!posx && !posy) {
 			// メニューから追加したときなど. wholescreenの左上端に置く.
 			posx = Vscreen.getWhole().x;
 			posy = Vscreen.getWhole().y;
@@ -305,7 +304,7 @@ class ContentInputGUI
 
 		let posx = this.store.getState().getContextPos().x;
 		let posy = this.store.getState().getContextPos().y;
-		if (posx === 0 && posy === 0) {
+		if (!posx && !posy) {
 			// メニューから追加したときなど. wholescreenの左上端に置く.
 			posx = Vscreen.getWhole().x;
 			posy = Vscreen.getWhole().y;
