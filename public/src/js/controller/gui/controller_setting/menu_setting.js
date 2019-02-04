@@ -106,7 +106,7 @@ function MenuSetting(management) {
                     URL : {
                         func : () => {
                             this.initContextPos();
-                            this.toggleURLInput();
+                            this.contentInputGUI.inputURL();
                         }
                     }
                 }, {
