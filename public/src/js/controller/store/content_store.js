@@ -181,7 +181,7 @@ class ContentStore
 	 */
 	_getContent(data) {
 		let callback = Store.extractCallback(data);
-		this.store.operation.getContent(data.request, callback);
+		this.store.operation.getContent(data.request, callback, data.preventDefaultEmit);
 	}
 
 	/**
@@ -247,7 +247,6 @@ class ContentStore
 			let metaData = this.store.getMetaData(id);
 			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= data.restoreIndex) {
 				metaData.restore_index = data.restoreIndex;
-				console.error("restoreIndex", data.restoreIndex)
 				this.store.operation.getContent(metaData, (err, reply) => {
 					if (reply.hasOwnProperty('metaData')) {
 						if (Validator.isTextType(reply.metaData)) {
@@ -258,7 +257,7 @@ class ContentStore
 							reply.metaData.posx = metaData.posx;
 							reply.metaData.posy = metaData.posy;
 						}
-						this.store.operation.updateMetadata(reply.metaData, (err, reply) => {
+						this.store.operation.updateMetadata(reply.metaData, (err, res) => {
 							this.store.emit(Store.EVENT_DONE_RESTORE_CONTENT, err, reply);
 						});
 						manipulator.removeManipulator();

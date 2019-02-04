@@ -170,6 +170,9 @@ class Controller {
 		// contentが追加された
 		this.store.on(Store.EVENT_DONE_ADD_CONTENT, this.doneAddContent);
 		
+		// contentが取得された
+		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
+		
 		// メタデータ取得完了
 		this.store.on(Store.EVENT_DONE_GET_METADATA, (err, reply, endCallback) => {
 			let last = reply.last;
@@ -1516,7 +1519,8 @@ class Controller {
 							if (endCallback) {
 								endCallback(null);
 							}
-						}
+						},
+						preventDefaultEmit : true
 					});
 				}
 				else {
@@ -1531,7 +1535,8 @@ class Controller {
 							if (endCallback) {
 								endCallback(null);
 							}
-						}
+						},
+						preventDefaultEmit : true
 					});
 				}
 			}
@@ -1544,7 +1549,8 @@ class Controller {
 							element : document.getElementById(metaData.id),
 							metaData : data.metaData
 						});
-					}
+					},
+					preventDefaultEmit : true
 				});
 			}
 		}
@@ -1584,7 +1590,7 @@ class Controller {
 				gui.importContent(metaData, contentData);
 			}
 			if (endCallback) {
-				endCallback(null);
+				endCallback(err, reply);
 			}
 		}
 		else {
@@ -1638,7 +1644,7 @@ class Controller {
 			this.store.setMetaData(json.id, json);
 		}
 		if (endCallback) {
-			endCallback(null, reply);
+			endCallback(err, reply);
 		}
 	}
 	/**

@@ -132,16 +132,21 @@ class Operation
 		});
     }
 
-    getContent(request, endCallback) {
-        this.connector.send('GetContent', request, endCallback);
+    getContent(request, endCallback, preventDefaultEmit) {
+        this.connector.send('GetContent', request, (err, reply) => {
+			if (!preventDefaultEmit) {
+				this.store.emit(Store.EVENT_DONE_GET_CONTENT, err, reply, endCallback);
+			} else {
+                endCallback(err, reply);
+			}
+		});
     }
     
     getVirtualDisplay(groupID, endCallback, preventDefaultEmit) {
         this.connector.send('GetVirtualDisplay', {group : groupID}, (err, reply) => {
 			if (!preventDefaultEmit) {
 				this.store.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply, endCallback);
-			}
-            if (endCallback) {
+			} else if (endCallback) {
                 endCallback(err, reply);
             }
         });

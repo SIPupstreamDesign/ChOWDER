@@ -548,6 +548,7 @@ Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";
 // operation
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
+Store.EVENT_DONE_GET_CONTENT = "done_get_content";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
 Store.EVENT_DONE_GET_GROUP_LIST = "done_get_group_list";
