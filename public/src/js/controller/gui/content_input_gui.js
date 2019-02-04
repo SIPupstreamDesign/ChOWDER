@@ -503,7 +503,7 @@ class ContentInputGUI
 			InputDialog.showTextInput({
 				name: i18next.t('input_extension_id'),
 				okButtonName: "OK"
-			}, function (extensionID) {
+			}, (extensionID) => {
 				chrome.runtime.sendMessage(extensionID, request, (response) => {
 					let target = {
 						video: {
@@ -520,7 +520,7 @@ class ContentInputGUI
 						}
 					};
 					if (response && response.type === 'success') {
-						navigator.getUserMedia(target, function (stream) {
+						navigator.getUserMedia(target, (stream) => {
 							this.action.inputVideoStream({
 								contentData : stream,
 								metaData : {
@@ -543,7 +543,7 @@ class ContentInputGUI
 					mediaSource: "screen"
 				},
 			};
-			navigator.mediaDevices.getUserMedia(mediaConstraints).then(function (stream) {
+			navigator.mediaDevices.getUserMedia(mediaConstraints).then((stream) => {
 				// TODO
 				controller.send_movie("screen", stream, {
 					group: gui.getCurrentGroupID(),
