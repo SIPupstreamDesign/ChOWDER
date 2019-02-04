@@ -237,6 +237,10 @@ class Action extends EventEmitter
 
     /**
      * URLを入力
+     * {
+     *   contentData : URL,
+     *   metaData : 登録用メタデータ
+     * }
      */
     inputURL(data) {
         this.emit(Action.EVENT_INPUT_URL, null, data);
@@ -245,6 +249,10 @@ class Action extends EventEmitter
     /**
      * テキストを入力
      * @param {*} data 
+     * {
+     *   contentData : テキスト,
+     *   metaData : 登録用メタデータ
+     * }
      */
     inputText(data) {
         this.emit(Action.EVENT_INPUT_TEXT, null, data);
@@ -253,6 +261,14 @@ class Action extends EventEmitter
     /**
      * レイアウトを入力
      * @param {*} data 
+     * {
+     *    contentData : {
+     *      contents : {
+     *          コンテンツID : メタデータ
+     *      }
+     *    }
+     * }
+     * metaData : 登録用メタデータ
      */
     inputLayout(data) {
         this.emit(Action.EVENT_INPUT_LAYOUT, null, data);
@@ -261,6 +277,10 @@ class Action extends EventEmitter
     /**
      * 動画ストリームを入力
      * @param {*} data 
+     * {
+     *   contentData : 動画blob,
+     *   metaData : 登録用メタデータ
+     * }
      */
     inputVideoStream(data) {
         this.emit(Action.EVENT_INPUT_VIDEO_STREAM, null, data);
@@ -281,7 +301,14 @@ class Action extends EventEmitter
     
     /**
      * レイアウトを差し替える
-     * @param {*} data 
+     * {
+     *    contentData : {
+     *      contents : {
+     *          コンテンツID : メタデータ
+     *      }
+     *    }
+     * }
+     * metaData : 登録用メタデータ
      */
     updateLayout(data) {
         this.emit(Action.EVENT_UPDATE_LAYOUT, null, data);
@@ -364,6 +391,9 @@ class Action extends EventEmitter
     /**
      * ディスプレイスケール変更
      * @param {*} data 
+     * {
+     *    displayScale : スケール値
+     * }
      */
     changeDisplayScale(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_SCALE, null, data);
@@ -371,20 +401,24 @@ class Action extends EventEmitter
 
     /**
      * ディスプレイ位置変更
+     * {
+     *    dx : x方向移動値,
+     *    dy : y方向移動値
+     * }
      */
     changeDisplayTrans(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_TRANS, null, data);
     }
 
     /**
-     * ディスプレイ削除
+     * 選択中のディスプレイ削除
      */
     deleteDisplay(data) {
         this.emit(Action.EVENT_DELETE_DISPLAY, null, data);
     }
 
     /**
-     * ディスプレイID表示非表示
+     * 選択中のディスプレイのID表示非表示
      * @param {*} data 
      * {
      *    isShow : 表示か非表示か
