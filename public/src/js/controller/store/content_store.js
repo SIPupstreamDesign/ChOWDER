@@ -142,7 +142,7 @@ class ContentStore
 	 * @param {Object} data { id : id, img : img, file : file }
 	 */
 	_updateImage(data) {
-		let metaData = this.getMetaData(data.id);
+		let metaData = this.store.getMetaData(data.id);
 		metaData.type = "image";
 		metaData.width = data.img.naturalWidth;
 		metaData.height = data.img.naturalHeight;
@@ -245,15 +245,16 @@ class ContentStore
 		let id = this.store.getState().getSelectedID();
 		if (this.store.hasMetadata(id) && Validator.isContentType(this.store.getMetaData(id))) {
 			let metaData = this.store.getMetaData(id);
-			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= restoreIndex) {
-				metaData.restore_index = restoreIndex;
+			if (metaData.hasOwnProperty('backup_list') && metaData.backup_list.length >= data.restoreIndex) {
+				metaData.restore_index = data.restoreIndex;
+				console.error("restoreIndex", data.restoreIndex)
 				this.store.operation.getContent(metaData, (err, reply) => {
 					if (reply.hasOwnProperty('metaData')) {
 						if (Validator.isTextType(reply.metaData)) {
 							metaData.user_data_text = JSON.stringify({ text: reply.contentData });
 						}
-						reply.metaData.restore_index = restoreIndex;
-						if (res === "no") {
+						reply.metaData.restore_index = data.restoreIndex;
+						if (!data.isRestore) {
 							reply.metaData.posx = metaData.posx;
 							reply.metaData.posy = metaData.posy;
 						}

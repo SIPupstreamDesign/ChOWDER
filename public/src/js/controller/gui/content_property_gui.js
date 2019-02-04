@@ -10,7 +10,7 @@ import Validator from '../../common/validator.js';
 import ColorSelector from '../../components/colorselector.js';
 import Vscreen from '../../common/vscreen'
 import Store from '../store/store'
-import ContentUtil from '../content_util';
+import InputDialog from '../../components/input_dialog';
 
 "use strict";
 
@@ -967,7 +967,7 @@ class ContentPropertyGUI extends EventEmitter {
 			yesButtonName: i18next.t('restore'),
 			noButtonName: i18next.t('restore_here'),
 			cancelButtonName: "Cancel",
-		}, function (res) {
+		}, (res) => {
 			if (res === "yes" || res === "no") {
 				let isRestore = (res === "yes");
 				this.action.restoreContent({

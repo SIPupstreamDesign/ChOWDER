@@ -77,7 +77,7 @@ class ContentsInput extends EventEmitter
         }, false);
 
         updateImageInput.onchange = (evt) => {
-            this.emit(ContentsInput.EVENT_PDFFILEINPUT_CHANGE, null, evt);
+            this.emit(ContentsInput.EVENT_UPDATEIMAGEINPUT_CHANGE, null, evt);
             updateImageInput.value = "";
         };
 
