@@ -294,11 +294,10 @@ function init(controller, gui, store, action, state, login) {
 
 	gui.init(controllerData);
 
-	let display_scale = controllerData.getDisplayScale();
+	let displayScale = controllerData.getDisplayScale();
 	let snap = controllerData.getSnapType(Validator.isDisplayTabSelected());
 
-	Vscreen.setWholeScale(display_scale, true);
-	gui.setDisplayScale(display_scale);
+	Vscreen.setWholeScale(displayScale, true);
 
 	if (snap) {
 		action.changeSnapType({

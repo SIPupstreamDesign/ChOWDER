@@ -46,7 +46,7 @@ class GUI extends EventEmitter
 		this.displayMenu = null;
 		this.contentMenu = null;
 		this.layoutMenu = null;
-		this.display_scale = 1.0;
+		this.displayScale = 1.0;
 		this.management = null;
 	}
 
@@ -57,6 +57,8 @@ class GUI extends EventEmitter
 	init(controllerData) {
 		this.management = this.store.getManagement();
 		this.controllerData = controllerData;
+
+		this.displayScale = controllerData.getDisplayScale();
 	
 		// 全体のレイアウトの初期化.
 		new Layout(AreaLayoutSetting());
@@ -227,25 +229,23 @@ class GUI extends EventEmitter
 
 	initMouseEvent() {
 		let isGesture = false;
-		let gestureScale,
-			dx,dy;
+		let gestureScale;
 
 		// 一定間隔同じイベントが来なかったら実行するための関数
 		let debounceChangeDisplayScale = (() => {
-			let interval = 250;
+			const interval = 250;
 			let timer;
 			return () => {
 				clearTimeout(timer);
 				timer = setTimeout(() => {
-					
 					this.action.changeDisplayScale({
 						isChanging: false,
-						displayScale : display_scale
+						displayScale : this.displayScale
 					})
 					
 				}, interval);
 			};
-		});
+		})();
 	
 		if(window.ontouchstart !== undefined) {
 			// タッチイベントの初期化
@@ -282,11 +282,10 @@ class GUI extends EventEmitter
 
 		this.onGestureChange = (e) => {
 			if (!isGesture) { return false; }
-			let scale_current = document.getElementById('scale_dropdown_current');
-			this.display_scale = gestureScale * e.scale;
+			this.displayScale = gestureScale * e.scale;
 			this.action.changeDisplayScale({
 				isChanging : true,
-				displayScale : this.display_scale
+				displayScale : this.displayScale
 			});
 			debounceChangeDisplayScale();
 			e.stopPropagation();
@@ -308,26 +307,26 @@ class GUI extends EventEmitter
 		let onWheel = (e) => {
 			if (this.managementGUI.isShow()) { return; }
 			if (!this.inListviewArea(e) && !this.is_property_area(e)) {
-				if(!e) e = window.event; //for legacy IE
+				if (!e) e = window.event; //for legacy IE
 				let delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
 				e.preventDefault();
 				if (delta < 0){
 					//下にスクロールした場合の処理
-					this.display_scale = this.display_scale + 0.05;
+					this.displayScale = this.displayScale + 0.05;
 				} else if (delta > 0){
 					//上にスクロールした場合の処理
-					this.display_scale = this.display_scale - 0.05;
+					this.displayScale = this.displayScale - 0.05;
 				}
 				
-				if (this.display_scale < 0.05) {
-					this.display_scale = 0.05
+				if (this.displayScale < 0.05) {
+					this.displayScale = 0.05
 				}
-				if (this.display_scale > 2) {
-					this.display_scale = 2;
+				if (this.displayScale > 2) {
+					this.displayScale = 2;
 				}
 				this.action.changeDisplayScale({
 					isChanging : true,
-					displayScale : this.display_scale
+					displayScale : this.displayScale
 				});
 				debounceChangeDisplayScale();
 			}
@@ -466,7 +465,7 @@ class GUI extends EventEmitter
 			if (this.managementGUI.isShow()) { return; }
 			if (this.state.isShiftDown()) { return; }
 			if (this.get_whole_scale) {
-				this.display_scale = this.get_whole_scale();
+				this.displayScale = this.get_whole_scale();
 			}
 			if (evt.button === 2) {
 				let rect = displayPreviewArea.getBoundingClientRect();
@@ -488,23 +487,23 @@ class GUI extends EventEmitter
 				let dy = evt.clientY - rect.top - mouseDownPosY,
 					ds = dy;
 				if (ds > 0) {
-					this.display_scale += 0.002 * Math.abs(ds + 0.5);
+					this.displayScale += 0.002 * Math.abs(ds + 0.5);
 				} else {
-					if (this.display_scale < 1.0) {
-						this.display_scale -= 0.001 * Math.abs(ds - 0.5);
+					if (this.displayScale < 1.0) {
+						this.displayScale -= 0.001 * Math.abs(ds - 0.5);
 					} else {
-						this.display_scale -= 0.002 * Math.abs(ds - 0.5);
+						this.displayScale -= 0.002 * Math.abs(ds - 0.5);
 					}
 				}
-				if (this.display_scale < 0.05) {
-					this.display_scale = 0.05;
+				if (this.displayScale < 0.05) {
+					this.displayScale = 0.05;
 				}
-				if (this.display_scale > 2) {
-					this.display_scale = 2;
+				if (this.displayScale > 2) {
+					this.displayScale = 2;
 				}
 				this.action.changeDisplayScale({
 					isChanging : true,
-					displayScale : this.display_scale
+					displayScale : this.displayScale
 				});
 			} else if (is_middle_dragging) {
 				let dx = evt.clientX - rect.left - mouseDownPosX,
@@ -523,7 +522,7 @@ class GUI extends EventEmitter
 			if (evt.button === 2) {
 				this.action.changeDisplayScale({
 					isChanging: false,
-					displayScale : this.display_scale
+					displayScale : this.displayScale
 				})
 				is_right_dragging = false;
 			} else {
@@ -958,10 +957,6 @@ class GUI extends EventEmitter
 	// Setter.
 	setUpdateContentID(id) {
 		this.contentInputGUI.setUpdateImageID(id);
-	}
-
-	setDisplayScale(scale) {
-		this.display_scale = scale; 
 	}
 
 	/**
