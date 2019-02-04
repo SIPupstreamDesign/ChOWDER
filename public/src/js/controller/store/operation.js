@@ -60,10 +60,10 @@ class Operation
 	 * @param {Blob} binary 更新するコンテンツのバイナリ
 	 */
 	updateContent(metaData, binary, endCallback) {
-		if (!this.checkCapacity(binary.byteLength)) {
+		if (!Validator.checkCapacity(binary.byteLength)) {
 			return;
 		}
-		connector.sendBinary('UpdateContent', metaData, binary, (err, reply) => {
+		this.connector.sendBinary('UpdateContent', metaData, binary, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_CONTENT, err, reply, endCallback);
         });
     }
