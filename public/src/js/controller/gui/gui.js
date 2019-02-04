@@ -443,20 +443,37 @@ class GUI extends EventEmitter
 		let contentPreviewArea = document.getElementById('content_preview_area');
 		let is_right_dragging = false;
 		let is_middle_dragging = false;
-		let mouseDownPosX = 0;
-		let mouseDownPosY = 0;
+		let mouseDownPos = {
+			x : 0,
+			y : 0
+		}
+		let mouseMovePos = {
+			x : 0,
+			y : 0,
+		}
 		
 		contentPreviewArea.addEventListener('mousedown', (evt) => {
 			if (this.managementGUI.isShow()) { return; }
 			if (this.state.isShiftDown()) { return; }
 			if (evt.button === 2) {
 				let rect = contentPreviewArea.getBoundingClientRect();
-				mouseDownPosY = evt.clientY - rect.top;
+				//mouseDownPosY = evt.clientY - rect.top;
+				mouseDownPos.y = evt.clientY - rect.top;
+				mouseMovePos.y = evt.clientY - rect.top;
 				is_right_dragging = true;
 			} else if (evt.button === 1 || this.state.isSpaceDown()) {
 				let rect = contentPreviewArea.getBoundingClientRect();
-				mouseDownPosX = evt.clientX - rect.left;
-				mouseDownPosY = evt.clientY - rect.top;
+
+				mouseDownPos = {
+					x : evt.clientX - rect.left,
+					y : evt.clientY - rect.top
+				};
+				mouseMovePos = {
+					x : evt.clientX - rect.left,
+					y : evt.clientY - rect.top
+				};
+				//mouseDownPosX = evt.clientX - rect.left;
+				//mouseDownPosY = evt.clientY - rect.top;
 				is_middle_dragging = true;
 			}
 		});
@@ -469,12 +486,19 @@ class GUI extends EventEmitter
 			}
 			if (evt.button === 2) {
 				let rect = displayPreviewArea.getBoundingClientRect();
-				mouseDownPosY = evt.clientY - rect.top;
+				mouseDownPos.y = evt.clientY - rect.top;
+				mouseMovePos.y = evt.clientY - rect.top;
 				is_right_dragging = true;
 			} else if (evt.button === 1 || this.state.isSpaceDown()) {
 				let rect = displayPreviewArea.getBoundingClientRect();
-				mouseDownPosX = evt.clientX - rect.left;
-				mouseDownPosY = evt.clientY - rect.top;
+				mouseDownPos = {
+					x : evt.clientX - rect.left,
+					y : evt.clientY - rect.top
+				};
+				mouseMovePos = {
+					x : evt.clientX - rect.left,
+					y : evt.clientY - rect.top
+				};
 				is_middle_dragging = true;
 			}
 		});
@@ -484,7 +508,7 @@ class GUI extends EventEmitter
 			if (this.state.isShiftDown()) { return; }
 			let rect = contentPreviewArea.getBoundingClientRect();
 			if (is_right_dragging) {
-				let dy = evt.clientY - rect.top - mouseDownPosY,
+				let dy = evt.clientY - rect.top - mouseMovePos.y,
 					ds = dy;
 				if (ds > 0) {
 					this.displayScale += 0.002 * Math.abs(ds + 0.5);
@@ -506,24 +530,30 @@ class GUI extends EventEmitter
 					displayScale : this.displayScale
 				});
 			} else if (is_middle_dragging) {
-				let dx = evt.clientX - rect.left - mouseDownPosX,
-					dy = evt.clientY - rect.top - mouseDownPosY;
+				let dx = evt.clientX - rect.left - mouseMovePos.x,
+					dy = evt.clientY - rect.top - mouseMovePos.y;
 				
 					this.action.changeDisplayTrans({
 						dx : dx,
 						dy : dy
 					});
 			}
-			mouseDownPosX = evt.clientX;
-			mouseDownPosY = evt.clientY;
+			mouseMovePos = {
+				x : evt.clientX,
+				y : evt.clientY
+			}
 		});
 
 		window.addEventListener('mouseup', (evt) => {
 			if (evt.button === 2) {
-				this.action.changeDisplayScale({
-					isChanging: false,
-					displayScale : this.displayScale
-				})
+				let rect = contentPreviewArea.getBoundingClientRect();
+				let dy = evt.clientY - rect.top - mouseDownPos.y;
+				if (dy !== 0) {
+					this.action.changeDisplayScale({
+						isChanging: false,
+						displayScale : this.displayScale
+					});
+				}
 				is_right_dragging = false;
 			} else {
 				is_middle_dragging = false;
