@@ -145,7 +145,7 @@ class ContentInputGUI
 					user_data_text : JSON.stringify({ text: text })
 				}
 				VscreenUtil.transPosInv(metaData);
-				this.action.inputTextFile({
+				this.action.inputText({
 					contentData : text,
 					metaData : metaData
 				});
