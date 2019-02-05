@@ -3,6 +3,8 @@
 import Command from '../../common/command'
 import Store from './store'
 import StringUtil from '../../common/string_util'
+import Vscreen from '../../common/vscreen'
+import DisplayUtil from '../display_util'
 
 class Receiver
 {
@@ -110,6 +112,7 @@ class Receiver
             }
         });
 
+        /// リモートカーソルが更新された
         this.connector.on(Command.UpdateMouseCursor, (res) => {
             let ctrlid = res.controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
@@ -160,7 +163,7 @@ class Receiver
                         + " 1px -1px 0 white,"
                         + "-1px -1px 0 white";
 
-                autoResizeCursor([elem, controllerID]);
+                DisplayUtil.autoResizeCursor([elem, controllerID]);
                 elem.style.left = Math.round(pos.x) + 'px';
                 elem.style.top  = Math.round(pos.y) + 'px';
                 controllerID.style.left = Math.round(pos.x) + 'px';
@@ -176,21 +179,24 @@ class Receiver
                         controllerID.style.left = '-999999px';
                         controllerID.style.top  = '-999999px';
                     }
-                    if (elem.parentNode) { elem.removeChild(elem); }
-                    if (controllerID.parentNode) { controllerID.removeChild(controllerID); }
+                    if (elem && elem.parentNode) { elem.parentNode.removeChild(elem); }
+                    if (controllerID && controllerID.parentNode) { controllerID.parentNode.removeChild(controllerID); }
                 }
             }
         });
 
+        /// WindowID表示要求がきた
         this.connector.on(Command.ShowWindowID, (data) => {
             // console.log("onShowWindowID", data);
             this.store.emit(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, null, data);
         });
 
+        /// メタデータが更新された
         this.connector.on(Command.UpdateMetaData, (data) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
         });
 
+        /// WebRTC
         this.connector.on(Command.RTCOffer, (data) => {
             if (!this.store.getWindowData()) return;
             let metaData = data.metaData;
@@ -222,6 +228,7 @@ class Receiver
             }
         });
         
+        /// WebRTC
         this.connector.on(Command.RTCClose, (data) => {
             let metaData = data.metaData;
             if (metaData.from === "view") { return; }
@@ -241,6 +248,7 @@ class Receiver
             }
         });
 
+        /// WebRTC
         this.connector.on(Command.RTCIceCandidate, (data) => {
             //console.error("on RTCIceCandidate")
             let metaData = data.metaData;

@@ -167,28 +167,6 @@ class GUI extends EventEmitter {
     }
     
     /**
-     * リモートカーソルの自動リサイズ
-     */
-    autoResizeCursor(elems) {
-        let ratio = Number(window.devicePixelRatio);
-        /*
-        let width = Number(screen.width);
-        let height = Number(screen.height);
-        let w = width;
-        let h = height;
-        let area = w * h;
-        let mul = area / 100000.0 / 40.0;
-        */
-        let  mul = 1.0 / ratio * 2;
-
-        for (let i = 0; i < elems.length; ++i) {
-            elems[i].style.transform = "scale(" + mul + ")";
-            elems[i].style.transformOrigin = "left top 0";
-        }
-        return mul;
-    }
-        
-    /**
      * マークによるコンテンツ強調表示のトグル
      * @param {Element} elem 対象エレメント
      * @param {JSON} metaData メタデータ
