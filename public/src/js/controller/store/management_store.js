@@ -7,6 +7,7 @@
 import Constants from '../../common/constants.js';
 import Store from './store';
 import Action from '../action';
+import Command from '../../common/command'
 
 "use strict";
 
@@ -49,39 +50,39 @@ class ManagementStore {
 
 	_reloadDBList(data) {
 		let callback = Store.extractCallback(data);
-		this.connector.send('GetDBList', {}, (err, reply) => {
+		this.connector.send(Command.GetDBList, {}, (err, reply) => {
 			this.store.emit(Store.EVENT_DBLIST_RELOADED, err, reply);
 		});
 
 	}
 
 	_newDB(data) {
-		this.connector.send("NewDB", data,  () => {
+		this.connector.send(Command.NewDB, data,  () => {
 		});
 	}
 	
 	_renameDB(data) {
-		this.connector.send("RenameDB", data, () => {});
+		this.connector.send(Command.RenameDB, data, () => {});
 	}
 
 	_changeDB(data) {
 		console.error("changeDB")
-		this.connector.send("ChangeDB", data, () => {});
+		this.connector.send(Command.ChangeDB, data, () => {});
 	}
 
 	_deleteDB(data) {
-		this.connector.send("DeleteDB", data, () => {});
+		this.connector.send(Command.DeleteDB, data, () => {});
 	}
 
 	_initDB(data) {
-		this.connector.send("InitDB", data, () => {});
+		this.connector.send(Command.InitDB, data, () => {});
 	}
 
 	/**
 	 * 全体設定の再ロード
 	 */
 	_reloadGlobalSetting() {
-		this.connector.send('GetGlobalSetting', {}, (err, reply) => {
+		this.connector.send(Command.GetGlobalSetting, {}, (err, reply) => {
 			this.store.emit(Store.EVENT_GLOBAL_SETTING_RELOADED, err, reply);
 		});
 	}
@@ -90,7 +91,7 @@ class ManagementStore {
 	 * 全体設定の更新
 	 */
 	_changeGlobalSetting(data) {
-		this.connector.send("ChangeGlobalSetting", data, (err, reply) => {
+		this.connector.send(Command.ChangeGlobalSetting, data, (err, reply) => {
 			this.store.emit(Store.EVENT_GLOBAL_SETTING_CHANGED, err, reply)
 		});
 	}
@@ -100,7 +101,7 @@ class ManagementStore {
 	 */
 	_changePassword(data) {
 		let callback = Store.extractCallback(data);
-		this.connector.send('ChangePassword', data, (err, reply) => {
+		this.connector.send(Command.ChangePassword, data, (err, reply) => {
 			if (callback) {
 				callback(err, reply);
 			}
@@ -114,7 +115,7 @@ class ManagementStore {
 	 */
 	_changeAuthority(data) {
 		let callback = Store.extractCallback(data);
-		this.connector.send('ChangeAuthority', data, (err, data) => {
+		this.connector.send(Command.ChangeAuthority, data, (err, data) => {
 			this.action.reloadUserList((err, userList) => {
 				if (callback) {
 					callback(err, userList);

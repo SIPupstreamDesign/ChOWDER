@@ -4,7 +4,7 @@
  * Copyright (c) 2017-2018 Tokyo University of Science. All rights reserved.
  */
 
-import Constants from '../../common/constants.js';
+import Command from '../../common/command'
 import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
@@ -196,7 +196,7 @@ class VideoStore {
 			webRTC.on(WebRTC.EVENT_ICECANDIDATE, (type, data) => {
 				if (type === "tincle") {
 					metaData.from = "controller";
-					this.connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+					this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
 						key: keyStr,
 						candidate: data
 					}), function (err, reply) { });
@@ -206,7 +206,7 @@ class VideoStore {
 			webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
 				let webRTC = this.webRTCDict[keyStr];
 				webRTC.offer((sdp) => {
-					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
 						key: keyStr,
 						sdp: sdp
 					}), function (err, reply) { });
@@ -225,7 +225,7 @@ class VideoStore {
 				webRTC.removeStream();
 				webRTC.addStream(stream);
 				webRTC.offer((sdp) => {
-					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
 						key: keyStr,
 						sdp: sdp
 					}), function (err, reply) { });
@@ -307,7 +307,7 @@ class VideoStore {
 			webRTC = this.webRTCDict[keyStr];
 		}
 		webRTC.offer((sdp) => {
-			this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+			this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
 				key: keyStr,
 				sdp: sdp
 			}), function (err, reply) { });

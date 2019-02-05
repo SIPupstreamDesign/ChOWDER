@@ -7,6 +7,7 @@
 import Constants from '../../common/constants.js';
 import Store from './store';
 import Action from '../action';
+import Command from '../../common/command'
 
 "use strict";
 
@@ -46,7 +47,7 @@ class LoginStore {
 
 		let controllerID = this.getControllerID();
 		if ((!controllerID || controllerID.length === 0) && !data.onetime) {
-			this.connector.send('GenerateControllerID', {}, (err, reply) => {
+			this.connector.send(Command.GenerateControllerID, {}, (err, reply) => {
 				if (!err) {
 					this.controllerID = reply;
 					location.hash = this.controllerID;
@@ -61,7 +62,7 @@ class LoginStore {
 		if (data.loginkey && data.loginkey.length > 0) {
 			request.loginkey = data.loginkey;
 		}
-		this.connector.send('Login', request, (err, reply) => {
+		this.connector.send(Command.Login, request, (err, reply) => {
 			if (err || reply === "failed") {
 				let data = {};
 				data.loginkey = "";
@@ -93,7 +94,7 @@ class LoginStore {
 	_reloadUserList(data) {
 		let callback = Store.extractCallback(data);
 
-		this.connector.send('GetUserList', {}, (err, userList) => {
+		this.connector.send(Command.GetUserList, {}, (err, userList) => {
 			this.userList = userList;
 			if (callback) {
 				callback(err, userList);
@@ -106,7 +107,7 @@ class LoginStore {
 	 * ログアウト
 	 */
 	_logout(data) {
-		this.connector.send('Logout', data, function () {
+		this.connector.send(Command.Logout, data, function () {
 			window.location.reload(true);
 		});
 	}

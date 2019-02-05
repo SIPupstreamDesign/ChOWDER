@@ -2,7 +2,7 @@
 import Store from './store';
 import Action from '../action';
 import Validator from '../../common/validator.js';
-import MediaPlayer from '../../common/mediaplayer';
+import Command from '../../common/command';
 import VscreenUtil from '../../common/vscreen_util';
 import manipulator from '../manipulator'
 
@@ -424,7 +424,7 @@ class ContentStore
 			// レイアウトのメモ変更.
 			// レイアウトコンテンツを取得し直しリストを更新する.
 			this.store.operation.updateMetadata(metaData, (err, reply) => {
-				this.connector.send('GetContent', metaData, (err, data) => {
+				this.connector.send(Command.GetContent, metaData, (err, data) => {
 					this.store.emit(Store.EVENT_CONTENT_METAINFO_CHANGED, null, metaData);
 					//controller.doneGetContent(err, data, callback);
 				});

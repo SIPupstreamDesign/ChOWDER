@@ -18,6 +18,7 @@ import Vscreen from '../common/vscreen.js';
 import VscreenUtil from '../common/vscreen_util.js';
 import Connector from '../common/ws_connector.js';
 import ContentUtil from './content_util';
+import Command from '../common/command'
 
 "use strict";
 
@@ -984,7 +985,8 @@ class Controller {
 		if (key.length > 0) {
 			let request = { id: "", password: "", loginkey: key };
 			
-			Connector.send('Login', request, (err, reply) => {
+			// TODO action化
+			Connector.send(Command.Login, request, (err, reply) => {
 				if (err || reply === "failed") {
 					// ログインに失敗した。リロードする.
 					window.location.reload(true);
@@ -1716,7 +1718,8 @@ class Controller {
 				if (k.indexOf(json.id) >= 0) {
 					this.webRTC[k].close(true);
 					json.from = "controller";
-					Connector.sendBinary('RTCClose', json, JSON.stringify({
+					// TODO action化
+					Connector.sendBinary(Command.RTCClose, json, JSON.stringify({
 						key: k
 					}), function (err, reply) { });
 					delete json.from;

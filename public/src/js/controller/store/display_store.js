@@ -1,5 +1,6 @@
 
 
+import Command from '../../common/command'
 import Action from '../action';
 import manipulator from '../manipulator.js';
 import Vscreen from '../../common/vscreen';
@@ -84,7 +85,7 @@ class DisplayStore
 			}
 		});
 		if (targetIDList.length > 0) {
-			this.connector.send('ShowWindowID', targetIDList, (err, reply) => {
+			this.connector.send(Command.ShowWindowID, targetIDList, (err, reply) => {
                 this.store.emit(Store.EVENT_DONE_SHOW_DISPLAY_ID, err, reply);
             });
 		}
