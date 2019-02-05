@@ -83,7 +83,7 @@ doneGetContent = function (err, data) {
 doneGetMetaData = function (err, json) {
 	let metaDataDict = store.getMetaDataDict();
 	let groupDict = store.getGroupDict();
-	let webRTCDict = store.getWebRTCDict();
+	let webRTCDict = store.getVideoStore().getWebRTCDict();
 	let metaData = json;
 	let isUpdateContent = false;
 	// console.log("doneGetMetaData", json);
@@ -137,7 +137,7 @@ doneGetMetaData = function (err, json) {
 				// コンテンツが画面外にいった
 				elem.style.display = "none";
 				// webrtcコンテンツが画面外にいったら切断して削除しておく.
-				let rtcKey = store.getRTCKey(json);
+				let rtcKey = store.getVideoStore().getRTCKey(json);
 				if (webRTCDict.hasOwnProperty(rtcKey)) {
 					webRTCDict[rtcKey].close(true);
 					if (elem.parentNode) {
@@ -236,15 +236,45 @@ store.on(Store.EVENT_LOGIN_SUCCESS, () => {
 	action.registerWindow({ size : gui.getWindowSize()});
 });
 
-store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, json) => {
+store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
 	if (!err) {
-		for (let i = 0; i < json.length; i = i + 1) {
-			gui.setDisplayID(json[i].id);
-			gui.updatePreviewAreaVisible(store.getWindowData());
-			gui.updateViewport(store.getWindowData());
+		for (let i = 0; i < data.length; i = i + 1) {
+			if (data[i].hasOwnProperty('id') && data[i].id === store.getWindowID()) {
+				gui.setDisplayID(data[i].id);
+				gui.updatePreviewAreaVisible(store.getWindowData());
+				gui.updateViewport(store.getWindowData())
+			}
 		}
 	}
 });
+
+store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, data) => {
+	let previewArea = document.getElementById("preview_area");
+	for (let i = 0; i < data.length; ++i) {
+		if (!store.isViewable(data[i].group)) {
+			let elem = document.getElementById(data[i].id);
+			if (elem) {
+				previewArea.removeChild(elem);
+			}
+			let memo =  document.getElementById("memo:" + data[i].id);
+			if (memo) {
+				previewArea.removeChild(memo);
+			}
+		}
+		action.update({ updateType : '', targetID : data[i].id });
+	}
+});
+
+store.on(Store.EVENT_DONE_DELETE_CONTENT, (err, data) => {
+	let previewArea = document.getElementById('preview_area');
+	for (let i = 0; i < data.length; ++i) {
+		let elem = document.getElementById(data[i].id);
+		if (elem) {
+			gui.deleteMark(elem, data[i].id);
+			previewArea.removeChild(elem);
+		}
+	}
+})
 
 store.on(Store.EVENT_DONE_REGISTER_WINDOW, (err, json) => {
 	if (!err) {
@@ -260,291 +290,14 @@ store.on(Store.EVENT_DONE_REGISTER_WINDOW, (err, json) => {
 });
 
 store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {
-	gui.updatePreviewAreaVisible(store.getWindowData());
-	gui.updateViewport(store.getWindowData());
-	updateContentVisible();
+	if (json.hasOwnProperty('id') && json.id === store.getWindowID()) {
+		gui.updatePreviewAreaVisible(json);
+		gui.updateViewport(json);
+		updateContentVisible();
+	}
 });
 
 store.on(Store.EVENT_DONE_GET_METADATA, doneGetMetaData);
-
-/**
- * 再接続.
- */
-function initReciever() {
-
-	Connector.on("Update", function (data) {
-		if (data === undefined) {
-			action.update({ updateType : 'window'});
-			action.update({ updateType : 'group' });
-			action.update({ updateType : 'content' });
-		}
-	});
-
-	Connector.on("UpdateContent", function (data) {
-		// console.log("onUpdateContent", data);
-
-		Connector.send('GetMetaData', data, function (err, json) {
-			// 閲覧可能か
-			if (!store.isViewable(json.group)) {
-				return;
-			}
-			if (json.type === "video") {
-				let rtcKey = store.getRTCKey(json);
-				let webRTCDict = store.getWebRTCDict();
-				if (webRTCDict.hasOwnProperty(rtcKey)) {
-					webRTCDict[rtcKey].close(true);
-
-					json.from = "view";
-					Connector.sendBinary('RTCClose', json, JSON.stringify({
-						key : rtcKey
-					}), function (err, reply) {});
-					delete json.from;
-				}
-			}
-			if (!err) {
-				doneGetMetaData(err, json);
-				Connector.send('GetContent', json, function (err, reply) {
-					let metaDataDict = store.getMetaDataDict();
-					if (metaDataDict.hasOwnProperty(json.id)) {
-						doneGetContent(err, reply);
-					}
-				} );
-			}
-		});
-	});
-
-	Connector.on("UpdateGroup", function (err, data) {
-		action.update({ updateType : "group" });
-	});
-
-	// 権限変更時に送られてくる
-	Connector.on("ChangeAuthority", () => {
-		let request = { id : "Display", password : "" };
-		Connector.send('Login', request, (err, reply) => {
-			store.setAuthority(reply.authority);
-			action.update({ updateType : 'window'});
-			action.update({ updateType : 'group'});
-			action.update({ updateType : 'content'});
-		});
-	});
-
-
-	// DB切り替え時にブロードキャストされてくる
-	Connector.on("ChangeDB", () => {
-		let request = { id : "Display", password : "" };
-		Connector.send('Login', request, (err, reply) => {
-			store.setAuthority(reply.authority);
-			console.error("changedb")
-			action.deleteAllElements();
-			action.update({ updateType : 'window' });
-			action.update({ updateType : 'group' });
-			action.update({ updateType : 'content' });
-		});
-	});
-
-	Connector.on("DeleteContent", (data) => {
-		// console.log("onDeleteContent", data);
-		let previewArea = document.getElementById('preview_area');
-		for (let i = 0; i < data.length; ++i) {
-			let elem = document.getElementById(data[i].id);
-			if (elem) {
-				let metaDataDict = store.getMetaDataDict();
-				gui.deleteMark(elem, metaDataDict[data[i].id]);
-				previewArea.removeChild(elem);
-				delete metaDataDict[data[i].id];
-			}
-		}
-	});
-
-	Connector.on("DeleteWindowMetaData", (data) => {
-		// console.log("onDeleteWindowMetaData", data);
-		action.update({ updateType : 'window' });
-	});
-
-	Connector.on("UpdateWindowMetaData", (data) => {
-		// console.log("onUpdateWindowMetaData", data);
-		for (let i = 0; i < data.length; ++i) {
-			if (data[i].hasOwnProperty('id') && data[i].id === store.getWindowID()) {
-				action.update({ updateType : 'window' });
-				gui.updatePreviewAreaVisible( data[i]);
-				gui.updateViewport( data[i])
-				return;
-			}
-		}
-	});
-
-	Connector.on("UpdateMouseCursor", (res) => {
-		let ctrlid = res.controllerID;
-		if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-			if (!controllers.hasOwnProperty(ctrlid)) {
-				++controllers.connectionCount;
-				controllers[ctrlid] = {
-					index: controllers.connectionCount,
-					lastActive: 0
-				};
-			}
-			let pos = Vscreen.transform(Vscreen.makeRect(Number(res.data.x), Number(res.data.y), 0, 0));
-			let elem = document.getElementById('hiddenCursor' + ctrlid);
-			let controllerID = document.getElementById('controllerID' + ctrlid);
-			if (!elem) {
-				elem = document.createElement('div');
-				elem.id = 'hiddenCursor' + ctrlid;
-				elem.className = 'hiddenCursor';
-				elem.style.backgroundColor = 'transparent';
-				let before = document.createElement('div');
-				before.className = 'before';
-				before.style.backgroundColor = res.data.rgb;
-				elem.appendChild(before);
-				let after = document.createElement('div');
-				after.className = 'after';
-				after.style.backgroundColor = res.data.rgb;
-				elem.appendChild(after);
-				
-				controllerID = document.createElement('div');
-				controllerID.id = 'controllerID' + ctrlid;
-				controllerID.className = 'controller_id';
-				controllerID.style.color = res.data.rgb;
-				controllerID.style.position = "absolute"
-				controllerID.style.fontSize = "20px";
-				controllerID.innerText = res.data.controllerID;
-				document.body.appendChild(controllerID);
-				
-				document.body.appendChild(elem);
-				// console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
-			} else {
-				controllerID.innerText = res.data.controllerID;
-				controllerID.style.color = res.data.rgb;
-				elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
-				elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
-			}
-			controllerID.style.textShadow = 
-					"1px 1px 0 white,"
-					+ "-1px 1px 0 white,"
-					+ " 1px -1px 0 white,"
-					+ "-1px -1px 0 white";
-
-			gui.autoResizeCursor([elem, controllerID]);
-			elem.style.left = Math.round(pos.x) + 'px';
-			elem.style.top  = Math.round(pos.y) + 'px';
-			controllerID.style.left = Math.round(pos.x) + 'px';
-			controllerID.style.top  = Math.round(pos.y + 150 / Number(window.devicePixelRatio)) + 'px';
-			controllers[ctrlid].lastActive = Date.now();
-		} else {
-			if (controllers.hasOwnProperty(ctrlid)) {
-				let elem = document.getElementById('hiddenCursor' + ctrlid);
-				let controllerID = document.getElementById('controllerID' + ctrlid);
-				if (elem) {
-					elem.style.left = '-999999px';
-					elem.style.top  = '-999999px';
-					controllerID.style.left = '-999999px';
-					controllerID.style.top  = '-999999px';
-				}
-				if (elem.parentNode) { elem.removeChild(elem); }
-				if (controllerID.parentNode) { controllerID.removeChild(controllerID); }
-			}
-		}
-	});
-
-	Connector.on("ShowWindowID", (data) => {
-		// console.log("onShowWindowID", data);
-		for (let i = 0; i < data.length; i = i + 1) {
-			gui.showDisplayID(data[i].id);
-		}
-	});
-
-	Connector.on("UpdateMetaData", (data) => {
-		let previewArea = document.getElementById("preview_area");
-		for (let i = 0; i < data.length; ++i) {
-			if (!store.isViewable(data[i].group)) {
-				let elem = document.getElementById(data[i].id);
-				if (elem) {
-					previewArea.removeChild(elem);
-				}
-				let memo =  document.getElementById("memo:" + data[i].id);
-				if (memo) {
-					previewArea.removeChild(memo);
-				}
-			}
-			action.update({ updateType : '', targetID : data[i].id });
-		}
-	});
-
-	Connector.on("RTCOffer", (data) => {
-		//console.error("RTCOffer")
-		if (!store.getWindowData()) return;
-		let metaData = data.metaData;
-		let contentData = data.contentData;
-		let sdp = null;
-		let rtcKey = null;
-		try {
-			let dataStr = StringUtil.arrayBufferToString(contentData.data);
-			let parsed = JSON.parse(dataStr);
-			rtcKey = parsed.key;
-			sdp = parsed.sdp;
-		} catch (e) {
-			console.error(e);
-			return;
-		}
-
-		if (sdp) {
-			let webRTCDict = store.getWebRTCDict();
-			if (webRTCDict.hasOwnProperty(rtcKey)) {
-				let webRTC = webRTCDict[rtcKey];
-				webRTC.answer(sdp, (answer) => {
-					//console.error("WebRTC: send answer")
-					Connector.sendBinary('RTCAnswer', metaData, JSON.stringify({
-						key : rtcKey,
-						sdp : answer
-					}), function () {});
-				});
-			}
-		}
-	});
-	
-	Connector.on("RTCClose", (data) => {
-		let metaData = data.metaData;
-		if (metaData.from === "view") { return; }
-		let contentData = data.contentData;
-		let rtcKey = null;
-		try {
-			let dataStr = StringUtil.arrayBufferToString(contentData.data);
-			let parsed = JSON.parse(dataStr);
-			rtcKey = parsed.key;
-		} catch (e) {
-			console.error(e);
-			return;
-		}
-		let webRTCDict = store.getWebRTCDict();
-		if (webRTCDict.hasOwnProperty(rtcKey)) {
-			webRTCDict[rtcKey].close(true);
-		}
-	});
-
-	Connector.on("RTCIceCandidate", (data) => {
-		//console.error("on RTCIceCandidate")
-		let metaData = data.metaData;
-		if (metaData.from === "view") { return; }
-		let contentData = data.contentData;
-		let candidate = null;
-		let rtcKey = null;
-		try {
-			let dataStr = StringUtil.arrayBufferToString(contentData.data);
-			let parsed = JSON.parse(dataStr);
-			rtcKey = parsed.key;
-			candidate = parsed.candidate;
-		} catch (e) {
-			console.error(e);
-			return;
-		}
-		let webRTCDict = store.getWebRTCDict();
-		if (webRTCDict.hasOwnProperty(rtcKey)) {
-			if (candidate) {
-				webRTCDict[rtcKey].addIceCandidate(candidate);
-			}
-		}
-	});
-
-}
 
 /**
  * 初期化
@@ -552,16 +305,13 @@ function initReciever() {
  */
 function init() {
 	action.connect();
-	initReciever();
+	//initReciever();
 	gui.init();
 }
 
 window.onload = init;
 window.onunload = function () {
-	let webRTCDict = store.getWebRTCDict();
-	for (let i in webRTCDict) {
-		webRTCDict[i].close();
-	}
+	store.release();
 }
 
 

@@ -10,7 +10,6 @@ import Vscreen from '../common/vscreen.js';
 import VscreenUtil from '../common/vscreen_util.js';
 import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
-import MediaPlayer from '../common/mediaplayer.js';
 import Connector from '../common/ws_connector.js'; // TODO 消す
 import WebRTC from '../common/webrtc'
 
@@ -33,7 +32,11 @@ class GUI extends EventEmitter {
             }
         });
 
-        this.player = null;
+        this.store.on(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, (err, data) => {
+            for (let i = 0; i < data.length; i = i + 1) {
+                this.showDisplayID(data[i].id);
+            }
+        });
 
         // 上部メニュー
         this.headMenu = null;
@@ -224,9 +227,9 @@ class GUI extends EventEmitter {
         }
     }
 
-    deleteMark(elem, metaData) {
-        if (elem && metaData.hasOwnProperty("id")) {
-            let memo =  document.getElementById("memo:" + metaData.id);
+    deleteMark(elem, id) {
+        if (elem) {
+            let memo =  document.getElementById("memo:" + id);
             if (memo) {
                 memo.style.display = "none";
                 if (memo.parentNode) {
@@ -371,10 +374,6 @@ class GUI extends EventEmitter {
         });
     }
 
-    playFragmentVideo(videoElem, data) {
-        this.player.onVideoFrame(data);
-    }
-
     /**
      * videoを表示
      * @param {*} elem 
@@ -382,75 +381,18 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showVideo(elem, metaData, contentData) {
-        let webRTCDict = this.store.getWebRTCDict();
-        let rtcKey = this.store.getRTCKey(metaData);
+        let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+        let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
         elem.setAttribute("controls", "");
         elem.setAttribute('autoplay', '');
         //console.error("showVideo", elem, metaData, contentData)
         //elem.setAttribute('preload', "metadata")
         if (!webRTCDict.hasOwnProperty(rtcKey)) {
             metaData.from = "view";
-            Connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), () => {
-                let webRTC = new WebRTC();
-                webRTCDict[rtcKey] = webRTC;
-                webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
-                    if (metaData.use_datachannel) {
-                        this.player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
-                        this.player.on('sourceOpen', () => {
-                            this.player.setDuration(313.47);
-                        })
-                    } else {
-                        let stream = evt.stream ? evt.stream : evt.streams[0];
-                        elem.srcObject = stream;
-                    }
-
-                    if (!webRTC.statusHandle) {
-                        let t = 0;
-                        webRTC.statusHandle = setInterval( ((rtcKey, webRTC) => {
-                            t += 1;
-                            webRTC.getStatus(function (status) {
-                                let bytes = 0;
-                                if (status.video && status.video.bytesReceived) {
-                                    bytes += status.video.bytesReceived;
-                                }
-                                if (status.audio && status.audio.bytesReceived) {
-                                    bytes += status.audio.bytesReceived;
-                                }
-                                // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
-                            });
-                        })(rtcKey, webRTCDict[rtcKey]), 1000);
-                    }
-                });
-
-                webRTC.on(WebRTC.EVENT_ICECANDIDATE, ((rtcKey) => {
-                    return (type, data) => {
-                        if (type === "tincle") {
-                            metaData.from = "view";
-                            Connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
-                                key : rtcKey,
-                                candidate: data
-                            }), function (err, reply) {});
-                            delete metaData.from;
-                        }
-                    }
-                })(rtcKey));
-
-                webRTC.on(WebRTC.EVENT_DATACHANNEL_MESSAGE, (err, message) => {
-                    console.error("datachannelmessage", message)
-                    this.playFragmentVideo(elem, message);
-                });
-                
-                webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
-                    return () => {
-                        if (webRTCDict.hasOwnProperty(this)) {
-                            if (webRTCDict[this].statusHandle) {
-                                clearInterval(webRTCDict[this].statusHandle);
-                                webRTCDict[this].statusHandle = null;
-                            }
-                            delete webRTCDict[this];
-                        }
-                    }
-                })(rtcKey));
+            this.action.requestWebRTC({
+                metaData : metaData,
+                element: elem,
+                request : JSON.stringify({ key : rtcKey })
             });
             delete metaData.from;
         }

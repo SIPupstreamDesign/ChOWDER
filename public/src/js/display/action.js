@@ -134,6 +134,19 @@ class Action extends EventEmitter
     changeContentTransform(data) {
         this.emit(Action.EVENT_CHANGE_CONTENT_TRANSFORM, null, data);
     }
+
+    /**
+     * webRTC開始リクエストを送る
+     * @param {*} data 
+     * {
+     *   metaData: metaData,
+     *   request : "{ key : リクエストキー }" (リクエスト文字列).
+     *   element : 表示対象エレメント
+     * }
+     */
+    requestWebRTC(data) {
+        this.emit(Action.EVENT_REQUEST_WEBRTC, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -147,5 +160,6 @@ Action.EVENT_REGISTER_WINDOW = "registerWindow";
 Action.EVENT_UPDATE = "update";
 Action.EVENT_CHANGE_CONTENT_INDEX_TO_FRONT = "changeContentIndexToFront";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
+Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 
 export default Action;

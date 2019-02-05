@@ -3,6 +3,7 @@
 import Validator from '../../common/validator'
 import Store from './store'
 import Constants from '../../common/constants'
+import StringUtil from '../../common/string_util'
 
 class Receiver
 {
@@ -11,15 +12,17 @@ class Receiver
         this.action = action;
         this.connector = connector;
 
+        this.controllers = {connectionCount: -1};
+
         this.init();
     }
 
     init() {
-        this.connector.on("Update", function (data) {
+        this.connector.on("Update", (data) => {
             if (data === undefined) {
-                update('window');
-                update('group');
-                update('content');
+                this.action.update({ updateType : 'window'});
+                this.action.update({ updateType : 'group' });
+                this.action.update({ updateType : 'content' });
             }
         });
 
@@ -33,6 +36,7 @@ class Receiver
                 }
                 if (json.type === "video") {
                     let rtcKey = getRTCKey(json);
+                    let webRTCDict = this.store.getVideoStore().getWebRTCDict();
                     if (webRTCDict.hasOwnProperty(rtcKey)) {
                         webRTCDict[rtcKey].close(true);
 
@@ -54,18 +58,18 @@ class Receiver
             });
         });
 
-        this.connector.on("UpdateGroup", function (err, data) {
-            update("group", "");
+        this.connector.on("UpdateGroup", (err, data) => {
+            this.action.update({ updateType : "group" });
         });
 
         // 権限変更時に送られてくる
         this.connector.on("ChangeAuthority", () => {
             let request = { id : "Display", password : "" };
             this.connector.send('Login', request, (err, reply) => {
-                authority = reply.authority;
-                update('window');
-                update('group');
-                update('content');
+                this.store.setAuthority(reply.authority);
+                this.action.update({ updateType : 'window'});
+                this.action.update({ updateType : 'group'});
+                this.action.update({ updateType : 'content'});
             });
         });
 
@@ -74,40 +78,35 @@ class Receiver
         this.connector.on("ChangeDB", () => {
             let request = { id : "Display", password : "" };
             this.connector.send('Login', request, (err, reply) => {
-                authority = reply.authority;
-                deleteAllElements();
-                update('window');
-                update('group');
-                update('content');
+                this.store.setAuthority(reply.authority);
+                this.action.deleteAllElements();
+                this.action.update({ updateType : 'window' });
+                this.action.update({ updateType : 'group' });
+                this.action.update({ updateType : 'content' });
             });
         });
 
         this.connector.on("DeleteContent", (data) => {
             // console.log("onDeleteContent", data);
-            let previewArea = document.getElementById('preview_area');
+            let metaDataDict = this.store.getMetaDataDict();
             for (let i = 0; i < data.length; ++i) {
-                let elem = document.getElementById(data[i].id);
-                if (elem) {
-                    deleteMark(elem, metaDataDict[data[i].id]);
-                    previewArea.removeChild(elem);
+                if (metaDataDict.hasOwnProperty(data[i].id)) {
                     delete metaDataDict[data[i].id];
                 }
             }
+            this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, null, data);
         });
 
         this.connector.on("DeleteWindowMetaData", (data) => {
             // console.log("onDeleteWindowMetaData", data);
-            update('window');
+            this.action.update({ updateType : 'window' });
         });
 
         this.connector.on("UpdateWindowMetaData", (data) => {
-            // console.log("onUpdateWindowMetaData", data);
             for (let i = 0; i < data.length; ++i) {
-                if (data[i].hasOwnProperty('id') && data[i].id === getWindowID()) {
-                    update('window');
-                    gui.updatePreviewAreaVisible(data[i]);
-                    resizeViewport(data[i])
-                    return;
+                if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
+                    this.action.update({ updateType : 'window' });
+                    this.store.onUpdateWindowMetaData(null, data);
                 }
             }
         });
@@ -115,10 +114,10 @@ class Receiver
         this.connector.on("UpdateMouseCursor", (res) => {
             let ctrlid = res.controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                if (!controllers.hasOwnProperty(ctrlid)) {
-                    ++controllers.connectionCount;
-                    controllers[ctrlid] = {
-                        index: controllers.connectionCount,
+                if (!this.controllers.hasOwnProperty(ctrlid)) {
+                    ++this.controllers.connectionCount;
+                    this.controllers[ctrlid] = {
+                        index: this.controllers.connectionCount,
                         lastActive: 0
                     };
                 }
@@ -167,9 +166,9 @@ class Receiver
                 elem.style.top  = Math.round(pos.y) + 'px';
                 controllerID.style.left = Math.round(pos.x) + 'px';
                 controllerID.style.top  = Math.round(pos.y + 150 / Number(window.devicePixelRatio)) + 'px';
-                controllers[ctrlid].lastActive = Date.now();
+                this.controllers[ctrlid].lastActive = Date.now();
             } else {
-                if (controllers.hasOwnProperty(ctrlid)) {
+                if (this.controllers.hasOwnProperty(ctrlid)) {
                     let elem = document.getElementById('hiddenCursor' + ctrlid);
                     let controllerID = document.getElementById('controllerID' + ctrlid);
                     if (elem) {
@@ -186,31 +185,15 @@ class Receiver
 
         this.connector.on("ShowWindowID", (data) => {
             // console.log("onShowWindowID", data);
-            for (let i = 0; i < data.length; i = i + 1) {
-                showDisplayID(data[i].id);
-            }
+            this.store.emit(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, null, data);
         });
 
         this.connector.on("UpdateMetaData", (data) => {
-            let previewArea = document.getElementById("preview_area");
-            for (let i = 0; i < data.length; ++i) {
-                if (!isViewable(data[i].group)) {
-                    let elem = document.getElementById(data[i].id);
-                    if (elem) {
-                        previewArea.removeChild(elem);
-                    }
-                    let memo =  document.getElementById("memo:" + data[i].id);
-                    if (memo) {
-                        previewArea.removeChild(memo);
-                    }
-                }
-                update('', data[i].id);
-            }
+            this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
         });
 
         this.connector.on("RTCOffer", (data) => {
-            //console.error("RTCOffer")
-            if (!windowData) return;
+            if (!this.store.getWindowData()) return;
             let metaData = data.metaData;
             let contentData = data.contentData;
             let sdp = null;
@@ -224,8 +207,9 @@ class Receiver
                 console.error(e);
                 return;
             }
-
+    
             if (sdp) {
+                let webRTCDict = this.store.getVideoStore().getWebRTCDict();
                 if (webRTCDict.hasOwnProperty(rtcKey)) {
                     let webRTC = webRTCDict[rtcKey];
                     webRTC.answer(sdp, (answer) => {
@@ -252,6 +236,7 @@ class Receiver
                 console.error(e);
                 return;
             }
+            let webRTCDict = this.store.getVideoStore().getWebRTCDict();
             if (webRTCDict.hasOwnProperty(rtcKey)) {
                 webRTCDict[rtcKey].close(true);
             }
@@ -273,28 +258,13 @@ class Receiver
                 console.error(e);
                 return;
             }
+            let webRTCDict = this.store.getVideoStore().getWebRTCDict();
             if (webRTCDict.hasOwnProperty(rtcKey)) {
                 if (candidate) {
                     webRTCDict[rtcKey].addIceCandidate(candidate);
                 }
             }
         });
-
-        this.connector.on("Disconnect", ((client) => {
-            return () => {
-                let previewArea = document.getElementById("preview_area");
-                let disconnectedText = document.getElementById("disconnected_text");
-                isDisconnect = true;
-                client.close();
-
-                if (previewArea) {
-                    previewArea.style.display = "none";
-                }
-                if (disconnectedText) {
-                    disconnectedText.innerHTML = "Display Deleted";
-                }
-            };
-        })(client));
     }
 }
 

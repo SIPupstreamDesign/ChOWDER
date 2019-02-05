@@ -9,10 +9,11 @@ import DisplayUtil from '../display_util';
 import Vscreen from '../../common/vscreen';
 import Validator from '../../common/validator';
 import VscreenUtil  from '../../common/vscreen_util';
+import VideoStore from './video_store';
+import Receiver from './reciever';
 
 "use strict";
 
-const random_id_for_webrtc = DisplayUtil.generateID();
 const reconnectTimeout = 2000;
 
 class Store extends EventEmitter
@@ -26,8 +27,10 @@ class Store extends EventEmitter
         this.windowData = null;
         this.metaDataDict = {};
         this.groupDict = {};
-        this.webRTCDict = {};
         
+        this.receiver = new Receiver(Connector, this, action);
+        this.videoStore = new VideoStore(Connector, this, action);
+
         this.initEvents();
 
         //this.reciever = new Receiver(Connector, store, action);
@@ -46,7 +49,13 @@ class Store extends EventEmitter
 			}
 		}
 		super.emit(...arguments);
-	}
+    }
+    
+    release() {
+        if (this.videoStore.release) {
+            this.videoStore.release();
+        }
+    }
 
 	initEvents() {
 		for (let i in Action) {
@@ -174,7 +183,7 @@ class Store extends EventEmitter
         metaData.orgWidth = wh.width;
         metaData.orgHeight = wh.height;
         Vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
-        Connector.send('UpdateWindowMetaData', [metaData], this.onUpdateWindowMetaData);
+        Connector.send('UpdateWindowMetaData', [metaData],  function () {} /*this.onUpdateWindowMetaData*/);
     }
 
     _deleteAllElements(data) {
@@ -370,6 +379,13 @@ class Store extends EventEmitter
         return ret;
     }
     
+	/**
+	 * VideoStoreを返す
+	 */
+	getVideoStore() {
+		return this.videoStore;
+    }
+    
     /**
      * Convert map into query params string.
      * @param {Object} map Map of parameters you want to convert into
@@ -425,10 +441,6 @@ class Store extends EventEmitter
     getGroupDict() {
         return this.groupDict;
     }
-
-    getWebRTCDict() {
-        return this.webRTCDict;
-    }
     
     /**
      * 閲覧情報があるか返す
@@ -454,13 +466,6 @@ class Store extends EventEmitter
         }
         return false;
     }
-
-    // このページのwebRTC用のキーを取得.
-    // ディスプレイIDが同じでもページごとに異なるキーとなる.
-    // (ページをリロードするたびに代わる)
-    getRTCKey(metaData) {
-        return metaData.id + "_" + this.getWindowData().id + "_" + random_id_for_webrtc;
-    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -475,5 +480,9 @@ Store.EVENT_DONE_GET_WINDOW_METADATA= "done_get_window_metadata";
 Store.EVENT_DONE_GET_METADATA= "done_get_metadata";
 Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
+
+// reviever
+Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
+Store.EVENT_REQUEST_SHOW_DISPLAY_ID = "request_show_display_id"
 
 export default Store;

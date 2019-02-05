@@ -53,7 +53,7 @@ class WebRTC extends EventEmitter {
 			printDebug("ondatachannel", evt.channel)
 			if (evt.channel) {
 				this.datachannel = evt.channel;
-				this.datachannel.onopen = function (event) {
+				this.datachannel.onopen = (event) => {
 					printDebug("datachannel.onopen")
 					this.emit(WebRTC.EVENT_DATACHANNEL_OPEN, null);
 				};

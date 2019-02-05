@@ -1657,6 +1657,9 @@ class Controller {
 		if (!this.store.isInitialized()) {
 			return;
 		}
+		if (!reply) {
+			return;
+		}
 		// console.log("doneUpdateWindowMetaData");
 		let windowData;
 		let windowDataList = reply;
