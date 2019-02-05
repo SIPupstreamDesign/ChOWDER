@@ -1,8 +1,7 @@
 
 
-import Validator from '../../common/validator'
+import Command from '../../common/command'
 import Store from './store'
-import Constants from '../../common/constants'
 import StringUtil from '../../common/string_util'
 
 class Receiver
@@ -18,7 +17,7 @@ class Receiver
     }
 
     init() {
-        this.connector.on("Update", (data) => {
+        this.connector.on(Command.Update, (data) => {
             if (data === undefined) {
                 this.action.update({ updateType : 'window'});
                 this.action.update({ updateType : 'group' });
@@ -26,10 +25,10 @@ class Receiver
             }
         });
 
-        this.connector.on("UpdateContent", function (data) {
+        this.connector.on(Command.UpdateContent, function (data) {
             // console.log("onUpdateContent", data);
 
-            this.connector.send('GetMetaData', data, function (err, json) {
+            this.connector.send(Command.GetMetaData, data, function (err, json) {
                 // 閲覧可能か
                 if (!isViewable(json.group)) {
                     return;
@@ -41,7 +40,7 @@ class Receiver
                         webRTCDict[rtcKey].close(true);
 
                         json.from = "view";
-                        this.connector.sendBinary('RTCClose', json, JSON.stringify({
+                        this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
                             key : rtcKey
                         }), function (err, reply) {});
                         delete json.from;
@@ -49,7 +48,7 @@ class Receiver
                 }
                 if (!err) {
                     doneGetMetaData(err, json);
-                    this.connector.send('GetContent', json, function (err, reply) {
+                    this.connector.send(Command.GetContent, json, function (err, reply) {
                         if (metaDataDict.hasOwnProperty(json.id)) {
                             doneGetContent(err, reply);
                         }
@@ -58,14 +57,14 @@ class Receiver
             });
         });
 
-        this.connector.on("UpdateGroup", (err, data) => {
+        this.connector.on(Command.UpdateGroup, (err, data) => {
             this.action.update({ updateType : "group" });
         });
 
         // 権限変更時に送られてくる
-        this.connector.on("ChangeAuthority", () => {
+        this.connector.on(Command.ChangeAuthority, () => {
             let request = { id : "Display", password : "" };
-            this.connector.send('Login', request, (err, reply) => {
+            this.connector.send(Command.Login, request, (err, reply) => {
                 this.store.setAuthority(reply.authority);
                 this.action.update({ updateType : 'window'});
                 this.action.update({ updateType : 'group'});
@@ -75,9 +74,9 @@ class Receiver
 
 
         // DB切り替え時にブロードキャストされてくる
-        this.connector.on("ChangeDB", () => {
+        this.connector.on(Command.ChangeDB, () => {
             let request = { id : "Display", password : "" };
-            this.connector.send('Login', request, (err, reply) => {
+            this.connector.send(Command.Login, request, (err, reply) => {
                 this.store.setAuthority(reply.authority);
                 this.action.deleteAllElements();
                 this.action.update({ updateType : 'window' });
@@ -86,7 +85,7 @@ class Receiver
             });
         });
 
-        this.connector.on("DeleteContent", (data) => {
+        this.connector.on(Command.DeleteContent, (data) => {
             // console.log("onDeleteContent", data);
             let metaDataDict = this.store.getMetaDataDict();
             for (let i = 0; i < data.length; ++i) {
@@ -97,12 +96,12 @@ class Receiver
             this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, null, data);
         });
 
-        this.connector.on("DeleteWindowMetaData", (data) => {
+        this.connector.on(Command.DeleteWindowMetaData, (data) => {
             // console.log("onDeleteWindowMetaData", data);
             this.action.update({ updateType : 'window' });
         });
 
-        this.connector.on("UpdateWindowMetaData", (data) => {
+        this.connector.on(Command.UpdateWindowMetaData, (data) => {
             for (let i = 0; i < data.length; ++i) {
                 if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
                     this.action.update({ updateType : 'window' });
@@ -111,7 +110,7 @@ class Receiver
             }
         });
 
-        this.connector.on("UpdateMouseCursor", (res) => {
+        this.connector.on(Command.UpdateMouseCursor, (res) => {
             let ctrlid = res.controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
                 if (!this.controllers.hasOwnProperty(ctrlid)) {
@@ -183,16 +182,16 @@ class Receiver
             }
         });
 
-        this.connector.on("ShowWindowID", (data) => {
+        this.connector.on(Command.ShowWindowID, (data) => {
             // console.log("onShowWindowID", data);
             this.store.emit(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, null, data);
         });
 
-        this.connector.on("UpdateMetaData", (data) => {
+        this.connector.on(Command.UpdateMetaData, (data) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
         });
 
-        this.connector.on("RTCOffer", (data) => {
+        this.connector.on(Command.RTCOffer, (data) => {
             if (!this.store.getWindowData()) return;
             let metaData = data.metaData;
             let contentData = data.contentData;
@@ -214,7 +213,7 @@ class Receiver
                     let webRTC = webRTCDict[rtcKey];
                     webRTC.answer(sdp, (answer) => {
                         //console.error("WebRTC: send answer")
-                        this.connector.sendBinary('RTCAnswer', metaData, JSON.stringify({
+                        this.connector.sendBinary(Command.RTCAnswer, metaData, JSON.stringify({
                             key : rtcKey,
                             sdp : answer
                         }), function () {});
@@ -223,7 +222,7 @@ class Receiver
             }
         });
         
-        this.connector.on("RTCClose", (data) => {
+        this.connector.on(Command.RTCClose, (data) => {
             let metaData = data.metaData;
             if (metaData.from === "view") { return; }
             let contentData = data.contentData;
@@ -242,7 +241,7 @@ class Receiver
             }
         });
 
-        this.connector.on("RTCIceCandidate", (data) => {
+        this.connector.on(Command.RTCIceCandidate, (data) => {
             //console.error("on RTCIceCandidate")
             let metaData = data.metaData;
             if (metaData.from === "view") { return; }

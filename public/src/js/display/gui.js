@@ -11,7 +11,7 @@ import VscreenUtil from '../common/vscreen_util.js';
 import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
 import Connector from '../common/ws_connector.js'; // TODO 消す
-import WebRTC from '../common/webrtc'
+import Command from '../common/command'
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -659,7 +659,7 @@ class GUI extends EventEmitter {
                     }
                     
                     if (!previousImage || isReload) {
-                        Connector.send('GetTileContent', request, function (err, data) {
+                        Connector.send(Command.GetTileContent, request, function (err, data) {
                             if (err) { console.error(err); return; }
                             let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
                             let blob = new Blob([data.contentData], {type: mime});

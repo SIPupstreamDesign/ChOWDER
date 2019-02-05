@@ -4,7 +4,7 @@
  * Copyright (c) 2017-2018 Tokyo University of Science. All rights reserved.
  */
 
-import Constants from '../../common/constants.js';
+import Command from '../../common/command';
 import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
@@ -68,7 +68,7 @@ class VideoStore {
         let request = data.request;
         let elem = data.element;
         let rtcKey = this.getRTCKey(metaData);
-        this.connector.sendBinary('RTCRequest', metaData, request, () => {
+        this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
             let webRTC = new WebRTC();
             this.webRTCDict[rtcKey] = webRTC;
             webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
@@ -104,7 +104,7 @@ class VideoStore {
                 return (type, data) => {
                     if (type === "tincle") {
                         metaData.from = "view";
-                        this.connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+                        this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
                             key : rtcKey,
                             candidate: data
                         }), function (err, reply) {});

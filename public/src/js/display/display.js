@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * Copyright (c) 2017-2018 Tokyo University of Science. All rights reserved.
  */
+import Command from '../common/command'
 import Constants from '../common/constants.js';
 import Validator from '../common/validator.js';
 import Vscreen from '../common/vscreen.js';
@@ -105,7 +106,7 @@ doneGetMetaData = function (err, json) {
 	if (metaDataDict.hasOwnProperty(json.id) && json.hasOwnProperty('restore_index')) {
 		if (metaDataDict[json.id].restore_index !== json.restore_index) {
 			let request = { type: json.type, id: json.id, restore_index : json.restore_index };
-			Connector.send('GetContent', request, function (err, reply) {
+			Connector.send(Command.GetContent, request, function (err, reply) {
 				doneGetContent(err, reply);
 				gui.toggleMark(document.getElementById(json.id), metaData);
 			});
@@ -145,7 +146,7 @@ doneGetMetaData = function (err, json) {
 					}
 
 					metaData.from = "view";
-					Connector.sendBinary('RTCClose', metaData, JSON.stringify({
+					Connector.sendBinary(Command.RTCClose, metaData, JSON.stringify({
 						key : rtcKey
 					}), function (err, reply) {});
 					delete metaData.from;
@@ -168,7 +169,7 @@ doneGetMetaData = function (err, json) {
 			if (isUpdateContent || (!isWindow && Validator.isVisible(json))) {
 				if (isUpdateContent) {
 					// updatecontentの場合はelemがあっても更新
-					Connector.send('GetContent', json, function (err, reply) {
+					Connector.send(Command.GetContent, json, function (err, reply) {
 						doneGetContent(err, reply);
 						gui.toggleMark(document.getElementById(json.id), metaData);
 					});
@@ -176,7 +177,7 @@ doneGetMetaData = function (err, json) {
 					// コンテンツがロードされるまで枠を表示しておく.
 					gui.showBoundingBox(json);
 					// 新規コンテンツロード.
-					Connector.send('GetContent', json, function (err, reply) {
+					Connector.send(Command.GetContent, json, function (err, reply) {
 						doneGetContent(err, reply);
 						gui.toggleMark(document.getElementById(json.id), metaData);
 					});
