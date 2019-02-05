@@ -133,9 +133,15 @@ class VideoStore {
         this.store = store;
 		this.action = action;
 
+		// WebRTC用キーから WebRTCインスタンスへのマップ
 		this.webRTCDict = {};
+
+		// id から video のバイナリデータへのマップ
 		this.videoDict = {};
+
+		// id から video エレメントへのマップ
 		this.videoElemDict = {};
+
 		this.initEvents();
 	}
 
@@ -256,7 +262,7 @@ class VideoStore {
 			let currentPos = 0;
 			let maxBytes = 65535;
 			let updateLoop = () => {
-				console.error("updateLoop", videoSegments.length, currentPos)
+				//console.error("updateLoop", videoSegments.length, currentPos)
 				setTimeout(() => {
 					let webRTC = this.webRTCDict[keyStr];
 					if (videoSegments) {

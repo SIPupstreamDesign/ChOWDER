@@ -21,9 +21,12 @@ class VideoStore {
         this.store = store;
 		this.action = action;
         
+		// WebRTC用キーから WebRTCインスタンスへのマップ
+        this.webRTCDict = {};
+
+        // WebRTC用キーから MediaPlayerインスタンスへのマップ
         this.playerDict = {};
 
-        this.webRTCDict = {};
 		this.initEvents();
 	}
 
