@@ -61,7 +61,6 @@ function processMovieBlob(videoElem, blob) {
 			videoSegments.push(initSegs[0].buffer);
 			player.onVideoFrame(initSegs[0].buffer);
 			player.onAudioFrame(initSegs[1].buffer);
-
 			mp4box.start();
 		});
 	}
@@ -134,7 +133,7 @@ class VideoStore {
         this.store = store;
 		this.action = action;
 
-		this.webRTC = {};
+		this.webRTCDict = {};
 		this.videoDict = {};
 		this.videoElemDict = {};
 		this.initEvents();
@@ -170,12 +169,12 @@ class VideoStore {
 	connectWebRTC(metaData, keyStr) {
 		let video = this.getVideoElem(metaData.id);
 		let webRTC;
-		if (!this.webRTC.hasOwnProperty(keyStr)) {
+		if (!this.webRTCDict.hasOwnProperty(keyStr)) {
 			// 初回読み込み時
 			let stream = captureStream(video);
 			webRTC = new WebRTC();
 			webRTC.setIsScreenSharing(metaData.subtype === "screen");
-			this.webRTC[keyStr] = webRTC;
+			this.webRTCDict[keyStr] = webRTC;
 			if (!stream) {
 				// for safari
 				stream = video.srcObject;
@@ -184,17 +183,17 @@ class VideoStore {
 			video.ontimeupdate = () => {
 				metaData = this.store.getMetaData(metaData.id);
 				if (metaData && metaData.isEnded === 'true') {
-					for (let i in controller.webRTC) {
+					for (let i in this.webRTCDict) {
 						if (i.indexOf(metaData.id) >= 0) {
-							this.webRTC[i].removeStream();
-							this.webRTC[i].addStream(captureStream(video));
+							this.webRTCDict[i].removeStream();
+							this.webRTCDict[i].addStream(captureStream(video));
 						}
 					}
 					metaData.isEnded = false;
 					this.store.operation.updateMetadata(metaData);
 				}
 			};
-			webRTC.on('icecandidate', (type, data) => {
+			webRTC.on(WebRTC.EVENT_ICECANDIDATE, (type, data) => {
 				if (type === "tincle") {
 					metaData.from = "controller";
 					this.connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
@@ -204,7 +203,8 @@ class VideoStore {
 					delete metaData.from;
 				}
 			});
-			webRTC.on('negotiationneeded', () => {
+			webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
+				let webRTC = this.webRTCDict[keyStr];
 				webRTC.offer((sdp) => {
 					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
 						key: keyStr,
@@ -217,10 +217,11 @@ class VideoStore {
                     isCameraOn : metaData.is_video_on
                 })
 			});
-			webRTC.on('closed', () => {
-				delete this.webRTC[keyStr];
+			webRTC.on(WebRTC.EVENT_CLOSED, () => {
+				delete this.webRTCDict[keyStr];
 			});
-			webRTC.on('need_restart', () => {
+			webRTC.on(WebRTC.EVENT_NEED_RESTART, () => {
+				let webRTC = this.webRTCDict[keyStr];
 				webRTC.removeStream();
 				webRTC.addStream(stream);
 				webRTC.offer((sdp) => {
@@ -230,10 +231,12 @@ class VideoStore {
 					}), function (err, reply) { });
 				});
 			});
-			webRTC.on('connected', () => {
+			webRTC.on(WebRTC.EVENT_CONNECTED, () => {
 				setTimeout(() => {
+					let webRTC = this.webRTCDict[keyStr];
+
 					webRTC.getStatus((status) => {
-						let meta = store.getMetaData(metaData.id);
+						let meta = this.store.getMetaData(metaData.id);
 						meta.webrtc_status = JSON.stringify({
 							bandwidth: {
 								availableSendBandwidth: status.bandwidth.availableSendBandwidth,
@@ -245,15 +248,17 @@ class VideoStore {
 							video_codec: status.video.send.codecs[0],
 							audio_codec: status.video.send.codecs[0]
 						});
-						store.operation.updateMetadata(meta);
+						this.store.operation.updateMetadata(meta);
 					});
 				}, 5000);
 			});
+
 			let currentPos = 0;
 			let maxBytes = 65535;
-			let updateLoop = function () {
-				//console.error("updateLoop", videoSegments.length, currentPos)
-				setTimeout(function () {
+			let updateLoop = () => {
+				console.error("updateLoop", videoSegments.length, currentPos)
+				setTimeout(() => {
+					let webRTC = this.webRTCDict[keyStr];
 					if (videoSegments) {
 						try {
 							if (currentPos === videoSegments.length)
@@ -292,12 +297,14 @@ class VideoStore {
 					updateLoop();
 				}, 500);
 			};
-			webRTC.on('datachannel.onopen', function () {
-				updateLoop();
-			});
+			if (metaData.use_datachannel) {
+				webRTC.on(WebRTC.EVENT_DATACHANNEL_OPEN, function () {
+					updateLoop();
+				});
+			}
 		}
 		else {
-			webRTC = this.webRTC[keyStr];
+			webRTC = this.webRTCDict[keyStr];
 		}
 		webRTC.offer((sdp) => {
 			this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
@@ -340,6 +347,7 @@ class VideoStore {
 		}
 		let videoData;
 		if (type === "file") {
+			metaData.use_datachannel = true;
 			processMovieBlob(video, blob);
 			/*
 			videoData = URL.createObjectURL(blob);
@@ -516,24 +524,26 @@ class VideoStore {
 		}
 
 		navigator.mediaDevices.getUserMedia(constraints).then(
-			function (stream) {
-				if (store.hasMetadata(metadataID)) {
-					// カメラマイク有効情報を保存
-					let meta = store.getMetaData(metadataID)
-					meta.video_device = this.video_device,
-					meta.audio_device = this.audio_device,
-					meta.is_video_on = isCameraOn,
-					meta.is_audio_on = isMicOn,
-					store.setMetaData(metadataID, meta)
-				}
-				// TODO
-				controller.send_movie("camera", stream, {
-					id : metadataID,
-					group: this.store.getGroupStore().getCurrentGroupID(),
-					posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
-				}, function () {
-				});
-			}.bind(saveDeviceID),
+			((saveDeviceID) => {
+				return (stream) => {
+					if (store.hasMetadata(metadataID)) {
+						// カメラマイク有効情報を保存
+						let meta = this.store.getMetaData(metadataID)
+						meta.video_device = saveDeviceID.video_device,
+						meta.audio_device = saveDeviceID.audio_device,
+						meta.is_video_on = isCameraOn,
+						meta.is_audio_on = isMicOn,
+						store.setMetaData(metadataID, meta)
+					}
+					// TODO
+					controller.send_movie("camera", stream, {
+						id : metadataID,
+						group: this.store.getGroupStore().getCurrentGroupID(),
+						posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
+					}, function () {
+					});
+				};
+			})(saveDeviceID),
 			function (err) {
 				console.error('Could not get stream: ', err);
 			});
@@ -616,9 +626,9 @@ class VideoStore {
         let metadataID = data.id;
         let isCameraOn = data.isCameraOn;
         let isMicOn = data.isMicOn;
-		for (let i in this.webRTC) {
+		for (let i in this.webRTCDict) {
 			if (i.indexOf(metadataID) >= 0) {
-				let streams = this.webRTC[i].peer.getLocalStreams();
+				let streams = this.webRTCDict[i].peer.getLocalStreams();
 				for (let k = 0; k < streams.length; ++k) {
 					let videos = streams[k].getVideoTracks();
 					for (let n = 0; n < videos.length; ++n) {
@@ -633,8 +643,8 @@ class VideoStore {
         }
 	}
 	
-	getWebRTC() {
-		return this.webRTC;
+	getWebRTCDict() {
+		return this.webRTCDict;
 	}
 
 	// video data
@@ -653,12 +663,12 @@ class VideoStore {
 	}
 	deleteVideoData(id) {
 		let videoData = this.videoDict[id];
-		if (videoData.getVideoTracks) {
+		if (videoData && videoData.getVideoTracks) {
 			videoData.getVideoTracks().forEach(function (track) {
 				track.stop();
 			});
 		}
-		if (videoData.getAudioTracks) {
+		if (videoData && videoData.getAudioTracks) {
 			videoData.getAudioTracks().forEach(function (track) {
 				track.stop();
 			});

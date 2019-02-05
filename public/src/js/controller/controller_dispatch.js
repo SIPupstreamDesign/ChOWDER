@@ -231,9 +231,9 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 			return;
 		}
 		if (key) {
-			// このコントローラが接続を持っているか判別
-			if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
-				controller.webRTC[key].close(true);
+			let webRTCDict = store.getVideoStore().getWebRTCDict();
+			if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
+				webRTCDict[key].close(true);
 			}
 		}
 	});
@@ -251,8 +251,9 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 			console.error(e);
 			return;
 		}
-		if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
-			controller.webRTC[key].setAnswer(answer, function (e) {
+		let webRTCDict = store.getVideoStore().getWebRTCDict();
+		if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
+			webRTCDict[key].setAnswer(answer, function (e) {
 				if (e) {
 					console.error(e);
 				}
@@ -276,9 +277,10 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 			console.error(e);
 			return;
 		}
-		if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
+		let webRTCDict = store.getVideoStore().getWebRTCDict();
+		if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
 			if (candidate) {
-				controller.webRTC[key].addIceCandidate(candidate);
+				webRTCDict[key].addIceCandidate(candidate);
 			}
 		}
 	});

@@ -12,6 +12,7 @@ import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
 import MediaPlayer from '../common/mediaplayer.js';
 import Connector from '../common/ws_connector.js'; // TODO 消す
+import WebRTC from '../common/webrtc'
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -385,21 +386,27 @@ class GUI extends EventEmitter {
         let rtcKey = this.store.getRTCKey(metaData);
         elem.setAttribute("controls", "");
         elem.setAttribute('autoplay', '');
-        console.error("showVideo", elem, metaData, contentData)
+        //console.error("showVideo", elem, metaData, contentData)
         //elem.setAttribute('preload', "metadata")
         if (!webRTCDict.hasOwnProperty(rtcKey)) {
             metaData.from = "view";
             Connector.sendBinary('RTCRequest', metaData, JSON.stringify({ key : rtcKey }), () => {
                 let webRTC = new WebRTC();
                 webRTCDict[rtcKey] = webRTC;
-                webRTC.on('addstream', (evt) => {
-                    /*
-                    let stream = evt.stream ? evt.stream : evt.streams[0];
-                    elem.srcObject = stream;
+                webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
+                    if (metaData.use_datachannel) {
+                        this.player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
+                        this.player.on('sourceOpen', () => {
+                            this.player.setDuration(313.47);
+                        })
+                    } else {
+                        let stream = evt.stream ? evt.stream : evt.streams[0];
+                        elem.srcObject = stream;
+                    }
 
                     if (!webRTC.statusHandle) {
                         let t = 0;
-                        webRTC.statusHandle = setInterval( function (rtcKey, webRTC) {
+                        webRTC.statusHandle = setInterval( ((rtcKey, webRTC) => {
                             t += 1;
                             webRTC.getStatus(function (status) {
                                 let bytes = 0;
@@ -410,42 +417,40 @@ class GUI extends EventEmitter {
                                     bytes += status.audio.bytesReceived;
                                 }
                                 // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
-                            }.bind(t));
-                        }.bind(this, rtcKey, webRTCDict[rtcKey]), 1000);
-                    }
-                    */
-                    if (!this.player) {
-                        this.player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
-                        this.player.on('sourceOpen', () => {
-                            this.player.setDuration(313.47);
-                        })
+                            });
+                        })(rtcKey, webRTCDict[rtcKey]), 1000);
                     }
                 });
 
-                webRTC.on('icecandidate', function (type, data) {
-                    if (type === "tincle") {
-                        metaData.from = "view";
-                        Connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
-                            key : rtcKey,
-                            candidate: data
-                        }), function (err, reply) {});
-                        delete metaData.from;
+                webRTC.on(WebRTC.EVENT_ICECANDIDATE, ((rtcKey) => {
+                    return (type, data) => {
+                        if (type === "tincle") {
+                            metaData.from = "view";
+                            Connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+                                key : rtcKey,
+                                candidate: data
+                            }), function (err, reply) {});
+                            delete metaData.from;
+                        }
                     }
-                });
+                })(rtcKey));
 
-                webRTC.on('datachannelmessage', function (err, message) {
+                webRTC.on(WebRTC.EVENT_DATACHANNEL_MESSAGE, (err, message) => {
+                    console.error("datachannelmessage", message)
                     this.playFragmentVideo(elem, message);
                 });
                 
-                webRTC.on('closed', function () {
-                    if (webRTCDict.hasOwnProperty(this)) {
-                        if (webRTCDict[this].statusHandle) {
-                            clearInterval(webRTCDict[this].statusHandle);
-                            webRTCDict[this].statusHandle = null;
+                webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
+                    return () => {
+                        if (webRTCDict.hasOwnProperty(this)) {
+                            if (webRTCDict[this].statusHandle) {
+                                clearInterval(webRTCDict[this].statusHandle);
+                                webRTCDict[this].statusHandle = null;
+                            }
+                            delete webRTCDict[this];
                         }
-                        delete webRTCDict[this];
                     }
-                }.bind(rtcKey));
+                })(rtcKey));
             });
             delete metaData.from;
         }
