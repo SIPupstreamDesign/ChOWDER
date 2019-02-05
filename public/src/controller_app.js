@@ -14,5 +14,4 @@ require("./css/components/tabs.css");
 require("./css/components/video_controller.css");
 require("./css/controller.css");
 
-require("./js/controller/controller.js");
-require("./js/controller/controller_dispatch.js");
+require("./js/controller/main.js");

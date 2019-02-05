@@ -12,8 +12,8 @@ import StringUtil from '../common/string_util.js';
 import Connector from '../common/ws_connector.js';
 import Command from '../common/command'
 
-function initGUIEvents(controller, gui, store, action, state, login) {
-
+function initGUIEvents(controller, gui, store, action) {
+	let state = store.getState();
 	/**
 	 * マウスイベントの登録
 	 */
@@ -290,7 +290,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
  * GUI/Dispacher/controller初期化
  * @method init
  */
-function init(controller, gui, store, action, state, login) {
+function init(controller, gui, store, action) {
 	let timer = null;
 	let controllerData = controller.getControllerData();
 
@@ -325,7 +325,7 @@ function init(controller, gui, store, action, state, login) {
 	manipulator.setCloseFunc(controller.onCloseContent);
 
 	// gui events etc
-	initGUIEvents(controller,  gui,store, action, state, login);
+	initGUIEvents(controller,  gui,store, action);
 
 	// resize event
 	window.onresize = function () {
@@ -349,6 +349,8 @@ function init(controller, gui, store, action, state, login) {
 	action.init();
 }
 
-window.ControllerDispatch = {
+let ControllerDispatch = {
 	init : init
 };
+
+export default ControllerDispatch;

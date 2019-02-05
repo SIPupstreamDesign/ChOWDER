@@ -15,11 +15,11 @@ class Validator
 	 * Validator初期設定
 	 * @param {*} gui 
 	 */
-	init(store, gui, state) {
+	init(store, gui) {
 		this.management = store.getManagement();
 		this.store = store;
 		this.gui = gui;
-		this.state = state;
+		this.state = this.store.getState();
 	};
 
 	isVisibleWindow(windowData) {

@@ -6,10 +6,7 @@
 
 import Constants from '../common/constants.js';
 import Validator from '../common/validator.js';
-import State from './state.js';
-import Action from './action.js';
 import Store from './store/store.js';
-import GUI from './gui/gui.js';
 import LoginGUI from './gui/login_gui.js';
 import InputDialog from '../components/input_dialog.js';
 import cookie from './cookie.js';
@@ -19,15 +16,9 @@ import VscreenUtil from '../common/vscreen_util.js';
 import Connector from '../common/ws_connector.js';
 import ContentUtil from './content_util';
 import Command from '../common/command'
+import ControllerDispatch from './controller_dispatch'
 
 "use strict";
-
-let state = new State();
-let action = new Action();
-let store = new Store(state, action, cookie);
-let gui = new GUI(store, action, state);
-let loginGUI = new LoginGUI(store, action);
-manipulator.init(store, action);
 
 
 function getSelectionRectElem() {
@@ -39,11 +30,16 @@ function getSelectionRectElem() {
 }
 
 class Controller {
-	constructor(store, action) {
+	constructor(store, action, gui) {
 		this.store = store;
 		this.action = action;
+		this.gui = gui;
+
 		this.state = store.getState();
 
+		this.loginGUI = new LoginGUI(store, action);
+		manipulator.init(store, action);
+		
 		this.isInitialUpdate = true;
 		this.setupWindow = this.setupWindow.bind(this);
 		this.setupSelectionRect = this.setupSelectionRect.bind(this);
@@ -97,15 +93,15 @@ class Controller {
 	initEvent() {
 		// ログイン失敗
 		this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
-			Validator.init(this.store, gui, state);
+			Validator.init(this.store, this.gui);
 		});
 
 		// ログイン成功
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
-			Validator.init(this.store, gui, state);
+			Validator.init(this.store, this.gui);
 
 			this.getControllerData().set(data.controllerData);
-			ControllerDispatch.init(this, gui, this.store, action, state, loginGUI);
+			ControllerDispatch.init(this, this.gui, this.store, this.action);
 			this.setupSelectionRect();
 
 			this.action.reloadAll({
@@ -136,7 +132,7 @@ class Controller {
 		// websocket接続が確立された
 		this.store.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
 			console.log("websocket connected")
-			loginGUI.login();
+			this.loginGUI.login();
 		})
 
 		// websocket接続失敗
@@ -224,7 +220,7 @@ class Controller {
 				if (wholes.hasOwnProperty(i)) {
 					let elem = document.getElementById(i);
 					if (elem) {
-						gui.getDisplayPreviewArea().removeChild(elem);
+						this.gui.getDisplayPreviewArea().removeChild(elem);
 					}
 				}
 			}
@@ -327,7 +323,7 @@ class Controller {
 		
 		// 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
 		this.store.on(Store.EVENT_DONE_RELOAD_ALL, (err, data) => {
-			gui.clearWindowList();
+			this.gui.clearWindowList();
 			
 			if (this.isInitialUpdate) {
 				let checkbox = document.getElementById('all_check_');
@@ -372,9 +368,9 @@ class Controller {
 				child.id = uid;
 				child.innerHTML = srcElem.childNodes[0].innerHTML;
 				if (Validator.isDisplayTabSelected()) {
-					previewArea = gui.getDisplayPreviewArea();
+					previewArea = this.gui.getDisplayPreviewArea();
 				} else {
-					previewArea = gui.getContentPreviewArea();
+					previewArea = this.gui.getContentPreviewArea();
 				}
 				delete srcElem.childNodes[0];
 				if (isListViewArea) {
@@ -505,7 +501,7 @@ class Controller {
 	 * @param {Object} splitWholes VirtualDisplayの分割情報.
 	 */
 	setupSplit(splitWholes) {
-		let previewArea = gui.getDisplayPreviewArea();
+		let previewArea = this.gui.getDisplayPreviewArea();
 		//console.log("setupSplit");
 		//console.log(splitWholes);
 		for (let i in splitWholes) {
@@ -580,7 +576,7 @@ class Controller {
 			if (Validator.isVirtualDisplayID(draggingID))
 				return;
 			// detect content list area
-			if (gui.inListviewArea2(evt, this.state.getMousedownPos()) && gui.inListviewArea(evt)) {
+			if (this.gui.inListviewArea2(evt, this.state.getMousedownPos()) && this.gui.inListviewArea(evt)) {
 				return;
 			}
 			let metaData = this.store.getMetaData(draggingID);
@@ -588,7 +584,7 @@ class Controller {
 				return;
 			}
 			if (metaData && !Validator.isVisible(metaData)) {
-				if (this.state.isMousedownOnList() && !gui.inListviewArea(evt)) {
+				if (this.state.isMousedownOnList() && !this.gui.inListviewArea(evt)) {
 					// リストからビューへドラッグ中のパターン
 					metaData.visible = "true";
 				}
@@ -597,7 +593,7 @@ class Controller {
 				}
 			}
 			// clear splitwhole colors
-			gui.clearSnapHighLight();
+			this.gui.clearSnapHighLight();
 			// Snap設定により背景色をハイライト
 			if (Validator.isGridMode() && this.state.getDraggingIDList().length === 1) {
 				let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
@@ -675,7 +671,7 @@ class Controller {
 	onMouseDown(id) {
 		return (evt) => {
 			let metaData = null;
-			let otherPreviewArea = gui.getContentPreviewArea();
+			let otherPreviewArea = this.gui.getContentPreviewArea();
 			let topElement = null;
 			let clientX;
 			let clientY;
@@ -705,7 +701,7 @@ class Controller {
 			if (this.store.hasMetadata(id)) {
 				metaData = this.store.getMetaData(id);
 				if (Validator.isContentType(metaData)) {
-					otherPreviewArea = gui.getDisplayPreviewArea();
+					otherPreviewArea = this.gui.getDisplayPreviewArea();
 				}
 			}
 			if (metaData) {
@@ -731,19 +727,19 @@ class Controller {
 			// erase last border
 			if (!this.state.isCtrlDown() && !this.state.isShiftDown()) {
 				this.unselectAll(true);
-				this.select(id, gui.inListviewArea(evt));
-				gui.closeContextMenu();
+				this.select(id, this.gui.inListviewArea(evt));
+				this.gui.closeContextMenu();
 			}
 			else {
-				this.select(id, gui.inListviewArea(evt));
-				gui.closeContextMenu();
+				this.select(id, this.gui.inListviewArea(evt));
+				this.gui.closeContextMenu();
 			}
 			this.state.setMousedownPos([
 				clientX,
 				clientY
 			]);
 			// メインビューまたはリストビューのコンテンツ
-			let isListViewArea = gui.inListviewArea(evt);
+			let isListViewArea = this.gui.inListviewArea(evt);
 			this.state.setMousedownOnList(isListViewArea);
 			this.state.for_each_dragging_id((i, id) => {
 				id = this.state.getSelectedIDList()[i];
@@ -788,11 +784,11 @@ class Controller {
 			if (this.store.hasMetadata(draggingID)) {
 				let elem = document.getElementById(draggingID);
 				let metaData = this.store.getMetaData(draggingID);
-				if (this.state.isMousedownOnList() && !gui.inListviewArea(evt)) {
+				if (this.state.isMousedownOnList() && !this.gui.inListviewArea(evt)) {
 					// リストビューの項目がリストビューからメインビューにドラッグされた
 					elem.style.margin = "0px";
 					if (Validator.isLayoutType(metaData)) {
-						gui.getContentPreviewArea().removeChild(elem);
+						this.gui.getContentPreviewArea().removeChild(elem);
 						this.applyLayout(metaData);
 					}
 					else {
@@ -806,7 +802,7 @@ class Controller {
 						}
 					}
 				}
-				if (!gui.inListviewArea(evt)) {
+				if (!this.gui.inListviewArea(evt)) {
 					// スナップ
 					if (Validator.isFreeMode()) {
 						this.store.operation.updateMetadata(metaData);
@@ -843,7 +839,7 @@ class Controller {
 						}
 					}
 				}
-				gui.clearSnapHighLight();
+				this.gui.clearSnapHighLight();
 			}
 			draggingIDList.splice(i, 1);
 		}
@@ -853,7 +849,7 @@ class Controller {
 		this.state.setMousedownOnList(false);
 	}
 	removeVirtualDisplay() {
-		let previewArea = gui.getDisplayPreviewArea();
+		let previewArea = this.gui.getDisplayPreviewArea();
 		let preWhole = document.getElementsByClassName("whole_screen_elem");
 		let screenElems = document.getElementsByClassName("screen");
 		if (preWhole[0]) {
@@ -875,7 +871,7 @@ class Controller {
 		let whole = Vscreen.getWhole();
 		let screen;
 		let wholeElem;
-		let previewArea = gui.getDisplayPreviewArea();
+		let previewArea = this.gui.getDisplayPreviewArea();
 		let elem;
 		let idElem;
 		let screenElem;
@@ -913,7 +909,7 @@ class Controller {
 			}
 		}
 		else {
-			gui.assignVirtualDisplay(Vscreen.getWhole(), Vscreen.getSplitCount());
+			this.gui.assignVirtualDisplay(Vscreen.getWhole(), Vscreen.getSplitCount());
 			// 全可視コンテンツの配置を再計算.
 			this.store.for_each_metadata((i, metaData) => {
 				if (Validator.isVisible(metaData)) {
@@ -1100,12 +1096,12 @@ class Controller {
 			if (Validator.isDisplayTabSelected()) {
 				manipulator.showManipulator(
 					selectionRect, 
-					gui.getDisplayPreviewArea());
+					this.gui.getDisplayPreviewArea());
 			}
 			else {
 				manipulator.showManipulator(
 					selectionRect, 
-					gui.getContentPreviewArea());
+					this.gui.getContentPreviewArea());
 			}
 			manipulator.moveManipulator(selectionRect);
 		}
@@ -1147,7 +1143,7 @@ class Controller {
 			if (Validator.isVirtualDisplayID(id))
 				return;
 			// detect content list area
-			if (gui.inListviewArea2(evt, this.state.getMousedownPos()) && gui.inListviewArea(evt)) {
+			if (this.gui.inListviewArea2(evt, this.state.getMousedownPos()) && this.gui.inListviewArea(evt)) {
 				return;
 			}
 			metaData = this.store.getMetaData(id);
@@ -1249,10 +1245,10 @@ class Controller {
 			groupID = this.state.getDisplaySelectedGroup();
 			wholeMetaData = this.store.getVirtualDisplayMetaData(groupID);
 			if (wholeMetaData) {
-				gui.initContentProperty(wholeMetaData, "", "whole_window");
-				gui.assignVirtualDisplay(Vscreen.getWhole(), Vscreen.getSplitCount());
-				if (gui.getWholeWindowElem(groupID)) {
-					gui.getWholeWindowElem(groupID).style.borderColor = this.store.getBorderColor(wholeMetaData);
+				this.gui.initContentProperty(wholeMetaData, "", "whole_window");
+				this.gui.assignVirtualDisplay(Vscreen.getWhole(), Vscreen.getSplitCount());
+				if (this.gui.getWholeWindowElem(groupID)) {
+					this.gui.getWholeWindowElem(groupID).style.borderColor = this.store.getBorderColor(wholeMetaData);
 				}
 			}
 			if (this.state.getSelectedIDList().indexOf(id) < 0) {
@@ -1264,8 +1260,8 @@ class Controller {
 		if (id.indexOf(Constants.WholeSubWindowID) >= 0) {
 			return;
 		}
-		if (gui.getWholeWindowElem(groupID)) {
-			gui.getWholeWindowElem(groupID).style.borderColor = "white";
+		if (this.gui.getWholeWindowElem(groupID)) {
+			this.gui.getWholeWindowElem(groupID).style.borderColor = "white";
 		}
 		let elem = this.getElem(id, isListViewArea);
 		if (!elem) {
@@ -1289,11 +1285,11 @@ class Controller {
 		}
 
 		// 選択ボーダー色設定
-		if (gui.getListElem(id)) {
-			gui.getListElem(id).style.borderColor = this.store.getBorderColor(metaData);
+		if (this.gui.getListElem(id)) {
+			this.gui.getListElem(id).style.borderColor = this.store.getBorderColor(metaData);
 		}
-		if (gui.getSearchElem(id)) {
-			gui.getSearchElem(id).style.borderColor = this.store.getBorderColor(metaData);
+		if (this.gui.getSearchElem(id)) {
+			this.gui.getSearchElem(id).style.borderColor = this.store.getBorderColor(metaData);
 		}
 		elem.style.borderColor = this.store.getBorderColor(metaData);
 		if (this.state.getSelectedIDList().length <= 0) {
@@ -1305,10 +1301,10 @@ class Controller {
 			// 複数選択. マニピュレーター, プロパティ設定
 			manipulator.removeManipulator();
 			if (Validator.isWindowType(metaData)) {
-				gui.initContentProperty(metaData, "", Constants.PropertyTypeMultiDisplay);
+				this.gui.initContentProperty(metaData, "", Constants.PropertyTypeMultiDisplay);
 			}
 			else {
-				gui.initContentProperty(metaData, "", Constants.PropertyTypeMultiContent);
+				this.gui.initContentProperty(metaData, "", Constants.PropertyTypeMultiContent);
 			}
 			// まとめて移動/拡縮するための枠を表示
 			this.showSelectionRect(true, metaData);
@@ -1317,9 +1313,9 @@ class Controller {
 		else {
 			// 単一選択.マニピュレーター, プロパティ設定
 			if (Validator.isWindowType(metaData)) {
-				gui.initContentProperty(metaData, "", Constants.PropertyTypeDisplay);
-				gui.assignContentProperty(metaData);
-				manipulator.showManipulator(elem, gui.getDisplayPreviewArea());
+				this.gui.initContentProperty(metaData, "", Constants.PropertyTypeDisplay);
+				this.gui.assignContentProperty(metaData);
+				manipulator.showManipulator(elem, this.gui.getDisplayPreviewArea());
 			}
 			else {
 				// 動画の場合は所有しているかどうか調べる
@@ -1328,15 +1324,15 @@ class Controller {
 					isOwnVideo = this.store.getVideoStore().hasVideoData(metaData.id);
 				}
 				if (this.store.getGroupStore().hasGroup(metaData.group)) {
-					gui.initContentProperty(metaData, this.store.getGroupStore().getGroup(metaData.group).name, metaData.type, isOwnVideo);
+					this.gui.initContentProperty(metaData, this.store.getGroupStore().getGroup(metaData.group).name, metaData.type, isOwnVideo);
 				}
 				else {
 					console.warn("not found group", metaData);
-					gui.initContentProperty(metaData, "", metaData.type, isOwnVideo);
+					this.gui.initContentProperty(metaData, "", metaData.type, isOwnVideo);
 				}
-				gui.assignContentProperty(metaData);
-				gui.setUpdateContentID(id);
-				manipulator.showManipulator(elem, gui.getContentPreviewArea());
+				this.gui.assignContentProperty(metaData);
+				this.gui.setUpdateContentID(id);
+				manipulator.showManipulator(elem, this.gui.getContentPreviewArea());
 			}
 		}
 		if (Validator.isDisplayTabSelected()) {
@@ -1384,15 +1380,15 @@ class Controller {
 				if (Validator.isContentType(metaData) && Validator.isVisible(metaData) && String(metaData.mark) !== "true") {
 					elem.style.border = "";
 				}
-				if (gui.getListElem(elem.id)) {
-					gui.getListElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
-					if (gui.getSearchElem(elem.id)) {
-						gui.getSearchElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
+				if (this.gui.getListElem(elem.id)) {
+					this.gui.getListElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
+					if (this.gui.getSearchElem(elem.id)) {
+						this.gui.getSearchElem(elem.id).style.borderColor = this.store.getListBorderColor(metaData);
 					}
 				}
 			}
 		}
-		gui.clearContentProperty(isUpdateMetaInfo);
+		this.gui.clearContentProperty(isUpdateMetaInfo);
 		this.state.getSelectedIDList().splice(this.state.getSelectedIDList().indexOf(id), 1);
 		if (this.state.getSelectedIDList().length === 0) {
 			// まとめて移動/拡縮するための枠を非表示
@@ -1428,10 +1424,10 @@ class Controller {
 			}
 			metaData.visible = false;
 			if (Validator.isWindowType(metaData)) {
-				previewArea = gui.getDisplayPreviewArea();
+				previewArea = this.gui.getDisplayPreviewArea();
 			}
 			else {
-				previewArea = gui.getContentPreviewArea();
+				previewArea = this.gui.getContentPreviewArea();
 			}
 			previewArea.removeChild(elem);
 			this.store.operation.updateMetadata(metaData);
@@ -1474,7 +1470,7 @@ class Controller {
 		this.store.setMetaData(json.id, json);
 		if (Validator.isCurrentTabMetaData(json)) {
 			if (this.state.getLastSelectContentID() === json.id || (manipulator.isShowManipulator() && this.state.getLastSelectContentID() === json.id)) {
-				gui.assignContentProperty(json);
+				this.gui.assignContentProperty(json);
 			}
 		}
 		if (Validator.isWindowType(json)) {
@@ -1513,7 +1509,7 @@ class Controller {
 					this.action.getContent({
 						request : request,
 						callback : (err, data) => {
-							gui.importContent(json, data.contentData, this.store.getVideoStore().getVideoElem(json.id));
+							this.gui.importContent(json, data.contentData, this.store.getVideoStore().getVideoElem(json.id));
 							this.action.toggleContentMarkIcon({
 								element : document.getElementById(metaData.id),
 								metaData : data.metaData
@@ -1529,7 +1525,7 @@ class Controller {
 					this.action.getContent({
 						request : request,
 						callback : (err, data) => {
-							gui.importContent(json, data.contentData);
+							this.gui.importContent(json, data.contentData);
 							this.action.toggleContentMarkIcon({
 								element : document.getElementById(metaData.id),
 								metaData : data.metaData
@@ -1581,15 +1577,15 @@ class Controller {
 			}
 			if (metaData.type === "video") {
 				if (this.store.getVideoStore().hasVideoData(metaData.id)) {
-					gui.importContent(metaData, contentData, this.store.getVideoStore().getVideoElem(metaData.id));
+					this.gui.importContent(metaData, contentData, this.store.getVideoStore().getVideoElem(metaData.id));
 				}
 				else {
 					// ローカルに保持していない動画コンテンツ
-					gui.importContent(metaData, contentData);
+					this.gui.importContent(metaData, contentData);
 				}
 			}
 			else {
-				gui.importContent(metaData, contentData);
+				this.gui.importContent(metaData, contentData);
 			}
 			if (endCallback) {
 				endCallback(err, reply);
@@ -1617,7 +1613,7 @@ class Controller {
 		if (reply.length === 1) {
 			let json = reply[0];
 			if (Validator.isCurrentTabMetaData(json)) {
-				gui.assignContentProperty(json);
+				this.gui.assignContentProperty(json);
 			}
 		}
 		for (let i = 0; i < reply.length; ++i) {
@@ -1695,20 +1691,20 @@ class Controller {
 		// console.log("doneDeleteContent", err, reply);
 		let func = (err, reply) => {
 			let json = reply;
-			let previewArea = gui.getContentPreviewArea();
+			let previewArea = this.gui.getContentPreviewArea();
 			let deleted = document.getElementById(json.id);
 			manipulator.removeManipulator();
 			this.showSelectionRect(false);
 			if (deleted) {
 				previewArea.removeChild(deleted);
 			}
-			if (gui.getListElem(json.id)) {
-				gui.getListElem(json.id).parentNode.removeChild(gui.getListElem(json.id));
+			if (this.gui.getListElem(json.id)) {
+				this.gui.getListElem(json.id).parentNode.removeChild(this.gui.getListElem(json.id));
 			}
-			if (gui.getSearchElem(json.id)) {
-				gui.getSearchElem(json.id).parentNode.removeChild(gui.getSearchElem(json.id));
+			if (this.gui.getSearchElem(json.id)) {
+				this.gui.getSearchElem(json.id).parentNode.removeChild(this.gui.getSearchElem(json.id));
 			}
-			gui.setUpdateContentID("No Content Selected.");
+			this.gui.setUpdateContentID("No Content Selected.");
 			this.state.setLastSelectContentID(null);
 			if (this.store.hasMetadata(json.id)) {
 				this.store.deleteMetaData(json.id);
@@ -1749,8 +1745,8 @@ class Controller {
 		// console.log("doneDeleteWindowMetaData", reply);
 		let elem;
 		let windowData;
-		let displayArea = gui.getDisplayArea();
-		let previewArea = gui.getDisplayPreviewArea();
+		let displayArea = this.gui.getDisplayArea();
+		let previewArea = this.gui.getDisplayPreviewArea();
 		manipulator.removeManipulator();
 		this.showSelectionRect(false);
 		if (reply.hasOwnProperty('id')) {
@@ -1758,7 +1754,7 @@ class Controller {
 			if (elem) {
 				previewArea.removeChild(elem);
 			}
-			elem = gui.getListElem(reply.id);
+			elem = this.gui.getListElem(reply.id);
 			if (elem) {
 				displayArea.removeChild(elem);
 			}
@@ -1773,7 +1769,7 @@ class Controller {
 					if (elem) {
 						previewArea.removeChild(elem);
 					}
-					elem = gui.getListElem(id);
+					elem = this.gui.getListElem(id);
 					if (elem) {
 						displayArea.removeChild(elem);
 					}
@@ -1795,7 +1791,7 @@ class Controller {
 			return;
 		}
 		// console.log("doneUpdateContent");
-		gui.setUpdateContentID("No Content Selected.");
+		this.gui.setUpdateContentID("No Content Selected.");
 		manipulator.removeManipulator();
 		this.showSelectionRect(false);
 	}
@@ -1813,8 +1809,8 @@ class Controller {
 		let json = reply;
 		// console.log("doneAddContent:" + json.id + ":" + json.type);
 		// DisplayタブだったらContentタブに変更する.
-		if (gui.isActiveTab(Constants.TabIDDisplay)) {
-			gui.changeTabByID(Constants.TabIDContent);
+		if (this.gui.isActiveTab(Constants.TabIDDisplay)) {
+			this.gui.changeTabByID(Constants.TabIDContent);
 		}
 		// 新規追加ではなく差し替えだった場合.
 		if (this.store.hasMetadata(json.id)) {
@@ -1842,11 +1838,11 @@ class Controller {
 		// console.log('doneGetWindowMetaData:');
 		let windowData = reply;
 		this.store.setMetaData(windowData.id, windowData);
-		gui.importDisplay(windowData);
-		gui.changeWindowBorderColor(windowData);
+		this.gui.importDisplay(windowData);
+		this.gui.changeWindowBorderColor(windowData);
 		if (Validator.isCurrentTabMetaData(reply)) {
 			if (this.state.getLastSelectWindowID() === windowData.id || (manipulator.getDraggingManip() && this.state.getLastSelectWindowID() === windowData.id)) {
-				gui.assignContentProperty(windowData);
+				this.gui.assignContentProperty(windowData);
 			}
 		}
 	}
@@ -1866,7 +1862,7 @@ class Controller {
 		let groupToMeta = {};
 		groupToElems[Constants.DefaultGroup] = [];
 		groupToMeta[Constants.DefaultGroup] = [];
-		let selectedGroup = gui.getCurrentGroupID();
+		let selectedGroup = this.gui.getCurrentGroupID();
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
 			this.store.for_each_metadata(function (id, metaData) {
@@ -1895,33 +1891,33 @@ class Controller {
 				}
 			});
 			// 一旦チェックされているSearch対象グループを取得
-			let searchTargetGroups = gui.getSearchTargetGroups();
-			let currentGroup = gui.getCurrentGroupID();
+			let searchTargetGroups = this.gui.getSearchTargetGroups();
+			let currentGroup = this.gui.getCurrentGroupID();
 			// groupリストを新たにセットして, Searchタブ等を初期化
-			gui.setGroupList(reply.grouplist, reply.displaygrouplist);
+			this.gui.setGroupList(reply.grouplist, reply.displaygrouplist);
 			this.store.getGroupStore().setGroupList(reply.grouplist, reply.displaygrouplist);
 			// Virtual Displayはすべてに追加しなおす.
 			this.store.getGroupStore().for_each_display_group((i, group) => {
 				let elem = this.createWholeWindow(group.id);
-				if (gui.getBoxArea(Constants.TypeWindow, group.id)) {
-					gui.getBoxArea(Constants.TypeWindow, group.id).appendChild(elem);
+				if (this.gui.getBoxArea(Constants.TypeWindow, group.id)) {
+					this.gui.getBoxArea(Constants.TypeWindow, group.id).appendChild(elem);
 				}
 			});
 			// 元々あったリストエレメントを全部つけなおす
 			for (let group in groupToElems) {
 				if (groupToElems.hasOwnProperty(group)) {
 					groupToMeta[group]
-					let contentArea = gui.getBoxArea(Constants.TypeContent, group);
+					let contentArea = this.gui.getBoxArea(Constants.TypeContent, group);
 					if (!contentArea) {
-						contentArea = gui.getBoxArea(Constants.TypeContent, Constants.DefaultGroup);
+						contentArea = this.gui.getBoxArea(Constants.TypeContent, Constants.DefaultGroup);
 					}
-					let layoutArea = gui.getBoxArea(Constants.TypeLayout, group);
+					let layoutArea = this.gui.getBoxArea(Constants.TypeLayout, group);
 					if (!layoutArea) {
-						layoutArea = gui.getBoxArea(Constants.TypeLayout, Constants.DefaultGroup);
+						layoutArea = this.gui.getBoxArea(Constants.TypeLayout, Constants.DefaultGroup);
 					}
-					let displayArea = gui.getBoxArea(Constants.TypeWindow, group);
+					let displayArea = this.gui.getBoxArea(Constants.TypeWindow, group);
 					if (!displayArea) {
-						displayArea = gui.getBoxArea(Constants.TypeWindow, Constants.DefaultGroup);
+						displayArea = this.gui.getBoxArea(Constants.TypeWindow, Constants.DefaultGroup);
 					}
 					for (let i = 0; i < groupToElems[group].length; i = i + 1) {
 						let metaData = groupToMeta[group][i];
@@ -1941,9 +1937,9 @@ class Controller {
 				document.getElementById(selectedGroup).onclick();
 			}
 			// Search対象グループをチェックし直す
-			gui.checkSearchTargetGroups(searchTargetGroups, true);
+			this.gui.checkSearchTargetGroups(searchTargetGroups, true);
 			// カレントグループを選択し直す.
-			gui.selectGroup(currentGroup);
+			this.gui.selectGroup(currentGroup);
 		}
 	}
 
@@ -1983,61 +1979,11 @@ class Controller {
 		}
 		else {
 			// 初回
-			this.action.changeDisplayProperty(gui.getContentPropertyGUI().getDisplayValues());
+			this.action.changeDisplayProperty(this.gui.getContentPropertyGUI().getDisplayValues());
 		}
 		manipulator.removeManipulator();
 		this.showSelectionRect(false);
 	}
 }
 
-
-///-------------------------------------------------------------------------------------------------------
-
-let controller = new Controller(store, action);
-
-window.onload = () => { action.connect(); }
-window.onunload = function () {
-	gui.clearContentProperty(true);
-	controller.release();
-	store.release();
-};
-window.onblur = function () {
-	//gui.clearContentProperty(true);
-	state.setCtrlDown(false);
-	state.setShiftDown(false);
-	state.setSpaceDown(false);
-};
-window.onkeydown = function (evt) {
-	if (evt.keyCode === 17) {
-		state.setCtrlDown(true);
-	}
-	if (evt.keyCode === 16) {
-		state.setShiftDown(true);
-	}
-	if (evt.keyCode === 32) {
-		state.setSpaceDown(true);
-	}
-	if (evt.keyCode === 37) { // ←
-		let history_up = document.getElementById('history_up');
-		if (history_up && history_up.style.display !== "none") {
-			history_up.click();
-		}
-	}
-	if (evt.keyCode === 39) {
-		let history_down  = document.getElementById('history_down');
-		if (history_down && history_down.style.display !== "none") {
-			history_down.click();
-		}
-	}
-};
-window.onkeyup = function (evt) {
-	if (evt.keyCode === 17) {
-		state.setCtrlDown(false);
-	}
-	if (evt.keyCode === 16) {
-		state.setShiftDown(false);
-	}
-	if (evt.keyCode === 32) {
-		state.setSpaceDown(false);
-	}
-};
+export default Controller;

@@ -13,4 +13,4 @@ require("./css/components/management_dialog.css");
 require("./css/components/video_controller.css");
 require("./css/display.css");
 
-require("./js/display/display.js");
+require("./js/display/main.js");

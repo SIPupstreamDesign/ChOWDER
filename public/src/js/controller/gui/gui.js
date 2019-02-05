@@ -35,13 +35,13 @@ import VideoController from '../../components/video_controller.js';
 
 class GUI extends EventEmitter 
 {
-	constructor(store, action, state, validator) 
+	constructor(store, action) 
 	{
 		super();
 
 		this.store = store;
 		this.action = action;
-		this.state = state;
+		this.state = store.getState();
 
 		this.displayMenu = null;
 		this.contentMenu = null;
