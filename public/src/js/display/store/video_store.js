@@ -21,7 +21,7 @@ class VideoStore {
         this.store = store;
 		this.action = action;
         
-        this.player = null;
+        this.playerDict = {};
 
         this.webRTCDict = {};
 		this.initEvents();
@@ -47,19 +47,12 @@ class VideoStore {
         }
     }
 
-	getWebRTCDict() {
-		return this.webRTCDict;
-	}
-
-    // このページのwebRTC用のキーを取得.
-    // ディスプレイIDが同じでもページごとに異なるキーとなる.
-    // (ページをリロードするたびに代わる)
-    getRTCKey(metaData) {
-        return metaData.id + "_" + this.store.getWindowData().id + "_" + random_id_for_webrtc;
-    }
-
-    playFragmentVideo(videoElem, data) {
-        this.player.onVideoFrame(data);
+    playFragmentVideo(rtcKey, data) {
+        if (this.playerDict.hasOwnProperty(rtcKey)) {
+            this.playerDict[rtcKey].onVideoFrame(data);
+        } else {
+            console.error("Error : not found rtc entry. rtckey", rtcKey)
+        }
     }
 
     _requestWebRTC(data) {
@@ -73,10 +66,13 @@ class VideoStore {
             this.webRTCDict[rtcKey] = webRTC;
             webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
                 if (metaData.use_datachannel) {
-                    this.player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
-                    this.player.on('sourceOpen', () => {
-                        this.player.setDuration(313.47);
-                    })
+                    if (!this.playerDict.hasOwnProperty(rtcKey)) {
+                        let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
+                        player.on('sourceOpen', () => {
+                            this.player.setDuration(313.47);
+                        });
+                        this.playerDict[rtcKey] = player;
+                    }
                 } else {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
                     elem.srcObject = stream;
@@ -113,13 +109,19 @@ class VideoStore {
                 }
             })(rtcKey));
 
-            webRTC.on(WebRTC.EVENT_DATACHANNEL_MESSAGE, (err, message) => {
-                console.error("datachannelmessage", message)
-                this.playFragmentVideo(elem, message);
-            });
+            webRTC.on(WebRTC.EVENT_DATACHANNEL_MESSAGE, ((rtcKey) => {
+                return (err, message) => {
+                    console.error("datachannelmessage", message)
+                    this.playFragmentVideo(rtcKey, message);
+                }
+            })(rtcKey));
             
             webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
                 return () => {
+                    if (this.playerDict.hasOwnProperty(rtcKey)) {
+                        this.playerDict[rtcKey].release();
+                        delete this.playerDict[rtcKey];
+                    }
                     if (this.webRTCDict.hasOwnProperty(rtcKey)) {
                         if (webRTCDict[rtcKey].statusHandle) {
                             clearInterval(this.webRTCDict[rtcKey].statusHandle);
@@ -130,6 +132,17 @@ class VideoStore {
                 }
             })(rtcKey));
         });
+    }
+
+	getWebRTCDict() {
+		return this.webRTCDict;
+	}
+
+    // このページのwebRTC用のキーを取得.
+    // ディスプレイIDが同じでもページごとに異なるキーとなる.
+    // (ページをリロードするたびに代わる)
+    getRTCKey(metaData) {
+        return metaData.id + "_" + this.store.getWindowData().id + "_" + random_id_for_webrtc;
     }
 };
 
