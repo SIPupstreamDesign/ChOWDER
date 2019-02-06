@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
+
 
 import Command from '../../common/command';
 import Action from '../action';
@@ -220,7 +225,6 @@ class GroupStore
 
 	/**
 	 * Group名変更
-	 * TODO ：バグってる
 	 */
 	_changeGroupName(data) {
         let groupID = data.groupID;
