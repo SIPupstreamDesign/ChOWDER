@@ -91,7 +91,7 @@ function MenuSetting(management) {
                     Text : {
                         func : () => { 
                             this.initContextPos();
-                            this.openTextInput();
+                            this.contentInputGUI.inputText();
                         }
                     },
                 }, {
