@@ -430,7 +430,7 @@ class ManagementDialog extends EventEmitter
         this.initDBButton.on(Button.EVENT_CLICK, (err, evt) => {
             let options = this.dbSelect.getOptions();
             let selectedIndex = this.dbSelect.getSelectedIndex();
-            if (options.length > e.selectedIndex) {
+            if (options.length > selectedIndex) {
                 let name = options[selectedIndex].value;
                 this.emit(ManagementDialog.EVENT_INIT_DB, null, name);
             }
