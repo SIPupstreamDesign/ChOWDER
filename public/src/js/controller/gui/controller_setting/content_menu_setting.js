@@ -7,6 +7,7 @@ import Constants from '../../../common/constants'
 
 /**
  * コンテンツメニューアイテム
+ * GUI(gui.js)にバインドして使用する
  */
 function ContentMenuSetting() 
 {

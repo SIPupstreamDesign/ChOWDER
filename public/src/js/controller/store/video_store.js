@@ -22,101 +22,6 @@ function generateID() {
 	return s4() + s4();
 }
 
-let videoSegments = [];
-
-function processMovieBlob(videoElem, blob) {
-	//let fileSize   = file.size;
-	let offset = 0;
-	let readBlock = null;
-
-	let mp4box = new MP4Box();
-	let player = null;
-	let chunkSize  = 1024 * 1024 * 1024; // bytes
-	mp4box.onReady = function(info) { 
-		videoSegments = [];
-		let videoCodec = 'video/mp4; codecs=\"' + info.tracks[0].codec +  '\"';
-		let audioCodec = null;
-		if (info.tracks.length > 1) {
-			audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
-		} 
-		// console.log("codec", videoCodec, audioCodec,
-		//	MediaSource.isTypeSupported(videoCodec),
-		//	MediaSource.isTypeSupported(audioCodec)
-		//);
-		if (!player) {
-			player = new MediaPlayer(videoElem, videoCodec, audioCodec);
-		}
-		if (info.isFragmented) {
-			// console.log("duration fragment", info.fragment_duration/info.timescale)
-			player.setDuration(info.fragment_duration/info.timescale);
-		} else {
-			// console.log("duration", info.duration/info.timescale)
-			player.setDuration(info.duration/info.timescale);
-		}
-		player.on("sourceOpen", function () {
-			mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
-			mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
-			
-			let initSegs = mp4box.initializeSegmentation();
-			videoSegments.push(initSegs[0].buffer);
-			player.onVideoFrame(initSegs[0].buffer);
-			player.onAudioFrame(initSegs[1].buffer);
-			mp4box.start();
-		});
-	}
-
-	mp4box.onSegment = function (id, user, buffer, sampleNum, is_last) {
-		if (user === player.buffer) {
-			videoSegments.push(buffer);
-			// console.log("videoseg")
-			player.onVideoFrame(buffer);
-		}
-		if (user === player.audioBuffer) {
-			// console.log("audioseg")
-			player.onAudioFrame(buffer);
-		}
-	}
-	let onparsedbuffer = function(mp4box, buffer) {
-		//console.log("Appending buffer with offset "+offset);
-		buffer.fileStart = 0;
-		mp4box.appendBuffer(buffer);
-	}
-	
-	onparsedbuffer(mp4box, blob); // callback for handling read chunk
-
-	/*
-	let onBlockRead = function(evt) {
-		if (evt.target.error == null) {
-			onparsedbuffer(mp4box, evt.target.result); // callback for handling read chunk
-			offset += evt.target.result.byteLength;
-			//progressbar.progressbar({ value: Math.ceil(100*offset/fileSize) });
-		} else {
-			// console.log("Read error: " + evt.target.error);
-			//finalizeUI(false);
-			return;
-		}
-		if (offset >= fileSize) {
-			//progressbar.progressbar({ value: 100 });
-			// console.log("Done reading file");
-			mp4box.flush();
-			videoElem.play();
-			//finalizeUI(true);
-			return;
-		}
-		readBlock(offset, chunkSize, file);
-	}
-	
-	
-	readBlock = function(_offset, length, _file) {
-		let r = new FileReader();
-		let blob = _file.slice(_offset, length + _offset);
-		r.onload = onBlockRead;
-		r.readAsArrayBuffer(blob);
-	}
-	readBlock(offset, chunkSize, file);
-	*/
-}
-
 function captureStream(video) {
 	if (video.captureStream) {
 		return video.captureStream();
@@ -141,6 +46,9 @@ class VideoStore {
 
 		// id から video エレメントへのマップ
 		this.videoElemDict = {};
+
+		// mp4boxで読み込んだsegmentsのキャッシュ
+		this.segmentDict = {};
 
 		this.initEvents();
 	}
@@ -168,6 +76,145 @@ class VideoStore {
 		}
 	}
     
+	processMovieBlob(videoElem, blob, id) {
+		//let fileSize   = file.size;
+		let offset = 0;
+		let readBlock = null;
+
+		// segmentをキャッシュする用
+		this.segmentDict[id] = {
+			audio : [],
+			video : [],
+			videoIndex : 0,
+			audioIndex : 0,
+			playHandle : null
+		};
+
+		const DURATION = 1001;
+		const TIMESCALE = 30000;
+		const SAMPLE_SEC = DURATION / TIMESCALE;
+		
+		let mp4box = new MP4Box();
+		let player = null;
+		let chunkSize  = 1024 * 1024 * 1024; // bytes
+		mp4box.onReady = (info) => {
+			let videoCodec = 'video/mp4; codecs=\"' + info.tracks[0].codec +  '\"';
+			let audioCodec = null;
+			if (info.tracks.length > 1) {
+				audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
+			} 
+			// console.log("codec", videoCodec, audioCodec,
+			//	MediaSource.isTypeSupported(videoCodec),
+			//	MediaSource.isTypeSupported(audioCodec)
+			//);
+			if (!player) {
+				player = new MediaPlayer(videoElem, videoCodec, audioCodec);
+			}
+
+			let playVideo = () => {
+				this.segmentDict[id].playHandle = setInterval(() => {
+					let videoSegs = this.segmentDict[id].video;
+					let audioSegs = this.segmentDict[id].audio;
+					if (videoSegs.length > 0) {
+						player.onVideoFrame(videoSegs[this.segmentDict[id].videoIndex]);
+						++this.segmentDict[id].videoIndex;
+					}
+					if (audioSegs.length > 0) {
+						player.onAudioFrame(audioSegs[this.segmentDict[id].audioIndex]);
+						++this.segmentDict[id].audioIndex;
+					}
+				}, SAMPLE_SEC);
+			};
+			let stopVideo = () => {
+				clearInterval(this.segmentDict[id].playHandle);
+			};
+
+			let samplesInfo;
+			player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
+				if (info.isFragmented) {
+					console.info("duration fragment", info.fragment_duration/info.timescale)
+					player.setDuration(info.fragment_duration/info.timescale);
+				} else {
+					console.info("duration", info.duration/info.timescale)
+					player.setDuration(info.duration/info.timescale);
+				}
+				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1000 } );
+				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1000 } );
+
+				samplesInfo = mp4box.getTrackSamplesInfo(info.tracks[0].id);
+
+				let initSegs = mp4box.initializeSegmentation();
+				this.segmentDict[id].video.push(initSegs[0].buffer);
+				this.segmentDict[id].audio.push(initSegs[1].buffer);
+				playVideo();
+				mp4box.start();
+			});
+			player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
+				stopVideo();
+				const segmentIndex = time / SAMPLE_SEC;
+				console.log("MediaPlayer.EVENT_NEED_RELOAD", time, segmentIndex, this.segmentDict[id].videoIndex, time / SAMPLE_SEC);
+				this.segmentDict[id].videoIndex = segmentIndex;
+				this.segmentDict[id].audioIndex = segmentIndex;
+				playVideo();
+			});
+		}
+
+		mp4box.onSegment = ((metaDataID) => {
+			return (id, user, buffer, sampleNum, is_last) => {
+				if (user === player.buffer) {
+					this.segmentDict[metaDataID].video.push(buffer);
+					// console.log("videoseg")
+					//player.onVideoFrame(buffer);
+				}
+				if (user === player.audioBuffer) {
+					this.segmentDict[metaDataID].audio.push(buffer);
+					// console.log("audioseg")
+					//player.onAudioFrame(buffer);
+				}
+			}
+		})(id);
+
+		let onparsedbuffer = function(mp4box, buffer) {
+			//console.log("Appending buffer with offset "+offset);
+			buffer.fileStart = 0;
+			mp4box.appendBuffer(buffer);
+		}
+		
+		onparsedbuffer(mp4box, blob); // callback for handling read chunk
+
+		/*
+		let onBlockRead = function(evt) {
+			if (evt.target.error == null) {
+				onparsedbuffer(mp4box, evt.target.result); // callback for handling read chunk
+				offset += evt.target.result.byteLength;
+				//progressbar.progressbar({ value: Math.ceil(100*offset/fileSize) });
+			} else {
+				// console.log("Read error: " + evt.target.error);
+				//finalizeUI(false);
+				return;
+			}
+			if (offset >= fileSize) {
+				//progressbar.progressbar({ value: 100 });
+				// console.log("Done reading file");
+				mp4box.flush();
+				videoElem.play();
+				//finalizeUI(true);
+				return;
+			}
+			readBlock(offset, chunkSize, file);
+		}
+		
+		
+		readBlock = function(_offset, length, _file) {
+			let r = new FileReader();
+			let blob = _file.slice(_offset, length + _offset);
+			r.onload = onBlockRead;
+			r.readAsArrayBuffer(blob);
+		}
+		readBlock(offset, chunkSize, file);
+		*/
+	}
+
 	/**
 	 * WebRTC接続開始
 	 * @method connectWebRTC
@@ -187,16 +234,16 @@ class VideoStore {
 			}
 			webRTC.addStream(stream);
 			video.ontimeupdate = () => {
-				metaData = this.store.getMetaData(metaData.id);
-				if (metaData && metaData.isEnded === 'true') {
+				let meta = this.store.getMetaData(metaData.id);
+				if (meta && meta.isEnded === 'true') {
 					for (let i in this.webRTCDict) {
-						if (i.indexOf(metaData.id) >= 0) {
+						if (i.indexOf(meta.id) >= 0) {
 							this.webRTCDict[i].removeStream();
 							this.webRTCDict[i].addStream(captureStream(video));
 						}
 					}
-					metaData.isEnded = false;
-					this.store.operation.updateMetadata(metaData);
+					meta.isEnded = false;
+					this.store.operation.updateMetadata(meta);
 				}
 			};
 			webRTC.on(WebRTC.EVENT_ICECANDIDATE, (type, data) => {
@@ -265,10 +312,12 @@ class VideoStore {
 				//console.error("updateLoop", videoSegments.length, currentPos)
 				setTimeout(() => {
 					let webRTC = this.webRTCDict[keyStr];
-					if (videoSegments) {
+					if (this.segmentDict.hasOwnProperty(metaData.id)) {
+						let videoSegments = this.segmentDict[metaData.id];
 						try {
 							if (currentPos === videoSegments.length)
 								return;
+
 							for (let maxPos = currentPos + 10; currentPos < maxPos && currentPos < videoSegments.length; ++currentPos) {
 								if (videoSegments[currentPos].byteLength >= maxBytes) {
 									let pos = 0;
@@ -296,7 +345,7 @@ class VideoStore {
 						}
 						catch (e) {
 							console.error(e);
-							webRTC.emit("need_restart", null);
+							webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
 							return;
 						}
 					}
@@ -354,7 +403,7 @@ class VideoStore {
 		let videoData;
 		if (type === "file") {
 			metaData.use_datachannel = true;
-			processMovieBlob(video, blob);
+			this.processMovieBlob(video, blob, metaData.id);
 			/*
 			videoData = URL.createObjectURL(blob);
 			video.src = videoData;
