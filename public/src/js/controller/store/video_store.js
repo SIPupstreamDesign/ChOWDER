@@ -138,8 +138,8 @@ class VideoStore {
 					console.info("duration", info.duration/info.timescale)
 					player.setDuration(info.duration/info.timescale);
 				}
-				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1000 } );
-				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1000 } );
+				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
+				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
 
 				samplesInfo = mp4box.getTrackSamplesInfo(info.tracks[0].id);
 
@@ -309,11 +309,11 @@ class VideoStore {
 			let currentPos = 0;
 			let maxBytes = 65535;
 			let updateLoop = () => {
-				//console.error("updateLoop", videoSegments.length, currentPos)
 				setTimeout(() => {
 					let webRTC = this.webRTCDict[keyStr];
 					if (this.segmentDict.hasOwnProperty(metaData.id)) {
-						let videoSegments = this.segmentDict[metaData.id];
+						let videoSegments = this.segmentDict[metaData.id].video;
+						//console.error("hoge", videoSegments)
 						try {
 							if (currentPos === videoSegments.length)
 								return;

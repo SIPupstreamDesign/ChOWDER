@@ -72,7 +72,7 @@ class VideoStore {
                     if (!this.playerDict.hasOwnProperty(rtcKey)) {
                         let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
                         player.on('sourceOpen', () => {
-                            this.player.setDuration(313.47);
+                            //this.player.setDuration(313.47);
                         });
                         this.playerDict[rtcKey] = player;
                     }
