@@ -1,5 +1,5 @@
 {
-	"url": "http://localhost:8080/view.html",
+	"url": "http://localhost:8080/display.html",
 	"windows": {
 		"tile1": {
 			"group": "group",
