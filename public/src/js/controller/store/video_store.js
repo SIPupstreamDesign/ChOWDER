@@ -68,6 +68,21 @@ class VideoStore {
 	};
 
 	release() {
+		let i;
+		for (i in this.webRTCDict) {
+			this.webRTCDict[i].close(true);
+		}
+		this.webRTCDict = {};
+		let metaDataList = [];
+		for (i in this.videoDict) {
+			if (this.store.hasMetadata(i)) {
+				metaDataList.push(this.store.getMetaData(i));
+			}
+		}
+		if (metaDataList.length > 0) {
+			this.store.operation.deleteContent(metaDataList);
+		}
+
 		for (i in this.videoDict) {
 			this.deleteVideoData(i);
 		}

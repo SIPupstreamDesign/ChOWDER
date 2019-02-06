@@ -71,20 +71,6 @@ class Controller {
 	 * 解放処理
 	 */
 	release() {
-		let i;
-		for (i in this.webRTC) {
-			this.webRTC[i].close(true);
-		}
-		this.webRTC = {};
-		let metaDataList = [];
-		for (i in this.store.videoDict) {
-			if (this.store.hasMetadata(i)) {
-				metaDataList.push(this.store.getMetaData(i));
-			}
-		}
-		if (metaDataList.length > 0) {
-			this.action.deleteContent(metaDataList);
-		}
 	}
 
 	/**

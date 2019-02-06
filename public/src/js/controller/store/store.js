@@ -37,7 +37,7 @@ class Store extends EventEmitter
 	constructor(state, action, cookie)
 	{
 		super();
-
+		
 		this.state = state;
 		this.action = action;
 		this.cookie = cookie;
@@ -120,6 +120,9 @@ class Store extends EventEmitter
 	 * 解放処理
 	 */
 	release() {
+		if (this.videoStore.release) {
+			this.videoStore.release();
+		}
 		if (this.managementStore.release) {
 			this.managementStore.release();
 		}
@@ -134,9 +137,6 @@ class Store extends EventEmitter
 		}
 		if (this.groupStore.release) {
 			this.groupStore.release();
-		}
-		if (this.videoStore.release) {
-			this.videoStore.release();
 		}
 		if (this.manipulatorStore.release) {
 			this.manipulatorStore.release();
