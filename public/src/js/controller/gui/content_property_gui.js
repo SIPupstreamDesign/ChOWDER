@@ -468,34 +468,40 @@ class ContentPropertyGUI extends EventEmitter {
 				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, 50, (val) => {
 					this.updateQualityDisplay();
 					this.action.changeVideoQuality({
-						id : metaData.id
+						id : metaData.id,
+						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", "最小bitrate", "kbps", "300", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id
+						id : metaData.id,
+						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", "最大bitrate", "kbps", "1000", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id
+						id : metaData.id,
+						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoTextLabel('video_select_quality_title', i18next.t('audio_quality'));
 				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, 100, (val) => {
 					this.updateQualityDisplay()
 					this.action.changeVideoQuality({
-						id : metaData.id
+						id : metaData.id,
+						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", "最小bitrate", "kbps", "50", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id
+						id : metaData.id,
+						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", "最大bitrate", "kbps", "300", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id
+						id : metaData.id,
+						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
 				if (metaData.hasOwnProperty('webrtc_status')) {
@@ -1026,6 +1032,37 @@ class ContentPropertyGUI extends EventEmitter {
 			splitY : iy,
 			scale : s
 		};
+	}
+
+	getVideoQualityValues(metadataID) {
+		let quality = {
+			video_quality_enable : this.isVideoQualityEnable(),
+			audio_quality_enable : this.isAudioQualityEnable(),
+			screen : this.getVideoQuality(metadataID).min,
+			video : this.getVideoQuality(metadataID).min,
+			audio : this.getAudioQuality(metadataID).min,
+			video_max : this.getVideoQuality(metadataID).max,
+			audio_max : this.getAudioQuality(metadataID).max
+		};
+		if (quality.video_max < quality.video) {
+			quality.video_max = quality.video;
+		}
+		if (quality.audio_max < quality.audio) {
+			quality.audio_max = quality.audio;
+		}
+		if (!quality.video_quality_enable) {
+			delete quality["screen"];
+			delete quality["video"];
+			delete quality["video_max"];
+		}
+		if (!quality.audio_quality_enable) {
+			delete quality["audio"];
+			delete quality["audio_max"];
+		}
+		if (Object.keys(quality).length === 0) {
+			quality = null;
+		}
+		return quality;
 	}
 
 	getContentTransform() {

@@ -662,43 +662,14 @@ class VideoStore {
 
     /**
      * 動画クオリティの変更
-	 * TODO
      */
     _changeVideoQuality(data) {
         let metadataID = data.id;
-        let deviceID = data.deviceID;
-		if (this.hasVideoElem(metadataID)) {
-			let quality = {
-				video_quality_enable : gui.getContentPropertyGUI().isVideoQualityEnable(),
-				audio_quality_enable : gui.getContentPropertyGUI().isAudioQualityEnable(),
-				screen : gui.getContentPropertyGUI().getVideoQuality(metadataID).min,
-				video : gui.getContentPropertyGUI().getVideoQuality(metadataID).min,
-				audio : gui.getContentPropertyGUI().getAudioQuality(metadataID).min,
-				video_max : gui.getContentPropertyGUI().getVideoQuality(metadataID).max,
-				audio_max : gui.getContentPropertyGUI().getAudioQuality(metadataID).max
-			};
-			if (quality.video_max < quality.video) {
-				quality.video_max = quality.video;
-			}
-			if (quality.audio_max < quality.audio) {
-				quality.audio_max = quality.audio;
-			}
-			if (!quality.video_quality_enable) {
-				delete quality["screen"];
-				delete quality["video"];
-				delete quality["video_max"];
-			}
-			if (!quality.audio_quality_enable) {
-				delete quality["audio"];
-				delete quality["audio_max"];
-			}
-			if (Object.keys(quality).length === 0) {
-				quality = null;
-			}
+		if (this.hasVideoElem(metadataID) && data.hasOwnProperty('quality')) {
 			if (this.store.hasMetadata(metadataID)) {
 				let meta = this.store.getMetaData(metadataID);
-				meta.quality = JSON.stringify(quality);
-				controller.update_metadata(meta);
+				meta.quality = JSON.stringify(data.quality);
+				this.store.operation.updateMetadata(meta);
 			}
 		}
     }

@@ -181,7 +181,7 @@ class Action extends EventEmitter
      * @param {*} data 
      * {
 	 *    id : metaData.id,
-	 *    deviceID : deviceID
+     *    quality : 動画クオリティ
      * }
      */
     changeVideoQuality(data) {

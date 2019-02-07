@@ -20,6 +20,7 @@ class State {
 		this.mouseDownPos = [0, 0];
 		this.dragRect = {};
 		this.isSelectionRectDragging_ = false;
+		// 2つ以上選択した時の枠が表示されているかどうか
 		this.isSelectionRectShown_ = false;
 		this.isMouseDownOnList_ = false;
 		this.contentSelectedGroup = Constants.DefaultGroup; //選択中のグループ
