@@ -142,7 +142,7 @@ class Controller {
 		});
 
 		// contentが更新された
-		this.store.on(Store.EVENT_DONE_UPDATE_CONTENT, this.doneUpdateMetaData);
+		this.store.on(Store.EVENT_DONE_UPDATE_CONTENT, this.doneUpdateContent);
 
 		// contentメタデータが更新された
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, this.doneUpdateMetaData);
