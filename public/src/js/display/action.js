@@ -147,6 +147,17 @@ class Action extends EventEmitter
     requestWebRTC(data) {
         this.emit(Action.EVENT_REQUEST_WEBRTC, null, data);
     }
+
+    /**
+     * タイルコンテンツの取得
+     * @param {*} data 
+     * {
+     *   request : "{ tile_index : タイル番号 }"
+     * }
+     */
+    getTileContent(data) {
+        this.emit(Action.EVENT_GET_TILE_CONTENT, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -161,5 +172,6 @@ Action.EVENT_UPDATE = "update";
 Action.EVENT_CHANGE_CONTENT_INDEX_TO_FRONT = "changeContentIndexToFront";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
+Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 
 export default Action;

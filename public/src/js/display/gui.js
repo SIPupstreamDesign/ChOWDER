@@ -10,8 +10,6 @@ import Vscreen from '../common/vscreen.js';
 import VscreenUtil from '../common/vscreen_util.js';
 import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
-import Connector from '../common/ws_connector.js'; // TODO 消す
-import Command from '../common/command'
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -637,16 +635,19 @@ class GUI extends EventEmitter {
                     }
                     
                     if (!previousImage || isReload) {
-                        Connector.send(Command.GetTileContent, request, function (err, data) {
-                            if (err) { console.error(err); return; }
-                            let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
-                            let blob = new Blob([data.contentData], {type: mime});
-                            let image = elem.getElementsByClassName(tileClassName)[0];
-                            if (!previousImage) {
-                                URL.revokeObjectURL(image.src);	
+                        this.action.getTileContent({
+                            request : request,
+                            callback :  (err, data) => {
+                                if (err) { console.error(err); return; }
+                                let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
+                                let blob = new Blob([data.contentData], {type: mime});
+                                let image = elem.getElementsByClassName(tileClassName)[0];
+                                if (!previousImage) {
+                                    URL.revokeObjectURL(image.src);	
+                                }
+                                image.src = URL.createObjectURL(blob);
                             }
-                            image.src = URL.createObjectURL(blob);
-                        });
+                        })
                     }
 
                     isInitial = false;

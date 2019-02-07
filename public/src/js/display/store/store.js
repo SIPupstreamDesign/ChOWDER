@@ -51,6 +51,15 @@ class Store extends EventEmitter
 		super.emit(...arguments);
     }
     
+	static extractCallback(data) {
+		let callback;
+		if (data && data.hasOwnProperty('callback')) {
+			callback = data.callback;
+			delete data.callback;
+		}
+		return callback;
+    }
+    
     release() {
         if (this.videoStore.release) {
             this.videoStore.release();
@@ -321,6 +330,15 @@ class Store extends EventEmitter
             Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {
             });
         }
+    }
+
+    _getTileContent(data) {
+        let callback = Store.extractCallback(data);
+        Connector.send(Command.GetTileContent, data.request, (err, reply) => {
+            if (callback) {
+                callback(err, reply);
+            }
+        });
     }
     
     onGetWindowData(err, json) {
