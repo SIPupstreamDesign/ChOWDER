@@ -52,8 +52,14 @@ class MediaPlayer extends EventEmitter {
 		this.timeUpdated = () => {
 			if (!this.buffer) return;
 			
-			//console.error(this.video.currentTime, this.bufferRemovedPos)
 			if (this.buffer) {
+				if (!this.isRepeat() && this.video.currentTime > this.video.duration - 1 && this.video.readyState == 2) {
+					// 終わり
+					if (this.queue.length === 0) {
+						this.mediaSource.endOfStream();
+						return;
+					}
+				}
 				if (this.video.currentTime > this.bufferRemovedPos + CACHE_TIME) {
 					// 現在時刻が削除済バッファ最終位置よりCACHE_TIME秒以上後ろであった.
 					// 現在時刻-CACHE_TIME秒の地点までのバッファを削除する.
