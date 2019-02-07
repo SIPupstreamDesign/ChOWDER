@@ -123,7 +123,7 @@ class Receiver
         this.connector.on(Command.DeleteWindowMetaData, (metaDataList) => {
             // console.log("DeleteWindowMetaData", metaDataList);
             for (let i = 0; i < metaDataList.length; i = i + 1) {
-                this.store.emit(Store.EVENT_DONE_WINDOW_METADATA, null, metaDataList[i], (err, reply) => {
+                this.store.emit(Store.EVENT_DONE_DELETE_WINDOW_METADATA, null, metaDataList[i], (err, reply) => {
                 });
             }
         });
