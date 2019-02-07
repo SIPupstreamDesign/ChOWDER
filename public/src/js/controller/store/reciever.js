@@ -46,7 +46,7 @@ class Receiver
             // console.log('UpdateContent', metaData);
             let id = metaData.id;
             if (id) {
-                this.connector.send(Command.GetContent, metaData, (err, reply) => {
+                this.operation.getContent(metaData, (err, reply) => {
                     if (reply.hasOwnProperty('metaData')) {
                         if (this.store.hasMetadata(metaData.id)) {
                             this.action.correctContentAspect({
@@ -61,7 +61,7 @@ class Receiver
                             });
                         }
                     }
-                });
+                }, true);
             }
         });
 

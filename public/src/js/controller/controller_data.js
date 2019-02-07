@@ -47,8 +47,8 @@ function generateCursorColor() {
 }
 
 /**
-	 * コントローラの設定データ. コントローラIDごとに固有に持ち, サーバサイドに保存される.
-	 */
+ * コントローラの設定データ. コントローラIDごとに固有に持ち, サーバサイドに保存される.
+ */
 class ControllerData extends EventEmitter {
 	constructor() {
 		super();
