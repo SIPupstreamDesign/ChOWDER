@@ -9,6 +9,7 @@ import Store from './store'
 import StringUtil from '../../common/string_util'
 import Vscreen from '../../common/vscreen'
 import DisplayUtil from '../display_util'
+import Validator from '../../common/validator'
 
 class Receiver
 {
@@ -31,12 +32,12 @@ class Receiver
             }
         });
 
-        this.connector.on(Command.UpdateContent, function (data) {
-            // console.log("onUpdateContent", data);
+        this.connector.on(Command.UpdateContent, (data) => {
+             console.log("onUpdateContent", data);
 
-            this.connector.send(Command.GetMetaData, data, function (err, json) {
+            this.connector.send(Command.GetMetaData, data, (err, json) => {
                 // 閲覧可能か
-                if (!isViewable(json.group)) {
+                if (!this.store.isViewable(json.group)) {
                     return;
                 }
                 if (json.type === "video") {
@@ -53,10 +54,11 @@ class Receiver
                     }
                 }
                 if (!err) {
-                    doneGetMetaData(err, json);
-                    this.connector.send(Command.GetContent, json, function (err, reply) {
+                    this.store.emit(Store.EVENT_DONE_GET_METADATA, err, json);
+                    this.connector.send(Command.GetContent, json, (err, reply) => {
+                        let metaDataDict = this.store.getMetaDataDict();
                         if (metaDataDict.hasOwnProperty(json.id)) {
-                            doneGetContent(err, reply);
+                            this.store.emit(Store.EVENT_DONE_GET_CONTENT, err, reply);
                         }
                     } );
                 }

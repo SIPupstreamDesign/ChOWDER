@@ -490,5 +490,6 @@ Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
 Store.EVENT_REQUEST_SHOW_DISPLAY_ID = "request_show_display_id"
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
+Store.EVENT_DONE_GET_CONTENT = "done_get_content";
 
 export default Store;

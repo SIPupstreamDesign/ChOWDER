@@ -304,6 +304,7 @@ class Display {
 		});
 		
 		this.store.on(Store.EVENT_DONE_GET_METADATA, this.doneGetMetaData);
+		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
 		
 	}
 }
