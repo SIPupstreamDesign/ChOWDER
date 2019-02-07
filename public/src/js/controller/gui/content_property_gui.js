@@ -453,14 +453,14 @@ class ContentPropertyGUI extends EventEmitter {
 					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, metaData.video_device, (deviceID) => {
 						this.action.changeVideoDevice({
 							id : metaData.id,
-							deviceID : deviceID
+							deviceInfo : this.getDeviceInfo(metaData)
 						});
 					});
 					addVideoTextLabel('video_select_audio_title', i18next.t('audio_input'));
 					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, metaData.audio_device, (deviceID) => {
 						this.action.changeAudioDevice({
 							id : metaData.id,
-							deviceID : deviceID
+							deviceInfo : this.getDeviceInfo(metaData)
 						});
 					});
 				}
@@ -578,9 +578,9 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 	}
 	/**
-		 * Propertyエリアパラメータ消去
-		 * @method clearProperty
-		 */
+	 * Propertyエリアパラメータ消去
+	 * @method clearProperty
+	 */
 	clear(updateText) {
 		let content_text = document.getElementById('content_text');
 		if (content_text && updateText) {
@@ -656,9 +656,9 @@ class ContentPropertyGUI extends EventEmitter {
 		this.initPropertyArea(metaData, groupName, type, isOwnVideo);
 	}
 	/**
-		 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
-		 * @method assignVirtualDisplay
-		 */
+	 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
+	 * @method assignVirtualDisplay
+	 */
 	assignVirtualDisplay(whole, splitCount) {
 		let wholeWidth = document.getElementById('whole_width');
 		let wholeHeight = document.getElementById('whole_height');
@@ -679,10 +679,10 @@ class ContentPropertyGUI extends EventEmitter {
 	}
 	
 	/**
-		 * メタデータをPropertyエリアに反映
-		 * @method assignContentProperty
-		 * @param {JSON} metaData メタデータ
-		 */
+	 * メタデータをPropertyエリアに反映
+	 * @method assignContentProperty
+	 * @param {JSON} metaData メタデータ
+	 */
 	assignContentProperty(metaData) {
 		//console.log("assignContentProperty:" + JSON.stringify(metaData));
 		let transx = document.getElementById('content_transform_x');
@@ -1063,6 +1063,15 @@ class ContentPropertyGUI extends EventEmitter {
 			quality = null;
 		}
 		return quality;
+	}
+
+	getDeviceInfo(metaData) {
+		return {
+			isCameraOn : metaData.is_video_on,
+			isMicOn : metaData.is_audio_on,
+			audioDeviceID : this.getAudioDeviceID(),
+			videoDeviceID : this.getVideoDeviceID()
+		}
 	}
 
 	getContentTransform() {

@@ -194,7 +194,8 @@ class ContentInputGUI
 					}
 					this.action.inputVideoFile({
 						contentData : data,
-						metaData : metaData
+						metaData : metaData,
+						subtype : "file"
 					});
 				}
 			};
@@ -402,7 +403,8 @@ class ContentInputGUI
 								posx: px,
 								posy: py,
 								visible: true,
-								user_data_text: JSON.stringify({ text:  file.name })
+								user_data_text: JSON.stringify({ text:  file.name }),
+								subtype : "file"
 							}
 						});
 					};
@@ -529,7 +531,8 @@ class ContentInputGUI
 								metaData : {
 									posx: Vscreen.getWhole().x, 
 									posy: Vscreen.getWhole().y, 
-									visible: true
+									visible: true,
+									subtype : "screen"
 								}
 							})
 						}, function (err) {
@@ -553,7 +556,8 @@ class ContentInputGUI
 						group: gui.getCurrentGroupID(),
 						posx: Vscreen.getWhole().x,
 						posy: Vscreen.getWhole().y,
-						visible: true
+						visible: true,
+						subtype : "screen"
 					}
 				})
 			}).catch(function (err) {
@@ -571,7 +575,8 @@ class ContentInputGUI
 					metaData : {
 						posx: Vscreen.getWhole().x,
 						posy: Vscreen.getWhole().y,
-						visible: true
+						visible: true,
+						subtype : "camera"
 					}
 				})
 			},

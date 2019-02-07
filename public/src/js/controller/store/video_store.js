@@ -9,6 +9,7 @@ import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
 import WebRTC from '../../common/webrtc';
+import Vscreen from '../../common/vscreen'
 
 "use strict";
 
@@ -401,7 +402,7 @@ class VideoStore {
     _inputVideoFile(data) {
         let metaData = data.metaData;
         let blob = data.contentData;
-        let type = "file";
+        let subType = data.metaData.subtype;
 
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
@@ -421,12 +422,12 @@ class VideoStore {
 			video = document.createElement('video');
 			this.setVideoElem(metaData.id, video);
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
-			if (type === "camera" || type === "screen") {
+			if (subType === "camera" || subType === "screen") {
 				video.muted = true;
 			}
 		}
 		let videoData;
-		if (type === "file") {
+		if (subType === "file") {
 			metaData.use_datachannel = true;
 			this.processMovieBlob(metaData, video, blob, metaData.id);
 			/*
@@ -470,7 +471,6 @@ class VideoStore {
 		*/
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
-			metaData.subtype = type;
 			if (!metaData.hasOwnProperty("width")) {
 				metaData.width = Number(video.videoWidth);
 			}
@@ -506,7 +506,7 @@ class VideoStore {
     _inputVideoStream(data) {
         let metaData = data.metaData;
         let blob = data.contentData;
-        let type = "stream";
+        let subType = data.subtype;
 
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
@@ -524,7 +524,7 @@ class VideoStore {
 			video = document.createElement('video');
 			this.setVideoElem(metaData.id, video);
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
-			if (type === "camera" || type === "screen") {
+			if (subType === "camera" || subType === "screen") {
 				video.muted = true;
 			}
 		}
@@ -545,7 +545,6 @@ class VideoStore {
         
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
-			metaData.subtype = type;
 			if (!metaData.hasOwnProperty("width")) {
 				metaData.width = Number(video.videoWidth);
 			}
@@ -574,11 +573,12 @@ class VideoStore {
     }
     
 	// TODO
-	restartCamera(metadataID) {
-		let isCameraOn = content_list.isCameraOn(metadataID);
-		let isMicOn = content_list.isMicOn(metadataID);
-		let audioDeviceID = gui.getContentPropertyGUI().getAudioDeviceID();
-		let videoDeviceID = gui.getContentPropertyGUI().getVideoDeviceID();
+	restartCamera(metadataID, deviceInfo) {
+		let isCameraOn = deviceInfo.isCameraOn;
+		let isMicOn = deviceInfo.isMicOn;
+		let audioDeviceID = deviceInfo.audioDeviceID;
+		let videoDeviceID = deviceInfo.videoDeviceID;
+
 		let constraints = {};
 		let saveDeviceID = {
 			video_device : videoDeviceID,
@@ -606,16 +606,16 @@ class VideoStore {
 		navigator.mediaDevices.getUserMedia(constraints).then(
 			((saveDeviceID) => {
 				return (stream) => {
-					if (store.hasMetadata(metadataID)) {
+					if (this.store.hasMetadata(metadataID)) {
 						// カメラマイク有効情報を保存
 						let meta = this.store.getMetaData(metadataID)
 						meta.video_device = saveDeviceID.video_device,
 						meta.audio_device = saveDeviceID.audio_device,
 						meta.is_video_on = isCameraOn,
 						meta.is_audio_on = isMicOn,
-						store.setMetaData(metadataID, meta)
+						this.store.setMetaData(metadataID, meta)
 					}
-					this.action._inputVideoStream({
+					this.action.inputVideoStream({
 						contentData : stream,
 						metaData : {
 							id : metadataID,
@@ -643,9 +643,8 @@ class VideoStore {
      */
     _changeVideoDevice(data) {
         let metadataID = data.id;
-        let deviceID = data.deviceID;
-        if (this.hasVideoElem(metadataID)) {
-            this.restartCamera(metadataID);
+        if (data.hasOwnProperty('deviceInfo') && this.hasVideoElem(metadataID)) {
+            this.restartCamera(metadataID, data.deviceInfo);
         }
     }
 
@@ -654,9 +653,8 @@ class VideoStore {
      */
     _changeAudioDevice(data) {
         let metadataID = data.id;
-        let deviceID = data.deviceID;
-		if (this.hasVideoElem(metadataID)) {
-			this.restartCamera(metadataID);
+		if (data.hasOwnProperty('deviceInfo') && this.hasVideoElem(metadataID)) {
+			this.restartCamera(metadataID, data.deviceInfo);
 		}
     }
 
