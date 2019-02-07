@@ -144,7 +144,7 @@
 		
 		var dataChannelOptions = {
 			ordered: true,
-			maxRetransmitTime: 100, // ミリ秒
+			//maxRetransmitTime: 100, // ミリ秒
 		};
 		this.datachannel = this.peer.createDataChannel("myLabel", dataChannelOptions);
 		this.datachannel.binaryType = "arraybuffer";

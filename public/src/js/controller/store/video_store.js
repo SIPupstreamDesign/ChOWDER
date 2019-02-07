@@ -321,9 +321,11 @@ class VideoStore {
 				}, 5000);
 			});
 
+
 			let currentPos = 0;
 			let maxBytes = 65535;
-			let updateLoop = () => {
+			const NUM_SEGMENTS_A_TIME = 5;
+			let updateLoop = (loopCount) => {
 				setTimeout(() => {
 					let webRTC = this.webRTCDict[keyStr];
 					if (this.segmentDict.hasOwnProperty(metaData.id)) {
@@ -333,7 +335,9 @@ class VideoStore {
 							if (currentPos === videoSegments.length)
 								return;
 
-							for (let maxPos = currentPos + 10; currentPos < maxPos && currentPos < videoSegments.length; ++currentPos) {
+							// 10segmentsずつ送る.
+							for (let maxPos = currentPos + 5; currentPos < maxPos && currentPos < videoSegments.length; ++currentPos) {
+								// 1segmentについてmaxBytesで分割しながら送る
 								if (videoSegments[currentPos].byteLength >= maxBytes) {
 									let pos = 0;
 									while (true) {
@@ -357,19 +361,23 @@ class VideoStore {
 									webRTC.datachannel.send(videoSegments[currentPos]);
 								}
 							}
+							if (loopCount > 0) {
+								updateLoop(--loopCount);
+							}
 						}
 						catch (e) {
+							// 送信失敗した場合、途中から再送を試みる
 							console.error(e);
-							webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
-							return;
+							updateLoop(Math.ceil((videoSegments.length - currentPos)/ NUM_SEGMENTS_A_TIME));
+							//webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
 						}
 					}
-					updateLoop();
 				}, 500);
 			};
 			if (metaData.use_datachannel) {
-				webRTC.on(WebRTC.EVENT_DATACHANNEL_OPEN, function () {
-					updateLoop();
+				webRTC.on(WebRTC.EVENT_DATACHANNEL_OPEN, () => {
+					let videoSegments = this.segmentDict[metaData.id].video;
+					updateLoop(Math.ceil(videoSegments.length/ NUM_SEGMENTS_A_TIME));
 				});
 			}
 		}
