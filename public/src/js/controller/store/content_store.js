@@ -266,7 +266,7 @@ class ContentStore
 						});
 						manipulator.removeManipulator();
 					}
-				});
+				}, true); // DONE_GET_CONTENT(doneGetContent)を遅延させEVENT_DONE_RESTORE_CONTENTにて行う
 			}
 		}
 	}

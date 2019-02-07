@@ -278,7 +278,7 @@
 
         /**
          * updateDB処理実行後のブロードキャスト用ラッパー.
-         * @method post_updateContent
+         * @method post_updateDB
          */
         post_updateDB(ws, resultCallback) {
             return (err, reply)=>{

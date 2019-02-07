@@ -323,6 +323,9 @@ class Controller {
 				this.updateScreen();
 			});
 		});
+
+		// 復元完了
+		this.store.on(Store.EVENT_DONE_RESTORE_CONTENT, this.doneGetContent);
 	}
 
 	/**
