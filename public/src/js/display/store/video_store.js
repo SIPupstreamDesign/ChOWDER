@@ -71,8 +71,21 @@ class VideoStore {
                 if (metaData.use_datachannel) {
                     if (!this.playerDict.hasOwnProperty(rtcKey)) {
                         let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
-                        player.on('sourceOpen', () => {
-                            //this.player.setDuration(313.47);
+                        player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
+                            if (metaData.hasOwnProperty('video_duration')) {
+                                player.setDuration(metaData.video_duration);
+                            }
+                        });
+                        player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
+                            /*
+                            stopVideo();
+                            const segmentIndex = time / SAMPLE_SEC;
+                            console.log("MediaPlayer.EVENT_NEED_RELOAD", time, segmentIndex, this.segmentDict[id].videoIndex, time / SAMPLE_SEC);
+                            this.segmentDict[id].videoIndex = segmentIndex;
+                            this.segmentDict[id].audioIndex = segmentIndex;
+                            playVideo();
+                            */
+                           // TODO
                         });
                         this.playerDict[rtcKey] = player;
                     }

@@ -91,7 +91,7 @@ class VideoStore {
 		}
 	}
     
-	processMovieBlob(videoElem, blob, id) {
+	processMovieBlob(metaData, videoElem, blob, id) {
 		//let fileSize   = file.size;
 		let offset = 0;
 		let readBlock = null;
@@ -149,9 +149,11 @@ class VideoStore {
 				if (info.isFragmented) {
 					console.info("duration fragment", info.fragment_duration/info.timescale)
 					player.setDuration(info.fragment_duration/info.timescale);
+					metaData.video_duration = info.fragment_duration/info.timescale;
 				} else {
 					console.info("duration", info.duration/info.timescale)
 					player.setDuration(info.duration/info.timescale);
+					metaData.video_duration = info.duration/info.timescale;
 				}
 				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
 				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
@@ -300,7 +302,7 @@ class VideoStore {
 				});
 			});
 			webRTC.on(WebRTC.EVENT_CONNECTED, () => {
-				setTimeout(() => {
+				setTimeout(((metaData) => {
 					let webRTC = this.webRTCDict[keyStr];
 
 					webRTC.getStatus((status) => {
@@ -318,7 +320,7 @@ class VideoStore {
 						});
 						this.store.operation.updateMetadata(meta);
 					});
-				}, 5000);
+				})(metaData), 5000);
 			});
 
 
@@ -367,7 +369,7 @@ class VideoStore {
 						}
 						catch (e) {
 							// 送信失敗した場合、途中から再送を試みる
-							console.error(e);
+							console.warn(e);
 							updateLoop(Math.ceil((videoSegments.length - currentPos)/ NUM_SEGMENTS_A_TIME));
 							//webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
 						}
@@ -426,7 +428,7 @@ class VideoStore {
 		let videoData;
 		if (type === "file") {
 			metaData.use_datachannel = true;
-			this.processMovieBlob(video, blob, metaData.id);
+			this.processMovieBlob(metaData, video, blob, metaData.id);
 			/*
 			videoData = URL.createObjectURL(blob);
 			video.src = videoData;

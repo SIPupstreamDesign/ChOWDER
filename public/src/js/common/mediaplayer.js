@@ -68,7 +68,9 @@ class MediaPlayer extends EventEmitter {
 						if (time > this.bufferRemovedPos) {
 							//console.error("remove", time)
 							this.buffer.remove(0, time);
-							this.audioBuffer.remove(0, time);
+							if (this.audioBuffer) {
+								this.audioBuffer.remove(0, time);
+							}
 							this.bufferRemovedPos = time;
 						}
 					}
@@ -81,18 +83,14 @@ class MediaPlayer extends EventEmitter {
 						this.preventUpdate = true;
 						this.queue = [];
 						this.audioQueue = [];
-						/*
-						if (this.buffer.buffered.length > 0) {
-							this.buffer.remove(this.buffer.buffered.start(0), this.buffer.buffered.end(0));
+						
+						if (this.buffer) {
+							this.buffer.abort();
 						}
-						if (this.audioBuffer.buffered.length > 0) {
-							this.audioBuffer.remove(this.audioBuffer.buffered.start(0), this.audioBuffer.buffered.end(0));
+						if (this.audioBuffer) {
+							this.audioBuffer.abort();
 						}
-						*/
-						this.buffer.abort();
-						this.audioBuffer.abort();
 						this.bufferRemovedPos = 0;
-						//const time = this.getSampleTime(this.video.currentTime);
 						this.setOffsetTime(0);
 						this.emit(MediaPlayer.EVENT_NEED_RELOAD, null, 0);
 					}
@@ -141,7 +139,9 @@ class MediaPlayer extends EventEmitter {
 						if (time > this.bufferRemovedPos) {
 							//console.error("remove", time, this.buffer.buffered)
 							this.buffer.remove(0, time);
-							this.audioBuffer.remove(0, time);
+							if (this.audioBuffer) {
+								this.audioBuffer.remove(0, time);
+							}
 							this.mediaSource.setLiveSeekableRange(time, this.buffer.buffered.end(0));
 							this.bufferRemovedPos = time;
 						}
