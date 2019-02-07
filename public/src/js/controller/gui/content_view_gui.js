@@ -305,5 +305,4 @@ class ContentViewGUI extends EventEmitter {
 
 }
 
-// singleton
 export default ContentViewGUI;

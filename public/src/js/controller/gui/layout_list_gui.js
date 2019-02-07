@@ -88,5 +88,4 @@ class LayoutListGUI extends EventEmitter {
 	}
 }	
 
-// singleton
 export default LayoutListGUI;

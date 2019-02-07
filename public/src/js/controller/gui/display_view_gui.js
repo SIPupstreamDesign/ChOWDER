@@ -77,5 +77,4 @@ class DisplayViewGUI extends EventEmitter {
 	}
 }
 
-// singleton
 export default DisplayViewGUI;

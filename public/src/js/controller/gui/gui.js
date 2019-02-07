@@ -594,14 +594,14 @@ class GUI extends EventEmitter
 			displayPreviewArea.style.opacity = 1.0;
 			contentPreviewArea.style.opacity = 0.3;
 			displayPreviewArea.style.zIndex = 10;
-			contentPreviewArea.style.zIndex = -1000;
+			contentPreviewArea.style.zIndex = 0;
 			this.displayMenu.show(true);
 			this.contentMenu.show(false);
 			this.layoutMenu.show(false);
 		} else if (tabName === 'Content') {
 			displayPreviewArea.style.opacity = 0.3;
 			contentPreviewArea.style.opacity = 1.0;
-			displayPreviewArea.style.zIndex = -1000;
+			displayPreviewArea.style.zIndex = 0;
 			contentPreviewArea.style.zIndex = 10;
 			this.displayMenu.show(false);
 			this.contentMenu.show(true);
@@ -609,14 +609,14 @@ class GUI extends EventEmitter
 		} else if (tabName === 'Search') {
 			displayPreviewArea.style.opacity = 0.3;
 			contentPreviewArea.style.opacity = 1.0;
-			displayPreviewArea.style.zIndex = -1000;
+			displayPreviewArea.style.zIndex = 0;
 			contentPreviewArea.style.zIndex = 10;
 			this.contentMenu.show(true);
 			this.layoutMenu.show(false);
 		} else if (tabName === "Layout") {
 			displayPreviewArea.style.opacity = 0.3;
 			contentPreviewArea.style.opacity = 1.0;
-			displayPreviewArea.style.zIndex = -1000;
+			displayPreviewArea.style.zIndex = 0;
 			contentPreviewArea.style.zIndex = 10;
 			this.displayMenu.show(false);
 			this.contentMenu.show(false);

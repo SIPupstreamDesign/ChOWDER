@@ -577,8 +577,8 @@ class VideoStore {
 	restartCamera(metadataID) {
 		let isCameraOn = content_list.isCameraOn(metadataID);
 		let isMicOn = content_list.isMicOn(metadataID);
-		let audioDeviceID = gui.getContentPropertyGUI().get_audio_device_id();
-		let videoDeviceID = gui.getContentPropertyGUI().get_video_device_id();
+		let audioDeviceID = gui.getContentPropertyGUI().getAudioDeviceID();
+		let videoDeviceID = gui.getContentPropertyGUI().getVideoDeviceID();
 		let constraints = {};
 		let saveDeviceID = {
 			video_device : videoDeviceID,
@@ -662,19 +662,20 @@ class VideoStore {
 
     /**
      * 動画クオリティの変更
+	 * TODO
      */
     _changeVideoQuality(data) {
         let metadataID = data.id;
         let deviceID = data.deviceID;
 		if (this.hasVideoElem(metadataID)) {
 			let quality = {
-				video_quality_enable : gui.getContentPropertyGUI().is_video_quality_enable(),
-				audio_quality_enable : gui.getContentPropertyGUI().is_audio_quality_enable(),
-				screen : gui.getContentPropertyGUI().get_video_quality(metadataID).min,
-				video : gui.getContentPropertyGUI().get_video_quality(metadataID).min,
-				audio : gui.getContentPropertyGUI().get_audio_quality(metadataID).min,
-				video_max : gui.getContentPropertyGUI().get_video_quality(metadataID).max,
-				audio_max : gui.getContentPropertyGUI().get_audio_quality(metadataID).max
+				video_quality_enable : gui.getContentPropertyGUI().isVideoQualityEnable(),
+				audio_quality_enable : gui.getContentPropertyGUI().isAudioQualityEnable(),
+				screen : gui.getContentPropertyGUI().getVideoQuality(metadataID).min,
+				video : gui.getContentPropertyGUI().getVideoQuality(metadataID).min,
+				audio : gui.getContentPropertyGUI().getAudioQuality(metadataID).min,
+				video_max : gui.getContentPropertyGUI().getVideoQuality(metadataID).max,
+				audio_max : gui.getContentPropertyGUI().getAudioQuality(metadataID).max
 			};
 			if (quality.video_max < quality.video) {
 				quality.video_max = quality.video;

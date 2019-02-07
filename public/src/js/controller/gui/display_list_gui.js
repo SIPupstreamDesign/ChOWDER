@@ -58,5 +58,4 @@ class DisplayListGUI extends EventEmitter {
 	}
 }
 
-// singleton
 export default DisplayListGUI;

@@ -59,7 +59,7 @@ function addInputProperty(isEditable, id, leftLabel, rightLabel, value, changeCa
 
 /**
  * Propertyタブに入力プロパティを追加する
- * @method addInputProperty
+ * @method addTextInputProperty
  * @param {Object} input element id
  * @param {String} value 初期入力値
  */
@@ -77,7 +77,7 @@ function addTextInputProperty(isEditable, id, value) {
 
 /**
  * Propertyタブに入力プロパティを追加する
- * @method addInputProperty
+ * @method addVideoTextLabel
  * @param {Object} input element id
  * @param {String} value 初期入力値
  */
@@ -93,7 +93,7 @@ function addVideoTextLabel(id, txt) {
 
 /**
  * Propertyタブに入力プロパティを追加する
- * @method addInputProperty
+ * @method addVideoQualityTextProperty
  * @param {Object} input element id
  * @param {String} value 初期入力値
  */
@@ -110,7 +110,7 @@ function addVideoQualityTextProperty(isEditable, id, value) {
 
 /**
  * Propertyタブに選択力プロパティを追加する
- * @method addInputProperty
+ * @method addVideoSelectProperty
  * @param {Object} input element id
  * @param {String} items 初期入力値 items { keys : [...] , values : [....] }
  */
@@ -149,7 +149,7 @@ function addVideoSelectProperty(isEditable, id, items, value, changeCallback) {
 
 /**
  * Propertyタブに入力プロパティを追加する
- * @method addInputProperty
+ * @method addVideoQualityProperty
  * @param {Object} input element id
  * @param {String} leftLabel 左ラベル
  * @param {String} rightLabel 右ラベル
@@ -466,7 +466,7 @@ class ContentPropertyGUI extends EventEmitter {
 				}
 				addVideoTextLabel('video_select_quality_title', i18next.t('video_quality'));
 				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, 50, (val) => {
-					this.update_quality_display();
+					this.updateQualityDisplay();
 					this.action.changeVideoQuality({
 						id : metaData.id
 					});
@@ -483,7 +483,7 @@ class ContentPropertyGUI extends EventEmitter {
 				});
 				addVideoTextLabel('video_select_quality_title', i18next.t('audio_quality'));
 				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, 100, (val) => {
-					this.update_quality_display()
+					this.updateQualityDisplay()
 					this.action.changeVideoQuality({
 						id : metaData.id
 					});
@@ -516,7 +516,7 @@ class ContentPropertyGUI extends EventEmitter {
 				if (metaData.hasOwnProperty('quality')) {
 					try {
 						let quality = JSON.parse(metaData.quality);
-						this.set_quality(quality);
+						this.setQuality(quality);
 					}
 					catch (e) {
 						console.error(e);
@@ -768,7 +768,7 @@ class ContentPropertyGUI extends EventEmitter {
 		if (metaData.hasOwnProperty('quality')) {
 			try {
 				let quality = JSON.parse(metaData.quality);
-				this.set_quality(quality);
+				this.setQuality(quality);
 			}
 			catch (e) {
 				console.error(e);
@@ -1047,28 +1047,28 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 	}
 
-	get_video_device_id() {
+	getVideoDeviceID() {
 		let elem = document.getElementById('video_select_input_video');
 		if (elem) {
 			return elem.options[elem.selectedIndex].value;
 		}
 		return null;
 	}
-	get_audio_device_id() {
+	getAudioDeviceID() {
 		let elem = document.getElementById('video_select_input_audio');
 		if (elem) {
 			return elem.options[elem.selectedIndex].value;
 		}
 		return null;
 	}
-	is_video_quality_enable() {
+	isVideoQualityEnable() {
 		let elem = document.getElementById('video_select_input_quality');
 		if (elem) {
 			return elem.options[elem.selectedIndex].value === "custom";
 		}
 		return false;
 	}
-	is_audio_quality_enable() {
+	isAudioQualityEnable() {
 		let elem = document.getElementById('audio_select_input_quality');
 		if (elem) {
 			return elem.options[elem.selectedIndex].value === "custom";
@@ -1076,7 +1076,7 @@ class ContentPropertyGUI extends EventEmitter {
 		return false;
 	}
 	// ビデオオーディオ品質の有効状態の変更による表示切り替え
-	update_quality_display() {
+	updateQualityDisplay() {
 		let elem;
 		let elems;
 		elem = document.getElementById('video_select_input_quality');
@@ -1094,7 +1094,7 @@ class ContentPropertyGUI extends EventEmitter {
 			}
 		}
 	}
-	get_video_quality() {
+	getVideoQuality() {
 		let elems = document.getElementsByClassName('video_quality');
 		if (elems.length > 0) {
 			return {
@@ -1104,7 +1104,7 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		return null;
 	}
-	get_audio_quality() {
+	getAudioQuality() {
 		let elems = document.getElementsByClassName('audio_quality');
 		if (elems.length > 0) {
 			return {
@@ -1114,15 +1114,15 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		return null;
 	}
-	set_quality(quality) {
-		//console.error("set_quality", quality)
+	setQuality(quality) {
+		//console.error("setQuality", quality)
 		let elem;
 		/*
-		screen : content_property.get_video_quality(metadataID).min,
-		video : content_property.get_video_quality(metadataID).min,
-		audio : content_property.get_audio_quality(metadataID).min,
-		video_max : content_property.get_video_quality(metadataID).max,
-		audio_max : content_property.get_audio_quality(metadataID).max
+		screen : content_property.getVideoQuality(metadataID).min,
+		video : content_property.getVideoQuality(metadataID).min,
+		audio : content_property.getAudioQuality(metadataID).min,
+		video_max : content_property.getVideoQuality(metadataID).max,
+		audio_max : content_property.getAudioQuality(metadataID).max
 		*/
 		elem = document.getElementById('video_select_input_quality');
 		if (elem) {
@@ -1166,12 +1166,8 @@ class ContentPropertyGUI extends EventEmitter {
 				amax.value = Number(quality.audio_max);
 			}
 		}
-		this.update_quality_display();
+		this.updateQualityDisplay();
 	}
 }
 
-ContentPropertyGUI.EVENT_VIDEOQUALITY_CHANGED = "videoquality_changed";
-
-
-// singleton
 export default ContentPropertyGUI;

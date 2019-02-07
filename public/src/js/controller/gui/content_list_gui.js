@@ -345,5 +345,4 @@ class ContentListGUI extends EventEmitter
 	}
 };
 
-// singleton
 export default ContentListGUI;
