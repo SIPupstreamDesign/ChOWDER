@@ -19,6 +19,7 @@ import ControllerData from '../controller_data'
 import Operation from './operation'
 import Translation from '../../common/translation'
 import Command from '../../common/command'
+import Receiver from './reciever.js';
 
 "use strict";
 
@@ -45,6 +46,7 @@ class Store extends EventEmitter
 		this.controllerData = new ControllerData();
 
 		this.isInitialized_ = false;
+		this.reciever = new Receiver(Connector, this, action);
 		this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
 		this.managementStore = new ManagementStore(Connector, state, this, action);
 		this.contentStore = new ContentStore(Connector, state, this, action);
@@ -596,6 +598,11 @@ Store.EVENT_GROUP_ADDED = "group_added";
 Store.EVENT_TAB_CHANGED_PRE = "tab_change_pre";
 Store.EVENT_TAB_CHANGED_POST = "tab_change_post";
 Store.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
+
+// reviever 
+Store.EVENT_DONE_DELETE_WINDOW_METADATA = "done_delete_window_metadata";
+Store.EVENT_DONE_UPDATE_GROUP = "done_update_group";
+Store.EVENT_DONE_UPDATE_SETTING = "done_update_setting";
 
 export default Store;
 

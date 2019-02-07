@@ -64,3 +64,4 @@ window.onkeyup = (evt) => {
 		state.setSpaceDown(false);
 	}
 };
+window.onresize = controller.onResize;

@@ -481,9 +481,7 @@ class GUI extends EventEmitter
 		displayPreviewArea.addEventListener('mousedown', (evt) => {
 			if (this.managementGUI.isShow()) { return; }
 			if (this.state.isShiftDown()) { return; }
-			if (this.get_whole_scale) {
-				this.displayScale = this.get_whole_scale();
-			}
+			this.displayScale = Vscreen.getWholeScale();
 			if (evt.button === 2) {
 				let rect = displayPreviewArea.getBoundingClientRect();
 				mouseDownPos.y = evt.clientY - rect.top;

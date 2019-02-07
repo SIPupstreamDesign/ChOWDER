@@ -16,7 +16,6 @@ import VscreenUtil from '../common/vscreen_util.js';
 import Connector from '../common/ws_connector.js';
 import ContentUtil from './content_util';
 import Command from '../common/command'
-import ControllerDispatch from './controller_dispatch'
 
 "use strict";
 
@@ -40,7 +39,11 @@ class Controller {
 		this.loginGUI = new LoginGUI(store, action);
 		manipulator.init(store, action);
 		
+		this.resizeTimer = null;
 		this.isInitialUpdate = true;
+		this.isInitialized = false;
+
+		this.onResize = this.onResize.bind(this);
 		this.setupWindow = this.setupWindow.bind(this);
 		this.setupSelectionRect = this.setupSelectionRect.bind(this);
 		this.showSelectionRect = this.showSelectionRect.bind(this);
@@ -53,12 +56,15 @@ class Controller {
 		this.onUpdateAuthority = this.onUpdateAuthority.bind(this);
 		this.onCloseContent = this.onCloseContent.bind(this);
 		this.doneGetVirtualDisplay = this.doneGetVirtualDisplay.bind(this);
+		this.doneUpdateVirtualDisplay = this.doneUpdateVirtualDisplay.bind(this);
+		this.doneUpdateSetting = this.doneUpdateSetting.bind(this);
 		this.doneGetContent = this.doneGetContent.bind(this);
 		this.doneGetWindowMetaData = this.doneGetWindowMetaData.bind(this);
 		this.doneGetGroupList = this.doneGetGroupList.bind(this);
 		this.doneDeleteContent = this.doneDeleteContent.bind(this);
 		this.doneAddContent = this.doneAddContent.bind(this);
 		this.doneUpdateContent = this.doneUpdateContent.bind(this);
+		this.doneUpdateGroup = this.doneUpdateGroup.bind(this);
 		this.doneUpdateMetaData = this.doneUpdateMetaData.bind(this);
 		this.doneUpdateWindowMetaData = this.doneUpdateWindowMetaData.bind(this);
 		this.doneGetMetaData = this.doneGetMetaData.bind(this);
@@ -74,6 +80,74 @@ class Controller {
 	}
 
 	/**
+	 * GUI/Dispacher/controller初期化
+	 * @method init
+	 */
+	init(data) {
+		this.getControllerData().set(data);
+		let controllerData = this.getControllerData();
+
+		let displayScale = controllerData.getDisplayScale();
+		Vscreen.setWholeScale(displayScale, true);
+
+		this.gui.init(controllerData);
+		// マウスイベントの登録
+		this.gui.on('mousemove', this.onMouseMove);
+		this.gui.on('mouseup', this.onMouseUp);
+
+		let snap = controllerData.getSnapType(Validator.isDisplayTabSelected());
+		if (snap) {
+			this.action.changeSnapType({
+				isDisplay : Validator.isDisplayTabSelected(),
+				snapType : snap
+			});
+		}
+		document.getElementsByClassName('head_menu_hover_left')[0].addEventListener('change', (eve) => {
+			let f = eve.currentTarget.value;
+			this.action.changeSnapType({
+				isDisplay : Validator.isDisplayTabSelected(),
+				snapType : f
+			});
+		}, false);
+
+		// リモートカーソルの有効状態を更新
+		this.action.updateRemoteCursor({isEnable : controllerData.isUpdateCursorEnable()});
+
+		manipulator.setCloseFunc(this.onCloseContent);
+
+		this.updateScreen();
+		this.setupSelectionRect();
+		Vscreen.dump();
+		this.action.init();
+
+		this.action.reloadAll({
+			callback : () => {
+				let head_menu_hover = document.getElementsByClassName('head_menu_hover')[0];
+				let logoutButton = document.getElementsByClassName('logout_button')[0];
+				let user_text = document.getElementsByClassName('user_text')[0];
+	
+				// ログインユーザ名の設定.
+				user_text.innerHTML = "User:" + data.loginUserName;
+				// ログアウトボタンを設定.
+				head_menu_hover.style.display = "block";
+				logoutButton.onclick = () => {
+					cookie.setLoginKey(this.store.getLoginStore().getControllerID(), data.loginkey);
+					this.action.logout({ loginkey: data.loginkey });
+				};
+				
+				let connectIcon = document.getElementsByClassName('head_menu_hover_right')[0];
+				if (connectIcon){
+					//e.textContent = '×';
+					connectIcon.title = i18next.t('connected_to_server');
+					connectIcon.className = 'head_menu_hover_right connect';
+				}
+			}
+		});
+		
+		this.isInitialized = true;
+	}
+
+	/**
 	 * イベントハンドラを定義
 	 */
 	initEvent() {
@@ -86,33 +160,7 @@ class Controller {
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
 			Validator.init(this.store, this.gui);
 
-			this.getControllerData().set(data.controllerData);
-			ControllerDispatch.init(this, this.gui, this.store, this.action);
-			this.setupSelectionRect();
-
-			this.action.reloadAll({
-				callback : () => {
-					let head_menu_hover = document.getElementsByClassName('head_menu_hover')[0];
-					let logoutButton = document.getElementsByClassName('logout_button')[0];
-					let user_text = document.getElementsByClassName('user_text')[0];
-		
-					// ログインユーザ名の設定.
-					user_text.innerHTML = "User:" + data.loginUserName;
-					// ログアウトボタンを設定.
-					head_menu_hover.style.display = "block";
-					logoutButton.onclick = () => {
-						cookie.setLoginKey(this.store.getLoginStore().getControllerID(), data.loginkey);
-						this.action.logout({ loginkey: data.loginkey });
-					};
-					
-					let connectIcon = document.getElementsByClassName('head_menu_hover_right')[0];
-					if (connectIcon){
-						//e.textContent = '×';
-						connectIcon.title = i18next.t('connected_to_server');
-						connectIcon.className = 'head_menu_hover_right connect';
-					}
-				}
-			});
+			this.init(data.controllerData);
 		});
 
 		// websocket接続が確立された
@@ -143,6 +191,9 @@ class Controller {
 
 		// contentが更新された
 		this.store.on(Store.EVENT_DONE_UPDATE_CONTENT, this.doneUpdateContent);
+
+		// groupが更新された
+		this.store.on(Store.EVENT_DONE_UPDATE_GROUP, this.doneUpdateGroup);
 
 		// contentメタデータが更新された
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, this.doneUpdateMetaData);
@@ -197,7 +248,7 @@ class Controller {
 		this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, this.doneGetVirtualDisplay);
 
 		// ディスプレイプロパティが変更された
-		this.store.on(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, this.doneGetVirtualDisplay);
+		this.store.on(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, this.doneUpdateVirtualDisplay);
 
 		// ディスプレイ分割数が変更された
 		this.store.on(Store.EVENT_DISPLAY_SPLIT_CHANGED, (err, split) => {
@@ -221,6 +272,9 @@ class Controller {
 		
 		// コンテンツが削除された
 		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, this.doneDeleteContent);
+
+		// ディスプレイのメタデータが削除された
+		this.store.on(Store.EVENT_DONE_DELETE_WINDOW_METADATA, this.doneDeleteWindowMetaData);
 
 		// コンテンツ選択
 		this.store.on(Store.EVENT_SELECT_CONTENT, (err, data) => {
@@ -326,6 +380,25 @@ class Controller {
 
 		// 復元完了
 		this.store.on(Store.EVENT_DONE_RESTORE_CONTENT, this.doneGetContent);
+	}
+
+	/**
+	 * リサイズハンドラ
+	 */
+	onResize(evt) {
+		if (this.resizeTimer) {
+			clearTimeout(this.resizeTimer);
+		}
+		this.resizeTimer = setTimeout(() => {
+			let panel = document.getElementsByClassName('preview_area_panel__')[0];
+			let cx = (panel.getBoundingClientRect().right - panel.getBoundingClientRect().left) / 2;
+			let cy = (panel.getBoundingClientRect().bottom - panel.getBoundingClientRect().top) / 2 + 28;
+			let whole = Vscreen.getWhole();
+
+			Vscreen.assignWhole(whole.orgW, whole.orgH, cx, cy, Vscreen.getWholeScale());
+			manipulator.removeManipulator();
+			this.updateScreen();
+		}, 200);
 	}
 
 	/**
@@ -1630,6 +1703,9 @@ class Controller {
 			// this.storeに格納
 			this.store.setMetaData(json.id, json);
 		}
+		if (this.store.getState().isSelectionRectShown() && reply.length > 0) {
+			this.updateSelectionRect();
+		}
 		if (endCallback) {
 			endCallback(err, reply);
 		}
@@ -1786,6 +1862,17 @@ class Controller {
 	}
 
 	/**
+	 * UpdateGroupが終了した
+	 * @param {*} err 
+	 * @param {*} reply 
+	 */
+	doneUpdateGroup(err, reply) {
+		this.onUpdateAuthority(() => {
+			this.action.getGroupList();
+		});
+	}
+
+	/**
 	 * AddContentを送信した後の終了コールバック.
 	 * @method doneAddContent
 	 * @param {String} err エラー. 無ければnull.
@@ -1833,6 +1920,9 @@ class Controller {
 			if (this.state.getLastSelectWindowID() === windowData.id || (manipulator.getDraggingManip() && this.state.getLastSelectWindowID() === windowData.id)) {
 				this.gui.assignContentProperty(windowData);
 			}
+		}
+		if (this.store.getState().isSelectionRectShown() && reply) {
+			this.updateSelectionRect();
 		}
 	}
 
@@ -1972,6 +2062,29 @@ class Controller {
 		}
 		manipulator.removeManipulator();
 		this.showSelectionRect(false);
+	}
+
+	/**
+	 * UpdateVirtualDisplayを送信した後の終了コールバック.
+	 * @method doneUpdateVirtualDisplay
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneUpdateVirtualDisplay(err, reply) {
+		this.removeVirtualDisplay();
+		this.doneGetVirtualDisplay(null, reply);
+	}
+
+	/**
+	 * UpdateSettingコールバック.
+	 * @method doneUpdateSetting
+	 * @param {String} err エラー. 無ければnull.
+	 * @param {JSON} reply 返信されたメタデータ
+	 */
+	doneUpdateSetting(err, reply) {
+		// 開きなおす
+		this.gui.showManagementGUI(false);
+		this.gui.showManagementGUI(true);
 	}
 }
 

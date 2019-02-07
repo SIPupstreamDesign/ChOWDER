@@ -3,11 +3,10 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-import Validator from '../validator'
 import Store from './store'
-import Vscreen from '../vscreen'
-import Constants from '../constants'
 import Command from '../../common/command'
+import StringUtil from '../../common/string_util'
+import manipulator  from '../manipulator'
 
 class Receiver
 {
@@ -27,20 +26,18 @@ class Receiver
                 let id = metaData.id;
                 if (this.store.getManagement().isViewable(metaData.group)) {
                     if (id) {
-                        controller.doneGetMetaData(null, metaData);
-                        if (this.store.getState().getSelectedID()) {
-                            let elem = document.getElementById(this.store.getState().getSelectedID());
-                            if (elem) {
-                                if (!this.store.getState().isSelectionRectShown()) {
-                                    manipulator.moveManipulator(elem);
+                        this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {
+                            if (this.store.getState().getSelectedID()) {
+                                let elem = document.getElementById(this.store.getState().getSelectedID());
+                                if (elem) {
+                                    if (!this.store.getState().isSelectionRectShown()) {
+                                        manipulator.moveManipulator(elem);
+                                    }
                                 }
                             }
-                        }
+                        });
                     }
                 }
-            }
-            if (this.store.getState().isSelectionRectShown() && data.length > 0) {
-                controller.updateSelectionRect();
             }
         });
 
@@ -56,8 +53,10 @@ class Receiver
                                 metaData : reply.metaData,
                                 callback : (err, meta) => {
                                     reply.metaData = meta;
-                                    controller.doneGetContent(err, reply);
-                                    controller.doneGetMetaData(err, meta);
+                                    this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
+                                    });
+                                    this.store.emit(Store.EVENT_DONE_GET_METADATA, null, meta, (err, reply) => {
+                                    });
                                 }
                             });
                         }
@@ -73,8 +72,8 @@ class Receiver
             if (data instanceof Array) {
                 for (let i = 0; i < data.length; ++i) {
                     let metaData = data[i];
-                    controller.doneGetWindowMetaData(null, metaData);
-                    gui.changeWindowBorderColor(metaData);
+                    this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, metaData, (err, reply) => {
+                    });
                     if (this.store.getState().getSelectedID()) {
                         if (!this.store.getState().isSelectionRectShown()) {
                             let elem = document.getElementById(this.store.getState().getSelectedID());
@@ -82,13 +81,10 @@ class Receiver
                         }
                     }
                 }
-                if (this.store.getState().isSelectionRectShown() && data.length > 0) {
-                    controller.updateSelectionRect();
-                }
             } else {
                 let metaData = data;
-                controller.doneGetWindowMetaData(null, metaData);
-                gui.changeWindowBorderColor(metaData);
+                this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, metaData, (err, reply) => {
+                });
                 if (this.store.getState().getSelectedID()) {
                     let elem = document.getElementById(this.store.getState().getSelectedID());
                     manipulator.moveManipulator(elem);
@@ -98,16 +94,13 @@ class Receiver
 
         // virtual displayが更新されたときにブロードキャストされてくる.
         this.connector.on(Command.UpdateVirtualDisplay, (data) => {
-            controller.removeVirtualDisplay();
-            controller.doneGetVirtualDisplay(null, data);
+            this.emit(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, null, data);
         });
 
         // グループが更新されたときにブロードキャストされてくる.
         this.connector.on(Command.UpdateGroup, (metaData) => {
             // console.log("onUpdateGroup")
-            controller.onUpdateAuthority(() => {
-                this.action.getGroupList();
-            });
+            this.store.emit(Store.EVENT_DONE_UPDATE_GROUP, null, metaData);
         });
 
         // すべての更新が必要なときにブロードキャストされてくる.
@@ -122,15 +115,16 @@ class Receiver
         // コンテンツが削除されたときにブロードキャストされてくる.
         this.connector.on(Command.DeleteContent, (data) => {
             // console.log("onDeleteContent", data);
-            let i;
-            controller.doneDeleteContent(null, data);
+            this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, null, data, (err, reply) => {
+            });
         });
 
         // ウィンドウが削除されたときにブロードキャストされてくる.
         this.connector.on(Command.DeleteWindowMetaData, (metaDataList) => {
             // console.log("DeleteWindowMetaData", metaDataList);
             for (let i = 0; i < metaDataList.length; i = i + 1) {
-                controller.doneDeleteWindowMetaData(null, metaDataList[i]);
+                this.store.emit(Store.EVENT_DONE_WINDOW_METADATA, null, metaDataList[i], (err, reply) => {
+                });
             }
         });
 
@@ -184,9 +178,7 @@ class Receiver
             this.action.reloadDBList({
                 callback : (err, reply) => {
                     if (!err) {
-                        // 開きなおす
-                        gui.showManagementGUI(false);
-                        gui.showManagementGUI(true);
+                        this.store.emit(Store.EVENT_DONE_UPDATE_SETTING, err, reply);
                     }
                 }
             });
@@ -198,7 +190,7 @@ class Receiver
             if (metaData.from === "controller") { return; }
             let key = null;
             try {
-                keyStr = StringUtil.arrayBufferToString(data.contentData.data);
+                let keyStr = StringUtil.arrayBufferToString(data.contentData.data);
                 key = JSON.parse(keyStr).key;
             }  catch (e) {
                 console.error(e);
@@ -219,7 +211,7 @@ class Receiver
             if (metaData.from === "controller") { return; }
             let key = null;
             try {
-                keyStr = StringUtil.arrayBufferToString(data.contentData.data);
+                let keyStr = StringUtil.arrayBufferToString(data.contentData.data);
                 key = JSON.parse(keyStr).key;
             }  catch (e) {
                 console.error(e);
@@ -227,8 +219,9 @@ class Receiver
             }
             if (key) {
                 // このコントローラが接続を持っているか判別
-                if (this.store.getVideoStore().getWebRTC() && this.store.getVideoStore().getWebRTC().hasOwnProperty(key)) {
-                    this.store.getVideoStore().getWebRTC()[key].close(true);
+                let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+                if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
+                    webRTCDict[key].close(true);
                 }
             }
         });
@@ -246,8 +239,9 @@ class Receiver
                 console.error(e);
                 return;
             }
-            if (this.store.getVideoStore().getWebRTC() && this.store.getVideoStore().getWebRTC().hasOwnProperty(key)) {
-                this.store.getVideoStore().getWebRTC()[key].setAnswer(answer, (e) => {
+            let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+            if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
+                webRTCDict[key].setAnswer(answer, (e) => {
                     if (e) {
                         console.error(e);
                     }
@@ -270,9 +264,10 @@ class Receiver
                 console.error(e);
                 return;
             }
-            if (this.store.getVideoStore().getWebRTC() && this.store.getVideoStore().getWebRTC().hasOwnProperty(key)) {
+            let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+            if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
                 if (candidate) {
-                    this.store.getVideoStore().getWebRTC()[key].addIceCandidate(candidate);
+                    webRTCDict[key].addIceCandidate(candidate);
                 }
             }
         });
