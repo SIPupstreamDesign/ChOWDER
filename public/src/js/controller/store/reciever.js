@@ -27,18 +27,11 @@ class Receiver
                 if (this.store.getManagement().isViewable(metaData.group)) {
                     if (id) {
                         this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {
-                            if (this.store.getState().getSelectedID()) {
-                                let elem = document.getElementById(this.store.getState().getSelectedID());
-                                if (elem) {
-                                    if (!this.store.getState().isSelectionRectShown()) {
-                                        manipulator.moveManipulator(elem);
-                                    }
-                                }
-                            }
                         });
                     }
                 }
             }
+            this.store.emit(Store.EVENT_NEET_UPDATE_MANIPULATOR, null);
         });
 
         // コンテンツが差し替えられたときにブロードキャストされてくる.

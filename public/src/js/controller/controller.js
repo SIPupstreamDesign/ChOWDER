@@ -212,6 +212,7 @@ class Controller {
 			let last = reply.last;
 			delete reply.last;
 			this.doneGetMetaData(err, reply, (err) => {
+				// TODO lastは無効
 				if (last) {
 					this.action.getGroupList({
 						callback : endCallback
@@ -380,6 +381,18 @@ class Controller {
 
 		// 復元完了
 		this.store.on(Store.EVENT_DONE_RESTORE_CONTENT, this.doneGetContent);
+
+		this.store.on(Store.EVENT_NEET_UPDATE_MANIPULATOR, () => {
+            if (this.store.getState().getSelectedID()) {
+                let elem = document.getElementById(this.store.getState().getSelectedID());
+                if (elem) {
+                    manipulator.moveManipulator(elem);
+                    if (this.store.getState().isSelectionRectShown()) {
+                        this.updateSelectionRect();
+                    }
+                }
+            }
+		});
 	}
 
 	/**
