@@ -5,6 +5,14 @@
 
 "use strict";
 
+const DURATION = 1001;
+const TIMESCALE = 30000;
+const SAMPLE_SEC = DURATION / TIMESCALE;
+
+// 現在位置から後ろ10秒キャッシュする.
+// それより前のバッファは削除する.(大容量動画対策)
+const CACHE_TIME = 10;
+
 class MediaPlayer extends EventEmitter {
 	constructor(videoElem, codecString, audioCodecString) {
 		super();
@@ -27,6 +35,9 @@ class MediaPlayer extends EventEmitter {
 		this.onVideoFrame = this.onVideoFrame.bind(this);
 		this.mediaSource.addEventListener('sourceopen', this.onSourceOpen);
 
+		this.bufferRemovedPos = 0;
+		this.audioBufferRemovedPos = 0;
+
 		this.repeatEvent = function (self) {
 			if (this.currentTime > this.duration - 1 && this.readyState == 2) {
 				this.currentTime = 0;
@@ -40,24 +51,48 @@ class MediaPlayer extends EventEmitter {
 
 		this.timeUpdated = () => {
 			if (!this.buffer) return;
-			if (this.buffer.buffered.length > 0) {
-				let start = this.buffer.buffered.start(0)
-				if (this.video.currentTime > start + 10) {
-					if (this.buffer.buffered.end(0) < this.duration) {
-						this.buffer.remove(0, this.video.currentTime - 10);
-						this.updateBuffer();
+			
+			//console.error(this.video.currentTime, this.bufferRemovedPos)
+			if (this.buffer) {
+				if (this.video.currentTime > this.bufferRemovedPos + CACHE_TIME) {
+					// 現在時刻が削除済バッファ最終位置よりCACHE_TIME秒以上後ろであった.
+					// 現在時刻-CACHE_TIME秒の地点までのバッファを削除する.
+					if (!this.buffer.updating && this.buffer.buffered.length > 0 && this.buffer.buffered.end(0) <= this.duration) {
+						const time = this.getSampleTime(this.video.currentTime - CACHE_TIME);
+						if (time > this.bufferRemovedPos) {
+							//console.error("remove", time)
+							this.buffer.remove(0, time);
+							this.audioBuffer.remove(0, time);
+							this.bufferRemovedPos = time;
+						}
+					}
+				} else if (this.video.currentTime < this.preTime) {
+					// 現在時刻が削除済バッファ最終位置より手前であった.
+					// 削除済バッファを参照しようとしているため、
+					// this.bufferRemovedPosから最後まで削除した上で、
+					// 現在時刻から再ロードする要求を送る.
+					if (!this.preventUpdate) {
+						this.preventUpdate = true;
+						this.queue = [];
+						this.audioQueue = [];
+						/*
+						if (this.buffer.buffered.length > 0) {
+							this.buffer.remove(this.buffer.buffered.start(0), this.buffer.buffered.end(0));
+						}
+						if (this.audioBuffer.buffered.length > 0) {
+							this.audioBuffer.remove(this.audioBuffer.buffered.start(0), this.audioBuffer.buffered.end(0));
+						}
+						*/
+						this.buffer.abort();
+						this.audioBuffer.abort();
+						this.bufferRemovedPos = 0;
+						//const time = this.getSampleTime(this.video.currentTime);
+						this.setOffsetTime(0);
+						this.emit(MediaPlayer.EVENT_NEED_RELOAD, null, 0);
 					}
 				}
 			}
-			if (this.audioBuffer && this.audioBuffer.buffered.length > 0) {
-				let start = this.audioBuffer.buffered.start(0)
-				if (this.video.currentTime > start + 10) {
-					if (this.audioBuffer.buffered.end(0) < this.duration) {
-						this.audioBuffer.remove(0, this.video.currentTime - 10);
-						this.updateBuffer();
-					}
-				}
-			}
+			this.preTime = this.video.currentTime;
 			/*
 			if (self.buffer && self.loadedStartTime !== 0) {
 				if (self.video.currentTime < self.loadedStartTime) {
@@ -71,33 +106,45 @@ class MediaPlayer extends EventEmitter {
 		this.setRepeat(this.repeat);
 		this.video.addEventListener('timeupdate', this.timeUpdated);
 	}
-	updateBuffer() {	
+
+	updateBuffer() {
+		if (this.preventUpdate) {
+			return;
+		}
+		//console.error("onupdatebuffer")
 		// https://cs.chromium.org/chromium/src/media/filters/source_buffer_platform.cc?l=9
 		// 12 MB for audio, 150 MB for video
-		if (this.buffer && this.queue.length > 0 && !this.buffer.updating) {
-			try {
+		try {
+			if (this.buffer && this.queue.length > 0 && !this.buffer.updating) {
 				let data = this.queue[0];
 				this.buffer.appendBuffer(data);
-				this.queue.shift()
-			} catch (e) {
-				if (this.video.currentTime > 8) {
-					this.buffer.remove(0, this.video.currentTime - 8);
-					this.loadedStartTime = this.video.currentTime - 8;
-				}
+				this.queue.shift();
 			}
-		}
-		if (this.audioBuffer && this.audioQueue.length > 0 && !this.audioBuffer.updating) {
-			try {
+			if (this.audioBuffer && this.audioQueue.length > 0 && !this.audioBuffer.updating) {
 				let data = this.audioQueue[0];
 				this.audioBuffer.appendBuffer(data);
-				this.audioQueue.shift()
-			} catch (e) {
-				if (this.video.currentTime > 8) {
-					this.audioBuffer.remove(0, this.video.currentTime - 8);
+				this.audioQueue.shift();
+			}
+		} catch (e) {
+			if (this.buffer) {
+				if (this.video.currentTime > this.bufferRemovedPos + CACHE_TIME) {
+					// 現在時刻が削除済バッファ最終位置よりCACHE_TIME秒以上後ろであった.
+					// 現在時刻-CACHE_TIME秒の地点までのバッファを削除する.
+					if (this.buffer.buffered.length > 0 && this.buffer.buffered.end(0) <= this.duration) {
+						const time = this.getSampleTime(this.video.currentTime - CACHE_TIME);
+						if (time > this.bufferRemovedPos) {
+							//console.error("remove", time, this.buffer.buffered)
+							this.buffer.remove(0, time);
+							this.audioBuffer.remove(0, time);
+							this.mediaSource.setLiveSeekableRange(time, this.buffer.buffered.end(0));
+							this.bufferRemovedPos = time;
+						}
+					}
 				}
 			}
 		}
 	}
+
 	onSourceOpen(ev) {
 		if (ev.target.readyState !== "open") {
 			return;
@@ -123,15 +170,17 @@ class MediaPlayer extends EventEmitter {
 				this.updateBuffer();
 			});
 		}
-		this.emit("sourceOpen");
+		this.emit(MediaPlayer.EVENT_SOURCE_OPEN);
 	}
 	release() {
 		// console.log("release MediaPlayer")
 		if (this.buffer) {
+			this.buffer.abort();
 			this.buffer.removeEventListener('update', this.updateBuffer);
 			this.buffer.removeEventListener('updateend', this.updateBuffer);
 		}
 		if (this.audioBuffer) {
+			this.audioBuffer.abort();
 			this.audioBuffer.removeEventListener('update', this.updateBuffer);
 			this.audioBuffer.removeEventListener('updateend', this.updateBuffer);
 		}
@@ -150,7 +199,13 @@ class MediaPlayer extends EventEmitter {
 			this.mediaSource.duration = this.duration;
 		}
 	}
+	getSampleTime(time) {
+		let numSampleSec = time / SAMPLE_SEC;
+		numSampleSec = numSampleSec - (numSampleSec - Math.floor(numSampleSec));
+		return SAMPLE_SEC * numSampleSec;
+	}
 	onVideoFrame(data) {
+		this.preventUpdate = false;
 		if (this.buffer && typeof data === 'object'){
 			if (this.buffer.updating || this.queue.length > 0) {
 				this.queue.push(data);
@@ -159,17 +214,21 @@ class MediaPlayer extends EventEmitter {
 					// console.log("appendVideo")
 					this.buffer.appendBuffer(data);
 				} catch(e) {
+					/*
 					if (this.video.currentTime > 8) {
-						console.error("hoge")
-						this.buffer.remove(0, this.video.currentTime - 8);
-						this.loadedStartTime = this.video.currentTime - 8;
+						const time = this.getSampleTime(this.video.currentTime - 8);
+						console.error("remove", time)
+						this.buffer.remove(0, time);
+						this.loadedStartTime = time;
 					}
+					*/
 					this.queue.push(data);
 				}
 			}
 		}
 	}
 	onAudioFrame(data) {
+		this.preventUpdate = false;
 		if (!this.audioBuffer) return;
 		if (this.audioBuffer && typeof data === 'object'){
 			if (this.audioBuffer.updating || this.audioQueue.length > 0) {
@@ -179,9 +238,12 @@ class MediaPlayer extends EventEmitter {
 					// console.log("appendAudio")
 					this.audioBuffer.appendBuffer(data);
 				} catch(e) {
+					/*
 					if (this.video.currentTime > 8) {
-						this.audioBuffer.remove(0, this.video.currentTime - 8);
+						const time = this.getSampleTime(this.video.currentTime - 8);
+						this.audioBuffer.remove(0, time);
 					}
+					*/
 					this.audioQueue.push(data);
 				}
 			}
@@ -204,13 +266,10 @@ class MediaPlayer extends EventEmitter {
 		this.loadedStartTime = time;
 		if (this.buffer) {
 			this.buffer.timestampOffset = time;
-			this.buffer.currentTime = time;
 		}
 		if (this.audioBuffer) {
 			this.audioBuffer.timestampOffset = time;
-			this.audioBuffer.currentTime = time;
 		}
-		this.video.currentTime = time;
 	}
 	setSize(width, height) {
 		this.video.width = wh.width;
@@ -223,4 +282,6 @@ class MediaPlayer extends EventEmitter {
 }
 
 MediaPlayer.EVENT_NEED_RESTART = "restart";
+MediaPlayer.EVENT_NEED_RELOAD = "reload";
+MediaPlayer.EVENT_SOURCE_OPEN = "sourceOpen";
 export default MediaPlayer;

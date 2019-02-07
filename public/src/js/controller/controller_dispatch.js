@@ -10,10 +10,10 @@ import manipulator from './manipulator.js';
 import Vscreen from '../common/vscreen.js';
 import StringUtil from '../common/string_util.js';
 import Connector from '../common/ws_connector.js';
+import Command from '../common/command'
 
-
-function initGUIEvents(controller, gui, store, action, state, login) {
-
+function initGUIEvents(controller, gui, store, action) {
+	let state = store.getState();
 	/**
 	 * マウスイベントの登録
 	 */
@@ -23,7 +23,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	/** */
 	///-------------------------------------------------------------------------------------------------------
 	// メタデータが更新されたときにブロードキャストされてくる.
-	Connector.on("UpdateMetaData", function (data) {
+	Connector.on(Command.UpdateMetaData, function (data) {
 		let elem;
 
 		for (let i = 0; i < data.length; ++i) {
@@ -49,11 +49,11 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// コンテンツが差し替えられたときにブロードキャストされてくる.
-	Connector.on('UpdateContent', function (metaData) {
+	Connector.on(Command.UpdateContent, function (metaData) {
 		// console.log('UpdateContent', metaData);
 		let id = metaData.id;
 		if (id) {
-			Connector.send('GetContent', metaData, function (err, reply) {
+			Connector.send(Command.GetContent, metaData, function (err, reply) {
 				if (reply.hasOwnProperty('metaData')) {
 					if (store.hasMetadata(metaData.id)) {
 						action.correctContentAspect({
@@ -71,7 +71,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// windowが更新されたときにブロードキャストされてくる.
-	Connector.on("UpdateWindowMetaData", function (data) {
+	Connector.on(Command.UpdateWindowMetaData, function (data) {
 		// console.log("onUpdateWindowMetaData", data);
 		let metaData;
 
@@ -102,37 +102,37 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// virtual displayが更新されたときにブロードキャストされてくる.
-	Connector.on("UpdateVirtualDisplay", function (data) {
+	Connector.on(Command.UpdateVirtualDisplay, function (data) {
 		controller.removeVirtualDisplay();
 		controller.doneGetVirtualDisplay(null, data);
 	});
 
 	// グループが更新されたときにブロードキャストされてくる.
-	Connector.on('UpdateGroup', function (metaData) {
+	Connector.on(Command.UpdateGroup, function (metaData) {
 		controller.onUpdateAuthority(function () {
 			action.getGroupList();
 		});
 	});
 
 	// すべての更新が必要なときにブロードキャストされてくる.
-	Connector.on('Update', function () {
+	Connector.on(Command.Update, function () {
 		if (!store.isInitialized()) { return; }
 		controller.setupSelectionRect();
 		action.reloadAll();
 	});
 
 	// windowが更新されたときにブロードキャストされてくる.
-	Connector.on('UpdateMouseCursor', function (metaData) { });
+	Connector.on(Command.UpdateMouseCursor, function (metaData) { });
 
 	// コンテンツが削除されたときにブロードキャストされてくる.
-	Connector.on("DeleteContent", function (data) {
+	Connector.on(Command.DeleteContent, function (data) {
 		// console.log("onDeleteContent", data);
 		let i;
 		controller.doneDeleteContent(null, data);
 	});
 
 	// ウィンドウが削除されたときにブロードキャストされてくる.
-	Connector.on("DeleteWindowMetaData", function (metaDataList) {
+	Connector.on(Command.DeleteWindowMetaData, function (metaDataList) {
 		// console.log("DeleteWindowMetaData", metaDataList);
 		for (let i = 0; i < metaDataList.length; i = i + 1) {
 			controller.doneDeleteWindowMetaData(null, metaDataList[i]);
@@ -140,7 +140,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// Video Controllerで使う.
-	Connector.on('SendMessage', function (data) {
+	Connector.on(Command.SendMessage, function (data) {
 		if (data.command === 'playVideo') {
 			data.ids.forEach(function (id) {
 				let el = document.getElementById(id);
@@ -167,13 +167,13 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// DB切り替え時にブロードキャストされてくる
-	Connector.on("ChangeDB", function () {
+	Connector.on(Command.ChangeDB, function () {
 		if (!store.isInitialized()) { return; }
 		window.location.reload(true);
 	});
 
 	// 権限変更時に送られてくる
-	Connector.on("ChangeAuthority", function (userID) {
+	Connector.on(Command.ChangeAuthority, function (userID) {
 		if (!store.isInitialized()) { return; }
 		if (store.getLoginStore().getLoginUserID() === userID) {
 			window.location.reload(true);
@@ -181,7 +181,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// 管理ページでの設定変更時にブロードキャストされてくる
-	Connector.on("UpdateSetting", function () {
+	Connector.on(Command.UpdateSetting, function () {
 		if (!store.isInitialized()) { return; }
 		// ユーザーリスト再取得
 		action.reloadUserList();
@@ -198,7 +198,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// WebRTC接続要求が来た
-	Connector.on('RTCRequest', function (data) {
+	Connector.on(Command.RTCRequest, function (data) {
 		let metaData = data.metaData;
 		if (metaData.from === "controller") { return; }
 		let key = null;
@@ -219,7 +219,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 	});
 
 	// WebRTC切断要求が来た
-	Connector.on('RTCClose', function (data) {
+	Connector.on(Command.RTCClose, function (data) {
 		let metaData = data.metaData;
 		if (metaData.from === "controller") { return; }
 		let key = null;
@@ -231,15 +231,15 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 			return;
 		}
 		if (key) {
-			// このコントローラが接続を持っているか判別
-			if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
-				controller.webRTC[key].close(true);
+			let webRTCDict = store.getVideoStore().getWebRTCDict();
+			if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
+				webRTCDict[key].close(true);
 			}
 		}
 	});
 
 	// WebRTCのAnswerが返ってきた
-	Connector.on("RTCAnswer", function (data) {
+	Connector.on(Command.RTCAnswer, function (data) {
 		let answer = null;
 		let key = null;
 		try {
@@ -251,8 +251,9 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 			console.error(e);
 			return;
 		}
-		if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
-			controller.webRTC[key].setAnswer(answer, function (e) {
+		let webRTCDict = store.getVideoStore().getWebRTCDict();
+		if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
+			webRTCDict[key].setAnswer(answer, function (e) {
 				if (e) {
 					console.error(e);
 				}
@@ -260,7 +261,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 		}
 	});
 
-	Connector.on("RTCIceCandidate", function (data) {
+	Connector.on(Command.RTCIceCandidate, function (data) {
 		let metaData = data.metaData;
 		if (metaData.from == "controller") { return; }
 		let contentData = data.contentData;
@@ -276,9 +277,10 @@ function initGUIEvents(controller, gui, store, action, state, login) {
 			console.error(e);
 			return;
 		}
-		if (controller.webRTC && controller.webRTC.hasOwnProperty(key)) {
+		let webRTCDict = store.getVideoStore().getWebRTCDict();
+		if (webRTCDict && webRTCDict.hasOwnProperty(key)) {
 			if (candidate) {
-				controller.webRTC[key].addIceCandidate(candidate);
+				webRTCDict[key].addIceCandidate(candidate);
 			}
 		}
 	});
@@ -288,7 +290,7 @@ function initGUIEvents(controller, gui, store, action, state, login) {
  * GUI/Dispacher/controller初期化
  * @method init
  */
-function init(controller, gui, store, action, state, login) {
+function init(controller, gui, store, action) {
 	let timer = null;
 	let controllerData = controller.getControllerData();
 
@@ -323,7 +325,7 @@ function init(controller, gui, store, action, state, login) {
 	manipulator.setCloseFunc(controller.onCloseContent);
 
 	// gui events etc
-	initGUIEvents(controller,  gui,store, action, state, login);
+	initGUIEvents(controller,  gui,store, action);
 
 	// resize event
 	window.onresize = function () {
@@ -347,6 +349,8 @@ function init(controller, gui, store, action, state, login) {
 	action.init();
 }
 
-window.ControllerDispatch = {
+let ControllerDispatch = {
 	init : init
 };
+
+export default ControllerDispatch;

@@ -41,32 +41,43 @@ class WebRTC extends EventEmitter {
 		this.peer = null;
 		try {
 			this.peer = new RTCPeerConnection(pc_config);
+
 		}
 		catch (e) {
 			printDebug("Failed to create peerConnection, exception: " + e.message);
 			return;
 		}
+				
+		this.peer.ondatachannel = (evt) => {
+			// evt.channelにDataChannelが格納されているのでそれを使う
+			printDebug("ondatachannel", evt.channel)
+			if (evt.channel) {
+				this.datachannel = evt.channel;
+				this.datachannel.onopen = (event) => {
+					printDebug("datachannel.onopen")
+					this.emit(WebRTC.EVENT_DATACHANNEL_OPEN, null);
+				};
+				this.datachannel.onclose = () =>  {
+					printDebug("datachannel.onclose");
+					this.emit(WebRTC.EVENT_DATACHANNEL_CLOSE, null);
+				};
+				this.datachannel.onmessage = (event) => {
+					printDebug("event", event)
+					this.emit(WebRTC.EVENT_DATACHANNEL_MESSAGE, null, event.data);
+				};
+				this.datachannel.onerror = function (error) {
+					printDebug('dataChannel.onerror', error);
+				};
+			}
+		};
+		
 		this.peer.onicecandidate = (evt) => {
-			printDebug("icecandidate"); //, evt, this.peer);
+			printDebug("icecandidate", evt.candidate); //, evt, this.peer);
 			if (evt.candidate) {
 				this.emit(WebRTC.EVENT_ICECANDIDATE, "tincle", evt.candidate);
 			}
 			else {
 				this.emit(WebRTC.EVENT_ICECANDIDATE, "vanilla", this.peer.localDescription);
-			}
-		};
-		this.peer.ondatachannel = (evt) => {
-			// evt.channelにDataChannelが格納されているのでそれを使う
-			if (evt.channel) {
-				//console.error("hoge", evt.channel)
-				this.datachannel = evt.channel;
-				this.datachannel.onopen = function (event) {
-					//console.error("datachannel.onopen")
-				};
-				this.datachannel.onmessage = (event) => {
-					//console.error("event", event)
-					this.emit(WebRTC.EVENT_DATACHANNEL_MESSAGE, null, event.data);
-				};
 			}
 		};
 		this.peer.onnegotiationneeded = (evt) => {
@@ -132,20 +143,33 @@ class WebRTC extends EventEmitter {
 	removeStream() {
 		this.peer.removeStream(this.peer.currentStream);
 	}
+
+	// 送信側
 	offer(callback) {
-		//console.error("offer")
 		let dataChannelOptions = {
 			ordered: true,
-			maxRetransmitTime: 100,
+			maxRetransmitTime: 100
 		};
-		this.datachannel = this.peer.createDataChannel("myLabel", dataChannelOptions);
+
+		// createOfferより前に作る必要がある
+		this.datachannel = this.peer.createDataChannel("myLabel" , dataChannelOptions);
 		this.datachannel.binaryType = "arraybuffer";
 		this.datachannel.onopen = () => {
-			this.emit("datachannel.onopen");
+			printDebug("datachannel.onopen")
+			this.emit(WebRTC.EVENT_DATACHANNEL_OPEN, null);
+		};
+		this.datachannel.onmessage = () =>  {
+			printDebug("datachannel.onmessage");
+			this.emit(WebRTC.EVENT_DATACHANNEL_MESSAGE, null);
 		};
 		this.datachannel.onclose = () =>  {
 			printDebug("datachannel.onclose");
+			this.emit(WebRTC.EVENT_DATACHANNEL_CLOSE, null);
 		};
+		this.datachannel.onerror = function (error) {
+			printDebug('dataChannel.onerror', error);
+		};
+		
 		printDebug('offer');
 		this.peer.createOffer((sdp) => {
 			// 成功
@@ -157,6 +181,7 @@ class WebRTC extends EventEmitter {
 			printDebug("Create Offer failed");
 		}, MediaOptions);
 	}
+
 	setQuality(sdp) {
 		sdp = BandwidthHandler.setApplicationSpecificBandwidth(sdp, this.bandwidth, this.isScreenSharing);
 		if (this.bandwidth && this.bandwidth.hasOwnProperty('video')) {
@@ -173,6 +198,8 @@ class WebRTC extends EventEmitter {
 		}
 		return sdp;
 	}
+
+	// 受信側
 	answer(sdp, callback) {
 		printDebug("WebRTC answer", sdp);
 		this.peer.setRemoteDescription(new RTCSessionDescription(sdp), () => {
@@ -235,5 +262,7 @@ WebRTC.EVENT_REMOVE_STREAM = "removestream";
 WebRTC.EVENT_ICECANDIDATE = "icecandidate";
 WebRTC.EVENT_DATACHANNEL_MESSAGE = "datachannelmessage";
 WebRTC.EVENT_NEGOTIATION_NEEDED = "negotiationneeded";
+WebRTC.EVENT_DATACHANNEL_OPEN = "datachannelopen";
+WebRTC.EVENT_DATACHANNEL_CLOSE = "datachannelclose";
 
 export default WebRTC;

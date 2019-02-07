@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
+
 require("./css/components/burger_menu.css");
 require("./css/components/context_menu.css");
 require("./css/components/group_box.css");
@@ -14,5 +19,4 @@ require("./css/components/tabs.css");
 require("./css/components/video_controller.css");
 require("./css/controller.css");
 
-require("./js/controller/controller.js");
-require("./js/controller/controller_dispatch.js");
+require("./js/controller/main.js");

@@ -1,8 +1,14 @@
 
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 
-import Validator from '../../common/validator'
+import Command from '../../common/command'
 import Store from './store'
-import Constants from '../../common/constants'
+import StringUtil from '../../common/string_util'
+import Vscreen from '../../common/vscreen'
+import DisplayUtil from '../display_util'
 
 class Receiver
 {
@@ -11,33 +17,36 @@ class Receiver
         this.action = action;
         this.connector = connector;
 
+        this.controllers = {connectionCount: -1};
+
         this.init();
     }
 
     init() {
-        this.connector.on("Update", function (data) {
+        this.connector.on(Command.Update, (data) => {
             if (data === undefined) {
-                update('window');
-                update('group');
-                update('content');
+                this.action.update({ updateType : 'window'});
+                this.action.update({ updateType : 'group' });
+                this.action.update({ updateType : 'content' });
             }
         });
 
-        this.connector.on("UpdateContent", function (data) {
+        this.connector.on(Command.UpdateContent, function (data) {
             // console.log("onUpdateContent", data);
 
-            this.connector.send('GetMetaData', data, function (err, json) {
+            this.connector.send(Command.GetMetaData, data, function (err, json) {
                 // 閲覧可能か
                 if (!isViewable(json.group)) {
                     return;
                 }
                 if (json.type === "video") {
                     let rtcKey = getRTCKey(json);
+                    let webRTCDict = this.store.getVideoStore().getWebRTCDict();
                     if (webRTCDict.hasOwnProperty(rtcKey)) {
                         webRTCDict[rtcKey].close(true);
 
                         json.from = "view";
-                        this.connector.sendBinary('RTCClose', json, JSON.stringify({
+                        this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
                             key : rtcKey
                         }), function (err, reply) {});
                         delete json.from;
@@ -45,7 +54,7 @@ class Receiver
                 }
                 if (!err) {
                     doneGetMetaData(err, json);
-                    this.connector.send('GetContent', json, function (err, reply) {
+                    this.connector.send(Command.GetContent, json, function (err, reply) {
                         if (metaDataDict.hasOwnProperty(json.id)) {
                             doneGetContent(err, reply);
                         }
@@ -54,71 +63,67 @@ class Receiver
             });
         });
 
-        this.connector.on("UpdateGroup", function (err, data) {
-            update("group", "");
+        this.connector.on(Command.UpdateGroup, (err, data) => {
+            this.action.update({ updateType : "group" });
         });
 
         // 権限変更時に送られてくる
-        this.connector.on("ChangeAuthority", () => {
+        this.connector.on(Command.ChangeAuthority, () => {
             let request = { id : "Display", password : "" };
-            this.connector.send('Login', request, (err, reply) => {
-                authority = reply.authority;
-                update('window');
-                update('group');
-                update('content');
+            this.connector.send(Command.Login, request, (err, reply) => {
+                this.store.setAuthority(reply.authority);
+                this.action.update({ updateType : 'window'});
+                this.action.update({ updateType : 'group'});
+                this.action.update({ updateType : 'content'});
             });
         });
 
 
         // DB切り替え時にブロードキャストされてくる
-        this.connector.on("ChangeDB", () => {
+        this.connector.on(Command.ChangeDB, () => {
             let request = { id : "Display", password : "" };
-            this.connector.send('Login', request, (err, reply) => {
-                authority = reply.authority;
-                deleteAllElements();
-                update('window');
-                update('group');
-                update('content');
+            this.connector.send(Command.Login, request, (err, reply) => {
+                this.store.setAuthority(reply.authority);
+                this.action.deleteAllElements();
+                this.action.update({ updateType : 'window' });
+                this.action.update({ updateType : 'group' });
+                this.action.update({ updateType : 'content' });
             });
         });
 
-        this.connector.on("DeleteContent", (data) => {
+        this.connector.on(Command.DeleteContent, (data) => {
             // console.log("onDeleteContent", data);
-            let previewArea = document.getElementById('preview_area');
+            let metaDataDict = this.store.getMetaDataDict();
             for (let i = 0; i < data.length; ++i) {
-                let elem = document.getElementById(data[i].id);
-                if (elem) {
-                    deleteMark(elem, metaDataDict[data[i].id]);
-                    previewArea.removeChild(elem);
+                if (metaDataDict.hasOwnProperty(data[i].id)) {
                     delete metaDataDict[data[i].id];
                 }
             }
+            this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, null, data);
         });
 
-        this.connector.on("DeleteWindowMetaData", (data) => {
+        this.connector.on(Command.DeleteWindowMetaData, (data) => {
             // console.log("onDeleteWindowMetaData", data);
-            update('window');
+            this.action.update({ updateType : 'window' });
         });
 
-        this.connector.on("UpdateWindowMetaData", (data) => {
-            // console.log("onUpdateWindowMetaData", data);
+        this.connector.on(Command.UpdateWindowMetaData, (data) => {
             for (let i = 0; i < data.length; ++i) {
-                if (data[i].hasOwnProperty('id') && data[i].id === getWindowID()) {
-                    update('window');
-                    gui.updatePreviewAreaVisible(data[i]);
-                    resizeViewport(data[i])
-                    return;
+                if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
+                    this.action.update({ updateType : 'window' });
+                    this.store.onUpdateWindowMetaData(null, data);
                 }
             }
         });
 
-        this.connector.on("UpdateMouseCursor", (res) => {
+        /// リモートカーソルが更新された
+        this.connector.on(Command.UpdateMouseCursor, (res) => {
             let ctrlid = res.controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                if (!controllers.hasOwnProperty(ctrlid)) {
-                    ++controllers.connectionCount;
-                    controllers[ctrlid] = {
-                        index: controllers.connectionCount,
+                if (!this.controllers.hasOwnProperty(ctrlid)) {
+                    ++this.controllers.connectionCount;
+                    this.controllers[ctrlid] = {
+                        index: this.controllers.connectionCount,
                         lastActive: 0
                     };
                 }
@@ -162,14 +167,14 @@ class Receiver
                         + " 1px -1px 0 white,"
                         + "-1px -1px 0 white";
 
-                autoResizeCursor([elem, controllerID]);
+                DisplayUtil.autoResizeCursor([elem, controllerID]);
                 elem.style.left = Math.round(pos.x) + 'px';
                 elem.style.top  = Math.round(pos.y) + 'px';
                 controllerID.style.left = Math.round(pos.x) + 'px';
                 controllerID.style.top  = Math.round(pos.y + 150 / Number(window.devicePixelRatio)) + 'px';
-                controllers[ctrlid].lastActive = Date.now();
+                this.controllers[ctrlid].lastActive = Date.now();
             } else {
-                if (controllers.hasOwnProperty(ctrlid)) {
+                if (this.controllers.hasOwnProperty(ctrlid)) {
                     let elem = document.getElementById('hiddenCursor' + ctrlid);
                     let controllerID = document.getElementById('controllerID' + ctrlid);
                     if (elem) {
@@ -178,39 +183,26 @@ class Receiver
                         controllerID.style.left = '-999999px';
                         controllerID.style.top  = '-999999px';
                     }
-                    if (elem.parentNode) { elem.removeChild(elem); }
-                    if (controllerID.parentNode) { controllerID.removeChild(controllerID); }
+                    if (elem && elem.parentNode) { elem.parentNode.removeChild(elem); }
+                    if (controllerID && controllerID.parentNode) { controllerID.parentNode.removeChild(controllerID); }
                 }
             }
         });
 
-        this.connector.on("ShowWindowID", (data) => {
+        /// WindowID表示要求がきた
+        this.connector.on(Command.ShowWindowID, (data) => {
             // console.log("onShowWindowID", data);
-            for (let i = 0; i < data.length; i = i + 1) {
-                showDisplayID(data[i].id);
-            }
+            this.store.emit(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, null, data);
         });
 
-        this.connector.on("UpdateMetaData", (data) => {
-            let previewArea = document.getElementById("preview_area");
-            for (let i = 0; i < data.length; ++i) {
-                if (!isViewable(data[i].group)) {
-                    let elem = document.getElementById(data[i].id);
-                    if (elem) {
-                        previewArea.removeChild(elem);
-                    }
-                    let memo =  document.getElementById("memo:" + data[i].id);
-                    if (memo) {
-                        previewArea.removeChild(memo);
-                    }
-                }
-                update('', data[i].id);
-            }
+        /// メタデータが更新された
+        this.connector.on(Command.UpdateMetaData, (data) => {
+            this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
         });
 
-        this.connector.on("RTCOffer", (data) => {
-            //console.error("RTCOffer")
-            if (!windowData) return;
+        /// WebRTC
+        this.connector.on(Command.RTCOffer, (data) => {
+            if (!this.store.getWindowData()) return;
             let metaData = data.metaData;
             let contentData = data.contentData;
             let sdp = null;
@@ -224,13 +216,14 @@ class Receiver
                 console.error(e);
                 return;
             }
-
+    
             if (sdp) {
+                let webRTCDict = this.store.getVideoStore().getWebRTCDict();
                 if (webRTCDict.hasOwnProperty(rtcKey)) {
                     let webRTC = webRTCDict[rtcKey];
                     webRTC.answer(sdp, (answer) => {
                         //console.error("WebRTC: send answer")
-                        this.connector.sendBinary('RTCAnswer', metaData, JSON.stringify({
+                        this.connector.sendBinary(Command.RTCAnswer, metaData, JSON.stringify({
                             key : rtcKey,
                             sdp : answer
                         }), function () {});
@@ -239,7 +232,8 @@ class Receiver
             }
         });
         
-        this.connector.on("RTCClose", (data) => {
+        /// WebRTC
+        this.connector.on(Command.RTCClose, (data) => {
             let metaData = data.metaData;
             if (metaData.from === "view") { return; }
             let contentData = data.contentData;
@@ -252,12 +246,14 @@ class Receiver
                 console.error(e);
                 return;
             }
+            let webRTCDict = this.store.getVideoStore().getWebRTCDict();
             if (webRTCDict.hasOwnProperty(rtcKey)) {
                 webRTCDict[rtcKey].close(true);
             }
         });
 
-        this.connector.on("RTCIceCandidate", (data) => {
+        /// WebRTC
+        this.connector.on(Command.RTCIceCandidate, (data) => {
             //console.error("on RTCIceCandidate")
             let metaData = data.metaData;
             if (metaData.from === "view") { return; }
@@ -273,28 +269,13 @@ class Receiver
                 console.error(e);
                 return;
             }
+            let webRTCDict = this.store.getVideoStore().getWebRTCDict();
             if (webRTCDict.hasOwnProperty(rtcKey)) {
                 if (candidate) {
                     webRTCDict[rtcKey].addIceCandidate(candidate);
                 }
             }
         });
-
-        this.connector.on("Disconnect", ((client) => {
-            return () => {
-                let previewArea = document.getElementById("preview_area");
-                let disconnectedText = document.getElementById("disconnected_text");
-                isDisconnect = true;
-                client.close();
-
-                if (previewArea) {
-                    previewArea.style.display = "none";
-                }
-                if (disconnectedText) {
-                    disconnectedText.innerHTML = "Display Deleted";
-                }
-            };
-        })(client));
     }
 }
 

@@ -1,7 +1,13 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
+
 import Validator from '../../common/validator'
 import Store from './store'
 import Vscreen from '../../common/vscreen'
 import Constants from '../../common/constants'
+import Command from '../../common/command'
 
 class Operation
 {
@@ -17,12 +23,12 @@ class Operation
 	updateMetadata(metaData, endCallback) {
 		if (Validator.isWindowType(metaData)) {
 			// window
-			this.connector.send('UpdateWindowMetaData', [metaData], (err, reply) => {
+			this.connector.send(Command.UpdateWindowMetaData, [metaData], (err, reply) => {
                 this.store.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, reply, endCallback);
 			});
 		} else {
 			if (this.store.getManagement().isEditable(metaData.group)) {
-				this.connector.send('UpdateMetaData', [metaData], (err, reply) => {
+				this.connector.send(Command.UpdateMetaData, [metaData], (err, reply) => {
                     this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, err, reply, endCallback);
 				});
 			}
@@ -35,7 +41,7 @@ class Operation
 	updateMetadataMulti(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
 			if (Validator.isWindowType(metaDataList[0])) {
-				this.connector.send('UpdateWindowMetaData', metaDataList, (err, reply) => {
+				this.connector.send(Command.UpdateWindowMetaData, metaDataList, (err, reply) => {
                     this.store.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, reply, endCallback);
 				});
 			}
@@ -46,7 +52,7 @@ class Operation
 					isEditable = isEditable || this.store.getManagement().isEditable(metaDataList[i].group);
 				}
 				if (isEditable) {
-					this.connector.send('UpdateMetaData', metaDataList, (err, reply) => {
+					this.connector.send(Command.UpdateMetaData, metaDataList, (err, reply) => {
                         this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, err, reply, endCallback);
 					});
 				}
@@ -63,14 +69,14 @@ class Operation
 		if (!Validator.checkCapacity(binary.byteLength)) {
 			return;
 		}
-		this.connector.sendBinary('UpdateContent', metaData, binary, (err, reply) => {
+		this.connector.sendBinary(Command.UpdateContent, metaData, binary, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_CONTENT, err, reply, endCallback);
         });
     }
     
     deleteContent(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
-			this.connector.send('DeleteContent', metaDataList, (err, reply) => {
+			this.connector.send(Command.DeleteContent, metaDataList, (err, reply) => {
 				if (endCallback) {
 					endCallback(err, reply);
 				}
@@ -81,7 +87,7 @@ class Operation
 	
 	deleteWindow(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
-			this.connector.send('DeleteWindowMetaData', metaDataList, (err, reply) => {
+			this.connector.send(Command.DeleteWindowMetaData, metaDataList, (err, reply) => {
 				if (endCallback) {
 					endCallback(err, reply);
 				}
@@ -96,16 +102,16 @@ class Operation
 	 */
 	update(endCallback) {
 		Vscreen.clearScreenAll();
-		this.connector.send('GetMetaData', { type: "all", id: "" }, (err, reply) => {
+		this.connector.send(Command.GetMetaData, { type: "all", id: "" }, (err, reply) => {
 			if (!err) {
                 this.store.emit(Store.EVENT_DONE_GET_METADATA, err, reply, endCallback);
 			}
 		});
 		this.getGroupList();
-		this.connector.send('GetVirtualDisplay', { group: Constants.DefaultGroup }, (err, reply) => {
+		this.connector.send(Command.GetVirtualDisplay, { group: Constants.DefaultGroup }, (err, reply) => {
 			this.store.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);
 		});
-		this.connector.send('GetWindowMetaData', { type: "all", id: "" }, (err, reply) => {
+		this.connector.send(Command.GetWindowMetaData, { type: "all", id: "" }, (err, reply) => {
 			this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, err, reply);
 		});
 	}
@@ -123,7 +129,7 @@ class Operation
 		if (!Validator.checkCapacity(binary.byteLength)) {
 			return;
 		}
-		this.connector.sendBinary('AddContent', metaData, binary, (err, reply) => {
+		this.connector.sendBinary(Command.AddContent, metaData, binary, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_ADD_CONTENT, err, reply, (err, reply) => {
                 if (endCallback) {
                     endCallback(err, reply);
@@ -133,7 +139,7 @@ class Operation
     }
 
     getContent(request, endCallback, preventDefaultEmit) {
-        this.connector.send('GetContent', request, (err, reply) => {
+        this.connector.send(Command.GetContent, request, (err, reply) => {
 			if (!preventDefaultEmit) {
 				this.store.emit(Store.EVENT_DONE_GET_CONTENT, err, reply, endCallback);
 			} else {
@@ -143,7 +149,7 @@ class Operation
     }
     
     getVirtualDisplay(groupID, endCallback, preventDefaultEmit) {
-        this.connector.send('GetVirtualDisplay', {group : groupID}, (err, reply) => {
+        this.connector.send(Command.GetVirtualDisplay, {group : groupID}, (err, reply) => {
 			if (!preventDefaultEmit) {
 				this.store.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply, endCallback);
 			} else if (endCallback) {
@@ -153,7 +159,7 @@ class Operation
     }
     
     updateVirtualDisplay(windowData, endCallback) {
-		this.connector.send('UpdateVirtualDisplay', windowData, (err, reply) => {
+		this.connector.send(Command.UpdateVirtualDisplay, windowData, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, err, reply);
             if (endCallback) {
                 endCallback(err, reply);
@@ -165,7 +171,7 @@ class Operation
 	 * グループリストの更新(再取得)
 	 */
 	getGroupList(endCallback) {
-		this.connector.send('GetGroupList', {}, (err, reply) => {
+		this.connector.send(Command.GetGroupList, {}, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_GET_GROUP_LIST, err, reply);
 			if (endCallback) {
 				endCallback(err, reply);
@@ -174,12 +180,12 @@ class Operation
     }
     
 	updateControllerData(controllerData) {
-        this.connector.send('UpdateControllerData', controllerData, function () {
+        this.connector.send(Command.UpdateControllerData, controllerData, function () {
         });
 	}
 	
 	sendMessage(message, endCallback) {
-		this.connector.send('SendMessage', message, endCallback);
+		this.connector.send(Command.SendMessage, message, endCallback);
 	}
 }
 export default Operation;

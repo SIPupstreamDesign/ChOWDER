@@ -4,7 +4,7 @@
  * Copyright (c) 2017-2018 Tokyo University of Science. All rights reserved.
  */
 
-import Constants from '../../common/constants.js';
+import Command from '../../common/command'
 import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
@@ -20,102 +20,6 @@ function generateID() {
 		return Math.floor((1 + Math.random()) * 0x10000000).toString(16).substring(1);
 	}
 	return s4() + s4();
-}
-
-let videoSegments = [];
-
-function processMovieBlob(videoElem, blob) {
-	//let fileSize   = file.size;
-	let offset = 0;
-	let readBlock = null;
-
-	let mp4box = new MP4Box();
-	let player = null;
-	let chunkSize  = 1024 * 1024 * 1024; // bytes
-	mp4box.onReady = function(info) { 
-		videoSegments = [];
-		let videoCodec = 'video/mp4; codecs=\"' + info.tracks[0].codec +  '\"';
-		let audioCodec = null;
-		if (info.tracks.length > 1) {
-			audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
-		} 
-		// console.log("codec", videoCodec, audioCodec,
-		//	MediaSource.isTypeSupported(videoCodec),
-		//	MediaSource.isTypeSupported(audioCodec)
-		//);
-		if (!player) {
-			player = new MediaPlayer(videoElem, videoCodec, audioCodec);
-		}
-		if (info.isFragmented) {
-			// console.log("duration fragment", info.fragment_duration/info.timescale)
-			player.setDuration(info.fragment_duration/info.timescale);
-		} else {
-			// console.log("duration", info.duration/info.timescale)
-			player.setDuration(info.duration/info.timescale);
-		}
-		player.on("sourceOpen", function () {
-			mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
-			mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
-			
-			let initSegs = mp4box.initializeSegmentation();
-			videoSegments.push(initSegs[0].buffer);
-			player.onVideoFrame(initSegs[0].buffer);
-			player.onAudioFrame(initSegs[1].buffer);
-
-			mp4box.start();
-		});
-	}
-
-	mp4box.onSegment = function (id, user, buffer, sampleNum, is_last) {
-		if (user === player.buffer) {
-			videoSegments.push(buffer);
-			// console.log("videoseg")
-			player.onVideoFrame(buffer);
-		}
-		if (user === player.audioBuffer) {
-			// console.log("audioseg")
-			player.onAudioFrame(buffer);
-		}
-	}
-	let onparsedbuffer = function(mp4box, buffer) {
-		//console.log("Appending buffer with offset "+offset);
-		buffer.fileStart = 0;
-		mp4box.appendBuffer(buffer);
-	}
-	
-	onparsedbuffer(mp4box, blob); // callback for handling read chunk
-
-	/*
-	let onBlockRead = function(evt) {
-		if (evt.target.error == null) {
-			onparsedbuffer(mp4box, evt.target.result); // callback for handling read chunk
-			offset += evt.target.result.byteLength;
-			//progressbar.progressbar({ value: Math.ceil(100*offset/fileSize) });
-		} else {
-			// console.log("Read error: " + evt.target.error);
-			//finalizeUI(false);
-			return;
-		}
-		if (offset >= fileSize) {
-			//progressbar.progressbar({ value: 100 });
-			// console.log("Done reading file");
-			mp4box.flush();
-			videoElem.play();
-			//finalizeUI(true);
-			return;
-		}
-		readBlock(offset, chunkSize, file);
-	}
-	
-	
-	readBlock = function(_offset, length, _file) {
-		let r = new FileReader();
-		let blob = _file.slice(_offset, length + _offset);
-		r.onload = onBlockRead;
-		r.readAsArrayBuffer(blob);
-	}
-	readBlock(offset, chunkSize, file);
-	*/
 }
 
 function captureStream(video) {
@@ -134,9 +38,18 @@ class VideoStore {
         this.store = store;
 		this.action = action;
 
-		this.webRTC = {};
+		// WebRTC用キーから WebRTCインスタンスへのマップ
+		this.webRTCDict = {};
+
+		// id から video のバイナリデータへのマップ
 		this.videoDict = {};
+
+		// id から video エレメントへのマップ
 		this.videoElemDict = {};
+
+		// mp4boxで読み込んだsegmentsのキャッシュ
+		this.segmentDict = {};
+
 		this.initEvents();
 	}
 
@@ -155,6 +68,21 @@ class VideoStore {
 	};
 
 	release() {
+		let i;
+		for (i in this.webRTCDict) {
+			this.webRTCDict[i].close(true);
+		}
+		this.webRTCDict = {};
+		let metaDataList = [];
+		for (i in this.videoDict) {
+			if (this.store.hasMetadata(i)) {
+				metaDataList.push(this.store.getMetaData(i));
+			}
+		}
+		if (metaDataList.length > 0) {
+			this.store.operation.deleteContent(metaDataList);
+		}
+
 		for (i in this.videoDict) {
 			this.deleteVideoData(i);
 		}
@@ -163,6 +91,145 @@ class VideoStore {
 		}
 	}
     
+	processMovieBlob(videoElem, blob, id) {
+		//let fileSize   = file.size;
+		let offset = 0;
+		let readBlock = null;
+
+		// segmentをキャッシュする用
+		this.segmentDict[id] = {
+			audio : [],
+			video : [],
+			videoIndex : 0,
+			audioIndex : 0,
+			playHandle : null
+		};
+
+		const DURATION = 1001;
+		const TIMESCALE = 30000;
+		const SAMPLE_SEC = DURATION / TIMESCALE;
+		
+		let mp4box = new MP4Box();
+		let player = null;
+		let chunkSize  = 1024 * 1024 * 1024; // bytes
+		mp4box.onReady = (info) => {
+			let videoCodec = 'video/mp4; codecs=\"' + info.tracks[0].codec +  '\"';
+			let audioCodec = null;
+			if (info.tracks.length > 1) {
+				audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
+			} 
+			// console.log("codec", videoCodec, audioCodec,
+			//	MediaSource.isTypeSupported(videoCodec),
+			//	MediaSource.isTypeSupported(audioCodec)
+			//);
+			if (!player) {
+				player = new MediaPlayer(videoElem, videoCodec, audioCodec);
+			}
+
+			let playVideo = () => {
+				this.segmentDict[id].playHandle = setInterval(() => {
+					let videoSegs = this.segmentDict[id].video;
+					let audioSegs = this.segmentDict[id].audio;
+					if (videoSegs.length > 0) {
+						player.onVideoFrame(videoSegs[this.segmentDict[id].videoIndex]);
+						++this.segmentDict[id].videoIndex;
+					}
+					if (audioSegs.length > 0) {
+						player.onAudioFrame(audioSegs[this.segmentDict[id].audioIndex]);
+						++this.segmentDict[id].audioIndex;
+					}
+				}, SAMPLE_SEC);
+			};
+			let stopVideo = () => {
+				clearInterval(this.segmentDict[id].playHandle);
+			};
+
+			let samplesInfo;
+			player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
+				if (info.isFragmented) {
+					console.info("duration fragment", info.fragment_duration/info.timescale)
+					player.setDuration(info.fragment_duration/info.timescale);
+				} else {
+					console.info("duration", info.duration/info.timescale)
+					player.setDuration(info.duration/info.timescale);
+				}
+				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
+				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
+
+				samplesInfo = mp4box.getTrackSamplesInfo(info.tracks[0].id);
+
+				let initSegs = mp4box.initializeSegmentation();
+				this.segmentDict[id].video.push(initSegs[0].buffer);
+				this.segmentDict[id].audio.push(initSegs[1].buffer);
+				playVideo();
+				mp4box.start();
+			});
+			player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
+				stopVideo();
+				const segmentIndex = time / SAMPLE_SEC;
+				console.log("MediaPlayer.EVENT_NEED_RELOAD", time, segmentIndex, this.segmentDict[id].videoIndex, time / SAMPLE_SEC);
+				this.segmentDict[id].videoIndex = segmentIndex;
+				this.segmentDict[id].audioIndex = segmentIndex;
+				playVideo();
+			});
+		}
+
+		mp4box.onSegment = ((metaDataID) => {
+			return (id, user, buffer, sampleNum, is_last) => {
+				if (user === player.buffer) {
+					this.segmentDict[metaDataID].video.push(buffer);
+					// console.log("videoseg")
+					//player.onVideoFrame(buffer);
+				}
+				if (user === player.audioBuffer) {
+					this.segmentDict[metaDataID].audio.push(buffer);
+					// console.log("audioseg")
+					//player.onAudioFrame(buffer);
+				}
+			}
+		})(id);
+
+		let onparsedbuffer = function(mp4box, buffer) {
+			//console.log("Appending buffer with offset "+offset);
+			buffer.fileStart = 0;
+			mp4box.appendBuffer(buffer);
+		}
+		
+		onparsedbuffer(mp4box, blob); // callback for handling read chunk
+
+		/*
+		let onBlockRead = function(evt) {
+			if (evt.target.error == null) {
+				onparsedbuffer(mp4box, evt.target.result); // callback for handling read chunk
+				offset += evt.target.result.byteLength;
+				//progressbar.progressbar({ value: Math.ceil(100*offset/fileSize) });
+			} else {
+				// console.log("Read error: " + evt.target.error);
+				//finalizeUI(false);
+				return;
+			}
+			if (offset >= fileSize) {
+				//progressbar.progressbar({ value: 100 });
+				// console.log("Done reading file");
+				mp4box.flush();
+				videoElem.play();
+				//finalizeUI(true);
+				return;
+			}
+			readBlock(offset, chunkSize, file);
+		}
+		
+		
+		readBlock = function(_offset, length, _file) {
+			let r = new FileReader();
+			let blob = _file.slice(_offset, length + _offset);
+			r.onload = onBlockRead;
+			r.readAsArrayBuffer(blob);
+		}
+		readBlock(offset, chunkSize, file);
+		*/
+	}
+
 	/**
 	 * WebRTC接続開始
 	 * @method connectWebRTC
@@ -170,43 +237,44 @@ class VideoStore {
 	connectWebRTC(metaData, keyStr) {
 		let video = this.getVideoElem(metaData.id);
 		let webRTC;
-		if (!this.webRTC.hasOwnProperty(keyStr)) {
+		if (!this.webRTCDict.hasOwnProperty(keyStr)) {
 			// 初回読み込み時
 			let stream = captureStream(video);
 			webRTC = new WebRTC();
 			webRTC.setIsScreenSharing(metaData.subtype === "screen");
-			this.webRTC[keyStr] = webRTC;
+			this.webRTCDict[keyStr] = webRTC;
 			if (!stream) {
 				// for safari
 				stream = video.srcObject;
 			}
 			webRTC.addStream(stream);
 			video.ontimeupdate = () => {
-				metaData = this.store.getMetaData(metaData.id);
-				if (metaData && metaData.isEnded === 'true') {
-					for (let i in controller.webRTC) {
-						if (i.indexOf(metaData.id) >= 0) {
-							this.webRTC[i].removeStream();
-							this.webRTC[i].addStream(captureStream(video));
+				let meta = this.store.getMetaData(metaData.id);
+				if (meta && meta.isEnded === 'true') {
+					for (let i in this.webRTCDict) {
+						if (i.indexOf(meta.id) >= 0) {
+							this.webRTCDict[i].removeStream();
+							this.webRTCDict[i].addStream(captureStream(video));
 						}
 					}
-					metaData.isEnded = false;
-					this.store.operation.updateMetadata(metaData);
+					meta.isEnded = false;
+					this.store.operation.updateMetadata(meta);
 				}
 			};
-			webRTC.on('icecandidate', (type, data) => {
+			webRTC.on(WebRTC.EVENT_ICECANDIDATE, (type, data) => {
 				if (type === "tincle") {
 					metaData.from = "controller";
-					this.connector.sendBinary('RTCIceCandidate', metaData, JSON.stringify({
+					this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
 						key: keyStr,
 						candidate: data
 					}), function (err, reply) { });
 					delete metaData.from;
 				}
 			});
-			webRTC.on('negotiationneeded', () => {
+			webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
+				let webRTC = this.webRTCDict[keyStr];
 				webRTC.offer((sdp) => {
-					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
 						key: keyStr,
 						sdp: sdp
 					}), function (err, reply) { });
@@ -217,23 +285,26 @@ class VideoStore {
                     isCameraOn : metaData.is_video_on
                 })
 			});
-			webRTC.on('closed', () => {
-				delete this.webRTC[keyStr];
+			webRTC.on(WebRTC.EVENT_CLOSED, () => {
+				delete this.webRTCDict[keyStr];
 			});
-			webRTC.on('need_restart', () => {
+			webRTC.on(WebRTC.EVENT_NEED_RESTART, () => {
+				let webRTC = this.webRTCDict[keyStr];
 				webRTC.removeStream();
 				webRTC.addStream(stream);
 				webRTC.offer((sdp) => {
-					this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+					this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
 						key: keyStr,
 						sdp: sdp
 					}), function (err, reply) { });
 				});
 			});
-			webRTC.on('connected', () => {
+			webRTC.on(WebRTC.EVENT_CONNECTED, () => {
 				setTimeout(() => {
+					let webRTC = this.webRTCDict[keyStr];
+
 					webRTC.getStatus((status) => {
-						let meta = store.getMetaData(metaData.id);
+						let meta = this.store.getMetaData(metaData.id);
 						meta.webrtc_status = JSON.stringify({
 							bandwidth: {
 								availableSendBandwidth: status.bandwidth.availableSendBandwidth,
@@ -245,19 +316,23 @@ class VideoStore {
 							video_codec: status.video.send.codecs[0],
 							audio_codec: status.video.send.codecs[0]
 						});
-						store.operation.updateMetadata(meta);
+						this.store.operation.updateMetadata(meta);
 					});
 				}, 5000);
 			});
+
 			let currentPos = 0;
 			let maxBytes = 65535;
-			let updateLoop = function () {
-				//console.error("updateLoop", videoSegments.length, currentPos)
-				setTimeout(function () {
-					if (videoSegments) {
+			let updateLoop = () => {
+				setTimeout(() => {
+					let webRTC = this.webRTCDict[keyStr];
+					if (this.segmentDict.hasOwnProperty(metaData.id)) {
+						let videoSegments = this.segmentDict[metaData.id].video;
+						//console.error("hoge", videoSegments)
 						try {
 							if (currentPos === videoSegments.length)
 								return;
+
 							for (let maxPos = currentPos + 10; currentPos < maxPos && currentPos < videoSegments.length; ++currentPos) {
 								if (videoSegments[currentPos].byteLength >= maxBytes) {
 									let pos = 0;
@@ -285,22 +360,24 @@ class VideoStore {
 						}
 						catch (e) {
 							console.error(e);
-							webRTC.emit("need_restart", null);
+							webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
 							return;
 						}
 					}
 					updateLoop();
 				}, 500);
 			};
-			webRTC.on('datachannel.onopen', function () {
-				updateLoop();
-			});
+			if (metaData.use_datachannel) {
+				webRTC.on(WebRTC.EVENT_DATACHANNEL_OPEN, function () {
+					updateLoop();
+				});
+			}
 		}
 		else {
-			webRTC = this.webRTC[keyStr];
+			webRTC = this.webRTCDict[keyStr];
 		}
 		webRTC.offer((sdp) => {
-			this.connector.sendBinary('RTCOffer', metaData, JSON.stringify({
+			this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
 				key: keyStr,
 				sdp: sdp
 			}), function (err, reply) { });
@@ -340,7 +417,8 @@ class VideoStore {
 		}
 		let videoData;
 		if (type === "file") {
-			processMovieBlob(video, blob);
+			metaData.use_datachannel = true;
+			this.processMovieBlob(video, blob, metaData.id);
 			/*
 			videoData = URL.createObjectURL(blob);
 			video.src = videoData;
@@ -516,24 +594,26 @@ class VideoStore {
 		}
 
 		navigator.mediaDevices.getUserMedia(constraints).then(
-			function (stream) {
-				if (store.hasMetadata(metadataID)) {
-					// カメラマイク有効情報を保存
-					let meta = store.getMetaData(metadataID)
-					meta.video_device = this.video_device,
-					meta.audio_device = this.audio_device,
-					meta.is_video_on = isCameraOn,
-					meta.is_audio_on = isMicOn,
-					store.setMetaData(metadataID, meta)
-				}
-				// TODO
-				controller.send_movie("camera", stream, {
-					id : metadataID,
-					group: this.store.getGroupStore().getCurrentGroupID(),
-					posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
-				}, function () {
-				});
-			}.bind(saveDeviceID),
+			((saveDeviceID) => {
+				return (stream) => {
+					if (store.hasMetadata(metadataID)) {
+						// カメラマイク有効情報を保存
+						let meta = this.store.getMetaData(metadataID)
+						meta.video_device = saveDeviceID.video_device,
+						meta.audio_device = saveDeviceID.audio_device,
+						meta.is_video_on = isCameraOn,
+						meta.is_audio_on = isMicOn,
+						store.setMetaData(metadataID, meta)
+					}
+					// TODO
+					controller.send_movie("camera", stream, {
+						id : metadataID,
+						group: this.store.getGroupStore().getCurrentGroupID(),
+						posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
+					}, function () {
+					});
+				};
+			})(saveDeviceID),
 			function (err) {
 				console.error('Could not get stream: ', err);
 			});
@@ -616,9 +696,9 @@ class VideoStore {
         let metadataID = data.id;
         let isCameraOn = data.isCameraOn;
         let isMicOn = data.isMicOn;
-		for (let i in this.webRTC) {
+		for (let i in this.webRTCDict) {
 			if (i.indexOf(metadataID) >= 0) {
-				let streams = this.webRTC[i].peer.getLocalStreams();
+				let streams = this.webRTCDict[i].peer.getLocalStreams();
 				for (let k = 0; k < streams.length; ++k) {
 					let videos = streams[k].getVideoTracks();
 					for (let n = 0; n < videos.length; ++n) {
@@ -633,8 +713,8 @@ class VideoStore {
         }
 	}
 	
-	getWebRTC() {
-		return this.webRTC;
+	getWebRTCDict() {
+		return this.webRTCDict;
 	}
 
 	// video data
@@ -653,12 +733,12 @@ class VideoStore {
 	}
 	deleteVideoData(id) {
 		let videoData = this.videoDict[id];
-		if (videoData.getVideoTracks) {
+		if (videoData && videoData.getVideoTracks) {
 			videoData.getVideoTracks().forEach(function (track) {
 				track.stop();
 			});
 		}
-		if (videoData.getAudioTracks) {
+		if (videoData && videoData.getAudioTracks) {
 			videoData.getAudioTracks().forEach(function (track) {
 				track.stop();
 			});

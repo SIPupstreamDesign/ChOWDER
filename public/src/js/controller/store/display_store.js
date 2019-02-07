@@ -1,5 +1,9 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 
-
+import Command from '../../common/command'
 import Action from '../action';
 import manipulator from '../manipulator.js';
 import Vscreen from '../../common/vscreen';
@@ -84,7 +88,7 @@ class DisplayStore
 			}
 		});
 		if (targetIDList.length > 0) {
-			this.connector.send('ShowWindowID', targetIDList, (err, reply) => {
+			this.connector.send(Command.ShowWindowID, targetIDList, (err, reply) => {
                 this.store.emit(Store.EVENT_DONE_SHOW_DISPLAY_ID, err, reply);
             });
 		}

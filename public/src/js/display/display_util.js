@@ -1,5 +1,7 @@
-
-import Validator from '../common/validator'
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 
 class DisplayUtil
 {
@@ -147,6 +149,28 @@ class DisplayUtil
             area.appendChild(elem);
             return;
         }
+    }
+
+    /**
+     * リモートカーソルの自動リサイズ
+     */
+    static autoResizeCursor(elems) {
+        let ratio = Number(window.devicePixelRatio);
+        /*
+        let width = Number(screen.width);
+        let height = Number(screen.height);
+        let w = width;
+        let h = height;
+        let area = w * h;
+        let mul = area / 100000.0 / 40.0;
+        */
+        let  mul = 1.0 / ratio * 2;
+
+        for (let i = 0; i < elems.length; ++i) {
+            elems[i].style.transform = "scale(" + mul + ")";
+            elems[i].style.transformOrigin = "left top 0";
+        }
+        return mul;
     }
 }
 

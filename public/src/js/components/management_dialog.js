@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
+
 import Select from "./select";
 import Input from "./input";
 import Button from "./button";
@@ -425,7 +430,7 @@ class ManagementDialog extends EventEmitter
         this.initDBButton.on(Button.EVENT_CLICK, (err, evt) => {
             let options = this.dbSelect.getOptions();
             let selectedIndex = this.dbSelect.getSelectedIndex();
-            if (options.length > e.selectedIndex) {
+            if (options.length > selectedIndex) {
                 let name = options[selectedIndex].value;
                 this.emit(ManagementDialog.EVENT_INIT_DB, null, name);
             }

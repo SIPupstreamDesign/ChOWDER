@@ -35,13 +35,13 @@ import VideoController from '../../components/video_controller.js';
 
 class GUI extends EventEmitter 
 {
-	constructor(store, action, state, validator) 
+	constructor(store, action) 
 	{
 		super();
 
 		this.store = store;
 		this.action = action;
-		this.state = state;
+		this.state = store.getState();
 
 		this.displayMenu = null;
 		this.contentMenu = null;
@@ -306,7 +306,7 @@ class GUI extends EventEmitter
 		// ホイールイベント
 		let onWheel = (e) => {
 			if (this.managementGUI.isShow()) { return; }
-			if (!this.inListviewArea(e) && !this.is_property_area(e)) {
+			if (!this.inListviewArea(e) && !this.inPropertyArea(e)) {
 				if (!e) e = window.event; //for legacy IE
 				let delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
 				e.preventDefault();
@@ -970,7 +970,7 @@ class GUI extends EventEmitter
 	 * @param {Object} evt イベント.
 	 * @return {bool} 発生したイベントがリストビュー領域で発生していたらtrueを返す.
 	 */
-	is_property_area(evt) {
+	inPropertyArea(evt) {
 		let propertyArea = this.getRightArea();
 		let rect = propertyArea.getBoundingClientRect();
 		let px = evt.clientX;

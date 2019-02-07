@@ -1,5 +1,10 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 
 
+import Command from '../../common/command';
 import Action from '../action';
 import Validator from '../../common/validator';
 import Store from './store'
@@ -56,7 +61,7 @@ class GroupStore
 			metaData.type = "content";
 		}
 
-		this.connector.send('AddGroup', metaData, (err, groupID) => {
+		this.connector.send(Command.AddGroup, metaData, (err, groupID) => {
 			// UserList再取得
 			this.action.reloadUserList();
 		});
@@ -80,7 +85,7 @@ class GroupStore
         
 		this.for_each_group((i, group) =>{
 			if (group.id === groupID) {
-				this.connector.send('DeleteGroup', group, (err, reply) => {
+				this.connector.send(Command.DeleteGroup, group, (err, reply) => {
 					// console.log("DeleteGroup done", err, reply);
 					// console.log("UpdateGroup done", err, reply);
 					if (!err) {
@@ -141,7 +146,7 @@ class GroupStore
 		if (targetMetaDataList.length > 0) {
 			this.store.operation.updateMetadataMulti(targetMetaDataList, ((group) => {
 				return (err, data) => {
-					this.connector.send('UpdateGroup', group, (err, reply) => {
+					this.connector.send(Command.UpdateGroup, group, (err, reply) => {
 					});
 				};
 			})(group));
@@ -179,7 +184,7 @@ class GroupStore
 						id: group.id,
 						index: i + 2
 					};
-					this.connector.send('ChangeGroupIndex', target, (err, reply) => {
+					this.connector.send(Command.ChangeGroupIndex, target, (err, reply) => {
 						if (err) { console.error(err); }
 						// console.log("ChangeGroupIndex done", err, reply);
 					});
@@ -208,7 +213,7 @@ class GroupStore
 						id: group.id,
 						index: i - 1
 					};
-					this.connector.send('ChangeGroupIndex', target, (err, reply) => {
+					this.connector.send(Command.ChangeGroupIndex, target, (err, reply) => {
 						if (err) { console.error(err); }
 						// console.log("ChangeGroupIndex done", err, reply);
 					});
@@ -220,7 +225,6 @@ class GroupStore
 
 	/**
 	 * Group名変更
-	 * TODO ：バグってる
 	 */
 	_changeGroupName(data) {
         let groupID = data.groupID;
@@ -230,7 +234,7 @@ class GroupStore
 			if (group.id === groupID) {
 				let oldName = group.name;
 				group.name = groupName;
-				this.connector.send('UpdateGroup', group, (err, reply) => {
+				this.connector.send(Command.UpdateGroup, group, (err, reply) => {
 					// console.log("UpdateGroup done", err, reply);
 					if (!err) {
 						// グループリスト更新
@@ -253,7 +257,7 @@ class GroupStore
 		this.for_each_group((i, group) => {
 			if (group.id === groupID) {
 				group.color = color;
-				this.connector.send('UpdateGroup', group, (err, reply) => {
+				this.connector.send(Command.UpdateGroup, group, (err, reply) => {
 				});
 				return true;
 			}

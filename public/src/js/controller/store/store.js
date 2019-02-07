@@ -18,6 +18,7 @@ import ManipulatorStore from './manipulator_store'
 import ControllerData from '../controller_data'
 import Operation from './operation'
 import Translation from '../../common/translation'
+import Command from '../../common/command'
 
 "use strict";
 
@@ -36,7 +37,7 @@ class Store extends EventEmitter
 	constructor(state, action, cookie)
 	{
 		super();
-
+		
 		this.state = state;
 		this.action = action;
 		this.cookie = cookie;
@@ -119,6 +120,9 @@ class Store extends EventEmitter
 	 * 解放処理
 	 */
 	release() {
+		if (this.videoStore.release) {
+			this.videoStore.release();
+		}
 		if (this.managementStore.release) {
 			this.managementStore.release();
 		}
@@ -133,9 +137,6 @@ class Store extends EventEmitter
 		}
 		if (this.groupStore.release) {
 			this.groupStore.release();
-		}
-		if (this.videoStore.release) {
-			this.videoStore.release();
 		}
 		if (this.manipulatorStore.release) {
 			this.manipulatorStore.release();
@@ -157,7 +158,7 @@ class Store extends EventEmitter
 		let isDisconnect = false;
 		let reconnect = () => {
 			let client;
-			Connector.on("Disconnect", (function (client) {
+			Connector.on(Command.Disconnect, (function (client) {
 				return function () {
 					isDisconnect = true;
 					client.close();
@@ -262,7 +263,7 @@ class Store extends EventEmitter
 		
 		if (!data.isEnable) {
 			// OFFにする場合
-			Connector.send('UpdateMouseCursor', {}, (err, reply) => { });
+			Connector.send(Command.UpdateMouseCursor, {}, (err, reply) => { });
 		} else {
 			// ONの場合
 			if (data.hasOwnProperty('rgb')) {
@@ -272,7 +273,7 @@ class Store extends EventEmitter
 			delete metaData.isEnable;
 			metaData.controllerID = this.getLoginStore().getControllerID();
 			metaData.rgb = this.getControllerData().getCursorColor();
-			Connector.send('UpdateMouseCursor', metaData, (err, reply) => { });
+			Connector.send(Command.UpdateMouseCursor, metaData, (err, reply) => { });
 		}
 	}
 
@@ -295,7 +296,7 @@ class Store extends EventEmitter
 		});
 
 		if (sendIds.length !== 0) {
-			Connector.send('SendMessage', {ids: sendIds, command: 'rewindVideo'}, (err, reply) => {
+			Connector.send(Command.SendMessage, {ids: sendIds, command: 'rewindVideo'}, (err, reply) => {
 				// do nothing
 			});
 		}
@@ -320,7 +321,7 @@ class Store extends EventEmitter
 		});
 
 		if (sendIds.length !== 0) {
-			Connector.send('SendMessage', {ids: sendIds, command: 'playVideo', play: play}, (err, reply) => {
+			Connector.send(Command.SendMessage, {ids: sendIds, command: 'playVideo', play: play}, (err, reply) => {
 				// do nothing
 			});
 		}

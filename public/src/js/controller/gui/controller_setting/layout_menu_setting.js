@@ -1,8 +1,13 @@
-import GUI from '../gui'
-import Constants from '../../../common/constants';
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
+
+ import Constants from '../../../common/constants';
 
 /**
  * レイアウトメニューアイテム
+ * GUI(gui.js)にバインドして使用する
  */
 function LayoutMenuSetting() {
     return [

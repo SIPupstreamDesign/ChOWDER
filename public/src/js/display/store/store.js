@@ -5,14 +5,15 @@
 import Action from '../action'
 import Connector from '../../common/ws_connector.js';
 import Constants from '../../common/constants'
-import DisplayUtil from '../display_util';
+import Command from '../../common/command';
 import Vscreen from '../../common/vscreen';
 import Validator from '../../common/validator';
 import VscreenUtil  from '../../common/vscreen_util';
+import VideoStore from './video_store';
+import Receiver from './reciever';
 
 "use strict";
 
-const random_id_for_webrtc = DisplayUtil.generateID();
 const reconnectTimeout = 2000;
 
 class Store extends EventEmitter
@@ -26,8 +27,10 @@ class Store extends EventEmitter
         this.windowData = null;
         this.metaDataDict = {};
         this.groupDict = {};
-        this.webRTCDict = {};
         
+        this.receiver = new Receiver(Connector, this, action);
+        this.videoStore = new VideoStore(Connector, this, action);
+
         this.initEvents();
 
         //this.reciever = new Receiver(Connector, store, action);
@@ -46,7 +49,13 @@ class Store extends EventEmitter
 			}
 		}
 		super.emit(...arguments);
-	}
+    }
+    
+    release() {
+        if (this.videoStore.release) {
+            this.videoStore.release();
+        }
+    }
 
 	initEvents() {
 		for (let i in Action) {
@@ -88,7 +97,7 @@ class Store extends EventEmitter
     }
 
     _login(data) {
-        Connector.send('Login', data, (err, reply) => {
+        Connector.send(Command.Login, data, (err, reply) => {
             this.authority = reply.authority;
             this.emit(Store.EVENT_LOGIN_SUCCESS, null);
         });
@@ -96,7 +105,7 @@ class Store extends EventEmitter
 
     _logout(data) {
 		this.authority = null;
-		Connector.send('Logout', {}, function () {
+		Connector.send(Command.Logout, {}, function () {
 		});
     }
 
@@ -112,11 +121,11 @@ class Store extends EventEmitter
 
         if (updateType === 'all') {
             // console.log("update all");
-            Connector.send('GetWindowMetaData', { id: this.getWindowID() }, (err, json) => {
+            Connector.send(Command.GetWindowMetaData, { id: this.getWindowID() }, (err, json) => {
                 this.onGetWindowData(err, json);
-                Connector.send('GetMetaData', { type: 'all', id: '' }, this.onGetMetaData);
+                Connector.send(Command.GetMetaData, { type: 'all', id: '' }, this.onGetMetaData);
             });
-            Connector.send('GetGroupList', {}, (err, data) => {
+            Connector.send(Command.GetGroupList, {}, (err, data) => {
                 if (!err && data.hasOwnProperty("grouplist")) {
                     this.updateGroupDict(data.grouplist);
                 }
@@ -124,10 +133,10 @@ class Store extends EventEmitter
         } else if (updateType === 'window') {
             if (this.getWindowData() !== null) {
                 // console.log("update winodow", this.getWindowData());
-                Connector.send('GetWindowMetaData', { id : this.getWindowData().id }, this.onGetWindowData);
+                Connector.send(Command.GetWindowMetaData, { id : this.getWindowData().id }, this.onGetWindowData);
             }
         } else if (updateType === 'group') {
-            Connector.send('GetGroupList', {}, (err, data) => {
+            Connector.send(Command.GetGroupList, {}, (err, data) => {
                 if (!err && data.hasOwnProperty("grouplist")) {
                     this.updateGroupDict(data.grouplist);
                 }
@@ -135,9 +144,9 @@ class Store extends EventEmitter
         } else {
             // console.log("update transform");
             if (targetID) {
-                Connector.send('GetMetaData', { type: '', id: targetID}, this.onGetMetaData);
+                Connector.send(Command.GetMetaData, { type: '', id: targetID}, this.onGetMetaData);
             } else {
-                Connector.send('GetMetaData', { type: 'all', id: ''}, this.onGetMetaData);
+                Connector.send(Command.GetMetaData, { type: 'all', id: ''}, this.onGetMetaData);
             }
         }
     }
@@ -150,7 +159,7 @@ class Store extends EventEmitter
         params.posy = metaData.posy;
         params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
     
-        Connector.send('GetWindowMetaData', {id : newId}, (err, metaData) => {
+        Connector.send(Command.GetWindowMetaData, {id : newId}, (err, metaData) => {
             if (!err && metaData) {
                 // 既にnewIdのdisplayが登録されていた場合は、そちらの位置サイズに合わせる
                 params.posx = metaData.posx;
@@ -174,7 +183,7 @@ class Store extends EventEmitter
         metaData.orgWidth = wh.width;
         metaData.orgHeight = wh.height;
         Vscreen.assignWhole(wh.width, wh.height, cx, cy, 1.0);
-        Connector.send('UpdateWindowMetaData', [metaData], this.onUpdateWindowMetaData);
+        Connector.send(Command.UpdateWindowMetaData, [metaData], this.onUpdateWindowMetaData);
     }
 
     _deleteAllElements(data) {
@@ -209,7 +218,7 @@ class Store extends EventEmitter
 
         let f = () => {
             if (windowID !== '') {
-                Connector.send('GetWindowMetaData', {id : windowID}, (err, metaData) => {
+                Connector.send(Command.GetWindowMetaData, {id : windowID}, (err, metaData) => {
                     if (!err && metaData) {
                         let scale = parseFloat(query.scale) || parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
                         metaData.group = groupId || metaData.group,
@@ -219,10 +228,10 @@ class Store extends EventEmitter
                         metaData.orgHeight = wh.height;
                         metaData.posx = query.posx || metaData.posx;
                         metaData.posy = query.posy || metaData.posy;
-                        Connector.send('AddWindowMetaData', metaData, this.onRegisterWindow);
+                        Connector.send(Command.AddWindowMetaData, metaData, this.onRegisterWindow);
                     } else {
                         let scale = parseFloat(query.scale) || 1.0;
-                        Connector.send('AddWindowMetaData', {
+                        Connector.send(Command.AddWindowMetaData, {
                             id: windowID,
                             group: groupId,
                             posx: query.posx || 0,
@@ -237,7 +246,7 @@ class Store extends EventEmitter
                 });
             } else {
                 let scale = parseFloat(query.scale) || 1.0;
-                Connector.send('AddWindowMetaData', {
+                Connector.send(Command.AddWindowMetaData, {
                     group: groupId,
                     posx: query.posx || 0,
                     posy: query.posy || 0,
@@ -252,7 +261,7 @@ class Store extends EventEmitter
 
         let groupName = decodeURIComponent(query.group || '');
         if (groupName) {
-            Connector.send('GetGroupList', {}, (err, data) => {
+            Connector.send(Command.GetGroupList, {}, (err, data) => {
                 for (let i = 0; i < data.displaygrouplist.length; i ++) {
                     if (data.displaygrouplist[i].name === groupName) {
                         groupId = data.displaygrouplist[i].id;
@@ -287,7 +296,7 @@ class Store extends EventEmitter
                 }
             }
             metaData.zIndex = max + 1;
-            Connector.send('UpdateMetaData', [metaData], function (err, reply) {});
+            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {});
         }
 	}
 
@@ -309,7 +318,7 @@ class Store extends EventEmitter
             metaData.posx -= Vscreen.getWhole().x;
             metaData.posy -= Vscreen.getWhole().y;
             
-            Connector.send('UpdateMetaData', [metaData], function (err, reply) {
+            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {
             });
         }
     }
@@ -332,7 +341,9 @@ class Store extends EventEmitter
         if (!err) {
             for (let i = 0; i < json.length; i = i + 1) {
                 this.metaDataDict[json[i].id] = json[i];
-                this.windowData = json[i];
+                if (!this.windowData || this.windowData.id === json[i].id) {
+                    this.windowData = json[i];
+                }
             }
         }
         this.emit(Store.EVENT_DONE_REGISTER_WINDOW, err, json)
@@ -342,7 +353,9 @@ class Store extends EventEmitter
         if (!err) {
             for (let i = 0; i < json.length; i = i + 1) {
                 this.metaDataDict[json[i].id] = json[i];
-                this.windowData = json[i];
+                if (!this.windowData || this.windowData.id === json[i].id) {
+                    this.windowData = json[i];
+                }
             }
         }
         this.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, json)
@@ -370,6 +383,13 @@ class Store extends EventEmitter
         return ret;
     }
     
+	/**
+	 * VideoStoreを返す
+	 */
+	getVideoStore() {
+		return this.videoStore;
+    }
+    
     /**
      * Convert map into query params string.
      * @param {Object} map Map of parameters you want to convert into
@@ -388,6 +408,7 @@ class Store extends EventEmitter
     }
 
     setWindowData(windowData) {
+        if (this.windowData.id !== windowData.id) { console.error("hoge", windowData ); }
         this.windowData = windowData;
     }
 
@@ -425,10 +446,6 @@ class Store extends EventEmitter
     getGroupDict() {
         return this.groupDict;
     }
-
-    getWebRTCDict() {
-        return this.webRTCDict;
-    }
     
     /**
      * 閲覧情報があるか返す
@@ -454,13 +471,6 @@ class Store extends EventEmitter
         }
         return false;
     }
-
-    // このページのwebRTC用のキーを取得.
-    // ディスプレイIDが同じでもページごとに異なるキーとなる.
-    // (ページをリロードするたびに代わる)
-    getRTCKey(metaData) {
-        return metaData.id + "_" + this.getWindowData().id + "_" + random_id_for_webrtc;
-    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -475,5 +485,10 @@ Store.EVENT_DONE_GET_WINDOW_METADATA= "done_get_window_metadata";
 Store.EVENT_DONE_GET_METADATA= "done_get_metadata";
 Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
+
+// reviever
+Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
+Store.EVENT_REQUEST_SHOW_DISPLAY_ID = "request_show_display_id"
+Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 
 export default Store;
