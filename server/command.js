@@ -6,10 +6,10 @@
 /*jslint devel:true*/
 /*global require, socket, module, Buffer */
 
-(function () {
+(()=>{
 	"use strict";
-	
-	var Command = {
+
+	let Command = {
 		// request command
 		AddContent : "AddContent",
 		AddTileContent : "AddTileContent",
@@ -24,7 +24,7 @@
 		GetWindowMetaData : "GetWindowMetaData",
 		GetVirtualDisplay : "GetVirtualDisplay",
 		GetGroupList : "GetGroupList",
-		
+
 		// using both server and client
 		Update : "Update",
 		UpdateContent : "UpdateContent",
@@ -38,7 +38,7 @@
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		SendMessage: "SendMessage",
-		
+
 		// to client
 		Disconnect : "Disconnect",
 
@@ -63,7 +63,7 @@
 		GetUserList :  "GetUserList",
 		GenerateControllerID : "GenerateControllerID",
 
-		// コントローラデータ. 
+		// コントローラデータ.
 		UpdateControllerData : "UpdateControllerData",
 		GetControllerData : "GetControllerData",
 
@@ -74,6 +74,6 @@
 		RTCIceCandidate : "RTCIceCandidate",
 		RTCClose : "RTCClose",
 	};
-	
+
 	module.exports = Command;
-}());
+})();
