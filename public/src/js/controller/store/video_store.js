@@ -605,13 +605,16 @@ class VideoStore {
 						meta.is_audio_on = isMicOn,
 						store.setMetaData(metadataID, meta)
 					}
-					// TODO
-					controller.send_movie("camera", stream, {
-						id : metadataID,
-						group: this.store.getGroupStore().getCurrentGroupID(),
-						posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
-					}, function () {
-					});
+					this.action._inputVideoStream({
+						contentData : stream,
+						metaData : {
+							id : metadataID,
+							group: this.store.getGroupStore().getCurrentGroupID(),
+							posx: Vscreen.getWhole().x,
+							posy: Vscreen.getWhole().y,
+							visible: true
+						}
+					})
 				};
 			})(saveDeviceID),
 			function (err) {

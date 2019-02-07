@@ -547,11 +547,15 @@ class ContentInputGUI
 				},
 			};
 			navigator.mediaDevices.getUserMedia(mediaConstraints).then((stream) => {
-				// TODO
-				controller.send_movie("screen", stream, {
-					group: gui.getCurrentGroupID(),
-					posx: Vscreen.getWhole().x, posy: Vscreen.getWhole().y, visible: true
-				});
+				this.action.inputVideoStream({
+					contentData : stream,
+					metaData : {
+						group: gui.getCurrentGroupID(),
+						posx: Vscreen.getWhole().x,
+						posy: Vscreen.getWhole().y,
+						visible: true
+					}
+				})
 			}).catch(function (err) {
 				console.error('Could not get stream: ', err);
 			});
