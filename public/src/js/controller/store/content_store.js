@@ -428,7 +428,7 @@ class ContentStore
 			// レイアウトのメモ変更.
 			// レイアウトコンテンツを取得し直しリストを更新する.
 			this.store.operation.updateMetadata(metaData, (err, reply) => {
-				this.operation.getContent(metaData, (err, data) => {
+				this.store.operation.getContent(metaData, (err, data) => {
 					this.store.emit(Store.EVENT_CONTENT_METAINFO_CHANGED, null, metaData);
 				}, true);
 			});
