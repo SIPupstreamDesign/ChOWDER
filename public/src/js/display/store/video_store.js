@@ -139,7 +139,7 @@ class VideoStore {
                         delete this.playerDict[rtcKey];
                     }
                     if (this.webRTCDict.hasOwnProperty(rtcKey)) {
-                        if (webRTCDict[rtcKey].statusHandle) {
+                        if (this.webRTCDict[rtcKey].statusHandle) {
                             clearInterval(this.webRTCDict[rtcKey].statusHandle);
                             this.webRTCDict[rtcKey].statusHandle = null;
                         }
