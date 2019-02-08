@@ -1027,10 +1027,13 @@ class GUI extends EventEmitter
 		if (!windowData || windowData === undefined || !windowData.hasOwnProperty('id')) {
 			return;
 		}
-		let displayArea = this.getDisplayAreaForInsert(windowData.group);
 		let listElem = this.getListElem(windowData.id);
+		
+		let displayBoxArea = this.getBoxArea(Constants.TypeWindow, windowData.group);
+		this.displayListGUI.importDisplay(displayBoxArea, listElem, windowData);
+		
+		let displayArea = this.getDisplayAreaForInsert(windowData.group);
 		this.displayViewGUI.importDisplay(displayArea, listElem, windowData);
-		this.displayListGUI.importDisplay(displayArea, listElem, windowData);
 	}
 
 	// コンテンツのインポート

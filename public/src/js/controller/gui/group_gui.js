@@ -182,7 +182,7 @@ class GroupGUI
             this.action.changeGroupColor({
                 groupID : groupID,
                 color : color
-            })
+            });
 		});
 
 		groupBox.on('group_changed', (err) => {

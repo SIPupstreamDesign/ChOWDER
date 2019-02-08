@@ -116,11 +116,13 @@ class ManagementStore {
 	_changeAuthority(data) {
 		let callback = Store.extractCallback(data);
 		this.connector.send(Command.ChangeAuthority, data, (err, data) => {
-			this.action.reloadUserList((err, userList) => {
-				if (callback) {
-					callback(err, userList);
+			this.action.reloadUserList({
+				callback : (err, userList) => {
+					if (callback) {
+						callback(err, userList);
+					}
+					this.store.emit(Store.EVENT_AUTHORITY_CHANGED, null);
 				}
-				this.store.emit(Store.EVENT_AUTHORITY_CHANGED, null);
 			});
 		});
 	}

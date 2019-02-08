@@ -207,15 +207,7 @@ class Controller {
 		
 		// メタデータ取得完了
 		this.store.on(Store.EVENT_DONE_GET_METADATA, (err, reply, endCallback) => {
-			let last = reply.last;
-			delete reply.last;
 			this.doneGetMetaData(err, reply, (err) => {
-				// TODO lastは無効
-				if (last) {
-					this.action.getGroupList({
-						callback : endCallback
-					});
-				}
 			});
 		});
 
@@ -362,7 +354,6 @@ class Controller {
 		
 		// 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
 		this.store.on(Store.EVENT_DONE_RELOAD_ALL, (err, data) => {
-			this.gui.clearWindowList();
 			
 			if (this.isInitialUpdate) {
 				let checkbox = document.getElementById('all_check_');
@@ -372,8 +363,10 @@ class Controller {
 				this.isInitialUpdate = false;
 			}
 	
-			this.action.getGroupList(() => {
-				this.updateScreen();
+			this.action.getGroupList({
+				callback : () => {
+					this.updateScreen();
+				}
 			});
 		});
 
