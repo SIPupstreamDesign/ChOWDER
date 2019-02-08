@@ -53,7 +53,6 @@ class Controller {
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onMouseUp = this.onMouseUp.bind(this);
 		this.onMouseDown = this.onMouseDown.bind(this);
-		this.onUpdateAuthority = this.onUpdateAuthority.bind(this);
 		this.onCloseContent = this.onCloseContent.bind(this);
 		this.doneGetVirtualDisplay = this.doneGetVirtualDisplay.bind(this);
 		this.doneUpdateVirtualDisplay = this.doneUpdateVirtualDisplay.bind(this);
@@ -64,7 +63,6 @@ class Controller {
 		this.doneDeleteContent = this.doneDeleteContent.bind(this);
 		this.doneAddContent = this.doneAddContent.bind(this);
 		this.doneUpdateContent = this.doneUpdateContent.bind(this);
-		this.doneUpdateGroup = this.doneUpdateGroup.bind(this);
 		this.doneUpdateMetaData = this.doneUpdateMetaData.bind(this);
 		this.doneUpdateWindowMetaData = this.doneUpdateWindowMetaData.bind(this);
 		this.doneGetMetaData = this.doneGetMetaData.bind(this);
@@ -84,7 +82,7 @@ class Controller {
 	 * @method init
 	 */
 	init(data) {
-		this.getControllerData().set(data);
+		this.getControllerData().set(data.controllerData);
 		let controllerData = this.getControllerData();
 
 		let displayScale = controllerData.getDisplayScale();
@@ -160,7 +158,7 @@ class Controller {
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
 			Validator.init(this.store, this.gui);
 
-			this.init(data.controllerData);
+			this.init(data);
 		});
 
 		// websocket接続が確立された
@@ -193,7 +191,7 @@ class Controller {
 		this.store.on(Store.EVENT_DONE_UPDATE_CONTENT, this.doneUpdateContent);
 
 		// groupが更新された
-		this.store.on(Store.EVENT_DONE_UPDATE_GROUP, this.doneUpdateGroup);
+		//this.store.on(Store.EVENT_DONE_UPDATE_GROUP, this.doneUpdateGroup);
 
 		// contentメタデータが更新された
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, this.doneUpdateMetaData);
@@ -1872,17 +1870,6 @@ class Controller {
 		this.gui.setUpdateContentID("No Content Selected.");
 		manipulator.removeManipulator();
 		this.showSelectionRect(false);
-	}
-
-	/**
-	 * UpdateGroupが終了した
-	 * @param {*} err 
-	 * @param {*} reply 
-	 */
-	doneUpdateGroup(err, reply) {
-		this.onUpdateAuthority(() => {
-			this.action.getGroupList();
-		});
 	}
 
 	/**

@@ -45,11 +45,24 @@ class Action extends EventEmitter
      *  userList : userList,
      *  userid : "",
      *  password : "",
-     *  key : loginkey,
+     *  loginkey : loginkey,
      * }
      */
     login(data) {
         this.emit(Action.EVENT_LOGIN, null, data);
+    }
+
+    /**
+     * 権限情報確認のためのログイン
+     * @param {*} data 
+     * {
+     *  userid : "",
+     *  password : "",
+     *  loginkey : loginkey,
+     * }
+     */
+    loginForCheckAuthority(data) {
+        this.emit(Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY, null, data);
     }
 
     /**
@@ -869,5 +882,6 @@ Action.EVENT_SNAP_CONTENT_TO_SCREEN = "snapContentToScreen";
 Action.EVENT_MOVE_UP_GROUP = "moveUpGroup";
 Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
+Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 
 export default Action;

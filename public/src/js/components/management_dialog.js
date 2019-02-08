@@ -465,7 +465,7 @@ class ManagementDialog extends EventEmitter
         this.displayEditableSelect = new SelectList();
         let allAccessText = i18next.t("all");
         // グループの追加削除を許可のチェック
-        this.deleteLabel.onclick = function () {
+        this.deleteLabel.onclick = () => {
             this.deleteCheckBox.getDOM().click();
         };
         // ユーザー名リストの設定
@@ -608,7 +608,7 @@ class ManagementDialog extends EventEmitter
                 if (displayEditable.indexOf(allAccessText) >= 0) {
                     displayEditable = "all";
                 }
-                this.emit(ManagementDialog.EVENT_CHANGE_AUTHORITY, id, editable, viewable, displayEditable, group_manipulatable, function () {
+                this.emit(ManagementDialog.EVENT_CHANGE_AUTHORITY, id, editable, viewable, displayEditable, group_manipulatable, () => {
                     let message = this.authMessage;
                     message.style.visibility = "visible";
                     setTimeout(function () {

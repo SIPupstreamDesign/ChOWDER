@@ -93,6 +93,15 @@ class Receiver
         // グループが更新されたときにブロードキャストされてくる.
         this.connector.on(Command.UpdateGroup, (metaData) => {
             // console.log("onUpdateGroup")
+            let key = this.store.getLoginStore().getLoginKey();
+            if (key.length > 0) {
+                let request = { userid: "", password: "", loginkey: key };
+                
+                this.action.loginForCheckAuthority(request);
+            }
+            else {
+                this.action.getGroupList();
+            }
             this.store.emit(Store.EVENT_DONE_UPDATE_GROUP, null, metaData);
         });
 

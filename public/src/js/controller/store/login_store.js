@@ -88,6 +88,19 @@ class LoginStore {
 		});
 	}
 
+	// 権限情報確認のためのログイン
+	_loginForCheckAuthority(data) {
+		let request = { id: data.userid, password: data.password, loginkey : data.loginkey };
+		this.connector.send(Command.Login, request, (err, reply) => {
+			if (err || reply === "failed") {
+				// ログインに失敗した。リロードする.
+				window.location.reload(true);
+			}
+			this.store.getManagement().authority = reply.authority;
+			this.action.getGroupList();
+		});
+	}
+
 	/**
 	 * ユーザーリストを最新に更新
 	 */
