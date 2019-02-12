@@ -10,7 +10,6 @@ class Button extends EventEmitter
 
         this.dom = document.createElement('input');
         this.dom.className = "btn";
-        this.dom.style.color = "black";
         this.dom.setAttribute('type', 'button');
         this.dom.value = "";
 

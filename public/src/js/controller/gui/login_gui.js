@@ -46,7 +46,7 @@ class LoginGUI extends EventEmitter {
 
 	initLoginMenu() {
 		this.loginMenu = new LoginMenu();
-		document.body.appendChild(this.loginMenu.getDOM());
+		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 
 		// ログインが実行された場合
 		this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {

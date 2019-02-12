@@ -69,7 +69,7 @@ class GUI extends EventEmitter
 		// 上部メニュー
 		this.menu = new Menu("controller", MenuSetting.bind(this)(this.management));
 		this.menu.setIDValue(this.store.getLoginStore().getControllerID());
-		document.getElementsByClassName('head_menu')[0].appendChild(this.menu.getDOM());
+		document.getElementById('layout').insertBefore(this.menu.getDOM(), document.getElementById('layout').childNodes[0]);
 
 		// 下部タブ、グループ編集GUI
 		this.groupGUI = new GroupGUI(this.store, this.action, TabSetting.bind(this)());

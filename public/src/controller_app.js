@@ -6,6 +6,7 @@
 require("./css/components/burger_menu.css");
 require("./css/components/context_menu.css");
 require("./css/components/group_box.css");
+require("./css/components/button.css");
 require("./css/components/input_dialog.css");
 require("./css/components/layout.css");
 require("./css/components/login_menu.css");
