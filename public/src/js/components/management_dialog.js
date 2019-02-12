@@ -80,6 +80,10 @@ class ManagementDialog extends EventEmitter
             this.initDBButton.setDataKey("initialize");
             this.initDBButton.getDOM().classList.add("management_dialog_db_button");
             selectFrame.appendChild(this.initDBButton.getDOM());   
+
+            // 初期状態でrenameとdeleteはdisable
+            this.renameDBButton.getDOM().disabled = true;
+            this.deleteDBButton.getDOM().disabled = true;
         }
 
 
@@ -755,15 +759,24 @@ class ManagementDialog extends EventEmitter
 
     close() {
         if (this.background) {
+            this.background.removeListener('close');
             this.background.close();
             this.background = null;
         }
-        this.background.removeListener('close');
         document.body.removeChild(this.dom);
     }
 
     isShow() {
         return (this.background != null);
+    }
+
+    getSelectedDBIndex() {
+        let selectedIndex = this.dbSelect.getSelectedIndex();
+        return selectedIndex;
+    }
+
+    setSelectedDBIndex(index) {
+        this.dbSelect.setSelectedIndex(index);
     }
 }
 

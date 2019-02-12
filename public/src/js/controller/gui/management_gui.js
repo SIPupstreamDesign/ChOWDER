@@ -24,6 +24,16 @@ class ManagementGUI
 		});
 		
 		this.action.reloadDBList();
+		
+		// ユーザーリスト更新時
+		// 再表示させる
+		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
+			//let selectedDBIndex = this.managementDialog.getSelectedDBIndex();
+			this.close();
+			this.show();
+			// リストの順番がリネームによりことなるので、再度同じDBを選択できない
+			//this.managementDialog.setSelectedDBIndex(selectedDBIndex);
+		});
 	}
 
 	/**

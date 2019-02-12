@@ -29,8 +29,7 @@ class LoginGUI extends EventEmitter {
 			this.loginMenu.showInvalidLabel(true);
 		});
 
-		// ユーザーリスト更新時に再ログインさせる
-		// 初回ページ表示時にも使用
+		// ユーザーリスト更新時
 		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
 			// Selectの中身をUserListで更新
 			let userList = this.loginStore.getUserList();
