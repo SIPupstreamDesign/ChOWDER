@@ -22,13 +22,13 @@ screenshare,スクリーン共有,Share Screen
 camerashare,カメラ共有,Share Camera
 change_name,名前変更,Rename
 change_color,色変更,Change Color
-user,ユーザー,User
+user,コントローラ,Controller
 password,パスワード,Password
 meta_info,メタ情報,Meta Info
 movie_setting,動画設定,Movie Settings
 change_history,差し替え履歴,Replacement History
 login,ログイン,Login
-invalid_login,ユーザーまたはパスワードが正しくありません,Invalid Login. User or Password isn't correct.
+invalid_login,コントローラまたはパスワードが正しくありません,Invalid Login. Controller or Password isn't correct.
 restore,復元,Restore
 management,管理,Management
 db_management,DB管理,DB Management
@@ -40,7 +40,7 @@ setting_target,設定対象,Setting Target
 editable_content,編集可能コンテンツ,Editable Content
 viewable_content,閲覧可能コンテンツ,Viewable Content
 allow_editting_group,グループの編集を許可,Allow Edit of Groups
-editable_display,編集可能ディスプレイ,Editable Display
+editable_display,編集可能サイト,Editable Site
 setting_password,パスワードの設定,Password Settings
 old_password,変更前のパスワード,Old Password
 new_password,新規パスワード,New Password
@@ -65,7 +65,7 @@ save_name,新規保存名,Name
 create,作成,Create
 already_exists,既に存在する名前です,The name already exists.
 cannot_empty,空の名前にはできません,The name is empty.
-cannot_set_to_this_user,このユーザーにはパスワードは設定できません,Cannot set password to this user.
+cannot_set_to_this_user,この設定対象にはパスワードは設定できません,Cannot set password to this target.
 input_valid_password,有効なパスワードを入力してください,Input valid password.
 delete_is_ok,を削除します。よろしいですか?,"will be deleted, OK?"
 init_is_ok,を初期化します。よろしいですか?,"will be initialized, OK?"

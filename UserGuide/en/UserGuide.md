@@ -32,7 +32,7 @@ Table of Contents
   - [Layout Tab](#layout-tab)
   - [Property Window](#property-window)
   - [Working with Video Content](#working-with-video-content)
-- [User Permissions and Administrator Screen](#user-permissions-and-administrator-screen)
+- [Controller Permissions and Administrator Screen](#controller-permissions-and-administrator-screen)
   - [Managing Permissions](#managing-permissions)
   - [Administrator Screen](#administrator-screen)
 - [Working with Display Screen](#working-with-display-screen)
@@ -214,7 +214,7 @@ Managing Administrative Users
 You can modify the administrator configurations by starting up ChOWDER.
 The default password for the administrator is “admin”.
 
-The section "User Permissions and Administrator Screen" in this document gives a more 
+The section "Controller Permissions and Administrator Screen" in this document gives a more 
 
 The Administrator Configuration File
 ---------------------------------------------------
@@ -231,7 +231,7 @@ To add or remove an administrator during the startup, create an `admin.json` fil
         }
     }
 
-In this example, the user "administrator" is added  and “administrator2” is deleted.
+In this example, the controller "administrator" is added  and “administrator2” is deleted.
 
 The entry `“command” : “add”` adds an administrator (actually, the same command can be used for overwriting an existing administrator configuration).  `“command” : “delete”` deletes an administrator. The `"password"` entry is mandatory when adding an administrator.
 The `admin.json` file will be processed when launching ChOWDER and administrators will be added or removed at that time. 
@@ -314,6 +314,7 @@ Under [Settings], you can toggle the appearance of ChOWDER's *remote cursor*.
 *Selecting [Settings]*
 
 The remote cursor is a cursor that appears on the tiled displays.
+
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *The remote cursor*
 
@@ -711,24 +712,28 @@ The operation is as follows.
 *Bulk operation of video*
 
 
-User Permissions and Administrator Screen
+Controller Permissions and Administrator Screen
 ==================================================================
 
 Managing Permissions
 ---------------------------------------------------
 ChOWDER has 4 permission types. An *administrator* permission lets one access and edit all the functionalities of ChOWDER.
 A *display* 
-In a typical scenario, many users work in a group in front of a tiled displays system. A *group user* permission is designed for this purpose. By default, this permission lets one view and edit the contents of her belonging group from their own computers.
+In a typical scenario, many users work in a group in front of a tiled displays system. A *group* permission is designed for this purpose. By default, this permission lets one view and edit the contents of her belonging group from their own computers.
 
-|User Categpry| Overview |Access Level|
+|Category| Overview |Access Level|
 | ---- | ---- | ---- |
 |Administrator| Administrator can access all functions | All functions including Administrator Screen |
-|Group User| User per Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
-|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
+|Group| User per Content Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
+
+You can set password and level of access to them. 
+
+### Special Permissions
+The Display and Guest can be used without password in and you can only set the access privilege.
+|Category| Overview |Access Level|
+| ---- | ---- | ---- |
 |Guest| Guest User without Password | Default setting of access restrictions of the Administrator Screen permits editing and viewing for default setting only |
-
-You can set password and level of access per user. 
-
+|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
 
 Administrator Screen
 ---------------------------------------------------
@@ -761,15 +766,15 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 <img src="image/management5.png" alt=" 閲覧・編集権限の設定" width="585" />
 *Viewing/Editing Permission Setup*
 
-1. Select user to set up.
-2. Choose whether selected user has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
-3. Select the site the user has permission to edit. Users with permission for “all” are able to edit/view newly created sites as well.
-4. Set up selected user with permission levels for editing groups and working with Display.
+1. Select controller to set up.
+2. Choose whether selected controller has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
+3. Select the site the controller has permission to edit. Users with permission for “all” are able to edit/view newly created sites as well.
+4. Set up selected controller with permission levels for editing groups and working with Display.
 
 
 ### Password Setup
 
-You can change a user’s password in Password Setup
+You can change a controller’s password in Password Setup
 The previous password will be required only for changing the Administrator’s password. 
 
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
