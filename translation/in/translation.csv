@@ -8,6 +8,7 @@ overwrite_layout,レイアウト上書き,Overwrite Layout
 change_group,グループ変更,Change Group
 change_displaygroup,サイト変更,Change Site
 select_all_in_a_group,グループ内全て選択,Select All in a Group
+select_all_in_a_site,サイト内全て選択,Select All in a Site
 move_to_front,最前面に移動,Move to front
 move_to_back,最背面に移動,Move to back
 add_content,コンテンツ追加,Add Content
@@ -56,7 +57,9 @@ new,新規,New
 initialize,初期化,Initialize
 apply,適用,Apply
 new_group,新規グループ,New Group
+new_site,新規サイト,New Site
 add_new_group,新規グループの追加,Add New Group
+add_new_site,新規サイトの追加,Add New Site
 move_up,1つ上に移動,Move Up
 move_down,1つ下に移動,Move Down
 change_group_name,グループ名変更,Change Group Name
