@@ -6,7 +6,7 @@ delete,削除,Delete
 add_layout,レイアウト追加,Add Layout
 overwrite_layout,レイアウト上書き,Overwrite Layout
 change_group,グループ変更,Change Group
-change_displaygroup,ディスプレイグループ変更,Change Display Group
+change_displaygroup,サイト変更,Change Site
 select_all_in_a_group,グループ内全て選択,Select All in a Group
 move_to_front,最前面に移動,Move to front
 move_to_back,最背面に移動,Move to back

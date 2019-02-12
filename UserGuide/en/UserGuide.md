@@ -524,26 +524,26 @@ The Select All button selects all connected Display.
 <img src="image/3Button3.png" alt="全選択ボタン" width="377" />
 *Select All Button*
 
-### DisplayGroup Setup
+### Site Setup
 
-You can set the DisplayGroup assigned to the display within the Display tab.
-You can set one Virtual Display per DisplayGroup.
+You can set the Site assigned to the display within the Display tab.
+You can set one Virtual Display per Site.
 
-You can add a group or change the order of a created group by using the button.
-In the settings menu, you can change the name of the group, the color of the group, and delete the group. 
+You can add a site or change the order of a created site by using the button.
+In the settings menu, you can change the name of the site, the color of the site, and delete the site. 
 
-<img src="image/display_group1.png" alt="DisplayGroupの追加, 順序変更" height="321" />
-*Adding and Changing the Order of the DisplayGroup*
+<img src="image/display_group1.png" alt="Siteの追加, 順序変更" height="321" />
+*Adding and Changing the Order of the Site*
 <br>
-<img src="image/display_group2.png" alt="DisplayGroupの設定" height="321" />
-*DisplayGroup Setup*
+<img src="image/display_group2.png" alt="Siteの設定" height="321" />
+*Site Setup*
 
-### Assigning the DisplayGroup
+### Assigning the Site
 
-You can make changes to the group assigned to Display by right-clicking menu in Display or through the menu on the lower right of the screen. Changes cannot be made to Groups in VirtualDisplay. 
+You can make changes to the site assigned to Display by right-clicking menu in Display or through the menu on the lower right of the screen. Changes cannot be made to Groups in VirtualDisplay. 
 
-<img src="image/display_group3.png" alt="DisplayGroupの変更" height="321" />
-*Make Changes to DisplayGroup*
+<img src="image/display_group3.png" alt="Siteの変更" height="321" />
+*Make Changes to Site*
  
 
 
@@ -763,7 +763,7 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 
 1. Select user to set up.
 2. Choose whether selected user has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
-3. Select the display group the user has permission to edit. Users with permission for “all” are able to edit/view newly created groups as well.
+3. Select the site the user has permission to edit. Users with permission for “all” are able to edit/view newly created sites as well.
 4. Set up selected user with permission levels for editing groups and working with Display.
 
 
@@ -1169,7 +1169,7 @@ The format for the setup file is as follows:
 
 -	Use the URL of the ChOWDER server for `url`.
 -	`windows` is the object that has the Display ID as key and display setup as value.
-    -	Designate the display group in `Group`.
+    -	Designate the site in `Group`.
     -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
     -	Set the size `[width, height]` of the window in `size`.
     -	Set the position `[Vertical, Horizontal]` within VDA in `vda_position`. The origin is the upper left corner of Virtual Display.
