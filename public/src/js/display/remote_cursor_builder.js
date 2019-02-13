@@ -58,9 +58,8 @@ class RemoteCursorBuilder
         elem.style.left = Math.round(pos.x) + 'px';
         elem.style.top  = Math.round(pos.y) + 'px';
         controllerID.style.left = Math.round(pos.x) + 'px';
-        controllerID.style.top  = Math.round(pos.y + (200 * this.getScalefromSize(Number(res.data.cursor_size))) / Number(window.devicePixelRatio)) + 'px';
+        controllerID.style.top  = Math.round(pos.y + Number(res.data.cursor_size)) + 'px';
         this.controllers[ctrlid].lastActive = Date.now();
-        console.log(Number(res.data.cursor_size));
     }
 
     static releaseCursor(res,controllers){

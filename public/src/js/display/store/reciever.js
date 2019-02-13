@@ -7,9 +7,7 @@
 import Command from '../../common/command'
 import Store from './store'
 import StringUtil from '../../common/string_util'
-import DisplayUtil from '../display_util'
-import Validator from '../../common/validator'
-import RemoteCursorBuilder from '../RemoteCursorBuilder'
+import RemoteCursorBuilder from '../remote_cursor_builder'
 
 class Receiver
 {
