@@ -216,9 +216,10 @@ class GUI extends EventEmitter
 	}
 
 	changeRemoteCursorSize(){
+		let cursorSize = this.controllerData.getCursorSize()
         const setting = {
 			name : "Input remote cursor size (px)",
-            initialValue : this.controllerData.getCursorSize(),
+            initialValue : cursorSize,
             okButtonName : "OK",
         }
         InputDialog.showTextInput(setting,(value)=>{

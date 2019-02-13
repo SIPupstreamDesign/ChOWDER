@@ -46,6 +46,7 @@ function generateCursorColor() {
 	return 'rgb(255, 255, 255)';
 }
 
+
 /**
  * コントローラの設定データ. コントローラIDごとに固有に持ち, サーバサイドに保存される.
  */
@@ -77,8 +78,13 @@ class ControllerData extends EventEmitter {
 			if (data.hasOwnProperty('cursorColor')) {
 				this.cursorColor = String(data.cursorColor);
 			}
-			if (data.hasOwnProperty('cursorColor')) {
-				this.cursorSize = parseInt(data.cursorSize);
+			if (data.hasOwnProperty('cursorSize')) {
+				let size = parseInt(data.cursorSize)
+				if(Number.isFinite(size)){
+					this.cursorSize = size;
+				}else{
+					console.error("cursorsize expected Number");
+				}
 			}
 			if (data.hasOwnProperty('groupCheck')) {
 				for (let i in data.groupCheck) {
@@ -148,8 +154,13 @@ class ControllerData extends EventEmitter {
 	getCursorColor() {
 		return this.cursorColor;
 	}
-	setCursorSize(size) {
-		this.cursorSize = size;
+	setCursorSize(cursorSize) {
+		let size = parseInt(cursorSize)
+		if(Number.isFinite(size)){
+			this.cursorSize = size;
+		}else{
+			console.error("cursorsize expected Number");
+		}
 		this.emit('update', null, this.get());
 	}
 	getCursorSize() {
