@@ -46,7 +46,7 @@ class Store extends EventEmitter
 		this.controllerData = new ControllerData();
 
 		this.isInitialized_ = false;
-		
+
 		// 接続状況
 		// null = 初期状態(未接続), false = 接続済, true = 接続した後に切断された
 		this.isDisconnect = null;
@@ -174,21 +174,8 @@ class Store extends EventEmitter
 	 */
 	_connect(data) {
 		let reconnect = () => {
-<<<<<<< HEAD
-			let client;
-			Connector.on(Command.Disconnect, (function (client) {
-				return function () {
-					isDisconnect = true;
-					client.close();
-				};
-			}(client)));
-
-			client = Connector.connect(() => {
-				if (isDisconnect) {
-=======
 			this.connectionClient = Connector.connect(() => {
 				if (this.isDisconnect) {
->>>>>>> 9e8eb568172a88416413166e7231347a8a466870
 					location.reload();
 					return;
 				}
@@ -367,7 +354,7 @@ class Store extends EventEmitter
 			});
 		}
 	}
-	
+
 	/**
 	 * 接続済かどうか返す
 	 */
