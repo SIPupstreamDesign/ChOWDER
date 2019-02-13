@@ -582,6 +582,7 @@ Store.EVENT_DBLIST_RELOADED = "dblist_reloaded";
 Store.EVENT_AUTHORITY_CHANGED = "authority_changed";
 Store.EVENT_PASSWORD_CHANGED = "password_changed";
 Store.EVENT_GLOBAL_SETTING_RELOADED = "global_setting_reloaded";
+Store.EVENT_GLOBAL_SETTING_CHANGED = "global_setting_changed";
 
 // content_store
 Store.EVENT_DONE_UPDATE_CONTENT = "done_update_content";
