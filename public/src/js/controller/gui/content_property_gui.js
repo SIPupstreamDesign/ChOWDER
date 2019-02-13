@@ -432,6 +432,10 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 	}
 	initVideoPropertyArea(isEditableContent, metaData, type) {
+		if (!navigator.mediaDevices) {
+			// IEなど
+			return
+		}
 		navigator.mediaDevices.enumerateDevices()
 			.then((devices) => {
 				let i;

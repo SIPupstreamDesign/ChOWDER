@@ -54,6 +54,7 @@ p {
 	color: white;
 }
 
+/* スクロールバー */
 ::-webkit-scrollbar {
 	width: 8px;
 	background-color: rgba(0,0,0,0);

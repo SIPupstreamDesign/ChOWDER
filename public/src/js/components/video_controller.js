@@ -3,6 +3,9 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
+/**
+ * 一括で動画を操作するための、再生、巻き戻しボタンのみあるコントローラ
+ */
 class VideoController extends EventEmitter
 {
     constructor() {

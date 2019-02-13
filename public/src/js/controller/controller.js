@@ -1576,7 +1576,7 @@ class Controller {
 					this.action.getContent({
 						request : request,
 						callback : (err, data) => {
-							this.gui.importContent(json, data.contentData, this.store.getVideoStore().getVideoElem(json.id));
+							this.gui.importContent(json, data.contentData, this.store.getVideoStore().getVideoPlayer(json.id));
 							this.action.toggleContentMarkIcon({
 								element : document.getElementById(metaData.id),
 								metaData : data.metaData
@@ -1644,7 +1644,7 @@ class Controller {
 			}
 			if (metaData.type === "video") {
 				if (this.store.getVideoStore().hasVideoData(metaData.id)) {
-					this.gui.importContent(metaData, contentData, this.store.getVideoStore().getVideoElem(metaData.id));
+					this.gui.importContent(metaData, contentData, this.store.getVideoStore().getVideoPlayer(metaData.id));
 				}
 				else {
 					// ローカルに保持していない動画コンテンツ
@@ -1794,8 +1794,8 @@ class Controller {
 			if (this.store.getVideoStore().hasVideoData(json.id)) {
 				this.store.getVideoStore().deleteVideoData(json.id);
 			}
-			if (this.store.getVideoStore().hasVideoElem(json.id)) {
-				this.store.getVideoStore().deleteVideoElem(json.id);
+			if (this.store.getVideoStore().hasVideoPlayer(json.id)) {
+				this.store.getVideoStore().deleteVideoPlayer(json.id);
 			}
 		};
 		for (let i = 0; i < reply.length; i = i + 1) {

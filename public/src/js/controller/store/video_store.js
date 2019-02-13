@@ -10,6 +10,7 @@ import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
 import WebRTC from '../../common/webrtc';
 import Vscreen from '../../common/vscreen'
+import VideoPlayer from '../../components/video_player'
 
 "use strict";
 
@@ -46,7 +47,7 @@ class VideoStore {
 		this.videoDict = {};
 
 		// id から video エレメントへのマップ
-		this.videoElemDict = {};
+		this.videoPlayerDict = {};
 
 		// mp4boxで読み込んだsegmentsのキャッシュ
 		this.segmentDict = {};
@@ -87,8 +88,8 @@ class VideoStore {
 		for (i in this.videoDict) {
 			this.deleteVideoData(i);
 		}
-		for (i in this.videoElemDict) {
-			this.deleteVideoElem(i);
+		for (i in this.videoPlayerDict) {
+			this.deleteVideoPlayer(i);
 		}
 	}
     
@@ -238,7 +239,8 @@ class VideoStore {
 	 * @method connectWebRTC
 	 */
 	connectWebRTC(metaData, keyStr) {
-		let video = this.getVideoElem(metaData.id);
+		let player = this.getVideoPlayer(metaData.id);
+		let video = player.getVideo();
 		let webRTC;
 		if (!this.webRTCDict.hasOwnProperty(keyStr)) {
 			// 初回読み込み時
@@ -415,12 +417,15 @@ class VideoStore {
 			metaData.id = generateID();
 		}
 		let video;
-		if (this.hasVideoElem(metaData.id)) {
-			video = this.getVideoElem(metaData.id);
+		if (this.hasVideoPlayer(metaData.id)) {
+			let player = this.getVideoPlayer(metaData.id);
+			video = player.getVideo();
 		}
 		else {
-			video = document.createElement('video');
-			this.setVideoElem(metaData.id, video);
+			//video = document.createElement('video');
+			let player = new VideoPlayer();
+			this.setVideoPlayer(metaData.id, player);
+			video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
 			if (subType === "camera" || subType === "screen") {
 				video.muted = true;
@@ -437,7 +442,7 @@ class VideoStore {
 			*/
 		}
 		this.setVideoData(metaData.id, videoData);
-		/*
+		
 		video.oncanplaythrough = function () {
 			if (type !== "file") {
 				window.setTimeout(function(){
@@ -468,7 +473,7 @@ class VideoStore {
 			metaData.isEnded = true;
 			this.update_metadata(metaData);
 		}.bind(this);
-		*/
+		
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
 			if (!metaData.hasOwnProperty("width")) {
@@ -518,31 +523,37 @@ class VideoStore {
 			metaData.id = generateID();
 		}
 		let video;
-		if (this.hasVideoElem(metaData.id)) {
-			video = this.getVideoElem(metaData.id);
+		if (this.hasVideoPlayer(metaData.id)) {
+			let player = this.getVideoPlayer(metaData.id);
+			video = player.getVideo();
 		} else {
-			video = document.createElement('video');
-			this.setVideoElem(metaData.id, video);
+			let player = new VideoPlayer();
+			this.setVideoPlayer(metaData.id, player);
+			video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
 			if (subType === "camera" || subType === "screen") {
 				video.muted = true;
 			}
 		}
-		let videoData;
-        // stream
-        if ('srcObject' in video) {
-            videoData = blob;
-            video.srcObject = blob;
-        }
-        else {
-            videoData = URL.createObjectURL(blob);
-            video.src = videoData;
-        }
-        video.load();
-        video.play();
 
-        this.setVideoData(metaData.id, videoData);
-        
+		let videoData;
+		// stream
+		if ('srcObject' in video) {
+			videoData = blob;
+			video.srcObject = blob;
+		}
+		else {
+			videoData = URL.createObjectURL(blob);
+			video.src = videoData;
+		}
+		
+		setTimeout(() => {
+			video.load();
+			video.play();
+		}, 100)
+
+		this.setVideoData(metaData.id, videoData);
+		
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
 			if (!metaData.hasOwnProperty("width")) {
@@ -643,7 +654,7 @@ class VideoStore {
      */
     _changeVideoDevice(data) {
         let metadataID = data.id;
-        if (data.hasOwnProperty('deviceInfo') && this.hasVideoElem(metadataID)) {
+        if (data.hasOwnProperty('deviceInfo') && this.hasVideoPlayer(metadataID)) {
             this.restartCamera(metadataID, data.deviceInfo);
         }
     }
@@ -653,7 +664,7 @@ class VideoStore {
      */
     _changeAudioDevice(data) {
         let metadataID = data.id;
-		if (data.hasOwnProperty('deviceInfo') && this.hasVideoElem(metadataID)) {
+		if (data.hasOwnProperty('deviceInfo') && this.hasVideoPlayer(metadataID)) {
 			this.restartCamera(metadataID, data.deviceInfo);
 		}
     }
@@ -663,7 +674,7 @@ class VideoStore {
      */
     _changeVideoQuality(data) {
         let metadataID = data.id;
-		if (this.hasVideoElem(metadataID) && data.hasOwnProperty('quality')) {
+		if (this.hasVideoPlayer(metadataID) && data.hasOwnProperty('quality')) {
 			if (this.store.hasMetadata(metadataID)) {
 				let meta = this.store.getMetaData(metadataID);
 				meta.quality = JSON.stringify(data.quality);
@@ -729,25 +740,20 @@ class VideoStore {
 		delete this.videoDict[id];
 	}
 
-	// video elem
-	setVideoElem(id, elem) {
-		this.videoElemDict[id] = elem;
+	// video player
+	setVideoPlayer(id, player) {
+		this.videoPlayerDict[id] = player;
 	}
-	getVideoElem(id, elem) {
-		return this.videoElemDict[id];
+	getVideoPlayer(id) {
+		return this.videoPlayerDict[id];
 	}
-	hasVideoElem(id) {
-		return this.videoElemDict.hasOwnProperty(id);
+	hasVideoPlayer(id) {
+		return this.videoPlayerDict.hasOwnProperty(id);
 	}
-	deleteVideoElem(id) {
-		let elem = this.videoElemDict[id];
-		elem.pause();
-		elem.srcObject = null;
-		if (elem.src) {
-			URL.revokeObjectURL(elem.src);
-		}
-		elem.src = "";
-		delete this.videoElemDict[id];
+	deleteVideoPlayer(id) {
+		let player = this.videoPlayerDict[id];
+		player.release();
+		delete this.videoPlayerDict[id];
 	}
 }
 

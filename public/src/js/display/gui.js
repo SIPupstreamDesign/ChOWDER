@@ -10,6 +10,7 @@ import Vscreen from '../common/vscreen.js';
 import VscreenUtil from '../common/vscreen_util.js';
 import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
+import VideoPlayer from '../components/video_player';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -352,22 +353,19 @@ class GUI extends EventEmitter {
 
     /**
      * videoを表示
-     * @param {*} elem 
+     * @param {*} videpPlayer 
      * @param {*} metaData 
      * @param {*} contentData 
      */
-    showVideo(elem, metaData, contentData) {
+    showVideo(videpPlayer, metaData, contentData) {
         let webRTCDict = this.store.getVideoStore().getWebRTCDict();
         let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
-        elem.setAttribute("controls", "");
-        elem.setAttribute('autoplay', '');
-        //console.error("showVideo", elem, metaData, contentData)
-        //elem.setAttribute('preload', "metadata")
+        
         if (!webRTCDict.hasOwnProperty(rtcKey)) {
             metaData.from = "view";
             this.action.requestWebRTC({
                 metaData : metaData,
-                element: elem,
+                player: videpPlayer,
                 request : JSON.stringify({ key : rtcKey })
             });
             delete metaData.from;
@@ -456,7 +454,7 @@ class GUI extends EventEmitter {
         let elem;
         let metaDataDict = this.store.getMetaDataDict();
         let groupDict = this.store.getGroupDict();
-    
+        let videoPlayer = null;
         // console.log("assignContent", "id=" + metaData.id);
         if (Validator.isWindowType(metaData) || 
             (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
@@ -478,7 +476,12 @@ class GUI extends EventEmitter {
             }
     
             if (!elem) {
-                elem = document.createElement(tagName);
+                if (metaData.type === 'video') {
+                    videoPlayer = new VideoPlayer();
+                    elem = videoPlayer.getDOM();
+                } else {
+                    elem = document.createElement(tagName);
+                }
                 elem.id = metaData.id;
                 elem.style.position = "absolute";
                 elem.style.color = "white";
@@ -487,7 +490,9 @@ class GUI extends EventEmitter {
                 //previewArea.appendChild(elem);
             }
             if (metaData.type === 'video') {
-                this.showVideo(elem, metaData, contentData);
+                setTimeout(() => {
+                    this.showVideo(videoPlayer, metaData, contentData);
+                }, 100);
             } else if (metaData.type === 'text') {
                 // contentData is text
                 this.showText(elem, metaData, contentData);

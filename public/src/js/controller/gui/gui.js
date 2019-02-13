@@ -1049,15 +1049,15 @@ class GUI extends EventEmitter
 	}
 
 	// コンテンツのインポート
-	importContent(metaData, contentData, videoElem) {
+	importContent(metaData, contentData, videoPlayer) {
 		let listElem = this.getListElem(metaData.id);
 
 		let layoutBoxArea = this.getBoxArea(Constants.TypeLayout, metaData.group);
 		this.layoutListGUI.importContent(layoutBoxArea, listElem, metaData, contentData);
 
 		let contentBoxArea = this.getBoxArea(Constants.TypeContent, metaData.group);
-		this.contentListGUI.importContent(contentBoxArea, listElem, metaData, contentData, videoElem);
-		this.contentViewGUI.importContent(this.getContentPreviewArea(), listElem, metaData, contentData, videoElem);
+		this.contentListGUI.importContent(contentBoxArea, listElem, metaData, contentData, videoPlayer);
+		this.contentViewGUI.importContent(this.getContentPreviewArea(), listElem, metaData, contentData, videoPlayer);
 	}
 
 	// Search対象グループのチェック

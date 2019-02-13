@@ -62,7 +62,7 @@ class VideoStore {
         console.error("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
-        let elem = data.element;
+        let elem = data.player.getVideo();
         let rtcKey = this.getRTCKey(metaData);
         this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
             let webRTC = new WebRTC();
