@@ -12,7 +12,7 @@ import Translation from '../../../common/translation'
 function MenuSetting(management) {
     let settingMenu = [{
         VirtualDisplay : {
-            func : () => { 
+            func : () => {
                 document.getElementById('display_tab_link').click();
                 this.action.clickVirtualDisplay()
             }
@@ -31,17 +31,22 @@ function MenuSetting(management) {
                 // カーソルカラーの変更
                 func : this.changeRemoteCursorColor.bind(this)
             }
-        }]	
+        }, {
+            Size : {
+                // カーソルサイズの変更
+                func : this.changeRemoteCursorSize.bind(this)
+            }
+        }]
     }, {
         Language : [{
             Japanese : {
-                func : () => { 
+                func : () => {
                     this.store.getCookie().setLanguage("ja-JP");
                     Translation.changeLanguage("ja-JP");
                     Translation.translate();
                 }
             }
-        }, { 
+        }, {
             English : {
                 func : () => {
                     this.store.getCookie().setLanguage("en-US");
@@ -59,7 +64,7 @@ function MenuSetting(management) {
             }
         });
     }
-    
+
     return [
         {
             Controller : [{
@@ -75,21 +80,21 @@ function MenuSetting(management) {
         {
             Add : [{
                     Image : {
-                        func : () => { 
+                        func : () => {
                             this.initContextPos();
                             this.contentInputGUI.inputImageFile();
                         }
                     }
                 }, {
                     Movie : {
-                        func : () => { 
+                        func : () => {
                             this.initContextPos();
                             this.contentInputGUI.inputVideoFile();
                         }
                     }
                 }, {
                     Text : {
-                        func : () => { 
+                        func : () => {
                             this.initContextPos();
                             this.contentInputGUI.inputText();
                         }
@@ -117,14 +122,14 @@ function MenuSetting(management) {
                     }
                 }, {
                     ScreenShare : {
-                        func : () => { 
+                        func : () => {
                             this.initContextPos();
                             this.contentInputGUI.inputScreenShare();
                         }
                     }
                 }, {
                     CameraShare : {
-                        func : () => { 
+                        func : () => {
                             this.initContextPos();
                             this.contentInputGUI.inputCameraShare();
                         }

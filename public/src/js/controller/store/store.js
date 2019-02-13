@@ -38,7 +38,7 @@ class Store extends EventEmitter
 	constructor(state, action, cookie)
 	{
 		super();
-		
+
 		this.state = state;
 		this.action = action;
 		this.cookie = cookie;
@@ -168,7 +168,7 @@ class Store extends EventEmitter
 					client.close();
 				};
 			}(client)));
-		
+
 			client = Connector.connect(() => {
 				if (isDisconnect) {
 					location.reload();
@@ -207,7 +207,7 @@ class Store extends EventEmitter
 		let callback_ = Store.extractCallback(data);
 
 		this._getAll();
-		
+
 		setTimeout(() => {
 			Translation.changeLanguage(this.cookie.getLanguage());
 			Translation.translate();
@@ -236,10 +236,10 @@ class Store extends EventEmitter
 		this.controllerData.setSnapType(data.isDisplay, data.snapType);
 		this.emit(Store.EVENT_SNAP_TYPE_CHANGED, null, data);
 	}
-	
+
 	/**
 	 * 検索文字列変更
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_changeSearchInput(data) {
 		this.emit(Store.EVENT_SEARCH_INPUT_CHANGED, null, data.text, data.groups);
@@ -260,30 +260,50 @@ class Store extends EventEmitter
 
 	/**
 	 * リモートカーソルの更新
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_updateRemoteCursor(data) {
-		this.getControllerData().setUpdateCursorEnable(data.isEnable);
-		
-		if (!data.isEnable) {
+		if (data.hasOwnProperty('rgb')) {
+			this.getControllerData().setCursorColor(data.rgb);
+		}
+		if (data.hasOwnProperty('cursor_size')) {
+			this.getControllerData().setCursorSize(data.cursor_size);
+		}
+
+		if (data.isEnable === undefined){ // 特にONともOFFともいわれてない
+			const nowEnable = this.getControllerData().getUpdateCursorEnable();
+			if(nowEnable === false){
+				Connector.send(Command.UpdateMouseCursor, {}, (err, reply) => { });
+			}else{
+				// ONの場合
+				let metaData = data;
+				delete metaData.isEnable;
+				metaData.controllerID = this.getLoginStore().getControllerID();
+				metaData.rgb = this.getControllerData().getCursorColor();
+				metaData.cursor_size = this.getControllerData().getCursorSize();
+				Connector.send(Command.UpdateMouseCursor, metaData, (err, reply) => { });
+			}
+		}else if (data.isEnable === false) {
 			// OFFにする場合
+			this.getControllerData().setUpdateCursorEnable(data.isEnable);
+
 			Connector.send(Command.UpdateMouseCursor, {}, (err, reply) => { });
 		} else {
 			// ONの場合
-			if (data.hasOwnProperty('rgb')) {
-				this.getControllerData().setCursorColor(data.rgb);
-			}
+			this.getControllerData().setUpdateCursorEnable(data.isEnable);
+
 			let metaData = data;
 			delete metaData.isEnable;
 			metaData.controllerID = this.getLoginStore().getControllerID();
 			metaData.rgb = this.getControllerData().getCursorColor();
+			metaData.cursor_size = this.getControllerData().getCursorSize();
 			Connector.send(Command.UpdateMouseCursor, metaData, (err, reply) => { });
 		}
 	}
 
 	/**
 	 * 全video巻き戻し
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_rewindAllVideo(data) {
 		let groupID = this.getGroupStore().getCurrentGroupID();
@@ -305,10 +325,10 @@ class Store extends EventEmitter
 			});
 		}
 	}
-	
+
 	/**
 	 * 全video再生
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_playAllVideo(data) {
 		let groupID = this.getGroupStore().getCurrentGroupID();
@@ -399,7 +419,7 @@ class Store extends EventEmitter
 	setVirtualDisplayMetaData(groupID, metaData) {
 		this.virtualDisplayDict[groupID] = metaData;
 	}
-	
+
 	/**
 	 * 指定したIDのVirtualDisplayy情報を返す
 	 */
@@ -420,14 +440,14 @@ class Store extends EventEmitter
 	setMetaData(id, metaData) {
 		this.metaDataDict[id] = metaData;
 	}
-	
+
 	/**
 	 * 指定したIDのメタデータがあるかどうか
 	 */
 	hasMetadata(id) {
 		return this.metaDataDict.hasOwnProperty(id);
 	}
-	
+
 	/**
 	 * 指定したIDのメタデータをメタデータ辞書から削除
 	 */
@@ -437,7 +457,7 @@ class Store extends EventEmitter
 
 	/**
 	 * メタデータごとにfuncを実行
-	 * @param {*} func 
+	 * @param {*} func
 	 */
 	for_each_metadata(func) {
 		let i;
@@ -516,7 +536,7 @@ class Store extends EventEmitter
 		}
 		return "white";
 	}
-	
+
 	/**
 	 * コンテンツのzindexの習得.
 	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
@@ -526,7 +546,7 @@ class Store extends EventEmitter
 			min = 0;
 
 		this.for_each_metadata(function (i, meta) {
-			if (meta.id !== metaData.id && 
+			if (meta.id !== metaData.id &&
 				Validator.isContentType(meta) &&
 				meta.hasOwnProperty("zIndex")) {
 				max = Math.max(max, parseInt(meta.zIndex, 10));
@@ -601,7 +621,7 @@ Store.EVENT_TAB_CHANGED_PRE = "tab_change_pre";
 Store.EVENT_TAB_CHANGED_POST = "tab_change_post";
 Store.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
 
-// reviever 
+// reviever
 Store.EVENT_DONE_DELETE_WINDOW_METADATA = "done_delete_window_metadata";
 Store.EVENT_DONE_UPDATE_GROUP = "done_update_group";
 Store.EVENT_DONE_UPDATE_SETTING = "done_update_setting";

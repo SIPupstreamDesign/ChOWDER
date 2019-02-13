@@ -55,8 +55,9 @@ class ControllerData extends EventEmitter {
 		this.contentSnapType = "free";
 		this.displaySnapType = "free";
 		this.displayScale = 1;
-		this.updateCursorEnable = false; // マウスカーソル送信が有効かどうか 
+		this.updateCursorEnable = false; // マウスカーソル送信が有効かどうか
 		this.cursorColor = generateCursorColor();
+		this.cursorSize = 100;
 		this.groupCheck = {}; // グループがチェックされているかどうか. { groupID : true, groupID2 : false }の形式
 	}
 	set(data) {
@@ -75,6 +76,9 @@ class ControllerData extends EventEmitter {
 			}
 			if (data.hasOwnProperty('cursorColor')) {
 				this.cursorColor = String(data.cursorColor);
+			}
+			if (data.hasOwnProperty('cursorColor')) {
+				this.cursorSize = parseInt(data.cursorSize);
 			}
 			if (data.hasOwnProperty('groupCheck')) {
 				for (let i in data.groupCheck) {
@@ -97,6 +101,7 @@ class ControllerData extends EventEmitter {
 			displayScale: this.displayScale,
 			updateCursorEnable: this.updateCursorEnable,
 			cursorColor: this.cursorColor,
+			cursorSize: this.cursorSize,
 			groupCheck: this.groupCheck,
 			contentSelectedGroup: this.contentSelectedGroup,
 			displaySelectedGroup: this.displaySelectedGroup
@@ -130,6 +135,9 @@ class ControllerData extends EventEmitter {
 		this.updateCursorEnable = enable;
 		this.emit('update', null, this.get());
 	}
+	getUpdateCursorEnable() {
+		return this.updateCursorEnable;
+	}
 	isUpdateCursorEnable() {
 		return this.updateCursorEnable;
 	}
@@ -139,6 +147,13 @@ class ControllerData extends EventEmitter {
 	}
 	getCursorColor() {
 		return this.cursorColor;
+	}
+	setCursorSize(size) {
+		this.cursorSize = size;
+		this.emit('update', null, this.get());
+	}
+	getCursorSize() {
+		return this.cursorSize;
 	}
 }
 

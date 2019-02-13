@@ -7,9 +7,9 @@
 import Command from '../../common/command'
 import Store from './store'
 import StringUtil from '../../common/string_util'
-import Vscreen from '../../common/vscreen'
 import DisplayUtil from '../display_util'
 import Validator from '../../common/validator'
+import RemoteCursorBuilder from '../RemoteCursorBuilder'
 
 class Receiver
 {
@@ -33,7 +33,7 @@ class Receiver
         });
 
         this.connector.on(Command.UpdateContent, (data) => {
-             console.log("onUpdateContent", data);
+            console.log("onUpdateContent", data);
 
             this.connector.send(Command.GetMetaData, data, (err, json) => {
                 // 閲覧可能か
@@ -120,74 +120,10 @@ class Receiver
 
         /// リモートカーソルが更新された
         this.connector.on(Command.UpdateMouseCursor, (res) => {
-            let ctrlid = res.controllerID;
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                if (!this.controllers.hasOwnProperty(ctrlid)) {
-                    ++this.controllers.connectionCount;
-                    this.controllers[ctrlid] = {
-                        index: this.controllers.connectionCount,
-                        lastActive: 0
-                    };
-                }
-                let pos = Vscreen.transform(Vscreen.makeRect(Number(res.data.x), Number(res.data.y), 0, 0));
-                let elem = document.getElementById('hiddenCursor' + ctrlid);
-                let controllerID = document.getElementById('controllerID' + ctrlid);
-                if (!elem) {
-                    elem = document.createElement('div');
-                    elem.id = 'hiddenCursor' + ctrlid;
-                    elem.className = 'hiddenCursor';
-                    elem.style.backgroundColor = 'transparent';
-                    let before = document.createElement('div');
-                    before.className = 'before';
-                    before.style.backgroundColor = res.data.rgb;
-                    elem.appendChild(before);
-                    let after = document.createElement('div');
-                    after.className = 'after';
-                    after.style.backgroundColor = res.data.rgb;
-                    elem.appendChild(after);
-                    
-                    controllerID = document.createElement('div');
-                    controllerID.id = 'controllerID' + ctrlid;
-                    controllerID.className = 'controller_id';
-                    controllerID.style.color = res.data.rgb;
-                    controllerID.style.position = "absolute"
-                    controllerID.style.fontSize = "20px";
-                    controllerID.innerText = res.data.controllerID;
-                    document.body.appendChild(controllerID);
-                    
-                    document.body.appendChild(elem);
-                    // console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
-                } else {
-                    controllerID.innerText = res.data.controllerID;
-                    controllerID.style.color = res.data.rgb;
-                    elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
-                    elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
-                }
-                controllerID.style.textShadow = 
-                        "1px 1px 0 white,"
-                        + "-1px 1px 0 white,"
-                        + " 1px -1px 0 white,"
-                        + "-1px -1px 0 white";
-
-                DisplayUtil.autoResizeCursor([elem, controllerID]);
-                elem.style.left = Math.round(pos.x) + 'px';
-                elem.style.top  = Math.round(pos.y) + 'px';
-                controllerID.style.left = Math.round(pos.x) + 'px';
-                controllerID.style.top  = Math.round(pos.y + 150 / Number(window.devicePixelRatio)) + 'px';
-                this.controllers[ctrlid].lastActive = Date.now();
-            } else {
-                if (this.controllers.hasOwnProperty(ctrlid)) {
-                    let elem = document.getElementById('hiddenCursor' + ctrlid);
-                    let controllerID = document.getElementById('controllerID' + ctrlid);
-                    if (elem) {
-                        elem.style.left = '-999999px';
-                        elem.style.top  = '-999999px';
-                        controllerID.style.left = '-999999px';
-                        controllerID.style.top  = '-999999px';
-                    }
-                    if (elem && elem.parentNode) { elem.parentNode.removeChild(elem); }
-                    if (controllerID && controllerID.parentNode) { controllerID.parentNode.removeChild(controllerID); }
-                }
+                RemoteCursorBuilder.createCursor(res, this.controllers);
+            }else{
+                RemoteCursorBuilder.releaseCursor(res, this.controllers);
             }
         });
 
@@ -218,7 +154,7 @@ class Receiver
                 console.error(e);
                 return;
             }
-    
+
             if (sdp) {
                 let webRTCDict = this.store.getVideoStore().getWebRTCDict();
                 if (webRTCDict.hasOwnProperty(rtcKey)) {
@@ -233,7 +169,7 @@ class Receiver
                 }
             }
         });
-        
+
         /// WebRTC
         this.connector.on(Command.RTCClose, (data) => {
             let metaData = data.metaData;

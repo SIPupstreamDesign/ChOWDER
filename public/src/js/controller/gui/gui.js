@@ -30,12 +30,13 @@ import TabSetting from './controller_setting/tab_setting'
 import Validator from '../../common/validator.js';
 import manipulator from '../manipulator.js';
 import VideoController from '../../components/video_controller.js';
+import InputDialog from '../../components/input_dialog'
 
 "use strict";
 
-class GUI extends EventEmitter 
+class GUI extends EventEmitter
 {
-	constructor(store, action) 
+	constructor(store, action)
 	{
 		super();
 
@@ -59,7 +60,7 @@ class GUI extends EventEmitter
 		this.controllerData = controllerData;
 
 		this.displayScale = controllerData.getDisplayScale();
-	
+
 		// 全体のレイアウトの初期化.
 		new Layout(AreaLayoutSetting());
 
@@ -100,7 +101,7 @@ class GUI extends EventEmitter
 
 		// バーガーメニュー
 		this.initBurgerMenu();
-		
+
 		// コンテキストメニュー
 		this.initContextMenu();
 
@@ -108,7 +109,7 @@ class GUI extends EventEmitter
 		this.contentListGUI = new ContentListGUI(this.store, this.action);
 		this.displayListGUI = new DisplayListGUI(this.store, this.action);
 		this.layoutListGUI =  new LayoutListGUI(this.store, this.action);
-		
+
 		// メインビュー
 		this.contentViewGUI = new ContentViewGUI(this.store, this.action);
 		this.displayViewGUI = new DisplayViewGUI(this.store, this.action);
@@ -130,7 +131,7 @@ class GUI extends EventEmitter
 		});
 
 		this.store.on(Store.EVENT_TAB_CHANGED_POST, this.onTabChanged.bind(this));
-			
+
 		this.store.on(Store.EVENT_SNAP_TYPE_CHANGED, (err, data) => {
 			let elem = document.getElementsByClassName('head_menu_hover_left')[0];
 			if (elem) {
@@ -169,7 +170,7 @@ class GUI extends EventEmitter
 			}
 			// スナップのdisplayを無効にする
 			document.getElementsByClassName('snap_display_option')[0].style.display = "none";
-			
+
 			this.action.changeSnapType({
 				isDisplay : true,
 				snapType : this.store.getControllerData().getSnapType(true)
@@ -178,7 +179,7 @@ class GUI extends EventEmitter
 			id = this.state.getLastSelectContentID();
 			// スナップのdisplayを有効にする
 			document.getElementsByClassName('snap_display_option')[0].style.display = "block";
-			
+
 			this.action.changeSnapType({
 				isDisplay : false,
 				snapType : this.store.getControllerData().getSnapType(false)
@@ -214,6 +215,17 @@ class GUI extends EventEmitter
 		colorPicker.show(this.controllerData.getCursorColor());
 	}
 
+	changeRemoteCursorSize(){
+        const setting = {
+			name : "Input remote cursor size (px)",
+            initialValue : 100,
+            okButtonName : "OK",
+        }
+        InputDialog.showTextInput(setting,(value)=>{
+			this.action.updateRemoteCursor({cursor_size : value});
+        });
+	}
+
 	initVideoController() {
 		this.videoController = new VideoController();
 		document.body.appendChild(this.videoController.getDOM());
@@ -242,11 +254,11 @@ class GUI extends EventEmitter
 						isChanging: false,
 						displayScale : this.displayScale
 					})
-					
+
 				}, interval);
 			};
 		})();
-	
+
 		if(window.ontouchstart !== undefined) {
 			// タッチイベントの初期化
 			document.addEventListener("touchstart", (evt) => {
@@ -267,7 +279,7 @@ class GUI extends EventEmitter
 			// マウスイベントの初期化
 			window.document.addEventListener("mousemove", (evt) => {
 				this.emit('mousemove', evt);
-			});	
+			});
 			window.document.addEventListener("mouseup", (evt) => {
 				this.emit('mouseup', evt);
 			});
@@ -291,7 +303,7 @@ class GUI extends EventEmitter
 			e.stopPropagation();
 			e.preventDefault();
 		};
-		
+
 		function gestureendFunc() {
 			isGesture = false;
 		}
@@ -317,7 +329,7 @@ class GUI extends EventEmitter
 					//上にスクロールした場合の処理
 					this.displayScale = this.displayScale - 0.05;
 				}
-				
+
 				if (this.displayScale < 0.05) {
 					this.displayScale = 0.05
 				}
@@ -341,14 +353,14 @@ class GUI extends EventEmitter
 
 	/**
 	 * メニュー内のグループ項目に中身(グループ名のアイテム)を挿入する
-	 * @param {*} type 
+	 * @param {*} type
 	 */
 	updateGroupMenus(type) {
 		let groupBox;
 		let burgerMenu;
 		let contextMenu;
 		let authority = this.management.getAuthorityObject();
-		
+
 		if (type === "content") {
 			groupBox = this.groupGUI.getContentBox();
 			burgerMenu = this.contentMenu;
@@ -365,7 +377,7 @@ class GUI extends EventEmitter
 			if (!authority.isDisplayEditable(this.getCurrentDisplayGroupID())) {
 				console.error(this.getCurrentGroupID());
 				return;
-			}	
+			}
 		}
 		if (type === "layout") {
 			groupBox = this.groupGUI.getLayoutBox();
@@ -451,7 +463,7 @@ class GUI extends EventEmitter
 			x : 0,
 			y : 0,
 		}
-		
+
 		contentPreviewArea.addEventListener('mousedown', (evt) => {
 			if (this.managementGUI.isShow()) { return; }
 			if (this.state.isShiftDown()) { return; }
@@ -530,7 +542,7 @@ class GUI extends EventEmitter
 			} else if (is_middle_dragging) {
 				let dx = evt.clientX - rect.left - mouseMovePos.x,
 					dy = evt.clientY - rect.top - mouseMovePos.y;
-				
+
 					this.action.changeDisplayTrans({
 						dx : dx,
 						dy : dy
@@ -629,7 +641,7 @@ class GUI extends EventEmitter
 	 * コンテンツタブの中身はすべて消去されてグループボックスが初期化される。
 	 * サーチタブ/レイアウトタブにもグループを追加。
 	 */
-	setGroupList(groupList, displayGroupList) 
+	setGroupList(groupList, displayGroupList)
 	{
 		let contentSelectedGroup = this.store.getState().getContentSelectedGroup();
 		let displaySelectedGroup = this.store.getState().getDisplaySelectedGroup();
@@ -741,7 +753,7 @@ class GUI extends EventEmitter
 				evt.preventDefault();
 			}
 		});
-		
+
 		document.body.addEventListener("mouseup", (evt) => {
 			if (this.groupGUI.getTabs().isActive(type) || this.groupGUI.getTabs().isActive(type2)) {
 				if (evt.button === 2 && !this.state.isShiftDown()) {
@@ -749,7 +761,7 @@ class GUI extends EventEmitter
 				}
 			}
 		});
-		
+
 		addEventListener("mouseup", (evt) => {
 			if (openContextMenu) {
 				let px = evt.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft),
@@ -766,7 +778,7 @@ class GUI extends EventEmitter
 				//this.updateContextMenuAccess(); TODO
 
 				if ( Math.pow(px - mouseDownPosX, 2) + Math.pow(py - mouseDownPosY, 2) < 10) {
-					
+
 					if (type == Constants.TabIDLayout && !this.inListviewArea(evt)) {
 						// レイアウトタブはメインビューのエリア内であればコンテンツメニューを開く
 						menuElem = document.getElementsByClassName('context_menu')[0];
@@ -813,18 +825,18 @@ class GUI extends EventEmitter
 		this.contentContextMenu = new ContextMenu("content", ContentMenuSetting.bind(this)());
 		document.body.appendChild(this.contentContextMenu.getDOM());
 		this.initContextMenuVisible(this.contentContextMenu.getDOM(), Constants.TabIDContent, Constants.TabIDSearch);
-		
+
 		// ディスプレイ
 		this.displayContextMenu = new ContextMenu("display", DisplayMenuSetting.bind(this)());
 		document.body.appendChild(this.displayContextMenu.getDOM());
 		this.initContextMenuVisible(this.displayContextMenu.getDOM(), Constants.TabIDDisplay, "");
-		
+
 		// レイアウト
 		this.layoutContextMenu = new ContextMenu("layout", LayoutMenuSetting.bind(this)());
 		document.body.appendChild(this.layoutContextMenu.getDOM());
 		this.initContextMenuVisible(this.layoutContextMenu.getDOM(), Constants.TabIDLayout, "");
 	}
-	
+
 	// 下部バーガーメニューの初期化
 	initBurgerMenu()
 	{
@@ -926,7 +938,7 @@ class GUI extends EventEmitter
 	getWholeWindowElem(groupID) {
 		return document.getElementById(Constants.WholeWindowListID + "_" + groupID);
 	}
-	
+
 	getSearchTargetGroups() {
 		return JSON.parse(JSON.stringify(this.groupGUI.getSearchBox().check_groups));
 	}
@@ -989,9 +1001,9 @@ class GUI extends EventEmitter
 
 	/**
 	 * アイコンの更新
-	 * @param {*} elem 
-	 * @param {*} metaData 
-	 * @param {*} groupDict 
+	 * @param {*} elem
+	 * @param {*} metaData
+	 * @param {*} groupDict
 	 */
 	onToggleContentMarkIcon(elem, metaData) {
 		let listElem = document.getElementById("onlist:" + metaData.id);
@@ -1028,10 +1040,10 @@ class GUI extends EventEmitter
 			return;
 		}
 		let listElem = this.getListElem(windowData.id);
-		
+
 		let displayBoxArea = this.getBoxArea(Constants.TypeWindow, windowData.group);
 		this.displayListGUI.importDisplay(displayBoxArea, listElem, windowData);
-		
+
 		let displayArea = this.getDisplayAreaForInsert(windowData.group);
 		this.displayViewGUI.importDisplay(displayArea, listElem, windowData);
 	}
@@ -1039,7 +1051,7 @@ class GUI extends EventEmitter
 	// コンテンツのインポート
 	importContent(metaData, contentData, videoElem) {
 		let listElem = this.getListElem(metaData.id);
-		
+
 		let layoutBoxArea = this.getBoxArea(Constants.TypeLayout, metaData.group);
 		this.layoutListGUI.importContent(layoutBoxArea, listElem, metaData, contentData);
 
@@ -1073,7 +1085,7 @@ class GUI extends EventEmitter
 				}
 			}
 		}
-	}	
+	}
 
 	closeContextMenu() {
 		this.contentContextMenu.close();
@@ -1091,18 +1103,18 @@ class GUI extends EventEmitter
 	}
 
 	assignVirtualDisplay(whole, splitCount) {
-		this.contentPropertyGUI.assignVirtualDisplay(whole, splitCount);	
+		this.contentPropertyGUI.assignVirtualDisplay(whole, splitCount);
 	}
 
 	// isOwnVideo このコントローラページで所有する動画かどうか. typeがvideoではない場合は無視される.
 	initContentProperty(metaData, group, type, isOwnVideo) {
 		this.contentPropertyGUI.init(metaData, group, type, isOwnVideo);
 	}
-	
+
 	getContentPropertyGUI() {
 		return this.contentPropertyGUI;
 	}
-	
+
 	/**
 	 * Snapハイライト解除
 	 * @method clearSnapHighLight
@@ -1125,7 +1137,7 @@ class GUI extends EventEmitter
 			}
 		}
 	}
-	
+
 	/**
 	 * リストビュー領域をクリアする
 	 * @method clearWindowList
