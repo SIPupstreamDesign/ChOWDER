@@ -74,7 +74,7 @@ class LoginGUI extends EventEmitter {
 			callback : () => {
 				// 再ログインを試みる
 				let loginkey = this.loginStore.getLoginKey(this.loginStore.getControllerID());
-				if (loginkey.length > 0) {
+				if (loginkey.length > 0 && loginkey !== "not found") {
 					// リロード時などの再ログイン.
 					this.action.login({
 						userid : "",
