@@ -15,6 +15,19 @@ class LoginMenu extends EventEmitter
         super();
 
         this.dom = document.createElement('div');
+        this.dom.style.width = "100%";
+        this.dom.style.height = "100%";
+
+        this.header = document.createElement('div');
+        this.header.className = "head_menu";
+        this.header.innerHTML =  `
+            <div class="head_mode_menu">
+                <div class="head_mode_text stopselect">
+                    <a href="index.html" id="chowder_text">ChOWDER</a>
+                </div>
+            </div>
+            `
+        this.dom.appendChild(this.header);
 
         this.background = document.createElement('div');
         this.background.className = "loginmenu_background";
@@ -86,10 +99,11 @@ class LoginMenu extends EventEmitter
 
     show(isShow) {
 		this.background.style.display = isShow ? "block" : "none";
-		this.loginMenu.style.display = isShow ? "block" : "none";
+        this.loginMenu.style.display = isShow ? "block" : "none";
+        this.dom.style.display = isShow ? "block" : "none";
     }
     showInvalidLabel(isShow) {
-        this.invalidLogin.display = isShow ? "block" : "none";
+        this.invalidLogin.style.display = isShow ? "block" : "none";
     }
     getDOM() {
         return this.dom;

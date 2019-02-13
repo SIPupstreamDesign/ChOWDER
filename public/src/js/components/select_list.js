@@ -30,9 +30,8 @@ class SelectList extends EventEmitter {
 		this.dom.appendChild(row);
 	}
 	getSelected() {
-		let i;
 		let selected = [];
-		for (i = 0; i < this.contents.length; i = i + 1) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].classList.contains(this.selectClassName)) {
 				selected.push(this.contents[i].innerHTML);
 			}
@@ -40,18 +39,34 @@ class SelectList extends EventEmitter {
 		return selected;
 	}
 	getSelectedValues() {
-		let i;
 		let selected = [];
-		for (i = 0; i < this.contents.length; i = i + 1) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].classList.contains(this.selectClassName)) {
 				selected.push(this.contents[i].value);
 			}
 		}
 		return selected;
 	}
+	selectValue(value) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
+			if (this.contents[i].value === value) {
+				if (!this.contents[i].classList.contains(this.selectClassName)) {
+					this.contents[i].classList.toggle(this.selectClassName);
+				}
+			}
+		}
+	}
+	deselectValue(value) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
+			if (this.contents[i].value === value) {
+				if (this.contents[i].classList.contains(this.selectClassName)) {
+					this.contents[i].classList.toggle(this.selectClassName);
+				}
+			}
+		}
+	}
 	select(text) {
-		let i;
-		for (i = 0; i < this.contents.length; i = i + 1) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].innerHTML === text) {
 				if (!this.contents[i].classList.contains(this.selectClassName)) {
 					this.contents[i].classList.toggle(this.selectClassName);
@@ -60,8 +75,7 @@ class SelectList extends EventEmitter {
 		}
 	}
 	deselect(text) {
-		let i;
-		for (i = 0; i < this.contents.length; i = i + 1) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
 			if (this.contents[i].innerHTML === text) {
 				if (this.contents[i].classList.contains(this.selectClassName)) {
 					this.contents[i].classList.toggle(this.selectClassName);
@@ -70,18 +84,23 @@ class SelectList extends EventEmitter {
 		}
 	}
 	selectAll() {
-		let i;
-		for (i = 0; i < this.contents.length; i = i + 1) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
 			if (!this.contents[i].classList.contains(this.selectClassName)) {
 				this.contents[i].classList.add(this.selectClassName);
 			}
 		}
 	}
 	deselectAll() {
-		let i;
-		for (i = 0; i < this.contents.length; i = i + 1) {
+		for (let i = 0; i < this.contents.length; i = i + 1) {
 			this.contents[i].classList.remove(this.selectClassName);
 		}
+	}
+	getValues() {
+		let values = [];
+		for (let i = 0; i < this.contents.length; i = i + 1) {
+			values.push(this.contents[i].value);
+		}
+		return values;
 	}
 	getDOM() {
 		return this.dom;

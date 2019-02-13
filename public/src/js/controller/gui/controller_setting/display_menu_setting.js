@@ -26,8 +26,8 @@ function DisplayMenuSetting() {
         },
         // グループ内全て選択
         {
-            className : "select_all_in_a_group",
-            dataKey : "select_all_in_a_group",
+            className : "select_all_in_a_site",
+            dataKey : "select_all_in_a_site",
             onmousedown : (evt) => { this.action.selectContent({ type : Constants.TypeWindow, onlyCurrentGroup : true}); }
         },
         // 非表示

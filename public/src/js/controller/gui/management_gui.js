@@ -24,6 +24,16 @@ class ManagementGUI
 		});
 		
 		this.action.reloadDBList();
+		
+		// ユーザーリスト更新時
+		// 再表示させる
+		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
+			//let selectedDBIndex = this.managementDialog.getSelectedDBIndex();
+			this.close();
+			this.show();
+			// リストの順番がリネームによりことなるので、再度同じDBを選択できない
+			//this.managementDialog.setSelectedDBIndex(selectedDBIndex);
+		});
 	}
 
 	/**
@@ -63,14 +73,16 @@ class ManagementGUI
 		});
 
 		// 履歴保存数の変更
-		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_HISTORY_NUM, (err, value, callback) => {
-			this.store.once(Store.EVENT_UPDATE_GLOBAL_SETTING, () => {
-				this.action.reloadGlobalSetting();
-				if (callback) {
-					callback();
+		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_HISTORY_NUM, (err, value, callback_) => {
+			this.action.changeGlobalSetting({ 
+				max_history_num : value,
+				callback : () => {
+					this.action.reloadGlobalSetting();
+					if (callback_) {
+						callback_();
+					}
 				}
 			});
-			this.action.changeGlobalSetting({ max_history_num : value });
 		});
 		
 		// 新規DB

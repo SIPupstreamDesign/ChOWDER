@@ -173,17 +173,33 @@ class GroupBox extends EventEmitter {
 		elem.className = "group_tab_append" + " " + "group_tab_down_" + this.type;
 		span.className = "group_tab_append_label";
 		span.innerHTML = "+";
-		elem.setAttribute("title", i18next.t('add_new_group'));
+		if (this.type === GroupBox.TYPE_DISPLAY) {
+			elem.setAttribute("title", i18next.t('add_new_site'));
+		} else {
+			elem.setAttribute("title", i18next.t('add_new_group'));
+		}
 		elem.appendChild(span);
-		elem.onclick = () => {
-			InputDialog.showTextInput({
-				name: i18next.t('new_group'),
-				initialValue: "",
-				okButtonName: "OK",
-			}, (value) => {
-				this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
-			});
-		};
+		if (this.type === GroupBox.TYPE_DISPLAY) {
+			elem.onclick = () => {
+				InputDialog.showTextInput({
+					name: i18next.t('new_site'),
+					initialValue: "",
+					okButtonName: "OK",
+				}, (value) => {
+					this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
+				});
+			};
+		} else {
+			elem.onclick = () => {
+				InputDialog.showTextInput({
+					name: i18next.t('new_group'),
+					initialValue: "",
+					okButtonName: "OK",
+				}, (value) => {
+					this.emit(GroupBox.EVENT_GROUP_APPEND, null, value);
+				});
+			};
+		}
 		parent.appendChild(elem);
 		return elem;
 	}

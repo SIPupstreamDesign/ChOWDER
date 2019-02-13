@@ -46,6 +46,12 @@ class Store extends EventEmitter
 		this.controllerData = new ControllerData();
 
 		this.isInitialized_ = false;
+		
+		// 接続状況
+		// null = 初期状態(未接続), false = 接続済, true = 接続した後に切断された
+		this.isDisconnect = null;
+
+		this.connectionClient = null;
 		this.reciever = new Receiver(Connector, this, action);
 		this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
 		this.managementStore = new ManagementStore(Connector, state, this, action);
@@ -84,6 +90,14 @@ class Store extends EventEmitter
 				controllerData : data
 			};
 			this.operation.updateControllerData(controllerData);
+		});
+
+		// websocket切断時の処理
+		Connector.on(Command.Disconnect, () => {
+			this.isDisconnect = true;
+			if (this.connectionClient) {
+				this.connectionClient.close();
+			}
 		});
 	}
 
@@ -159,8 +173,8 @@ class Store extends EventEmitter
 	 * websocket接続する
 	 */
 	_connect(data) {
-		let isDisconnect = false;
 		let reconnect = () => {
+<<<<<<< HEAD
 			let client;
 			Connector.on(Command.Disconnect, (function (client) {
 				return function () {
@@ -171,9 +185,14 @@ class Store extends EventEmitter
 
 			client = Connector.connect(() => {
 				if (isDisconnect) {
+=======
+			this.connectionClient = Connector.connect(() => {
+				if (this.isDisconnect) {
+>>>>>>> 9e8eb568172a88416413166e7231347a8a466870
 					location.reload();
 					return;
 				}
+				this.isDisconnect = false;
 				// 接続確率した
 				this.emit(Store.EVENT_CONNECT_SUCCESS, null);
 
@@ -181,12 +200,10 @@ class Store extends EventEmitter
 				// 接続失敗
 				this.emit(Store.EVENT_CONNECT_FAILED, null);
 				// 再ログイン
-				if (!isDisconnect) {
-					isDisconnect = true;
-					setTimeout(function () {
-						reconnect();
-					}, Constants.ReconnectTimeout);
-				}
+				this.isDisconnect = true;
+				setTimeout(() => {
+					reconnect();
+				}, Constants.ReconnectTimeout);
 			});
 		};
 		reconnect();
@@ -349,6 +366,13 @@ class Store extends EventEmitter
 				// do nothing
 			});
 		}
+	}
+	
+	/**
+	 * 接続済かどうか返す
+	 */
+	isConnected() {
+		return !this.isDisconnect;
 	}
 
 	// TODO 名前変更どうするか
@@ -591,6 +615,7 @@ Store.EVENT_DBLIST_RELOADED = "dblist_reloaded";
 Store.EVENT_AUTHORITY_CHANGED = "authority_changed";
 Store.EVENT_PASSWORD_CHANGED = "password_changed";
 Store.EVENT_GLOBAL_SETTING_RELOADED = "global_setting_reloaded";
+Store.EVENT_GLOBAL_SETTING_CHANGED = "global_setting_changed";
 
 // content_store
 Store.EVENT_DONE_UPDATE_CONTENT = "done_update_content";

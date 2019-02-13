@@ -1345,11 +1345,6 @@ class Controller {
 		}
 		this.state.setDraggingIDList(JSON.parse(JSON.stringify(this.state.getSelectedIDList())));
 
-		// レイアウトでは枠を出さない
-		if (Validator.isLayoutType(metaData)) {
-			return;
-		}
-
 		// 選択ボーダー色設定
 		if (this.gui.getListElem(id)) {
 			this.gui.getListElem(id).style.borderColor = this.store.getBorderColor(metaData);
@@ -1358,6 +1353,12 @@ class Controller {
 			this.gui.getSearchElem(id).style.borderColor = this.store.getBorderColor(metaData);
 		}
 		elem.style.borderColor = this.store.getBorderColor(metaData);
+		
+		// レイアウトでは枠を出さない
+		if (Validator.isLayoutType(metaData)) {
+			return;
+		}
+
 		if (this.state.getSelectedIDList().length <= 0) {
 			// 選択されているものがなかった.
 			manipulator.removeManipulator();

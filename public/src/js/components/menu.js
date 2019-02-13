@@ -23,7 +23,6 @@ class Menu extends EventEmitter {
 		*/
 
 		this.dom = document.createElement('div');
-		//this.dom.className = "head_menu";
 
 		// タイトルdiv
 		let headModeMenu = document.createElement('div');

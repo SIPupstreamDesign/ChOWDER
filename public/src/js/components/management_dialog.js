@@ -80,6 +80,10 @@ class ManagementDialog extends EventEmitter
             this.initDBButton.setDataKey("initialize");
             this.initDBButton.getDOM().classList.add("management_dialog_db_button");
             selectFrame.appendChild(this.initDBButton.getDOM());   
+
+            // 初期状態でrenameとdeleteはdisable
+            this.renameDBButton.getDOM().disabled = true;
+            this.deleteDBButton.getDOM().disabled = true;
         }
 
 
@@ -518,8 +522,9 @@ class ManagementDialog extends EventEmitter
                 }
             }
         });
-        // 全てが選択された場合
+
         this.editableSelect.on('change', (err, text, isSelected) => {
+            // 全てが選択された場合
             if (text === allAccessText) {
                 if (isSelected) {
                     this.editableSelect.selectAll();
@@ -535,8 +540,10 @@ class ManagementDialog extends EventEmitter
                     this.editableSelect.deselect(allAccessText);
                 }
             }
+            this.normalizeEditableViewableContent();
         });
         this.viewableSelect.on('change', (err, text, isSelected) => {
+            // 全てが選択された場合
             if (text === allAccessText) {
                 if (isSelected) {
                     this.viewableSelect.selectAll();
@@ -552,6 +559,7 @@ class ManagementDialog extends EventEmitter
                     this.viewableSelect.deselect(allAccessText);
                 }
             }
+            this.normalizeEditableViewableContent();
         });
         this.displayEditableSelect.on('change', (err, text, isSelected) => {
             if (text === allAccessText) {
@@ -619,6 +627,30 @@ class ManagementDialog extends EventEmitter
         });
         // 初回の選択.
         this.authSelect.emit(Select.EVENT_CHANGE);
+    }
+
+    /**
+     * 編集可能なコンテンツは閲覧可能
+     * 閲覧不可なコンテンツは編集不可
+     * とする
+     */
+    normalizeEditableViewableContent() {
+        let editableSelectValues = this.editableSelect.getValues();
+        let editable = this.editableSelect.getSelectedValues();
+        for (let i = 0; i < editableSelectValues.length; ++i) {
+            if (editable.indexOf(editableSelectValues[i]) >= 0) {
+                // 編集可能なコンテンツは閲覧可能
+                this.viewableSelect.selectValue(editableSelectValues[i]);
+            }
+        }
+        let viewableSelectValues = this.viewableSelect.getValues();
+        let viewable = this.viewableSelect.getSelectedValues();
+        for (let i = 0; i < viewableSelectValues.length; ++i) {
+            if (viewable.indexOf(viewableSelectValues[i]) < 0) {
+                // 閲覧不可なコンテンツは編集不可
+                this.editableSelect.deselectValue(viewableSelectValues[i]);
+            }
+        }
     }
     
     /**
@@ -755,15 +787,24 @@ class ManagementDialog extends EventEmitter
 
     close() {
         if (this.background) {
+            this.background.removeListener('close');
             this.background.close();
             this.background = null;
         }
-        this.background.removeListener('close');
         document.body.removeChild(this.dom);
     }
 
     isShow() {
         return (this.background != null);
+    }
+
+    getSelectedDBIndex() {
+        let selectedIndex = this.dbSelect.getSelectedIndex();
+        return selectedIndex;
+    }
+
+    setSelectedDBIndex(index) {
+        this.dbSelect.setSelectedIndex(index);
     }
 }
 

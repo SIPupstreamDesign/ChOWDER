@@ -91,8 +91,12 @@ class ManagementStore {
 	 * 全体設定の更新
 	 */
 	_changeGlobalSetting(data) {
+		let callback = Store.extractCallback(data);
 		this.connector.send(Command.ChangeGlobalSetting, data, (err, reply) => {
-			this.store.emit(Store.EVENT_GLOBAL_SETTING_CHANGED, err, reply)
+			this.store.emit(Store.EVENT_GLOBAL_SETTING_CHANGED, err, reply);
+			if (callback) {
+				callback(err, reply)
+			}
 		});
 	}
 

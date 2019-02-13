@@ -29,8 +29,7 @@ class LoginGUI extends EventEmitter {
 			this.loginMenu.showInvalidLabel(true);
 		});
 
-		// ユーザーリスト更新時に再ログインさせる
-		// 初回ページ表示時にも使用
+		// ユーザーリスト更新時
 		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
 			// Selectの中身をUserListで更新
 			let userList = this.loginStore.getUserList();
@@ -46,7 +45,7 @@ class LoginGUI extends EventEmitter {
 
 	initLoginMenu() {
 		this.loginMenu = new LoginMenu();
-		document.body.appendChild(this.loginMenu.getDOM());
+		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 
 		// ログインが実行された場合
 		this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
@@ -75,7 +74,7 @@ class LoginGUI extends EventEmitter {
 			callback : () => {
 				// 再ログインを試みる
 				let loginkey = this.loginStore.getLoginKey(this.loginStore.getControllerID());
-				if (loginkey.length > 0) {
+				if (loginkey.length > 0 && loginkey !== "not found") {
 					// リロード時などの再ログイン.
 					this.action.login({
 						userid : "",
