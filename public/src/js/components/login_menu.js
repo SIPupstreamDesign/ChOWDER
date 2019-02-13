@@ -103,7 +103,7 @@ class LoginMenu extends EventEmitter
         this.dom.style.display = isShow ? "block" : "none";
     }
     showInvalidLabel(isShow) {
-        this.invalidLogin.display = isShow ? "block" : "none";
+        this.invalidLogin.style.display = isShow ? "block" : "none";
     }
     getDOM() {
         return this.dom;
