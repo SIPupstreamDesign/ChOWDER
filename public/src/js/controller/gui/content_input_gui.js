@@ -387,7 +387,7 @@ class ContentInputGUI
 				} else if (file.type.match('text.*')) {
 					reader.onloadend = (evt) => {
 						let data = evt.target.result;
-						this.action.inputTextFile({
+						this.action.inputText({
 							contentData : data,
 							metaData : { posx: px, posy: py, visible: true }
 						});

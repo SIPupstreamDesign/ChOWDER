@@ -158,6 +158,7 @@ class Action extends EventEmitter
      * @param {*} data 
      * {
      *    metaData : メモ挿入済メタデータ
+     *    contentData : テキストコンテンツの場合は登録するテキスト, そうでない場合は不要
      *    callback : 終了時コールバック(option)
      * }
      */

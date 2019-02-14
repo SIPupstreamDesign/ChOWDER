@@ -89,17 +89,6 @@ class ContentStore
     }
 
     /**
-     * テキストファイル入力
-     * @param {*} data 
-     */
-    _inputTextFile(data) {
-		let metaData = data.metaData;
-		metaData.type = "text";
-		metaData.group = this.store.getGroupStore().getCurrentGroupID();
-		this.addContent(metaData, data.contentData);
-    }
-
-    /**
      * URLを入力
      * @param {*} data 
      */
@@ -422,7 +411,7 @@ class ContentStore
 		if (Validator.isTextType(metaData)) {
 			metaData.restore_index = -1;
 
-			this.store.operation.updateContent(metaData, text);
+			this.store.operation.updateContent(metaData, data.contentData);
 			this.store.emit(Store.EVENT_CONTENT_METAINFO_CHANGED, null, metaData);
 		} else if (Validator.isLayoutType(metaData)) {
 			// レイアウトのメモ変更.

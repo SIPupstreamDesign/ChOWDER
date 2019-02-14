@@ -566,6 +566,7 @@ class ContentPropertyGUI extends EventEmitter {
 								//console.error("metaData", metaData)
 								this.action.changeContentMetaInfo({
 									metaData : metaData,
+									contentData : content_text.value,
 									callback : endcallback
 								})
 							}
@@ -574,6 +575,7 @@ class ContentPropertyGUI extends EventEmitter {
 					} else {
 						this.action.changeContentMetaInfo({
 							metaData : metaData,
+							contentData : content_text.value,
 							callback : endcallback
 						})
 					}
