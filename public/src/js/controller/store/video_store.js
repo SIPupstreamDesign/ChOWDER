@@ -451,28 +451,28 @@ class VideoStore {
 			}
 		};
 
-		video.onplay = function () {
+		video.onplay = () => {
 			if (type !== 'file') { return; }
-			metaData = store.getMetaData(metaData.id);
+			metaData = this.store.getMetaData(metaData.id);
 			metaData.isPlaying = true;
-			this.update_metadata(metaData);
-		}.bind(this);
+			this.store.operation.updateMetadata(metaData);
+		};
 
-		video.onpause = function () {
+		video.onpause = () => {
 			if (type !== 'file') { return; }
-			metaData = store.getMetaData(metaData.id);
+			metaData = this.store.getMetaData(metaData.id);
 			metaData.isPlaying = false;
-			this.update_metadata(metaData);
-		}.bind(this);
+			this.store.operation(metaData);
+		};
 
-		video.onended = function () {
+		video.onended = () => {
 			if (type !== 'file') { return; }
 
-			metaData = store.getMetaData(metaData.id);
+			metaData = this.store.getMetaData(metaData.id);
 			metaData.isPlaying = false;
 			metaData.isEnded = true;
-			this.update_metadata(metaData);
-		}.bind(this);
+			this.store.operation(metaData);
+		};
 		
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";

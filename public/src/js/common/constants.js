@@ -50,7 +50,7 @@ const Constants = {
 	// Edge 20+
 	IsEdge : !(/*@cc_on!@*/false || !!document.documentMode) && !!window.StyleMedia,
 	// Chrome 1+
-	IsChrome : !!window.chrome && !!window.chrome.webstore,
+	IsChrome : /Google Inc/.test(navigator.vendor),
 	IsMobile : navigator.userAgent.indexOf('iPad') > 0 
 		|| navigator.userAgent.indexOf('Android') > 0
 		|| navigator.userAgent.indexOf('iPhone') > 0
