@@ -79,6 +79,13 @@ class Validator
 	}
 
 	/**
+	 * メタデータが動画タイプであるか返す
+	 */
+	isVideoType(meta)  {
+		return (meta.hasOwnProperty('type') && meta.type === Constants.TypeVideo);
+	}
+
+	/**
 	 * メタデータがVirtualDisplayであるか返す
 	 */
 	isVirtualDisplayID(id) {

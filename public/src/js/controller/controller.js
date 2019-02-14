@@ -769,6 +769,12 @@ class Controller {
 				if (Validator.isContentType(metaData)) {
 					otherPreviewArea = this.gui.getDisplayPreviewArea();
 				}
+				if (Validator.isVideoType(metaData)) {
+					// 動画コントロール上のボタンなどをクリックした場合は選択状態にしない
+					if (evt.target && (evt.target.tagName === "INPUT" || evt.target.tagName === "BUTTON")) {
+						return;
+					}
+				}
 			}
 			if (metaData) {
 				if (id.indexOf(Constants.WholeWindowID) === 0 ||
