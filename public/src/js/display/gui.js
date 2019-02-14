@@ -397,8 +397,8 @@ class GUI extends EventEmitter {
         if (elem && blob) {
             URL.revokeObjectURL(elem.src);
             elem.onload = function () {
-                if (this.hasOwnProperty('timestamp')) {
-                    console.debug(this.id,　"の登録から表示完了までの時間：",  (new Date() - new Date(this.timestamp)) / 1000 + "秒");
+                if (this.hasOwnProperty('time_register')) {
+                    console.debug(this.id,　"の登録から表示完了までの時間：",  (new Date() - new Date(this.time_register)) / 1000 + "秒");
                 }
             }.bind(metaData);
             elem.src = URL.createObjectURL(blob);

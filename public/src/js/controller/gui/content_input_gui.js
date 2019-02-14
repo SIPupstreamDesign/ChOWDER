@@ -62,9 +62,9 @@ class ContentInputGUI
 	 * @param {Object} evt FileOpenイベント
 	 */
 	onInputImageFile(evt, x, y) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let files = evt.target.files;
 		let fileReader = new FileReader();
-		let time = new Date().toISOString();
 
 		let posx = x;
 		let posy = y;
@@ -90,13 +90,13 @@ class ContentInputGUI
 							width : img.naturalWidth,
 							height : img.naturalHeight,
 							visible: true,
-							timestamp : time,
 							user_data_text: JSON.stringify({ text: name })
 						}
 						VscreenUtil.transPosInv(metaData);
 						this.action.inputImageFile({
 							contentData : data,
-							metaData : metaData
+							metaData : metaData,
+							timestamp : time
 						});
 						URL.revokeObjectURL(img.src);
 					};
@@ -115,6 +115,7 @@ class ContentInputGUI
 	 * @param {Object} evt FileOpenイベント
 	 */
 	onInputTextFile(evt, x, y) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let files = evt.target.files;
 		let fileReader = new FileReader();
 		let posx = x;
@@ -151,7 +152,8 @@ class ContentInputGUI
 				VscreenUtil.transPosInv(metaData);
 				this.action.inputText({
 					contentData : text,
-					metaData : metaData
+					metaData : metaData,
+					timestamp : time
 				});
 			}
 		};
@@ -169,6 +171,7 @@ class ContentInputGUI
 	 * @param {*} y 
 	 */
 	onInputVideoFile(evt, x, y) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let files = evt.target.files;
 		let fileReader = new FileReader();
 		let posx = x;
@@ -195,7 +198,8 @@ class ContentInputGUI
 					this.action.inputVideoFile({
 						contentData : data,
 						metaData : metaData,
-						subtype : "file"
+						subtype : "file",
+						timestamp : time
 					});
 				}
 			};
@@ -211,6 +215,7 @@ class ContentInputGUI
 	 * PDFファイルOpenハンドラ
 	 */
 	onInputPDFFile(evt, x, y) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let files = evt.target.files;
 		let fileReader = new FileReader();
 		let posx = x;
@@ -232,7 +237,8 @@ class ContentInputGUI
 				}
 				this.action.inputPDFFile({
 					contentData : data,
-					metaData : metaData
+					metaData : metaData,
+					timestamp : time
 				});
 			}
 		};
@@ -290,7 +296,11 @@ class ContentInputGUI
 				initialName :  "",
 				okButtonName : "Send",
 			}, (value) => {
-				this.action.inputURL(value);
+				const time = this.store.getManagement().fetchMeasureTime();
+				this.action.inputURL({
+					url : value,
+					timestamp : time
+				});
 				//this.emit(GUI.EVENT_URLSENDBUTTON_CLICKED, null, value);
 			});
 	}
@@ -299,6 +309,7 @@ class ContentInputGUI
 	 * テキスト入力
 	 */
 	onInputText(value, w, h) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let elem = document.createElement('pre');
 		let text = value;
 		if (!text) {
@@ -329,7 +340,8 @@ class ContentInputGUI
 
 		this.action.inputText({
 			contentData : text,
-			metaData : metaData
+			metaData : metaData,
+			timestamp : time
 		})
 	}
 
@@ -337,6 +349,7 @@ class ContentInputGUI
 	 * レイアウト入力
 	 */
 	onInputLayout(memo) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let layout = {
 			contents: {}
 		};
@@ -355,7 +368,8 @@ class ContentInputGUI
 				type: Constants.TypeLayout,
 				user_data_text: JSON.stringify({ text: memo }),
 				visible: false
-			}
+			},
+			timestamp : time
 		})
 	}
 
@@ -364,10 +378,10 @@ class ContentInputGUI
 	 * @param {Object} evt FileDropイベント
 	 */
 	dropFile(evt) {
+		const time = this.store.getManagement().fetchMeasureTime();
 		let rect = evt.target.getBoundingClientRect();
 		let px = rect.left + offsetX(evt);
 		let py = rect.top + offsetY(evt);
-		let time = new Date().toISOString();
 		let files = evt.dataTransfer.files;
 		for (let i = 0; i < files.length; i ++) {
 			(() => {
@@ -379,7 +393,8 @@ class ContentInputGUI
 						let data = evt.target.result;
 						this.action.inputImageFile({
 							contentData : data,
-							metaData : { posx: px, posy: py, visible: true, timestamp : time}
+							metaData : { posx: px, posy: py, visible: true },
+							timestamp : time
 						});
 					};
 					reader.readAsArrayBuffer(file);
@@ -389,7 +404,8 @@ class ContentInputGUI
 						let data = evt.target.result;
 						this.action.inputText({
 							contentData : data,
-							metaData : { posx: px, posy: py, visible: true }
+							metaData : { posx: px, posy: py, visible: true },
+							timestamp : time
 						});
 					};
 					reader.readAsText(file);
@@ -405,7 +421,8 @@ class ContentInputGUI
 								visible: true,
 								user_data_text: JSON.stringify({ text:  file.name }),
 								subtype : "file"
-							}
+							},
+							timestamp : time
 						});
 					};
 					reader.readAsArrayBuffer(file);
@@ -414,7 +431,8 @@ class ContentInputGUI
 						let data = evt.target.result;
 						this.action.inputPDFFile({
 							contentData : data,
-							metaData : { posx: px, posy: py, visible: true }
+							metaData : { posx: px, posy: py, visible: true },
+							timestamp : time
 						});
 					};
 					reader.readAsArrayBuffer(file);
@@ -526,6 +544,7 @@ class ContentInputGUI
 					};
 					if (response && response.type === 'success') {
 						navigator.getUserMedia(target, (stream) => {
+							const time = this.store.getManagement().fetchMeasureTime();
 							this.action.inputVideoStream({
 								contentData : stream,
 								metaData : {
@@ -533,7 +552,8 @@ class ContentInputGUI
 									posy: Vscreen.getWhole().y, 
 									visible: true,
 									subtype : "screen"
-								}
+								},
+								timestamp : time
 							})
 						}, function (err) {
 							console.error('Could not get stream: ', err);
@@ -550,6 +570,7 @@ class ContentInputGUI
 				},
 			};
 			navigator.mediaDevices.getUserMedia(mediaConstraints).then((stream) => {
+				const time = this.store.getManagement().fetchMeasureTime();
 				this.action.inputVideoStream({
 					contentData : stream,
 					metaData : {
@@ -558,7 +579,8 @@ class ContentInputGUI
 						posy: Vscreen.getWhole().y,
 						visible: true,
 						subtype : "screen"
-					}
+					},
+					timestamp : time
 				})
 			}).catch(function (err) {
 				console.error('Could not get stream: ', err);
@@ -570,6 +592,7 @@ class ContentInputGUI
 		let constraints = {video: true, audio: true};
 		navigator.mediaDevices.getUserMedia(constraints).then(
 			(stream) => {
+				const time = this.store.getManagement().fetchMeasureTime();
 				this.action.inputVideoStream({
 					contentData : stream,
 					metaData : {
@@ -577,7 +600,8 @@ class ContentInputGUI
 						posy: Vscreen.getWhole().y,
 						visible: true,
 						subtype : "camera"
-					}
+					},
+					timestamp : time
 				})
 			},
 			(err) => {
