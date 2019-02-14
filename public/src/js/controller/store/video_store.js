@@ -11,6 +11,7 @@ import MediaPlayer from '../../common/mediaplayer'
 import WebRTC from '../../common/webrtc';
 import Vscreen from '../../common/vscreen'
 import VideoPlayer from '../../components/video_player'
+import Validator from '../../common/validator'
 
 "use strict";
 
@@ -451,28 +452,6 @@ class VideoStore {
 			}
 		};
 
-		video.onplay = () => {
-			if (subType !== 'file') { return; }
-			metaData = this.store.getMetaData(metaData.id);
-			metaData.isPlaying = true;
-			this.store.operation.updateMetadata(metaData);
-		};
-
-		video.onpause = () => {
-			if (subType !== 'file') { return; }
-			metaData = this.store.getMetaData(metaData.id);
-			metaData.isPlaying = false;
-			this.store.operation.updateMetadata(metaData);
-		};
-
-		video.onended = () => {
-			if (subType !== 'file') { return; }
-			metaData = this.store.getMetaData(metaData.id);
-			metaData.isPlaying = false;
-			metaData.isEnded = true;
-			this.store.operation.updateMetadata(metaData);
-		};
-		
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
 			if (!metaData.hasOwnProperty("width")) {
@@ -499,6 +478,36 @@ class VideoStore {
 				data = this.getElem(metaData.id, true).src;
 			}
 			this.store.getContentStore().addContent(metaData, data, (err, reply) => {
+				video.onplay = ((id) => {
+					return () => {
+						if (subType !== 'file') { return; }
+						console.error(id);
+						let metaData = this.store.getMetaData(id);
+						console.error(metaData)
+						metaData.isPlaying = true;
+						this.store.operation.updateMetadata(metaData);	
+					}
+				})(metaData.id);
+		
+				video.onpause = ((id) => {
+					return () => {
+						if (subType !== 'file') { return; }
+						let metaData = this.store.getMetaData(id);
+						metaData.isPlaying = false;
+						this.store.operation.updateMetadata(metaData);
+					}
+				})(metaData.id);
+		
+				video.onended = ((id) => {
+					return () => {
+						if (subType !== 'file') { return; }
+						let metaData = this.store.getMetaData(id);
+						metaData.isPlaying = false;
+						metaData.isEnded = true;
+						this.store.operation.updateMetadata(metaData);
+					}
+				})(metaData.id);
+				
 			});
 		};
     }
@@ -705,6 +714,53 @@ class VideoStore {
 			}
         }
 	}
+
+	/**
+	 * 全video巻き戻し
+	 * @param {*} data
+	 */
+	_rewindAllVideo(data) {
+		let groupID = this.store.getGroupStore().getCurrentGroupID();
+		let sendIds = [];
+		this.store.for_each_metadata((id, metaData) => {
+			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+				if (
+					(metaData.group === groupID) &&
+					(metaData.type === 'video')
+				) {
+					sendIds.push(metaData.id);
+				}
+			}
+		});
+
+		if (sendIds.length !== 0) {
+			this.store.operation.sendMessage({ids: sendIds, command: 'rewindVideo'}, () => {});
+		}
+	}
+
+	/**
+	 * 全video再生
+	 * @param {*} data
+	 */
+	_playAllVideo(data) {
+		let groupID = this.store.getGroupStore().getCurrentGroupID();
+		let sendIds = [];
+		this.store.for_each_metadata((id, metaData) => {
+			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+				if (
+					(metaData.group === groupID) &&
+					(metaData.type === 'video')
+				) {
+					sendIds.push(metaData.id);
+				}
+			}
+		});
+
+		if (sendIds.length !== 0) {
+			this.store.operation.sendMessage({ids: sendIds, command: 'playVideo', play: data.play}, () => {});
+		}
+	}
+
 	
 	getWebRTCDict() {
 		return this.webRTCDict;

@@ -53,7 +53,7 @@ class VideoController extends EventEmitter
 
 		let isPlayButton = true;
 		elPlay.onclick = (evt) => {
-			this.emit('video_controller_play_clicked', null, isPlayButton);
+			this.emit(VideoController.EVENT_PLAY, null, isPlayButton);
 			isPlayButton = !isPlayButton;
 			elPlay.src = isPlayButton ? 'src/image/video_play.png' : 'src/image/video_pause.png';
 		};

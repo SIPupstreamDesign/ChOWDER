@@ -134,9 +134,10 @@ class Receiver
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'playVideo') {
                 data.ids.forEach((id) => {
-                    let el = document.getElementById(id);
-                    if (el && el.play) {
-                        data.play ? el.play() : el.pause();
+                    let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);
+                    if (videoPlayer) {
+                        let video = videoPlayer.getVideo();
+                        data.play ? video.play() : video.pause();
 
                         let metaData = this.store.getMetaData(id);
                         metaData.isPlaying = data.play;
@@ -149,9 +150,10 @@ class Receiver
 
             if (data.command === 'rewindVideo') {
                 data.ids.forEach((id) => {
-                    let el = document.getElementById(id);
-                    if (el && el.play) {
-                        el.currentTime = 0.0;
+                    let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);
+                    if (videoPlayer) {
+                        let video = videoPlayer.getVideo();
+                        video.currentTime = 0.0;
                     }
                 });
             }

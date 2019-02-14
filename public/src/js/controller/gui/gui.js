@@ -231,8 +231,10 @@ class GUI extends EventEmitter
 		this.videoController = new VideoController();
 		document.body.appendChild(this.videoController.getDOM());
 
-		this.videoController.on(VideoController.EVENT_PLAY, (err) => {
-			this.action.playAllVideo();
+		this.videoController.on(VideoController.EVENT_PLAY, (err, play) => {
+			this.action.playAllVideo({
+				play : play
+			});
 		});
 		this.videoController.on(VideoController.EVENT_REWIND, (err) => {
 			this.action.rewindAllVideo();

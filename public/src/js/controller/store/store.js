@@ -306,56 +306,6 @@ class Store extends EventEmitter
 	}
 
 	/**
-	 * 全video巻き戻し
-	 * @param {*} data
-	 */
-	_rewindAllVideo(data) {
-		let groupID = this.getGroupStore().getCurrentGroupID();
-		let sendIds = [];
-		this.for_each_metadata((id, metaData) => {
-			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
-				if (
-					(metaData.group === groupID) &&
-					(metaData.type === 'video')
-				) {
-					sendIds.push(metaData.id);
-				}
-			}
-		});
-
-		if (sendIds.length !== 0) {
-			Connector.send(Command.SendMessage, {ids: sendIds, command: 'rewindVideo'}, (err, reply) => {
-				// do nothing
-			});
-		}
-	}
-
-	/**
-	 * 全video再生
-	 * @param {*} data
-	 */
-	_playAllVideo(data) {
-		let groupID = this.getGroupStore().getCurrentGroupID();
-		let sendIds = [];
-		store.for_each_metadata((id, metaData) => {
-			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
-				if (
-					(metaData.group === groupID) &&
-					(metaData.type === 'video')
-				) {
-					sendIds.push(metaData.id);
-				}
-			}
-		});
-
-		if (sendIds.length !== 0) {
-			Connector.send(Command.SendMessage, {ids: sendIds, command: 'playVideo', play: play}, (err, reply) => {
-				// do nothing
-			});
-		}
-	}
-
-	/**
 	 * 接続済かどうか返す
 	 */
 	isConnected() {
