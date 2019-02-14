@@ -444,7 +444,7 @@ class VideoStore {
 		this.setVideoData(metaData.id, videoData);
 		
 		video.oncanplaythrough = function () {
-			if (type !== "file") {
+			if (subType !== "file") {
 				window.setTimeout(function(){
 					this.play()
 				}.bind(this), 1000); // for chrome
@@ -452,26 +452,25 @@ class VideoStore {
 		};
 
 		video.onplay = () => {
-			if (type !== 'file') { return; }
+			if (subType !== 'file') { return; }
 			metaData = this.store.getMetaData(metaData.id);
 			metaData.isPlaying = true;
 			this.store.operation.updateMetadata(metaData);
 		};
 
 		video.onpause = () => {
-			if (type !== 'file') { return; }
+			if (subType !== 'file') { return; }
 			metaData = this.store.getMetaData(metaData.id);
 			metaData.isPlaying = false;
-			this.store.operation(metaData);
+			this.store.operation.updateMetadata(metaData);
 		};
 
 		video.onended = () => {
-			if (type !== 'file') { return; }
-
+			if (subType !== 'file') { return; }
 			metaData = this.store.getMetaData(metaData.id);
 			metaData.isPlaying = false;
 			metaData.isEnded = true;
-			this.store.operation(metaData);
+			this.store.operation.updateMetadata(metaData);
 		};
 		
 		video.onloadedmetadata = (e) => {
