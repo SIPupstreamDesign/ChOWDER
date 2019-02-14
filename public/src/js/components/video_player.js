@@ -17,14 +17,19 @@ class VideoPlayer extends EventEmitter {
 
         this.dom.appendChild(this.video);
         
-        this.video.style.width = "100%";
-        this.video.style.height = "100%";
         this.video.setAttribute('crossorigin', '');
         this.video.setAttribute('playsinline', '');
         this.video.setAttribute('autoplay', '');
         this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "play", "progress", "current-time", "mute", "volume", "fullscreen"] }');
 
         this.player = new Plyr(this.video);
+
+        this.player.on('ready', () => {
+            let container = this.dom.getElementsByClassName('plyr--full-ui')[0];
+            container.style.width = "100%";
+            container.style.height = "100%";
+            this.emit(VideoPlayer.EVENT_READY, null);
+        });
     }
 
     release() {
@@ -44,5 +49,7 @@ class VideoPlayer extends EventEmitter {
         return this.video;
     }
 }
+
+VideoPlayer.EVENT_READY = "ready"
 
 export default VideoPlayer;

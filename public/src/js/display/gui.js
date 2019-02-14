@@ -490,9 +490,9 @@ class GUI extends EventEmitter {
                 //previewArea.appendChild(elem);
             }
             if (metaData.type === 'video') {
-                setTimeout(() => {
+                videoPlayer.on(VideoPlayer.EVENT_READY, () => {
                     this.showVideo(videoPlayer, metaData, contentData);
-                }, 100);
+                });
             } else if (metaData.type === 'text') {
                 // contentData is text
                 this.showText(elem, metaData, contentData);
