@@ -7,14 +7,14 @@
 /* global Promise */
 'use strict';
 
-var WebSocketClient = require('websocket').client;
+let WebSocketClient = require('websocket').client;
 
-var metabinary = require('./metabinary.js');
+let metabinary = require('./metabinary.js');
 
 /**
  * 簡易WebSocketラッパー
  */
-var WebSocketWrapper = function() {
+let WebSocketWrapper = function() {
 	/**
 	 * @type {WebSocket.client}
 	 */
@@ -57,12 +57,12 @@ WebSocketWrapper.prototype.connect = function(url) {
 
 			connection.on('message', function(message) {
 				if (message.type === 'utf8') {
-					var parsed = JSON.parse(message.utf8Data);
+					let parsed = JSON.parse(message.utf8Data);
 					if (this.resResolves[parsed.id] && parsed.method !== 'Update') {
 						this.resResolves[parsed.id](parsed);
 					}
 				} else { // binary
-					var data = message.binaryData;
+					let data = message.binaryData;
 					metabinary.loadMetaBinary(data, function (parsed, contentData) {
 						if (this.resResolves[parsed.id]) {
 							this.resResolves[parsed.id]({
@@ -104,7 +104,7 @@ WebSocketWrapper.prototype.sendBinary = function(method, params, buffer) {
 	}
 
 	return new Promise(function(resolve) {
-		var json = {
+		let json = {
 			jsonrpc: '2.0',
 			id: this.id,
 			method: method,
@@ -113,7 +113,7 @@ WebSocketWrapper.prototype.sendBinary = function(method, params, buffer) {
 		};
 		this.resResolves[this.id] = resolve;
 
-		var content = metabinary.createMetaBinary(json, buffer);
+		let content = metabinary.createMetaBinary(json, buffer);
 		this.connection.sendBytes(content);
 
 		this.id ++;
@@ -132,7 +132,7 @@ WebSocketWrapper.prototype.sendUTF = function(method, params) {
 	}
 
 	return new Promise(function(resolve) {
-		var json = {
+		let json = {
 			jsonrpc: '2.0',
 			id: this.id,
 			method: method,

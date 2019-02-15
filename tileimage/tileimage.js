@@ -7,15 +7,15 @@
 'use strict';
 
 // == load modules =============================================================
-var fs = require('fs');
-var path = require('path');
-var argv = require('argv');
-var readline = require('readline');
+let fs = require('fs');
+let path = require('path');
+let argv = require('argv');
+let readline = require('readline');
 
-var WebSocketWrapper = require('./websocket');
+let WebSocketWrapper = require('./websocket');
 
 // == prepare image processor ==================================================
-var imageProcessor = null;
+let imageProcessor = null;
 
 try {
 	imageProcessor = require('./image-processor-images');
@@ -36,14 +36,14 @@ if (!imageProcessor) {
  * ランダムな色を生成する
  * @returns {string} ランダムな色
  */
-var getRandomColor = function() {
+let getRandomColor = function() {
 	return 'rgb(' + Math.floor(Math.random() * 128 + 127) + ','
 	+ Math.floor(Math.random() * 128 + 127) + ','
 	+ Math.floor(Math.random() * 128 + 127) + ')';
 };
 
 // == process argv =============================================================
-var args = argv.option([
+let args = argv.option([
 	{
 		name: 'config',
 		short: 'c',
@@ -61,24 +61,24 @@ if (args.targets.length === 0) {
 	process.exit();
 }
 
-var configPath = (args.options.config || path.resolve(__dirname, './config.json'));
+let configPath = (args.options.config || path.resolve(__dirname, './config.json'));
 console.log('Config file: ' + configPath);
-var config = require(configPath);
+let config = require(configPath);
 
-var keyvalue = undefined;
+let keyvalue = undefined;
 if (args.options.metadata) {
 	console.log('Metadata: ' + args.options.metadata);
 	keyvalue = JSON.parse(args.options.metadata);
 }
 
-var imagePath = path.resolve(process.cwd(), args.targets[ 0 ]);
+let imagePath = path.resolve(process.cwd(), args.targets[ 0 ]);
 if (!fs.existsSync(imagePath)) {
 	throw new Error('Image file not found: ' + imagePath);
 }
 console.log('Image file: ' + imagePath);
 
 // == beginning of main procedure ==============================================
-var wsWrapper = new WebSocketWrapper();
+let wsWrapper = new WebSocketWrapper();
 
 // == connect to the websocket server ==========================================
 wsWrapper.connect(config.url).then(function() {
@@ -102,7 +102,7 @@ wsWrapper.connect(config.url).then(function() {
 
 	// == request group id =======================================================
 	return wsWrapper.sendUTF('GetGroupList', {}).then(function(parsed) {
-		var desiredGroup = parsed.result.grouplist.filter(function(group) {
+		let desiredGroup = parsed.result.grouplist.filter(function(group) {
 			return group.name === config.contentgrp;
 		});
 		if (desiredGroup.length !== 0) { // if there already are desired group
@@ -144,8 +144,8 @@ wsWrapper.connect(config.url).then(function() {
 	console.log('Thumbnail sent');
 
 	// == split the image ========================================================
-	var historyId = parsed.result.history_id;
-	var n = config.xsplit * config.ysplit;
+	let historyId = parsed.result.history_id;
+	let n = config.xsplit * config.ysplit;
 	imageProcessor.splitImage(imagePath, config.xsplit, config.ysplit, 8, function(buffer, i) {
 		readline.cursorTo(process.stdout, 0);
 		process.stdout.write('Tiled image processing: ' + ((i + 1) / n * 100.0).toFixed(0) + '%');
