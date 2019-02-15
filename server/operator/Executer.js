@@ -1727,9 +1727,10 @@
          * @method addContent
          * @param {JSON} metaData contentメタデータ
          * @param {BLOB} data バイナリデータ
-         * @param {Function} endCallback 終了時に呼ばれるコールバック
+         * @param {Number} totalTileCount 合計タイル数
+         * @param {Function} finishCallback 終了時に呼ばれるコールバック
          */
-        addTileContent(metaData, data, endCallback) {
+        addTileContent(metaData, data, totalTileCount, finishCallback) {
             console.log("addTileContent", metaData.id + ":" + metaData.content_id);
             let contentData = data;
             if (!metaData.hasOwnProperty('history_id')) {
@@ -1746,13 +1747,35 @@
 
             this.textClient.hkeys(this.contentHistoryPrefix + content_id, (err, keys)=>{
                 if (keys.length > 0 && keys.indexOf(history_id) >= 0) {
-
                     this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, (err, reply)=>{
                         if (err) {
                             console.error("Error on addContent:" + err);
                         } else {
-                            this.client.expire(this.contentHistoryDataPrefix + history_id, expireTime, ()=>{
-                                endCallback(err, metaData, contentData);
+                            // history idのkeyをすべて取得
+                            this.client.hkeys(this.contentHistoryDataPrefix + history_id, (err, reply)=>{
+                                if (err) {
+                                    console.error("Error on addContent:" + err);
+                                } else {
+                                    this.client.expire(this.contentHistoryDataPrefix + history_id, expireTime, ()=>{
+                                        let tileCount = 0;
+                                        for (let i = 0; i < reply.length; ++i) {
+                                            let key = String(reply[i]);
+                                            if (key !== "preview" && key !== "thumbnail") {
+                                                ++tileCount;
+                                            }
+                                        }
+                                        if (totalTileCount >= 0 && tileCount === totalTileCount) {
+                                            // 時系列データのある時刻に対する全タイルの登録が終わった. 
+                                            // クライアントサイドに通知を送る
+                                            if (finishCallback) {
+                                                finishCallback(err, metaData, contentData);
+                                            }
+                                        } else {
+                                            console.error("Error no split:" + err);
+                                            finishCallback(err, metaData, contentData);
+                                        }
+                                    });
+                                }
                             });
                         }
                     });

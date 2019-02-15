@@ -91,7 +91,11 @@
                                 }
                                 meta.tile_index = metaData.tile_index;
                                 meta.history_id = metaData.history_id;
-                                this.executer.addTileContent(meta, binaryData, endCallback);
+                                let tileCount = -1; // 合計タイル数
+                                if (meta.hasOwnProperty("xsplit") &&  meta.hasOwnProperty("ysplit")) {
+                                    tileCount = Number(meta.xsplit) * Number(meta.ysplit);
+                                }
+                                this.executer.addTileContent(meta, binaryData, tileCount, endCallback);
                             });
                         } else {
                             if (endCallback) {
