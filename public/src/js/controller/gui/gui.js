@@ -243,8 +243,10 @@ class GUI extends EventEmitter
 		this.videoController = new VideoController();
 		document.body.appendChild(this.videoController.getDOM());
 
-		this.videoController.on(VideoController.EVENT_PLAY, (err) => {
-			this.action.playAllVideo();
+		this.videoController.on(VideoController.EVENT_PLAY, (err, play) => {
+			this.action.playAllVideo({
+				play : play
+			});
 		});
 		this.videoController.on(VideoController.EVENT_REWIND, (err) => {
 			this.action.rewindAllVideo();
@@ -825,7 +827,7 @@ class GUI extends EventEmitter
 			if (evt.target.className !== "context_menu_item") {
 				menuElem.style.display = "none";
 			}
-			this.getContentPropertyGUI().submit_text();
+			this.getContentPropertyGUI().submitText();
 		});
 	}
 
@@ -1062,15 +1064,15 @@ class GUI extends EventEmitter
 	}
 
 	// コンテンツのインポート
-	importContent(metaData, contentData, videoElem) {
+	importContent(metaData, contentData, videoPlayer) {
 		let listElem = this.getListElem(metaData.id);
 
 		let layoutBoxArea = this.getBoxArea(Constants.TypeLayout, metaData.group);
 		this.layoutListGUI.importContent(layoutBoxArea, listElem, metaData, contentData);
 
 		let contentBoxArea = this.getBoxArea(Constants.TypeContent, metaData.group);
-		this.contentListGUI.importContent(contentBoxArea, listElem, metaData, contentData, videoElem);
-		this.contentViewGUI.importContent(this.getContentPreviewArea(), listElem, metaData, contentData, videoElem);
+		this.contentListGUI.importContent(contentBoxArea, listElem, metaData, contentData, videoPlayer);
+		this.contentViewGUI.importContent(this.getContentPreviewArea(), listElem, metaData, contentData, videoPlayer);
 	}
 
 	// Search対象グループのチェック

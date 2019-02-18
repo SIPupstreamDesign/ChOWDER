@@ -767,8 +767,7 @@ class ManagementDialog extends EventEmitter
         this.background = new PopupBackground();
         this.background.show();
         this.background.on('close', () => {
-            this.dom.style.display = "none";
-            document.body.removeChild(this.dom);
+            this.close();
             this.emit(ManagementDialog.EVENT_CLOSE, null);
         });
         this.dom.style.display = "block";

@@ -306,61 +306,6 @@ class Store extends EventEmitter
 	}
 
 	/**
-	 * 全video巻き戻し
-	 * @param {*} data
-	 */
-	_rewindAllVideo(data) {
-		let groupID = this.getGroupStore().getCurrentGroupID();
-		let sendIds = [];
-		this.for_each_metadata((id, metaData) => {
-			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
-				if (
-					(metaData.group === groupID) &&
-					(metaData.type === 'video')
-				) {
-					sendIds.push(metaData.id);
-				}
-			}
-		});
-
-		if (sendIds.length !== 0) {
-			Connector.send(Command.SendMessage, {ids: sendIds, command: 'rewindVideo'}, (err, reply) => {
-				// do nothing
-			});
-		}
-	}
-
-	/**
-	 * 全video再生
-	 * @param {*} data
-	 */
-	_playAllVideo(data) {
-		let groupID = this.getGroupStore().getCurrentGroupID();
-		let sendIds = [];
-		store.for_each_metadata((id, metaData) => {
-			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
-				if (
-					(metaData.group === groupID) &&
-					(metaData.type === 'video')
-				) {
-					sendIds.push(metaData.id);
-				}
-			}
-		});
-
-		if (sendIds.length !== 0) {
-			Connector.send(Command.SendMessage, {ids: sendIds, command: 'playVideo', play: play}, (err, reply) => {
-				// do nothing
-			});
-		}
-	}
-
-	_replyDisplayPermission(data){
-		console.log("_replyDisplayPermission",data);
-		Connector.send(Command.ReplyDisplayPermission, data, (err, reply) => {});
-	}
-
-	/**
 	 * 接続済かどうか返す
 	 */
 	isConnected() {
@@ -621,6 +566,7 @@ Store.EVENT_SETUP_CONTENT_ELEMENT = "setup_content_element";
 Store.EVENT_TOGGLE_CONTENT_MARK_ICON = "setup_toggle_content_mark_icon";
 Store.EVENT_DONE_SNAP_CONTENT_TO_SCREEN = "done_snap_content_to_screen";
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content";
+Store.EVENT_CONTENT_VISIBLE_CHANGED = "content_visible_changed";
 
 // display_store
 Store.EVENT_DISPLAY_SCALE_CHANGING = "display_scale_changing";
@@ -632,6 +578,7 @@ Store.EVENT_DONE_UPDATE_WINDOW_METADATA = "done_update_window_metadata";
 Store.EVENT_DISPLAY_PROPERTY_CHANGED = "display_property_changed"
 Store.EVENT_DISPLAY_SPLIT_CHANGED = "display_split_changed";
 Store.EVENT_CHANGE_DISPLAY_VISIBLE = "change_display_visible";
+Store.EVENT_DISPLAY_VISIBLE_CHANGED = "display_visible_changed";
 
 // group_store
 Store.EVENT_GROUP_ADDED = "group_added";

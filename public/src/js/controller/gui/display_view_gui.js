@@ -66,7 +66,6 @@ class DisplayViewGUI extends EventEmitter {
 					screen.className = "screen";
 				}
 			}
-			this.action.changeDisplayVisible(windowData);
 		}
 		// ボーダー色の設定
 		if (windowData.hasOwnProperty("color")) {

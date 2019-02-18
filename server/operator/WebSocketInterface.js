@@ -119,7 +119,7 @@
                 let metaData = data.metaData,
                     binaryData = data.contentData;
                 console.log(Command.AddTileContent);//, data);
-                this.commandOperator.addTileContent(socketid, metaData, binaryData, this.post_update(ws, resultCallback));
+                this.commandOperator.addTileContent(socketid, metaData, binaryData, this.post_addTileContent(ws, resultCallback), this.post_updateContent(ws, resultCallback));
             });
 
             ws_connector.on(Command.AddHistoricalContent, (data, resultCallback, socketid)=>{
@@ -234,6 +234,22 @@
         post_update(ws, resultCallback) {
             return (err, reply)=>{
                 ws_connector.broadcast(ws, Command.Update);
+                if (resultCallback) {
+                    resultCallback(err, reply);
+                }
+            };
+        }
+
+        /**
+         * tile登録アプリからタイルが登録された時の終了コールバック.
+         * addTileContent1回につき1回呼ばれる
+         * @param {*} ws 
+         * @param {*} resultCallback 
+         */
+        post_addTileContent(ws, resultCallback) {
+            return (err, reply)=>{
+                // broadcastしない.
+                // ws_connector.broadcast(ws, Command.Update);
                 if (resultCallback) {
                     resultCallback(err, reply);
                 }

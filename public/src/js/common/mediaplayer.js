@@ -27,7 +27,12 @@ class MediaPlayer extends EventEmitter {
 		this.duration = 0;
 		this.loadedStartTime = 0;
 		this.mediaSource = new MediaSource();
-		videoElem.src = window.URL.createObjectURL(this.mediaSource);
+		// https://developer.mozilla.org/ja/docs/Web/API/HTMLMediaElement/srcObject
+		try {
+			videoElem.srcObject = this.mediaSource;
+		} catch (error) {
+			videoElem.src = URL.createObjectURL(this.mediaSource);
+		}
 		this.video.setAttribute("autoplay", "")
 
 		this.updateBuffer = this.updateBuffer.bind(this);

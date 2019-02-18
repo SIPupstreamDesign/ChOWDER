@@ -235,6 +235,21 @@ class ManagementStore {
 		}
 		return null;
 	}
+	// パフォーマンス計算を行うかどうか
+	isMeasureTimeEnable() {
+		if (this.globalSetting.enableMeasureTime) {
+			return (String(this.globalSetting.enableMeasureTime) === "true");
+		}
+		return false;
+	}
+	// パフォーマンス計算用時間を生成して返す
+	fetchMeasureTime() {
+		let time = null;
+		if (this.isMeasureTimeEnable()) {
+			time = new Date().toISOString();
+		}
+		return time;
+	}
 }
 
 export default ManagementStore;

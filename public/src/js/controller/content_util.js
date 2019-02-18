@@ -125,6 +125,50 @@ class ContentUtil
         }
         return false;
     }
+    
+    static isNumber(x){ 
+        if( typeof(x) != 'number' && typeof(x) != 'string' )
+            return false;
+        else 
+            return (x == parseFloat(x) && isFinite(x));
+    }
+
+    static sortHistory(values) {
+        try {
+            values.sort(function (a, b) {
+                if (ContentUtil.isNumber(a)) {
+                    a = Number(a);
+                } else {
+                    a = a.toString().toLowerCase();
+                }
+                if (ContentUtil.isNumber(b)) {
+                    b = Number(b);
+                } else {
+                    b = b.toString().toLowerCase();
+                }
+                if (a < b){
+                    return -1;
+                }else if (a > b){
+                    return 1;
+                }
+                return 0;
+            });
+        } catch (e) {
+
+        }
+        return values;
+    }
+
+    static extractHistoryData(metaData) {
+        let historyData;
+        try {
+            historyData = JSON.parse(metaData.history_data);
+            return historyData;
+        }
+        catch (e) {
+        }
+        return null;
+    }
 }
 
 export default ContentUtil;

@@ -62,7 +62,7 @@ class VideoStore {
         console.error("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
-        let elem = data.element;
+        let elem = data.player.getVideo();
         let rtcKey = this.getRTCKey(metaData);
         this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
             let webRTC = new WebRTC();
@@ -96,9 +96,10 @@ class VideoStore {
 
                 if (!webRTC.statusHandle) {
                     let t = 0;
-                    webRTC.statusHandle = setInterval( ((rtcKey, webRTC) => {
+                    webRTC.statusHandle = setInterval( ((rtcKey) => {
+                        let webRTC = this.webRTCDict[rtcKey];
                         t += 1;
-                        webRTC.getStatus(function (status) {
+                        webRTC.getStatus((status) => {
                             let bytes = 0;
                             if (status.video && status.video.bytesReceived) {
                                 bytes += status.video.bytesReceived;
@@ -108,7 +109,7 @@ class VideoStore {
                             }
                             // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
                         });
-                    })(rtcKey, this.webRTCDict[rtcKey]), 1000);
+                    })(rtcKey), 1000);
                 }
             });
 
@@ -143,6 +144,7 @@ class VideoStore {
                             clearInterval(this.webRTCDict[rtcKey].statusHandle);
                             this.webRTCDict[rtcKey].statusHandle = null;
                         }
+                        this.webRTCDict[rtcKey].close();
                         delete this.webRTCDict[rtcKey];
                     }
                 }

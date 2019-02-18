@@ -74,9 +74,10 @@
          * @method AddTileContent
          * @param {Object} metaData メタデータ
          * @param {BLOB} binaryData バイナリデータ
-         * @param {Function} endCallback コンテンツ新規追加した場合に終了時に呼ばれるコールバック
+         * @param {Function} endCallback 1回のaddTileContent終了時に呼ばれるコールバック
+         * @param {Function} finishCallback 全タイル追加終了時に呼ばれるコールバック
          */
-        addTileContent(socketid, metaData, binaryData, endCallback) {
+        addTileContent(socketid, metaData, binaryData, endCallback, finishCallback) {
             console.log("AddTileContent", metaData);
 
             if (this.executer.isEditable(socketid, metaData.group)) {
@@ -91,7 +92,11 @@
                                 }
                                 meta.tile_index = metaData.tile_index;
                                 meta.history_id = metaData.history_id;
-                                this.executer.addTileContent(meta, binaryData, endCallback);
+                                let tileCount = -1; // 合計タイル数
+                                if (meta.hasOwnProperty("xsplit") &&  meta.hasOwnProperty("ysplit")) {
+                                    tileCount = Number(meta.xsplit) * Number(meta.ysplit);
+                                }
+                                this.executer.addTileContent(meta, binaryData, tileCount, endCallback, finishCallback);
                             });
                         } else {
                             if (endCallback) {

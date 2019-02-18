@@ -653,6 +653,13 @@ class Controller {
 				if (this.state.isMousedownOnList() && !this.gui.inListviewArea(evt)) {
 					// リストからビューへドラッグ中のパターン
 					metaData.visible = "true";
+					if (Validator.isWindowType(metaData)) {
+						this.action.changeDisplayVisible(metaData);
+						return;
+					} else {
+						this.action.changeContentVisible(metaData);
+						return;
+					}
 				}
 				else {
 					return;
@@ -768,6 +775,12 @@ class Controller {
 				metaData = this.store.getMetaData(id);
 				if (Validator.isContentType(metaData)) {
 					otherPreviewArea = this.gui.getDisplayPreviewArea();
+				}
+				if (Validator.isVideoType(metaData)) {
+					// 動画コントロール上のボタンなどをクリックした場合は選択状態にしない
+					if (evt.target && (evt.target.tagName === "INPUT" || evt.target.tagName === "BUTTON")) {
+						return;
+					}
 				}
 			}
 			if (metaData) {
@@ -1477,27 +1490,29 @@ class Controller {
 	 * @method onCloseContent
 	 */
 	onCloseContent() {
-		let id = this.state.getSelectedID();
 		let metaData = null;
 		let previewArea;
 		// console.log("onCloseContent");
-		if (this.store.hasMetadata(id)) {
-			this.unselect(id);
-			let elem = this.getElem(id, false);
-			metaData = this.store.getMetaData(id);
-			if (!this.store.getManagement().isEditable(metaData.group)) {
-				// 編集不可コンテンツ
-				return;
+		for (let i = this.state.getSelectedIDList().length - 1; i >= 0; i = i - 1) {
+			let id = this.state.getSelectedIDList()[i];
+			if (this.store.hasMetadata(id)) {
+				this.unselect(id);
+				let elem = this.getElem(id, false);
+				metaData = this.store.getMetaData(id);
+				if (!this.store.getManagement().isEditable(metaData.group)) {
+					// 編集不可コンテンツ
+					return;
+				}
+				metaData.visible = false;
+				if (Validator.isWindowType(metaData)) {
+					previewArea = this.gui.getDisplayPreviewArea();
+				}
+				else {
+					previewArea = this.gui.getContentPreviewArea();
+				}
+				previewArea.removeChild(elem);
+				this.store.operation.updateMetadata(metaData);
 			}
-			metaData.visible = false;
-			if (Validator.isWindowType(metaData)) {
-				previewArea = this.gui.getDisplayPreviewArea();
-			}
-			else {
-				previewArea = this.gui.getContentPreviewArea();
-			}
-			previewArea.removeChild(elem);
-			this.store.operation.updateMetadata(metaData);
 		}
 	}
 
@@ -1576,7 +1591,7 @@ class Controller {
 					this.action.getContent({
 						request : request,
 						callback : (err, data) => {
-							this.gui.importContent(json, data.contentData, this.store.getVideoStore().getVideoElem(json.id));
+							this.gui.importContent(json, data.contentData, this.store.getVideoStore().getVideoPlayer(json.id));
 							this.action.toggleContentMarkIcon({
 								element : document.getElementById(metaData.id),
 								metaData : data.metaData
@@ -1644,7 +1659,7 @@ class Controller {
 			}
 			if (metaData.type === "video") {
 				if (this.store.getVideoStore().hasVideoData(metaData.id)) {
-					this.gui.importContent(metaData, contentData, this.store.getVideoStore().getVideoElem(metaData.id));
+					this.gui.importContent(metaData, contentData, this.store.getVideoStore().getVideoPlayer(metaData.id));
 				}
 				else {
 					// ローカルに保持していない動画コンテンツ
@@ -1794,8 +1809,8 @@ class Controller {
 			if (this.store.getVideoStore().hasVideoData(json.id)) {
 				this.store.getVideoStore().deleteVideoData(json.id);
 			}
-			if (this.store.getVideoStore().hasVideoElem(json.id)) {
-				this.store.getVideoStore().deleteVideoElem(json.id);
+			if (this.store.getVideoStore().hasVideoPlayer(json.id)) {
+				this.store.getVideoStore().deleteVideoPlayer(json.id);
 			}
 		};
 		for (let i = 0; i < reply.length; i = i + 1) {

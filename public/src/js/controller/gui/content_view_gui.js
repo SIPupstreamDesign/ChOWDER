@@ -49,7 +49,7 @@ class ContentViewGUI extends EventEmitter {
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	importContent(previewArea, listElem, metaData, contentData, videoElem) {
+	importContent(previewArea, listElem, metaData, contentData, videoPlayer) {
 		let metaDataDict = this.store.getMetaDataDict();
 		let groupDict = this.store.getGroupDict();
 		let contentElem;
@@ -77,7 +77,7 @@ class ContentViewGUI extends EventEmitter {
 		if (document.getElementById(metaData.id)) {
 			contentElem = document.getElementById(metaData.id);
 		}
-		if (!contentElem && !videoElem) {
+		if (!contentElem && !videoPlayer) {
 			contentElem = document.createElement(tagName);
 			contentElem.id = metaData.id;
 			contentElem.style.position = "absolute";
@@ -88,10 +88,12 @@ class ContentViewGUI extends EventEmitter {
 			});
 			ContentUtil.insertElementWithDictionarySort(previewArea, contentElem);
 		}
-		if (videoElem) {
-			videoElem.id = metaData.id;
-			videoElem.style.position = "absolute";
-			videoElem.setAttribute('autoplay', '');
+		if (videoPlayer) {
+			let videoDOM = videoPlayer.getDOM();
+			videoDOM.id = metaData.id;
+			videoDOM.style.position = "absolute";
+			
+			let videoElem = videoPlayer.getVideo();
 			if (Constants.IsFirefox) {
 				videoElem.ondblclick = function () {
 					videoElem.setAttribute('controls', '');
@@ -106,13 +108,13 @@ class ContentViewGUI extends EventEmitter {
 				videoElem.setAttribute('controls', '');
 				videoElem.setAttribute('controlslist', 'nodownload');
 			}
-			videoElem.style.color = "white";
+			videoDOM.style.color = "white";
 			
 			this.action.setupContentElement({
-				element : videoElem,
+				element : videoDOM,
 				id : metaData.id
 			});
-			ContentUtil.insertElementWithDictionarySort(previewArea, videoElem);
+			ContentUtil.insertElementWithDictionarySort(previewArea, videoDOM);
 		}
 		// console.log("id=" + metaData.id);
 		if (contentData) {
@@ -125,8 +127,8 @@ class ContentViewGUI extends EventEmitter {
 			}
 			else if (metaData.type === 'video') {
 				//contentElem.src = contentData;
-				if (videoElem) {
-					vscreen_util.assignMetaData(videoElem, metaData, true, groupDict);
+				if (videoPlayer) {
+					vscreen_util.assignMetaData(videoPlayer.getDOM(), metaData, true, groupDict);
 				}
 				else {
 					contentElem.src = contentData;

@@ -132,7 +132,7 @@ class ContentListGUI extends EventEmitter
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} contentData コンテンツデータ
 	 */
-	importContent(contentArea, listElem, metaData, contentData, videoElem) {
+	importContent(contentArea, listElem, metaData, contentData, videoPlayer) {
 		let metaDataDict = this.store.getMetaDataDict();
 		let contentElem;
 		let divElem = listElem;
@@ -216,7 +216,7 @@ class ContentListGUI extends EventEmitter
 
 				contentElem.src = contentData;
 				fixDivSize(divElem, w, aspect);
-				if (videoElem && metaData.hasOwnProperty("subtype")) {
+				if (videoPlayer && metaData.hasOwnProperty("subtype")) {
 					// マイク、カメラボタン
 					this.createMicCameraButton(divElem, metaData);
 				}

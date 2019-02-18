@@ -10,6 +10,8 @@ import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
 import WebRTC from '../../common/webrtc';
 import Vscreen from '../../common/vscreen'
+import VideoPlayer from '../../components/video_player'
+import Validator from '../../common/validator'
 
 "use strict";
 
@@ -46,7 +48,7 @@ class VideoStore {
 		this.videoDict = {};
 
 		// id から video エレメントへのマップ
-		this.videoElemDict = {};
+		this.videoPlayerDict = {};
 
 		// mp4boxで読み込んだsegmentsのキャッシュ
 		this.segmentDict = {};
@@ -87,8 +89,8 @@ class VideoStore {
 		for (i in this.videoDict) {
 			this.deleteVideoData(i);
 		}
-		for (i in this.videoElemDict) {
-			this.deleteVideoElem(i);
+		for (i in this.videoPlayerDict) {
+			this.deleteVideoPlayer(i);
 		}
 	}
     
@@ -238,7 +240,8 @@ class VideoStore {
 	 * @method connectWebRTC
 	 */
 	connectWebRTC(metaData, keyStr) {
-		let video = this.getVideoElem(metaData.id);
+		let player = this.getVideoPlayer(metaData.id);
+		let video = player.getVideo();
 		let webRTC;
 		if (!this.webRTCDict.hasOwnProperty(keyStr)) {
 			// 初回読み込み時
@@ -393,39 +396,13 @@ class VideoStore {
 				sdp: sdp
 			}), function (err, reply) { });
 		});
-    }
-    
-    /**
-     * 動画ファイルの入力
-     * @param {*} data 
-     */
-    _inputVideoFile(data) {
-        let metaData = data.metaData;
-        let blob = data.contentData;
-        let subType = data.metaData.subtype;
-
-		// 動画は実体は送らずメタデータのみ送る
-		// データとしてSDPを送る
-		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
-		// IDはクライアントで作成する
-		if (metaData.hasOwnProperty("id") && this.store.hasMetadata(metaData.id)) {
-			metaData = this.store.getMetaData(metaData.id);
-		}
-		else {
-			metaData.id = generateID();
-		}
-		let video;
-		if (this.hasVideoElem(metaData.id)) {
-			video = this.getVideoElem(metaData.id);
-		}
-		else {
-			video = document.createElement('video');
-			this.setVideoElem(metaData.id, video);
-			// カメラ,スクリーン共有は追加したコントローラではmuteにする
-			if (subType === "camera" || subType === "screen") {
-				video.muted = true;
-			}
-		}
+	}
+	
+	/**
+	 * 動画ファイル処理用内部関数
+	 */
+	__processVideoFile(metaData, video, blob) {
+        let subType = metaData.subtype;
 		let videoData;
 		if (subType === "file") {
 			metaData.use_datachannel = true;
@@ -437,38 +414,15 @@ class VideoStore {
 			*/
 		}
 		this.setVideoData(metaData.id, videoData);
-		/*
+		
 		video.oncanplaythrough = function () {
-			if (type !== "file") {
+			if (subType !== "file") {
 				window.setTimeout(function(){
 					this.play()
 				}.bind(this), 1000); // for chrome
 			}
 		};
 
-		video.onplay = function () {
-			if (type !== 'file') { return; }
-			metaData = store.getMetaData(metaData.id);
-			metaData.isPlaying = true;
-			this.update_metadata(metaData);
-		}.bind(this);
-
-		video.onpause = function () {
-			if (type !== 'file') { return; }
-			metaData = store.getMetaData(metaData.id);
-			metaData.isPlaying = false;
-			this.update_metadata(metaData);
-		}.bind(this);
-
-		video.onended = function () {
-			if (type !== 'file') { return; }
-
-			metaData = store.getMetaData(metaData.id);
-			metaData.isPlaying = false;
-			metaData.isEnded = true;
-			this.update_metadata(metaData);
-		}.bind(this);
-		*/
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
 			if (!metaData.hasOwnProperty("width")) {
@@ -495,54 +449,101 @@ class VideoStore {
 				data = this.getElem(metaData.id, true).src;
 			}
 			this.store.getContentStore().addContent(metaData, data, (err, reply) => {
+				video.onplay = ((id) => {
+					return () => {
+						if (subType !== 'file') { return; }
+						console.error(id);
+						let metaData = this.store.getMetaData(id);
+						console.error(metaData)
+						metaData.isPlaying = true;
+						this.store.operation.updateMetadata(metaData);	
+					}
+				})(metaData.id);
+		
+				video.onpause = ((id) => {
+					return () => {
+						if (subType !== 'file') { return; }
+						let metaData = this.store.getMetaData(id);
+						metaData.isPlaying = false;
+						this.store.operation.updateMetadata(metaData);
+					}
+				})(metaData.id);
+		
+				video.onended = ((id) => {
+					return () => {
+						if (subType !== 'file') { return; }
+						let metaData = this.store.getMetaData(id);
+						metaData.isPlaying = false;
+						metaData.isEnded = true;
+						this.store.operation.updateMetadata(metaData);
+					}
+				})(metaData.id);
+				
 			});
 		};
-    }
-
+	}
+    
     /**
-     * 動画ストリームを入力
+     * 動画ファイルの入力
      * @param {*} data 
      */
-    _inputVideoStream(data) {
+    _inputVideoFile(data) {
         let metaData = data.metaData;
-        let blob = data.contentData;
-        let subType = data.subtype;
-
+		let blob = data.contentData;
+		
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
 		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
 		// IDはクライアントで作成する
 		if (metaData.hasOwnProperty("id") && this.store.hasMetadata(metaData.id)) {
 			metaData = this.store.getMetaData(metaData.id);
-		} else {
+		}
+		else {
 			metaData.id = generateID();
 		}
-		let video;
-		if (this.hasVideoElem(metaData.id)) {
-			video = this.getVideoElem(metaData.id);
-		} else {
-			video = document.createElement('video');
-			this.setVideoElem(metaData.id, video);
+		if (this.hasVideoPlayer(metaData.id)) {
+			let player = this.getVideoPlayer(metaData.id);
+			let video = player.getVideo();
+			this.__processVideoFile(metaData, video, blob);
+		}
+		else {
+			//video = document.createElement('video');
+			let player = new VideoPlayer();
+			this.setVideoPlayer(metaData.id, player);
+			let video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
-			if (subType === "camera" || subType === "screen") {
+			if (metaData.subType === "camera" || metaData.subType === "screen") {
 				video.muted = true;
 			}
+			player.on(VideoPlayer.EVENT_READY, () => {
+				this.__processVideoFile(metaData, video, blob);
+			});
 		}
+	}
+	
+	/**
+	 * 動画ファイル処理用内部関数
+	 */
+	__processVideoStream(metaData, video, blob) {
+        let subType = metaData.subtype;
 		let videoData;
-        // stream
-        if ('srcObject' in video) {
-            videoData = blob;
-            video.srcObject = blob;
-        }
-        else {
-            videoData = URL.createObjectURL(blob);
-            video.src = videoData;
-        }
-        video.load();
-        video.play();
+		// stream
+		if ('srcObject' in video) {
+			videoData = blob;
+			video.srcObject = blob;
+		}
+		else {
+			videoData = URL.createObjectURL(blob);
+			video.src = videoData;
+		}
+		
+		setTimeout(() => {
+			video.load();
+			video.play();
+		}, 100)
 
-        this.setVideoData(metaData.id, videoData);
-        
+		this.setVideoData(metaData.id, videoData);
+		
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
 			if (!metaData.hasOwnProperty("width")) {
@@ -570,6 +571,41 @@ class VideoStore {
 			}
 			this.store.getContentStore().addContent(metaData, data, (err, reply) => {});
 		};
+	}
+
+    /**
+     * 動画ストリームを入力
+     * @param {*} data 
+     */
+    _inputVideoStream(data) {
+        let metaData = data.metaData;
+        let blob = data.contentData;
+
+		// 動画は実体は送らずメタデータのみ送る
+		// データとしてSDPを送る
+		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
+		// IDはクライアントで作成する
+		if (metaData.hasOwnProperty("id") && this.store.hasMetadata(metaData.id)) {
+			metaData = this.store.getMetaData(metaData.id);
+		} else {
+			metaData.id = generateID();
+		}
+		if (this.hasVideoPlayer(metaData.id)) {
+			let player = this.getVideoPlayer(metaData.id);
+			let video = player.getVideo();
+			this.__processVideoStream(metaData, video, blob);
+		} else {
+			let player = new VideoPlayer();
+			this.setVideoPlayer(metaData.id, player);
+			let video = player.getVideo();
+			// カメラ,スクリーン共有は追加したコントローラではmuteにする
+			if (metaData.subType === "camera" || metaData.subType === "screen") {
+				video.muted = true;
+			}
+			player.on(VideoPlayer.EVENT_READY, () => {
+				this.__processVideoStream(metaData, video, blob);
+			});
+		}
     }
     
 	// TODO
@@ -643,7 +679,7 @@ class VideoStore {
      */
     _changeVideoDevice(data) {
         let metadataID = data.id;
-        if (data.hasOwnProperty('deviceInfo') && this.hasVideoElem(metadataID)) {
+        if (data.hasOwnProperty('deviceInfo') && this.hasVideoPlayer(metadataID)) {
             this.restartCamera(metadataID, data.deviceInfo);
         }
     }
@@ -653,7 +689,7 @@ class VideoStore {
      */
     _changeAudioDevice(data) {
         let metadataID = data.id;
-		if (data.hasOwnProperty('deviceInfo') && this.hasVideoElem(metadataID)) {
+		if (data.hasOwnProperty('deviceInfo') && this.hasVideoPlayer(metadataID)) {
 			this.restartCamera(metadataID, data.deviceInfo);
 		}
     }
@@ -663,7 +699,7 @@ class VideoStore {
      */
     _changeVideoQuality(data) {
         let metadataID = data.id;
-		if (this.hasVideoElem(metadataID) && data.hasOwnProperty('quality')) {
+		if (this.hasVideoPlayer(metadataID) && data.hasOwnProperty('quality')) {
 			if (this.store.hasMetadata(metadataID)) {
 				let meta = this.store.getMetaData(metadataID);
 				meta.quality = JSON.stringify(data.quality);
@@ -695,6 +731,53 @@ class VideoStore {
 			}
         }
 	}
+
+	/**
+	 * 全video巻き戻し
+	 * @param {*} data
+	 */
+	_rewindAllVideo(data) {
+		let groupID = this.store.getGroupStore().getCurrentGroupID();
+		let sendIds = [];
+		this.store.for_each_metadata((id, metaData) => {
+			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+				if (
+					(metaData.group === groupID) &&
+					(metaData.type === 'video')
+				) {
+					sendIds.push(metaData.id);
+				}
+			}
+		});
+
+		if (sendIds.length !== 0) {
+			this.store.operation.sendMessage({ids: sendIds, command: 'rewindVideo'}, () => {});
+		}
+	}
+
+	/**
+	 * 全video再生
+	 * @param {*} data
+	 */
+	_playAllVideo(data) {
+		let groupID = this.store.getGroupStore().getCurrentGroupID();
+		let sendIds = [];
+		this.store.for_each_metadata((id, metaData) => {
+			if (Validator.isContentType(metaData) || Validator.isLayoutType(metaData)) {
+				if (
+					(metaData.group === groupID) &&
+					(metaData.type === 'video')
+				) {
+					sendIds.push(metaData.id);
+				}
+			}
+		});
+
+		if (sendIds.length !== 0) {
+			this.store.operation.sendMessage({ids: sendIds, command: 'playVideo', play: data.play}, () => {});
+		}
+	}
+
 	
 	getWebRTCDict() {
 		return this.webRTCDict;
@@ -729,25 +812,20 @@ class VideoStore {
 		delete this.videoDict[id];
 	}
 
-	// video elem
-	setVideoElem(id, elem) {
-		this.videoElemDict[id] = elem;
+	// video player
+	setVideoPlayer(id, player) {
+		this.videoPlayerDict[id] = player;
 	}
-	getVideoElem(id, elem) {
-		return this.videoElemDict[id];
+	getVideoPlayer(id) {
+		return this.videoPlayerDict[id];
 	}
-	hasVideoElem(id) {
-		return this.videoElemDict.hasOwnProperty(id);
+	hasVideoPlayer(id) {
+		return this.videoPlayerDict.hasOwnProperty(id);
 	}
-	deleteVideoElem(id) {
-		let elem = this.videoElemDict[id];
-		elem.pause();
-		elem.srcObject = null;
-		if (elem.src) {
-			URL.revokeObjectURL(elem.src);
-		}
-		elem.src = "";
-		delete this.videoElemDict[id];
+	deleteVideoPlayer(id) {
+		let player = this.videoPlayerDict[id];
+		player.release();
+		delete this.videoPlayerDict[id];
 	}
 }
 

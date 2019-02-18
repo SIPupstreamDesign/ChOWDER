@@ -160,9 +160,19 @@ class DisplayStore
 	}
 
 	// ディスプレイ可視不可視の変更
-	_changeDisplayVisible(data) {
-		this.store.emit(Store.EVENT_CHANGE_DISPLAY_VISIBLE, null, data);
+	_changeDisplayVisible(metaData) {
+		if (!this.store.getManagement().isDisplayEditable(metaData.group)) {
+			// 編集不可ディスプレイ
+			return;
+		}
+
+		manipulator.removeManipulator();
+
+		this.store.operation.updateMetadataMulti([metaData], () => {
+			this.store.emit(Store.EVENT_DISPLAY_VISIBLE_CHANGED, null, metaData)
+		});
 	}
+
 }
 
 export default DisplayStore;

@@ -41,12 +41,16 @@ class ContentStore
 	 * @param {JSON} metaData コンテンツのメタデータ
 	 * @param {BLOB} binary コンテンツのバイナリデータ
 	 */
-	addContent(metaData, binary, endCallback) {
+	addContent(metaData, binary, timestamp) {
 		if (!metaData.hasOwnProperty("zIndex")) {
 			metaData.zIndex = this.store.getZIndex(metaData, true);
 		}
 		if (!Validator.checkCapacity(binary.byteLength)) {
 			return;
+		}
+		// パフォーマンス計測用.
+		if (timestamp) {
+			metaData.time_register = timestamp;
 		}
 		this.store.operation.addContent(metaData, binary);
 	}
@@ -59,7 +63,7 @@ class ContentStore
 		let metaData = data.metaData;
 		metaData.type = "image";
 		metaData.group = this.store.getGroupStore().getCurrentGroupID();
-		this.addContent(metaData, data.contentData);
+		this.addContent(metaData, data.contentData, data.timestamp);
     }
     
 	/**
@@ -67,7 +71,7 @@ class ContentStore
 	 * @param {*} data 
 	 */
     _inputPDFFile(data) {
-        let metaData = data.metaData;
+		let metaData = data.metaData;
         let contentData = data.contentData;
 
 		let pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -83,20 +87,9 @@ class ContentStore
 				metaData.pdfPage = 1;
 				metaData.pdfNumPages = pdf.numPages;
 				VscreenUtil.transPosInv(metaData);
-				this.addContent(metaData, contentData);
+				this.addContent(metaData, contentData, data.timestamp);
 			});
 		});
-    }
-
-    /**
-     * テキストファイル入力
-     * @param {*} data 
-     */
-    _inputTextFile(data) {
-		let metaData = data.metaData;
-		metaData.type = "text";
-		metaData.group = this.store.getGroupStore().getCurrentGroupID();
-		this.addContent(metaData, data.contentData);
     }
 
     /**
@@ -104,7 +97,7 @@ class ContentStore
      * @param {*} data 
      */
     _inputURL(data) {
-        let value = data;
+        let value = data.url;
 		value = value.split(' ').join('');
 		if (value.indexOf("http") < 0) {
 			console.error(value)
@@ -112,8 +105,9 @@ class ContentStore
 		}
 
 		try {
-            value = decodeURI(value);
-			this.addContent({ type: "url", user_data_text: JSON.stringify({ text: value }) }, value);
+			value = decodeURI(value);
+			let metaData = { type: "url", user_data_text: JSON.stringify({ text: value }) };
+			this.addContent(metaData, value, data.timestamp);
 		} catch (e) {
 			console.error(e);
 		}
@@ -127,7 +121,7 @@ class ContentStore
 		let metaData = data.metaData;
 		metaData.type = "text";
         metaData.group = this.store.getGroupStore().getCurrentGroupID();
-        this.addContent(metaData, data.contentData);
+        this.addContent(metaData, data.contentData, data.timestamp);
     }
 
     /**
@@ -138,7 +132,7 @@ class ContentStore
 		let metaData = data.metaData;
 		metaData.type = "layout";
         metaData.group = this.store.getGroupStore().getCurrentGroupID();
-        this.addContent(metaData, data.contentData);
+        this.addContent(metaData, data.contentData, data.timestamp);
     }
 
 	/**
@@ -320,25 +314,17 @@ class ContentStore
 	/**
 	 * コンテンツを非表示にする
 	 */
-	_changeContentVisible(data) {
-		let metaDataList = [];
-
+	_changeContentVisible(metaData) {
+		if (!this.store.getManagement().isEditable(metaData.group)) {
+			// 編集不可コンテンツ
+			return;
+		}
+		
 		manipulator.removeManipulator();
 
-		this.store.getState().for_each_selected_id((i, id) => {
-			if (this.store.hasMetadata(id)) {
-				let metaData = this.store.getMetaData(id);
-				if (!this.store.getManagement().isEditable(metaData.group)) {
-					// 編集不可コンテンツ
-					return;
-				}
-				metaData.visible = data.visible;
-				metaDataList.push(metaData);
-			}
+		this.store.operation.updateMetadataMulti([metaData], () => {
+			this.store.emit(Store.EVENT_CONTENT_VISIBLE_CHANGED, null, metaData)
 		});
-		if (metaDataList.length > 0) {
-			this.store.operation.updateMetadataMulti(metaDataList);
-		}
 	}
 
 	/**
@@ -422,7 +408,7 @@ class ContentStore
 		if (Validator.isTextType(metaData)) {
 			metaData.restore_index = -1;
 
-			this.store.operation.updateContent(metaData, text);
+			this.store.operation.updateContent(metaData, data.contentData);
 			this.store.emit(Store.EVENT_CONTENT_METAINFO_CHANGED, null, metaData);
 		} else if (Validator.isLayoutType(metaData)) {
 			// レイアウトのメモ変更.
