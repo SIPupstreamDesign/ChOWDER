@@ -136,7 +136,8 @@ wsWrapper.connect(config.url).then(function() {
 			height: thumb.height,
 			xsplit: config.xsplit,
 			ysplit: config.ysplit,
-			display_immediately: config.display_immediately,
+			visible : config.visible ? config.visible : false,
+			reload_latest: config.reload_latest,
 			keyvalue: keyvalue ? JSON.stringify(keyvalue) : undefined
 		}, thumb.buffer);
 	});

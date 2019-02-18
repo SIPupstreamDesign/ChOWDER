@@ -6,5 +6,6 @@
 	"ysplit": 8,
 	"contentid": "contentid",
 	"contentgrp": "default",
-	"display_immediately" : true
+	"reload_latest" : true,
+	"visible" : true
 }

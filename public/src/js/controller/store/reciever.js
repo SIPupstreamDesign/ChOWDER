@@ -43,7 +43,7 @@ class Receiver
             if (id) {
                 if (metaData.hasOwnProperty("id") && metaData.type === Constants.TypeTileImage) {
                     console.log(metaData);
-                    if (metaData.hasOwnProperty('display_immediately') && String(metaData.display_immediately) === "true") {
+                    if (metaData.hasOwnProperty('reload_latest') && String(metaData.reload_latest) === "true") {
                         try {
                             let keyValue = JSON.parse(metaData.keyvalue);
                             let key = Object.keys(keyValue)[0];
