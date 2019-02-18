@@ -243,8 +243,8 @@ class WebRTC extends EventEmitter {
 			if (isEmit) {
 				this.emit(WebRTC.EVENT_CLOSED, null);
 			}
+			this.peer = null;
 		}
-		this.removeStream();
 	}
 	setBandWidth(bandwidth) {
 		let preQuality = JSON.stringify(this.bandwidth);
