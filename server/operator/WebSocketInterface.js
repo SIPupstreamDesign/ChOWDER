@@ -243,8 +243,8 @@
         /**
          * tile登録アプリからタイルが登録された時の終了コールバック.
          * addTileContent1回につき1回呼ばれる
-         * @param {*} ws 
-         * @param {*} resultCallback 
+         * @param {*} ws
+         * @param {*} resultCallback
          */
         post_addTileContent(ws, resultCallback) {
             return (err, reply)=>{
@@ -436,14 +436,12 @@
          */
         post_askDisplayPermission(ws) {
             return (err, data)=>{
-                console.log("**********post_askDisplayPermission",data);
                 ws_connector.broadcast(ws, Command.AskDisplayPermission, data);
             }
         }
 
         post_acceptDisplayPermission(ws) {
             return (err, data)=>{
-                console.log("**********post_acceptDisplayPermission",data);
                 ws_connector.broadcast(ws, Command.AcceptDisplayPermission, data);
             }
         }

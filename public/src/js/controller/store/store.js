@@ -305,6 +305,11 @@ class Store extends EventEmitter
 		}
 	}
 
+	_replyDisplayPermission(data){
+		console.log("_replyDisplayPermission",data);
+		Connector.send(Command.ReplyDisplayPermission, data, (err, reply) => {});
+	}
+
 	/**
 	 * 接続済かどうか返す
 	 */

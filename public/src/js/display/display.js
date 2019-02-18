@@ -212,9 +212,7 @@ class Display {
 				disconnectedText.style.display = "none";
 			}
 			if (!this.store.getWindowData()) {
-				const login_option = { id : "Display", password : "", displayid : this.store.getWindowID() }
-				console.log("registerWindow",login_option);
-				this.action.login(login_option);
+				this.action.registerWindow({ size : this.gui.getWindowSize()});
 			}
 		});
 
@@ -240,7 +238,6 @@ class Display {
 
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
 			console.log("EVENT_LOGIN_SUCCESS")
-			this.action.registerWindow({ size : this.gui.getWindowSize()});
 		});
 
 		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
@@ -294,6 +291,10 @@ class Display {
 			}
 			document.getElementById('preview_area').innerHTML = "";
 			this.action.update({ updateType : 'all'});
+
+			const login_option = { id : "Display", password : "", displayid : this.store.getWindowID() }
+			this.action.login(login_option);
+
 		});
 
 		this.store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {

@@ -1767,7 +1767,7 @@
                                             }
                                         }
                                         if (totalTileCount >= 0 && tileCount === totalTileCount) {
-                                            // 時系列データのある時刻に対する全タイルの登録が終わった. 
+                                            // 時系列データのある時刻に対する全タイルの登録が終わった.
                                             // クライアントサイドに通知を送る
                                             if (finishCallback) {
                                                 finishCallback(err, metaData, contentData);
@@ -2817,11 +2817,11 @@
                 if(err){
                     callback(err);
                 }else if(doesExists !== 1) {//存在しない
-                    console.log("*********getdisplaypermission : doesnt exist");
+                    // console.log("getdisplaypermission : doesnt exist");
                     callback("this displayid isnt exists");
                 }else{
                     this.textClient.hget(this.displayPermission, displayid, (err, reply)=>{
-                        console.log("*********getdisplaypermission : does exist",this.displayPermission, displayid, reply);
+                        // console.log("getdisplaypermission : does exist",this.displayPermission, displayid, reply);
                         callback(err, reply);
                     });
                 }
