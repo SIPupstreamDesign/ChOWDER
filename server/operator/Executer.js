@@ -1728,9 +1728,10 @@
          * @param {JSON} metaData contentメタデータ
          * @param {BLOB} data バイナリデータ
          * @param {Number} totalTileCount 合計タイル数
-         * @param {Function} finishCallback 終了時に呼ばれるコールバック
+         * @param {Function} endCallback 1回のaddTileContent終了時に呼ばれるコールバック
+         * @param {Function} finishCallback 全タイル追加終了時に呼ばれるコールバック
          */
-        addTileContent(metaData, data, totalTileCount, finishCallback) {
+        addTileContent(metaData, data, totalTileCount, endCallback, finishCallback) {
             console.log("addTileContent", metaData.id + ":" + metaData.content_id);
             let contentData = data;
             if (!metaData.hasOwnProperty('history_id')) {
@@ -1770,9 +1771,9 @@
                                             if (finishCallback) {
                                                 finishCallback(err, metaData, contentData);
                                             }
-                                        } else {
-                                            console.error("Error no split:" + err);
-                                            finishCallback(err, metaData, contentData);
+                                        }
+                                        if (endCallback) {
+                                            endCallback(err, metaData);
                                         }
                                     });
                                 }

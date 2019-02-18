@@ -17,11 +17,13 @@ let WebSocketWrapper = require('./websocket');
 // == prepare image processor ==================================================
 let imageProcessor = null;
 
+/*
 try {
 	imageProcessor = require('./image-processor-images');
 } catch (e) {
 	// do nothing
 }
+*/
 
 if (!imageProcessor) {
 	try {
