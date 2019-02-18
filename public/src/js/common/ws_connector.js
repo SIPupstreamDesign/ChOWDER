@@ -62,7 +62,7 @@ class WsConnector {
 			}
 		}
 	}
-	
+
 	/**
 	 * バイナリメッセージの処理.
 	 * @method eventBinaryMessage
@@ -103,7 +103,7 @@ class WsConnector {
 			}
 		}
 	}
-	
+
 	static sendWrapper(id, method, reqdata, resultCallback) {
 		if (Command.hasOwnProperty(method)) {
 			resultCallbacks[id] = resultCallback;
@@ -115,7 +115,7 @@ class WsConnector {
 			// console.log('[Error] Not found the method in connector: ', method);
 		}
 	}
-	
+
 	/**
 	 * テキストメッセージをサーバへ送信する
 	 * @method send
@@ -127,7 +127,7 @@ class WsConnector {
 		if (client && client.readyState !== 1) {
 			console.error("client.readyState", client.readyState);
 			resultCallback(-1, null);
-			return; 
+			return;
 		}
 		let reqjson = {
 			jsonrpc: '2.0',
@@ -137,7 +137,7 @@ class WsConnector {
 			params: args,
 			to: 'master'
 		}, data;
-		
+
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);
@@ -146,7 +146,7 @@ class WsConnector {
 			console.error(e);
 		}
 	}
-	
+
 	/**
 	 * バイナリメッセージをサーバへ送信する
 	 * @method sendBinary
@@ -158,7 +158,7 @@ class WsConnector {
 		if (client && client.readyState !== 1) {
 			console.error("client.readyState", client.readyState);
 			resultCallback(-1, null);
-			return; 
+			return;
 		}
 		let data = {
 			jsonrpc: '2.0',
@@ -168,9 +168,9 @@ class WsConnector {
 			params: metaData,
 			to: 'master'
 		}, metabin;
-		
+
 		messageID = messageID + 1;
-		
+
 		try {
 			//console.log(data, binary);
 			metabin = MetaBinary.createMetaBinary(data, binary);
@@ -181,7 +181,7 @@ class WsConnector {
 			console.error(e);
 		}
 	}
-	
+
 	/**
 	 * コールバックの登録.
 	 * @method on
@@ -211,20 +211,20 @@ class WsConnector {
 			}
 			is_connected = true;
 		};
-	
+
 		client.onclose = function (ev) {
 			if (onclose) {
 				onclose(ev);
 			}
 			is_connected = false;
 		};
-		
+
 		client.onmessage = function (message) {
-			// console.log("ws chowder_request : ", message);
+			console.log("ws chowder_request : ", message);
 			let data = message.data,
 				parsed,
 				result;
-			
+
 			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);

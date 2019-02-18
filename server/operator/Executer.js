@@ -53,6 +53,7 @@
             this.adminUserPrefix = "admin_user";
             this.frontPrefix = "tiled_server:t:";
             this.uuidPrefix = "invalid:";
+            this.displayPermission = "permission_login_displayid";
 
             this.socketidToHash = {};
             this.socketidToAccessAuthority = {};
@@ -2766,6 +2767,60 @@
             this.changeGlobalSetting("master", json);
             Thumbnail.setPreviewWH(Number(json.reductionResolution));
         };
+
+        /**
+         * Display配信許可設定を登録する.
+         * @method setDisplayPermission
+         * @param {String} displayid displayID
+         * @param {boolean} permission 配信許可するか
+         */
+        setDisplayPermission(displayid, permission, callback){
+            console.log("setDisplayPermission",displayid, permission)
+            this.textClient.hset(this.displayPermission, displayid, permission, (err)=>{
+                if(err){console.error("error setDisplayPermission");}
+                callback();
+            });
+        }
+
+        /**
+         * Display配信許可設定を取得する.
+         * @method setDisplayPermission
+         * @param {String} displayid displayID
+         * @param {Function} callback (string err, bool permission)=>{}
+         */
+        getDisplayPermission(displayid, callback){
+            this.textClient.hexists(this.displayPermission, displayid,(err, doesExists)=>{
+                if(err){
+                    callback(err);
+                }else if(doesExists !== 1) {//存在しない
+                    console.log("*********getdisplaypermission : doesnt exist");
+                    callback("this displayid isnt exists");
+                }else{
+                    this.textClient.hget(this.displayPermission, displayid, (err, reply)=>{
+                        console.log("*********getdisplaypermission : does exist",this.displayPermission, displayid, reply);
+                        callback(err, reply);
+                    });
+                }
+            });
+        }
+
+        /**
+         * Display配信許可設定が存在するか確認する.
+         * @method existsDisplayPermission
+         * @param {String} displayid displayID
+         * @param {Function} callback (string err, bool exists)=>{}
+         */
+        existsDisplayPermission(displayid, callback){
+            this.textClient.hexists(this.displayPermission, displayid,(err, doesExists)=>{
+                if(err){
+                    callback(err);
+                }else if(doesExists !== 1) {//存在しない
+                    callback(err, false);
+                }else{
+                    callback(err, true);
+                }
+            });
+        }
 
     }
 

@@ -355,6 +355,11 @@ class Store extends EventEmitter
 		}
 	}
 
+	_replyDisplayPermission(data){
+		console.log("_replyDisplayPermission",data);
+		Connector.send(Command.ReplyDisplayPermission, data, (err, reply) => {});
+	}
+
 	/**
 	 * 接続済かどうか返す
 	 */
@@ -580,6 +585,7 @@ Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 Store.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";
 
+Store.EVENT_ASK_DISPLAY_PERMISSION = "ask_display_permission";
 
 // operation
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";

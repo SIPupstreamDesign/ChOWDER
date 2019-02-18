@@ -24,7 +24,7 @@ class Display {
 		this.doneGetMetaData = this.doneGetMetaData.bind(this);
 		this.initEvent();
 	}
-		
+
 	/**
 	 * コンテンツメタデータがウィンドウ内にあるか再計算する
 	 * @method recalculateContentVisible
@@ -59,7 +59,7 @@ class Display {
 			if (data.contentData instanceof Array) {
 				contentData = data.contentData[1][0];
 			}
-		
+
 			// 閲覧可能か
 			if (!this.store.isViewable(metaData.group)) {
 				return;
@@ -112,7 +112,7 @@ class Display {
 				});
 			}
 		}
-		
+
 		metaDataDict[json.id] = json;
 		if (!err) {
 			let elem = document.getElementById(json.id);
@@ -212,11 +212,12 @@ class Display {
 				disconnectedText.style.display = "none";
 			}
 			if (!this.store.getWindowData()) {
-				// console.log("registerWindow");
-				this.action.login({ id : "Display", password : "" });
+				const login_option = { id : "Display", password : "", displayid : this.store.getWindowID() }
+				console.log("registerWindow",login_option);
+				this.action.login(login_option);
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_CONNECT_FAILED, (err, data) => {
 			console.log("EVENT_CONNECT_FAILED")
 			let disconnected_text = document.getElementById("disconnected_text");
@@ -224,7 +225,7 @@ class Display {
 				disconnected_text.style.display = "block";
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_DISCONNECTED, () => {
 			console.log("EVENT_DISCONNECTED")
 			let previewArea = document.getElementById("preview_area");
@@ -236,12 +237,12 @@ class Display {
 				disconnectedText.innerHTML = "Display Deleted";
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
 			console.log("EVENT_LOGIN_SUCCESS")
 			this.action.registerWindow({ size : this.gui.getWindowSize()});
 		});
-		
+
 		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
 			if (!err) {
 				for (let i = 0; i < data.length; i = i + 1) {
@@ -253,7 +254,7 @@ class Display {
 				}
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, data) => {
 			let previewArea = document.getElementById("preview_area");
 			for (let i = 0; i < data.length; ++i) {
@@ -270,7 +271,7 @@ class Display {
 				this.action.update({ updateType : '', targetID : data[i].id });
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, (err, data) => {
 			let previewArea = document.getElementById('preview_area');
 			for (let i = 0; i < data.length; ++i) {
@@ -281,7 +282,7 @@ class Display {
 				}
 			}
 		})
-		
+
 		this.store.on(Store.EVENT_DONE_REGISTER_WINDOW, (err, json) => {
 			if (!err) {
 				for (let i = 0; i < json.length; i = i + 1) {
@@ -294,7 +295,7 @@ class Display {
 			document.getElementById('preview_area').innerHTML = "";
 			this.action.update({ updateType : 'all'});
 		});
-		
+
 		this.store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {
 			if (json.hasOwnProperty('id') && json.id === this.store.getWindowID()) {
 				this.gui.updatePreviewAreaVisible(json);
@@ -302,10 +303,10 @@ class Display {
 				this.updateContentVisible();
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_DONE_GET_METADATA, this.doneGetMetaData);
 		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
-		
+
 	}
 }
 

@@ -67,9 +67,21 @@ class Receiver
             this.action.update({ updateType : "group" });
         });
 
+        // ディスプレイ配信許可設定で許可されたとき
+        this.connector.on(Command.AcceptDisplayPermission, (err, data) => {
+            console.log("AcceptDisplayPermission", data);
+            let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
+            this.connector.send(Command.Login, request, (err, reply) => {
+                this.store.setAuthority(reply.authority);
+                this.action.update({ updateType : 'window'});
+                this.action.update({ updateType : 'group'});
+                this.action.update({ updateType : 'content'});
+            });
+        });
+
         // 権限変更時に送られてくる
         this.connector.on(Command.ChangeAuthority, () => {
-            let request = { id : "Display", password : "" };
+            let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
                 this.store.setAuthority(reply.authority);
                 this.action.update({ updateType : 'window'});
@@ -81,7 +93,7 @@ class Receiver
 
         // DB切り替え時にブロードキャストされてくる
         this.connector.on(Command.ChangeDB, () => {
-            let request = { id : "Display", password : "" };
+            let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
                 this.store.setAuthority(reply.authority);
                 this.action.deleteAllElements();

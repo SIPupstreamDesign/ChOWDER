@@ -161,7 +161,10 @@
                 this.commandOperator.logout(data, socketid, resultCallback);
             });
             ws_connector.on(Command.Login, (data, resultCallback, socketid)=>{
-                this.commandOperator.login(data, socketid, resultCallback);
+                this.commandOperator.login(data, socketid, resultCallback, this.post_askDisplayPermission(ws));
+            });
+            ws_connector.on(Command.ReplyDisplayPermission, (logindata, resultCallback, socketid)=>{
+                this.commandOperator.updateDisplayPermission(logindata, this.post_acceptDisplayPermission(ws));
             });
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{
                 this.commandOperator.changePassword(socketid, data, resultCallback);
@@ -411,7 +414,23 @@
             };
         }
 
+        /**
+         * 知らないDisplayIDがログインを試みたときに、許可設定を聞く
+         * @method post_askDisplayPermission
+         */
+        post_askDisplayPermission(ws) {
+            return (err, data)=>{
+                console.log("**********post_askDisplayPermission",data);
+                ws_connector.broadcast(ws, Command.AskDisplayPermission, data);
+            }
+        }
 
+        post_acceptDisplayPermission(ws) {
+            return (err, data)=>{
+                console.log("**********post_acceptDisplayPermission",data);
+                ws_connector.broadcast(ws, Command.AcceptDisplayPermission, data);
+            }
+        }
     }
 
     module.exports = WebsocketInterface;
