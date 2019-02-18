@@ -12,6 +12,7 @@ import Vscreen from '../../common/vscreen'
 import Store from '../store/store'
 import InputDialog from '../../components/input_dialog';
 import ContentUtil from '../content_util';
+import Input from '../../components/input';
 
 "use strict";
 
@@ -56,6 +57,43 @@ function addInputProperty(isEditable, id, leftLabel, rightLabel, value, changeCa
 	transform_input.appendChild(group);
 
 	input.onchange = changeCallback;
+}
+
+/**
+ * Propertyタブに入力プロパティを追加する
+ * @method addCheckProperty
+ * @param {Object} input element id
+ * @param {String} leftLabel 左ラベル
+ * @param {String} rightLabel 右ラベル
+ * @param {String} value 初期入力値
+ */
+function addCheckProperty(isEditable, className, leftLabel, value, changeCallback) {
+	/*
+		<div class="input-group">
+			<span class="input-group-addon">x</span>
+			<input type="text" class="form-control" id="content_transform_x" value="0">
+			<span class="input-group-addon">px</span>
+		</div>
+	*/
+	let transform_input = document.getElementById('transform_input');
+	let group = document.createElement('div');
+	let leftSpan = document.createElement('span');
+	leftSpan.className = "input-group-addon content_property_checkbox_label";
+	let centerSpan = document.createElement('span');
+	let input = new Input("checkbox");
+	group.className = "input-group";
+	leftSpan.innerHTML = leftLabel;
+	centerSpan.className = "input-group-addon content_property_checkbox_wrap"
+	input.setValue(value);
+	input.getDOM().disabled = !isEditable;
+	input.getDOM().className = "content_property_checkbox " + className
+
+	centerSpan.appendChild(input.getDOM());
+	group.appendChild(leftSpan);
+	group.appendChild(centerSpan);
+	transform_input.appendChild(group);
+
+	input.getDOM().onchange = changeCallback;
 }
 
 /**
@@ -206,6 +244,20 @@ class ContentPropertyGUI extends EventEmitter {
 			document.getElementById('content_transform_w').value = data.width;
 			document.getElementById('content_transform_h').value = data.height;
 		});
+
+		this.store.on(Store.EVENT_DISPLAY_VISIBLE_CHANGED, (err, metaData) => {
+			let displayVisibleCheck = document.getElementsByClassName('display_visible')[0];
+			if (displayVisibleCheck) {
+				displayVisibleCheck.checked = String(metaData.visible) === "true";
+			}
+		});
+		
+		this.store.on(Store.EVENT_CONTENT_VISIBLE_CHANGED, (err, metaData) => {
+			let contentVisibleCheck = document.getElementsByClassName('content_visible')[0];
+			if (contentVisibleCheck) {
+				contentVisibleCheck.checked = String(metaData.visible) === "true";
+			}
+		})
 	}
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
@@ -235,7 +287,7 @@ class ContentPropertyGUI extends EventEmitter {
 			extension, 
 			rectChangeFunc = (evt) => {
 				this.action.changeContentTransform(this.getContentTransform());
-			}, 
+			},
 			isEditableContent;
 
 		if (Validator.isWindowType(metaData)) {
@@ -265,6 +317,10 @@ class ContentPropertyGUI extends EventEmitter {
 		video_info.style.display = "none";
 		if (type === Constants.PropertyTypeDisplay) {
 			idlabel.innerHTML = "Display ID:";
+			addCheckProperty(isEditableContent, 'display_visible', 'visible', String(metaData.visible) === "true", () => {
+				metaData.visible = document.getElementsByClassName('display_visible')[0].checked;
+				this.action.changeDisplayVisible(metaData);
+			});
 			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
@@ -336,6 +392,10 @@ class ContentPropertyGUI extends EventEmitter {
 		else { // content (text, image, url... )
 			idlabel.innerHTML = "Content ID:";
 			grouplabel.innerHTML = "Group:";
+			addCheckProperty(isEditableContent, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
+				metaData.visible = document.getElementsByClassName('content_visible')[0].checked;
+				this.action.changeContentVisible(metaData);
+			});
 			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
@@ -503,7 +563,7 @@ class ContentPropertyGUI extends EventEmitter {
 				console.error('enumerateDevide ERROR:', err);
 			});
 	}
-	submit_text(endcallback) {
+	submitText(endcallback) {
 		let content_text = document.getElementById('content_text');
 		if (content_text && !content_text.disabled) {
 			
@@ -557,7 +617,7 @@ class ContentPropertyGUI extends EventEmitter {
 	clear(updateText) {
 		let content_text = document.getElementById('content_text');
 		if (content_text && updateText) {
-			this.submit_text(() => {
+			this.submitText(() => {
 				this.clear(false);
 			});
 		}
@@ -742,7 +802,7 @@ class ContentPropertyGUI extends EventEmitter {
 			}
 		}
 		// 時系列データ（仮）
-		this.update_history_area(metaData);
+		this.updateHistoryArea(metaData);
 		// ビデオ品質
 		if (metaData.hasOwnProperty('quality')) {
 			try {
@@ -754,7 +814,7 @@ class ContentPropertyGUI extends EventEmitter {
 			}
 		}
 	}
-	update_history_area(metaData, keyName) {
+	updateHistoryArea(metaData, keyName) {
 		let i, option, text;
 		if (!Validator.isWindowType(metaData) && metaData.type === Constants.TypeTileImage) {
 			let history_area = document.getElementById('history_area');
@@ -814,7 +874,7 @@ class ContentPropertyGUI extends EventEmitter {
 				}
 				let values = historyData[history_select.value];
 				values = ContentUtil.sortHistory(values);
-				
+
 				let select = document.createElement('select');
 				select.className = "history_list_content";
 				select.id = "history_list_content";

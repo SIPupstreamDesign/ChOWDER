@@ -815,7 +815,7 @@ class GUI extends EventEmitter
 			if (evt.target.className !== "context_menu_item") {
 				menuElem.style.display = "none";
 			}
-			this.getContentPropertyGUI().submit_text();
+			this.getContentPropertyGUI().submitText();
 		});
 	}
 

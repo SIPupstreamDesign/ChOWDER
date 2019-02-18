@@ -135,11 +135,8 @@ class Action extends EventEmitter
     }
 
     /**
-     * 選択中のコンテンツの可視不可視を変更
-     * @param {*} data 
-     * {
-     *    visible : trueまたはfalse
-     * }
+     * コンテンツの可視不可視を変更
+     * @param {*} data metaData
      */
     changeContentVisible(data) {
         this.emit(Action.EVENT_CHANGE_CONTENT_VISIBLE, null, data);

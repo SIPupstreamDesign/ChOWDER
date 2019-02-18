@@ -30,7 +30,11 @@ class Input extends EventEmitter
     }
 
     setValue(value) {
-        this.dom.value = value;
+        if (this.type === "checkbox") {
+            this.dom.checked = value;
+        } else {
+            this.dom.value = value;
+        }
     }
 
     getValue() {

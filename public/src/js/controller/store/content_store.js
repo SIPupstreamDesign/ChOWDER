@@ -314,25 +314,17 @@ class ContentStore
 	/**
 	 * コンテンツを非表示にする
 	 */
-	_changeContentVisible(data) {
-		let metaDataList = [];
-
+	_changeContentVisible(metaData) {
+		if (!this.store.getManagement().isEditable(metaData.group)) {
+			// 編集不可コンテンツ
+			return;
+		}
+		
 		manipulator.removeManipulator();
 
-		this.store.getState().for_each_selected_id((i, id) => {
-			if (this.store.hasMetadata(id)) {
-				let metaData = this.store.getMetaData(id);
-				if (!this.store.getManagement().isEditable(metaData.group)) {
-					// 編集不可コンテンツ
-					return;
-				}
-				metaData.visible = data.visible;
-				metaDataList.push(metaData);
-			}
+		this.store.operation.updateMetadataMulti([metaData], () => {
+			this.store.emit(Store.EVENT_CONTENT_VISIBLE_CHANGED, null, metaData)
 		});
-		if (metaDataList.length > 0) {
-			this.store.operation.updateMetadataMulti(metaDataList);
-		}
 	}
 
 	/**

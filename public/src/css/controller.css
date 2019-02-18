@@ -926,3 +926,17 @@ p {
 	border : 4px solid;
 	border-color :  rgb(0, 128, 255);
 }
+
+.content_property_checkbox_wrap {
+	margin-left : 20px;
+	background : #FFF;
+}
+
+.content_property_checkbox {
+	width : 20px;
+	height : 20px;
+}
+
+.content_property_checkbox_label {
+	border: 1px solid #ccc !important;
+}

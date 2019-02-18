@@ -653,6 +653,13 @@ class Controller {
 				if (this.state.isMousedownOnList() && !this.gui.inListviewArea(evt)) {
 					// リストからビューへドラッグ中のパターン
 					metaData.visible = "true";
+					if (Validator.isWindowType(metaData)) {
+						this.action.changeDisplayVisible(metaData);
+						return;
+					} else {
+						this.action.changeContentVisible(metaData);
+						return;
+					}
 				}
 				else {
 					return;
@@ -1483,27 +1490,29 @@ class Controller {
 	 * @method onCloseContent
 	 */
 	onCloseContent() {
-		let id = this.state.getSelectedID();
 		let metaData = null;
 		let previewArea;
 		// console.log("onCloseContent");
-		if (this.store.hasMetadata(id)) {
-			this.unselect(id);
-			let elem = this.getElem(id, false);
-			metaData = this.store.getMetaData(id);
-			if (!this.store.getManagement().isEditable(metaData.group)) {
-				// 編集不可コンテンツ
-				return;
+		for (let i = this.state.getSelectedIDList().length - 1; i >= 0; i = i - 1) {
+			let id = this.state.getSelectedIDList()[i];
+			if (this.store.hasMetadata(id)) {
+				this.unselect(id);
+				let elem = this.getElem(id, false);
+				metaData = this.store.getMetaData(id);
+				if (!this.store.getManagement().isEditable(metaData.group)) {
+					// 編集不可コンテンツ
+					return;
+				}
+				metaData.visible = false;
+				if (Validator.isWindowType(metaData)) {
+					previewArea = this.gui.getDisplayPreviewArea();
+				}
+				else {
+					previewArea = this.gui.getContentPreviewArea();
+				}
+				previewArea.removeChild(elem);
+				this.store.operation.updateMetadata(metaData);
 			}
-			metaData.visible = false;
-			if (Validator.isWindowType(metaData)) {
-				previewArea = this.gui.getDisplayPreviewArea();
-			}
-			else {
-				previewArea = this.gui.getContentPreviewArea();
-			}
-			previewArea.removeChild(elem);
-			this.store.operation.updateMetadata(metaData);
 		}
 	}
 
