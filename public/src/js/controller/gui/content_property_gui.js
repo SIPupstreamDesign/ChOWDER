@@ -11,6 +11,7 @@ import ColorSelector from '../../components/colorselector.js';
 import Vscreen from '../../common/vscreen'
 import Store from '../store/store'
 import InputDialog from '../../components/input_dialog';
+import ContentUtil from '../content_util';
 
 "use strict";
 
@@ -188,40 +189,6 @@ function addVideoQualityProperty(isEditable, containerClassName, id, leftLabel, 
 	container.style.display = "none"
 	video_input.appendChild(container);
 }
-
-function isNumber(x){ 
-	if( typeof(x) != 'number' && typeof(x) != 'string' )
-		return false;
-	else 
-		return (x == parseFloat(x) && isFinite(x));
-}
-
-function sortHistory(values) {
-	try {
-		values.sort(function (a, b) {
-			if (isNumber(a)) {
-				a = Number(a);
-			} else {
-				a = a.toString().toLowerCase();
-			}
-			if (isNumber(b)) {
-				b = Number(b);
-			} else {
-				b = b.toString().toLowerCase();
-			}
-			if (a < b){
-				return -1;
-			}else if (a > b){
-				return 1;
-			}
-			return 0;
-		});
-	} catch (e) {
-
-	}
-	return values;
-}
-
 
 // colorselector insert ui
 class ContentPropertyGUI extends EventEmitter {
@@ -829,14 +796,10 @@ class ContentPropertyGUI extends EventEmitter {
 				history_list.innerHTML = "";
 				history_select.innerHTML = "";
 				history_slider_memori.innerHTML = "";
-				let history_data;
-				try {
-					history_data = JSON.parse(metaData.history_data);
-				}
-				catch (e) {
-				}
+				let historyData = ContentUtil.extractHistoryData(metaData);
+
 				// キーの切り替えボックスの中身を入れる
-				for (let key in history_data) {
+				for (let key in historyData) {
 					let keyTitle = document.createElement('option');
 					keyTitle.value = key;
 					keyTitle.innerText = key;
@@ -847,14 +810,11 @@ class ContentPropertyGUI extends EventEmitter {
 					history_select.value = keyName;
 				}
 				else {
-					history_select.value = Object.keys(history_data)[0];
+					history_select.value = Object.keys(historyData)[0];
 				}
-				let values = history_data[history_select.value];
-				try {
-					values = sortHistory(values);
-				}
-				catch (e) {
-				}
+				let values = historyData[history_select.value];
+				values = ContentUtil.sortHistory(values);
+				
 				let select = document.createElement('select');
 				select.className = "history_list_content";
 				select.id = "history_list_content";
