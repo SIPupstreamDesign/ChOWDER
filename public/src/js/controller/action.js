@@ -21,14 +21,14 @@ class Action extends EventEmitter
 		}
 		super.emit(...arguments);
     }
-    
+
     init(data) {
         this.emit(Action.EVENT_INIT, null, data);
     }
 
     /**
      * websocket接続
-     * @param {*} data 
+     * @param {*} data
      */
     connect(data) {
         this.emit(Action.EVENT_CONNECT, null, data);
@@ -40,7 +40,7 @@ class Action extends EventEmitter
 
     /**
      * ログイン
-     * @param {*} data 
+     * @param {*} data
      * {
      *  userList : userList,
      *  userid : "",
@@ -54,7 +54,7 @@ class Action extends EventEmitter
 
     /**
      * 権限情報確認のためのログイン
-     * @param {*} data 
+     * @param {*} data
      * {
      *  userid : "",
      *  password : "",
@@ -67,7 +67,7 @@ class Action extends EventEmitter
 
     /**
      * ログアウト
-     * @param {*} data 
+     * @param {*} data
      * {
      *    loginkey: loginkey
      * }
@@ -78,7 +78,7 @@ class Action extends EventEmitter
 
     /**
      * 全体設定を更新
-     * @param {*} data 
+     * @param {*} data
      */
     reloadGlobalSetting(data) {
         this.emit(Action.EVENT_RELOAD_GLOBAL_SETTING, null, data);
@@ -97,7 +97,7 @@ class Action extends EventEmitter
 
     /**
      * グループリストを取得
-     * @param {*} data 
+     * @param {*} data
      * {
      *    callback : 終了時コールバック(option)
      * }
@@ -108,7 +108,7 @@ class Action extends EventEmitter
 
     /**
      * パスワード更新
-     * @param {*} data 
+     * @param {*} data
      */
     changePassword(data) {
         this.emit(Action.EVENT_CHANGE_PASSWORD, null, data);
@@ -116,7 +116,7 @@ class Action extends EventEmitter
 
     /**
      * 権限更新
-     * @param {*} data 
+     * @param {*} data
      */
     changeAuthority(data) {
         this.emit(Action.EVENT_CHANGE_AUTHORITY, null, data);
@@ -124,7 +124,7 @@ class Action extends EventEmitter
 
     /**
      * 選択中のコンテンツのインデックスを変更する
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    zIndex : 設定するzIndex
      *    toFront : 最前面に移動ならtrue, 最背面に移動ならfalse. こちらの値がzIndexより優先される.
@@ -144,15 +144,15 @@ class Action extends EventEmitter
 
     /**
      * 選択中のコンテンツのTransformを変更
-     * @param {*} data 
+     * @param {*} data
      */
     changeContentTransform(data) {
         this.emit(Action.EVENT_CHANGE_CONTENT_TRANSFORM, null, data);
     }
-    
+
     /**
      * 選択中のコンテンツのメモを変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    metaData : メモ挿入済メタデータ
      *    contentData : テキストコンテンツの場合は登録するテキスト, そうでない場合は不要
@@ -165,7 +165,7 @@ class Action extends EventEmitter
 
     /**
      * 動画デバイスの変更
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    id : metaData.id,
 	 *    deviceID : deviceID
@@ -177,7 +177,7 @@ class Action extends EventEmitter
 
     /**
      * 音声デバイスの変更
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    id : metaData.id,
 	 *    deviceID : deviceID
@@ -189,7 +189,7 @@ class Action extends EventEmitter
 
     /**
      * 動画クオリティの変更
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    id : metaData.id,
      *    quality : 動画クオリティ
@@ -201,7 +201,7 @@ class Action extends EventEmitter
 
     /**
      * 時系列データ同期
-     * @param {*} data 
+     * @param {*} data
      * {
      *   isSync : 同期するならtrue, 同期解除ならfalse
      * }
@@ -212,7 +212,7 @@ class Action extends EventEmitter
 
     /**
      * 画像ファイルを入力
-     * @param {*} data 
+     * @param {*} data
      * {
      *   contentData : 画像ファイルArrayBuffer,
      *   metaData : 登録用メタデータ
@@ -224,7 +224,7 @@ class Action extends EventEmitter
 
     /**
      * 動画ファイルを入力
-     * @param {*} data 
+     * @param {*} data
      * {
      *   contentData : 動画ファイルblob,
      *   metaData : 登録用メタデータ
@@ -236,7 +236,7 @@ class Action extends EventEmitter
 
     /**
      * PDFファイルを入力
-     * @param {*} data 
+     * @param {*} data
      * {
      *   contentData : PDFファイルArrayBuffer,
      *   metaData : 登録用メタデータ
@@ -259,7 +259,7 @@ class Action extends EventEmitter
 
     /**
      * テキストを入力
-     * @param {*} data 
+     * @param {*} data
      * {
      *   contentData : テキスト,
      *   metaData : 登録用メタデータ
@@ -271,7 +271,7 @@ class Action extends EventEmitter
 
     /**
      * レイアウトを入力
-     * @param {*} data 
+     * @param {*} data
      * {
      *    contentData : {
      *      contents : {
@@ -287,7 +287,7 @@ class Action extends EventEmitter
 
     /**
      * 動画ストリームを入力
-     * @param {*} data 
+     * @param {*} data
      * {
      *   contentData : 動画blob,
      *   metaData : 登録用メタデータ
@@ -299,7 +299,7 @@ class Action extends EventEmitter
 
     /**
      * 画像を差し替える
-     * @param {*} data 
+     * @param {*} data
      * {
      *   id : 対象コンテンツのmetadataのid,
      *   img : imgオブジェクト,
@@ -309,7 +309,7 @@ class Action extends EventEmitter
     updateImage(data) {
         this.emit(Action.EVENT_UPDATE_IMAGE, null, data);
     }
-    
+
     /**
      * レイアウトを差し替える
      * {
@@ -327,7 +327,7 @@ class Action extends EventEmitter
 
     /**
      * コンテンツ取得
-     * @param {*} data 
+     * @param {*} data
      * {
      *    request : リクエストメタデータ,
      *    callback : 終了時コールバック(option)
@@ -339,7 +339,7 @@ class Action extends EventEmitter
 
     /**
      * 全て再取得
-     * @param {*} data 
+     * @param {*} data
      * {
      *    callback : 終了時コールバック(option)
      * }
@@ -358,7 +358,7 @@ class Action extends EventEmitter
 
     /**
      * コンテンツ選択
-     * @param {*} data 
+     * @param {*} data
      * {
      *   id : 特定のコンテンツの未選択する場合に記載,
      *   onlyCurrentGroup : 現在のグループ内のみ対象ならtrue, 全グループ対象ならfalse
@@ -370,7 +370,7 @@ class Action extends EventEmitter
 
     /**
      * コンテンツ選択解除
-     * @param {*} data 
+     * @param {*} data
      * {
      *   id : 特定のコンテンツの未選択する場合に記載,
      *   onlyCurrentGroup : 現在のグループ内のみ対象ならtrue, 全グループ対象ならfalse
@@ -389,7 +389,7 @@ class Action extends EventEmitter
 
     /**
      * Historyコンテンツ復元
-     * @param {*} data 
+     * @param {*} data
      * {
      *   restoreKey : 復元用キー,
      *   restoreValue : 復元用value
@@ -401,7 +401,7 @@ class Action extends EventEmitter
 
     /**
      * ディスプレイスケール変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    displayScale : スケール値
      * }
@@ -430,7 +430,7 @@ class Action extends EventEmitter
 
     /**
      * 選択中のディスプレイのID表示非表示
-     * @param {*} data 
+     * @param {*} data
      * {
      *    isShow : 表示か非表示か
      * }
@@ -438,10 +438,10 @@ class Action extends EventEmitter
     showDisplayID(data) {
         this.emit(Action.EVENT_SHOW_DISPLAY_ID, null, data);
     }
-    
+
     /**
      * VirualDisplayボタンをクリックした
-     * @param {*} data 
+     * @param {*} data
      */
     clickVirtualDisplay(data) {
         this.emit(Action.EVENT_CLICK_VIRTUAL_DISPLAY, null, data);
@@ -449,7 +449,7 @@ class Action extends EventEmitter
 
     /**
      * ディスプレイ色変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    color : カラー
      *    callback : 終了時コールバック(option)
@@ -492,7 +492,7 @@ class Action extends EventEmitter
 
     /**
      * DB新規作成
-     * @param {*} data 
+     * @param {*} data
      */
     newDB(data) {
         this.emit(Action.EVENT_NEW_DB, null, data);
@@ -500,7 +500,7 @@ class Action extends EventEmitter
 
     /**
      * DB名前変更
-     * @param {*} data 
+     * @param {*} data
      */
     renameDB(data) {
         this.emit(Action.EVENT_RENAME_DB, null, data);
@@ -508,7 +508,7 @@ class Action extends EventEmitter
 
     /**
      * DB変更
-     * @param {*} data 
+     * @param {*} data
      */
     changeDB(data) {
         this.emit(Action.EVENT_CHANGE_DB, null, data);
@@ -516,23 +516,23 @@ class Action extends EventEmitter
 
     /**
      * DB削除
-     * @param {*} data 
+     * @param {*} data
      */
     deleteDB(data) {
         this.emit(Action.EVENT_DELETE_DB, null, data);
     }
-    
+
     /**
      * DB初期化
-     * @param {*} data 
+     * @param {*} data
      */
     initDB(data) {
         this.emit(Action.EVENT_INIT_DB, null, data);
     }
-    
+
     /**
      * グループ追加
-     * @param {*} data 
+     * @param {*} data
      * {
      *    groupName : グループ名
      * }
@@ -543,7 +543,7 @@ class Action extends EventEmitter
 
     /**
      * グループ削除
-     * @param {*} data 
+     * @param {*} data
      * {
      *    groupID : グループID
      * }
@@ -551,10 +551,10 @@ class Action extends EventEmitter
     deleteGroup(data) {
         this.emit(Action.EVENT_DELETE_GROUP, null, data);
     }
-    
+
     /**
      * 選択中のコンテンツのグループ変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    groupID : グループID
      * }
@@ -562,7 +562,7 @@ class Action extends EventEmitter
     changeGroup(data) {
         this.emit(Action.EVENT_CHANGE_GROUP, null, data);
     }
-    
+
     /**
      * Groupの選択が変更された
      * {
@@ -582,7 +582,7 @@ class Action extends EventEmitter
     moveDownGroup(data) {
         this.emit(Action.EVENT_MOVE_DOWN_GROUP, null, data);
     }
-    
+
     /**
      * Groupを上に移動
      * {
@@ -624,14 +624,14 @@ class Action extends EventEmitter
 
     /**
      * スナップタイプの変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *   isDisplay : ディスプレイ用かどうか,
      *   snapType : スナップタイプ
      * }
      */
     changeSnapType(data) {
-        this.emit(Action.EVENT_CHANGE_SNAP_TYPE, null, data);    
+        this.emit(Action.EVENT_CHANGE_SNAP_TYPE, null, data);
     }
 
     /**
@@ -647,7 +647,7 @@ class Action extends EventEmitter
 
     /**
      * コントローラIDを変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *   id : コントローラid
      * }
@@ -658,7 +658,7 @@ class Action extends EventEmitter
 
     /**
      * リモートカーソルの有効無効設定
-     * @param {*} data 
+     * @param {*} data
      * {
      *   isEnable : 有効ならtrue
      *   x: mousePos.x,
@@ -686,15 +686,15 @@ class Action extends EventEmitter
 
     /**
      * マニピュレータへのマウスダウン
-     * @param {*} data 
+     * @param {*} data
      */
     changeManipulatorMouseDownPos(data) {
         this.emit(Action.EVENT_CHANGE_MANIPULATOR_MOUSEDOWN_POS, null, data);
     }
-    
+
     /**
      * マニピュレータの星がトグルされた
-     * @param {*} data 
+     * @param {*} data
      * {
      *    isActive : 押し込まれている状態かどうか
      * }
@@ -702,10 +702,10 @@ class Action extends EventEmitter
     toggleManipulatorStar(data) {
         this.emit(Action.EVENT_TOGGLE_MANIPULATOR_STAR, null, data);
     }
-    
+
     /**
      * マニピュレータのmemoがトグルされた
-     * @param {*} data 
+     * @param {*} data
      * {
      *    isActive : 押し込まれている状態かどうか
      * }
@@ -716,7 +716,7 @@ class Action extends EventEmitter
 
     /**
      * マニピュレータ: pdfページ送り
-     * @param {*} data 
+     * @param {*} data
      * {
      *    id : メタデータのid
      *   delta : ページめくり
@@ -729,7 +729,7 @@ class Action extends EventEmitter
 
     /**
      * マニピュレータ: pdfページ送り
-     * @param {*} data 
+     * @param {*} data
      */
     playVideoOnManipulator(data) {
         this.emit(Action.EVENT_PLAY_VIDEO_ON_MANIPULATOR, null, data);
@@ -737,7 +737,7 @@ class Action extends EventEmitter
 
     /**
      * 動画コンテンツのカメラ、マイクの有効無効を設定
-     * @param {*} data 
+     * @param {*} data
      * {
 			isCameraOn : カメラが有効かどうか,
 			isMicOn : マイクが有効かどうか
@@ -750,7 +750,7 @@ class Action extends EventEmitter
     /**
      * コンテンツ用Elementのセットアップ（内部用）
      * TODO: データドリブンにしたい
-     * @param {*} data 
+     * @param {*} data
      * {
      *    element : セットアップするelement,
      *    id : メタデータのid
@@ -769,7 +769,7 @@ class Action extends EventEmitter
 
     /**
      * レイアウトの適用
-     * @param {*} data 
+     * @param {*} data
      * {
      *   type: metaData.type,
      *   id: metaData.id
@@ -815,6 +815,10 @@ class Action extends EventEmitter
      */
     snapContentToScreen(data) {
         this.emit(Action.EVENT_SNAP_CONTENT_TO_SCREEN, null, data);
+    }
+
+    replyDisplayPermission(data){
+        this.emit(Action.EVENT_REPRY_DISPLAY_PERMISSION, null, data);
     }
 };
 
@@ -894,5 +898,7 @@ Action.EVENT_MOVE_UP_GROUP = "moveUpGroup";
 Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
+
+Action.EVENT_REPRY_DISPLAY_PERMISSION = "replyDisplayPermission";
 
 export default Action;

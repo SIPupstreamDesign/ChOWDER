@@ -27,14 +27,14 @@ class Store extends EventEmitter
         this.windowData = null;
         this.metaDataDict = {};
         this.groupDict = {};
-        
+
         this.receiver = new Receiver(Connector, this, action);
         this.videoStore = new VideoStore(Connector, this, action);
 
         this.initEvents();
 
         //this.reciever = new Receiver(Connector, store, action);
-            
+
         this.onGetWindowData = this.onGetWindowData.bind(this);
         this.onGetMetaData = this.onGetMetaData.bind(this);
         this.onRegisterWindow = this.onRegisterWindow.bind(this);
@@ -50,7 +50,7 @@ class Store extends EventEmitter
 		}
 		super.emit(...arguments);
     }
-    
+
 	static extractCallback(data) {
 		let callback;
 		if (data && data.hasOwnProperty('callback')) {
@@ -59,7 +59,7 @@ class Store extends EventEmitter
 		}
 		return callback;
     }
-    
+
     release() {
         if (this.videoStore.release) {
             this.videoStore.release();
@@ -79,7 +79,7 @@ class Store extends EventEmitter
 			}
 		}
     };
-    
+
     _connect() {
         let isDisconnect = false;
         let client = Connector.connect(() => {
@@ -95,7 +95,7 @@ class Store extends EventEmitter
                     }
                 };
             })());
-            
+
         Connector.on("Disconnect", ((client) => {
             return () => {
                 isDisconnect = true;
@@ -167,7 +167,7 @@ class Store extends EventEmitter
         params.posx = metaData.posx;
         params.posy = metaData.posy;
         params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
-    
+
         Connector.send(Command.GetWindowMetaData, {id : newId}, (err, metaData) => {
             if (!err && metaData) {
                 // 既にnewIdのdisplayが登録されていた場合は、そちらの位置サイズに合わせる
@@ -204,12 +204,12 @@ class Store extends EventEmitter
         }
         this.emit(Store.EVENT_DONE_DELETE_ALL_ELEMENTS, null, idList);
     }
-    
+
     _changeQueryParam(data) {
         let query = this.mapToQueryString(data);
         history.replaceState(null, '', location.href.match(/^[^?]+/)[0] + query);
     }
-    
+
     _registerWindow(data) {
         let wh = data.size;
         Vscreen.assignWhole(wh.width, wh.height, wh.width / 2.0, wh.height / 2.0, 1.0);
@@ -294,7 +294,7 @@ class Store extends EventEmitter
             let metaData = metaDataDict[targetid];
             for (let i in metaDataDict) {
                 if (metaDataDict.hasOwnProperty(i)) {
-                    if (metaDataDict[i].id !== metaData.id && 
+                    if (metaDataDict[i].id !== metaData.id &&
                         !Validator.isWindowType(metaDataDict[i]) &&
                         metaDataDict[i].hasOwnProperty("zIndex")) {
                         let index = parseInt(metaDataDict[i].zIndex, 10);
@@ -311,7 +311,7 @@ class Store extends EventEmitter
 
 	/**
 	 * コンテンツのTransformを変更
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_changeContentTransform(data) {
         let targetid = data.targetID;
@@ -322,11 +322,11 @@ class Store extends EventEmitter
             let metaData = metaDataDict[targetid];
             metaData.posx = x;
             metaData.posy = y;
-            
+
             VscreenUtil.transPosInv(metaData);
             metaData.posx -= Vscreen.getWhole().x;
             metaData.posy -= Vscreen.getWhole().y;
-            
+
             Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {
             });
         }
@@ -340,7 +340,7 @@ class Store extends EventEmitter
             }
         });
     }
-    
+
     onGetWindowData(err, json) {
         if (!err && json) {
             this.metaDataDict[json.id] = json;
@@ -386,7 +386,7 @@ class Store extends EventEmitter
     getWindowID() {
         return this.getQueryParams().id;
     }
-    
+
     /**
      * Parse `location.search` and return it as object.
      * @returns {Object} result
@@ -400,14 +400,14 @@ class Store extends EventEmitter
         }
         return ret;
     }
-    
+
 	/**
 	 * VideoStoreを返す
 	 */
 	getVideoStore() {
 		return this.videoStore;
     }
-    
+
     /**
      * Convert map into query params string.
      * @param {Object} map Map of parameters you want to convert into
@@ -421,7 +421,7 @@ class Store extends EventEmitter
             }
         }
         str = str.substring( 0, str.length - 1 ); // remove the last '&'
-    
+
         return str;
     }
 
@@ -444,7 +444,7 @@ class Store extends EventEmitter
 
 	/**
 	 * メタデータごとにfuncを実行
-	 * @param {*} func 
+	 * @param {*} func
 	 */
 	for_each_metadata(func) {
 		let i;
@@ -460,14 +460,14 @@ class Store extends EventEmitter
     getMetaDataDict() {
         return this.metaDataDict;
     }
-    
+
     getGroupDict() {
         return this.groupDict;
     }
-    
+
     /**
      * 閲覧情報があるか返す
-     */ 
+     */
     isViewable(group) {
         if (!this.getAuthority()) {
             return false;

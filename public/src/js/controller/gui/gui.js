@@ -149,6 +149,18 @@ class GUI extends EventEmitter
 			let metaData = data.metaData;
 			this.onToggleContentMarkIcon(elem, metaData);
 		});
+
+		this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
+			console.log("gui",logindata);
+			const setting = {
+				name : "connection request : " + logindata.displayid,
+			}
+
+			InputDialog.showOKCancelInput(setting,(result)=>{
+				logindata.permission = result;
+				this.action.replyDisplayPermission(logindata);
+			});
+		});
 	}
 
 	/**

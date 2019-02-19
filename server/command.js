@@ -73,6 +73,12 @@
 		RTCAnswer : "RTCAnswer",
 		RTCIceCandidate : "RTCIceCandidate",
 		RTCClose : "RTCClose",
+
+		// ディスプレイ配信許可設定
+		AskDisplayPermission : "AskDisplayPermission",
+		ReplyDisplayPermission : "ReplyDisplayPermission",
+		AcceptDisplayPermission : "AcceptDisplayPermission"
+
 	};
 
 	module.exports = Command;

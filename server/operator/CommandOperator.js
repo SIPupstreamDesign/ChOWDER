@@ -996,38 +996,78 @@
          *               再ログインする場合はコールバックで返ってくる値を loginkey としてjsonに入れる.
          * @param {String} socketid ソケットID
          * @param {Function} endCallback 終了時に呼ばれるコールバック
+         * @param {Function} suspendCallback ログインを試みているdisplayを許可するかcontrollerに聞きに行く
+         *                              (string err, string displayid)=>{}
          */
-        login(data, socketid, endCallback) {
-            console.log("----------------------------" , socketid, "----------------------------")
-            if (data.hasOwnProperty('id') && data.hasOwnProperty('password')) {
-                // 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
-                if (data.hasOwnProperty('loginkey')) {
-                    if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey))
-                    {
-                        // 対応関係を保存
-                        this.executer.socketidToLoginKey[socketid] = data.loginkey;
-                        socketid = data.loginkey;
-                        let result = {
-                            id : this.executer.socketidToUserID[socketid],
-                            loginkey : socketid,
-                            authority : this.executer.socketidToAccessAuthority[socketid]
+        login(data, socketid, endCallback, suspendCallback) {
+            const execLogin = (data, socketid, endCallback)=>{
+                console.log("----------------------------" , socketid, "----------------------------")
+                if (data.hasOwnProperty('id') && data.hasOwnProperty('password')) {
+                    // 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
+                    if (data.hasOwnProperty('loginkey')) {
+                        if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey))
+                        {
+                            // 対応関係を保存
+                            this.executer.socketidToLoginKey[socketid] = data.loginkey;
+                            socketid = data.loginkey;
+                            let result = {
+                                id : this.executer.socketidToUserID[socketid],
+                                loginkey : socketid,
+                                authority : this.executer.socketidToAccessAuthority[socketid]
+                            }
+                            this.executer.getControllerData(data.controllerID, ((result)=>{
+                                return (err, controllerData)=>{
+                                    result.controllerData = controllerData;
+                                    endCallback(null, result);
+                                };
+                            })(result));
+                            return;
+                        } else {
+                            endCallback("ログアウトしました", false);
+                            return;
                         }
-                        this.executer.getControllerData(data.controllerID, ((result)=>{
-                            return (err, controllerData)=>{
-                                result.controllerData = controllerData;
-                                endCallback(null, result);
-                            };
-                        })(result));
-                        return;
-                    } else {
-                        endCallback("ログアウトしました", false);
+                    }
+                    this.executer.login(data.id, data.password, socketid, data.controllerID, endCallback);
+                } else {
+                    endCallback("ユーザ名またはパスワードが正しくありません.");
+                }
+            }
+            console.log("-----------login",data);
+            if(data.id === "Display"){
+                // ディスプレイは配信許可設定が必要
+                this.executer.existsDisplayPermission(data.displayid,(err, exists)=>{
+                    if(err){
+                    }else if(exists){
+                        this.executer.getDisplayPermission(data.displayid, (err, permission)=>{
+                            if(err){
+                                console.log(err);
+                            }else if(permission === "true"){
+                                // 配信許可済
+                                execLogin(data, socketid, endCallback);
+                                return;
+                            }else{
+                                // 配信拒否済
+                                endCallback("このDisplayIDは既に拒否設定されています");
+                                return;
+                            }
+                        });
+                    }else{
+                        // 許可設定がないのでコントローラに聞きに行く
+                        suspendCallback(err, data);
                         return;
                     }
-                }
-                this.executer.login(data.id, data.password, socketid, data.controllerID, endCallback);
-            } else {
-                endCallback("ユーザ名またはパスワードが正しくありません.");
+                });
+            }else{
+                execLogin(data, socketid, endCallback);
+                return;
             }
+        }
+
+        updateDisplayPermission(logindata, endCallback){
+            console.log("updateDisplayPermission",logindata)
+            this.executer.setDisplayPermission(logindata.displayid, logindata.permission, (err)=>{
+                endCallback(err,logindata);
+            });
         }
 
         /**

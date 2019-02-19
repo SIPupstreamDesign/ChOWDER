@@ -116,7 +116,7 @@ class Receiver
             let key = this.store.getLoginStore().getLoginKey();
             if (key.length > 0) {
                 let request = { userid: "", password: "", loginkey: key };
-                
+
                 this.action.loginForCheckAuthority(request);
             }
             else {
@@ -295,6 +295,14 @@ class Receiver
                 }
             }
         });
+
+        // ディスプレイ配信許可設定を聞かれた
+        this.connector.on(Command.AskDisplayPermission, (data) => {
+            let logindata = data;
+            console.log("AskDisplayPermission",logindata);
+            this.store.emit(Store.EVENT_ASK_DISPLAY_PERMISSION, null, logindata);
+        });
+
     }
 }
 export default Receiver;

@@ -5,7 +5,7 @@
  */
 
  "use strict";
-	
+
 const Command = {
 	// request command
 	AddContent : "AddContent",
@@ -22,7 +22,7 @@ const Command = {
 	UpdateVirtualDisplay : "UpdateVirtualDisplay",
 	GetVirtualDisplay : "GetVirtualDisplay",
 	GetGroupList : "GetGroupList",
-	
+
 	// using both server and client
 	Update : "Update",
 	UpdateMetaData : "UpdateMetaData",
@@ -34,12 +34,12 @@ const Command = {
 	DeleteWindowMetaData : "DeleteWindowMetaData",
 	ShowWindowID : "ShowWindowID",
 	UpdateMouseCursor : "UpdateMouseCursor",
-	
+
 	SendMessage: "SendMessage",
 
 	// to client
 	Disconnect : "Disconnect",
-	
+
 	// DB管理コマンド
 	NewDB : "NewDB",
 	InitDB : "InitDB",
@@ -47,12 +47,12 @@ const Command = {
 	DeleteDB : "DeleteDB",
 	ChangeDB : "ChangeDB",
 	GetDBList : "GetDBList",
-	
+
 	// 各種設定変更
 	ChangeGlobalSetting : "ChangeGlobalSetting",
 	GetGlobalSetting : "GetGlobalSetting",
 	UpdateSetting : "UpdateSetting",
-	
+
 	// ユーザー管理
 	Login : "Login",
 	Logout : "Logout",
@@ -64,13 +64,19 @@ const Command = {
 	// コントローラデータ
 	UpdateControllerData : "UpdateControllerData",
 	GetControllerData : "GetControllerData",
-	
+
 	// WebRTC
 	RTCRequest : "RTCRequest",
 	RTCOffer : "RTCOffer",
 	RTCAnswer : "RTCAnswer",
 	RTCIceCandidate : "RTCIceCandidate",
 	RTCClose : "RTCClose",
+
+	// ディスプレイ配信許可設定
+	AskDisplayPermission : "AskDisplayPermission",
+	ReplyDisplayPermission : "ReplyDisplayPermission",
+	AcceptDisplayPermission : "AcceptDisplayPermission"
+
 };
 
 export default Command;
