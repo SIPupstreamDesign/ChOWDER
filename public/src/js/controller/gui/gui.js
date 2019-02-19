@@ -158,7 +158,7 @@ class GUI extends EventEmitter
 
 			InputDialog.showOKCancelInput(setting,(result)=>{
 				logindata.permission = result;
-				this.action.replyDisplayPermission(logindata);
+				this.action.changeDisplayPermission(logindata);
 			});
 		});
 	}

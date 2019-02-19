@@ -305,9 +305,9 @@ class Store extends EventEmitter
 		}
 	}
 
-	_replyDisplayPermission(data){
-		console.log("_replyDisplayPermission",data);
-		Connector.send(Command.ReplyDisplayPermission, data, (err, reply) => {});
+	_changeDisplayPermission(data){
+		console.log("_changeDisplayPermission",data);
+		Connector.send(Command.ChangeDisplayPermission, data, (err, reply) => {});
 	}
 
 	/**

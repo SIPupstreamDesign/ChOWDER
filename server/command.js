@@ -75,10 +75,9 @@
 		RTCClose : "RTCClose",
 
 		// ディスプレイ配信許可設定
-		AskDisplayPermission : "AskDisplayPermission",
-		ReplyDisplayPermission : "ReplyDisplayPermission",
-		AcceptDisplayPermission : "AcceptDisplayPermission"
-
+		AskDisplayPermission : "AskDisplayPermission", // サーバからコントローラへ、許可していいか聞く
+		ChangeDisplayPermission : "ChangeDisplayPermission", // サーバが許可設定の変更を受け取る
+		AcceptDisplayPermission : "AcceptDisplayPermission", // サーバがディスプレイへ、許可されたことを伝える
 	};
 
 	module.exports = Command;

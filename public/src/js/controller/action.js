@@ -805,8 +805,8 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_SNAP_CONTENT_TO_SCREEN, null, data);
     }
 
-    replyDisplayPermission(data){
-        this.emit(Action.EVENT_REPRY_DISPLAY_PERMISSION, null, data);
+    changeDisplayPermission(data){
+        this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION, null, data);
     }
 };
 
@@ -886,6 +886,6 @@ Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 
-Action.EVENT_REPRY_DISPLAY_PERMISSION = "replyDisplayPermission";
+Action.EVENT_CHANGE_DISPLAY_PERMISSION = "changeDisplayPermission";
 
 export default Action;

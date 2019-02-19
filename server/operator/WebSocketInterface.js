@@ -163,9 +163,10 @@
             ws_connector.on(Command.Login, (data, resultCallback, socketid)=>{
                 this.commandOperator.login(data, socketid, resultCallback, this.post_askDisplayPermission(ws));
             });
-            ws_connector.on(Command.ReplyDisplayPermission, (logindata, resultCallback, socketid)=>{
+            ws_connector.on(Command.ChangeDisplayPermission, (logindata, resultCallback, socketid)=>{
                 this.commandOperator.updateDisplayPermission(logindata, this.post_acceptDisplayPermission(ws));
             });
+
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{
                 this.commandOperator.changePassword(socketid, data, resultCallback);
             });
