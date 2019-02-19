@@ -391,6 +391,7 @@ class Action extends EventEmitter
      * Historyコンテンツ復元
      * @param {*} data
      * {
+     *   id : 対象のメタデータID,
      *   restoreKey : 復元用キー,
      *   restoreValue : 復元用value
      * }
@@ -793,6 +794,18 @@ class Action extends EventEmitter
     }
 
     /**
+     * 時系列コンテンツのアスペクト比の調整
+     * @param {*} data metaData
+     * {
+     *   metaData : metaData,
+     *    callback : 終了時コールバック(option)
+     * }
+     */
+    correctHistoricalContentAspect(data) {
+        this.emit(Action.EVENT_CORRECT_HISTORICAL_CONTENT_ASPECT, null, data);
+    }
+
+    /**
      * コンテンツまたはディスプレイのスナップ
      * @param {*} data
      * {
@@ -889,6 +902,7 @@ Action.EVENT_CHANGE_CAMERA_MIC_ENABLE = "changeCameraMicEnable";
 Action.EVENT_SETUP_CONTENT_ELEMENT = "setupContentElement";
 Action.EVENT_APPLY_CONTENT_LAYOUT = "applyContentLayout";
 Action.EVENT_CORRECT_CONTENT_ASPECT = "correctContentAspect";
+Action.EVENT_CORRECT_HISTORICAL_CONTENT_ASPECT = "correctHistoricalContentAspect";
 Action.EVENT_SNAP_CONTENT_TO_SCREEN = "snapContentToScreen";
 Action.EVENT_MOVE_UP_GROUP = "moveUpGroup";
 Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";

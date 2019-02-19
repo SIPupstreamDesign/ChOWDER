@@ -42,7 +42,6 @@ class Receiver
             let id = metaData.id;
             if (id) {
                 if (metaData.hasOwnProperty("id") && metaData.type === Constants.TypeTileImage) {
-                    console.log(metaData);
                     if (metaData.hasOwnProperty('reload_latest') && String(metaData.reload_latest) === "true") {
                         try {
                             let keyValue = JSON.parse(metaData.keyvalue);
@@ -54,6 +53,7 @@ class Receiver
                                 if (values.length > 1) {
                                     let sorted = ContentUtil.sortHistory(values);
                                     this.action.restoreHistoryContent({
+                                        id : id,
                                         restoreKey : key,
                                         restoreValue : sorted[sorted.length - 1]
                                     });
@@ -69,15 +69,9 @@ class Receiver
                 this.store.operation.getContent(metaData, (err, reply) => {
                     if (reply.hasOwnProperty('metaData')) {
                         if (this.store.hasMetadata(metaData.id)) {
-                            this.action.correctContentAspect({
-                                metaData : reply.metaData,
-                                callback : (err, meta) => {
-                                    reply.metaData = meta;
-                                    this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
-                                    });
-                                    this.store.emit(Store.EVENT_DONE_GET_METADATA, null, meta, (err, reply) => {
-                                    });
-                                }
+                            this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
+                            });
+                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {
                             });
                         }
                     }
@@ -132,10 +126,12 @@ class Receiver
             this.store.emit(Store.EVENT_DONE_UPDATE_GROUP, null, metaData);
         });
 
-        // すべての更新が必要なときにブロードキャストされてくる.
-        this.connector.on(Command.Update, () => {
+        // コンテンツ追加時などにブロードキャストされてくる.
+        this.connector.on(Command.Update, (metaData) => {
             if (!this.store.isInitialized()) { return; }
-            this.action.reloadAll();
+			if (metaData) {
+                this.store.operation.getContent(metaData);
+            }
         });
 
         // windowが更新されたときにブロードキャストされてくる.

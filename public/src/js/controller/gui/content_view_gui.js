@@ -217,12 +217,13 @@ class ContentViewGUI extends EventEmitter {
 						contentElem.appendChild(icon);
 						icon.title = "Tiled Image";
 					}
-					let img = contentElem.getElementsByClassName('tileimage_image')[0];
-					if (img) {
-						URL.revokeObjectURL(img.src);
-						contentElem.removeChild(img);
+					let image = contentElem.getElementsByClassName('tileimage_image')[0];
+					if (image) {
+						URL.revokeObjectURL(image.src);
+					} else {
+						image = document.createElement('img');
+						contentElem.appendChild(image);
 					}
-					let image = document.createElement('img');
 					image.className = "tileimage_image";
 					if (typeof (contentData) === "string") {
 						image = document.createElement('div');
@@ -233,20 +234,30 @@ class ContentViewGUI extends EventEmitter {
 						image.style.color = "gray";
 						image.style.border = "1px solid gray";
 					}
-					contentElem.appendChild(image);
 					image.src = URL.createObjectURL(blob);
 					image.style.width = "100%";
 					image.style.height = "100%";
-					image.onload = function () {
-						if (metaData.width < 10) {
-							// console.log("naturalWidth:" + image.naturalWidth);
-							metaData.width = image.naturalWidth;
+					image.onload = () => {
+						// 時系列タイル画像で、途中の画像の解像度が違う場合があるため、
+						// width固定で、読み込んだ画像のaspectをheightに反映させる
+						let imageAspect = Number(image.naturalHeight) / Number(image.naturalWidth);
+						let currentAspect = Number(metaData.width) / Number(metaData.height)
+						if (imageAspect !== currentAspect) {
+							metaData.height = Number(metaData.width) * imageAspect;
+							this.action.correctHistoricalContentAspect({
+								metaData : metaData
+							})
+						} else {
+							if (metaData.width < 10) {
+								// console.log("naturalWidth:" + image.naturalWidth);
+								metaData.width = image.naturalWidth;
+							}
+							if (metaData.height < 10) {
+								// console.log("naturalHeight:" + image.naturalHeight);
+								metaData.height = image.naturalHeight;
+							}
+							vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 						}
-						if (metaData.height < 10) {
-							// console.log("naturalHeight:" + image.naturalHeight);
-							metaData.height = image.naturalHeight;
-						}
-						vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 					};
 				}
 			}

@@ -237,7 +237,7 @@
          */
         post_update(ws, resultCallback) {
             return (err, reply)=>{
-                ws_connector.broadcast(ws, Command.Update);
+                ws_connector.broadcast(ws, Command.Update, reply);
                 if (resultCallback) {
                     resultCallback(err, reply);
                 }

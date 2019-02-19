@@ -96,6 +96,12 @@ class Display {
 		if (metaDataDict.hasOwnProperty(json.id)) {
 			isUpdateContent = (metaDataDict[json.id].restore_index !== json.restore_index);
 			isUpdateContent = isUpdateContent || (metaDataDict[json.id].keyvalue !== json.keyvalue);
+			if (json.hasOwnProperty('restore_key')) {
+				isUpdateContent = isUpdateContent || (metaDataDict[json.id].restore_key !== json.restore_key);
+			}
+			if (json.hasOwnProperty('restore_value')) {
+				isUpdateContent = isUpdateContent || (metaDataDict[json.id].restore_value !== json.restore_value);
+			}
 		}
 		// 閲覧可能か
 		if (!this.store.isViewable(json.group)) {

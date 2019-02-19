@@ -571,20 +571,29 @@ class GUI extends EventEmitter {
         let request = JSON.parse(JSON.stringify(metaData));
 
         // ウィンドウ枠内に入っているか判定用
-        let whole = Vscreen.transformOrgInv(Vscreen.getWhole());
-        whole.x = Vscreen.getWhole().x;
-        whole.y = Vscreen.getWhole().y;
+        const whole = JSON.parse(JSON.stringify(Vscreen.getWhole()));
 
         let mime = "image/jpeg";
         let previousElem = null;
         let previousImage = null;
         let isInitial = true;
+		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
+		const ow = Number(metaData.orgWidth);
+		const oh = Number(metaData.orgHeight);
 
         for (let i = 0; i < Number(metaData.ysplit); ++i) {
             for (let k = 0; k < Number(metaData.xsplit); ++k) {
                 request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
-                let visible = !VscreenUtil.isOutsideWindow(rect, whole);
+                let width = Math.round(rect.w / ow * orgRect.w);
+                let height = Math.round(rect.h / oh * orgRect.h);
+                if (width === 0 || height === 0) { continue; }
+                let visible = !VscreenUtil.isOutsideWindow({
+                    x : rect.x, 
+                    y : rect.y,
+                    w : width,
+                    h : height
+                }, whole);
                 let tileClassName = 'tile_index_' + String(tileIndex);
 
                 if (visible) {
@@ -617,9 +626,13 @@ class GUI extends EventEmitter {
                         }
 
                         // metadataの解像度がcontentData（縮小版画像）より小さいか調べる
-                        if (Number(reductionElem.style.width.split("px").join("")) <= Number(metaData.reductionWidth)
-                            && Number(reductionElem.style.height.split("px").join("")) <= Number(metaData.reductionHeight)) {
-
+                        // aspectがreduction~と違う場合は、初期画像とは別解像度の画像に切り替わったと判断し、強制タイル表示
+                        let ew = Number(reductionElem.style.width.split("px").join(""));
+                        let eh = Number(reductionElem.style.height.split("px").join(""));
+                        let reductionAspect = Number(metaData.reductionWidth) / Number(metaData.reductionHeight);
+                        let aspect = Number(metaData.width) / Number(metaData.height);
+                        let isSameImage = Math.abs(reductionAspect-aspect) < 0.2;
+                        if (isSameImage && ew <= Number(metaData.reductionWidth) && eh <= Number(metaData.reductionHeight)) {
                             // reductionを表示、タイルを非表示に
                             reductionElem.style.display = "inline";
                             for (let n = 0; n < elem.children.length; ++n) {
