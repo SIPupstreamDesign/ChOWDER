@@ -125,7 +125,7 @@ class Controller {
 				let user_text = document.getElementsByClassName('user_text')[0];
 	
 				// ログインユーザ名の設定.
-				user_text.innerHTML = "User:" + data.loginUserName;
+				user_text.innerHTML = "Name:" + data.loginUserName;
 				// ログアウトボタンを設定.
 				head_menu_hover.style.display = "block";
 				logoutButton.onclick = () => {
