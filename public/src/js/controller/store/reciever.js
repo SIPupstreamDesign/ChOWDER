@@ -42,7 +42,6 @@ class Receiver
             let id = metaData.id;
             if (id) {
                 if (metaData.hasOwnProperty("id") && metaData.type === Constants.TypeTileImage) {
-                    console.log(metaData);
                     if (metaData.hasOwnProperty('reload_latest') && String(metaData.reload_latest) === "true") {
                         try {
                             let keyValue = JSON.parse(metaData.keyvalue);
@@ -69,15 +68,9 @@ class Receiver
                 this.store.operation.getContent(metaData, (err, reply) => {
                     if (reply.hasOwnProperty('metaData')) {
                         if (this.store.hasMetadata(metaData.id)) {
-                            this.action.correctContentAspect({
-                                metaData : reply.metaData,
-                                callback : (err, meta) => {
-                                    reply.metaData = meta;
-                                    this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
-                                    });
-                                    this.store.emit(Store.EVENT_DONE_GET_METADATA, null, meta, (err, reply) => {
-                                    });
-                                }
+                            this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
+                            });
+                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, meta, (err, reply) => {
                             });
                         }
                     }

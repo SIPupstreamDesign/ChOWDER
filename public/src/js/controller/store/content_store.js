@@ -305,7 +305,7 @@ class ContentStore
 							});
 							manipulator.removeManipulator();
 						}
-					});
+					}, true);
 				}
 			}
 		}
@@ -539,6 +539,16 @@ class ContentStore
 		if (isCorrect && callback) {
 			callback(null, metaData);
 		}
+	}
+
+	_correctHistoricalContentAspect(data) {
+		let callback = Store.extractCallback(data);
+		let metaData = data.metaData;	
+		this.store.operation.updateMetadata(metaData, (err, metaData) => {
+			if (callback) {
+				callback(err, metaData[0]);
+			}
+		});
 	}
 
 	/**

@@ -617,9 +617,13 @@ class GUI extends EventEmitter {
                         }
 
                         // metadataの解像度がcontentData（縮小版画像）より小さいか調べる
-                        if (Number(reductionElem.style.width.split("px").join("")) <= Number(metaData.reductionWidth)
-                            && Number(reductionElem.style.height.split("px").join("")) <= Number(metaData.reductionHeight)) {
-
+                        // aspectがreduction~と違う場合は、初期画像とは別解像度の画像に切り替わったと判断し、強制タイル表示
+                        let ew = Number(reductionElem.style.width.split("px").join(""));
+                        let eh = Number(reductionElem.style.height.split("px").join(""));
+                        let reductionAspect = Number(metaData.reductionWidth) / Number(metaData.reductionHeight);
+                        let aspect = Number(metaData.width) / Number(metaData.height);
+                        let isSameImage = Math.abs(reductionAspect-aspect) < 0.2;
+                        if (isSameImage && ew <= Number(metaData.reductionWidth) && eh <= Number(metaData.reductionHeight)) {
                             // reductionを表示、タイルを非表示に
                             reductionElem.style.display = "inline";
                             for (let n = 0; n < elem.children.length; ++n) {
