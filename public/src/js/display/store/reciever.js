@@ -23,11 +23,9 @@ class Receiver
 
     init() {
         this.connector.on(Command.Update, (data) => {
-            if (data === undefined) {
-                this.action.update({ updateType : 'window'});
-                this.action.update({ updateType : 'group' });
-                this.action.update({ updateType : 'content' });
-            }
+            this.action.update({ updateType : 'window'});
+            this.action.update({ updateType : 'group' });
+            this.action.update({ updateType : 'content' });
         });
 
         this.connector.on(Command.UpdateContent, (data) => {

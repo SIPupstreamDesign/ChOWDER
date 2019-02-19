@@ -126,10 +126,12 @@ class Receiver
             this.store.emit(Store.EVENT_DONE_UPDATE_GROUP, null, metaData);
         });
 
-        // すべての更新が必要なときにブロードキャストされてくる.
-        this.connector.on(Command.Update, () => {
+        // コンテンツ追加時などにブロードキャストされてくる.
+        this.connector.on(Command.Update, (metaData) => {
             if (!this.store.isInitialized()) { return; }
-            this.action.reloadAll();
+			if (metaData) {
+                this.store.operation.getContent(metaData);
+            }
         });
 
         // windowが更新されたときにブロードキャストされてくる.
