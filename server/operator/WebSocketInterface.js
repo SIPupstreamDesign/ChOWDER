@@ -166,6 +166,9 @@
             ws_connector.on(Command.ChangeDisplayPermission, (logindata, resultCallback, socketid)=>{
                 this.commandOperator.updateDisplayPermission(logindata, this.post_acceptDisplayPermission(ws));
             });
+            ws_connector.on(Command.GetDisplayPermissionList, (data, resultCallback, socketid)=>{
+                this.commandOperator.getDisplayPermissionList(resultCallback);
+            });
 
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{
                 this.commandOperator.changePassword(socketid, data, resultCallback);

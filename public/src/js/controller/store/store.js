@@ -310,6 +310,17 @@ class Store extends EventEmitter
 		Connector.send(Command.ChangeDisplayPermission, data, (err, reply) => {});
 	}
 
+	_getDisplayPermissionList(){
+		console.log("_getDisplayPermissionList");
+		Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
+			if(err){
+				console.log("_getDisplayPermissionList",err);
+			}else{
+				console.log("_getDisplayPermissionList",reply);
+			}
+		});
+	}
+
 	/**
 	 * 接続済かどうか返す
 	 */

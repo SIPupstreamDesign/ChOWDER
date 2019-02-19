@@ -18,13 +18,13 @@ class ManagementGUI
 		this.managementDialog = new ManagementDialog();
 
 		this.initEvents();
-		
+
 		store.on(Store.EVENT_DBLIST_RELOADED, (err, reply) => {
 			this.dblist = reply;
 		});
-		
+
 		this.action.reloadDBList();
-		
+
 		// ユーザーリスト更新時
 		// 再表示させる
 		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
@@ -56,7 +56,7 @@ class ManagementGUI
 			request.callback = callback;
 			this.action.changePassword(request);
 		});
-	
+
 		// 権限の変更
 		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_AUTHORITY, (
 			userID, editable, viewable, displayEditable,
@@ -74,7 +74,7 @@ class ManagementGUI
 
 		// 履歴保存数の変更
 		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_HISTORY_NUM, (err, value, callback_) => {
-			this.action.changeGlobalSetting({ 
+			this.action.changeGlobalSetting({
 				max_history_num : value,
 				callback : () => {
 					this.action.reloadGlobalSetting();
@@ -84,7 +84,7 @@ class ManagementGUI
 				}
 			});
 		});
-		
+
 		// 新規DB
 		this.managementDialog.on(ManagementDialog.EVENT_NEW_DB, (err, name) => {
 			this.action.newDB({ name : name });
@@ -94,7 +94,7 @@ class ManagementGUI
 		this.managementDialog.on(ManagementDialog.EVENT_RENAME_DB, (err, preName, name) => {
 			this.action.renameDB( { name : preName, new_name : name });
 		});
-		
+
 		// DBの切り替え
 		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DB, (err, name) => {
 			this.action.changeDB({ name : name });
@@ -141,6 +141,10 @@ class ManagementGUI
 		let currentDB = this.management.getCurrentDB();
 		let maxHistoryNum = this.management.getMaxHistoryNum();
 		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum);
+
+		console.log("@@@@@@@@@@@@@@");
+		this.action.getDisplayPermissionList();
+
 	}
 
 	close() {

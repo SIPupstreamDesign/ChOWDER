@@ -2828,6 +2828,16 @@
             });
         }
 
+        getDisplayPermissionList(callback){
+            this.textClient.hgetall(this.displayPermission, (err, replies)=>{
+                if(err){
+                    callback(err);
+                }else {
+                    callback(err,replies);
+                }
+            });
+        }
+
         /**
          * Display配信許可設定が存在するか確認する.
          * @method existsDisplayPermission

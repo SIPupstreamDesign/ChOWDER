@@ -55,31 +55,31 @@ class ManagementDialog extends EventEmitter
             this.dbSelect = new Select();
             this.dbSelect.getDOM().className = "db_select";
             selectFrame.appendChild(this.dbSelect.getDOM());
-    
+
             this.changeDBButton = new Button();
             this.changeDBButton.getDOM().classList.add("management_dialog_db_button");
             this.changeDBButton.setDataKey("change");
             selectFrame.appendChild(this.changeDBButton.getDOM());
-    
+
             this.newDBButton = new Button();
             this.newDBButton.setDataKey("new");
             this.newDBButton.getDOM().classList.add("management_dialog_db_button");
             selectFrame.appendChild(this.newDBButton.getDOM());
-            
+
             this.renameDBButton = new Button();
             this.renameDBButton.setDataKey("change_name");
             this.renameDBButton.getDOM().classList.add("management_dialog_db_button");
             selectFrame.appendChild(this.renameDBButton.getDOM());
-            
+
             this.deleteDBButton = new Button();
             this.deleteDBButton.setDataKey("delete");
             this.deleteDBButton.getDOM().classList.add("management_dialog_db_button");
             selectFrame.appendChild(this.deleteDBButton.getDOM());
-            
+
             this.initDBButton = new Button();
             this.initDBButton.setDataKey("initialize");
             this.initDBButton.getDOM().classList.add("management_dialog_db_button");
-            selectFrame.appendChild(this.initDBButton.getDOM());   
+            selectFrame.appendChild(this.initDBButton.getDOM());
 
             // 初期状態でrenameとdeleteはdisable
             this.renameDBButton.getDOM().disabled = true;
@@ -110,7 +110,7 @@ class ManagementDialog extends EventEmitter
             historyFrame.appendChild(this.historyFrameTitle);
 
             this.historyNumberInput = new Input("number");
-            this.historyNumberInput.getDOM().className = "history_number";            
+            this.historyNumberInput.getDOM().className = "history_number";
             this.historyNumberInput.setValue(10);
             historyFrame.appendChild(this.historyNumberInput.getDOM());
 
@@ -148,7 +148,7 @@ class ManagementDialog extends EventEmitter
                 </div>
             </div>
         */
-       {
+        {
             let authSettingTitle = document.createElement('h4');
             authSettingTitle.textContent = i18next.t("authority_setting");
             this.dom.appendChild(authSettingTitle);
@@ -164,19 +164,19 @@ class ManagementDialog extends EventEmitter
             this.authSelect = new Select();
             this.authSelect.getDOM().classList.add("auth_select");
             authSettingFrame.appendChild(this.authSelect.getDOM());
-    
+
             let authLabelWrap = document.createElement('div');
             {
                 this.editableContentLabel = document.createElement('span');
                 this.editableContentLabel.className = "auth_target_label";
                 this.editableContentLabel.textContent = i18next.t("editable_content");
                 authLabelWrap.appendChild(this.editableContentLabel);
-    
+
                 this.viewableContentLabel = document.createElement('span');
                 this.viewableContentLabel.className = "auth_target_label";
                 this.viewableContentLabel.textContent = i18next.t("viewable_content");
                 authLabelWrap.appendChild(this.viewableContentLabel);
-    
+
                 this.editableDisplayLabel = document.createElement('span');
                 this.editableDisplayLabel.className = "display_manipulate_label";
                 this.editableDisplayLabel.textContent = i18next.t("editable_display");
@@ -210,32 +210,32 @@ class ManagementDialog extends EventEmitter
                 applyAuthWrap.appendChild(this.authMessage);
             }
             authSettingFrame.appendChild(applyAuthWrap);
-       }
+        }
 
        /*
-       <h4 data-key="setting_password"></h4>
-       <div class="frame">
-           <div class="passinput_frame">
-               <p data-key="setting_target"></p>
-               <select id="auth_select_pass" class="auth_select"></select>
-           </div>
-           <div>
-               <div class="passinput_frame">
-                   <p data-key="old_password"></p>
-                   <input class="passinput" id="old_password" type="password" style="color:black" value="" />
-               </div>
-               <div class="passinput_frame">
-                   <p data-key="new_password"></p>
-                   <input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
-               </div>
-           </div>
-           <div class="apply_pass_frame">
-               <input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" data-key="apply" value="" />
-               <p id="apply_pass_message" data-key="password_changed"></p>
-           </div>
-       </div>
-       */
-       {
+        <h4 data-key="setting_password"></h4>
+        <div class="frame">
+            <div class="passinput_frame">
+                <p data-key="setting_target"></p>
+                <select id="auth_select_pass" class="auth_select"></select>
+            </div>
+            <div>
+                <div class="passinput_frame">
+                    <p data-key="old_password"></p>
+                    <input class="passinput" id="old_password" type="password" style="color:black" value="" />
+                </div>
+                <div class="passinput_frame">
+                    <p data-key="new_password"></p>
+                    <input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
+                </div>
+            </div>
+            <div class="apply_pass_frame">
+                <input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" data-key="apply" value="" />
+                <p id="apply_pass_message" data-key="password_changed"></p>
+            </div>
+        </div>
+        */
+        {
             let title = document.createElement('h4');
             title.textContent = i18next.t("setting_password");
             this.dom.appendChild(title);
@@ -251,7 +251,7 @@ class ManagementDialog extends EventEmitter
                     let settingTarget = document.createElement('p');
                     settingTarget.textContent = i18next.t("setting_target");
                     passInputFrame.appendChild(settingTarget);
-        
+
                     this.authSelectPass = new Select();
                     this.authSelectPass.getDOM().classList.add("auth_select");
                     passInputFrame.appendChild(this.authSelectPass.getDOM());
@@ -286,7 +286,7 @@ class ManagementDialog extends EventEmitter
                 }
             }
             passFrame.appendChild(passInputWrap);
-            
+
             {
                 let applyPassFrame = document.createElement('div');
                 applyPassFrame.className = "apply_pass_frame";
@@ -295,7 +295,7 @@ class ManagementDialog extends EventEmitter
                     this.managementApplyButton.getDOM().classList.add('management_apply_button');
                     this.managementApplyButton.setDataKey("apply");
                     applyPassFrame.appendChild(this.managementApplyButton.getDOM());
-                    
+
                     this.applyPassMessage = document.createElement('p');
                     this.applyPassMessage.textContent = i18next.t("password_changed");
                     this.applyPassMessage.className = "apply_pass_message";
@@ -303,7 +303,25 @@ class ManagementDialog extends EventEmitter
                 }
                 passFrame.appendChild(applyPassFrame);
             }
-       }
+        }
+
+        { // Display許可設定
+            let title = document.createElement('h4');
+            title.textContent = "Display Settings";
+            this.dom.appendChild(title);
+
+            let displayPermissionFrame = document.createElement('div');
+            displayPermissionFrame.className = "frame";
+            this.dom.appendChild(displayPermissionFrame);
+
+            let displayPermissionTitle = document.createElement('p');
+            displayPermissionTitle.textContent = "Display Permission";
+            displayPermissionFrame.appendChild(displayPermissionTitle);
+
+            this.displaySelect = new Select();
+            this.displaySelect.getDOM().className = "display_select";
+            displayPermissionFrame.appendChild(this.displaySelect.getDOM());
+        }
     }
 
     /**
@@ -318,7 +336,7 @@ class ManagementDialog extends EventEmitter
         }
         return null;
     }
-    
+
     /**
      *  DBの操作GUIの初期化
      */
@@ -343,7 +361,7 @@ class ManagementDialog extends EventEmitter
                 this.deleteDBButton.getDOM().disabled = isDisableEdit;
             }
         });
-        
+
         //changeDisableFunc();
 
         // DB新規
@@ -440,7 +458,7 @@ class ManagementDialog extends EventEmitter
             }
         });
     }
-    
+
     /**
      *  履歴管理GUIの初期化
      */
@@ -652,7 +670,7 @@ class ManagementDialog extends EventEmitter
             }
         }
     }
-    
+
     /**
      *  パスワード設定GUIの初期化
      */
@@ -731,7 +749,7 @@ class ManagementDialog extends EventEmitter
                     });
                     return;
                 }
-                this.emit(ManagementDialog.EVENT_CHANGE_PASSWORD, id, 
+                this.emit(ManagementDialog.EVENT_CHANGE_PASSWORD, id,
                     this.oldPassInput.getValue(), this.newPassInput.getValue(), (err, reply) => {
                     if (err) {
                         console.error(err, reply);

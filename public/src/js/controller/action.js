@@ -805,8 +805,17 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_SNAP_CONTENT_TO_SCREEN, null, data);
     }
 
+    /**
+     * 配信許可設定の変更
+     * @param {*} data windowData
+     */
     changeDisplayPermission(data){
+        console.log("changeDisplayPermission",data);
         this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION, null, data);
+    }
+
+    getDisplayPermissionList(){
+        this.emit(Action.EVENT_GET_DISPLAY_PERMISSION_LIST, null, null);
     }
 };
 
@@ -887,5 +896,6 @@ Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 
 Action.EVENT_CHANGE_DISPLAY_PERMISSION = "changeDisplayPermission";
+Action.EVENT_GET_DISPLAY_PERMISSION_LIST = "getDisplayPermissionList";
 
 export default Action;
