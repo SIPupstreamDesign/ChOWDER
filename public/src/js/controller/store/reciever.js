@@ -70,7 +70,7 @@ class Receiver
                         if (this.store.hasMetadata(metaData.id)) {
                             this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
                             });
-                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, meta, (err, reply) => {
+                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {
                             });
                         }
                     }

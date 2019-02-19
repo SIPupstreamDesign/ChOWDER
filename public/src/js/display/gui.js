@@ -571,20 +571,29 @@ class GUI extends EventEmitter {
         let request = JSON.parse(JSON.stringify(metaData));
 
         // ウィンドウ枠内に入っているか判定用
-        let whole = Vscreen.transformOrgInv(Vscreen.getWhole());
-        whole.x = Vscreen.getWhole().x;
-        whole.y = Vscreen.getWhole().y;
+        const whole = JSON.parse(JSON.stringify(Vscreen.getWhole()));
 
         let mime = "image/jpeg";
         let previousElem = null;
         let previousImage = null;
         let isInitial = true;
+		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
+		const ow = Number(metaData.orgWidth);
+		const oh = Number(metaData.orgHeight);
 
         for (let i = 0; i < Number(metaData.ysplit); ++i) {
             for (let k = 0; k < Number(metaData.xsplit); ++k) {
                 request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
-                let visible = !VscreenUtil.isOutsideWindow(rect, whole);
+                let width = Math.round(rect.w / ow * orgRect.w);
+                let height = Math.round(rect.h / oh * orgRect.h);
+                if (width === 0 || height === 0) { continue; }
+                let visible = !VscreenUtil.isOutsideWindow({
+                    x : rect.x, 
+                    y : rect.y,
+                    w : width,
+                    h : height
+                }, whole);
                 let tileClassName = 'tile_index_' + String(tileIndex);
 
                 if (visible) {
