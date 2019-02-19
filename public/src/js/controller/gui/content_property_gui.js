@@ -940,14 +940,14 @@ class ContentPropertyGUI extends EventEmitter {
 					let historyContent = document.getElementById('history_list_content');
 					let key = history_select.options[history_select.selectedIndex].value;
 					let value = historyContent.value;
-					this.restoreHistoryContent(key, value);
+					this.restoreHistoryContent(metaData.id, key, value);
 				};
 				// データ切り替えイベントの登録
 				select.onchange = (evt) => {
 					let historyContent = document.getElementById('history_list_content');
 					let key = history_select.value;
 					let value = historyContent.value;
-					this.restoreHistoryContent(key, value);
+					this.restoreHistoryContent(metaData.id, key, value);
 				};
 				history_up.onclick = function () {
 					let index = select.selectedIndex - 1;
@@ -987,7 +987,7 @@ class ContentPropertyGUI extends EventEmitter {
 					let historyContent = document.getElementById('history_list_content');
 					let key = history_select.value;
 					let value = historyContent.options[Number(history_slider.value)].value;
-					this.restoreHistoryContent(key, value);
+					this.restoreHistoryContent(metaData.id, key, value);
 				};
 			}
 		}
@@ -1010,8 +1010,9 @@ class ContentPropertyGUI extends EventEmitter {
 		});
 	}
 
-	restoreHistoryContent(key, value) {
+	restoreHistoryContent(id, key, value) {
 		this.action.restoreHistoryContent({
+			id : id,
 			restoreKey : key,
 			restoreValue : value
 		});

@@ -53,6 +53,7 @@ class Receiver
                                 if (values.length > 1) {
                                     let sorted = ContentUtil.sortHistory(values);
                                     this.action.restoreHistoryContent({
+                                        id : id,
                                         restoreKey : key,
                                         restoreValue : sorted[sorted.length - 1]
                                     });

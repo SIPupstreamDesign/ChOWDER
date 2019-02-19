@@ -270,10 +270,10 @@ class ContentStore
 	 * @param {*} data 
 	 */
 	_restoreHistoryContent(data) {
+		let id = data.id;
 		let restoreKey = data.restoreKey;
 		let restoreValue = data.restoreValue;
 		
-		let id = this.store.getState().getSelectedID();
 		if (this.store.hasMetadata(id) && Validator.isContentType(this.store.getMetaData(id))) {
 			let metaData = this.store.getMetaData(id);
 			if (metaData.hasOwnProperty('history_data')) {

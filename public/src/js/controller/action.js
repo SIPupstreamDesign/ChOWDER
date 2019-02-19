@@ -391,6 +391,7 @@ class Action extends EventEmitter
      * Historyコンテンツ復元
      * @param {*} data
      * {
+     *   id : 対象のメタデータID,
      *   restoreKey : 復元用キー,
      *   restoreValue : 復元用value
      * }
