@@ -1,16 +1,15 @@
 import SelectList from "./select_list";
 
-class CompareList {
-    constructor(leftTitle,rightTitle,applyCallback){
-        this.createDOM(leftTitle,rightTitle,applyCallback);
+class CompareList extends EventEmitter {
+    constructor(leftTitle,rightTitle){
+        super();
 
+        this.createDOM(leftTitle,rightTitle);
         this.data = {};
-
 
     }
 
-
-    createDOM(leftTitle,rightTitle,applyCallback){
+    createDOM(leftTitle,rightTitle){
         this.dom = document.createElement('div');
         let frame = document.createElement('div');
 
@@ -34,7 +33,7 @@ class CompareList {
         });
 
         this.applyButton = this.applyButtonBuilder(()=>{
-            applyCallback(this.getData());
+            this.emit(CompareList.EVENT_APPLY,null,this.getData());
         });
 
         this.leftWrap.appendChild(this.leftTitle);
@@ -132,5 +131,6 @@ class CompareList {
         return this.dom;
     }
 }
+CompareList.EVENT_APPLY = "compare_list_event_apply";
 
 export default CompareList;

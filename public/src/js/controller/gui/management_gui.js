@@ -129,7 +129,8 @@ class ManagementGUI
 		});
 
 		// ディスプレイ接続許可設定
-		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION, (err, name) => {
+		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION, (err, data) => {
+			console.log("managementgui", data);
 			// this.action.changeDisplayPermission(logindata);
 		});
 
