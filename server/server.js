@@ -24,6 +24,7 @@
 		ws2_s,
 		settings;
 
+	const Logger = require('./operator/PerformanceLogger.js');
 
 	const CommandOperator = require('./operator/CommandOperator.js');
 	const commandOperator = new CommandOperator;
@@ -188,6 +189,10 @@
 					maxReceivedFrameSize : Number(settings.wsMaxMessageSize),
 					autoAcceptConnections : false});
 
+				// パフォーマンス計測用
+				if (settings && settings.hasOwnProperty('enableMeasureTime') && String(settings.enableMeasureTime) === "true" ) {
+					Logger.setEnableMeasureTime(true);
+				}
 			} catch (e) {
 				console.error(e);
 			}

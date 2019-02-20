@@ -79,6 +79,8 @@ if (!fs.existsSync(imagePath)) {
 }
 console.log('Image file: ' + imagePath);
 
+let enableMeasureTime = false;
+
 // == beginning of main procedure ==============================================
 let wsWrapper = new WebSocketWrapper();
 
@@ -96,6 +98,14 @@ wsWrapper.connect(config.url).then(function() {
 		throw new Error('Login failed: ' + parsed.error);
 	}
 	console.log('Logged in as ' + parsed.result.id);
+	
+	return wsWrapper.sendUTF('GetGlobalSetting', {});
+
+}).then(function(parsed) {
+	if (parsed.error) {
+		throw new Error('Login failed: ' + parsed.error);
+	}
+	enableMeasureTime = String(parsed.result.enableMeasureTime) === "true";
 
 	// == generate thumbnail =====================================================
 	return imageProcessor.generateThumb(imagePath, config.thumbsize || 1920);
@@ -123,9 +133,7 @@ wsWrapper.connect(config.url).then(function() {
 		}
 	}).then(function(groupId) {
 		console.log('Group id: ' + groupId);
-
-		// == send thumbnail =======================================================
-		return wsWrapper.sendBinary('AddHistoricalContent', {
+		let metaData = {
 			type: 'tileimage',
 			id: config.contentid,
 			content_id: config.contentid,
@@ -139,7 +147,12 @@ wsWrapper.connect(config.url).then(function() {
 			visible : config.visible ? config.visible : false,
 			reload_latest: config.reload_latest,
 			keyvalue: keyvalue ? JSON.stringify(keyvalue) : undefined
-		}, thumb.buffer);
+		};
+		if (enableMeasureTime) {
+			metaData.time_register = new Date().toISOString();
+		}
+		// == send thumbnail =======================================================
+		return wsWrapper.sendBinary('AddHistoricalContent', metaData, thumb.buffer);
 	});
 }).then(function(parsed) {
 	if (parsed.error) {
@@ -154,12 +167,16 @@ wsWrapper.connect(config.url).then(function() {
 		readline.cursorTo(process.stdout, 0);
 		process.stdout.write('Tiled image processing: ' + ((i + 1) / n * 100.0).toFixed(0) + '%');
 
-		// == send each image fragment =============================================
-		return wsWrapper.sendBinary('AddTileContent', {
+		let metaData = {
 			id: config.contentid,
 			history_id: historyId,
 			tile_index: i
-		}, buffer);
+		};
+		if (enableMeasureTime) {
+			metaData.time_register = new Date().toISOString();
+		}
+		// == send each image fragment =============================================
+		return wsWrapper.sendBinary('AddTileContent', metaData, buffer);
 	}).then(function() {
 		console.log();
 		console.log('Done');
