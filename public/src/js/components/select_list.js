@@ -2,7 +2,7 @@
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
-	
+
  "use strict";
 
 /**
@@ -28,6 +28,12 @@ class SelectList extends EventEmitter {
 		}.bind(this, this.contents.length);
 		this.contents.push(row);
 		this.dom.appendChild(row);
+	}
+	clear(){
+		this.contents = [];
+		while (this.dom.firstChild){
+			this.dom.removeChild(this.dom.firstChild)
+		};
 	}
 	getSelected() {
 		let selected = [];

@@ -127,6 +127,12 @@ class ManagementGUI
 				}
 			})
 		});
+
+		// ディスプレイ接続許可設定
+		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION, (err, name) => {
+			// this.action.changeDisplayPermission(logindata);
+		});
+
 		this.action.reloadGlobalSetting();
 	}
 
@@ -142,7 +148,6 @@ class ManagementGUI
 		let maxHistoryNum = this.management.getMaxHistoryNum();
 		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum);
 
-		console.log("@@@@@@@@@@@@@@");
 		this.action.getDisplayPermissionList();
 
 	}

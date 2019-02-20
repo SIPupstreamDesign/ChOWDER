@@ -10,6 +10,7 @@ import PopupBackground from "./popup_background";
 import SelectList from "./select_list";
 import Constants from "../common/constants";
 import InputDialog from './input_dialog';
+import CompareList from "./compare_list";
 
 class ManagementDialog extends EventEmitter
 {
@@ -318,8 +319,12 @@ class ManagementDialog extends EventEmitter
             displayPermissionTitle.textContent = "Display Permission";
             displayPermissionFrame.appendChild(displayPermissionTitle);
 
-            this.displaySelect = new Select();
-            this.displaySelect.getDOM().className = "display_select";
+            this.displaySelect = new CompareList("Accessible","Reject",(data)=>{
+                console.log("comparelist",data);
+            });
+
+            this.displaySelect.setData({aaaa:true,bbbb:true,cccc:false});
+
             displayPermissionFrame.appendChild(this.displaySelect.getDOM());
         }
     }

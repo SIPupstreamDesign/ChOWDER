@@ -18,6 +18,7 @@ require("./css/components/search_box.css");
 require("./css/components/select_list.css");
 require("./css/components/tabs.css");
 require("./css/components/video_controller.css");
+require("./css/components/compare_list.css");
 require("./css/controller.css");
 
 require("./js/controller/main.js");
