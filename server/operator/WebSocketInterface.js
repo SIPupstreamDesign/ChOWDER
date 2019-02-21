@@ -451,14 +451,12 @@
 
         post_acceptDisplayPermission(ws) {
             return (err, data)=>{
-                console.log("post_acceptDisplayPermission",Command.AcceptDisplayPermission, data)
                 ws_connector.broadcast(ws, Command.AcceptDisplayPermission, data);
             }
         }
 
         post_pushDisplayPermissionList(ws){
             return (err, data)=>{
-                console.log("post_pushDisplayPermissionList",Command.PushDisplayPermissionList, data)
                 ws_connector.broadcast(ws, Command.PushDisplayPermissionList, data);
             }
         }
