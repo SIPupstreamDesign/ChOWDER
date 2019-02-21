@@ -162,12 +162,17 @@
             });
             ws_connector.on(Command.Login, (data, resultCallback, socketid)=>{
                 this.commandOperator.login(data, socketid, resultCallback, this.post_askDisplayPermission(ws));
+                this.commandOperator.getDisplayPermissionList(this.post_pushDisplayPermissionList(ws));//管理画面用にローカルstoreを更新する
             });
             ws_connector.on(Command.ChangeDisplayPermission, (logindata, resultCallback, socketid)=>{
-                this.commandOperator.updateDisplayPermission(logindata, this.post_acceptDisplayPermission(ws));
+                this.commandOperator.updateDisplayPermission(logindata, (err, logindata)=>{
+                    this.post_acceptDisplayPermission(ws)(err,logindata);
+                    this.commandOperator.getDisplayPermissionList(this.post_pushDisplayPermissionList(ws));//管理画面用にローカルstoreを更新する
+                });
             });
-            ws_connector.on(Command.GetDisplayPermissionList, (data, resultCallback, socketid)=>{
-                this.commandOperator.getDisplayPermissionList(resultCallback);
+
+            ws_connector.on(Command.ChangeDisplayPermissionList, (displayPermissionList, resultCallback, socketid)=>{
+                this.commandOperator.updateDisplayPermissionList(displayPermissionList, resultCallback);
             });
 
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{
@@ -446,7 +451,15 @@
 
         post_acceptDisplayPermission(ws) {
             return (err, data)=>{
+                console.log("post_acceptDisplayPermission",Command.AcceptDisplayPermission, data)
                 ws_connector.broadcast(ws, Command.AcceptDisplayPermission, data);
+            }
+        }
+
+        post_pushDisplayPermissionList(ws){
+            return (err, data)=>{
+                console.log("post_pushDisplayPermissionList",Command.PushDisplayPermissionList, data)
+                ws_connector.broadcast(ws, Command.PushDisplayPermissionList, data);
             }
         }
     }

@@ -2838,6 +2838,13 @@
             });
         }
 
+        setDisplayPermissionList(displayPermissionList, callback){
+            for(let i in displayPermissionList){
+                this.textClient.hset(this.displayPermission, i, displayPermissionList[i]);
+            }
+            callback();
+        }
+
         /**
          * Display配信許可設定が存在するか確認する.
          * @method existsDisplayPermission

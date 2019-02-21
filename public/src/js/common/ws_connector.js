@@ -220,7 +220,7 @@ class WsConnector {
 		};
 
 		client.onmessage = function (message) {
-			console.log("ws chowder_request : ", message);
+			// console.log("ws chowder_request : ", message);
 			let data = message.data,
 				parsed,
 				result;

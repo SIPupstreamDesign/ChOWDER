@@ -65,6 +65,8 @@ class Store extends EventEmitter
 		this.virtualDisplayDict = {};
 		this.metaDataDict = {};
 
+		this.displayPermissionList = {};
+
 		this.initEvents();
 
 		this.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
@@ -306,19 +308,19 @@ class Store extends EventEmitter
 	}
 
 	_changeDisplayPermission(data){
-		console.log("_changeDisplayPermission",data);
 		Connector.send(Command.ChangeDisplayPermission, data, (err, reply) => {});
 	}
 
-	_getDisplayPermissionList(){
-		console.log("_getDisplayPermissionList");
-		Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
-			if(err){
-				console.log("_getDisplayPermissionList",err);
-			}else{
-				console.log("_getDisplayPermissionList",reply);
-			}
-		});
+	_updateDisplayPermissionList(data){
+		this.displayPermissionList = data;
+	}
+
+	_changeDisplayPermissionList(data){
+		Connector.send(Command.ChangeDisplayPermissionList, data, (err, reply) => {});
+	}
+
+	getDisplayPermissionList(){
+		return this.displayPermissionList;
 	}
 
 	/**

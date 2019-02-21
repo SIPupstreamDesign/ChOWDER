@@ -196,6 +196,10 @@ class Receiver
             }
         });
 
+        this.connector.on(Command.PushDisplayPermissionList, (data)=>{
+            this.action.pushDisplayPermissionList(data);
+        });
+
         // 管理ページでの設定変更時にブロードキャストされてくる
         this.connector.on(Command.UpdateSetting, () => {
             if (!this.store.isInitialized()) { return; }

@@ -464,15 +464,12 @@ class ManagementDialog extends EventEmitter
     /**
      *  ディスプレイ配信許可設定の初期化
      */
-    initDisplayPermission(contents) {
+    initDisplayPermission(contents,displayPermissionList) {
         // 最大履歴保存数の適用
         this.displaySelect.on(CompareList.EVENT_APPLY , (err,data) => {
-            console.log("selecton",data);
-            this.emit(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION, null, data, ()=>{
-            });
+            this.emit(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data, ()=>{});
         });
-        console.log("initDisplayPermission");
-        this.displaySelect.setData({aaaa:true,bbbb:true,cccc:false});
+        this.displaySelect.setData(displayPermissionList);
     }
 
     /**
@@ -793,7 +790,7 @@ class ManagementDialog extends EventEmitter
      * 管理GUIを表示する
      * @param contents.dblist dbリスト
      */
-    show(userList, displayGroupList, contents, currentDB, maxHistoryNum) {
+    show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermission) {
         this.initAll();
         this.userList = userList;
         this.displayGroupList = displayGroupList;
@@ -815,7 +812,7 @@ class ManagementDialog extends EventEmitter
         this.initPasswordGUI(contents);
         // 権限情報をGUIに反映.
 
-        this.initDisplayPermission(contents);
+        this.initDisplayPermission(contents,displayPermission);
 
         document.body.appendChild(this.dom);
     }
@@ -863,6 +860,6 @@ ManagementDialog.EVENT_CLOSE = "close";
 ManagementDialog.EVENT_CHANGE_HISTORY_NUM = "change_history_num";
 
 // 最大履歴保存数の適用
-ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION = "change_display_permission";
+ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "change_display_permission_list";
 
 export default ManagementDialog;

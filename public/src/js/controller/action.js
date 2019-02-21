@@ -823,12 +823,16 @@ class Action extends EventEmitter
      * @param {*} data windowData
      */
     changeDisplayPermission(data){
-        console.log("changeDisplayPermission",data);
         this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION, null, data);
     }
 
-    getDisplayPermissionList(){
-        this.emit(Action.EVENT_GET_DISPLAY_PERMISSION_LIST, null, null);
+    // storeのpermissionlistの更新
+    pushDisplayPermissionList(displayPermissionList){
+        this.emit(Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST, null, displayPermissionList);
+    }
+
+    changeDisplayPermissionList(displayPermissionList){
+        this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, displayPermissionList);
     }
 };
 
@@ -910,6 +914,7 @@ Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 
 Action.EVENT_CHANGE_DISPLAY_PERMISSION = "changeDisplayPermission";
-Action.EVENT_GET_DISPLAY_PERMISSION_LIST = "getDisplayPermissionList";
+Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST = "updateDisplayPermissionList";
+Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
 
 export default Action;

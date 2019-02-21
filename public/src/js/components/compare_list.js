@@ -49,19 +49,45 @@ class CompareList extends EventEmitter {
         this.dom.appendChild(frame);
     }
 
-    setData(object){
-        console.log(object)
+    convertStringToBoolean(object){
+        // redisはboolを持てない
+        for(let i in object){
+            if(object[i] === "true"){
+                object[i] = true;
+            }
+            if(object[i] === "false"){
+                object[i] = false;
+            }
+        }
+        return object;
+    }
+
+    convertBooleanToString(object){
         for(let i in object){
             if(object[i] === true){
+                object[i] = "true";
+            }
+            if(object[i] === false){
+                object[i] = "false";
+            }
+        }
+        return object;
+    }
+
+
+    setData(object){
+        let data = this.convertStringToBoolean(object)
+        for(let i in data){
+            if(data[i] === true){
                 this.leftSelect.add(i,i);
-            }else if(object[i] === false){
+            }else if(data[i] === false){
                 this.rightSelect.add(i,i);
             }
         }
     }
 
     getData(){
-        let result = [];
+        let result = {};
         let trueDisplays = this.leftSelect.getValues();
         for(let i in trueDisplays){
             result[trueDisplays[i]] = true;
@@ -70,7 +96,7 @@ class CompareList extends EventEmitter {
         for(let i in falseDisplays){
             result[falseDisplays[i]] = false;
         }
-
+        result = this.convertBooleanToString(result);
         return result;
     }
 

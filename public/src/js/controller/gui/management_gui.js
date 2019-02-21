@@ -129,9 +129,8 @@ class ManagementGUI
 		});
 
 		// ディスプレイ接続許可設定
-		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION, (err, data) => {
-			console.log("managementgui", data);
-			// this.action.changeDisplayPermission(logindata);
+		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, (err, displayPermissionList) => {
+			this.action.changeDisplayPermissionList(displayPermissionList);
 		});
 
 		this.action.reloadGlobalSetting();
@@ -147,10 +146,8 @@ class ManagementGUI
 		let contents = { dblist : this.dblist };
 		let currentDB = this.management.getCurrentDB();
 		let maxHistoryNum = this.management.getMaxHistoryNum();
-		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum);
-
-		this.action.getDisplayPermissionList();
-
+		let displayPermissionList = this.store.getDisplayPermissionList();
+		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermissionList);
 	}
 
 	close() {
