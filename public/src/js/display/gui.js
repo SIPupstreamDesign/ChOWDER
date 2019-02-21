@@ -44,11 +44,11 @@ class GUI extends EventEmitter {
                 if (this.store.isMeasureTimeEnable()) {
                 let menu = document.getElementsByClassName('head_mode_text')[0];
                 let button = new Button();
-                button.getDOM().value = "Download"
+                button.getDOM().value = "PerformanceLog"
                 button.on(Button.EVENT_CLICK, () => {
                     PerformanceLogger.save("performance_log.csv");
                 })
-                button.getDOM().style.marginRight = "200px"
+                button.getDOM().style.marginLeft = "50px";
                 menu.appendChild(button.getDOM());
             }
         })
@@ -593,7 +593,6 @@ class GUI extends EventEmitter {
         const whole = JSON.parse(JSON.stringify(Vscreen.getWhole()));
 
         let mime = "image/jpeg";
-        let previousElem = null;
         let previousImage = null;
         let isInitial = true;
 		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
@@ -617,6 +616,8 @@ class GUI extends EventEmitter {
                 }, whole);
                 let tileClassName = 'tile_index_' + String(tileIndex);
 
+                let previousElem = null;
+                // windowの中にあるか外にあるかで可視不可視判定
                 if (visible) {
                     if (elem && elem.getElementsByClassName(tileClassName).length > 0) {
                         previousElem = elem.getElementsByClassName(tileClassName)[0]
@@ -682,9 +683,15 @@ class GUI extends EventEmitter {
                                 return (err, data) => {
                                     if (err) { console.error(err); return; }
                                     let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
-                                    let blob = new Blob([data.contentData], {type: mime});
                                     let image = elem.getElementsByClassName(tileClassName)[0];
-                                    if (!previousImage) {
+                                    // assignTileImageを複数回呼ばれたときに、
+                                    // 既に読み込み済だった場合は読まないようにする
+                                    if (image.src.length > 0 && image.keyvalue && image.keyvalue === metaData.keyvalue) {
+                                        return;
+                                    } else {
+                                        image.keyvalue = metaData.keyvalue;
+                                    }
+                                    if (previousImage) {
                                         URL.revokeObjectURL(image.src);	
                                     }
                                     if (this.store.isMeasureTimeEnable()) {
@@ -695,18 +702,19 @@ class GUI extends EventEmitter {
                                             for (let n = 0; n < loadedTiles.length; ++n) {
                                                 if (!loadedTiles[n]) {
                                                     loaded = false;
-                                                    break;
+                                                    return;
                                                 }
                                             }
                                             if (loaded) {
-                                                loadedTiles = [false];
+                                                loadedTiles = null;
                                                 PerformanceLogger.logFromRegisterToShow("showTileImage", metaData);
                                             }
                                         }
                                     }
+                                    let blob = new Blob([data.contentData], {type: mime});
                                     image.src = URL.createObjectURL(blob);
                                 }
-                            })(loadedTiles.length-1)
+                            })(loadedTiles ? loadedTiles.length-1 : 0)
                         })
                     }
 
