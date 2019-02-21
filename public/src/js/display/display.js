@@ -68,6 +68,7 @@ class Display {
 			if (Validator.isLayoutType(metaData)) { return; }
 
 			if (metaData.type === 'tileimage') {
+				// 時系列画像が更新された（時系列データ切り替わり）など
 				this.gui.assignTileImage(metaData, contentData, true);
 			} else {
 				// コンテンツ登録&表示

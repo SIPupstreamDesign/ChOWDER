@@ -600,6 +600,8 @@ class GUI extends EventEmitter {
 		const ow = Number(metaData.orgWidth);
 		const oh = Number(metaData.orgHeight);
 
+        let tileCount = Number(metaData.ysplit) * Number(metaData.xsplit);
+        let loadedTiles = [];
         for (let i = 0; i < Number(metaData.ysplit); ++i) {
             for (let k = 0; k < Number(metaData.xsplit); ++k) {
                 request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
@@ -670,20 +672,41 @@ class GUI extends EventEmitter {
                             }
                         }
                     }
+
+                    loadedTiles.push(false);
                     
                     if (!previousImage || isReload) {
                         this.action.getTileContent({
                             request : request,
-                            callback :  (err, data) => {
-                                if (err) { console.error(err); return; }
-                                let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
-                                let blob = new Blob([data.contentData], {type: mime});
-                                let image = elem.getElementsByClassName(tileClassName)[0];
-                                if (!previousImage) {
-                                    URL.revokeObjectURL(image.src);	
+                            callback :  ((index) => {
+                                return (err, data) => {
+                                    if (err) { console.error(err); return; }
+                                    let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
+                                    let blob = new Blob([data.contentData], {type: mime});
+                                    let image = elem.getElementsByClassName(tileClassName)[0];
+                                    if (!previousImage) {
+                                        URL.revokeObjectURL(image.src);	
+                                    }
+                                    if (this.store.isMeasureTimeEnable()) {
+                                        image.onload = () => {
+                                            if (!loadedTiles) return;
+                                            loadedTiles[index] = true;
+                                            let loaded = true;
+                                            for (let n = 0; n < loadedTiles.length; ++n) {
+                                                if (!loadedTiles[n]) {
+                                                    loaded = false;
+                                                    break;
+                                                }
+                                            }
+                                            if (loaded) {
+                                                loadedTiles = [false];
+                                                PerformanceLogger.logFromRegisterToShow("showTileImage", metaData);
+                                            }
+                                        }
+                                    }
+                                    image.src = URL.createObjectURL(blob);
                                 }
-                                image.src = URL.createObjectURL(blob);
-                            }
+                            })(loadedTiles.length-1)
                         })
                     }
 
