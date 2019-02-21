@@ -53,7 +53,6 @@
             this.adminUserPrefix = "admin_user";
             this.frontPrefix = "tiled_server:t:";
             this.uuidPrefix = "invalid:";
-            this.displayPermission = "permission_login_displayid";
 
             this.socketidToHash = {};
             this.socketidToAccessAuthority = {};
@@ -2800,7 +2799,7 @@
          */
         setDisplayPermission(displayid, permission, callback){
             console.log("setDisplayPermission",displayid, permission)
-            this.textClient.hset(this.displayPermission, displayid, permission, (err)=>{
+            this.textClient.hset(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", displayid, permission, (err)=>{
                 if(err){console.error("error setDisplayPermission");}
                 callback();
             });
@@ -2813,14 +2812,14 @@
          * @param {Function} callback (string err, bool permission)=>{}
          */
         getDisplayPermission(displayid, callback){
-            this.textClient.hexists(this.displayPermission, displayid,(err, doesExists)=>{
+            this.textClient.hexists(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", displayid,(err, doesExists)=>{
                 if(err){
                     callback(err);
                 }else if(doesExists !== 1) {//存在しない
                     // console.log("getdisplaypermission : doesnt exist");
                     callback("this displayid isnt exists");
                 }else{
-                    this.textClient.hget(this.displayPermission, displayid, (err, reply)=>{
+                    this.textClient.hget(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", displayid, (err, reply)=>{
                         // console.log("getdisplaypermission : does exist",this.displayPermission, displayid, reply);
                         callback(err, reply);
                     });
@@ -2829,7 +2828,7 @@
         }
 
         getDisplayPermissionList(callback){
-            this.textClient.hgetall(this.displayPermission, (err, replies)=>{
+            this.textClient.hgetall(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", (err, replies)=>{
                 if(err){
                     callback(err);
                 }else {
@@ -2840,7 +2839,8 @@
 
         setDisplayPermissionList(displayPermissionList, callback){
             for(let i in displayPermissionList){
-                this.textClient.hset(this.displayPermission, i, displayPermissionList[i]);
+                console.log("DBname???????",this.uuidPrefix);
+                this.textClient.hset(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", i, displayPermissionList[i]);
             }
             callback();
         }
@@ -2852,7 +2852,7 @@
          * @param {Function} callback (string err, bool exists)=>{}
          */
         existsDisplayPermission(displayid, callback){
-            this.textClient.hexists(this.displayPermission, displayid,(err, doesExists)=>{
+            this.textClient.hexists(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", displayid,(err, doesExists)=>{
                 if(err){
                     callback(err);
                 }else if(doesExists !== 1) {//存在しない
