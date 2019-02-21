@@ -1077,8 +1077,8 @@
         }
 
         updateDisplayPermissionList(displayPermissionList, endCallback){
-            this.executer.setDisplayPermissionList(displayPermissionList,()=>{
-                endCallback();
+            this.executer.setDisplayPermissionList(displayPermissionList,(err,permissions)=>{
+                endCallback(err,permissions);
             })
         }
 

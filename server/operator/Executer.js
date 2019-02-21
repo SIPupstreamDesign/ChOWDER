@@ -2839,10 +2839,10 @@
 
         setDisplayPermissionList(displayPermissionList, callback){
             for(let i in displayPermissionList){
-                console.log("DBname???????",this.uuidPrefix);
-                this.textClient.hset(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", i, displayPermissionList[i]);
+                this.textClient.hset(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", i, displayPermissionList[i],(err,reply)=>{
+                    callback(err,displayPermissionList);
+                });
             }
-            callback();
         }
 
         /**

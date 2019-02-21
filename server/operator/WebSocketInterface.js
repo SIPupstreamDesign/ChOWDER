@@ -172,7 +172,7 @@
             });
 
             ws_connector.on(Command.ChangeDisplayPermissionList, (displayPermissionList, resultCallback, socketid)=>{
-                this.commandOperator.updateDisplayPermissionList(displayPermissionList, resultCallback);
+                this.commandOperator.updateDisplayPermissionList(displayPermissionList, this.post_pushDisplayPermissionList(ws));//管理画面用にローカルstoreを更新する
             });
 
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{
