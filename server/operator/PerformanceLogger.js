@@ -6,8 +6,12 @@
 (()=>{
     "use strict";
 
+    const path = require('path');
     const fs = require('fs');
     const ws_connector = require('../ws_connector.js');
+    const OUTPUT_DIR = './log';
+    const INCOMING_LOG = 'timestamp_incoming_log.csv';
+    const OUTGOING_LOG = 'timestamp_outgoing_log.csv';
 
     class PerformanceLogger {
         constructor() {
@@ -20,11 +24,34 @@
             this.incomingLog.end();
             this.outgoingLog.end();
         }
-        
+
         // 書き込みファイル準備
+        prepareLogFile(fullFileName) {
+            let filePath = path.join(OUTPUT_DIR, fullFileName);
+            if (!fs.existsSync(filePath)) {
+                return fs.createWriteStream(filePath);
+            }
+            let splits = fullFileName.split('.csv');
+            let dotSplits = splits[0].split(".");
+            let fileName = dotSplits[0];
+            if (dotSplits.length > 1) {
+                let num = Number(dotSplits[1]);
+                fileName += "." + ('0000' + (num + 1)).slice(-3);
+            } else {
+                fileName += ".0001";
+            }
+            return this.prepareLogFile(fileName + ".csv");
+        }
+        
+        // 書き込み準備
         prepareWriting() {
-            this.incomingLog = fs.createWriteStream('./timestamp_incoming_log.csv');
-            this.outgoingLog = fs.createWriteStream('./timestamp_outgoing_log.csv');
+            if (!fs.existsSync(OUTPUT_DIR)) {
+                fs.mkdirSync(OUTPUT_DIR);
+            }
+            this.incomingLog = this.prepareLogFile(INCOMING_LOG);
+            this.incomingLog.write("method,time,id,tile_index\n");
+            this.outgoingLog = this.prepareLogFile(OUTGOING_LOG);
+            this.outgoingLog.write("method,time,id\n");
         }
         
         // ws_connector.onをすり替え
@@ -40,10 +67,7 @@
                             // method, time, id, tile_index,
                             let row = method;
                             row += "," + new Date().toISOString();
-                            
-                            if (metaData && metaData.hasOwnProperty('id')) {
-                                row += "," + metaData.id;
-                            }
+                            row += "," + metaData.id;
                             if (metaData.hasOwnProperty('tile_index')) {
                                 row += "," + metaData.tile_index;
                             }
@@ -73,6 +97,7 @@
                 }
                 originalBroadcast(ws, method, args, resultCallback);
             };
+
         }
         
         /**
