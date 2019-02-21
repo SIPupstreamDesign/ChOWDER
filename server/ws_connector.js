@@ -44,7 +44,7 @@
 					console.log('Failed to create Metabinary');
 					ws_connection.sendUTF(JSON.stringify(result));
 				} else {
-					console.log("chowder_response", result.method);
+					//console.log("chowder_response", result.method);
 					ws_connection.sendBytes(metabin);
 				}
 			} else {
@@ -57,7 +57,7 @@
 					result.error = err;
 				}
 				result.result = res;
-				console.log("chowder_response", result.method);
+				//console.log("chowder_response", result.method);
 				ws_connection.sendUTF(JSON.stringify(result));
 			}
 		};
@@ -148,7 +148,7 @@
 			if (!data.type || data.type === 'utf8') {
 				try {
 					parsed = JSON.parse(data.utf8Data);
-					console.log("ws chowder_request : ", parsed.method);
+					//console.log("ws chowder_request : ", parsed.method);
 					// JSONRPCのidがなかった場合は適当なidを割り当てておく.
 					if (!parsed.hasOwnProperty('id')) {
 						parsed.id = util.generateUUID8();
@@ -165,7 +165,7 @@
 					if (!metaData.hasOwnProperty('id')) {
 						metaData.id = util.generateUUID8();
 					}
-					console.log("ws chowder_request : ", metaData.method);
+					//console.log("ws chowder_request : ", metaData.method);
 					eventBinaryMessage(ws_connection, metaData, contentData);
 				});
 			}
@@ -266,7 +266,7 @@
 
 			if (Command.hasOwnProperty(reqjson.method)) {
 				resultCallbacks[reqjson.id] = resultCallback;
-				if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast ws", method);}
+				//if(method !== 'UpdateMouseCursor'){console.log("chowder_response broadcast ws", method);}
 				for (let i = 0; i < ws.length; ++i) {
 					ws[i].broadcast(data);
 				}

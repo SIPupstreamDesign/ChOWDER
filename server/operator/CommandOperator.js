@@ -24,7 +24,7 @@
          * @param {Function} updateEndCallback コンテンツ差し替えした場合に終了時に呼ばれるコールバック
          */
         addContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
-            console.log("AddContent", metaData, binaryData);
+            console.log("AddContent", metaData);
 
             if (this.executer.isEditable(socketid, metaData.group)) {
                 if (metaData.hasOwnProperty('id') && metaData.id !== "") {
@@ -408,7 +408,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         updateMetaData(socketid, json, endCallback) {
-            console.log("UpdateMetaData:", json.length);
+            console.log("UpdateMetaData");
             let i,
                 metaData,
                 results = [],
@@ -1032,7 +1032,7 @@
                     endCallback("ユーザ名またはパスワードが正しくありません.");
                 }
             }
-            console.log("-----------login",data);
+            //console.log("-----------login",data);
             if(data.id === "Display"){
                 // ディスプレイは配信許可設定が必要
                 this.executer.existsDisplayPermission(data.displayid,(err, exists)=>{

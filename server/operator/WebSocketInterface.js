@@ -111,14 +111,12 @@
             ws_connector.on(Command.AddContent, (data, resultCallback, socketid)=>{
                 let metaData = data.metaData,
                     binaryData = data.contentData;
-                console.log(Command.AddContent);//, data);
                 this.commandOperator.addContent(socketid, metaData, binaryData, this.post_update(ws, resultCallback), this.post_updateContent(ws, resultCallback));
             });
 
             ws_connector.on(Command.AddTileContent, (data, resultCallback, socketid)=>{
                 let metaData = data.metaData,
                     binaryData = data.contentData;
-                console.log(Command.AddTileContent);//, data);
                 this.commandOperator.addTileContent(socketid, metaData, binaryData, this.post_addTileContent(ws, resultCallback), this.post_updateContent(ws, resultCallback));
             });
 
