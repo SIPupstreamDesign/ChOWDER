@@ -11,6 +11,8 @@ import VscreenUtil from '../common/vscreen_util.js';
 import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
 import VideoPlayer from '../components/video_player';
+import PerformanceLogger from './performance_logger';
+import Button from '../components/button';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -36,6 +38,20 @@ class GUI extends EventEmitter {
                 this.showDisplayID(data[i].id);
             }
         });
+
+        this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
+            // ログありのときはSettingMenuに保存ボタン付ける
+                if (this.store.isMeasureTimeEnable()) {
+                let menu = document.getElementsByClassName('head_mode_text')[0];
+                let button = new Button();
+                button.getDOM().value = "Download"
+                button.on(Button.EVENT_CLICK, () => {
+                    PerformanceLogger.save("performance_log.csv");
+                })
+                button.getDOM().style.marginRight = "200px"
+                menu.appendChild(button.getDOM());
+            }
+        })
 
         // 上部メニュー
         this.headMenu = null;
@@ -98,7 +114,7 @@ class GUI extends EventEmitter {
                 setTimeout(hideMenuFunc, 3000);
             }
         });
-        
+
         // メニュー設定
         let menuSetting = [
             {
@@ -396,11 +412,14 @@ class GUI extends EventEmitter {
         let blob = new Blob([contentData], {type: mime});
         if (elem && blob) {
             URL.revokeObjectURL(elem.src);
-            elem.onload = function () {
-                if (this.hasOwnProperty('time_register')) {
-                    console.debug(this.id,　"の登録から表示完了までの時間：",  (new Date() - new Date(this.time_register)) / 1000 + "秒");
+            elem.onload = () => {
+                if (this.store.isMeasureTimeEnable()) {
+                    if (metaData.hasOwnProperty('time_register')) {
+                        PerformanceLogger.log("showImage", metaData);
+                        PerformanceLogger.logFromRegisterToShow("showImage", metaData);
+                    }
                 }
-            }.bind(metaData);
+            };
             elem.src = URL.createObjectURL(blob);
         }
     }

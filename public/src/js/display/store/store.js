@@ -11,6 +11,7 @@ import Validator from '../../common/validator';
 import VscreenUtil  from '../../common/vscreen_util';
 import VideoStore from './video_store';
 import Receiver from './reciever';
+import PerformanceLogger from '../performance_logger';
 
 "use strict";
 
@@ -23,17 +24,18 @@ class Store extends EventEmitter
 		super();
 		this.action = action;
 
+		this.isInitialized_ = false;
         this.authority = null;
         this.windowData = null;
         this.metaDataDict = {};
         this.groupDict = {};
-
-        this.receiver = new Receiver(Connector, this, action);
-        this.videoStore = new VideoStore(Connector, this, action);
+        this.globalSetting = null;
+ 
+        // 接続時に遅延して初期化する
+        this.receiver = null;
+        this.videoStore = null;
 
         this.initEvents();
-
-        //this.reciever = new Receiver(Connector, store, action);
 
         this.onGetWindowData = this.onGetWindowData.bind(this);
         this.onGetMetaData = this.onGetMetaData.bind(this);
@@ -80,10 +82,34 @@ class Store extends EventEmitter
 		}
     };
 
+    initOtherStores(callback) {
+        // 全体設定を取得
+        Connector.send(Command.GetGlobalSetting, {}, (err, reply) => {
+            this.globalSetting = reply;
+            // パフォーマンス計測を初期化
+            if (this.isMeasureTimeEnable()) {
+                this.prepareMeasureTime();
+            }
+            this.receiver = new Receiver(Connector, this, this.action);
+            this.videoStore = new VideoStore(Connector, this, this.action);
+    
+            this.isInitialized_ = true;
+            if (callback) {
+                callback();
+            }
+        });
+    }
+
     _connect() {
         let isDisconnect = false;
         let client = Connector.connect(() => {
-                this.emit(Store.EVENT_CONNECT_SUCCESS, null);
+                if (!this.isInitialized_) {
+                    this.initOtherStores(() => {
+                        this.emit(Store.EVENT_CONNECT_SUCCESS, null);
+                    });
+                } else {
+                    this.emit(Store.EVENT_CONNECT_SUCCESS, null);
+                }
             }, (() => {
                 return (ev) => {
                     this.emit(Store.EVENT_CONNECT_FAILED, null);
@@ -103,6 +129,41 @@ class Store extends EventEmitter
                 this.emit(Store.EVENT_DISCONNECTED, null);
             };
         })(client));
+    }
+
+    // パフォーマンス計測のためにConnectorに細工をする
+    prepareMeasureTime() {
+        PerformanceLogger.init(this);
+        
+        // incomming
+        const orgOn = Connector.on;
+        Connector.on = (method, callback) => {
+            if (callback) {
+                let orgCallback = callback;
+                callback = (data, a, b, c, d) => {
+                    if (data instanceof Array) {
+                        PerformanceLogger.log(method, data[0]);
+                    }
+                    orgCallback(data, a, b, c, d);
+                }
+            }
+            orgOn(method, callback);
+        };
+
+        // outgoing
+        const orgSend = Connector.send;
+        Connector.send = (method, args, resultCallback) => {
+            let metaData = null;
+            if (args instanceof Array) {
+                metaData = args[0];
+            } else {
+                metaData = args ? args : null;
+            }
+            if (metaData && metaData.hasOwnProperty('id')) {
+                PerformanceLogger.log(method, metaData);
+            }
+            orgSend(method, args, resultCallback);
+        };
     }
 
     _login(data) {
@@ -489,6 +550,22 @@ class Store extends EventEmitter
         }
         return false;
     }
+
+	// パフォーマンス計算を行うかどうか
+	isMeasureTimeEnable() {
+		if (this.globalSetting && this.globalSetting.enableMeasureTime) {
+			return (String(this.globalSetting.enableMeasureTime) === "true");
+		}
+		return false;
+	}
+	// パフォーマンス計算用時間を生成して返す
+	fetchMeasureTime() {
+		let time = null;
+		if (this.isMeasureTimeEnable()) {
+			time = new Date().toISOString();
+		}
+		return time;
+	}
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
