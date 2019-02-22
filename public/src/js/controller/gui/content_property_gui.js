@@ -621,7 +621,16 @@ class ContentPropertyGUI extends EventEmitter {
 				this.clear(false);
 			});
 		}
-		let transx = document.getElementById('content_transform_x'), transy = document.getElementById('content_transform_y'), transw = document.getElementById('content_transform_w'), transh = document.getElementById('content_transform_h'), transz = document.getElementById('content_transform_z'), dlbtn = document.getElementById('download_button'), content_id = document.getElementById('content_id'), backup_area = document.getElementById("backup_area"), history_area = document.getElementById("history_area"), history_slider_area = document.getElementById("history_slider_area");
+		let transx = document.getElementById('content_transform_x');
+		let transy = document.getElementById('content_transform_y');
+		let transw = document.getElementById('content_transform_w');
+		let transh = document.getElementById('content_transform_h');
+		let transz = document.getElementById('content_transform_z');
+		let dlbtn = document.getElementById('download_button');
+		let content_id = document.getElementById('content_id');
+		let backup_area = document.getElementById("backup_area");
+		let history_area = document.getElementById("history_area");
+		let history_slider_area = document.getElementById("history_slider_area");
 		if (transx) {
 			transx.value = 0;
 			transx.disabled = true;

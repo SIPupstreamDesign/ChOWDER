@@ -62,7 +62,7 @@ let generateThumb = function(filepath, maxreso) {
  * @param {Function} forEach 各分割済バッファに対して行う処理、Promiseを返す必要あり
  * @returns {Promise<void>} 全分割処理が終了後resolve
  */
-let splitImage = function(filepath, xsplit, ysplit, parallels, forEach) {
+let splitImage = function(filepath, xsplit, ysplit, parallels, forEach, startLogFunc, endSplitLogFunc, logFunc) {
 	if (!fs.existsSync(filepath)) {
 		throw new Error(filepath + 'は存在しません。');
 	}
@@ -83,13 +83,20 @@ let splitImage = function(filepath, xsplit, ysplit, parallels, forEach) {
 				let y = iy * sizey;
 				let i = ix + iy * xsplit;
 				tasks[taskIndex] = tasks[taskIndex].then(function() {
+					if (startLogFunc) { startLogFunc(i); }
 					return image.extract({
 						left: x,
 						top: y,
 						width: Math.min(sizex, width - x),
 						height: Math.min(sizey, height - y)
 					}).toBuffer().then(function(buffer) {
+						if (endSplitLogFunc) { endSplitLogFunc(i); }
 						return forEach(buffer, i);
+					}).then(function () {
+						return new Promise(function(resolve) {
+							if (logFunc) { logFunc(); }
+							resolve();
+						});
 					});
 				});
 				taskIndex = (taskIndex + 1) % parallels;

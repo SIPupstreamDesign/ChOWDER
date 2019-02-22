@@ -79,7 +79,51 @@ if (!fs.existsSync(imagePath)) {
 }
 console.log('Image file: ' + imagePath);
 
+// == パフォーマンス計算用 ==============================================
 let enableMeasureTime = false;
+const OUTPUT_DIR = path.join(__dirname, "./log");
+// パフォーマンス計算用時間を生成して返す
+function fetchMeasureTime() {
+	return new Date().toISOString();
+}
+let startTime = fetchMeasureTime();
+let logStream = null;
+// 書き込みファイル準備
+function prepareLogFile(fullFileName) {
+	let filePath = path.join(OUTPUT_DIR, fullFileName);
+	if (!fs.existsSync(filePath)) {
+		return fs.createWriteStream(filePath);
+	}
+	let splits = fullFileName.split('.csv');
+	let dotSplits = splits[0].split(".");
+	let fileName = dotSplits[0];
+	if (dotSplits.length > 1) {
+		let num = Number(dotSplits[1]);
+		fileName += "." + ('0000' + (num + 1)).slice(-3);
+	} else {
+		fileName += ".0001";
+	}
+	return prepareLogFile(fileName + ".csv");
+}
+// 書き込み
+function savePerformanceLog(label, time, tileIndex) {
+	if (!logStream) {
+		if (!fs.existsSync(OUTPUT_DIR)) {
+			fs.mkdirSync(OUTPUT_DIR);
+		}
+		const fileName = "tileimage_log" + "_"+ config.contentid + ".csv";
+		logStream = prepareLogFile(fileName);
+		logStream.write("label,time,id,tileIndex,\n");
+	}
+	let row = label;
+	row += "," + time;
+	row += "," + config.contentid;
+	if (tileIndex !== undefined) {
+		row += "," + String(tileIndex);
+	}
+	row += "," + "\n";
+	logStream.write(row);
+}
 
 // == beginning of main procedure ==============================================
 let wsWrapper = new WebSocketWrapper();
@@ -107,10 +151,17 @@ wsWrapper.connect(config.url).then(function() {
 	}
 	enableMeasureTime = String(parsed.result.enableMeasureTime) === "true";
 
+	if (enableMeasureTime) {
+		savePerformanceLog("StartGenerateThumbnail", fetchMeasureTime());
+	}
 	// == generate thumbnail =====================================================
 	return imageProcessor.generateThumb(imagePath, config.thumbsize || 1920);
 }).then(function(thumb) {
 	console.log('Thumbnail generated');
+
+	if (enableMeasureTime) {
+		savePerformanceLog("EndGenerateThumbnail", fetchMeasureTime());
+	}
 
 	// == request group id =======================================================
 	return wsWrapper.sendUTF('GetGroupList', {}).then(function(parsed) {
@@ -150,6 +201,7 @@ wsWrapper.connect(config.url).then(function() {
 		};
 		if (enableMeasureTime) {
 			metaData.time_register = new Date().toISOString();
+			savePerformanceLog("Start_AddHistoricalContent", fetchMeasureTime());
 		}
 		// == send thumbnail =======================================================
 		return wsWrapper.sendBinary('AddHistoricalContent', metaData, thumb.buffer);
@@ -163,6 +215,8 @@ wsWrapper.connect(config.url).then(function() {
 	// == split the image ========================================================
 	let historyId = parsed.result.history_id;
 	let n = config.xsplit * config.ysplit;
+
+	let isImageSplitting = true;
 	imageProcessor.splitImage(imagePath, config.xsplit, config.ysplit, 8, function(buffer, i) {
 		readline.cursorTo(process.stdout, 0);
 		process.stdout.write('Tiled image processing: ' + ((i + 1) / n * 100.0).toFixed(0) + '%');
@@ -174,13 +228,31 @@ wsWrapper.connect(config.url).then(function() {
 		};
 		if (enableMeasureTime) {
 			metaData.time_register = new Date().toISOString();
+			savePerformanceLog("Start_AddTileContent", fetchMeasureTime());
 		}
+		
 		// == send each image fragment =============================================
 		return wsWrapper.sendBinary('AddTileContent', metaData, buffer);
+	}, (i) => {
+		if (enableMeasureTime) {
+			savePerformanceLog("Start_ImageSplit", fetchMeasureTime(), i);
+		}
+	}, (i) => {
+		if (enableMeasureTime) {
+			savePerformanceLog("End_ImageSplit", fetchMeasureTime(), i);
+		}
+	}, (i) => {
+		if (enableMeasureTime) {
+			savePerformanceLog("End_AddTileContent", fetchMeasureTime(), i);
+		}
 	}).then(function() {
 		console.log();
 		console.log('Done');
 
+		if (enableMeasureTime) {
+			savePerformanceLog("End_AddHistoricalContent", fetchMeasureTime());
+			savePerformanceLog("TotalDuration", (new Date(fetchMeasureTime()) - new Date(startTime)) / 1000 + "秒");
+		}
 		wsWrapper.disconnect();
 	});
 });

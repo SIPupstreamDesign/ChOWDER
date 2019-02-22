@@ -46,7 +46,7 @@ window.onkeydown = (evt) => {
 			history_up.click();
 		}
 	}
-	if (evt.keyCode === 39) {
+	if (evt.keyCode === 39) { // →
 		let history_down  = document.getElementById('history_down');
 		if (history_down && history_down.style.display !== "none") {
 			history_down.click();
