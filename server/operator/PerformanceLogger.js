@@ -6,23 +6,43 @@
 (()=>{
     "use strict";
 
+    const InCommingMethodToMeaning = {
+        AddHistoricalContent : "時系列画像を追加開始",
+        AddTileContent : "タイルを追加",
+        GetContent : "コンテンツを取得",
+        GetTileContent : "タイルを取得"
+    };
+
+    const ResponseMethodToMeaning = {
+        GetContent : "コンテンツを送信",
+        GetTileContent : "タイルを送信"
+    };
+    
+    const BroadcastMethodToMeaning = {
+        UpdateContent : "新規コンテンツ通知"
+    };
+    
     const path = require('path');
     const fs = require('fs');
     const ws_connector = require('../ws_connector.js');
     const OUTPUT_DIR = './log';
-    const INCOMING_LOG = 'timestamp_incoming_log.csv';
-    const OUTGOING_LOG = 'timestamp_outgoing_log.csv';
-
+    const ALL_LOG = 'timestamp_log.csv';
+    /*
+    const INCOMING_LOG = 'timestamp_incoming.csv';
+    const RESPONSE_LOG = 'timestamp_response.csv';
+    const BROADCAST_LOG = 'timestamp_broadcast.csv';
+    */
     class PerformanceLogger {
         constructor() {
             this.enableMeasureTime = false;
-            this.incomingLog = null;
-            this.outgoingLog = null;
+            this.logStream = null;
+            //this.broadcastLog = null;
         }
 
         release() {
-            this.incomingLog.end();
-            this.outgoingLog.end();
+            this.logStream.end();
+            //this.responseLog.end();
+            //this.broadcastLog.end();
         }
 
         // 書き込みファイル準備
@@ -36,7 +56,7 @@
             let fileName = dotSplits[0];
             if (dotSplits.length > 1) {
                 let num = Number(dotSplits[1]);
-                fileName += "." + ('0000' + (num + 1)).slice(-3);
+                fileName += "." + ('0000' + (num + 1)).slice(-4);
             } else {
                 fileName += ".0001";
             }
@@ -48,14 +68,21 @@
             if (!fs.existsSync(OUTPUT_DIR)) {
                 fs.mkdirSync(OUTPUT_DIR);
             }
-            this.incomingLog = this.prepareLogFile(INCOMING_LOG);
-            this.incomingLog.write("method,time,id,tile_index\n");
-            this.outgoingLog = this.prepareLogFile(OUTGOING_LOG);
-            this.outgoingLog.write("method,time,id\n");
+            this.logStream = this.prepareLogFile(ALL_LOG);
+            this.logStream.write('\uFEFF');
+            this.logStream.write("type,label,method,time,id,tile_index,\n");
+            /*
+            this.responseLog = this.prepareLogFile(RESPONSE_LOG);
+            this.responseLog.write('\uFEFF');
+            this.responseLog.write("label,method,time,id,tile_index,\n");
+            this.broadcastLog = this.prepareLogFile(BROADCAST_LOG);
+            this.broadcastLog.write('\uFEFF');
+            this.broadcastLog.write("label,method,time,id,\n");
+            */
         }
         
-        // ws_connector.onをすり替え
         prepareLog() {
+            // ws_connector.onをすり替え
             const originalOn = ws_connector.on;
             ws_connector.on = (method, callback) => {
                 originalOn(method, (data, resultCallback, socketid) => {
@@ -63,33 +90,53 @@
                         let metaData = null;
                         if (data.hasOwnProperty('metaData') && data.metaData) {
                             metaData = data.metaData;
-    
-                            // method, time, id, tile_index,
-                            let row = method;
-                            row += "," + new Date().toISOString();
-                            row += "," + metaData.id;
-                            if (metaData.hasOwnProperty('tile_index')) {
-                                row += "," + metaData.tile_index;
+                        }
+                        if (data.hasOwnProperty('id')) {
+                            metaData = data;
+                        }
+                        if (metaData) {
+                            if (InCommingMethodToMeaning.hasOwnProperty(method)) {
+                                let label = InCommingMethodToMeaning[method];
+
+                                // type, label, method, time, id, tile_index,
+                                let row = "request";
+                                row += "," + label;
+                                row += "," + method;
+                                row += "," + new Date().toISOString();
+                                row += "," + metaData.id;
+                                if (metaData.hasOwnProperty('tile_index')) {
+                                    row += "," + metaData.tile_index;
+                                }
+                                row += "," + "\n";
+        
+                                this.logStream.write(row);
                             }
-                            row += "," + "\n";
-    
-                            this.incomingLog.write(row);
                         }
                     } catch(e) {
                     }
                     callback(data, resultCallback, socketid);
                 });
             };
+
+            // ws_connector.broadcastをすり替え
             const originalBroadcast = ws_connector.broadcast;
             ws_connector.broadcast = (ws, method, args, resultCallback) => {
                 try {
 
                     if (args !== undefined && args && args.hasOwnProperty('id')) {
-                        let row = method;
-                        row += "," + new Date().toISOString();
-                        row += "," + args.id;
-                        row += "," + "\n";
-                        this.outgoingLog.write(row);
+                        
+                        if (BroadcastMethodToMeaning.hasOwnProperty(method)) {
+                            let label = BroadcastMethodToMeaning[method];
+
+                            // label, method, time, id, tile_index,
+                            let row = "broadcast";
+                            row += "," + label;
+                            row += "," + method;
+                            row += "," + new Date().toISOString();
+                            row += "," + args.id;
+                            row += "," + "\n";
+                            this.logStream.write(row);
+                        }
                     }
 
                 } catch(e) {
@@ -97,7 +144,30 @@
                 }
                 originalBroadcast(ws, method, args, resultCallback);
             };
+        }
 
+        writeResponseLog(method, res) {
+            if (res && ResponseMethodToMeaning.hasOwnProperty(method)) {
+                let metaData = null;
+                if (res instanceof Array) {
+                    metaData = res[0];
+                } else {
+                    metaData = res;
+                }
+                if (metaData.hasOwnProperty('id')) {
+                    let label = ResponseMethodToMeaning[method];
+                    let row = "response";
+                    row += "," + label;
+                    row += "," + method;
+                    row += "," + new Date().toISOString();
+                    row += "," + metaData.id;
+                    if (metaData.hasOwnProperty('tile_index')) {
+                        row += "," + metaData.tile_index;
+                    }
+                    row += "," + "\n";
+                    this.logStream.write(row);
+                }
+            }
         }
         
         /**
@@ -113,6 +183,10 @@
                 // ws_connector.onをすり替え
                 this.prepareLog();
             }
+        }
+        
+        isEnableMeasureTime() {
+            return this.enableMeasureTime;
         }
     };
     

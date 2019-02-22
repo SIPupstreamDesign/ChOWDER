@@ -23,12 +23,13 @@ class PerformanceLogger
         if (MethodToMeaning.hasOwnProperty(method)) {
             let message = MethodToMeaning[method]
                 + "," + method
-                + "," + metaData.id
                 + "," +  this.store.fetchMeasureTime()
+                + "," + metaData.id
                 + ",";
 
-            if (metaData.hasOwnProperty('tile_index'))
-            message += metaData.tile_index + ",";
+            if (metaData.hasOwnProperty('tile_index')) {
+                message += metaData.tile_index + ",";
+            }
             console.debug(message);
             this.logText += message + "\n";
         }
@@ -38,8 +39,8 @@ class PerformanceLogger
         if (!this.store) return;
         let message = "登録から表示完了までの時間" 
             + "," + method
-            + "," + metaData.id 
             + "," + (new Date() - new Date(metaData.time_register)) / 1000 + "秒" 
+            + "," + metaData.id 
             + ",";
         console.debug(message);
         this.logText += message + "\n";
@@ -47,7 +48,8 @@ class PerformanceLogger
 
     save(filename) {
         let bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-        let blob = new Blob([bom, this.logText], {type: 'text/csv'});
+        let text = "label,method,id,time,tile_index,\n" + this.logText;
+        let blob = new Blob([bom, text], {type: 'text/csv'});
 
         let url = (window.URL || window.webkitURL);
         let blobUrl = url.createObjectURL(blob);

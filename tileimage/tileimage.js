@@ -82,6 +82,18 @@ console.log('Image file: ' + imagePath);
 // == パフォーマンス計算用 ==============================================
 let enableMeasureTime = false;
 const OUTPUT_DIR = path.join(__dirname, "./log");
+const MethodToMeaning = {
+	StartGenerateThumbnail : "サムネイル取得開始",
+	EndGenerateThumbnail : "サムネイル取得終了",
+	Start_AddHistoricalContent : "時系列画像を追加開始",
+	Start_ImageSplit : "画像分割開始",
+	End_ImageSplit : "画像分割終了",
+	Start_AddTileContent : "タイルの追加開始",
+	End_AddTileContent : "タイルの追加終了",
+	End_AddHistoricalContent : "時系列画像の追加終了",
+	TotalDuration : "送信開始から終了までの時間",
+};
+
 // パフォーマンス計算用時間を生成して返す
 function fetchMeasureTime() {
 	return new Date().toISOString();
@@ -99,7 +111,7 @@ function prepareLogFile(fullFileName) {
 	let fileName = dotSplits[0];
 	if (dotSplits.length > 1) {
 		let num = Number(dotSplits[1]);
-		fileName += "." + ('0000' + (num + 1)).slice(-3);
+		fileName += "." + ('0000' + (num + 1)).slice(-4);
 	} else {
 		fileName += ".0001";
 	}
@@ -113,9 +125,10 @@ function savePerformanceLog(label, time, tileIndex) {
 		}
 		const fileName = "tileimage_log" + "_"+ config.contentid + ".csv";
 		logStream = prepareLogFile(fileName);
+		logStream.write('\uFEFF');
 		logStream.write("label,time,id,tileIndex,\n");
 	}
-	let row = label;
+	let row = MethodToMeaning[label];
 	row += "," + time;
 	row += "," + config.contentid;
 	if (tileIndex !== undefined) {

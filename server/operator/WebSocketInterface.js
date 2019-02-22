@@ -7,10 +7,23 @@
     "use strict";
     const ws_connector = require('./../ws_connector.js');
     const Command = require('./../command.js');
+    const PerformanceLogger = require('./PerformanceLogger');
 
     class WebsocketInterface{ // クライアントとやり取りするAPI部分
         constructor(commandOperator){
             this.commandOperator = commandOperator;
+        }
+
+        log(method, resultCallback) {
+            if (PerformanceLogger.isEnableMeasureTime()) {
+                let orgCallback = resultCallback;
+                let swapCallback = (err, res, binary) => {
+                    PerformanceLogger.writeResponseLog(method, res);
+                    return orgCallback(err, res, binary);
+                };
+                return swapCallback;
+            }
+            return resultCallback;
         }
 
         /**
@@ -35,11 +48,11 @@
             });
 
             ws_connector.on(Command.GetContent, (data, resultCallback, socketid)=>{
-                this.commandOperator.getContent(socketid, data, resultCallback);
+                this.commandOperator.getContent(socketid, data, this.log(Command.GetContent, resultCallback));
             });
 
             ws_connector.on(Command.GetTileContent, (data, resultCallback, socketid)=>{
-                this.commandOperator.getTileContent(socketid, data, resultCallback);
+                this.commandOperator.getTileContent(socketid, data, this.log(Command.GetTileContent, resultCallback));
             });
 
             ws_connector.on(Command.UpdateMetaData, (data, resultCallback, socketid)=>{
