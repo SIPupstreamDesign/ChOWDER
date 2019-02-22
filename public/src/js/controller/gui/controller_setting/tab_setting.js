@@ -16,7 +16,7 @@ function TabSetting() {
             id : Constants.TabIDDisplay,
             onclick : () => { this.changeTab('Display'); },
             active : true,
-        }, 
+        },
         {
             name : "Content",
             id : Constants.TabIDContent,
@@ -29,6 +29,10 @@ function TabSetting() {
             name : "Layout",
             id : Constants.TabIDLayout,
             onclick : () => { this.changeTab('Layout'); }
+        },{
+            name : "Notice",
+            id : Constants.TabIDNotice,
+            onclick : () => { this.changeTab('Notice'); },
         }
     ]
 }

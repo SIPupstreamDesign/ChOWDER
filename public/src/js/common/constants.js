@@ -35,6 +35,7 @@ const Constants = {
 	TabIDContent : "content_tab",
 	TabIDSearch : "search_tab",
 	TabIDLayout : "layout_tab",
+	TabIDNotice : "notice_tab",
 	SnapTypeFree : "free",
 	SnapTypeGrid : "grid",
 	SnapTypeDisplay : "display",
@@ -43,7 +44,7 @@ const Constants = {
 	TemporaryBoundClass : "temporary_bounds",
 	// Firefox 1.0+
 	IsFirefox : typeof InstallTrigger !== 'undefined',
-	// Safari 3.0+ "[object HTMLElementConstructor]" 
+	// Safari 3.0+ "[object HTMLElementConstructor]"
 	IsSafari : /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
 	// Internet Explorer 6-11
 	IsIE : /*@cc_on!@*/false || !!document.documentMode,
@@ -51,7 +52,7 @@ const Constants = {
 	IsEdge : !(/*@cc_on!@*/false || !!document.documentMode) && !!window.StyleMedia,
 	// Chrome 1+
 	IsChrome : /Google Inc/.test(navigator.vendor),
-	IsMobile : navigator.userAgent.indexOf('iPad') > 0 
+	IsMobile : navigator.userAgent.indexOf('iPad') > 0
 		|| navigator.userAgent.indexOf('Android') > 0
 		|| navigator.userAgent.indexOf('iPhone') > 0
 		|| navigator.userAgent.indexOf('iPod') > 0

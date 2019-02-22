@@ -6,6 +6,7 @@
 import Constants from '../../common/constants'
 import GroupBox from '../../components/group_box'
 import SearchBox from '../../components/search_box.js';
+import NoticeBox from '../../components/notice_box.js';
 import Tabs from '../../components/tabs'
 import Store from '../store/store'
 import Validator from '../../common/validator'
@@ -88,8 +89,8 @@ class GroupGUI
 					}]
 			}, GroupBox.TYPE_CONTENT);
         this.initGroupBoxEvents(this.layoutBox);
-        
-        
+
+
         // Searchテキストが入力された
         this.store.on(Store.EVENT_SEARCH_INPUT_CHANGED, (err, text, groups) => {
             let foundContents = [];
@@ -137,10 +138,28 @@ class GroupGUI
             this.searchBox.setSearchResult(foundContents);
             // TODO
         });
+
+
+        // Displayから接続要求が飛んできた
+        this.noticeBox = new NoticeBox(document.getElementById('notice_tab_box'));
+
+        this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
+            this.noticeBox.addDisplayPermission(logindata.displayid);
+			// console.log("gui",logindata);
+			// const setting = {
+			// 	name : "connection request : " + logindata.displayid,
+			// }
+
+			// InputDialog.showOKCancelInput(setting,(result)=>{
+			// 	logindata.permission = result;
+			// 	this.action.changeDisplayPermission(logindata);
+			// });
+		});
+
     }
 
 	/**
-	 * グループのタブに対するイベントを設定. 
+	 * グループのタブに対するイベントを設定.
 	 */
 	initGroupBoxEvents(groupBox) {
 		groupBox.on("group_delete", (err, groupID) => {
@@ -164,7 +183,7 @@ class GroupGUI
                 groupID : groupID
             });
 		});
-		
+
 		groupBox.on("group_down", (err, groupID) => {
             this.action.moveDownGroup({
                 groupID : groupID
@@ -204,22 +223,24 @@ class GroupGUI
             })
         });
     }
-    
+
     update(contentSetting, displaySetting, searchSetting, layoutSetting) {
         document.getElementById('display_tab_box').innerHTML = "";
+        // @@@@@@@@@@@@@@@@@@@@
         this.displayBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('display_tab_box'), displaySetting, GroupBox.TYPE_DISPLAY);
         this.initGroupBoxEvents(this.displayBox);
-    
+
         document.getElementById('content_tab_box').innerHTML = "";
         this.groupBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('content_tab_box'), contentSetting, GroupBox.TYPE_CONTENT);
         this.initGroupBoxEvents(this.groupBox);
-    
+
         this.searchBox = new SearchBox(this.store.getManagement().getAuthorityObject(), document.getElementById('search_tab_box'), searchSetting, GroupBox.TYPE_CONTENT);
         this.initSearchBoxEvents(this.searchBox);
-    
+
         document.getElementById('layout_tab_box').innerHTML = "";
         this.layoutBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('layout_tab_box'), layoutSetting, GroupBox.TYPE_CONTENT);
         this.initGroupBoxEvents(this.layoutBox);
+
     }
 
 
@@ -235,7 +256,7 @@ class GroupGUI
 		this.getContentBox().selectTab(group_id);
 		this.getLayoutBox().selectTab(group_id);
     }
-    
+
     getDisplayBox() {
         return this.displayBox;
     }

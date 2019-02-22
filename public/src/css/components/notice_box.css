@@ -1,0 +1,7 @@
+.notice_box_leaf {
+    display : inline-block;
+    width : 200px;
+    height : 40px;
+    border : 1px solid red;
+    margin :20px;
+}
