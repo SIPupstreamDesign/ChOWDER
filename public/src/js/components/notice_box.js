@@ -29,23 +29,26 @@ class NoticeBox extends EventEmitter {
         let buttonWrap = document.createElement("span");
         buttonWrap.classList.add("notice_box_button_wrap");
 
-        let acceptButton = document.createElement("span");
-        acceptButton.classList.add("notice_box_accept_button");
-        acceptButton.textContent = "accept";
-        acceptButton.addEventListener("click",(err)=>{
+        notice.acceptButton = document.createElement("span");
+        notice.acceptButton.classList.add("notice_box_accept_button");
+        notice.acceptButton.textContent = "accept";
+        notice.acceptCallback = (err)=>{
             logindata.permission = true;
             this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, logindata);
-        },false);
+        };
+        notice.acceptButton.addEventListener("click",notice.acceptCallback,false);
 
-        let rejectButton = document.createElement("span");
-        rejectButton.classList.add("notice_box_reject_button");
-        rejectButton.textContent = "reject";
-        rejectButton.addEventListener("click",(err)=>{
+        notice.rejectButton = document.createElement("span");
+        notice.rejectButton.classList.add("notice_box_reject_button");
+        notice.rejectButton.textContent = "reject";
+        notice.rejectCallback = (err)=>{
             logindata.permission = false;
             this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, logindata);
-        },false);
-        buttonWrap.appendChild(acceptButton);
-        buttonWrap.appendChild(rejectButton);
+        };
+        notice.rejectButton.addEventListener("click", notice.rejectCallback,false);
+
+        buttonWrap.appendChild(notice.acceptButton);
+        buttonWrap.appendChild(notice.rejectButton);
 
         notice.dom.appendChild(buttonWrap);
 
@@ -57,10 +60,10 @@ class NoticeBox extends EventEmitter {
     deleteDisplayPermissionLeaf(logindata){
         for(let i in this.noticeList){
             if(this.noticeList[i].logindata.displayid === logindata.displayid){
-                // console.log("deletDisplayPermissionLeaf",this.noticeList[i].logindata.displayid);
+                this.noticeList[i].rejectButton.removeEventListener("click",this.noticeList[i].rejectCallback);
+                this.noticeList[i].acceptButton.removeEventListener("click",this.noticeList[i].acceptCallback);
                 this.container.removeChild(this.noticeList[i].dom);
                 this.noticeList.splice(i,1);
-                // TODO:leak?
             }
         }
     }
