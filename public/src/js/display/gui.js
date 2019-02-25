@@ -585,10 +585,6 @@ class GUI extends EventEmitter {
      * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
      */
     assignTileImage(metaData, contentData, isReload) {
-        // 全タイル読み込み済じゃなかったら返る
-        if (String(metaData.tile_finished) !== "true") {
-            return;
-        }
         let elem = document.getElementById(metaData.id);
         let tileIndex = 0;
         let request = JSON.parse(JSON.stringify(metaData));
@@ -603,22 +599,23 @@ class GUI extends EventEmitter {
 		const ow = Number(metaData.orgWidth);
 		const oh = Number(metaData.orgHeight);
 
-        let tileCount = Number(metaData.ysplit) * Number(metaData.xsplit);
         let loadedTiles = [];
         for (let i = 0; i < Number(metaData.ysplit); ++i) {
             for (let k = 0; k < Number(metaData.xsplit); ++k) {
                 request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
+                const tileClassName = 'tile_index_' + String(tileIndex);
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
-                let width = Math.round(rect.w / ow * orgRect.w);
-                let height = Math.round(rect.h / oh * orgRect.h);
+                let width = Math.round(rect.width / ow * orgRect.w);
+                let height = Math.round(rect.height / oh * orgRect.h);
                 if (width === 0 || height === 0) { continue; }
+
+                // windowの中にあるか外にあるかで可視不可視判定
                 let visible = !VscreenUtil.isOutsideWindow({
-                    x : rect.x, 
-                    y : rect.y,
-                    w : width,
-                    h : height
+                    posx: rect.posx, 
+                    posy : rect.posy,
+                    width : width,
+                    height : height
                 }, whole);
-                let tileClassName = 'tile_index_' + String(tileIndex);
 
                 let previousElem = null;
                 // windowの中にあるか外にあるかで可視不可視判定
@@ -634,7 +631,11 @@ class GUI extends EventEmitter {
                         elem = document.getElementById(metaData.id);
                         VscreenUtil.resizeTileImages(elem, metaData);
                     }
-                    
+                                
+                    // 全タイル読み込み済じゃなかったら返る
+                    if (String(metaData.tile_finished) !== "true") {
+                        continue;
+                    }
                     if (isInitial
                         && metaData.hasOwnProperty('reductionWidth')
                         && metaData.hasOwnProperty('reductionHeight')) {
@@ -678,10 +679,10 @@ class GUI extends EventEmitter {
                         }
                     }
 
+                    // 全タイル読み込み完了時にログを出すため
                     loadedTiles.push(false);
                     
                     if (!previousImage || isReload) {
-                        let tileClassName = 'tile_index_' + String(tileIndex);
                         let image = elem.getElementsByClassName(tileClassName)[0];
                         // assignTileImageを複数回呼ばれたときに、
                         // 既に読み込み済だった場合は読まないようにする
@@ -693,13 +694,12 @@ class GUI extends EventEmitter {
 
                         this.action.getTileContent({
                             request : request,
-                            callback :  ((index) => {
+                            callback :  ((index, image) => {
                                 return (err, data) => {
                                     if (err) {
                                         console.error(err);
                                         return;
                                     }
-                                    let image = elem.getElementsByClassName(tileClassName)[0];
                                     if (previousImage) {
                                         URL.revokeObjectURL(image.src);	
                                     }
@@ -716,6 +716,7 @@ class GUI extends EventEmitter {
                                                     return;
                                                 }
                                             }
+                                            // 全タイル読み込み完了時にログを出す
                                             if (loaded) {
                                                 loadedTiles = null;
                                                 PerformanceLogger.logFromRegisterToShow("showTileImage", metaData);
@@ -725,7 +726,7 @@ class GUI extends EventEmitter {
                                     let blob = new Blob([data.contentData], {type: mime});
                                     image.src = URL.createObjectURL(blob);
                                 }
-                            })(loadedTiles ? loadedTiles.length-1 : 0)
+                            })(loadedTiles ? loadedTiles.length-1 : 0, image)
                         })
                     }
 
