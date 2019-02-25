@@ -107,8 +107,12 @@ class Store extends EventEmitter
 
     _login(data) {
         Connector.send(Command.Login, data, (err, reply) => {
-            this.authority = reply.authority;
-            this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+            if(reply === null){
+                console.log("This Display was rejected.");
+            }else{
+                this.authority = reply.authority;
+                this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+            }
         });
     }
 
