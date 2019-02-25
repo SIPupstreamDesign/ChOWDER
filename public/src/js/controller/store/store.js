@@ -549,6 +549,7 @@ Store.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";
 
 Store.EVENT_ASK_DISPLAY_PERMISSION = "ask_display_permission";
+Store.EVENT_FINISH_DISPLAY_PERMISSION = "finish_display_permission";
 
 // operation
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";

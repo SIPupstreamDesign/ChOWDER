@@ -144,17 +144,17 @@ class GroupGUI
         this.noticeBox = new NoticeBox(document.getElementById('notice_tab_box'));
 
         this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
-            this.noticeBox.addDisplayPermission(logindata.displayid);
-			// console.log("gui",logindata);
-			// const setting = {
-			// 	name : "connection request : " + logindata.displayid,
-			// }
-
-			// InputDialog.showOKCancelInput(setting,(result)=>{
-			// 	logindata.permission = result;
-			// 	this.action.changeDisplayPermission(logindata);
-			// });
-		});
+            this.noticeBox.addDisplayPermissionLeaf(logindata);
+        });
+        this.store.on(Store.EVENT_FINISH_DISPLAY_PERMISSION, (err, logindata)=>{
+            this.noticeBox.deleteDisplayPermissionLeaf(logindata);
+        });
+        this.noticeBox.on(NoticeBox.EVENT_NOTICE_ACCEPT,(err, logindata)=>{
+            this.action.changeDisplayPermission(logindata);
+        });
+        this.noticeBox.on(NoticeBox.EVENT_NOTICE_REJECT,(err, logindata)=>{
+            this.action.changeDisplayPermission(logindata);
+        });
 
     }
 
@@ -226,7 +226,6 @@ class GroupGUI
 
     update(contentSetting, displaySetting, searchSetting, layoutSetting) {
         document.getElementById('display_tab_box').innerHTML = "";
-        // @@@@@@@@@@@@@@@@@@@@
         this.displayBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('display_tab_box'), displaySetting, GroupBox.TYPE_DISPLAY);
         this.initGroupBoxEvents(this.displayBox);
 

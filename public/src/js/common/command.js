@@ -75,7 +75,7 @@ const Command = {
 	// ディスプレイ配信許可設定
 	AskDisplayPermission : "AskDisplayPermission", // サーバからコントローラへ、許可していいか聞く
 	ChangeDisplayPermission : "ChangeDisplayPermission", // サーバが許可設定の変更を受け取る
-	AcceptDisplayPermission : "AcceptDisplayPermission", // サーバがディスプレイへ、許可されたことを伝える
+	FinishDisplayPermission : "FinishDisplayPermission", // サーバがディスプレイへ、許可されたことを伝える
 	PushDisplayPermissionList : "PushDisplayPermissionList", // 許可設定一覧に変更があったとき、コントローラへ送る
 	ChangeDisplayPermissionList : "ChangeDisplayPermissionList", // サーバが許可設定の変更リストを受け取る
 };

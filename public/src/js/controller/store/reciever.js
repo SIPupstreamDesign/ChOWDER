@@ -304,10 +304,15 @@ class Receiver
         });
 
         // ディスプレイ配信許可設定を聞かれた
-        this.connector.on(Command.AskDisplayPermission, (data) => {
-            let logindata = data;
-            console.log("AskDisplayPermission",logindata);
+        this.connector.on(Command.AskDisplayPermission, (logindata) => {
+            // console.log("AskDisplayPermission",logindata);
             this.store.emit(Store.EVENT_ASK_DISPLAY_PERMISSION, null, logindata);
+        });
+
+        // ディスプレイ配信許可設定で許可/拒否されたとき
+        this.connector.on(Command.FinishDisplayPermission, (logindata) => {
+            // console.log("FinishDisplayPermission", logindata);
+            this.store.emit(Store.EVENT_FINISH_DISPLAY_PERMISSION, null, logindata);
         });
 
     }

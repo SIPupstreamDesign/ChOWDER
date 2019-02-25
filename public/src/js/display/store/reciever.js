@@ -65,16 +65,18 @@ class Receiver
             this.action.update({ updateType : "group" });
         });
 
-        // ディスプレイ配信許可設定で許可されたとき
-        this.connector.on(Command.AcceptDisplayPermission, (err, data) => {
-            console.log("AcceptDisplayPermission", data);
-            let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
-            this.connector.send(Command.Login, request, (err, reply) => {
-                this.store.setAuthority(reply.authority);
-                this.action.update({ updateType : 'window'});
-                this.action.update({ updateType : 'group'});
-                this.action.update({ updateType : 'content'});
-            });
+        // ディスプレイ配信許可設定で許可/拒否されたとき
+        this.connector.on(Command.FinishDisplayPermission, (data) => {
+            console.log("FinishDisplayPermission", data);
+            if(data.displayid === this.store.getWindowID()){ // 自分向けか？
+                let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
+                this.connector.send(Command.Login, request, (err, reply) => {
+                    this.store.setAuthority(reply.authority);
+                    this.action.update({ updateType : 'window'});
+                    this.action.update({ updateType : 'group'});
+                    this.action.update({ updateType : 'content'});
+                });
+            }
         });
 
         // 権限変更時に送られてくる

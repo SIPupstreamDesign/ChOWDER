@@ -31,7 +31,7 @@ class GroupBox extends EventEmitter {
 	TabIDtoID(tabid) {
 		return tabid.split(this.container.id + "_").join("");
 	}
-	
+
 	/**
 	 * 設定ボタンの追加
 	 * @param {*} parent

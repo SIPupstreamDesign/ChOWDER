@@ -166,7 +166,7 @@
             });
             ws_connector.on(Command.ChangeDisplayPermission, (logindata, resultCallback, socketid)=>{
                 this.commandOperator.updateDisplayPermission(logindata, (err, logindata)=>{
-                    this.post_acceptDisplayPermission(ws)(err,logindata);
+                    this.post_finishDisplayPermission(ws)(err,logindata);
                     this.commandOperator.getDisplayPermissionList(this.post_pushDisplayPermissionList(ws));//管理画面用にローカルstoreを更新する
                 });
             });
@@ -449,9 +449,9 @@
             }
         }
 
-        post_acceptDisplayPermission(ws) {
+        post_finishDisplayPermission(ws) {
             return (err, data)=>{
-                ws_connector.broadcast(ws, Command.AcceptDisplayPermission, data);
+                ws_connector.broadcast(ws, Command.FinishDisplayPermission, data);
             }
         }
 

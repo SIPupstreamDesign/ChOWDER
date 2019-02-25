@@ -1,7 +1,47 @@
 .notice_box_leaf {
-    display : inline-block;
-    width : 200px;
-    height : 40px;
-    border : 1px solid red;
+    display : flex;
+    width : 250px;
+    height : 50px;
+    border : 1px solid rgb(255, 255, 255);
     margin :20px;
+}
+
+.notice_box_id_wrap {
+    display: flex;
+    width : 150px;
+    justify-content: center;
+    align-items: center;
+}
+
+.notice_box_button_wrap {
+    display: flex;
+    width : 100px;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.notice_box_accept_button {
+    border-radius: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    border : 1px solid rgb(5, 252, 108);
+}
+.notice_box_accept_button:hover{
+    color: #222222;
+    background-color: #EEFFEE;
+}
+
+.notice_box_reject_button {
+    border-radius: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    border : 1px solid rgb(252, 5, 5);
+}
+.notice_box_reject_button:hover{
+    color: #222222;
+    background-color: #FFEEEE;
 }
