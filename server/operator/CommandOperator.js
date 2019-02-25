@@ -24,7 +24,7 @@
          * @param {Function} updateEndCallback コンテンツ差し替えした場合に終了時に呼ばれるコールバック
          */
         addContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
-            console.log("AddContent", metaData, binaryData);
+            //console.log("AddContent", metaData);
 
             if (this.executer.isEditable(socketid, metaData.group)) {
                 if (metaData.hasOwnProperty('id') && metaData.id !== "") {
@@ -78,7 +78,7 @@
          * @param {Function} finishCallback 全タイル追加終了時に呼ばれるコールバック
          */
         addTileContent(socketid, metaData, binaryData, endCallback, finishCallback) {
-            console.log("AddTileContent", metaData);
+            //console.log("AddTileContent", metaData);
 
             if (this.executer.isEditable(socketid, metaData.group)) {
                 if (metaData.hasOwnProperty('id') && metaData.id !== "") {
@@ -96,7 +96,10 @@
                                 if (meta.hasOwnProperty("xsplit") &&  meta.hasOwnProperty("ysplit")) {
                                     tileCount = Number(meta.xsplit) * Number(meta.ysplit);
                                 }
-                                this.executer.addTileContent(meta, binaryData, tileCount, endCallback, finishCallback);
+                                this.executer.addTileContent(meta, binaryData, tileCount, endCallback, () => {
+                                    // タイル画像が全て登録された.
+                                    finishCallback(null, meta);
+                                });
                             });
                         } else {
                             if (endCallback) {
@@ -168,31 +171,37 @@
                     // Historyから復元して取得
                     if (meta.hasOwnProperty('history_id')) {
 
-                        // Historyの場合はpreview画像をバイナリに入れて返す.
-                        // サムネイル画像がある場合はリストに入れて返す
-                        // その後タイル画像リクエストが複数回client→serverにくる.
-                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "thumbnail", (err, thumbnail)=>{
-                            let metaList = [];
-                            let binaryList = [];
-                            if (!err && thumbnail[0]) {
-                                metaList.push({
-                                    type : "thumbnail"
-                                });
-                                binaryList.push(thumbnail[0]);
+                        // Historyの場合は全タイル登録済かどうかのフラグを返す
+                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished)=>{
+                            if (!err && tile_finished[0]) {
+                                meta.tile_finished = String(tile_finished[0]) === "true";
                             }
-                            this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "preview", (err, preview)=>{
-                                if (binaryList.length > 0) {
-                                    if (!err && preview[0]) {
-                                        metaList.unshift(meta);
-                                        binaryList.unshift(preview[0]);
-                                    }
-                                    endCallback(err, metaList, binaryList);
-                                } else {
-                                    endCallback(err, meta, preview[0]);
+                            // Historyの場合はpreview画像をバイナリに入れて返す.
+                            // サムネイル画像がある場合はリストに入れて返す
+                            // その後タイル画像リクエストが複数回client→serverにくる.
+                            this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "thumbnail", (err, thumbnail)=>{
+                                let metaList = [];
+                                let binaryList = [];
+                                if (!err && thumbnail[0]) {
+                                    metaList.push({
+                                        type : "thumbnail"
+                                    });
+                                    binaryList.push(thumbnail[0]);
                                 }
+                                this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "preview", (err, preview)=>{
+                                    if (binaryList.length > 0) {
+                                        if (!err && preview[0]) {
+                                            metaList.unshift(meta);
+                                            binaryList.unshift(preview[0]);
+                                        }
+                                        endCallback(err, metaList, binaryList);
+                                    } else {
+                                        endCallback(err, meta, preview[0]);
+                                    }
+                                });
                             });
+                            return;
                         });
-                        return;
                     }
 
                     // コンテンツの返却.
@@ -261,7 +270,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         getTileContent(socketid, json, endCallback) {
-            console.log("GetTileContent:" + json.id);
+            //console.log("GetTileContent:" + json.id);
             if (!this.executer.isViewable(socketid, json.group)) {
                 endCallback("access denied");
                 return;
@@ -319,7 +328,17 @@
             console.log("GetMetaData:" + json.type + "/" + json.id);
             this.executer.getMetaData(socketid, json.type, json.id, (err, metaData)=>{
                 if (endCallback) {
-                    endCallback(err, metaData);
+                    // Historyの場合は全タイル登録済かどうかのフラグを返す
+                    if (metaData && metaData.hasOwnProperty('history_id')) {
+                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + metaData.history_id, "tile_finished", (err, tile_finished)=>{
+                            if (!err && tile_finished[0]) {
+                                metaData.tile_finished = String(tile_finished[0]) === "true";
+                            }
+                            endCallback(err, metaData);
+                        });
+                    } else {
+                        endCallback(err, metaData);
+                    }
                 }
             });
         }
@@ -408,7 +427,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         updateMetaData(socketid, json, endCallback) {
-            console.log("UpdateMetaData:", json.length);
+            console.log("UpdateMetaData");
             let i,
                 metaData,
                 results = [],
@@ -1032,7 +1051,7 @@
                     endCallback("ユーザ名またはパスワードが正しくありません.");
                 }
             }
-            console.log("-----------login",data);
+            //console.log("-----------login",data);
             if(data.id === "Display"){
                 // ディスプレイは配信許可設定が必要
                 this.executer.existsDisplayPermission(data.displayid,(err, exists)=>{

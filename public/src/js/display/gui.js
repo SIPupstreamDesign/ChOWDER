@@ -11,6 +11,8 @@ import VscreenUtil from '../common/vscreen_util.js';
 import Menu from '../components/menu.js';
 import DisplayUtil from './display_util';
 import VideoPlayer from '../components/video_player';
+import PerformanceLogger from './performance_logger';
+import Button from '../components/button';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -36,6 +38,20 @@ class GUI extends EventEmitter {
                 this.showDisplayID(data[i].id);
             }
         });
+
+        this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
+            // ログありのときはSettingMenuに保存ボタン付ける
+                if (this.store.isMeasureTimeEnable()) {
+                let menu = document.getElementsByClassName('head_mode_text')[0];
+                let button = new Button();
+                button.getDOM().value = "PerformanceLog"
+                button.on(Button.EVENT_CLICK, () => {
+                    PerformanceLogger.save("performance_log.csv");
+                })
+                button.getDOM().style.marginLeft = "50px";
+                menu.appendChild(button.getDOM());
+            }
+        })
 
         // 上部メニュー
         this.headMenu = null;
@@ -98,7 +114,7 @@ class GUI extends EventEmitter {
                 setTimeout(hideMenuFunc, 3000);
             }
         });
-        
+
         // メニュー設定
         let menuSetting = [
             {
@@ -396,11 +412,14 @@ class GUI extends EventEmitter {
         let blob = new Blob([contentData], {type: mime});
         if (elem && blob) {
             URL.revokeObjectURL(elem.src);
-            elem.onload = function () {
-                if (this.hasOwnProperty('time_register')) {
-                    console.debug(this.id,　"の登録から表示完了までの時間：",  (new Date() - new Date(this.time_register)) / 1000 + "秒");
+            elem.onload = () => {
+                if (this.store.isMeasureTimeEnable()) {
+                    if (metaData.hasOwnProperty('time_register')) {
+                        PerformanceLogger.log("showImage", metaData);
+                        PerformanceLogger.logFromRegisterToShow("showImage", metaData);
+                    }
                 }
-            }.bind(metaData);
+            };
             elem.src = URL.createObjectURL(blob);
         }
     }
@@ -574,28 +593,32 @@ class GUI extends EventEmitter {
         const whole = JSON.parse(JSON.stringify(Vscreen.getWhole()));
 
         let mime = "image/jpeg";
-        let previousElem = null;
         let previousImage = null;
         let isInitial = true;
 		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
 		const ow = Number(metaData.orgWidth);
 		const oh = Number(metaData.orgHeight);
 
+        let loadedTiles = [];
         for (let i = 0; i < Number(metaData.ysplit); ++i) {
             for (let k = 0; k < Number(metaData.xsplit); ++k) {
                 request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
+                const tileClassName = 'tile_index_' + String(tileIndex);
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
-                let width = Math.round(rect.w / ow * orgRect.w);
-                let height = Math.round(rect.h / oh * orgRect.h);
+                let width = Math.round(rect.width / ow * orgRect.w);
+                let height = Math.round(rect.height / oh * orgRect.h);
                 if (width === 0 || height === 0) { continue; }
-                let visible = !VscreenUtil.isOutsideWindow({
-                    x : rect.x, 
-                    y : rect.y,
-                    w : width,
-                    h : height
-                }, whole);
-                let tileClassName = 'tile_index_' + String(tileIndex);
 
+                // windowの中にあるか外にあるかで可視不可視判定
+                let visible = !VscreenUtil.isOutsideWindow({
+                    posx: rect.posx, 
+                    posy : rect.posy,
+                    width : width,
+                    height : height
+                }, whole);
+
+                let previousElem = null;
+                // windowの中にあるか外にあるかで可視不可視判定
                 if (visible) {
                     if (elem && elem.getElementsByClassName(tileClassName).length > 0) {
                         previousElem = elem.getElementsByClassName(tileClassName)[0]
@@ -608,7 +631,11 @@ class GUI extends EventEmitter {
                         elem = document.getElementById(metaData.id);
                         VscreenUtil.resizeTileImages(elem, metaData);
                     }
-                    
+                                
+                    // 全タイル読み込み済じゃなかったら返る
+                    if (String(metaData.tile_finished) !== "true") {
+                        continue;
+                    }
                     if (isInitial
                         && metaData.hasOwnProperty('reductionWidth')
                         && metaData.hasOwnProperty('reductionHeight')) {
@@ -651,20 +678,55 @@ class GUI extends EventEmitter {
                             }
                         }
                     }
+
+                    // 全タイル読み込み完了時にログを出すため
+                    loadedTiles.push(false);
                     
                     if (!previousImage || isReload) {
+                        let image = elem.getElementsByClassName(tileClassName)[0];
+                        // assignTileImageを複数回呼ばれたときに、
+                        // 既に読み込み済だった場合は読まないようにする
+                        if (image.src.length > 0 && image.keyvalue && image.keyvalue === metaData.keyvalue) {
+                            return;
+                        } else {
+                            image.keyvalue = metaData.keyvalue;
+                        }
+
                         this.action.getTileContent({
                             request : request,
-                            callback :  (err, data) => {
-                                if (err) { console.error(err); return; }
-                                let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
-                                let blob = new Blob([data.contentData], {type: mime});
-                                let image = elem.getElementsByClassName(tileClassName)[0];
-                                if (!previousImage) {
-                                    URL.revokeObjectURL(image.src);	
+                            callback :  ((index, image) => {
+                                return (err, data) => {
+                                    if (err) {
+                                        console.error(err);
+                                        return;
+                                    }
+                                    if (previousImage) {
+                                        URL.revokeObjectURL(image.src);	
+                                    }
+                                    if (this.store.isMeasureTimeEnable()) {
+                                        image.onload = () => {
+                                            if (!loadedTiles) { 
+                                                return;
+                                            }
+                                            loadedTiles[index] = true;
+                                            let loaded = true;
+                                            for (let n = 0; n < loadedTiles.length; ++n) {
+                                                if (!loadedTiles[n]) {
+                                                    loaded = false;
+                                                    return;
+                                                }
+                                            }
+                                            // 全タイル読み込み完了時にログを出す
+                                            if (loaded) {
+                                                loadedTiles = null;
+                                                PerformanceLogger.logFromRegisterToShow("showTileImage", metaData);
+                                            }
+                                        }
+                                    }
+                                    let blob = new Blob([data.contentData], {type: mime});
+                                    image.src = URL.createObjectURL(blob);
                                 }
-                                image.src = URL.createObjectURL(blob);
-                            }
+                            })(loadedTiles ? loadedTiles.length-1 : 0, image)
                         })
                     }
 

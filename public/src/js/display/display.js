@@ -68,6 +68,7 @@ class Display {
 			if (Validator.isLayoutType(metaData)) { return; }
 
 			if (metaData.type === 'tileimage') {
+				// 時系列画像が更新された（時系列データ切り替わり）など
 				this.gui.assignTileImage(metaData, contentData, true);
 			} else {
 				// コンテンツ登録&表示
@@ -179,6 +180,10 @@ class Display {
 							this.doneGetContent(err, reply);
 							this.gui.toggleMark(document.getElementById(json.id), metaData);
 						});
+					} else if (json.type === "tileimage") {
+						// window範囲外で非表示になっているタイルが
+						// window範囲内に来ていた場合は、その部分のタイルを読み込む
+						this.gui.assignTileImage(json, null, false);
 					} else if (!elem) {
 						// コンテンツがロードされるまで枠を表示しておく.
 						this.gui.showBoundingBox(json);
@@ -188,11 +193,7 @@ class Display {
 							this.gui.toggleMark(document.getElementById(json.id), metaData);
 						});
 					}
-					if (json.type === "tileimage") {
-						// window範囲外で非表示になっているタイルが
-						// window範囲内に来ていた場合は、その部分のタイルを読み込む
-						this.gui.assignTileImage(json, null, false);
-					}
+					
 					elem = document.getElementById(json.id);
 					VscreenUtil.assignMetaData(elem, json, false, groupDict);
 				}
