@@ -585,6 +585,10 @@ class GUI extends EventEmitter {
      * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
      */
     assignTileImage(metaData, contentData, isReload) {
+        // 全タイル読み込み済じゃなかったら返る
+        if (String(metaData.tile_finished) !== "true") {
+            return;
+        }
         let elem = document.getElementById(metaData.id);
         let tileIndex = 0;
         let request = JSON.parse(JSON.stringify(metaData));
@@ -677,26 +681,33 @@ class GUI extends EventEmitter {
                     loadedTiles.push(false);
                     
                     if (!previousImage || isReload) {
+                        let tileClassName = 'tile_index_' + String(tileIndex);
+                        let image = elem.getElementsByClassName(tileClassName)[0];
+                        // assignTileImageを複数回呼ばれたときに、
+                        // 既に読み込み済だった場合は読まないようにする
+                        if (image.src.length > 0 && image.keyvalue && image.keyvalue === metaData.keyvalue) {
+                            return;
+                        } else {
+                            image.keyvalue = metaData.keyvalue;
+                        }
+
                         this.action.getTileContent({
                             request : request,
                             callback :  ((index) => {
                                 return (err, data) => {
-                                    if (err) { console.error(err); return; }
-                                    let tileClassName = 'tile_index_' + String(data.metaData.tile_index);
-                                    let image = elem.getElementsByClassName(tileClassName)[0];
-                                    // assignTileImageを複数回呼ばれたときに、
-                                    // 既に読み込み済だった場合は読まないようにする
-                                    if (image.src.length > 0 && image.keyvalue && image.keyvalue === metaData.keyvalue) {
+                                    if (err) {
+                                        console.error(err);
                                         return;
-                                    } else {
-                                        image.keyvalue = metaData.keyvalue;
                                     }
+                                    let image = elem.getElementsByClassName(tileClassName)[0];
                                     if (previousImage) {
                                         URL.revokeObjectURL(image.src);	
                                     }
                                     if (this.store.isMeasureTimeEnable()) {
                                         image.onload = () => {
-                                            if (!loadedTiles) return;
+                                            if (!loadedTiles) { 
+                                                return;
+                                            }
                                             loadedTiles[index] = true;
                                             let loaded = true;
                                             for (let n = 0; n < loadedTiles.length; ++n) {

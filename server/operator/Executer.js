@@ -1762,7 +1762,7 @@
                                         let tileCount = 0;
                                         for (let i = 0; i < reply.length; ++i) {
                                             let key = String(reply[i]);
-                                            if (key !== "preview" && key !== "thumbnail") {
+                                            if (key !== "preview" && key !== "thumbnail" && key !== "tile_finished") {
                                                 ++tileCount;
                                             }
                                         }
@@ -1770,7 +1770,10 @@
                                             // 時系列データのある時刻に対する全タイルの登録が終わった.
                                             // クライアントサイドに通知を送る
                                             if (finishCallback) {
-                                                finishCallback(err, metaData, contentData);
+                                                let kv = { tile_finished : true }
+                                                this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, () => {
+                                                    finishCallback(err, metaData, contentData);
+                                                });
                                             }
                                         }
                                         if (endCallback) {
@@ -2133,7 +2136,8 @@
                             this.storeHistoricalData(socketid, metaData, (err, reply, history_id)=>{
                                 Thumbnail.createThumbnail(metaData, contentData, (err, thumbnail)=>{
                                     let kv = {
-                                        preview : contentData
+                                        preview : contentData,
+                                        tile_finished : false, // 全タイル登録済かどうかのフラグ
                                     }
                                     if (!err && thumbnail) {
                                         kv.thumbnail = thumbnail
@@ -2163,7 +2167,8 @@
                         this.storeHistoricalData(socketid, metaData, (err, reply, history_id)=>{
                             Thumbnail.createThumbnail(metaData, contentData, (err, thumbnail)=>{
                                 let kv = {
-                                    preview : contentData
+                                    preview : contentData,
+                                    tile_finished : false, // 全タイル登録済かどうかのフラグ
                                 }
                                 if (!err && thumbnail) {
                                     kv.thumbnail = thumbnail
