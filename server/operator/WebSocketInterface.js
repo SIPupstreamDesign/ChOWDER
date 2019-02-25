@@ -14,11 +14,11 @@
             this.commandOperator = commandOperator;
         }
 
-        log(method, resultCallback) {
+        log(method, resultCallback, socketid) {
             if (PerformanceLogger.isEnableMeasureTime()) {
                 let orgCallback = resultCallback;
                 let swapCallback = (err, res, binary) => {
-                    PerformanceLogger.writeResponseLog(method, res);
+                    PerformanceLogger.writeResponseLog(method, res, socketid);
                     return orgCallback(err, res, binary);
                 };
                 return swapCallback;
@@ -48,11 +48,11 @@
             });
 
             ws_connector.on(Command.GetContent, (data, resultCallback, socketid)=>{
-                this.commandOperator.getContent(socketid, data, this.log(Command.GetContent, resultCallback));
+                this.commandOperator.getContent(socketid, data, this.log(Command.GetContent, resultCallback, socketid));
             });
 
             ws_connector.on(Command.GetTileContent, (data, resultCallback, socketid)=>{
-                this.commandOperator.getTileContent(socketid, data, this.log(Command.GetTileContent, resultCallback));
+                this.commandOperator.getTileContent(socketid, data, this.log(Command.GetTileContent, resultCallback, socketid));
             });
 
             ws_connector.on(Command.UpdateMetaData, (data, resultCallback, socketid)=>{

@@ -70,7 +70,7 @@
             }
             this.logStream = this.prepareLogFile(ALL_LOG);
             this.logStream.write('\uFEFF');
-            this.logStream.write("type,label,method,time,id,tile_index,\n");
+            this.logStream.write("type,label,method,time,id,tile_index,client_id,\n");
             /*
             this.responseLog = this.prepareLogFile(RESPONSE_LOG);
             this.responseLog.write('\uFEFF');
@@ -98,7 +98,7 @@
                             if (InCommingMethodToMeaning.hasOwnProperty(method)) {
                                 let label = InCommingMethodToMeaning[method];
 
-                                // type, label, method, time, id, tile_index,
+                                // type, label, method, time, id, tile_index, client_id
                                 let row = "request";
                                 row += "," + label;
                                 row += "," + method;
@@ -106,8 +106,15 @@
                                 row += "," + metaData.id;
                                 if (metaData.hasOwnProperty('tile_index')) {
                                     row += "," + metaData.tile_index;
+                                } else {
+                                    row += ",";
                                 }
-                                row += "," + "\n";
+                                if (this.executer.socketidToUserID.hasOwnProperty(socketid)) {
+                                    row += "," + this.executer.socketidToUserID[socketid];
+                                } else {
+                                    row += ",";
+                                }
+                                row += "\n";
         
                                 this.logStream.write(row);
                             }
@@ -134,6 +141,7 @@
                             row += "," + method;
                             row += "," + new Date().toISOString();
                             row += "," + args.id;
+                            row += ",";
                             row += "," + "\n";
                             this.logStream.write(row);
                         }
@@ -146,7 +154,7 @@
             };
         }
 
-        writeResponseLog(method, res) {
+        writeResponseLog(method, res, socketid) {
             if (res && ResponseMethodToMeaning.hasOwnProperty(method)) {
                 let metaData = null;
                 if (res instanceof Array) {
@@ -163,8 +171,15 @@
                     row += "," + metaData.id;
                     if (metaData.hasOwnProperty('tile_index')) {
                         row += "," + metaData.tile_index;
+                    } else {
+                        row += ",";
                     }
-                    row += "," + "\n";
+                    if (this.executer.socketidToUserID.hasOwnProperty(socketid)) {
+                        row += "," + this.executer.socketidToUserID[socketid];
+                    } else {
+                        row += ",";
+                    }
+                    row += "\n";
                     this.logStream.write(row);
                 }
             }
@@ -187,6 +202,13 @@
         
         isEnableMeasureTime() {
             return this.enableMeasureTime;
+        }
+
+        /**
+         * executerの参照を設定
+         */
+        setExecuter(executer) {
+            this.executer = executer;
         }
     };
     

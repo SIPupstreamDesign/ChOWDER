@@ -191,6 +191,7 @@
 
 				// パフォーマンス計測用
 				if (settings && settings.hasOwnProperty('enableMeasureTime') && String(settings.enableMeasureTime) === "true" ) {
+					Logger.setExecuter(executer);
 					Logger.setEnableMeasureTime(true);
 				}
 			} catch (e) {
