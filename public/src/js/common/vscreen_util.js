@@ -143,13 +143,14 @@ class VscreenUtil
 		let rect = {};
 		let width = Number(metaData.orgWidth);
 		let height = Number(metaData.orgHeight);
-		let sizex = VscreenUtil.calcSplitSize(width, Number(metaData.xsplit));
-		let sizey = VscreenUtil.calcSplitSize(height, Number(metaData.ysplit));
+		// org座標系での幅高さ
+		let sizew = VscreenUtil.calcSplitSize(width, Number(metaData.xsplit));
+		let sizeh = VscreenUtil.calcSplitSize(height, Number(metaData.ysplit));
 		let scale = Number(metaData.width) / width;
-		rect.posx = Number(metaData.posx) + xindex * sizex * scale;
-		rect.posy = Number(metaData.posy) + yindex * sizey * scale;
-		rect.width = Math.min(sizex, width);
-		rect.height = Math.min(sizey, height);
+		rect.posx = Number(metaData.posx) + xindex * sizew * scale;
+		rect.posy = Number(metaData.posy) + yindex * sizeh * scale;
+		rect.width = Math.min(sizew, (width - xindex * sizew));
+		rect.height = Math.min(sizeh, (height - yindex * sizeh));
 		return rect;
 	}
 

@@ -491,7 +491,7 @@ class Store extends EventEmitter
     }
 
     setWindowData(windowData) {
-        if (this.windowData.id !== windowData.id) { console.error("hoge", windowData ); }
+        if (this.windowData.id !== windowData.id) { console.error("Error : mismatch window id", windowData ); }
         this.windowData = windowData;
     }
 

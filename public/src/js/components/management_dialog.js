@@ -363,7 +363,9 @@ class ManagementDialog extends EventEmitter
             }
         });
 
-        //changeDisableFunc();
+        let isDisableEdit = (currentDB === "default");
+        this.renameDBButton.getDOM().disabled = isDisableEdit;
+        this.deleteDBButton.getDOM().disabled = isDisableEdit;
 
         // DB新規
         this.newDBButton.on(Button.EVENT_CLICK, (err, evt) => {

@@ -1933,6 +1933,7 @@ class Controller {
 		if (this.store.getState().isSelectionRectShown() && reply) {
 			this.updateSelectionRect();
 		}
+		this.updateScreen(windowData);
 	}
 
 	/**

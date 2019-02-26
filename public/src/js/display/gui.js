@@ -578,13 +578,34 @@ class GUI extends EventEmitter {
         }
     }
 
+    assignTileReductionImage(metaData, contentData) {
+        if (metaData.hasOwnProperty('reductionWidth')
+            && metaData.hasOwnProperty('reductionHeight')) {
+
+            let mime = "image/jpeg";
+            let elem = document.getElementById(metaData.id);
+            if (!elem) {
+                this.regenerateTileElements(elem, metaData);
+                elem = document.getElementById(metaData.id);
+            }
+            let reductionElem = elem.getElementsByClassName('reduction_image')[0];
+        
+            // contentData(reduction data)を生成
+            // 解像度によらず生成する
+            if (!reductionElem.src.length === 0) {
+                URL.revokeObjectURL(reductionElem.src);	
+            }
+            let blob = new Blob([contentData], {type: mime});
+            reductionElem.src = URL.createObjectURL(blob);
+        }
+    }
 
     /**
      * タイル画像はassignContentではなくこちらでコンテンツ生成を行う。
      * @param {*} metaData 
      * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
      */
-    assignTileImage(metaData, contentData, isReload) {
+    assignTileImage(metaData, isReload) {
         let elem = document.getElementById(metaData.id);
         let tileIndex = 0;
         let request = JSON.parse(JSON.stringify(metaData));
@@ -636,24 +657,14 @@ class GUI extends EventEmitter {
                     if (String(metaData.tile_finished) !== "true") {
                         continue;
                     }
+
+                    // metadataの解像度がcontentData（縮小版画像）より小さいか調べる
+                    // aspectがreduction~と違う場合は、初期画像とは別解像度の画像に切り替わったと判断し、強制タイル表示
                     if (isInitial
                         && metaData.hasOwnProperty('reductionWidth')
                         && metaData.hasOwnProperty('reductionHeight')) {
 
                         let reductionElem = elem.getElementsByClassName('reduction_image')[0];
-                    
-                        // contentData(reduction data)を生成
-                        // 解像度によらず生成する
-                        if (reductionElem.src.length === 0 || isReload) {
-                            if (!reductionElem.src.length === 0) {
-                                URL.revokeObjectURL(reductionElem.src);	
-                            }
-                            let blob = new Blob([contentData], {type: mime});
-                            reductionElem.src = URL.createObjectURL(blob);
-                        }
-
-                        // metadataの解像度がcontentData（縮小版画像）より小さいか調べる
-                        // aspectがreduction~と違う場合は、初期画像とは別解像度の画像に切り替わったと判断し、強制タイル表示
                         let ew = Number(reductionElem.style.width.split("px").join(""));
                         let eh = Number(reductionElem.style.height.split("px").join(""));
                         let reductionAspect = Number(metaData.reductionWidth) / Number(metaData.reductionHeight);

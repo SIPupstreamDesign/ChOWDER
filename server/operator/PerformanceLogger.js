@@ -104,7 +104,7 @@
                                 row += "," + method;
                                 row += "," + new Date().toISOString();
                                 row += "," + metaData.id;
-                                if (metaData.hasOwnProperty('tile_index')) {
+                                if (method.indexOf('Tile') >= 0 && metaData.hasOwnProperty('tile_index')) {
                                     row += "," + metaData.tile_index;
                                 } else {
                                     row += ",";
@@ -169,7 +169,7 @@
                     row += "," + method;
                     row += "," + new Date().toISOString();
                     row += "," + metaData.id;
-                    if (metaData.hasOwnProperty('tile_index')) {
+                    if (method.indexOf('Tile') >= 0 && metaData.hasOwnProperty('tile_index')) {
                         row += "," + metaData.tile_index;
                     } else {
                         row += ",";

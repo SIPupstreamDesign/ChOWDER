@@ -736,7 +736,6 @@ class GUI extends EventEmitter
 	 */
 	toggleBurgerSubmenuAddContent(show, bottom) {
 		let container = this.contentMenu.getDOM().getElementsByClassName('burger_menu_submenu_add_content')[0];
-		console.error("hoge", container)
 		if (show) {
 			this.initContextPos();
 			container.style.display = "block";
