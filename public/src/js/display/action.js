@@ -21,10 +21,10 @@ class Action extends EventEmitter
 		}
 		super.emit(...arguments);
     }
-    
+
     /**
      * websocket接続
-     * @param {*} data 
+     * @param {*} data
      */
     connect(data) {
         this.emit(Action.EVENT_CONNECT, null, data);
@@ -32,7 +32,7 @@ class Action extends EventEmitter
 
     /**
      * ログイン
-     * @param {*} data 
+     * @param {*} data
      * {
      *  userList : userList,
      *  userid : "",
@@ -46,7 +46,7 @@ class Action extends EventEmitter
 
     /**
      * ログアウト
-     * @param {*} data 
+     * @param {*} data
      */
     logout(data) {
         this.emit(Action.EVENT_LOGOUT, null, data);
@@ -54,7 +54,7 @@ class Action extends EventEmitter
 
     /**
      * 指定した種類のデータをサーバから取得し更新
-     * @param {*} data 
+     * @param {*} data
      * {
      *     updateType : 'all' or 'window' or 'group' or 'content',
      *     targetID : 対象のコンテンツID. 一つのコンテンツだけ更新したい場合に入れる
@@ -66,7 +66,7 @@ class Action extends EventEmitter
 
     /**
      * DisplayIDの変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    id : DisplayID
      * }
@@ -78,7 +78,7 @@ class Action extends EventEmitter
     /**
      * windowのリサイズ.
      * サーバに保存されている現在のdisplayサイズを更新する
-     * @param {*} data 
+     * @param {*} data
      * {
      *    size : { w : , h : }
      * }
@@ -89,7 +89,7 @@ class Action extends EventEmitter
 
     /**
      * ページに読み込み済コンテンツの全削除. サーバー側のDBからは消さない.
-     * @param {*} data 
+     * @param {*} data
      */
     deleteAllElements(data) {
         this.emit(Action.EVENT_DELETE_ALL_ELEMENTS, null, data);
@@ -105,15 +105,15 @@ class Action extends EventEmitter
 
     /**
      * displayの登録
-     * @param {*} data 
+     * @param {*} data
      */
     registerWindow(data) {
         this.emit(Action.EVENT_REGISTER_WINDOW, null, data);
     }
-    
+
     /**
      * コンテンツのZインデックスを一番手前にする
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    targetID : 対象のコンテンツのID
      * }
@@ -124,7 +124,7 @@ class Action extends EventEmitter
 
     /**
      * コンテンツのTransformを変更
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    targetID : 対象のコンテンツのID
      *    x : x座標
@@ -137,7 +137,7 @@ class Action extends EventEmitter
 
     /**
      * webRTC開始リクエストを送る
-     * @param {*} data 
+     * @param {*} data
      * {
      *   metaData: metaData,
      *   request : "{ key : リクエストキー }" (リクエスト文字列).
@@ -150,7 +150,7 @@ class Action extends EventEmitter
 
     /**
      * タイルコンテンツの取得
-     * @param {*} data 
+     * @param {*} data
      * {
      *   request : "{ tile_index : タイル番号 }"
      * }

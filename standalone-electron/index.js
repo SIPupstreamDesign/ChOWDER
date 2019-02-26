@@ -9,6 +9,8 @@ var CONFIG = require('./conf.json');
 
 var tileWindows = {};
 
+const {ipcMain} = require("electron");
+
 /**
  * Convert map into query params string.
  * @param {Object} map Map of parameters you want to convert into
@@ -72,7 +74,10 @@ function createWindows() {
 			posy: windowProps.vda_position ? windowProps.vda_position[1] : undefined,
 			scale: windowProps.scale || undefined
 		});
-		
+		const pass = CONFIG.password
+		ipcMain.on("electron_login", (event,arg)=>{
+			event.sender.send("electron_password", pass);
+		});
 		window.loadURL(CONFIG.url + query);
 	}
 }

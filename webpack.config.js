@@ -1,5 +1,8 @@
 require('babel-polyfill');
 const path = require('path');
+const webpack = require('webpack');
+var NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
+var ExternalsPlugin = webpack.ExternalsPlugin
 
 const DEBUG = !process.argv.includes('--release');
 
@@ -52,5 +55,29 @@ module.exports = {
     open: true,
 	},
 	// 容量大きすぎるときの警告を出さないようにする
-  performance: { hints: false }
+	performance: { hints: false },
+	plugins: [
+		new webpack.NoEmitOnErrorsPlugin(),
+		new ExternalsPlugin('commonjs', [
+		'app',
+		'auto-updater',
+		'browser-window',
+		'content-tracing',
+		'dialog',
+		'global-shortcut',
+		'ipc',
+		'menu',
+		'menu-item',
+		'power-monitor',
+		'protocol',
+		'tray',
+		'remote',
+		'web-frame',
+		'clipboard',
+		'crash-reporter',
+		'screen',
+		'shell'
+		]),
+		new NodeTargetPlugin()
+	],
 };

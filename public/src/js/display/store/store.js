@@ -30,7 +30,7 @@ class Store extends EventEmitter
         this.metaDataDict = {};
         this.groupDict = {};
         this.globalSetting = null;
- 
+
         // 接続時に遅延して初期化する
         this.receiver = null;
         this.videoStore = null;
@@ -92,7 +92,7 @@ class Store extends EventEmitter
             }
             this.receiver = new Receiver(Connector, this, this.action);
             this.videoStore = new VideoStore(Connector, this, this.action);
-    
+
             this.isInitialized_ = true;
             if (callback) {
                 callback();
@@ -134,7 +134,7 @@ class Store extends EventEmitter
     // パフォーマンス計測のためにConnectorに細工をする
     prepareMeasureTime() {
         PerformanceLogger.init(this);
-        
+
         // incomming
         const orgOn = Connector.on;
         Connector.on = (method, callback) => {

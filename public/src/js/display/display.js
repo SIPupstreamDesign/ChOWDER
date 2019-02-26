@@ -193,7 +193,7 @@ class Display {
 							this.gui.toggleMark(document.getElementById(json.id), metaData);
 						});
 					}
-					
+
 					elem = document.getElementById(json.id);
 					VscreenUtil.assignMetaData(elem, json, false, groupDict);
 				}
@@ -299,9 +299,16 @@ class Display {
 			document.getElementById('preview_area').innerHTML = "";
 			this.action.update({ updateType : 'all'});
 
-			const login_option = { id : "Display", password : "", displayid : this.store.getWindowID() }
-			this.action.login(login_option);
+			let login_option = { id : "Display", password : "", displayid : this.store.getWindowID() }
 
+			window.electronLogin((isElectron,password)=>{
+				if(isElectron){
+					login_option.password = password;
+					this.action.login(login_option);
+				}else{
+					this.action.login(login_option);
+				}
+			});
 		});
 
 		this.store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {
