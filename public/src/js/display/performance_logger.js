@@ -27,7 +27,7 @@ class PerformanceLogger
                 + "," + metaData.id
                 + ",";
 
-            if (metaData.hasOwnProperty('tile_index')) {
+            if (method.indexOf('Tile') >= 0 && metaData.hasOwnProperty('tile_index')) {
                 message += metaData.tile_index + ",";
             }
             console.debug(message);

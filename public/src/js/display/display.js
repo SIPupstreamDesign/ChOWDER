@@ -69,7 +69,8 @@ class Display {
 
 			if (metaData.type === 'tileimage') {
 				// 時系列画像が更新された（時系列データ切り替わり）など
-				this.gui.assignTileImage(metaData, contentData, true);
+				this.gui.assignTileReductionImage(metaData, contentData);
+				this.gui.assignTileImage(metaData, true);
 			} else {
 				// コンテンツ登録&表示
 				this.gui.assignContent(metaData, contentData);
@@ -183,7 +184,19 @@ class Display {
 					} else if (json.type === "tileimage") {
 						// window範囲外で非表示になっているタイルが
 						// window範囲内に来ていた場合は、その部分のタイルを読み込む
-						this.gui.assignTileImage(json, null, false);
+						let elem = document.getElementById(json.id);
+						if (elem) {
+							this.gui.assignTileImage(json, false);
+						} else {
+							// 新規コンテンツロード.
+							Connector.send(Command.GetContent, metaData, (err, reply) => {
+								this.doneGetContent(err, reply);
+								let el = document.getElementById(metaData.id);
+								this.gui.toggleMark(el, metaData);
+								VscreenUtil.assignMetaData(el, metaData, false, groupDict);
+							});
+							return;
+						}
 					} else if (!elem) {
 						// コンテンツがロードされるまで枠を表示しておく.
 						this.gui.showBoundingBox(json);
