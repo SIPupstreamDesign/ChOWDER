@@ -68,7 +68,10 @@ class VideoStore {
             let webRTC = new WebRTC();
             this.webRTCDict[rtcKey] = webRTC;
             webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
-                if (metaData.use_datachannel) {
+                const isUseDataChannel = this.isDataChannelUsed(metaData);
+
+                if (isUseDataChannel) {
+                    console.error("isUseDataChannel!")
                     if (!this.playerDict.hasOwnProperty(rtcKey)) {
                         let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
                         player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
@@ -162,6 +165,19 @@ class VideoStore {
     getRTCKey(metaData) {
         return metaData.id + "_" + this.store.getWindowData().id + "_" + random_id_for_webrtc;
     }
+    
+	isDataChannelUsed(metaData) {
+		let isUseDataChannel = false;
+		try {
+			let quality = JSON.parse(metaData.quality);
+			isUseDataChannel = quality 
+				&& quality.hasOwnProperty('raw_resolution') 
+				&& String(quality.raw_resolution) === "true";
+		} catch(e) {
+	
+		}
+		return isUseDataChannel;
+	}
 };
 
 export default VideoStore;

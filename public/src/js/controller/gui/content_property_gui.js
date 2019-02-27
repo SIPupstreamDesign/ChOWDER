@@ -529,13 +529,13 @@ class ContentPropertyGUI extends EventEmitter {
 						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", "最小bitrate", "kbps", "50", () => {
+				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", i18next.t("min_bitrate"), "kbps", "50", () => {
 					this.action.changeVideoQuality({
 						id : metaData.id,
 						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", "最大bitrate", "kbps", "300", () => {
+				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", i18next.t("max_bitrate"), "kbps", "300", () => {
 					this.action.changeVideoQuality({
 						id : metaData.id,
 						quality : this.getVideoQualityValues(metaData.id)
@@ -825,7 +825,7 @@ class ContentPropertyGUI extends EventEmitter {
 				this.setQuality(quality);
 			}
 			catch (e) {
-				console.error(e);
+				console.error(e, metaData);
 			}
 		}
 	}
@@ -1080,6 +1080,7 @@ class ContentPropertyGUI extends EventEmitter {
 		let quality = {
 			video_quality_enable : this.isVideoQualityEnable(),
 			audio_quality_enable : this.isAudioQualityEnable(),
+			raw_resolution : this.isRawResolution(),
 			screen : this.getVideoQuality(metadataID).min,
 			video : this.getVideoQuality(metadataID).min,
 			audio : this.getAudioQuality(metadataID).min,
@@ -1156,6 +1157,13 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		return false;
 	}
+	isRawResolution() {
+		let elem = document.getElementById('video_select_input_quality');
+		if (elem) {
+			return elem.options[elem.selectedIndex].value === "raw_resolution";
+		}
+		return false;
+	}
 	isAudioQualityEnable() {
 		let elem = document.getElementById('audio_select_input_quality');
 		if (elem) {
@@ -1165,20 +1173,33 @@ class ContentPropertyGUI extends EventEmitter {
 	}
 	// ビデオオーディオ品質の有効状態の変更による表示切り替え
 	updateQualityDisplay() {
-		let elem;
-		let elems;
-		elem = document.getElementById('video_select_input_quality');
-		if (elem) {
-			elems = document.getElementsByClassName('video_quality');
+		// bitrate min/maxの表示
+		let vElem = document.getElementById('video_select_input_quality');
+		if (vElem) {
+			let elems = document.getElementsByClassName('video_quality');
 			for (let i = 0; i < elems.length; ++i) {
-				elems[i].style.display = (elem.value === "auto") ? "none" : "block";
+				elems[i].style.display = (vElem.value === "auto" || vElem.value === "raw_resolution") ? "none" : "block";
 			}
 		}
-		elem = document.getElementById('audio_select_input_quality');
-		if (elem) {
-			elems = document.getElementsByClassName('audio_quality');
-			for (let i = 0; i < elems.length; ++i) {
-				elems[i].style.display = (elem.value === "auto") ? "none" : "block";
+		let aElem = document.getElementById('audio_select_input_quality');
+
+		if (vElem && vElem.value === "raw_resolution") {
+			if (aElem) {
+				aElem.disabled = true;
+				aElem.style.background = "lightgray";
+				let elems = document.getElementsByClassName('audio_quality');
+				for (let i = 0; i < elems.length; ++i) {
+					elems[i].style.display = "none";
+				}
+			}
+		} else {
+			if (aElem) {
+				aElem.disabled = false;
+				aElem.style.background = "";
+				let elems = document.getElementsByClassName('audio_quality');
+				for (let i = 0; i < elems.length; ++i) {
+					elems[i].style.display = (aElem.value === "auto") ? "none" : "block";
+				}
 			}
 		}
 	}
@@ -1203,7 +1224,7 @@ class ContentPropertyGUI extends EventEmitter {
 		return null;
 	}
 	setQuality(quality) {
-		//console.error("setQuality", quality)
+		// console.error("setQuality", quality)
 		let elem;
 		/*
 		screen : content_property.getVideoQuality(metadataID).min,
@@ -1214,7 +1235,10 @@ class ContentPropertyGUI extends EventEmitter {
 		*/
 		elem = document.getElementById('video_select_input_quality');
 		if (elem) {
-			if (quality.hasOwnProperty('video_quality_enable') && String(quality.video_quality_enable) !== "false") {
+			if (quality.hasOwnProperty('raw_resolution') && String(quality.raw_resolution) === "true") {
+				elem.value = "raw_resolution";
+			}
+			else if (quality.hasOwnProperty('video_quality_enable') && String(quality.video_quality_enable) !== "false") {
 				elem.value = "custom";
 			}
 			else {

@@ -111,7 +111,6 @@ class VideoStore {
 		const DURATION = 1001;
 		const TIMESCALE = 30000;
 		const SAMPLE_SEC = DURATION / TIMESCALE;
-		
 		let mp4box = new MP4Box();
 		let player = null;
 		let chunkSize  = 1024 * 1024 * 1024; // bytes
@@ -120,14 +119,15 @@ class VideoStore {
 			let audioCodec = null;
 			if (info.tracks.length > 1) {
 				audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
-			} 
-			// console.log("codec", videoCodec, audioCodec,
-			//	MediaSource.isTypeSupported(videoCodec),
-			//	MediaSource.isTypeSupported(audioCodec)
-			//);
-			if (!player) {
-				player = new MediaPlayer(videoElem, videoCodec, audioCodec);
 			}
+
+			console.log("codec", videoCodec, audioCodec,
+				MediaSource.isTypeSupported(videoCodec),
+				MediaSource.isTypeSupported(audioCodec)
+			);
+			if (!player) {
+                player = new MediaPlayer(videoElem, videoCodec, audioCodec);
+            }
 
 			let playVideo = () => {
 				this.segmentDict[id].playHandle = setInterval(() => {
@@ -380,7 +380,16 @@ class VideoStore {
 					}
 				}, 500);
 			};
-			if (metaData.use_datachannel) {
+
+			let isUseDataChannel = false;
+			try {
+				let quality = JSON.parse(metaData.quality);
+				isUseDataChannel = quality 
+					&& quality.hasOwnProperty('raw_resolution') 
+					&& String(quality.raw_resolution) === "true";
+			} catch(e) {
+			}
+			if (isUseDataChannel) {
 				webRTC.on(WebRTC.EVENT_DATACHANNEL_OPEN, () => {
 					let videoSegments = this.segmentDict[metaData.id].video;
 					updateLoop(Math.ceil(videoSegments.length/ NUM_SEGMENTS_A_TIME));
@@ -405,10 +414,6 @@ class VideoStore {
         let subType = metaData.subtype;
 		let videoData;
 		if (subType === "file") {
-			// DataChannelを使用しfmp4を送り付ける方式
-			// 解像度が維持される
-			// metaData.use_datachannel = true;
-			// this.processMovieBlob(metaData, video, blob, metaData.id);
 			
 			// 通常のwebrtc
 			// 解像度はwebrtcによって自動的に変更される
@@ -423,7 +428,7 @@ class VideoStore {
 			}
 			video.load();
 		}
-		this.setVideoData(metaData.id, videoData);
+		this.setVideoData(metaData.id, blob);
 		
 		video.oncanplaythrough = function () {
 			if (subType !== "file") {
@@ -552,7 +557,7 @@ class VideoStore {
 			video.play();
 		}, 100)
 
-		this.setVideoData(metaData.id, videoData);
+		this.setVideoData(metaData.id, blob);
 		
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
@@ -708,11 +713,24 @@ class VideoStore {
      * 動画クオリティの変更
      */
     _changeVideoQuality(data) {
-        let metadataID = data.id;
+		let metadataID = data.id;
 		if (this.hasVideoPlayer(metadataID) && data.hasOwnProperty('quality')) {
 			if (this.store.hasMetadata(metadataID)) {
 				let meta = this.store.getMetaData(metadataID);
 				meta.quality = JSON.stringify(data.quality);
+				if (this.isDataChannelUsed(meta)) {
+					if (this.hasVideoData(meta.id)) {
+						let blob = this.getVideoData(meta.id);
+						if (blob) {
+							let player = this.getVideoPlayer(meta.id);
+							URL.revokeObjectURL(player.video.src); // 通常のWebRTC用のソースを消す.
+							// DataChannelを使用しfmp4を送り付ける方式
+							// 解像度が維持される
+							this.processMovieBlob(meta, player.video, blob, meta.id);
+							player.video.load();
+						}
+					}
+				}
 				this.store.operation.updateMetadata(meta);
 			}
 		}
@@ -793,7 +811,7 @@ class VideoStore {
 		return this.webRTCDict;
 	}
 
-	// video data
+	// video blob
 	setVideoData(id, data) {
 		if (this.hasVideoData(id)) {
 			this.deleteVideoData(id);
@@ -809,15 +827,20 @@ class VideoStore {
 	}
 	deleteVideoData(id) {
 		let videoData = this.videoDict[id];
-		if (videoData && videoData.getVideoTracks) {
-			videoData.getVideoTracks().forEach(function (track) {
-				track.stop();
-			});
-		}
-		if (videoData && videoData.getAudioTracks) {
-			videoData.getAudioTracks().forEach(function (track) {
-				track.stop();
-			});
+
+		if (this.hasVideoPlayer(id)) {
+			let player = this.getVideoPlayer(id);
+			let videoSrc = player.mediaSource;
+			if (videoSrc && videoSrc.getVideoTracks) {
+				videoSrc.getVideoTracks().forEach(function (track) {
+					track.stop();
+				});
+			}
+			if (videoSrc && videoSrc.getAudioTracks) {
+				videoSrc.getAudioTracks().forEach(function (track) {
+					track.stop();
+				});
+			}
 		}
 		delete this.videoDict[id];
 	}
@@ -836,6 +859,19 @@ class VideoStore {
 		let player = this.videoPlayerDict[id];
 		player.release();
 		delete this.videoPlayerDict[id];
+	}
+	
+	isDataChannelUsed(metaData) {
+		let isUseDataChannel = false;
+		try {
+			let quality = JSON.parse(metaData.quality);
+			isUseDataChannel = (quality 
+				&& quality.hasOwnProperty('raw_resolution') 
+				&& quality.raw_resolution === true);
+		} catch(e) {
+			console.error(e);
+		}
+		return isUseDataChannel;
 	}
 }
 
