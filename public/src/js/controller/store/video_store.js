@@ -405,13 +405,23 @@ class VideoStore {
         let subType = metaData.subtype;
 		let videoData;
 		if (subType === "file") {
-			metaData.use_datachannel = true;
-			this.processMovieBlob(metaData, video, blob, metaData.id);
-			/*
-			videoData = URL.createObjectURL(blob);
-			video.src = videoData;
+			// DataChannelを使用しfmp4を送り付ける方式
+			// 解像度が維持される
+			// metaData.use_datachannel = true;
+			// this.processMovieBlob(metaData, video, blob, metaData.id);
+			
+			// 通常のwebrtc
+			// 解像度はwebrtcによって自動的に変更される
+			let blobObj = new Blob([blob]);
+			// https://developer.mozilla.org/ja/docs/Web/API/HTMLMediaElement/srcObject
+			try {
+				videoData = blobObj;
+				video.srcObject = blobObj;
+			} catch (error) {
+				videoData = URL.createObjectURL(blobObj);
+				video.src = videoData;
+			}
 			video.load();
-			*/
 		}
 		this.setVideoData(metaData.id, videoData);
 		

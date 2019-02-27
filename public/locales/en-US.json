@@ -100,5 +100,8 @@
  "control_videos_in_a_group": "Control All Videos in a Group",
  "video_controller": "Video Controller",
  "change_timeseries_key": "Change timeseries",
- "sync": "Sync"
+ "sync": "Sync",
+ "auto": "Auto",
+ "custom": "Custom",
+ "raw_resolution": "RawResolution"
 }

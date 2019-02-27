@@ -451,9 +451,14 @@ class ContentPropertyGUI extends EventEmitter {
 				download_button.style.display = "none";
 				// 動画専用プロパティを追加設定
 				if (isOwnVideo) {
-					// 設定エリアを表示
-					video_info.style.display = "block";
-					this.initVideoPropertyArea(isEditableContent, metaData, type);
+					if (metaData.hasOwnProperty('use_datachannel') && String(metaData.use_datachannel) === "true") {
+						// datachannel+fmp4版の動画用 設定エリアを表示
+
+					} else {
+						// webrtc動画用 設定エリアを表示
+						video_info.style.display = "block";
+						this.initVideoPropertyArea(isEditableContent, metaData, type);
+					}
 				}
 			}
 		}
@@ -468,7 +473,8 @@ class ContentPropertyGUI extends EventEmitter {
 				let i;
 				let audios = { keys: [], values: [] };
 				let videos = { keys: [], values: [] };
-				let qualities = { keys: ["自動", "手動"], values: ["auto", "custom"] };
+				let videoQualities = { keys: [i18next.t("auto"), i18next.t("custom"), i18next.t("raw_resolution")], values: ["auto", "custom", "raw_resolution"] };
+				let audioQualities = { keys: [i18next.t("auto"), i18next.t("custom")], values: ["auto", "custom"] };
 				for (i = 0; i < devices.length; ++i) {
 					if (devices[i].kind === "audioinput") {
 						audios.keys.push(devices[i].label);
@@ -496,7 +502,7 @@ class ContentPropertyGUI extends EventEmitter {
 					});
 				}
 				addVideoTextLabel('video_select_quality_title', i18next.t('video_quality'));
-				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', qualities, 50, (val) => {
+				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', videoQualities, 50, (val) => {
 					this.updateQualityDisplay();
 					this.action.changeVideoQuality({
 						id : metaData.id,
@@ -516,7 +522,7 @@ class ContentPropertyGUI extends EventEmitter {
 					});
 				});
 				addVideoTextLabel('video_select_quality_title', i18next.t('audio_quality'));
-				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', qualities, 100, (val) => {
+				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', audioQualities, 100, (val) => {
 					this.updateQualityDisplay()
 					this.action.changeVideoQuality({
 						id : metaData.id,

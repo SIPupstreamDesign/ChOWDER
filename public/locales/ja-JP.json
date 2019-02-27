@@ -100,5 +100,8 @@
  "control_videos_in_a_group": "グループ内動画の一括操作",
  "video_controller": "動画一括制御",
  "change_timeseries_key": "時系列データの切り替え",
- "sync": "同期"
+ "sync": "同期",
+ "auto": "自動",
+ "custom": "手動",
+ "raw_resolution": "原寸"
 }

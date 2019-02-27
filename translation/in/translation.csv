@@ -101,3 +101,6 @@ control_videos_in_a_group,グループ内動画の一括操作,Control All Videos in a Group
 video_controller,動画一括制御,Video Controller
 change_timeseries_key,時系列データの切り替え,Change timeseries
 sync,同期,Sync
+auto,自動,Auto
+custom,手動,Custom
+raw_resolution,原寸,RawResolution
