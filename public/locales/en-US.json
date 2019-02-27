@@ -103,5 +103,7 @@
  "sync": "Sync",
  "auto": "Auto",
  "custom": "Custom",
- "raw_resolution": "RawResolution"
+ "raw_resolution": "RawResolution",
+ "min_bitrate": "bitrate min",
+ "max_bitrate": "bitrate max"
 }

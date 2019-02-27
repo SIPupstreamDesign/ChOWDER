@@ -103,5 +103,7 @@
  "sync": "同期",
  "auto": "自動",
  "custom": "手動",
- "raw_resolution": "原寸"
+ "raw_resolution": "原寸",
+ "min_bitrate": "最小bitrate",
+ "max_bitrate": "最大bitrate"
 }

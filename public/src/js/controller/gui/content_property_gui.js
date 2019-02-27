@@ -509,13 +509,13 @@ class ContentPropertyGUI extends EventEmitter {
 						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", "最小bitrate", "kbps", "300", () => {
+				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", i18next.t("min_bitrate"), "kbps", "300", () => {
 					this.action.changeVideoQuality({
 						id : metaData.id,
 						quality : this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", "最大bitrate", "kbps", "1000", () => {
+				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", i18next.t("max_bitrate"), "kbps", "1000", () => {
 					this.action.changeVideoQuality({
 						id : metaData.id,
 						quality : this.getVideoQualityValues(metaData.id)
