@@ -703,6 +703,14 @@
                                 displayEditable : [],
                                 group_manipulatable : false
                             });
+                        }, ()=>{
+                            // ElectronDisplay設定の初期登録
+                            this.changeGroupUserSetting("master", "ElectronDisplay", {
+                                viewable : "all",
+                                editable : "all",
+                                displayEditable : [],
+                                group_manipulatable : false
+                            });
                         });
                     });
                 }
@@ -1132,6 +1140,18 @@
                             }
                         }
                         userList.push(apiUserData);
+
+                        // ElectronDisplay
+                        let electronDisplayData = { name : "ElectronDisplay", id : "ElectronDisplay", type : "electron"};
+                        if (setting.hasOwnProperty("ElectronDisplay")) {
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (setting.ElectronDisplay.hasOwnProperty(key)) {
+                                    electronDisplayData[key] = setting.ElectronDisplay[key];
+                                }
+                            }
+                        }
+                        userList.push(electronDisplayData);
 
                         if (endCallback) {
                             endCallback(null, userList);

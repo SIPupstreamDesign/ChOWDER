@@ -715,7 +715,7 @@ class ManagementDialog extends EventEmitter
                         this.oldPassInput.setEnable(true);
                         this.newPassInput.setEnable(true);
                     }
-                    else if (type === "group" || type === "api") {
+                    else if (type === "group" || type === "api" || type === "electron") {
                         this.oldPassInput.setEnable(false);
                         this.newPassInput.setEnable(true);
                     }

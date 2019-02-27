@@ -1,6 +1,6 @@
 {
 	"url": "http://localhost:8080/display.html",
-	"password": "elepass",
+	"password": "electronpassword",
 	"windows": {
 		"tile1": {
 			"group": "group",

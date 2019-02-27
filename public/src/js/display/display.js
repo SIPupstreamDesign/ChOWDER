@@ -258,6 +258,10 @@ class Display {
 
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
 			console.log("EVENT_LOGIN_SUCCESS")
+			this.action.update({ updateType : 'window'});
+			this.action.update({ updateType : 'group'});
+			this.action.update({ updateType : 'content'});
+
 		});
 
 		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
@@ -317,6 +321,7 @@ class Display {
 			window.electronLogin((isElectron,password)=>{
 				if(isElectron){
 					login_option.password = password;
+					login_option.id = "ElectronDisplay";
 					this.action.login(login_option);
 				}else{
 					this.action.login(login_option);
