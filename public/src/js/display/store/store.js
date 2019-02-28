@@ -30,6 +30,7 @@ class Store extends EventEmitter
         this.metaDataDict = {};
         this.groupDict = {};
         this.globalSetting = null;
+        this.virtualDisplay = null;
 
         // 接続時に遅延して初期化する
         this.receiver = null;
@@ -410,6 +411,11 @@ class Store extends EventEmitter
         if (!err && json) {
             this.metaDataDict[json.id] = json;
             this.windowData = json;
+            let group = json.group ? json.group : Constants.DefaultGroup;
+            Connector.send(Command.GetVirtualDisplay, { group: group }, (err, reply) => {
+                this.virtualDisplay = reply;
+                this.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);
+            });
             this.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, json);
         } else {
             this._logout();
@@ -569,7 +575,11 @@ class Store extends EventEmitter
 			time = new Date().toISOString();
 		}
 		return time;
-	}
+    }
+    
+    getVirtualDisplay() {
+        return this.virtualDisplay;
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -584,6 +594,7 @@ Store.EVENT_DONE_GET_WINDOW_METADATA= "done_get_window_metadata";
 Store.EVENT_DONE_GET_METADATA= "done_get_metadata";
 Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
+Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 
 // reviever
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
