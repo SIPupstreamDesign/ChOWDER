@@ -169,17 +169,13 @@ class MediaPlayer extends EventEmitter {
 			this.audioBuffer = this.mediaSource.addSourceBuffer(this.audioCodecString);
 			this.audioBuffer.mode = 'sequence';
 			this.audioBuffer.addEventListener('update', this.updateBuffer);
-			this.audioBuffer.addEventListener('updateend', () => {
-				this.updateBuffer();
-			});
+			this.audioBuffer.addEventListener('updateend', this.updateBuffer());
 		}
 		if (this.codecString) {
 			this.buffer = this.mediaSource.addSourceBuffer(this.codecString);
 			this.buffer.mode = 'sequence';
 			this.buffer.addEventListener('update', this.updateBuffer);
-			this.buffer.addEventListener('updateend', () => {
-				this.updateBuffer();
-			});
+			this.buffer.addEventListener('updateend', this.updateBuffer);
 		}
 		this.emit(MediaPlayer.EVENT_SOURCE_OPEN);
 	}

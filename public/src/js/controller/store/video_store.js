@@ -747,7 +747,13 @@ class VideoStore {
 					// DataChannel使用終了、webrtcに切り替え
 					if (this.hasVideoData(meta.id)) {
 						let player = this.getVideoPlayer(meta.id);
+						
+						// raw_resolutionの動画をクリア
 						if (player.hasOwnProperty('rawInstances')) {
+							if (this.segmentDict[meta.id].playHandle) {
+								clearInterval(this.segmentDict[meta.id].playHandle);
+							}
+							this.segmentDict[meta.id] = null;
 							let mediaPlayer = player.rawInstances.mediaPlayer;
 							if (mediaPlayer) {
 								mediaPlayer.release();
