@@ -16,7 +16,7 @@ class Action extends EventEmitter
 	emit() {
 		if (arguments.length > 0) {
 			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!")
+				console.error("Not found EVENT NAME!");
 			}
 		}
 		super.emit(...arguments);
