@@ -86,7 +86,6 @@ class Display {
 	doneGetMetaData(err, json) {
 		let metaDataDict = this.store.getMetaDataDict();
 		let groupDict = this.store.getGroupDict();
-		let webRTCDict = this.store.getVideoStore().getWebRTCDict();
 		let metaData = json;
 		let isUpdateContent = false;
 		// console.log("doneGetMetaData", json);
@@ -121,6 +120,31 @@ class Display {
 			}
 		}
 
+		// 動画ファイルのwebrtc<-->datachannel切り替え
+		if (json.type === "video" && json.hasOwnProperty("subtype") && json.subtype === "file") {
+			let oldMetaData = metaDataDict[json.id];
+			if (oldMetaData) {
+				let videoStore = this.store.getVideoStore();
+				let isAlreadyUsed = videoStore.isDataChannelUsed(oldMetaData);
+				let isDataChannelUsed = videoStore.isDataChannelUsed(json);
+				let videoPlayer = videoStore.getVideoPlayer(json.id);
+				if (!isAlreadyUsed && isDataChannelUsed) {
+					// DataChannel使用開始
+					videoStore.closeVideo(json);
+					this.gui.showVideo(videoPlayer, json);
+					metaDataDict[json.id] = json;
+					return;
+				}
+				if (isAlreadyUsed && !isDataChannelUsed) {
+					// DataChannel使用終了、webrtcに切り替え
+					videoStore.closeVideo(json);
+					this.gui.showVideo(videoPlayer, json);
+					metaDataDict[json.id] = json;
+					return;
+				}
+			}
+		}
+
 		metaDataDict[json.id] = json;
 		if (!err) {
 			let elem = document.getElementById(json.id);
@@ -142,24 +166,15 @@ class Display {
 			// console.log("isOutside:", isOutside);
 
 			if (isOutside) {
+				// webrtcコンテンツが画面外にいったら切断して削除しておく.
+				let elem = document.getElementById(json.id);
 				if (elem) {
-					// コンテンツが画面外にいった
 					elem.style.display = "none";
-					// webrtcコンテンツが画面外にいったら切断して削除しておく.
-					let rtcKey = this.store.getVideoStore().getRTCKey(json);
-					if (webRTCDict.hasOwnProperty(rtcKey)) {
-						webRTCDict[rtcKey].close(true);
-						if (elem.parentNode) {
-							elem.parentNode.removeChild(elem);
-						}
-
-						metaData.from = "view";
-						Connector.sendBinary(Command.RTCClose, metaData, JSON.stringify({
-							key : rtcKey
-						}), function (err, reply) {});
-						delete metaData.from;
+					if (elem.parentNode) {
+						elem.parentNode.removeChild(elem);
 					}
 				}
+				this.store.getVideoStore().closeVideo(json);
 			} else {
 				if (elem && elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type)) {
 					if (Validator.isVisible(json)) {

@@ -25,7 +25,10 @@ class VideoStore {
         this.webRTCDict = {};
 
         // WebRTC用キーから MediaPlayerインスタンスへのマップ
-        this.playerDict = {};
+        this.mediaPlayerDict = {};
+
+        // idからVideoPlayerインスタンスへのマップ
+        this.videoPlayerDict = {};
 
 		this.initEvents();
 	}
@@ -48,11 +51,17 @@ class VideoStore {
         for (let i in this.webRTCDict) {
             this.webRTCDict[i].close();
         }
+        for (let i in this.mediaPlayerDict) {
+            this.mediaPlayerDict[i].release();
+        }
+        for (let i in this.videoPlayerDict) {
+            this.videoPlayerDict[i].release();
+        }
     }
 
     playFragmentVideo(rtcKey, data) {
-        if (this.playerDict.hasOwnProperty(rtcKey)) {
-            this.playerDict[rtcKey].onVideoFrame(data);
+        if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+            this.mediaPlayerDict[rtcKey].onVideoFrame(data);
         } else {
             console.error("Error : not found rtc entry. rtckey", rtcKey)
         }
@@ -62,6 +71,7 @@ class VideoStore {
         console.error("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
+        this.videoPlayerDict[metaData.id] = data.player;
         let elem = data.player.getVideo();
         let rtcKey = this.getRTCKey(metaData);
         this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
@@ -72,7 +82,7 @@ class VideoStore {
 
                 if (isUseDataChannel) {
                     console.error("isUseDataChannel!")
-                    if (!this.playerDict.hasOwnProperty(rtcKey)) {
+                    if (!this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
                         let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
                         player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
                             if (metaData.hasOwnProperty('video_duration')) {
@@ -90,7 +100,7 @@ class VideoStore {
                             */
                            // TODO
                         });
-                        this.playerDict[rtcKey] = player;
+                        this.mediaPlayerDict[rtcKey] = player;
                     }
                 } else {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
@@ -142,9 +152,9 @@ class VideoStore {
             
             webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
                 return () => {
-                    if (this.playerDict.hasOwnProperty(rtcKey)) {
-                        this.playerDict[rtcKey].release();
-                        delete this.playerDict[rtcKey];
+                    if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+                        this.mediaPlayerDict[rtcKey].release();
+                        delete this.mediaPlayerDict[rtcKey];
                     }
                     if (this.webRTCDict.hasOwnProperty(rtcKey)) {
                         if (this.webRTCDict[rtcKey].statusHandle) {
@@ -171,17 +181,56 @@ class VideoStore {
     }
     
 	isDataChannelUsed(metaData) {
-		let isUseDataChannel = false;
+        let isUseDataChannel = false;
 		try {
-			let quality = JSON.parse(metaData.quality);
-			isUseDataChannel = quality 
-				&& quality.hasOwnProperty('raw_resolution') 
-				&& String(quality.raw_resolution) === "true";
+            if (metaData.hasOwnProperty('quality')) {
+                let quality = JSON.parse(metaData.quality);
+                isUseDataChannel = (quality 
+                    && quality.hasOwnProperty('raw_resolution') 
+                    && quality.raw_resolution === true);
+            }
 		} catch(e) {
-	
+			console.error(e);
 		}
 		return isUseDataChannel;
 	}
+	getVideoPlayer(id) {
+		return this.videoPlayerDict[id];
+	}
+	hasVideoPlayer(id) {
+		return this.videoPlayerDict.hasOwnProperty(id);
+	}
+	deleteVideoPlayer(id) {
+		let player = this.videoPlayerDict[id];
+		player.release();
+		delete this.videoPlayerDict[id];
+    }
+    
+    closeVideo(json) {
+		let webRTCDict = this.getWebRTCDict();
+		let rtcKey = this.getRTCKey(json);
+		if (webRTCDict.hasOwnProperty(rtcKey)) {
+            webRTCDict[rtcKey].close(true);
+            console.error("closewebrtc")
+
+			json.from = "view";
+			this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
+				key : rtcKey
+			}), function (err, reply) {});
+			delete json.from;
+        }
+        if (this.hasVideoPlayer(json.id)) {
+            let player = this.getVideoPlayer(json.id);
+            URL.revokeObjectURL(player.video.src); // 通常のWebRTC用のソースを消す.
+            if (player.video.hasOwnProperty('srcObject')) {
+                player.video.srcObject = null;
+            }
+        }
+        if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+            this.mediaPlayerDict[rtcKey].release();
+            delete this.mediaPlayerDict[rtcKey]
+        }
+    }
 };
 
 export default VideoStore;

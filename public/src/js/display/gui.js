@@ -373,7 +373,7 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      * @param {*} contentData 
      */
-    showVideo(videpPlayer, metaData, contentData) {
+    showVideo(videpPlayer, metaData) {
         let webRTCDict = this.store.getVideoStore().getWebRTCDict();
         let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
         
@@ -510,7 +510,7 @@ class GUI extends EventEmitter {
             }
             if (metaData.type === 'video') {
                 videoPlayer.on(VideoPlayer.EVENT_READY, () => {
-                    this.showVideo(videoPlayer, metaData, contentData);
+                    this.showVideo(videoPlayer, metaData);
                 });
             } else if (metaData.type === 'text') {
                 // contentData is text
