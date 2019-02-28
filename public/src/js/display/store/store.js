@@ -412,10 +412,12 @@ class Store extends EventEmitter
             this.metaDataDict[json.id] = json;
             this.windowData = json;
             let group = json.group ? json.group : Constants.DefaultGroup;
-            Connector.send(Command.GetVirtualDisplay, { group: group }, (err, reply) => {
-                this.virtualDisplay = reply;
-                this.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);
-            });
+            if (!this.virtualDisplay) {
+                Connector.send(Command.GetVirtualDisplay, { group: group }, (err, reply) => {
+                    this.virtualDisplay = reply;
+                    this.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);
+                });
+            }
             this.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, json);
         } else {
             this._logout();
