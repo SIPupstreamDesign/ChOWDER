@@ -2,19 +2,24 @@
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
+
+
+import Button from './button';
+
 class NoticeBox extends EventEmitter {
     constructor(container){
         super();
         this.noticeList = [];
-        this.container = container;
+        this.container = document.createElement('div');
+        this.container.className = "notice_box"
     }
 
     init(){
     }
 
     addDisplayPermissionLeaf(logindata){
-        for(let notice of this.noticeList){
-            if(logindata.displayid === notice.logindata.displayid){
+        for(let i = 0; i < this.noticeList.length; ++i){
+            if(logindata.displayid === this.noticeList[i].logindata.displayid){
                 // もうあるdisplayidは重複して作らない
                 return;
             }
@@ -25,9 +30,11 @@ class NoticeBox extends EventEmitter {
         notice.dom.classList.add("notice_box_leaf");
 
 
-        let idWrap = document.createElement("span");
-        idWrap.textContent = "ID:" + logindata.displayid;
-        idWrap.classList.add("notice_box_id_wrap");
+        let idWrap = document.createElement("div");
+        let idText = document.createElement("span");
+        idWrap.appendChild(idText);
+        idText.textContent = "ID:" + logindata.displayid;
+        idText.classList.add("notice_box_id_wrap");
 
         notice.dom.appendChild(idWrap);
 
@@ -35,26 +42,26 @@ class NoticeBox extends EventEmitter {
         let buttonWrap = document.createElement("span");
         buttonWrap.classList.add("notice_box_button_wrap");
 
-        notice.acceptButton = document.createElement("span");
-        notice.acceptButton.classList.add("notice_box_accept_button");
-        notice.acceptButton.textContent = "accept";
+        notice.acceptButton = new Button();
+        notice.acceptButton.getDOM().classList.add("notice_box_accept_button");
+        notice.acceptButton.setDataKey("accept"); // todo translation
         notice.acceptCallback = (err)=>{
             logindata.permission = true;
             this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, logindata);
         };
-        notice.acceptButton.addEventListener("click",notice.acceptCallback,false);
+        notice.acceptButton.on(Button.EVENT_CLICK, notice.acceptCallback);
 
-        notice.rejectButton = document.createElement("span");
-        notice.rejectButton.classList.add("notice_box_reject_button");
-        notice.rejectButton.textContent = "reject";
+        notice.rejectButton = new Button();
+        notice.rejectButton.getDOM().classList.add("notice_box_reject_button");
+        notice.rejectButton.setDataKey("reject"); // todo translation
         notice.rejectCallback = (err)=>{
             logindata.permission = false;
             this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, logindata);
         };
-        notice.rejectButton.addEventListener("click", notice.rejectCallback,false);
+        notice.rejectButton.on(Button.EVENT_CLICK, notice.rejectCallback);
 
-        buttonWrap.appendChild(notice.acceptButton);
-        buttonWrap.appendChild(notice.rejectButton);
+        buttonWrap.appendChild(notice.acceptButton.getDOM());
+        buttonWrap.appendChild(notice.rejectButton.getDOM());
 
         notice.dom.appendChild(buttonWrap);
 
@@ -64,10 +71,11 @@ class NoticeBox extends EventEmitter {
     }
 
     deleteDisplayPermissionLeaf(logindata){
-        for(let notice of this.noticeList){
+        for(let i = 0; i < this.noticeList.length; ++i){
+            let notice = this.noticeList[i];
             if(notice.logindata.displayid === logindata.displayid){
-                notice.rejectButton.removeEventListener("click",notice.rejectCallback);
-                notice.acceptButton.removeEventListener("click",notice.acceptCallback);
+                notice.rejectButton.release();
+                notice.acceptButton.release();
                 this.container.removeChild(notice.dom);
                 this.noticeList.splice(i,1);
             }
@@ -75,9 +83,14 @@ class NoticeBox extends EventEmitter {
     }
 
     update(){
-        for(let notice of this.noticeList){
+        for(let i = 0; i < this.noticeList.length; ++i){
+            let notice = this.noticeList[i];
             this.container.appendChild(notice.dom);
         }
+    }
+
+    getDOM() {
+        return this.container;
     }
 }
 

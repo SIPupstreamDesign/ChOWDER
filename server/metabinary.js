@@ -207,7 +207,7 @@
 			params;
 		if (head !== headerStr) { return; }
 
-		console.log("metabinary load start");
+		//console.log("metabinary load start");
 
 		version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0);
 		metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);

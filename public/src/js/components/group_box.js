@@ -212,16 +212,14 @@ class GroupBox extends EventEmitter {
 	_add_box(parent, tabID, tabItem) {
 		let box = document.createElement('div');
 		box.id = tabID + "_box";
-		box.className = tabItem.className + "_box";
-		box.style.width = "100%";
-		box.style.height = "100%";
-		box.style.overflow = "auto";
+		box.className = "group_box " + tabItem.className + "_box";
 		if (tabItem.hasOwnProperty('selected') && tabItem['selected']) {
 			box.style.display = "block";
 		}
 		else {
 			box.style.display = "none";
 		}
+		
 		parent.appendChild(box);
 		return box;
 	}

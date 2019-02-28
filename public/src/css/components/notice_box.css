@@ -1,47 +1,68 @@
+.notice_box {
+    width : 180px;
+    height : calc(100% - 30px);
+    border : 2px solid #0080FF;
+    right: 0px;
+    top: 0px;
+    margin-top: 30px;
+    position: absolute;
+    overflow-y : auto;
+}
+
 .notice_box_leaf {
     display : flex;
-    width : 250px;
+    width : 150px;
     height : 50px;
     border : 1px solid rgb(255, 255, 255);
-    margin :20px;
+    margin-top : 10px;
+    margin-left : 5px;
 }
 
 .notice_box_id_wrap {
     display: flex;
-    width : 150px;
+    width : 95px;
     justify-content: center;
     align-items: center;
 }
 
 .notice_box_button_wrap {
     display: flex;
-    width : 100px;
+    width : 50px;
     flex-direction: column;
     flex-wrap: wrap;
 }
 
 .notice_box_accept_button {
-    border-radius: 25px;
+    /*border-radius: 25px;*/
     display: flex;
     justify-content: center;
     align-items: center;
     flex: 1;
-    border : 1px solid rgb(5, 252, 108);
+    width : 50px;
+    height: 20px;
+    background-color: rgb(82, 150, 209);
 }
+/*
 .notice_box_accept_button:hover{
     color: #222222;
     background-color: #EEFFEE;
 }
+*/
 
 .notice_box_reject_button {
-    border-radius: 25px;
+    /*border-radius: 25px;*/
     display: flex;
     justify-content: center;
     align-items: center;
     flex: 1;
-    border : 1px solid rgb(252, 5, 5);
+    width : 50px;
+    height: 20px;
+    background-color: rgb(255, 80, 80);
 }
+/*
 .notice_box_reject_button:hover{
     color: #222222;
     background-color: #FFEEEE;
 }
+
+*/

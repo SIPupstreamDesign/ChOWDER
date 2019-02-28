@@ -140,22 +140,19 @@ class GroupGUI
         });
 
 
-        // Displayから接続要求が飛んできた
-        this.noticeBox = new NoticeBox(document.getElementById('notice_tab_box'));
+        this.noticeBox = new NoticeBox();
+        // DisplayBoxの中にNoticeBoxを突っ込む
+        let displayBox = document.getElementById('display_tab_box');
+        displayBox.appendChild(this.noticeBox.getDOM());
+        this.initNoticeEvents(this.noticeBox);
 
+        // Displayから接続要求が飛んできた
         this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
             this.noticeBox.addDisplayPermissionLeaf(logindata);
         });
         this.store.on(Store.EVENT_FINISH_DISPLAY_PERMISSION, (err, logindata)=>{
             this.noticeBox.deleteDisplayPermissionLeaf(logindata);
         });
-        this.noticeBox.on(NoticeBox.EVENT_NOTICE_ACCEPT,(err, logindata)=>{
-            this.action.changeDisplayPermission(logindata);
-        });
-        this.noticeBox.on(NoticeBox.EVENT_NOTICE_REJECT,(err, logindata)=>{
-            this.action.changeDisplayPermission(logindata);
-        });
-
     }
 
 	/**
@@ -212,6 +209,15 @@ class GroupGUI
 		});
 	}
 
+    initNoticeEvents(noticeBox) {
+        noticeBox.on(NoticeBox.EVENT_NOTICE_ACCEPT,(err, logindata)=>{
+            this.action.changeDisplayPermission(logindata);
+        });
+        noticeBox.on(NoticeBox.EVENT_NOTICE_REJECT,(err, logindata)=>{
+            this.action.changeDisplayPermission(logindata);
+        });
+    }
+
 	/**
 	 * Searchのタブに対するイベントを設定.
 	 */
@@ -239,6 +245,12 @@ class GroupGUI
         document.getElementById('layout_tab_box').innerHTML = "";
         this.layoutBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('layout_tab_box'), layoutSetting, GroupBox.TYPE_CONTENT);
         this.initGroupBoxEvents(this.layoutBox);
+
+        // DisplayBoxの中にNoticeBoxを突っ込む
+        this.noticeBox = new NoticeBox();
+        let displayBox = document.getElementById('display_tab_box');
+        displayBox.appendChild(this.noticeBox.getDOM());
+        this.initNoticeEvents(this.noticeBox);
 
     }
 

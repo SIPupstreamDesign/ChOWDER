@@ -40,9 +40,7 @@ class Tabs extends EventEmitter {
 			this.tabIDs.push(tabItem.id);
 			let box = document.createElement('div');
 			box.id = tabItem.id + "_box";
-			box.style.width = "100%";
-			box.style.height = "100%";
-			box.style.overflow = "auto";
+			box.className = "tabs_tab_box";
 			if (tabItem.hasOwnProperty('active') && tabItem['active']) {
 				box.style.display = "block";
 			}

@@ -1109,7 +1109,9 @@ class GUI extends EventEmitter
 
 	// content_property
 	clearContentProperty(updateText) {
-		this.contentPropertyGUI.clear(updateText);
+		if (this.contentPropertyGUI) {
+			this.contentPropertyGUI.clear(updateText);
+		}
 	}
 
 	assignContentProperty(json) {

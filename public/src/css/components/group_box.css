@@ -2,6 +2,7 @@
 
 .group_tab_area {
 	width : 170px;
+	/* グループリストのスクロール対策 */
 	height : calc(100% - 60px);
 	position : absolute;
 	overflow-y  : auto;
@@ -9,11 +10,18 @@
 }
 
 .group_box_area {
+	width : calc(100% - 170px - 178px);
 	height : 100%;
 	overflow : hidden;
 	margin-left : 170px;
 }
 
+.group_box {
+	width : 100%;
+	height : 100%;
+	overflow : auto;
+	box-sizing: content-box;
+}
 
 .content_tab {
 	background: rgb(54,187,68);
@@ -188,12 +196,10 @@
 
 .content_tab_box {
 	border-left: 2px solid rgb(54,187,68);
-	box-sizing: content-box;
 }
 
 .display_tab_box {
 	border-left: 2px solid #0080FF;
-	box-sizing: content-box;
 }
 .display_tab.active {
 	border: 3px solid white;
@@ -201,12 +207,10 @@
 
 .layout_tab_box {
 	border-left: 2px solid lightgray;
-	box-sizing: content-box;
 }
 
 #display_tab_box {
 	border: 2px solid #0080FF;
-	height : calc(100% - 2px);
 }
 
 #layout_tab_box {

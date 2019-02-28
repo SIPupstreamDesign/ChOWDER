@@ -72,6 +72,12 @@
 	background : rgba(200, 100, 0, 0.1);
 }
 
+.tabs_tab_box {
+	width : 100%;
+	height : 100%;
+	overflow : auto;
+}
+
 .content_box_area {
 	width : 100%;
 	height : 100%;

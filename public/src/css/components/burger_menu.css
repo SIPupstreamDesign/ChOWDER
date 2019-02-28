@@ -76,19 +76,23 @@ ul, ol {
 .bottom_burger_menu_display {
 	display : block;
 }
-/* ディスプレイメニューだけ少し横長 */
 .bottom_burger_menu_display>.burger_menu_contents {
+	/* ディスプレイのburgerメニュー位置をの左へずらす */
+	right : calc(180px + 12px);
+	/* ディスプレイメニューだけ少し横長 */
 	width : 200px;
 }
 .bottom_burger_menu_display > .burger_menu_icon {
+	/* ディスプレイのburgerメニュー位置をの左へずらす */
+	right : calc(180px + 12px);
 	background-color: rgb(66, 129, 244);
 }
 .bottom_burger_menu_display > .burger_menu_icon:hover {
 	background-color: rgb(46, 109, 224);
 }
-/* ディスプレイサブメニューの位置を調整 */
 .bottom_burger_menu_display>.burger_menu_contents>.burger_menu_submenu {
-	right : 210px;
+	/* ディスプレイのburgerサブメニュー位置をの左へずらす */
+	right : calc(180px + 210px);
 }
 
 .bottom_burger_menu_search {

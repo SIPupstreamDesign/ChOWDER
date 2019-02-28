@@ -51,7 +51,12 @@ class LoginStore {
 				if (!err) {
 					this.controllerID = reply;
 					location.hash = this.controllerID;
-					let loginData = JSON.parse(JSON.stringify(data));
+					let loginData;
+					try {
+						loginData = JSON.parse(JSON.stringify(data));
+					} catch(e) {
+						console.error(e);
+					} 
 					loginData.onetime = true;
 					this._login(loginData);
 				}
@@ -71,7 +76,12 @@ class LoginStore {
 			} else {
 				let userList = this.getUserList();
 
-				let data = JSON.parse(JSON.stringify(reply));
+				let data;
+				try {
+					data = JSON.parse(JSON.stringify(reply));
+				} catch(e) {
+					console.error(e);
+				}
 				for (let i = 0; i < userList.length; i = i + 1) {
 					if (userList[i].id === reply.id) {
 						data.loginUserName = userList[i].name;
