@@ -272,23 +272,13 @@
 	}
 
 	/**
-	 * 複号する
+	 * ハッシュ化する
 	 */
-	function decrypt(text, key) {
-		let decipher = crypto.createDecipher('aes-256-ctr', key),
-			dec = decipher.update(text, 'hex', 'utf8');
-		dec += decipher.final('utf8');
-		return dec;
-	}
-
-	/**
-	 * 暗号化する
-	 */
-	function encrypt(text, key) {
-		let cipher = crypto.createCipher('aes-256-ctr', key),
-			crypted = cipher.update(text, 'utf8', 'hex');
-		crypted += cipher.final('hex');
-		return crypted;
+	function encrypt(text) {
+		let sha512 = crypto.createHash("sha512");
+		sha512.update(text);
+		let hash = sha512.digest("hex");
+		return hash;
 	}
 
 	module.exports.generateUUID = generateUUID;

@@ -12,7 +12,6 @@
     const phantom = require('phantom');
     const redis = require("redis");
 
-    const cryptkey = "ChOWDERCRYPTKEY";
     const image_size = require('image-size');
     const Thumbnail = require('./../thumbnail.js');
 
@@ -971,7 +970,7 @@
                     data[groupID] = {};
                 }
                 if (setting.hasOwnProperty('password')) {
-                    data[groupID].password = util.encrypt(setting.password, cryptkey);
+                    data[groupID].password = util.encrypt(setting.password);
                 }
                 for (let i = 0; i < userSettingKeys.length; i = i + 1) {
                     let key = userSettingKeys[i];
@@ -1021,15 +1020,15 @@
                             data[id] = {};
                         }
                         if (data[id].hasOwnProperty('pre_password') && setting.hasOwnProperty('pre_password')) {
-                            prePass = util.encrypt(setting.pre_password, cryptkey);
+                            prePass = util.encrypt(setting.pre_password);
                         } else {
                             // 初回追加時.またはjsonから追加時.
-                            let pass = util.encrypt(setting.password, cryptkey);
+                            let pass = util.encrypt(setting.password);
                             data[id].pre_password = pass;
                             prePass = pass;
                         }
                         if (data[id].pre_password === prePass || socketid === "master") {
-                            data[id].password = util.encrypt(setting.password, cryptkey);
+                            data[id].password = util.encrypt(setting.password);
                             data[id].pre_password = data[id].password;
                             this.textClient.set(this.adminUserPrefix, JSON.stringify(data), (err, reply)=>{
                                 this.updateAuthority(data, null);
@@ -1180,7 +1179,7 @@
         }
 
         validatePassword(master, pass) {
-            return master === util.encrypt(pass, cryptkey);
+            return master === util.encrypt(pass);
         }
 
     	/**
