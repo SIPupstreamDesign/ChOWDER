@@ -16,6 +16,7 @@
 	<script type="text/javascript" src="display.bundle.js"></script>
 	<script type="text/javascript">
 		window.electronLogin = (callback)=>{
+			// webpack回避
 			try{
 				let electron_password = null;
 				const {ipcRenderer} = require("electron");

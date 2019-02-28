@@ -1052,7 +1052,20 @@
                 }
             }
             //console.log("-----------login",data);
-            if(data.id === "Display"){
+            if(data.id === "ElectronDisplay"){
+                execLogin(data, socketid, (err, loginResult)=>{
+                    if(err || loginResult.authority === null){
+                        /* ElectronDisplayとしてパスワードでログインに失敗したので、普通のdisplayとして処理する */
+                        let logindata = data;
+                        logindata.id = "Display";
+                        this.login(logindata, socketid, endCallback, suspendCallback);
+                        return;
+                    }else{ //パスワードOK
+                        endCallback(err, loginResult);
+                        return;
+                    }
+                });
+            }else if(data.id === "Display"){
                 // ディスプレイは配信許可設定が必要
                 this.executer.existsDisplayPermission(data.displayid,(err, exists)=>{
                     if(err){
@@ -1098,7 +1111,7 @@
         updateDisplayPermissionList(displayPermissionList, endCallback){
             this.executer.setDisplayPermissionList(displayPermissionList,(err,permissions)=>{
                 endCallback(err,permissions);
-            })
+            });
         }
 
         /**
@@ -1135,6 +1148,10 @@
                                     password : data.password
                                 }, endCallback);
                             } else if (userList[i].type === "api") {
+                                this.executer.changeGroupUserSetting(socketid, userList[i].id, {
+                                    password : data.password
+                                }, endCallback);
+                            } else if (userList[i].type === "electron") {
                                 this.executer.changeGroupUserSetting(socketid, userList[i].id, {
                                     password : data.password
                                 }, endCallback);

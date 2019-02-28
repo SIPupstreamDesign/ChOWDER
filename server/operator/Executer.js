@@ -12,7 +12,6 @@
     const phantom = require('phantom');
     const redis = require("redis");
 
-    const cryptkey = "ChOWDERCRYPTKEY";
     const image_size = require('image-size');
     const Thumbnail = require('./../thumbnail.js');
 
@@ -703,6 +702,14 @@
                                 displayEditable : [],
                                 group_manipulatable : false
                             });
+                        }, ()=>{
+                            // ElectronDisplay設定の初期登録
+                            this.changeGroupUserSetting("master", "ElectronDisplay", {
+                                viewable : "all",
+                                editable : "all",
+                                displayEditable : [],
+                                group_manipulatable : false
+                            });
                         });
                     });
                 }
@@ -963,7 +970,7 @@
                     data[groupID] = {};
                 }
                 if (setting.hasOwnProperty('password')) {
-                    data[groupID].password = util.encrypt(setting.password, cryptkey);
+                    data[groupID].password = util.encrypt(setting.password);
                 }
                 for (let i = 0; i < userSettingKeys.length; i = i + 1) {
                     let key = userSettingKeys[i];
@@ -1013,15 +1020,15 @@
                             data[id] = {};
                         }
                         if (data[id].hasOwnProperty('pre_password') && setting.hasOwnProperty('pre_password')) {
-                            prePass = util.encrypt(setting.pre_password, cryptkey);
+                            prePass = util.encrypt(setting.pre_password);
                         } else {
                             // 初回追加時.またはjsonから追加時.
-                            let pass = util.encrypt(setting.password, cryptkey);
+                            let pass = util.encrypt(setting.password);
                             data[id].pre_password = pass;
                             prePass = pass;
                         }
                         if (data[id].pre_password === prePass || socketid === "master") {
-                            data[id].password = util.encrypt(setting.password, cryptkey);
+                            data[id].password = util.encrypt(setting.password);
                             data[id].pre_password = data[id].password;
                             this.textClient.set(this.adminUserPrefix, JSON.stringify(data), (err, reply)=>{
                                 this.updateAuthority(data, null);
@@ -1133,6 +1140,18 @@
                         }
                         userList.push(apiUserData);
 
+                        // ElectronDisplay
+                        let electronDisplayData = { name : "ElectronDisplay", id : "ElectronDisplay", type : "electron"};
+                        if (setting.hasOwnProperty("ElectronDisplay")) {
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (setting.ElectronDisplay.hasOwnProperty(key)) {
+                                    electronDisplayData[key] = setting.ElectronDisplay[key];
+                                }
+                            }
+                        }
+                        userList.push(electronDisplayData);
+
                         if (endCallback) {
                             endCallback(null, userList);
                         }
@@ -1160,7 +1179,7 @@
         }
 
         validatePassword(master, pass) {
-            return master === util.encrypt(pass, cryptkey);
+            return master === util.encrypt(pass);
         }
 
     	/**
