@@ -21,7 +21,6 @@
 				let electron_password = null;
 				const {ipcRenderer} = require("electron");
 				ipcRenderer.on("electron_password",(event, arg)=>{
-					console.log("ipc received: ",arg);
 					electron_password = arg;
 					callback(true,electron_password);
 				});
