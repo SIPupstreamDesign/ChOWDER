@@ -55,7 +55,7 @@ function LayoutSetting() {
             },
             {
                 className : 'bottom_area',
-                size : "220px",
+                size : "217px",
                 minSize : "100px"
             }]
     }
