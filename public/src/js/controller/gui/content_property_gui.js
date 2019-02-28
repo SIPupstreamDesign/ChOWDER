@@ -473,7 +473,10 @@ class ContentPropertyGUI extends EventEmitter {
 				let i;
 				let audios = { keys: [], values: [] };
 				let videos = { keys: [], values: [] };
-				let videoQualities = { keys: [i18next.t("auto"), i18next.t("custom"), i18next.t("raw_resolution")], values: ["auto", "custom", "raw_resolution"] };
+				let videoQualities = { keys: [i18next.t("auto"), i18next.t("custom")], values: ["auto", "custom"] };
+				if (metaData.hasOwnProperty('subtype') && metaData.subtype === "file") {
+					videoQualities = { keys: [i18next.t("auto"), i18next.t("custom"), i18next.t("raw_resolution")], values: ["auto", "custom", "raw_resolution"] };
+				}
 				let audioQualities = { keys: [i18next.t("auto"), i18next.t("custom")], values: ["auto", "custom"] };
 				for (i = 0; i < devices.length; ++i) {
 					if (devices[i].kind === "audioinput") {
