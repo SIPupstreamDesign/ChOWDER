@@ -291,7 +291,6 @@
 	module.exports.launchApp = launchApp;
 	module.exports.isRelative = isRelative;
 	module.exports.kill = kill;
-	module.exports.decrypt = decrypt;
 	module.exports.encrypt = encrypt;
 	module.exports.detectImageType = detectImageType;
 })();
