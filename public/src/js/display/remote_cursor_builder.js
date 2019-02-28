@@ -1,11 +1,15 @@
 
 import Vscreen from '../common/vscreen'
+import Store from './store/store'
 
 class RemoteCursorBuilder
 {
-    static createCursor(res, controllers){
+    static createCursor(res, store, controllers){
+        this.cursor_size = res.data.cursor_size;
+        this.store = store;
         this.controllers = controllers;
         let ctrlid = res.controllerID;
+
 
         if (!this.controllers.hasOwnProperty(ctrlid)) {
             ++this.controllers.connectionCount;
@@ -15,51 +19,56 @@ class RemoteCursorBuilder
             };
         }
         let pos = Vscreen.transform(Vscreen.makeRect(Number(res.data.x), Number(res.data.y), 0, 0));
-        let elem = document.getElementById('hiddenCursor' + ctrlid);
-        let controllerID = document.getElementById('controllerID' + ctrlid);
-        if (!elem) {
-            elem = document.createElement('div');
-            elem.id = 'hiddenCursor' + ctrlid;
-            elem.className = 'hiddenCursor';
-            elem.style.backgroundColor = 'transparent';
+        this.elem = document.getElementById('hiddenCursor' + ctrlid);
+        this.controllerID = document.getElementById('controllerID' + ctrlid);
+        if (!this.elem) {
+            this.elem = document.createElement('div');
+            this.elem.id = 'hiddenCursor' + ctrlid;
+            this.elem.className = 'hiddenCursor';
+            this.elem.style.backgroundColor = 'transparent';
             let before = document.createElement('div');
             before.className = 'before';
             before.style.backgroundColor = res.data.rgb;
-            elem.appendChild(before);
+            this.elem.appendChild(before);
             let after = document.createElement('div');
             after.className = 'after';
             after.style.backgroundColor = res.data.rgb;
-            elem.appendChild(after);
+            this.elem.appendChild(after);
 
-            controllerID = document.createElement('div');
-            controllerID.id = 'controllerID' + ctrlid;
-            controllerID.className = 'controller_id';
-            controllerID.style.color = res.data.rgb;
-            controllerID.style.position = "absolute"
-            controllerID.style.fontSize = "20px";
-            controllerID.innerText = res.data.controllerID;
-            document.body.appendChild(controllerID);
+            this.controllerID = document.createElement('div');
+            this.controllerID.id = 'controllerID' + ctrlid;
+            this.controllerID.className = 'controller_id';
+            this.controllerID.style.color = res.data.rgb;
+            this.controllerID.style.position = "absolute"
+            this.controllerID.style.fontSize = "20px";
+            this.controllerID.innerText = res.data.controllerID;
+            document.body.appendChild(this.controllerID);
 
-            document.body.appendChild(elem);
+            document.body.appendChild(this.elem);
             // console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
         } else {
-            controllerID.innerText = res.data.controllerID;
-            controllerID.style.color = res.data.rgb;
-            elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
-            elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
+            this.controllerID.innerText = res.data.controllerID;
+            this.controllerID.style.color = res.data.rgb;
+            this.elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
+            this.elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
         }
-        controllerID.style.textShadow =
+        this.controllerID.style.textShadow =
                 "1px 1px 0 white,"
                 + "-1px 1px 0 white,"
                 + " 1px -1px 0 white,"
                 + "-1px -1px 0 white";
 
-        this.setCursorSize([elem, controllerID],Number(res.data.cursor_size));
-        elem.style.left = Math.round(pos.x) + 'px';
-        elem.style.top  = Math.round(pos.y) + 'px';
-        controllerID.style.left = Math.round(pos.x) + 'px';
-        controllerID.style.top  = Math.round(pos.y + Number(res.data.cursor_size)) + 'px';
+        let ratio = this.setCursorSize([this.elem, this.controllerID],Number(this.cursor_size));
+        this.elem.style.left = Math.round(pos.x) + 'px';
+        this.elem.style.top  = Math.round(pos.y) + 'px';
+        this.controllerID.style.left = Math.round(pos.x) + 'px';
+        this.controllerID.style.top  = Math.round(pos.y + Number(ratio * 100)) + 'px';
         this.controllers[ctrlid].lastActive = Date.now();
+
+        this.store.on(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, (err, vd)=>{
+            let ratio = this.setCursorSize([this.elem, this.controllerID],Number(this.cursor_size));
+            this.controllerID.style.top  = Math.round(pos.y + Number(ratio * 100)) + 'px';
+        });
     }
 
     static releaseCursor(res,controllers){
@@ -113,13 +122,22 @@ class RemoteCursorBuilder
             elems[i].style.transform = "scale(" + ratio + ")";
             elems[i].style.transformOrigin = "left top 0";
         }
+        return ratio;
     }
 
     /**
      * css用のscaleを求める
      */
     static getScalefromSize(pixel){
-        return pixel / 100.0;
+        let width = window.innerWidth / parseFloat(this.store.getVirtualDisplay().orgWidth);
+        let height = window.innerHeight / parseFloat(this.store.getVirtualDisplay().orgHeight);
+        let normalize = null;
+        if(width > height){
+            normalize = pixel * height;
+        }else{
+            normalize = pixel * width;
+        }
+        return normalize / 100.0;
     }
 }
 

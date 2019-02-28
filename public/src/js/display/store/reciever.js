@@ -130,16 +130,17 @@ class Receiver
         });
 
         this.connector.on(Command.UpdateVirtualDisplay, (data) => {
-            this.virtualDisplay = data;
+            this.store.virtualDisplay = data;
+            // console.log("UpdateVirtualDisplay",this.virtualDisplay)
             this.store.emit(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, null, data);
         });
 
         /// リモートカーソルが更新された
         this.connector.on(Command.UpdateMouseCursor, (res) => {
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                RemoteCursorBuilder.createCursor(res, this.controllers);
+                RemoteCursorBuilder.createCursor(res, this.store, this.controllers);
             }else{
-                RemoteCursorBuilder.releaseCursor(res, this.controllers);
+                RemoteCursorBuilder.releaseCursor(res, this.store, this.controllers);
             }
         });
 

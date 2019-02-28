@@ -578,7 +578,7 @@ class Store extends EventEmitter
 		}
 		return time;
     }
-    
+
     getVirtualDisplay() {
         return this.virtualDisplay;
     }

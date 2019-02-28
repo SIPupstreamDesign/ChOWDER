@@ -108,7 +108,7 @@ class Receiver
 
         // virtual displayが更新されたときにブロードキャストされてくる.
         this.connector.on(Command.UpdateVirtualDisplay, (data) => {
-            this.emit(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, null, data);
+            this.store.emit(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, null, data);
         });
 
         // グループが更新されたときにブロードキャストされてくる.
