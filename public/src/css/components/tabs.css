@@ -20,11 +20,6 @@
 	border-bottom : 0px;
 }
 
-#display_tab_box {
-	border: 3px solid #0080FF;
-	background : rgba(0, 100, 200, 0.1)
-}
-
 #content_tab {
 	position : absolute;
 	text-align: center;

@@ -21,7 +21,6 @@
 
 .search_check_wrapper {
 	width : 100% ;
-	border : 1px solid #FF8055;
 }
 
 .search_text_input_wrapper {
@@ -33,6 +32,8 @@
 	width : calc(100% - 170px);
 	height : 100%;
 	overflow : auto;
+	border-left: 2px solid #FF8055;
+	box-sizing: content-box;
 }
 
 .search_text_input {

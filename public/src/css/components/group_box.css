@@ -187,22 +187,26 @@
 }
 
 .content_tab_box {
-	border: 2px solid rgb(54,187,68);
+	border-left: 2px solid rgb(54,187,68);
+	box-sizing: content-box;
 }
 
 .display_tab_box {
-	border: 2px solid #0080FF;
+	border-left: 2px solid #0080FF;
+	box-sizing: content-box;
 }
 .display_tab.active {
 	border: 3px solid white;
 }
 
 .layout_tab_box {
-	border: 2px solid lightgray;
+	border-left: 2px solid lightgray;
+	box-sizing: content-box;
 }
 
 #display_tab_box {
 	border: 2px solid #0080FF;
+	height : calc(100% - 2px);
 }
 
 #layout_tab_box {
