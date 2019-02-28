@@ -195,6 +195,9 @@ class MediaPlayer extends EventEmitter {
 			this.audioBuffer.removeEventListener('update', this.updateBuffer);
 			this.audioBuffer.removeEventListener('updateend', this.updateBuffer);
 		}
+		for (let i = 0; i < this.mediaSource.sourceBuffers.length; ++i) {
+			this.mediaSource.removeSourceBuffer(this.mediaSource.sourceBuffers[i]);
+		}
 		this.mediaSource.removeEventListener('sourceopen', this.onSourceOpen);
 		this.video.removeEventListener('timeupdate', this.repeatEvent);
 		this.video.removeEventListener('timeupdate', this.timeUpdated);

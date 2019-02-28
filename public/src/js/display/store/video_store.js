@@ -94,7 +94,11 @@ class VideoStore {
                     }
                 } else {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
-                    elem.srcObject = stream;
+                    try {
+                        elem.srcObject = stream;
+                    } catch(e) {
+                        elem.src = stream;
+                    }
                 }
 
                 if (!webRTC.statusHandle) {

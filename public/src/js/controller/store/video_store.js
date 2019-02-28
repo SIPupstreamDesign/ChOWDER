@@ -183,7 +183,7 @@ class VideoStore {
 			return (id, user, buffer, sampleNum, is_last) => {
 				if (user === player.buffer) {
 					this.segmentDict[metaDataID].video.push(buffer);
-					// console.log("videoseg")
+					 console.log("videoseg")
 					//player.onVideoFrame(buffer);
 				}
 				if (user === player.audioBuffer) {
@@ -202,6 +202,10 @@ class VideoStore {
 		
 		onparsedbuffer(mp4box, blob); // callback for handling read chunk
 
+		return {
+			mp4box : mp4box,
+			mediaPlayer : player
+		};
 		/*
 		let onBlockRead = function(evt) {
 			if (evt.target.error == null) {
@@ -717,16 +721,54 @@ class VideoStore {
 		if (this.hasVideoPlayer(metadataID) && data.hasOwnProperty('quality')) {
 			if (this.store.hasMetadata(metadataID)) {
 				let meta = this.store.getMetaData(metadataID);
+				// 既にDatachannel使ってるか？
+				let isAlreadyUsed = meta.hasOwnProperty('quality') ? this.isDataChannelUsed(meta) : false;
+				// Datachannel使ってるか？
 				meta.quality = JSON.stringify(data.quality);
-				if (this.isDataChannelUsed(meta)) {
+				let isDataChannelUsed = this.isDataChannelUsed(meta);
+				if (!isAlreadyUsed && isDataChannelUsed) {
+					// DataChannel使用開始
 					if (this.hasVideoData(meta.id)) {
 						let blob = this.getVideoData(meta.id);
 						if (blob) {
 							let player = this.getVideoPlayer(meta.id);
 							URL.revokeObjectURL(player.video.src); // 通常のWebRTC用のソースを消す.
+							if (player.video.hasOwnProperty('srcObject')) {
+								player.video.srcObject = null;
+							}
 							// DataChannelを使用しfmp4を送り付ける方式
 							// 解像度が維持される
-							this.processMovieBlob(meta, player.video, blob, meta.id);
+							player.rawInstances = this.processMovieBlob(meta, player.video, blob, meta.id);
+							player.video.load();
+						}
+					}
+				}
+				if (isAlreadyUsed && !isDataChannelUsed) {
+					// DataChannel使用終了、webrtcに切り替え
+					if (this.hasVideoData(meta.id)) {
+						let player = this.getVideoPlayer(meta.id);
+						if (player.hasOwnProperty('rawInstances')) {
+							let mediaPlayer = player.rawInstances.mediaPlayer;
+							if (mediaPlayer) {
+								mediaPlayer.release();
+							}
+							let mp4box = player.rawInstances.mp4box;
+							if (mp4box) {
+								mp4box.stop();
+								mp4box.onSegment = null;
+								mp4box.onReady = null;
+							}
+							player.rawInstances = null;
+						}
+						let blob = this.getVideoData(meta.id);
+						if (blob) {
+							let player = this.getVideoPlayer(meta.id);
+							let blobObj = new Blob([blob]);
+							try {
+								player.video.srcObject = blobObj;
+							} catch (error) {
+								player.video.src = URL.createObjectURL(blobObj);
+							}
 							player.video.load();
 						}
 					}
