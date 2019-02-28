@@ -13,6 +13,12 @@ class NoticeBox extends EventEmitter {
     }
 
     addDisplayPermissionLeaf(logindata){
+        for(let notice of this.noticeList){
+            if(logindata.displayid === notice.logindata.displayid){
+                // もうあるdisplayidは重複して作らない
+                return;
+            }
+        }
         let notice = {};
         notice.dom = document.createElement("span");
         notice.logindata = logindata;
@@ -58,19 +64,19 @@ class NoticeBox extends EventEmitter {
     }
 
     deleteDisplayPermissionLeaf(logindata){
-        for(let i in this.noticeList){
-            if(this.noticeList[i].logindata.displayid === logindata.displayid){
-                this.noticeList[i].rejectButton.removeEventListener("click",this.noticeList[i].rejectCallback);
-                this.noticeList[i].acceptButton.removeEventListener("click",this.noticeList[i].acceptCallback);
-                this.container.removeChild(this.noticeList[i].dom);
+        for(let notice of this.noticeList){
+            if(notice.logindata.displayid === logindata.displayid){
+                notice.rejectButton.removeEventListener("click",notice.rejectCallback);
+                notice.acceptButton.removeEventListener("click",notice.acceptCallback);
+                this.container.removeChild(notice.dom);
                 this.noticeList.splice(i,1);
             }
         }
     }
 
     update(){
-        for(let i of this.noticeList){
-            this.container.appendChild(i.dom);
+        for(let notice of this.noticeList){
+            this.container.appendChild(notice.dom);
         }
     }
 }
