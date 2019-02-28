@@ -80,7 +80,7 @@ class ControllerData extends EventEmitter {
 			}
 			if (data.hasOwnProperty('cursorSize')) {
 				let size = parseInt(data.cursorSize)
-				if(Number.isFinite(size)){
+				if(isFinite(size)){
 					this.cursorSize = size;
 				}else{
 					console.error("cursorsize expected Number");
@@ -156,7 +156,7 @@ class ControllerData extends EventEmitter {
 	}
 	setCursorSize(cursorSize) {
 		let size = parseInt(cursorSize)
-		if(Number.isFinite(size)){
+		if(isFinite(size)){
 			this.cursorSize = size;
 		}else{
 			console.error("cursorsize expected Number");
