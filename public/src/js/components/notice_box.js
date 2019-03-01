@@ -74,8 +74,6 @@ class NoticeBox extends EventEmitter {
         for(let i = 0; i < this.noticeList.length; ++i){
             let notice = this.noticeList[i];
             if(notice.logindata.displayid === logindata.displayid){
-                notice.rejectButton.release();
-                notice.acceptButton.release();
                 this.container.removeChild(notice.dom);
                 this.noticeList.splice(i,1);
             }

@@ -107,7 +107,7 @@ class Store extends EventEmitter
 	emit() {
 		if (arguments.length > 0) {
 			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!")
+				console.error("Not found EVENT NAME!", arguments[0])
 			}
 		}
 		super.emit(...arguments);
