@@ -1099,7 +1099,7 @@
         }
 
         updateDisplayPermission(logindata, endCallback) {
-            console.log("updateDisplayPermission", logindata);
+            console.log("UpdateDisplayPermission");
             this.executer.setDisplayPermission(logindata.displayid, logindata.permission, (err) => {
                 endCallback(err, logindata);
             });
