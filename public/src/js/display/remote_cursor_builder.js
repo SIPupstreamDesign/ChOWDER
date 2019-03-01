@@ -129,8 +129,9 @@ class RemoteCursorBuilder
      * css用のscaleを求める
      */
     static getScalefromSize(pixel){
-        let width = window.innerWidth / parseFloat(this.store.getVirtualDisplay().orgWidth);
-        let height = window.innerHeight / parseFloat(this.store.getVirtualDisplay().orgHeight);
+        if (!this.store.getWindowData()) { return 100; }
+        let width = window.innerWidth / Number(this.store.getWindowData().width);
+        let height = window.innerHeight / Number(this.store.getWindowData().height);
         let normalize = null;
         if(width > height){
             normalize = pixel * height;
