@@ -18,6 +18,14 @@
     margin-left : 5px;
 }
 
+.notice_box_title {
+    height : 20px;
+    width : 100%;
+    background-color : rgb(0, 128, 255);
+    padding-left: 5px;
+    color : #333;
+}
+
 .notice_box_id_wrap {
     display: flex;
     width : 95px;

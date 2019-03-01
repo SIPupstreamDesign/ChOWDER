@@ -12,6 +12,12 @@ class NoticeBox extends EventEmitter {
         this.noticeList = [];
         this.container = document.createElement('div');
         this.container.className = "notice_box"
+        
+        this.title = document.createElement('div');
+        this.title.innerText = "New Displays";
+        this.title.className = "notice_box_title"
+        this.container.appendChild(this.title);
+
     }
 
     init(){
@@ -78,12 +84,22 @@ class NoticeBox extends EventEmitter {
                 this.noticeList.splice(i,1);
             }
         }
+        if (this.noticeList.length > 0) {
+            this.title.style.color = "white";
+        } else {
+            this.title.style.color = "#333";
+        }
     }
 
     update(){
         for(let i = 0; i < this.noticeList.length; ++i){
             let notice = this.noticeList[i];
             this.container.appendChild(notice.dom);
+        }
+        if (this.noticeList.length > 0) {
+            this.title.style.color = "white";
+        } else {
+            this.title.style.color = "#333";
         }
     }
 
