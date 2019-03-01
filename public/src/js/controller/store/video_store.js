@@ -12,18 +12,9 @@ import WebRTC from '../../common/webrtc';
 import Vscreen from '../../common/vscreen'
 import VideoPlayer from '../../components/video_player'
 import Validator from '../../common/validator'
+import ContentUtil from '../content_util'
 
 "use strict";
-
-/**
- * random ID (8 chars)
- */
-function generateID() {
-	function s4() {
-		return Math.floor((1 + Math.random()) * 0x10000000).toString(16).substring(1);
-	}
-	return s4() + s4();
-}
 
 function captureStream(video) {
 	if (video.captureStream) {
@@ -518,7 +509,7 @@ class VideoStore {
 			metaData = this.store.getMetaData(metaData.id);
 		}
 		else {
-			metaData.id = generateID();
+			metaData.id = ContentUtil.generateID();
 		}
 		if (this.hasVideoPlayer(metaData.id)) {
 			let player = this.getVideoPlayer(metaData.id);
@@ -607,7 +598,7 @@ class VideoStore {
 		if (metaData.hasOwnProperty("id") && this.store.hasMetadata(metaData.id)) {
 			metaData = this.store.getMetaData(metaData.id);
 		} else {
-			metaData.id = generateID();
+			metaData.id = ContentUtil.generateID();
 		}
 		if (this.hasVideoPlayer(metaData.id)) {
 			let player = this.getVideoPlayer(metaData.id);

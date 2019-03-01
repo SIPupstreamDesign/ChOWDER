@@ -4,6 +4,7 @@
  */
 
 import Translation from '../../../common/translation'
+import ContentUtil from '../../content_util';
 
 /**
  * 上部メニュー設定
@@ -70,7 +71,7 @@ function MenuSetting(management) {
             Controller : [{
                     Display : {
                         func : () => {
-                            let viewURL = "display.html";
+                            let viewURL = "display.html?id=" + ContentUtil.generateID();
                             window.open(viewURL);
                         }
                     },

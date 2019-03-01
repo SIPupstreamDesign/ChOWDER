@@ -8,7 +8,7 @@ import Constants from '../../common/constants'
 import Command from '../../common/command';
 import Vscreen from '../../common/vscreen';
 import Validator from '../../common/validator';
-import VscreenUtil  from '../../common/vscreen_util';
+import VscreenUtil from '../../common/vscreen_util';
 import VideoStore from './video_store';
 import Receiver from './reciever';
 import PerformanceLogger from '../performance_logger';
@@ -17,14 +17,12 @@ import PerformanceLogger from '../performance_logger';
 
 const reconnectTimeout = 2000;
 
-class Store extends EventEmitter
-{
-	constructor(action)
-	{
-		super();
-		this.action = action;
+class Store extends EventEmitter {
+    constructor(action) {
+        super();
+        this.action = action;
 
-		this.isInitialized_ = false;
+        this.isInitialized_ = false;
         this.authority = null;
         this.windowData = null;
         this.metaDataDict = {};
@@ -44,23 +42,23 @@ class Store extends EventEmitter
         this.onUpdateWindowMetaData = this.onUpdateWindowMetaData.bind(this);
     }
 
-	// デバッグ用. release版作るときは消す
-	emit() {
-		if (arguments.length > 0) {
-			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!")
-			}
-		}
-		super.emit(...arguments);
+    // デバッグ用. release版作るときは消す
+    emit() {
+        if (arguments.length > 0) {
+            if (!arguments[0]) {
+                console.error("Not found EVENT NAME!")
+            }
+        }
+        super.emit(...arguments);
     }
 
-	static extractCallback(data) {
-		let callback;
-		if (data && data.hasOwnProperty('callback')) {
-			callback = data.callback;
-			delete data.callback;
-		}
-		return callback;
+    static extractCallback(data) {
+        let callback;
+        if (data && data.hasOwnProperty('callback')) {
+            callback = data.callback;
+            delete data.callback;
+        }
+        return callback;
     }
 
     release() {
@@ -69,18 +67,18 @@ class Store extends EventEmitter
         }
     }
 
-	initEvents() {
-		for (let i in Action) {
-			if (i.indexOf('EVENT') >= 0) {
-				this.action.on(Action[i], ((method) => {
-					return (err, data) => {
-						if (this[method]) {
-							this[method](data);
-						}
-					};
-				})('_' + Action[i]));
-			}
-		}
+    initEvents() {
+        for (let i in Action) {
+            if (i.indexOf('EVENT') >= 0) {
+                this.action.on(Action[i], ((method) => {
+                    return (err, data) => {
+                        if (this[method]) {
+                            this[method](data);
+                        }
+                    };
+                })('_' + Action[i]));
+            }
+        }
     };
 
     initOtherStores(callback) {
@@ -104,24 +102,24 @@ class Store extends EventEmitter
     _connect() {
         let isDisconnect = false;
         let client = Connector.connect(() => {
-                if (!this.isInitialized_) {
-                    this.initOtherStores(() => {
-                        this.emit(Store.EVENT_CONNECT_SUCCESS, null);
-                    });
-                } else {
+            if (!this.isInitialized_) {
+                this.initOtherStores(() => {
                     this.emit(Store.EVENT_CONNECT_SUCCESS, null);
-                }
-            }, (() => {
-                return (ev) => {
-                    this.emit(Store.EVENT_CONNECT_FAILED, null);
+                });
+            } else {
+                this.emit(Store.EVENT_CONNECT_SUCCESS, null);
+            }
+        }, (() => {
+            return (ev) => {
+                this.emit(Store.EVENT_CONNECT_FAILED, null);
 
-                    if (!isDisconnect) {
-                        setTimeout(() => {
-                            this._connect();
-                        }, reconnectTimeout);
-                    }
-                };
-            })());
+                if (!isDisconnect) {
+                    setTimeout(() => {
+                        this._connect();
+                    }, reconnectTimeout);
+                }
+            };
+        })());
 
         Connector.on("Disconnect", ((client) => {
             return () => {
@@ -169,9 +167,9 @@ class Store extends EventEmitter
 
     _login(data) {
         Connector.send(Command.Login, data, (err, reply) => {
-            if(reply === null){
-                console.log("This Display was rejected.");
-            }else{
+            if (err || reply === null) {
+                console.log(err);
+            } else {
                 this.authority = reply.authority;
                 this.emit(Store.EVENT_LOGIN_SUCCESS, null);
             }
@@ -179,9 +177,9 @@ class Store extends EventEmitter
     }
 
     _logout(data) {
-		this.authority = null;
-		Connector.send(Command.Logout, {}, function () {
-		});
+        this.authority = null;
+        Connector.send(Command.Logout, {}, function () {
+        });
     }
 
     updateGroupDict(groupList) {
@@ -208,7 +206,7 @@ class Store extends EventEmitter
         } else if (updateType === 'window') {
             if (this.getWindowData() !== null) {
                 // console.log("update winodow", this.getWindowData());
-                Connector.send(Command.GetWindowMetaData, { id : this.getWindowData().id }, this.onGetWindowData);
+                Connector.send(Command.GetWindowMetaData, { id: this.getWindowData().id }, this.onGetWindowData);
             }
         } else if (updateType === 'group') {
             Connector.send(Command.GetGroupList, {}, (err, data) => {
@@ -219,9 +217,9 @@ class Store extends EventEmitter
         } else {
             // console.log("update transform");
             if (targetID) {
-                Connector.send(Command.GetMetaData, { type: '', id: targetID}, this.onGetMetaData);
+                Connector.send(Command.GetMetaData, { type: '', id: targetID }, this.onGetMetaData);
             } else {
-                Connector.send(Command.GetMetaData, { type: 'all', id: ''}, this.onGetMetaData);
+                Connector.send(Command.GetMetaData, { type: 'all', id: '' }, this.onGetMetaData);
             }
         }
     }
@@ -229,12 +227,18 @@ class Store extends EventEmitter
     _changeDisplayID(data) {
         let newId = data.id.replace(' ', '_');
         let metaData = this.getWindowData();
-        let params = {id : newId};
-        params.posx = metaData.posx;
-        params.posy = metaData.posy;
-        params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
+        let params = { id: newId };
+        if (metaData) {
+            params.posx = metaData.posx;
+            params.posy = metaData.posy;
+            params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);   
+        } else {
+            params.posx = 0;
+            params.posy = 0;
+            params.scale = 1;
+        }
 
-        Connector.send(Command.GetWindowMetaData, {id : newId}, (err, metaData) => {
+        Connector.send(Command.GetWindowMetaData, { id: newId }, (err, metaData) => {
             if (!err && metaData) {
                 // 既にnewIdのdisplayが登録されていた場合は、そちらの位置サイズに合わせる
                 params.posx = metaData.posx;
@@ -290,14 +294,14 @@ class Store extends EventEmitter
         let query = this.getQueryParams(location.search) || {};
         windowID = query.id ? decodeURIComponent(query.id) : windowID;
         let groupId = undefined;
-
+        
         let f = () => {
             if (windowID !== '') {
-                Connector.send(Command.GetWindowMetaData, {id : windowID}, (err, metaData) => {
+                Connector.send(Command.GetWindowMetaData, { id: windowID }, (err, metaData) => {
                     if (!err && metaData) {
                         let scale = parseFloat(query.scale) || parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
                         metaData.group = groupId || metaData.group,
-                        metaData.width = wh.width / scale;
+                            metaData.width = wh.width / scale;
                         metaData.height = wh.height / scale;
                         metaData.orgWidth = wh.width;
                         metaData.orgHeight = wh.height;
@@ -337,7 +341,7 @@ class Store extends EventEmitter
         let groupName = decodeURIComponent(query.group || '');
         if (groupName) {
             Connector.send(Command.GetGroupList, {}, (err, data) => {
-                for (let i = 0; i < data.displaygrouplist.length; i ++) {
+                for (let i = 0; i < data.displaygrouplist.length; i++) {
                     if (data.displaygrouplist[i].name === groupName) {
                         groupId = data.displaygrouplist[i].id;
                     }
@@ -352,7 +356,7 @@ class Store extends EventEmitter
 	/**
 	 * コンテンツのZインデックスを一番手前にする
 	 */
-	_changeContentIndexToFront(data) {
+    _changeContentIndexToFront(data) {
         let targetid = data.targetID;
         let max = 0;
         let metaDataDict = this.getMetaDataDict();
@@ -371,15 +375,15 @@ class Store extends EventEmitter
                 }
             }
             metaData.zIndex = max + 1;
-            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {});
+            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) { });
         }
-	}
+    }
 
 	/**
 	 * コンテンツのTransformを変更
 	 * @param {*} data
 	 */
-	_changeContentTransform(data) {
+    _changeContentTransform(data) {
         let targetid = data.targetID;
         let x = data.x;
         let y = data.y;
@@ -477,8 +481,8 @@ class Store extends EventEmitter
 	/**
 	 * VideoStoreを返す
 	 */
-	getVideoStore() {
-		return this.videoStore;
+    getVideoStore() {
+        return this.videoStore;
     }
 
     /**
@@ -493,13 +497,13 @@ class Store extends EventEmitter
                 str += key + '=' + map[key] + '&';
             }
         }
-        str = str.substring( 0, str.length - 1 ); // remove the last '&'
+        str = str.substring(0, str.length - 1); // remove the last '&'
 
         return str;
     }
 
     setWindowData(windowData) {
-        if (this.windowData.id !== windowData.id) { console.error("Error : mismatch window id", windowData ); }
+        if (this.windowData.id !== windowData.id) { console.error("Error : mismatch window id", windowData); }
         this.windowData = windowData;
     }
 
@@ -519,16 +523,16 @@ class Store extends EventEmitter
 	 * メタデータごとにfuncを実行
 	 * @param {*} func
 	 */
-	for_each_metadata(func) {
-		let i;
-		for (i in this.metaDataDict) {
-			if (this.metaDataDict.hasOwnProperty(i)) {
-				if (func(i, this.metaDataDict[i]) === true) {
-					break;
-				}
-			}
-		}
-	}
+    for_each_metadata(func) {
+        let i;
+        for (i in this.metaDataDict) {
+            if (this.metaDataDict.hasOwnProperty(i)) {
+                if (func(i, this.metaDataDict[i]) === true) {
+                    break;
+                }
+            }
+        }
+    }
 
     getMetaDataDict() {
         return this.metaDataDict;
@@ -563,20 +567,20 @@ class Store extends EventEmitter
         return false;
     }
 
-	// パフォーマンス計算を行うかどうか
-	isMeasureTimeEnable() {
-		if (this.globalSetting && this.globalSetting.enableMeasureTime) {
-			return (String(this.globalSetting.enableMeasureTime) === "true");
-		}
-		return false;
-	}
-	// パフォーマンス計算用時間を生成して返す
-	fetchMeasureTime() {
-		let time = null;
-		if (this.isMeasureTimeEnable()) {
-			time = new Date().toISOString();
-		}
-		return time;
+    // パフォーマンス計算を行うかどうか
+    isMeasureTimeEnable() {
+        if (this.globalSetting && this.globalSetting.enableMeasureTime) {
+            return (String(this.globalSetting.enableMeasureTime) === "true");
+        }
+        return false;
+    }
+    // パフォーマンス計算用時間を生成して返す
+    fetchMeasureTime() {
+        let time = null;
+        if (this.isMeasureTimeEnable()) {
+            time = new Date().toISOString();
+        }
+        return time;
     }
 
     getVirtualDisplay() {
@@ -592,8 +596,8 @@ Store.EVENT_DISPLAY_ID_CHANGED = "display_id_changed";
 Store.EVENT_DONE_UPDATE_WINDOW_METADATA = "done_update_window_metadata";
 Store.EVENT_DONE_DELETE_ALL_ELEMENTS = "done_delete_all_elements";
 Store.EVENT_DONE_REGISTER_WINDOW = "done_register_window";
-Store.EVENT_DONE_GET_WINDOW_METADATA= "done_get_window_metadata";
-Store.EVENT_DONE_GET_METADATA= "done_get_metadata";
+Store.EVENT_DONE_GET_WINDOW_METADATA = "done_get_window_metadata";
+Store.EVENT_DONE_GET_METADATA = "done_get_metadata";
 Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";

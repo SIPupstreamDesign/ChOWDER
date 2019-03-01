@@ -169,6 +169,17 @@ class ContentUtil
         }
         return null;
     }
+
+    /**
+     * random ID (8 chars)
+     */
+    static generateID() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000000).toString(16);
+        }
+        return s4();
+    }
+
 }
 
 export default ContentUtil;

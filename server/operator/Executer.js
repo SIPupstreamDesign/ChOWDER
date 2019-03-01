@@ -1160,7 +1160,7 @@
             });
         }
 
-        generateCOntrollerID(endCallback) {
+        generateControllerID(endCallback) {
             this.textClient.keys(this.controllerDataPrefix + "*", (err, replies)=>{
                 let i;
                 let prefix = "user";

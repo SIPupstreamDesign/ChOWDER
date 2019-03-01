@@ -246,16 +246,26 @@ class Display {
 			if (disconnectedText) {
 				disconnectedText.style.display = "none";
 			}
-			if (!this.store.getWindowData()) {
-				this.action.registerWindow({ size : this.gui.getWindowSize()});
-			}
+
+
+			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
+
+			window.electronLogin((isElectron,password)=>{
+				if(isElectron){
+					loginOption.password = password;
+					loginOption.id = "ElectronDisplay";
+					this.action.login(loginOption);
+				}else{
+					this.action.login(loginOption);
+				}
+			});
 		});
 
 		this.store.on(Store.EVENT_CONNECT_FAILED, (err, data) => {
 			console.log("EVENT_CONNECT_FAILED")
-			let disconnected_text = document.getElementById("disconnected_text");
-			if (disconnected_text) {
-				disconnected_text.style.display = "block";
+			let disconnectedText = document.getElementById("disconnected_text");
+			if (disconnectedText) {
+				disconnectedText.style.display = "block";
 			}
 		});
 
@@ -273,10 +283,13 @@ class Display {
 
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
 			console.log("EVENT_LOGIN_SUCCESS")
-			this.action.update({ updateType : 'window'});
-			this.action.update({ updateType : 'group'});
-			this.action.update({ updateType : 'content'});
-
+			if (!this.store.getWindowData()) {
+				this.action.registerWindow({ size : this.gui.getWindowSize()});
+			} else {
+				this.action.update({ updateType : 'window'});
+				this.action.update({ updateType : 'group'});
+				this.action.update({ updateType : 'content'});
+			}
 		});
 
 		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
@@ -330,18 +343,6 @@ class Display {
 			}
 			document.getElementById('preview_area').innerHTML = "";
 			this.action.update({ updateType : 'all'});
-
-			let login_option = { id : "Display", password : "", displayid : this.store.getWindowID() }
-
-			window.electronLogin((isElectron,password)=>{
-				if(isElectron){
-					login_option.password = password;
-					login_option.id = "ElectronDisplay";
-					this.action.login(login_option);
-				}else{
-					this.action.login(login_option);
-				}
-			});
 		});
 
 		this.store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {

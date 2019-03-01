@@ -173,11 +173,13 @@
             });
             ws_connector.on(Command.Login, (data, resultCallback, socketid)=>{
                 this.commandOperator.login(data, socketid, resultCallback, this.post_askDisplayPermission(ws));
+                // TODO 移動.
                 this.commandOperator.getDisplayPermissionList(this.post_pushDisplayPermissionList(ws));//管理画面用にローカルstoreを更新する
             });
             ws_connector.on(Command.ChangeDisplayPermission, (logindata, resultCallback, socketid)=>{
                 this.commandOperator.updateDisplayPermission(logindata, (err, logindata)=>{
                     this.post_finishDisplayPermission(ws)(err,logindata);
+                    // TODO 移動. 
                     this.commandOperator.getDisplayPermissionList(this.post_pushDisplayPermissionList(ws));//管理画面用にローカルstoreを更新する
                 });
             });

@@ -9,23 +9,22 @@ import Store from './store'
 import StringUtil from '../../common/string_util'
 import RemoteCursorBuilder from '../remote_cursor_builder'
 
-class Receiver
-{
+class Receiver {
     constructor(connector, store, action) {
         this.store = store;
         this.action = action;
         this.connector = connector;
 
-        this.controllers = {connectionCount: -1};
+        this.controllers = { connectionCount: -1 };
 
         this.init();
     }
 
     init() {
         this.connector.on(Command.Update, (data) => {
-            this.action.update({ updateType : 'window'});
-            this.action.update({ updateType : 'group' });
-            this.action.update({ updateType : 'content' });
+            this.action.update({ updateType: 'window' });
+            this.action.update({ updateType: 'group' });
+            this.action.update({ updateType: 'content' });
         });
 
         this.connector.on(Command.UpdateContent, (data) => {
@@ -42,8 +41,8 @@ class Receiver
 
                         json.from = "view";
                         this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
-                            key : rtcKey
-                        }), function (err, reply) {});
+                            key: rtcKey
+                        }), function (err, reply) { });
                         delete json.from;
                     }
                 }
@@ -54,53 +53,44 @@ class Receiver
                         if (metaDataDict.hasOwnProperty(json.id)) {
                             this.store.emit(Store.EVENT_DONE_GET_CONTENT, err, reply);
                         }
-                    } );
+                    });
                 }
             });
         });
 
         this.connector.on(Command.UpdateGroup, (err, data) => {
-            this.action.update({ updateType : "group" });
+            this.action.update({ updateType: "group" });
         });
 
         // ディスプレイ配信許可設定で許可/拒否されたとき
         this.connector.on(Command.FinishDisplayPermission, (data) => {
-            if(data.displayid === this.store.getWindowID()){ // 自分向けか？
-                let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
-                this.connector.send(Command.Login, request, (err, reply) => {
-                    if(reply === null){
-                        console.log("This Display was rejected.");
-                    }else{
-                        this.store.setAuthority(reply.authority);
-                        this.action.update({ updateType : 'window'});
-                        this.action.update({ updateType : 'group'});
-                        this.action.update({ updateType : 'content'});
-                    }
-                });
+            if (data.displayid === this.store.getWindowID()) { // 自分向けか？
+                let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
+                this.action.login(request);
             }
         });
 
         // 権限変更時に送られてくる
         this.connector.on(Command.ChangeAuthority, () => {
-            let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
+            let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
                 this.store.setAuthority(reply.authority);
-                this.action.update({ updateType : 'window'});
-                this.action.update({ updateType : 'group'});
-                this.action.update({ updateType : 'content'});
+                this.action.update({ updateType: 'window' });
+                this.action.update({ updateType: 'group' });
+                this.action.update({ updateType: 'content' });
             });
         });
 
 
         // DB切り替え時にブロードキャストされてくる
         this.connector.on(Command.ChangeDB, () => {
-            let request = { id : "Display", password : "", displayid : this.store.getWindowID() };
+            let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
                 this.store.setAuthority(reply.authority);
                 this.action.deleteAllElements();
-                this.action.update({ updateType : 'window' });
-                this.action.update({ updateType : 'group' });
-                this.action.update({ updateType : 'content' });
+                this.action.update({ updateType: 'window' });
+                this.action.update({ updateType: 'group' });
+                this.action.update({ updateType: 'content' });
             });
         });
 
@@ -117,13 +107,13 @@ class Receiver
 
         this.connector.on(Command.DeleteWindowMetaData, (data) => {
             // console.log("onDeleteWindowMetaData", data);
-            this.action.update({ updateType : 'window' });
+            this.action.update({ updateType: 'window' });
         });
 
         this.connector.on(Command.UpdateWindowMetaData, (data) => {
             for (let i = 0; i < data.length; ++i) {
                 if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
-                    this.action.update({ updateType : 'window' });
+                    this.action.update({ updateType: 'window' });
                     this.store.onUpdateWindowMetaData(null, data);
                 }
             }
@@ -139,7 +129,7 @@ class Receiver
         this.connector.on(Command.UpdateMouseCursor, (res) => {
             if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
                 RemoteCursorBuilder.createCursor(res, this.store, this.controllers);
-            }else{
+            } else {
                 RemoteCursorBuilder.releaseCursor(res, this.store, this.controllers);
             }
         });
@@ -179,9 +169,9 @@ class Receiver
                     webRTC.answer(sdp, (answer) => {
                         //console.error("WebRTC: send answer")
                         this.connector.sendBinary(Command.RTCAnswer, metaData, JSON.stringify({
-                            key : rtcKey,
-                            sdp : answer
-                        }), function () {});
+                            key: rtcKey,
+                            sdp: answer
+                        }), function () { });
                     });
                 }
             }

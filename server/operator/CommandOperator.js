@@ -3,11 +3,11 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-(()=>{
+(() => {
     "use strict";
     const Executer = require("./Executer.js");
-    class CommandOperator{ // 通信APIと実際に中身をいじる部分の中間層 兼 サーバ内部向け関数提供クラス
-        constructor(){
+    class CommandOperator { // 通信APIと実際に中身をいじる部分の中間層 兼 サーバ内部向け関数提供クラス
+        constructor() {
             this.executer = new Executer();
 
             this.connectionId = {};
@@ -28,9 +28,9 @@
 
             if (this.executer.isEditable(socketid, metaData.group)) {
                 if (metaData.hasOwnProperty('id') && metaData.id !== "") {
-                    this.executer.textClient.exists(this.executer.metadataPrefix + metaData.id, (err, doesExists)=>{
+                    this.executer.textClient.exists(this.executer.metadataPrefix + metaData.id, (err, doesExists) => {
                         if (!err && doesExists === 1) {
-                            this.executer.getMetaData(socketid, '', metaData.id, (err, meta)=>{
+                            this.executer.getMetaData(socketid, '', metaData.id, (err, meta) => {
                                 if (err) {
                                     endCallback(err);
                                     return;
@@ -46,7 +46,7 @@
 
                                 // 既に存在するコンテンツの上書き
                                 if (newContentID !== '' && oldContentID === newContentID) {
-                                    this.executer.updateContent(socketid, metaData, binaryData, (reply)=>{
+                                    this.executer.updateContent(socketid, metaData, binaryData, (reply) => {
                                         if (updateEndCallback) {
                                             updateEndCallback(null, reply);
                                         }
@@ -83,9 +83,9 @@
             if (this.executer.isEditable(socketid, metaData.group)) {
                 if (metaData.hasOwnProperty('id') && metaData.id !== "") {
                     // タイル用のコンテンツが登録されている必要がある
-                    this.executer.textClient.exists(this.executer.metadataPrefix + metaData.id, (err, doesExists)=>{
+                    this.executer.textClient.exists(this.executer.metadataPrefix + metaData.id, (err, doesExists) => {
                         if (!err && doesExists === 1) {
-                            this.executer.getMetaData(socketid, '', metaData.id, (err, meta)=>{
+                            this.executer.getMetaData(socketid, '', metaData.id, (err, meta) => {
                                 if (err) {
                                     endCallback(err);
                                     return;
@@ -93,7 +93,7 @@
                                 meta.tile_index = metaData.tile_index;
                                 meta.history_id = metaData.history_id;
                                 let tileCount = -1; // 合計タイル数
-                                if (meta.hasOwnProperty("xsplit") &&  meta.hasOwnProperty("ysplit")) {
+                                if (meta.hasOwnProperty("xsplit") && meta.hasOwnProperty("ysplit")) {
                                     tileCount = Number(meta.xsplit) * Number(meta.ysplit);
                                 }
                                 this.executer.addTileContent(meta, binaryData, tileCount, endCallback, () => {
@@ -130,9 +130,9 @@
 
             if (this.executer.isEditable(socketid, metaData.group)) {
                 // タイル用のコンテンツが登録されている必要がある
-                this.executer.textClient.exists(this.executer.metadataPrefix + metaData.id, (err, doesExists)=>{
+                this.executer.textClient.exists(this.executer.metadataPrefix + metaData.id, (err, doesExists) => {
                     if (!err && doesExists === 1) {
-                        this.executer.getMetaData(socketid, '', metaData.id, (err, meta)=>{
+                        this.executer.getMetaData(socketid, '', metaData.id, (err, meta) => {
                             if (err) {
                                 endCallback(err);
                                 return;
@@ -162,7 +162,7 @@
                 endCallback("access denied");
                 return;
             }
-            this.executer.getMetaData(socketid, json.type, json.id, (err, meta)=>{
+            this.executer.getMetaData(socketid, json.type, json.id, (err, meta) => {
                 if (err) {
                     endCallback(err);
                     return;
@@ -172,23 +172,23 @@
                     if (meta.hasOwnProperty('history_id')) {
 
                         // Historyの場合は全タイル登録済かどうかのフラグを返す
-                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished)=>{
+                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished) => {
                             if (!err && tile_finished[0]) {
                                 meta.tile_finished = String(tile_finished[0]) === "true";
                             }
                             // Historyの場合はpreview画像をバイナリに入れて返す.
                             // サムネイル画像がある場合はリストに入れて返す
                             // その後タイル画像リクエストが複数回client→serverにくる.
-                            this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "thumbnail", (err, thumbnail)=>{
+                            this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "thumbnail", (err, thumbnail) => {
                                 let metaList = [];
                                 let binaryList = [];
                                 if (!err && thumbnail[0]) {
                                     metaList.push({
-                                        type : "thumbnail"
+                                        type: "thumbnail"
                                     });
                                     binaryList.push(thumbnail[0]);
                                 }
-                                this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "preview", (err, preview)=>{
+                                this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "preview", (err, preview) => {
                                     if (binaryList.length > 0) {
                                         if (!err && preview[0]) {
                                             metaList.unshift(meta);
@@ -206,19 +206,19 @@
 
                     // コンテンツの返却.
                     // サムネイルやプレビュー用画像がある場合はリストに入れて返す
-                    this.executer.client.hgetall(this.executer.contentThumbnailPrefix + meta.content_id, (err, thumbnailData)=>{
+                    this.executer.client.hgetall(this.executer.contentThumbnailPrefix + meta.content_id, (err, thumbnailData) => {
                         let metaList = [];
                         let binaryList = [];
                         if (!err && thumbnailData) {
                             if (thumbnailData.hasOwnProperty('thumbnail')) {
                                 metaList.push({
-                                    type : "thumbnail"
+                                    type: "thumbnail"
                                 });
                                 binaryList.push(thumbnailData.thumbnail);
                             }
                             if (thumbnailData.hasOwnProperty('preview')) {
                                 metaList.push({
-                                    type : "preview"
+                                    type: "preview"
                                 });
                                 binaryList.push(thumbnailData.preview);
                             }
@@ -230,8 +230,8 @@
                             let restore_index = Number(json.restore_index);
                             if (restore_index >= 0 && backupList.length > restore_index) {
                                 let backup_date = backupList[restore_index];
-                                this.executer.textClient.hmget(this.executer.metadataBackupPrefix + meta.id, backup_date, (err, metaData)=>{
-                                    this.executer.client.hmget(this.executer.contentBackupPrefix + meta.content_id, backup_date, (err, reply)=>{
+                                this.executer.textClient.hmget(this.executer.metadataBackupPrefix + meta.id, backup_date, (err, metaData) => {
+                                    this.executer.client.hmget(this.executer.contentBackupPrefix + meta.content_id, backup_date, (err, reply) => {
                                         if (binaryList.length > 0) {
                                             metaList.unshift(JSON.parse(metaData));
                                             binaryList.unshift(reply[0]);
@@ -246,7 +246,7 @@
                         }
 
                         // 通常の取得
-                        this.executer.getContent(meta.type, meta.content_id, (reply)=>{
+                        this.executer.getContent(meta.type, meta.content_id, (reply) => {
                             if (reply === null) {
                                 reply = "";
                             }
@@ -275,17 +275,17 @@
                 endCallback("access denied");
                 return;
             }
-            this.executer.getMetaData(socketid, "tileimage", json.id, (err, meta)=>{
+            this.executer.getMetaData(socketid, "tileimage", json.id, (err, meta) => {
                 if (err) {
                     endCallback(err);
                     return;
                 }
                 if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== ''
-                        && json.hasOwnProperty('tile_index') && json.hasOwnProperty("history_id")) {
+                    && json.hasOwnProperty('tile_index') && json.hasOwnProperty("history_id")) {
 
                     meta.tile_index = json.tile_index;
                     meta.history_id = json.history_id;
-                    this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, meta.tile_index, (err, reply)=>{
+                    this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, meta.tile_index, (err, reply) => {
                         if (!err) {
                             if (endCallback) {
                                 if (reply[0]) {
@@ -311,7 +311,7 @@
          */
         addMetaData(json, endCallback) {
             console.log("AddMetaData:", json);
-            this.executer.addMetaData(json, (metaData)=>{
+            this.executer.addMetaData(json, (metaData) => {
                 if (endCallback) {
                     endCallback(null, metaData);
                 }
@@ -326,11 +326,11 @@
          */
         getMetaData(socketid, json, endCallback) {
             console.log("GetMetaData:" + json.type + "/" + json.id);
-            this.executer.getMetaData(socketid, json.type, json.id, (err, metaData)=>{
+            this.executer.getMetaData(socketid, json.type, json.id, (err, metaData) => {
                 if (endCallback) {
                     // Historyの場合は全タイル登録済かどうかのフラグを返す
                     if (metaData && metaData.hasOwnProperty('history_id')) {
-                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + metaData.history_id, "tile_finished", (err, tile_finished)=>{
+                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + metaData.history_id, "tile_finished", (err, tile_finished) => {
                             if (!err && tile_finished[0]) {
                                 metaData.tile_finished = String(tile_finished[0]) === "true";
                             }
@@ -355,7 +355,7 @@
                 metaData,
                 results = [],
                 all_done = json.length;
-            let syncDelete = (results, all_done)=>{
+            let syncDelete = (results, all_done) => {
                 if (all_done <= 0) {
                     if (endCallback) {
                         endCallback(null, results);
@@ -365,12 +365,12 @@
                     let metaData = json[all_done - 1];
                     if (this.executer.isEditable(socketid, metaData.group)) {
                         if (metaData && metaData.hasOwnProperty('type') && metaData.type === 'all') {
-                            this.executer.textClient.keys(this.executer.metadataPrefix + '*', (err, replies)=>{
-                                replies.forEach((id, index)=>{
+                            this.executer.textClient.keys(this.executer.metadataPrefix + '*', (err, replies) => {
+                                replies.forEach((id, index) => {
                                     console.log(id);
-                                    this.executer.textClient.hgetall(id, (err, data)=>{
+                                    this.executer.textClient.hgetall(id, (err, data) => {
                                         if (!err && data) {
-                                            this.executer.deleteContent(data, (meta)=>{
+                                            this.executer.deleteContent(data, (meta) => {
                                                 if (endCallback) {
                                                     endCallback(null, meta);
                                                 }
@@ -385,7 +385,7 @@
                                 return;
                             }
                         } else {
-                            this.executer.deleteContent(metaData, (meta)=>{
+                            this.executer.deleteContent(metaData, (meta) => {
                                 results.push(meta);
                                 syncDelete(results, all_done - 1);
                             });
@@ -409,7 +409,7 @@
         updateContent(socketid, metaData, binaryData, endCallback) {
             //console.log("UpdateContent");
             if (this.executer.isEditable(socketid, metaData.group)) {
-                this.executer.updateContent(socketid, metaData, binaryData, (meta)=>{
+                this.executer.updateContent(socketid, metaData, binaryData, (meta) => {
                     // socket.emit(Command.doneUpdateContent, JSON.stringify({"id" : id}));
                     if (endCallback) {
                         endCallback(null, meta);
@@ -433,19 +433,19 @@
                 results = [],
                 all_done = json.length
 
-            let registerFunc = (metaData, endCallback)=>{
+            let registerFunc = (metaData, endCallback) => {
                 // バックアップ有りの場合は、バックアップメタデータと通常メタデータ両方更新する
                 if (metaData.hasOwnProperty('restore_index')) {
                     let restore_index = Number(metaData.restore_index);
                     if (restore_index >= 0) {
                         let backupMetaData = {};
                         backupMetaData[metaData.date] = JSON.stringify(metaData);
-                        this.executer.client.hmset(this.executer.metadataBackupPrefix + metaData.id, backupMetaData, (err)=>{});
+                        this.executer.client.hmset(this.executer.metadataBackupPrefix + metaData.id, backupMetaData, (err) => { });
                     }
                 }
 
-                this.executer.setMetaData(metaData.type, metaData.id, metaData, (meta)=>{
-                    this.executer.getMetaData(socketid, meta.type, meta.id, (err, meta)=>{
+                this.executer.setMetaData(metaData.type, metaData.id, metaData, (meta) => {
+                    this.executer.getMetaData(socketid, meta.type, meta.id, (err, meta) => {
                         --all_done;
                         if (!err) {
                             results.push(meta);
@@ -458,9 +458,9 @@
                 });
             };
 
-            let updateByHistoryFunc = (metaData, endCallback)=>{
+            let updateByHistoryFunc = (metaData, endCallback) => {
                 // historyメタデータを取得し、通常のメタデータに上書きする
-                this.executer.textClient.hmget(this.executer.metadataHistoryPrefix + metaData.id + ":" + metaData.restore_key, metaData.restore_value, (err, meta)=>{
+                this.executer.textClient.hmget(this.executer.metadataHistoryPrefix + metaData.id + ":" + metaData.restore_key, metaData.restore_value, (err, meta) => {
 
                     if (!err && meta.length > 0 && meta[0]) {
                         let hmeta = JSON.parse(meta[0]);
@@ -479,26 +479,25 @@
                 });
             }
 
-            let syncFunc = (metaData, endCallback)=>{
+            let syncFunc = (metaData, endCallback) => {
                 // 同じgroupのsync付きのメタデータリストを取得.
                 if (metaData.hasOwnProperty('history_sync') && String(metaData.history_sync) === "true") {
                     let group = metaData.group;
-                    this.executer.textClient.keys(this.executer.metadataPrefix + '*', (err, replies)=>{
+                    this.executer.textClient.keys(this.executer.metadataPrefix + '*', (err, replies) => {
                         let all_done = replies.length;
                         if (err || replies.length === 0) {
                             endCallback("Error not found metadata");
                             return;
                         }
-                        replies.forEach((id, index)=>{
-                            this.executer.textClient.hgetall(id, (err, data)=>{
+                        replies.forEach((id, index) => {
+                            this.executer.textClient.hgetall(id, (err, data) => {
                                 if (data.type === "tileimage" &&
                                     data.hasOwnProperty('history_sync') && String(data.history_sync) === "true" &&
-                                    data.hasOwnProperty('group') && data.group === group)
-                                {
+                                    data.hasOwnProperty('group') && data.group === group) {
                                     // 同期対象メタデータを発見. 同期させる
                                     data.restore_key = metaData.restore_key;
                                     data.restore_value = metaData.restore_value;
-                                    updateByHistoryFunc(data, (err, metaData)=>{
+                                    updateByHistoryFunc(data, (err, metaData) => {
                                         registerFunc(metaData, endCallback);
                                     });
                                 }
@@ -511,20 +510,20 @@
             for (i = 0; i < json.length; i = i + 1) {
                 metaData = json[i];
                 if (this.executer.isEditable(socketid, metaData.group)) {
-                    this.executer.textClient.exists(this.executer.metadataPrefix + json[i].id, ((metaData)=>{
-                        return (err, doesExists)=>{
+                    this.executer.textClient.exists(this.executer.metadataPrefix + json[i].id, ((metaData) => {
+                        return (err, doesExists) => {
                             if (!err && doesExists === 1) {
 
                                 if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
                                     // 初期幅高さが入ってないのが来た. 入れておく.
-                                    this.executer.getContent(metaData.type, metaData.content_id, (reply)=>{
+                                    this.executer.getContent(metaData.type, metaData.content_id, (reply) => {
                                         this.executer.initialOrgWidthHeight(metaData, reply);
                                         registerFunc(metaData, endCallback);
                                     });
                                 } else if (metaData.hasOwnProperty('restore_key') && metaData.hasOwnProperty('restore_value')) {
                                     // historyデータが指定されているのが来た.
                                     // historyによるmetadataの更新.
-                                    updateByHistoryFunc(metaData, (err, metaData)=>{
+                                    updateByHistoryFunc(metaData, (err, metaData) => {
                                         // 更新したメタデータの登録.
                                         registerFunc(metaData, endCallback);
                                         // 同期させる. endCallback(metadataの更新broadcast)が複数回呼ばれる.
@@ -551,7 +550,7 @@
          */
         addWindowMetaData(socketid, json, endCallback) {
             console.log("AddWindowMetaData : " + JSON.stringify(json));
-            this.executer.addWindow(socketid, json, (windowData)=>{
+            this.executer.addWindow(socketid, json, (windowData) => {
                 if (endCallback) {
                     endCallback(null, [windowData]);
                 }
@@ -567,17 +566,17 @@
          */
         deleteWindowMetaData(socketid, json, endCallback) {
             console.log("DeleteWindowMetaData");
-            let deleteWindowFunc = (isAdmin)=>{
+            let deleteWindowFunc = (isAdmin) => {
                 let i,
                     meta,
                     results = [],
-                all_done = json.length;
+                    all_done = json.length;
                 for (i = 0; i < json.length; i = i + 1) {
                     meta = json[i];
                     if (isAdmin || this.executer.isDisplayEditable(socketid, meta.group)) {
-                        this.executer.getWindowMetaData(meta, (metaData)=>{
+                        this.executer.getWindowMetaData(meta, (metaData) => {
                             if (metaData) {
-                                this.executer.deleteWindow(metaData, (meta)=>{
+                                this.executer.deleteWindow(metaData, (meta) => {
                                     --all_done;
                                     results.push(meta);
                                     if (all_done <= 0) {
@@ -601,7 +600,7 @@
                 }
             };
 
-            this.executer.isAdmin(socketid, (err, isAdmin)=>{
+            this.executer.isAdmin(socketid, (err, isAdmin) => {
                 if (!err && isAdmin) {
                     deleteWindowFunc(isAdmin);
                 } else {
@@ -619,7 +618,7 @@
          */
         updateVirtualDisplay(socketid, json, endCallback) {
             if (json) {
-                this.executer.setVirtualDisplay(json, (data)=>{
+                this.executer.setVirtualDisplay(json, (data) => {
                     if (endCallback) {
                         endCallback(null, data);
                     }
@@ -635,7 +634,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         getVirtualDisplay(socketid, json, endCallback) {
-            this.executer.getVirtualDisplay(json, (data)=>{
+            this.executer.getVirtualDisplay(json, (data) => {
                 console.log("GetVirtualDisplay");//, data);
                 if (endCallback) {
                     endCallback(null, data);
@@ -667,7 +666,7 @@
                     socketid = this.executer.socketidToLoginKey[socketid];
                 }
                 let userid = this.executer.socketidToUserID[socketid];
-                this.executer.isGroupManipulatable(socketid, userid, (isManipulatable)=>{
+                this.executer.isGroupManipulatable(socketid, userid, (isManipulatable) => {
                     if (isManipulatable) {
                         if (json.hasOwnProperty("color")) {
                             groupColor = json.color;
@@ -676,10 +675,10 @@
                             type = json.type;
                         }
                         if (type === "content") {
-                            this.executer.addGroup(socketid, null, json.name, groupColor, (err, groupID)=>{
+                            this.executer.addGroup(socketid, null, json.name, groupColor, (err, groupID) => {
                                 // グループユーザーの権限情報に、グループを追加する.
                                 if (!err) {
-                                    this.executer.getGroupUserSetting((err, setting)=>{
+                                    this.executer.getGroupUserSetting((err, setting) => {
                                         if (setting.hasOwnProperty(userid)) {
                                             if (setting[userid].viewable !== "all") {
                                                 setting[userid].viewable.push(groupID);
@@ -689,7 +688,7 @@
                                             }
                                             // defaultグループは特殊扱いでユーザー無し
                                             if (userid !== "group_default") {
-                                                this.executer.changeGroupUserSetting(socketid, userid, setting[userid], ()=>{
+                                                this.executer.changeGroupUserSetting(socketid, userid, setting[userid], () => {
                                                     if (endCallback) {
                                                         endCallback(err, groupID);
                                                     }
@@ -706,10 +705,10 @@
                                 }
                             });
                         } else if (type === "display") {
-                            this.executer.addDisplayGroup(socketid, null, json.name, groupColor, (err, groupID)=>{
+                            this.executer.addDisplayGroup(socketid, null, json.name, groupColor, (err, groupID) => {
                                 // グループユーザーの権限情報に、グループを追加する.
                                 if (!err) {
-                                    this.executer.getGroupUserSetting((err, setting)=>{
+                                    this.executer.getGroupUserSetting((err, setting) => {
                                         if (setting.hasOwnProperty(userid)) {
                                             if (!setting[userid].hasOwnProperty('displayEditable')) {
                                                 setting[userid].displayEditable = [];
@@ -718,7 +717,7 @@
                                                 setting[userid].displayEditable.push(groupID);
                                             }
                                             if (userid !== "group_default") {
-                                                this.executer.changeGroupUserSetting(socketid, userid, setting[userid], ()=>{
+                                                this.executer.changeGroupUserSetting(socketid, userid, setting[userid], () => {
                                                     if (endCallback) {
                                                         endCallback(err, groupID);
                                                     }
@@ -860,7 +859,7 @@
          * @param {Function} resultCallback 終了時に呼ばれるコールバック
          */
         getDBList(socketid, resultCallback) {
-            this.executer.isAdmin(socketid, (err, isAdmin)=>{
+            this.executer.isAdmin(socketid, (err, isAdmin) => {
                 if (!err && isAdmin) {
                     this.executer.textClient.hgetall(this.executer.frontPrefix + 'dblist', resultCallback);
                 } else {
@@ -896,7 +895,7 @@
             let isAllType = json.hasOwnProperty('type') && json.type === 'all',
                 isIdentityType = json.hasOwnProperty('id') && json.id !== undefined && json.id !== "undefined" && json.id !== "";
             if (isAllType || isIdentityType) {
-                this.executer.getWindowMetaData(json, (windowData)=>{
+                this.executer.getWindowMetaData(json, (windowData) => {
                     if (windowData) {
                         //console.log("doneGetWindow:", windowData);
                         if (endCallback) {
@@ -918,7 +917,7 @@
          */
         updateWindowMetaData(socketid, json, endCallback) {
             console.log("UpdateWindowMetaData:", json.length);
-            let updateWindowFunc = (isAdmin)=>{
+            let updateWindowFunc = (isAdmin) => {
                 let i,
                     metaData,
                     results = [],
@@ -927,7 +926,7 @@
                 for (i = 0; i < json.length; i = i + 1) {
                     metaData = json[i];
                     if (isAdmin || this.executer.isDisplayEditable(socketid, metaData.group)) {
-                        this.executer.updateWindowMetaData(socketid, metaData, (meta)=>{
+                        this.executer.updateWindowMetaData(socketid, metaData, (meta) => {
                             --all_done;
                             results.push(meta);
                             if (all_done <= 0) {
@@ -943,7 +942,7 @@
                 }
             };
 
-            this.executer.isAdmin(socketid, (err, isAdmin)=>{
+            this.executer.isAdmin(socketid, (err, isAdmin) => {
                 if (!err && isAdmin) {
                     updateWindowFunc(isAdmin);
                 } else {
@@ -961,13 +960,13 @@
          */
         updateMouseCursor(socketid, json, endCallback) {
             let c, i, j;
-            if(!this.connectionId.hasOwnProperty(socketid)){
+            if (!this.connectionId.hasOwnProperty(socketid)) {
                 this.connectionId[socketid] = this.connectionCount;
                 ++this.connectionCount;
             }
             json.connectionCount = this.connectionId[socketid];
 
-            this.executer.updateMouseCursor(socketid, json, (windowData)=>{
+            this.executer.updateMouseCursor(socketid, json, (windowData) => {
                 endCallback(null, windowData);
             });
         }
@@ -984,7 +983,7 @@
             if (data.hasOwnProperty('name')) {
                 name = data.name;
                 delete data.name;
-                this.executer.getGroupID(data.name, (id)=>{
+                this.executer.getGroupID(data.name, (id) => {
                     this.executer.changeGroupUserSetting(socketid, id, data, endCallback);
                 });
             }
@@ -1005,7 +1004,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         generateControllerID(endCallback) {
-            this.executer.generateCOntrollerID(endCallback);
+            this.executer.generateControllerID(endCallback);
         }
 
         /**
@@ -1019,23 +1018,22 @@
          *                              (string err, string displayid)=>{}
          */
         login(data, socketid, endCallback, suspendCallback) {
-            const execLogin = (data, socketid, endCallback)=>{
-                console.log("----------------------------" , socketid, "----------------------------")
+            const execLogin = (data, socketid, endCallback) => {
+                console.log("----------------------------", socketid, "----------------------------")
                 if (data.hasOwnProperty('id') && data.hasOwnProperty('password')) {
                     // 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
                     if (data.hasOwnProperty('loginkey')) {
-                        if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey))
-                        {
+                        if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey)) {
                             // 対応関係を保存
                             this.executer.socketidToLoginKey[socketid] = data.loginkey;
                             socketid = data.loginkey;
                             let result = {
-                                id : this.executer.socketidToUserID[socketid],
-                                loginkey : socketid,
-                                authority : this.executer.socketidToAccessAuthority[socketid]
+                                id: this.executer.socketidToUserID[socketid],
+                                loginkey: socketid,
+                                authority: this.executer.socketidToAccessAuthority[socketid]
                             }
-                            this.executer.getControllerData(data.controllerID, ((result)=>{
-                                return (err, controllerData)=>{
+                            this.executer.getControllerData(data.controllerID, ((result) => {
+                                return (err, controllerData) => {
                                     result.controllerData = controllerData;
                                     endCallback(null, result);
                                 };
@@ -1052,65 +1050,70 @@
                 }
             }
             //console.log("-----------login",data);
-            if(data.id === "ElectronDisplay"){
-                execLogin(data, socketid, (err, loginResult)=>{
-                    if(err || loginResult.authority === null){
+            if (data.id === "ElectronDisplay") {
+                execLogin(data, socketid, (err, loginResult) => {
+                    if (err || loginResult.authority === null) {
                         /* ElectronDisplayとしてパスワードでログインに失敗したので、普通のdisplayとして処理する */
                         let logindata = data;
                         logindata.id = "Display";
                         this.login(logindata, socketid, endCallback, suspendCallback);
                         return;
-                    }else{ //パスワードOK
+                    } else { //パスワードOK
                         endCallback(err, loginResult);
                         return;
                     }
                 });
-            }else if(data.id === "Display"){
+            } else if (data.id === "Display") {
+                // DisplayID無しのリクエストが来た場合
+                if (!data.hasOwnProperty('displayid') || !data.displayid) {
+                    endCallback("Not found displayid");
+                    return;
+                }
                 // ディスプレイは配信許可設定が必要
-                this.executer.existsDisplayPermission(data.displayid,(err, exists)=>{
-                    if(err){
-                    }else if(exists){
-                        this.executer.getDisplayPermission(data.displayid, (err, permission)=>{
-                            if(err){
+                this.executer.existsDisplayPermission(data.displayid, (err, exists) => {
+                    if (err) {
+                    } else if (exists) {
+                        this.executer.getDisplayPermission(data.displayid, (err, permission) => {
+                            if (err) {
                                 console.log(err);
-                            }else if(permission === "true"){
+                            } else if (permission === "true") {
                                 // 配信許可済
                                 execLogin(data, socketid, endCallback);
                                 return;
-                            }else{
+                            } else {
                                 // 配信拒否済
                                 endCallback("Rejected for Permission");
                                 return;
                             }
                         });
-                    }else{
+                    } else {
                         // 許可設定がないのでコントローラに聞きに行く
                         suspendCallback(err, data);
                         return;
                     }
                 });
-            }else{
+            } else {
                 execLogin(data, socketid, endCallback);
                 return;
             }
         }
 
-        updateDisplayPermission(logindata, endCallback){
-            console.log("updateDisplayPermission",logindata);
-            this.executer.setDisplayPermission(logindata.displayid, logindata.permission, (err)=>{
-                endCallback(err,logindata);
+        updateDisplayPermission(logindata, endCallback) {
+            console.log("updateDisplayPermission", logindata);
+            this.executer.setDisplayPermission(logindata.displayid, logindata.permission, (err) => {
+                endCallback(err, logindata);
             });
         }
 
-        getDisplayPermissionList(endCallback){
-            this.executer.getDisplayPermissionList((err,permissions)=>{
-                endCallback(err,permissions);
+        getDisplayPermissionList(endCallback) {
+            this.executer.getDisplayPermissionList((err, permissions) => {
+                endCallback(err, permissions);
             });
         }
 
-        updateDisplayPermissionList(displayPermissionList, endCallback){
-            this.executer.setDisplayPermissionList(displayPermissionList,(err,permissions)=>{
-                endCallback(err,permissions);
+        updateDisplayPermissionList(displayPermissionList, endCallback) {
+            this.executer.setDisplayPermissionList(displayPermissionList, (err, permissions) => {
+                endCallback(err, permissions);
             });
         }
 
@@ -1132,30 +1135,29 @@
                 endCallback("failed to change password (2)");
                 return;
             }
-            if (data.hasOwnProperty('id') && data.hasOwnProperty('pre_password') && data.hasOwnProperty('password'))
-            {
-                this.executer.getUserList((err, userList)=>{
+            if (data.hasOwnProperty('id') && data.hasOwnProperty('pre_password') && data.hasOwnProperty('password')) {
+                this.executer.getUserList((err, userList) => {
                     let i;
                     for (i = 0; i < userList.length; i = i + 1) {
                         if (userList[i].id === data.id) {
                             if (userList[i].type === "admin") {
                                 this.executer.changeAdminUserSetting(socketid, userList[i].id, {
-                                    pre_password : data.pre_password,
-                                    password : data.password
+                                    pre_password: data.pre_password,
+                                    password: data.password
                                 }, endCallback);
                             } else if (userList[i].type === "group") {
                                 this.executer.changeGroupUserSetting(socketid, userList[i].id, {
-                                    password : data.password
+                                    password: data.password
                                 }, endCallback);
                             } else if (userList[i].type === "api") {
                                 this.executer.changeGroupUserSetting(socketid, userList[i].id, {
-                                    password : data.password
+                                    password: data.password
                                 }, endCallback);
                             } else if (userList[i].type === "electron") {
                                 this.executer.changeGroupUserSetting(socketid, userList[i].id, {
-                                    password : data.password
+                                    password: data.password
                                 }, endCallback);
-                            }  else {
+                            } else {
                                 endCallback("failed to change password (3)");
                             }
                             break;
@@ -1214,23 +1216,22 @@
             if (data.hasOwnProperty('id')
                 && data.hasOwnProperty('editable')
                 && data.hasOwnProperty('viewable')
-                && data.hasOwnProperty('group_manipulatable'))
-            {
-                this.executer.getUserList((err, userList)=>{
+                && data.hasOwnProperty('group_manipulatable')) {
+                this.executer.getUserList((err, userList) => {
                     let i;
-                    this.executer.getGroupList((err, groupList)=>{
+                    this.executer.getGroupList((err, groupList) => {
                         for (i = 0; i < userList.length; i = i + 1) {
                             if (userList[i].id === data.id) {
                                 if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
                                     let setting = {
-                                        viewable : data.viewable,
-                                        editable : data.editable,
-                                        group_manipulatable : data.group_manipulatable
+                                        viewable: data.viewable,
+                                        editable: data.editable,
+                                        group_manipulatable: data.group_manipulatable
                                     };
                                     if (data.hasOwnProperty('displayEditable')) {
                                         setting.displayEditable = data.displayEditable
                                     };
-                                    this.executer.changeGroupUserSetting(socketid, userList[i].id, setting, (err, reply)=>{
+                                    this.executer.changeGroupUserSetting(socketid, userList[i].id, setting, (err, reply) => {
                                         if (!err) {
                                             endCallback(err, userList[i].id);
                                         } else {
