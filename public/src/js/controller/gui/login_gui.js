@@ -35,7 +35,7 @@ class LoginGUI extends EventEmitter {
 			let userList = this.loginStore.getUserList();
 			let select = this.loginMenu.getUserSelect();
 			for (let i = 0; i < userList.length; i = i + 1) {
-				if (userList[i].type !== "display" && userList[i].type !== "api") {
+				if (userList[i].type !== "display" && userList[i].type !== "api" && userList[i].type !== "electron") {
 					select.addOption(userList[i].name, userList[i].name);
 				}
 			}

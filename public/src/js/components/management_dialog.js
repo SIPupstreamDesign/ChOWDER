@@ -510,7 +510,7 @@ class ManagementDialog extends EventEmitter
             this.authSelect.clear();
             for (i = 0; i < this.userList.length; i = i + 1) {
                 let user = this.userList[i];
-                if (user.type !== "admin" && user.type !== "api") {
+                if (user.type !== "admin" && user.type !== "api" && user.type !== "electron") {
                     this.authSelect.addOption(user.id, user.name);
                 }
             }
@@ -619,7 +619,8 @@ class ManagementDialog extends EventEmitter
             if (this.userList[i].type !== "admin" &&
                 this.userList[i].type !== "display" &&
                 this.userList[i].type !== "guest" &&
-                this.userList[i].type !== "api") {
+                this.userList[i].type !== "api" &&
+                this.userList[i].type !== "electron") {
                 this.editableSelect.add(this.userList[i].name, this.userList[i].id);
                 this.viewableSelect.add(this.userList[i].name, this.userList[i].id);
             }
