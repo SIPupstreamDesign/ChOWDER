@@ -308,7 +308,7 @@ class ManagementDialog extends EventEmitter
 
         { // Display許可設定
             let title = document.createElement('h4');
-            title.textContent = "Display Settings";
+            title.textContent = "Display Settings"; // TODO translation
             this.dom.appendChild(title);
 
             let displayPermissionFrame = document.createElement('div');
@@ -316,10 +316,10 @@ class ManagementDialog extends EventEmitter
             this.dom.appendChild(displayPermissionFrame);
 
             let displayPermissionTitle = document.createElement('p');
-            displayPermissionTitle.textContent = "Display Permission";
+            displayPermissionTitle.textContent = "Display Permission"; // TODO translation
             displayPermissionFrame.appendChild(displayPermissionTitle);
 
-            this.displaySelect = new CompareList("Accessible","Reject");
+            this.displaySelect = new CompareList("Accessible","Reject"); // TODO translation
 
             displayPermissionFrame.appendChild(this.displaySelect.getDOM());
         }
