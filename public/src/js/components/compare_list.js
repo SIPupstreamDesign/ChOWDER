@@ -1,4 +1,5 @@
 import SelectList from "./select_list";
+import Button from './button';
 
 class CompareList extends EventEmitter {
     constructor(leftTitle,rightTitle){
@@ -28,11 +29,11 @@ class CompareList extends EventEmitter {
         this.rightTitle.textContent = rightTitle;
         this.rightSelect = new SelectList();
 
-        this.exchangeButton = this.exchangeButtonBuilder(()=>{
+        this.exchangeButton = this.createExchangeButton(()=>{
             this.exchangeItems();
         });
 
-        this.applyButton = this.applyButtonBuilder(()=>{
+        this.applyButton = this.createApplyButton(()=>{
             this.emit(CompareList.EVENT_APPLY,null,this.getData());
         });
 
@@ -41,11 +42,11 @@ class CompareList extends EventEmitter {
         this.rightWrap.appendChild(this.rightTitle);
         this.rightWrap.appendChild(this.rightSelect.getDOM());
         uiArea.appendChild(this.leftWrap);
-        uiArea.appendChild(this.exchangeButton);
+        uiArea.appendChild(this.exchangeButton.getDOM());
         uiArea.appendChild(this.rightWrap);
 
         frame.appendChild(uiArea);
-        frame.appendChild(this.applyButton);
+        frame.appendChild(this.applyButton.getDOM());
         this.dom.appendChild(frame);
     }
 
@@ -134,22 +135,20 @@ class CompareList extends EventEmitter {
         }
     }
 
-    exchangeButtonBuilder(clickCallback){
-        let buttonDOM = document.createElement("button");
-        buttonDOM.classList.add("compare_list_exchange_button");
-        buttonDOM.textContent = "<>";
-
-        buttonDOM.addEventListener("click",clickCallback);
-        return buttonDOM;
+    createExchangeButton(clickCallback){
+        let button = new Button();
+        button.getDOM().classList.add("compare_list_exchange_button");
+        button.setDataKey("<>") // TODO translation
+        button.on(Button.EVENT_CLICK, clickCallback);
+        return button;
     }
 
-    applyButtonBuilder(clickCallback){
-        let buttonDOM = document.createElement("button");
-        buttonDOM.classList.add("compare_list_apply_button");
-        buttonDOM.textContent = "Apply";
-
-        buttonDOM.addEventListener("click",clickCallback);
-        return buttonDOM;
+    createApplyButton(clickCallback){
+        let button = new Button();
+        button.getDOM().classList.add("compare_list_apply_button");
+        button.setDataKey("apply") // TODO translation
+        button.on(Button.EVENT_CLICK, clickCallback);
+        return button;
     }
 
 
