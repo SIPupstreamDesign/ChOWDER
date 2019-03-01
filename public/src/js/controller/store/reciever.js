@@ -33,7 +33,7 @@ class Receiver
                     }
                 }
             }
-            this.store.emit(Store.EVENT_NEET_UPDATE_MANIPULATOR, null);
+            this.store.emit(Store.EVENT_NEED_UPDATE_MANIPULATOR, null);
         });
 
         // コンテンツが差し替えられたときにブロードキャストされてくる.

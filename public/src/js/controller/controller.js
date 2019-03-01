@@ -373,7 +373,7 @@ class Controller {
 		// 復元完了
 		this.store.on(Store.EVENT_DONE_RESTORE_CONTENT, this.doneGetContent);
 
-		this.store.on(Store.EVENT_NEET_UPDATE_MANIPULATOR, () => {
+		this.store.on(Store.EVENT_NEED_UPDATE_MANIPULATOR, () => {
             if (this.store.getState().getSelectedID()) {
                 let elem = document.getElementById(this.store.getState().getSelectedID());
                 if (elem) {

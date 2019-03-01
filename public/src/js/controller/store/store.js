@@ -609,7 +609,7 @@ Store.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
 Store.EVENT_DONE_DELETE_WINDOW_METADATA = "done_delete_window_metadata";
 Store.EVENT_DONE_UPDATE_GROUP = "done_update_group";
 Store.EVENT_DONE_UPDATE_SETTING = "done_update_setting";
-Store.EVENT_NEET_UPDATE_MANIPULATOR = "need_update_manipulator";
+Store.EVENT_NEED_UPDATE_MANIPULATOR = "need_update_manipulator";
 
 export default Store;
 
