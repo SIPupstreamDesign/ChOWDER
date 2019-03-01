@@ -1042,13 +1042,13 @@
                             })(result));
                             return;
                         } else {
-                            endCallback("ログアウトしました", false);
+                            endCallback("Invalid Login", false);
                             return;
                         }
                     }
                     this.executer.login(data.id, data.password, socketid, data.controllerID, endCallback);
                 } else {
-                    endCallback("ユーザ名またはパスワードが正しくありません.");
+                    endCallback("Invalid UserName or Password");
                 }
             }
             //console.log("-----------login",data);
@@ -1079,7 +1079,7 @@
                                 return;
                             }else{
                                 // 配信拒否済
-                                endCallback("このDisplayIDは既に拒否設定されています");
+                                endCallback("Rejected for Permission");
                                 return;
                             }
                         });
