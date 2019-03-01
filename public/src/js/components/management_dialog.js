@@ -319,7 +319,7 @@ class ManagementDialog extends EventEmitter
             displayPermissionTitle.textContent = "Display Permission"; // TODO translation
             displayPermissionFrame.appendChild(displayPermissionTitle);
 
-            this.displaySelect = new CompareList("Accessible","Reject"); // TODO translation
+            this.displaySelect = new CompareList("Allowed","Blocked"); // TODO translation
 
             displayPermissionFrame.appendChild(this.displaySelect.getDOM());
         }

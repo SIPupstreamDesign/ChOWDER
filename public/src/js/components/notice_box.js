@@ -50,7 +50,7 @@ class NoticeBox extends EventEmitter {
 
         notice.acceptButton = new Button();
         notice.acceptButton.getDOM().classList.add("notice_box_accept_button");
-        notice.acceptButton.setDataKey("accept"); // todo translation
+        notice.acceptButton.setDataKey("allow"); // todo translation
         notice.acceptCallback = (err)=>{
             logindata.permission = true;
             this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, logindata);
@@ -59,7 +59,7 @@ class NoticeBox extends EventEmitter {
 
         notice.rejectButton = new Button();
         notice.rejectButton.getDOM().classList.add("notice_box_reject_button");
-        notice.rejectButton.setDataKey("reject"); // todo translation
+        notice.rejectButton.setDataKey("block"); // todo translation
         notice.rejectCallback = (err)=>{
             logindata.permission = false;
             this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, logindata);
