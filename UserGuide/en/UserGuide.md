@@ -61,8 +61,11 @@ Table of Contents
 - [Displaying and Managing Large Scale Image Data](#displaying-and-managing-large-scale-image-data)
 - [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
   - [Overview](#overview-6)
-  - [Application Setup](#application-setup-1)
+  - [Installing the Application](#installing-the-application)
   - [Launching the Application](#launching-the-application-1)
+  - [Application Setup](#application-setup-1)
+  - [Editing the Configuration File](#editing-the-configuration-file)
+  - [Installation on remote host](#installation-on-remote-host)
 - [Using HTTPS](#using-https)
   - [Overview](#overview-7)
 
