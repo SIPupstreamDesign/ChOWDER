@@ -196,10 +196,6 @@ class Receiver
             }
         });
 
-        this.connector.on(Command.PushDisplayPermissionList, (data)=>{
-            this.action.pushDisplayPermissionList(data);
-        });
-
         // 管理ページでの設定変更時にブロードキャストされてくる
         this.connector.on(Command.UpdateSetting, () => {
             if (!this.store.isInitialized()) { return; }
@@ -310,8 +306,7 @@ class Receiver
         });
 
         // ディスプレイ配信許可設定で許可/拒否されたとき
-        this.connector.on(Command.FinishDisplayPermission, (logindata) => {
-            // console.log("FinishDisplayPermission", logindata);
+        this.connector.on(Command.FinishDisplayPermissionSetting, (logindata) => {
             this.store.emit(Store.EVENT_FINISH_DISPLAY_PERMISSION, null, logindata);
         });
 

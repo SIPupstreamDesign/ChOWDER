@@ -826,14 +826,14 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION, null, data);
     }
 
-    // storeのpermissionlistの更新
-    pushDisplayPermissionList(displayPermissionList){
-        this.emit(Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST, null, displayPermissionList);
+    updateDisplayPermissionList(){
+        this.emit(Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST, null, null);
     }
 
     changeDisplayPermissionList(displayPermissionList){
         this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, displayPermissionList);
     }
+
 };
 
 Action.EVENT_INIT = "init";
@@ -916,5 +916,6 @@ Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION = "changeDisplayPermission";
 Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST = "updateDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
+Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 
 export default Action;

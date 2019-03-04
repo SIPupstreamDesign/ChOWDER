@@ -77,9 +77,9 @@
 		// ディスプレイ配信許可設定
 		AskDisplayPermission : "AskDisplayPermission", // サーバからコントローラへ、許可していいか聞く
 		ChangeDisplayPermission : "ChangeDisplayPermission", // サーバが許可設定の変更を受け取る
-		FinishDisplayPermission : "FinishDisplayPermission", // サーバが許可処理の完了をbroadcastする
+		FinishDisplayPermissionSetting : "FinishDisplayPermissionSetting", // サーバが許可処理の完了をbroadcastする
 
-		PushDisplayPermissionList : "PushDisplayPermissionList", // 許可設定一覧に変更があったとき、コントローラへ送る
+		GetDisplayPermissionList : "GetDisplayPermissionList", // 許可設定一覧をサーバに要求する
 		ChangeDisplayPermissionList : "ChangeDisplayPermissionList", // サーバが許可設定の変更リストを受け取る
 	};
 

@@ -17,13 +17,13 @@ class LoginGUI extends EventEmitter {
 		this.store = store;
 		this.action = action;
 		this.loginStore = store.getLoginStore();
-		
+
 		// ログイン成功
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
 			this.loginMenu.showInvalidLabel(false);
 			this.loginMenu.show(false);
 		});
-		
+
 		// ログイン失敗
 		this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
 			this.loginMenu.showInvalidLabel(true);
@@ -68,7 +68,7 @@ class LoginGUI extends EventEmitter {
 		this.loginMenu.show(true);
 		Translation.changeLanguage(this.loginStore.getLanguage());
 		Translation.translate(function () {});
-		
+
 		// 最初にユーザーリスト取得
 		this.action.reloadUserList({
 			callback : () => {
@@ -84,7 +84,7 @@ class LoginGUI extends EventEmitter {
 				}
 			}
 		});
-		
+		this.action.updateDisplayPermissionList();
 	}
 }
 

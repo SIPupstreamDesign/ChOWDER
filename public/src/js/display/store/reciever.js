@@ -63,7 +63,7 @@ class Receiver {
         });
 
         // ディスプレイ配信許可設定で許可/拒否されたとき
-        this.connector.on(Command.FinishDisplayPermission, (data) => {
+        this.connector.on(Command.FinishDisplayPermissionSetting, (data) => {
             if (data.displayid === this.store.getWindowID()) { // 自分向けか？
                 let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
                 this.action.login(request);
