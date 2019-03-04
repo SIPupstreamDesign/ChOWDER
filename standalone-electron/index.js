@@ -8,7 +8,12 @@ var electron = require('electron');
 const path = require('path');
 console.log(__dirname);
 const os = require('os');
-const filepath = os.platform() === "win32" ? '../../conf.json' : path.resolve(__dirname, '../conf.json');
+const filepath = "conf.json"
+if (os.platform() === "darwin") {
+	filepath = path.resolve(__dirname, '../../../../conf.json');
+} else {
+	filepath = '../../conf.json'
+}
 var CONFIG = require(filepath);
 
 var tileWindows = {};
