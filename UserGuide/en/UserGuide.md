@@ -1141,6 +1141,21 @@ Overview
 --------------------------------------------------------------------------------
 You can automatically position a frameless window on the screen using the display application for the Electron version of ChOWDER.
 
+
+Installing the Application
+---------------------------------------------------
+
+Installation of Electron version ChOWDER is included in the [installation of Chowder](#installation).
+
+Launching the Application
+---------------------------------------------------
+
+Run the following executable located in the `standalone-electron` directory
+
+ - Windows: ChOWDER-Standalone-Electron-win32-x64/ChOWDER-Standalone-Electron.exe
+ - Mac: ChOWDER-Standalone-Electron-darwin-x64/ChOWDER-Standalone-Electron.app
+ - Linux: ChOWDER-Standalone-Electron-linux-x64/ChOWDER-Standalone-Electron
+
 Application Setup
 ---------------------------------------------------
 Set up the application using the setup file in JSON format.
@@ -1182,15 +1197,21 @@ The format for the setup file is as follows:
     -	Designate whether to display or to not display the full screen of the window in `fullscreen`.
     -	Designate whether to display or to not display the window frame in `frame`. 
 
-
-Launching the Application
+Editing the Configuration File
 ---------------------------------------------------
 
-Run the shell script below located in the `standalone-electron` directory
+Running `npm install` in the` standalone-electron` directory and overwriting the package will reflect the settings.
 
-    npm start
+Installation on remote host
+---------------------------------------------------
 
+By copying and executing the following folder containing the executable file, the Electron version ChOWDER display will also be launched on the remote host.
 
+ - Windows: ChOWDER-Standalone-Electron-win32-x64
+ - Mac: ChOWDER-Standalone-Electron-darwin-x64
+ - Linux: ChOWDER-Standalone-Electron-linux-x64
+
+ To edit the configuration file after copying to the remote host, edit `conf.json` in the directory containing the executable file.
 
 Using HTTPS
 ==================================================================
