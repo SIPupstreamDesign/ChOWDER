@@ -307,12 +307,6 @@ class Store extends EventEmitter
 		}
 	}
 
-	_changeDisplayPermission(data){
-		Connector.send(Command.ChangeDisplayPermission, data, (err, reply) => {
-			this.action.updateDisplayPermissionList();
-		});
-	}
-
 	_updateDisplayPermissionList(){
 		Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
 			this.displayPermissionList = reply;

@@ -148,10 +148,11 @@ class GroupGUI
 
         // Displayから接続要求が飛んできた
         this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
-            this.noticeBox.addDisplayPermissionLeaf(logindata);
+            let displayPermissionList = {[logindata.displayid] : null};
+            this.noticeBox.addDisplayPermissionLeaf(displayPermissionList);
         });
-        this.store.on(Store.EVENT_FINISH_DISPLAY_PERMISSION, (err, logindata)=>{
-            this.noticeBox.deleteDisplayPermissionLeaf(logindata);
+        this.store.on(Store.EVENT_FINISH_DISPLAY_PERMISSION, (err, displayPermissionList)=>{
+            this.noticeBox.deleteDisplayPermissionLeaf(displayPermissionList);
         });
     }
 
@@ -210,11 +211,11 @@ class GroupGUI
 	}
 
     initNoticeEvents(noticeBox) {
-        noticeBox.on(NoticeBox.EVENT_NOTICE_ACCEPT,(err, logindata)=>{
-            this.action.changeDisplayPermission(logindata);
+        noticeBox.on(NoticeBox.EVENT_NOTICE_ACCEPT,(err, displayPermissionList)=>{
+            this.action.changeDisplayPermissionList(displayPermissionList);
         });
-        noticeBox.on(NoticeBox.EVENT_NOTICE_REJECT,(err, logindata)=>{
-            this.action.changeDisplayPermission(logindata);
+        noticeBox.on(NoticeBox.EVENT_NOTICE_REJECT,(err, displayPermissionList)=>{
+            this.action.changeDisplayPermissionList(displayPermissionList);
         });
     }
 

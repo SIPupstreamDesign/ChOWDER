@@ -73,11 +73,11 @@ const Command = {
 	RTCClose : "RTCClose",
 
 	// ディスプレイ配信許可設定
-	AskDisplayPermission : "AskDisplayPermission", // サーバからコントローラへ、許可していいか聞く
-	ChangeDisplayPermission : "ChangeDisplayPermission", // サーバが許可設定の変更を受け取る
-	FinishDisplayPermissionSetting : "FinishDisplayPermissionSetting", // サーバがディスプレイへ、許可されたことを伝える
-	GetDisplayPermissionList : "GetDisplayPermissionList", // 許可設定一覧に変更があったとき、コントローラへ送る
-	ChangeDisplayPermissionList : "ChangeDisplayPermissionList", // サーバが許可設定の変更リストを受け取る
+	AskDisplayPermission : "AskDisplayPermission", // ログイン時に、サーバが許可していいかコントローラに聞く
+	ChangeDisplayPermissionList : "ChangeDisplayPermissionList", // コントローラが許可設定の変更リストをサーバへ送る
+	CompleteDisplayPermissionSetting : "CompleteDisplayPermissionSetting", // サーバが許可処理の完了をbroadcastする
+
+	GetDisplayPermissionList : "GetDisplayPermissionList", // コントローラが許可設定一覧をサーバに要求する
 };
 
 export default Command;

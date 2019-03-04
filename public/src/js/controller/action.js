@@ -822,10 +822,6 @@ class Action extends EventEmitter
      * 配信許可設定の変更
      * @param {*} data windowData
      */
-    changeDisplayPermission(data){
-        this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION, null, data);
-    }
-
     updateDisplayPermissionList(){
         this.emit(Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST, null, null);
     }
@@ -913,9 +909,7 @@ Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 
-Action.EVENT_CHANGE_DISPLAY_PERMISSION = "changeDisplayPermission";
 Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST = "updateDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
-Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 
 export default Action;

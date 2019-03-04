@@ -174,19 +174,16 @@
             ws_connector.on(Command.Login, (data, resultCallback, socketid)=>{
                 this.commandOperator.login(data, socketid, resultCallback, this.post_askDisplayPermission(ws));
             });
-            ws_connector.on(Command.ChangeDisplayPermission, (logindata, resultCallback, socketid)=>{
-                this.commandOperator.updateDisplayPermission(logindata, (err, logindata)=>{
-                    this.post_finishDisplayPermission(ws)(err,logindata);
-                    resultCallback()
-                });
-            });
 
             ws_connector.on(Command.GetDisplayPermissionList, (data, resultCallback, socketid)=>{
                 this.commandOperator.getDisplayPermissionList(resultCallback);
             });
 
             ws_connector.on(Command.ChangeDisplayPermissionList, (displayPermissionList, resultCallback, socketid)=>{
-                this.commandOperator.updateDisplayPermissionList(displayPermissionList, resultCallback);
+                this.commandOperator.updateDisplayPermissionList(displayPermissionList, (err, displayPermissionList)=>{
+                    this.post_completeDisplayPermission(ws)(err,displayPermissionList);
+                    resultCallback()
+                });
             });
 
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{
@@ -463,10 +460,9 @@
             }
         }
 
-        post_finishDisplayPermission(ws) {
+        post_completeDisplayPermission(ws) {
             return (err, data)=>{
-                console.log("postspost")
-                ws_connector.broadcast(ws, Command.FinishDisplayPermissionSetting, data);
+                ws_connector.broadcast(ws, Command.CompleteDisplayPermissionSetting, data);
             }
         }
 

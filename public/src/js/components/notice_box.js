@@ -12,7 +12,7 @@ class NoticeBox extends EventEmitter {
         this.noticeList = [];
         this.container = document.createElement('div');
         this.container.className = "notice_box"
-        
+
         this.title = document.createElement('div');
         this.title.innerText = "New Displays";
         this.title.className = "notice_box_title"
@@ -23,23 +23,32 @@ class NoticeBox extends EventEmitter {
     init(){
     }
 
-    addDisplayPermissionLeaf(logindata){
+    /**
+     * noticeboxにひとつidを追加する
+     * @method addDisplayPermissionLeaf
+     * @param {Object} displayPermissionList {displayid : bool}
+     */
+    addDisplayPermissionLeaf(displayPermissionList){
+        let displayid = null;
+        for(let i in displayPermissionList){
+            displayid = i;
+        }
         for(let i = 0; i < this.noticeList.length; ++i){
-            if(logindata.displayid === this.noticeList[i].logindata.displayid){
+            if(displayid === this.noticeList[i].displayid){
                 // もうあるdisplayidは重複して作らない
                 return;
             }
         }
         let notice = {};
         notice.dom = document.createElement("span");
-        notice.logindata = logindata;
+        notice.displayid = displayid;
         notice.dom.classList.add("notice_box_leaf");
 
 
         let idWrap = document.createElement("div");
         let idText = document.createElement("span");
         idWrap.appendChild(idText);
-        idText.textContent = "ID:" + logindata.displayid;
+        idText.textContent = "ID:" + displayid;
         idText.classList.add("notice_box_id_wrap");
 
         notice.dom.appendChild(idWrap);
@@ -52,8 +61,8 @@ class NoticeBox extends EventEmitter {
         notice.acceptButton.getDOM().classList.add("notice_box_accept_button");
         notice.acceptButton.setDataKey("allow"); // todo translation
         notice.acceptCallback = (err)=>{
-            logindata.permission = true;
-            this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, logindata);
+            let displayPermissionList = {[displayid] : true};
+            this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, displayPermissionList);
         };
         notice.acceptButton.on(Button.EVENT_CLICK, notice.acceptCallback);
 
@@ -61,8 +70,8 @@ class NoticeBox extends EventEmitter {
         notice.rejectButton.getDOM().classList.add("notice_box_reject_button");
         notice.rejectButton.setDataKey("block"); // todo translation
         notice.rejectCallback = (err)=>{
-            logindata.permission = false;
-            this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, logindata);
+            let displayPermissionList = {[displayid] : false};
+            this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, displayPermissionList);
         };
         notice.rejectButton.on(Button.EVENT_CLICK, notice.rejectCallback);
 
@@ -76,10 +85,20 @@ class NoticeBox extends EventEmitter {
         this.update();
     }
 
-    deleteDisplayPermissionLeaf(logindata){
+    /**
+     * noticeboxのidをひとつ削除する
+     * @method deleteDisplayPermissionLeaf
+     * @param {Object} displayPermissionList {displayid : bool}
+     */
+
+    deleteDisplayPermissionLeaf(displayPermissionList){
+        let displayid = null;
+        for(let i in displayPermissionList){
+            displayid = i;
+        }
         for(let i = 0; i < this.noticeList.length; ++i){
             let notice = this.noticeList[i];
-            if(notice.logindata.displayid === logindata.displayid){
+            if(notice.displayid === displayid){
                 this.container.removeChild(notice.dom);
                 this.noticeList.splice(i,1);
             }
