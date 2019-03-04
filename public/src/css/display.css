@@ -198,6 +198,15 @@ pre {
 	display : none;
 }
 
+.blocked_text {
+	position : fixed;
+	bottom : 0px;
+	right : 20px;
+	color : white;
+	font-size: 50px;
+	display : block;
+}
+
 .mark {
 	border-width : 6px;
 	border-style: solid;

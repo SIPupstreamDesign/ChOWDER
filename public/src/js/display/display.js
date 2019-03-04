@@ -242,7 +242,7 @@ class Display {
 
 		this.store.on(Store.EVENT_CONNECT_SUCCESS, (err, data) => {
 			console.log("EVENT_CONNECT_SUCCESS")
-			let disconnectedText = document.getElementById("disconnected_text");
+			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
 			if (disconnectedText) {
 				disconnectedText.style.display = "none";
 			}
@@ -263,7 +263,7 @@ class Display {
 
 		this.store.on(Store.EVENT_CONNECT_FAILED, (err, data) => {
 			console.log("EVENT_CONNECT_FAILED")
-			let disconnectedText = document.getElementById("disconnected_text");
+			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
 			if (disconnectedText) {
 				disconnectedText.style.display = "block";
 			}
@@ -272,7 +272,7 @@ class Display {
 		this.store.on(Store.EVENT_DISCONNECTED, () => {
 			console.log("EVENT_DISCONNECTED")
 			let previewArea = document.getElementById("preview_area");
-			let disconnectedText = document.getElementById("disconnected_text");
+			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
 			if (previewArea) {
 				previewArea.style.display = "none";
 			}
