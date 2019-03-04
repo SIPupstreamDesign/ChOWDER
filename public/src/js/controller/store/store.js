@@ -307,16 +307,16 @@ class Store extends EventEmitter
 		}
 	}
 
-	_changeDisplayPermission(data){
-		Connector.send(Command.ChangeDisplayPermission, data, (err, reply) => {});
-	}
-
-	_updateDisplayPermissionList(data){
-		this.displayPermissionList = data;
+	_updateDisplayPermissionList(){
+		Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
+			this.displayPermissionList = reply;
+		});
 	}
 
 	_changeDisplayPermissionList(data){
-		Connector.send(Command.ChangeDisplayPermissionList, data, (err, reply) => {});
+		Connector.send(Command.ChangeDisplayPermissionList, data, (err, reply) => {
+			this.action.updateDisplayPermissionList();
+		});
 	}
 
 	getDisplayPermissionList(){

@@ -38,7 +38,7 @@ class Controller {
 
 		this.loginGUI = new LoginGUI(store, action);
 		manipulator.init(store, action);
-		
+
 		this.resizeTimer = null;
 		this.isInitialUpdate = true;
 		this.isInitialized = false;
@@ -123,7 +123,7 @@ class Controller {
 				let head_menu_hover = document.getElementsByClassName('head_menu_hover')[0];
 				let logoutButton = document.getElementsByClassName('logout_button')[0];
 				let user_text = document.getElementsByClassName('user_text')[0];
-	
+
 				// ログインユーザ名の設定.
 				user_text.innerHTML = "Name:" + data.loginUserName;
 				// ログアウトボタンを設定.
@@ -132,7 +132,7 @@ class Controller {
 					cookie.setLoginKey(this.store.getLoginStore().getControllerID(), data.loginkey);
 					this.action.logout({ loginkey: data.loginkey });
 				};
-				
+
 				let connectIcon = document.getElementsByClassName('head_menu_hover_right')[0];
 				if (connectIcon){
 					//e.textContent = '×';
@@ -141,7 +141,7 @@ class Controller {
 				}
 			}
 		});
-		
+
 		this.isInitialized = true;
 	}
 
@@ -201,10 +201,10 @@ class Controller {
 
 		// contentが追加された
 		this.store.on(Store.EVENT_DONE_ADD_CONTENT, this.doneAddContent);
-		
+
 		// contentが取得された
 		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
-		
+
 		// メタデータ取得完了
 		this.store.on(Store.EVENT_DONE_GET_METADATA, (err, reply, endCallback) => {
 			this.doneGetMetaData(err, reply, (err) => {
@@ -218,7 +218,7 @@ class Controller {
 		this.store.on(Store.EVENT_DISPLAY_SCALE_CHANGING, (err, displayScale) => {
 			this.updateScreen();
 		});
-		
+
 		// ディスプレイスケール変更確定
 		this.store.on(Store.EVENT_DISPLAY_SCALE_CHANGED, (err, displayScale) => {
 			this.getControllerData().setDisplayScale(displayScale);
@@ -229,7 +229,7 @@ class Controller {
 		this.store.on(Store.EVENT_DONE_DISPLAY_TRANS, (err) => {
 			this.updateScreen();
 		});
-			
+
 		// ディスプレイ表示状態変更
 		this.store.on(Store.EVENT_CHANGE_DISPLAY_VISIBLE, (err, windowData) => {
 			this.updateScreen(windowData);
@@ -260,7 +260,7 @@ class Controller {
 			this.unselectAll(true);
 			this.select(Constants.WholeWindowListID);
 		});
-		
+
 		// コンテンツが削除された
 		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, this.doneDeleteContent);
 
@@ -277,10 +277,10 @@ class Controller {
 				this.store.for_each_metadata((id, meta) => {
 					if ((Validator.isContentType(meta) && data.type === Constants.TypeContent) ||
 						(Validator.isWindowType(meta) && data.type === Constants.TypeWindow) ||
-						(Validator.isLayoutType(meta) && data.type === Constants.TypeLayout)) 
+						(Validator.isLayoutType(meta) && data.type === Constants.TypeLayout))
 					{
 						if (data.onlyCurrentGroup) {
-							if ((!meta.hasOwnProperty('group') && currentGroup === Constants.DefaultGroup) || 
+							if ((!meta.hasOwnProperty('group') && currentGroup === Constants.DefaultGroup) ||
 								(meta.group === currentGroup)) {
 								if (Validator.isWindowType(meta)) {
 									if (Validator.isVisibleWindow(meta)) {
@@ -306,14 +306,14 @@ class Controller {
 				this.showSelectionRect(false);
 			}
 		});
-		
+
 		// メタデータ更新
 		this.store.on(Store.EVENT_UPDATE_METADATA_MULTI, (err, metaDataList, callback) => {
 			if (callback) {
 				callback();
 			}
 		});
-		
+
 		// グループ選択変更
 		this.store.on(Store.EVENT_GROUP_SELECT_CHANGED, (err, data) => {
 			this.removeVirtualDisplay();
@@ -351,10 +351,10 @@ class Controller {
 		this.store.on(Store.EVENT_DONE_SNAP_CONTENT_TO_SCREEN, (err, elem) => {
 			manipulator.moveManipulator(elem);
 		});
-		
+
 		// 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
 		this.store.on(Store.EVENT_DONE_RELOAD_ALL, (err, data) => {
-			
+
 			if (this.isInitialUpdate) {
 				let checkbox = document.getElementById('all_check_');
 				if (checkbox) {
@@ -362,7 +362,7 @@ class Controller {
 				}
 				this.isInitialUpdate = false;
 			}
-	
+
 			this.action.getGroupList({
 				callback : () => {
 					this.updateScreen();
@@ -1059,7 +1059,7 @@ class Controller {
 		let key = this.store.getLoginStore().getLoginKey();
 		if (key.length > 0) {
 			let request = { id: "", password: "", loginkey: key };
-			
+
 			// TODO action化
 			Connector.send(Command.Login, request, (err, reply) => {
 				if (err || reply === "failed") {
@@ -1102,7 +1102,7 @@ class Controller {
 		this.setupContent(divElem, divElem.id);
 		return divElem;
 	}
-	
+
 	/**
 	 * Content設定
 	 * @method setupContent
@@ -1174,12 +1174,12 @@ class Controller {
 		if (!manipulator.isShowManipulator()) {
 			if (Validator.isDisplayTabSelected()) {
 				manipulator.showManipulator(
-					selectionRect, 
+					selectionRect,
 					this.gui.getDisplayPreviewArea());
 			}
 			else {
 				manipulator.showManipulator(
-					selectionRect, 
+					selectionRect,
 					this.gui.getContentPreviewArea());
 			}
 			manipulator.moveManipulator(selectionRect);
@@ -1366,7 +1366,7 @@ class Controller {
 			this.gui.getSearchElem(id).style.borderColor = this.store.getBorderColor(metaData);
 		}
 		elem.style.borderColor = this.store.getBorderColor(metaData);
-		
+
 		// レイアウトでは枠を出さない
 		if (Validator.isLayoutType(metaData)) {
 			return;
@@ -1955,9 +1955,9 @@ class Controller {
 		if (!err && reply.hasOwnProperty('grouplist')) {
 			// 一旦全部のリストエレメントをはずす.
 			this.store.for_each_metadata(function (id, metaData) {
-				if (Validator.isContentType(metaData) || 
-					Validator.isWindowType(metaData) || 
-					Validator.isLayoutType(metaData)) 
+				if (Validator.isContentType(metaData) ||
+					Validator.isWindowType(metaData) ||
+					Validator.isLayoutType(metaData))
 				{
 					const onlistID = "onlist:" + id;
 					let elem = document.getElementById(onlistID);
