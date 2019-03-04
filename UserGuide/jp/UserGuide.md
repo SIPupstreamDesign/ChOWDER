@@ -1188,10 +1188,26 @@ Electron版ChOWDERディスプレイアプリケーションの利用
 Electron版ChOWDERディスプレイアプリケーションを利用して、フレームレスウインドウを画面上に自動的に配置することができます。
 
 
+アプリケーションのインストール
+---------------------------------------------------
+
+
+Electron版ChOWDERディスプレイのインストールは、ChOWDERのインストールに含まれています。
+[アプリケーションのインストール方法](#アプリケーションのインストール方法) の項に沿って、node.jsをインストールし、ChOWDERのインストールスクリプトを実行してください。
+
+アプリケーションの起動
+---------------------------------------------------
+
+`standalone-electron` ディレクトリ下の、以下のファイルを実行することで、Electron版ChOWDERディスプレイが起動します。
+ - Windows版: ChOWDER-Standalone-Electron-win32-x64/ChOWDER-Standalone-Electron.exe
+ - Mac版: ChOWDER-Standalone-Electron-darwin-x64/ChOWDER-Standalone-Electron.app
+ - Linux版: ChOWDER-Standalone-Electron-linux-x64/ChOWDER-Standalone-Electron
+
+
 アプリケーションの設定
 ---------------------------------------------------
 
-アプリケーションの設定は、JSON形式による設定ファイルで行うことができます。
+Electron版ChOWDERディスプレイの設定は、JSON形式による設定ファイルで行うことができます。
 設定ファイルは `standalone-electron` ディレクトリ下に `conf.json` というファイル名で作成します。
 設定ファイルの書式は以下の通りです:
 
@@ -1229,13 +1245,20 @@ Electron版ChOWDERディスプレイアプリケーションを利用して、�
     -   `fullscreen` には、ウインドウのフルスクリーン表示を行うかどうかを指定します。
     -   `frame` には、ウインドウのフレームを表示するかどうかを指定します。
 
-
-アプリケーションの起動
+アプリケーションの設定の反映
 ---------------------------------------------------
 
-`standalone-electron` ディレクトリ下で以下のシェルスクリプトを実行します。
+`standalone-electron` ディレクトリで`npm install`を実行し、パッケージを上書きすることで、設定が反映されます。
 
-    npm start
+リモートホストへのインストール
+---------------------------------------------------
+
+リモートホストへ、実行ファイルを含む以下のフォルダをコピーし、実行することで、リモートホスト上でもElectron版ChOWDERディスプレイが起動します
+ - Windows版: ChOWDER-Standalone-Electron-win32-x64
+ - Mac版: ChOWDER-Standalone-Electron-darwin-x64
+ - Linux版: ChOWDER-Standalone-Electron-linux-x64
+
+リモートホストへコピーした後に、設定ファイルを編集する場合は、実行ファイルのあるディレクトリにある、`conf.json`を編集してください。
 
 
 HTTPSの利用

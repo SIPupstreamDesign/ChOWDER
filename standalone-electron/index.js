@@ -3,9 +3,18 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
- var electron = require('electron');
+var electron = require('electron');
 
-var CONFIG = require('./conf.json');
+const path = require('path');
+console.log(__dirname);
+const os = require('os');
+let filepath = "conf.json"
+if (os.platform() === "darwin") {
+	filepath = path.resolve(__dirname, '../../../../conf.json');
+} else {
+	filepath = '../../conf.json'
+}
+var CONFIG = require(filepath);
 
 var tileWindows = {};
 
@@ -85,9 +94,9 @@ function createWindows() {
 electron.app.on('ready', createWindows);
 
 electron.app.on('window-all-closed', function() {
-	if (process.platform !== 'darwin') {
+	//if (process.platform !== 'darwin') {
 		electron.app.quit();
-	}
+	//}
 } );
 
 electron.app.on('activate', function() { // macOS

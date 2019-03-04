@@ -41,7 +41,9 @@ class GUI extends EventEmitter {
 
         this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
             // ログありのときはSettingMenuに保存ボタン付ける
-                if (this.store.isMeasureTimeEnable()) {
+            if (this.store.isMeasureTimeEnable()) {
+                let blockedText = document.getElementsByClassName('blocked_text')[0];
+                blockedText.style.display = "none";
                 let menu = document.getElementsByClassName('head_mode_text')[0];
                 let button = new Button();
                 button.getDOM().value = "PerformanceLog"
