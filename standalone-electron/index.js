@@ -8,7 +8,7 @@ var electron = require('electron');
 const path = require('path');
 console.log(__dirname);
 const os = require('os');
-const filepath = "conf.json"
+let filepath = "conf.json"
 if (os.platform() === "darwin") {
 	filepath = path.resolve(__dirname, '../../../../conf.json');
 } else {
