@@ -4,6 +4,17 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 	<link href="src/css/top.css" rel="stylesheet"/>
+	<script type="text/javascript">
+		function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000000).toString(16);
+		}
+		window.onload = function () {
+			let disp = document.getElementById('display_link');
+			disp.onclick = function () {
+				location.href='display.html?id=' + s4();
+			}
+		};
+	</script>
 </head>
 <body>
 <div class="title">ChOWDER</div>
@@ -19,7 +30,7 @@
 			<div class="sizer"></div>
 		</div>
 		<div class="list-item">
-		<a href="display.html">
+		<a id="display_link">;
 			<h1 class="display">Display</h1>
 		</a>
 		</div>
