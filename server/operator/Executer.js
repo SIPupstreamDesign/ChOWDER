@@ -2878,8 +2878,6 @@
             let count = 0;
             for(let i in displayPermissionList){
                 this.textClient.hdel(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", i, (err,reply)=>{
-                    console.log("DELETE",this.frontPrefix + this.uuidPrefix + "permission_login_displayid",i);
-                    console.log(err);
                     count += 1;
                     if(count >= Object.keys(displayPermissionList).length){
                         callback(err,displayPermissionList);

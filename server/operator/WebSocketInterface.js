@@ -187,7 +187,6 @@
             });
 
             ws_connector.on(Command.DeleteDisplayPermissionList, (displayPermissionList, resultCallback, socketid)=>{
-                console.log("GGGGGGGGGGG")
                 this.commandOperator.deleteDisplayPermissionList(displayPermissionList, resultCallback);
             });
 
