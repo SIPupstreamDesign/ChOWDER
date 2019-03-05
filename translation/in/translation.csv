@@ -112,3 +112,4 @@ allowed,許可,Allowed
 blocked,拒否,Blocked
 allow,許可,allow
 block,拒否,block
+display_setting_changed,ディスプレイ許可設定を変更しました,Display permission was changed successfully.

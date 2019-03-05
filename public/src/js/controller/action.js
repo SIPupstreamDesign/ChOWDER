@@ -826,8 +826,16 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST, null, null);
     }
 
-    changeDisplayPermissionList(displayPermissionList){
-        this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, displayPermissionList);
+    /**
+     * 配信許可設定の変更
+     * @param {*} data 
+     * {
+     *    permissionList : ディスプレイ許可リスト,
+     *    callback : 終了時コールバック(option)
+     * }
+     */
+    changeDisplayPermissionList(data){
+        this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data);
     }
 
 };

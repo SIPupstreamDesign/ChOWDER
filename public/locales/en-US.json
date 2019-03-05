@@ -111,5 +111,6 @@
  "allowed": "Allowed",
  "blocked": "Blocked",
  "allow": "allow",
- "block": "block"
+ "block": "block",
+ "display_setting_changed": "Display permission was changed successfully."
 }

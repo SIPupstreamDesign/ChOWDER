@@ -129,8 +129,11 @@ class ManagementGUI
 		});
 
 		// ディスプレイ接続許可設定
-		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, (err, displayPermissionList) => {
-			this.action.changeDisplayPermissionList(displayPermissionList);
+		this.managementDialog.on(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, (err, displayPermissionList, callback) => {
+			this.action.changeDisplayPermissionList({
+				permissionList : displayPermissionList,
+				callback : callback
+			});
 		});
 
 		this.action.reloadGlobalSetting();

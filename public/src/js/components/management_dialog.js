@@ -322,6 +322,12 @@ class ManagementDialog extends EventEmitter
             this.displaySelect = new CompareList(i18next.t("allowed"),i18next.t("blocked"));
 
             displayPermissionFrame.appendChild(this.displaySelect.getDOM());
+            
+            this.applyDisplaySettingMessage = document.createElement('p');
+            this.applyDisplaySettingMessage.textContent = i18next.t("display_setting_changed");
+            this.applyDisplaySettingMessage.className = "apply_display_setting_message";
+            displayPermissionFrame.appendChild(this.applyDisplaySettingMessage);
+            
         }
     }
 
@@ -467,9 +473,14 @@ class ManagementDialog extends EventEmitter
      *  ディスプレイ配信許可設定の初期化
      */
     initDisplayPermission(contents,displayPermissionList) {
-        // 最大履歴保存数の適用
         this.displaySelect.on(CompareList.EVENT_APPLY , (err,data) => {
-            this.emit(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data, ()=>{});
+            this.emit(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data, (err, data)=>{
+                let message = this.applyDisplaySettingMessage;
+                message.style.visibility = "visible";
+                setTimeout(function () {
+                    message.style.visibility = "hidden";
+                }, 2000);
+            });
         });
         this.displaySelect.setData(displayPermissionList);
     }

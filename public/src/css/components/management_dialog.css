@@ -105,6 +105,13 @@ input[disabled] {
 	top : 5px;
 }
 
+.apply_display_setting_message {
+	visibility: hidden;
+	width : 250px;
+	position : relative;
+	top : 5px;
+}
+
 .apply_auth_frame {
 	display : inline-block;
 	width : 300px;
