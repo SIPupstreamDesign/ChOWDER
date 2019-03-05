@@ -110,6 +110,6 @@
  "display_permission": "Display permission",
  "allowed": "Arrowed",
  "blocked": "Blocked",
- "allow": "arrow",
+ "allow": "allow",
  "block": "block"
 }

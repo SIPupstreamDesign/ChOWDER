@@ -110,5 +110,5 @@ display_settings,ディスプレイ設定,Display settings
 display_permission,ディスプレイ許可,Display permission
 allowed,許可,Arrowed
 blocked,拒否,Blocked
-allow,許可,arrow
+allow,許可,allow
 block,拒否,block
