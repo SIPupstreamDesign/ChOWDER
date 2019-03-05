@@ -105,5 +105,11 @@
  "custom": "手動",
  "raw_resolution": "原寸",
  "min_bitrate": "最小bitrate",
- "max_bitrate": "最大bitrate"
+ "max_bitrate": "最大bitrate",
+ "display_settings": "ディスプレイ設定",
+ "display_permission": "ディスプレイ許可",
+ "allowed": "許可",
+ "blocked": "拒否",
+ "allow": "許可",
+ "block": "拒否"
 }

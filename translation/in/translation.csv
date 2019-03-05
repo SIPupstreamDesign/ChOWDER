@@ -106,3 +106,9 @@ custom,手動,Custom
 raw_resolution,原寸,RawResolution
 min_bitrate,最小bitrate,bitrate min
 max_bitrate,最大bitrate,bitrate max
+display_settings,ディスプレイ設定,Display settings
+display_permission,ディスプレイ許可,Display permission
+allowed,許可,Arrowed
+blocked,拒否,Blocked
+allow,許可,arrow
+block,拒否,block

@@ -105,5 +105,11 @@
  "custom": "Custom",
  "raw_resolution": "RawResolution",
  "min_bitrate": "bitrate min",
- "max_bitrate": "bitrate max"
+ "max_bitrate": "bitrate max",
+ "display_settings": "Display settings",
+ "display_permission": "Display permission",
+ "allowed": "Arrowed",
+ "blocked": "Blocked",
+ "allow": "arrow",
+ "block": "block"
 }
