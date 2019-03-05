@@ -108,7 +108,7 @@
  "max_bitrate": "bitrate max",
  "display_settings": "Display settings",
  "display_permission": "Display permission",
- "allowed": "Arrowed",
+ "allowed": "Allowed",
  "blocked": "Blocked",
  "allow": "allow",
  "block": "block"
