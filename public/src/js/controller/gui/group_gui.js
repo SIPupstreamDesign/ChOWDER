@@ -212,10 +212,14 @@ class GroupGUI
 
     initNoticeEvents(noticeBox) {
         noticeBox.on(NoticeBox.EVENT_NOTICE_ACCEPT,(err, displayPermissionList)=>{
-            this.action.changeDisplayPermissionList(displayPermissionList);
+            this.action.changeDisplayPermissionList({
+                permissionList : displayPermissionList
+            });
         });
         noticeBox.on(NoticeBox.EVENT_NOTICE_REJECT,(err, displayPermissionList)=>{
-            this.action.changeDisplayPermissionList(displayPermissionList);
+            this.action.changeDisplayPermissionList({
+                permissionList : displayPermissionList
+            });
         });
     }
 
