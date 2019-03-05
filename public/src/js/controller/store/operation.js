@@ -59,7 +59,7 @@ class Operation
 			}
 		}
     }
-    
+
 	/**
 	 * コンテンツ更新要求送信
 	 * @param {JSON} metaData 更新するコンテンツのメタデータ
@@ -73,7 +73,7 @@ class Operation
             this.store.emit(Store.EVENT_DONE_UPDATE_CONTENT, err, reply, endCallback);
         });
     }
-    
+
     deleteContent(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
 			this.connector.send(Command.DeleteContent, metaDataList, (err, reply) => {
@@ -84,7 +84,7 @@ class Operation
 			});
 		}
 	}
-	
+
 	deleteWindow(metaDataList, endCallback) {
 		if (metaDataList.length > 0) {
 			this.connector.send(Command.DeleteWindowMetaData, metaDataList, (err, reply) => {
@@ -93,6 +93,14 @@ class Operation
 				}
                 this.store.emit(Store.EVENT_DONE_DELETE_DISPLAY, err, reply);
             });
+
+			let deleteDisplayPermissionList = {};
+			for(let i=0;i<metaDataList.length;i++){
+				deleteDisplayPermissionList[metaDataList[i].id] = false;
+			}
+			this.connector.send(Command.DeleteDisplayPermissionList, deleteDisplayPermissionList, (err, reply) => {
+				this.store.action.updateDisplayPermissionList();
+			});
 		}
 	}
 
@@ -115,7 +123,7 @@ class Operation
 			this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, err, reply);
 		});
 	}
-    
+
 	/**
 	 * Content追加
 	 * @method add_content
@@ -147,7 +155,7 @@ class Operation
 			}
 		});
     }
-    
+
     getVirtualDisplay(groupID, endCallback, preventDefaultEmit) {
         this.connector.send(Command.GetVirtualDisplay, {group : groupID}, (err, reply) => {
 			if (!preventDefaultEmit) {
@@ -157,7 +165,7 @@ class Operation
             }
         });
     }
-    
+
     updateVirtualDisplay(windowData, endCallback) {
 		this.connector.send(Command.UpdateVirtualDisplay, windowData, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, err, reply);
@@ -166,7 +174,7 @@ class Operation
             }
 		});
     }
-    
+
 	/**
 	 * グループリストの更新(再取得)
 	 */
@@ -178,12 +186,12 @@ class Operation
 			}
 		});
     }
-    
+
 	updateControllerData(controllerData) {
         this.connector.send(Command.UpdateControllerData, controllerData, function () {
         });
 	}
-	
+
 	sendMessage(message, endCallback) {
 		this.connector.send(Command.SendMessage, message, endCallback);
 	}

@@ -2862,9 +2862,28 @@
         }
 
         setDisplayPermissionList(displayPermissionList, callback){
+            let count = 0;
             for(let i in displayPermissionList){
                 this.textClient.hset(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", i, displayPermissionList[i],(err,reply)=>{
-                    callback(err,displayPermissionList);
+                    count += 1;
+                    if(count >= Object.keys(displayPermissionList).length){
+                        // 全部セットし終わったら
+                        callback(err,displayPermissionList);
+                    }
+                });
+            }
+        }
+
+        deleteDisplayPermissionList(displayPermissionList, callback){
+            let count = 0;
+            for(let i in displayPermissionList){
+                this.textClient.hdel(this.frontPrefix + this.uuidPrefix + "permission_login_displayid", i, (err,reply)=>{
+                    console.log("DELETE",this.frontPrefix + this.uuidPrefix + "permission_login_displayid",i);
+                    console.log(err);
+                    count += 1;
+                    if(count >= Object.keys(displayPermissionList).length){
+                        callback(err,displayPermissionList);
+                    }
                 });
             }
         }

@@ -76,6 +76,7 @@ const Command = {
 	AskDisplayPermission : "AskDisplayPermission", // ログイン時に、サーバが許可していいかコントローラに聞く
 	ChangeDisplayPermissionList : "ChangeDisplayPermissionList", // コントローラが許可設定の変更リストをサーバへ送る
 	CompleteDisplayPermissionSetting : "CompleteDisplayPermissionSetting", // サーバが許可処理の完了をbroadcastする
+	DeleteDisplayPermissionList : "DeleteDisplayPermissionList",
 
 	GetDisplayPermissionList : "GetDisplayPermissionList", // コントローラが許可設定一覧をサーバに要求する
 };

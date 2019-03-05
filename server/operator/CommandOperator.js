@@ -1117,6 +1117,12 @@
             });
         }
 
+        deleteDisplayPermissionList(displayPermissionList, endCallback){
+            this.executer.deleteDisplayPermissionList(displayPermissionList, (err, permissions) => {
+                endCallback(err, permissions);
+            });
+        }
+
         /**
          * パスワードを変更する
          * @method ChangePassword

@@ -182,8 +182,13 @@
             ws_connector.on(Command.ChangeDisplayPermissionList, (displayPermissionList, resultCallback, socketid)=>{
                 this.commandOperator.updateDisplayPermissionList(displayPermissionList, (err, displayPermissionList)=>{
                     this.post_completeDisplayPermission(ws)(err,displayPermissionList);
-                    resultCallback()
+                    resultCallback();
                 });
+            });
+
+            ws_connector.on(Command.DeleteDisplayPermissionList, (displayPermissionList, resultCallback, socketid)=>{
+                console.log("GGGGGGGGGGG")
+                this.commandOperator.deleteDisplayPermissionList(displayPermissionList, resultCallback);
             });
 
             ws_connector.on(Command.ChangePassword, (data, resultCallback, socketid)=>{

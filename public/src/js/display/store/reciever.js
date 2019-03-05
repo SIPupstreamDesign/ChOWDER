@@ -70,6 +70,7 @@ class Receiver {
                     this.action.login(request);
                 }
             }
+            window.location.reload(true);
         });
 
         // 権限変更時に送られてくる
