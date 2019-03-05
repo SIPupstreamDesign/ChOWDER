@@ -204,12 +204,13 @@ The server program reads the `server/setting.json` file while launching to confi
 
     {
         "wsMaxMessageSize": 67108864,
-        "reductionResolution" : 1920
+        "reductionResolution" : 1920,
+        "enableMeasureTime" : false
     }
 
--   wsMaxMessageSize sets the maximum size of a single message that the server transmits. 
--   reductionResolution sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
-
+-   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
+-   `reductionResolution` sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
+-   `enableMeasureTime` sets whether time log output is enabled or not. The log file is output to `tileimage/log`, `server/log`. You can also download logs on Display on Display.
 
 
 Managing Administrative Users
@@ -1078,7 +1079,9 @@ The format of the setup file is as follows:
         "xsplit": 8,
         "ysplit": 8,
         "contentid": "contentid",
-        "contentgrp": "default"
+        "contentgrp": "default",
+        "reload_latest" : true,
+	    "visible" : true
     }
 
 -	 `id` is fixed as `APIUser`
@@ -1086,6 +1089,9 @@ The format of the setup file is as follows:
 -	Use the URL of the ChOWDER WebSocket server for 'url'
 -	Set the number of horizontal and vertical image splits (sub-divisions) in `xplit` / `ysplit`.
 	Designate Content ID and Content Group each in `contentid` / `contentgrp`
+-   `reload_latest`: Represents whether to display the latest image registered using the `--metadata` option.
+-   `visible`: Represents visibility of registered images.
+
 
 Using the Application
 --------------------------------------------------------------------------------
