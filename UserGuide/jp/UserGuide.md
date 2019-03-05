@@ -209,11 +209,13 @@ redisが起動しているterminalを終了させます.
 
     {
         "wsMaxMessageSize": 67108864,
-        "reductionResolution" : 1920
+        "reductionResolution" : 1920,
+        "enableMeasureTime" : false
     }
 
--   wsMaxMessageSizeには、サーバーが1回で送受信できる最大メッセージサイズを設定します。
--   reductionResolutionには、大規模画像データの縮小画像のサイズを設定します。このサイズ以上の大規模画像データを登録した場合は、縮小画像が生成され、表示解像度によっては縮小画像が表示に使用されます。
+-   `wsMaxMessageSize`には、サーバーが1回で送受信できる最大メッセージサイズを設定します。
+-   `reductionResolution`には、大規模画像データの縮小画像のサイズを設定します。このサイズ以上の大規模画像データを登録した場合は、縮小画像が生成され、表示解像度によっては縮小画像が表示に使用されます。
+-   `enableMeasureTime`には、時刻ログ出力を有効にするかどうかを設定します。時刻ログ出力を有効にした場合、tileimage/log、server/logに対してログファイルが出力されます。また、Display上でDisplayでのログがダウンロードできるようになります。
 
 管理者初期設定
 ---------------------------------------------------
@@ -1121,7 +1123,9 @@ CLIアプリケーション経由で、巨大な画像データをChOWDERサー�
         "xsplit": 8,
         "ysplit": 8,
         "contentid": "contentid",
-        "contentgrp": "default"
+        "contentgrp": "default",
+        "reload_latest" : true,
+	    "visible" : true
     }
 
 -   `id` は `APIUser` で固定となります。
@@ -1129,7 +1133,8 @@ CLIアプリケーション経由で、巨大な画像データをChOWDERサー�
 -   `url` には、ChOWDER WebSocketサーバのURLを指定します。
 -   `xsplit` ・ `ysplit` にはそれぞれ、横・縦方向の画像分割数を指定できます。
 -   `contentid` ・ `contentgrp` にはそれぞれ、コンテンツID・コンテンツグループを指定します。
-
+-   `reload_latest`には、`--metadata`オプションを使用して登録した最新画像を, Displayで表示し続けるかどうかを`true`または`false`で指定します。
+-   `visible`には、登録した画像の可視不可視を`true`または`false`で設定します。
 
 アプリケーションの利用方法
 --------------------------------------------------------------------------------
