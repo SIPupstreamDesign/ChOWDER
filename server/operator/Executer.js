@@ -2888,7 +2888,7 @@
                     let value = String(permissionList[i][key]);
                     
                     //  設定が変更されたdisplay idを詰める
-                    if (permissionDict.hasOwnProperty(key)) {
+                    if (permissionDict && permissionDict.hasOwnProperty(key)) {
                         if (permissionDict[key] !== value) {
                             changeList.push(key);
                         }
