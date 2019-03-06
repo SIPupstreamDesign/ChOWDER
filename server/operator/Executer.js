@@ -703,14 +703,14 @@
                         this.changeGroupUserSetting("master", "Display", {
                             viewable: "all",
                             editable: "all",
-                            displayEditable: [],
+                            displayEditable: "all",
                             group_manipulatable: false
                         }, () => {
                             // APIUser設定の初期登録
                             this.changeGroupUserSetting("master", "APIUser", {
                                 viewable: "all",
                                 editable: "all",
-                                displayEditable: [],
+                                displayEditable: "all",
                                 group_manipulatable: false
                             });
                         }, () => {
@@ -718,7 +718,7 @@
                             this.changeGroupUserSetting("master", "ElectronDisplay", {
                                 viewable: "all",
                                 editable: "all",
-                                displayEditable: [],
+                                displayEditable: "all",
                                 group_manipulatable: false
                             });
                         });
