@@ -6,8 +6,6 @@ class CompareList extends EventEmitter {
         super();
 
         this.createDOM(leftTitle,rightTitle);
-        this.data = {};
-
     }
 
     createDOM(leftTitle,rightTitle){
@@ -50,54 +48,42 @@ class CompareList extends EventEmitter {
         this.dom.appendChild(frame);
     }
 
-    convertStringToBoolean(object){
-        // redisはboolを持てない
-        for(let i in object){
-            if(object[i] === "true"){
-                object[i] = true;
-            }
-            if(object[i] === "false"){
-                object[i] = false;
-            }
-        }
-        return object;
-    }
-
-    convertBooleanToString(object){
-        for(let i in object){
-            if(object[i] === true){
-                object[i] = "true";
-            }
-            if(object[i] === false){
-                object[i] = "false";
-            }
-        }
-        return object;
-    }
-
-
-    setData(object){
-        let data = this.convertStringToBoolean(object)
-        for(let i in data){
-            if(data[i] === true){
-                this.leftSelect.add(i,i);
-            }else if(data[i] === false){
-                this.rightSelect.add(i,i);
+    /**
+     * @param {*} data 
+     * [
+     *     { displayidA : true },
+     *     { displayidB : true },
+     *     { displayidC : false },
+     *  ..
+     * ]
+     */
+    setData(data){
+        for(let i = 0; i < data.length; ++i){
+            for (let key in data[i]) {
+                let value = data[i][key];
+                if (String(value) === "true"){
+                    this.leftSelect.add(key, key);
+                } else {
+                    this.rightSelect.add(key, key);
+                }
             }
         }
     }
 
     getData(){
-        let result = {};
+        let result = [];
         let trueDisplays = this.leftSelect.getValues();
-        for(let i in trueDisplays){
-            result[trueDisplays[i]] = true;
+        for(let i = 0; i < trueDisplays.length; ++i){
+            let permission = {};
+            permission[trueDisplays[i]] = "true";
+            result.push(permission);
         }
         let falseDisplays = this.rightSelect.getValues();
-        for(let i in falseDisplays){
-            result[falseDisplays[i]] = false;
+        for(let i = 0; i < falseDisplays.length; ++i){
+            let permission = {};
+            permission[falseDisplays[i]] = "false";
+            result.push(permission);
         }
-        result = this.convertBooleanToString(result);
         return result;
     }
 

@@ -12,7 +12,6 @@
 
             this.connectionId = {};
             this.connectionCount = 0;
-
         }
 
         /**
@@ -1070,10 +1069,11 @@
                     return;
                 }
                 // ディスプレイは配信許可設定が必要
-                this.executer.existsDisplayPermission(data.displayid, (err, exists) => {
+                this.executer.existsDisplayPermission(socketid, data.displayid, (err, exists) => {
                     if (err) {
+                        endCallback(err);
                     } else if (exists) {
-                        this.executer.getDisplayPermission(data.displayid, (err, permission) => {
+                        this.executer.getDisplayPermission(socketid, data.displayid, (err, permission) => {
                             if (err) {
                                 console.log(err);
                             } else if (permission === "true") {
@@ -1098,13 +1098,6 @@
             }
         }
 
-        updateDisplayPermission(logindata, endCallback) {
-            console.log("UpdateDisplayPermission");
-            this.executer.setDisplayPermission(logindata.displayid, logindata.permission, (err) => {
-                endCallback(err, logindata);
-            });
-        }
-
         getDisplayPermissionList(endCallback) {
             this.executer.getDisplayPermissionList((err, permissions) => {
                 endCallback(err, permissions);
@@ -1112,13 +1105,13 @@
         }
 
         updateDisplayPermissionList(displayPermissionList, endCallback) {
-            this.executer.setDisplayPermissionList(displayPermissionList, (err, permissions) => {
+            this.executer.updateDisplayPermissionList(displayPermissionList, (err, permissions) => {
                 endCallback(err, permissions);
             });
         }
 
-        deleteDisplayPermissionList(displayPermissionList, endCallback){
-            this.executer.deleteDisplayPermissionList(displayPermissionList, (err, permissions) => {
+        deleteDisplayPermissionList(displayIDList, endCallback) {
+            this.executer.deleteDisplayPermissionList(displayIDList, (err, permissions) => {
                 endCallback(err, permissions);
             });
         }

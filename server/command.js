@@ -75,12 +75,11 @@
 		RTCClose : "RTCClose",
 
 		// ディスプレイ配信許可設定
-		AskDisplayPermission : "AskDisplayPermission", // ログイン時に、サーバが許可していいかコントローラに聞く
-		ChangeDisplayPermissionList : "ChangeDisplayPermissionList", // コントローラが許可設定の変更リストをサーバへ送る
-		CompleteDisplayPermissionSetting : "CompleteDisplayPermissionSetting", // サーバが許可処理の完了をbroadcastする
+		AskDisplayPermission : "AskDisplayPermission", // ログイン時に、サーバが許可していいか聞く
+		UpdateDisplayPermissionList : "UpdateDisplayPermissionList", // 許可設定の変更
 		DeleteDisplayPermissionList : "DeleteDisplayPermissionList",
 
-		GetDisplayPermissionList : "GetDisplayPermissionList", // コントローラが許可設定一覧をサーバに要求する
+		GetDisplayPermissionList : "GetDisplayPermissionList", // 許可設定一覧をサーバに要求する
 	};
 
 	module.exports = Command;

@@ -804,7 +804,7 @@ class ManagementDialog extends EventEmitter
      * 管理GUIを表示する
      * @param contents.dblist dbリスト
      */
-    show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermission) {
+    show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermissionList) {
         this.initAll();
         this.userList = userList;
         this.displayGroupList = displayGroupList;
@@ -826,7 +826,7 @@ class ManagementDialog extends EventEmitter
         this.initPasswordGUI(contents);
         // 権限情報をGUIに反映.
 
-        this.initDisplayPermission(contents,displayPermission);
+        this.initDisplayPermission(contents,displayPermissionList);
 
         document.body.appendChild(this.dom);
     }

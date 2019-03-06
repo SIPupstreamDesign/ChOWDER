@@ -819,11 +819,11 @@ class Action extends EventEmitter
     }
 
     /**
-     * 配信許可設定の変更
+     * 配信許可設定の再読み込み
      * @param {*} data windowData
      */
-    updateDisplayPermissionList(){
-        this.emit(Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST, null, null);
+    reloadDisplayPermissionList(){
+        this.emit(Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST, null, null);
     }
 
     /**
@@ -917,7 +917,7 @@ Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 
-Action.EVENT_UPDATE_DISPLAY_PERMISSION_LIST = "updateDisplayPermissionList";
+Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
 
 export default Action;

@@ -3,25 +3,25 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-(()=>{
+(() => {
     "use strict";
 
     const InCommingMethodToMeaning = {
-        AddHistoricalContent : "時系列画像を追加開始",
-        AddTileContent : "タイルを追加",
-        GetContent : "コンテンツを取得",
-        GetTileContent : "タイルを取得"
+        AddHistoricalContent: "時系列画像を追加開始",
+        AddTileContent: "タイルを追加",
+        GetContent: "コンテンツを取得",
+        GetTileContent: "タイルを取得"
     };
 
     const ResponseMethodToMeaning = {
-        GetContent : "コンテンツを送信",
-        GetTileContent : "タイルを送信"
+        GetContent: "コンテンツを送信",
+        GetTileContent: "タイルを送信"
     };
-    
+
     const BroadcastMethodToMeaning = {
-        UpdateContent : "新規コンテンツ通知"
+        UpdateContent: "新規コンテンツ通知"
     };
-    
+
     const path = require('path');
     const fs = require('fs');
     const ws_connector = require('../ws_connector.js');
@@ -62,7 +62,7 @@
             }
             return this.prepareLogFile(fileName + ".csv");
         }
-        
+
         // 書き込み準備
         prepareWriting() {
             if (!fs.existsSync(OUTPUT_DIR)) {
@@ -80,7 +80,7 @@
             this.broadcastLog.write("label,method,time,id,\n");
             */
         }
-        
+
         prepareLog() {
             // ws_connector.onをすり替え
             const originalOn = ws_connector.on;
@@ -115,11 +115,11 @@
                                     row += ",";
                                 }
                                 row += "\n";
-        
+
                                 this.logStream.write(row);
                             }
                         }
-                    } catch(e) {
+                    } catch (e) {
                     }
                     callback(data, resultCallback, socketid);
                 });
@@ -131,7 +131,7 @@
                 try {
 
                     if (args !== undefined && args && args.hasOwnProperty('id')) {
-                        
+
                         if (BroadcastMethodToMeaning.hasOwnProperty(method)) {
                             let label = BroadcastMethodToMeaning[method];
 
@@ -147,7 +147,7 @@
                         }
                     }
 
-                } catch(e) {
+                } catch (e) {
                     console.error(e)
                 }
                 originalBroadcast(ws, method, args, resultCallback);
@@ -184,7 +184,7 @@
                 }
             }
         }
-        
+
         /**
          * パフォーマンス計測用フラグの設定
          * @param {*} enableMeasureTime 
@@ -199,7 +199,7 @@
                 this.prepareLog();
             }
         }
-        
+
         isEnableMeasureTime() {
             return this.enableMeasureTime;
         }
@@ -211,6 +211,6 @@
             this.executer = executer;
         }
     };
-    
+
     module.exports = new PerformanceLogger();
 })();

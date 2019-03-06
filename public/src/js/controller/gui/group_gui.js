@@ -148,11 +148,15 @@ class GroupGUI
 
         // Displayから接続要求が飛んできた
         this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
-            let displayPermissionList = {[logindata.displayid] : null};
-            this.noticeBox.addDisplayPermissionLeaf(displayPermissionList);
+            this.noticeBox.addDisplayPermissionLeaf([logindata.displayid]);
         });
-        this.store.on(Store.EVENT_FINISH_DISPLAY_PERMISSION, (err, displayPermissionList)=>{
-            this.noticeBox.deleteDisplayPermissionLeaf(displayPermissionList);
+        this.store.on(Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED, (err)=>{
+            let permissionList = this.store.getDisplayPermissionList();
+            let displayIDList = [];
+            for (let i = 0; i < permissionList.length; ++i) {
+                displayIDList.push(Object.keys(permissionList[i])[0]);
+            }
+            this.noticeBox.deleteDisplayPermissionLeaf(displayIDList);
         });
     }
 

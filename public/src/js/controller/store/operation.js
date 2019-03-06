@@ -93,14 +93,6 @@ class Operation
 				}
                 this.store.emit(Store.EVENT_DONE_DELETE_DISPLAY, err, reply);
             });
-
-			let deleteDisplayPermissionList = {};
-			for(let i=0;i<metaDataList.length;i++){
-				deleteDisplayPermissionList[metaDataList[i].id] = false;
-			}
-			this.connector.send(Command.DeleteDisplayPermissionList, deleteDisplayPermissionList, (err, reply) => {
-				this.store.action.updateDisplayPermissionList();
-			});
 		}
 	}
 

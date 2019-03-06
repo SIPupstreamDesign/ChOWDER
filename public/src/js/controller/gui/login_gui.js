@@ -84,7 +84,7 @@ class LoginGUI extends EventEmitter {
 				}
 			}
 		});
-		this.action.updateDisplayPermissionList();
+		this.action.reloadDisplayPermissionList();
 	}
 }
 

@@ -306,8 +306,8 @@ class Receiver
         });
 
         // ディスプレイ配信許可設定で許可/拒否されたとき
-        this.connector.on(Command.CompleteDisplayPermissionSetting, (displayPermissionList) => {
-            this.store.emit(Store.EVENT_FINISH_DISPLAY_PERMISSION, null, displayPermissionList);
+        this.connector.on(Command.UpdateDisplayPermissionList, () => {
+            this.action.reloadDisplayPermissionList();
         });
 
     }

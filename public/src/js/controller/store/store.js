@@ -65,7 +65,7 @@ class Store extends EventEmitter
 		this.virtualDisplayDict = {};
 		this.metaDataDict = {};
 
-		this.displayPermissionList = {};
+		this.displayPermissionList = [];
 
 		this.initEvents();
 
@@ -307,17 +307,19 @@ class Store extends EventEmitter
 		}
 	}
 
-	_updateDisplayPermissionList(){
+	_reloadDisplayPermissionList(){
 		Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
-			this.displayPermissionList = reply;
+			this.displayPermissionList = reply.permissionList;
+			this.emit(Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED, null, this.displayPermissionList)
 		});
 	}
 
 	_changeDisplayPermissionList(data){
 		let callback_ = Store.extractCallback(data);
 
-		Connector.send(Command.ChangeDisplayPermissionList, data.permissionList, (err, reply) => {
-			this.action.updateDisplayPermissionList();
+		Connector.send(Command.UpdateDisplayPermissionList, data, (err, reply) => {
+			console.log(err, reply)
+			this.action.reloadDisplayPermissionList();
 			if (callback_) {
 				callback_(err, reply);
 			}
@@ -553,8 +555,8 @@ Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 Store.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";
 
+Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED = "display_permission_list_reloaded";
 Store.EVENT_ASK_DISPLAY_PERMISSION = "ask_display_permission";
-Store.EVENT_FINISH_DISPLAY_PERMISSION = "finish_display_permission";
 
 // operation
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";

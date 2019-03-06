@@ -7,7 +7,7 @@
 import Button from './button';
 
 class NoticeBox extends EventEmitter {
-    constructor(container){
+    constructor(container) {
         super();
         this.noticeList = [];
         this.container = document.createElement('div');
@@ -20,87 +20,86 @@ class NoticeBox extends EventEmitter {
 
     }
 
-    init(){
+    init() {
     }
 
     /**
-     * noticeboxにひとつidを追加する
+     * noticeboxにidを追加する
      * @method addDisplayPermissionLeaf
-     * @param {Object} displayPermissionList {displayid : bool}
+     * @param {Object} displayIDList [ displayidA, displayidB, .. ]
      */
-    addDisplayPermissionLeaf(displayPermissionList){
-        let displayid = null;
-        for(let i in displayPermissionList){
-            displayid = i;
-        }
-        for(let i = 0; i < this.noticeList.length; ++i){
-            if(displayid === this.noticeList[i].displayid){
-                // もうあるdisplayidは重複して作らない
-                return;
+    addDisplayPermissionLeaf(displayIDList) {
+        for (let k = 0; k < displayIDList.length; ++k) {
+            let displayID = displayIDList[k]
+
+            let isFoundDisplayID = false;
+            for (let i = 0; i < this.noticeList.length; ++i) {
+                isFoundDisplayID = (displayID === this.noticeList[i].displayid);
             }
+            // もうあるdisplayidは重複して作らない
+            if (isFoundDisplayID) {
+                continue;
+            }
+                
+            let notice = {};
+            notice.dom = document.createElement("span");
+            notice.displayid = displayID;
+            notice.dom.classList.add("notice_box_leaf");
+    
+            let idWrap = document.createElement("div");
+            let idText = document.createElement("span");
+            idWrap.appendChild(idText);
+            idText.textContent = "ID:" + displayID;
+            idText.classList.add("notice_box_id_wrap");
+    
+            notice.dom.appendChild(idWrap);
+    
+            let buttonWrap = document.createElement("span");
+            buttonWrap.classList.add("notice_box_button_wrap");
+    
+            notice.acceptButton = new Button();
+            notice.acceptButton.getDOM().classList.add("notice_box_accept_button");
+            notice.acceptButton.setDataKey(i18next.t("allow"));
+            notice.acceptCallback = (err) => {
+                let displayPermissionList = [{ [displayID]: true }];
+                this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, displayPermissionList);
+            };
+            notice.acceptButton.on(Button.EVENT_CLICK, notice.acceptCallback);
+    
+            notice.rejectButton = new Button();
+            notice.rejectButton.getDOM().classList.add("notice_box_reject_button");
+            notice.rejectButton.setDataKey(i18next.t("block"));
+            notice.rejectCallback = (err) => {
+                let displayPermissionList = [{ [displayID]: false }];
+                this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, displayPermissionList);
+            };
+            notice.rejectButton.on(Button.EVENT_CLICK, notice.rejectCallback);
+    
+            buttonWrap.appendChild(notice.acceptButton.getDOM());
+            buttonWrap.appendChild(notice.rejectButton.getDOM());
+    
+            notice.dom.appendChild(buttonWrap);
+    
+            this.noticeList.push(notice);    
         }
-        let notice = {};
-        notice.dom = document.createElement("span");
-        notice.displayid = displayid;
-        notice.dom.classList.add("notice_box_leaf");
-
-
-        let idWrap = document.createElement("div");
-        let idText = document.createElement("span");
-        idWrap.appendChild(idText);
-        idText.textContent = "ID:" + displayid;
-        idText.classList.add("notice_box_id_wrap");
-
-        notice.dom.appendChild(idWrap);
-
-
-        let buttonWrap = document.createElement("span");
-        buttonWrap.classList.add("notice_box_button_wrap");
-
-        notice.acceptButton = new Button();
-        notice.acceptButton.getDOM().classList.add("notice_box_accept_button");
-        notice.acceptButton.setDataKey(i18next.t("allow"));
-        notice.acceptCallback = (err)=>{
-            let displayPermissionList = {[displayid] : true};
-            this.emit(NoticeBox.EVENT_NOTICE_ACCEPT, err, displayPermissionList);
-        };
-        notice.acceptButton.on(Button.EVENT_CLICK, notice.acceptCallback);
-
-        notice.rejectButton = new Button();
-        notice.rejectButton.getDOM().classList.add("notice_box_reject_button");
-        notice.rejectButton.setDataKey(i18next.t("block"));
-        notice.rejectCallback = (err)=>{
-            let displayPermissionList = {[displayid] : false};
-            this.emit(NoticeBox.EVENT_NOTICE_REJECT, err, displayPermissionList);
-        };
-        notice.rejectButton.on(Button.EVENT_CLICK, notice.rejectCallback);
-
-        buttonWrap.appendChild(notice.acceptButton.getDOM());
-        buttonWrap.appendChild(notice.rejectButton.getDOM());
-
-        notice.dom.appendChild(buttonWrap);
-
-        this.noticeList.push(notice);
-
         this.update();
     }
 
     /**
-     * noticeboxのidをひとつ削除する
+     * noticeboxのidを削除する
      * @method deleteDisplayPermissionLeaf
-     * @param {Object} displayPermissionList {displayid : bool}
+     * @param {Object} displayIDList [ displayidA, displayidB, .. ]
      */
 
-    deleteDisplayPermissionLeaf(displayPermissionList){
-        let displayid = null;
-        for(let i in displayPermissionList){
-            displayid = i;
-        }
-        for(let i = 0; i < this.noticeList.length; ++i){
-            let notice = this.noticeList[i];
-            if(notice.displayid === displayid){
-                this.container.removeChild(notice.dom);
-                this.noticeList.splice(i,1);
+    deleteDisplayPermissionLeaf(displayIDList) {
+        for (let k = 0; k < displayIDList.length; ++k) {
+            let displayID = displayIDList[k];
+            for (let i = this.noticeList.length - 1; i >= 0; --i) {
+                let notice = this.noticeList[i];
+                if (notice.displayid === displayID) {
+                    this.container.removeChild(notice.dom);
+                    this.noticeList.splice(i, 1);
+                }
             }
         }
         if (this.noticeList.length > 0) {
@@ -110,8 +109,8 @@ class NoticeBox extends EventEmitter {
         }
     }
 
-    update(){
-        for(let i = 0; i < this.noticeList.length; ++i){
+    update() {
+        for (let i = 0; i < this.noticeList.length; ++i) {
             let notice = this.noticeList[i];
             this.container.appendChild(notice.dom);
         }
