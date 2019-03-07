@@ -87,24 +87,26 @@ class WebRTC extends EventEmitter {
 			this.emit(WebRTC.EVENT_NEGOTIATION_NEEDED, evt);
 		};
 		this.peer.oniceconnectionstatechange = (evt) => {
-			let state = this.peer.iceConnectionState;
-			printDebug("oniceconnectionstatechange", state);
-			if (state === "disconnected") {
-				// 相手から切断された.
-				// 30秒待って閉じる
-				/*
-				setTimeout(function () {
-					if (this.peer.iceConnectionState === "disconnected") {
-						this.close(true);
-					}
-				}, 1000*30);
-				*/
-			}
-			else if (state === "failed") {
-				this.emit(WebRTC.EVENT_NEED_RESTART, null);
-			}
-			else if (state === "connected") {
-				this.emit(WebRTC.EVENT_CONNECTED, null);
+			if (this.peer) {
+				let state = this.peer.iceConnectionState;
+				printDebug("oniceconnectionstatechange", state);
+				if (state === "disconnected") {
+					// 相手から切断された.
+					// 30秒待って閉じる
+					/*
+					setTimeout(function () {
+						if (this.peer.iceConnectionState === "disconnected") {
+							this.close(true);
+						}
+					}, 1000*30);
+					*/
+				}
+				else if (state === "failed") {
+					this.emit(WebRTC.EVENT_NEED_RESTART, null);
+				}
+				else if (state === "connected") {
+					this.emit(WebRTC.EVENT_CONNECTED, null);
+				}
 			}
 		};
 		if ('ontrack' in this.peer) {
