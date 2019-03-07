@@ -62,7 +62,7 @@ class Store extends EventEmitter {
     }
 
     release() {
-        if (this.videoStore.release) {
+        if (this.videoStore && this.videoStore.release) {
             this.videoStore.release();
         }
     }

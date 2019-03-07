@@ -416,12 +416,17 @@ class VideoStore {
 			// 解像度はwebrtcによって自動的に変更される
 			let blobObj = new Blob([blob]);
 			// https://developer.mozilla.org/ja/docs/Web/API/HTMLMediaElement/srcObject
+			
 			try {
 				videoData = blobObj;
 				video.srcObject = blobObj;
 			} catch (error) {
-				videoData = URL.createObjectURL(blobObj);
-				video.src = videoData;
+				try {
+					videoData = URL.createObjectURL(blobObj);
+					video.src = videoData;
+				} catch (e) {
+					console.error(e);
+				}
 			}
 			video.load();
 		}
