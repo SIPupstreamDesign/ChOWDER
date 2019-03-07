@@ -408,9 +408,9 @@ class VideoStore {
 	 * 動画ファイル処理用内部関数
 	 */
 	__processVideoFile(metaData, video, blob, timestamp) {
-        let subType = metaData.subtype;
+        let subtype = metaData.subtype;
 		let videoData;
-		if (subType === "file") {
+		if (subtype === "file") {
 			
 			// 通常のwebrtc
 			// 解像度はwebrtcによって自動的に変更される
@@ -428,7 +428,7 @@ class VideoStore {
 		this.setVideoData(metaData.id, blob);
 		
 		video.oncanplaythrough = function () {
-			if (subType !== "file") {
+			if (subtype !== "file") {
 				window.setTimeout(function(){
 					this.play()
 				}.bind(this), 1000); // for chrome
@@ -463,7 +463,7 @@ class VideoStore {
 			this.store.getContentStore().addContent(metaData, data, timestamp, (err, reply) => {
 				video.onplay = ((id) => {
 					return () => {
-						if (subType !== 'file') { return; }
+						if (subtype !== 'file') { return; }
 						let metaData = this.store.getMetaData(id);
 						metaData.isPlaying = true;
 						this.store.operation.updateMetadata(metaData);	
@@ -472,7 +472,7 @@ class VideoStore {
 		
 				video.onpause = ((id) => {
 					return () => {
-						if (subType !== 'file') { return; }
+						if (subtype !== 'file') { return; }
 						let metaData = this.store.getMetaData(id);
 						metaData.isPlaying = false;
 						this.store.operation.updateMetadata(metaData);
@@ -481,7 +481,7 @@ class VideoStore {
 		
 				video.onended = ((id) => {
 					return () => {
-						if (subType !== 'file') { return; }
+						if (subtype !== 'file') { return; }
 						let metaData = this.store.getMetaData(id);
 						metaData.isPlaying = false;
 						metaData.isEnded = true;
@@ -500,6 +500,9 @@ class VideoStore {
     _inputVideoFile(data) {
         let metaData = data.metaData;
 		let blob = data.contentData;
+		if (data.hasOwnProperty('subtype')) {
+			metaData.subtype = data.subtype;
+		}
 		
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
@@ -522,7 +525,7 @@ class VideoStore {
 			this.setVideoPlayer(metaData.id, player);
 			let video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
-			if (metaData.subType === "camera" || metaData.subType === "screen") {
+			if (metaData.subtype === "camera" || metaData.subtype === "screen") {
 				video.muted = true;
 			}
 			player.on(VideoPlayer.EVENT_READY, () => {
@@ -535,7 +538,7 @@ class VideoStore {
 	 * 動画ファイル処理用内部関数
 	 */
 	__processVideoStream(metaData, video, blob) {
-        let subType = metaData.subtype;
+        let subtype = metaData.subtype;
 		let videoData;
 		// stream
 		if ('srcObject' in video) {
@@ -609,7 +612,7 @@ class VideoStore {
 			this.setVideoPlayer(metaData.id, player);
 			let video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
-			if (metaData.subType === "camera" || metaData.subType === "screen") {
+			if (metaData.subtype === "camera" || metaData.subtype === "screen") {
 				video.muted = true;
 			}
 			player.on(VideoPlayer.EVENT_READY, () => {
