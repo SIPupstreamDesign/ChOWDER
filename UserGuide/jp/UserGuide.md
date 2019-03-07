@@ -331,6 +331,13 @@ Settingメニューからはリモートカーソルの表示状態切替や、�
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *リモートカーソル*
 
+リモートカーソルのサイズはコントローラ側のピクセル数を指定します.
+ディスプレイ側のカーソルサイズはVirtualDisplayのスケールに合わせて変動します.
+
+<img src="image/cursorsize.png" alt="カーソルサイズ" width="415" />
+*カーソルサイズ*
+
+
 言語の切り替えは以下のメニューで行います。
 
 <img src="image/SettingMenu_language.png" alt="言語切り替え" width="415" />
@@ -500,6 +507,12 @@ VirtualDisplayと、ChOWDERサーバーに接続されているDisplayの一覧�
 配置したDisplay上にContentsを追加することによってContentsを共有するワークスペースを実現します.
 Displayはマウスドラッグドロップにより、VirtualDisplaySpaceに配置することができます.
 上図は、クライアントが接続された環境の例となります.
+
+<img src="image/newdisplay.png" alt="image" width="207" />
+
+NewDisplays欄には, 新規にアクセスされたDisplayを表示します.
+許可するまではDisplay側にコンテンツは配信されません.
+一度選択すると許可情報が保存され, 次のアクセスでは保存された許可情報に従って配信されます.
 
 Virtual Displayの設定
 ---------------------
@@ -806,11 +819,18 @@ DB 管理では, 保存領域の新規作成, 切り替え, 名前変更, 削除
  4. 選択中のコントローラに対して, グループの編集やDisplayを許可するかどうか設定します.
 
 ### パスワードの設定
-パスワードの設定では, コントローラのパスワード変更を行えます. 
+パスワードの設定では, コントローラとElectronDisplayのパスワード変更を行えます. 
 管理者のパスワードを変更する場合のみ, 変更前のパスワードが必要となります.
 
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
 *パスワードの設定*
+
+### ディスプレイ設定
+ディスプレイ設定では, コンテンツ配信許可設定を変更できます.
+許可しているディスプレイのみに配信されます.
+
+<img src="image/management7.png" alt="ディスプレイ設定" width="585" />
+*ディスプレイ設定*
 
 
 ディスプレイ画面の操作
@@ -1221,6 +1241,7 @@ Electron版ChOWDERディスプレイの設定は、JSON形式による設定フ�
 
     {
         "url": "http://localhost:8080/view.html",
+        "password" : "password",
         "windows": {
             "tile1": {
                 "group": "sample",
@@ -1244,6 +1265,7 @@ Electron版ChOWDERディスプレイの設定は、JSON形式による設定フ�
     }
 
 -   `url` には、ChOWDERサーバのURLを指定します。
+-   `password` には、ElectronDisplayユーザのパスワードを指定します。
 -   `windows` は、ディスプレイIDをキー・ディスプレイ設定を値として持ったオブジェクトとなります。
     -   `group` には、サイトを指定します。
     -   `position` には、スクリーン左上を原点としたときの、ウインドウの位置`[横方向, 縦方向]`を指定します。

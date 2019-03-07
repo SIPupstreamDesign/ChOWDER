@@ -322,6 +322,12 @@ The remote cursor is a cursor that appears on the tiled displays.
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *The remote cursor*
 
+Cursor size setting, set the number of pixels on the Controller.
+The cursor size on the [Display] adjust to the scale of VirtualDisplay.
+
+<img src="image/cursorsize.png" alt="カーソルサイズ" width="415" />
+*remote cursor size*
+
 You can change languages in the menu below.
 
 <img src="image/SettingMenu_language.png" alt="言語切り替え" width="415" />
@@ -471,6 +477,13 @@ The [Display] Tab
 
 The [Display] tab shows the virtual display area and all display tiles connected to the ChOWDER server. ChOWDER's controller page allows you to move tiles in the virtual display areas. Adding Contents to the arranged Display enables a shared workspace. Use the mouse to drag and drop Display into the VirtualDisplaySpace.
 The example above shows the environment when a client is connected. 
+
+<img src="image/newdisplay.png" alt="image" width="207" />
+
+In the NewDisplays area, the newly accessed the [Display] is appeared.
+Content will not be delivered to the [Display] until permission.
+Once selected, the permission data is saved, and in the next access it is delivered according to stored the permission data.
+
 
 Virtual Display Setup
 ---------------------
@@ -778,11 +791,18 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 
 ### Password Setup
 
-You can change a controller’s password in Password Setup
+You can change controller’s or ElectronDisplay’s password in Password Setup
 The previous password will be required only for changing the Administrator’s password. 
 
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
 *Password Setup*
+
+### Display Delivery Permission Setup
+In the display setting, you can change the content delivery permission setting.
+It will be delivered only to the display you are allowing.
+
+<img src="image/management7.png" alt="ディスプレイ設定" width="585" />
+*Display Delivery Permission Setup*
 
 
 Working with Display Screen
@@ -1174,6 +1194,7 @@ The format for the setup file is as follows:
 
     {
         "url": "http://localhost:8080/view.html",
+        "password" : "password",
         "windows": {
             "tile1": {
                 "group": "sample",
@@ -1197,6 +1218,7 @@ The format for the setup file is as follows:
     }
 
 -	Use the URL of the ChOWDER server for `url`.
+-   ElectronDisplay user’s password in `password`
 -	`windows` is the object that has the Display ID as key and display setup as value.
     -	Designate the site in `Group`.
     -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
