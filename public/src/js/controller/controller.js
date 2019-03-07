@@ -1703,10 +1703,11 @@ class Controller {
 			if (json.hasOwnProperty('quality')) {
 				try {
 					let quality = JSON.parse(json.quality);
-					if (this.webRTC) {
-						for (let k in this.webRTC) {
+					let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+					if (webRTCDict) {
+						for (let k in webRTCDict) {
 							if (k.indexOf(json.id) >= 0) {
-								this.webRTC[k].setBandWidth(quality);
+								webRTCDict[k].setBandWidth(quality);
 							}
 						}
 					}
