@@ -545,7 +545,7 @@ class ContentPropertyGUI extends EventEmitter {
 					});
 				});
 				if (metaData.hasOwnProperty('webrtc_status')) {
-					addVideoTextLabel('video_select_quality_title', i18next.t('initial_quality_info'));
+					addVideoTextLabel('initial_quality_info_title', i18next.t('initial_quality_info'));
 					let qtext = "";
 					let quality = JSON.parse(metaData.webrtc_status);
 					qtext += i18next.t('video_src_width') + ": \n    " + quality.resolution.width + "\n";
@@ -1186,6 +1186,9 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		let aElem = document.getElementById('audio_select_input_quality');
 
+		// RawResolutionの場合
+		let initialInfo = document.getElementById('video_quality_text');
+		let initialTitle = document.getElementById('initial_quality_info_title');
 		if (vElem && vElem.value === "raw_resolution") {
 			if (aElem) {
 				aElem.disabled = true;
@@ -1195,6 +1198,8 @@ class ContentPropertyGUI extends EventEmitter {
 					elems[i].style.display = "none";
 				}
 			}
+			if (initialInfo) { initialInfo.style.display = "none"; }
+			if (initialTitle) { initialTitle.style.display = "none"; }
 		} else {
 			if (aElem) {
 				aElem.disabled = false;
@@ -1204,6 +1209,8 @@ class ContentPropertyGUI extends EventEmitter {
 					elems[i].style.display = (aElem.value === "auto") ? "none" : "block";
 				}
 			}
+			if (initialInfo) { initialInfo.style.display = "block"; }
+			if (initialTitle) { initialTitle.style.display = "block"; }
 		}
 	}
 	getVideoQuality() {

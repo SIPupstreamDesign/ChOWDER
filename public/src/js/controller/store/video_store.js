@@ -302,23 +302,25 @@ class VideoStore {
 			});
 			webRTC.on(WebRTC.EVENT_CONNECTED, () => {
 				setTimeout(((metaData) => {
-					let webRTC = this.webRTCDict[keyStr];
-
-					webRTC.getStatus((status) => {
-						let meta = this.store.getMetaData(metaData.id);
-						meta.webrtc_status = JSON.stringify({
-							bandwidth: {
-								availableSendBandwidth: status.bandwidth.availableSendBandwidth,
-								actualEncBitrate: status.bandwidth.googActualEncBitrate,
-								targetEncBitrate: status.bandwidth.googTargetEncBitrate,
-								transmitBitrate: status.bandwidth.googTransmitBitrate,
-							},
-							resolution: status.resolutions.send,
-							video_codec: status.video.send.codecs[0],
-							audio_codec: status.video.send.codecs[0]
+					return () => {
+						let webRTC = this.webRTCDict[keyStr];
+	
+						webRTC.getStatus((status) => {
+							let meta = this.store.getMetaData(metaData.id);
+							meta.webrtc_status = JSON.stringify({
+								bandwidth: {
+									availableSendBandwidth: status.bandwidth.availableSendBandwidth,
+									actualEncBitrate: status.bandwidth.googActualEncBitrate,
+									targetEncBitrate: status.bandwidth.googTargetEncBitrate,
+									transmitBitrate: status.bandwidth.googTransmitBitrate,
+								},
+								resolution: status.resolutions.send,
+								video_codec: status.video.send.codecs[0],
+								audio_codec: status.video.send.codecs[0]
+							});
+							this.store.operation.updateMetadata(meta);
 						});
-						this.store.operation.updateMetadata(meta);
-					});
+					}
 				})(metaData), 5000);
 			});
 
