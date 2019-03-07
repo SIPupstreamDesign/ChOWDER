@@ -407,7 +407,7 @@ class VideoStore {
 	/**
 	 * 動画ファイル処理用内部関数
 	 */
-	__processVideoFile(metaData, video, blob) {
+	__processVideoFile(metaData, video, blob, timestamp) {
         let subType = metaData.subtype;
 		let videoData;
 		if (subType === "file") {
@@ -460,7 +460,7 @@ class VideoStore {
 			else {
 				data = this.getElem(metaData.id, true).src;
 			}
-			this.store.getContentStore().addContent(metaData, data, (err, reply) => {
+			this.store.getContentStore().addContent(metaData, data, timestamp, (err, reply) => {
 				video.onplay = ((id) => {
 					return () => {
 						if (subType !== 'file') { return; }
@@ -516,7 +516,7 @@ class VideoStore {
 		if (this.hasVideoPlayer(metaData.id)) {
 			let player = this.getVideoPlayer(metaData.id);
 			let video = player.getVideo();
-			this.__processVideoFile(metaData, video, blob);
+			this.__processVideoFile(metaData, video, blob, data.timestamp);
 		}
 		else {
 			//video = document.createElement('video');
@@ -528,7 +528,7 @@ class VideoStore {
 				video.muted = true;
 			}
 			player.on(VideoPlayer.EVENT_READY, () => {
-				this.__processVideoFile(metaData, video, blob);
+				this.__processVideoFile(metaData, video, blob, data.timestamp);
 			});
 		}
 	}

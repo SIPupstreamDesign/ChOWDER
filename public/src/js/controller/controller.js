@@ -1888,7 +1888,7 @@ class Controller {
 	 * @param {String} err エラー. 無ければnull.
 	 * @param {JSON} reply 返信されたメタデータ
 	 */
-	doneAddContent(err, reply) {
+	doneAddContent(err, reply, endCallback) {
 		if (!this.store.isInitialized()) {
 			return;
 		}
@@ -1903,11 +1903,17 @@ class Controller {
 			this.doneUpdateContent(err, reply);
 			this.unselectAll(true);
 			this.select(json.id, true);
+			if (endCallback) {
+				endCallback(err, reply);
+			}
 			return;
 		}
 		this.doneGetMetaData(err, reply, () => {
 			this.unselectAll(true);
 			this.select(json.id, true);
+			if (endCallback) {
+				endCallback(err, reply);
+			}
 		});
 	}
 

@@ -126,7 +126,13 @@ class Operation
 		if (!metaData.hasOwnProperty("zIndex")) {
 			metaData.zIndex = this.store.getZIndex(metaData, true);
 		}
-		if (!Validator.checkCapacity(binary.byteLength)) {
+		if (binary instanceof ArrayBuffer && !Validator.checkCapacity(binary.byteLength)) {
+			return;
+		}
+		if (binary instanceof Blob && !Validator.checkCapacity(binary.size)) {
+			return;
+		}
+		if (binary instanceof String && !Validator.checkCapacity(binary.length)) {
 			return;
 		}
 		this.connector.sendBinary(Command.AddContent, metaData, binary, (err, reply) => {

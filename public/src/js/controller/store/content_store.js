@@ -41,18 +41,24 @@ class ContentStore
 	 * @param {JSON} metaData コンテンツのメタデータ
 	 * @param {BLOB} binary コンテンツのバイナリデータ
 	 */
-	addContent(metaData, binary, timestamp) {
+	addContent(metaData, binary, timestamp, callback) {
 		if (!metaData.hasOwnProperty("zIndex")) {
 			metaData.zIndex = this.store.getZIndex(metaData, true);
 		}
-		if (!Validator.checkCapacity(binary.byteLength)) {
+		if (binary instanceof ArrayBuffer && !Validator.checkCapacity(binary.byteLength)) {
+			return;
+		}
+		if (binary instanceof Blob && !Validator.checkCapacity(binary.size)) {
+			return;
+		}
+		if (binary instanceof String && !Validator.checkCapacity(binary.length)) {
 			return;
 		}
 		// パフォーマンス計測用.
 		if (timestamp) {
 			metaData.time_register = timestamp;
 		}
-		this.store.operation.addContent(metaData, binary);
+		this.store.operation.addContent(metaData, binary, callback);
 	}
 
 	/**
