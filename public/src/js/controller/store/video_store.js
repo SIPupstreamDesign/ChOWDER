@@ -464,9 +464,7 @@ class VideoStore {
 				video.onplay = ((id) => {
 					return () => {
 						if (subType !== 'file') { return; }
-						console.error(id);
 						let metaData = this.store.getMetaData(id);
-						console.error(metaData)
 						metaData.isPlaying = true;
 						this.store.operation.updateMetadata(metaData);	
 					}
