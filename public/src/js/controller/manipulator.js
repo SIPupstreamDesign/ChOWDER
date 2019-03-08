@@ -297,7 +297,10 @@ class Manipulator extends EventEmitter {
 			button.onmousedown = (evt) => {
 				evt.stopPropagation();
 				isPlaying = !isPlaying;
-				this.emit('play_video', null, metaData.id, isPlaying);
+				this.action.playVideoOnManipulator({
+					id : metaData.id,
+					isPlaying : isPlaying
+				})
 				image.src = isPlaying ? 'src/image/video_pause.png' : 'src/image/video_play.png';
 			};
 		}

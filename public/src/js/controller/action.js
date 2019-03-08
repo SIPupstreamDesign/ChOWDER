@@ -729,8 +729,12 @@ class Action extends EventEmitter
     }
 
     /**
-     * マニピュレータ: pdfページ送り
+     * マニピュレータ: 動画再生
      * @param {*} data
+     * {
+     *    id : メタデータのid,
+     *    isPlaying : true=再生, flase=一時停止
+     * }
      */
     playVideoOnManipulator(data) {
         this.emit(Action.EVENT_PLAY_VIDEO_ON_MANIPULATOR, null, data);

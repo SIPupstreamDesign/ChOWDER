@@ -98,8 +98,8 @@ class ManipulatorStore {
 	 */
     _playVideoOnManipulator(data) {
         let id = data.id;
-        let play = data.id;
-        this.store.operation.sendMessage({ids: [id], command: 'playVideo', play: play});
+        let play = data.isPlaying;
+        this.store.operation.sendMessage({ids: [id], command: 'playVideo', play: play}, function () {});
     }
 }
 
