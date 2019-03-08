@@ -85,7 +85,7 @@ class VideoStore {
 		}
 	}
     
-	processMovieBlob(metaData, videoElem, blob, id) {
+	processMovieBlob(metaData, videoElem, blob, id, callback) {
 		//let fileSize   = file.size;
 		let offset = 0;
 		let readBlock = null;
@@ -143,11 +143,13 @@ class VideoStore {
 				if (info.isFragmented) {
 					console.info("duration fragment", info.fragment_duration/info.timescale)
 					player.setDuration(info.fragment_duration/info.timescale);
-					metaData.video_duration = info.fragment_duration/info.timescale;
 				} else {
 					console.info("duration", info.duration/info.timescale)
 					player.setDuration(info.duration/info.timescale);
-					metaData.video_duration = info.duration/info.timescale;
+				}
+				metaData.video_info = JSON.stringify(info);
+				if (callback) {
+					callback(metaData);
 				}
 				mp4box.setSegmentOptions(info.tracks[0].id, player.buffer, { nbSamples: 1 } );
 				mp4box.setSegmentOptions(info.tracks[1].id, player.audioBuffer, { nbSamples: 1 } );
@@ -307,18 +309,20 @@ class VideoStore {
 	
 						webRTC.getStatus((status) => {
 							let meta = this.store.getMetaData(metaData.id);
-							meta.webrtc_status = JSON.stringify({
-								bandwidth: {
-									availableSendBandwidth: status.bandwidth.availableSendBandwidth,
-									actualEncBitrate: status.bandwidth.googActualEncBitrate,
-									targetEncBitrate: status.bandwidth.googTargetEncBitrate,
-									transmitBitrate: status.bandwidth.googTransmitBitrate,
-								},
-								resolution: status.resolutions.send,
-								video_codec: status.video.send.codecs[0],
-								audio_codec: status.video.send.codecs[0]
-							});
-							this.store.operation.updateMetadata(meta);
+							if (meta) {
+								meta.webrtc_status = JSON.stringify({
+									bandwidth: {
+										availableSendBandwidth: status.bandwidth.availableSendBandwidth,
+										actualEncBitrate: status.bandwidth.googActualEncBitrate,
+										targetEncBitrate: status.bandwidth.googTargetEncBitrate,
+										transmitBitrate: status.bandwidth.googTransmitBitrate,
+									},
+									resolution: status.resolutions.send,
+									video_codec: status.video.send.codecs[0],
+									audio_codec: status.video.send.codecs[0]
+								});
+								this.store.operation.updateMetadata(meta);
+							}
 						});
 					}
 				})(metaData), 5000);
@@ -545,21 +549,26 @@ class VideoStore {
 	__processVideoStream(metaData, video, blob) {
         let subtype = metaData.subtype;
 		let videoData;
+		let isAlreadyLoaded = video.srcObject || video.src;
+
 		// stream
-		if ('srcObject' in video) {
+		try {
 			videoData = blob;
 			video.srcObject = blob;
-		}
-		else {
-			videoData = URL.createObjectURL(blob);
-			video.src = videoData;
+		} catch (error) {
+			try {
+				videoData = URL.createObjectURL(blob);
+				URL.revokeObjectURL(video.src);
+				video.src = videoData;
+			} catch (e) {
+				console.error(e);
+			}
 		}
 		
 		setTimeout(() => {
 			video.load();
 			video.play();
 		}, 100)
-
 		this.setVideoData(metaData.id, blob);
 		
 		video.onloadedmetadata = (e) => {
@@ -657,28 +666,34 @@ class VideoStore {
 			saveDeviceID.audio_device = audioDeviceID;
 		}
 
+		let oldData = this.getVideoData(metadataID);
+		if (oldData) {
+			oldData.getTracks().forEach(track => track.stop())
+		}
+
 		navigator.mediaDevices.getUserMedia(constraints).then(
 			((saveDeviceID) => {
 				return (stream) => {
+					let meta = this.store.getMetaData(metadataID)
 					if (this.store.hasMetadata(metadataID)) {
 						// カメラマイク有効情報を保存
-						let meta = this.store.getMetaData(metadataID)
-						meta.video_device = saveDeviceID.video_device,
-						meta.audio_device = saveDeviceID.audio_device,
+						meta.video_device = String(saveDeviceID.video_device),
+						meta.audio_device = String(saveDeviceID.audio_device),
 						meta.is_video_on = isCameraOn,
 						meta.is_audio_on = isMicOn,
 						this.store.setMetaData(metadataID, meta)
 					}
 					this.action.inputVideoStream({
 						contentData : stream,
-						metaData : {
-							id : metadataID,
-							group: this.store.getGroupStore().getCurrentGroupID(),
-							posx: Vscreen.getWhole().x,
-							posy: Vscreen.getWhole().y,
-							visible: true
-						}
+						metaData : meta
 					})
+					let player = this.getVideoPlayer(metadataID);
+					for (let i in this.webRTCDict) {
+						if (i.indexOf(metadataID) >= 0) {
+							this.webRTCDict[i].removeStream();
+							this.webRTCDict[i].addStream(captureStream(player.getVideo()));
+						}
+					}
 				};
 			})(saveDeviceID),
 			function (err) {
@@ -737,48 +752,52 @@ class VideoStore {
 							}
 							// DataChannelを使用しfmp4を送り付ける方式
 							// 解像度が維持される
-							player.rawInstances = this.processMovieBlob(meta, player.video, blob, meta.id);
+							player.rawInstances = this.processMovieBlob(meta, player.video, blob, meta.id, (metaData) => {
+								// processMovieBlobにより更新されたメタデータを送信
+								this.store.operation.updateMetadata(metaData);
+							});
 							player.video.load();
 						}
 					}
-				}
-				if (isAlreadyUsed && !isDataChannelUsed) {
-					// DataChannel使用終了、webrtcに切り替え
-					if (this.hasVideoData(meta.id)) {
-						let player = this.getVideoPlayer(meta.id);
-						
-						// raw_resolutionの動画をクリア
-						if (player.hasOwnProperty('rawInstances')) {
-							if (this.segmentDict[meta.id].playHandle) {
-								clearInterval(this.segmentDict[meta.id].playHandle);
-							}
-							this.segmentDict[meta.id] = null;
-							let mediaPlayer = player.rawInstances.mediaPlayer;
-							if (mediaPlayer) {
-								mediaPlayer.release();
-							}
-							let mp4box = player.rawInstances.mp4box;
-							if (mp4box) {
-								mp4box.stop();
-								mp4box.onSegment = null;
-								mp4box.onReady = null;
-							}
-							player.rawInstances = null;
-						}
-						let blob = this.getVideoData(meta.id);
-						if (blob) {
+				} else {
+					if (isAlreadyUsed && !isDataChannelUsed) {
+						// DataChannel使用終了、webrtcに切り替え
+						if (this.hasVideoData(meta.id)) {
 							let player = this.getVideoPlayer(meta.id);
-							let blobObj = new Blob([blob]);
-							try {
-								player.video.srcObject = blobObj;
-							} catch (error) {
-								player.video.src = URL.createObjectURL(blobObj);
+							
+							// raw_resolutionの動画をクリア
+							if (player.hasOwnProperty('rawInstances')) {
+								if (this.segmentDict[meta.id].playHandle) {
+									clearInterval(this.segmentDict[meta.id].playHandle);
+								}
+								this.segmentDict[meta.id] = null;
+								let mediaPlayer = player.rawInstances.mediaPlayer;
+								if (mediaPlayer) {
+									mediaPlayer.release();
+								}
+								let mp4box = player.rawInstances.mp4box;
+								if (mp4box) {
+									mp4box.stop();
+									mp4box.onSegment = null;
+									mp4box.onReady = null;
+								}
+								player.rawInstances = null;
 							}
-							player.video.load();
+							let blob = this.getVideoData(meta.id);
+							if (blob) {
+								let player = this.getVideoPlayer(meta.id);
+								let blobObj = new Blob([blob]);
+								try {
+									player.video.srcObject = blobObj;
+								} catch (error) {
+									player.video.src = URL.createObjectURL(blobObj);
+								}
+								player.video.load();
+							}
 						}
 					}
+					this.store.operation.updateMetadata(meta); // datachannelじゃない場合のメタデータ更新
 				}
-				this.store.operation.updateMetadata(meta);
 			}
 		}
     }

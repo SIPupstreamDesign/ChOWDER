@@ -1113,8 +1113,8 @@ class ContentPropertyGUI extends EventEmitter {
 
 	getDeviceInfo(metaData) {
 		return {
-			isCameraOn : metaData.is_video_on,
-			isMicOn : metaData.is_audio_on,
+			isCameraOn : metaData.hasOwnProperty('is_video_on') ? metaData.is_video_on : true,
+			isMicOn : metaData.hasOwnProperty('is_audio_on') ? metaData.is_audio_on : true,
 			audioDeviceID : this.getAudioDeviceID(),
 			videoDeviceID : this.getVideoDeviceID()
 		}

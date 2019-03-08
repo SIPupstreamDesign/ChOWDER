@@ -204,7 +204,7 @@ class MediaPlayer extends EventEmitter {
 		this.audioQueue = [];
 	}
 	setDuration(duration) {
-		this.duration = duration;
+		this.duration = Number(duration);
 		if (this.isOpened && this.mediaSource && this.buffer && !this.buffer.updating) {
 			this.mediaSource.duration = this.duration;
 		}

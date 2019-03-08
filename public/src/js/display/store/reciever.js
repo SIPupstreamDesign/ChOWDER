@@ -34,7 +34,7 @@ class Receiver {
                     return;
                 }
                 if (json.type === "video") {
-                    let rtcKey = getRTCKey(json);
+                    let rtcKey = this.store.getVideoStore().getRTCKey(json);
                     let webRTCDict = this.store.getVideoStore().getWebRTCDict();
                     if (webRTCDict.hasOwnProperty(rtcKey)) {
                         webRTCDict[rtcKey].close(true);
