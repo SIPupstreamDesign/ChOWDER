@@ -52,21 +52,39 @@ class WebRTC extends EventEmitter {
 			this.peer.ondatachannel = (evt) => {
 				// evt.channelにDataChannelが格納されているのでそれを使う
 				printDebug("ondatachannel", evt.channel)
-				if (evt.channel) {
-					this.datachannel = evt.channel;
-					this.datachannel.onopen = (event) => {
+				if (evt.channel && evt.channel.label === "ForVideo") {
+					this.videoDataChannel = evt.channel;
+					this.videoDataChannel.onopen = (event) => {
 						printDebug("datachannel.onopen")
-						this.emit(WebRTC.EVENT_DATACHANNEL_OPEN, null);
+						this.emit(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_OPEN, null);
 					};
-					this.datachannel.onclose = () =>  {
+					this.videoDataChannel.onclose = () =>  {
 						printDebug("datachannel.onclose");
-						this.emit(WebRTC.EVENT_DATACHANNEL_CLOSE, null);
+						this.emit(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_CLOSE, null);
 					};
-					this.datachannel.onmessage = (event) => {
+					this.videoDataChannel.onmessage = (event) => {
 						printDebug("event", event)
-						this.emit(WebRTC.EVENT_DATACHANNEL_MESSAGE, null, event.data);
+						this.emit(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_MESSAGE, null, event.data);
 					};
-					this.datachannel.onerror = function (error) {
+					this.videoDataChannel.onerror = function (error) {
+						printDebug('dataChannel.onerror', error);
+					};
+				}
+				if (evt.channel && evt.channel.label === "ForAudio") {
+					this.audioDataChannel = evt.channel;
+					this.audioDataChannel.onopen = (event) => {
+						printDebug("datachannel.onopen")
+						this.emit(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_OPEN, null);
+					};
+					this.audioDataChannel.onclose = () =>  {
+						printDebug("datachannel.onclose");
+						this.emit(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_CLOSE, null);
+					};
+					this.audioDataChannel.onmessage = (event) => {
+						printDebug("event", event)
+						this.emit(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE, null, event.data);
+					};
+					this.audioDataChannel.onerror = function (error) {
 						printDebug('dataChannel.onerror', error);
 					};
 				}
@@ -157,21 +175,39 @@ class WebRTC extends EventEmitter {
 
 		// createOfferより前に作る必要がある
 		if (Constants.IsChrome) {
-			this.datachannel = this.peer.createDataChannel("myLabel" , dataChannelOptions);
-			this.datachannel.binaryType = "arraybuffer";
-			this.datachannel.onopen = () => {
+			this.videoDataChannel = this.peer.createDataChannel("ForVideo" , dataChannelOptions);
+			this.videoDataChannel.binaryType = "arraybuffer";
+			this.videoDataChannel.onopen = () => {
 				printDebug("datachannel.onopen")
-				this.emit(WebRTC.EVENT_DATACHANNEL_OPEN, null);
+				this.emit(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_OPEN, null);
 			};
-			this.datachannel.onmessage = () =>  {
+			this.videoDataChannel.onmessage = () =>  {
 				printDebug("datachannel.onmessage");
-				this.emit(WebRTC.EVENT_DATACHANNEL_MESSAGE, null);
+				this.emit(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_MESSAGE, null);
 			};
-			this.datachannel.onclose = () =>  {
+			this.videoDataChannel.onclose = () =>  {
 				printDebug("datachannel.onclose");
-				this.emit(WebRTC.EVENT_DATACHANNEL_CLOSE, null);
+				this.emit(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_CLOSE, null);
 			};
-			this.datachannel.onerror = function (error) {
+			this.videoDataChannel.onerror = function (error) {
+				printDebug('dataChannel.onerror', error);
+			};
+			
+			this.audioDataChannel = this.peer.createDataChannel("ForAudio" , dataChannelOptions);
+			this.audioDataChannel.binaryType = "arraybuffer";
+			this.audioDataChannel.onopen = () => {
+				printDebug("datachannel.onopen")
+				this.emit(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_OPEN, null);
+			};
+			this.audioDataChannel.onmessage = () =>  {
+				printDebug("datachannel.onmessage");
+				this.emit(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE, null);
+			};
+			this.audioDataChannel.onclose = () =>  {
+				printDebug("datachannel.onclose");
+				this.emit(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_CLOSE, null);
+			};
+			this.audioDataChannel.onerror = function (error) {
 				printDebug('dataChannel.onerror', error);
 			};
 		}
@@ -277,9 +313,12 @@ WebRTC.EVENT_ADD_STREAM = "addstream";
 WebRTC.EVENT_NEED_RESTART = "need_restart";
 WebRTC.EVENT_REMOVE_STREAM = "removestream";
 WebRTC.EVENT_ICECANDIDATE = "icecandidate";
-WebRTC.EVENT_DATACHANNEL_MESSAGE = "datachannelmessage";
 WebRTC.EVENT_NEGOTIATION_NEEDED = "negotiationneeded";
-WebRTC.EVENT_DATACHANNEL_OPEN = "datachannelopen";
-WebRTC.EVENT_DATACHANNEL_CLOSE = "datachannelclose";
+WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_MESSAGE = "datachannelmessage";
+WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_OPEN = "datachannelopen";
+WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_CLOSE = "datachannelclose";
+WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE = "audiodatachannelmessage";
+WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_OPEN = "audiodatachannelopen";
+WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_CLOSE = "audiodatachannelclose";
 
 export default WebRTC;

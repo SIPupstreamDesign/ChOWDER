@@ -7,7 +7,6 @@
 
 const DURATION = 1001;
 const TIMESCALE = 30000;
-const SAMPLE_SEC = DURATION / TIMESCALE;
 
 // 現在位置から後ろ10秒キャッシュする.
 // それより前のバッファは削除する.(大容量動画対策)
@@ -16,6 +15,7 @@ const CACHE_TIME = 10;
 class MediaPlayer extends EventEmitter {
 	constructor(videoElem, codecString, audioCodecString) {
 		super();
+		this.sampleSec = DURATION / TIMESCALE;
 		this.video = videoElem;
 		this.codecString = codecString;
 		this.audioCodecString = audioCodecString;
@@ -182,12 +182,16 @@ class MediaPlayer extends EventEmitter {
 	release() {
 		// console.log("release MediaPlayer")
 		if (this.buffer) {
-			this.buffer.abort();
+			if (this.buffer.readyState === "open") {
+				this.buffer.abort();
+			}
 			this.buffer.removeEventListener('update', this.updateBuffer);
 			this.buffer.removeEventListener('updateend', this.updateBuffer);
 		}
 		if (this.audioBuffer) {
-			this.audioBuffer.abort();
+			if (this.buffer.audioBuffer === "open") {
+				this.audioBuffer.abort();
+			}
 			this.audioBuffer.removeEventListener('update', this.updateBuffer);
 			this.audioBuffer.removeEventListener('updateend', this.updateBuffer);
 		}
@@ -209,10 +213,13 @@ class MediaPlayer extends EventEmitter {
 			this.mediaSource.duration = this.duration;
 		}
 	}
+	setSampleSec(sampleSec) {
+		this.sampleSec = sampleSec;
+	}
 	getSampleTime(time) {
-		let numSampleSec = time / SAMPLE_SEC;
+		let numSampleSec = time / this.sampleSec;
 		numSampleSec = numSampleSec - (numSampleSec - Math.floor(numSampleSec));
-		return SAMPLE_SEC * numSampleSec;
+		return this.sampleSec * numSampleSec;
 	}
 	onVideoFrame(data) {
 		this.preventUpdate = false;

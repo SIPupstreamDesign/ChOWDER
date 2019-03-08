@@ -85,6 +85,30 @@ class VideoStore {
 		}
 	}
     
+    getCodec(info) {
+        let audioCodec = null;
+        let videoCodec = null;
+        for (let i = 0; i < info.tracks.length; ++i) {
+            let track = info.tracks[i];
+            if (track.hasOwnProperty('video')) {
+                videoCodec = 'video/mp4; codecs=\"' + track.codec +  '\"';
+            }
+            else if (track.hasOwnProperty('audio')) {
+                audioCodec = 'audio/mp4; codecs=\"' + track.codec +  '\"';
+            }
+        }
+        if (!MediaSource.isTypeSupported(videoCodec)) {
+            videoCodec = 'video/mp4; codecs="avc1.640033"';
+        }
+        if (!MediaSource.isTypeSupported(audioCodec)) {
+            audioCodec = null;
+        }
+        return {
+            audioCodec : audioCodec,
+            videoCodec : videoCodec
+        }
+	}
+	
 	processMovieBlob(metaData, videoElem, blob, id, callback) {
 		//let fileSize   = file.size;
 		let offset = 0;
@@ -106,18 +130,17 @@ class VideoStore {
 		let player = null;
 		let chunkSize  = 1024 * 1024 * 1024; // bytes
 		mp4box.onReady = (info) => {
-			let videoCodec = 'video/mp4; codecs=\"' + info.tracks[0].codec +  '\"';
-			let audioCodec = null;
-			if (info.tracks.length > 1) {
-				audioCodec = 'audio/mp4; codecs=\"' + info.tracks[1].codec +  '\"';
-			}
+			const codec = this.getCodec(info);    
 
-			console.log("codec", videoCodec, audioCodec,
-				MediaSource.isTypeSupported(videoCodec),
-				MediaSource.isTypeSupported(audioCodec)
+			console.log("codec", codec.videoCodec, codec.audioCodec,
+				MediaSource.isTypeSupported(codec.videoCodec),
+				MediaSource.isTypeSupported(codec.audioCodec)
 			);
 			if (!player) {
-                player = new MediaPlayer(videoElem, videoCodec, audioCodec);
+				player = new MediaPlayer(videoElem, codec.videoCodec, codec.audioCodec);
+				if (info.hasOwnProperty('duration') && info.hasOwnProperty('timescale')) {
+					player.setSampleSec(info.duration / info.timescale);
+				}
             }
 
 			let playVideo = () => {
@@ -176,7 +199,7 @@ class VideoStore {
 			return (id, user, buffer, sampleNum, is_last) => {
 				if (user === player.buffer) {
 					this.segmentDict[metaDataID].video.push(buffer);
-					 console.log("videoseg")
+					// console.log("videoseg")
 					//player.onVideoFrame(buffer);
 				}
 				if (user === player.audioBuffer) {
@@ -329,57 +352,72 @@ class VideoStore {
 			});
 
 
-			let currentPos = 0;
+			let currentPos = {
+				video : 0,
+				audio : 0,
+			}
+			const VideoType = 0;
+			const AudioType = 1;
 			let maxBytes = 65535;
 			const NUM_SEGMENTS_A_TIME = 5;
-			let updateLoop = (loopCount) => {
+			let updateLoop = (loopCount, type, updateTime) => {
 				setTimeout(() => {
 					let webRTC = this.webRTCDict[keyStr];
 					if (this.segmentDict.hasOwnProperty(metaData.id)) {
-						let videoSegments = this.segmentDict[metaData.id].video;
-						//console.error("hoge", videoSegments)
+						let segments = (type === VideoType) ? this.segmentDict[metaData.id].video : this.segmentDict[metaData.id].audio;
+						let current =  (type === VideoType) ? currentPos.video : currentPos.audio;
+						let datachannel = (type === VideoType) ? webRTC.videoDataChannel : webRTC.audioDataChannel;
 						try {
-							if (currentPos === videoSegments.length)
+							if (current === segments.length) {
 								return;
+							}
 
 							// 10segmentsずつ送る.
-							for (let maxPos = currentPos + 5; currentPos < maxPos && currentPos < videoSegments.length; ++currentPos) {
+							for (let maxPos = current + 5; current < maxPos && current < segments.length; ) {
 								// 1segmentについてmaxBytesで分割しながら送る
-								if (videoSegments[currentPos].byteLength >= maxBytes) {
+								if (segments[current].byteLength >= maxBytes) {
 									let pos = 0;
 									while (true) {
-										if ((pos + maxBytes) > videoSegments[currentPos].byteLength) {
+										if ((pos + maxBytes) > segments[current].byteLength) {
 											//console.error("slice", pos)
-											let data = videoSegments[currentPos].slice(pos);
-											webRTC.datachannel.send(data);
+											let data = segments[current].slice(pos);
+											datachannel.send(data);
 										}
 										else {
 											//console.error("slice", pos, pos + maxBytes)
-											webRTC.datachannel.send(videoSegments[currentPos].slice(pos, pos + maxBytes));
+											datachannel.send(segments[current].slice(pos, pos + maxBytes));
 										}
 										pos += maxBytes;
-										if (pos > videoSegments[currentPos].byteLength) {
+										if (pos > segments[current].byteLength) {
 											break;
 										}
 									}
 								}
 								else {
-									//console.error(videoSegments[currentPos].byteLength)
-									webRTC.datachannel.send(videoSegments[currentPos]);
+									//console.error(segments[current].byteLength)
+									datachannel.send(segments[current]);
+								}
+								if (type === VideoType) {
+									++currentPos.video;
+									console.error(currentPos.video)
+									current = currentPos.video;
+								} else {
+									++currentPos.audio;
+									current = currentPos.audio;
 								}
 							}
 							if (loopCount > 0) {
-								updateLoop(--loopCount);
+								updateLoop(--loopCount, type, updateTime);
 							}
 						}
 						catch (e) {
 							// 送信失敗した場合、途中から再送を試みる
 							console.warn(e);
-							updateLoop(Math.ceil((videoSegments.length - currentPos)/ NUM_SEGMENTS_A_TIME));
+							updateLoop(Math.ceil((segments.length - current)/ NUM_SEGMENTS_A_TIME), type, updateTime);
 							//webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
 						}
 					}
-				}, 500);
+				}, updateTime);
 			};
 
 			let isUseDataChannel = false;
@@ -391,9 +429,17 @@ class VideoStore {
 			} catch(e) {
 			}
 			if (isUseDataChannel) {
-				webRTC.on(WebRTC.EVENT_DATACHANNEL_OPEN, () => {
-					let videoSegments = this.segmentDict[metaData.id].video;
-					updateLoop(Math.ceil(videoSegments.length/ NUM_SEGMENTS_A_TIME));
+				webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_OPEN, () => {
+					if (this.segmentDict[metaData.id]) {
+						let videoSegments = this.segmentDict[metaData.id].video;
+						updateLoop(Math.ceil(videoSegments.length/ NUM_SEGMENTS_A_TIME), VideoType, 500);
+					}
+				});
+				webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_OPEN, () => {
+					if (this.segmentDict[metaData.id]) {
+						let audioSegments = this.segmentDict[metaData.id].audio;
+						updateLoop(Math.ceil(audioSegments.length/ NUM_SEGMENTS_A_TIME), AudioType, 500);
+					}
 				});
 			}
 		}
@@ -745,6 +791,15 @@ class VideoStore {
 					if (this.hasVideoData(meta.id)) {
 						let blob = this.getVideoData(meta.id);
 						if (blob) {
+							let webRTCDict = this.webRTCDict;
+							if (webRTCDict) {
+								for (let k in webRTCDict) {
+									if (k.indexOf(meta.id) >= 0) {
+										webRTCDict[k].close(true);
+									}
+								}
+							}
+
 							let player = this.getVideoPlayer(meta.id);
 							URL.revokeObjectURL(player.video.src); // 通常のWebRTC用のソースを消す.
 							if (player.video.hasOwnProperty('srcObject')) {
@@ -764,6 +819,15 @@ class VideoStore {
 						// DataChannel使用終了、webrtcに切り替え
 						if (this.hasVideoData(meta.id)) {
 							let player = this.getVideoPlayer(meta.id);
+							
+							let webRTCDict = this.webRTCDict;
+							if (webRTCDict) {
+								for (let k in webRTCDict) {
+									if (k.indexOf(meta.id) >= 0) {
+										webRTCDict[k].close(true);
+									}
+								}
+							}
 							
 							// raw_resolutionの動画をクリア
 							if (player.hasOwnProperty('rawInstances')) {

@@ -59,50 +59,97 @@ class VideoStore {
         }
     }
 
-    playFragmentVideo(rtcKey, data) {
-        if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-            this.mediaPlayerDict[rtcKey].onVideoFrame(data);
-        } else {
-            console.error("Error : not found rtc entry. rtckey", rtcKey)
+    getCodec(info) {
+        let audioCodec = null;
+        let videoCodec = null;
+        for (let i = 0; i < info.tracks.length; ++i) {
+            let track = info.tracks[i];
+            if (track.hasOwnProperty('video')) {
+                videoCodec = 'video/mp4; codecs=\"' + track.codec +  '\"';
+            }
+            else if (track.hasOwnProperty('audio')) {
+                audioCodec = 'audio/mp4; codecs=\"' + track.codec +  '\"';
+            }
+        }
+        if (!MediaSource.isTypeSupported(videoCodec)) {
+            videoCodec = 'video/mp4; codecs="avc1.640033"';
+        }
+        if (!MediaSource.isTypeSupported(audioCodec)) {
+            audioCodec = null;
+        }
+        return {
+            audioCodec : audioCodec,
+            videoCodec : videoCodec
         }
     }
 
     _requestWebRTC(data) {
-        console.log("requestWebRTC")
+        console.error("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
         this.videoPlayerDict[metaData.id] = data.player;
         let elem = data.player.getVideo();
         let rtcKey = this.getRTCKey(metaData);
+        let meta = this.store.getMetaData(metaData.id);
+        const isUseDataChannel = this.isDataChannelUsed(metaData);
+        
+        // 既にDatachannel使ってるか？
+        let isAlreadyUsed =  this.isDataChannelUsed(meta);
+        // Datachannel使ってるか？
+        let isDataChannelUsed = this.isDataChannelUsed(metaData);
+
         this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
             let webRTC = new WebRTC();
             this.webRTCDict[rtcKey] = webRTC;
-            webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
-                const isUseDataChannel = this.isDataChannelUsed(metaData);
 
-                if (isUseDataChannel) {
-                    console.log("isUseDataChannel!")
-                    if (!this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-                        let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
-                        player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
-                            if (metaData.hasOwnProperty('video_duration')) {
-                                player.setDuration(metaData.video_duration);
-                            }
-                        });
-                        player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
-                            /*
-                            stopVideo();
-                            const segmentIndex = time / SAMPLE_SEC;
-                            console.log("MediaPlayer.EVENT_NEED_RELOAD", time, segmentIndex, this.segmentDict[id].videoIndex, time / SAMPLE_SEC);
-                            this.segmentDict[id].videoIndex = segmentIndex;
-                            this.segmentDict[id].audioIndex = segmentIndex;
-                            playVideo();
-                            */
-                           // TODO
-                        });
-                        this.mediaPlayerDict[rtcKey] = player;
+            if (isDataChannelUsed) {
+                // DataChannel使用開始
+                URL.revokeObjectURL(elem.src); // 通常のWebRTC用のソースを消す.
+                if (elem.hasOwnProperty('srcObject')) {
+                    elem.srcObject = null;
+                }
+            }
+            
+            if (isDataChannelUsed) {
+                let info = null;
+                try {
+                    info = JSON.parse(metaData.video_info);
+                } catch(e) {
+                    console.error(e, metaData.video_info);
+                }
+                console.error("isUseDataChannel!", info)
+                
+                if (info) {            
+                    const codec = this.getCodec(info);    
+                    const duration = info.duration/info.timescale;
+                    
+                    console.log("codec", codec.videoCodec, codec.audioCodec,
+                        MediaSource.isTypeSupported(codec.videoCodec),
+                        MediaSource.isTypeSupported(codec.audioCodec)
+                    );
+                    let player = new MediaPlayer(elem, codec.videoCodec, codec.audioCodec);
+                    if (info.hasOwnProperty('duration') && info.hasOwnProperty('timescale')) {
+                        player.setSampleSec(info.duration / info.timescale);
                     }
-                } else {
+                    player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
+                        player.setDuration(duration);
+                    });
+                    player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
+                        console.error("EVENT_NEED_RELOAD")
+                    });
+                    this.mediaPlayerDict[rtcKey] = player;
+                    elem.load();
+                }
+            } else {
+                if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+                    this.mediaPlayerDict[rtcKey].release();
+                    delete this.mediaPlayerDict[rtcKey];
+                }
+            }
+            
+            webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
+
+                if (!isUseDataChannel) {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
                     try {
                         elem.srcObject = stream;
@@ -143,15 +190,28 @@ class VideoStore {
                 }
             })(rtcKey));
 
-            webRTC.on(WebRTC.EVENT_DATACHANNEL_MESSAGE, ((rtcKey) => {
-                return (err, message) => {
-                    // console.error("datachannelmessage", message)
-                    this.playFragmentVideo(rtcKey, message);
-                }
-            })(rtcKey));
+            if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+                webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_MESSAGE, ((mediaPlayer) => {
+                    return (err, message) => {
+                        mediaPlayer.onVideoFrame(message);
+                    }
+                })(this.mediaPlayerDict[rtcKey]));
+            }
             
+            if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+                webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE, ((mediaPlayer) => {
+                    return (err, message) => {
+                        mediaPlayer.onAudioFrame(message);
+                    }
+                })(this.mediaPlayerDict[rtcKey]));
+            }
+
+			webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
+                console.error("EVENT_NEGOTIATION_NEEDED")
+            });
             webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
                 return () => {
+                    console.error("closed")
                     if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
                         this.mediaPlayerDict[rtcKey].release();
                         delete this.mediaPlayerDict[rtcKey];

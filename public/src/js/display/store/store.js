@@ -542,6 +542,20 @@ class Store extends EventEmitter {
         return this.groupDict;
     }
 
+	/**
+	 * 指定したIDのメタデータがあるかどうか
+	 */
+	hasMetadata(id) {
+		return this.metaDataDict.hasOwnProperty(id);
+    }
+	/**
+	 * 指定したIDのメタデータを取得
+	 */
+	getMetaData(id) {
+		return this.metaDataDict[id];
+	}
+
+    
     /**
      * 閲覧情報があるか返す
      */
