@@ -322,8 +322,7 @@ The remote cursor is a cursor that appears on the tiled displays.
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *The remote cursor*
 
-Cursor size setting, set the number of pixels on the Controller.
-The cursor size on the [Display] adjust to the scale of VirtualDisplay.
+You can specify the size of the remote cursor as the number of pixels based on VirtualDisplay.
 
 <img src="image/cursorsize.png" alt="カーソルサイズ" width="415" />
 *remote cursor size*
@@ -481,6 +480,7 @@ The example above shows the environment when a client is connected.
 <img src="image/newdisplay.png" alt="image" width="207" />
 
 In the NewDisplays area, the newly accessed the [Display] is appeared.
+You can specify permission to distribute content for new Display.
 Content will not be delivered to the [Display] until permission.
 Once selected, the permission data is saved, and in the next access it is delivered according to stored the permission data.
 
@@ -791,7 +791,7 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 
 ### Password Setup
 
-You can change controller’s or ElectronDisplay’s password in Password Setup
+You can change controller’s password in Password Setup
 The previous password will be required only for changing the Administrator’s password. 
 
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
@@ -799,7 +799,7 @@ The previous password will be required only for changing the Administrator’s p
 
 ### Display Delivery Permission Setup
 In the display setting, you can change the content delivery permission setting.
-It will be delivered only to the display you are allowing.
+It will be delivered only to allowed displays.
 
 <img src="image/management7.png" alt="ディスプレイ設定" width="585" />
 *Display Delivery Permission Setup*
@@ -1218,7 +1218,9 @@ The format for the setup file is as follows:
     }
 
 -	Use the URL of the ChOWDER server for `url`.
--   ElectronDisplay user’s password in `password`
+-   For `password`, specify a password for display distribution permission.
+    By setting same password for `ElectronDisplay` on the controller,
+    Content is delivered without separately setting display permission.
 -	`windows` is the object that has the Display ID as key and display setup as value.
     -	Designate the site in `Group`.
     -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
