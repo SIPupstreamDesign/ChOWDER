@@ -713,14 +713,19 @@ You can configure the settings per below:
 
 1. Change video input device (only video contents from the camera can be set up)
 2. Change audio input device (only video contents from the camera can be set up)
-3. Set video quality. You can set the bitrate of the video streamed via WebRTC.(*)
-4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.(*)
+3. Set video quality. 
+   If you select `Custom`, You can set the bitrate of the video streamed via WebRTC.(*1)
+   If you select `RawResolution`, it switches to delivery mode using WebRTC Datachannel, and you can deliver the movie without any deterioration in full scale.(*2)
+4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.(*1)
 5. You can look up information on WebRTC quality saved in the metadata of Contents.
 
-(*)
+(*1)
 The bitrate set here is used at the start of distribution.
 Since the bitrate is automatically changed to the optimum bitrate at the time of distribution by WebRTC,
 The set bitrate and actual bitrate are different.
+
+(*2)
+Distribution with `RawResolution` is effective only when distributing movie files.
 
 ### Bulk Operation of Video
 
