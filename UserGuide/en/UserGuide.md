@@ -88,14 +88,14 @@ ChOWDER supports the following evironments.
 
 - OS
   - Linux(CentOS7) or higher
-  - Windows7 or higher
-  - MacOSX 10.10 or higher
+  - Windows10 or higher
+  - MacOSX 10.12 or higher
 
 - Web browsers to render client pages
-  - Apple Safari 9.x or higher
-  - Firefox 48.0 or higher
-  - Google Chrome 53 or higher
-  - Internet Explorer 11 or higher
+  - Apple Safari 12.x or higher
+  - Firefox 65.0 or higher
+  - Google Chrome 72 or higher
+  - Edge 44 or higher
 
 Each tile must display a web browser in full screen mode.
 

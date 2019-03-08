@@ -83,14 +83,14 @@
 以下の環境で動作確認を行っております.
 
 * OS
-    * Linux(CentOS6)
-    * Windows7
-    * MacOSX 10.10
+    * Linux(CentOS7)
+    * Windows10
+    * MacOSX 10.12
 * Webブラウザ
-    * Apple Safari 9.x
-    * Firefox 48.0
-    * Chrome 53
-    * Internet Explorer 11
+    * Apple Safari 12.x
+    * Firefox 65
+    * Chrome 72
+    * Edge 44
 
 アプリケーションの展開方法
 ========================================================================================
