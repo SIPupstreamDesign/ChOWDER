@@ -920,7 +920,7 @@ Action.EVENT_MOVE_UP_GROUP = "moveUpGroup";
 Action.EVENT_MOVE_DOWN_GROUP = "moveDownGroup";
 Action.EVENT_TOGGLE_CONTENT_MARK_ICON = "toggleContentMarkIcon";
 Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
-
+Action.EVENT_SYNC_CONTENT = "syncContent";
 Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
 
