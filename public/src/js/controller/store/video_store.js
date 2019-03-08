@@ -895,6 +895,10 @@ class VideoStore {
 		let videoData = this.videoDict[id];
 
 		if (this.hasVideoPlayer(id)) {
+			let oldData = this.getVideoData(id);
+			if (oldData && oldData.getTracks) {
+				oldData.getTracks().forEach(track => track.stop())
+			}
 			let player = this.getVideoPlayer(id);
 			let videoSrc = player.mediaSource;
 			if (videoSrc && videoSrc.getVideoTracks) {
