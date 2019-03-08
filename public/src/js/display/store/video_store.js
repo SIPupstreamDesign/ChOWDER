@@ -68,7 +68,7 @@ class VideoStore {
     }
 
     _requestWebRTC(data) {
-        console.error("requestWebRTC")
+        console.log("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
         this.videoPlayerDict[metaData.id] = data.player;
@@ -81,7 +81,7 @@ class VideoStore {
                 const isUseDataChannel = this.isDataChannelUsed(metaData);
 
                 if (isUseDataChannel) {
-                    console.error("isUseDataChannel!")
+                    console.log("isUseDataChannel!")
                     if (!this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
                         let player = new MediaPlayer(elem, 'video/mp4; codecs="avc1.640033"');
                         player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
@@ -145,7 +145,7 @@ class VideoStore {
 
             webRTC.on(WebRTC.EVENT_DATACHANNEL_MESSAGE, ((rtcKey) => {
                 return (err, message) => {
-                    console.error("datachannelmessage", message)
+                    // console.error("datachannelmessage", message)
                     this.playFragmentVideo(rtcKey, message);
                 }
             })(rtcKey));
@@ -211,7 +211,7 @@ class VideoStore {
 		let rtcKey = this.getRTCKey(json);
 		if (webRTCDict.hasOwnProperty(rtcKey)) {
             webRTCDict[rtcKey].close(true);
-            console.error("closewebrtc")
+            // console.error("closewebrtc")
 
 			json.from = "view";
 			this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
