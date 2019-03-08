@@ -1549,6 +1549,30 @@
             }
         }
 
+        /**
+         * 適切なサポート済Mimeを返す
+         * @param {*} metaData 
+         * @param {*} contentData 
+         */
+        getMime(metaData, contentData) {
+            if (metaData.type === "video") {
+                return "video/mp4";
+            } else if (metaData.type === 'text' || metaData.type === 'layout') {
+                return "text/plain";
+            } else if (metaData.type === 'pdf') {
+                return "application/pdf";
+            } else if (metaData.type === 'image') {
+                return util.detectImageType(contentData);
+            } else if (metaData.type === 'url') {
+                return util.detectImageType(contentData);
+            } else if (metaData.type === "tileimage" && contentData instanceof Buffer) {
+                return util.detectImageType(contentData);
+            } else {
+                console.error("Error undefined type:" + metaData.type);
+                return null;
+            }
+        }
+
 
         /**
          * メタデータをコンテンツバイナリから初期設定する.
@@ -1568,19 +1592,12 @@
             } else if (metaData.hasOwnProperty('height')) {
                 metaData.orgHeight = metaData.height;
             }
-            if (metaData.type === "video") {
-                metaData.mime = "video/mp4";
-            } else if (metaData.type === 'text') {
-                metaData.mime = "text/plain";
-            } else if (metaData.type === 'image') {
-                metaData.mime = util.detectImageType(contentData);
-            } else if (metaData.type === 'url') {
-                metaData.mime = util.detectImageType(contentData);
-            } else if (metaData.type === "tileimage") {
-                metaData.mime = util.detectImageType(contentData);
-            } else {
-                console.error("Error undefined type:" + metaData.type);
+
+            const mime = this.getMime(metaData, contentData);
+            if (mime) {
+                metaData.mime = mime;
             }
+
             if (metaData.type === 'image') {
                 if (this.isInvalidImageSize(metaData)) {
                     dimensions = image_size(contentData);
@@ -1608,17 +1625,12 @@
                 // タイルイメージの場合は画像バイナリからサイズを求めない.
                 return;
             }
-            if (metaData.type === "video") {
-                metaData.mime = "video/mp4";
-            } else if (metaData.type === 'text') {
-                metaData.mime = "text/plain";
-            } else if (metaData.type === 'image') {
-                metaData.mime = util.detectImageType(contentData);
-            } else if (metaData.type === 'url') {
-                metaData.mime = util.detectImageType(contentData);
-            } else {
-                console.error("Error undefined type:" + metaData.type);
+            
+            const mime = this.getMime(metaData, contentData);
+            if (mime) {
+                metaData.mime = mime;
             }
+
             if (metaData.type === 'image') {
                 if (this.isInvalidImageSize(metaData)) {
                     dimensions = image_size(contentData);
@@ -1687,18 +1699,10 @@
          */
         addContent(metaData, data, endCallback) {
             let contentData = data;
-            if (metaData.type === "video") {
-                metaData.mime = "video/mp4";
-            } else if (metaData.type === 'text') {
-                metaData.mime = "text/plain";
-            } else if (metaData.type === 'image') {
-                metaData.mime = util.detectImageType(contentData);
-            } else if (metaData.type === 'tileimage' && data instanceof Buffer) {
-                metaData.mime = util.detectImageType(contentData);
-            } else if (metaData.type === 'url') {
-                metaData.mime = util.detectImageType(contentData);
-            } else {
-                console.error("Error undefined type:" + metaData.type);
+            
+            const mime = this.getMime(metaData, contentData);
+            if (mime) {
+                metaData.mime = mime;
             }
 
             console.log("mime:" + metaData.mime);
@@ -2021,26 +2025,18 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         updateContent(socketid, metaData, data, endCallback) {
-            let contentData = null;
+            let contentData = data;
             console.log("updateContent:" + metaData.id + ":" + metaData.content_id);
-            if (metaData.type === "video") {
-                contentData = data;
-                metaData.mime = "video/mp4";
-            } else if (metaData.type === 'text' || metaData.type === 'layout') {
-                contentData = data;
-                metaData.mime = "text/plain";
-            } else if (metaData.type === 'image') {
-                contentData = data;
-                metaData.mime = util.detectImageType(data);
-            } else if (metaData.type === 'url') {
-                contentData = data;
-                metaData.mime = util.detectImageType(data);
-            } else if (metaData.type === 'tileimage') {
+
+            if (metaData.type === 'tileimage') {
                 console.error("Error not supported updating:" + metaData.type);
                 return;
-            } else {
-                console.error("Error undefined type:" + metaData.type);
             }
+            const mime = this.getMime(metaData, contentData);
+            if (mime) {
+                metaData.mime = mime;
+            }
+            
             this.textClient.exists(this.contentPrefix + metaData.content_id, (err, doesExist) => {
                 if (!err && doesExist === 1) {
                     let backupList = [];
@@ -2128,23 +2124,14 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         addHistoricalContent(socketid, metaData, data, endCallback) {
-            let contentData = null;
+            let contentData = data;
             console.log("addHistoricalContent:" + metaData.id + ":" + metaData.content_id);
-            if (metaData.type === "video") {
-                contentData = data;
-                metaData.mime = "video/mp4";
-            } else if (metaData.type === 'text' || metaData.type === 'layout') {
-                contentData = data;
-                metaData.mime = "text/plain";
-            } else if (metaData.type === 'image' || metaData.type === 'tileimage') {
-                contentData = data;
-                metaData.mime = util.detectImageType(data);
-            } else if (metaData.type === 'url') {
-                contentData = data;
-                metaData.mime = util.detectImageType(data);
-            } else {
-                console.error("Error undefined type:" + metaData.type);
+            
+            const mime = this.getMime(metaData, contentData);
+            if (mime) {
+                metaData.mime = mime;
             }
+            
             this.textClient.exists(this.contentPrefix + metaData.content_id, (err, doesExist) => {
                 if (!err) {
                     if (doesExist <= 0) {
