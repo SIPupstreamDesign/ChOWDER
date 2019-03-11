@@ -8,7 +8,7 @@ class RemoteCursorBuilder
         this.cursor_size = res.data.cursor_size;
         this.store = store;
         this.controllers = controllers;
-        let ctrlid = res.controllerID;
+        let ctrlid = res.data.controllerID;
 
 
         if (!this.controllers.hasOwnProperty(ctrlid)) {
