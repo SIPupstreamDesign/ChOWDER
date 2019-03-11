@@ -37,7 +37,7 @@
     display: flex;
     width : 50px;
     flex-direction: column;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; */
 }
 
 .notice_box_accept_button {
@@ -48,6 +48,7 @@
     flex: 1;
     width : 50px;
     height: 20px;
+    min-height: 20px;
     background-color: rgb(82, 150, 209);
 }
 /*
@@ -65,6 +66,7 @@
     flex: 1;
     width : 50px;
     height: 20px;
+    min-height: 20px;
     background-color: rgb(255, 80, 80);
 }
 /*
