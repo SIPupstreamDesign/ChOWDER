@@ -399,7 +399,6 @@ class VideoStore {
 								}
 								if (type === VideoType) {
 									++currentPos.video;
-									console.error(currentPos.video)
 									current = currentPos.video;
 								} else {
 									++currentPos.audio;
@@ -521,6 +520,7 @@ class VideoStore {
 						if (subtype !== 'file') { return; }
 						let metaData = this.store.getMetaData(id);
 						metaData.isPlaying = true;
+						metaData.currentTime = String(video.currentTime)
 						this.store.operation.updateMetadata(metaData);	
 					}
 				})(metaData.id);
@@ -530,6 +530,7 @@ class VideoStore {
 						if (subtype !== 'file') { return; }
 						let metaData = this.store.getMetaData(id);
 						metaData.isPlaying = false;
+						metaData.currentTime = String(video.currentTime)
 						this.store.operation.updateMetadata(metaData);
 					}
 				})(metaData.id);
@@ -540,6 +541,7 @@ class VideoStore {
 						let metaData = this.store.getMetaData(id);
 						metaData.isPlaying = false;
 						metaData.isEnded = true;
+						metaData.currentTime = String(video.currentTime)
 						this.store.operation.updateMetadata(metaData);
 					}
 				})(metaData.id);
@@ -811,6 +813,7 @@ class VideoStore {
 								// processMovieBlobにより更新されたメタデータを送信
 								this.store.operation.updateMetadata(metaData);
 							});
+							player.enableSeek(false);
 							player.video.load();
 						}
 					}
@@ -856,6 +859,7 @@ class VideoStore {
 								} catch (error) {
 									player.video.src = URL.createObjectURL(blobObj);
 								}
+								player.enableSeek(true);
 								player.video.load();
 							}
 						}

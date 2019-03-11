@@ -6,11 +6,12 @@ import Button from "./button";
  */
 
 class VideoPlayer extends EventEmitter {
-	constructor() {
+	constructor(isDisplay) {
         super();
 
         this.dom = document.createElement('div');
         this.video = document.createElement('video');
+        this.isSeekEnabled = true;
 
         // manipulator対策。あとで何とかする
         this.dom.play = true;
@@ -20,9 +21,24 @@ class VideoPlayer extends EventEmitter {
         this.video.setAttribute('crossorigin', '');
         this.video.setAttribute('playsinline', '');
         this.video.setAttribute('autoplay', '');
-        this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "play", "progress", "current-time", "mute", "volume", "fullscreen"] }');
+        if (isDisplay) {
+            this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "progress", "current-time", "mute", "volume", "fullscreen"] }');
+        } else {
+            this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "play", "progress", "current-time", "mute", "volume", "fullscreen"] }');
+        }
 
-        this.player = new Plyr(this.video);
+        this.player = new Plyr(this.video, {
+            listeners: {
+                seek: (e) => {
+                    if (!this.isSeekEnabled) {
+                        e.preventDefault();
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+            }
+        });
 
         this.player.on('ready', () => {
             let container = this.dom.getElementsByClassName('plyr--full-ui')[0];
@@ -31,6 +47,10 @@ class VideoPlayer extends EventEmitter {
             container.style.height = "100%";
             this.emit(VideoPlayer.EVENT_READY, null);
         });
+    }
+
+    enableSeek(enable) {
+        this.isSeekEnabled = enable;
     }
 
     release() {

@@ -498,7 +498,7 @@ class GUI extends EventEmitter {
     
             if (!elem) {
                 if (metaData.type === 'video') {
-                    videoPlayer = new VideoPlayer();
+                    videoPlayer = new VideoPlayer(true);
                     elem = videoPlayer.getDOM();
                 } else {
                     elem = document.createElement(tagName);

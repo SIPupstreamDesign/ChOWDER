@@ -218,6 +218,19 @@ class Receiver {
                 }
             }
         });
+
+        // VideoControllerの動画一括コントロール.
+        this.connector.on(Command.SendMessage, (data) => {
+            if (data.command === 'rewindVideo') {
+                data.ids.forEach((id) => {
+                    let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);
+                    if (videoPlayer) {
+                        let video = videoPlayer.getVideo();
+                        video.currentTime = 0.0;
+                    }
+                });
+            }
+        });
     }
 }
 
