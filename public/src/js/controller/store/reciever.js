@@ -153,7 +153,7 @@ class Receiver
             }
         });
 
-        // Video Controllerで使う.
+        // VideoControllerの動画一括コントロール.
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'playVideo') {
                 data.ids.forEach((id) => {
@@ -164,6 +164,7 @@ class Receiver
 
                         let metaData = this.store.getMetaData(id);
                         metaData.isPlaying = data.play;
+                        metaData.currentTime = String(video.currentTime);
                         this.store.operation.updateMetadata(metaData, function(err, reply) {
                             // do nothing
                         });

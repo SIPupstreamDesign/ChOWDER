@@ -84,7 +84,7 @@ class VideoStore {
     }
 
     _requestWebRTC(data) {
-        console.error("requestWebRTC")
+        //console.error("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
         this.videoPlayerDict[metaData.id] = data.player;
@@ -117,7 +117,7 @@ class VideoStore {
                 } catch(e) {
                     console.error(e, metaData.video_info);
                 }
-                console.error("isUseDataChannel!", info)
+                console.log("isUseDataChannel!", info)
                 
                 if (info) {            
                     const codec = this.getCodec(info);    
@@ -135,7 +135,7 @@ class VideoStore {
                         player.setDuration(duration);
                     });
                     player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
-                        console.error("EVENT_NEED_RELOAD")
+                        console.log("EVENT_NEED_RELOAD")
                     });
                     this.mediaPlayerDict[rtcKey] = player;
                     elem.load();
@@ -211,7 +211,7 @@ class VideoStore {
             });
             webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
                 return () => {
-                    console.error("closed")
+                    //console.error("closed")
                     if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
                         this.mediaPlayerDict[rtcKey].release();
                         delete this.mediaPlayerDict[rtcKey];
