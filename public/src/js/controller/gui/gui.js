@@ -437,7 +437,7 @@ class GUI extends EventEmitter
 					item.onmousedown = ((groupID) => {
 						return (evt) => {
 							this.action.changeGroup({ groupID : groupID });
-							contextMenu.show(false);
+							contextMenu.close();
 						};
 					})(groupID);
 				}

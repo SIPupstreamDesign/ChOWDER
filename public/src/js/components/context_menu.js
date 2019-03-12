@@ -39,7 +39,10 @@ class ContextMenu
 
     addMenuItems(container, items, itemClassName)
     {
+        let ul2 = [];
         for (let i = 0; i < items.length; ++i) {
+            ul2[i] = null;
+
             let info = items[i];
             if (info.dataKey) {
                 if (info.className === 'hr') {
@@ -69,46 +72,43 @@ class ContextMenu
                 }
                 if (info.submenu) {
                     li.classList.add("context_menu_content_submenu");
-                    let ul2 = document.createElement('ul');
-                    ul2.className = "context_menu_submenu context_menu_submenu_" + info.className;
-                    this.addMenuItems(ul2, info.submenu, itemClassName)
+                    ul2[i] = document.createElement('ul');
+                    ul2[i].className = "context_menu_submenu context_menu_submenu_" + info.className;
+                    this.addMenuItems(ul2[i], info.submenu, itemClassName)
                     
-                    ul2.onLI = false;
-                    ul2.onSubMenu = false;
+                    ul2[i].onLI = false;
+                    ul2[i].onSubMenu = false;
 
-                    li.onmouseover = ((ul2) => {
+                    li.onmouseover = (() => {
                         return (evt) => {
-                            this.showSubMenu(ul2, true);
-                            ul2.onLI = true;
-                        };
-                    })(ul2);
-                    
-                    li.onmouseout = ((ul2) => {
-                        return (evt) => {
-                            ul2.onLI = false;
-                        };
-                    })(ul2);
-                    
-                    ul2.onmouseover = ((ul2) => {
-                        return (evt) => {
-                            ul2.onSubMenu = true;
-                        };
-                    })(ul2);
-                    
-                    ul2.onmouseout = ((ul2) => {
-                        return (evt) => {
-                            ul2.onSubMenu = false;
-                        };
-                    })(ul2);
+                            this.showSubMenu(ul2[i], true);
 
-                    this.dom.addEventListener('mousemove', ((ul2) => {
-                        return (evt) => {
-                            if (!ul2.onSubMenu && !ul2.onLI) {
-                                this.showSubMenu(ul2, false);
+                            for(let p=0;p<ul2.length;p++){
+                                if(ul2[i] === ul2[p]){
+                                }else{
+                                    if(ul2[p]){
+                                        this.showSubMenu(ul2[p], false);
+                                    }
+                                }
                             }
                         };
-                    })(ul2));
-                    this.dom.appendChild(ul2);
+                    })();
+                    
+                    this.dom.appendChild(ul2[i]);
+                }else{
+                    li.onmouseover = (() => {
+                        return (evt) => {
+                            for(let p=0;p<ul2.length;p++){
+                                if(ul2[i] === ul2[p]){
+                                }else{
+                                    if(ul2[p]){
+                                        this.showSubMenu(ul2[p], false);
+                                    }
+                                }
+                            }
+                        };
+                    })();
+
                 }
             }
         }
