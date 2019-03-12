@@ -76,14 +76,11 @@ class ContextMenu
                     ul2[i].className = "context_menu_submenu context_menu_submenu_" + info.className;
                     this.addMenuItems(ul2[i], info.submenu, itemClassName)
                     
-                    ul2[i].onLI = false;
-                    ul2[i].onSubMenu = false;
-
                     li.onmouseover = (() => {
                         return (evt) => {
                             this.showSubMenu(ul2[i], true);
 
-                            for(let p=0;p<ul2.length;p++){
+                            for(let p=0;p<ul2.length;p++){//自分自身以外のサブメニューを消す
                                 if(ul2[i] === ul2[p]){
                                 }else{
                                     if(ul2[p]){
