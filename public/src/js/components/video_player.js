@@ -21,6 +21,7 @@ class VideoPlayer extends EventEmitter {
         this.video.setAttribute('crossorigin', '');
         this.video.setAttribute('playsinline', '');
         this.video.setAttribute('autoplay', '');
+        this.video.removeAttribute('controls');
         if (isDisplay) {
             this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "progress", "current-time", "mute", "volume", "fullscreen"] }');
         } else {

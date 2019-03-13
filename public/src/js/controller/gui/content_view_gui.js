@@ -96,7 +96,7 @@ class ContentViewGUI extends EventEmitter {
 			let videoElem = videoPlayer.getVideo();
 			if (Constants.IsFirefox) {
 				videoElem.ondblclick = function () {
-					videoElem.setAttribute('controls', '');
+					videoElem.removeAttribute('controls');
 					videoElem.setAttribute('controlslist', 'nodownload');
 				};
 				videoElem.onmouseleave = function () {
@@ -105,7 +105,7 @@ class ContentViewGUI extends EventEmitter {
 				};
 			}
 			else {
-				videoElem.setAttribute('controls', '');
+				videoElem.removeAttribute('controls');
 				videoElem.setAttribute('controlslist', 'nodownload');
 			}
 			videoDOM.style.color = "white";
