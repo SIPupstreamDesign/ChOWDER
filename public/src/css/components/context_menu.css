@@ -42,7 +42,6 @@
 .context_menu_submenu_change_group>.context_menu_item:hover {
 	background : rgb(66, 129, 244);
 	color : white;
-	box-shadow: 2px 4px 5px black;
 }
 
 .context_menu_submenu_add_content {
