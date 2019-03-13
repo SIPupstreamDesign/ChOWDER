@@ -247,11 +247,12 @@ class ContentListGUI extends EventEmitter
 							let w = 150.0 * aspect;
 							divElem.style.width = w + 'px';
 
-							canvas.toBlob(function (blob) {
+							let blob = ContentUtil.toBlob(canvas);
+							if (blob) {
 								URL.revokeObjectURL(contentElem.src);
 								contentElem.src = URL.createObjectURL(blob);
 								fixDivSize(divElem, w, aspect);
-							});
+							}
 						});
 					});
 				});

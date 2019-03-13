@@ -180,6 +180,22 @@ class ContentUtil
         return s4();
     }
 
+
+	static toBlob(canvas) {
+        const mime = "image/png";
+		let base64 = canvas.toDataURL(mime);
+		// Base64からバイナリへ変換
+		let bin = atob(base64.replace(/^.*,/, ''));
+		let buffer = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; i++) {
+			buffer[i] = bin.charCodeAt(i);
+		}
+		// Blobを作成
+		let blob = new Blob([buffer.buffer], {
+			type: mime
+		});
+		return blob;
+	}
 }
 
 export default ContentUtil;
