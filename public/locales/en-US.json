@@ -114,5 +114,6 @@
  "block": "block",
  "display_setting_changed": "Display permission was changed successfully.",
  "global_settings": "Global Settings",
- "per_db_settings": "Local Settings in DB"
+ "per_db_settings": "Local Settings in DB",
+ "admin_setting_password": "Administrator's Password Settings"
 }

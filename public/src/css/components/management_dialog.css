@@ -100,7 +100,6 @@ input[disabled] {
 }
 
 .apply_pass_frame {
-	display : inline-block;
 	width : 300px;
 }
 

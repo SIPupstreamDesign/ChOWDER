@@ -135,6 +135,77 @@ class ManagementDialog extends EventEmitter
             historyFrame.appendChild(this.historyApplyMessage);
         }
 
+        {
+            let title = document.createElement('h4');
+            title.textContent = i18next.t("admin_setting_password");
+            dbFrameBackground.appendChild(title);
+
+            let passFrame = document.createElement('div');
+            passFrame.className = "frame";
+            dbFrameBackground.appendChild(passFrame);
+
+            {
+                let passInputFrame = document.createElement('div');
+                passInputFrame.className = "passinput_frame";
+                {
+                    let settingTarget = document.createElement('p');
+                    settingTarget.textContent = i18next.t("setting_target");
+                    passInputFrame.appendChild(settingTarget);
+
+                    this.adminAuthSelectPass = new Select();
+                    this.adminAuthSelectPass.getDOM().classList.add("auth_select");
+                    passInputFrame.appendChild(this.adminAuthSelectPass.getDOM());
+                }
+                passFrame.appendChild(passInputFrame);
+            }
+
+            let passInputWrap = document.createElement('div');
+            {
+                {
+                    let passInputFrame = document.createElement('div');
+                    passInputFrame.className = "passinput_frame";
+                    let oldPassLabel = document.createElement('p');
+                    oldPassLabel.textContent = i18next.t("old_password");
+                    passInputFrame.appendChild(oldPassLabel);
+                    this.adminOldPassInput = new Input('password');
+                    this.adminOldPassInput.getDOM().classList.add("passinput");
+                    passInputFrame.appendChild(this.adminOldPassInput.getDOM());
+                    passInputWrap.appendChild(passInputFrame);
+                }
+
+                {
+                    let passInputFrame = document.createElement('div');
+                    passInputFrame.className = "passinput_frame";
+                    let newPassLabel = document.createElement('p');
+                    newPassLabel.textContent = i18next.t("new_password");
+                    passInputFrame.appendChild(newPassLabel);
+                    this.adminNewPassInput = new Input('password');
+                    this.adminNewPassInput.getDOM().classList.add("passinput");
+                    passInputFrame.appendChild(this.adminNewPassInput.getDOM());
+                    passInputWrap.appendChild(passInputFrame);
+                }
+            }
+            passFrame.appendChild(passInputWrap);
+
+            {
+                let applyPassFrame = document.createElement('div');
+                applyPassFrame.className = "apply_pass_frame";
+                {
+                    this.authManagementApplyButton = new Button();
+                    this.authManagementApplyButton.getDOM().classList.add('management_apply_button');
+                    this.authManagementApplyButton.setDataKey("apply");
+                    applyPassFrame.appendChild(this.authManagementApplyButton.getDOM());
+
+                    this.authApplyPassMessage = document.createElement('p');
+                    this.authApplyPassMessage.textContent = i18next.t("password_changed");
+                    this.authApplyPassMessage.className = "apply_pass_message";
+                    applyPassFrame.appendChild(this.authApplyPassMessage);
+                }
+                passFrame.appendChild(applyPassFrame);
+            }
+        }
+
+
         let title4 = document.createElement('h4');
         title4.textContent = i18next.t("per_db_settings");
         this.dom.appendChild(title4);
@@ -279,6 +350,7 @@ class ManagementDialog extends EventEmitter
             }
 
             let passInputWrap = document.createElement('div');
+            passInputWrap.style.display = "inline-block"
             {
                 {
                     let passInputFrame = document.createElement('div');
@@ -289,7 +361,7 @@ class ManagementDialog extends EventEmitter
                     this.oldPassInput = new Input('password');
                     this.oldPassInput.getDOM().classList.add("passinput");
                     passInputFrame.appendChild(this.oldPassInput.getDOM());
-                    passInputWrap.appendChild(passInputFrame);
+                    //passInputWrap.appendChild(passInputFrame);
                 }
 
                 {
@@ -723,57 +795,89 @@ class ManagementDialog extends EventEmitter
         // ユーザー名リストの設定
         if (this.userList) {
             this.authSelectPass.clear();
+            this.adminAuthSelectPass.clear();
             for (let i = 0; i < this.userList.length; i = i + 1) {
-                if (this.userList[i].type !== "guest" && this.userList[i].type !== "display") {
+                const type = this.userList[i].type;
+                if (type === "admin") {
+                    this.adminAuthSelectPass.addOption(this.userList[i].id, this.userList[i].name);
+                }
+                if (type !== "admin" && type !== "guest" && type !== "display") {
                     this.authSelectPass.addOption(this.userList[i].id, this.userList[i].name);
                 }
             }
         }
-        this.authSelectPass.on(Select.EVENT_CHANGE, () => {
-            this.oldPassInput.setValue("");
-            this.newPassInput.setValue("");
-            if (this.authSelectPass.getSelectedIndex() >= 0) {
+        let AuthSelectChangeFunc = (select, oldInput, newInput) => {
+            return () => {
+                oldInput.setValue("");
+                newInput.setValue("");
+                if (select.getSelectedIndex() >= 0) {
+                    let index = -1;
+                    let id = select.getSelectedValue();
+                    for (let i = 0; i < this.userList.length; i = i + 1) {
+                        if (this.userList[i].id === id) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    if (index >= 0 && this.userList.length > index) {
+                        let type = this.userList[index].type;
+                        if (type === "admin") {
+                            oldInput.setEnable(true);
+                            newInput.setEnable(true);
+                        }
+                        else if (type === "group" || type === "api" || type === "electron") {
+                            oldInput.setEnable(false);
+                            newInput.setEnable(true);
+                        }
+                        else {
+                            oldInput.setEnable(false);
+                            newInput.setEnable(false);
+                        }
+                    }
+                }
+            };
+        };
+        this.authSelectPass.on(Select.EVENT_CHANGE, AuthSelectChangeFunc(this.authSelectPass, this.oldPassInput, this.newPassInput));
+        this.adminAuthSelectPass.on(Select.EVENT_CHANGE, AuthSelectChangeFunc(this.adminAuthSelectPass, this.adminOldPassInput, this.adminNewPassInput));
+        this.authSelectPass.emit(Select.EVENT_CHANGE);
+        this.adminAuthSelectPass.emit(Select.EVENT_CHANGE);
+        
+        let PasswordApplyFunc = (select, oldInput, newInput, message) => {
+            return () => {
+                let id = select.getSelectedValue();
                 let index = -1;
-                let id = this.authSelectPass.getSelectedValue();
                 for (let i = 0; i < this.userList.length; i = i + 1) {
                     if (this.userList[i].id === id) {
                         index = i;
                         break;
                     }
                 }
-                if (index >= 0 && this.userList.length > index) {
-                    let type = this.userList[index].type;
-                    if (type === "admin") {
-                        this.oldPassInput.setEnable(true);
-                        this.newPassInput.setEnable(true);
+                if (index >= 0) {
+                    let id = this.userList[index].id;
+                    if (newInput.getValue() <= 0) {
+                        if (id === "Display" || id === "Guest") {
+                            InputDialog.showOKInput({
+                                name: i18next.t('cannot_set_to_this_user'),
+                                opacity: 0.7,
+                                zIndex: 90000001,
+                                backgroundColor: "#888"
+                            }, function () {
+                                return;
+                            });
+                        }
+                        else {
+                            InputDialog.showOKInput({
+                                name: i18next.t('input_valid_password'),
+                                opacity: 0.7,
+                                zIndex: 90000001,
+                                backgroundColor: "#888"
+                            }, function () {
+                                return;
+                            });
+                        }
+                        return;
                     }
-                    else if (type === "group" || type === "api" || type === "electron") {
-                        this.oldPassInput.setEnable(false);
-                        this.newPassInput.setEnable(true);
-                    }
-                    else {
-                        this.oldPassInput.setEnable(false);
-                        this.newPassInput.setEnable(false);
-                    }
-                }
-            }
-        });
-        this.managementApplyButton.on(Button.EVENT_CLICK, () => {
-            let index = this.authSelectPass.getSelectedIndex();
-            if (index >= 0) {
-                let id = this.userList[index].id;
-                if (this.newPassInput.getValue() <= 0) {
-                    if (id === "Display" || id === "Guest") {
-                        InputDialog.showOKInput({
-                            name: i18next.t('cannot_set_to_this_user'),
-                            opacity: 0.7,
-                            zIndex: 90000001,
-                            backgroundColor: "#888"
-                        }, function () {
-                            return;
-                        });
-                    }
-                    else {
+                    if (!newInput.getValue().match("^[a-zA-Z0-9 -/:-@\[-\`\{-\~]+$")) {
                         InputDialog.showOKInput({
                             name: i18next.t('input_valid_password'),
                             opacity: 0.7,
@@ -782,42 +886,33 @@ class ManagementDialog extends EventEmitter
                         }, function () {
                             return;
                         });
-                    }
-                    return;
-                }
-                if (!this.newPassInput.getValue().match("^[a-zA-Z0-9 -/:-@\[-\`\{-\~]+$")) {
-                    InputDialog.showOKInput({
-                        name: i18next.t('input_valid_password'),
-                        opacity: 0.7,
-                        zIndex: 90000001,
-                        backgroundColor: "#888"
-                    }, function () {
                         return;
+                    }
+                    this.emit(ManagementDialog.EVENT_CHANGE_PASSWORD, id,
+                        oldInput.getValue(), newInput.getValue(), (err, reply) => {
+                        if (err) {
+                            console.error(err, reply);
+                            InputDialog.showOKInput({
+                                name: i18next.t('input_valid_password'),
+                                opacity: 0.7,
+                                zIndex: 90000001,
+                                backgroundColor: "#888"
+                            }, function () {
+                                return;
+                            });
+                            return;
+                        }
+                        message.style.visibility = "visible";
+                        setTimeout(function () {
+                            message.style.visibility = "hidden";
+                        }, 2000);
                     });
-                    return;
                 }
-                this.emit(ManagementDialog.EVENT_CHANGE_PASSWORD, id,
-                    this.oldPassInput.getValue(), this.newPassInput.getValue(), (err, reply) => {
-                    if (err) {
-                        console.error(err, reply);
-                        InputDialog.showOKInput({
-                            name: i18next.t('input_valid_password'),
-                            opacity: 0.7,
-                            zIndex: 90000001,
-                            backgroundColor: "#888"
-                        }, function () {
-                            return;
-                        });
-                        return;
-                    }
-                    let message = this.applyPassMessage;
-                    message.style.visibility = "visible";
-                    setTimeout(function () {
-                        message.style.visibility = "hidden";
-                    }, 2000);
-                });
             }
-        });
+        };
+        this.managementApplyButton.on(Button.EVENT_CLICK, PasswordApplyFunc(this.authSelectPass, this.oldPassInput, this.newPassInput, this.applyPassMessage));
+        this.authManagementApplyButton.on(Button.EVENT_CLICK, PasswordApplyFunc(this.adminAuthSelectPass, this.adminOldPassInput, this.adminNewPassInput, this.authApplyPassMessage));
+
     }
 
     /**

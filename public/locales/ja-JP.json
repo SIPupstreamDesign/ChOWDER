@@ -114,5 +114,6 @@
  "block": "拒否",
  "display_setting_changed": "ディスプレイ許可設定を変更しました",
  "global_settings": "全体設定",
- "per_db_settings": "DBごとの設定"
+ "per_db_settings": "DBごとの設定",
+ "admin_setting_password": "管理パスワードの設定"
 }
