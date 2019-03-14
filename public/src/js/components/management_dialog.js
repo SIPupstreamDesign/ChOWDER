@@ -23,12 +23,19 @@ class ManagementDialog extends EventEmitter
         this.dom.className = "management";
         this.dom.style.display = "none";
 
-        let title = document.createElement('h3');
+
+        let title = document.createElement('h2');
         title.textContent = i18next.t("management");
-        let title2 = document.createElement('h4');
-        title2.textContent = i18next.t("db_management");
+        
         this.dom.appendChild(title);
-        this.dom.appendChild(title2);
+        
+        let title3 = document.createElement('h4');
+        title3.textContent = i18next.t("global_settings");
+        this.dom.appendChild(title3);
+
+        let dbFrameBackground = document.createElement('div');
+        dbFrameBackground.className = "management_db_frame_bg"
+        this.dom.appendChild(dbFrameBackground)
 
         /*
             <div class="frame">
@@ -45,9 +52,13 @@ class ManagementDialog extends EventEmitter
             </div>
          */
         {
+            let title2 = document.createElement('h4');
+            title2.textContent = i18next.t("db_management");
+            dbFrameBackground.appendChild(title2);
+
             let selectFrame = document.createElement('div');
-            selectFrame.className = "frame";
-            this.dom.appendChild(selectFrame);
+            selectFrame.className = "frame management_db_frame";
+            dbFrameBackground.appendChild(selectFrame);
 
             let selectFrameTitle = document.createElement('p');
             selectFrameTitle.textContent = "DB";
@@ -87,7 +98,6 @@ class ManagementDialog extends EventEmitter
             this.deleteDBButton.getDOM().disabled = true;
         }
 
-
         /*
             <h4 data-key="history_management"></h4>
             <div class="frame">
@@ -96,15 +106,15 @@ class ManagementDialog extends EventEmitter
                 <input id="apply_history_number_button" type="button" class="btn" style="color:black" data-key="apply" value="" />
                 <p id="apply_history_message" data-key="applied"></p>
             </div>
-       */
+        */
         {
             let historyManagementTitle = document.createElement('h4');
             historyManagementTitle.textContent = i18next.t("history_management");
-            this.dom.appendChild(historyManagementTitle);
+            dbFrameBackground.appendChild(historyManagementTitle);
 
             let historyFrame = document.createElement('div');
             historyFrame.className = "frame";
-            this.dom.appendChild(historyFrame);
+            dbFrameBackground.appendChild(historyFrame);
 
             this.historyFrameTitle = document.createElement('p');
             this.historyFrameTitle.textContent = i18next.t("max_history");
@@ -124,6 +134,14 @@ class ManagementDialog extends EventEmitter
             this.historyApplyMessage.textContent = i18next.t("applied");
             historyFrame.appendChild(this.historyApplyMessage);
         }
+
+        let title4 = document.createElement('h4');
+        title4.textContent = i18next.t("per_db_settings");
+        this.dom.appendChild(title4);
+        
+        let perDBBackground = document.createElement('div');
+        perDBBackground.className = "management_db_frame_bg"
+        this.dom.appendChild(perDBBackground)
 
         /*
             <h4 data-key="authority_setting"></h4>
@@ -152,11 +170,11 @@ class ManagementDialog extends EventEmitter
         {
             let authSettingTitle = document.createElement('h4');
             authSettingTitle.textContent = i18next.t("authority_setting");
-            this.dom.appendChild(authSettingTitle);
+            perDBBackground.appendChild(authSettingTitle);
 
             let authSettingFrame = document.createElement('div');
             authSettingFrame.className = "frame";
-            this.dom.appendChild(authSettingFrame);
+            perDBBackground.appendChild(authSettingFrame);
 
             let authSettingTarget = document.createElement('p');
             authSettingTarget.textContent = i18next.t("setting_target");
@@ -239,11 +257,11 @@ class ManagementDialog extends EventEmitter
         {
             let title = document.createElement('h4');
             title.textContent = i18next.t("setting_password");
-            this.dom.appendChild(title);
+            perDBBackground.appendChild(title);
 
             let passFrame = document.createElement('div');
             passFrame.className = "frame";
-            this.dom.appendChild(passFrame);
+            perDBBackground.appendChild(passFrame);
 
             {
                 let passInputFrame = document.createElement('div');
@@ -309,11 +327,11 @@ class ManagementDialog extends EventEmitter
         { // Display許可設定
             let title = document.createElement('h4');
             title.textContent = i18next.t("display_settings");
-            this.dom.appendChild(title);
+            perDBBackground.appendChild(title);
 
             let displayPermissionFrame = document.createElement('div');
             displayPermissionFrame.className = "frame";
-            this.dom.appendChild(displayPermissionFrame);
+            perDBBackground.appendChild(displayPermissionFrame);
 
             let displayPermissionTitle = document.createElement('p');
             displayPermissionTitle.textContent = i18next.t("display_permission");
@@ -706,7 +724,9 @@ class ManagementDialog extends EventEmitter
         if (this.userList) {
             this.authSelectPass.clear();
             for (let i = 0; i < this.userList.length; i = i + 1) {
-                this.authSelectPass.addOption(this.userList[i].id, this.userList[i].name);
+                if (this.userList[i].type !== "guest" && this.userList[i].type !== "display") {
+                    this.authSelectPass.addOption(this.userList[i].id, this.userList[i].name);
+                }
             }
         }
         this.authSelectPass.on(Select.EVENT_CHANGE, () => {

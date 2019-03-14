@@ -17,6 +17,7 @@ input[disabled] {
 	border-radius: 5px;
 	color : white;
 	padding : 20px;
+	padding-top : 0px;
 	overflow-y : auto;
 }
 
@@ -30,8 +31,17 @@ input[disabled] {
 }
 
 .frame {
-	border : 1px solid white;
+	border-bottom : 2px solid #ccc;
+	border-top : 1px solid gray;
 	padding : 10px;
+}
+.management_db_frame_bg {
+	border: 4px solid #ccc;
+	border-radius: 5px;
+}
+
+.management_db_frame_bg > h4 {
+	padding-left: 5px;
 }
 
 .db_select {

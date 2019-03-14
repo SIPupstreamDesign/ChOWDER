@@ -112,5 +112,7 @@
  "blocked": "Blocked",
  "allow": "allow",
  "block": "block",
- "display_setting_changed": "Display permission was changed successfully."
+ "display_setting_changed": "Display permission was changed successfully.",
+ "global_settings": "Global Settings",
+ "per_db_settings": "Local Settings in DB"
 }

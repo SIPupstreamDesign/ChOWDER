@@ -113,3 +113,5 @@ blocked,拒否,Blocked
 allow,許可,allow
 block,拒否,block
 display_setting_changed,ディスプレイ許可設定を変更しました,Display permission was changed successfully.
+global_settings,全体設定,Global Settings
+per_db_settings,DBごとの設定,Local Settings in DB
