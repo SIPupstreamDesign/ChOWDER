@@ -384,6 +384,13 @@ class Controller {
                 }
             }
 		});
+
+		// ディスプレイ許可リストがリロードされた
+        this.store.on(Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED, (err)=>{
+			if (this.store.isInitialized()) {
+				this.updateScreen();
+			}
+		});
 	}
 
 	/**
@@ -941,6 +948,23 @@ class Controller {
 		}
 	}
 
+	removeBlockedDisplayRect(metaData) {
+		let previewArea = this.gui.getDisplayPreviewArea();
+		let elem = document.getElementById(metaData.id);
+		let displayArea = this.gui.getBoxArea(Constants.TypeWindow, metaData.group);
+		if (!displayArea) {
+			displayArea = this.gui.getBoxArea(Constants.TypeWindow, Constants.DefaultGroup);
+		}
+		if (elem) {
+			previewArea.removeChild(elem);
+		}
+		elem = this.gui.getListElem(metaData.id);
+		if (elem) {
+			displayArea.removeChild(elem);
+		}
+		manipulator.removeManipulator();
+	}
+
 	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
@@ -1010,9 +1034,21 @@ class Controller {
 				previewArea.appendChild(wholeElem);
 			}
 			VscreenUtil.assignScreenRect(wholeElem, whole);
+			
+			let permissionList = this.store.getDisplayPermissionList();
+			let permissionDict = {};
+			for (let i = 0; i < permissionList.length; ++i) {
+				Object.assign(permissionDict, permissionList[i]);
+			}
+
 			// 保持しているmetadataから枠を生成して配置.
 			this.store.for_each_metadata((i, metaData) => {
 				if (Validator.isWindowType(metaData)) {
+					if (permissionDict.hasOwnProperty(metaData.id) && String(permissionDict[metaData.id]) !== "true") {
+						// 許可されていないディスプレイ
+						this.removeBlockedDisplayRect(metaData);
+						return;
+					}
 					// Screenを登録
 					Vscreen.assignScreen(metaData.id, metaData.orgX, metaData.orgY, metaData.orgWidth, metaData.orgHeight, metaData.visible, metaData.group);
 					Vscreen.setScreenSize(metaData.id, metaData.width, metaData.height);
@@ -1025,16 +1061,7 @@ class Controller {
 					screenElem = document.getElementById(metaData.id);
 					if (!screenElem) {
 						if (Validator.isVisibleWindow(metaData)) {
-							screenElem = document.createElement('div');
-							idElem = document.createElement('div');
-							idElem.innerHTML = "ID:" + metaData.id;
-							idElem.className = "screen_id";
-							screenElem.appendChild(idElem);
-							screenElem.className = "screen";
-							screenElem.id = metaData.id;
-							screenElem.style.borderStyle = 'solid';
-							previewArea.appendChild(screenElem);
-							this.setupWindow(screenElem, metaData.id);
+							this.gui.importDisplay(metaData);
 						}
 					}
 					if (screenElem) {
@@ -1930,17 +1957,28 @@ class Controller {
 		// console.log('doneGetWindowMetaData:');
 		let windowData = reply;
 		this.store.setMetaData(windowData.id, windowData);
-		this.gui.importDisplay(windowData);
-		this.gui.changeWindowBorderColor(windowData);
-		if (Validator.isCurrentTabMetaData(reply)) {
-			if (this.state.getLastSelectWindowID() === windowData.id || (manipulator.getDraggingManip() && this.state.getLastSelectWindowID() === windowData.id)) {
-				this.gui.assignContentProperty(windowData);
+		
+		let permissionList = this.store.getDisplayPermissionList();
+		let permissionDict = {};
+		for (let i = 0; i < permissionList.length; ++i) {
+			Object.assign(permissionDict, permissionList[i]);
+		}
+		if (permissionDict.hasOwnProperty(windowData.id) && String(permissionDict[windowData.id]) === "true") {
+			this.gui.importDisplay(windowData);
+			this.gui.changeWindowBorderColor(windowData);
+			if (Validator.isCurrentTabMetaData(reply)) {
+				if (this.state.getLastSelectWindowID() === windowData.id || (manipulator.getDraggingManip() && this.state.getLastSelectWindowID() === windowData.id)) {
+					this.gui.assignContentProperty(windowData);
+				}
 			}
+			if (this.store.getState().isSelectionRectShown() && reply) {
+				this.updateSelectionRect();
+			}
+			this.updateScreen(windowData);
+		} else {
+			// 許可されていないディスプレイ
+			this.removeBlockedDisplayRect(windowData);
 		}
-		if (this.store.getState().isSelectionRectShown() && reply) {
-			this.updateSelectionRect();
-		}
-		this.updateScreen(windowData);
 	}
 
 	/**

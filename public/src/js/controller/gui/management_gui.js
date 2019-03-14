@@ -155,6 +155,7 @@ class ManagementGUI
 
 	close() {
 		this.managementDialog.close();
+		this.action.reloadDisplayPermissionList();
 	}
 }
 

@@ -91,7 +91,9 @@ class Receiver
                     if (this.store.getState().getSelectedID()) {
                         if (!this.store.getState().isSelectionRectShown()) {
                             let elem = document.getElementById(this.store.getState().getSelectedID());
-                            manipulator.moveManipulator(elem);
+                            if (elem) {
+                                manipulator.moveManipulator(elem);
+                            }
                         }
                     }
                 }
@@ -101,7 +103,9 @@ class Receiver
                 });
                 if (this.store.getState().getSelectedID()) {
                     let elem = document.getElementById(this.store.getState().getSelectedID());
-                    manipulator.moveManipulator(elem);
+                    if (elem) {
+                        manipulator.moveManipulator(elem);
+                    }
                 }
             }
         });
