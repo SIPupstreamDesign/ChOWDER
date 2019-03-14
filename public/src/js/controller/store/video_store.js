@@ -500,53 +500,55 @@ class VideoStore {
 			metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		};
 		video.onloadeddata = () => {
-			let data;
-			if (!metaData.hasOwnProperty('is_video_on') ||
-				metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) !== "false") {
-				// サムネイル生成
-				let canvas = document.createElement('canvas');
-				let context = canvas.getContext("2d");
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				context.drawImage(video, 0, 0);
-				data = canvas.toDataURL("image/jpeg");
+			if (!this.store.hasMetadata(metaData.id)) {
+				let data;
+				if (!metaData.hasOwnProperty('is_video_on') ||
+					metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) !== "false") {
+					// サムネイル生成
+					let canvas = document.createElement('canvas');
+					let context = canvas.getContext("2d");
+					canvas.width = video.videoWidth;
+					canvas.height = video.videoHeight;
+					context.drawImage(video, 0, 0);
+					data = canvas.toDataURL("image/jpeg");
+				}
+				else {
+					data = this.getElem(metaData.id, true).src;
+				}
+				this.store.getContentStore().addContent(metaData, data, timestamp, (err, reply) => {
+					video.onplay = ((id) => {
+						return () => {
+							if (subtype !== 'file') { return; }
+							let metaData = this.store.getMetaData(id);
+							metaData.isPlaying = true;
+							metaData.currentTime = String(video.currentTime)
+							this.store.operation.updateMetadata(metaData);	
+						}
+					})(metaData.id);
+			
+					video.onpause = ((id) => {
+						return () => {
+							if (subtype !== 'file') { return; }
+							let metaData = this.store.getMetaData(id);
+							metaData.isPlaying = false;
+							metaData.currentTime = String(video.currentTime)
+							this.store.operation.updateMetadata(metaData);
+						}
+					})(metaData.id);
+			
+					video.onended = ((id) => {
+						return () => {
+							if (subtype !== 'file') { return; }
+							let metaData = this.store.getMetaData(id);
+							metaData.isPlaying = false;
+							metaData.isEnded = true;
+							metaData.currentTime = String(video.currentTime)
+							this.store.operation.updateMetadata(metaData);
+						}
+					})(metaData.id);
+					
+				});
 			}
-			else {
-				data = this.getElem(metaData.id, true).src;
-			}
-			this.store.getContentStore().addContent(metaData, data, timestamp, (err, reply) => {
-				video.onplay = ((id) => {
-					return () => {
-						if (subtype !== 'file') { return; }
-						let metaData = this.store.getMetaData(id);
-						metaData.isPlaying = true;
-						metaData.currentTime = String(video.currentTime)
-						this.store.operation.updateMetadata(metaData);	
-					}
-				})(metaData.id);
-		
-				video.onpause = ((id) => {
-					return () => {
-						if (subtype !== 'file') { return; }
-						let metaData = this.store.getMetaData(id);
-						metaData.isPlaying = false;
-						metaData.currentTime = String(video.currentTime)
-						this.store.operation.updateMetadata(metaData);
-					}
-				})(metaData.id);
-		
-				video.onended = ((id) => {
-					return () => {
-						if (subtype !== 'file') { return; }
-						let metaData = this.store.getMetaData(id);
-						metaData.isPlaying = false;
-						metaData.isEnded = true;
-						metaData.currentTime = String(video.currentTime)
-						this.store.operation.updateMetadata(metaData);
-					}
-				})(metaData.id);
-				
-			});
 		};
 	}
     
