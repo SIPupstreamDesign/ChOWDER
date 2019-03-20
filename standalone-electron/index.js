@@ -72,7 +72,8 @@ function createWindows() {
 			frame: frame,
 			transparent: !frame,
 			toolbar: false,
-			fullscreen: typeof windowProps.fullscreen !== 'undefined' ? windowProps.fullscreen : true
+			fullscreen: typeof windowProps.fullscreen !== 'undefined' ? windowProps.fullscreen : true,
+			enableLargerThanScreen : true
 		});
 		tileWindows[id] = window;
 

@@ -73,7 +73,7 @@
                 console.log('Error ' + err);
             });
         }
-        
+
         /**
          * 指定されたURLをレンダリングする
          * @method renderURL
@@ -2253,7 +2253,7 @@
          * @param {JSON} windowData windowメタデータ
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
-        addWindow(socketid, windowData, endCallback) {
+        addWindow(socketid, windowData, endCallback, permissionChangeCallback) {
             console.log("add window");
             this.addWindowMetaData(socketid, windowData, (metaData) => {
                 this.generateWindowContentID((content_id) => {
@@ -2274,6 +2274,22 @@
                                 metaData.reference_count = value;
                                 this.textClient.hmset(this.windowMetaDataPrefix + metaData.id, metaData, (err, reply) => {
                                     if (endCallback) {
+
+                                        // ElectronDisplay だった場合, 即時許可する
+                                        if (this.socketidToUserID.hasOwnProperty(socketid)) {
+                                            const userID = this.socketidToUserID[socketid];
+                                            if (userID === "ElectronDisplay") {
+                                                let perm = {};
+                                                perm[windowData.id] = "true";
+                                                let data = { permissionList : [perm] };
+                                                this.allDisplayCache[socketid] = windowData.id;
+                                                this.updateDisplayPermissionList(data, (err, changeList) => {
+                                                    if (permissionChangeCallback) {
+                                                        permissionChangeCallback(err, changeList);
+                                                    }
+                                                })
+                                            }
+                                        }
                                         endCallback(metaData);
                                     }
                                 });

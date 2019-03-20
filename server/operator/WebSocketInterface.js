@@ -84,7 +84,7 @@
             });
 
             ws_connector.on(Command.AddWindowMetaData, (data, resultCallback, socketid) => {
-                this.commandOperator.addWindowMetaData(socketid, data, this.post_updateWindowMetaData(ws, resultCallback));
+                this.commandOperator.addWindowMetaData(socketid, data, this.post_updateWindowMetaData(ws, resultCallback), this.post_updateDisplayPermission(ws, null));
             });
 
             ws_connector.on(Command.GetWindowMetaData, (data, resultCallback, socketid) => {

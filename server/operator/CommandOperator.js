@@ -581,13 +581,13 @@
          * @param {JSON} json windowメタデータ
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
-        addWindowMetaData(socketid, json, endCallback) {
+        addWindowMetaData(socketid, json, endCallback, permissionChangeCallback) {
             console.log("AddWindowMetaData : " + JSON.stringify(json));
             this.executer.addWindow(socketid, json, (windowData) => {
                 if (endCallback) {
                     endCallback(null, [windowData]);
                 }
-            });
+            }, permissionChangeCallback);
         }
 
         /**
