@@ -73,7 +73,7 @@
                 console.log('Error ' + err);
             });
         }
-
+        
         /**
          * 指定されたURLをレンダリングする
          * @method renderURL
@@ -1801,6 +1801,7 @@
                                         }
                                         if (totalTileCount >= 0 && tileCount === totalTileCount) {
                                             // 時系列データのある時刻に対する全タイルの登録が終わった.
+                                            // 最新のタイルを選択してから
                                             // クライアントサイドに通知を送る
                                             if (finishCallback) {
                                                 let kv = { tile_finished: true }

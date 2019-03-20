@@ -41,31 +41,6 @@ class Receiver
             // console.log('UpdateContent', metaData);
             let id = metaData.id;
             if (id) {
-                if (metaData.hasOwnProperty("id") && metaData.type === Constants.TypeTileImage) {
-                    if (metaData.hasOwnProperty('reload_latest') && String(metaData.reload_latest) === "true") {
-                        try {
-                            let keyValue = JSON.parse(metaData.keyvalue);
-                            let key = Object.keys(keyValue)[0];
-                            // 最新の時系列データ表示
-                            let historyData = ContentUtil.extractHistoryData(metaData);
-                            if (historyData) {
-                                let values = Object.values(historyData[key]);
-                                if (values.length > 1) {
-                                    let sorted = ContentUtil.sortHistory(values);
-                                    this.action.restoreHistoryContent({
-                                        id : id,
-                                        restoreKey : key,
-                                        restoreValue : sorted[sorted.length - 1]
-                                    });
-                                    return;
-                                }
-                            }
-                        } catch(e) {
-                            console.error(e);
-                        }
-                    }
-                }
-
                 this.store.operation.getContent(metaData, (err, reply) => {
                     if (reply.hasOwnProperty('metaData')) {
                         if (this.store.hasMetadata(metaData.id)) {

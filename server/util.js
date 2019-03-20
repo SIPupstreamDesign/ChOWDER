@@ -281,6 +281,51 @@
 		return hash;
 	}
 
+
+	function isNumber(x){ 
+		if( typeof(x) != 'number' && typeof(x) != 'string' )
+			return false;
+		else 
+			return (x == parseFloat(x) && isFinite(x));
+	}
+
+	function sortHistory(values) {
+		try {
+			values.sort(function (a, b) {
+				if (isNumber(a)) {
+					a = Number(a);
+				} else {
+					a = a.toString().toLowerCase();
+				}
+				if (isNumber(b)) {
+					b = Number(b);
+				} else {
+					b = b.toString().toLowerCase();
+				}
+				if (a < b){
+					return -1;
+				}else if (a > b){
+					return 1;
+				}
+				return 0;
+			});
+		} catch (e) {
+
+		}
+		return values;
+	}
+
+	function extractHistoryData(metaData) {
+		let historyData;
+		try {
+			historyData = JSON.parse(metaData.history_data);
+			return historyData;
+		}
+		catch (e) {
+		}
+		return null;
+	}
+
 	module.exports.generateUUID = generateUUID;
 	module.exports.generateUUID8 = generateUUID8;
 	module.exports.getExtention = getExtention;
@@ -293,4 +338,6 @@
 	module.exports.kill = kill;
 	module.exports.encrypt = encrypt;
 	module.exports.detectImageType = detectImageType;
+	module.exports.sortHistory = sortHistory;
+	module.exports.extractHistoryData = extractHistoryData;
 })();
