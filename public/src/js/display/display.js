@@ -282,11 +282,16 @@ class Display {
 
 			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
 
+			let isLoginPrcessed = false;
 			window.electronLogin((isElectron,password)=>{
 				if(isElectron){
-					loginOption.password = password;
-					loginOption.id = "ElectronDisplay";
-					this.action.login(loginOption);
+					// なぜかElectronの場合2回くる. 要調査
+					if (!isLoginPrcessed) {
+						loginOption.password = password;
+						loginOption.id = "ElectronDisplay";
+						isLoginPrcessed = true;
+						this.action.login(loginOption);
+					}
 				}else{
 					this.action.login(loginOption);
 				}
