@@ -45,13 +45,17 @@ class GUI extends EventEmitter {
             blockedText.style.display = "none";
             if (this.store.isMeasureTimeEnable()) {
                 let menu = document.getElementsByClassName('head_mode_text')[0];
-                let button = new Button();
-                button.getDOM().value = "PerformanceLog"
-                button.on(Button.EVENT_CLICK, () => {
-                    PerformanceLogger.save("performance_log.csv");
-                })
-                button.getDOM().style.marginLeft = "50px";
-                menu.appendChild(button.getDOM());
+                let oldElems = menu.getElementsByClassName('performance_log_button');
+                if (!oldElems || oldElems.length === 0) {
+                    let button = new Button();
+                    button.getDOM().classList.add("performance_log_button");
+                    button.getDOM().value = "PerformanceLog"
+                    button.on(Button.EVENT_CLICK, () => {
+                        PerformanceLogger.save("performance_log_" + this.store.getWindowID() + ".csv");
+                    })
+                    button.getDOM().style.marginLeft = "50px";
+                    menu.appendChild(button.getDOM());
+                }
             }
         })
 
