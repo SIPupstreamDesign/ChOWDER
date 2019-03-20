@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -15,27 +16,41 @@
 	<script type="text/javascript" src="3rd/js/plyr/plyr.polyfilled.min.js"></script>
 	<script type="text/javascript" src="display.bundle.js"></script>
 	<script type="text/javascript">
-		window.electronLogin = (callback)=>{
-			// webpack回避
-			try{
-				let electron_password = null;
-				const {ipcRenderer} = require("electron");
-				ipcRenderer.on("electron_password",(event, arg)=>{
-					electron_password = arg;
-					callback(true,electron_password);
-				});
-				ipcRenderer.send("electron_login", "login");
-				console.log("electron");
-			}catch(e){
-				console.log("not electron");
-				callback(false);
+		// webpack回避
+		function isElectron() {
+			if (typeof window !== 'undefined' && typeof window.process === 'object' && window.process.type === 'renderer') {
+				return true;
 			}
+			if (typeof process !== 'undefined' && typeof process.versions === 'object' && !!process.versions.electron) {
+				return true;
+			}
+			if (typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.indexOf('Electron') >= 0) {
+				return true;
+			}
+			return false;
 		}
+		window.addEventListener('load', function () {
+			window.electronLogin = function (callback) {
+				if (isElectron()) {
+					console.log("isElectron");
+					var ipcRenderer = require("electron").ipcRenderer;
+					ipcRenderer.on("electron_password", function (event, arg) {
+						var electron_password = arg;
+						callback(true, electron_password);
+					});
+					ipcRenderer.send("electron_login", "login");
+				} else {
+					console.log("not electron");
+					callback(false);
+				}
+			};
+		})
 	</script>
 </head>
+
 <body>
 
-	<div id="head_menu" class="head_menu menu_anim" >
+	<div id="head_menu" class="head_menu menu_anim">
 	</div>
 
 	<div id="preview_area">
@@ -47,6 +62,7 @@
 
 	<div class="blocked_text">Blocked</div>
 	<div class="disconnected_text">Disconnected</div>
-    <!-- <div id="hiddenCursor0" class="hiddenCursor"></div> -->
+	<!-- <div id="hiddenCursor0" class="hiddenCursor"></div> -->
 </body>
+
 </html>

@@ -14,10 +14,10 @@ const store = new Store(action);
 const gui = new GUI(store, action);
 const display = new Display(store, action, gui);
 
-window.onload = () => {
+window.addEventListener('load', () => {
 	action.connect();
 	gui.init();
-}
+});
 window.onunload = () => {
 	store.release();
 }

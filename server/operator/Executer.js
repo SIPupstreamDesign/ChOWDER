@@ -671,8 +671,8 @@
                                     this.metadataBackupPrefix = this.frontPrefix + this.uuidPrefix + "metadata_backup:";
                                     this.metadataHistoryPrefix = this.frontPrefix + this.uuidPrefix + "metadata_history:";
                                     this.windowMetaDataPrefix = this.frontPrefix + this.uuidPrefix + "window_metadata:";
-                                    this.windowContentPrefix = this.frontPrefix + this.uuidPrefix + "window_contentref:";
-                                    this.windowContentRefPrefix = this.frontPrefix + this.uuidPrefix + "window_content:";
+                                    this.windowContentPrefix = this.frontPrefix + this.uuidPrefix + "window_content:";
+                                    this.windowContentRefPrefix = this.frontPrefix + this.uuidPrefix + "window_contentref:";
                                     this.virtualDisplayIDStr = this.frontPrefix + this.uuidPrefix + "virtual_display";
                                     this.groupListPrefix = this.frontPrefix + this.uuidPrefix + "grouplist";
                                     this.groupUserPrefix = this.frontPrefix + this.uuidPrefix + "group_user"; // グループユーザー設定
@@ -970,7 +970,7 @@
          * グループユーザー設定の変更.
          */
         changeGroupUserSetting(socketid, groupID, setting, endCallback) {
-            console.log("changeGroupUserSetting", groupID, setting)
+            console.log("changeGroupUserSetting", groupID)
             this.getGroupUserSetting((err, data) => {
                 let groupSetting;
                 if (!data) {

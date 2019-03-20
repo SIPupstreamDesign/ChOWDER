@@ -1052,7 +1052,7 @@
          */
         login(data, socketid, endCallback, suspendCallback) {
             const execLogin = (data, socketid, endCallback) => {
-                console.log("----------------------------", socketid, "----------------------------")
+                //console.log("----------------------------", socketid, "----------------------------")
                 if (data.hasOwnProperty('id') && data.hasOwnProperty('password')) {
                     // 再ログイン用のsocketidがloginkeyに入っていたらそちらを使う.
                     if (data.hasOwnProperty('loginkey')) {
