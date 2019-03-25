@@ -15,7 +15,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "cd server && node server.js",
     "webpack": "webpack",
-    "install": "webpack -p --release",
+    "install": "webpack -p --release && cd standalone-electron && npm install",
     "dev": "webpack-dev-server",
     "watch": "webpack --mode development --watch"
   },
@@ -26,7 +26,7 @@
     "phantom": "^6.0.3",
     "redis": "*",
     "websocket": "*",
-    "electron": "^2.0.2"
+    "electron": "^4.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",

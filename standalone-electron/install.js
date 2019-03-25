@@ -4,9 +4,9 @@ const path = require('path');
 const fs = require('fs');
 
 const packagerPath = path.join(__dirname, './node_modules/.bin/electron-packager');
-const winCmd = packagerPath + " . ChOWDER-Standalone-Electron --platform=win32 --arch=x64 --electron-version=2.0.2 --overwrite";
-const linuxCmd = packagerPath + " . ChOWDER-Standalone-Electron --platform=linux --arch=x64 --electron-version=2.0.2 --overwrite";
-const macCmd = packagerPath + " . ChOWDER-Standalone-Electron --platform=darwin --arch=x64 --electron-version=2.0.2 --overwrite";
+const winCmd = packagerPath + " . ChOWDER-Standalone-Electron --platform=win32 --arch=x64 --electron-version=4.1.1 --overwrite";
+const linuxCmd = packagerPath + " . ChOWDER-Standalone-Electron --platform=linux --arch=x64 --electron-version=4.1.1 --overwrite";
+const macCmd = packagerPath + " . ChOWDER-Standalone-Electron --platform=darwin --arch=x64 --electron-version=4.1.1 --overwrite";
 
 let folder = "ChOWDER-Standalone-Electron-darwin-x64";
 let cmd = macCmd;

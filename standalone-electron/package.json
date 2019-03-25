@@ -5,11 +5,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cd .. && npm run standalone-electron",
     "install": "node install.js"
   },
   "devDependencies": {
-    "electron": "file:../node_modules/electron",
     "electron-packager": "^13.1.0"
   }
 }
