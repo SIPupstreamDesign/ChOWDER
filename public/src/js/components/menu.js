@@ -30,16 +30,17 @@ class Menu extends EventEmitter {
 		this.dom.appendChild(headModeMenu);
 
 		// タイトル
-		let headModeText = document.createElement('div');
-		headModeText.className = "head_mode_text stopselect";
-		let headModeTextContent = document.createElement('a');
-		headModeTextContent.href = "index.html";
-		headModeTextContent.textContent = "ChOWDER";
-		headModeTextContent.className = "chowder_text";
-		headModeText.appendChild(headModeTextContent);
-		headModeMenu.appendChild(headModeText);
-
 		if (type === "controller") {
+			// タイトル リンク有り
+			let headModeText = document.createElement('div');
+			headModeText.className = "head_mode_text stopselect";
+			let headModeTextContent = document.createElement('a');
+			headModeTextContent.href = "index.html";
+			headModeTextContent.textContent = "ChOWDER";
+			headModeTextContent.className = "chowder_text";
+			headModeText.appendChild(headModeTextContent);
+			headModeMenu.appendChild(headModeText);
+
 			/*
 			<div class="head_menu_hover">
 				<span class="snap_text">Snap:</span>
@@ -130,6 +131,15 @@ class Menu extends EventEmitter {
 		}
 		else
 		{
+			// タイトル リンク無し
+			let headModeText = document.createElement('div');
+			headModeText.className = "head_mode_text stopselect";
+			let headModeTextContent = document.createElement('div');
+			headModeTextContent.textContent = "ChOWDER";
+			headModeTextContent.className = "chowder_text";
+			headModeText.appendChild(headModeTextContent);
+			headModeMenu.appendChild(headModeText);
+			
 			/*
 				<span class="head_id_menu">
 					<span id="change_id_text">Display ID:</span>

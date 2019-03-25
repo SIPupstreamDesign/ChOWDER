@@ -7,17 +7,9 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<link href="3rd/css/plyr.css" rel="stylesheet" />
-	<script type="text/javascript" src="3rd/js/eventemitter3/index.js"></script>
-	<script type="text/javascript" src="3rd/js/getStats/getStats.js"></script>
-	<script type="text/javascript" src="3rd/js/BandwidthHandler/BandwidthHandler.js"></script>
-	<script type="text/javascript" src="3rd/js/adapter/adapter.js"></script>
-	<script type="text/javascript" src="3rd/js/pdfjs/pdf.js"></script>
-	<script type="text/javascript" src="3rd/js/mp4box.all.js"></script>
-	<script type="text/javascript" src="3rd/js/plyr/plyr.polyfilled.min.js"></script>
-	<script type="text/javascript" src="display.bundle.js"></script>
 	<script type="text/javascript">
 		// webpack回避
-		function isElectron() {
+		window.isElectron = function () {
 			if (typeof window !== 'undefined' && typeof window.process === 'object' && window.process.type === 'renderer') {
 				return true;
 			}
@@ -31,7 +23,7 @@
 		}
 		window.addEventListener('load', function () {
 			window.electronLogin = function (callback) {
-				if (isElectron()) {
+				if (window.isElectron()) {
 					console.log("isElectron");
 					var ipcRenderer = require("electron").ipcRenderer;
 					ipcRenderer.on("electron_password", function (event, arg) {
@@ -46,6 +38,14 @@
 			};
 		})
 	</script>
+	<script type="text/javascript" src="3rd/js/eventemitter3/index.js"></script>
+	<script type="text/javascript" src="3rd/js/getStats/getStats.js"></script>
+	<script type="text/javascript" src="3rd/js/BandwidthHandler/BandwidthHandler.js"></script>
+	<script type="text/javascript" src="3rd/js/adapter/adapter.js"></script>
+	<script type="text/javascript" src="3rd/js/pdfjs/pdf.js"></script>
+	<script type="text/javascript" src="3rd/js/mp4box.all.js"></script>
+	<script type="text/javascript" src="3rd/js/plyr/plyr.polyfilled.min.js"></script>
+	<script type="text/javascript" src="display.bundle.js"></script>
 </head>
 
 <body>

@@ -122,31 +122,50 @@ class GUI extends EventEmitter {
         });
 
         // メニュー設定
-        let menuSetting = [
-            {
-                Display : [{
-                        Controller : {
-                            func : () => {
-                                window.open("controller.html"); // TODO コントローラIDの設定どうするか
+        let menuSetting = null;
+        if (window.isElectron()) {
+            menuSetting = [
+                {
+                    Setting : [{
+                        Fullscreen : {
+                            func : function(evt, menu) { 
+                                if (!DisplayUtil.isFullScreen()) {
+                                    menu.changeName("Fullscreen", "CancelFullscreen")
+                                } else {
+                                    menu.changeName("CancelFullscreen", "Fullscreen")
+                                }
+                                DisplayUtil.toggleFullScreen();
                             }
                         }
-                    }],
-                url : "display.html"
-            },
-            {
-                Setting : [{
-                    Fullscreen : {
-                        func : function(evt, menu) { 
-                            if (!DisplayUtil.isFullScreen()) {
-                                menu.changeName("Fullscreen", "CancelFullscreen")
-                            } else {
-                                menu.changeName("CancelFullscreen", "Fullscreen")
+                    }]
+                }];
+        } else {
+            menuSetting = [
+                {
+                    Display : [{
+                            Controller : {
+                                func : () => {
+                                    window.open("controller.html"); // TODO コントローラIDの設定どうするか
+                                }
                             }
-                            DisplayUtil.toggleFullScreen();
+                        }],
+                    url : "display.html"
+                },
+                {
+                    Setting : [{
+                        Fullscreen : {
+                            func : function(evt, menu) { 
+                                if (!DisplayUtil.isFullScreen()) {
+                                    menu.changeName("Fullscreen", "CancelFullscreen")
+                                } else {
+                                    menu.changeName("CancelFullscreen", "Fullscreen")
+                                }
+                                DisplayUtil.toggleFullScreen();
+                            }
                         }
-                    }
-                }]
-	    	}];
+                    }]
+                }];
+        }
 
         this.headMenu = new Menu("display", menuSetting);
         document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
