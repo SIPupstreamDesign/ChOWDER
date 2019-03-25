@@ -1977,21 +1977,19 @@
          */
         storeHistoricalData(socketid, metaData, endCallback) {
             if (!metaData.hasOwnProperty('keyvalue')) {
-                console.error("Error : not found keyvalue")
-                return false;
+                console.error("Error : not found metadata of HistoricalData")
             }
-            let keyvalue;
+            let keyvalue = {};
             try {
-                keyvalue = JSON.parse(metaData.keyvalue);
+                if (metaData.hasOwnProperty('keyvalue')) {
+                    keyvalue = JSON.parse(metaData.keyvalue);
+                }
             } catch (e) {
                 console.error("Error : keyvalue parse failed")
                 return false;
             }
             let kvLen = Object.keys(keyvalue).length;
-            if (kvLen <= 0) {
-                console.error("Error : not found keyvalue")
-                return false;
-            }
+            
             if (!metaData.hasOwnProperty('history_id')) {
                 metaData.history_id = util.generateUUID8();
             }
@@ -2002,18 +2000,22 @@
                 let key;
                 let historyMetaData = {};
                 let count = 0;
-                for (key in keyvalue) {
-                    let value = keyvalue[key];
-                    historyMetaData = {};
-                    historyMetaData[value] = JSON.stringify(metaData);
-                    this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
-                        ++count;
-                        if (count >= kvLen) {
-                            if (endCallback) {
-                                endCallback(err, reply, metaData.history_id);
+                if (keyvalue && kvLen > 0) {
+                    for (key in keyvalue) {
+                        let value = keyvalue[key];
+                        historyMetaData = {};
+                        historyMetaData[value] = JSON.stringify(metaData);
+                        this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
+                            ++count;
+                            if (count >= kvLen) {
+                                if (endCallback) {
+                                    endCallback(err, reply, metaData.history_id);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                } else {
+                    endCallback(err, reply, metaData.history_id);
                 }
             });
         }

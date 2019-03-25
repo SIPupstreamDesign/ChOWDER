@@ -435,8 +435,10 @@ class ContentPropertyGUI extends EventEmitter {
 			}
 			if (metaData.type === Constants.TypeTileImage) {
 				download_button.style.display = "none";
-				history_area.style.display = "block";
-				history_slider_area.style.display = "block";
+				if (metaData.hasOwnProperty('keyvalue')) {
+					history_area.style.display = "block";
+					history_slider_area.style.display = "block";
+				}
 			}
 			else {
 				history_area.style.display = "none";
