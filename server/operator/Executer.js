@@ -1977,16 +1977,16 @@
          */
         storeHistoricalData(socketid, metaData, endCallback) {
             if (!metaData.hasOwnProperty('keyvalue')) {
-                console.error("Error : not found metadata of HistoricalData")
+                console.error("Warn : not found metadata of HistoricalData")
             }
             let keyvalue = {};
-            try {
-                if (metaData.hasOwnProperty('keyvalue')) {
+            if (metaData.hasOwnProperty('keyvalue')) {
+                try {
                     keyvalue = JSON.parse(metaData.keyvalue);
+                } catch (e) {
+                    console.error("Error : keyvalue parse failed")
+                    return false;
                 }
-            } catch (e) {
-                console.error("Error : keyvalue parse failed")
-                return false;
             }
             let kvLen = Object.keys(keyvalue).length;
             
