@@ -1143,8 +1143,8 @@ Run the command below located in the `bin` directory
 
 ### Command Option
 
-Set the path of the setup file using the `--config` option. The default path is `tileimage/tileimage.json`.
-Set the meta data of images using `--metadata` option.
+-   `--config` (Optional) : Set the path of the setup file. The default path is `tileimage/tileimage.json`.
+-   `--metadata` (Optional) : Set the meta data of images.
 
 See below example of command:
 
