@@ -75,6 +75,7 @@ function createWindows() {
 			fullscreen: typeof windowProps.fullscreen !== 'undefined' ? windowProps.fullscreen : true,
 			enableLargerThanScreen : true
 		});
+		window.setSize(windowProps.size[0], windowProps.size[1]);
 		tileWindows[id] = window;
 
 		var query = mapToQueryString({
