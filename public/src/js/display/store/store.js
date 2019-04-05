@@ -615,6 +615,7 @@ Store.EVENT_DONE_GET_METADATA = "done_get_metadata";
 Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
+Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
 
 // reviever
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
