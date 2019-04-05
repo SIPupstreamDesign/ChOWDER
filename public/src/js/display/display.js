@@ -236,12 +236,15 @@ class Display {
 							this.gui.assignTileImage(json, false);
 						} else {
 							// 新規コンテンツロード.
-							Connector.send(Command.GetContent, metaData, (err, reply) => {
-								this.doneGetContent(err, reply);
-								let el = document.getElementById(metaData.id);
-								this.gui.toggleMark(el, metaData);
-								VscreenUtil.assignMetaData(el, metaData, false, groupDict);
-							});
+							// 全タイル読み込み済じゃなかったら返る
+							if (String(metaData.tile_finished) === "true") {
+								Connector.send(Command.GetContent, metaData, (err, reply) => {
+									this.doneGetContent(err, reply);
+									let el = document.getElementById(metaData.id);
+									this.gui.toggleMark(el, metaData);
+									VscreenUtil.assignMetaData(el, metaData, false, groupDict);
+								});
+							}
 							return;
 						}
 					} else if (!elem) {

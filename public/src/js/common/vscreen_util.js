@@ -358,17 +358,16 @@ class VscreenUtil
 		let rect = VscreenUtil.toFloatRect(metaData);
 		
 		/*
-		// console.log("isOutsideWindow", window, rect,
+		console.log("isOutsideWindow", window, rect,
 					(-window.x > (rect.x + rect.w)),
 					(-window.y > (rect.y + rect.h)),
 					((window.w - window.x + rect.w) < (rect.w + rect.x)),
-					((window.h - window.y + rect.h) < (rect.h + rect.y)));
-					*/
+					((window.h - window.y + rect.h) < (rect.h + rect.y)));*/
 		
-		return (-window.x > (rect.x + rect.w)) || // window左端よりコンテンツが左か
-			(-window.y > (rect.y + rect.h)) ||    // 上
-			((window.w - window.x + rect.w) < (rect.w + rect.x)) || // 右
-			((window.h - window.y + rect.h) < (rect.h + rect.y));   // 下
+		return (-window.x >= (rect.x + rect.w)) || // window左端よりコンテンツが左か
+			(-window.y >= (rect.y + rect.h)) ||    // 上
+			((window.w - window.x + rect.w) <= (rect.w + rect.x)) || // 右
+			((window.h - window.y + rect.h) <= (rect.h + rect.y));   // 下
 	}
 }
 
