@@ -1975,19 +1975,7 @@
         /**
          * 時系列データの保存(元データは移動される)
          */
-        storeHistoricalData(socketid, metaData, endCallback) {
-            if (!metaData.hasOwnProperty('keyvalue')) {
-                console.error("Warn : not found metadata of HistoricalData")
-            }
-            let keyvalue = {};
-            if (metaData.hasOwnProperty('keyvalue')) {
-                try {
-                    keyvalue = JSON.parse(metaData.keyvalue);
-                } catch (e) {
-                    console.error("Error : keyvalue parse failed")
-                    return false;
-                }
-            }
+        storeHistoricalData(socketid, metaData, keyvalue, endCallback) {
             let kvLen = Object.keys(keyvalue).length;
             
             if (!metaData.hasOwnProperty('history_id')) {
@@ -1996,26 +1984,65 @@
 
             let historyIDtoID = {};
             historyIDtoID[metaData.history_id] = metaData.id;
-            this.client.hmset(this.contentHistoryPrefix + metaData.content_id, historyIDtoID, (err, reply) => {
-                let key;
-                let historyMetaData = {};
-                let count = 0;
-                if (keyvalue && kvLen > 0) {
-                    for (key in keyvalue) {
-                        let value = keyvalue[key];
-                        historyMetaData = {};
-                        historyMetaData[value] = JSON.stringify(metaData);
-                        this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
-                            ++count;
-                            if (count >= kvLen) {
-                                if (endCallback) {
-                                    endCallback(err, reply, metaData.history_id);
-                                }
+            this.textClient.exists(this.contentHistoryPrefix + metaData.content_id, (err, doesExist) => {
+                if (err) {
+                    console.error("Error:", err)
+                    return;
+                }
+                if (doesExist) {
+                    // contentHistoryPrefixに登録済項目が存在する場合は中身に既にhistory_idが無いか調べる
+                    this.textClient.hkeys(this.contentHistoryPrefix + metaData.content_id, (err, keys) => {
+                        if (keyvalue && kvLen > 0) {
+                            if (keys.length <= 0 || (keys.length > 0 && keys.indexOf(metaData.history_id) < 0)) {
+                                this.client.hmset(this.contentHistoryPrefix + metaData.content_id, historyIDtoID, (err, reply) => {
+                                    let key;
+                                    let historyMetaData = {};
+                                    let count = 0;
+                                        for (key in keyvalue) {
+                                            let value = keyvalue[key];
+                                            historyMetaData = {};
+                                            historyMetaData[value] = JSON.stringify(metaData);
+                                            this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
+                                                ++count;
+                                                if (count >= kvLen) {
+                                                    if (endCallback) {
+                                                        endCallback(err, reply, metaData.history_id);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                            } else {
+                                endCallback(err, null, metaData.history_id);
                             }
-                        });
-                    }
+                        } else {
+                            endCallback(err, null, metaData.history_id);
+                        }
+                    });
                 } else {
-                    endCallback(err, reply, metaData.history_id);
+                    // contentHistoryPrefixに登録済項目が存在しなかった
+                    this.client.hmset(this.contentHistoryPrefix + metaData.content_id, historyIDtoID, (err, reply) => {
+                        let key;
+                        let historyMetaData = {};
+                        let count = 0;
+                        if (keyvalue && kvLen > 0) {
+                            for (key in keyvalue) {
+                                let value = keyvalue[key];
+                                historyMetaData = {};
+                                historyMetaData[value] = JSON.stringify(metaData);
+                                this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
+                                    ++count;
+                                    if (count >= kvLen) {
+                                        if (endCallback) {
+                                            endCallback(err, reply, metaData.history_id);
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            endCallback(err, reply, metaData.history_id);
+                        }
+                    });
                 }
             });
         }
@@ -2118,6 +2145,79 @@
             });
         }
 
+        getHistoryID(keyvalue, metaData, callback) {
+            // keyvalueの時系列データが既に登録されていないか調査
+            this.textClient.keys(this.metadataHistoryPrefix + metaData.id + ":*", (err, oldkeys) => {
+                const keys = Object.keys(keyvalue);
+                // 登録されている時系列データがあった
+                if (keys.length > 0 && oldkeys.length > 0) {
+                    let found = false;
+                    for (let i = 0; i < keys.length; ++i) {
+                        const key = keys[i];
+                        if (oldkeys.indexOf(this.metadataHistoryPrefix + metaData.id + ":" + key) >= 0) {
+                            found = true;
+                            const value = keyvalue[key];
+                            this.textClient.keys(this.metadataHistoryPrefix + metaData.id + ":" + key, (err, oldValues) => {
+                                if (oldValues.indexOf(value) >= 0) {
+                                    // keyvalueの時系列データが既に登録されていた
+                                    // keyvalueのメタデータを取得
+                                    // history_idを返す
+                                    console.log(this.metadataHistoryPrefix + metaData.id + ":" + key, value)
+                                    this.textClient.hmget(this.metadataHistoryPrefix + metaData.id + ":" + key, value, (err, reply) => {
+                                        let meta = JSON.parse(String(reply));
+                                        callback(err, true, meta.history_id);
+                                    });
+                                } else {
+                                    callback(null, false);
+                                }
+                            });
+                        }
+                    }
+                    if (!found) {
+                        callback(null, false);
+                    }
+                } else {
+                    // 登録されている時系列データが無かった. 時系列データなしで登録されている場合がある
+                    this.textClient.hkeys(this.contentHistoryPrefix + metaData.content_id, (err, keys) => {
+                        if (keys.length > 0) {
+                            callback(err, true, keys[0]);
+                        } else {
+                            callback(err, false);
+                        }
+                    });
+                }
+            });
+        }
+
+        addHistoricalContentSecond(socketid, metaData, contentData, keyvalue, endCallback) {
+            // メタデータ初期設定.
+            if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
+                this.initialOrgWidthHeight(metaData, contentData);
+            }
+            // 追加historyコンテンツ
+            this.storeHistoricalData(socketid, metaData, keyvalue, (err, reply, history_id) => {
+                if (!err && reply) {
+                    Thumbnail.createThumbnail(metaData, contentData, (err, thumbnail) => {
+                        let kv = {
+                            preview: contentData,
+                            tile_finished: false, // 全タイル登録済かどうかのフラグ
+                        }
+                        if (!err && thumbnail) {
+                            kv.thumbnail = thumbnail
+                        }
+                        this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, (err, reply) => {
+                            metaData.history_id = history_id;
+                            if (endCallback) {
+                                endCallback(err, metaData);
+                            }
+                        });
+                    });
+                } else {
+                    endCallback(err, metaData);
+                }
+            });
+        }
+
         /**
          * 時系列データの追加
          * @method addHistoricalContent
@@ -2133,6 +2233,19 @@
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
+            }
+
+            if (!metaData.hasOwnProperty('keyvalue')) {
+                console.error("Warn : not found metadata of HistoricalData")
+            }
+            let keyvalue = {};
+            if (metaData.hasOwnProperty('keyvalue')) {
+                try {
+                    keyvalue = JSON.parse(metaData.keyvalue);
+                } catch (e) {
+                    console.error("Error : keyvalue parse failed")
+                    return false;
+                }
             }
             
             this.textClient.exists(this.contentPrefix + metaData.content_id, (err, doesExist) => {
@@ -2152,53 +2265,57 @@
                                 this.initialOrgWidthHeight(metaData, contentData);
                             }
                             // 追加historyコンテンツ
-                            this.storeHistoricalData(socketid, metaData, (err, reply, history_id) => {
-                                Thumbnail.createThumbnail(metaData, contentData, (err, thumbnail) => {
-                                    let kv = {
-                                        preview: contentData,
-                                        tile_finished: false, // 全タイル登録済かどうかのフラグ
-                                    }
-                                    if (!err && thumbnail) {
-                                        kv.thumbnail = thumbnail
-                                    }
-                                    this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, (err, reply) => {
-                                        metaData.history_id = history_id;
-                                        if (endCallback) {
-                                            endCallback(err, metaData);
+                            this.storeHistoricalData(socketid, metaData, keyvalue, (err, reply, history_id) => {
+                                if (!err && reply) {
+                                    Thumbnail.createThumbnail(metaData, contentData, (err, thumbnail) => {
+                                        let kv = {
+                                            preview: contentData,
+                                            tile_finished: false, // 全タイル登録済かどうかのフラグ
                                         }
+                                        if (!err && thumbnail) {
+                                            kv.thumbnail = thumbnail
+                                        }
+                                        this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, (err, reply) => {
+                                            metaData.history_id = history_id;
+                                            if (endCallback) {
+                                                endCallback(err, metaData);
+                                            }
+                                        });
                                     });
-                                });
+                                } else {
+                                    endCallback(err, metaData);
+                                }
                             });
                         });
                     } else {
-                        // 2つめ以降追加のコンテンツ
-                        metaData.date = new Date().toISOString(); //登録時間を保存
-                        if (!metaData.hasOwnProperty('reductionWidth')) {
-                            let dimensions = image_size(contentData);
-                            metaData.reductionWidth = dimensions.width;
-                            metaData.reductionHeight = dimensions.height;
-                        }
-                        // メタデータ初期設定.
-                        if (!metaData.hasOwnProperty('orgWidth') || !metaData.hasOwnProperty('orgHeight')) {
-                            this.initialOrgWidthHeight(metaData, contentData);
-                        }
-                        // 追加historyコンテンツ
-                        this.storeHistoricalData(socketid, metaData, (err, reply, history_id) => {
-                            Thumbnail.createThumbnail(metaData, contentData, (err, thumbnail) => {
-                                let kv = {
-                                    preview: contentData,
-                                    tile_finished: false, // 全タイル登録済かどうかのフラグ
-                                }
-                                if (!err && thumbnail) {
-                                    kv.thumbnail = thumbnail
-                                }
-                                this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, (err, reply) => {
-                                    metaData.history_id = history_id;
-                                    if (endCallback) {
-                                        endCallback(err, metaData);
-                                    }
+                        // keyvalueがすでに登録されていた場合は、history_idを取得して上書きするようにする
+                        this.getHistoryID(keyvalue, metaData, (err, isFound, history_id) => {
+                            // 2つめ以降追加のコンテンツ
+                            metaData.date = new Date().toISOString(); //登録時間を保存
+                            if (!metaData.hasOwnProperty('reductionWidth')) {
+                                let dimensions = image_size(contentData);
+                                metaData.reductionWidth = dimensions.width;
+                                metaData.reductionHeight = dimensions.height;
+                            }
+
+                            if (!err && isFound) {
+                                metaData.history_id = history_id;
+                                this.textClient.hkeys(this.contentHistoryPrefix + metaData.content_id, (err, replies) => {
+                                    replies.forEach((key, index) => {
+                                        let history_id = key.split(":");
+                                        history_id = history_id[history_id.length - 1];
+                                        this.textClient.del(this.contentHistoryDataPrefix + history_id);
+                                        if (index == replies.length - 1) {
+                                            this.textClient.del(this.contentHistoryPrefix + metaData.content_id);
+                                        }
+                                    });
+                                    this.setMetaData(metaData.type, metaData.id, metaData, (metaData) => {
+                                        this.addHistoricalContentSecond(socketid, metaData, contentData, keyvalue, endCallback);
+                                    });
                                 });
-                            });
+                            } else {
+                                this.addHistoricalContentSecond(socketid, metaData, contentData, keyvalue, endCallback);
+                            }
                         });
                     }
                 }

@@ -83,11 +83,11 @@ class Display {
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
 	 */
-	doneGetMetaData(err, json) {
+	doneGetMetaData(err, json, forceUpdate) {
 		let metaDataDict = this.store.getMetaDataDict();
 		let groupDict = this.store.getGroupDict();
 		let metaData = json;
-		let isUpdateContent = false;
+		let isUpdateContent = false || forceUpdate;
 		// console.log("doneGetMetaData", json);
 		if (!json) { return; }
 		// レイアウトは無視
@@ -95,7 +95,7 @@ class Display {
 		// 復元したコンテンツか
 		if (!json.hasOwnProperty('id')) { return; }
 		if (metaDataDict.hasOwnProperty(json.id)) {
-			isUpdateContent = (metaDataDict[json.id].restore_index !== json.restore_index);
+			isUpdateContent = isUpdateContent ||  (metaDataDict[json.id].restore_index !== json.restore_index);
 			isUpdateContent = isUpdateContent || (metaDataDict[json.id].keyvalue !== json.keyvalue);
 			if (json.hasOwnProperty('restore_key')) {
 				isUpdateContent = isUpdateContent || (metaDataDict[json.id].restore_key !== json.restore_key);
@@ -225,6 +225,12 @@ class Display {
 					if (isUpdateContent) {
 						// updatecontentの場合はelemがあっても更新
 						Connector.send(Command.GetContent, json, (err, reply) => {
+							let elem = document.getElementById(json.id);
+							if (elem) {
+								this.gui.regenerateTileElements(elem, metaData);
+								elem = document.getElementById(metaData.id);
+								VscreenUtil.resizeTileImages(elem, metaData);
+							}
 							this.doneGetContent(err, reply);
 							this.gui.toggleMark(document.getElementById(json.id), metaData);
 						});

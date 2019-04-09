@@ -643,7 +643,9 @@ class GUI extends EventEmitter {
         let isInitial = true;
 		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
 		const ow = Number(metaData.orgWidth);
-		const oh = Number(metaData.orgHeight);
+        const oh = Number(metaData.orgHeight);
+        
+        let win = this.getWindowSize();
 
         let loadedTiles = [];
         for (let i = 0; i < Number(metaData.ysplit); ++i) {
@@ -651,18 +653,30 @@ class GUI extends EventEmitter {
                 request.tile_index = tileIndex; // サーバーでは通し番号でtile管理している
                 const tileClassName = 'tile_index_' + String(tileIndex);
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
-                let width = Math.round(rect.width / ow * orgRect.w);
-                let height = Math.round(rect.height / oh * orgRect.h);
-                if (width === 0 || height === 0) { continue; }
+                // let frect = Vscreen.transformOrg(VscreenUtil.toFloatRect(rect));
+                let frect = Vscreen.transform(VscreenUtil.toFloatRect(rect));
+                frect.w =  Math.round(rect.width / ow * orgRect.w);
+                frect.h = Math.round(rect.height / oh * orgRect.h);
 
+                /*
+                let test = document.createElement('div')
+                test.style.border = "3px solid red";
+                test.style.position = "absolute";
+                test.style.left = frect.x + "px";
+                test.style.top = frect.y + "px";;
+                test.style.width = frect.w + "px";
+                test.style.height = frect.h + "px";
+                document.body.appendChild(test)
+                */
+
+                if (frect.w === 0 || frect.h === 0) { continue; }
                 // windowの中にあるか外にあるかで可視不可視判定
                 let visible = !VscreenUtil.isOutsideWindow({
-                    posx: rect.posx, 
-                    posy : rect.posy,
-                    width : width,
-                    height : height
-                }, whole);
-
+                    posx: frect.x, 
+                    posy : frect.y,
+                    width : frect.w,
+                    height : frect.h
+                }, { x : 0, y: 0, w : win.width, h: win.height});
                 let previousElem = null;
                 // windowの中にあるか外にあるかで可視不可視判定
                 if (visible) {
@@ -690,12 +704,20 @@ class GUI extends EventEmitter {
                         && metaData.hasOwnProperty('reductionHeight')) {
 
                         let reductionElem = elem.getElementsByClassName('reduction_image')[0];
-                        let ew = Number(reductionElem.style.width.split("px").join(""));
-                        let eh = Number(reductionElem.style.height.split("px").join(""));
-                        let reductionAspect = Number(metaData.reductionWidth) / Number(metaData.reductionHeight);
-                        let aspect = Number(metaData.width) / Number(metaData.height);
+                        // ディスプレイ座標系での画像全体の解像度（画面外にはみ出ているものを含む）
+                        const ew = Number(reductionElem.style.width.split("px").join(""));
+                        const eh = Number(reductionElem.style.height.split("px").join(""));
+                        // 縮小画像の解像度
+                        const rw = Number(metaData.reductionWidth);
+                        const rh = Number(metaData.reductionHeight);
+                        // メタデータの解像度
+                        const mw = Number(metaData.width);
+                        const mh = Number(metaData.height);
+                        let reductionAspect = rw / rh;
+                        let aspect = mw / mh;
                         let isSameImage = Math.abs(reductionAspect-aspect) < 0.2;
-                        if (isSameImage && ew <= Number(metaData.reductionWidth) && eh <= Number(metaData.reductionHeight)) {
+                        if (isSameImage && ew <= rw && eh <= rh) {
+                            // ディスプレイ内のreduction divの解像度 < オリジナルの縮小版画像の解像度
                             // reductionを表示、タイルを非表示に
                             reductionElem.style.display = "inline";
                             for (let n = 0; n < elem.children.length; ++n) {

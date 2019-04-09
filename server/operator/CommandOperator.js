@@ -73,23 +73,27 @@
         reloadLatestTile(socketid, metaData, endCallback) {
             if (metaData.hasOwnProperty('reload_latest') && String(metaData.reload_latest) === "true") {
                 try {
-                    let keyValue = JSON.parse(metaData.keyvalue);
-                    let key = Object.keys(keyValue)[0];
-                    // 最新の時系列データ表示
-                    let historyData = Util.extractHistoryData(metaData);
-                    if (historyData) {
-                        let values = Object.values(historyData[key]);
-                        if (values.length > 1) {
-                            let sorted = Util.sortHistory(values);
-                            metaData.restore_key = key;
-                            metaData.restore_value = sorted[sorted.length - 1];
-                            this.updateMetaData(socketid, [metaData], (err, meta) => {
-                                if (endCallback) {
-                                    endCallback(err, meta[0]);
-                                }
-                            });
-                            return;
+                    if (metaData.hasOwnProperty('keyvalue')) {
+                        let keyValue = JSON.parse(metaData.keyvalue);
+                        let key = Object.keys(keyValue)[0];
+                        // 最新の時系列データ表示
+                        let historyData = Util.extractHistoryData(metaData);
+                        if (historyData) {
+                            let values = Object.values(historyData[key]);
+                            if (values.length > 1) {
+                                let sorted = Util.sortHistory(values);
+                                metaData.restore_key = key;
+                                metaData.restore_value = sorted[sorted.length - 1];
+                                this.updateMetaData(socketid, [metaData], (err, meta) => {
+                                    if (endCallback) {
+                                        endCallback(err, meta[0]);
+                                    }
+                                });
+                                return;
+                            }
                         }
+                    } else {
+                        endCallback(e, metaData);
                     }
                 } catch(e) {
                     endCallback(e, metaData);

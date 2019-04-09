@@ -47,13 +47,15 @@ class Receiver {
                     }
                 }
                 if (!err) {
-                    this.store.emit(Store.EVENT_DONE_GET_METADATA, err, json);
+                    this.store.emit(Store.EVENT_DONE_GET_METADATA, err, json, true);
+                    /*
                     this.connector.send(Command.GetContent, json, (err, reply) => {
                         let metaDataDict = this.store.getMetaDataDict();
                         if (metaDataDict.hasOwnProperty(json.id)) {
                             this.store.emit(Store.EVENT_DONE_GET_CONTENT, err, reply);
                         }
                     });
+                    */
                 }
             });
         });
