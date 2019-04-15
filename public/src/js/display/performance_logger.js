@@ -9,6 +9,7 @@ const MethodToMeaning = {
     showImage : "コンテンツ表示完了",
     GetContent : "コンテンツ取得開始",
     GetTileContent : "タイル取得開始",
+    finishShow : "表示完了"
 }
 
 class PerformanceLogger
@@ -18,7 +19,7 @@ class PerformanceLogger
         this.logText = "";
     }
 
-    log(method, metaData) {
+    log(method, metaData, writeTileIndex = true) {
         if (!this.store) return;
         if (MethodToMeaning.hasOwnProperty(method)) {
             let message = MethodToMeaning[method]
@@ -27,7 +28,7 @@ class PerformanceLogger
                 + "," + metaData.id
                 + ",";
 
-            if (method.indexOf('Tile') >= 0 && metaData.hasOwnProperty('tile_index')) {
+            if (writeTileIndex && method.indexOf('Tile') >= 0 && metaData.hasOwnProperty('tile_index')) {
                 message += metaData.tile_index + ",";
             }
             console.debug(message);

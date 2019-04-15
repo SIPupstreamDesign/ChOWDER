@@ -777,6 +777,7 @@ class GUI extends EventEmitter {
                                             // 全タイル読み込み完了時にログを出す
                                             if (loaded) {
                                                 loadedTiles = null;
+                                                PerformanceLogger.log("finishShow", metaData, false)
                                                 PerformanceLogger.logFromRegisterToShow("showTileImage", metaData);
                                             }
                                         }
