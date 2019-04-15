@@ -8,6 +8,7 @@
 
 // パフォーマンス計測用
 const MethodToMeaning = {
+	StartTime: "開始時刻",
 	StartGenerateThumbnail : "サムネイル取得開始",
 	EndGenerateThumbnail : "サムネイル取得終了",
 	Start_AddHistoricalContent : "時系列画像を追加開始",
@@ -139,6 +140,8 @@ function savePerformanceLog(label, time, tileIndex) {
 	row += "," + "\n";
 	logStream.write(row);
 }
+
+savePerformanceLog("StartTime", startTime);
 
 // == beginning of main procedure ==============================================
 let wsWrapper = new WebSocketWrapper();
