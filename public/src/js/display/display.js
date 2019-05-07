@@ -46,7 +46,7 @@ class Display {
 	 * @param {String} err エラー.なければnull
 	 * @param {Object} data コンテンツデータ
 	 */
-	doneGetContent(err, data) {
+	doneGetContent(err, data, callback) {
 		// console.log("doneGetContent", err, data);
 		if (!err) {
 			let metaData = data.metaData;
@@ -70,7 +70,7 @@ class Display {
 			if (metaData.type === 'tileimage') {
 				// 時系列画像が更新された（時系列データ切り替わり）など
 				this.gui.assignTileReductionImage(metaData, contentData);
-				this.gui.assignTileImage(metaData, true);
+				this.gui.assignTileImage(metaData, true, callback);
 			} else {
 				// コンテンツ登録&表示
 				this.gui.assignContent(metaData, contentData);
@@ -83,7 +83,7 @@ class Display {
 	 * @param {String} err エラー.なければnull
 	 * @param {JSON} json メタデータ
 	 */
-	doneGetMetaData(err, json, forceUpdate) {
+	doneGetMetaData(err, json, forceUpdate, callback) {
 		let metaDataDict = this.store.getMetaDataDict();
 		let groupDict = this.store.getGroupDict();
 		let metaData = json;
@@ -114,7 +114,7 @@ class Display {
 			if (metaDataDict[json.id].restore_index !== json.restore_index) {
 				let request = { type: json.type, id: json.id, restore_index : json.restore_index };
 				Connector.send(Command.GetContent, request, (err, reply) => {
-					this.doneGetContent(err, reply);
+					this.doneGetContent(err, reply, callback);
 					this.gui.toggleMark(document.getElementById(json.id), metaData);
 				});
 			}
@@ -222,7 +222,7 @@ class Display {
 					}
 				}
 				if (isUpdateContent || (!isWindow && Validator.isVisible(json))) {
-					if (isUpdateContent) {
+					if (isUpdateContent && json.type !== "tileimage") {
 						// updatecontentの場合はelemがあっても更新
 						Connector.send(Command.GetContent, json, (err, reply) => {
 							let elem = document.getElementById(json.id);
@@ -231,24 +231,37 @@ class Display {
 								elem = document.getElementById(metaData.id);
 								VscreenUtil.resizeTileImages(elem, metaData);
 							}
-							this.doneGetContent(err, reply);
+							if (json.type !== "tileimage" || reply.contentData instanceof Array) {
+								this.doneGetContent(err, reply,  () => {
+									if (callback) {
+										callback();
+									}
+								});
+							}
 							this.gui.toggleMark(document.getElementById(json.id), metaData);
 						});
 					} else if (json.type === "tileimage") {
 						// window範囲外で非表示になっているタイルが
 						// window範囲内に来ていた場合は、その部分のタイルを読み込む
 						let elem = document.getElementById(json.id);
-						if (elem) {
-							this.gui.assignTileImage(json, false);
+						if (!isUpdateContent && elem) {
+								this.gui.assignTileImage(json, false, ((json) => {
+								})(json));
 						} else {
 							// 新規コンテンツロード.
 							// 全タイル読み込み済じゃなかったら返る
 							if (String(metaData.tile_finished) === "true") {
 								Connector.send(Command.GetContent, metaData, (err, reply) => {
-									this.doneGetContent(err, reply);
-									let el = document.getElementById(metaData.id);
-									this.gui.toggleMark(el, metaData);
-									VscreenUtil.assignMetaData(el, metaData, false, groupDict);
+									if (reply.contentData instanceof Array) {
+										this.doneGetContent(err, reply, () => {
+											if (callback) {
+												callback();
+											}
+										});
+										let el = document.getElementById(metaData.id);
+										this.gui.toggleMark(el, metaData);
+										VscreenUtil.assignMetaData(el, metaData, false, groupDict);
+									}
 								});
 							}
 							return;
@@ -258,7 +271,7 @@ class Display {
 						this.gui.showBoundingBox(json);
 						// 新規コンテンツロード.
 						Connector.send(Command.GetContent, json, (err, reply) => {
-							this.doneGetContent(err, reply);
+							this.doneGetContent(err, reply, callback);
 							this.gui.toggleMark(document.getElementById(json.id), metaData);
 						});
 					}

@@ -630,7 +630,7 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      * @param {*} isReload 全て再読み込みする場合はtrue, 読み込んでいない部分のみ読み込む場合はfalse
      */
-    assignTileImage(metaData, isReload) {
+    assignTileImage(metaData, isReload, callback) {
         let elem = document.getElementById(metaData.id);
         let tileIndex = 0;
         let request = JSON.parse(JSON.stringify(metaData));
@@ -694,6 +694,7 @@ class GUI extends EventEmitter {
                                 
                     // 全タイル読み込み済じゃなかったら返る
                     if (String(metaData.tile_finished) !== "true") {
+                        ++tileIndex;
                         continue;
                     }
 
@@ -779,6 +780,9 @@ class GUI extends EventEmitter {
                                                 loadedTiles = null;
                                                 PerformanceLogger.log("finishShow", metaData, false)
                                                 PerformanceLogger.logFromRegisterToShow("showTileImage", metaData);
+                                                if (callback) {
+                                                    callback();
+                                                }
                                             }
                                         }
                                     }
