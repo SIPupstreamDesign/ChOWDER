@@ -408,7 +408,8 @@ class Display {
 			if (json.hasOwnProperty('id') && json.id === this.store.getWindowID()) {
 				this.gui.updatePreviewAreaVisible(json);
 				this.gui.updateViewport(json);
-				this.updateContentVisible();
+				// タイル画像のリクエストが2回行われてしまう問題によりコメントアウト
+				//this.updateContentVisible();
 			}
 		});
 

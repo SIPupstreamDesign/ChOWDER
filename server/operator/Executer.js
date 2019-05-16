@@ -69,6 +69,9 @@
             // 1つのdisplayIDに対して複数のsocketidがある場合があるので、逆の辞書は作ってはいけない
             this.allDisplayCache = {};
 
+            // タイル追加時に連続して完了通知を呼ばないためのIDキャッシュ
+            this.tileFinishCache = {};
+
             this.client.on('error', (err) => {
                 console.log('Error ' + err);
             });
@@ -1806,7 +1809,11 @@
                                             if (finishCallback) {
                                                 let kv = { tile_finished: true }
                                                 this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, () => {
-                                                    finishCallback(err, metaData, contentData);
+                                                    if (!this.tileFinishCache.hasOwnProperty(content_id + "_" + history_id))
+                                                    {
+                                                        this.tileFinishCache[content_id + "_" + history_id] = true;
+                                                        finishCallback(err, metaData, contentData);
+                                                    }
                                                 });
                                             }
                                         }
@@ -2247,12 +2254,16 @@
                     return false;
                 }
             }
-            
+
             this.textClient.exists(this.contentPrefix + metaData.content_id, (err, doesExist) => {
                 if (!err) {
                     if (doesExist <= 0) {
                         // 最初のコンテンツ
                         metaData.history_id = util.generateUUID8();
+
+                        // finishキャッシュを空にする
+                        this.tileFinishCache = {};
+                        
                         if (!metaData.hasOwnProperty('reductionWidth')) {
                             let dimensions = image_size(contentData);
                             metaData.reductionWidth = dimensions.width;
