@@ -122,6 +122,13 @@ function MenuSetting(management) {
                         }
                     }
                 }, {
+                    WebGL : {
+                        func : () => {
+                            this.initContextPos();
+                            this.contentInputGUI.inputWebGL();
+                        }
+                    }
+                }, {
                     ScreenShare : {
                         func : () => {
                             this.initContextPos();

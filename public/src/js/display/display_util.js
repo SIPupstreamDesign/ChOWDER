@@ -107,6 +107,8 @@ class DisplayUtil
             tagName = 'canvas';
         } else if (contentType === 'tileimage') {
             tagName = 'div';
+        } else if (contentType === 'webgl') {
+            tagName = 'div';
         } else {
             tagName = 'img';
         }

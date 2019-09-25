@@ -1,0 +1,18 @@
+{
+  "name": "itowntest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "serve -p 8080"
+  },
+  "author": "digirea",
+  "license": "ISC",
+  "dependencies": {
+    "itowns": "^2.13.1"
+  },
+  "devDependencies": {
+    "serve": "*"
+  }
+}

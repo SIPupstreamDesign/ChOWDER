@@ -38,6 +38,8 @@ function getTagName(contentType) {
 		tagName = 'div';
 	} else if (contentType === "video") {
 		tagName = 'img';
+	} else if (contentType === 'webgl') {
+		tagName = 'img';
 	} else {
 		tagName = 'img';
 	}

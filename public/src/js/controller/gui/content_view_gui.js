@@ -17,13 +17,15 @@ import ContentUtil from '../content_util'
  */
 function getTagName(contentType) {
 	let tagName;
-	if (contentType === 'text') {
+	if (contentType === 'text' ) {
 		tagName = 'pre';
 	} else if (contentType === 'video') {
 		tagName = 'img'; // videoでvideoを保持してない場合用
 	} else if (contentType === 'pdf') {
 		tagName = 'canvas';
 	} else if (contentType === 'tileimage') {
+		tagName = 'div';
+	} else if (contentType === 'webgl') {
 		tagName = 'div';
 	} else {
 		tagName = 'img';
@@ -202,6 +204,20 @@ class ContentViewGUI extends EventEmitter {
 						contentElem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
 					});
 				}
+			}
+			else if (metaData.type === 'webgl') {
+				// contentData is text
+				let iframe = document.createElement('iframe');
+				iframe.src = contentData;
+				iframe.style.width = "100%";
+				iframe.style.height = "100%";
+				iframe.style.pointerEvents = "none";
+				contentElem.innerHTML = "";
+				contentElem.appendChild(iframe);
+				
+				contentElem.style.color = "white";
+				contentElem.style.overflow = "visible"; // Show all text
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 			}
 			else if (metaData.type === Constants.TypeTileImage) {
 				if (metaData.hasOwnProperty('mime')) {

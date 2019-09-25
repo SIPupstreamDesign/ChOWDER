@@ -258,6 +258,17 @@ class Action extends EventEmitter
     }
 
     /**
+     * WebGL URLを入力
+     * {
+     *   contentData : WebGL URL,
+     *   metaData : 登録用メタデータ
+     * }
+     */
+    inputWebGL(data) {
+        this.emit(Action.EVENT_INPUT_WEBGL, null, data);
+    }
+
+    /**
      * テキストを入力
      * @param {*} data
      * {
@@ -865,6 +876,7 @@ Action.EVENT_INPUT_IMAGE_FILE = "inputImageFile";
 Action.EVENT_INPUT_VIDEO_FILE = "inputVideoFile";
 Action.EVENT_INPUT_PDF_FILE = "inputPDFFile";
 Action.EVENT_INPUT_URL = "inputURL";
+Action.EVENT_INPUT_WEBGL = "inputWebGL";
 Action.EVENT_INPUT_TEXT = "inputText";
 Action.EVENT_INPUT_LAYOUT = "inputLayout";
 Action.EVENT_INPUT_VIDEO_STREAM = "inputVideoStream";

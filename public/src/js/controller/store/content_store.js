@@ -120,6 +120,26 @@ class ContentStore
     }
     
     /**
+     * WebGL URLを入力
+     * @param {*} data 
+     */
+    _inputWebGL(data) {
+        let value = data.url;
+		value = value.split(' ').join('');
+
+		try {
+			value = decodeURI(value);
+			let metaData = { type: "webgl", user_data_text: JSON.stringify({ text: value, 
+				width : 600,
+				height : 600 }) };
+			console.error(metaData);
+			this.addContent(metaData, value, data.timestamp);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+	
+    /**
      * テキストを入力
      * @param {*} data 
      */
@@ -392,6 +412,10 @@ class ContentStore
 				metaData.width = data.height / aspect;
 				metaData.height = data.height;
 			}
+		}
+		if (isNaN(metaData.width) || isNaN(metaData.height)) {
+			metaData.width = 600;
+			metaData.height = 600;
 		}
 
 		this.store.operation.updateMetadata(metaData);
