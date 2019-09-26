@@ -87,6 +87,12 @@ class GUI extends EventEmitter
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.border = "none";
+        iframe.onload = () => {
+            // iframe内のitownsからのコールバック
+            iframe.contentWindow.chowder_itowns_update_camera = (mat) => {
+                console.error("hoge", mat);
+            };
+        }
 
         document.getElementById('itowns').appendChild(iframe);
     }

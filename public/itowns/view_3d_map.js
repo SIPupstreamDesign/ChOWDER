@@ -83,5 +83,7 @@ window.onload = () => {
     view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
         updateScaleWidget();
     });
+
+    injectAsChOWDERiTownController(view);
     //debug.createTileDebugUI(menuGlobe.gui, view);
 };

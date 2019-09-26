@@ -18,4 +18,4 @@ window.addEventListener('load', () => {
 });
 window.onunload = () => {
 	store.release();
-}
+};
