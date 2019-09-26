@@ -84,4 +84,6 @@ window.onload = () => {
         updateScaleWidget();
     });
     //debug.createTileDebugUI(menuGlobe.gui, view);
+    
+    injectChOWDER(view, viewerDiv);
 };
