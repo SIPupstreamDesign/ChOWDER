@@ -55,10 +55,28 @@ class Action extends EventEmitter
     resizeWindow(data) {
         this.emit(Action.EVENT_RESIZE_WINDOW, null, data);
     }
+
+    /**
+     * コンテンツの追加
+     * @param {*} data 
+     */
+    addContent(data) {
+        this.emit(Action.EVENT_ADD_CONTENT, null, data);
+    }
+    
+    /**
+     * カメラのワールドマトリックスの更新
+     * @param {*} data 
+     */
+    updateCameraWorldMatrix(data) {
+        this.emit(Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
+Action.EVENT_ADD_CONTENT = "addContent";
+Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
 export default Action;

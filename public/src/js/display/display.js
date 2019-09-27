@@ -176,6 +176,12 @@ class Display {
 				}
 			}
 		}
+		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
+			let funcDict = this.store.getITownFuncDict();
+			if (funcDict.hasOwnProperty(json.id)) {
+				funcDict[json.id].chowder_itowns_update_camera_callback(JSON.parse(json.cameraWorldMatrix));
+			}
+		}
 
 		metaDataDict[json.id] = json;
 		if (!err) {

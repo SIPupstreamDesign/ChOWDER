@@ -10,36 +10,34 @@ import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
 
-class GUI extends EventEmitter
-{
-    constructor(store, action)
-	{
-		super();
+class GUI extends EventEmitter {
+    constructor(store, action) {
+        super();
 
-		this.store = store;
+        this.store = store;
         this.action = action;
-        
+
     }
 
     init() {
         this.initWindow();
         this.initLoginMenu();
-		this.loginMenu.show(true);
-		Translation.translate(function () {});
+        this.loginMenu.show(true);
+        Translation.translate(function () { });
 
-		// ログイン成功
-		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
-			this.loginMenu.showInvalidLabel(false);
+        // ログイン成功
+        this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
+            this.loginMenu.showInvalidLabel(false);
             this.loginMenu.show(false);
-            
+
             this.showWebGL();
-		});
+            this.addITownContent();
+        });
 
-		// ログイン失敗
-		this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
-			this.loginMenu.showInvalidLabel(true);
-		});
-
+        // ログイン失敗
+        this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
+            this.loginMenu.showInvalidLabel(true);
+        });
     }
 
     initWindow() {
@@ -51,30 +49,30 @@ class GUI extends EventEmitter
             }
             timer = setTimeout(() => {
                 this.action.resizeWindow({
-                    size : this.getWindowSize()
+                    size: this.getWindowSize()
                 });
             }, 200);
         };
     }
-    
-	initLoginMenu() {
-		this.loginMenu = new LoginMenu("ChOWDER iTowns Controller");
-		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 
-		// ログインが実行された場合
-		this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
-			let userSelect = this.loginMenu.getUserSelect();
-			// ログイン実行
-			this.action.login({
-				id : "APIUser",
-				password : this.loginMenu.getPassword()
-			});
+    initLoginMenu() {
+        this.loginMenu = new LoginMenu("ChOWDER iTowns Controller");
+        document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
+
+        // ログインが実行された場合
+        this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
+            let userSelect = this.loginMenu.getUserSelect();
+            // ログイン実行
+            this.action.login({
+                id: "APIUser",
+                password: this.loginMenu.getPassword()
+            });
         });
-        
+
         let select = this.loginMenu.getUserSelect();
         select.addOption("APIUser", "APIUser");
     }
-    
+
     /**
      * WebGLを表示
      * @param {*} elem 
@@ -90,11 +88,30 @@ class GUI extends EventEmitter
         iframe.onload = () => {
             // iframe内のitownsからのコールバック
             iframe.contentWindow.chowder_itowns_update_camera = (mat) => {
-                console.error("hoge", mat);
+                this.action.updateCameraWorldMatrix({
+                    mat : mat
+                });
             };
         }
 
         document.getElementById('itowns').appendChild(iframe);
+    }
+
+    addITownContent() {
+        let url =  "itowns/view_3d_map_display.html";
+        let metaData = {
+            type: "webgl",
+            user_data_text: JSON.stringify({
+                text: url
+            }),
+            orgWidth: this.getWindowSize().width,
+            orgHeight: this.getWindowSize().height,
+        };
+        let data = {
+            metaData : metaData,
+            contentData : decodeURI(url)
+        };
+        this.action.addContent(data);
     }
 
     /**
@@ -105,8 +122,8 @@ class GUI extends EventEmitter
      */
     getWindowSize() {
         return {
-            width : window.innerWidth,
-            height : window.innerHeight
+            width: window.innerWidth,
+            height: window.innerHeight
         };
     }
 }

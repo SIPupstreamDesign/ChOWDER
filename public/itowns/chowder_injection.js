@@ -21,6 +21,25 @@
         }
     };
     
+    // カメラにworldMatを設定して動かす
+    function applyCameraWorldMat(view, worldMat) {
+        view.camera.camera3D.matrixAutoUpdate = false;
+        view.camera.camera3D.matrixWorld.elements = worldMat;
+
+        var d = new itowns.THREE.Vector3(),
+            q = new itowns.THREE.Quaternion(),
+            s = new itowns.THREE.Vector3();
+        view.camera.camera3D.matrixWorld.decompose( d, q, s );
+        view.camera.camera3D.position.copy( d );
+        view.camera.camera3D.quaternion.copy( q );
+        view.camera.camera3D.scale.copy( s );
+
+        //console.error("applyCameraWorldMat", view.camera.camera3D.matrixWorld.elements);
+        view.camera.camera3D.updateMatrixWorld(true);
+        view.camera.camera3D.matrixAutoUpdate = true;
+        view.notifyChange();
+    }
+
     function injectChOWDER(view, viewerDiv)
     {
         var width = viewerDiv.getBoundingClientRect().right - viewerDiv.getBoundingClientRect().left;
@@ -44,27 +63,14 @@
                 view.notifyChange();
             };
         }()), 1000);
+
+        window.chowder_itowns_update_camera_callback = (function () {
+            return function (mat) {
+                applyCameraWorldMat(view, mat);
+            };
+        }());
     };
     
-    // カメラにworldMatを設定して動かす
-    function applyCameraWorldMat(view, worldMat) {
-        view.camera.camera3D.matrixAutoUpdate = false;
-        view.camera.camera3D.matrixWorld.elements = worldMat;
-
-        var d = new itowns.THREE.Vector3(),
-            q = new itowns.THREE.Quaternion(),
-            s = new itowns.THREE.Vector3();
-        view.camera.camera3D.matrixWorld.decompose( d, q, s );
-        view.camera.camera3D.position.copy( d );
-        view.camera.camera3D.quaternion.copy( q );
-        view.camera.camera3D.scale.copy( s );
-
-        console.error("applyCameraWorldMat", view.camera.camera3D.matrixWorld.elements);
-        view.camera.camera3D.updateMatrixWorld(true);
-        view.camera.camera3D.matrixAutoUpdate = true;
-        view.notifyChange();
-    }
-
     function injectAsChOWDERiTownController(view)
     {
         var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
@@ -81,6 +87,7 @@
             };
         }()));
 
+        /*
         window.addEventListener('mousedown', (function () {
             return function (ev) {
                 if (ev.button === 1) {
@@ -91,6 +98,7 @@
                 }
             };
         }()));
+        */
     }
 
     window.injectChOWDER = injectChOWDER;

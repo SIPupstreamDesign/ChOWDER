@@ -9,26 +9,33 @@ import Action from './action'
 import Constants from '../common/constants'
 import Command from '../common/command';
 import Connector from '../common/ws_connector.js';
+import Operation from './operation'
 
-class Store extends EventEmitter
-{
-    constructor(action) 
-    {
+class Store extends EventEmitter {
+    constructor(action) {
         super();
         this.action = action;
+        this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
         this.isInitialized_ = false;
-        
+
         this.initEvents();
 
-        
+        // itownコンテンツのメタデータ
+        // 1ウィンドウ1itownコンテンツなのでメタデータは1つ
+        this.metaData = null;
+
         // websocket接続が確立された.
         // ログインする.
-		this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
-			console.log("websocket connected")
-			let loginOption = { id : "APIUser", password : "" }
+        this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
+            console.log("websocket connected")
+            let loginOption = { id: "APIUser", password: "" }
             this.action.login(loginOption);
-		})
+        })
 
+        // コンテンツ追加完了した.
+        this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
+            this.metaData = reply;
+        })
     }
 
     // デバッグ用. release版作るときは消す
@@ -41,7 +48,7 @@ class Store extends EventEmitter
         super.emit(...arguments);
     }
 
-    release() {}
+    release() { }
 
     initEvents() {
         for (let i in Action) {
@@ -62,7 +69,7 @@ class Store extends EventEmitter
         let client = Connector.connect(() => {
             if (!this.isInitialized_) {
                 //this.initOtherStores(() => {
-                    this.emit(Store.EVENT_CONNECT_SUCCESS, null);
+                this.emit(Store.EVENT_CONNECT_SUCCESS, null);
                 //});
             } else {
                 this.emit(Store.EVENT_CONNECT_SUCCESS, null);
@@ -87,19 +94,33 @@ class Store extends EventEmitter
             };
         })(client));
     }
-    
+
     _login(data) {
         console.error(data)
         Connector.send(Command.Login, data, (err, reply) => {
             if (err || reply === null) {
                 console.log(err);
-				this.emit(Store.EVENT_LOGIN_FAILED, err, data);
+                this.emit(Store.EVENT_LOGIN_FAILED, err, data);
             } else {
                 console.log("loginSuccess", reply);
                 this.authority = reply.authority;
                 this.emit(Store.EVENT_LOGIN_SUCCESS, null);
             }
         });
+    }
+
+    _addContent(data) {
+        let metaData = data.metaData;
+        let contentData = data.contentData;
+        this.operation.addContent(metaData, contentData);
+    }
+
+    _updateCameraWorldMatrix(data) {
+        if (this.metaData) {
+            this.metaData.cameraWorldMatrix = data.mat;
+            this.operation.updateMetadata(this.metaData, (err, res) => {
+            });   
+        }
     }
 
     _logout(data) {
@@ -115,4 +136,6 @@ Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_LOGIN_SUCCESS = "login_success";
 Store.EVENT_LOGIN_FAILED = "login_failed";
+Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
+Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 export default Store;

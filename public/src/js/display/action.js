@@ -158,6 +158,18 @@ class Action extends EventEmitter
     getTileContent(data) {
         this.emit(Action.EVENT_GET_TILE_CONTENT, null, data);
     }
+
+    /**
+     * インラインフレームで開いたitownと通信するための関数を、コンテンツごとに登録
+     * @param {*} data
+     * {
+     *   id : metaData.id,
+     *   func : { hogeFunc : () => {}, .. }
+     * }
+     */
+    addItownFunc(data) {
+        this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -173,5 +185,5 @@ Action.EVENT_CHANGE_CONTENT_INDEX_TO_FRONT = "changeContentIndexToFront";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
-
+Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 export default Action;

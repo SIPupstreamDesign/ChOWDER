@@ -29,6 +29,7 @@ class Store extends EventEmitter {
         this.groupDict = {};
         this.globalSetting = null;
         this.virtualDisplay = null;
+        this.itownFuncDict = {};
 
         // 接続時に遅延して初期化する
         this.receiver = null;
@@ -411,6 +412,15 @@ class Store extends EventEmitter {
         });
     }
 
+    _addItownFunc(data) {
+        if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
+            this.itownFuncDict[data.id] = data.func;
+        }
+        else {
+            console.error("addITownFun - invalid param");
+        }
+    }
+
     onGetWindowData(err, json) {
         if (!err && json) {
             this.metaDataDict[json.id] = json;
@@ -536,6 +546,10 @@ class Store extends EventEmitter {
 
     getMetaDataDict() {
         return this.metaDataDict;
+    }
+
+    getITownFuncDict() {
+        return this.itownFuncDict;
     }
 
     getGroupDict() {

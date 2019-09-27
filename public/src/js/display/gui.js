@@ -438,6 +438,14 @@ class GUI extends EventEmitter {
         iframe.style.pointerEvents = "none";
         iframe.onload = () => {
             iframe.contentDocument.body.rect = rect;
+            if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
+                this.action.addItownFunc({
+                    id : metaData.id,
+                    func : {
+                        chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback
+                    }
+                });
+            }
         }
         elem.innerHTML = "";
         elem.appendChild(iframe);
