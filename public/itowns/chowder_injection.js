@@ -33,11 +33,8 @@
         view.camera.camera3D.position.copy( d );
         view.camera.camera3D.quaternion.copy( q );
         view.camera.camera3D.scale.copy( s );
-
-        //console.error("applyCameraWorldMat", view.camera.camera3D.matrixWorld.elements);
-        view.camera.camera3D.updateMatrixWorld(true);
         view.camera.camera3D.matrixAutoUpdate = true;
-        view.notifyChange();
+        view.notifyChange(view.camera.camera3D);
     }
 
     function injectChOWDER(view, viewerDiv)
@@ -71,6 +68,7 @@
         }());
     };
     
+    //var initialWorldMat = null;
     function injectAsChOWDERiTownController(view)
     {
         var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
