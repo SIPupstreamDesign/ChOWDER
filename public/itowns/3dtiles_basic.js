@@ -1,5 +1,6 @@
 
-window.onload = () => {
+window.onload = function() {
+    
     /* global itowns,document,GuiTools*/
     var positionOnGlobe = { longitude: -75.61, latitude: 40.04, altitude: 50000 };
     // iTowns namespace defined here

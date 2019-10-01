@@ -1,5 +1,5 @@
 
-window.onload = () => {
+window.onload = function() {
     
     // # Simple Globe viewer
     // Define initial camera position

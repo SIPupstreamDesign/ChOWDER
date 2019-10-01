@@ -1,6 +1,5 @@
 
-window.onload = () => {
-    
+window.onload = function() {
     // # Simple Globe viewer
     // Define initial camera position
     var positionOnGlobe = { longitude: 2.351323, latitude: 48.856712, altitude: 25000000 };
@@ -71,8 +70,8 @@ window.onload = () => {
             value /= 1000;
             unit = 'km';
         }
-        divScaleWidget.innerHTML = `${value} ${unit}`;
-        divScaleWidget.style.width = `${pix}px`;
+        //divScaleWidget.innerHTML = `${value} ${unit}`;
+        //divScaleWidget.style.width = `${pix}px`;
     }
     // Listen for globe full initialisation event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
@@ -80,7 +79,7 @@ window.onload = () => {
         console.info('Globe initialized');
         updateScaleWidget();
     });
-    view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
+    view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, function () {
         updateScaleWidget();
     });
     //debug.createTileDebugUI(menuGlobe.gui, view);
