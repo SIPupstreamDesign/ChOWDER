@@ -36,6 +36,16 @@ class Store extends EventEmitter {
         this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
             this.metaData = reply;
         })
+        
+        /// メタデータが更新された
+        Connector.on(Command.UpdateMetaData, (data) => {
+			for (let i = 0; i < data.length; ++i) {
+                let metaData = data[i];
+                if (metaData.id === this.metaData.id) {
+                    this.metaData = metaData;
+                }
+            }
+        });
     }
 
     // デバッグ用. release版作るときは消す
@@ -115,10 +125,28 @@ class Store extends EventEmitter {
         this.operation.addContent(metaData, contentData);
     }
 
+    _resizeWindow(data) {
+        let wh = data.size;
+        let cx = wh.width / 2.0;
+        let cy = wh.height / 2.0;
+        let metaData = this.metaData;
+        if (!metaData) { return; }
+        metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+        metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+        metaData.orgWidth = wh.width;
+        metaData.orgHeight = wh.height;
+        this.operation.updateMetadata(metaData, (err, res) => {
+        }); 
+    }
+
     _updateCameraWorldMatrix(data) {
         if (this.metaData) {
             this.metaData.cameraWorldMatrix = data.mat;
-            this.operation.updateMetadata(this.metaData, (err, res) => {
+            let updateData = JSON.parse(JSON.stringify(this.metaData));
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+            this.operation.updateMetadata(updateData, (err, res) => {
             });   
         }
     }
@@ -128,7 +156,6 @@ class Store extends EventEmitter {
         Connector.send(Command.Logout, {}, function () {
         });
     }
-
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";

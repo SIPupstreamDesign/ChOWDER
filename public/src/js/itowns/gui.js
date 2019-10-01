@@ -9,6 +9,7 @@ import Action from './action';
 import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
+import Constants from '../common/constants';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -100,10 +101,12 @@ class GUI extends EventEmitter {
     addITownContent() {
         let url =  "itowns/view_3d_map_display.html";
         let metaData = {
-            type: "webgl",
+            type: Constants.TypeWebGL,
             user_data_text: JSON.stringify({
                 text: url
             }),
+            width: this.getWindowSize().width,
+            height: this.getWindowSize().height,
             orgWidth: this.getWindowSize().width,
             orgHeight: this.getWindowSize().height,
         };
