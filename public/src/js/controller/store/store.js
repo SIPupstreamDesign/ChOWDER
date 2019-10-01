@@ -64,6 +64,7 @@ class Store extends EventEmitter
 
 		this.virtualDisplayDict = {};
 		this.metaDataDict = {};
+        this.itownFuncDict = {};
 
 		this.displayPermissionList = [];
 
@@ -326,6 +327,15 @@ class Store extends EventEmitter
 		});
 	}
 
+    _addItownFunc(data) {
+        if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
+            this.itownFuncDict[data.id] = data.func;
+        }
+        else {
+            console.error("addITownFun - invalid param");
+        }
+	}
+	
 	getDisplayPermissionList(){
 		return this.displayPermissionList;
 	}
@@ -545,6 +555,10 @@ class Store extends EventEmitter
 			return min - 1;
 		}
 	}
+	
+    getITownFuncDict() {
+        return this.itownFuncDict;
+    }
 }
 
 Store.EVENT_CONNECT_SUCCESS = "connect_success";

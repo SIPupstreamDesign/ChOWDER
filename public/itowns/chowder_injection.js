@@ -43,9 +43,11 @@
         var height = viewerDiv.getBoundingClientRect().bottom - viewerDiv.getBoundingClientRect().top;
         var fullWidth = width;
         var fullHeight = height;
-        window.removeEventListener("resize");
         setTimeout((function () {
             return function () {
+                // コントローラの場合は弾く
+                if (window.isController) { return; }
+                window.removeEventListener("resize");
                 var rect = document.body.rect;
                 if (!rect) return;
                 document.body.style.pointerEvents = "none"

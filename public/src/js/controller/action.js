@@ -853,6 +853,17 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data);
     }
 
+    /**
+     * インラインフレームで開いたitownと通信するための関数を、コンテンツごとに登録
+     * @param {*} data
+     * {
+     *   id : metaData.id,
+     *   func : { hogeFunc : () => {}, .. }
+     * }
+     */
+    addItownFunc(data) {
+        this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
+    }
 };
 
 Action.EVENT_INIT = "init";
@@ -935,5 +946,6 @@ Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 Action.EVENT_SYNC_CONTENT = "syncContent";
 Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
+Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 
 export default Action;

@@ -212,6 +212,17 @@ class ContentViewGUI extends EventEmitter {
 				iframe.style.width = "100%";
 				iframe.style.height = "100%";
 				iframe.style.pointerEvents = "none";
+				iframe.onload = () => {
+					iframe.contentWindow.isController = true;
+					if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
+						this.action.addItownFunc({
+							id : metaData.id,
+							func : {
+								chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback
+							}
+						});
+					}
+				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);
 				
