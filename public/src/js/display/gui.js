@@ -402,47 +402,24 @@ class GUI extends EventEmitter {
         let iframe = document.createElement('iframe');
         iframe.src = contentData;
 
-        let win = this.store.getWindowData();
-        // 左上0,0で、実ピクセルサイズ
-        const orgWin =  Vscreen.transform(VscreenUtil.toIntRect(win));
-        // orgWinと同様の座標系でのコンテンツrect
-        const orgRect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
-        
-        // 結果用rect
-        let rect = JSON.parse(JSON.stringify(orgRect));
-        // 右にはみ出している
-        if ((orgRect.x + orgRect.w) > (orgWin.x + orgWin.w)) {
-            rect.w = Math.max(1, orgWin.w - Math.abs(orgRect.x));
-        }
-        // 左にはみ出している
-        if (orgRect.x < orgWin.x) {
-            rect.w = Math.max(1, orgRect.w - Math.abs(orgRect.x));
-            rect.x = orgWin.x;
-        }
-        // 上にはみ出している
-        if (orgRect.y < orgWin.y) {
-            rect.h = Math.max(1, orgRect.h - Math.abs(orgRect.y));
-            rect.y = orgWin.y;
-        }
-        // 下にはみ出している
-        if ((orgRect.y + orgRect.h) > (orgWin.y + orgWin.h)) {
-            rect.h = Math.max(1, orgWin.h - Math.abs(orgRect.y));
-        }
-        rect.x -= orgRect.x;
-        rect.y -= orgRect.y;
-
         //console.error(orgRect, orgWin, rect)
 
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.pointerEvents = "none";
         iframe.onload = () => {
+            let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
             iframe.contentDocument.body.rect = rect;
             if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
+                if (metaData.hasOwnProperty('cameraWorldMatrix')) {
+                    iframe.contentWindow.chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+                }
+                iframe.contentWindow.chowder_itowns_resize_callback(rect);
                 this.action.addItownFunc({
                     id : metaData.id,
                     func : {
-                        chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback
+                        chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback,
+                        chowder_itowns_resize_callback : iframe.contentWindow.chowder_itowns_resize_callback
                     }
                 });
             }

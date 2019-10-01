@@ -3,6 +3,9 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
+import Vscreen from '../common/vscreen';
+import VscreenUtil from '../common/vscreen_util';
+
 class DisplayUtil
 {
     /**
@@ -151,6 +154,44 @@ class DisplayUtil
             area.appendChild(elem);
             return;
         }
+    }
+    
+    /**
+     * webGLのiframeのサイズを計算して返す
+     * @param {*} metaData
+     */
+    static calcWebGLFrameRect(store, metaData) {
+
+        let win = store.getWindowData();
+        // 左上0,0で、実ピクセルサイズ
+        const orgWin =  Vscreen.transform(VscreenUtil.toIntRect(win));
+        // orgWinと同様の座標系でのコンテンツrect
+        const orgRect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+        
+        // 結果用rect
+        let rect = JSON.parse(JSON.stringify(orgRect));
+        // 右にはみ出している
+        if ((orgRect.x + orgRect.w) > (orgWin.x + orgWin.w)) {
+            rect.w = Math.max(1, orgWin.w - Math.abs(orgRect.x));
+        }
+        // 左にはみ出している
+        if (orgRect.x < orgWin.x) {
+            rect.w = Math.max(1, orgRect.w - Math.abs(orgRect.x));
+            rect.x = orgWin.x;
+        }
+        // 上にはみ出している
+        if (orgRect.y < orgWin.y) {
+            rect.h = Math.max(1, orgRect.h - Math.abs(orgRect.y));
+            rect.y = orgWin.y;
+        }
+        // 下にはみ出している
+        if ((orgRect.y + orgRect.h) > (orgWin.y + orgWin.h)) {
+            rect.h = Math.max(1, orgWin.h - Math.abs(orgRect.y));
+        }
+        rect.x -= orgRect.x;
+        rect.y -= orgRect.y;
+
+        return rect;
     }
 }
 

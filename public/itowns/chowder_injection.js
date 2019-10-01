@@ -37,29 +37,31 @@
         view.notifyChange(view.camera.camera3D);
     }
 
-    function injectChOWDER(view, viewerDiv)
-    {
-        var width = viewerDiv.getBoundingClientRect().right - viewerDiv.getBoundingClientRect().left;
-        var height = viewerDiv.getBoundingClientRect().bottom - viewerDiv.getBoundingClientRect().top;
-        var fullWidth = width;
-        var fullHeight = height;
+    function injectChOWDER(view, viewerDiv) {
+
+        var resizeWindow = function (rect) {
+            if (!rect) return;
+            var width = document.body.clientWidth;
+            var height = document.body.clientHeight;
+            var fullWidth = width;
+            var fullHeight = height;
+            
+            document.body.style.pointerEvents = "none"
+            viewerDiv.style.left = parseInt(rect.x) + "px";
+            viewerDiv.style.top = parseInt(rect.y) + "px";
+            viewerDiv.style.width = parseInt(rect.w) + "px";
+            viewerDiv.style.height = parseInt(rect.h) + "px";
+            viewerDiv.style.position = "relative";
+            view.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
+            //console.error(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
+            view.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
+            view.notifyChange(view.camera.camera3D);
+        }
         setTimeout((function () {
             return function () {
                 // コントローラの場合は弾く
                 if (window.isController) { return; }
                 window.removeEventListener("resize");
-                var rect = document.body.rect;
-                if (!rect) return;
-                document.body.style.pointerEvents = "none"
-                viewerDiv.style.left = parseInt(rect.x) + "px";
-                viewerDiv.style.top = parseInt(rect.y) + "px";
-                viewerDiv.style.width = parseInt(rect.w) + "px";
-                viewerDiv.style.height = parseInt(rect.h) + "px";
-                viewerDiv.style.position = "relative";
-                view.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
-                console.error(rect.x, rect.y, rect.w, rect.h)
-                view.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
-                view.notifyChange();
             };
         }()), 1000);
 
@@ -68,6 +70,7 @@
                 applyCameraWorldMat(view, mat);
             };
         }());
+        window.chowder_itowns_resize_callback = resizeWindow;
     };
     
     //var initialWorldMat = null;

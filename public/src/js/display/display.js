@@ -41,6 +41,23 @@ class Display {
 		}
 	}
 
+	updateWebGLFrameRect(metaData) {
+		// webgl iframeの更新
+		if (metaData.type === Constants.TypeWebGL) {
+			let funcDict = this.store.getITownFuncDict();
+			let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
+			let elem = document.getElementById(metaData.id);
+			if (elem) {
+				if (elem.children[0] && elem.children[0].nodeName.toLowerCase() === "iframe") {
+					elem.children[0].contentDocument.body.rect = rect;
+					if (funcDict.hasOwnProperty(metaData.id)) {
+						funcDict[metaData.id].chowder_itowns_resize_callback(rect);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * GetContent終了コールバック
 	 * @param {String} err エラー.なければnull
@@ -284,6 +301,8 @@ class Display {
 
 					elem = document.getElementById(json.id);
 					VscreenUtil.assignMetaData(elem, json, false, groupDict);
+					// webgl iframeの更新
+					this.updateWebGLFrameRect(metaData);
 				}
 				if (isWindow) {
 					this.gui.updateViewport(this.store.getWindowData());
@@ -359,6 +378,16 @@ class Display {
 
 		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
 			if (!err) {
+				// 全てのwebgl iframeの更新
+				let metaDataDict = this.store.getMetaDataDict();
+				let funcDict = this.store.getITownFuncDict();
+				for (let i in metaDataDict) {
+					if (metaDataDict.hasOwnProperty(i)) {
+						let metaData = metaDataDict[i];
+						this.updateWebGLFrameRect(metaData);
+					}
+				}
+
 				for (let i = 0; i < data.length; i = i + 1) {
 					if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
 						this.gui.setDisplayID(data[i].id);
@@ -372,17 +401,21 @@ class Display {
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, data) => {
 			let previewArea = document.getElementById("preview_area");
 			for (let i = 0; i < data.length; ++i) {
-				if (!this.store.isViewable(data[i].group)) {
-					let elem = document.getElementById(data[i].id);
+				let metaData = data[i];
+				if (!this.store.isViewable(metaData.group)) {
+					let elem = document.getElementById(metaData.id);
 					if (elem) {
 						previewArea.removeChild(elem);
 					}
-					let memo =  document.getElementById("memo:" + data[i].id);
+					let memo =  document.getElementById("memo:" + metaData.id);
 					if (memo) {
 						previewArea.removeChild(memo);
 					}
 				}
-				this.action.update({ updateType : '', targetID : data[i].id });
+					
+				// webgl iframeの更新
+				this.updateWebGLFrameRect(metaData);
+				this.action.update({ updateType : '', targetID : metaData.id });
 			}
 		});
 
@@ -421,7 +454,6 @@ class Display {
 
 		this.store.on(Store.EVENT_DONE_GET_METADATA, this.doneGetMetaData);
 		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
-
 	}
 }
 

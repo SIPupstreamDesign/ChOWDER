@@ -22,6 +22,7 @@ const Constants = {
 	TypeText : "text",
 	TypeTileImage : "tileimage",
 	TypeVideo : "video",
+	TypeWebGL : "webgl",
 	PropertyTypeDisplay : "display",
 	PropertyTypeWholeWindow : "whole_window",
 	PropertyTypeLayout : "layout",
