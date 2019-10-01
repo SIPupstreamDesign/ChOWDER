@@ -7,6 +7,7 @@ let sharp;
 try {
     sharp = require('sharp');
 } catch (e) {
+    console.error(e)
     // do nothing
 }
 
@@ -14,6 +15,7 @@ let images;
 try {
     images = require('images');
 } catch (e) {
+    console.error(e)
     if (!sharp && !images) {
         throw 'It seems both `images` and `sharp` are failed to be installed, one of these two is required at least';
     }

@@ -21,7 +21,7 @@ window.onload = function() {
         maxSubdivisionLevel: 2,
         // Don't instance default controls since miniview's camera will be synced
         // on the main view's one (see view.addFrameRequester)
-        noControls: true,
+        noControls: true
     });
     // Set a 0 alpha clear value (instead of the default '1')
     // because we want a transparent background for the miniglobe view to be able
@@ -80,7 +80,7 @@ window.onload = function() {
         console.info('Globe initialized');
         updateScaleWidget();
     });
-    view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, () => {
+    view.controls.addEventListener(itowns.CONTROL_EVENTS.RANGE_CHANGED, function () {
         updateScaleWidget();
     });
 
