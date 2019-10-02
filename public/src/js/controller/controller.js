@@ -1377,8 +1377,7 @@ class Controller {
 			id = elem.id;
 		}
 		metaData = this.store.getMetaData(id);
-		// console.log("metaData", metaData);
-		let initialVisible = metaData.visible;
+		let initialVisible = (metaData && metaData.hasOwnProperty('visible')) ? metaData.visible : false;
 		elem.style.border = "solid 2px";
 		if (this.state.getSelectedIDList().indexOf(id) < 0) {
 			this.state.addSelectedID(id);
@@ -1689,6 +1688,10 @@ class Controller {
 			else if (reply.hasOwnProperty("id") && reply.type === Constants.TypeTileImage) {
 				metaData = reply;
 				contentData = "removed by the capacity limit";
+			}
+			// キャッシュしていないメタデータだったらキャッシュしておく
+			if (!this.store.hasMetadata(metaData.id)) {
+				this.store.setMetaData(metaData.id, metaData);
 			}
 			if (metaData.type === "video") {
 				if (this.store.getVideoStore().hasVideoData(metaData.id)) {

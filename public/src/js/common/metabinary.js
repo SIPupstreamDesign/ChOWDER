@@ -110,7 +110,7 @@ class MetaBinary {
 				}
 				
 				binary = buf.slice(pos, buf.byteLength);
-				if (params !== null && (params.type === 'text' ||params.type === 'webgl' || params.type === "layout" ||  params.type === "video")) {
+				if (params !== null && (params.type === 'text' || params.type === "layout" ||  params.type === "video")) {
 					binary = StringUtil.arrayBufferToString(binary);
 				}
 				endCallback(metaData, binary);
@@ -150,7 +150,7 @@ class MetaBinary {
 
 					binary = buf.slice(pos, pos + binarySize);
 					pos = pos + binarySize;
-					if (params !== null && (params.type === 'text' || params.type === 'webgl' ||params.type === "layout" ||  params.type === "video")) {
+					if (params !== null && (params.type === 'text' || params.type === "layout" ||  params.type === "video")) {
 						binary = StringUtil.arrayBufferToString(binary);
 					}
 					metaList.push(tempMetaData);
@@ -193,7 +193,7 @@ class MetaBinary {
 		if (params.type === 'url') {
 			binary = StringUtil.utf8StringToArray(encodeURI(data));
 			dstBufferSize = head.length + 8 + chars.length + binary.length;
-		} else if (params.type === 'text' || params.type === 'webgl' || params.type === 'layout' || params.type === "video") {
+		} else if (params.type === 'text' || params.type === 'layout' || params.type === "video") {
 			binary = StringUtil.utf8StringToArray(data);
 			dstBufferSize = head.length + 8 + chars.length + binary.length;
 		} else {
@@ -223,7 +223,7 @@ class MetaBinary {
 		}
 		pos = pos + chars.length;
 		
-		if (params.type === 'text' || params.type === 'webgl' || params.type === 'url' || params.type === 'layout' ||  params.type === "video") {
+		if (params.type === 'text' || params.type === 'url' || params.type === 'layout' ||  params.type === "video") {
 			for (i = pos; i < dstBufferSize; i = i + 1) {
 				view.setUint8(i, binary[i - pos], false);
 			}

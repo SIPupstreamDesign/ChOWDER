@@ -205,10 +205,10 @@ class ContentViewGUI extends EventEmitter {
 					});
 				}
 			}
-			else if (metaData.type === 'webgl') {
+			else if (metaData.type === Constants.TypeWebGL) {
 				// contentData is text
 				let iframe = document.createElement('iframe');
-				iframe.src = contentData;
+				iframe.src = metaData.url;
 				iframe.style.width = "100%";
 				iframe.style.height = "100%";
 				iframe.style.pointerEvents = "none";

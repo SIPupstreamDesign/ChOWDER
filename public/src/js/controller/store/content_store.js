@@ -129,10 +129,12 @@ class ContentStore
 
 		try {
 			value = decodeURI(value);
-			let metaData = { type: "webgl", user_data_text: JSON.stringify({ text: value, 
+			let metaData = { 
+				type: "webgl", 
+				user_data_text: JSON.stringify({ text: value }), 
 				width : 600,
-				height : 600 }) };
-			console.error(metaData);
+				height : 600 
+			};
 			this.addContent(metaData, value, data.timestamp);
 		} catch (e) {
 			console.error(e);

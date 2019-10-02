@@ -11,6 +11,8 @@ import Command from '../common/command';
 import Connector from '../common/ws_connector.js';
 import Operation from './operation'
 
+const reconnectTimeout = 2000;
+
 class Store extends EventEmitter {
     constructor(action) {
         super();

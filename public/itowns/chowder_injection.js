@@ -37,8 +37,48 @@
         view.notifyChange(view.camera.camera3D);
     }
 
-    function injectChOWDER(view, viewerDiv) {
+    // canvasをArrayBufferに
+    function toArrayBuffer(canvas) {
+        const mime = "image/png";
+        let base64 = canvas.toDataURL(mime);
+        // Base64からバイナリへ変換
+        let bin = atob(base64.replace(/^.*,/, ''));
+        let buffer = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+            buffer[i] = bin.charCodeAt(i);
+        }
+        return buffer.buffer;
+    }
 
+    // canvasをblobに
+    function toBlob(canvas) {
+        const mime = "image/png";
+        let base64 = canvas.toDataURL(mime);
+        // Base64からバイナリへ変換
+        let bin = atob(base64.replace(/^.*,/, ''));
+        let buffer = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+            buffer[i] = bin.charCodeAt(i);
+        }
+        // Blobを作成
+        let blob = new Blob([buffer.buffer], {
+            type: mime
+        });
+        return blob;
+    }
+
+    function resizeToThumbnail(srcCanvas) {
+        var width = document.body.clientWidth;
+        var height = document.body.clientHeight;
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        canvas.width = 256;
+        canvas.height = 256 * (height / width);
+        ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, canvas.width, canvas.height);
+        return toArrayBuffer(canvas);
+    }
+    
+    function injectChOWDER(view, viewerDiv) {
         var resizeWindow = function (rect) {
             if (!rect) return;
             var width = document.body.clientWidth;
@@ -74,7 +114,7 @@
     };
     
     //var initialWorldMat = null;
-    function injectAsChOWDERiTownController(view)
+    function injectAsChOWDERiTownController(view, viewerDiv)
     {
         var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
         view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (function () {
@@ -89,6 +129,42 @@
                 }
             };
         }()));
+
+        var done = false;
+
+        var interval = 500;
+        var timer;
+        var thumbnail;
+        var count = 0;
+        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function () {
+            // サムネイルを即時作成
+            if (!done) {
+                var canvas = viewerDiv.getElementsByTagName('canvas')[0];
+                thumbnail = resizeToThumbnail(canvas);
+                ++count;
+            }
+            // 一定間隔同じイベントが来なかったら実行
+            clearTimeout(timer);
+            timer = setTimeout((function () {
+                return function () {
+                    if (!done && count > 2) {
+                        if (window.hasOwnProperty("chowder_itowns_update_thumbnail")) {
+                            window.chowder_itowns_update_thumbnail(thumbnail)
+                            done = true;
+                        }
+                    }
+                }
+            }()), interval);
+            /*
+            if (!done && count > 2) {
+                var canvas = viewerDiv.getElementsByTagName('canvas')[0];
+                if (window.hasOwnProperty("chowder_itowns_update_thumbnail")) {
+                    window.chowder_itowns_update_thumbnail(resizeToThumbnail(canvas))
+                }
+                done = true;
+            }
+            */
+        });
 
         /*
         window.addEventListener('mousedown', (function () {

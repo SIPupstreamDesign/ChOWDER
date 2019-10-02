@@ -400,7 +400,7 @@ class GUI extends EventEmitter {
      */
     showWebGL(elem, metaData, contentData) {
         let iframe = document.createElement('iframe');
-        iframe.src = contentData;
+        iframe.src = metaData.url;
 
         //console.error(orgRect, orgWin, rect)
 

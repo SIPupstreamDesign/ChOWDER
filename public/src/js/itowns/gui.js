@@ -19,7 +19,7 @@ class GUI extends EventEmitter {
         this.action = action;
 
     }
-
+    
     init() {
         this.initWindow();
         this.initLoginMenu();
@@ -32,7 +32,7 @@ class GUI extends EventEmitter {
             this.loginMenu.show(false);
 
             this.showWebGL();
-            this.addITownContent();
+            ///this.addITownContent();
         });
 
         // ログイン失敗
@@ -93,26 +93,33 @@ class GUI extends EventEmitter {
                     mat : mat
                 });
             };
+            iframe.contentWindow.chowder_itowns_update_thumbnail = (thumbnailBuffer) => {
+                this.addITownContent(thumbnailBuffer);
+            };
         }
 
         document.getElementById('itowns').appendChild(iframe);
     }
 
-    addITownContent() {
+    addITownContent(thumbnailBuffer) {
         let url =  "itowns/view_3d_map_display.html";
         let metaData = {
             type: Constants.TypeWebGL,
             user_data_text: JSON.stringify({
                 text: url
             }),
+            posx : 0,
+            posy : 0,
             width: this.getWindowSize().width,
             height: this.getWindowSize().height,
             orgWidth: this.getWindowSize().width,
             orgHeight: this.getWindowSize().height,
+            visible : true,
+            url : decodeURI(url)
         };
         let data = {
             metaData : metaData,
-            contentData : decodeURI(url)
+            contentData : thumbnailBuffer
         };
         this.action.addContent(data);
     }

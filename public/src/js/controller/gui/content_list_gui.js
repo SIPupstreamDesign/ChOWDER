@@ -233,6 +233,7 @@ class ContentListGUI extends EventEmitter
 				window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
 				window.PDFJS.cMapPacked = true;
 
+				// thumbaniの生成
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
 					pdf.getPage(1).then(function (page) {
 						let viewport = page.getViewport(1);
@@ -263,6 +264,9 @@ class ContentListGUI extends EventEmitter
 				if (metaData.hasOwnProperty('mime')) {
 					mime = metaData.mime;
 					//console.log("mime:" + mime);
+				}
+				if (metaData.type === Constants.TypeWebGL) {
+					mime = "image/png"
 				}
 
 				divElem.style.height = "150px";
