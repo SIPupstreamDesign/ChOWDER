@@ -221,6 +221,9 @@ class ContentViewGUI extends EventEmitter {
 								chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback
 							}
 						});
+						if (metaData.hasOwnProperty("cameraWorldMatrix")) {
+							iframe.contentWindow.chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+						}
 					}
 				};
 				contentElem.innerHTML = "";
