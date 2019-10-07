@@ -196,6 +196,11 @@ class Display {
 		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
 			let funcDict = this.store.getITownFuncDict();
 			if (funcDict.hasOwnProperty(json.id)) {
+				// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
+				let elem = document.getElementById(json.id);
+				if (elem.className === Constants.TemporaryBoundClass) {
+					elem.className = ""
+				}
 				funcDict[json.id].chowder_itowns_update_camera_callback(JSON.parse(json.cameraWorldMatrix));
 			}
 		}

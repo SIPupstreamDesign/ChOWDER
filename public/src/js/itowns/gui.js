@@ -5,7 +5,7 @@
 
 "use strict";
 
-import Action from './action';
+import Select from '../components/select';
 import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
@@ -24,6 +24,7 @@ class GUI extends EventEmitter {
         this.initWindow();
         this.initLoginMenu();
         this.loginMenu.show(true);
+        this.addITwonSelect()
         Translation.translate(function () { });
 
         // ログイン成功
@@ -74,6 +75,19 @@ class GUI extends EventEmitter {
         select.addOption("APIUser", "APIUser");
     }
 
+    addITwonSelect() {
+        let wrapDom = document.createElement('div');
+        wrapDom.innerHTML = "Sample Content:"
+        this.itownSelect = new Select();
+        this.itownSelect.getDOM().className = "itown_select";
+        this.itownSelect.addOption("itowns/view_3d_map.html", "view_3d_map");
+        this.itownSelect.addOption("itowns/3dtiles_basic.html", "3dtiles_basic");
+        this.itownSelect.addOption("itowns/vector_tile_raster_3d.html", "vector_tile_raster_3d");
+        this.itownSelect.getDOM().style.marginTop = "20px"
+        wrapDom.appendChild(this.itownSelect.getDOM())
+        document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
+    }
+
     /**
      * WebGLを表示
      * @param {*} elem 
@@ -82,11 +96,12 @@ class GUI extends EventEmitter {
      */
     showWebGL() {
         let iframe = document.createElement('iframe');
-        iframe.src = "itowns/view_3d_map.html";
+        iframe.src = this.itownSelect.getSelectedValue();
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.border = "none";
         iframe.onload = () => {
+            iframe.contentWindow.chowder_itowns_view_type = "itowns";
             // iframe内のitownsからのコールバック
             iframe.contentWindow.chowder_itowns_update_camera = (mat) => {
                 this.action.updateCameraWorldMatrix({
@@ -102,7 +117,7 @@ class GUI extends EventEmitter {
     }
 
     addITownContent(thumbnailBuffer) {
-        let url =  "itowns/view_3d_map_display.html";
+        let url =  this.itownSelect.getSelectedValue();
         let metaData = {
             type: Constants.TypeWebGL,
             user_data_text: JSON.stringify({

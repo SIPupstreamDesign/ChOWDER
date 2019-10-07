@@ -77,8 +77,14 @@
         ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, canvas.width, canvas.height);
         return toArrayBuffer(canvas);
     }
+
+    function disableITownResizeFlow() {
+        // Display以外はリサイズを弾く
+        if (window.chowder_itowns_view_type !== "display") { return; }
+        window.removeEventListener("resize");
+    }
     
-    function injectChOWDER(view, viewerDiv) {
+    function injectChOWDERiTownCallbacks(view, viewerDiv) {
         var resizeWindow = function (rect) {
             if (!rect) return;
             var width = document.body.clientWidth;
@@ -97,13 +103,6 @@
             view.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
             view.notifyChange(view.camera.camera3D);
         }
-        setTimeout((function () {
-            return function () {
-                // コントローラの場合は弾く
-                if (window.isController) { return; }
-                window.removeEventListener("resize");
-            };
-        }()), 1000);
 
         window.chowder_itowns_update_camera_callback = (function () {
             return function (mat) {
@@ -147,7 +146,7 @@
             clearTimeout(timer);
             timer = setTimeout((function () {
                 return function () {
-                    if (!done && count > 2) {
+                    if (!done && count > 1) {
                         if (window.hasOwnProperty("chowder_itowns_update_thumbnail")) {
                             window.chowder_itowns_update_thumbnail(thumbnail)
                             done = true;
@@ -155,15 +154,6 @@
                     }
                 }
             }()), interval);
-            /*
-            if (!done && count > 2) {
-                var canvas = viewerDiv.getElementsByTagName('canvas')[0];
-                if (window.hasOwnProperty("chowder_itowns_update_thumbnail")) {
-                    window.chowder_itowns_update_thumbnail(resizeToThumbnail(canvas))
-                }
-                done = true;
-            }
-            */
         });
 
         /*
@@ -180,6 +170,21 @@
         */
     }
 
-    window.injectChOWDER = injectChOWDER;
-    window.injectAsChOWDERiTownController = injectAsChOWDERiTownController;
+    window.injectChOWDER = function (view, viewerDiv) {
+        var done = false;
+        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function () {
+            if (!done) {
+                if (window.chowder_itowns_view_type === "itowns") {
+                    // itowns追加用コントローラーからひかれた(itowns画面に対して操作可)
+                    injectAsChOWDERiTownController(view, viewerDiv);
+                } else {
+                    // displayまたはcontrollerから開かれた(itowns画面に対して操作不可)
+                    disableITownResizeFlow();
+                }
+                done = true;
+            }
+        });
+        // windowオブジェクトに対してコールバックを即時設定.
+        injectChOWDERiTownCallbacks(view, viewerDiv);
+    };
 }());

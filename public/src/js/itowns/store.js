@@ -108,7 +108,6 @@ class Store extends EventEmitter {
     }
 
     _login(data) {
-        console.error(data)
         Connector.send(Command.Login, data, (err, reply) => {
             if (err || reply === null) {
                 console.log(err);

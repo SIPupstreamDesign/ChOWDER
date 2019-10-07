@@ -84,6 +84,6 @@ window.onload = function() {
         updateScaleWidget();
     });
 
-    injectAsChOWDERiTownController(view, viewerDiv);
+    injectChOWDER(view, viewerDiv);
     //debug.createTileDebugUI(menuGlobe.gui, view);
 };

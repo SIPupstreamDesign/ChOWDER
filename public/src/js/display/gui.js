@@ -217,11 +217,11 @@ class GUI extends EventEmitter {
             if (metaData.hasOwnProperty(Constants.MARK) && (metaData[Constants.MARK] === 'true' || metaData[Constants.MARK] === true)) {
                 if (!elem.classList.contains(Constants.MARK)) {
                     elem.classList.add(Constants.MARK);
-                    if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-                        elem.style.borderColor = groupDict[metaData.group].color;
-                        elem.style.borderWidth = "6px";
-                    }
                 }
+                if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+                    elem.style.borderColor = groupDict[metaData.group].color;
+                }
+                elem.style.borderWidth = "6px";
             } else {
                 if (elem.classList.contains(Constants.MARK)) {
                     elem.classList.remove(Constants.MARK);
@@ -407,7 +407,9 @@ class GUI extends EventEmitter {
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.pointerEvents = "none";
+        iframe.style.border = "none"
         iframe.onload = () => {
+            iframe.contentWindow.chowder_itowns_view_type = "display";
             let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
             iframe.contentDocument.body.rect = rect;
             if (iframe.contentWindow.chowder_itowns_update_camera_callback) {

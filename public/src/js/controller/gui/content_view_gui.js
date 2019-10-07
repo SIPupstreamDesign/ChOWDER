@@ -213,7 +213,7 @@ class ContentViewGUI extends EventEmitter {
 				iframe.style.height = "100%";
 				iframe.style.pointerEvents = "none";
 				iframe.onload = () => {
-					iframe.contentWindow.isController = true;
+					iframe.contentWindow.chowder_itowns_view_type = "controller";
 					if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
 						this.action.addItownFunc({
 							id : metaData.id,
