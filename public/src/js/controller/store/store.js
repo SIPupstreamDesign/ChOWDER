@@ -625,6 +625,7 @@ Store.EVENT_GROUP_ADDED = "group_added";
 Store.EVENT_TAB_CHANGED_PRE = "tab_change_pre";
 Store.EVENT_TAB_CHANGED_POST = "tab_change_post";
 Store.EVENT_GROUP_SELECT_CHANGED = "group_select_changed";
+Store.EVENT_DISPLAY_GROUP_SELECT_CHANGED = "display_group_select_changed";
 
 // reviever
 Store.EVENT_DONE_DELETE_WINDOW_METADATA = "done_delete_window_metadata";

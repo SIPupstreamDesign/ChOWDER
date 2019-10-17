@@ -586,6 +586,16 @@ class Action extends EventEmitter
     }
 
     /**
+     * DisplayGroupの選択が変更された
+     * {
+     *    groupID : グループID
+     * }
+     */
+    changeDisplayGroupSelect(data) {
+        this.emit(Action.EVENT_CHANGE_DISPLAY_GROUP_SELECT, null, data);
+    }
+
+    /**
      * Groupを下に移動
      * {
      *    groupID : グループID
@@ -919,6 +929,7 @@ Action.EVENT_GET_GROUP_LIST = "getGroupList";
 Action.EVENT_DELETE_GROUP = "deleteGroup";
 Action.EVENT_CHANGE_GROUP = "changeGroup";
 Action.EVENT_CHANGE_GROUP_SELECT = "changeGroupSelect";
+Action.EVENT_CHANGE_DISPLAY_GROUP_SELECT = "changeDisplayGroupSelect";
 Action.EVENT_CHANGE_GROUP_NAME = "changeGroupName";
 Action.EVENT_CHANGE_GROUP_COLOR = "changeGroupColor";
 Action.EVENT_CHANGE_TAB = "changeTab";

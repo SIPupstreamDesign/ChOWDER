@@ -316,6 +316,12 @@ class Controller {
 
 		// グループ選択変更
 		this.store.on(Store.EVENT_GROUP_SELECT_CHANGED, (err, data) => {
+			this.unselectAll();
+			this.select(Constants.WholeWindowListID);
+		});
+
+		// ディスプレイグループ選択変更
+		this.store.on(Store.EVENT_DISPLAY_GROUP_SELECT_CHANGED, (err, data) => {
 			this.removeVirtualDisplay();
 			this.doneGetVirtualDisplay(err, data);
 			this.unselectAll();
@@ -331,6 +337,12 @@ class Controller {
 		this.store.on(Store.EVENT_TAB_CHANGED_PRE, () => {
 			manipulator.removeManipulator();
 			this.unselectAll(true);
+		});
+		
+		this.store.on(Store.EVENT_TAB_CHANGED_POST, () => {
+			// グループを選択しなおす
+			let currentGroup = this.gui.getCurrentGroupID();
+			this.gui.selectGroup(currentGroup);
 		});
 
 		// 選択解除された

@@ -390,7 +390,7 @@ class GUI extends EventEmitter
 			burgerMenu = this.displayMenu;
 			contextMenu = this.displayContextMenu;
 			if (!authority.isDisplayEditable(this.getCurrentDisplayGroupID())) {
-				console.error(this.getCurrentGroupID());
+				console.error(this.getCurrentDisplayGroupID());
 				return;
 			}
 		}

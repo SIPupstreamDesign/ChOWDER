@@ -209,8 +209,11 @@ class GroupGUI
 		groupBox.on('group_changed', (err) => {
 			if (this.isActiveTab(Constants.TabIDDisplay)) {
 				let id = groupBox.getCurrentGroupID();
+                this.action.changeDisplayGroupSelect({ groupID : id });
+			} else {
+                let id = groupBox.getCurrentGroupID();
 				this.action.changeGroupSelect({ groupID : id });
-			}
+            }
 		});
 	}
 
@@ -273,8 +276,15 @@ class GroupGUI
     }
 
 	selectGroup(group_id) {
-		this.getContentBox().selectTab(group_id);
-		this.getLayoutBox().selectTab(group_id);
+        if (this.isActiveTab(Constants.TabIDDisplay))
+        {
+            this.getDisplayBox().selectTab(group_id);
+        }
+        else
+        {
+            this.getContentBox().selectTab(group_id);
+            this.getLayoutBox().selectTab(group_id);
+        }
     }
 
     getDisplayBox() {
