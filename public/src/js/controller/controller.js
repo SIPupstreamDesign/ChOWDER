@@ -318,10 +318,8 @@ class Controller {
 		this.store.on(Store.EVENT_GROUP_SELECT_CHANGED, (err, data) => {
 			this.removeVirtualDisplay();
 			this.doneGetVirtualDisplay(err, data);
-			this.unselectAll(true);
-			this.select(Constants.WholeWindowListID)
-			manipulator.clearDraggingManip();
-			manipulator.removeManipulator();
+			this.unselectAll();
+			this.select(Constants.WholeWindowListID);
 		});
 
 		// グループリスト取得された
