@@ -318,8 +318,10 @@ class Controller {
 		this.store.on(Store.EVENT_GROUP_SELECT_CHANGED, (err, data) => {
 			this.removeVirtualDisplay();
 			this.doneGetVirtualDisplay(err, data);
-			this.unselectAll();
-			this.select('whole_window_' + data.groupID, true)
+			this.unselectAll(true);
+			this.select(Constants.WholeWindowListID)
+			manipulator.clearDraggingManip();
+			manipulator.removeManipulator();
 		});
 
 		// グループリスト取得された
@@ -426,7 +428,7 @@ class Controller {
 	 * @param {bool} isListViewArea リストビュー上のエレメントか
 	 * @return {Object} Element
 	 */
-	getElem(id, isListViewArea) {
+	getElem(id, isListViewArea = false) {
 		if (id === Constants.WholeWindowListID) {
 			return null;
 		}
@@ -448,7 +450,7 @@ class Controller {
 				delete srcElem.childNodes[0];
 				if (isListViewArea) {
 					child.style.display = "none";
-					child.style.margin = "5px";
+					child.style.margin = "0px";
 				}
 				else {
 					child.style.margin = "0px";
@@ -986,7 +988,7 @@ class Controller {
 			screen = Vscreen.getScreen(windowData.id);
 			if (screen) {
 				screenElem = document.getElementById(windowData.id);
-				if (!screenElem && Validator.isVisibleWindow(windowData)) {
+				if (!screenElem) {
 					// 新規Screen Element作成
 					screenElem = document.createElement('div');
 					idElem = document.createElement('div');
@@ -996,6 +998,7 @@ class Controller {
 					screenElem.className = "screen";
 					screenElem.id = windowData.id;
 					screenElem.style.borderStyle = 'solid';
+					screenElem.style.display = "none";
 					previewArea.appendChild(screenElem);
 					this.setupWindow(screenElem, windowData.id);
 				}
