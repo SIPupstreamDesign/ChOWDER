@@ -1,9 +1,11 @@
 
 window.onload = function() {
+    // for measure performance
+    //var startTime = performance.now();
     
     // # Simple Globe viewer
     // Define initial camera position
-    var positionOnGlobe = { longitude: 2.351323, latitude: 48.856712, altitude: 25000000 };
+    var positionOnGlobe = { longitude: 139.839478, latitude: 35.652832, altitude: 250000 };
     var miniView;
     var minDistance = 10000000;
     var maxDistance = 30000000;
@@ -42,11 +44,21 @@ window.onload = function() {
     // Add one imagery layer to the scene and the miniView
     // This layer is defined in a json file but it could be defined as a plain js
     // object. See Layer* for more info.
-    itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(function _(config) {
-        config.source = new itowns.WMTSSource(config.source);
-        var layer = new itowns.ColorLayer('Ortho', config);
+    itowns.Fetcher.json('./layers/JSONLayers/OPENSM.json').then(function _(config) {
+        config.source = new itowns.TMSSource(config.source);
+        var layer = new itowns.ColorLayer('OPENSM', config);
+        /*
+        // for measure performance
+        view.mainLoop.addEventListener('command-queue-empty', () => {
+            console.log("command-queue-empty")
+            console.log("renderingState:", view.mainLoop.renderingState, "time:", ((performance.now() - startTime) / 1000).toFixed(3), "seconds")
+        });
+        view.addEventListener(itowns.VIEW_EVENTS.LAYERS_INITIALIZED, () =>{
+            console.log("loaded")
+        });
+        */
         view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
-        var miniLayer = new itowns.ColorLayer('OrthoMini', config);
+        var miniLayer = new itowns.ColorLayer('OPENSMMini', config);
         miniView.addLayer(miniLayer);
     });
     // Add two elevation layers.
