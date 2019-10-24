@@ -7,7 +7,7 @@
   "optionalDependencies": {
     "hiredis": "*",
     "images": "^3.0.1",
-    "sharp": "^0.20.5"
+    "sharp": "^0.20.8"
   },
   "scripts": {
     "standalone-electron": "electron standalone-electron",
