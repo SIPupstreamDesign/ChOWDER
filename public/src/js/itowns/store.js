@@ -25,6 +25,9 @@ class Store extends EventEmitter {
         // itownコンテンツのメタデータ
         // 1ウィンドウ1itownコンテンツなのでメタデータは1つ
         this.metaData = null;
+        
+        // 初回カメラ行列用キャッシュ
+        this.initialMatrix = null;
 
         // websocket接続が確立された.
         // ログインする.
@@ -36,7 +39,19 @@ class Store extends EventEmitter {
 
         // コンテンツ追加完了した.
         this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
+            let isInitialContent = (!this.metaData);
+
             this.metaData = reply;
+
+            if (isInitialContent) {
+                // 初回追加だった
+                // カメラ更新
+                if (this.initialMatrix) {
+                    this._updateCameraWorldMatrix({
+                        mat : this.initialMatrix
+                    })
+                }
+            }
         })
         
         /// メタデータが更新された
@@ -149,6 +164,9 @@ class Store extends EventEmitter {
             delete updateData.height;
             this.operation.updateMetadata(updateData, (err, res) => {
             });   
+        } else {
+            // コンテンツ追加完了前だった。完了後にカメラを更新するため、matrixをキャッシュしておく。
+            this.initialMatrix = data.mat;
         }
     }
 

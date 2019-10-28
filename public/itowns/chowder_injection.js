@@ -116,6 +116,9 @@
     function injectAsChOWDERiTownController(view, viewerDiv)
     {
         var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
+        if (window.hasOwnProperty("chowder_itowns_update_camera")) {
+            window.chowder_itowns_update_camera(worldMat);
+        }
         view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (function () {
             return function () {
                 var mat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);

@@ -195,17 +195,6 @@ class Display {
 				}
 			}
 		}
-		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
-			let funcDict = this.store.getITownFuncDict();
-			if (funcDict.hasOwnProperty(json.id)) {
-				// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
-				let elem = document.getElementById(json.id);
-				if (elem && elem.className === Constants.TemporaryBoundClass) {
-					elem.className = ""
-				}
-				funcDict[json.id].chowder_itowns_update_camera_callback(JSON.parse(json.cameraWorldMatrix));
-			}
-		}
 
 		metaDataDict[json.id] = json;
 		if (!err) {
@@ -456,6 +445,21 @@ class Display {
 				this.gui.updateViewport(json);
 				// タイル画像のリクエストが2回行われてしまう問題によりコメントアウト
 				//this.updateContentVisible();
+			}
+		});
+		
+		this.store.on(Store.EVENT_DONE_ADD_ITOWN_FUNC, (err, id) => {
+			let metaData = this.store.getMetaData(id);
+			// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
+			if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
+				let funcDict = this.store.getITownFuncDict();
+				if (funcDict.hasOwnProperty(metaData.id)) {
+					let elem = document.getElementById(metaData.id);
+					if (elem && elem.className === Constants.TemporaryBoundClass) {
+						elem.className = ""
+					}
+					funcDict[metaData.id].chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+				}
 			}
 		});
 

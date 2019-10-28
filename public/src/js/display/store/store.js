@@ -415,6 +415,7 @@ class Store extends EventEmitter {
     _addItownFunc(data) {
         if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
             this.itownFuncDict[data.id] = data.func;
+            this.emit(Store.EVENT_DONE_ADD_ITOWN_FUNC, null, data.id);
         }
         else {
             console.error("addITownFun - invalid param");
@@ -630,6 +631,7 @@ Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
+Store.EVENT_DONE_ADD_ITOWN_FUNC = "done_add_itown_func";
 
 // reviever
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
