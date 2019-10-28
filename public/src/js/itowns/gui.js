@@ -102,6 +102,7 @@ class GUI extends EventEmitter {
         iframe.style.border = "none";
         iframe.onload = () => {
             iframe.contentWindow.chowder_itowns_view_type = "itowns";
+            iframe.contentWindow.focus();
             // iframe内のitownsからのコールバック
             iframe.contentWindow.chowder_itowns_update_camera = (mat) => {
                 this.action.updateCameraWorldMatrix({
