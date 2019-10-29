@@ -10,9 +10,9 @@
   "author": "digirea",
   "license": "ISC",
   "dependencies": {
-    "itowns": "^2.13.1"
+    "itowns": "^2.15.3"
   },
   "devDependencies": {
-    "serve": "*"
+    "serve": "^11.2.0"
   }
 }
