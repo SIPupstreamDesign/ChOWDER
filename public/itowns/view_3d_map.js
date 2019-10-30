@@ -1,7 +1,7 @@
 
 window.onload = function() {
     // for measure performance
-    //var startTime = performance.now();
+    var startTime = performance.now();
     
     // # Simple Globe viewer
     // Define initial camera position
@@ -47,16 +47,10 @@ window.onload = function() {
     itowns.Fetcher.json('./layers/JSONLayers/OPENSM.json').then(function _(config) {
         config.source = new itowns.TMSSource(config.source);
         var layer = new itowns.ColorLayer('OPENSM', config);
-        /*
-        // for measure performance
-        view.mainLoop.addEventListener('command-queue-empty', () => {
-            console.log("command-queue-empty")
-            console.log("renderingState:", view.mainLoop.renderingState, "time:", ((performance.now() - startTime) / 1000).toFixed(3), "seconds")
-        });
         view.addEventListener(itowns.VIEW_EVENTS.LAYERS_INITIALIZED, () =>{
             console.log("loaded")
         });
-        */
+        
         view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
         var miniLayer = new itowns.ColorLayer('OPENSMMini', config);
         miniView.addLayer(miniLayer);
@@ -96,6 +90,6 @@ window.onload = function() {
         updateScaleWidget();
     });
 
-    injectChOWDER(view, viewerDiv);
+    injectChOWDER(view, viewerDiv, startTime);
     //debug.createTileDebugUI(menuGlobe.gui, view);
 };

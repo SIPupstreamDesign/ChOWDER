@@ -173,7 +173,7 @@
         */
     }
 
-    window.injectChOWDER = function (view, viewerDiv) {
+    window.injectChOWDER = function (view, viewerDiv, startTime) {
         var done = false;
         view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function () {
             if (!done) {
@@ -183,6 +183,20 @@
                 } else {
                     // displayまたはcontrollerから開かれた(itowns画面に対して操作不可)
                     disableITownResizeFlow();
+
+                    // for measure performance
+                    view.mainLoop.addEventListener('command-queue-empty', () => {
+                        //console.log("command-queue-empty")
+                        //console.log("renderingState:", view.mainLoop.renderingState, "time:", ((performance.now() - startTime) / 1000).toFixed(3), "seconds")
+                        if (view.mainLoop.renderingState == 0 && startTime) 
+                        {
+                            startTime = null;
+                            var time = ((performance.now() - startTime) / 1000).toFixed(3) + "seconds";
+                            if (window.hasOwnProperty("chowder_itowns_measure_time")) {
+                                window.chowder_itowns_measure_time(time)
+                            }
+                        }
+                    });
                 }
                 done = true;
             }

@@ -237,7 +237,7 @@ class ManagementStore {
 	}
 	// パフォーマンス計算を行うかどうか
 	isMeasureTimeEnable() {
-		if (this.globalSetting.enableMeasureTime) {
+		if (this.globalSetting && this.globalSetting.enableMeasureTime) {
 			return (String(this.globalSetting.enableMeasureTime) === "true");
 		}
 		return false;

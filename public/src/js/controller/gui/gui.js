@@ -100,7 +100,10 @@ class GUI extends EventEmitter
 		this.initControllerIDInput();
 
 		// バーガーメニュー
-		this.initBurgerMenu();
+		// 速度測定モードかどうかによってGUIを表示させるため、全体設定更新時まで初期化を遅延させる
+		this.store.on(Store.EVENT_GLOBAL_SETTING_RELOADED, (err, data) => {
+			this.initBurgerMenu();
+		});
 
 		// コンテキストメニュー
 		this.initContextMenu();
@@ -161,6 +164,7 @@ class GUI extends EventEmitter
 		// 		this.action.changeDisplayPermission(logindata);
 		// 	});
 		// });
+
 	}
 
 	/**
@@ -841,7 +845,7 @@ class GUI extends EventEmitter
 		this.initContextMenuVisible(this.contentContextMenu.getDOM(), Constants.TabIDContent, Constants.TabIDSearch);
 
 		// ディスプレイ
-		this.displayContextMenu = new ContextMenu("display", DisplayMenuSetting.bind(this)());
+		this.displayContextMenu = new ContextMenu("display", DisplayMenuSetting.bind(this)(false));
 		document.body.appendChild(this.displayContextMenu.getDOM());
 		this.initContextMenuVisible(this.displayContextMenu.getDOM(), Constants.TabIDDisplay, "");
 
@@ -861,7 +865,15 @@ class GUI extends EventEmitter
 		document.body.appendChild(contentMenuDOM);
 
 		// ディスプレイ
-		this.displayMenu = new BurgerMenu(DisplayMenuSetting.bind(this)());
+		if (this.store.getManagement().isMeasureTimeEnable())
+		{
+			this.displayMenu = new BurgerMenu(DisplayMenuSetting.bind(this)(true));
+		}
+		else
+		{
+			this.displayMenu = new BurgerMenu(DisplayMenuSetting.bind(this)(false));
+		}
+		//this.displayMenu = new BurgerMenu(DisplayMenuSetting.bind(this)());
 		let displayMenuDOM = this.displayMenu.getDOM();
 		displayMenuDOM.classList.add("bottom_burger_menu_display");
 		document.body.appendChild(displayMenuDOM);

@@ -138,6 +138,14 @@
                 }
             });
 
+            ws_connector.on(Command.ReloadDisplay, (data, resultCallback) => {
+                console.log("ReloadDisplay")
+                ws_connector.broadcast(ws, Command.ReloadDisplay, data);
+                if (resultCallback) {
+                    resultCallback();
+                }
+            });
+
             ws_connector.on(Command.SendMessage, (data, resultCallback) => {
                 ws_connector.broadcast(ws, Command.SendMessage, data);
                 if (resultCallback) {

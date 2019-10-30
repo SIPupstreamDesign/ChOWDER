@@ -558,7 +558,7 @@ class Store extends EventEmitter
 	
     getITownFuncDict() {
         return this.itownFuncDict;
-    }
+	}
 }
 
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
@@ -614,6 +614,7 @@ Store.EVENT_DISPLAY_SCALE_CHANGED  = "display_scale_changed";
 Store.EVENT_DONE_DISPLAY_TRANS = "done_display_trans";
 Store.EVENT_DONE_DELETE_DISPLAY = "done_delete_display";
 Store.EVENT_DONE_SHOW_DISPLAY_ID = "done_show_display_id";
+Store.EVENT_DONE_RELOAD_DISPLAY = "done_reload_display";
 Store.EVENT_DONE_UPDATE_WINDOW_METADATA = "done_update_window_metadata";
 Store.EVENT_DISPLAY_PROPERTY_CHANGED = "display_property_changed"
 Store.EVENT_DISPLAY_SPLIT_CHANGED = "display_split_changed";

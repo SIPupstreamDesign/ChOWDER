@@ -81,6 +81,22 @@ pre {
 	display: none;
 }
 
+.debug_message_area {
+	min-height: 80px;
+	min-width: 800px;
+	width: 100%;
+	height: 20%;
+	position: fixed;
+	top: 50%;
+	left: 0;
+	background-color:#555555;
+	opacity: 0.9;
+	z-index: 1000000;
+	display: none;
+	color : white;
+	font-size : 80px;
+}
+
 #preview_area {
 	z-index : -1000000;
 }

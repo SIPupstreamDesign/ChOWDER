@@ -412,6 +412,13 @@ class GUI extends EventEmitter {
             iframe.contentWindow.chowder_itowns_view_type = "display";
             let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
             iframe.contentDocument.body.rect = rect;
+            // iframe内のitownsからのコールバック
+            iframe.contentWindow.chowder_itowns_measure_time = (timeString) => {
+                PerformanceLogger.logByVals("iTowns表示完了までの時間", "chowder_itowns_measure_time", timeString, metaData.id);
+                if (PerformanceLogger.validate()) {
+                    this.showDebugMessage(timeString);
+                }
+            };
             if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
                 if (metaData.hasOwnProperty('cameraWorldMatrix')) {
                     iframe.contentWindow.chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
@@ -505,6 +512,25 @@ class GUI extends EventEmitter {
                 document.getElementById('displayid_area').style.display = "none";
             }, 8 * 1000);
         }
+    }
+    
+    /**
+     * デバッグメッセージの表示
+     * @param {*} metaData 
+     */
+    showDebugMessage(message) {
+        document.getElementById('debug_message_area').innerHTML = message;
+        if (message) {
+            document.getElementById('debug_message_area').style.display = "block";
+            setTimeout(function () {
+                document.getElementById('debug_message_area').style.display = "none";
+            }, 8 * 1000);
+        } else if (message === "") {
+            document.getElementById('debug_message_area').style.display = "block";
+            setTimeout(function () {
+                document.getElementById('debug_message_area').style.display = "none";
+            }, 8 * 1000);
+        } 
     }
 
     /**
