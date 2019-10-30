@@ -195,6 +195,13 @@ class Display {
 				}
 			}
 		}
+		// webglカメラの適用
+		if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
+			let funcDict = this.store.getITownFuncDict();
+			if (funcDict.hasOwnProperty(metaData.id)) {
+				funcDict[metaData.id].chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+			}
+		}
 
 		metaDataDict[json.id] = json;
 		if (!err) {
