@@ -102,7 +102,9 @@ class GUI extends EventEmitter
 		// バーガーメニュー
 		// 速度測定モードかどうかによってGUIを表示させるため、全体設定更新時まで初期化を遅延させる
 		this.store.on(Store.EVENT_GLOBAL_SETTING_RELOADED, (err, data) => {
-			this.initBurgerMenu();
+			if (!this.contentMenu) {
+				this.initBurgerMenu();
+			}
 		});
 
 		// コンテキストメニュー
