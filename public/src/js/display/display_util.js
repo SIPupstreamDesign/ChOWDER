@@ -167,29 +167,17 @@ class DisplayUtil
         const orgWin =  Vscreen.transform(VscreenUtil.toIntRect(win));
         // orgWinと同様の座標系でのコンテンツrect
         const orgRect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+        // コンテンツ左上を(0,0)とした座標系での、windowのrectを求める。
         
         // 結果用rect
-        let rect = JSON.parse(JSON.stringify(orgRect));
-        // 右にはみ出している
-        if ((orgRect.x + orgRect.w) > (orgWin.x + orgWin.w)) {
-            rect.w = Math.max(1, orgWin.w - Math.abs(orgRect.x));
+        let rect = {
+            x : orgWin.x - orgRect.x,
+            y : orgWin.y - orgRect.y,
+            w : Math.floor(orgWin.w + 0.5),
+            h : Math.floor(orgWin.h + 0.5)
         }
-        // 左にはみ出している
-        if (orgRect.x < orgWin.x) {
-            rect.w = Math.max(1, orgRect.w - Math.abs(orgRect.x));
-            rect.x = orgWin.x;
-        }
-        // 上にはみ出している
-        if (orgRect.y < orgWin.y) {
-            rect.h = Math.max(1, orgRect.h - Math.abs(orgRect.y));
-            rect.y = orgWin.y;
-        }
-        // 下にはみ出している
-        if ((orgRect.y + orgRect.h) > (orgWin.y + orgWin.h)) {
-            rect.h = Math.max(1, orgWin.h - Math.abs(orgRect.y));
-        }
-        rect.x -= orgRect.x;
-        rect.y -= orgRect.y;
+        rect.x = Math.floor(rect.x + Math.sign(rect.x) * 0.5);
+        rect.y = Math.floor(rect.y + Math.sign(rect.x) * 0.5);
 
         return rect;
     }
