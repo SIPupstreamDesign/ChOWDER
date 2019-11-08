@@ -120,6 +120,16 @@ class GUI extends EventEmitter {
                 setTimeout(hideMenuFunc, 3000);
             }
         });
+        
+        setTimeout( () => {
+            if (!document.getElementById('head_menu').classList.contains('hide'))
+            {
+                if (!registered) {
+                    registered = true;
+                    setTimeout(hideMenuFunc, 2000);
+                }
+            }
+        }, 1000);
 
         // メニュー設定
         let menuSetting = null;
