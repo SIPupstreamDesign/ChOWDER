@@ -1,6 +1,6 @@
 # 3D Web GIS tool integration
 
-![alt](./image/ChOWDER_OSM_3DView.jpg)
+![alt](./images/ChOWDER_OSM_3DView.jpg)
 
 In this branch, we are implementing a prototype that displays 3D GIS data on the ChOWDER display.
 
