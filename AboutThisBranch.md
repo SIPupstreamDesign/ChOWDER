@@ -12,19 +12,19 @@ Here is the demonstration video that displays Open Street Map in 3D on a ChOWDER
 # Features
 
 - Display GIS data as content on ChOWDER tiled display
-  Like content that could be displayed with ChOWDER, such as images, videos, and PDFs, GIS data can be displayed at any position on the tiled display and can be enlarged or reduced.
+  - Like content that could be displayed with ChOWDER, such as images, videos, and PDFs, GIS data can be displayed at any position on the tiled display and can be enlarged or reduced.
   
 - Use [iTowns](http://www.itowns-project.org/) as the base GIS tool
-  3D display of GIS data by WebGL + Three.js.
+  - 3D display of GIS data by WebGL + Three.js.
   
 - WebGL distributed rendering
-  Each Web browser that makes up the tiled display renders the GIS data of the area in charge using WebGL. Thanks to this distributed rendering concept, rendering costs do not become a bottleneck even for ultra-large scale GIS data.
+  - Each Web browser that makes up the tiled display renders the GIS data of the area in charge using WebGL. Thanks to this distributed rendering concept, rendering costs do not become a bottleneck even for ultra-large scale GIS data.
   
 - GIS specific controller app
-  For GIS content requires user interaction such as changing the viewpoint, etc., it is operated in a web browser window that is separate from the standard ChOWDER controller. Since it runs on a web browser, no other specialized software is required.
+  - For GIS content requires user interaction such as changing the viewpoint, etc., it is operated in a web browser window that is separate from the standard ChOWDER controller. Since it runs on a web browser, no other specialized software is required.
   
 - LoD display linked to physical display resolution
-　GIS content displayed on a tiled display is not simply magnified. Depending on the physical resolution of the display device, LoD is also optimized.
+  - GIS content displayed on a tiled display is not simply magnified. Depending on the physical resolution of the display device, LoD is also optimized.
 
 
 # How to show GIS data on ChOWDER
