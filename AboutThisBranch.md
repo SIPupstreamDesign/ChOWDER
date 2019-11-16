@@ -7,7 +7,8 @@ In this branch, we are implementing a prototype that displays 3D GIS data on the
 # Demo video
 Here is the demonstration video that displays Open Street Map in 3D on a ChOWDER tiled display with a horizontal resolution of 20K, which is distributed and rendered by 5 Mac minis.
 
--- YouTube Link (comming soon!) --
+[![ChOWDER 3D Web GIS Integration](https://img.youtube.com/vi/u3jdhZ1RnHs/0.jpg)](https://www.youtube.com/watch?v=u3jdhZ1RnHs)
+
 
 # Features
 
