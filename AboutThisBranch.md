@@ -23,7 +23,7 @@ Here is the demonstration video that displays Open Street Map in 3D on a ChOWDER
 - GIS specific controller app
   - For GIS content requires user interaction such as changing the viewpoint, etc., it is operated in a web browser window that is separate from the standard ChOWDER controller. Since it runs on a web browser, no other specialized software is required.
   
-- LoD display linked to physical display resolution
+- Displaying LoD (Level of Detail) linked to physical display resolution
   - GIS content displayed on a tiled display is not simply magnified. Depending on the physical resolution of the display device, LoD is also optimized.
 
 # How to show GIS data on ChOWDER
