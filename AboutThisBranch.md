@@ -40,7 +40,7 @@ After starting the ChOWDER server, access the following URL from a web browser. 
   http://ChOWDER_SERVER_ADDRESS:8080/itowns.html
 ```
 
-Then the following screen will be displayed. Enter the `APIUser`'s password in the text box and press the blue button on the right side.
+Then the following screen will be displayed. Enter the `APIUser`'s password in the text box and press the blue button on the right side to log-in.
 ![alt](./images/GISController_login.png)
 
 ## Operate GIS data
