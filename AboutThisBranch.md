@@ -7,7 +7,7 @@ In this branch, we are implementing a prototype that displays 3D GIS data on the
 # Demo video
 Here is the demonstration video that displays Open Street Map in 3D on a ChOWDER tiled display with a horizontal resolution of 20K, which is distributed and rendered by 5 Mac minis.
 
--- YouTube Link --
+-- YouTube Link (comming soon!) --
 
 # Features
 
@@ -26,7 +26,6 @@ Here is the demonstration video that displays Open Street Map in 3D on a ChOWDER
 - LoD display linked to physical display resolution
   - GIS content displayed on a tiled display is not simply magnified. Depending on the physical resolution of the display device, LoD is also optimized.
 
-
 # How to show GIS data on ChOWDER
 
 ## Preparation
@@ -41,13 +40,16 @@ After starting the ChOWDER server, access the following URL from a web browser. 
   http://ChOWDER_SERVER_ADDRESS:8080/itowns.html
 ```
 
-Then the following screen is displayed. Enter the `APIUser`'s password in the text box and press the blue button on the right side.
+Then the following screen will be displayed. Enter the `APIUser`'s password in the text box and press the blue button on the right side.
+![alt](./images/GISController_login.png)
 
 ## Operate GIS data
 
-The Open Street Map centered on Tokyo should be displayed. The viewpoint can be changed with the same mouse operation as iTowns.
+Then, The Open Street Map centered on Tokyo should be displayed. The viewpoint can be changed with the same mouse operation as iTowns.
+![alt](./images/GISController_view_3d_map.png)
 
-The same GIS content is also displayed on the ChOWDER controller. Here you can move, enlarge, or reduce the GIS content.
+At the same time, the same GIS content is also displayed on the ChOWDER controller. Here you can move, enlarge, or reduce the GIS content.
+![alt](./images/ChOWDERController_view_3d_map.png)
 
 There are three types of GIS content currently implemented: You can select from the pull-down menu on the login screen of the GIS controller.
 1. view_3d_map
@@ -56,3 +58,4 @@ There are three types of GIS content currently implemented: You can select from 
 
 # Kitten!
 And of course, now you can see multiple GIS data and a kitten image at the same time! ;-)
+![alt](./images/ChOWDERController_with_kitten.png)
