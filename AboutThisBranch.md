@@ -2,7 +2,9 @@
 
 ![alt](./images/ChOWDER_OSM_3DView.jpg "map data © [OpenStreetMap](http://www.openstreetmap.org) contributors")
 
+map data © [OpenStreetMap](http://www.openstreetmap.org) contributors
 
+# About this branch
 
 In this branch, we are implementing a prototype that displays 3D GIS data on the ChOWDER display.
 
