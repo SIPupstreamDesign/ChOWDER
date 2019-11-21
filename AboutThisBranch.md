@@ -1,8 +1,8 @@
 # 3D Web GIS tool integration
 
-![alt](./images/ChOWDER_OSM_3DView.jpg)
+![alt](./images/ChOWDER_OSM_3DView.jpg "map data © [OpenStreetMap](http://www.openstreetmap.org) contributors")
 
-map data © [OpenStreetMap](http://www.openstreetmap.org) contributors
+
 
 In this branch, we are implementing a prototype that displays 3D GIS data on the ChOWDER display.
 
