@@ -115,6 +115,12 @@
     //var initialWorldMat = null;
     function injectAsChOWDERiTownController(view, viewerDiv)
     {
+        var menuDiv = document.getElementById('menuDiv');
+        if (menuDiv) {
+            menuDiv.style.position = "absolute";
+            menuDiv.style.top = "10px";
+            menuDiv.style.left = "10px";
+        }
         var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
         if (window.hasOwnProperty("chowder_itowns_update_camera")) {
             window.chowder_itowns_update_camera(worldMat);

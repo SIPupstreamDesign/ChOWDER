@@ -61,6 +61,7 @@ window.onload = function() {
         config.source = new itowns.WMTSSource(config.source);
         var layer = new itowns.ElevationLayer(config.id, config);
         view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
+        layer.scale = 1.0;
     }
     itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
     itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
