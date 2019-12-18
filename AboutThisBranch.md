@@ -16,8 +16,8 @@ Here is the demonstration video that displays Open Street Map in 3D on a ChOWDER
 
 # Features
 
-- Display GIS data as content on ChOWDER tiled display
-  - Like content that could be displayed with ChOWDER, such as images, videos, and PDFs, GIS data can be displayed at any position on the tiled display and can be enlarged or reduced.
+- Display GIS data as a content on ChOWDER tiled display
+  - Like a content that could be displayed with ChOWDER, such as images, videos, and PDFs, GIS data can be displayed at any position on the tiled display and can be enlarged or reduced.
   
 - Use [iTowns](http://www.itowns-project.org/) as the base GIS tool
   - 3D display of GIS data by WebGL + Three.js.
