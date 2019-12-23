@@ -5,12 +5,12 @@
 
 /* global Promise */
 
-var fs = require('fs');
-var path = require('path');
-var images = require('images');
+let fs = require('fs');
+let path = require('path');
+let images = require('images');
 images.setLimit(100000, 100000);
 
-var JPEG_BLOCK = 8;
+let JPEG_BLOCK = 8;
 
 /**
  * 適切な分割サイズを求める
@@ -18,8 +18,8 @@ var JPEG_BLOCK = 8;
  * @param {number} split 分割数
  * @returns {number} 分割サイズ
  */
-var calcSplitSize = function(resolution, split) {
-	var size = resolution / split;
+let calcSplitSize = function(resolution, split) {
+	let size = resolution / split;
 	return Math.ceil(size / JPEG_BLOCK) * JPEG_BLOCK;
 };
 
@@ -29,21 +29,21 @@ var calcSplitSize = function(resolution, split) {
  * @param {number} maxreso 最大辺サイズ
  * @returns {Promise<Buffer>} 縮小処理終了後resolve
  */
-var generateThumb = function(filepath, maxreso) {
+let generateThumb = function(filepath, maxreso) {
 	if (!fs.existsSync(filepath)) {
 		throw new Error(filepath + 'は存在しません。');
 	}
 
-	var image = images(filepath);
-	var ext = path.extname(filepath).slice(1);
+	let image = images(filepath);
+	let ext = path.extname(filepath).slice(1);
 
-	var width = image.width();
-	var height = image.height();
-	var scale = Math.min(1.0, maxreso / Math.max(width, height));
-	var thumbWidth = Math.round(width * scale);
-	var thumbHeight = Math.round(height * scale);
+	let width = image.width();
+	let height = image.height();
+	let scale = Math.min(1.0, maxreso / Math.max(width, height));
+	let thumbWidth = Math.round(width * scale);
+	let thumbHeight = Math.round(height * scale);
 
-	var buffer = image.size(thumbWidth, thumbHeight).encode(ext);
+	let buffer = image.size(thumbWidth, thumbHeight).encode(ext);
 	return Promise.resolve({
 		width: width,
 		height: height,
@@ -62,27 +62,27 @@ var generateThumb = function(filepath, maxreso) {
  * @param {Function} forEach 各分割済バッファに対して行う処理、Promiseを返す必要あり
  * @returns {Promise<void>} 全分割処理が終了後resolve
  */
-var splitImage = function(filepath, xsplit, ysplit, parallels, forEach) {
+let splitImage = function(filepath, xsplit, ysplit, parallels, forEach) {
 	if (!fs.existsSync(filepath)) {
 		throw new Error(filepath + 'は存在しません。');
 	}
 
-	var image = images(filepath);
-	var ext = path.extname(filepath).slice(1);
+	let image = images(filepath);
+	let ext = path.extname(filepath).slice(1);
 
-	var width = image.width();
-	var height = image.height();
-	var sizex = calcSplitSize(width, xsplit);
-	var sizey = calcSplitSize(height, ysplit);
+	let width = image.width();
+	let height = image.height();
+	let sizex = calcSplitSize(width, xsplit);
+	let sizey = calcSplitSize(height, ysplit);
 
-	var task = Promise.resolve();
+	let task = Promise.resolve();
 
-	for (var iy = 0; iy < ysplit; iy ++) {
-		for (var ix = 0; ix < xsplit; ix ++) {
-			var x = ix * sizex;
-			var y = iy * sizey;
-			var i = ix + iy * xsplit;
-			var splitted = images(
+	for (let iy = 0; iy < ysplit; iy ++) {
+		for (let ix = 0; ix < xsplit; ix ++) {
+			let x = ix * sizex;
+			let y = iy * sizey;
+			let i = ix + iy * xsplit;
+			let splitted = images(
 				image,
 				x,
 				y,

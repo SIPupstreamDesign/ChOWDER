@@ -14,7 +14,4 @@ rm -rf redis-*
 cd ..
 npm install
 
-cd standalone-electron
-npm install
-
 cd $ORIGIN

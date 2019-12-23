@@ -6,7 +6,7 @@
  
 'use strict';
 
-var headerStr = 'MetaBin:';
+let headerStr = 'MetaBin:';
 
 /**
  * UTF8文字列をArrayに変換して返す
@@ -14,12 +14,12 @@ var headerStr = 'MetaBin:';
  * @return Array
  */
 function utf8StringToArray(str) {
-	var n = str.length;
-	var pos = 0;
-	var array = [];
+	let n = str.length;
+	let pos = 0;
+	let array = [];
 	
-	for (var i = 0; i < n; i ++) {
-		var charCode = str.charCodeAt(i);
+	for (let i = 0; i < n; i ++) {
+		let charCode = str.charCodeAt(i);
 		if (charCode <= 0x7F) {
 			array[pos] = charCode;
 			pos ++;
@@ -66,11 +66,11 @@ function utf8StringToArray(str) {
  * @return buffer
  */
 function createMetaBinary(metaData, binary) {
-	var pos = 0;
-	var metaStr = new Buffer(utf8StringToArray(JSON.stringify(metaData)));
+	let pos = 0;
+	let metaStr = new Buffer(utf8StringToArray(JSON.stringify(metaData)));
 	if (!metaStr) { return; }
 	
-	var buffer = new Buffer(headerStr.length + 8 + metaStr.length + binary.length);
+	let buffer = new Buffer(headerStr.length + 8 + metaStr.length + binary.length);
 
 	// headerStr
 	buffer.write(headerStr, pos, headerStr.length, 'ascii');
@@ -101,14 +101,14 @@ function createMetaBinary(metaData, binary) {
  * @param {Function} endCallback 終了時に呼ばれるコールバック
  */
 function loadMetaBinary(binary, endCallback) {
-	var head = binary.slice(0, headerStr.length).toString('ascii');
+	let head = binary.slice(0, headerStr.length).toString('ascii');
 	if (head !== headerStr) { return; }
 
-	// var version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0); // somehow it's unused
-	var metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);
-	var metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString());
+	// let version = binary.slice(headerStr.length, headerStr.length + 4).readUInt32LE(0); // somehow it's unused
+	let metaSize = binary.slice(headerStr.length + 4, headerStr.length + 8).readUInt32LE(0);
+	let metaData = JSON.parse(binary.slice(headerStr.length + 8, headerStr.length + 8 + metaSize).toString());
 
-	var params;
+	let params;
 	if (metaData.hasOwnProperty('params')) {
 		params = metaData.params;
 	} else if (metaData.hasOwnProperty('result')) {
@@ -117,7 +117,7 @@ function loadMetaBinary(binary, endCallback) {
 		params = metaData.param;
 	}
 
-	var content = binary.slice(headerStr.length + 8 + metaSize);
+	let content = binary.slice(headerStr.length + 8 + metaSize);
 	
 	if (params.type === 'text' || params.type === 'url' || params.type === 'layout') {
 		content = content.toString('utf8');

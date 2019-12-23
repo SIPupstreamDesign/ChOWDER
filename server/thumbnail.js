@@ -3,14 +3,14 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-var sharp;
+let sharp;
 try {
     sharp = require('sharp');
 } catch (e) {
     // do nothing
 }
 
-var images;
+let images;
 try {
     images = require('images');
 } catch (e) {
@@ -19,14 +19,14 @@ try {
     }
 }
 
-var ThumbnailW = 200;
-var ThumbnailH = 150;
+let ThumbnailW = 200;
+let ThumbnailH = 150;
 
-var previewWH = 1920;
+let previewWH = 1920;
 
 function createThumbnail(metaData, inputBuffer, callback) {
-    var w = Number(metaData.width);
-    var h = Number(metaData.height);
+    let w = Number(metaData.width);
+    let h = Number(metaData.height);
     if (!w || !h) {
         callback("Invalid Image Size", null);
         return;
@@ -36,7 +36,7 @@ function createThumbnail(metaData, inputBuffer, callback) {
         callback(null, null);
         return;
     }
-    var aspect = w / h;
+    let aspect = w / h;
     if (w > h) {
         w = Math.min(ThumbnailW, w);
         h = w / aspect;
@@ -59,7 +59,7 @@ function createThumbnail(metaData, inputBuffer, callback) {
                 callback(err, null);
             });
     } else if (images) {
-        var data = images(inputBuffer)
+        let data = images(inputBuffer)
             .resize(w, h)
             .encode('jpg');
         callback(null, data);
@@ -67,8 +67,8 @@ function createThumbnail(metaData, inputBuffer, callback) {
 }
 
 function createPreview(metaData, inputBuffer, callback) {
-    var w = Number(metaData.width);
-    var h = Number(metaData.height);
+    let w = Number(metaData.width);
+    let h = Number(metaData.height);
     if (!w || !h) {
         callback("Invalid Image Size", null);
         return;
@@ -79,7 +79,7 @@ function createPreview(metaData, inputBuffer, callback) {
         return;
     }
 
-    var aspect = w / h;
+    let aspect = w / h;
     if (w > h) {
         w = Math.min(previewWH, w);
         h = w / aspect;
@@ -102,7 +102,7 @@ function createPreview(metaData, inputBuffer, callback) {
                 callback(err, null);
             });
     } else if (images) {
-        var data = images(inputBuffer)
+        let data = images(inputBuffer)
             .resize(w, h)
             .encode('jpg');
         callback(null, data);
@@ -114,7 +114,7 @@ function createPreview(metaData, inputBuffer, callback) {
  * @result callback = (err, thumbnail, preview)
  */
 function create(metaData, inputBuffer, callback) {
-    createThumbnail(metaData, inputBuffer, function (err, thumbnail) {
+    createThumbnail(metaData, inputBuffer, (err, thumbnail)=>{
         if (err) {
             callback(err);
             return;
@@ -123,7 +123,7 @@ function create(metaData, inputBuffer, callback) {
             callback(err, thumbnail, null);
             return;
         }
-        createPreview(metaData, inputBuffer, function (err, preview) {
+        createPreview(metaData, inputBuffer, (err, preview)=>{
             callback(err, thumbnail, preview)
             return;
         });

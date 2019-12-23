@@ -5,10 +5,10 @@
 
  /* global Promise */
 
-var fs = require('fs');
-var sharp = require('sharp');
+let fs = require('fs');
+let sharp = require('sharp');
 
-var JPEG_BLOCK = 8;
+let JPEG_BLOCK = 8;
 
 /**
  * 適切な分割サイズを求める
@@ -16,8 +16,8 @@ var JPEG_BLOCK = 8;
  * @param {number} split 分割数
  * @returns {number} 分割サイズ
  */
-var calcSplitSize = function(resolution, split) {
-	var size = resolution / split;
+let calcSplitSize = function(resolution, split) {
+	let size = resolution / split;
 	return Math.ceil(size / JPEG_BLOCK) * JPEG_BLOCK;
 };
 
@@ -27,19 +27,19 @@ var calcSplitSize = function(resolution, split) {
  * @param {number} maxreso 最大辺サイズ
  * @returns {Promise<Buffer>} 縮小処理終了後resolve
  */
-var generateThumb = function(filepath, maxreso) {
+let generateThumb = function(filepath, maxreso) {
 	if (!fs.existsSync(filepath)) {
 		throw new Error(filepath + 'は存在しません。');
 	}
 
-	var image = sharp(filepath);
+	let image = sharp(filepath);
 	return image.limitInputPixels(0).metadata().then(function(metadata) {
-		var width = metadata.width;
-		var height = metadata.height;
+		let width = metadata.width;
+		let height = metadata.height;
 
-		var scale = Math.min(1.0, maxreso / Math.max(width, height));
-		var thumbWidth = Math.round(width * scale);
-		var thumbHeight = Math.round(height * scale);
+		let scale = Math.min(1.0, maxreso / Math.max(width, height));
+		let thumbWidth = Math.round(width * scale);
+		let thumbHeight = Math.round(height * scale);
 
 		return image.resize(thumbWidth, thumbHeight).toBuffer().then(function(buffer) {
 			return {
@@ -62,39 +62,44 @@ var generateThumb = function(filepath, maxreso) {
  * @param {Function} forEach 各分割済バッファに対して行う処理、Promiseを返す必要あり
  * @returns {Promise<void>} 全分割処理が終了後resolve
  */
-var splitImage = function(filepath, xsplit, ysplit, parallels, forEach) {
+let splitImage = function(filepath, xsplit, ysplit, parallels, forEach, startLogFunc, endSplitLogFunc, logFunc) {
 	if (!fs.existsSync(filepath)) {
 		throw new Error(filepath + 'は存在しません。');
 	}
 	
-	var image = sharp(filepath);
+	let image = sharp(filepath);
 	return image.limitInputPixels(0).metadata().then(function(metadata) {
-		var width = metadata.width;
-		var height = metadata.height;
+		let width = metadata.width;
+		let height = metadata.height;
 
-		var tasks = new Array(parallels).fill(Promise.resolve());
-		var taskIndex = 0;
-		var sizex = calcSplitSize(width, xsplit);
-		var sizey = calcSplitSize(height, ysplit);
+		let tasks = new Array(parallels).fill(Promise.resolve());
+		let taskIndex = 0;
+		let sizex = calcSplitSize(width, xsplit);
+		let sizey = calcSplitSize(height, ysplit);
 
-		for (var iy = 0; iy < ysplit; iy ++) {
-			for (var ix = 0; ix < xsplit; ix ++) {
-				(function() {
-					var x = ix * sizex;
-					var y = iy * sizey;
-					var i = ix + iy * xsplit;
-					tasks[taskIndex] = tasks[taskIndex].then(function() {
-						return image.extract({
-							left: x,
-							top: y,
-							width: Math.min(sizex, width - x),
-							height: Math.min(sizey, height - y)
-						}).toBuffer().then(function(buffer) {
-							return forEach(buffer, i);
+		for (let iy = 0; iy < ysplit; iy ++) {
+			for (let ix = 0; ix < xsplit; ix ++) {
+				let x = ix * sizex;
+				let y = iy * sizey;
+				let i = ix + iy * xsplit;
+				tasks[taskIndex] = tasks[taskIndex].then(function() {
+					if (startLogFunc) { startLogFunc(i); }
+					return image.extract({
+						left: x,
+						top: y,
+						width: Math.min(sizex, width - x),
+						height: Math.min(sizey, height - y)
+					}).toBuffer().then(function(buffer) {
+						if (endSplitLogFunc) { endSplitLogFunc(i); }
+						return forEach(buffer, i);
+					}).then(function () {
+						return new Promise(function(resolve) {
+							if (logFunc) { logFunc(); }
+							resolve();
 						});
 					});
-					taskIndex = (taskIndex + 1) % parallels;
-				})();
+				});
+				taskIndex = (taskIndex + 1) % parallels;
 			}
 		}
 

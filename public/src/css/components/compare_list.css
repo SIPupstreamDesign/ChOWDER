@@ -1,0 +1,38 @@
+.compare_list_ui_area {
+    display: flex;
+    align-items: center;
+}
+
+.compare_list_select {
+    min-width: 100px;
+    width: 100px;
+}
+
+.compare_list_left_wrap {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.compare_list_right_wrap {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.compare_list_exchange_button {
+    width: 40px;
+    height: 30px;
+    color: black;
+}
+
+.compare_list_apply_button {
+    width: 100px;
+    height: 30px;
+    color: black;
+    margin : 10px;
+}
