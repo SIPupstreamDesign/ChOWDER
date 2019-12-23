@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "dependencies": {
-    "csv": "*",
-    "iconv-lite": "*"
+    "iconv-lite": "*",
+    "csv": "^5.1.3"
   }
 }
