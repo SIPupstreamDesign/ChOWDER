@@ -6,10 +6,10 @@
 /*jslint devel:true*/
 /*global require, socket, module, Buffer */
 
-(function () {
+(()=>{
 	"use strict";
-	
-	var Command = {
+
+	let Command = {
 		// request command
 		AddContent : "AddContent",
 		AddTileContent : "AddTileContent",
@@ -24,7 +24,7 @@
 		GetWindowMetaData : "GetWindowMetaData",
 		GetVirtualDisplay : "GetVirtualDisplay",
 		GetGroupList : "GetGroupList",
-		
+
 		// using both server and client
 		Update : "Update",
 		UpdateContent : "UpdateContent",
@@ -38,7 +38,7 @@
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		SendMessage: "SendMessage",
-		
+
 		// to client
 		Disconnect : "Disconnect",
 
@@ -63,7 +63,7 @@
 		GetUserList :  "GetUserList",
 		GenerateControllerID : "GenerateControllerID",
 
-		// コントローラデータ. 
+		// コントローラデータ.
 		UpdateControllerData : "UpdateControllerData",
 		GetControllerData : "GetControllerData",
 
@@ -73,7 +73,14 @@
 		RTCAnswer : "RTCAnswer",
 		RTCIceCandidate : "RTCIceCandidate",
 		RTCClose : "RTCClose",
+
+		// ディスプレイ配信許可設定
+		AskDisplayPermission : "AskDisplayPermission", // ログイン時に、サーバが許可していいか聞く
+		UpdateDisplayPermissionList : "UpdateDisplayPermissionList", // 許可設定の変更
+		DeleteDisplayPermissionList : "DeleteDisplayPermissionList",
+
+		GetDisplayPermissionList : "GetDisplayPermissionList", // 許可設定一覧をサーバに要求する
 	};
-	
+
 	module.exports = Command;
-}());
+})();

@@ -1,4 +1,4 @@
 {
 	"inputDirectory" : "in",
-	"outputDirectory" : "../client/locales/"
+	"outputDirectory" : "../public/locales/"
 }

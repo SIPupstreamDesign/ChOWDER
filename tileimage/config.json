@@ -5,5 +5,7 @@
 	"xsplit": 8,
 	"ysplit": 8,
 	"contentid": "contentid",
-	"contentgrp": "default"
+	"contentgrp": "default",
+	"reload_latest" : true,
+	"visible" : true
 }

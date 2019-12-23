@@ -9,6 +9,34 @@ const csv = require('csv')
 const path = require('path')
 const iconv = require('iconv-lite');
 
+const stream = require('stream');
+const makeMyStream = function(result) {
+  let index = 0;
+  return new stream.Transform({
+    readableObjectMode: true,
+    writableObjectMode: true,
+    transform: function(chunk, encoding, callback) {
+        if (index === 0) {
+            console.log("start")
+
+            for (let k = 1; k < chunk.length; ++k) {
+                result.push({
+                    lang : chunk[k],
+                    json : {}
+                });
+            }
+        } else {
+            for (let k = 0; k < result.length; ++k) {
+                let value = chunk[k + 1];
+                result[k].json[chunk[0]] = value;
+            }
+        }
+        ++index;
+        callback();
+    }
+  });
+};
+
 let config;
 
 try {
@@ -29,7 +57,6 @@ if (!config.hasOwnProperty('outputDirectory')) {
 fs.readdir(config.inputDirectory, (err, files) => {
     for (let i = 0; i < files.length; ++i) {
         let file = path.join(config.inputDirectory, files[i]);
-        let index = 0;
         let result = [];
         console.log("reading.. ", file)
 
@@ -55,24 +82,7 @@ fs.readdir(config.inputDirectory, (err, files) => {
                 }
                 console.log("done")
             })
-            .pipe(csv.transform(function(record, callback){
-                if (index === 0) {
-                    console.log("start")
-
-                    for (let k = 1; k < record.length; ++k) {
-                        result.push({
-                            lang : record[k],
-                            json : {}
-                        });
-                    }
-                } else {
-                    for (let k = 0; k < result.length; ++k) {
-                        let value = record[k + 1];
-                        result[k].json[record[0]] = value;
-                    }
-                }
-                ++index;
-            }))
+            .pipe(makeMyStream(result))
     }
 });
 

@@ -1,0 +1,25 @@
+
+.forcolorpicker {
+	min-height: 260px;
+    min-width: 280px;
+	position: fixed;
+	top: calc(50% - 130px);
+	left: calc(50% - 140px);
+	background-color:transparent;
+	z-index: 10000002;
+	display: none;
+	text-align: left;
+    padding: 9px;
+}
+.cursor_color_ok {
+    min-width: 60px;
+	position : absolute;
+	bottom : 10px;
+	right : 75px;
+}
+.cursor_color_cancel {
+    min-width: 60px;
+	position : absolute;
+	bottom : 10px;
+	right : 10px;
+}

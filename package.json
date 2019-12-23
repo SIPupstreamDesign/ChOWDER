@@ -11,7 +11,13 @@
   },
   "scripts": {
     "standalone-electron": "electron standalone-electron",
-    "desktop-capture": "electron desktop_capture"
+    "desktop-capture": "electron desktop_capture",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cd server && node server.js",
+    "webpack": "webpack",
+    "install": "webpack -p --release && cd standalone-electron && npm install",
+    "dev": "webpack-dev-server",
+    "watch": "webpack --mode development --watch"
   },
   "dependencies": {
     "argv": "0.0.2",
@@ -19,8 +25,20 @@
     "image-size": "*",
     "phantom": "^6.0.3",
     "redis": "*",
-    "socket.io": "2.0.4",
     "websocket": "*",
-    "electron": "^2.0.2"
+    "electron": "^4.1.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "babel-loader": "^8.0.5",
+    "babel-polyfill": "^6.26.0",
+    "css-loader": "^2.1.0",
+    "file-loader": "^3.0.1",
+    "style-loader": "^0.23.1",
+    "url-loader": "^1.1.2",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
   }
 }
