@@ -32,7 +32,7 @@ Table of Contents
   - [Layout Tab](#layout-tab)
   - [Property Window](#property-window)
   - [Working with Video Content](#working-with-video-content)
-- [User Permissions and Administrator Screen](#user-permissions-and-administrator-screen)
+- [Controller Permissions and Administrator Screen](#controller-permissions-and-administrator-screen)
   - [Managing Permissions](#managing-permissions)
   - [Administrator Screen](#administrator-screen)
 - [Working with Display Screen](#working-with-display-screen)
@@ -61,8 +61,11 @@ Table of Contents
 - [Displaying and Managing Large Scale Image Data](#displaying-and-managing-large-scale-image-data)
 - [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
   - [Overview](#overview-6)
-  - [Application Setup](#application-setup-1)
+  - [Installing the Application](#installing-the-application)
   - [Launching the Application](#launching-the-application-1)
+  - [Application Setup](#application-setup-1)
+  - [Editing the Configuration File](#editing-the-configuration-file)
+  - [Installation on remote host](#installation-on-remote-host)
 - [Using HTTPS](#using-https)
   - [Overview](#overview-7)
 
@@ -85,14 +88,14 @@ ChOWDER supports the following evironments.
 
 - OS
   - Linux(CentOS7) or higher
-  - Windows7 or higher
-  - MacOSX 10.10 or higher
+  - Windows10 or higher
+  - MacOSX 10.12 or higher
 
 - Web browsers to render client pages
-  - Apple Safari 9.x or higher
-  - Firefox 48.0 or higher
-  - Google Chrome 53 or higher
-  - Internet Explorer 11 or higher
+  - Apple Safari 12.x or higher
+  - Firefox 65.0 or higher
+  - Google Chrome 72 or higher
+  - Edge 44 or higher
 
 Each tile must display a web browser in full screen mode.
 
@@ -201,12 +204,13 @@ The server program reads the `server/setting.json` file while launching to confi
 
     {
         "wsMaxMessageSize": 67108864,
-        "reductionResolution" : 1920
+        "reductionResolution" : 1920,
+        "enableMeasureTime" : false
     }
 
--   wsMaxMessageSize sets the maximum size of a single message that the server transmits. 
--   reductionResolution sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
-
+-   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
+-   `reductionResolution` sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
+-   `enableMeasureTime` sets whether time log output is enabled or not. The log file is output to `tileimage/log`, `server/log`. You can also download logs on Display on Display.
 
 
 Managing Administrative Users
@@ -214,7 +218,7 @@ Managing Administrative Users
 You can modify the administrator configurations by starting up ChOWDER.
 The default password for the administrator is “admin”.
 
-The section "User Permissions and Administrator Screen" in this document gives a more 
+The section "Controller Permissions and Administrator Screen" in this document gives a more 
 
 The Administrator Configuration File
 ---------------------------------------------------
@@ -231,7 +235,7 @@ To add or remove an administrator during the startup, create an `admin.json` fil
         }
     }
 
-In this example, the user "administrator" is added  and “administrator2” is deleted.
+In this example, the controller "administrator" is added  and “administrator2” is deleted.
 
 The entry `“command” : “add”` adds an administrator (actually, the same command can be used for overwriting an existing administrator configuration).  `“command” : “delete”` deletes an administrator. The `"password"` entry is mandatory when adding an administrator.
 The `admin.json` file will be processed when launching ChOWDER and administrators will be added or removed at that time. 
@@ -314,8 +318,14 @@ Under [Settings], you can toggle the appearance of ChOWDER's *remote cursor*.
 *Selecting [Settings]*
 
 The remote cursor is a cursor that appears on the tiled displays.
+
 <img src="image/remotecursor.png" alt="リモートカーソル" width="415" />
 *The remote cursor*
+
+You can specify the size of the remote cursor as the number of pixels based on VirtualDisplay.
+
+<img src="image/cursorsize.png" alt="カーソルサイズ" width="415" />
+*remote cursor size*
 
 You can change languages in the menu below.
 
@@ -467,6 +477,14 @@ The [Display] Tab
 The [Display] tab shows the virtual display area and all display tiles connected to the ChOWDER server. ChOWDER's controller page allows you to move tiles in the virtual display areas. Adding Contents to the arranged Display enables a shared workspace. Use the mouse to drag and drop Display into the VirtualDisplaySpace.
 The example above shows the environment when a client is connected. 
 
+<img src="image/newdisplay.png" alt="image" width="207" />
+
+In the NewDisplays area, the newly accessed the [Display] is appeared.
+You can specify permission to distribute content for new Display.
+Content will not be delivered to the [Display] until permission.
+Once selected, the permission data is saved, and in the next access it is delivered according to stored the permission data.
+
+
 Virtual Display Setup
 ---------------------
 
@@ -524,26 +542,26 @@ The Select All button selects all connected Display.
 <img src="image/3Button3.png" alt="全選択ボタン" width="377" />
 *Select All Button*
 
-### DisplayGroup Setup
+### Site Setup
 
-You can set the DisplayGroup assigned to the display within the Display tab.
-You can set one Virtual Display per DisplayGroup.
+You can set the Site assigned to the display within the Display tab.
+You can set one Virtual Display per Site.
 
-You can add a group or change the order of a created group by using the button.
-In the settings menu, you can change the name of the group, the color of the group, and delete the group. 
+You can add a site or change the order of a created site by using the button.
+In the settings menu, you can change the name of the site, the color of the site, and delete the site. 
 
-<img src="image/display_group1.png" alt="DisplayGroupの追加, 順序変更" height="321" />
-*Adding and Changing the Order of the DisplayGroup*
+<img src="image/display_group1.png" alt="Siteの追加, 順序変更" height="321" />
+*Adding and Changing the Order of the Site*
 <br>
-<img src="image/display_group2.png" alt="DisplayGroupの設定" height="321" />
-*DisplayGroup Setup*
+<img src="image/display_group2.png" alt="Siteの設定" height="321" />
+*Site Setup*
 
-### Assigning the DisplayGroup
+### Assigning the Site
 
-You can make changes to the group assigned to Display by right-clicking menu in Display or through the menu on the lower right of the screen. Changes cannot be made to Groups in VirtualDisplay. 
+You can make changes to the site assigned to Display by right-clicking menu in Display or through the menu on the lower right of the screen. Changes cannot be made to Groups in VirtualDisplay. 
 
-<img src="image/display_group3.png" alt="DisplayGroupの変更" height="321" />
-*Make Changes to DisplayGroup*
+<img src="image/display_group3.png" alt="Siteの変更" height="321" />
+*Make Changes to Site*
  
 
 
@@ -695,9 +713,19 @@ You can configure the settings per below:
 
 1. Change video input device (only video contents from the camera can be set up)
 2. Change audio input device (only video contents from the camera can be set up)
-3. Set video quality. You can set the bitrate of the video streamed via WebRTC.
-4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.
+3. Set video quality. 
+   If you select `Custom`, You can set the bitrate of the video streamed via WebRTC.(*1)
+   If you select `RawResolution`, it switches to delivery mode using WebRTC Datachannel, and you can deliver the movie without any deterioration in full scale.(*2)
+4. Set audio quality. You can set the bitrate of the audio streamed via WebRTC.(*1)
 5. You can look up information on WebRTC quality saved in the metadata of Contents.
+
+(*1)
+The bitrate set here is used at the start of distribution.
+Since the bitrate is automatically changed to the optimum bitrate at the time of distribution by WebRTC,
+The set bitrate and actual bitrate are different.
+
+(*2)
+Distribution with `RawResolution` is effective only when distributing movie files.
 
 ### Bulk Operation of Video
 
@@ -711,24 +739,28 @@ The operation is as follows.
 *Bulk operation of video*
 
 
-User Permissions and Administrator Screen
+Controller Permissions and Administrator Screen
 ==================================================================
 
 Managing Permissions
 ---------------------------------------------------
 ChOWDER has 4 permission types. An *administrator* permission lets one access and edit all the functionalities of ChOWDER.
 A *display* 
-In a typical scenario, many users work in a group in front of a tiled displays system. A *group user* permission is designed for this purpose. By default, this permission lets one view and edit the contents of her belonging group from their own computers.
+In a typical scenario, many users work in a group in front of a tiled displays system. A *group* permission is designed for this purpose. By default, this permission lets one view and edit the contents of her belonging group from their own computers.
 
-|User Categpry| Overview |Access Level|
+|Category| Overview |Access Level|
 | ---- | ---- | ---- |
 |Administrator| Administrator can access all functions | All functions including Administrator Screen |
-|Group User| User per Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
-|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
+|Group| User per Content Group | Default setting of access restrictions of the Administrator Screen permits editing and viewing for own group and default setting|
+
+You can set password and level of access to them. 
+
+### Special Permissions
+The Display and Guest can be used without password in and you can only set the access privilege.
+|Category| Overview |Access Level|
+| ---- | ---- | ---- |
 |Guest| Guest User without Password | Default setting of access restrictions of the Administrator Screen permits editing and viewing for default setting only |
-
-You can set password and level of access per user. 
-
+|Display| User Connected to Display | Default setting of access restrictions of the Administrator Screen permits editing and viewing for all groups |
 
 Administrator Screen
 ---------------------------------------------------
@@ -761,19 +793,26 @@ You can set up each user’s permission in Viewing/Editing Rights Settings.
 <img src="image/management5.png" alt=" 閲覧・編集権限の設定" width="585" />
 *Viewing/Editing Permission Setup*
 
-1. Select user to set up.
-2. Choose whether selected user has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
-3. Select the display group the user has permission to edit. Users with permission for “all” are able to edit/view newly created groups as well.
-4. Set up selected user with permission levels for editing groups and working with Display.
+1. Select controller to set up.
+2. Choose whether selected controller has permission to edit/view. Users with permission for “all” are able to edit/view newly created groups as well.
+3. Select the site the controller has permission to edit. Users with permission for “all” are able to edit/view newly created sites as well.
+4. Set up selected controller with permission levels for editing groups and working with Display.
 
 
 ### Password Setup
 
-You can change a user’s password in Password Setup
+You can change controller’s password in Password Setup
 The previous password will be required only for changing the Administrator’s password. 
 
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
 *Password Setup*
+
+### Display Delivery Permission Setup
+In the display setting, you can change the content delivery permission setting.
+It will be delivered only to allowed displays.
+
+<img src="image/management7.png" alt="ディスプレイ設定" width="585" />
+*Display Delivery Permission Setup*
 
 
 Working with Display Screen
@@ -1070,7 +1109,9 @@ The format of the setup file is as follows:
         "xsplit": 8,
         "ysplit": 8,
         "contentid": "contentid",
-        "contentgrp": "default"
+        "contentgrp": "default",
+        "reload_latest" : true,
+	    "visible" : true
     }
 
 -	 `id` is fixed as `APIUser`
@@ -1078,6 +1119,9 @@ The format of the setup file is as follows:
 -	Use the URL of the ChOWDER WebSocket server for 'url'
 -	Set the number of horizontal and vertical image splits (sub-divisions) in `xplit` / `ysplit`.
 	Designate Content ID and Content Group each in `contentid` / `contentgrp`
+-   `reload_latest`: Represents whether to display the latest image registered using the `--metadata` option.
+-   `visible`: Represents visibility of registered images.
+
 
 Using the Application
 --------------------------------------------------------------------------------
@@ -1099,8 +1143,8 @@ Run the command below located in the `bin` directory
 
 ### Command Option
 
-Set the path of the setup file using the `--config` option. The default path is `tileimage/tileimage.json`.
-Set the meta data of images using `--metadata` option.
+-   `--config` (Optional) : Set the path of the setup file. The default path is `tileimage/tileimage.json`.
+-   `--metadata` (Optional) : Set the meta data of images.
 
 See below example of command:
 
@@ -1136,6 +1180,21 @@ Overview
 --------------------------------------------------------------------------------
 You can automatically position a frameless window on the screen using the display application for the Electron version of ChOWDER.
 
+
+Installing the Application
+---------------------------------------------------
+
+Installation of Electron version ChOWDER is included in the [installation of Chowder](#installation).
+
+Launching the Application
+---------------------------------------------------
+
+Run the following executable located in the `standalone-electron` directory
+
+ - Windows: ChOWDER-Standalone-Electron-win32-x64/ChOWDER-Standalone-Electron.exe
+ - Mac: ChOWDER-Standalone-Electron-darwin-x64/ChOWDER-Standalone-Electron.app
+ - Linux: ChOWDER-Standalone-Electron-linux-x64/ChOWDER-Standalone-Electron
+
 Application Setup
 ---------------------------------------------------
 Set up the application using the setup file in JSON format.
@@ -1145,6 +1204,7 @@ The format for the setup file is as follows:
 
     {
         "url": "http://localhost:8080/view.html",
+        "password" : "password",
         "windows": {
             "tile1": {
                 "group": "sample",
@@ -1168,8 +1228,11 @@ The format for the setup file is as follows:
     }
 
 -	Use the URL of the ChOWDER server for `url`.
+-   For `password`, specify a password for display distribution permission.
+    By setting same password for `ElectronDisplay` on the controller,
+    Content is delivered without separately setting display permission.
 -	`windows` is the object that has the Display ID as key and display setup as value.
-    -	Designate the display group in `Group`.
+    -	Designate the site in `Group`.
     -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
     -	Set the size `[width, height]` of the window in `size`.
     -	Set the position `[Vertical, Horizontal]` within VDA in `vda_position`. The origin is the upper left corner of Virtual Display.
@@ -1177,15 +1240,21 @@ The format for the setup file is as follows:
     -	Designate whether to display or to not display the full screen of the window in `fullscreen`.
     -	Designate whether to display or to not display the window frame in `frame`. 
 
-
-Launching the Application
+Editing the Configuration File
 ---------------------------------------------------
 
-Run the shell script below located in the `standalone-electron` directory
+Running `npm install` in the` standalone-electron` directory and overwriting the package will reflect the settings.
 
-    npm start
+Installation on remote host
+---------------------------------------------------
 
+By copying and executing the following folder containing the executable file, the Electron version ChOWDER display will also be launched on the remote host.
 
+ - Windows: ChOWDER-Standalone-Electron-win32-x64
+ - Mac: ChOWDER-Standalone-Electron-darwin-x64
+ - Linux: ChOWDER-Standalone-Electron-linux-x64
+
+ To edit the configuration file after copying to the remote host, edit `conf.json` in the directory containing the executable file.
 
 Using HTTPS
 ==================================================================
