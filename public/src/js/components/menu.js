@@ -129,7 +129,7 @@ class Menu extends EventEmitter {
 			this.headIDInput.className = "head_id_input";
 			headIDMenu.appendChild(this.headIDInput);
 		}
-		else
+		else if (type === "display") 
 		{
 			// タイトル リンク無し
 			let headModeText = document.createElement('div');
@@ -159,6 +159,18 @@ class Menu extends EventEmitter {
 			this.headIDInput.className = "head_id_input";
 			headIDMenu.appendChild(this.headIDInput);
 		}
+		else
+		{
+			// タイトル リンク無し
+			let headModeText = document.createElement('div');
+			headModeText.className = "head_mode_text stopselect";
+			let headModeTextContent = document.createElement('div');
+			headModeTextContent.textContent = "ChOWDER Display Setting";
+			headModeTextContent.className = "chowder_text";
+			headModeText.appendChild(headModeTextContent);
+			headModeMenu.appendChild(headModeText);
+		}
+
 		this.background = null;
 
 

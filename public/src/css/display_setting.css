@@ -1,0 +1,60 @@
+*:not(input) {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	box-sizing: border-box;
+}
+
+.stopselect{
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+html {
+    background-color:rgb(7, 22, 50);
+}
+body {
+	overflow:hidden;
+	background-color: rgb(7, 22, 50);
+	margin: 0px;
+}
+
+div {
+	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	white-space: nowrap;
+}
+
+a {
+	text-decoration : none;
+}
+
+pre {
+	font-family: "monospace, serif";
+	-webkit-box-sizing: "";
+	box-sizing: content-box;
+	line-height: 1;
+	margin: 0;
+}
+
+.head_menu {
+	background: rgb(112, 112, 112);
+	height: 30px;
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	z-index: 1000000;
+}
+
+
+.head_mode_menu {
+	text-align: center;
+	/*padding: 8px;*/
+}

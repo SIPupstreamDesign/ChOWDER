@@ -13,6 +13,7 @@ module.exports = {
 	entry: {
 			"controller" : './public/src/controller_app.js',
 			"display" : './public/src/display_app.js',
+			"display_setting" : './public/src/display_setting_app.js',
 	},
 	// 出力の設定
 	output: {
