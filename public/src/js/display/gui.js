@@ -36,6 +36,7 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, (err, data) => {
             for (let i = 0; i < data.length; i = i + 1) {
                 this.showDisplayID(data[i].id);
+                this.showArMarker()
             }
         });
 
@@ -959,6 +960,10 @@ class GUI extends EventEmitter {
         window.parent.document.title = "Display ID:" + displayID;
         this.getHeadMenu().setIDValue(displayID);
         document.getElementById('displayid').innerHTML = "ID:" + displayID;
+    }
+
+    showArMarker(){
+        document.getElementById('ar_marker').style.display="none"
     }
 }
 

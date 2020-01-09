@@ -67,6 +67,34 @@ pre {
 	margin: 0;
 }
 
+.ar_marker {
+	min-height: 800px;
+	min-width: 800px;
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background-color:#000000;
+	color:#ffffff;
+	opacity: 0.9;
+	z-index: 0;
+	display: block;
+}
+
+
+.ar_marker_img {
+	width: 2000;
+	height: 2000;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform:translate(-50%,-50%);
+	opacity: 0.9;
+	z-index: 0;
+}
+
+
 .displayid_area {
 	min-height: 800px;
 	min-width: 800px;

@@ -31,11 +31,12 @@
 						callback(true, electron_password);
 					});
 					ipcRenderer.send("electron_login", "login");
+
 				} else {
 					console.log("not electron");
 					callback(false);
 				}
-			};
+			};	
 		})
 	</script>
 	<script type="text/javascript" src="3rd/js/eventemitter3/index.js"></script>
@@ -56,6 +57,10 @@
 	<div id="preview_area">
 	</div>
 
+	<div id="ar_marker" class="ar_marker">
+		<image class="ar_marker_img" src="./markers/mark1.png">
+	</div>
+	
 	<div id="displayid_area" class="displayid_area">
 		<div id="displayid" class="displayid"></div>
 	</div>
