@@ -58,3 +58,11 @@ pre {
 	text-align: center;
 	/*padding: 8px;*/
 }
+
+#arjs-video{
+	z-index:0 !important;
+}
+
+.a-canvas{
+	z-index:1;
+}
