@@ -86,6 +86,40 @@
         window.removeEventListener("resize");
     }
     
+    var ColorMapSource = function (source) {
+        itowns.TMSSource.call(this, source);
+        this.url = source.url;
+    };
+	ColorMapSource.prototype = Object.create(itowns.TMSSource.prototype);
+
+    function addMap(view, params) {
+        var url = params.url;
+        url = url.split("${z}").join("%TILEMATRIX");
+        url = url.split("${x}").join("%COL");
+        url = url.split("${y}").join("%ROW");
+        var config = {
+            "projection": "EPSG:3857",
+            "isInverted": true,
+            "format": "image/png",
+            "url": url,
+            "tileMatrixSet": "PM",
+            "updateStrategy": {
+                "type": 3
+            },
+        };
+        if (params.hasOwnProperty('zoom')) {
+            config.zoom = params.zoom;
+        }
+        if (params.hasOwnProperty('format')) {
+            config.format = params.format;
+        }
+        var mapSource = new itowns.TMSSource(config);
+        var colorLayer = new itowns.ColorLayer('test', {
+            source: mapSource
+        });
+        view.addLayer(colorLayer);
+    }
+
     function injectChOWDERiTownCallbacks(view, viewerDiv) {
         var resizeWindow = function (rect) {
             if (!rect) return;
@@ -109,14 +143,22 @@
         window.addEventListener('message', function (evt) {
             try {
                 var data = JSON.parse(evt.data);
-                // 初期メッセージの受け取り
+                console.error(data)
+                // 親フレームから情報を受け取り
                 if (data.method === "chowder_itowns_update_camera_callback") 
                 {
+                    // カメラ更新命令
                     applyCameraWorldMat(view, data.params);
                 }
                 else if (data.method === "chowder_itowns_resize_callback")
                 {
+                    // リサイズ命令
                     resizeWindow(data.params);
+                }
+                else if (data.method === "chowder_itowns_add_map")
+                {
+                    // マップ追加命令
+                    addMap(view, data.params);
                 }
             } catch(ex) {
                 console.error(ex);
@@ -169,6 +211,12 @@
         var layerDataList = []
         view.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, function (evt) {
             layerDataList = getLayerData(view);
+            window.parent.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                id : messageID + 1,
+                method :  "chowder_itowns_update_layer",
+                params : layerDataList
+            }));
         })
 
         window.addEventListener('message', function (evt) {
@@ -230,12 +278,6 @@
                             id : messageID + 1,
                             method : "chowder_itowns_update_thumbnail",
                             params : thumbnailBase64
-                        }));
-                        window.parent.postMessage(JSON.stringify({
-                            jsonrpc : "2.0",
-                            id : messageID + 1,
-                            method :  "chowder_itowns_update_layer",
-                            params : layerDataList
                         }));
                         done = true;
                     }

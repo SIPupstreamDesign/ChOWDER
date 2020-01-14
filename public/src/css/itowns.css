@@ -93,3 +93,23 @@ p {
 	margin: 5px;
 	border: 1px solid;
 }
+
+.map_add_button {
+	margin : 5px;
+    width: 40px;
+    font-size: 20px;
+	display : block;
+}
+
+.input_dialog {
+	width : 500px;
+}
+
+.input_dialog_input {
+	width : 425px;
+}
+
+.map_select {
+	margin : 5px;
+	width : 240px;
+}

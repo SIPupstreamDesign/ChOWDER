@@ -10,7 +10,9 @@ import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
 import Constants from '../common/constants';
-import SelectList from '../components/select_list.js';
+import Button from '../components/button';
+import InputDialog from '../components/input_dialog';
+import PopupBackground from '../components/popup_background';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -56,6 +58,19 @@ class GUI extends EventEmitter {
         // ログイン失敗
         this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
             this.loginMenu.showInvalidLabel(true);
+        });
+
+        // ためしにマップ追加
+        this.store.on(Store.EVENT_DONE_ADD_MAP, (err, data) => {
+            console.log("ためしにマップ追加")
+            // iframe内のchowder injectionの初期化
+            this.iframe.contentWindow.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                method : "chowder_itowns_add_map",
+                params : {
+                    url  : data
+                }
+            }));
         });
     }
 
@@ -120,21 +135,47 @@ class GUI extends EventEmitter {
         contentName.innerHTML = this.itownSelect.getSelectedValue();
         propElem.appendChild(contentName);
 
-        // レイヤーリストタイトル
-        let layerTitle = document.createElement('p');
-        layerTitle.className = "title";
-        layerTitle.innerHTML = "Map List";
-        propElem.appendChild(layerTitle);
+        // マップリストタイトル
+        let mapTitle = document.createElement('p');
+        mapTitle.className = "title";
+        mapTitle.innerHTML = "Map List";
+        propElem.appendChild(mapTitle);
 
-        // レイヤー一覧
-        this.layerSelectList = new SelectList();
-        propElem.appendChild(this.layerSelectList.getDOM());
+        // マップ一覧
+        this.mapSelect = new Select();
+        this.mapSelect.getDOM().className = "map_select";
+        this.mapSelect.getDOM().size = 10;
+        propElem.appendChild(this.mapSelect.getDOM());
+
+        // マップ追加ボタン
+        this.mapAddButton = new Button();
+        this.mapAddButton.setDataKey("+");
+        this.mapAddButton.getDOM().className = "map_add_button btn btn-primary";
+        propElem.appendChild(this.mapAddButton.getDOM());
+
+        this.mapAddButton.on('click', () => {
+            let background = new PopupBackground();
+
+            background.show();
+            InputDialog.showTextInput({
+                name: '地図追加',
+                initialValue: "http://localhost/map/${z}/${x}/${y}.png",
+                okButtonName: "OK",
+            }, (value) => {
+
+                console.log("追加", value)
+                this.action.addMap(value);
+
+                background.close();
+            });
+        });
     }
 
     initLayerSelectList(layerDatas) {
+        this.mapSelect.clear();
         for (let i = 0; i < layerDatas.length; ++i) {
             let data = layerDatas[i];
-            this.layerSelectList.add(data.id + " - " + data.type, data.url);
+            this.mapSelect.addOption(data.url, data.id + " - " + data.type);
         }
     }
 
@@ -145,18 +186,15 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showWebGL() {
-        console.error("showWebGL")
-
-        let iframe = document.createElement('iframe');
-        iframe.src = this.itownSelect.getSelectedValue();
-        iframe.style.width = "100%";
-        iframe.style.height = "100%";
-        iframe.style.border = "none";
+        this.iframe = document.createElement('iframe');
+        this.iframe.src = this.itownSelect.getSelectedValue();
+        this.iframe.style.width = "100%";
+        this.iframe.style.height = "100%";
+        this.iframe.style.border = "none";
         
-        iframe.onload = () => {
-            console.error("load", iframe.contentWindow)
-            iframe.contentWindow.chowder_itowns_view_type = "itowns";
-            iframe.contentWindow.focus();
+        this.iframe.onload = () => {
+            this.iframe.contentWindow.chowder_itowns_view_type = "itowns";
+            this.iframe.contentWindow.focus();
             
             // iframeからのレスポンス
             window.addEventListener("message", (evt) => {
@@ -189,13 +227,13 @@ class GUI extends EventEmitter {
             });
             
             // iframe内のchowder injectionの初期化
-            iframe.contentWindow.postMessage(JSON.stringify({
+            this.iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
                 method : "chowder_injection_init"
             }));
         }
 
-        document.getElementById('itowns').appendChild(iframe);
+        document.getElementById('itowns').appendChild(this.iframe);
     }
 
     addITownContent(thumbnailBuffer) {

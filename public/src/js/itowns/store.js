@@ -175,6 +175,22 @@ class Store extends EventEmitter {
         Connector.send(Command.Logout, {}, function () {
         });
     }
+
+    _addMap(data) {
+        //if (this.metaData) {
+            /*
+            this.metaData.mapList = data;
+            let updateData = JSON.parse(JSON.stringify(this.metaData));
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+            this.operation.updateMetadata(updateData, (err, res) => {
+
+            });   
+            */
+           this.emit(Store.EVENT_DONE_ADD_MAP, null, data);
+        //}
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -184,4 +200,5 @@ Store.EVENT_LOGIN_SUCCESS = "login_success";
 Store.EVENT_LOGIN_FAILED = "login_failed";
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
+Store.EVENT_DONE_ADD_MAP = "done_add_map";
 export default Store;

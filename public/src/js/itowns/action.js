@@ -71,6 +71,14 @@ class Action extends EventEmitter
     updateCameraWorldMatrix(data) {
         this.emit(Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX, null, data);
     }
+
+    /**
+     * 地図の追加
+     * @param {*} data 
+     */
+    addMap(data) {
+        this.emit(Action.EVENT_ADD_MAP, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -78,5 +86,6 @@ Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_ADD_CONTENT = "addContent";
+Action.EVENT_ADD_MAP = "addMap";
 Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
 export default Action;
