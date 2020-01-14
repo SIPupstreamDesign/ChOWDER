@@ -126,6 +126,7 @@ class Operation
 		if (!metaData.hasOwnProperty("zIndex")) {
 			metaData.zIndex = 0;
 		}
+		/*
 		if (binary instanceof ArrayBuffer && !Validator.checkCapacity(binary.byteLength)) {
 			return;
 		}
@@ -135,6 +136,7 @@ class Operation
 		if (binary instanceof String && !Validator.checkCapacity(binary.length)) {
 			return;
 		}
+		*/
 		this.connector.sendBinary(Command.AddContent, metaData, binary, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_ADD_CONTENT, err, reply, (err, reply) => {
                 if (endCallback) {

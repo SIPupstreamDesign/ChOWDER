@@ -429,19 +429,39 @@ class GUI extends EventEmitter {
                     this.showDebugMessage(timeString);
                 }
             };
-            if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
-                if (metaData.hasOwnProperty('cameraWorldMatrix')) {
-                    iframe.contentWindow.chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
-                }
-                iframe.contentWindow.chowder_itowns_resize_callback(rect);
-                this.action.addItownFunc({
-                    id : metaData.id,
-                    func : {
-                        chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback,
-                        chowder_itowns_resize_callback : iframe.contentWindow.chowder_itowns_resize_callback
+
+            // 初回に一度実行
+            iframe.contentWindow.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                method : "chowder_itowns_update_camera_callback",
+                params : metaData.cameraWorldMatrix
+            }));
+            iframe.contentWindow.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                method : "chowder_itowns_resize_callback",
+                params : rect
+            }));
+
+            // chowderサーバから受信したカメラ情報などを、displayのiframe内に随時送るためのコールバックイベントを登録
+            this.action.addItownFunc({
+                id : metaData.id,
+                func : {
+                    chowder_itowns_update_camera_callback : (mat) => {
+                        iframe.contentWindow.postMessage(JSON.stringify({
+                            jsonrpc : "2.0",
+                            method : "chowder_itowns_update_camera_callback",
+                            params : mat
+                        }));
+                    },
+                    chowder_itowns_resize_callback : (rect) => {
+                        iframe.contentWindow.postMessage(JSON.stringify({
+                            jsonrpc : "2.0",
+                            method : "chowder_itowns_resize_callback",
+                            params : rect
+                        }));
                     }
-                });
-            }
+                }
+               });
         }
         elem.innerHTML = "";
         elem.appendChild(iframe);

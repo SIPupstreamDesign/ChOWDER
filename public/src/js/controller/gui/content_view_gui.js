@@ -214,17 +214,25 @@ class ContentViewGUI extends EventEmitter {
 				iframe.style.pointerEvents = "none";
 				iframe.onload = () => {
 					iframe.contentWindow.chowder_itowns_view_type = "controller";
-					if (iframe.contentWindow.chowder_itowns_update_camera_callback) {
-						this.action.addItownFunc({
-							id : metaData.id,
-							func : {
-								chowder_itowns_update_camera_callback : iframe.contentWindow.chowder_itowns_update_camera_callback
+					this.action.addItownFunc({
+						id : metaData.id,
+						func : {
+							chowder_itowns_update_camera_callback :  (mat) => {
+								iframe.contentWindow.postMessage(JSON.stringify({
+									jsonrpc : "2.0",
+									method : "chowder_itowns_update_camera_callback",
+									params : mat
+								}));
 							}
-						});
-						if (metaData.hasOwnProperty("cameraWorldMatrix")) {
-							iframe.contentWindow.chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
 						}
-					}
+					});
+					
+					// 初回に一度実行
+					iframe.contentWindow.postMessage(JSON.stringify({
+						jsonrpc : "2.0",
+						method : "chowder_itowns_update_camera_callback",
+						params : JSON.parse(metaData.cameraWorldMatrix)
+					}));
 				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);

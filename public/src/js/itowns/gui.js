@@ -10,6 +10,22 @@ import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
 import Constants from '../common/constants';
+import SelectList from '../components/select_list.js';
+
+function serializeFunction(f) {
+    return encodeURI(f.toString());
+}
+
+// canvasをArrayBufferに
+function toArrayBuffer(base64) {
+    // Base64からバイナリへ変換
+    var bin = atob(base64.replace(/^.*,/, ''));
+    var buffer = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) {
+        buffer[i] = bin.charCodeAt(i);
+    }
+    return buffer.buffer;
+}
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -32,6 +48,7 @@ class GUI extends EventEmitter {
             this.loginMenu.showInvalidLabel(false);
             this.loginMenu.show(false);
 
+            this.initPropertyPanel();
             this.showWebGL();
             ///this.addITownContent();
         });
@@ -88,6 +105,35 @@ class GUI extends EventEmitter {
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
     }
 
+    initPropertyPanel() {
+        let propElem = document.getElementById('itowns_property');
+
+        // コンテンツタイトル
+        let contentTitle = document.createElement('p');
+        contentTitle.className = "title";
+        contentTitle.innerHTML = "Base Content";
+        propElem.appendChild(contentTitle);
+
+        // コンテンツ名
+        let contentName = document.createElement('p');
+        contentName.className = "property_text";
+        contentName.innerHTML = this.itownSelect.getSelectedValue();
+        propElem.appendChild(contentName);
+
+        // レイヤーリストタイトル
+        let layerTitle = document.createElement('p');
+        layerTitle.className = "title";
+        layerTitle.innerHTML = "Layer List";
+        propElem.appendChild(layerTitle);
+
+        // レイヤー一覧
+        let selectList = new SelectList();
+        selectList.add("地理院STD", "piyo");
+        selectList.add("地理院DEM", "moga");
+        propElem.appendChild(selectList.getDOM());
+
+    }
+
     /**
      * WebGLを表示
      * @param {*} elem 
@@ -95,23 +141,50 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showWebGL() {
+        console.error("showWebGL")
+
         let iframe = document.createElement('iframe');
         iframe.src = this.itownSelect.getSelectedValue();
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.border = "none";
+        
         iframe.onload = () => {
+            console.error("load", iframe.contentWindow)
             iframe.contentWindow.chowder_itowns_view_type = "itowns";
             iframe.contentWindow.focus();
-            // iframe内のitownsからのコールバック
-            iframe.contentWindow.chowder_itowns_update_camera = (mat) => {
-                this.action.updateCameraWorldMatrix({
-                    mat : mat
-                });
-            };
-            iframe.contentWindow.chowder_itowns_update_thumbnail = (thumbnailBuffer) => {
-                this.addITownContent(thumbnailBuffer);
-            };
+            
+            // iframeからのレスポンス
+            window.addEventListener("message", (evt) => {
+                try 
+                {
+                    let data = JSON.parse(evt.data);
+
+                    // iframe内のitownsのカメラが更新された
+                    if (data.method === "chowder_itowns_update_camera")
+                    {
+                        this.action.updateCameraWorldMatrix({
+                            mat : data.params
+                        });
+                    }
+                    // iframe内のサムネイルが更新された（新規コンテンツ登録する
+                    else if (data.method === "chowder_itowns_update_thumbnail")
+                    {
+                        let params = data.params;
+                        this.addITownContent(toArrayBuffer(params));
+                    }
+                }
+                catch (e)
+                {
+                    console.error(e);
+                }
+            });
+            
+            // iframe内のchowder injectionの初期化
+            iframe.contentWindow.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                method : "chowder_injection_init"
+            }));
         }
 
         document.getElementById('itowns').appendChild(iframe);

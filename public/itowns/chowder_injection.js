@@ -1,4 +1,5 @@
 (function () {
+    var messageID = 1;
     var i;
     var originalAddEventListener = window.addEventListener;
     var resizeListeners = [];
@@ -75,7 +76,8 @@
         canvas.width = 256;
         canvas.height = 256 * (height / width);
         ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, canvas.width, canvas.height);
-        return toArrayBuffer(canvas);
+        //return toArrayBuffer(canvas);
+        return canvas.toDataURL("image/jpeg");
     }
 
     function disableITownResizeFlow() {
@@ -104,12 +106,31 @@
             view.notifyChange(view.camera.camera3D);
         }
 
+        window.addEventListener('message', function (evt) {
+            try {
+                var data = JSON.parse(evt.data);
+                // 初期メッセージの受け取り
+                if (data.method === "chowder_itowns_update_camera_callback") 
+                {
+                    applyCameraWorldMat(view, data.params);
+                }
+                else if (data.method === "chowder_itowns_resize_callback")
+                {
+                    resizeWindow(data.params);
+                }
+            } catch(ex) {
+                console.error(ex);
+            }
+        });
+
+        /*
         window.chowder_itowns_update_camera_callback = (function () {
             return function (mat) {
                 applyCameraWorldMat(view, mat);
             };
         }());
-        window.chowder_itowns_resize_callback = resizeWindow;
+        */
+        //window.chowder_itowns_resize_callback = resizeWindow;
     };
     
     //var initialWorldMat = null;
@@ -121,34 +142,54 @@
             menuDiv.style.top = "10px";
             menuDiv.style.left = "10px";
         }
-        var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
-        if (window.hasOwnProperty("chowder_itowns_update_camera")) {
-            window.chowder_itowns_update_camera(worldMat);
-        }
-        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (function () {
-            return function () {
-                var mat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
-                if (worldMat !== mat) {
-                    // カメラが動いた.
-                    worldMat = mat;
-                    if (window.hasOwnProperty("chowder_itowns_update_camera")) {
-                        window.chowder_itowns_update_camera(mat);
-                    }
+
+        window.addEventListener('message', function (evt) {
+            try {
+                var data = JSON.parse(evt.data);
+                // 初期メッセージの受け取り
+                if (data.method === "chowder_injection_init") 
+                {
+                    var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
+                    window.parent.postMessage(JSON.stringify({
+                        jsonrpc : "2.0",
+                        id : messageID + 1,
+                        method :  "chowder_itowns_update_camera",
+                        params : worldMat
+                    }), evt.origin);
+            
+                    // カメラ動いた時にマトリックスを送信
+                    view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (function () {
+                        return function () {
+                            var mat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
+                            if (worldMat !== mat) {
+                                // カメラが動いた.
+                                worldMat = mat;
+                                window.parent.postMessage(JSON.stringify({
+                                    jsonrpc : "2.0",
+                                    id : messageID + 1,
+                                    method :  "chowder_itowns_update_camera",
+                                    params : mat
+                                }), evt.origin);
+                            }
+                        };
+                    }()));
                 }
-            };
-        }()));
+            } catch (e) {
+
+            }
+        });
 
         var done = false;
 
         var interval = 500;
         var timer;
-        var thumbnail;
+        var thumbnailBase64;
         var count = 0;
         view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function () {
             // サムネイルを即時作成
             if (!done) {
                 var canvas = viewerDiv.getElementsByTagName('canvas')[0];
-                thumbnail = resizeToThumbnail(canvas);
+                thumbnailBase64 = resizeToThumbnail(canvas);
                 ++count;
             }
             // 一定間隔同じイベントが来なかったら実行
@@ -156,10 +197,13 @@
             timer = setTimeout((function () {
                 return function () {
                     if (!done && count > 1) {
-                        if (window.hasOwnProperty("chowder_itowns_update_thumbnail")) {
-                            window.chowder_itowns_update_thumbnail(thumbnail)
-                            done = true;
-                        }
+                        window.parent.postMessage(JSON.stringify({
+                            jsonrpc : "2.0",
+                            id : messageID + 1,
+                            method : "chowder_itowns_update_thumbnail",
+                            params : thumbnailBase64
+                        }));
+                        done = true;
                     }
                 }
             }()), interval);

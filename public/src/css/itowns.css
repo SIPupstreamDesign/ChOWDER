@@ -60,8 +60,36 @@ a {
 	text-decoration : none;
 }
 
+p {
+	color: white;
+}
+
 #itowns {
-    width : 100%;
+    width : calc(100% - 260px);
     height : 100%;
-    position: absolute;
+	position: absolute;
+}
+
+#itowns_property {
+	position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 260px;
+	height: 100%;
+    padding-left: 5px;
+}
+
+.title {
+	color : white;
+	font-size : 16px;
+	margin : 5px;
+}
+
+.select_list_frame {
+	width : 240px;
+}
+
+.property_text {
+	margin: 5px;
+	border: 1px solid;
 }
