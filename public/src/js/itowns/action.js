@@ -79,6 +79,14 @@ class Action extends EventEmitter
     addMap(data) {
         this.emit(Action.EVENT_ADD_MAP, null, data);
     }
+
+    /**
+     * 地図の削除
+     * @param {*} data 
+     */
+    deleteMap(data) {
+        this.emit(Action.EVENT_DELETE_MAP, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -87,5 +95,6 @@ Action.EVENT_LOGOUT = "logout";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_ADD_MAP = "addMap";
+Action.EVENT_DELETE_MAP = "deleteMap";
 Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
 export default Action;

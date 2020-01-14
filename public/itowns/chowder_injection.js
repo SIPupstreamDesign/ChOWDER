@@ -92,6 +92,7 @@
     };
 	ColorMapSource.prototype = Object.create(itowns.TMSSource.prototype);
 
+    // マップ追加
     function addMap(view, params) {
         var url = params.url;
         url = url.split("${z}").join("%TILEMATRIX");
@@ -118,6 +119,20 @@
             source: mapSource
         });
         view.addLayer(colorLayer);
+    }
+
+    // マップ削除
+    function deleteMap(view, params) {
+        var id = params.id;
+        var layers = view.getLayers();
+        var layer;
+        for (var i = 0; i < layers.length; ++i) {
+            layer = layers[i];
+            if (layer.id === id) {
+                view.removeLayer(id);
+                break;
+            }
+        }
     }
 
     function injectChOWDERiTownCallbacks(view, viewerDiv) {
@@ -159,6 +174,11 @@
                 {
                     // マップ追加命令
                     addMap(view, data.params);
+                }
+                else if (data.method === "chowder_itowns_delete_map")
+                {
+                    // マップ削除命令
+                    deleteMap(view, data.params);
                 }
             } catch(ex) {
                 console.error(ex);
@@ -217,7 +237,16 @@
                 method :  "chowder_itowns_update_layer",
                 params : layerDataList
             }));
-        })
+        });
+        view.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, function (evt) {
+            layerDataList = getLayerData(view);
+            window.parent.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                id : messageID + 1,
+                method :  "chowder_itowns_update_layer",
+                params : layerDataList
+            }));
+        });
 
         window.addEventListener('message', function (evt) {
             try {

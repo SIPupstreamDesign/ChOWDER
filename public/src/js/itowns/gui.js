@@ -72,6 +72,18 @@ class GUI extends EventEmitter {
                 }
             }));
         });
+
+        // マップ削除
+        this.store.on(Store.EVENT_DONE_DELETE_MAP, (err, data) => {
+            console.log("ためしにマップ削除")
+            this.iframe.contentWindow.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                method : "chowder_itowns_delete_map",
+                params : {
+                    id  : data
+                }
+            }));
+        });
     }
 
     initWindow() {
@@ -147,16 +159,36 @@ class GUI extends EventEmitter {
         this.mapSelect.getDOM().size = 10;
         propElem.appendChild(this.mapSelect.getDOM());
 
+        let mapButtonArea = document.createElement('div');
+        mapButtonArea.className = "map_button_area";
+
+        // マップ上移動ボタン
+        this.mapUpButton = new Button();
+        this.mapUpButton.getDOM().className = "map_up_button btn btn-light";
+        mapButtonArea.appendChild(this.mapUpButton.getDOM());
+
+        // マップ下移動ボタン
+        this.mapDownButton = new Button();
+        this.mapDownButton.getDOM().className = "map_down_button btn btn-light";
+        mapButtonArea.appendChild(this.mapDownButton.getDOM());
+
+
         // マップ追加ボタン
         this.mapAddButton = new Button();
         this.mapAddButton.setDataKey("+");
-        this.mapAddButton.getDOM().className = "map_add_button btn btn-primary";
-        propElem.appendChild(this.mapAddButton.getDOM());
+        this.mapAddButton.getDOM().className = "map_button btn btn-primary";
+        mapButtonArea.appendChild(this.mapAddButton.getDOM());
+
+        // マップ削除ボタン
+        this.mapDeleteButton = new Button();
+        this.mapDeleteButton.setDataKey("-");
+        this.mapDeleteButton.getDOM().className = "map_button btn btn-danger";
+        mapButtonArea.appendChild(this.mapDeleteButton.getDOM());
+
+        propElem.appendChild(mapButtonArea);
 
         this.mapAddButton.on('click', () => {
-            let background = new PopupBackground();
 
-            background.show();
             InputDialog.showTextInput({
                 name: '地図追加',
                 initialValue: "http://localhost/map/${z}/${x}/${y}.png",
@@ -165,8 +197,18 @@ class GUI extends EventEmitter {
 
                 console.log("追加", value)
                 this.action.addMap(value);
+            });
+        });
+        
+        this.mapDeleteButton.on('click', () => {
 
-                background.close();
+            InputDialog.showOKCancelInput({
+                name: this.mapSelect.getSelectedValue() + i18next.t('を削除しますか'),
+                okButtonName: "OK"
+            }, (isOK) => {
+                if (isOK) {
+                    this.action.deleteMap(this.mapSelect.getSelectedValue());
+                }
             });
         });
     }
@@ -175,7 +217,7 @@ class GUI extends EventEmitter {
         this.mapSelect.clear();
         for (let i = 0; i < layerDatas.length; ++i) {
             let data = layerDatas[i];
-            this.mapSelect.addOption(data.url, data.id + " - " + data.type);
+            this.mapSelect.addOption(data.id, data.id + " - " + data.type);
         }
     }
 

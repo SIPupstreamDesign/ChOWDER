@@ -94,11 +94,38 @@ p {
 	border: 1px solid;
 }
 
-.map_add_button {
+.map_button_area {
 	margin : 5px;
-    width: 40px;
     font-size: 20px;
-	display : block;
+}
+
+.map_button {
+	margin : 5px;
+    width: 24px;
+    height: 24px;
+}
+
+.map_up_button {
+	margin : 5px;
+    width: 24px;
+    height: 24px;
+	background-image:url("../image/group_up.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.map_down_button {
+	margin : 5px;
+    width: 24px;
+    height: 24px;
+	background-image:url("../image/group_down.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+}
+
+.map_button.btn {
+	padding: 0px;
+    font-size: 20px;
 }
 
 .input_dialog {

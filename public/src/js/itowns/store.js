@@ -191,6 +191,10 @@ class Store extends EventEmitter {
            this.emit(Store.EVENT_DONE_ADD_MAP, null, data);
         //}
     }
+
+    _deleteMap(data) {
+        this.emit(Store.EVENT_DONE_DELETE_MAP, null, data);
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -201,4 +205,5 @@ Store.EVENT_LOGIN_FAILED = "login_failed";
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_ADD_MAP = "done_add_map";
+Store.EVENT_DONE_DELETE_MAP = "done_delete_map";
 export default Store;
