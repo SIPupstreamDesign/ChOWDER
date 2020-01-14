@@ -58,7 +58,7 @@ class Store extends EventEmitter {
         Connector.on(Command.UpdateMetaData, (data) => {
 			for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
-                if (metaData.id === this.metaData.id) {
+                if (this.metaData && metaData.id === this.metaData.id) {
                     this.metaData = metaData;
                 }
             }
