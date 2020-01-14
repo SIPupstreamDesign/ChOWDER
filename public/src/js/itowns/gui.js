@@ -123,15 +123,19 @@ class GUI extends EventEmitter {
         // レイヤーリストタイトル
         let layerTitle = document.createElement('p');
         layerTitle.className = "title";
-        layerTitle.innerHTML = "Layer List";
+        layerTitle.innerHTML = "Map List";
         propElem.appendChild(layerTitle);
 
         // レイヤー一覧
-        let selectList = new SelectList();
-        selectList.add("地理院STD", "piyo");
-        selectList.add("地理院DEM", "moga");
-        propElem.appendChild(selectList.getDOM());
+        this.layerSelectList = new SelectList();
+        propElem.appendChild(this.layerSelectList.getDOM());
+    }
 
+    initLayerSelectList(layerDatas) {
+        for (let i = 0; i < layerDatas.length; ++i) {
+            let data = layerDatas[i];
+            this.layerSelectList.add(data.id + " - " + data.type, data.url);
+        }
     }
 
     /**
@@ -171,7 +175,11 @@ class GUI extends EventEmitter {
                     else if (data.method === "chowder_itowns_update_thumbnail")
                     {
                         let params = data.params;
-                        this.addITownContent(toArrayBuffer(params));
+                        //this.addITownContent(toArrayBuffer(params));
+                    }
+                    else if (data.method === "chowder_itowns_update_layer")
+                    {
+                        this.initLayerSelectList(data.params);
                     }
                 }
                 catch (e)

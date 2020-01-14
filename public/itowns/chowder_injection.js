@@ -122,16 +122,39 @@
                 console.error(ex);
             }
         });
-
-        /*
-        window.chowder_itowns_update_camera_callback = (function () {
-            return function (mat) {
-                applyCameraWorldMat(view, mat);
-            };
-        }());
-        */
-        //window.chowder_itowns_resize_callback = resizeWindow;
     };
+
+    function getLayerData(view)
+    {
+        var layers = view.getLayers();
+        var i;
+        var dataList = [];
+        var data = {}
+        var layer;
+        for (i = 0; i < layers.length; ++i) {
+            layer = layers[i];
+            data = {};
+            if (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url'))
+            {
+                data.visible =  layer.visible;
+                data.projection = layer.projection;
+                data.id = layer.id;
+                data.url = layer.source.url;
+                data.zoom = layer.source.zoom;
+                data.type = ((function (layer) {
+                    if (layer.isElevationLayer) {
+                        return "Elevation";
+                    } else if (layer.isColorLayer) {
+                        return "Color";
+                    } else if (layer.isGeometryLayer) {
+                        return "Geometry";
+                    }
+                })(layer));
+                dataList.push(data);
+            }
+        }
+        return dataList;
+    }
     
     //var initialWorldMat = null;
     function injectAsChOWDERiTownController(view, viewerDiv)
@@ -142,6 +165,11 @@
             menuDiv.style.top = "10px";
             menuDiv.style.left = "10px";
         }
+
+        var layerDataList = []
+        view.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, function (evt) {
+            layerDataList = getLayerData(view);
+        })
 
         window.addEventListener('message', function (evt) {
             try {
@@ -202,6 +230,12 @@
                             id : messageID + 1,
                             method : "chowder_itowns_update_thumbnail",
                             params : thumbnailBase64
+                        }));
+                        window.parent.postMessage(JSON.stringify({
+                            jsonrpc : "2.0",
+                            id : messageID + 1,
+                            method :  "chowder_itowns_update_layer",
+                            params : layerDataList
                         }));
                         done = true;
                     }
