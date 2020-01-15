@@ -95,9 +95,15 @@
     // マップ追加
     function addMap(view, params) {
         var url = params.url;
-        url = url.split("${z}").join("%TILEMATRIX");
-        url = url.split("${x}").join("%COL");
-        url = url.split("${y}").join("%ROW");
+        if (url.indexOf("${z}") >= 0) {
+            url = url.split("${z}").join("%TILEMATRIX");
+        }
+        if (url.indexOf("${x}") >= 0) {
+            url = url.split("${x}").join("%COL");
+        }
+        if (url.indexOf("${y}") >= 0) {
+            url = url.split("${y}").join("%ROW");
+        }
         var config = {
             "projection": "EPSG:3857",
             "isInverted": true,
@@ -108,6 +114,9 @@
                 "type": 3
             },
         };
+        if (params.hasOwnProperty('id')) {
+            config.id = params.id;
+        }
         if (params.hasOwnProperty('zoom')) {
             config.zoom = params.zoom;
         }
@@ -115,7 +124,7 @@
             config.format = params.format;
         }
         var mapSource = new itowns.TMSSource(config);
-        var colorLayer = new itowns.ColorLayer('test', {
+        var colorLayer = new itowns.ColorLayer(config.id, {
             source: mapSource
         });
         view.addLayer(colorLayer);
@@ -130,6 +139,35 @@
             layer = layers[i];
             if (layer.id === id) {
                 view.removeLayer(id);
+                break;
+            }
+        }
+    }
+
+    // マップ順序変更
+    function changeMapOrder(view, params) {
+        var id = params.id;
+        var isUp = params.isUp ? true : false;
+        var layers = view._layers[0].attachedLayers;
+        var layer;
+        console.log("pre", layers)
+        for (var i = 0; i < layers.length; ++i) {
+            layer = layers[i];
+            if (layer.id === id) {
+                if (isUp && i > 0) {
+                    console.error("up!", view, id)
+                    itowns.ColorLayersOrdering.moveLayerUp(view, id);
+                    layers.splice(i - 1, 2, layers[i], layers[i-1]);
+                    console.log(layers)
+                    view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED});
+                    view.notifyChange();
+                } else if (i < (layer.length - 1)) {
+                    itowns.ColorLayersOrdering.moveLayerDown(view, id);
+                    layers.splice(i, 2, layers[i+1], layers[i]);
+                    console.log(layers)
+                    view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED});
+                    view.notifyChange();
+                }
                 break;
             }
         }
@@ -179,6 +217,11 @@
                 {
                     // マップ削除命令
                     deleteMap(view, data.params);
+                }
+                else if (data.method === "chowder_itowns_change_map_order") 
+                {
+                    // マップ順序変更命令
+                    changeMapOrder(view, data.params);
                 }
             } catch(ex) {
                 console.error(ex);
@@ -239,6 +282,15 @@
             }));
         });
         view.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, function (evt) {
+            layerDataList = getLayerData(view);
+            window.parent.postMessage(JSON.stringify({
+                jsonrpc : "2.0",
+                id : messageID + 1,
+                method :  "chowder_itowns_update_layer",
+                params : layerDataList
+            }));
+        });
+        view.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, function (evt) {
             layerDataList = getLayerData(view);
             window.parent.postMessage(JSON.stringify({
                 jsonrpc : "2.0",

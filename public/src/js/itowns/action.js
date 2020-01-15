@@ -87,6 +87,14 @@ class Action extends EventEmitter
     deleteMap(data) {
         this.emit(Action.EVENT_DELETE_MAP, null, data);
     }
+
+    /**
+     * 地図順序変更
+     * @param {*} data 
+     */
+    changeMapOrder(data) {
+        this.emit(Action.EVENT_CHANGE_MAP_ORDER, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -96,5 +104,6 @@ Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_ADD_MAP = "addMap";
 Action.EVENT_DELETE_MAP = "deleteMap";
+Action.EVENT_CHANGE_MAP_ORDER = "changeMapOrder";
 Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
 export default Action;

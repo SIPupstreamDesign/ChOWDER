@@ -12,7 +12,7 @@ import Translation from '../common/translation';
 import Constants from '../common/constants';
 import Button from '../components/button';
 import InputDialog from '../components/input_dialog';
-import PopupBackground from '../components/popup_background';
+import MapDialog from './map_dialog';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -37,7 +37,7 @@ class GUI extends EventEmitter {
         this.action = action;
 
     }
-    
+
     init() {
         this.initWindow();
         this.initLoginMenu();
@@ -52,7 +52,6 @@ class GUI extends EventEmitter {
 
             this.initPropertyPanel();
             this.showWebGL();
-            ///this.addITownContent();
         });
 
         // ログイン失敗
@@ -62,28 +61,34 @@ class GUI extends EventEmitter {
 
         // ためしにマップ追加
         this.store.on(Store.EVENT_DONE_ADD_MAP, (err, data) => {
-            console.log("ためしにマップ追加")
             // iframe内のchowder injectionの初期化
             this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc : "2.0",
-                method : "chowder_itowns_add_map",
-                params : {
-                    url  : data
-                }
+                jsonrpc: "2.0",
+                method: "chowder_itowns_add_map",
+                params: data
             }));
         });
 
         // マップ削除
         this.store.on(Store.EVENT_DONE_DELETE_MAP, (err, data) => {
-            console.log("ためしにマップ削除")
             this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc : "2.0",
-                method : "chowder_itowns_delete_map",
-                params : {
-                    id  : data
+                jsonrpc: "2.0",
+                method: "chowder_itowns_delete_map",
+                params: {
+                    id: data
                 }
             }));
         });
+
+        // マップ順序変更
+        this.store.on(Store.EVENT_DONE_CHANGE_MAP_ORDER, (err, data) => {
+            this.iframe.contentWindow.postMessage(JSON.stringify({
+                jsonrpc: "2.0",
+                method: "chowder_itowns_change_map_order",
+                params: data
+            }));
+        });
+        
     }
 
     initWindow() {
@@ -127,6 +132,7 @@ class GUI extends EventEmitter {
         this.itownSelect.addOption("itowns/view_3d_map.html", "view_3d_map");
         this.itownSelect.addOption("itowns/3dtiles_basic.html", "3dtiles_basic");
         this.itownSelect.addOption("itowns/vector_tile_raster_3d.html", "vector_tile_raster_3d");
+        this.itownSelect.addOption("itowns/view_pointcloud_3d_map.html", "view_pointcloud_3d_map");
         this.itownSelect.getDOM().style.marginTop = "20px"
         wrapDom.appendChild(this.itownSelect.getDOM())
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
@@ -187,8 +193,16 @@ class GUI extends EventEmitter {
 
         propElem.appendChild(mapButtonArea);
 
-        this.mapAddButton.on('click', () => {
+        // マップ追加ダイアログ
+        this.mapDialog = new MapDialog(this.store, this.action);
+        document.body.appendChild(this.mapDialog.getDOM());
 
+        this.mapAddButton.on('click', () => {
+            this.mapDialog.show((isOK, data) => {
+                // OK
+                this.action.addMap(data);
+            });
+            /*
             InputDialog.showTextInput({
                 name: '地図追加',
                 initialValue: "http://localhost/map/${z}/${x}/${y}.png",
@@ -196,10 +210,13 @@ class GUI extends EventEmitter {
             }, (value) => {
 
                 console.log("追加", value)
-                this.action.addMap(value);
+                this.action.addMap({
+                    url : value
+                });
             });
+            */
         });
-        
+
         this.mapDeleteButton.on('click', () => {
 
             InputDialog.showOKCancelInput({
@@ -211,6 +228,21 @@ class GUI extends EventEmitter {
                 }
             });
         });
+
+        this.mapUpButton.on('click', () => {
+            this.action.changeMapOrder({
+                id: this.mapSelect.getSelectedValue(),
+                isUp : true
+            });
+        });
+
+        this.mapDownButton.on('click', () => {
+            this.action.changeMapOrder({
+                id: this.mapSelect.getSelectedValue(),
+                isUp : false
+            });
+        });
+        
     }
 
     initLayerSelectList(layerDatas) {
@@ -233,45 +265,40 @@ class GUI extends EventEmitter {
         this.iframe.style.width = "100%";
         this.iframe.style.height = "100%";
         this.iframe.style.border = "none";
-        
+
         this.iframe.onload = () => {
             this.iframe.contentWindow.chowder_itowns_view_type = "itowns";
             this.iframe.contentWindow.focus();
-            
+
             // iframeからのレスポンス
             window.addEventListener("message", (evt) => {
-                try 
-                {
+                try {
                     let data = JSON.parse(evt.data);
 
                     // iframe内のitownsのカメラが更新された
-                    if (data.method === "chowder_itowns_update_camera")
-                    {
+                    if (data.method === "chowder_itowns_update_camera") {
                         this.action.updateCameraWorldMatrix({
-                            mat : data.params
+                            mat: data.params
                         });
                     }
                     // iframe内のサムネイルが更新された（新規コンテンツ登録する
-                    else if (data.method === "chowder_itowns_update_thumbnail")
-                    {
+                    else if (data.method === "chowder_itowns_update_thumbnail") {
                         let params = data.params;
                         //this.addITownContent(toArrayBuffer(params));
                     }
-                    else if (data.method === "chowder_itowns_update_layer")
-                    {
+                    else if (data.method === "chowder_itowns_update_layer") {
                         this.initLayerSelectList(data.params);
                     }
                 }
-                catch (e)
-                {
+                catch (e) {
                     console.error(e);
                 }
             });
-            
+
             // iframe内のchowder injectionの初期化
             this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc : "2.0",
-                method : "chowder_injection_init"
+                jsonrpc: "2.0",
+                method: "chowder_injection_init"
             }));
         }
 
@@ -279,24 +306,24 @@ class GUI extends EventEmitter {
     }
 
     addITownContent(thumbnailBuffer) {
-        let url =  this.itownSelect.getSelectedValue();
+        let url = this.itownSelect.getSelectedValue();
         let metaData = {
             type: Constants.TypeWebGL,
             user_data_text: JSON.stringify({
                 text: url
             }),
-            posx : 0,
-            posy : 0,
+            posx: 0,
+            posy: 0,
             width: this.getWindowSize().width,
             height: this.getWindowSize().height,
             orgWidth: this.getWindowSize().width,
             orgHeight: this.getWindowSize().height,
-            visible : true,
-            url : decodeURI(url)
+            visible: true,
+            url: decodeURI(url)
         };
         let data = {
-            metaData : metaData,
-            contentData : thumbnailBuffer
+            metaData: metaData,
+            contentData: thumbnailBuffer
         };
         this.action.addContent(data);
     }
