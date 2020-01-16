@@ -10,9 +10,8 @@ import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
 import Constants from '../common/constants';
-import Button from '../components/button';
-import InputDialog from '../components/input_dialog';
-import LayerDialog from './layer_dialog';
+import LayerProperty from './layer_property';
+import LayerList from './layer_list';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -159,84 +158,13 @@ class GUI extends EventEmitter {
         layerTitle.innerHTML = i18next.t('layer_list');
         propElem.appendChild(layerTitle);
 
-        // レイヤー一覧
-        this.layerSelect = new Select();
-        this.layerSelect.getDOM().className = "layer_select";
-        this.layerSelect.getDOM().size = 10;
-        propElem.appendChild(this.layerSelect.getDOM());
+        // レイヤーリスト
+        this.layerList = new LayerList(this.store, this.action);
+        propElem.appendChild(this.layerList.getDOM());
 
-        let layerButtonArea = document.createElement('div');
-        layerButtonArea.className = "layer_button_area";
-
-        // レイヤー上移動ボタン
-        this.layerUpButton = new Button();
-        this.layerUpButton.getDOM().className = "layer_up_button btn btn-light";
-        layerButtonArea.appendChild(this.layerUpButton.getDOM());
-
-        // レイヤー下移動ボタン
-        this.layerDownButton = new Button();
-        this.layerDownButton.getDOM().className = "layer_down_button btn btn-light";
-        layerButtonArea.appendChild(this.layerDownButton.getDOM());
-
-
-        // レイヤー追加ボタン
-        this.layerAddButton = new Button();
-        this.layerAddButton.setDataKey("+");
-        this.layerAddButton.getDOM().className = "layer_button btn btn-primary";
-        layerButtonArea.appendChild(this.layerAddButton.getDOM());
-
-        // レイヤー削除ボタン
-        this.layerDeleteButton = new Button();
-        this.layerDeleteButton.setDataKey("-");
-        this.layerDeleteButton.getDOM().className = "layer_button btn btn-danger";
-        layerButtonArea.appendChild(this.layerDeleteButton.getDOM());
-
-        propElem.appendChild(layerButtonArea);
-
-        // レイヤー追加ダイアログ
-        this.layerDialog = new LayerDialog(this.store, this.action);
-        document.body.appendChild(this.layerDialog.getDOM());
-
-        this.layerAddButton.on('click', () => {
-            this.layerDialog.show((isOK, data) => {
-                // OK
-                this.action.addLayer(data);
-            });
-        });
-
-        this.layerDeleteButton.on('click', () => {
-            InputDialog.showOKCancelInput({
-                name: this.layerSelect.getSelectedValue() + i18next.t('delete_is_ok'),
-                okButtonName: "OK"
-            }, (isOK) => {
-                if (isOK) {
-                    this.action.deleteLayer(this.layerSelect.getSelectedValue());
-                }
-            });
-        });
-
-        this.layerUpButton.on('click', () => {
-            this.action.changeLayerOrder({
-                id: this.layerSelect.getSelectedValue(),
-                isUp : true
-            });
-        });
-
-        this.layerDownButton.on('click', () => {
-            this.action.changeLayerOrder({
-                id: this.layerSelect.getSelectedValue(),
-                isUp : false
-            });
-        });
-        
-    }
-
-    initLayerSelectList(layerDatas) {
-        this.layerSelect.clear();
-        for (let i = 0; i < layerDatas.length; ++i) {
-            let data = layerDatas[i];
-            this.layerSelect.addOption(data.id, data.id + " - " + data.type);
-        }
+        // レイヤープロパティ
+        this.layerProperty = new LayerProperty();
+        propElem.appendChild(this.layerProperty.getDOM());
     }
 
     /**
@@ -273,7 +201,7 @@ class GUI extends EventEmitter {
                         //this.addITownContent(toArrayBuffer(params));
                     }
                     else if (data.method === "chowder_itowns_update_layer") {
-                        this.initLayerSelectList(data.params);
+                        this.layerList.initLayerSelectList(data.params);
                     }
                 }
                 catch (e) {

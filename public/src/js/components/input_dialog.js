@@ -76,7 +76,6 @@ class InputDialog
 				okCallback(input_dialog_input.value);
 			}
 			background.close();
-			closeFunc();
 		};
 		background.show(setting.opacity, setting.zIndex);
 		background.on('close', closeFunc);
@@ -147,7 +146,6 @@ class InputDialog
 				callback(textarea.value, width, height);
 			}
 			background.close();
-			closeFunc();
 		};
 		background.show(setting.opacity, setting.zIndex);
 		background.on('close', closeFunc);
@@ -222,7 +220,6 @@ class InputDialog
 				okCallback(colorstr);
 			}
 			background.close();
-			closeFunc();
 		};
 
 		background.show(setting.opacity, setting.zIndex);
@@ -287,12 +284,10 @@ class InputDialog
 		ok_button.onclick = function (evt) {
 			if (callback) { callback(true); }
 			background.close();
-			closeFunc();
 		};
 		cancel_button.onclick = function (evt) {
 			if (callback) { callback(false); }
 			background.close();
-			closeFunc();
 		};
 
 		background.show(setting.opacity, setting.zIndex);
@@ -377,17 +372,14 @@ class InputDialog
 		yes_button.onclick = function (evt) {
 			if (callback) { callback("yes"); }
 			background.close();
-			closeFunc();
 		};
 		no_button.onclick = function (evt) {
 			if (callback) { callback("no"); }
 			background.close();
-			closeFunc();
 		};
 		cancel_button.onclick = function (evt) {
 			if (callback) { callback("cancel"); }
 			background.close();
-			closeFunc();
 		};
 
 		background.show(setting.opacity, setting.zIndex);
@@ -444,7 +436,6 @@ class InputDialog
 		ok_button.onclick = function (evt) {
 			if (callback) { callback(true); }
 			background.close();
-			closeFunc();
 		};
 
 		background.show(setting.opacity, setting.zIndex);

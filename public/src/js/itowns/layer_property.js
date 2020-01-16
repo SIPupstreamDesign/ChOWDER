@@ -10,9 +10,14 @@ class LayerProperty extends EventEmitter {
 
         this.store = store;
         this.action = action;
+
+        this.dom = document.createElement('div');
+        this.dom.innerHTML = "This is Layer Proeprty"
     }
 
-    
+    getDOM() {
+        return this.dom;
+    }
 }
 
 export default LayerProperty;
