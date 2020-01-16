@@ -12,7 +12,7 @@ import Translation from '../common/translation';
 import Constants from '../common/constants';
 import Button from '../components/button';
 import InputDialog from '../components/input_dialog';
-import MapDialog from './map_dialog';
+import LayerDialog from './layer_dialog';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -59,32 +59,32 @@ class GUI extends EventEmitter {
             this.loginMenu.showInvalidLabel(true);
         });
 
-        // ためしにマップ追加
-        this.store.on(Store.EVENT_DONE_ADD_MAP, (err, data) => {
+        // ためしにレイヤー追加
+        this.store.on(Store.EVENT_DONE_ADD_LAYER, (err, data) => {
             // iframe内のchowder injectionの初期化
             this.iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                method: "chowder_itowns_add_map",
+                method: "chowder_itowns_add_layer",
                 params: data
             }));
         });
 
-        // マップ削除
-        this.store.on(Store.EVENT_DONE_DELETE_MAP, (err, data) => {
+        // レイヤー削除
+        this.store.on(Store.EVENT_DONE_DELETE_LAYER, (err, data) => {
             this.iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                method: "chowder_itowns_delete_map",
+                method: "chowder_itowns_delete_layer",
                 params: {
                     id: data
                 }
             }));
         });
 
-        // マップ順序変更
-        this.store.on(Store.EVENT_DONE_CHANGE_MAP_ORDER, (err, data) => {
+        // レイヤー順序変更
+        this.store.on(Store.EVENT_DONE_CHANGE_LAYER_ORDER, (err, data) => {
             this.iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                method: "chowder_itowns_change_map_order",
+                method: "chowder_itowns_change_layer_order",
                 params: data
             }));
         });
@@ -144,7 +144,7 @@ class GUI extends EventEmitter {
         // コンテンツタイトル
         let contentTitle = document.createElement('p');
         contentTitle.className = "title";
-        contentTitle.innerHTML = "Base Content";
+        contentTitle.innerHTML = i18next.t('base_content');
         propElem.appendChild(contentTitle);
 
         // コンテンツ名
@@ -153,92 +153,78 @@ class GUI extends EventEmitter {
         contentName.innerHTML = this.itownSelect.getSelectedValue();
         propElem.appendChild(contentName);
 
-        // マップリストタイトル
-        let mapTitle = document.createElement('p');
-        mapTitle.className = "title";
-        mapTitle.innerHTML = "Map List";
-        propElem.appendChild(mapTitle);
+        // レイヤーリストタイトル
+        let layerTitle = document.createElement('p');
+        layerTitle.className = "title";
+        layerTitle.innerHTML = i18next.t('layer_list');
+        propElem.appendChild(layerTitle);
 
-        // マップ一覧
-        this.mapSelect = new Select();
-        this.mapSelect.getDOM().className = "map_select";
-        this.mapSelect.getDOM().size = 10;
-        propElem.appendChild(this.mapSelect.getDOM());
+        // レイヤー一覧
+        this.layerSelect = new Select();
+        this.layerSelect.getDOM().className = "layer_select";
+        this.layerSelect.getDOM().size = 10;
+        propElem.appendChild(this.layerSelect.getDOM());
 
-        let mapButtonArea = document.createElement('div');
-        mapButtonArea.className = "map_button_area";
+        let layerButtonArea = document.createElement('div');
+        layerButtonArea.className = "layer_button_area";
 
-        // マップ上移動ボタン
-        this.mapUpButton = new Button();
-        this.mapUpButton.getDOM().className = "map_up_button btn btn-light";
-        mapButtonArea.appendChild(this.mapUpButton.getDOM());
+        // レイヤー上移動ボタン
+        this.layerUpButton = new Button();
+        this.layerUpButton.getDOM().className = "layer_up_button btn btn-light";
+        layerButtonArea.appendChild(this.layerUpButton.getDOM());
 
-        // マップ下移動ボタン
-        this.mapDownButton = new Button();
-        this.mapDownButton.getDOM().className = "map_down_button btn btn-light";
-        mapButtonArea.appendChild(this.mapDownButton.getDOM());
+        // レイヤー下移動ボタン
+        this.layerDownButton = new Button();
+        this.layerDownButton.getDOM().className = "layer_down_button btn btn-light";
+        layerButtonArea.appendChild(this.layerDownButton.getDOM());
 
 
-        // マップ追加ボタン
-        this.mapAddButton = new Button();
-        this.mapAddButton.setDataKey("+");
-        this.mapAddButton.getDOM().className = "map_button btn btn-primary";
-        mapButtonArea.appendChild(this.mapAddButton.getDOM());
+        // レイヤー追加ボタン
+        this.layerAddButton = new Button();
+        this.layerAddButton.setDataKey("+");
+        this.layerAddButton.getDOM().className = "layer_button btn btn-primary";
+        layerButtonArea.appendChild(this.layerAddButton.getDOM());
 
-        // マップ削除ボタン
-        this.mapDeleteButton = new Button();
-        this.mapDeleteButton.setDataKey("-");
-        this.mapDeleteButton.getDOM().className = "map_button btn btn-danger";
-        mapButtonArea.appendChild(this.mapDeleteButton.getDOM());
+        // レイヤー削除ボタン
+        this.layerDeleteButton = new Button();
+        this.layerDeleteButton.setDataKey("-");
+        this.layerDeleteButton.getDOM().className = "layer_button btn btn-danger";
+        layerButtonArea.appendChild(this.layerDeleteButton.getDOM());
 
-        propElem.appendChild(mapButtonArea);
+        propElem.appendChild(layerButtonArea);
 
-        // マップ追加ダイアログ
-        this.mapDialog = new MapDialog(this.store, this.action);
-        document.body.appendChild(this.mapDialog.getDOM());
+        // レイヤー追加ダイアログ
+        this.layerDialog = new LayerDialog(this.store, this.action);
+        document.body.appendChild(this.layerDialog.getDOM());
 
-        this.mapAddButton.on('click', () => {
-            this.mapDialog.show((isOK, data) => {
+        this.layerAddButton.on('click', () => {
+            this.layerDialog.show((isOK, data) => {
                 // OK
-                this.action.addMap(data);
+                this.action.addLayer(data);
             });
-            /*
-            InputDialog.showTextInput({
-                name: '地図追加',
-                initialValue: "http://localhost/map/${z}/${x}/${y}.png",
-                okButtonName: "OK",
-            }, (value) => {
-
-                console.log("追加", value)
-                this.action.addMap({
-                    url : value
-                });
-            });
-            */
         });
 
-        this.mapDeleteButton.on('click', () => {
-
+        this.layerDeleteButton.on('click', () => {
             InputDialog.showOKCancelInput({
-                name: this.mapSelect.getSelectedValue() + i18next.t('を削除しますか'),
+                name: this.layerSelect.getSelectedValue() + i18next.t('delete_is_ok'),
                 okButtonName: "OK"
             }, (isOK) => {
                 if (isOK) {
-                    this.action.deleteMap(this.mapSelect.getSelectedValue());
+                    this.action.deleteLayer(this.layerSelect.getSelectedValue());
                 }
             });
         });
 
-        this.mapUpButton.on('click', () => {
-            this.action.changeMapOrder({
-                id: this.mapSelect.getSelectedValue(),
+        this.layerUpButton.on('click', () => {
+            this.action.changeLayerOrder({
+                id: this.layerSelect.getSelectedValue(),
                 isUp : true
             });
         });
 
-        this.mapDownButton.on('click', () => {
-            this.action.changeMapOrder({
-                id: this.mapSelect.getSelectedValue(),
+        this.layerDownButton.on('click', () => {
+            this.action.changeLayerOrder({
+                id: this.layerSelect.getSelectedValue(),
                 isUp : false
             });
         });
@@ -246,10 +232,10 @@ class GUI extends EventEmitter {
     }
 
     initLayerSelectList(layerDatas) {
-        this.mapSelect.clear();
+        this.layerSelect.clear();
         for (let i = 0; i < layerDatas.length; ++i) {
             let data = layerDatas[i];
-            this.mapSelect.addOption(data.id, data.id + " - " + data.type);
+            this.layerSelect.addOption(data.id, data.id + " - " + data.type);
         }
     }
 

@@ -115,5 +115,8 @@
  "display_setting_changed": "Display permission was changed successfully.",
  "global_settings": "Global Settings",
  "per_db_settings": "Local Settings in DB",
- "admin_setting_password": "Administrator's Password Settings"
+ "admin_setting_password": "Administrator's Password Settings",
+ "add_layer": "Add Layer",
+ "layer_list": "Layer List",
+ "base_content": "Base Content"
 }

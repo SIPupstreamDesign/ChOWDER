@@ -176,10 +176,10 @@ class Store extends EventEmitter {
         });
     }
 
-    _addMap(data) {
+    _addLayer(data) {
         //if (this.metaData) {
             /*
-            this.metaData.mapList = data;
+            this.metaData.layerList = data;
             let updateData = JSON.parse(JSON.stringify(this.metaData));
             // 幅高さは更新しない
             delete updateData.width;
@@ -188,16 +188,16 @@ class Store extends EventEmitter {
 
             });   
             */
-           this.emit(Store.EVENT_DONE_ADD_MAP, null, data);
+           this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
         //}
     }
 
-    _deleteMap(data) {
-        this.emit(Store.EVENT_DONE_DELETE_MAP, null, data);
+    _deleteLayer(data) {
+        this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
     }
 
-    _changeMapOrder(data) {
-        this.emit(Store.EVENT_DONE_CHANGE_MAP_ORDER, null, data);
+    _changeLayerOrder(data) {
+        this.emit(Store.EVENT_DONE_CHANGE_LAYER_ORDER, null, data);
     }
 }
 
@@ -208,7 +208,7 @@ Store.EVENT_LOGIN_SUCCESS = "login_success";
 Store.EVENT_LOGIN_FAILED = "login_failed";
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
-Store.EVENT_DONE_ADD_MAP = "done_add_map";
-Store.EVENT_DONE_DELETE_MAP = "done_delete_map";
-Store.EVENT_DONE_CHANGE_MAP_ORDER = "done_change_map_order";
+Store.EVENT_DONE_ADD_LAYER = "done_add_layer";
+Store.EVENT_DONE_DELETE_LAYER = "done_delete_layer";
+Store.EVENT_DONE_CHANGE_LAYER_ORDER = "done_change_layer_order";
 export default Store;

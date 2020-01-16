@@ -76,24 +76,24 @@ class Action extends EventEmitter
      * 地図の追加
      * @param {*} data 
      */
-    addMap(data) {
-        this.emit(Action.EVENT_ADD_MAP, null, data);
+    addLayer(data) {
+        this.emit(Action.EVENT_ADD_LAYER, null, data);
     }
 
     /**
      * 地図の削除
      * @param {*} data 
      */
-    deleteMap(data) {
-        this.emit(Action.EVENT_DELETE_MAP, null, data);
+    deleteLayer(data) {
+        this.emit(Action.EVENT_DELETE_LAYER, null, data);
     }
 
     /**
      * 地図順序変更
      * @param {*} data 
      */
-    changeMapOrder(data) {
-        this.emit(Action.EVENT_CHANGE_MAP_ORDER, null, data);
+    changeLayerOrder(data) {
+        this.emit(Action.EVENT_CHANGE_LAYER_ORDER, null, data);
     }
 }
 
@@ -102,8 +102,8 @@ Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_ADD_CONTENT = "addContent";
-Action.EVENT_ADD_MAP = "addMap";
-Action.EVENT_DELETE_MAP = "deleteMap";
-Action.EVENT_CHANGE_MAP_ORDER = "changeMapOrder";
+Action.EVENT_ADD_LAYER = "addLayer";
+Action.EVENT_DELETE_LAYER = "deleteLayer";
+Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
 Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
 export default Action;

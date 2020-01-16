@@ -116,3 +116,6 @@ display_setting_changed,ディスプレイ許可設定を変更しました,Display permission wa
 global_settings,全体設定,Global Settings
 per_db_settings,DBごとの設定,Local Settings in DB
 admin_setting_password,管理パスワードの設定,Administrator's Password Settings
+add_layer,レイヤーの追加,Add Layer
+layer_list,レイヤーリスト,Layer List
+base_content,ベースコンテンツ,Base Content
