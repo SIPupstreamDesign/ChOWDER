@@ -93,7 +93,7 @@
 	ColorMapSource.prototype = Object.create(itowns.TMSSource.prototype);
 
     // マップ追加
-    function addMap(view, params) {
+    function addLayer(view, params) {
         var url = params.url;
         if (url.indexOf("${z}") >= 0) {
             url = url.split("${z}").join("%TILEMATRIX");
@@ -112,7 +112,7 @@
             "tileMatrixSet": "PM",
             "updateStrategy": {
                 "type": 3
-            },
+            }
         };
         if (params.hasOwnProperty('id')) {
             config.id = params.id;
@@ -131,7 +131,7 @@
     }
 
     // マップ削除
-    function deleteMap(view, params) {
+    function deleteLayer(view, params) {
         var id = params.id;
         var layers = view.getLayers();
         var layer;
@@ -139,13 +139,14 @@
             layer = layers[i];
             if (layer.id === id) {
                 view.removeLayer(id);
+                view.notifyChange();
                 break;
             }
         }
     }
 
     // マップ順序変更
-    function changeMapOrder(view, params) {
+    function changeLayerOrder(view, params) {
         var id = params.id;
         var isUp = params.isUp ? true : false;
         var layers = view._layers[0].attachedLayers;
@@ -208,20 +209,20 @@
                     // リサイズ命令
                     resizeWindow(data.params);
                 }
-                else if (data.method === "chowder_itowns_add_map")
+                else if (data.method === "chowder_itowns_add_layer")
                 {
                     // マップ追加命令
-                    addMap(view, data.params);
+                    addLayer(view, data.params);
                 }
-                else if (data.method === "chowder_itowns_delete_map")
+                else if (data.method === "chowder_itowns_delete_layer")
                 {
                     // マップ削除命令
-                    deleteMap(view, data.params);
+                    deleteLayer(view, data.params);
                 }
-                else if (data.method === "chowder_itowns_change_map_order") 
+                else if (data.method === "chowder_itowns_change_layer_order") 
                 {
                     // マップ順序変更命令
-                    changeMapOrder(view, data.params);
+                    changeLayerOrder(view, data.params);
                 }
             } catch(ex) {
                 console.error(ex);
