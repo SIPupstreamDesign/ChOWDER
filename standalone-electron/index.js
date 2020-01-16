@@ -83,13 +83,16 @@ function createWindows() {
 			group: windowProps.group || undefined,
 			posx: windowProps.vda_position ? windowProps.vda_position[0] : undefined,
 			posy: windowProps.vda_position ? windowProps.vda_position[1] : undefined,
-			scale: windowProps.scale || undefined
+			scale: windowProps.scale || undefined,
+			marker_id: windowProps.marker_id || undefined
 		});
 		const pass = CONFIG.password
 		ipcMain.on("electron_login", (event,arg)=>{
 			event.sender.send("electron_password", pass);
 		});
 		window.loadURL(CONFIG.url + query);
+		window.webContents.openDevTools();
+		console.log("develope");
 	}
 }
 

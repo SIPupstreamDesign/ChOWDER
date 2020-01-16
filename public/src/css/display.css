@@ -83,9 +83,9 @@ pre {
 }
 
 
-.ar_marker_img {
-	width: 2000;
-	height: 2000;
+#ar_marker_img {
+	width: 80vh;
+	height: 80vh;
 	position: absolute;
 	top: 50%;
 	left: 50%;

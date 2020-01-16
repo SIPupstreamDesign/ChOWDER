@@ -4,11 +4,14 @@
  */
 import Action from './action'
 import Connector from '../common/ws_connector.js';
+import Command from '../common/command';
 
 class Store extends EventEmitter {
     constructor(action) {
         super();
         this.action = action;
+        this.displayIndexes = [{ trueIndex: 0, scannedIndex: 0 }];
+        this.position
 
         this.isInitialized_ = false;
         this.initEvents();
@@ -37,14 +40,14 @@ class Store extends EventEmitter {
         }
         super.emit(...arguments);
     }
-    
+
     _connect() {
         console.log("_connect")
         let isDisconnect = false;
         let client = Connector.connect(() => {
             if (!this.isInitialized_) {
                 //this.initOtherStores(() => {
-                    this.emit(Store.EVENT_CONNECT_SUCCESS, null);
+                this.emit(Store.EVENT_CONNECT_SUCCESS, null);
                 //});
             } else {
                 this.emit(Store.EVENT_CONNECT_SUCCESS, null);
@@ -69,9 +72,28 @@ class Store extends EventEmitter {
             };
         })(client));
     }
+
+    _getVirtualDisplay() {
+        Connector.send(Command.GetVirtualDisplay, {}, (err, reply) => {
+            this.virtualDisplay = reply;
+            this.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);//GUIにイベントを投げる
+        });
+    }
+
+    _setDisplayIndexes(data) {
+        //console.log(this.displayIndexes)
+        this.displayIndexes.push([data["trueIndex"], data["scannedIndex"]]);
+//        return this.displayIndexes;
+        this.emit(Store.EVENT_DONE_SET_DISPLAY_INDEXES, null, this.displayIndexes);
+        /* Connector.send(Command.SetDisplayIndexes,this.displayIndexes , (err, reply) => {
+         });*/
+    }
+
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
+Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "get_virtual_display";
+Store.EVENT_DONE_SET_DISPLAY_INDEXES = "set_display_indexes";
 export default Store;

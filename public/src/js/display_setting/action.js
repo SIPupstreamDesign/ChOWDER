@@ -29,9 +29,17 @@ class Action extends EventEmitter
     connect(data) {
         this.emit(Action.EVENT_CONNECT, null, data);
     }
+
+    getVirtualDisplay(data) {
+        this.emit(Action.EVENT_GET_VIRTUAL_DISPLAY, null, data);
+    }
+    setDisplayIndexes(data) {        
+        this.emit(Action.EVENT_SET_DISPLAY_INDEXES, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
-
+Action.EVENT_GET_VIRTUAL_DISPLAY="getVirtualDisplay";
+Action.EVENT_SET_DISPLAY_INDEXES="setDisplayIndexes";
 
 export default Action;

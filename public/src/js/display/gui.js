@@ -20,10 +20,10 @@ class GUI extends EventEmitter {
 
         this.store = store;
         this.action = action;
-        
+
         this.store.on(Store.EVENT_DONE_DELETE_ALL_ELEMENTS, (err, idList) => {
             console.error("EVENT_DONE_DELETE_ALL_ELEMENTS", idList)
-            let previewArea = document.getElementById('preview_area');
+            let previewArea = document.getElemetById('preview_area');
             for (let i = 0; i < idList.length; ++i) {
                 let id = idList[i];
                 let elem = document.getElementById(id);
@@ -36,8 +36,8 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, (err, data) => {
             for (let i = 0; i < data.length; i = i + 1) {
                 this.showDisplayID(data[i].id);
-                this.showArMarker()
             }
+            this.deleteArMarker();
         });
 
         this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
@@ -58,6 +58,7 @@ class GUI extends EventEmitter {
                     menu.appendChild(button.getDOM());
                 }
             }
+            this.showArMarker(this.store.getWindowID());
         })
 
         // 上部メニュー
@@ -78,7 +79,7 @@ class GUI extends EventEmitter {
             }
             timer = setTimeout(() => {
                 this.action.resizeWindow({
-                    size : this.getWindowSize()
+                    size: this.getWindowSize()
                 });
             }, 200);
         };
@@ -106,13 +107,13 @@ class GUI extends EventEmitter {
         let onfocus = false;
         // 時間たったら隠す関数
         let hideMenuFunc = function () {
-                // console.log("onfocus:", onfocus);
-                if (!onfocus) {
-                    // console.log("hideMenuFunc");
-                    document.getElementById('head_menu').classList.add('hide');
-                }
-                registered = false;
-            };
+            // console.log("onfocus:", onfocus);
+            if (!onfocus) {
+                // console.log("hideMenuFunc");
+                document.getElementById('head_menu').classList.add('hide');
+            }
+            registered = false;
+        };
 
         window.addEventListener('mousemove', function (evt) {
             document.getElementById('head_menu').classList.remove('hide');
@@ -127,9 +128,9 @@ class GUI extends EventEmitter {
         if (window.isElectron()) {
             menuSetting = [
                 {
-                    Setting : [{
-                        Fullscreen : {
-                            func : function(evt, menu) { 
+                    Setting: [{
+                        Fullscreen: {
+                            func: function (evt, menu) {
                                 if (!DisplayUtil.isFullScreen()) {
                                     menu.changeName("Fullscreen", "CancelFullscreen")
                                 } else {
@@ -143,19 +144,19 @@ class GUI extends EventEmitter {
         } else {
             menuSetting = [
                 {
-                    Display : [{
-                            Controller : {
-                                func : () => {
-                                    window.open("controller.html"); // TODO コントローラIDの設定どうするか
-                                }
+                    Display: [{
+                        Controller: {
+                            func: () => {
+                                window.open("controller.html"); // TODO コントローラIDの設定どうするか
                             }
-                        }],
-                    url : "display.html"
+                        }
+                    }],
+                    url: "display.html"
                 },
                 {
-                    Setting : [{
-                        Fullscreen : {
-                            func : function(evt, menu) { 
+                    Setting: [{
+                        Fullscreen: {
+                            func: function (evt, menu) {
                                 if (!DisplayUtil.isFullScreen()) {
                                     menu.changeName("Fullscreen", "CancelFullscreen")
                                 } else {
@@ -180,12 +181,12 @@ class GUI extends EventEmitter {
         this.headMenu.getIDInput().onblur = (ev) => {
             // console.log("onblur");
             onfocus = false;
-            this.action.changeDisplayID({ id : this.headMenu.getIDValue()});
+            this.action.changeDisplayID({ id: this.headMenu.getIDValue() });
         };
         this.headMenu.getIDInput().onkeypress = (ev) => {
             // console.log(ev.keyCode);
             if (ev.keyCode === 13) { // enter
-                this.action.changeDisplayID({ id : this.headMenu.getIDValue()});
+                this.action.changeDisplayID({ id: this.headMenu.getIDValue() });
             }
         };
     }
@@ -202,11 +203,11 @@ class GUI extends EventEmitter {
      */
     getWindowSize() {
         return {
-            width : window.innerWidth,
-            height : window.innerHeight
+            width: window.innerWidth,
+            height: window.innerHeight
         };
     }
-    
+
     /**
      * マークによるコンテンツ強調表示のトグル
      * @param {Element} elem 対象エレメント
@@ -229,15 +230,14 @@ class GUI extends EventEmitter {
                     elem.style.borderWidth = "0px";
                 }
             }
-            let memo =  document.getElementById("memo:" + metaData.id);
+            let memo = document.getElementById("memo:" + metaData.id);
             if (memo) {
                 if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
                     memo.style.borderColor = "lightgray";
-                    memo.style.backgroundColor = "lightgray"; 
+                    memo.style.backgroundColor = "lightgray";
                 }
-                if ( (metaData[Constants.MARK_MEMO] === 'true' || metaData[Constants.MARK_MEMO] === true) && 
-                        (metaData["visible"] === 'true' || metaData["visible"] === true) )
-                {
+                if ((metaData[Constants.MARK_MEMO] === 'true' || metaData[Constants.MARK_MEMO] === true) &&
+                    (metaData["visible"] === 'true' || metaData["visible"] === true)) {
                     memo.style.display = "block";
                 } else {
                     memo.style.display = "none";
@@ -248,7 +248,7 @@ class GUI extends EventEmitter {
 
     deleteMark(elem, id) {
         if (elem) {
-            let memo =  document.getElementById("memo:" + id);
+            let memo = document.getElementById("memo:" + id);
             if (memo) {
                 memo.style.display = "none";
                 if (memo.parentNode) {
@@ -257,7 +257,7 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     /**
      * 表示非表示の更新.
      * @method updatePreviewAreaVisible
@@ -285,7 +285,7 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     /**
      * メモを表示.
      * elemにメモ用エレメントをappendChild
@@ -302,7 +302,7 @@ class GUI extends EventEmitter {
                 let rect = elem.getBoundingClientRect();
                 memo.style.width = (rect.right - rect.left) + "px";
                 memo.style.left = rect.left + "px";
-                memo.style.top =  rect.bottom + "px";
+                memo.style.top = rect.bottom + "px";
                 memo.style.zIndex = elem.style.zIndex;
             } else {
                 memo = document.createElement("pre");
@@ -319,10 +319,10 @@ class GUI extends EventEmitter {
                 memo.style.zIndex = elem.style.zIndex;
                 previewArea.appendChild(memo);
             }
-            
+
             if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
                 memo.style.borderColor = groupDict[metaData.group].color;
-                memo.style.backgroundColor = groupDict[metaData.group].color; 
+                memo.style.backgroundColor = groupDict[metaData.group].color;
             }
         }
     }
@@ -368,15 +368,15 @@ class GUI extends EventEmitter {
                         elem.width = width;
                         elem.height = width / orgAspect;
 
-                        let transform = [ 1, 0, 0, 1, 0, 0 ];
-                        if ( orgAspect < pageAspect ) {
-                            let margin = ( 1.0 / orgAspect - 1.0 / pageAspect ) * width;
-                            transform[ 5 ] = margin / 2;
+                        let transform = [1, 0, 0, 1, 0, 0];
+                        if (orgAspect < pageAspect) {
+                            let margin = (1.0 / orgAspect - 1.0 / pageAspect) * width;
+                            transform[5] = margin / 2;
                         } else {
-                            let margin = ( orgAspect - pageAspect ) * width;
-                            transform[ 4 ] = margin / 2;
-                            transform[ 0 ] = ( width - margin ) / width;
-                            transform[ 3 ] = transform[ 0 ];
+                            let margin = (orgAspect - pageAspect) * width;
+                            transform[4] = margin / 2;
+                            transform[0] = (width - margin) / width;
+                            transform[3] = transform[0];
                         }
 
                         lastTask = lastTask.then(function () {
@@ -402,13 +402,13 @@ class GUI extends EventEmitter {
     showVideo(videpPlayer, metaData) {
         let webRTCDict = this.store.getVideoStore().getWebRTCDict();
         let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
-        
+
         if (!webRTCDict.hasOwnProperty(rtcKey)) {
             metaData.from = "view";
             this.action.requestWebRTC({
-                metaData : metaData,
+                metaData: metaData,
                 player: videpPlayer,
-                request : JSON.stringify({ key : rtcKey })
+                request: JSON.stringify({ key: rtcKey })
             });
             delete metaData.from;
         }
@@ -421,7 +421,7 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showText(elem, metaData, contentData) {
-    	elem.innerHTML = contentData;
+        elem.innerHTML = contentData;
     }
 
     /**
@@ -435,7 +435,7 @@ class GUI extends EventEmitter {
         if (metaData.hasOwnProperty('mime')) {
             mime = metaData.mime;
         }
-        let blob = new Blob([contentData], {type: mime});
+        let blob = new Blob([contentData], { type: mime });
         if (elem && blob) {
             URL.revokeObjectURL(elem.src);
             elem.onload = () => {
@@ -501,10 +501,10 @@ class GUI extends EventEmitter {
         let groupDict = this.store.getGroupDict();
         let videoPlayer = null;
         // console.log("assignContent", "id=" + metaData.id);
-        if (Validator.isWindowType(metaData) || 
+        if (Validator.isWindowType(metaData) ||
             (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
             let tagName = DisplayUtil.getTagName(metaData.type);
-    
+
             // 既に読み込み済みのコンテンツかどうか
             if (document.getElementById(metaData.id)) {
                 elem = document.getElementById(metaData.id);
@@ -519,7 +519,7 @@ class GUI extends EventEmitter {
                     metaData = metaDataDict[metaData.id];
                 }
             }
-    
+
             if (!elem) {
                 if (metaData.type === 'video') {
                     videoPlayer = new VideoPlayer(true);
@@ -550,16 +550,16 @@ class GUI extends EventEmitter {
                 this.showImage(elem, metaData, contentData);
             }
             VscreenUtil.assignMetaData(elem, metaData, false, groupDict);
-            
+
             // 同じコンテンツを参照しているメタデータがあれば更新
             if (elem) {
                 DisplayUtil.copyContentData(this.store, elem, null, metaData, false);
             }
-    
+
             this.showMemo(elem, metaData);
         }
     }
-    
+
     /**
      * タイル画像の枠を全部再生成する。中身の画像(image.src)は作らない。
      * @param {*} elem 
@@ -615,13 +615,13 @@ class GUI extends EventEmitter {
                 elem = document.getElementById(metaData.id);
             }
             let reductionElem = elem.getElementsByClassName('reduction_image')[0];
-        
+
             // contentData(reduction data)を生成
             // 解像度によらず生成する
             if (!reductionElem.src.length === 0) {
-                URL.revokeObjectURL(reductionElem.src);	
+                URL.revokeObjectURL(reductionElem.src);
             }
-            let blob = new Blob([contentData], {type: mime});
+            let blob = new Blob([contentData], { type: mime });
             reductionElem.src = URL.createObjectURL(blob);
         }
     }
@@ -642,10 +642,10 @@ class GUI extends EventEmitter {
         let mime = "image/jpeg";
         let previousImage = null;
         let isInitial = true;
-		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
-		const ow = Number(metaData.orgWidth);
+        const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
+        const ow = Number(metaData.orgWidth);
         const oh = Number(metaData.orgHeight);
-        
+
         let win = this.getWindowSize();
 
         let loadedTiles = [];
@@ -656,7 +656,7 @@ class GUI extends EventEmitter {
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
                 // let frect = Vscreen.transformOrg(VscreenUtil.toFloatRect(rect));
                 let frect = Vscreen.transform(VscreenUtil.toFloatRect(rect));
-                frect.w =  Math.round(rect.width / ow * orgRect.w);
+                frect.w = Math.round(rect.width / ow * orgRect.w);
                 frect.h = Math.round(rect.height / oh * orgRect.h);
 
                 /*
@@ -673,11 +673,11 @@ class GUI extends EventEmitter {
                 if (frect.w === 0 || frect.h === 0) { continue; }
                 // windowの中にあるか外にあるかで可視不可視判定
                 let visible = !VscreenUtil.isOutsideWindow({
-                    posx: frect.x, 
-                    posy : frect.y,
-                    width : frect.w,
-                    height : frect.h
-                }, { x : 0, y: 0, w : win.width, h: win.height});
+                    posx: frect.x,
+                    posy: frect.y,
+                    width: frect.w,
+                    height: frect.h
+                }, { x: 0, y: 0, w: win.width, h: win.height });
                 let previousElem = null;
                 // windowの中にあるか外にあるかで可視不可視判定
                 if (visible) {
@@ -692,7 +692,7 @@ class GUI extends EventEmitter {
                         elem = document.getElementById(metaData.id);
                         VscreenUtil.resizeTileImages(elem, metaData);
                     }
-                                
+
                     // 全タイル読み込み済じゃなかったら返る
                     if (String(metaData.tile_finished) !== "true") {
                         ++tileIndex;
@@ -717,7 +717,7 @@ class GUI extends EventEmitter {
                         const mh = Number(metaData.height);
                         let reductionAspect = rw / rh;
                         let aspect = mw / mh;
-                        let isSameImage = Math.abs(reductionAspect-aspect) < 0.2;
+                        let isSameImage = Math.abs(reductionAspect - aspect) < 0.2;
                         if (isSameImage && ew <= rw && eh <= rh) {
                             // ディスプレイ内のreduction divの解像度 < オリジナルの縮小版画像の解像度
                             // reductionを表示、タイルを非表示に
@@ -741,7 +741,7 @@ class GUI extends EventEmitter {
 
                     // 全タイル読み込み完了時にログを出すため
                     loadedTiles.push(false);
-                    
+
                     if (!previousImage || isReload) {
                         let image = elem.getElementsByClassName(tileClassName)[0];
                         // assignTileImageを複数回呼ばれたときに、
@@ -753,19 +753,19 @@ class GUI extends EventEmitter {
                         }
 
                         this.action.getTileContent({
-                            request : request,
-                            callback :  ((index, image) => {
+                            request: request,
+                            callback: ((index, image) => {
                                 return (err, data) => {
                                     if (err) {
                                         console.error(err);
                                         return;
                                     }
                                     if (previousImage) {
-                                        URL.revokeObjectURL(image.src);	
+                                        URL.revokeObjectURL(image.src);
                                     }
                                     if (this.store.isMeasureTimeEnable()) {
                                         image.onload = () => {
-                                            if (!loadedTiles) { 
+                                            if (!loadedTiles) {
                                                 return;
                                             }
                                             loadedTiles[index] = true;
@@ -787,10 +787,10 @@ class GUI extends EventEmitter {
                                             }
                                         }
                                     }
-                                    let blob = new Blob([data.contentData], {type: mime});
+                                    let blob = new Blob([data.contentData], { type: mime });
                                     image.src = URL.createObjectURL(blob);
                                 }
-                            })(loadedTiles ? loadedTiles.length-1 : 0, image)
+                            })(loadedTiles ? loadedTiles.length - 1 : 0, image)
                         })
                     }
 
@@ -815,11 +815,11 @@ class GUI extends EventEmitter {
             elem.style.borderWidth = "1px";
             elem.style.border = "solid";
             elem.is_dragging = true;
-            
+
             if (elem.classList.contains("mark")) {
                 elem.style.borderWidth = "6px";
                 if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-                    elem.style.borderColor = groupDict[metaData.group].color; 
+                    elem.style.borderColor = groupDict[metaData.group].color;
                 }
             }
         }
@@ -865,7 +865,7 @@ class GUI extends EventEmitter {
      */
     setupContent(elem, targetid) {
         let d = DisplayUtil.getTargetEvent();
-        if(d.mode === 'mouse'){
+        if (d.mode === 'mouse') {
             elem.addEventListener(d.start, ((elem) => {
                 return (evt) => {
                     let rect = elem.getBoundingClientRect();
@@ -874,7 +874,7 @@ class GUI extends EventEmitter {
                     elem.draggingOffsetLeft = evt.clientX - rect.left;
                     elem.draggingOffsetTop = evt.clientY - rect.top;
                     this.action.changeContentIndexToFront({
-                        targetID : targetid
+                        targetID: targetid
                     });
                     evt.preventDefault();
                 };
@@ -886,14 +886,14 @@ class GUI extends EventEmitter {
                 let elem = this.getSelectedElem();
                 if (elem && elem.is_dragging) {
                     this.action.changeContentTransform({
-                        targetID : elem.id, 
-                        x : evt.pageX - elem.draggingOffsetLeft, 
-                        y : evt.pageY - elem.draggingOffsetTop
+                        targetID: elem.id,
+                        x: evt.pageX - elem.draggingOffsetLeft,
+                        y: evt.pageY - elem.draggingOffsetTop
                     });
                 }
                 evt.preventDefault();
             };
-        }else{
+        } else {
             elem.addEventListener(d.start, ((elem) => {
                 return (evt) => {
                     let rect = elem.getBoundingClientRect();
@@ -902,7 +902,7 @@ class GUI extends EventEmitter {
                     elem.draggingOffsetLeft = evt.changedTouches[0].clientX - rect.left;
                     elem.draggingOffsetTop = evt.changedTouches[0].clientY - rect.top;
                     this.action.changeContentIndexToFront({
-                        targetID : targetid
+                        targetID: targetid
                     });
                     evt.preventDefault();
                 };
@@ -914,16 +914,16 @@ class GUI extends EventEmitter {
                 let elem = this.getSelectedElem();
                 if (elem && elem.is_dragging) {
                     this.action.changeContentTransform({
-                        targetID : elem.id,
-                        x : evt.changedTouches[0].pageX - elem.draggingOffsetLeft, 
-                        y : evt.changedTouches[0].pageY - elem.draggingOffsetTop
+                        targetID: elem.id,
+                        x: evt.changedTouches[0].pageX - elem.draggingOffsetLeft,
+                        y: evt.changedTouches[0].pageY - elem.draggingOffsetTop
                     });
                 }
                 evt.preventDefault();
             };
         }
     };
-    
+
 
     /**
      * windowDataをもとにビューポートを更新する.
@@ -943,7 +943,7 @@ class GUI extends EventEmitter {
         Vscreen.setWholeScale(scale);
         // trans
         Vscreen.translateWhole(-cx, -cy);
-        
+
         // 全コンテンツデータの座標をビューポートをもとに更新
         let metaDataDict = this.store.getMetaDataDict();
         let groupDict = this.store.getGroupDict();
@@ -962,7 +962,12 @@ class GUI extends EventEmitter {
         document.getElementById('displayid').innerHTML = "ID:" + displayID;
     }
 
-    showArMarker(){
+    showArMarker() {
+            let displayMarkerID=this.store.getQueryParams().marker_id;
+            //console.log(displayMarkerID);
+            document.getElementById('ar_marker_img').setAttribute("src", "./src/image/markers/marker"+displayMarkerID+".png");
+    }
+    deleteArMarker() {
         document.getElementById('ar_marker').style.display="none"
     }
 }

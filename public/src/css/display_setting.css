@@ -50,7 +50,7 @@ pre {
 	position: absolute;
 	left: 0px;
 	right: 0px;
-	z-index: 1000000;
+	z-index: 100000;
 }
 
 
@@ -61,8 +61,37 @@ pre {
 
 #arjs-video{
 	z-index:0 !important;
+	display:none;
 }
 
 .a-canvas{
-	z-index:1;
+	z-index:100000;
+}
+
+#scan_toggle_button{
+	background: rgb(255, 255, 255);
+	height: 30px;
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	z-index:1000000;
+	display:block;
+}
+ #frames{
+	background: rgb(255, 255, 255);
+	z-index:1000000;
+
+ }
+
+#whole_sub_window{
+ 	position: absolute;
+    border: 1px solid gray;
+    z-index: 100000;
+    left: 50%;
+	top: 50%;
+	transform:translate(-50%,-50%);
+    width: 98.2px;
+    height: 55.2px;
+    background: transparent;
 }
