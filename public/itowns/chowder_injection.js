@@ -317,23 +317,32 @@
         for (i = 0; i < layers.length; ++i) {
             layer = layers[i];
             data = {};
-            if (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url'))
+            if (
+                (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||
+                (layer.hasOwnProperty('file') && layer.hasOwnProperty('url'))
+                )
             {
-                data.visible =  layer.visible;
-                data.projection = layer.projection;
-                data.id = layer.id;
-                data.url = layer.source.url;
-                data.zoom = layer.source.zoom;
-                data.type = ((function (layer) {
-                    if (layer.isElevationLayer) {
-                        return "Elevation";
-                    } else if (layer.isColorLayer) {
-                        return "Color";
-                    } else if (layer.isGeometryLayer) {
-                        return "Geometry";
-                    }
-                })(layer));
-                dataList.push(data);
+                if (layer.hasOwnProperty('source') || layer.hasOwnProperty('file'))
+                {
+                    data.visible =  layer.visible;
+                    data.projection = layer.projection;
+                    data.id = layer.id;
+                    data.url = layer.hasOwnProperty('source') ? layer.source.url : layer.url;
+                    data.zoom = layer.hasOwnProperty('source') ? layer.source.zoom : undefined;
+                    data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
+                    data.type = ((function (layer) {
+                        if (layer instanceof itowns.ElevationLayer) {
+                            return "Elevation";
+                        } else if (layer instanceof itowns.ColorLayer) {
+                            return "Color";
+                        } else if (layer instanceof itowns.GeometryLayer) {
+                            return "Geometry";
+                        } else {
+                            return "Layer"
+                        }
+                    })(layer));
+                    dataList.push(data);
+                }
             }
         }
         return dataList;
@@ -358,7 +367,7 @@
             menuDiv.style.left = "10px";
         }
 
-        var layerDataList = []
+        var layerDataList = getLayerData(view);
         view.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, function (evt) {
             layerDataList = getLayerData(view);
             window.parent.postMessage(JSON.stringify({
@@ -409,6 +418,17 @@
                         to : "parent"
                     }), evt.origin);
             
+                    // 初期レイヤー送信
+                        if (layerDataList.length >= 0) {
+                        window.parent.postMessage(JSON.stringify({
+                            jsonrpc : "2.0",
+                            id : messageID + 1,
+                            method :  "UpdateLayer",
+                            params : layerDataList,
+                            to : "parent"
+                        }));
+                    }
+
                     // カメラ動いた時にマトリックスを送信
                     view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (function () {
                         return function () {
