@@ -11,7 +11,6 @@ class Store extends EventEmitter {
         super();
         this.action = action;
         this.displayIndexes = [{ trueIndex: 0, scannedIndex: 0 }];
-        this.position
 
         this.isInitialized_ = false;
         this.initEvents();

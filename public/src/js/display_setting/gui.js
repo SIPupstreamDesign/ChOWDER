@@ -6,6 +6,7 @@
 import Store from './store';
 import Menu from '../components/menu.js';
 
+
 class GUI extends EventEmitter {
     constructor(store, action) {
         super();
@@ -25,20 +26,20 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
             this.action.getVirtualDisplay();
-            
+
         });
 
         this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             console.log("getv");
-            console.log(reply);   
+            console.log(reply);
             this.showVirtualDisplay(reply)
-            this.displayNumber=reply.splitX * reply.splitY; 
-            console.log("displayNumver"+this.displayNumber);
+            this.displayNumber = reply.splitX * reply.splitY;
+            console.log("displayNumver" + this.displayNumber);
             this.setArMarkerImg();
         });
 
         this.store.on(Store.EVENT_DONE_SET_DISPLAY_INDEXES, (err, reply) => {
-           // console.log(reply);
+            // console.log(reply);
         });
 
         //カメラ映像と仮想ディスプレイ画面の切り替え
@@ -50,15 +51,10 @@ class GUI extends EventEmitter {
                 document.getElementById("arjs-video").style.display = "block"
             }
         };
+         //スキャンしたマーカデータをstoreへ送る
+         document.getElementById("scan_button").onclick = function () {
 
-        /*document.getElementById("ar_marker1").addEventListener("markerFound", () => {
-            //let indexData = { trueIndex: i + 1, scannedIndex: 0 };
-            //this.action.setDisplayIndexes(indexData);
-            console.log("found");
-        });
-        document.getElementById("ar_marker1").addEventListener("markerLost", () => {
-            console.log("lost");
-        });*/
+         }
     }
 
     showVirtualDisplay(reply) {
@@ -94,28 +90,30 @@ class GUI extends EventEmitter {
         }
     }
 
+    
     setArMarkerImg() {
         let arEntry = document.getElementById("ar_entry");
         let setCamera = document.getElementById("camera");
-        //let imgNumber = reply.splitX * reply.splitY;
-        for (let i = 1; i <=2/* this.displayNumber*/; i++) {
-            let newMarker=document.createElement("a-marker");
+        for (let i = 1; i <= this.displayNumber; i++) {
+            let newMarker = document.createElement("a-marker");
+            newMarker.setAttribute("id", "ar_marker" + i);
             newMarker.addEventListener("markerFound", () => {
+                let mar=document.getElementById("ar_marker" + i);
+                console.log("ar_marker" + i)
+                console.log(mar.object3D.position);
                 console.log("found");
             });
             newMarker.addEventListener("markerLost", () => {
                 console.log("lost");
             });
-            newMarker.setAttribute("preset","custom");
-            newMarker.setAttribute("id","ar_marker"+i);
-            newMarker.setAttribute("type","pattern");
-            newMarker.setAttribute("Url","http://localhost:8080/src/image/markers/marker"+String(i)+".patt");
+            newMarker.setAttribute("preset", "custom");
+            newMarker.setAttribute("type", "pattern");
+            newMarker.setAttribute("Url", "http://localhost:8080/src/image/markers/marker" + String(i) + ".patt");
             //let displayingModel=document.createElement("a-box");
-            let boxModelOrigin=document.getElementsByClassName("box");
-            let boxModelClone = boxModelOrigin[0].cloneNode(true); 
-            //displayingModel.setAttribute("position",{x:0 ,y:0.5, z:0});
-            //displayingModel.setAttribute("wireframe","true");
-            arEntry.insertBefore(newMarker,setCamera);
+            let boxModelOrigin = document.getElementsByClassName("text");
+            let boxModelClone = boxModelOrigin[0].cloneNode(true);
+            boxModelClone.setAttribute("value", "Marker" + String(i));
+            arEntry.insertBefore(newMarker, setCamera);
             newMarker.appendChild(boxModelClone);
         }
 
