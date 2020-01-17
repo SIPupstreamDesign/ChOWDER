@@ -259,14 +259,14 @@
             try {
                 var data = JSON.parse(evt.data);
                 // 親フレームから情報を受け取り
-                if (data.method === "UpdateCameraCallback") 
+                if (data.method === "UpdateCamera") 
                 {
                     // カメラ更新命令
                     applyCameraWorldMat(view, data.params);
                     // メッセージの返信
                     sendResponse(data, {});
                 }
-                else if (data.method === "ResizeCallback")
+                else if (data.method === "Resize")
                 {
                     // リサイズ命令
                     resizeWindow(data.params);

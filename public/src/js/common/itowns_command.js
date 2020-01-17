@@ -8,16 +8,14 @@
 const ITownsCommand = {
     // 通信開始命令
     Init : "Init",
-    // カメラ更新された(iframe->parent)
-    UpdateCamera : "UpdateCamera",
     // サムネイルが更新された(iframe->parent)
     UpdateThumbnail : "UpdateThumbnail",
     // レイヤーが更新された(iframe->parent)
     UpdateLayer : "UpdateLayer",
-    // カメラ更新命令(parent->iframe)
-    UpdateCameraCallback : "UpdateCameraCallback",
-    // リサイズ命令
-    ResizeCallback : "ResizeCallback",
+    // カメラ更新命令(parent<->iframe)
+    UpdateCamera : "UpdateCamera",
+    // リサイズ命令(parent<->iframe)
+    Resize : "Resize",
     // レイヤー追加命令
     AddLayer : "AddLayer",
     // レイヤー削除命令

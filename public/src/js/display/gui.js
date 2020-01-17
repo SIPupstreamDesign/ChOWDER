@@ -434,12 +434,12 @@ class GUI extends EventEmitter {
             // 初回に一度実行
             iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
-                method : ITownsCommand.UpdateCameraCallback,
+                method : ITownsCommand.UpdateCamera,
                 params : metaData.cameraWorldMatrix
             }));
             iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
-                method : ITownsCommand.ResizeCallback,
+                method : ITownsCommand.Resize,
                 params : rect
             }));
 
@@ -450,14 +450,14 @@ class GUI extends EventEmitter {
                     chowder_itowns_update_camera_callback : (mat) => {
                         iframe.contentWindow.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
-                            method : ITownsCommand.UpdateCameraCallback,
+                            method : ITownsCommand.UpdateCamera,
                             params : mat
                         }));
                     },
                     chowder_itowns_resize_callback : (rect) => {
                         iframe.contentWindow.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
-                            method : ITownsCommand.ResizeCallback,
+                            method : ITownsCommand.Resize,
                             params : rect
                         }));
                     }
