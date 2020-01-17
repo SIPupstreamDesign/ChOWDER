@@ -109,7 +109,6 @@ class Action extends EventEmitter
      * @param {*} data iframe
      */
     connectIFrame(data) {
-        console.error("connectIFrame")
         this.emit(Action.EVENT_CONNECT_IFRAME, null, data);
     }
 }

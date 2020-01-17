@@ -187,6 +187,10 @@ class Store extends EventEmitter {
     }
 
     _addLayer(data) {
+        // iframe内のchowder injectionの初期化
+        this.iframeConnector.send(ITownsCommand.AddLayer, data, (err, data) => {
+            this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
+        });
         //if (this.metaData) {
             /*
             this.metaData.layerList = data;
@@ -197,7 +201,6 @@ class Store extends EventEmitter {
             this.operation.updateMetadata(updateData, (err, res) => {
             });
             */
-            this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
         //}
     }
 

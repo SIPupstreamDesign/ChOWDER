@@ -263,34 +263,44 @@
                 {
                     // カメラ更新命令
                     applyCameraWorldMat(view, data.params);
+                    // メッセージの返信
+                    sendResponse(data, {});
                 }
                 else if (data.method === "ResizeCallback")
                 {
                     // リサイズ命令
                     resizeWindow(data.params);
+                    // メッセージの返信
+                    sendResponse(data, {});
                 }
                 else if (data.method === "AddLayer")
                 {
                     // レイヤー追加命令
                     addLayer(view, data.params);
+                    // メッセージの返信
+                    sendResponse(data, {});
                 }
                 else if (data.method === "DeleteLayer")
                 {
                     // レイヤー削除命令
                     deleteLayer(view, data.params);
+                    // メッセージの返信
+                    sendResponse(data, {});
                 }
                 else if (data.method === "ChangeLayerOrder") 
                 {
                     // レイヤー順序変更命令
                     changeLayerOrder(view, data.params);
+                    // メッセージの返信
+                    sendResponse(data, {});
                 }
                 else if (data.method === "ChangeLayerProperty") 
                 {
                     // レイヤープロパティ変更命令
                     changeLayerProperty(view, data.params);
+                    // メッセージの返信
+                    sendResponse(data, {});
                 }
-                // メッセージの返信
-                sendResponse(data, {});
             } catch(ex) {
                 console.error(ex);
             }
@@ -389,6 +399,7 @@
                     // メッセージの返信
                     sendResponse(data, {});
 
+                    // 初期カメラ位置送信
                     var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
                     window.parent.postMessage(JSON.stringify({
                         jsonrpc : "2.0",

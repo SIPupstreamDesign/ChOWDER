@@ -75,40 +75,18 @@ class GUI extends EventEmitter {
             this.loginMenu.showInvalidLabel(true);
         });
 
-        // ためしにレイヤー追加
-        this.store.on(Store.EVENT_DONE_ADD_LAYER, (err, data) => {
-            // iframe内のchowder injectionの初期化
-            this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc: "2.0",
-                method: ITownsCommand.AddLayer,
-                params: data
-            }));
-        });
-
-        // レイヤー削除
-        this.store.on(Store.EVENT_DONE_DELETE_LAYER, (err, data) => {
-        });
-
-        // レイヤー順序変更
-        this.store.on(Store.EVENT_DONE_CHANGE_LAYER_ORDER, (err, data) => {
-        });
-
-        // レイヤープロパティ変更
-        this.store.on(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, (err, data) => {
-        });
-
         this.store.on(Store.EVENT_DONE_IFRAME_CONNECT, (err, itownConnector) => {
-                
+
             // iframe内のitownsのカメラが更新された
             itownConnector.on(ITownsCommand.UpdateCamera, (err, params) => {
                 this.action.updateCameraWorldMatrix({
                     mat: params
                 });
             });
-            
+
             // iframe内のitownsのサムネイルが更新された
             itownConnector.on(ITownsCommand.UpdateThumbnail, (err, params) => {
-                //this.addITownContent(toArrayBuffer(params));
+                this.addITownContent(toArrayBuffer(params));
             });
 
             // iframe内のitownsのレイヤーが更新された
@@ -144,7 +122,7 @@ class GUI extends EventEmitter {
             // ログイン実行
             this.action.login({
                 id: "APIUser",
-                password: this.loginMenu.getPassword()
+                password: "123456",//this.loginMenu.getPassword()
             });
         });
 
@@ -171,7 +149,7 @@ class GUI extends EventEmitter {
                     }
                 }]
             }];*/
-        
+
         this.headMenu = new Menu("", menuSetting, "ChOWDER iTowns Controller");
         document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
 
@@ -182,10 +160,10 @@ class GUI extends EventEmitter {
         wrapDom.innerHTML = "Sample Content:"
         this.itownSelect = new Select();
         this.itownSelect.getDOM().className = "itown_select";
+        this.itownSelect.addOption("itowns/view_pointcloud_3d_map.html", "view_pointcloud_3d_map");
         this.itownSelect.addOption("itowns/view_3d_map.html", "view_3d_map");
         this.itownSelect.addOption("itowns/3dtiles_basic.html", "3dtiles_basic");
         this.itownSelect.addOption("itowns/vector_tile_raster_3d.html", "vector_tile_raster_3d");
-        this.itownSelect.addOption("itowns/view_pointcloud_3d_map.html", "view_pointcloud_3d_map");
         this.itownSelect.getDOM().style.marginTop = "20px"
         wrapDom.appendChild(this.itownSelect.getDOM())
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
