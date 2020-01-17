@@ -118,5 +118,6 @@
  "admin_setting_password": "管理パスワードの設定",
  "add_layer": "レイヤーの追加",
  "layer_list": "レイヤーリスト",
- "base_content": "ベースコンテンツ"
+ "base_content": "ベースコンテンツ",
+ "layer_property": "レイヤープロパティ"
 }

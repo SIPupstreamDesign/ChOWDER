@@ -92,8 +92,34 @@
     };
 	ColorMapSource.prototype = Object.create(itowns.TMSSource.prototype);
 
-    // マップ追加
+    /**
+     * レイヤーを返す. ない場合はnullを返す
+     * @param id : 対象レイヤのID
+     */
+
+    function getLayer(view, id) {
+        var layers = view.getLayers();
+        for (var i = 0; i < layers.length; ++i) {
+            if (layers[i].id === id) {
+                return layers[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * レイヤー追加
+     * @param view
+     * @param params
+     * { 
+     *   id : 対象レイヤのID
+     *   url : 追加するURL
+     *   zoom : { min : 1, max : 20 } ズーム範囲 (option)
+     *   format : "image/png"など (option)
+     * }
+     */
     function addLayer(view, params) {
+        console.error("addLayer", params)
         var url = params.url;
         if (url.indexOf("${z}") >= 0) {
             url = url.split("${z}").join("%TILEMATRIX");
@@ -130,46 +156,81 @@
         view.addLayer(colorLayer);
     }
 
-    // マップ削除
+    /**
+     * マップ削除 
+     * @param view
+     * @param params
+     * { 
+     *   id : 対象レイヤのID
+     * }
+     */
     function deleteLayer(view, params) {
         var id = params.id;
-        var layers = view.getLayers();
-        var layer;
-        for (var i = 0; i < layers.length; ++i) {
-            layer = layers[i];
-            if (layer.id === id) {
-                view.removeLayer(id);
-                view.notifyChange();
-                break;
-            }
+        var layer = getLayer(view, id);
+        if (layer) {
+            view.removeLayer(id);
+            view.notifyChange();
         }
     }
 
-    // マップ順序変更
+    /**
+     * マップ順序変更
+     * @param view
+     * @param params
+     * { 
+     *   id : 変更対象レイヤのID
+     *   isUp : 上に移動する場合はtrue、下の場合はfalse
+     * }
+     */ 
     function changeLayerOrder(view, params) {
         var id = params.id;
         var isUp = params.isUp ? true : false;
         var layers = view._layers[0].attachedLayers;
-        var layer;
+        var layer = getLayer(view, id);
         console.log("pre", layers)
-        for (var i = 0; i < layers.length; ++i) {
-            layer = layers[i];
-            if (layer.id === id) {
-                if (isUp && i > 0) {
-                    console.error("up!", view, id)
-                    itowns.ColorLayersOrdering.moveLayerUp(view, id);
-                    layers.splice(i - 1, 2, layers[i], layers[i-1]);
-                    console.log(layers)
-                    view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED});
-                    view.notifyChange();
-                } else if (i < (layer.length - 1)) {
-                    itowns.ColorLayersOrdering.moveLayerDown(view, id);
-                    layers.splice(i, 2, layers[i+1], layers[i]);
-                    console.log(layers)
-                    view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED});
-                    view.notifyChange();
-                }
-                break;
+        if (layer) {
+            if (isUp && i > 0) {
+                console.error("up!", view, id)
+                itowns.ColorLayersOrdering.moveLayerUp(view, id);
+                layers.splice(i - 1, 2, layers[i], layers[i-1]);
+                console.log(layers)
+                view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED});
+                view.notifyChange();
+            } else if (i < (layer.length - 1)) {
+                itowns.ColorLayersOrdering.moveLayerDown(view, id);
+                layers.splice(i, 2, layers[i+1], layers[i]);
+                console.log(layers)
+                view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED});
+                view.notifyChange();
+            }
+        }
+    }
+
+    /**
+     * プロパティの変更
+     * @param view
+     * @param params 
+     * {
+     *   id : 変更対象レイヤのID
+     *   opacity : 透明度(option)
+     *   visible : 表示非表示.表示の場合true(option)
+     * }
+     */ 
+    function changeLayerProperty(view, params) {
+        var id = params.id;
+        var layer = getLayer(view, id);
+        var isChanged = false;
+        if (layer) {
+            if (params.hasOwnProperty('opacity')) {
+                layer.opacity = Number(params.opacity);
+                isChanged = true;
+            }
+            if (params.hasOwnProperty('visible')) {
+                layer.visible = Boolean(params.visible);
+                isChanged = true;
+            }
+            if (isChanged) {
+                view.notifyChange(layer);
             }
         }
     }
@@ -197,33 +258,39 @@
         window.addEventListener('message', function (evt) {
             try {
                 var data = JSON.parse(evt.data);
-                console.error(data)
                 // 親フレームから情報を受け取り
-                if (data.method === "chowder_itowns_update_camera_callback") 
+                if (data.method === "UpdateCameraCallback") 
                 {
                     // カメラ更新命令
                     applyCameraWorldMat(view, data.params);
                 }
-                else if (data.method === "chowder_itowns_resize_callback")
+                else if (data.method === "ResizeCallback")
                 {
                     // リサイズ命令
                     resizeWindow(data.params);
                 }
-                else if (data.method === "chowder_itowns_add_layer")
+                else if (data.method === "AddLayer")
                 {
-                    // マップ追加命令
+                    // レイヤー追加命令
                     addLayer(view, data.params);
                 }
-                else if (data.method === "chowder_itowns_delete_layer")
+                else if (data.method === "DeleteLayer")
                 {
-                    // マップ削除命令
+                    // レイヤー削除命令
                     deleteLayer(view, data.params);
                 }
-                else if (data.method === "chowder_itowns_change_layer_order") 
+                else if (data.method === "ChangeLayerOrder") 
                 {
-                    // マップ順序変更命令
+                    // レイヤー順序変更命令
                     changeLayerOrder(view, data.params);
                 }
+                else if (data.method === "ChangeLayerProperty") 
+                {
+                    // レイヤープロパティ変更命令
+                    changeLayerProperty(view, data.params);
+                }
+                // メッセージの返信
+                sendResponse(data, {});
             } catch(ex) {
                 console.error(ex);
             }
@@ -261,6 +328,15 @@
         }
         return dataList;
     }
+
+    function sendResponse(data, result) {
+        window.parent.postMessage(JSON.stringify({
+            jsonrpc : "2.0",
+            id : data.id,
+            method :  data.method,
+            result : {}
+        }));
+    }
     
     //var initialWorldMat = null;
     function injectAsChOWDERiTownController(view, viewerDiv)
@@ -278,8 +354,9 @@
             window.parent.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
                 id : messageID + 1,
-                method :  "chowder_itowns_update_layer",
-                params : layerDataList
+                method :  "UpdateLayer",
+                params : layerDataList,
+                to : "parent"
             }));
         });
         view.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, function (evt) {
@@ -287,8 +364,9 @@
             window.parent.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
                 id : messageID + 1,
-                method :  "chowder_itowns_update_layer",
-                params : layerDataList
+                method :  "UpdateLayer",
+                params : layerDataList,
+                to : "parent"
             }));
         });
         view.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, function (evt) {
@@ -296,8 +374,9 @@
             window.parent.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
                 id : messageID + 1,
-                method :  "chowder_itowns_update_layer",
-                params : layerDataList
+                method :  "UpdateLayer",
+                params : layerDataList,
+                to : "parent"
             }));
         });
 
@@ -305,14 +384,18 @@
             try {
                 var data = JSON.parse(evt.data);
                 // 初期メッセージの受け取り
-                if (data.method === "chowder_injection_init") 
+                if (data.method === "Init") 
                 {
+                    // メッセージの返信
+                    sendResponse(data, {});
+
                     var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
                     window.parent.postMessage(JSON.stringify({
                         jsonrpc : "2.0",
                         id : messageID + 1,
-                        method :  "chowder_itowns_update_camera",
-                        params : worldMat
+                        method :  "UpdateCamera",
+                        params : worldMat,
+                        to : "parent"
                     }), evt.origin);
             
                     // カメラ動いた時にマトリックスを送信
@@ -325,8 +408,9 @@
                                 window.parent.postMessage(JSON.stringify({
                                     jsonrpc : "2.0",
                                     id : messageID + 1,
-                                    method :  "chowder_itowns_update_camera",
-                                    params : mat
+                                    method :  "UpdateCamera",
+                                    params : mat,
+                                    to : "parent"
                                 }), evt.origin);
                             }
                         };
@@ -358,8 +442,9 @@
                         window.parent.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
                             id : messageID + 1,
-                            method : "chowder_itowns_update_thumbnail",
-                            params : thumbnailBase64
+                            method : "UpdateThumbnail",
+                            params : thumbnailBase64,
+                            to : "parent"
                         }));
                         done = true;
                     }

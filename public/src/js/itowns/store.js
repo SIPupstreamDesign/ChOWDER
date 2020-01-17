@@ -10,6 +10,8 @@ import Constants from '../common/constants'
 import Command from '../common/command';
 import Connector from '../common/ws_connector.js';
 import Operation from './operation'
+import IFrameConnector from '../common/iframe_connector';
+import ITownsCommand from '../common/itowns_command';
 
 const reconnectTimeout = 2000;
 
@@ -25,7 +27,7 @@ class Store extends EventEmitter {
         // itownコンテンツのメタデータ
         // 1ウィンドウ1itownコンテンツなのでメタデータは1つ
         this.metaData = null;
-        
+
         // 初回カメラ行列用キャッシュ
         this.initialMatrix = null;
 
@@ -48,15 +50,15 @@ class Store extends EventEmitter {
                 // カメラ更新
                 if (this.initialMatrix) {
                     this._updateCameraWorldMatrix({
-                        mat : this.initialMatrix
+                        mat: this.initialMatrix
                     })
                 }
             }
         })
-        
+
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
-			for (let i = 0; i < data.length; ++i) {
+            for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
                 if (this.metaData && metaData.id === this.metaData.id) {
                     this.metaData = metaData;
@@ -135,6 +137,14 @@ class Store extends EventEmitter {
         });
     }
 
+    _connectIFrame(data) {
+        let iframe = data;
+        this.iframeConnector = new IFrameConnector(iframe);
+        this.iframeConnector.connect(() => {
+            this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
+        });
+    }
+
     _addContent(data) {
         let metaData = data.metaData;
         let contentData = data.contentData;
@@ -152,7 +162,7 @@ class Store extends EventEmitter {
         metaData.orgWidth = wh.width;
         metaData.orgHeight = wh.height;
         this.operation.updateMetadata(metaData, (err, res) => {
-        }); 
+        });
     }
 
     _updateCameraWorldMatrix(data) {
@@ -163,7 +173,7 @@ class Store extends EventEmitter {
             delete updateData.width;
             delete updateData.height;
             this.operation.updateMetadata(updateData, (err, res) => {
-            });   
+            });
         } else {
             // コンテンツ追加完了前だった。完了後にカメラを更新するため、matrixをキャッシュしておく。
             this.initialMatrix = data.mat;
@@ -185,19 +195,28 @@ class Store extends EventEmitter {
             delete updateData.width;
             delete updateData.height;
             this.operation.updateMetadata(updateData, (err, res) => {
-
-            });   
+            });
             */
-           this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
+            this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
         //}
     }
 
     _deleteLayer(data) {
-        this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
+        this.iframeConnector.send(ITownsCommand.DeleteLayer, data, (err, data) => {
+            this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
+        });
     }
 
     _changeLayerOrder(data) {
-        this.emit(Store.EVENT_DONE_CHANGE_LAYER_ORDER, null, data);
+        this.iframeConnector.send(ITownsCommand.ChangeLayerOrder, data, (err, data) => {
+            this.emit(Store.EVENT_DONE_CHANGE_LAYER_ORDER, null, data);
+        });
+    }
+
+    _changeLayerProperty(data) {
+        this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, data, (err, data) => {
+            this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, data);
+        });
     }
 }
 
@@ -211,4 +230,6 @@ Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_ADD_LAYER = "done_add_layer";
 Store.EVENT_DONE_DELETE_LAYER = "done_delete_layer";
 Store.EVENT_DONE_CHANGE_LAYER_ORDER = "done_change_layer_order";
+Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
+Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 export default Store;

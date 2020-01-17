@@ -4,6 +4,96 @@
  */
 "use strict";
 
+import Input from "../components/input"
+
+/**
+ * Propertyタブに入力プロパティを追加する
+ * @method addInputProperty
+ * @param {String} leftLabel 左ラベル
+ * @param {String} rightLabel 右ラベル
+ * @param {String} value 初期入力値
+ */
+function addInputProperty(parentElem, isEditable, leftLabel, rightLabel, value, changeCallback) {
+	/*
+		<div class="input-group">
+			<span class="input-group-addon">x</span>
+			<input type="text" class="form-control" id="content_transform_x" value="0">
+			<span class="input-group-addon">px</span>
+		</div>
+	*/
+	let group = document.createElement('div');
+	let leftSpan = document.createElement('span');
+	let rightSpan = document.createElement('span');
+	let input = document.createElement('input');
+
+	group.className = "input-group";
+	leftSpan.className = "input-group-addon";
+	leftSpan.innerHTML = leftLabel;
+	rightSpan.className = "input-group-addon";
+	rightSpan.innerHTML = rightLabel;
+	input.className = "form-control";
+	input.value = value;
+	input.disabled = !isEditable;
+
+	group.appendChild(leftSpan);
+	group.appendChild(input);
+	if (rightLabel) {
+		group.appendChild(rightSpan);
+	}
+	parentElem.appendChild(group);
+
+	input.onchange = (evt) => {
+        try {
+            let val = parseFloat(evt.target.value);
+            if (!isNaN(val)) {
+                changeCallback(null, val);
+            } else {
+                throw false;
+            }
+        } catch(ex) {
+            input.value = 1.0;
+        }
+    };
+}
+
+/**
+ * Propertyタブに入力プロパティを追加する
+ * @method addCheckProperty
+ * @param {String} leftLabel 左ラベル
+ * @param {String} rightLabel 右ラベル
+ * @param {String} value 初期入力値
+ */
+function addCheckProperty(parent, isEditable, className, leftLabel, value, changeCallback) {
+	/*
+		<div class="input-group">
+			<span class="input-group-addon">x</span>
+			<input type="text" class="form-control" id="content_transform_x" value="0">
+			<span class="input-group-addon">px</span>
+		</div>
+	*/
+	let group = document.createElement('div');
+	let leftSpan = document.createElement('span');
+	leftSpan.className = "input-group-addon content_property_checkbox_label";
+	let centerSpan = document.createElement('span');
+	let input = new Input("checkbox");
+	group.className = "input-group";
+	leftSpan.innerHTML = leftLabel;
+	centerSpan.className = "input-group-addon content_property_checkbox_wrap"
+	input.setValue(value);
+	input.getDOM().disabled = !isEditable;
+	input.getDOM().className = "content_property_checkbox " + className
+
+	centerSpan.appendChild(input.getDOM());
+	group.appendChild(leftSpan);
+	group.appendChild(centerSpan);
+	parent.appendChild(group);
+
+	input.on(Input.EVENT_CHANGE, (err, data) => {
+        changeCallback(err, data.target.checked);
+    });
+}
+
+
 class LayerProperty extends EventEmitter {
     constructor(store, action) {
         super();
@@ -12,7 +102,34 @@ class LayerProperty extends EventEmitter {
         this.action = action;
 
         this.dom = document.createElement('div');
-        this.dom.innerHTML = "This is Layer Proeprty"
+        this.dom.className = "layer_property";
+
+        this.layerID = null;
+        this.layerProps = null;
+
+        addCheckProperty(this.dom, false, "visible", "visible", true, (err, data) => {
+        });
+        addInputProperty(this.dom, false, "opacity", "", 1.0, (err, data) => {
+        });
+    }
+
+    // レイヤーID、プロパティをもとに初期値を設定
+    // レイヤーを選択しなおすたびに毎回呼ぶ.
+    initFromLayer(layerID, layerProps) {
+        this.dom.innerHTML = "";
+
+        addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
+            this.action.changeLayerProperty({
+                id : layerID,
+                visible : data
+            })
+        });
+        addInputProperty(this.dom, layerID && layerProps, "opacity", "", 1.0, (err, data) => {
+            this.action.changeLayerProperty({
+                id : layerID,
+                opacity : data
+            })
+        });
     }
 
     getDOM() {

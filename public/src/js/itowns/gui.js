@@ -12,6 +12,8 @@ import Translation from '../common/translation';
 import Constants from '../common/constants';
 import LayerProperty from './layer_property';
 import LayerList from './layer_list';
+import Menu from '../components/menu';
+import ITownsCommand from '../common/itowns_command';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -38,6 +40,22 @@ class GUI extends EventEmitter {
     }
 
     init() {
+        let date = new Date();
+        $("#timeline").k2goTimeline(
+            {
+                startTime: new Date(date.getFullYear(), date.getMonth(), 1), // 左端の日時を今月の01日に設定
+                endTime: new Date(date.getFullYear(), date.getMonth() + 1, 1), // 右端の日時を翌月の01日に設定
+                currentTime: new Date(date.getFullYear(), date.getMonth(), 16), // 摘み（ポインタ）の日時を今月の16日に設定
+                minTime: new Date(date.getFullYear(), 0, 1), // 過去方向への表示可能範囲を今年の1月1日に設定
+                maxTime: new Date(date.getFullYear() + 1, 0, 1), // 未来方向への表示可能範囲を翌年の1月1日に設定
+                timeChange: function (pTimeInfo) {
+                    console.error("timeChanged")
+                    // pTimeInfo.  startTimeから左端の日時を取得
+                    // pTimeInfo.    endTimeから右端の日時を取得
+                    // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
+                }
+            });
+
         this.initWindow();
         this.initLoginMenu();
         this.loginMenu.show(true);
@@ -46,10 +64,9 @@ class GUI extends EventEmitter {
 
         // ログイン成功
         this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
-            this.loginMenu.showInvalidLabel(false);
-            this.loginMenu.show(false);
-
+            document.body.removeChild(this.loginMenu.getDOM());
             this.initPropertyPanel();
+            this.initMenu();
             this.showWebGL();
         });
 
@@ -63,31 +80,43 @@ class GUI extends EventEmitter {
             // iframe内のchowder injectionの初期化
             this.iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                method: "chowder_itowns_add_layer",
+                method: ITownsCommand.AddLayer,
                 params: data
             }));
         });
 
         // レイヤー削除
         this.store.on(Store.EVENT_DONE_DELETE_LAYER, (err, data) => {
-            this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc: "2.0",
-                method: "chowder_itowns_delete_layer",
-                params: {
-                    id: data
-                }
-            }));
         });
 
         // レイヤー順序変更
         this.store.on(Store.EVENT_DONE_CHANGE_LAYER_ORDER, (err, data) => {
-            this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc: "2.0",
-                method: "chowder_itowns_change_layer_order",
-                params: data
-            }));
         });
-        
+
+        // レイヤープロパティ変更
+        this.store.on(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, (err, data) => {
+        });
+
+        this.store.on(Store.EVENT_DONE_IFRAME_CONNECT, (err, itownConnector) => {
+                
+            // iframe内のitownsのカメラが更新された
+            itownConnector.on(ITownsCommand.UpdateCamera, (err, params) => {
+                this.action.updateCameraWorldMatrix({
+                    mat: params
+                });
+            });
+            
+            // iframe内のitownsのサムネイルが更新された
+            itownConnector.on(ITownsCommand.UpdateThumbnail, (err, params) => {
+                //this.addITownContent(toArrayBuffer(params));
+            });
+
+            // iframe内のitownsのレイヤーが更新された
+            itownConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
+                this.layerList.initLayerSelectList(params);
+            });
+
+        })
     }
 
     initWindow() {
@@ -123,6 +152,31 @@ class GUI extends EventEmitter {
         select.addOption("APIUser", "APIUser");
     }
 
+    initMenu() {
+        // メニュー設定
+        let menuSetting = [];
+        /*
+        menuSetting = [
+            {
+                Setting : [{
+                    Fullscreen : {
+                        func : function(evt, menu) { 
+                            if (!DisplayUtil.isFullScreen()) {
+                                menu.changeName("Fullscreen", "CancelFullscreen")
+                            } else {
+                                menu.changeName("CancelFullscreen", "Fullscreen")
+                            }
+                            DisplayUtil.toggleFullScreen();
+                        }
+                    }
+                }]
+            }];*/
+        
+        this.headMenu = new Menu("", menuSetting, "ChOWDER iTowns Controller");
+        document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
+
+    }
+
     addITwonSelect() {
         let wrapDom = document.createElement('div');
         wrapDom.innerHTML = "Sample Content:"
@@ -152,6 +206,8 @@ class GUI extends EventEmitter {
         contentName.innerHTML = this.itownSelect.getSelectedValue();
         propElem.appendChild(contentName);
 
+        propElem.appendChild(document.createElement('hr'));
+
         // レイヤーリストタイトル
         let layerTitle = document.createElement('p');
         layerTitle.className = "title";
@@ -162,9 +218,19 @@ class GUI extends EventEmitter {
         this.layerList = new LayerList(this.store, this.action);
         propElem.appendChild(this.layerList.getDOM());
 
+        // レイヤープロパティタイトル
+        let layerPropertyTitle = document.createElement('p');
+        layerPropertyTitle.className = "title layer_property_title";
+        layerPropertyTitle.innerHTML = i18next.t('layer_property');
+        propElem.appendChild(layerPropertyTitle);
+
         // レイヤープロパティ
-        this.layerProperty = new LayerProperty();
+        this.layerProperty = new LayerProperty(this.store, this.action);
         propElem.appendChild(this.layerProperty.getDOM());
+
+        this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
+            this.layerProperty.initFromLayer(data.value, {});
+        });
     }
 
     /**
@@ -184,37 +250,8 @@ class GUI extends EventEmitter {
             this.iframe.contentWindow.chowder_itowns_view_type = "itowns";
             this.iframe.contentWindow.focus();
 
-            // iframeからのレスポンス
-            window.addEventListener("message", (evt) => {
-                try {
-                    let data = JSON.parse(evt.data);
-
-                    // iframe内のitownsのカメラが更新された
-                    if (data.method === "chowder_itowns_update_camera") {
-                        this.action.updateCameraWorldMatrix({
-                            mat: data.params
-                        });
-                    }
-                    // iframe内のサムネイルが更新された（新規コンテンツ登録する
-                    else if (data.method === "chowder_itowns_update_thumbnail") {
-                        let params = data.params;
-                        //this.addITownContent(toArrayBuffer(params));
-                    }
-                    else if (data.method === "chowder_itowns_update_layer") {
-                        this.layerList.initLayerSelectList(data.params);
-                    }
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            });
-
-            // iframe内のchowder injectionの初期化
-            this.iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc: "2.0",
-                method: "chowder_injection_init"
-            }));
-        }
+            this.action.connectIFrame(this.iframe);
+        };
 
         document.getElementById('itowns').appendChild(this.iframe);
     }

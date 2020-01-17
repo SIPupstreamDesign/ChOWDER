@@ -118,5 +118,6 @@
  "admin_setting_password": "Administrator's Password Settings",
  "add_layer": "Add Layer",
  "layer_list": "Layer List",
- "base_content": "Base Content"
+ "base_content": "Base Content",
+ "layer_property": "Layer Property"
 }

@@ -119,3 +119,4 @@ admin_setting_password,管理パスワードの設定,Administrator's Password Settings
 add_layer,レイヤーの追加,Add Layer
 layer_list,レイヤーリスト,Layer List
 base_content,ベースコンテンツ,Base Content
+layer_property,レイヤープロパティ,Layer Property

@@ -77,7 +77,9 @@ class LayerList extends EventEmitter {
                 okButtonName: "OK"
             }, (isOK) => {
                 if (isOK) {
-                    this.action.deleteLayer(this.layerSelect.getSelectedValue());
+                    this.action.deleteLayer({ 
+                        id : this.layerSelect.getSelectedValue()
+                    });
                 }
             });
         });
@@ -93,6 +95,13 @@ class LayerList extends EventEmitter {
             this.action.changeLayerOrder({
                 id: this.layerSelect.getSelectedValue(),
                 isUp : false
+            });
+        });
+
+        this.layerSelect.on(Select.EVENT_CHANGE, (err, evt) => {
+            this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {
+                index : this.layerSelect.getSelectedIndex(),
+                value : this.layerSelect.getSelectedValue()
             });
         });
     }
@@ -111,8 +120,6 @@ class LayerList extends EventEmitter {
     }
 }
 
-LayerList.EVENT_ADD_LAYER = "add_layer";
-LayerList.EVENT_DELETE_LAYER = "delete_layer";
-LayerList.EVENT_CHANGE_LAYER_ORDER = "change_layer_order";
+LayerList.EVENT_LAYER_SELECT_CHANGED = "layer_select_changed";
 
 export default LayerList;

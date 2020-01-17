@@ -8,6 +8,7 @@ import Constants from '../../common/constants.js';
 import Validator from '../../common/validator.js';
 import vscreen_util from '../../common/vscreen_util.js';
 import ContentUtil from '../content_util'
+import ITownsCommand from '../../common/itowns_command.js';
 
 "use strict";
 
@@ -220,7 +221,7 @@ class ContentViewGUI extends EventEmitter {
 							chowder_itowns_update_camera_callback :  (mat) => {
 								iframe.contentWindow.postMessage(JSON.stringify({
 									jsonrpc : "2.0",
-									method : "chowder_itowns_update_camera_callback",
+									method : ITownsCommand.UpdateCameraCallback,
 									params : mat
 								}));
 							}
@@ -230,7 +231,7 @@ class ContentViewGUI extends EventEmitter {
 					// 初回に一度実行
 					iframe.contentWindow.postMessage(JSON.stringify({
 						jsonrpc : "2.0",
-						method : "chowder_itowns_update_camera_callback",
+						method : ITownsCommand.UpdateCameraCallback,
 						params : JSON.parse(metaData.cameraWorldMatrix)
 					}));
 				};

@@ -8,7 +8,7 @@ import PopupBackground from './popup_background.js';
 "use strict";
 
 class Menu extends EventEmitter {
-	constructor(type, setting) {
+	constructor(type, setting, title) {
 		super();
 
 		/*
@@ -36,7 +36,7 @@ class Menu extends EventEmitter {
 			headModeText.className = "head_mode_text stopselect";
 			let headModeTextContent = document.createElement('a');
 			headModeTextContent.href = "index.html";
-			headModeTextContent.textContent = "ChOWDER";
+			headModeTextContent.textContent = title ? title : "ChOWDER";
 			headModeTextContent.className = "chowder_text";
 			headModeText.appendChild(headModeTextContent);
 			headModeMenu.appendChild(headModeText);
@@ -129,13 +129,13 @@ class Menu extends EventEmitter {
 			this.headIDInput.className = "head_id_input";
 			headIDMenu.appendChild(this.headIDInput);
 		}
-		else
+		else if (type === "display")
 		{
 			// タイトル リンク無し
 			let headModeText = document.createElement('div');
 			headModeText.className = "head_mode_text stopselect";
 			let headModeTextContent = document.createElement('div');
-			headModeTextContent.textContent = "ChOWDER";
+			headModeTextContent.textContent = title ? title : "ChOWDER";
 			headModeTextContent.className = "chowder_text";
 			headModeText.appendChild(headModeTextContent);
 			headModeMenu.appendChild(headModeText);
@@ -158,6 +158,17 @@ class Menu extends EventEmitter {
 			this.headIDInput = document.createElement('input');
 			this.headIDInput.className = "head_id_input";
 			headIDMenu.appendChild(this.headIDInput);
+		}
+		else
+		{
+			// タイトル リンク無し
+			let headModeText = document.createElement('div');
+			headModeText.className = "head_mode_text stopselect";
+			let headModeTextContent = document.createElement('div');
+			headModeTextContent.textContent = title ? title : "ChOWDER";
+			headModeTextContent.className = "chowder_text";
+			headModeText.appendChild(headModeTextContent);
+			headModeMenu.appendChild(headModeText);
 		}
 		this.background = null;
 

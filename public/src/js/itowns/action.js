@@ -73,7 +73,7 @@ class Action extends EventEmitter
     }
 
     /**
-     * 地図の追加
+     * レイヤーの追加
      * @param {*} data 
      */
     addLayer(data) {
@@ -81,7 +81,7 @@ class Action extends EventEmitter
     }
 
     /**
-     * 地図の削除
+     * レイヤーの削除
      * @param {*} data 
      */
     deleteLayer(data) {
@@ -89,15 +89,33 @@ class Action extends EventEmitter
     }
 
     /**
-     * 地図順序変更
+     * レイヤー順序変更
      * @param {*} data 
      */
     changeLayerOrder(data) {
         this.emit(Action.EVENT_CHANGE_LAYER_ORDER, null, data);
     }
+
+    /**
+     * レイヤープロパティ変更
+     * @param {*} data 
+     */
+    changeLayerProperty(data) {
+        this.emit(Action.EVENT_CHANGE_LAYER_PROPERTY, null, data);
+    }
+
+    /**
+     * iframeと通信開始
+     * @param {*} data iframe
+     */
+    connectIFrame(data) {
+        console.error("connectIFrame")
+        this.emit(Action.EVENT_CONNECT_IFRAME, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
+Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
@@ -106,4 +124,5 @@ Action.EVENT_ADD_LAYER = "addLayer";
 Action.EVENT_DELETE_LAYER = "deleteLayer";
 Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
 Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
+Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 export default Action;

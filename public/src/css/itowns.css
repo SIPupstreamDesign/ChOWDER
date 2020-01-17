@@ -66,16 +66,17 @@ p {
 
 #itowns {
     width : calc(100% - 260px);
-    height : 100%;
+    height : calc(100% - 200px  - 31px);
 	position: absolute;
+	top : 31px;
 }
 
 #itowns_property {
 	position: absolute;
-    top: 0px;
+    top: 31px;
     right: 0px;
     width: 260px;
-	height: 100%;
+	height: calc(100% - 31px);
     padding-left: 5px;
 }
 
@@ -83,6 +84,16 @@ p {
 	color : white;
 	font-size : 16px;
 	margin : 5px;
+}
+
+.chowder_text {
+	color : white;
+}
+
+.head_mode_text  {
+    background: rgb(68, 68, 68);
+	color : white;
+    height: 31px;
 }
 
 .select_list_frame {
@@ -213,4 +224,36 @@ p {
 
 .layer_dialog_zoom_max_title {
 	padding-left : 10px;
+}
+
+.input-group {
+	margin: 10px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.layer_property_title {
+	padding-top : 10px;
+}
+
+.timeline_wrap {
+	background : #3b3848;
+	height : 200px;
+	position : fixed;
+	bottom : 0px;
+    width: calc(100% - 260px);
+}
+.timeline {
+	position: absolute;
+	left : 10%;
+	height : 200px;
+	width: 80%;
+}
+
+.k2go-timeline-main {
+	bottom : 50px;
+}
+
+.k2go-timeline-pick-line {
+	max-height : 100px;
 }

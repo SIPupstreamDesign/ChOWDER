@@ -118,12 +118,12 @@ class LayerDialog extends EventEmitter {
             this.data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
             this.data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
 
-            this.close();
             if (this.endCallback) 
             {
                 this.endCallback(isOK, this.data);
                 this.endCallback = null;
             }
+            this.close();
         });
         this.okButton.on('click', () => {
             isOK = true;
@@ -141,6 +141,7 @@ class LayerDialog extends EventEmitter {
     }
 
     show(endCallback) {
+        this.idInput.setValue("Layer_" + Math.floor(Math.random() * 100));
 
         this.endCallback = endCallback;
         this.dom.style.display = "block";

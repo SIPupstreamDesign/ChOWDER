@@ -13,6 +13,7 @@ import DisplayUtil from './display_util';
 import VideoPlayer from '../components/video_player';
 import PerformanceLogger from './performance_logger';
 import Button from '../components/button';
+import ITownsCommand from '../common/itowns_command';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -433,12 +434,12 @@ class GUI extends EventEmitter {
             // 初回に一度実行
             iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
-                method : "chowder_itowns_update_camera_callback",
+                method : ITownsCommand.UpdateCameraCallback,
                 params : metaData.cameraWorldMatrix
             }));
             iframe.contentWindow.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
-                method : "chowder_itowns_resize_callback",
+                method : ITownsCommand.ResizeCallback,
                 params : rect
             }));
 
@@ -449,14 +450,14 @@ class GUI extends EventEmitter {
                     chowder_itowns_update_camera_callback : (mat) => {
                         iframe.contentWindow.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
-                            method : "chowder_itowns_update_camera_callback",
+                            method : ITownsCommand.UpdateCameraCallback,
                             params : mat
                         }));
                     },
                     chowder_itowns_resize_callback : (rect) => {
                         iframe.contentWindow.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
-                            method : "chowder_itowns_resize_callback",
+                            method : ITownsCommand.ResizeCallback,
                             params : rect
                         }));
                     }

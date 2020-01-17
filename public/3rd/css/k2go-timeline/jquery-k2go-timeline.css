@@ -1,0 +1,17 @@
+/******************************************************************************/
+/* k2go Timeline for JQuery Plugin                                            */
+/* author    : Inoue Computer Service.                                        */
+/* copyright : k2go                                                           */
+/* version   : 1.2.0                                                          */
+/******************************************************************************/
+.k2go-timeline-main { position:absolute; left:0px; bottom: 0px; width:100%; height:90px; }
+.k2go-timeline-bar  { position:absolute; left:0px; top   : 0px; width:100%; height:45px; cursor:pointer; overflow:hidden; }
+.k2go-timeline-rail { position:absolute; left:0px; top   :60px; width:100%; height:10px; cursor:pointer; background:#000; box-shadow:0 1px 0 #777; border-radius:5px; }
+
+.k2go-timeline-scale   { position:absolute; top:0px; width:1px; height:3px; background:#cbcbcb; pointer-events:none; }
+.k2go-timeline-scale-l { height:6px; }
+.k2go-timeline-label   { position:absolute; top:10px; color:#8a8a8a; font-size:12px; text-align:center; white-space:nowrap; }
+
+.k2go-timeline-pick      { position:absolute; left: 0px; bottom:-15px; width:41px; height:40px; }
+.k2go-timeline-pick-line { position:absolute; left:20px; bottom: 38px; width:01px; height: 0px; background:#801f1f; }
+.k2go-timeline-pick-knob { position:absolute; left: 0px; bottom:  0px; width:41px; height:40px; background:url(../../image/k2go-timeline/jquery-k2go-timeline-pick.png) center no-repeat; }
