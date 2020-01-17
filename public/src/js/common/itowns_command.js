@@ -8,8 +8,8 @@
 const ITownsCommand = {
     // 通信開始命令
     Init : "Init",
-    // サムネイルが更新された(iframe->parent)
-    UpdateThumbnail : "UpdateThumbnail",
+    // コンテンツ追加命令(iframe->parent)
+    AddContent : "AddContent",
     // レイヤーが更新された(iframe->parent)
     UpdateLayer : "UpdateLayer",
     // カメラ更新命令(parent<->iframe)

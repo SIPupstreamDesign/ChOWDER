@@ -29,7 +29,10 @@ class Operation
 		} else {
 			//if (this.store.getManagement().isEditable(metaData.group)) {
 				this.connector.send(Command.UpdateMetaData, [metaData], (err, reply) => {
-                    this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, err, reply, endCallback);
+					if (endCallback) {
+						endCallback(err, reply);
+					}
+                    this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, err, reply);
 				});
 			//}
 		}

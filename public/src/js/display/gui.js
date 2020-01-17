@@ -460,6 +460,29 @@ class GUI extends EventEmitter {
                             method : ITownsCommand.Resize,
                             params : rect
                         }));
+                    },
+                    chowder_itowns_update_metadata : (metaData) => {
+                        try {
+                            if (metaData.hasOwnProperty('layerList')) {
+                                let preMetaData = this.store.getMetaData(metaData.id);
+                                let preLayerList =  preMetaData ? preMetaData.layerList : [];
+                                // レイヤー情報が異なる場合は全レイヤー更新
+                                if (JSON.stringify(preLayerList) !== metaData.layerList) {
+                                    let layerList = JSON.parse(metaData.layerList);
+                                    for (let i = 0; i < layerList.length; ++i) {
+                                        let layer = layerList[i];
+                                        iframe.contentWindow.postMessage(JSON.stringify({
+                                            jsonrpc : "2.0",
+                                            method : ITownsCommand.ChangeLayerProperty,
+                                            params : layer
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                        catch(e) {
+                            console.error(e);
+                        }
                     }
                 }
                });

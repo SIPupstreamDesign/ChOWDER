@@ -44,7 +44,6 @@ class Store extends EventEmitter {
             let isInitialContent = (!this.metaData);
 
             this.metaData = reply;
-
             if (isInitialContent) {
                 // 初回追加だった
                 // カメラ更新
@@ -58,11 +57,31 @@ class Store extends EventEmitter {
 
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
+            const preLayerList = this.metaData ? this.metaData.layerList : [];
+
             for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
                 if (this.metaData && metaData.id === this.metaData.id) {
                     this.metaData = metaData;
                 }
+            }
+            
+            try {
+                if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
+                    // レイヤー情報が異なる場合は全レイヤー更新
+                    if (JSON.stringify(preLayerList) !== this.metaData.layerList) {
+                        let layerList = JSON.parse(this.metaData.layerList);
+                        for (let i = 0; i < layerList.length; ++i) {
+                            let layer = layerList[i];
+                            this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer, (err, reply) => {
+                                this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                            });
+                        }
+                    }
+                }
+            }
+            catch(e) {
+                console.error(e);
             }
         });
     }
@@ -94,7 +113,7 @@ class Store extends EventEmitter {
     };
 
     _connect() {
-        let isDisconnect = false;
+        this.isDisconnect = false;
         let client = Connector.connect(() => {
             if (!this.isInitialized_) {
                 //this.initOtherStores(() => {
@@ -107,7 +126,7 @@ class Store extends EventEmitter {
             return (ev) => {
                 this.emit(Store.EVENT_CONNECT_FAILED, null);
 
-                if (!isDisconnect) {
+                if (!this.isDisconnect) {
                     setTimeout(() => {
                         this._connect();
                     }, reconnectTimeout);
@@ -187,7 +206,6 @@ class Store extends EventEmitter {
     }
 
     _addLayer(data) {
-        // iframe内のchowder injectionの初期化
         this.iframeConnector.send(ITownsCommand.AddLayer, data, (err, data) => {
             this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
         });
@@ -216,10 +234,57 @@ class Store extends EventEmitter {
         });
     }
 
+    getLayerData(layerID) {
+        let layerList = JSON.parse(this.metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i) {
+            let layer = layerList[i];
+            let id = layer.id;
+            if (id === layerID) {
+                return layer;
+                break;
+            }
+        }
+        console.error("Not found layer from current content.");
+        return null;
+    }
+
+    // this.metaDataのlayerListにlayerDataを文字列として上書き保存する
+    saveLayer(layer) {
+        let layerList = JSON.parse(this.metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i) {
+            let id = layerList[i].id;
+            if (id === layer.id) {
+                layerList[i] = layer;
+                this.metaData.layerList = JSON.stringify(layerList);
+                return;
+            }
+        }
+        console.error("Not found layer from current content.");
+        return null;
+    }
+
     _changeLayerProperty(data) {
-        this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, data, (err, data) => {
-            this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, data);
-        });
+        let layer = this.getLayerData(data.id);
+        if (layer)
+        {
+            for (let key in data) {
+                if (key !== "id") {
+                    layer[key] = data[key];
+                }
+            }
+            this.saveLayer(layer);
+
+            this.operation.updateMetadata(this.metaData, (err, res) => {
+            });
+
+            // 接続されていなくても見た目上変わるようにしておく
+            if (!Connector.isConnected) {
+                this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer, (err, reply) => {
+                    this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                });
+            }
+        }
+        //console.error(this);
     }
 }
 

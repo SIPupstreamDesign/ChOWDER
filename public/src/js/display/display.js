@@ -195,11 +195,12 @@ class Display {
 				}
 			}
 		}
-		// webglカメラの適用
+		// webglカメラなどの適用
 		if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
 			let funcDict = this.store.getITownFuncDict();
-			if (funcDict.hasOwnProperty(metaData.id)) {
+			if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
 				funcDict[metaData.id].chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+				funcDict[metaData.id].chowder_itowns_update_metadata(metaData);
 			}
 		}
 

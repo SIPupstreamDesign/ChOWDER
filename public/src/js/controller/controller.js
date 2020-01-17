@@ -1588,6 +1588,15 @@ class Controller {
 				return;
 			}
 		}
+		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
+			let funcDict = this.store.getITownFuncDict();
+			if (funcDict && funcDict.hasOwnProperty(json.id)) {
+				funcDict[json.id].chowder_itowns_update_camera_callback(JSON.parse(json.cameraWorldMatrix));
+			}
+			if (funcDict && funcDict.hasOwnProperty(json.id)) {
+				funcDict[json.id].chowder_itowns_update_metadata(json);
+			}
+		}
 		this.store.setMetaData(json.id, json);
 		if (Validator.isCurrentTabMetaData(json)) {
 			if (this.state.getLastSelectContentID() === json.id || (manipulator.isShowManipulator() && this.state.getLastSelectContentID() === json.id)) {
@@ -1596,12 +1605,6 @@ class Controller {
 		}
 		if (Validator.isWindowType(json)) {
 			return;
-		}
-		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
-			let funcDict = this.store.getITownFuncDict();
-			if (funcDict.hasOwnProperty(json.id)) {
-				funcDict[json.id].chowder_itowns_update_camera_callback(JSON.parse(json.cameraWorldMatrix));
-			}
 		}
 		elem = document.getElementById(metaData.id);
 		if (elem && !isUpdateContent) {

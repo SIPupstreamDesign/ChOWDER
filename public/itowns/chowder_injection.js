@@ -473,8 +473,11 @@
                         window.parent.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
                             id : messageID + 1,
-                            method : "UpdateThumbnail",
-                            params : thumbnailBase64,
+                            method : "AddContent",
+                            params : {
+                                thumbnail : thumbnailBase64,
+                                layerList : layerDataList
+                            },
                             to : "parent"
                         }));
                         done = true;

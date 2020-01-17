@@ -84,9 +84,9 @@ class GUI extends EventEmitter {
                 });
             });
 
-            // iframe内のitownsのサムネイルが更新された
-            itownConnector.on(ITownsCommand.UpdateThumbnail, (err, params) => {
-                this.addITownContent(toArrayBuffer(params));
+            // iframe内からコンテンツ追加命令がきた
+            itownConnector.on(ITownsCommand.AddContent, (err, params) => {
+                this.addITownContent(params, toArrayBuffer(params.thumbnail));
             });
 
             // iframe内のitownsのレイヤーが更新された
@@ -234,7 +234,7 @@ class GUI extends EventEmitter {
         document.getElementById('itowns').appendChild(this.iframe);
     }
 
-    addITownContent(thumbnailBuffer) {
+    addITownContent(param, thumbnailBuffer) {
         let url = this.itownSelect.getSelectedValue();
         let metaData = {
             type: Constants.TypeWebGL,
@@ -248,6 +248,7 @@ class GUI extends EventEmitter {
             orgWidth: this.getWindowSize().width,
             orgHeight: this.getWindowSize().height,
             visible: true,
+            layerList : JSON.stringify(param.layerList),
             url: decodeURI(url)
         };
         let data = {
