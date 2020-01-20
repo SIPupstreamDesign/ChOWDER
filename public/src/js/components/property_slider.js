@@ -37,11 +37,9 @@ class PropertySlider extends EventEmitter {
         rightSpan.className = "property_slider input-group-addon";
         rightSpan.innerHTML = rightLabel;
         this.input.className = "property_slider form-control";
-        this.input.value = value;
         this.input.disabled = !isEditable;
 
         group.appendChild(leftSpan);
-
         group.appendChild(this.sliderBack);
         group.appendChild(this.slider);
         group.appendChild(this.input);
@@ -67,6 +65,11 @@ class PropertySlider extends EventEmitter {
         };
 
         this.input.addEventListener('change', this.onChange);
+
+        // 初期値の設定
+        this.input.value = value;
+        let val = parseFloat(this.input.value);
+        this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
 
         this.initEvent();
     }

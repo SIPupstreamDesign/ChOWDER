@@ -207,7 +207,7 @@ class GUI extends EventEmitter {
         propElem.appendChild(this.layerProperty.getDOM());
 
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
-            this.layerProperty.initFromLayer(data.value, {});
+            this.layerProperty.initFromLayer(data.value, this.store.getLayerData(data.value));
         });
     }
 

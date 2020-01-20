@@ -120,17 +120,29 @@ class LayerProperty extends EventEmitter {
 		if (this.slider) {
 			this.slider.release();
 		}
-
         this.dom.innerHTML = "";
 
-        addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
-            this.action.changeLayerProperty({
-                id : layerID,
-                visible : data
-            })
-		});
+		if (layerProps.hasOwnProperty('visible')) {
+			addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					visible : data
+				})
+			});
+		} else {
+			addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					visible : data
+				})
+			});
+		}
 
-		this.slider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);
+		if (layerProps.hasOwnProperty('opacity')) {
+			this.slider = new PropertySlider(layerID && layerProps, "opacity", "", layerProps.opacity);
+		} else {
+			this.slider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);
+		}
 		this.slider.on(PropertySlider.EVENT_CHANGE, (err, val) => {
             this.action.changeLayerProperty({
                 id : layerID,
