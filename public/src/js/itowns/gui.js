@@ -305,7 +305,7 @@ class GUI extends EventEmitter {
                 orgHeight: this.getWindowSize().height,
                 visible: true,
                 layerList : JSON.stringify(param.layerList),
-                url: decodeURI(url)
+                url: decodeURI(selectValue.url)
             };
             let data = {
                 metaData: metaData,
