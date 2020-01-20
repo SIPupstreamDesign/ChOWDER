@@ -13,6 +13,7 @@ require("./css/components/popup_background.css");
 require("./css/components/remote_cursor_color_picker.css");
 require("./css/components/select_list.css");
 require("./css/components/notice_box.css");
+require("./css/components/property_slider.css");
 require("./css/itowns.css");
  
 require("./js/itowns/main.js");

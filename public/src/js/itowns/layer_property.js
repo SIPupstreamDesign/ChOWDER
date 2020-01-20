@@ -5,6 +5,7 @@
 "use strict";
 
 import Input from "../components/input"
+import PropertySlider from "../components/property_slider"
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -109,13 +110,17 @@ class LayerProperty extends EventEmitter {
 
         addCheckProperty(this.dom, false, "visible", "visible", true, (err, data) => {
         });
-        addInputProperty(this.dom, false, "opacity", "", 1.0, (err, data) => {
-        });
+		this.slider = new PropertySlider(false, "opacity", "", 1.0);
+		this.dom.appendChild(this.slider.getDOM());
     }
 
     // レイヤーID、プロパティをもとに初期値を設定
     // レイヤーを選択しなおすたびに毎回呼ぶ.
     initFromLayer(layerID, layerProps) {
+		if (this.slider) {
+			this.slider.release();
+		}
+
         this.dom.innerHTML = "";
 
         addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
@@ -123,13 +128,16 @@ class LayerProperty extends EventEmitter {
                 id : layerID,
                 visible : data
             })
-        });
-        addInputProperty(this.dom, layerID && layerProps, "opacity", "", 1.0, (err, data) => {
+		});
+
+		this.slider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);
+		this.slider.on(PropertySlider.EVENT_CHANGE, (err, val) => {
             this.action.changeLayerProperty({
                 id : layerID,
-                opacity : data
+                opacity : val
             })
-        });
+		})
+		this.dom.appendChild(this.slider.getDOM());
     }
 
     getDOM() {

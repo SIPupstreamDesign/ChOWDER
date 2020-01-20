@@ -1,0 +1,35 @@
+
+.property_slider_slider {
+    width : 100px;
+    height: 34px;
+    background : dodgerblue;
+    border: 2px solid snow;
+    position: absolute;
+    left : calc(100% - 164px);
+    top: 0px;
+}
+
+.property_slider_slider_back {
+    width : 100px;
+    height: 34px;
+    background : white;
+    border: 2px solid snow;
+    position: absolute;
+    right: 64px;
+    top: 0px;
+}
+
+.property_slider.input-group-addon {
+    padding: 5px;
+    padding-left : 8px;
+    padding-right : 7px;
+}
+
+.property_slider_slider.disabled {
+    cursor:not-allowed;
+}
+
+input.property_slider.form-control {
+    width: 60px;
+    float: right;
+}
