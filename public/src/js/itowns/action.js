@@ -111,6 +111,20 @@ class Action extends EventEmitter
     connectIFrame(data) {
         this.emit(Action.EVENT_CONNECT_IFRAME, null, data);
     }
+
+    /**
+     * コンテンツ情報を取得
+     */
+    fetchContents(data) {
+        this.emit(Action.EVENT_FETCH_CONTENTS, null, data);
+    }
+
+    /**
+     * (プリセットをもとに作られた)ユーザーデータを読み込み
+     */
+    loadUserData(data) {
+        this.emit(Action.EVENT_LOAD_USER_DATA, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -124,4 +138,7 @@ Action.EVENT_DELETE_LAYER = "deleteLayer";
 Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
 Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
 Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
+Action.EVENT_FETCH_CONTENTS = "fetchContents";
+Action.EVENT_LOAD_USER_DATA = "loadUserData";
+
 export default Action;

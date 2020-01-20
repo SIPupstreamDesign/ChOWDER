@@ -59,11 +59,11 @@ class GUI extends EventEmitter {
         this.initWindow();
         this.initLoginMenu();
         this.loginMenu.show(true);
-        this.addITwonSelect()
         Translation.translate(function () { });
 
         // ログイン成功
         this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
+            // ログインメニューを削除
             document.body.removeChild(this.loginMenu.getDOM());
             this.initPropertyPanel();
             this.initMenu();
@@ -95,9 +95,24 @@ class GUI extends EventEmitter {
             });
         })
         
+        // サンプルコンテンツの追加
+        this.addPresetContentSelect();
+
+        this.store.on(Store.EVENT_CONNECT_SUCCESS, (err, data) => {
+            this.action.fetchContents();
+        });
+
+        // ページアクセス直後に全コンテンツのメタデータを取得し(action.fetchContents)、
+        // webglコンテンツであった場合のみコールバックが呼ばれる
+        // 複数のwebglコンテンツがあった場合は, 複数回呼ばれる
+        this.store.on(Store.EVENT_DONE_FETCH_CONTENTS, (err, metaData) => {
+            this.addUserContentSelect(metaData);
+        });
+
+        // コンテンツ追加後にMetaDataが更新されたタイミングでレイヤーリストをEnableにする
         this.store.on(Store.EVENT_DONE_UPDATE_METADATA, () => {
             this.layerList.setEnable(true);
-        })
+        });
     }
 
     initWindow() {
@@ -158,18 +173,39 @@ class GUI extends EventEmitter {
 
     }
 
-    addITwonSelect() {
+    addPresetContentSelect() {
         let wrapDom = document.createElement('div');
-        wrapDom.innerHTML = "Sample Content:"
+        wrapDom.innerHTML = "Content:"
         this.itownSelect = new Select();
         this.itownSelect.getDOM().className = "itown_select";
-        this.itownSelect.addOption("itowns/view_pointcloud_3d_map.html", "view_pointcloud_3d_map");
-        this.itownSelect.addOption("itowns/view_3d_map.html", "view_3d_map");
-        this.itownSelect.addOption("itowns/3dtiles_basic.html", "3dtiles_basic");
-        this.itownSelect.addOption("itowns/vector_tile_raster_3d.html", "vector_tile_raster_3d");
+        // サンプルコンテンツの追加
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/view_pointcloud_3d_map.html"
+        }), "Preset:view_pointcloud_3d_map");
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/view_3d_map.html"
+        }), "Preset:view_3d_map");
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/3dtiles_basic.html"
+        }), "Preset:3dtiles_basic");
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/vector_tile_raster_3d.html"
+        }), "Preset:vector_tile_raster_3d");
         this.itownSelect.getDOM().style.marginTop = "20px"
         wrapDom.appendChild(this.itownSelect.getDOM())
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
+    }
+
+    addUserContentSelect(metaData) {
+        this.itownSelect.addOption(JSON.stringify({
+            type : "user", 
+            url : metaData.url,
+            meta : metaData
+        }), "ContentID:" + metaData.id);
     }
 
     initPropertyPanel() {
@@ -184,7 +220,8 @@ class GUI extends EventEmitter {
         // コンテンツ名
         let contentName = document.createElement('p');
         contentName.className = "property_text";
-        contentName.innerHTML = this.itownSelect.getSelectedValue();
+        let selectValue = this.getSelectedValueOnMenuContents();
+        contentName.innerHTML = selectValue.url;
         propElem.appendChild(contentName);
 
         propElem.appendChild(document.createElement('hr'));
@@ -215,6 +252,16 @@ class GUI extends EventEmitter {
         });
     }
 
+    getSelectedValueOnMenuContents() {
+        let selectValue = { type : "error", url : "" };
+        try {
+            selectValue = JSON.parse(this.itownSelect.getSelectedValue());
+        } catch(ex) {
+            console.error(ex);
+        }
+        return selectValue;
+    }
+
     /**
      * WebGLを表示
      * @param {*} elem 
@@ -223,7 +270,8 @@ class GUI extends EventEmitter {
      */
     showWebGL() {
         this.iframe = document.createElement('iframe');
-        this.iframe.src = this.itownSelect.getSelectedValue();
+        let selectValue = this.getSelectedValueOnMenuContents();
+        this.iframe.src = selectValue.url;
         this.iframe.style.width = "100%";
         this.iframe.style.height = "100%";
         this.iframe.style.border = "none";
@@ -239,27 +287,32 @@ class GUI extends EventEmitter {
     }
 
     addITownContent(param, thumbnailBuffer) {
-        let url = this.itownSelect.getSelectedValue();
-        let metaData = {
-            type: Constants.TypeWebGL,
-            user_data_text: JSON.stringify({
-                text: url
-            }),
-            posx: 0,
-            posy: 0,
-            width: this.getWindowSize().width,
-            height: this.getWindowSize().height,
-            orgWidth: this.getWindowSize().width,
-            orgHeight: this.getWindowSize().height,
-            visible: true,
-            layerList : JSON.stringify(param.layerList),
-            url: decodeURI(url)
-        };
-        let data = {
-            metaData: metaData,
-            contentData: thumbnailBuffer
-        };
-        this.action.addContent(data);
+        let selectValue = this.getSelectedValueOnMenuContents();
+        if (selectValue.type === "user") {
+            let metaData = selectValue.meta;
+            this.action.loadUserData(metaData);
+        } else {
+            let metaData = {
+                type: Constants.TypeWebGL,
+                user_data_text: JSON.stringify({
+                    text: selectValue.url
+                }),
+                posx: 0,
+                posy: 0,
+                width: this.getWindowSize().width,
+                height: this.getWindowSize().height,
+                orgWidth: this.getWindowSize().width,
+                orgHeight: this.getWindowSize().height,
+                visible: true,
+                layerList : JSON.stringify(param.layerList),
+                url: decodeURI(url)
+            };
+            let data = {
+                metaData: metaData,
+                contentData: thumbnailBuffer
+            };
+            this.action.addContent(data);
+        }
     }
 
     /**

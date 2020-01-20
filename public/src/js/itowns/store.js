@@ -57,7 +57,6 @@ class Store extends EventEmitter {
 
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
-            const preLayerList = this.metaData ? this.metaData.layerList : [];
 
             for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
@@ -65,25 +64,32 @@ class Store extends EventEmitter {
                     this.metaData = metaData;
                 }
             }
-            
-            try {
-                if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
-                    // レイヤー情報が異なる場合は全レイヤー更新
-                    if (JSON.stringify(preLayerList) !== this.metaData.layerList) {
-                        let layerList = JSON.parse(this.metaData.layerList);
-                        for (let i = 0; i < layerList.length; ++i) {
-                            let layer = layerList[i];
-                            this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer, (err, reply) => {
-                                this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
-                            });
-                        }
+
+            this.__changeLayerProeprty();
+        });
+    }
+
+    // this.metaDataをもとに、iframe内のitownsのレイヤー情報を更新
+    __changeLayerProeprty() {
+        const preLayerList = this.metaData ? this.metaData.layerList : [];
+        
+        try {
+            if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
+                // レイヤー情報が異なる場合は全レイヤー更新
+                if (JSON.stringify(preLayerList) !== this.metaData.layerList) {
+                    let layerList = JSON.parse(this.metaData.layerList);
+                    for (let i = 0; i < layerList.length; ++i) {
+                        let layer = layerList[i];
+                        this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer, (err, reply) => {
+                            this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                        });
                     }
                 }
             }
-            catch(e) {
-                console.error(e);
-            }
-        });
+        }
+        catch(e) {
+            console.error(e);
+        }
     }
 
     // デバッグ用. release版作るときは消す
@@ -288,6 +294,24 @@ class Store extends EventEmitter {
         }
         //console.error(this);
     }
+
+    _fetchContents(data) {
+        let metaDataDict = {}; // id, metaData
+        Connector.send(Command.GetMetaData, { type: "all", id: '' }, (err, metaData) => {
+            if (!err && metaData && metaData.type === Constants.TypeWebGL) {
+                if (!metaDataDict.hasOwnProperty(metaData.id)) {
+                    metaDataDict[metaData.id] = metaData;
+                    this.emit(Store.EVENT_DONE_FETCH_CONTENTS, null, metaData);
+                }
+            }
+        });
+    }
+
+    _loadUserData(data) {
+        this.metaData = data;
+        this.__changeLayerProeprty();
+        this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -302,4 +326,6 @@ Store.EVENT_DONE_DELETE_LAYER = "done_delete_layer";
 Store.EVENT_DONE_CHANGE_LAYER_ORDER = "done_change_layer_order";
 Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
 Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
+Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
+
 export default Store;
