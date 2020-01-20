@@ -110,9 +110,20 @@ class GUI extends EventEmitter {
         });
 
         // コンテンツ追加後にMetaDataが更新されたタイミングでレイヤーリストをEnableにする
-        this.store.on(Store.EVENT_DONE_UPDATE_METADATA, () => {
-            this.layerList.setEnable(true);
+        this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, meta) => {
+            if (!err && meta.hasOwnProperty('id')) {
+                this.contentID.innerText = meta.id;
+                this.layerList.setEnable(true);
+            }
         });
+
+        this.store.on(Store.EVENT_DONE_ADD_CONTENT, (err, meta) => {
+            if (!err && meta.hasOwnProperty('id')) {
+                this.contentID.innerText = meta.id;
+                this.layerList.setEnable(true);
+            }
+        });
+        
     }
 
     initWindow() {
@@ -211,13 +222,24 @@ class GUI extends EventEmitter {
     initPropertyPanel() {
         let propElem = document.getElementById('itowns_property');
 
-        // コンテンツタイトル
+        // コンテンツIDタイトル
+        let contentIDTitle = document.createElement('p');
+        contentIDTitle.className = "title";
+        contentIDTitle.innerHTML = "Content ID";
+        propElem.appendChild(contentIDTitle);
+
+        // コンテンツID
+        this.contentID = document.createElement('p');
+        this.contentID.className = "property_text";
+        propElem.appendChild(this.contentID);
+
+        // ベースコンテンツタイトル
         let contentTitle = document.createElement('p');
         contentTitle.className = "title";
         contentTitle.innerHTML = i18next.t('base_content');
         propElem.appendChild(contentTitle);
 
-        // コンテンツ名
+        // ベースコンテンツ名
         let contentName = document.createElement('p');
         contentName.className = "property_text";
         let selectValue = this.getSelectedValueOnMenuContents();
