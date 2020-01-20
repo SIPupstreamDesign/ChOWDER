@@ -122,7 +122,7 @@ class LayerProperty extends EventEmitter {
 		}
         this.dom.innerHTML = "";
 
-		if (layerProps.hasOwnProperty('visible')) {
+		if (layerProps && layerProps.hasOwnProperty('visible')) {
 			addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
 				this.action.changeLayerProperty({
 					id : layerID,
@@ -138,7 +138,7 @@ class LayerProperty extends EventEmitter {
 			});
 		}
 
-		if (layerProps.hasOwnProperty('opacity')) {
+		if (layerProps && layerProps.hasOwnProperty('opacity')) {
 			this.slider = new PropertySlider(layerID && layerProps, "opacity", "", layerProps.opacity);
 		} else {
 			this.slider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);

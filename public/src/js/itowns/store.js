@@ -235,13 +235,15 @@ class Store extends EventEmitter {
     }
 
     getLayerData(layerID) {
-        let layerList = JSON.parse(this.metaData.layerList);
-        for (let i = 0; i < layerList.length; ++i) {
-            let layer = layerList[i];
-            let id = layer.id;
-            if (id === layerID) {
-                return layer;
-                break;
+        if (this.metaData && this.metaData.layerList) {
+            let layerList = JSON.parse(this.metaData.layerList);
+            for (let i = 0; i < layerList.length; ++i) {
+                let layer = layerList[i];
+                let id = layer.id;
+                if (id === layerID) {
+                    return layer;
+                    break;
+                }
             }
         }
         console.error("Not found layer from current content.");

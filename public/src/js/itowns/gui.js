@@ -93,7 +93,10 @@ class GUI extends EventEmitter {
             itownConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
                 this.layerList.initLayerSelectList(params);
             });
-
+        })
+        
+        this.store.on(Store.EVENT_DONE_UPDATE_METADATA, () => {
+            this.layerList.setEnable(true);
         })
     }
 
@@ -194,6 +197,7 @@ class GUI extends EventEmitter {
 
         // レイヤーリスト
         this.layerList = new LayerList(this.store, this.action);
+        this.layerList.setEnable(false);
         propElem.appendChild(this.layerList.getDOM());
 
         // レイヤープロパティタイトル

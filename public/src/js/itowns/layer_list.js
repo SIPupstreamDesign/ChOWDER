@@ -115,6 +115,14 @@ class LayerList extends EventEmitter {
         }
     }
 
+    setEnable(isEnable) {
+        if (!isEnable) {
+            this.layerSelect.getDOM().setAttribute('disabled', '');
+        } else {
+            this.layerSelect.getDOM().removeAttribute('disabled');
+        }
+    }
+
     getDOM() {
         return this.dom;
     }

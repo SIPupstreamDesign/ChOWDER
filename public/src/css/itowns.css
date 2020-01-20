@@ -150,6 +150,11 @@ p {
 .layer_select {
 	margin : 5px;
 	width : 240px;
+    cursor: default;
+}
+
+.layer_select:disabled {
+    cursor:not-allowed;
 }
 
 .layer_dialog {
