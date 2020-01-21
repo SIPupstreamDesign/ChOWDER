@@ -166,6 +166,20 @@ class Store extends EventEmitter {
         let iframe = data;
         this.iframeConnector = new IFrameConnector(iframe);
         this.iframeConnector.connect(() => {
+
+            // iframe内のitownsのレイヤーが追加された
+            this.iframeConnector.on(ITownsCommand.AddLayer, (err, params) => {
+                if (params.length > 0 && this.metaData) {
+                    let layerParam = params[params.length - 1];
+                    let layer = this.getLayerData(layerParam.id);
+                    if (!layer) {
+                        let layerList = JSON.parse(this.metaData.layerList);
+                        layerList.push(params);
+                        this.metaData.layerList = JSON.stringify(layerList);
+                    }
+                }
+            });
+            
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
         });
     }

@@ -47,17 +47,28 @@ class LayerDialog extends EventEmitter {
         this.title.className = "layer_dialog_title";
         this.title.innerText = i18next.t('add_layer');
 
+        this.typeTitle = document.createElement('p');
+        this.typeTitle.className = "layer_dialog_sub_title";
+        this.typeTitle.innerText = "Type:";
+
+        this.typeSelect = new Select();
+        this.typeSelect.getDOM().className = "layer_dialog_type_select";
+        this.typeSelect.addOption("color", "Color");
+        this.typeSelect.addOption("elevation", "Elevation");
+        this.typeSelect.addOption("3dtile", "3D Tile(.b3dm,.pnts)");
+        this.typeSelect.addOption("pointcloud", "PointCloud(potree data)");
+        this.typeSelect.addOption("geometry", "Geometry(three.js)");
+
         this.idTitle = document.createElement('p');
-        this.idTitle.className = "layer_dialog_id_title";
+        this.idTitle.className = "layer_dialog_sub_title";
         this.idTitle.innerText = "ID:";
 
         this.idInput = new Input("text");
         this.idInput.getDOM().className = "layer_dialog_id_input";
         this.idInput.setValue("Layer_" + Math.floor(Math.random() * 100));
 
-
         this.urlTitle = document.createElement('p');
-        this.urlTitle.className = "layer_dialog_url_title";
+        this.urlTitle.className = "layer_dialog_sub_title";
         this.urlTitle.innerText = "URL:";
 
         this.urlInput = new Input("text");
@@ -77,7 +88,7 @@ class LayerDialog extends EventEmitter {
             this.zoomMinSelect.addOption(i, String(i));
         }
         this.zoomMinSelect.getDOM().className = "layer_dialog_zoom_min_select";
-
+        
         this.zoomMaxSelect = new Select();
         for (let i = 1; i <= 20; ++i) {
             this.zoomMaxSelect.addOption(i, String(i));
@@ -97,6 +108,9 @@ class LayerDialog extends EventEmitter {
 
         this.dom.appendChild(this.wrap);
         this.wrap.appendChild(this.title);
+        let typeRow = createRow();
+        typeRow.appendChild(this.typeTitle);
+        typeRow.appendChild(this.typeSelect.getDOM());
         let idRow = createRow();
         idRow.appendChild(this.idTitle);
         idRow.appendChild(this.idInput.getDOM());
@@ -134,6 +148,17 @@ class LayerDialog extends EventEmitter {
             isOK = false;
             this.background.close();
         });
+
+        this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
+            if (this.typeSelect.getSelectedValue() === "color"
+            || this.typeSelect.getSelectedValue() === "elevation") {
+                this.zoomMinSelect.getDOM().removeAttribute('disabled');
+                this.zoomMaxSelect.getDOM().removeAttribute('disabled');
+            } else {
+                this.zoomMinSelect.getDOM().setAttribute('disabled', '');
+                this.zoomMaxSelect.getDOM().setAttribute('disabled', '');
+            }
+        });
     }
 
     close() {
@@ -146,7 +171,6 @@ class LayerDialog extends EventEmitter {
         this.endCallback = endCallback;
         this.dom.style.display = "block";
         this.background.show(this.setting.opacity, this.setting.zIndex);
-
     }
 
     getDOM() {

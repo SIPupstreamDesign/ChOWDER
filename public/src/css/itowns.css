@@ -205,12 +205,12 @@ p {
 	height: 40px;
 }
 
-.layer_dialog_id_title  {
+.layer_dialog_sub_title  {
 	display : inline-block;
 }
 
-.layer_dialog_url_title {
-	display : inline-block;
+.layer_dialog_type_select {
+	margin-left: 6px;
 }
 
 .layer_dialog_id_input {
@@ -261,4 +261,12 @@ p {
 
 .k2go-timeline-pick-line {
 	max-height : 100px;
+}
+
+.layer_dialog_zoom_min_select:disabled {
+	background : lightgray;
+}
+
+.layer_dialog_zoom_max_select:disabled {
+	background : lightgray;
 }
