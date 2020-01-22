@@ -335,6 +335,8 @@
                             return "Elevation";
                         } else if (layer instanceof itowns.ColorLayer) {
                             return "Color";
+                        } else if (layer instanceof itowns.PointCloudLayer) {
+                            return "PointCloud";
                         } else if (layer instanceof itowns.GeometryLayer) {
                             return "Geometry";
                         } else {
@@ -373,7 +375,7 @@
             window.parent.postMessage(JSON.stringify({
                 jsonrpc : "2.0",
                 id : messageID + 1,
-                method :  "UpdateLayer",
+                method :  "AddLayer",
                 params : layerDataList,
                 to : "parent"
             }));
@@ -469,7 +471,7 @@
             clearTimeout(timer);
             timer = setTimeout((function () {
                 return function () {
-                    if (!done && count > 1) {
+                    if (!done && (count > 1)) {
                         window.parent.postMessage(JSON.stringify({
                             jsonrpc : "2.0",
                             id : messageID + 1,
@@ -485,6 +487,23 @@
                 }
             }()), interval);
         });
+
+        // AFTER_RENDERが延々と来てたりすると, サムネイルは作れないけどとりあえず追加する
+        setTimeout(function () {
+            if (!done) {
+                window.parent.postMessage(JSON.stringify({
+                    jsonrpc : "2.0",
+                    id : messageID + 1,
+                    method : "AddContent",
+                    params : {
+                        thumbnail : thumbnailBase64,
+                        layerList : layerDataList
+                    },
+                    to : "parent"
+                }));
+                done = true;
+            }
+        }, 10 * 1000);
 
         /*
         window.addEventListener('mousedown', (function () {
