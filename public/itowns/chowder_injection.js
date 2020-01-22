@@ -1,5 +1,6 @@
 (function () {
     var messageID = 1;
+    var layerDataList = [];
 
     // itownsのresizeイベントを強制的に消す.
     var originalAddEventListener = window.addEventListener;
@@ -387,8 +388,8 @@
             menuDiv.style.top = "10px";
             menuDiv.style.left = "10px";
         }
-
-        var layerDataList = getLayerDataList(view);
+        
+        layerDataList = getLayerDataList(view);
         view.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, function (evt) {
             layerDataList = getLayerDataList(view);
             window.parent.postMessage(JSON.stringify({
