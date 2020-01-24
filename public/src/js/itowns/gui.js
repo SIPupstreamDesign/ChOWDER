@@ -89,15 +89,15 @@ class GUI extends EventEmitter {
                 this.addITownContent(params, toArrayBuffer(params.thumbnail));
             });
 
-            // iframe内のitownsのレイヤーが追加された
-            itownConnector.on(ITownsCommand.AddLayer, (err, params) => {
-                this.layerList.initLayerSelectList(params);
-            });
-
             // iframe内のitownsのレイヤーが更新された
             itownConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
                 this.layerList.initLayerSelectList(params);
             });
+        })
+
+        // レイヤーが追加された
+        this.store.on(Store.EVENT_DONE_ADD_LAYER, (err, layerDataList) => {
+            this.layerList.initLayerSelectList(layerDataList);
         })
         
         // サンプルコンテンツの追加

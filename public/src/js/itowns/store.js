@@ -171,18 +171,22 @@ class Store extends EventEmitter {
         this.iframeConnector.connect(() => {
 
             // iframe内のitownsのレイヤーが追加された
+            // storeのメンバに保存
             this.iframeConnector.on(ITownsCommand.AddLayer, (err, params) => {
                 if (params.length > 0 && this.metaData) {
-                    let layerParam = params[params.length - 1];
-                    let layer = this.getLayerData(layerParam.id);
-                    if (!layer) {
-                        let layerList = JSON.parse(this.metaData.layerList);
-                        layerList.push(params);
-                        this.metaData.layerList = JSON.stringify(layerList);
+                    for (let i = 0; i < params.length; ++i) {
+                        let layerParam = params[i];
+                        let layer = this.getLayerData(layerParam.id);
+                        if (!layer) {
+                            let layerList = JSON.parse(this.metaData.layerList);
+                            layerList.push(layerParam);
+                            this.metaData.layerList = JSON.stringify(layerList);
+                        }
                     }
                 }
+                this.emit(Store.EVENT_DONE_ADD_LAYER, null, params)
             });
-            
+
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
         });
     }
@@ -230,7 +234,6 @@ class Store extends EventEmitter {
 
     _addLayer(data) {
         this.iframeConnector.send(ITownsCommand.AddLayer, data, (err, data) => {
-            this.emit(Store.EVENT_DONE_ADD_LAYER, null, data);
         });
         //if (this.metaData) {
             /*
@@ -312,6 +315,7 @@ class Store extends EventEmitter {
         //console.error(this);
     }
 
+    // サーバから現在登録されているwebglコンテンツのメタデータを取得してくる
     _fetchContents(data) {
         let metaDataDict = {}; // id, metaData
         Connector.send(Command.GetMetaData, { type: "all", id: '' }, (err, metaData) => {
@@ -324,11 +328,21 @@ class Store extends EventEmitter {
         });
     }
 
-    _loadUserData(data) {
-        const preLayerList = this.metaData ? this.metaData.layerList : [];
-        this.metaData = data;
-        this.__changeLayerProeprty(preLayerList);
-        this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
+    _loadUserData(meta) {
+        let layerList = [];
+        try {
+            layerList = JSON.parse(meta.layerList);
+        } catch(err) {
+            console.error(err);
+        }
+        this.metaData = meta;
+        if (layerList.length > 0) {
+            for (let i = 0; i < layerList.length; ++i) {
+                this._addLayer(layerList[i]);
+            }
+            this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
+        }
+        this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
     }
 }
 

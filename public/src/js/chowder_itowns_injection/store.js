@@ -173,6 +173,12 @@ class Store extends EventEmitter {
     addLayer(params) {
         console.error("addLayer", params)
 
+        if (params.hasOwnProperty('id')) {
+            if (this.getLayer(params.id)) {
+                return;
+            }
+        }
+
         let type = "color";
         if (params.hasOwnProperty('type')) {
             type = params.type;
@@ -435,17 +441,14 @@ class Store extends EventEmitter {
 
         this.layerDataList = this.getLayerDataList();
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, (evt) => {
-            console.error("LAYER_ADDED")
             this.layerDataList = this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.AddLayer, this.layerDataList);
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, (evt) => {
-            console.error("LAYER_REMOVED")
             this.layerDataList = this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, (evt) => {
-            console.error("COLOR_LAYERS_ORDER_CHANGED")
             this.layerDataList = this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
@@ -460,7 +463,7 @@ class Store extends EventEmitter {
 
             // 初期レイヤー送信
             if (this.layerDataList.length >= 0) {
-                this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
+                this.iframeConnector.send(ITownsCommand.AddLayer, this.layerDataList);
             }
 
             // カメラ動いた時にマトリックスを送信

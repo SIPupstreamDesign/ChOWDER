@@ -178,7 +178,7 @@ class LayerProperty extends EventEmitter {
 		}
 		
 		// size
-		if (layerProps.type !== ITownsConstants.TypePointCloud) 
+		if (layerProps.type === ITownsConstants.TypePointCloud) 
 		{
 			if (layerProps && layerProps.hasOwnProperty('pointSize')) {
 				this.sizeSlider = new PropertySlider(layerID && layerProps, "size", "", layerProps.pointSize / 20.0, 20, true, 1);
