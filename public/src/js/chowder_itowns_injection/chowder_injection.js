@@ -1,35 +1,16 @@
-(function () {
-    var messageID = 1;
-    var layerDataList = [];
 
-    // itownsのresizeイベントを強制的に消す.
-    var originalAddEventListener = window.addEventListener;
-    var resizeListeners = [];
-    window.addEventListener = function (type, listener, capture) {
-        if (type === "resize") {
-            resizeListeners.push(listener);
-        }
-        originalAddEventListener(type, listener, capture);
-    };
-
-    var originalRemoveEventListener = window.removeEventListener;
-    window.removeEventListener = function (type, listener, capture) {
-        if (type === "resize" && listener == undefined) {
-            for (var i = 0; i < resizeListeners.length; ++i) {
-                originalRemoveEventListener(type, resizeListeners[i], capture);
-            }
-            resizeListeners = [];
-        } else {
-            originalRemoveEventListener(type, listener, capture);
-        }
-    };
+class ChOWDERInjection {
+    constructor() {
+        this.messageID = 1;
+        this.layerDataList = [];
+    }
 
     // カメラにworldMatを設定して動かす
-    function applyCameraWorldMat(view, worldMat) {
+    applyCameraWorldMat(view, worldMat) {
         view.camera.camera3D.matrixAutoUpdate = false;
         view.camera.camera3D.matrixWorld.elements = worldMat;
 
-        var d = new itowns.THREE.Vector3(),
+        let d = new itowns.THREE.Vector3(),
             q = new itowns.THREE.Quaternion(),
             s = new itowns.THREE.Vector3();
         view.camera.camera3D.matrixWorld.decompose(d, q, s);
@@ -40,11 +21,11 @@
         view.notifyChange(view.camera.camera3D);
     }
 
-    function resizeToThumbnail(srcCanvas) {
-        var width = document.body.clientWidth;
-        var height = document.body.clientHeight;
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
+    resizeToThumbnail(srcCanvas) {
+        let width = document.body.clientWidth;
+        let height = document.body.clientHeight;
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
         canvas.width = 256;
         canvas.height = 256 * (height / width);
         ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, canvas.width, canvas.height);
@@ -52,7 +33,7 @@
         return canvas.toDataURL("image/jpeg");
     }
 
-    function disableITownResizeFlow() {
+    disableITownResizeFlow() {
         // Display以外はリサイズを弾く
         if (window.chowder_itowns_view_type !== "display") { return; }
         window.removeEventListener("resize");
@@ -62,15 +43,32 @@
      * レイヤーを返す. ない場合はnullを返す
      * @param id : 対象レイヤのID
      */
-
-    function getLayer(view, id) {
-        var layers = view.getLayers();
-        for (var i = 0; i < layers.length; ++i) {
+    getLayer(view, id) {
+        let layers = view.getLayers();
+        for (let i = 0; i < layers.length; ++i) {
             if (layers[i].id === id) {
                 return layers[i];
             }
         }
         return null;
+    }
+
+    /**
+     * レイヤーの作成
+     * @param {*} type 
+     */
+    createLayerByType(config, type) {
+        let mapSource = new itowns.TMSSource(config);
+        if (type === "color") {
+            return new itowns.ColorLayer(config.id, {
+                source: mapSource
+            });
+        }
+        if (type === "elevation") {
+            return new itowns.ElevationLayer(config.id, {
+                source: mapSource
+            });
+        }
     }
 
     /**
@@ -84,14 +82,14 @@
      *   format : "image/png"など (option)
      * }
      */
-    function addLayer(view, params) {
+    addLayer(view, params) {
         console.error("addLayer", params)
 
-        var type = "color";
+        let type = "color";
         if (params.hasOwnProperty('type')) {
             type = params.type;
         }
-        var url = params.url;
+        let url = params.url;
         if (url.indexOf("${z}") >= 0) {
             url = url.split("${z}").join("%TILEMATRIX");
         }
@@ -101,7 +99,7 @@
         if (url.indexOf("${y}") >= 0) {
             url = url.split("${y}").join("%ROW");
         }
-        var config;
+        let config;
         if (type === "color") {
             config = {
                 "projection": "EPSG:3857",
@@ -114,8 +112,14 @@
                 }
             };
         }
-
-
+        if (type === "elevation") {
+            config = {
+                "projection": "EPSG:3857",
+                "isInverted": true,
+                "format": url.indexOf('.png') > 0 ? "image/png" : "",
+                "url": url
+            };
+        }
         if (params.hasOwnProperty('id')) {
             config.id = params.id;
         }
@@ -125,11 +129,8 @@
         if (params.hasOwnProperty('format')) {
             config.format = params.format;
         }
-        var mapSource = new itowns.TMSSource(config);
-        var colorLayer = new itowns.ColorLayer(config.id, {
-            source: mapSource
-        });
-        view.addLayer(colorLayer);
+        let layer = this.createLayerByType(config, type);
+        view.addLayer(layer);
     }
 
     /**
@@ -140,9 +141,9 @@
      *   id : 対象レイヤのID
      * }
      */
-    function deleteLayer(view, params) {
-        var id = params.id;
-        var layer = getLayer(view, id);
+    deleteLayer(view, params) {
+        let id = params.id;
+        let layer = this.getLayer(view, id);
         if (layer) {
             view.removeLayer(id);
             view.notifyChange();
@@ -158,11 +159,11 @@
      *   isUp : 上に移動する場合はtrue、下の場合はfalse
      * }
      */
-    function changeLayerOrder(view, params) {
-        var id = params.id;
-        var isUp = params.isUp ? true : false;
-        var layers = view._layers[0].attachedLayers;
-        var layer = getLayer(view, id);
+    changeLayerOrder(view, params) {
+        let id = params.id;
+        let isUp = params.isUp ? true : false;
+        let layers = view._layers[0].attachedLayers;
+        let layer = this.getLayer(view, id);
         console.log("pre", layers)
         if (layer) {
             if (isUp && i > 0) {
@@ -192,10 +193,10 @@
      *   visible : 表示非表示.表示の場合true(option)
      * }
      */
-    function changeLayerProperty(view, params) {
-        var id = params.id;
-        var layer = getLayer(view, id);
-        var isChanged = false;
+    changeLayerProperty(view, params) {
+        let id = params.id;
+        let layer = this.getLayer(view, id);
+        let isChanged = false;
         if (layer) {
             if (params.hasOwnProperty('opacity')) {
                 layer.opacity = Number(params.opacity);
@@ -211,65 +212,65 @@
         }
     }
 
-    function injectChOWDERiTownCallbacks(view, viewerDiv) {
-        var resizeWindow = function (rect) {
-            if (!rect) return;
-            var width = document.body.clientWidth;
-            var height = document.body.clientHeight;
-            var fullWidth = width;
-            var fullHeight = height;
+    resizeWindow(rect) {
+        if (!rect) return;
+        let width = document.body.clientWidth;
+        let height = document.body.clientHeight;
+        let fullWidth = width;
+        let fullHeight = height;
 
-            document.body.style.pointerEvents = "none"
-            viewerDiv.style.left = parseInt(rect.x) + "px";
-            viewerDiv.style.top = parseInt(rect.y) + "px";
-            viewerDiv.style.width = parseInt(rect.w) + "px";
-            viewerDiv.style.height = parseInt(rect.h) + "px";
-            viewerDiv.style.position = "relative";
-            view.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
-            //console.error(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
-            view.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
-            view.notifyChange(view.camera.camera3D);
-        }
+        document.body.style.pointerEvents = "none"
+        viewerDiv.style.left = parseInt(rect.x) + "px";
+        viewerDiv.style.top = parseInt(rect.y) + "px";
+        viewerDiv.style.width = parseInt(rect.w) + "px";
+        viewerDiv.style.height = parseInt(rect.h) + "px";
+        viewerDiv.style.position = "relative";
+        view.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
+        //console.error(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
+        view.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
+        view.notifyChange(view.camera.camera3D);
+    }
 
-        window.addEventListener('message', function (evt) {
+    injectChOWDERiTownCallbacks(view, viewerDiv) {
+        window.addEventListener('message', (evt) => {
             try {
-                var data = JSON.parse(evt.data);
+                let data = JSON.parse(evt.data);
                 // 親フレームから情報を受け取り
                 if (data.method === "UpdateCamera") {
                     // カメラ更新命令
-                    applyCameraWorldMat(view, data.params);
+                    this.applyCameraWorldMat(view, data.params);
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
                 }
                 else if (data.method === "Resize") {
                     // リサイズ命令
-                    resizeWindow(data.params);
+                    this.resizeWindow(data.params);
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
                 }
                 else if (data.method === "AddLayer") {
                     // レイヤー追加命令
-                    addLayer(view, data.params);
+                    this.addLayer(view, data.params);
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
                 }
                 else if (data.method === "DeleteLayer") {
                     // レイヤー削除命令
-                    deleteLayer(view, data.params);
+                    this.deleteLayer(view, data.params);
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
                 }
                 else if (data.method === "ChangeLayerOrder") {
                     // レイヤー順序変更命令
-                    changeLayerOrder(view, data.params);
+                    this.changeLayerOrder(view, data.params);
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
                 }
                 else if (data.method === "ChangeLayerProperty") {
                     // レイヤープロパティ変更命令
-                    changeLayerProperty(view, data.params);
+                    this.changeLayerProperty(view, data.params);
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
                 }
             } catch (ex) {
                 console.error(ex);
@@ -278,12 +279,12 @@
     };
 
     // 操作可能なレイヤーのデータリストを返す
-    function getLayerDataList(view) {
-        var layers = view.getLayers();
-        var i;
-        var dataList = [];
-        var data = {}
-        var layer;
+    getLayerDataList(view) {
+        let layers = view.getLayers();
+        let i;
+        let dataList = [];
+        let data = {}
+        let layer;
         for (i = 0; i < layers.length; ++i) {
             layer = layers[i];
             data = {};
@@ -298,7 +299,7 @@
                     data.url = layer.hasOwnProperty('source') ? layer.source.url : layer.url;
                     data.zoom = layer.hasOwnProperty('source') ? layer.source.zoom : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
-                    data.type = ((function (layer) {
+                    data.type = (((layer) => {
                         if (layer instanceof itowns.ElevationLayer) {
                             return "Elevation";
                         } else if (layer instanceof itowns.ColorLayer) {
@@ -319,50 +320,50 @@
     }
 
     // 一定時間経過後にコンテンツ追加命令をpostMessageする
-    function addContentWithInterval(view) {
-        var done = false;
-        var interval = 500;
-        var timer;
-        var thumbnailBase64;
-        var count = 0;
-        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function () {
+    addContentWithInterval(view) {
+        let done = false;
+        let interval = 500;
+        let timer;
+        let thumbnailBase64;
+        let count = 0;
+        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, () => {
             // サムネイルを即時作成
             if (!done) {
-                var canvas = viewerDiv.getElementsByTagName('canvas')[0];
-                thumbnailBase64 = resizeToThumbnail(canvas);
+                let canvas = viewerDiv.getElementsByTagName('canvas')[0];
+                thumbnailBase64 = this.resizeToThumbnail(canvas);
                 ++count;
             }
             // 一定間隔同じイベントが来なかったら実行
             clearTimeout(timer);
-            timer = setTimeout((function () {
-                return function () {
+            timer = setTimeout((() => {
+                return () => {
                     if (!done && (count > 1)) {
                         window.parent.postMessage(JSON.stringify({
                             jsonrpc: "2.0",
-                            id: messageID + 1,
+                            id: this.messageID + 1,
                             method: "AddContent",
                             params: {
                                 thumbnail: thumbnailBase64,
-                                layerList: layerDataList
+                                layerList: this.layerDataList
                             },
                             to: "parent"
                         }));
                         done = true;
                     }
                 }
-            }()), interval);
+            })(), interval);
         });
 
         // AFTER_RENDERが延々と来てたりすると, サムネイルは作れないけどとりあえず追加する
-        setTimeout(function () {
+        setTimeout(() => {
             if (!done) {
                 window.parent.postMessage(JSON.stringify({
                     jsonrpc: "2.0",
-                    id: messageID + 1,
+                    id: this.messageID + 1,
                     method: "AddContent",
                     params: {
                         thumbnail: thumbnailBase64,
-                        layerList: layerDataList
+                        layerList: this.layerDataList
                     },
                     to: "parent"
                 }));
@@ -372,7 +373,7 @@
     }
 
     // メッセージの返信をpostMessageする
-    function sendResponse(data, result_ = {}) {
+    sendResponse(data, result_ = {}) {
         window.parent.postMessage(JSON.stringify({
             jsonrpc: "2.0",
             id: data.id,
@@ -381,111 +382,111 @@
         }));
     }
 
-    function injectAsChOWDERiTownController(view, viewerDiv) {
-        var menuDiv = document.getElementById('menuDiv');
+    injectAsChOWDERiTownController(view, viewerDiv) {
+        let menuDiv = document.getElementById('menuDiv');
         if (menuDiv) {
             menuDiv.style.position = "absolute";
             menuDiv.style.top = "10px";
             menuDiv.style.left = "10px";
         }
-        
-        layerDataList = getLayerDataList(view);
-        view.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, function (evt) {
-            layerDataList = getLayerDataList(view);
+
+        this.layerDataList = this.getLayerDataList(view);
+        view.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, (evt) => {
+            this.layerDataList = this.getLayerDataList(view);
             window.parent.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                id: messageID + 1,
+                id: this.messageID + 1,
                 method: "AddLayer",
-                params: layerDataList,
+                params: this.layerDataList,
                 to: "parent"
             }));
         });
-        view.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, function (evt) {
-            layerDataList = getLayerDataList(view);
+        view.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, (evt) => {
+            this.layerDataList = this.getLayerDataList(view);
             window.parent.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                id: messageID + 1,
+                id: this.messageID + 1,
                 method: "UpdateLayer",
-                params: layerDataList,
+                params: this.layerDataList,
                 to: "parent"
             }));
         });
-        view.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, function (evt) {
-            layerDataList = getLayerDataList(view);
+        view.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, (evt) => {
+            this.layerDataList = this.getLayerDataList(view);
             window.parent.postMessage(JSON.stringify({
                 jsonrpc: "2.0",
-                id: messageID + 1,
+                id: this.messageID + 1,
                 method: "UpdateLayer",
-                params: layerDataList,
+                params: this.layerDataList,
                 to: "parent"
             }));
         });
 
-        window.addEventListener('message', function (evt) {
+        window.addEventListener('message', (evt) => {
             try {
-                var data = JSON.parse(evt.data);
+                let data = JSON.parse(evt.data);
                 // 初期メッセージの受け取り
                 if (data.method === "Init") {
                     // メッセージの返信
-                    sendResponse(data, {});
+                    this.sendResponse(data, {});
 
                     // 初期カメラ位置送信
-                    var worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
+                    let worldMat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
                     window.parent.postMessage(JSON.stringify({
                         jsonrpc: "2.0",
-                        id: messageID + 1,
+                        id: this.messageID + 1,
                         method: "UpdateCamera",
                         params: worldMat,
                         to: "parent"
                     }), evt.origin);
 
                     // 初期レイヤー送信
-                    if (layerDataList.length >= 0) {
+                    if (this.layerDataList.length >= 0) {
                         window.parent.postMessage(JSON.stringify({
                             jsonrpc: "2.0",
-                            id: messageID + 1,
+                            id: this.messageID + 1,
                             method: "UpdateLayer",
-                            params: layerDataList,
+                            params: this.layerDataList,
                             to: "parent"
                         }));
                     }
 
                     // カメラ動いた時にマトリックスを送信
-                    view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (function () {
-                        return function () {
-                            var mat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
+                    view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (() => {
+                        return () => {
+                            let mat = JSON.stringify(view.camera.camera3D.matrixWorld.elements);
                             if (worldMat !== mat) {
                                 // カメラが動いた.
                                 worldMat = mat;
                                 window.parent.postMessage(JSON.stringify({
                                     jsonrpc: "2.0",
-                                    id: messageID + 1,
+                                    id: this.messageID + 1,
                                     method: "UpdateCamera",
                                     params: mat,
                                     to: "parent"
                                 }), evt.origin);
                             }
                         };
-                    }()));
+                    })());
                 }
             } catch (e) {
 
             }
         });
 
-        addContentWithInterval(view);
+        this.addContentWithInterval(view);
     }
 
-    window.injectChOWDER = function (view, viewerDiv, startTime) {
-        var done = false;
-        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, function () {
+    injectChOWDER(view, viewerDiv, startTime) {
+        let done = false;
+        view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, (evt) => {
             if (!done) {
                 if (window.chowder_itowns_view_type === "itowns") {
                     // itowns追加用コントローラーからひかれた(itowns画面に対して操作可)
-                    injectAsChOWDERiTownController(view, viewerDiv);
+                    this.injectAsChOWDERiTownController(view, viewerDiv);
                 } else {
                     // displayまたはcontrollerから開かれた(itowns画面に対して操作不可)
-                    disableITownResizeFlow();
+                    this.disableITownResizeFlow();
 
                     // for measure performance
                     view.mainLoop.addEventListener('command-queue-empty', () => {
@@ -493,7 +494,7 @@
                         //console.log("renderingState:", view.mainLoop.renderingState, "time:", ((performance.now() - startTime) / 1000).toFixed(3), "seconds")
                         if (view.mainLoop.renderingState == 0 && startTime) {
                             startTime = null;
-                            var time = ((performance.now() - startTime) / 1000).toFixed(3) + "seconds";
+                            let time = ((performance.now() - startTime) / 1000).toFixed(3) + "seconds";
                             if (window.hasOwnProperty("chowder_itowns_measure_time")) {
                                 window.chowder_itowns_measure_time(time)
                             }
@@ -504,6 +505,8 @@
             }
         });
         // windowオブジェクトに対してコールバックを即時設定.
-        injectChOWDERiTownCallbacks(view, viewerDiv);
-    };
-}());
+        this.injectChOWDERiTownCallbacks(view, viewerDiv);
+    }
+}
+
+export default ChOWDERInjection;

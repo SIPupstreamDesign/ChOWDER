@@ -211,6 +211,10 @@ class GUI extends EventEmitter {
             type : "preset",
             url : "itowns/vector_tile_raster_3d.html"
         }), "Preset:vector_tile_raster_3d");
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/nict_tsukuba.html?name=mtTsukuba&px=-3952307.675547402&py=3304876.576466543&pz=3748873.8775102566&range=2737.9540096505734&xlookat=140.07961145092113&ylookat=36.20684848349528&zlookat=28.50089971907437&heading=140.65953519356157&tilt=17.701978694273777&c_vfov=37&c_pan=-140.66&c_tilt=-17.70098924418633&c_length=2839.4286268307546&p_tilt=-17.8&p_pan=-140.5&p_roll=0&p_hfov=49&p_vfov=30&p_opacity=0.7&p_auto=false&p_line=false&p_cube=false&demo=true"
+        }), "Preset:nict_tsukuba");
         this.itownSelect.getDOM().style.marginTop = "20px"
         wrapDom.appendChild(this.itownSelect.getDOM())
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);

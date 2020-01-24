@@ -14,6 +14,7 @@ module.exports = {
 			"controller" : './public/src/controller_app.js',
 			"display" : './public/src/display_app.js',
 			"itowns" : './public/src/itowns_app.js',
+			"chowder_injection" : './public/src/chowder_itowns_injection.js',
 	},
 	// 出力の設定
 	output: {

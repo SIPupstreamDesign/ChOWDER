@@ -9,6 +9,7 @@ import PopupBackground from "../components/popup_background";
 import Input from "../components/input";
 import Button from "../components/button";
 import Select from "../components/select";
+import ITownsConstants from "./itowns_constants.js"
 
 class LayerDialog extends EventEmitter {
     constructor(store, action) {
@@ -53,11 +54,11 @@ class LayerDialog extends EventEmitter {
 
         this.typeSelect = new Select();
         this.typeSelect.getDOM().className = "layer_dialog_type_select";
-        this.typeSelect.addOption("color", "Color");
-        this.typeSelect.addOption("elevation", "Elevation");
-        this.typeSelect.addOption("3dtile", "3D Tile(.b3dm,.pnts)");
-        this.typeSelect.addOption("pointcloud", "PointCloud(potree data)");
-        this.typeSelect.addOption("geometry", "Geometry(three.js)");
+        this.typeSelect.addOption(ITownsConstants.TypeColor, "Color");
+        this.typeSelect.addOption(ITownsConstants.TypeElevation, "Elevation");
+        this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(.b3dm,.pnts)");
+        this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree data)");
+        this.typeSelect.addOption(ITownsConstants.TypeGeometry, "Geometry(three.js)");
 
         this.idTitle = document.createElement('p');
         this.idTitle.className = "layer_dialog_sub_title";
@@ -127,6 +128,7 @@ class LayerDialog extends EventEmitter {
         let isOK = false;
         this.background = new PopupBackground();
         this.background.on('close', () => {
+            this.data.type = this.typeSelect.getSelectedValue();
             this.data.url = this.urlInput.getValue();
             this.data.id = this.idInput.getValue();
             this.data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
