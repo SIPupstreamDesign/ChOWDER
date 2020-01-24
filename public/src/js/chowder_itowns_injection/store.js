@@ -188,7 +188,7 @@ class Store extends EventEmitter {
             url = url.split("${y}").join("%ROW");
         }
         let config;
-        if (type === "color") {
+        if (type === ITownsConstants.TypeColor) {
             config = {
                 "projection": "EPSG:3857",
                 "isInverted": true,
@@ -201,12 +201,22 @@ class Store extends EventEmitter {
                 "opacity" : 1.0
             };
         }
-        if (type === "elevation") {
+        if (type === ITownsConstants.TypeElevation) {
             config = {
                 "projection": "EPSG:3857",
                 "isInverted": true,
                 "format": url.indexOf('.png') > 0 ? "image/png" : "",
-                "url": url
+                "url": url,
+                "scale" : 1
+            };
+        }
+        if (type === ITownsConstants.TypePointCloud) {
+            config = {
+                "projection": "EPSG:3857",
+                "isInverted": true,
+                "format": url.indexOf('.png') > 0 ? "image/png" : "",
+                "url": url,
+                "scale" : 1
             };
         }
         if (params.hasOwnProperty('id')) {
@@ -290,6 +300,14 @@ class Store extends EventEmitter {
             }
             if (params.hasOwnProperty('visible')) {
                 layer.visible = Boolean(params.visible);
+                isChanged = true;
+            }
+            if (params.hasOwnProperty('scale')) {
+                layer.scale = Number(params.scale);
+                isChanged = true;
+            }
+            if (params.hasOwnProperty('pointSize')) {
+                layer.pointSize = Number(params.pointSize);
                 isChanged = true;
             }
             if (isChanged) {

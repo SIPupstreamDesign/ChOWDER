@@ -12,10 +12,12 @@ class PropertySlider extends EventEmitter {
 			<span class="input-group-addon">px</span>
 		</div>
 	*/
-    constructor(isEditable, leftLabel, rightLabel, value, scale = 1.0, isInteger = false) {
+    constructor(isEditable, leftLabel, rightLabel, value, scale = 1.0, isInteger = false, minVal = 0.0, maxVal = 1000.0) {
         super();
         this.scale = scale;
         this.isInteger = isInteger;
+        this.minVal = minVal;
+        this.maxVal = maxVal;
         this.dom = document.createElement('div');
 
         let group = document.createElement('div');
@@ -52,7 +54,7 @@ class PropertySlider extends EventEmitter {
         this.dom.appendChild(group);
         this.onChange = (evt) => {
             try {
-                let scaledVal = parseFloat(this.input.value);
+                let scaledVal = this.clamp(parseFloat(this.input.value), this.minVal, this.maxVal);
                 let val = scaledVal / scale;
                 this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
                 if (!isNaN(val)) {
@@ -69,10 +71,14 @@ class PropertySlider extends EventEmitter {
 
         // 初期値の設定
         this.input.value = value * scale;
-        let scaledVal = parseFloat(this.input.value);
+        let scaledVal = this.clamp(parseFloat(this.input.value), this.minVal, this.maxVal);
         let val = scaledVal / scale;
         this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
         this.initEvent();
+    }
+
+    clamp(val, minVal, maxVal) {
+        return Math.max(minVal, Math.min(val, maxVal));
     }
 
     initEvent() {
@@ -94,8 +100,8 @@ class PropertySlider extends EventEmitter {
                     y: evt.clientY - rect.top
                 };
                 let value = Math.min(1.0, Math.max(0.0, mouseDownPos.x / 100.0));
-                value = value.toFixed(2);
-                this.input.value = this.isInteger ? Math.round(value * this.scale) : value * this.scale;
+                value = this.clamp(value.toFixed(2) * this.scale, this.minVal, this.maxVal);
+                this.input.value = this.isInteger ? Math.round(value) : value;
                 this.onChange();
             }
         };

@@ -112,6 +112,7 @@ class LayerProperty extends EventEmitter {
 		this.dom.appendChild(this.opacitySlider.getDOM());
 
 		this.scaleSlider = null;
+		this.sizeSlider = null;
 	}
 	
 
@@ -174,6 +175,23 @@ class LayerProperty extends EventEmitter {
 				});
 			});
 			this.dom.appendChild(this.scaleSlider.getDOM());
+		}
+		
+		// size
+		if (layerProps.type !== ITownsConstants.TypePointCloud) 
+		{
+			if (layerProps && layerProps.hasOwnProperty('pointSize')) {
+				this.sizeSlider = new PropertySlider(layerID && layerProps, "size", "", layerProps.pointSize / 20.0, 20, true, 1);
+			} else {
+				this.sizeSlider = new PropertySlider(layerID && layerProps, "size", "", 4 / 20.0, 20, true, 1);
+			}	
+			this.sizeSlider.on(PropertySlider.EVENT_CHANGE,  (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					pointSize : data
+				});
+			});
+			this.dom.appendChild(this.sizeSlider.getDOM());
 		}
     }
 
