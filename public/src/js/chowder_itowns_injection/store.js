@@ -62,7 +62,7 @@ class Store extends EventEmitter {
     initIFrameEvents() {
         this.iframeConnector.on(ITownsCommand.UpdateCamera, (err, param, request) => {
             // カメラ更新命令
-            this.applyCameraWorldMat(view, param);
+            this.applyCameraWorldMat(this.itownsView, param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
@@ -74,44 +74,44 @@ class Store extends EventEmitter {
         });
         this.iframeConnector.on(ITownsCommand.AddLayer, (err, param, request) => {
             // レイヤー追加命令
-            this.addLayer(view, param);
+            this.addLayer(this.itownsView, param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.DeleteLayer, (err, param, request) => {
             // レイヤー削除命令
-            this.deleteLayer(view, param);
+            this.deleteLayer(this.itownsView, param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.ChangeLayerOrder, (err, param, request) => {
             // レイヤー順序変更命令
-            this.changeLayerOrder(view, param);
+            this.changeLayerOrder(this.itownsView, param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.ChangeLayerProperty, (err, param, request) => {
             // レイヤープロパティ変更命令
-            this.changeLayerProperty(view, param);
+            this.changeLayerProperty(this.itownsView, param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
     }
     
     // カメラにworldMatを設定して動かす
-    applyCameraWorldMat(view, worldMat) {
-        view.camera.camera3D.matrixAutoUpdate = false;
-        view.camera.camera3D.matrixWorld.elements = worldMat;
+    applyCameraWorldMat(worldMat) {
+        this.itownsView.camera.camera3D.matrixAutoUpdate = false;
+        this.itownsView.camera.camera3D.matrixWorld.elements = worldMat;
 
         let d = new itowns.THREE.Vector3(),
             q = new itowns.THREE.Quaternion(),
             s = new itowns.THREE.Vector3();
-        view.camera.camera3D.matrixWorld.decompose(d, q, s);
-        view.camera.camera3D.position.copy(d);
-        view.camera.camera3D.quaternion.copy(q);
-        view.camera.camera3D.scale.copy(s);
-        view.camera.camera3D.matrixAutoUpdate = true;
-        view.notifyChange(view.camera.camera3D);
+        this.itownsView.camera.camera3D.matrixWorld.decompose(d, q, s);
+        this.itownsView.camera.camera3D.position.copy(d);
+        this.itownsView.camera.camera3D.quaternion.copy(q);
+        this.itownsView.camera.camera3D.scale.copy(s);
+        this.itownsView.camera.camera3D.matrixAutoUpdate = true;
+        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
     }
 
     resizeToThumbnail(srcCanvas) {
@@ -130,8 +130,8 @@ class Store extends EventEmitter {
      * レイヤーを返す. ない場合はnullを返す
      * @param id : 対象レイヤのID
      */
-    getLayer(view, id) {
-        let layers = view.getLayers();
+    getLayer(id) {
+        let layers = this.itownsView.getLayers();
         for (let i = 0; i < layers.length; ++i) {
             if (layers[i].id === id) {
                 return layers[i];
@@ -160,7 +160,6 @@ class Store extends EventEmitter {
 
     /**
      * レイヤー追加
-     * @param view
      * @param params
      * { 
      *   id : 対象レイヤのID
@@ -169,7 +168,7 @@ class Store extends EventEmitter {
      *   format : "image/png"など (option)
      * }
      */
-    addLayer(view, params) {
+    addLayer(params) {
         console.error("addLayer", params)
 
         let type = "color";
@@ -217,62 +216,59 @@ class Store extends EventEmitter {
             config.format = params.format;
         }
         let layer = this.createLayerByType(config, type);
-        view.addLayer(layer);
+        this.itownsView.addLayer(layer);
     }
 
     /**
      * マップ削除 
-     * @param view
      * @param params
      * { 
      *   id : 対象レイヤのID
      * }
      */
-    deleteLayer(view, params) {
+    deleteLayer(params) {
         let id = params.id;
-        let layer = this.getLayer(view, id);
+        let layer = this.getLayer(id);
         if (layer) {
-            view.removeLayer(id);
-            view.notifyChange();
+            this.itownsView.removeLayer(id);
+            this.itownsView.notifyChange();
         }
     }
 
     /**
      * マップ順序変更
-     * @param view
      * @param params
      * { 
      *   id : 変更対象レイヤのID
      *   isUp : 上に移動する場合はtrue、下の場合はfalse
      * }
      */
-    changeLayerOrder(view, params) {
+    changeLayerOrder(params) {
         let id = params.id;
         let isUp = params.isUp ? true : false;
-        let layers = view._layers[0].attachedLayers;
-        let layer = this.getLayer(view, id);
+        let layers = this.itownsView._layers[0].attachedLayers;
+        let layer = this.getLayer(id);
         console.log("pre", layers)
         if (layer) {
             if (isUp && i > 0) {
-                console.error("up!", view, id)
-                itowns.ColorLayersOrdering.moveLayerUp(view, id);
+                console.error("up!", this.itownsView, id)
+                itowns.ColorLayersOrdering.moveLayerUp(this.itownsView, id);
                 layers.splice(i - 1, 2, layers[i], layers[i - 1]);
                 console.log(layers)
-                view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
-                view.notifyChange();
+                this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
+                this.itownsView.notifyChange();
             } else if (i < (layer.length - 1)) {
-                itowns.ColorLayersOrdering.moveLayerDown(view, id);
+                itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
                 layers.splice(i, 2, layers[i + 1], layers[i]);
                 console.log(layers)
-                view.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
-                view.notifyChange();
+                this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
+                this.itownsView.notifyChange();
             }
         }
     }
 
     /**
      * プロパティの変更
-     * @param view
      * @param params 
      * {
      *   id : 変更対象レイヤのID
@@ -280,9 +276,9 @@ class Store extends EventEmitter {
      *   visible : 表示非表示.表示の場合true(option)
      * }
      */
-    changeLayerProperty(view, params) {
+    changeLayerProperty(params) {
         let id = params.id;
-        let layer = this.getLayer(view, id);
+        let layer = this.getLayer(this.itownsView, id);
         let isChanged = false;
         if (layer) {
             if (params.hasOwnProperty('opacity')) {
@@ -294,7 +290,7 @@ class Store extends EventEmitter {
                 isChanged = true;
             }
             if (isChanged) {
-                view.notifyChange(layer);
+                this.itownsView.notifyChange(layer);
             }
         }
     }
@@ -307,15 +303,15 @@ class Store extends EventEmitter {
         let fullHeight = height;
 
         document.body.style.pointerEvents = "none"
-        viewerDiv.style.left = parseInt(rect.x) + "px";
-        viewerDiv.style.top = parseInt(rect.y) + "px";
-        viewerDiv.style.width = parseInt(rect.w) + "px";
-        viewerDiv.style.height = parseInt(rect.h) + "px";
-        viewerDiv.style.position = "relative";
-        view.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
+        this.itownsViewerDiv.style.left = parseInt(rect.x) + "px";
+        this.itownsViewerDiv.style.top = parseInt(rect.y) + "px";
+        this.itownsViewerDiv.style.width = parseInt(rect.w) + "px";
+        this.itownsViewerDiv.style.height = parseInt(rect.h) + "px";
+        this.itownsViewerDiv.style.position = "relative";
+        this.itownsView.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
         //console.error(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
-        view.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
-        view.notifyChange(view.camera.camera3D);
+        this.itownsView.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
+        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
     }
 
 
@@ -448,7 +444,6 @@ class Store extends EventEmitter {
 
             // カメラ動いた時にマトリックスを送信
             this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (() => {
-                console.error("AFTER_CAMERA_UPDATE")
                 return () => {
                     let mat = JSON.stringify(this.itownsView.camera.camera3D.matrixWorld.elements);
                     if (worldMat !== mat) {
