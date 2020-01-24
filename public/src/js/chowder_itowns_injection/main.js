@@ -1,4 +1,6 @@
-import ChowderInjection from './chowder_injection'
+
+import Action from './action';
+import Store from './store';
 
 // itownsのresizeイベントを強制的に消す.
 let originalAddEventListener = window.addEventListener;
@@ -29,6 +31,10 @@ window.removeEventListener = function (type, listener, capture) {
  * @param viewerDiv itownsのviewerのdiv
  */ 
 window.injectChOWDER = (view, viewerDiv) => {
-    let injection = new ChowderInjection();
-    injection.injectChOWDER(view, viewerDiv);
-}
+    let action = new Action();
+    let store = new Store(action);
+    action.injectChOWDER({
+        view : view,
+        viewerDiv : viewerDiv
+    });
+};
