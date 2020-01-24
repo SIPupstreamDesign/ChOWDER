@@ -10,6 +10,7 @@ import EventEmitter from '../../../3rd/js/eventemitter3/index.js'
 import Action from './action'
 import IFrameConnector from '../common/iframe_connector'
 import ITownsCommand from '../common/itowns_command';
+import ITownsConstants from '../itowns/itowns_constants.js';
 
 /**
  * Store.
@@ -62,7 +63,7 @@ class Store extends EventEmitter {
     initIFrameEvents() {
         this.iframeConnector.on(ITownsCommand.UpdateCamera, (err, param, request) => {
             // カメラ更新命令
-            this.applyCameraWorldMat(this.itownsView, param);
+            this.applyCameraWorldMat(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
@@ -74,25 +75,26 @@ class Store extends EventEmitter {
         });
         this.iframeConnector.on(ITownsCommand.AddLayer, (err, param, request) => {
             // レイヤー追加命令
-            this.addLayer(this.itownsView, param);
+            this.addLayer(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.DeleteLayer, (err, param, request) => {
             // レイヤー削除命令
-            this.deleteLayer(this.itownsView, param);
+            this.deleteLayer(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.ChangeLayerOrder, (err, param, request) => {
             // レイヤー順序変更命令
-            this.changeLayerOrder(this.itownsView, param);
+            this.changeLayerOrder(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.ChangeLayerProperty, (err, param, request) => {
+            console.error("changeLayerProperty", err, param, request)
             // レイヤープロパティ変更命令
-            this.changeLayerProperty(this.itownsView, param);
+            this.changeLayerProperty(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
@@ -195,7 +197,8 @@ class Store extends EventEmitter {
                 "tileMatrixSet": "PM",
                 "updateStrategy": {
                     "type": 3
-                }
+                },
+                "opacity" : 1.0
             };
         }
         if (type === "elevation") {
@@ -278,7 +281,7 @@ class Store extends EventEmitter {
      */
     changeLayerProperty(params) {
         let id = params.id;
-        let layer = this.getLayer(this.itownsView, id);
+        let layer = this.getLayer(id);
         let isChanged = false;
         if (layer) {
             if (params.hasOwnProperty('opacity')) {
@@ -315,7 +318,7 @@ class Store extends EventEmitter {
     }
 
 
-    _disableITownResizeFlow() {
+    disableITownResizeFlow() {
         // Display以外はリサイズを弾く
         if (window.chowder_itowns_view_type !== "display") { return; }
         window.removeEventListener("resize");
@@ -344,15 +347,15 @@ class Store extends EventEmitter {
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.type = (((layer) => {
                         if (layer instanceof itowns.ElevationLayer) {
-                            return "Elevation";
+                            return ITownsConstants.TypeElevation;
                         } else if (layer instanceof itowns.ColorLayer) {
-                            return "Color";
+                            return ITownsConstants.TypeColor;
                         } else if (layer instanceof itowns.PointCloudLayer) {
-                            return "PointCloud";
+                            return ITownsConstants.TypePointCloud;
                         } else if (layer instanceof itowns.GeometryLayer) {
-                            return "Geometry";
+                            return ITownsConstants.TypeGeometry;
                         } else {
-                            return "Layer"
+                            return ITownsConstants.TypeLayer;
                         }
                     })(layer));
                     dataList.push(data);
@@ -412,20 +415,20 @@ class Store extends EventEmitter {
             menuDiv.style.left = "10px";
         }
 
-        this.layerDataList = this.getLayerDataList(this.itownsView);
+        this.layerDataList = this.getLayerDataList();
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, (evt) => {
             console.error("LAYER_ADDED")
-            this.layerDataList = this.getLayerDataList(this.itownsView);
+            this.layerDataList = this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.AddLayer, this.layerDataList);
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, (evt) => {
             console.error("LAYER_REMOVED")
-            this.layerDataList = this.getLayerDataList(this.itownsView);
+            this.layerDataList = this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, (evt) => {
             console.error("COLOR_LAYERS_ORDER_CHANGED")
-            this.layerDataList = this.getLayerDataList(this.itownsView);
+            this.layerDataList = this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
 

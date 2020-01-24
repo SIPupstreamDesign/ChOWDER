@@ -6,6 +6,7 @@
 
 import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
+import ITownsConstants from "./itowns_constants";
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -105,51 +106,75 @@ class LayerProperty extends EventEmitter {
         this.dom = document.createElement('div');
         this.dom.className = "layer_property";
 
-        this.layerID = null;
-        this.layerProps = null;
-
         addCheckProperty(this.dom, false, "visible", "visible", true, (err, data) => {
         });
-		this.slider = new PropertySlider(false, "opacity", "", 1.0);
-		this.dom.appendChild(this.slider.getDOM());
-    }
+		this.opacitySlider = new PropertySlider(false, "opacity", "", 1.0);
+		this.dom.appendChild(this.opacitySlider.getDOM());
+
+		this.scaleSlider = null;
+	}
+	
 
     // レイヤーID、プロパティをもとに初期値を設定
     // レイヤーを選択しなおすたびに毎回呼ぶ.
     initFromLayer(layerID, layerProps) {
-		if (this.slider) {
-			this.slider.release();
+		if (this.opacitySlider) {
+			this.opacitySlider.off(PropertySlider.EVENT_CHANGE, this.onOpacityChange)
+			this.opacitySlider.release();
+			this.opacitySlider = null;
 		}
         this.dom.innerHTML = "";
 
-		if (layerProps && layerProps.hasOwnProperty('visible')) {
-			addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
-				this.action.changeLayerProperty({
-					id : layerID,
-					visible : data
-				})
-			});
-		} else {
-			addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
-				this.action.changeLayerProperty({
-					id : layerID,
-					visible : data
-				})
-			});
+		// visible
+		if (layerProps.type !== ITownsConstants.TypeElevation) {
+			if (layerProps && layerProps.hasOwnProperty('visible')) {
+				addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
+					this.action.changeLayerProperty({
+						id : layerID,
+						visible : data
+					})
+				});
+			} else {
+				addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
+					this.action.changeLayerProperty({
+						id : layerID,
+						visible : data
+					})
+				});
+			}
 		}
 
-		if (layerProps && layerProps.hasOwnProperty('opacity')) {
-			this.slider = new PropertySlider(layerID && layerProps, "opacity", "", layerProps.opacity);
-		} else {
-			this.slider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);
+		// opacity
+		if (layerProps.type !== ITownsConstants.TypeElevation) {
+			if (layerProps && layerProps.hasOwnProperty('opacity')) {
+				this.opacitySlider = new PropertySlider(layerID && layerProps, "opacity", "", layerProps.opacity);
+			} else {
+				this.opacitySlider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);
+			}	
+			this.opacitySlider.on(PropertySlider.EVENT_CHANGE,  (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					opacity : data
+				});
+			});
+			this.dom.appendChild(this.opacitySlider.getDOM());
 		}
-		this.slider.on(PropertySlider.EVENT_CHANGE, (err, val) => {
-            this.action.changeLayerProperty({
-                id : layerID,
-                opacity : val
-            })
-		})
-		this.dom.appendChild(this.slider.getDOM());
+		
+		// scale
+		if (layerProps.type === ITownsConstants.TypeElevation) {
+			if (layerProps && layerProps.hasOwnProperty('scale')) {
+				this.scaleSlider = new PropertySlider(layerID && layerProps, "scale", "", layerProps.scale / 20.0, 20, true);
+			} else {
+				this.scaleSlider = new PropertySlider(layerID && layerProps, "scale", "", 1 / 20.0, 20, true);
+			}	
+			this.scaleSlider.on(PropertySlider.EVENT_CHANGE,  (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					scale : data
+				});
+			});
+			this.dom.appendChild(this.scaleSlider.getDOM());
+		}
     }
 
     getDOM() {

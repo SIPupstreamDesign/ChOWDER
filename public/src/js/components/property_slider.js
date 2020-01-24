@@ -12,12 +12,14 @@ class PropertySlider extends EventEmitter {
 			<span class="input-group-addon">px</span>
 		</div>
 	*/
-    constructor(isEditable, leftLabel, rightLabel, value) {
+    constructor(isEditable, leftLabel, rightLabel, value, scale = 1.0, isInteger = false) {
         super();
-
+        this.scale = scale;
+        this.isInteger = isInteger;
         this.dom = document.createElement('div');
 
         let group = document.createElement('div');
+
         let leftSpan = document.createElement('span');
         let rightSpan = document.createElement('span');
         this.input = document.createElement('input');
@@ -31,8 +33,8 @@ class PropertySlider extends EventEmitter {
         this.sliderBack = document.createElement('span')
         this.sliderBack.className = "property_slider_slider_back";
 
-        group.className = "input-group";
-        leftSpan.className = "property_slider input-group-addon";
+        group.className = "input-group property_slider_group";
+        leftSpan.className = "property_slider input-group-addon property_slider_left_span";
         leftSpan.innerHTML = leftLabel;
         rightSpan.className = "property_slider input-group-addon";
         rightSpan.innerHTML = rightLabel;
@@ -49,28 +51,27 @@ class PropertySlider extends EventEmitter {
         }
         this.dom.appendChild(group);
         this.onChange = (evt) => {
-            {
-                try {
-                    let val = parseFloat(this.input.value);
-                    this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
-                    if (!isNaN(val)) {
-                        this.emit(PropertySlider.EVENT_CHANGE, null, val);
-                    } else {
-                        throw false;
-                    }
-                } catch (ex) {
-                    this.input.value = 1.0;
+            try {
+                let scaledVal = parseFloat(this.input.value);
+                let val = scaledVal / scale;
+                this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
+                if (!isNaN(val)) {
+                    this.emit(PropertySlider.EVENT_CHANGE, null, scaledVal);
+                } else {
+                    throw false;
                 }
+            } catch (ex) {
+                this.input.value = 1.0;
             }
         };
 
         this.input.addEventListener('change', this.onChange);
 
         // 初期値の設定
-        this.input.value = value;
-        let val = parseFloat(this.input.value);
+        this.input.value = value * scale;
+        let scaledVal = parseFloat(this.input.value);
+        let val = scaledVal / scale;
         this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
-
         this.initEvent();
     }
 
@@ -94,7 +95,7 @@ class PropertySlider extends EventEmitter {
                 };
                 let value = Math.min(1.0, Math.max(0.0, mouseDownPos.x / 100.0));
                 value = value.toFixed(2);
-                this.input.value = value;
+                this.input.value = this.isInteger ? Math.round(value * this.scale) : value * this.scale;
                 this.onChange();
             }
         };

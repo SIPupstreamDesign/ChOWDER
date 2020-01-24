@@ -3,26 +3,21 @@
     width : 100px;
     height: 34px;
     background : dodgerblue;
-    border: 2px solid snow;
+    border-top: 2px solid snow;
+    border-bottom: 2px solid snow;
     position: absolute;
-    left : calc(100% - 164px);
+    left : calc(100% - 165px);
     top: 0px;
 }
 
 .property_slider_slider_back {
-    width : 100px;
+    width : 104px;
     height: 34px;
     background : white;
     border: 2px solid snow;
     position: absolute;
-    right: 64px;
+    right: 63px;
     top: 0px;
-}
-
-.property_slider.input-group-addon {
-    padding: 5px;
-    padding-left : 8px;
-    padding-right : 7px;
 }
 
 .property_slider_slider.disabled {
@@ -30,6 +25,22 @@
 }
 
 input.property_slider.form-control {
-    width: 60px;
+    width: 58px;
     float: right;
+    right: 0px;
+}
+
+.property_slider_left_span {
+    width : 63px;
+    padding: 6px 4px;
+}
+
+.input-group {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.property_slider_group {
+    table-layout: fixed;
+    width: 235px;
 }

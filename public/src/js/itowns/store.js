@@ -57,26 +57,29 @@ class Store extends EventEmitter {
 
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
-
+            let hasUpdateData = false;
             for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
-                if (this.metaData && metaData.id === this.metaData.id) {
+                if (metaData.type === Constants.TypeWebGL && this.metaData && metaData.id === this.metaData.id) {
                     this.metaData = metaData;
+                    hasUpdateData = true;
+                    break;
                 }
             }
 
-            this.__changeLayerProeprty();
+            if (hasUpdateData) {
+                this.__changeLayerProeprty();
+            }
         });
     }
 
     // this.metaDataをもとに、iframe内のitownsのレイヤー情報を更新
-    __changeLayerProeprty() {
-        const preLayerList = this.metaData ? this.metaData.layerList : [];
+    __changeLayerProeprty(preLayerList = []) {
         
         try {
             if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
                 // レイヤー情報が異なる場合は全レイヤー更新
-                if (JSON.stringify(preLayerList) !== this.metaData.layerList) {
+                if (preLayerList !== this.metaData.layerList) {
                     let layerList = JSON.parse(this.metaData.layerList);
                     for (let i = 0; i < layerList.length; ++i) {
                         let layer = layerList[i];
@@ -322,8 +325,9 @@ class Store extends EventEmitter {
     }
 
     _loadUserData(data) {
+        const preLayerList = this.metaData ? this.metaData.layerList : [];
         this.metaData = data;
-        this.__changeLayerProeprty();
+        this.__changeLayerProeprty(preLayerList);
         this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
     }
 }
