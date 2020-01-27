@@ -441,6 +441,13 @@ class Action extends EventEmitter
     }
 
     /**
+     * 全ディスプレイリロード（デバッグ用）
+     */
+    reloadDisplay(data) {
+        this.emit(Action.EVENT_RELOAD_DISPLAY, null, data);
+    }
+
+    /**
      * VirualDisplayボタンをクリックした
      * @param {*} data
      */
@@ -881,6 +888,7 @@ Action.EVENT_CHANGE_DISPLAY_SCALE = "changeDisplayScale";
 Action.EVENT_CHANGE_DISPLAY_TRANS = "changeDisplayTrans";
 Action.EVENT_DELETE_DISPLAY = "deleteDisplay";
 Action.EVENT_SHOW_DISPLAY_ID = "showDisplayID";
+Action.EVENT_RELOAD_DISPLAY = "reloadDisplay";
 Action.EVENT_CLICK_VIRTUAL_DISPLAY = "clickVirtualDisplay";
 Action.EVENT_CHANGE_DISPLAY_COLOR = "changeDisplayColor";
 Action.EVENT_CHANGE_DISPLAY_PROPERTY = "changeDisplayProperty";

@@ -9,8 +9,8 @@ import Constants from "../../../common/constants";
  * ディスプレイメニューアイテム
  * GUI(gui.js)にバインドして使用する
  */
-function DisplayMenuSetting() {
-    return [
+function DisplayMenuSetting(isDebugMode = false) {
+    let menuSetting = [
         // ID表示
         {
             className : "show_id",
@@ -47,6 +47,19 @@ function DisplayMenuSetting() {
             onmousedown : (evt) => { this.action.deleteDisplay(); }
         }
     ];
+    if (isDebugMode)
+    {
+        // デバッグ用メニュー
+        menuSetting.unshift(
+            // 全ディスプレイリロード（デバッグ用）
+            {
+                className : "reload_all_display",
+                dataKey : "reload_all_display",
+                onmousedown : (evt) => { this.action.reloadDisplay() }
+            });
+    }
+    
+    return menuSetting;
 }
 
 export default DisplayMenuSetting;

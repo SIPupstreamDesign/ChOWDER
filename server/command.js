@@ -37,6 +37,7 @@
 		DeleteContent : "DeleteContent",
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
+		ReloadDisplay : "ReloadDisplay",
 		SendMessage: "SendMessage",
 
 		// to client

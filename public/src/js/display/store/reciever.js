@@ -139,6 +139,15 @@ class Receiver {
             this.store.emit(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, null, data);
         });
 
+        /// Display全リロード. デバッグ用
+        this.connector.on(Command.ReloadDisplay, (data) => {
+            if (window.isElectron()) {
+                window.electronReload();
+            } else {
+                window.location.reload(true);
+            }
+        });
+
         /// メタデータが更新された
         this.connector.on(Command.UpdateMetaData, (data) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);

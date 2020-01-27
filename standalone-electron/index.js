@@ -3,8 +3,9 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-var electron = require('electron');
+let electron = require('electron');
 
+const fs = require('fs');
 const path = require('path');
 console.log(__dirname);
 const os = require('os');
@@ -13,12 +14,15 @@ if (os.platform() === "darwin") {
 	filepath = path.resolve(__dirname, '../../../../conf.json');
 } else {
 	filepath = '../../conf.json'
+	if (!fs.existsSync(filepath)) {
+		filepath = './conf.json';
+	}
 }
-var CONFIG = require(filepath);
 
-var tileWindows = {};
+let config = require(filepath);
+let tileWindows = {};
 
-const {ipcMain} = require("electron");
+const { ipcMain } = require("electron");
 
 /**
  * Convert map into query params string.
@@ -26,13 +30,13 @@ const {ipcMain} = require("electron");
  * @return {string} result
  */
 function mapToQueryString(map) {
-	var str = '?';
-	for (var key in map) {
+	let str = '?';
+	for (let key in map) {
 		if (map[key] !== undefined) {
 			str += key + '=' + map[key] + '&';
 		}
 	}
-	str = str.substring( 0, str.length - 1 ); // remove the last '&'
+	str = str.substring(0, str.length - 1); // remove the last '&'
 
 	return str;
 }
@@ -40,31 +44,33 @@ function mapToQueryString(map) {
 /**
  * Create windows based on the file conf.json.
  */
-function createWindows() {
-	if (!CONFIG.url) {
+function createWindows(config) {
+	let windowMap = {};
+
+	if (!config.url) {
 		console.error('conf.json is invalid: There are no required parameter "url"');
-		return;
+		return null;
 	}
 
-	for (var id in CONFIG.windows) {
+	for (let id in config.windows) {
 		if (tileWindows[id]) { // if window already exists
-			return;
+			return null;
 		}
 
-		var windowProps = CONFIG.windows[id];
+		let windowProps = config.windows[id];
 
 		if (!windowProps.position) {
 			console.error('conf.json is invalid: There are no required parameter "position" for window "' + id + '"');
-			return;
+			return null;
 		}
 
 		if (!windowProps.size) {
 			console.error('conf.json is invalid: There are no required parameter "size" for window "' + id + '"');
-			return;
+			return null;
 		}
 
-		var frame = typeof windowProps.frame !== 'undefined' ? windowProps.frame : true;
-		var window = new electron.BrowserWindow({
+		let frame = typeof windowProps.frame !== 'undefined' ? windowProps.frame : true;
+		let window = new electron.BrowserWindow({
 			x: windowProps.position[0],
 			y: windowProps.position[1],
 			width: windowProps.size[0],
@@ -73,12 +79,12 @@ function createWindows() {
 			transparent: !frame,
 			toolbar: false,
 			fullscreen: typeof windowProps.fullscreen !== 'undefined' ? windowProps.fullscreen : true,
-			enableLargerThanScreen : true
+			enableLargerThanScreen: true
 		});
 		window.setSize(windowProps.size[0], windowProps.size[1]);
 		tileWindows[id] = window;
 
-		var query = mapToQueryString({
+		let query = mapToQueryString({
 			id: id || undefined,
 			group: windowProps.group || undefined,
 			posx: windowProps.vda_position ? windowProps.vda_position[0] : undefined,
@@ -86,26 +92,71 @@ function createWindows() {
 			scale: windowProps.scale || undefined,
 			marker_id: windowProps.marker_id || undefined
 		});
-		const pass = CONFIG.password
-		ipcMain.on("electron_login", (event,arg)=>{
+		window.loadURL(config.url + query);
+
+		windowMap[id] = window;
+		//window.webContents.openDevTools();
+	}
+	return windowMap;
+}
+
+let preventQuitOnetime = false;
+function init() {
+	let windowMap = createWindows(config);
+
+	if (windowMap) {
+		const pass = config.password
+		ipcMain.on("electron_login", (event, arg) => {
 			event.sender.send("electron_password", pass);
 		});
-		window.loadURL(CONFIG.url + query);
-		window.webContents.openDevTools();
-		console.log("develope");
+
+		let messageCount = 0;
+		ipcMain.on("electron_reload", (event, arg) => {
+
+			++messageCount;
+
+			if (messageCount >= Object.keys(windowMap).length) {
+				preventQuitOnetime = true;
+
+				try {
+					config = JSON.parse(String(fs.readFileSync(filepath)));
+				} catch (err) {
+					console.error(err);
+					return;
+				}
+
+				tileWindows = {}
+				for (let id in windowMap) {
+					windowMap[id].close();
+				}
+				windowMap = createWindows(config);
+				if (!windowMap) {
+					console.error("Error. Failed to create windows");
+					electron.app.quit();
+				}
+				messageCount = 0;
+			}
+		});
+	} else {
+		console.error("Error. Failed to create windows");
+		electron.app.quit();
 	}
 }
 
-electron.app.on('ready', createWindows);
+electron.app.on('ready', init);
 
-electron.app.on('window-all-closed', function() {
+electron.app.on('window-all-closed', function () {
 	//if (process.platform !== 'darwin') {
+	if (!preventQuitOnetime) {
 		electron.app.quit();
-	//}
-} );
-
-electron.app.on('activate', function() { // macOS
-	if (tileWindows === null) {
-		createWindows();
+	} else {
+		preventQuitOnetime = false;
 	}
-} );
+	//}
+});
+
+electron.app.on('activate', function () { // macOS
+	if (tileWindows === null) {
+		init();
+	}
+});
