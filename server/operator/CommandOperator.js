@@ -1035,6 +1035,17 @@
             this.executer.getUserList(endCallback);
         }
 
+
+        /**
+         * Electronディスプレイを再配置する
+         * @param {*} socketid 
+         * @param {*} json 
+         * @param {*} endCallback 
+         */
+        relocateElectronDisplay(socketid, json, endCallback) {
+            this.executer.relocateElectronDisplay(socketid, json, endCallback);
+        }
+
         /**
          * ユニークなコントローラIDを生成して返す
          * @method GenerateCOntrollerID

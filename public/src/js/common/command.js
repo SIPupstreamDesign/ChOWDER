@@ -35,6 +35,7 @@ const Command = {
 	ShowWindowID : "ShowWindowID",
 	ReloadDisplay : "ReloadDisplay",
 	CloseElectronDisplay : "CloseElectronDisplay",
+	RelocateElectronDisplay : "RelocateElectronDisplay",
 	UpdateMouseCursor : "UpdateMouseCursor",
 
 	SendMessage: "SendMessage",

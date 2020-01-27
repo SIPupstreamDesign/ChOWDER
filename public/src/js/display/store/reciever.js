@@ -155,6 +155,17 @@ class Receiver {
             }
         });
 
+        /// ElectronDisplayクローズ.
+        this.connector.on(Command.RelocateElectronDisplay, (data) => {
+            if (window.isElectron()) {
+                try {
+                    window.electronRelocate(JSON.stringify(data));
+                } catch(err) {
+                    console.error(err);
+                }
+            }
+        });
+
         /// メタデータが更新された
         this.connector.on(Command.UpdateMetaData, (data) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);

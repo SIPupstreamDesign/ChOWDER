@@ -37,22 +37,28 @@
 					callback(false);
 				}
 			};
-			window.electronReload = function (callback) {
+			window.electronReload = function () {
 				if (window.isElectron()) {
 					var ipcRenderer = require("electron").ipcRenderer;
 					ipcRenderer.send("electron_reload", "reload");
 				} else {
 					console.log("not electron");
-					callback(false);
 				}
 			};
-			window.electronClose = function (callback) {
+			window.electronClose = function () {
 				if (window.isElectron()) {
 					var ipcRenderer = require("electron").ipcRenderer;
 					ipcRenderer.send("electron_close", "close");
 				} else {
 					console.log("not electron");
-					callback(false);
+				}
+			};
+			window.electronRelocate = function (data) {
+				if (window.isElectron()) {
+					var ipcRenderer = require("electron").ipcRenderer;
+					ipcRenderer.send("electron_relocate", data);
+				} else {
+					console.log("not electron");
 				}
 			};
 		})
