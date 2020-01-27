@@ -38,6 +38,7 @@
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		ReloadDisplay : "ReloadDisplay",
+		CloseElectronDisplay : "CloseElectronDisplay",
 		SendMessage: "SendMessage",
 
 		// to client

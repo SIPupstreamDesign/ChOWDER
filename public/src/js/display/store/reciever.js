@@ -147,6 +147,13 @@ class Receiver {
                 window.location.reload(true);
             }
         });
+        
+        /// ElectronDisplayクローズ.
+        this.connector.on(Command.CloseElectronDisplay, (data) => {
+            if (window.isElectron()) {
+                window.electronClose();
+            }
+        });
 
         /// メタデータが更新された
         this.connector.on(Command.UpdateMetaData, (data) => {

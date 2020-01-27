@@ -34,6 +34,7 @@ const Command = {
 	DeleteWindowMetaData : "DeleteWindowMetaData",
 	ShowWindowID : "ShowWindowID",
 	ReloadDisplay : "ReloadDisplay",
+	CloseElectronDisplay : "CloseElectronDisplay",
 	UpdateMouseCursor : "UpdateMouseCursor",
 
 	SendMessage: "SendMessage",

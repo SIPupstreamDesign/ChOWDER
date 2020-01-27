@@ -36,12 +36,20 @@
 					console.log("not electron");
 					callback(false);
 				}
-			};	
+			};
 			window.electronReload = function (callback) {
 				if (window.isElectron()) {
-					console.log("isElectron");
 					var ipcRenderer = require("electron").ipcRenderer;
 					ipcRenderer.send("electron_reload", "reload");
+				} else {
+					console.log("not electron");
+					callback(false);
+				}
+			};
+			window.electronClose = function (callback) {
+				if (window.isElectron()) {
+					var ipcRenderer = require("electron").ipcRenderer;
+					ipcRenderer.send("electron_close", "close");
 				} else {
 					console.log("not electron");
 					callback(false);

@@ -110,33 +110,41 @@ function init() {
 			event.sender.send("electron_password", pass);
 		});
 
-		let messageCount = 0;
-		ipcMain.on("electron_reload", (event, arg) => {
-
-			++messageCount;
-
-			if (messageCount >= Object.keys(windowMap).length) {
-				preventQuitOnetime = true;
-
-				try {
-					config = JSON.parse(String(fs.readFileSync(filepath)));
-				} catch (err) {
-					console.error(err);
-					return;
+		{
+			let messageCount = 0;
+			ipcMain.on("electron_reload", (event, arg) => {
+				++messageCount;
+				if (messageCount >= Object.keys(windowMap).length) {
+					preventQuitOnetime = true;
+	
+					try {
+						config = JSON.parse(String(fs.readFileSync(filepath)));
+					} catch (err) {
+						messageCount = 0;
+						console.error(err);
+						return;
+					}
+	
+					tileWindows = {}
+					for (let id in windowMap) {
+						windowMap[id].close();
+					}
+					windowMap = createWindows(config);
+					if (!windowMap) {
+						console.error("Error. Failed to create windows");
+						electron.app.quit();
+					}
+					messageCount = 0;
 				}
+			});
+		}
 
-				tileWindows = {}
-				for (let id in windowMap) {
-					windowMap[id].close();
-				}
-				windowMap = createWindows(config);
-				if (!windowMap) {
-					console.error("Error. Failed to create windows");
-					electron.app.quit();
-				}
-				messageCount = 0;
-			}
-		});
+		{
+			ipcMain.on("electron_close", (event, arg) => {
+				let win = electron.BrowserWindow.fromWebContents(event.sender);
+				win.close();
+			});
+		}
 	} else {
 		console.error("Error. Failed to create windows");
 		electron.app.quit();
@@ -148,6 +156,7 @@ electron.app.on('ready', init);
 electron.app.on('window-all-closed', function () {
 	//if (process.platform !== 'darwin') {
 	if (!preventQuitOnetime) {
+		console.log("quit")
 		electron.app.quit();
 	} else {
 		preventQuitOnetime = false;
