@@ -14,24 +14,22 @@
 	<script type="text/javascript" src="display_setting.bundle.js"></script>
 </head>
 
-<body>
+<body id="body">
 	<div id="head_menu" class="head_menu menu_anim">
 	</div>
 	
-	<input type="button" id="scan_toggle_button" class="scan_toggle_button" value="スキャン完了">
+	<input type="button" id="scan_toggle_button" class="scan_toggle_button" value="スキャン開始">
 	</input>
-	<input type="button" id="scan_button" class="scan_button" value="スキャン">
-	</input>
+
 	<div class="screen" id="whole_sub_window"></div>
 	
 	<a-scene embedded arjs="debugUIEnabled:false;" id="ar_entry">
 		<a-marker type="pattern" preset="hiro" id="hiro">
 			<a-text class="text" position="-0.5 0 0" value="Hiro" color="red" rotation="-90 0 0"></a-text>
-			<!--<a-box class="box" position="0 0.5 0" wireframe="true"></a-box>-->
 		</a-marker>
-		
 		<a-entity camera id="camera"></a-entity>
 	</a-scene>
+
 
 </body>
 

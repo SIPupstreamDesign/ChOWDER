@@ -33,13 +33,13 @@ class Action extends EventEmitter
     getVirtualDisplay(data) {
         this.emit(Action.EVENT_GET_VIRTUAL_DISPLAY, null, data);
     }
-    setDisplayIndexes(data) {        
-        this.emit(Action.EVENT_SET_DISPLAY_INDEXES, null, data);
+    calcAbsolutePosition(data) {        
+        this.emit(Action.EVENT_CALC_ABSOLUTE_POSITION, null, data);
     }
+    
 }
 
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_GET_VIRTUAL_DISPLAY="getVirtualDisplay";
-Action.EVENT_SET_DISPLAY_INDEXES="setDisplayIndexes";
-
+Action.EVENT_CALC_ABSOLUTE_POSITION="calcAbsolutePosition";
 export default Action;

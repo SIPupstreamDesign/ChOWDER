@@ -61,7 +61,7 @@ pre {
 
 #arjs-video{
 	z-index:0 !important;
-	display:none;
+	display:block;
 }
 
 .a-canvas{
@@ -78,6 +78,17 @@ pre {
 	z-index:1000000;
 	display:block;
 }
+#scan_button{
+	background: rgb(255, 255, 255);
+	height: 30px;
+	position: absolute;
+	bottom: 0px;
+	left: 50%;
+	right: 0px;
+	z-index:1000000;
+	display:block;
+}
+
  #frames{
 	background: rgb(255, 255, 255);
 	z-index:1000000;
@@ -90,8 +101,5 @@ pre {
     z-index: 100000;
     left: 50%;
 	top: 50%;
-	transform:translate(-50%,-50%);
-    width: 98.2px;
-    height: 55.2px;
-    background: transparent;
+	background: transparent;
 }

@@ -5,20 +5,22 @@
 		"tile1": {
 			"group": "group",
 			"position": [0, 0],
-			"size" : [500, 500],
+			"size" : [2000, 1500],
 			"vda_position": [0, 0],
 			"vda_scale": 1.0,
 			"fullscreen": false,
-			"frame": false
+			"frame": false,
+			"marker_id": 1
 		},
 		"tile2": {
 			"group": "group",
-			"position": [500, 0],
-			"size" : [500, 500],
-			"vda_position": [500, 0],
+			"position": [2000, 0],
+			"size" : [2000, 1500],
+			"vda_position": [1000, 0],
 			"vda_scale": 1.0,
 			"fullscreen": false,
-			"frame": false
+			"frame": false,
+			"marker_id": 2
 		}
 	}
 }
