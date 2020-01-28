@@ -23,7 +23,7 @@ class GUI extends EventEmitter {
 
         this.store.on(Store.EVENT_DONE_DELETE_ALL_ELEMENTS, (err, idList) => {
             console.error("EVENT_DONE_DELETE_ALL_ELEMENTS", idList)
-            let previewArea = document.getElemetById('preview_area');
+            let previewArea = document.getElementById('preview_area');
             for (let i = 0; i < idList.length; ++i) {
                 let id = idList[i];
                 let elem = document.getElementById(id);
@@ -949,8 +949,12 @@ class GUI extends EventEmitter {
         let groupDict = this.store.getGroupDict();
         for (let id in metaDataDict) {
             if (metaDataDict.hasOwnProperty(id)) {
-                if (document.getElementById(id)) {
-                    VscreenUtil.assignMetaData(document.getElementById(id), metaDataDict[id], false, groupDict);
+                let elem = document.getElementById(id);
+                let metaData = metaDataDict[id];
+                if (elem) {
+                    VscreenUtil.assignMetaData(document.getElementById(id), metaData, false, groupDict);
+                    // メモの座標も更新する
+                    this.showMemo(elem, metaData);
                 }
             }
         }
