@@ -949,8 +949,12 @@ class GUI extends EventEmitter {
         let groupDict = this.store.getGroupDict();
         for (let id in metaDataDict) {
             if (metaDataDict.hasOwnProperty(id)) {
-                if (document.getElementById(id)) {
-                    VscreenUtil.assignMetaData(document.getElementById(id), metaDataDict[id], false, groupDict);
+                let elem = document.getElementById(id);
+                let metaData = metaDataDict[id];
+                if (elem) {
+                    VscreenUtil.assignMetaData(document.getElementById(id), metaData, false, groupDict);
+                    // メモの座標も更新する
+                    this.showMemo(elem, metaData);
                 }
             }
         }
