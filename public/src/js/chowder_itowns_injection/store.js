@@ -146,18 +146,83 @@ class Store extends EventEmitter {
      * レイヤーの作成
      * @param {*} type 
      */
-    createLayerByType(config, type) {
-        let mapSource = new itowns.TMSSource(config);
-        if (type === "color") {
+    createLayerByType(config, type, view) {
+        if (type === ITownsConstants.TypeColor) {
+            let mapSource = new itowns.TMSSource(config);
             return new itowns.ColorLayer(config.id, {
                 source: mapSource
             });
         }
-        if (type === "elevation") {
+        if (type === ITownsConstants.TypeElevation) {
+            let mapSource = new itowns.TMSSource(config);
             return new itowns.ElevationLayer(config.id, {
                 source: mapSource
             });
         }
+        if (type === ITownsConstants.TypePointCloud) {
+            return new itowns.PointCloudLayer(config.id, config, view);
+        }
+    }
+
+    createLayerConfigByType(params, type) {
+        let url = params.url;
+        if (url.indexOf("${z}") >= 0) {
+            url = url.split("${z}").join("%TILEMATRIX");
+        }
+        if (url.indexOf("${x}") >= 0) {
+            url = url.split("${x}").join("%COL");
+        }
+        if (url.indexOf("${y}") >= 0) {
+            url = url.split("${y}").join("%ROW");
+        }
+
+        let config = {};
+        if (type === ITownsConstants.TypeColor) {
+            config = {
+                "projection": "EPSG:3857",
+                "isInverted": true,
+                "format": "image/png",
+                "url": url,
+                "tileMatrixSet": "PM",
+                "updateStrategy": {
+                    "type": 3
+                },
+                "opacity" : 1.0
+            };
+        }
+        if (type === ITownsConstants.TypeElevation) {
+            config = {
+                "projection": "EPSG:3857",
+                "isInverted": true,
+                "format": url.indexOf('.png') > 0 ? "image/png" : "",
+                "url": url,
+                "scale" : 1
+            };
+        }
+        if (type === ITownsConstants.TypePointCloud) {
+            if (params.hasOwnProperty('file')) {
+                url += params.file;
+            }
+            let splits = url.split('/');
+            let file = splits[splits.length - 1];
+            let serverUrl = url.split(file).join('');
+            config = {
+                "file" : file,
+                "url" : serverUrl,
+                "protocol" : 'potreeconverter'
+            };
+        }
+        // 以下共通
+        if (params.hasOwnProperty('id')) {
+            config.id = params.id;
+        }
+        if (params.hasOwnProperty('zoom')) {
+            config.zoom = params.zoom;
+        }
+        if (params.hasOwnProperty('format')) {
+            config.format = params.format;
+        }
+        return config;
     }
 
     /**
@@ -183,59 +248,13 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('type')) {
             type = params.type;
         }
-        let url = params.url;
-        if (url.indexOf("${z}") >= 0) {
-            url = url.split("${z}").join("%TILEMATRIX");
-        }
-        if (url.indexOf("${x}") >= 0) {
-            url = url.split("${x}").join("%COL");
-        }
-        if (url.indexOf("${y}") >= 0) {
-            url = url.split("${y}").join("%ROW");
-        }
-        let config;
-        if (type === ITownsConstants.TypeColor) {
-            config = {
-                "projection": "EPSG:3857",
-                "isInverted": true,
-                "format": "image/png",
-                "url": url,
-                "tileMatrixSet": "PM",
-                "updateStrategy": {
-                    "type": 3
-                },
-                "opacity" : 1.0
-            };
-        }
-        if (type === ITownsConstants.TypeElevation) {
-            config = {
-                "projection": "EPSG:3857",
-                "isInverted": true,
-                "format": url.indexOf('.png') > 0 ? "image/png" : "",
-                "url": url,
-                "scale" : 1
-            };
-        }
+        let config = this.createLayerConfigByType(params, type);
+        let layer = this.createLayerByType(config, type, view);
         if (type === ITownsConstants.TypePointCloud) {
-            config = {
-                "projection": "EPSG:3857",
-                "isInverted": true,
-                "format": url.indexOf('.png') > 0 ? "image/png" : "",
-                "url": url,
-                "scale" : 1
-            };
+            itowns.View.prototype.addLayer.call(view, layer);
+        } else {
+            this.itownsView.addLayer(layer);
         }
-        if (params.hasOwnProperty('id')) {
-            config.id = params.id;
-        }
-        if (params.hasOwnProperty('zoom')) {
-            config.zoom = params.zoom;
-        }
-        if (params.hasOwnProperty('format')) {
-            config.format = params.format;
-        }
-        let layer = this.createLayerByType(config, type);
-        this.itownsView.addLayer(layer);
     }
 
     /**
