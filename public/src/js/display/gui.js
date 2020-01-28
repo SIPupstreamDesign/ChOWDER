@@ -23,7 +23,7 @@ class GUI extends EventEmitter {
 
         this.store.on(Store.EVENT_DONE_DELETE_ALL_ELEMENTS, (err, idList) => {
             console.error("EVENT_DONE_DELETE_ALL_ELEMENTS", idList)
-            let previewArea = document.getElemetById('preview_area');
+            let previewArea = document.getElementById('preview_area');
             for (let i = 0; i < idList.length; ++i) {
                 let id = idList[i];
                 let elem = document.getElementById(id);
