@@ -141,8 +141,11 @@ class Receiver {
 
         /// Display全リロード. デバッグ用
         this.connector.on(Command.ReloadDisplay, (data) => {
-            window.location.reload(true);
-            this.store.emit(Store.EVENT_REQUEST_RELOAD_DISPLAY, null, data);
+            if (window.isElectron()) {
+                window.electronReload();
+            } else {
+                window.location.reload(true);
+            }
         });
 
         /// メタデータが更新された
