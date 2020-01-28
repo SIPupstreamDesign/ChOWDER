@@ -13,10 +13,12 @@ class GUI extends EventEmitter {
 
         this.store = store;
         this.action = action;
-       
+
         this.scannedData = [{ id: 0, x: 0, y: 0, z: 0 }];
-       // this.screenCoordinate = [];
-        this.scanFlag = [];
+        this.scanCompleteEvent;
+        this.scanCompleteFunction;
+        this.scanCompleteFlag = [0];
+        this.scanFlagList = [];
     }
 
     init() {
@@ -29,94 +31,51 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
             this.action.getVirtualDisplay();
-
+            let scanFunction;
+            //scanFunction = setInterval(this.action.storeScannedData(this.scanFlagList), 1000)
         });
 
         this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             console.log("getv");
             console.log(reply);
             let displayNumber = reply.splitX * reply.splitY;
-            //this.updateVirtualScreen(reply);
-            //this.displayNumber = reply.splitX * reply.splitY;
-            //console.log("displayNumver:" + this.displayNumber);
             this.setArMarkerImg(displayNumber);
             this.setScanButton(displayNumber);
             for (let i = 0; i < displayNumber; i++) {
-                this.scanFlag[i] = 0;
+                this.scanFlagList[i] = 0;
             }
         });
 
-        this.store.on(Store.EVENT_DONE_SET_DISPLAY_INDEXES, (err, reply) => {
-            // console.log(reply);
+        this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
+            console.log(reply);
+
         });
 
-        this.store.on(Store.EVENT_DONE_CALC_ABSOLUTE_POSITION, (err, reply) => {
+        this.store.on(Store.EVENT_DONE_SET_ADJACENCY_LIST, (err, reply) => {
             console.log(reply);
+            this.action.sendData();
             this.updateVirtualScreen(reply);
         });
-
-        this.store.on(Store.EVENT_DONE_GET_ADJACENCY_LIST, (err, reply) => {
+        this.store.on(Store.EVENT_DONE_SEND_DATA,(err, reply) => {
             console.log(reply);
         });
-
+     
         //カメラ映像と仮想ディスプレイ画面の切り替え
-        document.getElementById("scan_toggle_button").onclick = function () {
-            if (document.getElementById("arjs-video").style.display === "block") {
-                document.getElementById("arjs-video").style.display = "none"
-            }
-            else {
-                document.getElementById("arjs-video").style.display = "block"
-            }
+        document.getElementById("scan_toggle_button").onclick = () =>{
+            console.log("SCAN START");
+            this.scanCompleteFunction=setInterval((flag)=>{this.action.storeScannedData(flag)}, 100 , this.scanFlagList);          
         };
-
-
     }
 
     updateVirtualScreen(reply) {
-       /* let tmpScreenCoordinate = []
-        for (let i = 0; i < reply.length; i++) {
-            tmpScreenCoordinate[i] = [0, 0];
-        }
-        for (let i = 0; i < reply.length; i++) {
-            if (reply[i]) {
-                if (reply[i]["up"]) {
-                    tmpScreenCoordinate[reply[i]["up"]][1]++;
-                    console.log("up");
-                    console.log(JSON.parse(JSON.stringify(tmpScreenCoordinate)));
-                }
-                if (reply[i]["right"]) {
-                    tmpScreenCoordinate[reply[i]["right"]][0]++;
-                    console.log("right");
-                    console.log(JSON.parse(JSON.stringify(tmpScreenCoordinate)));
-                }
-            }
-        }
-        let difference = JSON.parse(JSON.stringify(tmpScreenCoordinate[0]));
-        for (let i = 0; i < tmpScreenCoordinate.length; i++) {
-            if (reply[i]) {
-                if (!this.screenCoordinate[i]) {
-                    this.screenCoordinate[i] = [tmpScreenCoordinate[i][0], tmpScreenCoordinate[i][1]];
-                }
-                else {
-                    this.screenCoordinate[i][0] = tmpScreenCoordinate[i][0];
-                    this.screenCoordinate[i][1] = tmpScreenCoordinate[i][1];
 
-                }
-            }
-        }
-        console.log(tmpScreenCoordinate);
-        console.log(this.screenCoordinate);
-*/
         document.getElementById("whole_sub_window").remove();
         let body = document.getElementById("body");
         let arEntry = document.getElementById("ar_entry");
         let screen = document.createElement("div");
         screen.setAttribute("id", "whole_sub_window");
         screen.setAttribute("value", "スキャン開始");
-       /*  let width = this.screenCoordinate.length * 100;
-        let height = this.screenCoordinate.length * 100;
-        */
-       let width = reply.length * 100;
+        let width = reply.length * 100;
         let height = reply.length * 100;
         screen.style.width = String(width) + "px";
         screen.style.height = String(height) + "px";
@@ -129,14 +88,14 @@ class GUI extends EventEmitter {
                 let line = Math.ceil(i + 1 - (column - 1) * reply.length);
                 let unitWidth = 100;
                 let unitHeight = 100;
-                let translateX = (reply[i][0]) * unitWidth-width/2;
-                let translateY =height/2 - (reply[i][1] + 1) * unitHeight;
-    
+                let translateX = (reply[i].relativeCoord[0]) * unitWidth - width / 2;
+                let translateY = height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
+
                 let newVirtualDisplay = document.createElement("div");
                 newVirtualDisplay.setAttribute("id", "whole_sub_window:" + column + ":" + line);
                 newVirtualDisplay.setAttribute("style.z-index", "100000");
-                newVirtualDisplay.style.opacity="0.5";
-                newVirtualDisplay.style.backgroundColor="white";
+                newVirtualDisplay.style.opacity = "0.5";
+                newVirtualDisplay.style.backgroundColor = "white";
                 newVirtualDisplay.style.width = unitWidth + "px";
                 newVirtualDisplay.style.height = unitHeight + "px";
                 newVirtualDisplay.style.border = "2px solid red";
@@ -146,7 +105,7 @@ class GUI extends EventEmitter {
                 newVirtualDisplay.style.transform = "translate(" + translateX + "px," + translateY + "px)";
                 newVirtualDisplay.innerHTML = String(i)
                 screen.appendChild(newVirtualDisplay);
-                }
+            }
         }
     }
 
@@ -161,21 +120,8 @@ class GUI extends EventEmitter {
         btn.setAttribute("id", "scan_button");
         btn.setAttribute("value", "スキャン完了");
         this.button.on(Button.EVENT_CLICK, (evt) => {
-            console.log("onclick");
-            for (let i = 0; i < displayNumber; i++) {
-                if (this.scanFlag[i] === 1) {
-                    let mar = document.getElementById("ar_marker" + (i + 1));
-                    //console.log(mar.object3D);
-                    this.scannedData[i] = { id: i + 1, x: mar.object3D.position["x"], y: mar.object3D.position["y"], z: mar.object3D.position["z"] };
-
-                    console.log(this.scannedData[i]);
-                }
-            }
-            let sendData = [this.scanFlag, this.scannedData];
-            this.action.calcAbsolutePosition(sendData);
-            for (let i = 0; i < displayNumber; i++) {
-                delete this.scannedData[i];
-            }
+            clearTimeout(this.scanCompleteFunction);
+            this.action.setAdjacencyList();
         });
     }
 
@@ -187,14 +133,13 @@ class GUI extends EventEmitter {
             let newMarker = document.createElement("a-marker");
             newMarker.setAttribute("id", "ar_marker" + i);
             newMarker.addEventListener("markerFound", (evt) => {
-                let mar = document.getElementById("ar_marker" + i);
-                this.scanFlag[i - 1] = 1;
-                console.log(evt);
+                this.scanFlagList[i - 1] = 1;
                 console.log("ar_marker" + i + "found")
+               // this.action.storeScannedData(this.scanFlagList);
             });
             newMarker.addEventListener("markerLost", () => {
                 let mar = document.getElementById("ar_marker" + i);
-                this.scanFlag[i - 1] = 0;
+                this.scanFlagList[i - 1] = 0;
                 console.log("ar_marker" + i + "lost");
             });
             newMarker.setAttribute("preset", "custom");
@@ -207,7 +152,6 @@ class GUI extends EventEmitter {
             arEntry.insertBefore(newMarker, setCamera);
             newMarker.appendChild(boxModelClone);
         }
-
     }
 }
 

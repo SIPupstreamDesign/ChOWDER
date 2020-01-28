@@ -33,8 +33,15 @@ class Action extends EventEmitter
     getVirtualDisplay(data) {
         this.emit(Action.EVENT_GET_VIRTUAL_DISPLAY, null, data);
     }
-    calcAbsolutePosition(data) {        
-        this.emit(Action.EVENT_CALC_ABSOLUTE_POSITION, null, data);
+    storeScannedData(data) {
+        console.log(this);        
+        this.emit(Action.EVENT_STORE_SCANNED_DATA, null, data);
+    }
+    setAdjacencyList(data) {        
+        this.emit(Action.EVENT_SET_ADJACENCY_LIST, null, data);
+    }
+    sendData(data){
+        this.emit(Action.EVENT_SET_SEND_DATA, null, data);    
     }
     
 }
@@ -42,4 +49,7 @@ class Action extends EventEmitter
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_GET_VIRTUAL_DISPLAY="getVirtualDisplay";
 Action.EVENT_CALC_ABSOLUTE_POSITION="calcAbsolutePosition";
+Action.EVENT_STORE_SCANNED_DATA="storeScannedData";
+Action.EVENT_SET_ADJACENCY_LIST="setAdjacencyList";
+Action.EVENT_SET_SEND_DATA="sendData";
 export default Action;
