@@ -52,7 +52,7 @@ class GUI extends EventEmitter {
                     this.setArMarkerImg(displayNumber);
                     this.setScanButton(displayNumber);
                     for (let i = 0; i < displayNumber; i++) {
-                        this.scanFlag[i] = 0;
+                        this.scanFlagList[i] = 0;
                     }
                 }
             });
