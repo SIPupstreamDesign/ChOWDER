@@ -249,12 +249,32 @@ class Store extends EventEmitter {
     }
 
     _deleteLayer(data) {
-        this.iframeConnector.send(ITownsCommand.DeleteLayer, data, (err, data) => {
-            this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
-        });
+        console.error(data);
+        // TODO サーバ側更新
+        let layerList = JSON.parse(this.metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i) {
+            if (layerList[i]) {
+                let id = layerList[i].id;
+                if (id === data.id) {
+                    // レイヤー削除して上書き
+                    delete layerList[i];
+                    this.metaData.layerList = JSON.stringify(layerList);
+    
+                    // iframeへ送る
+                    this.iframeConnector.send(ITownsCommand.DeleteLayer, data, (err, data) => {
+                        // サーバへ送る
+                        this.operation.updateMetadata(this.metaData, (err, res) => {
+                            this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
+                        });
+                    });
+                    break;
+                }
+            }
+        }
     }
 
     _changeLayerOrder(data) {
+        // TODO サーバ側更新
         this.iframeConnector.send(ITownsCommand.ChangeLayerOrder, data, (err, data) => {
             this.emit(Store.EVENT_DONE_CHANGE_LAYER_ORDER, null, data);
         });
@@ -265,14 +285,15 @@ class Store extends EventEmitter {
             let layerList = JSON.parse(this.metaData.layerList);
             for (let i = 0; i < layerList.length; ++i) {
                 let layer = layerList[i];
-                let id = layer.id;
-                if (id === layerID) {
-                    return layer;
-                    break;
+                if (layer) {
+                    let id = layer.id;
+                    if (id === layerID) {
+                        return layer;
+                    }
                 }
             }
         }
-        console.error("Not found layer from current content.");
+        console.error("Not found layer from current content.", layerID);
         return null;
     }
 

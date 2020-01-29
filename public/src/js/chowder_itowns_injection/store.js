@@ -92,9 +92,10 @@ class Store extends EventEmitter {
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.ChangeLayerProperty, (err, param, request) => {
-            //console.error("changeLayerProperty", err, param, request)
-            // レイヤープロパティ変更命令
-            this.changeLayerProperty(param);
+            if (param) {
+                // レイヤープロパティ変更命令
+                this.changeLayerProperty(param);
+            }
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
@@ -223,6 +224,9 @@ class Store extends EventEmitter {
                 "name" : params.hasOwnProperty('id') ? params.id : "3dtile",
                 "url": url
             };
+            if (params.hasOwnProperty('wireframe')) {
+                config.wireframe = params.wireframe;
+            }
         }
         // 以下共通
         if (params.hasOwnProperty('id')) {
@@ -247,7 +251,11 @@ class Store extends EventEmitter {
      *   format : "image/png"など (option)
      * }
      */
-    addLayer(params, ) {
+    addLayer(params) {
+        if (!params) {
+            console.error("Not found params");
+            return;
+        }
         console.error("addLayer", params)
 
         if (params.hasOwnProperty('id')) {
@@ -255,6 +263,10 @@ class Store extends EventEmitter {
                 console.error("already loaded")
                 return;
             }
+        }
+        if (!params.hasOwnProperty('url')) {
+            console.error("Not found url");
+            return;
         }
 
         let type = "color";
@@ -350,6 +362,10 @@ class Store extends EventEmitter {
                 layer.pointSize = Number(params.pointSize);
                 isChanged = true;
             }
+            if (params.hasOwnProperty('wireframe')) {
+                layer.wireframe = Number(params.wireframe);
+                isChanged = true;
+            }
             if (isChanged) {
                 this.itownsView.notifyChange(layer);
             }
@@ -425,6 +441,7 @@ class Store extends EventEmitter {
                     data.id = layer.id;
                     data.name = layer.hasOwnProperty('name') ? layer.name : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
+                    data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
                     data.type = (((layer) => {
                         if (layer instanceof itowns.ElevationLayer) {
                             return ITownsConstants.TypeElevation;

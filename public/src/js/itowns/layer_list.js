@@ -111,7 +111,9 @@ class LayerList extends EventEmitter {
         this.layerSelect.clear();
         for (let i = 0; i < layerDatas.length; ++i) {
             let data = layerDatas[i];
-            this.layerSelect.addOption(data.id, data.id + " - " + data.type);
+            if (data) {
+                this.layerSelect.addOption(data.id, data.id + " - " + data.type);
+            }
         }
     }
 

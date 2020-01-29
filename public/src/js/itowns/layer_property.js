@@ -193,6 +193,27 @@ class LayerProperty extends EventEmitter {
 			});
 			this.dom.appendChild(this.sizeSlider.getDOM());
 		}
+		
+		// wireframe
+		if (layerProps.type === ITownsConstants.Type3DTile || layerProps.type === ITownsConstants.TypeGeometry) 
+		{
+			if (layerProps && layerProps.hasOwnProperty('wireframe')) {
+				addCheckProperty(this.dom, layerID && layerProps, "wireframe", "wireframe", layerProps.wireframe, (err, data) => {
+					this.action.changeLayerProperty({
+						id : layerID,
+						wireframe : data
+					})
+				});
+			} else {
+				addCheckProperty(this.dom, layerID && layerProps, "wireframe", "wireframe", false, (err, data) => {
+					this.action.changeLayerProperty({
+						id : layerID,
+						wireframe : data
+					})
+				});
+			}
+		}
+
     }
 
     getDOM() {
