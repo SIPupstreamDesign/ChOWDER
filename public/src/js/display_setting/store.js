@@ -104,19 +104,23 @@ class Store extends EventEmitter {
     }
 
     _sendData() {
-        let data=this.AdjacencyList;
+        let data = this.AdjacencyList;
         console.log(data);
-        Connector.send(Command.RelocateElectronDisplay, { data }, (err, reply) => {});
+        Connector.send(Command.RelocateElectronDisplay, { data }, (err, reply) => { });
     }
+
+
     //スキャン後、蓄積したデータから各IDにおける隣接リストを作成する
     _setAdjacencyList() {
         console.log("SCAN COMPLETE")
+        //蓄積させたデータから隣接リストの作成
+        let scanMargin = this.scanNumber / 2;
         for (let i = 0; i < this.AdjacencyList.length; i++) {
             for (let j = 0; j < this.AdjacencyList.length; j++) {
                 if (this.AdjacencyList[i]) {
                     if (this.AdjacencyList[i].adjacencyUp[j]) {
                         let upIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyUp[j]);
-                        if (upIdPoint > this.AdjacencyList[i].adjacency["up"]) {
+                        if (upIdPoint > this.AdjacencyList[i].adjacency["up"] && upIdPoint > scanMargin) {
                             console.log("UP")
                             this.AdjacencyList[i].adjacency["up"] = j;
                         }
@@ -124,7 +128,7 @@ class Store extends EventEmitter {
 
                     if (this.AdjacencyList[i].adjacencyDown[j]) {
                         let downIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyDown[j]);
-                        if (downIdPoint > this.AdjacencyList[i].adjacency["down"]) {
+                        if (downIdPoint > this.AdjacencyList[i].adjacency["down"] && downIdPoint > scanMargin) {
                             console.log("DOWN")
                             this.AdjacencyList[i].adjacency["down"] = j;
                         }
@@ -132,7 +136,7 @@ class Store extends EventEmitter {
 
                     if (this.AdjacencyList[i].adjacencyRight[j]) {
                         let rightIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyRight[j]);
-                        if (rightIdPoint > this.AdjacencyList[i].adjacency["right"]) {
+                        if (rightIdPoint > this.AdjacencyList[i].adjacency["right"] && rightIdPoint > scanMargin) {
                             console.log("RIGHT")
                             this.AdjacencyList[i].adjacency["right"] = j;
                         }
@@ -140,7 +144,7 @@ class Store extends EventEmitter {
 
                     if (this.AdjacencyList[i].adjacencyLeft[j]) {
                         let leftIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyLeft[j]);
-                        if (leftIdPoint > this.AdjacencyList[i].adjacency["left"]) {
+                        if (leftIdPoint > this.AdjacencyList[i].adjacency["left"] && leftIdPoint > scanMargin) {
                             console.log("LEFT")
                             this.AdjacencyList[i].adjacency["left"] = j;
                         }
@@ -148,6 +152,8 @@ class Store extends EventEmitter {
                 }
             }
         }
+
+        //相対座標の算出
         let rightCount = [];
         let upCount = []
         for (let i = 0; i < this.AdjacencyList.length; i++) {
@@ -158,20 +164,20 @@ class Store extends EventEmitter {
             if (this.AdjacencyList[i]) {
                 if (this.AdjacencyList[i].adjacency["right"] !== -1 && this.AdjacencyList[i].adjacency["left"] === -1) {
                     let rightId = this.AdjacencyList[i].adjacency["right"];
-                    let count=1;
+                    let count = 1;
                     while (rightId > -1) {
-                        rightCount[rightId]+=count;
-                        rightId=this.AdjacencyList[rightId].adjacency["right"];
+                        rightCount[rightId] += count;
+                        rightId = this.AdjacencyList[rightId].adjacency["right"];
                         count++
                     }
                 }
-                
+
                 if (this.AdjacencyList[i].adjacency["up"] !== -1 && this.AdjacencyList[i].adjacency["down"] === -1) {
                     let upId = this.AdjacencyList[i].adjacency["up"];
-                    let count=1;
+                    let count = 1;
                     while (upId > -1) {
-                        upCount[upId]+=count;
-                        upId=this.AdjacencyList[upId].adjacency["up"];
+                        upCount[upId] += count;
+                        upId = this.AdjacencyList[upId].adjacency["up"];
                         count++
                     }
                 }
@@ -184,42 +190,40 @@ class Store extends EventEmitter {
             }
         }
         console.log(this.AdjacencyList);
+        this.scanNumber=0;
         this.emit(Store.EVENT_DONE_SET_ADJACENCY_LIST, null, this.AdjacencyList);
     }
 
-    
-    //マーカーが読み込まれるごとにそのデータを蓄積する
+
+    //IDの隣接状況の蓄積を行う
     _storeScannedData(data) {
         this.scanNumber++;
 
         //データのキューへの格納
         console.log("data");
-        console.log(JSON.parse(JSON.stringify(data)));
+        console.log(this.deepCopy(data));
 
         let arController = document.querySelector("a-scene").systems.arjs._arSession.arContext.arController
-        for (let i = 0; i < 10; i++) {
+       /* for (let i = 0; i < 10; i++) {
             console.log("marker");
             console.log(arController.getMarker(i));
-        }
+        }*/
 
+        let scanFlagData=this.deepCopy(data[0]);
+        let scannedData=this.deepCopy(data[1]);
         //位置の各IDへの振り分け
         console.log("pos");
-       /* for (let i = 0; i < data[1].length; i++) {
-            let marker;
-            if (data[1][i]) {
-         */       for (let j = 0; j < data.length; j++) {
-            let marker = arController.getMarker(j);
-            if (marker && data[marker["id"] - 1] === 1) {
-                //console.log("marker")
-                if (!this.AdjacencyList[marker["id"] - 1]) {
-                    this.AdjacencyList[marker["id"] - 1] = new Adjacency;
+        for (let i = 0; i< scanFlagData.length; i++) {
+            if ( scanFlagData[scannedData[i][0]] === 1) {
+                if (!this.AdjacencyList[scannedData[i][0]]) {
+                    this.AdjacencyList[scannedData[i][0]] = new Adjacency;
                 }
-                this.AdjacencyList[marker["id"] - 1].id = this.deepCopy(marker["id"] - 1);
-                this.AdjacencyList[marker["id"] - 1].pos2d[0] = this.deepCopy(marker["pos"][0])
-                this.AdjacencyList[marker["id"] - 1].pos2d[1] = this.deepCopy(marker["pos"][1])
+                this.AdjacencyList[scannedData[i][0]].id = this.deepCopy(i);
+                this.AdjacencyList[scannedData[i][0]].pos2d[0] = this.deepCopy(scannedData[i][1][0]["x"])
+                this.AdjacencyList[scannedData[i][0]].pos2d[1] = this.deepCopy(scannedData[i][1][1]["y"])
+                console.log(this.AdjacencyList[scannedData[i][0]])
             }
-            //     }
-            //}
+
         }
         console.log(this.AdjacencyList);
 
@@ -231,7 +235,7 @@ class Store extends EventEmitter {
         console.log(IdQuantity);
         for (let i = 0; i < IdQuantity - 1; i++) {
             for (let j = 1; j < IdQuantity - i; j++) {
-                if (this.AdjacencyList[i + j] && this.AdjacencyList[i] && data[i] === 1 && data[i + j] === 1) {
+                if (this.AdjacencyList[i + j] && this.AdjacencyList[i] && data[0][i] === 1 && data[0][i + j] === 1) {
                     differenceList[itr] = {
                         id: String(this.AdjacencyList[i].id) + String(this.AdjacencyList[i + j].id),
                         x: this.AdjacencyList[i + j].pos2d[0] - this.AdjacencyList[i].pos2d[0],
@@ -241,21 +245,27 @@ class Store extends EventEmitter {
                 }
             }
         }
-        console.log(differenceList);
+       // console.log(differenceList);
 
+        //２つのマーカーの単位行列をとり、方向ベクトルを得る。
+        //その後、45度回転させる
         let unitVec = [];
         let rotatedUnitVec = [];
         let squareSum = []
-        //２つのマーカーの単位行列をとり、方向ベクトルを得る。
-        //その後、45度回転させる
         for (let i = 0; i < differenceList.length; i++) {
             squareSum[i] = Math.sqrt(differenceList[i]["x"] * differenceList[i]["x"] + differenceList[i]["y"] * differenceList[i]["y"]);
             unitVec[i] = [differenceList[i]["x"] / squareSum[i], differenceList[i]["y"] / squareSum[i]];
             rotatedUnitVec[i] = [unitVec[i][0] * Math.cos(Math.PI / 4) - unitVec[i][1] * Math.sin(Math.PI / 4), unitVec[i][0] * Math.sin(Math.PI / 4) + unitVec[i][1] * Math.cos(Math.PI / 4)]
         }
-        console.log([Math.cos(Math.PI / 4) - Math.sin(Math.PI / 4), Math.sin(Math.PI / 4) + Math.cos(Math.PI) / 4])
-        console.log(unitVec);
-        console.log(rotatedUnitVec);
+       // console.log(squareSum);
+       // console.log(unitVec);
+        //console.log(rotatedUnitVec);
+        let sum = 0;
+        for (let i = 0; i < squareSum.length; i++) {
+            sum += squareSum[i];
+        }
+        let average = sum / squareSum.length;
+       // console.log(average);
 
 
         console.log("adjacency");
@@ -288,28 +298,30 @@ class Store extends EventEmitter {
             if (!this.AdjacencyList[idB].adjacencyRight[idA]) {
                 this.AdjacencyList[idB].adjacencyRight[idA] = 0;
             }
+         //   console.log(idA);
+          //  console.log(idB);
 
-            console.log(idA);
-            console.log(idB);
-            if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][0]) < margin) {
-                this.AdjacencyList[idA].adjacencyDown[idB]++;
-                this.AdjacencyList[idB].adjacencyUp[idA]++;
-                console.log(String(idB) + " is down of " + String(idA));
-            }
-            else if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][1]) < margin) {
-                this.AdjacencyList[idA].adjacencyLeft[idB]++;
-                this.AdjacencyList[idB].adjacencyRight[idA]++;
-                console.log(String(idB) + " is left of " + String(idA));
-            }
-            else if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][1]) < margin) {
-                this.AdjacencyList[idA].adjacencyRight[idB]++;
-                this.AdjacencyList[idB].adjacencyLeft[idA]++;
-                console.log(String(idB) + " is right of " + String(idA));
-            }
-            else if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][0]) < margin) {
-                this.AdjacencyList[idA].adjacencyUp[idB]++;
-                this.AdjacencyList[idB].adjacencyDown[idA]++;
-                console.log(String(idB) + " is down of " + String(idA));
+            if (squareSum[i] < average * 3 / 2) {
+                if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][0]) < margin) {
+                    this.AdjacencyList[idA].adjacencyDown[idB]++;
+                    this.AdjacencyList[idB].adjacencyUp[idA]++;
+                 //   console.log(String(idB) + " is down of " + String(idA));
+                }
+                else if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][1]) < margin) {
+                    this.AdjacencyList[idA].adjacencyLeft[idB]++;
+                    this.AdjacencyList[idB].adjacencyRight[idA]++;
+                 //   console.log(String(idB) + " is left of " + String(idA));
+                }
+                else if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][1]) < margin) {
+                    this.AdjacencyList[idA].adjacencyRight[idB]++;
+                    this.AdjacencyList[idB].adjacencyLeft[idA]++;
+                  //  console.log(String(idB) + " is right of " + String(idA));
+                }
+                else if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][0]) < margin) {
+                    this.AdjacencyList[idA].adjacencyUp[idB]++;
+                    this.AdjacencyList[idB].adjacencyDown[idA]++;
+                  //  console.log(String(idB) + " is down of " + String(idA));
+                }
             }
         }
         console.log(this.AdjacencyList);

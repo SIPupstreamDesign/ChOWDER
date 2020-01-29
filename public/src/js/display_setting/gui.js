@@ -14,11 +14,19 @@ class GUI extends EventEmitter {
         this.store = store;
         this.action = action;
 
-        this.scannedData = [{ id: 0, x: 0, y: 0, z: 0 }];
-        this.scanCompleteEvent;
+        this.markerId = ["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"];
+
+        this.scannedData = [];
+        // this.scanCompleteEvent;
         this.scanCompleteFunction;
-        this.scanCompleteFlag = [0];
+        // this.scanCompleteFlag = [0];
         this.scanFlagList = [];
+        for (let i in this.markerId) {
+            this.scanFlagList[this.markerId[i]]=0;
+        }
+        this.displayNumber = 0;
+
+
     }
 
     init() {
@@ -38,10 +46,10 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             console.log("getv");
             console.log(reply);
-            let displayNumber = reply.splitX * reply.splitY;
-            this.setArMarkerImg(displayNumber);
-            this.setScanButton(displayNumber);
-            for (let i = 0; i < displayNumber; i++) {
+            this.displayNumber = reply.splitX * reply.splitY;
+            this.setArMarkerImg(this.displayNumber);
+            this.setScanButton(this.displayNumber);
+            for (let i = 0; i < this.displayNumber; i++) {
                 this.scanFlagList[i] = 0;
             }
         });
@@ -56,14 +64,22 @@ class GUI extends EventEmitter {
             this.action.sendData();
             this.updateVirtualScreen(reply);
         });
-        this.store.on(Store.EVENT_DONE_SEND_DATA,(err, reply) => {
+        this.store.on(Store.EVENT_DONE_SEND_DATA, (err, reply) => {
             console.log(reply);
         });
-     
-        //カメラ映像と仮想ディスプレイ画面の切り替え
-        document.getElementById("scan_toggle_button").onclick = () =>{
+
+        //スキャン開始ボタン
+        document.getElementById("scan_toggle_button").onclick = () => {
             console.log("SCAN START");
-            this.scanCompleteFunction=setInterval((flag)=>{this.action.storeScannedData(flag)}, 100 , this.scanFlagList);          
+            this.scanCompleteFunction = setInterval((flag) => {
+                for (let i = 0; i < this.displayNumber; i++) {
+                    let marker = document.getElementsByTagName("a-marker")[i + 1];
+                    this.scannedData[i] =[marker.id, marker.object3D.position];
+                }
+                console.log(this.scannedData);
+                let sendData = [this.scanFlagList, this.scannedData];
+                this.action.storeScannedData(sendData);
+            }, 100, this.scanFlagList);
         };
     }
 
@@ -89,7 +105,7 @@ class GUI extends EventEmitter {
                 let unitWidth = 100;
                 let unitHeight = 100;
                 let translateX = (reply[i].relativeCoord[0]) * unitWidth - width / 2;
-                let translateY = height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
+                let translateY = (reply[i].relativeCoord[1]) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
 
                 let newVirtualDisplay = document.createElement("div");
                 newVirtualDisplay.setAttribute("id", "whole_sub_window:" + column + ":" + line);
@@ -103,7 +119,7 @@ class GUI extends EventEmitter {
                 newVirtualDisplay.style.left = "50%";
                 newVirtualDisplay.style.top = "50%";
                 newVirtualDisplay.style.transform = "translate(" + translateX + "px," + translateY + "px)";
-                newVirtualDisplay.innerHTML = String(i)
+                newVirtualDisplay.innerHTML = String(i);
                 screen.appendChild(newVirtualDisplay);
             }
         }
@@ -128,27 +144,28 @@ class GUI extends EventEmitter {
     setArMarkerImg(displayNumber) {
         let arEntry = document.getElementById("ar_entry");
         let setCamera = document.getElementById("camera");
+
         for (let i = 1; i <= displayNumber; i++) {
-            console.log(displayNumber);
             let newMarker = document.createElement("a-marker");
-            newMarker.setAttribute("id", "ar_marker" + i);
+            newMarker.setAttribute("id", this.markerId[i - 1]);
             newMarker.addEventListener("markerFound", (evt) => {
-                this.scanFlagList[i - 1] = 1;
+                this.scanFlagList[this.markerId[i - 1]] = 1;
                 console.log("ar_marker" + i + "found")
-               // this.action.storeScannedData(this.scanFlagList);
+                // console.log(newMarker);
+                // this.action.storeScannedData(this.scanFlagList);
             });
             newMarker.addEventListener("markerLost", () => {
-                let mar = document.getElementById("ar_marker" + i);
-                this.scanFlagList[i - 1] = 0;
+                let mar = document.getElementById(this.markerId[i - 1]);
+                this.scanFlagList[this.markerId[i - 1]] = 0;
                 console.log("ar_marker" + i + "lost");
             });
             newMarker.setAttribute("preset", "custom");
             newMarker.setAttribute("type", "pattern");
-            newMarker.setAttribute("Url", "http://localhost:8080/src/image/markers/marker" + String(i) + ".patt");
-            //let displayingModel=document.createElement("a-box");
+            //console.log(markerId[i]);
+            newMarker.setAttribute("Url", "http://localhost:8080/src/image/markers/marker" + this.markerId[i - 1] + ".patt");
             let boxModelOrigin = document.getElementsByClassName("text");
             let boxModelClone = boxModelOrigin[0].cloneNode(true);
-            boxModelClone.setAttribute("value", "Marker" + String(i));
+            boxModelClone.setAttribute("value", "Marker" + String(this.markerId[i - 1]));
             arEntry.insertBefore(newMarker, setCamera);
             newMarker.appendChild(boxModelClone);
         }
