@@ -9,6 +9,7 @@ import Validator from '../../common/validator.js';
 import vscreen_util from '../../common/vscreen_util.js';
 import ContentUtil from '../content_util'
 import ITownsCommand from '../../common/itowns_command.js';
+import IFrameConnector from '../../common/iframe_connector.js';
 
 "use strict";
 
@@ -215,15 +216,12 @@ class ContentViewGUI extends EventEmitter {
 				iframe.style.pointerEvents = "none";
 				iframe.onload = () => {
 					iframe.contentWindow.chowder_itowns_view_type = "controller";
+					let connector = new IFrameConnector(iframe);
 					this.action.addItownFunc({
 						id : metaData.id,
 						func : {
 							chowder_itowns_update_camera_callback :  (mat) => {
-								iframe.contentWindow.postMessage(JSON.stringify({
-									jsonrpc : "2.0",
-									method : ITownsCommand.UpdateCamera,
-									params : mat
-								}));
+								connector.send(ITownsCommand.UpdateCamera, mat);
 							},
 							chowder_itowns_update_metadata : (metaData) => {
 								try {
@@ -235,11 +233,7 @@ class ContentViewGUI extends EventEmitter {
 											let layerList = JSON.parse(metaData.layerList);
 											for (let i = 0; i < layerList.length; ++i) {
 												let layer = layerList[i];
-												iframe.contentWindow.postMessage(JSON.stringify({
-													jsonrpc : "2.0",
-													method : ITownsCommand.ChangeLayerProperty,
-													params : layer
-												}));
+												connector.send(ITownsCommand.ChangeLayerProperty, layer);
 											}
 										}
 									}
@@ -252,11 +246,7 @@ class ContentViewGUI extends EventEmitter {
 					});
 					
 					// 初回に一度実行
-					iframe.contentWindow.postMessage(JSON.stringify({
-						jsonrpc : "2.0",
-						method : ITownsCommand.UpdateCamera,
-						params : JSON.parse(metaData.cameraWorldMatrix)
-					}));
+					connector.send(ITownsCommand.UpdateCamera, JSON.parse(metaData.cameraWorldMatrix));
 				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);

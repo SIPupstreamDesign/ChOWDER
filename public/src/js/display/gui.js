@@ -14,6 +14,7 @@ import VideoPlayer from '../components/video_player';
 import PerformanceLogger from './performance_logger';
 import Button from '../components/button';
 import ITownsCommand from '../common/itowns_command';
+import IFrameConnector from '../common/iframe_connector';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -431,35 +432,21 @@ class GUI extends EventEmitter {
                 }
             };
 
+            let connector = new IFrameConnector(iframe);
+
             // 初回に一度実行
-            iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc : "2.0",
-                method : ITownsCommand.UpdateCamera,
-                params : metaData.cameraWorldMatrix
-            }));
-            iframe.contentWindow.postMessage(JSON.stringify({
-                jsonrpc : "2.0",
-                method : ITownsCommand.Resize,
-                params : rect
-            }));
+            connector.send(ITownsCommand.UpdateCamera, metaData.cameraWorldMatrix);
+            connector.send(ITownsCommand.Resize, rect);
 
             // chowderサーバから受信したカメラ情報などを、displayのiframe内に随時送るためのコールバックイベントを登録
             this.action.addItownFunc({
                 id : metaData.id,
                 func : {
                     chowder_itowns_update_camera_callback : (mat) => {
-                        iframe.contentWindow.postMessage(JSON.stringify({
-                            jsonrpc : "2.0",
-                            method : ITownsCommand.UpdateCamera,
-                            params : mat
-                        }));
+                        connector.send(ITownsCommand.UpdateCamera, mat);
                     },
                     chowder_itowns_resize_callback : (rect) => {
-                        iframe.contentWindow.postMessage(JSON.stringify({
-                            jsonrpc : "2.0",
-                            method : ITownsCommand.Resize,
-                            params : rect
-                        }));
+                        connector.send(ITownsCommand.Resize, rect);
                     },
                     chowder_itowns_update_metadata : (metaData) => {
                         try {
@@ -471,11 +458,7 @@ class GUI extends EventEmitter {
                                     let layerList = JSON.parse(metaData.layerList);
                                     for (let i = 0; i < layerList.length; ++i) {
                                         let layer = layerList[i];
-                                        iframe.contentWindow.postMessage(JSON.stringify({
-                                            jsonrpc : "2.0",
-                                            method : ITownsCommand.ChangeLayerProperty,
-                                            params : layer
-                                        }));
+                                        connector.send(ITownsCommand.ChangeLayerProperty, layer);
                                     }
                                 }
                             }

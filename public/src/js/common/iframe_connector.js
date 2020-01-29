@@ -13,7 +13,7 @@ let messageID = 1;
 
 class IFrameConnector extends EventEmitter
 {
-    constructor(iframe_) {
+    constructor(iframe_ = null) {
         super();
         this.iframe = iframe_;
         this.contentWindow = this.iframe ? this.iframe.contentWindow : null;
