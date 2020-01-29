@@ -5,6 +5,7 @@
 import Action from './action'
 import Connector from '../common/ws_connector.js';
 import Command from '../common/command';
+import Constants from '../common/constants'
 
 function Adjacency() {
     this.id = -1;
@@ -98,6 +99,20 @@ class Store extends EventEmitter {
                 this.emit(Store.EVENT_DISCONNECTED, null);
             };
         })(client));
+    }
+
+    _getCurrentDisplayMarkers(data) {
+        Connector.send(Command.GetWindowMetaData, { type : 'all', id: "" }, (err, json) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            // TODO groupによるサイト判別を追加する
+            let group = json.group ? json.group : Constants.DefaultGroup;
+            if (json.hasOwnProperty('marker_id')) {
+                this.emit(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, err, json.marker_id)
+            }
+        });
     }
 
     _getVirtualDisplay() {
@@ -239,6 +254,7 @@ class Store extends EventEmitter {
 Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
+Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER = "get_current_display_marker";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "get_virtual_display";
 Store.EVENT_DONE_CALC_ABSOLUTE_POSITION = "calc_absolute_position";
 export default Store;

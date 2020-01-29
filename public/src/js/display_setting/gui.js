@@ -29,21 +29,46 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
             this.action.getVirtualDisplay();
-
         });
 
         this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             console.log("getv");
             console.log(reply);
             let displayNumber = reply.splitX * reply.splitY;
+            let markerList = [];
+            this.action.getCurrentDisplayMarkers();
+            this.store.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, (err, marker_id) => {
+                if (err) {
+                    console.error(err); return;
+                }
+                markerList.push(marker_id);
+                if (markerList.length === displayNumber) {
+                    // marker_idを持ったdisplayが、virtualdisplayのgrid枠と同じ個数登録されていた.
+                    // アプリを開始してもOK. 初期化する
+                    this.setArMarkerImg(displayNumber);
+                    this.setScanButton(displayNumber);
+                    for (let i = 0; i < displayNumber; i++) {
+                        this.scanFlag[i] = 0;
+                    }
+                }
+            });
+            // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
+            setTimeout(() => {
+                if (markerList.length < displayNumber) {
+                    console.error("Not found for the number: found ", markerList.length, " all ", displayNumber);
+                }
+            }, 10 * 1000);
+
             //this.updateVirtualScreen(reply);
             //this.displayNumber = reply.splitX * reply.splitY;
             //console.log("displayNumver:" + this.displayNumber);
+            /*
             this.setArMarkerImg(displayNumber);
             this.setScanButton(displayNumber);
             for (let i = 0; i < displayNumber; i++) {
                 this.scanFlag[i] = 0;
             }
+            */
         });
 
         this.store.on(Store.EVENT_DONE_SET_DISPLAY_INDEXES, (err, reply) => {
