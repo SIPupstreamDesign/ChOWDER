@@ -310,7 +310,7 @@ class Store extends EventEmitter {
                         Connector.send(Command.AddWindowMetaData, metaData, this.onRegisterWindow);
                     } else {
                         let scale = parseFloat(query.scale) || 1.0;
-                        Connector.send(Command.AddWindowMetaData, {
+                        let meta =  {
                             id: windowID,
                             group: groupId,
                             posx: query.posx || 0,
@@ -320,12 +320,16 @@ class Store extends EventEmitter {
                             orgWidth: wh.width,
                             orgHeight: wh.height,
                             visible: true
-                        }, this.onRegisterWindow);
+                        };
+                        if (query.hasOwnProperty('marker_id')) {
+                            meta.marker_id = query.marker_id;
+                        }
+                        Connector.send(Command.AddWindowMetaData, meta, this.onRegisterWindow);
                     }
                 });
             } else {
                 let scale = parseFloat(query.scale) || 1.0;
-                Connector.send(Command.AddWindowMetaData, {
+                let meta =  {
                     group: groupId,
                     posx: query.posx || 0,
                     posy: query.posy || 0,
@@ -334,7 +338,11 @@ class Store extends EventEmitter {
                     orgWidth: wh.width,
                     orgHeight: wh.height,
                     visible: true
-                }, this.onRegisterWindow);
+                };
+                if (query.hasOwnProperty('marker_id')) {
+                    meta.marker_id = query.marker_id;
+                }
+                Connector.send(Command.AddWindowMetaData, meta, this.onRegisterWindow);
             }
         };
 

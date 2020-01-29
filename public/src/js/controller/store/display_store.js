@@ -98,7 +98,7 @@ class DisplayStore
 	 * Displayをリロード(デバッグ用)
 	 */
     _reloadDisplay(data) {
-		this.connector.send(Command.ReloadDisplay, {}, (err, reply) => {
+		this.connector.send(Command.RelocateElectronDisplay, {}, (err, reply) => {
 			this.store.emit(Store.EVENT_DONE_RELOAD_DISPLAY, err, reply);
 		});
 	}

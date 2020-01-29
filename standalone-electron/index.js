@@ -259,21 +259,28 @@ class ElectornDisplay {
 		for (let id in windowId) {
 			sortedWindowCoord[id] = this.sortMin(id, windowId[id]);
 		}
-		console.log(sortedWindowCoord);
-		this.windowAdjacencyList = sortedWindowCoord;
 		console.log("result");
+		this.windowAdjacencyList = sortedWindowCoord;
 		console.log(this.windowAdjacencyList);
 	}
 
 	//command relocate
 	relocateWindowsByRewriteConfig(data) {
 		try {
-			//console.log("relocateWindowsByRewriteConfig:", data);
+			console.log("relocateWindowsByRewriteConfig:", data);
 			let relocatedConfig = JSON.parse(JSON.stringify(this.config));
-			for (let id in this.config.windows) {
+			console.log(this.config.windows);
+			for (let id in this.config.windows) {	
 				let windowProps = this.config.windows[id];
+				console.log("tmp");
 				if (windowProps.hasOwnProperty('marker_id')) {
 					for (let i in this.config.windows) {
+						console.log(i);
+						let pcId=i[0];
+						let windowId=i[1];
+						console.log("compare");
+						console.log(pcId+windowId);
+						//if(data[])
 						/*if (windowProps.marker_id === data[marker_id]) {
 						}*/
 					}
@@ -346,7 +353,7 @@ class ElectornDisplay {
 
 			windowMap[id] = window;
 
-			window.webContents.openDevTools();
+			//window.webContents.openDevTools();
 		}
 		this.calcWindowCoord();
 		return windowMap;
