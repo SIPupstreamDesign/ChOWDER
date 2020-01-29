@@ -4,23 +4,117 @@
 	"windows": {
 		"tile1": {
 			"group": "group",
-			"position": [0, 0],
-			"size" : [2000, 1500],
-			"vda_position": [0, 0],
-			"vda_scale": 1.0,
+			"position": [
+				0,
+				0
+			],
+			"size": [
+				1000,
+				1000
+			],
+			"vda_position": [
+				0,
+				0
+			],
+			"vda_scale": 1,
 			"fullscreen": false,
 			"frame": false,
-			"marker_id": 1
+			"marker_id": "A1"
 		},
 		"tile2": {
 			"group": "group",
-			"position": [2000, 0],
-			"size" : [2000, 1500],
-			"vda_position": [1000, 0],
-			"vda_scale": 1.0,
+			"position": [
+				1000,
+				0
+			],
+			"size": [
+				1000,
+				1000
+			],
+			"vda_position": [
+				1000,
+				0
+			],
+			"vda_scale": 1,
 			"fullscreen": false,
 			"frame": false,
-			"marker_id": 2
+			"marker_id": "A2"
+		},
+		"tile3": {
+			"group": "group",
+			"position": [
+				1000,
+				1000
+			],
+			"size": [
+				1000,
+				1000
+			],
+			"vda_position": [
+				1000,
+				1000
+			],
+			"vda_scale": 1,
+			"fullscreen": false,
+			"frame": false,
+			"marker_id": "A3"
+		},
+		"tile4": {
+			"group": "group",
+			"position": [
+				0,
+				1000
+			],
+			"size": [
+				1000,
+				1000
+			],
+			"vda_position": [
+				0,
+				1000
+			],
+			"vda_scale": 1,
+			"fullscreen": false,
+			"frame": false,
+			"marker_id": "A4"
+		},
+		"tile5": {
+			"group": "group",
+			"position": [
+				2000,
+				0
+			],
+			"size": [
+				1000,
+				1000
+			],
+			"vda_position": [
+				2000,
+				0
+			],
+			"vda_scale": 1,
+			"fullscreen": false,
+			"frame": false,
+			"marker_id": "B1"
+		},
+		"tile6": {
+			"group": "group",
+			"position": [
+				2000,
+				1000
+			],
+			"size": [
+				1000,
+				1000
+			],
+			"vda_position": [
+				2000,
+				1000
+			],
+			"vda_scale": 1,
+			"fullscreen": false,
+			"frame": false,
+			"marker_id": "B2"
 		}
 	}
 }

@@ -46,6 +46,8 @@ class ElectornDisplay {
 		this.tileWindows = {};
 		this.preventQuitOnetime = false;
 
+		this.windowAdjacencyList = []
+
 		this.initElectronEvents.bind(this)();
 	}
 
@@ -116,25 +118,172 @@ class ElectornDisplay {
 		}
 	}
 
+	exchangeNum(number1, number2) {
+		console.log("exchange");
+		let tmp = number1;
+		number1 = number2;
+		number2 = tmp;
+		let re = [number1, number2];
+		return re;
+	}
+
+	sortMin(pcId, windowId) {
+		//let sortedData = [data[0]];
+		let itr = 0;
+		let differenceList = [];
+		//データの登録
+		let windowPos = [];
+		for (let id in this.config.windows) {
+			if (this.config.windows[id]["marker_id"][0] === pcId) {
+				if (!windowPos) {
+					windowPos = [this.config.windows[id]["marker_id"][1], this.config.windows[id]["position"]];
+				}
+				else {
+					windowPos.push([this.config.windows[id]["marker_id"][1], this.config.windows[id]["position"]]);
+				}
+			}
+		}
+		console.log(windowPos);
+
+		//差の取得
+		let differenceItr = 0;
+		for (let i = 0; i < windowId.length - 1; i++) {
+			for (let j = 1; j < windowId.length - i; j++) {
+				differenceList[differenceItr] = {
+					id: String(windowPos[i][0]) + String(windowPos[i + j][0]),
+					x: windowPos[i + j][1][0] - windowPos[i][1][0],
+					y: windowPos[i + j][1][1] - windowPos[i][1][1]
+				};
+
+				differenceItr++;
+			}
+		}
+		console.log("differenceList")
+		console.log(JSON.parse(JSON.stringify(differenceList)))
+
+		let sortedDataX = JSON.parse(JSON.stringify(windowPos));
+		let sortedDataY = JSON.parse(JSON.stringify(windowPos));
+		//x座標でソート
+		for (let i = 0; i < sortedDataX.length - 1; i++) {
+			for (let j = i + 1; j < sortedDataX.length; j++) {
+				if (sortedDataX[i][1][0] > sortedDataX[j][1][0]) {
+					let re = this.exchangeNum(sortedDataX[i], sortedDataX[j])
+					sortedDataX[i] = re[0];
+					sortedDataX[j] = re[1];
+				}
+			}
+		}
+		console.log("sortingX")
+		console.log(sortedDataX);
+		let groupedDataX = [[sortedDataX[0]]];
+		let groupingItrX = 0;
+		for (let i = 1; i < sortedDataX.length; i++) {
+			if (sortedDataX[i][1][0] === sortedDataX[i - 1][1][0]) {
+				groupedDataX[groupingItrX].push(sortedDataX[i]);
+			}
+			else {
+				groupedDataX.push([sortedDataX[i]]);
+				groupingItrX++;
+			}
+		}
+		console.log("groupingX")
+		console.log(groupedDataX);
+
+		for (let i = 0; i < sortedDataY.length - 1; i++) {
+			for (let j = i + 1; j < sortedDataY.length; j++) {
+				if (sortedDataY[i][1][1] > sortedDataY[j][1][1]) {
+					console.log("Y");
+					let re = this.exchangeNum(sortedDataY[i], sortedDataY[j]);
+					sortedDataY[i] = re[0];
+					sortedDataY[j] = re[1];
+				}
+			}
+		}
+		console.log("sortingY")
+		console.log(sortedDataY);
+
+		let groupedDataY = [[sortedDataY[0]]];
+		let groupingItrY = 0;
+		for (let i = 1; i < sortedDataY.length; i++) {
+			if (sortedDataY[i][1][1] === sortedDataY[i - 1][1][1]) {
+				groupedDataY[groupingItrY].push(sortedDataY[i]);
+			}
+			else {
+				groupedDataY.push([sortedDataY[i]]);
+				groupingItrY++;
+			}
+		}
+		console.log("groupingY")
+		console.log(groupedDataY);
+
+		let sortedCoord = [];
+		for (let i in groupedDataX) {
+			console.log(groupedDataX[i])
+			for (let j in groupedDataX[i]) {
+
+				//console.log(groupedDataX[i][j][0]);
+				sortedCoord[groupedDataX[i][j][0]-1] = [i];
+			}
+		}
+		for (let i in groupedDataY) {
+			console.log(groupedDataX[i])
+
+			for (let j in groupedDataY[i]) {
+				//console.log(groupedDataY[i][j][0]);
+				sortedCoord[groupedDataY[i][j][0]-1][1] = i;
+			}
+		}
+		console.log("sortedCoord");
+		console.log(sortedCoord);
+		return JSON.parse(JSON.stringify(sortedCoord));
+	}
+
+	calcWindowCoord() {
+		let relocatedConfig = JSON.parse(JSON.stringify(this.config));
+		console.log("calcWindowCoord");
+		let alphabet = "ABCDEFGHIJK";
+		let windowId = [];
+		for (let id in this.config.windows) {
+			let thisPcId = this.config.windows[id]["marker_id"][0];
+			let thisWindowId = this.config.windows[id]["marker_id"][1];
+			if (alphabet.indexOf(thisPcId) !== -1) {
+				if (!windowId[thisPcId]) {
+					windowId[thisPcId] = [thisWindowId];
+				}
+				else {
+					windowId[thisPcId].push(thisWindowId);
+				}
+			}
+		}
+		let sortedWindowCoord = [];
+		for (let id in windowId) {
+			sortedWindowCoord[id] = this.sortMin(id, windowId[id]);
+		}
+		console.log(sortedWindowCoord);
+		this.windowAdjacencyList = sortedWindowCoord;
+		console.log("result");
+		console.log(this.windowAdjacencyList);
+	}
+
+	//command relocate
 	relocateWindowsByRewriteConfig(data) {
-		try 
-		{
-			console.log("relocateWindowsByRewriteConfig:", data);
+		try {
+			//console.log("relocateWindowsByRewriteConfig:", data);
 			let relocatedConfig = JSON.parse(JSON.stringify(this.config));
 			for (let id in this.config.windows) {
 				let windowProps = this.config.windows[id];
 				if (windowProps.hasOwnProperty('marker_id')) {
-					// if (windowProps.marker_id === data[marker_id]???) {
-					//    
-					// }
+					for (let i in this.config.windows) {
+						/*if (windowProps.marker_id === data[marker_id]) {
+						}*/
+					}
 				}
 			}
-		
-			fs.writeFileSync(this.configPath, JSON.stringify(relocatedConfig, null , "\t"));
+
+			fs.writeFileSync(this.configPath, JSON.stringify(relocatedConfig, null, "\t"));
 			return true;
 		}
-		catch(err) 
-		{
+		catch (err) {
 			console.error(err);
 		}
 		return false;
@@ -196,8 +345,10 @@ class ElectornDisplay {
 			window.loadURL(config.url + query);
 
 			windowMap[id] = window;
-			//window.webContents.openDevTools();
+
+			window.webContents.openDevTools();
 		}
+		this.calcWindowCoord();
 		return windowMap;
 	}
 
