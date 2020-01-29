@@ -75,7 +75,7 @@ class Store extends EventEmitter {
 
     // this.metaDataをもとに、iframe内のitownsのレイヤー情報を更新
     __changeLayerProeprty(preLayerList = []) {
-        
+
         try {
             if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
                 // レイヤー情報が異なる場合は全レイヤー更新
@@ -83,14 +83,16 @@ class Store extends EventEmitter {
                     let layerList = JSON.parse(this.metaData.layerList);
                     for (let i = 0; i < layerList.length; ++i) {
                         let layer = layerList[i];
-                        this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer, (err, reply) => {
-                            this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
-                        });
+                        if (layer) {
+                            this.iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer, (err, reply) => {
+                                this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                            });
+                        }
                     }
                 }
             }
         }
-        catch(e) {
+        catch (e) {
             console.error(e);
         }
     }
@@ -236,15 +238,15 @@ class Store extends EventEmitter {
         this.iframeConnector.send(ITownsCommand.AddLayer, data, (err, data) => {
         });
         //if (this.metaData) {
-            /*
-            this.metaData.layerList = data;
-            let updateData = JSON.parse(JSON.stringify(this.metaData));
-            // 幅高さは更新しない
-            delete updateData.width;
-            delete updateData.height;
-            this.operation.updateMetadata(updateData, (err, res) => {
-            });
-            */
+        /*
+        this.metaData.layerList = data;
+        let updateData = JSON.parse(JSON.stringify(this.metaData));
+        // 幅高さは更新しない
+        delete updateData.width;
+        delete updateData.height;
+        this.operation.updateMetadata(updateData, (err, res) => {
+        });
+        */
         //}
     }
 
@@ -259,7 +261,8 @@ class Store extends EventEmitter {
                     // レイヤー削除して上書き
                     delete layerList[i];
                     this.metaData.layerList = JSON.stringify(layerList);
-    
+
+                    console.error("updateMetadata", data, this.metaData)
                     // iframeへ送る
                     this.iframeConnector.send(ITownsCommand.DeleteLayer, data, (err, data) => {
                         // サーバへ送る
@@ -301,11 +304,13 @@ class Store extends EventEmitter {
     saveLayer(layer) {
         let layerList = JSON.parse(this.metaData.layerList);
         for (let i = 0; i < layerList.length; ++i) {
-            let id = layerList[i].id;
-            if (id === layer.id) {
-                layerList[i] = layer;
-                this.metaData.layerList = JSON.stringify(layerList);
-                return;
+            if (layerList[i]) {
+                let id = layerList[i].id;
+                if (id === layer.id) {
+                    layerList[i] = layer;
+                    this.metaData.layerList = JSON.stringify(layerList);
+                    return;
+                }
             }
         }
         console.error("Not found layer from current content.");
@@ -314,8 +319,7 @@ class Store extends EventEmitter {
 
     _changeLayerProperty(data) {
         let layer = this.getLayerData(data.id);
-        if (layer)
-        {
+        if (layer) {
             for (let key in data) {
                 if (key !== "id") {
                     layer[key] = data[key];
@@ -353,17 +357,20 @@ class Store extends EventEmitter {
         let layerList = [];
         try {
             layerList = JSON.parse(meta.layerList);
-        } catch(err) {
+        } catch (err) {
             console.error(err);
         }
         this.metaData = meta;
         if (layerList.length > 0) {
             for (let i = 0; i < layerList.length; ++i) {
-                this._addLayer(layerList[i]);
+                if (layerList[i]) {
+                    this._addLayer(layerList[i]);
+                ]
+                }
+                this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             }
-            this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
+            this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }
-        this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
     }
 }
 
