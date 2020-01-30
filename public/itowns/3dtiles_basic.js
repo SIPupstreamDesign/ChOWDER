@@ -1,35 +1,45 @@
 
 window.onload = function() {
-    
     /* global itowns,document,GuiTools*/
-    var positionOnGlobe = { longitude: -75.61, latitude: 40.04, altitude: 50000 };
+    var placement = {
+        coord: new itowns.Coordinates('EPSG:4326', -75.6114, 40.03428, 0),
+        range: 4000,
+        tilt: 22,
+        heading: 180
+    }
     // iTowns namespace defined here
     var viewerDiv = document.getElementById('viewerDiv');
-    var view = new itowns.GlobeView(viewerDiv, positionOnGlobe);
+
+    var view = new itowns.GlobeView(viewerDiv, placement);
     view.camera.camera3D.near = 5;
     setupLoadingScreen(viewerDiv, view);
-    var menuGlobe = new GuiTools('menuDiv', view, 300, viewerDiv);
+
+    var menuGlobe = new GuiTools('menuDiv', view, 300);
+
     itowns.Fetcher.json('./layers/JSONLayers/OPENSM.json').then(function _(config) {
         config.source = new itowns.TMSSource(config.source);
         var layer = new itowns.ColorLayer('Ortho', config);
         view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
     });
+
     // Create a new Layer 3d-tiles For DiscreteLOD
     // -------------------------------------------
-    var $3dTilesLayerDiscreteLOD = new itowns.GeometryLayer('3d-tiles-discrete-lod', new itowns.THREE.Group());
-    $3dTilesLayerDiscreteLOD.name = 'DiscreteLOD';
-    $3dTilesLayerDiscreteLOD.url = 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithDiscreteLOD/tileset.json';
-    $3dTilesLayerDiscreteLOD.protocol = '3d-tiles'
-    $3dTilesLayerDiscreteLOD.overrideMaterials = true;  // custom cesium shaders are not functional
+    var $3dTilesLayerDiscreteLOD = new itowns.C3DTilesLayer('3d-tiles-discrete-lod', {
+        name: 'DiscreteLOD',
+        url: 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithDiscreteLOD/tileset.json',
+    }, view);
+
     itowns.View.prototype.addLayer.call(view, $3dTilesLayerDiscreteLOD);
+
     // Create a new Layer 3d-tiles For Viewer Request Volume
     // -----------------------------------------------------
-    var $3dTilesLayerRequestVolume = new itowns.GeometryLayer('3d-tiles-request-volume', new itowns.THREE.Group());
-    $3dTilesLayerRequestVolume.name = 'RequestVolume';
-    $3dTilesLayerRequestVolume.url = 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithRequestVolume/tileset.json';
-    $3dTilesLayerRequestVolume.protocol = '3d-tiles'
-    $3dTilesLayerRequestVolume.overrideMaterials = true;  // custom cesium shaders are not functional
-    $3dTilesLayerRequestVolume.sseThreshold = 1;
+
+    var $3dTilesLayerRequestVolume = new itowns.C3DTilesLayer('3d-tiles-request-volume', {
+        name: 'RequestVolume',
+        url: 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithRequestVolume/tileset.json',
+        sseThreshold: 1,
+    }, view);
+
     // add an event for picking the 3D Tiles layer and displaying
     // information about the picked feature in an html div
     var pickingArgs = {};
@@ -38,8 +48,12 @@ window.onload = function() {
     pickingArgs.layer = $3dTilesLayerRequestVolume;
     itowns.View.prototype.addLayer.call(view,
         $3dTilesLayerRequestVolume).then(function _() {
-            window.addEventListener('mousemove', fillHTMLWithPickingInfo.bind(pickingArgs),
-                false); });
+            /*
+            window.addEventListener('mousemove',
+                (event) => fillHTMLWithPickingInfo(event, view, pickingArgs),false);
+                */
+        });
+
     // Add the UI Debug
     var d = new debug.Debug(view, menuGlobe.gui);
     debug.createTileDebugUI(menuGlobe.gui, view, view.tileLayer, d);
@@ -51,6 +65,6 @@ window.onload = function() {
         view.notifyChange(view.camera.camera3D);
     }
     menuGlobe.gui.add(d, 'zoom').name('Go to point cloud');
-    
+
     injectChOWDER(view, viewerDiv);
 };
