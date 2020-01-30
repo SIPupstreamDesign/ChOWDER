@@ -319,9 +319,12 @@ class GUI extends EventEmitter {
             this.iframe.contentWindow.chowder_itowns_view_type = "itowns";
             this.iframe.contentWindow.focus();
 
+            this.iframe.contentWindow.onmousedown = () => {
+                this.iframe.contentWindow.focus();
+            };
+    
             this.action.connectIFrame(this.iframe);
         };
-
         document.getElementById('itowns').appendChild(this.iframe);
     }
 
