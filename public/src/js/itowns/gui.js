@@ -205,8 +205,8 @@ class GUI extends EventEmitter {
         }), "Preset:地理院地図 3D");
         this.itownSelect.addOption(JSON.stringify({
             type : "preset",
-            url : "itowns/view_pointcloud_3d_map.html"
-        }), "Preset:view_pointcloud_3d_map");
+            url : "itowns/pointcloud_3d_map.html"
+        }), "Preset:pointcloud_3d_map");
         this.itownSelect.addOption(JSON.stringify({
             type : "preset",
             url : "itowns/view_3d_map.html"
