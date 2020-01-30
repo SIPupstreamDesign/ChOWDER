@@ -23,10 +23,10 @@ window.onload = function () {
             "format": "image/png",
             "url": url,
             "tileMatrixSet": "PM",
-            "updateStrategy": {
-                "type": 3
-            },
-            "opacity": 1.0
+            "zoom" : {
+                "min" : 5,
+                "max" : 18
+            }
         };
         var mapSource = new itowns.TMSSource(config);
         var layer = new itowns.ColorLayer(config.id, {
@@ -34,6 +34,7 @@ window.onload = function () {
             updateStrategy: {
                 type: 3
             },
+            opacity: 1.0
         });
         view.addLayer(layer);//.then(menuGlobe.addLayerGUI.bind(menuGlobe));
     }
