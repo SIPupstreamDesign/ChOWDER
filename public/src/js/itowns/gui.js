@@ -156,7 +156,7 @@ class GUI extends EventEmitter {
             // ログイン実行
             this.action.login({
                 id: "APIUser",
-                password: "123456",//this.loginMenu.getPassword()
+                password: this.loginMenu.getPassword()
             });
         });
 

@@ -1,6 +1,9 @@
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 
-
-
+/// 地理院地図(Color)を3D球体で表示する
 
 window.onload = function () {
 

@@ -35,8 +35,8 @@ class Store extends EventEmitter {
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
             console.log("websocket connected")
-            let loginOption = { id: "APIUser", password: "" }
-            this.action.login(loginOption);
+            //let loginOption = { id: "APIUser", password: "" }
+            //this.action.login(loginOption);
         })
 
         // コンテンツ追加完了した.
