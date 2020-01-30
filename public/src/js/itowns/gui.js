@@ -197,6 +197,14 @@ class GUI extends EventEmitter {
         // サンプルコンテンツの追加
         this.itownSelect.addOption(JSON.stringify({
             type : "preset",
+            url : "itowns/gsi_planar.html"
+        }), "Preset:地理院地図 2.5D");
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/gsi.html"
+        }), "Preset:地理院地図 3D");
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
             url : "itowns/view_pointcloud_3d_map.html"
         }), "Preset:view_pointcloud_3d_map");
         this.itownSelect.addOption(JSON.stringify({

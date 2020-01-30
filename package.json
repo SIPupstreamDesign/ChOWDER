@@ -15,7 +15,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "cd server && node server.js",
     "webpack": "webpack",
-    "install": "webpack -p --release && cd standalone-electron && npm install && cd ../public/itowns && npm install",
+    "install": "webpack -p --release && cd standalone-electron && npm install",
     "dev": "webpack-dev-server",
     "watch": "webpack --mode development --watch"
   },
