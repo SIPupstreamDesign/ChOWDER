@@ -58,7 +58,7 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.addOption(ITownsConstants.TypeElevation, "Elevation");
         this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(tileset.json)");
         this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree data)");
-        this.typeSelect.addOption(ITownsConstants.TypeGeometry, "Geometry(three.js)");
+        this.typeSelect.addOption(ITownsConstants.TypeGeometry, "Geometry(pbf, geojson)");
 
         this.idTitle = document.createElement('p');
         this.idTitle.className = "layer_dialog_sub_title";
@@ -75,6 +75,14 @@ class LayerDialog extends EventEmitter {
         this.urlInput = new Input("text");
         this.urlInput.getDOM().className = "layer_dialog_url_input";
         this.urlInput.setValue("http://localhost:8080/std/${z}/${x}/${y}.png");
+        
+        this.styleURLTitle = document.createElement('p');
+        this.styleURLTitle.className = "layer_dialog_sub_title";
+        this.styleURLTitle.innerText = "Style:";
+
+        this.styleURLInput = new Input("text");
+        this.styleURLInput.getDOM().className = "layer_dialog_url_input";
+        this.styleURLInput.setValue("https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json");
 
         this.zoomMinTitle = document.createElement('p');
         this.zoomMinTitle.className = "layer_dialog_zoom_title";
@@ -109,20 +117,34 @@ class LayerDialog extends EventEmitter {
 
         this.dom.appendChild(this.wrap);
         this.wrap.appendChild(this.title);
-        let typeRow = createRow();
-        typeRow.appendChild(this.typeTitle);
-        typeRow.appendChild(this.typeSelect.getDOM());
-        let idRow = createRow();
-        idRow.appendChild(this.idTitle);
-        idRow.appendChild(this.idInput.getDOM());
-        let titleRow = createRow();
-        titleRow.appendChild(this.urlTitle);
-        titleRow.appendChild(this.urlInput.getDOM());
-        let zoomRow = createRow();
-        zoomRow.appendChild(this.zoomMinTitle);
-        zoomRow.appendChild(this.zoomMinSelect.getDOM());
-        zoomRow.appendChild(this.zoomMaxTitle);
-        zoomRow.appendChild(this.zoomMaxSelect.getDOM());
+        {
+            let typeRow = createRow();
+            typeRow.appendChild(this.typeTitle);
+            typeRow.appendChild(this.typeSelect.getDOM());
+        }
+        {
+            let idRow = createRow();
+            idRow.appendChild(this.idTitle);
+            idRow.appendChild(this.idInput.getDOM());
+        }
+        {
+            let titleRow = createRow();
+            titleRow.appendChild(this.urlTitle);
+            titleRow.appendChild(this.urlInput.getDOM());
+        }
+        {
+            this.styleRow = createRow();
+            this.styleRow.appendChild(this.styleURLTitle);
+            this.styleRow.appendChild(this.styleURLInput.getDOM());
+            this.styleRow.style.display = "none";
+        }
+        {
+            this.zoomRow = createRow();
+            this.zoomRow.appendChild(this.zoomMinTitle);
+            this.zoomRow.appendChild(this.zoomMinSelect.getDOM());
+            this.zoomRow.appendChild(this.zoomMaxTitle);
+            this.zoomRow.appendChild(this.zoomMaxSelect.getDOM());
+        }
         
         this.endCallback = null;
         let isOK = false;
@@ -133,6 +155,11 @@ class LayerDialog extends EventEmitter {
             this.data.id = this.idInput.getValue();
             this.data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
             this.data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
+            
+            let type = this.typeSelect.getSelectedValue();
+            if (type === "geometry") {
+                this.data.style = this.styleURLInput.getValue();
+            }
 
             if (this.endCallback) 
             {
@@ -152,13 +179,16 @@ class LayerDialog extends EventEmitter {
         });
 
         this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
-            if (this.typeSelect.getSelectedValue() === "color"
-            || this.typeSelect.getSelectedValue() === "elevation") {
-                this.zoomMinSelect.getDOM().removeAttribute('disabled');
-                this.zoomMaxSelect.getDOM().removeAttribute('disabled');
+            let type = this.typeSelect.getSelectedValue();
+            if (type === "pointcloud") {
+                this.zoomRow.style.display = "none";
             } else {
-                this.zoomMinSelect.getDOM().setAttribute('disabled', '');
-                this.zoomMaxSelect.getDOM().setAttribute('disabled', '');
+                this.zoomRow.style.display = "block";
+            }
+            if (type === "geometry") {
+                this.styleRow.style.display = "block";
+            } else {
+                this.styleRow.style.display = "none";
             }
         });
     }

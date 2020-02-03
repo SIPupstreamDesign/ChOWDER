@@ -148,6 +148,26 @@ class Store extends EventEmitter {
      * @param {*} type 
      */
     createLayerByType(config, type) {
+
+        class TestSource extends itowns.TMSSource {
+            /**
+             * @param {Object} source - An object that can contain all properties of a
+             * WMTSSource and {@link Source}. Only `url` and `name` are mandatory.
+             *
+             * @constructor
+             */
+            constructor(source) {
+                super(source);
+            }
+        
+            urlFromExtent(extent) {
+                let url = super.urlFromExtent(extent);
+                console.log("urlFromExtent",  url)
+                return url;//super.urlFromExtent(extent);
+            }
+        }
+        
+        
         if (type === ITownsConstants.TypeColor) {
             let mapSource = new itowns.TMSSource(config);
             return new itowns.ColorLayer(config.id, {
@@ -167,7 +187,35 @@ class Store extends EventEmitter {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
         }
         if (type === ITownsConstants.TypeGeometry) {
-            return new itowns.GeometryLayer(config.id, config, this.itownsView);
+            let mapSource = null;
+            if (config.format === "geojson") {
+                mapSource = new TestSource(config);
+                return new itowns.GeometryLayer(config.id, new itowns.THREE.Group(), {
+                    update : (context, layer, node) => {
+                        return itowns.FeatureProcessing.update(context, layer, node)
+                    },
+                    convert : itowns.Feature2Mesh.convert({
+                        color: new itowns.THREE.Color(0xbbffbb),
+                        extrude: 80 }),
+                    source : mapSource
+                });
+            }
+            if (config.format === "pbf") {
+                // Add a vector tile layer
+                function inter(z) {
+                    return z - (z % 5);
+                }
+                function isValidData(data, extentDestination) {
+                    const isValid = inter(extentDestination.zoom) == inter(data.extent.zoom);
+                    return isValid;
+                }
+                mapSource = new itowns.VectorTilesSource(config);
+                return new itowns.ColorLayer(config.id, {
+                    isValidData: isValidData,
+                    source: mapSource,
+                    fx: 2.5,
+                });
+            }
         }
     }
 
@@ -181,6 +229,15 @@ class Store extends EventEmitter {
         }
         if (url.indexOf("${y}") >= 0) {
             url = url.split("${y}").join("%ROW");
+        }
+        if (url.indexOf("{z}") >= 0) {
+            url = url.split("{z}").join("%TILEMATRIX");
+        }
+        if (url.indexOf("{x}") >= 0) {
+            url = url.split("{x}").join("%COL");
+        }
+        if (url.indexOf("{y}") >= 0) {
+            url = url.split("{y}").join("%ROW");
         }
 
         let config = {};
@@ -226,6 +283,21 @@ class Store extends EventEmitter {
             };
             if (params.hasOwnProperty('wireframe')) {
                 config.wireframe = params.wireframe;
+            }
+        }
+        if (type === ITownsConstants.TypeGeometry) {
+            config = {
+                "projection" : "EPSG:3857",
+                "url" : url
+            }
+            if (url.indexOf('.geojson') >= 0) {
+                config.format = "geojson";
+            }
+            if (url.indexOf('.pbf') >= 0) {
+                config.format = "pbf";
+            }
+            if (params.hasOwnProperty('style')) {
+                config.style = params.style;
             }
         }
         // 以下共通
