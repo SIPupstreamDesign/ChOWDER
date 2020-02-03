@@ -121,8 +121,7 @@ window.onload = function () {
 
     var view = new itowns.PlanarView(viewerDiv, extent, {
         placement: placement,
-        disableSkirt: true,
-        maxSubdivisionLevel: 14
+        maxSubdivisionLevel: 20
     });
 
     new itowns.PlanarControls(view, {
