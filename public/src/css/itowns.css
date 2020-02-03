@@ -66,7 +66,7 @@ p {
 
 #itowns {
     width : calc(100% - 260px);
-    height : calc(100% - 200px  - 31px);
+    height : calc(100% - 120px  - 31px);
 	position: absolute;
 	top : 31px;
 }
@@ -243,7 +243,7 @@ p {
 
 .timeline_wrap {
 	background : #3b3848;
-	height : 200px;
+	height : 120px;
 	position : fixed;
 	bottom : 0px;
     width: calc(100% - 260px);
@@ -251,16 +251,16 @@ p {
 .timeline {
 	position: absolute;
 	left : 10%;
-	height : 200px;
+	height : 120px;
 	width: 80%;
 }
 
 .k2go-timeline-main {
-	bottom : 50px;
+	/*bottom : 50px;*/
 }
 
 .k2go-timeline-pick-line {
-	max-height : 100px;
+	max-height : 70px;
 }
 
 .layer_dialog_zoom_min_select:disabled {

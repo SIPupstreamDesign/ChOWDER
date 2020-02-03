@@ -366,8 +366,8 @@ class Store extends EventEmitter {
                 if (layerList[i]) {
                     this._addLayer(layerList[i]);
                 }
-                this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             }
+            this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }
     }
