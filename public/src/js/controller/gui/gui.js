@@ -342,7 +342,7 @@ class GUI extends EventEmitter
 			if (!this.inListviewArea(e) && !this.inPropertyArea(e)) {
 				if (!e) e = window.event; //for legacy IE
 				let delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
-				e.preventDefault();
+				//e.preventDefault();
 				if (delta < 0){
 					//下にスクロールした場合の処理
 					this.displayScale = this.displayScale + 0.05;
