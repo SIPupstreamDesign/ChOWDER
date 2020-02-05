@@ -372,6 +372,16 @@ class ContentPropertyGUI extends EventEmitter {
 		restore_button.disabled = isDisable;
 	}
 
+	isEditableContent(metaData) {
+		if (Validator.isWindowType(metaData)) {
+			return this.authority.isDisplayEditable(metaData.group);
+		} else if (Validator.isVirtualDisplayType(metaData)) {
+			return this.authority.isDisplayEditable(metaData.group);
+		} else {
+			return this.authority.isEditable(metaData.group);
+		}
+	}
+
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
 	 * @method initPropertyArea
@@ -383,17 +393,11 @@ class ContentPropertyGUI extends EventEmitter {
 	initPropertyArea(metaData, groupName, type, isOwnVideo) {
 		let rectChangeFunc = (evt) => {
 			this.action.changeContentTransform(this.getContentTransform());
-		},
-			isEditableContent;
+		};
 
-		if (Validator.isWindowType(metaData)) {
-			isEditableContent = this.authority.isDisplayEditable(metaData.group);
-		}
-		else {
-			isEditableContent = this.authority.isEditable(metaData.group);
-		}
-		this.disableRestoreButton(!isEditableContent);
-		this.disableHistoryArea(!isEditableContent);
+		const isEditable = this.isEditableContent(metaData);
+		this.disableRestoreButton(!isEditable);
+		this.disableHistoryArea(!isEditable);
 		this.setID(metaData.id ? metaData.id : "");
 		this.setGroupName(groupName ? groupName : "");
 
@@ -409,36 +413,35 @@ class ContentPropertyGUI extends EventEmitter {
 		this.showVideoInfo(false);
 		if (type === Constants.PropertyTypeDisplay) {
 			this.setIDLabel("Display ID:");
-			addCheckProperty(isEditableContent, 'display_visible', 'visible', String(metaData.visible) === "true", () => {
+			addCheckProperty(isEditable, 'display_visible', 'visible', String(metaData.visible) === "true", () => {
 				metaData.visible = document.getElementsByClassName('display_visible')[0].checked;
 				this.action.changeDisplayVisible(metaData);
 			});
-			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
-			addTextInputProperty(isEditableContent, 'content_text', "");
+			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addTextInputProperty(isEditable, 'content_text', "");
 			this.showDownloadButton(false);
 			this.showMetaLabel(true);
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
-			this.showColorPicker(isEditableContent);
+			this.showColorPicker(isEditable);
 		}
 		else if (Validator.isVirtualDisplayType(metaData)) {
-			isEditableContent = this.authority.isDisplayEditable(metaData.group);
 			this.setIDLabel("Virtual Display Setting");
 			this.setID("");
 			this.setGroupLabel("");
-			addInputProperty(isEditableContent, 'whole_width', 'w', 'px', '1000', () => {
+			addInputProperty(isEditable, 'whole_width', 'w', 'px', '1000', () => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
-			addInputProperty(isEditableContent, 'whole_height', 'h', 'px', '900', () => {
+			addInputProperty(isEditable, 'whole_height', 'h', 'px', '900', () => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
-			addInputProperty(isEditableContent, 'whole_split_x', 'split x', '', '1', (evt) => {
+			addInputProperty(isEditable, 'whole_split_x', 'split x', '', '1', (evt) => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
-			addInputProperty(isEditableContent, 'whole_split_y', 'split y', '', '1', (evt) => {
+			addInputProperty(isEditable, 'whole_split_y', 'split y', '', '1', (evt) => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
 			//addTextInputProperty('content_text', "");
@@ -452,7 +455,7 @@ class ContentPropertyGUI extends EventEmitter {
 			this.setIDLabel("Content ID:");
 			this.setID("");
 			this.setGroupLabel("");
-			addInputProperty(isEditableContent, 'multi_transform_z', 'z', 'index', '', () => {
+			addInputProperty(isEditable, 'multi_transform_z', 'z', 'index', '', () => {
 				let multiZ = document.getElementById('multi_transform_z');
 				let val = parseInt(multiZ.value, 10);
 				this.action.changeContentIndex({
@@ -470,7 +473,7 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showDownloadButton(false);
 			this.setGroupLabel("Group:");
 			this.showMetaLabel(true);
-			addTextInputProperty(isEditableContent, 'content_text', "");
+			addTextInputProperty(isEditable, 'content_text', "");
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
 			this.showColorPicker(false);
@@ -478,22 +481,22 @@ class ContentPropertyGUI extends EventEmitter {
 		else { // content (text, image, url... )
 			this.setIDLabel("Content ID:");
 			this.setGroupLabel("Group:");
-			addCheckProperty(isEditableContent, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
+			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
 				metaData.visible = document.getElementsByClassName('content_visible')[0].checked;
 				this.action.changeContentVisible(metaData);
 			});
-			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_z', 'z', 'index', '0', () => {
+			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_z', 'z', 'index', '0', () => {
 				let transz = document.getElementById('content_transform_z');
 				let val = parseInt(transz.value, 10);
 				this.action.changeContentIndex({
 					zIndex: val
 				});
 			});
-			addTextInputProperty(isEditableContent, 'content_text', "");
+			addTextInputProperty(isEditable, 'content_text', "");
 			this.showDownloadButton(true, "download?" + metaData.id);
 			this.showMetaLabel(true);
 			if (type !== "" && type !== Constants.PropertTypeContent && metaData.type !== Constants.TypeTileImage) {
@@ -522,13 +525,13 @@ class ContentPropertyGUI extends EventEmitter {
 					} else {
 						// webrtc動画用 設定エリアを表示
 						this.showVideoInfo(true);
-						this.initVideoPropertyArea(isEditableContent, metaData, type);
+						this.initVideoPropertyArea(isEditable, metaData, type);
 					}
 				}
 			}
 		}
 	}
-	initVideoPropertyArea(isEditableContent, metaData, type) {
+	initVideoPropertyArea(isEditable, metaData, type) {
 		if (!navigator.mediaDevices) {
 			// IEなど
 			return
@@ -555,14 +558,14 @@ class ContentPropertyGUI extends EventEmitter {
 				}
 				if (metaData.subtype === "camera") {
 					addVideoTextLabel('video_select_video_title', i18next.t('video_input'));
-					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, metaData.video_device, (deviceID) => {
+					addVideoSelectProperty(isEditable, 'video_select_input_video', videos, metaData.video_device, (deviceID) => {
 						this.action.changeVideoDevice({
 							id: metaData.id,
 							deviceInfo: this.getDeviceInfo(metaData)
 						});
 					});
 					addVideoTextLabel('video_select_audio_title', i18next.t('audio_input'));
-					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, metaData.audio_device, (deviceID) => {
+					addVideoSelectProperty(isEditable, 'video_select_input_audio', audios, metaData.audio_device, (deviceID) => {
 						this.action.changeAudioDevice({
 							id: metaData.id,
 							deviceInfo: this.getDeviceInfo(metaData)
@@ -570,40 +573,40 @@ class ContentPropertyGUI extends EventEmitter {
 					});
 				}
 				addVideoTextLabel('video_select_quality_title', i18next.t('video_quality'));
-				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', videoQualities, 50, (val) => {
+				addVideoSelectProperty(isEditable, 'video_select_input_quality', videoQualities, 50, (val) => {
 					this.updateQualityDisplay();
 					this.action.changeVideoQuality({
 						id: metaData.id,
 						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", i18next.t("min_bitrate"), "kbps", "300", () => {
+				addVideoQualityProperty(isEditable, "video_quality", "video_quality_min", i18next.t("min_bitrate"), "kbps", "300", () => {
 					this.action.changeVideoQuality({
 						id: metaData.id,
 						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", i18next.t("max_bitrate"), "kbps", "1000", () => {
+				addVideoQualityProperty(isEditable, "video_quality", "video_quality_max", i18next.t("max_bitrate"), "kbps", "1000", () => {
 					this.action.changeVideoQuality({
 						id: metaData.id,
 						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoTextLabel('video_select_quality_title', i18next.t('audio_quality'));
-				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', audioQualities, 100, (val) => {
+				addVideoSelectProperty(isEditable, 'audio_select_input_quality', audioQualities, 100, (val) => {
 					this.updateQualityDisplay()
 					this.action.changeVideoQuality({
 						id: metaData.id,
 						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", i18next.t("min_bitrate"), "kbps", "50", () => {
+				addVideoQualityProperty(isEditable, "audio_quality", "audio_quality_min", i18next.t("min_bitrate"), "kbps", "50", () => {
 					this.action.changeVideoQuality({
 						id: metaData.id,
 						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", i18next.t("max_bitrate"), "kbps", "300", () => {
+				addVideoQualityProperty(isEditable, "audio_quality", "audio_quality_max", i18next.t("max_bitrate"), "kbps", "300", () => {
 					this.action.changeVideoQuality({
 						id: metaData.id,
 						quality: this.getVideoQualityValues(metaData.id)
@@ -637,7 +640,7 @@ class ContentPropertyGUI extends EventEmitter {
 				console.error('enumerateDevide ERROR:', err);
 			});
 	}
-	
+
 	submitText(endcallback) {
 		let content_text = document.getElementById('content_text');
 		if (content_text && !content_text.disabled) {
