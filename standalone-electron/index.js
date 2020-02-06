@@ -119,7 +119,7 @@ class ElectornDisplay {
 	}
 
 	exchangeNum(number1, number2) {
-		console.log("exchange");
+		//console.log("exchange");
 		let tmp = number1;
 		number1 = number2;
 		number2 = tmp;
@@ -133,6 +133,7 @@ class ElectornDisplay {
 		let differenceList = [];
 		//データの登録
 		let windowPos = [];
+		//	console.log(pcId+windowId);
 		for (let id in this.config.windows) {
 			if (this.config.windows[id]["marker_id"][0] === pcId) {
 				if (!windowPos) {
@@ -143,7 +144,7 @@ class ElectornDisplay {
 				}
 			}
 		}
-		console.log(windowPos);
+		//	console.log(windowPos);
 
 		//差の取得
 		let differenceItr = 0;
@@ -158,8 +159,8 @@ class ElectornDisplay {
 				differenceItr++;
 			}
 		}
-		console.log("differenceList")
-		console.log(JSON.parse(JSON.stringify(differenceList)))
+		//	console.log("differenceList")
+		//	console.log(JSON.parse(JSON.stringify(differenceList)))
 
 		let sortedDataX = JSON.parse(JSON.stringify(windowPos));
 		let sortedDataY = JSON.parse(JSON.stringify(windowPos));
@@ -173,8 +174,8 @@ class ElectornDisplay {
 				}
 			}
 		}
-		console.log("sortingX")
-		console.log(sortedDataX);
+		//console.log("sortingX")
+		//console.log(sortedDataX);
 		let groupedDataX = [[sortedDataX[0]]];
 		let groupingItrX = 0;
 		for (let i = 1; i < sortedDataX.length; i++) {
@@ -199,8 +200,8 @@ class ElectornDisplay {
 				}
 			}
 		}
-		console.log("sortingY")
-		console.log(sortedDataY);
+		//console.log("sortingY")
+		//console.log(sortedDataY);
 
 		let groupedDataY = [[sortedDataY[0]]];
 		let groupingItrY = 0;
@@ -213,29 +214,50 @@ class ElectornDisplay {
 				groupingItrY++;
 			}
 		}
-		console.log("groupingY")
-		console.log(groupedDataY);
+		//	console.log("groupingY")
+		//	console.log(groupedDataY);
 
 		let sortedCoord = [];
 		for (let i in groupedDataX) {
-			console.log(groupedDataX[i])
+			//console.log(groupedDataX[i])
 			for (let j in groupedDataX[i]) {
 
 				//console.log(groupedDataX[i][j][0]);
-				sortedCoord[groupedDataX[i][j][0]-1] = [i];
+				sortedCoord[groupedDataX[i][j][0] - 1] = [i];
 			}
 		}
 		for (let i in groupedDataY) {
-			console.log(groupedDataX[i])
+			//console.log(groupedDataX[i])
 
 			for (let j in groupedDataY[i]) {
 				//console.log(groupedDataY[i][j][0]);
-				sortedCoord[groupedDataY[i][j][0]-1][1] = i;
+				sortedCoord[groupedDataY[i][j][0] - 1][1] = i;
 			}
 		}
-		console.log("sortedCoord");
-		console.log(sortedCoord);
-		return JSON.parse(JSON.stringify(sortedCoord));
+		//	console.log("sortedCoord");
+		//console.log(sortedCoord);
+		let adjacency = [];
+		for (let i in sortedCoord) {
+			adjacency[i] = [];
+			for (let j in sortedCoord) {
+				let winId = Number(j) + 1;
+				if (sortedCoord[j][0] - sortedCoord[i][0] === 1 && sortedCoord[j][1] - sortedCoord[i][1] === 0) {
+					adjacency[i]["right"] = winId;
+				}
+				else if (sortedCoord[j][0] - sortedCoord[i][0] === -1 && sortedCoord[j][1] - sortedCoord[i][1] === 0) {
+					adjacency[i]["left"] = winId;
+				}
+				else if (sortedCoord[j][0] - sortedCoord[i][0] === 0 && sortedCoord[j][1] - sortedCoord[i][1] === 1) {
+					adjacency[i]["up"] = winId;
+				}
+				else if (sortedCoord[j][0] - sortedCoord[i][0] === 0 && sortedCoord[j][1] - sortedCoord[i][1] === -1) {
+					adjacency[i]["down"] = winId;
+				}
+			}
+		}
+		//console.log(adjacency);
+		this.windowAdjacencyList[pcId] = adjacency;
+		return JSON.parse(JSON.stringify(adjacency));
 	}
 
 	calcWindowCoord() {
@@ -244,6 +266,7 @@ class ElectornDisplay {
 		let alphabet = "ABCDEFGHIJK";
 		let windowId = [];
 		for (let id in this.config.windows) {
+			//console.log(this.config.windows[id]);
 			let thisPcId = this.config.windows[id]["marker_id"][0];
 			let thisWindowId = this.config.windows[id]["marker_id"][1];
 			if (alphabet.indexOf(thisPcId) !== -1) {
@@ -253,15 +276,77 @@ class ElectornDisplay {
 				else {
 					windowId[thisPcId].push(thisWindowId);
 				}
+				console.log(windowId)
 			}
 		}
 		let sortedWindowCoord = [];
 		for (let id in windowId) {
 			sortedWindowCoord[id] = this.sortMin(id, windowId[id]);
 		}
+
 		console.log("result");
-		this.windowAdjacencyList = sortedWindowCoord;
+		//this.windowAdjacencyList = sortedWindowCoord;
 		console.log(this.windowAdjacencyList);
+	}
+
+	exchangeRelocatedConfig(scannedConfigId, trueConfigId, sendConfig) {
+		sendConfig.windows[trueConfigId] = JSON.parse(JSON.stringify(this.config.windows[scannedConfigId]));
+		sendConfig.windows[trueConfigId].marker_id = JSON.parse(JSON.stringify(this.config.windows[trueConfigId].marker_id));
+	}
+
+	calcRelativeCoord(pcId, relativeCoord, adjacencyList) {
+		let directionName = ["right", "left", "up", "down"]
+		let rightCount = {};
+		rightCount[pcId] = [0]
+		let upCount = {};
+		upCount[pcId] = [0]
+		for (let i in adjacencyList[pcId]) {
+			rightCount[pcId].push(0);
+			upCount[pcId].push(0);
+		}
+		let resultCount = { right: rightCount, up: upCount }
+		for (let i in adjacencyList[pcId]) {
+			for (let j = 0; j < 2; j++) {
+				let id = adjacencyList[pcId][i][directionName[2 * j]];
+				let count = 1;
+				try {
+					while (id) {
+						resultCount[directionName[2 * j]][pcId][id - 1] += JSON.parse(JSON.stringify(count));
+						id = adjacencyList[pcId][id - 1][directionName[2 * j]];
+						//隣接リストleft,downへの参照がループしだしたとき、エラー
+						if (adjacencyList[pcId].length === count) {
+							throw new Error("Error:Adjacency judgment has looped");
+							break;
+						}
+					}
+				} catch (error) {
+					console.log(error.message);
+				}
+			}
+		}
+		for (let i in adjacencyList[pcId]) {
+			relativeCoord[pcId][i][0] += resultCount["right"][pcId][i];
+			relativeCoord[pcId][i][1] += resultCount["up"][pcId][i];
+		}
+		//console.log(resultCount);
+		//console.log(relativeCoord);
+	}
+
+	convertDataFormatScannedToTrue(scannedData, pcId) {
+		let direction = ["up", "down", "right", "left"]
+		let trueData = {}
+		trueData[pcId] = []
+		for (let i in this.windowAdjacencyList[pcId]) {
+			trueData[pcId][i] = {};
+			for (let j = 0; j < 4; j++) {
+				if (scannedData[i][j] !== -1) {
+					if (scannedData[i][j][0] === pcId) {
+						trueData[pcId][i][direction[j]] = Number(scannedData[i][j][1]);
+					}
+				}
+			}
+		}
+		return trueData;
 	}
 
 	//command relocate
@@ -269,24 +354,94 @@ class ElectornDisplay {
 		try {
 			console.log("relocateWindowsByRewriteConfig:", data);
 			let relocatedConfig = JSON.parse(JSON.stringify(this.config));
-			console.log(this.config.windows);
-			for (let id in this.config.windows) {	
-				let windowProps = this.config.windows[id];
-				console.log("tmp");
-				if (windowProps.hasOwnProperty('marker_id')) {
-					for (let i in this.config.windows) {
-						console.log(i);
-						let pcId=i[0];
-						let windowId=i[1];
-						console.log("compare");
-						console.log(pcId+windowId);
-						//if(data[])
-						/*if (windowProps.marker_id === data[marker_id]) {
-						}*/
+			let convertedData = JSON.parse(JSON.stringify(data.split('{').join('')));
+			convertedData = convertedData.split('}').join('');
+			convertedData = convertedData.split('[').join('');
+			convertedData = convertedData.split(']').join('');
+			convertedData = convertedData.split('"').join('');
+			convertedData = convertedData.split('data').join('');
+			convertedData = convertedData.split('up').join('');
+			convertedData = convertedData.split('down').join('');
+			convertedData = convertedData.split('right').join('');
+			convertedData = convertedData.split('left').join('');
+			convertedData = convertedData.split(':');
+			let convertedDataResult;
+			for (let i in convertedData) {
+				for (let j = 0; j < convertedData[i].split(',').length; j++) {
+					let tmp = convertedData[i].split(',')[j];
+					if (tmp) {
+						if (!convertedDataResult) {
+							convertedDataResult = [tmp];
+						}
+						else {
+							convertedDataResult.push(tmp);
+						}
 					}
 				}
 			}
+			console.log(convertedDataResult);
 
+
+			for (let id in this.config.windows) {
+				console.log(id);
+				let windowProps = this.config.windows[id];
+
+				if (windowProps.hasOwnProperty('marker_id')) {
+					console.log(windowProps.marker_id);
+					let pcId = this.config.windows[id].marker_id[0];
+					let windowId = this.config.windows[id].marker_id[1];
+					console.log("compare");
+					let trueData = this.windowAdjacencyList[pcId][windowId - 1];
+					console.log(trueData);
+					let scannedData = [];
+					for (let i in this.windowAdjacencyList[pcId]) {
+						let pcIdIndex = convertedDataResult.indexOf(pcId)
+						scannedData[i] = [convertedDataResult[pcIdIndex + i * 4 + 1], convertedDataResult[pcIdIndex + i * 4 + 2],
+						convertedDataResult[pcIdIndex + i * 4 + 3], convertedDataResult[pcIdIndex + i * 4 + 4],]
+					}
+					scannedData = this.convertDataFormatScannedToTrue(scannedData, pcId);
+					console.log(scannedData);
+			
+					let trueRelativeCoord = {};
+					for (let i in this.windowAdjacencyList[pcId]) {
+						if (!trueRelativeCoord[pcId]) { trueRelativeCoord[pcId] = [[0, 0]]; }
+						else { trueRelativeCoord[pcId].push([0, 0]); }
+					}
+					let scannedRelativeCoord = {};
+					for (let i in this.windowAdjacencyList[pcId]) {
+						if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
+						else { scannedRelativeCoord[pcId].push([0, 0]); }
+					}
+					
+					this.calcRelativeCoord(pcId, trueRelativeCoord, this.windowAdjacencyList);
+					this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
+
+					let trueMarkerId;
+					if (scannedRelativeCoord[pcId][windowId - 1][0] !== trueRelativeCoord[pcId][windowId - 1][0] || scannedRelativeCoord[pcId][windowId - 1][1] !== trueRelativeCoord[pcId][windowId - 1][1]) {
+						let searchingCoord = [scannedRelativeCoord[pcId][windowId - 1][0], scannedRelativeCoord[pcId][windowId - 1][1]];
+						for (let i in trueRelativeCoord[pcId]) {
+							if (trueRelativeCoord[pcId][i][0] === searchingCoord[0]) {
+								if (trueRelativeCoord[pcId][i][1] === searchingCoord[1]) {
+									trueMarkerId = Number(i) + 1;
+								}
+							}
+						}
+					}
+					//console.log(trueMarkerId);
+					if (trueMarkerId) {
+						let tmId = pcId + trueMarkerId
+						for (let trueWindowId in this.config.windows) {
+							if (this.config.windows[trueWindowId].marker_id === tmId) {
+								console.log("change");
+								console.log(id, trueWindowId);
+								this.exchangeRelocatedConfig(trueWindowId, id, relocatedConfig);
+							}
+						}
+					}
+
+				}
+			}
+			//console.log("rewritedConfig:", relocatedConfig);
 			fs.writeFileSync(this.configPath, JSON.stringify(relocatedConfig, null, "\t"));
 			return true;
 		}

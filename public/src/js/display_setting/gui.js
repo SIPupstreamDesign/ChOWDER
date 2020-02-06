@@ -14,12 +14,13 @@ class GUI extends EventEmitter {
         this.store = store;
         this.action = action;
 
-    
+
         this.scannedData = [];
         this.scanCompleteFunction;
         this.scanFlagList = [];
         this.displayNumber = 0;
-
+        this.displayNumberX = 0;
+        this.displayNumberY = 0;
 
     }
 
@@ -40,6 +41,9 @@ class GUI extends EventEmitter {
             console.log(reply);
 
             this.displayNumber = reply.splitX * reply.splitY;
+            this.displayNumberX=reply.splitX;
+            this.displayNumberY=reply.splitY;
+            
             let markerList = [];
             this.action.getCurrentDisplayMarkers();
             this.store.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, (err, marker_id) => {
@@ -53,9 +57,10 @@ class GUI extends EventEmitter {
                     for (let i = 0; i < this.displayNumber; i++) {
                         this.scanFlagList[markerList[i]] = 0;
                     }
+                    console.log(markerList);
                     this.setArMarkerImg(markerList);
                     this.setScanButton();
-                   
+
                 }
             });
             // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
@@ -64,17 +69,6 @@ class GUI extends EventEmitter {
                     console.error("Not found for the number: found ", markerList.length, " all ", this.displayNumber);
                 }
             }, 10 * 1000);
-
-            //this.updateVirtualScreen(reply);
-            //this.displayNumber = reply.splitX * reply.splitY;
-            //console.log("displayNumver:" + this.displayNumber);
-            /*
-            this.setArMarkerImg(displayNumber);
-            this.setScanButton(displayNumber);
-            for (let i = 0; i < displayNumber; i++) {
-                this.scanFlagList[i] = 0;
-            }
-            */
         });
 
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
@@ -99,7 +93,7 @@ class GUI extends EventEmitter {
             this.scanCompleteFunction = setInterval((flag) => {
                 for (let i = 0; i < this.displayNumber; i++) {
                     let marker = document.getElementsByTagName("a-marker")[i + 1];
-                    this.scannedData[i] =[marker.id,this.scanFlagList[marker.id], marker.object3D.position];
+                    this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
                 }
                 console.log(this.scannedData);
                 console.log(this.scanFlagList);
@@ -119,36 +113,36 @@ class GUI extends EventEmitter {
         screen.setAttribute("id", "whole_sub_window");
         screen.setAttribute("value", "スキャン開始");
         console.log(reply);
-        let replyLength=Object.keys(reply).length;
-        let width =  replyLength* 100;
-        let height = replyLength * 100;
+        let replyLength = Object.keys(reply).length;
+        let width = this.displayNumberX * 100;
+        let height = this.displayNumberY * 100;
         screen.style.width = String(width) + "px";
         screen.style.height = String(height) + "px";
         screen.style.transform = "translate(" + String(-width / 2) + "px," + String(-height / 2) + "px)";
         body.insertBefore(screen, arEntry);
 
         for (let i in reply) {
-                let column = Math.ceil((i + 1) / replyLength);
-                let line = Math.ceil(i + 1 - (column - 1) * replyLength);
-                let unitWidth = 100;
-                let unitHeight = 100;
-                let translateX = (reply[i].relativeCoord[0]) * unitWidth - width / 2;
-                let translateY = height / 2-(reply[i].relativeCoord[1]+1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
+            let column = Math.ceil((i + 1) / replyLength);
+            let line = Math.ceil(i + 1 - (column - 1) * replyLength);
+            let unitWidth = 100;
+            let unitHeight = 100;
+            let translateX = (reply[i].relativeCoord[0]) * unitWidth - width / 2;
+            let translateY = height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
 
-                let newVirtualDisplay = document.createElement("div");
-                newVirtualDisplay.setAttribute("id", "whole_sub_window:" + column + ":" + line);
-                newVirtualDisplay.setAttribute("style.z-index", "100000");
-                newVirtualDisplay.style.opacity = "0.5";
-                newVirtualDisplay.style.backgroundColor = "white";
-                newVirtualDisplay.style.width = unitWidth + "px";
-                newVirtualDisplay.style.height = unitHeight + "px";
-                newVirtualDisplay.style.border = "2px solid red";
-                newVirtualDisplay.style.position = "absolute";
-                newVirtualDisplay.style.left = "50%";
-                newVirtualDisplay.style.top = "50%";
-                newVirtualDisplay.style.transform = "translate(" + translateX + "px," + translateY + "px)";
-                newVirtualDisplay.innerHTML = String(i);
-                screen.appendChild(newVirtualDisplay);
+            let newVirtualDisplay = document.createElement("div");
+            newVirtualDisplay.setAttribute("id", "whole_sub_window:" + column + ":" + line);
+            newVirtualDisplay.setAttribute("style.z-index", "100000");
+            newVirtualDisplay.style.opacity = "0.5";
+            newVirtualDisplay.style.backgroundColor = "white";
+            newVirtualDisplay.style.width = unitWidth + "px";
+            newVirtualDisplay.style.height = unitHeight + "px";
+            newVirtualDisplay.style.border = "2px solid red";
+            newVirtualDisplay.style.position = "absolute";
+            newVirtualDisplay.style.left = "50%";
+            newVirtualDisplay.style.top = "50%";
+            newVirtualDisplay.style.transform = "translate(" + translateX + "px," + translateY + "px)";
+            newVirtualDisplay.innerHTML = String(i);
+            screen.appendChild(newVirtualDisplay);
         }
     }
 
@@ -175,7 +169,7 @@ class GUI extends EventEmitter {
 
         for (let i = 1; i <= this.displayNumber; i++) {
             let newMarker = document.createElement("a-marker");
-            newMarker.setAttribute("id",markerList[i - 1]);
+            newMarker.setAttribute("id", markerList[i - 1]);
             newMarker.addEventListener("markerFound", (evt) => {
                 this.scanFlagList[markerList[i - 1]] = 1;
                 console.log("ar_marker" + i + "found")
