@@ -67,5 +67,5 @@ Action.EVENT_CALC_ABSOLUTE_POSITION="calcAbsolutePosition";
 Action.EVENT_STORE_SCANNED_DATA="storeScannedData";
 Action.EVENT_SET_DATA_LIST="setDataList";
 Action.EVENT_SET_SEND_DATA="sendData";
-Action.EVENT_DELETE_DATA_LIST="deletedataList";
+Action.EVENT_DELETE_DATA_LIST="deleteDataList";
 export default Action;

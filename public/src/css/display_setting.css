@@ -68,6 +68,17 @@ pre {
 	z-index:100000;
 }
 
+_::-webkit-full-page-media, _:future, :root #scan_toggle_button{
+	background: rgb(255, 255, 255);
+	height: 30px;
+	width: 100px;
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	z-index:1000000;
+	display:block;
+}
 #scan_toggle_button{
 	background: rgb(255, 255, 255);
 	height: 30px;
@@ -78,12 +89,44 @@ pre {
 	z-index:1000000;
 	display:block;
 }
+
+_::-webkit-full-page-media, _:future, :root #scan_button{
+	background: rgb(255, 255, 255);
+	height: 30px;	
+	width: 100px;
+	position: absolute;
+	bottom: 0px;
+	left: 100px;
+	right: 0px;
+	z-index:1000000;
+	display:block;
+}
 #scan_button{
 	background: rgb(255, 255, 255);
 	height: 30px;
 	position: absolute;
 	bottom: 0px;
 	left: 50%;
+	right: 0px;
+	z-index:1000000;
+	display:block;
+}
+
+_::-webkit-full-page-media, _:future, :root #send_button{
+	background: rgb(255, 255, 255);
+	height: 30px;
+	width: 100px;
+	position: absolute;
+	bottom: 0px;
+	right: 100px;
+	z-index:1000000;
+	display:block;
+}
+#send_button{
+	background: rgb(255, 255, 255);
+	height: 30px;
+	position: absolute;
+	bottom: 0px;
 	right: 0px;
 	z-index:1000000;
 	display:block;

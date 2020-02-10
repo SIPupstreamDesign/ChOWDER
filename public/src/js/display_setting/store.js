@@ -115,22 +115,20 @@ class Store extends EventEmitter {
     _getDataList(data) {
         console.log("getDataList")
         let sendData=[data,];
-        console.log(this.dataList);
-        console.log(this.dataList.length);
         if (Object.keys(this.dataList.length!==0)) { 
             console.log("exist")
-            sendData = [data,this.deepCopy(this.dataList)]; 
+            sendData = [data,this.dataList]; 
         }
-        console.log(sendData)
         this.emit(Store.EVENT_DONE_GET_DATA_LIST,null, sendData);
     }
 
     /**
      * データリストをリセット
      */
-    _deletedatalist() {
+    _deleteDataList() {
         this.dataList = [];
-        this.emit(Store.EVENT_DONE_DELETE_DATA_LIST, err, null);
+        //console.log(dataList);
+        this.emit(Store.EVENT_DONE_DELETE_DATA_LIST, null, null);
     }
 
     /**
@@ -175,7 +173,7 @@ class Store extends EventEmitter {
             console.log("err", err);
         }//this.sendData = data;
         //データ送信
-        Connector.send(Command.RelocateElectronDisplay, data, (err, reply) => { /*this.dataList = [];*/ });
+    Connector.send(Command.RelocateElectronDisplay, data, (err, reply) => { /*this.dataList = [];*/ });
     }
 
     /**
@@ -198,10 +196,10 @@ class Store extends EventEmitter {
             }
         };
         for (let adjId in this.dataList) {
-            let tmpLength = Object.keys(this.dataList).length;
-            console.log(tmpLength);
+            let dataLength = Object.keys(this.dataList).length;
+            console.log(dataLength);
             for (let i in dir) {
-                data[adjId][dir[i]] = data[adjId][dir[i]] / tmpLength;
+                data[adjId][dir[i]] = data[adjId][dir[i]] / dataLength/2;
             }
             console.log(data);
         }
@@ -226,8 +224,8 @@ class Store extends EventEmitter {
                                 let tmpUpDifference = [this.dataList[j].pos2d[0] - this.dataList[i].pos2d[0], this.dataList[j].pos2d[1] - this.dataList[i].pos2d[1]];
                                 let tmpUpDistance = Math.sqrt(tmpUpDifference[0] * tmpUpDifference[0] + tmpUpDifference[1] * tmpUpDifference[1]);
                                 if (tmpUpDistance < distances[dir[dirPointK]] || distances[dir[dirPointK]] === 0) {
-                                    console.log(i + j + dir[dirPointK])
-                                    console.log(tmpUpDistance);
+                                   // console.log(i + j + dir[dirPointK])
+                                    //console.log(tmpUpDistance);
                                     distances[dir[dirPointK]] = this.deepCopy(tmpUpDistance);
 
                                     this.dataList[i].adj[dir[dirPointK]] = j;
@@ -259,12 +257,14 @@ class Store extends EventEmitter {
                     let count = 1;
                     try {
                         while (id !== -1) {
+                            console.log("search")
                             resultCount[directionName[2 * j]][id] += count;
                             id = this.dataList[id].adj[directionName[2 * j]];
                             count++;
-                            //隣接リストleft,downへの参照がループしだしたとき、エラー
-                            if (this.dataList.length === count) {
-                                throw new Error("Error:Adjacency judgment has looped");
+                            //隣接リストright,upへの参照がループしだしたとき、エラー
+                            if (Object.keys(this.dataList).length <= count) {
+                                break;
+                                //throw new Error("Error:Adjacency judgment has looped");
                             }
                         }
                     } catch (error) {
@@ -297,10 +297,10 @@ class Store extends EventEmitter {
         let itr = 0;
         let IdQuantity = Object.keys(this.dataList).length;
         let differenceList = [];
-        console.log(IdQuantity);
+        //console.log(IdQuantity);
         for (let a = 0; a < IdQuantity - 1; a++) {
             for (let b = 1; b < IdQuantity - a; b++) {
-                console.log(String(a) + String(b))
+          //      console.log(String(a) + String(b))
                 let abId = data[a + b][0];
                 let aId = data[a][0];
                 if (this.dataList[abId] && this.dataList[aId] && data[a][1] === 1 && data[a + b][1] === 1) {
@@ -319,8 +319,8 @@ class Store extends EventEmitter {
     //IDの隣接状況の蓄積を行う
     _storeScannedData(data) {
         //データの表示
-        console.log("data");
-        console.log(this.deepCopy(data));
+        //console.log("data");
+        //console.log(this.deepCopy(data));
 
         console.log("pos");
         for (let i = 0; i < data.length; i++) {
@@ -361,7 +361,7 @@ class Store extends EventEmitter {
             let idA = differenceList[i]["id"].substr(0, 2);
             let idB = differenceList[i]["id"].substr(2, 4);
             let margin = 0.5;
-            console.log(idA + ":" + idB)
+            //console.log(idA + ":" + idB)
             if (!this.dataList[idA].upPoint[idB]) {
                 this.dataList[idA].upPoint[idB] = 0;
             }
@@ -425,5 +425,5 @@ Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "get_virtual_display";
 Store.EVENT_DONE_STORE_SCANNED_DATA = "store_scanned_data";
 Store.EVENT_DONE_SET_DATA_LIST = "set_data_list";
 Store.EVENT_DONE_SEND_DATA = "send_data";
-Store.EVENT_DONE_DELETE_DATA_LIST = "delete_dajacency_list"
+Store.EVENT_DONE_DELETE_DATA_LIST = "delete_data_list"
 export default Store;

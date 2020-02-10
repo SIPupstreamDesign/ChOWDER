@@ -73,18 +73,14 @@ class GUI extends EventEmitter {
         });
 
         this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
-             console.log("getDatalist")
-            console.log(reply[1]);
-            if (!reply[1][1]) {
-                console.log("none")
+            if (Object.keys(reply[1]).length===0) {
+                console.log("Send button none")
                 reply[0].style.display = "none";
             }
             else {
-                console.log("block")
+                console.log("Send button block")
                 reply[0].style.display = "block";
             }
-            console.log("getDatalist")
-            console.log(reply);
         });
 
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
@@ -102,13 +98,16 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_DONE_SEND_DATA, (err, reply) => {
             console.log(reply);
         });
+        this.store.on(Store.EVENT_DELETE_DATA_LIST, (err, reply) => {
+            console.log("delete");
+        });
 
         //スキャン開始ボタン
         document.getElementById("scan_toggle_button").onclick = () => {
+            this.action.deleteDataList();
             console.log("SCAN START");
             document.getElementById("scan_toggle_button").style.display = "none";
             document.getElementById("scan_button").style.display = "block";
-            this.action.deleteDataList();
             document.getElementById("send_button").style.display = "none";
             this.scanCompleteFunction = setInterval((flag) => {
                 for (let i = 0; i < this.displayNumber; i++) {
@@ -136,33 +135,34 @@ class GUI extends EventEmitter {
         screen.setAttribute("value", "スキャン開始");
         console.log(reply);
         let replyLength = Object.keys(reply).length;
-        let width = this.displayNumberX * 100;
-        let height = this.displayNumberY * 100;
-        screen.style.width = String(width) + "px";
-        screen.style.height = String(height) + "px";
-        screen.style.transform = "translate(" + String(-width / 2) + "px," + String(-height / 2) + "px)";
+        let width = 50;//this.displayNumberX * 100;
+        let height = 50;//this.displayNumberY * 100;
+        screen.style.width = String(width) + "%";
+        screen.style.height = String(height) + "%";
+        screen.style.transform = "translate(" + String(-width ) + "%," + String(-height ) + "%)";
         body.insertBefore(screen, arEntry);
 
         for (let i in reply) {
             let column = Math.ceil((i + 1) / replyLength);
             let line = Math.ceil(i + 1 - (column - 1) * replyLength);
-            let unitWidth = 100;
-            let unitHeight = 100;
-            let translateX = (reply[i].relativeCoord[0]) * unitWidth - width / 2;
-            let translateY = height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
+            let unitWidth = 100/this.displayNumberX ;
+            let unitHeight = 100/this.displayNumberY;
+            let translateX = this.displayNumberX*(reply[i].relativeCoord[0]) * unitWidth- this.displayNumberX*width;
+            let translateY = this.displayNumberY*height  - this.displayNumberY*(reply[i].relativeCoord[1] + 1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
 
             let newVirtualDisplay = document.createElement("div");
             newVirtualDisplay.setAttribute("id", "whole_sub_window:" + column + ":" + line);
             newVirtualDisplay.setAttribute("style.z-index", "100000");
+            newVirtualDisplay.style.fontSize="100%";
             newVirtualDisplay.style.opacity = "0.5";
             newVirtualDisplay.style.backgroundColor = "white";
-            newVirtualDisplay.style.width = unitWidth + "px";
-            newVirtualDisplay.style.height = unitHeight + "px";
+            newVirtualDisplay.style.width = unitWidth + "%";
+            newVirtualDisplay.style.height = unitHeight + "%";
             newVirtualDisplay.style.border = "2px solid red";
             newVirtualDisplay.style.position = "absolute";
             newVirtualDisplay.style.left = "50%";
             newVirtualDisplay.style.top = "50%";
-            newVirtualDisplay.style.transform = "translate(" + translateX + "px," + translateY + "px)";
+            newVirtualDisplay.style.transform = "translate(" + translateX + "%," + translateY + "%)";
             newVirtualDisplay.innerHTML = String(i);
             screen.appendChild(newVirtualDisplay);
         }
