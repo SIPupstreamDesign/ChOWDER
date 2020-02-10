@@ -170,7 +170,7 @@ class GUI extends EventEmitter {
         if (window.location.href.indexOf('https') >= 0) {
             baseURL = "https://" + window.location.hostname + ":" + window.location.port;
         } else {
-            baseURL = "https://" + window.location.hostname + ":" + window.location.port;
+            baseURL = "http://" + window.location.hostname + ":" + window.location.port;
         }
         for (let i = 1; i <= this.displayNumber; i++) {
             let newMarker = document.createElement("a-marker");
