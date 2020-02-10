@@ -57,6 +57,12 @@ class Store extends EventEmitter {
         super.emit(...arguments);
     }
 
+    release() {
+        Connector.send(Command.SendMessage, {
+            command : "CloseElectronDisplay"
+        }, (err, reply) => {});
+    }
+
     initStartupEvent() {
         this.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             if (err) {
@@ -215,7 +221,14 @@ class Store extends EventEmitter {
         Connector.send(Command.SendMessage, {
             command : "RelocateElectronDisplay",
             data : data
-        }, (err, reply) => { /*this.dataList = [];*/ });
+        }, (err, reply) => {
+            setTimeout(() => {
+                // マーカーを再表示させる
+                Connector.send(Command.SendMessage, {
+                    command : "StartDisplaySetting",
+                }, (err, reply) => {});
+            }, 10000);
+        });
     }
 
     /**
