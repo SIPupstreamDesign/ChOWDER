@@ -58,8 +58,13 @@ class GUI extends EventEmitter {
                     menu.appendChild(button.getDOM());
                 }
             }
-            this.showArMarker(this.store.getWindowID());
         })
+
+        this.store.on(Store.EVENT_START_DISPLAY_SETTING, (err, json) => {
+            if (!err) {
+                this.showArMarker();
+            }
+        });
 
         // 上部メニュー
         this.headMenu = null;
@@ -967,12 +972,16 @@ class GUI extends EventEmitter {
     }
 
     showArMarker() {
-            let displayMarkerID=this.store.getQueryParams().marker_id;
-            //console.log(displayMarkerID);
-            document.getElementById('ar_marker_img').setAttribute("src", "./src/image/markers/marker"+displayMarkerID+".png");
+        document.getElementById('ar_marker').style.display = "block";
+        let displayMarkerID = this.store.getMarkerID();
+        if (displayMarkerID) {
+            document.getElementById('ar_marker_img').setAttribute("src", "./src/image/markers/marker" + displayMarkerID + ".png");
+        } else {
+            console.error("Not found marker_id");
+        }
     }
     deleteArMarker() {
-        document.getElementById('ar_marker').style.display="none"
+        document.getElementById('ar_marker').style.display = "none"
     }
 }
 

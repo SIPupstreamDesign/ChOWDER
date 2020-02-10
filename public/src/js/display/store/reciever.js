@@ -139,7 +139,7 @@ class Receiver {
             this.store.emit(Store.EVENT_REQUEST_SHOW_DISPLAY_ID, null, data);
         });
 
-        /// Display全リロード. デバッグ用
+        /// Display全リロード. DisplaySettingおよびデバッグ用
         this.connector.on(Command.ReloadDisplay, (data) => {
             if (window.isElectron()) {
                 window.electronReload();
@@ -148,24 +148,6 @@ class Receiver {
             }
         });
         
-        /// ElectronDisplayクローズ.
-        this.connector.on(Command.CloseElectronDisplay, (data) => {
-            if (window.isElectron()) {
-                window.electronClose();
-            }
-        });
-
-        /// ElectronDisplayクローズ.
-        this.connector.on(Command.RelocateElectronDisplay, (data) => {
-            if (window.isElectron()) {
-                try {
-                    window.electronRelocate(JSON.stringify(data));
-                } catch(err) {
-                    console.error(err);
-                }
-            }
-        });
-
         /// メタデータが更新された
         this.connector.on(Command.UpdateMetaData, (data) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
@@ -248,9 +230,9 @@ class Receiver {
             }
         });
 
-        // VideoControllerの動画一括コントロール.
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'rewindVideo') {
+                // VideoControllerの動画一括コントロール.
                 data.ids.forEach((id) => {
                     let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);
                     if (videoPlayer) {
@@ -258,6 +240,26 @@ class Receiver {
                         video.currentTime = 0.0;
                     }
                 });
+            }
+            /// ElectronDisplay再配置
+            if (data.command === 'RelocateElectronDisplay') {
+                if (window.isElectron()) {
+                    try {
+                        window.electronRelocate(JSON.stringify(data.data));
+                    } catch(err) {
+                        console.error(err);
+                    }
+                }
+            }
+            /// ElectronDisplayクローズ.
+            if (data.command === 'CloseElectronDisplay') {
+                if (window.isElectron()) {
+                    window.electronClose();
+                }
+            }
+            /// DisplaySetting開始.
+            if (data.command === 'StartDisplaySetting') {
+                this.store.onStartDisplaySetting(null, data);
             }
         });
     }

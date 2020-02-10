@@ -74,6 +74,9 @@ class Store extends EventEmitter {
                 }
                 markerList.push(marker_id);
                 if (markerList.length === displayCount) {
+                    Connector.send(Command.SendMessage, {
+                        command : "StartDisplaySetting"
+                    }, (err, reply) => {});
                     this.emit(Store.EVENT_START_SCAN, null, markerList);
                 }
             });
@@ -209,7 +212,10 @@ class Store extends EventEmitter {
             console.log("err", err);
         }//this.sendData = data;
         //データ送信
-    Connector.send(Command.RelocateElectronDisplay, data, (err, reply) => { /*this.dataList = [];*/ });
+        Connector.send(Command.SendMessage, {
+            command : "RelocateElectronDisplay",
+            data : data
+        }, (err, reply) => { /*this.dataList = [];*/ });
     }
 
     /**

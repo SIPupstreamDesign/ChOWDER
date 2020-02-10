@@ -146,22 +146,6 @@
                 }
             });
 
-            ws_connector.on(Command.CloseElectronDisplay, (data, resultCallback) => {
-                console.log("CloseElectronDisplay")
-                ws_connector.broadcast(ws, Command.CloseElectronDisplay, data);
-                if (resultCallback) {
-                    resultCallback();
-                }
-            });
-
-            ws_connector.on(Command.RelocateElectronDisplay, (data, resultCallback) => {
-                console.log("RelocateElectronDisplay")
-                ws_connector.broadcast(ws, Command.RelocateElectronDisplay, data);
-                if (resultCallback) {
-                    resultCallback();
-                }
-            });
-
             ws_connector.on(Command.SendMessage, (data, resultCallback) => {
                 ws_connector.broadcast(ws, Command.SendMessage, data);
                 if (resultCallback) {

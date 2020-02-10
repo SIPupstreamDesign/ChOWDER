@@ -30,6 +30,9 @@ class Store extends EventEmitter {
         this.globalSetting = null;
         this.virtualDisplay = null;
 
+        // display_setting用のマーカーID
+        this.markerID = null;
+
         // 接続時に遅延して初期化する
         this.receiver = null;
         this.videoStore = null;
@@ -294,6 +297,10 @@ class Store extends EventEmitter {
         let query = this.getQueryParams(location.search) || {};
         windowID = query.id ? decodeURIComponent(query.id) : windowID;
         let groupId = undefined;
+
+        if (query.marker_id) {
+            this.markerID = query.marker_id;
+        }
         
         let f = () => {
             if (windowID !== '') {
@@ -464,12 +471,24 @@ class Store extends EventEmitter {
         this.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, json)
     }
 
+    onStartDisplaySetting(err, json) {
+        this.emit(Store.EVENT_START_DISPLAY_SETTING, err, json);
+    }
+
     /**
      * window idの取得.
      * @method getWindowID
      */
     getWindowID() {
         return this.getQueryParams().id;
+    }
+
+    /**
+     * Marker IDの取得
+     * ない場合はnullが返る
+     */
+    getMarkerID() {
+        return this.markerID;
     }
 
     /**
@@ -624,6 +643,7 @@ Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
+Store.EVENT_START_DISPLAY_SETTING = "start_display_setting";
 
 // reviever
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
