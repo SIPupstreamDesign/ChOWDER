@@ -33,43 +33,6 @@ class GUI extends EventEmitter {
 
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
-            this.action.getVirtualDisplay();
-        });
-
-
-        this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
-            console.log("getv");
-            console.log(reply);
-
-            this.displayNumber = reply.splitX * reply.splitY;
-            this.displayNumberX = reply.splitX;
-            this.displayNumberY = reply.splitY;
-
-            let markerList = [];
-            this.action.getCurrentDisplayMarkers();
-            this.store.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, (err, marker_id) => {
-                if (err) {
-                    console.error(err); return;
-                }
-                markerList.push(marker_id);
-                if (markerList.length === this.displayNumber) {
-                    // marker_idを持ったdisplayが、virtualdisplayのgrid枠と同じ個数登録されていた.
-                    // アプリを開始してもOK. 初期化する 
-                    for (let i = 0; i < this.displayNumber; i++) {
-                        this.scanFlagList[markerList[i]] = 0;
-                    }
-                    console.log(markerList);
-                    this.setArMarkerImg(markerList);
-                    this.setScanButton();
-                    this.setSendButton();
-                }
-            });
-            // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
-            setTimeout(() => {
-                if (markerList.length < this.displayNumber) {
-                    console.error("Not found for the number: found ", markerList.length, " all ", this.displayNumber);
-                }
-            }, 10 * 1000);
         });
 
         this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
@@ -101,25 +64,48 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_DELETE_DATA_LIST, (err, reply) => {
             console.log("delete");
         });
+        this.store.on(Store.EVENT_START_SCAN, (err, markerList) => {
+            if (!err) {
+                let vd = this.store.getVirtualDisplay();
+                this.displayNumber = vd.splitX * vd.splitY;
+                this.displayNumberX = vd.splitX;
+                this.displayNumberY = vd.splitY;
+    
+                // marker_idを持ったdisplayが、virtualdisplayのgrid枠と同じ個数登録されていた.
+                // アプリを開始してもOK. 初期化する 
+                for (let i = 0; i < this.displayNumber; i++) {
+                    this.scanFlagList[markerList[i]] = 0;
+                }
+                console.log(markerList);
+                this.setArMarkerImg(markerList);
+                this.setScanButton();
+                this.setSendButton();
+                    
+                document.getElementById("scan_toggle_button").style.display = "none";
+                document.getElementById("scan_button").style.display = "block";
+                document.getElementById("send_button").style.display = "none";
+                this.scanCompleteFunction = setInterval((flag) => {
+                    for (let i = 0; i < this.displayNumber; i++) {
+                        let marker = document.getElementsByTagName("a-marker")[i + 1];
+                        this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
+                    }
+                    console.log(this.scannedData);
+                    console.log(this.scanFlagList);
+                    let sendData = this.scannedData;
+                    console.log(sendData);
+                    this.action.storeScannedData(sendData);
+                }, 100, this.scanFlagList);
+            } else {
+                // エラーダイアログを出す
+                console.error(err);
+            }
+        });
 
         //スキャン開始ボタン
         document.getElementById("scan_toggle_button").onclick = () => {
             this.action.deleteDataList();
             console.log("SCAN START");
-            document.getElementById("scan_toggle_button").style.display = "none";
-            document.getElementById("scan_button").style.display = "block";
-            document.getElementById("send_button").style.display = "none";
-            this.scanCompleteFunction = setInterval((flag) => {
-                for (let i = 0; i < this.displayNumber; i++) {
-                    let marker = document.getElementsByTagName("a-marker")[i + 1];
-                    this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
-                }
-                console.log(this.scannedData);
-                console.log(this.scanFlagList);
-                let sendData = this.scannedData;
-                console.log(sendData);
-                this.action.storeScannedData(sendData);
-            }, 100, this.scanFlagList);
+            this.action.startScan();
         };
     }
 

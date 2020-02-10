@@ -56,7 +56,12 @@ class Action extends EventEmitter
     deleteDataList(){
         this.emit(Action.EVENT_DELETE_DATA_LIST, null, null);    
     }
-    
+    /**
+     * スキャン開始
+     */
+    startScan(data) {
+        this.emit(Action.EVENT_START_SCAN, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -68,4 +73,5 @@ Action.EVENT_STORE_SCANNED_DATA="storeScannedData";
 Action.EVENT_SET_DATA_LIST="setDataList";
 Action.EVENT_SET_SEND_DATA="sendData";
 Action.EVENT_DELETE_DATA_LIST="deleteDataList";
+Action.EVENT_START_SCAN="startScan";
 export default Action;

@@ -26,9 +26,11 @@ class Store extends EventEmitter {
         
         this.dataList =[];
         this.sendData;
+        this.virtualDisplay = null;
 
         this.isInitialized_ = false;
         this.initEvents();
+        this.initStartupEvent();
     }
 
     initEvents() {
@@ -53,6 +55,40 @@ class Store extends EventEmitter {
             }
         }
         super.emit(...arguments);
+    }
+
+    initStartupEvent() {
+        this.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
+            if (err) {
+                this.emit(Store.EVENT_START_SCAN, err, null);
+                return;
+            }
+            let displayCount = reply.splitX * reply.splitY;
+            console.log(reply);
+
+            let markerList = [];
+            this._getCurrentDisplayMarkers();
+            this.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, (err, marker_id) => {
+                if (err) {
+                    console.error(err); return;
+                }
+                markerList.push(marker_id);
+                if (markerList.length === displayCount) {
+                    this.emit(Store.EVENT_START_SCAN, null, markerList);
+                }
+            });
+            // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
+            setTimeout(() => {
+                if (markerList.length < displayCount) {
+                    const errStr = "Not found for the number";
+                    this.emit(Store.EVENT_START_SCAN, errStr, null);
+                }
+            }, 1 * 1000);
+        });
+    }
+
+    getVirtualDisplay() {
+        return this.virtualDisplay;
     }
 
     deepCopy(data) {
@@ -414,6 +450,14 @@ class Store extends EventEmitter {
         this.emit(Store.EVENT_DONE_STORE_SCANNED_DATA, null, this.deepCopy(this.dataList));
     }
 
+    _startScan(data) {
+        if (!Connector.isConnected()) {
+            // 接続されてない
+            this.emit(Store.EVENT_START_SCAN, "Cannot connect to server");
+            return;
+        }
+        this._getVirtualDisplay();
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -426,4 +470,5 @@ Store.EVENT_DONE_STORE_SCANNED_DATA = "store_scanned_data";
 Store.EVENT_DONE_SET_DATA_LIST = "set_data_list";
 Store.EVENT_DONE_SEND_DATA = "send_data";
 Store.EVENT_DONE_DELETE_DATA_LIST = "delete_data_list"
+Store.EVENT_START_SCAN = "start_scan"
 export default Store;
