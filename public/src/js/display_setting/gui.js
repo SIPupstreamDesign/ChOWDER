@@ -208,7 +208,12 @@ class GUI extends EventEmitter {
         let arEntry = document.getElementById("ar_entry");
         let setCamera = document.getElementById("camera");
         console.log(markerList);
-
+        let baseURL;
+        if (window.location.href.indexOf('https') >= 0) {
+            baseURL = "https://" + window.location.hostname + ":" + window.location.port;
+        } else {
+            baseURL = "http://" + window.location.hostname + ":" + window.location.port;
+        }
         for (let i = 1; i <= this.displayNumber; i++) {
             let newMarker = document.createElement("a-marker");
             newMarker.setAttribute("id", markerList[i - 1]);
@@ -222,7 +227,7 @@ class GUI extends EventEmitter {
             });
             newMarker.setAttribute("preset", "custom");
             newMarker.setAttribute("type", "pattern");
-            newMarker.setAttribute("Url", "http://localhost:8080/src/image/markers/marker" + markerList[i - 1] + ".patt");
+            newMarker.setAttribute("Url", baseURL + "/src/image/markers/marker" + markerList[i - 1] + ".patt");
             let boxModelOrigin = document.getElementsByClassName("text");
             let boxModelClone = boxModelOrigin[0].cloneNode(true);
             boxModelClone.setAttribute("value", "Marker" + String(markerList[i - 1]));
