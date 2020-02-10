@@ -7,14 +7,14 @@ import Connector from '../common/ws_connector.js';
 import Command from '../common/command';
 import Constants from '../common/constants'
 
-function Adjacency() {
+function DispPosData() {
     this.id = -1;
     this.pos2d = [0, 0];
-    this.adjacencyUp = [];
-    this.adjacencyDown = [];
-    this.adjacencyRight = [];
-    this.adjacencyLeft = [];
-    this.adjacency = { up: -1, down: -1, right: -1, left: -1 };
+    this.upPoint = {};
+    this.downPoint = {};
+    this.rightPoint = {};
+    this.leftPoint = {};
+    this.adj = { up: -1, down: -1, right: -1, left: -1 };
     this.relativeCoord = [0, 0];
 };
 
@@ -23,13 +23,8 @@ class Store extends EventEmitter {
     constructor(action) {
         super();
         this.action = action;
-
-        this.displayNumber = 0;
-
-        /* this.adjacencyList;
-         this.differenceList = [];
- */
-        this.AdjacencyList = [];
+        
+        this.dataList =[];
         this.sendData;
 
         this.isInitialized_ = false;
@@ -117,6 +112,27 @@ class Store extends EventEmitter {
         });
     }
 
+    _getDataList(data) {
+        console.log("getDataList")
+        let sendData=[data,];
+        console.log(this.dataList);
+        console.log(this.dataList.length);
+        if (Object.keys(this.dataList.length!==0)) { 
+            console.log("exist")
+            sendData = [data,this.deepCopy(this.dataList)]; 
+        }
+        console.log(sendData)
+        this.emit(Store.EVENT_DONE_GET_DATA_LIST,null, sendData);
+    }
+
+    /**
+     * データリストをリセット
+     */
+    _deletedatalist() {
+        this.dataList = [];
+        this.emit(Store.EVENT_DONE_DELETE_DATA_LIST, err, null);
+    }
+
     /**
      * ディスプレイに送るためのデータ構造に変換
      * @param {*} data
@@ -132,13 +148,13 @@ class Store extends EventEmitter {
      */
     convertSendData() {
         let data = {};
-        for (let i in this.AdjacencyList) {
-            let adjacency = this.AdjacencyList[i].adjacency;
+        for (let i in this.dataList) {
+            let adj = this.dataList[i].adj;
             if (!data[i.charAt(0)]) {
                 data[i.charAt(0)] = [];
             }
-            console.log(adjacency);
-            data[i.charAt(0)][i.charAt(1) - 1] = this.deepCopy(adjacency);
+            console.log(adj);
+            data[i.charAt(0)][i.charAt(1) - 1] = this.deepCopy(adj);
         }
         console.log(data);
         return data;
@@ -159,167 +175,96 @@ class Store extends EventEmitter {
             console.log("err", err);
         }//this.sendData = data;
         //データ送信
-        Connector.send(Command.RelocateElectronDisplay, data, (err, reply) => { this.AdjacencyList = []; });
-        //隣接リストをリセット
-        //this.AdjacencyList = [];
+        Connector.send(Command.RelocateElectronDisplay, data, (err, reply) => { /*this.dataList = [];*/ });
     }
 
-    //スキャン回数の半分に満たないデータは捨てる
+    /**
+     * スキャン回数の平均に満たないデータは捨てる
+     * @param {*} data 
+     */
     calcScanMinMargin(data) {
-        for (let adjacencyId in this.AdjacencyList) {
-            if (!data[adjacencyId]) {
-                data[adjacencyId] = [];
-            }
-            data[adjacencyId]["up"] = 0;
-            data[adjacencyId]["down"] = 0;
-            data[adjacencyId]["right"] = 0;
-            data[adjacencyId]["left"] = 0;
-            for (let upId in this.AdjacencyList[adjacencyId].adjacencyUp) {
-                data[adjacencyId]["up"] += this.AdjacencyList[adjacencyId].adjacencyUp[upId];
-            }
-            for (let downId in this.AdjacencyList[adjacencyId].adjacencyDown) {
-                data[adjacencyId]["down"] += this.AdjacencyList[adjacencyId].adjacencyDown[downId];
-            }
-            for (let rightId in this.AdjacencyList[adjacencyId].adjacencyRight) {
-                data[adjacencyId]["right"] += this.AdjacencyList[adjacencyId].adjacencyRight[rightId];
-            }
-            for (let leftId in this.AdjacencyList[adjacencyId].adjacencyLeft) {
-                data[adjacencyId]["left"] += this.AdjacencyList[adjacencyId].adjacencyLeft[leftId];
+        let dir = ["up", "down", "right", "left"];
+        for (let adjId in this.dataList) {
+            let point = [this.dataList[adjId].upPoint, this.dataList[adjId].downPoint, this.dataList[adjId].rightPoint, this.dataList[adjId].leftPoint];
+            for (let i in dir) {
+                if (!data[adjId]) {
+                    data[adjId] = [];
+                }
+                data[adjId][dir[i]] = 0;
+
+                for (let dirId in point[i]) {
+                    data[adjId][dir[i]] += point[i][dirId];
+                }
             }
         };
-        for (let adjacencyId in this.AdjacencyList) {
-            let tmpLength=Object.keys(this.AdjacencyList).length;
+        for (let adjId in this.dataList) {
+            let tmpLength = Object.keys(this.dataList).length;
             console.log(tmpLength);
-            data[adjacencyId]["up"] = data[adjacencyId]["up"]/tmpLength;
-            data[adjacencyId]["down"] = data[adjacencyId]["down"]/tmpLength;
-            data[adjacencyId]["right"] = data[adjacencyId]["right"]/tmpLength;
-            data[adjacencyId]["left"] =data[adjacencyId]["left"]/ tmpLength;
-        }
-        console.log(data);
-        /*for (let id in data) {
-            for (let markerId in data[id]) {
-                data[id][markerId] = data[id][markerId] / 2;
+            for (let i in dir) {
+                data[adjId][dir[i]] = data[adjId][dir[i]] / tmpLength;
             }
-        }*/
+            console.log(data);
+        }
     }
 
+    /**
+     * 隣接関係の決定
+     * @param {*} minMarginData 
+     */
     desideAdjacency(minMarginData) {
-        for (let i in this.AdjacencyList) {
+        for (let i in this.dataList) {
             let distances = { up: 0, down: 0, right: 0, left: 0 };
-            for (let j in this.AdjacencyList) {
-                if (this.AdjacencyList[i]) {
+            for (let j in this.dataList) {
+                if (this.dataList[i]) {
+                    let point = [this.dataList[i].upPoint[j], this.dataList[i].downPoint[j], this.dataList[i].rightPoint[j], this.dataList[i].leftPoint[j]]
+                    let dir = ["up", "down", "right", "left"];
+                    for (let dirPointK in point) {
+                        if (point[dirPointK]) {
+                            let upIdPoint = this.deepCopy(point[dirPointK]);
+                            if (upIdPoint >= minMarginData[i][dir[dirPointK]]) {
 
-                    if (this.AdjacencyList[i].adjacencyUp[j]) {
-                        let upIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyUp[j]);
-                        if (/*upIdPoint >= this.AdjacencyList[i].adjacency["up"] &&*/ upIdPoint >= minMarginData[i]["up"]) {
-                           
-                            let tmpUpDifference = [this.AdjacencyList[j].pos2d[0] - this.AdjacencyList[i].pos2d[0], this.AdjacencyList[j].pos2d[1] - this.AdjacencyList[i].pos2d[1]];
-                            let tmpUpDistance = Math.sqrt(tmpUpDifference[0] * tmpUpDifference[0] + tmpUpDifference[1] * tmpUpDifference[1]);
-                            if (tmpUpDistance < distances["up"] || distances["up"] === 0) { 
-                                console.log(i+j+"up")
-                                console.log(tmpUpDistance);
-                                distances["up"] = this.deepCopy(tmpUpDistance);
+                                let tmpUpDifference = [this.dataList[j].pos2d[0] - this.dataList[i].pos2d[0], this.dataList[j].pos2d[1] - this.dataList[i].pos2d[1]];
+                                let tmpUpDistance = Math.sqrt(tmpUpDifference[0] * tmpUpDifference[0] + tmpUpDifference[1] * tmpUpDifference[1]);
+                                if (tmpUpDistance < distances[dir[dirPointK]] || distances[dir[dirPointK]] === 0) {
+                                    console.log(i + j + dir[dirPointK])
+                                    console.log(tmpUpDistance);
+                                    distances[dir[dirPointK]] = this.deepCopy(tmpUpDistance);
 
-                                this.AdjacencyList[i].adjacency["up"] = j;
+                                    this.dataList[i].adj[dir[dirPointK]] = j;
+                                }
                             }
                         }
                     }
-
-                    if (this.AdjacencyList[i].adjacencyDown[j]) {
-                        let downIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyDown[j]);
-                        if (/*downIdPoint >= this.AdjacencyList[i].adjacency["down"] &&*/ downIdPoint >= minMarginData[i]["down"]) {
-                            let tmpDownDifference = [this.AdjacencyList[j].pos2d[0] - this.AdjacencyList[i].pos2d[0], this.AdjacencyList[j].pos2d[1] - this.AdjacencyList[i].pos2d[1]];
-                            let tmpDownDistance = Math.sqrt(tmpDownDifference[0] * tmpDownDifference[0] + tmpDownDifference[1] * tmpDownDifference[1]);
-                            if (tmpDownDistance < distances["down"] || distances["down"] === 0) {
-                                console.log(i+j+"down")
-                                console.log(tmpDownDistance);
-                                distances["down"] = this.deepCopy(tmpDownDistance);
-
-                                this.AdjacencyList[i].adjacency["down"] = j;
-                            }
-                        }
-                    }
-
-                    if (this.AdjacencyList[i].adjacencyRight[j]) {
-                        let rightIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyRight[j]);
-                        if (/*rightIdPoint >= this.AdjacencyList[i].adjacency["right"] &&*/ rightIdPoint >= minMarginData[i]["right"]) {
-                            let tmpRightDifference = [this.AdjacencyList[j].pos2d[0] - this.AdjacencyList[i].pos2d[0], this.AdjacencyList[j].pos2d[1] - this.AdjacencyList[i].pos2d[1]];
-                            let tmpRightDistance = Math.sqrt(tmpRightDifference[0] * tmpRightDifference[0] + tmpRightDifference[1] * tmpRightDifference[1]);
-                            if (tmpRightDistance < distances["right"] || distances["right"] === 0) {
-                                console.log(i+j+"right")
-                                console.log(tmpRightDistance);
-                                distances["right"] = this.deepCopy(tmpRightDistance);
-
-                                this.AdjacencyList[i].adjacency["right"] = j;
-                            }
-                        }
-                    }
-
-                    if (this.AdjacencyList[i].adjacencyLeft[j]) {
-                        let leftIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyLeft[j]);
-                        if (/*leftIdPoint >= this.AdjacencyList[i].adjacency["left"] &&*/ leftIdPoint >= minMarginData[i]["left"]) {
-                            let tmpLeftDifference = [this.AdjacencyList[j].pos2d[0] - this.AdjacencyList[i].pos2d[0], this.AdjacencyList[j].pos2d[1] - this.AdjacencyList[i].pos2d[1]];
-                            let tmpLeftDistance = Math.sqrt(tmpLeftDifference[0] * tmpLeftDifference[0] + tmpLeftDifference[1] * tmpLeftDifference[1]);
-                            if (tmpLeftDistance < distances["left"] || distances["left"] === 0) {
-                                console.log(i+j+"left")
-                                console.log(tmpLeftDistance);
-                                distances["left"] = this.deepCopy(tmpLeftDistance);
-
-                                this.AdjacencyList[i].adjacency["left"] = j;
-                            }
-                        }
-                    }
-
-                    /* if (this.AdjacencyList[i].adjacencyDown[j]) {
-                         let downIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyDown[j]);
-                         if (downIdPoint > this.AdjacencyList[i].adjacency["down"] && downIdPoint > minMarginData[i]["down"]) {
-                             console.log("DOWN")
-                             this.AdjacencyList[i].adjacency["down"] = j;
-                         }
-                     }
- 
-                     if (this.AdjacencyList[i].adjacencyRight[j]) {
-                         let rightIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyRight[j]);
-                         if (rightIdPoint > this.AdjacencyList[i].adjacency["right"] && rightIdPoint > minMarginData[i]["right"]) {
-                             console.log("RIGHT")
-                             this.AdjacencyList[i].adjacency["right"] = j;
-                         }
-                     }
- 
-                     if (this.AdjacencyList[i].adjacencyLeft[j]) {
-                         let leftIdPoint = this.deepCopy(this.AdjacencyList[i].adjacencyLeft[j]);
-                         if (leftIdPoint > this.AdjacencyList[i].adjacency["left"] && leftIdPoint > minMarginData[i]["left"]) {
-                             console.log("LEFT")
-                             this.AdjacencyList[i].adjacency["left"] = j;
-                         }
-                     }*/
                 }
             }
         }
     }
+
+    /**
+     * 相対座標の算出
+     */
     calcRelativeCoord() {
         let directionName = ["right", "left", "up", "down"]
         let rightCount = [];
         let upCount = []
-        for (let i in this.AdjacencyList) {
+        for (let i in this.dataList) {
             rightCount[i] = 0;
             upCount[i] = 0;
         }
         let resultCount = { right: rightCount, up: upCount }
-        for (let i in this.AdjacencyList) {
+        for (let i in this.dataList) {
             for (let j = 0; j < 2; j++) {
-                if (this.AdjacencyList[i].adjacency[directionName[2 * j]] !== -1 && this.AdjacencyList[i].adjacency[directionName[2 * j + 1]] === -1) {
-                    let id = this.AdjacencyList[i].adjacency[directionName[2 * j]];
+                if (this.dataList[i].adj[directionName[2 * j]] !== -1 && this.dataList[i].adj[directionName[2 * j + 1]] === -1) {
+                    let id = this.dataList[i].adj[directionName[2 * j]];
                     let count = 1;
                     try {
                         while (id !== -1) {
                             resultCount[directionName[2 * j]][id] += count;
-                            id = this.AdjacencyList[id].adjacency[directionName[2 * j]];
+                            id = this.dataList[id].adj[directionName[2 * j]];
                             count++;
                             //隣接リストleft,downへの参照がループしだしたとき、エラー
-                            if (this.AdjacencyList.length === count) {
+                            if (this.dataList.length === count) {
                                 throw new Error("Error:Adjacency judgment has looped");
-                                break;
                             }
                         }
                     } catch (error) {
@@ -328,156 +273,75 @@ class Store extends EventEmitter {
                 }
             }
         }
-        for (let i in this.AdjacencyList) {
-            this.AdjacencyList[i].relativeCoord[0] += resultCount["right"][i];
-            this.AdjacencyList[i].relativeCoord[1] += resultCount["up"][i];
+        for (let i in this.dataList) {
+            this.dataList[i].relativeCoord[0] += resultCount["right"][i];
+            this.dataList[i].relativeCoord[1] += resultCount["up"][i];
         }
-        console.log(this.AdjacencyList);
+        console.log(this.dataList);
     }
 
     /**
      * スキャン後、蓄積したデータから各IDにおける隣接リストを作成する
      * */
-    _setAdjacencyList() {
+    _setDataList() {
         console.log("SCAN COMPLETE")
         let scanMinMargin = [];
         this.calcScanMinMargin(scanMinMargin);
         this.desideAdjacency(scanMinMargin);
         this.calcRelativeCoord();
-   
-        this.emit(Store.EVENT_DONE_SET_ADJACENCY_LIST, null, this.AdjacencyList);
+
+        this.emit(Store.EVENT_DONE_SET_DATA_LIST, null, this.dataList);
     }
 
-    calcDifferenceList(data, differenceList) {
+    calcDifferenceList(data) {
         let itr = 0;
-        let IdQuantity = Object.keys(this.AdjacencyList).length;
+        let IdQuantity = Object.keys(this.dataList).length;
+        let differenceList = [];
         console.log(IdQuantity);
         for (let a = 0; a < IdQuantity - 1; a++) {
             for (let b = 1; b < IdQuantity - a; b++) {
                 console.log(String(a) + String(b))
                 let abId = data[a + b][0];
                 let aId = data[a][0];
-                if (this.AdjacencyList[abId] && this.AdjacencyList[aId] && data[a][1] === 1 && data[a + b][1] === 1) {
+                if (this.dataList[abId] && this.dataList[aId] && data[a][1] === 1 && data[a + b][1] === 1) {
                     differenceList[itr] = {
-                        id: String(this.AdjacencyList[aId].id) + String(this.AdjacencyList[abId].id),
-                        x: this.AdjacencyList[abId].pos2d[0] - this.AdjacencyList[aId].pos2d[0],
-                        y: this.AdjacencyList[abId].pos2d[1] - this.AdjacencyList[aId].pos2d[1],
+                        id: String(this.dataList[aId].id) + String(this.dataList[abId].id),
+                        x: this.dataList[abId].pos2d[0] - this.dataList[aId].pos2d[0],
+                        y: this.dataList[abId].pos2d[1] - this.dataList[aId].pos2d[1],
                     };
                     itr++;
                 }
             }
         }
+        return this.deepCopy(differenceList);
     }
 
-    /*storeAdjacency(differenceList,unitVec){
-        for (let i = 0; i < differenceList.length; i++) {
-            let idA = differenceList[i]["id"].substr(0, 2);
-            let idB = differenceList[i]["id"].substr(2, 4);
-            let margin = 0.5;
-            console.log(idA + ":" + idB)
-            if (!this.AdjacencyList[idA].adjacencyUp[idB]) {
-                this.AdjacencyList[idA].adjacencyUp[idB] = 0;
-            }
-            if (!this.AdjacencyList[idA].adjacencyDown[idB]) {
-                this.AdjacencyList[idA].adjacencyDown[idB] = 0;
-            }
-            if (!this.AdjacencyList[idA].adjacencyLeft[idB]) {
-                this.AdjacencyList[idA].adjacencyLeft[idB] = 0;
-            }
-            if (!this.AdjacencyList[idA].adjacencyRight[idB]) {
-                this.AdjacencyList[idA].adjacencyRight[idB] = 0;
-            }
-            if (!this.AdjacencyList[idB].adjacencyUp[idA]) {
-                this.AdjacencyList[idB].adjacencyUp[idA] = 0;
-            }
-            if (!this.AdjacencyList[idB].adjacencyDown[idA]) {
-                this.AdjacencyList[idB].adjacencyDown[idA] = 0;
-            }
-            if (!this.AdjacencyList[idB].adjacencyLeft[idA]) {
-                this.AdjacencyList[idB].adjacencyLeft[idA] = 0;
-            }
-            if (!this.AdjacencyList[idB].adjacencyRight[idA]) {
-                this.AdjacencyList[idB].adjacencyRight[idA] = 0;
-            }
-            if (squareSum[i] < average * 3 / 2) {
-                if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][0]) < margin) {
-                    this.AdjacencyList[idA].adjacencyDown[idB]++;
-                    this.AdjacencyList[idB].adjacencyUp[idA]++;
-                    //   console.log(String(idB) + " is down of " + String(idA));
-                }
-                else if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][1]) < margin) {
-                    this.AdjacencyList[idA].adjacencyLeft[idB]++;
-                    this.AdjacencyList[idB].adjacencyRight[idA]++;
-                    //   console.log(String(idB) + " is left of " + String(idA));
-                }
-                else if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][1]) < margin) {
-                    this.AdjacencyList[idA].adjacencyRight[idB]++;
-                    this.AdjacencyList[idB].adjacencyLeft[idA]++;
-                    //  console.log(String(idB) + " is right of " + String(idA));
-                }
-                else if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][0]) < margin) {
-                    this.AdjacencyList[idA].adjacencyUp[idB]++;
-                    this.AdjacencyList[idB].adjacencyDown[idA]++;
-                    //  console.log(String(idB) + " is down of " + String(idA));
-                }
-            }
-        }
-    }
-*/
     //IDの隣接状況の蓄積を行う
     _storeScannedData(data) {
         //データの表示
         console.log("data");
         console.log(this.deepCopy(data));
 
-        //arControllerから2Dの位置を取得
-        /*let arController = document.querySelector("a-scene").systems.arjs._arSession.arContext.arController
-         for (let i = 0; i < 10; i++) {
-             console.log("marker");
-             console.log(arController.getMarker(i));
-         }*/
-        //2次元位置の各IDへの振り分け
-        //this.AdjacencyList
         console.log("pos");
         for (let i = 0; i < data.length; i++) {
             if (data[i][1] === 1) {
-                if (!this.AdjacencyList[data[i][0]]) {
-                    this.AdjacencyList[data[i][0]] = new Adjacency;
+                if (!this.dataList[data[i][0]]) {
+                    this.dataList[data[i][0]] = new DispPosData;
                 }
-                this.AdjacencyList[data[i][0]].id = this.deepCopy(data[i][0]);
-                this.AdjacencyList[data[i][0]].pos2d[0] = this.deepCopy(data[i][2]["x"])
-                this.AdjacencyList[data[i][0]].pos2d[1] = this.deepCopy(data[i][2]["y"])
+                this.dataList[data[i][0]].id = this.deepCopy(data[i][0]);
+                this.dataList[data[i][0]].pos2d[0] = this.deepCopy(data[i][2]["x"])
+                this.dataList[data[i][0]].pos2d[1] = this.deepCopy(data[i][2]["y"])
             }
 
         }
-        console.log(this.AdjacencyList);
+        //console.log(this.dataList);
 
         //スキャンした、各データごとの差をとる
         //differenceList
         console.log("difference")
-        let differenceList = [];
-        // this.calcDifferenceList(data, differenceList);
-        let itr = 0;
-        let IdQuantity = Object.keys(this.AdjacencyList).length;
-        console.log(IdQuantity);
-        for (let a = 0; a < IdQuantity - 1; a++) {
-            for (let b = 1; b < IdQuantity - a; b++) {
-                console.log(String(a) + String(b))
-                let abId = data[a + b][0];
-                let aId = data[a][0];
-                if (this.AdjacencyList[abId] && this.AdjacencyList[aId] && data[a][1] === 1 && data[a + b][1] === 1) {
-                    differenceList[itr] = {
-                        id: String(this.AdjacencyList[aId].id) + String(this.AdjacencyList[abId].id),
-                        x: this.AdjacencyList[abId].pos2d[0] - this.AdjacencyList[aId].pos2d[0],
-                        y: this.AdjacencyList[abId].pos2d[1] - this.AdjacencyList[aId].pos2d[1],
-                    };
-                    itr++;
-                }
-            }
-        }
-        console.log(differenceList);
+        let differenceList = this.calcDifferenceList(data);
 
-        //上下左右の隣接判定ができるように座標系を合わせる
+        //上下左右の隣接判定ができるように座標系を45度傾かせる
         let unitVec = [];
         let rotatedUnitVec = [];
         let squareSum = []
@@ -489,15 +353,6 @@ class Store extends EventEmitter {
         // console.log(squareSum);
         // console.log(unitVec);
         //console.log(rotatedUnitVec);
-        //各マーカーごとの距離の平均をとる
-        //（距離の閾値に使う）
-        let sum = 0;
-        for (let i = 0; i < squareSum.length; i++) {
-            sum += squareSum[i];
-        }
-        let average = sum / squareSum.length;
-        // console.log(average);
-
 
         //上下左右の関係を判定
         console.log("adjacency");
@@ -507,57 +362,56 @@ class Store extends EventEmitter {
             let idB = differenceList[i]["id"].substr(2, 4);
             let margin = 0.5;
             console.log(idA + ":" + idB)
-            if (!this.AdjacencyList[idA].adjacencyUp[idB]) {
-                this.AdjacencyList[idA].adjacencyUp[idB] = 0;
+            if (!this.dataList[idA].upPoint[idB]) {
+                this.dataList[idA].upPoint[idB] = 0;
             }
-            if (!this.AdjacencyList[idA].adjacencyDown[idB]) {
-                this.AdjacencyList[idA].adjacencyDown[idB] = 0;
+            if (!this.dataList[idA].downPoint[idB]) {
+                this.dataList[idA].downPoint[idB] = 0;
             }
-            if (!this.AdjacencyList[idA].adjacencyLeft[idB]) {
-                this.AdjacencyList[idA].adjacencyLeft[idB] = 0;
+            if (!this.dataList[idA].leftPoint[idB]) {
+                this.dataList[idA].leftPoint[idB] = 0;
             }
-            if (!this.AdjacencyList[idA].adjacencyRight[idB]) {
-                this.AdjacencyList[idA].adjacencyRight[idB] = 0;
+            if (!this.dataList[idA].rightPoint[idB]) {
+                this.dataList[idA].rightPoint[idB] = 0;
             }
-            if (!this.AdjacencyList[idB].adjacencyUp[idA]) {
-                this.AdjacencyList[idB].adjacencyUp[idA] = 0;
+            if (!this.dataList[idB].upPoint[idA]) {
+                this.dataList[idB].upPoint[idA] = 0;
             }
-            if (!this.AdjacencyList[idB].adjacencyDown[idA]) {
-                this.AdjacencyList[idB].adjacencyDown[idA] = 0;
+            if (!this.dataList[idB].downPoint[idA]) {
+                this.dataList[idB].downPoint[idA] = 0;
             }
-            if (!this.AdjacencyList[idB].adjacencyLeft[idA]) {
-                this.AdjacencyList[idB].adjacencyLeft[idA] = 0;
+            if (!this.dataList[idB].leftPoint[idA]) {
+                this.dataList[idB].leftPoint[idA] = 0;
             }
-            if (!this.AdjacencyList[idB].adjacencyRight[idA]) {
-                this.AdjacencyList[idB].adjacencyRight[idA] = 0;
+            if (!this.dataList[idB].rightPoint[idA]) {
+                this.dataList[idB].rightPoint[idA] = 0;
             }
             //if (squareSum[i] < average /2) {
 
             if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][0]) < margin) {
-                this.AdjacencyList[idA].adjacencyDown[idB]++;
-                this.AdjacencyList[idB].adjacencyUp[idA]++;
+                this.dataList[idA].downPoint[idB]++;
+                this.dataList[idB].upPoint[idA]++;
                 //   console.log(String(idB) + " is down of " + String(idA));
             }
             else if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] <= 0 && Math.abs(unitVec[i][1]) < margin) {
-                this.AdjacencyList[idA].adjacencyLeft[idB]++;
-                this.AdjacencyList[idB].adjacencyRight[idA]++;
+                this.dataList[idA].leftPoint[idB]++;
+                this.dataList[idB].rightPoint[idA]++;
                 //   console.log(String(idB) + " is left of " + String(idA));
             }
             else if (rotatedUnitVec[i][0] >= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][1]) < margin) {
-                this.AdjacencyList[idA].adjacencyRight[idB]++;
-                this.AdjacencyList[idB].adjacencyLeft[idA]++;
+                this.dataList[idA].rightPoint[idB]++;
+                this.dataList[idB].leftPoint[idA]++;
                 //  console.log(String(idB) + " is right of " + String(idA));
             }
             else if (rotatedUnitVec[i][0] <= 0 && rotatedUnitVec[i][1] >= 0 && Math.abs(unitVec[i][0]) < margin) {
-                this.AdjacencyList[idA].adjacencyUp[idB]++;
-                this.AdjacencyList[idB].adjacencyDown[idA]++;
+                this.dataList[idA].upPoint[idB]++;
+                this.dataList[idB].downPoint[idA]++;
                 //  console.log(String(idB) + " is down of " + String(idA));
             }
-            // }
         }
-        console.log(this.AdjacencyList);
+        console.log(this.dataList);
 
-        this.emit(Store.EVENT_DONE_STORE_SCANNED_DATA, null, this.deepCopy(this.AdjacencyList));
+        this.emit(Store.EVENT_DONE_STORE_SCANNED_DATA, null, this.deepCopy(this.dataList));
     }
 
 }
@@ -566,8 +420,10 @@ Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER = "get_current_display_marker";
+Store.EVENT_DONE_GET_DATA_LIST = "get_data_list";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "get_virtual_display";
 Store.EVENT_DONE_STORE_SCANNED_DATA = "store_scanned_data";
-Store.EVENT_DONE_SET_ADJACENCY_LIST = "set_adjacency_list";
+Store.EVENT_DONE_SET_DATA_LIST = "set_data_list";
 Store.EVENT_DONE_SEND_DATA = "send_data";
+Store.EVENT_DONE_DELETE_DATA_LIST = "delete_dajacency_list"
 export default Store;

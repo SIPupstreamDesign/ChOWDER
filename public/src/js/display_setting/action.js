@@ -40,15 +40,21 @@ class Action extends EventEmitter
     getVirtualDisplay(data) {
         this.emit(Action.EVENT_GET_VIRTUAL_DISPLAY, null, data);
     }
+    getDataList(data){   
+        this.emit(Action.EVENT_GET_DATA_LIST, null, data);    
+    }
     storeScannedData(data) {
         console.log(this);        
         this.emit(Action.EVENT_STORE_SCANNED_DATA, null, data);
     }
-    setAdjacencyList(data) {        
-        this.emit(Action.EVENT_SET_ADJACENCY_LIST, null, data);
+    setDataList(data) {        
+        this.emit(Action.EVENT_SET_DATA_LIST, null, data);
     }
     sendData(data){
         this.emit(Action.EVENT_SET_SEND_DATA, null, data);    
+    }
+    deleteDataList(){
+        this.emit(Action.EVENT_DELETE_DATA_LIST, null, null);    
     }
     
 }
@@ -56,8 +62,10 @@ class Action extends EventEmitter
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_GET_CURRENT_DISPLAY_MARKERS = "getCurrentDisplayMarkers";
 Action.EVENT_GET_VIRTUAL_DISPLAY="getVirtualDisplay";
+Action.EVENT_GET_DATA_LIST="getDataList";
 Action.EVENT_CALC_ABSOLUTE_POSITION="calcAbsolutePosition";
 Action.EVENT_STORE_SCANNED_DATA="storeScannedData";
-Action.EVENT_SET_ADJACENCY_LIST="setAdjacencyList";
+Action.EVENT_SET_DATA_LIST="setDataList";
 Action.EVENT_SET_SEND_DATA="sendData";
+Action.EVENT_DELETE_DATA_LIST="deletedataList";
 export default Action;

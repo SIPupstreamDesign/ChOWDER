@@ -46,7 +46,7 @@ class ElectornDisplay {
 		this.tileWindows = {};
 		this.preventQuitOnetime = false;
 
-		this.windowAdjacencyList = []
+		this.dataList = []
 
 		this.initElectronEvents.bind(this)();
 	}
@@ -127,7 +127,7 @@ class ElectornDisplay {
 		return re;
 	}
 
-	calcDifferencelist(data, len) {
+/*	calcDifferencelist(data, len) {
 		let differenceList = [];
 		let differenceItr = 0;
 		for (let i = 0; i < len - 1; i++) {
@@ -143,20 +143,21 @@ class ElectornDisplay {
 		}
 		return JSON.parse(JSON.stringify(differenceList));
 	}
-
-	sortData(result) {
+*/
+	sortData(data) {
 		for (let i = 0; i < 2; i++) {
-			for (let j = 0; j < result[i].length - 1; j++) {
-				for (let k = j + 1; k < result[i].length; k++) {
-					if (result[i][j][1][i] > result[i][k][1][i]) {
-						let re = this.exchangeNum(result[i][j], result[i][k])
-						result[i][j] = JSON.parse(JSON.stringify(re[0]));
-						result[i][k] = JSON.parse(JSON.stringify(re[1]));
+			for (let j = 0; j < data[i].length - 1; j++) {
+				for (let k = j + 1; k < data[i].length; k++) {
+					if (data[i][j][1][i] > data[i][k][1][i]) {
+						let re = this.exchangeNum(data[i][j], data[i][k])
+						data[i][j] = JSON.parse(JSON.stringify(re[0]));
+						data[i][k] = JSON.parse(JSON.stringify(re[1]));
 					}
 				}
 			}
 		}
-		//console.log(result)
+		console.log("sortedData:")
+		console.log(data);
 	}
 
 	groupingData(data) {
@@ -181,60 +182,62 @@ class ElectornDisplay {
 				console.log(tmpResult[i]);
 			}*/
 		}
-		//console.log(result);
+		console.log("groupingData:");
+		console.log(result);
 		return JSON.parse(JSON.stringify(result));
 
 	}
 
-	calcSortedCoord(data) {
-		let sortedCoord = [];
+	calcRank(data) {
+		let rank = [];
 		for (let i in data) {
 			for (let j in data[i]) {
 				//console.log(groupedDataX[i])
 				for (let k in data[i][j]) {
 
 					//console.log(groupedDataX[i][j][0]);
-					if (!sortedCoord[data[i][j][k][0] - 1]) {
-						sortedCoord[data[i][j][k][0] - 1] = [j];
+					if (!rank[data[i][j][k][0] - 1]) {
+						rank[data[i][j][k][0] - 1] = [j];
 					}
 					else {
-						sortedCoord[data[i][j][k][0] - 1][i] = j;
+						rank[data[i][j][k][0] - 1][i] = j;
 					}
 				}
 			}
 		}
 
-		//console.log(sortedCoord);
-		return JSON.parse(JSON.stringify(sortedCoord));
+		console.log("rank:");
+		console.log(rank);
+		return JSON.parse(JSON.stringify(rank));
 	}
 
 	calcAdjacency(data) {
 
-		let sortedCoord = this.calcSortedCoord(data);
-		//console.log("sortedCoordInFunction")
-		//console.log(sortedCoord);
-		let adjacency = {};
-		for (let i in sortedCoord) {
-			adjacency[i] = {};
-			for (let j in sortedCoord) {
+		let rank = this.calcRank(data);
+		//console.log("rankInFunction")
+		//console.log(rank);
+		let adj = {};
+		for (let i in rank) {
+			adj[i] = {};
+			for (let j in rank) {
 				let winId = Number(j) + 1;
-				if (sortedCoord[j][0] - sortedCoord[i][0] === 1 && sortedCoord[j][1] - sortedCoord[i][1] === 0) {
-					adjacency[i]["right"] = winId;
+				if (rank[j][0] - rank[i][0] === 1 && rank[j][1] - rank[i][1] === 0) {
+					adj[i]["right"] = winId;
 				}
-				else if (sortedCoord[j][0] - sortedCoord[i][0] === -1 && sortedCoord[j][1] - sortedCoord[i][1] === 0) {
-					adjacency[i]["left"] = winId;
+				else if (rank[j][0] - rank[i][0] === -1 && rank[j][1] - rank[i][1] === 0) {
+					adj[i]["left"] = winId;
 				}
-				else if (sortedCoord[j][0] - sortedCoord[i][0] === 0 && sortedCoord[j][1] - sortedCoord[i][1] === 1) {
-					adjacency[i]["up"] = winId;
+				else if (rank[j][0] - rank[i][0] === 0 && rank[j][1] - rank[i][1] === 1) {
+					adj[i]["up"] = winId;
 				}
-				else if (sortedCoord[j][0] - sortedCoord[i][0] === 0 && sortedCoord[j][1] - sortedCoord[i][1] === -1) {
-					adjacency[i]["down"] = winId;
+				else if (rank[j][0] - rank[i][0] === 0 && rank[j][1] - rank[i][1] === -1) {
+					adj[i]["down"] = winId;
 				}
 			}
 		}
 		console.log("adjacencyInFunction")
-		console.log(adjacency);
-		return JSON.parse(JSON.stringify(adjacency));
+		console.log(adj);
+		return JSON.parse(JSON.stringify(adj));
 	}
 
 
@@ -254,17 +257,15 @@ class ElectornDisplay {
 
 		//let differenceList = this.calcDifferencelist(windowPos, windowId.length)
 		let groupedData = this.groupingData(windowPos);
-		let adjacency = this.calcAdjacency(groupedData);
-		this.windowAdjacencyList[pcId] = JSON.parse(JSON.stringify(adjacency)); return JSON.parse(JSON.stringify(adjacency));
+		let adj = this.calcAdjacency(groupedData);
+		this.dataList[pcId] = JSON.parse(JSON.stringify(adj)); return JSON.parse(JSON.stringify(adj));
 	}
 
-	calcWindowCoord() {
-		//let relocatedConfig = JSON.parse(JSON.stringify(this.config));
-		console.log("calcWindowCoord");
+	convertDataFormatConfigToData() {
+		console.log("convertDataFormatConfigToData");
 		let alphabet = "ABCDEFGHIJK";
 		let windowId = [];
 		for (let id in this.config.windows) {
-			//console.log(this.config.windows[id]);
 			let thisPcId = this.config.windows[id]["marker_id"][0];
 			let thisWindowId = this.config.windows[id]["marker_id"][1];
 			if (alphabet.indexOf(thisPcId) !== -1) {
@@ -274,7 +275,6 @@ class ElectornDisplay {
 				else {
 					windowId[thisPcId].push(thisWindowId);
 				}
-				console.log(windowId)
 			}
 		}
 		let sortedWindowCoord = [];
@@ -283,7 +283,7 @@ class ElectornDisplay {
 		}
 
 		console.log("result");
-		console.log(this.windowAdjacencyList);
+		console.log(this.dataList);
 	}
 
 	convertDataFormatReceivedToScanned(received) {
@@ -312,7 +312,7 @@ class ElectornDisplay {
 				}
 			}
 		}
-		console.log(result);
+		//console.log(result);
 		return JSON.parse(JSON.stringify(result));
 
 	}
@@ -320,8 +320,8 @@ class ElectornDisplay {
 	convertDataFormatScannedToTrue(scannedData, pcId) {
 		let direction = ["up", "down", "right", "left"]
 		let trueData = {}
-		trueData[pcId] = []
-		for (let i in this.windowAdjacencyList[pcId]) {
+		trueData[pcId] = {};
+		for (let i in this.dataList[pcId]) {
 			trueData[pcId][i] = {};
 			for (let j = 0; j < 4; j++) {
 				if (scannedData[i][j] !== -1) {
@@ -331,30 +331,30 @@ class ElectornDisplay {
 				}
 			}
 		}
-		return trueData;
+		return JSON.parse(JSON.stringify(trueData));
 	}
 
-	calcRelativeCoord(pcId, relativeCoord, adjacencyList) {
+	calcRelativeCoord(pcId, relativeCoord, adjList) {
 		let directionName = ["right", "left", "up", "down"]
 		let rightCount = {};
 		rightCount[pcId] = [0]
 		let upCount = {};
 		upCount[pcId] = [0]
-		for (let i in adjacencyList[pcId]) {
+		for (let i in adjList[pcId]) {
 			rightCount[pcId].push(0);
 			upCount[pcId].push(0);
 		}
 		let resultCount = { right: rightCount, up: upCount }
-		for (let i in adjacencyList[pcId]) {
+		for (let i in adjList[pcId]) {
 			for (let j = 0; j < 2; j++) {
-				let id = adjacencyList[pcId][i][directionName[2 * j]];
+				let id = adjList[pcId][i][directionName[2 * j]];
 				let count = 1;
 				try {
 					while (id) {
 						resultCount[directionName[2 * j]][pcId][id - 1] += JSON.parse(JSON.stringify(count));
-						id = adjacencyList[pcId][id - 1][directionName[2 * j]];
+						id = adjList[pcId][id - 1][directionName[2 * j]];
 						//隣接リストleft,downへの参照がループしだしたとき、エラー
-						if (adjacencyList[pcId].length === count) {
+						if (adjList[pcId].length === count) {
 							throw new Error("Error:Adjacency judgment has looped");
 						}
 					}
@@ -363,12 +363,11 @@ class ElectornDisplay {
 				}
 			}
 		}
-		for (let i in adjacencyList[pcId]) {
+		for (let i in adjList[pcId]) {
 			relativeCoord[pcId][i][0] += resultCount["right"][pcId][i];
 			relativeCoord[pcId][i][1] += resultCount["up"][pcId][i];
 		}
-		//console.log(resultCount);
-		//console.log(relativeCoord);
+		console.log(relativeCoord);
 	}
 
 	locateScannnedPos(scannedConfigId, trueConfigId, sendConfig) {
@@ -392,9 +391,10 @@ class ElectornDisplay {
 					let pcId = this.config.windows[id].marker_id[0];
 					let windowId = this.config.windows[id].marker_id[1];
 					//スコープ内にある真値とスキャン値を取得する
-					let trueData = this.windowAdjacencyList[pcId][windowId - 1];
+					let trueData = this.dataList[pcId][windowId - 1];
+
 					let scannedData = [];
-					for (let i in this.windowAdjacencyList[pcId]) {
+					for (let i in this.dataList[pcId]) {
 						let pcIdIndex = receivedData.indexOf(pcId)
 						scannedData[i] = [receivedData[pcIdIndex + i * 4 + 1], receivedData[pcIdIndex + i * 4 + 2],
 						receivedData[pcIdIndex + i * 4 + 3], receivedData[pcIdIndex + i * 4 + 4],]
@@ -406,16 +406,16 @@ class ElectornDisplay {
 
 					//真値とスキャン値のフォーマットを相対座標値に合わせる
 					let trueRelativeCoord = {};
-					for (let i in this.windowAdjacencyList[pcId]) {
+					for (let i in this.dataList[pcId]) {
 						if (!trueRelativeCoord[pcId]) { trueRelativeCoord[pcId] = [[0, 0]]; }
 						else { trueRelativeCoord[pcId].push([0, 0]); }
 					}
 					let scannedRelativeCoord = {};
-					for (let i in this.windowAdjacencyList[pcId]) {
+					for (let i in this.dataList[pcId]) {
 						if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
 						else { scannedRelativeCoord[pcId].push([0, 0]); }
 					}
-					this.calcRelativeCoord(pcId, trueRelativeCoord, this.windowAdjacencyList);
+					this.calcRelativeCoord(pcId, trueRelativeCoord, this.dataList);
 					this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
 
 					//相対座標が違っていたらスキャン値の座標を真値から探しに行き、そのwindowIdを保存する
@@ -514,7 +514,7 @@ class ElectornDisplay {
 
 			//window.webContents.openDevTools();
 		}
-		this.calcWindowCoord();
+		this.convertDataFormatConfigToData();
 		return windowMap;
 	}
 

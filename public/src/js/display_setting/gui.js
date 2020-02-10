@@ -36,14 +36,15 @@ class GUI extends EventEmitter {
             this.action.getVirtualDisplay();
         });
 
+
         this.store.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             console.log("getv");
             console.log(reply);
 
             this.displayNumber = reply.splitX * reply.splitY;
-            this.displayNumberX=reply.splitX;
-            this.displayNumberY=reply.splitY;
-            
+            this.displayNumberX = reply.splitX;
+            this.displayNumberY = reply.splitY;
+
             let markerList = [];
             this.action.getCurrentDisplayMarkers();
             this.store.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, (err, marker_id) => {
@@ -60,7 +61,7 @@ class GUI extends EventEmitter {
                     console.log(markerList);
                     this.setArMarkerImg(markerList);
                     this.setScanButton();
-
+                    this.setSendButton();
                 }
             });
             // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
@@ -71,16 +72,31 @@ class GUI extends EventEmitter {
             }, 10 * 1000);
         });
 
+        this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
+             console.log("getDatalist")
+            console.log(reply[1]);
+            if (!reply[1][1]) {
+                console.log("none")
+                reply[0].style.display = "none";
+            }
+            else {
+                console.log("block")
+                reply[0].style.display = "block";
+            }
+            console.log("getDatalist")
+            console.log(reply);
+        });
+
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
             console.log("store");
             console.log(reply);
 
         });
 
-        this.store.on(Store.EVENT_DONE_SET_ADJACENCY_LIST, (err, reply) => {
+        this.store.on(Store.EVENT_DONE_SET_DATA_LIST, (err, reply) => {
             console.log(reply);
             console.log("SET COMPLETE")
-            this.action.sendData();
+            this.action.getDataList(document.getElementById("send_button"));
             this.updateVirtualScreen(reply);
         });
         this.store.on(Store.EVENT_DONE_SEND_DATA, (err, reply) => {
@@ -90,6 +106,10 @@ class GUI extends EventEmitter {
         //スキャン開始ボタン
         document.getElementById("scan_toggle_button").onclick = () => {
             console.log("SCAN START");
+            document.getElementById("scan_toggle_button").style.display = "none";
+            document.getElementById("scan_button").style.display = "block";
+            this.action.deleteDataList();
+            document.getElementById("send_button").style.display = "none";
             this.scanCompleteFunction = setInterval((flag) => {
                 for (let i = 0; i < this.displayNumber; i++) {
                     let marker = document.getElementsByTagName("a-marker")[i + 1];
@@ -105,6 +125,8 @@ class GUI extends EventEmitter {
     }
 
     updateVirtualScreen(reply) {
+        document.getElementById("scan_toggle_button").style.display = "block";
+        document.getElementById("scan_toggle_button").value = "再スキャン";
 
         document.getElementById("whole_sub_window").remove();
         let body = document.getElementById("body");
@@ -147,18 +169,38 @@ class GUI extends EventEmitter {
     }
 
     setScanButton() {
-        this.button = new Button;
+        this.scanButton = new Button;
         let parent = document.getElementById("body");
         let nextDOM = document.getElementById("scan_toggle_button");
         console.log("menu")
-        console.log(this.button.getDOM());
-        let btn = this.button.getDOM();
+        console.log(this.scanButton.getDOM());
+        let btn = this.scanButton.getDOM();
         parent.insertBefore(btn, nextDOM);
         btn.setAttribute("id", "scan_button");
         btn.setAttribute("value", "スキャン完了");
-        this.button.on(Button.EVENT_CLICK, (evt) => {
+        btn.style.display = "none";
+        this.scanButton.on(Button.EVENT_CLICK, (evt) => {
             clearTimeout(this.scanCompleteFunction);
-            this.action.setAdjacencyList();
+            this.action.getDataList(document.getElementById("send_button"));
+            this.action.setDataList();
+            btn.style.display = "none";
+            
+        });
+    }
+
+    setSendButton() {
+        this.sendButton = new Button;
+        let parent = document.getElementById("body");
+        let nextDOM = document.getElementById("scan_toggle_button");
+        console.log("menu")
+        console.log(this.sendButton.getDOM());
+        let btn = this.sendButton.getDOM();
+        parent.insertBefore(btn, nextDOM);
+        btn.setAttribute("id", "send_button");
+        btn.setAttribute("value", "データ送信");
+        this.action.getDataList(btn);
+        this.sendButton.on(Button.EVENT_CLICK, (evt) => {
+            this.action.sendData();
         });
     }
 
