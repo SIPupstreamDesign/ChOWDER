@@ -166,7 +166,7 @@ class Store extends EventEmitter {
      */
     _deleteDataList() {
         this.dataList = [];
-        //console.log(dataList);
+        console.log(this.dataList);
         this.emit(Store.EVENT_DONE_DELETE_DATA_LIST, null, null);
     }
 
@@ -201,7 +201,7 @@ class Store extends EventEmitter {
      *  ディスプレイにデータを送る 
      */
     _sendData() {
-        console.log("send")
+        console.log("SEND")
 
         // this.convertSendData()
         let data = { data: this.convertSendData() };
@@ -241,7 +241,7 @@ class Store extends EventEmitter {
             let dataLength = Object.keys(this.dataList).length;
             console.log(dataLength);
             for (let i in dir) {
-                data[adjId][dir[i]] = data[adjId][dir[i]] / dataLength/2;
+                data[adjId][dir[i]] = data[adjId][dir[i]] / dataLength;
             }
             console.log(data);
         }
@@ -261,7 +261,12 @@ class Store extends EventEmitter {
                     for (let dirPointK in point) {
                         if (point[dirPointK]) {
                             let upIdPoint = this.deepCopy(point[dirPointK]);
-                            if (upIdPoint >= minMarginData[i][dir[dirPointK]]) {
+                            let wholeMinMargin=0;
+                            for(let dirL in minMarginData[i]){
+                                wholeMinMargin += minMarginData[i][dirL];
+                            }
+                            wholeMinMargin/=4;
+                            if (upIdPoint >= minMarginData[i][dir[dirPointK]]&&upIdPoint>wholeMinMargin) {
 
                                 let tmpUpDifference = [this.dataList[j].pos2d[0] - this.dataList[i].pos2d[0], this.dataList[j].pos2d[1] - this.dataList[i].pos2d[1]];
                                 let tmpUpDistance = Math.sqrt(tmpUpDifference[0] * tmpUpDifference[0] + tmpUpDifference[1] * tmpUpDifference[1]);
@@ -361,8 +366,8 @@ class Store extends EventEmitter {
     //IDの隣接状況の蓄積を行う
     _storeScannedData(data) {
         //データの表示
-        //console.log("data");
-        //console.log(this.deepCopy(data));
+        console.log("data");
+        console.log(this.deepCopy(data));
 
         console.log("pos");
         for (let i = 0; i < data.length; i++) {

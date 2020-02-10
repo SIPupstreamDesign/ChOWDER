@@ -33,6 +33,9 @@ class GUI extends EventEmitter {
 
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
+            for (let i = 0; i < this.displayNumber; i++) {
+                this.scanFlagList[markerList[i]] = 0;
+            }
         });
 
         this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
@@ -73,9 +76,7 @@ class GUI extends EventEmitter {
     
                 // marker_idを持ったdisplayが、virtualdisplayのgrid枠と同じ個数登録されていた.
                 // アプリを開始してもOK. 初期化する 
-                for (let i = 0; i < this.displayNumber; i++) {
-                    this.scanFlagList[markerList[i]] = 0;
-                }
+               
                 console.log(markerList);
                 this.setArMarkerImg(markerList);
                 this.setScanButton();
@@ -121,8 +122,8 @@ class GUI extends EventEmitter {
         screen.setAttribute("value", "スキャン開始");
         console.log(reply);
         let replyLength = Object.keys(reply).length;
-        let width = 50;//this.displayNumberX * 100;
-        let height = 50;//this.displayNumberY * 100;
+        let width = 50;
+        let height = 50;
         screen.style.width = String(width) + "%";
         screen.style.height = String(height) + "%";
         screen.style.transform = "translate(" + String(-width ) + "%," + String(-height ) + "%)";
@@ -170,7 +171,6 @@ class GUI extends EventEmitter {
             this.action.getDataList(document.getElementById("send_button"));
             this.action.setDataList();
             btn.style.display = "none";
-            
         });
     }
 
