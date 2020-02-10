@@ -47,7 +47,7 @@
 	// websocket sender
 	//----------------------------------------------------------------------------------------
 	let options = {
-		key: fs.readFileSync(path.join(__dirname, 'cert.pem')),
+		key: fs.readFileSync(path.join(__dirname, 'key.pem')),
 		cert: fs.readFileSync(path.join(__dirname, 'cert.pem'))
 	};
 
