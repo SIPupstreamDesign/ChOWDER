@@ -42,7 +42,11 @@ window.onload = function () {
         view.addLayer(layer);//.then(menuGlobe.addLayerGUI.bind(menuGlobe));
     }
 
-    // 地理院地図(Elevation)の読み込み
+    function getTextureFloat(buffer) {
+        return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
+    };
+
+    // 地理院地図(Elevation/CSV)の読み込み
     function loadGSIElevationCSV() {
         var url = "https://cyberjapandata.gsi.go.jp/xyz/dem/%TILEMATRIX/%COL/%ROW.txt";
         var config = {
@@ -55,9 +59,6 @@ window.onload = function () {
                 "min" : 2,
                 "max" : 12
             }
-        };
-        var getTextureFloat = function getTextureFloat(buffer) {
-            return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
         };
 
         function checkResponse(response) {
@@ -106,6 +107,83 @@ window.onload = function () {
         view.addLayer(layer);
     }
 
+    // 地理院地図(Elevation/PNG)の読み込み
+    function loadGSIElevationPNG() {
+        var url = "https://cyberjapandata.gsi.go.jp/xyz/dem_png/%TILEMATRIX/%COL/%ROW.png";
+        var config = {
+            "id": "GSI Elevation",
+            "projection": "EPSG:3857",
+            "format": url.indexOf('.png') > 0 ? "image/png" : "",
+            "url": url,
+            "tileMatrixSet": "PM",
+            "zoom" : {
+                "min" : 2,
+                "max" : 12
+            }
+        };
+        var textureLoader = new itowns.THREE.TextureLoader();
+        function texture(url, options = {}) {
+            var res;
+            var rej;
+            textureLoader.crossOrigin = options.crossOrigin;
+            const promise = new Promise((resolve, reject) => {
+                res = resolve;
+                rej = reject;
+            });
+            textureLoader.load(url, res, () => { }, rej);
+            return promise;
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = "256";
+        canvas.height = "256";
+
+        function convertTexToArray(tex) {
+            var context = canvas.getContext('2d');
+            context.drawImage(tex.image, 0, 0);
+            var pixData = context.getImageData(0, 0, 256, 256).data;
+            var heights = []
+            var alt = 0;
+            for (var y = 0; y < 256; ++y) {
+                for (var x = 0; x < 256; x++) {
+                    var addr = (x + y * 256) * 4;
+                    var R = pixData[addr];
+                    var G = pixData[addr + 1];
+                    var B = pixData[addr + 2];
+                    var A = pixData[addr + 3];
+                    if (R == 128 && G == 0 && B == 0) {
+                        alt = 0;
+                    } else {
+                        //                          alt = (R << 16 + G << 8 + B);
+                        alt = (R * 65536 + G * 256 + B);
+                        if (alt > 8388608) {
+                            alt = (alt - 16777216);
+                        }
+                        alt = alt * 0.01;
+                    }
+                    heights.push(alt);
+                }
+            }
+            return heights;
+        }
+        var mapSource = new itowns.TMSSource(config);
+        mapSource.fetcher = function (url, options = {}) {
+            return texture(url, options).then(function (tex) {
+                var floatArray = convertTexToArray(tex);
+                var float32Array = new Float32Array(floatArray);
+                var tt = getTextureFloat(float32Array);
+                return tt;
+            });
+        };
+        var layer = new itowns.ElevationLayer(config.id, {
+            source: mapSource,
+            updateStrategy: {
+                type: 3
+            },
+            scale: 1
+        });
+        view.addLayer(layer);
+    }
+
     // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
     var viewerDiv = document.getElementById('viewerDiv');
 
@@ -130,7 +208,7 @@ window.onload = function () {
 
     loadGSIColor();
 
-    loadGSIElevationCSV();
+    loadGSIElevationPNG();
 
     injectChOWDER(view, viewerDiv);
 };
