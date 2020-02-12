@@ -227,10 +227,10 @@ class ElectornDisplay {
 				else if (rank[j][0] - rank[i][0] === -1 && rank[j][1] - rank[i][1] === 0) {
 					adj[i]["left"] = winId;
 				}
-				else if (rank[j][0] - rank[i][0] === 0 && rank[j][1] - rank[i][1] === 1) {
+				else if (rank[j][0] - rank[i][0] === 0 && rank[j][1] - rank[i][1] === -1) {
 					adj[i]["up"] = winId;
 				}
-				else if (rank[j][0] - rank[i][0] === 0 && rank[j][1] - rank[i][1] === -1) {
+				else if (rank[j][0] - rank[i][0] === 0 && rank[j][1] - rank[i][1] === 1) {
 					adj[i]["down"] = winId;
 				}
 			}
@@ -288,6 +288,8 @@ class ElectornDisplay {
 
 	convertDataFormatReceivedToScanned(received) {
 		let receivedData = JSON.parse(JSON.stringify(received.split('{').join('')));
+		console.log("received");
+		console.log(JSON.parse(received)["data"]);
 		receivedData = receivedData.split('}').join('');
 		receivedData = receivedData.split('[').join('');
 		receivedData = receivedData.split(']').join('');
@@ -335,6 +337,7 @@ class ElectornDisplay {
 	}
 
 	calcRelativeCoord(pcId, relativeCoord, adjList) {
+		console.log(adjList);
 		let directionName = ["right", "left", "up", "down"]
 		let rightCount = {};
 		rightCount[pcId] = [0]
@@ -415,6 +418,7 @@ class ElectornDisplay {
 						if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
 						else { scannedRelativeCoord[pcId].push([0, 0]); }
 					}
+					console.log("calcRelativeCoord")
 					this.calcRelativeCoord(pcId, trueRelativeCoord, this.dataList);
 					this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
 
