@@ -79,8 +79,9 @@ class GUI extends EventEmitter {
 
             // iframe内のitownsのカメラが更新された
             itownConnector.on(ITownsCommand.UpdateCamera, (err, params) => {
-                this.action.updateCameraWorldMatrix({
-                    mat: params
+                this.action.updateCamera({
+                    mat: params.mat,
+                    params : params.params
                 });
             });
 
@@ -195,6 +196,10 @@ class GUI extends EventEmitter {
         this.itownSelect = new Select();
         this.itownSelect.getDOM().className = "itown_select";
         // サンプルコンテンツの追加
+        this.itownSelect.addOption(JSON.stringify({
+            type : "preset",
+            url : "itowns/shp.html"
+        }), "Preset:shp");
         this.itownSelect.addOption(JSON.stringify({
             type : "preset",
             url : "itowns/gsi_planar.html"

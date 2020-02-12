@@ -1591,7 +1591,10 @@ class Controller {
 		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
 			let funcDict = this.store.getITownFuncDict();
 			if (funcDict && funcDict.hasOwnProperty(json.id)) {
-				funcDict[json.id].chowder_itowns_update_camera_callback(JSON.parse(json.cameraWorldMatrix));
+				funcDict[json.id].chowder_itowns_update_camera_callback({
+					mat : JSON.parse(json.cameraWorldMatrix),
+					params : JSON.parse(json.cameraParams),
+				});
 			}
 			if (funcDict && funcDict.hasOwnProperty(json.id)) {
 				funcDict[json.id].chowder_itowns_update_metadata(json);

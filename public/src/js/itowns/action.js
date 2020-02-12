@@ -65,11 +65,15 @@ class Action extends EventEmitter
     }
     
     /**
-     * カメラのワールドマトリックスの更新
+     * カメラの更新
      * @param {*} data 
+     * {
+     *    mat : カメラのワールドマトリックス,
+     *    params : カメラのパラメータ(fovy, zoom, near, far, aspect, filmGauge, filmOffset)
+     * }
      */
-    updateCameraWorldMatrix(data) {
-        this.emit(Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX, null, data);
+    updateCamera(data) {
+        this.emit(Action.EVENT_UPDATE_CAMERA, null, data);
     }
 
     /**
@@ -136,7 +140,7 @@ Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_ADD_LAYER = "addLayer";
 Action.EVENT_DELETE_LAYER = "deleteLayer";
 Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
-Action.EVENT_UPDATE_CAMERA_WORLD_MATRIX = "updateCameraWorldMatrix";
+Action.EVENT_UPDATE_CAMERA = "updateCamera";
 Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";

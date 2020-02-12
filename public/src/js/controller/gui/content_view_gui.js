@@ -220,8 +220,8 @@ class ContentViewGUI extends EventEmitter {
 					this.action.addItownFunc({
 						id : metaData.id,
 						func : {
-							chowder_itowns_update_camera_callback :  (mat) => {
-								connector.send(ITownsCommand.UpdateCamera, mat);
+							chowder_itowns_update_camera_callback :  (cameraData) => {
+								connector.send(ITownsCommand.UpdateCamera, cameraData);
 							},
 							chowder_itowns_update_metadata : (metaData) => {
 								try {
@@ -246,7 +246,10 @@ class ContentViewGUI extends EventEmitter {
 					});
 					
 					// 初回に一度実行
-					connector.send(ITownsCommand.UpdateCamera, JSON.parse(metaData.cameraWorldMatrix));
+					connector.send(ITownsCommand.UpdateCamera, {
+						mat : JSON.parse(metaData.cameraWorldMatrix),
+						params : JSON.parse(metaData.cameraParams),
+					});
 				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);

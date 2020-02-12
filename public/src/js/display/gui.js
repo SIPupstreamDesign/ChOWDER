@@ -435,15 +435,21 @@ class GUI extends EventEmitter {
             let connector = new IFrameConnector(iframe);
 
             // 初回に一度実行
-            connector.send(ITownsCommand.UpdateCamera, metaData.cameraWorldMatrix);
+            connector.send(ITownsCommand.UpdateCamera, {
+                mat : metaData.cameraWorldMatrix,
+                params : metaData.cameraParams,
+            });
             connector.send(ITownsCommand.Resize, rect);
 
             // chowderサーバから受信したカメラ情報などを、displayのiframe内に随時送るためのコールバックイベントを登録
             this.action.addItownFunc({
                 id : metaData.id,
                 func : {
-                    chowder_itowns_update_camera_callback : (mat) => {
-                        connector.send(ITownsCommand.UpdateCamera, mat);
+                    chowder_itowns_update_camera_callback : (cameraData) => {
+                        connector.send(ITownsCommand.UpdateCamera, {
+                            mat : cameraData.mat,
+                            params : cameraData.params
+                        });
                     },
                     chowder_itowns_resize_callback : (rect) => {
                         connector.send(ITownsCommand.Resize, rect);

@@ -199,7 +199,10 @@ class Display {
 		if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
 			let funcDict = this.store.getITownFuncDict();
 			if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-				funcDict[metaData.id].chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+				funcDict[metaData.id].chowder_itowns_update_camera_callback({
+					mat : JSON.parse(metaData.cameraWorldMatrix),
+					params : JSON.parse(metaData.cameraParams)
+				});
 				funcDict[metaData.id].chowder_itowns_update_metadata(metaData);
 			}
 		}
@@ -466,7 +469,10 @@ class Display {
 					if (elem && elem.className === Constants.TemporaryBoundClass) {
 						elem.className = ""
 					}
-					funcDict[metaData.id].chowder_itowns_update_camera_callback(JSON.parse(metaData.cameraWorldMatrix));
+					funcDict[metaData.id].chowder_itowns_update_camera_callback({
+						mat : JSON.parse(metaData.cameraWorldMatrix),
+						params : JSON.parse(metaData.cameraParams)
+					});
 				}
 			}
 		});

@@ -61,9 +61,9 @@ class Store extends EventEmitter {
     }
 
     initIFrameEvents() {
-        this.iframeConnector.on(ITownsCommand.UpdateCamera, (err, param, request) => {
+        this.iframeConnector.on(ITownsCommand.UpdateCamera, (err, cameraData, request) => {
             // カメラ更新命令
-            this.applyCameraWorldMat(param);
+            this.applyCamera(cameraData.mat, cameraData.params);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
@@ -102,7 +102,8 @@ class Store extends EventEmitter {
     }
     
     // カメラにworldMatを設定して動かす
-    applyCameraWorldMat(worldMat) {
+    // この関数実行後にview.notifyChangeを呼ぶこと
+    applyCamera(worldMat, cameraParams) {
         this.itownsView.camera.camera3D.matrixAutoUpdate = false;
         this.itownsView.camera.camera3D.matrixWorld.elements = worldMat;
 
@@ -113,7 +114,17 @@ class Store extends EventEmitter {
         this.itownsView.camera.camera3D.position.copy(d);
         this.itownsView.camera.camera3D.quaternion.copy(q);
         this.itownsView.camera.camera3D.scale.copy(s);
+        
+        this.itownsView.camera.camera3D.near = cameraParams.near;
+        this.itownsView.camera.camera3D.far = cameraParams.far;
+        this.itownsView.camera.camera3D.fov = cameraParams.fov;
+        this.itownsView.camera.camera3D.zoom = cameraParams.zoom;
+        this.itownsView.camera.camera3D.filmOffset = cameraParams.filmOffset;
+        this.itownsView.camera.camera3D.filmGauge = cameraParams.filmGauge;
+        this.itownsView.camera.camera3D.aspect = cameraParams.aspect;
+
         this.itownsView.camera.camera3D.matrixAutoUpdate = true;
+
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
     }
 
@@ -144,18 +155,59 @@ class Store extends EventEmitter {
     }
 
     /**
+     * 地理院DEMのtxt用fetcher/parsarを,mapSourceに設定する.
+     * @param {*} mapSource 
+     */
+    installCSVElevationParsar(mapSource) {
+        console.log("installCSVElevationParsar");
+        const getTextureFloat = function getTextureFloat(buffer) {
+            return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
+        };
+        function checkResponse(response) {
+            if (!response.ok) {
+                let error = new Error(`Error loading ${response.url}: status ${response.status}`);
+                error.response = response;
+                throw error;
+            }
+        }
+
+        let text = function (url, options = {}) {
+            return fetch(url, options).then((response) => {
+                checkResponse(response);
+                return response.text();
+            });
+        };
+
+        mapSource.fetcher = function (url, options = {}) {
+            return text(url, options).then((data) => {
+                let LF = String.fromCharCode(10);
+                let lines = data.split(LF);
+                let heights = [];
+                for (let i = 0; i < lines.length; i++) {
+                    let sp = lines[i].split(",");
+                    for (let j = 0; j < sp.length; j++) {
+                        if (sp[j] == "e") {
+                            heights.push(0);
+                        } else {
+                            heights.push(Number(sp[j]));
+                        }
+                    }
+                }
+                let floatArray = new Float32Array(heights);
+                let texture = getTextureFloat(floatArray);
+                return texture;
+            });
+        };
+    }
+
+    /**
      * レイヤーの作成
      * @param {*} type 
      */
     createLayerByType(config, type) {
-
+        console.error("createLayerByType", config, type)
+        /*
         class TestSource extends itowns.TMSSource {
-            /**
-             * @param {Object} source - An object that can contain all properties of a
-             * WMTSSource and {@link Source}. Only `url` and `name` are mandatory.
-             *
-             * @constructor
-             */
             constructor(source) {
                 super(source);
             }
@@ -166,9 +218,9 @@ class Store extends EventEmitter {
                 return url;//super.urlFromExtent(extent);
             }
         }
+        */
         
-        
-        if (type === ITownsConstants.TypeColor) {
+        if (type === ITownsConstants.TypeColor && config.format !== "pbf") {
             let mapSource = new itowns.TMSSource(config);
             return new itowns.ColorLayer(config.id, {
                 source: mapSource
@@ -176,8 +228,15 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             let mapSource = new itowns.TMSSource(config);
+            if (config.format === "csv" || config.format === "txt") {
+                this.installCSVElevationParsar(mapSource);
+            }
             return new itowns.ElevationLayer(config.id, {
-                source: mapSource
+                source: mapSource,
+                updateStrategy: {
+                    type: 3
+                },
+                scale: 1
             });
         }
         if (type === ITownsConstants.TypePointCloud) {
@@ -186,10 +245,10 @@ class Store extends EventEmitter {
         if (type === ITownsConstants.Type3DTile) {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
         }
-        if (type === ITownsConstants.TypeGeometry) {
+        if (type === ITownsConstants.TypeGeometry || config.format === "pbf") {
             let mapSource = null;
             if (config.format === "geojson") {
-                mapSource = new TestSource(config);
+                mapSource = new itowns.TMSSource(config);
                 return new itowns.GeometryLayer(config.id, new itowns.THREE.Group(), {
                     update : (context, layer, node) => {
                         return itowns.FeatureProcessing.update(context, layer, node)
@@ -257,8 +316,8 @@ class Store extends EventEmitter {
         if (type === ITownsConstants.TypeElevation) {
             config = {
                 "projection": "EPSG:3857",
-                "isInverted": true,
-                "format": url.indexOf('.png') > 0 ? "image/png" : "",
+                "tileMatrixSet": "PM",
+                "format": url.indexOf('.png') > 0 ? "image/png" : "csv",
                 "url": url,
                 "scale" : 1
             };
@@ -490,6 +549,7 @@ class Store extends EventEmitter {
                     data.projection = layer.projection;
                     data.id = layer.id;
                     data.url = layer.hasOwnProperty('source') ? layer.source.url : layer.url;
+                    data.style = layer.hasOwnProperty('style') ? layer.source.style : undefined;
                     data.zoom = layer.hasOwnProperty('source') ? layer.source.zoom : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.type = (((layer) => {
@@ -514,6 +574,7 @@ class Store extends EventEmitter {
                     data.name = layer.hasOwnProperty('name') ? layer.name : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
+                    data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
                     data.type = (((layer) => {
                         if (layer instanceof itowns.ElevationLayer) {
                             return ITownsConstants.TypeElevation;
@@ -578,6 +639,18 @@ class Store extends EventEmitter {
         }, 10 * 1000);
     }
 
+    getCameraParams(camera3D) {
+        return JSON.stringify({
+            fovy : camera3D.fov,
+            zoom : camera3D.zoom,
+            near : camera3D.near,
+            far : camera3D.far,
+            filmOffset : camera3D.filmOffset,
+            filmGauge : camera3D.filmGauge,
+            aspect : camera3D.aspect
+        });
+    }
+
     injectAsChOWDERiTownController() {
         let menuDiv = document.getElementById('menuDiv');
         if (menuDiv) {
@@ -606,7 +679,11 @@ class Store extends EventEmitter {
 
             // 初期カメラ位置送信
             let worldMat = JSON.stringify(this.itownsView.camera.camera3D.matrixWorld.elements);
-            this.iframeConnector.send(ITownsCommand.UpdateCamera, worldMat);
+            let cameraParams = this.getCameraParams(this.itownsView.camera.camera3D);
+            this.iframeConnector.send(ITownsCommand.UpdateCamera, {
+                mat : worldMat,
+                params : cameraParams
+            });
 
             // 初期レイヤー送信
             if (this.layerDataList.length >= 0) {
@@ -615,12 +692,17 @@ class Store extends EventEmitter {
 
             // カメラ動いた時にマトリックスを送信
             this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_CAMERA_UPDATE, (() => {
-                return () => {
-                    let mat = JSON.stringify(this.itownsView.camera.camera3D.matrixWorld.elements);
-                    if (worldMat !== mat) {
+                return (a, b, c ) => {
+                    let mat_ = JSON.stringify(this.itownsView.camera.camera3D.matrixWorld.elements);
+                    let params_ = this.getCameraParams(this.itownsView.camera.camera3D);
+                    if (worldMat !== mat_ || cameraParams !== params_) {
                         // カメラが動いた.
-                        worldMat = mat;
-                        this.iframeConnector.send(ITownsCommand.UpdateCamera, mat);
+                        worldMat = mat_;
+                        cameraParams = params_; 
+                        this.iframeConnector.send(ITownsCommand.UpdateCamera, {
+                            mat : mat_,
+                            params : params_
+                        });
                     }
                 };
             })());

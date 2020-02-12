@@ -48,8 +48,9 @@ class Store extends EventEmitter {
                 // 初回追加だった
                 // カメラ更新
                 if (this.initialMatrix) {
-                    this._updateCameraWorldMatrix({
-                        mat: this.initialMatrix
+                    this._updateCamera({
+                        mat: this.initialMatrix,
+                        params: this.initialCameraParams,
                     })
                 }
             }
@@ -213,9 +214,10 @@ class Store extends EventEmitter {
         });
     }
 
-    _updateCameraWorldMatrix(data) {
+    _updateCamera(data) {
         if (this.metaData) {
             this.metaData.cameraWorldMatrix = data.mat;
+            this.metaData.cameraParams = data.params;
             let updateData = JSON.parse(JSON.stringify(this.metaData));
             // 幅高さは更新しない
             delete updateData.width;
@@ -225,6 +227,7 @@ class Store extends EventEmitter {
         } else {
             // コンテンツ追加完了前だった。完了後にカメラを更新するため、matrixをキャッシュしておく。
             this.initialMatrix = data.mat;
+            this.initialCameraParams = data.params;
         }
     }
 
@@ -308,6 +311,7 @@ class Store extends EventEmitter {
                 let id = layerList[i].id;
                 if (id === layer.id) {
                     layerList[i] = layer;
+                    //console.error("saveLayer", layerList)
                     this.metaData.layerList = JSON.stringify(layerList);
                     return;
                 }
