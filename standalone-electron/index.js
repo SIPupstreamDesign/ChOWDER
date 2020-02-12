@@ -13,9 +13,12 @@ let filepath = "conf.json"
 if (os.platform() === "darwin") {
 	filepath = path.resolve(__dirname, '../../../../conf.json');
 } else {
-	filepath = '../../conf.json'
+	filepath = path.resolve(__dirname, '../../../conf.json');
 	if (!fs.existsSync(filepath)) {
-		filepath = './conf.json';
+		filepath = path.resolve(__dirname, '../../conf.json');
+		if (!fs.existsSync(filepath)) {
+			filepath = './conf.json';
+		}
 	}
 }
 
@@ -182,8 +185,8 @@ class ElectornDisplay {
 				console.log(tmpResult[i]);
 			}*/
 		}
-		console.log("groupingData:");
-		console.log(result);
+		//console.log("groupingData:");
+		//console.log(result);
 		return JSON.parse(JSON.stringify(result));
 
 	}
@@ -206,8 +209,8 @@ class ElectornDisplay {
 			}
 		}
 
-		console.log("rank:");
-		console.log(rank);
+		//console.log("rank:");
+		//console.log(rank);
 		return JSON.parse(JSON.stringify(rank));
 	}
 
@@ -235,8 +238,8 @@ class ElectornDisplay {
 				}
 			}
 		}
-		console.log("adjacencyInFunction")
-		console.log(adj);
+		//console.log("adjacencyInFunction")
+		//console.log(adj);
 		return JSON.parse(JSON.stringify(adj));
 	}
 
@@ -337,7 +340,7 @@ class ElectornDisplay {
 	}
 
 	calcRelativeCoord(pcId, relativeCoord, adjList) {
-		console.log(adjList);
+		//console.log(adjList);
 		let directionName = ["right", "left", "up", "down"]
 		let rightCount = {};
 		rightCount[pcId] = [0]
@@ -370,7 +373,7 @@ class ElectornDisplay {
 			relativeCoord[pcId][i][0] += resultCount["right"][pcId][i];
 			relativeCoord[pcId][i][1] += resultCount["up"][pcId][i];
 		}
-		console.log(relativeCoord);
+		//console.log(relativeCoord);
 	}
 
 	locateScannnedPos(scannedConfigId, trueConfigId, sendConfig) {
@@ -386,11 +389,11 @@ class ElectornDisplay {
 			let receivedData = this.convertDataFormatReceivedToScanned(data);
 
 			for (let id in this.config.windows) {
-				console.log(id);
+				//console.log(id);
 				let windowProps = this.config.windows[id];
 
 				if (windowProps.hasOwnProperty('marker_id')) {
-					console.log(windowProps.marker_id);
+					//console.log(windowProps.marker_id);
 					let pcId = this.config.windows[id].marker_id[0];
 					let windowId = this.config.windows[id].marker_id[1];
 					//スコープ内にある真値とスキャン値を取得する
@@ -404,8 +407,8 @@ class ElectornDisplay {
 					}
 					scannedData = this.convertDataFormatScannedToTrue(scannedData, pcId);
 
-					console.log(trueData);
-					console.log(scannedData);
+					//console.log(trueData);
+					//console.log(scannedData);
 
 					//真値とスキャン値のフォーマットを相対座標値に合わせる
 					let trueRelativeCoord = {};
@@ -418,7 +421,7 @@ class ElectornDisplay {
 						if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
 						else { scannedRelativeCoord[pcId].push([0, 0]); }
 					}
-					console.log("calcRelativeCoord")
+					//console.log("calcRelativeCoord")
 					this.calcRelativeCoord(pcId, trueRelativeCoord, this.dataList);
 					this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
 
@@ -440,8 +443,8 @@ class ElectornDisplay {
 						let tmId = pcId + trueMarkerId
 						for (let trueWindowId in this.config.windows) {
 							if (this.config.windows[trueWindowId].marker_id === tmId) {
-								console.log("change");
-								console.log(id, trueWindowId);
+								//console.log("change");
+								//console.log(id, trueWindowId);
 								this.locateScannnedPos(trueWindowId, id, relocatedConfig);
 							}
 						}
@@ -449,7 +452,7 @@ class ElectornDisplay {
 
 				}
 			}
-			//console.log("rewritedConfig:", relocatedConfig);
+			console.log(this.configPath, "rewritedConfig:", relocatedConfig);
 			fs.writeFileSync(this.configPath, JSON.stringify(relocatedConfig, null, "\t"));
 			return true;
 		}
