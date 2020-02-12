@@ -508,7 +508,8 @@ class Store extends EventEmitter {
         let isUp = params.isUp ? true : false;
         let layers = this.itownsView._layers[0].attachedLayers;
         let layer = this.getLayer(id);
-        console.log("pre", layers)
+        let i = layers.indexOf(layer);
+        console.log("pre", layer, i)
         if (layer) {
             if (isUp && i > 0) {
                 console.error("up!", this.itownsView, id)
@@ -517,7 +518,7 @@ class Store extends EventEmitter {
                 console.log(layers)
                 this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
                 this.itownsView.notifyChange();
-            } else if (i < (layer.length - 1)) {
+            } else if (!isUp && i < (layers.length - 1)) {
                 itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
                 layers.splice(i, 2, layers[i + 1], layers[i]);
                 console.log(layers)
