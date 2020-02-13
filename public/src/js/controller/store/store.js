@@ -607,6 +607,7 @@ Store.EVENT_TOGGLE_CONTENT_MARK_ICON = "setup_toggle_content_mark_icon";
 Store.EVENT_DONE_SNAP_CONTENT_TO_SCREEN = "done_snap_content_to_screen";
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content";
 Store.EVENT_CONTENT_VISIBLE_CHANGED = "content_visible_changed";
+Store.EVENT_CONTENT_DISPLAY_TIME_CHANGED = "content_display_time_changed";
 
 // display_store
 Store.EVENT_DISPLAY_SCALE_CHANGING = "display_scale_changing";

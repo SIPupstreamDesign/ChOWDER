@@ -238,6 +238,16 @@ pre {
 	padding : 5px;
 	box-sizing: border-box;
 }
+.time {
+	position : absolute;
+	color : black;
+	height : 100px;
+	font-size : 1.2em;
+	background-color: white;
+	border : 1px solid gray;
+	padding : 5px;
+	box-sizing: border-box;
+}
 .hiddenCursor {
     color: transparent;
     width: 100px;

@@ -312,6 +312,7 @@ class Display {
 					this.gui.updateViewport(this.store.getWindowData());
 				} else {
 					this.gui.showMemo(elem, metaData);
+					this.gui.showTime(elem, metaData);
 					this.gui.toggleMark(elem, metaData);
 				}
 			}
@@ -415,6 +416,10 @@ class Display {
 					if (memo) {
 						previewArea.removeChild(memo);
 					}
+					let time =  document.getElementById("time:" + metaData.id);
+					if (time) {
+						previewArea.removeChild(time);
+					}
 				}
 					
 				// webgl iframeの更新
@@ -428,6 +433,7 @@ class Display {
 			for (let i = 0; i < data.length; ++i) {
 				let elem = document.getElementById(data[i].id);
 				if (elem) {
+					this.gui.deleteTime(elem, data[i].id);
 					this.gui.deleteMark(elem, data[i].id);
 					previewArea.removeChild(elem);
 				}

@@ -143,6 +143,14 @@ class Action extends EventEmitter
     }
 
     /**
+     * コンテンツの時刻表示の可視不可視を変更
+     * @param {*} data 
+     */
+    changeContentDisplayTime(data) {
+        this.emit(Action.EVENT_CHANGE_DISPLAY_TIME, null, data);
+    }
+
+    /**
      * 選択中のコンテンツのTransformを変更
      * @param {*} data
      */
@@ -895,6 +903,7 @@ Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_CHANGE_CONTENT_INDEX = "changeContentIndex";
 Action.EVENT_CHANGE_CONTENT_VISIBLE = "changeContentVisible";
+Action.EVENT_CHANGE_DISPLAY_TIME = "changeContentDisplayTime";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_CHANGE_CONTENT_METAINFO = "changeContentMetaInfo";
 Action.EVENT_CHANGE_VIDEO_DEVICE = "changeVideoDevice";

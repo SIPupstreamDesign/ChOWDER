@@ -247,12 +247,23 @@ class GUI extends EventEmitter {
                     memo.style.borderColor = "lightgray";
                     memo.style.backgroundColor = "lightgray"; 
                 }
-                if ( (metaData[Constants.MARK_MEMO] === 'true' || metaData[Constants.MARK_MEMO] === true) && 
-                        (metaData["visible"] === 'true' || metaData["visible"] === true) )
+                if (String(metaData[Constants.MARK_MEMO]) === 'true' && String(metaData.visible) === 'true')
                 {
                     memo.style.display = "block";
                 } else {
                     memo.style.display = "none";
+                }
+            }
+            let time =  document.getElementById("time:" + metaData.id);
+            if (time) {
+                if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+                    time.style.borderColor = groupDict[metaData.group].color;
+                }
+                if (String(metaData.display_time) === 'true')
+                {
+                    time.style.display = "block";
+                } else {
+                    time.style.display = "none";
                 }
             }
         }
@@ -265,6 +276,18 @@ class GUI extends EventEmitter {
                 memo.style.display = "none";
                 if (memo.parentNode) {
                     memo.parentNode.removeChild(memo);
+                }
+            }
+        }
+    }
+    
+    deleteTime(elem, id) {
+        if (elem) {
+            let time =  document.getElementById("time:" + id);
+            if (time) {
+                time.style.display = "none";
+                if (time.parentNode) {
+                    time.parentNode.removeChild(time);
                 }
             }
         }
@@ -305,10 +328,10 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      */
     showMemo(elem, metaData) {
-        let groupDict = this.store.getGroupDict();
-        let previewArea = document.getElementById('preview_area');
-        let memo = document.getElementById("memo:" + metaData.id);
         if (elem && metaData.user_data_text) {
+            let groupDict = this.store.getGroupDict();
+            let previewArea = document.getElementById('preview_area');
+            let memo = document.getElementById("memo:" + metaData.id);
             if (memo) {
                 memo.innerHTML = JSON.parse(metaData.user_data_text).text;
                 let rect = elem.getBoundingClientRect();
@@ -335,6 +358,40 @@ class GUI extends EventEmitter {
             if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
                 memo.style.borderColor = groupDict[metaData.group].color;
                 memo.style.backgroundColor = groupDict[metaData.group].color; 
+            }
+        }
+    }
+
+    /**
+     * 時刻を表示.
+     * elemに時刻用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+    showTime(elem, metaData) {
+        if (elem && metaData.hasOwnProperty('display_time') && String(metaData.display_time) === "true") {
+            let previewArea = document.getElementById('preview_area');
+            let time = document.getElementById("time:" + metaData.id);
+            let previewRect = previewArea.getBoundingClientRect();
+            if (time) {
+                time.innerHTML = this.store.getTime().toDateString();
+                let rect = elem.getBoundingClientRect();
+                time.style.right = (previewRect.right - rect.right) + "px";
+                time.style.top =  rect.top + "px";
+                time.style.zIndex = elem.style.zIndex;
+            } else {
+                time = document.createElement("pre");
+                time.id = "time:" + metaData.id;
+                time.className = "time";
+                time.innerHTML = this.store.getTime().toDateString();
+                let rect = elem.getBoundingClientRect();
+                time.style.right = (previewRect.right - rect.right) + "px";
+                time.style.top = rect.top + "px";
+                time.style.position = "absolute";
+                time.style.height = "auto";
+                time.style.whiteSpace = "pre-line";
+                time.style.zIndex = elem.style.zIndex;
+                previewArea.appendChild(time);
             }
         }
     }
@@ -654,6 +711,7 @@ class GUI extends EventEmitter {
             }
     
             this.showMemo(elem, metaData);
+            this.showTime(elem, metaData);
         }
     }
     
@@ -1050,8 +1108,9 @@ class GUI extends EventEmitter {
                 let metaData = metaDataDict[id];
                 if (elem) {
                     VscreenUtil.assignMetaData(document.getElementById(id), metaData, false, groupDict);
-                    // メモの座標も更新する
+                    // メモ/timeの座標も更新する
                     this.showMemo(elem, metaData);
+                    this.showTime(elem, metaData);
                 }
             }
         }

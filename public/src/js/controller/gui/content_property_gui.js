@@ -258,6 +258,13 @@ class ContentPropertyGUI extends EventEmitter {
 				contentVisibleCheck.checked = String(metaData.visible) === "true";
 			}
 		})
+		
+		this.store.on(Store.EVENT_CONTENT_DISPLAY_TIME_CHANGED, (err, metaData) => {
+			let contentDisplayTimeCheck = document.getElementsByClassName('display_time')[0];
+			if (contentDisplayTimeCheck) {
+				contentDisplayTimeCheck.checked = String(metaData.display_time) === "true";
+			}
+		})
 	}
 
 
@@ -414,8 +421,9 @@ class ContentPropertyGUI extends EventEmitter {
 		if (type === Constants.PropertyTypeDisplay) {
 			this.setIDLabel("Display ID:");
 			addCheckProperty(isEditable, 'display_visible', 'visible', String(metaData.visible) === "true", () => {
-				metaData.visible = document.getElementsByClassName('display_visible')[0].checked;
-				this.action.changeDisplayVisible(metaData);
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('display_visible')[0].checked;
+				this.action.changeDisplayVisible(meta);
 			});
 			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
@@ -482,8 +490,9 @@ class ContentPropertyGUI extends EventEmitter {
 			this.setIDLabel("Content ID:");
 			this.setGroupLabel("Group:");
 			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
-				metaData.visible = document.getElementsByClassName('content_visible')[0].checked;
-				this.action.changeContentVisible(metaData);
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('content_visible')[0].checked;
+				this.action.changeContentVisible(meta);
 			});
 			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
@@ -496,6 +505,13 @@ class ContentPropertyGUI extends EventEmitter {
 					zIndex: val
 				});
 			});
+			if (metaData.type === Constants.TypeWebGL) {
+				addCheckProperty(isEditable, 'display_time', 'display time', String(metaData.display_time) === "true", () => {
+					let meta = this.store.getMetaData(metaData.id);
+					meta.display_time = document.getElementsByClassName('display_time')[0].checked;
+					this.action.changeContentDisplayTime(meta);
+				});
+			}
 			addTextInputProperty(isEditable, 'content_text', "");
 			this.showDownloadButton(true, "download?" + metaData.id);
 			this.showMetaLabel(true);

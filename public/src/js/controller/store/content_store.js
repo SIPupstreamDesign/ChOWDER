@@ -356,6 +356,22 @@ class ContentStore
 	}
 
 	/**
+	 * コンテンツの時刻表示の表示非表示を変更する
+	 */
+	_changeContentDisplayTime(metaData) {
+		if (!this.store.getManagement().isEditable(metaData.group)) {
+			// 編集不可コンテンツ
+			return;
+		}
+
+		manipulator.removeManipulator();
+
+		this.store.operation.updateMetadataMulti([metaData], () => {
+			this.store.emit(Store.EVENT_CONTENT_DISPLAY_TIME_CHANGED, null, metaData)
+		});
+	}
+
+	/**
 	 * コンテンツのzindex変更が要求された
 	 * @param {Object} data { toFront : 最前面に移動ならtrue, 最背面に移動ならfalse }
 	 */
