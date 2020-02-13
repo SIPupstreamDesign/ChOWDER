@@ -57,8 +57,8 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.addOption(ITownsConstants.TypeColor, "Color");
         this.typeSelect.addOption(ITownsConstants.TypeElevation, "Elevation");
         this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(tileset.json)");
-        this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree data)");
-        this.typeSelect.addOption(ITownsConstants.TypeGeometry, "Geometry(pbf, geojson)");
+        this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree cloud.js)");
+        this.typeSelect.addOption(ITownsConstants.TypeGeometry, "VectorTile(pbf, geojson)");
 
         this.idTitle = document.createElement('p');
         this.idTitle.className = "layer_dialog_sub_title";
