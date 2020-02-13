@@ -186,8 +186,29 @@ class Store extends EventEmitter {
                             this.metaData.layerList = JSON.stringify(layerList);
                         }
                     }
+                    this.operation.updateMetadata(this.metaData, (err, res) => {
+                        this.emit(Store.EVENT_DONE_ADD_LAYER, null, params)
+                    });
+                    return;
                 }
-                this.emit(Store.EVENT_DONE_ADD_LAYER, null, params)
+                // 初回起動時などで、レイヤー情報がまだmetadata似ない場合.
+                this.emit(Store.EVENT_DONE_ADD_LAYER, null, params);
+            });
+
+            this.iframeConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
+                let layerList = [];
+                if (params.length > 0 && this.metaData) {
+                    for (let i = 0; i < params.length; ++i) {
+                        let layerParam = params[i];
+                        let layer = this.getLayerData(layerParam.id);
+                        if (!layer) {
+                            layerList.push(layerParam);
+                        }
+                    }
+                }
+                this.metaData.layerList = JSON.stringify(layerList);
+                this.operation.updateMetadata(this.metaData, (err, res) => {
+                });
             });
 
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
@@ -366,11 +387,8 @@ class Store extends EventEmitter {
         }
         this.metaData = meta;
         if (layerList.length > 0) {
-            for (let i = 0; i < layerList.length; ++i) {
-                if (layerList[i]) {
-                    this._addLayer(layerList[i]);
-                }
-            }
+            this.iframeConnector.send(ITownsCommand.InitLayers, layerList, (err, data) => {
+            });
             this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }

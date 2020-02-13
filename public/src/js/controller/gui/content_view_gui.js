@@ -246,10 +246,15 @@ class ContentViewGUI extends EventEmitter {
 					});
 					
 					// 初回に一度実行
-					connector.send(ITownsCommand.UpdateCamera, {
-						mat : JSON.parse(metaData.cameraWorldMatrix),
-						params : JSON.parse(metaData.cameraParams),
-					});
+					try {
+						connector.send(ITownsCommand.UpdateCamera, {
+							mat : JSON.parse(metaData.cameraWorldMatrix),
+							params : JSON.parse(metaData.cameraParams),
+						});
+						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
+					} catch(err) {
+						console.error(err);
+					}
 				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);

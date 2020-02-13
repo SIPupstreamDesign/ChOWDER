@@ -98,7 +98,9 @@ class GUI extends EventEmitter {
 
         // レイヤーが追加された
         this.store.on(Store.EVENT_DONE_ADD_LAYER, (err, layerDataList) => {
-            this.layerList.initLayerSelectList(layerDataList);
+            if (!err) {
+                this.layerList.initLayerSelectList(layerDataList);
+            }
         })
         
         // サンプルコンテンツの追加

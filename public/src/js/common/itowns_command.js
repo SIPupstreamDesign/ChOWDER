@@ -10,6 +10,8 @@ const ITownsCommand = {
     Init : "Init",
     // コンテンツ追加命令(iframe->parent)
     AddContent : "AddContent",
+    // レイヤーリストからレイヤーを初期化
+    InitLayers : "InitLayers",
     // レイヤーが更新された(iframe->parent)
     UpdateLayer : "UpdateLayer",
     // カメラ更新命令(parent<->iframe)

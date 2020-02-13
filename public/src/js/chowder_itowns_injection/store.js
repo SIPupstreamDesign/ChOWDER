@@ -83,6 +83,12 @@ class Store extends EventEmitter {
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
+        this.iframeConnector.on(ITownsCommand.InitLayers, (err, param, request) => {
+            // レイヤー追加命令
+            this.initLayers(param);
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
         this.iframeConnector.on(ITownsCommand.DeleteLayer, (err, param, request) => {
             // レイヤー削除命令
             this.deleteLayer(param);
@@ -121,12 +127,12 @@ class Store extends EventEmitter {
 
         this.itownsView.camera.camera3D.near = cameraParams.near;
         this.itownsView.camera.camera3D.far = cameraParams.far;
-        this.itownsView.camera.camera3D.fov = cameraParams.fov;
+        this.itownsView.camera.camera3D.fov = cameraParams.fovy;
         this.itownsView.camera.camera3D.zoom = cameraParams.zoom;
         this.itownsView.camera.camera3D.filmOffset = cameraParams.filmOffset;
         this.itownsView.camera.camera3D.filmGauge = cameraParams.filmGauge;
         this.itownsView.camera.camera3D.aspect = cameraParams.aspect;
-
+        
         this.itownsView.camera.camera3D.matrixAutoUpdate = true;
 
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
@@ -476,6 +482,24 @@ class Store extends EventEmitter {
             itowns.View.prototype.addLayer.call(this.itownsView, layer);
         } else {
             this.itownsView.addLayer(layer);
+        }
+    }
+
+    /**
+     * レイヤーリストを元に初期化する
+     * 既存の有効なレイヤーはすべて削除され、layerListに記載されたレイヤーが追加される
+     * @param {*} layerList 
+     */
+    initLayers(layerList) {
+        for (let i = this.layerDataList.length - 1; i >= 0; --i) {
+            const id = this.layerDataList[i].id;
+            let layer = this.getLayer(id);
+            if (layer) {
+                this.itownsView.removeLayer(id);
+            }
+        }
+        for (let i = 0; i < layerList.length; ++i) {
+            this.addLayer(layerList[i]);
         }
     }
 
