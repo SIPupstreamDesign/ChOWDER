@@ -419,7 +419,7 @@ class Store extends EventEmitter {
             Connector.send(Command.SendMessage, {
                 command : "changeItownsContentTime",
                 data : data
-            })
+            }, () => {})
         }
     }
 }
