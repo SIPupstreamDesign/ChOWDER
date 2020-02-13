@@ -528,26 +528,53 @@ class Store extends EventEmitter {
      * }
      */
     changeLayerOrder(params) {
-        let id = params.id;
-        let isUp = params.isUp ? true : false;
-        let layers = this.itownsView._layers[0].attachedLayers;
-        let layer = this.getLayer(id);
-        let i = layers.indexOf(layer);
-        console.log("pre", layer, i)
-        if (layer) {
-            if (isUp && i > 0) {
-                console.error("up!", this.itownsView, id)
-                itowns.ColorLayersOrdering.moveLayerUp(this.itownsView, id);
-                layers.splice(i - 1, 2, layers[i], layers[i - 1]);
-                console.log(layers)
-                this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
-                this.itownsView.notifyChange();
-            } else if (!isUp && i < (layers.length - 1)) {
-                itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
-                layers.splice(i, 2, layers[i + 1], layers[i]);
-                console.log(layers)
-                this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
-                this.itownsView.notifyChange();
+        const id = params.id;
+        const isUp = params.isUp ? true : false;
+        const validLayers = this.getLayerDataList();
+        const targetLayer = this.getLayer(id);
+        if (targetLayer) {
+            for (let i = 0; i < this.itownsView._layers.length; ++i) {
+                let layers = this.itownsView._layers;
+                let layer = this.itownsView._layers[i];
+                let attachedLayers = layer.attachedLayers;
+                if (attachedLayers.length > 0) {
+                    let attachedIndex = attachedLayers.indexOf(targetLayer);
+                    if (attachedIndex >= 0) {
+                        // attachedLayerを移動したい
+                        // "attachedLayers"内で移動を試みる
+                        if (isUp 
+                            && attachedIndex > 0 
+                            && validLayers.indexOf(attachedLayers[i]) >= 0) // 入れ替え先レイヤーが有効かどうか
+                            {
+                            console.error("up!", this.itownsView, id)
+                            itowns.ColorLayersOrdering.moveLayerUp(this.itownsView, id);
+                            attachedLayers.splice(i - 1, 2, attachedLayers[i], attachedLayers[i - 1]);
+                            this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
+                            this.itownsView.notifyChange();
+                        } else if (!isUp 
+                            && attachedIndex < (attachedLayers.length - 1)
+                            && validLayers.indexOf(attachedLayers[i + 1]) >= 0) // 入れ替え先レイヤーが有効かどうか) 
+                            {
+                            console.error("moveLayerDown", i, i + 1)
+                            itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
+                            attachedLayers.splice(i, 2, attachedLayers[i + 1], attachedLayers[i]);
+                            this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
+                            this.itownsView.notifyChange();
+                        } else {
+                            // attachedLayers内で移動できない. 上位の"_layers"内の移動を行う
+                            if (isUp && i > 0) {
+                                layers.splice(i - 1, 2, layers[i], layers[i - 1]);
+                                this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
+                                this.itownsView.notifyChange();
+                            } else if (!isUp && i < (layers.length - 1)) {
+                                layers.splice(i, 2, layers[i + 1], layers[i]);
+                                this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
+                                this.itownsView.notifyChange();
+                            }
+                        }
+                        break;
+                    }
+                }
             }
         }
     }
@@ -627,6 +654,7 @@ class Store extends EventEmitter {
         let layer;
         for (i = 0; i < layers.length; ++i) {
             layer = layers[i];
+            if (!layer) continue;
             data = {};
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||

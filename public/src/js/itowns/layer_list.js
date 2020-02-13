@@ -27,6 +27,7 @@ class LayerList extends EventEmitter {
         let layerButtonArea = document.createElement('div');
         layerButtonArea.className = "layer_button_area";
 
+        /*
         // レイヤー上移動ボタン
         this.layerUpButton = new Button();
         this.layerUpButton.getDOM().className = "layer_up_button btn btn-light";
@@ -36,7 +37,7 @@ class LayerList extends EventEmitter {
         this.layerDownButton = new Button();
         this.layerDownButton.getDOM().className = "layer_down_button btn btn-light";
         layerButtonArea.appendChild(this.layerDownButton.getDOM());
-
+        */
 
         // レイヤー追加ボタン
         this.layerAddButton = new Button();
@@ -84,6 +85,7 @@ class LayerList extends EventEmitter {
             });
         });
 
+        /*
         this.layerUpButton.on('click', () => {
             this.action.changeLayerOrder({
                 id: this.layerSelect.getSelectedValue(),
@@ -97,6 +99,7 @@ class LayerList extends EventEmitter {
                 isUp : false
             });
         });
+        */
 
         this.layerSelect.on(Select.EVENT_CHANGE, (err, evt) => {
             this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {

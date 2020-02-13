@@ -10,6 +10,7 @@ import vscreen_util from '../../common/vscreen_util.js';
 import ContentUtil from '../content_util'
 import ITownsCommand from '../../common/itowns_command.js';
 import IFrameConnector from '../../common/iframe_connector.js';
+import ITownsUtil from '../../common/itowns_util.js';
 
 "use strict";
 
@@ -210,7 +211,12 @@ class ContentViewGUI extends EventEmitter {
 			else if (metaData.type === Constants.TypeWebGL) {
 				// contentData is text
 				let iframe = document.createElement('iframe');
-				iframe.src = metaData.url;
+				
+				let url = metaData.url;
+				if (url.indexOf("demo=true") >= 0) {
+					url = url.split("demo=true").join("demo=false");
+				}
+				iframe.src = url;
 				iframe.style.width = "100%";
 				iframe.style.height = "100%";
 				iframe.style.pointerEvents = "none";
@@ -220,27 +226,12 @@ class ContentViewGUI extends EventEmitter {
 					this.action.addItownFunc({
 						id : metaData.id,
 						func : {
-							chowder_itowns_update_camera_callback :  (cameraData) => {
-								connector.send(ITownsCommand.UpdateCamera, cameraData);
+							chowder_itowns_update_camera :  (metaData) => {
+								ITownsUtil.updateCamera(connector, metaData);
 							},
-							chowder_itowns_update_metadata : (metaData) => {
-								try {
-									if (metaData.hasOwnProperty('layerList')) {
-										let preMetaData = this.store.getMetaData(metaData.id);
-										let preLayerList =  preMetaData ? preMetaData.layerList : [];
-										// レイヤー情報が異なる場合は全レイヤー更新
-										if (JSON.stringify(preLayerList) !== metaData.layerList) {
-											let layerList = JSON.parse(metaData.layerList);
-											for (let i = 0; i < layerList.length; ++i) {
-												let layer = layerList[i];
-												connector.send(ITownsCommand.ChangeLayerProperty, layer);
-											}
-										}
-									}
-								}
-								catch(e) {
-									console.error(e);
-								}
+							chowder_itowns_update_layer_list : (metaData) => {
+								let preMetaData = this.store.getMetaData(metaData.id);
+								ITownsUtil.updateLayerList(connector, metaData, preMetaData);
 							}
 						}
 					});

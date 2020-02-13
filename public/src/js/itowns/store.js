@@ -195,14 +195,21 @@ class Store extends EventEmitter {
                 this.emit(Store.EVENT_DONE_ADD_LAYER, null, params);
             });
 
+            //  iframe内のitownsのレイヤーが削除された
+            // storeのメンバに保存
+            this.iframeConnector.on(ITownsCommand.DeleteLayer, (err, params) => {
+            });
+
             this.iframeConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
                 let layerList = [];
                 if (params.length > 0 && this.metaData) {
                     for (let i = 0; i < params.length; ++i) {
                         let layerParam = params[i];
                         let layer = this.getLayerData(layerParam.id);
-                        if (!layer) {
+                        if (layer) {
                             layerList.push(layerParam);
+                        } else {
+                            console.error("Not found layer on ChOWDER metadata", layerParam.id)
                         }
                     }
                 }
@@ -283,10 +290,10 @@ class Store extends EventEmitter {
                 let id = layerList[i].id;
                 if (id === data.id) {
                     // レイヤー削除して上書き
-                    delete layerList[i];
+                    layerList.splice(i, 1);
                     this.metaData.layerList = JSON.stringify(layerList);
 
-                    console.error("updateMetadata", data, this.metaData)
+                    console.log("updateMetadata", data, this.metaData)
                     // iframeへ送る
                     this.iframeConnector.send(ITownsCommand.DeleteLayer, data, (err, data) => {
                         // サーバへ送る

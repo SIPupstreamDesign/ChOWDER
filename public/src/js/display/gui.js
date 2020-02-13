@@ -15,6 +15,7 @@ import PerformanceLogger from './performance_logger';
 import Button from '../components/button';
 import ITownsCommand from '../common/itowns_command';
 import IFrameConnector from '../common/iframe_connector';
+import ITownsUtil from '../common/itowns_util';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -451,33 +452,15 @@ class GUI extends EventEmitter {
             this.action.addItownFunc({
                 id : metaData.id,
                 func : {
-                    chowder_itowns_update_camera_callback : (cameraData) => {
-                        connector.send(ITownsCommand.UpdateCamera, {
-                            mat : cameraData.mat,
-                            params : cameraData.params
-                        });
+                    chowder_itowns_update_camera : (metaData) => {
+                        ITownsUtil.updateCamera(connector, metaData);
                     },
-                    chowder_itowns_resize_callback : (rect) => {
-                        connector.send(ITownsCommand.Resize, rect);
+                    chowder_itowns_resize : (rect) => {
+                        ITownsUtil.resize(connector, rect)
                     },
-                    chowder_itowns_update_metadata : (metaData) => {
-                        try {
-                            if (metaData.hasOwnProperty('layerList')) {
-                                let preMetaData = this.store.getMetaData(metaData.id);
-                                let preLayerList =  preMetaData ? preMetaData.layerList : [];
-                                // レイヤー情報が異なる場合は全レイヤー更新
-                                if (JSON.stringify(preLayerList) !== metaData.layerList) {
-                                    let layerList = JSON.parse(metaData.layerList);
-                                    for (let i = 0; i < layerList.length; ++i) {
-                                        let layer = layerList[i];
-                                        connector.send(ITownsCommand.ChangeLayerProperty, layer);
-                                    }
-                                }
-                            }
-                        }
-                        catch(e) {
-                            console.error(e);
-                        }
+                    chowder_itowns_update_layer_list : (metaData) => {
+                        let preMetaData = this.store.getMetaData(metaData.id);
+                        ITownsUtil.updateLayerList(connector, metaData, preMetaData);
                     }
                 }
                });

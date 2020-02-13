@@ -52,7 +52,7 @@ class Display {
 					if (elem.children[0].contentDocument.body) {
 						elem.children[0].contentDocument.body.rect = rect;
 						if (funcDict.hasOwnProperty(metaData.id)) {
-							funcDict[metaData.id].chowder_itowns_resize_callback(rect);
+							funcDict[metaData.id].chowder_itowns_resize(rect);
 						}
 					}
 				}
@@ -199,11 +199,8 @@ class Display {
 		if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
 			let funcDict = this.store.getITownFuncDict();
 			if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-				funcDict[metaData.id].chowder_itowns_update_camera_callback({
-					mat : JSON.parse(metaData.cameraWorldMatrix),
-					params : JSON.parse(metaData.cameraParams)
-				});
-				funcDict[metaData.id].chowder_itowns_update_metadata(metaData);
+				funcDict[metaData.id].chowder_itowns_update_camera(metaData);
+				funcDict[metaData.id].chowder_itowns_update_layer_list(metaData);
 			}
 		}
 
@@ -469,10 +466,7 @@ class Display {
 					if (elem && elem.className === Constants.TemporaryBoundClass) {
 						elem.className = ""
 					}
-					funcDict[metaData.id].chowder_itowns_update_camera_callback({
-						mat : JSON.parse(metaData.cameraWorldMatrix),
-						params : JSON.parse(metaData.cameraParams)
-					});
+					funcDict[metaData.id].chowder_itowns_update_camera(metaData);
 				}
 			}
 		});
