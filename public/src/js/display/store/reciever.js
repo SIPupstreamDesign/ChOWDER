@@ -232,6 +232,13 @@ class Receiver {
 
         // VideoControllerの動画一括コントロール.
         this.connector.on(Command.SendMessage, (data) => {
+            if (data.command === 'changeItownsContentTime') {
+                if (data.hasOwnProperty('data')) {
+                    this.store.time = new Date(data.data.time);
+                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data, (err, reply) => {
+                    });
+                }
+            }
             if (data.command === 'rewindVideo') {
                 data.ids.forEach((id) => {
                     let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);

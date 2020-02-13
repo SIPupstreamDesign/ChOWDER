@@ -43,7 +43,7 @@ class ITownsUtil {
                         // 増えていたレイヤーを追加
                         for (let i = 0; i < layerIDs.length; ++i) {
                             if (preLayerIDs.indexOf(layerIDs[i]) < 0) {
-                                console.error("AddLayer", i)
+                                //console.error("AddLayer", i)
                                 iframeConnector.send(ITownsCommand.AddLayer, layerList[i]);
                             }
                         }
@@ -55,7 +55,7 @@ class ITownsUtil {
                         // 減っていたレイヤーを削除
                         for (let i = 0; i < preLayerIDs.length; ++i) {
                             if (layerIDs.indexOf(preLayerIDs[i]) < 0) {
-                                console.error("DeleteLayer", i)
+                                //console.error("DeleteLayer", i)
                                 iframeConnector.send(ITownsCommand.DeleteLayer, preLayerList[i]);
                             }
                         }

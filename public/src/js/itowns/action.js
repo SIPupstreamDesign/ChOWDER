@@ -129,6 +129,17 @@ class Action extends EventEmitter
     loadUserData(data) {
         this.emit(Action.EVENT_LOAD_USER_DATA, null, data);
     }
+
+    /**
+     * コンテンツに対する時刻の変更
+     * @param data
+     * {
+     *    time : 時刻を表すDateインスタンス
+     * }
+     */
+    changeTime(data) {
+        this.emit(Action.EVENT_CHANGE_TIME, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -144,5 +155,5 @@ Action.EVENT_UPDATE_CAMERA = "updateCamera";
 Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
-
+Action.EVENT_CHANGE_TIME = "changeTime";
 export default Action;

@@ -62,6 +62,20 @@ class GUI extends EventEmitter {
             }
         })
 
+        this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
+            // 全コンテンツデータの時刻をビューポートをもとに更新
+            let metaDataDict = this.store.getMetaDataDict();
+            for (let id in metaDataDict) {
+                if (metaDataDict.hasOwnProperty(id)) {
+                    let metaData = metaDataDict[id];
+                    if (metaData.type === Constants.TypeWebGL) {
+                        let elem = document.getElementById(id);
+                        this.showTime(elem, metaData)
+                    }
+                }
+            }
+        })
+
         // 上部メニュー
         this.headMenu = null;
     }

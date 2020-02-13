@@ -407,6 +407,21 @@ class Store extends EventEmitter {
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }
     }
+
+    _changeTime(data) {
+        if (this.metaData) {
+            /*
+            this.metaData.time = data.time.toJSON();
+
+            this.operation.updateMetadata(this.metaData, (err, res) => {
+            });
+            */
+            Connector.send(Command.SendMessage, {
+                command : "changeItownsContentTime",
+                data : data
+            })
+        }
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";

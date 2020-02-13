@@ -40,6 +40,20 @@ class GUI extends EventEmitter {
     }
 
     init() {
+		// 一定間隔同じイベントが来なかったら実行するための関数
+		let debounceChangeTime = (() => {
+			const interval = 100;
+			let timer;
+			return (pTimeInfo) => {
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+                    this.action.changeTime({
+                        time : new Date(pTimeInfo.currentTime)
+                    });
+				}, interval);
+			};
+		})();
+
         let date = new Date();
         $("#timeline").k2goTimeline(
             {
@@ -49,7 +63,7 @@ class GUI extends EventEmitter {
                 minTime: new Date(date.getFullYear(), 0, 1), // 過去方向への表示可能範囲を今年の1月1日に設定
                 maxTime: new Date(date.getFullYear() + 1, 0, 1), // 未来方向への表示可能範囲を翌年の1月1日に設定
                 timeChange: function (pTimeInfo) {
-                    console.error("timeChanged")
+                    debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得
                     // pTimeInfo.    endTimeから右端の日時を取得
                     // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
