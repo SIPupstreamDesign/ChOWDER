@@ -386,9 +386,16 @@ class Store extends EventEmitter {
             console.error(err);
         }
         this.metaData = meta;
-        if (layerList.length > 0) {
-            this.iframeConnector.send(ITownsCommand.InitLayers, layerList, (err, data) => {
+        if (meta.hasOwnProperty('cameraWorldMatrix')) {
+            // カメラをメタデータの値を元に設定
+            this.iframeConnector.send(ITownsCommand.UpdateCamera, {
+                mat : JSON.parse(meta.cameraWorldMatrix),
+                params : JSON.parse(meta.cameraParams),
             });
+        }
+        if (layerList.length > 0) {
+            // レイヤー初期化
+            this.iframeConnector.send(ITownsCommand.InitLayers, layerList, (err, data) => {});
             this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }
