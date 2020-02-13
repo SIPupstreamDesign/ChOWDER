@@ -35,6 +35,7 @@ class Action extends EventEmitter
      * @param {*} data 
      */
     getCurrentDisplayMarkers(data) {
+        console.log("dispMArker")
         this.emit(Action.EVENT_GET_CURRENT_DISPLAY_MARKERS, null, data);
     }
     getVirtualDisplay(data) {
@@ -43,8 +44,7 @@ class Action extends EventEmitter
     getDataList(data){   
         this.emit(Action.EVENT_GET_DATA_LIST, null, data);    
     }
-    storeScannedData(data) {
-        console.log(this);        
+    storeScannedData(data) {       
         this.emit(Action.EVENT_STORE_SCANNED_DATA, null, data);
     }
     setDataList(data) {        
@@ -62,6 +62,12 @@ class Action extends EventEmitter
     startScan(data) {
         this.emit(Action.EVENT_START_SCAN, null, data);
     }
+    closeErectron(data) {
+        this.emit(Action.EVENT_CLOSE_ERECTRON, null, data);
+    }
+    adjustmentEvent(data){
+        this.emit(Action.EVENT_ADJUSTMENT_EVENT, null, data);    
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -74,4 +80,6 @@ Action.EVENT_SET_DATA_LIST="setDataList";
 Action.EVENT_SET_SEND_DATA="sendData";
 Action.EVENT_DELETE_DATA_LIST="deleteDataList";
 Action.EVENT_START_SCAN="startScan";
+Action.EVENT_CLOSE_ERECTRON="closeErectron";
+Action.EVENT_ADJUSTMENT_EVENT="adjustmentEvent"
 export default Action;

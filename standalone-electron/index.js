@@ -130,23 +130,23 @@ class ElectornDisplay {
 		return re;
 	}
 
-/*	calcDifferencelist(data, len) {
-		let differenceList = [];
-		let differenceItr = 0;
-		for (let i = 0; i < len - 1; i++) {
-			for (let j = 1; j < len - i; j++) {
-				differenceList[differenceItr] = {
-					id: String(data[i][0]) + String(data[i + j][0]),
-					x: data[i + j][1][0] - data[i][1][0],
-					y: data[i + j][1][1] - data[i][1][1]
-				};
-
-				differenceItr++;
+	/*	calcDifferencelist(data, len) {
+			let differenceList = [];
+			let differenceItr = 0;
+			for (let i = 0; i < len - 1; i++) {
+				for (let j = 1; j < len - i; j++) {
+					differenceList[differenceItr] = {
+						id: String(data[i][0]) + String(data[i + j][0]),
+						x: data[i + j][1][0] - data[i][1][0],
+						y: data[i + j][1][1] - data[i][1][1]
+					};
+	
+					differenceItr++;
+				}
 			}
+			return JSON.parse(JSON.stringify(differenceList));
 		}
-		return JSON.parse(JSON.stringify(differenceList));
-	}
-*/
+	*/
 	sortData(data) {
 		for (let i = 0; i < 2; i++) {
 			for (let j = 0; j < data[i].length - 1; j++) {
@@ -381,78 +381,100 @@ class ElectornDisplay {
 		sendConfig.windows[trueConfigId].marker_id = JSON.parse(JSON.stringify(this.config.windows[trueConfigId].marker_id));
 	}
 
+	exchangeTilePos(tileId1, tileId2, relocatedConfig) {
+		relocatedConfig.windows[tileId1] = JSON.parse(JSON.stringify(this.config.windows[tileId2]));
+		relocatedConfig.windows[tileId2] = JSON.parse(JSON.stringify(this.config.windows[tileId1]));
+		relocatedConfig.windows[tileId1].marker_id = JSON.parse(JSON.stringify(this.config.windows[tileId1].marker_id));
+		relocatedConfig.windows[tileId2].marker_id = JSON.parse(JSON.stringify(this.config.windows[tileId2].marker_id));
+	}
+
 	//command relocate
 	relocateWindowsByRewriteConfig(data) {
 		try {
 			console.log("relocateWindowsByRewriteConfig:", data);
 			let relocatedConfig = JSON.parse(JSON.stringify(this.config));
-			let receivedData = this.convertDataFormatReceivedToScanned(data);
-
-			for (let id in this.config.windows) {
-				//console.log(id);
-				let windowProps = this.config.windows[id];
-
-				if (windowProps.hasOwnProperty('marker_id')) {
-					//console.log(windowProps.marker_id);
-					let pcId = this.config.windows[id].marker_id[0];
-					let windowId = this.config.windows[id].marker_id[1];
-					//スコープ内にある真値とスキャン値を取得する
-					let trueData = this.dataList[pcId][windowId - 1];
-
-					let scannedData = [];
-					for (let i in this.dataList[pcId]) {
-						let pcIdIndex = receivedData.indexOf(pcId)
-						scannedData[i] = [receivedData[pcIdIndex + i * 4 + 1], receivedData[pcIdIndex + i * 4 + 2],
-						receivedData[pcIdIndex + i * 4 + 3], receivedData[pcIdIndex + i * 4 + 4],]
+			let received = JSON.parse(data);
+			if (received[0] === "Adjustment event occuured") {
+				console.log("Adjustment event occuured");
+				for (let tileId1 in this.config.windows) {
+					for (let tileId2 in this.config.windows) {
+						let markerId1 = this.config.windows[tileId1].marker_id
+						let markerId2 = this.config.windows[tileId2].marker_id
+						if (markerId1 === received[1] && markerId2 === received[2]) {
+							this.exchangeTilePos(tileId1, tileId2, relocatedConfig)
+						}
 					}
-					scannedData = this.convertDataFormatScannedToTrue(scannedData, pcId);
+				}
+			}
+			else {
+				let receivedData = this.convertDataFormatReceivedToScanned(data);
 
-					//console.log(trueData);
-					//console.log(scannedData);
+				for (let id in this.config.windows) {
+					//console.log(id);
+					let windowProps = this.config.windows[id];
 
-					//真値とスキャン値のフォーマットを相対座標値に合わせる
-					let trueRelativeCoord = {};
-					for (let i in this.dataList[pcId]) {
-						if (!trueRelativeCoord[pcId]) { trueRelativeCoord[pcId] = [[0, 0]]; }
-						else { trueRelativeCoord[pcId].push([0, 0]); }
-					}
-					let scannedRelativeCoord = {};
-					for (let i in this.dataList[pcId]) {
-						if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
-						else { scannedRelativeCoord[pcId].push([0, 0]); }
-					}
-					//console.log("calcRelativeCoord")
-					this.calcRelativeCoord(pcId, trueRelativeCoord, this.dataList);
-					this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
+					if (windowProps.hasOwnProperty('marker_id')) {
+						//console.log(windowProps.marker_id);
+						let pcId = this.config.windows[id].marker_id[0];
+						let windowId = this.config.windows[id].marker_id[1];
+						//スコープ内にある真値とスキャン値を取得する
+						let trueData = this.dataList[pcId][windowId - 1];
 
-					//相対座標が違っていたらスキャン値の座標を真値から探しに行き、そのwindowIdを保存する
-					let trueMarkerId;
-					if (scannedRelativeCoord[pcId][windowId - 1][0] !== trueRelativeCoord[pcId][windowId - 1][0] || scannedRelativeCoord[pcId][windowId - 1][1] !== trueRelativeCoord[pcId][windowId - 1][1]) {
-						let searchingCoord = [scannedRelativeCoord[pcId][windowId - 1][0], scannedRelativeCoord[pcId][windowId - 1][1]];
-						for (let i in trueRelativeCoord[pcId]) {
-							if (trueRelativeCoord[pcId][i][0] === searchingCoord[0]) {
-								if (trueRelativeCoord[pcId][i][1] === searchingCoord[1]) {
-									trueMarkerId = Number(i) + 1;
+						let scannedData = [];
+						for (let i in this.dataList[pcId]) {
+							let pcIdIndex = receivedData.indexOf(pcId)
+							scannedData[i] = [receivedData[pcIdIndex + i * 4 + 1], receivedData[pcIdIndex + i * 4 + 2],
+							receivedData[pcIdIndex + i * 4 + 3], receivedData[pcIdIndex + i * 4 + 4],]
+						}
+						scannedData = this.convertDataFormatScannedToTrue(scannedData, pcId);
+
+						//console.log(trueData);
+						//console.log(scannedData);
+
+						//真値とスキャン値のフォーマットを相対座標値に合わせる
+						let trueRelativeCoord = {};
+						for (let i in this.dataList[pcId]) {
+							if (!trueRelativeCoord[pcId]) { trueRelativeCoord[pcId] = [[0, 0]]; }
+							else { trueRelativeCoord[pcId].push([0, 0]); }
+						}
+						let scannedRelativeCoord = {};
+						for (let i in this.dataList[pcId]) {
+							if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
+							else { scannedRelativeCoord[pcId].push([0, 0]); }
+						}
+						//console.log("calcRelativeCoord")
+						this.calcRelativeCoord(pcId, trueRelativeCoord, this.dataList);
+						this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
+
+						//相対座標が違っていたらスキャン値の座標を真値から探しに行き、そのwindowIdを保存する
+						let trueMarkerId;
+						if (scannedRelativeCoord[pcId][windowId - 1][0] !== trueRelativeCoord[pcId][windowId - 1][0] || scannedRelativeCoord[pcId][windowId - 1][1] !== trueRelativeCoord[pcId][windowId - 1][1]) {
+							let searchingCoord = [scannedRelativeCoord[pcId][windowId - 1][0], scannedRelativeCoord[pcId][windowId - 1][1]];
+							for (let i in trueRelativeCoord[pcId]) {
+								if (trueRelativeCoord[pcId][i][0] === searchingCoord[0]) {
+									if (trueRelativeCoord[pcId][i][1] === searchingCoord[1]) {
+										trueMarkerId = Number(i) + 1;
+									}
 								}
 							}
 						}
-					}
-					//console.log(trueMarkerId);
-					//trueMakerIdをコンフィグから探し、そこにスコープ内のマーカを配置する
-					if (trueMarkerId) {
-						let tmId = pcId + trueMarkerId
-						for (let trueWindowId in this.config.windows) {
-							if (this.config.windows[trueWindowId].marker_id === tmId) {
-								//console.log("change");
-								//console.log(id, trueWindowId);
-								this.locateScannnedPos(trueWindowId, id, relocatedConfig);
+						//console.log(trueMarkerId);
+						//trueMakerIdをコンフィグから探し、そこにスコープ内のマーカを配置する
+						if (trueMarkerId) {
+							let tmId = pcId + trueMarkerId
+							for (let trueWindowId in this.config.windows) {
+								if (this.config.windows[trueWindowId].marker_id === tmId) {
+									//console.log("change");
+									//console.log(id, trueWindowId);
+									this.locateScannnedPos(trueWindowId, id, relocatedConfig);
+								}
 							}
 						}
-					}
 
+					}
 				}
 			}
-			console.log(this.configPath, "rewritedConfig:", relocatedConfig);
+			//console.log(this.configPath, "rewritedConfig:", relocatedConfig);
 			fs.writeFileSync(this.configPath, JSON.stringify(relocatedConfig, null, "\t"));
 			return true;
 		}

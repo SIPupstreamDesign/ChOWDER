@@ -7,7 +7,7 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<script type="text/javascript" src="3rd/js/eventemitter3/index.js"></script>
-	<link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+	<!--<link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">-->
 
 	<!--<script src="https://aframe.io/releases/0.6.1/aframe.min.js"></script>-->
 	<script src="./3rd/js/aframejs/aframe-master.min.js"></script>
@@ -23,31 +23,54 @@
 
 
 	<p id="scanned_maekrID"></p>
+	<p id="scanned_maekrID_number"></p>
 
-	<input type="button" id="scan_toggle_button" class="scan_toggle_button" value="スキャン開始">
+	<input type="button" id="scan_toggle_button" class="button" value="スキャン開始">
 	</input>
 
-	<p id="text">
-		<font size="4">Displayを起動してください。
-		</font>
-	</p>
+	<p id="text"></p>
 
 	<div class="popup" id="popup">
 		<div class="popup_inner">
 			<div class="close_btn" id="close_btn"><i class="fas fa_times"></i></div>
-		
-			<p id="text_end_setting">
-				<font size="4">ディスプレイ設定を終了しますか？</font>
+			<p>
+				<font size="4">ディスプレイ設定を終了しますか？(Displayを終了します)</font>
 			</p>
-			<p id="text_yes">
+			<p id="pop_yes">
 				<font size="4">はい</font>
 			</p>
-			<p id="text_no">
+			<p id="pop_no">
 				<font size="4">いいえ</font>
 			</p>
-
 		</div>
 		<div class="black_background" id="black_bg"></div>
+	</div>
+
+	<div class="popup" id="start_popup"">
+		<div class=" popup_inner">
+		<div class="close_btn" id="start_close_btn"><i class="fas fa_times"></i></div>
+		<p>
+			<font size="4">起動しているDisplayの数が設定した数と一致しません</font>
+			<font size="5"><br>Displayを起動してください</font>
+		</p>
+	</div>
+	<div class="black_background" id="start_black_bg"></div>
+	</div>
+
+
+	<div class="popup" id="adjustment_popup"">
+		<div class=" popup_inner">
+		<div class="close_btn" id="adjustment_close_btn"><i class="fas fa_times"></i></div>
+		<p>
+			<font size="4">位置を交換する２つのマーカーを入力して下さい</font>
+			<form name="excahnge_marker">
+				<br><select id="marker_id_1" name="marker_id_1"></select>
+				<br><select id="marker_id_2" name="marker_id_2"></select>
+			</form>
+		</p>
+		<p id="pop_send">送信</p>
+	</div>
+	<div class="black_background" id="adjustment_black_bg"></div>
 	</div>
 
 	<div class="screen" id="whole_sub_window"></div>

@@ -23,8 +23,8 @@ class Store extends EventEmitter {
     constructor(action) {
         super();
         this.action = action;
-        
-        this.dataList =[];
+
+        this.dataList = [];
         this.sendData;
         this.virtualDisplay = null;
 
@@ -58,9 +58,14 @@ class Store extends EventEmitter {
     }
 
     release() {
+
+    }
+    _closeErectron() {
+        console.log("closeErectron");
         Connector.send(Command.SendMessage, {
-            command : "CloseElectronDisplay"
-        }, (err, reply) => {});
+            command: "CloseElectronDisplay"
+        }, (err, reply) => { });
+        this.emit(Store.EVENT_CLOSE_ERECTRON, null, null);
     }
 
     initStartupEvent() {
@@ -70,22 +75,22 @@ class Store extends EventEmitter {
                 return;
             }
             let displayCount = reply.splitX * reply.splitY;
-            console.log(reply);
 
             let markerList = [];
             this._getCurrentDisplayMarkers();
-            this.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, (err, marker_id) => {
+            this.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, (err, marker_id) => {
                 if (err) {
                     console.error(err); return;
                 }
                 markerList.push(marker_id);
                 if (markerList.length === displayCount) {
                     Connector.send(Command.SendMessage, {
-                        command : "StartDisplaySetting"
-                    }, (err, reply) => {});
+                        command: "StartDisplaySetting"
+                    }, (err, reply) => { });
                     this.emit(Store.EVENT_START_SCAN, null, markerList);
                 }
             });
+
             // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
             setTimeout(() => {
                 if (markerList.length < displayCount) {
@@ -145,7 +150,7 @@ class Store extends EventEmitter {
             // TODO groupによるサイト判別を追加する
             let group = json.group ? json.group : Constants.DefaultGroup;
             if (json.hasOwnProperty('marker_id')) {
-                this.emit(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER, err, json.marker_id)
+                this.emit(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, err, json.marker_id)
             }
         });
     }
@@ -159,20 +164,20 @@ class Store extends EventEmitter {
 
     _getDataList(data) {
         console.log("getDataList")
-        let sendData=[data,];
-        if (Object.keys(this.dataList.length!==0)) { 
+        let dataL;
+        if (Object.keys(this.dataList.length !== 0)) {
             console.log("exist")
-            sendData = [data,this.dataList]; 
+            dataL =  this.dataList;
         }
-        this.emit(Store.EVENT_DONE_GET_DATA_LIST,null, sendData);
+        this.emit(Store.EVENT_DONE_GET_DATA_LIST, null, dataL);
     }
 
     /**
      * データリストをリセット
      */
     _deleteDataList() {
+        console.log("DATA RESET")
         this.dataList = [];
-        console.log(this.dataList);
         this.emit(Store.EVENT_DONE_DELETE_DATA_LIST, null, null);
     }
 
@@ -219,14 +224,29 @@ class Store extends EventEmitter {
         }//this.sendData = data;
         //データ送信
         Connector.send(Command.SendMessage, {
-            command : "RelocateElectronDisplay",
-            data : data
+            command: "RelocateElectronDisplay",
+            data: data
         }, (err, reply) => {
             setTimeout(() => {
                 // マーカーを再表示させる
                 Connector.send(Command.SendMessage, {
-                    command : "StartDisplaySetting",
-                }, (err, reply) => {});
+                    command: "StartDisplaySetting",
+                }, (err, reply) => { });
+            }, 10000);
+        });
+    }
+
+    _adjustmentEvent(data) {
+        console.log(data);
+        Connector.send(Command.SendMessage, {
+            command: "RelocateElectronDisplay",
+            data: data
+        }, (err, reply) => {
+            setTimeout(() => {
+                // マーカーを再表示させる
+                Connector.send(Command.SendMessage, {
+                    command: "StartDisplaySetting",
+                }, (err, reply) => { });
             }, 10000);
         });
     }
@@ -274,17 +294,17 @@ class Store extends EventEmitter {
                     for (let dirPointK in point) {
                         if (point[dirPointK]) {
                             let upIdPoint = this.deepCopy(point[dirPointK]);
-                            let wholeMinMargin=0;
-                            for(let dirL in minMarginData[i]){
+                            let wholeMinMargin = 0;
+                            for (let dirL in minMarginData[i]) {
                                 wholeMinMargin += minMarginData[i][dirL];
                             }
-                            wholeMinMargin/=4;
-                            if (upIdPoint >= minMarginData[i][dir[dirPointK]]&&upIdPoint>wholeMinMargin) {
+                            wholeMinMargin /= 4;
+                            if (upIdPoint >= minMarginData[i][dir[dirPointK]] && upIdPoint > wholeMinMargin) {
 
                                 let tmpUpDifference = [this.dataList[j].pos2d[0] - this.dataList[i].pos2d[0], this.dataList[j].pos2d[1] - this.dataList[i].pos2d[1]];
                                 let tmpUpDistance = Math.sqrt(tmpUpDifference[0] * tmpUpDifference[0] + tmpUpDifference[1] * tmpUpDifference[1]);
                                 if (tmpUpDistance < distances[dir[dirPointK]] || distances[dir[dirPointK]] === 0) {
-                                   // console.log(i + j + dir[dirPointK])
+                                    // console.log(i + j + dir[dirPointK])
                                     //console.log(tmpUpDistance);
                                     distances[dir[dirPointK]] = this.deepCopy(tmpUpDistance);
 
@@ -360,7 +380,7 @@ class Store extends EventEmitter {
         //console.log(IdQuantity);
         for (let a = 0; a < IdQuantity - 1; a++) {
             for (let b = 1; b < IdQuantity - a; b++) {
-          //      console.log(String(a) + String(b))
+                //      console.log(String(a) + String(b))
                 let abId = data[a + b][0];
                 let aId = data[a][0];
                 if (this.dataList[abId] && this.dataList[aId] && data[a][1] === 1 && data[a + b][1] === 1) {
@@ -480,19 +500,26 @@ class Store extends EventEmitter {
             this.emit(Store.EVENT_START_SCAN, "Cannot connect to server");
             return;
         }
-        this._getVirtualDisplay();
+        else {
+            console.log("SCAN START");
+        }
+        /*else {
+            this._getVirtualDisplay();
+        }*/
     }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
-Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKER = "get_current_display_marker";
+Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS = "get_current_display_markers";
 Store.EVENT_DONE_GET_DATA_LIST = "get_data_list";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "get_virtual_display";
 Store.EVENT_DONE_STORE_SCANNED_DATA = "store_scanned_data";
 Store.EVENT_DONE_SET_DATA_LIST = "set_data_list";
 Store.EVENT_DONE_SEND_DATA = "send_data";
-Store.EVENT_DONE_DELETE_DATA_LIST = "delete_data_list"
-Store.EVENT_START_SCAN = "start_scan"
+Store.EVENT_DONE_DELETE_DATA_LIST = "delete_data_list";
+Store.EVENT_START_SCAN = "start_scan";
+Store.EVENT_CLOSE_ERECTRON = "close_erectron";
+Store.EVENT_ADJUSTMENT_EVENT = "adjustment_event";
 export default Store;

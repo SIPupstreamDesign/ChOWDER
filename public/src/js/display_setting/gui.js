@@ -16,7 +16,7 @@ class GUI extends EventEmitter {
 
 
         this.scannedData = [];
-        this.scanCompleteFunction;
+        this.scanCompleteFunction = [];
         this.scanFlagList = [];
         this.displayNumber = 0;
         this.displayNumberX = 0;
@@ -26,98 +26,124 @@ class GUI extends EventEmitter {
 
     init() {
         console.log("display_setting gui init");
-
         let menuSetting = [];
         this.headMenu = new Menu("display_setting", menuSetting);
         document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
 
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
-            // console.log(this.action.getVirtualDisplay());
+            this.setStartButton();
+            this.setSendButton();
+            this.setCompleteButton();
+            this.setAdjustmentButton();
+            this.setScanButton();
+            this.updateScanStatus(null);
+            this.updateText("準備ができたら[スキャン開始]ボタンを押してください");
+        });
+
+        this.store.on(Store.EVENT_CLOSE_ERECTRON, (err, reply) => {
+            console.log("close");
         });
 
         this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
-            this.updateSendAndCompleteButton(reply);/*
-            if (Object.keys(reply[1]).length === 0) {
-                console.log("Send button none")
-                reply[0].style.display = "none";
-            }
-            else {
-                console.log("Send button block")
-                reply[0].style.display = "block";
-            }*/
-            this.updateScanStatus(reply[1]);
+            this.updateScanStatus(reply);
         });
 
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
             console.log("store");
-            console.log(reply);
-
         });
 
         this.store.on(Store.EVENT_DONE_SET_DATA_LIST, (err, reply) => {
             console.log(reply);
             console.log("SET COMPLETE")
-            this.action.getDataList(document.getElementById("send_button"));
+            this.updateSendButton(reply);
+            this.action.getDataList();
             document.getElementById("scan_toggle_button").style.display = "block";
             document.getElementById("scan_toggle_button").value = "再スキャン";
 
             this.updateVirtualScreen(reply);
         });
         this.store.on(Store.EVENT_DONE_SEND_DATA, (err, reply) => {
-            console.log(reply);
+            console.log("send");
         });
         this.store.on(Store.EVENT_DELETE_DATA_LIST, (err, reply) => {
             console.log("delete");
         });
         this.store.on(Store.EVENT_START_SCAN, (err, markerList) => {
+            this.setScanStartButtonPopUp(err);
             if (!err) {
                 let vd = this.store.getVirtualDisplay();
                 this.displayNumber = vd.splitX * vd.splitY;
                 this.displayNumberX = vd.splitX;
                 this.displayNumberY = vd.splitY;
 
-                // marker_idを持ったdisplayが、virtualdisplayのgrid枠と同じ個数登録されていた.
-                // アプリを開始してもOK. 初期化する
+                this.scanCompleteFunction.push(
+                    setInterval((flag) => {
+                        for (let i = 0; i < this.displayNumber; i++) {
+                            let marker = document.getElementsByTagName("a-marker")[i + 1];
+                            this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
+                        }
 
+                        console.log(this.scannedData);
+                        console.log(this.scanFlagList);
+                        let sendData = this.scannedData;
+                        console.log(sendData);
+                        this.action.storeScannedData(sendData);
+                        this.action.getDataList();
+                    }, 100, this.scanFlagList));
                 console.log(markerList);
-                this.setArMarkerImg(markerList);
-                this.setScanButton();
-                this.setSendButton();
-                this.setCompleteButton();
-                this.action.getDataList("a");
 
-                document.getElementById("scan_toggle_button").style.display = "none";
+                this.setArMarkerImg(markerList);
                 document.getElementById("scan_button").style.display = "block";
+                document.getElementById("scan_toggle_button").style.display = "none";
                 document.getElementById("send_button").style.display = "none";
-                this.scanCompleteFunction = setInterval((flag) => {
-                    for (let i = 0; i < this.displayNumber; i++) {
-                        let marker = document.getElementsByTagName("a-marker")[i + 1];
-                        this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
-                    }
-                    console.log(this.scannedData);
-                    console.log(this.scanFlagList);
-                    let sendData = this.scannedData;
-                    console.log(sendData);
-                    this.action.storeScannedData(sendData);
-                    this.action.getDataList();
-                }, 100, this.scanFlagList);
+                document.getElementById("adjustment_button").style.display = "none";
+                document.getElementById("complete_button").style.display = "none";
+                document.getElementById("text").style.display = "none";
             } else {
                 // エラーダイアログを出す
+                document.getElementById('start_popup').classList.toggle('is_show');
                 console.error(err);
             }
+        });
+
+        this.store.on(Store.EVENT_ADJUSTMENT_EVENT, (err, reply) => {
+            console.log("ADJUSTMENT");
         });
 
         //スキャン開始ボタン
         document.getElementById("scan_toggle_button").onclick = () => {
             this.action.deleteDataList();
-            console.log("SCAN START");
+            this.action.getVirtualDisplay();
             this.action.startScan();
         };
-
-      
     }
-   
+
+    updateText(text) {
+        document.getElementById("text").innerHTML = text;
+    }
+
+    closePopUp(elem, popUp) {
+        console.log(elem);
+        if (!elem) return;
+        elem.onclick = () => {
+            popUp.classList.toggle('is_show');
+        };
+    }
+
+    setScanStartButtonPopUp(err) {
+        let popup = document.getElementById('start_popup');
+        if (!popup) return;
+
+        let blackBg = document.getElementById('start_black_bg');
+        let closeBtn = document.getElementById('start_close_btn');
+
+        this.closePopUp(blackBg, popup);
+        this.closePopUp(closeBtn, popup);
+        this.updateText("準備ができたら[スキャン開始]ボタンを押してください");
+        console.log(err);
+    }
+
     updateScanStatus(data) {
         console.log(data);
         let pointSum = {};
@@ -139,19 +165,34 @@ class GUI extends EventEmitter {
         console.log(pointSum);
 
         let text = "スキャンされたマーカ:"
+        let count=0;
         for (let i in pointSum) {
             if (pointSum[i] > 30) {
                 text += i + ",";
+                count++;
             }
         }
         console.log(text)
         document.getElementById("scanned_maekrID").innerHTML = text;
+        document.getElementById("scanned_maekrID_number").innerHTML = count+"/"+this.displayNumber;
     }
 
     updateVirtualScreen(reply) {
         document.getElementById("scan_toggle_button").style.display = "block";
         document.getElementById("scan_toggle_button").value = "再スキャン";
-        document.getElementById("text").innerHTML = "検出されたmarkerIDの並び順が正しければ、データ送信ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。」"
+        this.updateText("検出されたmarkerIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+
+        let ids = []
+        for (let i in reply) {
+            ids.push(i);
+        }
+        console.log(ids);
+        let text = ""
+        for (let i in ids) {
+            text += "<option>" + ids[i] + "</option>"
+        }
+        document.getElementById("marker_id_1").innerHTML = text;
+        document.getElementById("marker_id_2").innerHTML = text;
 
         document.getElementById("whole_sub_window").remove();
         let body = document.getElementById("body");
@@ -193,19 +234,28 @@ class GUI extends EventEmitter {
         }
     }
 
-    updateSendAndCompleteButton(data) {
+    updateSendButton(data) {
         let sendBtn = document.getElementById("send_button")
-        let completeBtn = document.getElementById("complete_button")
-        if (Object.keys(data[1]).length === 0) {
+        if (Object.keys(data).length === 0) {
             console.log("Send button none")
             sendBtn.style.display = "none";
-            completeBtn.style.display = "none";
         }
         else {
             console.log("Send button block")
             sendBtn.style.display = "block";
-            completeBtn.style.display = "block";
         }
+    }
+
+    setButtonStylePosition(btn, position, left, top) {
+        btn.style.position = position;
+        btn.style.left = left;
+        btn.style.top = top;
+        btn.style.transform = "translate(-50%,-50%)";
+    }
+
+    setStartButton() {
+        let btn = document.getElementById("scan_toggle_button");
+        this.setButtonStylePosition(btn, "absolute", "50%", "10%");
     }
 
     setScanButton() {
@@ -217,13 +267,28 @@ class GUI extends EventEmitter {
         let btn = this.scanButton.getDOM();
         parent.insertBefore(btn, nextDOM);
         btn.setAttribute("id", "scan_button");
+        btn.setAttribute("class", "button");
         btn.setAttribute("value", "スキャン完了");
         btn.style.display = "none";
+        this.setButtonStylePosition(btn, "absolute", "50%", "10%");
+
+        let complete = document.getElementById("complete_button");
+        let description = document.getElementById("text");
+        let adjustment = document.getElementById("adjustment_button");
+        //let sendData=document.getElementById()
+
         this.scanButton.on(Button.EVENT_CLICK, (evt) => {
-            clearTimeout(this.scanCompleteFunction);
-            this.action.getDataList(document.getElementById("send_button"));
+            console.log("scanned")
+            console.log(this.scanCompleteFunction);
+            for (let i in this.scanCompleteFunction) {
+                clearInterval(this.scanCompleteFunction[i]);
+            }
             this.action.setDataList();
+            this.action.getDataList();
             btn.style.display = "none";
+            complete.style.display = "block";
+            description.style.display = "block";
+            adjustment.style.display = "block";
         });
     }
 
@@ -236,10 +301,14 @@ class GUI extends EventEmitter {
         let btn = this.sendButton.getDOM();
         parent.insertBefore(btn, nextDOM);
         btn.setAttribute("id", "send_button");
+        btn.setAttribute("class", "button");
         btn.setAttribute("value", "データ送信");
+        btn.style.display = "none";
+        this.setButtonStylePosition(btn, "absolute", "80%", "10%");
 
         this.sendButton.on(Button.EVENT_CLICK, (evt) => {
             this.action.sendData();
+            this.updateText("Displayに表示されているmarkerIDの並び順がただしければ、設定完了ボタンを押してください。検出されたmarkerIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
         });
     }
 
@@ -252,31 +321,80 @@ class GUI extends EventEmitter {
         let btn = this.completeButton.getDOM();
         parent.insertBefore(btn, nextDOM);
         btn.setAttribute("id", "complete_button");
+        btn.setAttribute("class", "button");
         btn.setAttribute("value", "設定完了");
+        btn.style.display = "none";
+        this.setButtonStylePosition(btn, "absolute", "20%", "10%");
 
-        var popup = document.getElementById('popup');
-        if(!popup) return;
-      
-        var blackBg = document.getElementById('black_bg');
-        var closeBtn = document.getElementById('close_btn');
-       
-        closePopUp(blackBg);
-        closePopUp(closeBtn);
-        closePopUp(btn);
-        function closePopUp(elem) {
-          if(!elem) return;
-          elem.addEventListener('click', function() {
-            popup.classList.toggle('is_show');
-          });
+        let popup = document.getElementById('popup');
+        if (!popup) return;
+
+        let blackBg = document.getElementById('black_bg');
+        let closeBtn = document.getElementById('close_btn');
+        let popNo = document.getElementById("pop_no");
+
+        this.closePopUp(blackBg, popup);
+        this.closePopUp(closeBtn, popup);
+        this.closePopUp(popNo, popup);
+        this.closePopUp(btn, popup);
+
+        let popYes = document.getElementById("pop_yes");
+        console.log(popYes);
+        popYes.onclick = () => {
+            console.log(this);
+            this.action.closeErectron("a");
+            console.log("yes")
+            let baseURL;
+            if (window.location.href.indexOf('https') >= 0) {
+                baseURL = "https://" + window.location.hostname + ":" + window.location.port;
+            } else {
+                baseURL = "http://" + window.location.hostname + ":" + window.location.port;
+            }
+            window.location.href = baseURL;
+        };
+        this.completeButton.on(Button.EVENT_CLICK, (evt) => {
+        });
+    }
+
+    setAdjustmentButton() {
+        this.adjustmentButton = new Button;
+        let parent = document.getElementById("body");
+        let nextDOM = document.getElementById("scan_toggle_button");
+        console.log(this.adjustmentButton.getDOM());
+        let btn = this.adjustmentButton.getDOM();
+        parent.insertBefore(btn, nextDOM);
+        btn.setAttribute("id", "adjustment_button");
+        btn.setAttribute("class", "button");
+        btn.setAttribute("value", "調整モード");
+        this.setButtonStylePosition(btn, "absolute", "50%", "80%");
+        btn.style.display = "none";
+
+        let popup = document.getElementById('adjustment_popup');
+        if (!popup) return;
+
+        let blackBg = document.getElementById('adjustment_black_bg');
+        let closeBtn = document.getElementById('adjustment_close_btn');
+
+        this.closePopUp(blackBg, popup);
+        this.closePopUp(closeBtn, popup);
+        this.closePopUp(btn, popup);
+
+        let send = document.getElementById('pop_send');
+        let marker1 = document.excahnge_marker.marker_id_1//getElementById('marker_id_1');
+        let marker2 = document.getElementById('marker_id_2');
+
+        send.onclick = () => {
+            let index1 = marker1.selectedIndex;
+            let markerId1 = marker1.options[index1].value;
+            let index2 = marker2.selectedIndex;
+            let markerId2 = marker2.options[index2].value;
+            console.log(markerId1);
+            console.log(markerId2);
+            let sendData = ["Adjustment event occuured", markerId1, markerId2]
+            this.action.adjustmentEvent(sendData)
         }
 
-        let textYes=document.getElementById("text_yes");
-        textYes.onclick=()=>{
-            
-            window.close();
-        };
-
-        this.completeButton.on(Button.EVENT_CLICK, (evt) => {
+        this.adjustmentButton.on(Button.EVENT_CLICK, (evt) => {
         });
     }
 
