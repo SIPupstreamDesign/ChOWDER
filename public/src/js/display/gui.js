@@ -371,27 +371,31 @@ class GUI extends EventEmitter {
     showTime(elem, metaData) {
         if (elem && metaData.hasOwnProperty('display_time') && String(metaData.display_time) === "true") {
             let previewArea = document.getElementById('preview_area');
-            let time = document.getElementById("time:" + metaData.id);
+            let timeElem = document.getElementById("time:" + metaData.id);
             let previewRect = previewArea.getBoundingClientRect();
-            if (time) {
-                time.innerHTML = this.store.getTime().toDateString();
+            let time = "Time not received";
+            if (this.store.getTime()) {
+                time = this.store.getTime().toDateString();
+            }
+            if (timeElem) {
+                timeElem.innerHTML = time;
                 let rect = elem.getBoundingClientRect();
-                time.style.right = (previewRect.right - rect.right) + "px";
-                time.style.top =  rect.top + "px";
-                time.style.zIndex = elem.style.zIndex;
+                timeElem.style.right = (previewRect.right - rect.right) + "px";
+                timeElem.style.top =  rect.top + "px";
+                timeElem.style.zIndex = elem.style.zIndex;
             } else {
-                time = document.createElement("pre");
-                time.id = "time:" + metaData.id;
-                time.className = "time";
-                time.innerHTML = this.store.getTime().toDateString();
+                timeElem = document.createElement("pre");
+                timeElem.id = "time:" + metaData.id;
+                timeElem.className = "time";
+                timeElem.innerHTML = time;
                 let rect = elem.getBoundingClientRect();
-                time.style.right = (previewRect.right - rect.right) + "px";
-                time.style.top = rect.top + "px";
-                time.style.position = "absolute";
-                time.style.height = "auto";
-                time.style.whiteSpace = "pre-line";
-                time.style.zIndex = elem.style.zIndex;
-                previewArea.appendChild(time);
+                timeElem.style.right = (previewRect.right - rect.right) + "px";
+                timeElem.style.top = rect.top + "px";
+                timeElem.style.position = "absolute";
+                timeElem.style.height = "auto";
+                timeElem.style.whiteSpace = "pre-line";
+                timeElem.style.zIndex = elem.style.zIndex;
+                previewArea.appendChild(timeElem);
             }
         }
     }
