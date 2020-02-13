@@ -67,6 +67,12 @@ class GUI extends EventEmitter {
                     // pTimeInfo.  startTimeから左端の日時を取得
                     // pTimeInfo.    endTimeから右端の日時を取得
                     // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
+                },
+                barMove : function (pTimeInfo) {
+                    debounceChangeTime(pTimeInfo);
+                },
+                barMoveEnd : function (pTimeInfo) {
+                    debounceChangeTime(pTimeInfo);
                 }
             });
 
