@@ -74,7 +74,7 @@ class LayerDialog extends EventEmitter {
 
         this.urlInput = new Input("text");
         this.urlInput.getDOM().className = "layer_dialog_url_input";
-        this.urlInput.setValue("http://localhost:8080/std/${z}/${x}/${y}.png");
+        this.urlInput.setValue("http://" + window.location.hostname + ":" + window.location.port + "/std/{z}/{x}/{y}.png");
         
         this.styleURLTitle = document.createElement('p');
         this.styleURLTitle.className = "layer_dialog_sub_title";
