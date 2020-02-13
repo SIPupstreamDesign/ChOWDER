@@ -272,7 +272,7 @@ class Store extends EventEmitter {
      * @param {*} type 
      */
     createLayerByType(config, type) {
-        console.error("createLayerByType", config, type)
+        console.log("createLayerByType", config, type)
         /*
         class TestSource extends itowns.TMSSource {
             constructor(source) {
@@ -457,11 +457,11 @@ class Store extends EventEmitter {
             console.error("Not found params");
             return;
         }
-        console.error("addLayer", params)
+        console.log("addLayer", params)
 
         if (params.hasOwnProperty('id')) {
             if (this.getLayer(params.id)) {
-                console.error("already loaded")
+                console.warn("already loaded")
                 return;
             }
         }
@@ -478,7 +478,7 @@ class Store extends EventEmitter {
         let layer = this.createLayerByType(config, type);
         if (type === ITownsConstants.TypePointCloud ||
             type === ITownsConstants.Type3DTile) {
-            console.error("addLayer", layer)
+            console.log("addLayer", layer)
             itowns.View.prototype.addLayer.call(this.itownsView, layer);
         } else {
             this.itownsView.addLayer(layer);
@@ -546,7 +546,7 @@ class Store extends EventEmitter {
                             && attachedIndex > 0 
                             && validLayers.indexOf(attachedLayers[i]) >= 0) // 入れ替え先レイヤーが有効かどうか
                             {
-                            console.error("up!", this.itownsView, id)
+                            console.log("up!", this.itownsView, id)
                             itowns.ColorLayersOrdering.moveLayerUp(this.itownsView, id);
                             attachedLayers.splice(i - 1, 2, attachedLayers[i], attachedLayers[i - 1]);
                             this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
@@ -555,7 +555,7 @@ class Store extends EventEmitter {
                             && attachedIndex < (attachedLayers.length - 1)
                             && validLayers.indexOf(attachedLayers[i + 1]) >= 0) // 入れ替え先レイヤーが有効かどうか) 
                             {
-                            console.error("moveLayerDown", i, i + 1)
+                            console.log("moveLayerDown", i, i + 1)
                             itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
                             attachedLayers.splice(i, 2, attachedLayers[i + 1], attachedLayers[i]);
                             this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
@@ -633,7 +633,7 @@ class Store extends EventEmitter {
         this.itownsViewerDiv.style.height = parseInt(rect.h) + "px";
         this.itownsViewerDiv.style.position = "relative";
         this.itownsView.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
-        //console.error(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
+        //console.log(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
         this.itownsView.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
     }
