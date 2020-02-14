@@ -41,7 +41,7 @@ class GUI extends EventEmitter {
             this.updateText("準備ができたら[スキャン開始]ボタンを押してください");
         });
 
-        this.store.on(Store.EVENT_CLOSE_ERECTRON, (err, reply) => {
+        this.store.on(Store.EVENT_CLOSE_ELECTRON, (err, reply) => {
             console.log("close");
         });
 
@@ -165,7 +165,7 @@ class GUI extends EventEmitter {
         console.log(pointSum);
 
         let text = "スキャンされたマーカ:"
-        let count=0;
+        let count = 0;
         for (let i in pointSum) {
             if (pointSum[i] > 30) {
                 text += i + ",";
@@ -174,7 +174,7 @@ class GUI extends EventEmitter {
         }
         console.log(text)
         document.getElementById("scanned_maekrID").innerHTML = text;
-        document.getElementById("scanned_maekrID_number").innerHTML = count+"/"+this.displayNumber;
+        document.getElementById("scanned_maekrID_number").innerHTML = count + "/" + this.displayNumber;
     }
 
     updateVirtualScreen(reply) {
@@ -198,7 +198,7 @@ class GUI extends EventEmitter {
         let body = document.getElementById("body");
         let arEntry = document.getElementById("ar_entry");
         let screen = document.createElement("div");
-        screen.setAttribute("id", "whole_sub_window");
+        screen.id = "whole_sub_window";
         console.log(reply);
         let replyLength = Object.keys(reply).length;
         let width = 50;
@@ -217,8 +217,8 @@ class GUI extends EventEmitter {
             let translateY = this.displayNumberY * height - this.displayNumberY * (reply[i].relativeCoord[1] + 1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
 
             let newVirtualDisplay = document.createElement("div");
-            newVirtualDisplay.setAttribute("id", "whole_sub_window:" + column + ":" + line);
-            newVirtualDisplay.setAttribute("style.z-index", "100000");
+            newVirtualDisplay.id = "whole_sub_window:" + column + ":" + line;
+            newVirtualDisplay.style.zIndex = 100000;
             newVirtualDisplay.style.fontSize = "100%";
             newVirtualDisplay.style.opacity = "0.5";
             newVirtualDisplay.style.backgroundColor = "white";
@@ -266,9 +266,9 @@ class GUI extends EventEmitter {
         console.log(this.scanButton.getDOM());
         let btn = this.scanButton.getDOM();
         parent.insertBefore(btn, nextDOM);
-        btn.setAttribute("id", "scan_button");
-        btn.setAttribute("class", "button");
-        btn.setAttribute("value", "スキャン完了");
+        btn.id = "scan_button";
+        btn.className = "button";
+        btn.value = "スキャン完了";
         btn.style.display = "none";
         this.setButtonStylePosition(btn, "absolute", "50%", "10%");
 
@@ -300,9 +300,9 @@ class GUI extends EventEmitter {
         console.log(this.sendButton.getDOM());
         let btn = this.sendButton.getDOM();
         parent.insertBefore(btn, nextDOM);
-        btn.setAttribute("id", "send_button");
-        btn.setAttribute("class", "button");
-        btn.setAttribute("value", "データ送信");
+        btn.id = "send_button";
+        btn.className = "button";
+        btn.value = "データ送信";
         btn.style.display = "none";
         this.setButtonStylePosition(btn, "absolute", "80%", "10%");
 
@@ -320,9 +320,9 @@ class GUI extends EventEmitter {
         console.log(this.completeButton.getDOM());
         let btn = this.completeButton.getDOM();
         parent.insertBefore(btn, nextDOM);
-        btn.setAttribute("id", "complete_button");
-        btn.setAttribute("class", "button");
-        btn.setAttribute("value", "設定完了");
+        btn.id = "complete_button";
+        btn.className = "button";
+        btn.value = "設定完了";
         btn.style.display = "none";
         this.setButtonStylePosition(btn, "absolute", "20%", "10%");
 
@@ -342,7 +342,7 @@ class GUI extends EventEmitter {
         console.log(popYes);
         popYes.onclick = () => {
             console.log(this);
-            this.action.closeErectron("a");
+            this.action.closeElectron("a");
             console.log("yes")
             let baseURL;
             if (window.location.href.indexOf('https') >= 0) {
@@ -363,9 +363,9 @@ class GUI extends EventEmitter {
         console.log(this.adjustmentButton.getDOM());
         let btn = this.adjustmentButton.getDOM();
         parent.insertBefore(btn, nextDOM);
-        btn.setAttribute("id", "adjustment_button");
-        btn.setAttribute("class", "button");
-        btn.setAttribute("value", "調整モード");
+        btn.id = "adjustment_button";
+        btn.className = "button";
+        btn.value = "調整モード";
         this.setButtonStylePosition(btn, "absolute", "50%", "80%");
         btn.style.display = "none";
 
@@ -409,6 +409,7 @@ class GUI extends EventEmitter {
             baseURL = "http://" + window.location.hostname + ":" + window.location.port;
         }
         for (let i = 1; i <= this.displayNumber; i++) {
+            // HTML標準タグではないのでsetAttributeする必要がある
             let newMarker = document.createElement("a-marker");
             newMarker.setAttribute("id", markerList[i - 1]);
             newMarker.addEventListener("markerFound", (evt) => {

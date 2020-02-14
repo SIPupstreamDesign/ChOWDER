@@ -60,12 +60,12 @@ class Store extends EventEmitter {
     release() {
 
     }
-    _closeErectron() {
-        console.log("closeErectron");
+    _closeElectron() {
+        console.log("closeElectron");
         Connector.send(Command.SendMessage, {
             command: "CloseElectronDisplay"
         }, (err, reply) => { });
-        this.emit(Store.EVENT_CLOSE_ERECTRON, null, null);
+        this.emit(Store.EVENT_CLOSE_ELECTRON, null, null);
     }
 
     initStartupEvent() {
@@ -167,7 +167,7 @@ class Store extends EventEmitter {
         let dataL;
         if (Object.keys(this.dataList.length !== 0)) {
             console.log("exist")
-            dataL =  this.dataList;
+            dataL = this.dataList;
         }
         this.emit(Store.EVENT_DONE_GET_DATA_LIST, null, dataL);
     }
@@ -520,6 +520,6 @@ Store.EVENT_DONE_SET_DATA_LIST = "set_data_list";
 Store.EVENT_DONE_SEND_DATA = "send_data";
 Store.EVENT_DONE_DELETE_DATA_LIST = "delete_data_list";
 Store.EVENT_START_SCAN = "start_scan";
-Store.EVENT_CLOSE_ERECTRON = "close_erectron";
+Store.EVENT_CLOSE_ELECTRON = "close_erectron";
 Store.EVENT_ADJUSTMENT_EVENT = "adjustment_event";
 export default Store;
