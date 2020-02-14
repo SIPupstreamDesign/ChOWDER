@@ -24,9 +24,10 @@ class Store extends EventEmitter {
         super();
         this.action = action;
 
-        this.dataList = [];
+        this.dataList = {};
         this.sendData;
         this.virtualDisplay = null;
+        this.currentDisplayMarkers = [];
 
         this.isInitialized_ = false;
         this.initEvents();
@@ -61,7 +62,6 @@ class Store extends EventEmitter {
 
     }
     _closeElectron() {
-        console.log("closeElectron");
         Connector.send(Command.SendMessage, {
             command: "CloseElectronDisplay"
         }, (err, reply) => { });
@@ -69,35 +69,38 @@ class Store extends EventEmitter {
     }
 
     initStartupEvent() {
+        let displayCount = 0;
+
         this.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             if (err) {
                 this.emit(Store.EVENT_START_SCAN, err, null);
                 return;
             }
-            let displayCount = reply.splitX * reply.splitY;
+            displayCount = reply.splitX * reply.splitY;
 
-            let markerList = [];
             this._getCurrentDisplayMarkers();
-            this.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, (err, marker_id) => {
-                if (err) {
-                    console.error(err); return;
-                }
-                markerList.push(marker_id);
-                if (markerList.length === displayCount) {
-                    Connector.send(Command.SendMessage, {
-                        command: "StartDisplaySetting"
-                    }, (err, reply) => { });
-                    this.emit(Store.EVENT_START_SCAN, null, markerList);
-                }
-            });
 
             // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
             setTimeout(() => {
-                if (markerList.length < displayCount) {
+                if (this.currentDisplayMarkers.length < displayCount) {
                     const errStr = "Not found for the number";
+                    this.currentDisplayMarkers = [];
                     this.emit(Store.EVENT_START_SCAN, errStr, null);
                 }
             }, 1 * 1000);
+        });
+
+        this.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, (err, marker_id) => {
+            if (err) {
+                console.error(err); return;
+            }
+            this.currentDisplayMarkers.push(marker_id);
+            if (this.currentDisplayMarkers.length === displayCount) {
+                Connector.send(Command.SendMessage, {
+                    command: "StartDisplaySetting"
+                }, (err, reply) => { });
+                this.emit(Store.EVENT_START_SCAN, null, this.currentDisplayMarkers);
+            }
         });
     }
 
@@ -142,6 +145,7 @@ class Store extends EventEmitter {
     }
 
     _getCurrentDisplayMarkers(data) {
+        this.currentDisplayMarkers = [];
         Connector.send(Command.GetWindowMetaData, { type: 'all', id: "" }, (err, json) => {
             if (err) {
                 console.error(err);
@@ -156,6 +160,7 @@ class Store extends EventEmitter {
     }
 
     _getVirtualDisplay() {
+        this.currentDisplayMarkers = [];
         Connector.send(Command.GetVirtualDisplay, {}, (err, reply) => {
             this.virtualDisplay = reply;
             this.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);//GUIにイベントを投げる
@@ -163,9 +168,9 @@ class Store extends EventEmitter {
     }
 
     _getDataList(data) {
-        console.log("getDataList")
+        console.log("getDataList", this.dataList)
         let dataL;
-        if (Object.keys(this.dataList.length !== 0)) {
+        if (Object.keys(this.dataList).length !== 0) {
             console.log("exist")
             dataL = this.dataList;
         }
@@ -177,7 +182,7 @@ class Store extends EventEmitter {
      */
     _deleteDataList() {
         console.log("DATA RESET")
-        this.dataList = [];
+        this.dataList = {};
         this.emit(Store.EVENT_DONE_DELETE_DATA_LIST, null, null);
     }
 
@@ -418,8 +423,8 @@ class Store extends EventEmitter {
 
         //スキャンした、各データごとの差をとる
         //differenceList
-        console.log("difference")
         let differenceList = this.calcDifferenceList(data);
+        console.log("difference", differenceList)
 
         //上下左右の隣接判定ができるように座標系を45度傾かせる
         let unitVec = [];

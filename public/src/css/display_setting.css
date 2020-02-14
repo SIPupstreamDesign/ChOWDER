@@ -5,11 +5,11 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	font-family: "Hiragino Kaku Gothic Pro", "Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
 	box-sizing: border-box;
 }
 
-.stopselect{
+.stopselect {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
@@ -19,26 +19,26 @@
 }
 
 html {
-    background-color:rgb(7, 22, 50);
+	background-color: rgb(7, 22, 50);
 }
+
 body {
-	overflow:hidden;
+	overflow: hidden;
 	background-color: rgb(7, 22, 50);
 	margin: 0px;
 }
 
 div {
-	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	font-family: "Hiragino Kaku Gothic Pro", "Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
 	white-space: nowrap;
 }
 
 a {
-	text-decoration : none;
+	text-decoration: none;
 }
 
 pre {
 	font-family: "monospace, serif";
-	-webkit-box-sizing: "";
 	box-sizing: content-box;
 	line-height: 1;
 	margin: 0;
@@ -53,90 +53,76 @@ pre {
 	z-index: 100000;
 }
 
-
 .head_mode_menu {
 	text-align: center;
 	/*padding: 8px;*/
 }
 
-#arjs-video{
-	z-index:0 !important;
-	display:block;
+#arjs-video {
+	z-index: 0 !important;
+	display: block;
 }
 
-.a-canvas{
-	z-index:100000;
+.a-canvas {
+	z-index: 100000;
 }
 
-#scanned_maekrID{
+#scanned_markerID {
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
 	border: 1px solid rgb(7, 22, 50);
-	opacity:0.6;
-
-
+	opacity: 0.6;
 	position: absolute;
 	top: 15%;
 	left: 50%;
-	transform: translate(-50%,-50%);
-	z-index:1000000;
+	transform: translate(-50%, -50%);
+	z-index: 1000000;
 }
 
-
-#scanned_maekrID_number{
+#scanned_markerID_number {
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
 	border: 1px solid rgb(7, 22, 50);
-	opacity:0.6;
-
+	opacity: 0.6;
 	position: absolute;
 	top: 20%;
 	left: 50%;
-	transform: translate(-50%,-50%);
-	z-index:1000000;
+	transform: translate(-50%, -50%);
+	z-index: 1000000;
 }
 
-
-.button{
+.button {
 	font-weight: bold;
 	padding: 0.25em 0.5em;
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
 	border-style: none;
-
-
 	box-shadow: 2px 2px 3px 1px #666;
-	-moz-box-shadow: 2px 2px 3px 1px #666;
-	-webkit-box-shadow: 2px 2px 3px 1px #666;
-	
 	transition: .4s;
 	height: 3%;
 	width: 15%;
-	z-index:1000000;
-	display:block;
+	z-index: 1000000;
+	display: block;
 }
-.button:hover{
+
+.button:hover {
 	background: rgb(7, 22, 50);
 	color: rgb(255, 255, 255);
 }
 
-#text{
-	text-align:justify;
-	text-justify: auto;
-
-	background: rgb(200, 200, 200);
+#text {
+	text-align: justify;
+	background: rgba(200, 200, 200, 0.8);
 	border: 1px solid rgb(7, 22, 50);
-	opacity:0.6;
-
-	/*height: 5%;*/
 	width: 100%;
 	position: absolute;
 	bottom: 0%;
 	left: 50%;
 	transform: translateX(-50%);
-	display:block;
-	z-index:1000000;
+	display: block;
+	z-index: 1000000;
+	font-size : 20px;
 }
 
 .popup {
@@ -149,26 +135,30 @@ pre {
 	opacity: 0;
 	visibility: hidden;
 	transition: .6s;
-  }
-  .popup.is_show {
+}
+
+.popup.is_show {
 	opacity: 1;
 	visibility: visible;
-  }
-  .popup_inner {
+}
+
+.popup_inner {
 	position: absolute;
 	left: 50%;
 	top: 50%;
-	transform: translate(-50%,-50%);
+	transform: translate(-50%, -50%);
 	width: 80%;
 	max-width: 600px;
 	padding: 50px;
 	background-color: #fff;
 	z-index: 2;
-  }
-  .popup_inner img {
+}
+
+.popup_inner img {
 	width: 100%;
-  }
-  .close_btn {
+}
+
+.close_btn {
 	position: absolute;
 	right: 0;
 	top: 0;
@@ -177,92 +167,152 @@ pre {
 	line-height: 50px;
 	text-align: center;
 	cursor: pointer;
-  }
-  .close_btn i {
+}
+
+.close_btn i {
 	font-size: 20px;
 	color: #333;
-  }
-  .black_background {
+}
+
+.black_background {
 	position: absolute;
 	left: 0;
 	top: 0;
 	width: 100%;
 	height: 100%;
-	background-color: rgba(0,0,0,.8);
+	background-color: rgba(0, 0, 0, .8);
 	z-index: 1;
 	cursor: pointer;
-  }
-  /*#js_show_popup{
+}
+
+/*#js_show_popup{
 	position: absolute;
 	left: 50%;
 	top: 50%;
 	z-index: 1000000;
   }*/
 
-  #pop_yes{
+#pop_yes {
 	font-weight: bold;
 	padding: 0.25em 0.5em;
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-
 	border-style: none;
-	
 	transition: .4s;
-	z-index:1000000;
-	display:block;
+	z-index: 1000000;
+	display: block;
 }
-#pop_yes:hover{
+
+#pop_yes:hover {
 	background: rgb(7, 22, 50);
 	color: rgb(255, 255, 255);
 }
 
-#pop_no{
+#pop_no {
 	font-weight: bold;
 	padding: 0.25em 0.5em;
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-
 	border-style: none;
-	
 	transition: .4s;
-	z-index:1000000;
-	display:block;
+	z-index: 1000000;
+	display: block;
 }
-#pop_no:hover{
+
+#pop_no:hover {
 	background: rgb(7, 22, 50);
 	color: rgb(255, 255, 255);
 }
 
-#pop_send{
+#pop_send {
 	font-weight: bold;
 	padding: 0.25em 0.5em;
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-
 	border-style: none;
-	
 	transition: .4s;
-	z-index:1000000;
-	display:block;
+	z-index: 1000000;
+	display: block;
 }
-#pop_send:hover{
+
+#pop_send:hover {
 	background: rgb(7, 22, 50);
 	color: rgb(255, 255, 255);
 }
 
+/*
  #frames{
 	background: rgb(255, 255, 255);
 	z-index:1000000;
  }
 
-#whole_sub_window{
- 	position: absolute;
-    border: 1px solid gray;
-    z-index: 100000;
-    left: 50%;
+*/
+
+#screen {
+	position: absolute;
+	border: 1px solid gray;
+	z-index: 100000;
+	left: 50%;
 	top: 50%;
 	background: transparent;
+	width: 50%;
+    height: 50%;
+	transform : translate(-50%,-50%);
+}
+
+.whole_sub_window {
+	z-index : 100000;
+	font-size : 50px;
+	background-color: rgba(255, 255, 255, 0.5);
+	border :2px solid rgb(0, 98, 255);
+	position : absolute;
+	left : 50%;
+	top : 50%;
+	vertical-align: middle;
+}
+
+#gui {
+	z-index: 1000000;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.scan_toggle_button {
+	position : absolute;
+	left : 50%;
+	top : 10%;
+	transform : translate(-50%,-10%);
+}
+
+.send_button {
+	display : none;
+	position : absolute;
+	left : 80%;
+	top : 10%;
+	transform : translate(-80%,-10%);
+}
+
+.adjustment_button {
+	display : none;
+	position : absolute;
+	left : 50%;
+	top : 80%;
+	transform : translate(-50%,-80%);
+}
+
+.okcancel_dialog {
+	margin-left: -25%;
+	font-size : 20px;
+}
+
+.btn {
+	width: 130px;
+	height: 50px;
+	font-size : 16px;
 }
