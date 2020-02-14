@@ -27,6 +27,21 @@ class Action extends EventEmitter {
     connect(data) {
         this.emit(Action.EVENT_CONNECT, null, data);
     }
+    
+    /**
+     * ログイン
+     * @param {*} data
+     * {
+     *  userList : userList,
+     *  userid : "",
+     *  password : "",
+     *  key : loginkey,
+     * }
+     */
+    login(data) {
+        this.emit(Action.EVENT_LOGIN, null, data);
+    }
+
     /**
      * 現在登録されているディスプレイのうち、メタデータに'marker_id'を持っているディスプレイを取得する.
      * 取得すると, Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERイベントで取得したmarker_idが投げられる.
@@ -69,6 +84,7 @@ class Action extends EventEmitter {
 }
 
 Action.EVENT_CONNECT = "connect";
+Action.EVENT_LOGIN = "login";
 Action.EVENT_GET_CURRENT_DISPLAY_MARKERS = "getCurrentDisplayMarkers";
 Action.EVENT_GET_VIRTUAL_DISPLAY = "getVirtualDisplay";
 Action.EVENT_GET_DATA_LIST = "getDataList";

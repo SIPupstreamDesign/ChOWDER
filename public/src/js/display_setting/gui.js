@@ -4,8 +4,11 @@
  */
 
 import Store from './store';
-import Menu from '../components/menu.js';
+import Menu from '../components/menu';
+import LoginMenu from '../components/login_menu';
+import Select from '../components/select';
 import Button from '../components/button.js';
+import Translation from '../common/translation';
 
 function getBaseURL() {
     let baseURL;
@@ -40,18 +43,25 @@ class GUI extends EventEmitter {
 
     init() {
         this.dom = document.getElementById('gui');
-        console.log("display_setting gui init");
-        let menuSetting = [];
-        this.headMenu = new Menu("display_setting", menuSetting);
-        document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
 
+        // ARjsのカメラ初期化イベントらしい
+        window.addEventListener('arjs-video-loaded', (data) => {
+            // 初期化完了後, ログイン完了するまで非表示にしておく
+            document.getElementById('arjs-video').style.display = "none";
+        })
+
+        // ログイン完了するまで非表示にしておく
+        this.dom.style.display = "none"
+
+        this.initLoginMenu();
         this.initScanButton();
         this.initSendButton();
         this.initAdjustmentButton();
         this.initCompleteButton();
         this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
-
         this.initScanStartButtonPopUp();
+        this.initSiteSelect();
+        Translation.translate(function () { });
 
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
@@ -148,6 +158,69 @@ class GUI extends EventEmitter {
                 this.action.getDataList();
             }
         });
+        
+        // ログイン成功
+        this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
+            // ログインメニューを削除
+            document.body.removeChild(this.loginMenu.getDOM());
+            this.changeGUIToStart();
+        });
+
+        // ログイン失敗
+        this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
+            this.loginMenu.showInvalidLabel(true);
+        });
+
+        // ディスプレイリスト取得
+        this.store.on(Store.EVENT_DONE_GET_DISPLAY_LIST, (err, data) => {
+            this.updateSiteSelect(data);
+        });
+    }
+
+    /// ログインメニューの初期化
+    initLoginMenu() {
+        this.loginMenu = new LoginMenu("ChOWDER DisplaySetting");
+        this.loginMenu.getDOM().style.zIndex = 20000000;
+        document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
+        
+        this.loginMenu.show(true);
+
+        // ログインが実行された場合
+        this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
+            let userSelect = this.loginMenu.getUserSelect();
+            // ログイン実行
+            this.action.login({
+                id: "APIUser",
+                password: this.loginMenu.getPassword()
+            });
+        });
+
+        let select = this.loginMenu.getUserSelect();
+        select.addOption("APIUser", "APIUser");
+    }
+
+    /// ログイン時のディスプレイsite選択ボックスの初期化
+    initSiteSelect() {
+        let wrapDom = document.createElement('div');
+        wrapDom.innerHTML = "DisplaySite :"
+        this.siteSelect = new Select();
+        this.siteSelect.getDOM().className = "site_select";
+        this.siteSelect.addOption("group_default", "default");
+
+        wrapDom.appendChild(this.siteSelect.getDOM())
+
+        document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
+    }
+
+    /**
+     * ログイン時のディスプレイsite選択ボックスの更新
+     * @param siteList ディスプレイsiteのリスト 
+     */ 
+    updateSiteSelect(siteList) {
+        this.siteSelect.clear();
+        for (let i = 0; i < siteList.length; ++i) {
+            this.siteSelect.addOption(siteList[i].id, siteList[i].name);
+        }
     }
 
     /// スキャンIntervalのクリア
@@ -157,6 +230,18 @@ class GUI extends EventEmitter {
             clearInterval(this.scanIntervalHandle[i]);
         }
         this.scanIntervalHandle = [];
+    }
+
+    /// GUIをスキャン開始ページの状態に切り替える
+    changeGUIToStart() {
+        // 動画, GUI表示
+        document.getElementById('arjs-video').style.display = "block";
+        this.dom.style.display = "block";
+
+        // メニュー表示
+        let menuSetting = [];
+        this.headMenu = new Menu("display_setting", menuSetting);
+        document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
     }
 
     /// GUIをスキャン中の状態に切り替える
@@ -211,7 +296,7 @@ class GUI extends EventEmitter {
             elem.style.display = isShow ? "block" : "none";
         }
     }
-    
+
     /// 設定完了ボタンを表示
     showCompleteButton(isShow) {
         let elem = document.getElementById("complete_button");

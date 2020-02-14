@@ -61,6 +61,20 @@ class Store extends EventEmitter {
     release() {
 
     }
+
+    _login(data) {
+        Connector.send(Command.Login, data, (err, reply) => {
+            if (err || reply === null) {
+                console.log(err);
+                this.emit(Store.EVENT_LOGIN_FAILED, err, data);
+            } else {
+                console.log("loginSuccess", reply);
+                this.authority = reply.authority;
+                this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+            }
+        });
+    }
+
     _closeElectron() {
         Connector.send(Command.SendMessage, {
             command: "CloseElectronDisplay"
@@ -118,6 +132,12 @@ class Store extends EventEmitter {
         let client = Connector.connect(() => {
             if (!this.isInitialized_) {
                 //this.initOtherStores(() => {
+                Connector.send(Command.GetGroupList, {}, (err, data) => {
+                    if (!err && data.hasOwnProperty("displaygrouplist")) {
+                        this.emit(Store.EVENT_DONE_GET_DISPLAY_LIST, null, data.displaygrouplist)
+                    }
+                });
+
                 this.emit(Store.EVENT_CONNECT_SUCCESS, null);
                 //});
             } else {
@@ -516,6 +536,9 @@ class Store extends EventEmitter {
 
 Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
+Store.EVENT_LOGIN_SUCCESS = "login_success";
+Store.EVENT_LOGIN_FAILED = "login_failed";
+Store.EVENT_DONE_GET_DISPLAY_LIST = "get_display_list";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS = "get_current_display_markers";
 Store.EVENT_DONE_GET_DATA_LIST = "get_data_list";
