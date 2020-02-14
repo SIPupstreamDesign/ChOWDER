@@ -98,6 +98,7 @@ class Store extends EventEmitter {
                 console.error(err); return;
             }
             this.currentDisplayMarkers.push(marker_id);
+            console.log(marker_id);
             if (this.currentDisplayMarkers.length === displayCount) {
                 Connector.send(Command.SendMessage, {
                     command: "StartDisplaySetting"
@@ -169,6 +170,9 @@ class Store extends EventEmitter {
     getVirtualDisplay() {
         return this.virtualDisplay
     };
+    getCurrentDisplayMarkers() {
+        return this.currentDisplayMarkers;
+    };
     /**
      * Virtual Displau Setting を取得
      */
@@ -205,15 +209,6 @@ class Store extends EventEmitter {
     /**
      * ディスプレイに送るためのデータ構造に変換
      * @param {*} data
-     * {
-     *   PCID
-     *   {  
-     *     up
-     *     down
-     *     right
-     *     left
-     *   }
-     * }
      */
     convertSendData() {
         let data = {};
@@ -388,14 +383,14 @@ class Store extends EventEmitter {
     /**
      * スキャン後、蓄積したデータから各IDにおける隣接リストを作成する
      * */
-    _setDataList() {
+    _calcRelativeCoord() {
         console.log("SCAN COMPLETE")
         let scanMinMargin = [];
         this.calcScanMinMargin(scanMinMargin);
         this.desideAdjacency(scanMinMargin);
         this.calcRelativeCoord();
 
-        this.emit(Store.EVENT_DONE_SET_DATA_LIST, null, this.dataList);
+        this.emit(Store.EVENT_DONE_CALC_RELATIVE_COORD, null, this.dataList);
     }
 
     /**
@@ -447,11 +442,6 @@ class Store extends EventEmitter {
         //console.log(this.dataList);
 
         //スキャンした、各データごとの差をとる
-<<<<<<< HEAD
-        console.log("difference")
-=======
-        //differenceList
->>>>>>> c5b6a01cfd4e40c20bc097804722a03437876b74
         let differenceList = this.calcDifferenceList(data);
         console.log("difference", differenceList)
 
@@ -550,7 +540,7 @@ Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS = "get_current_display_markers";
 Store.EVENT_DONE_GET_DATA_LIST = "get_data_list";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "get_virtual_display";
 Store.EVENT_DONE_STORE_SCANNED_DATA = "store_scanned_data";
-Store.EVENT_DONE_SET_DATA_LIST = "set_data_list";
+Store.EVENT_DONE_CALC_RELATIVE_COORD = "calc_relative_coord";
 Store.EVENT_DONE_SEND_DATA = "send_data";
 Store.EVENT_DONE_DELETE_DATA_LIST = "delete_data_list";
 Store.EVENT_START_SCAN = "start_scan";

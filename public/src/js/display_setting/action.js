@@ -45,8 +45,8 @@ class Action extends EventEmitter {
     storeScannedData(data) {
         this.emit(Action.EVENT_STORE_SCANNED_DATA, null, data);
     }
-    setDataList(data) {
-        this.emit(Action.EVENT_SET_DATA_LIST, null, data);
+    calcRelativeCoord(data) {
+        this.emit(Action.EVENT_CALC_RELATIVE_COORD, null, data);
     }
     sendData(data) {
         this.emit(Action.EVENT_SET_SEND_DATA, null, data);
@@ -74,7 +74,7 @@ Action.EVENT_GET_VIRTUAL_DISPLAY = "getVirtualDisplay";
 Action.EVENT_GET_DATA_LIST = "getDataList";
 Action.EVENT_CALC_ABSOLUTE_POSITION = "calcAbsolutePosition";
 Action.EVENT_STORE_SCANNED_DATA = "storeScannedData";
-Action.EVENT_SET_DATA_LIST = "setDataList";
+Action.EVENT_CALC_RELATIVE_COORD = "calcRelativeCoord";
 Action.EVENT_SET_SEND_DATA = "sendData";
 Action.EVENT_DELETE_DATA_LIST = "deleteDataList";
 Action.EVENT_START_SCAN = "startScan";

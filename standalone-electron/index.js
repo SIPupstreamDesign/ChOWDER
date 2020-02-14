@@ -121,6 +121,7 @@ class ElectornDisplay {
 		}
 	}
 
+
 	exchangeNum(number1, number2) {
 		//console.log("exchange");
 		let tmp = number1;
@@ -130,23 +131,10 @@ class ElectornDisplay {
 		return re;
 	}
 
-	/*	calcDifferencelist(data, len) {
-			let differenceList = [];
-			let differenceItr = 0;
-			for (let i = 0; i < len - 1; i++) {
-				for (let j = 1; j < len - i; j++) {
-					differenceList[differenceItr] = {
-						id: String(data[i][0]) + String(data[i + j][0]),
-						x: data[i + j][1][0] - data[i][1][0],
-						y: data[i + j][1][1] - data[i][1][1]
-					};
-	
-					differenceItr++;
-				}
-			}
-			return JSON.parse(JSON.stringify(differenceList));
-		}
-	*/
+	/**
+	 * 入ってきたデータをx座標,y座標それぞれでソート
+	 * @param {*} data 
+	 */
 	sortData(data) {
 		for (let i = 0; i < 2; i++) {
 			for (let j = 0; j < data[i].length - 1; j++) {
@@ -159,10 +147,15 @@ class ElectornDisplay {
 				}
 			}
 		}
-		console.log("sortedData:")
-		console.log(data);
+		//console.log("sortedData:")
+		//console.log(data);
 	}
 
+
+	/**
+	 * データを縦一列に並んでいるもの、横一列に並んでいるものでグループ分けする
+	 * @param {*} data 
+	 */
 	groupingData(data) {
 		let sortedData = [JSON.parse(JSON.stringify(data)), JSON.parse(JSON.stringify(data))];
 		let result = [];
@@ -180,25 +173,26 @@ class ElectornDisplay {
 				}
 			}
 			result[i] = tmpResult;
-			/*for (let i in tmpResult) {
-				console.log(i);
-				console.log(tmpResult[i]);
-			}*/
 		}
-		//console.log("groupingData:");
-		//console.log(result);
+		/*console.log("groupingData:");
+		for (let i in result) {
+			console.log(i);
+			console.log(result[i]);
+		}*/
 		return JSON.parse(JSON.stringify(result));
 
 	}
 
+	/**
+	 * 縦横での座標の昇順でランク分け
+	 * @param {*} data 
+	 */
 	calcRank(data) {
 		let rank = [];
 		for (let i in data) {
 			for (let j in data[i]) {
-				//console.log(groupedDataX[i])
 				for (let k in data[i][j]) {
 
-					//console.log(groupedDataX[i][j][0]);
 					if (!rank[data[i][j][k][0] - 1]) {
 						rank[data[i][j][k][0] - 1] = [j];
 					}
@@ -214,11 +208,13 @@ class ElectornDisplay {
 		return JSON.parse(JSON.stringify(rank));
 	}
 
+	/**
+	 * 隣接関係の判定
+	 * @param {*} data 
+	 */
 	calcAdjacency(data) {
 
 		let rank = this.calcRank(data);
-		//console.log("rankInFunction")
-		//console.log(rank);
 		let adj = {};
 		for (let i in rank) {
 			adj[i] = {};
@@ -238,13 +234,17 @@ class ElectornDisplay {
 				}
 			}
 		}
-		//console.log("adjacencyInFunction")
+		//console.log("adjacency")
 		//console.log(adj);
 		return JSON.parse(JSON.stringify(adj));
 	}
 
-
-	sortMin(pcId, windowId) {
+	/**
+	 * 
+	 * @param {*} pcId 
+	 * @param {*} windowId 
+	 */
+	decideAdajacency(pcId, windowId) {
 		//データの登録
 		let windowPos = [];
 		for (let id in this.config.windows) {
@@ -258,12 +258,14 @@ class ElectornDisplay {
 			}
 		}
 
-		//let differenceList = this.calcDifferencelist(windowPos, windowId.length)
 		let groupedData = this.groupingData(windowPos);
 		let adj = this.calcAdjacency(groupedData);
 		this.dataList[pcId] = JSON.parse(JSON.stringify(adj)); return JSON.parse(JSON.stringify(adj));
 	}
 
+	/**
+	 * コンフィグのデータを使うデータにフォーマットを合わせる
+	 */
 	convertDataFormatConfigToData() {
 		console.log("convertDataFormatConfigToData");
 		let alphabet = "ABCDEFGHIJK";
@@ -282,46 +284,20 @@ class ElectornDisplay {
 		}
 		let sortedWindowCoord = [];
 		for (let id in windowId) {
-			sortedWindowCoord[id] = this.sortMin(id, windowId[id]);
+			sortedWindowCoord[id] = this.decideAdajacency(id, windowId[id]);
 		}
 
 		console.log("result");
-		console.log(this.dataList);
-	}
-
-	convertDataFormatReceivedToScanned(received) {
-		let receivedData = JSON.parse(JSON.stringify(received.split('{').join('')));
-		console.log("received");
-		console.log(JSON.parse(received)["data"]);
-		receivedData = receivedData.split('}').join('');
-		receivedData = receivedData.split('[').join('');
-		receivedData = receivedData.split(']').join('');
-		receivedData = receivedData.split('"').join('');
-		receivedData = receivedData.split('data').join('');
-		receivedData = receivedData.split('up').join('');
-		receivedData = receivedData.split('down').join('');
-		receivedData = receivedData.split('right').join('');
-		receivedData = receivedData.split('left').join('');
-		receivedData = receivedData.split(':');
-		let result;
-		for (let i in receivedData) {
-			for (let j = 0; j < receivedData[i].split(',').length; j++) {
-				let tmp = receivedData[i].split(',')[j];
-				if (tmp) {
-					if (!result) {
-						result = [JSON.parse(JSON.stringify(tmp))];
-					}
-					else {
-						result.push(JSON.parse(JSON.stringify(tmp)));
-					}
-				}
-			}
+		for (let i in this.dataList) {
+			console.log(this.dataList[i]);
 		}
-		//console.log(result);
-		return JSON.parse(JSON.stringify(result));
-
 	}
 
+	/**
+	 * 受取ったデータフォーマットを計算用に合わせる
+	 * @param {*} scannedData 
+	 * @param {*} pcId 
+	 */
 	convertDataFormatScannedToTrue(scannedData, pcId) {
 		let direction = ["up", "down", "right", "left"]
 		let trueData = {}
@@ -339,6 +315,12 @@ class ElectornDisplay {
 		return JSON.parse(JSON.stringify(trueData));
 	}
 
+	/**
+	 * 相対座標の算出
+	 * @param {*} pcId 
+	 * @param {*} relativeCoord 
+	 * @param {*} adjList 
+	 */
 	calcRelativeCoord(pcId, relativeCoord, adjList) {
 		//console.log(adjList);
 		let directionName = ["right", "left", "up", "down"]
@@ -376,11 +358,23 @@ class ElectornDisplay {
 		//console.log(relativeCoord);
 	}
 
+	/**
+	 * 任意の位置にmakerIdのコンフィグを配置する
+	 * @param {*} scannedConfigId 
+	 * @param {*} trueConfigId 
+	 * @param {*} sendConfig 
+	 */
 	locateScannnedPos(scannedConfigId, trueConfigId, sendConfig) {
 		sendConfig.windows[trueConfigId] = JSON.parse(JSON.stringify(this.config.windows[scannedConfigId]));
 		sendConfig.windows[trueConfigId].marker_id = JSON.parse(JSON.stringify(this.config.windows[trueConfigId].marker_id));
 	}
 
+	/**
+	 * 任意のタイルの位置を交換
+	 * @param {*} tileId1 
+	 * @param {*} tileId2 
+	 * @param {*} relocatedConfig 
+	 */
 	exchangeTilePos(tileId1, tileId2, relocatedConfig) {
 		relocatedConfig.windows[tileId1] = JSON.parse(JSON.stringify(this.config.windows[tileId2]));
 		relocatedConfig.windows[tileId2] = JSON.parse(JSON.stringify(this.config.windows[tileId1]));
@@ -407,8 +401,6 @@ class ElectornDisplay {
 				}
 			}
 			else {
-				let receivedData = this.convertDataFormatReceivedToScanned(data);
-
 				for (let id in this.config.windows) {
 					//console.log(id);
 					let windowProps = this.config.windows[id];
@@ -418,13 +410,11 @@ class ElectornDisplay {
 						let pcId = this.config.windows[id].marker_id[0];
 						let windowId = this.config.windows[id].marker_id[1];
 						//スコープ内にある真値とスキャン値を取得する
-						let trueData = this.dataList[pcId][windowId - 1];
 
 						let scannedData = [];
 						for (let i in this.dataList[pcId]) {
-							let pcIdIndex = receivedData.indexOf(pcId)
-							scannedData[i] = [receivedData[pcIdIndex + i * 4 + 1], receivedData[pcIdIndex + i * 4 + 2],
-							receivedData[pcIdIndex + i * 4 + 3], receivedData[pcIdIndex + i * 4 + 4],]
+							let markerData = received["data"][pcId][Number(i)]
+							scannedData[i] = [markerData["up"], markerData["down"], markerData["right"], markerData["left"]]
 						}
 						scannedData = this.convertDataFormatScannedToTrue(scannedData, pcId);
 

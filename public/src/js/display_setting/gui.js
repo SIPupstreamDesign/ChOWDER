@@ -62,15 +62,28 @@ class GUI extends EventEmitter {
         });
 
         this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
-            this.updateScanStatusText(reply);
-        });
+            let pointSum = this.updateScanStatusText(reply);
+            let text = "検出されたマーカ:"
+            let count = 0;
+            for (let i in pointSum) {
+                if (pointSum[i] > 30) {
+                    text += i + ",";
+                    count++;
+                }
+            }
+            console.log(text)
+            this.updateScannedMarker(text, count);
+            /*document.getElementById("scanned_markerID").innerHTML = text;
+            document.getElementById("scanned_markerID_number").innerHTML = count + "/" + this.displayNumber;
+        */});
 
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
             console.log("store");
         });
 
-        this.store.on(Store.EVENT_DONE_SET_DATA_LIST, (err, reply) => {
+        this.store.on(Store.EVENT_DONE_CALC_RELATIVE_COORD, (err, reply) => {
             if (!err) {
+                console.log("se")
                 this.pageState = GUI.STATE_COMPLETE;
                 this.changeGUIToComplete(reply);
                 this.action.getDataList();
@@ -144,7 +157,7 @@ class GUI extends EventEmitter {
                 console.log("Scan Complete")
 
                 this.clearScanInterval();
-                this.action.setDataList();
+                this.action.calcRelativeCoord();
                 this.action.getDataList();
             }
         });
@@ -211,7 +224,7 @@ class GUI extends EventEmitter {
             elem.style.display = isShow ? "block" : "none";
         }
     }
-    
+
     /// 設定完了ボタンを表示
     showCompleteButton(isShow) {
         let elem = document.getElementById("complete_button");
@@ -273,16 +286,10 @@ class GUI extends EventEmitter {
                 }
             }
         }
+        return JSON.parse(JSON.stringify(pointSum));
+    }
 
-        let text = "検出されたマーカ:"
-        let count = 0;
-        for (let i in pointSum) {
-            if (pointSum[i] > 30) {
-                text += i + ",";
-                count++;
-            }
-        }
-        console.log(text)
+    updateScannedMarker(text, count) {
         document.getElementById("scanned_markerID").innerHTML = text;
         document.getElementById("scanned_markerID_number").innerHTML = count + "/" + this.displayNumber;
     }
@@ -291,8 +298,10 @@ class GUI extends EventEmitter {
     updateVirtualScreen(reply) {
         console.log("updateVirtualScreen", reply);
         let ids = []
-        for (let i in reply) {
-            ids.push(i);
+        let currentMarkerList=this.store.getCurrentDisplayMarkers();
+        console.log(currentMarkerList);
+        for (let i in currentMarkerList) {
+                 ids.push(currentMarkerList[i]);
         }
         console.log(ids);
         let text = ""
@@ -306,23 +315,28 @@ class GUI extends EventEmitter {
         const replyLength = Object.keys(reply).length;
         const width = 50;
         const height = 50;
+        screen.innerHTML="";
+        let pointSum = this.updateScanStatusText(reply);
+        console.log(pointSum);
 
         for (let i in reply) {
-            //const column = Math.ceil((i + 1) / replyLength); NaN!
-            //const line = Math.ceil(i + 1 - (column - 1) * replyLength); NaN!
-            const unitWidth = 100 / this.displayNumberX;
-            const unitHeight = 100 / this.displayNumberY;
-            const translateX = this.displayNumberX * (reply[i].relativeCoord[0]) * unitWidth - this.displayNumberX * width;
-            const translateY = this.displayNumberY * height - this.displayNumberY * (reply[i].relativeCoord[1] + 1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
+            if (pointSum[i] > 30) {
+                const unitWidth = 100 / this.displayNumberX;
+                const unitHeight = 100 / this.displayNumberY;
+                const translateX = this.displayNumberX * (reply[i].relativeCoord[0]) * unitWidth - this.displayNumberX * width;
+                const translateY = this.displayNumberY * height - this.displayNumberY * (reply[i].relativeCoord[1] + 1) * unitHeight;//height / 2 - (reply[i].relativeCoord[1] + 1) * unitHeight;
 
-            let newVirtualDisplay = document.createElement("div");
-            newVirtualDisplay.className = "whole_sub_window"
-            //newVirtualDisplay.id = "whole_sub_window:" + column + ":" + line;
-            newVirtualDisplay.style.width = unitWidth + "%";
-            newVirtualDisplay.style.height = unitHeight + "%";
-            newVirtualDisplay.style.transform = "translate(" + translateX + "%," + translateY + "%)";
-            newVirtualDisplay.innerHTML = String(i);
-            screen.appendChild(newVirtualDisplay);
+                let newVirtualDisplay = document.createElement("div");
+                newVirtualDisplay.className = "whole_sub_window"
+                newVirtualDisplay.style.width = unitWidth + "%";
+                newVirtualDisplay.style.height = unitHeight + "%";
+                newVirtualDisplay.style.transform = "translate(" + translateX + "%," + translateY + "%)";
+                newVirtualDisplay.innerHTML = String(i);
+                screen.appendChild(newVirtualDisplay);
+            }
+            else{
+
+            }
         }
     }
 
@@ -402,9 +416,22 @@ class GUI extends EventEmitter {
         this.closePopUp(btn, popup);
 
         let send = document.getElementById('pop_send');
-        let marker1 = document.getElementById('exchange_marker');
+        let marker1 = document.getElementById('marker_id_1');
         let marker2 = document.getElementById('marker_id_2');
 
+       /* let ids = []
+        let currentMarkerList=this.store.getCurrentDisplayMarkers();
+        for (let i in currentMarkerList) {
+            ids.push(i);
+        }
+        console.log(ids);
+        let text = ""
+        for (let i in ids) {
+            text += "<option>" + ids[i] + "</option>"
+        }
+        marker1.innerHTML = text;
+        marker2.innerHTML = text;
+*/
         send.onclick = () => {
             let index1 = marker1.selectedIndex;
             let markerId1 = marker1.options[index1].value;
