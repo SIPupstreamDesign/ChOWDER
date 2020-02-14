@@ -45,11 +45,10 @@ class GUI extends EventEmitter {
         this.headMenu = new Menu("display_setting", menuSetting);
         document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
 
-        // スキャン開始完了ボタン
         this.initScanButton();
         this.initSendButton();
         this.initAdjustmentButton();
-        this.initCompleteDialog()
+        this.initCompleteButton();
         this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
 
         this.initScanStartButtonPopUp();
@@ -169,6 +168,8 @@ class GUI extends EventEmitter {
 
     /// GUIをスキャン完了状態に切り替える
     changeGUIToComplete(reply) {
+        const hasScanData = Object.keys(reply).length > 0;
+
         this.pageState = GUI.STATE_COMPLETE;
 
         // 説明文を表示
@@ -177,13 +178,20 @@ class GUI extends EventEmitter {
         // 調整モードボタンを表示
         this.showAjustmentButton(true);
 
-        // スキャン結果があるかどうかによって送信ボタンの表示非表示を切り替える
-        this.showSendButton(Object.keys(reply).length > 0);
+        // 設定完了ボタンを表示
+        this.showCompleteButton(hasScanData);
+
+        // データ送信ボタンを表示
+        this.showSendButton(hasScanData);
 
         // スキャンボタンの名前を変更
         this.scanToggleButton.getDOM().value = "再スキャン";
 
-        this.updateDescription("検出されたmarkerIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+        if (hasScanData) {
+            this.updateDescription("検出されたマーカーIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+        } else {
+            this.updateDescription("マーカーIDが検出されていません。もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+        }
 
         this.updateVirtualScreen(reply);
     }
@@ -199,6 +207,14 @@ class GUI extends EventEmitter {
     /// 調整モードボタンを表示
     showAjustmentButton(isShow) {
         let elem = document.getElementById("adjustment_button");
+        if (elem) {
+            elem.style.display = isShow ? "block" : "none";
+        }
+    }
+    
+    /// 設定完了ボタンを表示
+    showCompleteButton(isShow) {
+        let elem = document.getElementById("complete_button");
         if (elem) {
             elem.style.display = isShow ? "block" : "none";
         }
@@ -329,12 +345,19 @@ class GUI extends EventEmitter {
 
         this.sendButton.on(Button.EVENT_CLICK, (evt) => {
             this.action.sendData();
-            this.updateDescription("Displayに表示されているmarkerIDの並び順がただしければ、設定完了ボタンを押してください。検出されたmarkerIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+            this.updateDescription("Displayに表示されているマーカーIDの並び順がただしければ、設定完了ボタンを押してください。検出されたマーカーIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
         });
     }
 
-    /// 完了ボタン押したときに出るダイアログの初期化
-    initCompleteDialog() {
+    /// 完了ボタン押したときに出るボタンとダイアログの初期化
+    initCompleteButton() {
+        this.completeButton = new Button;
+        let btn = this.completeButton.getDOM();
+        this.dom.appendChild(btn);
+        btn.id = "complete_button";
+        btn.className = "complete_button btn btn-primary";
+        btn.value = "設定完了";
+
         let popup = document.getElementById('popup');
         if (!popup) {
             conosle.error("not found popup");
@@ -359,7 +382,7 @@ class GUI extends EventEmitter {
         };
     }
 
-    /// 調整モードボタンの初期化
+    /// 調整モードボタンとダイアログの初期化
     initAdjustmentButton() {
         this.adjustmentButton = new Button;
         let btn = this.adjustmentButton.getDOM();
@@ -392,9 +415,6 @@ class GUI extends EventEmitter {
             let sendData = ["Adjustment event occuured", markerId1, markerId2]
             this.action.adjustmentEvent(sendData)
         }
-
-        this.adjustmentButton.on(Button.EVENT_CLICK, (evt) => {
-        });
     }
 
     /**

@@ -301,9 +301,17 @@ pre {
 .adjustment_button {
 	display : none;
 	position : absolute;
-	left : 50%;
+	left : 20%;
+	top : 10%;
+	transform : translate(-20%,-10%);
+}
+
+.complete_button {
+	display : none;
+	position : absolute;
+	left : 80%;
 	top : 80%;
-	transform : translate(-50%,-80%);
+	transform : translate(-80%,-80%);
 }
 
 .okcancel_dialog {
