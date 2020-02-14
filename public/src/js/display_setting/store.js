@@ -68,6 +68,9 @@ class Store extends EventEmitter {
         this.emit(Store.EVENT_CLOSE_ERECTRON, null, null);
     }
 
+    /**
+     * スキャン開始してよいかの判定の準備
+     */
     initStartupEvent() {
         this.on(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, (err, reply) => {
             if (err) {
@@ -101,10 +104,10 @@ class Store extends EventEmitter {
         });
     }
 
-    getVirtualDisplay() {
-        return this.virtualDisplay;
-    }
-
+    /**
+     * データのディープコピー
+     * @param {*} data 
+     */
     deepCopy(data) {
         return JSON.parse(JSON.stringify(data));
     }
@@ -141,6 +144,10 @@ class Store extends EventEmitter {
         })(client));
     }
 
+    /**
+     * 現在のマーカ群を取得
+     * @param {}} data 
+     */
     _getCurrentDisplayMarkers(data) {
         Connector.send(Command.GetWindowMetaData, { type: 'all', id: "" }, (err, json) => {
             if (err) {
@@ -155,6 +162,12 @@ class Store extends EventEmitter {
         });
     }
 
+    getVirtualDisplay(){
+        return this.virtualDisplay
+    };
+    /**
+     * Virtual Displau Setting を取得
+     */
     _getVirtualDisplay() {
         Connector.send(Command.GetVirtualDisplay, {}, (err, reply) => {
             this.virtualDisplay = reply;
@@ -162,7 +175,10 @@ class Store extends EventEmitter {
         });
     }
 
-    _getDataList(data) {
+    /**
+     * this.dataListの取得 
+     */
+    _getDataList() {
         console.log("getDataList")
         let dataL;
         if (Object.keys(this.dataList.length !== 0)) {
@@ -236,6 +252,10 @@ class Store extends EventEmitter {
         });
     }
 
+    /**
+     * 調整モードでデータを送信する
+     * @param {*} data 
+     */
     _adjustmentEvent(data) {
         console.log(data);
         Connector.send(Command.SendMessage, {
@@ -373,6 +393,10 @@ class Store extends EventEmitter {
         this.emit(Store.EVENT_DONE_SET_DATA_LIST, null, this.dataList);
     }
 
+    /**
+     * 各データの2D座標の差を取得
+     * @param {*} data 
+     */
     calcDifferenceList(data) {
         let itr = 0;
         let IdQuantity = Object.keys(this.dataList).length;
@@ -398,10 +422,11 @@ class Store extends EventEmitter {
 
     //IDの隣接状況の蓄積を行う
     _storeScannedData(data) {
-        //データの表示
-        console.log("data");
+       /* console.log("data");
         console.log(this.deepCopy(data));
-
+*/
+  
+        //データの入力
         console.log("pos");
         for (let i = 0; i < data.length; i++) {
             if (data[i][1] === 1) {
@@ -417,7 +442,6 @@ class Store extends EventEmitter {
         //console.log(this.dataList);
 
         //スキャンした、各データごとの差をとる
-        //differenceList
         console.log("difference")
         let differenceList = this.calcDifferenceList(data);
 
@@ -436,7 +460,6 @@ class Store extends EventEmitter {
 
         //上下左右の関係を判定
         console.log("adjacency");
-        //this.storeAdjacency();
         for (let i = 0; i < differenceList.length; i++) {
             let idA = differenceList[i]["id"].substr(0, 2);
             let idB = differenceList[i]["id"].substr(2, 4);
@@ -494,6 +517,10 @@ class Store extends EventEmitter {
         this.emit(Store.EVENT_DONE_STORE_SCANNED_DATA, null, this.deepCopy(this.dataList));
     }
 
+    /**
+     * スキャン開始イベント
+     * @param {*} data 
+     */
     _startScan(data) {
         if (!Connector.isConnected()) {
             // 接続されてない
@@ -503,9 +530,6 @@ class Store extends EventEmitter {
         else {
             console.log("SCAN START");
         }
-        /*else {
-            this._getVirtualDisplay();
-        }*/
     }
 }
 
