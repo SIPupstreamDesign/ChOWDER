@@ -13,6 +13,11 @@
 	<script src="./3rd/js/aframejs/aframe-master.min.js"></script>
 	<script src="./3rd/js/arjs/aframe-ar.js"></script>
 
+	<link href="3rd/css/bootstrap.css" rel="stylesheet" />
+	<script type="text/javascript" src="3rd/js/i18next/i18next.min.js"></script>
+	<script type="text/javascript" src="3rd/js/i18next/i18nextXHRBackend.min.js"></script>
+	<script type="text/javascript" src="3rd/js/i18next/i18nextBrowserLanguageDetector.min.js"></script>
+	<script type="text/javascript" src="3rd/js/bootstrap-without-jquery.min.js"></script>
 	<script type="text/javascript" src="display_setting.bundle.js"></script>
 </head>
 
@@ -21,12 +26,10 @@
 	</div>
 
 
+	<div id="gui"></div>
 
-	<p id="scanned_maekrID"></p>
-	<p id="scanned_maekrID_number"></p>
-
-	<input type="button" id="scan_toggle_button" class="button" value="スキャン開始">
-	</input>
+	<p id="scanned_markerID"></p>
+	<p id="scanned_markerID_number"></p>
 
 	<p id="text"></p>
 
@@ -34,50 +37,49 @@
 		<div class="popup_inner">
 			<div class="close_btn" id="close_btn"><i class="fas fa_times"></i></div>
 			<p>
-				<font size="4">ディスプレイ設定を終了しますか？(Displayを終了します)</font>
+				<p style="font-size: 1.5vh;">ディスプレイ設定を終了しますか？(Displayを終了します)</p>
 			</p>
 			<p id="pop_yes">
-				<font size="4">はい</font>
+				<p style="font-size: 1.5vh;">はい</p>
 			</p>
 			<p id="pop_no">
-				<font size="4">いいえ</font>
+				<p style="font-size: 1.5vh;">いいえ</p>
 			</p>
 		</div>
 		<div class="black_background" id="black_bg"></div>
 	</div>
 
-	<div class="popup" id="start_popup"">
+	<div class="popup" id="start_popup">
 		<div class=" popup_inner">
-		<div class="close_btn" id="start_close_btn"><i class="fas fa_times"></i></div>
-		<p>
-			<font size="4">起動しているDisplayの数が設定した数と一致しません</font>
-			<font size="5"><br>Displayを起動してください</font>
-		</p>
-	</div>
-	<div class="black_background" id="start_black_bg"></div>
+			<div class="close_btn" id="start_close_btn"><i class="fas fa_times"></i></div>
+			<p>
+				<p style="font-size: 1.5vh;">起動しているDisplayの数が設定した数と一致しません</p>
+				<p style="font-size: 1.5vh;"><br />Displayを起動してください</p>
+			</p>
+		</div>
+		<div class="black_background" id="start_black_bg"></div>
 	</div>
 
-
-	<div class="popup" id="adjustment_popup"">
+	<div class="popup" id="adjustment_popup">
 		<div class=" popup_inner">
-		<div class="close_btn" id="adjustment_close_btn"><i class="fas fa_times"></i></div>
-		<p>
-			<font size="4">位置を交換する２つのマーカーを入力して下さい</font>
-			<form name="excahnge_marker">
-				<br><select id="marker_id_1" name="marker_id_1"></select>
-				<br><select id="marker_id_2" name="marker_id_2"></select>
-			</form>
-		</p>
-		<p id="pop_send">送信</p>
-	</div>
-	<div class="black_background" id="adjustment_black_bg"></div>
+			<div class="close_btn" id="adjustment_close_btn"><i class="fas fa_times"></i></div>
+			<p>
+				<p style="font-size: 1.5vh;">位置を交換する２つのマーカーを入力して下さい</p>
+				<form id="exchange_marker">
+					<br /><select id="marker_id_1" name="marker_id_1"></select>
+					<br /><select id="marker_id_2" name="marker_id_2"></select>
+				</form>
+			</p>
+			<p id="pop_send">送信</p>
+		</div>
+		<div class="black_background" id="adjustment_black_bg"></div>
 	</div>
 
-	<div class="screen" id="whole_sub_window"></div>
+	<div class="screen" id="screen"></div>
 
 	<a-scene embedded arjs="debugUIEnabled:false;" id="ar_entry">
 		<a-marker type="pattern" preset="hiro" id="hiro">
-			<a-text class="text" position="-0.5 0 0" value="Hiro" color="red" rotation="-90 0 0"></a-text>
+			<a-text class="hiro_marker_text" position="-0.5 0 0" value="Hiro" color="red" rotation="-90 0 0"></a-text>
 		</a-marker>
 		<a-entity camera id="camera"></a-entity>
 	</a-scene>

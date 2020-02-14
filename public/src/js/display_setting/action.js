@@ -5,21 +5,19 @@
 
 "use strict";
 
-class Action extends EventEmitter
-{
-    constructor()
-    {
+class Action extends EventEmitter {
+    constructor() {
         super();
     }
 
-	// デバッグ用. release版作るときは消す
-	emit() {
-		if (arguments.length > 0) {
-			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!");
-			}
-		}
-		super.emit(...arguments);
+    // デバッグ用. release版作るときは消す
+    emit() {
+        if (arguments.length > 0) {
+            if (!arguments[0]) {
+                console.error("Not found EVENT NAME!");
+            }
+        }
+        super.emit(...arguments);
     }
 
     /**
@@ -41,20 +39,20 @@ class Action extends EventEmitter
     getVirtualDisplay(data) {
         this.emit(Action.EVENT_GET_VIRTUAL_DISPLAY, null, data);
     }
-    getDataList(data){   
-        this.emit(Action.EVENT_GET_DATA_LIST, null, data);    
+    getDataList(data) {
+        this.emit(Action.EVENT_GET_DATA_LIST, null, data);
     }
-    storeScannedData(data) {       
+    storeScannedData(data) {
         this.emit(Action.EVENT_STORE_SCANNED_DATA, null, data);
     }
-    setDataList(data) {        
+    setDataList(data) {
         this.emit(Action.EVENT_SET_DATA_LIST, null, data);
     }
-    sendData(data){
-        this.emit(Action.EVENT_SET_SEND_DATA, null, data);    
+    sendData(data) {
+        this.emit(Action.EVENT_SET_SEND_DATA, null, data);
     }
-    deleteDataList(){
-        this.emit(Action.EVENT_DELETE_DATA_LIST, null, null);    
+    deleteDataList() {
+        this.emit(Action.EVENT_DELETE_DATA_LIST, null, null);
     }
     /**
      * スキャン開始
@@ -62,24 +60,24 @@ class Action extends EventEmitter
     startScan(data) {
         this.emit(Action.EVENT_START_SCAN, null, data);
     }
-    closeErectron(data) {
-        this.emit(Action.EVENT_CLOSE_ERECTRON, null, data);
+    closeElectron(data) {
+        this.emit(Action.EVENT_CLOSE_ELECTRON, null, data);
     }
-    adjustmentEvent(data){
-        this.emit(Action.EVENT_ADJUSTMENT_EVENT, null, data);    
+    adjustmentEvent(data) {
+        this.emit(Action.EVENT_ADJUSTMENT_EVENT, null, data);
     }
 }
 
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_GET_CURRENT_DISPLAY_MARKERS = "getCurrentDisplayMarkers";
-Action.EVENT_GET_VIRTUAL_DISPLAY="getVirtualDisplay";
-Action.EVENT_GET_DATA_LIST="getDataList";
-Action.EVENT_CALC_ABSOLUTE_POSITION="calcAbsolutePosition";
-Action.EVENT_STORE_SCANNED_DATA="storeScannedData";
-Action.EVENT_SET_DATA_LIST="setDataList";
-Action.EVENT_SET_SEND_DATA="sendData";
-Action.EVENT_DELETE_DATA_LIST="deleteDataList";
-Action.EVENT_START_SCAN="startScan";
-Action.EVENT_CLOSE_ERECTRON="closeErectron";
-Action.EVENT_ADJUSTMENT_EVENT="adjustmentEvent"
+Action.EVENT_GET_VIRTUAL_DISPLAY = "getVirtualDisplay";
+Action.EVENT_GET_DATA_LIST = "getDataList";
+Action.EVENT_CALC_ABSOLUTE_POSITION = "calcAbsolutePosition";
+Action.EVENT_STORE_SCANNED_DATA = "storeScannedData";
+Action.EVENT_SET_DATA_LIST = "setDataList";
+Action.EVENT_SET_SEND_DATA = "sendData";
+Action.EVENT_DELETE_DATA_LIST = "deleteDataList";
+Action.EVENT_START_SCAN = "startScan";
+Action.EVENT_CLOSE_ELECTRON = "closeElectron";
+Action.EVENT_ADJUSTMENT_EVENT = "adjustmentEvent"
 export default Action;
