@@ -37,34 +37,25 @@ class GUI extends EventEmitter {
         this.displayNumberY = 0;
 
         // ページの状態
-        this.pageState = GUI.STATE_START;
+        this.pageState = GUI.STATE_LOGIN;
 
     }
 
     init() {
         this.dom = document.getElementById('gui');
 
-        // ARjsのカメラ初期化イベントらしい
-        window.addEventListener('arjs-video-loaded', (data) => {
-            // 初期化完了後, ログイン完了するまで非表示にしておく
-            document.getElementById('arjs-video').style.display = "none";
-        })
-
-        // ログイン完了するまで非表示にしておく
-        this.dom.style.display = "none"
-
-        this.initLoginMenu();
+        
+        this.changeGUIToLogin();
         this.initScanButton();
         this.initSendButton();
         this.initAdjustmentButton();
         this.initCompleteButton();
-        this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
         this.initScanStartButtonPopUp();
-        this.initSiteSelect();
         Translation.translate(function () { });
 
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
+            this.action.requestSiteList();
         });
 
         this.store.on(Store.EVENT_CLOSE_ELECTRON, (err, reply) => {
@@ -174,8 +165,6 @@ class GUI extends EventEmitter {
         
         // ログイン成功
         this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
-            // ログインメニューを削除
-            document.body.removeChild(this.loginMenu.getDOM());
             this.changeGUIToStart();
         });
 
@@ -184,8 +173,8 @@ class GUI extends EventEmitter {
             this.loginMenu.showInvalidLabel(true);
         });
 
-        // ディスプレイリスト取得
-        this.store.on(Store.EVENT_DONE_GET_DISPLAY_LIST, (err, data) => {
+        // ディスプレイsiteリスト取得
+        this.store.on(Store.EVENT_DONE_GET_SITE_LIST, (err, data) => {
             this.updateSiteSelect(data);
         });
     }
@@ -204,7 +193,8 @@ class GUI extends EventEmitter {
             // ログイン実行
             this.action.login({
                 id: "APIUser",
-                password: this.loginMenu.getPassword()
+                password: this.loginMenu.getPassword(),
+                display_site : this.siteSelect.getSelectedValue()
             });
         });
 
@@ -223,6 +213,7 @@ class GUI extends EventEmitter {
         wrapDom.appendChild(this.siteSelect.getDOM())
 
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
+        this.action.requestSiteList();
     }
 
     /**
@@ -245,8 +236,23 @@ class GUI extends EventEmitter {
         this.scanIntervalHandle = [];
     }
 
+    /// GUIをログインページの状態に切り替える
+    changeGUIToLogin() {
+        this.initLoginMenu();
+        this.initSiteSelect();
+        // ログイン完了するまで非表示にしておく
+        this.dom.style.display = "none"
+    }
+
     /// GUIをスキャン開始ページの状態に切り替える
     changeGUIToStart() {
+        this.pageState = GUI.STATE_START;
+        
+        // ログインメニューを削除
+        document.body.removeChild(this.loginMenu.getDOM());
+        
+        this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
+
         // 動画, GUI表示
         document.getElementById('arjs-video').style.display = "block";
         this.dom.style.display = "block";
@@ -470,14 +476,18 @@ class GUI extends EventEmitter {
         this.closePopUp(blackBg, popup);
         this.closePopUp(closeBtn, popup);
         this.closePopUp(popNo, popup);
+        this.closePopUp(btn, popup);
+
 
         let popYes = document.getElementById("pop_yes");
         console.log(popYes);
         popYes.onclick = () => {
             console.log(this);
             this.action.closeElectron("a");
-            console.log("yes")
-            window.location.href = getBaseURL();
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         };
     }
 
@@ -568,8 +578,9 @@ class GUI extends EventEmitter {
     }
 }
 
-GUI.STATE_START = "start";
-GUI.STATE_SCANNING = "scanning";
-GUI.STATE_COMPLETE = "complete";
+GUI.STATE_LOGIN = "login"; // ログインページ
+GUI.STATE_START = "start"; // スキャン開始可能なページ
+GUI.STATE_SCANNING = "scanning"; // スキャン中
+GUI.STATE_COMPLETE = "complete"; // スキャン終わったページ
 
 export default GUI;
