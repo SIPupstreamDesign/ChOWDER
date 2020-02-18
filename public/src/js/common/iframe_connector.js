@@ -103,9 +103,9 @@ class IFrameConnector extends EventEmitter
 			this.resultCallbacks[id] = resultCallback;
 
 			if (this.contentWindow) {
-				this.contentWindow.postMessage(reqdata);
+				this.contentWindow.postMessage(reqdata, location.href);
 			} else {
-				window.parent.postMessage(reqdata);
+				window.parent.postMessage(reqdata, location.href);
 			}
 		} else {
 			console.error('[Error] Not found the method: ', method);
@@ -165,9 +165,9 @@ class IFrameConnector extends EventEmitter
 		try {
 			let data = JSON.stringify(resjson);
 			if (this.contentWindow) {
-				this.contentWindow.postMessage(data);
+				this.contentWindow.postMessage(data, location.href);
 			} else {
-				window.parent.postMessage(data);
+				window.parent.postMessage(data, location.href);
 			}
 		} catch(e) {
 			console.error(e);
