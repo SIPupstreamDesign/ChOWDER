@@ -241,6 +241,7 @@ class GUI extends EventEmitter {
         this.initLoginMenu();
         this.initSiteSelect();
         // ログイン完了するまで非表示にしておく
+        document.getElementById('head_menu').style.display = "none";
         this.dom.style.display = "none"
     }
 
@@ -260,6 +261,7 @@ class GUI extends EventEmitter {
         // メニュー表示
         let menuSetting = [];
         this.headMenu = new Menu("display_setting", menuSetting);
+        document.getElementById('head_menu').style.display = "block";
         document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
     }
 
