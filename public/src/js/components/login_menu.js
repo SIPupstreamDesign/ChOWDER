@@ -11,7 +11,7 @@ import Input from "./input";
 
 class LoginMenu extends EventEmitter
 {
-    constructor() {
+    constructor(title) {
         super();
 
         this.dom = document.createElement('div');
@@ -20,13 +20,25 @@ class LoginMenu extends EventEmitter
 
         this.header = document.createElement('div');
         this.header.className = "head_menu";
-        this.header.innerHTML =  `
-            <div class="head_mode_menu">
-                <div class="head_mode_text stopselect">
-                    <a href="index.html" id="chowder_text">ChOWDER</a>
+        if (title) 
+        {
+            let titleDiv = '<div class="head_mode_menu">';
+            titleDiv += '<div class="head_mode_text stopselect">';
+            titleDiv += '<a href="index.html" id="chowder_text">';
+            titleDiv += title;
+            titleDiv += '</a></div></div>';
+            this.header.innerHTML = titleDiv;
+        }
+        else
+        {
+            this.header.innerHTML =  `
+                <div class="head_mode_menu">
+                    <div class="head_mode_text stopselect">
+                        <a href="index.html" id="chowder_text">ChOWDER</a>
+                    </div>
                 </div>
-            </div>
-            `
+                `
+        }
         this.dom.appendChild(this.header);
 
         this.background = document.createElement('div');

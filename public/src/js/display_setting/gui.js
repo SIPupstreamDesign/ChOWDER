@@ -4,8 +4,11 @@
  */
 
 import Store from './store';
-import Menu from '../components/menu.js';
+import Menu from '../components/menu';
+import LoginMenu from '../components/login_menu';
+import Select from '../components/select';
 import Button from '../components/button.js';
+import Translation from '../common/translation';
 
 function getBaseURL() {
     let baseURL;
@@ -34,27 +37,25 @@ class GUI extends EventEmitter {
         this.displayNumberY = 0;
 
         // ページの状態
-        this.pageState = GUI.STATE_START;
+        this.pageState = GUI.STATE_LOGIN;
 
     }
 
     init() {
         this.dom = document.getElementById('gui');
-        console.log("display_setting gui init");
-        let menuSetting = [];
-        this.headMenu = new Menu("display_setting", menuSetting);
-        document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
 
+        
+        this.changeGUIToLogin();
         this.initScanButton();
         this.initSendButton();
         this.initAdjustmentButton();
         this.initCompleteButton();
-        this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
-
         this.initScanStartButtonPopUp();
+        Translation.translate(function () { });
 
         this.store.on(Store.EVENT_CONNECT_SUCCESS, () => {
             console.log("CONNECT_SUCCESS");
+            this.action.requestSiteList();
         });
 
         this.store.on(Store.EVENT_CLOSE_ELECTRON, (err, reply) => {
@@ -161,6 +162,69 @@ class GUI extends EventEmitter {
                 this.action.getDataList();
             }
         });
+        
+        // ログイン成功
+        this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
+            this.changeGUIToStart();
+        });
+
+        // ログイン失敗
+        this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
+            this.loginMenu.showInvalidLabel(true);
+        });
+
+        // ディスプレイsiteリスト取得
+        this.store.on(Store.EVENT_DONE_GET_SITE_LIST, (err, data) => {
+            this.updateSiteSelect(data);
+        });
+    }
+
+    /// ログインメニューの初期化
+    initLoginMenu() {
+        this.loginMenu = new LoginMenu("ChOWDER DisplaySetting");
+        this.loginMenu.getDOM().style.zIndex = 20000000;
+        document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
+        
+        this.loginMenu.show(true);
+
+        // ログインが実行された場合
+        this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
+            let userSelect = this.loginMenu.getUserSelect();
+            // ログイン実行
+            this.action.login({
+                id: "APIUser",
+                password: this.loginMenu.getPassword(),
+                display_site : this.siteSelect.getSelectedValue()
+            });
+        });
+
+        let select = this.loginMenu.getUserSelect();
+        select.addOption("APIUser", "APIUser");
+    }
+
+    /// ログイン時のディスプレイsite選択ボックスの初期化
+    initSiteSelect() {
+        let wrapDom = document.createElement('div');
+        wrapDom.innerHTML = "DisplaySite :"
+        this.siteSelect = new Select();
+        this.siteSelect.getDOM().className = "site_select";
+        this.siteSelect.addOption("group_default", "default");
+
+        wrapDom.appendChild(this.siteSelect.getDOM())
+
+        document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
+        this.action.requestSiteList();
+    }
+
+    /**
+     * ログイン時のディスプレイsite選択ボックスの更新
+     * @param siteList ディスプレイsiteのリスト 
+     */ 
+    updateSiteSelect(siteList) {
+        this.siteSelect.clear();
+        for (let i = 0; i < siteList.length; ++i) {
+            this.siteSelect.addOption(siteList[i].id, siteList[i].name);
+        }
     }
 
     /// スキャンIntervalのクリア
@@ -170,6 +234,33 @@ class GUI extends EventEmitter {
             clearInterval(this.scanIntervalHandle[i]);
         }
         this.scanIntervalHandle = [];
+    }
+
+    /// GUIをログインページの状態に切り替える
+    changeGUIToLogin() {
+        this.initLoginMenu();
+        this.initSiteSelect();
+        // ログイン完了するまで非表示にしておく
+        this.dom.style.display = "none"
+    }
+
+    /// GUIをスキャン開始ページの状態に切り替える
+    changeGUIToStart() {
+        this.pageState = GUI.STATE_START;
+        
+        // ログインメニューを削除
+        document.body.removeChild(this.loginMenu.getDOM());
+        
+        this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
+
+        // 動画, GUI表示
+        document.getElementById('arjs-video').style.display = "block";
+        this.dom.style.display = "block";
+
+        // メニュー表示
+        let menuSetting = [];
+        this.headMenu = new Menu("display_setting", menuSetting);
+        document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
     }
 
     /// GUIをスキャン中の状態に切り替える
@@ -397,9 +488,11 @@ class GUI extends EventEmitter {
         popYes.onclick = () => {
             console.log(this);
             this.action.closeElectron("a");
-            console.log("yes");
-            window.location.href = getBaseURL();
-        };
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
+};
        
     }
 
@@ -490,8 +583,9 @@ class GUI extends EventEmitter {
     }
 }
 
-GUI.STATE_START = "start";
-GUI.STATE_SCANNING = "scanning";
-GUI.STATE_COMPLETE = "complete";
+GUI.STATE_LOGIN = "login"; // ログインページ
+GUI.STATE_START = "start"; // スキャン開始可能なページ
+GUI.STATE_SCANNING = "scanning"; // スキャン中
+GUI.STATE_COMPLETE = "complete"; // スキャン終わったページ
 
 export default GUI;

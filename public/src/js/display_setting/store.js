@@ -32,6 +32,9 @@ class Store extends EventEmitter {
         this.isInitialized_ = false;
         this.initEvents();
         this.initStartupEvent();
+        
+        // ディスプレイsite
+        this.displaySite = "group_default";
     }
 
     initEvents() {
@@ -61,6 +64,33 @@ class Store extends EventEmitter {
     release() {
 
     }
+
+    _login(data) {
+        if (data.hasOwnProperty('display_site')) {
+            this.displaySite = data.display_site;
+            delete data["display_site"]
+        }
+        Connector.send(Command.Login, data, (err, reply) => {
+            if (err || reply === null) {
+                console.log(err);
+                this.emit(Store.EVENT_LOGIN_FAILED, err, data);
+            } else {
+                console.log("loginSuccess", reply);
+                this.authority = reply.authority;
+                this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+            }
+        });
+    }
+
+    _requestSiteList(data) {
+        if (!Connector.isConnected()) return;
+        Connector.send(Command.GetGroupList, {}, (err, data) => {
+            if (!err && data.hasOwnProperty("displaygrouplist")) {
+                this.emit(Store.EVENT_DONE_GET_SITE_LIST, null, data.displaygrouplist)
+            }
+        });
+    }
+
     _closeElectron() {
         Connector.send(Command.SendMessage, {
             command: "CloseElectronDisplay"
@@ -178,7 +208,7 @@ class Store extends EventEmitter {
      */
     _getVirtualDisplay() {
         this.currentDisplayMarkers = [];
-        Connector.send(Command.GetVirtualDisplay, {}, (err, reply) => {
+        Connector.send(Command.GetVirtualDisplay, { group : this.displaySite }, (err, reply) => {
             this.virtualDisplay = reply;
             this.emit(Store.EVENT_DONE_GET_VIRTUAL_DISPLAY, err, reply);//GUIにイベントを投げる
         });
@@ -535,6 +565,9 @@ class Store extends EventEmitter {
 
 Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
+Store.EVENT_LOGIN_SUCCESS = "login_success";
+Store.EVENT_LOGIN_FAILED = "login_failed";
+Store.EVENT_DONE_GET_SITE_LIST = "get_site_list";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS = "get_current_display_markers";
 Store.EVENT_DONE_GET_DATA_LIST = "get_data_list";

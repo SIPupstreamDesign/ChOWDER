@@ -70,7 +70,7 @@ pre {
 #scanned_markerID {
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-	border: 1px solid rgb(7, 22, 50);
+	/*border: 1px solid rgb(7, 22, 50);*/
 	opacity: 0.6;
 	position: absolute;
 	top: 80px;
@@ -81,7 +81,7 @@ pre {
 #scanned_markerID_number {
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-	border: 1px solid rgb(7, 22, 50);
+	/*border: 1px solid rgb(7, 22, 50);*/
 	opacity: 0.6;
 	position: absolute;
 	top: 80px;
@@ -320,4 +320,10 @@ pre {
 	width: 33%;
 	height: 50px;
 	font-size : 16px;
+}
+
+.loginbutton {
+	font-size : 16px;
+	width: 100px;
+	height: 40px;
 }

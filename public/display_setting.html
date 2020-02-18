@@ -23,60 +23,56 @@
 
 <body id="body">
 	<div id="head_menu" class="head_menu menu_anim">
-	</div>
+    </div>
 
+	<div id="gui">
+		<p id="scanned_markerID"></p>
+		<p id="scanned_markerID_number"></p>
 
-	<div id="gui"></div>
+		<p id="text"></p>
 
-	<p id="scanned_markerID"></p>
-	<p id="scanned_markerID_number"></p>
-
-	<p id="text"></p>
-
-	<div class="popup" id="popup">
-		<div class="popup_inner">
-			<div class="close_btn" id="close_btn"><i class="fas fa_times"></i></div>
-			<p>
-				<p style="font-size: 1.5vh;">ディスプレイ設定を終了しますか？(Displayを終了します)</p>
-			</p>
-			<p id="pop_yes">
-				<p style="font-size: 1.5vh;">はい</p>
-			</p>
-			<p id="pop_no">
-				<p style="font-size: 1.5vh;">いいえ</p>
-			</p>
+		<div class="popup" id="popup">
+			<div class="popup_inner">
+				<div class="close_btn" id="close_btn"><i class="fas fa_times"></i></div>
+				<p>
+					<p style="font-size: 1.5vh;">ディスプレイ設定を終了しますか？(Displayを終了します)</p>
+				</p>
+				<p id="pop_yes" style="font-size: 1.5vh;">はい</p>
+				<p id="pop_no" style="font-size: 1.5vh;">いいえ</p>
+			</div>
+			<div class="black_background" id="black_bg"></div>
 		</div>
-		<div class="black_background" id="black_bg"></div>
-	</div>
 
-	<div class="popup" id="start_popup">
-		<div class=" popup_inner">
-			<div class="close_btn" id="start_close_btn"><i class="fas fa_times"></i></div>
-			<p>
-				<p style="font-size: 1.5vh;">起動しているDisplayの数が設定した数と一致しません</p>
-				<p style="font-size: 1.5vh;"><br />Displayを起動してください</p>
-			</p>
+		<div class="popup" id="start_popup">
+			<div class=" popup_inner">
+				<div class="close_btn" id="start_close_btn"><i class="fas fa_times"></i></div>
+				<p>
+					<p style="font-size: 1.5vh;">起動しているDisplayの数が設定した数と一致しません</p>
+					<p style="font-size: 1.5vh;"><br />Displayを起動してください</p>
+				</p>
+			</div>
+			<div class="black_background" id="start_black_bg"></div>
 		</div>
-		<div class="black_background" id="start_black_bg"></div>
-	</div>
 
-	<div class="popup" id="adjustment_popup">
-		<div class=" popup_inner">
-			<div class="close_btn" id="adjustment_close_btn"><i class="fas fa_times"></i></div>
-			<p>
-				<p style="font-size: 1.5vh;">位置を交換する２つのマーカーを入力して下さい</p>
-				<form id="exchange_marker">
-					<br /><select id="marker_id_1" name="marker_id_1"></select>
-					<br /><select id="marker_id_2" name="marker_id_2"></select>
-				</form>
-			</p>
-			<p id="pop_send">送信</p>
+		<div class="popup" id="adjustment_popup">
+			<div class=" popup_inner">
+				<div class="close_btn" id="adjustment_close_btn"><i class="fas fa_times"></i></div>
+				<p>
+					<p style="font-size: 1.5vh;">位置を交換する２つのマーカーを入力して下さい</p>
+					<form id="exchange_marker">
+						<br /><select id="marker_id_1" name="marker_id_1"></select>
+						<br /><select id="marker_id_2" name="marker_id_2"></select>
+					</form>
+				</p>
+				<p id="pop_send">送信</p>
+			</div>
+			<div class="black_background" id="adjustment_black_bg"></div>
 		</div>
-		<div class="black_background" id="adjustment_black_bg"></div>
+
+		<div class="screen" id="screen"></div>
+
+
 	</div>
-
-	<div class="screen" id="screen"></div>
-
 	<a-scene embedded arjs="debugUIEnabled:false;" id="ar_entry">
 		<a-marker type="pattern" preset="hiro" id="hiro">
 			<a-text class="hiro_marker_text" position="-0.5 0 0" value="Hiro" color="red" rotation="-90 0 0"></a-text>
