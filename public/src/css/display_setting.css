@@ -73,9 +73,8 @@ pre {
 	border: 1px solid rgb(7, 22, 50);
 	opacity: 0.6;
 	position: absolute;
-	top: 15%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+	top: 80px;
+	left: 0%;
 	z-index: 1000000;
 }
 
@@ -85,9 +84,8 @@ pre {
 	border: 1px solid rgb(7, 22, 50);
 	opacity: 0.6;
 	position: absolute;
-	top: 20%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+	top: 80px;
+	left: 80%;
 	z-index: 1000000;
 }
 
@@ -101,7 +99,7 @@ pre {
 	box-shadow: 2px 2px 3px 1px #666;
 	transition: .4s;
 	height: 3%;
-	width: 15%;
+	width: 500px;
 	z-index: 1000000;
 	display: block;
 }
@@ -117,11 +115,11 @@ pre {
 	border: 1px solid rgb(7, 22, 50);
 	width: 100%;
 	position: absolute;
-	bottom: 0%;
+	bottom: 50px;
 	left: 50%;
 	transform: translateX(-50%);
 	display: block;
-	z-index: 1000000;
+	z-index: 100000;
 	font-size : 20px;
 }
 
@@ -285,33 +283,32 @@ pre {
 
 .scan_toggle_button {
 	position : absolute;
-	left : 50%;
-	top : 10%;
-	transform : translate(-50%,-10%);
+	left :  50%;
+	top : 30px;
+	transform : translate(-50%,0%);
 }
 
 .send_button {
 	display : none;
 	position : absolute;
-	left : 80%;
-	top : 10%;
-	transform : translate(-80%,-10%);
+	right : 0%;
+	top : 30px;
 }
 
 .adjustment_button {
 	display : none;
 	position : absolute;
-	left : 20%;
-	top : 10%;
-	transform : translate(-20%,-10%);
+	left : 0%;
+	top : 30px;
 }
 
 .complete_button {
 	display : none;
 	position : absolute;
-	left : 80%;
-	top : 80%;
-	transform : translate(-80%,-80%);
+	left : 50%;
+	top : 100%;
+	z-index:1000000;
+	transform : translate(-50%,-100%);
 }
 
 .okcancel_dialog {
@@ -320,7 +317,7 @@ pre {
 }
 
 .btn {
-	width: 130px;
+	width: 33%;
 	height: 50px;
 	font-size : 16px;
 }
