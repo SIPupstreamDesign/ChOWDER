@@ -44,7 +44,7 @@ class GUI extends EventEmitter {
     init() {
         this.dom = document.getElementById('gui');
 
-        
+
         this.changeGUIToLogin();
         this.initScanButton();
         this.initSendButton();
@@ -162,7 +162,7 @@ class GUI extends EventEmitter {
                 this.action.getDataList();
             }
         });
-        
+
         // ログイン成功
         this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
             this.changeGUIToStart();
@@ -184,7 +184,7 @@ class GUI extends EventEmitter {
         this.loginMenu = new LoginMenu("ChOWDER DisplaySetting");
         this.loginMenu.getDOM().style.zIndex = 20000000;
         document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
-        
+
         this.loginMenu.show(true);
 
         // ログインが実行された場合
@@ -194,7 +194,7 @@ class GUI extends EventEmitter {
             this.action.login({
                 id: "APIUser",
                 password: this.loginMenu.getPassword(),
-                display_site : this.siteSelect.getSelectedValue()
+                display_site: this.siteSelect.getSelectedValue()
             });
         });
 
@@ -219,7 +219,7 @@ class GUI extends EventEmitter {
     /**
      * ログイン時のディスプレイsite選択ボックスの更新
      * @param siteList ディスプレイsiteのリスト 
-     */ 
+     */
     updateSiteSelect(siteList) {
         this.siteSelect.clear();
         for (let i = 0; i < siteList.length; ++i) {
@@ -247,10 +247,10 @@ class GUI extends EventEmitter {
     /// GUIをスキャン開始ページの状態に切り替える
     changeGUIToStart() {
         this.pageState = GUI.STATE_START;
-        
+
         // ログインメニューを削除
         document.body.removeChild(this.loginMenu.getDOM());
-        
+
         this.updateDescription("準備ができたら[スキャン開始]ボタンを押してください");
 
         // 動画, GUI表示
@@ -488,12 +488,12 @@ class GUI extends EventEmitter {
         popYes.onclick = () => {
             console.log(this);
             this.action.closeElectron("a");
-            
+
             setTimeout(() => {
                 window.location.reload();
             }, 100);
-};
-       
+        };
+
     }
 
     /// 調整モードボタンとダイアログの初期化

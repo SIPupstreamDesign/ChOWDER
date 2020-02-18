@@ -64,7 +64,7 @@ pre {
 }
 
 .a-canvas {
-	z-index: 100000;
+	z-index: 100;
 }
 
 #scanned_markerID {
@@ -87,6 +87,10 @@ pre {
 	top: 80px;
 	left: 80%;
 	z-index: 1000000;
+}
+
+#screen{
+	z-index:10000
 }
 
 .button {
