@@ -73,9 +73,7 @@ class GUI extends EventEmitter {
             }
             console.log(text)
             this.updateScannedMarker(text, count);
-            /*document.getElementById("scanned_markerID").innerHTML = text;
-            document.getElementById("scanned_markerID_number").innerHTML = count + "/" + this.displayNumber;
-        */});
+        });
 
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
             console.log("store");
@@ -109,8 +107,10 @@ class GUI extends EventEmitter {
 
                 this.scanIntervalHandle.push(
                     setInterval((flag) => {
+                        console.log(this.displayNumber);
                         for (let i = 0; i < this.displayNumber; i++) {
                             let marker = document.getElementsByTagName("a-marker")[i + 1];
+                            console.log(marker);
                             this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
                         }
 
@@ -201,7 +201,7 @@ class GUI extends EventEmitter {
         this.scanToggleButton.getDOM().value = "再スキャン";
 
         if (hasScanData) {
-            this.updateDescription("検出されたマーカーIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+            this.updateDescription("検出されたマーカーIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、[再スキャン]ボタンを押してください。");
         } else {
             this.updateDescription("マーカーIDが検出されていません。もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
         }
@@ -291,17 +291,21 @@ class GUI extends EventEmitter {
 
     updateScannedMarker(text, count) {
         document.getElementById("scanned_markerID").innerHTML = text;
+        document.getElementById("scanned_markerID").style.width = "80%";
+        document.getElementById("scanned_markerID").style.height = "20px";
         document.getElementById("scanned_markerID_number").innerHTML = count + "/" + this.displayNumber;
+        document.getElementById("scanned_markerID_number").style.width = "20%";
+        document.getElementById("scanned_markerID_number").style.height = "20px";
     }
 
     /// 検出済マーカーの枠を更新(スキャン完了後に出る)
     updateVirtualScreen(reply) {
         console.log("updateVirtualScreen", reply);
         let ids = []
-        let currentMarkerList=this.store.getCurrentDisplayMarkers();
+        let currentMarkerList = this.store.getCurrentDisplayMarkers();
         console.log(currentMarkerList);
         for (let i in currentMarkerList) {
-                 ids.push(currentMarkerList[i]);
+            ids.push(currentMarkerList[i]);
         }
         console.log(ids);
         let text = ""
@@ -315,7 +319,7 @@ class GUI extends EventEmitter {
         const replyLength = Object.keys(reply).length;
         const width = 50;
         const height = 50;
-        screen.innerHTML="";
+        screen.innerHTML = "";
         let pointSum = this.updateScanStatusText(reply);
         console.log(pointSum);
 
@@ -334,7 +338,7 @@ class GUI extends EventEmitter {
                 newVirtualDisplay.innerHTML = String(i);
                 screen.appendChild(newVirtualDisplay);
             }
-            else{
+            else {
 
             }
         }
@@ -359,7 +363,7 @@ class GUI extends EventEmitter {
 
         this.sendButton.on(Button.EVENT_CLICK, (evt) => {
             this.action.sendData();
-            this.updateDescription("Displayに表示されているマーカーIDの並び順がただしければ、設定完了ボタンを押してください。検出されたマーカーIDの並び順が正しければ、[データ送信]ボタンを押してください。スキャンし直す場合は、もう一度カメラをDisplayに向けて[再スキャン]ボタンを押してください。");
+            this.updateDescription("Displayに表示されているマーカーIDの並び順がただしければ、設定完了ボタンを押してください。スキャンし直す場合は、[再スキャン]ボタンを押してください。");
         });
     }
 
@@ -371,6 +375,7 @@ class GUI extends EventEmitter {
         btn.id = "complete_button";
         btn.className = "complete_button btn btn-primary";
         btn.value = "設定完了";
+        btn.style.width = "100%";
 
         let popup = document.getElementById('popup');
         if (!popup) {
@@ -385,15 +390,17 @@ class GUI extends EventEmitter {
         this.closePopUp(blackBg, popup);
         this.closePopUp(closeBtn, popup);
         this.closePopUp(popNo, popup);
+        this.closePopUp(btn, popup);
 
         let popYes = document.getElementById("pop_yes");
         console.log(popYes);
         popYes.onclick = () => {
             console.log(this);
             this.action.closeElectron("a");
-            console.log("yes")
+            console.log("yes");
             window.location.href = getBaseURL();
         };
+       
     }
 
     /// 調整モードボタンとダイアログの初期化
@@ -419,19 +426,19 @@ class GUI extends EventEmitter {
         let marker1 = document.getElementById('marker_id_1');
         let marker2 = document.getElementById('marker_id_2');
 
-       /* let ids = []
-        let currentMarkerList=this.store.getCurrentDisplayMarkers();
-        for (let i in currentMarkerList) {
-            ids.push(i);
-        }
-        console.log(ids);
-        let text = ""
-        for (let i in ids) {
-            text += "<option>" + ids[i] + "</option>"
-        }
-        marker1.innerHTML = text;
-        marker2.innerHTML = text;
-*/
+        /* let ids = []
+         let currentMarkerList=this.store.getCurrentDisplayMarkers();
+         for (let i in currentMarkerList) {
+             ids.push(i);
+         }
+         console.log(ids);
+         let text = ""
+         for (let i in ids) {
+             text += "<option>" + ids[i] + "</option>"
+         }
+         marker1.innerHTML = text;
+         marker2.innerHTML = text;
+ */
         send.onclick = () => {
             let index1 = marker1.selectedIndex;
             let markerId1 = marker1.options[index1].value;
