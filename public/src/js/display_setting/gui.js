@@ -126,6 +126,7 @@ class GUI extends EventEmitter {
 
                 this.setArMarkerImg(markerList);
                 this.showSendButton(false);
+                this.showCompleteButton(false);
                 this.showAjustmentButton(false);
                 this.showDescription(false);
             } else {
@@ -285,7 +286,7 @@ class GUI extends EventEmitter {
         this.showAjustmentButton(true);
 
         // 設定完了ボタンを表示
-        this.showCompleteButton(hasScanData);
+        this.showCompleteButton(true);
 
         // データ送信ボタンを表示
         this.showSendButton(hasScanData);

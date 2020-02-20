@@ -91,7 +91,7 @@ pre {
 }
 
 #screen{
-	z-index:10000
+	z-index:100
 }
 
 .button {
@@ -125,7 +125,9 @@ pre {
 	transform: translateX(-50%);
 	display: block;
 	z-index: 100000;
-	font-size : 20px;
+	font-size : 2.0vmax;
+
+	white-space: normal;
 }
 
 .popup {
@@ -201,7 +203,7 @@ pre {
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-	border-style: none;
+	border-style: outset;
 	transition: .4s;
 	z-index: 1000000;
 	display: block;
@@ -218,7 +220,7 @@ pre {
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-	border-style: none;
+	border-style: outset;
 	transition: .4s;
 	z-index: 1000000;
 	display: block;
@@ -235,7 +237,7 @@ pre {
 	text-decoration: none;
 	color: rgb(7, 22, 50);
 	background: rgb(255, 255, 255);
-	border-style: none;
+	border-style: outset;
 	transition: .4s;
 	z-index: 1000000;
 	display: block;
@@ -291,6 +293,7 @@ pre {
 	left :  50%;
 	top : 30px;
 	transform : translate(-50%,0%);
+	z-index:100000;
 }
 
 .send_button {
@@ -298,6 +301,7 @@ pre {
 	position : absolute;
 	right : 0%;
 	top : 30px;
+	z-index:100000;
 }
 
 .adjustment_button {
@@ -305,6 +309,7 @@ pre {
 	position : absolute;
 	left : 0%;
 	top : 30px;
+	z-index:100000;
 }
 
 .complete_button {
@@ -312,8 +317,8 @@ pre {
 	position : absolute;
 	left : 50%;
 	top : 100%;
-	z-index:1000000;
 	transform : translate(-50%,-100%);
+	z-index:100000;
 }
 
 .okcancel_dialog {
@@ -331,4 +336,11 @@ pre {
 	font-size : 16px;
 	width: 100px;
 	height: 40px;
+}
+
+#marker_id_1{
+	border-style: outset;
+}
+#marker_id_2{
+	border-style: outset;
 }
