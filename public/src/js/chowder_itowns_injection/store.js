@@ -132,7 +132,7 @@ class Store extends EventEmitter {
         this.itownsView.camera.camera3D.filmOffset = cameraParams.filmOffset;
         this.itownsView.camera.camera3D.filmGauge = cameraParams.filmGauge;
         this.itownsView.camera.camera3D.aspect = cameraParams.aspect;
-        
+
         this.itownsView.camera.camera3D.matrixAutoUpdate = true;
 
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
@@ -542,19 +542,19 @@ class Store extends EventEmitter {
                     if (attachedIndex >= 0) {
                         // attachedLayerを移動したい
                         // "attachedLayers"内で移動を試みる
-                        if (isUp 
-                            && attachedIndex > 0 
+                        if (isUp
+                            && attachedIndex > 0
                             && validLayers.indexOf(attachedLayers[i]) >= 0) // 入れ替え先レイヤーが有効かどうか
-                            {
+                        {
                             console.log("up!", this.itownsView, id)
                             itowns.ColorLayersOrdering.moveLayerUp(this.itownsView, id);
                             attachedLayers.splice(i - 1, 2, attachedLayers[i], attachedLayers[i - 1]);
                             this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
                             this.itownsView.notifyChange();
-                        } else if (!isUp 
+                        } else if (!isUp
                             && attachedIndex < (attachedLayers.length - 1)
                             && validLayers.indexOf(attachedLayers[i + 1]) >= 0) // 入れ替え先レイヤーが有効かどうか) 
-                            {
+                        {
                             console.log("moveLayerDown", i, i + 1)
                             itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
                             attachedLayers.splice(i, 2, attachedLayers[i + 1], attachedLayers[i]);
@@ -643,6 +643,13 @@ class Store extends EventEmitter {
         // Display以外はリサイズを弾く
         if (window.chowder_itowns_view_type !== "display") { return; }
         window.removeEventListener("resize");
+        
+        this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
+            // パフォーマンス計測命令
+            let result = this.measurePerformance();
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request, result);
+        });
     }
 
     // 操作可能なレイヤーのデータリストを返す
@@ -766,6 +773,55 @@ class Store extends EventEmitter {
             filmGauge: camera3D.filmGauge,
             aspect: camera3D.aspect
         });
+    }
+
+    /// 各種パフォーマンスを計測する
+    measurePerformance() {
+        /*
+        {
+            ズームレベル: [レベルごとの表示可能ノード, レベルごとの表示済ノード],
+            ...
+        }
+        */
+        let status = {}
+        let tileLayer = this.itownsView.tileLayer;
+        if (tileLayer) {
+            function countVisible(node, stats) {
+                if (!node || !node.visible) {
+                    return;
+                }
+                if (node.level >= 0 && node.layer === tileLayer) {
+                    if (stats[node.level]) {
+                        stats[node.level][0] += 1;
+                    } else {
+                        stats[node.level] = [1, 0];
+                    }
+                    if (node.material.visible) {
+                        stats[node.level][1] += 1;
+                    }
+                }
+                if (node.children) {
+                    for (const child of node.children) {
+                        countVisible(child, stats);
+                    }
+                }
+            }
+
+            // update bar graph
+            const stats = {};
+            countVisible(tileLayer.object3d, stats);
+            status.nodeVisible = stats;
+        }
+
+        // テクスチャ数
+        {
+            let renderer = this.itownsView.mainLoop.gfxEngine.renderer;
+            const memory = renderer.info.memory;
+            status.textureCount = memory.textures;
+            status.geometryCount = memory.geometries;
+            console.log(status)
+        }
+        return status;
     }
 
     injectAsChOWDERiTownController() {

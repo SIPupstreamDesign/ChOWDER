@@ -167,6 +167,23 @@ class Store extends EventEmitter {
         };
     }
 
+    // iTownsのパフォーマンス計測を行う
+    // PerformanceLoggerは使用しない
+    measureITownPerformance(id) {
+        let funcDict = this.getITownFuncDict();
+        console.log(funcDict, id)
+        if (funcDict && funcDict.hasOwnProperty(id)) {
+            funcDict[id].chowder_itowns_measure_time((err, status) => {
+                Connector.send("SendMessage", {
+                    id : id,
+                    display_id : this.getWindowID(),
+                    command : "measureITownPerformanceResult",
+                    result : status
+                }, () => {})
+            });
+        }
+    }
+
     _login(data) {
         Connector.send(Command.Login, data, (err, reply) => {
             if (err || reply === null) {

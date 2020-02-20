@@ -270,3 +270,11 @@ p {
 .layer_dialog_zoom_max_select:disabled {
 	background : lightgray;
 }
+
+.measure_button {
+    bottom: 20px;
+    position: absolute;
+    right: 15px;
+	width: 220px;
+	height: 34px;
+}

@@ -56,6 +56,8 @@ class Store extends EventEmitter {
             }
         })
 
+        this.performanceResult = {}
+
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
             let hasUpdateData = false;
@@ -70,6 +72,16 @@ class Store extends EventEmitter {
 
             if (hasUpdateData) {
                 this.__changeLayerProeprty();
+            }
+        });
+
+        // パフォーマンス計測結果の受信
+        Connector.on(Command.SendMessage, (data) => {
+            if (data && data.hasOwnProperty('command') && data.command === "measureITownPerformanceResult") {
+                if (this.metaData.id === data.id) {
+                    this.performanceResult[data.display_id] = data.result;
+                    this.emit(Store.EVENT_UPDATE_MEASURE_PERFORMANCE, null, data.id, data.display_id);
+                }
             }
         });
     }
@@ -422,6 +434,19 @@ class Store extends EventEmitter {
             }, () => {})
         }
     }
+
+    _measurePerformance(data) {
+        if (!this.metaData) return;
+        this.performanceResult = {};
+        Connector.send(Command.SendMessage, {
+            command : "measureITownPerformance",
+            id : this.metaData.id
+        }, () => {});
+    }
+
+    getPerformanceResult() {
+        return this.performanceResult;
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -437,5 +462,6 @@ Store.EVENT_DONE_CHANGE_LAYER_ORDER = "done_change_layer_order";
 Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
 Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
+Store.EVENT_UPDATE_MEASURE_PERFORMANCE = "update_mesure_performance"; // 計測結果が更新された
 
 export default Store;

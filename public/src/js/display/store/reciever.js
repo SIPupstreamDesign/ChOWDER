@@ -232,6 +232,9 @@ class Receiver {
 
         // VideoControllerの動画一括コントロール.
         this.connector.on(Command.SendMessage, (data) => {
+            if (data.command === 'measureITownPerformance') {
+                this.store.measureITownPerformance(data.id);
+            }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {
                     this.store.time = new Date(data.data.time);

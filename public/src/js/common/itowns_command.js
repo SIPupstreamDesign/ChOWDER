@@ -25,7 +25,9 @@ const ITownsCommand = {
     // レイヤー順序変更命令
     ChangeLayerOrder : "ChangeLayerOrder",
     // レイヤープロパティ変更命令
-    ChangeLayerProperty : "ChangeLayerProperty"
+    ChangeLayerProperty : "ChangeLayerProperty",
+    // パフォーマンス計測
+    MeasurePerformance : "MeasurePerformance"
 };
 
 export default ITownsCommand;

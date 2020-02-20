@@ -140,6 +140,13 @@ class Action extends EventEmitter
     changeTime(data) {
         this.emit(Action.EVENT_CHANGE_TIME, null, data);
     }
+    
+    /**
+     * パフォーマンス計測命令の発行
+     */
+    measurePerformance(data) {
+        this.emit(Action.EVENT_MEASURE_PERFORMANCE, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -156,4 +163,5 @@ Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
 Action.EVENT_CHANGE_TIME = "changeTime";
+Action.EVENT_MEASURE_PERFORMANCE = "measurePerformance";
 export default Action;

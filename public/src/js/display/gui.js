@@ -501,16 +501,20 @@ class GUI extends EventEmitter {
             let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
             iframe.contentDocument.body.rect = rect;
             // iframe内のitownsからのコールバック
+            /*
             iframe.contentWindow.chowder_itowns_measure_time = (timeString) => {
                 PerformanceLogger.logByVals("iTowns表示完了までの時間", "chowder_itowns_measure_time", timeString, metaData.id);
                 if (PerformanceLogger.validate()) {
                     this.showDebugMessage(timeString);
                 }
             };
+            */
 
             let connector = new IFrameConnector(iframe);
 
             try {
+                connector.connect();
+
                 // 初回に一度実行
                 connector.send(ITownsCommand.UpdateCamera, {
                     mat : metaData.cameraWorldMatrix,
@@ -519,6 +523,9 @@ class GUI extends EventEmitter {
                 connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                     connector.send(ITownsCommand.Resize, rect);
                 });
+                connector.on(ITownsCommand.MeasurePerformance, (err, status) => {
+                    console.error(status);
+                })
             } catch(err) {
                 console.error(err);
             }
@@ -536,6 +543,9 @@ class GUI extends EventEmitter {
                     chowder_itowns_update_layer_list : (metaData) => {
                         let preMetaData = this.store.getMetaData(metaData.id);
                         ITownsUtil.updateLayerList(connector, metaData, preMetaData);
+                    },
+                    chowder_itowns_measure_time : (callback) => {
+                        connector.send(ITownsCommand.MeasurePerformance, {}, callback);
                     }
                 }
                });

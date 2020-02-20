@@ -14,6 +14,9 @@ import LayerProperty from './layer_property';
 import LayerList from './layer_list';
 import Menu from '../components/menu';
 import ITownsCommand from '../common/itowns_command';
+import Button from '../components/button';
+import InputDialog from '../components/input_dialog'
+import PopupBackground from '../components/popup_background';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -152,6 +155,35 @@ class GUI extends EventEmitter {
             }
         });
         
+        let timer;
+        const interval = 5 * 1000;
+        let background = null;
+        this.store.on(Store.EVENT_UPDATE_MEASURE_PERFORMANCE, (err, id, displayID) => {
+            // 一定間隔同じイベントが来なかったら実行
+            clearTimeout(timer);
+            timer = setTimeout((() => {
+                return () => {
+                    this.savePerformanceResult(id, displayID);
+                    if (background) {
+                        background.close();
+                    }
+                }
+            })(), interval);
+            
+            if (!background) {
+                background = new PopupBackground()
+                background.show();
+                let backdom = document.getElementsByClassName('popup_background')[0]
+                let text = document.createElement('div');
+                text.style.color = "white"
+                text.style.fontSize = "40px"
+                text.style.position = "absolute"
+                text.style.left = "100px"
+                text.style.top = "100px"
+                text.innerHTML = "Please wait for a few seconds.."
+                backdom.appendChild(text);
+            }
+        })
     }
 
     initWindow() {
@@ -318,6 +350,15 @@ class GUI extends EventEmitter {
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
             this.layerProperty.initFromLayer(data.value, this.store.getLayerData(data.value));
         });
+
+        // 速度計測ボタン
+        this.measureButton = new Button();
+        this.measureButton.setDataKey("MeasurePerformance");
+        this.measureButton.getDOM().className = "measure_button btn btn-primary";
+        propElem.appendChild(this.measureButton.getDOM());
+        this.measureButton.on('click', () => {
+            this.action.measurePerformance();
+        });
     }
 
     getSelectedValueOnMenuContents() {
@@ -385,7 +426,6 @@ class GUI extends EventEmitter {
             this.action.addContent(data);
         }
     }
-
     /**
      * クライアントサイズを取得する.
      * ただの `{width: window.innerWidth, height: window.innerHeight}`.
@@ -398,6 +438,52 @@ class GUI extends EventEmitter {
             height: window.innerHeight
         };
     }
+    
+    /// パフォーマンス計測結果を表示
+    savePerformanceResult(dataID, displayID) {
+        let result = this.store.getPerformanceResult();
+        let text = "";
+        text += "DisplayID,";
+        text += "zoom0, zoom1, zoom2, zoom3, zoom4, zoom5, ";
+        text += "zoom6, zoom7, zoom8, zoom9, zoom10, zoom11, zoom12, ";
+        text += "zoom13, zoom14, zoom15, zoom16, zoom17, zoom18, zoom19, zoom20,";
+        text += "displayed nodes, textures, geometries, ";
+        text += "\n";
+
+        for (let id in result) {
+            let data = result[id];
+            text += id + ",";
+            let displayedNodes = 0;
+            for (let k = 0; k <= 20; ++k) {
+                if (data.nodeVisible.hasOwnProperty(String(k))) {
+                    text += String(data.nodeVisible[k][1]) + ", ";
+                    displayedNodes += data.nodeVisible[k][1];
+                } else {
+                    text += "0, ";
+                }
+            }
+            text += String(displayedNodes) + ",";
+            text += data.textureCount + ",";
+            text += data.geometryCount + ",";
+            text += "\n";
+        }
+
+        function save(text, filename) {
+            let bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            let blob = new Blob([bom, text], {type: 'text/csv'});
+    
+            let url = (window.URL || window.webkitURL);
+            let blobUrl = url.createObjectURL(blob);
+            let e = document.createEvent('MouseEvents');
+            e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            let a = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+            a.href = blobUrl;
+            a.download = filename;
+            a.dispatchEvent(e);
+        }
+        save(text, "performance_" + dataID + ".csv" )
+    }
+
 }
 
 export default GUI;
