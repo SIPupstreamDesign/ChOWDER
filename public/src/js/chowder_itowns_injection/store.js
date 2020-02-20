@@ -645,10 +645,37 @@ class Store extends EventEmitter {
         window.removeEventListener("resize");
         
         this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
+            let before = 0;            
+            let frameCount = 0;
+            let totalMillis = 0;
             // パフォーマンス計測命令
             let result = this.measurePerformance();
-            // メッセージの返信
-            this.iframeConnector.sendResponse(request, result);
+
+            let updateStart = () => {
+                if (frameCount === null) { return; }
+                before = Date.now();
+            }
+            let updateEnd = () => {
+                if (frameCount === null) { return; }
+                ++frameCount;
+                totalMillis += Date.now() - before;
+                if (frameCount >= 10) {
+                    this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
+                    this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
+                    let updateDuration = Math.floor(totalMillis / frameCount);
+
+                    result.updateDuration = updateDuration;
+                    // メッセージの返信
+                    this.iframeConnector.sendResponse(request, result);
+
+                    frameCount = null; // invalid
+                } else {
+                    this.itownsView.notifyChange();
+                }
+            }
+            this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
+            this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
+            this.itownsView.notifyChange();
         });
     }
 
