@@ -48,8 +48,6 @@ class IFrameConnector extends EventEmitter
 				// 返信メッセージ
 				if (this.resultCallbacks[metaData.id]) {
 					this.resultCallbacks[metaData.id](null, metaData.result);
-				} else {
-					console.error("[Error] not found :", metaData)
 				}
 			} else {
 				if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('params')) {
@@ -96,11 +94,16 @@ class IFrameConnector extends EventEmitter
 				this.resultCallbacks[metaData.id]('ArgumentError', null);
 			}
 		}
+		if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete this.resultCallbacks[metaData.id];
+		}
 	}
 
 	sendWrapper(id, method, reqdata, resultCallback) {
 		if (ITownsCommand.hasOwnProperty(method)) {
-			this.resultCallbacks[id] = resultCallback;
+			if (resultCallback) {
+				this.resultCallbacks[id] = resultCallback;
+			}
 
 			if (this.contentWindow) {
 				this.contentWindow.postMessage(reqdata, location.href);
@@ -119,7 +122,7 @@ class IFrameConnector extends EventEmitter
 	 * @param {JSON} args パラメータ
 	 * @param {Function} resultCallback 返信があった場合に呼ばれる. resultCallback(err, res)の形式.
 	 */
-	send(method, args, resultCallback = () => {}) {
+	send(method, args, resultCallback = null) {
 		let reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',

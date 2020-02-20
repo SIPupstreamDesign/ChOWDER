@@ -61,6 +61,9 @@ class WsConnector {
 				}
 			}
 		}
+		if (resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete resultCallbacks[metaData.id]
+		}
 	}
 
 	/**
@@ -101,6 +104,9 @@ class WsConnector {
 					resultCallbacks[metaData.id]('ArgumentError', null);
 				}
 			}
+		}
+		if (resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete resultCallbacks[metaData.id]
 		}
 	}
 

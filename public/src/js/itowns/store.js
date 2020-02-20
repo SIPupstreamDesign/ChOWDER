@@ -278,8 +278,7 @@ class Store extends EventEmitter {
     }
 
     _addLayer(data) {
-        this.iframeConnector.send(ITownsCommand.AddLayer, data, (err, data) => {
-        });
+        this.iframeConnector.send(ITownsCommand.AddLayer, data);
         //if (this.metaData) {
         /*
         this.metaData.layerList = data;

@@ -523,9 +523,6 @@ class GUI extends EventEmitter {
                 connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                     connector.send(ITownsCommand.Resize, rect);
                 });
-                connector.on(ITownsCommand.MeasurePerformance, (err, status) => {
-                    console.error(status);
-                })
             } catch(err) {
                 console.error(err);
             }
