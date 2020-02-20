@@ -166,6 +166,7 @@ class GUI extends EventEmitter {
                     this.savePerformanceResult(id, displayID);
                     if (background) {
                         background.close();
+                        background = null;
                     }
                 }
             })(), interval);
