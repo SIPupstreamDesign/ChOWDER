@@ -248,14 +248,6 @@ pre {
 	color: rgb(255, 255, 255);
 }
 
-/*
- #frames{
-	background: rgb(255, 255, 255);
-	z-index:1000000;
- }
-
-*/
-
 #screen {
 	position: absolute;
 	border: 1px solid gray;

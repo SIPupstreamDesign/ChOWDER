@@ -136,6 +136,7 @@ class ElectornDisplay {
 	 * @param {*} data 
 	 */
 	sortData(data) {
+		console.log("sortData")
 		for (let i = 0; i < 2; i++) {
 			for (let j = 0; j < data[i].length - 1; j++) {
 				for (let k = j + 1; k < data[i].length; k++) {
@@ -154,9 +155,10 @@ class ElectornDisplay {
 
 	/**
 	 * データを縦一列に並んでいるもの、横一列に並んでいるものでグループ分けする
-	 * @param {*} data 
+	 * @param {*} data  各マーカの隣接関係
 	 */
 	groupingData(data) {
+		console.log("groupingData")
 		let sortedData = [JSON.parse(JSON.stringify(data)), JSON.parse(JSON.stringify(data))];
 		let result = [];
 		this.sortData(sortedData);
@@ -185,9 +187,10 @@ class ElectornDisplay {
 
 	/**
 	 * 縦横での座標の昇順でランク分け
-	 * @param {*} data 
+	 * @param {*} data グループ分けされたデータ
 	 */
 	calcRank(data) {
+		console.log("calcRank");
 		let rank = [];
 		for (let i in data) {
 			for (let j in data[i]) {
@@ -210,10 +213,10 @@ class ElectornDisplay {
 
 	/**
 	 * 隣接関係の判定
-	 * @param {*} data 
+	 * @param {*} data コンフィグデータ
 	 */
 	calcAdjacency(data) {
-
+		console.log("calcAdjacency");
 		let rank = this.calcRank(data);
 		let adj = {};
 		for (let i in rank) {
@@ -240,11 +243,11 @@ class ElectornDisplay {
 	}
 
 	/**
-	 * 
-	 * @param {*} pcId 
-	 * @param {*} windowId 
+	 * 隣接関係の決定
+	 * @param {*} pcId　 各PCを定義づけるID
 	 */
-	decideAdajacency(pcId, windowId) {
+	decideAdajacency(pcId) {
+		console.log("decideAdajacency");
 		//データの登録
 		let windowPos = [];
 		for (let id in this.config.windows) {
@@ -263,14 +266,13 @@ class ElectornDisplay {
 		this.dataList[pcId] = JSON.parse(JSON.stringify(adj)); return JSON.parse(JSON.stringify(adj));
 	}
 
-	/**
-	 * コンフィグのデータを使うデータにフォーマットを合わせる
-	 */
+	//コンフィグのデータを使うデータにフォーマットを合わせる
 	convertDataFormatConfigToData() {
 		console.log("convertDataFormatConfigToData");
 		let alphabet = "ABCDEFGHIJK";
 		let windowId = [];
 		for (let id in this.config.windows) {
+			
 			let thisPcId = this.config.windows[id]["marker_id"][0];
 			let thisWindowId = this.config.windows[id]["marker_id"][1];
 			if (alphabet.indexOf(thisPcId) !== -1) {
@@ -284,19 +286,19 @@ class ElectornDisplay {
 		}
 		let sortedWindowCoord = [];
 		for (let id in windowId) {
-			sortedWindowCoord[id] = this.decideAdajacency(id, windowId[id]);
+			console.log(id);
+			sortedWindowCoord[id] = this.decideAdajacency(id);
 		}
 
-		console.log("result");
-		for (let i in this.dataList) {
+		/*for (let i in this.dataList) {
 			console.log(this.dataList[i]);
-		}
+		}*/
 	}
 
 	/**
 	 * 受取ったデータフォーマットを計算用に合わせる
-	 * @param {*} scannedData 
-	 * @param {*} pcId 
+	 * @param {*} scannedData スキャンされた入力データ
+	 * @param {*} pcId 各PCを定義づけるID
 	 */
 	convertDataFormatScannedToTrue(scannedData, pcId) {
 		let direction = ["up", "down", "right", "left"]
@@ -317,11 +319,12 @@ class ElectornDisplay {
 
 	/**
 	 * 相対座標の算出
-	 * @param {*} pcId 
-	 * @param {*} relativeCoord 
-	 * @param {*} adjList 
+	 * @param {*} pcId 各PCを定義づけるID
+	 * @param {*} relativeCoord 結果を保存する座標
+	 * @param {*} adjList 参照する隣接リスト
 	 */
 	calcRelativeCoord(pcId, relativeCoord, adjList) {
+		console.log("calcRelativeCoord")
 		//console.log(adjList);
 		let directionName = ["right", "left", "up", "down"]
 		let rightCount = {};
@@ -334,13 +337,24 @@ class ElectornDisplay {
 		}
 		let resultCount = { right: rightCount, up: upCount }
 		for (let i in adjList[pcId]) {
+			//console.log(pcId + i)
 			for (let j = 0; j < 2; j++) {
-				let id = adjList[pcId][i][directionName[2 * j]];
+				//console.log(directionName[2 * j]);
+				let id;
 				let count = 1;
+				if (adjList[pcId][i][directionName[2 * j]]) {
+					id = JSON.parse(JSON.stringify(adjList[pcId][i][directionName[2 * j]]));
+				}
 				try {
 					while (id) {
+						//console.log(id);
 						resultCount[directionName[2 * j]][pcId][id - 1] += JSON.parse(JSON.stringify(count));
-						id = adjList[pcId][id - 1][directionName[2 * j]];
+						if (adjList[pcId][id - 1][directionName[2 * j]]) {
+							id = JSON.parse(JSON.stringify(adjList[pcId][id - 1][directionName[2 * j]]));
+						}
+						else {
+							break;
+						}
 						//隣接リストleft,downへの参照がループしだしたとき、エラー
 						if (adjList[pcId].length === count) {
 							throw new Error("Error:Adjacency judgment has looped");
@@ -355,27 +369,30 @@ class ElectornDisplay {
 			relativeCoord[pcId][i][0] += resultCount["right"][pcId][i];
 			relativeCoord[pcId][i][1] += resultCount["up"][pcId][i];
 		}
+		//console.log(adjList);
 		//console.log(relativeCoord);
 	}
 
 	/**
 	 * 任意の位置にmakerIdのコンフィグを配置する
-	 * @param {*} scannedConfigId 
-	 * @param {*} trueConfigId 
-	 * @param {*} sendConfig 
+	 * @param {*} scannedConfigId スキャンされたコンフィグ
+	 * @param {*} trueConfigId 現在のコンフィグ
+	 * @param {*} sendConfig 書き直すコンフィグ
 	 */
 	locateScannnedPos(scannedConfigId, trueConfigId, sendConfig) {
+		console.log("locateScannnedPos");
 		sendConfig.windows[trueConfigId] = JSON.parse(JSON.stringify(this.config.windows[scannedConfigId]));
 		sendConfig.windows[trueConfigId].marker_id = JSON.parse(JSON.stringify(this.config.windows[trueConfigId].marker_id));
 	}
 
 	/**
 	 * 任意のタイルの位置を交換
-	 * @param {*} tileId1 
-	 * @param {*} tileId2 
-	 * @param {*} relocatedConfig 
+	 * @param {*} tileId1 １つ目のdesplayのID
+	 * @param {*} tileId2 2つ目のdesplayのID
+	 * @param {*} relocatedConfig 書き直すコンフィグ
 	 */
 	exchangeTilePos(tileId1, tileId2, relocatedConfig) {
+		console.log("exchangeTilePos");
 		relocatedConfig.windows[tileId1] = JSON.parse(JSON.stringify(this.config.windows[tileId2]));
 		relocatedConfig.windows[tileId2] = JSON.parse(JSON.stringify(this.config.windows[tileId1]));
 		relocatedConfig.windows[tileId1].marker_id = JSON.parse(JSON.stringify(this.config.windows[tileId1].marker_id));
@@ -406,7 +423,6 @@ class ElectornDisplay {
 					let windowProps = this.config.windows[id];
 
 					if (windowProps.hasOwnProperty('marker_id')) {
-						//console.log(windowProps.marker_id);
 						let pcId = this.config.windows[id].marker_id[0];
 						let windowId = this.config.windows[id].marker_id[1];
 						//スコープ内にある真値とスキャン値を取得する
@@ -432,7 +448,6 @@ class ElectornDisplay {
 							if (!scannedRelativeCoord[pcId]) { scannedRelativeCoord[pcId] = [[0, 0]]; }
 							else { scannedRelativeCoord[pcId].push([0, 0]); }
 						}
-						//console.log("calcRelativeCoord")
 						this.calcRelativeCoord(pcId, trueRelativeCoord, this.dataList);
 						this.calcRelativeCoord(pcId, scannedRelativeCoord, scannedData);
 
@@ -454,8 +469,6 @@ class ElectornDisplay {
 							let tmId = pcId + trueMarkerId
 							for (let trueWindowId in this.config.windows) {
 								if (this.config.windows[trueWindowId].marker_id === tmId) {
-									//console.log("change");
-									//console.log(id, trueWindowId);
 									this.locateScannnedPos(trueWindowId, id, relocatedConfig);
 								}
 							}
