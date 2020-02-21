@@ -85,7 +85,6 @@ class Store extends EventEmitter {
     _requestSiteList(data) {
         Connector.send(Command.GetGroupList, {}, (err, data) => {
             if (!err && data.hasOwnProperty("displaygrouplist")) {
-                window.alert(JSON.stringify(data.displaygrouplist))
                 this.emit(Store.EVENT_DONE_GET_SITE_LIST, null, data.displaygrouplist)
             }
         });
