@@ -498,8 +498,6 @@ class GUI extends EventEmitter {
         iframe.style.border = "none"
         iframe.onload = () => {
             iframe.contentWindow.chowder_itowns_view_type = "display";
-            let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
-            iframe.contentDocument.body.rect = rect;
             // iframe内のitownsからのコールバック
             /*
             iframe.contentWindow.chowder_itowns_measure_time = (timeString) => {
@@ -513,15 +511,16 @@ class GUI extends EventEmitter {
             let connector = new IFrameConnector(iframe);
 
             try {
-                connector.connect();
-
-                // 初回に一度実行
-                connector.send(ITownsCommand.UpdateCamera, {
-                    mat : metaData.cameraWorldMatrix,
-                    params : metaData.cameraParams,
-                });
-                connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
-                    connector.send(ITownsCommand.Resize, rect);
+                connector.connect(() => {
+                    // 初回に一度実行
+                    connector.send(ITownsCommand.UpdateCamera, {
+                        mat : JSON.parse(metaData.cameraWorldMatrix),
+                        params : JSON.parse(metaData.cameraParams),
+                    });
+                    connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                        let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
+                        connector.send(ITownsCommand.Resize, rect);
+                    });
                 });
             } catch(err) {
                 console.error(err);

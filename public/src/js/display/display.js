@@ -49,11 +49,8 @@ class Display {
 			let elem = document.getElementById(metaData.id);
 			if (elem) {
 				if (elem.children[0] && elem.children[0].nodeName.toLowerCase() === "iframe") {
-					if (elem.children[0].contentDocument.body) {
-						elem.children[0].contentDocument.body.rect = rect;
-						if (funcDict.hasOwnProperty(metaData.id)) {
-							funcDict[metaData.id].chowder_itowns_resize(rect);
-						}
+					if (funcDict.hasOwnProperty(metaData.id)) {
+						funcDict[metaData.id].chowder_itowns_resize(rect);
 					}
 				}
 			}

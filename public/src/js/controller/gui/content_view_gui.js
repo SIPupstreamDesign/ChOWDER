@@ -20,7 +20,7 @@ import ITownsUtil from '../../common/itowns_util.js';
  */
 function getTagName(contentType) {
 	let tagName;
-	if (contentType === 'text' ) {
+	if (contentType === 'text') {
 		tagName = 'pre';
 	} else if (contentType === 'video') {
 		tagName = 'img'; // videoでvideoを保持してない場合用
@@ -46,7 +46,7 @@ class ContentViewGUI extends EventEmitter {
 		this.store = store;
 		this.action = action;
 	}
-	
+
 	/**
 	 * コンテンツをメインビューにインポートする。
 	 * doneGetContent時にコールされる。
@@ -86,10 +86,10 @@ class ContentViewGUI extends EventEmitter {
 			contentElem = document.createElement(tagName);
 			contentElem.id = metaData.id;
 			contentElem.style.position = "absolute";
-			
+
 			this.action.setupContentElement({
-				element : contentElem,
-				id : metaData.id
+				element: contentElem,
+				id: metaData.id
 			});
 			ContentUtil.insertElementWithDictionarySort(previewArea, contentElem);
 		}
@@ -97,7 +97,7 @@ class ContentViewGUI extends EventEmitter {
 			let videoDOM = videoPlayer.getDOM();
 			videoDOM.id = metaData.id;
 			videoDOM.style.position = "absolute";
-			
+
 			let videoElem = videoPlayer.getVideo();
 			if (Constants.IsFirefox) {
 				videoElem.ondblclick = function () {
@@ -114,10 +114,10 @@ class ContentViewGUI extends EventEmitter {
 				videoElem.setAttribute('controlslist', 'nodownload');
 			}
 			videoDOM.style.color = "white";
-			
+
 			this.action.setupContentElement({
-				element : videoDOM,
-				id : metaData.id
+				element: videoDOM,
+				id: metaData.id
 			});
 			ContentUtil.insertElementWithDictionarySort(previewArea, videoDOM);
 		}
@@ -211,7 +211,7 @@ class ContentViewGUI extends EventEmitter {
 			else if (metaData.type === Constants.TypeWebGL) {
 				// contentData is text
 				let iframe = document.createElement('iframe');
-				
+
 				let url = metaData.url;
 				if (url.indexOf("demo=true") >= 0) {
 					url = url.split("demo=true").join("demo=false");
@@ -224,32 +224,35 @@ class ContentViewGUI extends EventEmitter {
 					iframe.contentWindow.chowder_itowns_view_type = "controller";
 					let connector = new IFrameConnector(iframe);
 					this.action.addItownFunc({
-						id : metaData.id,
-						func : {
-							chowder_itowns_update_camera :  (metaData) => {
+						id: metaData.id,
+						func: {
+							chowder_itowns_update_camera: (metaData) => {
 								ITownsUtil.updateCamera(connector, metaData);
 							},
-							chowder_itowns_update_layer_list : (metaData) => {
+							chowder_itowns_update_layer_list: (metaData) => {
 								let preMetaData = this.store.getMetaData(metaData.id);
 								ITownsUtil.updateLayerList(connector, metaData, preMetaData);
 							}
 						}
 					});
-					
-					// 初回に一度実行
+
+					// IframeConnectorを通してiframeに接続
 					try {
-						connector.send(ITownsCommand.UpdateCamera, {
-							mat : JSON.parse(metaData.cameraWorldMatrix),
-							params : JSON.parse(metaData.cameraParams),
+						connector.connect(() => {
+							// 初回に一度実行.
+							connector.send(ITownsCommand.UpdateCamera, {
+								mat: JSON.parse(metaData.cameraWorldMatrix),
+								params: JSON.parse(metaData.cameraParams),
+							});
+							connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
 						});
-						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
-					} catch(err) {
+					} catch (err) {
 						console.error(err);
 					}
 				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);
-				
+
 				contentElem.style.color = "white";
 				contentElem.style.overflow = "visible"; // Show all text
 				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
@@ -296,7 +299,7 @@ class ContentViewGUI extends EventEmitter {
 						if (imageAspect !== currentAspect) {
 							metaData.height = Number(metaData.width) * imageAspect;
 							this.action.correctHistoricalContentAspect({
-								metaData : metaData
+								metaData: metaData
 							})
 						} else {
 							if (metaData.width < 10) {

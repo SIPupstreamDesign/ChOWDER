@@ -47,8 +47,6 @@ class WsConnector {
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](null, metaData.result);
-				} else {
-					console.error("[Error] not found :", metaData)
 				}
 			} else {
 				if (metaData.hasOwnProperty('id') && resultCallbacks.hasOwnProperty(metaData.id)) {

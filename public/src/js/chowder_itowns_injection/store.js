@@ -640,12 +640,17 @@ class Store extends EventEmitter {
 
 
     disableITownResizeFlow() {
+        // 初期化イベントに対する応答
+        this.iframeConnector.on(ITownsCommand.Init, (err, param, data) => {
+            this.iframeConnector.sendResponse(data);
+        });
+
         // Display以外はリサイズを弾く
         if (window.chowder_itowns_view_type !== "display") { return; }
         window.removeEventListener("resize");
-        
+
         this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
-            let before = 0;            
+            let before = 0;
             let frameCount = 0;
             let totalMillis = 0;
             // パフォーマンス計測命令
@@ -873,6 +878,7 @@ class Store extends EventEmitter {
             this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
 
+        //  itowns追加用コントローラーからひかれた
         this.iframeConnector.on(ITownsCommand.Init, (err, param, data) => {
             // メッセージの返信
             this.iframeConnector.sendResponse(data);
