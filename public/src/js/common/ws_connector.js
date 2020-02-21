@@ -59,9 +59,11 @@ class WsConnector {
 				}
 			}
 		}
+		/*
 		if (resultCallbacks.hasOwnProperty(metaData.id)) {
 			delete resultCallbacks[metaData.id]
 		}
+		*/
 	}
 
 	/**
@@ -103,9 +105,11 @@ class WsConnector {
 				}
 			}
 		}
+		/*
 		if (resultCallbacks.hasOwnProperty(metaData.id)) {
 			delete resultCallbacks[metaData.id]
 		}
+		*/
 	}
 
 	static sendWrapper(id, method, reqdata, resultCallback) {
