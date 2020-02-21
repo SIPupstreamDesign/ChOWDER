@@ -92,7 +92,8 @@ class Store extends EventEmitter {
 
     _closeElectron() {
         Connector.send(Command.SendMessage, {
-            command: "CloseElectronDisplay"
+            command: "CloseElectronDisplay",
+            display_site : this.displaySite
         }, (err, reply) => { });
         this.emit(Store.EVENT_CLOSE_ELECTRON, null, null);
     }
@@ -110,14 +111,14 @@ class Store extends EventEmitter {
 
             this._getCurrentDisplayMarkers();
 
-            // 10秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
+            // 3秒くらいたってmarker_idを持ったdisplayが指定数ない場合はエラーとする
             setTimeout(() => {
                 if (this.currentDisplayMarkers.length < displayCount) {
                     const errStr = "Not found for the number";
                     this.currentDisplayMarkers = [];
                     this.emit(Store.EVENT_START_SCAN, errStr, null);
                 }
-            }, 1 * 1000);
+            }, 3 * 1000);
         });
 
         this.on(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, (err, marker_id) => {
@@ -128,7 +129,8 @@ class Store extends EventEmitter {
             this.currentDisplayMarkers.push(marker_id);
             if (this.currentDisplayMarkers.length === displayCount) {
                 Connector.send(Command.SendMessage, {
-                    command: "StartDisplaySetting"
+                    command: "StartDisplaySetting",
+                    display_site : this.displaySite
                 }, (err, reply) => { });
                 this.emit(Store.EVENT_START_SCAN, null, this.currentDisplayMarkers);
             }
@@ -185,8 +187,10 @@ class Store extends EventEmitter {
             }
             // TODO groupによるサイト判別を追加する
             let group = json.group ? json.group : Constants.DefaultGroup;
-            if (json.hasOwnProperty('marker_id')) {
-                this.emit(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, err, json.marker_id)
+            if (group === this.displaySite) {
+                if (json.hasOwnProperty('marker_id')) {
+                    this.emit(Store.EVENT_DONE_GET_CURRENT_DISPLAY_MARKERS, err, json.marker_id)
+                }
             }
         });
     }
@@ -248,12 +252,14 @@ class Store extends EventEmitter {
         //データ送信
         Connector.send(Command.SendMessage, {
             command: "RelocateElectronDisplay",
-            data: data
+            data: data,
+            display_site : this.displaySite
         }, (err, reply) => {
             setTimeout(() => {
                 // マーカーを再表示させる
                 Connector.send(Command.SendMessage, {
                     command: "StartDisplaySetting",
+                    display_site : this.displaySite
                 }, (err, reply) => { });
             }, 10000);
         });
@@ -267,12 +273,14 @@ class Store extends EventEmitter {
         console.log(data);
         Connector.send(Command.SendMessage, {
             command: "RelocateElectronDisplay",
-            data: data
+            data: data,
+            display_site : this.displaySite
         }, (err, reply) => {
             setTimeout(() => {
                 // マーカーを再表示させる
                 Connector.send(Command.SendMessage, {
                     command: "StartDisplaySetting",
+                    display_site : this.displaySite
                 }, (err, reply) => { });
             }, 10000);
         });

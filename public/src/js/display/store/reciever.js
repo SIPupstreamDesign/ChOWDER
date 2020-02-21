@@ -147,7 +147,7 @@ class Receiver {
                 window.location.reload(true);
             }
         });
-        
+
         /// メタデータが更新された
         this.connector.on(Command.UpdateMetaData, (data) => {
             this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
@@ -230,6 +230,13 @@ class Receiver {
             }
         });
 
+        let isValidSite = (site) => {
+            return (
+                this.store.getWindowData() &&
+                ((!this.store.getWindowData().group) || this.store.getWindowData().group === site)
+            );
+        }
+
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'rewindVideo') {
                 // VideoControllerの動画一括コントロール.
@@ -245,8 +252,10 @@ class Receiver {
             if (data.command === 'RelocateElectronDisplay') {
                 if (window.isElectron()) {
                     try {
-                        window.electronRelocate(JSON.stringify(data.data));
-                    } catch(err) {
+                        if (isValidSite(data.display_site)) {
+                            window.electronRelocate(JSON.stringify(data.data));
+                        }
+                    } catch (err) {
                         console.error(err);
                     }
                 }
@@ -254,12 +263,16 @@ class Receiver {
             /// ElectronDisplayクローズ.
             if (data.command === 'CloseElectronDisplay') {
                 if (window.isElectron()) {
-                    window.electronClose();
+                    if (isValidSite(data.display_site)) {
+                        window.electronClose();
+                    }
                 }
             }
             /// DisplaySetting開始.
             if (data.command === 'StartDisplaySetting') {
-                this.store.onStartDisplaySetting(null, data);
+                if (isValidSite(data.display_site)) {
+                    this.store.onStartDisplaySetting(null, data);
+                }
             }
         });
     }
