@@ -59,10 +59,11 @@ class GUI extends EventEmitter {
         });
 
         this.store.on(Store.EVENT_CLOSE_ELECTRON, (err, reply) => {
-            console.log("close");
+            console.log("CLOSE_ELECTRON");
         });
 
         this.store.on(Store.EVENT_DONE_GET_DATA_LIST, (err, reply) => {
+            console.log("GET_DATA_LIST");
             let pointSum = this.updateScanStatusText(reply);
             let text = "検出されたマーカ:"
             let count = 0;
@@ -77,12 +78,12 @@ class GUI extends EventEmitter {
         });
 
         this.store.on(Store.EVENT_DONE_STORE_SCANNED_DATA, (err, reply) => {
-            console.log("store");
+            console.log("STORE_SCANNED_DATA");
         });
 
         this.store.on(Store.EVENT_DONE_CALC_RELATIVE_COORD, (err, reply) => {
+            console.log("CALC_RELATIVE_COORD");
             if (!err) {
-                console.log("se")
                 this.pageState = GUI.STATE_COMPLETE;
                 this.changeGUIToComplete(reply);
                 this.action.getDataList();
@@ -91,13 +92,14 @@ class GUI extends EventEmitter {
             }
         });
         this.store.on(Store.EVENT_DONE_SEND_DATA, (err, reply) => {
-            console.log("send");
+            console.log("SEND_DATA");
         });
         this.store.on(Store.EVENT_DELETE_DATA_LIST, (err, reply) => {
-            console.log("delete");
+            console.log("DELETE_DATA_LIST");
         });
         this.store.on(Store.EVENT_START_SCAN, (err, markerList) => {
-            //this.setScanStartButtonPopUp(err);
+            console.log("START_SCAN")
+            console.log("markerList",markerList);
             if (!err) {
                 this.changeGUIToScanning();
 
@@ -108,21 +110,17 @@ class GUI extends EventEmitter {
 
                 this.scanIntervalHandle.push(
                     setInterval((flag) => {
-                        console.log(this.displayNumber);
+                        //console.log(this.displayNumber);
                         for (let i = 0; i < this.displayNumber; i++) {
                             let marker = document.getElementsByTagName("a-marker")[i + 1];
-                            console.log(marker);
                             this.scannedData[i] = [marker.id, this.scanFlagList[marker.id], marker.object3D.position];
                         }
 
-                        console.log(this.scannedData);
-                        console.log(this.scanFlagList);
-                        let sendData = this.scannedData;
-                        console.log(sendData);
-                        this.action.storeScannedData(sendData);
+                        let scannedData = this.scannedData;
+                        console.log("scannedData",scannedData);
+                        this.action.storeScannedData(scannedData);
                         this.action.getDataList();
                     }, 100, this.scanFlagList));
-                console.log(markerList);
 
                 this.setArMarkerImg(markerList);
                 this.showSendButton(false);
@@ -341,7 +339,7 @@ class GUI extends EventEmitter {
     }
 
     closePopUp(elem, popUp) {
-        console.log(elem);
+      //  console.log(elem);
         if (!elem) return;
         elem.onclick = () => {
             popUp.classList.toggle('is_show');
@@ -395,16 +393,16 @@ class GUI extends EventEmitter {
     /// 検出済マーカーの枠を更新(スキャン完了後に出る)
     updateVirtualScreen(reply) {
         console.log("updateVirtualScreen", reply);
-        let ids = []
+        let markerList = []
         let currentMarkerList = this.store.getCurrentDisplayMarkers();
-        console.log(currentMarkerList);
+        console.log("currentMarkerList",currentMarkerList);
         for (let i in currentMarkerList) {
-            ids.push(currentMarkerList[i]);
+            markerList.push(currentMarkerList[i]);
         }
-        console.log(ids);
+        console.log("markerList",markerList);
         let text = ""
-        for (let i in ids) {
-            text += "<option>" + ids[i] + "</option>"
+        for (let i in markerList) {
+            text += "<option>" + markerList[i] + "</option>"
         }
         document.getElementById("marker_id_1").innerHTML = text;
         document.getElementById("marker_id_2").innerHTML = text;
@@ -415,7 +413,7 @@ class GUI extends EventEmitter {
         const height = 50;
         screen.innerHTML = "";
         let pointSum = this.updateScanStatusText(reply);
-        console.log(pointSum);
+        console.log("pointSum",pointSum);
 
         for (let i in reply) {
             if (pointSum[i] > 30) {
@@ -456,6 +454,7 @@ class GUI extends EventEmitter {
         btn.value = "データ送信";
 
         this.sendButton.on(Button.EVENT_CLICK, (evt) => {
+            console.log("sendButton_clicked")
             this.action.sendData();
             this.updateDescription("Displayに表示されているマーカーIDの並び順がただしければ、設定完了ボタンを押してください。スキャンし直す場合は、[再スキャン]ボタンを押してください。");
         });
@@ -487,9 +486,8 @@ class GUI extends EventEmitter {
         this.closePopUp(btn, popup);
 
         let popYes = document.getElementById("pop_yes");
-        console.log(popYes);
         popYes.onclick = () => {
-            console.log(this);
+            console.log("popYes_clicked")
             this.action.closeElectron("a");
 
             setTimeout(() => {
@@ -522,26 +520,12 @@ class GUI extends EventEmitter {
         let marker1 = document.getElementById('marker_id_1');
         let marker2 = document.getElementById('marker_id_2');
 
-        /* let ids = []
-         let currentMarkerList=this.store.getCurrentDisplayMarkers();
-         for (let i in currentMarkerList) {
-             ids.push(i);
-         }
-         console.log(ids);
-         let text = ""
-         for (let i in ids) {
-             text += "<option>" + ids[i] + "</option>"
-         }
-         marker1.innerHTML = text;
-         marker2.innerHTML = text;
- */
         send.onclick = () => {
+            console.log("adjustment_clicked")
             let index1 = marker1.selectedIndex;
             let markerId1 = marker1.options[index1].value;
             let index2 = marker2.selectedIndex;
             let markerId2 = marker2.options[index2].value;
-            console.log(markerId1);
-            console.log(markerId2);
             let sendData = ["Adjustment event occuured", markerId1, markerId2]
             this.action.adjustmentEvent(sendData)
         }
@@ -566,11 +550,11 @@ class GUI extends EventEmitter {
                 newMarker.className = "display_setting_marker"
                 newMarker.addEventListener("markerFound", (evt) => {
                     this.scanFlagList[marker] = 1;
-                    console.log("ar_marker" + marker + "found")
+                    console.log("ar_marker:" + marker + " found")
                 });
                 newMarker.addEventListener("markerLost", (evt) => {
                     this.scanFlagList[marker] = 0;
-                    console.log("ar_marker" + marker + "lost");
+                    console.log("ar_marker:" + marker + " lost");
                 });
                 newMarker.setAttribute("preset", "custom");
                 newMarker.setAttribute("type", "pattern");

@@ -58,33 +58,63 @@ class Action extends EventEmitter {
         console.log("dispMArker")
         this.emit(Action.EVENT_GET_CURRENT_DISPLAY_MARKERS, null, data);
     }
+
+    /**
+     * 仮想ディスプレイの設定を取得する
+     * @param {*} data
+     */
     getVirtualDisplay(data) {
         this.emit(Action.EVENT_GET_VIRTUAL_DISPLAY, null, data);
     }
+    /**
+     * store内のキャッシュデータを取得する。
+     * @param {*} data 
+     */
     getDataList(data) {
         this.emit(Action.EVENT_GET_DATA_LIST, null, data);
     }
+    /**
+     * スキャンされたデータを蓄積するイベント
+     * @param {*} data 
+     */
     storeScannedData(data) {
         this.emit(Action.EVENT_STORE_SCANNED_DATA, null, data);
     }
+    /**
+     * 画面表示用に相対座標を計算するイベント
+     * @param {*} data 
+     */
     calcRelativeCoord(data) {
         this.emit(Action.EVENT_CALC_RELATIVE_COORD, null, data);
     }
+    /**
+     * データをDesplay側に送信する
+     * @param {*} data 
+     */
     sendData(data) {
         this.emit(Action.EVENT_SET_SEND_DATA, null, data);
     }
+    
+    //store内のキャッシュデータをリセットする
     deleteDataList() {
         this.emit(Action.EVENT_DELETE_DATA_LIST, null, null);
     }
-    /**
-     * スキャン開始
-     */
+
+    //スキャン開始
     startScan(data) {
         this.emit(Action.EVENT_START_SCAN, null, data);
     }
+    /**
+     * displayを終了する
+     * @param {*} data 
+     */
     closeElectron(data) {
         this.emit(Action.EVENT_CLOSE_ELECTRON, null, data);
     }
+    /**
+     * 調整モードでのデータ送信イベント
+     * @param {*} data 
+     */
     adjustmentEvent(data) {
         this.emit(Action.EVENT_ADJUSTMENT_EVENT, null, data);
     }
