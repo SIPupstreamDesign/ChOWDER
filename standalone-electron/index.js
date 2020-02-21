@@ -122,6 +122,11 @@ class ElectornDisplay {
 	}
 
 
+	/**
+	 * 入ってきたオブジェクトの入れ替え
+	 * @param {*} number1 
+	 * @param {*} number2 
+	 */
 	exchangeNum(number1, number2) {
 		//console.log("exchange");
 		let tmp = number1;
@@ -272,7 +277,7 @@ class ElectornDisplay {
 		let alphabet = "ABCDEFGHIJK";
 		let windowId = [];
 		for (let id in this.config.windows) {
-			
+
 			let thisPcId = this.config.windows[id]["marker_id"][0];
 			let thisWindowId = this.config.windows[id]["marker_id"][1];
 			if (alphabet.indexOf(thisPcId) !== -1) {

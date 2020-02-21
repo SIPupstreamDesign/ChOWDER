@@ -9,8 +9,8 @@
 				0
 			],
 			"size": [
-				1000,
-				1000
+				400,
+				300
 			],
 			"vda_position": [
 				0,
@@ -24,15 +24,15 @@
 		"tile2": {
 			"group": "group",
 			"position": [
-				1000,
+				400,
 				0
 			],
 			"size": [
-				1000,
-				1000
+				400,
+				300
 			],
 			"vda_position": [
-				1000,
+				400,
 				0
 			],
 			"vda_scale": 1,
@@ -43,78 +43,41 @@
 		"tile3": {
 			"group": "group",
 			"position": [
-				1000,
-				1000
-			],
-			"size": [
-				1000,
-				1000
-			],
-			"vda_position": [
-				1000,
-				1000
-			],
-			"vda_scale": 1,
-			"fullscreen": false,
-			"frame": false,
-			"marker_id": "A3"
-		},
-		"tile4": {
-			"group": "group",
-			"position": [
 				0,
-				1000
+				300
 			],
 			"size": [
-				1000,
-				1000
+				400,
+				300
 			],
 			"vda_position": [
 				0,
-				1000
-			],
-			"vda_scale": 1,
-			"fullscreen": false,
-			"frame": false,
-			"marker_id": "A4"
-		},
-		"tile5": {
-			"group": "group",
-			"position": [
-				2000,
-				0
-			],
-			"size": [
-				1000,
-				1000
-			],
-			"vda_position": [
-				2000,
-				0
+				300
 			],
 			"vda_scale": 1,
 			"fullscreen": false,
 			"frame": false,
 			"marker_id": "B1"
 		},
-		"tile6": {
+		"tile4": {
 			"group": "group",
 			"position": [
-				2000,
-				1000
+				400,
+				300
 			],
 			"size": [
-				1000,
-				1000
+				400,
+				300
 			],
 			"vda_position": [
-				2000,
-				1000
+				400,
+				300
 			],
 			"vda_scale": 1,
 			"fullscreen": false,
 			"frame": false,
 			"marker_id": "B2"
 		}
+		
 	}
 }
