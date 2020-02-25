@@ -45,26 +45,25 @@ ChOWDER Serverにより公開されているプロファイルをダウンロー
 iOSのSafariで「http://[ipアドレス]:8080/cert.pem」を開き、
 許可します。
 
-
 <img src="image/ssl/1.png" alt="download_cert" width="585"/>
 
 「設定」→「一般」の「ダウンロード済プロファイル」をタップし、ダウンロード済プロファイルをインストールします。
 
-<img src="image/ssl/2.png" alt="" height="585"/>
+<img src="image/ssl/2.png" alt="" height="500"/>
 
-<img src="image/ssl/3.png" alt="" height="585"/>
+<img src="image/ssl/3.png" alt="" height="500"/>
 
-<img src="image/ssl/4.png" alt="" height="585"/>
+<img src="image/ssl/4.png" alt="" height="500"/>
 
-<img src="image/ssl/5.png" alt="" height="585"/>
+<img src="image/ssl/5.png" alt="" height="500"/>
 
 インストールが終わったら、「設定」→「一般」最下部に、「証明書信頼設定」という項目があるので、
 タップして、先ほどインストールしたプロファイルを信頼するようチェックします。
 
+<img src="image/ssl/6.png" alt="" height="500"/>
 
-<img src="image/ssl/6.png" alt="" height="585"/>
+<img src="image/ssl/7.png" alt="" height="500"/>
 
-<img src="image/ssl/7.png" alt="" height="585"/>
 
 以上で設定完了となります。
 
