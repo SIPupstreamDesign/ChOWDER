@@ -9,15 +9,20 @@ iOSで、ローカルネットワーク上で使用するための自己証明�
 Windowsの場合
 --------------------
 コマンドプロンプトで、/binディレクトリに移動し、
-以下のコマンドを実行します
+以下のコマンドを実行し、自己署名証明書を作成します。
+
 ```
 ./create_local_cert.bat ChOWDERServerのIPアドレス
 ```
 
 Linuxの場合
 --------------------
+```
+sh create_local_cert.sh ChOWDERServerのIPアドレス
+```
 
-
+作成された証明書は、public/cert.pem及びserver/cert.pem、server/key.pemに格納されます。
+以下のiOS側の設定を行い、完了後にpublic/cert.pemは削除してください。
 
 
 iOS側の設定
