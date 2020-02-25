@@ -21,6 +21,19 @@ Linuxの場合
 sh create_local_cert.sh ChOWDERServerのIPアドレス
 ```
 
+正常終了メッセージ例
+```
+$ sh create_local_cert.sh 192.168.1.8
+Generating a 2048 bit RSA private key
+...................+++
+..+++
+writing new private key to '../server/key.pem'
+-----
+Signature ok
+subject=C = JA, CN = 192.168.1.8
+Getting Private key
+```
+
 作成された証明書は、public/cert.pem及びserver/cert.pem、server/key.pemに格納されます。
 以下のiOS側の設定を行い、完了後にpublic/cert.pemは削除してください。
 
