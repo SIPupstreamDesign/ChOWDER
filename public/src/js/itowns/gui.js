@@ -301,52 +301,56 @@ class GUI extends EventEmitter {
     initPropertyPanel() {
         let propElem = document.getElementById('itowns_property');
 
+		let propInner = document.createElement('div');
+		propInner.className = "itowns_property_inner";
+        propElem.appendChild(propInner);
+        
         // コンテンツIDタイトル
         let contentIDTitle = document.createElement('p');
         contentIDTitle.className = "title";
         contentIDTitle.innerHTML = "Content ID";
-        propElem.appendChild(contentIDTitle);
+        propInner.appendChild(contentIDTitle);
 
         // コンテンツID
         this.contentID = document.createElement('p');
         this.contentID.className = "property_text";
-        propElem.appendChild(this.contentID);
+        propInner.appendChild(this.contentID);
 
         // ベースコンテンツタイトル
         let contentTitle = document.createElement('p');
         contentTitle.className = "title";
         contentTitle.innerHTML = i18next.t('base_content');
-        propElem.appendChild(contentTitle);
+        propInner.appendChild(contentTitle);
 
         // ベースコンテンツ名
         let contentName = document.createElement('p');
         contentName.className = "property_text";
         let selectValue = this.getSelectedValueOnMenuContents();
         contentName.innerHTML = selectValue.url;
-        propElem.appendChild(contentName);
+        propInner.appendChild(contentName);
 
-        propElem.appendChild(document.createElement('hr'));
+        propInner.appendChild(document.createElement('hr'));
 
         // レイヤーリストタイトル
         let layerTitle = document.createElement('p');
         layerTitle.className = "title";
         layerTitle.innerHTML = i18next.t('layer_list');
-        propElem.appendChild(layerTitle);
+        propInner.appendChild(layerTitle);
 
         // レイヤーリスト
         this.layerList = new LayerList(this.store, this.action);
         this.layerList.setEnable(false);
-        propElem.appendChild(this.layerList.getDOM());
+        propInner.appendChild(this.layerList.getDOM());
 
         // レイヤープロパティタイトル
         let layerPropertyTitle = document.createElement('p');
         layerPropertyTitle.className = "title layer_property_title";
         layerPropertyTitle.innerHTML = i18next.t('layer_property');
-        propElem.appendChild(layerPropertyTitle);
+        propInner.appendChild(layerPropertyTitle);
 
         // レイヤープロパティ
         this.layerProperty = new LayerProperty(this.store, this.action);
-        propElem.appendChild(this.layerProperty.getDOM());
+        propInner.appendChild(this.layerProperty.getDOM());
 
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
             this.layerProperty.initFromLayer(data.value, this.store.getLayerData(data.value));

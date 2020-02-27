@@ -80,6 +80,12 @@ p {
     padding-left: 5px;
 }
 
+.itowns_property_inner {
+	position: absolute;
+	height: calc(100% - 50px); /* measureボタン分引く */
+    overflow-y: auto;
+}
+
 .title {
 	color : white;
 	font-size : 16px;
@@ -100,9 +106,19 @@ p {
 	width : 240px;
 }
 
+
+.property_text_title {
+    margin-left: 14px;
+	margin-right: 14px;
+}
+
 .property_text {
-	margin: 5px;
+	margin-left: 14px;
+	margin-right: 14px;
 	border: 1px solid;
+	white-space: normal;
+	word-break: break-all;
+	user-select: text;
 }
 
 .layer_button_area {
@@ -272,8 +288,8 @@ p {
 }
 
 .measure_button {
-    bottom: 20px;
-    position: absolute;
+    bottom: 10px;
+    position: fixed;
     right: 15px;
 	width: 220px;
 	height: 34px;

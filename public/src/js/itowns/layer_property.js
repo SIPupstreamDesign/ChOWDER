@@ -104,12 +104,14 @@ class LayerProperty extends EventEmitter {
         this.action = action;
 
         this.dom = document.createElement('div');
-        this.dom.className = "layer_property";
+		this.dom.className = "layer_property";
 
+		/*
         addCheckProperty(this.dom, false, "visible", "visible", true, (err, data) => {
         });
 		this.opacitySlider = new PropertySlider(false, "opacity", "", 1.0);
 		this.dom.appendChild(this.opacitySlider.getDOM());
+		*/
 
 		this.scaleSlider = null;
 		this.sizeSlider = null;
@@ -124,7 +126,23 @@ class LayerProperty extends EventEmitter {
 			this.opacitySlider.release();
 			this.opacitySlider = null;
 		}
-        this.dom.innerHTML = "";
+		this.dom.innerHTML = "";
+		
+        // レイヤーURLタイトル
+        let layerURLTitle = document.createElement('p');
+        layerURLTitle.className = "property_text_title";
+        layerURLTitle.innerHTML = "URL";
+        this.dom.appendChild(layerURLTitle);
+
+        // レイヤーURL
+        this.layerURL = document.createElement('p');
+		this.layerURL.className = "property_text";
+		this.layerURL.innerText = layerProps.url;
+		if (layerProps.hasOwnProperty('file')) {
+			this.layerURL.innerText += layerProps.file;
+		}
+		this.dom.appendChild(this.layerURL);
+		console.log(layerProps)
 
 		// visible
 		if (layerProps.type !== ITownsConstants.TypeElevation) {
