@@ -32,10 +32,15 @@ class WebRTC extends EventEmitter {
 	prepareNewConnection() {
 		printDebug("prepareNewConnection");
 		let pc_config = {
-			"iceServers": [
-				{ "urls": "stun:stun.l.google.com:19302" },
-				{ "urls": "stun:stun1.l.google.com:19302" },
-				{ "urls": "stun:stun2.l.google.com:19302" }
+			iceServers: [
+				{
+					urls: ["stun:" + window.location.hostname + ":3478"]
+				},
+				{
+					urls: ["turn:" + window.location.hostname + ":3478"],
+					username:"chowder",
+					credential:"395FFEB08356282A867A63D2B4729D039859F6E6C98294C1DCAAE494DAF87A6048DC4D06FB0ADF9D387F67EB41780B362AA9C3FD9AF4515A24FF1ECE5B85E70E"
+				}
 			]
 		};
 		this.peer = null;
@@ -90,7 +95,7 @@ class WebRTC extends EventEmitter {
 				}
 			};
 		}
-		
+
 		this.peer.onicecandidate = (evt) => {
 			printDebug("icecandidate", evt.candidate); //, evt, this.peer);
 			if (evt.candidate) {
@@ -192,7 +197,7 @@ class WebRTC extends EventEmitter {
 			this.videoDataChannel.onerror = function (error) {
 				printDebug('dataChannel.onerror', error);
 			};
-			
+
 			this.audioDataChannel = this.peer.createDataChannel("ForAudio" , dataChannelOptions);
 			this.audioDataChannel.binaryType = "arraybuffer";
 			this.audioDataChannel.onopen = () => {
@@ -211,7 +216,7 @@ class WebRTC extends EventEmitter {
 				printDebug('dataChannel.onerror', error);
 			};
 		}
-		
+
 		printDebug('offer');
 		this.peer.createOffer((sdp) => {
 			// 成功
