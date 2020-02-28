@@ -34,12 +34,21 @@ class WebRTC extends EventEmitter {
 		let pc_config = {
 			iceServers: [
 				{
-					urls: ["stun:" + window.location.hostname + ":3478"]
+					urls: [
+						"stun:" + window.location.hostname + ":3478"
+					]
 				},
 				{
 					urls: ["turn:" + window.location.hostname + ":3478"],
 					username:"chowder",
 					credential:"395FFEB08356282A867A63D2B4729D039859F6E6C98294C1DCAAE494DAF87A6048DC4D06FB0ADF9D387F67EB41780B362AA9C3FD9AF4515A24FF1ECE5B85E70E"
+				},
+				{
+					urls: [
+						"stun:stun.l.google.com:19302",
+						"stun:stun1.l.google.com:19302",
+						"stun:stun2.l.google.com:19302"
+					]
 				}
 			]
 		};
