@@ -30,7 +30,7 @@ window.onload = function () {
                 "type": 3
             },
             "zoom" : {
-                "min" : 5,
+                "min" : 1,
                 "max" : 18
             },
             "opacity": 1.0

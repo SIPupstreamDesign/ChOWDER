@@ -27,7 +27,7 @@ window.onload = function () {
             "url": url,
             "tileMatrixSet": "PM",
             "zoom" : {
-                "min" : 5,
+                "min" : 1,
                 "max" : 18
             }
         };
