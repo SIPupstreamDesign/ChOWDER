@@ -18,7 +18,10 @@ cd turnserver-4.5.1.1
 make && make install
 cd ..
 rm -rf turnserver-4.5.1.1
+cp turnserver.conf /usr/local/etc/turnserver.conf
+cp ../server/server.crt /usr/local/etc/server.crt
+cp ../server/server.key /usr/local/etc/server.key
 
-npm install
+npm install --unsafe-perm
 
 cd $ORIGIN
