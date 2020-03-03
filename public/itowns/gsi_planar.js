@@ -203,7 +203,7 @@ window.onload = function () {
     });
 
     new itowns.PlanarControls(view, {
-        maxAltitude: 400000
+        maxAltitude: 40000000
     });
 
     loadGSIColor();
