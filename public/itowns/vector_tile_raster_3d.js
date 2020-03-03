@@ -62,16 +62,16 @@ window.onload = function() {
 
     view.addLayer(mvtLayer);
 
-    var menuGlobe = new GuiTools('menuDiv', view, 300);
+    //var menuGlobe = new GuiTools('menuDiv', view, 300);
     // Listen for globe full initialisation event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
         Promise.all(promises).then(function () {
-            menuGlobe.addImageryLayersGUI(view.getLayers(function (l) { return l.isColorLayer; }));
+            //menuGlobe.addImageryLayersGUI(view.getLayers(function (l) { return l.isColorLayer; }));
             itowns.ColorLayersOrdering.moveLayerToIndex(view, 'Ortho', 0);
         }).catch(console.error);
     });
 
-    debug.createTileDebugUI(menuGlobe.gui, view);
+    //debug.createTileDebugUI(menuGlobe.gui, view);
     
     injectChOWDER(view, viewerDiv);
 };
