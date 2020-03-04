@@ -610,7 +610,7 @@ class Store extends EventEmitter {
                 isChanged = true;
             }
             if (params.hasOwnProperty('wireframe')) {
-                layer.wireframe = Number(params.wireframe);
+                layer.wireframe = Boolean(params.wireframe);
                 isChanged = true;
             }
             if (isChanged) {

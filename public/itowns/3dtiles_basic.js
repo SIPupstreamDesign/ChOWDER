@@ -14,12 +14,12 @@ window.onload = function() {
     view.camera.camera3D.near = 5;
     setupLoadingScreen(viewerDiv, view);
 
-    var menuGlobe = new GuiTools('menuDiv', view, 300);
+    //var menuGlobe = new GuiTools('menuDiv', view, 300);
 
     itowns.Fetcher.json('./layers/JSONLayers/OPENSM.json').then(function _(config) {
         config.source = new itowns.TMSSource(config.source);
         var layer = new itowns.ColorLayer('Ortho', config);
-        view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
+        view.addLayer(layer);//.then(menuGlobe.addLayerGUI.bind(menuGlobe));
     });
 
     // Create a new Layer 3d-tiles For DiscreteLOD
@@ -55,6 +55,7 @@ window.onload = function() {
         });
 
     // Add the UI Debug
+    /*
     var d = new debug.Debug(view, menuGlobe.gui);
     debug.createTileDebugUI(menuGlobe.gui, view, view.tileLayer, d);
     debug.create3dTilesDebugUI(menuGlobe.gui, view, $3dTilesLayerDiscreteLOD, d);
@@ -65,6 +66,6 @@ window.onload = function() {
         view.notifyChange(view.camera.camera3D);
     }
     menuGlobe.gui.add(d, 'zoom').name('Go to point cloud');
-
+*/
     injectChOWDER(view, viewerDiv);
 };
