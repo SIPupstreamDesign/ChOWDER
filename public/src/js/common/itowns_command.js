@@ -27,7 +27,9 @@ const ITownsCommand = {
     // レイヤープロパティ変更命令
     ChangeLayerProperty : "ChangeLayerProperty",
     // パフォーマンス計測
-    MeasurePerformance : "MeasurePerformance"
+    MeasurePerformance : "MeasurePerformance",
+    // 現在時刻の更新
+    UpdateTime : "UpdateTime"
 };
 
 export default ITownsCommand;

@@ -72,6 +72,12 @@ class ITownsUtil {
         }
     }
 
+    static updateTime(iframeConnector, metaData, time) {
+        iframeConnector.send(ITownsCommand.UpdateTime, {
+            time : time.toJSON()
+        });
+    }
+
     static resize(iframeConnector, rect) {
         iframeConnector.send(ITownsCommand.Resize, rect);
     }

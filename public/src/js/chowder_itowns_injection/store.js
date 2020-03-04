@@ -613,6 +613,56 @@ class Store extends EventEmitter {
                 layer.wireframe = Boolean(params.wireframe);
                 isChanged = true;
             }
+            if ((params.hasOwnProperty('offset_xyz') || params.hasOwnProperty('offset_uvw')) &&
+                layer.object3d && 
+                layer.object3d.children.length > 0) 
+            {
+                for (let i = 0; i < layer.object3d.children.length; ++i) {
+                    let target = layer.object3d.children[i];
+                    let initial = { x : 0, y : 0, z : 0 };
+                    if (target["initial_position"]) {
+                        initial = target.initial_position;
+                    } else {
+                        target.initial_position = target.position.clone();
+                    }
+                    let vec = target.initial_position.clone();
+                    if (vec.length() === 0) {
+                        if (layer.hasOwnProperty('root')) {
+                            vec = layer.root.bbox.min.clone()
+                        }
+                    }
+
+                    vec.normalize();
+                    let u = vec.clone();
+                    u.cross(new itowns.THREE.Vector3(0, 1, 0));
+                    let v = vec.clone();
+                    v.cross(u);
+                    let w = vec.clone();
+
+                    let mu = { x : 0, y : 0, z : 0 };
+                    let mv = { x : 0, y : 0, z : 0 };
+                    let mw = { x : 0, y : 0, z : 0 };
+                    let xyz = { x : 0, y : 0, z : 0 };
+                    if (params.hasOwnProperty('offset_uvw')) {
+                        u.multiplyScalar(params.offset_uvw.u * 100);
+                        mu = u;
+                        v.multiplyScalar(params.offset_uvw.v * 100);
+                        mv = v;
+                        w.multiplyScalar(params.offset_uvw.w * 100);
+                        mw = w;
+                    }
+                    if (params.hasOwnProperty('offset_xyz')) {
+                        xyz = params.offset_xyz;
+                    }
+                    target.position.set(
+                        initial.x + xyz.x + mu.x + mv.x + mw.x,
+                        initial.y + xyz.y + mu.y + mv.y + mw.y,
+                        initial.z + xyz.z + mu.z + mv.z + mw.z);
+                    target.updateMatrix();
+                    target.updateMatrixWorld();
+                    isChanged = true;
+                }
+            }
             if (isChanged) {
                 this.itownsView.notifyChange(layer);
             }
@@ -648,6 +698,10 @@ class Store extends EventEmitter {
         // Display以外はリサイズを弾く
         if (window.chowder_itowns_view_type !== "display") { return; }
         window.removeEventListener("resize");
+        
+        this.iframeConnector.on(ITownsCommand.UpdateTime, (err, param, request) => {
+            
+        });
 
         this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
             let before = 0;
@@ -874,8 +928,8 @@ class Store extends EventEmitter {
             this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, (evt) => {
-            this.layerDataList = this.getLayerDataList();
-            this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
+            //this.layerDataList = this.getLayerDataList();
+            //this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
         });
 
         //  itowns追加用コントローラーからひかれた

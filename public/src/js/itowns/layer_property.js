@@ -232,6 +232,65 @@ class LayerProperty extends EventEmitter {
 			}
 		}
 
+		// offset_xyz
+		if (layerProps.type !== ITownsConstants.TypeColor && 
+			layerProps.type !== ITownsConstants.TypeElevation) {
+			if (layerProps && layerProps.hasOwnProperty('offset_xyz')) {
+				this.offsetX = new PropertySlider(layerID && layerProps, "offset x", "", layerProps.offset_xyz.x / 2000.0 + 0.5, 2000, false, -1000, 1000)
+				this.offsetY = new PropertySlider(layerID && layerProps, "offset y", "", layerProps.offset_xyz.y / 2000.0 + 0.5, 2000, false, -1000, 1000);
+				this.offsetZ = new PropertySlider(layerID && layerProps, "offset z", "", layerProps.offset_xyz.z / 2000.0 + 0.5, 2000, false, -1000, 1000);
+			} else {
+				this.offsetX = new PropertySlider(layerID && layerProps, "offset x", "", 0.5, 2000, false, -1000, 1000);
+				this.offsetY = new PropertySlider(layerID && layerProps, "offset y", "", 0.5, 2000, false, -1000, 1000);
+				this.offsetZ = new PropertySlider(layerID && layerProps, "offset z", "", 0.5, 2000, false, -1000, 1000);
+			}
+			const UpdateOffset = (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					offset_xyz : {
+						x : this.offsetX.getValue(),
+						y : this.offsetY.getValue(),
+						z : this.offsetZ.getValue(),
+					}
+				});
+			}
+			this.offsetX.on(PropertySlider.EVENT_CHANGE, UpdateOffset);
+			this.offsetY.on(PropertySlider.EVENT_CHANGE, UpdateOffset);
+			this.offsetZ.on(PropertySlider.EVENT_CHANGE, UpdateOffset);
+			this.dom.appendChild(this.offsetX.getDOM());
+			this.dom.appendChild(this.offsetY.getDOM());
+			this.dom.appendChild(this.offsetZ.getDOM());
+		}
+		
+		// offset_uv
+		if (layerProps.type !== ITownsConstants.TypeColor && 
+			layerProps.type !== ITownsConstants.TypeElevation) {
+			if (layerProps && layerProps.hasOwnProperty('offset_uvw')) {
+				this.offsetU = new PropertySlider(layerID && layerProps, "offset u", "", layerProps.offset_uvw.u / 2000.0 + 0.5, 2000, false, -1000, 1000)
+				this.offsetV = new PropertySlider(layerID && layerProps, "offset v", "", layerProps.offset_uvw.v / 2000.0 + 0.5, 2000, false, -1000, 1000)
+				this.offsetW = new PropertySlider(layerID && layerProps, "offset w", "", layerProps.offset_uvw.w / 2000.0 + 0.5, 2000, false, -1000, 1000)
+			} else {
+				this.offsetU = new PropertySlider(layerID && layerProps, "offset u", "", 0.5, 2000, false, -1000, 1000);
+				this.offsetV = new PropertySlider(layerID && layerProps, "offset v", "", 0.5, 2000, false, -1000, 1000);
+				this.offsetW = new PropertySlider(layerID && layerProps, "offset w", "", 0.5, 2000, false, -1000, 1000);
+			}
+			const UpdateOffset = (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					offset_uvw : {
+						u : this.offsetU.getValue(),
+						v : this.offsetV.getValue(),
+						w : this.offsetW.getValue()
+					}
+				});
+			};
+			this.offsetU.on(PropertySlider.EVENT_CHANGE, UpdateOffset);
+			this.offsetV.on(PropertySlider.EVENT_CHANGE, UpdateOffset);
+			this.offsetW.on(PropertySlider.EVENT_CHANGE, UpdateOffset);
+			this.dom.appendChild(this.offsetU.getDOM());
+			this.dom.appendChild(this.offsetV.getDOM());
+			this.dom.appendChild(this.offsetW.getDOM());
+		}
     }
 
     getDOM() {

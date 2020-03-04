@@ -55,7 +55,7 @@ class PropertySlider extends EventEmitter {
         this.onChange = (evt) => {
             try {
                 let scaledVal = this.clamp(parseFloat(this.input.value), this.minVal, this.maxVal);
-                let val = scaledVal / scale;
+                let val = (scaledVal - this.minVal) / scale;
                 this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
                 if (!isNaN(val)) {
                     this.emit(PropertySlider.EVENT_CHANGE, null, scaledVal);
@@ -63,6 +63,7 @@ class PropertySlider extends EventEmitter {
                     throw false;
                 }
             } catch (ex) {
+                console.error(ex)
                 this.input.value = 1.0;
             }
         };
@@ -70,9 +71,9 @@ class PropertySlider extends EventEmitter {
         this.input.addEventListener('change', this.onChange);
 
         // 初期値の設定
-        this.input.value = value * scale;
+        this.input.value = value * scale + this.minVal;
         let scaledVal = this.clamp(parseFloat(this.input.value), this.minVal, this.maxVal);
-        let val = scaledVal / scale;
+        let val = (scaledVal - this.minVal)  / scale;
         this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
         this.initEvent();
     }
@@ -100,7 +101,7 @@ class PropertySlider extends EventEmitter {
                     y: evt.clientY - rect.top
                 };
                 let value = Math.min(1.0, Math.max(0.0, mouseDownPos.x / 100.0));
-                value = this.clamp(value.toFixed(2) * this.scale, this.minVal, this.maxVal);
+                value = this.clamp(value.toFixed(2) * this.scale + this.minVal, this.minVal, this.maxVal);
                 this.input.value = this.isInteger ? Math.round(value) : value;
                 this.onChange();
             }
@@ -110,6 +111,10 @@ class PropertySlider extends EventEmitter {
             isMouseDown = false;
         };
         window.addEventListener('mouseup', this.onMouseUp);
+    }
+
+    getValue() {
+        return Number(this.input.value);
     }
 
     release() {
