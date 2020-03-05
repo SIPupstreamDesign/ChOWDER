@@ -469,9 +469,12 @@ class GUI extends EventEmitter {
                     text += "0, ";
                 }
             }
-            text += String(displayedNodes) + ",";
-            text += data.textureCount + ",";
-            text += data.geometryCount + ",";
+            text += String(displayedNodes) + ", ";
+            text += data.textureCount + ", ";
+            text += data.geometryCount + ", ";
+            text += data.triangleCount + ", ";
+            text += data.pointCount + ", ";
+            text += data.lineCount + ", ";
             text += "\n";
         }
 
