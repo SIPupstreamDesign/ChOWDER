@@ -613,17 +613,22 @@ class Store extends EventEmitter {
                 layer.wireframe = Boolean(params.wireframe);
                 isChanged = true;
             }
-            if ((params.hasOwnProperty('offset_xyz') || params.hasOwnProperty('offset_uvw')) &&
+            if ((params.hasOwnProperty('offset_xyz') 
+                || params.hasOwnProperty('offset_uvw')
+                || params.hasOwnProperty('offset_small_uv')) &&
                 layer.object3d && 
                 layer.object3d.children.length > 0) 
             {
                 for (let i = 0; i < layer.object3d.children.length; ++i) {
                     let target = layer.object3d.children[i];
-                    let initial = { x : 0, y : 0, z : 0 };
+                    let initial_position = { x : 0, y : 0, z : 0 };
+                    let initial_quaternion = new itowns.THREE.Quaternion();
                     if (target["initial_position"]) {
-                        initial = target.initial_position;
+                        initial_position = target.initial_position;
+                        initial_quaternion = target.initial_quaternion;
                     } else {
                         target.initial_position = target.position.clone();
+                        target.initial_quaternion = target.quaternion.clone();
                     }
                     let vec = target.initial_position.clone();
                     if (vec.length() === 0) {
@@ -639,27 +644,50 @@ class Store extends EventEmitter {
                     v.cross(u);
                     let w = vec.clone();
 
-                    let mu = { x : 0, y : 0, z : 0 };
-                    let mv = { x : 0, y : 0, z : 0 };
                     let mw = { x : 0, y : 0, z : 0 };
                     let xyz = { x : 0, y : 0, z : 0 };
-                    if (params.hasOwnProperty('offset_uvw')) {
-                        u.multiplyScalar(params.offset_uvw.u * 100);
-                        mu = u;
-                        v.multiplyScalar(params.offset_uvw.v * 100);
-                        mv = v;
-                        w.multiplyScalar(params.offset_uvw.w * 100);
-                        mw = w;
-                    }
+                    // position
                     if (params.hasOwnProperty('offset_xyz')) {
                         xyz = params.offset_xyz;
                     }
-                    target.position.set(
-                        initial.x + xyz.x + mu.x + mv.x + mw.x,
-                        initial.y + xyz.y + mu.y + mv.y + mw.y,
-                        initial.z + xyz.z + mu.z + mv.z + mw.z);
+                    if (params.hasOwnProperty('offset_uvw')) {
+                        w.multiplyScalar(params.offset_uvw.w * 100);
+                        mw = w;
+                    }
+                    let position = new itowns.THREE.Vector3(
+                        initial_position.x + xyz.x + mw.x,
+                        initial_position.y + xyz.y + mw.y,
+                        initial_position.z + xyz.z + mw.z
+                    );
+                    // rotation
+                    let quaternionTUV = new itowns.THREE.Quaternion();
+                    let quaternionUV = new itowns.THREE.Quaternion();
+                    if (params.hasOwnProperty('offset_small_uv')) {
+                        let quaternionTU = new itowns.THREE.Quaternion();
+                        let quaternionTV = new itowns.THREE.Quaternion();
+                        quaternionTU.setFromAxisAngle(u, params.offset_small_uv.u * Math.PI / 180.0 / 1.0e6);
+                        quaternionTV.setFromAxisAngle(v, params.offset_small_uv.v * Math.PI / 180.0 / 1.0e6);
+                        quaternionTUV.copy(quaternionTU);
+                        quaternionTUV.multiply(quaternionTV);
+                    }
+                    if (params.hasOwnProperty('offset_uvw')) {
+                        let quaternionU = new itowns.THREE.Quaternion();
+                        let quaternionV = new itowns.THREE.Quaternion();
+                        quaternionU.setFromAxisAngle(u, params.offset_uvw.u * Math.PI / 180.0);
+                        quaternionV.setFromAxisAngle(v, params.offset_uvw.v * Math.PI / 180.0);
+                        quaternionUV.copy(quaternionU);
+                        quaternionUV.multiply(quaternionV);
+                    }
+                    position.applyQuaternion(quaternionTUV)
+                    position.applyQuaternion(quaternionUV)
+                    target.matrixAutoUpdate = false;
+                    target.position.copy(position);
+                    target.quaternion.copy(initial_quaternion);
+                    target.quaternion.multiply(quaternionTUV);
+                    target.quaternion.multiply(quaternionUV);
                     target.updateMatrix();
                     target.updateMatrixWorld();
+                    target.matrixAutoUpdate = true;
                     isChanged = true;
                 }
             }
