@@ -213,9 +213,6 @@ class ContentViewGUI extends EventEmitter {
 				let iframe = document.createElement('iframe');
 
 				let url = metaData.url;
-				if (url.indexOf("demo=true") >= 0) {
-					url = url.split("demo=true").join("demo=false");
-				}
 				iframe.src = url;
 				iframe.style.width = "100%";
 				iframe.style.height = "100%";

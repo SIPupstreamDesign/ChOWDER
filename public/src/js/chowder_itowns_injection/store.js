@@ -136,6 +136,12 @@ class Store extends EventEmitter {
         this.itownsView.camera.camera3D.matrixAutoUpdate = true;
 
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
+
+        if (window.chowder_itowns_view_type === "controller") {
+            for (let i = 0; i < window.resizeListeners.length; ++i) {
+                window.resizeListeners[i]();
+            }
+        }
     }
 
     resizeToThumbnail(srcCanvas) {
@@ -478,7 +484,6 @@ class Store extends EventEmitter {
         let layer = this.createLayerByType(config, type);
         if (type === ITownsConstants.TypePointCloud ||
             type === ITownsConstants.Type3DTile) {
-            console.log("addLayer", layer)
             itowns.View.prototype.addLayer.call(this.itownsView, layer);
         } else {
             this.itownsView.addLayer(layer);
@@ -613,6 +618,11 @@ class Store extends EventEmitter {
                 layer.wireframe = Boolean(params.wireframe);
                 isChanged = true;
             }
+            if (params.hasOwnProperty('pointBudget')) {
+                layer.pointBudget = Number(params.pointBudget);
+                isChanged = true;
+                console.error("pointBudget", layer.pointBudget)
+            }
             if ((params.hasOwnProperty('offset_xyz') 
                 || params.hasOwnProperty('offset_uvw')
                 || params.hasOwnProperty('offset_small_uv')) &&
@@ -717,53 +727,63 @@ class Store extends EventEmitter {
     }
 
 
-    disableITownResizeFlow() {
+    injectaAsChOWDERDisplayController(data) {
         // 初期化イベントに対する応答
-        this.iframeConnector.on(ITownsCommand.Init, (err, param, data) => {
-            this.iframeConnector.sendResponse(data);
+        this.iframeConnector.on(ITownsCommand.Init, (err, param, request) => {
+            this.iframeConnector.sendResponse(request);
         });
 
-        // Display以外はリサイズを弾く
-        if (window.chowder_itowns_view_type !== "display") { return; }
-        window.removeEventListener("resize");
-        
         this.iframeConnector.on(ITownsCommand.UpdateTime, (err, param, request) => {
-            
+            if (err) {
+                console.error(err);
+                return;
+            }
+            if (data.timeCallback) {
+                data.timeCallback(new Date(param.time));
+            }
+            this.iframeConnector.sendResponse(request);
         });
 
-        this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
-            let before = 0;
-            let frameCount = 0;
-            let totalMillis = 0;
-            // パフォーマンス計測命令
-            let result = this.measurePerformance();
+        // Displayはリサイズを弾く
+        
+        if (window.chowder_itowns_view_type === "display") {
+            window.removeEventListener("resize");
 
-            let updateStart = () => {
-                if (frameCount === null) { return; }
-                before = Date.now();
-            }
-            let updateEnd = () => {
-                if (frameCount === null) { return; }
-                ++frameCount;
-                totalMillis += Date.now() - before;
-                if (frameCount >= 10) {
-                    this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
-                    this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
-                    let updateDuration = Math.floor(totalMillis / frameCount);
-
-                    result.updateDuration = updateDuration;
-                    // メッセージの返信
-                    this.iframeConnector.sendResponse(request, result);
-
-                    frameCount = null; // invalid
-                } else {
-                    this.itownsView.notifyChange();
+            // Displayのみ計測
+            this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
+                let before = 0;
+                let frameCount = 0;
+                let totalMillis = 0;
+                // パフォーマンス計測命令
+                let result = this.measurePerformance();
+    
+                let updateStart = () => {
+                    if (frameCount === null) { return; }
+                    before = Date.now();
                 }
-            }
-            this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
-            this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
-            this.itownsView.notifyChange();
-        });
+                let updateEnd = () => {
+                    if (frameCount === null) { return; }
+                    ++frameCount;
+                    totalMillis += Date.now() - before;
+                    if (frameCount >= 10) {
+                        this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
+                        this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
+                        let updateDuration = Math.floor(totalMillis / frameCount);
+    
+                        result.updateDuration = updateDuration;
+                        // メッセージの返信
+                        this.iframeConnector.sendResponse(request, result);
+    
+                        frameCount = null; // invalid
+                    } else {
+                        this.itownsView.notifyChange();
+                    }
+                }
+                this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
+                this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
+                this.itownsView.notifyChange();
+            });
+        }
     }
 
     // 操作可能なレイヤーのデータリストを返す
@@ -1013,7 +1033,7 @@ class Store extends EventEmitter {
                     this.injectAsChOWDERiTownController();
                 } else {
                     // displayまたはcontrollerから開かれた(itowns画面に対して操作不可)
-                    this.disableITownResizeFlow();
+                    this.injectaAsChOWDERDisplayController(data);
 
                     // for measure performance
                     /*

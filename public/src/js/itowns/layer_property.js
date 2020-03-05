@@ -211,6 +211,25 @@ class LayerProperty extends EventEmitter {
 			});
 			this.dom.appendChild(this.sizeSlider.getDOM());
 		}
+
+		// pointBudget
+		/*
+		{
+			if (layerProps && layerProps.hasOwnProperty('pointBudget')) {
+				this.maxPointCountSlider = new PropertySlider(layerID && layerProps, "max points", "", layerProps.pointBudget / 10000000.0, 10000000, true, 1000);
+			} else {
+				this.maxPointCountSlider = new PropertySlider(layerID && layerProps, "max points", "", 1000 / 10000000.0, 10000000, true, 1000);
+			}	
+			this.maxPointCountSlider.on(PropertySlider.EVENT_CHANGE,  (err, data) => {
+				console.error("changeLayerProperty", this.maxPointCountSlider.getValue())
+				this.action.changeLayerProperty({
+					id : layerID,
+					pointBudget : this.maxPointCountSlider.getValue()
+				});
+			});
+			this.dom.appendChild(this.maxPointCountSlider.getDOM());
+		}
+		*/
 		
 		// wireframe
 		if (layerProps.type === ITownsConstants.Type3DTile || layerProps.type === ITownsConstants.TypeGeometry) 

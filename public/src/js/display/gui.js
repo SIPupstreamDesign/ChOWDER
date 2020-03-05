@@ -65,12 +65,17 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
             // 全コンテンツデータの時刻をビューポートをもとに更新
             let metaDataDict = this.store.getMetaDataDict();
+            let funcDict = this.store.getITownFuncDict();
             for (let id in metaDataDict) {
                 if (metaDataDict.hasOwnProperty(id)) {
                     let metaData = metaDataDict[id];
                     if (metaData.type === Constants.TypeWebGL) {
                         let elem = document.getElementById(id);
-                        this.showTime(elem, metaData)
+                        this.showTime(elem, metaData);
+                        
+                        if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+                            funcDict[metaData.id].chowder_itowns_update_time(metaData);
+                        }
                     }
                 }
             }
@@ -532,6 +537,9 @@ class GUI extends EventEmitter {
                 func : {
                     chowder_itowns_update_camera : (metaData) => {
                         ITownsUtil.updateCamera(connector, metaData);
+                    },
+                    chowder_itowns_update_time : (metaData) => {
+                        ITownsUtil.updateTime(connector, metaData, this.store.getTime());
                     },
                     chowder_itowns_resize : (rect) => {
                         ITownsUtil.resize(connector, rect)
