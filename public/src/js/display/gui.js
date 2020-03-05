@@ -533,9 +533,6 @@ class GUI extends EventEmitter {
                     chowder_itowns_update_camera : (metaData) => {
                         ITownsUtil.updateCamera(connector, metaData);
                     },
-                    chowder_itowns_update_camera : (metaData) => {
-                        ITownsUtil.updateTime(connector, metaData, this.time);
-                    },
                     chowder_itowns_resize : (rect) => {
                         ITownsUtil.resize(connector, rect)
                     },

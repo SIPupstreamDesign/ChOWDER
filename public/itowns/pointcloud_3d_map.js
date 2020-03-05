@@ -30,6 +30,7 @@ window.onload = function () {
     }, view);
 
     // add pointcloud to scene
+    /*
     function onLayerReady() {
         debug.PointCloudDebug.initTools(view, pointcloud, debugGui);
 
@@ -42,9 +43,10 @@ window.onload = function () {
                 pointcloud.displayedCount.toLocaleString();
         };
     }
+    */
     window.view = view;
 
-    itowns.View.prototype.addLayer.call(view, pointcloud).then(onLayerReady);
+    itowns.View.prototype.addLayer.call(view, pointcloud);//.then(onLayerReady);
 
     itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(function _(config) {
         config.source = new itowns.WMTSSource(config.source);
