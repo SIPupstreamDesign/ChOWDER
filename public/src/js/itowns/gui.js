@@ -453,7 +453,7 @@ class GUI extends EventEmitter {
         text += "zoom0, zoom1, zoom2, zoom3, zoom4, zoom5, ";
         text += "zoom6, zoom7, zoom8, zoom9, zoom10, zoom11, zoom12, ";
         text += "zoom13, zoom14, zoom15, zoom16, zoom17, zoom18, zoom19, zoom20,";
-        text += "displayed nodes, textures, geometries, ";
+        text += "displayed nodes, textures, geometries, triangles, points, lines,";
         text += "\n";
 
         for (let id in result) {

@@ -927,13 +927,15 @@ class Store extends EventEmitter {
             status.nodeVisible = stats;
         }
 
-        // テクスチャ数
+        // 各種カウント情報
         {
             let renderer = this.itownsView.mainLoop.gfxEngine.renderer;
             const memory = renderer.info.memory;
             status.textureCount = memory.textures;
             status.geometryCount = memory.geometries;
-            console.log(status)
+            status.triangleCount = renderer.info.render.triangles;
+            status.pointCount = renderer.info.render.points;
+            status.lineCount = renderer.info.render.lines;
         }
         return status;
     }
