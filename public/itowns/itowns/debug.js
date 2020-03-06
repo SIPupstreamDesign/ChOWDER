@@ -105726,7 +105726,7 @@ function parseSourceData(data, extDest, layer) {
   var source = layer.source;
   var options = {
     buildExtent: source.isFileSource || !layer.isGeometryLayer,
-    crsIn: source.projection,
+    crsIn: source.hasOwnProperty("inCrs") ? source.inCrs : source.projection,
     crsOut: layer.projection,
     sprites: layer.sprites || source.sprites,
     // TODO FIXME: error in filtering vector tile
@@ -105740,6 +105740,11 @@ function parseSourceData(data, extDest, layer) {
     withAltitude: layer.isGeometryLayer,
     symbolToCircle: layer.symbolToCircle || false
   };
+
+  if (source.hasOwnProperty("inCrs")) {
+    options.filteringExtent = !source.isFileSource && layer.isGeometryLayer ? extDest.as(source.inCrs) : undefined;
+  }
+
   return source.parser(data, options).then(function (parsedFile) {
     return source.onParsedFile(parsedFile);
   });

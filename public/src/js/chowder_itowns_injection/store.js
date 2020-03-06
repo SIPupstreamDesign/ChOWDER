@@ -324,10 +324,12 @@ class Store extends EventEmitter {
             let mapSource = null;
             if (config.format === "geojson") {
                 mapSource = new itowns.TMSSource(config);
+                if (config.url.indexOf('gsi.go.jp')) {
+                    mapSource.inCrs = "EPSG:4326";
+                }
+                mapSource.style = config.style;
                 return new itowns.GeometryLayer(config.id, new itowns.THREE.Group(), {
-                    update: (context, layer, node) => {
-                        return itowns.FeatureProcessing.update(context, layer, node)
-                    },
+                    update: itowns.FeatureProcessing.update,
                     convert: itowns.Feature2Mesh.convert({
                         color: new itowns.THREE.Color(0xbbffbb),
                         extrude: 80
@@ -345,6 +347,10 @@ class Store extends EventEmitter {
                     return isValid;
                 }
                 mapSource = new itowns.VectorTilesSource(config);
+                if (config.url.indexOf('gsi.go.jp')) {
+                    mapSource.inCrs = "EPSG:4326";
+                }
+                mapSource.style = config.style;
                 return new itowns.ColorLayer(config.id, {
                     isValidData: isValidData,
                     source: mapSource,
@@ -420,20 +426,27 @@ class Store extends EventEmitter {
                 config.wireframe = params.wireframe;
             }
         }
-        if (type === ITownsConstants.TypeGeometry) {
+        if (url.indexOf('.geojson') >= 0) {
             config = {
                 "projection": "EPSG:3857",
+                "tileMatrixSet": "PM",
                 "url": url
-            }
-            if (url.indexOf('.geojson') >= 0) {
-                config.format = "geojson";
-            }
-            if (url.indexOf('.pbf') >= 0) {
-                config.format = "pbf";
             }
             if (params.hasOwnProperty('style')) {
                 config.style = params.style;
             }
+            config.format = "geojson";
+        }
+        if (url.indexOf('.pbf') >= 0) {
+            config = {
+                "projection": "EPSG:3857",
+                "tileMatrixSet": "PM",
+                "url": url
+            }
+            if (params.hasOwnProperty('style')) {
+                config.style = params.style;
+            }
+            config.format = "pbf";
         }
         // 以下共通
         if (params.hasOwnProperty('id')) {
@@ -622,11 +635,13 @@ class Store extends EventEmitter {
                 layer.wireframe = Boolean(params.wireframe);
                 isChanged = true;
             }
+            /*
             if (params.hasOwnProperty('pointBudget')) {
                 layer.pointBudget = Number(params.pointBudget);
                 isChanged = true;
                 console.error("pointBudget", layer.pointBudget)
             }
+            */
             if ((params.hasOwnProperty('offset_xyz') 
                 || params.hasOwnProperty('offset_uvw')
                 || params.hasOwnProperty('offset_small_uv')) &&
@@ -801,6 +816,15 @@ class Store extends EventEmitter {
             layer = layers[i];
             if (!layer) continue;
             data = {};
+            if (layer.hasOwnProperty('bboxes')) {
+                data.bbox = layer.bboxes.visible;
+            }
+            if (layer.hasOwnProperty('pointSize')) {
+                data.pointSize = layer.pointSize;
+            }
+            if (layer.hasOwnProperty('wireframe')) {
+                data.wireframe = layer.wireframe;
+            }
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||
                 (layer.hasOwnProperty('file') && layer.hasOwnProperty('url')) ||
@@ -856,6 +880,7 @@ class Store extends EventEmitter {
                 }
             }
         }
+        //console.error("dataList", layers, dataList)
         return dataList;
     }
 
