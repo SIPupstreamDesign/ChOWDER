@@ -606,6 +606,10 @@ class Store extends EventEmitter {
                 layer.visible = Boolean(params.visible);
                 isChanged = true;
             }
+            if (params.hasOwnProperty('bbox')) {
+                layer.bboxes.visible = Boolean(params.bbox);
+                isChanged = true;
+            }
             if (params.hasOwnProperty('scale')) {
                 layer.scale = Number(params.scale);
                 isChanged = true;

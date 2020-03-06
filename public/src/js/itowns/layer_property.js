@@ -163,6 +163,26 @@ class LayerProperty extends EventEmitter {
 			}
 		}
 
+		// bbox
+		if (layerProps.type === ITownsConstants.TypePointCloud) 
+		{
+			if (layerProps && layerProps.hasOwnProperty('bbox')) {
+				addCheckProperty(this.dom, layerID && layerProps, "bbox", "bbox", layerProps.bbox, (err, data) => {
+					this.action.changeLayerProperty({
+						id : layerID,
+						bbox : data
+					})
+				});
+			} else {
+				addCheckProperty(this.dom, layerID && layerProps, "bbox", "bbox", false, (err, data) => {
+					this.action.changeLayerProperty({
+						id : layerID,
+						bbox : data
+					})
+				});
+			}
+		}
+
 		// opacity
 		if (layerProps.type !== ITownsConstants.TypeElevation) {
 			if (layerProps && layerProps.hasOwnProperty('opacity')) {
