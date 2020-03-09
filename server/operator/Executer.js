@@ -9,11 +9,24 @@
     const fs = require('fs');
     const path = require('path');
 
-    const phantom = require('phantom');
+    let phantom = null;
+    try {
+        phantom = require('phantom');
+    } catch (e) {
+        console.log("not found phantom");
+    }
     const redis = require("redis");
 
     const image_size = require('image-size');
-    const Thumbnail = require('./../thumbnail.js');
+    let Thumbnail = { 
+        create : (meta, binary, func) => { func(null, null, null); },
+        setPreviewWH : () => {}
+    }
+    try {
+        Thumbnail = require('./../thumbnail.js');
+    } catch (e) {
+        console.log("thumbnail require faild");
+    }
 
     const util = require('./../util.js');
 
