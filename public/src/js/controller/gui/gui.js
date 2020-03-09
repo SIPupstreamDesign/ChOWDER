@@ -155,6 +155,22 @@ class GUI extends EventEmitter
 			this.onToggleContentMarkIcon(elem, metaData);
 		});
 
+        this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
+            // 全コンテンツデータの時刻をビューポートをもとに更新
+            let metaDataDict = this.store.getMetaDataDict();
+            let funcDict = this.store.getITownFuncDict();
+            for (let id in metaDataDict) {
+                if (metaDataDict.hasOwnProperty(id)) {
+                    let metaData = metaDataDict[id];
+                    if (metaData.type === Constants.TypeWebGL) {
+                        
+                        if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+                            funcDict[metaData.id].chowder_itowns_update_time(metaData);
+                        }
+                    }
+                }
+            }
+        })
 		// this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
 		// 	console.log("gui",logindata);
 		// 	const setting = {

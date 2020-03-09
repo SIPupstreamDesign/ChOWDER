@@ -752,6 +752,7 @@ class Store extends EventEmitter {
             this.iframeConnector.sendResponse(request);
         });
 
+        // time更新
         this.iframeConnector.on(ITownsCommand.UpdateTime, (err, param, request) => {
             if (err) {
                 console.error(err);
@@ -989,13 +990,25 @@ class Store extends EventEmitter {
         return status;
     }
 
-    injectAsChOWDERiTownController() {
+    injectAsChOWDERiTownController(data) {
         let menuDiv = document.getElementById('menuDiv');
         if (menuDiv) {
             menuDiv.style.position = "absolute";
             menuDiv.style.top = "10px";
             menuDiv.style.left = "10px";
         }
+
+        // time更新
+        this.iframeConnector.on(ITownsCommand.UpdateTime, (err, param, request) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            if (data.timeCallback) {
+                data.timeCallback(new Date(param.time));
+            }
+            this.iframeConnector.sendResponse(request);
+        });
 
         this.layerDataList = this.getLayerDataList();
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, (evt) => {
@@ -1059,7 +1072,7 @@ class Store extends EventEmitter {
             if (!done) {
                 if (window.chowder_itowns_view_type === "itowns") {
                     // itowns追加用コントローラーからひかれた(itowns画面に対して操作可)
-                    this.injectAsChOWDERiTownController();
+                    this.injectAsChOWDERiTownController(data);
                 } else {
                     // displayまたはcontrollerから開かれた(itowns画面に対して操作不可)
                     this.injectaAsChOWDERDisplayController(data);

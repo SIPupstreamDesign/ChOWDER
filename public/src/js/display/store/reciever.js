@@ -230,7 +230,6 @@ class Receiver {
             }
         });
 
-        // VideoControllerの動画一括コントロール.
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'measureITownPerformance') {
                 this.store.measureITownPerformance(data.id);
@@ -242,6 +241,7 @@ class Receiver {
                     });
                 }
             }
+            // VideoControllerの動画一括コントロール.
             if (data.command === 'rewindVideo') {
                 data.ids.forEach((id) => {
                     let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);

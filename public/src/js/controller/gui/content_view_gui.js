@@ -229,7 +229,10 @@ class ContentViewGUI extends EventEmitter {
 							chowder_itowns_update_layer_list: (metaData) => {
 								let preMetaData = this.store.getMetaData(metaData.id);
 								ITownsUtil.updateLayerList(connector, metaData, preMetaData);
-							}
+							},
+							chowder_itowns_update_time : (metaData) => {
+								ITownsUtil.updateTime(connector, metaData, this.store.getTime());
+							},
 						}
 					});
 

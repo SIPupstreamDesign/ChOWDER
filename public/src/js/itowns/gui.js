@@ -60,11 +60,11 @@ class GUI extends EventEmitter {
         let date = new Date();
         $("#timeline").k2goTimeline(
             {
-                startTime: new Date(date.getFullYear(), date.getMonth(), 1), // 左端の日時を今月の01日に設定
-                endTime: new Date(date.getFullYear(), date.getMonth() + 1, 1), // 右端の日時を翌月の01日に設定
-                currentTime: new Date(date.getFullYear(), date.getMonth(), 16), // 摘み（ポインタ）の日時を今月の16日に設定
-                minTime: new Date(date.getFullYear(), 0, 1), // 過去方向への表示可能範囲を今年の1月1日に設定
-                maxTime: new Date(date.getFullYear() + 1, 0, 1), // 未来方向への表示可能範囲を翌年の1月1日に設定
+                startTime: new Date(2020, (2-1), 8, 9, 0, 0), // 左端の日時
+                endTime: new Date(2020, (2-1), 8, 23, 59, 59), // 右端の日時
+                currentTime: new Date(2020, (2-1), 8, 9), // 摘み（ポインタ）の日時
+                minTime: new Date(2020, (2-1), 8, 9, 0, 0), // 過去方向への表示可能範囲
+                maxTime: new Date(2020, (2-1), 8, 23, 59, 59), // 未来方向への表示可能範囲
                 timeChange: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得

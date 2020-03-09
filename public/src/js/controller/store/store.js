@@ -47,6 +47,8 @@ class Store extends EventEmitter
 
 		this.isInitialized_ = false;
 
+		this.time = null;
+		
 		// 接続状況
 		// null = 初期状態(未接続), false = 接続済, true = 接続した後に切断された
 		this.isDisconnect = null;
@@ -559,6 +561,10 @@ class Store extends EventEmitter
     getITownFuncDict() {
         return this.itownFuncDict;
 	}
+
+    getTime() {
+        return this.time;
+    }
 }
 
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
@@ -634,6 +640,7 @@ Store.EVENT_DONE_DELETE_WINDOW_METADATA = "done_delete_window_metadata";
 Store.EVENT_DONE_UPDATE_GROUP = "done_update_group";
 Store.EVENT_DONE_UPDATE_SETTING = "done_update_setting";
 Store.EVENT_NEED_UPDATE_MANIPULATOR = "need_update_manipulator";
+Store.EVENT_UPDATE_TIME = "updat_time";
 
 export default Store;
 

@@ -150,6 +150,13 @@ class Receiver
                     }
                 });
             }
+            if (data.command === 'changeItownsContentTime') {
+                if (data.hasOwnProperty('data')) {
+                    this.store.time = new Date(data.data.time);
+                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data, (err, reply) => {
+                    });
+                }
+            }
 
             if (data.command === 'rewindVideo') {
                 data.ids.forEach((id) => {

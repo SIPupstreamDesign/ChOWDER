@@ -430,7 +430,11 @@ class Store extends EventEmitter {
             Connector.send(Command.SendMessage, {
                 command : "changeItownsContentTime",
                 data : data
-            }, () => {})
+            }, () => {
+                this.iframeConnector.send(ITownsCommand.UpdateTime, {
+                    time : data.time.toJSON()
+                });
+            })
         }
     }
 
