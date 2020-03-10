@@ -422,6 +422,9 @@ class Store extends EventEmitter {
                 "name": params.hasOwnProperty('id') ? params.id : "3dtile",
                 "url": url
             };
+            if (params.hasOwnProperty('sseThreshold')) {
+                config.sseThreshold = params.sseThreshold;
+            }
             if (params.hasOwnProperty('wireframe')) {
                 config.wireframe = params.wireframe;
             }
@@ -635,6 +638,10 @@ class Store extends EventEmitter {
                 layer.wireframe = Boolean(params.wireframe);
                 isChanged = true;
             }
+            if (params.hasOwnProperty('sseThreshold')) {
+                layer.sseThreshold = Number(params.sseThreshold);
+                isChanged = true;
+            }
             /*
             if (params.hasOwnProperty('pointBudget')) {
                 layer.pointBudget = Number(params.pointBudget);
@@ -825,6 +832,9 @@ class Store extends EventEmitter {
             }
             if (layer.hasOwnProperty('wireframe')) {
                 data.wireframe = layer.wireframe;
+            }
+            if (layer.hasOwnProperty('sseThreshold')) {
+                data.sseThreshold = layer.sseThreshold;
             }
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||

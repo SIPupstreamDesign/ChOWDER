@@ -270,6 +270,28 @@ class LayerProperty extends EventEmitter {
 				});
 			}
 		}
+		
+		// sseThreshold
+		if (layerProps.type === ITownsConstants.Type3DTile ||
+			layerProps.type === ITownsConstants.TypePointCloud)
+		{
+			let maxVal = 1.0;
+			if (layerProps.type === ITownsConstants.TypePointCloud) {
+				maxVal = 2.0;
+			}
+			if (layerProps && layerProps.hasOwnProperty('sseThreshold')) {
+				this.sseThresholdSlider = new PropertySlider(layerID && layerProps, "sseThreshold", "", layerProps.sseThreshold / maxVal, maxVal, false, 0.0, maxVal);
+			} else {
+				this.sseThresholdSlider = new PropertySlider(layerID && layerProps, "sseThreshold", "", 1.0 / maxVal, maxVal, false, 0.0, maxVal);
+			}
+			this.sseThresholdSlider.on(PropertySlider.EVENT_CHANGE,  (err, data) => {
+				this.action.changeLayerProperty({
+					id : layerID,
+					sseThreshold : data
+				});
+			});
+			this.dom.appendChild(this.sseThresholdSlider.getDOM());
+		}
 
 		// offset_xyz
 		/*
