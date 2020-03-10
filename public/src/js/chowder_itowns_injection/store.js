@@ -301,7 +301,10 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             let mapSource = new itowns.TMSSource(config);
-            if (config.format === "csv" || config.format === "txt") {
+            if (config.format === "image/x-bil;bits=32" || config.format === "wmts") {
+                config.name = config.id;
+                mapSource = new itowns.WMTSSource(config);
+            } else if (config.format === "csv" || config.format === "txt") {
                 this.installCSVElevationParsar(mapSource);
             } else if (config.format.indexOf("png") >= 0) {
                 this.installPNGElevationParsar(mapSource);
@@ -397,12 +400,25 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             config = {
-                "projection": "EPSG:3857",
-                "tileMatrixSet": "PM",
-                "format": url.indexOf('.png') > 0 ? "image/png" : "csv",
+                "projection": "EPSG:4326",
+                "tileMatrixSet": "WGS84G",
+                "format" : params.hasOwnProperty('format') ? params.format : "wmts",
                 "url": url,
                 "scale": 1
             };
+            if (url.indexOf('.png') > 0) {
+                // 地理院
+                config.format = "image/png";
+                config.projection = "EPSG:3857";
+                config.tileMatrixSet = "PM";
+            }
+            if (url.indexOf('.txt') > 0 || url.indexOf('.csv') > 0) {
+                // 地理院
+                config.format = "csv"
+                config.projection = "EPSG:3857";
+                config.tileMatrixSet = "PM";
+            }
+            
         }
         if (type === ITownsConstants.TypePointCloud) {
             if (params.hasOwnProperty('file')) {
@@ -835,6 +851,9 @@ class Store extends EventEmitter {
             }
             if (layer.hasOwnProperty('sseThreshold')) {
                 data.sseThreshold = layer.sseThreshold;
+            }
+            if (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('format')) {
+                data.format = layer.source.format;
             }
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||

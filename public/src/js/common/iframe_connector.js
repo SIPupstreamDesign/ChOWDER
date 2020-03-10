@@ -43,11 +43,17 @@ class IFrameConnector extends EventEmitter
 				// エラー返信メッセージ
 				if (this.resultCallbacks[metaData.id]) {
 					this.resultCallbacks[metaData.id](metaData.error, null);
+					if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+						delete this.resultCallbacks[metaData.id];
+					}
 				}
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				// 返信メッセージ
 				if (this.resultCallbacks[metaData.id]) {
 					this.resultCallbacks[metaData.id](null, metaData.result);
+					if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+						delete this.resultCallbacks[metaData.id];
+					}
 				}
 			} else {
 				if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('params')) {
@@ -58,6 +64,9 @@ class IFrameConnector extends EventEmitter
 					console.error('[Error] ArgumentError in iframe_connector.js', metaData);
 					if (metaData.hasOwnProperty('id')) {
 						this.resultCallbacks[metaData.id]('ArgumentError', null);
+						if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+							delete this.resultCallbacks[metaData.id];
+						}
 					}
 				}
 			}
@@ -67,11 +76,17 @@ class IFrameConnector extends EventEmitter
 				// エラー返信メッセージ
 				if (this.resultCallbacks[metaData.id]) {
 					this.resultCallbacks[metaData.id](metaData.error, null);
+					if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+						delete this.resultCallbacks[metaData.id];
+					}
 				}
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				// 返信メッセージ
 				if (this.resultCallbacks[metaData.id]) {
 					this.resultCallbacks[metaData.id](null, metaData.result);
+					if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+						delete this.resultCallbacks[metaData.id];
+					}
 				} else {
 					console.error("[Error] not found :", metaData)
 				}
@@ -84,6 +99,9 @@ class IFrameConnector extends EventEmitter
 					console.error('[Error] ArgumentError in iframe_connector.js', metaData);
 					if (metaData.hasOwnProperty('id')) {
 						this.resultCallbacks[metaData.id]('ArgumentError', null);
+						if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+							delete this.resultCallbacks[metaData.id];
+						}
 					}
 				}
 			}
@@ -92,10 +110,10 @@ class IFrameConnector extends EventEmitter
 			console.error('[Error] ArgumentError in iframe_connector.js', metaData);
 			if (metaData.hasOwnProperty('id')) {
 				this.resultCallbacks[metaData.id]('ArgumentError', null);
+				if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
+					delete this.resultCallbacks[metaData.id];
+				}
 			}
-		}
-		if (this.resultCallbacks.hasOwnProperty(metaData.id)) {
-			delete this.resultCallbacks[metaData.id];
 		}
 	}
 
@@ -184,14 +202,13 @@ class IFrameConnector extends EventEmitter
 	 * @param {Function} onclose クローズ時コールバック
 	 */
 	connect(onopen, onclose) {
-        
 		// iframe内のchowder injectionの初期化
 		if (this.iframe) {
 			window.removeEventListener("message", this.messageCallback);
 			window.addEventListener("message", this.messageCallback);
 
 			// 親ページからiframeへの接続
-			this.send(ITownsCommand.Init, {}, onopen);
+			this.send(ITownsCommand.Init, {}, onopen());
 		} else {
 			window.removeEventListener("message", this.messageCallback);
 			window.addEventListener("message", this.messageCallback);
