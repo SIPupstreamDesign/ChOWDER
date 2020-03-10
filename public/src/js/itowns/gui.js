@@ -43,38 +43,38 @@ class GUI extends EventEmitter {
     }
 
     init() {
-		// 一定間隔同じイベントが来なかったら実行するための関数
-		let debounceChangeTime = (() => {
-			const interval = 100;
-			let timer;
-			return (pTimeInfo) => {
-				clearTimeout(timer);
-				timer = setTimeout(() => {
+        // 一定間隔同じイベントが来なかったら実行するための関数
+        let debounceChangeTime = (() => {
+            const interval = 100;
+            let timer;
+            return (pTimeInfo) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
                     this.action.changeTime({
-                        time : new Date(pTimeInfo.currentTime)
+                        time: new Date(pTimeInfo.currentTime)
                     });
-				}, interval);
-			};
-		})();
+                }, interval);
+            };
+        })();
 
         let date = new Date();
         $("#timeline").k2goTimeline(
             {
-                startTime: new Date(2020, (2-1), 8, 9, 0, 0), // 左端の日時
-                endTime: new Date(2020, (2-1), 8, 23, 59, 59), // 右端の日時
-                currentTime: new Date(2020, (2-1), 8, 9), // 摘み（ポインタ）の日時
-                minTime: new Date(2020, (2-1), 8, 9, 0, 0), // 過去方向への表示可能範囲
-                maxTime: new Date(2020, (2-1), 8, 23, 59, 59), // 未来方向への表示可能範囲
+                startTime: new Date(2020, (2 - 1), 8, 9, 0, 0), // 左端の日時
+                endTime: new Date(2020, (2 - 1), 8, 23, 59, 59), // 右端の日時
+                currentTime: new Date(2020, (2 - 1), 8, 9), // 摘み（ポインタ）の日時
+                minTime: new Date(2020, (2 - 1), 8, 9, 0, 0), // 過去方向への表示可能範囲
+                maxTime: new Date(2020, (2 - 1), 8, 23, 59, 59), // 未来方向への表示可能範囲
                 timeChange: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得
                     // pTimeInfo.    endTimeから右端の日時を取得
                     // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
                 },
-                barMove : function (pTimeInfo) {
+                barMove: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                 },
-                barMoveEnd : function (pTimeInfo) {
+                barMoveEnd: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                 }
             });
@@ -104,7 +104,7 @@ class GUI extends EventEmitter {
             itownConnector.on(ITownsCommand.UpdateCamera, (err, params) => {
                 this.action.updateCamera({
                     mat: params.mat,
-                    params : params.params
+                    params: params.params
                 });
             });
 
@@ -125,7 +125,7 @@ class GUI extends EventEmitter {
                 this.layerList.initLayerSelectList(layerDataList);
             }
         })
-        
+
         // サンプルコンテンツの追加
         this.addPresetContentSelect();
 
@@ -154,7 +154,7 @@ class GUI extends EventEmitter {
                 this.layerList.setEnable(true);
             }
         });
-        
+
         let timer;
         const interval = 5 * 1000;
         let background = null;
@@ -170,7 +170,7 @@ class GUI extends EventEmitter {
                     }
                 }
             })(), interval);
-            
+
             if (!background) {
                 background = new PopupBackground()
                 background.show();
@@ -252,39 +252,44 @@ class GUI extends EventEmitter {
         this.itownSelect.getDOM().className = "itown_select";
         // サンプルコンテンツの追加
         this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/gsi_planar.html"
+            type: "preset",
+            url: "itowns/gsi_planar.html"
         }), "Preset:地理院地図 2.5D");
         this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/gsi.html"
+            type: "preset",
+            url: "itowns/gsi.html"
         }), "Preset:地理院地図 3D");
         this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/pointcloud_3d_map.html"
+            type: "preset",
+            url: "itowns/pointcloud_3d_map.html"
         }), "Preset:pointcloud_3d_map");
         this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/view_3d_map.html"
+            type: "preset",
+            url: "itowns/view_3d_map.html"
         }), "Preset:view_3d_map");
         this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/3dtiles_basic.html"
+            type: "preset",
+            url: "itowns/3dtiles_basic.html"
         }), "Preset:3dtiles_basic");
         this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/vector_tile_raster_3d.html"
+            type: "preset",
+            url: "itowns/vector_tile_raster_3d.html"
         }), "Preset:vector_tile_raster_3d");
-        this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/shp.html"
-        }), "Preset:shp");
-        /*
-        this.itownSelect.addOption(JSON.stringify({
-            type : "preset",
-            url : "itowns/nict_tsukuba.html?name=mtTsukuba&px=-3952307.675547402&py=3304876.576466543&pz=3748873.8775102566&range=2737.9540096505734&xlookat=140.07961145092113&ylookat=36.20684848349528&zlookat=28.50089971907437&heading=140.65953519356157&tilt=17.701978694273777&c_vfov=37&c_pan=-140.66&c_tilt=-17.70098924418633&c_length=2839.4286268307546&p_tilt=-17.8&p_pan=-140.5&p_roll=0&p_hfov=49&p_vfov=30&p_opacity=0.7&p_auto=false&p_line=false&p_cube=false&demo=true"
-        }), "Preset:nict_tsukuba");
-        */
+
+        {
+            let xhr = new XMLHttpRequest();
+            xhr.onload = () => {
+                if (xhr.status == 200) {
+                    this.itownSelect.addOption(JSON.stringify({
+                        type: "preset",
+                        url: "itowns/ipCameraView/" + xhr.response
+                    }), "Preset:ipCameraView");
+                }
+            }
+            xhr.open("GET", "itowns/ipCameraView/parameter.txt");
+            xhr.send("null");
+        }
+
         this.itownSelect.getDOM().style.marginTop = "20px"
         wrapDom.appendChild(this.itownSelect.getDOM())
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
@@ -292,19 +297,19 @@ class GUI extends EventEmitter {
 
     addUserContentSelect(metaData) {
         this.itownSelect.addOption(JSON.stringify({
-            type : "user", 
-            url : metaData.url,
-            meta : metaData
+            type: "user",
+            url: metaData.url,
+            meta: metaData
         }), "ContentID:" + metaData.id);
     }
 
     initPropertyPanel() {
         let propElem = document.getElementById('itowns_property');
 
-		let propInner = document.createElement('div');
-		propInner.className = "itowns_property_inner";
+        let propInner = document.createElement('div');
+        propInner.className = "itowns_property_inner";
         propElem.appendChild(propInner);
-        
+
         // コンテンツIDタイトル
         let contentIDTitle = document.createElement('p');
         contentIDTitle.className = "title";
@@ -367,10 +372,10 @@ class GUI extends EventEmitter {
     }
 
     getSelectedValueOnMenuContents() {
-        let selectValue = { type : "error", url : "" };
+        let selectValue = { type: "error", url: "" };
         try {
             selectValue = JSON.parse(this.itownSelect.getSelectedValue());
-        } catch(ex) {
+        } catch (ex) {
             console.error(ex);
         }
         return selectValue;
@@ -397,7 +402,7 @@ class GUI extends EventEmitter {
             this.iframe.contentWindow.onmousedown = () => {
                 this.iframe.contentWindow.focus();
             };
-    
+
             this.action.connectIFrame(this.iframe);
         };
         document.getElementById('itowns').appendChild(this.iframe);
@@ -421,7 +426,7 @@ class GUI extends EventEmitter {
                 orgWidth: this.getWindowSize().width,
                 orgHeight: this.getWindowSize().height,
                 visible: true,
-                layerList : JSON.stringify(param.layerList),
+                layerList: JSON.stringify(param.layerList),
                 url: decodeURI(selectValue.url)
             };
             let data = {
@@ -443,7 +448,7 @@ class GUI extends EventEmitter {
             height: window.innerHeight
         };
     }
-    
+
     /// パフォーマンス計測結果を表示
     savePerformanceResult(dataID, displayID) {
         let result = this.store.getPerformanceResult();
@@ -480,8 +485,8 @@ class GUI extends EventEmitter {
 
         function save(text, filename) {
             let bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-            let blob = new Blob([bom, text], {type: 'text/csv'});
-    
+            let blob = new Blob([bom, text], { type: 'text/csv' });
+
             let url = (window.URL || window.webkitURL);
             let blobUrl = url.createObjectURL(blob);
             let e = document.createEvent('MouseEvents');
@@ -491,7 +496,7 @@ class GUI extends EventEmitter {
             a.download = filename;
             a.dispatchEvent(e);
         }
-        save(text, "performance_" + dataID + ".csv" )
+        save(text, "performance_" + dataID + ".csv")
     }
 
 }
