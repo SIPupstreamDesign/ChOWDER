@@ -109,8 +109,9 @@ class GUI extends EventEmitter {
             });
 
             // iframe内からコンテンツ追加命令がきた
-            itownConnector.on(ITownsCommand.AddContent, (err, params) => {
+            itownConnector.on(ITownsCommand.AddContent, (err, params, req) => {
                 this.addITownContent(params, toArrayBuffer(params.thumbnail));
+                itownConnector.sendResponse(req)
             });
 
             // iframe内のitownsのレイヤーが更新された

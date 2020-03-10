@@ -11,7 +11,9 @@ const ITownsConstants = {
     Type3DTile : "3dtile",
     TypePointCloud : "pointcloud",
     TypeGeometry : "geometry",
-    TypeLayer : "layer"
+    TypeUser : "user",
+    TypeGlobe : "globe",
+    TypeAtomosphere : "atomosphere"
 };
 
 export default ITownsConstants;

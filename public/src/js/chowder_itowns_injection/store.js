@@ -340,7 +340,7 @@ class Store extends EventEmitter {
                     source: mapSource
                 });
             }
-            if (config.format === "pbf") {
+            else if (config.format === "pbf") {
                 // Add a vector tile layer
                 function inter(z) {
                     return z - (z % 5);
@@ -365,23 +365,25 @@ class Store extends EventEmitter {
 
     createLayerConfigByType(params, type) {
         let url = params.url;
-        if (url.indexOf("${z}") >= 0) {
-            url = url.split("${z}").join("%TILEMATRIX");
-        }
-        if (url.indexOf("${x}") >= 0) {
-            url = url.split("${x}").join("%COL");
-        }
-        if (url.indexOf("${y}") >= 0) {
-            url = url.split("${y}").join("%ROW");
-        }
-        if (url.indexOf("{z}") >= 0) {
-            url = url.split("{z}").join("%TILEMATRIX");
-        }
-        if (url.indexOf("{x}") >= 0) {
-            url = url.split("{x}").join("%COL");
-        }
-        if (url.indexOf("{y}") >= 0) {
-            url = url.split("{y}").join("%ROW");
+        if (url) {
+            if (url.indexOf("${z}") >= 0) {
+                url = url.split("${z}").join("%TILEMATRIX");
+            }
+            if (url.indexOf("${x}") >= 0) {
+                url = url.split("${x}").join("%COL");
+            }
+            if (url.indexOf("${y}") >= 0) {
+                url = url.split("${y}").join("%ROW");
+            }
+            if (url.indexOf("{z}") >= 0) {
+                url = url.split("{z}").join("%TILEMATRIX");
+            }
+            if (url.indexOf("{x}") >= 0) {
+                url = url.split("{x}").join("%COL");
+            }
+            if (url.indexOf("{y}") >= 0) {
+                url = url.split("{y}").join("%ROW");
+            }
         }
 
         let config = {};
@@ -445,7 +447,7 @@ class Store extends EventEmitter {
                 config.wireframe = params.wireframe;
             }
         }
-        if (url.indexOf('.geojson') >= 0) {
+        if (url && url.indexOf('.geojson') >= 0) {
             config = {
                 "projection": "EPSG:3857",
                 "tileMatrixSet": "PM",
@@ -456,7 +458,7 @@ class Store extends EventEmitter {
             }
             config.format = "geojson";
         }
-        if (url.indexOf('.pbf') >= 0) {
+        if (url && url.indexOf('.pbf') >= 0) {
             config = {
                 "projection": "EPSG:3857",
                 "tileMatrixSet": "PM",
@@ -476,6 +478,9 @@ class Store extends EventEmitter {
         }
         if (params.hasOwnProperty('format')) {
             config.format = params.format;
+        }
+        if (params.hasOwnProperty('opacity')) {
+            config.opacity = params.opacity;
         }
         return config;
     }
@@ -529,14 +534,26 @@ class Store extends EventEmitter {
      */
     initLayers(layerList) {
         for (let i = this.layerDataList.length - 1; i >= 0; --i) {
-            const id = this.layerDataList[i].id;
-            let layer = this.getLayer(id);
-            if (layer) {
-                this.itownsView.removeLayer(id);
+            if (this.layerDataList[i].type === ITownsConstants.TypeUser) {
+                continue;
+            } else {
+                const id = this.layerDataList[i].id;
+                let layer = this.getLayer(id);
+                if (layer) {
+                    this.itownsView.removeLayer(id);
+                }
             }
         }
         for (let i = 0; i < layerList.length; ++i) {
-            this.addLayer(layerList[i]);
+            if (layerList[i].type === ITownsConstants.TypeUser) {
+                let src = layerList[i];
+                let dst = this.getLayer(src.id);
+                dst.wireframe = src.wireframe;
+                dst.visible = src.visible;
+                dst.opacity = src.opacity;
+            } else {
+                this.addLayer(layerList[i]);
+            }
         }
     }
 
@@ -849,6 +866,9 @@ class Store extends EventEmitter {
             if (layer.hasOwnProperty('wireframe')) {
                 data.wireframe = layer.wireframe;
             }
+            if (layer.hasOwnProperty('opacity')) {
+                data.opacity = layer.opacity;
+            }
             if (layer.hasOwnProperty('sseThreshold')) {
                 data.sseThreshold = layer.sseThreshold;
             }
@@ -858,7 +878,8 @@ class Store extends EventEmitter {
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||
                 (layer.hasOwnProperty('file') && layer.hasOwnProperty('url')) ||
-                (layer.hasOwnProperty('name') && layer.hasOwnProperty('url'))
+                (layer.hasOwnProperty('name') && layer.hasOwnProperty('url')) ||
+                (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true)
             ) {
                 if (layer.hasOwnProperty('source') || layer.hasOwnProperty('file')) {
                     data.visible = layer.visible;
@@ -869,7 +890,9 @@ class Store extends EventEmitter {
                     data.zoom = layer.hasOwnProperty('source') ? layer.source.zoom : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.type = (((layer) => {
-                        if (layer instanceof itowns.ElevationLayer) {
+                        if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
+                            return ITownsConstants.TypeUser;
+                        } else if (layer instanceof itowns.ElevationLayer) {
                             return ITownsConstants.TypeElevation;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
@@ -880,7 +903,7 @@ class Store extends EventEmitter {
                         } else if (layer instanceof itowns.GeometryLayer) {
                             return ITownsConstants.TypeGeometry;
                         } else {
-                            return ITownsConstants.TypeLayer;
+                            return ITownsConstants.TypeUser;
                         }
                     })(layer));
                     dataList.push(data);
@@ -892,8 +915,8 @@ class Store extends EventEmitter {
                     data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
                     data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
                     data.type = (((layer) => {
-                        if (layer instanceof itowns.ElevationLayer) {
-                            return ITownsConstants.TypeElevation;
+                        if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
+                            return ITownsConstants.TypeUser;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
                         } else if (layer instanceof itowns.PointCloudLayer) {
@@ -903,14 +926,13 @@ class Store extends EventEmitter {
                         } else if (layer instanceof itowns.GeometryLayer) {
                             return ITownsConstants.TypeGeometry;
                         } else {
-                            return ITownsConstants.TypeLayer;
+                            return ITownsConstants.TypeUser;
                         }
                     })(layer));
                     dataList.push(data);
                 }
             }
         }
-        //console.error("dataList", layers, dataList)
         return dataList;
     }
 
@@ -934,11 +956,13 @@ class Store extends EventEmitter {
             timer = setTimeout((() => {
                 return () => {
                     if (!done && (count > 1)) {
+                        done = true;
                         this.iframeConnector.send(ITownsCommand.AddContent, {
                             thumbnail: thumbnailBase64,
                             layerList: this.layerDataList
+                        }, function () {
+                            done = true;
                         });
-                        done = true;
                     }
                 }
             })(), interval);

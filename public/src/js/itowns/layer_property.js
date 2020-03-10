@@ -142,7 +142,6 @@ class LayerProperty extends EventEmitter {
 			this.layerURL.innerText += layerProps.file;
 		}
 		this.dom.appendChild(this.layerURL);
-		console.log(layerProps)
 
 		// visible
 		if (layerProps.type !== ITownsConstants.TypeElevation) {
@@ -184,7 +183,9 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// opacity
-		if (layerProps.type !== ITownsConstants.TypeElevation) {
+		if (layerProps.type !== ITownsConstants.TypeElevation &&
+			layerProps.type !== ITownsConstants.TypeAtomosphere
+			) {
 			if (layerProps && layerProps.hasOwnProperty('opacity')) {
 				this.opacitySlider = new PropertySlider(layerID && layerProps, "opacity", "", layerProps.opacity);
 			} else {
@@ -252,7 +253,10 @@ class LayerProperty extends EventEmitter {
 		*/
 		
 		// wireframe
-		if (layerProps.type === ITownsConstants.Type3DTile || layerProps.type === ITownsConstants.TypeGeometry) 
+		if (layerProps.type === ITownsConstants.Type3DTile
+			 || layerProps.type === ITownsConstants.TypeGeometry
+			 || layerProps.type === ITownsConstants.TypeUser
+			 || layerProps.type === ITownsConstants.TypeGlobe) 
 		{
 			if (layerProps && layerProps.hasOwnProperty('wireframe')) {
 				addCheckProperty(this.dom, layerID && layerProps, "wireframe", "wireframe", layerProps.wireframe, (err, data) => {
@@ -327,8 +331,9 @@ class LayerProperty extends EventEmitter {
 
 		// offset_small_uv
 		// offset_uvの1度の区間を1000分の1にしたスライダー
-		if (layerProps.type !== ITownsConstants.TypeColor && 
-			layerProps.type !== ITownsConstants.TypeElevation) {
+		if (layerProps.type === ITownsConstants.TypePointCloud ||
+			layerProps.type === ITownsConstants.Type3DTile ||
+			layerProps.type === ITownsConstants.TypeGeometry) {
 			if (layerProps && layerProps.hasOwnProperty('offset_small_uv')) {
 				this.offsetTU = new PropertySlider(layerID && layerProps, "offset tu", "", layerProps.offset_small_uv.u / 2000.0 + 0.5, 2000, false, -1000, 1000)
 				this.offsetTV = new PropertySlider(layerID && layerProps, "offset tv", "", layerProps.offset_small_uv.v / 2000.0 + 0.5, 2000, false, -1000, 1000);
@@ -352,8 +357,9 @@ class LayerProperty extends EventEmitter {
 		}
 		
 		// offset_uv
-		if (layerProps.type !== ITownsConstants.TypeColor && 
-			layerProps.type !== ITownsConstants.TypeElevation) {
+		if (layerProps.type === ITownsConstants.TypePointCloud ||
+			layerProps.type === ITownsConstants.Type3DTile ||
+			layerProps.type === ITownsConstants.TypeGeometry) {
 			if (layerProps && layerProps.hasOwnProperty('offset_uvw')) {
 				this.offsetU = new PropertySlider(layerID && layerProps, "offset u", "", layerProps.offset_uvw.u / 360.0 + 0.5, 360, false, -180, 180)
 				this.offsetV = new PropertySlider(layerID && layerProps, "offset v", "", layerProps.offset_uvw.v / 360.0 + 0.5, 360, false, -180, 180)
