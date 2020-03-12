@@ -72,9 +72,9 @@ class LayerDialog extends EventEmitter {
         this.urlTitle.className = "layer_dialog_sub_title";
         this.urlTitle.innerText = "URL:";
 
-        this.urlInput = new Input("text");
-        this.urlInput.getDOM().className = "layer_dialog_url_input";
-        this.urlInput.setValue("http://" + window.location.hostname + ":" + window.location.port + "/std/{z}/{x}/{y}.png");
+        this.urlInput = document.createElement('textarea');
+        this.urlInput.className = "layer_dialog_url_input";
+        this.urlInput.value = "http://" + window.location.hostname + ":" + window.location.port + "/std/{z}/{x}/{y}.png";
         
         this.styleURLTitle = document.createElement('p');
         this.styleURLTitle.className = "layer_dialog_sub_title";
@@ -129,8 +129,9 @@ class LayerDialog extends EventEmitter {
         }
         {
             let titleRow = createRow();
+            titleRow.className = "layer_dialog_row2"
             titleRow.appendChild(this.urlTitle);
-            titleRow.appendChild(this.urlInput.getDOM());
+            titleRow.appendChild(this.urlInput);
         }
         {
             this.styleRow = createRow();
@@ -151,7 +152,7 @@ class LayerDialog extends EventEmitter {
         this.background = new PopupBackground();
         this.background.on('close', () => {
             this.data.type = this.typeSelect.getSelectedValue();
-            this.data.url = this.urlInput.getValue();
+            this.data.url = this.urlInput.value.split("\n").join("");
             this.data.id = this.idInput.getValue();
             this.data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
             this.data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
