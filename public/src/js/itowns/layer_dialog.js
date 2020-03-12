@@ -80,9 +80,9 @@ class LayerDialog extends EventEmitter {
         this.styleURLTitle.className = "layer_dialog_sub_title";
         this.styleURLTitle.innerText = "Style:";
 
-        this.styleURLInput = new Input("text");
-        this.styleURLInput.getDOM().className = "layer_dialog_url_input";
-        this.styleURLInput.setValue("https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json");
+        this.styleURLInput = document.createElement('textarea');
+        this.styleURLInput.className = "layer_dialog_url_input";
+        this.styleURLInput.value = "https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json";
 
         this.zoomMinTitle = document.createElement('p');
         this.zoomMinTitle.className = "layer_dialog_zoom_title";
@@ -135,8 +135,9 @@ class LayerDialog extends EventEmitter {
         }
         {
             this.styleRow = createRow();
+            this.styleRow.className = "layer_dialog_row2"
             this.styleRow.appendChild(this.styleURLTitle);
-            this.styleRow.appendChild(this.styleURLInput.getDOM());
+            this.styleRow.appendChild(this.styleURLInput);
             this.styleRow.style.display = "none";
         }
         {
@@ -159,7 +160,7 @@ class LayerDialog extends EventEmitter {
             
             let type = this.typeSelect.getSelectedValue();
             if (type === "geometry") {
-                this.data.style = this.styleURLInput.getValue();
+                this.data.style = this.styleURLInput.value.split("\n").join("");
             }
 
             if (this.endCallback) 
