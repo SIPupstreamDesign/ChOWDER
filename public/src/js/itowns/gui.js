@@ -209,7 +209,7 @@ class GUI extends EventEmitter {
     }
 
     initLoginMenu() {
-        this.loginMenu = new LoginMenu("ChOWDER iTowns Controller");
+        this.loginMenu = new LoginMenu("ChOWDER iTowns App");
         document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 
         // ログインが実行された場合
@@ -246,7 +246,7 @@ class GUI extends EventEmitter {
                 }]
             }];*/
 
-        this.headMenu = new Menu("", menuSetting, "ChOWDER iTowns Controller");
+        this.headMenu = new Menu("", menuSetting, "ChOWDER iTowns App");
         document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
 
     }
