@@ -1273,6 +1273,7 @@ GISレイヤー追加機能
  - PointCloud : potree Converterによって作成された点群データ
     - http://server-address/cloud.json などと、jsonのアドレスを指定
  - VectorTile : pbfなどのベクトルタイル
+    - http://server-address/vectortile.pbf などと、ベクトルタイルのアドレスを指定
 
  IDには、レイヤーリストに表示される名前を設定します。ユニークな名前である必要があります。
 
