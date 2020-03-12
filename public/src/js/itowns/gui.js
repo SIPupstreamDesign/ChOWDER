@@ -58,13 +58,18 @@ class GUI extends EventEmitter {
         })();
 
         let date = new Date();
+        const year = 2019;
+        const month = 8;
+        const day = 3;
+        const minHour = 10;
+
         $("#timeline").k2goTimeline(
             {
-                startTime: new Date(2020, (2 - 1), 8, 9, 0, 0), // 左端の日時
-                endTime: new Date(2020, (2 - 1), 8, 23, 59, 59), // 右端の日時
-                currentTime: new Date(2020, (2 - 1), 8, 9), // 摘み（ポインタ）の日時
-                minTime: new Date(2020, (2 - 1), 8, 9, 0, 0), // 過去方向への表示可能範囲
-                maxTime: new Date(2020, (2 - 1), 8, 23, 59, 59), // 未来方向への表示可能範囲
+                startTime: new Date(year, (month - 1), day, minHour, 0, 0), // 左端の日時
+                endTime: new Date(year, (month - 1), day, 23, 59, 59), // 右端の日時
+                currentTime: new Date(year, (month - 1), day, 13, 51), // 摘み（ポインタ）の日時
+                minTime: new Date(year, (month - 1), day, minHour, 0, 0), // 過去方向への表示可能範囲
+                maxTime: new Date(year, (month - 1), day, 23, 59, 59), // 未来方向への表示可能範囲
                 timeChange: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得
