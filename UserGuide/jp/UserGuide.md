@@ -1236,8 +1236,8 @@ GIS描画ライブラリであるiTownsを使用し、GISコンテンツを、We
 以下のURLにアクセスし、WebGL分散描画機能を利用することができます.
 HTTPS用URLでは、例外に追加する必要があります.
 
--   HTTP用URL … http://ChOWDER_Server_Address:8080/itowns/
--   HTTPS用URL … https://ChOWDER_Server_Address:9090/itowns/
+-   HTTP用URL … http://ChOWDER_Server_Address:8080/itowns.html
+-   HTTPS用URL … https://ChOWDER_Server_Address:9090/itowns.html
 
 <img src="image/itowns1.png" alt="WebGL分散描画機能" width="500" />
 

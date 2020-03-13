@@ -59,15 +59,21 @@ Table of Contents
   - [Application Setup](#application-setup)
   - [Using the Application](#using-the-application)
 - [Displaying and Managing Large Scale Image Data](#displaying-and-managing-large-scale-image-data)
-- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+- [Using the WebGL distributed drawing function](#using-the-webgl-distributed-drawing-function)
   - [Overview](#overview-6)
+  - [Application Setup](#application-setup-1)
+  - [GIS layer addition function](#gis-layer-addition-function)
+  - [GIS layer properties](#gis-layer-properties)
+  - [Settings on the controller](#settings-on-the-controller)
+- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+  - [Overview](#overview-7)
   - [Installing the Application](#installing-the-application)
   - [Launching the Application](#launching-the-application-1)
   - [Application Setup](#application-setup-1)
   - [Editing the Configuration File](#editing-the-configuration-file)
   - [Installation on remote host](#installation-on-remote-host)
 - [Using HTTPS](#using-https)
-  - [Overview](#overview-7)
+  - [Overview](#overview-8)
 
 About ChOWDER
 ==================================================================
@@ -1172,6 +1178,101 @@ The following commands are available by selecting large scale image in Controlle
 3. Synching of selected large scale image data begins upon pressing the Sync button. All contents in sync within the same group will switch to the corresponding image data according to the selection of `key` and `value` in `metadata`.
 4. The slider may also be used to switch `value` as described in item 2 above.
 
+Using the WebGL distributed drawing function
+========================================================================================
+
+Overview
+--------------------------------------------------------------------------------
+
+Using iTowns, a GIS drawing library, GIS content can be drawn on a ChOWDER display using WebGL.
+
+Application Setup
+--------------------------------------------------------------------------------
+
+You can access the following URL and use the WebGL distributed drawing function.
+In the URL for HTTPS, it is necessary to add to the exception.
+
+-   HTTP URL … http://ChOWDER_Server_Address:8080/itowns.html
+-   HTTPS URL … https://ChOWDER_Server_Address:9090/itowns.html
+
+<img src="image/itowns1.png" alt="WebGL分散描画機能" width="500" />
+
+Select the APIUser password and the preset to be displayed, and log in.
+When the content is loaded successfully, the displayed preset will be added as a ChOWDER content at the same time.
+
+<img src="image/itowns2.jpg" alt="WebGL分散描画機能" width="500" />
+
+ - 1. The registered content ID
+ - 2. The URL of the preset
+ - 3. Operable GIS layers 
+ - 4. Add and delete GIS layers
+ - 5. Manipulate GIS layer properties
+ - 6. Display performance measurement function
+ - 7. In the content corresponding to the time change, the time change by the timeline operation is reflected
+
+GIS layer addition function
+--------------------------------------------------------------------------------
+
+By pressing the Add Layer button, the Add Layer dialog will appear.
+You can add layers.
+
+<img src="image/itowns3.png" alt="レイヤー追加ダイアログ" width="500" />
+
+The type of layer that can be added and the method of specifying the URL are as follows
+ - Color : EPSG3857 Color Tiles
+    - http://server-address/{z}/{x}/{y}.png - Specify the tile number part with {x} {y} {z}
+ - Elevation : EPSG4326 Elevation Tiles or DEM Tiles in gsi.co.jp
+    - http://server-address/{z}/{x}/{y}.txt- Specify the tile number part with {x} {y} {z}
+ - 3D Tile : 3D Tiles(b3dm)
+    - http://server-address/tileset.json - Specify json address
+ - PointCloud : Point cloud data created by potree Converter
+    - http://server-address/cloud.json - Specify json address
+ - VectorTile : pbfなどのベクトルタイル
+    - http://server-address/vectortile.pbf - Specify vector tile address
+
+For the ID, set the name displayed in the layer list. Must be a unique name.
+
+For ZOOM, specify the expansion range of the data source.
+Corresponds to {z} in the tile URL.
+
+<img src="image/itowns4.png" alt="レイヤー追加ダイアログ" width="500" />
+
+In VectorLayer, specify style.json for Style.
+
+GIS layer properties
+--------------------------------------------------------------------------------
+
+The following properties can be set from the GUI for each type of layer added
+
+ - Color
+    - visible - Show / Hide
+    - opacity - Opacity
+ - Elevation
+    - scale - Elevation magnification
+ - 3D Tiles
+    - visible - Show / Hide
+    - opacity - Opacity
+    - wireframe - Show / Hide of wireframe
+    - sseThreshold  - Threshold used for LoD processing
+    - offset tu, offset uv, offset u, offset v - Tangent position offset
+    - offset w  - Position offset in height direction
+
+ - PointCloud
+    - visible - Show / Hide
+    - bbox - Show / Hide of bounding box
+    - opacity - Opacity
+    - size  - Point size in screen space
+    - sseThreshold  - Threshold used for LoD processing
+    - offset tu, offset uv, offset u, offset v - Tangent position offset
+    - offset w  - Position offset in height direction
+
+Settings on the controller
+--------------------------------------------------------------------------------
+
+<img src="image/itowns5.jpg" alt="コントローラでの設定" width="500" />
+
+The controller cannot operate the camera of GIS content, etc.,
+In addition to the normal content settings, you can set the display / non-display of the time information on the timeline
 
 Using the Display Application for the Electron version of ChOWDER
 ==================================================================
