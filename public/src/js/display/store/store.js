@@ -250,7 +250,7 @@ class Store extends EventEmitter {
         if (metaData) {
             params.posx = metaData.posx;
             params.posy = metaData.posy;
-            params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);   
+            params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
         } else {
             params.posx = 0;
             params.posy = 0;
@@ -313,7 +313,7 @@ class Store extends EventEmitter {
         let query = this.getQueryParams(location.search) || {};
         windowID = query.id ? decodeURIComponent(query.id) : windowID;
         let groupId = undefined;
-        
+
         let f = () => {
             if (windowID !== '') {
                 Connector.send(Command.GetWindowMetaData, { id: windowID }, (err, metaData) => {
@@ -588,7 +588,7 @@ class Store extends EventEmitter {
 		return this.metaDataDict[id];
 	}
 
-    
+
     /**
      * 閲覧情報があるか返す
      */
@@ -637,6 +637,10 @@ class Store extends EventEmitter {
     getTime() {
         return this.time;
     }
+
+    getGlobalSetting(){
+		return this.globalSetting;
+	}
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";

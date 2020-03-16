@@ -20,7 +20,7 @@ class VideoStore {
         this.connector = connector;
         this.store = store;
 		this.action = action;
-        
+
 		// WebRTC用キーから WebRTCインスタンスへのマップ
         this.webRTCDict = {};
 
@@ -92,14 +92,14 @@ class VideoStore {
         let rtcKey = this.getRTCKey(metaData);
         let meta = this.store.getMetaData(metaData.id);
         const isUseDataChannel = this.isDataChannelUsed(metaData);
-        
+
         // 既にDatachannel使ってるか？
         let isAlreadyUsed =  this.isDataChannelUsed(meta);
         // Datachannel使ってるか？
         let isDataChannelUsed = this.isDataChannelUsed(metaData);
 
         this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
-            let webRTC = new WebRTC();
+			webRTC = new WebRTC(this.store.globalSetting);
             this.webRTCDict[rtcKey] = webRTC;
 
             if (isDataChannelUsed) {
@@ -109,7 +109,7 @@ class VideoStore {
                     elem.srcObject = null;
                 }
             }
-            
+
             if (isDataChannelUsed) {
                 let info = null;
                 try {
@@ -118,11 +118,11 @@ class VideoStore {
                     console.error(e, metaData.video_info);
                 }
                 console.log("isUseDataChannel!", info)
-                
-                if (info) {            
-                    const codec = this.getCodec(info);    
+
+                if (info) {
+                    const codec = this.getCodec(info);
                     const duration = info.duration/info.timescale;
-                    
+
                     console.log("codec", codec.videoCodec, codec.audioCodec,
                         MediaSource.isTypeSupported(codec.videoCodec),
                         MediaSource.isTypeSupported(codec.audioCodec)
@@ -146,7 +146,7 @@ class VideoStore {
                     delete this.mediaPlayerDict[rtcKey];
                 }
             }
-            
+
             webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
 
                 if (!isUseDataChannel) {
@@ -197,7 +197,7 @@ class VideoStore {
                     }
                 })(this.mediaPlayerDict[rtcKey]));
             }
-            
+
             if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
                 webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE, ((mediaPlayer) => {
                     return (err, message) => {
@@ -239,14 +239,14 @@ class VideoStore {
     getRTCKey(metaData) {
         return metaData.id + "_" + this.store.getWindowData().id + "_" + random_id_for_webrtc;
     }
-    
+
 	isDataChannelUsed(metaData) {
         let isUseDataChannel = false;
 		try {
             if (metaData.hasOwnProperty('quality')) {
                 let quality = JSON.parse(metaData.quality);
-                isUseDataChannel = (quality 
-                    && quality.hasOwnProperty('raw_resolution') 
+                isUseDataChannel = (quality
+                    && quality.hasOwnProperty('raw_resolution')
                     && quality.raw_resolution === true);
             }
 		} catch(e) {
@@ -265,7 +265,7 @@ class VideoStore {
 		player.release();
 		delete this.videoPlayerDict[id];
     }
-    
+
     closeVideo(json) {
 		let webRTCDict = this.getWebRTCDict();
 		let rtcKey = this.getRTCKey(json);

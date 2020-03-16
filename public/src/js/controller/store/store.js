@@ -48,7 +48,7 @@ class Store extends EventEmitter
 		this.isInitialized_ = false;
 
 		this.time = null;
-		
+
 		// 接続状況
 		// null = 初期状態(未接続), false = 接続済, true = 接続した後に切断された
 		this.isDisconnect = null;
@@ -337,7 +337,7 @@ class Store extends EventEmitter
             console.error("addITownFun - invalid param");
         }
 	}
-	
+
 	getDisplayPermissionList(){
 		return this.displayPermissionList;
 	}
@@ -557,14 +557,18 @@ class Store extends EventEmitter
 			return min - 1;
 		}
 	}
-	
+
     getITownFuncDict() {
         return this.itownFuncDict;
 	}
 
     getTime() {
         return this.time;
-    }
+	}
+
+	getGlobalSetting(){
+		return this.managementStore.globalSetting;
+	}
 }
 
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
