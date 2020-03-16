@@ -77,6 +77,8 @@
     -   [リモートホストへのインストール](#リモートホストへのインストール)
 -   [HTTPSの利用](#httpsの利用)
     -   [概要](#概要-8)
+-   [coturnの利用](#coturnの利用)
+    -   [概要](#概要-9)
     
 はじめに
 ========================================================================================
@@ -216,12 +218,20 @@ redisが起動しているterminalを終了させます.
     {
         "wsMaxMessageSize": 67108864,
         "reductionResolution" : 1920,
-        "enableMeasureTime" : false
+        "enableMeasureTime" : false,
+        "stunServerUrl" : "",
+        "turnServerUrl" : "",
+        "turnServerUsername" : "",
+        "turnServerCredential" : ""
     }
 
 -   `wsMaxMessageSize`には、サーバーが1回で送受信できる最大メッセージサイズを設定します。
 -   `reductionResolution`には、大規模画像データの縮小画像のサイズを設定します。このサイズ以上の大規模画像データを登録した場合は、縮小画像が生成され、表示解像度によっては縮小画像が表示に使用されます。
 -   `enableMeasureTime`には、時刻ログ出力を有効にするかどうかを設定します。時刻ログ出力を有効にした場合、tileimage/log、server/logに対してログファイルが出力されます。また、Display上でDisplayでのログがダウンロードできるようになります。
+-   `stunServerUrl`には、WebRTC接続において使用する、STUNサーバのURLを指定します。
+-   `turnServerUrl`には、WebRTC接続において使用する、TURNサーバのURLを指定します。
+-   `turnServerUsername`には、WebRTC接続において使用する、TURNサーバの認証用ユーザー名を指定します。
+-   `turnServerCredential`には、WebRTC接続において使用する、TURNサーバの認証用パスワードを指定します。
 
 管理者初期設定
 ---------------------------------------------------
@@ -1417,3 +1427,12 @@ ChOWDERでは標準でHTTPSサーバーも立ち上がっていて、仮の証�
 -   HTTPS用URL … https://localhost:9090
 -   HTTPS用WebSocketポート … https://localhost:9091
 
+coturnの利用
+========================================================================================
+
+概要
+---------------------------------------------------
+
+Linux環境では、WebRTC用に、STUN/TURNサーバとして、coturnを使用することができます。
+coturnは、install.shによるインストール時に同時にインストールされ、デフォルトで使用されます。
+また、別のSTUN/TURNサーバを使用したい場合は、[サーバー基本設定](#サーバー基本設定)により、任意のSTUN/TURNサーバを指定することが可能です。

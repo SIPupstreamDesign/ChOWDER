@@ -74,6 +74,8 @@ Table of Contents
   - [Installation on remote host](#installation-on-remote-host)
 - [Using HTTPS](#using-https)
   - [Overview](#overview-8)
+- [Using coturn](#using-coturn)
+  - [Overview](#overview-9)
 
 About ChOWDER
 ==================================================================
@@ -211,13 +213,20 @@ The server program reads the `server/setting.json` file while launching to confi
     {
         "wsMaxMessageSize": 67108864,
         "reductionResolution" : 1920,
-        "enableMeasureTime" : false
+        "enableMeasureTime" : false,
+        "stunServerUrl" : "",
+        "turnServerUrl" : "",
+        "turnServerUsername" : "",
+        "turnServerCredential" : ""
     }
 
 -   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
 -   `reductionResolution` sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
 -   `enableMeasureTime` sets whether time log output is enabled or not. The log file is output to `tileimage/log`, `server/log`. You can also download logs on Display on Display.
-
+-   `stunServerUrl` sets the STUN server URL in the WebRTC connection.
+-   `turnServerUrl` sets the TURN server URL in the WebRTC connection.
+-   `turnServerUsername` sets the username in the WebRTC credential.
+-   `turnServerCredential` sets the password in the WebRTC credential.
 
 Managing Administrative Users
 ---------------------------------------------------
@@ -1369,3 +1378,13 @@ ChOWDER has a built-in HTTPS server as well as a temporary SSL certificate. Unde
 
 - URL for HTTPS — https://localhost:9090
 - WebSocket Port for HTTPS — https://localhost:9091
+
+Using coturn
+==================================================================
+
+Overview
+---------------------------------------------------
+
+In a Linux environment, coturn can be used as a STUN / TURN server for WebRTC.
+coturn is installed at the same time as install.sh and is used by default.
+If you want to use another STUN/TURN server, you can specify any STUN/TURN server by [Basic Setup for Server](#basic-setup-for-server).
