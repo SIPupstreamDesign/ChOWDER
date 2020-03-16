@@ -99,7 +99,7 @@ class VideoStore {
         let isDataChannelUsed = this.isDataChannelUsed(metaData);
 
         this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
-			webRTC = new WebRTC(this.store.globalSetting);
+			let webRTC = new WebRTC(this.store.globalSetting);
             this.webRTCDict[rtcKey] = webRTC;
 
             if (isDataChannelUsed) {
