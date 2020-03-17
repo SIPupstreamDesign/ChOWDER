@@ -1,0 +1,70 @@
+
+
+.date_input {
+    position: absolute;
+	width: 40px;
+    height: 25px;
+    text-align: center;
+}
+
+.date_input_year_in {
+	width : 60px;
+    top: 0px;
+    left: 0px;
+}
+
+.date_input_month_in {
+    top: 0px;
+	left: 70px;
+}
+.date_input_day_in {
+	top: 0px;
+	left: 120px;
+}
+
+.date_input_slash_txt_1 {
+    width: 10px;
+    margin: 2px;
+    top: 0px;
+    left: 60px;
+	color : white;
+}
+
+.date_input_slash_txt_2 {
+    width: 10px;
+    margin: 2px;
+    top: 0px;
+    left: 110px;
+	color : white;
+}
+
+.date_input_colon_txt_1 {
+    width: 10px;
+    margin: 2px;
+    top: 0px;
+	left: 220px;
+	color : white;
+}
+
+.date_input_colon_txt_2 {
+    width: 10px;
+    margin: 2px;
+    top: 0px;
+	left: 270px;
+	color : white;
+}
+
+.date_input_hour_in {
+	top: 0px;
+	left: 180px;
+}
+
+.date_input_minute_in {
+	top: 0px;
+	left: 230px;
+}
+
+.date_input_second_in {
+	top: 0px;
+	left: 280px;
+}

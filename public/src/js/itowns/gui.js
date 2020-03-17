@@ -17,6 +17,8 @@ import ITownsCommand from '../common/itowns_command';
 import Button from '../components/button';
 import InputDialog from '../components/input_dialog'
 import PopupBackground from '../components/popup_background';
+import DateInput from '../components/date_input';
+import TimelineSettingDialog from './timeline_setting_dialog';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -57,19 +59,13 @@ class GUI extends EventEmitter {
             };
         })();
 
-        let date = new Date();
-        const year = 2019;
-        const month = 8;
-        const day = 3;
-        const minHour = 10;
-
         $("#timeline").k2goTimeline(
             {
-                startTime: new Date(year, (month - 1), day, minHour, 0, 0), // 左端の日時
-                endTime: new Date(year, (month - 1), day, 23, 59, 59), // 右端の日時
-                currentTime: new Date(year, (month - 1), day, 13, 51), // 摘み（ポインタ）の日時
-                minTime: new Date(year, (month - 1), day, minHour, 0, 0), // 過去方向への表示可能範囲
-                maxTime: new Date(year, (month - 1), day, 23, 59, 59), // 未来方向への表示可能範囲
+                startTime: this.store.getTimelineStartTime(), // 左端の日時
+                endTime: this.store.getTimelineEndTime(), // 右端の日時
+                currentTime: this.store.getTimelineCurrentTime(), // 摘み（ポインタ）の日時
+                minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
+                maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
                 timeChange: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得
@@ -83,6 +79,36 @@ class GUI extends EventEmitter {
                     debounceChangeTime(pTimeInfo);
                 }
             });
+
+
+        this.timelineSettingDialog = new TimelineSettingDialog(this.store, this.action);
+        document.body.appendChild(this.timelineSettingDialog.getDOM());
+        
+        let timelineSettingButton = new Button();
+        timelineSettingButton.getDOM().classList.add("timeline_setting_button");
+        document.getElementById('timeline').appendChild(timelineSettingButton.getDOM());
+        timelineSettingButton.on('click', () => {
+            this.timelineSettingDialog.show((err, data) => {
+                this.action.changeTimelineRange(data);
+            });
+        });
+
+        this.store.on(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, (err) => {
+            const start = this.store.getTimelineStartTime();
+            const end = this.store.getTimelineEndTime();
+            const current = this.store.getTimelineCurrentTime();
+            $("#timeline").k2goTimeline("create",
+            {
+                timeInfo :
+                {
+                  minTime     : start,
+                  maxTime     : end,
+                  startTime   : start,
+                  endTime     : end,
+                  currentTime : current
+                }
+            });
+        });
 
         this.initWindow();
         this.initLoginMenu();

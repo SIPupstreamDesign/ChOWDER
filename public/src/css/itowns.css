@@ -187,6 +187,37 @@ p {
 	border-radius: 5px;
 }
 
+.timeline_setting_dialog {
+	display : none;
+	top: 50%;
+	left: 50%;
+    width: 500px;
+    height: 200px;
+	margin-top: calc(-300px / 2);
+	margin-left: calc(-500px / 2);
+	position: fixed;
+	z-index: 100000000;
+	background-color: rgb(83, 83, 83);
+	border-radius: 5px;
+}
+
+.timeline_setting_button {
+	background-image:url("../image/setting3.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	
+    width: 32px;
+    height: 32px;
+    position: fixed;
+    left: 8px;
+    bottom: 10px;
+    background-color: lightgray;
+}
+
+.timeline_setting_button:hover {
+    background-color: white;
+}
+
 .layer_dialog_ok_button {
 	position: absolute;
     font-size: 14px;
@@ -211,12 +242,26 @@ p {
     margin: 15px;
 }
 
+.timeline_setting_dialog_wrap {
+    margin: 15px;
+}
+
 .layer_dialog_title {
 	font-size : 20px;
     padding-bottom: 10px;
 }
 
+.timeline_setting_dialog_title {
+	font-size : 20px;
+    padding-bottom: 10px;
+}
+
 .layer_dialog_row  {
+	width : 100%;
+	height: 40px;
+}
+
+.timeline_setting_row  {
 	width : 100%;
 	height: 40px;
 }

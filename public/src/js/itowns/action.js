@@ -147,6 +147,13 @@ class Action extends EventEmitter
     measurePerformance(data) {
         this.emit(Action.EVENT_MEASURE_PERFORMANCE, null, data);
     }
+
+    /**
+     * タイムラインのレンジを変更
+     */
+    changeTimelineRange(data) {
+        this.emit(Action.EVENT_CHANGE_TIMELINE_RANGE, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -163,5 +170,6 @@ Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
 Action.EVENT_CHANGE_TIME = "changeTime";
+Action.EVENT_CHANGE_TIMELINE_RANGE = "changeTimelineRange";
 Action.EVENT_MEASURE_PERFORMANCE = "measurePerformance";
 export default Action;

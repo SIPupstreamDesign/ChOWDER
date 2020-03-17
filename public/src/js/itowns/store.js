@@ -31,6 +31,18 @@ class Store extends EventEmitter {
         // 初回カメラ行列用キャッシュ
         this.initialMatrix = null;
 
+        const year = 2019;
+        const month = 8;
+        const day = 3;
+        const minHour = 10;
+
+        // タイムラインStart Time
+        this.timelineStartTime = new Date(year, (month - 1), day, minHour, 0, 0)
+        // タイムラインEnd Time
+        this.timelineEndTime = new Date(year, (month - 1), day, 23, 59, 59)
+        // タイムラインCurrent Time
+        this.timelineCurrentTime = new Date(year, (month - 1), day, 13, 51);
+
         // websocket接続が確立された.
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
@@ -420,6 +432,8 @@ class Store extends EventEmitter {
     }
 
     _changeTime(data) {
+        this.timelineCurrentTime = data.time;
+
         if (this.metaData) {
             /*
             this.metaData.time = data.time.toJSON();
@@ -450,6 +464,32 @@ class Store extends EventEmitter {
     getPerformanceResult() {
         return this.performanceResult;
     }
+
+    getTimelineStartTime() {
+        return this.timelineStartTime;
+    }
+    
+    getTimelineEndTime() {
+        return this.timelineEndTime;
+    }
+
+    getTimelineCurrentTime() {
+        return this.timelineCurrentTime;
+    }
+
+    _changeTimelineRange(data) {
+        if (data.hasOwnProperty('start') && data.hasOwnProperty('end')) {
+            this.timelineStartTime = data.start;
+            this.timelineEndTime = data.end;
+            if (this.timelineCurrentTime.getTime() < this.timelineStartTime.getTime()) {
+                this.timelineCurrentTime = this.timelineStartTime;
+            }
+            if (this.timelineEndTime.getTime() > this.timelineEndTime.getTime()) {
+                this.timelineCurrentTime = this.timelineEndTime;
+            }
+            this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+        }
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -466,5 +506,6 @@ Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
 Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
 Store.EVENT_UPDATE_MEASURE_PERFORMANCE = "update_mesure_performance"; // 計測結果が更新された
+Store.EVENT_DONE_CHANGE_TIMELINE_RANGE = "done_change_timeline_range";
 
 export default Store;
