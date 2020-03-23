@@ -3,6 +3,8 @@
 ORIGIN=`pwd`
 cd `dirname $0`
 
+privateip=127.0.0.1
+
 while true;do
     echo "Install a cert key for SSL? (yes or no)"
     read answer
@@ -47,7 +49,7 @@ if [ ! -e "/usr/bin/turnserver" ]; then
 fi
 
 if [ -e "/usr/local/etc/turnserver.conf" ]; then
-	cp turnserver.conf /usr/local/etc/turnserver.conf
+	sed -e "s/listening-ip=0.0.0.0/listening-ip=$privateip/" turnserver.conf > /usr/local/etc/turnserver.conf
 else
 	echo "Error: Not fond turnserver.conf in your system"
 fi
