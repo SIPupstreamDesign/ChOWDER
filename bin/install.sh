@@ -5,14 +5,15 @@ cd `dirname $0`
 
 privateip=127.0.0.1
 
+echo "Please input the private IP address(e.g. 192.168.xxx.xxx)"
+read privateip
+echo "Private IP : $privateip"
+
 while true;do
     echo "Install a cert key for SSL? (yes or no)"
     read answer
     case $answer in
         yes|y)
-			echo "Please input the private IP address(e.g. 192.168.xxx.xxx)"
-			read privateip
-			echo "Private IP : $privateip"
 			echo "creating cert.."
 			sh create_local_cert.sh $privateip
             break
