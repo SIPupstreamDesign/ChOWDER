@@ -9,7 +9,7 @@ echo "Private IP : $privateip"
 echo "creating cert.."
 sh create_local_cert.sh $privateip
 
-if [! -e "../redis/redis-server" ]; then
+if [ ! -e "../redis/redis-server" ]; then
 	if [! -e "/usr/bin/redis-server" ]; then
 		curl -O http://download.redis.io/redis-stable.tar.gz
 		tar xf redis-stable.tar.gz
@@ -21,7 +21,7 @@ if [! -e "../redis/redis-server" ]; then
 	fi
 fi
 
-if [! -e "/usr/bin/turnserver" ]; then
+if [ ! -e "/usr/bin/turnserver" ]; then
 	curl -O http://turnserver.open-sys.org/downloads/v4.5.1.1/turnserver-4.5.1.1.tar.gz
 	tar xf turnserver-4.5.1.1.tar.gz
 	cd turnserver-4.5.1.1
