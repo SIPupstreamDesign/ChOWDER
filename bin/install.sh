@@ -3,14 +3,29 @@
 ORIGIN=`pwd`
 cd `dirname $0`
 
-echo "Please input the private IP address(e.g. 192.168.xxx.xxx)"
-read privateip
-echo "Private IP : $privateip"
-echo "creating cert.."
-sh create_local_cert.sh $privateip
+while true;do
+    echo "Install a cert key for SSL? (yes or no)"
+    read answer
+    case $answer in
+        yes|y)
+			echo "Please input the private IP address(e.g. 192.168.xxx.xxx)"
+			read privateip
+			echo "Private IP : $privateip"
+			echo "creating cert.."
+			sh create_local_cert.sh $privateip
+            break
+            ;;
+        no|n)
+            break
+            ;;
+        *)
+            echo -e "cannot understand $answer.\n"
+            ;;
+    esac
+done
 
 if [ ! -e "../redis/redis-server" ]; then
-	if [! -e "/usr/bin/redis-server" ]; then
+	if [ ! -e "/usr/bin/redis-server" ]; then
 		curl -O http://download.redis.io/redis-stable.tar.gz
 		tar xf redis-stable.tar.gz
 		cd redis-stable
@@ -37,8 +52,12 @@ else
 	echo "Error: Not fond turnserver.conf in your system"
 fi
 
-cp ../server/cert.pem /usr/local/etc/cert.pem
-cp ../server/key.pem /usr/local/etc/key.perm
+if [ -e "/usr/local/etc" ]; then
+	cp ../server/cert.pem /usr/local/etc/cert.pem
+	cp ../server/key.pem /usr/local/etc/key.perm
+else 
+	echo "Error: Not fond /usr/local/etc/"
+fi
 
 npm install --unsafe-perm
 
