@@ -59,7 +59,7 @@ fi
 
 if [ -e "/usr/local/etc" ]; then
 	cp ../server/cert.pem /usr/local/etc/cert.pem
-	cp ../server/key.pem /usr/local/etc/key.perm
+	cp ../server/key.pem /usr/local/etc/key.pem
 else 
 	echo "Error: Not fond /usr/local/etc/"
 fi
