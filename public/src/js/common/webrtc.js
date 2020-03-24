@@ -41,7 +41,7 @@ class WebRTC extends EventEmitter {
 		/* STUN config */
 		if(!this.globalSetting.stunServerUrl || this.globalSetting.stunServerUrl === ""){
 			let stun = {
-				urls: ["stun:" + window.location.hostname + ":3478"]
+				urls: ["stun:" + window.location.hostname + ":9092"]
 			};
 			pc_config.iceServers.push(stun);
 		}else{
@@ -54,7 +54,7 @@ class WebRTC extends EventEmitter {
 		/* TURN config */
 		if(!this.globalSetting.turnServerUrl || this.globalSetting.turnServerUrl === ""){
 			let turn = {
-				urls: ["turn:" + window.location.hostname + ":3478"],
+				urls: ["turn:" + window.location.hostname + ":9092"],
 				username:"chowder",
 				credential:"395FFEB08356282A867A63D2B4729D039859F6E6C98294C1DCAAE494DAF87A6048DC4D06FB0ADF9D387F67EB41780B362AA9C3FD9AF4515A24FF1ECE5B85E70E"
 			};
