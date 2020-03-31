@@ -1343,7 +1343,7 @@ The format for the setup file is as follows:
     Content is delivered without separately setting display permission.
 -	`windows` is the object that has the Display ID as key and display setup as value.
     -	Designate the site in `Group`.
-    -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
+    -	Set the position `[Vertical, Horizontal]` of the window on display device in `position`. This is the screen coordinates of the display device. The origin is the upper left corner of screen.
     -	Set the size `[width, height]` of the window in `size`.
     -	Set the position `[Vertical, Horizontal]` within VDA in `vda_position`. The origin is the upper left corner of Virtual Display.
     -	Set the enlargement factor within VDA in `vda_scale`.
