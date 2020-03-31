@@ -453,10 +453,22 @@ class GUI extends EventEmitter {
                     lastWidth = width;
 
                     pdf.getPage(p).then(function (page) {
-                        let viewport = page.getViewport(width / page.getViewport(1).width);
+                        const originalSize = page.getViewport(1);
+                        let viewport = page.getViewport(width / originalSize.width);
                         let orgAspect = metaData.orgWidth / metaData.orgHeight;
                         let pageAspect = viewport.width / viewport.height;
 
+                        if ((viewport.width * viewport.height) > (7680*4320)) {
+                            if (viewport.width > viewport.height) {
+                                viewport.width = 7680;
+                                viewport.height = viewport.width / pageAspect;
+                            } else {
+                                viewport.height = 4320;
+                                viewport.width = viewport.height * pageAspect;
+                            }
+                            width = Math.round(viewport.width);
+                            viewport = page.getViewport(width / originalSize.width);
+                        }
                         elem.width = width;
                         elem.height = width / orgAspect;
 
