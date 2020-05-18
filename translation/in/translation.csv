@@ -41,7 +41,8 @@ setting_target,設定対象,Setting Target
 editable_content,編集可能コンテンツ,Editable Content
 viewable_content,閲覧可能コンテンツ,Viewable Content
 allow_editting_group,グループの編集を許可,Allow Edit of Groups
-editable_display,編集可能サイト,Editable Site
+editable_site,編集可能サイト,Editable Site
+viewable_site,表示許可サイト,Display Permitted Site
 setting_password,パスワードの設定,Password Settings
 old_password,変更前のパスワード,Old Password
 new_password,新規パスワード,New Password

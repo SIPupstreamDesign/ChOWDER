@@ -8,6 +8,7 @@ input[disabled] {
 	top: 50%;
 	left: 50%;
 	width: 60vw;
+	min-width: 460px;
 	height: 80vh;
 	margin-top: calc(-80vh / 2);
 	margin-left: calc(-60vw / 2);

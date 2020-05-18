@@ -78,6 +78,8 @@ class Display {
 
 			// 閲覧可能か
 			if (!this.store.isViewable(metaData.group)) {
+				let previewArea = document.getElementById("preview_area");
+				this.removeContent(previewArea, json.id);
 				return;
 			}
 			// レイアウトは無視
@@ -122,6 +124,8 @@ class Display {
 		}
 		// 閲覧可能か
 		if (!this.store.isViewable(json.group)) {
+			let previewArea = document.getElementById("preview_area");
+			this.removeContent(previewArea, json.id);
 			return;
 		}
 
@@ -316,6 +320,21 @@ class Display {
 		}
 	}
 
+	removeContent(previewArea, id) {
+		let elem = document.getElementById(id);
+		if (elem) {
+			previewArea.removeChild(elem);
+		}
+		let memo =  document.getElementById("memo:" + id);
+		if (memo) {
+			previewArea.removeChild(memo);
+		}
+		let time =  document.getElementById("time:" + id);
+		if (time) {
+			previewArea.removeChild(time);
+		}
+	}
+
 	/**
 	 * イベントハンドラを定義
 	 */
@@ -405,18 +424,7 @@ class Display {
 			for (let i = 0; i < data.length; ++i) {
 				let metaData = data[i];
 				if (!this.store.isViewable(metaData.group)) {
-					let elem = document.getElementById(metaData.id);
-					if (elem) {
-						previewArea.removeChild(elem);
-					}
-					let memo =  document.getElementById("memo:" + metaData.id);
-					if (memo) {
-						previewArea.removeChild(memo);
-					}
-					let time =  document.getElementById("time:" + metaData.id);
-					if (time) {
-						previewArea.removeChild(time);
-					}
+					this.removeContent(previewArea, id);
 				}
 					
 				// webgl iframeの更新

@@ -189,8 +189,13 @@ class Store extends EventEmitter {
             if (err || reply === null) {
                 console.log(err);
             } else {
-                this.authority = reply.authority;
-                this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+                // ユーザーリスト取得
+                this._reloadUserList({
+                    callback : () => {
+                        this.authority = reply.authority;
+                        this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+                    }
+                });
             }
         });
     }
@@ -200,6 +205,21 @@ class Store extends EventEmitter {
         Connector.send(Command.Logout, {}, function () {
         });
     }
+
+	/**
+	 * ユーザーリストを最新に更新
+	 */
+	_reloadUserList(data) {
+		let callback = Store.extractCallback(data);
+
+		Connector.send(Command.GetUserList, {}, (err, userList) => {
+			this.userList = userList;
+			if (callback) {
+				callback(err, userList);
+			}
+            this.emit(Store.EVENT_USERLIST_RELOADED, null);
+		});
+	}
 
     updateGroupDict(groupList) {
         for (let i = 0; i < groupList.length; ++i) {
@@ -596,6 +616,9 @@ class Store extends EventEmitter {
         if (!this.getAuthority()) {
             return false;
         }
+        if (!this.isViewableSite(group)) {
+            return false;
+        }
         if (group === undefined || group === "") {
             return true;
         }
@@ -608,6 +631,32 @@ class Store extends EventEmitter {
                 return true;
             }
             if (this.getAuthority().viewable.indexOf(group) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * socketidユーザーがdisplaygroupを表示可能かどうか返す
+     * @method isViewableDisplay
+     * @param {String} group group
+     */
+    isViewableSite(group) {
+        // displayからのアクセスだった
+        const windowData = this.getWindowData();
+        if (!windowData) {
+            return false;
+        }
+        for (let i = 0; i < this.userList.length; ++i) {
+            const authority = this.userList[i];
+            if (authority.id === group) {
+                if (authority.hasOwnProperty('viewableSite')) {
+                    if (authority.viewableSite !== "all") {
+                        return authority.viewableSite.indexOf(windowData.group) >= 0;
+                    }
+                }
+                // viewableSiteの設定が無い、または"all"
                 return true;
             }
         }
@@ -658,6 +707,7 @@ Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
 Store.EVENT_DONE_ADD_ITOWN_FUNC = "done_add_itown_func";
+Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 
 // reviever
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"

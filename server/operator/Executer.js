@@ -34,6 +34,7 @@
         "viewable",
         "editable",
         "displayEditable",
+        "viewableSite",
         "group_manipulatable"
     ];
     const expireTime = 60 * 60 * 24 * 365 * 100; // 100years
@@ -303,6 +304,7 @@
                         this.changeGroupUserSetting(socketid, id, {
                             viewable: [id],
                             editable: [id],
+                            viewableSite: "all",
                             group_manipulatable: false
                         }, (err, reply) => {
                             if (endCallback) {
@@ -713,6 +715,7 @@
                         viewable: [],
                         editable: [],
                         displayEditable: [],
+                        viewableSite: [],
                         group_manipulatable: false
                     }, () => {
                         // Display設定の初期登録
@@ -720,6 +723,7 @@
                             viewable: "all",
                             editable: "all",
                             displayEditable: "all",
+                            viewableSite: "all",
                             group_manipulatable: false
                         }, () => {
                             // APIUser設定の初期登録
@@ -727,6 +731,7 @@
                                 viewable: "all",
                                 editable: "all",
                                 displayEditable: "all",
+                                viewableSite: "all",
                                 group_manipulatable: false
                             });
                         }, () => {
@@ -735,6 +740,7 @@
                                 viewable: "all",
                                 editable: "all",
                                 displayEditable: "all",
+                                viewableSite: "all",
                                 group_manipulatable: false
                             });
                         });
@@ -1227,6 +1233,7 @@
                             authority.viewable = "all";
                             authority.editable = "all";
                             authority.displayEditable = [];
+                            authority.viewableSite = "all";
                             authority.group_manipulatable = true;
                             authority.is_admin = true;
                             this.socketidToAccessAuthority[socketid] = authority;
@@ -2729,6 +2736,7 @@
             if (groupID === undefined || groupID === "") {
                 return true;
             }
+            // ここでDisplayならsocketid=Displayとなる
             if (this.socketidToLoginKey.hasOwnProperty(socketid)) {
                 socketid = this.socketidToLoginKey[socketid];
             }
@@ -2803,6 +2811,41 @@
                 }
             }
             return false;
+        }
+
+        /**
+         * socketidユーザーがdisplaygroupを表示可能かどうか返す
+         * @method isViewableDisplay
+         * @param {String} socketid socketid
+         * @param {String} group group
+         */
+        isViewableSite(socketid, groupID, endCallback) {
+            if (this.allDisplayCache.hasOwnProperty(socketid)) {
+                // displayからのアクセスだった
+                const displayID = this.allDisplayCache[socketid];
+                this.getWindowMetaData({ id : displayID },  (windowMeta) => {
+                    this.getGroupUserSetting((err, data) => {
+                        if (!err && data) {
+                            if (data.hasOwnProperty(groupID)) {
+                                const authority = data[groupID];
+                                if (authority.hasOwnProperty('viewableSite')) {
+                                    if (authority.viewableSite !== "all") {
+                                        endCallback(null, authority.viewableSite.indexOf(windowMeta.group) >= 0);
+                                        return;
+                                    }
+                                }
+                                // viewableSiteの設定が無い、または"all"
+                                endCallback(null, true);
+                                return;
+                            }
+                        }
+                        endCallback(err, false);
+                    });
+                });
+            } else {
+                // controllerからのアクセスだった
+                endCallback(null, true);
+            }
         }
 
         isGroupManipulatable(socketid, groupID, endCallback) {

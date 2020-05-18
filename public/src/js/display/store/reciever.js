@@ -73,10 +73,12 @@ class Receiver {
         this.connector.on(Command.ChangeAuthority, () => {
             let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
-                this.store.setAuthority(reply.authority);
-                this.action.update({ updateType: 'window' });
-                this.action.update({ updateType: 'group' });
-                this.action.update({ updateType: 'content' });
+                this.action.reloadUserList({ callback : () => {
+                    this.store.setAuthority(reply.authority);
+                    this.action.update({ updateType: 'window' });
+                    this.action.update({ updateType: 'group' });
+                    this.action.update({ updateType: 'content' });
+                }});
             });
         });
 
@@ -85,11 +87,13 @@ class Receiver {
         this.connector.on(Command.ChangeDB, () => {
             let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
-                this.store.setAuthority(reply.authority);
-                this.action.deleteAllElements();
-                this.action.update({ updateType: 'window' });
-                this.action.update({ updateType: 'group' });
-                this.action.update({ updateType: 'content' });
+                this.action.reloadUserList({ callback : () => {
+                    this.store.setAuthority(reply.authority);
+                    this.action.deleteAllElements();
+                    this.action.update({ updateType: 'window' });
+                    this.action.update({ updateType: 'group' });
+                    this.action.update({ updateType: 'content' });
+                }});
             });
         });
 

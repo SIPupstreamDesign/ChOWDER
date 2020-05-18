@@ -53,6 +53,14 @@ class Action extends EventEmitter
     }
 
     /**
+     * ユーザリストの再読み込み
+     * @param {*} data
+     */
+    reloadUserList(data) {
+        this.emit(Action.EVENT_RELOAD_USERLIST, null, data);
+    }
+
+    /**
      * 指定した種類のデータをサーバから取得し更新
      * @param {*} data
      * {
@@ -175,6 +183,7 @@ class Action extends EventEmitter
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
+Action.EVENT_RELOAD_USERLIST = "reloadUserList";
 Action.EVENT_CHANGE_DISPLAY_ID = "changeDisplayID";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_DELETE_ALL_ELEMENTS = "deleteAllElements";
