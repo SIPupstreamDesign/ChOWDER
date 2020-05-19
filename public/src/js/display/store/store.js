@@ -188,6 +188,7 @@ class Store extends EventEmitter {
         Connector.send(Command.Login, data, (err, reply) => {
             if (err || reply === null) {
                 console.log(err);
+                this.emit(Store.EVENT_LOGIN_FAILED, null);
             } else {
                 this.authority = reply.authority;
                 this.emit(Store.EVENT_LOGIN_SUCCESS, null);
@@ -647,6 +648,7 @@ Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_LOGIN_SUCCESS = "login_success";
+Store.EVENT_LOGIN_FAILED = "login_failed"
 Store.EVENT_DISPLAY_ID_CHANGED = "display_id_changed";
 Store.EVENT_DONE_UPDATE_WINDOW_METADATA = "done_update_window_metadata";
 Store.EVENT_DONE_DELETE_ALL_ELEMENTS = "done_delete_all_elements";

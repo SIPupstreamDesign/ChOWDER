@@ -66,7 +66,27 @@ class Receiver {
 
         // ディスプレイ配信許可設定で許可/拒否されたとき
         this.connector.on(Command.UpdateDisplayPermissionList, () => {
-            window.location.reload(true);
+            let blockedText = document.getElementsByClassName('blocked_text')[0];
+            blockedText.style.display = "block";
+
+            this.store.once(Store.EVENT_LOGIN_FAILED, () => {
+                window.location.reload(true);
+            });
+			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
+
+			let isLoginPrcessed = false;
+			window.electronLogin((isElectron,password)=>{
+				if(isElectron){
+					if (!isLoginPrcessed) {
+						loginOption.password = password;
+						loginOption.id = "ElectronDisplay";
+						isLoginPrcessed = true;
+						this.action.login(loginOption);
+					}
+				}else{
+					this.action.login(loginOption);
+				}
+			});
         });
 
         // 権限変更時に送られてくる
