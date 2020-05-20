@@ -230,6 +230,10 @@ class ManagementStore {
 			// defaultグループだった
 			return true;
 		}
+		if (group === "" || group === Constants.DefaultGroup) {
+			// defaultグループだった
+			return true;
+		}
         for (let i = 0; i < userList.length; ++i) {
             const authority = userList[i];
             if (authority.id === group) {
