@@ -191,7 +191,9 @@ class Controller {
 		this.store.on(Store.EVENT_DONE_UPDATE_CONTENT, this.doneUpdateContent);
 
 		// groupが更新された
-		//this.store.on(Store.EVENT_DONE_UPDATE_GROUP, this.doneUpdateGroup);
+		this.store.on(Store.EVENT_DONE_UPDATE_GROUP, () => {
+			this.updateContentVisibleInSite();
+		});
 
 		// contentメタデータが更新された
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, this.doneUpdateMetaData);
@@ -327,12 +329,7 @@ class Controller {
 			this.unselectAll();
 			this.select(Constants.WholeWindowListID);
 			
-			// doneGetMetaDataを再度呼んで権限による可視不可視の切り替え
-			this.store.for_each_metadata((i, meta) => {
-				if (Validator.isContentType(meta)) {
-					this.doneGetMetaData(null, meta);
-				}
-			});
+			this.updateContentVisibleInSite();
 		});
 
 		// グループリスト取得された
@@ -363,12 +360,7 @@ class Controller {
 
 		// ユーザリストがリロードされた
 		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
-			// doneGetMetaDataを再度呼んで権限による可視不可視の切り替え
-			this.store.for_each_metadata((i, meta) => {
-				if (Validator.isContentType(meta)) {
-					this.doneGetMetaData(null, meta);
-				}
-			});
+			this.updateContentVisibleInSite();
 		});
 
 		// コンテンツのエレメントのセットアップ（内部用）
@@ -996,6 +988,19 @@ class Controller {
 	}
 
 	/**
+	 * 現在のSite表示によって、コンテンツの表示状態を切り替える
+	 */
+	updateContentVisibleInSite()
+	{
+		// doneGetMetaDataを再度呼んで権限による可視不可視の切り替え
+		this.store.for_each_metadata((i, meta) => {
+			if (Validator.isContentType(meta)) {
+				this.doneGetMetaData(null, meta);
+			}
+		});
+	}
+
+	/**
 	 * VirtualScreen更新
 	 * @method updateScreen
 	 * @param {JSON} windowData ウィンドウデータ. 無い場合はすべてのVirtualScreenが更新される.
@@ -1416,7 +1421,19 @@ class Controller {
 		if (this.state.getSelectedIDList().indexOf(id) < 0) {
 			this.state.addSelectedID(id);
 		}
-		this.state.setDraggingIDList(JSON.parse(JSON.stringify(this.state.getSelectedIDList())));
+
+		let isContentInViewableSite = true;
+		if (metaData && Validator.isContentType(metaData)) {
+			if (!this.store.getManagement().isViewableSite(metaData.group)) {
+				// コンテンツは現在表示中のサイトで表示可能な場合のみ
+				// マニピュレータを出す
+				isContentInViewableSite = false;
+			}
+		}
+		if (isContentInViewableSite)
+		{
+			this.state.setDraggingIDList(JSON.parse(JSON.stringify(this.state.getSelectedIDList())));
+		}
 
 		// 選択ボーダー色設定
 		if (this.gui.getListElem(id)) {
@@ -1455,7 +1472,11 @@ class Controller {
 			if (Validator.isWindowType(metaData)) {
 				this.gui.initContentProperty(metaData, "", Constants.PropertyTypeDisplay);
 				this.gui.assignContentProperty(metaData);
-				manipulator.showManipulator(elem, this.gui.getDisplayPreviewArea());
+
+				if (isContentInViewableSite)
+				{
+					manipulator.showManipulator(elem, this.gui.getDisplayPreviewArea());
+				}
 			}
 			else {
 				// 動画の場合は所有しているかどうか調べる
@@ -1472,7 +1493,11 @@ class Controller {
 				}
 				this.gui.assignContentProperty(metaData);
 				this.gui.setUpdateContentID(id);
-				manipulator.showManipulator(elem, this.gui.getContentPreviewArea());
+
+				if (isContentInViewableSite)
+				{
+					manipulator.showManipulator(elem, this.gui.getContentPreviewArea());
+				}
 			}
 		}
 		if (Validator.isDisplayTabSelected()) {
