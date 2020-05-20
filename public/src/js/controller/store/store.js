@@ -77,14 +77,14 @@ class Store extends EventEmitter
 			let userList = this.loginStore.getUserList();
 			//this.managementStore = new ManagementStore(Connector, state, this, action);
 			this.managementStore.globalSetting = null;
-			this.managementStore.userList = userList;
+			//this.managementStore.userList = userList;
 			this.managementStore.authority = data.authority;
 		});
 		this.on(Store.EVENT_LOGIN_FAILED, () => {
 			// management新規作成
 			//this.managementStore = new ManagementStore(Connector, state, this, action);
 			this.managementStore.globalSetting = null;
-			this.managementStore.userList = null;
+			//this.managementStore.userList = null;
 			this.managementStore.authority = null;
 		});
 

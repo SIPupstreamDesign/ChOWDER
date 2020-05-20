@@ -671,6 +671,7 @@ class ManagementDialog extends EventEmitter {
             this.viewableSelect.deselectAll();
             this.editableSelect.deselectAll();
             this.displayEditableSelect.deselectAll();
+            this.viewableSiteSelect.deselectAll();
             if (user) {
                 for (let i = 0; i < this.userList.length; i = i + 1) {
                     if (this.userList[i].type !== "admin" && this.userList[i].type !== "api") {

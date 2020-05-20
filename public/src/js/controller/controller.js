@@ -326,6 +326,13 @@ class Controller {
 			this.doneGetVirtualDisplay(err, data);
 			this.unselectAll();
 			this.select(Constants.WholeWindowListID);
+			
+			// doneGetMetaDataを再度呼んで権限による可視不可視の切り替え
+			this.store.for_each_metadata((i, meta) => {
+				if (Validator.isContentType(meta)) {
+					this.doneGetMetaData(null, meta);
+				}
+			});
 		});
 
 		// グループリスト取得された
@@ -352,6 +359,16 @@ class Controller {
 			} else {
 				this.unselectAll(data.isUpdateMetaInfo);
 			}
+		});
+
+		// ユーザリストがリロードされた
+		this.store.on(Store.EVENT_USERLIST_RELOADED, () => {
+			// doneGetMetaDataを再度呼んで権限による可視不可視の切り替え
+			this.store.for_each_metadata((i, meta) => {
+				if (Validator.isContentType(meta)) {
+					this.doneGetMetaData(null, meta);
+				}
+			});
 		});
 
 		// コンテンツのエレメントのセットアップ（内部用）
@@ -946,6 +963,7 @@ class Controller {
 		this.state.setSelectionRectDragging(false);
 		this.state.setMousedownOnList(false);
 	}
+	
 	removeVirtualDisplay() {
 		let previewArea = this.gui.getDisplayPreviewArea();
 		let preWhole = document.getElementsByClassName("whole_screen_elem");
@@ -1030,9 +1048,12 @@ class Controller {
 			this.store.for_each_metadata((i, metaData) => {
 				if (Validator.isVisible(metaData)) {
 					if (Validator.isContentType(metaData)) {
-						elem = document.getElementById(metaData.id);
-						if (elem) {
-							VscreenUtil.assignMetaData(elem, metaData, true, this.store.getGroupDict());
+						if (this.store.getManagement().isViewable(metaData.group))
+						{
+							elem = document.getElementById(metaData.id);
+							if (elem) {
+								VscreenUtil.assignMetaData(elem, metaData, true, this.store.getGroupDict());
+							}
 						}
 					}
 				}
@@ -1580,7 +1601,7 @@ class Controller {
 			isUpdateContent = isUpdateContent || (this.store.getMetaData(json.id).keyvalue !== reply.keyvalue);
 		}
 		if (json.hasOwnProperty('group')) {
-			if (!this.store.getManagement().getAuthorityObject().isViewable(json.group)) {
+			if (!this.store.getManagement().isViewable(json.group)) {
 				elem = document.getElementById(metaData.id);
 				if (elem) {
 					elem.style.display = "none";

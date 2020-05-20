@@ -178,6 +178,10 @@ class Receiver
         // 権限変更時に送られてくる
         this.connector.on(Command.ChangeAuthority, (userID) => {
             if (!this.store.isInitialized()) { return; }
+
+            // ユーザーリスト再取得
+            this.action.reloadUserList();
+
             if (this.store.getLoginStore().getLoginUserID() === userID) {
                 window.location.reload(true);
             }
