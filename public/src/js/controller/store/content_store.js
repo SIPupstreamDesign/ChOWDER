@@ -43,7 +43,7 @@ class ContentStore
 	 */
 	addContent(metaData, binary, timestamp, callback) {
 		if (!metaData.hasOwnProperty("zIndex")) {
-			metaData.zIndex = this.store.getZIndex(metaData, true);
+			metaData.zIndex = this.store.getZIndex(metaData, true, false);
 		}
 		if (binary instanceof ArrayBuffer && !Validator.checkCapacity(binary.byteLength)) {
 			return;
@@ -380,8 +380,11 @@ class ContentStore
 		this.store.getState().for_each_selected_id((i, id) => {
 			if (this.store.hasMetadata(id)) {
 				let metaData = this.store.getMetaData(id);
-				if (data.hasOwnProperty('toFront')) {
-					metaData.zIndex = this.store.getZIndex(metaData, data.toFront);
+				if (data.hasOwnProperty('alwaysOnTop')) 
+				{
+					metaData.zIndex = this.store.getZIndex(metaData, false, data.alwaysOnTop);
+				} else if (data.hasOwnProperty('toFront')) {
+					metaData.zIndex = this.store.getZIndex(metaData, data.toFront, false);
 				} else {
 					metaData.zIndex = data.zIndex;
 				}

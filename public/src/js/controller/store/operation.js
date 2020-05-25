@@ -124,7 +124,7 @@ class Operation
 	 */
 	addContent(metaData, binary, endCallback) {
 		if (!metaData.hasOwnProperty("zIndex")) {
-			metaData.zIndex = this.store.getZIndex(metaData, true);
+			metaData.zIndex = this.store.getZIndex(metaData, true, false);
 		}
 		if (binary instanceof ArrayBuffer && !Validator.checkCapacity(binary.byteLength)) {
 			return;

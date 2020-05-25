@@ -9,6 +9,7 @@
  "change_displaygroup": "サイト変更",
  "select_all_in_a_group": "グループ内全て選択",
  "select_all_in_a_site": "サイト内全て選択",
+ "always_on_top": "常に最前面に表示",
  "move_to_front": "最前面に移動",
  "move_to_back": "最背面に移動",
  "add_content": "コンテンツ追加",

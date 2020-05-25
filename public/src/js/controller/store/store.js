@@ -539,7 +539,7 @@ class Store extends EventEmitter
 	 * コンテンツのzindexの習得.
 	 * @param {boolean} isFront 最前面に移動ならtrue, 最背面に移動ならfalse
 	 * */
-	getZIndex(metaData, isFront) {
+	getZIndex(metaData, isFront, isAlwaysOnTop) {
 		let max = 0,
 			min = 0;
 
@@ -547,10 +547,18 @@ class Store extends EventEmitter
 			if (meta.id !== metaData.id &&
 				Validator.isContentType(meta) &&
 				meta.hasOwnProperty("zIndex")) {
-				max = Math.max(max, parseInt(meta.zIndex, 10));
-				min = Math.min(min, parseInt(meta.zIndex, 10));
+					if (meta.zIndex < 0x7FFFFFFF)
+					{
+						max = Math.max(max, parseInt(meta.zIndex, 10));
+						min = Math.min(min, parseInt(meta.zIndex, 10));
+					}
 			}
 		});
+		if (isAlwaysOnTop)
+		{
+			return 0x7FFFFFFF;
+		}
+
 		if (isFront) {
 			return max + 1;
 		} else {

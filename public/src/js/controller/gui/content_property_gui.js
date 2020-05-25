@@ -500,10 +500,17 @@ class ContentPropertyGUI extends EventEmitter {
 			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_z', 'z', 'index', '0', () => {
 				let transz = document.getElementById('content_transform_z');
-				let val = parseInt(transz.value, 10);
-				this.action.changeContentIndex({
-					zIndex: val
-				});
+				if (transz === Constants.ZIndexAlwaysOnTopString) {
+					let val = Constants.ZIndexAlwaysOnTopValue;
+					this.action.changeContentIndex({
+						zIndex: val
+					});
+				} else {
+					let val = parseInt(transz.value, 10);
+					this.action.changeContentIndex({
+						zIndex: val
+					});
+				}
 			});
 			if (metaData.type === Constants.TypeWebGL) {
 				addCheckProperty(isEditable, 'display_time', 'display time', String(metaData.display_time) === "true", () => {
@@ -839,6 +846,10 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		if (transz && metaData.hasOwnProperty('zIndex')) {
 			transz.value = parseInt(metaData.zIndex, 10);
+			if (metaData.zIndex == Constants.ZIndexAlwaysOnTopValue)
+			{
+				transz.value = Constants.ZIndexAlwaysOnTopString;
+			}
 		}
 		// メタ情報
 		if (metaData.hasOwnProperty('user_data_text')) {

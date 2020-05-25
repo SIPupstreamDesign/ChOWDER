@@ -63,6 +63,12 @@ function ContentMenuSetting()
     ];
 
     return [
+        // 常に最前面に表示
+        {
+            className : "always_on_top",
+            dataKey : "always_on_top",
+            onmousedown : (evt) => { this.action.changeContentIndex({ alwaysOnTop : true }); }
+        },
         // 最前面へ
         {
             className : "move_to_front",
