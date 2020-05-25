@@ -2820,6 +2820,14 @@
          * @param {String} group group
          */
         isViewableSite(socketid, groupID, endCallback) {
+            if (groupID === "group_default") {
+                endCallback(null, true);
+                return;
+            }
+            if (groupID === undefined || groupID === "") {
+                endCallback(null, true);
+                return;
+            }
             if (this.allDisplayCache.hasOwnProperty(socketid)) {
                 // displayからのアクセスだった
                 const displayID = this.allDisplayCache[socketid];

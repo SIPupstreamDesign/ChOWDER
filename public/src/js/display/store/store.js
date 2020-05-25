@@ -407,10 +407,13 @@ class Store extends EventEmitter {
                     if (metaDataDict[i].id !== metaData.id &&
                         !Validator.isWindowType(metaDataDict[i]) &&
                         metaDataDict[i].hasOwnProperty("zIndex")) {
-                        let index = parseInt(metaDataDict[i].zIndex, 10);
-                        if (!isNaN(index)) {
-                            max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
-                        }
+                            if (metaDataDict[i].zIndex < Constants.ZIndexAlwaysOnTopValue)
+                            {
+                                let index = parseInt(metaDataDict[i].zIndex, 10);
+                                if (!isNaN(index)) {
+                                    max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+                                }
+                            }
                     }
                 }
             }
@@ -617,14 +620,14 @@ class Store extends EventEmitter {
         if (!this.getAuthority()) {
             return false;
         }
-        if (!this.isViewableSite(group)) {
-            return false;
-        }
         if (group === undefined || group === "") {
             return true;
         }
         if (group === Constants.DefaultGroup) {
             return true;
+        }
+        if (!this.isViewableSite(group)) {
+            return false;
         }
         let groupDict = this.getGroupDict();
         if (groupDict.hasOwnProperty(group)) {
@@ -644,6 +647,12 @@ class Store extends EventEmitter {
      * @param {String} group group
      */
     isViewableSite(group) {
+        if (group === Constants.DefaultGroup) {
+            return true;
+        }
+        if (group === undefined || group === "") {
+            return true;
+        }
         // displayからのアクセスだった
         const windowData = this.getWindowData();
         if (!windowData) {

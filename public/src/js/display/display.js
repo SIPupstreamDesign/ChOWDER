@@ -79,7 +79,7 @@ class Display {
 			// 閲覧可能か
 			if (!this.store.isViewable(metaData.group)) {
 				let previewArea = document.getElementById("preview_area");
-				this.removeContent(previewArea, json.id);
+				this.removeContent(previewArea, metaData.id);
 				return;
 			}
 			// レイアウトは無視
