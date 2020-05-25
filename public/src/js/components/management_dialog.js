@@ -672,7 +672,30 @@ class ManagementDialog extends EventEmitter {
             this.editableSelect.deselectAll();
             this.displayEditableSelect.deselectAll();
             this.viewableSiteSelect.deselectAll();
+
             if (user) {
+                if (user.type === "group")
+                {
+                    this.viewableSiteLabel.style.display = "inline-block"
+                    this.viewableSiteSelect.getDOM().style.display = "inline-block"
+                }
+                else
+                {
+                    this.viewableSiteLabel.style.display = "none"
+                    this.viewableSiteSelect.getDOM().style.display = "none"
+                }
+    
+                if (user.type === "display")
+                {
+                    this.editableDisplayLabel.style.display = "none"
+                    this.displayEditableSelect.getDOM().style.display = "none"
+                }
+                else
+                {
+                    this.editableDisplayLabel.style.display = "inline-block"
+                    this.displayEditableSelect.getDOM().style.display = "inline-block"
+                }
+    
                 for (let i = 0; i < this.userList.length; i = i + 1) {
                     if (this.userList[i].type !== "admin" && this.userList[i].type !== "api") {
                         let listContentName = this.userList[i].id;
