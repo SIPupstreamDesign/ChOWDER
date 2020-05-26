@@ -394,7 +394,14 @@ class GUI extends EventEmitter {
             let previewRect = previewArea.getBoundingClientRect();
             let time = "Time not received";
             if (this.store.getTime()) {
-                time = this.store.getTime().toDateString();
+                let date = this.store.getTime();
+                const y = date.getFullYear();
+                const m = ("00" + (date.getMonth()+1)).slice(-2);
+                const d = ("00" + date.getDate()).slice(-2);
+                const hh = ("00" + date.getHours()).slice(-2);
+                const mm = ("00" + date.getMinutes()).slice(-2);
+                const ss = ("00" + date.getSeconds()).slice(-2);
+                time = y + "/" + m + "/" + d + " " + hh + ":" + mm + ":" + ss;
             }
             if (timeElem) {
                 timeElem.innerHTML = time;
