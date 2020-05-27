@@ -433,6 +433,10 @@ class Display {
 			}
 		});
 
+		this.store.on(Store.EVENT_DONE_UPDATE_WWINDOW_GROUP, (err, data) => {
+			this.action.update({ updateType : 'content'});
+		})
+
 		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, (err, data) => {
 			let previewArea = document.getElementById('preview_area');
 			for (let i = 0; i < data.length; ++i) {

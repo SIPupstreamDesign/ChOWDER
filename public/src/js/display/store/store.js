@@ -175,11 +175,11 @@ class Store extends EventEmitter {
         if (funcDict && funcDict.hasOwnProperty(id)) {
             funcDict[id].chowder_itowns_measure_time((err, status) => {
                 Connector.send("SendMessage", {
-                    id : id,
-                    display_id : this.getWindowID(),
-                    command : "measureITownPerformanceResult",
-                    result : status
-                }, () => {})
+                    id: id,
+                    display_id: this.getWindowID(),
+                    command: "measureITownPerformanceResult",
+                    result: status
+                }, () => { })
             });
         }
     }
@@ -192,7 +192,7 @@ class Store extends EventEmitter {
             } else {
                 // ユーザーリスト取得
                 this._reloadUserList({
-                    callback : () => {
+                    callback: () => {
                         this.authority = reply.authority;
                         this.emit(Store.EVENT_LOGIN_SUCCESS, null);
                     }
@@ -210,17 +210,17 @@ class Store extends EventEmitter {
 	/**
 	 * ユーザーリストを最新に更新
 	 */
-	_reloadUserList(data) {
-		let callback = Store.extractCallback(data);
+    _reloadUserList(data) {
+        let callback = Store.extractCallback(data);
 
-		Connector.send(Command.GetUserList, {}, (err, userList) => {
-			this.userList = userList;
-			if (callback) {
-				callback(err, userList);
-			}
+        Connector.send(Command.GetUserList, {}, (err, userList) => {
+            this.userList = userList;
+            if (callback) {
+                callback(err, userList);
+            }
             this.emit(Store.EVENT_USERLIST_RELOADED, null);
-		});
-	}
+        });
+    }
 
     updateGroupDict(groupList) {
         for (let i = 0; i < groupList.length; ++i) {
@@ -407,13 +407,12 @@ class Store extends EventEmitter {
                     if (metaDataDict[i].id !== metaData.id &&
                         !Validator.isWindowType(metaDataDict[i]) &&
                         metaDataDict[i].hasOwnProperty("zIndex")) {
-                            if (metaDataDict[i].zIndex < Constants.ZIndexAlwaysOnTopValue)
-                            {
-                                let index = parseInt(metaDataDict[i].zIndex, 10);
-                                if (!isNaN(index)) {
-                                    max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
-                                }
+                        if (metaDataDict[i].zIndex < Constants.ZIndexAlwaysOnTopValue) {
+                            let index = parseInt(metaDataDict[i].zIndex, 10);
+                            if (!isNaN(index)) {
+                                max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
                             }
+                        }
                     }
                 }
             }
@@ -499,14 +498,23 @@ class Store extends EventEmitter {
 
     onUpdateWindowMetaData(err, json) {
         if (!err) {
+            let isGroupChanged = false;
             for (let i = 0; i < json.length; i = i + 1) {
                 this.metaDataDict[json[i].id] = json[i];
                 if (!this.windowData || this.windowData.id === json[i].id) {
+                    if (!isGroupChanged) {
+                        if (this.windowData && this.windowData.group !== json[i].group) {
+                            isGroupChanged = true;
+                        }
+                    }
                     this.windowData = json[i];
                 }
             }
+            if (isGroupChanged) {
+                this.emit(Store.EVENT_DONE_UPDATE_WWINDOW_GROUP, err, json)
+            }
         }
-        this.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, json)
+        this.emit(Store.EVENT_DONE_UPDATE_WWINDOW_METADATA, err, json)
     }
 
     /**
@@ -602,15 +610,15 @@ class Store extends EventEmitter {
 	/**
 	 * 指定したIDのメタデータがあるかどうか
 	 */
-	hasMetadata(id) {
-		return this.metaDataDict.hasOwnProperty(id);
+    hasMetadata(id) {
+        return this.metaDataDict.hasOwnProperty(id);
     }
 	/**
 	 * 指定したIDのメタデータを取得
 	 */
-	getMetaData(id) {
-		return this.metaDataDict[id];
-	}
+    getMetaData(id) {
+        return this.metaDataDict[id];
+    }
 
 
     /**
@@ -697,9 +705,9 @@ class Store extends EventEmitter {
         return this.time;
     }
 
-    getGlobalSetting(){
-		return this.globalSetting;
-	}
+    getGlobalSetting() {
+        return this.globalSetting;
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -727,5 +735,7 @@ Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_GET_CONTENT = "done_get_content";
 Store.EVENT_REQUEST_RELOAD_DISPLAY = "reload_display";
 Store.EVENT_UPDATE_TIME = "updat_time";
+Store.EVENT_DONE_UPDATE_WWINDOW_METADATA = "done_update_window_metadata";
+Store.EVENT_DONE_UPDATE_WWINDOW_GROUP = "done_update_window_group";
 
 export default Store;
