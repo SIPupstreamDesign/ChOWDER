@@ -500,7 +500,7 @@ class ContentPropertyGUI extends EventEmitter {
 			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_z', 'z', 'index', '0', () => {
 				let transz = document.getElementById('content_transform_z');
-				if (transz === Constants.ZIndexAlwaysOnTopString) {
+				if (transz !== Constants.ZIndexAlwaysOnTopString) {
 					let val = Constants.ZIndexAlwaysOnTopValue;
 					this.action.changeContentIndex({
 						zIndex: val
@@ -510,6 +510,21 @@ class ContentPropertyGUI extends EventEmitter {
 					this.action.changeContentIndex({
 						zIndex: val
 					});
+				}
+			});
+			addCheckProperty(isEditable, 'always_on_top', 'AlwaysOnTop', String(metaData.zIndex) === Constants.ZIndexAlwaysOnTopString, () => {
+				let meta = this.store.getMetaData(metaData.id);
+				let transz = document.getElementById('content_transform_z');
+				if (document.getElementsByClassName('always_on_top')[0].checked) {
+					this.action.changeContentIndex({
+						zIndex: Constants.ZIndexAlwaysOnTopValue
+					});
+					transz.disabled = true;
+				} else {
+					this.action.changeContentIndex({
+						zIndex: 0
+					});
+					transz.disabled = false;
 				}
 			});
 			if (metaData.type === Constants.TypeWebGL) {
