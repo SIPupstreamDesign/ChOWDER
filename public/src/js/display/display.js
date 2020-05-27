@@ -424,7 +424,7 @@ class Display {
 			for (let i = 0; i < data.length; ++i) {
 				let metaData = data[i];
 				if (!this.store.isViewable(metaData.group)) {
-					this.removeContent(previewArea, id);
+					this.removeContent(previewArea, metaData.id);
 				}
 					
 				// webgl iframeの更新
