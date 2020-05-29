@@ -314,6 +314,7 @@ class Display {
 				} else {
 					this.gui.showMemo(elem, metaData);
 					this.gui.showTime(elem, metaData);
+					this.gui.showCopyrights(elem, metaData);
 					this.gui.toggleMark(elem, metaData);
 				}
 			}
@@ -333,6 +334,10 @@ class Display {
 		if (time) {
 			previewArea.removeChild(time);
 		}
+		let copyright =  document.getElementById("copyright:" + id);
+		if (copyright) {
+			previewArea.removeChild(copyright);
+		}
 	}
 
 	/**
@@ -346,7 +351,6 @@ class Display {
 			if (disconnectedText) {
 				disconnectedText.style.display = "none";
 			}
-
 
 			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
 
@@ -444,6 +448,7 @@ class Display {
 				if (elem) {
 					this.gui.deleteTime(elem, data[i].id);
 					this.gui.deleteMark(elem, data[i].id);
+					this.gui.deleteCopyright(elem, data[i].id);
 					previewArea.removeChild(elem);
 				}
 			}

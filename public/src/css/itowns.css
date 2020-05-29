@@ -112,6 +112,10 @@ p {
 	margin-right: 14px;
 }
 
+.attribution_title {
+	font-size : 11px;
+}
+
 .property_text {
 	margin-left: 14px;
 	margin-right: 14px;
@@ -343,4 +347,25 @@ p {
     right: 15px;
 	width: 220px;
 	height: 34px;
+}
+
+.copyright {
+	position : absolute;
+	color : black;
+	height : 50px;
+	font-size : 1em;
+	background-color: rgba(255, 255, 255, 0.5);
+	border : 1px solid gray;
+	padding : 10px;
+	box-sizing: border-box;
+	margin: unset;
+}
+.copyright_link:link {
+	color : black;
+}
+.copyright_link:visited {
+	color : black;
+}
+.copyright_link:hover {
+	color : lightgray;
 }

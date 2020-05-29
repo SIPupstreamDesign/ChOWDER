@@ -19,6 +19,7 @@ import InputDialog from '../components/input_dialog'
 import PopupBackground from '../components/popup_background';
 import DateInput from '../components/date_input';
 import TimelineSettingDialog from './timeline_setting_dialog';
+import ITownsUtil  from '../common/itowns_util';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -173,10 +174,17 @@ class GUI extends EventEmitter {
         });
 
         // コンテンツ追加後にMetaDataが更新されたタイミングでレイヤーリストをEnableにする
-        this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, meta) => {
+        this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, metaData) => {
+            let meta = metaData;
+            if (metaData.length === 1) {
+                meta = metaData[0];
+            }
             if (!err && meta.hasOwnProperty('id')) {
                 this.contentID.innerText = meta.id;
                 this.layerList.setEnable(true);
+                
+                // copyright更新
+                this.showCopyrights(document.getElementById('itowns'), meta)
             }
         });
 
@@ -184,6 +192,9 @@ class GUI extends EventEmitter {
             if (!err && meta.hasOwnProperty('id')) {
                 this.contentID.innerText = meta.id;
                 this.layerList.setEnable(true);
+                
+                // copyright更新
+                this.showCopyrights(document.getElementById('itowns'), meta)
             }
         });
 
@@ -529,6 +540,43 @@ class GUI extends EventEmitter {
             a.dispatchEvent(e);
         }
         save(text, "performance_" + dataID + ".csv")
+    }
+
+    /**
+     * Copyrightを表示.
+     * elemにCopyright用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+    showCopyrights(elem, metaData) {
+        if (elem 
+            && metaData.type === Constants.TypeWebGL
+            && metaData.hasOwnProperty('layerList')) 
+            {
+
+            let copyrightText = ITownsUtil.createCopyrightText(metaData);
+            if (copyrightText.length === 0) return;
+            
+            let copyrightElem = document.getElementById("copyright:" + metaData.id);
+            if (copyrightElem) {
+                copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.right = "0px";
+                copyrightElem.style.top =   "0px";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+            } else {
+                copyrightElem = document.createElement("pre");
+                copyrightElem.id = "copyright:" + metaData.id;
+                copyrightElem.className = "copyright";
+                copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.right = "0px";
+                copyrightElem.style.top =   "0px";
+                copyrightElem.style.position = "absolute";
+                copyrightElem.style.height = "auto";
+                copyrightElem.style.whiteSpace = "pre-line";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+                elem.appendChild(copyrightElem);
+            }
+        }
     }
 
 }

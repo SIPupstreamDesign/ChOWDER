@@ -1642,6 +1642,7 @@ class Controller {
 			if (funcDict && funcDict.hasOwnProperty(json.id)) {
 				funcDict[json.id].chowder_itowns_update_layer_list(json);
 			}
+			this.gui.showCopyrights(document.getElementById(metaData.id), metaData);
 		}
 		this.store.setMetaData(json.id, json);
 		if (Validator.isCurrentTabMetaData(json)) {

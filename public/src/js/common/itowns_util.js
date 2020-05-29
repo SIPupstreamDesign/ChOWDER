@@ -5,6 +5,7 @@
 
 "use strict";
 
+import Constants from './constants';
 import ITownsCommand from './itowns_command.js';
 
 // ChOWDERメタデータを元にiTownsビュー更新用のユーティリティ
@@ -80,6 +81,29 @@ class ITownsUtil {
 
     static resize(iframeConnector, rect) {
         iframeConnector.send(ITownsCommand.Resize, rect);
+    }
+
+    static createCopyrightText(metaData) {
+        let copyrightText = "";
+        let layerList = JSON.parse(metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i)
+        {
+            if (layerList[i].hasOwnProperty(Constants.ItownsAttributionKey))
+            {
+                let attrib = layerList[i][Constants.ItownsAttributionKey];
+                if (attrib.hasOwnProperty('name') && attrib.name.length > 0) {
+                    copyrightText += attrib.name + "<br />"
+                }
+                if (attrib.hasOwnProperty('url') && attrib.url.length > 0) {
+                    copyrightText += '<a href="' 
+                    + attrib.url 
+                    + '" class="copyright_link">' 
+                    + attrib.url 
+                    + "</a><br />";
+                }
+            }
+        }
+        return copyrightText;
     }
 }
 

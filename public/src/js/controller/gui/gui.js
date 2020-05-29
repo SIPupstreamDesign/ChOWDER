@@ -31,6 +31,7 @@ import Validator from '../../common/validator.js';
 import manipulator from '../manipulator.js';
 import VideoController from '../../components/video_controller.js';
 import InputDialog from '../../components/input_dialog'
+import ITownsUtil from '../../common/itowns_util'
 
 "use strict";
 
@@ -1183,6 +1184,47 @@ class GUI extends EventEmitter
 			}
 		}
 	}
+
+    /**
+     * Copyrightを表示.
+     * elemにCopyright用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+    showCopyrights(elem, metaData) {
+        if (elem 
+            && metaData.type === Constants.TypeWebGL
+            && metaData.hasOwnProperty('layerList')) 
+            {
+
+            let copyrightText = ITownsUtil.createCopyrightText(metaData);
+            if (copyrightText.length === 0) return;
+
+            let previewArea = document.getElementById('preview_area');
+            let copyrightElem = document.getElementById("copyright:" + metaData.id);
+            let previewRect = previewArea.getBoundingClientRect();
+            if (copyrightElem) {
+                copyrightElem.innerHTML = copyrightText;
+                let rect = elem.getBoundingClientRect();
+                copyrightElem.style.right = "0px";
+				copyrightElem.style.top =  "0px";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+            } else {
+                copyrightElem = document.createElement("pre");
+                copyrightElem.id = "copyright:" + metaData.id;
+                copyrightElem.className = "copyright";
+                copyrightElem.innerHTML = copyrightText;
+                let rect = elem.getBoundingClientRect();
+                copyrightElem.style.right = "0px";
+				copyrightElem.style.top =  "0px";
+                copyrightElem.style.position = "absolute";
+                copyrightElem.style.height = "auto";
+                copyrightElem.style.whiteSpace = "pre-line";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+                elem.appendChild(copyrightElem);
+            }
+        }
+    }
 
 	/**
 	 * リストビュー領域をクリアする

@@ -482,6 +482,9 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('opacity')) {
             config.opacity = params.opacity;
         }
+        if (params.hasOwnProperty('attribution')) {
+            config.attribution = params.attribution;
+        }
         return config;
     }
 
@@ -874,6 +877,11 @@ class Store extends EventEmitter {
             }
             if (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('format')) {
                 data.format = layer.source.format;
+            }
+            if (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('attribution')) {
+                if (layer.source !== undefined) {
+                    data.attribution = layer.source.attribution;
+                }
             }
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||

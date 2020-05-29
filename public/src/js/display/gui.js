@@ -72,6 +72,8 @@ class GUI extends EventEmitter {
                     if (metaData.type === Constants.TypeWebGL) {
                         let elem = document.getElementById(id);
                         this.showTime(elem, metaData);
+                        // timeが変更された場合は、copyrightの位置が変更される
+                        this.showCopyrights(elem, metaData);
                         
                         if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
                             funcDict[metaData.id].chowder_itowns_update_time(metaData);
@@ -312,6 +314,18 @@ class GUI extends EventEmitter {
         }
     }
     
+    deleteCopyright(elem, id) {
+        if (elem) {
+            let copyright =  document.getElementById("copyright:" + id);
+            if (copyright) {
+                copyright.style.display = "none";
+                if (copyright.parentNode) {
+                    copyright.parentNode.removeChild(copyright);
+                }
+            }
+        }
+    }
+
     /**
      * 表示非表示の更新.
      * @method updatePreviewAreaVisible
@@ -427,6 +441,55 @@ class GUI extends EventEmitter {
     }
 
     /**
+     * Copyrightを表示.
+     * elemにCopyright用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+    showCopyrights(elem, metaData) {
+        if (elem 
+            && metaData.type === Constants.TypeWebGL
+            && metaData.hasOwnProperty('layerList')) 
+            {
+
+            let copyrightText = ITownsUtil.createCopyrightText(metaData);
+            if (copyrightText.length === 0) return;
+
+            let previewArea = document.getElementById('preview_area');
+            let copyrightElem = document.getElementById("copyright:" + metaData.id);
+            let previewRect = previewArea.getBoundingClientRect();
+            if (copyrightElem) {
+                copyrightElem.innerHTML = copyrightText;
+                let rect = elem.getBoundingClientRect();
+                copyrightElem.style.right = (previewRect.right - rect.right) + "px";
+                if (metaData.display_time && String(metaData.display_time) === "true") {
+                    copyrightElem.style.top =  (rect.top + 50) + "px";
+                } else {
+                    copyrightElem.style.top =  rect.top + "px";
+                }
+                copyrightElem.style.zIndex = elem.style.zIndex;
+            } else {
+                copyrightElem = document.createElement("pre");
+                copyrightElem.id = "copyright:" + metaData.id;
+                copyrightElem.className = "copyright";
+                copyrightElem.innerHTML = copyrightText;
+                let rect = elem.getBoundingClientRect();
+                copyrightElem.style.right = (previewRect.right - rect.right) + "px";
+                if (metaData.display_time && String(metaData.display_time) === "true") {
+                    copyrightElem.style.top =  (rect.top + 50) + "px";
+                } else {
+                    copyrightElem.style.top =  rect.top + "px";
+                }
+                copyrightElem.style.position = "absolute";
+                copyrightElem.style.height = "auto";
+                copyrightElem.style.whiteSpace = "pre-line";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+                previewArea.appendChild(copyrightElem);
+            }
+        }
+    }
+
+    /**
      * PDFを表示
      * @param {*} elem 
      * @param {*} metaData 
@@ -537,17 +600,19 @@ class GUI extends EventEmitter {
             try {
                 connector.connect(() => {
                     // 初回に一度実行
-                    connector.send(ITownsCommand.UpdateCamera, {
-                        mat : JSON.parse(metaData.cameraWorldMatrix),
-                        params : JSON.parse(metaData.cameraParams),
-                    });
+                    if (metaData.hasOwnProperty('cameraWorldMatrix')) {
+                        connector.send(ITownsCommand.UpdateCamera, {
+                            mat : JSON.parse(metaData.cameraWorldMatrix),
+                            params : JSON.parse(metaData.cameraParams),
+                        });
+                    }
                     connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                         let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
                         connector.send(ITownsCommand.Resize, rect);
                     });
                 });
             } catch(err) {
-                console.error(err);
+                console.error(err, metaData);
             }
 
             // chowderサーバから受信したカメラ情報などを、displayのiframe内に随時送るためのコールバックイベントを登録
@@ -763,6 +828,7 @@ class GUI extends EventEmitter {
     
             this.showMemo(elem, metaData);
             this.showTime(elem, metaData);
+            this.showCopyrights(elem, metaData);
         }
     }
     
@@ -1162,6 +1228,7 @@ class GUI extends EventEmitter {
                     // メモ/timeの座標も更新する
                     this.showMemo(elem, metaData);
                     this.showTime(elem, metaData);
+                    this.showCopyrights(elem, metaData);
                 }
             }
         }
