@@ -296,27 +296,27 @@ class GUI extends EventEmitter {
         // サンプルコンテンツの追加
         this.itownSelect.addOption(JSON.stringify({
             type: "preset",
-            url: "itowns/gsi_planar.html"
+            url: "itowns/preset/gsi_planar/gsi_planar.html"
         }), "Preset:地理院地図 2.5D");
         this.itownSelect.addOption(JSON.stringify({
             type: "preset",
-            url: "itowns/gsi.html"
+            url: "itowns/preset/gsi/gsi.html"
         }), "Preset:地理院地図 3D");
         this.itownSelect.addOption(JSON.stringify({
             type: "preset",
-            url: "itowns/pointcloud_3d_map.html"
+            url: "itowns/preset/pointcloud_3d_map/pointcloud_3d_map.html"
         }), "Preset:pointcloud_3d_map");
         this.itownSelect.addOption(JSON.stringify({
             type: "preset",
-            url: "itowns/view_3d_map.html"
+            url: "itowns/preset/view_3d_map/view_3d_map.html"
         }), "Preset:view_3d_map");
         this.itownSelect.addOption(JSON.stringify({
             type: "preset",
-            url: "itowns/3dtiles_basic.html"
+            url: "itowns/preset/3dtiles_basic/3dtiles_basic.html"
         }), "Preset:3dtiles_basic");
         this.itownSelect.addOption(JSON.stringify({
             type: "preset",
-            url: "itowns/vector_tile_raster_3d.html"
+            url: "itowns/preset/vector_tile_raster_3d/vector_tile_raster_3d.html"
         }), "Preset:vector_tile_raster_3d");
 
         {

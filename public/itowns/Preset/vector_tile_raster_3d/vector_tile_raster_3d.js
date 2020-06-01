@@ -23,7 +23,7 @@ window.onload = function() {
 
     setupLoadingScreen(viewerDiv, view);
 
-    promises.push(itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(function _(config) {
+    promises.push(itowns.Fetcher.json('./Ortho.json').then(function _(config) {
         config.source = new itowns.WMTSSource(config.source);
         var layer = new itowns.ColorLayer('Ortho', config);
         return view.addLayer(layer);

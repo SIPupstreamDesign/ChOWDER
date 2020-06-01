@@ -48,12 +48,12 @@ window.onload = function () {
 
     itowns.View.prototype.addLayer.call(view, pointcloud);//.then(onLayerReady);
 
-    itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(function _(config) {
+    itowns.Fetcher.json('./IGN_MNT_HIGHRES.json').then(function _(config) {
         config.source = new itowns.WMTSSource(config.source);
         var layer = new itowns.ElevationLayer(config.id, config);
         view.addLayer(layer);
     });
-    itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(function _(config) {
+    itowns.Fetcher.json('./Ortho.json').then(function _(config) {
         config.source = new itowns.WMTSSource(config.source);
         var layer = new itowns.ColorLayer(config.id, config);
         view.addLayer(layer);

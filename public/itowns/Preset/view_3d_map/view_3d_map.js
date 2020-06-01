@@ -44,7 +44,7 @@ window.onload = function() {
     // Add one imagery layer to the scene and the miniView
     // This layer is defined in a json file but it could be defined as a plain js
     // object. See Layer* for more info.
-    itowns.Fetcher.json('./layers/JSONLayers/OPENSM.json').then(function _(config) {
+    itowns.Fetcher.json('./OPENSM.json').then(function _(config) {
         config.source = new itowns.TMSSource(config.source);
         var layer = new itowns.ColorLayer('OPENSM', config);
         view.addEventListener(itowns.VIEW_EVENTS.LAYERS_INITIALIZED, () =>{
@@ -63,8 +63,8 @@ window.onload = function() {
         view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
         layer.scale = 1.0;
     }
-    itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
-    itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
+    itowns.Fetcher.json('./WORLD_DTM.json').then(addElevationLayerFromConfig);
+    itowns.Fetcher.json('./IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
     var menuGlobe = new GuiTools('menuDiv', view, null, viewerDiv);
     var divScaleWidget = document.getElementById('divScaleWidget');
     function updateScaleWidget() {
