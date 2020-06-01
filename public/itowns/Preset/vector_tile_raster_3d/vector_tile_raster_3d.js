@@ -39,29 +39,20 @@ window.onload = function() {
         return isValid;
     }
 
-    var mvtSource = new itowns.VectorTilesSource({
-        style: 'https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json',
-        // eslint-disable-next-line no-template-curly-in-string
-        url: 'https://osm.oslandia.io/data/v3/${z}/${x}/${y}.pbf',
-        attribution: {
-            name: 'OpenStreetMap',
-            url: 'http://www.openstreetmap.org/',
-        },
-        filter: function (layer) { return ['fill', 'line'].includes(layer.type) },
-        zoom: {
-            min: 2,
-            max: 16,
-        },
-    });
+    promises.push(itowns.Fetcher.json('./MVT.json').then(function _(config) {
+        config.source.filter = function (layer) { return ['fill', 'line'].includes(layer.type) };
 
-    var mvtLayer = new itowns.ColorLayer('MVT', {
-        isValidData: isValidData,
-        source: mvtSource,
-        fx: 2.5,
-    });
-
-    view.addLayer(mvtLayer);
-
+        var mvtSource = new itowns.VectorTilesSource(config.source);
+    
+        var mvtLayer = new itowns.ColorLayer('MVT', {
+            isValidData: isValidData,
+            source: mvtSource,
+            fx: 2.5,
+        });
+    
+        view.addLayer(mvtLayer);
+    }));
+    
     //var menuGlobe = new GuiTools('menuDiv', view, 300);
     // Listen for globe full initialisation event
     view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {

@@ -9,37 +9,17 @@ window.onload = function () {
 
     // 地理院地図(Color)の読み込み
     function loadGSIColor() {
-        var url = "https://cyberjapandata.gsi.go.jp/xyz/std/%TILEMATRIX/%COL/%ROW.png";
-        if (url.indexOf("${z}") >= 0) {
-            url = url.split("${z}").join("%TILEMATRIX");
-        }
-        if (url.indexOf("${x}") >= 0) {
-            url = url.split("${x}").join("%COL");
-        }
-        if (url.indexOf("${y}") >= 0) {
-            url = url.split("${y}").join("%ROW");
-        }
-        var config = {
-            "id": "GSI Color",
-            "projection": "EPSG:3857",
-            "isInverted": true,
-            "format": "image/png",
-            "url": url,
-            "tileMatrixSet": "PM",
-            "zoom" : {
-                "min" : 1,
-                "max" : 18
-            }
-        };
-        var mapSource = new itowns.TMSSource(config);
-        var layer = new itowns.ColorLayer(config.id, {
-            source: mapSource,
-            updateStrategy: {
-                type: 3
-            },
-            opacity: 1.0
+        itowns.Fetcher.json('./gsi.json').then(function (config) {
+            var mapSource = new itowns.TMSSource(config.source);
+            var layer = new itowns.ColorLayer(config.id, {
+                source: mapSource,
+                updateStrategy: {
+                    type: 3
+                },
+                opacity: 1.0
+            });
+            view.addLayer(layer);//.then(menuGlobe.addLayerGUI.bind(menuGlobe));
         });
-        view.addLayer(layer);//.then(menuGlobe.addLayerGUI.bind(menuGlobe));
     }
 
     function getTextureFloat(buffer) {
@@ -109,79 +89,70 @@ window.onload = function () {
 
     // 地理院地図(Elevation/PNG)の読み込み
     function loadGSIElevationPNG() {
-        var url = "https://cyberjapandata.gsi.go.jp/xyz/dem_png/%TILEMATRIX/%COL/%ROW.png";
-        var config = {
-            "id": "GSI Elevation",
-            "projection": "EPSG:3857",
-            "format": url.indexOf('.png') > 0 ? "image/png" : "",
-            "url": url,
-            "tileMatrixSet": "PM",
-            "zoom" : {
-                "min" : 2,
-                "max" : 12
+        itowns.Fetcher.json('./gsi_elevation.json').then(function (config) {
+            var url = config.source.url;
+            var textureLoader = new itowns.THREE.TextureLoader();
+            function texture(url, options = {}) {
+                var res;
+                var rej;
+                textureLoader.crossOrigin = options.crossOrigin;
+                const promise = new Promise((resolve, reject) => {
+                    res = resolve;
+                    rej = reject;
+                });
+                textureLoader.load(url, res, () => { }, rej);
+                return promise;
             }
-        };
-        var textureLoader = new itowns.THREE.TextureLoader();
-        function texture(url, options = {}) {
-            var res;
-            var rej;
-            textureLoader.crossOrigin = options.crossOrigin;
-            const promise = new Promise((resolve, reject) => {
-                res = resolve;
-                rej = reject;
-            });
-            textureLoader.load(url, res, () => { }, rej);
-            return promise;
-        }
-        var canvas = document.createElement("canvas");
-        canvas.width = "256";
-        canvas.height = "256";
-
-        function convertTexToArray(tex) {
-            var context = canvas.getContext('2d');
-            context.drawImage(tex.image, 0, 0);
-            var pixData = context.getImageData(0, 0, 256, 256).data;
-            var heights = []
-            var alt = 0;
-            for (var y = 0; y < 256; ++y) {
-                for (var x = 0; x < 256; x++) {
-                    var addr = (x + y * 256) * 4;
-                    var R = pixData[addr];
-                    var G = pixData[addr + 1];
-                    var B = pixData[addr + 2];
-                    var A = pixData[addr + 3];
-                    if (R == 128 && G == 0 && B == 0) {
-                        alt = 0;
-                    } else {
-                        //                          alt = (R << 16 + G << 8 + B);
-                        alt = (R * 65536 + G * 256 + B);
-                        if (alt > 8388608) {
-                            alt = (alt - 16777216);
+            var canvas = document.createElement("canvas");
+            canvas.width = "256";
+            canvas.height = "256";
+    
+            function convertTexToArray(tex) {
+                var context = canvas.getContext('2d');
+                context.drawImage(tex.image, 0, 0);
+                var pixData = context.getImageData(0, 0, 256, 256).data;
+                var heights = []
+                var alt = 0;
+                for (var y = 0; y < 256; ++y) {
+                    for (var x = 0; x < 256; x++) {
+                        var addr = (x + y * 256) * 4;
+                        var R = pixData[addr];
+                        var G = pixData[addr + 1];
+                        var B = pixData[addr + 2];
+                        var A = pixData[addr + 3];
+                        if (R == 128 && G == 0 && B == 0) {
+                            alt = 0;
+                        } else {
+                            //                          alt = (R << 16 + G << 8 + B);
+                            alt = (R * 65536 + G * 256 + B);
+                            if (alt > 8388608) {
+                                alt = (alt - 16777216);
+                            }
+                            alt = alt * 0.01;
                         }
-                        alt = alt * 0.01;
+                        heights.push(alt);
                     }
-                    heights.push(alt);
                 }
+                return heights;
             }
-            return heights;
-        }
-        var mapSource = new itowns.TMSSource(config);
-        mapSource.fetcher = function (url, options = {}) {
-            return texture(url, options).then(function (tex) {
-                var floatArray = convertTexToArray(tex);
-                var float32Array = new Float32Array(floatArray);
-                var tt = getTextureFloat(float32Array);
-                return tt;
+            var mapSource = new itowns.TMSSource(config.source);
+            mapSource.fetcher = function (url, options = {}) {
+                return texture(url, options).then(function (tex) {
+                    var floatArray = convertTexToArray(tex);
+                    var float32Array = new Float32Array(floatArray);
+                    var tt = getTextureFloat(float32Array);
+                    return tt;
+                });
+            };
+            var layer = new itowns.ElevationLayer(config.id, {
+                source: mapSource,
+                updateStrategy: {
+                    type: 3
+                },
+                scale: 1
             });
-        };
-        var layer = new itowns.ElevationLayer(config.id, {
-            source: mapSource,
-            updateStrategy: {
-                type: 3
-            },
-            scale: 1
+            view.addLayer(layer);
         });
-        view.addLayer(layer);
     }
 
     // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)

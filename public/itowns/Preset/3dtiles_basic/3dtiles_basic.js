@@ -16,7 +16,7 @@ window.onload = function() {
 
     //var menuGlobe = new GuiTools('menuDiv', view, 300);
 
-    itowns.Fetcher.json('./layers/JSONLayers/OPENSM.json').then(function _(config) {
+    itowns.Fetcher.json('./OPENSM.json').then(function _(config) {
         config.source = new itowns.TMSSource(config.source);
         var layer = new itowns.ColorLayer('Ortho', config);
         view.addLayer(layer);//.then(menuGlobe.addLayerGUI.bind(menuGlobe));
