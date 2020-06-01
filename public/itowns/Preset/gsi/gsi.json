@@ -1,0 +1,22 @@
+{
+	"id": "GSI Color",
+	"source": {
+		"projection": "EPSG:3857",
+		"isInverted": true,
+		"format": "image/png",
+		"url": "https://cyberjapandata.gsi.go.jp/xyz/std/%TILEMATRIX/%COL/%ROW.png",
+		"attribution": {
+			"name": "出典：国土地理院発行 標準地図（電子地形図（タイル））",
+			"url": "https://maps.gsi.go.jp/development/ichiran.html"
+		},
+		"tileMatrixSet": "PM",
+		"updateStrategy": {
+			"type": 3
+		},
+		"zoom": {
+			"min": 1,
+			"max": 18
+		},
+		"opacity": 1.0
+	}
+}

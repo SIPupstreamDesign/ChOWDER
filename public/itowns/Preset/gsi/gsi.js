@@ -9,40 +9,16 @@ window.onload = function () {
 
     // 地理院地図(Color)の読み込み
     function loadGSIColor() {
-        var url = "https://cyberjapandata.gsi.go.jp/xyz/std/%TILEMATRIX/%COL/%ROW.png";
-        if (url.indexOf("${z}") >= 0) {
-            url = url.split("${z}").join("%TILEMATRIX");
-        }
-        if (url.indexOf("${x}") >= 0) {
-            url = url.split("${x}").join("%COL");
-        }
-        if (url.indexOf("${y}") >= 0) {
-            url = url.split("${y}").join("%ROW");
-        }
-        var config = {
-            "id": "GSI Color",
-            "projection": "EPSG:3857",
-            "isInverted": true,
-            "format": "image/png",
-            "url": url,
-            "tileMatrixSet": "PM",
-            "updateStrategy": {
-                "type": 3
-            },
-            "zoom" : {
-                "min" : 1,
-                "max" : 18
-            },
-            "opacity": 1.0
-        };
-        var mapSource = new itowns.TMSSource(config);
-        var layer = new itowns.ColorLayer(config.id, {
-            source: mapSource,
-            updateStrategy: {
-                type: 3
-            },
+        itowns.Fetcher.json('./gsi.json').then(function (config) {
+            var mapSource = new itowns.TMSSource(config.source);
+            var layer = new itowns.ColorLayer(config.id, {
+                source: mapSource,
+                updateStrategy: {
+                    type: 3
+                },
+            });
+            view.addLayer(layer);
         });
-        view.addLayer(layer);
     }
 
     // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
