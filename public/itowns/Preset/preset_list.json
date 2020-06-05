@@ -1,0 +1,28 @@
+{
+	"preset_list" : [
+		{
+			"name" : "地理院地図 2.5D",
+			"url" : "itowns/preset/gsi_planar/gsi_planar.html"
+		},
+		{
+			"name" : "地理院地図 3D",
+			"url" : "itowns/preset/gsi/gsi.html"
+		},
+		{
+			"name" : "pointcloud_3d_map",
+			"url" : "itowns/preset/pointcloud_3d_map/pointcloud_3d_map.html"
+		},
+		{
+			"name" : "view_3d_map",
+			"url" : "itowns/preset/view_3d_map/view_3d_map.html"
+		},
+		{
+			"name" : "3dtiles_basic",
+			"url" : "itowns/preset/3dtiles_basic/3dtiles_basic.html"
+		},
+		{
+			"name" : "vector_tile_raster_3d",
+			"url" : "itowns/preset/vector_tile_raster_3d/vector_tile_raster_3d.htm"
+		}
+	]
+}

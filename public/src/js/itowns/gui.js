@@ -294,42 +294,51 @@ class GUI extends EventEmitter {
         this.itownSelect = new Select();
         this.itownSelect.getDOM().className = "itown_select";
         // サンプルコンテンツの追加
-        this.itownSelect.addOption(JSON.stringify({
-            type: "preset",
-            url: "itowns/preset/gsi_planar/gsi_planar.html"
-        }), "Preset:地理院地図 2.5D");
-        this.itownSelect.addOption(JSON.stringify({
-            type: "preset",
-            url: "itowns/preset/gsi/gsi.html"
-        }), "Preset:地理院地図 3D");
-        this.itownSelect.addOption(JSON.stringify({
-            type: "preset",
-            url: "itowns/preset/pointcloud_3d_map/pointcloud_3d_map.html"
-        }), "Preset:pointcloud_3d_map");
-        this.itownSelect.addOption(JSON.stringify({
-            type: "preset",
-            url: "itowns/preset/view_3d_map/view_3d_map.html"
-        }), "Preset:view_3d_map");
-        this.itownSelect.addOption(JSON.stringify({
-            type: "preset",
-            url: "itowns/preset/3dtiles_basic/3dtiles_basic.html"
-        }), "Preset:3dtiles_basic");
-        this.itownSelect.addOption(JSON.stringify({
-            type: "preset",
-            url: "itowns/preset/vector_tile_raster_3d/vector_tile_raster_3d.html"
-        }), "Preset:vector_tile_raster_3d");
-
         {
             let xhr = new XMLHttpRequest();
             xhr.onload = () => {
                 if (xhr.status == 200) {
-                    this.itownSelect.addOption(JSON.stringify({
-                        type: "preset",
-                        url: "itowns/ipCameraView/" + xhr.response
-                    }), "Preset:ipCameraView");
+                    try 
+                    {
+                        const json = JSON.parse(xhr.response);
+                        if (!json.hasOwnProperty('preset_list')) {
+                            throw "Error: invalid preset_list.json";
+                        }
+                        for (let i = 0; i < json.preset_list.length; ++i)
+                        {
+                            const preset =  json.preset_list[i];
+                            if (!preset.hasOwnProperty('name') || !preset.hasOwnProperty('url')) {
+                                throw "Error: invalid preset_list.json";
+                            }
+                            this.itownSelect.addOption(JSON.stringify({
+                                type: "preset",
+                                url: preset.url
+                            }), "Preset:" + preset.name);
+                        }
+                    }
+                    catch(err)
+                    {
+                        window.alert(err);
+                        console.error(err)
+                    }
+                    
+                    // ipcameraがあれば追加
+                    {
+                        let xhr2 = new XMLHttpRequest();
+                        xhr2.onload = () => {
+                            if (xhr2.status == 200) {
+                                this.itownSelect.addOption(JSON.stringify({
+                                    type: "preset",
+                                    url: "itowns/ipCameraView/" + xhr2.response
+                                }), "Preset:ipCameraView");
+                            }
+                        }
+                        xhr2.open("GET", "itowns/ipCameraView/parameter.txt");
+                        xhr2.send("null");
+                    }
                 }
             }
-            xhr.open("GET", "itowns/ipCameraView/parameter.txt");
+            xhr.open("GET", "itowns/Preset/preset_list.json");
             xhr.send("null");
         }
 
