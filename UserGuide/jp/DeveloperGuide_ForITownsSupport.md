@@ -24,13 +24,18 @@ gsi.json
 ```
 とファイルがありますが、ChOWDERでは、このうちgsi.htmlをiframeにて表示します。
 
+<img src="image/itowns_iframe.png" height="400" />
+
 ChOWDERに対応したiTownsコンテンツでは、`iTowns用いたプリセットページの相対URL`と、
-ChOWDER iTowns Appにて編集可能な`レイヤーデータ`が、ChOWDERのデータベースに保存されます。
+ChOWDER iTowns Appにて編集可能な`レイヤープロパティ`が、ChOWDERのデータベースに保存されます。
 
 ChOWDERのコントローラ、ディスプレイ、ChOWDER iTowns Appでは、
-まず、保存情報を元にプリセットページをiframeで表示し、その後、保存されているレイヤーデータを適用して、
+まず、保存情報を元にプリセットページをiframeで表示し、その後、保存されているレイヤープロパティを適用して、
 プリセットに対するコンテンツごとの編集状態を復元します。
 つまり、ChOWDER iTowns Appでのレイヤープロパティの編集は、元のプリセットのhtmlに対して、非破壊的に行っています。
+
+<img src="image/itowns_layerprop.png" height="400" />
+ChOWDER iTowns Appでのレイヤープロパティ編集
 
 iTownsコンテンツの開発方法
 ========================================================================================
@@ -52,6 +57,7 @@ chowder_injection.bundle.jsでは、iTownsのリサイズイベントの制御�
 次に、iTownsコンテンツにて、iTownsのレイヤー編集などを可能にするために、
 iTownsコンテンツページの`onload`のタイミングで、`injectChOWDER`関数を呼ぶ必要があります。
 関数のプロトタイプは以下の通りです。
+呼び出しには、itownsのviewインスタンスとiTownsのviewerのdivエレメントが引数として必要です。
 
 ```js
 /**
@@ -95,6 +101,7 @@ window.onload = function () {
     var view = new itowns.GlobeView(viewerDiv, placement);
 
     loadGSIColor();
+
     injectChOWDER(view, viewerDiv); // ←ここで呼び出しています
 };
 ```
@@ -141,9 +148,8 @@ ChOWDER iTowns Appのプリセットリストへ反映させ、Presetとして�
 }
 ```
 
-上記JSONによるPresetリスト表示例
-
 <img src="image/itowns_preset_list.png" height="400" />
+上記JSONによるPresetリスト表示例
 
 # chowder_injectionについて(詳細)
 
@@ -185,5 +191,7 @@ ChOWDERは、chowder_injection及びiTownsコンテンツを読み込み、コ�
  EventTarget - https://developer.mozilla.org/ja/docs/Web/API/EventTarget
 
  ChOWDER-chowder_injection間の通信コード - src/js/common/iframe_connector.js
+
+<img src="image/itowns_connection.png" height="400" />
 
 また、chowder_injectionとiTownsコンテンツの間では、前述の`injectChOWDER`関数を呼び出し、chowder_injectionが直接iTownsのオブジェクトを参照することで、chowder_injectionの機能を実現しています。
