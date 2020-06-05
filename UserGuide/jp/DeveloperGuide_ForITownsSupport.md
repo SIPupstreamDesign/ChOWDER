@@ -1,4 +1,4 @@
-DevelperGuide For Itowns Support
+DevelperGuide For iTowns Support
 ========================================================================================
 
 はじめに
@@ -42,7 +42,7 @@ ChOWDERに対応したiTownsコンテンツを作るには、まず、
 `chowder_injection.bundle.js`というJavascriptコードを読み込みます。
 
 chowder_injection.bundle.jsでは、iTownsのリサイズイベントの制御も行っているため、htmlファイル内での読み込み順として、iTownsより先に読み込む必要があります。
-```
+```html
 <head>
     <script src="../../../chowder_injection.bundle.js"></script>
     <script src="../../itowns/itowns.js"></script>
@@ -53,7 +53,7 @@ chowder_injection.bundle.jsでは、iTownsのリサイズイベントの制御�
 iTownsコンテンツページの`onload`のタイミングで、`injectChOWDER`関数を呼ぶ必要があります。
 関数のプロトタイプは以下の通りです。
 
-```
+```js
 /**
  * itownsを使ったwebアプリケーションをchowder対応するための関数
  * injectChOWDER(view, viewerDiv); と呼び出す
