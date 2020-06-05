@@ -166,7 +166,7 @@ chowder_injectionでは、以下のことを行っています。
     - レイヤーの追加時のURLのxyz指定について、iTownsの`${z}/${x}/${y}`だけでなく、地理院地図などで用いられる`{z}/{x}/{y}`にも対応するようにしています。
 
  - レイヤープロパティの取得、変更
-    - ChOWDER iTowns Appにて、iTownsコンテンツ読み込み時に、iTownsコンテンツ内のレイヤーデータを取得し、一部のレイヤープロパティ（透明度や表示非表示など）をChOWDER iTowns Appで表示、変更できるようにしています。
+    - ChOR iTowns Appにて、iTownsコンテンツ読み込み時に、iTownsコンテンツ内のレイヤーデータを取得し、一部のレイヤープロパティ（透明度や表示非表示など）をChOWDER iTowns Appで表示、変更できるようにしています。
     レイヤープロパティを変更した際は、変更したデータはChOWDERのコンテンツ内のメタデータとして、ChOWDERが使用しているRedisDB内に保存されます。
 
  - データに応じた特殊対応
@@ -194,4 +194,4 @@ ChOWDERは、chowder_injection及びiTownsコンテンツを読み込み、コ�
 
 <img src="image/itowns_connection.png" height="400" />
 
-また、chowder_injectionとiTownsコンテンツの間では、前述の`injectChOWDER`関数を呼び出し、chowder_injectionが直接iTownsのオブジェクトを参照することで、chowder_injectionの機能を実現しています。
+また、chowder_injectionとiTownsコンテンツの間では、前述の`injectChOWDER`関数を呼び出し、chowder_injectionから直接iTownsのオブジェクトを参照することで、chowder_injectionの機能を実現しています。
