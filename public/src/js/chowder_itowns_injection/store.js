@@ -440,12 +440,6 @@ class Store extends EventEmitter {
                 "name": params.hasOwnProperty('id') ? params.id : "3dtile",
                 "url": url
             };
-            if (params.hasOwnProperty('sseThreshold')) {
-                config.sseThreshold = params.sseThreshold;
-            }
-            if (params.hasOwnProperty('wireframe')) {
-                config.wireframe = params.wireframe;
-            }
         }
         if (url && url.indexOf('.geojson') >= 0) {
             config = {
@@ -479,11 +473,26 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('format')) {
             config.format = params.format;
         }
+        /*
+        // configに入れても生成時に反映されないため, 生成後に反映させる
         if (params.hasOwnProperty('opacity')) {
             config.opacity = params.opacity;
         }
+        if (params.hasOwnProperty('visible')) {
+            config.opacity = Boolean(params.visible);
+        }
+        */
         if (params.hasOwnProperty('attribution')) {
             config.attribution = params.attribution;
+        }
+        if (params.hasOwnProperty('sseThreshold')) {
+            config.sseThreshold = params.sseThreshold;
+        }
+        if (params.hasOwnProperty('wireframe')) {
+            config.wireframe = params.wireframe;
+        }
+        if (params.hasOwnProperty('pointSize')) {
+            config.pointSize = params.pointSize;
         }
         return config;
     }
@@ -522,6 +531,16 @@ class Store extends EventEmitter {
         }
         let config = this.createLayerConfigByType(params, type);
         let layer = this.createLayerByType(config, type);
+        // 生成時に反映されないレイヤープロパティは、生成後に反映させる
+        if (params.hasOwnProperty('opacity')) {
+            layer.opacity = params.opacity;
+        }
+        if (params.hasOwnProperty('visible')) {
+            layer.visible = Boolean(params.visible);
+        }
+        if (params.hasOwnProperty('bbox')) {
+            layer.bboxes.visible = Boolean(params.bbox);
+        }
         if (type === ITownsConstants.TypePointCloud ||
             type === ITownsConstants.Type3DTile) {
             itowns.View.prototype.addLayer.call(this.itownsView, layer);
