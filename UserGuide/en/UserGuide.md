@@ -1253,6 +1253,8 @@ GIS layer properties
 
 The following properties can be set from the GUI for each type of layer added
 
+  - All Layers
+    - attribution - name and url for copyright
  - Color
     - visible - Show / Hide
     - opacity - Opacity
