@@ -95,6 +95,20 @@ class Store extends EventEmitter {
                     this.emit(Store.EVENT_UPDATE_MEASURE_PERFORMANCE, null, data.id, data.display_id);
                 }
             }
+            if (data && data.hasOwnProperty('command') && data.command === "changeItownsContentTime") {
+                if (data.hasOwnProperty('data') && data.data.hasOwnProperty('time')) {
+                    if (this.timelineCurrentTime.toJSON() != data.data.time) {
+                        let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
+                        this.timelineCurrentTime = new Date(data.data.time);
+                        this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
+                        this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
+                        this.iframeConnector.send(ITownsCommand.UpdateTime, {
+                            time : data.data.time
+                        });
+                        this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+                    }
+                }
+            }
         });
     }
 
