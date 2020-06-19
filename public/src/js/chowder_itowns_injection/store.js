@@ -1001,6 +1001,8 @@ class Store extends EventEmitter {
                 this.iframeConnector.send(ITownsCommand.AddContent, {
                     thumbnail: thumbnailBase64,
                     layerList: this.layerDataList
+                }, function () {
+                    done = true;
                 });
                 done = true;
             }

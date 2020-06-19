@@ -498,7 +498,7 @@ class Store extends EventEmitter {
             if (this.timelineCurrentTime.getTime() < this.timelineStartTime.getTime()) {
                 this.timelineCurrentTime = this.timelineStartTime;
             }
-            if (this.timelineEndTime.getTime() > this.timelineEndTime.getTime()) {
+            if (this.timelineCurrentTime.getTime() > this.timelineEndTime.getTime()) {
                 this.timelineCurrentTime = this.timelineEndTime;
             }
             this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
