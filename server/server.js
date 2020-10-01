@@ -14,8 +14,8 @@
 		WebSocket = require('websocket'),
 		util = require('./util'),
 		ws_connector = require('./ws_connector.js'),
-		port = 8080,
-		sslport = 9090,
+		port = 80,
+		sslport = 443,
 		currentVersion = "v2",
 		ws2_connections = {},
 		id_counter = 0,
@@ -179,12 +179,12 @@
 				executer.setSettingJSON(settings);
 
 				/// web socket server instance
-				ws2 = new WebSocket.server({ httpServer : wsopserver,
+				ws2 = new WebSocket.server({ httpServer : opsever,
 						maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
 						maxReceivedFrameSize :Number(settings.wsMaxMessageSize),
 						autoAcceptConnections : false});
 
-				ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+				ws2_s = new WebSocket.server({ httpServer : opsever_s,
 					maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
 					maxReceivedFrameSize : Number(settings.wsMaxMessageSize),
 					autoAcceptConnections : false});
@@ -199,13 +199,13 @@
 			}
 		}
 		if (!ws2) {
-			ws2 = new WebSocket.server({ httpServer : wsopserver,
+			ws2 = new WebSocket.server({ httpServer : opsever,
 				maxReceivedMessageSize: 64*1024*1024, // 64MB
 				maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
 				autoAcceptConnections : false});
 		}
 		if (!ws2_s)	{
-			ws2_s = new WebSocket.server({ httpServer : wsopserver_s,
+			ws2_s = new WebSocket.server({ httpServer : opsever_s,
 				maxReceivedMessageSize: 64*1024*1024, // 64MB
 				maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
 				autoAcceptConnections : false});
@@ -235,8 +235,7 @@
 	//----------------------------------------------------------------------------------------
 
 	console.log('start server "http://localhost:' + port + '/"');
-	console.log('start ws operate server "ws://localhost:' + (port + 1) + '/"');
+	console.log('start ws operate server "ws://localhost:' + (port) + '/"');
 	console.log('start server "https://localhost:' + sslport + '/"');
-	console.log('start ws operate server "wss://localhost:' + (sslport + 1) + '/"');
-	//console.log('start ws operate server "ws://localhost:' + (port + 2) + '/"');
+	console.log('start ws operate server "wss://localhost:' + (sslport) + '/"');
 })();

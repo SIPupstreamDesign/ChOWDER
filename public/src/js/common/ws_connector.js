@@ -23,7 +23,12 @@ let resultCallbacks = {},
 	client = null,
 	is_connected = false,
 	currentVersion = "v2",
-	url = get_protocol() + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+	url = get_protocol() + location.hostname + "/" + currentVersion + "/";
+
+if (location.port)
+{
+	url = get_protocol() + location.hostname + ":" + (Number(location.port)) + "/" + currentVersion + "/";
+}
 
 class WsConnector {
 
