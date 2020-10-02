@@ -561,7 +561,6 @@ class Store extends EventEmitter {
      * @param {*} layerList 
      */
     initLayers(layerList) {
-        console.error("initLayers", layerList)
         this.isStopDispatchRemoveEvent = true;
         for (let i = this.layerDataList.length - 1; i >= 0; --i) {
             if (this.layerDataList[i].type === ITownsConstants.TypeUser) {
