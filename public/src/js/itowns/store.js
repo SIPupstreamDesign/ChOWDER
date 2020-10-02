@@ -364,7 +364,7 @@ class Store extends EventEmitter {
                 }
             }
         }
-        console.error("Not found layer from current content.", layerID);
+        console.error("Not found layer from current content.", layerID, JSON.parse(this.metaData.layerList));
         return null;
     }
 

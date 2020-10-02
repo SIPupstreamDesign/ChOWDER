@@ -318,7 +318,10 @@ class Store extends EventEmitter {
             });
         }
         if (type === ITownsConstants.TypePointCloud) {
-            return new itowns.PointCloudLayer(config.id, config, this.itownsView);
+            config.projection = this.itownsView.referenceCrs;
+            return new itowns.PotreeLayer(config.id, {
+                source : new itowns.PotreeSource(config)
+            });
         }
         if (type === ITownsConstants.Type3DTile) {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
@@ -531,21 +534,24 @@ class Store extends EventEmitter {
         }
         let config = this.createLayerConfigByType(params, type);
         let layer = this.createLayerByType(config, type);
-        // 生成時に反映されないレイヤープロパティは、生成後に反映させる
-        if (params.hasOwnProperty('opacity')) {
-            layer.opacity = params.opacity;
-        }
-        if (params.hasOwnProperty('visible')) {
-            layer.visible = Boolean(params.visible);
-        }
-        if (params.hasOwnProperty('bbox')) {
-            layer.bboxes.visible = Boolean(params.bbox);
-        }
-        if (type === ITownsConstants.TypePointCloud ||
-            type === ITownsConstants.Type3DTile) {
-            itowns.View.prototype.addLayer.call(this.itownsView, layer);
-        } else {
-            this.itownsView.addLayer(layer);
+        if (layer)
+        {
+            // 生成時に反映されないレイヤープロパティは、生成後に反映させる
+            if (params.hasOwnProperty('opacity')) {
+                layer.opacity = params.opacity;
+            }
+            if (params.hasOwnProperty('visible')) {
+                layer.visible = Boolean(params.visible);
+            }
+            if (params.hasOwnProperty('bbox')) {
+                layer.bboxes.visible = Boolean(params.bbox);
+            }
+            if (type === ITownsConstants.TypePointCloud ||
+                type === ITownsConstants.Type3DTile) {
+                itowns.View.prototype.addLayer.call(this.itownsView, layer);
+            } else {
+                this.itownsView.addLayer(layer);
+            }
         }
     }
 
@@ -555,17 +561,24 @@ class Store extends EventEmitter {
      * @param {*} layerList 
      */
     initLayers(layerList) {
+        console.error("initLayers", layerList)
+        this.isStopDispatchRemoveEvent = true;
         for (let i = this.layerDataList.length - 1; i >= 0; --i) {
             if (this.layerDataList[i].type === ITownsConstants.TypeUser) {
                 continue;
             } else {
                 const id = this.layerDataList[i].id;
-                let layer = this.getLayer(id);
-                if (layer) {
-                    this.itownsView.removeLayer(id);
+                if ((this.layerDataList[i].hasOwnProperty('url') && this.layerDataList[i].url !== "none")
+                || (this.layerDataList[i].hasOwnProperty('file') && this.layerDataList[i].file))
+                {
+                    let layer = this.getLayer(id);
+                    if (layer) {
+                        this.itownsView.removeLayer(id);
+                    }
                 }
             }
         }
+        this.isStopDispatchRemoveEvent = false;
         for (let i = 0; i < layerList.length; ++i) {
             if (layerList[i].type === ITownsConstants.TypeUser) {
                 let src = layerList[i];
@@ -904,18 +917,18 @@ class Store extends EventEmitter {
             }
             if (
                 (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||
-                (layer.hasOwnProperty('file') && layer.hasOwnProperty('url')) ||
+                (layer.hasOwnProperty('source') && layer.hasOwnProperty('file')) ||
                 (layer.hasOwnProperty('name') && layer.hasOwnProperty('url')) ||
                 (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true)
             ) {
-                if (layer.hasOwnProperty('source') || layer.hasOwnProperty('file')) {
+                if (layer.hasOwnProperty('source')) {
                     data.visible = layer.visible;
                     data.projection = layer.projection;
                     data.id = layer.id;
-                    data.url = layer.hasOwnProperty('source') ? layer.source.url : layer.url;
-                    data.style = layer.hasOwnProperty('style') ? layer.source.style : undefined;
-                    data.zoom = layer.hasOwnProperty('source') ? layer.source.zoom : undefined;
-                    data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
+                    data.url = layer.source.hasOwnProperty('url') ? layer.source.url : layer.url;
+                    data.style = layer.source.hasOwnProperty('style') ? layer.source.style : undefined;
+                    data.zoom = layer.source.hasOwnProperty('zoom') ? layer.source.zoom : undefined;
+                    data.file = layer.source.hasOwnProperty('file') ? layer.source.file : undefined;
                     data.type = (((layer) => {
                         if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
                             return ITownsConstants.TypeUser;
@@ -923,7 +936,7 @@ class Store extends EventEmitter {
                             return ITownsConstants.TypeElevation;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PointCloudLayer) {
+                        } else if (layer instanceof itowns.PotreeLayer) {
                             return ITownsConstants.TypePointCloud;
                         } else if (layer instanceof itowns.C3DTilesLayer) {
                             return ITownsConstants.Type3DTile;
@@ -946,7 +959,7 @@ class Store extends EventEmitter {
                             return ITownsConstants.TypeUser;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PointCloudLayer) {
+                        } else if (layer instanceof itowns.PotreeLayer) {
                             return ITownsConstants.TypePointCloud;
                         } else if (layer instanceof itowns.C3DTilesLayer) {
                             return ITownsConstants.Type3DTile;
@@ -1098,8 +1111,10 @@ class Store extends EventEmitter {
             this.iframeConnector.send(ITownsCommand.AddLayer, this.layerDataList);
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, (evt) => {
-            this.layerDataList = this.getLayerDataList();
-            this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
+            if (!this.isStopDispatchRemoveEvent) {
+                this.layerDataList = this.getLayerDataList();
+                this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
+            }
         });
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED, (evt) => {
             //this.layerDataList = this.getLayerDataList();

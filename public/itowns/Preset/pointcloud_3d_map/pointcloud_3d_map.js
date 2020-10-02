@@ -1,6 +1,6 @@
 
 window.onload = function () {
-    var pointcloud;
+    var potreeLayer;
     var oldPostUpdate;
     var viewerDiv;
     var debugGui;
@@ -24,29 +24,32 @@ window.onload = function () {
     view.controls.minDistance = 50;
 
     // Configure Point Cloud layer
-    pointcloud = new itowns.PointCloudLayer('eglise_saint_blaise_arles', {
-        file: 'eglise_saint_blaise_arles.js',
-        url: 'https://raw.githubusercontent.com/gmaillet/dataset/master/',
-    }, view);
+    potreeLayer = new itowns.PotreeLayer('eglise_saint_blaise_arles', {
+        source: new itowns.PotreeSource({
+            file: 'eglise_saint_blaise_arles.js',
+            url: 'https://raw.githubusercontent.com/gmaillet/dataset/master/',
+            projection: view.referenceCrs,
+        }),
+    });
 
     // add pointcloud to scene
     /*
     function onLayerReady() {
-        debug.PointCloudDebug.initTools(view, pointcloud, debugGui);
+        debug.PointCloudDebug.initTools(view, potreeLayer, debugGui);
 
         // update stats window
-        oldPostUpdate = pointcloud.postUpdate;
-        pointcloud.postUpdate = function postUpdate() {
+        oldPostUpdate = potreeLayer.postUpdate;
+        potreeLayer.postUpdate = function postUpdate() {
             var info = document.getElementById('info');
-            oldPostUpdate.apply(pointcloud, arguments);
+            oldPostUpdate.apply(potreeLayer, arguments);
             info.textContent = 'Nb points: ' +
-                pointcloud.displayedCount.toLocaleString();
+                potreeLayer.displayedCount.toLocaleString();
         };
     }
     */
     window.view = view;
 
-    itowns.View.prototype.addLayer.call(view, pointcloud);//.then(onLayerReady);
+    itowns.View.prototype.addLayer.call(view, potreeLayer);//.then(onLayerReady);
 
     itowns.Fetcher.json('./IGN_MNT_HIGHRES.json').then(function _(config) {
         config.source = new itowns.WMTSSource(config.source);
