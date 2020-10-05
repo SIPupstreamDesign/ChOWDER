@@ -592,22 +592,11 @@ class Store extends EventEmitter {
             }
         }
         // iTownsAppで保持しているパラメータを反映させる
-        // console.error(this.itownsView.mainLoop.renderingState ,this.itownsView.mainLoop.scheduler)
-        let updateGraduallyFunc = (endCallback) => {
-            setTimeout(() => {
-                if (this.itownsView.mainLoop.scheduler.commandsWaitingExecutionCount() == 0)
-                {
-                    for (let i = 0; i < layerList.length; ++i) {
-                        this.changeLayerProperty(layerList[i])
-                    }
-                }
-                else
-                {
-                    endCallback(updateGraduallyFunc);
-                }
-            }, 500);
-        }
-        updateGraduallyFunc(updateGraduallyFunc);
+        this.itownsView.addEventListener('layers-initialized', () => {
+            for (let i = 0; i < layerList.length; ++i) {
+                this.changeLayerProperty(layerList[i])
+            }
+        });
     }
 
     /**
