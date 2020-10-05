@@ -84,7 +84,7 @@ class Store extends EventEmitter {
             this.iframeConnector.sendResponse(request);
         });
         this.iframeConnector.on(ITownsCommand.InitLayers, (err, param, request) => {
-            // レイヤー追加命令
+            // レイヤー初期化命令
             this.initLayers(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
@@ -561,6 +561,7 @@ class Store extends EventEmitter {
      * @param {*} layerList 
      */
     initLayers(layerList) {
+        // 特殊なレイヤー以外削除
         this.isStopDispatchRemoveEvent = true;
         for (let i = this.layerDataList.length - 1; i >= 0; --i) {
             if (this.layerDataList[i].type === ITownsConstants.TypeUser) {
@@ -578,6 +579,7 @@ class Store extends EventEmitter {
             }
         }
         this.isStopDispatchRemoveEvent = false;
+        // レイヤーの追加
         for (let i = 0; i < layerList.length; ++i) {
             if (layerList[i].type === ITownsConstants.TypeUser) {
                 let src = layerList[i];
@@ -589,6 +591,23 @@ class Store extends EventEmitter {
                 this.addLayer(layerList[i]);
             }
         }
+        // iTownsAppで保持しているパラメータを反映させる
+        // console.error(this.itownsView.mainLoop.renderingState ,this.itownsView.mainLoop.scheduler)
+        let updateGraduallyFunc = (endCallback) => {
+            setTimeout(() => {
+                if (this.itownsView.mainLoop.scheduler.commandsWaitingExecutionCount() == 0)
+                {
+                    for (let i = 0; i < layerList.length; ++i) {
+                        this.changeLayerProperty(layerList[i])
+                    }
+                }
+                else
+                {
+                    endCallback(updateGraduallyFunc);
+                }
+            }, 500);
+        }
+        updateGraduallyFunc(updateGraduallyFunc);
     }
 
     /**
@@ -676,7 +695,7 @@ class Store extends EventEmitter {
      *   visible : 表示非表示.表示の場合true(option)
      * }
      */
-    changeLayerProperty(params) {
+    changeLayerProperty(params, redraw = true) {
         let id = params.id;
         let layer = this.getLayer(id);
         let isChanged = false;
@@ -794,7 +813,7 @@ class Store extends EventEmitter {
                     isChanged = true;
                 }
             }
-            if (isChanged) {
+            if (isChanged && redraw) {
                 this.itownsView.notifyChange(layer);
             }
         }
@@ -877,6 +896,11 @@ class Store extends EventEmitter {
                 this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
                 this.itownsView.notifyChange();
             });
+        } else {
+            // chowder controller
+            console.error(this.itownsView, itowns)
+           // this.itownsView.mainLoop.renderingState = 0;
+            //this.renderingState = RENDERING_PAUSED;
         }
     }
 
