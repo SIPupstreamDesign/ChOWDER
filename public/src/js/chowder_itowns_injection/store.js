@@ -829,9 +829,33 @@ class Store extends EventEmitter {
 
 
     injectaAsChOWDERDisplayController(data) {
+        // 一定間隔同じイベントが来なかったら再描画するための関数
+		let debounceRedraw = (() => {
+			const interval = 500;
+            let timer;
+            let sumDT = 0.0;
+			return (func, view, dt) => {
+                sumDT += dt;
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+                    func(view, sumDT);
+                    sumDT = 0.0;
+				}, interval);
+			};
+        })();
+        
         // 初期化イベントに対する応答
         this.iframeConnector.on(ITownsCommand.Init, (err, param, request) => {
             this.iframeConnector.sendResponse(request);
+
+            // chowder controllerのみ、負荷を下げるため、頻繁に再描画させないようにする
+            // 具体的には、連続したredrawが発行された際に、最後に1回だけ実行するようにする。
+            if (window.chowder_itowns_view_type !== "display") {
+                const origRenderView = this.itownsView.mainLoop.__proto__._renderView.bind(this.itownsView.mainLoop);
+                this.itownsView.mainLoop.__proto__._renderView = function (view, dt) {
+                    debounceRedraw(origRenderView, view, dt);
+                }
+            }
         });
 
         // time更新
@@ -885,11 +909,6 @@ class Store extends EventEmitter {
                 this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
                 this.itownsView.notifyChange();
             });
-        } else {
-            // chowder controller
-            console.error(this.itownsView, itowns)
-           // this.itownsView.mainLoop.renderingState = 0;
-            //this.renderingState = RENDERING_PAUSED;
         }
     }
 
