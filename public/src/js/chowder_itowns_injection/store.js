@@ -827,8 +827,20 @@ class Store extends EventEmitter {
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
     }
 
+    isViewReady() {
+        //const allReady = this.itownsView.getLayers().every(layer => layer.ready);
+        if (//*allReady &&
+            this.itownsView.mainLoop.scheduler.commandsWaitingExecutionCount() == 0 &&
+            this.itownsView.mainLoop.renderingState == 0 /*RENDERING_PAUSED*/) {
+            return true;
+        }
+        return false;
+    }
 
     injectaAsChOWDERDisplayController(data) {
+        // Display, controllerはリサイズを弾く
+        window.removeEventListener("resize");
+
         // 一定間隔同じイベントが来なかったら再描画するための関数
 		let debounceRedraw = (() => {
 			const interval = 500;
@@ -838,23 +850,74 @@ class Store extends EventEmitter {
                 sumDT += dt;
 				clearTimeout(timer);
 				timer = setTimeout(() => {
-                    func(view, sumDT);
-                    sumDT = 0.0;
+                    if (this.isViewReady())
+                    {
+                        func(view, sumDT);
+                        sumDT = 0.0;
+                    }
+                    else
+                    {
+                        debounceRedraw(func, view, sumDT);
+                    }
 				}, interval);
 			};
         })();
-        
+
+        let aspectForResize = 1.0
+
+        const getAspect = function (div) {
+            const rect = div.getBoundingClientRect();
+            return (rect.right - rect.left) / (rect.bottom - rect.top);
+        }
+
+		const debounceResize = (() => {
+			const interval = 500;
+            let timer;
+			return (func) => {
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+                    let aspect = getAspect(this.itownsViewerDiv);
+                    if (Math.abs(aspectForResize - aspect) > 0.02)
+                    {
+                        console.error(aspectForResize, aspect)
+                        aspectForResize = aspect;
+                        func();
+                        let canvas = this.itownsViewerDiv.getElementsByTagName('canvas')[0];
+                        if (canvas) {
+                            canvas.style.width = "100%";
+                            canvas.style.height = "100%";
+                        }
+                    }
+				}, interval);
+			};
+        })();
+
         // 初期化イベントに対する応答
         this.iframeConnector.on(ITownsCommand.Init, (err, param, request) => {
             this.iframeConnector.sendResponse(request);
+            
 
             // chowder controllerのみ、負荷を下げるため、頻繁に再描画させないようにする
             // 具体的には、連続したredrawが発行された際に、最後に1回だけ実行するようにする。
-            if (window.chowder_itowns_view_type !== "display") {
+            if (window.chowder_itowns_view_type === "controller") {
                 const origRenderView = this.itownsView.mainLoop.__proto__._renderView.bind(this.itownsView.mainLoop);
                 this.itownsView.mainLoop.__proto__._renderView = function (view, dt) {
                     debounceRedraw(origRenderView, view, dt);
                 }
+
+                // chowder controllerのみ、負荷を下げるため、初期の解像度を256,256固定とする
+                aspectForResize = getAspect(this.itownsViewerDiv);
+                let canvas = this.itownsViewerDiv.getElementsByTagName('canvas')[0];
+                if (canvas) {
+                    canvas.style.width = "100%";
+                    canvas.style.height = "100%";
+                }
+                
+                const origResize = this.itownsView.__proto__.resize.bind(this.itownsView);
+                window.addEventListener("resize", (evt) => {
+                    debounceResize(origResize);
+                });
+
             }
         });
 
@@ -870,11 +933,7 @@ class Store extends EventEmitter {
             this.iframeConnector.sendResponse(request);
         });
 
-        // Displayはリサイズを弾く
-        
         if (window.chowder_itowns_view_type === "display") {
-            window.removeEventListener("resize");
-
             // Displayのみ計測
             this.iframeConnector.on(ITownsCommand.MeasurePerformance, (err, param, request) => {
                 let before = 0;

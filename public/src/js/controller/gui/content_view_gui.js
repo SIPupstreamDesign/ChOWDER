@@ -221,7 +221,7 @@ class ContentViewGUI extends EventEmitter {
 				}
 			}
 			else if (metaData.type === Constants.TypeWebGL) {
-				// contentData is text
+				// contentData is thubmail
 				let iframe = document.createElement('iframe');
 
 				let url = metaData.url;
@@ -264,6 +264,29 @@ class ContentViewGUI extends EventEmitter {
 				};
 				contentElem.innerHTML = "";
 				contentElem.appendChild(iframe);
+
+				/*
+				blob = new Blob([contentData], { type: "image/png" });
+				let imageElem = new Image();
+				if (contentElem && blob) {
+					URL.revokeObjectURL(imageElem.src);
+					imageElem.src = URL.createObjectURL(blob);
+					imageElem.onload = function () {
+						if (metaData.width < 10) {
+							// console.log("naturalWidth:" + imageElem.naturalWidth);
+							metaData.width = imageElem.naturalWidth;
+						}
+						if (metaData.height < 10) {
+							// console.log("naturalHeight:" + imageElem.naturalHeight);
+							metaData.height = imageElem.naturalHeight;
+						}
+						vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+						imageElem.style.width = "100%";
+						imageElem.style.height = "100%";
+					};
+				}
+				contentElem.appendChild(imageElem);
+				*/
 
 				contentElem.style.color = "white";
 				contentElem.style.overflow = "visible"; // Show all text
