@@ -395,7 +395,11 @@ class Display {
 			if (!err) {
 				for (let i = 0; i < json.length; i = i + 1) {
 					this.gui.setDisplayID(json[i].id);
-					this.action.changeQueryParam({id: json[i].id});
+					let meta = {id: json[i].id};
+					if (this.store.getMarkerID()) {
+						meta.marker_id = this.store.getMarkerID();
+					}
+					this.action.changeQueryParam(meta);
 					this.gui.updatePreviewAreaVisible(this.store.getWindowData());
 					this.gui.updateViewport(this.store.getWindowData());
 				}

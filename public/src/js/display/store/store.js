@@ -235,6 +235,9 @@ class Store extends EventEmitter {
             params.posx = metaData.posx;
             params.posy = metaData.posy;
             params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);   
+            if (metaData.hasOwnProperty('marker_id')) {
+                params.marker_id = metaData.marker_id;
+            }
         } else {
             params.posx = 0;
             params.posy = 0;
@@ -247,6 +250,9 @@ class Store extends EventEmitter {
                 params.posx = metaData.posx;
                 params.posy = metaData.posy;
                 params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
+                if (params.hasOwnProperty('marker_id')) {
+                    params.marker_id = metaData.marker_id;
+                }
             }
             this._changeQueryParam(params);
             location.reload();
@@ -298,7 +304,7 @@ class Store extends EventEmitter {
         windowID = query.id ? decodeURIComponent(query.id) : windowID;
         let groupId = undefined;
 
-        if (query.marker_id) {
+        if (query.hasOwnProperty('marker_id')) {
             this.markerID = query.marker_id;
         }
         
