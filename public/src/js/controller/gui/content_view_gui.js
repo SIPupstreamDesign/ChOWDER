@@ -45,17 +45,32 @@ class ContentViewGUI extends EventEmitter {
 
 		this.store = store;
 		this.action = action;
+		this.webglQueue = [];
+		this.isImportingWebGL = false; // webglコンテンツを1つでもロード中かどうか
+		
+
+		setInterval(() => {
+			if (!this.isImportingWebGL) {
+				if (this.webglQueue.length > 0) {
+					const data = this.webglQueue.shift();
+					this.importWebGLContentFromQueue(data);
+				}
+			}
+		}, 500);
 	}
 
-	importWebGLContent(contentElem, contentData, metaData, groupDict) {
+	importWebGLContentFromQueue(data) {
+		this.isImportingWebGL = true;
+		let contentElem = data[0];
+		let contentData = data[1];
+		let metaData = data[2];
+		let groupDict = data[3];
+		let iframe = data[4];
+		
 		// contentData is thubmail
-		let iframe = document.createElement('iframe');
 
 		let url = metaData.url;
 		iframe.src = url;
-		iframe.style.width = "100%";
-		iframe.style.height = "100%";
-		iframe.style.pointerEvents = "none";
 		iframe.onload = () => {
 			iframe.contentWindow.chowder_itowns_view_type = "controller";
 			let connector = new IFrameConnector(iframe);
@@ -85,12 +100,16 @@ class ContentViewGUI extends EventEmitter {
 					});
 					connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
 				});
+				connector.once(ITownsCommand.LayersInitialized, (err, data) => {
+					this.isImportingWebGL = false;
+				});
+				setTimeout(() => {
+					this.isImportingWebGL = false;
+				}, 15 * 1000)
 			} catch (err) {
 				console.error(err);
 			}
 		};
-		contentElem.innerHTML = "";
-		contentElem.appendChild(iframe);
 
 		/*
 		blob = new Blob([contentData], { type: "image/png" });
@@ -115,9 +134,20 @@ class ContentViewGUI extends EventEmitter {
 		contentElem.appendChild(imageElem);
 		*/
 
+		//vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+	}
+
+	importWebGLContent(contentElem, contentData, metaData, groupDict) {
+		let iframe = document.createElement('iframe');
+		iframe.style.width = "100%";
+		iframe.style.height = "100%";
+		iframe.style.pointerEvents = "none";
+		contentElem.innerHTML = "";
+		contentElem.appendChild(iframe);
 		contentElem.style.color = "white";
 		contentElem.style.overflow = "visible"; // Show all text
 		vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+		this.webglQueue.push([contentElem, contentData, metaData, groupDict, iframe]);
 	}
 
 	importPDFContent(contentElem, contentData, metaData, groupDict) {

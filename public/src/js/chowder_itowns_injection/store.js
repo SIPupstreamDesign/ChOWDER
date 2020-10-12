@@ -598,6 +598,8 @@ class Store extends EventEmitter {
             for (let i = 0; i < layerList.length; ++i) {
                 this.changeLayerProperty(layerList[i])
             }
+
+            this.iframeConnector.send(ITownsCommand.LayersInitialized, {}, function () {});
         });
     }
 
