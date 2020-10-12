@@ -47,6 +47,262 @@ class ContentViewGUI extends EventEmitter {
 		this.action = action;
 	}
 
+	importWebGLContent(contentElem, contentData, metaData, groupDict) {
+		// contentData is thubmail
+		let iframe = document.createElement('iframe');
+
+		let url = metaData.url;
+		iframe.src = url;
+		iframe.style.width = "100%";
+		iframe.style.height = "100%";
+		iframe.style.pointerEvents = "none";
+		iframe.onload = () => {
+			iframe.contentWindow.chowder_itowns_view_type = "controller";
+			let connector = new IFrameConnector(iframe);
+			this.action.addItownFunc({
+				id: metaData.id,
+				func: {
+					chowder_itowns_update_camera: (metaData) => {
+						ITownsUtil.updateCamera(connector, metaData);
+					},
+					chowder_itowns_update_layer_list: (metaData) => {
+						let preMetaData = this.store.getMetaData(metaData.id);
+						ITownsUtil.updateLayerList(connector, metaData, preMetaData);
+					},
+					chowder_itowns_update_time : (metaData) => {
+						ITownsUtil.updateTime(connector, metaData, this.store.getTime());
+					},
+				}
+			});
+
+			// IframeConnectorを通してiframeに接続
+			try {
+				connector.connect(() => {
+					// 初回に一度実行.
+					connector.send(ITownsCommand.UpdateCamera, {
+						mat: JSON.parse(metaData.cameraWorldMatrix),
+						params: JSON.parse(metaData.cameraParams),
+					});
+					connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
+				});
+			} catch (err) {
+				console.error(err);
+			}
+		};
+		contentElem.innerHTML = "";
+		contentElem.appendChild(iframe);
+
+		/*
+		blob = new Blob([contentData], { type: "image/png" });
+		let imageElem = new Image();
+		if (contentElem && blob) {
+			URL.revokeObjectURL(imageElem.src);
+			imageElem.src = URL.createObjectURL(blob);
+			imageElem.onload = function () {
+				if (metaData.width < 10) {
+					// console.log("naturalWidth:" + imageElem.naturalWidth);
+					metaData.width = imageElem.naturalWidth;
+				}
+				if (metaData.height < 10) {
+					// console.log("naturalHeight:" + imageElem.naturalHeight);
+					metaData.height = imageElem.naturalHeight;
+				}
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+				imageElem.style.width = "100%";
+				imageElem.style.height = "100%";
+			};
+		}
+		contentElem.appendChild(imageElem);
+		*/
+
+		contentElem.style.color = "white";
+		contentElem.style.overflow = "visible"; // Show all text
+		vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+	}
+
+	importPDFContent(contentElem, contentData, metaData, groupDict) {
+		vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+		if (!contentElem.pdfSetupCompleted) {
+			contentElem.pdfSetupCompleted = true;
+			let context = contentElem.getContext('2d');
+			let pdfjsLib = window['pdfjs-dist/build/pdf'];
+			window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
+			window.PDFJS.cMapPacked = true;
+			pdfjsLib.getDocument(contentData).then(function (pdf) {
+				metaData.pdfPage = parseInt(metaData.pdfPage) || 1;
+				metaData.pdfNumPages = pdf.numPages;
+				let lastTask = Promise.resolve();
+				let lastDate = 0;
+				let lastPage = 0;
+				let lastWidth = 0;
+				contentElem.loadPage = function (p, width) {
+					let date = Date.now();
+					lastDate = date;
+					if (lastPage === p && lastWidth === width) {
+						return;
+					}
+					setTimeout(function () {
+						if (lastDate !== date) {
+							return;
+						}
+						lastPage = p;
+						lastWidth = width;
+						pdf.getPage(p).then(function (page) {
+							const originalSize = page.getViewport(1);
+							let viewport = page.getViewport(width / originalSize.width);
+							let orgAspect = metaData.orgWidth / metaData.orgHeight;
+							let pageAspect = viewport.width / viewport.height;
+							if ((viewport.width * viewport.height) > (7680*4320)) {
+								if (viewport.width > viewport.height) {
+									viewport.width = 7680;
+									viewport.height = viewport.width / pageAspect;
+								} else {
+									viewport.height = 4320;
+									viewport.width = viewport.height * pageAspect;
+								}
+								width = Math.round(viewport.width);
+								viewport = page.getViewport(width / originalSize.width);
+							}
+							contentElem.width = width;
+							contentElem.height = width / orgAspect;
+							let transform = [1, 0, 0, 1, 0, 0];
+							if (orgAspect < pageAspect) {
+								let margin = (1.0 / orgAspect - 1.0 / pageAspect) * width;
+								transform[5] = margin / 2;
+							}
+							else {
+								let margin = (orgAspect - pageAspect) * width;
+								transform[4] = margin / 2;
+								transform[0] = (width - margin) / width;
+								transform[3] = transform[0];
+							}
+							lastTask = lastTask.then(function () {
+								return page.render({
+									canvasContext: context,
+									viewport: viewport,
+									transform: transform
+								});
+							});
+						});
+					}, lastPage === p ? 500 : 0);
+				};
+				contentElem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
+			});
+		}
+	}
+
+	importVideoContent(contentElem, contentData, metaData, groupDict, videoPlayer) {
+		//contentElem.src = contentData;
+		if (videoPlayer) {
+			vscreen_util.assignMetaData(videoPlayer.getDOM(), metaData, true, groupDict);
+		}
+		else {
+			contentElem.src = contentData;
+			contentElem.onload = function () {
+				if (metaData.width < 10) {
+					// console.log("naturalWidth:" + contentElem.naturalWidth);
+					metaData.width = contentElem.naturalWidth;
+				}
+				if (metaData.height < 10) {
+					// console.log("naturalHeight:" + contentElem.naturalHeight);
+					metaData.height = contentElem.naturalHeight;
+				}
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+			};
+		}
+	}
+
+	importTextContent(contentElem, contentData, metaData, groupDict) {
+		// contentData is text
+		contentElem.innerHTML = contentData;
+		contentElem.style.color = "white";
+		contentElem.style.overflow = "visible"; // Show all text
+		vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+	}
+	
+	importTileImageContent(contentElem, contentData, metaData, groupDict) {
+		let mime = "image/jpeg";
+		if (metaData.hasOwnProperty('mime')) {
+			mime = metaData.mime;
+		}
+		let blob = new Blob([contentData], { type: mime });
+		if (contentElem && blob) {
+			// アイコンを設置
+			if (contentElem.getElementsByClassName('tileimage_icon').length === 0) {
+				let icon = document.createElement('div');
+				icon.className = 'tileimage_icon';
+				contentElem.appendChild(icon);
+				icon.title = "Tiled Image";
+			}
+			let image = contentElem.getElementsByClassName('tileimage_image')[0];
+			if (image) {
+				URL.revokeObjectURL(image.src);
+			} else {
+				image = document.createElement('img');
+				contentElem.appendChild(image);
+			}
+			image.className = "tileimage_image";
+			if (typeof (contentData) === "string") {
+				image = document.createElement('div');
+				image.className = "tileimage_image";
+				image.innerHTML = "image removed by capacity limit";
+				image.style.width = "100%";
+				image.style.textAlign = "center";
+				image.style.color = "gray";
+				image.style.border = "1px solid gray";
+			}
+			image.src = URL.createObjectURL(blob);
+			image.style.width = "100%";
+			image.style.height = "100%";
+			image.onload = () => {
+				// 時系列タイル画像で、途中の画像の解像度が違う場合があるため、
+				// width固定で、読み込んだ画像のaspectをheightに反映させる
+				let imageAspect = Number(image.naturalHeight) / Number(image.naturalWidth);
+				let currentAspect = Number(metaData.width) / Number(metaData.height)
+				if (imageAspect !== currentAspect) {
+					metaData.height = Number(metaData.width) * imageAspect;
+					this.action.correctHistoricalContentAspect({
+						metaData: metaData
+					})
+				} else {
+					if (metaData.width < 10) {
+						// console.log("naturalWidth:" + image.naturalWidth);
+						metaData.width = image.naturalWidth;
+					}
+					if (metaData.height < 10) {
+						// console.log("naturalHeight:" + image.naturalHeight);
+						metaData.height = image.naturalHeight;
+					}
+					vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+				}
+			};
+		}
+	}
+
+	importImageContent(contentElem, contentData, metaData, groupDict) {
+		let mime = "image/jpeg";
+		if (metaData.hasOwnProperty('mime')) {
+			mime = metaData.mime;
+		}
+		// contentData is blob
+		let blob = new Blob([contentData], { type: mime });
+		if (contentElem && blob) {
+			URL.revokeObjectURL(contentElem.src);
+			contentElem.src = URL.createObjectURL(blob);
+			contentElem.onload = function () {
+				if (metaData.width < 10) {
+					// console.log("naturalWidth:" + contentElem.naturalWidth);
+					metaData.width = contentElem.naturalWidth;
+				}
+				if (metaData.height < 10) {
+					// console.log("naturalHeight:" + contentElem.naturalHeight);
+					metaData.height = contentElem.naturalHeight;
+				}
+				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+			};
+		}
+	}
+
 	/**
 	 * コンテンツをメインビューにインポートする。
 	 * doneGetContent時にコールされる。
@@ -59,8 +315,6 @@ class ContentViewGUI extends EventEmitter {
 		let groupDict = this.store.getGroupDict();
 		let contentElem;
 		let tagName;
-		let blob;
-		let mime = "image/jpeg";
 		if (Validator.isLayoutType(metaData)) {
 			return;
 		}
@@ -123,255 +377,23 @@ class ContentViewGUI extends EventEmitter {
 		}
 		// console.log("id=" + metaData.id);
 		if (contentData) {
-			if (metaData.type === 'text') {
-				// contentData is text
-				contentElem.innerHTML = contentData;
-				contentElem.style.color = "white";
-				contentElem.style.overflow = "visible"; // Show all text
-				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+			if (metaData.type === Constants.TypeText) {
+				this.importTextContent(contentElem, contentData, metaData, groupDict);
 			}
-			else if (metaData.type === 'video') {
-				//contentElem.src = contentData;
-				if (videoPlayer) {
-					vscreen_util.assignMetaData(videoPlayer.getDOM(), metaData, true, groupDict);
-				}
-				else {
-					contentElem.src = contentData;
-					contentElem.onload = function () {
-						if (metaData.width < 10) {
-							// console.log("naturalWidth:" + contentElem.naturalWidth);
-							metaData.width = contentElem.naturalWidth;
-						}
-						if (metaData.height < 10) {
-							// console.log("naturalHeight:" + contentElem.naturalHeight);
-							metaData.height = contentElem.naturalHeight;
-						}
-						vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-					};
-				}
+			else if (metaData.type === Constants.TypeVideo) {
+				this.importVideoContent(contentElem, contentData, metaData, groupDict, videoPlayer);
 			}
-			else if (metaData.type === 'pdf') {
-				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-				if (!contentElem.pdfSetupCompleted) {
-					contentElem.pdfSetupCompleted = true;
-					let context = contentElem.getContext('2d');
-					let pdfjsLib = window['pdfjs-dist/build/pdf'];
-					window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
-					window.PDFJS.cMapPacked = true;
-					pdfjsLib.getDocument(contentData).then(function (pdf) {
-						metaData.pdfPage = parseInt(metaData.pdfPage) || 1;
-						metaData.pdfNumPages = pdf.numPages;
-						let lastTask = Promise.resolve();
-						let lastDate = 0;
-						let lastPage = 0;
-						let lastWidth = 0;
-						contentElem.loadPage = function (p, width) {
-							let date = Date.now();
-							lastDate = date;
-							if (lastPage === p && lastWidth === width) {
-								return;
-							}
-							setTimeout(function () {
-								if (lastDate !== date) {
-									return;
-								}
-								lastPage = p;
-								lastWidth = width;
-								pdf.getPage(p).then(function (page) {
-									const originalSize = page.getViewport(1);
-									let viewport = page.getViewport(width / originalSize.width);
-									let orgAspect = metaData.orgWidth / metaData.orgHeight;
-									let pageAspect = viewport.width / viewport.height;
-									if ((viewport.width * viewport.height) > (7680*4320)) {
-										if (viewport.width > viewport.height) {
-											viewport.width = 7680;
-											viewport.height = viewport.width / pageAspect;
-										} else {
-											viewport.height = 4320;
-											viewport.width = viewport.height * pageAspect;
-										}
-										width = Math.round(viewport.width);
-										viewport = page.getViewport(width / originalSize.width);
-									}
-									contentElem.width = width;
-									contentElem.height = width / orgAspect;
-									let transform = [1, 0, 0, 1, 0, 0];
-									if (orgAspect < pageAspect) {
-										let margin = (1.0 / orgAspect - 1.0 / pageAspect) * width;
-										transform[5] = margin / 2;
-									}
-									else {
-										let margin = (orgAspect - pageAspect) * width;
-										transform[4] = margin / 2;
-										transform[0] = (width - margin) / width;
-										transform[3] = transform[0];
-									}
-									lastTask = lastTask.then(function () {
-										return page.render({
-											canvasContext: context,
-											viewport: viewport,
-											transform: transform
-										});
-									});
-								});
-							}, lastPage === p ? 500 : 0);
-						};
-						contentElem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
-					});
-				}
+			else if (metaData.type === Constants.TypePDF) {
+				this.importPDFContent(contentElem, contentData, metaData, groupDict);
 			}
 			else if (metaData.type === Constants.TypeWebGL) {
-				// contentData is thubmail
-				let iframe = document.createElement('iframe');
-
-				let url = metaData.url;
-				iframe.src = url;
-				iframe.style.width = "100%";
-				iframe.style.height = "100%";
-				iframe.style.pointerEvents = "none";
-				iframe.onload = () => {
-					iframe.contentWindow.chowder_itowns_view_type = "controller";
-					let connector = new IFrameConnector(iframe);
-					this.action.addItownFunc({
-						id: metaData.id,
-						func: {
-							chowder_itowns_update_camera: (metaData) => {
-								ITownsUtil.updateCamera(connector, metaData);
-							},
-							chowder_itowns_update_layer_list: (metaData) => {
-								let preMetaData = this.store.getMetaData(metaData.id);
-								ITownsUtil.updateLayerList(connector, metaData, preMetaData);
-							},
-							chowder_itowns_update_time : (metaData) => {
-								ITownsUtil.updateTime(connector, metaData, this.store.getTime());
-							},
-						}
-					});
-
-					// IframeConnectorを通してiframeに接続
-					try {
-						connector.connect(() => {
-							// 初回に一度実行.
-							connector.send(ITownsCommand.UpdateCamera, {
-								mat: JSON.parse(metaData.cameraWorldMatrix),
-								params: JSON.parse(metaData.cameraParams),
-							});
-							connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
-						});
-					} catch (err) {
-						console.error(err);
-					}
-				};
-				contentElem.innerHTML = "";
-				contentElem.appendChild(iframe);
-
-				/*
-				blob = new Blob([contentData], { type: "image/png" });
-				let imageElem = new Image();
-				if (contentElem && blob) {
-					URL.revokeObjectURL(imageElem.src);
-					imageElem.src = URL.createObjectURL(blob);
-					imageElem.onload = function () {
-						if (metaData.width < 10) {
-							// console.log("naturalWidth:" + imageElem.naturalWidth);
-							metaData.width = imageElem.naturalWidth;
-						}
-						if (metaData.height < 10) {
-							// console.log("naturalHeight:" + imageElem.naturalHeight);
-							metaData.height = imageElem.naturalHeight;
-						}
-						vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-						imageElem.style.width = "100%";
-						imageElem.style.height = "100%";
-					};
-				}
-				contentElem.appendChild(imageElem);
-				*/
-
-				contentElem.style.color = "white";
-				contentElem.style.overflow = "visible"; // Show all text
-				vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
+				this.importWebGLContent(contentElem, contentData, metaData, groupDict);
 			}
 			else if (metaData.type === Constants.TypeTileImage) {
-				if (metaData.hasOwnProperty('mime')) {
-					mime = metaData.mime;
-					// console.log("mime:" + mime);
-				}
-				blob = new Blob([contentData], { type: mime });
-				if (contentElem && blob) {
-					// アイコンを設置
-					if (contentElem.getElementsByClassName('tileimage_icon').length === 0) {
-						let icon = document.createElement('div');
-						icon.className = 'tileimage_icon';
-						contentElem.appendChild(icon);
-						icon.title = "Tiled Image";
-					}
-					let image = contentElem.getElementsByClassName('tileimage_image')[0];
-					if (image) {
-						URL.revokeObjectURL(image.src);
-					} else {
-						image = document.createElement('img');
-						contentElem.appendChild(image);
-					}
-					image.className = "tileimage_image";
-					if (typeof (contentData) === "string") {
-						image = document.createElement('div');
-						image.className = "tileimage_image";
-						image.innerHTML = "image removed by capacity limit";
-						image.style.width = "100%";
-						image.style.textAlign = "center";
-						image.style.color = "gray";
-						image.style.border = "1px solid gray";
-					}
-					image.src = URL.createObjectURL(blob);
-					image.style.width = "100%";
-					image.style.height = "100%";
-					image.onload = () => {
-						// 時系列タイル画像で、途中の画像の解像度が違う場合があるため、
-						// width固定で、読み込んだ画像のaspectをheightに反映させる
-						let imageAspect = Number(image.naturalHeight) / Number(image.naturalWidth);
-						let currentAspect = Number(metaData.width) / Number(metaData.height)
-						if (imageAspect !== currentAspect) {
-							metaData.height = Number(metaData.width) * imageAspect;
-							this.action.correctHistoricalContentAspect({
-								metaData: metaData
-							})
-						} else {
-							if (metaData.width < 10) {
-								// console.log("naturalWidth:" + image.naturalWidth);
-								metaData.width = image.naturalWidth;
-							}
-							if (metaData.height < 10) {
-								// console.log("naturalHeight:" + image.naturalHeight);
-								metaData.height = image.naturalHeight;
-							}
-							vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-						}
-					};
-				}
+				this.importTileImageContent(contentElem, contentData, metaData, groupDict);
 			}
 			else {
-				// contentData is blob
-				if (metaData.hasOwnProperty('mime')) {
-					mime = metaData.mime;
-					// console.log("mime:" + mime);
-				}
-				blob = new Blob([contentData], { type: mime });
-				if (contentElem && blob) {
-					URL.revokeObjectURL(contentElem.src);
-					contentElem.src = URL.createObjectURL(blob);
-					contentElem.onload = function () {
-						if (metaData.width < 10) {
-							// console.log("naturalWidth:" + contentElem.naturalWidth);
-							metaData.width = contentElem.naturalWidth;
-						}
-						if (metaData.height < 10) {
-							// console.log("naturalHeight:" + contentElem.naturalHeight);
-							metaData.height = contentElem.naturalHeight;
-						}
-						vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-					};
-				}
+				this.importImageContent(contentElem, contentData, metaData, groupDict);
 			}
 			this.toggleMark(contentElem, metaData);
 		}

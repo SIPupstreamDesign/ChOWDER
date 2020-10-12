@@ -441,7 +441,9 @@ class Store extends EventEmitter {
         if (type === ITownsConstants.Type3DTile) {
             config = {
                 "name": params.hasOwnProperty('id') ? params.id : "3dtile",
-                "url": url
+                "source" :  new itowns.C3DTilesSource({
+                    "url": url
+                })
             };
         }
         if (url && url.indexOf('.geojson') >= 0) {
