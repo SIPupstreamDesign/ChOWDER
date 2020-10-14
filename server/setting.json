@@ -5,5 +5,9 @@
     "stunServerUrl" : "",
     "turnServerUrl" : "",
     "turnServerUsername" : "",
-    "turnServerCredential" : ""
+    "turnServerCredential" : "",
+    "enableHTTP" : false,
+    "enableSSL" : true,
+    "HTTPPort" : 80,
+    "SSLPort" : 443
 }
