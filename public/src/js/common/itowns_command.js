@@ -29,7 +29,9 @@ const ITownsCommand = {
     // パフォーマンス計測
     MeasurePerformance : "MeasurePerformance",
     // 現在時刻の更新
-    UpdateTime : "UpdateTime"
+    UpdateTime : "UpdateTime",
+    // itowns側からのレイヤー初期化完了通知
+    LayersInitialized : "LayersInitialized"
 };
 
 export default ITownsCommand;
