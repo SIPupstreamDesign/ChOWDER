@@ -15,6 +15,7 @@ module.exports = {
 			"display" : './public/src/display_app.js',
 			"itowns" : './public/src/itowns_app.js',
 			"chowder_injection" : './public/src/chowder_itowns_injection.js',
+			"qgis" : './public/src/qgis_app.js',
 	},
 	// 出力の設定
 	output: {
