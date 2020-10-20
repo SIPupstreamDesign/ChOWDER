@@ -32,6 +32,7 @@ class Action extends EventEmitter {
 	 * @param {*} data iframe
 	 */
 	connectIFrame(data) {
+		console.log("[action]:connectIFrame");
 		this.emit(Action.EVENT_CONNECT_IFRAME, null, data);
 	}
 
@@ -60,9 +61,19 @@ class Action extends EventEmitter {
 	resizeWindow(data) {
 		this.emit(Action.EVENT_RESIZE_WINDOW, null, data);
 	}
+
+	/**
+     * コンテンツの追加
+     * @param {*} data 
+     */
+    addContent(data) {
+		console.log("[action]addContent");
+        this.emit(Action.EVENT_ADD_CONTENT, null, data);
+	}
 }
 
 Action.EVENT_CONNECT = "connect";
+Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";

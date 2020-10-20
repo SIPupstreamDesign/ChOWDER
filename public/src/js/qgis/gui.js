@@ -10,14 +10,100 @@ import LoginMenu from '../components/login_menu.js';
 import Translation from '../common/translation';
 import Menu from '../components/menu';
 import GUIProperty from './gui_property';
+import Constants from '../common/constants';
+
+
+/**
+ * canvasをArrayBufferに
+ * @method toArrayBuffer
+ * @param {string} base64
+ * @return {ArrayBuffer}
+ */
+function toArrayBuffer(base64) {
+    // Base64からバイナリへ変換
+    let bin = atob(base64.replace(/^.*,/, ''));
+    let buffer = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) {
+        buffer[i] = bin.charCodeAt(i);
+    }
+	return buffer.buffer;
+}
+
+function resizeToThumbnail(srcCanvas) {
+	let width = document.body.clientWidth;
+	let height = document.body.clientHeight;
+	let canvas = document.createElement('canvas');
+	let ctx = canvas.getContext('2d');
+	canvas.width = 256;
+	canvas.height = 256 * (height / width);
+	ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, canvas.width, canvas.height);
+	return toArrayBuffer(canvas.toDataURL("image/jpeg"));
+}
+
 
 class GUI extends EventEmitter {
 	constructor(store, action) {
 		super();
-
+		console.log("[gui]:constructor")
 		this.store = store;
 		this.action = action;
+	}
 
+	// すべてのGUIの初期化
+	init() {
+		this.initWindow();
+		this.initLoginMenu();
+		this.loginMenu.show(true);
+		Translation.translate(function () { });
+
+		// ログイン成功
+		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
+			// ログインメニューを削除
+			document.body.removeChild(this.loginMenu.getDOM());
+			this.initPropertyPanel();
+			this.initMenu();
+			this.showWebGL();
+		});
+
+		// ログイン失敗
+		this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
+			this.loginMenu.showInvalidLabel(true);
+		});
+
+		this.store.on(Store.EVENT_DONE_IFRAME_CONNECT, (err, iframeConnector) => {
+			console.log("[gui]:EVENT_DONE_IFRAME_CONNECT");
+			this.addQgisContent();
+		})
+		
+	}
+
+	/**
+	 * @method addQgisContent
+	 */
+	addQgisContent(){
+		const thumbnail = resizeToThumbnail(this.iframe.contentWindow.Q3D.application.renderer.domElement)
+
+		let metaData = {
+			type: Constants.TypeWebGL,
+			user_data_text: JSON.stringify({
+				text: this.store.getContentInfo().url
+			}),
+			posx: 0,
+			posy: 0,
+			width: this.getWindowSize().width,
+			height: this.getWindowSize().height,
+			orgWidth: this.getWindowSize().width,
+			orgHeight: this.getWindowSize().height,
+			visible: true,
+			// layerList: JSON.stringify(param.layerList),
+			url: decodeURI(this.store.getContentInfo().url)
+		};
+		let data = {
+			metaData: metaData,
+			contentData: thumbnail
+		};
+		console.log("[addQgisContent]: ",data);
+		this.action.addContent(data);
 	}
 
 	initLoginMenu() {
@@ -113,28 +199,6 @@ class GUI extends EventEmitter {
 				});
 			}, 200);
 		};
-	}
-
-	// すべてのGUIの初期化
-	init() {
-		this.initWindow();
-		this.initLoginMenu();
-		this.loginMenu.show(true);
-		Translation.translate(function () { });
-
-		// ログイン成功
-		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
-			// ログインメニューを削除
-			document.body.removeChild(this.loginMenu.getDOM());
-			this.initPropertyPanel();
-			this.initMenu();
-			this.showWebGL();
-		});
-
-		// ログイン失敗
-		this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
-			this.loginMenu.showInvalidLabel(true);
-		});
 	}
 
 	/**

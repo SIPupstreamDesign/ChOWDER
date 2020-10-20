@@ -99,10 +99,71 @@ class Store extends EventEmitter {
         });
 	}
 	
+	_connectIFrame(data) {
+        let iframe = data;
+        this.iframeConnector = new IFrameConnector(iframe);
+        this.iframeConnector.connect(() => {
+
+            // // iframe内のitownsのレイヤーが追加された
+            // // storeのメンバに保存
+            // this.iframeConnector.on(ITownsCommand.AddLayer, (err, params) => {
+            //     if (params.length > 0 && this.metaData) {
+            //         for (let i = 0; i < params.length; ++i) {
+            //             let layerParam = params[i];
+            //             let layer = this.getLayerData(layerParam.id);
+            //             if (!layer) {
+            //                 let layerList = JSON.parse(this.metaData.layerList);
+            //                 layerList.push(layerParam);
+            //                 this.metaData.layerList = JSON.stringify(layerList);
+            //             }
+            //         }
+            //         this.operation.updateMetadata(this.metaData, (err, res) => {
+            //             this.emit(Store.EVENT_DONE_ADD_LAYER, null, params)
+            //         });
+            //         return;
+            //     }
+            //     // 初回起動時などで、レイヤー情報がまだmetadata似ない場合.
+            //     this.emit(Store.EVENT_DONE_ADD_LAYER, null, params);
+            // });
+
+            // //  iframe内のitownsのレイヤーが削除された
+            // // storeのメンバに保存
+            // this.iframeConnector.on(ITownsCommand.DeleteLayer, (err, params) => {
+            // });
+
+            // this.iframeConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
+            //     let layerList = [];
+            //     if (params.length > 0 && this.metaData) {
+            //         for (let i = 0; i < params.length; ++i) {
+            //             let layerParam = params[i];
+            //             let layer = this.getLayerData(layerParam.id);
+            //             if (layer) {
+            //                 layerList.push(layerParam);
+            //             } else {
+            //                 console.error("Not found layer on ChOWDER metadata", layerParam.id)
+            //             }
+            //         }
+            //     }
+            //     this.metaData.layerList = JSON.stringify(layerList);
+            //     this.operation.updateMetadata(this.metaData, (err, res) => {
+            //     });
+            // });
+			console.log("[store]:_connectIFrame")
+            this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
+        });
+    }
+
+    _addContent(data) {
+		console.log("[store]addContent");
+        let metaData = data.metaData;
+        let contentData = data.contentData;
+        this.operation.addContent(metaData, contentData);
+    }
+
 	// TODO: 仮です。
     getContentInfo() {
 		return {
-			url : "http://localhost/licenses.md",
+			url : "http://localhost/qgis/qgis2three_noserver/index.html",
 			contentID : "hogepiyo",
 			visible : true,
 			wireframe : false,
@@ -116,4 +177,7 @@ Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_LOGIN_SUCCESS = "login_success";
 Store.EVENT_LOGIN_FAILED = "login_failed";
+Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
+Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
+
 export default Store;
