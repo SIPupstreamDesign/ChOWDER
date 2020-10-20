@@ -70,6 +70,10 @@ class Action extends EventEmitter {
 		console.log("[action]addContent");
         this.emit(Action.EVENT_ADD_CONTENT, null, data);
 	}
+
+	upload(data) {
+        this.emit(Action.EVENT_UPLOAD, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -77,4 +81,6 @@ Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
+Action.EVENT_UPLOAD = "upload";
+
 export default Action;

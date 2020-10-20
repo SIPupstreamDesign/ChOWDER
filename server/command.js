@@ -81,6 +81,8 @@
 		DeleteDisplayPermissionList : "DeleteDisplayPermissionList",
 
 		GetDisplayPermissionList : "GetDisplayPermissionList", // 許可設定一覧をサーバに要求する
+
+		Upload : "Upload",
 	};
 
 	module.exports = Command;

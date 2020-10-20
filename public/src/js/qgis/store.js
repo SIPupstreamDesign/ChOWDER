@@ -98,6 +98,21 @@ class Store extends EventEmitter {
         Connector.send(Command.Logout, {}, function () {
         });
 	}
+
+    _upload(data) {
+        const metaData = [];
+        console.log("[store]_upload", data);
+        Connector.sendBinary(Command.Upload, metaData, data.binary, (err, reply) => {
+            if (err || reply === null) {
+                console.log(err);
+                this.emit(Store.EVENT_UPLOAD_FAILED, err, data);
+            } else {
+                console.log("uploadSuccess", reply);
+                // this.authority = reply.authority;
+                this.emit(Store.EVENT_UPLOAD_SUCCESS, null);
+            }
+        });
+    }
 	
 	_connectIFrame(data) {
         let iframe = data;
@@ -179,5 +194,7 @@ Store.EVENT_LOGIN_SUCCESS = "login_success";
 Store.EVENT_LOGIN_FAILED = "login_failed";
 Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
+Store.EVENT_UPLOAD_FAILED = "upload_failed";
+Store.EVENT_UPLOAD_SUCCESS = "upload_success";
 
 export default Store;

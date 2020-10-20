@@ -7,6 +7,7 @@
 
 import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
+import UploadMenu from '../components/upload_menu.js';
 import Translation from '../common/translation';
 import Menu from '../components/menu';
 import GUIProperty from './gui_property';
@@ -108,7 +109,9 @@ class GUI extends EventEmitter {
 
 	initLoginMenu() {
 		this.loginMenu = new LoginMenu("ChOWDER Qgis2Threejs App");
+		this.uploadMenu = new UploadMenu();
 		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
+		document.getElementsByClassName("loginframe")[0].appendChild(this.uploadMenu.getDOM());
 
 		// ログインが実行された場合
 		this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
@@ -120,6 +123,24 @@ class GUI extends EventEmitter {
 			});
 		});
 
+		// アップロードが実行された場合
+		this.uploadMenu.on(UploadMenu.EVENT_UPLOAD, () => {
+			const fileinput = document.getElementById("uploadfile");
+			const file = fileinput.files[0];
+			const reader = new FileReader();
+			reader.addEventListener('load', (event) => {
+				console.log("load",event.target.result);
+
+				this.action.upload({
+					binary: event.target.result
+				});
+	
+			});
+			console.log(file)
+			reader.readAsArrayBuffer(file)
+
+		});
+		
 		let select = this.loginMenu.getUserSelect();
 		select.addOption("APIUser", "APIUser");
 	}

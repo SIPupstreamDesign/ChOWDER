@@ -1320,6 +1320,10 @@
             }
         }
 
+        upload(metaData, binaryData, endCallback){
+            console.log("upload", metaData);
+            this.executer.upload(binaryData,endCallback);
+        }
     }
 
     module.exports = CommandOperator;

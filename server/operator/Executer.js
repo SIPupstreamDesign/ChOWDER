@@ -8,6 +8,7 @@
 
     const fs = require('fs');
     const path = require('path');
+    const nodeZip = require("node-zip");
 
     let phantom = null;
     try {
@@ -3166,6 +3167,28 @@
             });
         }
 
+        
+        /**
+         * upload
+         * @method upload
+         * @param {BLOB} binaryData binaryData
+         * @param {Function} callback (string err)=>{}
+         */
+        upload(binaryData, callback){
+            const zip = new nodeZip(binaryData, {base64: false, checkCRC32: true});
+            for(let i in zip.files){
+                if(zip.files[i].options.dir === true){
+                    if(!fs.existsSync("../public/qgis"+zip.files[i].name)){
+                        console.log("[mkdir] : ","../public/qgis"+zip.files[i].name);
+                        fs.mkdirSync("../public/qgis"+zip.files[i].name, { recursive: true });
+                    }
+                }else{
+                    fs.writeFile("../public/qgis"+zip.files[i].name,zip.files[i]._data,"binary",(err)=>{
+                        if(err){console.log(err)};
+                    });
+                }
+            }
+        }
     }
 
     module.exports = Executer;
