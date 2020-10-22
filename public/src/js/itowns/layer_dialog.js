@@ -11,6 +11,14 @@ import Button from "../components/button";
 import Select from "../components/select";
 import ITownsConstants from "./itowns_constants.js"
 
+const SampleURLFileNames = {}
+SampleURLFileNames[ITownsConstants.TypeColor] = "std/{z}/{x}/{y}.png";
+SampleURLFileNames[ITownsConstants.TypeElevation] = "std/{z}/{x}/{y}.png";
+SampleURLFileNames[ITownsConstants.Type3DTile] = "something/tileset.json";
+SampleURLFileNames[ITownsConstants.TypePointCloud] = "something/cloud.js";
+SampleURLFileNames[ITownsConstants.TypeGeometry] = "something/data.pbf";
+SampleURLFileNames[ITownsConstants.TypeBargraph] = "sample_csv_data/data1.csv";
+
 class LayerDialog extends EventEmitter {
     constructor(store, action) {
         super();
@@ -28,6 +36,12 @@ class LayerDialog extends EventEmitter {
         };
         this.init();
         this.setting = {};
+        this.csv = null;
+    }
+
+    changeInputURLValue(fileName) {
+        const port = window.location.port ? ":" + window.location.port : "";
+        this.urlInput.value = window.location.protocol + "//" + window.location.hostname + port + "/" + fileName;
     }
 
     init() {
@@ -59,6 +73,7 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(tileset.json)");
         this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree cloud.js)");
         this.typeSelect.addOption(ITownsConstants.TypeGeometry, "VectorTile(pbf, geojson)");
+        this.typeSelect.addOption(ITownsConstants.TypeBargraph, "Bargraph(csv)");
 
         this.idTitle = document.createElement('p');
         this.idTitle.className = "layer_dialog_sub_title";
@@ -74,7 +89,7 @@ class LayerDialog extends EventEmitter {
 
         this.urlInput = document.createElement('textarea');
         this.urlInput.className = "layer_dialog_url_input";
-        this.urlInput.value = "http://" + window.location.hostname + ":" + window.location.port + "/std/{z}/{x}/{y}.png";
+        this.changeInputURLValue(SampleURLFileNames[ITownsConstants.TypeColor]);
         
         this.styleURLTitle = document.createElement('p');
         this.styleURLTitle.className = "layer_dialog_sub_title";
@@ -91,6 +106,14 @@ class LayerDialog extends EventEmitter {
         this.zoomMaxTitle = document.createElement('p');
         this.zoomMaxTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
         this.zoomMaxTitle.innerText = "Max";
+
+        this.fileOpenTitle = document.createElement('p');
+        this.fileOpenTitle.className = "layer_dialog_fileopen_title";
+        this.fileOpenTitle.innerText = "Import From File:";
+
+        this.fileOpenInput = new Input('file');
+        this.fileOpenInput.type = "file";
+        this.fileOpenInput.getDOM().style.display = "inline-block";
 
         this.zoomMinSelect = new Select();
         for (let i = 1; i <= 20; ++i) {
@@ -147,19 +170,29 @@ class LayerDialog extends EventEmitter {
             this.zoomRow.appendChild(this.zoomMaxTitle);
             this.zoomRow.appendChild(this.zoomMaxSelect.getDOM());
         }
+
+        {
+            this.fileOpenRow = createRow();
+            this.fileOpenRow.appendChild(this.fileOpenTitle);
+            this.fileOpenRow.appendChild(this.fileOpenInput.getDOM());
+            this.fileOpenRow.style.display = "none";
+        }
         
         this.endCallback = null;
         let isOK = false;
         this.background = new PopupBackground();
         this.background.on('close', () => {
             this.data.type = this.typeSelect.getSelectedValue();
+            if (this.data.type == ITownsConstants.TypeBargraph) {
+                this.data.isBarGraph = true;
+            }
             this.data.url = this.urlInput.value.split("\n").join("");
             this.data.id = this.idInput.getValue();
             this.data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
             this.data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
             
             let type = this.typeSelect.getSelectedValue();
-            if (type === "geometry") {
+            if (type === ITownsConstants.TypeGeometry) {
                 this.data.style = this.styleURLInput.value.split("\n").join("");
             }
 
@@ -180,18 +213,46 @@ class LayerDialog extends EventEmitter {
             this.background.close();
         });
 
+        this.fileOpenInput.on(Input.EVENT_CHANGE, (err, evt) => {
+            this.csv = null;
+            let files = evt.target.files;
+            let fileReader = new FileReader();
+            fileReader.onload = (e) =>{
+                let data = new Uint8Array(e.target.result);
+                let converted = window.Encoding.convert(data, {
+                    to: 'UNICODE',
+                    from: 'AUTO'
+                });
+                let str = Encoding.codeToString(converted);
+                let parsed = window.Papa.parse(str);
+                if (parsed.errors.length == 0) {
+                    this.csv = str;
+                } else {
+                    console.error(parsed.errors);
+                }
+            };
+            fileReader.readAsArrayBuffer(files[0]);
+        });
+
         this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
             let type = this.typeSelect.getSelectedValue();
-            if (type === "pointcloud") {
+            if (type === ITownsConstants.TypePointCloud
+                || type === ITownsConstants.TypeBargraph) {
                 this.zoomRow.style.display = "none";
             } else {
                 this.zoomRow.style.display = "block";
             }
-            if (type === "geometry") {
+            if (type === ITownsConstants.TypeGeometry) {
                 this.styleRow.style.display = "block";
             } else {
                 this.styleRow.style.display = "none";
             }
+            if (type === ITownsConstants.TypeBargraph) {
+                this.fileOpenRow.style.display = "block";
+            } else {
+                this.fileOpenRow.style.display = "none";
+            }
+            this.changeInputURLValue(SampleURLFileNames[type]);
         });
     }
 

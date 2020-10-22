@@ -31,6 +31,9 @@ class Store extends EventEmitter {
         // 初回カメラ行列用キャッシュ
         this.initialMatrix = null;
 
+        // csvキャッシュ。csvは大きいのでmetaDataとして登録しない。
+        this.csvCaches = {}
+
         const year = 2019;
         const month = 8;
         const day = 3;
@@ -52,7 +55,7 @@ class Store extends EventEmitter {
         })
 
         // コンテンツ追加完了した.
-        this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
+        this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply, endCallback) => {
             let isInitialContent = (!this.metaData);
 
             this.metaData = reply;
@@ -66,6 +69,7 @@ class Store extends EventEmitter {
                     })
                 }
             }
+            if (endCallback) { endCallback(); }
         })
 
         this.performanceResult = {}
@@ -206,6 +210,17 @@ class Store extends EventEmitter {
         });
     }
 
+    __execludeAndCacheCSVData(layerParams) {
+        for (let i = 0; i < layerParams.length; ++i) {
+            const layerParam = layerParams[i];
+            if (layerParam.hasOwnProperty('csv')) {
+                this.csvCaches[layerParam.id] = layerParam.csv;
+                delete layerParam.csv;
+                break;
+            }
+        }
+    }
+
     _connectIFrame(data) {
         let iframe = data;
         this.iframeConnector = new IFrameConnector(iframe);
@@ -214,6 +229,7 @@ class Store extends EventEmitter {
             // iframe内のitownsのレイヤーが追加された
             // storeのメンバに保存
             this.iframeConnector.on(ITownsCommand.AddLayer, (err, params) => {
+                this.__execludeAndCacheCSVData(params);
                 if (params.length > 0 && this.metaData) {
                     for (let i = 0; i < params.length; ++i) {
                         let layerParam = params[i];
@@ -229,7 +245,7 @@ class Store extends EventEmitter {
                     });
                     return;
                 }
-                // 初回起動時などで、レイヤー情報がまだmetadata似ない場合.
+                // 初回起動時などで、レイヤー情報がまだmetadataにない場合.
                 this.emit(Store.EVENT_DONE_ADD_LAYER, null, params);
             });
 
@@ -239,6 +255,7 @@ class Store extends EventEmitter {
             });
 
             this.iframeConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
+                this.__execludeAndCacheCSVData(params);
                 let layerList = [];
                 if (params.length > 0 && this.metaData) {
                     for (let i = 0; i < params.length; ++i) {
@@ -263,7 +280,7 @@ class Store extends EventEmitter {
     _addContent(data) {
         let metaData = data.metaData;
         let contentData = data.contentData;
-        this.operation.addContent(metaData, contentData);
+        this.operation.addContent(metaData, contentData, () => {});
     }
 
     _resizeWindow(data) {
@@ -333,6 +350,7 @@ class Store extends EventEmitter {
                     console.log("updateMetadata", data, this.metaData)
                     // iframeへ送る
                     this.iframeConnector.send(ITownsCommand.DeleteLayer, data, (err, data) => {
+                        console.error("DeleteLayer")
                         // サーバへ送る
                         this.operation.updateMetadata(this.metaData, (err, res) => {
                             this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
@@ -364,7 +382,14 @@ class Store extends EventEmitter {
                 }
             }
         }
-        console.error("Not found layer from current content.", layerID, JSON.parse(this.metaData.layerList));
+        console.log("Not found layer from current content.", layerID, JSON.parse(this.metaData.layerList));
+        return null;
+    }
+
+    getCSVCache(layerID) {
+        if (this.csvCaches.hasOwnProperty(layerID)) {
+            return this.csvCaches[layerID];
+        }
         return null;
     }
 

@@ -297,6 +297,14 @@ p {
 	padding-right : 5px;
 }
 
+.layer_dialog_fileopen_title {
+	display : inline-block;
+	padding-right : 5px;
+}
+.layer_dialog_fileopen_input {
+	display : inline-block;
+}
+
 .layer_dialog_zoom_max_title {
 	padding-left : 10px;
 }
@@ -309,6 +317,13 @@ p {
 
 .layer_property_title {
 	padding-top : 10px;
+}
+
+.property_bargraph_col {
+	margin: 3px;
+    margin-left: 12px;
+    height: 30px;
+    width: calc(100% - 24px);
 }
 
 .timeline_wrap {

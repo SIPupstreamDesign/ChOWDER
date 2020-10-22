@@ -410,7 +410,12 @@ class GUI extends EventEmitter {
         propInner.appendChild(this.layerProperty.getDOM());
 
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
-            this.layerProperty.initFromLayer(data.value, this.store.getLayerData(data.value));
+            let layerData = this.store.getLayerData(data.value);
+            const csv = this.store.getCSVCache(layerData.id);
+            if (csv) {
+                layerData.csv = csv;
+            }
+            this.layerProperty.initFromLayer(data.value, layerData);
         });
 
         // 速度計測ボタン
