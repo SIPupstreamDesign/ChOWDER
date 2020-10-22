@@ -54,20 +54,6 @@
 	//----------------------------------------------------------------------------------------
 	// websocket operator
 	//----------------------------------------------------------------------------------------
-	/// http server instance for websocket operator
-	let wsopserver = http.createServer((req, res)=>{
-		'use strict';
-		console.log('REQ>', req.url);
-		res.end("websocket operator");
-	});
-	wsopserver.listen(port + 1);
-
-	let wsopserver_s = https.createServer(options, (req, res)=>{
-		'use strict';
-		console.log('REQ>', req.url);
-		res.end("websocket operator");
-	});
-	wsopserver_s.listen(sslport + 1);
 
 	function ws_request(ws2) { // for http or https
 		return (request)=>{
@@ -166,55 +152,105 @@
 	}
 
 	/// http server instance for operation
-	let opsever = http.createServer(opserver_http_request);
-	opsever.listen(port);
-
-	let opsever_s = https.createServer(options, opserver_http_request);
-	opsever_s.listen(sslport);
 
 	fs.readFile(path.join(__dirname, 'setting.json'), (err, data)=>{
-		if (!err) {
-			try {
-				settings = JSON.parse(String(data));
-				executer.setSettingJSON(settings);
+		if (err) {
+			console.error("Error: Failed to load setting.json.");
+			return;
+		}
+	
+		// 設定ファイルをパース
+		try {
+			settings = JSON.parse(String(data));
+		} catch (e) {
+			console.error(e);
+			console.error("Failed to load setting.json");
+			process.exit(-1);
+		}
 
-				/// web socket server instance
-				ws2 = new WebSocket.server({ httpServer : opsever,
-						maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
-						maxReceivedFrameSize :Number(settings.wsMaxMessageSize),
-						autoAcceptConnections : false});
+		// executerに設定ファイルをセット
+		executer.setSettingJSON(settings);
 
-				ws2_s = new WebSocket.server({ httpServer : opsever_s,
+		// パフォーマンス計測用の設定
+		if (settings && settings.hasOwnProperty('enableMeasureTime') && String(settings.enableMeasureTime) === "true" ) {
+			Logger.setExecuter(executer);
+			Logger.setEnableMeasureTime(true);
+		}
+
+		// http/httpsサーバを有効にするかどうか
+		const enableHTTP = settings.hasOwnProperty('enableHTTP') && settings.enableHTTP;
+		const enableSSL = settings.hasOwnProperty('enableSSL') && settings.enableSSL;
+
+		// http/httpsサーバのポートを設定ファイルから取得
+		if (settings.hasOwnProperty('HTTPPort') && Number(settings.HTTPPort)) {
+			port = Number(settings.HTTPPort)
+		}
+		if (settings.hasOwnProperty('SSLPort') && Number(settings.SSLPort)) {
+			sslport = Number(settings.SSLPort);
+		}
+
+		let wsList = [];
+		if (enableHTTP) {
+			let opsever = http.createServer(opserver_http_request);
+			opsever.listen(port);
+			/// web socket server instance
+			ws2 = new WebSocket.server({ httpServer : opsever,
 					maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
-					maxReceivedFrameSize : Number(settings.wsMaxMessageSize),
+					maxReceivedFrameSize :Number(settings.wsMaxMessageSize),
 					autoAcceptConnections : false});
+			
+			// 設定ファイルのメッセージサイズによる起動が失敗した場合、固定のサイズで起動する
+			if (!ws2) {
+				ws2 = new WebSocket.server({ httpServer : opsever,
+					maxReceivedMessageSize: 64*1024*1024, // 64MB
+					maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+					autoAcceptConnections : false});
+			}
 
-				// パフォーマンス計測用
-				if (settings && settings.hasOwnProperty('enableMeasureTime') && String(settings.enableMeasureTime) === "true" ) {
-					Logger.setExecuter(executer);
-					Logger.setEnableMeasureTime(true);
-				}
-			} catch (e) {
-				console.error(e);
+			if (ws2) {
+				wsList.push(ws2);
 			}
 		}
-		if (!ws2) {
-			ws2 = new WebSocket.server({ httpServer : opsever,
-				maxReceivedMessageSize: 64*1024*1024, // 64MB
-				maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
-				autoAcceptConnections : false});
-		}
-		if (!ws2_s)	{
+		if (enableSSL) {
+			let opsever_s = https.createServer(options, opserver_http_request);	
+			opsever_s.listen(sslport);
+			/// web socket server instance
 			ws2_s = new WebSocket.server({ httpServer : opsever_s,
-				maxReceivedMessageSize: 64*1024*1024, // 64MB
-				maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+				maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
+				maxReceivedFrameSize : Number(settings.wsMaxMessageSize),
 				autoAcceptConnections : false});
+
+			// 設定ファイルのメッセージサイズによる起動が失敗した場合、固定のサイズで起動する
+			if (!ws2_s)	{
+				ws2_s = new WebSocket.server({ httpServer : opsever_s,
+					maxReceivedMessageSize: 64*1024*1024, // 64MB
+					maxReceivedFrameSize : 64*1024*1024, // more receive buffer!! default 65536B
+					autoAcceptConnections : false});
+			}
+
+			if (ws2_s) {
+				wsList.push(ws2_s);
+			}
 		}
 
-		// finally
-		ws2.on('request', ws_request([ws2, ws2_s]));
-		ws2_s.on('request', ws_request([ws2, ws2_s]));
 
+		if (enableHTTP) {
+			// リクエストを受け付けるコールバックを設定
+			ws2.on('request', ws_request(wsList));
+			// 開いたポートをコンソールにプリント
+			const portSTR = (port===80) ? (":" + port) : ("");
+			console.log('start server "http://localhost' + portSTR + '/"');
+			console.log('start ws operate server "ws://localhost' + portSTR + '/"');
+		}
+		
+		if (enableSSL) {
+			// リクエストを受け付けるコールバックを設定
+			ws2_s.on('request', ws_request(wsList));
+			// 開いたポートをコンソールにプリント
+			const portSTR = (sslport===443) ? (":" + sslport) : ("");
+			console.log('start server "https://localhost' + portSTR + '/"');
+			console.log('start ws operate server "wss://localhost' + portSTR + '/"');
+		}
 	});
 
 	// unregister all window
@@ -232,10 +268,5 @@
 		}, 500);
 	});
 
-	//----------------------------------------------------------------------------------------
-
-	console.log('start server "http://localhost:' + port + '/"');
-	console.log('start ws operate server "ws://localhost:' + (port) + '/"');
-	console.log('start server "https://localhost:' + sslport + '/"');
-	console.log('start ws operate server "wss://localhost:' + (sslport) + '/"');
+	console.log('start ChOWDER Server');
 })();
