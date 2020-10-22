@@ -6,7 +6,7 @@
     "turnServerUrl" : "",
     "turnServerUsername" : "",
     "turnServerCredential" : "",
-    "enableHTTP" : false,
+    "enableHTTP" : true,
     "enableSSL" : true,
     "HTTPPort" : 80,
     "SSLPort" : 443
