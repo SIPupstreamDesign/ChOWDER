@@ -116,7 +116,8 @@ class LayerProperty extends EventEmitter {
 		*/
 
 		this.scaleSlider = null;
-		this.sizeSlider = null;
+		this.pointSizeSlider = null;
+		this.bboxSizeSlider = null;
 	}
 
 	addVisible(layerID, layerProps) {
@@ -185,19 +186,34 @@ class LayerProperty extends EventEmitter {
 		this.dom.appendChild(this.scaleSlider.getDOM());
 	}
 
-	addSize(layerID, layerProps) {
+	addPointSize(layerID, layerProps) {
 		if (layerProps && layerProps.hasOwnProperty('pointSize')) {
-			this.sizeSlider = new PropertySlider(layerID && layerProps, "size", "", (layerProps.pointSize - 1) / 20.0, 20, true, 1);
+			this.pointSizeSlider = new PropertySlider(layerID && layerProps, "size", "", (layerProps.pointSize - 1) / 20.0, 20, false, 1);
 		} else {
-			this.sizeSlider = new PropertySlider(layerID && layerProps, "size", "", 4 / 20.0, 20, true, 1);
+			this.pointSizeSlider = new PropertySlider(layerID && layerProps, "size", "", 4 / 20.0, 20, false, 1);
 		}
-		this.sizeSlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {
+		this.pointSizeSlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {
 			this.action.changeLayerProperty({
 				id: layerID,
 				pointSize: data
 			});
 		});
-		this.dom.appendChild(this.sizeSlider.getDOM());
+		this.dom.appendChild(this.pointSizeSlider.getDOM());
+	}
+
+	addBBoxSize(layerID, layerProps) {
+		if (layerProps && layerProps.hasOwnProperty('size')) {
+			this.bboxSizeSlider = new PropertySlider(layerID && layerProps, "size", "", (layerProps.size - 0.01) / 10.0, 10.0, false, 0.01);
+		} else {
+			this.bboxSizeSlider = new PropertySlider(layerID && layerProps, "size", "", 5 / 10.0, 10.0, false, 0.01);
+		}
+		this.bboxSizeSlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {
+			this.action.changeLayerProperty({
+				id: layerID,
+				size: data
+			});
+		});
+		this.dom.appendChild(this.bboxSizeSlider.getDOM());
 	}
 
 	addWireFrame(layerID, layerProps) {
@@ -563,9 +579,14 @@ class LayerProperty extends EventEmitter {
 			this.addScale(layerID, layerProps);
 		}
 
-		// size
+		// point size
 		if (layerProps.type === ITownsConstants.TypePointCloud) {
-			this.addSize(layerID, layerProps);
+			this.addPointSize(layerID, layerProps);
+		}
+
+		// bbox size
+		if (isBarGraph) {
+			this.addBBoxSize(layerID, layerProps);
 		}
 
 		// wireframe

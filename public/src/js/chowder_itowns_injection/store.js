@@ -260,7 +260,8 @@ class Store extends EventEmitter {
                     if (parsed.data[i].length !== parsed.data[0].length) continue;
                     const material = new itowns.THREE.MeshToonMaterial({ color: 0x5555ff });
                     material.opacity = 1.0;
-                    const geo = new itowns.THREE.BoxGeometry(100000, 100000, 1);
+                    const geo = new itowns.THREE.BoxGeometry(1, 1, 1);
+                    geo.translate(0, 0, -0.5);
                     const mesh = new itowns.THREE.Mesh(geo, material);;
                     mesh.scale.set(1, 1, 1);
                     mesh.lookAt(0, 0, 0);
@@ -496,7 +497,7 @@ class Store extends EventEmitter {
 
                     const color = rainbow.colourAt(physical2Val);
                     mesh.material.color.setHex("0x" + color);
-                    mesh.scale.set(1, 1, scaleZ);
+                    mesh.scale.set(bargraphLayer.size * 10000, bargraphLayer.size * 10000, scaleZ);
                     mesh.position.copy(coord.as(this.itownsView.referenceCrs))
                     mesh.lookAt(0, 0, 0);
                     mesh.visible = (isValidLonIndex && isValidLatIndex);
@@ -504,6 +505,11 @@ class Store extends EventEmitter {
                 }
             }
             bargraphLayer.defineLayerProperty('scale', bargraphLayer.scale || 1.0, (self) => {
+                bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
+                    updateBarGraph(bargraphLayer, data);
+                });
+            });
+            bargraphLayer.defineLayerProperty('size', bargraphLayer.size || 5, (self) => {
                 bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
                     updateBarGraph(bargraphLayer, data);
                 });
@@ -915,6 +921,10 @@ class Store extends EventEmitter {
                 layer.scale = Number(params.scale);
                 isChanged = true;
             }
+            if (params.hasOwnProperty('size')) {
+                layer.size = Number(params.size);
+                isChanged = true;
+            }
             if (params.hasOwnProperty('pointSize')) {
                 layer.pointSize = Number(params.pointSize);
                 isChanged = true;
@@ -1204,6 +1214,12 @@ class Store extends EventEmitter {
             }
             if (layer.hasOwnProperty('sseThreshold')) {
                 data.sseThreshold = layer.sseThreshold;
+            }
+            if (layer.hasOwnProperty('scale')) {
+                data.scale = layer.scale;
+            }
+            if (layer.hasOwnProperty('size')) {
+                data.size = layer.size;
             }
             if (layer.hasOwnProperty('isBarGraph')) {
                 data.isBarGraph = layer.isBarGraph;
