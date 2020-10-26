@@ -98,32 +98,36 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         renderURL(url, endCallback) {
-            phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
-                instance.createPage().then(function (page) {
-                    page.property('viewportSize', { width: 1024, height: 600 }).then(function () {
-                        page.open(url).then(function (status) {
-                            if (status !== 'success') {
-                                console.error('renderURL: Page open failed: ' + status);
-                                return;
-                            }
+            if(phantom === null){
+                console.log("not found phantom");
+            }else{
+                phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
+                    instance.createPage().then(function (page) {
+                        page.property('viewportSize', { width: 1024, height: 600 }).then(function () {
+                            page.open(url).then(function (status) {
+                                if (status !== 'success') {
+                                    console.error('renderURL: Page open failed: ' + status);
+                                    return;
+                                }
 
-                            page.evaluate(function () {
-                                return { /* eslint-disable */
-                                    width: document.body.scrollWidth,
-                                    height: document.body.scrollHeight,
-                                    deviceScaleFactor: window.devicePixelRatio
-                                }; /* eslint-enable */
-                            }).then(function (dim) {
-                                page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
-                                    const filename = path.resolve('/tmp', Date.now().toString() + '.png');
-                                    page.render(filename).then(function () {
-                                        fs.readFile(filename, function (err, data) {
-                                            if (err) {
-                                                console.error(err);
-                                                return;
-                                            }
-                                            endCallback(data, image_size(data));
-                                            instance.exit();
+                                page.evaluate(function () {
+                                    return { /* eslint-disable */
+                                        width: document.body.scrollWidth,
+                                        height: document.body.scrollHeight,
+                                        deviceScaleFactor: window.devicePixelRatio
+                                    }; /* eslint-enable */
+                                }).then(function (dim) {
+                                    page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
+                                        const filename = path.resolve('/tmp', Date.now().toString() + '.png');
+                                        page.render(filename).then(function () {
+                                            fs.readFile(filename, function (err, data) {
+                                                if (err) {
+                                                    console.error(err);
+                                                    return;
+                                                }
+                                                endCallback(data, image_size(data));
+                                                instance.exit();
+                                            });
                                         });
                                     });
                                 });
@@ -131,7 +135,7 @@
                         });
                     });
                 });
-            });
+            }
         }
 
         generateID(prefix, endCallback) {

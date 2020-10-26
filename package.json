@@ -7,6 +7,7 @@
   "optionalDependencies": {
     "hiredis": "*",
     "images": "^3.0.1",
+    "phantom": "^6.0.3",
     "sharp": "^0.20.8"
   },
   "scripts": {
@@ -23,7 +24,6 @@
     "argv": "0.0.2",
     "bson": "*",
     "image-size": "*",
-    "phantom": "^6.0.3",
     "redis": "*",
     "websocket": "*",
     "electron": "^4.1.1"
