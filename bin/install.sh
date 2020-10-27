@@ -45,7 +45,7 @@ while true;do
 				fi
 			fi
 
-			if [ -e "/usr/local/etc/turnserver.conf" ]; then
+			if [ -e "/usr/local/etc/turnserver.conf.default" ]; then
 				sed -e "s/listening-ip=0.0.0.0/listening-ip=$privateip/" turnserver.conf > /usr/local/etc/turnserver.conf
 			else
 				echo "Error: Not fond turnserver.conf in your system"
@@ -67,6 +67,7 @@ if [ ! -e "../redis/redis-server" ]; then
 		tar xf redis-stable.tar.gz
 		cd redis-stable
 		make
+		make distclean
 		cp src/redis-server ../../redis/
 		cd ..
 		rm -rf redis-*
