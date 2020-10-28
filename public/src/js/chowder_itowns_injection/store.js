@@ -15,8 +15,15 @@ import IFrameConnector from '../common/iframe_connector'
 import ITownsCommand from '../common/itowns_command';
 import ITownsConstants from '../itowns/itowns_constants.js';
 
-const getTextureFloat = function getTextureFloat(buffer) {
-    return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
+
+const getTextureFloat = (buffer) => {
+    // webgl2
+    const texture = new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.RedFormat, itowns.THREE.FloatType);
+    texture.internalFormat = 'R32F';
+    return texture;
+
+    // webgl1
+    //return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
 };
 
 /**
