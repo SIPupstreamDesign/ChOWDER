@@ -42,6 +42,6 @@ if [ ! -e "../redis/redis-server" ]; then
 	fi
 fi
 
-npm install --unsafe-perm
+npm install
 
 cd $ORIGIN
