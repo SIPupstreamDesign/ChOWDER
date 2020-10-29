@@ -6,7 +6,7 @@
   "main": "server/server.js",
   "optionalDependencies": {
     "hiredis": "*",
-    "images": "^3.0.1",
+    "images": "^3.2.3",
     "phantom": "^6.0.3",
     "sharp": "^0.20.8"
   },
