@@ -62,8 +62,8 @@ if [ ! -e "../redis/redis-server" ]; then
 		curl -O http://download.redis.io/redis-stable.tar.gz
 		tar xf redis-stable.tar.gz
 		cd redis-stable
-		make
 		make distclean
+		make
 		cp src/redis-server ../../redis/
 		cd ..
 		rm -rf redis-*
