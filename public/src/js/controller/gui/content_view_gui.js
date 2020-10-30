@@ -68,13 +68,14 @@ class ContentViewGUI extends EventEmitter {
 		let contentElem = data[0];
 		let contentData = data[1];
 		let metaData = data[2];
-		let groupDict = data[3];
-		let iframe = document.getElementById(getWebGLIFrameID(metaData.id));
+		//let groupDict = data[3];
+		let iframe = document.getElementById(getWebGLIFrameID(metaData));
 
 		// contentData is thubmail
 
 		let url = metaData.url;
-		iframe.onload = () => {
+		iframe.onload = ((metaData) => {
+			let iframe = document.getElementById(getWebGLIFrameID(metaData));
 			iframe.contentWindow.chowder_itowns_view_type = "controller";
 			let connector = new IFrameConnector(iframe);
 			this.action.addItownFunc({
@@ -117,7 +118,7 @@ class ContentViewGUI extends EventEmitter {
 			} catch (err) {
 				console.error(err);
 			}
-		};
+		}).bind(this, metaData);
 		iframe.contentWindow.location.replace(url);
 
 		/*
@@ -147,14 +148,14 @@ class ContentViewGUI extends EventEmitter {
 	}
 
 	importWebGLContent(contentElem, contentData, metaData, groupDict) {
-		if (document.getElementById(getWebGLIFrameID(metaData.id))) {
+		if (document.getElementById(getWebGLIFrameID(metaData))) {
 			return;
 		}
 		let iframe = document.createElement('iframe');
 		iframe.style.width = "100%";
 		iframe.style.height = "100%";
 		iframe.style.pointerEvents = "none";
-		iframe.id = getWebGLIFrameID(metaData.id);
+		iframe.id = getWebGLIFrameID(metaData);
 		contentElem.innerHTML = "";
 		contentElem.appendChild(iframe);
 		contentElem.style.color = "white";
