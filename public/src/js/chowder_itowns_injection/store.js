@@ -925,7 +925,7 @@ class Store extends EventEmitter {
                 isChanged = true;
             }
             if (params.hasOwnProperty('scale')) {
-                layer.scale = Number(params.scale);
+                layer.scale = params.scale;
                 isChanged = true;
             }
             if (params.hasOwnProperty('size')) {
