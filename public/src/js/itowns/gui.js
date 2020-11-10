@@ -487,6 +487,7 @@ class GUI extends EventEmitter {
         evt.clientX = event.clientX - clRect.left; 
         evt.clientY = event.clientY - clRect.top; 
         this.iframe.contentWindow.dispatchEvent(evt); 
+        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt); 
     }
 
     _onMouseMove(event) {
@@ -498,6 +499,7 @@ class GUI extends EventEmitter {
         evt.offsetX = event.clientX; 
         evt.offsetY = event.clientY; 
         this.iframe.contentWindow.dispatchEvent(evt);
+        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt); 
     }
 
     addITownContent(param, thumbnailBuffer) {
