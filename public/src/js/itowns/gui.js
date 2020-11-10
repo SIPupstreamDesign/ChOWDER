@@ -230,6 +230,11 @@ class GUI extends EventEmitter {
                 backdom.appendChild(text);
             }
         })
+
+        // iframe内にwindowのmousemoveを伝える用
+        this.onMouseMove = this._onMouseMove.bind(this);
+        // iframe内にwindowのmouseupを伝える用
+        this.onMouseUp = this._onMouseUp.bind(this);
     }
 
     initWindow() {
@@ -462,9 +467,37 @@ class GUI extends EventEmitter {
                 this.iframe.contentWindow.focus();
             };
 
+            // iframe外のmouseupを拾ってiframeに投げる
+            window.addEventListener('mouseup', this.onMouseUp);
+            // iframe外のmousemoveを拾ってiframeに投げる
+            window.addEventListener('mousemove', this.onMouseMove);
+
             this.action.connectIFrame(this.iframe);
         };
+        this.iframe.onunload = () => {
+            window.removeEventListener('mouseup', this.onMouseUp);
+            window.removeEventListener('mousemove', this.onMouseMove);
+        };
         document.getElementById('itowns').appendChild(this.iframe);
+    }
+
+    _onMouseUp(event) {
+        const evt = new CustomEvent('mouseup', {bubbles: true, cancelable: false}); 
+        const clRect = this.iframe.getBoundingClientRect(); 
+        evt.clientX = event.clientX - clRect.left; 
+        evt.clientY = event.clientY - clRect.top; 
+        this.iframe.contentWindow.dispatchEvent(evt); 
+    }
+
+    _onMouseMove(event) {
+        const clRect = this.iframe.getBoundingClientRect();
+        const evt = new CustomEvent('mousemove', {bubbles: true, cancelable: false}); 
+        Object.defineProperty(evt, 'target', {writable: false, value: this.iframe.contentDocument.body });
+        evt.clientX = event.clientX + clRect.left;
+        evt.clientY = event.clientY + clRect.top;
+        evt.offsetX = event.clientX; 
+        evt.offsetY = event.clientY; 
+        this.iframe.contentWindow.dispatchEvent(evt);
     }
 
     addITownContent(param, thumbnailBuffer) {
