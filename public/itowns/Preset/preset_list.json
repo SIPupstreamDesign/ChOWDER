@@ -9,6 +9,10 @@
 			"url" : "itowns/Preset/gsi/gsi.html"
 		},
 		{
+			"name" : "汎用直交座標用",
+			"url" : "itowns/Preset/cartesian/cartesian.html"
+		},
+		{
 			"name" : "pointcloud_3d_map",
 			"url" : "itowns/Preset/pointcloud_3d_map/pointcloud_3d_map.html"
 		},
