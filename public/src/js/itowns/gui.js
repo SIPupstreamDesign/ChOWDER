@@ -65,8 +65,10 @@ class GUI extends EventEmitter {
                 startTime: this.store.getTimelineStartTime(), // 左端の日時
                 endTime: this.store.getTimelineEndTime(), // 右端の日時
                 currentTime: this.store.getTimelineCurrentTime(), // 摘み（ポインタ）の日時
-                minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
-                maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
+                // 以下を設定してもウィンドウサイズ変えると勝手に表示可能範囲が変わる上、
+                // ホイールスクロールの時にズームインできるけどズームアウトできなくなる。
+                //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
+                //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
                 timeChange: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得
