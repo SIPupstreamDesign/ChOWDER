@@ -75,7 +75,7 @@ class GUI extends EventEmitter {
 			console.log("[gui]:EVENT_DONE_IFRAME_CONNECT");
 			this.addQgisContent();
 		})
-		
+
 	}
 
 	/**
@@ -86,6 +86,7 @@ class GUI extends EventEmitter {
 
 		let metaData = {
 			type: Constants.TypeWebGL,
+			webglType: "qgis2three.js",
 			user_data_text: JSON.stringify({
 				text: this.store.getContentInfo().url
 			}),
@@ -134,13 +135,13 @@ class GUI extends EventEmitter {
 				this.action.upload({
 					binary: event.target.result
 				});
-	
+
 			});
 			console.log(file)
 			reader.readAsArrayBuffer(file)
 
 		});
-		
+
 		let select = this.loginMenu.getUserSelect();
 		select.addOption("APIUser", "APIUser");
 	}
@@ -200,8 +201,74 @@ class GUI extends EventEmitter {
         this.guiProperty = new GUIProperty(this.store, this.action);
         propInner.appendChild(this.guiProperty.getDOM());
 
+
+		let mat = null;
+		const button = document.createElement("input");
+		button.type = "button";
+		button.value = "DEBUG1";
+		button.addEventListener("click",()=>{
+			console.log(this.iframe);
+			console.log(this.iframe.contentWindow);
+			console.log(this.iframe.contentWindow.Q3D.application.camera);
+			console.log(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements);
+			mat = JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements);
+		});
+		propInner.appendChild(button);
+
+		const button2 = document.createElement("input");
+		button2.type = "button";
+		button2.value = "DEBUG2";
+		button2.addEventListener("click",()=>{
+			this.iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
+			this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(mat);
+			let d = new this.iframe.contentWindow.THREE.Vector3();
+			let q = new this.iframe.contentWindow.THREE.Quaternion();
+			let s = new this.iframe.contentWindow.THREE.Vector3();
+			this.iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d,q,s);
+			this.iframe.contentWindow.Q3D.application.camera.position.copy( d );
+			this.iframe.contentWindow.Q3D.application.camera.quaternion.copy( q );
+			this.iframe.contentWindow.Q3D.application.camera.scale.copy( s );
+			this.iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
+			this.iframe.contentWindow.Q3D.application.scene.requestRender();
+		});
+		propInner.appendChild(button2);
+
+		const button3 = document.createElement("input");
+		button3.type = "button";
+		button3.value = "DEBUG3";
+		button3.addEventListener("click",()=>{
+			// const params = {
+			// 	mat:JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements),
+			// 	params:"nodata"
+			// }
+			console.log("btn3 clicked");
+			// this.action.updateCamera({
+			// 	mat: params.mat,
+			// 	params: params.params
+			// });
+
+			/* ワイヤフレーム */
+			// if(this.iframe.contentWindow.Q3D.application._wireframeMode === true){
+			// 	this.iframe.contentWindow.Q3D.application.setWireframeMode(false);
+			// }else{
+			// 	this.iframe.contentWindow.Q3D.application.setWireframeMode(true);
+			// }
+
+			/* ラベル表示 */
+			if(this.iframe.contentWindow.Q3D.application.labelVisible === true){
+				this.iframe.contentWindow.Q3D.application.setLabelVisible(false);
+			}else{
+				this.iframe.contentWindow.Q3D.application.setLabelVisible(true);
+			}
+
+			/* カメラリセット */
+			
+
+		});
+		propInner.appendChild(button3);
+
 		// コンテンツ読み込み後とかに初期化する（仮
-		// if (this.store.on(Store.IsContentLoaded)) 
+		// if (this.store.on(Store.IsContentLoaded))
 		{
 			this.guiProperty.initFromProps(this.store.getContentInfo());
 		}
@@ -237,9 +304,9 @@ class GUI extends EventEmitter {
 
 	/**
 	 * WebGLを表示
-	 * @param {*} elem 
-	 * @param {*} metaData 
-	 * @param {*} contentData 
+	 * @param {*} elem
+	 * @param {*} metaData
+	 * @param {*} contentData
 	 */
 	showWebGL() {
 		this.iframe = document.createElement('iframe');
@@ -255,6 +322,16 @@ class GUI extends EventEmitter {
 			this.iframe.contentWindow.onmousedown = () => {
 				this.iframe.contentWindow.focus();
 			};
+			this.iframe.contentWindow.Q3D.application.controls.addEventListener("change",()=>{
+				const params = {
+					mat:JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements),
+					params:"nodata"
+				}
+				this.action.updateCamera({
+					mat: params.mat,
+					params: params.params
+				});
+			});
 
 			this.action.connectIFrame(this.iframe);
 		};

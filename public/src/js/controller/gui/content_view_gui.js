@@ -72,42 +72,45 @@ class ContentViewGUI extends EventEmitter {
 		let url = metaData.url;
 		iframe.src = url;
 		iframe.onload = () => {
-			iframe.contentWindow.chowder_itowns_view_type = "controller";
-			let connector = new IFrameConnector(iframe);
-			this.action.addItownFunc({
-				id: metaData.id,
-				func: {
-					chowder_itowns_update_camera: (metaData) => {
-						ITownsUtil.updateCamera(connector, metaData);
-					},
-					chowder_itowns_update_layer_list: (metaData) => {
-						let preMetaData = this.store.getMetaData(metaData.id);
-						ITownsUtil.updateLayerList(connector, metaData, preMetaData);
-					},
-					chowder_itowns_update_time : (metaData) => {
-						ITownsUtil.updateTime(connector, metaData, this.store.getTime());
-					},
-				}
-			});
+			if(metaData.webglType && metaData.webglType === "qgis2three.js"){
+			}else{
+				iframe.contentWindow.chowder_itowns_view_type = "controller";
+				let connector = new IFrameConnector(iframe);
+				this.action.addItownFunc({
+					id: metaData.id,
+					func: {
+						chowder_itowns_update_camera: (metaData) => {
+							ITownsUtil.updateCamera(connector, metaData);
+						},
+						chowder_itowns_update_layer_list: (metaData) => {
+							let preMetaData = this.store.getMetaData(metaData.id);
+							ITownsUtil.updateLayerList(connector, metaData, preMetaData);
+						},
+						chowder_itowns_update_time : (metaData) => {
+							ITownsUtil.updateTime(connector, metaData, this.store.getTime());
+						},
+					}
+				});
 
-			// IframeConnectorを通してiframeに接続
-			try {
-				connector.connect(() => {
-					// 初回に一度実行.
-					connector.send(ITownsCommand.UpdateCamera, {
-						mat: JSON.parse(metaData.cameraWorldMatrix),
-						params: JSON.parse(metaData.cameraParams),
+				// IframeConnectorを通してiframeに接続
+				try {
+					connector.connect(() => {
+						// 初回に一度実行.
+						connector.send(ITownsCommand.UpdateCamera, {
+							mat: JSON.parse(metaData.cameraWorldMatrix),
+							params: JSON.parse(metaData.cameraParams),
+						});
+						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
 					});
-					connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
-				});
-				connector.once(ITownsCommand.LayersInitialized, (err, data) => {
-					this.isImportingWebGL = false;
-				});
-				setTimeout(() => {
-					this.isImportingWebGL = false;
-				}, 15 * 1000)
-			} catch (err) {
-				console.error(err);
+					connector.once(ITownsCommand.LayersInitialized, (err, data) => {
+						this.isImportingWebGL = false;
+					});
+					setTimeout(() => {
+						this.isImportingWebGL = false;
+					}, 15 * 1000)
+				} catch (err) {
+					console.error(err);
+				}
 			}
 		};
 

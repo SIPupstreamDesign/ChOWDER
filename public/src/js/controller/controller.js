@@ -1635,14 +1635,20 @@ class Controller {
 			}
 		}
 		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
-			let funcDict = this.store.getITownFuncDict();
-			if (funcDict && funcDict.hasOwnProperty(json.id)) {
-				funcDict[json.id].chowder_itowns_update_camera(json);
+			if(json.webglType && json.webglType === "qgis2three.js"){
+				/* qgis */
+				this.action.updateQgisMetadata(metaData);
+			}else{
+				/* itowns */
+				let funcDict = this.store.getITownFuncDict();
+				if (funcDict && funcDict.hasOwnProperty(json.id)) {
+					funcDict[json.id].chowder_itowns_update_camera(json);
+				}
+				if (funcDict && funcDict.hasOwnProperty(json.id)) {
+					funcDict[json.id].chowder_itowns_update_layer_list(json);
+				}
+				this.gui.showCopyrights(document.getElementById(metaData.id), metaData);
 			}
-			if (funcDict && funcDict.hasOwnProperty(json.id)) {
-				funcDict[json.id].chowder_itowns_update_layer_list(json);
-			}
-			this.gui.showCopyrights(document.getElementById(metaData.id), metaData);
 		}
 		this.store.setMetaData(json.id, json);
 		if (Validator.isCurrentTabMetaData(json)) {

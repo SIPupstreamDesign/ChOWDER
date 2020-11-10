@@ -32,7 +32,7 @@ class Action extends EventEmitter {
 	 * @param {*} data iframe
 	 */
 	connectIFrame(data) {
-		console.log("[action]:connectIFrame");
+		// console.log("[action]:connectIFrame");
 		this.emit(Action.EVENT_CONNECT_IFRAME, null, data);
 	}
 
@@ -63,12 +63,29 @@ class Action extends EventEmitter {
 	}
 
 	/**
+     * カメラの更新
+     * @param {*} data 
+     * {
+     *    mat : カメラのワールドマトリックス,
+     *    params : カメラのパラメータ(fovy, zoom, near, far, aspect, filmGauge, filmOffset)
+     * }
+     */
+    updateCamera(data) {
+        this.emit(Action.EVENT_UPDATE_CAMERA, null, data);
+    }
+
+
+	/**
      * コンテンツの追加
      * @param {*} data 
      */
     addContent(data) {
-		console.log("[action]addContent");
+		// console.log("[action]addContent");
         this.emit(Action.EVENT_ADD_CONTENT, null, data);
+	}
+
+	changeProperty(data){
+		this.emit(Action.EVENT_CHANGE_PROPERTY, null, data);
 	}
 
 	upload(data) {
@@ -82,5 +99,7 @@ Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_UPLOAD = "upload";
+Action.EVENT_UPDATE_CAMERA = "updateCamera";
+Action.EVENT_CHANGE_PROPERTY = "changeProperty";
 
 export default Action;

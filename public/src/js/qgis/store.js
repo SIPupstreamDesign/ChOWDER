@@ -21,6 +21,52 @@ class Store extends EventEmitter {
 		this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
 		this.isInitialized_ = false;
 
+		// 1ウィンドウ1webglコンテンツなのでメタデータは1つ
+		this.metaData = null;
+
+        // websocket接続が確立された.
+        // ログインする.
+        this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
+            console.log("websocket connected")
+            //let loginOption = { id: "APIUser", password: "" }
+            //this.action.login(loginOption);
+        })
+
+        // コンテンツ追加完了した.
+        this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
+            let isInitialContent = (!this.metaData);
+
+            this.metaData = reply;
+            if (isInitialContent) {
+                // 初回追加だった
+                // カメラ更新
+                if (this.initialMatrix) {
+                    this._updateCamera({
+                        mat: this.initialMatrix,
+                        params: this.initialCameraParams,
+                    })
+                }
+            }
+        })
+
+        /// メタデータが更新された
+        Connector.on(Command.UpdateMetaData, (data) => {
+            let hasUpdateData = false;
+            for (let i = 0; i < data.length; ++i) {
+                let metaData = data[i];
+                if (metaData.type === Constants.TypeWebGL && this.metaData && metaData.id === this.metaData.id) {
+                    this.metaData = metaData;
+                    hasUpdateData = true;
+                    break;
+                }
+            }
+
+            // if (hasUpdateData) {
+            //     this.__changeLayerProeprty();
+            // }
+        });
+
+
 		this.initEvents();
 	}
 
@@ -118,52 +164,6 @@ class Store extends EventEmitter {
         let iframe = data;
         this.iframeConnector = new IFrameConnector(iframe);
         this.iframeConnector.connect(() => {
-
-            // // iframe内のitownsのレイヤーが追加された
-            // // storeのメンバに保存
-            // this.iframeConnector.on(ITownsCommand.AddLayer, (err, params) => {
-            //     if (params.length > 0 && this.metaData) {
-            //         for (let i = 0; i < params.length; ++i) {
-            //             let layerParam = params[i];
-            //             let layer = this.getLayerData(layerParam.id);
-            //             if (!layer) {
-            //                 let layerList = JSON.parse(this.metaData.layerList);
-            //                 layerList.push(layerParam);
-            //                 this.metaData.layerList = JSON.stringify(layerList);
-            //             }
-            //         }
-            //         this.operation.updateMetadata(this.metaData, (err, res) => {
-            //             this.emit(Store.EVENT_DONE_ADD_LAYER, null, params)
-            //         });
-            //         return;
-            //     }
-            //     // 初回起動時などで、レイヤー情報がまだmetadata似ない場合.
-            //     this.emit(Store.EVENT_DONE_ADD_LAYER, null, params);
-            // });
-
-            // //  iframe内のitownsのレイヤーが削除された
-            // // storeのメンバに保存
-            // this.iframeConnector.on(ITownsCommand.DeleteLayer, (err, params) => {
-            // });
-
-            // this.iframeConnector.on(ITownsCommand.UpdateLayer, (err, params) => {
-            //     let layerList = [];
-            //     if (params.length > 0 && this.metaData) {
-            //         for (let i = 0; i < params.length; ++i) {
-            //             let layerParam = params[i];
-            //             let layer = this.getLayerData(layerParam.id);
-            //             if (layer) {
-            //                 layerList.push(layerParam);
-            //             } else {
-            //                 console.error("Not found layer on ChOWDER metadata", layerParam.id)
-            //             }
-            //         }
-            //     }
-            //     this.metaData.layerList = JSON.stringify(layerList);
-            //     this.operation.updateMetadata(this.metaData, (err, res) => {
-            //     });
-            // });
-			console.log("[store]:_connectIFrame")
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
         });
     }
@@ -173,6 +173,38 @@ class Store extends EventEmitter {
         let metaData = data.metaData;
         let contentData = data.contentData;
         this.operation.addContent(metaData, contentData);
+    }
+
+    _resizeWindow(data) {
+        let wh = data.size;
+        let cx = wh.width / 2.0;
+        let cy = wh.height / 2.0;
+        let metaData = this.metaData;
+        if (!metaData) { return; }
+        metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+        metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+        metaData.orgWidth = wh.width;
+        metaData.orgHeight = wh.height;
+        this.operation.updateMetadata(metaData, (err, res) => {
+        });
+    }
+
+    _updateCamera(data) {
+        if (this.metaData) {
+            this.metaData.cameraWorldMatrix = data.mat;
+            this.metaData.cameraParams = data.params;
+			let updateData = JSON.parse(JSON.stringify(this.metaData));
+
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+            this.operation.updateMetadata(updateData, (err, res) => {
+            });
+        } else {
+            // コンテンツ追加完了前だった。完了後にカメラを更新するため、matrixをキャッシュしておく。
+            this.initialMatrix = data.mat;
+            this.initialCameraParams = data.params;
+        }
     }
 
 	// TODO: 仮です。
@@ -196,5 +228,6 @@ Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_UPLOAD_FAILED = "upload_failed";
 Store.EVENT_UPLOAD_SUCCESS = "upload_success";
+Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 
 export default Store;
