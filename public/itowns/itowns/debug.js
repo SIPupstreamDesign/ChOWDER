@@ -99819,6 +99819,7 @@ MainLoop.prototype.scheduleViewUpdate = function (view, forceRedraw) {
 
   if (this.renderingState !== RENDERING_SCHEDULED) {
     this.renderingState = RENDERING_SCHEDULED;
+    document.title += ' ⌛';
     requestAnimationFrame(function (timestamp) {
       _this._step(view, timestamp);
     });
@@ -99844,7 +99845,11 @@ function updateElements(context, geometryLayer, elements) {
 
       if (sub) {
         if (sub.element) {
-          // update attached layers
+          if (!sub.element.isObject3D) {
+            throw new Error("\n                            Invalid object for attached layer to update.\n                            Must be a THREE.Object and have a THREE.Material");
+          } // update attached layers
+
+
           var _iterator2 = _createForOfIteratorHelper(geometryLayer.attachedLayers),
               _step3;
 
@@ -100034,6 +100039,7 @@ MainLoop.prototype._step = function (view, timestamp) {
 
 
   this._updateLoopRestarted = this.renderingState === RENDERING_PAUSED;
+  document.title = document.title.substr(0, document.title.length - 2);
   view.camera.camera3D.matrixAutoUpdate = oldAutoUpdate;
   view.execFrameRequesters(MAIN_LOOP_EVENTS.UPDATE_END, dt, this._updateLoopRestarted);
 };
@@ -101466,6 +101472,10 @@ function _instanciateQueue() {
         _this.counters.executing--;
         cmd.reject(err);
         _this.counters.failed++;
+
+        if ( true && _this.counters.failed < 3) {
+          console.error(err);
+        }
       });
     }
   };
@@ -102772,6 +102782,7 @@ var View = /*#__PURE__*/function (_THREE$EventDispatche) {
       return _this.resize();
     }, false);
     _this._changeSources = new Set();
+    _this.isDebugMode = true;
     _this._delayedFrameRequesterRemoval = [];
 
     _this._allLayersAreReadyCallback = function () {
@@ -109769,6 +109780,18 @@ var LayeredMaterial = /*#__PURE__*/function (_THREE$RawShaderMater) {
     _CommonMaterial__WEBPACK_IMPORTED_MODULE_11__["default"].setDefineMapping(_babel_runtime_helpers_assertThisInitialized__WEBPACK_IMPORTED_MODULE_2___default()(_this), 'ELEVATION', ELEVATION_MODES);
     _CommonMaterial__WEBPACK_IMPORTED_MODULE_11__["default"].setDefineMapping(_babel_runtime_helpers_assertThisInitialized__WEBPACK_IMPORTED_MODULE_2___default()(_this), 'MODE', _RenderMode__WEBPACK_IMPORTED_MODULE_9__["default"].MODES);
     _CommonMaterial__WEBPACK_IMPORTED_MODULE_11__["default"].setDefineProperty(_babel_runtime_helpers_assertThisInitialized__WEBPACK_IMPORTED_MODULE_2___default()(_this), 'mode', 'MODE', _RenderMode__WEBPACK_IMPORTED_MODULE_9__["default"].MODES.FINAL);
+    {
+      _this.defines.DEBUG = 1;
+      var outlineColors = [new three__WEBPACK_IMPORTED_MODULE_6__["Vector3"](1.0, 0.0, 0.0)];
+
+      if (crsCount > 1) {
+        outlineColors.push(new three__WEBPACK_IMPORTED_MODULE_6__["Vector3"](1.0, 0.5, 0.0));
+      }
+
+      _CommonMaterial__WEBPACK_IMPORTED_MODULE_11__["default"].setUniformProperty(_babel_runtime_helpers_assertThisInitialized__WEBPACK_IMPORTED_MODULE_2___default()(_this), 'showOutline', true);
+      _CommonMaterial__WEBPACK_IMPORTED_MODULE_11__["default"].setUniformProperty(_babel_runtime_helpers_assertThisInitialized__WEBPACK_IMPORTED_MODULE_2___default()(_this), 'outlineWidth', 0.008);
+      _CommonMaterial__WEBPACK_IMPORTED_MODULE_11__["default"].setUniformProperty(_babel_runtime_helpers_assertThisInitialized__WEBPACK_IMPORTED_MODULE_2___default()(_this), 'outlineColors', outlineColors);
+    }
 
     if (_Core_System_Capabilities__WEBPACK_IMPORTED_MODULE_8__["default"].isLogDepthBufferSupported()) {
       _this.defines.USE_LOGDEPTHBUF = 1;
@@ -110106,6 +110129,10 @@ var MaterialLayer = /*#__PURE__*/function () {
           _iterator.e(err);
         } finally {
           _iterator.f();
+        }
+
+        if (index != extents.length) {
+          console.error("non-coherent result ".concat(index, " vs ").concat(extents.length, "."), extents);
         }
       }
     }
@@ -110533,6 +110560,7 @@ var PointsMaterial = /*#__PURE__*/function (_THREE$RawShaderMater) {
       _this.defines.USE_LOGDEPTHBUF_EXT = 1;
     }
 
+    _this.defines.DEBUG = 1;
     return _this;
   }
 
@@ -110841,7 +110869,7 @@ var c3DEngine = /*#__PURE__*/function () {
     this.renderer.setClearColor(0x030508);
     this.renderer.autoClear = false;
     this.renderer.sortObjects = true;
-    this.renderer.debug.checkShaderErrors = false;
+    this.renderer.debug.checkShaderErrors = true;
 
     if (!renderer) {
       this.renderer.setPixelRatio(viewerDiv.devicePixelRatio);

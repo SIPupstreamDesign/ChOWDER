@@ -16,14 +16,23 @@ import ITownsCommand from '../common/itowns_command';
 import ITownsConstants from '../itowns/itowns_constants.js';
 
 
-const getTextureFloat = (buffer) => {
+const getTextureFloat = (buffer, view) => {
     // webgl2
-    const texture = new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.RedFormat, itowns.THREE.FloatType);
-    texture.internalFormat = 'R32F';
-    return texture;
+    if (view.mainLoop.gfxEngine.renderer.capabilities.isWebGL2)
+    {
+        const texture = new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.RedFormat, itowns.THREE.FloatType);
+        texture.internalFormat = 'R32F';
+        return texture;
+    }
+    else
+    {
+        // webgl1
+        return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
+    }
+};
 
-    // webgl1
-    //return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
+const isBarGraphLayer = (layer) => {
+    return layer.hasOwnProperty('isBarGraph') && layer.isBarGraph;
 };
 
 /**

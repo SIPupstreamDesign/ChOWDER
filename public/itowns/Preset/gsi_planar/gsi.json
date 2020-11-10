@@ -1,7 +1,7 @@
 {
 	"id": "GSI Color",
 	"source": {
-		"projection": "EPSG:3857",
+		"crs": "EPSG:3857",
 		"isInverted": true,
 		"format": "image/png",
 		"url": "https://cyberjapandata.gsi.go.jp/xyz/std/%TILEMATRIX/%COL/%ROW.png",

@@ -26,7 +26,9 @@ window.onload = function() {
     // -------------------------------------------
     var $3dTilesLayerDiscreteLOD = new itowns.C3DTilesLayer('3d-tiles-discrete-lod', {
         name: 'DiscreteLOD',
-        url: 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithDiscreteLOD/tileset.json',
+        source: new itowns.C3DTilesSource({
+            url: 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithDiscreteLOD/tileset.json',
+        }),
         sseThreshold: 0.05,
     }, view);
 
@@ -37,7 +39,9 @@ window.onload = function() {
 
     var $3dTilesLayerRequestVolume = new itowns.C3DTilesLayer('3d-tiles-request-volume', {
         name: 'RequestVolume',
-        url: 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithRequestVolume/tileset.json',
+        source: new itowns.C3DTilesSource({
+            url: 'https://raw.githubusercontent.com/AnalyticalGraphicsInc/3d-tiles-samples/master/tilesets/TilesetWithRequestVolume/tileset.json',
+        }),
         sseThreshold: 1,
     }, view);
 
