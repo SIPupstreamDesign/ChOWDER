@@ -50,8 +50,13 @@ class Store extends EventEmitter {
 
         this.itownsView = null;
         this.itownsViewerDiv = null;
-        
+
         this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
+
+        this.rainbow = new Rainbow();
+        this.rainbow.setSpectrum('black', 'blue', 'aqua', 'lime', 'yellow', 'red');
+
+        this.date = null;
     }
 
     // デバッグ用. release版作るときは消す
@@ -192,6 +197,20 @@ class Store extends EventEmitter {
     }
 
     /**
+     * chowder側で独自にisBarGraphフラグを設定した、BarGraphLayerを返す
+     */
+    getBarGraphLayers() {
+        let res = [];
+        let layers = this.itownsView.getLayers();
+        for (let i = 0; i < layers.length; ++i) {
+            if (isBarGraphLayer(layers[i])) {
+                res.push(layers[i]);
+            }
+        }
+        return res;
+    }
+
+    /**
      * 地理院DEMのtxt用fetcher/parsarを,mapSourceに設定する.
      * @param {*} mapSource 
      */
@@ -228,7 +247,7 @@ class Store extends EventEmitter {
                     }
                 }
                 let floatArray = new Float32Array(heights);
-                let texture = getTextureFloat(floatArray);
+                let texture = getTextureFloat(floatArray, this.itownsView);
                 return texture;
             });
         };
@@ -254,13 +273,13 @@ class Store extends EventEmitter {
             url: config.url,
             crs: 'EPSG:4326',
             // コンストラクタでfetcherが使用され、結果がfetchedDataに入る.
-            fetcher : (url, options = {}) => {
+            fetcher: (url, options = {}) => {
                 return arrayBuffer(url, options).then((buffer) => {
                     return buffer;
                 });
             },
             // 後ほど（タイミングはよくわからない）, parserが使用され、返り値はFileSourceがcacheする
-            parser : (buffer, options = {}) => {
+            parser: (buffer, options = {}) => {
                 let data = new Uint8Array(buffer);
                 let converted = Encoding.convert(data, {
                     to: 'UNICODE',
@@ -268,13 +287,17 @@ class Store extends EventEmitter {
                 });
                 let str = Encoding.codeToString(converted);
                 let parsed = Papaparse.parse(str);
-                
+
                 // 初回パース時にジオメトリを生成しておく
                 let group = new itowns.THREE.Group();
-                
+
                 for (let i = 1; i < parsed.data.length; ++i) {
                     if (parsed.data[i].length !== parsed.data[0].length) continue;
-                    const material = new itowns.THREE.MeshToonMaterial({ color: 0x5555ff });
+                    // const material = new itowns.THREE.({ color: 0x5555ff });
+                    let material = new itowns.THREE.MeshToonMaterial({ color: 0x5555ff });
+                    if (this.itownsView.isPlanarView) {
+                        material = new itowns.THREE.MeshBasicMaterial({ color: 0x5555ff });
+                    }
                     material.opacity = 1.0;
                     const geo = new itowns.THREE.BoxGeometry(1, 1, 1);
                     geo.translate(0, 0, -0.5);
@@ -288,8 +311,8 @@ class Store extends EventEmitter {
                 }
 
                 return Promise.resolve({
-                    csv : parsed,
-                    meshGroup : group
+                    csv: parsed,
+                    meshGroup: group
                 });
             }
         });
@@ -346,14 +369,123 @@ class Store extends EventEmitter {
             }
             return heights;
         }
-        mapSource.fetcher = function (url, options = {}) {
-            return texture(url, options).then(function (tex) {
+        mapSource.fetcher = (url, options = {}) => {
+            return texture(url, options).then((tex) => {
                 let floatArray = convertTexToArray(tex);
                 let float32Array = new Float32Array(floatArray);
-                let tt = getTextureFloat(float32Array);
+                let tt = getTextureFloat(float32Array, this.itownsView);
                 return tt;
             });
         };
+    }
+
+    /*
+     layer.bargraphParam = {
+         lon : 1,
+         lat : 2,
+         time : 3,
+         physical1 : 4,
+         physical2 : 5,
+     }
+     のようなchowder泥漿するパラメータを元にメッシュを更新する
+    */
+    updateBarGraph(bargraphLayer) {
+        if (!bargraphLayer.hasOwnProperty('bargraphParams')) return;
+        bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
+            const params = bargraphLayer.bargraphParams;
+            const csvData = data.csv.data;
+    
+            // keyがparamsにある場合のみvalueを返す、ない場合は空文字を返す
+            function getValIfExist(params, key) {
+                if (key.length == 0 || !params.hasOwnProperty(key)) {
+                    return "";
+                }
+                return params[key]
+            }
+            // 正しいインデックスかどうか
+            function isValidIndex(index, array) {
+                return Number.isInteger(index) && index >= 0 && index < array.length;
+            }
+            const lonIndex = getValIfExist(params, 'lon');
+            const latIndex = getValIfExist(params, 'lat');
+            const timeIndex = getValIfExist(params, 'time');
+            const physicalVal1Index = getValIfExist(params, 'physical1');
+            const physicalVal2Index = getValIfExist(params, 'physical2');
+    
+            // 色を付けるために値(PhysicalVal2)の範囲を求める
+            let physicalVal2Range = { min: +Infinity, max: -Infinity }
+            for (let i = 0; i < data.meshGroup.children.length; ++i) {
+                const mesh = data.meshGroup.children[i];
+                const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
+                let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
+                if (isNaN(physical2Val)) {
+                    physical2Val = 0.0;
+                }
+                physicalVal2Range.min = Math.min(physicalVal2Range.min, physical2Val);
+                physicalVal2Range.max = Math.max(physicalVal2Range.max, physical2Val);
+            }
+            if (physicalVal2Range.min !== physicalVal2Range.max) {
+                this.rainbow.setNumberRange(physicalVal2Range.min, physicalVal2Range.max);
+            }
+            // 全メッシュにposition/scale/colorを設定して更新
+            for (let i = 0; i < data.meshGroup.children.length; ++i) {
+                const mesh = data.meshGroup.children[i];
+                let isValidLonIndex = isValidIndex(lonIndex, csvData[i]);
+                let isValidLatIndex = isValidIndex(latIndex, csvData[i]);
+                let isValidTimeIndex = isValidIndex(timeIndex, csvData[i]);
+                const isValidPhysical1Index = isValidIndex(physicalVal1Index, csvData[mesh.CSVIndex]);
+                const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
+    
+                // Lon/Latを求める
+                let lonlat = {
+                    "lon": isValidLonIndex ? Number(csvData[i][lonIndex]) : 0,
+                    "lat": isValidLatIndex ? Number(csvData[i][latIndex]) : 0,
+                };
+                if (isNaN(lonlat.lon)) {
+                    lonlat.lon = 0;
+                    isValidLonIndex = false;
+                }
+                if (isNaN(lonlat.lat)) {
+                    lonlat.lat = 0;
+                    isValidLatIndex = false;
+                }
+                // Lon/Latからmeshのpositionを割り出す
+                const coord = new itowns.Coordinates('EPSG:4326', lonlat.lon, lonlat.lat, 0);
+                // physical1valからmeshのscaleを割り出す
+                const scaleZ = isValidPhysical1Index ? Number(csvData[mesh.CSVIndex][physicalVal1Index]) * 1000 * bargraphLayer.scale : 1.0;
+                let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
+                if (isNaN(physical2Val)) {
+                    physical2Val = 0.0;
+                }
+                // physical2valからmeshの色を割り出す
+                const color = this.rainbow.colourAt(physical2Val);
+                mesh.material.color.setHex("0x" + color);
+                if (this.itownsView.isPlanarView) {
+                    mesh.scale.set(bargraphLayer.size * 10000, bargraphLayer.size * 10000, -scaleZ);
+                } else {
+                    mesh.scale.set(bargraphLayer.size * 10000, bargraphLayer.size * 10000, scaleZ);
+                }
+                mesh.position.copy(coord.as(this.itownsView.referenceCrs))
+                if (!this.itownsView.isPlanarView) {
+                    const zeroCoord = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
+                    const zeroVector = zeroCoord.as(this.itownsView.referenceCrs);
+                    mesh.lookAt(new itowns.THREE.Vector3(zeroVector.x, zeroVector.y, zeroVector.z));
+                }
+                mesh.visible = (isValidLonIndex && isValidLatIndex);
+                if (mesh.visible && isValidTimeIndex && this.date)
+                {
+                    // meshが可視の場合で、かつ時刻が設定されている場合、
+                    // 現在時刻と時刻を比較し、visibleを上書きする
+                    const date = new Date(csvData[i][timeIndex]);
+                    if (date.getTime() < this.date.getTime()) {
+                        mesh.visible = true;
+                    } else {
+                        mesh.visible = false;
+                    }
+                }
+                mesh.updateMatrixWorld();
+            }
+        });
     }
 
     /**
@@ -402,7 +534,7 @@ class Store extends EventEmitter {
             });
         }
         if (type === ITownsConstants.TypePointCloud) {
-            config.projection = this.itownsView.referenceCrs;
+            config.crs = this.itownsView.referenceCrs;
             return new itowns.PotreeLayer(config.id, {
                 source: new itowns.PotreeSource(config)
             });
@@ -420,7 +552,7 @@ class Store extends EventEmitter {
             // chowder側で判別できるようにフラグを設定
             bargraphLayer.isBarGraph = true;
 
-            bargraphLayer.update = function (context, layer, node) {  }
+            bargraphLayer.update = function (context, layer, node) { }
             bargraphLayer.preUpdate = (context, changeSources) => {
                 bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
                     if (!data) {
@@ -437,111 +569,22 @@ class Store extends EventEmitter {
                 });
             }
 
-            const rainbow = new Rainbow();
-            rainbow.setSpectrum('black', 'blue', 'aqua', 'lime', 'yellow', 'red');
-            /*
-             layer.bargraphParam = {
-                 lon : 1,
-                 lat : 2,
-                 time : 3,
-                 physical1 : 4,
-                 physical2 : 5,
-             }
-             のようなchowder泥漿するパラメータを元にメッシュを更新する
-            */
-            const updateBarGraph = (bargraphLayer, data) => {
-                if (!bargraphLayer.hasOwnProperty('bargraphParams')) return;
-                const params = bargraphLayer.bargraphParams;
-                const csvData = data.csv.data;
-
-                // keyがparamsにある場合のみvalueを返す、ない場合は空文字を返す
-                function getValIfExist(params, key) {
-                    if (key.length == 0 || !params.hasOwnProperty(key)) {
-                        return "";
-                    }
-                    return params[key]
-                }
-                // 正しいインデックスかどうか
-                function isValidIndex(index, array) {
-                    return Number.isInteger(lonIndex) && lonIndex < array.length;
-                }
-                const lonIndex = getValIfExist(params, 'lon');
-                const latIndex = getValIfExist(params, 'lat');
-                const physicalVal1Index = getValIfExist(params, 'physical1');
-                const physicalVal2Index = getValIfExist(params, 'physical2');
-
-                // 色を付けるために値(PhysicalVal2)の範囲を求める
-                let physicalVal2Range = { min : +Infinity, max : -Infinity }
-                for (let i = 0; i < data.meshGroup.children.length; ++i) {
-                    const mesh = data.meshGroup.children[i];
-                    const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
-                    let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
-                    if (isNaN(physical2Val)) {
-                        physical2Val = 0.0;
-                    }
-                    physicalVal2Range.min = Math.min(physicalVal2Range.min, physical2Val);
-                    physicalVal2Range.max = Math.max(physicalVal2Range.max, physical2Val);
-                }
-                if (physicalVal2Range.min !== physicalVal2Range.max) {
-                    rainbow.setNumberRange(physicalVal2Range.min, physicalVal2Range.max);
-                }
-                for (let i = 0; i < data.meshGroup.children.length; ++i) {
-                    const mesh = data.meshGroup.children[i];
-                    let isValidLonIndex = isValidIndex(lonIndex, csvData[i]);
-                    let isValidLatIndex = isValidIndex(latIndex, csvData[i]);
-                    const isValidPhysical1Index = isValidIndex(physicalVal1Index, csvData[mesh.CSVIndex]);
-                    const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
-                    let lonlat = { 
-                        "lon": isValidLonIndex ? Number(csvData[i][lonIndex]) : 0,
-                        "lat" : isValidLatIndex ? Number(csvData[i][latIndex]) : 0,
-                    };
-                    if (isNaN(lonlat.lon)) {
-                        lonlat.lon = 0;
-                        isValidLonIndex = false;
-                    }
-                    if (isNaN(lonlat.lat)) {
-                        lonlat.lat = 0;
-                        isValidLatIndex = false;
-                    }
-
-                    const coord = new itowns.Coordinates('EPSG:4326', lonlat.lon, lonlat.lat, 0);
-                    const scaleZ = isValidPhysical1Index ? Number(csvData[mesh.CSVIndex][physicalVal1Index]) * 1000 * bargraphLayer.scale : 1.0;
-                    let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
-                    if (isNaN(physical2Val)) {
-                        physical2Val = 0.0;
-                    }
-
-                    const color = rainbow.colourAt(physical2Val);
-                    mesh.material.color.setHex("0x" + color);
-                    mesh.scale.set(bargraphLayer.size * 10000, bargraphLayer.size * 10000, scaleZ);
-                    mesh.position.copy(coord.as(this.itownsView.referenceCrs))
-                    mesh.lookAt(0, 0, 0);
-                    mesh.visible = (isValidLonIndex && isValidLatIndex);
-                    mesh.updateMatrixWorld();
-                }
-            }
-            bargraphLayer.defineLayerProperty('scale', bargraphLayer.scale || 1.0, (self) => {
-                bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
-                    updateBarGraph(bargraphLayer, data);
-                });
+            bargraphLayer.defineLayerProperty('scale', bargraphLayer.scale || 1.0, () => {
+                this.updateBarGraph(bargraphLayer);
             });
-            bargraphLayer.defineLayerProperty('size', bargraphLayer.size || 5, (self) => {
-                bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
-                    updateBarGraph(bargraphLayer, data);
-                });
+            bargraphLayer.defineLayerProperty('size', bargraphLayer.size || 5, () => {
+                this.updateBarGraph(bargraphLayer);
             });
             bargraphLayer.defineLayerProperty('bargraphParams', {
-                lon : 0,
-                lat : 0,
-                time : 0,
-                physical1 : 0,
-                physical2 : 0,
-            }, (self) => {
-                bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
-                    updateBarGraph(bargraphLayer, data);
-                });
+                lon: 0,
+                lat: 0,
+                time: 0,
+                physical1: 0,
+                physical2: 0,
+            }, () => {
+                this.updateBarGraph(bargraphLayer);
             });
-            bargraphLayer.convert = function () {}
+            bargraphLayer.convert = function () { }
             return bargraphLayer;
         }
         if (type === ITownsConstants.TypeGeometry || config.format === "pbf") {
@@ -610,7 +653,7 @@ class Store extends EventEmitter {
         let config = {};
         if (type === ITownsConstants.TypeColor) {
             config = {
-                "projection": "EPSG:3857",
+                "crs": "EPSG:3857",
                 "isInverted": true,
                 "format": "image/png",
                 "url": url,
@@ -623,7 +666,7 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             config = {
-                "projection": "EPSG:4326",
+                "crs": "EPSG:4326",
                 "tileMatrixSet": "WGS84G",
                 "format": params.hasOwnProperty('format') ? params.format : "wmts",
                 "url": url,
@@ -632,13 +675,13 @@ class Store extends EventEmitter {
             if (url.indexOf('.png') > 0) {
                 // 地理院
                 config.format = "image/png";
-                config.projection = "EPSG:3857";
+                config.crs = "EPSG:3857";
                 config.tileMatrixSet = "PM";
             }
             if (url.indexOf('.txt') > 0 || url.indexOf('.csv') > 0) {
                 // 地理院
                 config.format = "csv"
-                config.projection = "EPSG:3857";
+                config.crs = "EPSG:3857";
                 config.tileMatrixSet = "PM";
             }
 
@@ -666,7 +709,7 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeBargraph) {
             config = {
-                "projection": "EPSG:3857",
+                "crs": "EPSG:3857",
                 "isUserData": true,
                 "opacity": 1.0,
                 "url": url,
@@ -674,7 +717,7 @@ class Store extends EventEmitter {
         }
         if (url && url.indexOf('.geojson') >= 0) {
             config = {
-                "projection": "EPSG:3857",
+                "crs": "EPSG:3857",
                 "tileMatrixSet": "PM",
                 "url": url
             }
@@ -685,7 +728,7 @@ class Store extends EventEmitter {
         }
         if (url && url.indexOf('.pbf') >= 0) {
             config = {
-                "projection": "EPSG:3857",
+                "crs": "EPSG:3857",
                 "tileMatrixSet": "PM",
                 "url": url
             }
@@ -704,15 +747,6 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('format')) {
             config.format = params.format;
         }
-        /*
-        // configに入れても生成時に反映されないため, 生成後に反映させる
-        if (params.hasOwnProperty('opacity')) {
-            config.opacity = params.opacity;
-        }
-        if (params.hasOwnProperty('visible')) {
-            config.opacity = Boolean(params.visible);
-        }
-        */
         if (params.hasOwnProperty('attribution')) {
             config.attribution = params.attribution;
         }
@@ -1162,8 +1196,16 @@ class Store extends EventEmitter {
                 console.error(err);
                 return;
             }
+            this.date = new Date(param.time);
             if (data.timeCallback) {
-                data.timeCallback(new Date(param.time));
+                data.timeCallback(this.date);
+            }
+            const layers = this.getBarGraphLayers();
+            if (layers.length > 0) {
+                for (let i = 0; i < layers.length; ++i) {
+                    this.updateBarGraph(layers[i]);
+                }
+                this.itownsView.notifyChange();
             }
             this.iframeConnector.sendResponse(request);
         });
@@ -1263,7 +1305,7 @@ class Store extends EventEmitter {
             ) {
                 if (layer.hasOwnProperty('source')) {
                     data.visible = layer.visible;
-                    data.projection = layer.projection;
+                    data.crs = layer.crs;
                     data.id = layer.id;
                     data.url = layer.source.hasOwnProperty('url') ? layer.source.url : layer.url;
                     data.style = layer.source.hasOwnProperty('style') ? layer.source.style : undefined;
@@ -1439,18 +1481,26 @@ class Store extends EventEmitter {
                 console.error(err);
                 return;
             }
+            this.date = new Date(param.time);
             if (data.timeCallback) {
-                data.timeCallback(new Date(param.time));
+                data.timeCallback(this.date);
+            }
+            const layers = this.getBarGraphLayers();
+            if (layers.length > 0) {
+                for (let i = 0; i < layers.length; ++i) {
+                    this.updateBarGraph(layers[i]);
+                }
+                this.itownsView.notifyChange();
             }
             this.iframeConnector.sendResponse(request);
         });
 
         this.layerDataList = await this.getLayerDataList();
-        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, async(evt) => {
+        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, async (evt) => {
             this.layerDataList = await this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.AddLayer, this.layerDataList);
         });
-        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, async(evt) => {
+        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, async (evt) => {
             if (!this.isStopDispatchRemoveEvent) {
                 this.layerDataList = await this.getLayerDataList();
                 this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
