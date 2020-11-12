@@ -29,23 +29,6 @@ function loadGSIColor(view, callback) {
     });
 }
 
-function loadObjLayer(view, callback) {
-    var manager = new itowns.THREE.LoadingManager();
-    var objLoader = new OBJLoader(manager);
-    objLoader.load('teapot.obj', function (object) {
-        console.log(object);
-        console.log(object.children[0].geometry);
-        var material = new THREE.MeshBasicMaterial({color: 0x6699FF})
-        for (var i = 0; i < object.children.length; ++i) {
-            object.children[i].geometry.scale(100000, 100000, 100000);
-            object.children[i].material = material;
-        }
-        view.scene.add(object);
-        view.notifyChange();  
-        // fitCamera(object,camera);
-    });
-}
-
 window.onload = function () {
     // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
     var viewerDiv = document.getElementById('viewerDiv');
@@ -70,10 +53,45 @@ window.onload = function () {
     var axes = new itowns.THREE.AxesHelper(10000000 * 2);
     view.scene.add(axes);
 
+    const light = new itowns.THREE.HemisphereLight(0xFFFFFF, 0x555555, 1.0);
+    view.scene.add(light);
+
+    var dirLight = new THREE.DirectionalLight( 0xffffff );
+    dirLight.position.set( - 3, 10, - 10 );
+    view.scene.add( dirLight );
+
     var controls = new itowns.OrbitControls(view, { focusOnClick: true});
 
-    // objを出す
-    loadObjLayer(view);
+    // itownsコントローラから開かれた場合のみコントロールを表示
+    var done = false;
+    view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, (evt) => {
+        if (!done && window.chowder_itowns_view_type === "itowns") {
+            var wrap = document.createElement('span');
+            wrap.style.position = "absolute";
+            wrap.style.left = "30px";
+            wrap.style.bottom = "30px";
+            wrap.style.zIndex = 1;
+            var gridOnOff = document.createElement('input');
+            gridOnOff.type = "checkbox"
+            gridOnOff.style.width = "20px";
+            gridOnOff.style.height = "20px";
+            gridOnOff.checked = true;
+            wrap.appendChild(gridOnOff)
+            var gridText = document.createElement('span');
+            gridText.style.fontSize = "16px";
+            gridText.style.color = "white"
+            gridText.textContent = "Grid On/Off";
+            wrap.appendChild(gridText)
+            gridOnOff.onchange = function () {
+                axes.visible = gridOnOff.checked;
+                grid.visible = gridOnOff.checked;
+                view.notifyChange();
+            };
+    
+            document.body.appendChild(wrap)
+            done = true;
+        }
+    });
 
     injectChOWDER(view, viewerDiv);
 };

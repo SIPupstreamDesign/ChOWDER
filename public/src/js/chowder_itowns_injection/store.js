@@ -8,13 +8,12 @@
 // chowder_itowns_injectionで1jsにeventemitterもまとめたいので、このファイルでは直接importする
 import EventEmitter from '../../../3rd/js/eventemitter3/index.js'
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
-import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
-import Rainbow from '../../../3rd/js/rainbowvis.js'
 import Action from './action'
 import IFrameConnector from '../common/iframe_connector'
 import ITownsCommand from '../common/itowns_command';
 import ITownsConstants from '../itowns/itowns_constants.js';
-
+import CraeteBarGraphLayer from './bargraph_layer.js';
+import CreateOBJLayer from './obj_layer.js';
 
 const getTextureFloat = (buffer, view) => {
     // webgl2
@@ -35,6 +34,10 @@ const isBarGraphLayer = (layer) => {
     return layer.hasOwnProperty('isBarGraph') && layer.isBarGraph;
 };
 
+const isOBJLayer = (layer) => {
+    return layer.hasOwnProperty('isOBJ') && layer.isOBJ;
+};
+
 /**
  * Store.
  * itownsに操作を行うため, itownsのviewインスタンスを保持する
@@ -52,9 +55,6 @@ class Store extends EventEmitter {
         this.itownsViewerDiv = null;
 
         this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
-
-        this.rainbow = new Rainbow();
-        this.rainbow.setSpectrum('black', 'blue', 'aqua', 'lime', 'yellow', 'red');
 
         this.date = null;
     }
@@ -211,6 +211,20 @@ class Store extends EventEmitter {
     }
 
     /**
+     * chowder側で独自にisOBJフラグを設定した、OBJLayerを返す
+     */
+    getOBJLayers() {
+        let res = [];
+        let layers = this.itownsView.getLayers();
+        for (let i = 0; i < layers.length; ++i) {
+            if (isOBJLayer(layers[i])) {
+                res.push(layers[i]);
+            }
+        }
+        return res;
+    }
+
+    /**
      * 地理院DEMのtxt用fetcher/parsarを,mapSourceに設定する.
      * @param {*} mapSource 
      */
@@ -251,72 +265,6 @@ class Store extends EventEmitter {
                 return texture;
             });
         };
-    }
-
-    /**
-     * 汎用csvパーサーを,fileSourceに設定する.
-     * @param {*} fileSource 
-     */
-    createCSVBargraphSource(config) {
-        function checkResponse(response) {
-            if (!response.ok) {
-                let error = new Error(`Error loading ${response.url}: status ${response.status}`);
-                error.response = response;
-                throw error;
-            }
-        }
-        const arrayBuffer = (url, options = {}) => fetch(url, options).then((response) => {
-            checkResponse(response);
-            return response.arrayBuffer();
-        });
-        const csvSource = new itowns.FileSource({
-            url: config.url,
-            crs: 'EPSG:4326',
-            // コンストラクタでfetcherが使用され、結果がfetchedDataに入る.
-            fetcher: (url, options = {}) => {
-                return arrayBuffer(url, options).then((buffer) => {
-                    return buffer;
-                });
-            },
-            // 後ほど（タイミングはよくわからない）, parserが使用され、返り値はFileSourceがcacheする
-            parser: (buffer, options = {}) => {
-                let data = new Uint8Array(buffer);
-                let converted = Encoding.convert(data, {
-                    to: 'UNICODE',
-                    from: 'AUTO'
-                });
-                let str = Encoding.codeToString(converted);
-                let parsed = Papaparse.parse(str);
-
-                // 初回パース時にジオメトリを生成しておく
-                let group = new itowns.THREE.Group();
-
-                for (let i = 1; i < parsed.data.length; ++i) {
-                    if (parsed.data[i].length !== parsed.data[0].length) continue;
-                    // const material = new itowns.THREE.({ color: 0x5555ff });
-                    let material = new itowns.THREE.MeshToonMaterial({ color: 0x5555ff });
-                    if (this.itownsView.isPlanarView) {
-                        material = new itowns.THREE.MeshBasicMaterial({ color: 0x5555ff });
-                    }
-                    material.opacity = 1.0;
-                    const geo = new itowns.THREE.BoxGeometry(1, 1, 1);
-                    geo.translate(0, 0, -0.5);
-                    const mesh = new itowns.THREE.Mesh(geo, material);;
-                    mesh.scale.set(1, 1, 1);
-                    mesh.lookAt(0, 0, 0);
-                    mesh.updateMatrixWorld();
-                    mesh.CSVIndex = i;
-                    mesh.visible = false;
-                    group.add(mesh);
-                }
-
-                return Promise.resolve({
-                    csv: parsed,
-                    meshGroup: group
-                });
-            }
-        });
-        return csvSource;
     }
 
     /**
@@ -379,115 +327,6 @@ class Store extends EventEmitter {
         };
     }
 
-    /*
-     layer.bargraphParam = {
-         lon : 1,
-         lat : 2,
-         time : 3,
-         physical1 : 4,
-         physical2 : 5,
-     }
-     のようなchowder泥漿するパラメータを元にメッシュを更新する
-    */
-    updateBarGraph(bargraphLayer) {
-        if (!bargraphLayer.hasOwnProperty('bargraphParams')) return;
-        bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
-            const params = bargraphLayer.bargraphParams;
-            const csvData = data.csv.data;
-    
-            // keyがparamsにある場合のみvalueを返す、ない場合は空文字を返す
-            function getValIfExist(params, key) {
-                if (key.length == 0 || !params.hasOwnProperty(key)) {
-                    return "";
-                }
-                return params[key]
-            }
-            // 正しいインデックスかどうか
-            function isValidIndex(index, array) {
-                return Number.isInteger(index) && index >= 0 && index < array.length;
-            }
-            const lonIndex = getValIfExist(params, 'lon');
-            const latIndex = getValIfExist(params, 'lat');
-            const timeIndex = getValIfExist(params, 'time');
-            const physicalVal1Index = getValIfExist(params, 'physical1');
-            const physicalVal2Index = getValIfExist(params, 'physical2');
-    
-            // 色を付けるために値(PhysicalVal2)の範囲を求める
-            let physicalVal2Range = { min: +Infinity, max: -Infinity }
-            for (let i = 0; i < data.meshGroup.children.length; ++i) {
-                const mesh = data.meshGroup.children[i];
-                const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
-                let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
-                if (isNaN(physical2Val)) {
-                    physical2Val = 0.0;
-                }
-                physicalVal2Range.min = Math.min(physicalVal2Range.min, physical2Val);
-                physicalVal2Range.max = Math.max(physicalVal2Range.max, physical2Val);
-            }
-            if (physicalVal2Range.min !== physicalVal2Range.max) {
-                this.rainbow.setNumberRange(physicalVal2Range.min, physicalVal2Range.max);
-            }
-            // 全メッシュにposition/scale/colorを設定して更新
-            for (let i = 0; i < data.meshGroup.children.length; ++i) {
-                const mesh = data.meshGroup.children[i];
-                let isValidLonIndex = isValidIndex(lonIndex, csvData[i]);
-                let isValidLatIndex = isValidIndex(latIndex, csvData[i]);
-                let isValidTimeIndex = isValidIndex(timeIndex, csvData[i]);
-                const isValidPhysical1Index = isValidIndex(physicalVal1Index, csvData[mesh.CSVIndex]);
-                const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
-    
-                // Lon/Latを求める
-                let lonlat = {
-                    "lon": isValidLonIndex ? Number(csvData[i][lonIndex]) : 0,
-                    "lat": isValidLatIndex ? Number(csvData[i][latIndex]) : 0,
-                };
-                if (isNaN(lonlat.lon)) {
-                    lonlat.lon = 0;
-                    isValidLonIndex = false;
-                }
-                if (isNaN(lonlat.lat)) {
-                    lonlat.lat = 0;
-                    isValidLatIndex = false;
-                }
-                // Lon/Latからmeshのpositionを割り出す
-                const coord = new itowns.Coordinates('EPSG:4326', lonlat.lon, lonlat.lat, 0);
-                // physical1valからmeshのscaleを割り出す
-                const scaleZ = isValidPhysical1Index ? Number(csvData[mesh.CSVIndex][physicalVal1Index]) * 1000 * bargraphLayer.scale : 1.0;
-                let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
-                if (isNaN(physical2Val)) {
-                    physical2Val = 0.0;
-                }
-                // physical2valからmeshの色を割り出す
-                const color = this.rainbow.colourAt(physical2Val);
-                mesh.material.color.setHex("0x" + color);
-                if (this.itownsView.isPlanarView) {
-                    mesh.scale.set(bargraphLayer.size * 10000, bargraphLayer.size * 10000, -scaleZ);
-                } else {
-                    mesh.scale.set(bargraphLayer.size * 10000, bargraphLayer.size * 10000, scaleZ);
-                }
-                mesh.position.copy(coord.as(this.itownsView.referenceCrs))
-                if (!this.itownsView.isPlanarView) {
-                    const zeroCoord = new itowns.Coordinates('EPSG:4978', 0, 0, 0);
-                    const zeroVector = zeroCoord.as(this.itownsView.referenceCrs);
-                    mesh.lookAt(new itowns.THREE.Vector3(zeroVector.x, zeroVector.y, zeroVector.z));
-                }
-                mesh.visible = (isValidLonIndex && isValidLatIndex);
-                if (mesh.visible && isValidTimeIndex && this.date)
-                {
-                    // meshが可視の場合で、かつ時刻が設定されている場合、
-                    // 現在時刻と時刻を比較し、visibleを上書きする
-                    const date = new Date(csvData[i][timeIndex]);
-                    if (date.getTime() < this.date.getTime()) {
-                        mesh.visible = true;
-                    } else {
-                        mesh.visible = false;
-                    }
-                }
-                mesh.updateMatrixWorld();
-            }
-        });
-    }
-
     /**
      * レイヤーの作成
      * @param {*} type 
@@ -543,49 +382,12 @@ class Store extends EventEmitter {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
         }
         if (type === ITownsConstants.TypeBargraph) {
-            let group = new itowns.THREE.Group();
-            const csvSource = this.createCSVBargraphSource(config);
-            let bargraphLayer = new itowns.GeometryLayer(config.id, group, {
-                source: csvSource
-            });
-
-            // chowder側で判別できるようにフラグを設定
-            bargraphLayer.isBarGraph = true;
-
-            bargraphLayer.update = function (context, layer, node) { }
-            bargraphLayer.preUpdate = (context, changeSources) => {
-                bargraphLayer.source.loadData(this.BarGraphExtent, bargraphLayer).then((data) => {
-                    if (!data) {
-                        console.error("Not found bargraph datasource");
-                    }
-                    if (!group.getObjectById(data.meshGroup.id)) {
-                        console.log("add mesh group", data);
-                        group.add(data.meshGroup);
-                        // wireframeやopacityの変更に対応するにはこれが必要
-                        for (let i = 0; i < data.meshGroup.children.length; ++i) {
-                            data.meshGroup.children[i].layer = bargraphLayer;
-                        }
-                    }
-                });
-            }
-
-            bargraphLayer.defineLayerProperty('scale', bargraphLayer.scale || 1.0, () => {
-                this.updateBarGraph(bargraphLayer);
-            });
-            bargraphLayer.defineLayerProperty('size', bargraphLayer.size || 5, () => {
-                this.updateBarGraph(bargraphLayer);
-            });
-            bargraphLayer.defineLayerProperty('bargraphParams', {
-                lon: 0,
-                lat: 0,
-                time: 0,
-                physical1: 0,
-                physical2: 0,
-            }, () => {
-                this.updateBarGraph(bargraphLayer);
-            });
-            bargraphLayer.convert = function () { }
-            return bargraphLayer;
+            console.error("CreateBarGraphLayer")
+            return CraeteBarGraphLayer(this.itownsView, config);
+        }
+        if (type === ITownsConstants.TypeOBJ) {
+            console.error("CreateOBJLayer")
+            return CreateOBJLayer(this.itownsView, config);
         }
         if (type === ITownsConstants.TypeGeometry || config.format === "pbf") {
             let mapSource = null;
@@ -715,6 +517,17 @@ class Store extends EventEmitter {
                 "url": url,
             };
         }
+        if (type === ITownsConstants.TypeOBJ) {
+            config = {
+                "crs": "EPSG:4978",
+                "isUserData": true,
+                "opacity": 1.0,
+                "url": url,
+            };
+            if (params.hasOwnProperty('mtlurl')) {
+                config.mtlurl = params.mtlurl;
+            }
+        }
         if (url && url.indexOf('.geojson') >= 0) {
             config = {
                 "crs": "EPSG:3857",
@@ -797,6 +610,9 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('isBarGraph') && params.isBarGraph) {
             type = ITownsConstants.TypeBargraph;
         }
+        if (params.hasOwnProperty('isOBJ') && params.isOBJ) {
+            type = ITownsConstants.TypeOBJ;
+        }
         let config = this.createLayerConfigByType(params, type);
         let layer = this.createLayerByType(config, type);
         if (layer) {
@@ -812,7 +628,8 @@ class Store extends EventEmitter {
             }
             if (type === ITownsConstants.TypePointCloud ||
                 type === ITownsConstants.Type3DTile ||
-                type === ITownsConstants.TypeBargraph) {
+                type === ITownsConstants.TypeBargraph ||
+                type === ITownsConstants.TypeOBJ) {
                 itowns.View.prototype.addLayer.call(this.itownsView, layer);
             } else {
                 this.itownsView.addLayer(layer);
@@ -1289,6 +1106,9 @@ class Store extends EventEmitter {
                     data.csv = csvData.csv;
                 }
             }
+            if (layer.hasOwnProperty('isOBJ')) {
+                data.isOBJ = layer.isOBJ;
+            }
             if (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('format')) {
                 data.format = layer.source.format;
             }
@@ -1309,6 +1129,7 @@ class Store extends EventEmitter {
                     data.id = layer.id;
                     data.url = layer.source.hasOwnProperty('url') ? layer.source.url : layer.url;
                     data.style = layer.source.hasOwnProperty('style') ? layer.source.style : undefined;
+                    data.mtlurl = layer.source.hasOwnProperty('mtlurl') ? layer.source.mtlurl : undefined;
                     data.zoom = layer.source.hasOwnProperty('zoom') ? layer.source.zoom : undefined;
                     data.file = layer.source.hasOwnProperty('file') ? layer.source.file : undefined;
                     data.type = (((layer) => {
@@ -1336,6 +1157,7 @@ class Store extends EventEmitter {
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
                     data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
+                    data.mtlurl = layer.hasOwnProperty('mtlurl') ? layer.mtlurl : undefined;
                     data.type = (((layer) => {
                         if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
                             return ITownsConstants.TypeUser;

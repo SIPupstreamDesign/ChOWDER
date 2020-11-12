@@ -1,4 +1,7 @@
-
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 import Action from './action';
 import Store from './store';
 

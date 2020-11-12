@@ -533,6 +533,7 @@ class LayerProperty extends EventEmitter {
 		// console.error(layerProps)
 
 		const isBarGraph = (layerProps.hasOwnProperty('isBarGraph') && layerProps.isBarGraph);
+		const isOBJ = (layerProps.hasOwnProperty('isOBJ') && layerProps.isOBJ);
 
 		if (this.opacitySlider) {
 			this.opacitySlider.off(PropertySlider.EVENT_CHANGE, this.onOpacityChange)
@@ -575,7 +576,8 @@ class LayerProperty extends EventEmitter {
 
 		// scale
 		if (layerProps.type === ITownsConstants.TypeElevation
-			|| isBarGraph) {
+			|| isBarGraph
+			|| isOBJ) {
 			this.addScale(layerID, layerProps);
 		}
 

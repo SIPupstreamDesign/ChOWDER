@@ -18,6 +18,7 @@ SampleURLFileNames[ITownsConstants.Type3DTile] = "something/tileset.json";
 SampleURLFileNames[ITownsConstants.TypePointCloud] = "something/cloud.js";
 SampleURLFileNames[ITownsConstants.TypeGeometry] = "something/data.pbf";
 SampleURLFileNames[ITownsConstants.TypeBargraph] = "sample_csv_data/data1.csv";
+SampleURLFileNames[ITownsConstants.TypeOBJ] = "male02/male02.obj";
 
 class LayerDialog extends EventEmitter {
     constructor(store, action) {
@@ -26,14 +27,6 @@ class LayerDialog extends EventEmitter {
         this.store = store;
         this.action = action;
 
-        this.data = {
-            id: "",
-            url: "",
-            zoom : {
-                min : 1,
-                max : 20
-            }
-        };
         this.init();
         this.setting = {};
         this.csv = null;
@@ -74,6 +67,7 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree cloud.js)");
         this.typeSelect.addOption(ITownsConstants.TypeGeometry, "VectorTile(pbf, geojson)");
         this.typeSelect.addOption(ITownsConstants.TypeBargraph, "Bargraph(csv)");
+        this.typeSelect.addOption(ITownsConstants.TypeOBJ, "OBJFile(obj)");
 
         this.idTitle = document.createElement('p');
         this.idTitle.className = "layer_dialog_sub_title";
@@ -98,6 +92,14 @@ class LayerDialog extends EventEmitter {
         this.styleURLInput = document.createElement('textarea');
         this.styleURLInput.className = "layer_dialog_url_input";
         this.styleURLInput.value = "https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json";
+
+        this.mtlURLTitle = document.createElement('p');
+        this.mtlURLTitle.className = "layer_dialog_sub_title";
+        this.mtlURLTitle.innerText = "MTL:";
+
+        this.mtlURLInput = document.createElement('textarea');
+        this.mtlURLInput.className = "layer_dialog_url_input";
+        this.mtlURLInput.value = "http://localhost/male02/male02.mtl";
 
         this.zoomMinTitle = document.createElement('p');
         this.zoomMinTitle.className = "layer_dialog_zoom_title";
@@ -164,6 +166,13 @@ class LayerDialog extends EventEmitter {
             this.styleRow.style.display = "none";
         }
         {
+            this.mtlRow = createRow();
+            this.mtlRow.className = "layer_dialog_row2"
+            this.mtlRow.appendChild(this.mtlURLTitle);
+            this.mtlRow.appendChild(this.mtlURLInput);
+            this.mtlRow.style.display = "none";
+        }
+        {
             this.zoomRow = createRow();
             this.zoomRow.appendChild(this.zoomMinTitle);
             this.zoomRow.appendChild(this.zoomMinSelect.getDOM());
@@ -182,23 +191,36 @@ class LayerDialog extends EventEmitter {
         let isOK = false;
         this.background = new PopupBackground();
         this.background.on('close', () => {
-            this.data.type = this.typeSelect.getSelectedValue();
-            if (this.data.type == ITownsConstants.TypeBargraph) {
-                this.data.isBarGraph = true;
+            const data = {
+                id: "",
+                url: "",
+                zoom : {
+                    min : 1,
+                    max : 20
+                }
+            };
+            data.type = this.typeSelect.getSelectedValue();
+            if (data.type == ITownsConstants.TypeBargraph) {
+                data.isBarGraph = true;
             }
-            this.data.url = this.urlInput.value.split("\n").join("");
-            this.data.id = this.idInput.getValue();
-            this.data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
-            this.data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
+            if (data.type == ITownsConstants.TypeOBJ) {
+                data.isOBJ = true;
+            }
+            data.url = this.urlInput.value.split("\n").join("");
+            data.id = this.idInput.getValue();
+            data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
+            data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
             
-            let type = this.typeSelect.getSelectedValue();
-            if (type === ITownsConstants.TypeGeometry) {
-                this.data.style = this.styleURLInput.value.split("\n").join("");
+            if (data.type === ITownsConstants.TypeGeometry) {
+                data.style = this.styleURLInput.value.split("\n").join("");
+            }
+            if (data.isOBJ) {
+                data.mtlurl = this.mtlURLInput.value.split("\n").join("");
             }
 
             if (this.endCallback) 
             {
-                this.endCallback(isOK, this.data);
+                this.endCallback(isOK, data);
                 this.endCallback = null;
             }
             this.close();
@@ -237,7 +259,8 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
             let type = this.typeSelect.getSelectedValue();
             if (type === ITownsConstants.TypePointCloud
-                || type === ITownsConstants.TypeBargraph) {
+                || type === ITownsConstants.TypeBargraph
+                || type === ITownsConstants.TypeOBJ) {
                 this.zoomRow.style.display = "none";
             } else {
                 this.zoomRow.style.display = "block";
@@ -246,6 +269,11 @@ class LayerDialog extends EventEmitter {
                 this.styleRow.style.display = "block";
             } else {
                 this.styleRow.style.display = "none";
+            }
+            if (type === ITownsConstants.TypeOBJ) {
+                this.mtlRow.style.display = "block";
+            } else {
+                this.mtlRow.style.display = "none";
             }
             if (type === ITownsConstants.TypeBargraph) {
                 this.fileOpenRow.style.display = "block";
