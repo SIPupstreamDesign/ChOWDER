@@ -22,7 +22,10 @@ class Store extends EventEmitter {
 		this.isInitialized_ = false;
 
 		// 1ウィンドウ1webglコンテンツなのでメタデータは1つ
-		this.metaData = null;
+        this.metaData = null;
+        
+        // カメラリセット時に使うカメラ行列
+        this.initCameraMatrix = null;
 
         // websocket接続が確立された.
         // ログインする.
@@ -189,7 +192,12 @@ class Store extends EventEmitter {
         });
     }
 
-    _updateCamera(data) {
+    
+    /**
+     * カメラメタデータの更新
+     * UI操作などで既にqgisアプリの絵は更新されているので、メタデータだけを更新する
+     */
+    _updateMetaDataCamera(data) {
         if (this.metaData) {
             this.metaData.cameraWorldMatrix = data.mat;
             this.metaData.cameraParams = data.params;
@@ -207,16 +215,91 @@ class Store extends EventEmitter {
         }
     }
 
+    getIFrameDOM(){
+        const qgis = document.getElementById("qgis");
+		if(!qgis){
+			return null;
+		}
+		// console.log("[store:_updateQgisMetadata]",dom,metaData.id);
+        const iframe = qgis.childNodes[0];
+		if(!iframe || !iframe.contentWindow || !iframe.contentWindow.Q3D){
+			//iframe読み込みがまだ終わっていない
+			return null;
+        }
+        return iframe;
+    }
+
+	/**
+	 * カメラの更新
+	 * qgisアプリの絵の更新と、メタデータの更新を行う
+	 */
+    _updateRenderCamera(data){
+        const iframe = this.getIFrameDOM();
+        if(!iframe){
+            return;
+        }
+
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
+        iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(data.mat);
+        let d = new iframe.contentWindow.THREE.Vector3();
+        let q = new iframe.contentWindow.THREE.Quaternion();
+        let s = new iframe.contentWindow.THREE.Vector3();
+        iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d,q,s);
+        iframe.contentWindow.Q3D.application.camera.position.copy( d );
+        iframe.contentWindow.Q3D.application.camera.quaternion.copy( q );
+        iframe.contentWindow.Q3D.application.camera.scale.copy( s );
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
+        iframe.contentWindow.Q3D.application.scene.requestRender();
+        
+        this._updateMetaDataCamera(data);
+    }
+
+    _changeProperty(data){
+        if (this.metaData) {
+
+            let displayProperty = JSON.parse(this.metaData.displayProperty);
+            if(data.hasOwnProperty("label")){
+                displayProperty.label = data.label;
+            }
+            if(data.hasOwnProperty("wireframe")){
+                displayProperty.wireframe = data.wireframe;
+            }
+
+            // this.iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
+            // this.iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+
+            this.metaData.displayProperty = JSON.stringify(displayProperty);
+
+
+            let updateData = JSON.parse(JSON.stringify(this.metaData));
+
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+
+            this.operation.updateMetadata(updateData, (err, res) => {
+                this.emit(Store.EVENT_DONE_CHANGE_PROPERTY, null, displayProperty);
+            });
+        }else{
+
+        }
+
+    }
+
+    getMetaData(){
+        return this.metaData;
+    }
+
 	// TODO: 仮です。
     getContentInfo() {
 		return {
 			url : "http://localhost/qgis/qgis2three_noserver/index.html",
-			contentID : "hogepiyo",
-			visible : true,
-			wireframe : false,
-			label : false
+			// contentID : "hogepiyo",
+			// visible : true,
+			// wireframe : false,
+			// label : false
 		}
-	}
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -229,5 +312,6 @@ Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_UPLOAD_FAILED = "upload_failed";
 Store.EVENT_UPLOAD_SUCCESS = "upload_success";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
+Store.EVENT_DONE_CHANGE_PROPERTY = "done_change_property";
 
 export default Store;

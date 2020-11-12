@@ -56,38 +56,52 @@ class GUIProperty extends EventEmitter {
 	}
 
 	// プロパティをもとに初期値を設定
-	initFromProps(props) {
+	initFromProps(metaData) {
 		this.dom.innerHTML = "";
-
-		// visible
-		if (props && props.hasOwnProperty('visible')) {
-			addCheckProperty(this.dom, true, "visible", "visible", props.visible, (err, data) => {
-				this.action.changeLayerProperty({
-					visible: data
+		const displayProperty = JSON.parse(metaData.displayProperty);
+		// label
+		if (displayProperty && displayProperty.hasOwnProperty('label')) {
+			addCheckProperty(this.dom, true, "props_label", "label", displayProperty.label, (err, data) => {
+				this.action.changeProperty({
+					label: data
 				})
 			});
 		} else {
-			addCheckProperty(this.dom, true, "visible", "visible", true, (err, data) => {
-				this.action.changeLayerProperty({
-					visible: data
-				})
+			addCheckProperty(this.dom, true, "label", "label", true, (err, data) => {
+				// this.action.changeLayerProperty({
+				// 	visible: data
+				// })
 			});
 		}
 
 		// wireframe
-		if (props && props.hasOwnProperty('wireframe')) {
-			addCheckProperty(this.dom, true, "wireframe", "wireframe", props.wireframe, (err, data) => {
-				this.action.changeLayerProperty({
+		if (displayProperty && displayProperty.hasOwnProperty('wireframe')) {
+			addCheckProperty(this.dom, true, "wireframe", "wireframe", displayProperty.wireframe, (err, data) => {
+				this.action.changeProperty({
 					wireframe: data
 				})
 			});
 		} else {
 			addCheckProperty(this.dom, true, "wireframe", "wireframe", false, (err, data) => {
-				this.action.changeLayerProperty({
-					wireframe: data
-				})
+				// this.action.changeLayerProperty({
+				// 	wireframe: data
+				// })
 			});
 		}
+
+		const resetCameraButton = document.createElement("input");
+		resetCameraButton.type = "button";
+		resetCameraButton.value = "ResetCamera";
+		resetCameraButton.addEventListener("click",()=>{
+			const metaData = this.store.getMetaData();
+			
+			this.action.updateRenderCamera({
+				mat:metaData.initCameraMatrix,
+				params:"nodata"
+			});
+		});
+		this.dom.appendChild(resetCameraButton);
+
 
 	}
 

@@ -63,17 +63,25 @@ class Action extends EventEmitter {
 	}
 
 	/**
-     * カメラの更新
+     * カメラメタデータの更新
+     * UI操作などで既にqgisアプリの絵は更新されているので、メタデータだけを更新する
      * @param {*} data 
      * {
      *    mat : カメラのワールドマトリックス,
      *    params : カメラのパラメータ(fovy, zoom, near, far, aspect, filmGauge, filmOffset)
      * }
      */
-    updateCamera(data) {
-        this.emit(Action.EVENT_UPDATE_CAMERA, null, data);
+    updateMetaDataCamera(data) {
+        this.emit(Action.EVENT_UPDATE_METADATA_CAMERA, null, data);
     }
 
+	/**
+	 * カメラの更新
+	 * qgisアプリの絵の更新と、メタデータの更新を行う
+	 */
+    updateRenderCamera(data) {
+        this.emit(Action.EVENT_UPDATE_RENDER_CAMERA, null, data);
+    }
 
 	/**
      * コンテンツの追加
@@ -99,7 +107,8 @@ Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_UPLOAD = "upload";
-Action.EVENT_UPDATE_CAMERA = "updateCamera";
+Action.EVENT_UPDATE_METADATA_CAMERA = "updateMetaDataCamera";
+Action.EVENT_UPDATE_RENDER_CAMERA = "updateRenderCamera";
 Action.EVENT_CHANGE_PROPERTY = "changeProperty";
 
 export default Action;

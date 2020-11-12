@@ -31,8 +31,9 @@ function toArrayBuffer(base64) {
 }
 
 function resizeToThumbnail(srcCanvas) {
-	let width = document.body.clientWidth;
-	let height = document.body.clientHeight;
+	const qgis_size = getCanvasSize();
+	const width = qgis_size.width;
+	const height = qgis_size.height;
 	let canvas = document.createElement('canvas');
 	let ctx = canvas.getContext('2d');
 	canvas.width = 256;
@@ -41,6 +42,10 @@ function resizeToThumbnail(srcCanvas) {
 	return toArrayBuffer(canvas.toDataURL("image/jpeg"));
 }
 
+const getCanvasSize = ()=>{
+	const qgis = document.getElementById("qgis");
+	return {width:qgis.clientWidth,height:qgis.clientHeight};
+}
 
 class GUI extends EventEmitter {
 	constructor(store, action) {
@@ -61,7 +66,6 @@ class GUI extends EventEmitter {
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
 			// ログインメニューを削除
 			document.body.removeChild(this.loginMenu.getDOM());
-			this.initPropertyPanel();
 			this.initMenu();
 			this.showWebGL();
 		});
@@ -71,9 +75,19 @@ class GUI extends EventEmitter {
 			this.loginMenu.showInvalidLabel(true);
 		});
 
+		this.store.on(Store.EVENT_DONE_CHANGE_PROPERTY, (err, data) => {
+            this.iframe.contentWindow.Q3D.application.setLabelVisible(data.label);
+            this.iframe.contentWindow.Q3D.application.setWireframeMode(data.wireframe);
+		});
+
 		this.store.on(Store.EVENT_DONE_IFRAME_CONNECT, (err, iframeConnector) => {
 			console.log("[gui]:EVENT_DONE_IFRAME_CONNECT");
 			this.addQgisContent();
+		})
+
+		this.store.on(Store.EVENT_DONE_ADD_CONTENT, (err, data) => {
+			console.log("[gui]:EVENT_DONE_ADD_CONTENT");
+			this.initPropertyPanel();
 		})
 
 	}
@@ -83,6 +97,7 @@ class GUI extends EventEmitter {
 	 */
 	addQgisContent(){
 		const thumbnail = resizeToThumbnail(this.iframe.contentWindow.Q3D.application.renderer.domElement)
+		const initCameraMatrix = JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements);
 
 		let metaData = {
 			type: Constants.TypeWebGL,
@@ -90,15 +105,20 @@ class GUI extends EventEmitter {
 			user_data_text: JSON.stringify({
 				text: this.store.getContentInfo().url
 			}),
+			initCameraMatrix:initCameraMatrix,
 			posx: 0,
 			posy: 0,
-			width: this.getWindowSize().width,
-			height: this.getWindowSize().height,
-			orgWidth: this.getWindowSize().width,
-			orgHeight: this.getWindowSize().height,
+			width: getCanvasSize().width,
+			height: getCanvasSize().height,
+			orgWidth: getCanvasSize().width,
+			orgHeight: getCanvasSize().height,
 			visible: true,
 			// layerList: JSON.stringify(param.layerList),
-			url: decodeURI(this.store.getContentInfo().url)
+			url: decodeURI(this.store.getContentInfo().url),
+			displayProperty:JSON.stringify({
+				wireframe : false,
+				label : true	
+			})
 		};
 		let data = {
 			metaData: metaData,
@@ -157,7 +177,7 @@ class GUI extends EventEmitter {
 
 	// 右側のパネルの初期化
 	initPropertyPanel() {
-		const contentInfo = this.store.getContentInfo();
+		const metaData = this.store.getMetaData();
 
         let propElem = document.getElementById('qgis_property');
 
@@ -174,7 +194,7 @@ class GUI extends EventEmitter {
         // コンテンツID
         this.contentID = document.createElement('p');
 		this.contentID.className = "property_text";
-		this.contentID.innerText = contentInfo.contentID;
+		this.contentID.innerText = metaData.contentID;
         propInner.appendChild(this.contentID);
 
         // ベースコンテンツタイトル
@@ -186,7 +206,7 @@ class GUI extends EventEmitter {
         // ベースコンテンツ名
         let contentName = document.createElement('p');
         contentName.className = "property_text";
-        contentName.innerHTML = contentInfo.url;
+        contentName.innerHTML = metaData.url;
         propInner.appendChild(contentName);
 
         propInner.appendChild(document.createElement('hr'));
@@ -202,75 +222,10 @@ class GUI extends EventEmitter {
         propInner.appendChild(this.guiProperty.getDOM());
 
 
-		let mat = null;
-		const button = document.createElement("input");
-		button.type = "button";
-		button.value = "DEBUG1";
-		button.addEventListener("click",()=>{
-			console.log(this.iframe);
-			console.log(this.iframe.contentWindow);
-			console.log(this.iframe.contentWindow.Q3D.application.camera);
-			console.log(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements);
-			mat = JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements);
-		});
-		propInner.appendChild(button);
-
-		const button2 = document.createElement("input");
-		button2.type = "button";
-		button2.value = "DEBUG2";
-		button2.addEventListener("click",()=>{
-			this.iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
-			this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(mat);
-			let d = new this.iframe.contentWindow.THREE.Vector3();
-			let q = new this.iframe.contentWindow.THREE.Quaternion();
-			let s = new this.iframe.contentWindow.THREE.Vector3();
-			this.iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d,q,s);
-			this.iframe.contentWindow.Q3D.application.camera.position.copy( d );
-			this.iframe.contentWindow.Q3D.application.camera.quaternion.copy( q );
-			this.iframe.contentWindow.Q3D.application.camera.scale.copy( s );
-			this.iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
-			this.iframe.contentWindow.Q3D.application.scene.requestRender();
-		});
-		propInner.appendChild(button2);
-
-		const button3 = document.createElement("input");
-		button3.type = "button";
-		button3.value = "DEBUG3";
-		button3.addEventListener("click",()=>{
-			// const params = {
-			// 	mat:JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements),
-			// 	params:"nodata"
-			// }
-			console.log("btn3 clicked");
-			// this.action.updateCamera({
-			// 	mat: params.mat,
-			// 	params: params.params
-			// });
-
-			/* ワイヤフレーム */
-			// if(this.iframe.contentWindow.Q3D.application._wireframeMode === true){
-			// 	this.iframe.contentWindow.Q3D.application.setWireframeMode(false);
-			// }else{
-			// 	this.iframe.contentWindow.Q3D.application.setWireframeMode(true);
-			// }
-
-			/* ラベル表示 */
-			if(this.iframe.contentWindow.Q3D.application.labelVisible === true){
-				this.iframe.contentWindow.Q3D.application.setLabelVisible(false);
-			}else{
-				this.iframe.contentWindow.Q3D.application.setLabelVisible(true);
-			}
-
-			/* カメラリセット */
-			
-
-		});
-		propInner.appendChild(button3);
-
 		// コンテンツ読み込み後とかに初期化する（仮
 		// if (this.store.on(Store.IsContentLoaded))
 		{
-			this.guiProperty.initFromProps(this.store.getContentInfo());
+			this.guiProperty.initFromProps(this.store.getMetaData());
 		}
 	}
 
@@ -283,7 +238,7 @@ class GUI extends EventEmitter {
 			}
 			timer = setTimeout(() => {
 				this.action.resizeWindow({
-					size: this.getWindowSize()
+					size: getCanvasSize()
 				});
 			}, 200);
 		};
@@ -327,7 +282,7 @@ class GUI extends EventEmitter {
 					mat:JSON.stringify(this.iframe.contentWindow.Q3D.application.camera.matrixWorld.elements),
 					params:"nodata"
 				}
-				this.action.updateCamera({
+				this.action.updateMetaDataCamera({
 					mat: params.mat,
 					params: params.params
 				});

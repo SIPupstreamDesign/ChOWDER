@@ -350,6 +350,7 @@ class Store extends EventEmitter
 			return;
 		}
 		
+		/* camera matrix */
 		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
 		iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(metaData.cameraWorldMatrix);
 		let d = new iframe.contentWindow.THREE.Vector3();
@@ -361,6 +362,15 @@ class Store extends EventEmitter
 		iframe.contentWindow.Q3D.application.camera.scale.copy( s );
 		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
 		iframe.contentWindow.Q3D.application.scene.requestRender();
+
+		/* camera matrix */
+		const displayProperty = JSON.parse(metaData.displayProperty);
+		if(iframe.contentWindow.Q3D.application.labelVisible !== displayProperty.label){
+			iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
+		}
+		if(iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe){
+			iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+		}
 	}
 
 	getDisplayPermissionList(){
