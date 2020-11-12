@@ -125,6 +125,8 @@ function CreateOBJLayer(itownsView, config) {
 			this.isOBJ = true;
 			this.OBJExtent = new itowns.Extent('EPSG:4978', 0, 0, 0);
 
+			this.updateOBJ = this.updateOBJ.bind(this);
+
 			this.defineLayerProperty('scale', this.scale || 1.0, () => {
 				if (group.children.length > 0) {
 					this.updateOBJ();

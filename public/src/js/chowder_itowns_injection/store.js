@@ -382,11 +382,9 @@ class Store extends EventEmitter {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
         }
         if (type === ITownsConstants.TypeBargraph) {
-            console.error("CreateBarGraphLayer")
             return CraeteBarGraphLayer(this.itownsView, config);
         }
         if (type === ITownsConstants.TypeOBJ) {
-            console.error("CreateOBJLayer")
             return CreateOBJLayer(this.itownsView, config);
         }
         if (type === ITownsConstants.TypeGeometry || config.format === "pbf") {
@@ -1020,7 +1018,7 @@ class Store extends EventEmitter {
             const layers = this.getBarGraphLayers();
             if (layers.length > 0) {
                 for (let i = 0; i < layers.length; ++i) {
-                    this.updateBarGraph(layers[i]);
+                    layers[i].updateBarGraph(layers[i]);
                 }
                 this.itownsView.notifyChange();
             }
@@ -1310,7 +1308,7 @@ class Store extends EventEmitter {
             const layers = this.getBarGraphLayers();
             if (layers.length > 0) {
                 for (let i = 0; i < layers.length; ++i) {
-                    this.updateBarGraph(layers[i]);
+                    layers[i].updateBarGraph(layers[i]);
                 }
                 this.itownsView.notifyChange();
             }
