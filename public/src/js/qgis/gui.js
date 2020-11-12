@@ -178,7 +178,7 @@ class GUI extends EventEmitter {
 	// 右側のパネルの初期化
 	initPropertyPanel() {
 		const metaData = this.store.getMetaData();
-
+		console.log("@",metaData);
         let propElem = document.getElementById('qgis_property');
 
         let propInner = document.createElement('div');
@@ -194,7 +194,7 @@ class GUI extends EventEmitter {
         // コンテンツID
         this.contentID = document.createElement('p');
 		this.contentID.className = "property_text";
-		this.contentID.innerText = metaData.contentID;
+		this.contentID.innerText = metaData.id;
         propInner.appendChild(this.contentID);
 
         // ベースコンテンツタイトル
