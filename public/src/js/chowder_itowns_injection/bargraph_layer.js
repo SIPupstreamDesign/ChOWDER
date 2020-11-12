@@ -6,8 +6,6 @@ import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
 import Rainbow from '../../../3rd/js/rainbowvis.js'
 
-"use strict";
-
 /**
  * 汎用csvパーサーを,fileSourceに設定する.
  * @param {*} fileSource 
@@ -138,7 +136,7 @@ function CreateBargraphLayer(itownsView, config) {
 		 }
 		 のようなchowder泥漿するパラメータを元にメッシュを更新する
 		*/
-		updateBarGraph() {
+		updateBarGraph(currentData = null) {
 			if (!this.hasOwnProperty('bargraphParams')) return;
 			this.source.loadData(this.BarGraphExtent, this).then((data) => {
 				const params = this.bargraphParams;
@@ -221,11 +219,11 @@ function CreateBargraphLayer(itownsView, config) {
 						mesh.lookAt(new itowns.THREE.Vector3(zeroVector.x, zeroVector.y, zeroVector.z));
 					}
 					mesh.visible = (isValidLonIndex && isValidLatIndex);
-					if (mesh.visible && isValidTimeIndex && this.date) {
+					if (mesh.visible && isValidTimeIndex && currentData) {
 						// meshが可視の場合で、かつ時刻が設定されている場合、
 						// 現在時刻と時刻を比較し、visibleを上書きする
 						const date = new Date(csvData[i][timeIndex]);
-						if (date.getTime() < this.date.getTime()) {
+						if (date.getTime() < currentData.getTime()) {
 							mesh.visible = true;
 						} else {
 							mesh.visible = false;

@@ -3,8 +3,6 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-"use strict";
-
 // chowder_itowns_injectionで1jsにeventemitterもまとめたいので、このファイルでは直接importする
 import EventEmitter from '../../../3rd/js/eventemitter3/index.js'
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
@@ -1018,7 +1016,7 @@ class Store extends EventEmitter {
             const layers = this.getBarGraphLayers();
             if (layers.length > 0) {
                 for (let i = 0; i < layers.length; ++i) {
-                    layers[i].updateBarGraph(layers[i]);
+                    layers[i].updateBarGraph(this.date);
                 }
                 this.itownsView.notifyChange();
             }
@@ -1308,7 +1306,7 @@ class Store extends EventEmitter {
             const layers = this.getBarGraphLayers();
             if (layers.length > 0) {
                 for (let i = 0; i < layers.length; ++i) {
-                    layers[i].updateBarGraph(layers[i]);
+                    layers[i].updateBarGraph(this.date);
                 }
                 this.itownsView.notifyChange();
             }
