@@ -12,6 +12,7 @@ import ITownsCommand from '../common/itowns_command';
 import ITownsConstants from '../itowns/itowns_constants.js';
 import CraeteBarGraphLayer from './bargraph_layer.js';
 import CreateOBJLayer from './obj_layer.js';
+import CreateTimescalePotreeLayer from './timescale_potree_layer';
 
 const getTextureFloat = (buffer, view) => {
     // webgl2
@@ -26,6 +27,25 @@ const getTextureFloat = (buffer, view) => {
         // webgl1
         return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
     }
+};
+
+function checkResponse(response) {
+    if (!response.ok) {
+        let error = new Error(`Error loading ${response.url}: status ${response.status}`);
+        error.response = response;
+        throw error;
+    }
+}
+
+function fetchText(url, options = {}) {
+	return fetch(url, options).then((response) => {
+		checkResponse(response);
+		return response.text();
+	});
+}
+
+const isTimescalePotreeLayer = (layer) => {
+    return layer.hasOwnProperty('isTimescalePotree') && layer.isTimescalePotree;
 };
 
 const isBarGraphLayer = (layer) => {
@@ -222,29 +242,27 @@ class Store extends EventEmitter {
         return res;
     }
 
+    getTimescaleLayers() {
+        let res = [];
+        let layers = this.itownsView.getLayers();
+        for (let i = 0; i < layers.length; ++i) {
+            if (isBarGraphLayer(layers[i])
+            || isTimescalePotreeLayer(layers[i])) {
+                res.push(layers[i]);
+            }
+        }
+        return res;
+    }
+
     /**
      * 地理院DEMのtxt用fetcher/parsarを,mapSourceに設定する.
      * @param {*} mapSource 
      */
     installCSVElevationParsar(mapSource) {
         console.log("installCSVElevationParsar");
-        function checkResponse(response) {
-            if (!response.ok) {
-                let error = new Error(`Error loading ${response.url}: status ${response.status}`);
-                error.response = response;
-                throw error;
-            }
-        }
-
-        let text = function (url, options = {}) {
-            return fetch(url, options).then((response) => {
-                checkResponse(response);
-                return response.text();
-            });
-        };
 
         mapSource.fetcher = function (url, options = {}) {
-            return text(url, options).then((data) => {
+            return fetchText(url, options).then((data) => {
                 let LF = String.fromCharCode(10);
                 let lines = data.split(LF);
                 let heights = [];
@@ -372,9 +390,15 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypePointCloud) {
             config.crs = this.itownsView.referenceCrs;
-            return new itowns.PotreeLayer(config.id, {
-                source: new itowns.PotreeSource(config)
-            });
+			if (config.file.indexOf('.json') > 0) {
+                return CreateTimescalePotreeLayer(this.itownsView, config);
+            }
+            else
+            {
+                new itowns.PotreeLayer(config.id, {
+                    source: new itowns.PotreeSource(config)
+                });
+            }
         }
         if (type === ITownsConstants.Type3DTile) {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
@@ -606,6 +630,9 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('isBarGraph') && params.isBarGraph) {
             type = ITownsConstants.TypeBargraph;
         }
+        if (params.hasOwnProperty('isTimescalePotree') && params.isTimescalePotree) {
+            type = ITownsConstants.TypePointCloud;
+        }
         if (params.hasOwnProperty('isOBJ') && params.isOBJ) {
             type = ITownsConstants.TypeOBJ;
         }
@@ -639,6 +666,7 @@ class Store extends EventEmitter {
      * @param {*} layerList 
      */
     initLayers(layerList) {
+        // console.log("layerList", layerList)
         // 特殊なレイヤー以外削除
         this.isStopDispatchRemoveEvent = true;
         for (let i = this.layerDataList.length - 1; i >= 0; --i) {
@@ -1013,10 +1041,10 @@ class Store extends EventEmitter {
             if (data.timeCallback) {
                 data.timeCallback(this.date);
             }
-            const layers = this.getBarGraphLayers();
+            const layers = this.getTimescaleLayers();
             if (layers.length > 0) {
                 for (let i = 0; i < layers.length; ++i) {
-                    layers[i].updateBarGraph(this.date);
+                    layers[i].updateByTime(this.date);
                 }
                 this.itownsView.notifyChange();
             }
@@ -1070,6 +1098,7 @@ class Store extends EventEmitter {
         for (i = 0; i < layers.length; ++i) {
             layer = layers[i];
             if (!layer) continue;
+            if (layer.isChildLayer) continue; // 時系列データ用の子レイヤーは除く
             let data = {};
             if (layer.hasOwnProperty('bboxes')) {
                 data.bbox = layer.bboxes.visible;
@@ -1101,6 +1130,9 @@ class Store extends EventEmitter {
                     let csvData = await layer.source.loadData(this.BarGraphExtent, layer);
                     data.csv = csvData.csv;
                 }
+            }
+            if (layer.hasOwnProperty('isTimescalePotree')) {
+                data.isTimescalePotree = layer.isTimescalePotree;
             }
             if (layer.hasOwnProperty('isOBJ')) {
                 data.isOBJ = layer.isOBJ;
@@ -1135,11 +1167,11 @@ class Store extends EventEmitter {
                             return ITownsConstants.TypeElevation;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PotreeLayer) {
+                        } else if (layer instanceof itowns.PotreeLayer || layer.isTimescalePotree) {
                             return ITownsConstants.TypePointCloud;
                         } else if (layer instanceof itowns.C3DTilesLayer) {
                             return ITownsConstants.Type3DTile;
-                        } else if (layer instanceof itowns.GeometryLayer) {
+                        } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
                             return ITownsConstants.TypeGeometry;
                         } else {
                             return ITownsConstants.TypeUser;
@@ -1155,15 +1187,15 @@ class Store extends EventEmitter {
                     data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
                     data.mtlurl = layer.hasOwnProperty('mtlurl') ? layer.mtlurl : undefined;
                     data.type = (((layer) => {
-                        if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
+                        if (layer.hasOwnProperty('isUserLayer')) {
                             return ITownsConstants.TypeUser;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PotreeLayer) {
+                        } else if (layer instanceof itowns.PotreeLayer || layer.isTimescalePotree) {
                             return ITownsConstants.TypePointCloud;
                         } else if (layer instanceof itowns.C3DTilesLayer) {
                             return ITownsConstants.Type3DTile;
-                        } else if (layer instanceof itowns.GeometryLayer) {
+                        } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
                             return ITownsConstants.TypeGeometry;
                         } else {
                             return ITownsConstants.TypeUser;
@@ -1303,10 +1335,10 @@ class Store extends EventEmitter {
             if (data.timeCallback) {
                 data.timeCallback(this.date);
             }
-            const layers = this.getBarGraphLayers();
+            const layers = this.getTimescaleLayers();
             if (layers.length > 0) {
                 for (let i = 0; i < layers.length; ++i) {
-                    layers[i].updateBarGraph(this.date);
+                    layers[i].updateByTime(this.date);
                 }
                 this.itownsView.notifyChange();
             }

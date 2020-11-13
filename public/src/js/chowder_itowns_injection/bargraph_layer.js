@@ -136,7 +136,7 @@ function CreateBargraphLayer(itownsView, config) {
 		 }
 		 のようなchowder泥漿するパラメータを元にメッシュを更新する
 		*/
-		updateBarGraph(currentData = null) {
+		updateBarGraph(currentDate = null) {
 			if (!this.hasOwnProperty('bargraphParams')) return;
 			this.source.loadData(this.BarGraphExtent, this).then((data) => {
 				const params = this.bargraphParams;
@@ -219,11 +219,11 @@ function CreateBargraphLayer(itownsView, config) {
 						mesh.lookAt(new itowns.THREE.Vector3(zeroVector.x, zeroVector.y, zeroVector.z));
 					}
 					mesh.visible = (isValidLonIndex && isValidLatIndex);
-					if (mesh.visible && isValidTimeIndex && currentData) {
+					if (mesh.visible && isValidTimeIndex && currentDate) {
 						// meshが可視の場合で、かつ時刻が設定されている場合、
 						// 現在時刻と時刻を比較し、visibleを上書きする
 						const date = new Date(csvData[i][timeIndex]);
-						if (date.getTime() < currentData.getTime()) {
+						if (date.getTime() <= currentDate.getTime()) {
 							mesh.visible = true;
 						} else {
 							mesh.visible = false;
@@ -232,6 +232,10 @@ function CreateBargraphLayer(itownsView, config) {
 					mesh.updateMatrixWorld();
 				}
 			});
+		}
+		
+		updateByTime(currentDate = null) {
+			updateBarGraph(currentDate);
 		}
 	}
 	return new BarGraphLayer(itownsView, config);
