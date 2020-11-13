@@ -16,18 +16,6 @@ function fetchText(url, options = {}) {
 }
 
 function createTimescalePotreeSource(config) {
-
-	function checkResponse(response) {
-		if (!response.ok) {
-			let error = new Error(`Error loading ${response.url}: status ${response.status}`);
-			error.response = response;
-			throw error;
-		}
-	}
-	const arrayBuffer = (url, options = {}) => fetch(url, options).then((response) => {
-		checkResponse(response);
-		return response.arrayBuffer();
-	});
 	const potreeSource = new itowns.FileSource({
 		url: config.url + config.file,
 		crs: "EPSG:4978",
@@ -85,11 +73,9 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 			this.tempExtent = new itowns.Extent('EPSG:4978', 0, 0, 0);
 		}
 
-		update(context, layer, node) {
-		}
+		update(context, layer, node) { }
 
-		preUpdate(context, changeSources) {
-		}
+		preUpdate(context, changeSources) { }
 
 		convert() { }
 
@@ -98,10 +84,10 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 				let visibleLayer = null;
 				for (let i = data.layers.length - 1; i >= 0; --i) {
 					// UTC時刻のUnixTime文字列で初期化されたDateを作成する
-					const local  = new Date(data.layers[i].time)
+					const local = new Date(data.layers[i].time)
 					const offset = -1 * local.getTimezoneOffset() / 60
 					const utcDate = new Date(local.getTime() + (offset * 3600000))
-					
+
 					// console.log("date", utcDate, this.currentDate);
 					if (utcDate <= this.currentDate) {
 						visibleLayer = data.layers[i].layer;
@@ -113,9 +99,8 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 				for (let i = 0; i < data.layers.length; ++i) {
 					data.layers[i].layer.visible = false;
 				}
-				
-				if (visibleLayer)
-				{
+
+				if (visibleLayer) {
 					let isExisted = false;
 					let layers = this.itownsView.getLayers();
 					for (let i = 0; i < layers.length; ++i) {

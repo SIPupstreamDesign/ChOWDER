@@ -242,6 +242,9 @@ class Store extends EventEmitter {
         return res;
     }
 
+    /**
+     * chowder itowns appの時系列表示に対応したLayerを返す
+     */
     getTimescaleLayers() {
         let res = [];
         let layers = this.itownsView.getLayers();
