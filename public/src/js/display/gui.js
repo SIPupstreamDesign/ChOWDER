@@ -602,41 +602,47 @@ class GUI extends EventEmitter {
                     // 初回に一度実行
                     if (metaData.hasOwnProperty('cameraWorldMatrix')) {
                         connector.send(ITownsCommand.UpdateCamera, {
-                            mat : JSON.parse(metaData.cameraWorldMatrix),
-                            params : JSON.parse(metaData.cameraParams),
+                            mat: JSON.parse(metaData.cameraWorldMatrix),
+                            params: JSON.parse(metaData.cameraParams),
+                        }, () => {
+                            connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                                let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
+                                connector.send(ITownsCommand.Resize, rect);
+                            });
+                        });
+                    } else {
+                        connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                            let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
+                            connector.send(ITownsCommand.Resize, rect);
                         });
                     }
-                    connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
-                        let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
-                        connector.send(ITownsCommand.Resize, rect);
-                    });
                 });
-            } catch(err) {
+            } catch (err) {
                 console.error(err, metaData);
             }
 
             // chowderサーバから受信したカメラ情報などを、displayのiframe内に随時送るためのコールバックイベントを登録
             this.action.addItownFunc({
-                id : metaData.id,
-                func : {
-                    chowder_itowns_update_camera : (metaData) => {
+                id: metaData.id,
+                func: {
+                    chowder_itowns_update_camera: (metaData) => {
                         ITownsUtil.updateCamera(connector, metaData);
                     },
-                    chowder_itowns_update_time : (metaData) => {
+                    chowder_itowns_update_time: (metaData) => {
                         ITownsUtil.updateTime(connector, metaData, this.store.getTime());
                     },
-                    chowder_itowns_resize : (rect) => {
+                    chowder_itowns_resize: (rect) => {
                         ITownsUtil.resize(connector, rect)
                     },
-                    chowder_itowns_update_layer_list : (metaData) => {
+                    chowder_itowns_update_layer_list: (metaData, callback) => {
                         let preMetaData = this.store.getMetaData(metaData.id);
-                        ITownsUtil.updateLayerList(connector, metaData, preMetaData);
+                        ITownsUtil.updateLayerList(connector, metaData, preMetaData, callback);
                     },
-                    chowder_itowns_measure_time : (callback) => {
+                    chowder_itowns_measure_time: (callback) => {
                         connector.send(ITownsCommand.MeasurePerformance, {}, callback);
                     }
                 }
-               });
+            });
         }
         elem.innerHTML = "";
         elem.appendChild(iframe);

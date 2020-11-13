@@ -487,6 +487,7 @@ class Display {
 						elem.className = ""
 					}
 					funcDict[metaData.id].chowder_itowns_update_camera(metaData);
+					this.updateWebGLFrameRect(metaData);
 				}
 			}
 		});

@@ -180,12 +180,6 @@ class Store extends EventEmitter {
         this.itownsView.camera.camera3D.matrixAutoUpdate = true;
 
         this.itownsView.notifyChange(this.itownsView.camera.camera3D);
-
-        if (window.chowder_itowns_view_type === "controller") {
-            for (let i = 0; i < window.resizeListeners.length; ++i) {
-                window.resizeListeners[i]();
-            }
-        }
     }
 
     resizeToThumbnail(srcCanvas) {
@@ -925,7 +919,9 @@ class Store extends EventEmitter {
         }
     }
 
-    resizeWindow(rect) {
+    resizeWindow(param) {
+        const rect = param.rect;
+        const isSetOffset = param.isSetOffset;
         if (!rect) return;
         let width = document.body.clientWidth;
         let height = document.body.clientHeight;
@@ -933,15 +929,29 @@ class Store extends EventEmitter {
         let fullHeight = height;
 
         document.body.style.pointerEvents = "none"
+        this.itownsViewerDiv.style.position = "relative";
         this.itownsViewerDiv.style.left = parseInt(rect.x) + "px";
         this.itownsViewerDiv.style.top = parseInt(rect.y) + "px";
-        this.itownsViewerDiv.style.width = parseInt(rect.w) + "px";
-        this.itownsViewerDiv.style.height = parseInt(rect.h) + "px";
-        this.itownsViewerDiv.style.position = "relative";
+        if (isSetOffset) {
+            this.itownsViewerDiv.style.width = parseInt(rect.w) + "px";
+            this.itownsViewerDiv.style.height = parseInt(rect.h) + "px";
+        } else {
+            this.itownsViewerDiv.style.width = "100%";
+            this.itownsViewerDiv.style.height =  "100%";
+        }
         this.itownsView.camera.camera3D.setViewOffset(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
-        //console.log(fullWidth, fullHeight, rect.x, rect.y, rect.w, rect.h)
         this.itownsView.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
-        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
+        
+        if (window.chowder_itowns_view_type === "controller") {
+            for (let i = 0; i < window.resizeListeners.length; ++i) {
+                window.resizeListeners[i]();
+            }
+            let canvas = this.itownsViewerDiv.getElementsByTagName('canvas')[0];
+            if (canvas) {
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+            }
+        }
     }
 
     isViewReady() {

@@ -11,12 +11,12 @@ import ITownsCommand from './itowns_command.js';
 // ChOWDERメタデータを元にiTownsビュー更新用のユーティリティ
 class ITownsUtil {
     
-    static updateCamera(iframeConnector, metaData) {
+    static updateCamera(iframeConnector, metaData, callback = null) {
         if (metaData.hasOwnProperty('cameraWorldMatrix') && metaData.hasOwnProperty('cameraParams')) {
             iframeConnector.send(ITownsCommand.UpdateCamera, {
                 mat : JSON.parse(metaData.cameraWorldMatrix),
                 params : JSON.parse(metaData.cameraParams),
-            });
+            }, callback);
         }
     }
 
@@ -28,7 +28,7 @@ class ITownsUtil {
         return IDList;
     }
 
-    static updateLayerList(iframeConnector, metaData, preMetaData) {
+    static updateLayerList(iframeConnector, metaData, preMetaData, callback) {
         try {
             if (metaData.hasOwnProperty('layerList')) {
                 let preLayerListStr =  preMetaData ? preMetaData.layerList : [];
@@ -65,6 +65,10 @@ class ITownsUtil {
                         let layer = layerList[i];
                         iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer);
                     }
+                    if (callback)
+                    {
+                        callback();
+                    }
                 }
             }
         }
@@ -79,8 +83,11 @@ class ITownsUtil {
         });
     }
 
-    static resize(iframeConnector, rect) {
-        iframeConnector.send(ITownsCommand.Resize, rect);
+    static resize(iframeConnector, rect, isSetOffset = true) {
+        iframeConnector.send(ITownsCommand.Resize, {
+            rect : rect,
+            isSetOffset : isSetOffset
+        });
     }
 
     static createCopyrightText(metaData) {
