@@ -105601,6 +105601,7 @@ function enableDracoLoader(path, config) {
    *
    */
   parse: function parse(buffer, options) {
+    console.error('parse');
     var gltfUpAxis = options.gltfUpAxis;
     var urlBase = options.urlBase;
 
@@ -105670,6 +105671,8 @@ function enableDracoLoader(path, config) {
       /* , reject */
       ) {
         var onload = function (gltf) {
+          console.error(gltf);
+
           var _iterator = _createForOfIteratorHelper(gltf.scenes),
               _step;
 
@@ -105746,6 +105749,7 @@ function enableDracoLoader(path, config) {
         };
 
         var version = headerView.getUint32(4, true);
+        console.error(urlBase);
 
         if (version === 1) {
           legacyGLTFLoader.parse(gltfBuffer, urlBase, onload);

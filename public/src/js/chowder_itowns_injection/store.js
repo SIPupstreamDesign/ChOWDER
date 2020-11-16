@@ -369,7 +369,7 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             let mapSource = new itowns.TMSSource(config);
-            if (config.format === "image/x-bil;bits=32" || config.format === "wmts") {
+            if (config.format === "image/x-bil;bits=32" || config.hasOwnProperty('tileMatrixSet')) {
                 config.name = config.id;
                 mapSource = new itowns.WMTSSource(config);
             } else if (config.format === "csv" || config.format === "txt") {
@@ -377,13 +377,27 @@ class Store extends EventEmitter {
             } else if (config.format.indexOf("png") >= 0) {
                 this.installPNGElevationParsar(mapSource);
             }
-            return new itowns.ElevationLayer(config.id, {
-                source: mapSource,
-                updateStrategy: {
-                    type: 3
-                },
-                scale: 1
-            });
+            console.error("mapSource", mapSource, config)
+            if (config.hasOwnProperty('tileMatrixSet') && config.tileMatrixSet === "iTowns") {
+                return new itowns.ElevationLayer(config.id, {
+                    source: mapSource,
+                    updateStrategy: {
+                        type: 3
+                    },
+                    useColorTextureElevation : true,
+                    colorTextureElevationMinZ : 37,
+                    colorTextureElevationMaxZ : 248,
+                    scale: 1
+                });
+            } else {
+                return new itowns.ElevationLayer(config.id, {
+                    source: mapSource,
+                    updateStrategy: {
+                        type: 3
+                    },
+                    scale: 1
+                });
+            }
         }
         if (type === ITownsConstants.TypePointCloud) {
             config.crs = this.itownsView.referenceCrs;
@@ -486,8 +500,8 @@ class Store extends EventEmitter {
         if (type === ITownsConstants.TypeElevation) {
             config = {
                 "crs": "EPSG:4326",
-                "tileMatrixSet": "WGS84G",
-                "format": params.hasOwnProperty('format') ? params.format : "wmts",
+                "tileMatrixSet": params.hasOwnProperty('tileMatrixSet') ? params.tileMatrixSet : "WGS84G",
+                "format": params.hasOwnProperty('format') ? params.format : "image/x-bil;bits=32",
                 "url": url,
                 "scale": 1
             };
@@ -651,6 +665,9 @@ class Store extends EventEmitter {
                 type === ITownsConstants.TypeBargraph ||
                 type === ITownsConstants.TypeOBJ) {
                 itowns.View.prototype.addLayer.call(this.itownsView, layer);
+                if (layer.isTimescalePotree) {
+                    layer.updateParams();
+                }
             } else {
                 this.itownsView.addLayer(layer);
             }
@@ -803,6 +820,9 @@ class Store extends EventEmitter {
             }
             if (params.hasOwnProperty('bbox')) {
                 layer.bboxes.visible = Boolean(params.bbox);
+                if (layer.isTimescalePotree) {
+                    layer.updateParams();
+                }
                 isChanged = true;
             }
             if (params.hasOwnProperty('scale')) {
