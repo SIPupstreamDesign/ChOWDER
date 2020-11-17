@@ -588,6 +588,7 @@ class GUI extends EventEmitter {
                 // qgis
                 const connector = new IFrameConnector(iframe);
                 connector.connect(() => {
+                    this.action.updateQgisMetadata(metaData);
                 });
 
             }else{

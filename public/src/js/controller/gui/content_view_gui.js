@@ -76,7 +76,7 @@ class ContentViewGUI extends EventEmitter {
 				// qgis
 				const connector = new IFrameConnector(iframe);
 				connector.connect(() => {
-					console.log(url);
+					this.action.updateQgisMetadata(metaData);
 					this.isImportingWebGL = false;
 				});
 				
