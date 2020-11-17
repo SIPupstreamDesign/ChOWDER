@@ -3176,18 +3176,86 @@
          */
         upload(binaryData, callback){
             const zip = new nodeZip(binaryData, {base64: false, checkCRC32: true});
+
+            /* 既にこのファイルがアップロードされてたら何もしない */
+            let fileAlreadyExist = false;
             for(let i in zip.files){
-                if(zip.files[i].options.dir === true){
-                    if(!fs.existsSync("../public/qgis"+zip.files[i].name)){
-                        console.log("[mkdir] : ","../public/qgis"+zip.files[i].name);
-                        fs.mkdirSync("../public/qgis"+zip.files[i].name, { recursive: true });
-                    }
-                }else{
-                    fs.writeFile("../public/qgis"+zip.files[i].name,zip.files[i]._data,"binary",(err)=>{
-                        if(err){console.log(err)};
-                    });
+                if(fs.existsSync("../public/qgis/"+zip.files[i].name)){
+                    fileAlreadyExist = true;
                 }
             }
+            if(fileAlreadyExist === true){
+                console.log("[upload]this file already exists");
+                callback("this file already exists");
+                return;
+            }
+
+            /* ファイルを解凍する */
+            (async()=>{
+                let resultList = [];
+                for(let i in zip.files){
+                    const r = await this._promiseExtract(zip,i);
+                    resultList.push(r);
+                }
+                this.updateQgisContentsList();
+                console.log("upload:result",resultList);
+                
+                for(let result of resultList){
+                    if(result !== null){
+                        callback(result);//最初に起きたエラー
+                    }
+                }
+                callback(null);//エラーはなかった
+            })();
+        }
+
+        /**
+         * _promiseExtract
+         * nodezipの解凍をファイル/フォルダごとにpromise実行する。
+         * @method _promiseExtract
+         * @return {Promise}
+         */
+        _promiseExtract(zip,file){
+            return new Promise((resolve,reject)=>{
+                if(zip.files[file].options.dir === true){
+                    if(!fs.existsSync("../public/qgis/"+zip.files[file].name)){
+                        console.log("[mkdir] : ","../public/qgis/"+zip.files[file].name);
+                        fs.mkdir("../public/qgis/"+zip.files[file].name, { recursive: true },(err)=>{
+                            if(err){
+                                console.log(err)
+                                reject(err);
+                            };
+                            resolve(null);
+                        });
+                    }else{
+                        reject("this filename already exist");
+                    }
+                }else{
+                    fs.writeFile("../public/qgis/"+zip.files[file].name,zip.files[file]._data,"binary",(err)=>{
+                        console.log("[writeFile] : ","../public/qgis/"+zip.files[file].name);
+                        if(err){
+                            console.log(err)
+                            reject(err);
+                        };
+                        resolve(null);
+                    });
+                }
+            });
+        }
+
+        updateQgisContentsList(){
+            console.log("updateQgisContentsList");
+            fs.readdir("../public/qgis/",(err,files)=>{
+                let list = [];
+                for(let file of files){
+                    if(file !== "contentsList.json")
+                    list.push(file);
+                }
+
+                fs.writeFile("../public/qgis/contentsList.json",JSON.stringify(list),"utf8",(err)=>{
+                    console.log("[contentslist]done");
+                });
+            });
         }
     }
 

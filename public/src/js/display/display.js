@@ -198,10 +198,16 @@ class Display {
 		}
 		// webglカメラなどの適用
 		if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
-			let funcDict = this.store.getITownFuncDict();
-			if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-				funcDict[metaData.id].chowder_itowns_update_camera(metaData);
-				funcDict[metaData.id].chowder_itowns_update_layer_list(metaData);
+			if(json.webglType && json.webglType === "qgis2three.js"){
+				/* qgis */
+				this.action.updateQgisMetadata(metaData);
+			}else{
+				/* itowns */
+				let funcDict = this.store.getITownFuncDict();
+				if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+					funcDict[metaData.id].chowder_itowns_update_camera(metaData);
+					funcDict[metaData.id].chowder_itowns_update_layer_list(metaData);
+				}
 			}
 		}
 

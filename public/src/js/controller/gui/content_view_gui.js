@@ -73,6 +73,13 @@ class ContentViewGUI extends EventEmitter {
 		iframe.src = url;
 		iframe.onload = () => {
 			if(metaData.webglType && metaData.webglType === "qgis2three.js"){
+				// qgis
+				const connector = new IFrameConnector(iframe);
+				connector.connect(() => {
+					console.log(url);
+					this.isImportingWebGL = false;
+				});
+				
 			}else{
 				iframe.contentWindow.chowder_itowns_view_type = "controller";
 				let connector = new IFrameConnector(iframe);

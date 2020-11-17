@@ -178,6 +178,11 @@ class Action extends EventEmitter
     addItownFunc(data) {
         this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
     }
+
+    updateQgisMetadata(metaData){
+        this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
+    }
+
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -195,4 +200,5 @@ Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
+Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
 export default Action;

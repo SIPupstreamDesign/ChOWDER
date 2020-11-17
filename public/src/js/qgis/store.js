@@ -27,14 +27,30 @@ class Store extends EventEmitter {
         // カメラリセット時に使うカメラ行列
         this.initCameraMatrix = null;
 
+        this.contentsList = null;
+        this.updateContentsList((contentslist)=>{
+            this.contentsList = contentslist;
+            this.emit(Store.EVENT_DONE_UPDATE_CONTETNTSLIST, null, this.contentsList);
+        });
+
+        this.selectedContent = null;
+
         // websocket接続が確立された.
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
             console.log("websocket connected")
             //let loginOption = { id: "APIUser", password: "" }
-            //this.action.login(loginOption);
-        })
+            //this.action.login(loginOption);    
+        });
 
+        this.on(Store.EVENT_UPLOAD_SUCCESS, (err) => {
+            this.updateContentsList((contentslist)=>{
+                this.contentsList = contentslist;
+                this.emit(Store.EVENT_DONE_UPDATE_CONTETNTSLIST, null, this.contentsList);
+            });
+        });
+
+        
         // コンテンツ追加完了した.
         this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
             let isInitialContent = (!this.metaData);
@@ -50,7 +66,7 @@ class Store extends EventEmitter {
                     })
                 }
             }
-        })
+        });
 
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
@@ -290,15 +306,21 @@ class Store extends EventEmitter {
         return this.metaData;
     }
 
-	// TODO: 仮です。
-    getContentInfo() {
-		return {
-			url : "http://localhost/qgis/qgis2three_noserver/index.html",
-			// contentID : "hogepiyo",
-			// visible : true,
-			// wireframe : false,
-			// label : false
-		}
+    getSelectedContentUrl() {
+        if(this.selectedContent === null){
+            return null;
+        }
+        return "./qgis/" + this.selectedContent + "/index.html";
+    }
+
+    updateContentsList(callback){
+        fetch("./qgis/contentsList.json")
+        .then((res)=>{
+            return res.json();
+        })
+        .then((contentsList)=>{
+            callback(contentsList);
+        });
     }
 }
 
@@ -313,5 +335,6 @@ Store.EVENT_UPLOAD_FAILED = "upload_failed";
 Store.EVENT_UPLOAD_SUCCESS = "upload_success";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_CHANGE_PROPERTY = "done_change_property";
+Store.EVENT_DONE_UPDATE_CONTETNTSLIST = "done_update_contentslist";
 
 export default Store;

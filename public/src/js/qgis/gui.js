@@ -8,6 +8,7 @@
 import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import UploadMenu from '../components/upload_menu.js';
+import ContentsSelect from '../components/contents_select.js';
 import Translation from '../common/translation';
 import Menu from '../components/menu';
 import GUIProperty from './gui_property';
@@ -61,7 +62,7 @@ class GUI extends EventEmitter {
 		this.initLoginMenu();
 		this.loginMenu.show(true);
 		Translation.translate(function () { });
-
+		
 		// ログイン成功
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
 			// ログインメニューを削除
@@ -103,7 +104,7 @@ class GUI extends EventEmitter {
 			type: Constants.TypeWebGL,
 			webglType: "qgis2three.js",
 			user_data_text: JSON.stringify({
-				text: this.store.getContentInfo().url
+				text: this.store.getSelectedContentUrl()
 			}),
 			initCameraMatrix:initCameraMatrix,
 			posx: 0,
@@ -114,7 +115,7 @@ class GUI extends EventEmitter {
 			orgHeight: getCanvasSize().height,
 			visible: true,
 			// layerList: JSON.stringify(param.layerList),
-			url: decodeURI(this.store.getContentInfo().url),
+			url: decodeURI(this.store.getSelectedContentUrl()),
 			displayProperty:JSON.stringify({
 				wireframe : false,
 				label : true	
@@ -130,6 +131,19 @@ class GUI extends EventEmitter {
 
 	initLoginMenu() {
 		this.loginMenu = new LoginMenu("ChOWDER Qgis2Threejs App");
+
+		this.contentsSelect = new ContentsSelect();
+		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
+		document.getElementsByClassName("loginframe")[0].appendChild(this.contentsSelect.getDOM());
+
+		this.store.on(Store.EVENT_DONE_UPDATE_CONTETNTSLIST,(err,contentList)=>{
+			this.contentsSelect.setContentsList(contentList);
+		});
+		this.contentsSelect.on(ContentsSelect.EVENT_CHANGE,(err,event)=>{
+			console.log(this.contentsSelect.getSeletedContent());
+			this.store.selectedContent = this.contentsSelect.getSeletedContent() //★yabai
+		});
+
 		this.uploadMenu = new UploadMenu();
 		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 		document.getElementsByClassName("loginframe")[0].appendChild(this.uploadMenu.getDOM());
@@ -148,6 +162,11 @@ class GUI extends EventEmitter {
 		this.uploadMenu.on(UploadMenu.EVENT_UPLOAD, () => {
 			const fileinput = document.getElementById("uploadfile");
 			const file = fileinput.files[0];
+			console.log(file);
+			if(!file.name.match(/.zip$/)){
+				console.log("not zip file")
+				return;
+			}
 			const reader = new FileReader();
 			reader.addEventListener('load', (event) => {
 				console.log("load",event.target.result);
@@ -157,7 +176,6 @@ class GUI extends EventEmitter {
 				});
 
 			});
-			console.log(file)
 			reader.readAsArrayBuffer(file)
 
 		});
@@ -265,7 +283,7 @@ class GUI extends EventEmitter {
 	 */
 	showWebGL() {
 		this.iframe = document.createElement('iframe');
-		this.iframe.src = this.store.getContentInfo().url;
+		this.iframe.src = this.store.getSelectedContentUrl();
 		this.iframe.style.width = "100%";
 		this.iframe.style.height = "100%";
 		this.iframe.style.border = "none";

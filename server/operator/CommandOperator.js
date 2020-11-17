@@ -1324,6 +1324,10 @@
             console.log("upload", metaData);
             this.executer.upload(binaryData,endCallback);
         }
+
+        updateQgisContentsList(endCallback){
+            this.executer.updateQgisContentsList(endCallback);
+        }
     }
 
     module.exports = CommandOperator;
