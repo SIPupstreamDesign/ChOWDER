@@ -966,12 +966,13 @@ class Store extends EventEmitter {
             for (let i = 0; i < window.resizeListeners.length; ++i) {
                 window.resizeListeners[i]();
             }
-            let canvas = this.itownsViewerDiv.getElementsByTagName('canvas')[0];
-            if (canvas) {
-                canvas.style.width = "100%";
-                canvas.style.height = "100%";
-            }
         }
+        let canvas = this.itownsViewerDiv.getElementsByTagName('canvas')[0];
+        if (canvas) {
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+        }
+        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
     }
 
     isViewReady() {
