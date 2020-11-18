@@ -122,3 +122,9 @@ add_layer,レイヤーの追加,Add Layer
 layer_list,レイヤーリスト,Layer List
 base_content,ベースコンテンツ,Base Content
 layer_property,レイヤープロパティ,Layer Property
+selection_initial,選択してください,Please Select
+timestamp,時刻,Timestamp
+longitude,Longitude (経度),Longitude
+latitude,Latitude (緯度),Latitude
+physical_value_1,物理量1 (棒グラフの長さ),PhysicalValue1 (length)
+physical_value_2,物理量2 (棒グラフの色),PhysicalValue2 (color)

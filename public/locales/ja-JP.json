@@ -121,5 +121,11 @@
  "add_layer": "レイヤーの追加",
  "layer_list": "レイヤーリスト",
  "base_content": "ベースコンテンツ",
- "layer_property": "レイヤープロパティ"
+ "layer_property": "レイヤープロパティ",
+ "selection_initial": "選択してください",
+ "timestamp": "時刻",
+ "longitude": "Longitude (経度)",
+ "latitude": "Latitude (緯度)",
+ "physical_value_1": "物理量1 (棒グラフの長さ)",
+ "physical_value_2": "物理量2 (棒グラフの色)"
 }

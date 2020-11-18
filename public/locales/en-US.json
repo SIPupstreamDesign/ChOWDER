@@ -121,5 +121,11 @@
  "add_layer": "Add Layer",
  "layer_list": "Layer List",
  "base_content": "Base Content",
- "layer_property": "Layer Property"
+ "layer_property": "Layer Property",
+ "selection_initial": "Please Select",
+ "timestamp": "Timestamp",
+ "longitude": "Longitude",
+ "latitude": "Latitude",
+ "physical_value_1": "PhysicalValue1 (length)",
+ "physical_value_2": "PhysicalValue2 (color)"
 }

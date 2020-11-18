@@ -36,6 +36,10 @@ function getTagName(contentType) {
 	return tagName;
 }
 
+function getWebGLIFrameID(metaData) {
+	return 'webgl_content_' + metaData.id;
+}
+
 /**
  * コンテンツを追加できるメインビュー
  */
@@ -47,7 +51,7 @@ class ContentViewGUI extends EventEmitter {
 		this.action = action;
 		this.webglQueue = [];
 		this.isImportingWebGL = false; // webglコンテンツを1つでもロード中かどうか
-		
+
 
 		setInterval(() => {
 			if (!this.isImportingWebGL) {
@@ -64,14 +68,13 @@ class ContentViewGUI extends EventEmitter {
 		let contentElem = data[0];
 		let contentData = data[1];
 		let metaData = data[2];
-		let groupDict = data[3];
-		let iframe = data[4];
-		
+		//let groupDict = data[3];
+		let iframe = document.getElementById(getWebGLIFrameID(metaData));
+
 		// contentData is thubmail
 
 		let url = metaData.url;
-		iframe.src = url;
-		iframe.onload = () => {
+		iframe.onload = ((metaData) => {
 			if(metaData.webglType && metaData.webglType === "qgis2three.js"){
 				// qgis
 				const connector = new IFrameConnector(iframe);
@@ -81,6 +84,8 @@ class ContentViewGUI extends EventEmitter {
 				});
 				
 			}else{
+
+				let iframe = document.getElementById(getWebGLIFrameID(metaData));
 				iframe.contentWindow.chowder_itowns_view_type = "controller";
 				let connector = new IFrameConnector(iframe);
 				this.action.addItownFunc({
@@ -93,7 +98,7 @@ class ContentViewGUI extends EventEmitter {
 							let preMetaData = this.store.getMetaData(metaData.id);
 							ITownsUtil.updateLayerList(connector, metaData, preMetaData);
 						},
-						chowder_itowns_update_time : (metaData) => {
+						chowder_itowns_update_time: (metaData) => {
 							ITownsUtil.updateTime(connector, metaData, this.store.getTime());
 						},
 					}
@@ -103,23 +108,29 @@ class ContentViewGUI extends EventEmitter {
 				try {
 					connector.connect(() => {
 						// 初回に一度実行.
-						connector.send(ITownsCommand.UpdateCamera, {
-							mat: JSON.parse(metaData.cameraWorldMatrix),
-							params: JSON.parse(metaData.cameraParams),
-						});
+						if (metaData.hasOwnProperty('cameraWorldMatrix') &&
+							metaData.hasOwnProperty('cameraParams')) {
+							connector.send(ITownsCommand.UpdateCamera, {
+								mat: JSON.parse(metaData.cameraWorldMatrix),
+								params: JSON.parse(metaData.cameraParams),
+							});
+						}
 						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
 					});
 					connector.once(ITownsCommand.LayersInitialized, (err, data) => {
 						this.isImportingWebGL = false;
 					});
-					setTimeout(() => {
+					let timeOutID = null;
+					timeOutID = setTimeout(() => {
 						this.isImportingWebGL = false;
+						clearTimeout(timeOutID);
 					}, 15 * 1000)
 				} catch (err) {
 					console.error(err);
 				}
 			}
-		};
+		}).bind(this, metaData);
+		iframe.contentWindow.location.replace(url);
 
 		/*
 		blob = new Blob([contentData], { type: "image/png" });
@@ -148,16 +159,20 @@ class ContentViewGUI extends EventEmitter {
 	}
 
 	importWebGLContent(contentElem, contentData, metaData, groupDict) {
+		if (document.getElementById(getWebGLIFrameID(metaData))) {
+			return;
+		}
 		let iframe = document.createElement('iframe');
 		iframe.style.width = "100%";
 		iframe.style.height = "100%";
 		iframe.style.pointerEvents = "none";
+		iframe.id = getWebGLIFrameID(metaData);
 		contentElem.innerHTML = "";
 		contentElem.appendChild(iframe);
 		contentElem.style.color = "white";
 		contentElem.style.overflow = "visible"; // Show all text
 		vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
-		this.webglQueue.push([contentElem, contentData, metaData, groupDict, iframe]);
+		this.webglQueue.push([contentElem, contentData, metaData, groupDict]);
 	}
 
 	importPDFContent(contentElem, contentData, metaData, groupDict) {
@@ -192,7 +207,7 @@ class ContentViewGUI extends EventEmitter {
 							let viewport = page.getViewport(width / originalSize.width);
 							let orgAspect = metaData.orgWidth / metaData.orgHeight;
 							let pageAspect = viewport.width / viewport.height;
-							if ((viewport.width * viewport.height) > (7680*4320)) {
+							if ((viewport.width * viewport.height) > (7680 * 4320)) {
 								if (viewport.width > viewport.height) {
 									viewport.width = 7680;
 									viewport.height = viewport.width / pageAspect;
@@ -259,7 +274,7 @@ class ContentViewGUI extends EventEmitter {
 		contentElem.style.overflow = "visible"; // Show all text
 		vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
 	}
-	
+
 	importTileImageContent(contentElem, contentData, metaData, groupDict) {
 		let mime = "image/jpeg";
 		if (metaData.hasOwnProperty('mime')) {

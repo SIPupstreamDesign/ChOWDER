@@ -13,7 +13,9 @@ const ITownsConstants = {
     TypeGeometry : "geometry",
     TypeUser : "user",
     TypeGlobe : "globe",
-    TypeAtomosphere : "atomosphere"
+    TypeAtomosphere : "atomosphere",
+    TypeBargraph : "bargraph", // 独自
+    TypeOBJ : "obj", // 独自
 };
 
 export default ITownsConstants;

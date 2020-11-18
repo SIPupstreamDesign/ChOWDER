@@ -22,9 +22,20 @@ window.onload = function () {
         });
     }
 
-    function getTextureFloat(buffer) {
-        return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
-    };
+    function getTextureFloat(buffer, view) {
+        // webgl2
+        if (view.mainLoop.gfxEngine.renderer.capabilities.isWebGL2)
+        {
+            const texture = new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.RedFormat, itowns.THREE.FloatType);
+            texture.internalFormat = 'R32F';
+            return texture;
+        }
+        else
+        {
+            // webgl1
+            return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
+        }
+    }
 
     // 地理院地図(Elevation/CSV)の読み込み
     function loadGSIElevationCSV() {
@@ -73,7 +84,7 @@ window.onload = function () {
                     }
                 }
                 var floatArray = new Float32Array(heights);
-                var texture = getTextureFloat(floatArray);
+                var texture = getTextureFloat(floatArray, view);
                 return texture;
             });
         };
@@ -140,7 +151,7 @@ window.onload = function () {
                 return texture(url, options).then(function (tex) {
                     var floatArray = convertTexToArray(tex);
                     var float32Array = new Float32Array(floatArray);
-                    var tt = getTextureFloat(float32Array);
+                    var tt = getTextureFloat(float32Array, view);
                     return tt;
                 });
             };

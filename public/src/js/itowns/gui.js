@@ -65,8 +65,10 @@ class GUI extends EventEmitter {
                 startTime: this.store.getTimelineStartTime(), // 左端の日時
                 endTime: this.store.getTimelineEndTime(), // 右端の日時
                 currentTime: this.store.getTimelineCurrentTime(), // 摘み（ポインタ）の日時
-                minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
-                maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
+                // 以下を設定してもウィンドウサイズ変えると勝手に表示可能範囲が変わる上、
+                // ホイールスクロールの時にズームインできるけどズームアウトできなくなる。
+                //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
+                //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
                 timeChange: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                     // pTimeInfo.  startTimeから左端の日時を取得
@@ -228,6 +230,11 @@ class GUI extends EventEmitter {
                 backdom.appendChild(text);
             }
         })
+
+        // iframe内にwindowのmousemoveを伝える用
+        this.onMouseMove = this._onMouseMove.bind(this);
+        // iframe内にwindowのmouseupを伝える用
+        this.onMouseUp = this._onMouseUp.bind(this);
     }
 
     initWindow() {
@@ -410,7 +417,12 @@ class GUI extends EventEmitter {
         propInner.appendChild(this.layerProperty.getDOM());
 
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
-            this.layerProperty.initFromLayer(data.value, this.store.getLayerData(data.value));
+            let layerData = this.store.getLayerData(data.value);
+            const csv = this.store.getCSVCache(layerData.id);
+            if (csv) {
+                layerData.csv = csv;
+            }
+            this.layerProperty.initFromLayer(data.value, layerData);
         });
 
         // 速度計測ボタン
@@ -455,9 +467,39 @@ class GUI extends EventEmitter {
                 this.iframe.contentWindow.focus();
             };
 
+            // iframe外のmouseupを拾ってiframeに投げる
+            window.addEventListener('mouseup', this.onMouseUp);
+            // iframe外のmousemoveを拾ってiframeに投げる
+            window.addEventListener('mousemove', this.onMouseMove);
+
             this.action.connectIFrame(this.iframe);
         };
+        this.iframe.onunload = () => {
+            window.removeEventListener('mouseup', this.onMouseUp);
+            window.removeEventListener('mousemove', this.onMouseMove);
+        };
         document.getElementById('itowns').appendChild(this.iframe);
+    }
+
+    _onMouseUp(event) {
+        const evt = new CustomEvent('mouseup', {bubbles: true, cancelable: false}); 
+        const clRect = this.iframe.getBoundingClientRect(); 
+        evt.clientX = event.clientX - clRect.left; 
+        evt.clientY = event.clientY - clRect.top; 
+        this.iframe.contentWindow.dispatchEvent(evt); 
+        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt); 
+    }
+
+    _onMouseMove(event) {
+        const clRect = this.iframe.getBoundingClientRect();
+        const evt = new CustomEvent('mousemove', {bubbles: true, cancelable: false}); 
+        Object.defineProperty(evt, 'target', {writable: false, value: this.iframe.contentDocument.body });
+        evt.clientX = event.clientX + clRect.left;
+        evt.clientY = event.clientY + clRect.top;
+        evt.offsetX = event.clientX; 
+        evt.offsetY = event.clientY; 
+        this.iframe.contentWindow.dispatchEvent(evt);
+        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt); 
     }
 
     addITownContent(param, thumbnailBuffer) {

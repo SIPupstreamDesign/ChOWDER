@@ -3,8 +3,6 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-"use strict";
-
 // chowder_itowns_injectionで1jsにeventemitterもまとめたいので、このファイルでは直接importする
 import EventEmitter from '../../../3rd/js/eventemitter3/index.js'
 
