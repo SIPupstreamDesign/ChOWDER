@@ -12,6 +12,7 @@ import Connector from '../common/ws_connector.js';
 import Operation from './operation'
 import IFrameConnector from '../common/iframe_connector';
 import ITownsCommand from '../common/itowns_command';
+import ITownsUtil from '../common/itowns_util';
 
 const reconnectTimeout = 2000;
 
@@ -91,6 +92,7 @@ class Store extends EventEmitter {
             }
         });
 
+        // タイムライン時刻変更の受信
         // パフォーマンス計測結果の受信
         Connector.on(Command.SendMessage, (data) => {
             if (data && data.hasOwnProperty('command') && data.command === "measureITownPerformanceResult") {
@@ -101,15 +103,18 @@ class Store extends EventEmitter {
             }
             if (data && data.hasOwnProperty('command') && data.command === "changeItownsContentTime") {
                 if (data.hasOwnProperty('data') && data.data.hasOwnProperty('time')) {
-                    if (this.timelineCurrentTime.toJSON() != data.data.time) {
-                        let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
-                        this.timelineCurrentTime = new Date(data.data.time);
-                        this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
-                        this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
-                        this.iframeConnector.send(ITownsCommand.UpdateTime, {
-                            time : data.data.time
-                        });
-                        this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+                     // sync状態でない場合、同じコンテンツIDのものにしか反映させない
+                    if (ITownsUtil.isTimelineSync(this.metaData, data.data.id, data.data.senderSync)) {
+                        if (this.timelineCurrentTime.toJSON() != data.data.time) {
+                            let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
+                            this.timelineCurrentTime = new Date(data.data.time);
+                            this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
+                            this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
+                            this.iframeConnector.send(ITownsCommand.UpdateTime, {
+                                time : data.data.time
+                            });
+                            this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+                        }
                     }
                 }
             }
@@ -480,14 +485,29 @@ class Store extends EventEmitter {
             this.operation.updateMetadata(this.metaData, (err, res) => {
             });
             */
+           const isSync = ITownsUtil.isTimelineSync(this.metaData);
+           console.error("sendmessage", this.metaData.id)
             Connector.send(Command.SendMessage, {
                 command : "changeItownsContentTime",
-                data : data
+                data : {
+                    time : data.time,
+                    id : this.metaData.id,
+                    senderSync : isSync // 送信元のsync状態
+                }
             }, () => {
                 this.iframeConnector.send(ITownsCommand.UpdateTime, {
                     time : data.time.toJSON()
                 });
             })
+        }
+    }
+
+    _changeTimelineSync(data) {
+        if (this.metaData) {
+            this.metaData.sync = data.sync;
+            this.operation.updateMetadata(this.metaData, (err, res) => {
+            });
+            this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, this.metaData);
         }
     }
 

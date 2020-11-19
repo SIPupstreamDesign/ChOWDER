@@ -64,19 +64,23 @@ class GUI extends EventEmitter {
 
         this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
             // 全コンテンツデータの時刻をビューポートをもとに更新
-            let metaDataDict = this.store.getMetaDataDict();
-            let funcDict = this.store.getITownFuncDict();
+            const metaDataDict = this.store.getMetaDataDict();
+            const funcDict = this.store.getITownFuncDict();
+			const time = new Date(data.time);
             for (let id in metaDataDict) {
                 if (metaDataDict.hasOwnProperty(id)) {
                     let metaData = metaDataDict[id];
                     if (metaData.type === Constants.TypeWebGL) {
-                        let elem = document.getElementById(id);
-                        this.showTime(elem, metaData);
-                        // timeが変更された場合は、copyrightの位置が変更される
-                        this.showCopyrights(elem, metaData);
-                        
-                        if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-                            funcDict[metaData.id].chowder_itowns_update_time(metaData);
+                        if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync))
+                        {
+                            let elem = document.getElementById(id);
+                            this.showTime(elem, metaData);
+                            // timeが変更された場合は、copyrightの位置が変更される
+                            this.showCopyrights(elem, metaData);
+                            
+                            if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+                                funcDict[metaData.id].chowder_itowns_update_time(metaData, time);
+                            }
                         }
                     }
                 }
@@ -407,8 +411,8 @@ class GUI extends EventEmitter {
             let timeElem = document.getElementById("time:" + metaData.id);
             let previewRect = previewArea.getBoundingClientRect();
             let time = "Time not received";
-            if (this.store.getTime()) {
-                let date = this.store.getTime();
+            if (this.store.getTime(metaData.id)) {
+                let date = this.store.getTime(metaData.id);
                 const y = date.getFullYear();
                 const m = ("00" + (date.getMonth()+1)).slice(-2);
                 const d = ("00" + date.getDate()).slice(-2);
@@ -628,8 +632,8 @@ class GUI extends EventEmitter {
                     chowder_itowns_update_camera: (metaData) => {
                         ITownsUtil.updateCamera(connector, metaData);
                     },
-                    chowder_itowns_update_time: (metaData) => {
-                        ITownsUtil.updateTime(connector, metaData, this.store.getTime());
+                    chowder_itowns_update_time: (metaDatam, time) => {
+                        ITownsUtil.updateTime(connector, metaData, time);
                     },
                     chowder_itowns_resize: (rect) => {
                         ITownsUtil.resize(connector, rect)

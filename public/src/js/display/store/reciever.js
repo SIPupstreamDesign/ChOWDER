@@ -8,6 +8,8 @@ import Command from '../../common/command'
 import Store from './store'
 import StringUtil from '../../common/string_util'
 import RemoteCursorBuilder from '../remote_cursor_builder'
+import ITownsUtil from '../../common/itowns_util';
+import Constants from '../../common/constants';
 
 class Receiver {
     constructor(connector, store, action) {
@@ -260,8 +262,20 @@ class Receiver {
             }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {
-                    this.store.time = new Date(data.data.time);
-                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data, (err, reply) => {
+                    // 各メタデータごとに時刻を保存
+                    let metaDataDict = this.store.getMetaDataDict();
+                    for (let id in metaDataDict) {
+                        if (metaDataDict.hasOwnProperty(id)) {
+                            let metaData = metaDataDict[id];
+                            if (metaData.type === Constants.TypeWebGL) {
+                                if (ITownsUtil.isTimelineSync(metaData, data.data.id, data.data.senderSync))
+                                {
+                                    this.store.time[data.data.id] = new Date(data.data.time);
+                                }
+                            }
+                        }
+                    }
+                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data.data, (err, reply) => {
                     });
                 }
             }

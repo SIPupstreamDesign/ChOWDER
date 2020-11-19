@@ -112,6 +112,25 @@ class ITownsUtil {
         }
         return copyrightText;
     }
+
+    // 指定のメタデータがタイムライン同期対象となっているか返す.
+    static isTimelineSync(metaData, senderID = null, senderSync = null) {
+        let isSync =  (!metaData.hasOwnProperty('sync')) // syncボタンが1回も押されていない
+            || (metaData.hasOwnProperty('sync') && String(metaData.sync) === 'true');   // syncボタンが押されてsyncとなっている
+
+        if (senderSync !== null) {
+            // senderがsync=falseの状態であればfalseとする
+            isSync = isSync &&  String(senderSync) === 'true'; 
+        }
+        if (senderID !== null) {
+            // 送信元IDが引数にあった場合は、
+            // 送信元IDとmetadataのIDが同じであれば
+            // isSync = trueとする。
+            // senderSyncがfalseの場合でも、同じIDであればtrueとする。
+            isSync = isSync || (metaData.id === senderID); 
+        }
+        return isSync;
+    }
 }
 
 export default ITownsUtil;

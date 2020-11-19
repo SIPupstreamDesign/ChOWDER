@@ -154,6 +154,17 @@ class Action extends EventEmitter
     changeTimelineRange(data) {
         this.emit(Action.EVENT_CHANGE_TIMELINE_RANGE, null, data);
     }
+
+    /**
+     * タイムラインの同期設定の変更
+     * @param {*} data 
+     * {
+     *    "sync" : true または false
+     * }
+     */
+    changeTimelineSync(data) {
+        this.emit(Action.EVENT_CHANGE_TIMELINE_SYNC, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -172,4 +183,5 @@ Action.EVENT_LOAD_USER_DATA = "loadUserData";
 Action.EVENT_CHANGE_TIME = "changeTime";
 Action.EVENT_CHANGE_TIMELINE_RANGE = "changeTimelineRange";
 Action.EVENT_MEASURE_PERFORMANCE = "measurePerformance";
+Action.EVENT_CHANGE_TIMELINE_SYNC = "changeTimelineSync";
 export default Action;

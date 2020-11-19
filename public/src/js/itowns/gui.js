@@ -19,7 +19,8 @@ import InputDialog from '../components/input_dialog'
 import PopupBackground from '../components/popup_background';
 import DateInput from '../components/date_input';
 import TimelineSettingDialog from './timeline_setting_dialog';
-import ITownsUtil  from '../common/itowns_util';
+import ITownsUtil from '../common/itowns_util';
+import Input from '../components/input';
 
 function serializeFunction(f) {
     return encodeURI(f.toString());
@@ -36,6 +37,8 @@ function toArrayBuffer(base64) {
     return buffer.buffer;
 }
 
+const pressedClassName = 'timeline_sync_button_pressed';
+
 class GUI extends EventEmitter {
     constructor(store, action) {
         super();
@@ -46,47 +49,8 @@ class GUI extends EventEmitter {
     }
 
     init() {
-        // 一定間隔同じイベントが来なかったら実行するための関数
-        let debounceChangeTime = (() => {
-            const interval = 100;
-            let timer;
-            return (pTimeInfo) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    this.action.changeTime({
-                        time: new Date(pTimeInfo.currentTime)
-                    });
-                }, interval);
-            };
-        })();
+        this.initTimeline();
 
-        $("#timeline").k2goTimeline(
-            {
-                startTime: this.store.getTimelineStartTime(), // 左端の日時
-                endTime: this.store.getTimelineEndTime(), // 右端の日時
-                currentTime: this.store.getTimelineCurrentTime(), // 摘み（ポインタ）の日時
-                // 以下を設定してもウィンドウサイズ変えると勝手に表示可能範囲が変わる上、
-                // ホイールスクロールの時にズームインできるけどズームアウトできなくなる。
-                //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
-                //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
-                timeChange: function (pTimeInfo) {
-                    debounceChangeTime(pTimeInfo);
-                    // pTimeInfo.  startTimeから左端の日時を取得
-                    // pTimeInfo.    endTimeから右端の日時を取得
-                    // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
-                },
-                barMove: function (pTimeInfo) {
-                    debounceChangeTime(pTimeInfo);
-                },
-                barMoveEnd: function (pTimeInfo) {
-                    debounceChangeTime(pTimeInfo);
-                }
-            });
-
-
-        this.timelineSettingDialog = new TimelineSettingDialog(this.store, this.action);
-        document.body.appendChild(this.timelineSettingDialog.getDOM());
-        
         let timelineSettingButton = new Button();
         timelineSettingButton.getDOM().classList.add("timeline_setting_button");
         document.getElementById('timeline').appendChild(timelineSettingButton.getDOM());
@@ -101,16 +65,16 @@ class GUI extends EventEmitter {
             const end = this.store.getTimelineEndTime();
             const current = this.store.getTimelineCurrentTime();
             $("#timeline").k2goTimeline("create",
-            {
-                timeInfo :
                 {
-                  minTime     : start,
-                  maxTime     : end,
-                  startTime   : start,
-                  endTime     : end,
-                  currentTime : current
-                }
-            });
+                    timeInfo:
+                    {
+                        minTime: start,
+                        maxTime: end,
+                        startTime: start,
+                        endTime: end,
+                        currentTime: current
+                    }
+                });
         });
 
         this.initWindow();
@@ -175,7 +139,9 @@ class GUI extends EventEmitter {
             this.addUserContentSelect(metaData);
         });
 
-        // コンテンツ追加後にMetaDataが更新されたタイミングでレイヤーリストをEnableにする
+        // コンテンツ追加後に
+        // MetaDataが更新されたタイミングでレイヤーリストをEnableにする
+        // syncボタンの状態を更新
         this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, metaData) => {
             let meta = metaData;
             if (metaData.length === 1) {
@@ -184,9 +150,23 @@ class GUI extends EventEmitter {
             if (!err && meta.hasOwnProperty('id')) {
                 this.contentID.innerText = meta.id;
                 this.layerList.setEnable(true);
-                
+
                 // copyright更新
                 this.showCopyrights(document.getElementById('itowns'), meta)
+            }
+            // syncの更新
+            if (!err) {
+                const isSync = ITownsUtil.isTimelineSync(meta);
+                const dom = this.timelineSyncButton.getDOM();
+                if (isSync) {
+                    if (!dom.classList.contains(pressedClassName)) {
+                        dom.classList.add(pressedClassName);
+                    }
+                } else {
+                    if (dom.classList.contains(pressedClassName)) {
+                        dom.classList.remove(pressedClassName);
+                    }
+                }
             }
         });
 
@@ -194,7 +174,7 @@ class GUI extends EventEmitter {
             if (!err && meta.hasOwnProperty('id')) {
                 this.contentID.innerText = meta.id;
                 this.layerList.setEnable(true);
-                
+
                 // copyright更新
                 this.showCopyrights(document.getElementById('itowns'), meta)
             }
@@ -235,6 +215,62 @@ class GUI extends EventEmitter {
         this.onMouseMove = this._onMouseMove.bind(this);
         // iframe内にwindowのmouseupを伝える用
         this.onMouseUp = this._onMouseUp.bind(this);
+    }
+
+    initTimeline() {
+        // 一定間隔同じイベントが来なかったら実行するための関数
+        let debounceChangeTime = (() => {
+            const interval = 100;
+            let timer;
+            return (pTimeInfo) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    this.action.changeTime({
+                        time: new Date(pTimeInfo.currentTime)
+                    });
+                }, interval);
+            };
+        })();
+        $("#timeline").k2goTimeline(
+            {
+                startTime: this.store.getTimelineStartTime(), // 左端の日時
+                endTime: this.store.getTimelineEndTime(), // 右端の日時
+                currentTime: this.store.getTimelineCurrentTime(), // 摘み（ポインタ）の日時
+                // 以下を設定してもウィンドウサイズ変えると勝手に表示可能範囲が変わる上、
+                // ホイールスクロールの時にズームインできるけどズームアウトできなくなる。
+                //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
+                //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
+                timeChange: function (pTimeInfo) {
+                    debounceChangeTime(pTimeInfo);
+                    // pTimeInfo.  startTimeから左端の日時を取得
+                    // pTimeInfo.    endTimeから右端の日時を取得
+                    // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
+                },
+                barMove: function (pTimeInfo) {
+                    debounceChangeTime(pTimeInfo);
+                },
+                barMoveEnd: function (pTimeInfo) {
+                    debounceChangeTime(pTimeInfo);
+                }
+            });
+
+        this.timelineSettingDialog = new TimelineSettingDialog(this.store, this.action);
+        document.body.appendChild(this.timelineSettingDialog.getDOM());
+
+        this.timelineSyncButton = new Button();
+        this.timelineSyncButton.getDOM().className = 'timeline_sync_button timeline_sync_button_pressed';
+        this.timelineSyncButton.setDataKey('Sync');
+        document.body.appendChild(this.timelineSyncButton.getDOM());
+        this.timelineSyncButton.on('click', (evt) => {
+            const dom = this.timelineSyncButton.getDOM();
+            if (dom.classList.contains(pressedClassName)) {
+                dom.classList.remove(pressedClassName);
+                this.action.changeTimelineSync({ sync : false });
+            } else {
+                dom.classList.add(pressedClassName);
+                this.action.changeTimelineSync({ sync : true });
+            }
+        });
     }
 
     initWindow() {
@@ -305,15 +341,13 @@ class GUI extends EventEmitter {
             let xhr = new XMLHttpRequest();
             xhr.onload = () => {
                 if (xhr.status == 200) {
-                    try 
-                    {
+                    try {
                         const json = JSON.parse(xhr.response);
                         if (!json.hasOwnProperty('preset_list')) {
                             throw "Error: invalid preset_list.json";
                         }
-                        for (let i = 0; i < json.preset_list.length; ++i)
-                        {
-                            const preset =  json.preset_list[i];
+                        for (let i = 0; i < json.preset_list.length; ++i) {
+                            const preset = json.preset_list[i];
                             if (!preset.hasOwnProperty('name') || !preset.hasOwnProperty('url')) {
                                 throw "Error: invalid preset_list.json";
                             }
@@ -323,12 +357,11 @@ class GUI extends EventEmitter {
                             }), "Preset:" + preset.name);
                         }
                     }
-                    catch(err)
-                    {
+                    catch (err) {
                         window.alert(err);
                         console.error(err)
                     }
-                    
+
                     // ipcameraがあれば追加
                     {
                         let xhr2 = new XMLHttpRequest();
@@ -482,24 +515,24 @@ class GUI extends EventEmitter {
     }
 
     _onMouseUp(event) {
-        const evt = new CustomEvent('mouseup', {bubbles: true, cancelable: false}); 
-        const clRect = this.iframe.getBoundingClientRect(); 
-        evt.clientX = event.clientX - clRect.left; 
-        evt.clientY = event.clientY - clRect.top; 
-        this.iframe.contentWindow.dispatchEvent(evt); 
-        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt); 
+        const evt = new CustomEvent('mouseup', { bubbles: true, cancelable: false });
+        const clRect = this.iframe.getBoundingClientRect();
+        evt.clientX = event.clientX - clRect.left;
+        evt.clientY = event.clientY - clRect.top;
+        this.iframe.contentWindow.dispatchEvent(evt);
+        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt);
     }
 
     _onMouseMove(event) {
         const clRect = this.iframe.getBoundingClientRect();
-        const evt = new CustomEvent('mousemove', {bubbles: true, cancelable: false}); 
-        Object.defineProperty(evt, 'target', {writable: false, value: this.iframe.contentDocument.body });
+        const evt = new CustomEvent('mousemove', { bubbles: true, cancelable: false });
+        Object.defineProperty(evt, 'target', { writable: false, value: this.iframe.contentDocument.body });
         evt.clientX = event.clientX + clRect.left;
         evt.clientY = event.clientY + clRect.top;
-        evt.offsetX = event.clientX; 
-        evt.offsetY = event.clientY; 
+        evt.offsetX = event.clientX;
+        evt.offsetY = event.clientY;
         this.iframe.contentWindow.dispatchEvent(evt);
-        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt); 
+        this.iframe.contentWindow.document.documentElement.dispatchEvent(evt);
     }
 
     addITownContent(param, thumbnailBuffer) {
@@ -600,19 +633,18 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      */
     showCopyrights(elem, metaData) {
-        if (elem 
+        if (elem
             && metaData.type === Constants.TypeWebGL
-            && metaData.hasOwnProperty('layerList')) 
-            {
+            && metaData.hasOwnProperty('layerList')) {
 
             let copyrightText = ITownsUtil.createCopyrightText(metaData);
             if (copyrightText.length === 0) return;
-            
+
             let copyrightElem = document.getElementById("copyright:" + metaData.id);
             if (copyrightElem) {
                 copyrightElem.innerHTML = copyrightText;
                 copyrightElem.style.right = "0px";
-                copyrightElem.style.top =   "0px";
+                copyrightElem.style.top = "0px";
                 copyrightElem.style.zIndex = elem.style.zIndex;
             } else {
                 copyrightElem = document.createElement("pre");
@@ -620,7 +652,7 @@ class GUI extends EventEmitter {
                 copyrightElem.className = "copyright";
                 copyrightElem.innerHTML = copyrightText;
                 copyrightElem.style.right = "0px";
-                copyrightElem.style.top =   "0px";
+                copyrightElem.style.top = "0px";
                 copyrightElem.style.position = "absolute";
                 copyrightElem.style.height = "auto";
                 copyrightElem.style.whiteSpace = "pre-line";

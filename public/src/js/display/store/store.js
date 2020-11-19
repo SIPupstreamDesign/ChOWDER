@@ -36,7 +36,7 @@ class Store extends EventEmitter {
         this.videoStore = null;
 
         this.initEvents();
-        this.time = null;
+        this.time = {};
 
         this.onGetWindowData = this.onGetWindowData.bind(this);
         this.onGetMetaData = this.onGetMetaData.bind(this);
@@ -701,8 +701,11 @@ class Store extends EventEmitter {
         return this.virtualDisplay;
     }
 
-    getTime() {
-        return this.time;
+    getTime(id) {
+        if (this.time.hasOwnProperty(id)) {
+            return this.time[id];
+        }
+        return null;
     }
 
     getGlobalSetting() {

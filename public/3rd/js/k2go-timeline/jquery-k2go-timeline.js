@@ -78,7 +78,7 @@
       {
         if (typeof $main.data("options.k2goTimeline").zoomStart == "function") setTimeout(function() { $main.data("options.k2goTimeline").zoomStart(_getTimeInfo()); }, 1);
       }
-      
+
       var intDelta = pEvent.originalEvent.deltaY ? -(pEvent.originalEvent.deltaY) : pEvent.originalEvent.wheelDelta ? pEvent.originalEvent.wheelDelta : -(pEvent.originalEvent.detail);
       var intScale = $main.data("options.k2goTimeline").scale * 0.1 * (intDelta < 0 ? 1 : -1);
 

@@ -47,8 +47,6 @@ class Store extends EventEmitter
 
 		this.isInitialized_ = false;
 
-		this.time = null;
-
 		// 接続状況
 		// null = 初期状態(未接続), false = 接続済, true = 接続した後に切断された
 		this.isDisconnect = null;
@@ -568,10 +566,6 @@ class Store extends EventEmitter
 
     getITownFuncDict() {
         return this.itownFuncDict;
-	}
-
-    getTime() {
-        return this.time;
 	}
 
 	getGlobalSetting(){

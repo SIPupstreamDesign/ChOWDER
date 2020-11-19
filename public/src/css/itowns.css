@@ -191,6 +191,32 @@ p {
 	border-radius: 5px;
 }
 
+
+.timeline_sync_button {
+	position : fixed;
+    width: 60px;
+	height : 32px;
+	left : 8px;
+	bottom : 60px;
+	border : 5px solid lightgray;
+	border-radius: 3px;
+	
+    padding: 0px;
+    font-size: 11px;
+    font-weight: bold;
+    color: darkgray;
+}
+
+.timeline_sync_button:hover {
+	border : 5px solid gray;
+}
+
+.timeline_sync_button_pressed {
+	background : rgb(81, 191, 93);
+	border-color:#b1ffb9;
+	color : black;
+}
+
 .timeline_setting_dialog {
 	display : none;
 	top: 50%;

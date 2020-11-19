@@ -132,8 +132,8 @@ class Receiver
             }
         });
 
-        // VideoControllerの動画一括コントロール.
         this.connector.on(Command.SendMessage, (data) => {
+            // VideoControllerの動画一括コントロール.
             if (data.command === 'playVideo') {
                 data.ids.forEach((id) => {
                     let videoPlayer = this.store.getVideoStore().getVideoPlayer(id);
@@ -152,8 +152,7 @@ class Receiver
             }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {
-                    this.store.time = new Date(data.data.time);
-                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data, (err, reply) => {
+                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data.data, (err, reply) => {
                     });
                 }
             }
