@@ -27,12 +27,6 @@ class Store extends EventEmitter {
         // カメラリセット時に使うカメラ行列
         this.initCameraMatrix = null;
 
-        this.contentsList = null;
-        this.updateContentsList((contentslist)=>{
-            this.contentsList = contentslist;
-            this.emit(Store.EVENT_DONE_UPDATE_CONTETNTSLIST, null, this.contentsList);
-        });
-
         this.selectedContent = null;
 
         // websocket接続が確立された.
@@ -40,14 +34,12 @@ class Store extends EventEmitter {
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
             console.log("websocket connected")
             //let loginOption = { id: "APIUser", password: "" }
-            //this.action.login(loginOption);    
+            //this.action.login(loginOption);
+            this._fetchContents();
         });
 
         this.on(Store.EVENT_UPLOAD_SUCCESS, (err) => {
-            this.updateContentsList((contentslist)=>{
-                this.contentsList = contentslist;
-                this.emit(Store.EVENT_DONE_UPDATE_CONTETNTSLIST, null, this.contentsList);
-            });
+
         });
 
         
@@ -151,7 +143,7 @@ class Store extends EventEmitter {
 				console.log(err);
 				this.emit(Store.EVENT_LOGIN_FAILED, err, data);
 			} else {
-				console.log("loginSuccess", reply);
+				// console.log("loginSuccess", reply);
 				this.authority = reply.authority;
 				this.emit(Store.EVENT_LOGIN_SUCCESS, null);
 			}
@@ -165,20 +157,36 @@ class Store extends EventEmitter {
 	}
 
     _upload(data) {
-        const metaData = [];
-        console.log("[store]_upload", data);
-        Connector.sendBinary(Command.Upload, metaData, data.binary, (err, reply) => {
+        const JSONRPC_param = {
+            filename : data.metaData.filename,
+            type : "qgis2three.js"
+        };
+        Connector.sendBinary(Command.Upload, JSONRPC_param, data.binary, (err, reply) => {
             if (err || reply === null) {
                 console.log(err);
                 this.emit(Store.EVENT_UPLOAD_FAILED, err, data);
             } else {
                 console.log("uploadSuccess", reply);
                 // this.authority = reply.authority;
-                this.emit(Store.EVENT_UPLOAD_SUCCESS, null);
+                this.emit(Store.EVENT_UPLOAD_SUCCESS, null, reply);
             }
         });
     }
-	
+    
+    // サーバから現在登録されているwebglコンテンツのメタデータを取得してくる
+    _fetchContents(data) {
+        let metaDataDict = {}; // id, metaData
+        Connector.send(Command.GetMetaData, { type: "all", id: '' }, (err, metaData) => {
+            if (!err && metaData && metaData.type === Constants.TypeWebGL && metaData.webglType === "qgis2three.js") {
+                if (!metaDataDict.hasOwnProperty(metaData.id)) {
+                    metaDataDict[metaData.id] = metaData;
+                    this.emit(Store.EVENT_DONE_FETCH_CONTENTS, null, metaData);
+                }
+            }
+        });
+    }
+    
+    
 	_connectIFrame(data) {
         let iframe = data;
         this.iframeConnector = new IFrameConnector(iframe);
@@ -302,25 +310,21 @@ class Store extends EventEmitter {
 
     }
 
+    _updateSelectedContent(data){
+        const selectedValue = JSON.parse(data);
+        this.metaData = selectedValue.meta;
+        this.selectedContent = selectedValue;
+    }
+
     getMetaData(){
         return this.metaData;
     }
 
-    getSelectedContentUrl() {
-        if(this.selectedContent === null){
+    getSelectedContent() {
+        if(!this.selectedContent){
             return null;
         }
-        return "./qgis/" + this.selectedContent + "/index.html";
-    }
-
-    updateContentsList(callback){
-        fetch("./qgis/contentsList.json")
-        .then((res)=>{
-            return res.json();
-        })
-        .then((contentsList)=>{
-            callback(contentsList);
-        });
+        return this.selectedContent;
     }
 }
 
@@ -335,6 +339,6 @@ Store.EVENT_UPLOAD_FAILED = "upload_failed";
 Store.EVENT_UPLOAD_SUCCESS = "upload_success";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_CHANGE_PROPERTY = "done_change_property";
-Store.EVENT_DONE_UPDATE_CONTETNTSLIST = "done_update_contentslist";
+Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
 
 export default Store;

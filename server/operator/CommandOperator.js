@@ -1320,9 +1320,8 @@
             }
         }
 
-        upload(metaData, binaryData, endCallback){
-            console.log("upload", metaData);
-            this.executer.upload(binaryData,endCallback);
+        upload(param, binaryData, endCallback){
+            this.executer.upload(param,binaryData,endCallback);
         }
 
         updateQgisContentsList(endCallback){

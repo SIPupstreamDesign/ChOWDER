@@ -31,14 +31,11 @@ class ContentsSelect extends EventEmitter
         return dom;
     }
 
-    setContentsList(array){
-        this.select.clear();
-        for(let name of array){
-            this.select.addOption(name, name);
-        }
+    addOption(value,name){
+        this.select.addOption(value, name);
     }
 
-    getSeletedContent(){
+    getSelectedValue(){
         return this.select.getSelectedValue();
     }
 

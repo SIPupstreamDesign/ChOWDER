@@ -98,7 +98,11 @@ class Action extends EventEmitter {
 
 	upload(data) {
         this.emit(Action.EVENT_UPLOAD, null, data);
-    }
+	}
+	
+	updateSelectedContent(data){
+		this.emit(Action.EVENT_UPDATE_SELECTEDCONTENT, null, data);
+	}
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -110,5 +114,6 @@ Action.EVENT_UPLOAD = "upload";
 Action.EVENT_UPDATE_METADATA_CAMERA = "updateMetaDataCamera";
 Action.EVENT_UPDATE_RENDER_CAMERA = "updateRenderCamera";
 Action.EVENT_CHANGE_PROPERTY = "changeProperty";
+Action.EVENT_UPDATE_SELECTEDCONTENT = "updateSelectedContent"
 
 export default Action;

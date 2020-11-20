@@ -9,6 +9,7 @@
     const fs = require('fs');
     const path = require('path');
     const nodeZip = require("node-zip");
+    const Zip = require("./zip.js");
 
     let phantom = null;
     try {
@@ -3175,91 +3176,62 @@
         /**
          * upload
          * @method upload
+         * @param {Object} param param
          * @param {BLOB} binaryData binaryData
-         * @param {Function} callback (string err)=>{}
+         * @param {Function} callback ({string err, string directoryname})=>{}
          */
-        upload(binaryData, callback){
-            const zip = new nodeZip(binaryData, {base64: false, checkCRC32: true});
-
-            /* 既にこのファイルがアップロードされてたら何もしない */
-            let fileAlreadyExist = false;
-            for(let i in zip.files){
-                if(fs.existsSync("../public/qgis/"+zip.files[i].name)){
-                    fileAlreadyExist = true;
+        upload(param,binaryData, callback){
+            /* sendBinary の JSONRPC の param.type で何がアップロードされたか見る */
+            if(param.type === "qgis2three.js"){
+                /* qgis app 用のqgis2three.jsファイル */
+                const timestamp = Zip.createTimestamp();
+                const extractDir = "../public/qgis/"+timestamp+"/";
+                /* タイムスタンプでディレクトリ掘る */
+                if(!fs.existsSync(extractDir)){
+                    fs.mkdirSync(extractDir);
                 }
-            }
-            if(fileAlreadyExist === true){
-                console.log("[upload]this file already exists");
-                callback("this file already exists");
-                return;
-            }
-
-            /* ファイルを解凍する */
-            (async()=>{
-                let resultList = [];
-                for(let i in zip.files){
-                    const r = await this._promiseExtract(zip,i);
-                    resultList.push(r);
-                }
-                this.updateQgisContentsList();
-                console.log("upload:result",resultList);
-                
-                for(let result of resultList){
-                    if(result !== null){
-                        callback(result);//最初に起きたエラー
+    
+                /* ファイルを解凍する */
+                (async()=>{
+                    const fileList = await Zip.extract(binaryData, extractDir);
+                    
+                    if(typeof fileList === Error){
+                        // 想定外の実行時エラーでrejectされた
+                        callback({err:fileList.toString(),dirname:null});
+                        return;
                     }
-                }
-                callback(null);//エラーはなかった
-            })();
-        }
-
-        /**
-         * _promiseExtract
-         * nodezipの解凍をファイル/フォルダごとにpromise実行する。
-         * @method _promiseExtract
-         * @return {Promise}
-         */
-        _promiseExtract(zip,file){
-            return new Promise((resolve,reject)=>{
-                if(zip.files[file].options.dir === true){
-                    if(!fs.existsSync("../public/qgis/"+zip.files[file].name)){
-                        console.log("[mkdir] : ","../public/qgis/"+zip.files[file].name);
-                        fs.mkdir("../public/qgis/"+zip.files[file].name, { recursive: true },(err)=>{
-                            if(err){
-                                console.log(err)
-                                reject(err);
-                            };
-                            resolve(null);
-                        });
-                    }else{
-                        reject("this filename already exist");
+                    
+                    /* index.htmlを探す */
+                    let htmlDir = null;
+                    for(let file of fileList){
+                        if(file.err !== null){
+                            /* 解凍時にファイル単位でエラーになってた */
+                            callback({err:file.err.toString(),dirname:null});//最初に起きたエラー
+                            return;
+                        }
+                        if(file.dir.match(/index.html$/)){
+                            // console.log("HTML EXIST:",file.dir);
+                            htmlDir = file.dir;
+                        }
                     }
-                }else{
-                    fs.writeFile("../public/qgis/"+zip.files[file].name,zip.files[file]._data,"binary",(err)=>{
-                        console.log("[writeFile] : ","../public/qgis/"+zip.files[file].name);
-                        if(err){
-                            console.log(err)
-                            reject(err);
-                        };
-                        resolve(null);
-                    });
-                }
-            });
-        }
 
-        updateQgisContentsList(){
-            console.log("updateQgisContentsList");
-            fs.readdir("../public/qgis/",(err,files)=>{
-                let list = [];
-                for(let file of files){
-                    if(file !== "contentsList.json")
-                    list.push(file);
-                }
+                    if(htmlDir === null){
+                        /* index.html がないってことは qgis2three.js のファイルじゃないと思う */
+                        console.log("it is not qgis2three.js file");
+                        callback({err:new Error("it is not qgis2three.js file").toString(),dirname:null});
+                        return;
+                    }
 
-                fs.writeFile("../public/qgis/contentsList.json",JSON.stringify(list),"utf8",(err)=>{
-                    console.log("[contentslist]done");
-                });
-            });
+                    callback({err:null,dirname:htmlDir});//エラーはなかった
+                })();
+            }else{
+                // (async()=>{
+                //     const extractDir = "../public/"
+                //     const fileList = await Zip.extract(binaryData, extractDir);
+                // })();
+
+                callback({err:new Error("JSONRPC param.type undefined").toString(),dirname:null});
+            }
         }
     }
 

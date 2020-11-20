@@ -81,15 +81,33 @@ class GUI extends EventEmitter {
             this.iframe.contentWindow.Q3D.application.setWireframeMode(data.wireframe);
 		});
 
+		const NEW_CONTENT = false;
 		this.store.on(Store.EVENT_DONE_IFRAME_CONNECT, (err, iframeConnector) => {
 			console.log("[gui]:EVENT_DONE_IFRAME_CONNECT");
-			this.addQgisContent();
+			if(NEW_CONTENT === true){
+				/* 新しくアップロードしたデータをaddする */
+				this.addQgisContent();
+			}else{
+				/* redisからfetchしたコンテンツデータを使う */
+			}
 		})
 
 		this.store.on(Store.EVENT_DONE_ADD_CONTENT, (err, data) => {
 			console.log("[gui]:EVENT_DONE_ADD_CONTENT");
 			this.initPropertyPanel();
 		})
+
+        // ページアクセス直後に全コンテンツのメタデータを取得し(action.fetchContents)、
+        // webglコンテンツであった場合のみコールバックが呼ばれる
+        // 複数のwebglコンテンツがあった場合は, 複数回呼ばれる
+        this.store.on(Store.EVENT_DONE_FETCH_CONTENTS, (err, metaData) => {
+            this.contentsSelect.addOption(JSON.stringify({
+				type: "user",
+				url: metaData.url,
+				meta: metaData
+			}), "ContentID:" + metaData.id);
+			this.action.updateSelectedContent(this.contentsSelect.getSelectedValue())
+        });
 
 	}
 
@@ -104,7 +122,7 @@ class GUI extends EventEmitter {
 			type: Constants.TypeWebGL,
 			webglType: "qgis2three.js",
 			user_data_text: JSON.stringify({
-				text: this.store.getSelectedContentUrl()
+				text: this.store.getSelectedContent().url
 			}),
 			initCameraMatrix:initCameraMatrix,
 			posx: 0,
@@ -115,7 +133,7 @@ class GUI extends EventEmitter {
 			orgHeight: getCanvasSize().height,
 			visible: true,
 			// layerList: JSON.stringify(param.layerList),
-			url: decodeURI(this.store.getSelectedContentUrl()),
+			url: decodeURI(this.store.getSelectedContent().url),
 			displayProperty:JSON.stringify({
 				wireframe : false,
 				label : true	
@@ -136,12 +154,8 @@ class GUI extends EventEmitter {
 		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 		document.getElementsByClassName("loginframe")[0].appendChild(this.contentsSelect.getDOM());
 
-		this.store.on(Store.EVENT_DONE_UPDATE_CONTETNTSLIST,(err,contentList)=>{
-			this.contentsSelect.setContentsList(contentList);
-		});
 		this.contentsSelect.on(ContentsSelect.EVENT_CHANGE,(err,event)=>{
-			console.log(this.contentsSelect.getSeletedContent());
-			this.store.selectedContent = this.contentsSelect.getSeletedContent() //★yabai
+			this.action.updateSelectedContent(this.contentsSelect.getSelectedValue())
 		});
 
 		this.uploadMenu = new UploadMenu();
@@ -172,12 +186,12 @@ class GUI extends EventEmitter {
 				console.log("load",event.target.result);
 
 				this.action.upload({
+					metaData: {filename:file.name},
 					binary: event.target.result
 				});
 
 			});
 			reader.readAsArrayBuffer(file)
-
 		});
 
 		let select = this.loginMenu.getUserSelect();
@@ -262,6 +276,15 @@ class GUI extends EventEmitter {
 		};
 	}
 
+    addUserContentSelect(metaData) {
+        this.itownSelect.addOption(JSON.stringify({
+            type: "user",
+            url: metaData.url,
+            meta: metaData
+        }), "ContentID:" + metaData.id);
+    }
+
+
 	/**
 	 * クライアントサイズを取得する.
 	 * ただの `{width: window.innerWidth, height: window.innerHeight}`.
@@ -283,7 +306,8 @@ class GUI extends EventEmitter {
 	 */
 	showWebGL() {
 		this.iframe = document.createElement('iframe');
-		this.iframe.src = this.store.getSelectedContentUrl();
+		this.iframe.src = this.store.getSelectedContent().url;
+		console.log(this.store.getSelectedContent().url)
 		this.iframe.style.width = "100%";
 		this.iframe.style.height = "100%";
 		this.iframe.style.border = "none";
