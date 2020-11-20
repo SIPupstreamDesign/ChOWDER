@@ -13,6 +13,7 @@ import Translation from '../common/translation';
 import Menu from '../components/menu';
 import GUIProperty from './gui_property';
 import Constants from '../common/constants';
+import RadioButton from '../components/radio_button.js';
 
 
 /**
@@ -81,10 +82,9 @@ class GUI extends EventEmitter {
             this.iframe.contentWindow.Q3D.application.setWireframeMode(data.wireframe);
 		});
 
-		const NEW_CONTENT = false;
 		this.store.on(Store.EVENT_DONE_IFRAME_CONNECT, (err, iframeConnector) => {
 			console.log("[gui]:EVENT_DONE_IFRAME_CONNECT");
-			if(NEW_CONTENT === true){
+			if(this.store.getNewContent() === true){
 				/* 新しくアップロードしたデータをaddする */
 				this.addQgisContent();
 			}else{
@@ -150,48 +150,71 @@ class GUI extends EventEmitter {
 	initLoginMenu() {
 		this.loginMenu = new LoginMenu("ChOWDER Qgis2Threejs App");
 
-		this.contentsSelect = new ContentsSelect();
+		this.radio = new RadioButton("contents");
 		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
-		document.getElementsByClassName("loginframe")[0].appendChild(this.contentsSelect.getDOM());
+		document.getElementsByClassName("loginframe")[0].appendChild(this.radio.getDOM());
+
+
+		this.contentsSelect = new ContentsSelect();
+		this.radio.addRadio("redis_content",this.contentsSelect.getDOM());
 
 		this.contentsSelect.on(ContentsSelect.EVENT_CHANGE,(err,event)=>{
 			this.action.updateSelectedContent(this.contentsSelect.getSelectedValue())
 		});
 
 		this.uploadMenu = new UploadMenu();
-		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
-		document.getElementsByClassName("loginframe")[0].appendChild(this.uploadMenu.getDOM());
+		this.radio.addRadio("upload",this.uploadMenu.getDOM());
+
+		const upload = () => {
+			return new Promise((resolve,reject)=>{
+				const fileinput = document.getElementById("uploadfile");
+				const file = fileinput.files[0];
+				console.log(file);
+
+				this.store.on(Store.EVENT_UPLOAD_SUCCESS, (err) => {
+					console.log("UPLOAD_SUCCESS");
+					resolve();
+				});
+
+				if(!file.name.match(/.zip$/)){
+					console.log("not zip file")
+					return;
+				}
+				const reader = new FileReader();
+				reader.addEventListener('load', (event) => {
+					console.log("load",event.target.result);
+	
+					this.action.upload({
+						metaData: {filename:file.name},
+						binary: event.target.result
+					});
+
+				});
+				reader.readAsArrayBuffer(file);
+			})
+		}
 
 		// ログインが実行された場合
-		this.loginMenu.on(LoginMenu.EVENT_LOGIN, () => {
+		this.loginMenu.on(LoginMenu.EVENT_LOGIN, async()=>{
+			const selected = this.radio.getSelected();
+			let newContent = null;
+			if(selected === "redis_content"){
+				newContent = false;
+			}else if(selected === "upload"){
+				newContent = true;
+				await upload();
+			}else{
+
+			}
+
 			let userSelect = this.loginMenu.getUserSelect();
 			// ログイン実行
 			this.action.login({
 				id: "APIUser",
-				password: this.loginMenu.getPassword()
+				password: this.loginMenu.getPassword(),
+				newContent:newContent
 			});
-		});
-
-		// アップロードが実行された場合
-		this.uploadMenu.on(UploadMenu.EVENT_UPLOAD, () => {
-			const fileinput = document.getElementById("uploadfile");
-			const file = fileinput.files[0];
-			console.log(file);
-			if(!file.name.match(/.zip$/)){
-				console.log("not zip file")
-				return;
-			}
-			const reader = new FileReader();
-			reader.addEventListener('load', (event) => {
-				console.log("load",event.target.result);
-
-				this.action.upload({
-					metaData: {filename:file.name},
-					binary: event.target.result
-				});
-
-			});
-			reader.readAsArrayBuffer(file)
+			return;
 		});
 
 		let select = this.loginMenu.getUserSelect();
@@ -210,7 +233,6 @@ class GUI extends EventEmitter {
 	// 右側のパネルの初期化
 	initPropertyPanel() {
 		const metaData = this.store.getMetaData();
-		console.log("@",metaData);
         let propElem = document.getElementById('qgis_property');
 
         let propInner = document.createElement('div');

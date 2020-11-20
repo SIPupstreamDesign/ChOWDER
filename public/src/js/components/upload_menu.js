@@ -26,14 +26,14 @@ class UploadMenu extends EventEmitter
         fileinput.id = "uploadfile";
         dom.appendChild(fileinput);
 
-        const button = document.createElement("input");
-        button.type = "button";
-        button.value = "send";
-        dom.appendChild(button);
+        // const button = document.createElement("input");
+        // button.type = "button";
+        // button.value = "send";
+        // dom.appendChild(button);
 
-        button.addEventListener("click",(err)=>{
-            this.emit(UploadMenu.EVENT_UPLOAD, err);
-        });
+        // button.addEventListener("click",(err)=>{
+        //     this.emit(UploadMenu.EVENT_UPLOAD, err);
+        // });
 
         return dom;
     }

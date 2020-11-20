@@ -29,6 +29,8 @@ class Store extends EventEmitter {
 
         this.selectedContent = null;
 
+        this.newContent = null;
+
         // websocket接続が確立された.
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
@@ -37,11 +39,6 @@ class Store extends EventEmitter {
             //this.action.login(loginOption);
             this._fetchContents();
         });
-
-        this.on(Store.EVENT_UPLOAD_SUCCESS, (err) => {
-
-        });
-
         
         // コンテンツ追加完了した.
         this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply) => {
@@ -138,6 +135,7 @@ class Store extends EventEmitter {
 	}
 
 	_login(data) {
+        this.newContent = data.newContent;
 		Connector.send(Command.Login, data, (err, reply) => {
 			if (err || reply === null) {
 				console.log(err);
@@ -325,6 +323,10 @@ class Store extends EventEmitter {
             return null;
         }
         return this.selectedContent;
+    }
+
+    getNewContent(){
+        return this.newContent;
     }
 }
 

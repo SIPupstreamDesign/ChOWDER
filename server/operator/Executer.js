@@ -3178,7 +3178,7 @@
          * @method upload
          * @param {Object} param param
          * @param {BLOB} binaryData binaryData
-         * @param {Function} callback ({string err, string directoryname})=>{}
+         * @param {Function} callback (string err, {string dirname})=>{}
          */
         upload(param,binaryData, callback){
             /* sendBinary の JSONRPC の param.type で何がアップロードされたか見る */
@@ -3197,7 +3197,8 @@
                     
                     if(typeof fileList === Error){
                         // 想定外の実行時エラーでrejectされた
-                        callback({err:fileList.toString(),dirname:null});
+                        console.log("err:",fileList.toString());
+                        callback(fileList.toString(),null);
                         return;
                     }
                     
@@ -3206,7 +3207,7 @@
                     for(let file of fileList){
                         if(file.err !== null){
                             /* 解凍時にファイル単位でエラーになってた */
-                            callback({err:file.err.toString(),dirname:null});//最初に起きたエラー
+                            callback(file.err.toString(),null);//最初に起きたエラー
                             return;
                         }
                         if(file.dir.match(/index.html$/)){
@@ -3218,11 +3219,11 @@
                     if(htmlDir === null){
                         /* index.html がないってことは qgis2three.js のファイルじゃないと思う */
                         console.log("it is not qgis2three.js file");
-                        callback({err:new Error("it is not qgis2three.js file").toString(),dirname:null});
+                        callback(new Error("it is not qgis2three.js file").toString(),null);
                         return;
                     }
 
-                    callback({err:null,dirname:htmlDir});//エラーはなかった
+                    callback(null,{dirname:htmlDir});//エラーはなかった
                 })();
             }else{
                 // (async()=>{
@@ -3230,7 +3231,7 @@
                 //     const fileList = await Zip.extract(binaryData, extractDir);
                 // })();
 
-                callback({err:new Error("JSONRPC param.type undefined").toString(),dirname:null});
+                callback(new Error("JSONRPC param.type undefined").toString(),null);
             }
         }
     }
