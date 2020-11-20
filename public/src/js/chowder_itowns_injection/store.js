@@ -710,14 +710,17 @@ class Store extends EventEmitter {
                 this.addLayer(layerList[i]);
             }
         }
-        // iTownsAppで保持しているパラメータを反映させる
-        this.itownsView.addEventListener('layers-initialized', () => {
+        const initializeOneTime = () => {
             for (let i = 0; i < layerList.length; ++i) {
                 this.changeLayerProperty(layerList[i])
             }
 
             this.iframeConnector.send(ITownsCommand.LayersInitialized, {}, function () { });
-        });
+            this.itownsView.removeEventListener('layers-initialized', initializeOneTime);
+        }
+
+        // iTownsAppで保持しているパラメータを反映させる
+        this.itownsView.addEventListener('layers-initialized', initializeOneTime);
     }
 
     /**
@@ -810,6 +813,39 @@ class Store extends EventEmitter {
         let layer = this.getLayer(id);
         let isChanged = false;
         if (layer) {
+            let isUpdateSource = false;
+            if (params.hasOwnProperty('url') 
+                && layer.hasOwnProperty('source')
+                && layer.source.hasOwnProperty('url'))
+            {
+                // URLが違う場合はソース更新
+                isUpdateSource = isUpdateSource || (params.url !== layer.source.url);
+                // update_idが違う場合はソース更新
+                isUpdateSource = isUpdateSource || (params.update_id !== layer.update_id);
+            }
+            if (isUpdateSource)
+            {
+                if (layer.source instanceof itowns.C3DTilesSource) {
+                    this.itownsView.removeLayer(layer.id);
+                    let config = this.createLayerConfigByType(params, params.type);
+                    config.source = new itowns.C3DTilesSource({
+                        "url": params.url
+                    });
+                    layer = new itowns.C3DTilesLayer(layer.id, config, this.itownsView);
+                    itowns.View.prototype.addLayer.call(this.itownsView, layer);
+                }
+                if (layer.isOBJ) {
+                    this.itownsView.removeLayer(layer.id);
+                    let config = this.createLayerConfigByType(params, params.type);
+                    layer = CreateOBJLayer(this.itownsView, config);
+                    itowns.View.prototype.addLayer.call(this.itownsView, layer);
+                }
+                isChanged = true;
+            }
+            if (params.hasOwnProperty('update_id')) {
+                layer.update_id = params.update_id;
+                isChanged = true;
+            }
             if (params.hasOwnProperty('opacity')) {
                 layer.opacity = Number(params.opacity);
                 isChanged = true;
