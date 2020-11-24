@@ -16,9 +16,11 @@ SampleURLFileNames[ITownsConstants.TypeColor] = "std/{z}/{x}/{y}.png";
 SampleURLFileNames[ITownsConstants.TypeElevation] = "std/{z}/{x}/{y}.png";
 SampleURLFileNames[ITownsConstants.Type3DTile] = "something/tileset.json";
 SampleURLFileNames[ITownsConstants.TypePointCloud] = "something/cloud.js";
+SampleURLFileNames[ITownsConstants.TypePointCloudTimeSeries] = "something/timeseries.json";
 SampleURLFileNames[ITownsConstants.TypeGeometry] = "something/data.pbf";
 SampleURLFileNames[ITownsConstants.TypeBargraph] = "sample_csv_data/data1.csv";
 SampleURLFileNames[ITownsConstants.TypeOBJ] = "male02/male02.obj";
+
 
 class LayerDialog extends EventEmitter {
     constructor(store, action) {
@@ -81,6 +83,7 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.addOption(ITownsConstants.TypeElevation, "Elevation");
         this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(tileset.json)");
         this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree cloud.js)");
+        this.typeSelect.addOption(ITownsConstants.TypePointCloudTimeSeries, "PointCloudTimeSeries(.json)");
         this.typeSelect.addOption(ITownsConstants.TypeGeometry, "VectorTile(pbf, geojson)");
         this.typeSelect.addOption(ITownsConstants.TypeBargraph, "Bargraph(csv)");
         this.typeSelect.addOption(ITownsConstants.TypeOBJ, "OBJFile(obj)");
@@ -92,6 +95,7 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
             let type = this.typeSelect.getSelectedValue();
             if (type === ITownsConstants.TypePointCloud
+                || type === ITownsConstants.TypePointCloudTimeSeries
                 || type === ITownsConstants.TypeBargraph
                 || type === ITownsConstants.TypeOBJ) {
                 this.zoomRow.style.display = "none";

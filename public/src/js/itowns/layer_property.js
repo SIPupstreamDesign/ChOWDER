@@ -236,7 +236,8 @@ class LayerProperty extends EventEmitter {
 
 	addSSEThreashold(layerID, layerProps) {
 		let maxVal = 1.0;
-		if (layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			maxVal = 2.0;
 		}
 		if (layerProps && layerProps.hasOwnProperty('sseThreshold')) {
@@ -563,7 +564,8 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// bbox
-		if (layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addBBox(layerID, layerProps);
 		}
 
@@ -582,7 +584,8 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// point size
-		if (layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addPointSize(layerID, layerProps);
 		}
 
@@ -601,8 +604,9 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// sseThreshold
-		if (layerProps.type === ITownsConstants.Type3DTile ||
-			layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.Type3DTile 
+			|| layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addSSEThreashold(layerID, layerProps);
 		}
 
@@ -616,9 +620,10 @@ class LayerProperty extends EventEmitter {
 		if (!isBarGraph) {
 			// offset_small_uv
 			// offset_uvの1度の区間を1000分の1にしたスライダー
-			if (layerProps.type === ITownsConstants.TypePointCloud ||
-				layerProps.type === ITownsConstants.Type3DTile ||
-				layerProps.type === ITownsConstants.TypeGeometry) {
+			if (layerProps.type === ITownsConstants.TypePointCloud 
+				|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries
+				|| layerProps.type === ITownsConstants.Type3DTile 
+				|| layerProps.type === ITownsConstants.TypeGeometry) {
 				this.addOffsetUV(layerID, layerProps);
 			}
 		}

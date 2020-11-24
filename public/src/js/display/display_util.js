@@ -163,21 +163,34 @@ class DisplayUtil
     static calcWebGLFrameRect(store, metaData) {
 
         let win = store.getWindowData();
+        
+		let winR = Vscreen.makeRect(
+			win.posx,
+			win.posy,
+			win.width,
+			win.height
+        );
+        
+		let metaR = Vscreen.makeRect(
+			metaData.posx,
+			metaData.posy,
+			metaData.width,
+			metaData.height
+        );
+        
         // 左上0,0で、実ピクセルサイズ
-        const orgWin =  Vscreen.transform(VscreenUtil.toIntRect(win));
+        const orgWin =  Vscreen.transform(winR);
         // orgWinと同様の座標系でのコンテンツrect
-        const orgRect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+        const orgRect = Vscreen.transform(metaR);
         // コンテンツ左上を(0,0)とした座標系での、windowのrectを求める。
         
         // 結果用rect
         let rect = {
-            x : orgWin.x - orgRect.x,
-            y : orgWin.y - orgRect.y,
-            w : Math.floor(orgWin.w + 0.5),
-            h : Math.floor(orgWin.h + 0.5)
+            x : Math.floor(orgWin.x - orgRect.x - 0.5),
+            y : Math.floor(orgWin.y - orgRect.y - 0.5),
+            w : Math.ceil(orgWin.w + 1.0),
+            h : Math.ceil(orgWin.h + 1.0)
         }
-        rect.x = Math.floor(rect.x + Math.sign(rect.x) * 0.5);
-        rect.y = Math.floor(rect.y + Math.sign(rect.x) * 0.5);
 
         return rect;
     }

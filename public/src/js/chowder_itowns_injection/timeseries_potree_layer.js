@@ -69,7 +69,7 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 			this.config = config;
 			this.itownsView = itownsView;
 			this.source = potreeSource;
-			this.isTimescalePotree = true;
+			this.isTimeseriesPotree = true;
 			this.tempExtent = new itowns.Extent('EPSG:4978', 0, 0, 0);
 
 			this.updateParams_ = this.updateParams.bind(this);

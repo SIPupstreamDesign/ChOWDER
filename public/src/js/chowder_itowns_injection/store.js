@@ -5,14 +5,13 @@
 
 // chowder_itowns_injectionで1jsにeventemitterもまとめたいので、このファイルでは直接importする
 import EventEmitter from '../../../3rd/js/eventemitter3/index.js'
-import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
 import Action from './action'
 import IFrameConnector from '../common/iframe_connector'
 import ITownsCommand from '../common/itowns_command';
 import ITownsConstants from '../itowns/itowns_constants.js';
 import CraeteBarGraphLayer from './bargraph_layer.js';
 import CreateOBJLayer from './obj_layer.js';
-import CreateTimescalePotreeLayer from './timescale_potree_layer';
+import CreateTimescalePotreeLayer from './timeseries_potree_layer.js';
 
 const getTextureFloat = (buffer, view) => {
     // webgl2
@@ -44,8 +43,8 @@ function fetchText(url, options = {}) {
 	});
 }
 
-const isTimescalePotreeLayer = (layer) => {
-    return layer.hasOwnProperty('isTimescalePotree') && layer.isTimescalePotree;
+const isTimeseriesPotreeLayer = (layer) => {
+    return layer.hasOwnProperty('isTimeseriesPotree') && layer.isTimeseriesPotree;
 };
 
 const isBarGraphLayer = (layer) => {
@@ -244,7 +243,7 @@ class Store extends EventEmitter {
         let layers = this.itownsView.getLayers();
         for (let i = 0; i < layers.length; ++i) {
             if (isBarGraphLayer(layers[i])
-            || isTimescalePotreeLayer(layers[i])) {
+            || isTimeseriesPotreeLayer(layers[i])) {
                 res.push(layers[i]);
             }
         }
@@ -401,15 +400,13 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypePointCloud) {
             config.crs = this.itownsView.referenceCrs;
-			if (config.file.indexOf('.json') > 0) {
-                return CreateTimescalePotreeLayer(this.itownsView, config);
-            }
-            else
-            {
-                new itowns.PotreeLayer(config.id, {
-                    source: new itowns.PotreeSource(config)
-                });
-            }
+            return new itowns.PotreeLayer(config.id, {
+                source: new itowns.PotreeSource(config)
+            });
+        }
+        if (type === ITownsConstants.TypePointCloudTimeSeries) {
+            config.crs = this.itownsView.referenceCrs;
+            return CreateTimescalePotreeLayer(this.itownsView, config);
         }
         if (type === ITownsConstants.Type3DTile) {
             return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
@@ -519,7 +516,8 @@ class Store extends EventEmitter {
             }
 
         }
-        if (type === ITownsConstants.TypePointCloud) {
+        if (type === ITownsConstants.TypePointCloud
+            || type === ITownsConstants.TypePointCloudTimeSeries) {
             if (params.hasOwnProperty('file')) {
                 url += params.file;
             }
@@ -641,8 +639,8 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('isBarGraph') && params.isBarGraph) {
             type = ITownsConstants.TypeBargraph;
         }
-        if (params.hasOwnProperty('isTimescalePotree') && params.isTimescalePotree) {
-            type = ITownsConstants.TypePointCloud;
+        if (params.hasOwnProperty('isTimeseriesPotree') && params.isTimeseriesPotree) {
+            type = ITownsConstants.TypePointCloudTimeSeries;
         }
         if (params.hasOwnProperty('isOBJ') && params.isOBJ) {
             type = ITownsConstants.TypeOBJ;
@@ -661,11 +659,12 @@ class Store extends EventEmitter {
                 layer.bboxes.visible = Boolean(params.bbox);
             }
             if (type === ITownsConstants.TypePointCloud ||
+                type === ITownsConstants.TypePointCloudTimeSeries    ||
                 type === ITownsConstants.Type3DTile ||
                 type === ITownsConstants.TypeBargraph ||
                 type === ITownsConstants.TypeOBJ) {
                 itowns.View.prototype.addLayer.call(this.itownsView, layer);
-                if (layer.isTimescalePotree) {
+                if (layer.isTimeseriesPotree) {
                     layer.updateParams();
                 }
             } else {
@@ -856,7 +855,7 @@ class Store extends EventEmitter {
             }
             if (params.hasOwnProperty('bbox')) {
                 layer.bboxes.visible = Boolean(params.bbox);
-                if (layer.isTimescalePotree) {
+                if (layer.isTimeseriesPotree) {
                     layer.updateParams();
                 }
                 isChanged = true;
@@ -1201,8 +1200,8 @@ class Store extends EventEmitter {
                     data.csv = csvData.csv;
                 }
             }
-            if (layer.hasOwnProperty('isTimescalePotree')) {
-                data.isTimescalePotree = layer.isTimescalePotree;
+            if (layer.hasOwnProperty('isTimeseriesPotree')) {
+                data.isTimeseriesPotree = layer.isTimeseriesPotree;
             }
             if (layer.hasOwnProperty('isOBJ')) {
                 data.isOBJ = layer.isOBJ;
@@ -1237,8 +1236,10 @@ class Store extends EventEmitter {
                             return ITownsConstants.TypeElevation;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PotreeLayer || layer.isTimescalePotree) {
+                        } else if (layer instanceof itowns.PotreeLayer) {
                             return ITownsConstants.TypePointCloud;
+                        } else if (layer.isTimeseriesPotree) {
+                            return ITownsConstants.TypePointCloudTimeSeries;
                         } else if (layer instanceof itowns.C3DTilesLayer) {
                             return ITownsConstants.Type3DTile;
                         } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
@@ -1261,8 +1262,10 @@ class Store extends EventEmitter {
                             return ITownsConstants.TypeUser;
                         } else if (layer instanceof itowns.ColorLayer) {
                             return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PotreeLayer || layer.isTimescalePotree) {
+                        } else if (layer instanceof itowns.PotreeLayer) {
                             return ITownsConstants.TypePointCloud;
+                        } else if (layer.isTimeseriesPotree) {
+                            return ITownsConstants.TypePointCloudTimeSeries;
                         } else if (layer instanceof itowns.C3DTilesLayer) {
                             return ITownsConstants.Type3DTile;
                         } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
