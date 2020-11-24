@@ -44,6 +44,13 @@ function createTimescalePotreeSource(config) {
 					source: new itowns.PotreeSource(childConfig)
 				});
 				childLayer.isChildLayer = true;
+
+				// UTC時刻のUnixTime文字列で初期化されたDateを作成する
+				const local = new Date(timeStr)
+				const offset = -1 * local.getTimezoneOffset() / 60
+				const utcDate = new Date(local.getTime() + (offset * 3600000))
+				childLayer.date = utcDate;
+
 				layers.push({
 					time: timeStr,
 					layer: childLayer
@@ -51,7 +58,8 @@ function createTimescalePotreeSource(config) {
 			}
 			const sortLayers = [...layers].sort((a, b) => a.time > b.time);
 			return Promise.resolve({
-				layers: sortLayers
+				layers: sortLayers,
+				json : buffer
 			});
 		}
 	});
@@ -97,6 +105,7 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 		updateParams() {
 			this.source.loadData(this.tempExtent, this).then((data) => {
+				this.timeseries = data.json;
 				this.updateVisibility();
 				for (let i = 0; i < data.layers.length; ++i) {
 					data.layers[i].layer.pointSize = this.pointSize;
@@ -109,16 +118,12 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 		updateVisibility() {
 			this.source.loadData(this.tempExtent, this).then((data) => {
+				this.timeseries = data.json;
 				let visibleLayer = null;
 				if (this.currentDate) {
 					for (let i = data.layers.length - 1; i >= 0; --i) {
-						// UTC時刻のUnixTime文字列で初期化されたDateを作成する
-						const local = new Date(data.layers[i].time)
-						const offset = -1 * local.getTimezoneOffset() / 60
-						const utcDate = new Date(local.getTime() + (offset * 3600000))
-	
 						// console.log("date", utcDate, this.currentDate);
-						if (utcDate <= this.currentDate) {
+						if (data.layers[i].layer.date <= this.currentDate) {
 							visibleLayer = data.layers[i].layer;
 							break;
 						}

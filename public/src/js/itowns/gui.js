@@ -48,6 +48,24 @@ class GUI extends EventEmitter {
 
     }
 
+    updateTimeline() {
+        const start = this.store.getTimelineStartTime();
+        const end = this.store.getTimelineEndTime();
+        const current = this.store.getTimelineCurrentTime();
+        // この再描画によりtimeChangeが走ってしまうが、debounceChangeTimeにより重複イベントが吸収されるはず
+        $("#timeline").k2goTimeline("create",
+            {
+                timeInfo:
+                {
+                    maxTime: $(".k2go-timeline-main").data("options.k2goTimeline").maxTime,
+                    minTime: $(".k2go-timeline-main").data("options.k2goTimeline").minTime,
+                    startTime: start,
+                    endTime: end,
+                    currentTime: current
+                }
+            });
+    }
+
     init() {
         this.initTimeline();
 
@@ -61,20 +79,20 @@ class GUI extends EventEmitter {
         });
 
         this.store.on(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, (err) => {
-            const start = this.store.getTimelineStartTime();
-            const end = this.store.getTimelineEndTime();
-            const current = this.store.getTimelineCurrentTime();
-            $("#timeline").k2goTimeline("create",
-                {
-                    timeInfo:
-                    {
-                        minTime: start,
-                        maxTime: end,
-                        startTime: start,
-                        endTime: end,
-                        currentTime: current
-                    }
-                });
+            this.updateTimeline();
+        });
+
+        this.store.on(Store.EVENT_DONE_CHANGE_TIME, (err) => {
+            this.updateTimeline();
+        });
+
+        this.store.on(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR, (err) => {
+            const rangeBar = this.store.getTimelineRangeBar();
+            if (rangeBar && rangeBar.hasOwnProperty('rangeStartTime') && rangeBar.hasOwnProperty('rangeEndTime')) {
+                $("#timeline").k2goTimeline("showRangeBar", rangeBar);
+            } else {
+                $("#timeline").k2goTimeline("hiddenRangeBar");
+            }
         });
 
         this.initWindow();
@@ -225,7 +243,7 @@ class GUI extends EventEmitter {
             return (pTimeInfo) => {
                 clearTimeout(timer);
                 timer = setTimeout(() => {
-                    this.action.changeTime({
+                    this.action.changeTimeByTimeline({
                         time: new Date(pTimeInfo.currentTime)
                     });
                 }, interval);
@@ -454,6 +472,10 @@ class GUI extends EventEmitter {
             const csv = this.store.getCSVCache(layerData.id);
             if (csv) {
                 layerData.csv = csv;
+            }
+            const json = this.store.getJSONCache(layerData.id);
+            if (json) {
+                layerData.json = json;
             }
             this.layerProperty.initFromLayer(data.value, layerData);
         });

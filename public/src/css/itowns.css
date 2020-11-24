@@ -177,6 +177,28 @@ p {
     cursor:not-allowed;
 }
 
+.time_button_list {
+	width : 240px;
+	height : 150px;
+	overflow-y : auto;
+    border: 1px solid gray;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.time_button_wrap {
+	padding: 1px;
+	padding-top : 5px;
+	padding-left : 4px;
+}
+
+.time_button { 
+	width : 220px;
+    height: 20px;
+    vertical-align: middle;
+    padding: 0px;
+}
+
 .layer_dialog {
 	display : none;
 	top: 50%;

@@ -32,6 +32,7 @@ class LayerDialog extends EventEmitter {
         this.init();
         this.setting = {};
         this.csv = null;
+        this.json = null;
     }
 
     changeInputURLValue(fileName) {

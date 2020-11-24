@@ -664,9 +664,6 @@ class Store extends EventEmitter {
                 type === ITownsConstants.TypeBargraph ||
                 type === ITownsConstants.TypeOBJ) {
                 itowns.View.prototype.addLayer.call(this.itownsView, layer);
-                if (layer.isTimeseriesPotree) {
-                    layer.updateParams();
-                }
             } else {
                 this.itownsView.addLayer(layer);
             }
@@ -1202,6 +1199,11 @@ class Store extends EventEmitter {
             }
             if (layer.hasOwnProperty('isTimeseriesPotree')) {
                 data.isTimeseriesPotree = layer.isTimeseriesPotree;
+                if (!layer.ready) {
+                    await layer.whenReady;
+                }
+                let jsonData = await layer.source.loadData(layer.tempExtent, layer);
+                data.json = jsonData.json;
             }
             if (layer.hasOwnProperty('isOBJ')) {
                 data.isOBJ = layer.isOBJ;

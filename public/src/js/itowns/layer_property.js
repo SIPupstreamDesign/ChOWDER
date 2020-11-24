@@ -8,6 +8,7 @@ import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
 import ITownsConstants from "./itowns_constants";
 import Select from "../components/select"
+import Button from "../components/button"
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -413,6 +414,73 @@ class LayerProperty extends EventEmitter {
 		}
 	}
 
+	addTimeList(layerID, layerProps) {
+		console.error("layerProps", layerProps)
+		if (!layerProps.hasOwnProperty('json') || layerProps.json.length <= 0) return;
+		let times = null;
+		try {
+			const json = JSON.parse(layerProps.json);
+			console.error("json", json);
+			if (json) {
+				times = Object.keys(json);
+			}
+		} catch (err) {
+			console.error(err);
+			return;
+		}
+
+		if (times)
+		{
+			// 時刻歴タイトル
+			let timesTitle = document.createElement('p');
+			timesTitle.className = "property_text_title";
+			timesTitle.innerText = "Times";
+			timesTitle.style.paddingTop = "10px";
+			this.dom.appendChild(timesTitle);
+
+			const buttnList = document.createElement('div');
+			buttnList.className = "time_button_list"
+			let rangeStartTime = null;
+			let rangeEndTime = null;
+			// 時刻歴一覧
+			for (let i = 0; i < times.length; ++i) {
+				const div = document.createElement('div');
+				div.className = "time_button_wrap";
+				let timeButton = new Button();
+				timeButton.getDOM().className = "time_button btn btn-secondary";
+				timeButton.getDOM().value = times[i];
+				// UTC時刻のUnixTime文字列で初期化されたDateを作成する
+				const local = new Date(times[i])
+				const offset = -1 * local.getTimezoneOffset() / 60
+				const date = new Date(local.getTime() + (offset * 3600000));
+				if (i === 0) {
+					rangeStartTime = date;
+				}
+				if (i === times.length - 1) {
+					rangeEndTime = date;
+				}
+
+				timeButton.on('click', ((date) => {
+					return () => {
+						this.action.changeTime({
+							time: date
+						})
+					};
+				})(date));
+				div.appendChild(timeButton.getDOM());
+				buttnList.appendChild(div);
+			}
+			this.dom.appendChild(buttnList);
+
+			if (rangeStartTime && rangeEndTime) {
+				this.action.changeTimelineRangeBar({
+					rangeStartTime: rangeStartTime,
+					rangeEndTime : rangeEndTime
+				})
+			}
+		}
+	}
+
 	addBargraphColumns(layerID, layerProps) {
 		if (!layerProps.hasOwnProperty('csv') || layerProps.csv.data.length <= 0) return;
 
@@ -612,6 +680,11 @@ class LayerProperty extends EventEmitter {
 
 		// attribution url
 		this.addAttribution(layerID, layerProps);
+
+		this.action.changeTimelineRangeBar({});
+		if (layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
+			this.addTimeList(layerID, layerProps);
+		}
 
 		if (isBarGraph) {
 			this.addBargraphColumns(layerID, layerProps);

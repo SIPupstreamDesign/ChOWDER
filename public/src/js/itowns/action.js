@@ -142,6 +142,17 @@ class Action extends EventEmitter
     }
     
     /**
+     * コンテンツに対する時刻の変更
+     * @param data
+     * {
+     *    time : 時刻を表すDateインスタンス
+     * }
+     */
+    changeTimeByTimeline(data) {
+        this.emit(Action.EVENT_CHANGE_TIME_BY_TIMELINE, null, data);
+    }
+
+    /**
      * パフォーマンス計測命令の発行
      */
     measurePerformance(data) {
@@ -149,11 +160,30 @@ class Action extends EventEmitter
     }
 
     /**
-     * タイムラインのレンジを変更
+     * タイムラインのレンジ(start, end)を変更
+     * @param {*} data 
+     * {
+     *   start: Date,
+     *   end : Date
+     * }
      */
     changeTimelineRange(data) {
         this.emit(Action.EVENT_CHANGE_TIMELINE_RANGE, null, data);
     }
+
+    /**
+     * タイムラインのレンジバー(rangeStartTime, rangeEndTime)を変更
+     * @param {*} data 
+     * {
+     *   rangeStartTime: Date,
+     *   rangeEndTime : Date
+     * }
+     * または {} (レンジバー非表示の場合)
+     */
+    changeTimelineRangeBar(data) {
+        this.emit(Action.EVENT_CHANGE_TIMELINE_RANGE_BAR, null, data);
+    }
+
 
     /**
      * タイムラインの同期設定の変更
@@ -181,7 +211,9 @@ Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
 Action.EVENT_CHANGE_TIME = "changeTime";
+Action.EVENT_CHANGE_TIME_BY_TIMELINE = "changeTimeByTimeline";
 Action.EVENT_CHANGE_TIMELINE_RANGE = "changeTimelineRange";
+Action.EVENT_CHANGE_TIMELINE_RANGE_BAR = "changeTimelineRangeBar";
 Action.EVENT_MEASURE_PERFORMANCE = "measurePerformance";
 Action.EVENT_CHANGE_TIMELINE_SYNC = "changeTimelineSync";
 export default Action;
