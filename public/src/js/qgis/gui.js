@@ -89,6 +89,7 @@ class GUI extends EventEmitter {
 				this.addQgisContent();
 			}else{
 				/* redisからfetchしたコンテンツデータを使う */
+				this.initPropertyPanel();
 			}
 		})
 
@@ -154,6 +155,18 @@ class GUI extends EventEmitter {
 		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 		document.getElementsByClassName("loginframe")[0].appendChild(this.radio.getDOM());
 
+		this.errorMessage = document.createElement("div");
+		this.errorMessage.style.backgroundColor = "red";
+        this.errorMessage.style.padding = "10px";
+		document.body.insertBefore(this.errorMessage, document.body.childNodes[0]);
+		document.getElementsByClassName("loginframe")[0].appendChild(this.errorMessage);
+		this.store.on(Store.EVENT_ERROR_MESSAGE,(err)=>{
+			let e = err;
+			if(typeof e === Error){
+				e = e.toString();
+			}
+			this.errorMessage.textContent = e;
+		});
 
 		this.contentsSelect = new ContentsSelect();
 		this.radio.addRadio("redis_content",this.contentsSelect.getDOM());
@@ -170,16 +183,21 @@ class GUI extends EventEmitter {
 				const fileinput = document.getElementById("uploadfile");
 				const file = fileinput.files[0];
 				console.log(file);
+				if(!file){
+					this.store.emit(Store.EVENT_ERROR_MESSAGE,new Error("no contents"));
+					return;
+				}
 
 				this.store.on(Store.EVENT_UPLOAD_SUCCESS, (err) => {
 					console.log("UPLOAD_SUCCESS");
-					resolve();
+					resolve("UPLOAD_SUCCESS");
 				});
 
-				if(!file.name.match(/.zip$/)){
-					console.log("not zip file")
-					return;
-				}
+				this.store.on(Store.EVENT_UPLOAD_FAILED, (err) => {
+					console.log("UPLOAD_FAILED");
+					resolve("UPLOAD_FAILED");
+				});
+
 				const reader = new FileReader();
 				reader.addEventListener('load', (event) => {
 					console.log("load",event.target.result);
@@ -200,11 +218,19 @@ class GUI extends EventEmitter {
 			let newContent = null;
 			if(selected === "redis_content"){
 				newContent = false;
+				console.log(this.store.getSelectedContent())
+				if(!this.store.getSelectedContent()){
+					this.store.emit(Store.EVENT_ERROR_MESSAGE,new Error("no contents"));
+					return;
+				}	
 			}else if(selected === "upload"){
 				newContent = true;
-				await upload();
+				const result = await upload();
+				if(result === "UPLOAD_FAILED"){
+					return;
+				}
 			}else{
-
+				return;
 			}
 
 			let userSelect = this.loginMenu.getUserSelect();
@@ -328,6 +354,7 @@ class GUI extends EventEmitter {
 	 */
 	showWebGL() {
 		this.iframe = document.createElement('iframe');
+		console.log(this.store.getSelectedContent())
 		this.iframe.src = this.store.getSelectedContent().url;
 		console.log(this.store.getSelectedContent().url)
 		this.iframe.style.width = "100%";

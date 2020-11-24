@@ -3190,7 +3190,7 @@
                 if(!fs.existsSync(extractDir)){
                     fs.mkdirSync(extractDir);
                 }
-    
+
                 /* ファイルを解凍する */
                 (async()=>{
                     const fileList = await Zip.extract(binaryData, extractDir);
@@ -3212,7 +3212,8 @@
                         }
                         if(file.dir.match(/index.html$/)){
                             // console.log("HTML EXIST:",file.dir);
-                            htmlDir = file.dir;
+                            const dir = file.dir.substr(9);
+                            htmlDir = dir;
                         }
                     }
 

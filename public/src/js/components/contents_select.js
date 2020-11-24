@@ -18,6 +18,7 @@ class ContentsSelect extends EventEmitter
 
     createUI(){
         const dom = document.createElement("div");
+        dom.style.display = "inline-block";
         dom.style.backgroundColor = "green";
         dom.style.padding = "10px";
 

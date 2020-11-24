@@ -155,16 +155,30 @@ class Store extends EventEmitter {
 	}
 
     _upload(data) {
+        console.log(data);
+        data.metaData.filename
+        if(!data.metaData.filename.match(/.zip$/)){
+            console.log("not zip file");
+            this.emit(Store.EVENT_ERROR_MESSAGE,new Error("Only zip file can be uploaded."));
+            return;
+        }
+
         const JSONRPC_param = {
             filename : data.metaData.filename,
             type : "qgis2three.js"
         };
+
         Connector.sendBinary(Command.Upload, JSONRPC_param, data.binary, (err, reply) => {
             if (err || reply === null) {
                 console.log(err);
-                this.emit(Store.EVENT_UPLOAD_FAILED, err, data);
+                this.emit(Store.EVENT_UPLOAD_FAILED, err);
+                this.emit(Store.EVENT_ERROR_MESSAGE,err);
             } else {
                 console.log("uploadSuccess", reply);
+                const uploadedContent = {
+                    url:reply.dirname
+                };
+                this.selectedContent = uploadedContent;
                 // this.authority = reply.authority;
                 this.emit(Store.EVENT_UPLOAD_SUCCESS, null, reply);
             }
@@ -342,5 +356,6 @@ Store.EVENT_UPLOAD_SUCCESS = "upload_success";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_CHANGE_PROPERTY = "done_change_property";
 Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
+Store.EVENT_ERROR_MESSAGE = "error_message";
 
 export default Store;

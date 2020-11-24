@@ -1,6 +1,7 @@
 (() => {
     "use strict";
     const fs = require('fs');
+    const path = require("path");
     const nodeZip = require("node-zip");
 
     class Zip{
@@ -31,8 +32,9 @@
         static _extractFile(zip,file,extractDir){
             return new Promise((resolve,reject)=>{
                 if(zip.files[file].options.dir === true){
+                    console.log("@@@@@@@@@@@"+extractDir+zip.files[file].name,fs.existsSync(extractDir+zip.files[file].name));
                     if(!fs.existsSync(extractDir+zip.files[file].name)){
-                        // console.log("[mkdir] : ",extractDir+zip.files[file].name);
+                        console.log("[mkdir] : ",extractDir+zip.files[file].name);
                         fs.mkdir(extractDir+zip.files[file].name, { recursive: true },(err)=>{
                             if(err){
                                 console.log(err)
@@ -44,8 +46,11 @@
                         reject({err:new Error("this filename already exist"),dir:null});
                     }
                 }else{
+                    if(!fs.existsSync(path.parse(extractDir+zip.files[file].name).dir)){
+                        fs.mkdirSync(path.parse(extractDir+zip.files[file].name).dir);
+                    }
                     fs.writeFile(extractDir+zip.files[file].name,zip.files[file]._data,"binary",(err)=>{
-                        // console.log("[writeFile] : ",extractDir+zip.files[file].name);
+                        console.log("[writeFile] : ",extractDir+zip.files[file].name);
                         if(err){
                             console.log(err)
                             reject({err:err,dir:null});

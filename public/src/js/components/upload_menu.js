@@ -18,7 +18,8 @@ class UploadMenu extends EventEmitter
 
     createUploadUI(){
         const dom = document.createElement("div");
-        dom.style.backgroundColor = "red";
+        dom.style.display = "inline-block";
+        dom.style.backgroundColor = "aqua";
         dom.style.padding = "10px";
 
         const fileinput = document.createElement("input");
