@@ -244,7 +244,9 @@ class GUI extends EventEmitter {
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     this.action.changeTimeByTimeline({
-                        time: new Date(pTimeInfo.currentTime)
+                        currentTime: new Date(pTimeInfo.currentTime),
+                        startTime: new Date(pTimeInfo.startTime),
+                        endTime: new Date(pTimeInfo.endTime)
                     });
                 }, interval);
             };

@@ -415,12 +415,10 @@ class LayerProperty extends EventEmitter {
 	}
 
 	addTimeList(layerID, layerProps) {
-		console.error("layerProps", layerProps)
 		if (!layerProps.hasOwnProperty('json') || layerProps.json.length <= 0) return;
 		let times = null;
 		try {
 			const json = JSON.parse(layerProps.json);
-			console.error("json", json);
 			if (json) {
 				times = Object.keys(json);
 			}

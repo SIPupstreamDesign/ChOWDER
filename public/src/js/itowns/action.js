@@ -142,10 +142,13 @@ class Action extends EventEmitter
     }
     
     /**
-     * コンテンツに対する時刻の変更
+     * コンテンツに対する時刻の変更(GUIを使用して変更した場合)
+     * 同時に複数のパラメータが変化したりする
      * @param data
      * {
-     *    time : 時刻を表すDateインスタンス
+     *    currentTime: new Date(pTimeInfo.currentTime),
+     *    startTime: new Date(pTimeInfo.startTime),
+     *    endTime: new Date(pTimeInfo.endTime)
      * }
      */
     changeTimeByTimeline(data) {

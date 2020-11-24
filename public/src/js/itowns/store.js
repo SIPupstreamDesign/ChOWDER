@@ -531,7 +531,9 @@ class Store extends EventEmitter {
     // 変更完了イベントを投げない（再描画を行わない）
     // 現在のstoreの時刻からタイムラインを再描画させるとタイムラインの設計的にtimeChangeが走って無限ループする。
     _changeTimeByTimeline(data) {
-        this.timelineCurrentTime = data.time;
+        this.timelineCurrentTime = data.currentTime;
+        this.timelineStartTime = data.startTime;
+        this.timelineEndTime =  data.endTime;
 
         if (this.metaData) {
            const isSync = ITownsUtil.isTimelineSync(this.metaData);
@@ -545,7 +547,7 @@ class Store extends EventEmitter {
                 }
             }, () => {
                 this.iframeConnector.send(ITownsCommand.UpdateTime, {
-                    time : data.time.toJSON()
+                    time : data.currentTime.toJSON()
                 });
             })
         }
