@@ -235,7 +235,7 @@ function CreateBargraphLayer(itownsView, config) {
 		}
 		
 		updateByTime(currentDate = null) {
-			updateBarGraph(currentDate);
+			this.updateBarGraph(currentDate);
 		}
 	}
 	return new BarGraphLayer(itownsView, config);

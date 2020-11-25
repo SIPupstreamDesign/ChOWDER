@@ -177,6 +177,28 @@ p {
     cursor:not-allowed;
 }
 
+.time_button_list {
+	width : 240px;
+	height : 150px;
+	overflow-y : auto;
+    border: 1px solid gray;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.time_button_wrap {
+	padding: 1px;
+	padding-top : 5px;
+	padding-left : 4px;
+}
+
+.time_button { 
+	width : 220px;
+    height: 20px;
+    vertical-align: middle;
+    padding: 0px;
+}
+
 .layer_dialog {
 	display : none;
 	top: 50%;
@@ -189,6 +211,32 @@ p {
 	z-index: 100000000;
 	background-color: rgb(83, 83, 83);
 	border-radius: 5px;
+}
+
+
+.timeline_sync_button {
+	position : fixed;
+    width: 60px;
+	height : 32px;
+	left : 8px;
+	bottom : 60px;
+	border : 5px solid lightgray;
+	border-radius: 3px;
+	
+    padding: 0px;
+    font-size: 11px;
+    font-weight: bold;
+    color: darkgray;
+}
+
+.timeline_sync_button:hover {
+	border : 5px solid gray;
+}
+
+.timeline_sync_button_pressed {
+	background : rgb(81, 191, 93);
+	border-color:#b1ffb9;
+	color : black;
 }
 
 .timeline_setting_dialog {

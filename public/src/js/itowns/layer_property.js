@@ -8,6 +8,7 @@ import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
 import ITownsConstants from "./itowns_constants";
 import Select from "../components/select"
+import Button from "../components/button"
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -236,7 +237,8 @@ class LayerProperty extends EventEmitter {
 
 	addSSEThreashold(layerID, layerProps) {
 		let maxVal = 1.0;
-		if (layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			maxVal = 2.0;
 		}
 		if (layerProps && layerProps.hasOwnProperty('sseThreshold')) {
@@ -412,6 +414,91 @@ class LayerProperty extends EventEmitter {
 		}
 	}
 
+	addTimeList(layerID, layerProps) {
+		let times = [];
+		if (layerProps.hasOwnProperty('json') && layerProps.json.length > 0) {
+			try {
+				const json = JSON.parse(layerProps.json);
+				if (json) {
+					times = Object.keys(json);
+				}
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+		}
+		if (layerProps.hasOwnProperty('csv') && layerProps.csv.data.length > 1) {
+			if (layerProps.hasOwnProperty('bargraphParams')) {
+				const bargraphParams = layerProps.bargraphParams;
+				for (let i = 1; i < layerProps.csv.data.length; ++i) {
+					times.push(layerProps.csv.data[i][bargraphParams.time]);
+				}
+			}
+		}
+
+		if (times.length > 0) {
+			// 時刻歴タイトル
+			let timesTitle = document.createElement('p');
+			timesTitle.className = "property_text_title";
+			timesTitle.innerText = "Times";
+			timesTitle.style.paddingTop = "10px";
+			this.dom.appendChild(timesTitle);
+
+			const buttnList = document.createElement('div');
+			buttnList.className = "time_button_list"
+			let rangeStartTime = null;
+			let rangeEndTime = null;
+			// 時刻歴一覧
+			for (let i = 0; i < times.length; ++i) {
+				if (times[i].length > 0)
+				{
+					const div = document.createElement('div');
+					div.className = "time_button_wrap";
+					let timeButton = new Button();
+					timeButton.getDOM().className = "time_button btn btn-secondary";
+					timeButton.getDOM().value = times[i];
+					// UTC時刻のUnixTime文字列で初期化されたDateを作成する
+					const local = new Date(times[i])
+					const offset = -1 * local.getTimezoneOffset() / 60
+					const date = new Date(local.getTime() + (offset * 3600000));
+					if (!isNaN(date.getTime())) {
+						if (!rangeStartTime) {
+							rangeStartTime = date;
+						}
+						if (!rangeEndTime) {
+							rangeEndTime = date;
+						}
+						rangeStartTime = new Date(Math.min(date.getTime(), rangeStartTime.getTime()));
+						rangeEndTime = new Date(Math.max(date.getTime(), rangeEndTime.getTime()));
+					}
+	
+					timeButton.on('click', ((date) => {
+						return () => {
+							this.action.changeTime({
+								time: date
+							})
+						};
+					})(date));
+					div.appendChild(timeButton.getDOM());
+					buttnList.appendChild(div);
+				}
+			}
+
+			// console.error("rangeStartTime", rangeStartTime, rangeEndTime)
+			if (rangeStartTime && rangeEndTime) {
+				if (!isNaN(rangeStartTime.getTime()) && !isNaN(rangeEndTime.getTime())) {
+					this.action.changeTimelineRangeBar({
+						rangeStartTime: rangeStartTime,
+						rangeEndTime: rangeEndTime
+					});
+
+					// 正しい値がある場合のみ追加
+					this.dom.appendChild(buttnList);
+				}
+			}
+		}
+	}
+
 	addBargraphColumns(layerID, layerProps) {
 		if (!layerProps.hasOwnProperty('csv') || layerProps.csv.data.length <= 0) return;
 
@@ -563,7 +650,8 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// bbox
-		if (layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addBBox(layerID, layerProps);
 		}
 
@@ -582,7 +670,8 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// point size
-		if (layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addPointSize(layerID, layerProps);
 		}
 
@@ -601,13 +690,20 @@ class LayerProperty extends EventEmitter {
 		}
 
 		// sseThreshold
-		if (layerProps.type === ITownsConstants.Type3DTile ||
-			layerProps.type === ITownsConstants.TypePointCloud) {
+		if (layerProps.type === ITownsConstants.Type3DTile
+			|| layerProps.type === ITownsConstants.TypePointCloud
+			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addSSEThreashold(layerID, layerProps);
 		}
 
 		// attribution url
 		this.addAttribution(layerID, layerProps);
+
+		this.action.changeTimelineRangeBar({});
+		if (layerProps.type === ITownsConstants.TypePointCloudTimeSeries
+			|| isBarGraph) {
+			this.addTimeList(layerID, layerProps);
+		}
 
 		if (isBarGraph) {
 			this.addBargraphColumns(layerID, layerProps);
@@ -616,9 +712,10 @@ class LayerProperty extends EventEmitter {
 		if (!isBarGraph) {
 			// offset_small_uv
 			// offset_uvの1度の区間を1000分の1にしたスライダー
-			if (layerProps.type === ITownsConstants.TypePointCloud ||
-				layerProps.type === ITownsConstants.Type3DTile ||
-				layerProps.type === ITownsConstants.TypeGeometry) {
+			if (layerProps.type === ITownsConstants.TypePointCloud
+				|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries
+				|| layerProps.type === ITownsConstants.Type3DTile
+				|| layerProps.type === ITownsConstants.TypeGeometry) {
 				this.addOffsetUV(layerID, layerProps);
 			}
 		}

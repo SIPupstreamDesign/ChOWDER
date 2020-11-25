@@ -16,6 +16,7 @@ const ITownsConstants = {
     TypeAtomosphere : "atomosphere",
     TypeBargraph : "bargraph", // 独自
     TypeOBJ : "obj", // 独自
+    TypePointCloudTimeSeries : "pointcloud_timeseries" // 独自
 };
 
 export default ITownsConstants;

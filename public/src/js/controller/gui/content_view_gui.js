@@ -63,6 +63,17 @@ class ContentViewGUI extends EventEmitter {
 		}, 500);
 	}
 
+	updateWebGLFrameSize(connector, metaData) {
+		let iframe = document.getElementById(getWebGLIFrameID(metaData));
+		let rect = iframe.getBoundingClientRect()
+		ITownsUtil.resize(connector, {
+			x: 0,
+			y: 0,
+			w: rect.right - rect.left,
+			h: rect.bottom - rect.top
+		}, false);
+	}
+
 	importWebGLContentFromQueue(data) {
 		this.isImportingWebGL = true;
 		let contentElem = data[0];
@@ -82,9 +93,7 @@ class ContentViewGUI extends EventEmitter {
 					this.action.updateQgisMetadata(metaData);
 					this.isImportingWebGL = false;
 				});
-				
 			}else{
-
 				let iframe = document.getElementById(getWebGLIFrameID(metaData));
 				iframe.contentWindow.chowder_itowns_view_type = "controller";
 				let connector = new IFrameConnector(iframe);
@@ -92,18 +101,23 @@ class ContentViewGUI extends EventEmitter {
 					id: metaData.id,
 					func: {
 						chowder_itowns_update_camera: (metaData) => {
-							ITownsUtil.updateCamera(connector, metaData);
+							ITownsUtil.updateCamera(connector, metaData, () => {
+								this.updateWebGLFrameSize(connector, metaData);
+							});
 						},
 						chowder_itowns_update_layer_list: (metaData) => {
 							let preMetaData = this.store.getMetaData(metaData.id);
 							ITownsUtil.updateLayerList(connector, metaData, preMetaData);
 						},
-						chowder_itowns_update_time: (metaData) => {
-							ITownsUtil.updateTime(connector, metaData, this.store.getTime());
+						chowder_itowns_update_time: (metaData, time) => {
+							ITownsUtil.updateTime(connector, metaData, time);
 						},
+						chowder_itowns_update_layer_url: () => {
+							iframe.contentWindow.location.replace(url);
+						}
 					}
 				});
-
+	
 				// IframeConnectorを通してiframeに接続
 				try {
 					connector.connect(() => {
@@ -114,10 +128,20 @@ class ContentViewGUI extends EventEmitter {
 								mat: JSON.parse(metaData.cameraWorldMatrix),
 								params: JSON.parse(metaData.cameraParams),
 							});
+							this.updateWebGLFrameSize(connector, metaData);
 						}
-						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList));
+						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+							let rect = {
+								x: 0,
+								y: 0,
+								w: iframe.clientWidth,
+								h: iframe.clientHeight
+							}
+							connector.send(ITownsCommand.Resize, rect);
+						});
 					});
 					connector.once(ITownsCommand.LayersInitialized, (err, data) => {
+	
 						this.isImportingWebGL = false;
 					});
 					let timeOutID = null;

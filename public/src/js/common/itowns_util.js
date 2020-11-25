@@ -11,12 +11,12 @@ import ITownsCommand from './itowns_command.js';
 // ChOWDERメタデータを元にiTownsビュー更新用のユーティリティ
 class ITownsUtil {
     
-    static updateCamera(iframeConnector, metaData) {
+    static updateCamera(iframeConnector, metaData, callback = null) {
         if (metaData.hasOwnProperty('cameraWorldMatrix') && metaData.hasOwnProperty('cameraParams')) {
             iframeConnector.send(ITownsCommand.UpdateCamera, {
                 mat : JSON.parse(metaData.cameraWorldMatrix),
                 params : JSON.parse(metaData.cameraParams),
-            });
+            }, callback);
         }
     }
 
@@ -28,7 +28,7 @@ class ITownsUtil {
         return IDList;
     }
 
-    static updateLayerList(iframeConnector, metaData, preMetaData) {
+    static updateLayerList(iframeConnector, metaData, preMetaData, callback) {
         try {
             if (metaData.hasOwnProperty('layerList')) {
                 let preLayerListStr =  preMetaData ? preMetaData.layerList : [];
@@ -65,6 +65,10 @@ class ITownsUtil {
                         let layer = layerList[i];
                         iframeConnector.send(ITownsCommand.ChangeLayerProperty, layer);
                     }
+                    if (callback)
+                    {
+                        callback();
+                    }
                 }
             }
         }
@@ -79,8 +83,11 @@ class ITownsUtil {
         });
     }
 
-    static resize(iframeConnector, rect) {
-        iframeConnector.send(ITownsCommand.Resize, rect);
+    static resize(iframeConnector, rect, isSetOffset = true) {
+        iframeConnector.send(ITownsCommand.Resize, {
+            rect : rect,
+            isSetOffset : isSetOffset
+        });
     }
 
     static createCopyrightText(metaData) {
@@ -104,6 +111,25 @@ class ITownsUtil {
             }
         }
         return copyrightText;
+    }
+
+    // 指定のメタデータがタイムライン同期対象となっているか返す.
+    static isTimelineSync(metaData, senderID = null, senderSync = null) {
+        let isSync =  (!metaData.hasOwnProperty('sync')) // syncボタンが1回も押されていない
+            || (metaData.hasOwnProperty('sync') && String(metaData.sync) === 'true');   // syncボタンが押されてsyncとなっている
+
+        if (senderSync !== null) {
+            // senderがsync=falseの状態であればfalseとする
+            isSync = isSync &&  String(senderSync) === 'true'; 
+        }
+        if (senderID !== null) {
+            // 送信元IDが引数にあった場合は、
+            // 送信元IDとmetadataのIDが同じであれば
+            // isSync = trueとする。
+            // senderSyncがfalseの場合でも、同じIDであればtrueとする。
+            isSync = isSync || (metaData.id === senderID); 
+        }
+        return isSync;
     }
 }
 

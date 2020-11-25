@@ -12,6 +12,7 @@ import Connector from '../common/ws_connector.js';
 import Operation from './operation'
 import IFrameConnector from '../common/iframe_connector';
 import ITownsCommand from '../common/itowns_command';
+import ITownsUtil from '../common/itowns_util';
 
 const reconnectTimeout = 2000;
 
@@ -33,6 +34,8 @@ class Store extends EventEmitter {
 
         // csvキャッシュ。csvは大きいのでmetaDataとして登録しない。
         this.csvCaches = {}
+        // jsonキャッシュ。jsonは大きいのでmetaDataとして登録しない。
+        this.jsonCaches = {}
 
         const year = 2019;
         const month = 8;
@@ -45,6 +48,8 @@ class Store extends EventEmitter {
         this.timelineEndTime = new Date(year, (month - 1), day, 23, 59, 59)
         // タイムラインCurrent Time
         this.timelineCurrentTime = new Date(year, (month - 1), day, 13, 51);
+        // タイムラインのRangeBar(オレンジのやつ)
+        this.timelineRangeBar = null;
 
         // websocket接続が確立された.
         // ログインする.
@@ -91,6 +96,7 @@ class Store extends EventEmitter {
             }
         });
 
+        // タイムライン時刻変更の受信
         // パフォーマンス計測結果の受信
         Connector.on(Command.SendMessage, (data) => {
             if (data && data.hasOwnProperty('command') && data.command === "measureITownPerformanceResult") {
@@ -101,15 +107,18 @@ class Store extends EventEmitter {
             }
             if (data && data.hasOwnProperty('command') && data.command === "changeItownsContentTime") {
                 if (data.hasOwnProperty('data') && data.data.hasOwnProperty('time')) {
-                    if (this.timelineCurrentTime.toJSON() != data.data.time) {
-                        let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
-                        this.timelineCurrentTime = new Date(data.data.time);
-                        this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
-                        this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
-                        this.iframeConnector.send(ITownsCommand.UpdateTime, {
-                            time : data.data.time
-                        });
-                        this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+                     // sync状態でない場合、同じコンテンツIDのものにしか反映させない
+                    if (ITownsUtil.isTimelineSync(this.metaData, data.data.id, data.data.senderSync)) {
+                        if (this.timelineCurrentTime.toJSON() != data.data.time) {
+                            let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
+                            this.timelineCurrentTime = new Date(data.data.time);
+                            this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
+                            this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
+                            this.iframeConnector.send(ITownsCommand.UpdateTime, {
+                                time : data.data.time
+                            });
+                            this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+                        }
                     }
                 }
             }
@@ -221,6 +230,17 @@ class Store extends EventEmitter {
         }
     }
 
+    __execludeAndCacheJSONData(layerParams) {
+        for (let i = 0; i < layerParams.length; ++i) {
+            const layerParam = layerParams[i];
+            if (layerParam.hasOwnProperty('json')) {
+                this.jsonCaches[layerParam.id] = layerParam.json;
+                delete layerParam.json;
+                break;
+            }
+        }
+    }
+
     _connectIFrame(data) {
         let iframe = data;
         this.iframeConnector = new IFrameConnector(iframe);
@@ -230,6 +250,7 @@ class Store extends EventEmitter {
             // storeのメンバに保存
             this.iframeConnector.on(ITownsCommand.AddLayer, (err, params) => {
                 this.__execludeAndCacheCSVData(params);
+                this.__execludeAndCacheJSONData(params);
                 if (params.length > 0 && this.metaData) {
                     for (let i = 0; i < params.length; ++i) {
                         let layerParam = params[i];
@@ -393,6 +414,13 @@ class Store extends EventEmitter {
         return null;
     }
 
+    getJSONCache(layerID) {
+        if (this.jsonCaches.hasOwnProperty(layerID)) {
+            return this.jsonCaches[layerID];
+        }
+        return null;
+    }
+
     // this.metaDataのlayerListにlayerDataを文字列として上書き保存する
     saveLayer(layer) {
         let layerList = JSON.parse(this.metaData.layerList);
@@ -472,22 +500,65 @@ class Store extends EventEmitter {
 
     _changeTime(data) {
         this.timelineCurrentTime = data.time;
+        if (this.timelineCurrentTime.getTime() < this.timelineStartTime.getTime()
+        ||  this.timelineCurrentTime.getTime() > this.timelineEndTime.getTime()) {
+            const span = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
+            this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - span);
+            this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + span);
+        }
 
         if (this.metaData) {
-            /*
-            this.metaData.time = data.time.toJSON();
-
-            this.operation.updateMetadata(this.metaData, (err, res) => {
-            });
-            */
+           const isSync = ITownsUtil.isTimelineSync(this.metaData);
+            // console.error("sendmessage", this.metaData.id)
             Connector.send(Command.SendMessage, {
                 command : "changeItownsContentTime",
-                data : data
+                data : {
+                    time : data.time,
+                    id : this.metaData.id,
+                    senderSync : isSync // 送信元のsync状態
+                }
             }, () => {
                 this.iframeConnector.send(ITownsCommand.UpdateTime, {
                     time : data.time.toJSON()
                 });
             })
+
+            this.emit(Store.EVENT_DONE_CHANGE_TIME, null, data);
+        }
+    }
+
+    // タイムラインのGUIから時刻を変更した場合
+    // 変更完了イベントを投げない（再描画を行わない）
+    // 現在のstoreの時刻からタイムラインを再描画させるとタイムラインの設計的にtimeChangeが走って無限ループする。
+    _changeTimeByTimeline(data) {
+        this.timelineCurrentTime = data.currentTime;
+        this.timelineStartTime = data.startTime;
+        this.timelineEndTime =  data.endTime;
+
+        if (this.metaData) {
+           const isSync = ITownsUtil.isTimelineSync(this.metaData);
+            // console.error("sendmessage", this.metaData.id)
+            Connector.send(Command.SendMessage, {
+                command : "changeItownsContentTime",
+                data : {
+                    time : data.time,
+                    id : this.metaData.id,
+                    senderSync : isSync // 送信元のsync状態
+                }
+            }, () => {
+                this.iframeConnector.send(ITownsCommand.UpdateTime, {
+                    time : data.currentTime.toJSON()
+                });
+            })
+        }
+    }
+
+    _changeTimelineSync(data) {
+        if (this.metaData) {
+            this.metaData.sync = data.sync;
+            this.operation.updateMetadata(this.metaData, (err, res) => {
+            });
+            this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, this.metaData);
         }
     }
 
@@ -516,6 +587,10 @@ class Store extends EventEmitter {
         return this.timelineCurrentTime;
     }
 
+    getTimelineRangeBar() {
+        return this.timelineRangeBar;
+    }
+
     _changeTimelineRange(data) {
         if (data.hasOwnProperty('start') && data.hasOwnProperty('end')) {
             this.timelineStartTime = data.start;
@@ -528,6 +603,15 @@ class Store extends EventEmitter {
             }
             this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
         }
+    }
+
+    _changeTimelineRangeBar(data) {
+        if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime')) {
+            this.timelineRangeBar = data;
+        } else {
+            this.timelineRangeBar = null;
+        }
+        this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR, null);
     }
 }
 
@@ -546,5 +630,6 @@ Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
 Store.EVENT_UPDATE_MEASURE_PERFORMANCE = "update_mesure_performance"; // 計測結果が更新された
 Store.EVENT_DONE_CHANGE_TIMELINE_RANGE = "done_change_timeline_range";
-
+Store.EVENT_DONE_CHANGE_TIME = "done_change_time";
+Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR = "done_change_timeline_range_bar";
 export default Store;

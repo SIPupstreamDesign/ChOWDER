@@ -118,7 +118,14 @@ class LayerList extends EventEmitter {
         for (let i = 0; i < layerDatas.length; ++i) {
             let data = layerDatas[i];
             if (data) {
-                this.layerSelect.addOption(data.id, data.id + " - " + data.type);
+                let type = data.type;
+                if (data.isBarGraph) {
+                    type = "bargraph"
+                }
+                if (data.isTimeseriesPotree) {
+                    type = "pointcloud_timeseries"
+                }
+                this.layerSelect.addOption(data.id, data.id + " - " + type);
             }
         }
     }

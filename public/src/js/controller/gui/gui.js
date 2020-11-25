@@ -158,16 +158,19 @@ class GUI extends EventEmitter
 
         this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
             // 全コンテンツデータの時刻をビューポートをもとに更新
-            let metaDataDict = this.store.getMetaDataDict();
-            let funcDict = this.store.getITownFuncDict();
+            const metaDataDict = this.store.getMetaDataDict();
+			const funcDict = this.store.getITownFuncDict();
+			const time = new Date(data.time);
             for (let id in metaDataDict) {
                 if (metaDataDict.hasOwnProperty(id)) {
                     let metaData = metaDataDict[id];
                     if (metaData.type === Constants.TypeWebGL) {
-                        
-                        if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-                            funcDict[metaData.id].chowder_itowns_update_time(metaData);
-                        }
+						if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync))
+						{
+							if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+								funcDict[metaData.id].chowder_itowns_update_time(metaData, time);
+							}
+						}
                     }
                 }
             }

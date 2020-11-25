@@ -44,6 +44,13 @@ function createTimescalePotreeSource(config) {
 					source: new itowns.PotreeSource(childConfig)
 				});
 				childLayer.isChildLayer = true;
+
+				// UTC時刻のUnixTime文字列で初期化されたDateを作成する
+				const local = new Date(timeStr)
+				const offset = -1 * local.getTimezoneOffset() / 60
+				const utcDate = new Date(local.getTime() + (offset * 3600000))
+				childLayer.date = utcDate;
+
 				layers.push({
 					time: timeStr,
 					layer: childLayer
@@ -51,7 +58,8 @@ function createTimescalePotreeSource(config) {
 			}
 			const sortLayers = [...layers].sort((a, b) => a.time > b.time);
 			return Promise.resolve({
-				layers: sortLayers
+				layers: sortLayers,
+				json : buffer
 			});
 		}
 	});
@@ -69,38 +77,66 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 			this.config = config;
 			this.itownsView = itownsView;
 			this.source = potreeSource;
-			this.isTimescalePotree = true;
+			this.isTimeseriesPotree = true;
 			this.tempExtent = new itowns.Extent('EPSG:4978', 0, 0, 0);
+
+			this.updateParams_ = this.updateParams.bind(this);
+
+			this.attachedLayers = [];
+			this.bboxes = {
+				visible : false
+			}
+			this.visible = true;
+
+			this.defineLayerProperty('visible', this.visible, this.updateParams_);
+			this.defineLayerProperty('bboxes', this.bboxes, this.updateParams_);
+			this.defineLayerProperty('opacity', this.opacity || 1.0, this.updateParams_);
+			this.defineLayerProperty('pointSize', this.pointSize || 4, this.updateParams_);
+			this.defineLayerProperty('sseThreshold', this.sseThreshold || 2, this.updateParams_);
 		}
 
 		update(context, layer, node) { }
 
 		preUpdate(context, changeSources) { }
 
+		postUpdate() {}
+
 		convert() { }
+
+		updateParams() {
+			this.source.loadData(this.tempExtent, this).then((data) => {
+				this.timeseries = data.json;
+				this.updateVisibility();
+				for (let i = 0; i < data.layers.length; ++i) {
+					data.layers[i].layer.pointSize = this.pointSize;
+					data.layers[i].layer.sseThreshold = this.sseThreshold;
+					data.layers[i].layer.opacity = this.opacity;
+					this.itownsView.notifyChange(data.layers[i].layer);
+				}
+			});
+		}
 
 		updateVisibility() {
 			this.source.loadData(this.tempExtent, this).then((data) => {
+				this.timeseries = data.json;
 				let visibleLayer = null;
-				for (let i = data.layers.length - 1; i >= 0; --i) {
-					// UTC時刻のUnixTime文字列で初期化されたDateを作成する
-					const local = new Date(data.layers[i].time)
-					const offset = -1 * local.getTimezoneOffset() / 60
-					const utcDate = new Date(local.getTime() + (offset * 3600000))
-
-					// console.log("date", utcDate, this.currentDate);
-					if (utcDate <= this.currentDate) {
-						visibleLayer = data.layers[i].layer;
-						break;
+				if (this.currentDate) {
+					for (let i = data.layers.length - 1; i >= 0; --i) {
+						// console.log("date", utcDate, this.currentDate);
+						if (data.layers[i].layer.date <= this.currentDate) {
+							visibleLayer = data.layers[i].layer;
+							break;
+						}
 					}
 				}
 
 				// 対象レイヤー以外非表示
 				for (let i = 0; i < data.layers.length; ++i) {
 					data.layers[i].layer.visible = false;
+					data.layers[i].layer.bboxes.visible = false;
 				}
 
-				if (visibleLayer) {
+				if (this.visible && visibleLayer) {
 					let isExisted = false;
 					let layers = this.itownsView.getLayers();
 					for (let i = 0; i < layers.length; ++i) {
@@ -113,6 +149,7 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 						itowns.View.prototype.addLayer.call(this.itownsView, visibleLayer);
 					}
 					visibleLayer.visible = true;
+					visibleLayer.bboxes.visible = this.bboxes.visible;
 				}
 			});
 		}

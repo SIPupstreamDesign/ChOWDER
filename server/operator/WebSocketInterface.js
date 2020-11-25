@@ -147,6 +147,7 @@
             });
 
             ws_connector.on(Command.SendMessage, (data, resultCallback) => {
+                console.log('SendMessage');
                 ws_connector.broadcast(ws, Command.SendMessage, data);
                 if (resultCallback) {
                     resultCallback();

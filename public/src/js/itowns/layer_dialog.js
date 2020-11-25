@@ -16,9 +16,11 @@ SampleURLFileNames[ITownsConstants.TypeColor] = "std/{z}/{x}/{y}.png";
 SampleURLFileNames[ITownsConstants.TypeElevation] = "std/{z}/{x}/{y}.png";
 SampleURLFileNames[ITownsConstants.Type3DTile] = "something/tileset.json";
 SampleURLFileNames[ITownsConstants.TypePointCloud] = "something/cloud.js";
+SampleURLFileNames[ITownsConstants.TypePointCloudTimeSeries] = "something/timeseries.json";
 SampleURLFileNames[ITownsConstants.TypeGeometry] = "something/data.pbf";
 SampleURLFileNames[ITownsConstants.TypeBargraph] = "sample_csv_data/data1.csv";
 SampleURLFileNames[ITownsConstants.TypeOBJ] = "male02/male02.obj";
+
 
 class LayerDialog extends EventEmitter {
     constructor(store, action) {
@@ -30,6 +32,7 @@ class LayerDialog extends EventEmitter {
         this.init();
         this.setting = {};
         this.csv = null;
+        this.json = null;
     }
 
     changeInputURLValue(fileName) {
@@ -44,221 +47,56 @@ class LayerDialog extends EventEmitter {
         this.wrap = document.createElement('div');
         this.wrap.className = "layer_dialog_wrap";
 
-        let createRow = () => {
+        this.title = document.createElement('p');
+        this.title.className = "layer_dialog_title";
+        this.title.innerText = i18next.t('add_layer');
+        this.wrap.appendChild(this.title);
+
+        this.createRow = () => {
             let row = document.createElement('div');
             row.className = "layer_dialog_row";
             this.wrap.appendChild(row);
             return row;
         }
 
-        this.title = document.createElement('p');
-        this.title.className = "layer_dialog_title";
-        this.title.innerText = i18next.t('add_layer');
+        this.createTypeRow();
+        this.createIDRow();
+        this.createTitleRow();
+        this.createStyleRow();
+        this.createMTLRow();
+        this.createZoomRow();
+        this.createFileOpenRow();
+        this.createFormatRow();
 
+        this.endCallback = null;
+        this.createPopupBackground();
+        
+        this.dom.appendChild(this.wrap);
+    }
+
+    createTypeRow() {
         this.typeTitle = document.createElement('p');
         this.typeTitle.className = "layer_dialog_sub_title";
         this.typeTitle.innerText = "Type:";
-
         this.typeSelect = new Select();
         this.typeSelect.getDOM().className = "layer_dialog_type_select";
         this.typeSelect.addOption(ITownsConstants.TypeColor, "Color");
         this.typeSelect.addOption(ITownsConstants.TypeElevation, "Elevation");
         this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(tileset.json)");
         this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree cloud.js)");
+        this.typeSelect.addOption(ITownsConstants.TypePointCloudTimeSeries, "PointCloudTimeSeries(.json)");
         this.typeSelect.addOption(ITownsConstants.TypeGeometry, "VectorTile(pbf, geojson)");
         this.typeSelect.addOption(ITownsConstants.TypeBargraph, "Bargraph(csv)");
         this.typeSelect.addOption(ITownsConstants.TypeOBJ, "OBJFile(obj)");
 
-        this.idTitle = document.createElement('p');
-        this.idTitle.className = "layer_dialog_sub_title";
-        this.idTitle.innerText = "ID:";
-
-        this.idInput = new Input("text");
-        this.idInput.getDOM().className = "layer_dialog_id_input";
-        this.idInput.setValue("Layer_" + Math.floor(Math.random() * 100));
-
-        this.urlTitle = document.createElement('p');
-        this.urlTitle.className = "layer_dialog_sub_title";
-        this.urlTitle.innerText = "URL:";
-
-        this.urlInput = document.createElement('textarea');
-        this.urlInput.className = "layer_dialog_url_input";
-        this.changeInputURLValue(SampleURLFileNames[ITownsConstants.TypeColor]);
-        
-        this.styleURLTitle = document.createElement('p');
-        this.styleURLTitle.className = "layer_dialog_sub_title";
-        this.styleURLTitle.innerText = "Style:";
-
-        this.styleURLInput = document.createElement('textarea');
-        this.styleURLInput.className = "layer_dialog_url_input";
-        this.styleURLInput.value = "https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json";
-
-        this.mtlURLTitle = document.createElement('p');
-        this.mtlURLTitle.className = "layer_dialog_sub_title";
-        this.mtlURLTitle.innerText = "MTL:";
-
-        this.mtlURLInput = document.createElement('textarea');
-        this.mtlURLInput.className = "layer_dialog_url_input";
-        this.mtlURLInput.value = "http://localhost/male02/male02.mtl";
-
-        this.zoomMinTitle = document.createElement('p');
-        this.zoomMinTitle.className = "layer_dialog_zoom_title";
-        this.zoomMinTitle.innerText = "ZOOM: Min";
-
-        this.zoomMaxTitle = document.createElement('p');
-        this.zoomMaxTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
-        this.zoomMaxTitle.innerText = "Max";
-
-        this.fileOpenTitle = document.createElement('p');
-        this.fileOpenTitle.className = "layer_dialog_fileopen_title";
-        this.fileOpenTitle.innerText = "Import From File:";
-
-        this.fileOpenInput = new Input('file');
-        this.fileOpenInput.type = "file";
-        this.fileOpenInput.getDOM().style.display = "inline-block";
-
-        this.zoomMinSelect = new Select();
-        for (let i = 1; i <= 20; ++i) {
-            this.zoomMinSelect.addOption(i, String(i));
-        }
-        this.zoomMinSelect.getDOM().className = "layer_dialog_zoom_min_select";
-        
-        this.zoomMaxSelect = new Select();
-        for (let i = 1; i <= 20; ++i) {
-            this.zoomMaxSelect.addOption(i, String(i));
-        }
-        this.zoomMaxSelect.getDOM().className = "layer_dialog_zoom_max_select";
-        this.zoomMaxSelect.setSelectedIndex(this.zoomMaxSelect.getOptions().length - 1);
-
-        this.okButton = new Button();
-        this.okButton.setDataKey("OK");
-        this.okButton.getDOM().className = "layer_dialog_ok_button btn btn-primary";
-        this.dom.appendChild(this.okButton.getDOM());
-
-        this.cancelButton = new Button();
-        this.cancelButton.setDataKey("Cancel");
-        this.cancelButton.getDOM().className = "layer_dialog_cancel_button btn btn-light";
-        this.dom.appendChild(this.cancelButton.getDOM());
-
-        this.dom.appendChild(this.wrap);
-        this.wrap.appendChild(this.title);
-        {
-            let typeRow = createRow();
-            typeRow.appendChild(this.typeTitle);
-            typeRow.appendChild(this.typeSelect.getDOM());
-        }
-        {
-            let idRow = createRow();
-            idRow.appendChild(this.idTitle);
-            idRow.appendChild(this.idInput.getDOM());
-        }
-        {
-            let titleRow = createRow();
-            titleRow.className = "layer_dialog_row2"
-            titleRow.appendChild(this.urlTitle);
-            titleRow.appendChild(this.urlInput);
-        }
-        {
-            this.styleRow = createRow();
-            this.styleRow.className = "layer_dialog_row2"
-            this.styleRow.appendChild(this.styleURLTitle);
-            this.styleRow.appendChild(this.styleURLInput);
-            this.styleRow.style.display = "none";
-        }
-        {
-            this.mtlRow = createRow();
-            this.mtlRow.className = "layer_dialog_row2"
-            this.mtlRow.appendChild(this.mtlURLTitle);
-            this.mtlRow.appendChild(this.mtlURLInput);
-            this.mtlRow.style.display = "none";
-        }
-        {
-            this.zoomRow = createRow();
-            this.zoomRow.appendChild(this.zoomMinTitle);
-            this.zoomRow.appendChild(this.zoomMinSelect.getDOM());
-            this.zoomRow.appendChild(this.zoomMaxTitle);
-            this.zoomRow.appendChild(this.zoomMaxSelect.getDOM());
-        }
-
-        {
-            this.fileOpenRow = createRow();
-            this.fileOpenRow.appendChild(this.fileOpenTitle);
-            this.fileOpenRow.appendChild(this.fileOpenInput.getDOM());
-            this.fileOpenRow.style.display = "none";
-        }
-        
-        this.endCallback = null;
-        let isOK = false;
-        this.background = new PopupBackground();
-        this.background.on('close', () => {
-            const data = {
-                id: "",
-                url: "",
-                zoom : {
-                    min : 1,
-                    max : 20
-                }
-            };
-            data.type = this.typeSelect.getSelectedValue();
-            if (data.type == ITownsConstants.TypeBargraph) {
-                data.isBarGraph = true;
-            }
-            if (data.type == ITownsConstants.TypeOBJ) {
-                data.isOBJ = true;
-            }
-            data.url = this.urlInput.value.split("\n").join("");
-            data.id = this.idInput.getValue();
-            data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
-            data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
-            
-            if (data.type === ITownsConstants.TypeGeometry) {
-                data.style = this.styleURLInput.value.split("\n").join("");
-            }
-            if (data.isOBJ) {
-                data.mtlurl = this.mtlURLInput.value.split("\n").join("");
-            }
-
-            if (this.endCallback) 
-            {
-                this.endCallback(isOK, data);
-                this.endCallback = null;
-            }
-            this.close();
-        });
-        this.okButton.on('click', () => {
-            isOK = true;
-            this.background.close();
-        });
-
-        this.cancelButton.on('click', () => {
-            isOK = false;
-            this.background.close();
-        });
-
-        this.fileOpenInput.on(Input.EVENT_CHANGE, (err, evt) => {
-            this.csv = null;
-            let files = evt.target.files;
-            let fileReader = new FileReader();
-            fileReader.onload = (e) =>{
-                let data = new Uint8Array(e.target.result);
-                let converted = window.Encoding.convert(data, {
-                    to: 'UNICODE',
-                    from: 'AUTO'
-                });
-                let str = Encoding.codeToString(converted);
-                let parsed = window.Papa.parse(str);
-                if (parsed.errors.length == 0) {
-                    this.csv = str;
-                } else {
-                    console.error(parsed.errors);
-                }
-            };
-            fileReader.readAsArrayBuffer(files[0]);
-        });
+        let typeRow = this.createRow();
+        typeRow.appendChild(this.typeTitle);
+        typeRow.appendChild(this.typeSelect.getDOM());
 
         this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
             let type = this.typeSelect.getSelectedValue();
             if (type === ITownsConstants.TypePointCloud
+                || type === ITownsConstants.TypePointCloudTimeSeries
                 || type === ITownsConstants.TypeBargraph
                 || type === ITownsConstants.TypeOBJ) {
                 this.zoomRow.style.display = "none";
@@ -280,7 +118,242 @@ class LayerDialog extends EventEmitter {
             } else {
                 this.fileOpenRow.style.display = "none";
             }
+            if (type === ITownsConstants.TypeElevation) {
+                this.formatRow.style.display = "block";
+            } else {
+                this.formatRow.style.display = "none";
+            }
             this.changeInputURLValue(SampleURLFileNames[type]);
+        });
+    }
+
+    createIDRow() {
+        this.idTitle = document.createElement('p');
+        this.idTitle.className = "layer_dialog_sub_title";
+        this.idTitle.innerText = "ID:";
+        this.idInput = new Input("text");
+        this.idInput.getDOM().className = "layer_dialog_id_input";
+        this.idInput.setValue("Layer_" + Math.floor(Math.random() * 100));
+
+        let idRow = this.createRow();
+        idRow.appendChild(this.idTitle);
+        idRow.appendChild(this.idInput.getDOM());
+    }
+
+    createTitleRow() {
+        this.urlTitle = document.createElement('p');
+        this.urlTitle.className = "layer_dialog_sub_title";
+        this.urlTitle.innerText = "URL:";
+        this.urlInput = document.createElement('textarea');
+        this.urlInput.className = "layer_dialog_url_input";
+        this.changeInputURLValue(SampleURLFileNames[ITownsConstants.TypeColor]);
+
+        let titleRow = this.createRow();
+        titleRow.className = "layer_dialog_row2"
+        titleRow.appendChild(this.urlTitle);
+        titleRow.appendChild(this.urlInput);
+    }
+
+    createStyleRow() {
+        this.styleURLTitle = document.createElement('p');
+        this.styleURLTitle.className = "layer_dialog_sub_title";
+        this.styleURLTitle.innerText = "Style:";
+        this.styleURLInput = document.createElement('textarea');
+        this.styleURLInput.className = "layer_dialog_url_input";
+        this.styleURLInput.value = "https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json";
+
+        this.styleRow = this.createRow();
+        this.styleRow.className = "layer_dialog_row2"
+        this.styleRow.appendChild(this.styleURLTitle);
+        this.styleRow.appendChild(this.styleURLInput);
+        this.styleRow.style.display = "none";
+    }
+
+    createMTLRow() {
+        this.mtlURLTitle = document.createElement('p');
+        this.mtlURLTitle.className = "layer_dialog_sub_title";
+        this.mtlURLTitle.innerText = "MTL:";
+        this.mtlURLInput = document.createElement('textarea');
+        this.mtlURLInput.className = "layer_dialog_url_input";
+        this.mtlURLInput.value = "http://localhost/male02/male02.mtl";
+
+        this.mtlRow = this.createRow();
+        this.mtlRow.className = "layer_dialog_row2"
+        this.mtlRow.appendChild(this.mtlURLTitle);
+        this.mtlRow.appendChild(this.mtlURLInput);
+        this.mtlRow.style.display = "none";
+    }
+
+    createZoomRow() {
+        this.zoomMinTitle = document.createElement('p');
+        this.zoomMinTitle.className = "layer_dialog_zoom_title";
+        this.zoomMinTitle.innerText = "ZOOM: Min";
+        this.zoomMaxTitle = document.createElement('p');
+        this.zoomMaxTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
+        this.zoomMaxTitle.innerText = "Max";
+
+        this.zoomMinSelect = new Select();
+        for (let i = 1; i <= 20; ++i) {
+            this.zoomMinSelect.addOption(i, String(i));
+        }
+        this.zoomMinSelect.getDOM().className = "layer_dialog_zoom_min_select";
+
+        this.zoomMaxSelect = new Select();
+        for (let i = 1; i <= 20; ++i) {
+            this.zoomMaxSelect.addOption(i, String(i));
+        }
+        this.zoomMaxSelect.getDOM().className = "layer_dialog_zoom_max_select";
+        this.zoomMaxSelect.setSelectedIndex(this.zoomMaxSelect.getOptions().length - 1);
+
+        this.zoomRow = this.createRow();
+        this.zoomRow.appendChild(this.zoomMinTitle);
+        this.zoomRow.appendChild(this.zoomMinSelect.getDOM());
+        this.zoomRow.appendChild(this.zoomMaxTitle);
+        this.zoomRow.appendChild(this.zoomMaxSelect.getDOM());
+    }
+
+    createFileOpenRow() {
+        this.fileOpenTitle = document.createElement('p');
+        this.fileOpenTitle.className = "layer_dialog_fileopen_title";
+        this.fileOpenTitle.innerText = "Import From File:";
+        this.fileOpenInput = new Input('file');
+        this.fileOpenInput.type = "file";
+        this.fileOpenInput.getDOM().style.display = "inline-block";
+
+        this.fileOpenRow = this.createRow();
+        this.fileOpenRow.appendChild(this.fileOpenTitle);
+        this.fileOpenRow.appendChild(this.fileOpenInput.getDOM());
+        this.fileOpenRow.style.display = "none";
+        
+        this.fileOpenInput.on(Input.EVENT_CHANGE, (err, evt) => {
+            this.csv = null;
+            let files = evt.target.files;
+            let fileReader = new FileReader();
+            fileReader.onload = (e) => {
+                let data = new Uint8Array(e.target.result);
+                let converted = window.Encoding.convert(data, {
+                    to: 'UNICODE',
+                    from: 'AUTO'
+                });
+                let str = Encoding.codeToString(converted);
+                let parsed = window.Papa.parse(str);
+                if (parsed.errors.length == 0) {
+                    this.csv = str;
+                } else {
+                    console.error(parsed.errors);
+                }
+            };
+            fileReader.readAsArrayBuffer(files[0]);
+        });
+    }
+
+    createFormatRow() {
+        this.formatTitle = document.createElement('p');
+        this.formatTitle.className = "layer_dialog_sub_title";
+        this.formatTitle.innerText = "Format:";
+        this.formatSelect = new Select();
+        this.formatSelect.getDOM().className = "layer_dialog_type_select";
+        this.formatSelect.addOption("image/png", "png");
+        this.formatSelect.addOption("csv", "csv");
+        this.formatSelect.addOption("image/x-bil;bits=32", "BIL(wmts)");
+        this.formatSelect.addOption("image/png", "png(wmts)");
+
+        this.tileMatrixSetTitle = document.createElement('p');
+        this.tileMatrixSetTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
+        this.tileMatrixSetTitle.innerText = "tileMatrixSet:";
+        this.tileMatrixSetTitle.style.display = "none"
+        
+        this.tileMatrixSetSelect = new Select();
+        this.tileMatrixSetSelect.addOption("WGS84G", "WGS84G");
+        this.tileMatrixSetSelect.addOption("PM", "PM");
+        this.tileMatrixSetSelect.addOption("iTowns", "iTowns");
+        this.tileMatrixSetSelect.getDOM().className = "layer_dialog_zoom_max_select";
+        this.tileMatrixSetSelect.setSelectedIndex(0);
+        this.tileMatrixSetSelect.getDOM().style.display = "none"
+
+        this.formatRow = this.createRow();
+        this.formatRow.style.display = "none"
+        this.formatRow.appendChild(this.formatTitle);
+        this.formatRow.appendChild(this.formatSelect.getDOM());
+        this.formatRow.appendChild(this.tileMatrixSetTitle);
+        this.formatRow.appendChild(this.tileMatrixSetSelect.getDOM());
+
+        this.formatSelect.on(Select.EVENT_CHANGE, (err, val) => {
+            let index = this.formatSelect.getSelectedIndex();
+            if (index >= 2) {
+                // wmts
+                this.tileMatrixSetTitle.style.display = "inline"
+                this.tileMatrixSetSelect.getDOM().style.display = "inline"
+            } else {
+                this.tileMatrixSetTitle.style.display = "none"
+                this.tileMatrixSetSelect.getDOM().style.display = "none"
+            }
+        });
+    }
+
+    createPopupBackground() {
+        this.okButton = new Button();
+        this.okButton.setDataKey("OK");
+        this.okButton.getDOM().className = "layer_dialog_ok_button btn btn-primary";
+        this.dom.appendChild(this.okButton.getDOM());
+
+        this.cancelButton = new Button();
+        this.cancelButton.setDataKey("Cancel");
+        this.cancelButton.getDOM().className = "layer_dialog_cancel_button btn btn-light";
+        this.dom.appendChild(this.cancelButton.getDOM());
+
+        let isOK = false;
+        this.background = new PopupBackground();
+        this.background.on('close', () => {
+            const data = {
+                id: "",
+                url: "",
+                zoom: {
+                    min: 1,
+                    max: 20
+                }
+            };
+            data.type = this.typeSelect.getSelectedValue();
+            if (data.type == ITownsConstants.TypeBargraph) {
+                data.isBarGraph = true;
+            }
+            if (data.type == ITownsConstants.TypeOBJ) {
+                data.isOBJ = true;
+            }
+            data.url = this.urlInput.value.split("\n").join("");
+            data.id = this.idInput.getValue();
+            data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
+            data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
+
+            if (data.type === ITownsConstants.TypeGeometry) {
+                data.style = this.styleURLInput.value.split("\n").join("");
+            }
+            if (data.isOBJ) {
+                data.mtlurl = this.mtlURLInput.value.split("\n").join("");
+            }
+            if (data.type === ITownsConstants.TypeElevation) {
+                data.format = this.formatSelect.getSelectedValue();
+                if (this.formatSelect.getSelectedIndex() >= 2) {
+                    data.tileMatrixSet = this.tileMatrixSetSelect.getSelectedValue();
+                } else {
+                    data.tileMatrixSet = 'PM'
+                }
+            }
+
+            if (this.endCallback) {
+                this.endCallback(isOK, data);
+                this.endCallback = null;
+            }
+            this.close();
+        });
+        this.okButton.on('click', () => {
+            isOK = true;
+            this.background.close();
+        });
+
+        this.cancelButton.on('click', () => {
+            isOK = false;
+            this.background.close();
         });
     }
 
