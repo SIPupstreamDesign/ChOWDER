@@ -156,7 +156,6 @@ class GUI extends EventEmitter {
 		document.getElementsByClassName("loginframe")[0].appendChild(this.radio.getDOM());
 
 		this.errorMessage = document.createElement("div");
-		this.errorMessage.style.backgroundColor = "red";
         this.errorMessage.style.padding = "10px";
 		document.body.insertBefore(this.errorMessage, document.body.childNodes[0]);
 		document.getElementsByClassName("loginframe")[0].appendChild(this.errorMessage);

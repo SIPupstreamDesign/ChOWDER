@@ -19,10 +19,18 @@ class UploadMenu extends EventEmitter
     createUploadUI(){
         const dom = document.createElement("div");
         dom.style.display = "inline-block";
-        dom.style.backgroundColor = "aqua";
-        dom.style.padding = "10px";
+
+        const label = document.createElement("div");
+        label.style.display = "inline-block";
+        label.style.paddingLeft = "10px";
+        label.style.paddingRight = "10px";
+        label.textContent = "zipファイルを選択して読み込み: "
+        dom.appendChild(label);
 
         const fileinput = document.createElement("input");
+        fileinput.style.display = "inline-block";
+        fileinput.style.padding = "10px";
+        fileinput.style.backgroundColor = "#ACACAC";
         fileinput.type = "file";
         fileinput.id = "uploadfile";
         dom.appendChild(fileinput);
