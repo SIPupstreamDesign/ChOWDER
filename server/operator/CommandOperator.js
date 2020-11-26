@@ -1320,6 +1320,13 @@
             }
         }
 
+        upload(param, binaryData, endCallback){
+            this.executer.upload(param,binaryData,endCallback);
+        }
+
+        updateQgisContentsList(endCallback){
+            this.executer.updateQgisContentsList(endCallback);
+        }
     }
 
     module.exports = CommandOperator;

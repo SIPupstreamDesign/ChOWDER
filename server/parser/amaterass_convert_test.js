@@ -8,8 +8,8 @@ const ColorInterpolate = require('color-interpolate');
 
 const GeoTIFF = require('./geotiff.js/dist/geotiff.bundle.js');
 
-const AmaterassParser = require('./amaterass_parsar.js').AmaterassParser;
-const AmaterassConverter = require('./amaterass_parsar.js').AmaterassConverter;
+const AmaterassParser = require('./amaterass_parser.js').AmaterassParser;
+const AmaterassConverter = require('./amaterass_parser.js').AmaterassConverter;
 
 function lonLatToXYZ(R, lon, lat) {
     return {
@@ -20,8 +20,8 @@ function lonLatToXYZ(R, lon, lat) {
 }
 const DEGTORAD = (Math.PI / 180.0);
 
-const heightFile = 'D:/data/himawaridata/201910100020.wtr.cld.cth.fld.4km.bin'
-const thicknessFile = 'D:/data/himawaridata/201910100020.wtr.cld.tau.fld.4km.bin'
+const heightFile = 'D:/work/ChOWDER_data/201910110020.wtr.cld.cth.fld.4km.bin'
+const thicknessFile = 'D:/work/ChOWDER_data/201910110020.wtr.cld.tau.fld.4km.bin'
 const width = 3000;
 const height = 3000;
 
@@ -214,9 +214,9 @@ function cloudToTXT()
 function cloudToTXT2()
 {
     // 前のファイルの中身を消す
-    fs.writeFileSync('C:/source/output2.txt', "");
+    fs.writeFileSync('D:/work/ChOWDER_data/dist2/output3.txt', "");
     // 追加モードで開きなおす
-    let fd = fs.openSync('C:/source/output2.txt', 'a');
+    let fd = fs.openSync('D:/work/ChOWDER_data/dist2/output3.txt', 'a');
     const space = " ";
     const gridSize = 120 / width;
 

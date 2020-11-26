@@ -32,6 +32,7 @@ class Action extends EventEmitter {
 	 * @param {*} data iframe
 	 */
 	connectIFrame(data) {
+		// console.log("[action]:connectIFrame");
 		this.emit(Action.EVENT_CONNECT_IFRAME, null, data);
 	}
 
@@ -60,10 +61,59 @@ class Action extends EventEmitter {
 	resizeWindow(data) {
 		this.emit(Action.EVENT_RESIZE_WINDOW, null, data);
 	}
+
+	/**
+     * カメラメタデータの更新
+     * UI操作などで既にqgisアプリの絵は更新されているので、メタデータだけを更新する
+     * @param {*} data 
+     * {
+     *    mat : カメラのワールドマトリックス,
+     *    params : カメラのパラメータ(fovy, zoom, near, far, aspect, filmGauge, filmOffset)
+     * }
+     */
+    updateMetaDataCamera(data) {
+        this.emit(Action.EVENT_UPDATE_METADATA_CAMERA, null, data);
+    }
+
+	/**
+	 * カメラの更新
+	 * qgisアプリの絵の更新と、メタデータの更新を行う
+	 */
+    updateRenderCamera(data) {
+        this.emit(Action.EVENT_UPDATE_RENDER_CAMERA, null, data);
+    }
+
+	/**
+     * コンテンツの追加
+     * @param {*} data 
+     */
+    addContent(data) {
+		// console.log("[action]addContent");
+        this.emit(Action.EVENT_ADD_CONTENT, null, data);
+	}
+
+	changeProperty(data){
+		this.emit(Action.EVENT_CHANGE_PROPERTY, null, data);
+	}
+
+	upload(data) {
+        this.emit(Action.EVENT_UPLOAD, null, data);
+	}
+	
+	updateSelectedContent(data){
+		this.emit(Action.EVENT_UPDATE_SELECTEDCONTENT, null, data);
+	}
 }
 
 Action.EVENT_CONNECT = "connect";
+Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
+Action.EVENT_UPLOAD = "upload";
+Action.EVENT_UPDATE_METADATA_CAMERA = "updateMetaDataCamera";
+Action.EVENT_UPDATE_RENDER_CAMERA = "updateRenderCamera";
+Action.EVENT_CHANGE_PROPERTY = "changeProperty";
+Action.EVENT_UPDATE_SELECTEDCONTENT = "updateSelectedContent"
+
 export default Action;

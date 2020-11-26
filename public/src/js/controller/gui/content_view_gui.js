@@ -86,62 +86,72 @@ class ContentViewGUI extends EventEmitter {
 
 		let url = metaData.url;
 		iframe.onload = ((metaData) => {
-			let iframe = document.getElementById(getWebGLIFrameID(metaData));
-			iframe.contentWindow.chowder_itowns_view_type = "controller";
-			let connector = new IFrameConnector(iframe);
-			this.action.addItownFunc({
-				id: metaData.id,
-				func: {
-					chowder_itowns_update_camera: (metaData) => {
-						ITownsUtil.updateCamera(connector, metaData, () => {
-							this.updateWebGLFrameSize(connector, metaData);
-						});
-					},
-					chowder_itowns_update_layer_list: (metaData) => {
-						let preMetaData = this.store.getMetaData(metaData.id);
-						ITownsUtil.updateLayerList(connector, metaData, preMetaData);
-					},
-					chowder_itowns_update_time: (metaData, time, range) => {
-						ITownsUtil.updateTime(connector, metaData, time, range);
-					},
-					chowder_itowns_update_layer_url: () => {
-						iframe.contentWindow.location.replace(url);
-					}
-				}
-			});
-
-			// IframeConnectorを通してiframeに接続
-			try {
+			if (metaData.webglType && metaData.webglType === "qgis2three.js") {
+				// qgis
+				const connector = new IFrameConnector(iframe);
 				connector.connect(() => {
-					// 初回に一度実行.
-					if (metaData.hasOwnProperty('cameraWorldMatrix') &&
-						metaData.hasOwnProperty('cameraParams')) {
-						connector.send(ITownsCommand.UpdateCamera, {
-							mat: JSON.parse(metaData.cameraWorldMatrix),
-							params: JSON.parse(metaData.cameraParams),
-						});
-						this.updateWebGLFrameSize(connector, metaData);
-					}
-					connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
-						let rect = {
-							x: 0,
-							y: 0,
-							w: iframe.clientWidth,
-							h: iframe.clientHeight
+					this.action.updateQgisMetadata(metaData);
+					this.isImportingWebGL = false;
+				});
+			} else {
+				let iframe = document.getElementById(getWebGLIFrameID(metaData));
+				iframe.contentWindow.chowder_itowns_view_type = "controller";
+				let connector = new IFrameConnector(iframe);
+				this.action.addItownFunc({
+					id: metaData.id,
+					func: {
+						chowder_itowns_update_camera: (metaData) => {
+							ITownsUtil.updateCamera(connector, metaData, () => {
+								this.updateWebGLFrameSize(connector, metaData);
+							});
+						},
+						chowder_itowns_update_layer_list: (metaData) => {
+							let preMetaData = this.store.getMetaData(metaData.id);
+							ITownsUtil.updateLayerList(connector, metaData, preMetaData);
+						},
+						chowder_itowns_update_time: (metaData, time, range) => {
+							ITownsUtil.updateTime(connector, metaData, time, range);
+						},
+						chowder_itowns_update_layer_url: () => {
+							iframe.contentWindow.location.replace(url);
 						}
-						connector.send(ITownsCommand.Resize, rect);
+					}
+				});
+
+				// IframeConnectorを通してiframeに接続
+				try {
+					connector.connect(() => {
+						// 初回に一度実行.
+						if (metaData.hasOwnProperty('cameraWorldMatrix') &&
+							metaData.hasOwnProperty('cameraParams')) {
+							connector.send(ITownsCommand.UpdateCamera, {
+								mat: JSON.parse(metaData.cameraWorldMatrix),
+								params: JSON.parse(metaData.cameraParams),
+							});
+							this.updateWebGLFrameSize(connector, metaData);
+						}
+						connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+							let rect = {
+								x: 0,
+								y: 0,
+								w: iframe.clientWidth,
+								h: iframe.clientHeight
+							}
+							connector.send(ITownsCommand.Resize, rect);
+						});
 					});
-				});
-				connector.once(ITownsCommand.LayersInitialized, (err, data) => {
-					this.isImportingWebGL = false;
-				});
-				let timeOutID = null;
-				timeOutID = setTimeout(() => {
-					this.isImportingWebGL = false;
-					clearTimeout(timeOutID);
-				}, 15 * 1000)
-			} catch (err) {
-				console.error(err);
+					connector.once(ITownsCommand.LayersInitialized, (err, data) => {
+
+						this.isImportingWebGL = false;
+					});
+					let timeOutID = null;
+					timeOutID = setTimeout(() => {
+						this.isImportingWebGL = false;
+						clearTimeout(timeOutID);
+					}, 15 * 1000)
+				} catch (err) {
+					console.error(err);
+				}
 			}
 		}).bind(this, metaData);
 		iframe.contentWindow.location.replace(url);

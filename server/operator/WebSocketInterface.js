@@ -275,6 +275,13 @@
                 }
             });
 
+            ws_connector.on(Command.Upload, (data, resultCallback) => {
+                console.log("[WebsocketInterface]upload")
+                let metaData = data.metaData,
+                    binaryData = data.contentData;
+                this.commandOperator.upload(metaData, binaryData, resultCallback);
+            });
+
             ws_connector.registerEvent(ws, ws_connection);
 
 

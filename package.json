@@ -23,10 +23,12 @@
   "dependencies": {
     "argv": "0.0.2",
     "bson": "*",
+    "electron": "^4.1.1",
     "image-size": "*",
+    "node-zip": "^1.1.1",
+    "phantom": "^6.0.3",
     "redis": "*",
-    "websocket": "*",
-    "electron": "^4.1.1"
+    "websocket": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",

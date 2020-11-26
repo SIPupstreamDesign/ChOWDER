@@ -8,6 +8,8 @@
 
     const fs = require('fs');
     const path = require('path');
+    const nodeZip = require("node-zip");
+    const Zip = require("./zip.js");
 
     let phantom = null;
     try {
@@ -3170,6 +3172,69 @@
             });
         }
 
+        
+        /**
+         * upload
+         * @method upload
+         * @param {Object} param param
+         * @param {BLOB} binaryData binaryData
+         * @param {Function} callback (string err, {string dirname})=>{}
+         */
+        upload(param,binaryData, callback){
+            /* sendBinary の JSONRPC の param.type で何がアップロードされたか見る */
+            if(param.type === "qgis2three.js"){
+                /* qgis app 用のqgis2three.jsファイル */
+                const timestamp = Zip.createTimestamp();
+                const extractDir = "../public/qgis/"+timestamp+"/";
+                /* タイムスタンプでディレクトリ掘る */
+                if(!fs.existsSync(extractDir)){
+                    fs.mkdirSync(extractDir);
+                }
+
+                /* ファイルを解凍する */
+                (async()=>{
+                    const fileList = await Zip.extract(binaryData, extractDir);
+                    
+                    if(typeof fileList === Error){
+                        // 想定外の実行時エラーでrejectされた
+                        console.log("err:",fileList.toString());
+                        callback(fileList.toString(),null);
+                        return;
+                    }
+                    
+                    /* index.htmlを探す */
+                    let htmlDir = null;
+                    for(let file of fileList){
+                        if(file.err !== null){
+                            /* 解凍時にファイル単位でエラーになってた */
+                            callback(file.err.toString(),null);//最初に起きたエラー
+                            return;
+                        }
+                        if(file.dir.match(/index.html$/)){
+                            // console.log("HTML EXIST:",file.dir);
+                            const dir = file.dir.substr(9);
+                            htmlDir = dir;
+                        }
+                    }
+
+                    if(htmlDir === null){
+                        /* index.html がないってことは qgis2three.js のファイルじゃないと思う */
+                        console.log("it is not qgis2three.js file");
+                        callback(new Error("it is not qgis2three.js file").toString(),null);
+                        return;
+                    }
+
+                    callback(null,{dirname:htmlDir});//エラーはなかった
+                })();
+            }else{
+                // (async()=>{
+                //     const extractDir = "../public/"
+                //     const fileList = await Zip.extract(binaryData, extractDir);
+                // })();
+
+                callback(new Error("JSONRPC param.type undefined").toString(),null);
+            }
+        }
     }
 
     module.exports = Executer;

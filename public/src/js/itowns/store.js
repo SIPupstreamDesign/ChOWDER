@@ -471,7 +471,7 @@ class Store extends EventEmitter {
     _fetchContents(data) {
         let metaDataDict = {}; // id, metaData
         Connector.send(Command.GetMetaData, { type: "all", id: '' }, (err, metaData) => {
-            if (!err && metaData && metaData.type === Constants.TypeWebGL) {
+            if (!err && metaData && metaData.type === Constants.TypeWebGL && !metaData.webglType) {
                 if (!metaDataDict.hasOwnProperty(metaData.id)) {
                     metaDataDict[metaData.id] = metaData;
                     this.emit(Store.EVENT_DONE_FETCH_CONTENTS, null, metaData);
