@@ -86,14 +86,14 @@ class ContentViewGUI extends EventEmitter {
 
 		let url = metaData.url;
 		iframe.onload = ((metaData) => {
-			if(metaData.webglType && metaData.webglType === "qgis2three.js"){
+			if (metaData.webglType && metaData.webglType === "qgis2three.js") {
 				// qgis
 				const connector = new IFrameConnector(iframe);
 				connector.connect(() => {
 					this.action.updateQgisMetadata(metaData);
 					this.isImportingWebGL = false;
 				});
-			}else{
+			} else {
 				let iframe = document.getElementById(getWebGLIFrameID(metaData));
 				iframe.contentWindow.chowder_itowns_view_type = "controller";
 				let connector = new IFrameConnector(iframe);
@@ -109,15 +109,15 @@ class ContentViewGUI extends EventEmitter {
 							let preMetaData = this.store.getMetaData(metaData.id);
 							ITownsUtil.updateLayerList(connector, metaData, preMetaData);
 						},
-						chowder_itowns_update_time: (metaData, time) => {
-							ITownsUtil.updateTime(connector, metaData, time);
+						chowder_itowns_update_time: (metaData, time, range) => {
+							ITownsUtil.updateTime(connector, metaData, time, range);
 						},
 						chowder_itowns_update_layer_url: () => {
 							iframe.contentWindow.location.replace(url);
 						}
 					}
 				});
-	
+
 				// IframeConnectorを通してiframeに接続
 				try {
 					connector.connect(() => {
@@ -141,7 +141,7 @@ class ContentViewGUI extends EventEmitter {
 						});
 					});
 					connector.once(ITownsCommand.LayersInitialized, (err, data) => {
-	
+
 						this.isImportingWebGL = false;
 					});
 					let timeOutID = null;

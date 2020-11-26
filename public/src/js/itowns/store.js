@@ -114,9 +114,14 @@ class Store extends EventEmitter {
                             this.timelineCurrentTime = new Date(data.data.time);
                             this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
                             this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
-                            this.iframeConnector.send(ITownsCommand.UpdateTime, {
-                                time : data.data.time
-                            });
+                            let message = {
+                                time : data.data.time,
+                            }
+                            if (data.data.hasOwnProperty('rangeStartTime') && data.data.hasOwnProperty('rangeEndTime')) {
+                                message.rangeStartTime = data.data.rangeStartTime;
+                                message.rangeEndTime = data.data.rangeEndTime;
+                            }
+                            this.iframeConnector.send(ITownsCommand.UpdateTime, message);
                             this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
                         }
                     }
@@ -499,7 +504,7 @@ class Store extends EventEmitter {
     }
 
     _changeTime(data) {
-        this.timelineCurrentTime = data.time;
+        this.timelineCurrentTime = data.currentTime;
         if (this.timelineCurrentTime.getTime() < this.timelineStartTime.getTime()
         ||  this.timelineCurrentTime.getTime() > this.timelineEndTime.getTime()) {
             const span = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
@@ -508,18 +513,23 @@ class Store extends EventEmitter {
         }
 
         if (this.metaData) {
-           const isSync = ITownsUtil.isTimelineSync(this.metaData);
-            // console.error("sendmessage", this.metaData.id)
-            Connector.send(Command.SendMessage, {
-                command : "changeItownsContentTime",
-                data : {
-                    time : data.time,
-                    id : this.metaData.id,
-                    senderSync : isSync // 送信元のsync状態
-                }
-            }, () => {
+            const isSync = ITownsUtil.isTimelineSync(this.metaData);
+             // console.error("sendmessage", this.metaData.id)
+             let message = {
+                 command : "changeItownsContentTime",
+                 data : {
+                     time : data.currentTime.toJSON(),
+                     rangeStartTime : this.timelineRangeBar ? this.timelineRangeBar.rangeStartTime.toJSON() : "",
+                     rangeEndTime : this.timelineRangeBar ? this.timelineRangeBar.rangeEndTime.toJSON() : "",
+                     id : this.metaData.id,
+                     senderSync : isSync // 送信元のsync状態
+                 }
+             };
+            Connector.send(Command.SendMessage, message, () => {
                 this.iframeConnector.send(ITownsCommand.UpdateTime, {
-                    time : data.time.toJSON()
+                    time : data.currentTime.toJSON(),
+                    rangeStartTime : this.timelineRangeBar ? this.timelineRangeBar.rangeStartTime.toJSON() : "",
+                    rangeEndTime : this.timelineRangeBar ? this.timelineRangeBar.rangeEndTime.toJSON() : "",
                 });
             })
 
@@ -538,16 +548,21 @@ class Store extends EventEmitter {
         if (this.metaData) {
            const isSync = ITownsUtil.isTimelineSync(this.metaData);
             // console.error("sendmessage", this.metaData.id)
-            Connector.send(Command.SendMessage, {
+            let message = {
                 command : "changeItownsContentTime",
                 data : {
-                    time : data.time,
+                    time : data.currentTime.toJSON(),
+                    rangeStartTime : this.timelineRangeBar ? this.timelineRangeBar.rangeStartTime.toJSON() : "",
+                    rangeEndTime : this.timelineRangeBar ? this.timelineRangeBar.rangeEndTime.toJSON() : "",
                     id : this.metaData.id,
                     senderSync : isSync // 送信元のsync状態
                 }
-            }, () => {
+            };
+            Connector.send(Command.SendMessage, message, () => {
                 this.iframeConnector.send(ITownsCommand.UpdateTime, {
-                    time : data.currentTime.toJSON()
+                    time : data.currentTime.toJSON(),
+                    rangeStartTime : this.timelineRangeBar ? this.timelineRangeBar.rangeStartTime.toJSON() : "",
+                    rangeEndTime : this.timelineRangeBar ? this.timelineRangeBar.rangeEndTime.toJSON() : "",
                 });
             })
         }
@@ -608,9 +623,17 @@ class Store extends EventEmitter {
     _changeTimelineRangeBar(data) {
         if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime')) {
             this.timelineRangeBar = data;
+            if (data.rangeStartTime.getTime() === data.rangeEndTime.getTime()) {
+                data.rangeEndTime = new Date(data.rangeStartTime.getTime() + 24 * 60 * 60 * 1000);
+            }
         } else {
             this.timelineRangeBar = null;
         }
+        this._changeTimeByTimeline({
+            currentTime : this.timelineCurrentTime,
+            startTime: this.timelineStartTime,
+            endTime: this.timelineEndTime,
+        });
         this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR, null);
     }
 }

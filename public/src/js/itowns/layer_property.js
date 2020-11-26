@@ -437,20 +437,13 @@ class LayerProperty extends EventEmitter {
 		}
 
 		if (times.length > 0) {
-			// 時刻歴タイトル
-			let timesTitle = document.createElement('p');
-			timesTitle.className = "property_text_title";
-			timesTitle.innerText = "Times";
-			timesTitle.style.paddingTop = "10px";
-			this.dom.appendChild(timesTitle);
-
 			const buttnList = document.createElement('div');
 			buttnList.className = "time_button_list"
 			let rangeStartTime = null;
 			let rangeEndTime = null;
 			// 時刻歴一覧
 			for (let i = 0; i < times.length; ++i) {
-				if (times[i].length > 0)
+				if (times[i] && times[i].length > 0)
 				{
 					const div = document.createElement('div');
 					div.className = "time_button_wrap";
@@ -475,7 +468,7 @@ class LayerProperty extends EventEmitter {
 					timeButton.on('click', ((date) => {
 						return () => {
 							this.action.changeTime({
-								time: date
+								currentTime: date
 							})
 						};
 					})(date));
@@ -493,7 +486,28 @@ class LayerProperty extends EventEmitter {
 					});
 
 					// 正しい値がある場合のみ追加
+					// 時刻歴タイトル
+					let timesTitle = document.createElement('p');
+					timesTitle.className = "property_text_title";
+					timesTitle.innerText = "Times";
+					timesTitle.style.paddingTop = "10px";
+					this.dom.appendChild(timesTitle);
+					// ボタンリスト
 					this.dom.appendChild(buttnList);
+					
+					let buttonWrap = document.createElement('div');
+					buttonWrap.className = "reset_rangebar_button_wrap"
+					let button = new Button();
+					button.getDOM().className = "reset_rangebar_button btn btn-secondary";
+					button.setDataKey('Reset RangeBar by Times');
+					button.on('click', () => {
+						this.action.changeTimelineRangeBar({
+							rangeStartTime: rangeStartTime,
+							rangeEndTime: rangeEndTime
+						});
+					})
+					buttonWrap.appendChild(button.getDOM());
+					this.dom.appendChild(buttonWrap);
 				}
 			}
 		}

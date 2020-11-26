@@ -72,6 +72,34 @@ class TimelineSettingDialog extends EventEmitter {
             row.style.position = "absolute"
         }
 
+        {
+            let row = createRow();
+            this.rangeStart = new DateInput();
+            this.rangeStart.getDOM().style.left = "100px"
+            this.rangeStart.getDOM().style.position = "absolute"
+            row.appendChild(this.rangeStart.getDOM());
+            this.rangeStartLabel = document.createElement('p');
+            this.rangeStartLabel.innerText = 'Range Start';
+            row.appendChild(this.rangeStartLabel);
+            row.style.top = "140px"
+            row.style.left = "40px"
+            row.style.position = "absolute"
+        }
+
+        {
+            let row = createRow();
+            this.rangeEnd = new DateInput();
+            this.rangeEnd.getDOM().style.left = "100px"
+            this.rangeEnd.getDOM().style.position = "absolute"
+            row.appendChild(this.rangeEnd.getDOM());
+            this.rangeEndLabel = document.createElement('p');
+            this.rangeEndLabel.innerText = 'Range End';
+            row.appendChild(this.rangeEndLabel);
+            row.style.top = "180px"
+            row.style.left = "40px"
+            row.style.position = "absolute"
+        }
+
         this.okButton = new Button();
         this.okButton.setDataKey("OK");
         this.okButton.getDOM().className = "layer_dialog_ok_button btn btn-primary";
@@ -93,6 +121,10 @@ class TimelineSettingDialog extends EventEmitter {
                 start: this.startDate.getDate(),
                 end: this.endDate.getDate()
             };
+            if (this.store.getTimelineRangeBar()) {
+                this.data.rangeStartTime = this.rangeStart.getDate();
+                this.data.rangeEndTime = this.rangeEnd.getDate();
+            }
             
             console.log("close", this.data);
 
@@ -123,6 +155,23 @@ class TimelineSettingDialog extends EventEmitter {
         //this.idInput.setValue("Layer_" + Math.floor(Math.random() * 100));
         this.startDate.setDate(this.store.getTimelineStartTime());
         this.endDate.setDate(this.store.getTimelineEndTime());
+
+        if (this.store.getTimelineRangeBar()) {
+            this.dom.style.height = "300px";
+            this.rangeStart.getDOM().style.display = "block"
+            this.rangeStartLabel.style.display = "block"
+            this.rangeEnd.getDOM().style.display = "block"
+            this.rangeEndLabel.style.display = "block"
+
+            this.rangeStart.setDate(this.store.getTimelineRangeBar().rangeStartTime);
+            this.rangeEnd.setDate(this.store.getTimelineRangeBar().rangeEndTime);
+        } else {
+            this.dom.style.height = "200px";
+            this.rangeStart.getDOM().style.display = "none"
+            this.rangeStartLabel.style.display = "none"
+            this.rangeEnd.getDOM().style.display = "none"
+            this.rangeEndLabel.style.display = "none"
+        }
 
         this.endCallback = endCallback;
         this.dom.style.display = "block";

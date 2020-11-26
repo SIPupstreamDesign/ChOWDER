@@ -136,7 +136,7 @@ function CreateBargraphLayer(itownsView, config) {
 		 }
 		 のようなchowder泥漿するパラメータを元にメッシュを更新する
 		*/
-		updateBarGraph(currentDate = null) {
+		updateBarGraph() {
 			if (!this.hasOwnProperty('bargraphParams')) return;
 			this.source.loadData(this.BarGraphExtent, this).then((data) => {
 				const params = this.bargraphParams;
@@ -219,14 +219,27 @@ function CreateBargraphLayer(itownsView, config) {
 						mesh.lookAt(new itowns.THREE.Vector3(zeroVector.x, zeroVector.y, zeroVector.z));
 					}
 					mesh.visible = (isValidLonIndex && isValidLatIndex);
-					if (mesh.visible && isValidTimeIndex && currentDate) {
+					if (mesh.visible && isValidTimeIndex && this.currentDate) {
 						// meshが可視の場合で、かつ時刻が設定されている場合、
 						// 現在時刻と時刻を比較し、visibleを上書きする
 						const date = new Date(csvData[i][timeIndex]);
-						if (date.getTime() <= currentDate.getTime()) {
+						if (date.getTime() <= this.currentDate.getTime()) {
 							mesh.visible = true;
 						} else {
 							mesh.visible = false;
+						}
+						
+						if (this.range) {
+							// 現在時刻がレンジ範囲外なら非表示とする
+							if (this.currentDate< this.range.rangeStartTime
+								|| this.currentDate > this.range.rangeEndTime) {
+									mesh.visible = false;
+							}
+							// データ時刻がレンジ範囲外なら非表示とする
+							if (date.getTime() < this.range.rangeStartTime
+								|| date.getTime() > this.range.rangeEndTime) {
+									mesh.visible = false;
+							}
 						}
 					}
 					mesh.updateMatrixWorld();
@@ -234,7 +247,9 @@ function CreateBargraphLayer(itownsView, config) {
 			});
 		}
 		
-		updateByTime(currentDate = null) {
+		updateByTime(currentDate = null, range = null) {
+			this.currentDate = currentDate;
+			this.range = range;
 			this.updateBarGraph(currentDate);
 		}
 	}

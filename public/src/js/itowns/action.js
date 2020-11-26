@@ -134,7 +134,7 @@ class Action extends EventEmitter
      * コンテンツに対する時刻の変更
      * @param data
      * {
-     *    time : 時刻を表すDateインスタンス
+     *    currentTime : 時刻を表すDateインスタンス
      * }
      */
     changeTime(data) {
