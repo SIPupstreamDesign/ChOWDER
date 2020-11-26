@@ -105,7 +105,6 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 		updateParams() {
 			this.source.loadData(this.tempExtent, this).then((data) => {
-				this.timeseries = data.json;
 				this.updateVisibility();
 				for (let i = 0; i < data.layers.length; ++i) {
 					data.layers[i].layer.pointSize = this.pointSize;
@@ -118,7 +117,6 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 		updateVisibility() {
 			this.source.loadData(this.tempExtent, this).then((data) => {
-				this.timeseries = data.json;
 				let visibleLayer = null;
 				if (this.currentDate) {
 					for (let i = data.layers.length - 1; i >= 0; --i) {
@@ -127,6 +125,14 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 							visibleLayer = data.layers[i].layer;
 							break;
 						}
+					}
+				}
+
+				// 現在時刻がレンジ範囲外なら非表示
+				if (this.range) {
+					if (this.currentDate< this.range.rangeStartTime
+						|| this.currentDate > this.range.rangeEndTime) {
+							visibleLayer = null;
 					}
 				}
 
@@ -154,8 +160,9 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 			});
 		}
 
-		updateByTime(currentDate = null) {
+		updateByTime(currentDate = null, range = null) {
 			this.currentDate = currentDate;
+			this.range = range;
 			this.updateVisibility();
 		}
 	}

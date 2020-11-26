@@ -192,6 +192,21 @@ p {
 	padding-left : 4px;
 }
 
+.reset_rangebar_button_wrap {
+    margin: 5px;
+	margin-top : 0px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.reset_rangebar_button {
+    width: 100%;
+    height: 25px;
+    padding: 0px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+}
+
 .time_button { 
 	width : 220px;
     height: 20px;

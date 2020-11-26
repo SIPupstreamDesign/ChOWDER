@@ -161,6 +161,14 @@ class GUI extends EventEmitter
             const metaDataDict = this.store.getMetaDataDict();
 			const funcDict = this.store.getITownFuncDict();
 			const time = new Date(data.time);
+            let range = {}
+			if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') && 
+				data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
+                range = {
+                    rangeStartTime : new Date(data.rangeStartTime),
+                    rangeEndTime : new Date(data.rangeEndTime)
+                }
+            }
             for (let id in metaDataDict) {
                 if (metaDataDict.hasOwnProperty(id)) {
                     let metaData = metaDataDict[id];
@@ -168,7 +176,7 @@ class GUI extends EventEmitter
 						if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync))
 						{
 							if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-								funcDict[metaData.id].chowder_itowns_update_time(metaData, time);
+								funcDict[metaData.id].chowder_itowns_update_time(metaData, time, range);
 							}
 						}
                     }

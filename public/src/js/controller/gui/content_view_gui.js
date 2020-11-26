@@ -101,8 +101,8 @@ class ContentViewGUI extends EventEmitter {
 						let preMetaData = this.store.getMetaData(metaData.id);
 						ITownsUtil.updateLayerList(connector, metaData, preMetaData);
 					},
-					chowder_itowns_update_time: (metaData, time) => {
-						ITownsUtil.updateTime(connector, metaData, time);
+					chowder_itowns_update_time: (metaData, time, range) => {
+						ITownsUtil.updateTime(connector, metaData, time, range);
 					},
 					chowder_itowns_update_layer_url: () => {
 						iframe.contentWindow.location.replace(url);

@@ -48,17 +48,47 @@ class GUI extends EventEmitter {
 
     }
 
+    __extrudeStartEndTime(startEndTime, targetTime) {
+        if (targetTime.getTime() <= startEndTime.startTime.getTime()) {
+            startEndTime.startTime = new Date(targetTime.getTime() - 3600);
+        }
+        if (targetTime.getTime() >= startEndTime.endTime.getTime()) {
+            startEndTime.endTime = new Date(targetTime.getTime() + 3600);
+        }
+    }
+
+    // targetTimeがtimelineStartTime～timelineEndTimeの範囲外であった場合に、
+    // timelineStartTime, timelineEndTimeを再設定する
+    __extrudeMinMaxTime(minMaxTime, targetTime) {
+        // console.error("minMaxTime, targetTime", minMaxTime, targetTime);
+        if (targetTime.getTime() <= minMaxTime.minTime.getTime()) {
+            minMaxTime.minTime = new Date(targetTime.getTime() - 3600);
+        }
+        if (targetTime.getTime() >= minMaxTime.maxTime.getTime()) {
+            minMaxTime.maxTime = new Date(targetTime.getTime() + 3600);
+        }
+    }
+
     updateTimeline() {
         const start = this.store.getTimelineStartTime();
         const end = this.store.getTimelineEndTime();
         const current = this.store.getTimelineCurrentTime();
+        let minMaxTime = {
+            minTime : $(".k2go-timeline-main").data("options.k2goTimeline").minTime,
+            maxTime : $(".k2go-timeline-main").data("options.k2goTimeline").maxTime
+        }
+        /*
+        this.__extrudeMinMaxTime(minMaxTime, start);
+        this.__extrudeMinMaxTime(minMaxTime, end);
+        */
+
         // この再描画によりtimeChangeが走ってしまうが、debounceChangeTimeにより重複イベントが吸収されるはず
         $("#timeline").k2goTimeline("create",
             {
                 timeInfo:
                 {
-                    maxTime: $(".k2go-timeline-main").data("options.k2goTimeline").maxTime,
-                    minTime: $(".k2go-timeline-main").data("options.k2goTimeline").minTime,
+                    minTime: minMaxTime.minTime,
+                    maxTime: minMaxTime.maxTime,
                     startTime: start,
                     endTime: end,
                     currentTime: current
@@ -75,6 +105,12 @@ class GUI extends EventEmitter {
         timelineSettingButton.on('click', () => {
             this.timelineSettingDialog.show((err, data) => {
                 this.action.changeTimelineRange(data);
+                if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime')) {
+                    this.action.changeTimelineRangeBar({
+                        rangeStartTime : data.rangeStartTime,
+                        rangeEndTime : data.rangeEndTime
+                    });
+                }
             });
         });
 
@@ -89,6 +125,27 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR, (err) => {
             const rangeBar = this.store.getTimelineRangeBar();
             if (rangeBar && rangeBar.hasOwnProperty('rangeStartTime') && rangeBar.hasOwnProperty('rangeEndTime')) {
+                /*
+                let minMaxTime = {
+                    minTime : $(".k2go-timeline-main").data("options.k2goTimeline").minTime,
+                    maxTime : $(".k2go-timeline-main").data("options.k2goTimeline").maxTime
+                }
+                let startEndTime = {
+                    startTime : $(".k2go-timeline-main").data("options.k2goTimeline").startTime,
+                    endTime : $(".k2go-timeline-main").data("options.k2goTimeline").endTime
+                }
+                this.__extrudeStartEndTime(startEndTime, rangeBar.rangeStartTime);
+                this.__extrudeStartEndTime(startEndTime, rangeBar.rangeEndTime);
+                this.__extrudeMinMaxTime(minMaxTime, startEndTime.startTime);
+                this.__extrudeMinMaxTime(minMaxTime, startEndTime.endTime);
+                $(".k2go-timeline-main").data("options.k2goTimeline").minTime = minMaxTime.minTime;
+                $(".k2go-timeline-main").data("options.k2goTimeline").maxTime = minMaxTime.maxTime;
+                $(".k2go-timeline-main").data("options.k2goTimeline").startTime = startEndTime.startTime;
+                $(".k2go-timeline-main").data("options.k2goTimeline").endTime = startEndTime.endTime;
+                */
+
+                // この関数、1度呼ぶとなんとpTimeInfoの全ての値が変わる！！
+                // しかもレンジが現状の範囲外だとチェック関数でエラーで止まる。
                 $("#timeline").k2goTimeline("showRangeBar", rangeBar);
             } else {
                 $("#timeline").k2goTimeline("hiddenRangeBar");
@@ -271,6 +328,9 @@ class GUI extends EventEmitter {
                 },
                 barMoveEnd: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
+                },
+                rangeMoveEnd :  (pTimeInfo) => {
+                    this.action.changeTimelineRangeBar(pTimeInfo);
                 }
             });
 

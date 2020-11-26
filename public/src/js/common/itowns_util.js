@@ -77,10 +77,15 @@ class ITownsUtil {
         }
     }
 
-    static updateTime(iframeConnector, metaData, time) {
-        iframeConnector.send(ITownsCommand.UpdateTime, {
+    static updateTime(iframeConnector, metaData, time, range) {
+        let timeData = {
             time : time.toJSON()
-        });
+        };
+        if (range.hasOwnProperty('rangeStartTime') && range.hasOwnProperty('rangeEndTime')) {
+            timeData.rangeStartTime = range.rangeStartTime.toJSON();
+            timeData.rangeEndTime = range.rangeEndTime.toJSON();
+        }
+        iframeConnector.send(ITownsCommand.UpdateTime, timeData);
     }
 
     static resize(iframeConnector, rect, isSetOffset = true) {
