@@ -666,9 +666,9 @@ class GUI extends EventEmitter {
                     }
                 });
             }
-            elem.innerHTML = "";
-            elem.appendChild(iframe);
         }
+        elem.innerHTML = "";
+        elem.appendChild(iframe);
     }
 
     /**
