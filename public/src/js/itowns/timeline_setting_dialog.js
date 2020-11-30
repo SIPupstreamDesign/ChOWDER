@@ -73,31 +73,31 @@ class TimelineSettingDialog extends EventEmitter {
         }
 
         {
-            let row = createRow();
+            this.rangeStartRow = createRow();
             this.rangeStart = new DateInput();
             this.rangeStart.getDOM().style.left = "100px"
             this.rangeStart.getDOM().style.position = "absolute"
-            row.appendChild(this.rangeStart.getDOM());
+            this.rangeStartRow.appendChild(this.rangeStart.getDOM());
             this.rangeStartLabel = document.createElement('p');
             this.rangeStartLabel.innerText = 'Range Start';
-            row.appendChild(this.rangeStartLabel);
-            row.style.top = "140px"
-            row.style.left = "40px"
-            row.style.position = "absolute"
+            this.rangeStartRow.appendChild(this.rangeStartLabel);
+            this.rangeStartRow.style.top = "140px"
+            this.rangeStartRow.style.left = "40px"
+            this.rangeStartRow.style.position = "absolute"
         }
 
         {
-            let row = createRow();
+            this.rangeEndRow = createRow();
             this.rangeEnd = new DateInput();
             this.rangeEnd.getDOM().style.left = "100px"
             this.rangeEnd.getDOM().style.position = "absolute"
-            row.appendChild(this.rangeEnd.getDOM());
+            this.rangeEndRow.appendChild(this.rangeEnd.getDOM());
             this.rangeEndLabel = document.createElement('p');
             this.rangeEndLabel.innerText = 'Range End';
-            row.appendChild(this.rangeEndLabel);
-            row.style.top = "180px"
-            row.style.left = "40px"
-            row.style.position = "absolute"
+            this.rangeEndRow.appendChild(this.rangeEndLabel);
+            this.rangeEndRow.style.top = "180px"
+            this.rangeEndRow.style.left = "40px"
+            this.rangeEndRow.style.position = "absolute"
         }
 
         this.okButton = new Button();
@@ -167,10 +167,10 @@ class TimelineSettingDialog extends EventEmitter {
             this.rangeEnd.setDate(this.store.getTimelineRangeBar().rangeEndTime);
         } else {
             this.dom.style.height = "200px";
-            this.rangeStart.getDOM().style.display = "none"
-            this.rangeStartLabel.style.display = "none"
-            this.rangeEnd.getDOM().style.display = "none"
-            this.rangeEndLabel.style.display = "none"
+            this.rangeStartRow.style.display = "none"
+            //this.rangeStartLabel.style.display = "none"
+            this.rangeEndRow.style.display = "none"
+            // this.rangeEndLabel.style.display = "none"
         }
 
         this.endCallback = endCallback;

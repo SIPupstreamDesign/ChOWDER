@@ -38,6 +38,7 @@ function toArrayBuffer(base64) {
 }
 
 const pressedClassName = 'timeline_sync_button_pressed';
+const timelinePlayButtonPressed = 'timeline_play_button_pressed';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -74,8 +75,8 @@ class GUI extends EventEmitter {
         const end = this.store.getTimelineEndTime();
         const current = this.store.getTimelineCurrentTime();
         let minMaxTime = {
-            minTime : $(".k2go-timeline-main").data("options.k2goTimeline").minTime,
-            maxTime : $(".k2go-timeline-main").data("options.k2goTimeline").maxTime
+            minTime: $(".k2go-timeline-main").data("options.k2goTimeline").minTime,
+            maxTime: $(".k2go-timeline-main").data("options.k2goTimeline").maxTime
         }
         /*
         this.__extrudeMinMaxTime(minMaxTime, start);
@@ -96,23 +97,26 @@ class GUI extends EventEmitter {
             });
     }
 
-    init() {
-        this.initTimeline();
-
-        let timelineSettingButton = new Button();
-        timelineSettingButton.getDOM().classList.add("timeline_setting_button");
-        document.getElementById('timeline').appendChild(timelineSettingButton.getDOM());
-        timelineSettingButton.on('click', () => {
-            this.timelineSettingDialog.show((err, data) => {
-                this.action.changeTimelineRange(data);
-                if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime')) {
-                    this.action.changeTimelineRangeBar({
-                        rangeStartTime : data.rangeStartTime,
-                        rangeEndTime : data.rangeEndTime
-                    });
+    playTimeline() {
+        $("#timeline").k2goTimeline("start",
+            {
+                fps: 1,       // 1秒間に1回描画
+                speed: 100,       // 1秒間に100ピクセル移動
+                stop: () => {
+                    // rangeバーの終端で勝手に止まるようだ
+                    const dom = this.timelinePlayButton.getDOM();
+                    if (dom.classList.contains(timelinePlayButtonPressed)) {
+                        dom.classList.remove(timelinePlayButtonPressed);
+                    }
                 }
             });
-        });
+    }
+    stopTimeline() {
+        $("#timeline").k2goTimeline("stop");
+    }
+
+    init() {
+        this.initTimeline();
 
         this.store.on(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, (err) => {
             this.updateTimeline();
@@ -329,7 +333,7 @@ class GUI extends EventEmitter {
                 barMoveEnd: function (pTimeInfo) {
                     debounceChangeTime(pTimeInfo);
                 },
-                rangeMoveEnd :  (pTimeInfo) => {
+                rangeMoveEnd: (pTimeInfo) => {
                     this.action.changeTimelineRangeBar(pTimeInfo);
                 }
             });
@@ -337,7 +341,9 @@ class GUI extends EventEmitter {
         this.timelineSettingDialog = new TimelineSettingDialog(this.store, this.action);
         document.body.appendChild(this.timelineSettingDialog.getDOM());
 
+        // Syncボタン
         this.timelineSyncButton = new Button();
+        document.getElementById('timeline').appendChild(this.timelineSyncButton.getDOM());
         this.timelineSyncButton.getDOM().className = 'timeline_sync_button timeline_sync_button_pressed';
         this.timelineSyncButton.setDataKey('Sync');
         document.body.appendChild(this.timelineSyncButton.getDOM());
@@ -345,12 +351,52 @@ class GUI extends EventEmitter {
             const dom = this.timelineSyncButton.getDOM();
             if (dom.classList.contains(pressedClassName)) {
                 dom.classList.remove(pressedClassName);
-                this.action.changeTimelineSync({ sync : false });
+                this.action.changeTimelineSync({ sync: false });
             } else {
                 dom.classList.add(pressedClassName);
-                this.action.changeTimelineSync({ sync : true });
+                this.action.changeTimelineSync({ sync: true });
             }
         });
+
+        let settingWrap = document.createElement('div');
+        settingWrap.classList.add('timeline_setting_wrap');
+
+        // 設定ボタン
+        let timelineSettingButton = new Button();
+        timelineSettingButton.getDOM().classList.add("timeline_setting_button");
+        settingWrap.appendChild(timelineSettingButton.getDOM());
+        timelineSettingButton.on('click', () => {
+            this.timelineSettingDialog.show((err, data) => {
+                this.action.changeTimelineRange(data);
+                if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime')) {
+                    this.action.changeTimelineRangeBar({
+                        rangeStartTime: data.rangeStartTime,
+                        rangeEndTime: data.rangeEndTime
+                    });
+                }
+            });
+        });
+        document.getElementById('timeline').appendChild(settingWrap);
+
+        let playWrap = document.createElement('div');
+        playWrap.classList.add('timeline_play_wrap');
+
+        // 再生ボタン
+        this.timelinePlayButton = new Button();
+        this.timelinePlayButton.getDOM().classList.add("timeline_play_button");
+        playWrap.appendChild(this.timelinePlayButton.getDOM());
+        this.timelinePlayButton.on('click', () => {
+            const dom = this.timelinePlayButton.getDOM();
+            if (dom.classList.contains(timelinePlayButtonPressed)) {
+                dom.classList.remove(timelinePlayButtonPressed);
+                this.stopTimeline();
+            } else {
+                dom.classList.add(timelinePlayButtonPressed);
+                this.playTimeline();
+            }
+        });
+
+        document.getElementById('timeline').appendChild(playWrap);
     }
 
     initWindow() {

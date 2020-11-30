@@ -233,9 +233,9 @@ p {
 	position : fixed;
     width: 60px;
 	height : 32px;
-	left : 8px;
+	right : calc(260px + 8px);
 	bottom : 60px;
-	border : 5px solid lightgray;
+	border : 5px solid rgb(253, 221, 221);
 	border-radius: 3px;
 	
     padding: 0px;
@@ -275,14 +275,70 @@ p {
 	
     width: 32px;
     height: 32px;
-    position: fixed;
-    left: 8px;
-    bottom: 10px;
+    margin: 3px;
+    border: none;
     background-color: lightgray;
 }
 
 .timeline_setting_button:hover {
     background-color: white;
+}
+
+.timeline_play_button {
+	background-image:url("../image/play.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	
+    width: 32px;
+    height: 32px;
+    margin: 3px;
+    border: none;
+    background-color: lightgray;
+}
+
+.timeline_play_button_pressed {
+	background-image:url("../image/pause.png");
+}
+
+.timeline_play_button:hover {
+    background-color: white;
+}
+/*
+.timeline_pause_button {
+	background-image:url("../image/pause.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	
+    width: 32px;
+    height: 32px;
+    margin: 3px;
+    margin-left: 2px;
+    margin-right: 4px;
+    background-color: lightgray;
+}
+
+.timeline_pause_button:hover {
+    background-color: white;
+}
+*/
+.timeline_play_wrap {
+	position: fixed;
+	left: 10px;
+    bottom: 10px;
+    background: gray;
+    width: 38px;
+    height: 38px;
+    border-radius: 5px;
+}
+
+.timeline_setting_wrap {
+    position: fixed;
+    right: calc(260px + 8px);
+    bottom: 10px;
+    background: gray;
+    border-radius: 5px;
+    width: 38px;
+    height: 38px;
 }
 
 .layer_dialog_ok_button {
@@ -398,9 +454,9 @@ p {
 }
 .timeline {
 	position: absolute;
-	left : 10%;
+	left : 100px;
 	height : 120px;
-	width: 80%;
+	width: calc(100% -  100px - 100px);
 }
 
 .k2go-timeline-main {
