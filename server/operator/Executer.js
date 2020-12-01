@@ -9,7 +9,7 @@
     const fs = require('fs');
     const path = require('path');
     const nodeZip = require("node-zip");
-    const Zip = require("./zip.js");
+    const Zip = require("./Zip.js");
 
     let phantom = null;
     try {
