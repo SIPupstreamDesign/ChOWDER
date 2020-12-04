@@ -417,49 +417,54 @@ class Store extends EventEmitter {
                 layer.object3d.updateMatrixWorld();
             });
 
-            if (config.hasOwnProperty('conversion') &&
-                (config.conversion.src !== 'EPSG:4978' || config.conversion.dst !== 'EPSG:4978')) {
+            if (config.hasOwnProperty('conversion')) {
+                layer.defineLayerProperty('conversion', config.conversion, () => {
+                    // not implemented
+                });
 
-                layer.whenReady.then(() => {
-                    // bboxを一旦初期化する
-                    if (layer.root.hasOwnProperty('boundingVolume')) {
-                        if (layer.root.boundingVolume.hasOwnProperty('box')) {
-                            layer.root.boundingVolume.box.makeEmpty();
-                        }
-                    }
-                    layer.object3d.traverse(obj => {
-                        if (obj.type === 'Mesh') {
-                            const attrs = obj.geometry.attributes;
-                            const positions = attrs.position;
-                            // 頂点座標の変換
-                            for (let i = 0; i < positions.count; ++i) {
-                                const v0 = i * positions.itemSize + 0;
-                                const v1 = i * positions.itemSize + 1;
-                                const v2 = i * positions.itemSize + 2;
-                                const p = new itowns.Coordinates(
-                                    config.conversion.src,
-                                    positions.array[v0], positions.array[v1], positions.array[v2]
-                                ).as(config.conversion.dst);
+                if (config.conversion.src !== 'EPSG:4978' || config.conversion.dst !== 'EPSG:4978') {
 
-                                positions.array[v0] = p.x;
-                                positions.array[v1] = p.y;
-                                positions.array[v2] = p.z;
+                    layer.whenReady.then(() => {
+                        // bboxを一旦初期化する
+                        if (layer.root.hasOwnProperty('boundingVolume')) {
+                            if (layer.root.boundingVolume.hasOwnProperty('box')) {
+                                layer.root.boundingVolume.box.makeEmpty();
                             }
-                            attrs.position.needsUpdate = true;
+                        }
+                        layer.object3d.traverse(obj => {
+                            if (obj.type === 'Mesh') {
+                                const attrs = obj.geometry.attributes;
+                                const positions = attrs.position;
+                                // 頂点座標の変換
+                                for (let i = 0; i < positions.count; ++i) {
+                                    const v0 = i * positions.itemSize + 0;
+                                    const v1 = i * positions.itemSize + 1;
+                                    const v2 = i * positions.itemSize + 2;
+                                    const p = new itowns.Coordinates(
+                                        config.conversion.src,
+                                        positions.array[v0], positions.array[v1], positions.array[v2]
+                                    ).as(config.conversion.dst);
 
-                            // 法線再計算
-                            obj.geometry.computeVertexNormals();
-                            // bbox再計算
-                            obj.geometry.computeBoundingBox();
-                            // meshのbboxをlayerのboundingVolume.boxにunionしていく
-                            if (obj.layer.root.hasOwnProperty('boundingVolume')) {
-                                if (obj.layer.root.boundingVolume.hasOwnProperty('box')) {
-                                    obj.layer.root.boundingVolume.box.union(obj.geometry.boundingBox);
+                                    positions.array[v0] = p.x;
+                                    positions.array[v1] = p.y;
+                                    positions.array[v2] = p.z;
+                                }
+                                attrs.position.needsUpdate = true;
+
+                                // 法線再計算
+                                obj.geometry.computeVertexNormals();
+                                // bbox再計算
+                                obj.geometry.computeBoundingBox();
+                                // meshのbboxをlayerのboundingVolume.boxにunionしていく
+                                if (obj.layer.root.hasOwnProperty('boundingVolume')) {
+                                    if (obj.layer.root.boundingVolume.hasOwnProperty('box')) {
+                                        obj.layer.root.boundingVolume.box.union(obj.geometry.boundingBox);
+                                    }
                                 }
                             }
-                        }
+                        });
                     });
-                });
+                }
             }
             return layer;
         }
@@ -955,8 +960,7 @@ class Store extends EventEmitter {
             if ((params.hasOwnProperty('offset_xyz')
                 || params.hasOwnProperty('offset_uvw')
                 || params.hasOwnProperty('offset_small_uv')) &&
-                layer.object3d &&
-                layer.object3d.children.length > 0) {
+                layer.object3d) {
 
                 // layerからパラメータを取得できるように、layerに入れておく
                 if (params.hasOwnProperty('offset_xyz')) {
@@ -1277,6 +1281,9 @@ class Store extends EventEmitter {
             }
             if (layer.hasOwnProperty('sseThreshold')) {
                 data.sseThreshold = layer.sseThreshold;
+            }
+            if (layer.hasOwnProperty('conversion')) {
+                data.conversion = JSON.parse(JSON.stringify(layer.conversion));
             }
             if (layer.hasOwnProperty('scale')) {
                 data.scale = layer.scale;
