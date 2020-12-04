@@ -416,6 +416,12 @@ p {
 	padding-right : 5px;
 }
 
+.layer_dialog_epsg_title {
+	display : inline-block;
+	padding-right : 5px;
+	padding-left : 10px;
+}
+
 .layer_dialog_fileopen_title {
 	display : inline-block;
 	padding-right : 5px;
@@ -472,6 +478,14 @@ p {
 }
 
 .layer_dialog_zoom_max_select:disabled {
+	background : lightgray;
+}
+
+.layer_dialog_epsg_min_select:disabled {
+	background : lightgray;
+}
+
+.layer_dialog_epsg_max_select:disabled {
 	background : lightgray;
 }
 

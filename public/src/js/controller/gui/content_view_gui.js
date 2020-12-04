@@ -81,7 +81,10 @@ class ContentViewGUI extends EventEmitter {
 		let metaData = data[2];
 		//let groupDict = data[3];
 		let iframe = document.getElementById(getWebGLIFrameID(metaData));
-
+		if (!iframe) {
+			console.warn('iframe is not loaded');
+			return;
+		}
 		// contentData is thubmail
 
 		let url = metaData.url;

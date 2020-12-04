@@ -59,7 +59,7 @@ function createTimescalePotreeSource(config) {
 			const sortLayers = [...layers].sort((a, b) => a.time > b.time);
 			return Promise.resolve({
 				layers: sortLayers,
-				json : buffer
+				json: buffer
 			});
 		}
 	});
@@ -84,9 +84,11 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 			this.attachedLayers = [];
 			this.bboxes = {
-				visible : false
+				visible: false
 			}
 			this.visible = true;
+			this.object3d = new itowns.THREE.Group();
+			this.root = new itowns.THREE.Group();
 
 			this.defineLayerProperty('visible', this.visible, this.updateParams_);
 			this.defineLayerProperty('bboxes', this.bboxes, this.updateParams_);
@@ -99,18 +101,63 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 		preUpdate(context, changeSources) { }
 
-		postUpdate() {}
+		postUpdate() { }
 
 		convert() { }
+
+		delete() {
+			this.source.loadData(this.tempExtent, this).then((data) => {
+				for (let i = 0; i < data.layers.length; ++i) {
+					data.layers[i].layer.delete();
+				}
+			});
+		}
 
 		updateParams() {
 			this.source.loadData(this.tempExtent, this).then((data) => {
 				this.updateVisibility();
+				this.updateTransform();
 				for (let i = 0; i < data.layers.length; ++i) {
 					data.layers[i].layer.pointSize = this.pointSize;
 					data.layers[i].layer.sseThreshold = this.sseThreshold;
 					data.layers[i].layer.opacity = this.opacity;
 					this.itownsView.notifyChange(data.layers[i].layer);
+				}
+			});
+		}
+
+		updateTransform() {
+			this.source.loadData(this.tempExtent, this).then((data) => {
+				for (let i = 0; i < data.layers.length; ++i) {
+					const targetLayer = data.layers[i].layer;
+					const target = targetLayer.object3d;
+
+					target.matrixAutoUpdate = false;
+					const position = this.object3d.position;
+					const quaternion = this.object3d.quaternion;
+					target.position.copy(position);
+					target.quaternion.copy(quaternion);
+					target.updateMatrix();
+					target.updateMatrixWorld();
+					target.matrixAutoUpdate = true;
+
+					// PointCloudLayer.jsでLoDの指標として使用される、
+					// point.copy(context.camera.camera3D.position).sub(this.object3d.position);
+					// について、this.object3d.positionを、いじって
+					// uvwによる移動前の位置にカメラをオフセットさせた状態にする
+					if (targetLayer.hasOwnProperty('root') &&
+						targetLayer.root.hasOwnProperty('bbox')) {
+						const min = targetLayer.root.bbox.min;
+						const minOrg = new itowns.THREE.Vector3(min.x, min.y, min.z);
+						const cameraOffset = new itowns.THREE.Vector3(min.x, min.y, min.z);
+						cameraOffset.add(position);
+						if (target.hasOwnProperty('initial_position')) {
+							cameraOffset.sub(target.initial_position);
+						}
+						cameraOffset.applyQuaternion(quaternion);
+						cameraOffset.sub(minOrg);
+						target.position.set(cameraOffset.x, cameraOffset.y, cameraOffset.z);
+					}
 				}
 			});
 		}
@@ -130,9 +177,9 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 
 				// 現在時刻がレンジ範囲外なら非表示
 				if (this.range) {
-					if (this.currentDate< this.range.rangeStartTime
+					if (this.currentDate < this.range.rangeStartTime
 						|| this.currentDate > this.range.rangeEndTime) {
-							visibleLayer = null;
+						visibleLayer = null;
 					}
 				}
 
@@ -140,6 +187,12 @@ function CreateTimescalePotreeLayer(itownsView, config) {
 				for (let i = 0; i < data.layers.length; ++i) {
 					data.layers[i].layer.visible = false;
 					data.layers[i].layer.bboxes.visible = false;
+
+					// uvwオフセットの指標として使用する,this.rootは,
+					// 最初のレイヤーのrootとする
+					if (i === 0) {
+						this.root = data.layers[i].layer.root;
+					}
 				}
 
 				if (this.visible && visibleLayer) {

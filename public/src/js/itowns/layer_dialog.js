@@ -67,6 +67,7 @@ class LayerDialog extends EventEmitter {
         this.createZoomRow();
         this.createFileOpenRow();
         this.createFormatRow();
+        this.createEPSGRow();
 
         this.endCallback = null;
         this.createPopupBackground();
@@ -122,6 +123,11 @@ class LayerDialog extends EventEmitter {
                 this.formatRow.style.display = "block";
             } else {
                 this.formatRow.style.display = "none";
+            }
+            if (type === ITownsConstants.Type3DTile) {
+                this.epsgRow.style.display = "block";
+            } else {
+                this.epsgRow.style.display = "none";
             }
             this.changeInputURLValue(SampleURLFileNames[type]);
         });
@@ -291,6 +297,44 @@ class LayerDialog extends EventEmitter {
         });
     }
 
+    createEPSGRow() {
+        this.epsgTitle = document.createElement('p');
+        this.epsgTitle.className = "layer_dialog_sub_title";
+        this.epsgTitle.innerText = "Conversion:";
+        
+        this.epsgFromTitle = document.createElement('p');
+        this.epsgFromTitle.className = "layer_dialog_epsg_title layer_dialog_epsg_from_title";
+        this.epsgFromTitle.innerText = "From";
+
+        this.epsgSrcSelect = new Select();
+        this.epsgSrcSelect.addOption("EPSG:4978", "EPSG:4978");
+        this.epsgSrcSelect.addOption("EPSG:3857", "EPSG:3857");
+        this.epsgSrcSelect.addOption("EPSG:2446", "EPSG:2446");
+        this.epsgSrcSelect.addOption("Custom", "Custom");
+        this.epsgSrcSelect.getDOM().className = "layer_dialog_epsg_min_select";
+        this.epsgSrcSelect.setSelectedIndex(0);
+
+        this.epsgToTile = document.createElement('p');
+        this.epsgToTile.className = "layer_dialog_epsg_title";
+        this.epsgToTile.innerText = "To";
+
+        this.epsgDstSelect = new Select();
+        this.epsgDstSelect.addOption("EPSG:4978", "EPSG:4978");
+        this.epsgDstSelect.addOption("EPSG:3857", "EPSG:3857");
+        this.epsgDstSelect.addOption("EPSG:2446", "EPSG:2446");
+        this.epsgDstSelect.addOption("Custom", "Custom");
+        this.epsgDstSelect.getDOM().className = "layer_dialog_epsg_max_select";
+        this.epsgDstSelect.setSelectedIndex(0);
+
+        this.epsgRow = this.createRow();
+        this.epsgRow.style.display = "none"
+        this.epsgRow.appendChild(this.epsgTitle);
+        this.epsgRow.appendChild(this.epsgFromTitle);
+        this.epsgRow.appendChild(this.epsgSrcSelect.getDOM());
+        this.epsgRow.appendChild(this.epsgToTile);
+        this.epsgRow.appendChild(this.epsgDstSelect.getDOM());
+    }
+
     createPopupBackground() {
         this.okButton = new Button();
         this.okButton.setDataKey("OK");
@@ -338,6 +382,12 @@ class LayerDialog extends EventEmitter {
                 } else {
                     data.tileMatrixSet = 'PM'
                 }
+            }
+            if (data.type === ITownsConstants.Type3DTile) {
+                data.conversion = {
+                    src : this.epsgSrcSelect.getSelectedValue(),
+                    dst : this.epsgDstSelect.getSelectedValue()
+                };
             }
 
             if (this.endCallback) {

@@ -73,6 +73,8 @@ class Store extends EventEmitter {
         this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
 
         this.date = null;
+
+        itowns.proj4.defs("EPSG:2446", "+proj=tmerc +lat_0=33 +lon_0=133.5 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
     }
 
     // デバッグ用. release版作るときは消す
@@ -375,7 +377,6 @@ class Store extends EventEmitter {
             } else if (config.format.indexOf("png") >= 0) {
                 this.installPNGElevationParsar(mapSource);
             }
-            console.error("mapSource", mapSource, config)
             if (config.hasOwnProperty('tileMatrixSet') && config.tileMatrixSet === "iTowns") {
                 return new itowns.ElevationLayer(config.id, {
                     source: mapSource,
@@ -399,16 +400,68 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypePointCloud) {
             config.crs = this.itownsView.referenceCrs;
-            return new itowns.PotreeLayer(config.id, {
+            const layer = new itowns.PotreeLayer(config.id, {
                 source: new itowns.PotreeSource(config)
             });
+            return layer;
         }
         if (type === ITownsConstants.TypePointCloudTimeSeries) {
             config.crs = this.itownsView.referenceCrs;
             return CreateTimescalePotreeLayer(this.itownsView, config);
         }
         if (type === ITownsConstants.Type3DTile) {
-            return new itowns.C3DTilesLayer(config.id, config, this.itownsView);
+            const layer = new itowns.C3DTilesLayer(config.id, config, this.itownsView);
+            layer.defineLayerProperty('scale', 1.0, () => {
+                const scaleValue = layer.scale;
+                layer.object3d.scale.set(scaleValue, scaleValue, scaleValue);
+                layer.object3d.updateMatrixWorld();
+            });
+
+            if (config.hasOwnProperty('conversion') &&
+                (config.conversion.src !== 'EPSG:4978' || config.conversion.dst !== 'EPSG:4978')) {
+
+                layer.whenReady.then(() => {
+                    // bboxを一旦初期化する
+                    if (layer.root.hasOwnProperty('boundingVolume')) {
+                        if (layer.root.boundingVolume.hasOwnProperty('box')) {
+                            layer.root.boundingVolume.box.makeEmpty();
+                        }
+                    }
+                    layer.object3d.traverse(obj => {
+                        if (obj.type === 'Mesh') {
+                            const attrs = obj.geometry.attributes;
+                            const positions = attrs.position;
+                            // 頂点座標の変換
+                            for (let i = 0; i < positions.count; ++i) {
+                                const v0 = i * positions.itemSize + 0;
+                                const v1 = i * positions.itemSize + 1;
+                                const v2 = i * positions.itemSize + 2;
+                                const p = new itowns.Coordinates(
+                                    config.conversion.src,
+                                    positions.array[v0], positions.array[v1], positions.array[v2]
+                                ).as(config.conversion.dst);
+
+                                positions.array[v0] = p.x;
+                                positions.array[v1] = p.y;
+                                positions.array[v2] = p.z;
+                            }
+                            attrs.position.needsUpdate = true;
+
+                            // 法線再計算
+                            obj.geometry.computeVertexNormals();
+                            // bbox再計算
+                            obj.geometry.computeBoundingBox();
+                            // meshのbboxをlayerのboundingVolume.boxにunionしていく
+                            if (obj.layer.root.hasOwnProperty('boundingVolume')) {
+                                if (obj.layer.root.boundingVolume.hasOwnProperty('box')) {
+                                    obj.layer.root.boundingVolume.box.union(obj.geometry.boundingBox);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+            return layer;
         }
         if (type === ITownsConstants.TypeBargraph) {
             return CraeteBarGraphLayer(this.itownsView, config);
@@ -534,8 +587,12 @@ class Store extends EventEmitter {
                 "name": params.hasOwnProperty('id') ? params.id : "3dtile",
                 "source": new itowns.C3DTilesSource({
                     "url": url
-                })
+                }),
+                overrideMaterials: false
             };
+            if (params.hasOwnProperty('conversion')) {
+                config.conversion = JSON.parse(JSON.stringify(params.conversion));
+            }
         }
         if (type === ITownsConstants.TypeBargraph) {
             config = {
@@ -811,7 +868,7 @@ class Store extends EventEmitter {
         if (!layer.ready) {
             console.warn("layer is not ready")
             return;
-        } 
+        }
         let isChanged = false;
         if (layer) {
             let isUpdateSource = false;
@@ -884,6 +941,10 @@ class Store extends EventEmitter {
                 layer.bargraphParams = JSON.parse(JSON.stringify(params.bargraphParams));
                 isChanged = true;
             }
+            if (params.hasOwnProperty('conversion')) {
+                layer.conversion = JSON.parse(JSON.stringify(params.conversion));
+                isChanged = true;
+            }
             /*
             if (params.hasOwnProperty('pointBudget')) {
                 layer.pointBudget = Number(params.pointBudget);
@@ -896,76 +957,99 @@ class Store extends EventEmitter {
                 || params.hasOwnProperty('offset_small_uv')) &&
                 layer.object3d &&
                 layer.object3d.children.length > 0) {
-                for (let i = 0; i < layer.object3d.children.length; ++i) {
-                    let target = layer.object3d.children[i];
-                    let initial_position = { x: 0, y: 0, z: 0 };
-                    let initial_quaternion = new itowns.THREE.Quaternion();
-                    if (target["initial_position"]) {
-                        initial_position = target.initial_position;
-                        initial_quaternion = target.initial_quaternion;
-                    } else {
-                        target.initial_position = target.position.clone();
-                        target.initial_quaternion = target.quaternion.clone();
-                    }
-                    let vec = target.initial_position.clone();
-                    if (vec.length() === 0) {
-                        if (layer.hasOwnProperty('root')) {
-                            vec = layer.root.bbox.min.clone()
+
+                // layerからパラメータを取得できるように、layerに入れておく
+                if (params.hasOwnProperty('offset_xyz')) {
+                    layer.offset_xyz = JSON.parse(JSON.stringify(params.offset_xyz));
+                }
+                if (params.hasOwnProperty('offset_small_uv')) {
+                    layer.offset_small_uv = JSON.parse(JSON.stringify(params.offset_small_uv));
+                }
+                if (params.hasOwnProperty('offset_uvw')) {
+                    layer.offset_uvw = JSON.parse(JSON.stringify(params.offset_uvw));
+                }
+
+                let target = layer.object3d;
+                let initial_position = { x: 0, y: 0, z: 0 };
+                let initial_quaternion = new itowns.THREE.Quaternion();
+                if (target["initial_position"]) {
+                    initial_position = target.initial_position;
+                    initial_quaternion = target.initial_quaternion;
+                } else {
+                    target.initial_position = target.position.clone();
+                    target.initial_quaternion = target.quaternion.clone();
+                }
+                let vec = target.initial_position.clone();
+                if (vec.length() === 0) {
+                    if (layer.root) {
+                        if (layer.root.hasOwnProperty('bbox')) {
+                            layer.root.bbox.getCenter(vec);
+                        }
+                        if (layer.root.hasOwnProperty('boundingVolume') && layer.root.boundingVolume.hasOwnProperty('box')) {
+                            layer.root.boundingVolume.box.getCenter(vec);
                         }
                     }
+                }
 
-                    vec.normalize();
-                    let u = vec.clone();
-                    u.cross(new itowns.THREE.Vector3(0, 1, 0));
-                    let v = vec.clone();
-                    v.cross(u);
-                    let w = vec.clone();
+                vec.normalize();
+                let u = vec.clone();
+                u.cross(new itowns.THREE.Vector3(0, 0, 1));
+                let v = vec.clone();
+                v.cross(u);
+                let w = vec.clone();
+                w.normalize();
 
-                    let mw = { x: 0, y: 0, z: 0 };
-                    let xyz = { x: 0, y: 0, z: 0 };
-                    // position
-                    if (params.hasOwnProperty('offset_xyz')) {
-                        xyz = params.offset_xyz;
-                    }
-                    if (params.hasOwnProperty('offset_uvw')) {
-                        w.multiplyScalar(params.offset_uvw.w * 100);
-                        mw = w;
-                    }
-                    let position = new itowns.THREE.Vector3(
-                        initial_position.x + xyz.x + mw.x,
-                        initial_position.y + xyz.y + mw.y,
-                        initial_position.z + xyz.z + mw.z
-                    );
-                    // rotation
-                    let quaternionTUV = new itowns.THREE.Quaternion();
-                    let quaternionUV = new itowns.THREE.Quaternion();
-                    if (params.hasOwnProperty('offset_small_uv')) {
-                        let quaternionTU = new itowns.THREE.Quaternion();
-                        let quaternionTV = new itowns.THREE.Quaternion();
-                        quaternionTU.setFromAxisAngle(u, params.offset_small_uv.u * Math.PI / 180.0 / 1.0e6);
-                        quaternionTV.setFromAxisAngle(v, params.offset_small_uv.v * Math.PI / 180.0 / 1.0e6);
-                        quaternionTUV.copy(quaternionTU);
-                        quaternionTUV.multiply(quaternionTV);
-                    }
-                    if (params.hasOwnProperty('offset_uvw')) {
-                        let quaternionU = new itowns.THREE.Quaternion();
-                        let quaternionV = new itowns.THREE.Quaternion();
-                        quaternionU.setFromAxisAngle(u, params.offset_uvw.u * Math.PI / 180.0);
-                        quaternionV.setFromAxisAngle(v, params.offset_uvw.v * Math.PI / 180.0);
-                        quaternionUV.copy(quaternionU);
-                        quaternionUV.multiply(quaternionV);
-                    }
-                    position.applyQuaternion(quaternionTUV)
-                    position.applyQuaternion(quaternionUV)
-                    target.matrixAutoUpdate = false;
-                    target.position.copy(position);
-                    target.quaternion.copy(initial_quaternion);
-                    target.quaternion.multiply(quaternionTUV);
-                    target.quaternion.multiply(quaternionUV);
-                    target.updateMatrix();
-                    target.updateMatrixWorld();
-                    target.matrixAutoUpdate = true;
-                    isChanged = true;
+                let mw = { x: 0, y: 0, z: 0 };
+                let xyz = { x: 0, y: 0, z: 0 };
+                // position
+                if (params.hasOwnProperty('offset_xyz')) {
+                    xyz = params.offset_xyz;
+                }
+                if (params.hasOwnProperty('offset_uvw')) {
+                    // w.multiplyScalar(params.offset_uvw.w * 100);
+                    // mw = w;
+                }
+                let position = new itowns.THREE.Vector3(
+                    initial_position.x + xyz.x + mw.x,
+                    initial_position.y + xyz.y + mw.y,
+                    initial_position.z + xyz.z + mw.z
+                );
+                // rotation
+                let quaternionTUV = new itowns.THREE.Quaternion();
+                let quaternionUVW = new itowns.THREE.Quaternion();
+                if (params.hasOwnProperty('offset_small_uv')) {
+                    let quaternionTU = new itowns.THREE.Quaternion();
+                    let quaternionTV = new itowns.THREE.Quaternion();
+                    quaternionTU.setFromAxisAngle(u, params.offset_small_uv.u * Math.PI / 180.0 / 1.0e6);
+                    quaternionTV.setFromAxisAngle(v, params.offset_small_uv.v * Math.PI / 180.0 / 1.0e6);
+                    quaternionTUV.copy(quaternionTU);
+                    quaternionTUV.multiply(quaternionTV);
+                }
+                if (params.hasOwnProperty('offset_uvw')) {
+                    let quaternionU = new itowns.THREE.Quaternion();
+                    let quaternionV = new itowns.THREE.Quaternion();
+                    let quaternionW = new itowns.THREE.Quaternion();
+                    quaternionU.setFromAxisAngle(u, params.offset_uvw.u * Math.PI / 180.0);
+                    quaternionV.setFromAxisAngle(v, params.offset_uvw.v * Math.PI / 180.0);
+                    quaternionW.setFromAxisAngle(w, params.offset_uvw.w * Math.PI / 180.0);
+                    quaternionUVW.copy(quaternionU);
+                    quaternionUVW.multiply(quaternionV);
+                    quaternionUVW.multiply(quaternionW);
+                }
+                position.applyQuaternion(quaternionTUV)
+                position.applyQuaternion(quaternionUVW)
+                target.matrixAutoUpdate = false;
+                target.position.copy(position);
+                target.quaternion.copy(initial_quaternion);
+                target.quaternion.multiply(quaternionTUV);
+                target.quaternion.multiply(quaternionUVW);
+                target.updateMatrix();
+                target.updateMatrixWorld();
+                target.matrixAutoUpdate = true;
+                isChanged = true;
+
+                if (layer.isTimeseriesPotree) {
+                    layer.updateParams();
                 }
             }
             if (isChanged && redraw) {
@@ -1103,7 +1187,7 @@ class Store extends EventEmitter {
         // time更新
         this.iframeConnector.on(ITownsCommand.UpdateTime, (err, param, request) => {
             if (err) {
-                console.error(err);getTimelineRangeBar
+                console.error(err);
                 return;
             }
             this.date = new Date(param.time);
@@ -1200,6 +1284,15 @@ class Store extends EventEmitter {
             if (layer.hasOwnProperty('size')) {
                 data.size = layer.size;
             }
+            if (layer.hasOwnProperty('offset_small_uv')) {
+                data.offset_small_uv = JSON.parse(JSON.stringify(layer.offset_small_uv));
+            }
+            if (layer.hasOwnProperty('offset_uvw')) {
+                data.offset_uvw = JSON.parse(JSON.stringify(layer.offset_uvw));
+            }
+            if (layer.hasOwnProperty('conversion')) {
+                data.conversion = JSON.parse(JSON.stringify(layer.conversion));
+            }
             if (layer.hasOwnProperty('isBarGraph')) {
                 data.isBarGraph = layer.isBarGraph;
                 if (!layer.ready) {
@@ -1229,66 +1322,47 @@ class Store extends EventEmitter {
                     data.attribution = layer.source.attribution;
                 }
             }
-            if (
-                (layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||
+            data.type = (((layer) => {
+                if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
+                    return ITownsConstants.TypeUser;
+                } else if (layer instanceof itowns.ColorLayer) {
+                    return ITownsConstants.TypeColor;
+                } else if (layer instanceof itowns.ElevationLayer) {
+                    return ITownsConstants.TypeElevation;
+                } else if (layer instanceof itowns.PotreeLayer) {
+                    return ITownsConstants.TypePointCloud;
+                } else if (layer.isTimeseriesPotree) {
+                    return ITownsConstants.TypePointCloudTimeSeries;
+                } else if (layer instanceof itowns.C3DTilesLayer) {
+                    return ITownsConstants.Type3DTile;
+                } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
+                    return ITownsConstants.TypeGeometry;
+                } else {
+                    return ITownsConstants.TypeUser;
+                }
+            })(layer));
+            data.visible = layer.visible;
+            data.crs = layer.crs;
+            data.id = layer.id;
+
+            if ((layer.hasOwnProperty('source') && layer.source.hasOwnProperty('url')) ||
                 (layer.hasOwnProperty('source') && layer.hasOwnProperty('file')) ||
                 (layer.hasOwnProperty('name') && layer.hasOwnProperty('url')) ||
                 (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true)
             ) {
                 if (layer.hasOwnProperty('source')) {
-                    data.visible = layer.visible;
-                    data.crs = layer.crs;
-                    data.id = layer.id;
                     data.url = layer.source.hasOwnProperty('url') ? layer.source.url : layer.url;
                     data.style = layer.source.hasOwnProperty('style') ? layer.source.style : undefined;
                     data.mtlurl = layer.source.hasOwnProperty('mtlurl') ? layer.source.mtlurl : undefined;
-                    data.zoom = layer.source.hasOwnProperty('zoom') ? layer.source.zoom : undefined;
                     data.file = layer.source.hasOwnProperty('file') ? layer.source.file : undefined;
-                    data.type = (((layer) => {
-                        if (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true) {
-                            return ITownsConstants.TypeUser;
-                        } else if (layer instanceof itowns.ElevationLayer) {
-                            return ITownsConstants.TypeElevation;
-                        } else if (layer instanceof itowns.ColorLayer) {
-                            return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PotreeLayer) {
-                            return ITownsConstants.TypePointCloud;
-                        } else if (layer.isTimeseriesPotree) {
-                            return ITownsConstants.TypePointCloudTimeSeries;
-                        } else if (layer instanceof itowns.C3DTilesLayer) {
-                            return ITownsConstants.Type3DTile;
-                        } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
-                            return ITownsConstants.TypeGeometry;
-                        } else {
-                            return ITownsConstants.TypeUser;
-                        }
-                    })(layer));
+                    data.zoom = layer.source.hasOwnProperty('zoom') ? layer.source.zoom : undefined;
                     dataList.push(data);
                 } else {
-                    data.visible = layer.visible;
-                    data.id = layer.id;
-                    data.name = layer.hasOwnProperty('name') ? layer.name : undefined;
-                    data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
                     data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
                     data.mtlurl = layer.hasOwnProperty('mtlurl') ? layer.mtlurl : undefined;
-                    data.type = (((layer) => {
-                        if (layer.hasOwnProperty('isUserLayer')) {
-                            return ITownsConstants.TypeUser;
-                        } else if (layer instanceof itowns.ColorLayer) {
-                            return ITownsConstants.TypeColor;
-                        } else if (layer instanceof itowns.PotreeLayer) {
-                            return ITownsConstants.TypePointCloud;
-                        } else if (layer.isTimeseriesPotree) {
-                            return ITownsConstants.TypePointCloudTimeSeries;
-                        } else if (layer instanceof itowns.C3DTilesLayer) {
-                            return ITownsConstants.Type3DTile;
-                        } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
-                            return ITownsConstants.TypeGeometry;
-                        } else {
-                            return ITownsConstants.TypeUser;
-                        }
-                    })(layer));
+                    data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
+                    data.name = layer.hasOwnProperty('name') ? layer.name : undefined;
                     dataList.push(data);
                 }
             }
