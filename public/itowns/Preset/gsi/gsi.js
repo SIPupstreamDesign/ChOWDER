@@ -28,8 +28,8 @@ window.onload = function () {
         coord: new itowns.Coordinates("EPSG:4326", 138.7539, 35.3539),
         range: 25000
     };
-
     var view = new itowns.GlobeView(viewerDiv, placement);
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
     loadGSIColor();
 

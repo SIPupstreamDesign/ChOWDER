@@ -31,6 +31,7 @@ window.onload = function () {
             projection: view.referenceCrs,
         }),
     });
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
     // add pointcloud to scene
     /*

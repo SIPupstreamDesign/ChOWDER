@@ -14,6 +14,7 @@ window.onload = function() {
     var miniDiv = document.getElementById('miniDiv');
     // Instanciate iTowns GlobeView*
     var view = new itowns.GlobeView(viewerDiv, positionOnGlobe);
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
     setupLoadingScreen(viewerDiv, view);
     // Dont' instance mini viewer if it's Test env
     miniView = new itowns.GlobeView(miniDiv, positionOnGlobe, {

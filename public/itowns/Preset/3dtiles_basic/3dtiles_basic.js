@@ -45,6 +45,8 @@ window.onload = function() {
         sseThreshold: 1,
     }, view);
 
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
+
     // add an event for picking the 3D Tiles layer and displaying
     // information about the picked feature in an html div
     var pickingArgs = {};
@@ -58,6 +60,7 @@ window.onload = function() {
                 (event) => fillHTMLWithPickingInfo(event, view, pickingArgs),false);
                 */
         });
+
 
     // Add the UI Debug
     /*

@@ -40,6 +40,7 @@ window.onload = function () {
     var view = new itowns.GlobeView(viewerDiv, placement, {
         noControls : true
     });
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
     loadGSIColor(view, function () {
         hideAllLayers(view);
@@ -59,7 +60,6 @@ window.onload = function () {
     var dirLight = new THREE.DirectionalLight( 0xffffff );
     dirLight.position.set( - 3, 10, - 10 );
     view.scene.add( dirLight );
-
     var controls = new itowns.OrbitControls(view, { focusOnClick: true});
 
     // itownsコントローラから開かれた場合のみコントロールを表示

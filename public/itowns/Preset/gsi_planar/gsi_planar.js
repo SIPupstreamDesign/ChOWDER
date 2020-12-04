@@ -183,6 +183,7 @@ window.onload = function () {
         placement: placement,
         maxSubdivisionLevel: 20
     });
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
     new itowns.PlanarControls(view, {
         maxAltitude: 40000000

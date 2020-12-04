@@ -14,6 +14,7 @@ window.onload = function() {
 
     // Instanciate iTowns GlobeView*
     var view = new itowns.GlobeView(viewerDiv, placement);
+    view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
     // define pole texture
     view.tileLayer.noTextureColor = new itowns.THREE.Color(0x95c1e1);
