@@ -3,8 +3,6 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-"use strict";
-
 import Action from './action'
 import Constants from '../common/constants'
 import Command from '../common/command';
@@ -362,7 +360,6 @@ class Store extends EventEmitter {
     }
 
     _deleteLayer(data) {
-        console.error(data);
         // TODO サーバ側更新
         let layerList = JSON.parse(this.metaData.layerList);
         for (let i = 0; i < layerList.length; ++i) {
@@ -636,6 +633,17 @@ class Store extends EventEmitter {
         });
         this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR, null);
     }
+    
+    _upload(data) {
+        console.error(data);
+        const param = {
+            filename : data.filename,
+            type : data.type
+        };
+        Connector.sendBinary(Command.Upload, param, data.binary, (err, reply) => {
+            this.emit(Store.EVENT_DONE_UPLOAD, err, reply);
+        });
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -655,4 +663,5 @@ Store.EVENT_UPDATE_MEASURE_PERFORMANCE = "update_mesure_performance"; // 計測�
 Store.EVENT_DONE_CHANGE_TIMELINE_RANGE = "done_change_timeline_range";
 Store.EVENT_DONE_CHANGE_TIME = "done_change_time";
 Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR = "done_change_timeline_range_bar";
+Store.EVENT_DONE_UPLOAD = "done_upload";
 export default Store;

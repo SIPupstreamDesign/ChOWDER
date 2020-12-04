@@ -3,8 +3,6 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-"use strict";
-
 class Action extends EventEmitter
 {
     constructor()
@@ -198,6 +196,19 @@ class Action extends EventEmitter
     changeTimelineSync(data) {
         this.emit(Action.EVENT_CHANGE_TIMELINE_SYNC, null, data);
     }
+    
+    /**
+     * タイムラインの同期設定の変更
+     * @param {*} data 
+     * {
+     *    "filename" : ファイル名,
+     *    "type" : アップロードタイプ(ITownsConstants.UploadType~),
+     *    "binary" :ArrayBuffer
+     * }
+     */
+    upload(data) {
+        this.emit(Action.EVENT_UPLOAD, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -219,4 +230,5 @@ Action.EVENT_CHANGE_TIMELINE_RANGE = "changeTimelineRange";
 Action.EVENT_CHANGE_TIMELINE_RANGE_BAR = "changeTimelineRangeBar";
 Action.EVENT_MEASURE_PERFORMANCE = "measurePerformance";
 Action.EVENT_CHANGE_TIMELINE_SYNC = "changeTimelineSync";
+Action.EVENT_UPLOAD = "upload";
 export default Action;

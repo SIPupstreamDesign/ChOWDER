@@ -8,7 +8,7 @@
 
     const fs = require('fs');
     const path = require('path');
-    const nodeZip = require("node-zip");
+    const Util = require('./../util.js');
     const Zip = require("./Zip.js");
 
     let phantom = null;
@@ -20,9 +20,9 @@
     const redis = require("redis");
 
     const image_size = require('image-size');
-    let Thumbnail = { 
-        create : (meta, binary, func) => { func(null, null, null); },
-        setPreviewWH : () => {}
+    let Thumbnail = {
+        create: (meta, binary, func) => { func(null, null, null); },
+        setPreviewWH: () => { }
     }
     try {
         Thumbnail = require('./../thumbnail.js');
@@ -73,7 +73,7 @@
             this.socketidToAccessAuthority = {};
             this.socketidToUserID = {};
             this.socketidToLoginKey = {};
-            
+
             // 拒否設定のDisplayのsocketidのキャッシュ.
             // 拒否設定のDisplayに対するbroadcast防止用.
             // { socketidA : displayIDa,  socketidB : displayIDb, .. }
@@ -100,9 +100,9 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         renderURL(url, endCallback) {
-            if(phantom === null){
+            if (phantom === null) {
                 console.log("not found phantom");
-            }else{
+            } else {
                 phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
                     instance.createPage().then(function (page) {
                         page.property('viewportSize', { width: 1024, height: 600 }).then(function () {
@@ -1221,7 +1221,7 @@
             return master === util.encrypt(pass);
         }
 
-    	/**
+        /**
          * socketidごとの権限情報キャッシュを全て更新する
          */
         updateAuthority(adminSetting, groupSetting) {
@@ -1656,7 +1656,7 @@
                 // タイルイメージの場合は画像バイナリからサイズを求めない.
                 return;
             }
-            
+
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
@@ -1730,7 +1730,7 @@
          */
         addContent(metaData, data, endCallback) {
             let contentData = data;
-            
+
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
@@ -1837,8 +1837,7 @@
                                             if (finishCallback) {
                                                 let kv = { tile_finished: true }
                                                 this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, () => {
-                                                    if (!this.tileFinishCache.hasOwnProperty(content_id + "_" + history_id))
-                                                    {
+                                                    if (!this.tileFinishCache.hasOwnProperty(content_id + "_" + history_id)) {
                                                         this.tileFinishCache[content_id + "_" + history_id] = true;
                                                         finishCallback(err, metaData, contentData);
                                                     }
@@ -2012,7 +2011,7 @@
          */
         storeHistoricalData(socketid, metaData, keyvalue, endCallback) {
             let kvLen = Object.keys(keyvalue).length;
-            
+
             if (!metaData.hasOwnProperty('history_id')) {
                 metaData.history_id = util.generateUUID8();
             }
@@ -2033,20 +2032,20 @@
                                     let key;
                                     let historyMetaData = {};
                                     let count = 0;
-                                        for (key in keyvalue) {
-                                            let value = keyvalue[key];
-                                            historyMetaData = {};
-                                            historyMetaData[value] = JSON.stringify(metaData);
-                                            this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
-                                                ++count;
-                                                if (count >= kvLen) {
-                                                    if (endCallback) {
-                                                        endCallback(err, reply, metaData.history_id);
-                                                    }
+                                    for (key in keyvalue) {
+                                        let value = keyvalue[key];
+                                        historyMetaData = {};
+                                        historyMetaData[value] = JSON.stringify(metaData);
+                                        this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
+                                            ++count;
+                                            if (count >= kvLen) {
+                                                if (endCallback) {
+                                                    endCallback(err, reply, metaData.history_id);
                                                 }
-                                            });
-                                        }
-                                    });
+                                            }
+                                        });
+                                    }
+                                });
                             } else {
                                 endCallback(err, null, metaData.history_id);
                             }
@@ -2101,7 +2100,7 @@
             if (mime) {
                 metaData.mime = mime;
             }
-            
+
             this.textClient.exists(this.contentPrefix + metaData.content_id, (err, doesExist) => {
                 if (!err && doesExist === 1) {
                     let backupList = [];
@@ -2264,7 +2263,7 @@
         addHistoricalContent(socketid, metaData, data, endCallback) {
             let contentData = data;
             console.log("addHistoricalContent:" + metaData.id + ":" + metaData.content_id);
-            
+
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
@@ -2291,7 +2290,7 @@
 
                         // finishキャッシュを空にする
                         this.tileFinishCache = {};
-                        
+
                         if (!metaData.hasOwnProperty('reductionWidth')) {
                             let dimensions = image_size(contentData);
                             metaData.reductionWidth = dimensions.width;
@@ -2439,7 +2438,7 @@
                                             if (userID === "ElectronDisplay") {
                                                 let perm = {};
                                                 perm[windowData.id] = "true";
-                                                let data = { permissionList : [perm] };
+                                                let data = { permissionList: [perm] };
                                                 this.allDisplayCache[socketid] = windowData.id;
                                                 this.updateDisplayPermissionList(data, (err, changeList) => {
                                                     if (permissionChangeCallback) {
@@ -2589,7 +2588,7 @@
                         if (!err && doesExist === 1) {
                             this.textClient.del(this.windowContentPrefix + meta.content_id, (err) => {
                                 if (!err) {
-                                    this.deleteDisplayPermissionList({ displayIDList : [meta.id] }, (err, reply) => {
+                                    this.deleteDisplayPermissionList({ displayIDList: [meta.id] }, (err, reply) => {
                                         if (!err) {
                                             this.textClient.del(this.windowContentRefPrefix + meta.content_id);
                                             if (meta.hasOwnProperty('reference_count')) {
@@ -2837,7 +2836,7 @@
             if (this.allDisplayCache.hasOwnProperty(socketid)) {
                 // displayからのアクセスだった
                 const displayID = this.allDisplayCache[socketid];
-                this.getWindowMetaData({ id : displayID },  (windowMeta) => {
+                this.getWindowMetaData({ id: displayID }, (windowMeta) => {
                     this.getGroupUserSetting((err, data) => {
                         if (!err && data) {
                             if (data.hasOwnProperty(groupID)) {
@@ -3092,7 +3091,7 @@
                 for (let i = 0; i < permissionList.length; ++i) {
                     let key = Object.keys(permissionList[i])[0];
                     let value = String(permissionList[i][key]);
-                    
+
                     //  設定が変更されたdisplay idを詰める
                     if (permissionDict && permissionDict.hasOwnProperty(key)) {
                         if (permissionDict[key] !== value) {
@@ -3172,7 +3171,7 @@
             });
         }
 
-        
+
         /**
          * upload
          * @method upload
@@ -3180,59 +3179,96 @@
          * @param {BLOB} binaryData binaryData
          * @param {Function} callback (string err, {string dirname})=>{}
          */
-        upload(param,binaryData, callback){
+        upload(param, binaryData, callback) {
             /* sendBinary の JSONRPC の param.type で何がアップロードされたか見る */
-            if(param.type === "qgis2three.js"){
+            if (param.type === "qgis2three.js") {
                 /* qgis app 用のqgis2three.jsファイル */
-                const timestamp = Zip.createTimestamp();
-                const extractDir = "../public/qgis/"+timestamp+"/";
+                const timestamp = Util.createTimestamp();
+                const extractDir = "../public/userdata/qgis/" + timestamp + "/";
                 /* タイムスタンプでディレクトリ掘る */
-                if(!fs.existsSync(extractDir)){
-                    fs.mkdirSync(extractDir);
-                }
+                fs.mkdir(extractDir, { recursive: true }, (err) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        /* ファイルを解凍する */
+                        (async () => {
+                            const fileList = await Zip.extract(binaryData, extractDir);
 
-                /* ファイルを解凍する */
-                (async()=>{
-                    const fileList = await Zip.extract(binaryData, extractDir);
-                    
-                    if(typeof fileList === Error){
-                        // 想定外の実行時エラーでrejectされた
-                        console.log("err:",fileList.toString());
-                        callback(fileList.toString(),null);
-                        return;
+                            if (typeof fileList === Error) {
+                                // 想定外の実行時エラーでrejectされた
+                                console.log("err:", fileList.toString());
+                                callback(fileList.toString(), null);
+                                return;
+                            }
+
+                            /* index.htmlを探す */
+                            let htmlDir = null;
+                            for (let file of fileList) {
+                                if (file.err !== null) {
+                                    /* 解凍時にファイル単位でエラーになってた */
+                                    callback(file.err.toString(), null);//最初に起きたエラー
+                                    return;
+                                }
+                                if (file.dir.match(/index.html$/)) {
+                                    // console.log("HTML EXIST:",file.dir);
+                                    const dir = file.dir.substr(9);
+                                    htmlDir = dir;
+                                }
+                            }
+
+                            if (htmlDir === null) {
+                                /* index.html がないってことは qgis2three.js のファイルじゃないと思う */
+                                console.log("it is not qgis2three.js file");
+                                callback(new Error("it is not qgis2three.js file").toString(), null);
+                                return;
+                            }
+
+                            callback(null, { dirname: htmlDir });//エラーはなかった
+                        })();
                     }
-                    
-                    /* index.htmlを探す */
-                    let htmlDir = null;
-                    for(let file of fileList){
-                        if(file.err !== null){
-                            /* 解凍時にファイル単位でエラーになってた */
-                            callback(file.err.toString(),null);//最初に起きたエラー
-                            return;
-                        }
-                        if(file.dir.match(/index.html$/)){
-                            // console.log("HTML EXIST:",file.dir);
-                            const dir = file.dir.substr(9);
-                            htmlDir = dir;
-                        }
+                });
+            } else if (param.type === "itownsapp_csv") {
+                const timestamp = Util.createTimestamp();
+                const extractDir = "../public/userdata/itowns/" + timestamp + "/";
+                /* タイムスタンプでディレクトリ掘る */
+                fs.mkdir(extractDir, { recursive: true }, (err) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        // csvファイル書き込み
+                        const csvFilePath = path.join(extractDir, 'data.csv')
+                        fs.writeFile(csvFilePath, binaryData, (err) => {
+                            if (err) {
+                                callback(err, null);
+                            } else {
+                                const posixPath = path.relative('../public', csvFilePath).split(path.sep).join(path.posix.sep);
+                                callback(null, { path: posixPath });
+                            }
+                        })
                     }
-
-                    if(htmlDir === null){
-                        /* index.html がないってことは qgis2three.js のファイルじゃないと思う */
-                        console.log("it is not qgis2three.js file");
-                        callback(new Error("it is not qgis2three.js file").toString(),null);
-                        return;
+                });
+            } else if (param.type === 'itownsapp_json') {
+                const timestamp = Util.createTimestamp();
+                const extractDir = "../public/userdata/itowns/" + timestamp + "/";
+                /* タイムスタンプでディレクトリ掘る */
+                fs.mkdir(extractDir, { recursive: true }, (err) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        // jsonファイル書き込み
+                        const jsonFile = path.join(extractDir, 'data.json')
+                        fs.writeFile(jsonFile, binaryData, (err) => {
+                            if (err) {
+                                callback(err, null);
+                            } else {
+                                const posixPath = path.relative('../public', jsonFile).split(path.sep).join(path.posix.sep);
+                                callback(null, { path: posixPath });
+                            }
+                        })
                     }
-
-                    callback(null,{dirname:htmlDir});//エラーはなかった
-                })();
-            }else{
-                // (async()=>{
-                //     const extractDir = "../public/"
-                //     const fileList = await Zip.extract(binaryData, extractDir);
-                // })();
-
-                callback(new Error("JSONRPC param.type undefined").toString(),null);
+                });
+            } else {
+                callback(new Error("JSONRPC param.type undefined").toString(), null);
             }
         }
     }

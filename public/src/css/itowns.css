@@ -219,8 +219,8 @@ p {
 	top: 50%;
 	left: 50%;
     width: 600px;
-    height: 300px;
-	margin-top: calc(-300px / 2);
+    height: 350px;
+	margin-top: calc(-350px / 2);
 	margin-left: calc(-500px / 2);
 	position: fixed;
 	z-index: 100000000;
@@ -303,6 +303,21 @@ p {
 .timeline_play_button:hover {
     background-color: white;
 }
+
+.layer_dialog_csv_loading {
+	background-image:url("../image/loading.gif");
+	background-repeat:no-repeat;
+	background-size: contain;
+
+    padding-left: 30px;
+    color: white;
+}
+
+.layer_dialog_error {
+    padding-top: 10px;
+    color: orangered;
+}
+
 /*
 .timeline_pause_button {
 	background-image:url("../image/pause.png");

@@ -3,9 +3,10 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-"use strict";
 
 const ITownsConstants = {
+    UploadTypeCSV : "itownsapp_csv",
+    UploadTypeJSON : "itownsapp_json",
     TypeColor : "color",
     TypeElevation : "elevation",
     Type3DTile : "3dtile",

@@ -3,8 +3,6 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-"use strict";
-
 import PopupBackground from "../components/popup_background";
 import Button from "../components/button";
 import DateInput from "../components/date_input";
