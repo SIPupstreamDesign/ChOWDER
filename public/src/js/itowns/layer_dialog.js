@@ -14,6 +14,7 @@ const SampleURLFileNames = {}
 SampleURLFileNames[ITownsConstants.TypeColor] = "std/{z}/{x}/{y}.png";
 SampleURLFileNames[ITownsConstants.TypeElevation] = "std/{z}/{x}/{y}.png";
 SampleURLFileNames[ITownsConstants.Type3DTile] = "something/tileset.json";
+SampleURLFileNames[ITownsConstants.Type3DTilesTimeSeries] = "something/timeseries.json";
 SampleURLFileNames[ITownsConstants.TypePointCloud] = "something/cloud.js";
 SampleURLFileNames[ITownsConstants.TypePointCloudTimeSeries] = "something/timeseries.json";
 SampleURLFileNames[ITownsConstants.TypeGeometry] = "something/data.pbf";
@@ -105,7 +106,8 @@ class LayerDialog extends EventEmitter {
         this.typeSelect.getDOM().className = "layer_dialog_type_select";
         this.typeSelect.addOption(ITownsConstants.TypeColor, "Color");
         this.typeSelect.addOption(ITownsConstants.TypeElevation, "Elevation");
-        this.typeSelect.addOption(ITownsConstants.Type3DTile, "3D Tile(tileset.json)");
+        this.typeSelect.addOption(ITownsConstants.Type3DTile, "3DTiles(tileset.json)");
+        this.typeSelect.addOption(ITownsConstants.Type3DTilesTimeSeries, "3DTiles Timeseries(.json)");
         this.typeSelect.addOption(ITownsConstants.TypePointCloud, "PointCloud(potree cloud.js)");
         this.typeSelect.addOption(ITownsConstants.TypePointCloudTimeSeries, "PointCloudTimeSeries(.json)");
         this.typeSelect.addOption(ITownsConstants.TypeGeometry, "VectorTile(pbf, geojson)");
@@ -120,6 +122,8 @@ class LayerDialog extends EventEmitter {
             let type = this.typeSelect.getSelectedValue();
             if (type === ITownsConstants.TypePointCloud
                 || type === ITownsConstants.TypePointCloudTimeSeries
+                || type === ITownsConstants.Type3DTile
+                || type === ITownsConstants.Type3DTilesTimeSeries
                 || type === ITownsConstants.TypeBargraph
                 || type === ITownsConstants.TypeOBJ) {
                 this.zoomRow.style.display = "none";
@@ -150,7 +154,8 @@ class LayerDialog extends EventEmitter {
             } else {
                 this.formatRow.style.display = "none";
             }
-            if (type === ITownsConstants.Type3DTile) {
+            if (type === ITownsConstants.Type3DTile
+                || type === ITownsConstants.Type3DTilesTimeSeries) {
                 this.epsgRow.style.display = "block";
             } else {
                 this.epsgRow.style.display = "none";
@@ -507,7 +512,8 @@ class LayerDialog extends EventEmitter {
                     data.tileMatrixSet = 'PM'
                 }
             }
-            if (data.type === ITownsConstants.Type3DTile) {
+            if (data.type === ITownsConstants.Type3DTile
+                || data.type === ITownsConstants.Type3DTilesTimeSeries) {
                 data.conversion = {
                     src : this.epsgSrcSelect.getSelectedValue(),
                     dst : this.epsgDstSelect.getSelectedValue()

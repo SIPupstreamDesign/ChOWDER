@@ -7,6 +7,7 @@ import Select from '../components/select';
 import Button from '../components/button';
 import InputDialog from '../components/input_dialog';
 import LayerDialog from './layer_dialog';
+import ITownsConstants from './itowns_constants';
 
 class LayerList extends EventEmitter {
     constructor(store, action) {
@@ -119,10 +120,16 @@ class LayerList extends EventEmitter {
             if (data) {
                 let type = data.type;
                 if (data.isBarGraph) {
-                    type = "bargraph"
+                    type = ITownsConstants.TypeBargraph;
+                }
+                if (data.isOBJ) {
+                    type = ITownsConstants.TypeOBJ;
                 }
                 if (data.isTimeseriesPotree) {
-                    type = "pointcloud_timeseries"
+                    type = ITownsConstants.TypePointCloudTimeSeries;
+                }
+                if (data.isTimeseriesC3DTiles) {
+                    type = ITownsConstants.Type3DTilesTimeSeries;
                 }
                 this.layerSelect.addOption(data.id, data.id + " - " + type);
             }

@@ -695,6 +695,7 @@ class LayerProperty extends EventEmitter {
 
 		// wireframe
 		if (layerProps.type === ITownsConstants.Type3DTile
+			|| layerProps.type === ITownsConstants.Type3DTilesTimeSeries
 			|| layerProps.type === ITownsConstants.TypeGeometry
 			|| layerProps.type === ITownsConstants.TypeUser
 			|| layerProps.type === ITownsConstants.TypeGlobe
@@ -704,6 +705,7 @@ class LayerProperty extends EventEmitter {
 
 		// sseThreshold
 		if (layerProps.type === ITownsConstants.Type3DTile
+			|| layerProps.type === ITownsConstants.Type3DTilesTimeSeries
 			|| layerProps.type === ITownsConstants.TypePointCloud
 			|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries) {
 			this.addSSEThreashold(layerID, layerProps);
@@ -714,6 +716,7 @@ class LayerProperty extends EventEmitter {
 
 		this.action.changeTimelineRangeBar({});
 		if (layerProps.type === ITownsConstants.TypePointCloudTimeSeries
+			|| layerProps.type === ITownsConstants.Type3DTilesTimeSeries
 			|| isBarGraph) {
 			this.addTimeList(layerID, layerProps);
 		}
@@ -728,6 +731,7 @@ class LayerProperty extends EventEmitter {
 			if (layerProps.type === ITownsConstants.TypePointCloud
 				|| layerProps.type === ITownsConstants.TypePointCloudTimeSeries
 				|| layerProps.type === ITownsConstants.Type3DTile
+				|| layerProps.type === ITownsConstants.Type3DTilesTimeSeries
 				|| layerProps.type === ITownsConstants.TypeGeometry) {
 				this.addOffsetUV(layerID, layerProps);
 			}

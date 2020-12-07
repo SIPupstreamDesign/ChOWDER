@@ -12,7 +12,7 @@ import ITownsConstants from '../itowns/itowns_constants.js';
 import CraeteBarGraphLayer from './bargraph_layer.js';
 import CreateOBJLayer from './obj_layer.js';
 import CreateTimescalePotreeLayer from './timeseries_potree_layer.js';
-import { CompressedPixelFormat } from 'three';
+import CreateTimescaleC3DTilesLayer from './timeseries_c3dtiles_layer.js';
 
 const getTextureFloat = (buffer, view) => {
     // webgl2
@@ -44,6 +44,10 @@ function fetchText(url, options = {}) {
 
 const isTimeseriesPotreeLayer = (layer) => {
     return layer.hasOwnProperty('isTimeseriesPotree') && layer.isTimeseriesPotree;
+};
+
+const isTimeseriesC3DTilesLayer = (layer) => {
+    return layer.hasOwnProperty('isTimeseriesC3DTiles') && layer.isTimeseriesC3DTiles;
 };
 
 const isBarGraphLayer = (layer) => {
@@ -244,7 +248,8 @@ class Store extends EventEmitter {
         let layers = this.itownsView.getLayers();
         for (let i = 0; i < layers.length; ++i) {
             if (isBarGraphLayer(layers[i])
-                || isTimeseriesPotreeLayer(layers[i])) {
+                || isTimeseriesPotreeLayer(layers[i])
+                || isTimeseriesC3DTilesLayer(layers[i])) {
                 res.push(layers[i]);
             }
         }
@@ -408,6 +413,10 @@ class Store extends EventEmitter {
         if (type === ITownsConstants.TypePointCloudTimeSeries) {
             config.crs = this.itownsView.referenceCrs;
             return CreateTimescalePotreeLayer(this.itownsView, config);
+        }
+        if (type === ITownsConstants.Type3DTilesTimeSeries) {
+            config.crs = this.itownsView.referenceCrs;
+            return CreateTimescaleC3DTilesLayer(this.itownsView, config);
         }
         if (type === ITownsConstants.Type3DTile) {
             const layer = new itowns.C3DTilesLayer(config.id, config, this.itownsView);
@@ -587,7 +596,8 @@ class Store extends EventEmitter {
                 "protocol": 'potreeconverter'
             };
         }
-        if (type === ITownsConstants.Type3DTile) {
+        if (type === ITownsConstants.Type3DTile
+            || type === ITownsConstants.Type3DTilesTimeSeries) {
             config = {
                 "name": params.hasOwnProperty('id') ? params.id : "3dtile",
                 "source": new itowns.C3DTilesSource({
@@ -703,6 +713,9 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('isTimeseriesPotree') && params.isTimeseriesPotree) {
             type = ITownsConstants.TypePointCloudTimeSeries;
         }
+        if (params.hasOwnProperty('isTimeseriesC3DTiles') && params.isTimeseriesC3DTiles) {
+            type = ITownsConstants.Type3DTilesTimeSeries;
+        }
         if (params.hasOwnProperty('isOBJ') && params.isOBJ) {
             type = ITownsConstants.TypeOBJ;
         }
@@ -724,6 +737,7 @@ class Store extends EventEmitter {
             if (type === ITownsConstants.TypePointCloud ||
                 type === ITownsConstants.TypePointCloudTimeSeries ||
                 type === ITownsConstants.Type3DTile ||
+                type === ITownsConstants.Type3DTilesTimeSeries ||
                 type === ITownsConstants.TypeBargraph ||
                 type === ITownsConstants.TypeOBJ) {
                 itowns.View.prototype.addLayer.call(this.itownsView, layer);
@@ -917,9 +931,6 @@ class Store extends EventEmitter {
             }
             if (params.hasOwnProperty('bbox')) {
                 layer.bboxes.visible = Boolean(params.bbox);
-                if (layer.isTimeseriesPotree) {
-                    layer.updateParams();
-                }
                 isChanged = true;
             }
             if (params.hasOwnProperty('scale')) {
@@ -974,6 +985,7 @@ class Store extends EventEmitter {
                 }
 
                 let target = layer.object3d;
+
                 let initial_position = { x: 0, y: 0, z: 0 };
                 let initial_quaternion = new itowns.THREE.Quaternion();
                 if (target["initial_position"]) {
@@ -984,7 +996,7 @@ class Store extends EventEmitter {
                     target.initial_quaternion = target.quaternion.clone();
                 }
                 let vec = target.initial_position.clone();
-                if (vec.length() === 0) {
+                if (vec.length() < 1.0e-6) {
                     if (layer.root) {
                         if (layer.root.hasOwnProperty('bbox')) {
                             layer.root.bbox.getCenter(vec);
@@ -1003,6 +1015,16 @@ class Store extends EventEmitter {
                 let w = vec.clone();
                 w.normalize();
 
+                if (vec.length() < 1.0e-6) {
+                    vec = new itowns.THREE.Vector3(0, 0, 1);
+                    u = vec.clone();
+                    u.cross(new itowns.THREE.Vector3(1, 0, 0));
+                    v = vec.clone();
+                    v.cross(u);
+                    w = vec.clone();
+                    w.normalize();
+                }
+                
                 let mw = { x: 0, y: 0, z: 0 };
                 let xyz = { x: 0, y: 0, z: 0 };
                 // position
@@ -1051,8 +1073,12 @@ class Store extends EventEmitter {
                 target.updateMatrixWorld();
                 target.matrixAutoUpdate = true;
                 isChanged = true;
-
+            }
+            if (isChanged) {
                 if (layer.isTimeseriesPotree) {
+                    layer.updateParams();
+                }
+                if (layer.isTimeseriesC3DTiles) {
                     layer.updateParams();
                 }
             }
@@ -1318,6 +1344,14 @@ class Store extends EventEmitter {
                 let jsonData = await layer.source.loadData(layer.tempExtent, layer);
                 data.json = jsonData.json;
             }
+            if (layer.hasOwnProperty('isTimeseriesC3DTiles')) {
+                data.isTimeseriesC3DTiles = layer.isTimeseriesC3DTiles;
+                if (!layer.ready) {
+                    await layer.whenReady;
+                }
+                let jsonData = await layer.source.loadData(layer.tempExtent, layer);
+                data.json = jsonData.json;
+            }
             if (layer.hasOwnProperty('isOBJ')) {
                 data.isOBJ = layer.isOBJ;
             }
@@ -1342,6 +1376,8 @@ class Store extends EventEmitter {
                     return ITownsConstants.TypePointCloudTimeSeries;
                 } else if (layer instanceof itowns.C3DTilesLayer) {
                     return ITownsConstants.Type3DTile;
+                } else if (layer.isTimeseriesC3DTiles) {
+                    return ITownsConstants.Type3DTilesTimeSeries;
                 } else if (layer instanceof itowns.GeometryLayer || layer.isBarGraph || layer.isOBJ) {
                     return ITownsConstants.TypeGeometry;
                 } else {
