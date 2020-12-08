@@ -8,6 +8,7 @@ import PropertySlider from "../components/property_slider"
 import ITownsConstants from "./itowns_constants";
 import Select from "../components/select"
 import Button from "../components/button"
+import LayerPropertyBargraphDialog  from './layer_property_bargraph_dialog'
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -118,6 +119,9 @@ class LayerProperty extends EventEmitter {
 		this.scaleSlider = null;
 		this.pointSizeSlider = null;
 		this.bboxSizeSlider = null;
+		
+		this.bargraphSetting = new LayerPropertyBargraphDialog(this.store, this.action);
+		document.body.appendChild(this.bargraphSetting.getDOM());
 	}
 
 	addVisible(layerID, layerProps) {
@@ -524,8 +528,8 @@ class LayerProperty extends EventEmitter {
 		this.timeSelect = new Select();
 		this.barGraphSelectLon.getDOM().className = "property_bargraph_col"
 		this.barGraphSelectLat.getDOM().className = "property_bargraph_col"
-		this.barGraphSelect1.getDOM().className = "property_bargraph_col"
-		this.barGraphSelect2.getDOM().className = "property_bargraph_col"
+		this.barGraphSelect1.getDOM().className = "property_bargraph_col property_bargraph_physical"
+		this.barGraphSelect2.getDOM().className = "property_bargraph_col property_bargraph_physical"
 		this.timeSelect.getDOM().className = "property_bargraph_col"
 		this.barGraphSelectLon.addOption(-1, i18next.t('selection_initial'));
 		this.barGraphSelectLat.addOption(-1, i18next.t('selection_initial'));
@@ -576,6 +580,10 @@ class LayerProperty extends EventEmitter {
 		this.dom.appendChild(colTitle1);
 		// selectを追加
 		this.dom.appendChild(this.barGraphSelect1.getDOM());
+		// 設定ボタンを追加
+		this.barGrahphCustomButton1 = new Button();
+		this.barGrahphCustomButton1.getDOM().className = "property_bargraph_physical_custom_button";
+		this.dom.appendChild(this.barGrahphCustomButton1.getDOM());
 
 		// 物理量2 (棒グラフの色)　を追加
 		let colTitle2 = document.createElement('p');
@@ -585,8 +593,14 @@ class LayerProperty extends EventEmitter {
 		this.dom.appendChild(colTitle2);
 		// selectを追加
 		this.dom.appendChild(this.barGraphSelect2.getDOM());
+		// 設定ボタンを追加
+		this.barGrahphCustomButton2 = new Button();
+		this.barGrahphCustomButton2.getDOM().className = "property_bargraph_physical_custom_button";
+		this.dom.appendChild(this.barGrahphCustomButton2.getDOM());
 
 		// 初期値の設定
+		this.physical1Expr = "";
+		this.physical2Expr = "";
 		if (layerProps.hasOwnProperty('bargraphParams')) {
 			const bargraphParams = layerProps.bargraphParams;
 			if (bargraphParams.hasOwnProperty('time')) {
@@ -604,7 +618,34 @@ class LayerProperty extends EventEmitter {
 			if (bargraphParams.hasOwnProperty('physical2')) {
 				this.barGraphSelect2.setSelectedIndex(bargraphParams.physical2 + 1);
 			}
+			if (bargraphParams.hasOwnProperty('physical1Expr')) {
+				this.physical1Expr = bargraphParams.physical1Expr;
+			}
+			if (bargraphParams.hasOwnProperty('physical2Expr')) {
+				this.physical2Expr = bargraphParams.physical2Expr;
+			}
 		}
+
+		// 物理量の式が入っていた場合は、セレクトボックスを選択してくださいの状態にする
+		const UpdatePhysicalSelect = () => {
+			if (this.physical1Expr.length > 0) {
+				const physical1Col = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
+				if (this.physical1Expr !== physical1Col) {
+					this.barGraphSelect1.setSelectedIndex(0);
+				}
+			} else {
+				this.physical1Expr = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
+			}
+			if (this.physical2Expr.length > 0) {
+				const physical2Col = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
+				if (this.physical2Expr !== physical2Col) {
+					this.barGraphSelect2.setSelectedIndex(0);
+				}
+			} else {
+				this.physical2Expr = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
+			}
+		}
+		UpdatePhysicalSelect();
 
 		// 各種変更イベント
 		const UpdateBargraph = (err, data) => {
@@ -616,15 +657,47 @@ class LayerProperty extends EventEmitter {
 					lat: Number(this.barGraphSelectLat.getSelectedValue()),
 					physical1: Number(this.barGraphSelect1.getSelectedValue()),
 					physical2: Number(this.barGraphSelect2.getSelectedValue()),
+					physical1Expr : this.physical1Expr ? this.physical1Expr : "",
+					physical2Expr : this.physical2Expr ? this.physical2Expr : ""
 				}
 			});
 		};
 
+		this.barGrahphCustomButton1.on('click', () => {
+			this.bargraphSetting.show('physical1_setting', this.physical1Expr,  (isOK, data) => {
+				if (isOK) {
+					this.physical1Expr = data;
+					UpdatePhysicalSelect();
+					UpdateBargraph();
+				}
+			});
+		});
+		this.barGrahphCustomButton2.on('click', () => {
+			this.bargraphSetting.show('physical2_setting', this.physical2Expr, (isOK, data) => {
+				if (isOK) {
+					this.physical2Expr = data;
+					UpdatePhysicalSelect();
+					UpdateBargraph();
+				}
+			});
+		});
 		this.timeSelect.on(Select.EVENT_CHANGE, UpdateBargraph);
 		this.barGraphSelectLon.on(Select.EVENT_CHANGE, UpdateBargraph);
 		this.barGraphSelectLat.on(Select.EVENT_CHANGE, UpdateBargraph);
-		this.barGraphSelect1.on(Select.EVENT_CHANGE, UpdateBargraph);
-		this.barGraphSelect2.on(Select.EVENT_CHANGE, UpdateBargraph);
+		this.barGraphSelect1.on(Select.EVENT_CHANGE, () => {
+			// 0番目以外の項目を選択した場合は、expr文字列を選択した項目で初期化する
+			if (this.barGraphSelect1.getSelectedIndex() > 0) {
+				this.physical1Expr = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
+			}
+			UpdateBargraph();
+		});
+		this.barGraphSelect2.on(Select.EVENT_CHANGE, () => {
+			// 0番目以外の項目を選択した場合は、expr文字列を選択した項目で初期化する
+			if (this.barGraphSelect2.getSelectedIndex() > 0) {
+				this.physical2Expr = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
+			}
+			UpdateBargraph();
+		} );
 	}
 
 	// レイヤーID、プロパティをもとに初期値を設定

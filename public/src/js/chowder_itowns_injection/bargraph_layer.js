@@ -5,6 +5,7 @@
 import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
 import Rainbow from '../../../3rd/js/rainbowvis.js'
+import ExprEval from '../../../3rd/js/expr-eval.js'
 
 /**
  * 汎用csvパーサーを,fileSourceに設定する.
@@ -62,6 +63,7 @@ function createCSVBargraphSource(itownsView, config) {
 				mesh.visible = false;
 				group.add(mesh);
 			}
+			console.error(parsed);
 
 			return Promise.resolve({
 				csv: parsed,
@@ -89,6 +91,8 @@ function CreateBargraphLayer(itownsView, config) {
 			this.rainbow = new Rainbow();
 			this.rainbow.setSpectrum('black', 'blue', 'aqua', 'lime', 'yellow', 'red');
 	
+
+			this.exprParser = new ExprEval.Parser();
 
 			// chowder側で判別できるようにフラグを設定
 			this.isBarGraph = true;
@@ -126,6 +130,22 @@ function CreateBargraphLayer(itownsView, config) {
 
 		convert() { }
 
+		/**
+		 * 
+		 * @param {*} csvData csvのパース済全データ
+		 * @param {*} csvIndex 計算対象のcsvIndex(行インデックス)
+		 */
+		convertPhisicalValueByExpr(exprStr, csvData, csvIndex) {
+			let expr = this.exprParser.parse(exprStr);
+			// 全ての列名と、CSVIndexでの値を設定する
+			let currentValues = {};
+			for (let k = 0; k < csvData[0].length; ++k) {
+				currentValues[csvData[0][k]] = csvData[csvIndex][k];
+			}
+			const value = expr.evaluate(currentValues);
+			return value;
+		}
+
 		/*
 		 layer.bargraphParam = {
 			 lon : 1,
@@ -141,7 +161,7 @@ function CreateBargraphLayer(itownsView, config) {
 			this.source.loadData(this.BarGraphExtent, this).then((data) => {
 				const params = this.bargraphParams;
 				const csvData = data.csv.data;
-
+				
 				// keyがparamsにある場合のみvalueを返す、ない場合は空文字を返す
 				function getValIfExist(params, key) {
 					if (key.length == 0 || !params.hasOwnProperty(key)) {
@@ -158,6 +178,9 @@ function CreateBargraphLayer(itownsView, config) {
 				const timeIndex = getValIfExist(params, 'time');
 				const physicalVal1Index = getValIfExist(params, 'physical1');
 				const physicalVal2Index = getValIfExist(params, 'physical2');
+				const physical1Expr = getValIfExist(params, 'physical1Expr');
+				const physical2Expr = getValIfExist(params, 'physical2Expr');
+				console.error("physical2Expr", physical2Expr);
 
 				// 色を付けるために値(PhysicalVal2)の範囲を求める
 				let physicalVal2Range = { min: +Infinity, max: -Infinity }
@@ -165,6 +188,9 @@ function CreateBargraphLayer(itownsView, config) {
 					const mesh = data.meshGroup.children[i];
 					const isValidPhysical2Index = isValidIndex(physicalVal2Index, csvData[mesh.CSVIndex]);
 					let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
+					if (physical2Expr.length > 0) {
+						physical2Val = this.convertPhisicalValueByExpr(physical2Expr, csvData, mesh.CSVIndex);
+					}
 					if (isNaN(physical2Val)) {
 						physical2Val = 0.0;
 					}
@@ -199,8 +225,15 @@ function CreateBargraphLayer(itownsView, config) {
 					// Lon/Latからmeshのpositionを割り出す
 					const coord = new itowns.Coordinates('EPSG:4326', lonlat.lon, lonlat.lat, 0);
 					// physical1valからmeshのscaleを割り出す
-					const scaleZ = isValidPhysical1Index ? Number(csvData[mesh.CSVIndex][physicalVal1Index]) * 1000 * this.scale : 1.0;
+					let physical1Val = isValidPhysical1Index ? Number(csvData[mesh.CSVIndex][physicalVal1Index]) * 1000 * this.scale  : 1.0;
+					if (physical1Expr.length > 0) {
+						physical1Val = this.convertPhisicalValueByExpr(physical1Expr, csvData, mesh.CSVIndex) * 1000 * this.scale;
+					}
+					const scaleZ = physical1Val;
 					let physical2Val = Number(csvData[mesh.CSVIndex][physicalVal2Index]);
+					if (physical2Expr.length > 0) {
+						physical2Val = this.convertPhisicalValueByExpr(physical2Expr, csvData, mesh.CSVIndex);
+					}
 					if (isNaN(physical2Val)) {
 						physical2Val = 0.0;
 					}

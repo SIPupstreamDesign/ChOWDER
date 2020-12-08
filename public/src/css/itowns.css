@@ -466,6 +466,28 @@ p {
     width: calc(100% - 24px);
 }
 
+.property_bargraph_physical {
+	width: calc(100% - 60px);
+}
+
+.property_bargraph_physical_custom_button {
+	background-image:url("../image/setting3.png");
+	background-repeat:no-repeat;
+	background-size: contain;
+	
+    float: right;
+    width: 30px;
+    height: 30px;
+    margin: 3px;
+    margin-right: 12px;
+    border: none;
+    background-color: lightgray;
+}
+
+.property_bargraph_physical_custom_button:hover {
+    background-color: white;
+}
+
 .timeline_wrap {
 	background : #3b3848;
 	height : 120px;
