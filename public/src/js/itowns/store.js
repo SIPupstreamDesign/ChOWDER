@@ -105,7 +105,7 @@ class Store extends EventEmitter {
             }
             if (data && data.hasOwnProperty('command') && data.command === "changeItownsContentTime") {
                 if (data.hasOwnProperty('data') && data.data.hasOwnProperty('time')) {
-                     // sync状態でない場合、同じコンテンツIDのものにしか反映させない
+                     // sync状態でない場合、同じコンテンツIDのものにしか反映させない)
                     if (ITownsUtil.isTimelineSync(this.metaData, data.data.id, data.data.senderSync)) {
                         if (this.timelineCurrentTime.toJSON() != data.data.time) {
                             let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;

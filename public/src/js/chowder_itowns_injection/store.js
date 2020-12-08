@@ -13,6 +13,7 @@ import CraeteBarGraphLayer from './bargraph_layer.js';
 import CreateOBJLayer from './obj_layer.js';
 import CreateTimescalePotreeLayer from './timeseries_potree_layer.js';
 import CreateTimescaleC3DTilesLayer from './timeseries_c3dtiles_layer.js';
+import C3DTileUtil from './c3dtile_util.js';
 
 const getTextureFloat = (buffer, view) => {
     // webgl2
@@ -431,49 +432,9 @@ class Store extends EventEmitter {
                     // not implemented
                 });
 
-                if (config.conversion.src !== 'EPSG:4978' || config.conversion.dst !== 'EPSG:4978') {
+                // EPSGによる座標変換の設定
+                C3DTileUtil.applyConvertSetting(layer, config);
 
-                    layer.whenReady.then(() => {
-                        // bboxを一旦初期化する
-                        if (layer.root.hasOwnProperty('boundingVolume')) {
-                            if (layer.root.boundingVolume.hasOwnProperty('box')) {
-                                layer.root.boundingVolume.box.makeEmpty();
-                            }
-                        }
-                        layer.object3d.traverse(obj => {
-                            if (obj.type === 'Mesh') {
-                                const attrs = obj.geometry.attributes;
-                                const positions = attrs.position;
-                                // 頂点座標の変換
-                                for (let i = 0; i < positions.count; ++i) {
-                                    const v0 = i * positions.itemSize + 0;
-                                    const v1 = i * positions.itemSize + 1;
-                                    const v2 = i * positions.itemSize + 2;
-                                    const p = new itowns.Coordinates(
-                                        config.conversion.src,
-                                        positions.array[v0], positions.array[v1], positions.array[v2]
-                                    ).as(config.conversion.dst);
-
-                                    positions.array[v0] = p.x;
-                                    positions.array[v1] = p.y;
-                                    positions.array[v2] = p.z;
-                                }
-                                attrs.position.needsUpdate = true;
-
-                                // 法線再計算
-                                obj.geometry.computeVertexNormals();
-                                // bbox再計算
-                                obj.geometry.computeBoundingBox();
-                                // meshのbboxをlayerのboundingVolume.boxにunionしていく
-                                if (obj.layer.root.hasOwnProperty('boundingVolume')) {
-                                    if (obj.layer.root.boundingVolume.hasOwnProperty('box')) {
-                                        obj.layer.root.boundingVolume.box.union(obj.geometry.boundingBox);
-                                    }
-                                }
-                            }
-                        });
-                    });
-                }
             }
             return layer;
         }
