@@ -301,7 +301,7 @@ class GUI extends EventEmitter {
         let debounceChangeTime = (() => {
             const interval = 100;
             let timer;
-            return (pTimeInfo) => {
+            return (pTimeInfo, func = null) => {
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     this.action.changeTimeByTimeline({
@@ -309,6 +309,9 @@ class GUI extends EventEmitter {
                         startTime: new Date(pTimeInfo.startTime),
                         endTime: new Date(pTimeInfo.endTime)
                     });
+                    if (func) {
+                        func();
+                    }
                 }, interval);
             };
         })();
@@ -321,17 +324,24 @@ class GUI extends EventEmitter {
                 // ホイールスクロールの時にズームインできるけどズームアウトできなくなる。
                 //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
                 //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
-                timeChange: function (pTimeInfo) {
-                    debounceChangeTime(pTimeInfo);
+                timeChange: (pTimeInfo) => {
+                    debounceChangeTime(pTimeInfo, () => {
+                        this.timelineCurrentTime.textContent = this.store.getTimelineCurrentTimeString();
+                    });
+
                     // pTimeInfo.  startTimeから左端の日時を取得
                     // pTimeInfo.    endTimeから右端の日時を取得
                     // pTimeInfo.currentTimeから摘み（ポインタ）の日時を取得
                 },
-                barMove: function (pTimeInfo) {
-                    debounceChangeTime(pTimeInfo);
+                barMove: (pTimeInfo) => {
+                    debounceChangeTime(pTimeInfo, () => {
+                        this.timelineCurrentTime.textContent = this.store.getTimelineCurrentTimeString();
+                    });
                 },
-                barMoveEnd: function (pTimeInfo) {
-                    debounceChangeTime(pTimeInfo);
+                barMoveEnd: (pTimeInfo) =>  {
+                    debounceChangeTime(pTimeInfo, () => {
+                        this.timelineCurrentTime.textContent = this.store.getTimelineCurrentTimeString();
+                    });
                 },
                 rangeMoveEnd: (pTimeInfo) => {
                     this.action.changeTimelineRangeBar(pTimeInfo);
@@ -360,6 +370,12 @@ class GUI extends EventEmitter {
 
         let settingWrap = document.createElement('div');
         settingWrap.classList.add('timeline_setting_wrap');
+
+        // 現在時刻
+        this.timelineCurrentTime = document.createElement('div');
+        this.timelineCurrentTime.textContent = this.store.getTimelineCurrentTime().toString();
+        this.timelineCurrentTime.className = 'timeline_current_time';
+        document.getElementById('timeline').appendChild(this.timelineCurrentTime);
 
         // 設定ボタン
         let timelineSettingButton = new Button();

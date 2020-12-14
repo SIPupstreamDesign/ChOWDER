@@ -502,6 +502,15 @@ p {
 	width: calc(100% -  100px - 100px);
 }
 
+.timeline_current_time {
+	position: absolute;
+	left : 0px;
+	top : 5px;
+	color : white;
+	font-size: 12px;
+	color : lightgray;
+}
+
 .k2go-timeline-main {
 	/*bottom : 50px;*/
 }

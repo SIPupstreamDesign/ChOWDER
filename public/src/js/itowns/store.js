@@ -599,6 +599,32 @@ class Store extends EventEmitter {
         return this.timelineCurrentTime;
     }
 
+    getTimelineCurrentTimeString() {
+        const time = this.timelineCurrentTime;
+        const year = time.getFullYear();
+        const month = ("0"+(time.getMonth()+1)).slice(-2);
+        const date = ("0"+time.getDate()).slice(-2);
+        const hour = ("0"+time.getHours()).slice(-2);
+        const minutes = ("0"+time.getMinutes()).slice(-2);
+        const seconds = ("0"+time.getSeconds()).slice(-2);
+        const offset = time.getTimezoneOffset();
+        const sign = Math.sign(-offset) >= 0 ? "+" : "-";
+        const offsetMin = Math.abs(time.getTimezoneOffset() % 60);
+        let offsetStr = "GMT" + sign + Math.floor(Math.abs(time.getTimezoneOffset() / 60));
+        if (offsetMin > 0) {
+            offsetStr += ":" + offsetMin;
+        }
+        if (offset === 0) {
+            offsetStr = "GMT";
+        }
+        const ymdhms = year + "/" + month + "/" + date + " "
+             + hour + ":" 
+             + minutes + ":" 
+             + seconds + " " + offsetStr
+
+        return ymdhms;
+    }
+
     getTimelineRangeBar() {
         return this.timelineRangeBar;
     }

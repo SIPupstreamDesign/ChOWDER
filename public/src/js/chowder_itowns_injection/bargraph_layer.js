@@ -63,7 +63,6 @@ function createCSVBargraphSource(itownsView, config) {
 				mesh.visible = false;
 				group.add(mesh);
 			}
-			console.error(parsed);
 
 			return Promise.resolve({
 				csv: parsed,
@@ -180,7 +179,6 @@ function CreateBargraphLayer(itownsView, config) {
 				const physicalVal2Index = getValIfExist(params, 'physical2');
 				const physical1Expr = getValIfExist(params, 'physical1Expr');
 				const physical2Expr = getValIfExist(params, 'physical2Expr');
-				console.error("physical2Expr", physical2Expr);
 
 				// 色を付けるために値(PhysicalVal2)の範囲を求める
 				let physicalVal2Range = { min: +Infinity, max: -Infinity }
