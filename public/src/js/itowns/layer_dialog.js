@@ -157,9 +157,16 @@ class LayerDialog extends EventEmitter {
             if (type === ITownsConstants.Type3DTile
                 || type === ITownsConstants.Type3DTilesTimeSeries) {
                 this.epsgRow.style.display = "block";
+                this.epsgCustomSrcRow.style.display = "none";
+                this.epsgCustomDstRow.style.display = "none";
             } else {
                 this.epsgRow.style.display = "none";
+                this.epsgCustomSrcRow.style.display = "none";
+                this.epsgCustomDstRow.style.display = "none";
             }
+            this.resetEPSGCustomSrcRowVisible();
+            this.resetEPSGCustomDstRowVisible();
+
             this.changeInputURLValue(SampleURLFileNames[type]);
         });
     }
@@ -382,6 +389,36 @@ class LayerDialog extends EventEmitter {
         });
     }
 
+    resetEPSGCustomSrcRowVisible() {
+        const type = this.typeSelect.getSelectedValue();
+        const enableEPSGInput = (
+            type === ITownsConstants.Type3DTile ||
+            type === ITownsConstants.Type3DTilesTimeSeries);
+
+        const customIndex = Object.keys(this.epsgSrcSelect.getOptions()).length - 1;
+        const isCustom = this.epsgSrcSelect.getSelectedIndex() === customIndex;
+        if (enableEPSGInput && isCustom) {
+            this.epsgCustomSrcRow.style.display = "block";
+        } else {
+            this.epsgCustomSrcRow.style.display = "none";
+        }
+    }
+
+    resetEPSGCustomDstRowVisible() {
+        const type = this.typeSelect.getSelectedValue();
+        const enableEPSGInput = (
+            type === ITownsConstants.Type3DTile ||
+            type === ITownsConstants.Type3DTilesTimeSeries);
+
+        const customIndex = Object.keys(this.epsgDstSelect.getOptions()).length - 1;
+        const isCustom = this.epsgDstSelect.getSelectedIndex() === customIndex;
+        if (enableEPSGInput && isCustom) {
+            this.epsgCustomDstRow.style.display = "block";
+        } else {
+            this.epsgCustomDstRow.style.display = "none";
+        }
+    }
+
     createFormatRow() {
         this.formatTitle = document.createElement('p');
         this.formatTitle.className = "layer_dialog_sub_title";
@@ -462,6 +499,62 @@ class LayerDialog extends EventEmitter {
         this.epsgRow.appendChild(this.epsgSrcSelect.getDOM());
         this.epsgRow.appendChild(this.epsgToTile);
         this.epsgRow.appendChild(this.epsgDstSelect.getDOM());
+
+        // EPSG Src 入力
+        this.epsgSrcTitle = document.createElement('p');
+        this.epsgSrcTitle.className = "layer_dialog_epsg_title layer_dialog_epsg_from_title";
+        this.epsgSrcTitle.innerText = "From Custom EPSG:";
+
+        this.epsgSrcInput = new Input("text");
+        this.epsgSrcInput.getDOM().className = "layer_dialog_epsg_input";
+        this.epsgSrcInput.setValue("4978");
+
+        this.epsgSrcCodeTitle = document.createElement('p');
+        this.epsgSrcCodeTitle.className = "layer_dialog_epsg_title";
+        this.epsgSrcCodeTitle.innerText = "PROJ.4";
+
+        this.epsgSrcCodeInput = new Input("text");
+        this.epsgSrcCodeInput.getDOM().className = "layer_dialog_epsg_definition_input";
+        this.epsgSrcCodeInput.setValue('+proj=geocent +datum=WGS84 +units=m +no_defs')
+        
+        this.epsgCustomSrcRow = this.createRow();
+        this.epsgCustomSrcRow.style.display = "none"
+        this.epsgCustomSrcRow.appendChild(this.epsgSrcTitle);
+        this.epsgCustomSrcRow.appendChild(this.epsgSrcInput.getDOM());
+        this.epsgCustomSrcRow.appendChild(this.epsgSrcCodeTitle);
+        this.epsgCustomSrcRow.appendChild(this.epsgSrcCodeInput.getDOM());
+
+        // EPSG Dst 入力
+        this.epsgDstTitle = document.createElement('p');
+        this.epsgDstTitle.className = "layer_dialog_epsg_title layer_dialog_epsg_from_title";
+        this.epsgDstTitle.innerText = "To Custom EPSG:";
+
+        this.epsgDstInput = new Input("text");
+        this.epsgDstInput.getDOM().className = "layer_dialog_epsg_input";
+        this.epsgDstInput.setValue("4978");
+
+        this.epsgDstCodeTitle = document.createElement('p');
+        this.epsgDstCodeTitle.className = "layer_dialog_epsg_title";
+        this.epsgDstCodeTitle.innerText = "PROJ.4";
+
+        this.epsgDstCodeInput = new Input("text");
+        this.epsgDstCodeInput.getDOM().className = "layer_dialog_epsg_definition_input";
+        this.epsgDstCodeInput.setValue('+proj=geocent +datum=WGS84 +units=m +no_defs')
+        
+        this.epsgCustomDstRow = this.createRow();
+        this.epsgCustomDstRow.style.display = "none"
+        this.epsgCustomDstRow.appendChild(this.epsgDstTitle);
+        this.epsgCustomDstRow.appendChild(this.epsgDstInput.getDOM());
+        this.epsgCustomDstRow.appendChild(this.epsgDstCodeTitle);
+        this.epsgCustomDstRow.appendChild(this.epsgDstCodeInput.getDOM());
+        
+        this.epsgSrcSelect.on('change', () => {
+            this.resetEPSGCustomSrcRowVisible();
+        });
+        
+        this.epsgDstSelect.on('change', () => {
+            this.resetEPSGCustomDstRowVisible();
+        });
     }
 
     createPopupBackground() {
@@ -518,6 +611,14 @@ class LayerDialog extends EventEmitter {
                     src : this.epsgSrcSelect.getSelectedValue(),
                     dst : this.epsgDstSelect.getSelectedValue()
                 };
+                if (data.conversion.src === 'Custom') {
+                    data.conversion.srcCustomEPSG = "EPSG:" + this.epsgSrcInput.getValue();
+                    data.conversion.srcCustomProj4 = this.epsgSrcCodeInput.getValue();
+                }
+                if (data.conversion.dst === 'Custom') {
+                    data.conversion.dstCustomEPSG = "EPSG:" + this.epsgDstInput.getValue();
+                    data.conversion.dstCustomProj4 = this.epsgDstCodeInput.getValue();
+                }
             }
 
             if (this.endCallback) {

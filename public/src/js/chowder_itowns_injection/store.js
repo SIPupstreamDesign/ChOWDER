@@ -1284,9 +1284,6 @@ class Store extends EventEmitter {
             if (layer.hasOwnProperty('offset_uvw')) {
                 data.offset_uvw = JSON.parse(JSON.stringify(layer.offset_uvw));
             }
-            if (layer.hasOwnProperty('conversion')) {
-                data.conversion = JSON.parse(JSON.stringify(layer.conversion));
-            }
             if (layer.hasOwnProperty('isBarGraph')) {
                 data.isBarGraph = layer.isBarGraph;
                 if (!layer.ready) {

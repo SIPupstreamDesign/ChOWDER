@@ -109,6 +109,8 @@ class LayerProperty extends EventEmitter {
 		this.dom = document.createElement('div');
 		this.dom.className = "layer_property";
 
+		this.physical1Expr = "";
+		this.physical2Expr = "";
 		/*
 		addCheckProperty(this.dom, false, "visible", "visible", true, (err, data) => {
 		});
@@ -628,7 +630,7 @@ class LayerProperty extends EventEmitter {
 
 		// 物理量の式が入っていた場合は、セレクトボックスを選択してくださいの状態にする
 		const UpdatePhysicalSelect = () => {
-			if (this.physical1Expr.length > 0) {
+			if (this.physical1Expr !== undefined && this.physical1Expr.length > 0) {
 				const physical1Col = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
 				if (this.physical1Expr !== physical1Col) {
 					this.barGraphSelect1.setSelectedIndex(0);
@@ -636,7 +638,7 @@ class LayerProperty extends EventEmitter {
 			} else {
 				this.physical1Expr = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
 			}
-			if (this.physical2Expr.length > 0) {
+			if (this.physical2Expr !== undefined && this.physical2Expr.length > 0) {
 				const physical2Col = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
 				if (this.physical2Expr !== physical2Col) {
 					this.barGraphSelect2.setSelectedIndex(0);

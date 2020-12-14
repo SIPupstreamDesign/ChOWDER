@@ -2,6 +2,23 @@ class C3DTileUtil {
 	static applyConvertSetting(layer, config) {
 		if (config.conversion.src !== 'EPSG:4978' || config.conversion.dst !== 'EPSG:4978') {
 
+			let srcEPSG = config.conversion.src;
+			let dstEPSG = config.conversion.dst;
+
+			if (srcEPSG === 'Custom') {
+				srcEPSG = config.conversion.srcCustomEPSG;
+				itowns.proj4.defs(srcEPSG, config.conversion.srcCustomProj4);
+				
+				console.log('set proj4 definition', srcEPSG, config.conversion.srcCustomProj4);
+			}
+			if (dstEPSG === 'Custom') {
+				dstEPSG = config.conversion.dstCustomEPSG;
+				itowns.proj4.defs(dstEPSG, config.conversion.dstCustomProj4);
+				
+				console.log('set proj4 definition', dstEPSG, config.conversion.dstCustomProj4);
+			}
+			console.log('srcEPSG/dstEPSG', srcEPSG, '/', dstEPSG);
+
 			layer.whenReady.then(() => {
 				let isInitial = true;
 			
@@ -19,9 +36,9 @@ class C3DTileUtil {
 					];
 					for (let i = 0; i < vers.length; ++i) {
 						const p = new itowns.Coordinates(
-							config.conversion.src,
+							srcEPSG,
 							vers[i].x, vers[i].y, vers[i].z
-						).as(config.conversion.dst);
+						).as(dstEPSG);
 						vers[i].x = p.x;
 						vers[i].y = p.y;
 						vers[i].z = p.z;
@@ -60,9 +77,9 @@ class C3DTileUtil {
 							const v1 = i * positions.itemSize + 1;
 							const v2 = i * positions.itemSize + 2;
 							const p = new itowns.Coordinates(
-								config.conversion.src,
+								srcEPSG,
 								positions.array[v0], positions.array[v1], positions.array[v2]
-							).as(config.conversion.dst);
+							).as(dstEPSG);
 
 							positions.array[v0] = p.x;
 							positions.array[v1] = p.y;
@@ -102,9 +119,9 @@ class C3DTileUtil {
 								const v1 = i * positions.itemSize + 1;
 								const v2 = i * positions.itemSize + 2;
 								const p = new itowns.Coordinates(
-									config.conversion.src,
+									srcEPSG,
 									positions.array[v0], positions.array[v1], positions.array[v2]
-								).as(config.conversion.dst);
+								).as(dstEPSG);
 
 								positions.array[v0] = p.x;
 								positions.array[v1] = p.y;

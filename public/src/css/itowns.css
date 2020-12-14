@@ -449,6 +449,14 @@ p {
 	padding-left : 10px;
 }
 
+.layer_dialog_epsg_definition_input {
+    width: 260px;
+}
+
+.layer_dialog_epsg_input {
+	width : 60px;
+}
+
 .input-group {
 	margin: 10px;
 	padding-left: 5px;
