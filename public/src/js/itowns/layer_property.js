@@ -8,7 +8,7 @@ import PropertySlider from "../components/property_slider"
 import ITownsConstants from "./itowns_constants";
 import Select from "../components/select"
 import Button from "../components/button"
-import LayerPropertyBargraphDialog  from './layer_property_bargraph_dialog'
+import LayerPropertyBargraphDialog from './layer_property_bargraph_dialog'
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -121,7 +121,7 @@ class LayerProperty extends EventEmitter {
 		this.scaleSlider = null;
 		this.pointSizeSlider = null;
 		this.bboxSizeSlider = null;
-		
+
 		this.bargraphSetting = new LayerPropertyBargraphDialog(this.store, this.action);
 		document.body.appendChild(this.bargraphSetting.getDOM());
 	}
@@ -448,8 +448,7 @@ class LayerProperty extends EventEmitter {
 			let rangeEndTime = null;
 			// 時刻歴一覧
 			for (let i = 0; i < times.length; ++i) {
-				if (times[i] && times[i].length > 0)
-				{
+				if (times[i] && times[i].length > 0) {
 					const div = document.createElement('div');
 					div.className = "time_button_wrap";
 					let timeButton = new Button();
@@ -469,7 +468,7 @@ class LayerProperty extends EventEmitter {
 						rangeStartTime = new Date(Math.min(date.getTime(), rangeStartTime.getTime()));
 						rangeEndTime = new Date(Math.max(date.getTime(), rangeEndTime.getTime()));
 					}
-	
+
 					timeButton.on('click', ((date) => {
 						return () => {
 							this.action.changeTime({
@@ -499,7 +498,7 @@ class LayerProperty extends EventEmitter {
 					this.dom.appendChild(timesTitle);
 					// ボタンリスト
 					this.dom.appendChild(buttnList);
-					
+
 					let buttonWrap = document.createElement('div');
 					buttonWrap.className = "reset_rangebar_button_wrap"
 					let button = new Button();
@@ -659,14 +658,17 @@ class LayerProperty extends EventEmitter {
 					lat: Number(this.barGraphSelectLat.getSelectedValue()),
 					physical1: Number(this.barGraphSelect1.getSelectedValue()),
 					physical2: Number(this.barGraphSelect2.getSelectedValue()),
-					physical1Expr : this.physical1Expr ? this.physical1Expr : "",
-					physical2Expr : this.physical2Expr ? this.physical2Expr : ""
+					physical1Expr: this.physical1Expr ? this.physical1Expr : "",
+					physical2Expr: this.physical2Expr ? this.physical2Expr : ""
+				},
+				callback: () => {
+					this.emit(LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI, null, { value: layerID });
 				}
 			});
 		};
 
 		this.barGrahphCustomButton1.on('click', () => {
-			this.bargraphSetting.show('physical1_setting', this.physical1Expr,  (isOK, data) => {
+			this.bargraphSetting.show('physical1_setting', this.physical1Expr, (isOK, data) => {
 				if (isOK) {
 					this.physical1Expr = data;
 					UpdatePhysicalSelect();
@@ -699,7 +701,7 @@ class LayerProperty extends EventEmitter {
 				this.physical2Expr = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
 			}
 			UpdateBargraph();
-		} );
+		});
 	}
 
 	// レイヤーID、プロパティをもとに初期値を設定
@@ -817,5 +819,6 @@ class LayerProperty extends EventEmitter {
 		return this.dom;
 	}
 }
+LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI = "layer_property_need_update_gui";
 
 export default LayerProperty;

@@ -445,13 +445,16 @@ class Store extends EventEmitter {
         let layer = this.getLayerData(data.id);
         if (layer) {
             for (let key in data) {
-                if (key !== "id") {
+                if (key !== "id" && key !== "callback") {
                     layer[key] = data[key];
                 }
             }
             this.saveLayer(layer);
 
             this.operation.updateMetadata(this.metaData, (err, res) => {
+                if (data.hasOwnProperty('callback')) {
+                    data.callback();
+                }
             });
 
             // 接続されていなくても見た目上変わるようにしておく

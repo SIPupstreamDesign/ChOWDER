@@ -591,7 +591,7 @@ class GUI extends EventEmitter {
         this.layerProperty = new LayerProperty(this.store, this.action);
         propInner.appendChild(this.layerProperty.getDOM());
 
-        this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
+        const initLayerProperty = (data) => {
             let layerData = this.store.getLayerData(data.value);
             const csv = this.store.getCSVCache(layerData.id);
             if (csv) {
@@ -602,6 +602,15 @@ class GUI extends EventEmitter {
                 layerData.json = json;
             }
             this.layerProperty.initFromLayer(data.value, layerData);
+        };
+
+        this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
+            initLayerProperty(data);
+        });
+        this.layerProperty.on(LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI, (err, data) => {
+            const scrollTop = propInner.scrollTop;
+            initLayerProperty(data);
+            propInner.scrollTop = scrollTop;
         });
 
         // 速度計測ボタン
