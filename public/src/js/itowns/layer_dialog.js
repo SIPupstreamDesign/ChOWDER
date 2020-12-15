@@ -18,8 +18,8 @@ SampleURLFileNames[ITownsConstants.Type3DTilesTimeSeries] = "something/timeserie
 SampleURLFileNames[ITownsConstants.TypePointCloud] = "something/cloud.js";
 SampleURLFileNames[ITownsConstants.TypePointCloudTimeSeries] = "something/timeseries.json";
 SampleURLFileNames[ITownsConstants.TypeGeometry] = "something/data.pbf";
-SampleURLFileNames[ITownsConstants.TypeBargraph] = "sample_csv_data/data1.csv";
-SampleURLFileNames[ITownsConstants.TypeOBJ] = "male02/male02.obj";
+SampleURLFileNames[ITownsConstants.TypeBargraph] = "sample_data/bargraph/data1.csv";
+SampleURLFileNames[ITownsConstants.TypeOBJ] = "sample_data/obj/teapot/teapot.obj";
 
 
 class LayerDialog extends EventEmitter {
@@ -219,7 +219,7 @@ class LayerDialog extends EventEmitter {
         this.jsonURLTitle.innerText = "JSON:";
         this.jsonURLInput = document.createElement('textarea');
         this.jsonURLInput.className = "layer_dialog_url_input";
-        this.jsonURLInput.value = "https://localhost/userdata/itowns/csv_sample/setting.json";
+        this.jsonURLInput.value = "https://localhost/sample_data/bargraph/setting.json";
 
         this.jsonRow = this.createRow();
         this.jsonRow.className = "layer_dialog_row2"
@@ -234,7 +234,7 @@ class LayerDialog extends EventEmitter {
         this.mtlURLTitle.innerText = "MTL:";
         this.mtlURLInput = document.createElement('textarea');
         this.mtlURLInput.className = "layer_dialog_url_input";
-        this.mtlURLInput.value = "http://localhost/male02/male02.mtl";
+        this.mtlURLInput.value = "http://localhost/sample_data/obj/teapot/default.mtl";
 
         this.mtlRow = this.createRow();
         this.mtlRow.className = "layer_dialog_row2"

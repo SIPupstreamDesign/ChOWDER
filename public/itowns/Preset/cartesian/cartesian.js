@@ -56,12 +56,14 @@ window.onload = function () {
     var axes = new itowns.THREE.AxesHelper(10000000 * 2);
     view.scene.add(axes);
 
-    const light = new itowns.THREE.HemisphereLight(0xFFFFFF, 0x555555, 1.0);
+    const light = new itowns.THREE.HemisphereLight(0xFFFFFF, 0x00000, 1.0);
     view.scene.add(light);
 
+    /*
     var dirLight = new THREE.DirectionalLight( 0xffffff );
     dirLight.position.set( - 3, 10, - 10 );
     view.scene.add( dirLight );
+    */
     var controls = new itowns.OrbitControls(view, { focusOnClick: true});
 
     // itownsコントローラから開かれた場合のみコントロールを表示
