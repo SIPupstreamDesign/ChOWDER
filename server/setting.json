@@ -9,5 +9,6 @@
     "enableHTTP" : true,
     "enableSSL" : true,
     "HTTPPort" : 80,
-    "SSLPort" : 443
+    "SSLPort" : 443,
+    "enableCORS" : true
 }
