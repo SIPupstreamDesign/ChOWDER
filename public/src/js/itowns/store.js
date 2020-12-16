@@ -497,7 +497,13 @@ class Store extends EventEmitter {
         }
         if (layerList.length > 0) {
             // レイヤー初期化
-            this.iframeConnector.send(ITownsCommand.InitLayers, layerList, (err, data) => {});
+            this.iframeConnector.send(ITownsCommand.InitLayers, layerList, (err, data) => {
+                this._changeTimeByTimeline({
+                    currentTime : this.timelineCurrentTime,
+                    startTime: this.timelineStartTime,
+                    endTime: this.timelineEndTime,
+                });
+            });
             this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }

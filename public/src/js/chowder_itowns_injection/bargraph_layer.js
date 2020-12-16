@@ -19,12 +19,20 @@ function createCSVBargraphSource(itownsView, config) {
 			throw error;
 		}
 	}
+	function fetchJSON(url, options = {}) {
+		return fetch(url, options).then((response) => {
+			checkResponse(response);
+			return response.json();
+		});
+	}
+	
 	const arrayBuffer = (url, options = {}) => fetch(url, options).then((response) => {
 		checkResponse(response);
 		return response.arrayBuffer();
 	});
-	const csvSource = new itowns.FileSource({
+	const bargraphSource = new itowns.FileSource({
 		url: config.url,
+		jsonurl: config.jsonurl ? config.jsonurl : null,
 		crs: 'EPSG:4326',
 		// コンストラクタでfetcherが使用され、結果がfetchedDataに入る.
 		fetcher: (url, options = {}) => {
@@ -64,25 +72,80 @@ function createCSVBargraphSource(itownsView, config) {
 				group.add(mesh);
 			}
 
+			const jsonKeyToParamKey = {
+				'Time' : 'time',
+				'Longitude' : 'lon',
+				'Latitude' : 'lat',
+				'Physical1' : 'physical1',
+				'Physical2' : 'physical2',
+			};
+
+			if (config.jsonurl) {
+				return new Promise(resolve => {
+					try {
+						fetchJSON(config.jsonurl).then(data => {
+							let csvKeys = parsed.data[0];
+							let params = {};
+							for (let jsonKey in jsonKeyToParamKey) {
+								if (data.hasOwnProperty(jsonKey)) {
+									const jsonVal = data[jsonKey];
+									const paramKey = jsonKeyToParamKey[jsonKey];
+									let isFoundKey = false;
+									for (let i = 0; i < csvKeys.length; ++i) {
+										if (csvKeys[i] === jsonVal) {
+											params[paramKey] = i;
+											isFoundKey = true;
+											break;
+										}
+									}
+									if (!isFoundKey && paramKey === 'physical1') {
+										params['physical1'] = 'Custom';
+										params['physical1Expr'] = jsonVal;
+									}
+									if (!isFoundKey && paramKey === 'physical2') {
+										params['physical2'] = 'Custom';
+										params['physical2Expr'] = jsonVal;
+									}
+								}
+							}
+							
+							resolve({
+								initialBargraphParams : params,
+								csv: parsed,
+								meshGroup: group
+							});
+						});
+						return;
+					} catch(err) {
+						console.error(err);
+					}
+					resolve({
+						csv: parsed,
+						meshGroup: group
+					});
+				});
+			}
+
 			return Promise.resolve({
 				csv: parsed,
 				meshGroup: group
 			});
 		}
 	});
-	return csvSource;
+	return bargraphSource;
 }
 
 function CreateBargraphLayer(itownsView, config) {
 	class BarGraphLayer extends itowns.GeometryLayer {
 		constructor(itownsView, config) {
 			const group = new itowns.THREE.Group();
-			const csvSource = createCSVBargraphSource(itownsView, config);
+			const bargraphSource = createCSVBargraphSource(itownsView, config);
+			bargraphSource.jsonurl = config.jsonurl;
 			super(config.id, group, {
-				source: csvSource
+				source: bargraphSource
 			});
 			this.group = group;
-			this.source = csvSource;
+			this.source = bargraphSource;
 
 			this.itownsView = itownsView;
 
@@ -100,13 +163,7 @@ function CreateBargraphLayer(itownsView, config) {
 
 			this.defineLayerProperty('scale', this.scale || 1.0, this.updateBarGraph);
 			this.defineLayerProperty('size', this.size || 5, this.updateBarGraph);
-			this.defineLayerProperty('bargraphParams', {
-				lon: 0,
-				lat: 0,
-				time: 0,
-				physical1: 0,
-				physical2: 0,
-			}, this.updateBarGraph);
+			this.defineLayerProperty('bargraphParams', {}, this.updateBarGraph);
 		}
 
 		update(context, layer, node) { }
@@ -158,7 +215,18 @@ function CreateBargraphLayer(itownsView, config) {
 		updateBarGraph() {
 			if (!this.hasOwnProperty('bargraphParams')) return;
 			this.source.loadData(this.BarGraphExtent, this).then((data) => {
-				const params = this.bargraphParams;
+				let params = null;
+				if (data.hasOwnProperty('initialBargraphParams')) {
+					this.initialBargraphParams = data.initialBargraphParams;
+					params = JSON.parse(JSON.stringify(this.initialBargraphParams));
+				}
+				if (!params) {
+					params = this.bargraphParams;
+				} else {
+					for (let key in this.bargraphParams) {
+						params[key] = this.bargraphParams[key];
+					}
+				}
 				const csvData = data.csv.data;
 				
 				// keyがparamsにある場合のみvalueを返す、ない場合は空文字を返す

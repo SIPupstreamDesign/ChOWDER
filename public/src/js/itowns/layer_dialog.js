@@ -219,7 +219,7 @@ class LayerDialog extends EventEmitter {
         this.jsonURLTitle.innerText = "JSON:";
         this.jsonURLInput = document.createElement('textarea');
         this.jsonURLInput.className = "layer_dialog_url_input";
-        this.jsonURLInput.value = "https://localhost/sample_data/bargraph/setting.json";
+        this.jsonURLInput.value = "http://localhost/sample_data/bargraph/setting1.json";
 
         this.jsonRow = this.createRow();
         this.jsonRow.className = "layer_dialog_row2"
@@ -582,6 +582,7 @@ class LayerDialog extends EventEmitter {
             data.type = this.typeSelect.getSelectedValue();
             if (data.type == ITownsConstants.TypeBargraph) {
                 data.isBarGraph = true;
+                data.jsonurl = this.jsonURLInput.value.split("\n").join("");
             }
             if (data.type == ITownsConstants.TypeOBJ) {
                 data.isOBJ = true;

@@ -577,6 +577,9 @@ class Store extends EventEmitter {
                 "opacity": 1.0,
                 "url": url,
             };
+            if (params.hasOwnProperty('jsonurl')) {
+                config.jsonurl = params.jsonurl;
+            }
         }
         if (type === ITownsConstants.TypeOBJ) {
             config = {
@@ -702,6 +705,12 @@ class Store extends EventEmitter {
                 type === ITownsConstants.TypeBargraph ||
                 type === ITownsConstants.TypeOBJ) {
                 itowns.View.prototype.addLayer.call(this.itownsView, layer);
+
+                if (type === ITownsConstants.TypeBargraph) {
+                    layer.whenReady.then(() => {
+                        layer.updateBarGraph();
+                    })
+                }
             } else {
                 this.itownsView.addLayer(layer);
             }
@@ -1290,8 +1299,11 @@ class Store extends EventEmitter {
                     await layer.whenReady;
                 }
                 if (layer.hasOwnProperty('source') && layer.source._featuresCaches.hasOwnProperty(layer.crs)) {
-                    let csvData = await layer.source.loadData(this.BarGraphExtent, layer);
-                    data.csv = csvData.csv;
+                    let loadedData = await layer.source.loadData(this.BarGraphExtent, layer);
+                    data.csv = loadedData.csv;
+                    if (loadedData.hasOwnProperty('initialBargraphParams')) {
+                        data.initialBargraphParams = loadedData.initialBargraphParams;
+                    }
                 }
             }
             if (layer.hasOwnProperty('isTimeseriesPotree')) {
@@ -1355,6 +1367,7 @@ class Store extends EventEmitter {
                     data.url = layer.source.hasOwnProperty('url') ? layer.source.url : layer.url;
                     data.style = layer.source.hasOwnProperty('style') ? layer.source.style : undefined;
                     data.mtlurl = layer.source.hasOwnProperty('mtlurl') ? layer.source.mtlurl : undefined;
+                    data.jsonurl = layer.source.hasOwnProperty('jsonurl') ? layer.source.jsonurl : undefined;
                     data.file = layer.source.hasOwnProperty('file') ? layer.source.file : undefined;
                     data.zoom = layer.source.hasOwnProperty('zoom') ? layer.source.zoom : undefined;
                     dataList.push(data);
@@ -1362,6 +1375,7 @@ class Store extends EventEmitter {
                     data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
                     data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
                     data.mtlurl = layer.hasOwnProperty('mtlurl') ? layer.mtlurl : undefined;
+                    data.jsonurl = layer.hasOwnProperty('jsonurl') ? layer.jsonurl : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.name = layer.hasOwnProperty('name') ? layer.name : undefined;
                     dataList.push(data);
