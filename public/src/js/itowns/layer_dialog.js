@@ -439,9 +439,20 @@ class LayerDialog extends EventEmitter {
         this.tileMatrixSetSelect.addOption("WGS84G", "WGS84G");
         this.tileMatrixSetSelect.addOption("PM", "PM");
         this.tileMatrixSetSelect.addOption("iTowns", "iTowns");
+        this.tileMatrixSetSelect.addOption("Custom", "Custom");
         this.tileMatrixSetSelect.getDOM().className = "layer_dialog_zoom_max_select";
         this.tileMatrixSetSelect.setSelectedIndex(0);
         this.tileMatrixSetSelect.getDOM().style.display = "none"
+
+        this.styleNameInputTitle  = document.createElement('p')
+        this.styleNameInputTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
+        this.styleNameInputTitle.innerText = "style:";
+        this.styleNameInputTitle.style.display = "none"
+
+        this.styleNameInput = new Input("text");
+        this.styleNameInput.getDOM().className = "layer_dialog_style_name_input";
+        this.styleNameInput.setValue("normal");
+        this.styleNameInput.getDOM().style.display = "none"
 
         this.formatRow = this.createRow();
         this.formatRow.style.display = "none"
@@ -449,6 +460,30 @@ class LayerDialog extends EventEmitter {
         this.formatRow.appendChild(this.formatSelect.getDOM());
         this.formatRow.appendChild(this.tileMatrixSetTitle);
         this.formatRow.appendChild(this.tileMatrixSetSelect.getDOM());
+        this.formatRow.appendChild(this.styleNameInputTitle);
+        this.formatRow.appendChild(this.styleNameInput.getDOM());
+
+        this.tileMatrixSetInputTitle  = document.createElement('p')
+        this.tileMatrixSetInputTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
+        this.tileMatrixSetInputTitle.innerText = "tileMatrixSet(Custom):";
+
+        this.tileMatrixSetInput = new Input("text");
+        this.tileMatrixSetInput.getDOM().className = "layer_dialog_style_name_input";
+        this.tileMatrixSetInput.setValue("WGS84G");
+
+        this.tileMatrixSetCustomRow = this.createRow();
+        this.tileMatrixSetCustomRow.style.display = "none"
+        this.tileMatrixSetCustomRow.appendChild(this.tileMatrixSetInputTitle);
+        this.tileMatrixSetCustomRow.appendChild(this.tileMatrixSetInput.getDOM());
+        
+        this.tileMatrixSetSelect.on(Select.EVENT_CHANGE, (err, val) => {
+            const isCustom = (this.tileMatrixSetSelect.getSelectedIndex() === Object.keys(this.tileMatrixSetSelect.getOptions()).length - 1);
+            if (isCustom) {
+                this.tileMatrixSetCustomRow.style.display = "block";
+            } else {
+                this.tileMatrixSetCustomRow.style.display = "none";
+            }
+        });
 
         this.formatSelect.on(Select.EVENT_CHANGE, (err, val) => {
             let index = this.formatSelect.getSelectedIndex();
@@ -456,9 +491,13 @@ class LayerDialog extends EventEmitter {
                 // wmts
                 this.tileMatrixSetTitle.style.display = "inline"
                 this.tileMatrixSetSelect.getDOM().style.display = "inline"
+                this.styleNameInputTitle.style.display = "inline"
+                this.styleNameInput.getDOM().style.display = "inline"
             } else {
                 this.tileMatrixSetTitle.style.display = "none"
                 this.tileMatrixSetSelect.getDOM().style.display = "none"
+                this.styleNameInputTitle.style.display = "none"
+                this.styleNameInput.getDOM().style.display = "none"
             }
         });
     }
@@ -602,8 +641,13 @@ class LayerDialog extends EventEmitter {
                 data.format = this.formatSelect.getSelectedValue();
                 if (this.formatSelect.getSelectedIndex() >= 2) {
                     data.tileMatrixSet = this.tileMatrixSetSelect.getSelectedValue();
+                    if (data.tileMatrixSet === 'Custom') {
+                        data.tileMatrixSet = this.tileMatrixSetInput.getValue();
+                    }
+                    data.style = this.styleNameInput.getValue();
                 } else {
                     data.tileMatrixSet = 'PM'
+                    data.style = 'normal'
                 }
             }
             if (data.type === ITownsConstants.Type3DTile

@@ -318,6 +318,10 @@ p {
     color: orangered;
 }
 
+.layer_dialog_style_name_input {
+	width : 100px;
+}
+
 /*
 .timeline_pause_button {
 	background-image:url("../image/pause.png");

@@ -541,7 +541,9 @@ class Store extends EventEmitter {
                 config.crs = "EPSG:3857";
                 config.tileMatrixSet = "PM";
             }
-
+            if (params.hasOwnProperty('style')) {
+                config.style = params.style;
+            }
         }
         if (type === ITownsConstants.TypePointCloud
             || type === ITownsConstants.TypePointCloudTimeSeries) {
