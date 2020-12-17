@@ -1366,13 +1366,16 @@ class Store extends EventEmitter {
                 (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true)
             ) {
                 if (layer.hasOwnProperty('source')) {
+                    if (data.crs.indexOf('EPSG:') <= 0 && layer.source.extent) {
+                        data.crs = layer.source.extent.crs;
+                    }
+
                     data.url = layer.source.hasOwnProperty('url') ? layer.source.url : layer.url;
                     data.style = layer.source.hasOwnProperty('style') ? layer.source.style : undefined;
                     data.mtlurl = layer.source.hasOwnProperty('mtlurl') ? layer.source.mtlurl : undefined;
                     data.jsonurl = layer.source.hasOwnProperty('jsonurl') ? layer.source.jsonurl : undefined;
                     data.file = layer.source.hasOwnProperty('file') ? layer.source.file : undefined;
                     data.zoom = layer.source.hasOwnProperty('zoom') ? layer.source.zoom : undefined;
-                    dataList.push(data);
                 } else {
                     data.url = layer.hasOwnProperty('url') ? layer.url : undefined;
                     data.style = layer.hasOwnProperty('style') ? layer.style : undefined;
@@ -1380,8 +1383,24 @@ class Store extends EventEmitter {
                     data.jsonurl = layer.hasOwnProperty('jsonurl') ? layer.jsonurl : undefined;
                     data.file = layer.hasOwnProperty('file') ? layer.file : undefined;
                     data.name = layer.hasOwnProperty('name') ? layer.name : undefined;
-                    dataList.push(data);
                 }
+
+                // WMTSの場合はURLに含まれているパラメータから各種パラメータを復元し
+                // URLはパラメータを含まない形にする
+                if (data.url.indexOf('?LAYER=') > 0) {
+                    const getParams = data.url.slice(data.url.indexOf('?LAYER='));
+                    let paramList = getParams.split('&');
+                    for (let k = 0; k < paramList.length; ++k) {
+                        if (paramList[k].indexOf('TILEMATRIXSET=') >= 0) {
+                            data.tileMatrixSet = paramList[k].slice(paramList[k].indexOf('=') + 1);
+                        } else if (paramList[k].indexOf('STYLE=') >= 0) {
+                            data.style = paramList[k].slice(paramList[k].indexOf('=') + 1);
+                        }
+                    }
+                    data.url = data.url.slice(0, data.url.indexOf('?LAYER='));
+                }
+
+                dataList.push(data);
             }
         }
         return dataList;
