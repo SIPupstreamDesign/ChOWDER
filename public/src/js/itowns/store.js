@@ -35,9 +35,9 @@ class Store extends EventEmitter {
         // jsonキャッシュ。jsonは大きいのでmetaDataとして登録しない。
         this.jsonCaches = {}
 
-        const year = 2019;
-        const month = 8;
-        const day = 3;
+        const year = 2020;
+        const month = 12;
+        const day = 6;
         const minHour = 10;
 
         // タイムラインStart Time
