@@ -433,10 +433,15 @@ class LayerProperty extends EventEmitter {
 			}
 		}
 		if (layerProps.hasOwnProperty('csv') && layerProps.csv.data.length > 1) {
-			if (layerProps.hasOwnProperty('bargraphParams')) {
+			if (layerProps.hasOwnProperty('bargraphParams') && layerProps.bargraphParams.hasOwnProperty('time')) {
 				const bargraphParams = layerProps.bargraphParams;
 				for (let i = 1; i < layerProps.csv.data.length; ++i) {
 					times.push(layerProps.csv.data[i][bargraphParams.time]);
+				}
+			} else if (layerProps.hasOwnProperty('initialBargraphParams') && layerProps.initialBargraphParams.hasOwnProperty('time')) {
+				const initialBargraphParams = layerProps.initialBargraphParams;
+				for (let i = 1; i < layerProps.csv.data.length; ++i) {
+					times.push(layerProps.csv.data[i][initialBargraphParams.time]);
 				}
 			}
 		}
@@ -522,6 +527,8 @@ class LayerProperty extends EventEmitter {
 
 		const colTitles = layerProps.csv.data[0];
 
+		const hasInitialParams = layerProps.hasOwnProperty('initialBargraphParams');
+
 		this.barGraphSelectLon = new Select();
 		this.barGraphSelectLat = new Select();
 		this.barGraphSelect1 = new Select();
@@ -602,6 +609,31 @@ class LayerProperty extends EventEmitter {
 		// 初期値の設定
 		this.physical1Expr = "";
 		this.physical2Expr = "";
+		if (hasInitialParams) {
+			const initialParams = layerProps.initialBargraphParams;
+			if (initialParams.hasOwnProperty('time')) {
+				this.timeSelect.setSelectedIndex(initialParams.time + 1);
+			}
+			if (initialParams.hasOwnProperty('lon')) {
+				this.barGraphSelectLon.setSelectedIndex(initialParams.lon + 1);
+			}
+			if (initialParams.hasOwnProperty('lat')) {
+				this.barGraphSelectLat.setSelectedIndex(initialParams.lat + 1);
+			}
+			if (initialParams.hasOwnProperty('physical1')) {
+				this.barGraphSelect1.setSelectedIndex(initialParams.physical1 + 1);
+			}
+			if (initialParams.hasOwnProperty('physical2')) {
+				this.barGraphSelect2.setSelectedIndex(initialParams.physical2 + 1);
+			}
+			if (initialParams.hasOwnProperty('physical1Expr')) {
+				this.physical1Expr = initialParams.physical1Expr;
+			}
+			if (initialParams.hasOwnProperty('physical2Expr')) {
+				this.physical2Expr = initialParams.physical2Expr;
+			}
+		}
+
 		if (layerProps.hasOwnProperty('bargraphParams')) {
 			const bargraphParams = layerProps.bargraphParams;
 			if (bargraphParams.hasOwnProperty('time')) {

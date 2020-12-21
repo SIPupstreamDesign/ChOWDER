@@ -8,7 +8,7 @@
     "hiredis": "*",
     "images": "^3.2.3",
     "phantom": "^6.0.3",
-    "sharp": "^0.20.8"
+    "sharp": "^0.26.3"
   },
   "scripts": {
     "standalone-electron": "electron standalone-electron",
