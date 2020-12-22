@@ -1366,7 +1366,7 @@ class Store extends EventEmitter {
                 (layer.hasOwnProperty('isUserLayer') && layer.isUserLayer === true)
             ) {
                 if (layer.hasOwnProperty('source')) {
-                    if (data.crs.indexOf('EPSG:') <= 0 && layer.source.extent) {
+                    if (data.hasOwnProperty('crs') && data.crs !== undefined && data.crs.indexOf('EPSG:') <= 0 && layer.source.extent) {
                         data.crs = layer.source.extent.crs;
                     }
 
