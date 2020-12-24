@@ -4,7 +4,7 @@
  */
 import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
-import Rainbow from '../../../3rd/js/rainbowvis.js'
+import Rainbow from '../../../3rd/js/colormap.js'
 import ExprEval from '../../../3rd/js/expr-eval.js'
 
 /**
@@ -135,6 +135,39 @@ function createCSVBargraphSource(itownsView, config) {
 	return bargraphSource;
 }
 
+class ColorMap 
+{
+	constructor() {
+		this.map = colormap({
+			colormap: 'jet',
+			nshades: 1000,
+			format: 'hex',
+			alpha: 1
+		})
+		console.log(this.map)
+	}
+
+	setNumberRange(numMin, numMax) {
+		this.numMin = numMin;
+		this.numMax = numMax;
+	}
+	
+	getColorAt(number) {
+		let num = number;
+		if (num < this.minNum) {
+			num = this.minNum;
+		}
+		if (num > this.maxNum) {
+			num = this.maxNum;
+		} 
+		const len = (this.numMax - this.numMin);
+		const p = (num - this.numMin);
+		const ratio = p / len;
+		const index = Math.max(0, Math.min(999, Math.floor(ratio * 1000)));
+		return this.map[index].split('#').join('');
+	}
+}
+
 function CreateBargraphLayer(itownsView, config) {
 	class BarGraphLayer extends itowns.GeometryLayer {
 		constructor(itownsView, config) {
@@ -150,9 +183,8 @@ function CreateBargraphLayer(itownsView, config) {
 			this.itownsView = itownsView;
 
 			this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
-			this.rainbow = new Rainbow();
-			this.rainbow.setSpectrum('black', 'blue', 'aqua', 'lime', 'yellow', 'red');
-	
+
+			this.colormap = new ColorMap();
 
 			this.exprParser = new ExprEval.Parser();
 
@@ -264,7 +296,7 @@ function CreateBargraphLayer(itownsView, config) {
 					physicalVal2Range.max = Math.max(physicalVal2Range.max, physical2Val);
 				}
 				if (physicalVal2Range.min !== physicalVal2Range.max) {
-					this.rainbow.setNumberRange(physicalVal2Range.min, physicalVal2Range.max);
+					this.colormap.setNumberRange(physicalVal2Range.min, physicalVal2Range.max);
 				}
 				// 全メッシュにposition/scale/colorを設定して更新
 				for (let i = 0; i < data.meshGroup.children.length; ++i) {
@@ -304,7 +336,7 @@ function CreateBargraphLayer(itownsView, config) {
 						physical2Val = 0.0;
 					}
 					// physical2valからmeshの色を割り出す
-					const color = this.rainbow.colourAt(physical2Val);
+					const color = this.colormap.getColorAt(physical2Val);
 					mesh.material.color.setHex("0x" + color);
 					if (this.itownsView.isPlanarView) {
 						mesh.scale.set(this.size * 10000, this.size * 10000, -scaleZ);
