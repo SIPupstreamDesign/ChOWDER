@@ -729,7 +729,7 @@ class LayerProperty extends EventEmitter {
 		};
 
 		this.barGrahphCustomButton1.on('click', () => {
-			this.bargraphSetting.show('physical1_setting', this.physical1Expr, (isOK, data) => {
+			this.bargraphSetting.show('physical_expression_1', this.physical1Expr, (isOK, data) => {
 				if (isOK) {
 					this.physical1Expr = data;
 					UpdatePhysicalSelect();
@@ -738,7 +738,7 @@ class LayerProperty extends EventEmitter {
 			});
 		});
 		this.barGrahphCustomButton2.on('click', () => {
-			this.bargraphSetting.show('physical2_setting', this.physical2Expr, (isOK, data) => {
+			this.bargraphSetting.show('physical_expression_2', this.physical2Expr, (isOK, data) => {
 				if (isOK) {
 					this.physical2Expr = data;
 					UpdatePhysicalSelect();
