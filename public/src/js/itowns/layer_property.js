@@ -529,6 +529,9 @@ class LayerProperty extends EventEmitter {
 
 		const hasInitialParams = layerProps.hasOwnProperty('initialBargraphParams');
 
+		// 「選択してください」のテキスト
+		const pleaseSelectText = i18next.t('selection_initial');
+
 		this.barGraphSelectLon = new Select();
 		this.barGraphSelectLat = new Select();
 		this.barGraphSelect1 = new Select();
@@ -539,11 +542,11 @@ class LayerProperty extends EventEmitter {
 		this.barGraphSelect1.getDOM().className = "property_bargraph_col property_bargraph_physical"
 		this.barGraphSelect2.getDOM().className = "property_bargraph_col property_bargraph_physical"
 		this.timeSelect.getDOM().className = "property_bargraph_col"
-		this.barGraphSelectLon.addOption(-1, i18next.t('selection_initial'));
-		this.barGraphSelectLat.addOption(-1, i18next.t('selection_initial'));
-		this.barGraphSelect1.addOption(-1, i18next.t('selection_initial'));
-		this.barGraphSelect2.addOption(-1, i18next.t('selection_initial'));
-		this.timeSelect.addOption(-1, i18next.t('selection_initial'));
+		this.barGraphSelectLon.addOption(-1, pleaseSelectText);
+		this.barGraphSelectLat.addOption(-1, pleaseSelectText);
+		this.barGraphSelect1.addOption(-1, pleaseSelectText);
+		this.barGraphSelect2.addOption(-1, pleaseSelectText);
+		this.timeSelect.addOption(-1, pleaseSelectText);
 		for (let i = 0; i < colTitles.length; ++i) {
 			const title = colTitles[i];
 			this.barGraphSelectLon.addOption(i, title);
@@ -664,18 +667,44 @@ class LayerProperty extends EventEmitter {
 			if (this.physical1Expr !== undefined && this.physical1Expr.length > 0) {
 				const physical1Col = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
 				if (this.physical1Expr !== physical1Col) {
+					// 物理量に入れられた式と同じカラムがあるか？
+					// colTitles[0]以外を選択し、その後選択してくださいを選択した場合
+					// 選択してくださいの部分のテキストを変更しないようにする。
+					let hasSameCol = false;
+					for (let i = 0; i < colTitles.length; ++i) {
+						if (colTitles[i] === this.physical2Expr) {
+							hasSameCol = true;
+							break;
+						}
+					}
+					if (!hasSameCol) {
+						this.barGraphSelect1.getOptions()[0].textContent = this.physical1Expr;
+					}
 					this.barGraphSelect1.setSelectedIndex(0);
+					
 				}
 			} else {
 				this.physical1Expr = colTitles[this.barGraphSelect1.getSelectedIndex() - 1];
+				this.barGraphSelect1.getOptions()[0].textContent = pleaseSelectText;
 			}
 			if (this.physical2Expr !== undefined && this.physical2Expr.length > 0) {
 				const physical2Col = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
 				if (this.physical2Expr !== physical2Col) {
+					let hasSameCol = false;
+					for (let i = 0; i < colTitles.length; ++i) {
+						if (colTitles[i] === this.physical2Expr) {
+							hasSameCol = true;
+							break;
+						}
+					}
+					if (!hasSameCol) {
+						this.barGraphSelect2.getOptions()[0].textContent = this.physical2Expr;
+					}
 					this.barGraphSelect2.setSelectedIndex(0);
 				}
 			} else {
 				this.physical2Expr = colTitles[this.barGraphSelect2.getSelectedIndex() - 1];
+				this.barGraphSelect2.getOptions()[0].textContent = pleaseSelectText;
 			}
 		}
 		UpdatePhysicalSelect();
