@@ -144,6 +144,11 @@ bin配下の以下のシェルスクリプトを実行します.
        $cd bin
        $sh install.sh
 
+WebRTC用のturnサーバを同時にインストールする場合は以下を実行します.
+
+       $cd bin
+       $sh install_with_turn.sh
+
 ### Windowsの場合
 
 bin配下の以下のファイルを実行します.
@@ -1282,6 +1287,8 @@ GISレイヤー追加機能
     - http://server-address/tileset.json などと、jsonのアドレスを指定
  - PointCloud : potree Converterによって作成された点群データ
     - http://server-address/cloud.json などと、jsonのアドレスを指定
+ - PointCloudTimeSeries : potree Converterによって作成された時系列の点群データ
+    - http://server-address/timeseries.json などと、jsonのアドレスを指定
  - VectorTile : pbfなどのベクトルタイル
     - http://server-address/vectortile.pbf などと、ベクトルタイルのアドレスを指定
 
@@ -1329,6 +1336,53 @@ GISレイヤーのプロパティ
 
 コントローラでは、GISコンテンツのカメラなどを操作することはできませんが、
 通常のコンテンツの設定に加えて、タイムラインの時刻情報の表示非表示設定を行うことができます
+
+Qgis2threejsプラグイン出力描画機能の利用
+========================================================================================
+
+概要
+------------------------------------------------------------------
+
+QGIS用のオープンソースのプラグインである、Qgis2threejsから出力された HTML + Javascriptによるコンテンツを、ChOWDERコンテンツとして登録し、ChOWDERディスプレイに描画することができます。
+
+アプリケーションの利用方法
+-----------------------------------------------------------
+
+以下のURLにアクセスし、Qgis2threejsプラグイン出力描画機能を利用することができます.
+-   HTTP用URL … http://ChOWDER_Server_Address/qgis.html
+-   HTTPS用URL … https://ChOWDER_Server_Address/qgis.html
+
+<img src="image/qgis2threejs.png" alt="Qgis2threejsプラグイン出力描画機能" width="500" />
+
+APIUserのパスワードと使用するファイルを選択し、ログインします。
+
+選択したファイルがアップロードされ、正常にコンテンツが読み込まれると同時に、選択したQgis2threejsプラグイン出力データがChOWDERコンテンツとして追加されます。
+
+<img src="image/qgis2threejs2.png" alt="Qgis2threejsプラグイン出力描画機能" width="500" />
+
+ - 1. 登録されたコンテンツIDが表示されます
+ - 2. コンテンツのURLが表示されます
+ - 3. コンテンツにラベルがあれば表示/非表示を切り替えます
+ - 4. ワイヤフレーム表示を切り替えます
+ - 5. カメラを初期状態にリセットします
+ 
+
+
+データのアップロード
+-----------------------------------------------------------
+ログイン時に「zipファイルを選択して読み込み」のファイル選択で指定したデータをアップロードします。
+
+アップロードするファイルはzip形式で、Qgis2threejsプラグインから出力された以下のディレクトリ構造を1ファイルに圧縮したものとします。
+
+```
+filename/
+    data/
+    threejs/
+    index.html
+    Qgis2threejs.css
+    Qgis2threejs.js
+    Qgis2threejs.png
+```
 
 
 Electron版ChOWDERディスプレイアプリケーションの利用

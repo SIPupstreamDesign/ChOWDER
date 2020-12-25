@@ -152,6 +152,13 @@ Run the installation script in the `bin` directory.
        $ sh install.sh
 ~~~
 
+To install the turn server for WebRTC at the same time.
+
+~~~
+       $cd bin
+       $sh install_with_turn.sh
+~~~
+
 ### On Windows
 
 Run the installation script in the `bin` directory. 
@@ -1236,7 +1243,9 @@ The type of layer that can be added and the method of specifying the URL are as 
     - http://server-address/tileset.json - Specify json address
  - PointCloud : Point cloud data created by potree Converter
     - http://server-address/cloud.json - Specify json address
- - VectorTile : pbfなどのベクトルタイル
+ - PointCloudTimeSeries : Time series point cloud data created by potree Converter
+    - http://server-address/timeseries.json - Specify json address
+ - VectorTile : Vector tiles such as pbf
     - http://server-address/vectortile.pbf - Specify vector tile address
 
 For the ID, set the name displayed in the layer list. Must be a unique name.
@@ -1284,6 +1293,56 @@ Settings on the controller
 
 The controller cannot operate the camera of GIS content, etc.,
 In addition to the normal content settings, you can set the display / non-display of the time information on the timeline
+
+Using the Qgis2threejs plugin output drawing function
+========================================================================================
+
+Overview
+------------------------------------------------------------------
+
+HTML + Javascript content output from Qgis2threejs, an open source plug-in for QGIS, can be registered as ChOWDER content and rendered on a ChOWDER display.
+
+アプリケーションの利用方法
+-----------------------------------------------------------
+
+You can access the following URL and use the WebGL distributed drawing function.
+In the URL for HTTPS, it is necessary to add to the exception.
+
+-   HTTP URL … http://ChOWDER_Server_Address/qgis.html
+-   HTTPS URL … https://ChOWDER_Server_Address/qgis.html
+
+<img src="image/qgis2threejs.png" alt="Qgis2threejsプラグイン出力描画機能" width="500" />
+
+Select the APIUser password and the file to be used, and login.
+
+The selected file will be uploaded, and as soon as the content is successfully loaded, the selected Qgis2threejs plugin output data will be added as ChOWDER content.
+
+<img src="image/qgis2threejs2.png" alt="Qgis2threejsプラグイン出力描画機能" width="500" />
+
+ - 1. The registered content ID.
+ - 2. The URL of the content
+ - 3. Toggles the label display.
+ - 4. Toggles the wire frame display.
+ - 5. Resets the camera to its initial state.
+ 
+
+
+Uploading data
+-----------------------------------------------------------
+Upload the data specified in the file selection of "Select and load a zip file" when you log in.
+
+The file to be uploaded is in zip format, and should be the following directory structure output from the Qgis2threejs plugin compressed into a single file.
+
+```
+filename/
+    data/
+    threejs/
+    index.html
+    Qgis2threejs.css
+    Qgis2threejs.js
+    Qgis2threejs.png
+```
+
 
 Using the Display Application for the Electron version of ChOWDER
 ==================================================================
