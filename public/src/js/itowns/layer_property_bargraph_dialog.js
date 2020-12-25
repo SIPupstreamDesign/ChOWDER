@@ -18,6 +18,8 @@ class LayerPropertyBargraphDialog extends EventEmitter {
     init(title) {
         this.dom = document.createElement('div');
         this.dom.className = "layer_dialog";
+        this.dom.style.height = "170px";
+        this.dom.style.width = "550px";
 
         this.wrap = document.createElement('div');
         this.wrap.className = "layer_dialog_wrap";

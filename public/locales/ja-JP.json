@@ -127,5 +127,7 @@
  "longitude": "Longitude (経度)",
  "latitude": "Latitude (緯度)",
  "physical_value_1": "物理量1 (棒グラフの長さ)",
- "physical_value_2": "物理量2 (棒グラフの色)"
+ "physical_value_2": "物理量2 (棒グラフの色)",
+ "physical_expression_1": "物理量1の数式を入力してください",
+ "physical_expression_2": "物理量2の数式を入力してください"
 }
