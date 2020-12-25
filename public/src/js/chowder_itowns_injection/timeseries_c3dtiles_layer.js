@@ -44,11 +44,8 @@ function createTimescaleC3DTilesSource(itownsView, config) {
 				}, itownsView);
 				childLayer.isChildLayer = true;
 
-				// UTC時刻のUnixTime文字列で初期化されたDateを作成する
-				const local = new Date(timeStr)
-				const offset = -1 * local.getTimezoneOffset() / 60
-				const utcDate = new Date(local.getTime() + (offset * 3600000))
-				childLayer.date = utcDate;
+				// ISO8601による時刻文字列からDateを作成する
+				childLayer.date = new Date(timeStr)
 	
 				// EPSGによる座標変換の設定
 				C3DTileUtil.applyConvertSetting(childLayer, config);
