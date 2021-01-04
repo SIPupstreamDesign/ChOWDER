@@ -9,18 +9,29 @@ const GeoTIFF = require('./geotiff.js/dist/geotiff.bundle.js');
 const HimawariParser = require('./himawari_parser.js').HimawariParser;
 const HimawariConverter = require('./himawari_parser.js').HimawariConverter;
 
-const fileList = [
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0110.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0210.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0310.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0410.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0510.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0610.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0710.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0810.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S0910.DAT',
-    'H:/data/30/B13/HS_H08_20191010_0930_B13_FLDK_R20_S1010.DAT',
-];
+const fileListText = String(fs.readFileSync('himawari_parse_test_file_list.txt'));
+const fileList_ = fileListText.split('\n');
+let fileList = [];
+for (let i = 0; i < fileList_.length; ++i) {
+    fileList_[i] = fileList_[i].split('\r').join('');
+    if (fileList_[i].length > 0) {
+        if (fs.existsSync(fileList_[i])) {
+            fileList.push(fileList_[i]);
+        } else {
+            console.error('Error: Not found file:', fileList_[i]);
+        }
+    }
+}
+if (fileList.length > 0) {
+    console.log("fileList: ", fileList)
+}
+if (fileList.length < 10) {
+    console.error('Error: Not found 10 paths in file_list.txt');
+    console.log('Usage: ');
+    console.log(' (1) Please write absolute paths to himawari_parse_test_file_list.txt');
+    console.log(' (2) node --max-old-space-size=32000 .\himawari_parse_test.js');
+    process.exit();
+}
 
 function parseAndConvert(fileList, dstConverterList, fileIndex) {
     return new Promise((resolve)  => 

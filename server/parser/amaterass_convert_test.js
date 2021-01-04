@@ -20,8 +20,24 @@ function lonLatToXYZ(R, lon, lat) {
 }
 const DEGTORAD = (Math.PI / 180.0);
 
-const heightFile = 'D:/work/ChOWDER_data/201910110020.wtr.cld.cth.fld.4km.bin'
-const thicknessFile = 'D:/work/ChOWDER_data/201910110020.wtr.cld.tau.fld.4km.bin'
+// const heightFile = 'E:/ChOWDER_DATA/amaterass_data/201910110020.wtr.cld.cth.fld.4km.bin'
+// const thicknessFile = 'E:/ChOWDER_DATA/amaterass_data/201910110020.wtr.cld.tau.fld.4km.bin'
+if (process.argv.length < 4) {
+    console.log('Error: Not found arguments of heightFile/thicknessFile');
+    console.log('Usage: node --max-old-space-size=32000 ./amaterass_convert_test.js heightFileAbsolutePath thicknessFileAbsolutePath');
+    process.exit();
+}
+const heightFile = process.argv[process.argv.length - 2];
+const thicknessFile = process.argv[process.argv.length - 1];
+console.log('heightFile absolute path:', heightFile);
+console.log('thicknessFile absolute path:', thicknessFile);
+if (heightFile.indexOf('cth.fld') < 0) {
+    console.warn('heightFile absolute path does not include cth.fld');
+}
+if (heightFile.indexOf('tau.fld') < 0) {
+    console.warn('heightFile absolute path does not include tau.fld');
+}
+
 const width = 3000;
 const height = 3000;
 
