@@ -9,11 +9,19 @@ const GeoTIFF = require('./geotiff.js/dist/geotiff.bundle.js');
 
 const AmaterassParser = require('./amaterass_parser.js').AmaterassParser;
 
-function parseTest()
+if (process.argv.length < 3) {
+    console.log('Error: Not found argument of amaterass data file');
+    console.log('Usage: node --max-old-space-size=32000 ./amaterass_parse_test.js amaterassDataAbsolutePath');
+    process.exit();
+}
+const targetFile = process.argv[process.argv.length - 1];
+console.log('targetFile absolute path:', targetFile);
+
+function parseTest(targetFile)
 {
 	const width = 3000;
 	const height = 3000;
-	const file = 'D:/data/himawaridata/201910100020.wtr.cld.cth.fld.4km.bin'
+	const file = targetFile;//'D:/data/himawaridata/201910100020.wtr.cld.cth.fld.4km.bin'
 
 	let parser = new AmaterassParser(width, height);
 	parser.parse(file).then(
@@ -42,4 +50,4 @@ function parseTest()
 	})
 }
 
-parseTest();
+parseTest(targetFile);

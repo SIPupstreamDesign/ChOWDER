@@ -230,9 +230,9 @@ function cloudToTXT()
 function cloudToTXT2()
 {
     // 前のファイルの中身を消す
-    fs.writeFileSync('D:/work/ChOWDER_data/dist2/output3.txt', "");
+    fs.writeFileSync('output.txt', "");
     // 追加モードで開きなおす
-    let fd = fs.openSync('D:/work/ChOWDER_data/dist2/output3.txt', 'a');
+    let fd = fs.openSync('output.txt', 'a');
     const space = " ";
     const gridSize = 120 / width;
 

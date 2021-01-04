@@ -29,7 +29,7 @@ if (fileList.length < 10) {
     console.error('Error: Not found 10 paths in file_list.txt');
     console.log('Usage: ');
     console.log(' (1) Please write absolute paths to himawari_parse_test_file_list.txt');
-    console.log(' (2) node --max-old-space-size=32000 .\himawari_parse_test.js');
+    console.log(' (2) node --max-old-space-size=32000 himawari_parse_test.js');
     process.exit();
 }
 
