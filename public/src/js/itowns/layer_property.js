@@ -459,7 +459,7 @@ class LayerProperty extends EventEmitter {
 					let timeButton = new Button();
 					timeButton.getDOM().className = "time_button btn btn-secondary";
 					timeButton.getDOM().value = times[i];
-					// UTC時刻のUnixTime文字列で初期化されたDateを作成する
+					// ISO8601文字列よりDateを作成する
 					const date = new Date(times[i])
 					if (!isNaN(date.getTime())) {
 						if (!rangeStartTime) {
