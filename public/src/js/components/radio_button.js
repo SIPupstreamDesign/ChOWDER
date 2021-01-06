@@ -49,7 +49,6 @@ class RadioButton extends EventEmitter
         }
         radio.appendChild(dom);
         this.form.appendChild(radio);
-        console.log(this.form.childNodes);
     }
 
     getSelected(){
