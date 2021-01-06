@@ -67,6 +67,7 @@
     -   [アプリケーションの利用方法](#アプリケーションの利用方法)
     -   [GISレイヤー追加機能](#GISレイヤー追加機能)
     -   [GISレイヤーのプロパティ](#GISレイヤーのプロパティ)
+    -   [GIS用タイムラインの設定と操作方法](#GIS用タイムラインの設定と操作方法)
     -   [コントローラでの設定](#コントローラでの設定)
 -   [Electron版ChOWDERディスプレイアプリケーションの利用](#Electron版ChOWDERディスプレイアプリケーションの利用)
     -   [概要](#概要-7)
@@ -79,6 +80,10 @@
     -   [概要](#概要-8)
 -   [coturnの利用](#coturnの利用)
     -   [概要](#概要-9)
+-   [ひまわりパーサーの利用](#ひまわりパーサーの利用)
+    -   [概要](#概要-10)
+-   [太陽放射コンソーシアムデータ用パーサーの利用](#太陽放射コンソーシアムデータ用パーサーの利用)
+    -   [概要](#概要-11)
     
 はじめに
 ========================================================================================
@@ -190,7 +195,7 @@ bin配下の以下のファイルを実行します.
 コントローラへアクセス
 ---------------------------------------------------
 
-ChOWDERへのアクセスは、Webブラウザのアドレス欄に「 http://localhost:8080 」と入力することでアクセス出来ます.
+ChOWDERへのアクセスは、Webブラウザのアドレス欄に「 http://localhost/ 」と入力することでアクセス出来ます.
 アクセスし、下図の画面が表示されたらインストールは完了となります。.
 
 <img src="image/home.png" alt="install終了後ホーム画面" width="585" />
@@ -227,7 +232,12 @@ redisが起動しているterminalを終了させます.
         "stunServerUrl" : "",
         "turnServerUrl" : "",
         "turnServerUsername" : "",
-        "turnServerCredential" : ""
+        "turnServerCredential" : "",
+        "enableHTTP" : true,
+        "enableSSL" : true,
+        "HTTPPort" : 80,
+        "SSLPort" : 443,
+        "enableCORS" : true
     }
 
 -   `wsMaxMessageSize`には、サーバーが1回で送受信できる最大メッセージサイズを設定します。
@@ -237,6 +247,11 @@ redisが起動しているterminalを終了させます.
 -   `turnServerUrl`には、WebRTC接続において使用する、TURNサーバのURLを指定します。
 -   `turnServerUsername`には、WebRTC接続において使用する、TURNサーバの認証用ユーザー名を指定します。
 -   `turnServerCredential`には、WebRTC接続において使用する、TURNサーバの認証用パスワードを指定します。
+-   `enableHTTP`には、HTTP通信を有効にするかどうかを指定します。
+-   `enableSSL`には、HTTPS通信を有効にするかどうかを指定します。
+-   `HTTPPort`には、HTTP通信で使用するポート番号を指定します。Websocket(ws)通信でも同様のポートが使用されます。
+-   `SSLPort`には、HTTPS通信で使用するポート番号を指定します。Websocket(wss)通信でも同様のポートが使用されます。
+-   `enableCORS`には、ChOWDER Serverで公開するウェブコンテンツに対し、CORSを許可するかどうかを指定します。
 
 管理者初期設定
 ---------------------------------------------------
@@ -274,7 +289,7 @@ ChOWDERのホーム画面
 ホーム画面説明
 ---------------------------------------------------
 
-ChOWDERへのアクセスは、前述のアプリケーション起動を行った後、Webブラウザのアドレス欄に「 http://localhost:8080 」と入力することでアクセス出来ます.
+ChOWDERへのアクセスは、前述のアプリケーション起動を行った後、Webブラウザのアドレス欄に「 http://localhost/ 」と入力することでアクセス出来ます.
 アクセスすると上述のホーム画面が表示されます.
 ChOWDERは、以下の2つのモード(Display, Controller)を持っており、ホーム画面でどちらのモードを使うかを決定します.
 
@@ -1251,8 +1266,8 @@ GIS描画ライブラリであるiTownsを使用し、GISコンテンツを、We
 以下のURLにアクセスし、WebGL分散描画機能を利用することができます.
 HTTPS用URLでは、例外に追加する必要があります.
 
--   HTTP用URL … http://ChOWDER_Server_Address:8080/itowns.html
--   HTTPS用URL … https://ChOWDER_Server_Address:9090/itowns.html
+-   HTTP用URL … http://ChOWDER_Server_Address/itowns.html
+-   HTTPS用URL … https://ChOWDER_Server_Address/itowns.html
 
 <img src="image/itowns1.png" alt="WebGL分散描画機能" width="500" />
 
@@ -1279,26 +1294,45 @@ GISレイヤー追加機能
 <img src="image/itowns3.png" alt="レイヤー追加ダイアログ" width="500" />
 
 追加できるレイヤーのTypeと、URLの指定方法は以下の通りです
- - Color : EPSG3857のカラータイル
+ - Color : EPSG3857のカラータイルによるレイヤー
     - http://server-address/{z}/{x}/{y}.png などと、タイル番号の部分を{x}{y}{z}により指定
- - Elevation : EPSG4326の標高タイル、及び、地理院地図のDEMタイル
+ - Elevation : EPSG4326の標高タイル、及び、地理院地図のDEMタイルによるレイヤー
     - http://server-address/{z}/{x}/{y}.txt などと、タイル番号の部分を{x}{y}{z}により指定
- - 3D Tile : 3D Tiles(b3dm)
+ - 3DTile : 3D Tiles(b3dm)形式によるレイヤー
     - http://server-address/tileset.json などと、jsonのアドレスを指定
- - PointCloud : potree Converterによって作成された点群データ
+ - 3DTiles Timeseries : 時系列の3DTilesによるレイヤー
+    - http://server-address/timeseries.json などと、jsonのアドレスを指定(jsonの記載方法については後述)
+ - PointCloud : potree Converterによって作成された点群データによるレイヤー
     - http://server-address/cloud.json などと、jsonのアドレスを指定
- - PointCloudTimeSeries : potree Converterによって作成された時系列の点群データ
-    - http://server-address/timeseries.json などと、jsonのアドレスを指定
+ - PointCloudTimeSeries : potree Converterによって作成された時系列の点群データによるレイヤー
+    - http://server-address/timeseries.json などと、jsonのアドレスを指定(jsonの記載方法については後述)
  - VectorTile : pbfなどのベクトルタイル
     - http://server-address/vectortile.pbf などと、ベクトルタイルのアドレスを指定
+    - https://server-address/style.json などと、ベクトルファイル用のstyle.jsonを指定
+ - Bargraph : 任意のCSVファイルにより棒グラフを作成するレイヤー
+    - http://server-address/data1.csv などと、CSVファイルのアドレスを指定、または`Import CSV File`によりローカルファイルからアップロード
+    - http://server-address/setting1.json などと、設定用JSONファイルのアドレスを指定、または`Import JSON File`によりローカルファイルからアップロード
+ - OBJ : Wavefront OBJ形式によるメッシュデータのレイヤー
+    - http://server-address/teapot.obj などと、OBJファイルのアドレスを指定
+    - http://server-address/default.mtl などと、MTLファイルのアドレスを指定
 
  IDには、レイヤーリストに表示される名前を設定します。ユニークな名前である必要があります。
 
- ZOOMには、データソースの拡大対象範囲を指定します。タイルURL中の{z}に該当します。
+ ZOOMには、データソースの拡大対象範囲(MIN, MAX)を指定します。タイルURL中の{z}に該当します。
+
+ timeseries.jsonとして指定するjsonファイルの記載方法は以下の通りです。
+ - キーとして、時刻歴をISO8601の記法で記載します。
+ - 3DTilesの場合は、値として、tileset.jsonのアドレスを記載します。
+ - PointCloudの場合は、値として、cloud.jsonのアドレスを記載します。
+
+ 3DTilesおよび3DTiles TimeseriesのTypeにおいて、
+ 読み込み時にEPSGコードを指定した座標変換を行うことができます。指定方法は以下の通りです、
+- Conversion : From ・・・ データのEPSGコードを選択または入力します
+- Conversion : To ・・・ データの変換先EPSGコードを選択または入力します
 
 <img src="image/itowns4.png" alt="レイヤー追加ダイアログ" width="500" />
+<br><br>
 
-VectorLayerでは、Styleに、style.jsonを指定します。
 
 GISレイヤーのプロパティ
 --------------------------------------------------------------------------------
@@ -1318,7 +1352,7 @@ GISレイヤーのプロパティ
     - wireframe - ワイヤーフレーム表示非表示
     - sseThreshold  - LoD処理に使用される閾値
     - offset tu, offset uv, offset u, offset v - 接方向への位置オフセット
-    - offset w  - 高さ方向への位置オフセット
+    - offset w  - 軸回りの回転オフセット
  - PointCloud
     - visible - 表示非表示
     - bbox - バウンディングボックス表示非表示
@@ -1326,8 +1360,51 @@ GISレイヤーのプロパティ
     - size  - スクリーンスペースでのポイントサイズ
     - sseThreshold  - LoD処理に使用される閾値
     - offset tu, offset uv, offset u, offset v - 接方向への位置オフセット
-    - offset w  - 高さ方向への位置オフセット
+    - offset w  - 軸回りの回転オフセット
+  - Bargraph
+      - 時刻 - ISO8601の時刻文字列が入っている、CSVの列名を選択します
+      - Latitude(緯度) - 緯度の数値が入っている、CSVの列名を選択します
+      - Longitude(経度) - 経度の数値が入っている、CSVの列名を選択します
+      - 物理量1(棒グラフの長さ) - 棒グラフの長さの値として使用する、CSVの列名を選択します。<br>
+                            - 全体的な長さについては、別途scaleの値にて、調整することができます。
+      - 物理量2(棒グラフの色) - 棒グラフの色の値として使用する、CSVの列名を選択します。<br>
+                            - CSVに含まれる値のうち、最小値から最大値までを、jetカラーマップに割り当て、色として使用します。
 
+物理量2最小値→<img src="image/jet.png" alt="物理量2" width="300" />←物理量2最大値
+
+GIS用タイムラインの設定と操作方法
+--------------------------------------------------------------------------------
+
+GIS用タイムラインでは、データに対応する時刻の指定と、再生、停止を行うことができます。
+タイムラインには、レンジバーという領域を指定することができ、ChOWDERでは、データの表示範囲として使用しています。
+
+<img src="image/timeline.png" alt="タイムライン" width="500" />
+
+ - 1. 再生/停止ボタン - タイムラインの再生/停止を行います。
+ - 2. レンジバー - ChOWDERでは、データの表示範囲として使用しています。
+ - 3. Syncボタン - 複数の異なるiTownsコンテンツ間で、タイムラインの時刻を同期するかどうかを決定します。<br>
+                 - デフォルトでは同期状態となっています
+ - 4. 設定ボタン - タイムラインの表示範囲や、レンジバーの範囲を設定することができます。
+
+設定ボタンによる、範囲設定GUIは以下の通りです
+
+<img src="image/timeline_setting.png" alt="タイムライン" width="500" />
+
+ - 1. タイムラインの開始日時、終了日時の設定 - 通常タイムラインのスクロールやウィンドウサイズの変更によって自動的に変更されます
+ - 2. レンジバーの開始日時、終了日時の設定 - データ表示の有効範囲を設定します
+
+
+タイムラインに対応するデータと、表示非表示の詳細については、以下の通りです.
+
+ - Bargraph
+   - 時刻として指定した列の値が、タイムラインの時刻より前のタイムスタンプであった場合、棒グラフを表示します
+   - タイムラインの時刻より後のタイムスタンプであった場合、棒グラフは非表示となります。
+   - タイムラインの時刻より前のタイムスタンプが複数あった場合、当該の棒グラフを全て表示します。
+
+ - 3DTiles Timeseries
+ - PointCloudTimeSeries
+   - jsonに指定されているタイムスタンプが、タイムラインの時刻より前のタイムスタンプであった場合、データを表示します。
+   - jsonに指定されているタイムスタンプが複数あった場合、最も近い過去のタイムスタンプのデータのみが、表示されます。
 
 コントローラでの設定
 --------------------------------------------------------------------------------
@@ -1418,7 +1495,7 @@ Electron版ChOWDERディスプレイの設定は、JSON形式による設定フ�
 設定ファイルの書式は以下の通りです:
 
     {
-        "url": "http://localhost:8080/view.html",
+        "url": "http://localhost/view.html",
         "password" : "password",
         "windows": {
             "tile1": {
@@ -1481,8 +1558,7 @@ FireFox及びGoogleChromeでは、セキュリティー制限により、HTTPS�
 ChOWDERでは標準でHTTPSサーバーも立ち上がっていて、仮の証明書を備えています.
 デフォルトでは以下のURLにアクセスし、例外に追加することで、HTTPSを使用したページを使用することができます.
 
--   HTTPS用URL … https://localhost:9090
--   HTTPS用WebSocketポート … https://localhost:9091
+-   HTTPS用URL … https://localhost
 
 coturnの利用
 ========================================================================================
@@ -1493,3 +1569,66 @@ coturnの利用
 Linux環境では、WebRTC用に、STUN/TURNサーバとして、coturnを使用することができます。
 coturnは、install.shによるインストール時に同時にインストールされ、デフォルトで使用されます。
 また、別のSTUN/TURNサーバを使用したい場合は、[サーバー基本設定](#サーバー基本設定)により、任意のSTUN/TURNサーバを指定することが可能です。
+
+ひまわりパーサーの利用
+========================================================================================
+
+概要
+---------------------------------------------------
+
+ChOWDER/server/parserに、[気象衛星ひまわり](https://www.data.jma.go.jp/sat_info/himawari/satellite.html)のDATファイル用のパーサーを格納しています。
+パーサーはnode.jsで使用するために書かれており、以下のフォーマット情報により実装しています。
+
+ひまわり８・９号　ひまわり標準データ　利用の手引き：
+https://www.data.jma.go.jp/mscweb/ja/info/pdf/HS_D_users_guide_jp_v13.pdf
+
+ひまわり用パーサーの使用方法
+---------------------------------------------------
+(1) 変換に使用するデータファイル(10ファイル)の絶対パスを、himawari_parse_test_file_list.txtに記載します。
+
+(2) himawari_parse_test.jsを以下のコマンドにより実行すると、各種物理量を、geotiffファイル(output.tiff)として保存します。
+
+> node --max-old-space-size=32000 himawari_parse_test.js
+
+保存される物理量は、以下の通りです。
+ - バンド1～6では、放射輝度を反射率に変換し、物理量として保存しています。
+ - バンド7～16では、放射輝度を輝度温度に変換し、物理量として保存しています。
+
+データを緯度経度座標に変換する方法については、
+[気象衛星センター 「ひまわり標準データの読み込みサンプルプログラム」](https://www.data.jma.go.jp/mscweb/ja/info/sample_data_program.html)
+の、hisd_pixlin2lonlat.cを参考に、javascriptによって以下の関数として実装しています。
+ - (himawari_parser.js内) HimawariConverter.convertPixLinToLonLat
+ - (himawari_parser.js内) HimawariConverter.convertLonLatToPixLin
+
+より詳細な使用に関しては、himawari_parse_test.js及び、himawari_convert_test.js中のコードを参照してください。
+
+ 
+太陽放射コンソーシアムデータ用パーサーの利用
+========================================================================================
+
+概要
+---------------------------------------------------
+ChOWDER/server/parserに、[太陽放射コンソーシアム](http://www.amaterass.org/)で提供されているデータ用のパーサーを格納しています。
+パーサーはnode.jsで使用するために書かれており、以下のフォーマット情報により実装しています。
+
+太陽放射コンソーシアム データについて：
+http://www.amaterass.org/data.html
+
+太陽放射コンソーシアムデータ用パーサーの使用方法
+---------------------------------------------------
+
+ - amaterass_parse_test.jsを以下のコマンドにより実行すると、データに格納されている物理量をgeotiffファイル(output.tiff)として保存します。
+
+> node --max-old-space-size=32000 ./amaterass_parse_test.js amaterassDataAbsolutePath
+
+amaterassDataAbsolutePathには、パースするデータのパスを絶対パスで記述してください
+
+ - amaterass_convert_test.jsを以下のコマンドにより実行すると、データに格納されている雲頂高度と雲厚さを元に、xyziRGB(.txt)形式の点群のデータを、output.txtとして保存します。
+ - デフォルトで、4億点程度の点群データを作成しますので、ディスク容量に注意してください。
+
+ > node --max-old-space-size=32000 ./amaterass_convert_test.js heightFileAbsolutePath thicknessFileAbsolutePath
+
+heightFileAbsolutePathには、雲頂高度のデータのパスを絶対パスで記述してください
+
+thicknessFileAbsolutePathには、雲厚さのデータのパスを絶対パスで記述してください
+

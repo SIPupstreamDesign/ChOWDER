@@ -64,6 +64,7 @@ Table of Contents
   - [Application Setup](#application-setup-1)
   - [GIS layer addition function](#gis-layer-addition-function)
   - [GIS layer properties](#gis-layer-properties)
+  - [GIS timeline settings and usage](#gis-timeline-settings-and-usage)
   - [Settings on the controller](#settings-on-the-controller)
 - [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
   - [Overview](#overview-7)
@@ -76,6 +77,10 @@ Table of Contents
   - [Overview](#overview-8)
 - [Using coturn](#using-coturn)
   - [Overview](#overview-9)
+- [Using Himawari parser](#using-himawari-parser)
+  - [Overview](#overview-10)
+- [Using Himawari amaterass parser](#using-amaterass-parser)
+  - [Overview](#overview-11)
 
 About ChOWDER
 ==================================================================
@@ -198,7 +203,7 @@ Run the execution script in the `bin` directory.
 Accessing ChOWDER from a Web Browser
 ---------------------------------------------------
 
-Enter ChOWDER's URL (`http://localhost:8080` by default) in the address bar of a web browser.
+Enter ChOWDER's URL (`http://localhost/` by default) in the address bar of a web browser.
 
 <img src="image/home.png" alt="install終了後ホーム画面" width="585" />
 *The home screen of ChOWDER's client page*
@@ -224,7 +229,12 @@ The server program reads the `server/setting.json` file while launching to confi
         "stunServerUrl" : "",
         "turnServerUrl" : "",
         "turnServerUsername" : "",
-        "turnServerCredential" : ""
+        "turnServerCredential" : "",
+        "enableHTTP" : true,
+        "enableSSL" : true,
+        "HTTPPort" : 80,
+        "SSLPort" : 443,
+        "enableCORS" : true
     }
 
 -   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
@@ -234,6 +244,11 @@ The server program reads the `server/setting.json` file while launching to confi
 -   `turnServerUrl` sets the TURN server URL in the WebRTC connection.
 -   `turnServerUsername` sets the username in the WebRTC credential.
 -   `turnServerCredential` sets the password in the WebRTC credential.
+-   `enableHTTP` sets whether http server is enabled or not. 
+-   `enableSSL` sets whether https server is enabled or not. 
+-   `HTTPPort` sets the http port. websocket connections(ws) use the same port, too.
+-   `SSLPort` sets the https port. websocket connections(wss) use the same port, too.
+-   `enableCORS` sets whether CORS connections to chowder server is enabled or not. 
 
 Managing Administrative Users
 ---------------------------------------------------
@@ -269,7 +284,7 @@ The Home Screen of ChOWDER
 What's on Your Home Screen?
 ---------------------------------------------------
 
-To access ChOWDER, run the server and visit `http://localhost:8080` with a web browser to open the home screen. The screen offers two modes, *display* and *controller*.
+To access ChOWDER, run the server and visit `http://localhost/` with a web browser to open the home screen. The screen offers two modes, *display* and *controller*.
 
 - **Controller mode** lets you set the screen configuration and move the displayed contents.
 
@@ -1208,8 +1223,8 @@ Application Setup
 You can access the following URL and use the WebGL distributed drawing function.
 In the URL for HTTPS, it is necessary to add to the exception.
 
--   HTTP URL … http://ChOWDER_Server_Address:8080/itowns.html
--   HTTPS URL … https://ChOWDER_Server_Address:9090/itowns.html
+-   HTTP URL … http://ChOWDER_Server_Address/itowns.html
+-   HTTPS URL … https://ChOWDER_Server_Address/itowns.html
 
 <img src="image/itowns1.png" alt="WebGL分散描画機能" width="500" />
 
@@ -1241,21 +1256,40 @@ The type of layer that can be added and the method of specifying the URL are as 
     - http://server-address/{z}/{x}/{y}.txt- Specify the tile number part with {x} {y} {z}
  - 3D Tile : 3D Tiles(b3dm)
     - http://server-address/tileset.json - Specify json address
+ - 3DTiles Timeseries : 3D Tiles Layer of timeseries defined by json
+    - http://server-address/timeseries.json Specify json address
  - PointCloud : Point cloud data created by potree Converter
     - http://server-address/cloud.json - Specify json address
  - PointCloudTimeSeries : Time series point cloud data created by potree Converter
     - http://server-address/timeseries.json - Specify json address
  - VectorTile : Vector tiles such as pbf
     - http://server-address/vectortile.pbf - Specify vector tile address
+ - Bargraph : Bargraph layer defined by CSV file.
+    - http://server-address/data1.csv - Specify csv address, or upload local file by `Import CSV File`.
+    - http://server-address/setting1.json - Specify json addressm or upload local file by `Import JSON File`.
+ - OBJ : Wavefront OBJ Layer
+    - http://server-address/teapot.obj - Specify obj address
+    - http://server-address/default.mtl - Specify mtl address
+
 
 For the ID, set the name displayed in the layer list. Must be a unique name.
 
 For ZOOM, specify the expansion range of the data source.
 Corresponds to {z} in the tile URL.
 
-<img src="image/itowns4.png" alt="レイヤー追加ダイアログ" width="500" />
+For timeseries.json, specity following format
+ - As a Key, wirte the timeseries's timestamp defined by ISO8601
+ - For 3DTiles, enter the address of tileset.json as the value.
+ - For PointCloud, enter the cloud.json address as the value.
 
-In VectorLayer, specify style.json for Style.
+In 3D Tiles and 3D Tiles Time series Type,<br>
+You can perform coordinate conversion by specifying the EPSG code when reading. <br>
+The specification method is as follows, <br>
+- Conversion : From - Select or enter the EPSG code for your data
+- Conversion : To - Select or enter the EPSG code to which you want to convert the data
+
+<img src="image/itowns4.png" alt="レイヤー追加ダイアログ" width="500" />
+<br><br>
 
 GIS layer properties
 --------------------------------------------------------------------------------
@@ -1285,6 +1319,51 @@ The following properties can be set from the GUI for each type of layer added
     - sseThreshold  - Threshold used for LoD processing
     - offset tu, offset uv, offset u, offset v - Tangent position offset
     - offset w  - Position offset in height direction
+
+  - Bargraph
+    - time - Select the CSV column name that contains the ISO8601 time string.
+    - Latitude - Select the CSV column name that contains the latitude number.
+    - Longitude - Select the CSV column name that contains the longitude number.
+    - PhysicalValue1 - Select the CSV column name to use as the bargraph height value. <br>
+                     - The overall height can be adjusted separately with the scale value.
+    - PhysicalValue2 - Select the CSV column name to use as the color value for the bargraph.<br>
+                    - Of the values ​​included in CSV, the minimum to maximum values ​​are assigned to the jet color map and used as colors.
+
+PhysicalValue2 Min→<img src="image/jet.png" alt="物理量2" width="300" />←PhysicalValue2 Max
+
+GIS timeline settings and usage
+--------------------------------------------------------------------------------
+In the timeline for GIS, you can specify the time corresponding to the data and play / stop it.
+An area called the range bar can be specified on the timeline, and ChOWDER uses it as the data display range.
+
+<img src="image/timeline.png" alt="タイムライン" width="500" />
+
+ - 1. Play/Stop button - Plays / stops the timeline.
+ - 2. Range bar - In ChOWDER, it is used as a data display range.
+ - 3. Sync button - Determines whether the time in the timeline is synchronized between different iTowns contents.<br>
+                  - The default is sync.
+ - 4. Setting button - You can set the display range of the timeline and the range of the range bar.
+
+The range setting GUI by the setting button is as follows.
+
+<img src="image/timeline_setting.png" alt="タイムライン" width="500" />
+
+ - 1. Setting the start date and time and end date and time of the timeline<br>
+                   - Usually changed automatically by scrolling the timeline or changing the window size
+ - 2. Setting the start date and time and end date and time of the range bar<br>
+                   - Set the effective range of data display.
+
+The data corresponding to the timeline and the details of showing / hiding are as follows.
+
+ - Bargraph
+     - If the value in the column specified as the time is a time stamp before the time on the timeline, a bar graph will be displayed.
+     - If the time stamp is after the time on the timeline, the bar graph will be hidden.
+     - If there are multiple time stamps before the time on the timeline, all the relevant bar graphs will be displayed.
+
+ - 3DTiles Timeseries
+ - PointCloudTimeSeries
+     - If the time stamp specified in json is a time stamp earlier than the time on the timeline, the data will be displayed.
+     - If there are multiple time stamps specified in json, only the data of the nearest past time stamp will be displayed.
 
 Settings on the controller
 --------------------------------------------------------------------------------
@@ -1374,7 +1453,7 @@ Create the setup file named `conf.json` in the `standalone-electron` directory.
 The format for the setup file is as follows:
 
     {
-        "url": "http://localhost:8080/view.html",
+        "url": "http://localhost/view.html",
         "password" : "password",
         "windows": {
             "tile1": {
@@ -1437,8 +1516,7 @@ There may be occasions screen sharing and camera sharing are activated only when
 
 ChOWDER has a built-in HTTPS server as well as a temporary SSL certificate. Under default settings, you can access the URL below and add it as a one-off exception to use a page using HTTPS. 
 
-- URL for HTTPS — https://localhost:9090
-- WebSocket Port for HTTPS — https://localhost:9091
+- URL for HTTPS — https://localhost/
 
 Using coturn
 ==================================================================
@@ -1449,3 +1527,63 @@ Overview
 In a Linux environment, coturn can be used as a STUN / TURN server for WebRTC.
 coturn is installed at the same time as install.sh and is used by default.
 If you want to use another STUN/TURN server, you can specify any STUN/TURN server by [Basic Setup for Server](#basic-setup-for-server).
+
+Using Himawari parser
+==================================================================
+
+Overview
+---------------------------------------------------
+ChOWDER contains the parser for the DAT file of [the Himawari 8/9 weather satellite] (https://www.data.jma.go.jp/sat_info/himawari/satellite.html) in ChOWDER/server/parser.
+The parser is written for use with node.js and is implemented with the following format information.
+
+Himawari 8/9 Himawari Standard Data Usage Guide
+https://www.data.jma.go.jp/mscweb/ja/info/pdf/HS_D_users_guide_jp_v13.pdf
+
+
+Using Himawari Parser
+---------------------------------------------------
+(1) The absolute path of the data file (10 files) used for conversion is described in himawari_parse_test_file_list.txt.
+
+(2) When himawari_parse_test.js is executed by the following command, various physical quantities are saved as a geotiff file (output.tiff).
+
+> node --max-old-space-size=32000 himawari_parse_test.js
+
+The physical quantities that are stored are as follows.
+ - In bands 1 to 6, radiance is converted to reflectance and stored as a physical quantity.
+ - In bands 7 to 16, radiance is converted to luminance temperature and stored as a physical quantity.
+
+For information on how to convert data to latitude / longitude coordinates
+[Meteorological Satellite Center "Himawari Standard Data Reading Sample Program"] (https://www.data.jma.go.jp/mscweb/ja/info/sample_data_program.html)
+It is implemented as the following function by javascript with reference to hisd_pixlin2lonlat.c.
+ - (In himawari_parser.js) HimawariConverter.convertPixLinToLonLat
+ - (In himawari_parser.js) HimawariConverter.convertLonLatToPixLin
+
+See the code in himawari_parse_test.js and himawari_convert_test.js for detailed usage.
+
+Using Amaterass Parser
+==================================================================
+
+Overview
+---------------------------------------------------
+ChOWDER contains the parser for the data provided by the [Solar Radiation Consortium](http://www.amaterass.org/).
+The parser is written for use with node.js and is implemented with the following format information.
+
+About solar radiation consortium's data:
+http://www.amaterass.org/data.html
+
+Using Amaterass Parser
+---------------------------------------------------
+When amaterass_parse_test.js is executed by the following command, the physical quantity stored in the data is saved as a geotiff file (output.tiff).
+
+> node --max-old-space-size=32000 ./amaterass_parse_test.js amaterassDataAbsolutePath
+
+In amaterassDataAbsolutePath, describe the path of the data to be parsed with an absolute path.
+
+ - When amaterass_convert_test.js is executed by the following command, the point cloud data in xyziRGB (.txt) format is saved as output.txt based on the cloud top altitude and cloud thickness stored in the data.
+ - By default, point cloud data of about 400 million points is created, so be careful about the disk capacity.
+
+ > node --max-old-space-size=32000 ./amaterass_convert_test.js heightFileAbsolutePath thicknessFileAbsolutePath
+
+In heightFileAbsolutePath, describe the path of the cloud top altitude data as an absolute path.
+
+In thicknessFileAbsolutePath, describe the path of cloud thickness data as an absolute path.
