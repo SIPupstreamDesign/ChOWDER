@@ -89,7 +89,16 @@ class GUI extends EventEmitter {
 				this.addQgisContent();
 			}else{
 				/* redisからfetchしたコンテンツデータを使う */
+				/* property復元 */
 				this.initPropertyPanel();
+
+				/* camera復元 */
+				const metaData = this.store.getMetaData();
+				this.action.updateRenderCamera({
+					mat:metaData.cameraWorldMatrix,
+					params:"nodata"
+				});
+	
 			}
 		})
 
@@ -107,7 +116,7 @@ class GUI extends EventEmitter {
 				url: metaData.url,
 				meta: metaData
 			}), "ContentID:" + metaData.id);
-			this.action.updateSelectedContent(this.contentsSelect.getSelectedValue())
+			this.action.updateSelectedContent(this.contentsSelect.getSelectedValue());
         });
 
 	}

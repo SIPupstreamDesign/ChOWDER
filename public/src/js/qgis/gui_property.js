@@ -66,6 +66,10 @@ class GUIProperty extends EventEmitter {
 					label: data
 				})
 			});
+			this.action.changeProperty({
+				label: displayProperty.label
+			})
+
 		} else {
 			addCheckProperty(this.dom, true, "label", "label", true, (err, data) => {
 				// this.action.changeLayerProperty({
@@ -81,6 +85,10 @@ class GUIProperty extends EventEmitter {
 					wireframe: data
 				})
 			});
+			this.action.changeProperty({
+				label: displayProperty.wireframe
+			})
+
 		} else {
 			addCheckProperty(this.dom, true, "wireframe", "wireframe", false, (err, data) => {
 				// this.action.changeLayerProperty({
