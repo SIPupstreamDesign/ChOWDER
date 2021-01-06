@@ -1789,7 +1789,7 @@
 
         /**
          * タイルコンテンツ追加
-         * @method addContent
+         * @method addTileContent
          * @param {JSON} metaData contentメタデータ
          * @param {BLOB} data バイナリデータ
          * @param {Number} totalTileCount 合計タイル数
