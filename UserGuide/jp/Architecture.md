@@ -214,6 +214,9 @@ APIに相当するコマンドが, `command.js`に定義されており, それ�
 || posy  || Integer | コンテンツy座標 |
 || width  || Integer | コンテンツ幅 |
 || height  || Integer | コンテンツ高さ |
+|| visible  || "true" or "false" | 可視不可視 |
+|| user_data_text  || { "text" : "" }の形式の文字列 | memoに相当する内容 |
+|| zIndex  || Integer | 上下位置関係の設定のための値 |
 | AddTileContent || | | タイルコンテンツを追加します |
 || id | ○ | String | ID |
 || type | ○ | String | コンテンツ種別 | 
@@ -273,20 +276,51 @@ APIに相当するコマンドが, `command.js`に定義されており, それ�
 
 | Method | Params | 必須 | 形式 | 用途 | 
 | ---- | ---- | ---- | ---- | ---- |
-| UpdateContent|| | | グループリストを取得します. <br>更新通知: UpdateContent |
-|| group | ○ | String | グループID |
+| UpdateContent|| | | コンテンツを更新します. コンテンツによってはバイナリデータをMetaBinaryに入れる必要があります.<br>更新通知: UpdateContent |
+|| id | ○ | String | ID |
+|| content_id | ○ | String | コンテンツID | 
+|| group |  | String | グループID |
 | UpdateMetaData| | | | メタデータを更新します. <br>更新通知: UpdateMetaData |
-|　 UpdateVirtualDisplay| | | | 仮想ディスプレイ情報を更新します. <br>更新通知: UpdateVirtualDisplay |
-|  UpdateWindowMetaData| | | | ウィンドウメタデータを更新します. <br>更新通知: UpdateWindowMetaData |
-|  UpdateMouseCursor| | | | マウスカーソルを更新します. <br>更新通知: UpdateMouseCursor |
-|  UpdateGroup| | | | グループ情報を更新します. <br>更新通知: UpdateGroup |
-|  ChangeGroupIndex| | | | グループインデックスを変更します. <br>更新通知: ChangeGroupIndex |
-|  DeleteContent| | | | コンテンツを削除します. <br>更新通知: DeleteContent |
-|  DeleteWindowMetaData| | | | ウィンドウメタデータを削除します. <br>更新通知: DeleteWindowMetaData |
-|  ShowWindowID| | | | ウィンドウIDを表示通知を送ります. <br>通知: ShowWindowID |
-|  SendMessage| | | | ユーザ定義メッセージを送ります. <br>通知: ShowWindowID |
-|  ReloadDisplay| | | | ディスプレイ再読み込み通知を送ります. <br>通知: ReloadDisplay |
-|  Disconnect| | | | websocketが切断された場合にクライアントに通知します. <br>通知: Disconnect
+|| id | ○ | String | ID |
+|| content_id | ○ | String | コンテンツID | 
+|| type | ○ | String | コンテンツ種別 | 
+|| group |  | String | グループID |
+|| restore_index | | Integer | バックアップデータより復帰する場合はrestore_indexを指定します |
+|| history_sync || "true" or "false" | 時系列大規模画像における同期フラグを指定します |
+|| restore_key || String | history_syncがtrueの場合に使用します. 大規模画像の復元対象のキーを指定します |
+|| restore_value || String | history_syncがtrueの場合に使用します. 大規模画像の復元対象のバリューを指定します |
+| UpdateVirtualDisplay| | | | 仮想ディスプレイ情報を更新します. <br>更新通知: UpdateVirtualDisplay |
+|| group || String | グループIDを指定します |
+|| その他VirtualDisplay情報 ||| GetVirtualDisplayで取得可能な値を変更して更新に使用します |
+| UpdateWindowMetaData| | | | ウィンドウメタデータを更新します. <br>更新通知: UpdateWindowMetaData |
+|| id | ○ | String | ID |
+|| group |  | String | コンテンツグループ |
+|| posx  |  | Integer | コンテンツx座標) |
+|| posy  || Integer | コンテンツy座標 |
+|| width  || Integer | コンテンツ幅 |
+|| height  || Integer | コンテンツ高さ |
+|| visible  || "true" or "false" | 可視不可視 |
+|| user_data_text  || { "text" : "" }の形式の文字列 | memoに相当する内容 |
+| UpdateMouseCursor| | | | マウスカーソルを更新します. <br>更新通知: UpdateMouseCursor |
+|| controllerID || String | 更新メッセージ送り元のコントローラID |
+|| rgb || "rgb(255, 255, 255)"といった色を表すString | マウスカーソル色 |
+|| cursor_size || Integer | マウスカーソルサイズ |
+| UpdateGroup| | | | グループ情報を更新します. GetGroupListで取得可能な値を変更して更新に使用します <br>更新通知: UpdateGroup |
+|| id | ○ | String | グループID |
+|| name | ○ | String | グループ名 |
+| ChangeGroupIndex| | | | グループインデックスを変更します. <br>更新通知: ChangeGroupIndex |
+|| id | ○ | String | グループID |
+|| index | ○ | Integer | グループインデックス |
+| DeleteContent| | | | コンテンツを削除します. <bIDr>更新通知: DeleteContent |
+|| id | ○ | String | ID |
+|| content_id | ○ | String | コンテンツID |
+| DeleteWindowMetaData| | | | ウィンドウメタデータを削除します. <br>更新通知: DeleteWindowMetaData |
+|| id | ○ | String | ID |
+|| group | ○ | String | グループ名 |
+| ShowWindowID| | | | ウィンドウIDを表示通知を送ります. <br>通知: ShowWindowID |
+| SendMessage| | | | ユーザ定義メッセージを全クライアントに送ります. paramには任意のJSONを入れられます. <br>通知: ShowWindowID |
+| ReloadDisplay| | | | ディスプレイ再読み込み通知を送ります. <br>通知: ReloadDisplay |
+| Disconnect| | | | websocketが切断された場合にクライアントに通知します. <br>通知: Disconnect
 
 ## DB管理
 以下の`DB`はredisDBの中に作成した、ChOWDERコンテンツ管理領域を表します。
@@ -297,10 +331,16 @@ redisDBのChOWDER保存領域内に、以下のmethodで作成した複数の`DB
 | Method | Params | 必須 | 形式 | 用途 | 
 | ---- | ---- | ---- | ---- | ---- |
 |  NewDB| | | | DBの新規追加. <br>更新通知: ChangeDB |
+|| name | ○ | String | DB名 |
 |  InitDB| | | | DBの初期化. <br>更新通知: ChangeDB |
+|| name | ○ | String | DB名 |
 |  DeleteDB| | | | DBの削除. <br>更新通知: ChangeDB |
+|| name | ○ | String | DB名 |
 |  RenameDB| | | | DBのリネーム. <br>更新通知: UpdateSetting |
+|| name | ○ | String | 変更前DB名 |
+|| new_name | ○ | String | 変更後DB名 |
 |  ChangeDB| | | | DBの切り替え. <br>更新通知: ChangeDB |
+|| name | ○ | String | DB名 |
 |  GetDBList| | | | DBリストの取得.メタデータは不要なので{}としてリクエストします <br>更新通知: ChangeDB |
 
 ## グローバル設定
@@ -308,23 +348,27 @@ redisDBのChOWDER保存領域内に、以下のmethodで作成した複数の`DB
 
 | Method | Params | 必須 | 形式 | 用途 | 
 | ---- | ---- | ---- | ---- | ---- |
-| ChangeGlobalSetting| | | | グローバル設定を変更します. <br>更新通知: UpdateSetting |
 | GetGlobalSetting| | | | グローバル設定を取得します. <br>更新通知: なし |
+| ChangeGlobalSetting| | | | グローバル設定を変更します.GetGlobalSettingで取得可能な値を変更して更新に使用します  <br>更新通知: UpdateSetting |
 
 ## ユーザー管理
-ログイン時ログアウトや, ChOWDERコントローラに管理者権限でログインした場合に管理画面より行う, 各種ユーザ管理に対応したmethodです.
+ログイン時ログアウトや, ChOWDERコントローラに管理者権限でログインした場合に管理画面より行う, 各種ユーザ管理に対応したmethodです. 
 
 | Method | Params | 必須 | 形式 | 用途 | 
 | ---- | ---- | ---- | ---- | ---- |
 | Login| | | | ログインします. <br>通知: AskDisplayPermission |
+|| id| id/password または loginkey どちらか必須| String | ログインID | 
+|| password|  id/password または loginkey どちらか必須| String |  パスワード |
+|| loginkey |  id/password または loginkey どちらか必須| String |  一度ログイン成功した際に得られる, 再アクセスのためのキーを指定 |
 | Logout| | | | ログアウトします. <br>更新通知: なし |
+|| loginkey | |  String |  一度ログイン成功した際に得られる, 再アクセスのためのキーを指定. 指定しない場合は, アクセス元クライアントのログインセッションが削除される. |
 | ChangePassword| | | | パスワードを変更します. <br>通知: なし |
 | ChangeAuthority| | | | 権限を変更します. <br>更新通知: ChangeAuthority |
 | GetUserList| | | | ユーザリストを取得します. <br>更新通知: なし |
 | GenerateControllerID| | | | コントローラIDを生成します. <br>更新通知: なし |
 
 ## コントローラデータ
-ChWODERコントローラのコントローラIDに紐づくデータの取得更新methodです.
+ChWODERコントローラのコントローラIDに紐づくデータの取得更新methodです. 
 
 | Method | Params | 必須 | 形式 | 用途 | 
 | ---- | ---- | ---- | ---- | ---- |
@@ -332,24 +376,25 @@ ChWODERコントローラのコントローラIDに紐づくデータの取得�
 | GetControllerData| | | コントローラデータを取得します. <br>通知: なし |
 
 ## WebRTC
-WebRTCを使用した動画配信に関するmethodです.
+WebRTCを使用した動画配信に関するmethodです. 
 
-| Method | Params | 必須 | 形式 | 用途 | 
-| ---- | ---- | ---- | ---- | ---- |
-| RTCRequest | | | |WebRTCリクエストを行います. <br>通知: なし |
-| RTCOffer | | ||Offerを通知します. <br>通知: なし |
-| RTCAnswer | | | |Anserを通知します. <br>通知: なし |
-| RTCIceCandidate | | | |IceCandidateを通知します. <br>通知: なし |
-| RTCClose | | || WebRTCを終了します. <br>通知: なし |
+| Method | 用途 | 
+| ---- |---- |
+| RTCRequest |WebRTCリクエストを行います. <br>通知: なし |
+| RTCOffer |Offerを通知します. <br>通知: なし |
+| RTCAnswer  |Anserを通知します. <br>通知: なし |
+| RTCIceCandidate |IceCandidateを通知します. <br>通知: なし |
+| RTCClose | WebRTCを終了します. <br>通知: なし |
 
 ## ディスプレイ配信許可設定
+ディスプレイ配信許可に関するmethodです. 
 
-| Method | Params | 必須 | 形式 | 用途 | 
-| ---- | ---- | ---- | ---- | ---- |
-| AskDisplayPermission | | | |新規Displayを, サーバが許可して良いかどうかを取得します. <br>通知: AskDisplayPermission |
-| UpdateDisplayPermissionList | | | |Display許可設定一覧の変更を行います <br>通知: UpdateDisplayPermissionList |
-| DeleteDisplayPermissionList | | || Display許可設定一覧を削除します <br>通知: DeleteDisplayPermissionList |
-| GetDisplayPermissionList | | | |Display許可設定一覧を取得します<br>通知: なし |
+| Method | 用途 | 
+| ---- | ---- | 
+| AskDisplayPermission |新規Displayを, サーバが許可して良いかどうかを取得します. <br>通知: AskDisplayPermission |
+| UpdateDisplayPermissionList  |Display許可設定一覧の変更を行います <br>通知: UpdateDisplayPermissionList |
+| DeleteDisplayPermissionList | Display許可設定一覧を削除します <br>通知: DeleteDisplayPermissionList |
+| GetDisplayPermissionList |Display許可設定一覧を取得します<br>通知: なし |
 
 ### Upload
 
