@@ -257,6 +257,16 @@ class Store extends EventEmitter {
         return res;
     }
 
+    getSelectedLayer() {
+        let layers = this.itownsView.getLayers();
+        for (let i = 0; i < layers.length; ++i) {
+            if (layers[i].isSelected === true) {
+                return layers[i];
+            }
+        }
+        return null;
+    }
+
     /**
      * 地理院DEMのtxt用fetcher/parsarを,mapSourceに設定する.
      * @param {*} mapSource 
@@ -1605,7 +1615,76 @@ class Store extends EventEmitter {
             })());
         });
 
+        this.iframeConnector.on(ITownsCommand.SelectLayer, (err, param, request) => {
+            const layer = this.getLayer(param.id);
+            if (layer) {
+                // 全レイヤーのisSelectedをfalseとし、選択されたレイヤーのみtrueとする
+                let layers = this.itownsView.getLayers();
+                for (let i = 0; i < layers.length; ++i) {
+                    layers[i].isSelected = false;
+                }
+                layer.isSelected = true;
+            }
+            this.iframeConnector.sendResponse(request);
+        });
+
+        this.addOrbitControls();
+
         this.addContentWithInterval();
+    }
+
+    addOrbitControls() {
+        const controls = this.itownsView.controls;
+        if (controls instanceof itowns.OrbitControls) {
+            const resetButton = document.createElement('button');
+            resetButton.style.position = 'fixed'
+            resetButton.style.bottom = '110px'
+            resetButton.style.left = '35px'
+            resetButton.style.height = "25px";
+            resetButton.style.zIndex = 1;
+            resetButton.style.backgroundColor = "#3071a9"
+            resetButton.style.color = "white"
+            resetButton.style.borderRadius = "4px"
+            resetButton.textContent = 'Reset Camera'
+            resetButton.onclick = function () {
+                controls.resetCamera();
+            }
+            document.body.appendChild(resetButton);
+    
+            const button = document.createElement('button');
+            button.style.position = 'fixed'
+            button.style.bottom = '70px'
+            button.style.left = '35px'
+            button.style.height = "25px";
+            button.style.zIndex = 1;
+            button.style.backgroundColor = "#3071a9"
+            button.style.color = "white"
+            button.style.borderRadius = "4px"
+            button.textContent = 'Fit Camera'
+            button.onclick = () => {
+                const layer = this.getSelectedLayer();
+                if (layer) {
+                    if (layer.object3d) {
+                        const bbox = new itowns.THREE.Box3();
+                        layer.object3d.traverse(obj => {
+                            // meshがあった場合
+                            if (obj.type === 'Mesh') {
+                                obj.geometry.computeBoundingBox();
+                                const box = (new itowns.THREE.Box3()).copy(obj.geometry.boundingBox).applyMatrix4(obj.matrixWorld);
+                                bbox.union(box);
+                            }
+                        });
+                        controls.fitCamera(bbox);
+                    }
+                    /* else if (layer.root && layer.root.bbox) {
+                        controls.fitCamera(layer.root.bbox);
+                    }
+                    */
+                }
+                button.blur();
+            }
+            document.body.appendChild(button);
+        }
     }
 
     _injectChOWDER(data) {

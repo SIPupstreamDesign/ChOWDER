@@ -359,6 +359,10 @@ class Store extends EventEmitter {
         //}
     }
 
+    _selectLayer(data) {
+        this.iframeConnector.send(ITownsCommand.SelectLayer, data);
+    }
+
     _deleteLayer(data) {
         // TODO サーバ側更新
         let layerList = JSON.parse(this.metaData.layerList);

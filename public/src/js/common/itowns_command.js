@@ -22,6 +22,8 @@ const ITownsCommand = {
     AddLayer : "AddLayer",
     // レイヤー削除命令
     DeleteLayer : "DeleteLayer",
+    // レイヤー選択
+    SelectLayer : "SelectLayer",
     // レイヤー順序変更命令
     ChangeLayerOrder : "ChangeLayerOrder",
     // レイヤープロパティ変更命令

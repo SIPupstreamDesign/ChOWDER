@@ -65,6 +65,7 @@ window.onload = function () {
     view.scene.add( dirLight );
     */
     var controls = new itowns.OrbitControls(view, { focusOnClick: true});
+    view.controls = controls;
 
     // itownsコントローラから開かれた場合のみコントロールを表示
     var done = false;
@@ -96,6 +97,6 @@ window.onload = function () {
             done = true;
         }
     });
-
+    
     injectChOWDER(view, viewerDiv);
 };

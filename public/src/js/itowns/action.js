@@ -83,6 +83,14 @@ class Action extends EventEmitter
     }
 
     /**
+     * レイヤーの選択
+     * @param {*} data 
+     */
+    selectLayer(data) {
+        this.emit(Action.EVENT_SELECT_LAYER, null, data);
+    }
+
+    /**
      * レイヤーの削除
      * @param {*} data 
      */
@@ -218,6 +226,7 @@ Action.EVENT_LOGOUT = "logout";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_ADD_LAYER = "addLayer";
+Action.EVENT_SELECT_LAYER = "selectLayer";
 Action.EVENT_DELETE_LAYER = "deleteLayer";
 Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
 Action.EVENT_UPDATE_CAMERA = "updateCamera";

@@ -103,8 +103,10 @@ class LayerList extends EventEmitter {
 
         this.layerSelect.on(Select.EVENT_CHANGE, (err, evt) => {
             const value = this.layerSelect.getSelectedValue();
-            const isDisableDelete = this.store.getLayerData(value).type === "user";
+            const layerData = this.store.getLayerData(value);
+            const isDisableDelete = layerData.type === "user";
             this.layerDeleteButton.getDOM().disabled = isDisableDelete;
+            this.action.selectLayer({ id : layerData.id });
             this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {
                 index : this.layerSelect.getSelectedIndex(),
                 value : value
