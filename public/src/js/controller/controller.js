@@ -1634,7 +1634,7 @@ class Controller {
 				return;
 			}
 		}
-		if (json.type === "webgl" && json.hasOwnProperty("cameraWorldMatrix")) {
+		if (json.type === "webgl") {
 			if(json.webglType && json.webglType === "qgis2three.js"){
 				/* qgis */
 				this.action.updateQgisMetadata(metaData);

@@ -197,7 +197,7 @@ class Display {
 			}
 		}
 		// webglカメラなどの適用
-		if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
+		if (metaData.type === "webgl") {
 			if(json.webglType && json.webglType === "qgis2three.js"){
 				/* qgis */
 				this.action.updateQgisMetadata(metaData);
