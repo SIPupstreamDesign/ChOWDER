@@ -1628,40 +1628,27 @@ class Store extends EventEmitter {
             this.iframeConnector.sendResponse(request);
         });
 
-        this.addOrbitControls();
+        this.addEarthControls();
 
         this.addContentWithInterval();
     }
 
-    addOrbitControls() {
+    addEarthControls() {
         const controls = this.itownsView.controls;
-        if (controls instanceof itowns.OrbitControls) {
-            const resetButton = document.createElement('button');
-            resetButton.style.position = 'fixed'
-            resetButton.style.bottom = '110px'
-            resetButton.style.left = '35px'
-            resetButton.style.height = "25px";
-            resetButton.style.zIndex = 1;
-            resetButton.style.backgroundColor = "#3071a9"
-            resetButton.style.color = "white"
-            resetButton.style.borderRadius = "4px"
-            resetButton.textContent = 'Reset Camera'
-            resetButton.onclick = function () {
-                controls.resetCamera();
-            }
-            document.body.appendChild(resetButton);
-    
-            const button = document.createElement('button');
-            button.style.position = 'fixed'
-            button.style.bottom = '70px'
-            button.style.left = '35px'
-            button.style.height = "25px";
-            button.style.zIndex = 1;
-            button.style.backgroundColor = "#3071a9"
-            button.style.color = "white"
-            button.style.borderRadius = "4px"
-            button.textContent = 'Fit Camera'
-            button.onclick = () => {
+        console.error('addEarthControls', controls instanceof itowns.EarthControls);
+        if (controls instanceof itowns.EarthControls) {
+            const fitButton = document.createElement('button');
+            fitButton.style.position = 'fixed'
+            fitButton.style.bottom = '70px'
+            fitButton.style.left = '35px'
+            fitButton.style.height = "25px";
+            fitButton.style.zIndex = 1;
+            fitButton.style.backgroundColor = "#3071a9"
+            fitButton.style.color = "white"
+            fitButton.style.borderRadius = "4px"
+            fitButton.textContent = 'Fit Camera'
+            fitButton.style.display = controls.isMyOrbitMode ? 'block' : 'none';
+            fitButton.onclick = () => {
                 const layer = this.getSelectedLayer();
                 if (layer) {
                     if (layer.object3d) {
@@ -1681,9 +1668,41 @@ class Store extends EventEmitter {
                     }
                     */
                 }
-                button.blur();
+                fitButton.blur();
             }
-            document.body.appendChild(button);
+            document.body.appendChild(fitButton);
+
+            const changeButton = document.createElement('button');
+            changeButton.textContent = controls.isMyOrbitMode ? 'Mode: Cartecian' : 'Mode: Earth';
+            changeButton.style.backgroundColor = "#3071a9"
+            changeButton.style.position = 'fixed'
+            changeButton.style.bottom = '150px'
+            changeButton.style.left = '35px'
+            changeButton.style.height = "25px";
+            changeButton.style.zIndex = 1;
+            changeButton.style.color = "white"
+            changeButton.style.borderRadius = "4px"
+            changeButton.onclick = function () {
+                controls.setMyOrbitMode(!controls.isMyOrbitMode);
+                changeButton.textContent = controls.isMyOrbitMode ? 'Mode: Cartecian' : 'Mode: Earth';
+                fitButton.style.display = controls.isMyOrbitMode ? 'block' : 'none';
+            }
+            document.body.appendChild(changeButton);
+
+            const resetButton = document.createElement('button');
+            resetButton.style.position = 'fixed'
+            resetButton.style.bottom = '110px'
+            resetButton.style.left = '35px'
+            resetButton.style.height = "25px";
+            resetButton.style.zIndex = 1;
+            resetButton.style.backgroundColor = "#3071a9"
+            resetButton.style.color = "white"
+            resetButton.style.borderRadius = "4px"
+            resetButton.textContent = 'Reset Camera'
+            resetButton.onclick = function () {
+                controls.resetCamera();
+            }
+            document.body.appendChild(resetButton);
         }
     }
 

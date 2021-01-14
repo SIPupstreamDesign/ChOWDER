@@ -64,8 +64,10 @@ window.onload = function () {
     dirLight.position.set( - 3, 10, - 10 );
     view.scene.add( dirLight );
     */
-    var controls = new itowns.OrbitControls(view, { focusOnClick: true});
+
+    var controls = new itowns.EarthControls(view, placement);
     view.controls = controls;
+    controls.setMyOrbitMode(true);
 
     // itownsコントローラから開かれた場合のみコントロールを表示
     var done = false;
