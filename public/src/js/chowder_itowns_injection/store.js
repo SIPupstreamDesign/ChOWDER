@@ -1246,7 +1246,7 @@ class Store extends EventEmitter {
                     if (frameCount >= 10) {
                         this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
                         this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
-                        let updateDuration = Math.floor(totalMillis / frameCount);
+                        let updateDuration = totalMillis / frameCount;
 
                         result.updateDuration = updateDuration;
                         // メッセージの返信
