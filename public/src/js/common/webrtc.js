@@ -51,6 +51,18 @@ class WebRTC extends EventEmitter {
 			pc_config.iceServers.push(stun);
 		}
 
+		/* google STUN */
+		let googlestun = {
+			urls: [
+				"stun:stun.l.google.com:19302",
+				"stun:stun1.l.google.com:19302",
+				// 現時点では、5つ以上URLを含めると、ブラウザのwebrtc sdk内でエラーが吐かれるため
+				// 合計5つ以内に抑える必要がある
+				// "stun:stun2.l.google.com:19302"
+			]
+		};
+		pc_config.iceServers.push(googlestun);
+
 		/* TURN config */
 		if(!this.globalSetting.turnServerUrl || this.globalSetting.turnServerUrl === ""){
 			let turn = {
@@ -67,17 +79,6 @@ class WebRTC extends EventEmitter {
 			};
 			pc_config.iceServers.push(turn);
 		}
-
-		/* google STUN */
-		let googlestun = {
-			urls: [
-				"stun:stun.l.google.com:19302",
-				"stun:stun1.l.google.com:19302",
-				"stun:stun2.l.google.com:19302"
-			]
-		};
-		pc_config.iceServers.push(googlestun);
-
 
 		this.peer = null;
 		try {

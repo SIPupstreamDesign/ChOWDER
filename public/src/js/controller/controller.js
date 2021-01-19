@@ -1879,6 +1879,10 @@ class Controller {
 		if (!this.store.isInitialized()) {
 			return;
 		}
+		if (err) {
+			console.error(err);
+			return;
+		}
 		// console.log("doneDeleteContent", err, reply);
 		let func = (err, reply) => {
 			let json = reply;

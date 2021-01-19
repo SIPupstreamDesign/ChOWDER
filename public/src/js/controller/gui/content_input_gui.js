@@ -592,7 +592,7 @@ class ContentInputGUI
 				this.action.inputVideoStream({
 					contentData : stream,
 					metaData : {
-						group: gui.getCurrentGroupID(),
+						group: this.store.getGroupStore().getCurrentGroupID(),
 						posx: Vscreen.getWhole().x,
 						posy: Vscreen.getWhole().y,
 						visible: true,
