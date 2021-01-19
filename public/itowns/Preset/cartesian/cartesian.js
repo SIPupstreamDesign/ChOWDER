@@ -65,9 +65,8 @@ window.onload = function () {
     view.scene.add( dirLight );
     */
 
-    var controls = new itowns.EarthControls(view, placement);
+    var controls = new itowns.EarthControls(view, placement, { isOrbitMode : true });
     view.controls = controls;
-    controls.setMyOrbitMode(true);
 
     // itownsコントローラから開かれた場合のみコントロールを表示
     var done = false;
