@@ -24,6 +24,7 @@ function loadGSIColor(view, callback) {
                 type: 3
             },
         });
+        layer.visible = false;
         view.addLayer(layer);
         if (callback) { callback(); }
     });
@@ -45,9 +46,9 @@ window.onload = function () {
     view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
     loadGSIColor(view, function () {
-        hideAllLayers(view);
         view.notifyChange();
     });
+    hideAllLayers(view);
 
     var grid = new itowns.THREE.GridHelper( 10000000, 10);
     grid.geometry.rotateX(Math.PI / 2);
@@ -56,14 +57,13 @@ window.onload = function () {
     var axes = new itowns.THREE.AxesHelper(10000000 * 2);
     view.scene.add(axes);
 
-    const light = new itowns.THREE.HemisphereLight(0xFFFFFF, 0x00000, 1.0);
+    const light = new THREE.AmbientLight(0xFFFFFF,  0.3);
     view.scene.add(light);
 
-    /*
-    var dirLight = new THREE.DirectionalLight( 0xffffff );
-    dirLight.position.set( - 3, 10, - 10 );
-    view.scene.add( dirLight );
-    */
+    const sun = new THREE.DirectionalLight(0xFFFFFF, 0.7);
+    sun.position.set(1, 1, 1);
+    sun.updateMatrixWorld(true);
+    view.scene.add(sun);
 
     var controls = new itowns.EarthControls(view, placement, { isOrbitMode : true });
     view.controls = controls;
