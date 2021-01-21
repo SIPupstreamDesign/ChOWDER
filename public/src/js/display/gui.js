@@ -118,21 +118,7 @@ class GUI extends EventEmitter {
             }, 200);
         };
 
-        if (DisplayUtil.getTargetEvent().mode === 'mouse') {
-            window.document.addEventListener("mousedown", function () {
-                let displayArea = document.getElementById('displayid_area');
-                if (displayArea.style.display !== "none") {
-                    displayArea.style.display = "none";
-                }
-            });
-        } else {
-            window.document.addEventListener("touchstart", function () {
-                let displayArea = document.getElementById('displayid_area');
-                if (displayArea.style.display !== "none") {
-                    displayArea.style.display = "none";
-                }
-            });
-        }
+        this.setupWindowEvents();
     }
 
     // 上部メニューの初期化.
@@ -1167,9 +1153,9 @@ class GUI extends EventEmitter {
     setupContent(elem, targetid) {
         let d = DisplayUtil.getTargetEvent();
         if(d.mode === 'mouse'){
-            elem.addEventListener(d.start, ((elem) => {
+            elem.addEventListener(d.start, ((elem, targetid) => {
                 return (evt) => {
-                    let rect = elem.getBoundingClientRect();
+                    const rect = elem.getBoundingClientRect();
                     this.unselect();
                     this.select(targetid);
                     elem.draggingOffsetLeft = evt.clientX - rect.left;
@@ -1179,25 +1165,11 @@ class GUI extends EventEmitter {
                     });
                     evt.preventDefault();
                 };
-            })(elem), false);
-            window.onmouseup = () => {
-                this.unselect();
-            };
-            window.onmousemove = (evt) => {
-                let elem = this.getSelectedElem();
-                if (elem && elem.is_dragging) {
-                    this.action.changeContentTransform({
-                        targetID : elem.id, 
-                        x : evt.pageX - elem.draggingOffsetLeft, 
-                        y : evt.pageY - elem.draggingOffsetTop
-                    });
-                }
-                evt.preventDefault();
-            };
+            })(elem, targetid),  { passive: false });
         }else{
-            elem.addEventListener(d.start, ((elem) => {
+            elem.addEventListener(d.start, ((elem, targetid) => {
                 return (evt) => {
-                    let rect = elem.getBoundingClientRect();
+                    const rect = elem.getBoundingClientRect();
                     this.unselect();
                     this.select(targetid);
                     elem.draggingOffsetLeft = evt.changedTouches[0].clientX - rect.left;
@@ -1207,12 +1179,44 @@ class GUI extends EventEmitter {
                     });
                     evt.preventDefault();
                 };
-            })(elem), false);
-            window.ontouchend = function () {
+            })(elem, targetid),  { passive: false });
+        }
+    };
+
+    setupWindowEvents() {
+        if (DisplayUtil.getTargetEvent().mode === 'mouse') {
+            window.document.addEventListener("mousedown", function () {
+                let displayArea = document.getElementById('displayid_area');
+                if (displayArea.style.display !== "none") {
+                    displayArea.style.display = "none";
+                }
+            });
+            window.addEventListener('mouseup', (evt) => {
                 this.unselect();
-            };
-            window.ontouchmove = (evt) => {
-                let elem = this.getSelectedElem();
+            });
+            window.addEventListener('mousemove', (evt) => {
+                const elem = this.getSelectedElem();
+                if (elem && elem.is_dragging) {
+                    this.action.changeContentTransform({
+                        targetID : elem.id, 
+                        x : evt.pageX - elem.draggingOffsetLeft, 
+                        y : evt.pageY - elem.draggingOffsetTop
+                    });
+                }
+                evt.preventDefault();
+            },  { passive: false });
+        } else {
+            window.document.addEventListener("touchstart", function () {
+                let displayArea = document.getElementById('displayid_area');
+                if (displayArea.style.display !== "none") {
+                    displayArea.style.display = "none";
+                }
+            });
+            window.addEventListener('touchend', (evt) => {
+                this.unselect();
+            });
+            window.addEventListener('touchmove', (evt) => {
+                const elem = this.getSelectedElem();
                 if (elem && elem.is_dragging) {
                     this.action.changeContentTransform({
                         targetID : elem.id,
@@ -1221,9 +1225,9 @@ class GUI extends EventEmitter {
                     });
                 }
                 evt.preventDefault();
-            };
+            },  { passive: false });
         }
-    };
+    }
     
 
     /**
