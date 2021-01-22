@@ -17,6 +17,7 @@ body {
 
 .license_wrap {
 	position : absolute;
+	top : 200px;
 	width : 100%;
 	padding-top : 50px;
 	text-align: center;
