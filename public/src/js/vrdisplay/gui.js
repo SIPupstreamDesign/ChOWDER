@@ -133,7 +133,7 @@ class GUI extends EventEmitter {
 	initVRPreviewArea() {
 		const previewArea = document.querySelector('#vr_area');
 
-		const renderer = new THREE.WebGLRenderer({ canvas: previewArea });
+		const renderer = new THREE.WebGLRenderer({ canvas: previewArea, logarithmicDepthBuffer: true });
 		// three.jsのXRモードを有効にする
 		renderer.xr.enabled = true;
 

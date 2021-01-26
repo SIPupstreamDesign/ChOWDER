@@ -90,6 +90,8 @@ class VRStore {
 		const height = radius * Math.tan(60 * Math.PI / 180) * 2; //= 4234.205916839362
 		const radialSegments = 512;
 		const heightSegments = 1;
+		// thetaStartは+z方向を0として、Y軸に対して反時計回りで角度を指定する。と思われる。
+		// xz平面を上から見たときに、+x → +z → -x となるような円弧を描く
 		const thetaStart = 1.5 * Math.PI; // right start
 		const thetaLength = Math.PI;
 		const geometry = new THREE.CylinderGeometry(
@@ -109,13 +111,48 @@ class VRStore {
 
 	_addVRPlane(data) {
 		const metaData = data.metaData;
-		const geometry = new THREE.PlaneGeometry(Number(metaData.orgWidth), Number(metaData.orgHeight));
-		geometry.translate(Number(metaData.orgWidth) / 2, -Number(metaData.orgHeight) / 2, 0);
-		const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
-		const plane = new THREE.Mesh(geometry, material);
-		this._setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
-		this.vrPlaneDict[metaData.id] = plane;
-		this.scene.add(plane);
+		if (this.isPlaneMode) {
+			const geometry = new THREE.PlaneGeometry(Number(metaData.orgWidth), Number(metaData.orgHeight));
+			// 左上を原点とする
+			geometry.translate(Number(metaData.orgWidth) / 2, -Number(metaData.orgHeight) / 2, 0);
+			const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+			const plane = new THREE.Mesh(geometry, material);
+			this._setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
+			this.vrPlaneDict[metaData.id] = plane;
+			this.scene.add(plane);
+		} else {
+			// metaDataの大きさのシリンダーを作る
+			// 高さ: orgHで表現
+			// 幅: this.widthの幅に当たる角度がπと考え、角度で表現。
+			// シリンダーを外から見たときに正しいUVとなっているため、
+			// シリンダーを作成後ｚ反転させる
+			// つまり最初カメラから見て後ろ側にシリンダーを作成する。
+			const radius = this.width / Math.PI;
+			const height = Number(metaData.orgHeight);
+			const radialSegments = Math.max(2, Math.floor(512 * Number(metaData.orgWidth) / this.width));
+			const heightSegments = 1;
+			// thetaStartは+z方向を0として、Y軸に対して反時計回りで角度を指定する。と思われる。
+			// xz平面を上から見たときに、+x → +z → -x となるような円弧を描き
+			// 円弧の大きさ(thetaLength)は、コンテンツの初期幅となるように設定する。
+			const thetaStart = 1.5 * Math.PI; // right start
+			const thetaLength = Math.PI * (Number(metaData.orgWidth) / this.width);
+			const geometry = new THREE.CylinderGeometry(
+				radius, radius, height, radialSegments, heightSegments, true,
+				thetaStart, thetaLength);
+			// 左上を原点とする
+			geometry.translate(0, -Number(metaData.orgHeight) / 2, 0);
+
+			// console.error(radius, radius, height, radialSegments, heightSegments, true, thetaStart, thetaLength)
+
+			const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+			const cylinder = new THREE.Mesh(geometry, material);
+			// flip
+			cylinder.scale.z *= -1;
+
+			this._setVRPlanePos(cylinder, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
+			this.vrPlaneDict[metaData.id] = cylinder;
+			this.scene.add(cylinder);
+		}
 	}
 
 	_setVRPlaneImage(data) {
@@ -131,20 +168,34 @@ class VRStore {
 	}
 
 	_setVRPlanePos(plane, x, y, z = null) {
-		plane.position.x = this.planeBaseX + x;
-		plane.position.y = this.planeBaseY - y;
-		if (z) {
-			plane.position.z = this.planeDepth + z;
+		if (this.isPlaneMode) {
+			plane.position.x = this.planeBaseX + x;
+			plane.position.y = this.planeBaseY - y;
+			if (z) {
+				plane.position.z = this.planeDepth + z;
+			}
+		} else {
+			// x位置:
+			// z反転前の状態で考えたとき、シリンダー表面上でのコンテンツx座標は、
+			// xz平面で+x方向を0とし、+x → +z → -x回りの角度で表現することができる。
+			// ただしz反転しているため、角度の指定は負となる
+			plane.rotation.set(0, -Math.PI * (x / this.width), 0);
+			// y位置: 座標で表現
+			plane.position.y = this.planeBaseY - y;
+			// z位置: 座標で表現
+			plane.position.z = z;
 		}
 	}
 
 	_setVRPlaneWH(plane, metaData, w, h) {
-		const orgW = Number(metaData.orgWidth);
-		const orgH = Number(metaData.orgHeight);
-		const scaleX = w / orgW;
-		const scaleY = h / orgH;
-		plane.scale.x = scaleX;
-		plane.scale.y = scaleY;
+		if (this.isPlaneMode) {
+			const orgW = Number(metaData.orgWidth);
+			const orgH = Number(metaData.orgHeight);
+			const scaleX = w / orgW;
+			const scaleY = h / orgH;
+			plane.scale.x = scaleX;
+			plane.scale.y = scaleY;
+		}
 	}
 
 	_assignVRMetaData(data) {
