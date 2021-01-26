@@ -21,12 +21,6 @@ class GUI extends EventEmitter {
 	constructor(store, action) {
 		super();
 
-		this.width = 3840;
-		this.planeDepth = -(3840/2) * (1/Math.tan(57*Math.PI/180));
-		this.height = (-this.planeDepth)*Math.tan(60*Math.PI/180)*2;
-		this.planeBaseX = -this.width / 2;
-		this.planeBaseY = this.height / 2;
-
 		this.store = store;
 		this.action = action;
 
@@ -65,6 +59,7 @@ class GUI extends EventEmitter {
 				}
 			}
 			*/
+			this.initVRPreviewArea();
 		})
 
 		this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
@@ -106,7 +101,6 @@ class GUI extends EventEmitter {
 	init() {
 		this.initWindow();
 		this.initMenu();
-		this.initVRPreviewArea();
 	}
 
 	initWindow() {
@@ -126,38 +120,41 @@ class GUI extends EventEmitter {
 		this.setupWindowEvents();
 	}
 
+	initVR(renderer) {
+		const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking' ] };
+		navigator.xr.requestSession( 'immersive-vr', sessionInit ).then( (session) => {
+			renderer.xr.setSession(session);
+
+		});
+	}
+
 	initVRPreviewArea() {
 		const previewArea = document.querySelector('#vr_area');
 
 		const renderer = new THREE.WebGLRenderer({ canvas: previewArea });
 		// three.jsのXRモードを有効にする
 		renderer.xr.enabled = true;
-		// 1056 x 479 in OculusQuest2
-		renderer.setSize(this.width, this.height);
-		// VRボタンを設置
-		document.body.appendChild(VRButton.createButton(renderer));
 
-		// シーン作成
-		const urls = [
-			'src/image/room/posx.jpg',
-			'src/image/room/negx.jpg',
-			'src/image/room/posy.jpg',
-			'src/image/room/negy.jpg',
-			'src/image/room/posz.jpg',
-			'src/image/room/negz.jpg'
-		]
-		this.scene = new THREE.Scene();
-		this.scene.background = new THREE.CubeTextureLoader().load( urls );
+		const width = this.store.getVRStore().getWidth();
+		const height = this.store.getVRStore().getHeight();
+		
+		// 1056 x 479 in OculusQuest2
+		renderer.setSize(width, height);
+		// VRボタンを設置
+		// document.body.appendChild(VRButton.createButton(renderer));
+
 
 		// 水平fov 90度
 		this.camera = new THREE.PerspectiveCamera(
-			58.71550709, this.width / this.height, 1, 10000);
+			58.71550709, width / height, 1, 10000);
 
 		// レンダリング
 		const render = (timestamp) => {
-			renderer.render(this.scene, this.camera);
+			renderer.render(this.store.getVRStore().getScene(), this.camera);
 		};
 		renderer.setAnimationLoop(render);
+
+		this.initVR(renderer);
 	}
 
 	// 上部メニューの初期化.
@@ -273,8 +270,8 @@ class GUI extends EventEmitter {
 	 */
 	getWindowSize() {
 		return {
-			width: this.width,
-			height: this.height
+			width: this.store.getVRStore().getWidth(),
+			height: this.store.getVRStore().getHeight()
 		};
 	}
 
@@ -370,8 +367,9 @@ class GUI extends EventEmitter {
 	updatePreviewAreaVisible(json) {
 		let groupDict = this.store.getGroupDict();
 		let previewArea = document.getElementById("preview_area");
-		let elem = document.getElementById(json.id);
-		// console.log("updatePreviewAreaVisible", previewArea, elem);
+		previewArea.style.display = "none"; //  for VR
+		
+		/*
 		if (previewArea) {
 			if (Validator.isVisible(json)) {
 				VscreenUtil.assignMetaData(previewArea, json, false, groupDict);
@@ -380,14 +378,7 @@ class GUI extends EventEmitter {
 				previewArea.style.display = "none";
 			}
 		}
-		if (elem) {
-			if (Validator.isVisible(json)) {
-				VscreenUtil.assignMetaData(elem, json, false, groupDict);
-				elem.style.display = "block";
-			} else {
-				elem.style.display = "none";
-			}
-		}
+		*/
 	}
 
 	/**
@@ -739,16 +730,12 @@ class GUI extends EventEmitter {
 		let blob = new Blob([contentData], { type: mime });
 		if (elem && blob) {
 			URL.revokeObjectURL(elem.src);
+			// Planeのみ追加
+			// 画像読み込みは遅延するので、先にPlaneだけ追加しておく必要がある
+			this.action.addVRPlane({ metaData : metaData });
 			elem.onload =  () => {
-				const texture = new THREE.Texture(elem);
-				texture.needsUpdate = true;
-				const geometry = new THREE.PlaneGeometry(Number(metaData.width), Number(metaData.height));
-				geometry.translate(Number(metaData.width) / 2, -Number(metaData.height) / 2, 0);
-				const material = new THREE.MeshBasicMaterial( {map: texture, side: THREE.DoubleSide} );
-				const plane = new THREE.Mesh( geometry, material );
-				this.setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
-				this.store.vrPlaneDict[metaData.id] = plane;
-				this.scene.add(plane);
+				// Planeの画像を追加
+				this.action.setVRPlaneImage({ image: elem, metaData : metaData });
 			}
 			elem.src = URL.createObjectURL(blob);
 		}
@@ -832,7 +819,6 @@ class GUI extends EventEmitter {
 			// 既に読み込み済みのコンテンツかどうか
 			if (document.getElementById(metaData.id)) {
 				elem = document.getElementById(metaData.id);
-				plane = this.store.getVRPlane(metaData.id);
 				// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
 				if (elem.tagName.toLowerCase() !== tagName) {
 					previewArea.removeChild(elem);
@@ -877,7 +863,7 @@ class GUI extends EventEmitter {
 				this.showImage(elem, metaData, contentData);
 			}
 			VscreenUtil.assignMetaData(elem, metaData, false, groupDict);
-			this.assignVRMetaData(plane, metaData, false, groupDict);
+			this.action.assignVRMetaData({ metaData : metaData, useOrg : false});
 
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {
@@ -890,64 +876,6 @@ class GUI extends EventEmitter {
 		}
 	}
 
-    setVRPlanePos(plane, x, y, z = null) {
-		plane.position.x = this.planeBaseX + x;
-		plane.position.y = this.planeBaseY - y;
-		if (z) {
-			plane.position.z = this.planeDepth + z;
-		}
-    }
-    
-    setVRPlaneWH(plane, w, h) {
-		console.error(plane.geometry);
-    }
-
-    assignVRMetaData(plane, metaData, useOrg, groupDict) {
-		if (!plane) return;
-		let rect;
-		if (useOrg) {
-			rect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
-		} else {
-			rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
-		}
-		if (plane && metaData) {
-			// VscreenUtil.assignRect(elem, rect, (metaData.width < 10), (metaData.height < 10));
-			// VscreenUtil.assignZIndex(elem, metaData);
-            this.setVRPlanePos(plane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
-			if (!(metaData.width < 10) && rect.w) {
-                if (!(metaData.height < 10) && rect.h) {
-                    this.setVRPlaneWH(plane, parseInt(rect.w, 10), parseInt(rect.h, 10));
-                }
-			}
-            
-            /* TODO
-			if (Validator.isTextType(metaData)) {
-				VscreenUtil.resizeText(elem, rect);
-			} else if (metaData.type === "video") {
-				VscreenUtil.resizeVideo(elem, rect);
-			} else if (metaData.type === "tileimage") {
-				VscreenUtil.resizeTileImages(elem, metaData);
-			}
-			
-			if (VscreenUtil.isVisible(metaData)) {
-				elem.style.display = "block";
-				if (!Validator.isWindowType(metaData)) {
-					if (metaData.mark && groupDict.hasOwnProperty(metaData.group)) {
-						if (metaData.group === Constants.DefaultGroup) {
-							elem.style.borderColor = "rgb(54,187,68)";
-						} else {
-							elem.style.borderColor = groupDict[metaData.group].color;
-						}
-					} else if (!useOrg) {
-						elem.style.borderColor = "rgb(54,187,68)";
-					}
-				}
-			} else {
-				elem.style.display = "none";
-            }
-            */
-		}
-	}
 
 	/**
 	 * タイル画像の枠を全部再生成する。中身の画像(image.src)は作らない。

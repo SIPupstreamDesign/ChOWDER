@@ -310,8 +310,7 @@ class VRDisplay {
 
 					elem = document.getElementById(json.id);
 					VscreenUtil.assignMetaData(elem, json, false, groupDict);
-					const plane = this.store.getVRPlane(json.id);
-					this.gui.assignVRMetaData(plane, json, false, groupDict);
+					this.action.assignVRMetaData({ metaData : metaData, useOrg : false});
 					// webgl iframeの更新
 					this.updateWebGLFrameRect(metaData);
 				}

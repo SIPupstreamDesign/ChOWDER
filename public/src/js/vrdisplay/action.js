@@ -5,21 +5,19 @@
 
 "use strict";
 
-class Action extends EventEmitter
-{
-    constructor()
-    {
+class Action extends EventEmitter {
+    constructor() {
         super();
     }
 
-	// デバッグ用. release版作るときは消す
-	emit() {
-		if (arguments.length > 0) {
-			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!");
-			}
-		}
-		super.emit(...arguments);
+    // デバッグ用. release版作るときは消す
+    emit() {
+        if (arguments.length > 0) {
+            if (!arguments[0]) {
+                console.error("Not found EVENT NAME!");
+            }
+        }
+        super.emit(...arguments);
     }
 
     /**
@@ -123,7 +121,7 @@ class Action extends EventEmitter
      * コンテンツのZインデックスを一番手前にする
      * @param {*} data
      * {
-	 *    targetID : 対象のコンテンツのID
+     *    targetID : 対象のコンテンツのID
      * }
      */
     changeContentIndexToFront(data) {
@@ -134,7 +132,7 @@ class Action extends EventEmitter
      * コンテンツのTransformを変更
      * @param {*} data
      * {
-	 *    targetID : 対象のコンテンツのID
+     *    targetID : 対象のコンテンツのID
      *    x : x座標
      *    y : y座標
      * }
@@ -179,10 +177,45 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
     }
 
-    updateQgisMetadata(metaData){
+    updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
 
+    /**
+     * VRPlaneを追加
+     * @param {*} 
+     * {
+     *   metaData: metaData
+     * }
+     */
+    addVRPlane(data) {
+        this.emit(Action.EVENT_ADD_VR_PLANE, null, data);
+    }
+
+    /**
+     * VRPlaneに画像を設定
+     * @param {*} data 
+     * {
+     *   image : image,
+     *   metaData: metaData
+     * }
+     */
+    setVRPlaneImage(data) {
+        this.emit(Action.EVENT_SET_VR_PLANE_IMAGE, null, data);
+    }
+
+    /**
+     * メタデータの位置、幅高さなどをVR用プリミティブに設定
+     * @param {*} 
+     * {
+     *   plane : plane, // VR用Plane Mesh
+     *   metaData : metaData,
+     *   useOrg : useOrg,
+     * }
+     */
+    assignVRMetaData(data) {
+        this.emit(Action.EVENT_ASSIGN_VR_METADATA, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -201,4 +234,7 @@ Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_ADD_VR_PLANE = "addVRPlane";
+Action.EVENT_SET_VR_PLANE_IMAGE = "setVRPlaneImage";
+Action.EVENT_ASSIGN_VR_METADATA = "assignVRMetaData";
 export default Action;
