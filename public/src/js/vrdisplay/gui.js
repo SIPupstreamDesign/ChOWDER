@@ -121,11 +121,13 @@ class GUI extends EventEmitter {
 	}
 
 	initVR(renderer) {
+		/*
 		const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking' ] };
 		navigator.xr.requestSession( 'immersive-vr', sessionInit ).then( (session) => {
 			renderer.xr.setSession(session);
 
 		});
+		*/
 	}
 
 	initVRPreviewArea() {
@@ -141,12 +143,13 @@ class GUI extends EventEmitter {
 		// 1056 x 479 in OculusQuest2
 		renderer.setSize(width, height);
 		// VRボタンを設置
-		// document.body.appendChild(VRButton.createButton(renderer));
-
+		document.body.appendChild(VRButton.createButton(renderer));
 
 		// 水平fov 90度
+		let windowSize = this.getWindowSize();
+
 		this.camera = new THREE.PerspectiveCamera(
-			58.71550709, width / height, 1, 10000);
+			58.71550709, windowSize.width / windowSize.height, 1, 10000);
 
 		// レンダリング
 		const render = (timestamp) => {
@@ -270,8 +273,8 @@ class GUI extends EventEmitter {
 	 */
 	getWindowSize() {
 		return {
-			width: this.store.getVRStore().getWidth(),
-			height: this.store.getVRStore().getHeight()
+			width: window.innerWidth,
+			height: window.innerHeight
 		};
 	}
 

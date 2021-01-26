@@ -401,7 +401,10 @@ class VRDisplay {
 		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
 			console.log("EVENT_LOGIN_SUCCESS")
 			if (!this.store.getWindowData()) {
-				this.action.registerWindow({ size : this.gui.getWindowSize()});
+				this.action.registerWindow({ size : {
+					width : this.store.getVRStore().getWidth(),
+					height : this.store.getVRStore().getHeight(),
+				}});
 			} else {
 				this.action.update({ updateType : 'window'});
 				this.action.update({ updateType : 'group'});

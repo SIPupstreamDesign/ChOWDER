@@ -17,8 +17,8 @@ class VRStore {
 		this.action = action;
 
 		this.width = 3840;
-		this.planeDepth = -(3840/2) * (1/Math.tan(57*Math.PI/180));
-		this.height = (-this.planeDepth)*Math.tan(60*Math.PI/180)*2;
+		this.planeDepth = -(3840/2) * (1/Math.tan(57*Math.PI/180)); //=-1246.8625789392206
+		this.height = 2160; // (-this.planeDepth)*Math.tan(60*Math.PI/180)*2;
 		this.planeBaseX = -this.width / 2;
 		this.planeBaseY = this.height / 2;
 
@@ -37,6 +37,8 @@ class VRStore {
 		this.vrPlaneDict = {};
 
 		this.initEvents();
+
+		this.initCoverPlane();
 	}
 
 	initEvents() {
@@ -54,6 +56,21 @@ class VRStore {
 	}
 
 	release() {
+	}
+
+	// 平面モードの矩形領域
+	// 
+	initCoverPlane() {
+		const height = (-this.planeDepth)*Math.tan(60*Math.PI/180)*2;
+		console.error(height);
+		const geometry = new THREE.PlaneGeometry(this.width, height);
+		geometry.translate(this.width / 2, -height / 2, 0);
+		const material = new THREE.MeshBasicMaterial({ color:0xFF00FF, side: THREE.DoubleSide });
+		const plane = new THREE.Mesh(geometry, material);
+		this._setVRPlanePos(plane, 0, 0, -10);
+		// 4K中心に中心を合わせる
+		plane.position.y = height / 2
+		this.scene.add(plane);
 	}
 
 	_addVRPlane(data) {
@@ -88,22 +105,12 @@ class VRStore {
 	}
 
 	_setVRPlaneWH(plane, metaData, w, h) {
-		const preX = plane.position.x;
-		const preY = plane.position.y;
-		const preZ = plane.position.z;
-		plane.position.x = 0;
-		plane.position.y = 0;
-		plane.position.z = 0;
 		const orgW = Number(metaData.orgWidth);
 		const orgH = Number(metaData.orgHeight);
 		const scaleX = w / orgW;
 		const scaleY = h / orgH;
 		plane.scale.x = scaleX;
 		plane.scale.y = scaleY;
-		plane.updateMatrixWorld();
-		plane.position.x = preX;
-		plane.position.y = preY;
-		plane.position.z = preZ;
 	}
 
 	_assignVRMetaData(data) {
