@@ -17,8 +17,9 @@ class VRStore {
 		this.action = action;
 
 		this.width = 3840;
-		this.planeDepth = -(3840/2) * (1/Math.tan(57*Math.PI/180)); //=-1246.8625789392206
-		this.height = 2160; // (-this.planeDepth)*Math.tan(60*Math.PI/180)*2;
+		this.height = 2160;
+
+		this.planeDepth = -this.width / Math.PI; //-(3840 / 2) * (1 / Math.tan(57 * Math.PI / 180)); //=-1246.8625789392206
 		this.planeBaseX = -this.width / 2;
 		this.planeBaseY = this.height / 2;
 
@@ -38,7 +39,13 @@ class VRStore {
 
 		this.initEvents();
 
-		this.initCoverPlane();
+		this.isPlaneMode = false;
+
+		if (this.isPlaneMode) {
+			this.initCoverPlane();
+		} else {
+			this.initCoverCylinder();
+		}
 	}
 
 	initEvents() {
@@ -59,25 +66,52 @@ class VRStore {
 	}
 
 	// 平面モードの矩形領域
-	// 
+	// 水平視野角114度、垂直視野角120度
 	initCoverPlane() {
-		const height = (-this.planeDepth)*Math.tan(60*Math.PI/180)*2;
-		console.error(height);
+		const height = (-this.planeDepth) * Math.tan(60 * Math.PI / 180) * 2; // =4234.205916839362
 		const geometry = new THREE.PlaneGeometry(this.width, height);
 		geometry.translate(this.width / 2, -height / 2, 0);
-		const material = new THREE.MeshBasicMaterial({ color:0xFF00FF, side: THREE.DoubleSide });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
 		const plane = new THREE.Mesh(geometry, material);
 		this._setVRPlanePos(plane, 0, 0, -10);
 		// 4K中心に中心を合わせる
 		plane.position.y = height / 2
 		this.scene.add(plane);
+		
+		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
+		material.map = texture;
+		material.needsUpdate = true;
+	}
+
+	// 曲面モードの矩形領域と一致するシリンダー
+	// 水平視野角180度(にthis.widthピクセル割り当てる)、垂直視野角120度
+	initCoverCylinder() {
+		const radius = this.width / Math.PI;
+		const height = radius * Math.tan(60 * Math.PI / 180) * 2; //= 4234.205916839362
+		const radialSegments = 512;
+		const heightSegments = 1;
+		const thetaStart = 1.5 * Math.PI; // right start
+		const thetaLength = Math.PI;
+		const geometry = new THREE.CylinderGeometry(
+			radius, radius, height, radialSegments, heightSegments, true,
+			thetaStart, thetaLength);
+
+		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
+		const cylinder = new THREE.Mesh(geometry, material);
+		// flip
+		cylinder.scale.z *= -1;
+		this.scene.add(cylinder);
+
+		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
+		material.map = texture;
+		material.needsUpdate = true;
 	}
 
 	_addVRPlane(data) {
 		const metaData = data.metaData;
 		const geometry = new THREE.PlaneGeometry(Number(metaData.orgWidth), Number(metaData.orgHeight));
 		geometry.translate(Number(metaData.orgWidth) / 2, -Number(metaData.orgHeight) / 2, 0);
-		const material = new THREE.MeshBasicMaterial({ color:0xFFFFFF, side: THREE.DoubleSide });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
 		const plane = new THREE.Mesh(geometry, material);
 		this._setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
 		this.vrPlaneDict[metaData.id] = plane;
@@ -92,7 +126,7 @@ class VRStore {
 			console.error('not found plane for', metaData.id);
 		}
 
-		this.vrPlaneDict[metaData.id].material.map = texture; 
+		this.vrPlaneDict[metaData.id].material.map = texture;
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 

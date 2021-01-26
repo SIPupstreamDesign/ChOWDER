@@ -137,19 +137,22 @@ class GUI extends EventEmitter {
 		// three.jsのXRモードを有効にする
 		renderer.xr.enabled = true;
 
+		// 仮想ディスプレイの解像度
 		const width = this.store.getVRStore().getWidth();
 		const height = this.store.getVRStore().getHeight();
 		
-		// 1056 x 479 in OculusQuest2
+		// canvas解像度は、仮想ディスプレイの解像度とする
 		renderer.setSize(width, height);
 		// VRボタンを設置
 		document.body.appendChild(VRButton.createButton(renderer));
 
-		// 水平fov 90度
+		// デバイスの解像度
+		// 1056 x 479 in OculusQuest2
 		let windowSize = this.getWindowSize();
+		//console.error('windowSize', windowSize);
 
 		this.camera = new THREE.PerspectiveCamera(
-			58.71550709, windowSize.width / windowSize.height, 1, 10000);
+			93, windowSize.width / windowSize.height, 1, 10000);
 
 		// レンダリング
 		const render = (timestamp) => {
