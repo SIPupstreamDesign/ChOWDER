@@ -39,7 +39,13 @@ class VRStore {
 
 		this.initEvents();
 
-		this.isPlaneMode = false;
+		
+		const query = new URLSearchParams(location.search);
+		if (query.get('mode') && query.get('mode') === 'plane') {
+			this.isPlaneMode = true;
+		} else {
+			this.isPlaneMode = false;
+		}
 
 		if (this.isPlaneMode) {
 			this.initCoverPlane();
@@ -102,6 +108,7 @@ class VRStore {
 		const cylinder = new THREE.Mesh(geometry, material);
 		// flip
 		cylinder.scale.z *= -1;
+		cylinder.position.z = -1;
 		this.scene.add(cylinder);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
@@ -155,6 +162,14 @@ class VRStore {
 		}
 	}
 
+	_deleteVRPlane(data) {
+		const id = data.id;
+		if (this.vrPlaneDict.hasOwnProperty(id)) {
+			this.scene.remove(this.vrPlaneDict[id]);
+			delete this.vrPlaneDict[id];
+		}
+	}
+
 	_setVRPlaneImage(data) {
 		const metaData = data.metaData;
 		const texture = new THREE.Texture(data.image);
@@ -172,7 +187,7 @@ class VRStore {
 			plane.position.x = this.planeBaseX + x;
 			plane.position.y = this.planeBaseY - y;
 			if (z) {
-				plane.position.z = this.planeDepth + z;
+				plane.position.z = this.planeDepth + z * 0.1;
 			}
 		} else {
 			// x位置:
@@ -183,7 +198,7 @@ class VRStore {
 			// y位置: 座標で表現
 			plane.position.y = this.planeBaseY - y;
 			// z位置: 座標で表現
-			plane.position.z = z;
+			plane.position.z = z * 0.1;
 		}
 	}
 

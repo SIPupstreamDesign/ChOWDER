@@ -216,6 +216,17 @@ class Action extends EventEmitter {
     assignVRMetaData(data) {
         this.emit(Action.EVENT_ASSIGN_VR_METADATA, null, data);
     }
+
+    /**
+     * VRPlaneを削除
+     * @param {*} data 
+     * {
+     *    id : id
+     * }
+     */
+    deleteVRPlane(data) {
+        this.emit(Action.EVENT_DELETE_VR_PLANE, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -237,4 +248,5 @@ Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
 Action.EVENT_ADD_VR_PLANE = "addVRPlane";
 Action.EVENT_SET_VR_PLANE_IMAGE = "setVRPlaneImage";
 Action.EVENT_ASSIGN_VR_METADATA = "assignVRMetaData";
+Action.EVENT_DELETE_VR_PLANE = "deleteVRPlane";
 export default Action;

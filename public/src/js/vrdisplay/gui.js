@@ -365,6 +365,17 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	deleteContent(id) {
+		const elem = document.getElementById(id);
+		if (elem) {
+			const previewArea = document.getElementById('preview_area');
+			this.deleteMark(elem, id);
+			this.deleteTime(elem, id);
+			this.deleteCopyright(elem, id);
+			previewArea.removeChild(elem);
+		}
+	}
+
 	/**
 	 * 表示非表示の更新.
 	 * @method updatePreviewAreaVisible

@@ -34,6 +34,10 @@
 			vrdisp.onclick = function () {
 				location.href = 'vrdisplay.html?id=' + s4();
 			}
+			let vrdispPlane = document.getElementById('vr_display_link_plane');
+			vrdispPlane.onclick = function () {
+				location.href = 'vrdisplay.html?id=' + s4() + '&mode=plane';
+			}
 		};
 	</script>
 </head>
@@ -60,7 +64,12 @@
 		<div class="list-box" id='vr_mode' style="display:none">
 			<div class="list-item">
 				<a id="vr_display_link">
-					<h1 class="display">VR Display</h1>
+					<h1 class="display" style="width:230px">VR Display(曲面)</h1>
+				</a>
+			</div>
+			<div class="list-item">
+				<a id="vr_display_link_plane">
+					<h1 class="display" style="margin-left: 30px; width:230px">VR Display(平面)</h1>
 				</a>
 			</div>
 		</div>

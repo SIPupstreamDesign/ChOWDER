@@ -76,8 +76,8 @@ class VRDisplay {
 
 			// 閲覧可能か
 			if (!this.store.isViewable(metaData.group)) {
-				let previewArea = document.getElementById("preview_area");
-				this.removeContent(previewArea, metaData.id);
+				this.gui.deleteContent(metaData.id);
+				this.action.deleteVRPlane({ id : metaData.id });
 				return;
 			}
 			// レイアウトは無視
@@ -122,8 +122,8 @@ class VRDisplay {
 		}
 		// 閲覧可能か
 		if (!this.store.isViewable(json.group)) {
-			let previewArea = document.getElementById("preview_area");
-			this.removeContent(previewArea, json.id);
+			this.gui.deleteContent(json.id);
+			this.action.deleteVRPlane({ id : json.id });
 			return;
 		}
 
@@ -231,13 +231,8 @@ class VRDisplay {
 
 			if (isOutside) {
 				// webrtcコンテンツが画面外にいったら切断して削除しておく.
-				let elem = document.getElementById(json.id);
-				if (elem) {
-					elem.style.display = "none";
-					if (elem.parentNode) {
-						elem.parentNode.removeChild(elem);
-					}
-				}
+				this.gui.deleteContent(json.id);
+				this.action.deleteVRPlane({ id : json.id });
 				this.store.getVideoStore().closeVideo(json);
 			} else {
 				if (elem && elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type)) {
@@ -323,25 +318,6 @@ class VRDisplay {
 					this.gui.toggleMark(elem, metaData);
 				}
 			}
-		}
-	}
-
-	removeContent(previewArea, id) {
-		let elem = document.getElementById(id);
-		if (elem) {
-			previewArea.removeChild(elem);
-		}
-		let memo =  document.getElementById("memo:" + id);
-		if (memo) {
-			previewArea.removeChild(memo);
-		}
-		let time =  document.getElementById("time:" + id);
-		if (time) {
-			previewArea.removeChild(time);
-		}
-		let copyright =  document.getElementById("copyright:" + id);
-		if (copyright) {
-			previewArea.removeChild(copyright);
 		}
 	}
 
@@ -435,11 +411,11 @@ class VRDisplay {
 		});
 
 		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, data) => {
-			let previewArea = document.getElementById("preview_area");
 			for (let i = 0; i < data.length; ++i) {
 				let metaData = data[i];
 				if (!this.store.isViewable(metaData.group)) {
-					this.removeContent(previewArea, metaData.id);
+					this.gui.deleteContent(metaData.id);
+					this.action.deleteVRPlane({ id : metaData.id });
 				}
 					
 				// webgl iframeの更新
@@ -453,17 +429,11 @@ class VRDisplay {
 		})
 
 		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, (err, data) => {
-			let previewArea = document.getElementById('preview_area');
 			for (let i = 0; i < data.length; ++i) {
-				let elem = document.getElementById(data[i].id);
-				if (elem) {
-					this.gui.deleteTime(elem, data[i].id);
-					this.gui.deleteMark(elem, data[i].id);
-					this.gui.deleteCopyright(elem, data[i].id);
-					previewArea.removeChild(elem);
-				}
+				this.gui.deleteContent(data[i].id);
+				this.action.deleteVRPlane({ id : data[i].id });
 			}
-		})
+		});
 
 		this.store.on(Store.EVENT_DONE_REGISTER_WINDOW, (err, json) => {
 			if (!err) {
