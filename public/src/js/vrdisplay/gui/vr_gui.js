@@ -250,6 +250,22 @@ class VRGUI extends EventEmitter {
 			const scaleY = h / orgH;
 			plane.scale.x = scaleX;
 			plane.scale.y = scaleY;
+		} else {
+			const param = JSON.parse(JSON.stringify(plane.geometry.parameters));
+			param.thetaLength = Math.PI * (Number(metaData.width) / this.width);
+			param.height = Number(metaData.height);
+			param.radialSegments = Math.max(2, Math.floor(512 * Number(metaData.width) / this.width));
+			
+			const geometry = new THREE.CylinderGeometry(
+				param.radiusTop, param.radiusBottom, param.height, 
+				param.radialSegments, param.heightSegments, param.openEnded,
+				param.thetaStart, param.thetaLength);
+				
+			// 左上を原点とする
+			geometry.translate(0, -Number(metaData.height) / 2, 0);
+
+			plane.geometry = geometry;
+			plane.needsUpdate = true;
 		}
 	}
 
