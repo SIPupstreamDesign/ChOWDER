@@ -219,6 +219,9 @@ class VRGUI extends EventEmitter {
 		}
 
 		this.vrPlaneDict[metaData.id].material.map = texture;
+		// this.vrPlaneDict[metaData.id].material.blending = THREE.NormalBlending;
+		this.vrPlaneDict[metaData.id].material.transparent = true;
+		this.vrPlaneDict[metaData.id].material.alphaTest = 0.5;
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 
@@ -238,7 +241,7 @@ class VRGUI extends EventEmitter {
 			// y位置: 座標で表現
 			plane.position.y = this.planeBaseY - y;
 			// z位置: 座標で表現
-			plane.position.z = z * 0.1;
+			plane.position.z = z * 0.15;
 		}
 	}
 
