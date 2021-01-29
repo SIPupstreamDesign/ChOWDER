@@ -5,14 +5,14 @@
  */
 
 import Action from './action';
-import GUI from './gui';
+import GUI from './gui/gui';
 import Store from './store/store';
-import VRDisplay from './vrdisplay';
+import ContentHandler from './content_handler';
 
 const action = new Action();
 const store = new Store(action);
 const gui = new GUI(store, action);
-const vrdisplay = new VRDisplay(store, action, gui);
+const content_handler = new ContentHandler(store, action, gui);
 
 window.addEventListener('load', () => {
 	action.connect();

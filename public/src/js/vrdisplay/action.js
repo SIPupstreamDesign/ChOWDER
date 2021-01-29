@@ -180,53 +180,6 @@ class Action extends EventEmitter {
     updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
-
-    /**
-     * VRPlaneを追加
-     * @param {*} 
-     * {
-     *   metaData: metaData
-     * }
-     */
-    addVRPlane(data) {
-        this.emit(Action.EVENT_ADD_VR_PLANE, null, data);
-    }
-
-    /**
-     * VRPlaneに画像を設定
-     * @param {*} data 
-     * {
-     *   image : image,
-     *   metaData: metaData
-     * }
-     */
-    setVRPlaneImage(data) {
-        this.emit(Action.EVENT_SET_VR_PLANE_IMAGE, null, data);
-    }
-
-    /**
-     * メタデータの位置、幅高さなどをVR用プリミティブに設定
-     * @param {*} 
-     * {
-     *   plane : plane, // VR用Plane Mesh
-     *   metaData : metaData,
-     *   useOrg : useOrg,
-     * }
-     */
-    assignVRMetaData(data) {
-        this.emit(Action.EVENT_ASSIGN_VR_METADATA, null, data);
-    }
-
-    /**
-     * VRPlaneを削除
-     * @param {*} data 
-     * {
-     *    id : id
-     * }
-     */
-    deleteVRPlane(data) {
-        this.emit(Action.EVENT_DELETE_VR_PLANE, null, data);
-    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -245,8 +198,4 @@ Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
-Action.EVENT_ADD_VR_PLANE = "addVRPlane";
-Action.EVENT_SET_VR_PLANE_IMAGE = "setVRPlaneImage";
-Action.EVENT_ASSIGN_VR_METADATA = "assignVRMetaData";
-Action.EVENT_DELETE_VR_PLANE = "deleteVRPlane";
 export default Action;

@@ -1,18 +1,13 @@
-/**
- * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
- * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * Copyright (c) 2017-2018 Tokyo University of Science. All rights reserved.
- */
 
-import Command from '../../common/command';
-import Store from './store';
-import Action from '../action';
-import Vscreen from '../../common/vscreen'
-import VscreenUtil from '../../common/vscreen_util'
 
-class VRStore {
-	constructor(connector, store, action) {
-		this.connector = connector;
+import Vscreen from '../../common/vscreen.js';
+import VscreenUtil from '../../common/vscreen_util.js';
+import { VRButton } from '../../../../3rd/js/three/VRButton.js';
+
+class VRGUI extends EventEmitter {
+	constructor(store, action) {
+		super();
+
 		this.store = store;
 		this.action = action;
 
@@ -37,8 +32,6 @@ class VRStore {
 
 		this.vrPlaneDict = {};
 
-		this.initEvents();
-
 		
 		const query = new URLSearchParams(location.search);
 		if (query.get('mode') && query.get('mode') === 'plane') {
@@ -54,21 +47,46 @@ class VRStore {
 		}
 	}
 
-	initEvents() {
-		for (let i in Action) {
-			if (i.indexOf('EVENT') >= 0) {
-				this.action.on(Action[i], ((method) => {
-					return (err, data) => {
-						if (this[method]) {
-							this[method](data);
-						}
-					};
-				})('_' + Action[i]));
-			}
-		}
+	initVR(renderer) {
+		/*
+		const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking' ] };
+		navigator.xr.requestSession( 'immersive-vr', sessionInit ).then( (session) => {
+			renderer.xr.setSession(session);
+
+		});
+		*/
 	}
 
-	release() {
+	/**
+	 * 
+	 * @param {*} windowSize デバイス解像度。1056 x 479 in OculusQuest2
+	 */
+	initVRPreviewArea(windowSize) {
+		const previewArea = document.querySelector('#vr_area');
+
+		this.renderer = new THREE.WebGLRenderer({ canvas: previewArea, logarithmicDepthBuffer: true });
+		// three.jsのXRモードを有効にする
+		this.renderer.xr.enabled = true;
+
+		// 仮想ディスプレイの解像度
+		const width = this.getWidth();
+		const height = this.getHeight();
+		
+		// canvas解像度は、仮想ディスプレイの解像度とする
+		this.renderer.setSize(width, height);
+		// VRボタンを設置
+		document.body.appendChild(VRButton.createButton(this.renderer));
+
+		this.camera = new THREE.PerspectiveCamera(
+			93, windowSize.width / windowSize.height, 1, 10000);
+
+		// レンダリング
+		const render = (timestamp) => {
+			this.renderer.render(this.getScene(), this.camera);
+		};
+		this.renderer.setAnimationLoop(render);
+
+		this.initVR(this.renderer);
 	}
 
 	// 平面モードの矩形領域
@@ -79,7 +97,7 @@ class VRStore {
 		geometry.translate(this.width / 2, -height / 2, 0);
 		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
 		const plane = new THREE.Mesh(geometry, material);
-		this._setVRPlanePos(plane, 0, 0, -10);
+		this.setVRPlanePos(plane, 0, 0, -10);
 		// 4K中心に中心を合わせる
 		plane.position.y = height / 2
 		this.scene.add(plane);
@@ -116,7 +134,14 @@ class VRStore {
 		material.needsUpdate = true;
 	}
 
-	_addVRPlane(data) {
+    /**
+     * VRPlaneを追加
+     * @param {*} 
+     * {
+     *   metaData: metaData
+     * }
+     */
+	addVRPlane(data) {
 		const metaData = data.metaData;
 		if (this.isPlaneMode) {
 			const geometry = new THREE.PlaneGeometry(Number(metaData.orgWidth), Number(metaData.orgHeight));
@@ -124,7 +149,7 @@ class VRStore {
 			geometry.translate(Number(metaData.orgWidth) / 2, -Number(metaData.orgHeight) / 2, 0);
 			const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
 			const plane = new THREE.Mesh(geometry, material);
-			this._setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
+			this.setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
 			this.vrPlaneDict[metaData.id] = plane;
 			this.scene.add(plane);
 		} else {
@@ -156,13 +181,20 @@ class VRStore {
 			// flip
 			cylinder.scale.z *= -1;
 
-			this._setVRPlanePos(cylinder, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
+			this.setVRPlanePos(cylinder, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
 			this.vrPlaneDict[metaData.id] = cylinder;
 			this.scene.add(cylinder);
 		}
 	}
 
-	_deleteVRPlane(data) {
+    /**
+     * VRPlaneを削除
+     * @param {*} data 
+     * {
+     *    id : id
+     * }
+     */
+	deleteVRPlane(data) {
 		const id = data.id;
 		if (this.vrPlaneDict.hasOwnProperty(id)) {
 			this.scene.remove(this.vrPlaneDict[id]);
@@ -170,7 +202,15 @@ class VRStore {
 		}
 	}
 
-	_setVRPlaneImage(data) {
+    /**
+     * VRPlaneに画像を設定
+     * @param {*} data 
+     * {
+     *   image : image,
+     *   metaData: metaData
+     * }
+     */
+	setVRPlaneImage(data) {
 		const metaData = data.metaData;
 		const texture = new THREE.Texture(data.image);
 		texture.needsUpdate = true;
@@ -182,7 +222,7 @@ class VRStore {
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 
-	_setVRPlanePos(plane, x, y, z = null) {
+	setVRPlanePos(plane, x, y, z = null) {
 		if (this.isPlaneMode) {
 			plane.position.x = this.planeBaseX + x;
 			plane.position.y = this.planeBaseY - y;
@@ -202,7 +242,7 @@ class VRStore {
 		}
 	}
 
-	_setVRPlaneWH(plane, metaData, w, h) {
+	setVRPlaneWH(plane, metaData, w, h) {
 		if (this.isPlaneMode) {
 			const orgW = Number(metaData.orgWidth);
 			const orgH = Number(metaData.orgHeight);
@@ -213,7 +253,16 @@ class VRStore {
 		}
 	}
 
-	_assignVRMetaData(data) {
+    /**
+     * メタデータの位置、幅高さなどをVR用プリミティブに設定
+     * @param {*} 
+     * {
+     *   plane : plane, // VR用Plane Mesh
+     *   metaData : metaData,
+     *   useOrg : useOrg,
+     * }
+     */
+	assignVRMetaData(data) {
 		const metaData = data.metaData;
 		const useOrg = data.useOrg;
 		const groupDict = this.store.getGroupDict();
@@ -229,10 +278,10 @@ class VRStore {
 		if (plane && metaData) {
 			// VscreenUtil.assignRect(elem, rect, (metaData.width < 10), (metaData.height < 10));
 			// VscreenUtil.assignZIndex(elem, metaData);
-			this._setVRPlanePos(plane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
+			this.setVRPlanePos(plane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
 			if (!(metaData.width < 10) && rect.w) {
 				if (!(metaData.height < 10) && rect.h) {
-					this._setVRPlaneWH(plane, metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
+					this.setVRPlaneWH(plane, metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
 				}
 			}
 
@@ -285,4 +334,4 @@ class VRStore {
 	}
 }
 
-export default VRStore;
+export default VRGUI;

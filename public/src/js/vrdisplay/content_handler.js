@@ -12,7 +12,9 @@ import Store from './store/store.js';
 import Connector from '../common/ws_connector.js';
 import DisplayUtil from './display_util';
 
-class VRDisplay {
+// コンテンツ取得時にやることが多いので
+// このクラスに分離している
+class ContentHandler {
 	constructor(store, action, gui) {
 		this.store = store;
 		this.action = action;
@@ -20,39 +22,8 @@ class VRDisplay {
 
 		this.doneGetContent = this.doneGetContent.bind(this);
 		this.doneGetMetaData = this.doneGetMetaData.bind(this);
-		this.initEvent();
-	}
-
-	/**
-	 * コンテンツメタデータがウィンドウ内にあるか再計算する
-	 * @method recalculateContentVisible
-	 */
-	updateContentVisible() {
-		let metaDataDict = this.store.getMetaDataDict();
-		for (let i in metaDataDict) {
-			if (metaDataDict.hasOwnProperty(i)) {
-				// console.log(metaDataDict[i]);
-				if (metaDataDict[i].type !== 'window') {
-					this.doneGetMetaData(null, metaDataDict[i]);
-				}
-			}
-		}
-	}
-
-	updateWebGLFrameRect(metaData) {
-		// webgl iframeの更新
-		if (metaData.type === Constants.TypeWebGL) {
-			let funcDict = this.store.getITownFuncDict();
-			let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
-			let elem = document.getElementById(metaData.id);
-			if (elem) {
-				if (elem.children[0] && elem.children[0].nodeName.toLowerCase() === "iframe") {
-					if (funcDict.hasOwnProperty(metaData.id)) {
-						funcDict[metaData.id].chowder_itowns_resize(rect);
-					}
-				}
-			}
-		}
+		this.store.on(Store.EVENT_DONE_GET_METADATA, this.doneGetMetaData);
+		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
 	}
 
 	/**
@@ -77,7 +48,7 @@ class VRDisplay {
 			// 閲覧可能か
 			if (!this.store.isViewable(metaData.group)) {
 				this.gui.deleteContent(metaData.id);
-				this.action.deleteVRPlane({ id : metaData.id });
+				this.gui.getVRGUI().deleteVRPlane({ id : metaData.id });
 				return;
 			}
 			// レイアウトは無視
@@ -123,7 +94,7 @@ class VRDisplay {
 		// 閲覧可能か
 		if (!this.store.isViewable(json.group)) {
 			this.gui.deleteContent(json.id);
-			this.action.deleteVRPlane({ id : json.id });
+			this.gui.getVRGUI().deleteVRPlane({ id : json.id });
 			return;
 		}
 
@@ -232,7 +203,7 @@ class VRDisplay {
 			if (isOutside) {
 				// webrtcコンテンツが画面外にいったら切断して削除しておく.
 				this.gui.deleteContent(json.id);
-				this.action.deleteVRPlane({ id : json.id });
+				this.gui.getVRGUI().deleteVRPlane({ id : json.id });
 				this.store.getVideoStore().closeVideo(json);
 			} else {
 				if (elem && elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type)) {
@@ -305,9 +276,9 @@ class VRDisplay {
 
 					elem = document.getElementById(json.id);
 					VscreenUtil.assignMetaData(elem, json, false, groupDict);
-					this.action.assignVRMetaData({ metaData : metaData, useOrg : false});
+					this.gui.getVRGUI().assignVRMetaData({ metaData : metaData, useOrg : false});
 					// webgl iframeの更新
-					this.updateWebGLFrameRect(metaData);
+					this.gui.updateWebGLFrameRect(metaData);
 				}
 				if (isWindow) {
 					this.gui.updateViewport(this.store.getWindowData());
@@ -321,162 +292,6 @@ class VRDisplay {
 		}
 	}
 
-	/**
-	 * イベントハンドラを定義
-	 */
-	initEvent() {
-
-		this.store.on(Store.EVENT_CONNECT_SUCCESS, (err, data) => {
-			console.log("EVENT_CONNECT_SUCCESS")
-			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
-			if (disconnectedText) {
-				disconnectedText.style.display = "none";
-			}
-
-			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
-
-			let isLoginPrcessed = false;
-			this.action.login(loginOption);
-			/*
-			window.electronLogin((isElectron,password)=>{
-				if(isElectron){
-					// なぜかElectronの場合2回くる. 要調査
-					if (!isLoginPrcessed) {
-						loginOption.password = password;
-						loginOption.id = "ElectronDisplay";
-						isLoginPrcessed = true;
-						this.action.login(loginOption);
-					}
-				}else{
-					this.action.login(loginOption);
-				}
-			});
-			*/
-		});
-
-		this.store.on(Store.EVENT_CONNECT_FAILED, (err, data) => {
-			console.log("EVENT_CONNECT_FAILED")
-			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
-			if (disconnectedText) {
-				disconnectedText.style.display = "block";
-			}
-		});
-
-		this.store.on(Store.EVENT_DISCONNECTED, () => {
-			console.log("EVENT_DISCONNECTED")
-			let previewArea = document.getElementById("preview_area");
-			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
-			if (previewArea) {
-				previewArea.style.display = "none";
-			}
-			if (disconnectedText) {
-				disconnectedText.innerHTML = "Display Deleted";
-			}
-		});
-
-		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
-			console.log("EVENT_LOGIN_SUCCESS")
-			if (!this.store.getWindowData()) {
-				this.action.registerWindow({ size : {
-					width : this.store.getVRStore().getWidth(),
-					height : this.store.getVRStore().getHeight(),
-				}});
-			} else {
-				this.action.update({ updateType : 'window'});
-				this.action.update({ updateType : 'group'});
-				this.action.update({ updateType : 'content'});
-			}
-		});
-
-		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
-			if (!err) {
-				// 全てのwebgl iframeの更新
-				let metaDataDict = this.store.getMetaDataDict();
-				let funcDict = this.store.getITownFuncDict();
-				for (let i in metaDataDict) {
-					if (metaDataDict.hasOwnProperty(i)) {
-						let metaData = metaDataDict[i];
-						this.updateWebGLFrameRect(metaData);
-					}
-				}
-
-				for (let i = 0; i < data.length; i = i + 1) {
-					if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
-						this.gui.setDisplayID(data[i].id);
-						this.gui.updatePreviewAreaVisible(this.store.getWindowData());
-						this.gui.updateViewport(this.store.getWindowData())
-					}
-				}
-			}
-		});
-
-		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, data) => {
-			for (let i = 0; i < data.length; ++i) {
-				let metaData = data[i];
-				if (!this.store.isViewable(metaData.group)) {
-					this.gui.deleteContent(metaData.id);
-					this.action.deleteVRPlane({ id : metaData.id });
-				}
-					
-				// webgl iframeの更新
-				this.updateWebGLFrameRect(metaData);
-				this.action.update({ updateType : '', targetID : metaData.id });
-			}
-		});
-
-		this.store.on(Store.EVENT_DONE_UPDATE_WWINDOW_GROUP, (err, data) => {
-			this.action.update({ updateType : 'content'});
-		})
-
-		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, (err, data) => {
-			for (let i = 0; i < data.length; ++i) {
-				this.gui.deleteContent(data[i].id);
-				this.action.deleteVRPlane({ id : data[i].id });
-			}
-		});
-
-		this.store.on(Store.EVENT_DONE_REGISTER_WINDOW, (err, json) => {
-			if (!err) {
-				for (let i = 0; i < json.length; i = i + 1) {
-					this.gui.setDisplayID(json[i].id);
-					this.action.changeQueryParam({id: json[i].id});
-					this.gui.updatePreviewAreaVisible(this.store.getWindowData());
-					this.gui.updateViewport(this.store.getWindowData());
-				}
-			}
-			document.getElementById('preview_area').innerHTML = "";
-			this.action.update({ updateType : 'all'});
-		});
-
-		this.store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {
-			if (json.hasOwnProperty('id') && json.id === this.store.getWindowID()) {
-				this.gui.updatePreviewAreaVisible(json);
-				this.gui.updateViewport(json);
-				// タイル画像のリクエストが2回行われてしまう問題によりコメントアウト
-				//this.updateContentVisible();
-			}
-		});
-		
-		this.store.on(Store.EVENT_DONE_ADD_ITOWN_FUNC, (err, id) => {
-			let metaData = this.store.getMetaData(id);
-			// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
-			if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
-				let funcDict = this.store.getITownFuncDict();
-				if (funcDict.hasOwnProperty(metaData.id)) {
-					let elem = document.getElementById(metaData.id);
-					if (elem && elem.className === Constants.TemporaryBoundClass) {
-						elem.className = ""
-					}
-					funcDict[metaData.id].chowder_itowns_update_camera(metaData);
-					this.updateWebGLFrameRect(metaData);
-				}
-			}
-		});
-
-		this.store.on(Store.EVENT_DONE_GET_METADATA, this.doneGetMetaData);
-		this.store.on(Store.EVENT_DONE_GET_CONTENT, this.doneGetContent);
-	}
-
 }
 
-export default VRDisplay;
+export default ContentHandler;

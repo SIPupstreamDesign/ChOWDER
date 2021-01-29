@@ -10,7 +10,6 @@ import Vscreen from '../../common/vscreen';
 import Validator from '../../common/validator';
 import VscreenUtil from '../../common/vscreen_util';
 import VideoStore from './video_store';
-import VRStore from './vr_store';
 import Receiver from './reciever';
 
 const reconnectTimeout = 2000;
@@ -21,6 +20,7 @@ class Store extends EventEmitter {
         this.action = action;
 
         this.isInitialized_ = false;
+        this.isVRMode_ = true;
         this.authority = null;
         this.windowData = null;
         this.metaDataDict = {};
@@ -91,7 +91,6 @@ class Store extends EventEmitter {
             }
             this.receiver = new Receiver(Connector, this, this.action);
             this.videoStore = new VideoStore(Connector, this, this.action);
-            this.vrStore = new VRStore(Connector, this, this.action);
 
             this.isInitialized_ = true;
             if (callback) {
@@ -582,13 +581,6 @@ class Store extends EventEmitter {
         return this.videoStore;
     }
 
-	/**
-	 * VRStoreを返す
-	 */
-    getVRStore() {
-        return this.vrStore;
-    }
-    
     /**
      * Convert map into query params string.
      * @param {Object} map Map of parameters you want to convert into
@@ -752,6 +744,10 @@ class Store extends EventEmitter {
 
     getGlobalSetting() {
         return this.globalSetting;
+    }
+
+    isVRMode() {
+        return this.isVRMode_;
     }
 }
 

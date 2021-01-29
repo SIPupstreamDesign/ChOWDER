@@ -3,19 +3,18 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-import Store from './store/store';
-import Constants from '../common/constants.js';
-import Validator from '../common/validator';
-import Vscreen from '../common/vscreen.js';
-import VscreenUtil from '../common/vscreen_util.js';
-import Menu from '../components/menu.js';
-import DisplayUtil from './display_util';
-import VideoPlayer from '../components/video_player';
-import Button from '../components/button';
-import ITownsCommand from '../common/itowns_command';
-import IFrameConnector from '../common/iframe_connector';
-import ITownsUtil from '../common/itowns_util';
-import { VRButton } from '../../../3rd/js/three/VRButton.js';
+import Store from '../store/store';
+import Constants from '../../common/constants.js';
+import Validator from '../../common/validator';
+import Vscreen from '../../common/vscreen.js';
+import VscreenUtil from '../../common/vscreen_util.js';
+import DisplayUtil from '../display_util';
+import VideoPlayer from '../../components/video_player';
+import ITownsCommand from '../../common/itowns_command';
+import IFrameConnector from '../../common/iframe_connector';
+import ITownsUtil from '../../common/itowns_util';
+import VRGUI from './vr_gui';
+import HeadMenu from './head_menu';
 
 class GUI extends EventEmitter {
 	constructor(store, action) {
@@ -23,6 +22,37 @@ class GUI extends EventEmitter {
 
 		this.store = store;
 		this.action = action;
+		// 上部メニュー
+		this.headMenu = null;
+	}
+
+	init() {
+		this.headMenu =  new HeadMenu(this.store, this.action);
+		this.initWindow();
+		this.initEvents();
+	}
+
+	initWindow() {
+		// ウィンドウリサイズ時の処理
+		if (!this.store.isVRMode()) {
+			let timer;
+			window.onresize = () => {
+				if (timer) {
+					clearTimeout(timer);
+				}
+				timer = setTimeout(() => {
+					this.action.resizeWindow({
+						size: this.getWindowSize()
+					});
+				}, 200);
+			};
+		}
+
+		this.setupWindowEvents();
+	}
+
+
+	initEvents() {
 
 		this.store.on(Store.EVENT_DONE_DELETE_ALL_ELEMENTS, (err, idList) => {
 			console.error("EVENT_DONE_DELETE_ALL_ELEMENTS", idList)
@@ -59,7 +89,11 @@ class GUI extends EventEmitter {
 				}
 			}
 			*/
-			this.initVRPreviewArea();
+
+			if (this.store.isVRMode()) {
+				this.vrgui = new VRGUI(this.store, this.action);
+				this.vrgui.initVRPreviewArea(this.getWindowSize());
+			}
 		})
 
 		this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
@@ -92,176 +126,153 @@ class GUI extends EventEmitter {
 					}
 				}
 			}
-		})
-
-		// 上部メニュー
-		this.headMenu = null;
-	}
-
-	init() {
-		this.initWindow();
-		this.initMenu();
-	}
-
-	initWindow() {
-		// ウィンドウリサイズ時の処理
-		let timer;
-		window.onresize = () => {
-			if (timer) {
-				clearTimeout(timer);
-			}
-			timer = setTimeout(() => {
-				this.action.resizeWindow({
-					size: this.getWindowSize()
-				});
-			}, 200);
-		};
-
-		this.setupWindowEvents();
-	}
-
-	initVR(renderer) {
-		/*
-		const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking' ] };
-		navigator.xr.requestSession( 'immersive-vr', sessionInit ).then( (session) => {
-			renderer.xr.setSession(session);
-
 		});
-		*/
-	}
 
-	initVRPreviewArea() {
-		const previewArea = document.querySelector('#vr_area');
-
-		const renderer = new THREE.WebGLRenderer({ canvas: previewArea, logarithmicDepthBuffer: true });
-		// three.jsのXRモードを有効にする
-		renderer.xr.enabled = true;
-
-		// 仮想ディスプレイの解像度
-		const width = this.store.getVRStore().getWidth();
-		const height = this.store.getVRStore().getHeight();
-		
-		// canvas解像度は、仮想ディスプレイの解像度とする
-		renderer.setSize(width, height);
-		// VRボタンを設置
-		document.body.appendChild(VRButton.createButton(renderer));
-
-		// デバイスの解像度
-		// 1056 x 479 in OculusQuest2
-		let windowSize = this.getWindowSize();
-		//console.error('windowSize', windowSize);
-
-		this.camera = new THREE.PerspectiveCamera(
-			93, windowSize.width / windowSize.height, 1, 10000);
-
-		// レンダリング
-		const render = (timestamp) => {
-			renderer.render(this.store.getVRStore().getScene(), this.camera);
-		};
-		renderer.setAnimationLoop(render);
-
-		this.initVR(renderer);
-	}
-
-	// 上部メニューの初期化.
-	initMenu() {
-		let registered = false;
-		let onfocus = false;
-		// 時間たったら隠す関数
-		let hideMenuFunc = function () {
-			// console.log("onfocus:", onfocus);
-			if (!onfocus) {
-				// console.log("hideMenuFunc");
-				document.getElementById('head_menu').classList.add('hide');
+		this.store.on(Store.EVENT_CONNECT_SUCCESS, (err, data) => {
+			console.log("EVENT_CONNECT_SUCCESS")
+			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
+			if (disconnectedText) {
+				disconnectedText.style.display = "none";
 			}
-			registered = false;
-		};
 
-		window.addEventListener('mousemove', function (evt) {
-			document.getElementById('head_menu').classList.remove('hide');
-			if (!registered) {
-				registered = true;
-				setTimeout(hideMenuFunc, 3000);
+			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
+
+			let isLoginPrcessed = false;
+			this.action.login(loginOption);
+			/*
+			window.electronLogin((isElectron,password)=>{
+				if(isElectron){
+					// なぜかElectronの場合2回くる. 要調査
+					if (!isLoginPrcessed) {
+						loginOption.password = password;
+						loginOption.id = "ElectronDisplay";
+						isLoginPrcessed = true;
+						this.action.login(loginOption);
+					}
+				}else{
+					this.action.login(loginOption);
+				}
+			});
+			*/
+		});
+
+		this.store.on(Store.EVENT_CONNECT_FAILED, (err, data) => {
+			console.log("EVENT_CONNECT_FAILED")
+			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
+			if (disconnectedText) {
+				disconnectedText.style.display = "block";
 			}
 		});
 
-		setTimeout(() => {
-			if (!document.getElementById('head_menu').classList.contains('hide')) {
-				if (!registered) {
-					registered = true;
-					setTimeout(hideMenuFunc, 2000);
+		this.store.on(Store.EVENT_DISCONNECTED, () => {
+			console.log("EVENT_DISCONNECTED")
+			let previewArea = document.getElementById("preview_area");
+			let disconnectedText = document.getElementsByClassName("disconnected_text")[0];
+			if (previewArea) {
+				previewArea.style.display = "none";
+			}
+			if (disconnectedText) {
+				disconnectedText.innerHTML = "Display Deleted";
+			}
+		});
+
+		this.store.on(Store.EVENT_LOGIN_SUCCESS, () => {
+			console.log("EVENT_LOGIN_SUCCESS")
+			if (!this.store.getWindowData()) {
+				this.action.registerWindow({ size : {
+					width : this.getVRGUI().getWidth(),
+					height : this.getVRGUI().getHeight(),
+				}});
+			} else {
+				this.action.update({ updateType : 'window'});
+				this.action.update({ updateType : 'group'});
+				this.action.update({ updateType : 'content'});
+			}
+		});
+
+		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, (err, data) => {
+			if (!err) {
+				// 全てのwebgl iframeの更新
+				let metaDataDict = this.store.getMetaDataDict();
+				for (let i in metaDataDict) {
+					if (metaDataDict.hasOwnProperty(i)) {
+						let metaData = metaDataDict[i];
+						this.updateWebGLFrameRect(metaData);
+					}
+				}
+
+				for (let i = 0; i < data.length; i = i + 1) {
+					if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
+						this.setDisplayID(data[i].id);
+						this.updatePreviewAreaVisible(this.store.getWindowData());
+						this.updateViewport(this.store.getWindowData())
+					}
 				}
 			}
-		}, 1000);
+		});
 
-		// メニュー設定
-		let menuSetting = null;
-		/*
-		if (window.isElectron()) {
-			menuSetting = [
-				{
-					Setting : [{
-						Fullscreen : {
-							func : function(evt, menu) { 
-								if (!DisplayUtil.isFullScreen()) {
-									menu.changeName("Fullscreen", "CancelFullscreen")
-								} else {
-									menu.changeName("CancelFullscreen", "Fullscreen")
-								}
-								DisplayUtil.toggleFullScreen();
-							}
-						}
-					}]
-				}];
-		} else {
-			*/
-		menuSetting = [
-			{
-				Display: [{
-					Controller: {
-						func: () => {
-							window.open("controller.html"); // TODO コントローラIDの設定どうするか
-						}
-					}
-				}],
-				url: "display.html"
-			},
-			{
-				Setting: [{
-					Fullscreen: {
-						func: function (evt, menu) {
-							if (!DisplayUtil.isFullScreen()) {
-								menu.changeName("Fullscreen", "CancelFullscreen")
-							} else {
-								menu.changeName("CancelFullscreen", "Fullscreen")
-							}
-							DisplayUtil.toggleFullScreen();
-						}
-					}
-				}]
-			}];
-		//}
-
-		this.headMenu = new Menu("display", menuSetting);
-		document.getElementsByClassName('head_menu')[0].appendChild(this.headMenu.getDOM());
-
-		this.headMenu.getIDInput().onfocus = (ev) => {
-			// console.log("onfocus");
-			onfocus = true;
-			document.getElementById('head_menu').classList.remove('hide');
-			clearTimeout(hideMenuFunc);
-		};
-		this.headMenu.getIDInput().onblur = (ev) => {
-			// console.log("onblur");
-			onfocus = false;
-			this.action.changeDisplayID({ id: this.headMenu.getIDValue() });
-		};
-		this.headMenu.getIDInput().onkeypress = (ev) => {
-			// console.log(ev.keyCode);
-			if (ev.keyCode === 13) { // enter
-				this.action.changeDisplayID({ id: this.headMenu.getIDValue() });
+		this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, data) => {
+			for (let i = 0; i < data.length; ++i) {
+				let metaData = data[i];
+				if (!this.store.isViewable(metaData.group)) {
+					this.deleteContent(metaData.id);
+					this.getVRGUI().deleteVRPlane({ id : metaData.id });
+				}
+					
+				// webgl iframeの更新
+				this.updateWebGLFrameRect(metaData);
+				this.action.update({ updateType : '', targetID : metaData.id });
 			}
-		};
+		});
+
+		this.store.on(Store.EVENT_DONE_UPDATE_WWINDOW_GROUP, (err, data) => {
+			this.action.update({ updateType : 'content'});
+		})
+
+		this.store.on(Store.EVENT_DONE_DELETE_CONTENT, (err, data) => {
+			for (let i = 0; i < data.length; ++i) {
+				this.deleteContent(data[i].id);
+				this.getVRGUI().deleteVRPlane({ id : data[i].id });
+			}
+		});
+
+		this.store.on(Store.EVENT_DONE_REGISTER_WINDOW, (err, json) => {
+			if (!err) {
+				for (let i = 0; i < json.length; i = i + 1) {
+					this.setDisplayID(json[i].id);
+					this.action.changeQueryParam({id: json[i].id});
+					this.updatePreviewAreaVisible(this.store.getWindowData());
+					this.updateViewport(this.store.getWindowData());
+				}
+			}
+			document.getElementById('preview_area').innerHTML = "";
+			this.action.update({ updateType : 'all'});
+		});
+
+		this.store.on(Store.EVENT_DONE_GET_WINDOW_METADATA, (err, json) => {
+			if (json.hasOwnProperty('id') && json.id === this.store.getWindowID()) {
+				this.updatePreviewAreaVisible(json);
+				this.updateViewport(json);
+				// タイル画像のリクエストが2回行われてしまう問題によりコメントアウト
+				//this.updateContentVisible();
+			}
+		});
+		
+		this.store.on(Store.EVENT_DONE_ADD_ITOWN_FUNC, (err, id) => {
+			let metaData = this.store.getMetaData(id);
+			// 読み込み完了までテンポラリで枠を表示してる．枠であった場合は消す.
+			if (metaData.type === "webgl" && metaData.hasOwnProperty("cameraWorldMatrix")) {
+				let funcDict = this.store.getITownFuncDict();
+				if (funcDict.hasOwnProperty(metaData.id)) {
+					let elem = document.getElementById(metaData.id);
+					if (elem && elem.className === Constants.TemporaryBoundClass) {
+						elem.className = ""
+					}
+					funcDict[metaData.id].chowder_itowns_update_camera(metaData);
+					this.updateWebGLFrameRect(metaData);
+				}
+			}
+		});
 	}
 
 	getHeadMenu() {
@@ -749,10 +760,10 @@ class GUI extends EventEmitter {
 			URL.revokeObjectURL(elem.src);
 			// Planeのみ追加
 			// 画像読み込みは遅延するので、先にPlaneだけ追加しておく必要がある
-			this.action.addVRPlane({ metaData : metaData });
+			this.vrgui.addVRPlane({ metaData : metaData });
 			elem.onload =  () => {
 				// Planeの画像を追加
-				this.action.setVRPlaneImage({ image: elem, metaData : metaData });
+				this.vrgui.setVRPlaneImage({ image: elem, metaData : metaData });
 			}
 			elem.src = URL.createObjectURL(blob);
 		}
@@ -880,7 +891,7 @@ class GUI extends EventEmitter {
 				this.showImage(elem, metaData, contentData);
 			}
 			VscreenUtil.assignMetaData(elem, metaData, false, groupDict);
-			this.action.assignVRMetaData({ metaData : metaData, useOrg : false});
+			this.vrgui.assignVRMetaData({ metaData : metaData, useOrg : false});
 
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {
@@ -1303,6 +1314,8 @@ class GUI extends EventEmitter {
 				let metaData = metaDataDict[id];
 				if (elem) {
 					VscreenUtil.assignMetaData(document.getElementById(id), metaData, false, groupDict);
+					this.vrgui.assignVRMetaData({ metaData : metaData, useOrg : false});
+		
 					// メモ/timeの座標も更新する
 					this.showMemo(elem, metaData);
 					this.showTime(elem, metaData);
@@ -1312,10 +1325,30 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	updateWebGLFrameRect(metaData) {
+		// webgl iframeの更新
+		if (metaData.type === Constants.TypeWebGL) {
+			let funcDict = this.store.getITownFuncDict();
+			let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
+			let elem = document.getElementById(metaData.id);
+			if (elem) {
+				if (elem.children[0] && elem.children[0].nodeName.toLowerCase() === "iframe") {
+					if (funcDict.hasOwnProperty(metaData.id)) {
+						funcDict[metaData.id].chowder_itowns_resize(rect);
+					}
+				}
+			}
+		}
+	}
+	
 	setDisplayID(displayID) {
 		window.parent.document.title = "Display ID:" + displayID;
 		this.getHeadMenu().setIDValue(displayID);
 		document.getElementById('displayid').innerHTML = "ID:" + displayID;
+	}
+
+	getVRGUI() {
+		return this.vrgui;
 	}
 }
 
