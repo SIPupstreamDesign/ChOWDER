@@ -1,4 +1,8 @@
 
+/**
+ * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
+ * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ */
 
 import Vscreen from '../../common/vscreen.js';
 import VscreenUtil from '../../common/vscreen_util.js';
