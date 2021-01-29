@@ -161,7 +161,7 @@ class VRGUI extends EventEmitter {
 			// つまり最初カメラから見て後ろ側にシリンダーを作成する。
 			const radius = this.width / Math.PI;
 			const height = Number(metaData.orgHeight);
-			const radialSegments = Math.max(2, Math.floor(512 * Number(metaData.orgWidth) / this.width));
+			const radialSegments = Math.max(2, Math.floor(128 * Number(metaData.orgWidth) / this.width));
 			const heightSegments = 1;
 			// thetaStartは+z方向を0として、Y軸に対して反時計回りで角度を指定する。と思われる。
 			// xz平面を上から見たときに、+x → +z → -x となるような円弧を描き
@@ -254,7 +254,7 @@ class VRGUI extends EventEmitter {
 			const param = JSON.parse(JSON.stringify(plane.geometry.parameters));
 			param.thetaLength = Math.PI * (Number(metaData.width) / this.width);
 			param.height = Number(metaData.height);
-			param.radialSegments = Math.max(2, Math.floor(512 * Number(metaData.width) / this.width));
+			param.radialSegments = Math.max(2, Math.floor(128 * Number(metaData.width) / this.width));
 			
 			const geometry = new THREE.CylinderGeometry(
 				param.radiusTop, param.radiusBottom, param.height, 
