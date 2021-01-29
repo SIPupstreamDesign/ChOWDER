@@ -1306,6 +1306,9 @@ class GUI extends EventEmitter {
 		Vscreen.translateWhole(-cx, -cy);
 
 		// 全コンテンツデータの座標をビューポートをもとに更新
+		let whole = Vscreen.transformOrgInv(Vscreen.getWhole());
+		whole.x = Vscreen.getWhole().x;
+		whole.y = Vscreen.getWhole().y;
 		let metaDataDict = this.store.getMetaDataDict();
 		let groupDict = this.store.getGroupDict();
 		for (let id in metaDataDict) {
@@ -1313,13 +1316,27 @@ class GUI extends EventEmitter {
 				let elem = document.getElementById(id);
 				let metaData = metaDataDict[id];
 				if (elem) {
-					VscreenUtil.assignMetaData(document.getElementById(id), metaData, false, groupDict);
-					this.vrgui.assignVRMetaData({ metaData : metaData, useOrg : false});
-		
-					// メモ/timeの座標も更新する
-					this.showMemo(elem, metaData);
-					this.showTime(elem, metaData);
-					this.showCopyrights(elem, metaData);
+					// 仮想ディスプレイ範囲外のコンテンツを削除
+					const isOutside = VscreenUtil.isOutsideWindow(metaData, whole);
+					if (isOutside) {
+						this.deleteContent(metaData.id);
+						this.vrgui.deleteVRPlane({ id : metaData.id });
+					} else {
+						VscreenUtil.assignMetaData(document.getElementById(id), metaData, false, groupDict);
+						this.vrgui.assignVRMetaData({ metaData : metaData, useOrg : false});
+			
+						// メモ/timeの座標も更新する
+						this.showMemo(elem, metaData);
+						this.showTime(elem, metaData);
+						this.showCopyrights(elem, metaData);
+					}
+				} else {
+					const isOutside = VscreenUtil.isOutsideWindow(metaData, whole);
+					if (!isOutside) {
+						this.action.update({
+							targetID : metaData.id
+						});
+					}
 				}
 			}
 		}
@@ -1340,7 +1357,7 @@ class GUI extends EventEmitter {
 			}
 		}
 	}
-	
+
 	setDisplayID(displayID) {
 		window.parent.document.title = "Display ID:" + displayID;
 		this.getHeadMenu().setIDValue(displayID);

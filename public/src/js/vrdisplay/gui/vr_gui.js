@@ -126,7 +126,7 @@ class VRGUI extends EventEmitter {
 		const cylinder = new THREE.Mesh(geometry, material);
 		// flip
 		cylinder.scale.z *= -1;
-		cylinder.position.z = -1;
+		cylinder.position.z = -2;
 		this.scene.add(cylinder);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
@@ -161,7 +161,7 @@ class VRGUI extends EventEmitter {
 			// つまり最初カメラから見て後ろ側にシリンダーを作成する。
 			const radius = this.width / Math.PI;
 			const height = Number(metaData.orgHeight);
-			const radialSegments = Math.max(2, Math.floor(128 * Number(metaData.orgWidth) / this.width));
+			const radialSegments = Math.max(2, Math.floor(256 * Number(metaData.orgWidth) / this.width));
 			const heightSegments = 1;
 			// thetaStartは+z方向を0として、Y軸に対して反時計回りで角度を指定する。と思われる。
 			// xz平面を上から見たときに、+x → +z → -x となるような円弧を描き
@@ -241,7 +241,7 @@ class VRGUI extends EventEmitter {
 			// y位置: 座標で表現
 			plane.position.y = this.planeBaseY - y;
 			// z位置: 座標で表現
-			plane.position.z = z * 0.15;
+			plane.position.z = z * 0.25;
 		}
 	}
 
@@ -255,9 +255,9 @@ class VRGUI extends EventEmitter {
 			plane.scale.y = scaleY;
 		} else {
 			const param = JSON.parse(JSON.stringify(plane.geometry.parameters));
-			param.thetaLength = Math.PI * (Number(metaData.width) / this.width);
-			param.height = Number(metaData.height);
-			param.radialSegments = Math.max(2, Math.floor(128 * Number(metaData.width) / this.width));
+			param.thetaLength = Math.PI * (w / this.width);
+			param.height = h;
+			param.radialSegments = Math.max(2, Math.floor(256 * Number(metaData.width) / this.width));
 			
 			const geometry = new THREE.CylinderGeometry(
 				param.radiusTop, param.radiusBottom, param.height, 
@@ -265,7 +265,7 @@ class VRGUI extends EventEmitter {
 				param.thetaStart, param.thetaLength);
 				
 			// 左上を原点とする
-			geometry.translate(0, -Number(metaData.height) / 2, 0);
+			geometry.translate(0, -h / 2, 0);
 
 			plane.geometry = geometry;
 			plane.needsUpdate = true;
