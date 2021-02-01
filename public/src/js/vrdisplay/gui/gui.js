@@ -92,7 +92,8 @@ class GUI extends EventEmitter {
 
 			if (this.store.isVRMode()) {
 				this.vrgui = new VRGUI(this.store, this.action);
-				this.vrgui.initVRPreviewArea(this.getWindowSize());
+				this.initVRGUIEvents();
+				this.vrgui.initVR(this.getWindowSize());
 			}
 		})
 
@@ -272,6 +273,27 @@ class GUI extends EventEmitter {
 					this.updateWebGLFrameRect(metaData);
 				}
 			}
+		});
+	}
+
+	initVRGUIEvents() {
+		this.vrgui.on(VRGUI.EVENT_SELECT, (err, id) => {
+			// VRモードでコンテンツが選択された
+			this.unselect();
+			this.select(id);
+			this.action.changeContentIndexToFront({
+				targetID: id
+			});
+		});
+
+		this.vrgui.on(VRGUI.EVENT_UNSELECT,  (err, id) => {
+			// VRモードでコンテンツが選択解除された
+			this.unselect();
+		});
+
+		
+		this.vrgui.on(VRGUI.EVENT_SELECT_MOVE, (err, id) => {
+			// VRモードでコンテンツが選択中にポインター移動された
 		});
 	}
 

@@ -6,7 +6,9 @@
 
 import Vscreen from '../../common/vscreen.js';
 import VscreenUtil from '../../common/vscreen_util.js';
-import { VRButton } from '../../../../3rd/js/three/VRButton.js';
+import { VRButton } from '../../../../../node_modules/three/examples/jsm/webxr/VRButton.js';
+import { XRControllerModelFactory } from '../../../../../node_modules/three/examples/jsm/webxr/XRControllerModelFactory.js';
+import { Mesh } from 'three';
 
 class VRGUI extends EventEmitter {
 	constructor(store, action) {
@@ -22,7 +24,7 @@ class VRGUI extends EventEmitter {
 		this.planeBaseX = -this.width / 2;
 		this.planeBaseY = this.height / 2;
 
-		// シーン作成
+		// 背景画像
 		const urls = [
 			'src/image/room/posx.jpg',
 			'src/image/room/negx.jpg',
@@ -31,12 +33,25 @@ class VRGUI extends EventEmitter {
 			'src/image/room/posz.jpg',
 			'src/image/room/negz.jpg'
 		]
+
+		// chowderコンテンツを描画するシーン
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.CubeTextureLoader().load(urls);
 
+		// 確実に手前に描画するシーン（ポインタなど）
+		this.frontScene = new THREE.Scene();
+
+		// 衝突検出用
+		this.raycaster = new THREE.Raycaster();
+		// コントローラの方向計算用ベクトル(テンポラリ)
+		this.controllerDir = new THREE.Vector3(0, 0, -1);
+
+		// コンテンツIDと対応するthree.js Meshの辞書
 		this.vrPlaneDict = {};
 
-		
+		this.selectedIDs = [null, null];
+
+		// 平面モードかどうか
 		const query = new URLSearchParams(location.search);
 		if (query.get('mode') && query.get('mode') === 'plane') {
 			this.isPlaneMode = true;
@@ -51,21 +66,16 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
-	initVR(renderer) {
-		/*
-		const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking' ] };
-		navigator.xr.requestSession( 'immersive-vr', sessionInit ).then( (session) => {
-			renderer.xr.setSession(session);
-
-		});
-		*/
+	initVR(windowSize) {
+		this.initVRRenderer(windowSize);
+		this.initVRController();
 	}
 
 	/**
 	 * 
 	 * @param {*} windowSize デバイス解像度。1056 x 479 in OculusQuest2
 	 */
-	initVRPreviewArea(windowSize) {
+	initVRRenderer(windowSize) {
 		const previewArea = document.querySelector('#vr_area');
 
 		this.renderer = new THREE.WebGLRenderer({ canvas: previewArea, logarithmicDepthBuffer: true });
@@ -75,7 +85,7 @@ class VRGUI extends EventEmitter {
 		// 仮想ディスプレイの解像度
 		const width = this.getWidth();
 		const height = this.getHeight();
-		
+
 		// canvas解像度は、仮想ディスプレイの解像度とする
 		this.renderer.setSize(width, height);
 		// VRボタンを設置
@@ -84,13 +94,162 @@ class VRGUI extends EventEmitter {
 		this.camera = new THREE.PerspectiveCamera(
 			93, windowSize.width / windowSize.height, 1, 10000);
 
+		this.renderer.autoClear = false;
+
 		// レンダリング
 		const render = (timestamp) => {
+			this.resolveInputs();
+			this.renderer.clear();
 			this.renderer.render(this.getScene(), this.camera);
+			this.renderer.clearDepth();
+			this.renderer.render(this.getFrontScene(), this.camera);
 		};
 		this.renderer.setAnimationLoop(render);
+	}
 
-		this.initVR(this.renderer);
+	initVRController() {
+		const createLine = () => {
+			const geometry = new THREE.BufferGeometry();
+			geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -1], 3));
+			geometry.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0.5, 0.5, 0.5], 3));
+			const material = new THREE.LineBasicMaterial({ vertexColors: true, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false });
+			const line = new THREE.Line(geometry, material);
+			line.scale.z = 5;
+			return line;
+		}
+		const createCircle = () => {
+			const gaze_geometry = new THREE.SphereGeometry(5, 16, 16).translate(0, 0, -1);
+			const gaze_material = new THREE.MeshBasicMaterial({ depthTest: false, depthWrite: false });
+			const mesh = new THREE.Mesh(gaze_geometry, gaze_material);
+			mesh.position.z = this.planeDepth;
+			return mesh;
+		}
+
+		//右側の光線
+		const controller1 = this.renderer.xr.getController(0);
+		controller1.addEventListener('connected', function (event) {
+			this.add(createLine());
+			this.add(createCircle());
+		});
+		controller1.addEventListener('disconnected', function () {
+			for (let i = this.children.length - 1; i >= 0; --i) {
+				this.remove(this.children[i]);
+			}
+		});
+		this.frontScene.add(controller1);
+
+		//左側の光線
+		const controller2 = this.renderer.xr.getController(1);
+		controller2.addEventListener('connected', function (event) {
+			this.add(createLine());
+			this.add(createCircle());
+		});
+		controller2.addEventListener('disconnected', function () {
+			for (let i = this.children.length - 1; i >= 0; --i) {
+				this.remove(this.children[i]);
+			}
+		});
+		this.frontScene.add(controller2);
+
+		const controllerModelFactory = new XRControllerModelFactory();
+
+		// 右手コントローラの3Dオブジェクト
+		const grip1 = this.renderer.xr.getControllerGrip(0);
+		grip1.add(controllerModelFactory.createControllerModel(grip1));
+		this.frontScene.add(grip1);
+
+		// 左手コントローラの3Dオブジェクト
+		const grip2 = this.renderer.xr.getControllerGrip(1);
+		grip2.add(controllerModelFactory.createControllerModel(grip2));
+		this.frontScene.add(grip2);
+
+		// 選択イベントの初期化
+		/*
+		this.onSelect = this._onSelect.bind(this);
+		this.renderer.xr.addEventListener('sessionstart', (event) => {
+			const session = this.renderer.xr.getSession();
+			this.currentSession = session;
+			// session.addEventListener('select', this.onSelect);
+		});
+		this.renderer.xr.addEventListener('sessionend', (event) => {
+			const session = this.renderer.xr.getSession();
+			this.currentSession = null;
+			// session.removeEventListener('select', this.onSelect);
+		});
+		*/
+	}
+
+	// VRコントローラのボタン入力に応じた処理を行う
+	resolveInputs() {
+		if (!this.currentSession) return;
+
+		for (const source of this.currentSession.inputSources) {
+			if (!source.gamepad) continue;
+			const gamepad = source.gamepad;
+
+			 //トリガー（人さし指）押下
+			const trigerPressed = gamepad.buttons[0].pressed;
+			if (trigerPressed) {
+				this.select(source);
+			} else {
+				this.unselect(source);
+			}
+		}
+
+		this.move();
+	}
+
+	// VRコントローラの選択イベント（トリガーを引くやつ）
+	select(source) {
+		const isLeft = source.handedness === 'left';
+		const controllerIndex = isLeft ? 1 : 0;
+
+		// コントローラの向きを計算
+		const controller = this.renderer.xr.getController(controllerIndex);
+		this.controllerDir.set(0, 0, -1);
+		this.controllerDir.applyQuaternion(controller.quaternion);
+
+		this.raycaster.set(controller.position, this.controllerDir);
+		const intersects = this.raycaster.intersectObjects(this.scene.children);
+		let target = null;
+		for (let i = 0; i < intersects.length; ++i) {
+			if (!target) {
+				target = intersects[i];
+			}
+			if (target.distance > intersects[i].distance) {
+				target = intersects[i];
+			}
+		}
+		if (target) {
+			const objs = Object.values(this.vrPlaneDict);
+			const index = objs.indexOf(target.object);
+			if (index >= 0) {
+				const id = Object.keys(this.vrPlaneDict)[index];
+				console.log('selected: ', id);
+				// IDを保存
+				this.selectedIDs[controllerIndex] = id;
+				// コンテンツが選択されたことを通知
+				this.emit(VRGUI.EVENT_SELECT, null, id);
+			}
+		}
+	}
+
+	unselect(source) {
+		const isLeft = source.handedness === 'left';
+		const controllerIndex = isLeft ? 1 : 0;
+		if (this.selectedIDs[controllerIndex]) {
+			const id = this.selectedIDs[controllerIndex];
+			this.selectedIDs[controllerIndex] = null;
+			// 選択中から選択解除になった場合のみ、選択解除イベントを送る
+			this.emit(VRGUI.EVENT_UNSELECT, null, id);
+		}
+	}
+
+	// 選択中のポインター移動によるコンテンツ移動
+	move() {
+		if (this.selectedIDs[0] || this.selectedIDs[1]) {
+			this.emit(VRGUI.EVENT_SELECT_MOVE, null);
+		}
 	}
 
 	// 平面モードの矩形領域
@@ -105,7 +264,7 @@ class VRGUI extends EventEmitter {
 		// 4K中心に中心を合わせる
 		plane.position.y = height / 2
 		this.scene.add(plane);
-		
+
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
 		material.map = texture;
 		material.needsUpdate = true;
@@ -138,13 +297,13 @@ class VRGUI extends EventEmitter {
 		material.needsUpdate = true;
 	}
 
-    /**
-     * VRPlaneを追加
-     * @param {*} 
-     * {
-     *   metaData: metaData
-     * }
-     */
+	/**
+	 * VRPlaneを追加
+	 * @param {*} 
+	 * {
+	 *   metaData: metaData
+	 * }
+	 */
 	addVRPlane(data) {
 		const metaData = data.metaData;
 		if (this.isPlaneMode) {
@@ -191,13 +350,13 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
-    /**
-     * VRPlaneを削除
-     * @param {*} data 
-     * {
-     *    id : id
-     * }
-     */
+	/**
+	 * VRPlaneを削除
+	 * @param {*} data 
+	 * {
+	 *    id : id
+	 * }
+	 */
 	deleteVRPlane(data) {
 		const id = data.id;
 		if (this.vrPlaneDict.hasOwnProperty(id)) {
@@ -206,14 +365,14 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
-    /**
-     * VRPlaneに画像を設定
-     * @param {*} data 
-     * {
-     *   image : image,
-     *   metaData: metaData
-     * }
-     */
+	/**
+	 * VRPlaneに画像を設定
+	 * @param {*} data 
+	 * {
+	 *   image : image,
+	 *   metaData: metaData
+	 * }
+	 */
 	setVRPlaneImage(data) {
 		const metaData = data.metaData;
 		const texture = new THREE.Texture(data.image);
@@ -262,12 +421,12 @@ class VRGUI extends EventEmitter {
 			param.thetaLength = Math.PI * (w / this.width);
 			param.height = h;
 			param.radialSegments = Math.max(2, Math.floor(256 * Number(metaData.width) / this.width));
-			
+
 			const geometry = new THREE.CylinderGeometry(
-				param.radiusTop, param.radiusBottom, param.height, 
+				param.radiusTop, param.radiusBottom, param.height,
 				param.radialSegments, param.heightSegments, param.openEnded,
 				param.thetaStart, param.thetaLength);
-				
+
 			// 左上を原点とする
 			geometry.translate(0, -h / 2, 0);
 
@@ -276,15 +435,15 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
-    /**
-     * メタデータの位置、幅高さなどをVR用プリミティブに設定
-     * @param {*} 
-     * {
-     *   plane : plane, // VR用Plane Mesh
-     *   metaData : metaData,
-     *   useOrg : useOrg,
-     * }
-     */
+	/**
+	 * メタデータの位置、幅高さなどをVR用プリミティブに設定
+	 * @param {*} 
+	 * {
+	 *   plane : plane, // VR用Plane Mesh
+	 *   metaData : metaData,
+	 *   useOrg : useOrg,
+	 * }
+	 */
 	assignVRMetaData(data) {
 		const metaData = data.metaData;
 		const useOrg = data.useOrg;
@@ -348,6 +507,10 @@ class VRGUI extends EventEmitter {
 		return this.scene;
 	}
 
+	getFrontScene() {
+		return this.frontScene;
+	}
+
 	getWidth() {
 		return this.width;
 	}
@@ -356,5 +519,9 @@ class VRGUI extends EventEmitter {
 		return this.height;
 	}
 }
+
+VRGUI.EVENT_SELECT = 'select';
+VRGUI.EVENT_UNSELECT = 'unselect';
+VRGUI.EVENT_SELECT_MOVE = 'select_move';
 
 export default VRGUI;
