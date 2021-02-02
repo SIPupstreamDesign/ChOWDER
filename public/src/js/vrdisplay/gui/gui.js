@@ -277,10 +277,18 @@ class GUI extends EventEmitter {
 	}
 
 	initVRGUIEvents() {
-		this.vrgui.on(VRGUI.EVENT_SELECT, (err, id) => {
+		this.vrgui.on(VRGUI.EVENT_SELECT, (err, id, x, y) => {
+			console.error('EVENT_SELECT', id, x, y)
 			// VRモードでコンテンツが選択された
 			this.unselect();
 			this.select(id);
+			const elem = document.getElementById(id);
+			const meta = this.store.getMetaData(id);
+			if (elem && meta) {
+				const rect = Vscreen.transform(VscreenUtil.toIntRect(meta));
+				elem.draggingOffsetLeft = x - rect.x;
+				elem.draggingOffsetTop = y - rect.y;
+			}
 			this.action.changeContentIndexToFront({
 				targetID: id
 			});
@@ -291,9 +299,16 @@ class GUI extends EventEmitter {
 			this.unselect();
 		});
 
-		
-		this.vrgui.on(VRGUI.EVENT_SELECT_MOVE, (err, id) => {
+		this.vrgui.on(VRGUI.EVENT_SELECT_MOVE, (err, id, x, y) => {
 			// VRモードでコンテンツが選択中にポインター移動された
+			const elem = document.getElementById(id);
+			if (elem && elem.is_dragging) {
+				this.action.changeContentTransform({
+					targetID: elem.id,
+					x: x - elem.draggingOffsetLeft,
+					y: y - elem.draggingOffsetTop
+				});
+			}
 		});
 	}
 

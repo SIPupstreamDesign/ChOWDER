@@ -49,7 +49,15 @@ class VRGUI extends EventEmitter {
 		// コンテンツIDと対応するthree.js Meshの辞書
 		this.vrPlaneDict = {};
 
-		this.selectedIDs = [null, null];
+		// 右手、左手コントローラで選択中のコンテンツIDリスト
+		this.selectedIDs = [null, null]; // [右, 左]
+		// 最初の1回のトリガーを検知するためのフラグ
+		this.isInitialTriger = [true, true]
+
+		// 右手、左手コントローラで選択した際のコントローラ姿勢を表すレイ
+		this.preRays = [new THREE.Ray(), new THREE.Ray()]; // [右, 左]
+		// テンポラリRay
+		this.tempRay = new THREE.Ray();
 
 		// 平面モードかどうか
 		const query = new URLSearchParams(location.search);
@@ -164,19 +172,14 @@ class VRGUI extends EventEmitter {
 		this.frontScene.add(grip2);
 
 		// 選択イベントの初期化
-		/*
-		this.onSelect = this._onSelect.bind(this);
 		this.renderer.xr.addEventListener('sessionstart', (event) => {
 			const session = this.renderer.xr.getSession();
 			this.currentSession = session;
-			// session.addEventListener('select', this.onSelect);
 		});
 		this.renderer.xr.addEventListener('sessionend', (event) => {
 			const session = this.renderer.xr.getSession();
 			this.currentSession = null;
-			// session.removeEventListener('select', this.onSelect);
 		});
-		*/
 	}
 
 	// VRコントローラのボタン入力に応じた処理を行う
@@ -189,10 +192,17 @@ class VRGUI extends EventEmitter {
 
 			 //トリガー（人さし指）押下
 			const trigerPressed = gamepad.buttons[0].pressed;
+			const isLeft = source.handedness === 'left';
+			const controllerIndex = isLeft ? 1 : 0;
+
 			if (trigerPressed) {
-				this.select(source);
+				if (this.isInitialTriger[controllerIndex]) {
+					this.isInitialTriger[controllerIndex] = false;
+					this.select(source);
+				}
 			} else {
 				this.unselect(source);
+				this.isInitialTriger[controllerIndex] = true;
 			}
 		}
 
@@ -225,11 +235,20 @@ class VRGUI extends EventEmitter {
 			const index = objs.indexOf(target.object);
 			if (index >= 0) {
 				const id = Object.keys(this.vrPlaneDict)[index];
-				console.log('selected: ', id);
-				// IDを保存
-				this.selectedIDs[controllerIndex] = id;
-				// コンテンツが選択されたことを通知
-				this.emit(VRGUI.EVENT_SELECT, null, id);
+				if (this.selectedIDs[controllerIndex] !== id) {
+					console.log('selected: ', id);
+					// IDを保存
+					this.selectedIDs[controllerIndex] = id;
+					// コントローラ姿勢を保存
+					this.preRays[controllerIndex].set(controller.position.clone(), this.controllerDir.clone());
+
+					const xy = this.calcPixelPosFromRay(this.preRays[controllerIndex]);
+					// コンテンツが選択されたことを通知
+					if (xy) {
+						this.preXY = xy;
+						this.emit(VRGUI.EVENT_SELECT, null, id, xy.x, xy.y);
+					}
+				}
 			}
 		}
 	}
@@ -239,6 +258,7 @@ class VRGUI extends EventEmitter {
 		const controllerIndex = isLeft ? 1 : 0;
 		if (this.selectedIDs[controllerIndex]) {
 			const id = this.selectedIDs[controllerIndex];
+			console.log('unselect', id);
 			this.selectedIDs[controllerIndex] = null;
 			// 選択中から選択解除になった場合のみ、選択解除イベントを送る
 			this.emit(VRGUI.EVENT_UNSELECT, null, id);
@@ -247,9 +267,62 @@ class VRGUI extends EventEmitter {
 
 	// 選択中のポインター移動によるコンテンツ移動
 	move() {
-		if (this.selectedIDs[0] || this.selectedIDs[1]) {
-			this.emit(VRGUI.EVENT_SELECT_MOVE, null);
+		const isRight = (this.selectedIDs[0] !== null);
+		const isLeft = (this.selectedIDs[1] !== null);
+		const cindices = [ isRight ? 0 : null, isLeft ? 1 : null];
+		for (let i = 0; i < cindices.length; ++i) {
+			const controllerIndex = cindices[i];
+			if (controllerIndex !== null) {
+				const controller = this.renderer.xr.getController(controllerIndex);
+				this.controllerDir.set(0, 0, -1);
+				this.controllerDir.applyQuaternion(controller.quaternion);
+				this.tempRay.set(controller.position, this.controllerDir);
+	
+				const id = this.selectedIDs[controllerIndex];
+				const xy = this.calcPixelPosFromRay(this.tempRay);
+				if (xy && this.preXY && (this.preXY.x !== xy.x || this.preXY.y !== xy.y)) {
+					this.emit(VRGUI.EVENT_SELECT_MOVE, null, id, xy.x, xy.y);
+					this.preXY = xy;
+				}
+			}
 		}
+	}
+
+	// 姿勢Rayから、ピクセル空間で位置割り出す
+	calcPixelPosFromRay(ray) {
+		if (this.isPlaneMode) {
+
+		} else {
+			this.raycaster.set(ray.origin, ray.direction);
+			const intersect = this.raycaster.intersectObject(this.coverCylinder);
+			if (intersect.length >= 1) {
+				const uv = intersect[0].uv;
+				// 当たった点の(背景のcyliderの)UVを加工して、
+				// 仮想ディスプレイに対するUV座標に変換する
+
+				// 仮想ディスプレイ情報
+				const win = this.store.getWindowData();
+				// 背景のcylinderの高さ
+				const ch = this.coverCylinder.geometry.parameters.height;
+				
+				const offsetU = Number(win.posx) / this.width;
+				const offsetV = -Number(win.posy) / this.height;
+				const uScale =  this.width / Number(win.width);
+				const vScale =  ch / win.height;
+
+				uv.x *= uScale;
+				uv.x += offsetU;
+				uv.y += - ((ch - Number(win.height)) / 2) / ch;
+				uv.y += offsetV;
+				uv.y *= vScale;
+
+				return {
+					x : Math.floor((Number(win.width) * uv.x)),
+					y : Math.floor((Number(win.height) * (1.0 - uv.y))),
+				}
+			}
+		}
+		return null;
 	}
 
 	// 平面モードの矩形領域
@@ -286,11 +359,11 @@ class VRGUI extends EventEmitter {
 			thetaStart, thetaLength);
 
 		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
-		const cylinder = new THREE.Mesh(geometry, material);
+		this.coverCylinder = new THREE.Mesh(geometry, material);
 		// flip
-		cylinder.scale.z *= -1;
-		cylinder.position.z = -2;
-		this.scene.add(cylinder);
+		this.coverCylinder.scale.z *= -1;
+		this.coverCylinder.position.z = -2;
+		this.scene.add(this.coverCylinder);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
 		material.map = texture;
