@@ -54,8 +54,6 @@ class VRGUI extends EventEmitter {
 		// 最初の1回のトリガーを検知するためのフラグ
 		this.isInitialTriger = [true, true]
 
-		// 右手、左手コントローラで選択した際のコントローラ姿勢を表すレイ
-		this.preRays = [new THREE.Ray(), new THREE.Ray()]; // [右, 左]
 		// テンポラリRay
 		this.tempRay = new THREE.Ray();
 
@@ -239,10 +237,10 @@ class VRGUI extends EventEmitter {
 					console.log('selected: ', id);
 					// IDを保存
 					this.selectedIDs[controllerIndex] = id;
-					// コントローラ姿勢を保存
-					this.preRays[controllerIndex].set(controller.position.clone(), this.controllerDir.clone());
+					// コントローラ姿勢
+					this.tempRay.set(controller.position, this.controllerDir);
 
-					const xy = this.calcPixelPosFromRay(this.preRays[controllerIndex]);
+					const xy = this.calcPixelPosFromRay(this.tempRay);
 					// コンテンツが選択されたことを通知
 					if (xy) {
 						this.preXY = xy;
@@ -290,37 +288,48 @@ class VRGUI extends EventEmitter {
 
 	// 姿勢Rayから、ピクセル空間で位置割り出す
 	calcPixelPosFromRay(ray) {
+		// 仮想ディスプレイ情報
+		const win = this.store.getWindowData();
+		// xyを仮想ディスプレイ範囲内に制限して返す
+		const clampToWindow = (xy) => {
+			xy.x = Math.max(Number(win.posx), xy.x);
+			xy.x = Math.min(Number(win.posx) + Number(win.width), xy.x);
+			xy.y = Math.max(Number(win.posy), xy.y);
+			xy.y = Math.min(Number(win.posy) + Number(win.height), xy.y);
+			return xy;
+		}
+		let cover = null;
 		if (this.isPlaneMode) {
-
+			cover = this.coverPlane;
 		} else {
-			this.raycaster.set(ray.origin, ray.direction);
-			const intersect = this.raycaster.intersectObject(this.coverCylinder);
-			if (intersect.length >= 1) {
-				const uv = intersect[0].uv;
-				// 当たった点の(背景のcyliderの)UVを加工して、
-				// 仮想ディスプレイに対するUV座標に変換する
+			cover = this.coverCylinder;
+		}
 
-				// 仮想ディスプレイ情報
-				const win = this.store.getWindowData();
-				// 背景のcylinderの高さ
-				const ch = this.coverCylinder.geometry.parameters.height;
-				
-				const offsetU = Number(win.posx) / this.width;
-				const offsetV = -Number(win.posy) / this.height;
-				const uScale =  this.width / Number(win.width);
-				const vScale =  ch / win.height;
+		this.raycaster.set(ray.origin, ray.direction);
+		const intersect = this.raycaster.intersectObject(cover);
+		if (intersect.length >= 1) {
+			const uv = intersect[0].uv;
+			// 当たった点の(背景のcyliderの)UVを加工して、
+			// 仮想ディスプレイに対するUV座標に変換する。
+			// 背景のメッシュの高さ
+			const ch = cover.geometry.parameters.height;
+			// UVをオフセットさせる値を計算
+			const offsetU = Number(win.posx) / this.width;
+			const offsetV = -Number(win.posy) / this.height;
+			const uScale =  this.width / Number(win.width);
+			const vScale =  ch / win.height;
 
-				uv.x *= uScale;
-				uv.x += offsetU;
-				uv.y += - ((ch - Number(win.height)) / 2) / ch;
-				uv.y += offsetV;
-				uv.y *= vScale;
+			uv.x *= uScale;
+			uv.x += offsetU;
+			uv.y += - ((ch - Number(win.height)) / 2) / ch;
+			uv.y += offsetV;
+			uv.y *= vScale;
 
-				return {
-					x : Math.floor((Number(win.width) * uv.x)),
-					y : Math.floor((Number(win.height) * (1.0 - uv.y))),
-				}
+			let xy = {
+				x : Math.floor((Number(win.width) * uv.x)),
+				y : Math.floor((Number(win.height) * (1.0 - uv.y))),
 			}
+			return clampToWindow(xy);
 		}
 		return null;
 	}
@@ -332,11 +341,11 @@ class VRGUI extends EventEmitter {
 		const geometry = new THREE.PlaneGeometry(this.width, height);
 		geometry.translate(this.width / 2, -height / 2, 0);
 		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
-		const plane = new THREE.Mesh(geometry, material);
-		this.setVRPlanePos(plane, 0, 0, -10);
+		this.coverPlane = new THREE.Mesh(geometry, material);
+		this.setVRPlanePos(this.coverPlane, 0, 0, -10);
 		// 4K中心に中心を合わせる
-		plane.position.y = height / 2
-		this.scene.add(plane);
+		this.coverPlane.position.y = height / 2
+		this.scene.add(this.coverPlane);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
 		material.map = texture;

@@ -278,7 +278,6 @@ class GUI extends EventEmitter {
 
 	initVRGUIEvents() {
 		this.vrgui.on(VRGUI.EVENT_SELECT, (err, id, x, y) => {
-			console.error('EVENT_SELECT', id, x, y)
 			// VRモードでコンテンツが選択された
 			this.unselect();
 			this.select(id);
