@@ -33,7 +33,9 @@ const ITownsCommand = {
     // 現在時刻の更新
     UpdateTime : "UpdateTime",
     // itowns側からのレイヤー初期化完了通知
-    LayersInitialized : "LayersInitialized"
+    LayersInitialized : "LayersInitialized",
+    // 強制ステップ実行(VR用)
+    StepForce : "StepForce",
 };
 
 export default ITownsCommand;

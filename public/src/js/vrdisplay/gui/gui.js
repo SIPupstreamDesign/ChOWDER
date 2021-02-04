@@ -431,18 +431,22 @@ class GUI extends EventEmitter {
 	updatePreviewAreaVisible(json) {
 		let groupDict = this.store.getGroupDict();
 		let previewArea = document.getElementById("preview_area");
-		previewArea.style.display = "none"; //  for VR
-		
-		/*
+
+		if (this.store.isVRMode()) {
+			previewArea.style.visibility = "hidden"; //  for VR
+		}
 		if (previewArea) {
 			if (Validator.isVisible(json)) {
 				VscreenUtil.assignMetaData(previewArea, json, false, groupDict);
-				previewArea.style.display = "block";
+				if (!this.store.isVRMode()) {
+					previewArea.style.display = "block";
+				}
 			} else {
-				previewArea.style.display = "none";
+				if (!this.store.isVRMode()) {
+					previewArea.style.display = "none";
+				}
 			}
 		}
-		*/
 	}
 
 	/**
@@ -708,12 +712,14 @@ class GUI extends EventEmitter {
 								connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
 									let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
 									connector.send(ITownsCommand.Resize, rect);
+									this.getVRGUI().showWebGLVR(iframe, metaData);
 								});
 							});
 						} else {
 							connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
 								let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
 								connector.send(ITownsCommand.Resize, rect);
+								this.getVRGUI().showWebGLVR(iframe, metaData);
 							});
 						}
 					});
@@ -725,6 +731,9 @@ class GUI extends EventEmitter {
 				this.action.addItownFunc({
 					id: metaData.id,
 					func: {
+						chowder_itowns_step_force: (timestamp) => {
+							connector.send(ITownsCommand.StepForce, { timestamp: String(timestamp) }, null);
+						},
 						chowder_itowns_update_camera: (metaData) => {
 							ITownsUtil.updateCamera(connector, metaData);
 						},

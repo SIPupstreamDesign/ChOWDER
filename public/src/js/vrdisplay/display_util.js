@@ -161,6 +161,15 @@ class DisplayUtil
      * @param {*} metaData
      */
     static calcWebGLFrameRect(store, metaData) {
+        if (store.isVRMode()) {
+			const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+            return {
+                 x : 0,
+                 y : 0,
+                 w : rect.w,
+                 h : rect.h
+            }
+        }
 
         let win = store.getWindowData();
         

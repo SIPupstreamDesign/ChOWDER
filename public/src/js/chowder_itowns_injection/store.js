@@ -1261,6 +1261,12 @@ class Store extends EventEmitter {
                 this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
                 this.itownsView.notifyChange();
             });
+
+            // VR用step更新
+            this.iframeConnector.on(ITownsCommand.StepForce, (err, param, request) => {
+                this.itownsView.mainLoop._step(this.itownsView, param.timestamp);
+                this.iframeConnector.sendResponse(request);
+            });
         }
     }
 

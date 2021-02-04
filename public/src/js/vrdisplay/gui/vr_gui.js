@@ -53,6 +53,8 @@ class VRGUI extends EventEmitter {
 		// 枠線の幅
 		this.lineWidth = 2;
 
+		this.vrWebGLDict = {};
+
 		// 右手、左手コントローラで選択中のコンテンツIDリスト
 		this.selectedIDs = [null, null]; // [右, 左]
 		// 最初の1回のトリガーを検知するためのフラグ
@@ -102,12 +104,13 @@ class VRGUI extends EventEmitter {
 		document.body.appendChild(VRButton.createButton(this.renderer));
 
 		this.camera = new THREE.PerspectiveCamera(
-			93, windowSize.width / windowSize.height, 1, 10000);
+			93, width / height, 1, 10000);
 
 		this.renderer.autoClear = false;
 
 		// レンダリング
 		const render = (timestamp) => {
+			this.resolveIFrames(timestamp);
 			this.resolveInputs();
 			this.renderer.clear();
 			this.renderer.render(this.getScene(), this.camera);
@@ -209,6 +212,15 @@ class VRGUI extends EventEmitter {
 		}
 
 		this.move();
+	}
+
+	resolveIFrames(timestamp) {
+		const funcDict = this.store.getITownFuncDict();
+		for (let key in this.vrWebGLDict) {
+			if (funcDict.hasOwnProperty(key)) {
+				funcDict[key].chowder_itowns_step_force(timestamp, function (){});
+			}
+		}
 	}
 
 	// VRコントローラの選択イベント（トリガーを引くやつ）
@@ -363,6 +375,8 @@ class VRGUI extends EventEmitter {
 		this.scene.add(this.coverPlane);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
 		material.map = texture;
 		material.needsUpdate = true;
 	}
@@ -390,6 +404,8 @@ class VRGUI extends EventEmitter {
 		this.scene.add(this.coverCylinder);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
 		material.map = texture;
 		material.needsUpdate = true;
 	}
@@ -582,6 +598,12 @@ class VRGUI extends EventEmitter {
 			this.scene.remove(this.vrPlaneDict[id]);
 			delete this.vrPlaneDict[id];
 		}
+		if (this.vrLineDict.hasOwnProperty(id)) {
+			delete this.vrLineDict[id];
+		}
+		if (this.vrWebGLDict.hasOwnProperty(id)) {
+			delete this.vrWebGLDict[id];
+		}
 	}
 
 	/**
@@ -595,6 +617,8 @@ class VRGUI extends EventEmitter {
 	setVRPlaneImage(data) {
 		const metaData = data.metaData;
 		const texture = new THREE.Texture(data.image);
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
 		texture.needsUpdate = true;
 		if (!this.vrPlaneDict.hasOwnProperty(metaData.id)) {
 			console.error('not found plane for', metaData.id);
@@ -604,6 +628,30 @@ class VRGUI extends EventEmitter {
 		// this.vrPlaneDict[metaData.id].material.blending = THREE.NormalBlending;
 		this.vrPlaneDict[metaData.id].material.transparent = true;
 		this.vrPlaneDict[metaData.id].material.alphaTest = 0.5;
+		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
+	}
+
+	/**
+	 * VRPlaneに動画を設定
+	 * @param {*} data 
+	 * {
+	 *   video : video,
+	 *   metaData: metaData
+	 * }
+	 */
+	setVRPlaneVideo(data) {
+		const metaData = data.metaData;
+		const video = data.video;
+		const texture = new THREE.VideoTexture(video);
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
+		texture.format = THREE.RGBFormat;
+		texture.needsUpdate = true;
+		if (!this.vrPlaneDict.hasOwnProperty(metaData.id)) {
+			console.error('not found plane for', metaData.id);
+		}
+
+		this.vrPlaneDict[metaData.id].material.map = texture;
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 
@@ -652,6 +700,7 @@ class VRGUI extends EventEmitter {
 
 				plane.geometry = geometry;
 				plane.needsUpdate = true;
+
 			} else {
 				// 枠線
 				// Left
@@ -776,6 +825,33 @@ class VRGUI extends EventEmitter {
 				elem.style.display = "none";
 			}
 			*/
+		}
+	}
+
+	showWebGLVR(iframe, metaData) {
+		const canvasList = iframe.contentDocument.getElementsByTagName('canvas');
+		if (canvasList.length > 0) {
+			const canvas = canvasList[0];
+
+			const stream = canvas.captureStream(10);
+			const video = document.createElement('video');
+			video.muted = true;
+			video.setAttribute('playsinline', '');
+			video.setAttribute('crossOrigin', 'anonymous');
+			video.setAttribute('loop', '');
+			video.srcObject = stream;
+			video.addEventListener('canplay', () => {
+				if (video.paused) {
+					video.play();
+					console.error(canvas.width, canvas.height)
+					this.vrWebGLDict[metaData.id] = canvas;
+		
+				}
+			});
+			this.addVRPlane({ metaData: metaData });
+			this.setVRPlaneVideo({ metaData: metaData, video: video });
+			const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+			this.setVRPlaneWH(this.vrPlaneDict[metaData.id], metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
 		}
 	}
 
