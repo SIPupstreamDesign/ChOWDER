@@ -434,6 +434,7 @@ class GUI extends EventEmitter {
 
 		if (this.store.isVRMode()) {
 			previewArea.style.visibility = "hidden"; //  for VR
+			previewArea.style.opacity = 0.0;
 		}
 		if (previewArea) {
 			if (Validator.isVisible(json)) {
@@ -938,7 +939,6 @@ class GUI extends EventEmitter {
 					this.showVideo(videoPlayer, metaData);
 				});
 			} else if (metaData.type === 'text') {
-				// contentData is text
 				this.showText(elem, metaData, contentData);
 			} else if (metaData.type === 'pdf') {
 				this.showPDF(elem, metaData, contentData);
@@ -952,6 +952,11 @@ class GUI extends EventEmitter {
 			}
 			VscreenUtil.assignMetaData(elem, metaData, false, groupDict);
 			this.vrgui.assignVRMetaData({ metaData : metaData, useOrg : false});
+
+			// elemのサイズが設定された後に呼ぶ必要がある
+			if (metaData.type === 'text') {
+				this.getVRGUI().showTextVR(elem, metaData);
+			}
 
 			// 同じコンテンツを参照しているメタデータがあれば更新
 			if (elem) {

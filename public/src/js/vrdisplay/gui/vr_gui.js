@@ -869,6 +869,36 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	showTextVR(elem, metaData) {
+		const plane = this.getVRPlane(metaData.id)
+		if (!plane) {
+			this.addVRPlane({ metaData : metaData });
+		}
+		
+		const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+		const previewArea = document.getElementById("preview_area");
+		previewArea.style.visibility = "visible"
+		if (elem.style.fontSize) {
+			const fontSize = Number(elem.style.fontSize.split("px").join(""));
+			elem.style.fontSize = fontSize * Math.sqrt(window.devicePixelRatio) + "px";
+		}
+		html2canvas(elem, {backgroundColor : null, 
+				width : rect.w * window.devicePixelRatio,
+				height : rect.h * window.devicePixelRatio }).then(canvas => {
+			previewArea.style.visibility = "hidden"
+			canvas.toBlob((blob) => {
+				const image = new Image();
+				image.onload =  () => {
+					URL.revokeObjectURL(image.src);
+					// Planeの画像を追加
+					this.setVRPlaneImage({ image: image, metaData : metaData });
+					this.assignVRMetaData({ metaData : metaData, useOrg : false});
+				}
+				image.src = URL.createObjectURL(blob);
+			});
+		});
+	}
+
 	/**
 	 * 指定したIDのVRPlaneを取得
 	 */
