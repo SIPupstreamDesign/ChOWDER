@@ -238,15 +238,15 @@ class VRGUI extends EventEmitter {
 		let target = null;
 		for (let i = 0; i < intersects.length; ++i) {
 			if (!target) {
-				target = intersects[i];
+				target = intersects[i].object;
 			}
-			if (target.distance > intersects[i].distance) {
-				target = intersects[i];
+			if (target.renderOrder <= intersects[i].object.renderOrder) {
+				target = intersects[i].object;
 			}
 		}
 		if (target) {
 			const objs = Object.values(this.vrPlaneDict);
-			const index = objs.indexOf(target.object);
+			const index = objs.indexOf(target);
 			if (index >= 0) {
 				const id = Object.keys(this.vrPlaneDict)[index];
 				if (this.selectedIDs[controllerIndex] !== id) {
@@ -306,11 +306,19 @@ class VRGUI extends EventEmitter {
 	}
 
 	showFrame(id) {
-		this.vrLineDict[id].visible = true;
+		if (this.vrLineDict.hasOwnProperty(id)) {
+			this.vrLineDict[id].visible = true;
+		} else {
+			console.error('Not found frame:', id)
+		}
 	}
 
 	hideFrame(id) {
-		this.vrLineDict[id].visible = false;
+		if (this.vrLineDict.hasOwnProperty(id)) {
+			this.vrLineDict[id].visible = false;
+		} else {
+			console.error('Not found frame:', id)
+		}
 	}
 
 	// 姿勢Rayから、ピクセル空間で位置割り出す
@@ -367,9 +375,9 @@ class VRGUI extends EventEmitter {
 		const height = (-this.planeDepth) * Math.tan(60 * Math.PI / 180) * 2; // =4234.205916839362
 		const geometry = new THREE.PlaneGeometry(this.width, height);
 		geometry.translate(this.width / 2, -height / 2, 0);
-		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest:false  });
 		this.coverPlane = new THREE.Mesh(geometry, material);
-		this.setVRPlanePos(this.coverPlane, 0, 0, -10);
+		this.setVRPlanePos(this.coverPlane, 0, 0, -100000);
 		// 4K中心に中心を合わせる
 		this.coverPlane.position.y = height / 2
 		this.scene.add(this.coverPlane);
@@ -396,11 +404,11 @@ class VRGUI extends EventEmitter {
 			radius, radius, height, radialSegments, heightSegments, true,
 			thetaStart, thetaLength);
 
-		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest:false  });
 		this.coverCylinder = new THREE.Mesh(geometry, material);
+		this.setVRPlanePos(this.coverCylinder, 0, 0, -100000);
 		// flip
 		this.coverCylinder.scale.z *= -1;
-		this.coverCylinder.position.z = -2;
 		this.scene.add(this.coverCylinder);
 
 		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
@@ -423,14 +431,15 @@ class VRGUI extends EventEmitter {
 		const h = Number(metaData.orgHeight);
 		const lineWidth = this.lineWidth;
 		const lineWidth2 = this.lineWidth * 2;
+		const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest:false });
+		const contentMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest:false });
 		if (this.isPlaneMode) {
 			// コンテンツ本体
 			{
 				const geometry = new THREE.PlaneGeometry(w, h);
 				// 左上を原点とする
 				geometry.translate(w / 2, -h / 2, 0);
-				const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
-				const plane = new THREE.Mesh(geometry, material);
+				const plane = new THREE.Mesh(geometry, contentMaterial);
 				this.setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
 				this.vrPlaneDict[metaData.id] = plane;
 				this.scene.add(plane);
@@ -450,7 +459,6 @@ class VRGUI extends EventEmitter {
 				geoBottom.translate((w + lineWidth) / 2, - lineWidth / 2 - h, 0);
 				geoRight.translate(lineWidth / 2 + w, - (h + lineWidth) / 2, 0);
 
-				const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431 });
 				const lineTop = new THREE.Mesh(geoTop, lineMaterial);
 				const lineLeft = new THREE.Mesh(geoLeft, lineMaterial);
 				const lineBottom = new THREE.Mesh(geoBottom, lineMaterial);
@@ -464,7 +472,7 @@ class VRGUI extends EventEmitter {
 
 				this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth, Number(metaData.posy) - lineWidth, Number(metaData.zIndex));
 				this.vrLineDict[metaData.id] = lines;
-				this.scene.add(lines);
+				this.frontScene.add(lines);
 			}
 		} else {
 			// metaDataの大きさのシリンダーを作る
@@ -495,8 +503,7 @@ class VRGUI extends EventEmitter {
 
 				// console.error(radius, radius, height, radialSegments, heightSegments, true, thetaStart, thetaLength)
 
-				const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
-				const cylinder = new THREE.Mesh(geometry, material);
+				const cylinder = new THREE.Mesh(geometry, contentMaterial);
 				// flip
 				cylinder.scale.z *= -1;
 
@@ -512,7 +519,6 @@ class VRGUI extends EventEmitter {
 
 				// Left
 				{
-					const material = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide });
 					// 高さ
 					const height = h;
 					const radialSegments = 2;
@@ -522,13 +528,12 @@ class VRGUI extends EventEmitter {
 						radius, radius, height, radialSegments, heightSegments, true,
 						thetaStart, thetaLength);
 					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, material);
+					const cylinder = new THREE.Mesh(geometry, lineMaterial);
 					cylinder.scale.z *= -1;
 					lines.add(cylinder);
 				}
 				// Right
 				{
-					const material = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide });
 					// 高さ
 					const height = h;
 					const radialSegments = 2;
@@ -538,13 +543,12 @@ class VRGUI extends EventEmitter {
 						radius, radius, height, radialSegments, heightSegments, true,
 						thetaStart, thetaLength);
 					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, material);
+					const cylinder = new THREE.Mesh(geometry, lineMaterial);
 					cylinder.scale.z *= -1;
 					lines.add(cylinder);
 				}
 				// Top
 				{
-					const material = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide });
 					// 高さ
 					const height = lineWidth;
 					const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
@@ -554,13 +558,12 @@ class VRGUI extends EventEmitter {
 						radius, radius, height, radialSegments, heightSegments, true,
 						thetaStart, thetaLength);
 					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, material);
+					const cylinder = new THREE.Mesh(geometry, lineMaterial);
 					cylinder.scale.z *= -1;
 					lines.add(cylinder);
 				}
 				// Bottom
 				{
-					const material = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide });
 					// 高さ
 					const height = lineWidth;
 					const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
@@ -570,7 +573,7 @@ class VRGUI extends EventEmitter {
 						radius, radius, height, radialSegments, heightSegments, true,
 						thetaStart, thetaLength);
 					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, material);
+					const cylinder = new THREE.Mesh(geometry, lineMaterial);
 					cylinder.scale.z *= -1;
 					lines.add(cylinder);
 				}
@@ -580,7 +583,7 @@ class VRGUI extends EventEmitter {
 				this.setVRPlaneWH(lines, metaData, parseInt(rect.w, 10) + lineWidth2, parseInt(rect.h, 10) + lineWidth2);
 				lines.visible = false;
 				this.vrLineDict[metaData.id] = lines;
-				this.scene.add(lines);
+				this.frontScene.add(lines);
 			}
 		}
 	}
@@ -659,9 +662,8 @@ class VRGUI extends EventEmitter {
 		if (this.isPlaneMode) {
 			plane.position.x = this.planeBaseX + x;
 			plane.position.y = this.planeBaseY - y;
-			if (z) {
-				plane.position.z = this.planeDepth + z * 0.1;
-			}
+			plane.position.z = this.planeDepth;
+			plane.renderOrder = z;
 		} else {
 			// x位置:
 			// z反転前の状態で考えたとき、シリンダー表面上でのコンテンツx座標は、
@@ -671,7 +673,8 @@ class VRGUI extends EventEmitter {
 			// y位置: 座標で表現
 			plane.position.y = this.planeBaseY - y;
 			// z位置: 座標で表現
-			plane.position.z = z * 0.25;
+			// plane.position.z = z * 0.25;
+			plane.renderOrder = z;
 		}
 	}
 
