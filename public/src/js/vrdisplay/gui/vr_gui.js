@@ -110,7 +110,6 @@ class VRGUI extends EventEmitter {
 
 		// レンダリング
 		const render = (timestamp) => {
-			this.resolveIFrames(timestamp);
 			this.resolveInputs();
 			this.renderer.clear();
 			this.renderer.render(this.getScene(), this.camera);
@@ -214,12 +213,10 @@ class VRGUI extends EventEmitter {
 		this.move();
 	}
 
-	resolveIFrames(timestamp) {
+	resolveIFrames(id, timestamp) {
 		const funcDict = this.store.getITownFuncDict();
-		for (let key in this.vrWebGLDict) {
-			if (funcDict.hasOwnProperty(key)) {
-				funcDict[key].chowder_itowns_step_force(timestamp, function (){});
-			}
+		if (funcDict.hasOwnProperty(id)) {
+			funcDict[id].chowder_itowns_step_force(timestamp, function (){});
 		}
 	}
 
@@ -655,15 +652,19 @@ class VRGUI extends EventEmitter {
 		}
 
 		this.vrPlaneDict[metaData.id].material.map = texture;
+		// renderOrderを指定した場合に透過するかどうかにより大きく分けられてしまうため
+		// 全てtransparentとしておき、renderOrderに完全に一致させる。
+		this.vrPlaneDict[metaData.id].material.transparent = true;
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 
-	setVRPlanePos(plane, x, y, z = null, w = null, h = null) {
+	setVRPlanePos(plane, x, y, z) {
+		let zValue = z;
 		if (this.isPlaneMode) {
 			plane.position.x = this.planeBaseX + x;
 			plane.position.y = this.planeBaseY - y;
 			plane.position.z = this.planeDepth;
-			plane.renderOrder = z;
+			plane.renderOrder = zValue;
 		} else {
 			// x位置:
 			// z反転前の状態で考えたとき、シリンダー表面上でのコンテンツx座標は、
@@ -673,8 +674,7 @@ class VRGUI extends EventEmitter {
 			// y位置: 座標で表現
 			plane.position.y = this.planeBaseY - y;
 			// z位置: 座標で表現
-			// plane.position.z = z * 0.25;
-			plane.renderOrder = z;
+			plane.renderOrder = zValue;
 		}
 	}
 
@@ -758,7 +758,9 @@ class VRGUI extends EventEmitter {
 
 	updateVisible(metaData) {
 		const plane = this.getVRPlane(metaData.id);
-		plane.visible = VscreenUtil.isVisible(metaData);
+		if (plane) {
+			plane.visible = VscreenUtil.isVisible(metaData);
+		}
 	}
 
 	/**
@@ -853,15 +855,17 @@ class VRGUI extends EventEmitter {
 			video.addEventListener('canplay', () => {
 				if (video.paused) {
 					video.play();
-					console.error(canvas.width, canvas.height)
-					this.vrWebGLDict[metaData.id] = canvas;
-		
+					if (!this.vrWebGLDict.hasOwnProperty(metaData.id)) {
+						this.vrWebGLDict[metaData.id] = canvas;
+						this.setVRPlaneVideo({ metaData: metaData, video: video });
+					}
 				}
 			});
+			video.addEventListener("timeupdate",  () => {
+				this.resolveIFrames(metaData.id, video.currentTime)
+			}, false);
 			this.addVRPlane({ metaData: metaData });
-			this.setVRPlaneVideo({ metaData: metaData, video: video });
-			const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
-			this.setVRPlaneWH(this.vrPlaneDict[metaData.id], metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
+			this.assignVRMetaData({ metaData : metaData, useOrg : false});
 		}
 	}
 
@@ -869,6 +873,9 @@ class VRGUI extends EventEmitter {
 	 * 指定したIDのVRPlaneを取得
 	 */
 	getVRPlane(id) {
+		if (!this.vrPlaneDict.hasOwnProperty(id)) {
+			return null;
+		}
 		return this.vrPlaneDict[id];
 	}
 
