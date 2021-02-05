@@ -843,7 +843,15 @@ class VRGUI extends EventEmitter {
 	showWebGLVR(iframe, metaData) {
 		const canvasList = iframe.contentDocument.getElementsByTagName('canvas');
 		if (canvasList.length > 0) {
-			const canvas = canvasList[0];
+			let canvas = canvasList[0];
+			let size = 0;
+			for (let i = 0; i < canvasList.length; ++i) {
+				const canvasSize = Number(canvasList[i].width) * Number(canvasList[i].height);
+				if (size < canvasSize) {
+					size = canvasSize;
+					canvas = canvasList[i];
+				}
+			}
 
 			const stream = canvas.captureStream(10);
 			const video = document.createElement('video');

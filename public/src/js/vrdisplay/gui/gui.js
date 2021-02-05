@@ -699,6 +699,7 @@ class GUI extends EventEmitter {
 				const connector = new IFrameConnector(iframe);
 				connector.connect(() => {
 					this.action.updateQgisMetadata(metaData);
+					this.getVRGUI().showWebGLVR(iframe, metaData);
 				});
 
 			} else {
