@@ -303,7 +303,6 @@ class Controller {
 		// コンテンツtransform更新
 		this.store.on(Store.EVENT_CONTENT_TRANSFORM_CHANGED, (err, metaData) => {
 			if (metaData) {
-				console.error("EVENT_CONTENT_TRANSFORM_CHANGED")
 				manipulator.removeManipulator();
 				this.showSelectionRect(false);
 			}

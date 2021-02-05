@@ -449,6 +449,21 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	updateVisible(elem, json) {
+		if (Validator.isVisible(json)) {
+			elem.style.display = "block";
+
+		} else {
+			elem.style.display = "none";
+		}
+	}
+
+	updatePDFPage(elem, json) {
+		if (elem.loadPage) {
+			elem.loadPage(parseInt(json.pdfPage), parseInt(json.width));
+		}
+	}
+
 	/**
 	 * メモを表示.
 	 * elemにメモ用エレメントをappendChild

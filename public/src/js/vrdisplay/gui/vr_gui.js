@@ -756,6 +756,11 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	updateVisible(metaData) {
+		const plane = this.getVRPlane(metaData.id);
+		plane.visible = VscreenUtil.isVisible(metaData);
+	}
+
 	/**
 	 * メタデータの位置、幅高さなどをVR用プリミティブに設定
 	 * @param {*} 
@@ -801,6 +806,8 @@ class VRGUI extends EventEmitter {
 					}
 				}
 			}
+
+			this.updateVisible(metaData);
 
 			/* TODO
 			if (Validator.isTextType(metaData)) {

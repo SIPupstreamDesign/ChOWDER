@@ -110,7 +110,7 @@ class ContentHandler {
 		}
 
 		// 動画ファイルのwebrtc<-->datachannel切り替え
-		if (json.type === "video" && json.hasOwnProperty("subtype") && json.subtype === "file") {
+		if (json.type === Constants.TypeVideo && json.hasOwnProperty("subtype") && json.subtype === "file") {
 			let oldMetaData = metaDataDict[json.id];
 			if (oldMetaData) {
 				let videoStore = this.store.getVideoStore();
@@ -166,7 +166,7 @@ class ContentHandler {
 			}
 		}
 		// webglカメラなどの適用
-		if (metaData.type === "webgl") {
+		if (metaData.type === Constants.TypeWebGL) {
 			if(json.webglType && json.webglType === "qgis2three.js"){
 				/* qgis */
 				this.action.updateQgisMetadata(metaData);
@@ -207,16 +207,12 @@ class ContentHandler {
 				this.store.getVideoStore().closeVideo(json);
 			} else {
 				if (elem && elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type)) {
-					if (Validator.isVisible(json)) {
-						VscreenUtil.assignMetaData(elem, json, false, groupDict);
-						elem.style.display = "block";
-
-						// pdfページの切り替え
-						if (json.type === 'pdf' && elem.loadPage) {
-							elem.loadPage(parseInt(json.pdfPage), parseInt(json.width));
-						}
-					} else {
-						elem.style.display = "none";
+					// 表示非表示の切り替え
+					this.gui.updateVisible(elem, metaData);
+					this.gui.getVRGUI().updateVisible(metaData);
+					// pdfページの切り替え
+					if (json.type === Constants.TypePDF) {
+						this.gui.updatePDFPage(elem, metaData);
 					}
 				}
 				if (isUpdateContent || (!isWindow && Validator.isVisible(json))) {
