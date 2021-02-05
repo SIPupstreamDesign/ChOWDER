@@ -389,6 +389,11 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 	}
 
+	isAlwaysOnTop(zIndex) {
+		return (Number(zIndex) === Constants.ZIndexAlwaysOnTopValue)
+		|| (String(zIndex) === Constants.ZIndexAlwaysOnTopString);
+	} 
+
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
 	 * @method initPropertyArea
@@ -500,11 +505,8 @@ class ContentPropertyGUI extends EventEmitter {
 			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_z', 'z', 'index', '0', () => {
 				let transz = document.getElementById('content_transform_z');
-				if (transz !== Constants.ZIndexAlwaysOnTopString) {
-					let val = Constants.ZIndexAlwaysOnTopValue;
-					this.action.changeContentIndex({
-						zIndex: val
-					});
+				if (this.isAlwaysOnTop(transz.value)) {
+					document.getElementsByClassName('always_on_top')[0].checked = true;
 				} else {
 					let val = parseInt(transz.value, 10);
 					this.action.changeContentIndex({
@@ -512,8 +514,8 @@ class ContentPropertyGUI extends EventEmitter {
 					});
 				}
 			});
-			addCheckProperty(isEditable, 'always_on_top', 'AlwaysOnTop', String(metaData.zIndex) === Constants.ZIndexAlwaysOnTopString, () => {
-				let meta = this.store.getMetaData(metaData.id);
+			const isTop = this.isAlwaysOnTop(metaData.zIndex);
+			addCheckProperty(isEditable, 'always_on_top', 'AlwaysOnTop', isTop, () => {
 				let transz = document.getElementById('content_transform_z');
 				if (document.getElementsByClassName('always_on_top')[0].checked) {
 					this.action.changeContentIndex({
@@ -527,6 +529,10 @@ class ContentPropertyGUI extends EventEmitter {
 					transz.disabled = false;
 				}
 			});
+			if (isTop) {
+				const transz = document.getElementById('content_transform_z');
+				transz.disabled = true;
+			}
 			if (metaData.type === Constants.TypeWebGL) {
 				addCheckProperty(isEditable, 'display_time', 'display time', String(metaData.display_time) === "true", () => {
 					let meta = this.store.getMetaData(metaData.id);
