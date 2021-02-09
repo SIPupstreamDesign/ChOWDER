@@ -8,6 +8,8 @@ import Vscreen from '../../common/vscreen.js';
 import VscreenUtil from '../../common/vscreen_util.js';
 import { VRButton } from '../../../../../node_modules/three/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from '../../../../../node_modules/three/examples/jsm/webxr/XRControllerModelFactory.js';
+import Store from '../store/store'
+import VideoStore from '../store/video_store'
 
 class VRGUI extends EventEmitter {
 	constructor(store, action) {
@@ -55,6 +57,8 @@ class VRGUI extends EventEmitter {
 
 		this.vrWebGLDict = {};
 
+		this.vrWebGLVideoHandleDict = {};
+
 		// 右手、左手コントローラで選択中のコンテンツIDリスト
 		this.selectedIDs = [null, null]; // [右, 左]
 		// 最初の1回のトリガーを検知するためのフラグ
@@ -81,6 +85,7 @@ class VRGUI extends EventEmitter {
 	initVR(windowSize) {
 		this.initVRRenderer(windowSize);
 		this.initVRController();
+		this.initVREvents();
 	}
 
 	/**
@@ -110,6 +115,7 @@ class VRGUI extends EventEmitter {
 
 		// レンダリング
 		const render = (timestamp) => {
+			this.timestamp = timestamp;
 			this.resolveInputs();
 			this.renderer.clear();
 			this.renderer.render(this.getScene(), this.camera);
@@ -183,6 +189,21 @@ class VRGUI extends EventEmitter {
 		this.renderer.xr.addEventListener('sessionend', (event) => {
 			const session = this.renderer.xr.getSession();
 			this.currentSession = null;
+		});
+	}
+
+	initVREvents() {
+		const videoStore = this.store.getVideoStore();
+		videoStore.on(VideoStore.EVENT_STREAM_ADDED, (err, metaData) => {
+			const player = videoStore.getVideoPlayer(metaData.id);
+			console.error(player)
+			if (player) {
+				// 動画ストリームが追加された場合に、動画をテクスチャとして貼り付け
+					console.error(player.getVideo().width, player.getVideo().height)
+				if (!this.vrPlaneDict[metaData.id].material.map) {
+					this.setVRPlaneVideo({ metaData: metaData, video: player.getVideo() });
+				}
+			}
 		});
 	}
 
@@ -594,6 +615,10 @@ class VRGUI extends EventEmitter {
 	 */
 	deleteVRPlane(data) {
 		const id = data.id;
+		if (this.vrWebGLVideoHandleDict.hasOwnProperty(id)) {
+			clearInterval(this.vrWebGLVideoHandleDict[id]);
+			delete this.vrWebGLVideoHandleDict[id];
+		}
 		if (this.vrPlaneDict.hasOwnProperty(id)) {
 			this.scene.remove(this.vrPlaneDict[id]);
 			delete this.vrPlaneDict[id];
@@ -840,6 +865,11 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	showVideoVR(metaData) {
+		this.addVRPlane({ metaData: metaData });
+		this.assignVRMetaData({ metaData : metaData, useOrg : false});
+	}
+
 	showWebGLVR(iframe, metaData) {
 		const canvasList = iframe.contentDocument.getElementsByTagName('canvas');
 		if (canvasList.length > 0) {
@@ -856,22 +886,36 @@ class VRGUI extends EventEmitter {
 			const stream = canvas.captureStream(10);
 			const video = document.createElement('video');
 			video.muted = true;
-			video.setAttribute('playsinline', '');
-			video.setAttribute('crossOrigin', 'anonymous');
-			video.setAttribute('loop', '');
-			video.srcObject = stream;
+			video.autoplay = true;
+			video.loop = true;
+			let isInit = false;
 			video.addEventListener('canplay', () => {
 				if (video.paused) {
 					video.play();
 					if (!this.vrWebGLDict.hasOwnProperty(metaData.id)) {
 						this.vrWebGLDict[metaData.id] = canvas;
 						this.setVRPlaneVideo({ metaData: metaData, video: video });
+						isInit = true;
 					}
 				}
 			});
-			video.addEventListener("timeupdate",  () => {
-				this.resolveIFrames(metaData.id, video.currentTime)
-			}, false);
+			video.load();
+			video.srcObject = stream;
+			this.vrWebGLVideoHandleDict[metaData.id] = setInterval(() => {
+				this.resolveIFrames(metaData.id, this.timestamp)
+			}, 100);
+			setTimeout(() => {
+				if (!isInit) {
+					if (video.paused) {
+						video.play();
+						if (!this.vrWebGLDict.hasOwnProperty(metaData.id)) {
+							this.vrWebGLDict[metaData.id] = canvas;
+							this.setVRPlaneVideo({ metaData: metaData, video: video });
+							isInit = true;
+						}
+					}
+				}
+			}, 1000);
 			this.addVRPlane({ metaData: metaData });
 			this.assignVRMetaData({ metaData : metaData, useOrg : false});
 		}

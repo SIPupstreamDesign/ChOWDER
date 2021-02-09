@@ -13,8 +13,9 @@ import DisplayUtil from '../display_util';
 
 const random_id_for_webrtc = DisplayUtil.generateID();
 
-class VideoStore {
+class VideoStore　extends EventEmitter {
     constructor(connector, store, action) {
+        super();
         this.connector = connector;
         this.store = store;
 		this.action = action;
@@ -149,10 +150,16 @@ class VideoStore {
 
                 if (!isUseDataChannel) {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
-                    try {
-                        elem.srcObject = stream;
-                    } catch(e) {
-                        elem.src = stream;
+                    if (!elem.paused) {
+                        try {
+                            elem.srcObject = stream;
+                        } catch(e) {
+                            elem.src = stream;
+                        }
+                        if (elem.paused) {
+                            elem.play();
+                        }
+                        this.emit(VideoStore.EVENT_STREAM_ADDED, null, metaData);
                     }
                 }
 
@@ -290,5 +297,7 @@ class VideoStore {
         }
     }
 };
+
+VideoStore.EVENT_STREAM_ADDED = 'stream_added';
 
 export default VideoStore;

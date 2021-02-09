@@ -793,6 +793,8 @@ class GUI extends EventEmitter {
 				request: JSON.stringify({ key: rtcKey })
 			});
 			delete metaData.from;
+
+			this.getVRGUI().showVideoVR(metaData);
 		}
 	}
 
