@@ -472,12 +472,16 @@ class VideoStore {
 			} catch (error) {
 				try {
 					videoData = URL.createObjectURL(blobObj);
+					URL.revokeObjectURL(video.src);
 					video.src = videoData;
 				} catch (e) {
 					console.error(e);
 				}
 			}
-			video.load();
+			setTimeout(() => {
+				video.load();
+				video.play();
+			}, 100)
 		}
 		this.setVideoData(metaData.id, blob);
 
@@ -599,7 +603,6 @@ class VideoStore {
 	__processVideoStream(metaData, video, blob) {
         let subtype = metaData.subtype;
 		let videoData;
-		let isAlreadyLoaded = video.srcObject || video.src;
 
 		// stream
 		try {

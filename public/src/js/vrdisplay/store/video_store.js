@@ -146,17 +146,21 @@ class VideoStore　extends EventEmitter {
                 }
             }
 
+
             webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
 
                 if (!isUseDataChannel) {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
-                    if (!elem.paused) {
+
+                    if (elem.srcObject !== stream) {
                         try {
                             elem.srcObject = stream;
                         } catch(e) {
                             elem.src = stream;
                         }
-                        if (elem.paused) {
+    
+                        if (!data.player.isPlaying()) {
+                            elem.load();
                             elem.play();
                         }
                         this.emit(VideoStore.EVENT_STREAM_ADDED, null, metaData);

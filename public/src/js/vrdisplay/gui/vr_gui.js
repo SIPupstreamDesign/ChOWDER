@@ -196,10 +196,8 @@ class VRGUI extends EventEmitter {
 		const videoStore = this.store.getVideoStore();
 		videoStore.on(VideoStore.EVENT_STREAM_ADDED, (err, metaData) => {
 			const player = videoStore.getVideoPlayer(metaData.id);
-			console.error(player)
 			if (player) {
 				// 動画ストリームが追加された場合に、動画をテクスチャとして貼り付け
-					console.error(player.getVideo().width, player.getVideo().height)
 				if (!this.vrPlaneDict[metaData.id].material.map) {
 					this.setVRPlaneVideo({ metaData: metaData, video: player.getVideo() });
 				}

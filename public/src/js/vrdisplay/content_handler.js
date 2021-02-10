@@ -117,50 +117,52 @@ class ContentHandler {
 				let isAlreadyUsed = videoStore.isDataChannelUsed(oldMetaData);
 				let isDataChannelUsed = videoStore.isDataChannelUsed(json);
 				let videoPlayer = videoStore.getVideoPlayer(json.id);
-				if (!isAlreadyUsed && isDataChannelUsed) {
-					// DataChannel使用開始
-					videoStore.closeVideo(json);
-					this.gui.showVideo(videoPlayer, json);
-					metaDataDict[json.id] = json;
-					videoPlayer.enableSeek(false);
-					return;
-				}
-				if (isAlreadyUsed && !isDataChannelUsed) {
-					// DataChannel使用終了、webrtcに切り替え
-					videoStore.closeVideo(json);
-					this.gui.showVideo(videoPlayer, json);
-					metaDataDict[json.id] = json;
-					videoPlayer.enableSeek(true);
-					return;
-				}
-				if (json.hasOwnProperty('isPlaying')) {
-					// 動画再生状態の変化
-					if (String(json.isPlaying) === "true" && videoPlayer.getVideo().paused) {
-						// 再生に変化
-						if (json.hasOwnProperty('currentTime')) {
-							const currentTime = Number(json.currentTime);
-							videoPlayer.getVideo().currentTime = currentTime;
-						}
-						videoPlayer.getVideo().play();
+				if (videoPlayer) {
+					if (!isAlreadyUsed && isDataChannelUsed) {
+						// DataChannel使用開始
+						videoStore.closeVideo(json);
+						this.gui.showVideo(videoPlayer, json);
+						metaDataDict[json.id] = json;
+						videoPlayer.enableSeek(false);
 						return;
-					} else if (String(json.isPlaying) === "false" && !videoPlayer.getVideo().paused) {
-						// 一時停止に変化
-						if (json.hasOwnProperty('currentTime')) {
-							const currentTime = Number(json.currentTime);
-							if (videoPlayer.getVideo().currentTime < currentTime) {
-								// コントローラ側より遅れている場合, コントローラの時間まで待ってからpause
-								let subTime = currentTime - videoPlayer.getVideo().currentTime;
-								setTimeout(() => {
-									videoPlayer.getVideo().pause();
-								}, subTime * 1000);
-								return;
-							} else {
-								// コントローラ側より進んでいる場合, コントローラの時間に合わせてpause
+					}
+					if (isAlreadyUsed && !isDataChannelUsed) {
+						// DataChannel使用終了、webrtcに切り替え
+						videoStore.closeVideo(json);
+						this.gui.showVideo(videoPlayer, json);
+						metaDataDict[json.id] = json;
+						videoPlayer.enableSeek(true);
+						return;
+					}
+					if (json.hasOwnProperty('isPlaying')) {
+						// 動画再生状態の変化
+						if (String(json.isPlaying) === "true" && videoPlayer.getVideo().paused) {
+							// 再生に変化
+							if (json.hasOwnProperty('currentTime')) {
+								const currentTime = Number(json.currentTime);
 								videoPlayer.getVideo().currentTime = currentTime;
-								videoPlayer.getVideo().pause();
 							}
+							videoPlayer.getVideo().play();
+							return;
+						} else if (String(json.isPlaying) === "false" && !videoPlayer.getVideo().paused) {
+							// 一時停止に変化
+							if (json.hasOwnProperty('currentTime')) {
+								const currentTime = Number(json.currentTime);
+								if (videoPlayer.getVideo().currentTime < currentTime) {
+									// コントローラ側より遅れている場合, コントローラの時間まで待ってからpause
+									let subTime = currentTime - videoPlayer.getVideo().currentTime;
+									setTimeout(() => {
+										videoPlayer.getVideo().pause();
+									}, subTime * 1000);
+									return;
+								} else {
+									// コントローラ側より進んでいる場合, コントローラの時間に合わせてpause
+									videoPlayer.getVideo().currentTime = currentTime;
+									videoPlayer.getVideo().pause();
+								}
+							}
+							return;
 						}
-						return;
 					}
 				}
 			}

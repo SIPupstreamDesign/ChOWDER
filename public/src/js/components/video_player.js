@@ -20,7 +20,7 @@ class VideoPlayer extends EventEmitter {
         
         this.video.setAttribute('crossorigin', '');
         this.video.setAttribute('playsinline', '');
-        this.video.setAttribute('autoplay', '');
+        // this.video.setAttribute('autoplay', '');
         if (Constants.IsMobile) {
             this.video.setAttribute('muted', 'muted');
         }
@@ -65,6 +65,12 @@ class VideoPlayer extends EventEmitter {
 		}
 		this.video.src = "";
     }
+    
+    isPlaying() {
+        //https://stackoverflow.com/questions/36803176/how-to-prevent-the-play-request-was-interrupted-by-a-call-to-pause-error
+        return this.video.currentTime > 0 && !this.video.paused && !this.video.ended 
+                && this.video.readyState > this.video.HAVE_CURRENT_DATA;
+    } 
 
     getDOM() {
         return this.dom;

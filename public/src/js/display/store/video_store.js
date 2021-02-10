@@ -151,10 +151,17 @@ class VideoStore {
 
                 if (!isUseDataChannel) {
                     let stream = evt.stream ? evt.stream : evt.streams[0];
-                    try {
-                        elem.srcObject = stream;
-                    } catch(e) {
-                        elem.src = stream;
+                    if (elem.srcObject !== stream) {
+                        try {
+                            elem.srcObject = stream;
+                        } catch(e) {
+                            elem.src = stream;
+                        }
+    
+                        if (!data.player.isPlaying()) {
+                            elem.load();
+                            elem.play();
+                        }
                     }
                 }
 
