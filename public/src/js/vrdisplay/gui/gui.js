@@ -329,14 +329,15 @@ class GUI extends EventEmitter {
 	}
 
 	/**
-	 * マークによるコンテンツ強調表示のトグル
+	 * マークによるコンテンツ強調表示の表示状態の更新
 	 * @param {Element} elem 対象エレメント
 	 * @param {JSON} metaData メタデータ
 	 */
-	toggleMark(elem, metaData) {
-		let groupDict = this.store.getGroupDict();
+	updateMarkVisible(elem, metaData) {
+		const groupDict = this.store.getGroupDict();
 		if (elem && metaData.hasOwnProperty("id")) {
-			if (metaData.hasOwnProperty(Constants.MARK) && (metaData[Constants.MARK] === 'true' || metaData[Constants.MARK] === true)) {
+			const isMarkVisible = metaData.hasOwnProperty(Constants.MARK) && (metaData[Constants.MARK] === 'true' || metaData[Constants.MARK] === true);
+			if (isMarkVisible) {
 				if (!elem.classList.contains(Constants.MARK)) {
 					elem.classList.add(Constants.MARK);
 				}
@@ -350,33 +351,80 @@ class GUI extends EventEmitter {
 					elem.style.borderWidth = "0px";
 				}
 			}
-			let memo = document.getElementById("memo:" + metaData.id);
+		}
+	}
+
+	/**
+	 * メモの表示状態の更新
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	updateMemoVisible(elem, metaData) {
+		const groupDict = this.store.getGroupDict();
+		if (elem && metaData.hasOwnProperty("id")) {
+			// Memo
+			const memo = document.getElementById("memo:" + metaData.id);
 			if (memo) {
 				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
 					memo.style.borderColor = "lightgray";
 					memo.style.backgroundColor = "lightgray";
 				}
-				if (String(metaData[Constants.MARK_MEMO]) === 'true' && String(metaData.visible) === 'true') {
-					memo.style.display = "block";
-				} else {
-					memo.style.display = "none";
-				}
-			}
-			let time = document.getElementById("time:" + metaData.id);
-			if (time) {
-				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-					time.style.borderColor = groupDict[metaData.group].color;
-				}
-				if (String(metaData.display_time) === 'true') {
-					time.style.display = "block";
-				} else {
-					time.style.display = "none";
-				}
+				const isMemoVisible = String(metaData[Constants.MARK_MEMO]) === 'true' && String(metaData.visible) === 'true';
+				memo.style.display = isMemoVisible ? "block" : "none"
 			}
 		}
 	}
 
-	deleteMark(elem, id) {
+	/**
+	 * 時刻の表示状態の更新
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	updateTimeVisible(elem, metaData) {
+		const groupDict = this.store.getGroupDict();
+		if (elem && metaData.hasOwnProperty("id")) {
+			const time = document.getElementById("time:" + metaData.id);
+			if (time) {
+				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+					time.style.borderColor = groupDict[metaData.group].color;
+				}
+				const isTimeVisible = String(metaData.display_time) === 'true'
+				time.style.display = isTimeVisible ? "block" : "none";
+			}
+		}
+	}
+
+	/**
+	 * コンテンツの付加情報（メモ、マークなど）の表示状態をまとめて更新
+	 * @param {Element} elem 対象エレメント
+	 * @param {JSON} metaData メタデータ
+	 */
+	updateSubStatusVisible(elem, metaData) {
+		this.updateMarkVisible(elem, metaData);
+		this.updateMemoVisible(elem, metaData);
+		this.updateTimeVisible(elem, metaData);
+	}
+
+	/**
+	 * コンテンツの表示状態の更新
+	 * @param {*} elem 
+	 * @param {*} json 
+	 */
+	updateContentVisible(elem, json) {
+		if (Validator.isVisible(json)) {
+			elem.style.display = "block";
+
+		} else {
+			elem.style.display = "none";
+		}
+	}
+
+	/**
+	 * メモを削除
+	 * @param {*} elem 
+	 * @param {*} id 
+	 */
+	deleteMemo(elem, id) {
 		if (elem) {
 			let memo = document.getElementById("memo:" + id);
 			if (memo) {
@@ -388,6 +436,11 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * 時刻表示を削除
+	 * @param {*} elem 
+	 * @param {*} id 
+	 */
 	deleteTime(elem, id) {
 		if (elem) {
 			let time = document.getElementById("time:" + id);
@@ -400,6 +453,11 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * 著作権情報を削除
+	 * @param {*} elem 
+	 * @param {*} id 
+	 */
 	deleteCopyright(elem, id) {
 		if (elem) {
 			let copyright = document.getElementById("copyright:" + id);
@@ -412,11 +470,16 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * コンテンツを削除
+	 * @param {*} elem 
+	 * @param {*} id 
+	 */
 	deleteContent(id) {
 		const elem = document.getElementById(id);
 		if (elem) {
 			const previewArea = document.getElementById('preview_area');
-			this.deleteMark(elem, id);
+			this.deleteMemo(elem, id);
 			this.deleteTime(elem, id);
 			this.deleteCopyright(elem, id);
 			previewArea.removeChild(elem);
@@ -450,15 +513,11 @@ class GUI extends EventEmitter {
 		}
 	}
 
-	updateVisible(elem, json) {
-		if (Validator.isVisible(json)) {
-			elem.style.display = "block";
-
-		} else {
-			elem.style.display = "none";
-		}
-	}
-
+	/**
+	 * PDFページの更新
+	 * @param {*} elem 
+	 * @param {*} json 
+	 */
 	updatePDFPage(elem, json) {
 		if (elem.loadPage) {
 			elem.loadPage(parseInt(json.pdfPage), parseInt(json.width), () => {
@@ -1420,6 +1479,10 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * WebGL表示の幅高さを更新
+	 * @param {*} metaData 
+	 */
 	updateWebGLFrameRect(metaData) {
 		// webgl iframeの更新
 		if (metaData.type === Constants.TypeWebGL) {
@@ -1436,6 +1499,10 @@ class GUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * ディスプレイIDをタイトルとして設定
+	 * @param {*} metaData 
+	 */
 	setDisplayID(displayID) {
 		window.parent.document.title = "Display ID:" + displayID;
 		this.getHeadMenu().setIDValue(displayID);

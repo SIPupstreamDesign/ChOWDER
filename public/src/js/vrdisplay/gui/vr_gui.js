@@ -800,7 +800,7 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
-	updateVisible(metaData) {
+	updateContentVisible(metaData) {
 		const plane = this.getVRPlane(metaData.id);
 		if (plane) {
 			plane.visible = VscreenUtil.isVisible(metaData);
@@ -853,7 +853,7 @@ class VRGUI extends EventEmitter {
 				}
 			}
 
-			this.updateVisible(metaData);
+			this.updateContentVisible(metaData);
 
 			/* TODO
 			if (Validator.isTextType(metaData)) {
@@ -978,22 +978,54 @@ class VRGUI extends EventEmitter {
 			const fontSize = Number(elem.style.fontSize.split("px").join(""));
 			elem.style.fontSize = fontSize * Math.sqrt(window.devicePixelRatio) + "px";
 		}
-		html2canvas(elem, {backgroundColor : null, 
-				width : rect.w * window.devicePixelRatio,
-				height : rect.h * window.devicePixelRatio }).then(canvas => {
-			previewArea.style.visibility = "hidden"
-			canvas.toBlob((blob) => {
-				const image = new Image();
-				image.onload =  () => {
-					URL.revokeObjectURL(image.src);
-					// Planeの画像を追加
-					this.setVRPlaneImage({ image: image, metaData : metaData });
-					this.assignVRMetaData({ metaData : metaData, useOrg : false});
-				}
-				image.src = URL.createObjectURL(blob);
+		try {
+			html2canvas(elem, {backgroundColor : null, 
+					width : rect.w * window.devicePixelRatio,
+					height : rect.h * window.devicePixelRatio }).then(canvas => {
+				previewArea.style.visibility = "hidden"
+				canvas.toBlob((blob) => {
+					const image = new Image();
+					image.onload =  () => {
+						URL.revokeObjectURL(image.src);
+						// Planeの画像を追加
+						this.setVRPlaneImage({ image: image, metaData : metaData });
+						this.assignVRMetaData({ metaData : metaData, useOrg : false});
+					}
+					image.src = URL.createObjectURL(blob);
+				});
 			});
-		});
+		} catch (ex) {
+			previewArea.style.visibility = "hidden"
+		}
 	}
+
+	/**
+	 * メモ用テキストをVRで表示. (コントローラのiボタン有効時)
+	 * html2canvasによりレンダリングした画像をVR Planeとして表示する.
+	 * @param {*} data 
+	 * { 
+	 *   memoElem : 通常のdisplayで、メモ用テキストを表示させたエレメント
+	 *   metaData: metaData,
+	 * }
+	 */
+	showMemoVR(memoElem, metaData) {
+		// メモ用ID(内部でのみ使用)
+		const memoID = "memo:" + metaData.id;
+		const plane = this.getVRPlane(memoID)
+		if (!plane) {
+			return false;
+		}
+
+		
+	}
+
+	/**
+	 * コンテンツ強調表示(コントローラの☆ボタン有効時)
+	 */
+	showMark() {
+
+	}
+
 
 	/**
 	 * PDFをVRで表示. 

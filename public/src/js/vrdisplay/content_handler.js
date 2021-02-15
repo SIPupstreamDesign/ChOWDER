@@ -104,7 +104,7 @@ class ContentHandler {
 				let request = { type: json.type, id: json.id, restore_index : json.restore_index };
 				Connector.send(Command.GetContent, request, (err, reply) => {
 					this.doneGetContent(err, reply, callback);
-					this.gui.toggleMark(document.getElementById(json.id), metaData);
+					this.gui.updateSubStatusVisible(document.getElementById(json.id), metaData);
 				});
 			}
 		}
@@ -210,8 +210,8 @@ class ContentHandler {
 			} else {
 				if (elem && elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type)) {
 					// 表示非表示の切り替え
-					this.gui.updateVisible(elem, metaData);
-					this.gui.getVRGUI().updateVisible(metaData);
+					this.gui.updateContentVisible(elem, metaData);
+					this.gui.getVRGUI().updateContentVisible(metaData);
 					// pdfページの切り替え
 					if (json.type === Constants.TypePDF) {
 						this.gui.updatePDFPage(elem, metaData);
@@ -234,7 +234,7 @@ class ContentHandler {
 									}
 								});
 							}
-							this.gui.toggleMark(document.getElementById(json.id), metaData);
+							this.gui.updateSubStatusVisible(document.getElementById(json.id), metaData);
 						});
 					} else if (json.type === "tileimage") {
 						// window範囲外で非表示になっているタイルが
@@ -255,7 +255,7 @@ class ContentHandler {
 											}
 										});
 										let el = document.getElementById(metaData.id);
-										this.gui.toggleMark(el, metaData);
+										this.gui.updateSubStatusVisible(el, metaData);
 										VscreenUtil.assignMetaData(el, metaData, false, groupDict);
 									}
 								});
@@ -268,7 +268,7 @@ class ContentHandler {
 						// 新規コンテンツロード.
 						Connector.send(Command.GetContent, json, (err, reply) => {
 							this.doneGetContent(err, reply, callback);
-							this.gui.toggleMark(document.getElementById(json.id), metaData);
+							this.gui.updateSubStatusVisible(document.getElementById(json.id), metaData);
 						});
 					}
 
@@ -284,7 +284,7 @@ class ContentHandler {
 					this.gui.showMemo(elem, metaData);
 					this.gui.showTime(elem, metaData);
 					this.gui.showCopyrights(elem, metaData);
-					this.gui.toggleMark(elem, metaData);
+					this.gui.updateSubStatusVisible(elem, metaData);
 				}
 			}
 		}
