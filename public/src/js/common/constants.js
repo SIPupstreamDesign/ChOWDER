@@ -64,6 +64,7 @@ const Constants = {
 		|| navigator.userAgent.indexOf('Android') > 0 && navigator.userAgent.indexOf('Mobile') > 0,
 	DefaultCursorColor : "rgb(255, 255, 255)",
 	DefaultTileIconColor : "rgb(54, 187, 68)",
+	DefaultGroupColor :  "rgb(54, 187, 68)",
 	ReconnectTimeout : 2000,
 	MARK_MEMO : "mark_memo",
 	MARK : "mark"

@@ -54,6 +54,8 @@ class VRGUI extends EventEmitter {
 		this.vrLineDict = {};
 		// 枠線の幅
 		this.lineWidth = 2;
+		// コンテンツIDと対応する強調表示線の辞書
+		this.vrMarkLineDict = {};
 
 		this.vrWebGLDict = {};
 
@@ -434,6 +436,100 @@ class VRGUI extends EventEmitter {
 		material.needsUpdate = true;
 	}
 
+	createVRPlaneFrame(w, h, lineMaterial, lineWidth) {
+		const lines = new THREE.Group();
+		const geoTop = new THREE.PlaneGeometry(w + lineWidth, lineWidth);
+		const geoLeft = new THREE.PlaneGeometry(lineWidth, h + lineWidth);
+		const geoBottom = new THREE.PlaneGeometry(w + lineWidth, lineWidth);
+		const geoRight = new THREE.PlaneGeometry(lineWidth, h + lineWidth);
+
+		// 左上を原点とする
+		geoTop.translate((w + lineWidth) / 2, - lineWidth / 2, 0);
+		geoLeft.translate(lineWidth / 2, - (h + lineWidth) / 2, 0);
+		geoBottom.translate((w + lineWidth) / 2, - lineWidth / 2 - h, 0);
+		geoRight.translate(lineWidth / 2 + w, - (h + lineWidth) / 2, 0);
+
+		const lineTop = new THREE.Mesh(geoTop, lineMaterial);
+		const lineLeft = new THREE.Mesh(geoLeft, lineMaterial);
+		const lineBottom = new THREE.Mesh(geoBottom, lineMaterial);
+		const lineRight = new THREE.Mesh(geoRight, lineMaterial);
+
+		lines.add(lineTop);
+		lines.add(lineBottom);
+		lines.add(lineLeft);
+		lines.add(lineRight);
+		lines.visible = false;
+		return lines;
+	}
+
+	createVRCylinderFrame(w, h, lineMaterial, lineWidth) {
+		const lines = new THREE.Group();
+		const radius = this.width / Math.PI;
+		const heightSegments = 1;
+
+		// Left
+		{
+			// 高さ
+			const height = h;
+			const radialSegments = 2;
+			const thetaStart = 1.5 * Math.PI; // right start
+			const thetaLength = Math.PI * (lineWidth / this.width);
+			const geometry = new THREE.CylinderGeometry(
+				radius, radius, height, radialSegments, heightSegments, true,
+				thetaStart, thetaLength);
+			geometry.translate(0, -height / 2, 0);
+			const cylinder = new THREE.Mesh(geometry, lineMaterial);
+			cylinder.scale.z *= -1;
+			lines.add(cylinder);
+		}
+		// Right
+		{
+			// 高さ
+			const height = h;
+			const radialSegments = 2;
+			const thetaStart = 1.5 * Math.PI; // right start
+			const thetaLength = Math.PI * (lineWidth / this.width);
+			const geometry = new THREE.CylinderGeometry(
+				radius, radius, height, radialSegments, heightSegments, true,
+				thetaStart, thetaLength);
+			geometry.translate(0, -height / 2, 0);
+			const cylinder = new THREE.Mesh(geometry, lineMaterial);
+			cylinder.scale.z *= -1;
+			lines.add(cylinder);
+		}
+		// Top
+		{
+			// 高さ
+			const height = lineWidth;
+			const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
+			const thetaStart = 1.5 * Math.PI; // right start
+			const thetaLength = Math.PI * (w / this.width);
+			const geometry = new THREE.CylinderGeometry(
+				radius, radius, height, radialSegments, heightSegments, true,
+				thetaStart, thetaLength);
+			geometry.translate(0, -height / 2, 0);
+			const cylinder = new THREE.Mesh(geometry, lineMaterial);
+			cylinder.scale.z *= -1;
+			lines.add(cylinder);
+		}
+		// Bottom
+		{
+			// 高さ
+			const height = lineWidth;
+			const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
+			const thetaStart = 1.5 * Math.PI; // right start
+			const thetaLength = Math.PI * (w / this.width);
+			const geometry = new THREE.CylinderGeometry(
+				radius, radius, height, radialSegments, heightSegments, true,
+				thetaStart, thetaLength);
+			geometry.translate(0, -height / 2, 0);
+			const cylinder = new THREE.Mesh(geometry, lineMaterial);
+			cylinder.scale.z *= -1;
+			lines.add(cylinder);
+		}
+		return lines;
+	}
+
 	/**
 	 * VRPlaneを追加
 	 * @param {*} 
@@ -463,29 +559,7 @@ class VRGUI extends EventEmitter {
 
 			// 選択時の枠線
 			{
-				const lines = new THREE.Group();
-				const geoTop = new THREE.PlaneGeometry(w + lineWidth, lineWidth);
-				const geoLeft = new THREE.PlaneGeometry(lineWidth, h + lineWidth);
-				const geoBottom = new THREE.PlaneGeometry(w + lineWidth, lineWidth);
-				const geoRight = new THREE.PlaneGeometry(lineWidth, h + lineWidth);
-
-				// 左上を原点とする
-				geoTop.translate((w + lineWidth) / 2, - lineWidth / 2, 0);
-				geoLeft.translate(lineWidth / 2, - (h + lineWidth) / 2, 0);
-				geoBottom.translate((w + lineWidth) / 2, - lineWidth / 2 - h, 0);
-				geoRight.translate(lineWidth / 2 + w, - (h + lineWidth) / 2, 0);
-
-				const lineTop = new THREE.Mesh(geoTop, lineMaterial);
-				const lineLeft = new THREE.Mesh(geoLeft, lineMaterial);
-				const lineBottom = new THREE.Mesh(geoBottom, lineMaterial);
-				const lineRight = new THREE.Mesh(geoRight, lineMaterial);
-
-				lines.add(lineTop);
-				lines.add(lineBottom);
-				lines.add(lineLeft);
-				lines.add(lineRight);
-				lines.visible = false;
-
+				const lines = this.createVRPlaneFrame(w, h, lineMaterial, lineWidth);
 				this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth, Number(metaData.posy) - lineWidth, Number(metaData.zIndex));
 				this.vrLineDict[metaData.id] = lines;
 				this.frontScene.add(lines);
@@ -531,68 +605,7 @@ class VRGUI extends EventEmitter {
 
 			// 選択時の枠線
 			{
-				const lines = new THREE.Group();
-
-				// Left
-				{
-					// 高さ
-					const height = h;
-					const radialSegments = 2;
-					const thetaStart = 1.5 * Math.PI; // right start
-					const thetaLength = Math.PI * (lineWidth / this.width);
-					const geometry = new THREE.CylinderGeometry(
-						radius, radius, height, radialSegments, heightSegments, true,
-						thetaStart, thetaLength);
-					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, lineMaterial);
-					cylinder.scale.z *= -1;
-					lines.add(cylinder);
-				}
-				// Right
-				{
-					// 高さ
-					const height = h;
-					const radialSegments = 2;
-					const thetaStart = 1.5 * Math.PI; // right start
-					const thetaLength = Math.PI * (lineWidth / this.width);
-					const geometry = new THREE.CylinderGeometry(
-						radius, radius, height, radialSegments, heightSegments, true,
-						thetaStart, thetaLength);
-					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, lineMaterial);
-					cylinder.scale.z *= -1;
-					lines.add(cylinder);
-				}
-				// Top
-				{
-					// 高さ
-					const height = lineWidth;
-					const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
-					const thetaStart = 1.5 * Math.PI; // right start
-					const thetaLength = Math.PI * (w / this.width);
-					const geometry = new THREE.CylinderGeometry(
-						radius, radius, height, radialSegments, heightSegments, true,
-						thetaStart, thetaLength);
-					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, lineMaterial);
-					cylinder.scale.z *= -1;
-					lines.add(cylinder);
-				}
-				// Bottom
-				{
-					// 高さ
-					const height = lineWidth;
-					const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
-					const thetaStart = 1.5 * Math.PI; // right start
-					const thetaLength = Math.PI * (w / this.width);
-					const geometry = new THREE.CylinderGeometry(
-						radius, radius, height, radialSegments, heightSegments, true,
-						thetaStart, thetaLength);
-					geometry.translate(0, -height / 2, 0);
-					const cylinder = new THREE.Mesh(geometry, lineMaterial);
-					cylinder.scale.z *= -1;
-					lines.add(cylinder);
-				}
+				const lines = this.createVRCylinderFrame(w, h, lineMaterial, lineWidth);
 				// cylinderの枠線は、位置をlines Groupに設定し、幅高さによるトランスフォームを、childrenのmeshに設定することとする
 				this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth, Number(metaData.posy) - lineWidth, Number(metaData.zIndex));
 				const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
@@ -622,7 +635,12 @@ class VRGUI extends EventEmitter {
 			delete this.vrPlaneDict[id];
 		}
 		if (this.vrLineDict.hasOwnProperty(id)) {
+			this.frontScene.remove(this.vrLineDict[id]);
 			delete this.vrLineDict[id];
+		}
+		if (this.vrMarkLineDict.hasOwnProperty(id)) {
+			this.frontScene.remove(this.vrMarkLineDict[id]);
+			delete this.vrMarkLineDict[id];
 		}
 		if (this.vrWebGLDict.hasOwnProperty(id)) {
 			delete this.vrWebGLDict[id];
@@ -807,6 +825,33 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	assignVRMetaDataToPlane(metaData, rect, plane) {
+		this.setVRPlanePos(plane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
+
+		if (!(metaData.width < 10) && rect.w) {
+			if (!(metaData.height < 10) && rect.h) {
+				this.setVRPlaneWH(plane, metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
+			}
+		}
+	}
+
+	assignVRMetaDataToLines(metaData, rect, lines, lineWidth) {
+		if (lines) {
+			this.setVRPlanePos(lines,
+				parseInt(rect.x, 10) - lineWidth,
+				parseInt(rect.y, 10) - lineWidth,
+				Number(metaData.zIndex));
+		}
+		if (!(metaData.width < 10) && rect.w) {
+			if (!(metaData.height < 10) && rect.h) {
+				// 枠線の更新
+				if (lines) {
+					this.setVRPlaneWH(lines, metaData, parseInt(rect.w, 10) + lineWidth, parseInt(rect.h, 10) + lineWidth);
+				}
+			}
+		}
+	}
+
 	/**
 	 * メタデータの位置、幅高さなどをVR用プリミティブに設定
 	 * @param {*} 
@@ -832,25 +877,16 @@ class VRGUI extends EventEmitter {
 		if (plane && metaData) {
 			// VscreenUtil.assignRect(elem, rect, (metaData.width < 10), (metaData.height < 10));
 			// VscreenUtil.assignZIndex(elem, metaData);
-			this.setVRPlanePos(plane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
-
-			const lines = this.vrLineDict[metaData.id];
+			this.assignVRMetaDataToPlane(metaData, rect, plane);
+			
 			// 枠線の更新
-			if (lines) {
-				this.setVRPlanePos(lines,
-					parseInt(rect.x, 10) - this.lineWidth,
-					parseInt(rect.y, 10) - this.lineWidth,
-					Number(metaData.zIndex));
-			}
-			if (!(metaData.width < 10) && rect.w) {
-				if (!(metaData.height < 10) && rect.h) {
-					this.setVRPlaneWH(plane, metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
+			const lines = this.vrLineDict[metaData.id];
+			this.assignVRMetaDataToLines(metaData, rect, lines, this.lineWidth);
 
-					// 枠線の更新
-					if (lines) {
-						this.setVRPlaneWH(lines, metaData, parseInt(rect.w, 10) + this.lineWidth, parseInt(rect.h, 10) + this.lineWidth);
-					}
-				}
+			// 強調表示用の枠線の更新
+			if (this.vrMarkLineDict.hasOwnProperty(metaData.id)) {
+				const markLines = this.vrMarkLineDict[metaData.id];
+				this.assignVRMetaDataToLines(metaData, rect, markLines, this.lineWidth * 2);
 			}
 
 			this.updateContentVisible(metaData);
@@ -1022,10 +1058,52 @@ class VRGUI extends EventEmitter {
 	/**
 	 * コンテンツ強調表示(コントローラの☆ボタン有効時)
 	 */
-	showMark() {
-
+	showMark(metaData, color) {
+		const hasMark = this.vrMarkLineDict.hasOwnProperty(metaData.id);
+		if (!hasMark) {
+			// ジオメトリを節約するために、
+			//　強調表示用の枠線は、必要になったタイミングで追加する
+			const w = Number(metaData.orgWidth);
+			const h = Number(metaData.orgHeight);
+			const lineWidth2 = this.lineWidth * 2;
+			const markMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest:false });
+			if (this.isPlaneMode) {
+				// 強調表示(Mark)用の枠線
+				{
+					const lines = this.createVRPlaneFrame(w, h, markMaterial, lineWidth2);
+					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex));
+					this.vrMarkLineDict[metaData.id] = lines;
+					this.frontScene.add(lines);
+				}
+			} else {
+				// 強調表示(Mark)用の枠線
+				{
+					const lines = this.createVRCylinderFrame(w, h, markMaterial, lineWidth2);
+					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex));
+					this.vrMarkLineDict[metaData.id] = lines;
+					this.frontScene.add(lines);
+				}
+			}
+			this.assignVRMetaData({ metaData : metaData, useOrg : false});
+		}
+		const markLines = this.vrMarkLineDict[metaData.id];
+		for (let i = 0; i < markLines.children.length; ++i) {
+			const child = markLines.children[i];
+			child.material.color.setStyle(color);
+		}
+		markLines.visible = true;
 	}
 
+	/**
+	 * コンテンツ強調表示の表示状態の更新
+	 */
+	updateMarkVisible(isMarkVisible, metaData, color) {
+		this.showMark(metaData, color);
+		if (this.vrMarkLineDict.hasOwnProperty(metaData.id)) {
+			const markLines = this.vrMarkLineDict[metaData.id];
+			markLines.visible = isMarkVisible;
+		}
+	}
 
 	/**
 	 * PDFをVRで表示. 

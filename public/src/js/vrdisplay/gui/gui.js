@@ -336,13 +336,17 @@ class GUI extends EventEmitter {
 	updateMarkVisible(elem, metaData) {
 		const groupDict = this.store.getGroupDict();
 		if (elem && metaData.hasOwnProperty("id")) {
+			let color = Constants.DefaultGroupColor;
 			const isMarkVisible = metaData.hasOwnProperty(Constants.MARK) && (metaData[Constants.MARK] === 'true' || metaData[Constants.MARK] === true);
 			if (isMarkVisible) {
 				if (!elem.classList.contains(Constants.MARK)) {
 					elem.classList.add(Constants.MARK);
 				}
 				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-					elem.style.borderColor = groupDict[metaData.group].color;
+					if (groupDict[metaData.group].color) {
+						color = groupDict[metaData.group].color;
+					}
+					elem.style.borderColor = color;
 				}
 				elem.style.borderWidth = "6px";
 			} else {
@@ -351,6 +355,7 @@ class GUI extends EventEmitter {
 					elem.style.borderWidth = "0px";
 				}
 			}
+			this.getVRGUI().updateMarkVisible(isMarkVisible, metaData, color);
 		}
 	}
 
@@ -534,8 +539,8 @@ class GUI extends EventEmitter {
 	 */
 	showMemo(elem, metaData) {
 		if (elem && metaData.user_data_text) {
-			let groupDict = this.store.getGroupDict();
-			let previewArea = document.getElementById('preview_area');
+			const groupDict = this.store.getGroupDict();
+			const previewArea = document.getElementById('preview_area');
 			let memo = document.getElementById("memo:" + metaData.id);
 			if (memo) {
 				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
@@ -564,6 +569,27 @@ class GUI extends EventEmitter {
 				memo.style.borderColor = groupDict[metaData.group].color;
 				memo.style.backgroundColor = groupDict[metaData.group].color;
 			}
+		}
+	}
+
+	/**
+	 * コンテンツ強調表示.
+	 * @param {*} elem 
+	 * @param {*} metaData 
+	 */
+	showMark(elem, metaData) {
+		if (elem.classList.contains("mark")) {
+			const groupDict = this.store.getGroupDict();
+			elem.style.borderWidth = "6px";
+			let color = Constants.DefaultGroupColor;
+			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+				if (groupDict[metaData.group].color) {
+					color = groupDict[metaData.group].color;
+				}
+				elem.style.borderColor = color;
+			}
+
+			this.getVRGUI().showMark(metaData, color);
 		}
 	}
 
@@ -1286,22 +1312,14 @@ class GUI extends EventEmitter {
 	 * @param {String} targetid 対象コンテンツID
 	 */
 	select(targetid) {
-		let groupDict = this.store.getGroupDict();
-		let metaData;
-		let elem;
 		if (this.store.getMetaDataDict().hasOwnProperty(targetid)) {
-			metaData = this.store.getMetaDataDict()[targetid];
-			elem = document.getElementById(targetid);
+			const metaData = this.store.getMetaDataDict()[targetid];
+			const elem = document.getElementById(targetid);
 			elem.style.borderWidth = "1px";
 			elem.style.border = "solid";
 			elem.is_dragging = true;
 
-			if (elem.classList.contains("mark")) {
-				elem.style.borderWidth = "6px";
-				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-					elem.style.borderColor = groupDict[metaData.group].color;
-				}
-			}
+			this.showMark(elem, metaData);
 		}
 	}
 
@@ -1314,9 +1332,8 @@ class GUI extends EventEmitter {
 				let elem = document.getElementById(this.store.getMetaDataDict()[i].id);
 				if (elem && elem.is_dragging) {
 					elem.is_dragging = false;
-					if (!elem.classList.contains("mark")) {
-						elem.style.borderWidth = "0px";
-					}
+
+					this.updateMarkVisible(elem, metaData);
 				}
 			}
 		}
