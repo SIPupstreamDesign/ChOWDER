@@ -461,7 +461,9 @@ class GUI extends EventEmitter {
 
 	updatePDFPage(elem, json) {
 		if (elem.loadPage) {
-			elem.loadPage(parseInt(json.pdfPage), parseInt(json.width));
+			elem.loadPage(parseInt(json.pdfPage), parseInt(json.width), () => {
+				this.getVRGUI().showPDFVR(elem, json);
+			});
 		}
 	}
 
@@ -614,14 +616,14 @@ class GUI extends EventEmitter {
 		window.PDFJS.cMapUrl = '/3rd/js/pdfjs/cmaps/';
 		window.PDFJS.cMapPacked = true;
 
-		pdfjsLib.getDocument(contentData).then(function (pdf) {
+		pdfjsLib.getDocument(contentData).then((pdf) => {
 			metaData.pdfNumPages = pdf.numPages;
 
 			let lastTask = Promise.resolve();
 			let lastDate = 0;
 			let lastPage = 0;
 			let lastWidth = 0;
-			elem.loadPage = function (p, width) {
+			elem.loadPage = function (p, width, callback) {
 				let date = Date.now();
 				lastDate = date;
 
@@ -664,16 +666,24 @@ class GUI extends EventEmitter {
 						}
 
 						lastTask = lastTask.then(function () {
-							return page.render({
+							const task = page.render({
 								canvasContext: context,
 								viewport: viewport,
 								transform: transform
+							});
+							return task.then(() => {
+								if (callback) {
+									callback();
+								}
+								return Promise.resolve();
 							});
 						});
 					});
 				}, lastPage === p ? 500 : 0);
 			};
-			elem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width));
+			elem.loadPage(parseInt(metaData.pdfPage), parseInt(metaData.width), () => {
+				this.getVRGUI().showPDFVR(elem, metaData);
+			})
 		});
 	}
 

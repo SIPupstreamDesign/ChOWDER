@@ -681,6 +681,17 @@ class VRGUI extends EventEmitter {
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 
+	/**
+	 * VRPlaneの位置を設定
+	 * @param {*} data 
+	 * {
+	 *   image : image,
+	 *   metaData: metaData,
+	 *   x : 2DのVirtualDisplay空間でのx座標
+	 *   y : 2DのVirtualDisplay空間でのy座標
+	 *   z : zIndex
+	 * }
+	 */
 	setVRPlanePos(plane, x, y, z) {
 		let zValue = z;
 		if (this.isPlaneMode) {
@@ -701,6 +712,16 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * VRPlaneの幅高さを設定
+	 * @param {*} data 
+	 * {
+	 *   image : image,
+	 *   metaData: metaData,
+	 *   w : 幅(pixel)
+	 *   h : 高さ(pixel)
+	 * }
+	 */
 	setVRPlaneWH(plane, metaData, w, h) {
 		const orgW = Number(metaData.orgWidth);
 		const orgH = Number(metaData.orgHeight);
@@ -863,11 +884,27 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * 動画をVRで表示. 動画ストリーム自体は別途アサインする.
+	 * この関数では動画用の枠(Plane)だけ設定する
+	 * @param {*} data 
+	 * {
+	 *   metaData: metaData,
+	 * }
+	 */
 	showVideoVR(metaData) {
 		this.addVRPlane({ metaData: metaData });
 		this.assignVRMetaData({ metaData : metaData, useOrg : false});
 	}
 
+	/**
+	 * WebGLをVRで表示. 
+	 * @param {*} data 
+	 * { 
+	 *   iframe : webgl canvasを含む, iframe
+	 *   metaData: metaData,
+	 * }
+	 */
 	showWebGLVR(iframe, metaData) {
 		const canvasList = iframe.contentDocument.getElementsByTagName('canvas');
 		if (canvasList.length > 0) {
@@ -919,6 +956,15 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	/**
+	 * テキストをVRで表示. 
+	 * html2canvasによりレンダリングした画像をVR Planeとして表示する.
+	 * @param {*} data 
+	 * { 
+	 *   elem : 通常のdisplayで、テキストを表示させたエレメント
+	 *   metaData: metaData,
+	 * }
+	 */
 	showTextVR(elem, metaData) {
 		const plane = this.getVRPlane(metaData.id)
 		if (!plane) {
@@ -946,6 +992,30 @@ class VRGUI extends EventEmitter {
 				}
 				image.src = URL.createObjectURL(blob);
 			});
+		});
+	}
+
+	/**
+	 * PDFをVRで表示. 
+	 * @param {*} data 
+	 * { 
+	 *   canvas : PDFをレンダリング済のcanvas
+	 *   metaData: metaData,
+	 * }
+	 */
+	showPDFVR(canvas, metaData) {
+		const plane = this.getVRPlane(metaData.id)
+		if (!plane) {
+			this.addVRPlane({ metaData: metaData });
+		}
+		canvas.toBlob((blob) => {
+			const image = new Image();
+			image.onload =  () => {
+				URL.revokeObjectURL(image.src);
+				this.setVRPlaneImage({ image: image, metaData : metaData });
+				this.assignVRMetaData({ metaData : metaData, useOrg : false});
+			}
+			image.src = URL.createObjectURL(blob);
 		});
 	}
 
