@@ -237,7 +237,7 @@ class VRGUI extends EventEmitter {
 	resolveIFrames(id, timestamp) {
 		const funcDict = this.store.getITownFuncDict();
 		if (funcDict.hasOwnProperty(id)) {
-			funcDict[id].chowder_itowns_step_force(timestamp, function (){});
+			funcDict[id].chowder_itowns_step_force(timestamp, function () { });
 		}
 	}
 
@@ -393,7 +393,7 @@ class VRGUI extends EventEmitter {
 		const height = (-this.planeDepth) * Math.tan(60 * Math.PI / 180) * 2; // =4234.205916839362
 		const geometry = new THREE.PlaneGeometry(this.width, height);
 		geometry.translate(this.width / 2, -height / 2, 0);
-		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest:false  });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest: false });
 		this.coverPlane = new THREE.Mesh(geometry, material);
 		this.setVRPlanePos(this.coverPlane, 0, 0, -100000);
 		// 4K中心に中心を合わせる
@@ -422,7 +422,7 @@ class VRGUI extends EventEmitter {
 			radius, radius, height, radialSegments, heightSegments, true,
 			thetaStart, thetaLength);
 
-		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest:false  });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest: false });
 		this.coverCylinder = new THREE.Mesh(geometry, material);
 		this.setVRPlanePos(this.coverCylinder, 0, 0, -100000);
 		// flip
@@ -537,14 +537,14 @@ class VRGUI extends EventEmitter {
 	 *   metaData: metaData
 	 * }
 	 */
-	addVRPlane(data) {
+	addVRPlane(data, hasFrame = true) {
 		const metaData = data.metaData;
 		const w = Number(metaData.orgWidth);
 		const h = Number(metaData.orgHeight);
 		const lineWidth = this.lineWidth;
 		const lineWidth2 = this.lineWidth * 2;
-		const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest:false });
-		const contentMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest:false });
+		const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest: false });
+		const contentMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
 		if (this.isPlaneMode) {
 			// コンテンツ本体
 			{
@@ -558,7 +558,7 @@ class VRGUI extends EventEmitter {
 			}
 
 			// 選択時の枠線
-			{
+			if (hasFrame) {
 				const lines = this.createVRPlaneFrame(w, h, lineMaterial, lineWidth);
 				this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth, Number(metaData.posy) - lineWidth, Number(metaData.zIndex));
 				this.vrLineDict[metaData.id] = lines;
@@ -604,7 +604,7 @@ class VRGUI extends EventEmitter {
 
 
 			// 選択時の枠線
-			{
+			if (hasFrame) {
 				const lines = this.createVRCylinderFrame(w, h, lineMaterial, lineWidth);
 				// cylinderの枠線は、位置をlines Groupに設定し、幅高さによるトランスフォームを、childrenのmeshに設定することとする
 				this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth, Number(metaData.posy) - lineWidth, Number(metaData.zIndex));
@@ -639,7 +639,7 @@ class VRGUI extends EventEmitter {
 			delete this.vrLineDict[id];
 		}
 		if (this.vrMarkLineDict.hasOwnProperty(id)) {
-			this.frontScene.remove(this.vrMarkLineDict[id]);
+			this.frontScene.remove(this.vrLineDict[id]);
 			delete this.vrMarkLineDict[id];
 		}
 		if (this.vrWebGLDict.hasOwnProperty(id)) {
@@ -878,7 +878,7 @@ class VRGUI extends EventEmitter {
 			// VscreenUtil.assignRect(elem, rect, (metaData.width < 10), (metaData.height < 10));
 			// VscreenUtil.assignZIndex(elem, metaData);
 			this.assignVRMetaDataToPlane(metaData, rect, plane);
-			
+
 			// 枠線の更新
 			const lines = this.vrLineDict[metaData.id];
 			this.assignVRMetaDataToLines(metaData, rect, lines, this.lineWidth);
@@ -887,6 +887,19 @@ class VRGUI extends EventEmitter {
 			if (this.vrMarkLineDict.hasOwnProperty(metaData.id)) {
 				const markLines = this.vrMarkLineDict[metaData.id];
 				this.assignVRMetaDataToLines(metaData, rect, markLines, this.lineWidth * 2);
+			}
+
+			// メモの更新
+			const memoID = "memo:" + metaData.id;
+			if (metaData.user_data_text && this.vrPlaneDict.hasOwnProperty(memoID)) {
+				const memoPlane = this.vrPlaneDict[memoID];
+				const memoElem = document.getElementById(memoID);
+				const elemRect = memoElem.getBoundingClientRect();
+				const memoRect = {
+					x: rect.x,
+					y: rect.y + rect.h
+				}
+				this.assignVRMetaDataToMemo(metaData, memoRect, memoPlane);
 			}
 
 			this.updateContentVisible(metaData);
@@ -930,7 +943,7 @@ class VRGUI extends EventEmitter {
 	 */
 	showVideoVR(metaData) {
 		this.addVRPlane({ metaData: metaData });
-		this.assignVRMetaData({ metaData : metaData, useOrg : false});
+		this.assignVRMetaData({ metaData: metaData, useOrg: false });
 	}
 
 	/**
@@ -988,7 +1001,7 @@ class VRGUI extends EventEmitter {
 				}
 			}, 1000);
 			this.addVRPlane({ metaData: metaData });
-			this.assignVRMetaData({ metaData : metaData, useOrg : false});
+			this.assignVRMetaData({ metaData: metaData, useOrg: false });
 		}
 	}
 
@@ -1004,9 +1017,9 @@ class VRGUI extends EventEmitter {
 	showTextVR(elem, metaData) {
 		const plane = this.getVRPlane(metaData.id)
 		if (!plane) {
-			this.addVRPlane({ metaData : metaData });
+			this.addVRPlane({ metaData: metaData });
 		}
-		
+
 		const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
 		const previewArea = document.getElementById("preview_area");
 		previewArea.style.visibility = "visible"
@@ -1015,17 +1028,19 @@ class VRGUI extends EventEmitter {
 			elem.style.fontSize = fontSize * Math.sqrt(window.devicePixelRatio) + "px";
 		}
 		try {
-			html2canvas(elem, {backgroundColor : null, 
-					width : rect.w * window.devicePixelRatio,
-					height : rect.h * window.devicePixelRatio }).then(canvas => {
+			html2canvas(elem, {
+				backgroundColor: null,
+				width: rect.w * window.devicePixelRatio,
+				height: rect.h * window.devicePixelRatio
+			}).then(canvas => {
 				previewArea.style.visibility = "hidden"
 				canvas.toBlob((blob) => {
 					const image = new Image();
-					image.onload =  () => {
+					image.onload = () => {
 						URL.revokeObjectURL(image.src);
 						// Planeの画像を追加
-						this.setVRPlaneImage({ image: image, metaData : metaData });
-						this.assignVRMetaData({ metaData : metaData, useOrg : false});
+						this.setVRPlaneImage({ image: image, metaData: metaData });
+						this.assignVRMetaData({ metaData: metaData, useOrg: false });
 					}
 					image.src = URL.createObjectURL(blob);
 				});
@@ -1044,15 +1059,54 @@ class VRGUI extends EventEmitter {
 	 *   metaData: metaData,
 	 * }
 	 */
-	showMemoVR(memoElem, metaData) {
+	showMemoVR(memoElem, metaData, color) {
 		// メモ用ID(内部でのみ使用)
 		const memoID = "memo:" + metaData.id;
-		const plane = this.getVRPlane(memoID)
-		if (!plane) {
-			return false;
-		}
-
+		let plane = this.getVRPlane(memoID)
+		const elemRect = memoElem.getBoundingClientRect();
+		const w = elemRect.right - elemRect.left;
+		const h = elemRect.bottom - elemRect.top;
 		
+		if (!plane) {
+			let copyMetaData = JSON.parse(JSON.stringify(metaData));
+			copyMetaData.id = memoID;
+			this.addVRPlane({ metaData: copyMetaData }, false);
+			plane = this.getVRPlane(memoID);
+
+			const previewArea = document.getElementById("preview_area");
+			previewArea.style.visibility = "visible"
+			html2canvas(memoElem, {
+				backgroundColor: color,
+				width: w * window.devicePixelRatio,
+				height: h * window.devicePixelRatio
+			}).then(canvas => {
+				previewArea.style.visibility = "hidden"
+				canvas.toBlob((blob) => {
+					const image = new Image();
+					image.onload = () => {
+						URL.revokeObjectURL(image.src);
+						// Planeの画像を追加
+						this.setVRPlaneImage({ image: image, metaData: { id: memoID } });
+						const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+						const memoRect = {
+							x: rect.x,
+							y: rect.y + rect.h,
+							w: w,
+							h: h
+						}
+						this.assignVRMetaDataToMemo(metaData, memoRect, plane);
+					}
+					image.src = URL.createObjectURL(blob);
+				});
+			});
+		}
+	}
+
+	assignVRMetaDataToMemo(metaData, rect, memoPlane) {
+		this.setVRPlanePos(memoPlane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
+		if (rect.w && rect.h) {
+			this.setVRPlaneWH(memoPlane, metaData, parseInt(rect.w, 10), parseInt(rect.h, 10));
+		}
 	}
 
 	/**
@@ -1066,12 +1120,12 @@ class VRGUI extends EventEmitter {
 			const w = Number(metaData.orgWidth);
 			const h = Number(metaData.orgHeight);
 			const lineWidth2 = this.lineWidth * 2;
-			const markMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest:false });
+			const markMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest: false });
 			if (this.isPlaneMode) {
 				// 強調表示(Mark)用の枠線
 				{
 					const lines = this.createVRPlaneFrame(w, h, markMaterial, lineWidth2);
-					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex));
+					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex) + 0.1);
 					this.vrMarkLineDict[metaData.id] = lines;
 					this.frontScene.add(lines);
 				}
@@ -1079,12 +1133,12 @@ class VRGUI extends EventEmitter {
 				// 強調表示(Mark)用の枠線
 				{
 					const lines = this.createVRCylinderFrame(w, h, markMaterial, lineWidth2);
-					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex));
+					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex) + 0.1);
 					this.vrMarkLineDict[metaData.id] = lines;
 					this.frontScene.add(lines);
 				}
 			}
-			this.assignVRMetaData({ metaData : metaData, useOrg : false});
+			this.assignVRMetaData({ metaData: metaData, useOrg: false });
 		}
 		const markLines = this.vrMarkLineDict[metaData.id];
 		for (let i = 0; i < markLines.children.length; ++i) {
@@ -1120,10 +1174,10 @@ class VRGUI extends EventEmitter {
 		}
 		canvas.toBlob((blob) => {
 			const image = new Image();
-			image.onload =  () => {
+			image.onload = () => {
 				URL.revokeObjectURL(image.src);
-				this.setVRPlaneImage({ image: image, metaData : metaData });
-				this.assignVRMetaData({ metaData : metaData, useOrg : false});
+				this.setVRPlaneImage({ image: image, metaData: metaData });
+				this.assignVRMetaData({ metaData: metaData, useOrg: false });
 			}
 			image.src = URL.createObjectURL(blob);
 		});

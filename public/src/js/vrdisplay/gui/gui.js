@@ -564,11 +564,18 @@ class GUI extends EventEmitter {
 				memo.style.zIndex = elem.style.zIndex;
 				previewArea.appendChild(memo);
 			}
-
-			if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-				memo.style.borderColor = groupDict[metaData.group].color;
-				memo.style.backgroundColor = groupDict[metaData.group].color;
+			if (this.store.isVRMode()) {
+				memo.style.border = "none"
+			} else {
+				if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
+					memo.style.borderColor = groupDict[metaData.group].color;
+					if (groupDict[metaData.group].color) {
+						color = groupDict[metaData.group].color;
+					}
+					memo.style.backgroundColor = groupDict[metaData.group].color;
+				}
 			}
+			this.getVRGUI().showMemoVR(memo, metaData, "lightgray");
 		}
 	}
 
@@ -1329,7 +1336,8 @@ class GUI extends EventEmitter {
 	unselect() {
 		for (let i in this.store.getMetaDataDict()) {
 			if (this.store.getMetaDataDict().hasOwnProperty(i)) {
-				let elem = document.getElementById(this.store.getMetaDataDict()[i].id);
+				const metaData = this.store.getMetaDataDict()[i];
+				let elem = document.getElementById(metaData.id);
 				if (elem && elem.is_dragging) {
 					elem.is_dragging = false;
 
