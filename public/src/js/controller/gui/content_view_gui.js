@@ -477,7 +477,7 @@ class ContentViewGUI extends EventEmitter {
 			else {
 				this.importImageContent(contentElem, contentData, metaData, groupDict);
 			}
-			this.toggleMark(contentElem, metaData);
+			// this.toggleMark(contentElem, metaData);
 		}
 		// 同じコンテンツを参照しているメタデータがあれば更新
 		if (!contentData && contentElem) {

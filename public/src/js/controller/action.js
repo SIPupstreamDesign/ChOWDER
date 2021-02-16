@@ -803,6 +803,10 @@ class Action extends EventEmitter
 
     /**
      * 強調表示のトグル
+     * {
+     *    element : セットアップするelement,
+     *    metaData : metaData
+     * }
      */
     toggleContentMarkIcon(data) {
         this.emit(Action.EVENT_TOGGLE_CONTENT_MARK_ICON, null, data);
