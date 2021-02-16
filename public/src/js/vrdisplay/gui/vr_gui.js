@@ -636,6 +636,16 @@ class VRGUI extends EventEmitter {
 			this.scene.remove(this.vrPlaneDict[id]);
 			delete this.vrPlaneDict[id];
 		}
+		const memoBGID = "memobg:" + id
+		if (this.vrPlaneDict.hasOwnProperty(memoBGID)) {
+			this.scene.remove(this.vrPlaneDict[memoBGID]);
+			delete this.vrPlaneDict[memoBGID];
+		}
+		const memoTextID = "memotxt:" + id
+		if (this.vrPlaneDict.hasOwnProperty(memoTextID)) {
+			this.scene.remove(this.vrPlaneDict[memoTextID]);
+			delete this.vrPlaneDict[memoTextID];
+		}
 		if (this.vrLineDict.hasOwnProperty(id)) {
 			this.frontScene.remove(this.vrLineDict[id]);
 			delete this.vrLineDict[id];
@@ -925,15 +935,31 @@ class VRGUI extends EventEmitter {
 
 			// メモの更新
 			const memoID = "memo:" + metaData.id;
-			if (metaData.user_data_text && this.vrPlaneDict.hasOwnProperty(memoID)) {
-				const memoPlane = this.vrPlaneDict[memoID];
+			const memoBGID = "memobg:" + metaData.id;
+			const memoTextID = "memotxt:" + metaData.id;
+			if (metaData.user_data_text) {
+				const memoBGPlane = this.vrPlaneDict[memoBGID];
+				const memoTextPlane = this.vrPlaneDict[memoTextID];
 				const memoElem = document.getElementById(memoID);
 				const elemRect = memoElem.getBoundingClientRect();
-				const memoRect = {
-					x: rect.x,
-					y: rect.y + rect.h
+				// 背景色planeは幅高さも変える
+				if (memoBGPlane) {
+					const memoRect = {
+						x: rect.x - this.lineWidth * 2,
+						y: rect.y + rect.h,
+						w: rect.w + this.lineWidth,
+						h: elemRect.bottom - elemRect.top
+					}
+					this.assignVRMetaDataToMemo(metaData, memoRect, memoBGPlane);
 				}
-				this.assignVRMetaDataToMemo(metaData, memoRect, memoPlane);
+				if (memoTextPlane) {
+					const memoTextRect = {
+						x: rect.x - this.lineWidth * 2,
+						y: rect.y + rect.h
+					}
+					// メモ用(text)planeは、位置のみ変更
+					this.assignVRMetaDataToMemo(metaData, memoTextRect, memoTextPlane);
+				}
 			}
 
 			this.updateContentVisible(metaData);
@@ -1078,7 +1104,7 @@ class VRGUI extends EventEmitter {
 						// Planeの画像を追加
 						this.setVRPlaneImage({ image: image, metaData: metaData });
 						this.assignVRMetaData({ metaData: metaData, useOrg: false });
-					}
+					};
 					image.src = URL.createObjectURL(blob);
 				});
 			});
@@ -1098,42 +1124,63 @@ class VRGUI extends EventEmitter {
 	 */
 	showMemoVR(memoElem, metaData, color) {
 		// メモ用ID(内部でのみ使用)
-		const memoID = "memo:" + metaData.id;
-		let plane = this.getVRPlane(memoID)
-		const elemRect = memoElem.getBoundingClientRect();
-		const w = elemRect.right - elemRect.left;
-		const h = elemRect.bottom - elemRect.top;
+		const memoBGID = "memobg:" + metaData.id;
+		const memoTextID = "memotxt:" + metaData.id;
+		let textPlane = this.getVRPlane(memoTextID)
 		
-		if (!plane) {
-			let copyMetaData = JSON.parse(JSON.stringify(metaData));
-			copyMetaData.id = memoID;
-			this.addVRPlane({ metaData: copyMetaData }, false);
-			plane = this.getVRPlane(memoID);
+		if (!textPlane) {
+			// 背景色用plane
+			let memoMetaData = JSON.parse(JSON.stringify(metaData));
+			memoMetaData.id = memoBGID;
+			this.addVRPlane({ metaData: memoMetaData }, false);
+			const bgPlane = this.getVRPlane(memoBGID);
+			bgPlane.material.color.setStyle(color);
+			bgPlane.material.transparent = true;
 
+			// メモ用plane
+			let memoTextMetaData = JSON.parse(JSON.stringify(metaData));
+			memoTextMetaData.id = memoTextID;
+			this.addVRPlane({ metaData: memoTextMetaData }, false);
+			textPlane = this.getVRPlane(memoTextID);
+			textPlane.material.transparent = true;
+			
 			const previewArea = document.getElementById("preview_area");
 			previewArea.style.visibility = "visible"
+			const preCol = memoElem.style.backgroundColor;
+			memoElem.style.background = "transparent"
+			const preFontSize = memoElem.style.fontSize;
+
+			// VRでは解像度の都合上、メモのfontSizeに2emを強制させる
+			memoElem.style.fontSize = "2em"
+			const elemRect = memoElem.getBoundingClientRect();
+			const w = elemRect.right - elemRect.left;
+			const h = elemRect.bottom - elemRect.top;
+			
+			const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+			const memoRect = {
+				x: rect.x,
+				y: rect.y + rect.h,
+				w: w,
+				h: h
+			}
+			this.assignVRMetaDataToMemo(metaData, memoRect, bgPlane);
+			this.assignVRMetaDataToMemo(metaData, memoRect, textPlane);
+
 			html2canvas(memoElem, {
-				backgroundColor: color,
+				backgroundColor: null,
 				width: w * window.devicePixelRatio,
 				height: h * window.devicePixelRatio
 			}).then(canvas => {
 				previewArea.style.visibility = "hidden"
+				memoElem.style.background = preCol;
 				canvas.toBlob((blob) => {
 					const image = new Image();
 					image.onload = () => {
 						URL.revokeObjectURL(image.src);
-						// Planeの画像を追加
-						this.setVRPlaneImage({ image: image, metaData: { id: memoID } });
-						const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
-						const memoRect = {
-							x: rect.x,
-							y: rect.y + rect.h,
-							w: w,
-							h: h
-						}
-						this.assignVRMetaDataToMemo(metaData, memoRect, plane);
+						// textPlaneの画像を追加
+						this.setVRPlaneImage({ image: image, metaData: { id: memoTextID } });
 					}
-					image.src = URL.createObjectURL(blob);
+					image.src = window.URL.createObjectURL(blob);
 				});
 			});
 		}
@@ -1141,10 +1188,15 @@ class VRGUI extends EventEmitter {
 
 	updateMemoVisible(memoElem, metaData, isMemoVisible) {
 		// メモ用ID(内部でのみ使用)
-		const memoID = "memo:" + metaData.id;
-		let plane = this.getVRPlane(memoID);
+		const memoBGID = "memobg:" + metaData.id;
+		let plane = this.getVRPlane(memoBGID);
 		if (plane) {
 			plane.visible = isMemoVisible;
+		}
+		const memoTextID = "memotxt:" + metaData.id;
+		let textPlane = this.getVRPlane(memoTextID);
+		if (textPlane) {
+			textPlane.visible = isMemoVisible;
 		}
 	}
 
