@@ -544,18 +544,23 @@ class GUI extends EventEmitter {
 			const groupDict = this.store.getGroupDict();
 			const previewArea = document.getElementById('preview_area');
 			let memo = document.getElementById("memo:" + metaData.id);
+			const text = JSON.parse(metaData.user_data_text).text;
+			let isTextChanged = false;
 			if (memo) {
-				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+				isTextChanged = (memo.innerHTML !== text);
+				memo.innerHTML = text;
 				let rect = elem.getBoundingClientRect();
 				memo.style.width = (rect.right - rect.left) + "px";
 				memo.style.left = rect.left + "px";
 				memo.style.top = rect.bottom + "px";
 				memo.style.zIndex = elem.style.zIndex;
 			} else {
+				// 新規メモ表示
+				isTextChanged = true;
 				memo = document.createElement("pre");
 				memo.id = "memo:" + metaData.id;
 				memo.className = "memo";
-				memo.innerHTML = JSON.parse(metaData.user_data_text).text;
+				memo.innerHTML = text;
 				let rect = elem.getBoundingClientRect();
 				memo.style.left = rect.left + "px";
 				memo.style.top = rect.bottom + "px";
@@ -566,6 +571,7 @@ class GUI extends EventEmitter {
 				memo.style.zIndex = elem.style.zIndex;
 				previewArea.appendChild(memo);
 			}
+			let color = "lightgray"
 			if (this.store.isVRMode()) {
 				memo.style.border = "none"
 			} else {
@@ -577,7 +583,7 @@ class GUI extends EventEmitter {
 					memo.style.backgroundColor = groupDict[metaData.group].color;
 				}
 			}
-			this.getVRGUI().showMemoVR(memo, metaData, "lightgray");
+			this.getVRGUI().showMemoVR(memo, metaData, color, isTextChanged);
 		}
 	}
 

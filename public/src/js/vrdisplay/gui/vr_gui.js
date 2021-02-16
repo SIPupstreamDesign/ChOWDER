@@ -1122,18 +1122,19 @@ class VRGUI extends EventEmitter {
 	 *   metaData: metaData,
 	 * }
 	 */
-	showMemoVR(memoElem, metaData, color) {
+	showMemoVR(memoElem, metaData, color, isTextChanged) {
 		// メモ用ID(内部でのみ使用)
 		const memoBGID = "memobg:" + metaData.id;
 		const memoTextID = "memotxt:" + metaData.id;
 		let textPlane = this.getVRPlane(memoTextID)
+		let bgPlane = this.getVRPlane(memoBGID)
 		
 		if (!textPlane) {
 			// 背景色用plane
 			let memoMetaData = JSON.parse(JSON.stringify(metaData));
 			memoMetaData.id = memoBGID;
 			this.addVRPlane({ metaData: memoMetaData }, false);
-			const bgPlane = this.getVRPlane(memoBGID);
+			bgPlane = this.getVRPlane(memoBGID);
 			bgPlane.material.color.setStyle(color);
 			bgPlane.material.transparent = true;
 
@@ -1144,35 +1145,38 @@ class VRGUI extends EventEmitter {
 			textPlane = this.getVRPlane(memoTextID);
 			textPlane.material.transparent = true;
 			
+		}
+
+		// VRでは解像度の都合上、メモのfontSizeに2emを強制させる
+		memoElem.style.fontSize = "2em"
+		const elemRect = memoElem.getBoundingClientRect();
+		const w = elemRect.right - elemRect.left;
+		const h = elemRect.bottom - elemRect.top;
+		
+		// レンダリング前に枠のサイズを決定しておく
+		const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
+		const memoRect = {
+			x: rect.x,
+			y: rect.y + rect.h,
+			w: w,
+			h: h
+		}
+		this.assignVRMetaDataToMemo(metaData, memoRect, bgPlane);
+		this.assignVRMetaDataToMemo(metaData, memoRect, textPlane);
+		
+		if (isTextChanged) {
 			const previewArea = document.getElementById("preview_area");
 			previewArea.style.visibility = "visible"
-			const preCol = memoElem.style.backgroundColor;
+			const preBackgroundCol = memoElem.style.backgroundColor;
 			memoElem.style.background = "transparent"
-			const preFontSize = memoElem.style.fontSize;
-
-			// VRでは解像度の都合上、メモのfontSizeに2emを強制させる
-			memoElem.style.fontSize = "2em"
-			const elemRect = memoElem.getBoundingClientRect();
-			const w = elemRect.right - elemRect.left;
-			const h = elemRect.bottom - elemRect.top;
 			
-			const rect = Vscreen.transform(VscreenUtil.toIntRect(metaData));
-			const memoRect = {
-				x: rect.x,
-				y: rect.y + rect.h,
-				w: w,
-				h: h
-			}
-			this.assignVRMetaDataToMemo(metaData, memoRect, bgPlane);
-			this.assignVRMetaDataToMemo(metaData, memoRect, textPlane);
-
 			html2canvas(memoElem, {
 				backgroundColor: null,
 				width: w * window.devicePixelRatio,
 				height: h * window.devicePixelRatio
 			}).then(canvas => {
 				previewArea.style.visibility = "hidden"
-				memoElem.style.background = preCol;
+				memoElem.style.background = preBackgroundCol;
 				canvas.toBlob((blob) => {
 					const image = new Image();
 					image.onload = () => {
