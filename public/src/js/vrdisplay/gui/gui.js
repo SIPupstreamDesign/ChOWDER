@@ -376,6 +376,8 @@ class GUI extends EventEmitter {
 				}
 				const isMemoVisible = String(metaData[Constants.MARK_MEMO]) === 'true' && String(metaData.visible) === 'true';
 				memo.style.display = isMemoVisible ? "block" : "none"
+
+				this.getVRGUI().updateMemoVisible(memo, metaData, isMemoVisible);
 			}
 		}
 	}

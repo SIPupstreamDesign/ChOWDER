@@ -1102,6 +1102,15 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	updateMemoVisible(memoElem, metaData, isMemoVisible) {
+		// メモ用ID(内部でのみ使用)
+		const memoID = "memo:" + metaData.id;
+		let plane = this.getVRPlane(memoID);
+		if (plane) {
+			plane.visible = isMemoVisible;
+		}
+	}
+
 	assignVRMetaDataToMemo(metaData, rect, memoPlane) {
 		this.setVRPlanePos(memoPlane, parseInt(rect.x, 10), parseInt(rect.y, 10), Number(metaData.zIndex));
 		if (rect.w && rect.h) {
