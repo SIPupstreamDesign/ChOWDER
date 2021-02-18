@@ -937,10 +937,10 @@ class VRGUI extends EventEmitter {
 			const memoID = "memo:" + metaData.id;
 			const memoBGID = "memobg:" + metaData.id;
 			const memoTextID = "memotxt:" + metaData.id;
-			if (metaData.user_data_text) {
+			const memoElem = document.getElementById(memoID);
+			if (memoElem && metaData.user_data_text) {
 				const memoBGPlane = this.vrPlaneDict[memoBGID];
 				const memoTextPlane = this.vrPlaneDict[memoTextID];
-				const memoElem = document.getElementById(memoID);
 				const elemRect = memoElem.getBoundingClientRect();
 				// 背景色planeは幅高さも変える
 				if (memoBGPlane) {
