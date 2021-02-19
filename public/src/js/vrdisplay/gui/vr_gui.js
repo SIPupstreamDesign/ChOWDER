@@ -108,6 +108,8 @@ class VRGUI extends EventEmitter {
 
 		// コンテンツIDと対応する枠線の辞書
 		this.vrLineDict = {};
+		// メモ/強調表示ON,OFF用ボタンの辞書
+		this.vrMemoMarkOnOffDict = {};
 		// 枠線の幅
 		this.lineWidth = 2;
 		// コンテンツIDと対応する強調表示線の辞書
@@ -144,6 +146,15 @@ class VRGUI extends EventEmitter {
 		} else {
 			this.initCoverCylinder();
 		}
+
+		this.memoOnImage = new Image();
+		this.memoOnImage.src = "./src/image/vr_memo_on.png";
+		this.memoOffImage = new Image();
+		this.memoOffImage.src = "./src/image/vr_memo_off.png";
+		this.markOnImage = new Image();
+		this.markOnImage.src = "./src/image/vr_star_on.png";
+		this.markOffImage = new Image();
+		this.markOffImage.src = "./src/image/vr_star_off.png";
 	}
 
 	initVR(windowSize) {
@@ -286,7 +297,6 @@ class VRGUI extends EventEmitter {
 		if (!this.currentSession) return;
 
 		this.move();
-
 		for (const source of this.currentSession.inputSources) {
 			if (!source.gamepad) continue;
 			const gamepad = source.gamepad;
@@ -296,11 +306,20 @@ class VRGUI extends EventEmitter {
 			const isLeft = source.handedness === 'left';
 			const controllerIndex = isLeft ? 1 : 0;
 			this.isTrigerPressed[controllerIndex] = trigerPressed;
-
 			if (trigerPressed) {
 				if (this.isInitialTriger[controllerIndex]) {
 					this.isInitialTriger[controllerIndex] = false;
 					this.select(source);
+				} else {
+					// コントローラの向きを計算
+					const controller = this.renderer.xr.getController(controllerIndex);
+					this.controllerDir.set(0, 0, -1);
+					this.controllerDir.applyQuaternion(controller.quaternion);
+					// コントローラ姿勢
+					this.tempRay.set(controller.position, this.controllerDir);
+					const xy = this.calcPixelPosFromRay(this.tempRay);
+					this.preXY[controllerIndex] = xy;
+					this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
 				}
 			} else {
 				this.preXY[controllerIndex] = null;
@@ -410,6 +429,14 @@ class VRGUI extends EventEmitter {
 		} else {
 			console.error('Not found frame:', id)
 		}
+		const markOnOffID = "markonoff:" + id;
+		if (this.vrMemoMarkOnOffDict[markOnOffID]) {
+			this.vrMemoMarkOnOffDict[markOnOffID].visible = true;
+		}
+		const memoOnOffID = "memoonoff:" + id;
+		if (this.vrMemoMarkOnOffDict[memoOnOffID]) {
+			this.vrMemoMarkOnOffDict[memoOnOffID].visible = true;
+		}
 	}
 
 	hideFrame(id) {
@@ -417,6 +444,14 @@ class VRGUI extends EventEmitter {
 			this.vrLineDict[id].visible = false;
 		} else {
 			console.error('Not found frame:', id)
+		}
+		const markOnOffID = "markonoff:" + id;
+		if (this.vrMemoMarkOnOffDict[markOnOffID]) {
+			this.vrMemoMarkOnOffDict[markOnOffID].visible = false;
+		}
+		const memoOnOffID = "memoonoff:" + id;
+		if (this.vrMemoMarkOnOffDict[memoOnOffID]) {
+			this.vrMemoMarkOnOffDict[memoOnOffID].visible = false;
 		}
 	}
 
@@ -647,6 +682,40 @@ class VRGUI extends EventEmitter {
 				this.vrLineDict[metaData.id] = lines;
 				this.frontScene.add(lines);
 			}
+
+			// 選択時のメモマークOn/Off
+			if (hasFrame) {
+				const w = 30;
+				const h = 30;
+				{
+					const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+					const geometry = new THREE.PlaneGeometry(w, h);
+					// 左上を原点とする
+					geometry.translate(w / 2, -h / 2, 0);
+					const markOnOff = new THREE.Mesh(geometry, buttonMaterial);
+					markOnOff.visible = false;
+					this.setVRPlanePos(markOnOff, Number(metaData.posx), Number(metaData.posy) - h - 10, Number(metaData.zIndex));
+					const markOnOffID = "markonoff:" + metaData.id;
+					this.vrMemoMarkOnOffDict[markOnOffID] = markOnOff;
+					this.frontScene.add(markOnOff);
+					
+					this.setVRPlaneImage({ image: this.markOnImage, metaData: {id : markOnOffID} }, this.vrMemoMarkOnOffDict);
+				}
+				{
+					const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+					const geometry = new THREE.PlaneGeometry(w, h);
+					// 左上を原点とする
+					geometry.translate(w / 2, -h / 2, 0);
+					const memoOnOff = new THREE.Mesh(geometry, buttonMaterial);
+					memoOnOff.visible = false;
+					this.setVRPlanePos(memoOnOff, Number(metaData.posx) + w + 5, Number(metaData.posy) - h - 10, Number(metaData.zIndex));
+					const memoOnOffID = "memoonoff:" + metaData.id;
+					this.vrMemoMarkOnOffDict[memoOnOffID] = memoOnOff;
+					this.frontScene.add(memoOnOff);
+					
+					this.setVRPlaneImage({ image: this.memoOnImage, metaData: {id : memoOnOffID} }, this.vrMemoMarkOnOffDict);
+				}
+			}
 		} else {
 			// metaDataの大きさのシリンダーを作る
 			// 高さ: orgHで表現
@@ -738,6 +807,16 @@ class VRGUI extends EventEmitter {
 		}
 		if (this.vrWebGLDict.hasOwnProperty(id)) {
 			delete this.vrWebGLDict[id];
+		}
+		const memoOnOffID = "memoonoff:" + id
+		if (this.vrMemoMarkOnOffDict.hasOwnProperty(memoOnOffID)) {
+			this.frontScene.remove(this.vrMemoMarkOnOffDict[memoOnOffID]);
+			delete this.vrMemoMarkOnOffDict[memoOnOffID];
+		}
+		const markOnOffID = "markonoff:" + id
+		if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
+			this.frontScene.remove(this.vrMemoMarkOnOffDict[markOnOffID]);
+			delete this.vrMemoMarkOnOffDict[markOnOffID];
 		}
 	}
 
@@ -960,6 +1039,16 @@ class VRGUI extends EventEmitter {
 		}
 	}
 
+	assignVRMetaDataToButton(metaData, rect, button, isMemoOnOff) {
+		if (isMemoOnOff) {
+			// memoOnOff
+			this.setVRPlanePos(button, parseInt(rect.x, 10) + 35, parseInt(rect.y, 10) - 40, Number(metaData.zIndex));
+		} else {
+			// markOnOff
+			this.setVRPlanePos(button, parseInt(rect.x, 10), parseInt(rect.y, 10) - 40, Number(metaData.zIndex));
+		}
+	}
+
 	assignVRMetaDataToLines(metaData, rect, lines, lineWidth) {
 		if (lines) {
 			this.setVRPlanePos(lines,
@@ -1043,6 +1132,18 @@ class VRGUI extends EventEmitter {
 				}
 			}
 
+			// ONOffボタンの更新
+			const markOnOffID = "markonoff:" + metaData.id;
+			if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
+				const markOnOffButton = this.vrMemoMarkOnOffDict[markOnOffID];
+				this.assignVRMetaDataToButton(metaData, rect, markOnOffButton, false);
+			}
+			const memoOnOffID = "memoonoff:" + metaData.id;
+			if (this.vrMemoMarkOnOffDict.hasOwnProperty(memoOnOffID)) {
+				const memoOnOffButton = this.vrMemoMarkOnOffDict[memoOnOffID];
+				this.assignVRMetaDataToButton(metaData, rect, memoOnOffButton, true);
+			}
+
 			this.updateContentVisible(metaData);
 
 			/* TODO
@@ -1098,6 +1199,7 @@ class VRGUI extends EventEmitter {
 	showWebGLVR(iframe, metaData) {
 		const canvasList = iframe.contentDocument.getElementsByTagName('canvas');
 		if (canvasList.length > 0) {
+			const id = metaData.id; 
 			let canvas = canvasList[0];
 			let size = 0;
 			for (let i = 0; i < canvasList.length; ++i) {
@@ -1125,7 +1227,7 @@ class VRGUI extends EventEmitter {
 				}
 			});
 			this.vrWebGLVideoHandleDict[metaData.id] = setInterval(() => {
-				this.resolveIFrames(metaData.id, this.timestamp)
+				this.resolveIFrames(id, this.timestamp)
 			}, 100);
 			setTimeout(() => {
 				if (!isInit) {
