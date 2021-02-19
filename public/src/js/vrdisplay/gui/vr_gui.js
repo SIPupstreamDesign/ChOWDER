@@ -11,6 +11,62 @@ import { XRControllerModelFactory } from '../../../../../node_modules/three/exam
 import Store from '../store/store'
 import VideoStore from '../store/video_store'
 
+let testLines = null;
+/*
+function painterSortStable( a, b ) {
+
+	if ( a.groupOrder !== b.groupOrder ) {
+
+		return a.groupOrder - b.groupOrder;
+
+	} else if ( a.renderOrder !== b.renderOrder ) {
+
+		return a.renderOrder - b.renderOrder;
+
+	} else if ( a.program !== b.program ) {
+
+		return a.program.id - b.program.id;
+
+	} else if ( a.material.id !== b.material.id ) {
+
+		return a.material.id - b.material.id;
+
+	} else if ( a.z !== b.z ) {
+
+		return a.z - b.z;
+
+	} else {
+
+		return a.id - b.id;
+
+	}
+
+}
+
+
+function reversePainterSortStable( a, b ) {
+
+	if ( a.groupOrder !== b.groupOrder ) {
+
+		return a.groupOrder - b.groupOrder;
+
+	} else if ( a.renderOrder !== b.renderOrder ) {
+
+		return a.renderOrder - b.renderOrder;
+
+	} else if ( a.z !== b.z ) {
+
+		return b.z - a.z;
+
+	} else {
+
+		return a.id - b.id;
+
+	}
+
+}
+*/
+
 class VRGUI extends EventEmitter {
 	constructor(store, action) {
 		super();
@@ -100,6 +156,9 @@ class VRGUI extends EventEmitter {
 		this.renderer = new THREE.WebGLRenderer({ canvas: previewArea, logarithmicDepthBuffer: true });
 		// three.jsのXRモードを有効にする
 		this.renderer.xr.enabled = true;
+
+		//this.renderer.setOpaqueSort (painterSortStable)
+		//this.renderer.setTransparentSort  (reversePainterSortStable)
 
 		// 仮想ディスプレイの解像度
 		const width = this.getWidth();
@@ -596,6 +655,7 @@ class VRGUI extends EventEmitter {
 				// console.error(radius, radius, height, radialSegments, heightSegments, true, thetaStart, thetaLength)
 
 				const cylinder = new THREE.Mesh(geometry, contentMaterial);
+
 				// flip
 				cylinder.scale.z *= -1;
 
@@ -651,7 +711,7 @@ class VRGUI extends EventEmitter {
 			delete this.vrLineDict[id];
 		}
 		if (this.vrMarkLineDict.hasOwnProperty(id)) {
-			this.frontScene.remove(this.vrLineDict[id]);
+			this.scene.remove(this.vrLineDict[id]);
 			delete this.vrMarkLineDict[id];
 		}
 		if (this.vrWebGLDict.hasOwnProperty(id)) {
@@ -679,7 +739,6 @@ class VRGUI extends EventEmitter {
 
 		this.vrPlaneDict[metaData.id].material.map = texture;
 		// this.vrPlaneDict[metaData.id].material.blending = THREE.NormalBlending;
-		this.vrPlaneDict[metaData.id].material.transparent = true;
 		this.vrPlaneDict[metaData.id].material.alphaTest = 0.5;
 		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
@@ -707,8 +766,8 @@ class VRGUI extends EventEmitter {
 		this.vrPlaneDict[metaData.id].material.map = texture;
 		// renderOrderを指定した場合に透過するかどうかにより大きく分けられてしまうため
 		// 全てtransparentとしておき、renderOrderに完全に一致させる。
-		this.vrPlaneDict[metaData.id].material.transparent = true;
-		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
+		// this.vrPlaneDict[metaData.id].material.transparent = true;
+		// this.vrPlaneDict[metaData.id].material.needsUpdate = true;
 	}
 
 	/**
@@ -1136,14 +1195,14 @@ class VRGUI extends EventEmitter {
 			this.addVRPlane({ metaData: memoMetaData }, false);
 			bgPlane = this.getVRPlane(memoBGID);
 			bgPlane.material.color.setStyle(color);
-			bgPlane.material.transparent = true;
+			// bgPlane.material.transparent = true;
 
 			// メモ用plane
 			let memoTextMetaData = JSON.parse(JSON.stringify(metaData));
 			memoTextMetaData.id = memoTextID;
 			this.addVRPlane({ metaData: memoTextMetaData }, false);
 			textPlane = this.getVRPlane(memoTextID);
-			textPlane.material.transparent = true;
+			// textPlane.material.transparent = true;
 			
 		}
 
@@ -1161,13 +1220,15 @@ class VRGUI extends EventEmitter {
 			w: w,
 			h: h
 		}
-		this.assignVRMetaDataToMemo(metaData, memoRect, bgPlane);
-		this.assignVRMetaDataToMemo(metaData, memoRect, textPlane);
 		
 		if (isTextChanged) {
+			this.assignVRMetaDataToMemo(metaData, memoRect, bgPlane);
+			this.assignVRMetaDataToMemo(metaData, memoRect, textPlane);
+			
 			const previewArea = document.getElementById("preview_area");
 			previewArea.style.visibility = "visible"
 			const preBackgroundCol = memoElem.style.backgroundColor;
+			// 文字画像については背景を透過させておく必要がある
 			memoElem.style.background = "transparent"
 			
 			html2canvas(memoElem, {
@@ -1227,17 +1288,17 @@ class VRGUI extends EventEmitter {
 				// 強調表示(Mark)用の枠線
 				{
 					const lines = this.createVRPlaneFrame(markMaterial, lineWidth2);
-					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex) + 0.1);
+					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex));
 					this.vrMarkLineDict[metaData.id] = lines;
-					this.frontScene.add(lines);
+					this.scene.add(lines);
 				}
 			} else {
 				// 強調表示(Mark)用の枠線
 				{
 					const lines = this.createVRCylinderFrame(w, 1, markMaterial, lineWidth2);
-					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex) + 0.1);
+					this.setVRPlanePos(lines, Number(metaData.posx) - lineWidth2, Number(metaData.posy) - lineWidth2, Number(metaData.zIndex));
 					this.vrMarkLineDict[metaData.id] = lines;
-					this.frontScene.add(lines);
+					this.scene.add(lines);
 				}
 			}
 			this.assignVRMetaData({ metaData: metaData, useOrg: false });
