@@ -659,6 +659,8 @@ class VRGUI extends EventEmitter {
 		const h = Number(metaData.orgHeight);
 		const lineWidth = this.lineWidth;
 		const lineWidth2 = this.lineWidth * 2;
+		const memoOnOffID = "memoonoff:" + metaData.id;
+		const markOnOffID = "markonoff:" + metaData.id;
 		const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest: false });
 		const contentMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
 		if (this.isPlaneMode) {
@@ -695,7 +697,6 @@ class VRGUI extends EventEmitter {
 					const markOnOff = new THREE.Mesh(geometry, buttonMaterial);
 					markOnOff.visible = false;
 					this.setVRPlanePos(markOnOff, Number(metaData.posx), Number(metaData.posy) - h - 10, Number(metaData.zIndex));
-					const markOnOffID = "markonoff:" + metaData.id;
 					this.vrMemoMarkOnOffDict[markOnOffID] = markOnOff;
 					this.frontScene.add(markOnOff);
 					
@@ -709,7 +710,6 @@ class VRGUI extends EventEmitter {
 					const memoOnOff = new THREE.Mesh(geometry, buttonMaterial);
 					memoOnOff.visible = false;
 					this.setVRPlanePos(memoOnOff, Number(metaData.posx) + w + 5, Number(metaData.posy) - h - 10, Number(metaData.zIndex));
-					const memoOnOffID = "memoonoff:" + metaData.id;
 					this.vrMemoMarkOnOffDict[memoOnOffID] = memoOnOff;
 					this.frontScene.add(memoOnOff);
 					
@@ -766,6 +766,50 @@ class VRGUI extends EventEmitter {
 				lines.visible = false;
 				this.vrLineDict[metaData.id] = lines;
 				this.frontScene.add(lines);
+			}
+			
+			// 選択時のメモマークOn/Off
+			if (hasFrame) {
+				const w = 30;
+				const h = 30;
+				const height = h;
+				const radialSegments = 2;
+				const thetaStart = 1.5 * Math.PI; // right start
+				const thetaLength = Math.PI * (w / this.width);
+				{
+					const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+					const geometry = new THREE.CylinderGeometry(
+						radius, radius, height, radialSegments, heightSegments, true,
+						thetaStart, thetaLength);
+					// 左上を原点とする
+					geometry.translate(0, -h / 2, 0);
+					const markOnOff = new THREE.Mesh(geometry, buttonMaterial);
+					markOnOff.visible = false;
+					// flip
+					markOnOff.scale.z *= -1;
+					this.setVRPlanePos(markOnOff, Number(metaData.posx), Number(metaData.posy) - h - 10, Number(metaData.zIndex));
+					this.vrMemoMarkOnOffDict[markOnOffID] = markOnOff;
+					this.frontScene.add(markOnOff);
+
+					this.setVRPlaneImage({ image: this.markOnImage, metaData: {id : markOnOffID} }, this.vrMemoMarkOnOffDict);
+				}
+				{
+					const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+					const geometry = new THREE.CylinderGeometry(
+						radius, radius, height, radialSegments, heightSegments, true,
+						thetaStart, thetaLength);
+					// 左上を原点とする
+					geometry.translate(0, -h / 2, 0);
+					const memoOnOff = new THREE.Mesh(geometry, buttonMaterial);
+					memoOnOff.visible = false;
+					// flip
+					memoOnOff.scale.z *= -1;
+					this.setVRPlanePos(memoOnOff, Number(metaData.posx) + w + 5, Number(metaData.posy) - h - 10, Number(metaData.zIndex));
+					this.vrMemoMarkOnOffDict[memoOnOffID] = memoOnOff;
+					this.frontScene.add(memoOnOff);
+
+					this.setVRPlaneImage({ image: this.memoOnImage, metaData: {id : memoOnOffID} }, this.vrMemoMarkOnOffDict);
+				}
 			}
 		}
 	}
