@@ -350,7 +350,13 @@ class Store extends EventEmitter
 		
 		/* camera matrix */
 		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
-		iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(metaData.cameraWorldMatrix);
+        if (metaData.hasOwnProperty('cameraWorldMatrix')) {
+            try {
+                iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(metaData.cameraWorldMatrix);
+            } catch(e) {
+                // console.error(e, metaData)
+            }
+        }
 		let d = new iframe.contentWindow.THREE.Vector3();
 		let q = new iframe.contentWindow.THREE.Quaternion();
 		let s = new iframe.contentWindow.THREE.Vector3();

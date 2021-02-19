@@ -788,8 +788,8 @@ class VRGUI extends EventEmitter {
 		planeDict[metaData.id].material.map = texture;
 		// renderOrderを指定した場合に透過するかどうかにより大きく分けられてしまうため
 		// 全てtransparentとしておき、renderOrderに完全に一致させる。
-		// planeDict[metaData.id].material.transparent = true;
-		// planeDict[metaData.id].material.needsUpdate = true;
+		// planeDict[metaData.id].material.alphaTest = 0.5;
+		planeDict[metaData.id].material.needsUpdate = true;
 	}
 
 	/**
@@ -1124,8 +1124,6 @@ class VRGUI extends EventEmitter {
 					}
 				}
 			});
-			video.load();
-			video.srcObject = stream;
 			this.vrWebGLVideoHandleDict[metaData.id] = setInterval(() => {
 				this.resolveIFrames(metaData.id, this.timestamp)
 			}, 100);
@@ -1143,6 +1141,8 @@ class VRGUI extends EventEmitter {
 			}, 1000);
 			this.addVRPlane({ metaData: metaData });
 			this.assignVRMetaData({ metaData: metaData, useOrg: false });
+			video.load();
+			video.srcObject = stream;
 		}
 	}
 
