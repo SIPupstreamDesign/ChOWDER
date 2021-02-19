@@ -1377,6 +1377,7 @@ class GUI extends EventEmitter {
 	 * @param targetid コンテンツのid
 	 */
 	setupContent(elem, targetid) {
+		if (this.store.isVRMode()) { return; }
 		let d = DisplayUtil.getTargetEvent();
 		if (d.mode === 'mouse') {
 			elem.addEventListener(d.start, ((elem, targetid) => {
@@ -1410,6 +1411,7 @@ class GUI extends EventEmitter {
 	};
 
 	setupWindowEvents() {
+		if (this.store.isVRMode()) { return; }
 		if (DisplayUtil.getTargetEvent().mode === 'mouse') {
 			window.document.addEventListener("mousedown", function () {
 				let displayArea = document.getElementById('displayid_area');

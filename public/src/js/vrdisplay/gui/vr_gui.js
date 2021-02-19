@@ -112,8 +112,10 @@ class VRGUI extends EventEmitter {
 		this.lineWidth = 2;
 		// コンテンツIDと対応する強調表示線の辞書
 		this.vrMarkLineDict = {};
-
+		// コンテンツIDと対応するwebgl canvasの辞書
 		this.vrWebGLDict = {};
+		// コンテンツIDと対応するメモのplaneの辞書
+		this.vrMemoDict = {};
 
 		this.vrWebGLVideoHandleDict = {};
 
@@ -121,6 +123,10 @@ class VRGUI extends EventEmitter {
 		this.selectedIDs = [null, null]; // [右, 左]
 		// 最初の1回のトリガーを検知するためのフラグ
 		this.isInitialTriger = [true, true]
+		// トリガーが押されているかどうか
+		this.isTrigerPressed = [false, false]
+		// トリガーが押されたときのスクリーン座標（移動計算用
+		this.preXY = [null, null]
 
 		// テンポラリRay
 		this.tempRay = new THREE.Ray();
@@ -167,7 +173,8 @@ class VRGUI extends EventEmitter {
 		// canvas解像度は、仮想ディスプレイの解像度とする
 		this.renderer.setSize(width, height);
 		// VRボタンを設置
-		document.body.appendChild(VRButton.createButton(this.renderer));
+		this.vrButton = VRButton.createButton(this.renderer);
+		document.body.appendChild(this.vrButton);
 
 		this.camera = new THREE.PerspectiveCamera(
 			93, width / height, 1, 10000);
@@ -184,6 +191,14 @@ class VRGUI extends EventEmitter {
 			this.renderer.render(this.getFrontScene(), this.camera);
 		};
 		this.renderer.setAnimationLoop(render);
+		
+		this.renderer.xr.addEventListener('sessionend', (evt) => {
+			// onsessionend
+		});
+		this.renderer.xr.addEventListener('sessionstart', (evt) => {
+			this.renderer.xr.getSession().updateRenderState({ depthFar: 10000 });
+		});
+
 	}
 
 	initVRController() {
@@ -270,6 +285,8 @@ class VRGUI extends EventEmitter {
 	resolveInputs() {
 		if (!this.currentSession) return;
 
+		this.move();
+
 		for (const source of this.currentSession.inputSources) {
 			if (!source.gamepad) continue;
 			const gamepad = source.gamepad;
@@ -278,6 +295,7 @@ class VRGUI extends EventEmitter {
 			const trigerPressed = gamepad.buttons[0].pressed;
 			const isLeft = source.handedness === 'left';
 			const controllerIndex = isLeft ? 1 : 0;
+			this.isTrigerPressed[controllerIndex] = trigerPressed;
 
 			if (trigerPressed) {
 				if (this.isInitialTriger[controllerIndex]) {
@@ -285,12 +303,11 @@ class VRGUI extends EventEmitter {
 					this.select(source);
 				}
 			} else {
-				this.unselect(source);
+				this.preXY[controllerIndex] = null;
+				// this.unselect(source);
 				this.isInitialTriger[controllerIndex] = true;
 			}
 		}
-
-		this.move();
 	}
 
 	resolveIFrames(id, timestamp) {
@@ -301,6 +318,7 @@ class VRGUI extends EventEmitter {
 	}
 
 	// VRコントローラの選択イベント（トリガーを引くやつ）
+	// 選択対象のplaneがあったら選択し、this.selectedIDs[idx]に選択中フラグを設定する
 	select(source) {
 		const isLeft = source.handedness === 'left';
 		const controllerIndex = isLeft ? 1 : 0;
@@ -310,6 +328,7 @@ class VRGUI extends EventEmitter {
 		this.controllerDir.set(0, 0, -1);
 		this.controllerDir.applyQuaternion(controller.quaternion);
 
+		// ヒットテストを行い、当たったplaneのうち最もrenderOrderが高いものを選択
 		this.raycaster.set(controller.position, this.controllerDir);
 		const intersects = this.raycaster.intersectObjects(this.scene.children);
 		let target = null;
@@ -327,7 +346,7 @@ class VRGUI extends EventEmitter {
 			if (index >= 0) {
 				const id = Object.keys(this.vrPlaneDict)[index];
 				if (this.selectedIDs[controllerIndex] !== id) {
-					console.log('selected: ', id);
+					this.unselect(this.selectedIDs[controllerIndex], controllerIndex);
 					// IDを保存
 					this.selectedIDs[controllerIndex] = id;
 					// コントローラ姿勢
@@ -338,19 +357,20 @@ class VRGUI extends EventEmitter {
 					const xy = this.calcPixelPosFromRay(this.tempRay);
 					// コンテンツが選択されたことを通知
 					if (xy) {
-						this.preXY = xy;
+						this.preXY[controllerIndex] = xy;
 						this.emit(VRGUI.EVENT_SELECT, null, id, xy.x, xy.y);
 					}
 				}
 			}
+		} else {
+			if (this.selectedIDs[controllerIndex]) {
+				this.unselect(this.selectedIDs[controllerIndex], controllerIndex);
+			}
 		}
 	}
 
-	unselect(source) {
-		const isLeft = source.handedness === 'left';
-		const controllerIndex = isLeft ? 1 : 0;
-		if (this.selectedIDs[controllerIndex]) {
-			const id = this.selectedIDs[controllerIndex];
+	unselect(id, controllerIndex) {
+		if (id) {
 			console.log('unselect', id);
 			this.selectedIDs[controllerIndex] = null;
 			this.hideFrame(id);
@@ -361,8 +381,8 @@ class VRGUI extends EventEmitter {
 
 	// 選択中のポインター移動によるコンテンツ移動
 	move() {
-		const isRight = (this.selectedIDs[0] !== null);
-		const isLeft = (this.selectedIDs[1] !== null);
+		const isRight = (this.selectedIDs[0] !== null && this.isTrigerPressed[0] === true);
+		const isLeft = (this.selectedIDs[1] !== null && this.isTrigerPressed[1] === true);
 		const cindices = [isRight ? 0 : null, isLeft ? 1 : null];
 		for (let i = 0; i < cindices.length; ++i) {
 			const controllerIndex = cindices[i];
@@ -374,9 +394,11 @@ class VRGUI extends EventEmitter {
 
 				const id = this.selectedIDs[controllerIndex];
 				const xy = this.calcPixelPosFromRay(this.tempRay);
-				if (xy && this.preXY && (this.preXY.x !== xy.x || this.preXY.y !== xy.y)) {
+				if (xy
+					 && this.preXY[controllerIndex]
+					 && (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) {
 					this.emit(VRGUI.EVENT_SELECT_MOVE, null, id, xy.x, xy.y);
-					this.preXY = xy;
+					this.preXY[controllerIndex] = xy;
 				}
 			}
 		}
@@ -596,7 +618,7 @@ class VRGUI extends EventEmitter {
 	 *   metaData: metaData
 	 * }
 	 */
-	addVRPlane(data, hasFrame = true) {
+	addVRPlane(data, hasFrame = true, planeDict = this.vrPlaneDict) {
 		const metaData = data.metaData;
 		const w = Number(metaData.orgWidth);
 		const h = Number(metaData.orgHeight);
@@ -612,7 +634,7 @@ class VRGUI extends EventEmitter {
 				geometry.translate(w / 2, -h / 2, 0);
 				const plane = new THREE.Mesh(geometry, contentMaterial);
 				this.setVRPlanePos(plane, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
-				this.vrPlaneDict[metaData.id] = plane;
+				planeDict[metaData.id] = plane;
 				this.scene.add(plane);
 			}
 
@@ -660,7 +682,7 @@ class VRGUI extends EventEmitter {
 				cylinder.scale.z *= -1;
 
 				this.setVRPlanePos(cylinder, Number(metaData.posx), Number(metaData.posy), Number(metaData.zIndex));
-				this.vrPlaneDict[metaData.id] = cylinder;
+				planeDict[metaData.id] = cylinder;
 				this.scene.add(cylinder);
 			}
 
@@ -697,21 +719,21 @@ class VRGUI extends EventEmitter {
 			delete this.vrPlaneDict[id];
 		}
 		const memoBGID = "memobg:" + id
-		if (this.vrPlaneDict.hasOwnProperty(memoBGID)) {
-			this.scene.remove(this.vrPlaneDict[memoBGID]);
-			delete this.vrPlaneDict[memoBGID];
+		if (this.vrMemoDict.hasOwnProperty(memoBGID)) {
+			this.scene.remove(this.vrMemoDict[memoBGID]);
+			delete this.vrMemoDict[memoBGID];
 		}
 		const memoTextID = "memotxt:" + id
-		if (this.vrPlaneDict.hasOwnProperty(memoTextID)) {
-			this.scene.remove(this.vrPlaneDict[memoTextID]);
-			delete this.vrPlaneDict[memoTextID];
+		if (this.vrMemoDict.hasOwnProperty(memoTextID)) {
+			this.scene.remove(this.vrMemoDict[memoTextID]);
+			delete this.vrMemoDict[memoTextID];
 		}
 		if (this.vrLineDict.hasOwnProperty(id)) {
 			this.frontScene.remove(this.vrLineDict[id]);
 			delete this.vrLineDict[id];
 		}
 		if (this.vrMarkLineDict.hasOwnProperty(id)) {
-			this.scene.remove(this.vrLineDict[id]);
+			this.scene.remove(this.vrMarkLineDict[id]);
 			delete this.vrMarkLineDict[id];
 		}
 		if (this.vrWebGLDict.hasOwnProperty(id)) {
@@ -727,20 +749,20 @@ class VRGUI extends EventEmitter {
 	 *   metaData: metaData
 	 * }
 	 */
-	setVRPlaneImage(data) {
+	setVRPlaneImage(data, planeDict = this.vrPlaneDict) {
 		const metaData = data.metaData;
 		const texture = new THREE.Texture(data.image);
 		texture.minFilter = THREE.LinearFilter;
 		texture.magFilter = THREE.LinearFilter;
 		texture.needsUpdate = true;
-		if (!this.vrPlaneDict.hasOwnProperty(metaData.id)) {
+		if (!planeDict.hasOwnProperty(metaData.id)) {
 			console.error('not found plane for', metaData.id);
 		}
 
-		this.vrPlaneDict[metaData.id].material.map = texture;
-		// this.vrPlaneDict[metaData.id].material.blending = THREE.NormalBlending;
-		this.vrPlaneDict[metaData.id].material.alphaTest = 0.5;
-		this.vrPlaneDict[metaData.id].material.needsUpdate = true;
+		planeDict[metaData.id].material.map = texture;
+		// planeDict[metaData.id].material.blending = THREE.NormalBlending;
+		planeDict[metaData.id].material.alphaTest = 0.5;
+		planeDict[metaData.id].material.needsUpdate = true;
 	}
 
 	/**
@@ -751,7 +773,7 @@ class VRGUI extends EventEmitter {
 	 *   metaData: metaData
 	 * }
 	 */
-	setVRPlaneVideo(data) {
+	setVRPlaneVideo(data, planeDict = this.vrPlaneDict) {
 		const metaData = data.metaData;
 		const video = data.video;
 		const texture = new THREE.VideoTexture(video);
@@ -759,15 +781,15 @@ class VRGUI extends EventEmitter {
 		texture.magFilter = THREE.LinearFilter;
 		texture.format = THREE.RGBFormat;
 		texture.needsUpdate = true;
-		if (!this.vrPlaneDict.hasOwnProperty(metaData.id)) {
+		if (!planeDict.hasOwnProperty(metaData.id)) {
 			console.error('not found plane for', metaData.id);
 		}
 
-		this.vrPlaneDict[metaData.id].material.map = texture;
+		planeDict[metaData.id].material.map = texture;
 		// renderOrderを指定した場合に透過するかどうかにより大きく分けられてしまうため
 		// 全てtransparentとしておき、renderOrderに完全に一致させる。
-		// this.vrPlaneDict[metaData.id].material.transparent = true;
-		// this.vrPlaneDict[metaData.id].material.needsUpdate = true;
+		// planeDict[metaData.id].material.transparent = true;
+		// planeDict[metaData.id].material.needsUpdate = true;
 	}
 
 	/**
@@ -998,8 +1020,8 @@ class VRGUI extends EventEmitter {
 			const memoTextID = "memotxt:" + metaData.id;
 			const memoElem = document.getElementById(memoID);
 			if (memoElem && metaData.user_data_text) {
-				const memoBGPlane = this.vrPlaneDict[memoBGID];
-				const memoTextPlane = this.vrPlaneDict[memoTextID];
+				const memoBGPlane = this.vrMemoDict[memoBGID];
+				const memoTextPlane = this.vrMemoDict[memoTextID];
 				const elemRect = memoElem.getBoundingClientRect();
 				// 背景色planeは幅高さも変える
 				if (memoBGPlane) {
@@ -1185,23 +1207,23 @@ class VRGUI extends EventEmitter {
 		// メモ用ID(内部でのみ使用)
 		const memoBGID = "memobg:" + metaData.id;
 		const memoTextID = "memotxt:" + metaData.id;
-		let textPlane = this.getVRPlane(memoTextID)
-		let bgPlane = this.getVRPlane(memoBGID)
+		let textPlane = this.getVRPlane(memoTextID, this.vrMemoDict)
+		let bgPlane = this.getVRPlane(memoBGID, this.vrMemoDict)
 		
 		if (!textPlane) {
 			// 背景色用plane
 			let memoMetaData = JSON.parse(JSON.stringify(metaData));
 			memoMetaData.id = memoBGID;
-			this.addVRPlane({ metaData: memoMetaData }, false);
-			bgPlane = this.getVRPlane(memoBGID);
+			this.addVRPlane({ metaData: memoMetaData }, false, this.vrMemoDict);
+			bgPlane = this.getVRPlane(memoBGID, this.vrMemoDict);
 			bgPlane.material.color.setStyle(color);
 			// bgPlane.material.transparent = true;
 
 			// メモ用plane
 			let memoTextMetaData = JSON.parse(JSON.stringify(metaData));
 			memoTextMetaData.id = memoTextID;
-			this.addVRPlane({ metaData: memoTextMetaData }, false);
-			textPlane = this.getVRPlane(memoTextID);
+			this.addVRPlane({ metaData: memoTextMetaData }, false, this.vrMemoDict);
+			textPlane = this.getVRPlane(memoTextID, this.vrMemoDict);
 			// textPlane.material.transparent = true;
 			
 		}
@@ -1243,7 +1265,7 @@ class VRGUI extends EventEmitter {
 					image.onload = () => {
 						URL.revokeObjectURL(image.src);
 						// textPlaneの画像を追加
-						this.setVRPlaneImage({ image: image, metaData: { id: memoTextID } });
+						this.setVRPlaneImage({ image: image, metaData: { id: memoTextID } }, this.vrMemoDict);
 					}
 					image.src = window.URL.createObjectURL(blob);
 				});
@@ -1254,12 +1276,12 @@ class VRGUI extends EventEmitter {
 	updateMemoVisible(memoElem, metaData, isMemoVisible) {
 		// メモ用ID(内部でのみ使用)
 		const memoBGID = "memobg:" + metaData.id;
-		let plane = this.getVRPlane(memoBGID);
+		let plane = this.getVRPlane(memoBGID, this.vrMemoDict);
 		if (plane) {
 			plane.visible = isMemoVisible;
 		}
 		const memoTextID = "memotxt:" + metaData.id;
-		let textPlane = this.getVRPlane(memoTextID);
+		let textPlane = this.getVRPlane(memoTextID, this.vrMemoDict);
 		if (textPlane) {
 			textPlane.visible = isMemoVisible;
 		}
@@ -1349,11 +1371,11 @@ class VRGUI extends EventEmitter {
 	/**
 	 * 指定したIDのVRPlaneを取得
 	 */
-	getVRPlane(id) {
-		if (!this.vrPlaneDict.hasOwnProperty(id)) {
+	getVRPlane(id, planeDict = this.vrPlaneDict ) {
+		if (!planeDict.hasOwnProperty(id)) {
 			return null;
 		}
-		return this.vrPlaneDict[id];
+		return planeDict[id];
 	}
 
 	getScene() {
