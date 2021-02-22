@@ -67,6 +67,26 @@ function reversePainterSortStable( a, b ) {
 }
 */
 
+function GetMemoOnOffID(id) {
+	return "memoonoff:" + id;
+}
+
+function GetMarkOnOffID(id) {
+	return "markonoff:" + id;
+}
+
+function GetMemoID(id) {
+	return "memo:" + id;
+}
+
+function GetMemoBGID(id) {
+	return "memobg:" + id;
+}
+
+function GetMemoTxtID(id) {
+	return "memotxt:" + id;
+}
+
 class VRGUI extends EventEmitter {
 	constructor(store, action) {
 		super();
@@ -310,7 +330,7 @@ class VRGUI extends EventEmitter {
 				if (this.isInitialTriger[controllerIndex]) {
 					this.isInitialTriger[controllerIndex] = false;
 					this.select(source);
-				} else {
+				} else if (this.selectedIDs[controllerIndex]) {
 					// コントローラの向きを計算
 					const controller = this.renderer.xr.getController(controllerIndex);
 					this.controllerDir.set(0, 0, -1);
@@ -318,8 +338,10 @@ class VRGUI extends EventEmitter {
 					// コントローラ姿勢
 					this.tempRay.set(controller.position, this.controllerDir);
 					const xy = this.calcPixelPosFromRay(this.tempRay);
-					this.preXY[controllerIndex] = xy;
-					this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
+					if (xy) {
+						this.preXY[controllerIndex] = xy;
+						this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
+					}
 				}
 			} else {
 				this.preXY[controllerIndex] = null;
@@ -349,7 +371,8 @@ class VRGUI extends EventEmitter {
 
 		// ヒットテストを行い、当たったplaneのうち最もrenderOrderが高いものを選択
 		this.raycaster.set(controller.position, this.controllerDir);
-		const intersects = this.raycaster.intersectObjects(this.scene.children);
+		const planes = Object.values(this.vrPlaneDict);
+		const intersects = this.raycaster.intersectObjects(planes);
 		let target = null;
 		for (let i = 0; i < intersects.length; ++i) {
 			if (!target) {
@@ -360,8 +383,7 @@ class VRGUI extends EventEmitter {
 			}
 		}
 		if (target) {
-			const objs = Object.values(this.vrPlaneDict);
-			const index = objs.indexOf(target);
+			const index = planes.indexOf(target);
 			if (index >= 0) {
 				const id = Object.keys(this.vrPlaneDict)[index];
 				if (this.selectedIDs[controllerIndex] !== id) {
@@ -429,11 +451,11 @@ class VRGUI extends EventEmitter {
 		} else {
 			console.error('Not found frame:', id)
 		}
-		const markOnOffID = "markonoff:" + id;
+		const markOnOffID = GetMarkOnOffID(id);
 		if (this.vrMemoMarkOnOffDict[markOnOffID]) {
 			this.vrMemoMarkOnOffDict[markOnOffID].visible = true;
 		}
-		const memoOnOffID = "memoonoff:" + id;
+		const memoOnOffID = GetMemoOnOffID(id);
 		if (this.vrMemoMarkOnOffDict[memoOnOffID]) {
 			this.vrMemoMarkOnOffDict[memoOnOffID].visible = true;
 		}
@@ -445,11 +467,11 @@ class VRGUI extends EventEmitter {
 		} else {
 			console.error('Not found frame:', id)
 		}
-		const markOnOffID = "markonoff:" + id;
+		const markOnOffID = GetMarkOnOffID(id);
 		if (this.vrMemoMarkOnOffDict[markOnOffID]) {
 			this.vrMemoMarkOnOffDict[markOnOffID].visible = false;
 		}
-		const memoOnOffID = "memoonoff:" + id;
+		const memoOnOffID = GetMemoOnOffID(id);
 		if (this.vrMemoMarkOnOffDict[memoOnOffID]) {
 			this.vrMemoMarkOnOffDict[memoOnOffID].visible = false;
 		}
@@ -659,8 +681,8 @@ class VRGUI extends EventEmitter {
 		const h = Number(metaData.orgHeight);
 		const lineWidth = this.lineWidth;
 		const lineWidth2 = this.lineWidth * 2;
-		const memoOnOffID = "memoonoff:" + metaData.id;
-		const markOnOffID = "markonoff:" + metaData.id;
+		const memoOnOffID = GetMemoOnOffID(metaData.id);
+		const markOnOffID = GetMarkOnOffID(metaData.id);
 		const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest: false });
 		const contentMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
 		if (this.isPlaneMode) {
@@ -831,12 +853,12 @@ class VRGUI extends EventEmitter {
 			this.scene.remove(this.vrPlaneDict[id]);
 			delete this.vrPlaneDict[id];
 		}
-		const memoBGID = "memobg:" + id
+		const memoBGID = GetMemoBGID(id);
 		if (this.vrMemoDict.hasOwnProperty(memoBGID)) {
 			this.scene.remove(this.vrMemoDict[memoBGID]);
 			delete this.vrMemoDict[memoBGID];
 		}
-		const memoTextID = "memotxt:" + id
+		const memoTextID = GetMemoTxtID(id);
 		if (this.vrMemoDict.hasOwnProperty(memoTextID)) {
 			this.scene.remove(this.vrMemoDict[memoTextID]);
 			delete this.vrMemoDict[memoTextID];
@@ -852,12 +874,12 @@ class VRGUI extends EventEmitter {
 		if (this.vrWebGLDict.hasOwnProperty(id)) {
 			delete this.vrWebGLDict[id];
 		}
-		const memoOnOffID = "memoonoff:" + id
+		const memoOnOffID = GetMemoOnOffID(id);
 		if (this.vrMemoMarkOnOffDict.hasOwnProperty(memoOnOffID)) {
 			this.frontScene.remove(this.vrMemoMarkOnOffDict[memoOnOffID]);
 			delete this.vrMemoMarkOnOffDict[memoOnOffID];
 		}
-		const markOnOffID = "markonoff:" + id
+		const markOnOffID = GetMarkOnOffID(id);
 		if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
 			this.frontScene.remove(this.vrMemoMarkOnOffDict[markOnOffID]);
 			delete this.vrMemoMarkOnOffDict[markOnOffID];
@@ -1148,9 +1170,9 @@ class VRGUI extends EventEmitter {
 			}
 
 			// メモの更新
-			const memoID = "memo:" + metaData.id;
-			const memoBGID = "memobg:" + metaData.id;
-			const memoTextID = "memotxt:" + metaData.id;
+			const memoID = GetMemoID(metaData.id);
+			const memoBGID = GetMemoBGID(metaData.id);
+			const memoTextID = GetMemoTxtID(metaData.id);
 			const memoElem = document.getElementById(memoID);
 			if (memoElem && metaData.user_data_text) {
 				const memoBGPlane = this.vrMemoDict[memoBGID];
@@ -1177,12 +1199,12 @@ class VRGUI extends EventEmitter {
 			}
 
 			// ONOffボタンの更新
-			const markOnOffID = "markonoff:" + metaData.id;
+			const markOnOffID = GetMarkOnOffID(metaData.id);
 			if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
 				const markOnOffButton = this.vrMemoMarkOnOffDict[markOnOffID];
 				this.assignVRMetaDataToButton(metaData, rect, markOnOffButton, false);
 			}
-			const memoOnOffID = "memoonoff:" + metaData.id;
+			const memoOnOffID = GetMemoOnOffID(metaData.id);
 			if (this.vrMemoMarkOnOffDict.hasOwnProperty(memoOnOffID)) {
 				const memoOnOffButton = this.vrMemoMarkOnOffDict[memoOnOffID];
 				this.assignVRMetaDataToButton(metaData, rect, memoOnOffButton, true);
@@ -1351,8 +1373,8 @@ class VRGUI extends EventEmitter {
 	 */
 	showMemoVR(memoElem, metaData, color, isTextChanged) {
 		// メモ用ID(内部でのみ使用)
-		const memoBGID = "memobg:" + metaData.id;
-		const memoTextID = "memotxt:" + metaData.id;
+		const memoBGID = GetMemoBGID(metaData.id);
+		const memoTextID = GetMemoTxtID(metaData.id);
 		let textPlane = this.getVRPlane(memoTextID, this.vrMemoDict)
 		let bgPlane = this.getVRPlane(memoBGID, this.vrMemoDict)
 		
@@ -1421,12 +1443,12 @@ class VRGUI extends EventEmitter {
 
 	updateMemoVisible(memoElem, metaData, isMemoVisible) {
 		// メモ用ID(内部でのみ使用)
-		const memoBGID = "memobg:" + metaData.id;
+		const memoBGID = GetMemoBGID(metaData.id);
 		let plane = this.getVRPlane(memoBGID, this.vrMemoDict);
 		if (plane) {
 			plane.visible = isMemoVisible;
 		}
-		const memoTextID = "memotxt:" + metaData.id;
+		const memoTextID = GetMemoTxtID(metaData.id);
 		let textPlane = this.getVRPlane(memoTextID, this.vrMemoDict);
 		if (textPlane) {
 			textPlane.visible = isMemoVisible;

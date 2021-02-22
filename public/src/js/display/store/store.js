@@ -474,6 +474,9 @@ class Store extends EventEmitter {
 			//iframe読み込みがまだ終わっていない
 			return;
 		}
+        if (!iframe.contentWindow.Q3D.application.hasOwnProperty('camera')) {
+            return;
+        }
 		
 		/* camera matrix */
 		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;

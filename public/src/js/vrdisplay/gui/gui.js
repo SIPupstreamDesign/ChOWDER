@@ -1330,11 +1330,13 @@ class GUI extends EventEmitter {
 		if (this.store.getMetaDataDict().hasOwnProperty(targetid)) {
 			const metaData = this.store.getMetaDataDict()[targetid];
 			const elem = document.getElementById(targetid);
-			elem.style.borderWidth = "1px";
-			elem.style.border = "solid";
-			elem.is_dragging = true;
-
-			this.showMark(elem, metaData);
+			if (elem) {
+				elem.style.borderWidth = "1px";
+				elem.style.border = "solid";
+				elem.is_dragging = true;
+	
+				this.showMark(elem, metaData);
+			}
 		}
 	}
 

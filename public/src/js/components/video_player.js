@@ -46,9 +46,11 @@ class VideoPlayer extends EventEmitter {
 
         this.player.on('ready', () => {
             let container = this.dom.getElementsByClassName('plyr--full-ui')[0];
-            container.style.minWidth = "unset";
-            container.style.width = "100%";
-            container.style.height = "100%";
+            if (container) {
+                container.style.minWidth = "unset";
+                container.style.width = "100%";
+                container.style.height = "100%";
+            }
             this.emit(VideoPlayer.EVENT_READY, null);
         });
     }
