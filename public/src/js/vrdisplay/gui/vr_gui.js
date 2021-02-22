@@ -10,6 +10,7 @@ import { VRButton } from '../../../../../node_modules/three/examples/jsm/webxr/V
 import { XRControllerModelFactory } from '../../../../../node_modules/three/examples/jsm/webxr/XRControllerModelFactory.js';
 import Store from '../store/store'
 import VideoStore from '../store/video_store'
+import Constants from '../../common/constants'
 
 let testLines = null;
 /*
@@ -66,6 +67,9 @@ function reversePainterSortStable( a, b ) {
 
 }
 */
+
+const MarkOnOffPrefix = "markonoff";
+const MemoOnOffPrefix = "memoonoff";
 
 function GetMemoOnOffID(id) {
 	return "memoonoff:" + id;
@@ -147,6 +151,9 @@ class VRGUI extends EventEmitter {
 		this.isInitialTriger = [true, true]
 		// トリガーが押されているかどうか
 		this.isTrigerPressed = [false, false]
+		// ON/OFFボタンが押されているかどうか
+		// falseまたは押されたボタンのID(memoonoff:hogehogeまたはmarkonoff:hogehoge)
+		this.pressedButtons = [false, false]
 		// トリガーが押されたときのスクリーン座標（移動計算用
 		this.preXY = [null, null]
 
@@ -327,23 +334,48 @@ class VRGUI extends EventEmitter {
 			const controllerIndex = isLeft ? 1 : 0;
 			this.isTrigerPressed[controllerIndex] = trigerPressed;
 			if (trigerPressed) {
-				if (this.isInitialTriger[controllerIndex]) {
-					this.isInitialTriger[controllerIndex] = false;
-					this.select(source);
-				} else if (this.selectedIDs[controllerIndex]) {
-					// コントローラの向きを計算
-					const controller = this.renderer.xr.getController(controllerIndex);
-					this.controllerDir.set(0, 0, -1);
-					this.controllerDir.applyQuaternion(controller.quaternion);
-					// コントローラ姿勢
-					this.tempRay.set(controller.position, this.controllerDir);
-					const xy = this.calcPixelPosFromRay(this.tempRay);
-					if (xy) {
-						this.preXY[controllerIndex] = xy;
-						this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
+				// コントローラの向きを計算
+				const controller = this.renderer.xr.getController(controllerIndex);
+				this.controllerDir.set(0, 0, -1);
+				this.controllerDir.applyQuaternion(controller.quaternion);
+				this.raycaster.set(controller.position, this.controllerDir);
+				// ボタン押してるか調べる
+				if (!this.pressedButtons[controllerIndex]) {
+					this.tryPressButton(controllerIndex);
+				}
+
+				// ボタン押していない場合は、コンテンツ再選択を試す
+				if (!this.pressedButtons[controllerIndex]) {
+					if (this.isInitialTriger[controllerIndex]) {
+						this.isInitialTriger[controllerIndex] = false;
+						this.select(source);
+					} else if (this.selectedIDs[controllerIndex]) {
+						// コントローラ姿勢
+						this.tempRay.set(controller.position, this.controllerDir);
+						const xy = this.calcPixelPosFromRay(this.tempRay);
+						if (xy) {
+							this.preXY[controllerIndex] = xy;
+							this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
+						}
 					}
 				}
 			} else {
+				// トリガーが離されている状態
+
+				// トリガー押下時に、何かボタンを押していた場合
+				if (this.pressedButtons[controllerIndex] !== false) {
+					const key = this.pressedButtons[controllerIndex];
+					const splits = key.split(':');
+					const prefix = splits[0];
+					const id = splits[1];
+					if (prefix === MarkOnOffPrefix) {
+						this.action.toggleMark({ id : id });
+					} else if (prefix === MemoOnOffPrefix) {
+						this.action.toggleMemo({ id : id });
+					}
+					this.pressedButtons[controllerIndex] = false;
+				}
+
 				this.preXY[controllerIndex] = null;
 				// this.unselect(source);
 				this.isInitialTriger[controllerIndex] = true;
@@ -369,8 +401,8 @@ class VRGUI extends EventEmitter {
 		this.controllerDir.set(0, 0, -1);
 		this.controllerDir.applyQuaternion(controller.quaternion);
 
-		// ヒットテストを行い、当たったplaneのうち最もrenderOrderが高いものを選択
 		this.raycaster.set(controller.position, this.controllerDir);
+		// ヒットテストを行い、当たったplaneのうち最もrenderOrderが高いものを選択
 		const planes = Object.values(this.vrPlaneDict);
 		const intersects = this.raycaster.intersectObjects(planes);
 		let target = null;
@@ -382,6 +414,7 @@ class VRGUI extends EventEmitter {
 				target = intersects[i].object;
 			}
 		}
+
 		if (target) {
 			const index = planes.indexOf(target);
 			if (index >= 0) {
@@ -406,6 +439,31 @@ class VRGUI extends EventEmitter {
 		} else {
 			if (this.selectedIDs[controllerIndex]) {
 				this.unselect(this.selectedIDs[controllerIndex], controllerIndex);
+			}
+		}
+	}
+
+	tryPressButton(controllerIndex) {
+		
+		// メモ、強調表示ON/OFFボタンに対してヒットテストし, 最もrenderOrderが高いものを選択
+		{
+			const buttons = Object.values(this.vrMemoMarkOnOffDict);
+			const intersectButtons = this.raycaster.intersectObjects(buttons);
+			let button = null;
+			for (let i = 0; i < intersectButtons.length; ++i) {
+				if (!button) {
+					button = intersectButtons[i].object;
+				}
+				if (button.renderOrder <= intersectButtons[i].object.renderOrder) {
+					button = intersectButtons[i].object;
+				}
+			}
+			if (button) {
+				const index = buttons.indexOf(button);
+				if (index >= 0) {
+					const key = Object.keys(this.vrMemoMarkOnOffDict)[index];
+					this.pressedButtons[controllerIndex] = key;
+				}
 			}
 		}
 	}
@@ -721,8 +779,6 @@ class VRGUI extends EventEmitter {
 					this.setVRPlanePos(markOnOff, Number(metaData.posx), Number(metaData.posy) - h - 10, Number(metaData.zIndex));
 					this.vrMemoMarkOnOffDict[markOnOffID] = markOnOff;
 					this.frontScene.add(markOnOff);
-					
-					this.setVRPlaneImage({ image: this.markOnImage, metaData: {id : markOnOffID} }, this.vrMemoMarkOnOffDict);
 				}
 				{
 					const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
@@ -734,9 +790,8 @@ class VRGUI extends EventEmitter {
 					this.setVRPlanePos(memoOnOff, Number(metaData.posx) + w + 5, Number(metaData.posy) - h - 10, Number(metaData.zIndex));
 					this.vrMemoMarkOnOffDict[memoOnOffID] = memoOnOff;
 					this.frontScene.add(memoOnOff);
-					
-					this.setVRPlaneImage({ image: this.memoOnImage, metaData: {id : memoOnOffID} }, this.vrMemoMarkOnOffDict);
 				}
+				this.updateOnOffButton(metaData);
 			}
 		} else {
 			// metaDataの大きさのシリンダーを作る
@@ -812,8 +867,6 @@ class VRGUI extends EventEmitter {
 					this.setVRPlanePos(markOnOff, Number(metaData.posx), Number(metaData.posy) - h - 10, Number(metaData.zIndex));
 					this.vrMemoMarkOnOffDict[markOnOffID] = markOnOff;
 					this.frontScene.add(markOnOff);
-
-					this.setVRPlaneImage({ image: this.markOnImage, metaData: {id : markOnOffID} }, this.vrMemoMarkOnOffDict);
 				}
 				{
 					const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
@@ -829,13 +882,12 @@ class VRGUI extends EventEmitter {
 					this.setVRPlanePos(memoOnOff, Number(metaData.posx) + w + 5, Number(metaData.posy) - h - 10, Number(metaData.zIndex));
 					this.vrMemoMarkOnOffDict[memoOnOffID] = memoOnOff;
 					this.frontScene.add(memoOnOff);
-
-					this.setVRPlaneImage({ image: this.memoOnImage, metaData: {id : memoOnOffID} }, this.vrMemoMarkOnOffDict);
 				}
+				this.updateOnOffButton(metaData);
 			}
 		}
 	}
-
+	
 	/**
 	 * VRPlaneを削除
 	 * @param {*} data 
@@ -1092,6 +1144,21 @@ class VRGUI extends EventEmitter {
 		const plane = this.getVRPlane(metaData.id);
 		if (plane) {
 			plane.visible = VscreenUtil.isVisible(metaData);
+		}
+	}
+
+	updateOnOffButton(metaData) {
+		const memoOnOffID = GetMemoOnOffID(metaData.id);
+		const markOnOffID = GetMarkOnOffID(metaData.id);
+		const isMarkVisible = metaData.hasOwnProperty(Constants.MARK) && (metaData[Constants.MARK] === 'true' || metaData[Constants.MARK] === true);
+		const isMemoVisible = metaData.hasOwnProperty(Constants.MARK_MEMO) && (metaData[Constants.MARK_MEMO] === 'true' || metaData[Constants.MARK_MEMO] === true);
+		const markImage = isMarkVisible ? this.markOnImage : this.markOffImage;
+		const memoImage = isMemoVisible ? this.memoOnImage : this.memoOffImage;
+		if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
+			this.setVRPlaneImage({ image: markImage, metaData: {id : markOnOffID} }, this.vrMemoMarkOnOffDict);
+		}
+		if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
+			this.setVRPlaneImage({ image: memoImage, metaData: {id : memoOnOffID} }, this.vrMemoMarkOnOffDict);
 		}
 	}
 
@@ -1498,7 +1565,10 @@ class VRGUI extends EventEmitter {
 			const child = markLines.children[i];
 			child.material.color.setStyle(color);
 		}
-		markLines.visible = true;
+		if (markLines.visible !== true) {
+			this.updateOnOffButton(metaData);
+			markLines.visible = true;
+		}
 	}
 
 	/**
@@ -1508,7 +1578,10 @@ class VRGUI extends EventEmitter {
 		this.showMark(metaData, color);
 		if (this.vrMarkLineDict.hasOwnProperty(metaData.id)) {
 			const markLines = this.vrMarkLineDict[metaData.id];
-			markLines.visible = isMarkVisible;
+			if (markLines.visible !== isMarkVisible) {
+				this.updateOnOffButton(metaData);
+				markLines.visible = isMarkVisible;
+			}
 		}
 	}
 

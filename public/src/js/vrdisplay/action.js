@@ -180,6 +180,29 @@ class Action extends EventEmitter {
     updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
+
+    
+    /**
+     * 強調表示ON/OFFがトグルされた
+     * @param {*} data
+     * {
+     *    isActive : 押し込まれている状態かどうか
+     * }
+     */
+    toggleMark(data) {
+        this.emit(Action.EVENT_TOGGLE_MARK, null, data);
+    }
+
+    /**
+     * メモON/OFFがトグルされた
+     * @param {*} data
+     * {
+     *    isActive : 押し込まれている状態かどうか
+     * }
+     */
+    toggleMemo(data) {
+        this.emit(Action.EVENT_TOGGLE_MEMO, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -198,4 +221,6 @@ Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_TOGGLE_MARK = "toggleMark";
+Action.EVENT_TOGGLE_MEMO = "toggleMemo";
 export default Action;

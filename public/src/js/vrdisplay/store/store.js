@@ -11,6 +11,7 @@ import Validator from '../../common/validator';
 import VscreenUtil from '../../common/vscreen_util';
 import VideoStore from './video_store';
 import Receiver from './reciever';
+import Operation from './operation';
 
 const reconnectTimeout = 2000;
 
@@ -18,6 +19,7 @@ class Store extends EventEmitter {
     constructor(action) {
         super();
         this.action = action;
+        this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
 
         this.isInitialized_ = false;
         this.isVRMode_ = true;
@@ -207,9 +209,9 @@ class Store extends EventEmitter {
         });
     }
 
-	/**
-	 * ユーザーリストを最新に更新
-	 */
+    /**
+     * ユーザーリストを最新に更新
+     */
     _reloadUserList(data) {
         let callback = Store.extractCallback(data);
 
@@ -393,9 +395,9 @@ class Store extends EventEmitter {
         }
     }
 
-	/**
-	 * コンテンツのZインデックスを一番手前にする
-	 */
+    /**
+     * コンテンツのZインデックスを一番手前にする
+     */
     _changeContentIndexToFront(data) {
         let targetid = data.targetID;
         let max = 0;
@@ -421,10 +423,10 @@ class Store extends EventEmitter {
         }
     }
 
-	/**
-	 * コンテンツのTransformを変更
-	 * @param {*} data
-	 */
+    /**
+     * コンテンツのTransformを変更
+     * @param {*} data
+     */
     _changeContentTransform(data) {
         let targetid = data.targetID;
         let x = data.x;
@@ -463,49 +465,75 @@ class Store extends EventEmitter {
         }
     }
 
-    _updateQgisMetadata(metaData){
-		let dom = document.getElementById(metaData.id);
-		if(!dom){
-			return;
-		}
-		// console.log("[store:_updateQgisMetadata]",dom,metaData.id);
-		let iframe = dom.childNodes[0];
-		if(!iframe || !iframe.contentWindow || !iframe.contentWindow.Q3D){
-			//iframe読み込みがまだ終わっていない
-			return;
-		}
+    _updateQgisMetadata(metaData) {
+        let dom = document.getElementById(metaData.id);
+        if (!dom) {
+            return;
+        }
+        // console.log("[store:_updateQgisMetadata]",dom,metaData.id);
+        let iframe = dom.childNodes[0];
+        if (!iframe || !iframe.contentWindow || !iframe.contentWindow.Q3D) {
+            //iframe読み込みがまだ終わっていない
+            return;
+        }
         if (!iframe.contentWindow.Q3D.application.hasOwnProperty('camera')) {
             return;
         }
-		
-		/* camera matrix */
-		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
+
+        /* camera matrix */
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
         if (metaData.hasOwnProperty('cameraWorldMatrix')) {
             try {
                 iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(metaData.cameraWorldMatrix);
-            } catch(e) {
+            } catch (e) {
                 // console.error(e, metaData)
             }
         }
-		let d = new iframe.contentWindow.THREE.Vector3();
-		let q = new iframe.contentWindow.THREE.Quaternion();
-		let s = new iframe.contentWindow.THREE.Vector3();
-		iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d,q,s);
-		iframe.contentWindow.Q3D.application.camera.position.copy( d );
-		iframe.contentWindow.Q3D.application.camera.quaternion.copy( q );
-		iframe.contentWindow.Q3D.application.camera.scale.copy( s );
-		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
-		iframe.contentWindow.Q3D.application.scene.requestRender();
+        let d = new iframe.contentWindow.THREE.Vector3();
+        let q = new iframe.contentWindow.THREE.Quaternion();
+        let s = new iframe.contentWindow.THREE.Vector3();
+        iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d, q, s);
+        iframe.contentWindow.Q3D.application.camera.position.copy(d);
+        iframe.contentWindow.Q3D.application.camera.quaternion.copy(q);
+        iframe.contentWindow.Q3D.application.camera.scale.copy(s);
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
+        iframe.contentWindow.Q3D.application.scene.requestRender();
 
-		/* camera matrix */
-		const displayProperty = JSON.parse(metaData.displayProperty);
-		if(iframe.contentWindow.Q3D.application.labelVisible !== displayProperty.label){
-			iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
-		}
-		if(iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe){
-			iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
-		}
-	}
+        /* camera matrix */
+        const displayProperty = JSON.parse(metaData.displayProperty);
+        if (iframe.contentWindow.Q3D.application.labelVisible !== displayProperty.label) {
+            iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
+        }
+        if (iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe) {
+            iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+        }
+    }
+
+    /**
+     * マニピュレータの星がトグルされた
+     */
+    _toggleMark(data) {
+        const id = data.id;
+        if (this.hasMetadata(id)) {
+            let metaData = this.getMetaData(id);
+            const isMarkVisible = metaData.hasOwnProperty(Constants.MARK) && (metaData[Constants.MARK] === 'true' || metaData[Constants.MARK] === true);
+            metaData.mark = String(!isMarkVisible);
+            this.operation.updateMetadata(metaData);
+        }
+    }
+
+    /**
+     * マニピュレータのmemoがトグルされた
+     */
+    _toggleMemo(data) {
+        const id = data.id;
+        if (this.hasMetadata(id)) {
+            let metaData = this.getMetaData(id);
+            const isMemoVisible = metaData.hasOwnProperty(Constants.MARK_MEMO) && (metaData[Constants.MARK_MEMO] === 'true' || metaData[Constants.MARK_MEMO] === true);
+            metaData.mark_memo = String(!isMemoVisible);
+            this.operation.updateMetadata(metaData);
+        }
+    }
 
     onGetWindowData(err, json) {
         if (!err && json) {
@@ -583,9 +611,9 @@ class Store extends EventEmitter {
         return ret;
     }
 
-	/**
-	 * VideoStoreを返す
-	 */
+    /**
+     * VideoStoreを返す
+     */
     getVideoStore() {
         return this.videoStore;
     }
@@ -624,10 +652,10 @@ class Store extends EventEmitter {
         this.authority = authority;
     }
 
-	/**
-	 * メタデータごとにfuncを実行
-	 * @param {*} func
-	 */
+    /**
+     * メタデータごとにfuncを実行
+     * @param {*} func
+     */
     for_each_metadata(func) {
         let i;
         for (i in this.metaDataDict) {
@@ -651,15 +679,15 @@ class Store extends EventEmitter {
         return this.groupDict;
     }
 
-	/**
-	 * 指定したIDのメタデータがあるかどうか
-	 */
+    /**
+     * 指定したIDのメタデータがあるかどうか
+     */
     hasMetadata(id) {
         return this.metaDataDict.hasOwnProperty(id);
     }
-	/**
-	 * 指定したIDのメタデータを取得
-	 */
+    /**
+     * 指定したIDのメタデータを取得
+     */
     getMetaData(id) {
         return this.metaDataDict[id];
     }
