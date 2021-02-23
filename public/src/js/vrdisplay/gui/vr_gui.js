@@ -1157,7 +1157,7 @@ class VRGUI extends EventEmitter {
 		if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
 			this.setVRPlaneImage({ image: markImage, metaData: {id : markOnOffID} }, this.vrMemoMarkOnOffDict);
 		}
-		if (this.vrMemoMarkOnOffDict.hasOwnProperty(markOnOffID)) {
+		if (this.vrMemoMarkOnOffDict.hasOwnProperty(memoOnOffID)) {
 			this.setVRPlaneImage({ image: memoImage, metaData: {id : memoOnOffID} }, this.vrMemoMarkOnOffDict);
 		}
 	}
@@ -1518,7 +1518,10 @@ class VRGUI extends EventEmitter {
 		const memoTextID = GetMemoTxtID(metaData.id);
 		let textPlane = this.getVRPlane(memoTextID, this.vrMemoDict);
 		if (textPlane) {
-			textPlane.visible = isMemoVisible;
+			if (textPlane.visible !== isMemoVisible) {
+				this.updateOnOffButton(metaData);
+				textPlane.visible = isMemoVisible;
+			}
 		}
 	}
 
