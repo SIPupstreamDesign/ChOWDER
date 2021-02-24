@@ -429,20 +429,43 @@ class Store extends EventEmitter {
      */
     _changeContentTransform(data) {
         let targetid = data.targetID;
-        let x = data.x;
-        let y = data.y;
         let metaDataDict = this.getMetaDataDict();
         if (metaDataDict.hasOwnProperty(targetid)) {
             let metaData = metaDataDict[targetid];
-            metaData.posx = x;
-            metaData.posy = y;
+                
+            if (data.hasOwnProperty('x') && data.hasOwnProperty('y')) {
+                metaData.posx = data.x;
+                metaData.posy = data.y;
+                VscreenUtil.transPosInv(metaData);
+                metaData.posx = Number(metaData.posx) - Vscreen.getWhole().x;
+                metaData.posy = Number(metaData.posy) - Vscreen.getWhole().y;
+            }
+            
+            if (data.hasOwnProperty('w') && data.hasOwnProperty('h')) {
+                const rect = Vscreen.transformOrgInv(
+                    Vscreen.makeRect(0, 0, data.w, data.h)
+                );
+                const isW = Math.abs(data.w) > Math.abs(data.h);
+                const aspect = Number(metaData.orgWidth) / Number(metaData.orgHeight);
+                let w = Number(metaData.width) + rect.w;
+                let h = Number(metaData.height) + rect.h;
+                if (isW) {
+                    // 幅基準で合わせる
+                    h = w / aspect;
+                } else {
+                    // 高さ基準で合わせる
+                    w = h * aspect;
+                }
 
-            VscreenUtil.transPosInv(metaData);
-            metaData.posx -= Vscreen.getWhole().x;
-            metaData.posy -= Vscreen.getWhole().y;
+                metaData.width = String(Math.max(10, Math.round(w)));
+                metaData.height = String(Math.max(10, Math.round(h)));
+            }
 
             Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {
             });
+            if (data.hasOwnProperty('callback')) {
+                data.callback();
+            }
         }
     }
 

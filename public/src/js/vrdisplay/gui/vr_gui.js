@@ -157,9 +157,14 @@ class VRGUI extends EventEmitter {
 		this.pressedButtons = [false, false]
 		// トリガーが押されたときのスクリーン座標（移動計算用
 		this.preXY = [null, null]
+		// 最後に選択したコントローラのインデックス
+		this.currentSelectionControllerIndex = null;
 
 		// テンポラリRay
 		this.tempRay = new THREE.Ray();
+
+		// 描画用の更新を止めるフラグ
+		this.stopUpdate = false;
 
 		// 平面モードかどうか
 		const query = new URLSearchParams(location.search);
@@ -223,11 +228,13 @@ class VRGUI extends EventEmitter {
 		// レンダリング
 		const render = (timestamp) => {
 			this.timestamp = timestamp;
-			this.resolveInputs();
-			this.renderer.clear();
-			this.renderer.render(this.getScene(), this.camera);
-			this.renderer.clearDepth();
-			this.renderer.render(this.getFrontScene(), this.camera);
+			if (!this.stopUpdate) {
+				this.resolveInputs();
+				this.renderer.clear();
+				this.renderer.render(this.getScene(), this.camera);
+				this.renderer.clearDepth();
+				this.renderer.render(this.getFrontScene(), this.camera);
+			}
 		};
 		this.renderer.setAnimationLoop(render);
 		
@@ -334,6 +341,7 @@ class VRGUI extends EventEmitter {
 			const cancelPressed = gamepad.buttons[1].pressed;
 			const isLeft = source.handedness === 'left';
 			const controllerIndex = isLeft ? 1 : 0;
+			const otherIndex = isLeft ? 0 : 1;
 			this.isTrigerPressed[controllerIndex] = trigerPressed;
 			if (cancelPressed) {
 				if (this.isInitialCancel[controllerIndex]) {
@@ -365,6 +373,7 @@ class VRGUI extends EventEmitter {
 						if (xy) {
 							this.preXY[controllerIndex] = xy;
 							this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
+							this.currentSelectionControllerIndex = controllerIndex;
 						}
 					}
 				}
@@ -443,6 +452,7 @@ class VRGUI extends EventEmitter {
 					if (xy) {
 						this.preXY[controllerIndex] = xy;
 						this.emit(VRGUI.EVENT_SELECT, null, id, xy.x, xy.y);
+						this.currentSelectionControllerIndex = controllerIndex;
 					}
 				}
 			}
@@ -481,6 +491,10 @@ class VRGUI extends EventEmitter {
 	unselect(id, controllerIndex) {
 		if (id) {
 			console.log('unselect', id);
+			const otherIndex = (controllerIndex === 0) ? 1 : 0;
+			if (this.selectedIDs[controllerIndex] === this.selectedIDs[otherIndex]) {
+				this.selectedIDs[otherIndex] = null;
+			}
 			this.selectedIDs[controllerIndex] = null;
 			this.hideFrame(id);
 			// 選択中から選択解除になった場合のみ、選択解除イベントを送る
@@ -493,21 +507,44 @@ class VRGUI extends EventEmitter {
 		const isRight = (this.selectedIDs[0] !== null && this.isTrigerPressed[0] === true);
 		const isLeft = (this.selectedIDs[1] !== null && this.isTrigerPressed[1] === true);
 		const cindices = [isRight ? 0 : null, isLeft ? 1 : null];
-		for (let i = 0; i < cindices.length; ++i) {
-			const controllerIndex = cindices[i];
-			if (controllerIndex !== null) {
+		if (isRight && isLeft) {
+			if (!this.stopUpdate && this.selectedIDs[0] === this.selectedIDs[1]) {
+				const controllerIndex = this.currentSelectionControllerIndex === 1 ? 0 : 1;
 				const controller = this.renderer.xr.getController(controllerIndex);
 				this.controllerDir.set(0, 0, -1);
 				this.controllerDir.applyQuaternion(controller.quaternion);
 				this.tempRay.set(controller.position, this.controllerDir);
-
-				const id = this.selectedIDs[controllerIndex];
+				// リサイズ
+				const id = this.selectedIDs[0];
 				const xy = this.calcPixelPosFromRay(this.tempRay);
 				if (xy
-					 && this.preXY[controllerIndex]
-					 && (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) {
-					this.emit(VRGUI.EVENT_SELECT_MOVE, null, id, xy.x, xy.y);
-					this.preXY[controllerIndex] = xy;
+					&& this.preXY[controllerIndex]
+					&& (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) 
+					{
+						const mx = xy.x - this.preXY[controllerIndex].x;
+						const my = xy.y - this.preXY[controllerIndex].y;
+						this.emit(VRGUI.EVENT_SELECT_RESIZE, null, id, mx, my);
+						this.preXY[controllerIndex] = xy;
+					}
+			}
+		} else {
+			// move
+			for (let i = 0; i < cindices.length; ++i) {
+				const controllerIndex = cindices[i];
+				if (controllerIndex !== null) {
+					const controller = this.renderer.xr.getController(controllerIndex);
+					this.controllerDir.set(0, 0, -1);
+					this.controllerDir.applyQuaternion(controller.quaternion);
+					this.tempRay.set(controller.position, this.controllerDir);
+	
+					const id = this.selectedIDs[controllerIndex];
+					const xy = this.calcPixelPosFromRay(this.tempRay);
+					if (xy
+						 && this.preXY[controllerIndex]
+						 && (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) {
+						this.emit(VRGUI.EVENT_SELECT_MOVE, null, id, xy.x, xy.y);
+						this.preXY[controllerIndex] = xy;
+					}
 				}
 			}
 		}
@@ -1219,12 +1256,16 @@ class VRGUI extends EventEmitter {
 	 * }
 	 */
 	assignVRMetaData(data) {
+		this.stopUpdate = true;
 		const metaData = data.metaData;
 		const useOrg = data.useOrg;
 		const groupDict = this.store.getGroupDict();
 		const plane = this.getVRPlane(metaData.id);
 
-		if (!plane) return;
+		if (!plane) {
+			this.stopUpdate = false;
+			return;
+		}
 		let rect;
 		if (useOrg) {
 			rect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
@@ -1316,6 +1357,7 @@ class VRGUI extends EventEmitter {
 			}
 			*/
 		}
+		this.stopUpdate = false;
 	}
 
 	/**
@@ -1652,5 +1694,6 @@ class VRGUI extends EventEmitter {
 VRGUI.EVENT_SELECT = 'select';
 VRGUI.EVENT_UNSELECT = 'unselect';
 VRGUI.EVENT_SELECT_MOVE = 'select_move';
+VRGUI.EVENT_SELECT_RESIZE = 'select_resize';
 
 export default VRGUI;

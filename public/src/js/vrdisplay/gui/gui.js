@@ -309,6 +309,28 @@ class GUI extends EventEmitter {
 				});
 			}
 		});
+
+		
+		this.vrgui.on(VRGUI.EVENT_SELECT_RESIZE, (err, id, mx, my) => {
+			// VRモードでコンテンツ選択中に別のコントローラでも選択してポインタを移動した場合
+			// リサイズ処理を行う
+			const elem = document.getElementById(id);
+			this.vrgui.stopUpdate = true;
+			if (elem) {
+				this.action.changeContentTransform({
+					targetID: id,
+					w: mx,
+					h: my,
+					callback : () => {
+						const metaData = this.store.getMetaData(id);
+						let groupDict = this.store.getGroupDict();
+						VscreenUtil.assignMetaData(elem, metaData, false, groupDict);
+						this.getVRGUI().assignVRMetaData({ metaData : metaData, useOrg : false});
+						this.vrgui.stopUpdate = false;
+					}
+				});
+			}
+		});
 	}
 
 	getHeadMenu() {
