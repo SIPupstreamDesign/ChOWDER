@@ -149,6 +149,7 @@ class VRGUI extends EventEmitter {
 		this.selectedIDs = [null, null]; // [右, 左]
 		// 最初の1回のトリガーを検知するためのフラグ
 		this.isInitialTriger = [true, true]
+		this.isInitialCancel = [true, true]
 		// トリガーが押されているかどうか
 		this.isTrigerPressed = [false, false]
 		// ON/OFFボタンが押されているかどうか
@@ -330,9 +331,17 @@ class VRGUI extends EventEmitter {
 
 			//トリガー（人さし指）押下
 			const trigerPressed = gamepad.buttons[0].pressed;
+			const cancelPressed = gamepad.buttons[1].pressed;
 			const isLeft = source.handedness === 'left';
 			const controllerIndex = isLeft ? 1 : 0;
 			this.isTrigerPressed[controllerIndex] = trigerPressed;
+			if (cancelPressed) {
+				if (this.isInitialCancel[controllerIndex]) {
+					this.isInitialCancel[controllerIndex] = false;
+					this.unselect(this.selectedIDs[controllerIndex], controllerIndex)
+				}
+			}
+
 			if (trigerPressed) {
 				// コントローラの向きを計算
 				const controller = this.renderer.xr.getController(controllerIndex);
@@ -379,6 +388,7 @@ class VRGUI extends EventEmitter {
 				this.preXY[controllerIndex] = null;
 				// this.unselect(source);
 				this.isInitialTriger[controllerIndex] = true;
+				this.isInitialCancel[controllerIndex] = true;
 			}
 		}
 	}
