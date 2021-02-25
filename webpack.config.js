@@ -13,7 +13,7 @@ module.exports = {
 	entry: {
 			"controller" : './public/src/controller_app.js',
 			"display" : './public/src/display_app.js',
-			"vrdisplay" : './public/src/vrdisplay_app.js',
+			"vrdisplay" : ['@babel/polyfill', './public/src/vrdisplay_app.js'],
 			"itowns" : './public/src/itowns_app.js',
 			"chowder_injection" : ['@babel/polyfill', './public/src/chowder_itowns_injection.js'],
 			"qgis" : ['@babel/polyfill', './public/src/qgis_app.js'],

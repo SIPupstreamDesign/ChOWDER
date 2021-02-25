@@ -6,7 +6,7 @@
 
 import Vscreen from '../../common/vscreen.js';
 import VscreenUtil from '../../common/vscreen_util.js';
-import { VRButton } from '../../../../../node_modules/three/examples/jsm/webxr/VRButton.js';
+import { VRButton } from './vr_button.js';
 import { XRControllerModelFactory } from '../../../../../node_modules/three/examples/jsm/webxr/XRControllerModelFactory.js';
 import Store from '../store/store'
 import VideoStore from '../store/video_store'

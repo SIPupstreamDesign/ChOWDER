@@ -30,7 +30,6 @@
 					navigator.xr.isSessionSupported('immersive-vr').then(function (supported) {
 						if (supported) {
 							let caption = document.getElementsByClassName('caption')[0];
-							caption.innerHTML = "VR Mode"
 							caption.style.margin = "5px";
 							vrModeDiv.style.display = 'table';
 							let frame = document.getElementById('vr_frame');
