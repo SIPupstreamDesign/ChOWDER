@@ -27,6 +27,9 @@ class GUI extends EventEmitter {
 	}
 
 	init() {
+		if (this.store.isVRMode()) {
+			this.initForVR();
+		}
 		this.headMenu =  new HeadMenu(this.store, this.action);
 		this.initWindow();
 		this.initEvents();
@@ -51,6 +54,30 @@ class GUI extends EventEmitter {
 		this.setupWindowEvents();
 	}
 
+	initForVR() {
+		// ヘッダを無効にする
+		document.getElementById('head_menu').style.display = "none";
+		// ディスプレイが許可されていない場合のメッセージを出す
+		this.blockMessageElem = document.createElement('div');
+		this.blockMessageElem.innerHTML = "Please allow this display (ID:" +this.store.getWindowID() + ") in controller."
+		this.blockMessageElem.style.fontSize = "30px";
+		this.blockMessageElem.style.position = "fixed";
+		this.blockMessageElem.style.bottom = "70px"
+		this.blockMessageElem.style.color = "white";
+		this.blockMessageElem.style.left = "5px";
+		this.blockMessageElem.style.zIndex = 10000000;
+		this.blockMessageElem.id = "block_message"
+		document.body.appendChild(this.blockMessageElem);
+
+		const canvas = document.getElementById('vr_area');
+		canvas.style.visibility = "hidden";
+		canvas.style.opacity = 0.0;
+
+		// 背景色の変更と、htmlの表示
+		const html = document.getElementsByTagName('html')[0];
+		html.style.backgroundColor = "#7e7e7e"
+		html.style.display = "initial"
+	}
 
 	initEvents() {
 
@@ -76,6 +103,9 @@ class GUI extends EventEmitter {
 			// ログありのときはSettingMenuに保存ボタン付ける
 			let blockedText = document.getElementsByClassName('blocked_text')[0];
 			blockedText.style.display = "none";
+			if (this.store.isVRMode()) {
+				this.blockMessageElem.style.display = "none";
+			}
 			/*
 			if (this.store.isMeasureTimeEnable()) {
 				let menu = document.getElementsByClassName('head_mode_text')[0];

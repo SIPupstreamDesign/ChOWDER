@@ -70,6 +70,12 @@ class Receiver {
         this.connector.on(Command.UpdateDisplayPermissionList, () => {
             let blockedText = document.getElementsByClassName('blocked_text')[0];
             blockedText.style.display = "block";
+			if (this.store.isVRMode()) {
+                const blockMessage = document.getElementById('block_message');
+                if (blockMessage) {
+                    blockMessage.style.display = "block";
+                }
+			}
 
             this.store.once(Store.EVENT_LOGIN_FAILED, () => {
                 window.location.reload(true);

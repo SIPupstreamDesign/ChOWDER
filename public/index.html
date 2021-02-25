@@ -9,6 +9,19 @@
 		function s4() {
 			return Math.floor((1 + Math.random()) * 0x10000000).toString(16);
 		}
+		/**
+		 * Parse `location.search` and return it as object.
+		 * @returns {Object} result
+		 */
+		function getQueryParams() {
+			let re = /[?&]([^=]+)=([^&]*)/g;
+			let ret = {};
+			let match;
+			while ((match = re.exec(location.search)) !== null) { // while `re` is not depleted
+				ret[match[1]] = decodeURIComponent(match[2]);
+			}
+			return ret;
+		}
 		window.onload = function () {
 			let normalModeDiv = document.getElementById('normal_mode');
 			let vrModeDiv = document.getElementById('vr_mode');
@@ -16,7 +29,19 @@
 				if (navigator.xr.isSessionSupported) {
 					navigator.xr.isSessionSupported('immersive-vr').then(function (supported) {
 						if (supported) {
+							let caption = document.getElementsByClassName('caption')[0];
+							caption.innerHTML = "VR Mode"
+							caption.style.margin = "5px";
 							vrModeDiv.style.display = 'table';
+							let frame = document.getElementById('vr_frame');
+							let displayID = s4()
+							let query = getQueryParams(location.search) || {};
+							displayID = query.id ? decodeURIComponent(query.id) : displayID;
+							frame.src = 'vrdisplay.html?id=' + displayID;
+							frame.style.width = "800px"
+							frame.style.height = "150px"
+							frame.style.border = "none"
+							window.history.pushState('', '', '/index.html?id=' + displayID); 
 						} else {
 							normalModeDiv.style.display = 'table';
 						}
@@ -30,6 +55,7 @@
 			disp.onclick = function () {
 				location.href = 'display.html?id=' + s4();
 			}
+			/*
 			let vrdisp = document.getElementById('vr_display_link');
 			vrdisp.onclick = function () {
 				location.href = 'vrdisplay.html?id=' + s4();
@@ -38,6 +64,7 @@
 			vrdispPlane.onclick = function () {
 				location.href = 'vrdisplay.html?id=' + s4() + '&mode=plane';
 			}
+			*/
 		};
 	</script>
 </head>
@@ -62,7 +89,9 @@
 			</div>
 		</div>
 		<div class="list-box" id='vr_mode' style="display:none">
-			<div class="list-item">
+			<iframe id='vr_frame'>
+			</iframe>
+			<!--div class="list-item">
 				<a id="vr_display_link">
 					<h1 class="display" style="width:230px">VR Display(曲面)</h1>
 				</a>
@@ -71,7 +100,7 @@
 				<a id="vr_display_link_plane">
 					<h1 class="display" style="margin-left: 30px; width:230px">VR Display(平面)</h1>
 				</a>
-			</div>
+			</div-->
 		</div>
 		<div class="license_wrap">
 			<a class="whitelink" href="licenses.md">

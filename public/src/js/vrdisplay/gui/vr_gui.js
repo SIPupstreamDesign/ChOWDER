@@ -236,12 +236,19 @@ class VRGUI extends EventEmitter {
 				this.renderer.render(this.getFrontScene(), this.camera);
 			}
 		};
-		this.renderer.setAnimationLoop(render);
 		
 		this.renderer.xr.addEventListener('sessionend', (evt) => {
+			const canvas = document.getElementById('vr_area');
+			this.renderer.setAnimationLoop(null);
+			canvas.style.visibility = "hidden";
+			canvas.style.opacity = 0.0;
 			// onsessionend
 		});
 		this.renderer.xr.addEventListener('sessionstart', (evt) => {
+			const canvas = document.getElementById('vr_area');
+			canvas.style.opacity = 1;
+			canvas.style.visibility = "visible";
+			this.renderer.setAnimationLoop(render);
 			this.renderer.xr.getSession().updateRenderState({ depthFar: 10000 });
 		});
 
