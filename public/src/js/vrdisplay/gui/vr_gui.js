@@ -11,6 +11,7 @@ import { XRControllerModelFactory } from '../../../../../node_modules/three/exam
 import Store from '../store/store'
 import VideoStore from '../store/video_store'
 import Constants from '../../common/constants'
+import { Vector3 } from 'three';
 
 let testLines = null;
 /*
@@ -119,6 +120,16 @@ class VRGUI extends EventEmitter {
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.CubeTextureLoader().load(urls);
 
+		/*
+		const xrPlaneGeometry = new THREE.PlaneBufferGeometry( 10, 10, 100, 100 );
+		xrPlaneGeometry.scale(10000, 10000, 10000);
+		xrPlaneGeometry.rotateX( -0.5 * Math.PI );
+		xrPlaneGeometry.translate(0, -100, 0 );
+		const xrPlaneMaterial = new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } );
+		const xrPlaneObject = new THREE.Mesh( xrPlaneGeometry, xrPlaneMaterial );
+		this.scene.add( xrPlaneObject );
+		*/
+
 		// 確実に手前に描画するシーン（ポインタなど）
 		this.frontScene = new THREE.Scene();
 
@@ -223,6 +234,8 @@ class VRGUI extends EventEmitter {
 		this.cameraBase = new THREE.Object3D();
 		this.scene.add(this.cameraBase);
 
+		this.frontScene.add(this.cameraBase);
+
 		this.camera = new THREE.PerspectiveCamera(
 			93, width / height, 1, 10000);
 		this.cameraBase.add(this.camera);
@@ -278,17 +291,13 @@ class VRGUI extends EventEmitter {
 	}
 
 	onXRFrame(time, frame) {
-		// console.error(time, frame);
 		if (this.enableTracking && this.refSpace) {
-			const scale = 1000;
+			const scale = 500;
 			const pose = frame.getViewerPose(this.refSpace);
-			const pos = pose.transform.position
-			// orientation (quat)
-			// position (vec3)
-			// 
+			const pos = pose.transform.position;
 			this.cameraBase.position.set(
 				pos.x * scale, 
-				pos.y, 
+				this.planeBaseY + pos.y, 
 				pos.z * scale);
 			this.cameraBase.updateMatrix();
 		}
@@ -323,7 +332,7 @@ class VRGUI extends EventEmitter {
 				this.remove(this.children[i]);
 			}
 		});
-		this.frontScene.add(controller1);
+		this.cameraBase.add(controller1);
 
 		//左側の光線
 		const controller2 = this.renderer.xr.getController(1);
@@ -336,19 +345,19 @@ class VRGUI extends EventEmitter {
 				this.remove(this.children[i]);
 			}
 		});
-		this.frontScene.add(controller2);
+		this.cameraBase.add(controller2);
 
 		const controllerModelFactory = new XRControllerModelFactory();
 
 		// 右手コントローラの3Dオブジェクト
 		const grip1 = this.renderer.xr.getControllerGrip(0);
 		grip1.add(controllerModelFactory.createControllerModel(grip1));
-		this.frontScene.add(grip1);
+		this.cameraBase.add(grip1);
 
 		// 左手コントローラの3Dオブジェクト
 		const grip2 = this.renderer.xr.getControllerGrip(1);
 		grip2.add(controllerModelFactory.createControllerModel(grip2));
-		this.frontScene.add(grip2);
+		this.cameraBase.add(grip2);
 
 		// 選択イベントの初期化
 		this.renderer.xr.addEventListener('sessionstart', (event) => {
@@ -402,7 +411,7 @@ class VRGUI extends EventEmitter {
 				const controller = this.renderer.xr.getController(controllerIndex);
 				this.controllerDir.set(0, 0, -1);
 				this.controllerDir.applyQuaternion(controller.quaternion);
-				this.raycaster.set(controller.position, this.controllerDir);
+				this.raycaster.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
 				// ボタン押してるか調べる
 				if (!this.pressedButtons[controllerIndex]) {
 					this.tryPressButton(controllerIndex);
@@ -415,7 +424,7 @@ class VRGUI extends EventEmitter {
 						this.select(source);
 					} else if (this.selectedIDs[controllerIndex]) {
 						// コントローラ姿勢
-						this.tempRay.set(controller.position, this.controllerDir);
+						this.tempRay.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
 						const xy = this.calcPixelPosFromRay(this.tempRay);
 						if (xy) {
 							this.preXY[controllerIndex] = xy;
@@ -467,7 +476,7 @@ class VRGUI extends EventEmitter {
 		this.controllerDir.set(0, 0, -1);
 		this.controllerDir.applyQuaternion(controller.quaternion);
 
-		this.raycaster.set(controller.position, this.controllerDir);
+		this.raycaster.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
 		// ヒットテストを行い、当たったplaneのうち最もrenderOrderが高いものを選択
 		const planes = Object.values(this.vrPlaneDict);
 		const intersects = this.raycaster.intersectObjects(planes);
@@ -490,7 +499,7 @@ class VRGUI extends EventEmitter {
 					// IDを保存
 					this.selectedIDs[controllerIndex] = id;
 					// コントローラ姿勢
-					this.tempRay.set(controller.position, this.controllerDir);
+					this.tempRay.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
 					// 選択中の枠を描画
 					this.showFrame(id);
 
@@ -560,7 +569,7 @@ class VRGUI extends EventEmitter {
 				const controller = this.renderer.xr.getController(controllerIndex);
 				this.controllerDir.set(0, 0, -1);
 				this.controllerDir.applyQuaternion(controller.quaternion);
-				this.tempRay.set(controller.position, this.controllerDir);
+				this.tempRay.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
 				// リサイズ
 				const id = this.selectedIDs[0];
 				const xy = this.calcPixelPosFromRay(this.tempRay);
@@ -582,7 +591,7 @@ class VRGUI extends EventEmitter {
 					const controller = this.renderer.xr.getController(controllerIndex);
 					this.controllerDir.set(0, 0, -1);
 					this.controllerDir.applyQuaternion(controller.quaternion);
-					this.tempRay.set(controller.position, this.controllerDir);
+					this.tempRay.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
 	
 					const id = this.selectedIDs[controllerIndex];
 					const xy = this.calcPixelPosFromRay(this.tempRay);
