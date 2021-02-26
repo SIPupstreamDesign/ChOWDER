@@ -220,14 +220,26 @@ class VRGUI extends EventEmitter {
 		this.vrButton = VRButton.createButton(this.renderer);
 		document.body.appendChild(this.vrButton);
 
+		this.cameraBase = new THREE.Object3D();
+		this.scene.add(this.cameraBase);
+
 		this.camera = new THREE.PerspectiveCamera(
 			93, width / height, 1, 10000);
+		this.cameraBase.add(this.camera);
 
 		this.renderer.autoClear = false;
+
+		this.refSpace = null;
+
+		this.onXRFrame_ = this.onXRFrame.bind(this);
+
+		this.enableTracking = false;
 
 		// レンダリング
 		const render = (timestamp) => {
 			this.timestamp = timestamp;
+			const session = this.renderer.xr.getSession();
+			session.requestAnimationFrame(this.onXRFrame_);
 			if (!this.stopUpdate) {
 				this.resolveInputs();
 				this.renderer.clear();
@@ -249,9 +261,37 @@ class VRGUI extends EventEmitter {
 			canvas.style.opacity = 1;
 			canvas.style.visibility = "visible";
 			this.renderer.setAnimationLoop(render);
-			this.renderer.xr.getSession().updateRenderState({ depthFar: 10000 });
-		});
+			const session = this.renderer.xr.getSession();
+			session.updateRenderState({ depthFar: 10000 });
 
+			session.requestReferenceSpace("bounded-floor")
+			.then((refSpace) => {
+				this.enableTracking = true;
+				this.refSpace = refSpace;
+			}).catch((err) => {
+				this.enableTracking = false;
+				session.requestReferenceSpace("local-floor"). then((refSpace) => {
+					this.refSpace = refSpace;
+				})
+			});
+		});
+	}
+
+	onXRFrame(time, frame) {
+		// console.error(time, frame);
+		if (this.enableTracking && this.refSpace) {
+			const scale = 1000;
+			const pose = frame.getViewerPose(this.refSpace);
+			const pos = pose.transform.position
+			// orientation (quat)
+			// position (vec3)
+			// 
+			this.cameraBase.position.set(
+				pos.x * scale, 
+				pos.y, 
+				pos.z * scale);
+			this.cameraBase.updateMatrix();
+		}
 	}
 
 	initVRController() {
