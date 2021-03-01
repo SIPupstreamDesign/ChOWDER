@@ -692,14 +692,14 @@ class VRGUI extends EventEmitter {
 		const height = (-this.planeDepth) * Math.tan(60 * Math.PI / 180) * 2; // =4234.205916839362
 		const geometry = new THREE.PlaneGeometry(this.width, height);
 		geometry.translate(this.width / 2, -height / 2, 0);
-		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest: false });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
 		this.coverPlane = new THREE.Mesh(geometry, material);
 		this.setVRPlanePos(this.coverPlane, 0, 1080, -100000);
 		// 4K中心に中心を合わせる
 		this.coverPlane.position.y = height / 2
 		this.scene.add(this.coverPlane);
 
-		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
+		const texture = new THREE.TextureLoader().load("src/image/vr_background.png");
 		texture.minFilter = THREE.LinearFilter;
 		texture.magFilter = THREE.LinearFilter;
 		material.map = texture;
@@ -721,14 +721,14 @@ class VRGUI extends EventEmitter {
 			radius, radius, height, radialSegments, heightSegments, true,
 			thetaStart, thetaLength);
 
-		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest: false });
+		const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
 		this.coverCylinder = new THREE.Mesh(geometry, material);
 		this.setVRPlanePos(this.coverCylinder, 0, 1080, -100000);
 		// flip
 		this.coverCylinder.scale.z *= -1;
 		this.scene.add(this.coverCylinder);
 
-		const texture = new THREE.TextureLoader().load("src/image/cylinder_grid.png");
+		const texture = new THREE.TextureLoader().load("src/image/vr_background.png");
 		texture.minFilter = THREE.LinearFilter;
 		texture.magFilter = THREE.LinearFilter;
 		material.map = texture;
