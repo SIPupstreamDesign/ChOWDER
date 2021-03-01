@@ -694,7 +694,7 @@ class VRGUI extends EventEmitter {
 		geometry.translate(this.width / 2, -height / 2, 0);
 		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest: false });
 		this.coverPlane = new THREE.Mesh(geometry, material);
-		this.setVRPlanePos(this.coverPlane, 0, 0, -100000);
+		this.setVRPlanePos(this.coverPlane, 0, 1080, -100000);
 		// 4K中心に中心を合わせる
 		this.coverPlane.position.y = height / 2
 		this.scene.add(this.coverPlane);
@@ -723,7 +723,7 @@ class VRGUI extends EventEmitter {
 
 		const material = new THREE.MeshBasicMaterial({ color: 0xFF00FF, side: THREE.DoubleSide, depthTest: false });
 		this.coverCylinder = new THREE.Mesh(geometry, material);
-		this.setVRPlanePos(this.coverCylinder, 0, 0, -100000);
+		this.setVRPlanePos(this.coverCylinder, 0, 1080, -100000);
 		// flip
 		this.coverCylinder.scale.z *= -1;
 		this.scene.add(this.coverCylinder);
