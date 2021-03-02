@@ -743,7 +743,7 @@ class VRGUI extends EventEmitter {
 	}
 
 	createVRPlaneFrame(lineMaterial, lineWidth) {
-		const lines = new THREE.Group();
+		const lines = new THREE.Object3D();
 		const geoTop = new THREE.PlaneGeometry(lineWidth, lineWidth);
 		const geoLeft = new THREE.PlaneGeometry(lineWidth, lineWidth);
 		const geoBottom = new THREE.PlaneGeometry(lineWidth, lineWidth);
@@ -769,7 +769,7 @@ class VRGUI extends EventEmitter {
 	}
 
 	createVRCylinderFrame(w, h, lineMaterial, lineWidth) {
-		const lines = new THREE.Group();
+		const lines = new THREE.Object3D();
 		const radius = this.width / Math.PI;
 		const heightSegments = 1;
 
@@ -1127,6 +1127,9 @@ class VRGUI extends EventEmitter {
 			plane.position.y = this.planeBaseY - y;
 			// z位置: 座標で表現
 			plane.renderOrder = zValue;
+		}
+		for (let i = 0; i < plane.children.length; ++i) {
+			plane.children[i].renderOrder = zValue;	
 		}
 	}
 
