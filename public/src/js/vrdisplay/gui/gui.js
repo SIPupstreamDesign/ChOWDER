@@ -1395,7 +1395,6 @@ class GUI extends EventEmitter {
 	 * 現在選択されているContentを非選択状態にする
 	 */
 	unselect(id = null) {
-		console.error('unselect', id)
 		for (let i in this.store.getMetaDataDict()) {
 			if (this.store.getMetaDataDict().hasOwnProperty(i)) {
 				const metaData = this.store.getMetaDataDict()[i];

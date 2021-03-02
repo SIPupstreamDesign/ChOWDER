@@ -153,7 +153,9 @@ class GUI extends EventEmitter
 		this.store.on(Store.EVENT_TOGGLE_CONTENT_MARK_ICON, (err, data) => {
 			let elem = data.element;
 			let metaData = data.metaData;
-			this.onToggleContentMarkIcon(elem, metaData);
+			this.updateContentTileIcon(elem, metaData);
+			manipulator.updateMemoToggleButton(metaData);
+			manipulator.updateMarkToggleButton(metaData);
 		});
 
         this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
@@ -1056,15 +1058,15 @@ class GUI extends EventEmitter
 	}
 
 	/**
-	 * アイコンの更新
+	 * タイル用アイコンの更新
 	 * @param {*} elem
 	 * @param {*} metaData
 	 * @param {*} groupDict
 	 */
-	onToggleContentMarkIcon(elem, metaData) {
+	updateContentTileIcon(elem, metaData) {
+		if (metaData.type !== Constants.TypeTileImage) return;
 		let listElem = document.getElementById("onlist:" + metaData.id);
 		let groupDict = this.store.getGroupDict();
-		if (metaData.type !== Constants.TypeTileImage) return;
 		let icons = [
 			elem.getElementsByClassName('tileimage_icon')[0],
 			listElem.getElementsByClassName('tileimage_icon_for_list')[0]

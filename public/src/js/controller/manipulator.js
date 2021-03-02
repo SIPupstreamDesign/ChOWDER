@@ -391,6 +391,43 @@ class Manipulator extends EventEmitter {
 			}
 		}
 	}
+
+	// メモボタンのオンオフの表示状態を変更する
+	updateMemoToggleButton(metaData) {
+		if (!this.isShowManipulator()) return;
+		const isMemoVisible = (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === 'true' || metaData.mark_memo === true));
+		const memo = document.getElementById('_manip_menu_1');
+		if (memo) {
+			if (isMemoVisible) {
+				if (!memo.classList.contains('active')) {
+					memo.classList.add('active');
+				}
+			} else {
+				if (memo.classList.contains('active')) {
+					memo.classList.remove('active');
+				}
+			}
+		}
+	}
+
+	// マークボタンのオンオフの表示状態を変更する
+	updateMarkToggleButton(metaData) {
+		if (!this.isShowManipulator()) return;
+		const isMemoVisible = (metaData.hasOwnProperty('mark') && (metaData.mark === 'true' || metaData.mark === true));
+		const mark = document.getElementById('_manip_menu_0');
+		if (mark) {
+			if (isMemoVisible) {
+				if (!mark.classList.contains('active')) {
+					mark.classList.add('active');
+				}
+			} else {
+				if (mark.classList.contains('active')) {
+					mark.classList.remove('active');
+				}
+			}
+		}
+	}
+
 	isShowManipulator() {
 		return (document.getElementById("_manip_0") !== null);
 	}
