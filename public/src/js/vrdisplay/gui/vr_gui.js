@@ -304,7 +304,7 @@ class VRGUI extends EventEmitter {
 			const pos = pose.transform.position;
 			this.cameraBase.position.set(
 				pos.x * scale, 
-				this.planeBaseY + pos.y, 
+				-this.planeBaseY/2 + pos.y * scale, 
 				pos.z * scale);
 			this.cameraBase.updateMatrix();
 		}
