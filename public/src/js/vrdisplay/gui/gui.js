@@ -309,7 +309,6 @@ class GUI extends EventEmitter {
 	initVRGUIEvents() {
 		this.vrgui.on(VRGUI.EVENT_SELECT, (err, id, x, y) => {
 			// VRモードでコンテンツが選択された
-			this.unselect();
 			this.select(id);
 			const elem = document.getElementById(id);
 			const meta = this.store.getMetaData(id);
@@ -325,7 +324,7 @@ class GUI extends EventEmitter {
 
 		this.vrgui.on(VRGUI.EVENT_UNSELECT,  (err, id) => {
 			// VRモードでコンテンツが選択解除された
-			this.unselect();
+			this.unselect(id);
 		});
 
 		this.vrgui.on(VRGUI.EVENT_SELECT_MOVE, (err, id, x, y) => {
@@ -1395,15 +1394,29 @@ class GUI extends EventEmitter {
 	/**
 	 * 現在選択されているContentを非選択状態にする
 	 */
-	unselect() {
+	unselect(id = null) {
+		console.error('unselect', id)
 		for (let i in this.store.getMetaDataDict()) {
 			if (this.store.getMetaDataDict().hasOwnProperty(i)) {
 				const metaData = this.store.getMetaDataDict()[i];
-				let elem = document.getElementById(metaData.id);
-				if (elem && elem.is_dragging) {
-					elem.is_dragging = false;
-
-					this.updateMarkVisible(elem, metaData);
+				if (id) {
+					// ID指定があった場合、そのIDのみ非選択とする
+					if (metaData.id === id) {
+						let elem = document.getElementById(metaData.id);
+						if (elem && elem.is_dragging) {
+							elem.is_dragging = false;
+		
+							this.updateMarkVisible(elem, metaData);
+						}
+					}
+				} else {
+					// ID指定なしの場合、全コンテンツ非選択
+					let elem = document.getElementById(metaData.id);
+					if (elem && elem.is_dragging) {
+						elem.is_dragging = false;
+	
+						this.updateMarkVisible(elem, metaData);
+					}
 				}
 			}
 		}

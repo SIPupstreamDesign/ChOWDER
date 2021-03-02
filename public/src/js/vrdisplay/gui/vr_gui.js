@@ -435,7 +435,7 @@ class VRGUI extends EventEmitter {
 						const xy = this.calcPixelPosFromRay(this.tempRay);
 						if (xy) {
 							this.preXY[controllerIndex] = xy;
-							this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y);
+							this.emit(VRGUI.EVENT_SELECT, null, this.selectedIDs[controllerIndex], xy.x, xy.y, this.selectedIDs[controllerIndex]);
 							this.currentSelectionControllerIndex = controllerIndex;
 						}
 					}
@@ -502,7 +502,8 @@ class VRGUI extends EventEmitter {
 			if (index >= 0) {
 				const id = Object.keys(this.vrPlaneDict)[index];
 				if (this.selectedIDs[controllerIndex] !== id) {
-					this.unselect(this.selectedIDs[controllerIndex], controllerIndex);
+					const unselectID = this.selectedIDs[controllerIndex];
+					this.unselect(unselectID, controllerIndex);
 					// IDを保存
 					this.selectedIDs[controllerIndex] = id;
 					// コントローラ姿勢
@@ -570,6 +571,7 @@ class VRGUI extends EventEmitter {
 		const isRight = (this.selectedIDs[0] !== null && this.isTrigerPressed[0] === true);
 		const isLeft = (this.selectedIDs[1] !== null && this.isTrigerPressed[1] === true);
 		const cindices = [isRight ? 0 : null, isLeft ? 1 : null];
+		let isResized = false;
 		if (isRight && isLeft) {
 			if (!this.stopUpdate && this.selectedIDs[0] === this.selectedIDs[1]) {
 				const controllerIndex = this.currentSelectionControllerIndex === 1 ? 0 : 1;
@@ -588,10 +590,13 @@ class VRGUI extends EventEmitter {
 						const my = xy.y - this.preXY[controllerIndex].y;
 						this.emit(VRGUI.EVENT_SELECT_RESIZE, null, id, mx, my);
 						this.preXY[controllerIndex] = xy;
+						isResized = true;
 					}
 			}
-		} else {
-			// move
+		}
+	
+		// move
+		if (!isResized) {
 			for (let i = 0; i < cindices.length; ++i) {
 				const controllerIndex = cindices[i];
 				if (controllerIndex !== null) {
@@ -603,8 +608,9 @@ class VRGUI extends EventEmitter {
 					const id = this.selectedIDs[controllerIndex];
 					const xy = this.calcPixelPosFromRay(this.tempRay);
 					if (xy
-						 && this.preXY[controllerIndex]
-						 && (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) {
+							&& this.preXY[controllerIndex]
+							&& (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) {
+								console.error('EVENT_SELECT_MOVE', id)
 						this.emit(VRGUI.EVENT_SELECT_MOVE, null, id, xy.x, xy.y);
 						this.preXY[controllerIndex] = xy;
 					}
