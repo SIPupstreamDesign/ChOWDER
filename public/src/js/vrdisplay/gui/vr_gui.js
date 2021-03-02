@@ -178,14 +178,17 @@ class VRGUI extends EventEmitter {
 		this.stopUpdate = false;
 
 		// 平面モードかどうか
-		const query = new URLSearchParams(location.search);
-		if (query.get('mode') && query.get('mode') === 'plane') {
-			this.isPlaneMode = true;
-		} else {
-			this.isPlaneMode = false;
+		this.vrMode = "plane";
+		if (this.store.getGlobalSetting().hasOwnProperty('VRMode')) {
+			const mode = this.store.getGlobalSetting().VRMode;
+			if (mode) {
+				if (mode.toLowerCase() === "cylinder") {
+					this.vrMode = "cylinder";
+				}
+			}
 		}
 
-		if (this.isPlaneMode) {
+		if (this.isPlaneMode()) {
 			this.initCoverPlane();
 		} else {
 			this.initCoverCylinder();
@@ -199,6 +202,10 @@ class VRGUI extends EventEmitter {
 		this.markOnImage.src = "./src/image/vr_star_on.png";
 		this.markOffImage = new Image();
 		this.markOffImage.src = "./src/image/vr_star_off.png";
+	}
+
+	isPlaneMode() {
+		return this.vrMode === "plane"
 	}
 
 	initVR(windowSize) {
@@ -651,7 +658,7 @@ class VRGUI extends EventEmitter {
 			return xy;
 		}
 		let cover = null;
-		if (this.isPlaneMode) {
+		if (this.isPlaneMode()) {
 			cover = this.coverPlane;
 		} else {
 			cover = this.coverCylinder;
@@ -846,7 +853,7 @@ class VRGUI extends EventEmitter {
 		const markOnOffID = GetMarkOnOffID(metaData.id);
 		const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest: false });
 		const contentMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
-		if (this.isPlaneMode) {
+		if (this.isPlaneMode()) {
 			// コンテンツ本体
 			{
 				const geometry = new THREE.PlaneGeometry(w, h);
@@ -1105,7 +1112,7 @@ class VRGUI extends EventEmitter {
 	 */
 	setVRPlanePos(plane, x, y, z) {
 		let zValue = z;
-		if (this.isPlaneMode) {
+		if (this.isPlaneMode()) {
 			plane.position.x = this.planeBaseX + x;
 			plane.position.y = this.planeBaseY - y;
 			plane.position.z = this.planeDepth;
@@ -1136,7 +1143,7 @@ class VRGUI extends EventEmitter {
 	setVRPlaneWH(plane, metaData, w, h, lineWidth) {
 		const orgW = Number(metaData.orgWidth);
 		const orgH = Number(metaData.orgHeight);
-		if (this.isPlaneMode) {
+		if (this.isPlaneMode()) {
 			const scaleX = w / orgW;
 			const scaleY = h / orgH;
 			if (plane.hasOwnProperty('geometry')) {
@@ -1246,7 +1253,9 @@ class VRGUI extends EventEmitter {
 	updateContentVisible(metaData) {
 		const plane = this.getVRPlane(metaData.id);
 		if (plane) {
-			plane.visible = VscreenUtil.isVisible(metaData);
+			const isVisible = VscreenUtil.isVisible(metaData);
+			plane.visible = isVisible;
+			this.updateMarkVisible(isVisible, metaData);
 		}
 	}
 
@@ -1643,7 +1652,7 @@ class VRGUI extends EventEmitter {
 	/**
 	 * コンテンツ強調表示(コントローラの☆ボタン有効時)
 	 */
-	showMark(metaData, color) {
+	showMark(metaData, color = null) {
 		const hasMark = this.vrMarkLineDict.hasOwnProperty(metaData.id);
 		if (!hasMark) {
 			// ジオメトリを節約するために、
@@ -1652,7 +1661,7 @@ class VRGUI extends EventEmitter {
 			const h = Number(metaData.orgHeight);
 			const lineWidth2 = this.lineWidth * 2;
 			const markMaterial = new THREE.MeshBasicMaterial({ color: 0x04b431, side: THREE.DoubleSide, depthTest: false });
-			if (this.isPlaneMode) {
+			if (this.isPlaneMode()) {
 				// 強調表示(Mark)用の枠線
 				{
 					const lines = this.createVRPlaneFrame(markMaterial, lineWidth2);
@@ -1672,9 +1681,11 @@ class VRGUI extends EventEmitter {
 			this.assignVRMetaData({ metaData: metaData, useOrg: false });
 		}
 		const markLines = this.vrMarkLineDict[metaData.id];
-		for (let i = 0; i < markLines.children.length; ++i) {
-			const child = markLines.children[i];
-			child.material.color.setStyle(color);
+		if (color) {
+			for (let i = 0; i < markLines.children.length; ++i) {
+				const child = markLines.children[i];
+				child.material.color.setStyle(color);
+			}
 		}
 		if (markLines.visible !== true) {
 			this.updateOnOffButton(metaData);
@@ -1685,7 +1696,7 @@ class VRGUI extends EventEmitter {
 	/**
 	 * コンテンツ強調表示の表示状態の更新
 	 */
-	updateMarkVisible(isMarkVisible, metaData, color) {
+	updateMarkVisible(isMarkVisible, metaData, color = null) {
 		this.showMark(metaData, color);
 		if (this.vrMarkLineDict.hasOwnProperty(metaData.id)) {
 			const markLines = this.vrMarkLineDict[metaData.id];

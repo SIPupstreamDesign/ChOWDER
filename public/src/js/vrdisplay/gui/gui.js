@@ -407,7 +407,8 @@ class GUI extends EventEmitter {
 					elem.style.borderWidth = "0px";
 				}
 			}
-			this.getVRGUI().updateMarkVisible(isMarkVisible, metaData, color);
+			const isVisible = isMarkVisible && String(metaData.visible) === 'true';
+			this.getVRGUI().updateMarkVisible(isVisible, metaData, color);
 		}
 	}
 
@@ -472,7 +473,6 @@ class GUI extends EventEmitter {
 	updateContentVisible(elem, json) {
 		if (Validator.isVisible(json)) {
 			elem.style.display = "block";
-
 		} else {
 			elem.style.display = "none";
 		}
