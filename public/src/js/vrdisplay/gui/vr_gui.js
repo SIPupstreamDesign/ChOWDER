@@ -807,7 +807,7 @@ class VRGUI extends EventEmitter {
 		{
 			// 高さ
 			const height = lineWidth;
-			const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
+			const radialSegments = Math.max(4, Math.floor(32 * w / this.width));
 			const thetaStart = 1.5 * Math.PI; // right start
 			const thetaLength = Math.PI * (w / this.width);
 			const geometry = new THREE.CylinderGeometry(
@@ -822,7 +822,7 @@ class VRGUI extends EventEmitter {
 		{
 			// 高さ
 			const height = lineWidth;
-			const radialSegments = Math.max(2, Math.floor(32 * w / this.width));
+			const radialSegments = Math.max(4, Math.floor(32 * w / this.width));
 			const thetaStart = 1.5 * Math.PI; // right start
 			const thetaLength = Math.PI * (w / this.width);
 			const geometry = new THREE.CylinderGeometry(
