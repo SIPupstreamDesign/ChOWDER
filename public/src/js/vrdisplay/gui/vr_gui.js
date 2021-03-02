@@ -610,7 +610,6 @@ class VRGUI extends EventEmitter {
 					if (xy
 							&& this.preXY[controllerIndex]
 							&& (this.preXY[controllerIndex].x !== xy.x || this.preXY[controllerIndex].y !== xy.y)) {
-								console.error('EVENT_SELECT_MOVE', id)
 						this.emit(VRGUI.EVENT_SELECT_MOVE, null, id, xy.x, xy.y);
 						this.preXY[controllerIndex] = xy;
 					}
