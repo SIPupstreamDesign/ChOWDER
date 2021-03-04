@@ -162,6 +162,7 @@ class VideoStore　extends EventEmitter {
                         if (!data.player.isPlaying()) {
                             elem.load();
                             elem.play();
+                            elem.muted = false;
                         }
                         this.emit(VideoStore.EVENT_STREAM_ADDED, null, metaData);
                     }
@@ -180,7 +181,7 @@ class VideoStore　extends EventEmitter {
                             if (status.audio && status.audio.bytesReceived) {
                                 bytes += status.audio.bytesReceived;
                             }
-                            // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
+                            // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / 1000) + "kbps");
                         });
                     })(rtcKey), 1000);
                 }

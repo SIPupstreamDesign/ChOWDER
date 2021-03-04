@@ -26,12 +26,17 @@ class VideoPlayer extends EventEmitter {
         }
         this.video.removeAttribute('controls');
         if (isDisplay) {
-            this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "progress", "current-time", "mute", "volume", "fullscreen"] }');
+            if (Constants.IsChrome) {
+                this.video.setAttribute('muted', 'muted');
+            }
+            this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false,  "controls" : [ "progress", "current-time", "mute", "volume", "fullscreen"] }');
         } else {
+            this.video.setAttribute('muted', 'muted');
             this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "play", "progress", "current-time", "mute", "volume", "fullscreen"] }');
         }
 
         this.player = new Plyr(this.video, {
+            storage : { enabled: false },
             listeners: {
                 seek: (e) => {
                     if (!this.isSeekEnabled) {

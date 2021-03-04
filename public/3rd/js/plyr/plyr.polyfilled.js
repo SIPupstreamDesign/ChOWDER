@@ -1,50 +1,45 @@
 typeof navigator === "object" && (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define('Plyr', factory) :
-  (global.Plyr = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Plyr = factory());
 }(this, (function () { 'use strict';
 
   // Polyfill for creating CustomEvents on IE9/10/11
-
   // code pulled from:
   // https://github.com/d4tocchini/customevent-polyfill
   // https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent#Polyfill
-
-  (function() {
+  (function () {
     if (typeof window === 'undefined') {
       return;
     }
 
     try {
-      var ce = new window.CustomEvent('test', { cancelable: true });
+      var ce = new window.CustomEvent('test', {
+        cancelable: true
+      });
       ce.preventDefault();
+
       if (ce.defaultPrevented !== true) {
         // IE has problems with .preventDefault() on custom events
         // http://stackoverflow.com/questions/23349191
         throw new Error('Could not prevent default');
       }
     } catch (e) {
-      var CustomEvent = function(event, params) {
+      var CustomEvent = function CustomEvent(event, params) {
         var evt, origPrevent;
-        params = params || {
-          bubbles: false,
-          cancelable: false,
-          detail: undefined
-        };
-
+        params = params || {};
+        params.bubbles = !!params.bubbles;
+        params.cancelable = !!params.cancelable;
         evt = document.createEvent('CustomEvent');
-        evt.initCustomEvent(
-          event,
-          params.bubbles,
-          params.cancelable,
-          params.detail
-        );
+        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
         origPrevent = evt.preventDefault;
-        evt.preventDefault = function() {
+
+        evt.preventDefault = function () {
           origPrevent.call(this);
+
           try {
             Object.defineProperty(this, 'defaultPrevented', {
-              get: function() {
+              get: function get() {
                 return true;
               }
             });
@@ -52,6 +47,7 @@ typeof navigator === "object" && (function (global, factory) {
             this.defaultPrevented = true;
           }
         };
+
         return evt;
       };
 
@@ -60,495 +56,729 @@ typeof navigator === "object" && (function (global, factory) {
     }
   })();
 
-  var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
   function createCommonjsModule(fn, module) {
   	return module = { exports: {} }, fn(module, module.exports), module.exports;
   }
 
-  (function(global) {
-    /**
-     * Polyfill URLSearchParams
-     *
-     * Inspired from : https://github.com/WebReflection/url-search-params/blob/master/src/url-search-params.js
-     */
+  var check = function (it) {
+    return it && it.Math == Math && it;
+  };
 
-    var checkIfIteratorIsSupported = function() {
-      try {
-        return !!Symbol.iterator;
-      } catch (error) {
-        return false;
-      }
-    };
+  // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
+  var global_1 =
+    // eslint-disable-next-line no-undef
+    check(typeof globalThis == 'object' && globalThis) ||
+    check(typeof window == 'object' && window) ||
+    check(typeof self == 'object' && self) ||
+    check(typeof commonjsGlobal == 'object' && commonjsGlobal) ||
+    // eslint-disable-next-line no-new-func
+    (function () { return this; })() || Function('return this')();
 
-
-    var iteratorSupported = checkIfIteratorIsSupported();
-
-    var createIterator = function(items) {
-      var iterator = {
-        next: function() {
-          var value = items.shift();
-          return { done: value === void 0, value: value };
-        }
-      };
-
-      if (iteratorSupported) {
-        iterator[Symbol.iterator] = function() {
-          return iterator;
-        };
-      }
-
-      return iterator;
-    };
-
-    /**
-     * Search param name and values should be encoded according to https://url.spec.whatwg.org/#urlencoded-serializing
-     * encodeURIComponent() produces the same result except encoding spaces as `%20` instead of `+`.
-     */
-    var serializeParam = function(value) {
-      return encodeURIComponent(value).replace(/%20/g, '+');
-    };
-
-    var deserializeParam = function(value) {
-      return decodeURIComponent(value).replace(/\+/g, ' ');
-    };
-
-    var polyfillURLSearchParams = function() {
-
-      var URLSearchParams = function(searchString) {
-        Object.defineProperty(this, '_entries', { writable: true, value: {} });
-        var typeofSearchString = typeof searchString;
-
-        if (typeofSearchString === 'undefined') ; else if (typeofSearchString === 'string') {
-          if (searchString !== '') {
-            this._fromString(searchString);
-          }
-        } else if (searchString instanceof URLSearchParams) {
-          var _this = this;
-          searchString.forEach(function(value, name) {
-            _this.append(name, value);
-          });
-        } else if ((searchString !== null) && (typeofSearchString === 'object')) {
-          if (Object.prototype.toString.call(searchString) === '[object Array]') {
-            for (var i = 0; i < searchString.length; i++) {
-              var entry = searchString[i];
-              if ((Object.prototype.toString.call(entry) === '[object Array]') || (entry.length !== 2)) {
-                this.append(entry[0], entry[1]);
-              } else {
-                throw new TypeError('Expected [string, any] as entry at index ' + i + ' of URLSearchParams\'s input');
-              }
-            }
-          } else {
-            for (var key in searchString) {
-              if (searchString.hasOwnProperty(key)) {
-                this.append(key, searchString[key]);
-              }
-            }
-          }
-        } else {
-          throw new TypeError('Unsupported input\'s type for URLSearchParams');
-        }
-      };
-
-      var proto = URLSearchParams.prototype;
-
-      proto.append = function(name, value) {
-        if (name in this._entries) {
-          this._entries[name].push(String(value));
-        } else {
-          this._entries[name] = [String(value)];
-        }
-      };
-
-      proto.delete = function(name) {
-        delete this._entries[name];
-      };
-
-      proto.get = function(name) {
-        return (name in this._entries) ? this._entries[name][0] : null;
-      };
-
-      proto.getAll = function(name) {
-        return (name in this._entries) ? this._entries[name].slice(0) : [];
-      };
-
-      proto.has = function(name) {
-        return (name in this._entries);
-      };
-
-      proto.set = function(name, value) {
-        this._entries[name] = [String(value)];
-      };
-
-      proto.forEach = function(callback, thisArg) {
-        var entries;
-        for (var name in this._entries) {
-          if (this._entries.hasOwnProperty(name)) {
-            entries = this._entries[name];
-            for (var i = 0; i < entries.length; i++) {
-              callback.call(thisArg, entries[i], name, this);
-            }
-          }
-        }
-      };
-
-      proto.keys = function() {
-        var items = [];
-        this.forEach(function(value, name) {
-          items.push(name);
-        });
-        return createIterator(items);
-      };
-
-      proto.values = function() {
-        var items = [];
-        this.forEach(function(value) {
-          items.push(value);
-        });
-        return createIterator(items);
-      };
-
-      proto.entries = function() {
-        var items = [];
-        this.forEach(function(value, name) {
-          items.push([name, value]);
-        });
-        return createIterator(items);
-      };
-
-      if (iteratorSupported) {
-        proto[Symbol.iterator] = proto.entries;
-      }
-
-      proto.toString = function() {
-        var searchArray = [];
-        this.forEach(function(value, name) {
-          searchArray.push(serializeParam(name) + '=' + serializeParam(value));
-        });
-        return searchArray.join('&');
-      };
-
-
-      global.URLSearchParams = URLSearchParams;
-    };
-
-    if (!('URLSearchParams' in global) || (new URLSearchParams('?a=1').toString() !== 'a=1')) {
-      polyfillURLSearchParams();
+  var fails = function (exec) {
+    try {
+      return !!exec();
+    } catch (error) {
+      return true;
     }
+  };
 
-    var proto = URLSearchParams.prototype;
+  // Thank's IE8 for his funny defineProperty
+  var descriptors = !fails(function () {
+    return Object.defineProperty({}, 1, { get: function () { return 7; } })[1] != 7;
+  });
 
-    if (typeof proto.sort !== 'function') {
-      proto.sort = function() {
-        var _this = this;
-        var items = [];
-        this.forEach(function(value, name) {
-          items.push([name, value]);
-          if (!_this._entries) {
-            _this.delete(name);
-          }
-        });
-        items.sort(function(a, b) {
-          if (a[0] < b[0]) {
-            return -1;
-          } else if (a[0] > b[0]) {
-            return +1;
-          } else {
-            return 0;
-          }
-        });
-        if (_this._entries) { // force reset because IE keeps keys index
-          _this._entries = {};
-        }
-        for (var i = 0; i < items.length; i++) {
-          this.append(items[i][0], items[i][1]);
-        }
-      };
-    }
+  var nativePropertyIsEnumerable = {}.propertyIsEnumerable;
+  var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
-    if (typeof proto._fromString !== 'function') {
-      Object.defineProperty(proto, '_fromString', {
-        enumerable: false,
-        configurable: false,
-        writable: false,
-        value: function(searchString) {
-          if (this._entries) {
-            this._entries = {};
-          } else {
-            var keys = [];
-            this.forEach(function(value, name) {
-              keys.push(name);
-            });
-            for (var i = 0; i < keys.length; i++) {
-              this.delete(keys[i]);
-            }
-          }
+  // Nashorn ~ JDK8 bug
+  var NASHORN_BUG = getOwnPropertyDescriptor && !nativePropertyIsEnumerable.call({ 1: 2 }, 1);
 
-          searchString = searchString.replace(/^\?/, '');
-          var attributes = searchString.split('&');
-          var attribute;
-          for (var i = 0; i < attributes.length; i++) {
-            attribute = attributes[i].split('=');
-            this.append(
-              deserializeParam(attribute[0]),
-              (attribute.length > 1) ? deserializeParam(attribute[1]) : ''
-            );
-          }
-        }
-      });
-    }
+  // `Object.prototype.propertyIsEnumerable` method implementation
+  // https://tc39.github.io/ecma262/#sec-object.prototype.propertyisenumerable
+  var f = NASHORN_BUG ? function propertyIsEnumerable(V) {
+    var descriptor = getOwnPropertyDescriptor(this, V);
+    return !!descriptor && descriptor.enumerable;
+  } : nativePropertyIsEnumerable;
 
-    // HTMLAnchorElement
+  var objectPropertyIsEnumerable = {
+  	f: f
+  };
 
-  })(
-    (typeof commonjsGlobal !== 'undefined') ? commonjsGlobal
-      : ((typeof window !== 'undefined') ? window
-      : ((typeof self !== 'undefined') ? self : commonjsGlobal))
-  );
-
-  (function(global) {
-    /**
-     * Polyfill URL
-     *
-     * Inspired from : https://github.com/arv/DOM-URL-Polyfill/blob/master/src/url.js
-     */
-
-    var checkIfURLIsSupported = function() {
-      try {
-        var u = new URL('b', 'http://a');
-        u.pathname = 'c%20d';
-        return (u.href === 'http://a/c%20d') && u.searchParams;
-      } catch (e) {
-        return false;
-      }
+  var createPropertyDescriptor = function (bitmap, value) {
+    return {
+      enumerable: !(bitmap & 1),
+      configurable: !(bitmap & 2),
+      writable: !(bitmap & 4),
+      value: value
     };
+  };
 
+  var toString = {}.toString;
 
-    var polyfillURL = function() {
-      var _URL = global.URL;
+  var classofRaw = function (it) {
+    return toString.call(it).slice(8, -1);
+  };
 
-      var URL = function(url, base) {
-        if (typeof url !== 'string') url = String(url);
+  var split = ''.split;
 
-        // Only create another document if the base is different from current location.
-        var doc = document, baseElement;
-        if (base && (global.location === void 0 || base !== global.location.href)) {
-          doc = document.implementation.createHTMLDocument('');
-          baseElement = doc.createElement('base');
-          baseElement.href = base;
-          doc.head.appendChild(baseElement);
-          try {
-            if (baseElement.href.indexOf(base) !== 0) throw new Error(baseElement.href);
-          } catch (err) {
-            throw new Error('URL unable to set base ' + base + ' due to ' + err);
-          }
-        }
+  // fallback for non-array-like ES3 and non-enumerable old V8 strings
+  var indexedObject = fails(function () {
+    // throws an error in rhino, see https://github.com/mozilla/rhino/issues/346
+    // eslint-disable-next-line no-prototype-builtins
+    return !Object('z').propertyIsEnumerable(0);
+  }) ? function (it) {
+    return classofRaw(it) == 'String' ? split.call(it, '') : Object(it);
+  } : Object;
 
-        var anchorElement = doc.createElement('a');
-        anchorElement.href = url;
-        if (baseElement) {
-          doc.body.appendChild(anchorElement);
-          anchorElement.href = anchorElement.href; // force href to refresh
-        }
-
-        if (anchorElement.protocol === ':' || !/:/.test(anchorElement.href)) {
-          throw new TypeError('Invalid URL');
-        }
-
-        Object.defineProperty(this, '_anchorElement', {
-          value: anchorElement
-        });
-
-
-        // create a linked searchParams which reflect its changes on URL
-        var searchParams = new URLSearchParams(this.search);
-        var enableSearchUpdate = true;
-        var enableSearchParamsUpdate = true;
-        var _this = this;
-        ['append', 'delete', 'set'].forEach(function(methodName) {
-          var method = searchParams[methodName];
-          searchParams[methodName] = function() {
-            method.apply(searchParams, arguments);
-            if (enableSearchUpdate) {
-              enableSearchParamsUpdate = false;
-              _this.search = searchParams.toString();
-              enableSearchParamsUpdate = true;
-            }
-          };
-        });
-
-        Object.defineProperty(this, 'searchParams', {
-          value: searchParams,
-          enumerable: true
-        });
-
-        var search = void 0;
-        Object.defineProperty(this, '_updateSearchParams', {
-          enumerable: false,
-          configurable: false,
-          writable: false,
-          value: function() {
-            if (this.search !== search) {
-              search = this.search;
-              if (enableSearchParamsUpdate) {
-                enableSearchUpdate = false;
-                this.searchParams._fromString(this.search);
-                enableSearchUpdate = true;
-              }
-            }
-          }
-        });
-      };
-
-      var proto = URL.prototype;
-
-      var linkURLWithAnchorAttribute = function(attributeName) {
-        Object.defineProperty(proto, attributeName, {
-          get: function() {
-            return this._anchorElement[attributeName];
-          },
-          set: function(value) {
-            this._anchorElement[attributeName] = value;
-          },
-          enumerable: true
-        });
-      };
-
-      ['hash', 'host', 'hostname', 'port', 'protocol']
-        .forEach(function(attributeName) {
-          linkURLWithAnchorAttribute(attributeName);
-        });
-
-      Object.defineProperty(proto, 'search', {
-        get: function() {
-          return this._anchorElement['search'];
-        },
-        set: function(value) {
-          this._anchorElement['search'] = value;
-          this._updateSearchParams();
-        },
-        enumerable: true
-      });
-
-      Object.defineProperties(proto, {
-
-        'toString': {
-          get: function() {
-            var _this = this;
-            return function() {
-              return _this.href;
-            };
-          }
-        },
-
-        'href': {
-          get: function() {
-            return this._anchorElement.href.replace(/\?$/, '');
-          },
-          set: function(value) {
-            this._anchorElement.href = value;
-            this._updateSearchParams();
-          },
-          enumerable: true
-        },
-
-        'pathname': {
-          get: function() {
-            return this._anchorElement.pathname.replace(/(^\/?)/, '/');
-          },
-          set: function(value) {
-            this._anchorElement.pathname = value;
-          },
-          enumerable: true
-        },
-
-        'origin': {
-          get: function() {
-            // get expected port from protocol
-            var expectedPort = { 'http:': 80, 'https:': 443, 'ftp:': 21 }[this._anchorElement.protocol];
-            // add port to origin if, expected port is different than actual port
-            // and it is not empty f.e http://foo:8080
-            // 8080 != 80 && 8080 != ''
-            var addPortToOrigin = this._anchorElement.port != expectedPort &&
-              this._anchorElement.port !== '';
-
-            return this._anchorElement.protocol +
-              '//' +
-              this._anchorElement.hostname +
-              (addPortToOrigin ? (':' + this._anchorElement.port) : '');
-          },
-          enumerable: true
-        },
-
-        'password': { // TODO
-          get: function() {
-            return '';
-          },
-          set: function(value) {
-          },
-          enumerable: true
-        },
-
-        'username': { // TODO
-          get: function() {
-            return '';
-          },
-          set: function(value) {
-          },
-          enumerable: true
-        },
-      });
-
-      URL.createObjectURL = function(blob) {
-        return _URL.createObjectURL.apply(_URL, arguments);
-      };
-
-      URL.revokeObjectURL = function(url) {
-        return _URL.revokeObjectURL.apply(_URL, arguments);
-      };
-
-      global.URL = URL;
-
-    };
-
-    if (!checkIfURLIsSupported()) {
-      polyfillURL();
-    }
-
-    if ((global.location !== void 0) && !('origin' in global.location)) {
-      var getOrigin = function() {
-        return global.location.protocol + '//' + global.location.hostname + (global.location.port ? (':' + global.location.port) : '');
-      };
-
-      try {
-        Object.defineProperty(global.location, 'origin', {
-          get: getOrigin,
-          enumerable: true
-        });
-      } catch (e) {
-        setInterval(function() {
-          global.location.origin = getOrigin();
-        }, 100);
-      }
-    }
-
-  })(
-    (typeof commonjsGlobal !== 'undefined') ? commonjsGlobal
-      : ((typeof window !== 'undefined') ? window
-      : ((typeof self !== 'undefined') ? self : commonjsGlobal))
-  );
-
-  var _aFunction = function (it) {
-    if (typeof it != 'function') throw TypeError(it + ' is not a function!');
+  // `RequireObjectCoercible` abstract operation
+  // https://tc39.github.io/ecma262/#sec-requireobjectcoercible
+  var requireObjectCoercible = function (it) {
+    if (it == undefined) throw TypeError("Can't call method on " + it);
     return it;
   };
 
-  // optional / simple context binding
+  // toObject with fallback for non-array-like ES3 strings
 
-  var _ctx = function (fn, that, length) {
-    _aFunction(fn);
+
+
+  var toIndexedObject = function (it) {
+    return indexedObject(requireObjectCoercible(it));
+  };
+
+  var isObject = function (it) {
+    return typeof it === 'object' ? it !== null : typeof it === 'function';
+  };
+
+  // `ToPrimitive` abstract operation
+  // https://tc39.github.io/ecma262/#sec-toprimitive
+  // instead of the ES6 spec version, we didn't implement @@toPrimitive case
+  // and the second argument - flag - preferred type is a string
+  var toPrimitive = function (input, PREFERRED_STRING) {
+    if (!isObject(input)) return input;
+    var fn, val;
+    if (PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject(val = fn.call(input))) return val;
+    if (typeof (fn = input.valueOf) == 'function' && !isObject(val = fn.call(input))) return val;
+    if (!PREFERRED_STRING && typeof (fn = input.toString) == 'function' && !isObject(val = fn.call(input))) return val;
+    throw TypeError("Can't convert object to primitive value");
+  };
+
+  var hasOwnProperty = {}.hasOwnProperty;
+
+  var has = function (it, key) {
+    return hasOwnProperty.call(it, key);
+  };
+
+  var document$1 = global_1.document;
+  // typeof document.createElement is 'object' in old IE
+  var EXISTS = isObject(document$1) && isObject(document$1.createElement);
+
+  var documentCreateElement = function (it) {
+    return EXISTS ? document$1.createElement(it) : {};
+  };
+
+  // Thank's IE8 for his funny defineProperty
+  var ie8DomDefine = !descriptors && !fails(function () {
+    return Object.defineProperty(documentCreateElement('div'), 'a', {
+      get: function () { return 7; }
+    }).a != 7;
+  });
+
+  var nativeGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+
+  // `Object.getOwnPropertyDescriptor` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
+  var f$1 = descriptors ? nativeGetOwnPropertyDescriptor : function getOwnPropertyDescriptor(O, P) {
+    O = toIndexedObject(O);
+    P = toPrimitive(P, true);
+    if (ie8DomDefine) try {
+      return nativeGetOwnPropertyDescriptor(O, P);
+    } catch (error) { /* empty */ }
+    if (has(O, P)) return createPropertyDescriptor(!objectPropertyIsEnumerable.f.call(O, P), O[P]);
+  };
+
+  var objectGetOwnPropertyDescriptor = {
+  	f: f$1
+  };
+
+  var anObject = function (it) {
+    if (!isObject(it)) {
+      throw TypeError(String(it) + ' is not an object');
+    } return it;
+  };
+
+  var nativeDefineProperty = Object.defineProperty;
+
+  // `Object.defineProperty` method
+  // https://tc39.github.io/ecma262/#sec-object.defineproperty
+  var f$2 = descriptors ? nativeDefineProperty : function defineProperty(O, P, Attributes) {
+    anObject(O);
+    P = toPrimitive(P, true);
+    anObject(Attributes);
+    if (ie8DomDefine) try {
+      return nativeDefineProperty(O, P, Attributes);
+    } catch (error) { /* empty */ }
+    if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported');
+    if ('value' in Attributes) O[P] = Attributes.value;
+    return O;
+  };
+
+  var objectDefineProperty = {
+  	f: f$2
+  };
+
+  var createNonEnumerableProperty = descriptors ? function (object, key, value) {
+    return objectDefineProperty.f(object, key, createPropertyDescriptor(1, value));
+  } : function (object, key, value) {
+    object[key] = value;
+    return object;
+  };
+
+  var setGlobal = function (key, value) {
+    try {
+      createNonEnumerableProperty(global_1, key, value);
+    } catch (error) {
+      global_1[key] = value;
+    } return value;
+  };
+
+  var SHARED = '__core-js_shared__';
+  var store = global_1[SHARED] || setGlobal(SHARED, {});
+
+  var sharedStore = store;
+
+  var functionToString = Function.toString;
+
+  // this helper broken in `3.4.1-3.4.4`, so we can't use `shared` helper
+  if (typeof sharedStore.inspectSource != 'function') {
+    sharedStore.inspectSource = function (it) {
+      return functionToString.call(it);
+    };
+  }
+
+  var inspectSource = sharedStore.inspectSource;
+
+  var WeakMap$1 = global_1.WeakMap;
+
+  var nativeWeakMap = typeof WeakMap$1 === 'function' && /native code/.test(inspectSource(WeakMap$1));
+
+  var isPure = false;
+
+  var shared = createCommonjsModule(function (module) {
+  (module.exports = function (key, value) {
+    return sharedStore[key] || (sharedStore[key] = value !== undefined ? value : {});
+  })('versions', []).push({
+    version: '3.7.0',
+    mode:  'global',
+    copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
+  });
+  });
+
+  var id = 0;
+  var postfix = Math.random();
+
+  var uid = function (key) {
+    return 'Symbol(' + String(key === undefined ? '' : key) + ')_' + (++id + postfix).toString(36);
+  };
+
+  var keys = shared('keys');
+
+  var sharedKey = function (key) {
+    return keys[key] || (keys[key] = uid(key));
+  };
+
+  var hiddenKeys = {};
+
+  var WeakMap$2 = global_1.WeakMap;
+  var set, get, has$1;
+
+  var enforce = function (it) {
+    return has$1(it) ? get(it) : set(it, {});
+  };
+
+  var getterFor = function (TYPE) {
+    return function (it) {
+      var state;
+      if (!isObject(it) || (state = get(it)).type !== TYPE) {
+        throw TypeError('Incompatible receiver, ' + TYPE + ' required');
+      } return state;
+    };
+  };
+
+  if (nativeWeakMap) {
+    var store$1 = sharedStore.state || (sharedStore.state = new WeakMap$2());
+    var wmget = store$1.get;
+    var wmhas = store$1.has;
+    var wmset = store$1.set;
+    set = function (it, metadata) {
+      metadata.facade = it;
+      wmset.call(store$1, it, metadata);
+      return metadata;
+    };
+    get = function (it) {
+      return wmget.call(store$1, it) || {};
+    };
+    has$1 = function (it) {
+      return wmhas.call(store$1, it);
+    };
+  } else {
+    var STATE = sharedKey('state');
+    hiddenKeys[STATE] = true;
+    set = function (it, metadata) {
+      metadata.facade = it;
+      createNonEnumerableProperty(it, STATE, metadata);
+      return metadata;
+    };
+    get = function (it) {
+      return has(it, STATE) ? it[STATE] : {};
+    };
+    has$1 = function (it) {
+      return has(it, STATE);
+    };
+  }
+
+  var internalState = {
+    set: set,
+    get: get,
+    has: has$1,
+    enforce: enforce,
+    getterFor: getterFor
+  };
+
+  var redefine = createCommonjsModule(function (module) {
+  var getInternalState = internalState.get;
+  var enforceInternalState = internalState.enforce;
+  var TEMPLATE = String(String).split('String');
+
+  (module.exports = function (O, key, value, options) {
+    var unsafe = options ? !!options.unsafe : false;
+    var simple = options ? !!options.enumerable : false;
+    var noTargetGet = options ? !!options.noTargetGet : false;
+    var state;
+    if (typeof value == 'function') {
+      if (typeof key == 'string' && !has(value, 'name')) {
+        createNonEnumerableProperty(value, 'name', key);
+      }
+      state = enforceInternalState(value);
+      if (!state.source) {
+        state.source = TEMPLATE.join(typeof key == 'string' ? key : '');
+      }
+    }
+    if (O === global_1) {
+      if (simple) O[key] = value;
+      else setGlobal(key, value);
+      return;
+    } else if (!unsafe) {
+      delete O[key];
+    } else if (!noTargetGet && O[key]) {
+      simple = true;
+    }
+    if (simple) O[key] = value;
+    else createNonEnumerableProperty(O, key, value);
+  // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
+  })(Function.prototype, 'toString', function toString() {
+    return typeof this == 'function' && getInternalState(this).source || inspectSource(this);
+  });
+  });
+
+  var path = global_1;
+
+  var aFunction = function (variable) {
+    return typeof variable == 'function' ? variable : undefined;
+  };
+
+  var getBuiltIn = function (namespace, method) {
+    return arguments.length < 2 ? aFunction(path[namespace]) || aFunction(global_1[namespace])
+      : path[namespace] && path[namespace][method] || global_1[namespace] && global_1[namespace][method];
+  };
+
+  var ceil = Math.ceil;
+  var floor = Math.floor;
+
+  // `ToInteger` abstract operation
+  // https://tc39.github.io/ecma262/#sec-tointeger
+  var toInteger = function (argument) {
+    return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor : ceil)(argument);
+  };
+
+  var min = Math.min;
+
+  // `ToLength` abstract operation
+  // https://tc39.github.io/ecma262/#sec-tolength
+  var toLength = function (argument) {
+    return argument > 0 ? min(toInteger(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
+  };
+
+  var max = Math.max;
+  var min$1 = Math.min;
+
+  // Helper for a popular repeating case of the spec:
+  // Let integer be ? ToInteger(index).
+  // If integer < 0, let result be max((length + integer), 0); else let result be min(integer, length).
+  var toAbsoluteIndex = function (index, length) {
+    var integer = toInteger(index);
+    return integer < 0 ? max(integer + length, 0) : min$1(integer, length);
+  };
+
+  // `Array.prototype.{ indexOf, includes }` methods implementation
+  var createMethod = function (IS_INCLUDES) {
+    return function ($this, el, fromIndex) {
+      var O = toIndexedObject($this);
+      var length = toLength(O.length);
+      var index = toAbsoluteIndex(fromIndex, length);
+      var value;
+      // Array#includes uses SameValueZero equality algorithm
+      // eslint-disable-next-line no-self-compare
+      if (IS_INCLUDES && el != el) while (length > index) {
+        value = O[index++];
+        // eslint-disable-next-line no-self-compare
+        if (value != value) return true;
+      // Array#indexOf ignores holes, Array#includes - not
+      } else for (;length > index; index++) {
+        if ((IS_INCLUDES || index in O) && O[index] === el) return IS_INCLUDES || index || 0;
+      } return !IS_INCLUDES && -1;
+    };
+  };
+
+  var arrayIncludes = {
+    // `Array.prototype.includes` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.includes
+    includes: createMethod(true),
+    // `Array.prototype.indexOf` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+    indexOf: createMethod(false)
+  };
+
+  var indexOf = arrayIncludes.indexOf;
+
+
+  var objectKeysInternal = function (object, names) {
+    var O = toIndexedObject(object);
+    var i = 0;
+    var result = [];
+    var key;
+    for (key in O) !has(hiddenKeys, key) && has(O, key) && result.push(key);
+    // Don't enum bug & hidden keys
+    while (names.length > i) if (has(O, key = names[i++])) {
+      ~indexOf(result, key) || result.push(key);
+    }
+    return result;
+  };
+
+  // IE8- don't enum bug keys
+  var enumBugKeys = [
+    'constructor',
+    'hasOwnProperty',
+    'isPrototypeOf',
+    'propertyIsEnumerable',
+    'toLocaleString',
+    'toString',
+    'valueOf'
+  ];
+
+  var hiddenKeys$1 = enumBugKeys.concat('length', 'prototype');
+
+  // `Object.getOwnPropertyNames` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+  var f$3 = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+    return objectKeysInternal(O, hiddenKeys$1);
+  };
+
+  var objectGetOwnPropertyNames = {
+  	f: f$3
+  };
+
+  var f$4 = Object.getOwnPropertySymbols;
+
+  var objectGetOwnPropertySymbols = {
+  	f: f$4
+  };
+
+  // all object keys, includes non-enumerable and symbols
+  var ownKeys = getBuiltIn('Reflect', 'ownKeys') || function ownKeys(it) {
+    var keys = objectGetOwnPropertyNames.f(anObject(it));
+    var getOwnPropertySymbols = objectGetOwnPropertySymbols.f;
+    return getOwnPropertySymbols ? keys.concat(getOwnPropertySymbols(it)) : keys;
+  };
+
+  var copyConstructorProperties = function (target, source) {
+    var keys = ownKeys(source);
+    var defineProperty = objectDefineProperty.f;
+    var getOwnPropertyDescriptor = objectGetOwnPropertyDescriptor.f;
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (!has(target, key)) defineProperty(target, key, getOwnPropertyDescriptor(source, key));
+    }
+  };
+
+  var replacement = /#|\.prototype\./;
+
+  var isForced = function (feature, detection) {
+    var value = data[normalize(feature)];
+    return value == POLYFILL ? true
+      : value == NATIVE ? false
+      : typeof detection == 'function' ? fails(detection)
+      : !!detection;
+  };
+
+  var normalize = isForced.normalize = function (string) {
+    return String(string).replace(replacement, '.').toLowerCase();
+  };
+
+  var data = isForced.data = {};
+  var NATIVE = isForced.NATIVE = 'N';
+  var POLYFILL = isForced.POLYFILL = 'P';
+
+  var isForced_1 = isForced;
+
+  var getOwnPropertyDescriptor$1 = objectGetOwnPropertyDescriptor.f;
+
+
+
+
+
+
+  /*
+    options.target      - name of the target object
+    options.global      - target is the global object
+    options.stat        - export as static methods of target
+    options.proto       - export as prototype methods of target
+    options.real        - real prototype method for the `pure` version
+    options.forced      - export even if the native feature is available
+    options.bind        - bind methods to the target, required for the `pure` version
+    options.wrap        - wrap constructors to preventing global pollution, required for the `pure` version
+    options.unsafe      - use the simple assignment of property instead of delete + defineProperty
+    options.sham        - add a flag to not completely full polyfills
+    options.enumerable  - export as enumerable property
+    options.noTargetGet - prevent calling a getter on target
+  */
+  var _export = function (options, source) {
+    var TARGET = options.target;
+    var GLOBAL = options.global;
+    var STATIC = options.stat;
+    var FORCED, target, key, targetProperty, sourceProperty, descriptor;
+    if (GLOBAL) {
+      target = global_1;
+    } else if (STATIC) {
+      target = global_1[TARGET] || setGlobal(TARGET, {});
+    } else {
+      target = (global_1[TARGET] || {}).prototype;
+    }
+    if (target) for (key in source) {
+      sourceProperty = source[key];
+      if (options.noTargetGet) {
+        descriptor = getOwnPropertyDescriptor$1(target, key);
+        targetProperty = descriptor && descriptor.value;
+      } else targetProperty = target[key];
+      FORCED = isForced_1(GLOBAL ? key : TARGET + (STATIC ? '.' : '#') + key, options.forced);
+      // contained in target
+      if (!FORCED && targetProperty !== undefined) {
+        if (typeof sourceProperty === typeof targetProperty) continue;
+        copyConstructorProperties(sourceProperty, targetProperty);
+      }
+      // add a flag to not completely full polyfills
+      if (options.sham || (targetProperty && targetProperty.sham)) {
+        createNonEnumerableProperty(sourceProperty, 'sham', true);
+      }
+      // extend global
+      redefine(target, key, sourceProperty, options);
+    }
+  };
+
+  var nativeSymbol = !!Object.getOwnPropertySymbols && !fails(function () {
+    // Chrome 38 Symbol has incorrect toString conversion
+    // eslint-disable-next-line no-undef
+    return !String(Symbol());
+  });
+
+  var useSymbolAsUid = nativeSymbol
+    // eslint-disable-next-line no-undef
+    && !Symbol.sham
+    // eslint-disable-next-line no-undef
+    && typeof Symbol.iterator == 'symbol';
+
+  // `IsArray` abstract operation
+  // https://tc39.github.io/ecma262/#sec-isarray
+  var isArray = Array.isArray || function isArray(arg) {
+    return classofRaw(arg) == 'Array';
+  };
+
+  // `ToObject` abstract operation
+  // https://tc39.github.io/ecma262/#sec-toobject
+  var toObject = function (argument) {
+    return Object(requireObjectCoercible(argument));
+  };
+
+  // `Object.keys` method
+  // https://tc39.github.io/ecma262/#sec-object.keys
+  var objectKeys = Object.keys || function keys(O) {
+    return objectKeysInternal(O, enumBugKeys);
+  };
+
+  // `Object.defineProperties` method
+  // https://tc39.github.io/ecma262/#sec-object.defineproperties
+  var objectDefineProperties = descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
+    anObject(O);
+    var keys = objectKeys(Properties);
+    var length = keys.length;
+    var index = 0;
+    var key;
+    while (length > index) objectDefineProperty.f(O, key = keys[index++], Properties[key]);
+    return O;
+  };
+
+  var html = getBuiltIn('document', 'documentElement');
+
+  var GT = '>';
+  var LT = '<';
+  var PROTOTYPE = 'prototype';
+  var SCRIPT = 'script';
+  var IE_PROTO = sharedKey('IE_PROTO');
+
+  var EmptyConstructor = function () { /* empty */ };
+
+  var scriptTag = function (content) {
+    return LT + SCRIPT + GT + content + LT + '/' + SCRIPT + GT;
+  };
+
+  // Create object with fake `null` prototype: use ActiveX Object with cleared prototype
+  var NullProtoObjectViaActiveX = function (activeXDocument) {
+    activeXDocument.write(scriptTag(''));
+    activeXDocument.close();
+    var temp = activeXDocument.parentWindow.Object;
+    activeXDocument = null; // avoid memory leak
+    return temp;
+  };
+
+  // Create object with fake `null` prototype: use iframe Object with cleared prototype
+  var NullProtoObjectViaIFrame = function () {
+    // Thrash, waste and sodomy: IE GC bug
+    var iframe = documentCreateElement('iframe');
+    var JS = 'java' + SCRIPT + ':';
+    var iframeDocument;
+    iframe.style.display = 'none';
+    html.appendChild(iframe);
+    // https://github.com/zloirock/core-js/issues/475
+    iframe.src = String(JS);
+    iframeDocument = iframe.contentWindow.document;
+    iframeDocument.open();
+    iframeDocument.write(scriptTag('document.F=Object'));
+    iframeDocument.close();
+    return iframeDocument.F;
+  };
+
+  // Check for document.domain and active x support
+  // No need to use active x approach when document.domain is not set
+  // see https://github.com/es-shims/es5-shim/issues/150
+  // variation of https://github.com/kitcambridge/es5-shim/commit/4f738ac066346
+  // avoid IE GC bug
+  var activeXDocument;
+  var NullProtoObject = function () {
+    try {
+      /* global ActiveXObject */
+      activeXDocument = document.domain && new ActiveXObject('htmlfile');
+    } catch (error) { /* ignore */ }
+    NullProtoObject = activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) : NullProtoObjectViaIFrame();
+    var length = enumBugKeys.length;
+    while (length--) delete NullProtoObject[PROTOTYPE][enumBugKeys[length]];
+    return NullProtoObject();
+  };
+
+  hiddenKeys[IE_PROTO] = true;
+
+  // `Object.create` method
+  // https://tc39.github.io/ecma262/#sec-object.create
+  var objectCreate = Object.create || function create(O, Properties) {
+    var result;
+    if (O !== null) {
+      EmptyConstructor[PROTOTYPE] = anObject(O);
+      result = new EmptyConstructor();
+      EmptyConstructor[PROTOTYPE] = null;
+      // add "__proto__" for Object.getPrototypeOf polyfill
+      result[IE_PROTO] = O;
+    } else result = NullProtoObject();
+    return Properties === undefined ? result : objectDefineProperties(result, Properties);
+  };
+
+  var nativeGetOwnPropertyNames = objectGetOwnPropertyNames.f;
+
+  var toString$1 = {}.toString;
+
+  var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
+    ? Object.getOwnPropertyNames(window) : [];
+
+  var getWindowNames = function (it) {
+    try {
+      return nativeGetOwnPropertyNames(it);
+    } catch (error) {
+      return windowNames.slice();
+    }
+  };
+
+  // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
+  var f$5 = function getOwnPropertyNames(it) {
+    return windowNames && toString$1.call(it) == '[object Window]'
+      ? getWindowNames(it)
+      : nativeGetOwnPropertyNames(toIndexedObject(it));
+  };
+
+  var objectGetOwnPropertyNamesExternal = {
+  	f: f$5
+  };
+
+  var WellKnownSymbolsStore = shared('wks');
+  var Symbol$1 = global_1.Symbol;
+  var createWellKnownSymbol = useSymbolAsUid ? Symbol$1 : Symbol$1 && Symbol$1.withoutSetter || uid;
+
+  var wellKnownSymbol = function (name) {
+    if (!has(WellKnownSymbolsStore, name)) {
+      if (nativeSymbol && has(Symbol$1, name)) WellKnownSymbolsStore[name] = Symbol$1[name];
+      else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
+    } return WellKnownSymbolsStore[name];
+  };
+
+  var f$6 = wellKnownSymbol;
+
+  var wellKnownSymbolWrapped = {
+  	f: f$6
+  };
+
+  var defineProperty = objectDefineProperty.f;
+
+  var defineWellKnownSymbol = function (NAME) {
+    var Symbol = path.Symbol || (path.Symbol = {});
+    if (!has(Symbol, NAME)) defineProperty(Symbol, NAME, {
+      value: wellKnownSymbolWrapped.f(NAME)
+    });
+  };
+
+  var defineProperty$1 = objectDefineProperty.f;
+
+
+
+  var TO_STRING_TAG = wellKnownSymbol('toStringTag');
+
+  var setToStringTag = function (it, TAG, STATIC) {
+    if (it && !has(it = STATIC ? it : it.prototype, TO_STRING_TAG)) {
+      defineProperty$1(it, TO_STRING_TAG, { configurable: true, value: TAG });
+    }
+  };
+
+  var aFunction$1 = function (it) {
+    if (typeof it != 'function') {
+      throw TypeError(String(it) + ' is not a function');
+    } return it;
+  };
+
+  // optional / simple context binding
+  var functionBindContext = function (fn, that, length) {
+    aFunction$1(fn);
     if (that === undefined) return fn;
     switch (length) {
+      case 0: return function () {
+        return fn.call(that);
+      };
       case 1: return function (a) {
         return fn.call(that, a);
       };
@@ -564,853 +794,887 @@ typeof navigator === "object" && (function (global, factory) {
     };
   };
 
-  var _global = createCommonjsModule(function (module) {
-  // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
-  var global = module.exports = typeof window != 'undefined' && window.Math == Math
-    ? window : typeof self != 'undefined' && self.Math == Math ? self
-    // eslint-disable-next-line no-new-func
-    : Function('return this')();
-  if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
-  });
+  var SPECIES = wellKnownSymbol('species');
 
-  var _core = createCommonjsModule(function (module) {
-  var core = module.exports = { version: '2.6.2' };
-  if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
-  });
-  var _core_1 = _core.version;
-
-  var _isObject = function (it) {
-    return typeof it === 'object' ? it !== null : typeof it === 'function';
-  };
-
-  var _anObject = function (it) {
-    if (!_isObject(it)) throw TypeError(it + ' is not an object!');
-    return it;
-  };
-
-  var _fails = function (exec) {
-    try {
-      return !!exec();
-    } catch (e) {
-      return true;
-    }
-  };
-
-  // Thank's IE8 for his funny defineProperty
-  var _descriptors = !_fails(function () {
-    return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
-  });
-
-  var document$1 = _global.document;
-  // typeof document.createElement is 'object' in old IE
-  var is = _isObject(document$1) && _isObject(document$1.createElement);
-  var _domCreate = function (it) {
-    return is ? document$1.createElement(it) : {};
-  };
-
-  var _ie8DomDefine = !_descriptors && !_fails(function () {
-    return Object.defineProperty(_domCreate('div'), 'a', { get: function () { return 7; } }).a != 7;
-  });
-
-  // 7.1.1 ToPrimitive(input [, PreferredType])
-
-  // instead of the ES6 spec version, we didn't implement @@toPrimitive case
-  // and the second argument - flag - preferred type is a string
-  var _toPrimitive = function (it, S) {
-    if (!_isObject(it)) return it;
-    var fn, val;
-    if (S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it))) return val;
-    if (typeof (fn = it.valueOf) == 'function' && !_isObject(val = fn.call(it))) return val;
-    if (!S && typeof (fn = it.toString) == 'function' && !_isObject(val = fn.call(it))) return val;
-    throw TypeError("Can't convert object to primitive value");
-  };
-
-  var dP = Object.defineProperty;
-
-  var f = _descriptors ? Object.defineProperty : function defineProperty(O, P, Attributes) {
-    _anObject(O);
-    P = _toPrimitive(P, true);
-    _anObject(Attributes);
-    if (_ie8DomDefine) try {
-      return dP(O, P, Attributes);
-    } catch (e) { /* empty */ }
-    if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
-    if ('value' in Attributes) O[P] = Attributes.value;
-    return O;
-  };
-
-  var _objectDp = {
-  	f: f
-  };
-
-  var _propertyDesc = function (bitmap, value) {
-    return {
-      enumerable: !(bitmap & 1),
-      configurable: !(bitmap & 2),
-      writable: !(bitmap & 4),
-      value: value
-    };
-  };
-
-  var _hide = _descriptors ? function (object, key, value) {
-    return _objectDp.f(object, key, _propertyDesc(1, value));
-  } : function (object, key, value) {
-    object[key] = value;
-    return object;
-  };
-
-  var hasOwnProperty = {}.hasOwnProperty;
-  var _has = function (it, key) {
-    return hasOwnProperty.call(it, key);
-  };
-
-  var id = 0;
-  var px = Math.random();
-  var _uid = function (key) {
-    return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
-  };
-
-  var _redefine = createCommonjsModule(function (module) {
-  var SRC = _uid('src');
-  var TO_STRING = 'toString';
-  var $toString = Function[TO_STRING];
-  var TPL = ('' + $toString).split(TO_STRING);
-
-  _core.inspectSource = function (it) {
-    return $toString.call(it);
-  };
-
-  (module.exports = function (O, key, val, safe) {
-    var isFunction = typeof val == 'function';
-    if (isFunction) _has(val, 'name') || _hide(val, 'name', key);
-    if (O[key] === val) return;
-    if (isFunction) _has(val, SRC) || _hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key)));
-    if (O === _global) {
-      O[key] = val;
-    } else if (!safe) {
-      delete O[key];
-      _hide(O, key, val);
-    } else if (O[key]) {
-      O[key] = val;
-    } else {
-      _hide(O, key, val);
-    }
-  // add fake Function#toString for correct work wrapped methods / constructors with methods like LoDash isNative
-  })(Function.prototype, TO_STRING, function toString() {
-    return typeof this == 'function' && this[SRC] || $toString.call(this);
-  });
-  });
-
-  var PROTOTYPE = 'prototype';
-
-  var $export = function (type, name, source) {
-    var IS_FORCED = type & $export.F;
-    var IS_GLOBAL = type & $export.G;
-    var IS_STATIC = type & $export.S;
-    var IS_PROTO = type & $export.P;
-    var IS_BIND = type & $export.B;
-    var target = IS_GLOBAL ? _global : IS_STATIC ? _global[name] || (_global[name] = {}) : (_global[name] || {})[PROTOTYPE];
-    var exports = IS_GLOBAL ? _core : _core[name] || (_core[name] = {});
-    var expProto = exports[PROTOTYPE] || (exports[PROTOTYPE] = {});
-    var key, own, out, exp;
-    if (IS_GLOBAL) source = name;
-    for (key in source) {
-      // contains in native
-      own = !IS_FORCED && target && target[key] !== undefined;
-      // export native or passed
-      out = (own ? target : source)[key];
-      // bind timers to global for call from export context
-      exp = IS_BIND && own ? _ctx(out, _global) : IS_PROTO && typeof out == 'function' ? _ctx(Function.call, out) : out;
-      // extend global
-      if (target) _redefine(target, key, out, type & $export.U);
-      // export
-      if (exports[key] != out) _hide(exports, key, exp);
-      if (IS_PROTO && expProto[key] != out) expProto[key] = out;
-    }
-  };
-  _global.core = _core;
-  // type bitmap
-  $export.F = 1;   // forced
-  $export.G = 2;   // global
-  $export.S = 4;   // static
-  $export.P = 8;   // proto
-  $export.B = 16;  // bind
-  $export.W = 32;  // wrap
-  $export.U = 64;  // safe
-  $export.R = 128; // real proto method for `library`
-  var _export = $export;
-
-  // 7.2.1 RequireObjectCoercible(argument)
-  var _defined = function (it) {
-    if (it == undefined) throw TypeError("Can't call method on  " + it);
-    return it;
-  };
-
-  // 7.1.13 ToObject(argument)
-
-  var _toObject = function (it) {
-    return Object(_defined(it));
-  };
-
-  // call something on iterator step with safe closing on error
-
-  var _iterCall = function (iterator, fn, value, entries) {
-    try {
-      return entries ? fn(_anObject(value)[0], value[1]) : fn(value);
-    // 7.4.6 IteratorClose(iterator, completion)
-    } catch (e) {
-      var ret = iterator['return'];
-      if (ret !== undefined) _anObject(ret.call(iterator));
-      throw e;
-    }
-  };
-
-  var _iterators = {};
-
-  var _library = false;
-
-  var _shared = createCommonjsModule(function (module) {
-  var SHARED = '__core-js_shared__';
-  var store = _global[SHARED] || (_global[SHARED] = {});
-
-  (module.exports = function (key, value) {
-    return store[key] || (store[key] = value !== undefined ? value : {});
-  })('versions', []).push({
-    version: _core.version,
-    mode: 'global',
-    copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
-  });
-  });
-
-  var _wks = createCommonjsModule(function (module) {
-  var store = _shared('wks');
-
-  var Symbol = _global.Symbol;
-  var USE_SYMBOL = typeof Symbol == 'function';
-
-  var $exports = module.exports = function (name) {
-    return store[name] || (store[name] =
-      USE_SYMBOL && Symbol[name] || (USE_SYMBOL ? Symbol : _uid)('Symbol.' + name));
-  };
-
-  $exports.store = store;
-  });
-
-  // check on default Array iterator
-
-  var ITERATOR = _wks('iterator');
-  var ArrayProto = Array.prototype;
-
-  var _isArrayIter = function (it) {
-    return it !== undefined && (_iterators.Array === it || ArrayProto[ITERATOR] === it);
-  };
-
-  // 7.1.4 ToInteger
-  var ceil = Math.ceil;
-  var floor = Math.floor;
-  var _toInteger = function (it) {
-    return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
-  };
-
-  // 7.1.15 ToLength
-
-  var min = Math.min;
-  var _toLength = function (it) {
-    return it > 0 ? min(_toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
-  };
-
-  var _createProperty = function (object, index, value) {
-    if (index in object) _objectDp.f(object, index, _propertyDesc(0, value));
-    else object[index] = value;
-  };
-
-  var toString = {}.toString;
-
-  var _cof = function (it) {
-    return toString.call(it).slice(8, -1);
-  };
-
-  // getting tag from 19.1.3.6 Object.prototype.toString()
-
-  var TAG = _wks('toStringTag');
-  // ES3 wrong here
-  var ARG = _cof(function () { return arguments; }()) == 'Arguments';
-
-  // fallback for IE11 Script Access Denied error
-  var tryGet = function (it, key) {
-    try {
-      return it[key];
-    } catch (e) { /* empty */ }
-  };
-
-  var _classof = function (it) {
-    var O, T, B;
-    return it === undefined ? 'Undefined' : it === null ? 'Null'
-      // @@toStringTag case
-      : typeof (T = tryGet(O = Object(it), TAG)) == 'string' ? T
-      // builtinTag case
-      : ARG ? _cof(O)
-      // ES3 arguments fallback
-      : (B = _cof(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : B;
-  };
-
-  var ITERATOR$1 = _wks('iterator');
-
-  var core_getIteratorMethod = _core.getIteratorMethod = function (it) {
-    if (it != undefined) return it[ITERATOR$1]
-      || it['@@iterator']
-      || _iterators[_classof(it)];
-  };
-
-  var ITERATOR$2 = _wks('iterator');
-  var SAFE_CLOSING = false;
-
-  try {
-    var riter = [7][ITERATOR$2]();
-    riter['return'] = function () { SAFE_CLOSING = true; };
-  } catch (e) { /* empty */ }
-
-  var _iterDetect = function (exec, skipClosing) {
-    if (!skipClosing && !SAFE_CLOSING) return false;
-    var safe = false;
-    try {
-      var arr = [7];
-      var iter = arr[ITERATOR$2]();
-      iter.next = function () { return { done: safe = true }; };
-      arr[ITERATOR$2] = function () { return iter; };
-      exec(arr);
-    } catch (e) { /* empty */ }
-    return safe;
-  };
-
-  _export(_export.S + _export.F * !_iterDetect(function (iter) { }), 'Array', {
-    // 22.1.2.1 Array.from(arrayLike, mapfn = undefined, thisArg = undefined)
-    from: function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
-      var O = _toObject(arrayLike);
-      var C = typeof this == 'function' ? this : Array;
-      var aLen = arguments.length;
-      var mapfn = aLen > 1 ? arguments[1] : undefined;
-      var mapping = mapfn !== undefined;
-      var index = 0;
-      var iterFn = core_getIteratorMethod(O);
-      var length, result, step, iterator;
-      if (mapping) mapfn = _ctx(mapfn, aLen > 2 ? arguments[2] : undefined, 2);
-      // if object isn't iterable or it's array with default iterator - use simple case
-      if (iterFn != undefined && !(C == Array && _isArrayIter(iterFn))) {
-        for (iterator = iterFn.call(O), result = new C(); !(step = iterator.next()).done; index++) {
-          _createProperty(result, index, mapping ? _iterCall(iterator, mapfn, [step.value, index], true) : step.value);
-        }
-      } else {
-        length = _toLength(O.length);
-        for (result = new C(length); length > index; index++) {
-          _createProperty(result, index, mapping ? mapfn(O[index], index) : O[index]);
-        }
-      }
-      result.length = index;
-      return result;
-    }
-  });
-
-  // fallback for non-array-like ES3 and non-enumerable old V8 strings
-
-  // eslint-disable-next-line no-prototype-builtins
-  var _iobject = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
-    return _cof(it) == 'String' ? it.split('') : Object(it);
-  };
-
-  // 7.2.2 IsArray(argument)
-
-  var _isArray = Array.isArray || function isArray(arg) {
-    return _cof(arg) == 'Array';
-  };
-
-  var SPECIES = _wks('species');
-
-  var _arraySpeciesConstructor = function (original) {
+  // `ArraySpeciesCreate` abstract operation
+  // https://tc39.github.io/ecma262/#sec-arrayspeciescreate
+  var arraySpeciesCreate = function (originalArray, length) {
     var C;
-    if (_isArray(original)) {
-      C = original.constructor;
+    if (isArray(originalArray)) {
+      C = originalArray.constructor;
       // cross-realm fallback
-      if (typeof C == 'function' && (C === Array || _isArray(C.prototype))) C = undefined;
-      if (_isObject(C)) {
+      if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
+      else if (isObject(C)) {
         C = C[SPECIES];
         if (C === null) C = undefined;
       }
-    } return C === undefined ? Array : C;
+    } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
   };
 
-  // 9.4.2.3 ArraySpeciesCreate(originalArray, length)
+  var push = [].push;
 
-
-  var _arraySpeciesCreate = function (original, length) {
-    return new (_arraySpeciesConstructor(original))(length);
-  };
-
-  // 0 -> Array#forEach
-  // 1 -> Array#map
-  // 2 -> Array#filter
-  // 3 -> Array#some
-  // 4 -> Array#every
-  // 5 -> Array#find
-  // 6 -> Array#findIndex
-
-
-
-
-
-  var _arrayMethods = function (TYPE, $create) {
+  // `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+  var createMethod$1 = function (TYPE) {
     var IS_MAP = TYPE == 1;
     var IS_FILTER = TYPE == 2;
     var IS_SOME = TYPE == 3;
     var IS_EVERY = TYPE == 4;
     var IS_FIND_INDEX = TYPE == 6;
     var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
-    var create = $create || _arraySpeciesCreate;
-    return function ($this, callbackfn, that) {
-      var O = _toObject($this);
-      var self = _iobject(O);
-      var f = _ctx(callbackfn, that, 3);
-      var length = _toLength(self.length);
+    return function ($this, callbackfn, that, specificCreate) {
+      var O = toObject($this);
+      var self = indexedObject(O);
+      var boundFunction = functionBindContext(callbackfn, that, 3);
+      var length = toLength(self.length);
       var index = 0;
-      var result = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
-      var val, res;
+      var create = specificCreate || arraySpeciesCreate;
+      var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
+      var value, result;
       for (;length > index; index++) if (NO_HOLES || index in self) {
-        val = self[index];
-        res = f(val, index, O);
+        value = self[index];
+        result = boundFunction(value, index, O);
         if (TYPE) {
-          if (IS_MAP) result[index] = res;   // map
-          else if (res) switch (TYPE) {
-            case 3: return true;             // some
-            case 5: return val;              // find
-            case 6: return index;            // findIndex
-            case 2: result.push(val);        // filter
-          } else if (IS_EVERY) return false; // every
+          if (IS_MAP) target[index] = result; // map
+          else if (result) switch (TYPE) {
+            case 3: return true;              // some
+            case 5: return value;             // find
+            case 6: return index;             // findIndex
+            case 2: push.call(target, value); // filter
+          } else if (IS_EVERY) return false;  // every
         }
       }
-      return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : result;
+      return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
     };
   };
 
-  // 22.1.3.31 Array.prototype[@@unscopables]
-  var UNSCOPABLES = _wks('unscopables');
-  var ArrayProto$1 = Array.prototype;
-  if (ArrayProto$1[UNSCOPABLES] == undefined) _hide(ArrayProto$1, UNSCOPABLES, {});
-  var _addToUnscopables = function (key) {
-    ArrayProto$1[UNSCOPABLES][key] = true;
+  var arrayIteration = {
+    // `Array.prototype.forEach` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+    forEach: createMethod$1(0),
+    // `Array.prototype.map` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.map
+    map: createMethod$1(1),
+    // `Array.prototype.filter` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+    filter: createMethod$1(2),
+    // `Array.prototype.some` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.some
+    some: createMethod$1(3),
+    // `Array.prototype.every` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.every
+    every: createMethod$1(4),
+    // `Array.prototype.find` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.find
+    find: createMethod$1(5),
+    // `Array.prototype.findIndex` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
+    findIndex: createMethod$1(6)
   };
 
-  // 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
+  var $forEach = arrayIteration.forEach;
 
-  var $find = _arrayMethods(5);
-  var KEY = 'find';
-  var forced = true;
-  // Shouldn't skip holes
-  if (KEY in []) Array(1)[KEY](function () { forced = false; });
-  _export(_export.P + _export.F * forced, 'Array', {
-    find: function find(callbackfn /* , that = undefined */) {
-      return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  var HIDDEN = sharedKey('hidden');
+  var SYMBOL = 'Symbol';
+  var PROTOTYPE$1 = 'prototype';
+  var TO_PRIMITIVE = wellKnownSymbol('toPrimitive');
+  var setInternalState = internalState.set;
+  var getInternalState = internalState.getterFor(SYMBOL);
+  var ObjectPrototype = Object[PROTOTYPE$1];
+  var $Symbol = global_1.Symbol;
+  var $stringify = getBuiltIn('JSON', 'stringify');
+  var nativeGetOwnPropertyDescriptor$1 = objectGetOwnPropertyDescriptor.f;
+  var nativeDefineProperty$1 = objectDefineProperty.f;
+  var nativeGetOwnPropertyNames$1 = objectGetOwnPropertyNamesExternal.f;
+  var nativePropertyIsEnumerable$1 = objectPropertyIsEnumerable.f;
+  var AllSymbols = shared('symbols');
+  var ObjectPrototypeSymbols = shared('op-symbols');
+  var StringToSymbolRegistry = shared('string-to-symbol-registry');
+  var SymbolToStringRegistry = shared('symbol-to-string-registry');
+  var WellKnownSymbolsStore$1 = shared('wks');
+  var QObject = global_1.QObject;
+  // Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
+  var USE_SETTER = !QObject || !QObject[PROTOTYPE$1] || !QObject[PROTOTYPE$1].findChild;
+
+  // fallback for old Android, https://code.google.com/p/v8/issues/detail?id=687
+  var setSymbolDescriptor = descriptors && fails(function () {
+    return objectCreate(nativeDefineProperty$1({}, 'a', {
+      get: function () { return nativeDefineProperty$1(this, 'a', { value: 7 }).a; }
+    })).a != 7;
+  }) ? function (O, P, Attributes) {
+    var ObjectPrototypeDescriptor = nativeGetOwnPropertyDescriptor$1(ObjectPrototype, P);
+    if (ObjectPrototypeDescriptor) delete ObjectPrototype[P];
+    nativeDefineProperty$1(O, P, Attributes);
+    if (ObjectPrototypeDescriptor && O !== ObjectPrototype) {
+      nativeDefineProperty$1(ObjectPrototype, P, ObjectPrototypeDescriptor);
     }
-  });
-  _addToUnscopables(KEY);
+  } : nativeDefineProperty$1;
 
-  var f$1 = {}.propertyIsEnumerable;
-
-  var _objectPie = {
-  	f: f$1
-  };
-
-  // to indexed object, toObject with fallback for non-array-like ES3 strings
-
-
-  var _toIobject = function (it) {
-    return _iobject(_defined(it));
-  };
-
-  var gOPD = Object.getOwnPropertyDescriptor;
-
-  var f$2 = _descriptors ? gOPD : function getOwnPropertyDescriptor(O, P) {
-    O = _toIobject(O);
-    P = _toPrimitive(P, true);
-    if (_ie8DomDefine) try {
-      return gOPD(O, P);
-    } catch (e) { /* empty */ }
-    if (_has(O, P)) return _propertyDesc(!_objectPie.f.call(O, P), O[P]);
-  };
-
-  var _objectGopd = {
-  	f: f$2
-  };
-
-  // Works with __proto__ only. Old v8 can't work with null proto objects.
-  /* eslint-disable no-proto */
-
-
-  var check = function (O, proto) {
-    _anObject(O);
-    if (!_isObject(proto) && proto !== null) throw TypeError(proto + ": can't set as prototype!");
-  };
-  var _setProto = {
-    set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
-      function (test, buggy, set) {
-        try {
-          set = _ctx(Function.call, _objectGopd.f(Object.prototype, '__proto__').set, 2);
-          set(test, []);
-          buggy = !(test instanceof Array);
-        } catch (e) { buggy = true; }
-        return function setPrototypeOf(O, proto) {
-          check(O, proto);
-          if (buggy) O.__proto__ = proto;
-          else set(O, proto);
-          return O;
-        };
-      }({}, false) : undefined),
-    check: check
-  };
-
-  var setPrototypeOf = _setProto.set;
-  var _inheritIfRequired = function (that, target, C) {
-    var S = target.constructor;
-    var P;
-    if (S !== C && typeof S == 'function' && (P = S.prototype) !== C.prototype && _isObject(P) && setPrototypeOf) {
-      setPrototypeOf(that, P);
-    } return that;
-  };
-
-  var max = Math.max;
-  var min$1 = Math.min;
-  var _toAbsoluteIndex = function (index, length) {
-    index = _toInteger(index);
-    return index < 0 ? max(index + length, 0) : min$1(index, length);
-  };
-
-  // false -> Array#indexOf
-  // true  -> Array#includes
-
-
-
-  var _arrayIncludes = function (IS_INCLUDES) {
-    return function ($this, el, fromIndex) {
-      var O = _toIobject($this);
-      var length = _toLength(O.length);
-      var index = _toAbsoluteIndex(fromIndex, length);
-      var value;
-      // Array#includes uses SameValueZero equality algorithm
-      // eslint-disable-next-line no-self-compare
-      if (IS_INCLUDES && el != el) while (length > index) {
-        value = O[index++];
-        // eslint-disable-next-line no-self-compare
-        if (value != value) return true;
-      // Array#indexOf ignores holes, Array#includes - not
-      } else for (;length > index; index++) if (IS_INCLUDES || index in O) {
-        if (O[index] === el) return IS_INCLUDES || index || 0;
-      } return !IS_INCLUDES && -1;
-    };
-  };
-
-  var shared = _shared('keys');
-
-  var _sharedKey = function (key) {
-    return shared[key] || (shared[key] = _uid(key));
-  };
-
-  var arrayIndexOf = _arrayIncludes(false);
-  var IE_PROTO = _sharedKey('IE_PROTO');
-
-  var _objectKeysInternal = function (object, names) {
-    var O = _toIobject(object);
-    var i = 0;
-    var result = [];
-    var key;
-    for (key in O) if (key != IE_PROTO) _has(O, key) && result.push(key);
-    // Don't enum bug & hidden keys
-    while (names.length > i) if (_has(O, key = names[i++])) {
-      ~arrayIndexOf(result, key) || result.push(key);
-    }
-    return result;
-  };
-
-  // IE 8- don't enum bug keys
-  var _enumBugKeys = (
-    'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
-  ).split(',');
-
-  // 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-
-  var hiddenKeys = _enumBugKeys.concat('length', 'prototype');
-
-  var f$3 = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
-    return _objectKeysInternal(O, hiddenKeys);
-  };
-
-  var _objectGopn = {
-  	f: f$3
-  };
-
-  var _stringWs = '\x09\x0A\x0B\x0C\x0D\x20\xA0\u1680\u180E\u2000\u2001\u2002\u2003' +
-    '\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
-
-  var space = '[' + _stringWs + ']';
-  var non = '\u200b\u0085';
-  var ltrim = RegExp('^' + space + space + '*');
-  var rtrim = RegExp(space + space + '*$');
-
-  var exporter = function (KEY, exec, ALIAS) {
-    var exp = {};
-    var FORCE = _fails(function () {
-      return !!_stringWs[KEY]() || non[KEY]() != non;
+  var wrap = function (tag, description) {
+    var symbol = AllSymbols[tag] = objectCreate($Symbol[PROTOTYPE$1]);
+    setInternalState(symbol, {
+      type: SYMBOL,
+      tag: tag,
+      description: description
     });
-    var fn = exp[KEY] = FORCE ? exec(trim) : _stringWs[KEY];
-    if (ALIAS) exp[ALIAS] = fn;
-    _export(_export.P + _export.F * FORCE, 'String', exp);
+    if (!descriptors) symbol.description = description;
+    return symbol;
   };
 
-  // 1 -> String#trimLeft
-  // 2 -> String#trimRight
-  // 3 -> String#trim
-  var trim = exporter.trim = function (string, TYPE) {
-    string = String(_defined(string));
-    if (TYPE & 1) string = string.replace(ltrim, '');
-    if (TYPE & 2) string = string.replace(rtrim, '');
-    return string;
+  var isSymbol = useSymbolAsUid ? function (it) {
+    return typeof it == 'symbol';
+  } : function (it) {
+    return Object(it) instanceof $Symbol;
   };
 
-  var _stringTrim = exporter;
-
-  // 19.1.2.14 / 15.2.3.14 Object.keys(O)
-
-
-
-  var _objectKeys = Object.keys || function keys(O) {
-    return _objectKeysInternal(O, _enumBugKeys);
+  var $defineProperty = function defineProperty(O, P, Attributes) {
+    if (O === ObjectPrototype) $defineProperty(ObjectPrototypeSymbols, P, Attributes);
+    anObject(O);
+    var key = toPrimitive(P, true);
+    anObject(Attributes);
+    if (has(AllSymbols, key)) {
+      if (!Attributes.enumerable) {
+        if (!has(O, HIDDEN)) nativeDefineProperty$1(O, HIDDEN, createPropertyDescriptor(1, {}));
+        O[HIDDEN][key] = true;
+      } else {
+        if (has(O, HIDDEN) && O[HIDDEN][key]) O[HIDDEN][key] = false;
+        Attributes = objectCreate(Attributes, { enumerable: createPropertyDescriptor(0, false) });
+      } return setSymbolDescriptor(O, key, Attributes);
+    } return nativeDefineProperty$1(O, key, Attributes);
   };
 
-  var _objectDps = _descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
-    _anObject(O);
-    var keys = _objectKeys(Properties);
-    var length = keys.length;
-    var i = 0;
-    var P;
-    while (length > i) _objectDp.f(O, P = keys[i++], Properties[P]);
+  var $defineProperties = function defineProperties(O, Properties) {
+    anObject(O);
+    var properties = toIndexedObject(Properties);
+    var keys = objectKeys(properties).concat($getOwnPropertySymbols(properties));
+    $forEach(keys, function (key) {
+      if (!descriptors || $propertyIsEnumerable.call(properties, key)) $defineProperty(O, key, properties[key]);
+    });
     return O;
   };
 
-  var document$2 = _global.document;
-  var _html = document$2 && document$2.documentElement;
-
-  // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-
-
-
-  var IE_PROTO$1 = _sharedKey('IE_PROTO');
-  var Empty = function () { /* empty */ };
-  var PROTOTYPE$1 = 'prototype';
-
-  // Create object with fake `null` prototype: use iframe Object with cleared prototype
-  var createDict = function () {
-    // Thrash, waste and sodomy: IE GC bug
-    var iframe = _domCreate('iframe');
-    var i = _enumBugKeys.length;
-    var lt = '<';
-    var gt = '>';
-    var iframeDocument;
-    iframe.style.display = 'none';
-    _html.appendChild(iframe);
-    iframe.src = 'javascript:'; // eslint-disable-line no-script-url
-    // createDict = iframe.contentWindow.Object;
-    // html.removeChild(iframe);
-    iframeDocument = iframe.contentWindow.document;
-    iframeDocument.open();
-    iframeDocument.write(lt + 'script' + gt + 'document.F=Object' + lt + '/script' + gt);
-    iframeDocument.close();
-    createDict = iframeDocument.F;
-    while (i--) delete createDict[PROTOTYPE$1][_enumBugKeys[i]];
-    return createDict();
+  var $create = function create(O, Properties) {
+    return Properties === undefined ? objectCreate(O) : $defineProperties(objectCreate(O), Properties);
   };
 
-  var _objectCreate = Object.create || function create(O, Properties) {
-    var result;
-    if (O !== null) {
-      Empty[PROTOTYPE$1] = _anObject(O);
-      result = new Empty();
-      Empty[PROTOTYPE$1] = null;
-      // add "__proto__" for Object.getPrototypeOf polyfill
-      result[IE_PROTO$1] = O;
-    } else result = createDict();
-    return Properties === undefined ? result : _objectDps(result, Properties);
+  var $propertyIsEnumerable = function propertyIsEnumerable(V) {
+    var P = toPrimitive(V, true);
+    var enumerable = nativePropertyIsEnumerable$1.call(this, P);
+    if (this === ObjectPrototype && has(AllSymbols, P) && !has(ObjectPrototypeSymbols, P)) return false;
+    return enumerable || !has(this, P) || !has(AllSymbols, P) || has(this, HIDDEN) && this[HIDDEN][P] ? enumerable : true;
   };
 
-  var gOPN = _objectGopn.f;
-  var gOPD$1 = _objectGopd.f;
-  var dP$1 = _objectDp.f;
-  var $trim = _stringTrim.trim;
-  var NUMBER = 'Number';
-  var $Number = _global[NUMBER];
-  var Base = $Number;
-  var proto = $Number.prototype;
-  // Opera ~12 has broken Object#toString
-  var BROKEN_COF = _cof(_objectCreate(proto)) == NUMBER;
-  var TRIM = 'trim' in String.prototype;
+  var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor(O, P) {
+    var it = toIndexedObject(O);
+    var key = toPrimitive(P, true);
+    if (it === ObjectPrototype && has(AllSymbols, key) && !has(ObjectPrototypeSymbols, key)) return;
+    var descriptor = nativeGetOwnPropertyDescriptor$1(it, key);
+    if (descriptor && has(AllSymbols, key) && !(has(it, HIDDEN) && it[HIDDEN][key])) {
+      descriptor.enumerable = true;
+    }
+    return descriptor;
+  };
 
-  // 7.1.3 ToNumber(argument)
-  var toNumber = function (argument) {
-    var it = _toPrimitive(argument, false);
-    if (typeof it == 'string' && it.length > 2) {
-      it = TRIM ? it.trim() : $trim(it, 3);
-      var first = it.charCodeAt(0);
-      var third, radix, maxCode;
-      if (first === 43 || first === 45) {
-        third = it.charCodeAt(2);
-        if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
-      } else if (first === 48) {
-        switch (it.charCodeAt(1)) {
-          case 66: case 98: radix = 2; maxCode = 49; break; // fast equal /^0b[01]+$/i
-          case 79: case 111: radix = 8; maxCode = 55; break; // fast equal /^0o[0-7]+$/i
-          default: return +it;
-        }
-        for (var digits = it.slice(2), i = 0, l = digits.length, code; i < l; i++) {
-          code = digits.charCodeAt(i);
-          // parseInt parses a string to a first unavailable symbol
-          // but ToNumber should return NaN if a string contains unavailable symbols
-          if (code < 48 || code > maxCode) return NaN;
-        } return parseInt(digits, radix);
+  var $getOwnPropertyNames = function getOwnPropertyNames(O) {
+    var names = nativeGetOwnPropertyNames$1(toIndexedObject(O));
+    var result = [];
+    $forEach(names, function (key) {
+      if (!has(AllSymbols, key) && !has(hiddenKeys, key)) result.push(key);
+    });
+    return result;
+  };
+
+  var $getOwnPropertySymbols = function getOwnPropertySymbols(O) {
+    var IS_OBJECT_PROTOTYPE = O === ObjectPrototype;
+    var names = nativeGetOwnPropertyNames$1(IS_OBJECT_PROTOTYPE ? ObjectPrototypeSymbols : toIndexedObject(O));
+    var result = [];
+    $forEach(names, function (key) {
+      if (has(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || has(ObjectPrototype, key))) {
+        result.push(AllSymbols[key]);
       }
-    } return +it;
+    });
+    return result;
   };
 
-  if (!$Number(' 0o1') || !$Number('0b1') || $Number('+0x1')) {
-    $Number = function Number(value) {
-      var it = arguments.length < 1 ? 0 : value;
-      var that = this;
-      return that instanceof $Number
-        // check on 1..constructor(foo) case
-        && (BROKEN_COF ? _fails(function () { proto.valueOf.call(that); }) : _cof(that) != NUMBER)
-          ? _inheritIfRequired(new Base(toNumber(it)), that, $Number) : toNumber(it);
+  // `Symbol` constructor
+  // https://tc39.github.io/ecma262/#sec-symbol-constructor
+  if (!nativeSymbol) {
+    $Symbol = function Symbol() {
+      if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor');
+      var description = !arguments.length || arguments[0] === undefined ? undefined : String(arguments[0]);
+      var tag = uid(description);
+      var setter = function (value) {
+        if (this === ObjectPrototype) setter.call(ObjectPrototypeSymbols, value);
+        if (has(this, HIDDEN) && has(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
+        setSymbolDescriptor(this, tag, createPropertyDescriptor(1, value));
+      };
+      if (descriptors && USE_SETTER) setSymbolDescriptor(ObjectPrototype, tag, { configurable: true, set: setter });
+      return wrap(tag, description);
     };
-    for (var keys = _descriptors ? gOPN(Base) : (
-      // ES3:
-      'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
-      // ES6 (in case, if modules with ES6 Number statics required before):
-      'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
-      'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
-    ).split(','), j = 0, key; keys.length > j; j++) {
-      if (_has(Base, key = keys[j]) && !_has($Number, key)) {
-        dP$1($Number, key, gOPD$1(Base, key));
+
+    redefine($Symbol[PROTOTYPE$1], 'toString', function toString() {
+      return getInternalState(this).tag;
+    });
+
+    redefine($Symbol, 'withoutSetter', function (description) {
+      return wrap(uid(description), description);
+    });
+
+    objectPropertyIsEnumerable.f = $propertyIsEnumerable;
+    objectDefineProperty.f = $defineProperty;
+    objectGetOwnPropertyDescriptor.f = $getOwnPropertyDescriptor;
+    objectGetOwnPropertyNames.f = objectGetOwnPropertyNamesExternal.f = $getOwnPropertyNames;
+    objectGetOwnPropertySymbols.f = $getOwnPropertySymbols;
+
+    wellKnownSymbolWrapped.f = function (name) {
+      return wrap(wellKnownSymbol(name), name);
+    };
+
+    if (descriptors) {
+      // https://github.com/tc39/proposal-Symbol-description
+      nativeDefineProperty$1($Symbol[PROTOTYPE$1], 'description', {
+        configurable: true,
+        get: function description() {
+          return getInternalState(this).description;
+        }
+      });
+      {
+        redefine(ObjectPrototype, 'propertyIsEnumerable', $propertyIsEnumerable, { unsafe: true });
       }
     }
-    $Number.prototype = proto;
-    proto.constructor = $Number;
-    _redefine(_global, NUMBER, $Number);
   }
 
-  // most Object methods by ES6 should accept primitives
-
-
-
-  var _objectSap = function (KEY, exec) {
-    var fn = (_core.Object || {})[KEY] || Object[KEY];
-    var exp = {};
-    exp[KEY] = exec(fn);
-    _export(_export.S + _export.F * _fails(function () { fn(1); }), 'Object', exp);
-  };
-
-  // 19.1.2.14 Object.keys(O)
-
-
-
-  _objectSap('keys', function () {
-    return function keys(it) {
-      return _objectKeys(_toObject(it));
-    };
+  _export({ global: true, wrap: true, forced: !nativeSymbol, sham: !nativeSymbol }, {
+    Symbol: $Symbol
   });
 
-  // 7.2.8 IsRegExp(argument)
+  $forEach(objectKeys(WellKnownSymbolsStore$1), function (name) {
+    defineWellKnownSymbol(name);
+  });
 
+  _export({ target: SYMBOL, stat: true, forced: !nativeSymbol }, {
+    // `Symbol.for` method
+    // https://tc39.github.io/ecma262/#sec-symbol.for
+    'for': function (key) {
+      var string = String(key);
+      if (has(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
+      var symbol = $Symbol(string);
+      StringToSymbolRegistry[string] = symbol;
+      SymbolToStringRegistry[symbol] = string;
+      return symbol;
+    },
+    // `Symbol.keyFor` method
+    // https://tc39.github.io/ecma262/#sec-symbol.keyfor
+    keyFor: function keyFor(sym) {
+      if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol');
+      if (has(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
+    },
+    useSetter: function () { USE_SETTER = true; },
+    useSimple: function () { USE_SETTER = false; }
+  });
 
-  var MATCH = _wks('match');
-  var _isRegexp = function (it) {
-    var isRegExp;
-    return _isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : _cof(it) == 'RegExp');
-  };
+  _export({ target: 'Object', stat: true, forced: !nativeSymbol, sham: !descriptors }, {
+    // `Object.create` method
+    // https://tc39.github.io/ecma262/#sec-object.create
+    create: $create,
+    // `Object.defineProperty` method
+    // https://tc39.github.io/ecma262/#sec-object.defineproperty
+    defineProperty: $defineProperty,
+    // `Object.defineProperties` method
+    // https://tc39.github.io/ecma262/#sec-object.defineproperties
+    defineProperties: $defineProperties,
+    // `Object.getOwnPropertyDescriptor` method
+    // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
+    getOwnPropertyDescriptor: $getOwnPropertyDescriptor
+  });
 
-  // helper for String#{startsWith, endsWith, includes}
+  _export({ target: 'Object', stat: true, forced: !nativeSymbol }, {
+    // `Object.getOwnPropertyNames` method
+    // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+    getOwnPropertyNames: $getOwnPropertyNames,
+    // `Object.getOwnPropertySymbols` method
+    // https://tc39.github.io/ecma262/#sec-object.getownpropertysymbols
+    getOwnPropertySymbols: $getOwnPropertySymbols
+  });
 
-
-
-  var _stringContext = function (that, searchString, NAME) {
-    if (_isRegexp(searchString)) throw TypeError('String#' + NAME + " doesn't accept regex!");
-    return String(_defined(that));
-  };
-
-  var MATCH$1 = _wks('match');
-  var _failsIsRegexp = function (KEY) {
-    var re = /./;
-    try {
-      '/./'[KEY](re);
-    } catch (e) {
-      try {
-        re[MATCH$1] = false;
-        return !'/./'[KEY](re);
-      } catch (f) { /* empty */ }
-    } return true;
-  };
-
-  var INCLUDES = 'includes';
-
-  _export(_export.P + _export.F * _failsIsRegexp(INCLUDES), 'String', {
-    includes: function includes(searchString /* , position = 0 */) {
-      return !!~_stringContext(this, searchString, INCLUDES)
-        .indexOf(searchString, arguments.length > 1 ? arguments[1] : undefined);
+  // Chrome 38 and 39 `Object.getOwnPropertySymbols` fails on primitives
+  // https://bugs.chromium.org/p/v8/issues/detail?id=3443
+  _export({ target: 'Object', stat: true, forced: fails(function () { objectGetOwnPropertySymbols.f(1); }) }, {
+    getOwnPropertySymbols: function getOwnPropertySymbols(it) {
+      return objectGetOwnPropertySymbols.f(toObject(it));
     }
   });
 
-  // https://github.com/tc39/Array.prototype.includes
+  // `JSON.stringify` method behavior with symbols
+  // https://tc39.github.io/ecma262/#sec-json.stringify
+  if ($stringify) {
+    var FORCED_JSON_STRINGIFY = !nativeSymbol || fails(function () {
+      var symbol = $Symbol();
+      // MS Edge converts symbol values to JSON as {}
+      return $stringify([symbol]) != '[null]'
+        // WebKit converts symbol values to JSON as null
+        || $stringify({ a: symbol }) != '{}'
+        // V8 throws on boxed symbols
+        || $stringify(Object(symbol)) != '{}';
+    });
 
-  var $includes = _arrayIncludes(true);
-
-  _export(_export.P, 'Array', {
-    includes: function includes(el /* , fromIndex = 0 */) {
-      return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
-    }
-  });
-
-  _addToUnscopables('includes');
-
-  // 7.2.9 SameValue(x, y)
-  var _sameValue = Object.is || function is(x, y) {
-    // eslint-disable-next-line no-self-compare
-    return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
-  };
-
-  var builtinExec = RegExp.prototype.exec;
-
-   // `RegExpExec` abstract operation
-  // https://tc39.github.io/ecma262/#sec-regexpexec
-  var _regexpExecAbstract = function (R, S) {
-    var exec = R.exec;
-    if (typeof exec === 'function') {
-      var result = exec.call(R, S);
-      if (typeof result !== 'object') {
-        throw new TypeError('RegExp exec method returned something other than an Object or null');
+    _export({ target: 'JSON', stat: true, forced: FORCED_JSON_STRINGIFY }, {
+      // eslint-disable-next-line no-unused-vars
+      stringify: function stringify(it, replacer, space) {
+        var args = [it];
+        var index = 1;
+        var $replacer;
+        while (arguments.length > index) args.push(arguments[index++]);
+        $replacer = replacer;
+        if (!isObject(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
+        if (!isArray(replacer)) replacer = function (key, value) {
+          if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
+          if (!isSymbol(value)) return value;
+        };
+        args[1] = replacer;
+        return $stringify.apply(null, args);
       }
+    });
+  }
+
+  // `Symbol.prototype[@@toPrimitive]` method
+  // https://tc39.github.io/ecma262/#sec-symbol.prototype-@@toprimitive
+  if (!$Symbol[PROTOTYPE$1][TO_PRIMITIVE]) {
+    createNonEnumerableProperty($Symbol[PROTOTYPE$1], TO_PRIMITIVE, $Symbol[PROTOTYPE$1].valueOf);
+  }
+  // `Symbol.prototype[@@toStringTag]` property
+  // https://tc39.github.io/ecma262/#sec-symbol.prototype-@@tostringtag
+  setToStringTag($Symbol, SYMBOL);
+
+  hiddenKeys[HIDDEN] = true;
+
+  var defineProperty$2 = objectDefineProperty.f;
+
+
+  var NativeSymbol = global_1.Symbol;
+
+  if (descriptors && typeof NativeSymbol == 'function' && (!('description' in NativeSymbol.prototype) ||
+    // Safari 12 bug
+    NativeSymbol().description !== undefined
+  )) {
+    var EmptyStringDescriptionStore = {};
+    // wrap Symbol constructor for correct work with undefined description
+    var SymbolWrapper = function Symbol() {
+      var description = arguments.length < 1 || arguments[0] === undefined ? undefined : String(arguments[0]);
+      var result = this instanceof SymbolWrapper
+        ? new NativeSymbol(description)
+        // in Edge 13, String(Symbol(undefined)) === 'Symbol(undefined)'
+        : description === undefined ? NativeSymbol() : NativeSymbol(description);
+      if (description === '') EmptyStringDescriptionStore[result] = true;
+      return result;
+    };
+    copyConstructorProperties(SymbolWrapper, NativeSymbol);
+    var symbolPrototype = SymbolWrapper.prototype = NativeSymbol.prototype;
+    symbolPrototype.constructor = SymbolWrapper;
+
+    var symbolToString = symbolPrototype.toString;
+    var native = String(NativeSymbol('test')) == 'Symbol(test)';
+    var regexp = /^Symbol\((.*)\)[^)]+$/;
+    defineProperty$2(symbolPrototype, 'description', {
+      configurable: true,
+      get: function description() {
+        var symbol = isObject(this) ? this.valueOf() : this;
+        var string = symbolToString.call(symbol);
+        if (has(EmptyStringDescriptionStore, symbol)) return '';
+        var desc = native ? string.slice(7, -1) : string.replace(regexp, '$1');
+        return desc === '' ? undefined : desc;
+      }
+    });
+
+    _export({ global: true, forced: true }, {
+      Symbol: SymbolWrapper
+    });
+  }
+
+  // `Symbol.iterator` well-known symbol
+  // https://tc39.github.io/ecma262/#sec-symbol.iterator
+  defineWellKnownSymbol('iterator');
+
+  var arrayMethodIsStrict = function (METHOD_NAME, argument) {
+    var method = [][METHOD_NAME];
+    return !!method && fails(function () {
+      // eslint-disable-next-line no-useless-call,no-throw-literal
+      method.call(null, argument || function () { throw 1; }, 1);
+    });
+  };
+
+  var defineProperty$3 = Object.defineProperty;
+  var cache = {};
+
+  var thrower = function (it) { throw it; };
+
+  var arrayMethodUsesToLength = function (METHOD_NAME, options) {
+    if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
+    if (!options) options = {};
+    var method = [][METHOD_NAME];
+    var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
+    var argument0 = has(options, 0) ? options[0] : thrower;
+    var argument1 = has(options, 1) ? options[1] : undefined;
+
+    return cache[METHOD_NAME] = !!method && !fails(function () {
+      if (ACCESSORS && !descriptors) return true;
+      var O = { length: -1 };
+
+      if (ACCESSORS) defineProperty$3(O, 1, { enumerable: true, get: thrower });
+      else O[1] = 1;
+
+      method.call(O, argument0, argument1);
+    });
+  };
+
+  var $forEach$1 = arrayIteration.forEach;
+
+
+
+  var STRICT_METHOD = arrayMethodIsStrict('forEach');
+  var USES_TO_LENGTH = arrayMethodUsesToLength('forEach');
+
+  // `Array.prototype.forEach` method implementation
+  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+  var arrayForEach = (!STRICT_METHOD || !USES_TO_LENGTH) ? function forEach(callbackfn /* , thisArg */) {
+    return $forEach$1(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  } : [].forEach;
+
+  // `Array.prototype.forEach` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+  _export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
+    forEach: arrayForEach
+  });
+
+  var $indexOf = arrayIncludes.indexOf;
+
+
+
+  var nativeIndexOf = [].indexOf;
+
+  var NEGATIVE_ZERO = !!nativeIndexOf && 1 / [1].indexOf(1, -0) < 0;
+  var STRICT_METHOD$1 = arrayMethodIsStrict('indexOf');
+  var USES_TO_LENGTH$1 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+
+  // `Array.prototype.indexOf` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+  _export({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD$1 || !USES_TO_LENGTH$1 }, {
+    indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
+      return NEGATIVE_ZERO
+        // convert -0 to +0
+        ? nativeIndexOf.apply(this, arguments) || 0
+        : $indexOf(this, searchElement, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  var UNSCOPABLES = wellKnownSymbol('unscopables');
+  var ArrayPrototype = Array.prototype;
+
+  // Array.prototype[@@unscopables]
+  // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+  if (ArrayPrototype[UNSCOPABLES] == undefined) {
+    objectDefineProperty.f(ArrayPrototype, UNSCOPABLES, {
+      configurable: true,
+      value: objectCreate(null)
+    });
+  }
+
+  // add a key to Array.prototype[@@unscopables]
+  var addToUnscopables = function (key) {
+    ArrayPrototype[UNSCOPABLES][key] = true;
+  };
+
+  var iterators = {};
+
+  var correctPrototypeGetter = !fails(function () {
+    function F() { /* empty */ }
+    F.prototype.constructor = null;
+    return Object.getPrototypeOf(new F()) !== F.prototype;
+  });
+
+  var IE_PROTO$1 = sharedKey('IE_PROTO');
+  var ObjectPrototype$1 = Object.prototype;
+
+  // `Object.getPrototypeOf` method
+  // https://tc39.github.io/ecma262/#sec-object.getprototypeof
+  var objectGetPrototypeOf = correctPrototypeGetter ? Object.getPrototypeOf : function (O) {
+    O = toObject(O);
+    if (has(O, IE_PROTO$1)) return O[IE_PROTO$1];
+    if (typeof O.constructor == 'function' && O instanceof O.constructor) {
+      return O.constructor.prototype;
+    } return O instanceof Object ? ObjectPrototype$1 : null;
+  };
+
+  var ITERATOR = wellKnownSymbol('iterator');
+  var BUGGY_SAFARI_ITERATORS = false;
+
+  var returnThis = function () { return this; };
+
+  // `%IteratorPrototype%` object
+  // https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
+  var IteratorPrototype, PrototypeOfArrayIteratorPrototype, arrayIterator;
+
+  if ([].keys) {
+    arrayIterator = [].keys();
+    // Safari 8 has buggy iterators w/o `next`
+    if (!('next' in arrayIterator)) BUGGY_SAFARI_ITERATORS = true;
+    else {
+      PrototypeOfArrayIteratorPrototype = objectGetPrototypeOf(objectGetPrototypeOf(arrayIterator));
+      if (PrototypeOfArrayIteratorPrototype !== Object.prototype) IteratorPrototype = PrototypeOfArrayIteratorPrototype;
+    }
+  }
+
+  if (IteratorPrototype == undefined) IteratorPrototype = {};
+
+  // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
+  if ( !has(IteratorPrototype, ITERATOR)) {
+    createNonEnumerableProperty(IteratorPrototype, ITERATOR, returnThis);
+  }
+
+  var iteratorsCore = {
+    IteratorPrototype: IteratorPrototype,
+    BUGGY_SAFARI_ITERATORS: BUGGY_SAFARI_ITERATORS
+  };
+
+  var IteratorPrototype$1 = iteratorsCore.IteratorPrototype;
+
+
+
+
+
+  var returnThis$1 = function () { return this; };
+
+  var createIteratorConstructor = function (IteratorConstructor, NAME, next) {
+    var TO_STRING_TAG = NAME + ' Iterator';
+    IteratorConstructor.prototype = objectCreate(IteratorPrototype$1, { next: createPropertyDescriptor(1, next) });
+    setToStringTag(IteratorConstructor, TO_STRING_TAG, false);
+    iterators[TO_STRING_TAG] = returnThis$1;
+    return IteratorConstructor;
+  };
+
+  var aPossiblePrototype = function (it) {
+    if (!isObject(it) && it !== null) {
+      throw TypeError("Can't set " + String(it) + ' as a prototype');
+    } return it;
+  };
+
+  // `Object.setPrototypeOf` method
+  // https://tc39.github.io/ecma262/#sec-object.setprototypeof
+  // Works with __proto__ only. Old v8 can't work with null proto objects.
+  /* eslint-disable no-proto */
+  var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
+    var CORRECT_SETTER = false;
+    var test = {};
+    var setter;
+    try {
+      setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
+      setter.call(test, []);
+      CORRECT_SETTER = test instanceof Array;
+    } catch (error) { /* empty */ }
+    return function setPrototypeOf(O, proto) {
+      anObject(O);
+      aPossiblePrototype(proto);
+      if (CORRECT_SETTER) setter.call(O, proto);
+      else O.__proto__ = proto;
+      return O;
+    };
+  }() : undefined);
+
+  var IteratorPrototype$2 = iteratorsCore.IteratorPrototype;
+  var BUGGY_SAFARI_ITERATORS$1 = iteratorsCore.BUGGY_SAFARI_ITERATORS;
+  var ITERATOR$1 = wellKnownSymbol('iterator');
+  var KEYS = 'keys';
+  var VALUES = 'values';
+  var ENTRIES = 'entries';
+
+  var returnThis$2 = function () { return this; };
+
+  var defineIterator = function (Iterable, NAME, IteratorConstructor, next, DEFAULT, IS_SET, FORCED) {
+    createIteratorConstructor(IteratorConstructor, NAME, next);
+
+    var getIterationMethod = function (KIND) {
+      if (KIND === DEFAULT && defaultIterator) return defaultIterator;
+      if (!BUGGY_SAFARI_ITERATORS$1 && KIND in IterablePrototype) return IterablePrototype[KIND];
+      switch (KIND) {
+        case KEYS: return function keys() { return new IteratorConstructor(this, KIND); };
+        case VALUES: return function values() { return new IteratorConstructor(this, KIND); };
+        case ENTRIES: return function entries() { return new IteratorConstructor(this, KIND); };
+      } return function () { return new IteratorConstructor(this); };
+    };
+
+    var TO_STRING_TAG = NAME + ' Iterator';
+    var INCORRECT_VALUES_NAME = false;
+    var IterablePrototype = Iterable.prototype;
+    var nativeIterator = IterablePrototype[ITERATOR$1]
+      || IterablePrototype['@@iterator']
+      || DEFAULT && IterablePrototype[DEFAULT];
+    var defaultIterator = !BUGGY_SAFARI_ITERATORS$1 && nativeIterator || getIterationMethod(DEFAULT);
+    var anyNativeIterator = NAME == 'Array' ? IterablePrototype.entries || nativeIterator : nativeIterator;
+    var CurrentIteratorPrototype, methods, KEY;
+
+    // fix native
+    if (anyNativeIterator) {
+      CurrentIteratorPrototype = objectGetPrototypeOf(anyNativeIterator.call(new Iterable()));
+      if (IteratorPrototype$2 !== Object.prototype && CurrentIteratorPrototype.next) {
+        if ( objectGetPrototypeOf(CurrentIteratorPrototype) !== IteratorPrototype$2) {
+          if (objectSetPrototypeOf) {
+            objectSetPrototypeOf(CurrentIteratorPrototype, IteratorPrototype$2);
+          } else if (typeof CurrentIteratorPrototype[ITERATOR$1] != 'function') {
+            createNonEnumerableProperty(CurrentIteratorPrototype, ITERATOR$1, returnThis$2);
+          }
+        }
+        // Set @@toStringTag to native iterators
+        setToStringTag(CurrentIteratorPrototype, TO_STRING_TAG, true);
+      }
+    }
+
+    // fix Array#{values, @@iterator}.name in V8 / FF
+    if (DEFAULT == VALUES && nativeIterator && nativeIterator.name !== VALUES) {
+      INCORRECT_VALUES_NAME = true;
+      defaultIterator = function values() { return nativeIterator.call(this); };
+    }
+
+    // define iterator
+    if ( IterablePrototype[ITERATOR$1] !== defaultIterator) {
+      createNonEnumerableProperty(IterablePrototype, ITERATOR$1, defaultIterator);
+    }
+    iterators[NAME] = defaultIterator;
+
+    // export additional methods
+    if (DEFAULT) {
+      methods = {
+        values: getIterationMethod(VALUES),
+        keys: IS_SET ? defaultIterator : getIterationMethod(KEYS),
+        entries: getIterationMethod(ENTRIES)
+      };
+      if (FORCED) for (KEY in methods) {
+        if (BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME || !(KEY in IterablePrototype)) {
+          redefine(IterablePrototype, KEY, methods[KEY]);
+        }
+      } else _export({ target: NAME, proto: true, forced: BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME }, methods);
+    }
+
+    return methods;
+  };
+
+  var ARRAY_ITERATOR = 'Array Iterator';
+  var setInternalState$1 = internalState.set;
+  var getInternalState$1 = internalState.getterFor(ARRAY_ITERATOR);
+
+  // `Array.prototype.entries` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.entries
+  // `Array.prototype.keys` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.keys
+  // `Array.prototype.values` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.values
+  // `Array.prototype[@@iterator]` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
+  // `CreateArrayIterator` internal method
+  // https://tc39.github.io/ecma262/#sec-createarrayiterator
+  var es_array_iterator = defineIterator(Array, 'Array', function (iterated, kind) {
+    setInternalState$1(this, {
+      type: ARRAY_ITERATOR,
+      target: toIndexedObject(iterated), // target
+      index: 0,                          // next index
+      kind: kind                         // kind
+    });
+  // `%ArrayIteratorPrototype%.next` method
+  // https://tc39.github.io/ecma262/#sec-%arrayiteratorprototype%.next
+  }, function () {
+    var state = getInternalState$1(this);
+    var target = state.target;
+    var kind = state.kind;
+    var index = state.index++;
+    if (!target || index >= target.length) {
+      state.target = undefined;
+      return { value: undefined, done: true };
+    }
+    if (kind == 'keys') return { value: index, done: false };
+    if (kind == 'values') return { value: target[index], done: false };
+    return { value: [index, target[index]], done: false };
+  }, 'values');
+
+  // argumentsList[@@iterator] is %ArrayProto_values%
+  // https://tc39.github.io/ecma262/#sec-createunmappedargumentsobject
+  // https://tc39.github.io/ecma262/#sec-createmappedargumentsobject
+  iterators.Arguments = iterators.Array;
+
+  // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+  addToUnscopables('keys');
+  addToUnscopables('values');
+  addToUnscopables('entries');
+
+  var nativeJoin = [].join;
+
+  var ES3_STRINGS = indexedObject != Object;
+  var STRICT_METHOD$2 = arrayMethodIsStrict('join', ',');
+
+  // `Array.prototype.join` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.join
+  _export({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD$2 }, {
+    join: function join(separator) {
+      return nativeJoin.call(toIndexedObject(this), separator === undefined ? ',' : separator);
+    }
+  });
+
+  var createProperty = function (object, key, value) {
+    var propertyKey = toPrimitive(key);
+    if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
+    else object[propertyKey] = value;
+  };
+
+  var engineUserAgent = getBuiltIn('navigator', 'userAgent') || '';
+
+  var process = global_1.process;
+  var versions = process && process.versions;
+  var v8 = versions && versions.v8;
+  var match, version;
+
+  if (v8) {
+    match = v8.split('.');
+    version = match[0] + match[1];
+  } else if (engineUserAgent) {
+    match = engineUserAgent.match(/Edge\/(\d+)/);
+    if (!match || match[1] >= 74) {
+      match = engineUserAgent.match(/Chrome\/(\d+)/);
+      if (match) version = match[1];
+    }
+  }
+
+  var engineV8Version = version && +version;
+
+  var SPECIES$1 = wellKnownSymbol('species');
+
+  var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
+    // We can't use this feature detection in V8 since it causes
+    // deoptimization and serious performance degradation
+    // https://github.com/zloirock/core-js/issues/677
+    return engineV8Version >= 51 || !fails(function () {
+      var array = [];
+      var constructor = array.constructor = {};
+      constructor[SPECIES$1] = function () {
+        return { foo: 1 };
+      };
+      return array[METHOD_NAME](Boolean).foo !== 1;
+    });
+  };
+
+  var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('slice');
+  var USES_TO_LENGTH$2 = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
+
+  var SPECIES$2 = wellKnownSymbol('species');
+  var nativeSlice = [].slice;
+  var max$1 = Math.max;
+
+  // `Array.prototype.slice` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.slice
+  // fallback for not array-like ES3 strings and DOM objects
+  _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH$2 }, {
+    slice: function slice(start, end) {
+      var O = toIndexedObject(this);
+      var length = toLength(O.length);
+      var k = toAbsoluteIndex(start, length);
+      var fin = toAbsoluteIndex(end === undefined ? length : end, length);
+      // inline `ArraySpeciesCreate` for usage native `Array#slice` where it's possible
+      var Constructor, result, n;
+      if (isArray(O)) {
+        Constructor = O.constructor;
+        // cross-realm fallback
+        if (typeof Constructor == 'function' && (Constructor === Array || isArray(Constructor.prototype))) {
+          Constructor = undefined;
+        } else if (isObject(Constructor)) {
+          Constructor = Constructor[SPECIES$2];
+          if (Constructor === null) Constructor = undefined;
+        }
+        if (Constructor === Array || Constructor === undefined) {
+          return nativeSlice.call(O, k, fin);
+        }
+      }
+      result = new (Constructor === undefined ? Array : Constructor)(max$1(fin - k, 0));
+      for (n = 0; k < fin; k++, n++) if (k in O) createProperty(result, n, O[k]);
+      result.length = n;
       return result;
     }
-    if (_classof(R) !== 'RegExp') {
-      throw new TypeError('RegExp#exec called on incompatible receiver');
-    }
-    return builtinExec.call(R, S);
+  });
+
+  var TO_STRING_TAG$1 = wellKnownSymbol('toStringTag');
+  var test = {};
+
+  test[TO_STRING_TAG$1] = 'z';
+
+  var toStringTagSupport = String(test) === '[object z]';
+
+  var TO_STRING_TAG$2 = wellKnownSymbol('toStringTag');
+  // ES3 wrong here
+  var CORRECT_ARGUMENTS = classofRaw(function () { return arguments; }()) == 'Arguments';
+
+  // fallback for IE11 Script Access Denied error
+  var tryGet = function (it, key) {
+    try {
+      return it[key];
+    } catch (error) { /* empty */ }
   };
 
-  // 21.2.5.3 get RegExp.prototype.flags
+  // getting tag from ES6+ `Object.prototype.toString`
+  var classof = toStringTagSupport ? classofRaw : function (it) {
+    var O, tag, result;
+    return it === undefined ? 'Undefined' : it === null ? 'Null'
+      // @@toStringTag case
+      : typeof (tag = tryGet(O = Object(it), TO_STRING_TAG$2)) == 'string' ? tag
+      // builtinTag case
+      : CORRECT_ARGUMENTS ? classofRaw(O)
+      // ES3 arguments fallback
+      : (result = classofRaw(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
+  };
 
-  var _flags = function () {
-    var that = _anObject(this);
+  // `Object.prototype.toString` method implementation
+  // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+  var objectToString = toStringTagSupport ? {}.toString : function toString() {
+    return '[object ' + classof(this) + ']';
+  };
+
+  // `Object.prototype.toString` method
+  // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+  if (!toStringTagSupport) {
+    redefine(Object.prototype, 'toString', objectToString, { unsafe: true });
+  }
+
+  // `RegExp.prototype.flags` getter implementation
+  // https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
+  var regexpFlags = function () {
+    var that = anObject(this);
     var result = '';
     if (that.global) result += 'g';
     if (that.ignoreCase) result += 'i';
     if (that.multiline) result += 'm';
+    if (that.dotAll) result += 's';
     if (that.unicode) result += 'u';
     if (that.sticky) result += 'y';
     return result;
+  };
+
+  // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
+  // so we use an intermediate function.
+  function RE(s, f) {
+    return RegExp(s, f);
+  }
+
+  var UNSUPPORTED_Y = fails(function () {
+    // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
+    var re = RE('a', 'y');
+    re.lastIndex = 2;
+    return re.exec('abcd') != null;
+  });
+
+  var BROKEN_CARET = fails(function () {
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
+    var re = RE('^r', 'gy');
+    re.lastIndex = 2;
+    return re.exec('str') != null;
+  });
+
+  var regexpStickyHelpers = {
+  	UNSUPPORTED_Y: UNSUPPORTED_Y,
+  	BROKEN_CARET: BROKEN_CARET
   };
 
   var nativeExec = RegExp.prototype.exec;
@@ -1421,40 +1685,69 @@ typeof navigator === "object" && (function (global, factory) {
 
   var patchedExec = nativeExec;
 
-  var LAST_INDEX = 'lastIndex';
-
   var UPDATES_LAST_INDEX_WRONG = (function () {
-    var re1 = /a/,
-        re2 = /b*/g;
+    var re1 = /a/;
+    var re2 = /b*/g;
     nativeExec.call(re1, 'a');
     nativeExec.call(re2, 'a');
-    return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
+    return re1.lastIndex !== 0 || re2.lastIndex !== 0;
   })();
+
+  var UNSUPPORTED_Y$1 = regexpStickyHelpers.UNSUPPORTED_Y || regexpStickyHelpers.BROKEN_CARET;
 
   // nonparticipating capturing group, copied from es5-shim's String#split patch.
   var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
 
-  var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
+  var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED || UNSUPPORTED_Y$1;
 
   if (PATCH) {
     patchedExec = function exec(str) {
       var re = this;
       var lastIndex, reCopy, match, i;
+      var sticky = UNSUPPORTED_Y$1 && re.sticky;
+      var flags = regexpFlags.call(re);
+      var source = re.source;
+      var charsAdded = 0;
+      var strCopy = str;
+
+      if (sticky) {
+        flags = flags.replace('y', '');
+        if (flags.indexOf('g') === -1) {
+          flags += 'g';
+        }
+
+        strCopy = String(str).slice(re.lastIndex);
+        // Support anchored sticky behavior.
+        if (re.lastIndex > 0 && (!re.multiline || re.multiline && str[re.lastIndex - 1] !== '\n')) {
+          source = '(?: ' + source + ')';
+          strCopy = ' ' + strCopy;
+          charsAdded++;
+        }
+        // ^(? + rx + ) is needed, in combination with some str slicing, to
+        // simulate the 'y' flag.
+        reCopy = new RegExp('^(?:' + source + ')', flags);
+      }
 
       if (NPCG_INCLUDED) {
-        reCopy = new RegExp('^' + re.source + '$(?!\\s)', _flags.call(re));
+        reCopy = new RegExp('^' + source + '$(?!\\s)', flags);
       }
-      if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
+      if (UPDATES_LAST_INDEX_WRONG) lastIndex = re.lastIndex;
 
-      match = nativeExec.call(re, str);
+      match = nativeExec.call(sticky ? reCopy : re, strCopy);
 
-      if (UPDATES_LAST_INDEX_WRONG && match) {
-        re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
+      if (sticky) {
+        if (match) {
+          match.input = match.input.slice(charsAdded);
+          match[0] = match[0].slice(charsAdded);
+          match.index = re.lastIndex;
+          re.lastIndex += match[0].length;
+        } else re.lastIndex = 0;
+      } else if (UPDATES_LAST_INDEX_WRONG && match) {
+        re.lastIndex = re.global ? match.index + match[0].length : lastIndex;
       }
       if (NPCG_INCLUDED && match && match.length > 1) {
         // Fix browsers whose `exec` methods don't consistently return `undefined`
         // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-        // eslint-disable-next-line no-loop-func
         nativeReplace.call(match[0], reCopy, function () {
           for (i = 1; i < arguments.length - 2; i++) {
             if (arguments[i] === undefined) match[i] = undefined;
@@ -1466,19 +1759,97 @@ typeof navigator === "object" && (function (global, factory) {
     };
   }
 
-  var _regexpExec = patchedExec;
+  var regexpExec = patchedExec;
 
-  _export({
-    target: 'RegExp',
-    proto: true,
-    forced: _regexpExec !== /./.exec
-  }, {
-    exec: _regexpExec
+  _export({ target: 'RegExp', proto: true, forced: /./.exec !== regexpExec }, {
+    exec: regexpExec
   });
 
-  var SPECIES$1 = _wks('species');
+  var TO_STRING = 'toString';
+  var RegExpPrototype = RegExp.prototype;
+  var nativeToString = RegExpPrototype[TO_STRING];
 
-  var REPLACE_SUPPORTS_NAMED_GROUPS = !_fails(function () {
+  var NOT_GENERIC = fails(function () { return nativeToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
+  // FF44- RegExp#toString has a wrong name
+  var INCORRECT_NAME = nativeToString.name != TO_STRING;
+
+  // `RegExp.prototype.toString` method
+  // https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
+  if (NOT_GENERIC || INCORRECT_NAME) {
+    redefine(RegExp.prototype, TO_STRING, function toString() {
+      var R = anObject(this);
+      var p = String(R.source);
+      var rf = R.flags;
+      var f = String(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype) ? regexpFlags.call(R) : rf);
+      return '/' + p + '/' + f;
+    }, { unsafe: true });
+  }
+
+  // `String.prototype.{ codePointAt, at }` methods implementation
+  var createMethod$2 = function (CONVERT_TO_STRING) {
+    return function ($this, pos) {
+      var S = String(requireObjectCoercible($this));
+      var position = toInteger(pos);
+      var size = S.length;
+      var first, second;
+      if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
+      first = S.charCodeAt(position);
+      return first < 0xD800 || first > 0xDBFF || position + 1 === size
+        || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
+          ? CONVERT_TO_STRING ? S.charAt(position) : first
+          : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
+    };
+  };
+
+  var stringMultibyte = {
+    // `String.prototype.codePointAt` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+    codeAt: createMethod$2(false),
+    // `String.prototype.at` method
+    // https://github.com/mathiasbynens/String.prototype.at
+    charAt: createMethod$2(true)
+  };
+
+  var charAt = stringMultibyte.charAt;
+
+
+
+  var STRING_ITERATOR = 'String Iterator';
+  var setInternalState$2 = internalState.set;
+  var getInternalState$2 = internalState.getterFor(STRING_ITERATOR);
+
+  // `String.prototype[@@iterator]` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
+  defineIterator(String, 'String', function (iterated) {
+    setInternalState$2(this, {
+      type: STRING_ITERATOR,
+      string: String(iterated),
+      index: 0
+    });
+  // `%StringIteratorPrototype%.next` method
+  // https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
+  }, function next() {
+    var state = getInternalState$2(this);
+    var string = state.string;
+    var index = state.index;
+    var point;
+    if (index >= string.length) return { value: undefined, done: true };
+    point = charAt(string, index);
+    state.index += point.length;
+    return { value: point, done: false };
+  });
+
+  // TODO: Remove from `core-js@4` since it's moved to entry points
+
+
+
+
+
+
+
+  var SPECIES$3 = wellKnownSymbol('species');
+
+  var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
     // #replace needs built-in support for named groups.
     // #match works fine because it just return the exec results, even if it has
     // a "grops" property.
@@ -1491,698 +1862,2209 @@ typeof navigator === "object" && (function (global, factory) {
     return ''.replace(re, '$<a>') !== '7';
   });
 
-  var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = (function () {
-    // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+  // IE <= 11 replaces $0 with the whole match, as if it was $&
+  // https://stackoverflow.com/questions/6024666/getting-ie-to-replace-a-regex-with-the-literal-string-0
+  var REPLACE_KEEPS_$0 = (function () {
+    return 'a'.replace(/./, '$0') === '$0';
+  })();
+
+  var REPLACE = wellKnownSymbol('replace');
+  // Safari <= 13.0.3(?) substitutes nth capture where n>m with an empty string
+  var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE = (function () {
+    if (/./[REPLACE]) {
+      return /./[REPLACE]('a', '$0') === '';
+    }
+    return false;
+  })();
+
+  // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+  // Weex JS has frozen built-in prototypes, so use try / catch wrapper
+  var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = !fails(function () {
     var re = /(?:)/;
     var originalExec = re.exec;
     re.exec = function () { return originalExec.apply(this, arguments); };
     var result = 'ab'.split(re);
-    return result.length === 2 && result[0] === 'a' && result[1] === 'b';
-  })();
+    return result.length !== 2 || result[0] !== 'a' || result[1] !== 'b';
+  });
 
-  var _fixReWks = function (KEY, length, exec) {
-    var SYMBOL = _wks(KEY);
+  var fixRegexpWellKnownSymbolLogic = function (KEY, length, exec, sham) {
+    var SYMBOL = wellKnownSymbol(KEY);
 
-    var DELEGATES_TO_SYMBOL = !_fails(function () {
+    var DELEGATES_TO_SYMBOL = !fails(function () {
       // String methods call symbol-named RegEp methods
       var O = {};
       O[SYMBOL] = function () { return 7; };
       return ''[KEY](O) != 7;
     });
 
-    var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL ? !_fails(function () {
+    var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL && !fails(function () {
       // Symbol-named RegExp methods call .exec
       var execCalled = false;
       var re = /a/;
-      re.exec = function () { execCalled = true; return null; };
+
       if (KEY === 'split') {
+        // We can't use real regex here since it causes deoptimization
+        // and serious performance degradation in V8
+        // https://github.com/zloirock/core-js/issues/306
+        re = {};
         // RegExp[@@split] doesn't call the regex's exec method, but first creates
         // a new one. We need to return the patched regex when creating the new one.
         re.constructor = {};
-        re.constructor[SPECIES$1] = function () { return re; };
+        re.constructor[SPECIES$3] = function () { return re; };
+        re.flags = '';
+        re[SYMBOL] = /./[SYMBOL];
       }
+
+      re.exec = function () { execCalled = true; return null; };
+
       re[SYMBOL]('');
       return !execCalled;
-    }) : undefined;
+    });
 
     if (
       !DELEGATES_TO_SYMBOL ||
       !DELEGATES_TO_EXEC ||
-      (KEY === 'replace' && !REPLACE_SUPPORTS_NAMED_GROUPS) ||
+      (KEY === 'replace' && !(
+        REPLACE_SUPPORTS_NAMED_GROUPS &&
+        REPLACE_KEEPS_$0 &&
+        !REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
+      )) ||
       (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
     ) {
       var nativeRegExpMethod = /./[SYMBOL];
-      var fns = exec(
-        _defined,
-        SYMBOL,
-        ''[KEY],
-        function maybeCallNative(nativeMethod, regexp, str, arg2, forceStringMethod) {
-          if (regexp.exec === _regexpExec) {
-            if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
-              // The native String method already delegates to @@method (this
-              // polyfilled function), leasing to infinite recursion.
-              // We avoid it by directly calling the native @@method method.
-              return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
-            }
-            return { done: true, value: nativeMethod.call(str, regexp, arg2) };
+      var methods = exec(SYMBOL, ''[KEY], function (nativeMethod, regexp, str, arg2, forceStringMethod) {
+        if (regexp.exec === regexpExec) {
+          if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
+            // The native String method already delegates to @@method (this
+            // polyfilled function), leasing to infinite recursion.
+            // We avoid it by directly calling the native @@method method.
+            return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
           }
-          return { done: false };
+          return { done: true, value: nativeMethod.call(str, regexp, arg2) };
         }
-      );
-      var strfn = fns[0];
-      var rxfn = fns[1];
+        return { done: false };
+      }, {
+        REPLACE_KEEPS_$0: REPLACE_KEEPS_$0,
+        REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE: REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
+      });
+      var stringMethod = methods[0];
+      var regexMethod = methods[1];
 
-      _redefine(String.prototype, KEY, strfn);
-      _hide(RegExp.prototype, SYMBOL, length == 2
+      redefine(String.prototype, KEY, stringMethod);
+      redefine(RegExp.prototype, SYMBOL, length == 2
         // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
         // 21.2.5.11 RegExp.prototype[@@split](string, limit)
-        ? function (string, arg) { return rxfn.call(string, this, arg); }
+        ? function (string, arg) { return regexMethod.call(string, this, arg); }
         // 21.2.5.6 RegExp.prototype[@@match](string)
         // 21.2.5.9 RegExp.prototype[@@search](string)
-        : function (string) { return rxfn.call(string, this); }
+        : function (string) { return regexMethod.call(string, this); }
       );
     }
+
+    if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
+  };
+
+  var charAt$1 = stringMultibyte.charAt;
+
+  // `AdvanceStringIndex` abstract operation
+  // https://tc39.github.io/ecma262/#sec-advancestringindex
+  var advanceStringIndex = function (S, index, unicode) {
+    return index + (unicode ? charAt$1(S, index).length : 1);
+  };
+
+  // `RegExpExec` abstract operation
+  // https://tc39.github.io/ecma262/#sec-regexpexec
+  var regexpExecAbstract = function (R, S) {
+    var exec = R.exec;
+    if (typeof exec === 'function') {
+      var result = exec.call(R, S);
+      if (typeof result !== 'object') {
+        throw TypeError('RegExp exec method returned something other than an Object or null');
+      }
+      return result;
+    }
+
+    if (classofRaw(R) !== 'RegExp') {
+      throw TypeError('RegExp#exec called on incompatible receiver');
+    }
+
+    return regexpExec.call(R, S);
+  };
+
+  var max$2 = Math.max;
+  var min$2 = Math.min;
+  var floor$1 = Math.floor;
+  var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d\d?|<[^>]*>)/g;
+  var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d\d?)/g;
+
+  var maybeToString = function (it) {
+    return it === undefined ? it : String(it);
+  };
+
+  // @@replace logic
+  fixRegexpWellKnownSymbolLogic('replace', 2, function (REPLACE, nativeReplace, maybeCallNative, reason) {
+    var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE = reason.REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE;
+    var REPLACE_KEEPS_$0 = reason.REPLACE_KEEPS_$0;
+    var UNSAFE_SUBSTITUTE = REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE ? '$' : '$0';
+
+    return [
+      // `String.prototype.replace` method
+      // https://tc39.github.io/ecma262/#sec-string.prototype.replace
+      function replace(searchValue, replaceValue) {
+        var O = requireObjectCoercible(this);
+        var replacer = searchValue == undefined ? undefined : searchValue[REPLACE];
+        return replacer !== undefined
+          ? replacer.call(searchValue, O, replaceValue)
+          : nativeReplace.call(String(O), searchValue, replaceValue);
+      },
+      // `RegExp.prototype[@@replace]` method
+      // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
+      function (regexp, replaceValue) {
+        if (
+          (!REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE && REPLACE_KEEPS_$0) ||
+          (typeof replaceValue === 'string' && replaceValue.indexOf(UNSAFE_SUBSTITUTE) === -1)
+        ) {
+          var res = maybeCallNative(nativeReplace, regexp, this, replaceValue);
+          if (res.done) return res.value;
+        }
+
+        var rx = anObject(regexp);
+        var S = String(this);
+
+        var functionalReplace = typeof replaceValue === 'function';
+        if (!functionalReplace) replaceValue = String(replaceValue);
+
+        var global = rx.global;
+        if (global) {
+          var fullUnicode = rx.unicode;
+          rx.lastIndex = 0;
+        }
+        var results = [];
+        while (true) {
+          var result = regexpExecAbstract(rx, S);
+          if (result === null) break;
+
+          results.push(result);
+          if (!global) break;
+
+          var matchStr = String(result[0]);
+          if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+        }
+
+        var accumulatedResult = '';
+        var nextSourcePosition = 0;
+        for (var i = 0; i < results.length; i++) {
+          result = results[i];
+
+          var matched = String(result[0]);
+          var position = max$2(min$2(toInteger(result.index), S.length), 0);
+          var captures = [];
+          // NOTE: This is equivalent to
+          //   captures = result.slice(1).map(maybeToString)
+          // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
+          // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
+          // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
+          for (var j = 1; j < result.length; j++) captures.push(maybeToString(result[j]));
+          var namedCaptures = result.groups;
+          if (functionalReplace) {
+            var replacerArgs = [matched].concat(captures, position, S);
+            if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
+            var replacement = String(replaceValue.apply(undefined, replacerArgs));
+          } else {
+            replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
+          }
+          if (position >= nextSourcePosition) {
+            accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
+            nextSourcePosition = position + matched.length;
+          }
+        }
+        return accumulatedResult + S.slice(nextSourcePosition);
+      }
+    ];
+
+    // https://tc39.github.io/ecma262/#sec-getsubstitution
+    function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
+      var tailPos = position + matched.length;
+      var m = captures.length;
+      var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
+      if (namedCaptures !== undefined) {
+        namedCaptures = toObject(namedCaptures);
+        symbols = SUBSTITUTION_SYMBOLS;
+      }
+      return nativeReplace.call(replacement, symbols, function (match, ch) {
+        var capture;
+        switch (ch.charAt(0)) {
+          case '$': return '$';
+          case '&': return matched;
+          case '`': return str.slice(0, position);
+          case "'": return str.slice(tailPos);
+          case '<':
+            capture = namedCaptures[ch.slice(1, -1)];
+            break;
+          default: // \d\d?
+            var n = +ch;
+            if (n === 0) return match;
+            if (n > m) {
+              var f = floor$1(n / 10);
+              if (f === 0) return match;
+              if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
+              return match;
+            }
+            capture = captures[n - 1];
+        }
+        return capture === undefined ? '' : capture;
+      });
+    }
+  });
+
+  // `SameValue` abstract operation
+  // https://tc39.github.io/ecma262/#sec-samevalue
+  var sameValue = Object.is || function is(x, y) {
+    // eslint-disable-next-line no-self-compare
+    return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
   };
 
   // @@search logic
-  _fixReWks('search', 1, function (defined, SEARCH, $search, maybeCallNative) {
+  fixRegexpWellKnownSymbolLogic('search', 1, function (SEARCH, nativeSearch, maybeCallNative) {
     return [
       // `String.prototype.search` method
       // https://tc39.github.io/ecma262/#sec-string.prototype.search
       function search(regexp) {
-        var O = defined(this);
-        var fn = regexp == undefined ? undefined : regexp[SEARCH];
-        return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[SEARCH](String(O));
+        var O = requireObjectCoercible(this);
+        var searcher = regexp == undefined ? undefined : regexp[SEARCH];
+        return searcher !== undefined ? searcher.call(regexp, O) : new RegExp(regexp)[SEARCH](String(O));
       },
       // `RegExp.prototype[@@search]` method
       // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@search
       function (regexp) {
-        var res = maybeCallNative($search, regexp, this);
+        var res = maybeCallNative(nativeSearch, regexp, this);
         if (res.done) return res.value;
-        var rx = _anObject(regexp);
+
+        var rx = anObject(regexp);
         var S = String(this);
+
         var previousLastIndex = rx.lastIndex;
-        if (!_sameValue(previousLastIndex, 0)) rx.lastIndex = 0;
-        var result = _regexpExecAbstract(rx, S);
-        if (!_sameValue(rx.lastIndex, previousLastIndex)) rx.lastIndex = previousLastIndex;
+        if (!sameValue(previousLastIndex, 0)) rx.lastIndex = 0;
+        var result = regexpExecAbstract(rx, S);
+        if (!sameValue(rx.lastIndex, previousLastIndex)) rx.lastIndex = previousLastIndex;
         return result === null ? -1 : result.index;
       }
     ];
   });
 
-  // 21.2.5.3 get RegExp.prototype.flags()
-  if (_descriptors && /./g.flags != 'g') _objectDp.f(RegExp.prototype, 'flags', {
-    configurable: true,
-    get: _flags
-  });
+  var MATCH = wellKnownSymbol('match');
 
-  var TO_STRING = 'toString';
-  var $toString = /./[TO_STRING];
-
-  var define = function (fn) {
-    _redefine(RegExp.prototype, TO_STRING, fn, true);
+  // `IsRegExp` abstract operation
+  // https://tc39.github.io/ecma262/#sec-isregexp
+  var isRegexp = function (it) {
+    var isRegExp;
+    return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
   };
 
-  // 21.2.5.14 RegExp.prototype.toString()
-  if (_fails(function () { return $toString.call({ source: 'a', flags: 'b' }) != '/a/b'; })) {
-    define(function toString() {
-      var R = _anObject(this);
-      return '/'.concat(R.source, '/',
-        'flags' in R ? R.flags : !_descriptors && R instanceof RegExp ? _flags.call(R) : undefined);
-    });
-  // FF44- RegExp#toString has a wrong name
-  } else if ($toString.name != TO_STRING) {
-    define(function toString() {
-      return $toString.call(this);
-    });
+  var SPECIES$4 = wellKnownSymbol('species');
+
+  // `SpeciesConstructor` abstract operation
+  // https://tc39.github.io/ecma262/#sec-speciesconstructor
+  var speciesConstructor = function (O, defaultConstructor) {
+    var C = anObject(O).constructor;
+    var S;
+    return C === undefined || (S = anObject(C)[SPECIES$4]) == undefined ? defaultConstructor : aFunction$1(S);
+  };
+
+  var arrayPush = [].push;
+  var min$3 = Math.min;
+  var MAX_UINT32 = 0xFFFFFFFF;
+
+  // babel-minify transpiles RegExp('x', 'y') -> /x/y and it causes SyntaxError
+  var SUPPORTS_Y = !fails(function () { return !RegExp(MAX_UINT32, 'y'); });
+
+  // @@split logic
+  fixRegexpWellKnownSymbolLogic('split', 2, function (SPLIT, nativeSplit, maybeCallNative) {
+    var internalSplit;
+    if (
+      'abbc'.split(/(b)*/)[1] == 'c' ||
+      'test'.split(/(?:)/, -1).length != 4 ||
+      'ab'.split(/(?:ab)*/).length != 2 ||
+      '.'.split(/(.?)(.?)/).length != 4 ||
+      '.'.split(/()()/).length > 1 ||
+      ''.split(/.?/).length
+    ) {
+      // based on es5-shim implementation, need to rework it
+      internalSplit = function (separator, limit) {
+        var string = String(requireObjectCoercible(this));
+        var lim = limit === undefined ? MAX_UINT32 : limit >>> 0;
+        if (lim === 0) return [];
+        if (separator === undefined) return [string];
+        // If `separator` is not a regex, use native split
+        if (!isRegexp(separator)) {
+          return nativeSplit.call(string, separator, lim);
+        }
+        var output = [];
+        var flags = (separator.ignoreCase ? 'i' : '') +
+                    (separator.multiline ? 'm' : '') +
+                    (separator.unicode ? 'u' : '') +
+                    (separator.sticky ? 'y' : '');
+        var lastLastIndex = 0;
+        // Make `global` and avoid `lastIndex` issues by working with a copy
+        var separatorCopy = new RegExp(separator.source, flags + 'g');
+        var match, lastIndex, lastLength;
+        while (match = regexpExec.call(separatorCopy, string)) {
+          lastIndex = separatorCopy.lastIndex;
+          if (lastIndex > lastLastIndex) {
+            output.push(string.slice(lastLastIndex, match.index));
+            if (match.length > 1 && match.index < string.length) arrayPush.apply(output, match.slice(1));
+            lastLength = match[0].length;
+            lastLastIndex = lastIndex;
+            if (output.length >= lim) break;
+          }
+          if (separatorCopy.lastIndex === match.index) separatorCopy.lastIndex++; // Avoid an infinite loop
+        }
+        if (lastLastIndex === string.length) {
+          if (lastLength || !separatorCopy.test('')) output.push('');
+        } else output.push(string.slice(lastLastIndex));
+        return output.length > lim ? output.slice(0, lim) : output;
+      };
+    // Chakra, V8
+    } else if ('0'.split(undefined, 0).length) {
+      internalSplit = function (separator, limit) {
+        return separator === undefined && limit === 0 ? [] : nativeSplit.call(this, separator, limit);
+      };
+    } else internalSplit = nativeSplit;
+
+    return [
+      // `String.prototype.split` method
+      // https://tc39.github.io/ecma262/#sec-string.prototype.split
+      function split(separator, limit) {
+        var O = requireObjectCoercible(this);
+        var splitter = separator == undefined ? undefined : separator[SPLIT];
+        return splitter !== undefined
+          ? splitter.call(separator, O, limit)
+          : internalSplit.call(String(O), separator, limit);
+      },
+      // `RegExp.prototype[@@split]` method
+      // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@split
+      //
+      // NOTE: This cannot be properly polyfilled in engines that don't support
+      // the 'y' flag.
+      function (regexp, limit) {
+        var res = maybeCallNative(internalSplit, regexp, this, limit, internalSplit !== nativeSplit);
+        if (res.done) return res.value;
+
+        var rx = anObject(regexp);
+        var S = String(this);
+        var C = speciesConstructor(rx, RegExp);
+
+        var unicodeMatching = rx.unicode;
+        var flags = (rx.ignoreCase ? 'i' : '') +
+                    (rx.multiline ? 'm' : '') +
+                    (rx.unicode ? 'u' : '') +
+                    (SUPPORTS_Y ? 'y' : 'g');
+
+        // ^(? + rx + ) is needed, in combination with some S slicing, to
+        // simulate the 'y' flag.
+        var splitter = new C(SUPPORTS_Y ? rx : '^(?:' + rx.source + ')', flags);
+        var lim = limit === undefined ? MAX_UINT32 : limit >>> 0;
+        if (lim === 0) return [];
+        if (S.length === 0) return regexpExecAbstract(splitter, S) === null ? [S] : [];
+        var p = 0;
+        var q = 0;
+        var A = [];
+        while (q < S.length) {
+          splitter.lastIndex = SUPPORTS_Y ? q : 0;
+          var z = regexpExecAbstract(splitter, SUPPORTS_Y ? S : S.slice(q));
+          var e;
+          if (
+            z === null ||
+            (e = min$3(toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
+          ) {
+            q = advanceStringIndex(S, q, unicodeMatching);
+          } else {
+            A.push(S.slice(p, q));
+            if (A.length === lim) return A;
+            for (var i = 1; i <= z.length - 1; i++) {
+              A.push(z[i]);
+              if (A.length === lim) return A;
+            }
+            q = p = e;
+          }
+        }
+        A.push(S.slice(p));
+        return A;
+      }
+    ];
+  }, !SUPPORTS_Y);
+
+  // iterable DOM collections
+  // flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
+  var domIterables = {
+    CSSRuleList: 0,
+    CSSStyleDeclaration: 0,
+    CSSValueList: 0,
+    ClientRectList: 0,
+    DOMRectList: 0,
+    DOMStringList: 0,
+    DOMTokenList: 1,
+    DataTransferItemList: 0,
+    FileList: 0,
+    HTMLAllCollection: 0,
+    HTMLCollection: 0,
+    HTMLFormElement: 0,
+    HTMLSelectElement: 0,
+    MediaList: 0,
+    MimeTypeArray: 0,
+    NamedNodeMap: 0,
+    NodeList: 1,
+    PaintRequestList: 0,
+    Plugin: 0,
+    PluginArray: 0,
+    SVGLengthList: 0,
+    SVGNumberList: 0,
+    SVGPathSegList: 0,
+    SVGPointList: 0,
+    SVGStringList: 0,
+    SVGTransformList: 0,
+    SourceBufferList: 0,
+    StyleSheetList: 0,
+    TextTrackCueList: 0,
+    TextTrackList: 0,
+    TouchList: 0
+  };
+
+  for (var COLLECTION_NAME in domIterables) {
+    var Collection = global_1[COLLECTION_NAME];
+    var CollectionPrototype = Collection && Collection.prototype;
+    // some Chrome versions have non-configurable methods on DOMTokenList
+    if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) try {
+      createNonEnumerableProperty(CollectionPrototype, 'forEach', arrayForEach);
+    } catch (error) {
+      CollectionPrototype.forEach = arrayForEach;
+    }
   }
 
-  var _iterStep = function (done, value) {
-    return { value: value, done: !!done };
-  };
+  var ITERATOR$2 = wellKnownSymbol('iterator');
+  var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
+  var ArrayValues = es_array_iterator.values;
 
-  var def = _objectDp.f;
-
-  var TAG$1 = _wks('toStringTag');
-
-  var _setToStringTag = function (it, tag, stat) {
-    if (it && !_has(it = stat ? it : it.prototype, TAG$1)) def(it, TAG$1, { configurable: true, value: tag });
-  };
-
-  var IteratorPrototype = {};
-
-  // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-  _hide(IteratorPrototype, _wks('iterator'), function () { return this; });
-
-  var _iterCreate = function (Constructor, NAME, next) {
-    Constructor.prototype = _objectCreate(IteratorPrototype, { next: _propertyDesc(1, next) });
-    _setToStringTag(Constructor, NAME + ' Iterator');
-  };
-
-  // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-
-
-  var IE_PROTO$2 = _sharedKey('IE_PROTO');
-  var ObjectProto = Object.prototype;
-
-  var _objectGpo = Object.getPrototypeOf || function (O) {
-    O = _toObject(O);
-    if (_has(O, IE_PROTO$2)) return O[IE_PROTO$2];
-    if (typeof O.constructor == 'function' && O instanceof O.constructor) {
-      return O.constructor.prototype;
-    } return O instanceof Object ? ObjectProto : null;
-  };
-
-  var ITERATOR$3 = _wks('iterator');
-  var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
-  var FF_ITERATOR = '@@iterator';
-  var KEYS = 'keys';
-  var VALUES = 'values';
-
-  var returnThis = function () { return this; };
-
-  var _iterDefine = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
-    _iterCreate(Constructor, NAME, next);
-    var getMethod = function (kind) {
-      if (!BUGGY && kind in proto) return proto[kind];
-      switch (kind) {
-        case KEYS: return function keys() { return new Constructor(this, kind); };
-        case VALUES: return function values() { return new Constructor(this, kind); };
-      } return function entries() { return new Constructor(this, kind); };
-    };
-    var TAG = NAME + ' Iterator';
-    var DEF_VALUES = DEFAULT == VALUES;
-    var VALUES_BUG = false;
-    var proto = Base.prototype;
-    var $native = proto[ITERATOR$3] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
-    var $default = $native || getMethod(DEFAULT);
-    var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
-    var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
-    var methods, key, IteratorPrototype;
-    // Fix native
-    if ($anyNative) {
-      IteratorPrototype = _objectGpo($anyNative.call(new Base()));
-      if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
-        // Set @@toStringTag to native iterators
-        _setToStringTag(IteratorPrototype, TAG, true);
-        // fix for some old engines
-        if (!_library && typeof IteratorPrototype[ITERATOR$3] != 'function') _hide(IteratorPrototype, ITERATOR$3, returnThis);
+  for (var COLLECTION_NAME$1 in domIterables) {
+    var Collection$1 = global_1[COLLECTION_NAME$1];
+    var CollectionPrototype$1 = Collection$1 && Collection$1.prototype;
+    if (CollectionPrototype$1) {
+      // some Chrome versions have non-configurable methods on DOMTokenList
+      if (CollectionPrototype$1[ITERATOR$2] !== ArrayValues) try {
+        createNonEnumerableProperty(CollectionPrototype$1, ITERATOR$2, ArrayValues);
+      } catch (error) {
+        CollectionPrototype$1[ITERATOR$2] = ArrayValues;
+      }
+      if (!CollectionPrototype$1[TO_STRING_TAG$3]) {
+        createNonEnumerableProperty(CollectionPrototype$1, TO_STRING_TAG$3, COLLECTION_NAME$1);
+      }
+      if (domIterables[COLLECTION_NAME$1]) for (var METHOD_NAME in es_array_iterator) {
+        // some Chrome versions have non-configurable methods on DOMTokenList
+        if (CollectionPrototype$1[METHOD_NAME] !== es_array_iterator[METHOD_NAME]) try {
+          createNonEnumerableProperty(CollectionPrototype$1, METHOD_NAME, es_array_iterator[METHOD_NAME]);
+        } catch (error) {
+          CollectionPrototype$1[METHOD_NAME] = es_array_iterator[METHOD_NAME];
+        }
       }
     }
-    // fix Array#{values, @@iterator}.name in V8 / FF
-    if (DEF_VALUES && $native && $native.name !== VALUES) {
-      VALUES_BUG = true;
-      $default = function values() { return $native.call(this); };
-    }
-    // Define iterator
-    if ((!_library || FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR$3])) {
-      _hide(proto, ITERATOR$3, $default);
-    }
-    // Plug for library
-    _iterators[NAME] = $default;
-    _iterators[TAG] = returnThis;
-    if (DEFAULT) {
-      methods = {
-        values: DEF_VALUES ? $default : getMethod(VALUES),
-        keys: IS_SET ? $default : getMethod(KEYS),
-        entries: $entries
-      };
-      if (FORCED) for (key in methods) {
-        if (!(key in proto)) _redefine(proto, key, methods[key]);
-      } else _export(_export.P + _export.F * (BUGGY || VALUES_BUG), NAME, methods);
-    }
-    return methods;
-  };
-
-  // 22.1.3.4 Array.prototype.entries()
-  // 22.1.3.13 Array.prototype.keys()
-  // 22.1.3.29 Array.prototype.values()
-  // 22.1.3.30 Array.prototype[@@iterator]()
-  var es6_array_iterator = _iterDefine(Array, 'Array', function (iterated, kind) {
-    this._t = _toIobject(iterated); // target
-    this._i = 0;                   // next index
-    this._k = kind;                // kind
-  // 22.1.5.2.1 %ArrayIteratorPrototype%.next()
-  }, function () {
-    var O = this._t;
-    var kind = this._k;
-    var index = this._i++;
-    if (!O || index >= O.length) {
-      this._t = undefined;
-      return _iterStep(1);
-    }
-    if (kind == 'keys') return _iterStep(0, index);
-    if (kind == 'values') return _iterStep(0, O[index]);
-    return _iterStep(0, [index, O[index]]);
-  }, 'values');
-
-  // argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
-  _iterators.Arguments = _iterators.Array;
-
-  _addToUnscopables('keys');
-  _addToUnscopables('values');
-  _addToUnscopables('entries');
-
-  var ITERATOR$4 = _wks('iterator');
-  var TO_STRING_TAG = _wks('toStringTag');
-  var ArrayValues = _iterators.Array;
-
-  var DOMIterables = {
-    CSSRuleList: true, // TODO: Not spec compliant, should be false.
-    CSSStyleDeclaration: false,
-    CSSValueList: false,
-    ClientRectList: false,
-    DOMRectList: false,
-    DOMStringList: false,
-    DOMTokenList: true,
-    DataTransferItemList: false,
-    FileList: false,
-    HTMLAllCollection: false,
-    HTMLCollection: false,
-    HTMLFormElement: false,
-    HTMLSelectElement: false,
-    MediaList: true, // TODO: Not spec compliant, should be false.
-    MimeTypeArray: false,
-    NamedNodeMap: false,
-    NodeList: true,
-    PaintRequestList: false,
-    Plugin: false,
-    PluginArray: false,
-    SVGLengthList: false,
-    SVGNumberList: false,
-    SVGPathSegList: false,
-    SVGPointList: false,
-    SVGStringList: false,
-    SVGTransformList: false,
-    SourceBufferList: false,
-    StyleSheetList: true, // TODO: Not spec compliant, should be false.
-    TextTrackCueList: false,
-    TextTrackList: false,
-    TouchList: false
-  };
-
-  for (var collections = _objectKeys(DOMIterables), i = 0; i < collections.length; i++) {
-    var NAME = collections[i];
-    var explicit = DOMIterables[NAME];
-    var Collection = _global[NAME];
-    var proto$1 = Collection && Collection.prototype;
-    var key$1;
-    if (proto$1) {
-      if (!proto$1[ITERATOR$4]) _hide(proto$1, ITERATOR$4, ArrayValues);
-      if (!proto$1[TO_STRING_TAG]) _hide(proto$1, TO_STRING_TAG, NAME);
-      _iterators[NAME] = ArrayValues;
-      if (explicit) for (key$1 in es6_array_iterator) if (!proto$1[key$1]) _redefine(proto$1, key$1, es6_array_iterator[key$1], true);
-    }
   }
 
-  // true  -> String#at
-  // false -> String#codePointAt
-  var _stringAt = function (TO_STRING) {
-    return function (that, pos) {
-      var s = String(_defined(that));
-      var i = _toInteger(pos);
-      var l = s.length;
-      var a, b;
-      if (i < 0 || i >= l) return TO_STRING ? '' : undefined;
-      a = s.charCodeAt(i);
-      return a < 0xd800 || a > 0xdbff || i + 1 === l || (b = s.charCodeAt(i + 1)) < 0xdc00 || b > 0xdfff
-        ? TO_STRING ? s.charAt(i) : a
-        : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
-    };
-  };
+  var ITERATOR$3 = wellKnownSymbol('iterator');
 
-  var $at = _stringAt(true);
-
-  // 21.1.3.27 String.prototype[@@iterator]()
-  _iterDefine(String, 'String', function (iterated) {
-    this._t = String(iterated); // target
-    this._i = 0;                // next index
-  // 21.1.5.2.1 %StringIteratorPrototype%.next()
-  }, function () {
-    var O = this._t;
-    var index = this._i;
-    var point;
-    if (index >= O.length) return { value: undefined, done: true };
-    point = $at(O, index);
-    this._i += point.length;
-    return { value: point, done: false };
+  var nativeUrl = !fails(function () {
+    var url = new URL('b?a=1&b=2&c=3', 'http://a');
+    var searchParams = url.searchParams;
+    var result = '';
+    url.pathname = 'c%20d';
+    searchParams.forEach(function (value, key) {
+      searchParams['delete']('b');
+      result += key + value;
+    });
+    return (isPure && !url.toJSON)
+      || !searchParams.sort
+      || url.href !== 'http://a/c%20d?a=1&c=3'
+      || searchParams.get('c') !== '3'
+      || String(new URLSearchParams('?a=1')) !== 'a=1'
+      || !searchParams[ITERATOR$3]
+      // throws in Edge
+      || new URL('https://a@b').username !== 'a'
+      || new URLSearchParams(new URLSearchParams('a=b')).get('a') !== 'b'
+      // not punycoded in Edge
+      || new URL('http://тест').host !== 'xn--e1aybc'
+      // not escaped in Chrome 62-
+      || new URL('http://a#б').hash !== '#%D0%B1'
+      // fails in Chrome 66-
+      || result !== 'a1c3'
+      // throws in Safari
+      || new URL('http://x', undefined).host !== 'x';
   });
 
-  var _meta = createCommonjsModule(function (module) {
-  var META = _uid('meta');
-
-
-  var setDesc = _objectDp.f;
-  var id = 0;
-  var isExtensible = Object.isExtensible || function () {
-    return true;
-  };
-  var FREEZE = !_fails(function () {
-    return isExtensible(Object.preventExtensions({}));
-  });
-  var setMeta = function (it) {
-    setDesc(it, META, { value: {
-      i: 'O' + ++id, // object ID
-      w: {}          // weak collections IDs
-    } });
-  };
-  var fastKey = function (it, create) {
-    // return primitive with prefix
-    if (!_isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
-    if (!_has(it, META)) {
-      // can't set metadata to uncaught frozen object
-      if (!isExtensible(it)) return 'F';
-      // not necessary to add metadata
-      if (!create) return 'E';
-      // add missing metadata
-      setMeta(it);
-    // return object ID
-    } return it[META].i;
-  };
-  var getWeak = function (it, create) {
-    if (!_has(it, META)) {
-      // can't set metadata to uncaught frozen object
-      if (!isExtensible(it)) return true;
-      // not necessary to add metadata
-      if (!create) return false;
-      // add missing metadata
-      setMeta(it);
-    // return hash weak collections IDs
-    } return it[META].w;
-  };
-  // add metadata on freeze-family methods calling
-  var onFreeze = function (it) {
-    if (FREEZE && meta.NEED && isExtensible(it) && !_has(it, META)) setMeta(it);
-    return it;
-  };
-  var meta = module.exports = {
-    KEY: META,
-    NEED: false,
-    fastKey: fastKey,
-    getWeak: getWeak,
-    onFreeze: onFreeze
-  };
-  });
-  var _meta_1 = _meta.KEY;
-  var _meta_2 = _meta.NEED;
-  var _meta_3 = _meta.fastKey;
-  var _meta_4 = _meta.getWeak;
-  var _meta_5 = _meta.onFreeze;
-
-  var f$4 = Object.getOwnPropertySymbols;
-
-  var _objectGops = {
-  	f: f$4
-  };
-
-  // 19.1.2.1 Object.assign(target, source, ...)
-
-
-
-
-
-  var $assign = Object.assign;
-
-  // should work with symbols and should have deterministic property order (V8 bug)
-  var _objectAssign = !$assign || _fails(function () {
-    var A = {};
-    var B = {};
-    // eslint-disable-next-line no-undef
-    var S = Symbol();
-    var K = 'abcdefghijklmnopqrst';
-    A[S] = 7;
-    K.split('').forEach(function (k) { B[k] = k; });
-    return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
-  }) ? function assign(target, source) { // eslint-disable-line no-unused-vars
-    var T = _toObject(target);
-    var aLen = arguments.length;
-    var index = 1;
-    var getSymbols = _objectGops.f;
-    var isEnum = _objectPie.f;
-    while (aLen > index) {
-      var S = _iobject(arguments[index++]);
-      var keys = getSymbols ? _objectKeys(S).concat(getSymbols(S)) : _objectKeys(S);
-      var length = keys.length;
-      var j = 0;
-      var key;
-      while (length > j) if (isEnum.call(S, key = keys[j++])) T[key] = S[key];
-    } return T;
-  } : $assign;
-
-  var _redefineAll = function (target, src, safe) {
-    for (var key in src) _redefine(target, key, src[key], safe);
-    return target;
-  };
-
-  var _anInstance = function (it, Constructor, name, forbiddenField) {
-    if (!(it instanceof Constructor) || (forbiddenField !== undefined && forbiddenField in it)) {
-      throw TypeError(name + ': incorrect invocation!');
+  var anInstance = function (it, Constructor, name) {
+    if (!(it instanceof Constructor)) {
+      throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
     } return it;
   };
 
-  var _forOf = createCommonjsModule(function (module) {
-  var BREAK = {};
-  var RETURN = {};
-  var exports = module.exports = function (iterable, entries, fn, that, ITERATOR) {
-    var iterFn = ITERATOR ? function () { return iterable; } : core_getIteratorMethod(iterable);
-    var f = _ctx(fn, that, entries ? 2 : 1);
-    var index = 0;
-    var length, step, iterator, result;
-    if (typeof iterFn != 'function') throw TypeError(iterable + ' is not iterable!');
-    // fast case for arrays with default iterator
-    if (_isArrayIter(iterFn)) for (length = _toLength(iterable.length); length > index; index++) {
-      result = entries ? f(_anObject(step = iterable[index])[0], step[1]) : f(iterable[index]);
-      if (result === BREAK || result === RETURN) return result;
-    } else for (iterator = iterFn.call(iterable); !(step = iterator.next()).done;) {
-      result = _iterCall(iterator, f, step.value, entries);
-      if (result === BREAK || result === RETURN) return result;
+  var nativeAssign = Object.assign;
+  var defineProperty$4 = Object.defineProperty;
+
+  // `Object.assign` method
+  // https://tc39.github.io/ecma262/#sec-object.assign
+  var objectAssign = !nativeAssign || fails(function () {
+    // should have correct order of operations (Edge bug)
+    if (descriptors && nativeAssign({ b: 1 }, nativeAssign(defineProperty$4({}, 'a', {
+      enumerable: true,
+      get: function () {
+        defineProperty$4(this, 'b', {
+          value: 3,
+          enumerable: false
+        });
+      }
+    }), { b: 2 })).b !== 1) return true;
+    // should work with symbols and should have deterministic property order (V8 bug)
+    var A = {};
+    var B = {};
+    // eslint-disable-next-line no-undef
+    var symbol = Symbol();
+    var alphabet = 'abcdefghijklmnopqrst';
+    A[symbol] = 7;
+    alphabet.split('').forEach(function (chr) { B[chr] = chr; });
+    return nativeAssign({}, A)[symbol] != 7 || objectKeys(nativeAssign({}, B)).join('') != alphabet;
+  }) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+    var T = toObject(target);
+    var argumentsLength = arguments.length;
+    var index = 1;
+    var getOwnPropertySymbols = objectGetOwnPropertySymbols.f;
+    var propertyIsEnumerable = objectPropertyIsEnumerable.f;
+    while (argumentsLength > index) {
+      var S = indexedObject(arguments[index++]);
+      var keys = getOwnPropertySymbols ? objectKeys(S).concat(getOwnPropertySymbols(S)) : objectKeys(S);
+      var length = keys.length;
+      var j = 0;
+      var key;
+      while (length > j) {
+        key = keys[j++];
+        if (!descriptors || propertyIsEnumerable.call(S, key)) T[key] = S[key];
+      }
+    } return T;
+  } : nativeAssign;
+
+  var iteratorClose = function (iterator) {
+    var returnMethod = iterator['return'];
+    if (returnMethod !== undefined) {
+      return anObject(returnMethod.call(iterator)).value;
     }
   };
-  exports.BREAK = BREAK;
-  exports.RETURN = RETURN;
+
+  // call something on iterator step with safe closing on error
+  var callWithSafeIterationClosing = function (iterator, fn, value, ENTRIES) {
+    try {
+      return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
+    // 7.4.6 IteratorClose(iterator, completion)
+    } catch (error) {
+      iteratorClose(iterator);
+      throw error;
+    }
+  };
+
+  var ITERATOR$4 = wellKnownSymbol('iterator');
+  var ArrayPrototype$1 = Array.prototype;
+
+  // check on default Array iterator
+  var isArrayIteratorMethod = function (it) {
+    return it !== undefined && (iterators.Array === it || ArrayPrototype$1[ITERATOR$4] === it);
+  };
+
+  var ITERATOR$5 = wellKnownSymbol('iterator');
+
+  var getIteratorMethod = function (it) {
+    if (it != undefined) return it[ITERATOR$5]
+      || it['@@iterator']
+      || iterators[classof(it)];
+  };
+
+  // `Array.from` method implementation
+  // https://tc39.github.io/ecma262/#sec-array.from
+  var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
+    var O = toObject(arrayLike);
+    var C = typeof this == 'function' ? this : Array;
+    var argumentsLength = arguments.length;
+    var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
+    var mapping = mapfn !== undefined;
+    var iteratorMethod = getIteratorMethod(O);
+    var index = 0;
+    var length, result, step, iterator, next, value;
+    if (mapping) mapfn = functionBindContext(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
+    // if the target is not iterable or it's an array with the default iterator - use a simple case
+    if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
+      iterator = iteratorMethod.call(O);
+      next = iterator.next;
+      result = new C();
+      for (;!(step = next.call(iterator)).done; index++) {
+        value = mapping ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true) : step.value;
+        createProperty(result, index, value);
+      }
+    } else {
+      length = toLength(O.length);
+      result = new C(length);
+      for (;length > index; index++) {
+        value = mapping ? mapfn(O[index], index) : O[index];
+        createProperty(result, index, value);
+      }
+    }
+    result.length = index;
+    return result;
+  };
+
+  // based on https://github.com/bestiejs/punycode.js/blob/master/punycode.js
+  var maxInt = 2147483647; // aka. 0x7FFFFFFF or 2^31-1
+  var base = 36;
+  var tMin = 1;
+  var tMax = 26;
+  var skew = 38;
+  var damp = 700;
+  var initialBias = 72;
+  var initialN = 128; // 0x80
+  var delimiter = '-'; // '\x2D'
+  var regexNonASCII = /[^\0-\u007E]/; // non-ASCII chars
+  var regexSeparators = /[.\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
+  var OVERFLOW_ERROR = 'Overflow: input needs wider integers to process';
+  var baseMinusTMin = base - tMin;
+  var floor$2 = Math.floor;
+  var stringFromCharCode = String.fromCharCode;
+
+  /**
+   * Creates an array containing the numeric code points of each Unicode
+   * character in the string. While JavaScript uses UCS-2 internally,
+   * this function will convert a pair of surrogate halves (each of which
+   * UCS-2 exposes as separate characters) into a single code point,
+   * matching UTF-16.
+   */
+  var ucs2decode = function (string) {
+    var output = [];
+    var counter = 0;
+    var length = string.length;
+    while (counter < length) {
+      var value = string.charCodeAt(counter++);
+      if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+        // It's a high surrogate, and there is a next character.
+        var extra = string.charCodeAt(counter++);
+        if ((extra & 0xFC00) == 0xDC00) { // Low surrogate.
+          output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+        } else {
+          // It's an unmatched surrogate; only append this code unit, in case the
+          // next code unit is the high surrogate of a surrogate pair.
+          output.push(value);
+          counter--;
+        }
+      } else {
+        output.push(value);
+      }
+    }
+    return output;
+  };
+
+  /**
+   * Converts a digit/integer into a basic code point.
+   */
+  var digitToBasic = function (digit) {
+    //  0..25 map to ASCII a..z or A..Z
+    // 26..35 map to ASCII 0..9
+    return digit + 22 + 75 * (digit < 26);
+  };
+
+  /**
+   * Bias adaptation function as per section 3.4 of RFC 3492.
+   * https://tools.ietf.org/html/rfc3492#section-3.4
+   */
+  var adapt = function (delta, numPoints, firstTime) {
+    var k = 0;
+    delta = firstTime ? floor$2(delta / damp) : delta >> 1;
+    delta += floor$2(delta / numPoints);
+    for (; delta > baseMinusTMin * tMax >> 1; k += base) {
+      delta = floor$2(delta / baseMinusTMin);
+    }
+    return floor$2(k + (baseMinusTMin + 1) * delta / (delta + skew));
+  };
+
+  /**
+   * Converts a string of Unicode symbols (e.g. a domain name label) to a
+   * Punycode string of ASCII-only symbols.
+   */
+  // eslint-disable-next-line  max-statements
+  var encode = function (input) {
+    var output = [];
+
+    // Convert the input in UCS-2 to an array of Unicode code points.
+    input = ucs2decode(input);
+
+    // Cache the length.
+    var inputLength = input.length;
+
+    // Initialize the state.
+    var n = initialN;
+    var delta = 0;
+    var bias = initialBias;
+    var i, currentValue;
+
+    // Handle the basic code points.
+    for (i = 0; i < input.length; i++) {
+      currentValue = input[i];
+      if (currentValue < 0x80) {
+        output.push(stringFromCharCode(currentValue));
+      }
+    }
+
+    var basicLength = output.length; // number of basic code points.
+    var handledCPCount = basicLength; // number of code points that have been handled;
+
+    // Finish the basic string with a delimiter unless it's empty.
+    if (basicLength) {
+      output.push(delimiter);
+    }
+
+    // Main encoding loop:
+    while (handledCPCount < inputLength) {
+      // All non-basic code points < n have been handled already. Find the next larger one:
+      var m = maxInt;
+      for (i = 0; i < input.length; i++) {
+        currentValue = input[i];
+        if (currentValue >= n && currentValue < m) {
+          m = currentValue;
+        }
+      }
+
+      // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow.
+      var handledCPCountPlusOne = handledCPCount + 1;
+      if (m - n > floor$2((maxInt - delta) / handledCPCountPlusOne)) {
+        throw RangeError(OVERFLOW_ERROR);
+      }
+
+      delta += (m - n) * handledCPCountPlusOne;
+      n = m;
+
+      for (i = 0; i < input.length; i++) {
+        currentValue = input[i];
+        if (currentValue < n && ++delta > maxInt) {
+          throw RangeError(OVERFLOW_ERROR);
+        }
+        if (currentValue == n) {
+          // Represent delta as a generalized variable-length integer.
+          var q = delta;
+          for (var k = base; /* no condition */; k += base) {
+            var t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+            if (q < t) break;
+            var qMinusT = q - t;
+            var baseMinusT = base - t;
+            output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT)));
+            q = floor$2(qMinusT / baseMinusT);
+          }
+
+          output.push(stringFromCharCode(digitToBasic(q)));
+          bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+          delta = 0;
+          ++handledCPCount;
+        }
+      }
+
+      ++delta;
+      ++n;
+    }
+    return output.join('');
+  };
+
+  var stringPunycodeToAscii = function (input) {
+    var encoded = [];
+    var labels = input.toLowerCase().replace(regexSeparators, '\u002E').split('.');
+    var i, label;
+    for (i = 0; i < labels.length; i++) {
+      label = labels[i];
+      encoded.push(regexNonASCII.test(label) ? 'xn--' + encode(label) : label);
+    }
+    return encoded.join('.');
+  };
+
+  var redefineAll = function (target, src, options) {
+    for (var key in src) redefine(target, key, src[key], options);
+    return target;
+  };
+
+  var getIterator = function (it) {
+    var iteratorMethod = getIteratorMethod(it);
+    if (typeof iteratorMethod != 'function') {
+      throw TypeError(String(it) + ' is not iterable');
+    } return anObject(iteratorMethod.call(it));
+  };
+
+  // TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  var $fetch = getBuiltIn('fetch');
+  var Headers = getBuiltIn('Headers');
+  var ITERATOR$6 = wellKnownSymbol('iterator');
+  var URL_SEARCH_PARAMS = 'URLSearchParams';
+  var URL_SEARCH_PARAMS_ITERATOR = URL_SEARCH_PARAMS + 'Iterator';
+  var setInternalState$3 = internalState.set;
+  var getInternalParamsState = internalState.getterFor(URL_SEARCH_PARAMS);
+  var getInternalIteratorState = internalState.getterFor(URL_SEARCH_PARAMS_ITERATOR);
+
+  var plus = /\+/g;
+  var sequences = Array(4);
+
+  var percentSequence = function (bytes) {
+    return sequences[bytes - 1] || (sequences[bytes - 1] = RegExp('((?:%[\\da-f]{2}){' + bytes + '})', 'gi'));
+  };
+
+  var percentDecode = function (sequence) {
+    try {
+      return decodeURIComponent(sequence);
+    } catch (error) {
+      return sequence;
+    }
+  };
+
+  var deserialize = function (it) {
+    var result = it.replace(plus, ' ');
+    var bytes = 4;
+    try {
+      return decodeURIComponent(result);
+    } catch (error) {
+      while (bytes) {
+        result = result.replace(percentSequence(bytes--), percentDecode);
+      }
+      return result;
+    }
+  };
+
+  var find = /[!'()~]|%20/g;
+
+  var replace = {
+    '!': '%21',
+    "'": '%27',
+    '(': '%28',
+    ')': '%29',
+    '~': '%7E',
+    '%20': '+'
+  };
+
+  var replacer = function (match) {
+    return replace[match];
+  };
+
+  var serialize = function (it) {
+    return encodeURIComponent(it).replace(find, replacer);
+  };
+
+  var parseSearchParams = function (result, query) {
+    if (query) {
+      var attributes = query.split('&');
+      var index = 0;
+      var attribute, entry;
+      while (index < attributes.length) {
+        attribute = attributes[index++];
+        if (attribute.length) {
+          entry = attribute.split('=');
+          result.push({
+            key: deserialize(entry.shift()),
+            value: deserialize(entry.join('='))
+          });
+        }
+      }
+    }
+  };
+
+  var updateSearchParams = function (query) {
+    this.entries.length = 0;
+    parseSearchParams(this.entries, query);
+  };
+
+  var validateArgumentsLength = function (passed, required) {
+    if (passed < required) throw TypeError('Not enough arguments');
+  };
+
+  var URLSearchParamsIterator = createIteratorConstructor(function Iterator(params, kind) {
+    setInternalState$3(this, {
+      type: URL_SEARCH_PARAMS_ITERATOR,
+      iterator: getIterator(getInternalParamsState(params).entries),
+      kind: kind
+    });
+  }, 'Iterator', function next() {
+    var state = getInternalIteratorState(this);
+    var kind = state.kind;
+    var step = state.iterator.next();
+    var entry = step.value;
+    if (!step.done) {
+      step.value = kind === 'keys' ? entry.key : kind === 'values' ? entry.value : [entry.key, entry.value];
+    } return step;
   });
 
-  var _validateCollection = function (it, TYPE) {
-    if (!_isObject(it) || it._t !== TYPE) throw TypeError('Incompatible receiver, ' + TYPE + ' required!');
-    return it;
-  };
+  // `URLSearchParams` constructor
+  // https://url.spec.whatwg.org/#interface-urlsearchparams
+  var URLSearchParamsConstructor = function URLSearchParams(/* init */) {
+    anInstance(this, URLSearchParamsConstructor, URL_SEARCH_PARAMS);
+    var init = arguments.length > 0 ? arguments[0] : undefined;
+    var that = this;
+    var entries = [];
+    var iteratorMethod, iterator, next, step, entryIterator, entryNext, first, second, key;
 
-  var getWeak = _meta.getWeak;
-
-
-
-
-
-
-
-  var arrayFind = _arrayMethods(5);
-  var arrayFindIndex = _arrayMethods(6);
-  var id$1 = 0;
-
-  // fallback for uncaught frozen keys
-  var uncaughtFrozenStore = function (that) {
-    return that._l || (that._l = new UncaughtFrozenStore());
-  };
-  var UncaughtFrozenStore = function () {
-    this.a = [];
-  };
-  var findUncaughtFrozen = function (store, key) {
-    return arrayFind(store.a, function (it) {
-      return it[0] === key;
+    setInternalState$3(that, {
+      type: URL_SEARCH_PARAMS,
+      entries: entries,
+      updateURL: function () { /* empty */ },
+      updateSearchParams: updateSearchParams
     });
-  };
-  UncaughtFrozenStore.prototype = {
-    get: function (key) {
-      var entry = findUncaughtFrozen(this, key);
-      if (entry) return entry[1];
-    },
-    has: function (key) {
-      return !!findUncaughtFrozen(this, key);
-    },
-    set: function (key, value) {
-      var entry = findUncaughtFrozen(this, key);
-      if (entry) entry[1] = value;
-      else this.a.push([key, value]);
-    },
-    'delete': function (key) {
-      var index = arrayFindIndex(this.a, function (it) {
-        return it[0] === key;
-      });
-      if (~index) this.a.splice(index, 1);
-      return !!~index;
+
+    if (init !== undefined) {
+      if (isObject(init)) {
+        iteratorMethod = getIteratorMethod(init);
+        if (typeof iteratorMethod === 'function') {
+          iterator = iteratorMethod.call(init);
+          next = iterator.next;
+          while (!(step = next.call(iterator)).done) {
+            entryIterator = getIterator(anObject(step.value));
+            entryNext = entryIterator.next;
+            if (
+              (first = entryNext.call(entryIterator)).done ||
+              (second = entryNext.call(entryIterator)).done ||
+              !entryNext.call(entryIterator).done
+            ) throw TypeError('Expected sequence with length 2');
+            entries.push({ key: first.value + '', value: second.value + '' });
+          }
+        } else for (key in init) if (has(init, key)) entries.push({ key: key, value: init[key] + '' });
+      } else {
+        parseSearchParams(entries, typeof init === 'string' ? init.charAt(0) === '?' ? init.slice(1) : init : init + '');
+      }
     }
   };
 
-  var _collectionWeak = {
-    getConstructor: function (wrapper, NAME, IS_MAP, ADDER) {
-      var C = wrapper(function (that, iterable) {
-        _anInstance(that, C, NAME, '_i');
-        that._t = NAME;      // collection type
-        that._i = id$1++;      // collection id
-        that._l = undefined; // leak store for uncaught frozen objects
-        if (iterable != undefined) _forOf(iterable, IS_MAP, that[ADDER], that);
-      });
-      _redefineAll(C.prototype, {
-        // 23.3.3.2 WeakMap.prototype.delete(key)
-        // 23.4.3.3 WeakSet.prototype.delete(value)
-        'delete': function (key) {
-          if (!_isObject(key)) return false;
-          var data = getWeak(key);
-          if (data === true) return uncaughtFrozenStore(_validateCollection(this, NAME))['delete'](key);
-          return data && _has(data, this._i) && delete data[this._i];
-        },
-        // 23.3.3.4 WeakMap.prototype.has(key)
-        // 23.4.3.4 WeakSet.prototype.has(value)
-        has: function has(key) {
-          if (!_isObject(key)) return false;
-          var data = getWeak(key);
-          if (data === true) return uncaughtFrozenStore(_validateCollection(this, NAME)).has(key);
-          return data && _has(data, this._i);
+  var URLSearchParamsPrototype = URLSearchParamsConstructor.prototype;
+
+  redefineAll(URLSearchParamsPrototype, {
+    // `URLSearchParams.prototype.append` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-append
+    append: function append(name, value) {
+      validateArgumentsLength(arguments.length, 2);
+      var state = getInternalParamsState(this);
+      state.entries.push({ key: name + '', value: value + '' });
+      state.updateURL();
+    },
+    // `URLSearchParams.prototype.delete` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-delete
+    'delete': function (name) {
+      validateArgumentsLength(arguments.length, 1);
+      var state = getInternalParamsState(this);
+      var entries = state.entries;
+      var key = name + '';
+      var index = 0;
+      while (index < entries.length) {
+        if (entries[index].key === key) entries.splice(index, 1);
+        else index++;
+      }
+      state.updateURL();
+    },
+    // `URLSearchParams.prototype.get` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-get
+    get: function get(name) {
+      validateArgumentsLength(arguments.length, 1);
+      var entries = getInternalParamsState(this).entries;
+      var key = name + '';
+      var index = 0;
+      for (; index < entries.length; index++) {
+        if (entries[index].key === key) return entries[index].value;
+      }
+      return null;
+    },
+    // `URLSearchParams.prototype.getAll` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-getall
+    getAll: function getAll(name) {
+      validateArgumentsLength(arguments.length, 1);
+      var entries = getInternalParamsState(this).entries;
+      var key = name + '';
+      var result = [];
+      var index = 0;
+      for (; index < entries.length; index++) {
+        if (entries[index].key === key) result.push(entries[index].value);
+      }
+      return result;
+    },
+    // `URLSearchParams.prototype.has` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-has
+    has: function has(name) {
+      validateArgumentsLength(arguments.length, 1);
+      var entries = getInternalParamsState(this).entries;
+      var key = name + '';
+      var index = 0;
+      while (index < entries.length) {
+        if (entries[index++].key === key) return true;
+      }
+      return false;
+    },
+    // `URLSearchParams.prototype.set` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-set
+    set: function set(name, value) {
+      validateArgumentsLength(arguments.length, 1);
+      var state = getInternalParamsState(this);
+      var entries = state.entries;
+      var found = false;
+      var key = name + '';
+      var val = value + '';
+      var index = 0;
+      var entry;
+      for (; index < entries.length; index++) {
+        entry = entries[index];
+        if (entry.key === key) {
+          if (found) entries.splice(index--, 1);
+          else {
+            found = true;
+            entry.value = val;
+          }
         }
-      });
-      return C;
-    },
-    def: function (that, key, value) {
-      var data = getWeak(_anObject(key), true);
-      if (data === true) uncaughtFrozenStore(that).set(key, value);
-      else data[that._i] = value;
-      return that;
-    },
-    ufstore: uncaughtFrozenStore
-  };
-
-  var _collection = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
-    var Base = _global[NAME];
-    var C = Base;
-    var ADDER = IS_MAP ? 'set' : 'add';
-    var proto = C && C.prototype;
-    var O = {};
-    var fixMethod = function (KEY) {
-      var fn = proto[KEY];
-      _redefine(proto, KEY,
-        KEY == 'delete' ? function (a) {
-          return IS_WEAK && !_isObject(a) ? false : fn.call(this, a === 0 ? 0 : a);
-        } : KEY == 'has' ? function has(a) {
-          return IS_WEAK && !_isObject(a) ? false : fn.call(this, a === 0 ? 0 : a);
-        } : KEY == 'get' ? function get(a) {
-          return IS_WEAK && !_isObject(a) ? undefined : fn.call(this, a === 0 ? 0 : a);
-        } : KEY == 'add' ? function add(a) { fn.call(this, a === 0 ? 0 : a); return this; }
-          : function set(a, b) { fn.call(this, a === 0 ? 0 : a, b); return this; }
-      );
-    };
-    if (typeof C != 'function' || !(IS_WEAK || proto.forEach && !_fails(function () {
-      new C().entries().next();
-    }))) {
-      // create collection constructor
-      C = common.getConstructor(wrapper, NAME, IS_MAP, ADDER);
-      _redefineAll(C.prototype, methods);
-      _meta.NEED = true;
-    } else {
-      var instance = new C();
-      // early implementations not supports chaining
-      var HASNT_CHAINING = instance[ADDER](IS_WEAK ? {} : -0, 1) != instance;
-      // V8 ~  Chromium 40- weak-collections throws on primitives, but should return false
-      var THROWS_ON_PRIMITIVES = _fails(function () { instance.has(1); });
-      // most early implementations doesn't supports iterables, most modern - not close it correctly
-      var ACCEPT_ITERABLES = _iterDetect(function (iter) { new C(iter); }); // eslint-disable-line no-new
-      // for early implementations -0 and +0 not the same
-      var BUGGY_ZERO = !IS_WEAK && _fails(function () {
-        // V8 ~ Chromium 42- fails only with 5+ elements
-        var $instance = new C();
-        var index = 5;
-        while (index--) $instance[ADDER](index, index);
-        return !$instance.has(-0);
-      });
-      if (!ACCEPT_ITERABLES) {
-        C = wrapper(function (target, iterable) {
-          _anInstance(target, C, NAME);
-          var that = _inheritIfRequired(new Base(), target, C);
-          if (iterable != undefined) _forOf(iterable, IS_MAP, that[ADDER], that);
-          return that;
-        });
-        C.prototype = proto;
-        proto.constructor = C;
       }
-      if (THROWS_ON_PRIMITIVES || BUGGY_ZERO) {
-        fixMethod('delete');
-        fixMethod('has');
-        IS_MAP && fixMethod('get');
+      if (!found) entries.push({ key: key, value: val });
+      state.updateURL();
+    },
+    // `URLSearchParams.prototype.sort` method
+    // https://url.spec.whatwg.org/#dom-urlsearchparams-sort
+    sort: function sort() {
+      var state = getInternalParamsState(this);
+      var entries = state.entries;
+      // Array#sort is not stable in some engines
+      var slice = entries.slice();
+      var entry, entriesIndex, sliceIndex;
+      entries.length = 0;
+      for (sliceIndex = 0; sliceIndex < slice.length; sliceIndex++) {
+        entry = slice[sliceIndex];
+        for (entriesIndex = 0; entriesIndex < sliceIndex; entriesIndex++) {
+          if (entries[entriesIndex].key > entry.key) {
+            entries.splice(entriesIndex, 0, entry);
+            break;
+          }
+        }
+        if (entriesIndex === sliceIndex) entries.push(entry);
       }
-      if (BUGGY_ZERO || HASNT_CHAINING) fixMethod(ADDER);
-      // weak collections should not contains .clear method
-      if (IS_WEAK && proto.clear) delete proto.clear;
+      state.updateURL();
+    },
+    // `URLSearchParams.prototype.forEach` method
+    forEach: function forEach(callback /* , thisArg */) {
+      var entries = getInternalParamsState(this).entries;
+      var boundFunction = functionBindContext(callback, arguments.length > 1 ? arguments[1] : undefined, 3);
+      var index = 0;
+      var entry;
+      while (index < entries.length) {
+        entry = entries[index++];
+        boundFunction(entry.value, entry.key, this);
+      }
+    },
+    // `URLSearchParams.prototype.keys` method
+    keys: function keys() {
+      return new URLSearchParamsIterator(this, 'keys');
+    },
+    // `URLSearchParams.prototype.values` method
+    values: function values() {
+      return new URLSearchParamsIterator(this, 'values');
+    },
+    // `URLSearchParams.prototype.entries` method
+    entries: function entries() {
+      return new URLSearchParamsIterator(this, 'entries');
     }
+  }, { enumerable: true });
 
-    _setToStringTag(C, NAME);
+  // `URLSearchParams.prototype[@@iterator]` method
+  redefine(URLSearchParamsPrototype, ITERATOR$6, URLSearchParamsPrototype.entries);
 
-    O[NAME] = C;
-    _export(_export.G + _export.W + _export.F * (C != Base), O);
+  // `URLSearchParams.prototype.toString` method
+  // https://url.spec.whatwg.org/#urlsearchparams-stringification-behavior
+  redefine(URLSearchParamsPrototype, 'toString', function toString() {
+    var entries = getInternalParamsState(this).entries;
+    var result = [];
+    var index = 0;
+    var entry;
+    while (index < entries.length) {
+      entry = entries[index++];
+      result.push(serialize(entry.key) + '=' + serialize(entry.value));
+    } return result.join('&');
+  }, { enumerable: true });
 
-    if (!IS_WEAK) common.setStrong(C, NAME, IS_MAP);
+  setToStringTag(URLSearchParamsConstructor, URL_SEARCH_PARAMS);
 
-    return C;
-  };
+  _export({ global: true, forced: !nativeUrl }, {
+    URLSearchParams: URLSearchParamsConstructor
+  });
 
-  var es6_weakMap = createCommonjsModule(function (module) {
-  var each = _arrayMethods(0);
-
-
-
-
-
-
-
-  var WEAK_MAP = 'WeakMap';
-  var getWeak = _meta.getWeak;
-  var isExtensible = Object.isExtensible;
-  var uncaughtFrozenStore = _collectionWeak.ufstore;
-  var tmp = {};
-  var InternalMap;
-
-  var wrapper = function (get) {
-    return function WeakMap() {
-      return get(this, arguments.length > 0 ? arguments[0] : undefined);
-    };
-  };
-
-  var methods = {
-    // 23.3.3.3 WeakMap.prototype.get(key)
-    get: function get(key) {
-      if (_isObject(key)) {
-        var data = getWeak(key);
-        if (data === true) return uncaughtFrozenStore(_validateCollection(this, WEAK_MAP)).get(key);
-        return data ? data[this._i] : undefined;
+  // Wrap `fetch` for correct work with polyfilled `URLSearchParams`
+  // https://github.com/zloirock/core-js/issues/674
+  if (!nativeUrl && typeof $fetch == 'function' && typeof Headers == 'function') {
+    _export({ global: true, enumerable: true, forced: true }, {
+      fetch: function fetch(input /* , init */) {
+        var args = [input];
+        var init, body, headers;
+        if (arguments.length > 1) {
+          init = arguments[1];
+          if (isObject(init)) {
+            body = init.body;
+            if (classof(body) === URL_SEARCH_PARAMS) {
+              headers = init.headers ? new Headers(init.headers) : new Headers();
+              if (!headers.has('content-type')) {
+                headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+              }
+              init = objectCreate(init, {
+                body: createPropertyDescriptor(0, String(body)),
+                headers: createPropertyDescriptor(0, headers)
+              });
+            }
+          }
+          args.push(init);
+        } return $fetch.apply(this, args);
       }
-    },
-    // 23.3.3.5 WeakMap.prototype.set(key, value)
-    set: function set(key, value) {
-      return _collectionWeak.def(_validateCollection(this, WEAK_MAP), key, value);
-    }
-  };
-
-  // 23.3 WeakMap Objects
-  var $WeakMap = module.exports = _collection(WEAK_MAP, wrapper, methods, _collectionWeak, true, true);
-
-  // IE11 WeakMap frozen keys fix
-  if (_fails(function () { return new $WeakMap().set((Object.freeze || Object)(tmp), 7).get(tmp) != 7; })) {
-    InternalMap = _collectionWeak.getConstructor(wrapper, WEAK_MAP);
-    _objectAssign(InternalMap.prototype, methods);
-    _meta.NEED = true;
-    each(['delete', 'has', 'get', 'set'], function (key) {
-      var proto = $WeakMap.prototype;
-      var method = proto[key];
-      _redefine(proto, key, function (a, b) {
-        // store frozen objects on internal weakmap shim
-        if (_isObject(a) && !isExtensible(a)) {
-          if (!this._f) this._f = new InternalMap();
-          var result = this._f[key](a, b);
-          return key == 'set' ? this : result;
-        // store all the rest on native weakmap
-        } return method.call(this, a, b);
-      });
     });
   }
+
+  var web_urlSearchParams = {
+    URLSearchParams: URLSearchParamsConstructor,
+    getState: getInternalParamsState
+  };
+
+  // TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
+
+
+
+
+
+
+
+
+
+
+
+  var codeAt = stringMultibyte.codeAt;
+
+
+
+
+
+  var NativeURL = global_1.URL;
+  var URLSearchParams$1 = web_urlSearchParams.URLSearchParams;
+  var getInternalSearchParamsState = web_urlSearchParams.getState;
+  var setInternalState$4 = internalState.set;
+  var getInternalURLState = internalState.getterFor('URL');
+  var floor$3 = Math.floor;
+  var pow = Math.pow;
+
+  var INVALID_AUTHORITY = 'Invalid authority';
+  var INVALID_SCHEME = 'Invalid scheme';
+  var INVALID_HOST = 'Invalid host';
+  var INVALID_PORT = 'Invalid port';
+
+  var ALPHA = /[A-Za-z]/;
+  var ALPHANUMERIC = /[\d+-.A-Za-z]/;
+  var DIGIT = /\d/;
+  var HEX_START = /^(0x|0X)/;
+  var OCT = /^[0-7]+$/;
+  var DEC = /^\d+$/;
+  var HEX = /^[\dA-Fa-f]+$/;
+  // eslint-disable-next-line no-control-regex
+  var FORBIDDEN_HOST_CODE_POINT = /[\u0000\u0009\u000A\u000D #%/:?@[\\]]/;
+  // eslint-disable-next-line no-control-regex
+  var FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT = /[\u0000\u0009\u000A\u000D #/:?@[\\]]/;
+  // eslint-disable-next-line no-control-regex
+  var LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE = /^[\u0000-\u001F ]+|[\u0000-\u001F ]+$/g;
+  // eslint-disable-next-line no-control-regex
+  var TAB_AND_NEW_LINE = /[\u0009\u000A\u000D]/g;
+  var EOF;
+
+  var parseHost = function (url, input) {
+    var result, codePoints, index;
+    if (input.charAt(0) == '[') {
+      if (input.charAt(input.length - 1) != ']') return INVALID_HOST;
+      result = parseIPv6(input.slice(1, -1));
+      if (!result) return INVALID_HOST;
+      url.host = result;
+    // opaque host
+    } else if (!isSpecial(url)) {
+      if (FORBIDDEN_HOST_CODE_POINT_EXCLUDING_PERCENT.test(input)) return INVALID_HOST;
+      result = '';
+      codePoints = arrayFrom(input);
+      for (index = 0; index < codePoints.length; index++) {
+        result += percentEncode(codePoints[index], C0ControlPercentEncodeSet);
+      }
+      url.host = result;
+    } else {
+      input = stringPunycodeToAscii(input);
+      if (FORBIDDEN_HOST_CODE_POINT.test(input)) return INVALID_HOST;
+      result = parseIPv4(input);
+      if (result === null) return INVALID_HOST;
+      url.host = result;
+    }
+  };
+
+  var parseIPv4 = function (input) {
+    var parts = input.split('.');
+    var partsLength, numbers, index, part, radix, number, ipv4;
+    if (parts.length && parts[parts.length - 1] == '') {
+      parts.pop();
+    }
+    partsLength = parts.length;
+    if (partsLength > 4) return input;
+    numbers = [];
+    for (index = 0; index < partsLength; index++) {
+      part = parts[index];
+      if (part == '') return input;
+      radix = 10;
+      if (part.length > 1 && part.charAt(0) == '0') {
+        radix = HEX_START.test(part) ? 16 : 8;
+        part = part.slice(radix == 8 ? 1 : 2);
+      }
+      if (part === '') {
+        number = 0;
+      } else {
+        if (!(radix == 10 ? DEC : radix == 8 ? OCT : HEX).test(part)) return input;
+        number = parseInt(part, radix);
+      }
+      numbers.push(number);
+    }
+    for (index = 0; index < partsLength; index++) {
+      number = numbers[index];
+      if (index == partsLength - 1) {
+        if (number >= pow(256, 5 - partsLength)) return null;
+      } else if (number > 255) return null;
+    }
+    ipv4 = numbers.pop();
+    for (index = 0; index < numbers.length; index++) {
+      ipv4 += numbers[index] * pow(256, 3 - index);
+    }
+    return ipv4;
+  };
+
+  // eslint-disable-next-line max-statements
+  var parseIPv6 = function (input) {
+    var address = [0, 0, 0, 0, 0, 0, 0, 0];
+    var pieceIndex = 0;
+    var compress = null;
+    var pointer = 0;
+    var value, length, numbersSeen, ipv4Piece, number, swaps, swap;
+
+    var char = function () {
+      return input.charAt(pointer);
+    };
+
+    if (char() == ':') {
+      if (input.charAt(1) != ':') return;
+      pointer += 2;
+      pieceIndex++;
+      compress = pieceIndex;
+    }
+    while (char()) {
+      if (pieceIndex == 8) return;
+      if (char() == ':') {
+        if (compress !== null) return;
+        pointer++;
+        pieceIndex++;
+        compress = pieceIndex;
+        continue;
+      }
+      value = length = 0;
+      while (length < 4 && HEX.test(char())) {
+        value = value * 16 + parseInt(char(), 16);
+        pointer++;
+        length++;
+      }
+      if (char() == '.') {
+        if (length == 0) return;
+        pointer -= length;
+        if (pieceIndex > 6) return;
+        numbersSeen = 0;
+        while (char()) {
+          ipv4Piece = null;
+          if (numbersSeen > 0) {
+            if (char() == '.' && numbersSeen < 4) pointer++;
+            else return;
+          }
+          if (!DIGIT.test(char())) return;
+          while (DIGIT.test(char())) {
+            number = parseInt(char(), 10);
+            if (ipv4Piece === null) ipv4Piece = number;
+            else if (ipv4Piece == 0) return;
+            else ipv4Piece = ipv4Piece * 10 + number;
+            if (ipv4Piece > 255) return;
+            pointer++;
+          }
+          address[pieceIndex] = address[pieceIndex] * 256 + ipv4Piece;
+          numbersSeen++;
+          if (numbersSeen == 2 || numbersSeen == 4) pieceIndex++;
+        }
+        if (numbersSeen != 4) return;
+        break;
+      } else if (char() == ':') {
+        pointer++;
+        if (!char()) return;
+      } else if (char()) return;
+      address[pieceIndex++] = value;
+    }
+    if (compress !== null) {
+      swaps = pieceIndex - compress;
+      pieceIndex = 7;
+      while (pieceIndex != 0 && swaps > 0) {
+        swap = address[pieceIndex];
+        address[pieceIndex--] = address[compress + swaps - 1];
+        address[compress + --swaps] = swap;
+      }
+    } else if (pieceIndex != 8) return;
+    return address;
+  };
+
+  var findLongestZeroSequence = function (ipv6) {
+    var maxIndex = null;
+    var maxLength = 1;
+    var currStart = null;
+    var currLength = 0;
+    var index = 0;
+    for (; index < 8; index++) {
+      if (ipv6[index] !== 0) {
+        if (currLength > maxLength) {
+          maxIndex = currStart;
+          maxLength = currLength;
+        }
+        currStart = null;
+        currLength = 0;
+      } else {
+        if (currStart === null) currStart = index;
+        ++currLength;
+      }
+    }
+    if (currLength > maxLength) {
+      maxIndex = currStart;
+      maxLength = currLength;
+    }
+    return maxIndex;
+  };
+
+  var serializeHost = function (host) {
+    var result, index, compress, ignore0;
+    // ipv4
+    if (typeof host == 'number') {
+      result = [];
+      for (index = 0; index < 4; index++) {
+        result.unshift(host % 256);
+        host = floor$3(host / 256);
+      } return result.join('.');
+    // ipv6
+    } else if (typeof host == 'object') {
+      result = '';
+      compress = findLongestZeroSequence(host);
+      for (index = 0; index < 8; index++) {
+        if (ignore0 && host[index] === 0) continue;
+        if (ignore0) ignore0 = false;
+        if (compress === index) {
+          result += index ? ':' : '::';
+          ignore0 = true;
+        } else {
+          result += host[index].toString(16);
+          if (index < 7) result += ':';
+        }
+      }
+      return '[' + result + ']';
+    } return host;
+  };
+
+  var C0ControlPercentEncodeSet = {};
+  var fragmentPercentEncodeSet = objectAssign({}, C0ControlPercentEncodeSet, {
+    ' ': 1, '"': 1, '<': 1, '>': 1, '`': 1
   });
+  var pathPercentEncodeSet = objectAssign({}, fragmentPercentEncodeSet, {
+    '#': 1, '?': 1, '{': 1, '}': 1
+  });
+  var userinfoPercentEncodeSet = objectAssign({}, pathPercentEncodeSet, {
+    '/': 1, ':': 1, ';': 1, '=': 1, '@': 1, '[': 1, '\\': 1, ']': 1, '^': 1, '|': 1
+  });
+
+  var percentEncode = function (char, set) {
+    var code = codeAt(char, 0);
+    return code > 0x20 && code < 0x7F && !has(set, char) ? char : encodeURIComponent(char);
+  };
+
+  var specialSchemes = {
+    ftp: 21,
+    file: null,
+    http: 80,
+    https: 443,
+    ws: 80,
+    wss: 443
+  };
+
+  var isSpecial = function (url) {
+    return has(specialSchemes, url.scheme);
+  };
+
+  var includesCredentials = function (url) {
+    return url.username != '' || url.password != '';
+  };
+
+  var cannotHaveUsernamePasswordPort = function (url) {
+    return !url.host || url.cannotBeABaseURL || url.scheme == 'file';
+  };
+
+  var isWindowsDriveLetter = function (string, normalized) {
+    var second;
+    return string.length == 2 && ALPHA.test(string.charAt(0))
+      && ((second = string.charAt(1)) == ':' || (!normalized && second == '|'));
+  };
+
+  var startsWithWindowsDriveLetter = function (string) {
+    var third;
+    return string.length > 1 && isWindowsDriveLetter(string.slice(0, 2)) && (
+      string.length == 2 ||
+      ((third = string.charAt(2)) === '/' || third === '\\' || third === '?' || third === '#')
+    );
+  };
+
+  var shortenURLsPath = function (url) {
+    var path = url.path;
+    var pathSize = path.length;
+    if (pathSize && (url.scheme != 'file' || pathSize != 1 || !isWindowsDriveLetter(path[0], true))) {
+      path.pop();
+    }
+  };
+
+  var isSingleDot = function (segment) {
+    return segment === '.' || segment.toLowerCase() === '%2e';
+  };
+
+  var isDoubleDot = function (segment) {
+    segment = segment.toLowerCase();
+    return segment === '..' || segment === '%2e.' || segment === '.%2e' || segment === '%2e%2e';
+  };
+
+  // States:
+  var SCHEME_START = {};
+  var SCHEME = {};
+  var NO_SCHEME = {};
+  var SPECIAL_RELATIVE_OR_AUTHORITY = {};
+  var PATH_OR_AUTHORITY = {};
+  var RELATIVE = {};
+  var RELATIVE_SLASH = {};
+  var SPECIAL_AUTHORITY_SLASHES = {};
+  var SPECIAL_AUTHORITY_IGNORE_SLASHES = {};
+  var AUTHORITY = {};
+  var HOST = {};
+  var HOSTNAME = {};
+  var PORT = {};
+  var FILE = {};
+  var FILE_SLASH = {};
+  var FILE_HOST = {};
+  var PATH_START = {};
+  var PATH = {};
+  var CANNOT_BE_A_BASE_URL_PATH = {};
+  var QUERY = {};
+  var FRAGMENT = {};
+
+  // eslint-disable-next-line max-statements
+  var parseURL = function (url, input, stateOverride, base) {
+    var state = stateOverride || SCHEME_START;
+    var pointer = 0;
+    var buffer = '';
+    var seenAt = false;
+    var seenBracket = false;
+    var seenPasswordToken = false;
+    var codePoints, char, bufferCodePoints, failure;
+
+    if (!stateOverride) {
+      url.scheme = '';
+      url.username = '';
+      url.password = '';
+      url.host = null;
+      url.port = null;
+      url.path = [];
+      url.query = null;
+      url.fragment = null;
+      url.cannotBeABaseURL = false;
+      input = input.replace(LEADING_AND_TRAILING_C0_CONTROL_OR_SPACE, '');
+    }
+
+    input = input.replace(TAB_AND_NEW_LINE, '');
+
+    codePoints = arrayFrom(input);
+
+    while (pointer <= codePoints.length) {
+      char = codePoints[pointer];
+      switch (state) {
+        case SCHEME_START:
+          if (char && ALPHA.test(char)) {
+            buffer += char.toLowerCase();
+            state = SCHEME;
+          } else if (!stateOverride) {
+            state = NO_SCHEME;
+            continue;
+          } else return INVALID_SCHEME;
+          break;
+
+        case SCHEME:
+          if (char && (ALPHANUMERIC.test(char) || char == '+' || char == '-' || char == '.')) {
+            buffer += char.toLowerCase();
+          } else if (char == ':') {
+            if (stateOverride && (
+              (isSpecial(url) != has(specialSchemes, buffer)) ||
+              (buffer == 'file' && (includesCredentials(url) || url.port !== null)) ||
+              (url.scheme == 'file' && !url.host)
+            )) return;
+            url.scheme = buffer;
+            if (stateOverride) {
+              if (isSpecial(url) && specialSchemes[url.scheme] == url.port) url.port = null;
+              return;
+            }
+            buffer = '';
+            if (url.scheme == 'file') {
+              state = FILE;
+            } else if (isSpecial(url) && base && base.scheme == url.scheme) {
+              state = SPECIAL_RELATIVE_OR_AUTHORITY;
+            } else if (isSpecial(url)) {
+              state = SPECIAL_AUTHORITY_SLASHES;
+            } else if (codePoints[pointer + 1] == '/') {
+              state = PATH_OR_AUTHORITY;
+              pointer++;
+            } else {
+              url.cannotBeABaseURL = true;
+              url.path.push('');
+              state = CANNOT_BE_A_BASE_URL_PATH;
+            }
+          } else if (!stateOverride) {
+            buffer = '';
+            state = NO_SCHEME;
+            pointer = 0;
+            continue;
+          } else return INVALID_SCHEME;
+          break;
+
+        case NO_SCHEME:
+          if (!base || (base.cannotBeABaseURL && char != '#')) return INVALID_SCHEME;
+          if (base.cannotBeABaseURL && char == '#') {
+            url.scheme = base.scheme;
+            url.path = base.path.slice();
+            url.query = base.query;
+            url.fragment = '';
+            url.cannotBeABaseURL = true;
+            state = FRAGMENT;
+            break;
+          }
+          state = base.scheme == 'file' ? FILE : RELATIVE;
+          continue;
+
+        case SPECIAL_RELATIVE_OR_AUTHORITY:
+          if (char == '/' && codePoints[pointer + 1] == '/') {
+            state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
+            pointer++;
+          } else {
+            state = RELATIVE;
+            continue;
+          } break;
+
+        case PATH_OR_AUTHORITY:
+          if (char == '/') {
+            state = AUTHORITY;
+            break;
+          } else {
+            state = PATH;
+            continue;
+          }
+
+        case RELATIVE:
+          url.scheme = base.scheme;
+          if (char == EOF) {
+            url.username = base.username;
+            url.password = base.password;
+            url.host = base.host;
+            url.port = base.port;
+            url.path = base.path.slice();
+            url.query = base.query;
+          } else if (char == '/' || (char == '\\' && isSpecial(url))) {
+            state = RELATIVE_SLASH;
+          } else if (char == '?') {
+            url.username = base.username;
+            url.password = base.password;
+            url.host = base.host;
+            url.port = base.port;
+            url.path = base.path.slice();
+            url.query = '';
+            state = QUERY;
+          } else if (char == '#') {
+            url.username = base.username;
+            url.password = base.password;
+            url.host = base.host;
+            url.port = base.port;
+            url.path = base.path.slice();
+            url.query = base.query;
+            url.fragment = '';
+            state = FRAGMENT;
+          } else {
+            url.username = base.username;
+            url.password = base.password;
+            url.host = base.host;
+            url.port = base.port;
+            url.path = base.path.slice();
+            url.path.pop();
+            state = PATH;
+            continue;
+          } break;
+
+        case RELATIVE_SLASH:
+          if (isSpecial(url) && (char == '/' || char == '\\')) {
+            state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
+          } else if (char == '/') {
+            state = AUTHORITY;
+          } else {
+            url.username = base.username;
+            url.password = base.password;
+            url.host = base.host;
+            url.port = base.port;
+            state = PATH;
+            continue;
+          } break;
+
+        case SPECIAL_AUTHORITY_SLASHES:
+          state = SPECIAL_AUTHORITY_IGNORE_SLASHES;
+          if (char != '/' || buffer.charAt(pointer + 1) != '/') continue;
+          pointer++;
+          break;
+
+        case SPECIAL_AUTHORITY_IGNORE_SLASHES:
+          if (char != '/' && char != '\\') {
+            state = AUTHORITY;
+            continue;
+          } break;
+
+        case AUTHORITY:
+          if (char == '@') {
+            if (seenAt) buffer = '%40' + buffer;
+            seenAt = true;
+            bufferCodePoints = arrayFrom(buffer);
+            for (var i = 0; i < bufferCodePoints.length; i++) {
+              var codePoint = bufferCodePoints[i];
+              if (codePoint == ':' && !seenPasswordToken) {
+                seenPasswordToken = true;
+                continue;
+              }
+              var encodedCodePoints = percentEncode(codePoint, userinfoPercentEncodeSet);
+              if (seenPasswordToken) url.password += encodedCodePoints;
+              else url.username += encodedCodePoints;
+            }
+            buffer = '';
+          } else if (
+            char == EOF || char == '/' || char == '?' || char == '#' ||
+            (char == '\\' && isSpecial(url))
+          ) {
+            if (seenAt && buffer == '') return INVALID_AUTHORITY;
+            pointer -= arrayFrom(buffer).length + 1;
+            buffer = '';
+            state = HOST;
+          } else buffer += char;
+          break;
+
+        case HOST:
+        case HOSTNAME:
+          if (stateOverride && url.scheme == 'file') {
+            state = FILE_HOST;
+            continue;
+          } else if (char == ':' && !seenBracket) {
+            if (buffer == '') return INVALID_HOST;
+            failure = parseHost(url, buffer);
+            if (failure) return failure;
+            buffer = '';
+            state = PORT;
+            if (stateOverride == HOSTNAME) return;
+          } else if (
+            char == EOF || char == '/' || char == '?' || char == '#' ||
+            (char == '\\' && isSpecial(url))
+          ) {
+            if (isSpecial(url) && buffer == '') return INVALID_HOST;
+            if (stateOverride && buffer == '' && (includesCredentials(url) || url.port !== null)) return;
+            failure = parseHost(url, buffer);
+            if (failure) return failure;
+            buffer = '';
+            state = PATH_START;
+            if (stateOverride) return;
+            continue;
+          } else {
+            if (char == '[') seenBracket = true;
+            else if (char == ']') seenBracket = false;
+            buffer += char;
+          } break;
+
+        case PORT:
+          if (DIGIT.test(char)) {
+            buffer += char;
+          } else if (
+            char == EOF || char == '/' || char == '?' || char == '#' ||
+            (char == '\\' && isSpecial(url)) ||
+            stateOverride
+          ) {
+            if (buffer != '') {
+              var port = parseInt(buffer, 10);
+              if (port > 0xFFFF) return INVALID_PORT;
+              url.port = (isSpecial(url) && port === specialSchemes[url.scheme]) ? null : port;
+              buffer = '';
+            }
+            if (stateOverride) return;
+            state = PATH_START;
+            continue;
+          } else return INVALID_PORT;
+          break;
+
+        case FILE:
+          url.scheme = 'file';
+          if (char == '/' || char == '\\') state = FILE_SLASH;
+          else if (base && base.scheme == 'file') {
+            if (char == EOF) {
+              url.host = base.host;
+              url.path = base.path.slice();
+              url.query = base.query;
+            } else if (char == '?') {
+              url.host = base.host;
+              url.path = base.path.slice();
+              url.query = '';
+              state = QUERY;
+            } else if (char == '#') {
+              url.host = base.host;
+              url.path = base.path.slice();
+              url.query = base.query;
+              url.fragment = '';
+              state = FRAGMENT;
+            } else {
+              if (!startsWithWindowsDriveLetter(codePoints.slice(pointer).join(''))) {
+                url.host = base.host;
+                url.path = base.path.slice();
+                shortenURLsPath(url);
+              }
+              state = PATH;
+              continue;
+            }
+          } else {
+            state = PATH;
+            continue;
+          } break;
+
+        case FILE_SLASH:
+          if (char == '/' || char == '\\') {
+            state = FILE_HOST;
+            break;
+          }
+          if (base && base.scheme == 'file' && !startsWithWindowsDriveLetter(codePoints.slice(pointer).join(''))) {
+            if (isWindowsDriveLetter(base.path[0], true)) url.path.push(base.path[0]);
+            else url.host = base.host;
+          }
+          state = PATH;
+          continue;
+
+        case FILE_HOST:
+          if (char == EOF || char == '/' || char == '\\' || char == '?' || char == '#') {
+            if (!stateOverride && isWindowsDriveLetter(buffer)) {
+              state = PATH;
+            } else if (buffer == '') {
+              url.host = '';
+              if (stateOverride) return;
+              state = PATH_START;
+            } else {
+              failure = parseHost(url, buffer);
+              if (failure) return failure;
+              if (url.host == 'localhost') url.host = '';
+              if (stateOverride) return;
+              buffer = '';
+              state = PATH_START;
+            } continue;
+          } else buffer += char;
+          break;
+
+        case PATH_START:
+          if (isSpecial(url)) {
+            state = PATH;
+            if (char != '/' && char != '\\') continue;
+          } else if (!stateOverride && char == '?') {
+            url.query = '';
+            state = QUERY;
+          } else if (!stateOverride && char == '#') {
+            url.fragment = '';
+            state = FRAGMENT;
+          } else if (char != EOF) {
+            state = PATH;
+            if (char != '/') continue;
+          } break;
+
+        case PATH:
+          if (
+            char == EOF || char == '/' ||
+            (char == '\\' && isSpecial(url)) ||
+            (!stateOverride && (char == '?' || char == '#'))
+          ) {
+            if (isDoubleDot(buffer)) {
+              shortenURLsPath(url);
+              if (char != '/' && !(char == '\\' && isSpecial(url))) {
+                url.path.push('');
+              }
+            } else if (isSingleDot(buffer)) {
+              if (char != '/' && !(char == '\\' && isSpecial(url))) {
+                url.path.push('');
+              }
+            } else {
+              if (url.scheme == 'file' && !url.path.length && isWindowsDriveLetter(buffer)) {
+                if (url.host) url.host = '';
+                buffer = buffer.charAt(0) + ':'; // normalize windows drive letter
+              }
+              url.path.push(buffer);
+            }
+            buffer = '';
+            if (url.scheme == 'file' && (char == EOF || char == '?' || char == '#')) {
+              while (url.path.length > 1 && url.path[0] === '') {
+                url.path.shift();
+              }
+            }
+            if (char == '?') {
+              url.query = '';
+              state = QUERY;
+            } else if (char == '#') {
+              url.fragment = '';
+              state = FRAGMENT;
+            }
+          } else {
+            buffer += percentEncode(char, pathPercentEncodeSet);
+          } break;
+
+        case CANNOT_BE_A_BASE_URL_PATH:
+          if (char == '?') {
+            url.query = '';
+            state = QUERY;
+          } else if (char == '#') {
+            url.fragment = '';
+            state = FRAGMENT;
+          } else if (char != EOF) {
+            url.path[0] += percentEncode(char, C0ControlPercentEncodeSet);
+          } break;
+
+        case QUERY:
+          if (!stateOverride && char == '#') {
+            url.fragment = '';
+            state = FRAGMENT;
+          } else if (char != EOF) {
+            if (char == "'" && isSpecial(url)) url.query += '%27';
+            else if (char == '#') url.query += '%23';
+            else url.query += percentEncode(char, C0ControlPercentEncodeSet);
+          } break;
+
+        case FRAGMENT:
+          if (char != EOF) url.fragment += percentEncode(char, fragmentPercentEncodeSet);
+          break;
+      }
+
+      pointer++;
+    }
+  };
+
+  // `URL` constructor
+  // https://url.spec.whatwg.org/#url-class
+  var URLConstructor = function URL(url /* , base */) {
+    var that = anInstance(this, URLConstructor, 'URL');
+    var base = arguments.length > 1 ? arguments[1] : undefined;
+    var urlString = String(url);
+    var state = setInternalState$4(that, { type: 'URL' });
+    var baseState, failure;
+    if (base !== undefined) {
+      if (base instanceof URLConstructor) baseState = getInternalURLState(base);
+      else {
+        failure = parseURL(baseState = {}, String(base));
+        if (failure) throw TypeError(failure);
+      }
+    }
+    failure = parseURL(state, urlString, null, baseState);
+    if (failure) throw TypeError(failure);
+    var searchParams = state.searchParams = new URLSearchParams$1();
+    var searchParamsState = getInternalSearchParamsState(searchParams);
+    searchParamsState.updateSearchParams(state.query);
+    searchParamsState.updateURL = function () {
+      state.query = String(searchParams) || null;
+    };
+    if (!descriptors) {
+      that.href = serializeURL.call(that);
+      that.origin = getOrigin.call(that);
+      that.protocol = getProtocol.call(that);
+      that.username = getUsername.call(that);
+      that.password = getPassword.call(that);
+      that.host = getHost.call(that);
+      that.hostname = getHostname.call(that);
+      that.port = getPort.call(that);
+      that.pathname = getPathname.call(that);
+      that.search = getSearch.call(that);
+      that.searchParams = getSearchParams.call(that);
+      that.hash = getHash.call(that);
+    }
+  };
+
+  var URLPrototype = URLConstructor.prototype;
+
+  var serializeURL = function () {
+    var url = getInternalURLState(this);
+    var scheme = url.scheme;
+    var username = url.username;
+    var password = url.password;
+    var host = url.host;
+    var port = url.port;
+    var path = url.path;
+    var query = url.query;
+    var fragment = url.fragment;
+    var output = scheme + ':';
+    if (host !== null) {
+      output += '//';
+      if (includesCredentials(url)) {
+        output += username + (password ? ':' + password : '') + '@';
+      }
+      output += serializeHost(host);
+      if (port !== null) output += ':' + port;
+    } else if (scheme == 'file') output += '//';
+    output += url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
+    if (query !== null) output += '?' + query;
+    if (fragment !== null) output += '#' + fragment;
+    return output;
+  };
+
+  var getOrigin = function () {
+    var url = getInternalURLState(this);
+    var scheme = url.scheme;
+    var port = url.port;
+    if (scheme == 'blob') try {
+      return new URL(scheme.path[0]).origin;
+    } catch (error) {
+      return 'null';
+    }
+    if (scheme == 'file' || !isSpecial(url)) return 'null';
+    return scheme + '://' + serializeHost(url.host) + (port !== null ? ':' + port : '');
+  };
+
+  var getProtocol = function () {
+    return getInternalURLState(this).scheme + ':';
+  };
+
+  var getUsername = function () {
+    return getInternalURLState(this).username;
+  };
+
+  var getPassword = function () {
+    return getInternalURLState(this).password;
+  };
+
+  var getHost = function () {
+    var url = getInternalURLState(this);
+    var host = url.host;
+    var port = url.port;
+    return host === null ? ''
+      : port === null ? serializeHost(host)
+      : serializeHost(host) + ':' + port;
+  };
+
+  var getHostname = function () {
+    var host = getInternalURLState(this).host;
+    return host === null ? '' : serializeHost(host);
+  };
+
+  var getPort = function () {
+    var port = getInternalURLState(this).port;
+    return port === null ? '' : String(port);
+  };
+
+  var getPathname = function () {
+    var url = getInternalURLState(this);
+    var path = url.path;
+    return url.cannotBeABaseURL ? path[0] : path.length ? '/' + path.join('/') : '';
+  };
+
+  var getSearch = function () {
+    var query = getInternalURLState(this).query;
+    return query ? '?' + query : '';
+  };
+
+  var getSearchParams = function () {
+    return getInternalURLState(this).searchParams;
+  };
+
+  var getHash = function () {
+    var fragment = getInternalURLState(this).fragment;
+    return fragment ? '#' + fragment : '';
+  };
+
+  var accessorDescriptor = function (getter, setter) {
+    return { get: getter, set: setter, configurable: true, enumerable: true };
+  };
+
+  if (descriptors) {
+    objectDefineProperties(URLPrototype, {
+      // `URL.prototype.href` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-href
+      href: accessorDescriptor(serializeURL, function (href) {
+        var url = getInternalURLState(this);
+        var urlString = String(href);
+        var failure = parseURL(url, urlString);
+        if (failure) throw TypeError(failure);
+        getInternalSearchParamsState(url.searchParams).updateSearchParams(url.query);
+      }),
+      // `URL.prototype.origin` getter
+      // https://url.spec.whatwg.org/#dom-url-origin
+      origin: accessorDescriptor(getOrigin),
+      // `URL.prototype.protocol` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-protocol
+      protocol: accessorDescriptor(getProtocol, function (protocol) {
+        var url = getInternalURLState(this);
+        parseURL(url, String(protocol) + ':', SCHEME_START);
+      }),
+      // `URL.prototype.username` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-username
+      username: accessorDescriptor(getUsername, function (username) {
+        var url = getInternalURLState(this);
+        var codePoints = arrayFrom(String(username));
+        if (cannotHaveUsernamePasswordPort(url)) return;
+        url.username = '';
+        for (var i = 0; i < codePoints.length; i++) {
+          url.username += percentEncode(codePoints[i], userinfoPercentEncodeSet);
+        }
+      }),
+      // `URL.prototype.password` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-password
+      password: accessorDescriptor(getPassword, function (password) {
+        var url = getInternalURLState(this);
+        var codePoints = arrayFrom(String(password));
+        if (cannotHaveUsernamePasswordPort(url)) return;
+        url.password = '';
+        for (var i = 0; i < codePoints.length; i++) {
+          url.password += percentEncode(codePoints[i], userinfoPercentEncodeSet);
+        }
+      }),
+      // `URL.prototype.host` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-host
+      host: accessorDescriptor(getHost, function (host) {
+        var url = getInternalURLState(this);
+        if (url.cannotBeABaseURL) return;
+        parseURL(url, String(host), HOST);
+      }),
+      // `URL.prototype.hostname` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-hostname
+      hostname: accessorDescriptor(getHostname, function (hostname) {
+        var url = getInternalURLState(this);
+        if (url.cannotBeABaseURL) return;
+        parseURL(url, String(hostname), HOSTNAME);
+      }),
+      // `URL.prototype.port` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-port
+      port: accessorDescriptor(getPort, function (port) {
+        var url = getInternalURLState(this);
+        if (cannotHaveUsernamePasswordPort(url)) return;
+        port = String(port);
+        if (port == '') url.port = null;
+        else parseURL(url, port, PORT);
+      }),
+      // `URL.prototype.pathname` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-pathname
+      pathname: accessorDescriptor(getPathname, function (pathname) {
+        var url = getInternalURLState(this);
+        if (url.cannotBeABaseURL) return;
+        url.path = [];
+        parseURL(url, pathname + '', PATH_START);
+      }),
+      // `URL.prototype.search` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-search
+      search: accessorDescriptor(getSearch, function (search) {
+        var url = getInternalURLState(this);
+        search = String(search);
+        if (search == '') {
+          url.query = null;
+        } else {
+          if ('?' == search.charAt(0)) search = search.slice(1);
+          url.query = '';
+          parseURL(url, search, QUERY);
+        }
+        getInternalSearchParamsState(url.searchParams).updateSearchParams(url.query);
+      }),
+      // `URL.prototype.searchParams` getter
+      // https://url.spec.whatwg.org/#dom-url-searchparams
+      searchParams: accessorDescriptor(getSearchParams),
+      // `URL.prototype.hash` accessors pair
+      // https://url.spec.whatwg.org/#dom-url-hash
+      hash: accessorDescriptor(getHash, function (hash) {
+        var url = getInternalURLState(this);
+        hash = String(hash);
+        if (hash == '') {
+          url.fragment = null;
+          return;
+        }
+        if ('#' == hash.charAt(0)) hash = hash.slice(1);
+        url.fragment = '';
+        parseURL(url, hash, FRAGMENT);
+      })
+    });
+  }
+
+  // `URL.prototype.toJSON` method
+  // https://url.spec.whatwg.org/#dom-url-tojson
+  redefine(URLPrototype, 'toJSON', function toJSON() {
+    return serializeURL.call(this);
+  }, { enumerable: true });
+
+  // `URL.prototype.toString` method
+  // https://url.spec.whatwg.org/#URL-stringification-behavior
+  redefine(URLPrototype, 'toString', function toString() {
+    return serializeURL.call(this);
+  }, { enumerable: true });
+
+  if (NativeURL) {
+    var nativeCreateObjectURL = NativeURL.createObjectURL;
+    var nativeRevokeObjectURL = NativeURL.revokeObjectURL;
+    // `URL.createObjectURL` method
+    // https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL
+    // eslint-disable-next-line no-unused-vars
+    if (nativeCreateObjectURL) redefine(URLConstructor, 'createObjectURL', function createObjectURL(blob) {
+      return nativeCreateObjectURL.apply(NativeURL, arguments);
+    });
+    // `URL.revokeObjectURL` method
+    // https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL
+    // eslint-disable-next-line no-unused-vars
+    if (nativeRevokeObjectURL) redefine(URLConstructor, 'revokeObjectURL', function revokeObjectURL(url) {
+      return nativeRevokeObjectURL.apply(NativeURL, arguments);
+    });
+  }
+
+  setToStringTag(URLConstructor, 'URL');
+
+  _export({ global: true, forced: !nativeUrl, sham: !descriptors }, {
+    URL: URLConstructor
+  });
+
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+      _typeof = function (obj) {
+        return typeof obj;
+      };
+    } else {
+      _typeof = function (obj) {
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+      };
+    }
+
+    return _typeof(obj);
+  }
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -2221,20 +4103,86 @@ typeof navigator === "object" && (function (global, factory) {
     return obj;
   }
 
+  function ownKeys$1(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      if (enumerableOnly) symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      });
+      keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i] != null ? arguments[i] : {};
+
+      if (i % 2) {
+        ownKeys$1(Object(source), true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys$1(Object(source)).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
+      }
+    }
+
+    return target;
+  }
+
+  function _objectWithoutPropertiesLoose(source, excluded) {
+    if (source == null) return {};
+    var target = {};
+    var sourceKeys = Object.keys(source);
+    var key, i;
+
+    for (i = 0; i < sourceKeys.length; i++) {
+      key = sourceKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      target[key] = source[key];
+    }
+
+    return target;
+  }
+
+  function _objectWithoutProperties(source, excluded) {
+    if (source == null) return {};
+
+    var target = _objectWithoutPropertiesLoose(source, excluded);
+
+    var key, i;
+
+    if (Object.getOwnPropertySymbols) {
+      var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+
+      for (i = 0; i < sourceSymbolKeys.length; i++) {
+        key = sourceSymbolKeys[i];
+        if (excluded.indexOf(key) >= 0) continue;
+        if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+        target[key] = source[key];
+      }
+    }
+
+    return target;
+  }
+
   function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
   }
 
   function _toConsumableArray(arr) {
-    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
 
   function _arrayWithoutHoles(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-      return arr2;
-    }
+    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
 
   function _arrayWithHoles(arr) {
@@ -2242,10 +4190,11 @@ typeof navigator === "object" && (function (global, factory) {
   }
 
   function _iterableToArray(iter) {
-    if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
   }
 
   function _iterableToArrayLimit(arr, i) {
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
     var _arr = [];
     var _n = true;
     var _d = false;
@@ -2271,361 +4220,1807 @@ typeof navigator === "object" && (function (global, factory) {
     return _arr;
   }
 
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
   function _nonIterableSpread() {
-    throw new TypeError("Invalid attempt to spread non-iterable instance");
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
-  var _strictMethod = function (method, arg) {
-    return !!method && _fails(function () {
-      // eslint-disable-next-line no-useless-call
-      arg ? method.call(null, function () { /* empty */ }, 1) : method.call(null);
+  (function (global) {
+    /**
+     * Polyfill URLSearchParams
+     *
+     * Inspired from : https://github.com/WebReflection/url-search-params/blob/master/src/url-search-params.js
+     */
+    var checkIfIteratorIsSupported = function checkIfIteratorIsSupported() {
+      try {
+        return !!Symbol.iterator;
+      } catch (error) {
+        return false;
+      }
+    };
+
+    var iteratorSupported = checkIfIteratorIsSupported();
+
+    var createIterator = function createIterator(items) {
+      var iterator = {
+        next: function next() {
+          var value = items.shift();
+          return {
+            done: value === void 0,
+            value: value
+          };
+        }
+      };
+
+      if (iteratorSupported) {
+        iterator[Symbol.iterator] = function () {
+          return iterator;
+        };
+      }
+
+      return iterator;
+    };
+    /**
+     * Search param name and values should be encoded according to https://url.spec.whatwg.org/#urlencoded-serializing
+     * encodeURIComponent() produces the same result except encoding spaces as `%20` instead of `+`.
+     */
+
+
+    var serializeParam = function serializeParam(value) {
+      return encodeURIComponent(value).replace(/%20/g, '+');
+    };
+
+    var deserializeParam = function deserializeParam(value) {
+      return decodeURIComponent(String(value).replace(/\+/g, ' '));
+    };
+
+    var polyfillURLSearchParams = function polyfillURLSearchParams() {
+      var URLSearchParams = function URLSearchParams(searchString) {
+        Object.defineProperty(this, '_entries', {
+          writable: true,
+          value: {}
+        });
+
+        var typeofSearchString = _typeof(searchString);
+
+        if (typeofSearchString === 'undefined') ; else if (typeofSearchString === 'string') {
+          if (searchString !== '') {
+            this._fromString(searchString);
+          }
+        } else if (searchString instanceof URLSearchParams) {
+          var _this = this;
+
+          searchString.forEach(function (value, name) {
+            _this.append(name, value);
+          });
+        } else if (searchString !== null && typeofSearchString === 'object') {
+          if (Object.prototype.toString.call(searchString) === '[object Array]') {
+            for (var i = 0; i < searchString.length; i++) {
+              var entry = searchString[i];
+
+              if (Object.prototype.toString.call(entry) === '[object Array]' || entry.length !== 2) {
+                this.append(entry[0], entry[1]);
+              } else {
+                throw new TypeError('Expected [string, any] as entry at index ' + i + ' of URLSearchParams\'s input');
+              }
+            }
+          } else {
+            for (var key in searchString) {
+              if (searchString.hasOwnProperty(key)) {
+                this.append(key, searchString[key]);
+              }
+            }
+          }
+        } else {
+          throw new TypeError('Unsupported input\'s type for URLSearchParams');
+        }
+      };
+
+      var proto = URLSearchParams.prototype;
+
+      proto.append = function (name, value) {
+        if (name in this._entries) {
+          this._entries[name].push(String(value));
+        } else {
+          this._entries[name] = [String(value)];
+        }
+      };
+
+      proto.delete = function (name) {
+        delete this._entries[name];
+      };
+
+      proto.get = function (name) {
+        return name in this._entries ? this._entries[name][0] : null;
+      };
+
+      proto.getAll = function (name) {
+        return name in this._entries ? this._entries[name].slice(0) : [];
+      };
+
+      proto.has = function (name) {
+        return name in this._entries;
+      };
+
+      proto.set = function (name, value) {
+        this._entries[name] = [String(value)];
+      };
+
+      proto.forEach = function (callback, thisArg) {
+        var entries;
+
+        for (var name in this._entries) {
+          if (this._entries.hasOwnProperty(name)) {
+            entries = this._entries[name];
+
+            for (var i = 0; i < entries.length; i++) {
+              callback.call(thisArg, entries[i], name, this);
+            }
+          }
+        }
+      };
+
+      proto.keys = function () {
+        var items = [];
+        this.forEach(function (value, name) {
+          items.push(name);
+        });
+        return createIterator(items);
+      };
+
+      proto.values = function () {
+        var items = [];
+        this.forEach(function (value) {
+          items.push(value);
+        });
+        return createIterator(items);
+      };
+
+      proto.entries = function () {
+        var items = [];
+        this.forEach(function (value, name) {
+          items.push([name, value]);
+        });
+        return createIterator(items);
+      };
+
+      if (iteratorSupported) {
+        proto[Symbol.iterator] = proto.entries;
+      }
+
+      proto.toString = function () {
+        var searchArray = [];
+        this.forEach(function (value, name) {
+          searchArray.push(serializeParam(name) + '=' + serializeParam(value));
+        });
+        return searchArray.join('&');
+      };
+
+      global.URLSearchParams = URLSearchParams;
+    };
+
+    var checkIfURLSearchParamsSupported = function checkIfURLSearchParamsSupported() {
+      try {
+        var URLSearchParams = global.URLSearchParams;
+        return new URLSearchParams('?a=1').toString() === 'a=1' && typeof URLSearchParams.prototype.set === 'function' && typeof URLSearchParams.prototype.entries === 'function';
+      } catch (e) {
+        return false;
+      }
+    };
+
+    if (!checkIfURLSearchParamsSupported()) {
+      polyfillURLSearchParams();
+    }
+
+    var proto = global.URLSearchParams.prototype;
+
+    if (typeof proto.sort !== 'function') {
+      proto.sort = function () {
+        var _this = this;
+
+        var items = [];
+        this.forEach(function (value, name) {
+          items.push([name, value]);
+
+          if (!_this._entries) {
+            _this.delete(name);
+          }
+        });
+        items.sort(function (a, b) {
+          if (a[0] < b[0]) {
+            return -1;
+          } else if (a[0] > b[0]) {
+            return +1;
+          } else {
+            return 0;
+          }
+        });
+
+        if (_this._entries) {
+          // force reset because IE keeps keys index
+          _this._entries = {};
+        }
+
+        for (var i = 0; i < items.length; i++) {
+          this.append(items[i][0], items[i][1]);
+        }
+      };
+    }
+
+    if (typeof proto._fromString !== 'function') {
+      Object.defineProperty(proto, '_fromString', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: function value(searchString) {
+          if (this._entries) {
+            this._entries = {};
+          } else {
+            var keys = [];
+            this.forEach(function (value, name) {
+              keys.push(name);
+            });
+
+            for (var i = 0; i < keys.length; i++) {
+              this.delete(keys[i]);
+            }
+          }
+
+          searchString = searchString.replace(/^\?/, '');
+          var attributes = searchString.split('&');
+          var attribute;
+
+          for (var i = 0; i < attributes.length; i++) {
+            attribute = attributes[i].split('=');
+            this.append(deserializeParam(attribute[0]), attribute.length > 1 ? deserializeParam(attribute[1]) : '');
+          }
+        }
+      });
+    } // HTMLAnchorElement
+
+  })(typeof commonjsGlobal !== 'undefined' ? commonjsGlobal : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : commonjsGlobal);
+
+  (function (global) {
+    /**
+     * Polyfill URL
+     *
+     * Inspired from : https://github.com/arv/DOM-URL-Polyfill/blob/master/src/url.js
+     */
+    var checkIfURLIsSupported = function checkIfURLIsSupported() {
+      try {
+        var u = new global.URL('b', 'http://a');
+        u.pathname = 'c d';
+        return u.href === 'http://a/c%20d' && u.searchParams;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    var polyfillURL = function polyfillURL() {
+      var _URL = global.URL;
+
+      var URL = function URL(url, base) {
+        if (typeof url !== 'string') url = String(url);
+        if (base && typeof base !== 'string') base = String(base); // Only create another document if the base is different from current location.
+
+        var doc = document,
+            baseElement;
+
+        if (base && (global.location === void 0 || base !== global.location.href)) {
+          base = base.toLowerCase();
+          doc = document.implementation.createHTMLDocument('');
+          baseElement = doc.createElement('base');
+          baseElement.href = base;
+          doc.head.appendChild(baseElement);
+
+          try {
+            if (baseElement.href.indexOf(base) !== 0) throw new Error(baseElement.href);
+          } catch (err) {
+            throw new Error('URL unable to set base ' + base + ' due to ' + err);
+          }
+        }
+
+        var anchorElement = doc.createElement('a');
+        anchorElement.href = url;
+
+        if (baseElement) {
+          doc.body.appendChild(anchorElement);
+          anchorElement.href = anchorElement.href; // force href to refresh
+        }
+
+        var inputElement = doc.createElement('input');
+        inputElement.type = 'url';
+        inputElement.value = url;
+
+        if (anchorElement.protocol === ':' || !/:/.test(anchorElement.href) || !inputElement.checkValidity() && !base) {
+          throw new TypeError('Invalid URL');
+        }
+
+        Object.defineProperty(this, '_anchorElement', {
+          value: anchorElement
+        }); // create a linked searchParams which reflect its changes on URL
+
+        var searchParams = new global.URLSearchParams(this.search);
+        var enableSearchUpdate = true;
+        var enableSearchParamsUpdate = true;
+
+        var _this = this;
+
+        ['append', 'delete', 'set'].forEach(function (methodName) {
+          var method = searchParams[methodName];
+
+          searchParams[methodName] = function () {
+            method.apply(searchParams, arguments);
+
+            if (enableSearchUpdate) {
+              enableSearchParamsUpdate = false;
+              _this.search = searchParams.toString();
+              enableSearchParamsUpdate = true;
+            }
+          };
+        });
+        Object.defineProperty(this, 'searchParams', {
+          value: searchParams,
+          enumerable: true
+        });
+        var search = void 0;
+        Object.defineProperty(this, '_updateSearchParams', {
+          enumerable: false,
+          configurable: false,
+          writable: false,
+          value: function value() {
+            if (this.search !== search) {
+              search = this.search;
+
+              if (enableSearchParamsUpdate) {
+                enableSearchUpdate = false;
+
+                this.searchParams._fromString(this.search);
+
+                enableSearchUpdate = true;
+              }
+            }
+          }
+        });
+      };
+
+      var proto = URL.prototype;
+
+      var linkURLWithAnchorAttribute = function linkURLWithAnchorAttribute(attributeName) {
+        Object.defineProperty(proto, attributeName, {
+          get: function get() {
+            return this._anchorElement[attributeName];
+          },
+          set: function set(value) {
+            this._anchorElement[attributeName] = value;
+          },
+          enumerable: true
+        });
+      };
+
+      ['hash', 'host', 'hostname', 'port', 'protocol'].forEach(function (attributeName) {
+        linkURLWithAnchorAttribute(attributeName);
+      });
+      Object.defineProperty(proto, 'search', {
+        get: function get() {
+          return this._anchorElement['search'];
+        },
+        set: function set(value) {
+          this._anchorElement['search'] = value;
+
+          this._updateSearchParams();
+        },
+        enumerable: true
+      });
+      Object.defineProperties(proto, {
+        'toString': {
+          get: function get() {
+            var _this = this;
+
+            return function () {
+              return _this.href;
+            };
+          }
+        },
+        'href': {
+          get: function get() {
+            return this._anchorElement.href.replace(/\?$/, '');
+          },
+          set: function set(value) {
+            this._anchorElement.href = value;
+
+            this._updateSearchParams();
+          },
+          enumerable: true
+        },
+        'pathname': {
+          get: function get() {
+            return this._anchorElement.pathname.replace(/(^\/?)/, '/');
+          },
+          set: function set(value) {
+            this._anchorElement.pathname = value;
+          },
+          enumerable: true
+        },
+        'origin': {
+          get: function get() {
+            // get expected port from protocol
+            var expectedPort = {
+              'http:': 80,
+              'https:': 443,
+              'ftp:': 21
+            }[this._anchorElement.protocol]; // add port to origin if, expected port is different than actual port
+            // and it is not empty f.e http://foo:8080
+            // 8080 != 80 && 8080 != ''
+
+            var addPortToOrigin = this._anchorElement.port != expectedPort && this._anchorElement.port !== '';
+            return this._anchorElement.protocol + '//' + this._anchorElement.hostname + (addPortToOrigin ? ':' + this._anchorElement.port : '');
+          },
+          enumerable: true
+        },
+        'password': {
+          // TODO
+          get: function get() {
+            return '';
+          },
+          set: function set(value) {},
+          enumerable: true
+        },
+        'username': {
+          // TODO
+          get: function get() {
+            return '';
+          },
+          set: function set(value) {},
+          enumerable: true
+        }
+      });
+
+      URL.createObjectURL = function (blob) {
+        return _URL.createObjectURL.apply(_URL, arguments);
+      };
+
+      URL.revokeObjectURL = function (url) {
+        return _URL.revokeObjectURL.apply(_URL, arguments);
+      };
+
+      global.URL = URL;
+    };
+
+    if (!checkIfURLIsSupported()) {
+      polyfillURL();
+    }
+
+    if (global.location !== void 0 && !('origin' in global.location)) {
+      var getOrigin = function getOrigin() {
+        return global.location.protocol + '//' + global.location.hostname + (global.location.port ? ':' + global.location.port : '');
+      };
+
+      try {
+        Object.defineProperty(global.location, 'origin', {
+          get: getOrigin,
+          enumerable: true
+        });
+      } catch (e) {
+        setInterval(function () {
+          global.location.origin = getOrigin();
+        }, 100);
+      }
+    }
+  })(typeof commonjsGlobal !== 'undefined' ? commonjsGlobal : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : commonjsGlobal);
+
+  var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+  var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+  var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/679
+  var IS_CONCAT_SPREADABLE_SUPPORT = engineV8Version >= 51 || !fails(function () {
+    var array = [];
+    array[IS_CONCAT_SPREADABLE] = false;
+    return array.concat()[0] !== array;
+  });
+
+  var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+  var isConcatSpreadable = function (O) {
+    if (!isObject(O)) return false;
+    var spreadable = O[IS_CONCAT_SPREADABLE];
+    return spreadable !== undefined ? !!spreadable : isArray(O);
+  };
+
+  var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+  // `Array.prototype.concat` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.concat
+  // with adding support of @@isConcatSpreadable and @@species
+  _export({ target: 'Array', proto: true, forced: FORCED }, {
+    concat: function concat(arg) { // eslint-disable-line no-unused-vars
+      var O = toObject(this);
+      var A = arraySpeciesCreate(O, 0);
+      var n = 0;
+      var i, k, length, len, E;
+      for (i = -1, length = arguments.length; i < length; i++) {
+        E = i === -1 ? O : arguments[i];
+        if (isConcatSpreadable(E)) {
+          len = toLength(E.length);
+          if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+          for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+        } else {
+          if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+          createProperty(A, n++, E);
+        }
+      }
+      A.length = n;
+      return A;
+    }
+  });
+
+  var $filter = arrayIteration.filter;
+
+
+
+  var HAS_SPECIES_SUPPORT$1 = arrayMethodHasSpeciesSupport('filter');
+  // Edge 14- issue
+  var USES_TO_LENGTH$3 = arrayMethodUsesToLength('filter');
+
+  // `Array.prototype.filter` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+  // with adding support of @@species
+  _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$1 || !USES_TO_LENGTH$3 }, {
+    filter: function filter(callbackfn /* , thisArg */) {
+      return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  var $find = arrayIteration.find;
+
+
+
+  var FIND = 'find';
+  var SKIPS_HOLES = true;
+
+  var USES_TO_LENGTH$4 = arrayMethodUsesToLength(FIND);
+
+  // Shouldn't skip holes
+  if (FIND in []) Array(1)[FIND](function () { SKIPS_HOLES = false; });
+
+  // `Array.prototype.find` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.find
+  _export({ target: 'Array', proto: true, forced: SKIPS_HOLES || !USES_TO_LENGTH$4 }, {
+    find: function find(callbackfn /* , that = undefined */) {
+      return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+  addToUnscopables(FIND);
+
+  var ITERATOR$7 = wellKnownSymbol('iterator');
+  var SAFE_CLOSING = false;
+
+  try {
+    var called = 0;
+    var iteratorWithReturn = {
+      next: function () {
+        return { done: !!called++ };
+      },
+      'return': function () {
+        SAFE_CLOSING = true;
+      }
+    };
+    iteratorWithReturn[ITERATOR$7] = function () {
+      return this;
+    };
+    // eslint-disable-next-line no-throw-literal
+    Array.from(iteratorWithReturn, function () { throw 2; });
+  } catch (error) { /* empty */ }
+
+  var checkCorrectnessOfIteration = function (exec, SKIP_CLOSING) {
+    if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
+    var ITERATION_SUPPORT = false;
+    try {
+      var object = {};
+      object[ITERATOR$7] = function () {
+        return {
+          next: function () {
+            return { done: ITERATION_SUPPORT = true };
+          }
+        };
+      };
+      exec(object);
+    } catch (error) { /* empty */ }
+    return ITERATION_SUPPORT;
+  };
+
+  var INCORRECT_ITERATION = !checkCorrectnessOfIteration(function (iterable) {
+    Array.from(iterable);
+  });
+
+  // `Array.from` method
+  // https://tc39.github.io/ecma262/#sec-array.from
+  _export({ target: 'Array', stat: true, forced: INCORRECT_ITERATION }, {
+    from: arrayFrom
+  });
+
+  var $includes = arrayIncludes.includes;
+
+
+
+  var USES_TO_LENGTH$5 = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+
+  // `Array.prototype.includes` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.includes
+  _export({ target: 'Array', proto: true, forced: !USES_TO_LENGTH$5 }, {
+    includes: function includes(el /* , fromIndex = 0 */) {
+      return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+  addToUnscopables('includes');
+
+  var $map = arrayIteration.map;
+
+
+
+  var HAS_SPECIES_SUPPORT$2 = arrayMethodHasSpeciesSupport('map');
+  // FF49- issue
+  var USES_TO_LENGTH$6 = arrayMethodUsesToLength('map');
+
+  // `Array.prototype.map` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.map
+  // with adding support of @@species
+  _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$2 || !USES_TO_LENGTH$6 }, {
+    map: function map(callbackfn /* , thisArg */) {
+      return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  // makes subclassing work correct for wrapped built-ins
+  var inheritIfRequired = function ($this, dummy, Wrapper) {
+    var NewTarget, NewTargetPrototype;
+    if (
+      // it can work only with native `setPrototypeOf`
+      objectSetPrototypeOf &&
+      // we haven't completely correct pre-ES6 way for getting `new.target`, so use this
+      typeof (NewTarget = dummy.constructor) == 'function' &&
+      NewTarget !== Wrapper &&
+      isObject(NewTargetPrototype = NewTarget.prototype) &&
+      NewTargetPrototype !== Wrapper.prototype
+    ) objectSetPrototypeOf($this, NewTargetPrototype);
+    return $this;
+  };
+
+  // a string of all valid unicode whitespaces
+  // eslint-disable-next-line max-len
+  var whitespaces = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
+
+  var whitespace = '[' + whitespaces + ']';
+  var ltrim = RegExp('^' + whitespace + whitespace + '*');
+  var rtrim = RegExp(whitespace + whitespace + '*$');
+
+  // `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
+  var createMethod$3 = function (TYPE) {
+    return function ($this) {
+      var string = String(requireObjectCoercible($this));
+      if (TYPE & 1) string = string.replace(ltrim, '');
+      if (TYPE & 2) string = string.replace(rtrim, '');
+      return string;
+    };
+  };
+
+  var stringTrim = {
+    // `String.prototype.{ trimLeft, trimStart }` methods
+    // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
+    start: createMethod$3(1),
+    // `String.prototype.{ trimRight, trimEnd }` methods
+    // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
+    end: createMethod$3(2),
+    // `String.prototype.trim` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+    trim: createMethod$3(3)
+  };
+
+  var getOwnPropertyNames = objectGetOwnPropertyNames.f;
+  var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
+  var defineProperty$5 = objectDefineProperty.f;
+  var trim = stringTrim.trim;
+
+  var NUMBER = 'Number';
+  var NativeNumber = global_1[NUMBER];
+  var NumberPrototype = NativeNumber.prototype;
+
+  // Opera ~12 has broken Object#toString
+  var BROKEN_CLASSOF = classofRaw(objectCreate(NumberPrototype)) == NUMBER;
+
+  // `ToNumber` abstract operation
+  // https://tc39.github.io/ecma262/#sec-tonumber
+  var toNumber = function (argument) {
+    var it = toPrimitive(argument, false);
+    var first, third, radix, maxCode, digits, length, index, code;
+    if (typeof it == 'string' && it.length > 2) {
+      it = trim(it);
+      first = it.charCodeAt(0);
+      if (first === 43 || first === 45) {
+        third = it.charCodeAt(2);
+        if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
+      } else if (first === 48) {
+        switch (it.charCodeAt(1)) {
+          case 66: case 98: radix = 2; maxCode = 49; break; // fast equal of /^0b[01]+$/i
+          case 79: case 111: radix = 8; maxCode = 55; break; // fast equal of /^0o[0-7]+$/i
+          default: return +it;
+        }
+        digits = it.slice(2);
+        length = digits.length;
+        for (index = 0; index < length; index++) {
+          code = digits.charCodeAt(index);
+          // parseInt parses a string to a first unavailable symbol
+          // but ToNumber should return NaN if a string contains unavailable symbols
+          if (code < 48 || code > maxCode) return NaN;
+        } return parseInt(digits, radix);
+      }
+    } return +it;
+  };
+
+  // `Number` constructor
+  // https://tc39.github.io/ecma262/#sec-number-constructor
+  if (isForced_1(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNumber('+0x1'))) {
+    var NumberWrapper = function Number(value) {
+      var it = arguments.length < 1 ? 0 : value;
+      var dummy = this;
+      return dummy instanceof NumberWrapper
+        // check on 1..constructor(foo) case
+        && (BROKEN_CLASSOF ? fails(function () { NumberPrototype.valueOf.call(dummy); }) : classofRaw(dummy) != NUMBER)
+          ? inheritIfRequired(new NativeNumber(toNumber(it)), dummy, NumberWrapper) : toNumber(it);
+    };
+    for (var keys$1 = descriptors ? getOwnPropertyNames(NativeNumber) : (
+      // ES3:
+      'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
+      // ES2015 (in case, if modules with ES2015 Number statics required before):
+      'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
+      'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
+    ).split(','), j = 0, key; keys$1.length > j; j++) {
+      if (has(NativeNumber, key = keys$1[j]) && !has(NumberWrapper, key)) {
+        defineProperty$5(NumberWrapper, key, getOwnPropertyDescriptor$2(NativeNumber, key));
+      }
+    }
+    NumberWrapper.prototype = NumberPrototype;
+    NumberPrototype.constructor = NumberWrapper;
+    redefine(global_1, NUMBER, NumberWrapper);
+  }
+
+  var FAILS_ON_PRIMITIVES = fails(function () { objectKeys(1); });
+
+  // `Object.keys` method
+  // https://tc39.github.io/ecma262/#sec-object.keys
+  _export({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
+    keys: function keys(it) {
+      return objectKeys(toObject(it));
+    }
+  });
+
+  var notARegexp = function (it) {
+    if (isRegexp(it)) {
+      throw TypeError("The method doesn't accept regular expressions");
+    } return it;
+  };
+
+  var MATCH$1 = wellKnownSymbol('match');
+
+  var correctIsRegexpLogic = function (METHOD_NAME) {
+    var regexp = /./;
+    try {
+      '/./'[METHOD_NAME](regexp);
+    } catch (error1) {
+      try {
+        regexp[MATCH$1] = false;
+        return '/./'[METHOD_NAME](regexp);
+      } catch (error2) { /* empty */ }
+    } return false;
+  };
+
+  // `String.prototype.includes` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.includes
+  _export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
+    includes: function includes(searchString /* , position = 0 */) {
+      return !!~String(requireObjectCoercible(this))
+        .indexOf(notARegexp(searchString), arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  var freezing = !fails(function () {
+    return Object.isExtensible(Object.preventExtensions({}));
+  });
+
+  var internalMetadata = createCommonjsModule(function (module) {
+  var defineProperty = objectDefineProperty.f;
+
+
+
+  var METADATA = uid('meta');
+  var id = 0;
+
+  var isExtensible = Object.isExtensible || function () {
+    return true;
+  };
+
+  var setMetadata = function (it) {
+    defineProperty(it, METADATA, { value: {
+      objectID: 'O' + ++id, // object ID
+      weakData: {}          // weak collections IDs
+    } });
+  };
+
+  var fastKey = function (it, create) {
+    // return a primitive with prefix
+    if (!isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
+    if (!has(it, METADATA)) {
+      // can't set metadata to uncaught frozen object
+      if (!isExtensible(it)) return 'F';
+      // not necessary to add metadata
+      if (!create) return 'E';
+      // add missing metadata
+      setMetadata(it);
+    // return object ID
+    } return it[METADATA].objectID;
+  };
+
+  var getWeakData = function (it, create) {
+    if (!has(it, METADATA)) {
+      // can't set metadata to uncaught frozen object
+      if (!isExtensible(it)) return true;
+      // not necessary to add metadata
+      if (!create) return false;
+      // add missing metadata
+      setMetadata(it);
+    // return the store of weak collections IDs
+    } return it[METADATA].weakData;
+  };
+
+  // add metadata on freeze-family methods calling
+  var onFreeze = function (it) {
+    if (freezing && meta.REQUIRED && isExtensible(it) && !has(it, METADATA)) setMetadata(it);
+    return it;
+  };
+
+  var meta = module.exports = {
+    REQUIRED: false,
+    fastKey: fastKey,
+    getWeakData: getWeakData,
+    onFreeze: onFreeze
+  };
+
+  hiddenKeys[METADATA] = true;
+  });
+  var internalMetadata_1 = internalMetadata.REQUIRED;
+  var internalMetadata_2 = internalMetadata.fastKey;
+  var internalMetadata_3 = internalMetadata.getWeakData;
+  var internalMetadata_4 = internalMetadata.onFreeze;
+
+  var Result = function (stopped, result) {
+    this.stopped = stopped;
+    this.result = result;
+  };
+
+  var iterate = function (iterable, unboundFunction, options) {
+    var that = options && options.that;
+    var AS_ENTRIES = !!(options && options.AS_ENTRIES);
+    var IS_ITERATOR = !!(options && options.IS_ITERATOR);
+    var INTERRUPTED = !!(options && options.INTERRUPTED);
+    var fn = functionBindContext(unboundFunction, that, 1 + AS_ENTRIES + INTERRUPTED);
+    var iterator, iterFn, index, length, result, next, step;
+
+    var stop = function (condition) {
+      if (iterator) iteratorClose(iterator);
+      return new Result(true, condition);
+    };
+
+    var callFn = function (value) {
+      if (AS_ENTRIES) {
+        anObject(value);
+        return INTERRUPTED ? fn(value[0], value[1], stop) : fn(value[0], value[1]);
+      } return INTERRUPTED ? fn(value, stop) : fn(value);
+    };
+
+    if (IS_ITERATOR) {
+      iterator = iterable;
+    } else {
+      iterFn = getIteratorMethod(iterable);
+      if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
+      // optimisation for array iterators
+      if (isArrayIteratorMethod(iterFn)) {
+        for (index = 0, length = toLength(iterable.length); length > index; index++) {
+          result = callFn(iterable[index]);
+          if (result && result instanceof Result) return result;
+        } return new Result(false);
+      }
+      iterator = iterFn.call(iterable);
+    }
+
+    next = iterator.next;
+    while (!(step = next.call(iterator)).done) {
+      try {
+        result = callFn(step.value);
+      } catch (error) {
+        iteratorClose(iterator);
+        throw error;
+      }
+      if (typeof result == 'object' && result && result instanceof Result) return result;
+    } return new Result(false);
+  };
+
+  var collection = function (CONSTRUCTOR_NAME, wrapper, common) {
+    var IS_MAP = CONSTRUCTOR_NAME.indexOf('Map') !== -1;
+    var IS_WEAK = CONSTRUCTOR_NAME.indexOf('Weak') !== -1;
+    var ADDER = IS_MAP ? 'set' : 'add';
+    var NativeConstructor = global_1[CONSTRUCTOR_NAME];
+    var NativePrototype = NativeConstructor && NativeConstructor.prototype;
+    var Constructor = NativeConstructor;
+    var exported = {};
+
+    var fixMethod = function (KEY) {
+      var nativeMethod = NativePrototype[KEY];
+      redefine(NativePrototype, KEY,
+        KEY == 'add' ? function add(value) {
+          nativeMethod.call(this, value === 0 ? 0 : value);
+          return this;
+        } : KEY == 'delete' ? function (key) {
+          return IS_WEAK && !isObject(key) ? false : nativeMethod.call(this, key === 0 ? 0 : key);
+        } : KEY == 'get' ? function get(key) {
+          return IS_WEAK && !isObject(key) ? undefined : nativeMethod.call(this, key === 0 ? 0 : key);
+        } : KEY == 'has' ? function has(key) {
+          return IS_WEAK && !isObject(key) ? false : nativeMethod.call(this, key === 0 ? 0 : key);
+        } : function set(key, value) {
+          nativeMethod.call(this, key === 0 ? 0 : key, value);
+          return this;
+        }
+      );
+    };
+
+    // eslint-disable-next-line max-len
+    if (isForced_1(CONSTRUCTOR_NAME, typeof NativeConstructor != 'function' || !(IS_WEAK || NativePrototype.forEach && !fails(function () {
+      new NativeConstructor().entries().next();
+    })))) {
+      // create collection constructor
+      Constructor = common.getConstructor(wrapper, CONSTRUCTOR_NAME, IS_MAP, ADDER);
+      internalMetadata.REQUIRED = true;
+    } else if (isForced_1(CONSTRUCTOR_NAME, true)) {
+      var instance = new Constructor();
+      // early implementations not supports chaining
+      var HASNT_CHAINING = instance[ADDER](IS_WEAK ? {} : -0, 1) != instance;
+      // V8 ~ Chromium 40- weak-collections throws on primitives, but should return false
+      var THROWS_ON_PRIMITIVES = fails(function () { instance.has(1); });
+      // most early implementations doesn't supports iterables, most modern - not close it correctly
+      // eslint-disable-next-line no-new
+      var ACCEPT_ITERABLES = checkCorrectnessOfIteration(function (iterable) { new NativeConstructor(iterable); });
+      // for early implementations -0 and +0 not the same
+      var BUGGY_ZERO = !IS_WEAK && fails(function () {
+        // V8 ~ Chromium 42- fails only with 5+ elements
+        var $instance = new NativeConstructor();
+        var index = 5;
+        while (index--) $instance[ADDER](index, index);
+        return !$instance.has(-0);
+      });
+
+      if (!ACCEPT_ITERABLES) {
+        Constructor = wrapper(function (dummy, iterable) {
+          anInstance(dummy, Constructor, CONSTRUCTOR_NAME);
+          var that = inheritIfRequired(new NativeConstructor(), dummy, Constructor);
+          if (iterable != undefined) iterate(iterable, that[ADDER], { that: that, AS_ENTRIES: IS_MAP });
+          return that;
+        });
+        Constructor.prototype = NativePrototype;
+        NativePrototype.constructor = Constructor;
+      }
+
+      if (THROWS_ON_PRIMITIVES || BUGGY_ZERO) {
+        fixMethod('delete');
+        fixMethod('has');
+        IS_MAP && fixMethod('get');
+      }
+
+      if (BUGGY_ZERO || HASNT_CHAINING) fixMethod(ADDER);
+
+      // weak collections should not contains .clear method
+      if (IS_WEAK && NativePrototype.clear) delete NativePrototype.clear;
+    }
+
+    exported[CONSTRUCTOR_NAME] = Constructor;
+    _export({ global: true, forced: Constructor != NativeConstructor }, exported);
+
+    setToStringTag(Constructor, CONSTRUCTOR_NAME);
+
+    if (!IS_WEAK) common.setStrong(Constructor, CONSTRUCTOR_NAME, IS_MAP);
+
+    return Constructor;
+  };
+
+  var getWeakData = internalMetadata.getWeakData;
+
+
+
+
+
+
+
+
+  var setInternalState$5 = internalState.set;
+  var internalStateGetterFor = internalState.getterFor;
+  var find$1 = arrayIteration.find;
+  var findIndex = arrayIteration.findIndex;
+  var id$1 = 0;
+
+  // fallback for uncaught frozen keys
+  var uncaughtFrozenStore = function (store) {
+    return store.frozen || (store.frozen = new UncaughtFrozenStore());
+  };
+
+  var UncaughtFrozenStore = function () {
+    this.entries = [];
+  };
+
+  var findUncaughtFrozen = function (store, key) {
+    return find$1(store.entries, function (it) {
+      return it[0] === key;
     });
   };
 
-  var $sort = [].sort;
-  var test = [1, 2, 3];
-
-  _export(_export.P + _export.F * (_fails(function () {
-    // IE8-
-    test.sort(undefined);
-  }) || !_fails(function () {
-    // V8 bug
-    test.sort(null);
-    // Old WebKit
-  }) || !_strictMethod($sort)), 'Array', {
-    // 22.1.3.25 Array.prototype.sort(comparefn)
-    sort: function sort(comparefn) {
-      return comparefn === undefined
-        ? $sort.call(_toObject(this))
-        : $sort.call(_toObject(this), _aFunction(comparefn));
+  UncaughtFrozenStore.prototype = {
+    get: function (key) {
+      var entry = findUncaughtFrozen(this, key);
+      if (entry) return entry[1];
+    },
+    has: function (key) {
+      return !!findUncaughtFrozen(this, key);
+    },
+    set: function (key, value) {
+      var entry = findUncaughtFrozen(this, key);
+      if (entry) entry[1] = value;
+      else this.entries.push([key, value]);
+    },
+    'delete': function (key) {
+      var index = findIndex(this.entries, function (it) {
+        return it[0] === key;
+      });
+      if (~index) this.entries.splice(index, 1);
+      return !!~index;
     }
-  });
-
-  // 19.1.3.1 Object.assign(target, source)
-
-
-  _export(_export.S + _export.F, 'Object', { assign: _objectAssign });
-
-  // 7.3.20 SpeciesConstructor(O, defaultConstructor)
-
-
-  var SPECIES$2 = _wks('species');
-  var _speciesConstructor = function (O, D) {
-    var C = _anObject(O).constructor;
-    var S;
-    return C === undefined || (S = _anObject(C)[SPECIES$2]) == undefined ? D : _aFunction(S);
   };
 
-  var at = _stringAt(true);
+  var collectionWeak = {
+    getConstructor: function (wrapper, CONSTRUCTOR_NAME, IS_MAP, ADDER) {
+      var C = wrapper(function (that, iterable) {
+        anInstance(that, C, CONSTRUCTOR_NAME);
+        setInternalState$5(that, {
+          type: CONSTRUCTOR_NAME,
+          id: id$1++,
+          frozen: undefined
+        });
+        if (iterable != undefined) iterate(iterable, that[ADDER], { that: that, AS_ENTRIES: IS_MAP });
+      });
 
-   // `AdvanceStringIndex` abstract operation
-  // https://tc39.github.io/ecma262/#sec-advancestringindex
-  var _advanceStringIndex = function (S, index, unicode) {
-    return index + (unicode ? at(S, index).length : 1);
-  };
+      var getInternalState = internalStateGetterFor(CONSTRUCTOR_NAME);
 
-  var $min = Math.min;
-  var $push = [].push;
-  var $SPLIT = 'split';
-  var LENGTH = 'length';
-  var LAST_INDEX$1 = 'lastIndex';
+      var define = function (that, key, value) {
+        var state = getInternalState(that);
+        var data = getWeakData(anObject(key), true);
+        if (data === true) uncaughtFrozenStore(state).set(key, value);
+        else data[state.id] = value;
+        return that;
+      };
 
-  // eslint-disable-next-line no-empty
-  var SUPPORTS_Y = !!(function () { try { return new RegExp('x', 'y'); } catch (e) {} })();
-
-  // @@split logic
-  _fixReWks('split', 2, function (defined, SPLIT, $split, maybeCallNative) {
-    var internalSplit;
-    if (
-      'abbc'[$SPLIT](/(b)*/)[1] == 'c' ||
-      'test'[$SPLIT](/(?:)/, -1)[LENGTH] != 4 ||
-      'ab'[$SPLIT](/(?:ab)*/)[LENGTH] != 2 ||
-      '.'[$SPLIT](/(.?)(.?)/)[LENGTH] != 4 ||
-      '.'[$SPLIT](/()()/)[LENGTH] > 1 ||
-      ''[$SPLIT](/.?/)[LENGTH]
-    ) {
-      // based on es5-shim implementation, need to rework it
-      internalSplit = function (separator, limit) {
-        var string = String(this);
-        if (separator === undefined && limit === 0) return [];
-        // If `separator` is not a regex, use native split
-        if (!_isRegexp(separator)) return $split.call(string, separator, limit);
-        var output = [];
-        var flags = (separator.ignoreCase ? 'i' : '') +
-                    (separator.multiline ? 'm' : '') +
-                    (separator.unicode ? 'u' : '') +
-                    (separator.sticky ? 'y' : '');
-        var lastLastIndex = 0;
-        var splitLimit = limit === undefined ? 4294967295 : limit >>> 0;
-        // Make `global` and avoid `lastIndex` issues by working with a copy
-        var separatorCopy = new RegExp(separator.source, flags + 'g');
-        var match, lastIndex, lastLength;
-        while (match = _regexpExec.call(separatorCopy, string)) {
-          lastIndex = separatorCopy[LAST_INDEX$1];
-          if (lastIndex > lastLastIndex) {
-            output.push(string.slice(lastLastIndex, match.index));
-            if (match[LENGTH] > 1 && match.index < string[LENGTH]) $push.apply(output, match.slice(1));
-            lastLength = match[0][LENGTH];
-            lastLastIndex = lastIndex;
-            if (output[LENGTH] >= splitLimit) break;
-          }
-          if (separatorCopy[LAST_INDEX$1] === match.index) separatorCopy[LAST_INDEX$1]++; // Avoid an infinite loop
+      redefineAll(C.prototype, {
+        // 23.3.3.2 WeakMap.prototype.delete(key)
+        // 23.4.3.3 WeakSet.prototype.delete(value)
+        'delete': function (key) {
+          var state = getInternalState(this);
+          if (!isObject(key)) return false;
+          var data = getWeakData(key);
+          if (data === true) return uncaughtFrozenStore(state)['delete'](key);
+          return data && has(data, state.id) && delete data[state.id];
+        },
+        // 23.3.3.4 WeakMap.prototype.has(key)
+        // 23.4.3.4 WeakSet.prototype.has(value)
+        has: function has$1(key) {
+          var state = getInternalState(this);
+          if (!isObject(key)) return false;
+          var data = getWeakData(key);
+          if (data === true) return uncaughtFrozenStore(state).has(key);
+          return data && has(data, state.id);
         }
-        if (lastLastIndex === string[LENGTH]) {
-          if (lastLength || !separatorCopy.test('')) output.push('');
-        } else output.push(string.slice(lastLastIndex));
-        return output[LENGTH] > splitLimit ? output.slice(0, splitLimit) : output;
-      };
-    // Chakra, V8
-    } else if ('0'[$SPLIT](undefined, 0)[LENGTH]) {
-      internalSplit = function (separator, limit) {
-        return separator === undefined && limit === 0 ? [] : $split.call(this, separator, limit);
-      };
-    } else {
-      internalSplit = $split;
-    }
+      });
 
-    return [
-      // `String.prototype.split` method
-      // https://tc39.github.io/ecma262/#sec-string.prototype.split
-      function split(separator, limit) {
-        var O = defined(this);
-        var splitter = separator == undefined ? undefined : separator[SPLIT];
-        return splitter !== undefined
-          ? splitter.call(separator, O, limit)
-          : internalSplit.call(String(O), separator, limit);
+      redefineAll(C.prototype, IS_MAP ? {
+        // 23.3.3.3 WeakMap.prototype.get(key)
+        get: function get(key) {
+          var state = getInternalState(this);
+          if (isObject(key)) {
+            var data = getWeakData(key);
+            if (data === true) return uncaughtFrozenStore(state).get(key);
+            return data ? data[state.id] : undefined;
+          }
+        },
+        // 23.3.3.5 WeakMap.prototype.set(key, value)
+        set: function set(key, value) {
+          return define(this, key, value);
+        }
+      } : {
+        // 23.4.3.1 WeakSet.prototype.add(value)
+        add: function add(value) {
+          return define(this, value, true);
+        }
+      });
+
+      return C;
+    }
+  };
+
+  var es_weakMap = createCommonjsModule(function (module) {
+
+
+
+
+
+
+  var enforceIternalState = internalState.enforce;
+
+
+  var IS_IE11 = !global_1.ActiveXObject && 'ActiveXObject' in global_1;
+  var isExtensible = Object.isExtensible;
+  var InternalWeakMap;
+
+  var wrapper = function (init) {
+    return function WeakMap() {
+      return init(this, arguments.length ? arguments[0] : undefined);
+    };
+  };
+
+  // `WeakMap` constructor
+  // https://tc39.github.io/ecma262/#sec-weakmap-constructor
+  var $WeakMap = module.exports = collection('WeakMap', wrapper, collectionWeak);
+
+  // IE11 WeakMap frozen keys fix
+  // We can't use feature detection because it crash some old IE builds
+  // https://github.com/zloirock/core-js/issues/485
+  if (nativeWeakMap && IS_IE11) {
+    InternalWeakMap = collectionWeak.getConstructor(wrapper, 'WeakMap', true);
+    internalMetadata.REQUIRED = true;
+    var WeakMapPrototype = $WeakMap.prototype;
+    var nativeDelete = WeakMapPrototype['delete'];
+    var nativeHas = WeakMapPrototype.has;
+    var nativeGet = WeakMapPrototype.get;
+    var nativeSet = WeakMapPrototype.set;
+    redefineAll(WeakMapPrototype, {
+      'delete': function (key) {
+        if (isObject(key) && !isExtensible(key)) {
+          var state = enforceIternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          return nativeDelete.call(this, key) || state.frozen['delete'](key);
+        } return nativeDelete.call(this, key);
       },
-      // `RegExp.prototype[@@split]` method
-      // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@split
-      //
-      // NOTE: This cannot be properly polyfilled in engines that don't support
-      // the 'y' flag.
-      function (regexp, limit) {
-        var res = maybeCallNative(internalSplit, regexp, this, limit, internalSplit !== $split);
-        if (res.done) return res.value;
-
-        var rx = _anObject(regexp);
-        var S = String(this);
-        var C = _speciesConstructor(rx, RegExp);
-
-        var unicodeMatching = rx.unicode;
-        var flags = (rx.ignoreCase ? 'i' : '') +
-                      (rx.multiline ? 'm' : '') +
-                      (rx.unicode ? 'u' : '') +
-                      (SUPPORTS_Y ? 'y' : 'g');
-
-        // ^(? + rx + ) is needed, in combination with some S slicing, to
-        // simulate the 'y' flag.
-        var splitter = new C(SUPPORTS_Y ? rx : '^(?:' + rx.source + ')', flags);
-        var lim = limit === undefined ? 0xffffffff : limit >>> 0;
-        if (lim === 0) return [];
-        if (S.length === 0) return _regexpExecAbstract(splitter, S) === null ? [S] : [];
-        var p = 0;
-        var q = 0;
-        var A = [];
-        while (q < S.length) {
-          splitter.lastIndex = SUPPORTS_Y ? q : 0;
-          var z = _regexpExecAbstract(splitter, SUPPORTS_Y ? S : S.slice(q));
-          var e;
-          if (
-            z === null ||
-            (e = $min(_toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
-          ) {
-            q = _advanceStringIndex(S, q, unicodeMatching);
-          } else {
-            A.push(S.slice(p, q));
-            if (A.length === lim) return A;
-            for (var i = 1; i <= z.length - 1; i++) {
-              A.push(z[i]);
-              if (A.length === lim) return A;
-            }
-            q = p = e;
-          }
-        }
-        A.push(S.slice(p));
-        return A;
+      has: function has(key) {
+        if (isObject(key) && !isExtensible(key)) {
+          var state = enforceIternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          return nativeHas.call(this, key) || state.frozen.has(key);
+        } return nativeHas.call(this, key);
+      },
+      get: function get(key) {
+        if (isObject(key) && !isExtensible(key)) {
+          var state = enforceIternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          return nativeHas.call(this, key) ? nativeGet.call(this, key) : state.frozen.get(key);
+        } return nativeGet.call(this, key);
+      },
+      set: function set(key, value) {
+        if (isObject(key) && !isExtensible(key)) {
+          var state = enforceIternalState(this);
+          if (!state.frozen) state.frozen = new InternalWeakMap();
+          nativeHas.call(this, key) ? nativeSet.call(this, key, value) : state.frozen.set(key, value);
+        } else nativeSet.call(this, key, value);
+        return this;
       }
-    ];
+    });
+  }
   });
 
-  var isEnum = _objectPie.f;
-  var _objectToArray = function (isEntries) {
+  var $every = arrayIteration.every;
+
+
+
+  var STRICT_METHOD$3 = arrayMethodIsStrict('every');
+  var USES_TO_LENGTH$7 = arrayMethodUsesToLength('every');
+
+  // `Array.prototype.every` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.every
+  _export({ target: 'Array', proto: true, forced: !STRICT_METHOD$3 || !USES_TO_LENGTH$7 }, {
+    every: function every(callbackfn /* , thisArg */) {
+      return $every(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  // `Object.assign` method
+  // https://tc39.github.io/ecma262/#sec-object.assign
+  _export({ target: 'Object', stat: true, forced: Object.assign !== objectAssign }, {
+    assign: objectAssign
+  });
+
+  var non = '\u200B\u0085\u180E';
+
+  // check that a method works with the correct list
+  // of whitespaces and has a correct name
+  var stringTrimForced = function (METHOD_NAME) {
+    return fails(function () {
+      return !!whitespaces[METHOD_NAME]() || non[METHOD_NAME]() != non || whitespaces[METHOD_NAME].name !== METHOD_NAME;
+    });
+  };
+
+  var $trim = stringTrim.trim;
+
+
+  // `String.prototype.trim` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+  _export({ target: 'String', proto: true, forced: stringTrimForced('trim') }, {
+    trim: function trim() {
+      return $trim(this);
+    }
+  });
+
+  var $some = arrayIteration.some;
+
+
+
+  var STRICT_METHOD$4 = arrayMethodIsStrict('some');
+  var USES_TO_LENGTH$8 = arrayMethodUsesToLength('some');
+
+  // `Array.prototype.some` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.some
+  _export({ target: 'Array', proto: true, forced: !STRICT_METHOD$4 || !USES_TO_LENGTH$8 }, {
+    some: function some(callbackfn /* , thisArg */) {
+      return $some(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  // `thisNumberValue` abstract operation
+  // https://tc39.github.io/ecma262/#sec-thisnumbervalue
+  var thisNumberValue = function (value) {
+    if (typeof value != 'number' && classofRaw(value) != 'Number') {
+      throw TypeError('Incorrect invocation');
+    }
+    return +value;
+  };
+
+  // `String.prototype.repeat` method implementation
+  // https://tc39.github.io/ecma262/#sec-string.prototype.repeat
+  var stringRepeat = ''.repeat || function repeat(count) {
+    var str = String(requireObjectCoercible(this));
+    var result = '';
+    var n = toInteger(count);
+    if (n < 0 || n == Infinity) throw RangeError('Wrong number of repetitions');
+    for (;n > 0; (n >>>= 1) && (str += str)) if (n & 1) result += str;
+    return result;
+  };
+
+  var nativeToFixed = 1.0.toFixed;
+  var floor$4 = Math.floor;
+
+  var pow$1 = function (x, n, acc) {
+    return n === 0 ? acc : n % 2 === 1 ? pow$1(x, n - 1, acc * x) : pow$1(x * x, n / 2, acc);
+  };
+
+  var log = function (x) {
+    var n = 0;
+    var x2 = x;
+    while (x2 >= 4096) {
+      n += 12;
+      x2 /= 4096;
+    }
+    while (x2 >= 2) {
+      n += 1;
+      x2 /= 2;
+    } return n;
+  };
+
+  var FORCED$1 = nativeToFixed && (
+    0.00008.toFixed(3) !== '0.000' ||
+    0.9.toFixed(0) !== '1' ||
+    1.255.toFixed(2) !== '1.25' ||
+    1000000000000000128.0.toFixed(0) !== '1000000000000000128'
+  ) || !fails(function () {
+    // V8 ~ Android 4.3-
+    nativeToFixed.call({});
+  });
+
+  // `Number.prototype.toFixed` method
+  // https://tc39.github.io/ecma262/#sec-number.prototype.tofixed
+  _export({ target: 'Number', proto: true, forced: FORCED$1 }, {
+    // eslint-disable-next-line max-statements
+    toFixed: function toFixed(fractionDigits) {
+      var number = thisNumberValue(this);
+      var fractDigits = toInteger(fractionDigits);
+      var data = [0, 0, 0, 0, 0, 0];
+      var sign = '';
+      var result = '0';
+      var e, z, j, k;
+
+      var multiply = function (n, c) {
+        var index = -1;
+        var c2 = c;
+        while (++index < 6) {
+          c2 += n * data[index];
+          data[index] = c2 % 1e7;
+          c2 = floor$4(c2 / 1e7);
+        }
+      };
+
+      var divide = function (n) {
+        var index = 6;
+        var c = 0;
+        while (--index >= 0) {
+          c += data[index];
+          data[index] = floor$4(c / n);
+          c = (c % n) * 1e7;
+        }
+      };
+
+      var dataToString = function () {
+        var index = 6;
+        var s = '';
+        while (--index >= 0) {
+          if (s !== '' || index === 0 || data[index] !== 0) {
+            var t = String(data[index]);
+            s = s === '' ? t : s + stringRepeat.call('0', 7 - t.length) + t;
+          }
+        } return s;
+      };
+
+      if (fractDigits < 0 || fractDigits > 20) throw RangeError('Incorrect fraction digits');
+      // eslint-disable-next-line no-self-compare
+      if (number != number) return 'NaN';
+      if (number <= -1e21 || number >= 1e21) return String(number);
+      if (number < 0) {
+        sign = '-';
+        number = -number;
+      }
+      if (number > 1e-21) {
+        e = log(number * pow$1(2, 69, 1)) - 69;
+        z = e < 0 ? number * pow$1(2, -e, 1) : number / pow$1(2, e, 1);
+        z *= 0x10000000000000;
+        e = 52 - e;
+        if (e > 0) {
+          multiply(0, z);
+          j = fractDigits;
+          while (j >= 7) {
+            multiply(1e7, 0);
+            j -= 7;
+          }
+          multiply(pow$1(10, j, 1), 0);
+          j = e - 1;
+          while (j >= 23) {
+            divide(1 << 23);
+            j -= 23;
+          }
+          divide(1 << j);
+          multiply(1, 1);
+          divide(2);
+          result = dataToString();
+        } else {
+          multiply(0, z);
+          multiply(1 << -e, 0);
+          result = dataToString() + stringRepeat.call('0', fractDigits);
+        }
+      }
+      if (fractDigits > 0) {
+        k = result.length;
+        result = sign + (k <= fractDigits
+          ? '0.' + stringRepeat.call('0', fractDigits - k) + result
+          : result.slice(0, k - fractDigits) + '.' + result.slice(k - fractDigits));
+      } else {
+        result = sign + result;
+      } return result;
+    }
+  });
+
+  var propertyIsEnumerable = objectPropertyIsEnumerable.f;
+
+  // `Object.{ entries, values }` methods implementation
+  var createMethod$4 = function (TO_ENTRIES) {
     return function (it) {
-      var O = _toIobject(it);
-      var keys = _objectKeys(O);
+      var O = toIndexedObject(it);
+      var keys = objectKeys(O);
       var length = keys.length;
       var i = 0;
       var result = [];
       var key;
-      while (length > i) if (isEnum.call(O, key = keys[i++])) {
-        result.push(isEntries ? [key, O[key]] : O[key]);
-      } return result;
+      while (length > i) {
+        key = keys[i++];
+        if (!descriptors || propertyIsEnumerable.call(O, key)) {
+          result.push(TO_ENTRIES ? [key, O[key]] : O[key]);
+        }
+      }
+      return result;
     };
   };
 
-  // https://github.com/tc39/proposal-object-values-entries
-
-  var $entries = _objectToArray(true);
-
-  _export(_export.S, 'Object', {
-    entries: function entries(it) {
-      return $entries(it);
-    }
-  });
-
-  // https://github.com/tc39/proposal-object-values-entries
-
-  var $values = _objectToArray(false);
-
-  _export(_export.S, 'Object', {
-    values: function values(it) {
-      return $values(it);
-    }
-  });
-
-  var max$1 = Math.max;
-  var min$2 = Math.min;
-  var floor$1 = Math.floor;
-  var SUBSTITUTION_SYMBOLS = /\$([$&`']|\d\d?|<[^>]*>)/g;
-  var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&`']|\d\d?)/g;
-
-  var maybeToString = function (it) {
-    return it === undefined ? it : String(it);
+  var objectToArray = {
+    // `Object.entries` method
+    // https://tc39.github.io/ecma262/#sec-object.entries
+    entries: createMethod$4(true),
+    // `Object.values` method
+    // https://tc39.github.io/ecma262/#sec-object.values
+    values: createMethod$4(false)
   };
 
-  // @@replace logic
-  _fixReWks('replace', 2, function (defined, REPLACE, $replace, maybeCallNative) {
+  var $entries = objectToArray.entries;
+
+  // `Object.entries` method
+  // https://tc39.github.io/ecma262/#sec-object.entries
+  _export({ target: 'Object', stat: true }, {
+    entries: function entries(O) {
+      return $entries(O);
+    }
+  });
+
+  var $values = objectToArray.values;
+
+  // `Object.values` method
+  // https://tc39.github.io/ecma262/#sec-object.values
+  _export({ target: 'Object', stat: true }, {
+    values: function values(O) {
+      return $values(O);
+    }
+  });
+
+  // `Number.isNaN` method
+  // https://tc39.github.io/ecma262/#sec-number.isnan
+  _export({ target: 'Number', stat: true }, {
+    isNaN: function isNaN(number) {
+      // eslint-disable-next-line no-self-compare
+      return number != number;
+    }
+  });
+
+  var nativeGetOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
+
+
+  var FAILS_ON_PRIMITIVES$1 = fails(function () { nativeGetOwnPropertyDescriptor$2(1); });
+  var FORCED$2 = !descriptors || FAILS_ON_PRIMITIVES$1;
+
+  // `Object.getOwnPropertyDescriptor` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
+  _export({ target: 'Object', stat: true, forced: FORCED$2, sham: !descriptors }, {
+    getOwnPropertyDescriptor: function getOwnPropertyDescriptor(it, key) {
+      return nativeGetOwnPropertyDescriptor$2(toIndexedObject(it), key);
+    }
+  });
+
+  // `Object.getOwnPropertyDescriptors` method
+  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
+  _export({ target: 'Object', stat: true, sham: !descriptors }, {
+    getOwnPropertyDescriptors: function getOwnPropertyDescriptors(object) {
+      var O = toIndexedObject(object);
+      var getOwnPropertyDescriptor = objectGetOwnPropertyDescriptor.f;
+      var keys = ownKeys(O);
+      var result = {};
+      var index = 0;
+      var key, descriptor;
+      while (keys.length > index) {
+        descriptor = getOwnPropertyDescriptor(O, key = keys[index++]);
+        if (descriptor !== undefined) createProperty(result, key, descriptor);
+      }
+      return result;
+    }
+  });
+
+  // @@match logic
+  fixRegexpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCallNative) {
     return [
-      // `String.prototype.replace` method
-      // https://tc39.github.io/ecma262/#sec-string.prototype.replace
-      function replace(searchValue, replaceValue) {
-        var O = defined(this);
-        var fn = searchValue == undefined ? undefined : searchValue[REPLACE];
-        return fn !== undefined
-          ? fn.call(searchValue, O, replaceValue)
-          : $replace.call(String(O), searchValue, replaceValue);
+      // `String.prototype.match` method
+      // https://tc39.github.io/ecma262/#sec-string.prototype.match
+      function match(regexp) {
+        var O = requireObjectCoercible(this);
+        var matcher = regexp == undefined ? undefined : regexp[MATCH];
+        return matcher !== undefined ? matcher.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
       },
-      // `RegExp.prototype[@@replace]` method
-      // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
-      function (regexp, replaceValue) {
-        var res = maybeCallNative($replace, regexp, this, replaceValue);
+      // `RegExp.prototype[@@match]` method
+      // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
+      function (regexp) {
+        var res = maybeCallNative(nativeMatch, regexp, this);
         if (res.done) return res.value;
 
-        var rx = _anObject(regexp);
+        var rx = anObject(regexp);
         var S = String(this);
-        var functionalReplace = typeof replaceValue === 'function';
-        if (!functionalReplace) replaceValue = String(replaceValue);
-        var global = rx.global;
-        if (global) {
-          var fullUnicode = rx.unicode;
-          rx.lastIndex = 0;
-        }
-        var results = [];
-        while (true) {
-          var result = _regexpExecAbstract(rx, S);
-          if (result === null) break;
-          results.push(result);
-          if (!global) break;
+
+        if (!rx.global) return regexpExecAbstract(rx, S);
+
+        var fullUnicode = rx.unicode;
+        rx.lastIndex = 0;
+        var A = [];
+        var n = 0;
+        var result;
+        while ((result = regexpExecAbstract(rx, S)) !== null) {
           var matchStr = String(result[0]);
-          if (matchStr === '') rx.lastIndex = _advanceStringIndex(S, _toLength(rx.lastIndex), fullUnicode);
+          A[n] = matchStr;
+          if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+          n++;
         }
-        var accumulatedResult = '';
-        var nextSourcePosition = 0;
-        for (var i = 0; i < results.length; i++) {
-          result = results[i];
-          var matched = String(result[0]);
-          var position = max$1(min$2(_toInteger(result.index), S.length), 0);
-          var captures = [];
-          // NOTE: This is equivalent to
-          //   captures = result.slice(1).map(maybeToString)
-          // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
-          // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
-          // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
-          for (var j = 1; j < result.length; j++) captures.push(maybeToString(result[j]));
-          var namedCaptures = result.groups;
-          if (functionalReplace) {
-            var replacerArgs = [matched].concat(captures, position, S);
-            if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
-            var replacement = String(replaceValue.apply(undefined, replacerArgs));
-          } else {
-            replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
-          }
-          if (position >= nextSourcePosition) {
-            accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
-            nextSourcePosition = position + matched.length;
-          }
-        }
-        return accumulatedResult + S.slice(nextSourcePosition);
+        return n === 0 ? null : A;
       }
     ];
-
-      // https://tc39.github.io/ecma262/#sec-getsubstitution
-    function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
-      var tailPos = position + matched.length;
-      var m = captures.length;
-      var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
-      if (namedCaptures !== undefined) {
-        namedCaptures = _toObject(namedCaptures);
-        symbols = SUBSTITUTION_SYMBOLS;
-      }
-      return $replace.call(replacement, symbols, function (match, ch) {
-        var capture;
-        switch (ch.charAt(0)) {
-          case '$': return '$';
-          case '&': return matched;
-          case '`': return str.slice(0, position);
-          case "'": return str.slice(tailPos);
-          case '<':
-            capture = namedCaptures[ch.slice(1, -1)];
-            break;
-          default: // \d\d?
-            var n = +ch;
-            if (n === 0) return match;
-            if (n > m) {
-              var f = floor$1(n / 10);
-              if (f === 0) return match;
-              if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
-              return match;
-            }
-            capture = captures[n - 1];
-        }
-        return capture === undefined ? '' : capture;
-      });
-    }
   });
 
-  // fast apply, http://jsperf.lnkit.com/fast-apply/5
-  var _invoke = function (fn, args, that) {
-    var un = that === undefined;
-    switch (args.length) {
-      case 0: return un ? fn()
-                        : fn.call(that);
-      case 1: return un ? fn(args[0])
-                        : fn.call(that, args[0]);
-      case 2: return un ? fn(args[0], args[1])
-                        : fn.call(that, args[0], args[1]);
-      case 3: return un ? fn(args[0], args[1], args[2])
-                        : fn.call(that, args[0], args[1], args[2]);
-      case 4: return un ? fn(args[0], args[1], args[2], args[3])
-                        : fn.call(that, args[0], args[1], args[2], args[3]);
-    } return fn.apply(that, args);
+  function _classCallCheck$1(e, t) {
+    if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
+  }
+
+  function _defineProperties$1(e, t) {
+    for (var n = 0; n < t.length; n++) {
+      var r = t[n];
+      r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(e, r.key, r);
+    }
+  }
+
+  function _createClass$1(e, t, n) {
+    return t && _defineProperties$1(e.prototype, t), n && _defineProperties$1(e, n), e;
+  }
+
+  function _defineProperty$1(e, t, n) {
+    return t in e ? Object.defineProperty(e, t, {
+      value: n,
+      enumerable: !0,
+      configurable: !0,
+      writable: !0
+    }) : e[t] = n, e;
+  }
+
+  function ownKeys$2(e, t) {
+    var n = Object.keys(e);
+
+    if (Object.getOwnPropertySymbols) {
+      var r = Object.getOwnPropertySymbols(e);
+      t && (r = r.filter(function (t) {
+        return Object.getOwnPropertyDescriptor(e, t).enumerable;
+      })), n.push.apply(n, r);
+    }
+
+    return n;
+  }
+
+  function _objectSpread2$1(e) {
+    for (var t = 1; t < arguments.length; t++) {
+      var n = null != arguments[t] ? arguments[t] : {};
+      t % 2 ? ownKeys$2(Object(n), !0).forEach(function (t) {
+        _defineProperty$1(e, t, n[t]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(n)) : ownKeys$2(Object(n)).forEach(function (t) {
+        Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(n, t));
+      });
+    }
+
+    return e;
+  }
+
+  var defaults = {
+    addCSS: !0,
+    thumbWidth: 15,
+    watch: !0
   };
 
-  var process = _global.process;
-  var setTask = _global.setImmediate;
-  var clearTask = _global.clearImmediate;
-  var MessageChannel = _global.MessageChannel;
-  var Dispatch = _global.Dispatch;
+  function matches(e, t) {
+    return function () {
+      return Array.from(document.querySelectorAll(t)).includes(this);
+    }.call(e, t);
+  }
+
+  function trigger(e, t) {
+    if (e && t) {
+      var n = new Event(t, {
+        bubbles: !0
+      });
+      e.dispatchEvent(n);
+    }
+  }
+
+  var getConstructor = function getConstructor(e) {
+    return null != e ? e.constructor : null;
+  },
+      instanceOf = function instanceOf(e, t) {
+    return !!(e && t && e instanceof t);
+  },
+      isNullOrUndefined = function isNullOrUndefined(e) {
+    return null == e;
+  },
+      isObject$1 = function isObject(e) {
+    return getConstructor(e) === Object;
+  },
+      isNumber = function isNumber(e) {
+    return getConstructor(e) === Number && !Number.isNaN(e);
+  },
+      isString = function isString(e) {
+    return getConstructor(e) === String;
+  },
+      isBoolean = function isBoolean(e) {
+    return getConstructor(e) === Boolean;
+  },
+      isFunction = function isFunction(e) {
+    return getConstructor(e) === Function;
+  },
+      isArray$1 = function isArray(e) {
+    return Array.isArray(e);
+  },
+      isNodeList = function isNodeList(e) {
+    return instanceOf(e, NodeList);
+  },
+      isElement = function isElement(e) {
+    return instanceOf(e, Element);
+  },
+      isEvent = function isEvent(e) {
+    return instanceOf(e, Event);
+  },
+      isEmpty = function isEmpty(e) {
+    return isNullOrUndefined(e) || (isString(e) || isArray$1(e) || isNodeList(e)) && !e.length || isObject$1(e) && !Object.keys(e).length;
+  },
+      is = {
+    nullOrUndefined: isNullOrUndefined,
+    object: isObject$1,
+    number: isNumber,
+    string: isString,
+    boolean: isBoolean,
+    function: isFunction,
+    array: isArray$1,
+    nodeList: isNodeList,
+    element: isElement,
+    event: isEvent,
+    empty: isEmpty
+  };
+
+  function getDecimalPlaces(e) {
+    var t = "".concat(e).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+    return t ? Math.max(0, (t[1] ? t[1].length : 0) - (t[2] ? +t[2] : 0)) : 0;
+  }
+
+  function round(e, t) {
+    if (1 > t) {
+      var n = getDecimalPlaces(t);
+      return parseFloat(e.toFixed(n));
+    }
+
+    return Math.round(e / t) * t;
+  }
+
+  var RangeTouch = function () {
+    function e(t, n) {
+      _classCallCheck$1(this, e), is.element(t) ? this.element = t : is.string(t) && (this.element = document.querySelector(t)), is.element(this.element) && is.empty(this.element.rangeTouch) && (this.config = _objectSpread2$1({}, defaults, {}, n), this.init());
+    }
+
+    return _createClass$1(e, [{
+      key: "init",
+      value: function value() {
+        e.enabled && (this.config.addCSS && (this.element.style.userSelect = "none", this.element.style.webKitUserSelect = "none", this.element.style.touchAction = "manipulation"), this.listeners(!0), this.element.rangeTouch = this);
+      }
+    }, {
+      key: "destroy",
+      value: function value() {
+        e.enabled && (this.config.addCSS && (this.element.style.userSelect = "", this.element.style.webKitUserSelect = "", this.element.style.touchAction = ""), this.listeners(!1), this.element.rangeTouch = null);
+      }
+    }, {
+      key: "listeners",
+      value: function value(e) {
+        var t = this,
+            n = e ? "addEventListener" : "removeEventListener";
+        ["touchstart", "touchmove", "touchend"].forEach(function (e) {
+          t.element[n](e, function (e) {
+            return t.set(e);
+          }, !1);
+        });
+      }
+    }, {
+      key: "get",
+      value: function value(t) {
+        if (!e.enabled || !is.event(t)) return null;
+        var n,
+            r = t.target,
+            i = t.changedTouches[0],
+            o = parseFloat(r.getAttribute("min")) || 0,
+            s = parseFloat(r.getAttribute("max")) || 100,
+            u = parseFloat(r.getAttribute("step")) || 1,
+            c = r.getBoundingClientRect(),
+            a = 100 / c.width * (this.config.thumbWidth / 2) / 100;
+        return 0 > (n = 100 / c.width * (i.clientX - c.left)) ? n = 0 : 100 < n && (n = 100), 50 > n ? n -= (100 - 2 * n) * a : 50 < n && (n += 2 * (n - 50) * a), o + round(n / 100 * (s - o), u);
+      }
+    }, {
+      key: "set",
+      value: function value(t) {
+        e.enabled && is.event(t) && !t.target.disabled && (t.preventDefault(), t.target.value = this.get(t), trigger(t.target, "touchend" === t.type ? "change" : "input"));
+      }
+    }], [{
+      key: "setup",
+      value: function value(t) {
+        var n = 1 < arguments.length && void 0 !== arguments[1] ? arguments[1] : {},
+            r = null;
+        if (is.empty(t) || is.string(t) ? r = Array.from(document.querySelectorAll(is.string(t) ? t : 'input[type="range"]')) : is.element(t) ? r = [t] : is.nodeList(t) ? r = Array.from(t) : is.array(t) && (r = t.filter(is.element)), is.empty(r)) return null;
+
+        var i = _objectSpread2$1({}, defaults, {}, n);
+
+        if (is.string(t) && i.watch) {
+          var o = new MutationObserver(function (n) {
+            Array.from(n).forEach(function (n) {
+              Array.from(n.addedNodes).forEach(function (n) {
+                is.element(n) && matches(n, t) && new e(n, i);
+              });
+            });
+          });
+          o.observe(document.body, {
+            childList: !0,
+            subtree: !0
+          });
+        }
+
+        return r.map(function (t) {
+          return new e(t, n);
+        });
+      }
+    }, {
+      key: "enabled",
+      get: function get() {
+        return "ontouchstart" in document.documentElement;
+      }
+    }]), e;
+  }();
+
+  var nativePromiseConstructor = global_1.Promise;
+
+  var SPECIES$5 = wellKnownSymbol('species');
+
+  var setSpecies = function (CONSTRUCTOR_NAME) {
+    var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
+    var defineProperty = objectDefineProperty.f;
+
+    if (descriptors && Constructor && !Constructor[SPECIES$5]) {
+      defineProperty(Constructor, SPECIES$5, {
+        configurable: true,
+        get: function () { return this; }
+      });
+    }
+  };
+
+  var engineIsIos = /(iphone|ipod|ipad).*applewebkit/i.test(engineUserAgent);
+
+  var engineIsNode = classofRaw(global_1.process) == 'process';
+
+  var location = global_1.location;
+  var set$1 = global_1.setImmediate;
+  var clear = global_1.clearImmediate;
+  var process$1 = global_1.process;
+  var MessageChannel = global_1.MessageChannel;
+  var Dispatch = global_1.Dispatch;
   var counter = 0;
   var queue = {};
   var ONREADYSTATECHANGE = 'onreadystatechange';
   var defer, channel, port;
-  var run = function () {
-    var id = +this;
+
+  var run = function (id) {
     // eslint-disable-next-line no-prototype-builtins
     if (queue.hasOwnProperty(id)) {
       var fn = queue[id];
@@ -2633,113 +6028,141 @@ typeof navigator === "object" && (function (global, factory) {
       fn();
     }
   };
-  var listener = function (event) {
-    run.call(event.data);
+
+  var runner = function (id) {
+    return function () {
+      run(id);
+    };
   };
+
+  var listener = function (event) {
+    run(event.data);
+  };
+
+  var post = function (id) {
+    // old engines have not location.origin
+    global_1.postMessage(id + '', location.protocol + '//' + location.host);
+  };
+
   // Node.js 0.9+ & IE10+ has setImmediate, otherwise:
-  if (!setTask || !clearTask) {
-    setTask = function setImmediate(fn) {
+  if (!set$1 || !clear) {
+    set$1 = function setImmediate(fn) {
       var args = [];
       var i = 1;
       while (arguments.length > i) args.push(arguments[i++]);
       queue[++counter] = function () {
         // eslint-disable-next-line no-new-func
-        _invoke(typeof fn == 'function' ? fn : Function(fn), args);
+        (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
       };
       defer(counter);
       return counter;
     };
-    clearTask = function clearImmediate(id) {
+    clear = function clearImmediate(id) {
       delete queue[id];
     };
     // Node.js 0.8-
-    if (_cof(process) == 'process') {
+    if (engineIsNode) {
       defer = function (id) {
-        process.nextTick(_ctx(run, id, 1));
+        process$1.nextTick(runner(id));
       };
     // Sphere (JS game engine) Dispatch API
     } else if (Dispatch && Dispatch.now) {
       defer = function (id) {
-        Dispatch.now(_ctx(run, id, 1));
+        Dispatch.now(runner(id));
       };
     // Browsers with MessageChannel, includes WebWorkers
-    } else if (MessageChannel) {
+    // except iOS - https://github.com/zloirock/core-js/issues/624
+    } else if (MessageChannel && !engineIsIos) {
       channel = new MessageChannel();
       port = channel.port2;
       channel.port1.onmessage = listener;
-      defer = _ctx(port.postMessage, port, 1);
+      defer = functionBindContext(port.postMessage, port, 1);
     // Browsers with postMessage, skip WebWorkers
     // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
-    } else if (_global.addEventListener && typeof postMessage == 'function' && !_global.importScripts) {
-      defer = function (id) {
-        _global.postMessage(id + '', '*');
-      };
-      _global.addEventListener('message', listener, false);
+    } else if (
+      global_1.addEventListener &&
+      typeof postMessage == 'function' &&
+      !global_1.importScripts &&
+      location && location.protocol !== 'file:' &&
+      !fails(post)
+    ) {
+      defer = post;
+      global_1.addEventListener('message', listener, false);
     // IE8-
-    } else if (ONREADYSTATECHANGE in _domCreate('script')) {
+    } else if (ONREADYSTATECHANGE in documentCreateElement('script')) {
       defer = function (id) {
-        _html.appendChild(_domCreate('script'))[ONREADYSTATECHANGE] = function () {
-          _html.removeChild(this);
-          run.call(id);
+        html.appendChild(documentCreateElement('script'))[ONREADYSTATECHANGE] = function () {
+          html.removeChild(this);
+          run(id);
         };
       };
     // Rest old browsers
     } else {
       defer = function (id) {
-        setTimeout(_ctx(run, id, 1), 0);
+        setTimeout(runner(id), 0);
       };
     }
   }
-  var _task = {
-    set: setTask,
-    clear: clearTask
+
+  var task = {
+    set: set$1,
+    clear: clear
   };
 
-  var macrotask = _task.set;
-  var Observer = _global.MutationObserver || _global.WebKitMutationObserver;
-  var process$1 = _global.process;
-  var Promise$1 = _global.Promise;
-  var isNode = _cof(process$1) == 'process';
+  var getOwnPropertyDescriptor$3 = objectGetOwnPropertyDescriptor.f;
+  var macrotask = task.set;
 
-  var _microtask = function () {
-    var head, last, notify;
 
-    var flush = function () {
+
+  var MutationObserver$1 = global_1.MutationObserver || global_1.WebKitMutationObserver;
+  var document$2 = global_1.document;
+  var process$2 = global_1.process;
+  var Promise$1 = global_1.Promise;
+  // Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
+  var queueMicrotaskDescriptor = getOwnPropertyDescriptor$3(global_1, 'queueMicrotask');
+  var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
+
+  var flush, head, last, notify, toggle, node, promise, then;
+
+  // modern engines have queueMicrotask method
+  if (!queueMicrotask) {
+    flush = function () {
       var parent, fn;
-      if (isNode && (parent = process$1.domain)) parent.exit();
+      if (engineIsNode && (parent = process$2.domain)) parent.exit();
       while (head) {
         fn = head.fn;
         head = head.next;
         try {
           fn();
-        } catch (e) {
+        } catch (error) {
           if (head) notify();
           else last = undefined;
-          throw e;
+          throw error;
         }
       } last = undefined;
       if (parent) parent.enter();
     };
 
-    // Node.js
-    if (isNode) {
-      notify = function () {
-        process$1.nextTick(flush);
-      };
-    // browsers with MutationObserver, except iOS Safari - https://github.com/zloirock/core-js/issues/339
-    } else if (Observer && !(_global.navigator && _global.navigator.standalone)) {
-      var toggle = true;
-      var node = document.createTextNode('');
-      new Observer(flush).observe(node, { characterData: true }); // eslint-disable-line no-new
+    // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+    if (!engineIsIos && !engineIsNode && MutationObserver$1 && document$2) {
+      toggle = true;
+      node = document$2.createTextNode('');
+      new MutationObserver$1(flush).observe(node, { characterData: true });
       notify = function () {
         node.data = toggle = !toggle;
       };
     // environments with maybe non-completely correct, but existent Promise
     } else if (Promise$1 && Promise$1.resolve) {
       // Promise.resolve without an argument throws an error in LG WebOS 2
-      var promise = Promise$1.resolve(undefined);
+      promise = Promise$1.resolve(undefined);
+      then = promise.then;
       notify = function () {
-        promise.then(flush);
+        then.call(promise, flush);
+      };
+    // Node.js without promises
+    } else if (engineIsNode) {
+      notify = function () {
+        process$2.nextTick(flush);
       };
     // for other environments - macrotask based on:
     // - setImmediate
@@ -2750,122 +6173,144 @@ typeof navigator === "object" && (function (global, factory) {
     } else {
       notify = function () {
         // strange IE + webpack dev server bug - use .call(global)
-        macrotask.call(_global, flush);
+        macrotask.call(global_1, flush);
       };
     }
+  }
 
-    return function (fn) {
-      var task = { fn: fn, next: undefined };
-      if (last) last.next = task;
-      if (!head) {
-        head = task;
-        notify();
-      } last = task;
-    };
+  var microtask = queueMicrotask || function (fn) {
+    var task = { fn: fn, next: undefined };
+    if (last) last.next = task;
+    if (!head) {
+      head = task;
+      notify();
+    } last = task;
   };
 
-  // 25.4.1.5 NewPromiseCapability(C)
-
-
-  function PromiseCapability(C) {
+  var PromiseCapability = function (C) {
     var resolve, reject;
     this.promise = new C(function ($$resolve, $$reject) {
       if (resolve !== undefined || reject !== undefined) throw TypeError('Bad Promise constructor');
       resolve = $$resolve;
       reject = $$reject;
     });
-    this.resolve = _aFunction(resolve);
-    this.reject = _aFunction(reject);
-  }
+    this.resolve = aFunction$1(resolve);
+    this.reject = aFunction$1(reject);
+  };
 
-  var f$5 = function (C) {
+  // 25.4.1.5 NewPromiseCapability(C)
+  var f$7 = function (C) {
     return new PromiseCapability(C);
   };
 
-  var _newPromiseCapability = {
-  	f: f$5
+  var newPromiseCapability = {
+  	f: f$7
   };
 
-  var _perform = function (exec) {
-    try {
-      return { e: false, v: exec() };
-    } catch (e) {
-      return { e: true, v: e };
-    }
-  };
-
-  var navigator$1 = _global.navigator;
-
-  var _userAgent = navigator$1 && navigator$1.userAgent || '';
-
-  var _promiseResolve = function (C, x) {
-    _anObject(C);
-    if (_isObject(x) && x.constructor === C) return x;
-    var promiseCapability = _newPromiseCapability.f(C);
+  var promiseResolve = function (C, x) {
+    anObject(C);
+    if (isObject(x) && x.constructor === C) return x;
+    var promiseCapability = newPromiseCapability.f(C);
     var resolve = promiseCapability.resolve;
     resolve(x);
     return promiseCapability.promise;
   };
 
-  var SPECIES$3 = _wks('species');
-
-  var _setSpecies = function (KEY) {
-    var C = _global[KEY];
-    if (_descriptors && C && !C[SPECIES$3]) _objectDp.f(C, SPECIES$3, {
-      configurable: true,
-      get: function () { return this; }
-    });
+  var hostReportErrors = function (a, b) {
+    var console = global_1.console;
+    if (console && console.error) {
+      arguments.length === 1 ? console.error(a) : console.error(a, b);
+    }
   };
 
-  var task = _task.set;
-  var microtask = _microtask();
-
-
-
-
-  var PROMISE = 'Promise';
-  var TypeError$1 = _global.TypeError;
-  var process$2 = _global.process;
-  var versions = process$2 && process$2.versions;
-  var v8 = versions && versions.v8 || '';
-  var $Promise = _global[PROMISE];
-  var isNode$1 = _classof(process$2) == 'process';
-  var empty = function () { /* empty */ };
-  var Internal, newGenericPromiseCapability, OwnPromiseCapability, Wrapper;
-  var newPromiseCapability = newGenericPromiseCapability = _newPromiseCapability.f;
-
-  var USE_NATIVE = !!function () {
+  var perform = function (exec) {
     try {
-      // correct subclassing with @@species support
-      var promise = $Promise.resolve(1);
-      var FakePromise = (promise.constructor = {})[_wks('species')] = function (exec) {
-        exec(empty, empty);
-      };
-      // unhandled rejections tracking support, NodeJS Promise without it fails @@species test
-      return (isNode$1 || typeof PromiseRejectionEvent == 'function')
-        && promise.then(empty) instanceof FakePromise
-        // v8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
-        // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
-        // we can't detect it synchronously, so just check versions
-        && v8.indexOf('6.6') !== 0
-        && _userAgent.indexOf('Chrome/66') === -1;
-    } catch (e) { /* empty */ }
-  }();
+      return { error: false, value: exec() };
+    } catch (error) {
+      return { error: true, value: error };
+    }
+  };
+
+  var task$1 = task.set;
+
+
+
+
+
+
+
+
+
+
+
+  var SPECIES$6 = wellKnownSymbol('species');
+  var PROMISE = 'Promise';
+  var getInternalState$3 = internalState.get;
+  var setInternalState$6 = internalState.set;
+  var getInternalPromiseState = internalState.getterFor(PROMISE);
+  var PromiseConstructor = nativePromiseConstructor;
+  var TypeError$1 = global_1.TypeError;
+  var document$3 = global_1.document;
+  var process$3 = global_1.process;
+  var $fetch$1 = getBuiltIn('fetch');
+  var newPromiseCapability$1 = newPromiseCapability.f;
+  var newGenericPromiseCapability = newPromiseCapability$1;
+  var DISPATCH_EVENT = !!(document$3 && document$3.createEvent && global_1.dispatchEvent);
+  var NATIVE_REJECTION_EVENT = typeof PromiseRejectionEvent == 'function';
+  var UNHANDLED_REJECTION = 'unhandledrejection';
+  var REJECTION_HANDLED = 'rejectionhandled';
+  var PENDING = 0;
+  var FULFILLED = 1;
+  var REJECTED = 2;
+  var HANDLED = 1;
+  var UNHANDLED = 2;
+  var Internal, OwnPromiseCapability, PromiseWrapper, nativeThen;
+
+  var FORCED$3 = isForced_1(PROMISE, function () {
+    var GLOBAL_CORE_JS_PROMISE = inspectSource(PromiseConstructor) !== String(PromiseConstructor);
+    if (!GLOBAL_CORE_JS_PROMISE) {
+      // V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
+      // We can't detect it synchronously, so just check versions
+      if (engineV8Version === 66) return true;
+      // Unhandled rejections tracking support, NodeJS Promise without it fails @@species test
+      if (!engineIsNode && !NATIVE_REJECTION_EVENT) return true;
+    }
+    // We can't use @@species feature detection in V8 since it causes
+    // deoptimization and performance degradation
+    // https://github.com/zloirock/core-js/issues/679
+    if (engineV8Version >= 51 && /native code/.test(PromiseConstructor)) return false;
+    // Detect correctness of subclassing with @@species support
+    var promise = PromiseConstructor.resolve(1);
+    var FakePromise = function (exec) {
+      exec(function () { /* empty */ }, function () { /* empty */ });
+    };
+    var constructor = promise.constructor = {};
+    constructor[SPECIES$6] = FakePromise;
+    return !(promise.then(function () { /* empty */ }) instanceof FakePromise);
+  });
+
+  var INCORRECT_ITERATION$1 = FORCED$3 || !checkCorrectnessOfIteration(function (iterable) {
+    PromiseConstructor.all(iterable)['catch'](function () { /* empty */ });
+  });
 
   // helpers
   var isThenable = function (it) {
     var then;
-    return _isObject(it) && typeof (then = it.then) == 'function' ? then : false;
+    return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
   };
-  var notify = function (promise, isReject) {
-    if (promise._n) return;
-    promise._n = true;
-    var chain = promise._c;
+
+  var notify$1 = function (state, isReject) {
+    if (state.notified) return;
+    state.notified = true;
+    var chain = state.reactions;
     microtask(function () {
-      var value = promise._v;
-      var ok = promise._s == 1;
-      var i = 0;
-      var run = function (reaction) {
+      var value = state.value;
+      var ok = state.state == FULFILLED;
+      var index = 0;
+      // variable length - can't use forEach
+      while (chain.length > index) {
+        var reaction = chain[index++];
         var handler = ok ? reaction.ok : reaction.fail;
         var resolve = reaction.resolve;
         var reject = reaction.reject;
@@ -2874,13 +6319,13 @@ typeof navigator === "object" && (function (global, factory) {
         try {
           if (handler) {
             if (!ok) {
-              if (promise._h == 2) onHandleUnhandled(promise);
-              promise._h = 1;
+              if (state.rejection === UNHANDLED) onHandleUnhandled(state);
+              state.rejection = HANDLED;
             }
             if (handler === true) result = value;
             else {
               if (domain) domain.enter();
-              result = handler(value); // may throw
+              result = handler(value); // can throw
               if (domain) {
                 domain.exit();
                 exited = true;
@@ -2892,314 +6337,381 @@ typeof navigator === "object" && (function (global, factory) {
               then.call(result, resolve, reject);
             } else resolve(result);
           } else reject(value);
-        } catch (e) {
+        } catch (error) {
           if (domain && !exited) domain.exit();
-          reject(e);
+          reject(error);
         }
-      };
-      while (chain.length > i) run(chain[i++]); // variable length - can't use forEach
-      promise._c = [];
-      promise._n = false;
-      if (isReject && !promise._h) onUnhandled(promise);
+      }
+      state.reactions = [];
+      state.notified = false;
+      if (isReject && !state.rejection) onUnhandled(state);
     });
   };
-  var onUnhandled = function (promise) {
-    task.call(_global, function () {
-      var value = promise._v;
-      var unhandled = isUnhandled(promise);
-      var result, handler, console;
-      if (unhandled) {
-        result = _perform(function () {
-          if (isNode$1) {
-            process$2.emit('unhandledRejection', value, promise);
-          } else if (handler = _global.onunhandledrejection) {
-            handler({ promise: promise, reason: value });
-          } else if ((console = _global.console) && console.error) {
-            console.error('Unhandled promise rejection', value);
-          }
+
+  var dispatchEvent = function (name, promise, reason) {
+    var event, handler;
+    if (DISPATCH_EVENT) {
+      event = document$3.createEvent('Event');
+      event.promise = promise;
+      event.reason = reason;
+      event.initEvent(name, false, true);
+      global_1.dispatchEvent(event);
+    } else event = { promise: promise, reason: reason };
+    if (!NATIVE_REJECTION_EVENT && (handler = global_1['on' + name])) handler(event);
+    else if (name === UNHANDLED_REJECTION) hostReportErrors('Unhandled promise rejection', reason);
+  };
+
+  var onUnhandled = function (state) {
+    task$1.call(global_1, function () {
+      var promise = state.facade;
+      var value = state.value;
+      var IS_UNHANDLED = isUnhandled(state);
+      var result;
+      if (IS_UNHANDLED) {
+        result = perform(function () {
+          if (engineIsNode) {
+            process$3.emit('unhandledRejection', value, promise);
+          } else dispatchEvent(UNHANDLED_REJECTION, promise, value);
         });
         // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
-        promise._h = isNode$1 || isUnhandled(promise) ? 2 : 1;
-      } promise._a = undefined;
-      if (unhandled && result.e) throw result.v;
-    });
-  };
-  var isUnhandled = function (promise) {
-    return promise._h !== 1 && (promise._a || promise._c).length === 0;
-  };
-  var onHandleUnhandled = function (promise) {
-    task.call(_global, function () {
-      var handler;
-      if (isNode$1) {
-        process$2.emit('rejectionHandled', promise);
-      } else if (handler = _global.onrejectionhandled) {
-        handler({ promise: promise, reason: promise._v });
+        state.rejection = engineIsNode || isUnhandled(state) ? UNHANDLED : HANDLED;
+        if (result.error) throw result.value;
       }
     });
   };
-  var $reject = function (value) {
-    var promise = this;
-    if (promise._d) return;
-    promise._d = true;
-    promise = promise._w || promise; // unwrap
-    promise._v = value;
-    promise._s = 2;
-    if (!promise._a) promise._a = promise._c.slice();
-    notify(promise, true);
+
+  var isUnhandled = function (state) {
+    return state.rejection !== HANDLED && !state.parent;
   };
-  var $resolve = function (value) {
-    var promise = this;
-    var then;
-    if (promise._d) return;
-    promise._d = true;
-    promise = promise._w || promise; // unwrap
+
+  var onHandleUnhandled = function (state) {
+    task$1.call(global_1, function () {
+      var promise = state.facade;
+      if (engineIsNode) {
+        process$3.emit('rejectionHandled', promise);
+      } else dispatchEvent(REJECTION_HANDLED, promise, state.value);
+    });
+  };
+
+  var bind = function (fn, state, unwrap) {
+    return function (value) {
+      fn(state, value, unwrap);
+    };
+  };
+
+  var internalReject = function (state, value, unwrap) {
+    if (state.done) return;
+    state.done = true;
+    if (unwrap) state = unwrap;
+    state.value = value;
+    state.state = REJECTED;
+    notify$1(state, true);
+  };
+
+  var internalResolve = function (state, value, unwrap) {
+    if (state.done) return;
+    state.done = true;
+    if (unwrap) state = unwrap;
     try {
-      if (promise === value) throw TypeError$1("Promise can't be resolved itself");
-      if (then = isThenable(value)) {
+      if (state.facade === value) throw TypeError$1("Promise can't be resolved itself");
+      var then = isThenable(value);
+      if (then) {
         microtask(function () {
-          var wrapper = { _w: promise, _d: false }; // wrap
+          var wrapper = { done: false };
           try {
-            then.call(value, _ctx($resolve, wrapper, 1), _ctx($reject, wrapper, 1));
-          } catch (e) {
-            $reject.call(wrapper, e);
+            then.call(value,
+              bind(internalResolve, wrapper, state),
+              bind(internalReject, wrapper, state)
+            );
+          } catch (error) {
+            internalReject(wrapper, error, state);
           }
         });
       } else {
-        promise._v = value;
-        promise._s = 1;
-        notify(promise, false);
+        state.value = value;
+        state.state = FULFILLED;
+        notify$1(state, false);
       }
-    } catch (e) {
-      $reject.call({ _w: promise, _d: false }, e); // wrap
+    } catch (error) {
+      internalReject({ done: false }, error, state);
     }
   };
 
   // constructor polyfill
-  if (!USE_NATIVE) {
+  if (FORCED$3) {
     // 25.4.3.1 Promise(executor)
-    $Promise = function Promise(executor) {
-      _anInstance(this, $Promise, PROMISE, '_h');
-      _aFunction(executor);
+    PromiseConstructor = function Promise(executor) {
+      anInstance(this, PromiseConstructor, PROMISE);
+      aFunction$1(executor);
       Internal.call(this);
+      var state = getInternalState$3(this);
       try {
-        executor(_ctx($resolve, this, 1), _ctx($reject, this, 1));
-      } catch (err) {
-        $reject.call(this, err);
+        executor(bind(internalResolve, state), bind(internalReject, state));
+      } catch (error) {
+        internalReject(state, error);
       }
     };
     // eslint-disable-next-line no-unused-vars
     Internal = function Promise(executor) {
-      this._c = [];             // <- awaiting reactions
-      this._a = undefined;      // <- checked in isUnhandled reactions
-      this._s = 0;              // <- state
-      this._d = false;          // <- done
-      this._v = undefined;      // <- value
-      this._h = 0;              // <- rejection state, 0 - default, 1 - handled, 2 - unhandled
-      this._n = false;          // <- notify
+      setInternalState$6(this, {
+        type: PROMISE,
+        done: false,
+        notified: false,
+        parent: false,
+        reactions: [],
+        rejection: false,
+        state: PENDING,
+        value: undefined
+      });
     };
-    Internal.prototype = _redefineAll($Promise.prototype, {
-      // 25.4.5.3 Promise.prototype.then(onFulfilled, onRejected)
+    Internal.prototype = redefineAll(PromiseConstructor.prototype, {
+      // `Promise.prototype.then` method
+      // https://tc39.github.io/ecma262/#sec-promise.prototype.then
       then: function then(onFulfilled, onRejected) {
-        var reaction = newPromiseCapability(_speciesConstructor(this, $Promise));
+        var state = getInternalPromiseState(this);
+        var reaction = newPromiseCapability$1(speciesConstructor(this, PromiseConstructor));
         reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
         reaction.fail = typeof onRejected == 'function' && onRejected;
-        reaction.domain = isNode$1 ? process$2.domain : undefined;
-        this._c.push(reaction);
-        if (this._a) this._a.push(reaction);
-        if (this._s) notify(this, false);
+        reaction.domain = engineIsNode ? process$3.domain : undefined;
+        state.parent = true;
+        state.reactions.push(reaction);
+        if (state.state != PENDING) notify$1(state, false);
         return reaction.promise;
       },
-      // 25.4.5.1 Promise.prototype.catch(onRejected)
+      // `Promise.prototype.catch` method
+      // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
       'catch': function (onRejected) {
         return this.then(undefined, onRejected);
       }
     });
     OwnPromiseCapability = function () {
       var promise = new Internal();
+      var state = getInternalState$3(promise);
       this.promise = promise;
-      this.resolve = _ctx($resolve, promise, 1);
-      this.reject = _ctx($reject, promise, 1);
+      this.resolve = bind(internalResolve, state);
+      this.reject = bind(internalReject, state);
     };
-    _newPromiseCapability.f = newPromiseCapability = function (C) {
-      return C === $Promise || C === Wrapper
+    newPromiseCapability.f = newPromiseCapability$1 = function (C) {
+      return C === PromiseConstructor || C === PromiseWrapper
         ? new OwnPromiseCapability(C)
         : newGenericPromiseCapability(C);
     };
+
+    if ( typeof nativePromiseConstructor == 'function') {
+      nativeThen = nativePromiseConstructor.prototype.then;
+
+      // wrap native Promise#then for native async functions
+      redefine(nativePromiseConstructor.prototype, 'then', function then(onFulfilled, onRejected) {
+        var that = this;
+        return new PromiseConstructor(function (resolve, reject) {
+          nativeThen.call(that, resolve, reject);
+        }).then(onFulfilled, onRejected);
+      // https://github.com/zloirock/core-js/issues/640
+      }, { unsafe: true });
+
+      // wrap fetch result
+      if (typeof $fetch$1 == 'function') _export({ global: true, enumerable: true, forced: true }, {
+        // eslint-disable-next-line no-unused-vars
+        fetch: function fetch(input /* , init */) {
+          return promiseResolve(PromiseConstructor, $fetch$1.apply(global_1, arguments));
+        }
+      });
+    }
   }
 
-  _export(_export.G + _export.W + _export.F * !USE_NATIVE, { Promise: $Promise });
-  _setToStringTag($Promise, PROMISE);
-  _setSpecies(PROMISE);
-  Wrapper = _core[PROMISE];
+  _export({ global: true, wrap: true, forced: FORCED$3 }, {
+    Promise: PromiseConstructor
+  });
+
+  setToStringTag(PromiseConstructor, PROMISE, false);
+  setSpecies(PROMISE);
+
+  PromiseWrapper = getBuiltIn(PROMISE);
 
   // statics
-  _export(_export.S + _export.F * !USE_NATIVE, PROMISE, {
-    // 25.4.4.5 Promise.reject(r)
+  _export({ target: PROMISE, stat: true, forced: FORCED$3 }, {
+    // `Promise.reject` method
+    // https://tc39.github.io/ecma262/#sec-promise.reject
     reject: function reject(r) {
-      var capability = newPromiseCapability(this);
-      var $$reject = capability.reject;
-      $$reject(r);
+      var capability = newPromiseCapability$1(this);
+      capability.reject.call(undefined, r);
       return capability.promise;
     }
   });
-  _export(_export.S + _export.F * (_library || !USE_NATIVE), PROMISE, {
-    // 25.4.4.6 Promise.resolve(x)
+
+  _export({ target: PROMISE, stat: true, forced:  FORCED$3 }, {
+    // `Promise.resolve` method
+    // https://tc39.github.io/ecma262/#sec-promise.resolve
     resolve: function resolve(x) {
-      return _promiseResolve(_library && this === Wrapper ? $Promise : this, x);
+      return promiseResolve( this, x);
     }
   });
-  _export(_export.S + _export.F * !(USE_NATIVE && _iterDetect(function (iter) {
-    $Promise.all(iter)['catch'](empty);
-  })), PROMISE, {
-    // 25.4.4.1 Promise.all(iterable)
+
+  _export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION$1 }, {
+    // `Promise.all` method
+    // https://tc39.github.io/ecma262/#sec-promise.all
     all: function all(iterable) {
       var C = this;
-      var capability = newPromiseCapability(C);
+      var capability = newPromiseCapability$1(C);
       var resolve = capability.resolve;
       var reject = capability.reject;
-      var result = _perform(function () {
+      var result = perform(function () {
+        var $promiseResolve = aFunction$1(C.resolve);
         var values = [];
-        var index = 0;
+        var counter = 0;
         var remaining = 1;
-        _forOf(iterable, false, function (promise) {
-          var $index = index++;
+        iterate(iterable, function (promise) {
+          var index = counter++;
           var alreadyCalled = false;
           values.push(undefined);
           remaining++;
-          C.resolve(promise).then(function (value) {
+          $promiseResolve.call(C, promise).then(function (value) {
             if (alreadyCalled) return;
             alreadyCalled = true;
-            values[$index] = value;
+            values[index] = value;
             --remaining || resolve(values);
           }, reject);
         });
         --remaining || resolve(values);
       });
-      if (result.e) reject(result.v);
+      if (result.error) reject(result.value);
       return capability.promise;
     },
-    // 25.4.4.4 Promise.race(iterable)
+    // `Promise.race` method
+    // https://tc39.github.io/ecma262/#sec-promise.race
     race: function race(iterable) {
       var C = this;
-      var capability = newPromiseCapability(C);
+      var capability = newPromiseCapability$1(C);
       var reject = capability.reject;
-      var result = _perform(function () {
-        _forOf(iterable, false, function (promise) {
-          C.resolve(promise).then(capability.resolve, reject);
+      var result = perform(function () {
+        var $promiseResolve = aFunction$1(C.resolve);
+        iterate(iterable, function (promise) {
+          $promiseResolve.call(C, promise).then(capability.resolve, reject);
         });
       });
-      if (result.e) reject(result.v);
+      if (result.error) reject(result.value);
       return capability.promise;
     }
   });
 
-  var STARTS_WITH = 'startsWith';
-  var $startsWith = ''[STARTS_WITH];
+  var getOwnPropertyDescriptor$4 = objectGetOwnPropertyDescriptor.f;
 
-  _export(_export.P + _export.F * _failsIsRegexp(STARTS_WITH), 'String', {
+
+
+
+
+
+  var nativeStartsWith = ''.startsWith;
+  var min$4 = Math.min;
+
+  var CORRECT_IS_REGEXP_LOGIC = correctIsRegexpLogic('startsWith');
+  // https://github.com/zloirock/core-js/pull/702
+  var MDN_POLYFILL_BUG =  !CORRECT_IS_REGEXP_LOGIC && !!function () {
+    var descriptor = getOwnPropertyDescriptor$4(String.prototype, 'startsWith');
+    return descriptor && !descriptor.writable;
+  }();
+
+  // `String.prototype.startsWith` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.startswith
+  _export({ target: 'String', proto: true, forced: !MDN_POLYFILL_BUG && !CORRECT_IS_REGEXP_LOGIC }, {
     startsWith: function startsWith(searchString /* , position = 0 */) {
-      var that = _stringContext(this, searchString, STARTS_WITH);
-      var index = _toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+      var that = String(requireObjectCoercible(this));
+      notARegexp(searchString);
+      var index = toLength(min$4(arguments.length > 1 ? arguments[1] : undefined, that.length));
       var search = String(searchString);
-      return $startsWith
-        ? $startsWith.call(that, search, index)
+      return nativeStartsWith
+        ? nativeStartsWith.call(that, search, index)
         : that.slice(index, index + search.length) === search;
-    }
-  });
-
-  // 20.1.2.4 Number.isNaN(number)
-
-
-  _export(_export.S, 'Number', {
-    isNaN: function isNaN(number) {
-      // eslint-disable-next-line no-self-compare
-      return number != number;
     }
   });
 
   // ==========================================================================
   // Type checking utils
   // ==========================================================================
-  var getConstructor = function getConstructor(input) {
+  var getConstructor$1 = function getConstructor(input) {
     return input !== null && typeof input !== 'undefined' ? input.constructor : null;
   };
 
-  var instanceOf = function instanceOf(input, constructor) {
+  var instanceOf$1 = function instanceOf(input, constructor) {
     return Boolean(input && constructor && input instanceof constructor);
   };
 
-  var isNullOrUndefined = function isNullOrUndefined(input) {
+  var isNullOrUndefined$1 = function isNullOrUndefined(input) {
     return input === null || typeof input === 'undefined';
   };
 
-  var isObject = function isObject(input) {
-    return getConstructor(input) === Object;
+  var isObject$2 = function isObject(input) {
+    return getConstructor$1(input) === Object;
   };
 
-  var isNumber = function isNumber(input) {
-    return getConstructor(input) === Number && !Number.isNaN(input);
+  var isNumber$1 = function isNumber(input) {
+    return getConstructor$1(input) === Number && !Number.isNaN(input);
   };
 
-  var isString = function isString(input) {
-    return getConstructor(input) === String;
+  var isString$1 = function isString(input) {
+    return getConstructor$1(input) === String;
   };
 
-  var isBoolean = function isBoolean(input) {
-    return getConstructor(input) === Boolean;
+  var isBoolean$1 = function isBoolean(input) {
+    return getConstructor$1(input) === Boolean;
   };
 
-  var isFunction = function isFunction(input) {
-    return getConstructor(input) === Function;
+  var isFunction$1 = function isFunction(input) {
+    return getConstructor$1(input) === Function;
   };
 
-  var isArray = function isArray(input) {
+  var isArray$2 = function isArray(input) {
     return Array.isArray(input);
   };
 
   var isWeakMap = function isWeakMap(input) {
-    return instanceOf(input, WeakMap);
+    return instanceOf$1(input, WeakMap);
   };
 
-  var isNodeList = function isNodeList(input) {
-    return instanceOf(input, NodeList);
+  var isNodeList$1 = function isNodeList(input) {
+    return instanceOf$1(input, NodeList);
   };
 
-  var isElement = function isElement(input) {
-    return instanceOf(input, Element);
+  var isElement$1 = function isElement(input) {
+    return instanceOf$1(input, Element);
   };
 
   var isTextNode = function isTextNode(input) {
-    return getConstructor(input) === Text;
+    return getConstructor$1(input) === Text;
   };
 
-  var isEvent = function isEvent(input) {
-    return instanceOf(input, Event);
+  var isEvent$1 = function isEvent(input) {
+    return instanceOf$1(input, Event);
   };
 
   var isKeyboardEvent = function isKeyboardEvent(input) {
-    return instanceOf(input, KeyboardEvent);
+    return instanceOf$1(input, KeyboardEvent);
   };
 
   var isCue = function isCue(input) {
-    return instanceOf(input, window.TextTrackCue) || instanceOf(input, window.VTTCue);
+    return instanceOf$1(input, window.TextTrackCue) || instanceOf$1(input, window.VTTCue);
   };
 
   var isTrack = function isTrack(input) {
-    return instanceOf(input, TextTrack) || !isNullOrUndefined(input) && isString(input.kind);
+    return instanceOf$1(input, TextTrack) || !isNullOrUndefined$1(input) && isString$1(input.kind);
   };
 
-  var isEmpty = function isEmpty(input) {
-    return isNullOrUndefined(input) || (isString(input) || isArray(input) || isNodeList(input)) && !input.length || isObject(input) && !Object.keys(input).length;
+  var isPromise = function isPromise(input) {
+    return instanceOf$1(input, Promise) && isFunction$1(input.then);
+  };
+
+  var isEmpty$1 = function isEmpty(input) {
+    return isNullOrUndefined$1(input) || (isString$1(input) || isArray$2(input) || isNodeList$1(input)) && !input.length || isObject$2(input) && !Object.keys(input).length;
   };
 
   var isUrl = function isUrl(input) {
     // Accept a URL object
-    if (instanceOf(input, window.URL)) {
+    if (instanceOf$1(input, window.URL)) {
       return true;
     } // Must be string from here
 
 
-    if (!isString(input)) {
+    if (!isString$1(input)) {
       return false;
     } // Add the protocol if required
 
@@ -3211,176 +6723,173 @@ typeof navigator === "object" && (function (global, factory) {
     }
 
     try {
-      return !isEmpty(new URL(string).hostname);
+      return !isEmpty$1(new URL(string).hostname);
     } catch (e) {
       return false;
     }
   };
 
   var is$1 = {
-    nullOrUndefined: isNullOrUndefined,
-    object: isObject,
-    number: isNumber,
-    string: isString,
-    boolean: isBoolean,
-    function: isFunction,
-    array: isArray,
+    nullOrUndefined: isNullOrUndefined$1,
+    object: isObject$2,
+    number: isNumber$1,
+    string: isString$1,
+    boolean: isBoolean$1,
+    function: isFunction$1,
+    array: isArray$2,
     weakMap: isWeakMap,
-    nodeList: isNodeList,
-    element: isElement,
+    nodeList: isNodeList$1,
+    element: isElement$1,
     textNode: isTextNode,
-    event: isEvent,
+    event: isEvent$1,
     keyboardEvent: isKeyboardEvent,
     cue: isCue,
     track: isTrack,
+    promise: isPromise,
     url: isUrl,
-    empty: isEmpty
+    empty: isEmpty$1
   };
 
-  // https://github.com/WICG/EventListenerOptions/blob/gh-pages/explainer.md
-  // https://www.youtube.com/watch?v=NPM6172J22g
-
-  var supportsPassiveListeners = function () {
-    // Test via a getter in the options object to see if the passive property is accessed
-    var supported = false;
-
-    try {
-      var options = Object.defineProperty({}, 'passive', {
-        get: function get() {
-          supported = true;
-          return null;
-        }
-      });
-      window.addEventListener('test', null, options);
-      window.removeEventListener('test', null, options);
-    } catch (e) {// Do nothing
-    }
-
-    return supported;
-  }(); // Toggle event listener
-
-
-  function toggleListener(element, event, callback) {
-    var _this = this;
-
-    var toggle = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
-    var passive = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
-    var capture = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
-
-    // Bail if no element, event, or callback
-    if (!element || !('addEventListener' in element) || is$1.empty(event) || !is$1.function(callback)) {
-      return;
-    } // Allow multiple events
-
-
-    var events = event.split(' '); // Build options
-    // Default to just the capture boolean for browsers with no passive listener support
-
-    var options = capture; // If passive events listeners are supported
-
-    if (supportsPassiveListeners) {
-      options = {
-        // Whether the listener can be passive (i.e. default never prevented)
-        passive: passive,
-        // Whether the listener is a capturing listener or not
-        capture: capture
-      };
-    } // If a single node is passed, bind the event listener
-
-
-    events.forEach(function (type) {
-      if (_this && _this.eventListeners && toggle) {
-        // Cache event listener
-        _this.eventListeners.push({
-          element: element,
-          type: type,
-          callback: callback,
-          options: options
-        });
-      }
-
-      element[toggle ? 'addEventListener' : 'removeEventListener'](type, callback, options);
+  var transitionEndEvent = function () {
+    var element = document.createElement('span');
+    var events = {
+      WebkitTransition: 'webkitTransitionEnd',
+      MozTransition: 'transitionend',
+      OTransition: 'oTransitionEnd otransitionend',
+      transition: 'transitionend'
+    };
+    var type = Object.keys(events).find(function (event) {
+      return element.style[event] !== undefined;
     });
-  } // Bind event handler
+    return is$1.string(type) ? events[type] : false;
+  }(); // Force repaint of element
 
-  function on(element) {
-    var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    var callback = arguments.length > 2 ? arguments[2] : undefined;
-    var passive = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-    var capture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
-    toggleListener.call(this, element, events, callback, true, passive, capture);
-  } // Unbind event handler
+  function repaint(element, delay) {
+    setTimeout(function () {
+      try {
+        // eslint-disable-next-line no-param-reassign
+        element.hidden = true; // eslint-disable-next-line no-unused-expressions
 
-  function off(element) {
-    var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    var callback = arguments.length > 2 ? arguments[2] : undefined;
-    var passive = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-    var capture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
-    toggleListener.call(this, element, events, callback, false, passive, capture);
-  } // Bind once-only event handler
+        element.offsetHeight; // eslint-disable-next-line no-param-reassign
 
-  function once(element) {
-    var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    var callback = arguments.length > 2 ? arguments[2] : undefined;
-    var passive = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-    var capture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
-
-    function onceCallback() {
-      off(element, events, onceCallback, passive, capture);
-
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+        element.hidden = false;
+      } catch (e) {// Do nothing
       }
-
-      callback.apply(this, args);
-    }
-
-    toggleListener.call(this, element, events, onceCallback, true, passive, capture);
-  } // Trigger event
-
-  function triggerEvent(element) {
-    var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    var bubbles = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-    var detail = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-
-    // Bail if no element
-    if (!is$1.element(element) || is$1.empty(type)) {
-      return;
-    } // Create and dispatch the event
-
-
-    var event = new CustomEvent(type, {
-      bubbles: bubbles,
-      detail: Object.assign({}, detail, {
-        plyr: this
-      })
-    }); // Dispatch the event
-
-    element.dispatchEvent(event);
-  } // Unbind all cached event listeners
-
-  function unbindListeners() {
-    if (this && this.eventListeners) {
-      this.eventListeners.forEach(function (item) {
-        var element = item.element,
-            type = item.type,
-            callback = item.callback,
-            options = item.options;
-        element.removeEventListener(type, callback, options);
-      });
-      this.eventListeners = [];
-    }
-  } // Run method when / if player is ready
-
-  function ready() {
-    var _this2 = this;
-
-    return new Promise(function (resolve) {
-      return _this2.ready ? setTimeout(resolve, 0) : on.call(_this2, _this2.elements.container, 'ready', resolve);
-    }).then(function () {});
+    }, delay);
   }
 
-  function wrap(elements, wrapper) {
+  // ==========================================================================
+  // Browser sniffing
+  // Unfortunately, due to mixed support, UA sniffing is required
+  // ==========================================================================
+  var browser = {
+    isIE:
+    /* @cc_on!@ */
+     !!document.documentMode,
+    isEdge: window.navigator.userAgent.includes('Edge'),
+    isWebkit: 'WebkitAppearance' in document.documentElement.style && !/Edge/.test(navigator.userAgent),
+    isIPhone: /(iPhone|iPod)/gi.test(navigator.platform),
+    isIos: /(iPad|iPhone|iPod)/gi.test(navigator.platform)
+  };
+
+  // `Array.prototype.{ reduce, reduceRight }` methods implementation
+  var createMethod$5 = function (IS_RIGHT) {
+    return function (that, callbackfn, argumentsLength, memo) {
+      aFunction$1(callbackfn);
+      var O = toObject(that);
+      var self = indexedObject(O);
+      var length = toLength(O.length);
+      var index = IS_RIGHT ? length - 1 : 0;
+      var i = IS_RIGHT ? -1 : 1;
+      if (argumentsLength < 2) while (true) {
+        if (index in self) {
+          memo = self[index];
+          index += i;
+          break;
+        }
+        index += i;
+        if (IS_RIGHT ? index < 0 : length <= index) {
+          throw TypeError('Reduce of empty array with no initial value');
+        }
+      }
+      for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
+        memo = callbackfn(memo, self[index], index, O);
+      }
+      return memo;
+    };
+  };
+
+  var arrayReduce = {
+    // `Array.prototype.reduce` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+    left: createMethod$5(false),
+    // `Array.prototype.reduceRight` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
+    right: createMethod$5(true)
+  };
+
+  var $reduce = arrayReduce.left;
+
+
+
+
+
+  var STRICT_METHOD$5 = arrayMethodIsStrict('reduce');
+  var USES_TO_LENGTH$9 = arrayMethodUsesToLength('reduce', { 1: 0 });
+  // Chrome 80-82 has a critical bug
+  // https://bugs.chromium.org/p/chromium/issues/detail?id=1049982
+  var CHROME_BUG = !engineIsNode && engineV8Version > 79 && engineV8Version < 83;
+
+  // `Array.prototype.reduce` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+  _export({ target: 'Array', proto: true, forced: !STRICT_METHOD$5 || !USES_TO_LENGTH$9 || CHROME_BUG }, {
+    reduce: function reduce(callbackfn /* , initialValue */) {
+      return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  function cloneDeep(object) {
+    return JSON.parse(JSON.stringify(object));
+  } // Get a nested value in an object
+
+  function getDeep(object, path) {
+    return path.split('.').reduce(function (obj, key) {
+      return obj && obj[key];
+    }, object);
+  } // Deep extend destination object with N more objects
+
+  function extend() {
+    var target = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    for (var _len = arguments.length, sources = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      sources[_key - 1] = arguments[_key];
+    }
+
+    if (!sources.length) {
+      return target;
+    }
+
+    var source = sources.shift();
+
+    if (!is$1.object(source)) {
+      return target;
+    }
+
+    Object.keys(source).forEach(function (key) {
+      if (is$1.object(source[key])) {
+        if (!Object.keys(target).includes(key)) {
+          Object.assign(target, _defineProperty({}, key, {}));
+        }
+
+        extend(target[key], source[key]);
+      } else {
+        Object.assign(target, _defineProperty({}, key, source[key]));
+      }
+    });
+    return extend.apply(void 0, [target].concat(sources));
+  }
+
+  function wrap$1(elements, wrapper) {
     // Convert `elements` to an array, if necessary.
     var targets = elements.length ? elements : [elements]; // Loops backwards to prevent having to clone the wrapper on the
     // first element (see `child` below).
@@ -3503,7 +7012,7 @@ typeof navigator === "object" && (function (global, factory) {
     }
 
     var attributes = {};
-    var existing = existingAttributes;
+    var existing = extend({}, existingAttributes);
     sel.split(',').forEach(function (s) {
       // Remove whitespace
       var selector = s.trim();
@@ -3511,7 +7020,10 @@ typeof navigator === "object" && (function (global, factory) {
       var stripped = selector.replace(/[[\]]/g, ''); // Get the parts and value
 
       var parts = stripped.split('=');
-      var key = parts[0];
+
+      var _parts = _slicedToArray(parts, 1),
+          key = _parts[0];
+
       var value = parts.length > 1 ? parts[1].replace(/["']/g, '') : ''; // Get the first character
 
       var start = selector.charAt(0);
@@ -3519,11 +7031,12 @@ typeof navigator === "object" && (function (global, factory) {
       switch (start) {
         case '.':
           // Add to existing classname
-          if (is$1.object(existing) && is$1.string(existing.class)) {
-            existing.class += " ".concat(className);
+          if (is$1.string(existing.class)) {
+            attributes.class = "".concat(existing.class, " ").concat(className);
+          } else {
+            attributes.class = className;
           }
 
-          attributes.class = className;
           break;
 
         case '#':
@@ -3535,12 +7048,9 @@ typeof navigator === "object" && (function (global, factory) {
           // Attribute selector
           attributes[key] = value;
           break;
-
-        default:
-          break;
       }
     });
-    return attributes;
+    return extend(existing, attributes);
   } // Toggle hidden
 
   function toggleHidden(element, hidden) {
@@ -3552,13 +7062,10 @@ typeof navigator === "object" && (function (global, factory) {
 
     if (!is$1.boolean(hide)) {
       hide = !element.hidden;
-    }
+    } // eslint-disable-next-line no-param-reassign
 
-    if (hide) {
-      element.setAttribute('hidden', '');
-    } else {
-      element.removeAttribute('hidden');
-    }
+
+    element.hidden = hide;
   } // Mirror Element.classList.toggle, with IE compatibility for "force" argument
 
   function toggleClass(element, className, force) {
@@ -3586,14 +7093,35 @@ typeof navigator === "object" && (function (global, factory) {
     return is$1.element(element) && element.classList.contains(className);
   } // Element matches selector
 
-  function matches(element, selector) {
+  function matches$1(element, selector) {
+    var _Element = Element,
+        prototype = _Element.prototype;
 
     function match() {
       return Array.from(document.querySelectorAll(selector)).includes(this);
     }
 
-    var matches = match;
-    return matches.call(element, selector);
+    var method = prototype.matches || prototype.webkitMatchesSelector || prototype.mozMatchesSelector || prototype.msMatchesSelector || match;
+    return method.call(element, selector);
+  } // Closest ancestor element matching selector (also tests element itself)
+
+  function closest(element, selector) {
+    var _Element2 = Element,
+        prototype = _Element2.prototype; // https://developer.mozilla.org/en-US/docs/Web/API/Element/closest#Polyfill
+
+    function closestElement() {
+      var el = this;
+
+      do {
+        if (matches$1.matches(el, selector)) return el;
+        el = el.parentElement || el.parentNode;
+      } while (el !== null && el.nodeType === 1);
+
+      return null;
+    }
+
+    var method = prototype.closest || closestElement;
+    return method.call(element, selector);
   } // Find all elements
 
   function getElements(selector) {
@@ -3602,41 +7130,6 @@ typeof navigator === "object" && (function (global, factory) {
 
   function getElement(selector) {
     return this.elements.container.querySelector(selector);
-  } // Trap focus inside container
-
-  function trapFocus() {
-    var element = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-    var toggle = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    if (!is$1.element(element)) {
-      return;
-    }
-
-    var focusable = getElements.call(this, 'button:not(:disabled), input:not(:disabled), [tabindex]');
-    var first = focusable[0];
-    var last = focusable[focusable.length - 1];
-
-    var trap = function trap(event) {
-      // Bail if not tab key or not fullscreen
-      if (event.key !== 'Tab' || event.keyCode !== 9) {
-        return;
-      } // Get the current focused element
-
-
-      var focused = document.activeElement;
-
-      if (focused === last && !event.shiftKey) {
-        // Move focus to first element that can be tabbed if Shift isn't used
-        first.focus();
-        event.preventDefault();
-      } else if (focused === first && event.shiftKey) {
-        // Move focus to last element that can be tabbed if Shift is used
-        last.focus();
-        event.preventDefault();
-      }
-    };
-
-    toggleListener.call(this, this.elements.container, 'keydown', trap, toggle, false);
   } // Set focus and tab focus class
 
   function setFocus() {
@@ -3656,45 +7149,6 @@ typeof navigator === "object" && (function (global, factory) {
       toggleClass(element, this.config.classNames.tabFocus);
     }
   }
-
-  var transitionEndEvent = function () {
-    var element = document.createElement('span');
-    var events = {
-      WebkitTransition: 'webkitTransitionEnd',
-      MozTransition: 'transitionend',
-      OTransition: 'oTransitionEnd otransitionend',
-      transition: 'transitionend'
-    };
-    var type = Object.keys(events).find(function (event) {
-      return element.style[event] !== undefined;
-    });
-    return is$1.string(type) ? events[type] : false;
-  }(); // Force repaint of element
-
-  function repaint(element) {
-    setTimeout(function () {
-      try {
-        toggleHidden(element, true);
-        element.offsetHeight; // eslint-disable-line
-
-        toggleHidden(element, false);
-      } catch (e) {// Do nothing
-      }
-    }, 0);
-  }
-
-  // ==========================================================================
-  // Browser sniffing
-  // Unfortunately, due to mixed support, UA sniffing is required
-  // ==========================================================================
-  var browser = {
-    isIE:
-    /* @cc_on!@ */
-    !!document.documentMode,
-    isWebkit: 'WebkitAppearance' in document.documentElement.style && !/Edge/.test(navigator.userAgent),
-    isIPhone: /(iPhone|iPod)/gi.test(navigator.platform),
-    isIos: /(iPad|iPhone|iPod)/gi.test(navigator.platform)
-  };
 
   var defaultCodecs = {
     'audio/ogg': 'vorbis',
@@ -3749,12 +7203,16 @@ typeof navigator === "object" && (function (global, factory) {
     // Check for mime type support against a player instance
     // Credits: http://diveintohtml5.info/everything.html
     // Related: http://www.leanbackplayer.com/test/h5mt.html
-    mime: function mime(inputType) {
-      var _inputType$split = inputType.split('/'),
-          _inputType$split2 = _slicedToArray(_inputType$split, 1),
-          mediaType = _inputType$split2[0];
+    mime: function mime(input) {
+      if (is$1.empty(input)) {
+        return false;
+      }
 
-      var type = inputType; // Verify we're using HTML5 and there's no media type mismatch
+      var _input$split = input.split('/'),
+          _input$split2 = _slicedToArray(_input$split, 1),
+          mediaType = _input$split2[0];
+
+      var type = input; // Verify we're using HTML5 and there's no media type mismatch
 
       if (!this.isHTML5 || mediaType !== this.type) {
         return false;
@@ -3762,7 +7220,7 @@ typeof navigator === "object" && (function (global, factory) {
 
 
       if (Object.keys(defaultCodecs).includes(type)) {
-        type += "; codecs=\"".concat(defaultCodecs[inputType], "\"");
+        type += "; codecs=\"".concat(defaultCodecs[input], "\"");
       }
 
       try {
@@ -3789,6 +7247,251 @@ typeof navigator === "object" && (function (global, factory) {
     reducedMotion: 'matchMedia' in window && window.matchMedia('(prefers-reduced-motion)').matches
   };
 
+  // https://github.com/WICG/EventListenerOptions/blob/gh-pages/explainer.md
+  // https://www.youtube.com/watch?v=NPM6172J22g
+
+  var supportsPassiveListeners = function () {
+    // Test via a getter in the options object to see if the passive property is accessed
+    var supported = false;
+
+    try {
+      var options = Object.defineProperty({}, 'passive', {
+        get: function get() {
+          supported = true;
+          return null;
+        }
+      });
+      window.addEventListener('test', null, options);
+      window.removeEventListener('test', null, options);
+    } catch (e) {// Do nothing
+    }
+
+    return supported;
+  }(); // Toggle event listener
+
+
+  function toggleListener(element, event, callback) {
+    var _this = this;
+
+    var toggle = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+    var passive = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+    var capture = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
+
+    // Bail if no element, event, or callback
+    if (!element || !('addEventListener' in element) || is$1.empty(event) || !is$1.function(callback)) {
+      return;
+    } // Allow multiple events
+
+
+    var events = event.split(' '); // Build options
+    // Default to just the capture boolean for browsers with no passive listener support
+
+    var options = capture; // If passive events listeners are supported
+
+    if (supportsPassiveListeners) {
+      options = {
+        // Whether the listener can be passive (i.e. default never prevented)
+        passive: passive,
+        // Whether the listener is a capturing listener or not
+        capture: capture
+      };
+    } // If a single node is passed, bind the event listener
+
+
+    events.forEach(function (type) {
+      if (_this && _this.eventListeners && toggle) {
+        // Cache event listener
+        _this.eventListeners.push({
+          element: element,
+          type: type,
+          callback: callback,
+          options: options
+        });
+      }
+
+      element[toggle ? 'addEventListener' : 'removeEventListener'](type, callback, options);
+    });
+  } // Bind event handler
+
+  function on(element) {
+    var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var callback = arguments.length > 2 ? arguments[2] : undefined;
+    var passive = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+    var capture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+    toggleListener.call(this, element, events, callback, true, passive, capture);
+  } // Unbind event handler
+
+  function off(element) {
+    var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var callback = arguments.length > 2 ? arguments[2] : undefined;
+    var passive = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+    var capture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+    toggleListener.call(this, element, events, callback, false, passive, capture);
+  } // Bind once-only event handler
+
+  function once(element) {
+    var _this2 = this;
+
+    var events = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var callback = arguments.length > 2 ? arguments[2] : undefined;
+    var passive = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+    var capture = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+
+    var onceCallback = function onceCallback() {
+      off(element, events, onceCallback, passive, capture);
+
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      callback.apply(_this2, args);
+    };
+
+    toggleListener.call(this, element, events, onceCallback, true, passive, capture);
+  } // Trigger event
+
+  function triggerEvent(element) {
+    var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var bubbles = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    var detail = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+    // Bail if no element
+    if (!is$1.element(element) || is$1.empty(type)) {
+      return;
+    } // Create and dispatch the event
+
+
+    var event = new CustomEvent(type, {
+      bubbles: bubbles,
+      detail: _objectSpread2(_objectSpread2({}, detail), {}, {
+        plyr: this
+      })
+    }); // Dispatch the event
+
+    element.dispatchEvent(event);
+  } // Unbind all cached event listeners
+
+  function unbindListeners() {
+    if (this && this.eventListeners) {
+      this.eventListeners.forEach(function (item) {
+        var element = item.element,
+            type = item.type,
+            callback = item.callback,
+            options = item.options;
+        element.removeEventListener(type, callback, options);
+      });
+      this.eventListeners = [];
+    }
+  } // Run method when / if player is ready
+
+  function ready() {
+    var _this3 = this;
+
+    return new Promise(function (resolve) {
+      return _this3.ready ? setTimeout(resolve, 0) : on.call(_this3, _this3.elements.container, 'ready', resolve);
+    }).then(function () {});
+  }
+
+  /**
+   * Silence a Promise-like object.
+   * This is useful for avoiding non-harmful, but potentially confusing "uncaught
+   * play promise" rejection error messages.
+   * @param  {Object} value An object that may or may not be `Promise`-like.
+   */
+
+  function silencePromise(value) {
+    if (is$1.promise(value)) {
+      value.then(null, function () {});
+    }
+  }
+
+  function validateRatio(input) {
+    if (!is$1.array(input) && (!is$1.string(input) || !input.includes(':'))) {
+      return false;
+    }
+
+    var ratio = is$1.array(input) ? input : input.split(':');
+    return ratio.map(Number).every(is$1.number);
+  }
+  function reduceAspectRatio(ratio) {
+    if (!is$1.array(ratio) || !ratio.every(is$1.number)) {
+      return null;
+    }
+
+    var _ratio = _slicedToArray(ratio, 2),
+        width = _ratio[0],
+        height = _ratio[1];
+
+    var getDivider = function getDivider(w, h) {
+      return h === 0 ? w : getDivider(h, w % h);
+    };
+
+    var divider = getDivider(width, height);
+    return [width / divider, height / divider];
+  }
+  function getAspectRatio(input) {
+    var parse = function parse(ratio) {
+      return validateRatio(ratio) ? ratio.split(':').map(Number) : null;
+    }; // Try provided ratio
+
+
+    var ratio = parse(input); // Get from config
+
+    if (ratio === null) {
+      ratio = parse(this.config.ratio);
+    } // Get from embed
+
+
+    if (ratio === null && !is$1.empty(this.embed) && is$1.array(this.embed.ratio)) {
+      ratio = this.embed.ratio;
+    } // Get from HTML5 video
+
+
+    if (ratio === null && this.isHTML5) {
+      var _this$media = this.media,
+          videoWidth = _this$media.videoWidth,
+          videoHeight = _this$media.videoHeight;
+      ratio = reduceAspectRatio([videoWidth, videoHeight]);
+    }
+
+    return ratio;
+  } // Set aspect ratio for responsive container
+
+  function setAspectRatio(input) {
+    if (!this.isVideo) {
+      return {};
+    }
+
+    var wrapper = this.elements.wrapper;
+    var ratio = getAspectRatio.call(this, input);
+
+    var _ref = is$1.array(ratio) ? ratio : [0, 0],
+        _ref2 = _slicedToArray(_ref, 2),
+        w = _ref2[0],
+        h = _ref2[1];
+
+    var padding = 100 / w * h;
+    wrapper.style.paddingBottom = "".concat(padding, "%"); // For Vimeo we have an extra <div> to hide the standard controls and UI
+
+    if (this.isVimeo && !this.config.vimeo.premium && this.supported.ui) {
+      var height = 100 / this.media.offsetWidth * parseInt(window.getComputedStyle(this.media).paddingBottom, 10);
+      var offset = (height - padding) / (height / 50);
+
+      if (this.fullscreen.active) {
+        wrapper.style.paddingBottom = null;
+      } else {
+        this.media.style.transform = "translateY(-".concat(offset, "%)");
+      }
+    } else if (this.isHTML5) {
+      wrapper.classList.toggle(this.config.classNames.videoFixedRatio, ratio !== null);
+    }
+
+    return {
+      padding: padding,
+      ratio: ratio
+    };
+  }
+
   var html5 = {
     getSources: function getSources() {
       var _this = this;
@@ -3797,68 +7500,97 @@ typeof navigator === "object" && (function (global, factory) {
         return [];
       }
 
-      var sources = Array.from(this.media.querySelectorAll('source')); // Filter out unsupported sources
+      var sources = Array.from(this.media.querySelectorAll('source')); // Filter out unsupported sources (if type is specified)
 
       return sources.filter(function (source) {
-        return support.mime.call(_this, source.getAttribute('type'));
+        var type = source.getAttribute('type');
+
+        if (is$1.empty(type)) {
+          return true;
+        }
+
+        return support.mime.call(_this, type);
       });
     },
     // Get quality levels
     getQualityOptions: function getQualityOptions() {
-      // Get sizes from <source> elements
+      // Whether we're forcing all options (e.g. for streaming)
+      if (this.config.quality.forced) {
+        return this.config.quality.options;
+      } // Get sizes from <source> elements
+
+
       return html5.getSources.call(this).map(function (source) {
         return Number(source.getAttribute('size'));
       }).filter(Boolean);
     },
-    extend: function extend() {
+    setup: function setup() {
       if (!this.isHTML5) {
         return;
       }
 
-      var player = this; // Quality
+      var player = this; // Set speed options from config
+
+      player.options.speed = player.config.speed.options; // Set aspect ratio if fixed
+
+      if (!is$1.empty(this.config.ratio)) {
+        setAspectRatio.call(player);
+      } // Quality
+
 
       Object.defineProperty(player.media, 'quality', {
         get: function get() {
           // Get sources
           var sources = html5.getSources.call(player);
-          var source = sources.find(function (source) {
-            return source.getAttribute('src') === player.source;
+          var source = sources.find(function (s) {
+            return s.getAttribute('src') === player.source;
           }); // Return size, if match is found
 
           return source && Number(source.getAttribute('size'));
         },
         set: function set(input) {
-          // Get sources
-          var sources = html5.getSources.call(player); // Get first match for requested size
-
-          var source = sources.find(function (source) {
-            return Number(source.getAttribute('size')) === input;
-          }); // No matching source found
-
-          if (!source) {
+          if (player.quality === input) {
             return;
-          } // Get current state
+          } // If we're using an an external handler...
 
 
-          var _player$media = player.media,
-              currentTime = _player$media.currentTime,
-              paused = _player$media.paused,
-              preload = _player$media.preload,
-              readyState = _player$media.readyState; // Set new source
+          if (player.config.quality.forced && is$1.function(player.config.quality.onChange)) {
+            player.config.quality.onChange(input);
+          } else {
+            // Get sources
+            var sources = html5.getSources.call(player); // Get first match for requested size
 
-          player.media.src = source.getAttribute('src'); // Prevent loading if preload="none" and the current source isn't loaded (#1044)
+            var source = sources.find(function (s) {
+              return Number(s.getAttribute('size')) === input;
+            }); // No matching source found
 
-          if (preload !== 'none' || readyState) {
-            // Restore time
-            player.once('loadedmetadata', function () {
-              player.currentTime = currentTime; // Resume playing
+            if (!source) {
+              return;
+            } // Get current state
 
-              if (!paused) {
-                player.play();
-              }
-            }); // Load new source
 
-            player.media.load();
+            var _player$media = player.media,
+                currentTime = _player$media.currentTime,
+                paused = _player$media.paused,
+                preload = _player$media.preload,
+                readyState = _player$media.readyState,
+                playbackRate = _player$media.playbackRate; // Set new source
+
+            player.media.src = source.getAttribute('src'); // Prevent loading if preload="none" and the current source isn't loaded (#1044)
+
+            if (preload !== 'none' || readyState) {
+              // Restore time
+              player.once('loadedmetadata', function () {
+                player.speed = playbackRate;
+                player.currentTime = currentTime; // Resume playing
+
+                if (!paused) {
+                  silencePromise(player.play());
+                }
+              }); // Load new source
+
+              player.media.load();
+            }
           } // Trigger change event
 
 
@@ -3890,8 +7622,6 @@ typeof navigator === "object" && (function (global, factory) {
     }
   };
 
-  // ==========================================================================
-
   function dedupe(array) {
     if (!is$1.array(array)) {
       return array;
@@ -3902,7 +7632,7 @@ typeof navigator === "object" && (function (global, factory) {
     });
   } // Get the closest value in an array
 
-  function closest(array, value) {
+  function closest$1(array, value) {
     if (!is$1.array(array) || !array.length) {
       return null;
     }
@@ -3912,88 +7642,86 @@ typeof navigator === "object" && (function (global, factory) {
     });
   }
 
-  function cloneDeep(object) {
-    return JSON.parse(JSON.stringify(object));
-  } // Get a nested value in an object
-
-  function getDeep(object, path) {
-    return path.split('.').reduce(function (obj, key) {
-      return obj && obj[key];
-    }, object);
-  } // Deep extend destination object with N more objects
-
-  function extend() {
-    var target = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-    for (var _len = arguments.length, sources = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      sources[_key - 1] = arguments[_key];
-    }
-
-    if (!sources.length) {
-      return target;
-    }
-
-    var source = sources.shift();
-
-    if (!is$1.object(source)) {
-      return target;
-    }
-
-    Object.keys(source).forEach(function (key) {
-      if (is$1.object(source[key])) {
-        if (!Object.keys(target).includes(key)) {
-          Object.assign(target, _defineProperty({}, key, {}));
-        }
-
-        extend(target[key], source[key]);
-      } else {
-        Object.assign(target, _defineProperty({}, key, source[key]));
-      }
-    });
-    return extend.apply(void 0, [target].concat(sources));
-  }
-
-  var dP$2 = _objectDp.f;
-  var gOPN$1 = _objectGopn.f;
+  var defineProperty$6 = objectDefineProperty.f;
+  var getOwnPropertyNames$1 = objectGetOwnPropertyNames.f;
 
 
-  var $RegExp = _global.RegExp;
-  var Base$1 = $RegExp;
-  var proto$2 = $RegExp.prototype;
+
+
+
+  var setInternalState$7 = internalState.set;
+
+
+
+  var MATCH$2 = wellKnownSymbol('match');
+  var NativeRegExp = global_1.RegExp;
+  var RegExpPrototype$1 = NativeRegExp.prototype;
   var re1 = /a/g;
   var re2 = /a/g;
-  // "new" creates a new object, old webkit buggy here
-  var CORRECT_NEW = new $RegExp(re1) !== re1;
 
-  if (_descriptors && (!CORRECT_NEW || _fails(function () {
-    re2[_wks('match')] = false;
+  // "new" should create a new object, old webkit bug
+  var CORRECT_NEW = new NativeRegExp(re1) !== re1;
+
+  var UNSUPPORTED_Y$2 = regexpStickyHelpers.UNSUPPORTED_Y;
+
+  var FORCED$4 = descriptors && isForced_1('RegExp', (!CORRECT_NEW || UNSUPPORTED_Y$2 || fails(function () {
+    re2[MATCH$2] = false;
     // RegExp constructor can alter flags and IsRegExp works correct with @@match
-    return $RegExp(re1) != re1 || $RegExp(re2) == re2 || $RegExp(re1, 'i') != '/a/i';
-  }))) {
-    $RegExp = function RegExp(p, f) {
-      var tiRE = this instanceof $RegExp;
-      var piRE = _isRegexp(p);
-      var fiU = f === undefined;
-      return !tiRE && piRE && p.constructor === $RegExp && fiU ? p
-        : _inheritIfRequired(CORRECT_NEW
-          ? new Base$1(piRE && !fiU ? p.source : p, f)
-          : Base$1((piRE = p instanceof $RegExp) ? p.source : p, piRE && fiU ? _flags.call(p) : f)
-        , tiRE ? this : proto$2, $RegExp);
+    return NativeRegExp(re1) != re1 || NativeRegExp(re2) == re2 || NativeRegExp(re1, 'i') != '/a/i';
+  })));
+
+  // `RegExp` constructor
+  // https://tc39.github.io/ecma262/#sec-regexp-constructor
+  if (FORCED$4) {
+    var RegExpWrapper = function RegExp(pattern, flags) {
+      var thisIsRegExp = this instanceof RegExpWrapper;
+      var patternIsRegExp = isRegexp(pattern);
+      var flagsAreUndefined = flags === undefined;
+      var sticky;
+
+      if (!thisIsRegExp && patternIsRegExp && pattern.constructor === RegExpWrapper && flagsAreUndefined) {
+        return pattern;
+      }
+
+      if (CORRECT_NEW) {
+        if (patternIsRegExp && !flagsAreUndefined) pattern = pattern.source;
+      } else if (pattern instanceof RegExpWrapper) {
+        if (flagsAreUndefined) flags = regexpFlags.call(pattern);
+        pattern = pattern.source;
+      }
+
+      if (UNSUPPORTED_Y$2) {
+        sticky = !!flags && flags.indexOf('y') > -1;
+        if (sticky) flags = flags.replace(/y/g, '');
+      }
+
+      var result = inheritIfRequired(
+        CORRECT_NEW ? new NativeRegExp(pattern, flags) : NativeRegExp(pattern, flags),
+        thisIsRegExp ? this : RegExpPrototype$1,
+        RegExpWrapper
+      );
+
+      if (UNSUPPORTED_Y$2 && sticky) setInternalState$7(result, { sticky: sticky });
+
+      return result;
     };
     var proxy = function (key) {
-      key in $RegExp || dP$2($RegExp, key, {
+      key in RegExpWrapper || defineProperty$6(RegExpWrapper, key, {
         configurable: true,
-        get: function () { return Base$1[key]; },
-        set: function (it) { Base$1[key] = it; }
+        get: function () { return NativeRegExp[key]; },
+        set: function (it) { NativeRegExp[key] = it; }
       });
     };
-    for (var keys$1 = gOPN$1(Base$1), i$1 = 0; keys$1.length > i$1;) proxy(keys$1[i$1++]);
-    proto$2.constructor = $RegExp;
-    $RegExp.prototype = proto$2;
-    _redefine(_global, 'RegExp', $RegExp);
+    var keys$2 = getOwnPropertyNames$1(NativeRegExp);
+    var index = 0;
+    while (keys$2.length > index) proxy(keys$2[index++]);
+    RegExpPrototype$1.constructor = RegExpWrapper;
+    RegExpWrapper.prototype = RegExpPrototype$1;
+    redefine(global_1, 'RegExp', RegExpWrapper);
   }
 
-  _setSpecies('RegExp');
+  // https://tc39.github.io/ecma262/#sec-get-regexp-@@species
+  setSpecies('RegExp');
 
   function generateId(prefix) {
     return "".concat(prefix, "-").concat(Math.floor(Math.random() * 10000));
@@ -4021,19 +7749,19 @@ typeof navigator === "object" && (function (global, factory) {
     return (current / max * 100).toFixed(2);
   } // Replace all occurances of a string in a string
 
-  function replaceAll() {
+  var replaceAll = function replaceAll() {
     var input = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
     var find = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
     var replace = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
     return input.replace(new RegExp(find.toString().replace(/([.*+?^=!:${}()|[\]/\\])/g, '\\$1'), 'g'), replace.toString());
-  } // Convert to title case
+  }; // Convert to title case
 
-  function toTitleCase() {
+  var toTitleCase = function toTitleCase() {
     var input = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
     return input.toString().replace(/\w\S*/g, function (text) {
       return text.charAt(0).toUpperCase() + text.substr(1).toLowerCase();
     });
-  } // Convert string to pascalCase
+  }; // Convert string to pascalCase
 
   function toPascalCase() {
     var input = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
@@ -4103,18 +7831,16 @@ typeof navigator === "object" && (function (global, factory) {
       };
       Object.entries(replace).forEach(function (_ref) {
         var _ref2 = _slicedToArray(_ref, 2),
-            key = _ref2[0],
-            value = _ref2[1];
+            k = _ref2[0],
+            v = _ref2[1];
 
-        string = replaceAll(string, key, value);
+        string = replaceAll(string, k, v);
       });
       return string;
     }
   };
 
-  var Storage =
-  /*#__PURE__*/
-  function () {
+  var Storage = /*#__PURE__*/function () {
     function Storage(player) {
       _classCallCheck(this, Storage);
 
@@ -4241,6 +7967,7 @@ typeof navigator === "object" && (function (global, factory) {
     };
 
     var update = function update(container, data) {
+      // eslint-disable-next-line no-param-reassign
       container.innerHTML = data; // Check again incase of race condition
 
       if (hasId && exists()) {
@@ -4290,16 +8017,25 @@ typeof navigator === "object" && (function (global, factory) {
     }
   }
 
-  // ==========================================================================
+  var ceil$1 = Math.ceil;
+  var floor$5 = Math.floor;
+
+  // `Math.trunc` method
+  // https://tc39.github.io/ecma262/#sec-math.trunc
+  _export({ target: 'Math', stat: true }, {
+    trunc: function trunc(it) {
+      return (it > 0 ? floor$5 : ceil$1)(it);
+    }
+  });
 
   var getHours = function getHours(value) {
-    return parseInt(value / 60 / 60 % 60, 10);
+    return Math.trunc(value / 60 / 60 % 60, 10);
   };
   var getMinutes = function getMinutes(value) {
-    return parseInt(value / 60 % 60, 10);
+    return Math.trunc(value / 60 % 60, 10);
   };
   var getSeconds = function getSeconds(value) {
-    return parseInt(value % 60, 10);
+    return Math.trunc(value % 60, 10);
   }; // Format time to UI friendly string
 
   function formatTime() {
@@ -4309,7 +8045,7 @@ typeof navigator === "object" && (function (global, factory) {
 
     // Bail if the value isn't a number
     if (!is$1.number(time)) {
-      return formatTime(null, displayHours, inverted);
+      return formatTime(undefined, displayHours, inverted);
     } // Format time component to add leading zero
 
 
@@ -4395,7 +8131,7 @@ typeof navigator === "object" && (function (global, factory) {
 
       var icon = document.createElementNS(namespace, 'svg');
       setAttributes(icon, extend(attributes, {
-        role: 'presentation',
+        'aria-hidden': 'true',
         focusable: 'false'
       })); // Create the <use> to reference sprite
 
@@ -4418,9 +8154,11 @@ typeof navigator === "object" && (function (global, factory) {
     createLabel: function createLabel(key) {
       var attr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var text = i18n.get(key, this.config);
-      var attributes = Object.assign({}, attr, {
+
+      var attributes = _objectSpread2(_objectSpread2({}, attr), {}, {
         class: [attr.class, this.config.classNames.hidden].filter(Boolean).join(' ')
       });
+
       return createElement('span', attributes, text);
     },
     // Create a badge
@@ -4439,7 +8177,9 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Create a <button>
     createButton: function createButton(buttonType, attr) {
-      var attributes = Object.assign({}, attr);
+      var _this = this;
+
+      var attributes = extend({}, attr);
       var type = toCamelCase(buttonType);
       var props = {
         element: 'button',
@@ -4462,8 +8202,12 @@ typeof navigator === "object" && (function (global, factory) {
 
 
       if (Object.keys(attributes).includes('class')) {
-        if (!attributes.class.includes(this.config.classNames.control)) {
-          attributes.class += " ".concat(this.config.classNames.control);
+        if (!attributes.class.split(' ').some(function (c) {
+          return c === _this.config.classNames.control;
+        })) {
+          extend(attributes, {
+            class: "".concat(attributes.class, " ").concat(this.config.classNames.control)
+          });
         }
       } else {
         attributes.class = this.config.classNames.control;
@@ -4578,7 +8322,9 @@ typeof navigator === "object" && (function (global, factory) {
       }, attributes));
       this.elements.inputs[type] = input; // Set the fill for webkit now
 
-      controls.updateRangeFill.call(this, input);
+      controls.updateRangeFill.call(this, input); // Improve support on touch devices
+
+      RangeTouch.setup(input);
       return input;
     },
     // Create a <progress>
@@ -4587,7 +8333,7 @@ typeof navigator === "object" && (function (global, factory) {
         min: 0,
         max: 100,
         value: 0,
-        role: 'presentation',
+        role: 'progressbar',
         'aria-hidden': true
       }, attributes)); // Create the label inside
 
@@ -4605,10 +8351,10 @@ typeof navigator === "object" && (function (global, factory) {
       return progress;
     },
     // Create time display
-    createTime: function createTime(type) {
-      var attributes = getAttributesFromSelector(this.config.selectors.display[type]);
+    createTime: function createTime(type, attrs) {
+      var attributes = getAttributesFromSelector(this.config.selectors.display[type], attrs);
       var container = createElement('div', extend(attributes, {
-        class: "".concat(this.config.classNames.display.time, " ").concat(attributes.class ? attributes.class : '').trim(),
+        class: "".concat(attributes.class ? attributes.class : '', " ").concat(this.config.classNames.display.time, " ").trim(),
         'aria-label': i18n.get(type, this.config)
       }), '00:00'); // Reference for updates
 
@@ -4619,10 +8365,10 @@ typeof navigator === "object" && (function (global, factory) {
     // We have to bind to keyup otherwise Firefox triggers a click when a keydown event handler shifts focus
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1220143
     bindMenuItemShortcuts: function bindMenuItemShortcuts(menuItem, type) {
-      var _this = this;
+      var _this2 = this;
 
       // Navigate through menus via arrow keys and space
-      on(menuItem, 'keydown keyup', function (event) {
+      on.call(this, menuItem, 'keydown keyup', function (event) {
         // We only care about space and ⬆️ ⬇️️ ➡️
         if (![32, 38, 39, 40].includes(event.which)) {
           return;
@@ -4636,10 +8382,10 @@ typeof navigator === "object" && (function (global, factory) {
           return;
         }
 
-        var isRadioButton = matches(menuItem, '[role="menuitemradio"]'); // Show the respective menu
+        var isRadioButton = matches$1(menuItem, '[role="menuitemradio"]'); // Show the respective menu
 
         if (!isRadioButton && [32, 39].includes(event.which)) {
-          controls.showMenuPanel.call(_this, type, true);
+          controls.showMenuPanel.call(_this2, type, true);
         } else {
           var target;
 
@@ -4658,23 +8404,23 @@ typeof navigator === "object" && (function (global, factory) {
               }
             }
 
-            setFocus.call(_this, target, true);
+            setFocus.call(_this2, target, true);
           }
         }
       }, false); // Enter will fire a `click` event but we still need to manage focus
       // So we bind to keyup which fires after and set focus here
 
-      on(menuItem, 'keyup', function (event) {
+      on.call(this, menuItem, 'keyup', function (event) {
         if (event.which !== 13) {
           return;
         }
 
-        controls.focusFirstMenuItem.call(_this, null, true);
+        controls.focusFirstMenuItem.call(_this2, null, true);
       });
     },
     // Create a settings menu item
     createMenuItem: function createMenuItem(_ref) {
-      var _this2 = this;
+      var _this3 = this;
 
       var value = _ref.value,
           list = _ref.list,
@@ -4707,17 +8453,17 @@ typeof navigator === "object" && (function (global, factory) {
         get: function get() {
           return menuItem.getAttribute('aria-checked') === 'true';
         },
-        set: function set(checked) {
+        set: function set(check) {
           // Ensure exclusivity
-          if (checked) {
+          if (check) {
             Array.from(menuItem.parentNode.children).filter(function (node) {
-              return matches(node, '[role="menuitemradio"]');
+              return matches$1(node, '[role="menuitemradio"]');
             }).forEach(function (node) {
               return node.setAttribute('aria-checked', 'false');
             });
           }
 
-          menuItem.setAttribute('aria-checked', checked ? 'true' : 'false');
+          menuItem.setAttribute('aria-checked', check ? 'true' : 'false');
         }
       });
       this.listeners.bind(menuItem, 'click keyup', function (event) {
@@ -4731,28 +8477,25 @@ typeof navigator === "object" && (function (global, factory) {
 
         switch (type) {
           case 'language':
-            _this2.currentTrack = Number(value);
+            _this3.currentTrack = Number(value);
             break;
 
           case 'quality':
-            _this2.quality = value;
+            _this3.quality = value;
             break;
 
           case 'speed':
-            _this2.speed = parseFloat(value);
-            break;
-
-          default:
+            _this3.speed = parseFloat(value);
             break;
         }
 
-        controls.showMenuPanel.call(_this2, 'home', is$1.keyboardEvent(event));
+        controls.showMenuPanel.call(_this3, 'home', is$1.keyboardEvent(event));
       }, type, false);
       controls.bindMenuItemShortcuts.call(this, menuItem, type);
       list.appendChild(menuItem);
     },
     // Format a time for display
-    formatTime: function formatTime$$1() {
+    formatTime: function formatTime$1() {
       var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
       var inverted = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
@@ -4810,7 +8553,7 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Update <progress> elements
     updateProgress: function updateProgress(event) {
-      var _this3 = this;
+      var _this4 = this;
 
       if (!this.supported.ui || !is$1.event(event)) {
         return;
@@ -4819,16 +8562,16 @@ typeof navigator === "object" && (function (global, factory) {
       var value = 0;
 
       var setProgress = function setProgress(target, input) {
-        var value = is$1.number(input) ? input : 0;
-        var progress = is$1.element(target) ? target : _this3.elements.display.buffer; // Update value and label
+        var val = is$1.number(input) ? input : 0;
+        var progress = is$1.element(target) ? target : _this4.elements.display.buffer; // Update value and label
 
         if (is$1.element(progress)) {
-          progress.value = value; // Update text label inside
+          progress.value = val; // Update text label inside
 
           var label = progress.getElementsByTagName('span')[0];
 
           if (is$1.element(label)) {
-            label.childNodes[0].nodeValue = value;
+            label.childNodes[0].nodeValue = val;
           }
         }
       };
@@ -4852,9 +8595,6 @@ typeof navigator === "object" && (function (global, factory) {
           case 'progress':
             setProgress(this.elements.display.buffer, this.buffered * 100);
             break;
-
-          default:
-            break;
         }
       }
     },
@@ -4868,13 +8608,13 @@ typeof navigator === "object" && (function (global, factory) {
       } // Set aria values for https://github.com/sampotts/plyr/issues/905
 
 
-      if (matches(range, this.config.selectors.inputs.seek)) {
+      if (matches$1(range, this.config.selectors.inputs.seek)) {
         range.setAttribute('aria-valuenow', this.currentTime);
         var currentTime = controls.formatTime(this.currentTime);
         var duration = controls.formatTime(this.duration);
-        var format$$1 = i18n.get('seekLabel', this.config);
-        range.setAttribute('aria-valuetext', format$$1.replace('{currentTime}', currentTime).replace('{duration}', duration));
-      } else if (matches(range, this.config.selectors.inputs.volume)) {
+        var format = i18n.get('seekLabel', this.config);
+        range.setAttribute('aria-valuetext', format.replace('{currentTime}', currentTime).replace('{duration}', duration));
+      } else if (matches$1(range, this.config.selectors.inputs.volume)) {
         var percent = range.value * 100;
         range.setAttribute('aria-valuenow', percent);
         range.setAttribute('aria-valuetext', "".concat(percent.toFixed(1), "%"));
@@ -4892,20 +8632,17 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Update hover tooltip for seeking
     updateSeekTooltip: function updateSeekTooltip(event) {
-      var _this4 = this;
+      var _this5 = this;
 
       // Bail if setting not true
       if (!this.config.tooltips.seek || !is$1.element(this.elements.inputs.seek) || !is$1.element(this.elements.display.seekTooltip) || this.duration === 0) {
         return;
-      } // Calculate percentage
+      }
 
-
-      var percent = 0;
-      var clientRect = this.elements.progress.getBoundingClientRect();
       var visible = "".concat(this.config.classNames.tooltip, "--visible");
 
-      var toggle = function toggle(_toggle) {
-        toggleClass(_this4.elements.display.seekTooltip, visible, _toggle);
+      var toggle = function toggle(show) {
+        return toggleClass(_this5.elements.display.seekTooltip, visible, show);
       }; // Hide on touch
 
 
@@ -4914,6 +8651,9 @@ typeof navigator === "object" && (function (global, factory) {
         return;
       } // Determine percentage, if already visible
 
+
+      var percent = 0;
+      var clientRect = this.elements.progress.getBoundingClientRect();
 
       if (is$1.event(event)) {
         percent = 100 / clientRect.width * (event.pageX - clientRect.left);
@@ -5071,7 +8811,7 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Set the quality menu
     setQualityMenu: function setQualityMenu(options) {
-      var _this5 = this;
+      var _this6 = this;
 
       // Menu required
       if (!is$1.element(this.elements.settings.panels.quality)) {
@@ -5083,7 +8823,7 @@ typeof navigator === "object" && (function (global, factory) {
 
       if (is$1.array(options)) {
         this.options.quality = dedupe(options).filter(function (quality) {
-          return _this5.config.quality.options.includes(quality);
+          return _this6.config.quality.options.includes(quality);
         });
       } // Toggle the pane and tab
 
@@ -5101,25 +8841,25 @@ typeof navigator === "object" && (function (global, factory) {
 
 
       var getBadge = function getBadge(quality) {
-        var label = i18n.get("qualityBadge.".concat(quality), _this5.config);
+        var label = i18n.get("qualityBadge.".concat(quality), _this6.config);
 
         if (!label.length) {
           return null;
         }
 
-        return controls.createBadge.call(_this5, label);
+        return controls.createBadge.call(_this6, label);
       }; // Sort options by the config and then render options
 
 
       this.options.quality.sort(function (a, b) {
-        var sorting = _this5.config.quality.options;
+        var sorting = _this6.config.quality.options;
         return sorting.indexOf(a) > sorting.indexOf(b) ? 1 : -1;
       }).forEach(function (quality) {
-        controls.createMenuItem.call(_this5, {
+        controls.createMenuItem.call(_this6, {
           value: quality,
           list: list,
           type: type,
-          title: controls.getLabel.call(_this5, 'quality', quality),
+          title: controls.getLabel.call(_this6, 'quality', quality),
           badge: getBadge(quality)
         });
       });
@@ -5128,44 +8868,44 @@ typeof navigator === "object" && (function (global, factory) {
     // Set the looping options
 
     /* setLoopMenu() {
-        // Menu required
-        if (!is.element(this.elements.settings.panels.loop)) {
-            return;
-        }
-         const options = ['start', 'end', 'all', 'reset'];
-        const list = this.elements.settings.panels.loop.querySelector('[role="menu"]');
-         // Show the pane and tab
-        toggleHidden(this.elements.settings.buttons.loop, false);
-        toggleHidden(this.elements.settings.panels.loop, false);
-         // Toggle the pane and tab
-        const toggle = !is.empty(this.loop.options);
-        controls.toggleMenuButton.call(this, 'loop', toggle);
-         // Empty the menu
-        emptyElement(list);
-         options.forEach(option => {
-            const item = createElement('li');
-             const button = createElement(
-                'button',
-                extend(getAttributesFromSelector(this.config.selectors.buttons.loop), {
-                    type: 'button',
-                    class: this.config.classNames.control,
-                    'data-plyr-loop-action': option,
-                }),
-                i18n.get(option, this.config)
-            );
-             if (['start', 'end'].includes(option)) {
-                const badge = controls.createBadge.call(this, '00:00');
-                button.appendChild(badge);
-            }
-             item.appendChild(button);
-            list.appendChild(item);
-        });
-    }, */
+          // Menu required
+          if (!is.element(this.elements.settings.panels.loop)) {
+              return;
+          }
+           const options = ['start', 'end', 'all', 'reset'];
+          const list = this.elements.settings.panels.loop.querySelector('[role="menu"]');
+           // Show the pane and tab
+          toggleHidden(this.elements.settings.buttons.loop, false);
+          toggleHidden(this.elements.settings.panels.loop, false);
+           // Toggle the pane and tab
+          const toggle = !is.empty(this.loop.options);
+          controls.toggleMenuButton.call(this, 'loop', toggle);
+           // Empty the menu
+          emptyElement(list);
+           options.forEach(option => {
+              const item = createElement('li');
+               const button = createElement(
+                  'button',
+                  extend(getAttributesFromSelector(this.config.selectors.buttons.loop), {
+                      type: 'button',
+                      class: this.config.classNames.control,
+                      'data-plyr-loop-action': option,
+                  }),
+                  i18n.get(option, this.config)
+              );
+               if (['start', 'end'].includes(option)) {
+                  const badge = controls.createBadge.call(this, '00:00');
+                  button.appendChild(badge);
+              }
+               item.appendChild(button);
+              list.appendChild(item);
+          });
+      }, */
     // Get current selected caption language
     // TODO: rework this to user the getter in the API?
     // Set a list of available captions languages
     setCaptionsMenu: function setCaptionsMenu() {
-      var _this6 = this;
+      var _this7 = this;
 
       // Menu required
       if (!is$1.element(this.elements.settings.panels.captions)) {
@@ -5192,9 +8932,9 @@ typeof navigator === "object" && (function (global, factory) {
       var options = tracks.map(function (track, value) {
         return {
           value: value,
-          checked: _this6.captions.toggled && _this6.currentTrack === value,
-          title: captions.getLabel.call(_this6, track),
-          badge: track.language && controls.createBadge.call(_this6, track.language.toUpperCase()),
+          checked: _this7.captions.toggled && _this7.currentTrack === value,
+          title: captions.getLabel.call(_this7, track),
+          badge: track.language && controls.createBadge.call(_this7, track.language.toUpperCase()),
           list: list,
           type: 'language'
         };
@@ -5212,8 +8952,8 @@ typeof navigator === "object" && (function (global, factory) {
       controls.updateSetting.call(this, type, list);
     },
     // Set a list of available captions languages
-    setSpeedMenu: function setSpeedMenu(options) {
-      var _this7 = this;
+    setSpeedMenu: function setSpeedMenu() {
+      var _this8 = this;
 
       // Menu required
       if (!is$1.element(this.elements.settings.panels.speed)) {
@@ -5221,17 +8961,10 @@ typeof navigator === "object" && (function (global, factory) {
       }
 
       var type = 'speed';
-      var list = this.elements.settings.panels.speed.querySelector('[role="menu"]'); // Set the speed options
+      var list = this.elements.settings.panels.speed.querySelector('[role="menu"]'); // Filter out invalid speeds
 
-      if (is$1.array(options)) {
-        this.options.speed = options;
-      } else if (this.isHTML5 || this.isVimeo) {
-        this.options.speed = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-      } // Set options if passed and filter based on config
-
-
-      this.options.speed = this.options.speed.filter(function (speed) {
-        return _this7.config.speed.options.includes(speed);
+      this.options.speed = this.options.speed.filter(function (o) {
+        return o >= _this8.minimumSpeed && o <= _this8.maximumSpeed;
       }); // Toggle the pane and tab
 
       var toggle = !is$1.empty(this.options.speed) && this.options.speed.length > 1;
@@ -5247,11 +8980,11 @@ typeof navigator === "object" && (function (global, factory) {
 
 
       this.options.speed.forEach(function (speed) {
-        controls.createMenuItem.call(_this7, {
+        controls.createMenuItem.call(_this8, {
           value: speed,
           list: list,
           type: type,
-          title: controls.getLabel.call(_this7, 'speed', speed)
+          title: controls.getLabel.call(_this8, 'speed', speed)
         });
       });
       controls.updateSetting.call(this, type, list);
@@ -5275,8 +9008,8 @@ typeof navigator === "object" && (function (global, factory) {
       var target = pane;
 
       if (!is$1.element(target)) {
-        target = Object.values(this.elements.settings.panels).find(function (pane) {
-          return !pane.hidden;
+        target = Object.values(this.elements.settings.panels).find(function (p) {
+          return !p.hidden;
         });
       }
 
@@ -5301,7 +9034,10 @@ typeof navigator === "object" && (function (global, factory) {
       } else if (is$1.keyboardEvent(input) && input.which === 27) {
         show = false;
       } else if (is$1.event(input)) {
-        var isMenuItem = popup.contains(input.target); // If the click was inside the menu or if the click
+        // If Plyr is in a shadowDOM, the event target is set to the component, instead of the
+        // Element in the shadowDOM. The path, if available, is complete.
+        var target = is$1.function(input.composedPath) ? input.composedPath()[0] : input.target;
+        var isMenuItem = popup.contains(target); // If the click was inside the menu or if the click
         // wasn't the button or menu item and we're trying to
         // show the menu (a doc click shouldn't show the menu)
 
@@ -5344,11 +9080,11 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Show a panel in the menu
     showMenuPanel: function showMenuPanel() {
-      var _this8 = this;
+      var _this9 = this;
 
       var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
       var tabFocus = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-      var target = document.getElementById("plyr-settings-".concat(this.id, "-").concat(type)); // Nothing to show, bail
+      var target = this.elements.container.querySelector("#plyr-settings-".concat(this.id, "-").concat(type)); // Nothing to show, bail
 
       if (!is$1.element(target)) {
         return;
@@ -5377,7 +9113,7 @@ typeof navigator === "object" && (function (global, factory) {
           container.style.width = '';
           container.style.height = ''; // Only listen once
 
-          off.call(_this8, container, transitionEndEvent, restore);
+          off.call(_this9, container, transitionEndEvent, restore);
         }; // Listen for the transition finishing and restore auto height/width
 
 
@@ -5394,265 +9130,296 @@ typeof navigator === "object" && (function (global, factory) {
 
       controls.focusFirstMenuItem.call(this, target, tabFocus);
     },
-    // Set the download link
-    setDownloadLink: function setDownloadLink() {
+    // Set the download URL
+    setDownloadUrl: function setDownloadUrl() {
       var button = this.elements.buttons.download; // Bail if no button
 
       if (!is$1.element(button)) {
         return;
-      } // Set download link
+      } // Set attribute
 
 
       button.setAttribute('href', this.download);
     },
     // Build the default HTML
-    // TODO: Set order based on order in the config.controls array?
     create: function create(data) {
-      var _this9 = this;
+      var _this10 = this;
 
-      // Create the container
-      var container = createElement('div', getAttributesFromSelector(this.config.selectors.controls.wrapper)); // Restart button
+      var bindMenuItemShortcuts = controls.bindMenuItemShortcuts,
+          createButton = controls.createButton,
+          createProgress = controls.createProgress,
+          createRange = controls.createRange,
+          createTime = controls.createTime,
+          setQualityMenu = controls.setQualityMenu,
+          setSpeedMenu = controls.setSpeedMenu,
+          showMenuPanel = controls.showMenuPanel;
+      this.elements.controls = null; // Larger overlaid play button
 
-      if (this.config.controls.includes('restart')) {
-        container.appendChild(controls.createButton.call(this, 'restart'));
-      } // Rewind button
-
-
-      if (this.config.controls.includes('rewind')) {
-        container.appendChild(controls.createButton.call(this, 'rewind'));
-      } // Play/Pause button
-
-
-      if (this.config.controls.includes('play')) {
-        container.appendChild(controls.createButton.call(this, 'play'));
-      } // Fast forward button
+      if (is$1.array(this.config.controls) && this.config.controls.includes('play-large')) {
+        this.elements.container.appendChild(createButton.call(this, 'play-large'));
+      } // Create the container
 
 
-      if (this.config.controls.includes('fast-forward')) {
-        container.appendChild(controls.createButton.call(this, 'fast-forward'));
-      } // Progress
+      var container = createElement('div', getAttributesFromSelector(this.config.selectors.controls.wrapper));
+      this.elements.controls = container; // Default item attributes
+
+      var defaultAttributes = {
+        class: 'plyr__controls__item'
+      }; // Loop through controls in order
+
+      dedupe(is$1.array(this.config.controls) ? this.config.controls : []).forEach(function (control) {
+        // Restart button
+        if (control === 'restart') {
+          container.appendChild(createButton.call(_this10, 'restart', defaultAttributes));
+        } // Rewind button
 
 
-      if (this.config.controls.includes('progress')) {
-        var progress = createElement('div', getAttributesFromSelector(this.config.selectors.progress)); // Seek range slider
-
-        progress.appendChild(controls.createRange.call(this, 'seek', {
-          id: "plyr-seek-".concat(data.id)
-        })); // Buffer progress
-
-        progress.appendChild(controls.createProgress.call(this, 'buffer')); // TODO: Add loop display indicator
-        // Seek tooltip
-
-        if (this.config.tooltips.seek) {
-          var tooltip = createElement('span', {
-            class: this.config.classNames.tooltip
-          }, '00:00');
-          progress.appendChild(tooltip);
-          this.elements.display.seekTooltip = tooltip;
-        }
-
-        this.elements.progress = progress;
-        container.appendChild(this.elements.progress);
-      } // Media current time display
+        if (control === 'rewind') {
+          container.appendChild(createButton.call(_this10, 'rewind', defaultAttributes));
+        } // Play/Pause button
 
 
-      if (this.config.controls.includes('current-time')) {
-        container.appendChild(controls.createTime.call(this, 'currentTime'));
-      } // Media duration display
+        if (control === 'play') {
+          container.appendChild(createButton.call(_this10, 'play', defaultAttributes));
+        } // Fast forward button
 
 
-      if (this.config.controls.includes('duration')) {
-        container.appendChild(controls.createTime.call(this, 'duration'));
-      } // Volume controls
+        if (control === 'fast-forward') {
+          container.appendChild(createButton.call(_this10, 'fast-forward', defaultAttributes));
+        } // Progress
 
 
-      if (this.config.controls.includes('mute') || this.config.controls.includes('volume')) {
-        var volume = createElement('div', {
-          class: 'plyr__volume'
-        }); // Toggle mute button
-
-        if (this.config.controls.includes('mute')) {
-          volume.appendChild(controls.createButton.call(this, 'mute'));
-        } // Volume range control
-
-
-        if (this.config.controls.includes('volume')) {
-          // Set the attributes
-          var attributes = {
-            max: 1,
-            step: 0.05,
-            value: this.config.volume
-          }; // Create the volume range slider
-
-          volume.appendChild(controls.createRange.call(this, 'volume', extend(attributes, {
-            id: "plyr-volume-".concat(data.id)
-          })));
-          this.elements.volume = volume;
-        }
-
-        container.appendChild(volume);
-      } // Toggle captions button
-
-
-      if (this.config.controls.includes('captions')) {
-        container.appendChild(controls.createButton.call(this, 'captions'));
-      } // Settings button / menu
-
-
-      if (this.config.controls.includes('settings') && !is$1.empty(this.config.settings)) {
-        var control = createElement('div', {
-          class: 'plyr__menu',
-          hidden: ''
-        });
-        control.appendChild(controls.createButton.call(this, 'settings', {
-          'aria-haspopup': true,
-          'aria-controls': "plyr-settings-".concat(data.id),
-          'aria-expanded': false
-        }));
-        var popup = createElement('div', {
-          class: 'plyr__menu__container',
-          id: "plyr-settings-".concat(data.id),
-          hidden: ''
-        });
-        var inner = createElement('div');
-        var home = createElement('div', {
-          id: "plyr-settings-".concat(data.id, "-home")
-        }); // Create the menu
-
-        var menu = createElement('div', {
-          role: 'menu'
-        });
-        home.appendChild(menu);
-        inner.appendChild(home);
-        this.elements.settings.panels.home = home; // Build the menu items
-
-        this.config.settings.forEach(function (type) {
-          // TODO: bundle this with the createMenuItem helper and bindings
-          var menuItem = createElement('button', extend(getAttributesFromSelector(_this9.config.selectors.buttons.settings), {
-            type: 'button',
-            class: "".concat(_this9.config.classNames.control, " ").concat(_this9.config.classNames.control, "--forward"),
-            role: 'menuitem',
-            'aria-haspopup': true,
-            hidden: ''
-          })); // Bind menu shortcuts for keyboard users
-
-          controls.bindMenuItemShortcuts.call(_this9, menuItem, type); // Show menu on click
-
-          on(menuItem, 'click', function () {
-            controls.showMenuPanel.call(_this9, type, false);
+        if (control === 'progress') {
+          var progressContainer = createElement('div', {
+            class: "".concat(defaultAttributes.class, " plyr__progress__container")
           });
-          var flex = createElement('span', null, i18n.get(type, _this9.config));
-          var value = createElement('span', {
-            class: _this9.config.classNames.menu.value
-          }); // Speed contains HTML entities
+          var progress = createElement('div', getAttributesFromSelector(_this10.config.selectors.progress)); // Seek range slider
 
-          value.innerHTML = data[type];
-          flex.appendChild(value);
-          menuItem.appendChild(flex);
-          menu.appendChild(menuItem); // Build the panes
+          progress.appendChild(createRange.call(_this10, 'seek', {
+            id: "plyr-seek-".concat(data.id)
+          })); // Buffer progress
 
-          var pane = createElement('div', {
-            id: "plyr-settings-".concat(data.id, "-").concat(type),
+          progress.appendChild(createProgress.call(_this10, 'buffer')); // TODO: Add loop display indicator
+          // Seek tooltip
+
+          if (_this10.config.tooltips.seek) {
+            var tooltip = createElement('span', {
+              class: _this10.config.classNames.tooltip
+            }, '00:00');
+            progress.appendChild(tooltip);
+            _this10.elements.display.seekTooltip = tooltip;
+          }
+
+          _this10.elements.progress = progress;
+          progressContainer.appendChild(_this10.elements.progress);
+          container.appendChild(progressContainer);
+        } // Media current time display
+
+
+        if (control === 'current-time') {
+          container.appendChild(createTime.call(_this10, 'currentTime', defaultAttributes));
+        } // Media duration display
+
+
+        if (control === 'duration') {
+          container.appendChild(createTime.call(_this10, 'duration', defaultAttributes));
+        } // Volume controls
+
+
+        if (control === 'mute' || control === 'volume') {
+          var volume = _this10.elements.volume; // Create the volume container if needed
+
+          if (!is$1.element(volume) || !container.contains(volume)) {
+            volume = createElement('div', extend({}, defaultAttributes, {
+              class: "".concat(defaultAttributes.class, " plyr__volume").trim()
+            }));
+            _this10.elements.volume = volume;
+            container.appendChild(volume);
+          } // Toggle mute button
+
+
+          if (control === 'mute') {
+            volume.appendChild(createButton.call(_this10, 'mute'));
+          } // Volume range control
+          // Ignored on iOS as it's handled globally
+          // https://developer.apple.com/library/safari/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/Device-SpecificConsiderations/Device-SpecificConsiderations.html
+
+
+          if (control === 'volume' && !browser.isIos) {
+            // Set the attributes
+            var attributes = {
+              max: 1,
+              step: 0.05,
+              value: _this10.config.volume
+            }; // Create the volume range slider
+
+            volume.appendChild(createRange.call(_this10, 'volume', extend(attributes, {
+              id: "plyr-volume-".concat(data.id)
+            })));
+          }
+        } // Toggle captions button
+
+
+        if (control === 'captions') {
+          container.appendChild(createButton.call(_this10, 'captions', defaultAttributes));
+        } // Settings button / menu
+
+
+        if (control === 'settings' && !is$1.empty(_this10.config.settings)) {
+          var wrapper = createElement('div', extend({}, defaultAttributes, {
+            class: "".concat(defaultAttributes.class, " plyr__menu").trim(),
             hidden: ''
-          }); // Back button
-
-          var backButton = createElement('button', {
-            type: 'button',
-            class: "".concat(_this9.config.classNames.control, " ").concat(_this9.config.classNames.control, "--back")
-          }); // Visible label
-
-          backButton.appendChild(createElement('span', {
-            'aria-hidden': true
-          }, i18n.get(type, _this9.config))); // Screen reader label
-
-          backButton.appendChild(createElement('span', {
-            class: _this9.config.classNames.hidden
-          }, i18n.get('menuBack', _this9.config))); // Go back via keyboard
-
-          on(pane, 'keydown', function (event) {
-            // We only care about <-
-            if (event.which !== 37) {
-              return;
-            } // Prevent seek
-
-
-            event.preventDefault();
-            event.stopPropagation(); // Show the respective menu
-
-            controls.showMenuPanel.call(_this9, 'home', true);
-          }, false); // Go back via button click
-
-          on(backButton, 'click', function () {
-            controls.showMenuPanel.call(_this9, 'home', false);
-          }); // Add to pane
-
-          pane.appendChild(backButton); // Menu
-
-          pane.appendChild(createElement('div', {
-            role: 'menu'
           }));
-          inner.appendChild(pane);
-          _this9.elements.settings.buttons[type] = menuItem;
-          _this9.elements.settings.panels[type] = pane;
-        });
-        popup.appendChild(inner);
-        control.appendChild(popup);
-        container.appendChild(control);
-        this.elements.settings.popup = popup;
-        this.elements.settings.menu = control;
-      } // Picture in picture button
-
-
-      if (this.config.controls.includes('pip') && support.pip) {
-        container.appendChild(controls.createButton.call(this, 'pip'));
-      } // Airplay button
-
-
-      if (this.config.controls.includes('airplay') && support.airplay) {
-        container.appendChild(controls.createButton.call(this, 'airplay'));
-      } // Download button
-
-
-      if (this.config.controls.includes('download')) {
-        var _attributes = {
-          element: 'a',
-          href: this.download,
-          target: '_blank'
-        };
-        var download = this.config.urls.download;
-
-        if (!is$1.url(download) && this.isEmbed) {
-          extend(_attributes, {
-            icon: "logo-".concat(this.provider),
-            label: this.provider
+          wrapper.appendChild(createButton.call(_this10, 'settings', {
+            'aria-haspopup': true,
+            'aria-controls': "plyr-settings-".concat(data.id),
+            'aria-expanded': false
+          }));
+          var popup = createElement('div', {
+            class: 'plyr__menu__container',
+            id: "plyr-settings-".concat(data.id),
+            hidden: ''
           });
+          var inner = createElement('div');
+          var home = createElement('div', {
+            id: "plyr-settings-".concat(data.id, "-home")
+          }); // Create the menu
+
+          var menu = createElement('div', {
+            role: 'menu'
+          });
+          home.appendChild(menu);
+          inner.appendChild(home);
+          _this10.elements.settings.panels.home = home; // Build the menu items
+
+          _this10.config.settings.forEach(function (type) {
+            // TODO: bundle this with the createMenuItem helper and bindings
+            var menuItem = createElement('button', extend(getAttributesFromSelector(_this10.config.selectors.buttons.settings), {
+              type: 'button',
+              class: "".concat(_this10.config.classNames.control, " ").concat(_this10.config.classNames.control, "--forward"),
+              role: 'menuitem',
+              'aria-haspopup': true,
+              hidden: ''
+            })); // Bind menu shortcuts for keyboard users
+
+            bindMenuItemShortcuts.call(_this10, menuItem, type); // Show menu on click
+
+            on.call(_this10, menuItem, 'click', function () {
+              showMenuPanel.call(_this10, type, false);
+            });
+            var flex = createElement('span', null, i18n.get(type, _this10.config));
+            var value = createElement('span', {
+              class: _this10.config.classNames.menu.value
+            }); // Speed contains HTML entities
+
+            value.innerHTML = data[type];
+            flex.appendChild(value);
+            menuItem.appendChild(flex);
+            menu.appendChild(menuItem); // Build the panes
+
+            var pane = createElement('div', {
+              id: "plyr-settings-".concat(data.id, "-").concat(type),
+              hidden: ''
+            }); // Back button
+
+            var backButton = createElement('button', {
+              type: 'button',
+              class: "".concat(_this10.config.classNames.control, " ").concat(_this10.config.classNames.control, "--back")
+            }); // Visible label
+
+            backButton.appendChild(createElement('span', {
+              'aria-hidden': true
+            }, i18n.get(type, _this10.config))); // Screen reader label
+
+            backButton.appendChild(createElement('span', {
+              class: _this10.config.classNames.hidden
+            }, i18n.get('menuBack', _this10.config))); // Go back via keyboard
+
+            on.call(_this10, pane, 'keydown', function (event) {
+              // We only care about <-
+              if (event.which !== 37) {
+                return;
+              } // Prevent seek
+
+
+              event.preventDefault();
+              event.stopPropagation(); // Show the respective menu
+
+              showMenuPanel.call(_this10, 'home', true);
+            }, false); // Go back via button click
+
+            on.call(_this10, backButton, 'click', function () {
+              showMenuPanel.call(_this10, 'home', false);
+            }); // Add to pane
+
+            pane.appendChild(backButton); // Menu
+
+            pane.appendChild(createElement('div', {
+              role: 'menu'
+            }));
+            inner.appendChild(pane);
+            _this10.elements.settings.buttons[type] = menuItem;
+            _this10.elements.settings.panels[type] = pane;
+          });
+
+          popup.appendChild(inner);
+          wrapper.appendChild(popup);
+          container.appendChild(wrapper);
+          _this10.elements.settings.popup = popup;
+          _this10.elements.settings.menu = wrapper;
+        } // Picture in picture button
+
+
+        if (control === 'pip' && support.pip) {
+          container.appendChild(createButton.call(_this10, 'pip', defaultAttributes));
+        } // Airplay button
+
+
+        if (control === 'airplay' && support.airplay) {
+          container.appendChild(createButton.call(_this10, 'airplay', defaultAttributes));
+        } // Download button
+
+
+        if (control === 'download') {
+          var _attributes = extend({}, defaultAttributes, {
+            element: 'a',
+            href: _this10.download,
+            target: '_blank'
+          }); // Set download attribute for HTML5 only
+
+
+          if (_this10.isHTML5) {
+            _attributes.download = '';
+          }
+
+          var download = _this10.config.urls.download;
+
+          if (!is$1.url(download) && _this10.isEmbed) {
+            extend(_attributes, {
+              icon: "logo-".concat(_this10.provider),
+              label: _this10.provider
+            });
+          }
+
+          container.appendChild(createButton.call(_this10, 'download', _attributes));
+        } // Toggle fullscreen button
+
+
+        if (control === 'fullscreen') {
+          container.appendChild(createButton.call(_this10, 'fullscreen', defaultAttributes));
         }
-
-        container.appendChild(controls.createButton.call(this, 'download', _attributes));
-      } // Toggle fullscreen button
-
-
-      if (this.config.controls.includes('fullscreen')) {
-        container.appendChild(controls.createButton.call(this, 'fullscreen'));
-      } // Larger overlaid play button
-
-
-      if (this.config.controls.includes('play-large')) {
-        this.elements.container.appendChild(controls.createButton.call(this, 'play-large'));
-      }
-
-      this.elements.controls = container; // Set available quality levels
+      }); // Set available quality levels
 
       if (this.isHTML5) {
-        controls.setQualityMenu.call(this, html5.getQualityOptions.call(this));
+        setQualityMenu.call(this, html5.getQualityOptions.call(this));
       }
 
-      controls.setSpeedMenu.call(this);
+      setSpeedMenu.call(this);
       return container;
     },
     // Insert controls
     inject: function inject() {
-      var _this10 = this;
+      var _this11 = this;
 
       // Sprite
       if (this.config.loadSprite) {
@@ -5719,8 +9486,6 @@ typeof navigator === "object" && (function (global, factory) {
       if (update) {
         if (is$1.string(this.config.controls)) {
           container = replace(container);
-        } else if (is$1.element(container)) {
-          container.innerHTML = replace(container.innerHTML);
         }
       } // Controls container
 
@@ -5747,7 +9512,7 @@ typeof navigator === "object" && (function (global, factory) {
 
       if (!is$1.empty(this.elements.buttons)) {
         var addProperty = function addProperty(button) {
-          var className = _this10.config.classNames.controlPressed;
+          var className = _this11.config.classNames.controlPressed;
           Object.defineProperty(button, 'pressed', {
             enumerable: true,
             get: function get() {
@@ -5768,10 +9533,10 @@ typeof navigator === "object" && (function (global, factory) {
             addProperty(button);
           }
         });
-      } // Edge sometimes doesn't finish the paint so force a redraw
+      } // Edge sometimes doesn't finish the paint so force a repaint
 
 
-      if (window.navigator.userAgent.includes('Edge')) {
+      if (browser.isEdge) {
         repaint(target);
       } // Setup tooltips
 
@@ -5783,8 +9548,8 @@ typeof navigator === "object" && (function (global, factory) {
         var selector = "".concat(selectors.controls.wrapper, " ").concat(selectors.labels, " .").concat(classNames.hidden);
         var labels = getElements.call(this, selector);
         Array.from(labels).forEach(function (label) {
-          toggleClass(label, _this10.config.classNames.hidden, false);
-          toggleClass(label, _this10.config.classNames.tooltip, true);
+          toggleClass(label, _this11.config.classNames.hidden, false);
+          toggleClass(label, _this11.config.classNames.tooltip, true);
         });
       }
     }
@@ -5792,8 +9557,8 @@ typeof navigator === "object" && (function (global, factory) {
 
   /**
    * Parse a string to a URL object
-   * @param {string} input - the URL to be parsed
-   * @param {boolean} safe - failsafe parsing
+   * @param {String} input - the URL to be parsed
+   * @param {Boolean} safe - failsafe parsing
    */
 
   function parseUrl(input) {
@@ -5935,8 +9700,15 @@ typeof navigator === "object" && (function (global, factory) {
           meta.set(track, {
             default: track.mode === 'showing'
           }); // Turn off native caption rendering to avoid double captions
+          // Note: mode='hidden' forces a track to download. To ensure every track
+          // isn't downloaded at once, only 'showing' tracks should be reassigned
+          // eslint-disable-next-line no-param-reassign
 
-          track.mode = 'hidden'; // Add event listener for cue changes
+          if (track.mode === 'showing') {
+            // eslint-disable-next-line no-param-reassign
+            track.mode = 'hidden';
+          } // Add event listener for cue changes
+
 
           on.call(_this, track, 'cuechange', function () {
             return captions.updateCues.call(_this);
@@ -5953,13 +9725,15 @@ typeof navigator === "object" && (function (global, factory) {
 
       toggleClass(this.elements.container, this.config.classNames.captions.enabled, !is$1.empty(tracks)); // Update available languages in list
 
-      if ((this.config.controls || []).includes('settings') && this.config.settings.includes('captions')) {
+      if (is$1.array(this.config.controls) && this.config.controls.includes('settings') && this.config.settings.includes('captions')) {
         controls.setCaptionsMenu.call(this);
       }
     },
     // Toggle captions display
     // Used internally for the toggleCaptions method, with the passive option forced to false
     toggle: function toggle(input) {
+      var _this2 = this;
+
       var passive = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
       // If there's no full support
@@ -6006,7 +9780,15 @@ typeof navigator === "object" && (function (global, factory) {
         controls.updateSetting.call(this, 'captions'); // Trigger event (not used internally)
 
         triggerEvent.call(this, this.media, active ? 'captionsenabled' : 'captionsdisabled');
-      }
+      } // Wait for the call stack to clear before setting mode='hidden'
+      // on the active track - forcing the browser to download it
+
+
+      setTimeout(function () {
+        if (active && _this2.captions.toggled) {
+          _this2.captions.currentTrackNode.mode = 'hidden';
+        }
+      });
     },
     // Set captions by track index
     // Used internally for the currentTrack setter with the passive option forced to false
@@ -6087,7 +9869,7 @@ typeof navigator === "object" && (function (global, factory) {
     // If update is false it will also ignore tracks without metadata
     // This is used to "freeze" the language options when captions.update is false
     getTracks: function getTracks() {
-      var _this2 = this;
+      var _this3 = this;
 
       var update = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       // Handle media or textTracks missing or null
@@ -6095,20 +9877,20 @@ typeof navigator === "object" && (function (global, factory) {
       // Filter out removed tracks and tracks that aren't captions/subtitles (for example metadata)
 
       return tracks.filter(function (track) {
-        return !_this2.isHTML5 || update || _this2.captions.meta.has(track);
+        return !_this3.isHTML5 || update || _this3.captions.meta.has(track);
       }).filter(function (track) {
         return ['captions', 'subtitles'].includes(track.kind);
       });
     },
     // Match tracks based on languages and get the first
     findTrack: function findTrack(languages) {
-      var _this3 = this;
+      var _this4 = this;
 
       var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var tracks = captions.getTracks.call(this);
 
       var sortIsDefault = function sortIsDefault(track) {
-        return Number((_this3.captions.meta.get(track) || {}).default);
+        return Number((_this4.captions.meta.get(track) || {}).default);
       };
 
       var sorted = Array.from(tracks).sort(function (a, b) {
@@ -6116,8 +9898,8 @@ typeof navigator === "object" && (function (global, factory) {
       });
       var track;
       languages.every(function (language) {
-        track = sorted.find(function (track) {
-          return track.language === language;
+        track = sorted.find(function (t) {
+          return t.language === language;
         });
         return !track; // Break iteration if there is a match
       }); // If no match is found but is required, get first
@@ -6199,7 +9981,7 @@ typeof navigator === "object" && (function (global, factory) {
   // ==========================================================================
   // Plyr default config
   // ==========================================================================
-  var defaults = {
+  var defaults$1 = {
     // Disable
     enabled: true,
     // Custom media title
@@ -6227,8 +10009,9 @@ typeof navigator === "object" && (function (global, factory) {
     invertTime: true,
     // Clicking the currentTime inverts it's value to show time left rather than elapsed
     toggleInvert: true,
-    // Aspect ratio (for embeds)
-    ratio: '16:9',
+    // Force an aspect ratio
+    // The format must be `'w:h'` (e.g. `'16:9'`)
+    ratio: null,
     // Click video container to play/pause
     clickToPlay: true,
     // Auto hide the controls
@@ -6240,13 +10023,16 @@ typeof navigator === "object" && (function (global, factory) {
     // Sprite (for icons)
     loadSprite: true,
     iconPrefix: 'plyr',
-    iconUrl: 'https://cdn.plyr.io/3.4.8/plyr.svg',
+    iconUrl: 'https://cdn.plyr.io/3.6.3/plyr.svg',
     // Blank video (used to prevent errors on source change)
     blankVideo: 'https://cdn.plyr.io/static/blank.mp4',
     // Quality default
     quality: {
       default: 576,
-      options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240]
+      // The options to display in the UI, if available for the source media
+      options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240],
+      forced: false,
+      onChange: null
     },
     // Set loops
     loop: {
@@ -6257,7 +10043,8 @@ typeof navigator === "object" && (function (global, factory) {
     // Speed default and options to display
     speed: {
       selected: 1,
-      options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+      // The options to display in the UI, if available for the source media (e.g. Vimeo and YouTube only support 0.5x-4x)
+      options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 4]
     },
     // Keyboard shortcut settings
     keyboard: {
@@ -6282,8 +10069,11 @@ typeof navigator === "object" && (function (global, factory) {
       enabled: true,
       // Allow fullscreen?
       fallback: true,
-      // Fallback for vintage browsers
+      // Fallback using full viewport/window
       iosNative: false // Use the native fullscreen in iOS (disables custom controls)
+      // Selector for the fullscreen container so contextual / non-player content can remain visible in fullscreen mode
+      // Non-ancestors of the player element will be ignored
+      // container: null, // defaults to the player element
 
     },
     // Local storage
@@ -6295,7 +10085,8 @@ typeof navigator === "object" && (function (global, factory) {
     controls: ['play-large', // 'restart',
     // 'rewind',
     'play', // 'fast-forward',
-    'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', // 'download',
+    'progress', 'current-time', // 'duration',
+    'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', // 'download',
     'fullscreen'],
     settings: ['captions', 'quality', 'speed'],
     // Localisation
@@ -6322,6 +10113,7 @@ typeof navigator === "object" && (function (global, factory) {
       frameTitle: 'Player for {title}',
       captions: 'Captions',
       settings: 'Settings',
+      pip: 'PIP',
       menuBack: 'Go back to previous menu',
       speed: 'Speed',
       normal: 'Normal',
@@ -6349,11 +10141,11 @@ typeof navigator === "object" && (function (global, factory) {
       vimeo: {
         sdk: 'https://player.vimeo.com/api/player.js',
         iframe: 'https://player.vimeo.com/video/{0}?{1}',
-        api: 'https://vimeo.com/api/v2/video/{0}.json'
+        api: 'https://vimeo.com/api/oembed.json?url={0}'
       },
       youtube: {
         sdk: 'https://www.youtube.com/iframe_api',
-        api: 'https://www.googleapis.com/youtube/v3/videos?id={0}&key={1}&fields=items(snippet(title))&part=snippet'
+        api: 'https://noembed.com/embed?url=https://www.youtube.com/watch?v={0}'
       },
       googleIMA: {
         sdk: 'https://imasdk.googleapis.com/js/sdkloader/ima3.js'
@@ -6429,10 +10221,7 @@ typeof navigator === "object" && (function (global, factory) {
       },
       progress: '.plyr__progress',
       captions: '.plyr__captions',
-      caption: '.plyr__caption',
-      menu: {
-        quality: '.js-plyr__menu__list--quality'
-      }
+      caption: '.plyr__caption'
     },
     // Class hooks added to the player in different states
     classNames: {
@@ -6440,6 +10229,7 @@ typeof navigator === "object" && (function (global, factory) {
       provider: 'plyr--{0}',
       video: 'plyr__video-wrapper',
       embed: 'plyr__video-embed',
+      videoFixedRatio: 'plyr__video-wrapper--fixed-ratio',
       embedContainer: 'plyr__video-embed__container',
       poster: 'plyr__poster',
       posterEnabled: 'plyr__poster-enabled',
@@ -6483,7 +10273,17 @@ typeof navigator === "object" && (function (global, factory) {
         supported: 'plyr--airplay-supported',
         active: 'plyr--airplay-active'
       },
-      tabFocus: 'plyr__tab-focus'
+      tabFocus: 'plyr__tab-focus',
+      previewThumbnails: {
+        // Tooltip thumbs
+        thumbContainer: 'plyr__preview-thumb',
+        thumbContainerShown: 'plyr__preview-thumb--is-shown',
+        imageContainer: 'plyr__preview-thumb__image-container',
+        timeContainer: 'plyr__preview-thumb__time-container',
+        // Scrubbing
+        scrubbingContainer: 'plyr__preview-scrubbing',
+        scrubbingContainerShown: 'plyr__preview-scrubbing--is-shown'
+      }
     },
     // Embed attributes
     attributes: {
@@ -6492,15 +10292,47 @@ typeof navigator === "object" && (function (global, factory) {
         id: 'data-plyr-embed-id'
       }
     },
-    // API keys
-    keys: {
-      google: null
-    },
     // Advertisements plugin
     // Register for an account here: http://vi.ai/publisher-video-monetization/?aid=plyrio
     ads: {
       enabled: false,
-      publisherId: ''
+      publisherId: '',
+      tagUrl: ''
+    },
+    // Preview Thumbnails plugin
+    previewThumbnails: {
+      enabled: false,
+      src: ''
+    },
+    // Vimeo plugin
+    vimeo: {
+      byline: false,
+      portrait: false,
+      title: false,
+      speed: true,
+      transparent: false,
+      // Custom settings from Plyr
+      customControls: true,
+      referrerPolicy: null,
+      // https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement/referrerPolicy
+      // Whether the owner of the video has a Pro or Business account
+      // (which allows us to properly hide controls without CSS hacks, etc)
+      premium: false
+    },
+    // YouTube plugin
+    youtube: {
+      rel: 0,
+      // No related vids
+      showinfo: 0,
+      // Hide info
+      iv_load_policy: 3,
+      // Hide annotations
+      modestbranding: 1,
+      // Hide logos as much as possible (they still show one in the corner when paused)
+      // Custom settings from Plyr
+      customControls: true,
+      noCookie: false // Whether to use an alternative version of YouTube without cookies
+
     }
   };
 
@@ -6531,7 +10363,7 @@ typeof navigator === "object" && (function (global, factory) {
 
   function getProviderByUrl(url) {
     // YouTube
-    if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url)) {
+    if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtube-nocookie\.com|youtu\.?be)\/.+$/.test(url)) {
       return providers.youtube;
     } // Vimeo
 
@@ -6548,9 +10380,7 @@ typeof navigator === "object" && (function (global, factory) {
   // ==========================================================================
   var noop = function noop() {};
 
-  var Console =
-  /*#__PURE__*/
-  function () {
+  var Console = /*#__PURE__*/function () {
     function Console() {
       var enabled = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -6586,85 +10416,9 @@ typeof navigator === "object" && (function (global, factory) {
     return Console;
   }();
 
-  function onChange() {
-    if (!this.enabled) {
-      return;
-    } // Update toggle button
-
-
-    var button = this.player.elements.buttons.fullscreen;
-
-    if (is$1.element(button)) {
-      button.pressed = this.active;
-    } // Trigger an event
-
-
-    triggerEvent.call(this.player, this.target, this.active ? 'enterfullscreen' : 'exitfullscreen', true); // Trap focus in container
-
-    if (!browser.isIos) {
-      trapFocus.call(this.player, this.target, this.active);
-    }
-  }
-
-  function toggleFallback() {
-    var _this = this;
-
-    var toggle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-    // Store or restore scroll position
-    if (toggle) {
-      this.scrollPosition = {
-        x: window.scrollX || 0,
-        y: window.scrollY || 0
-      };
-    } else {
-      window.scrollTo(this.scrollPosition.x, this.scrollPosition.y);
-    } // Toggle scroll
-
-
-    document.body.style.overflow = toggle ? 'hidden' : ''; // Toggle class hook
-
-    toggleClass(this.target, this.player.config.classNames.fullscreen.fallback, toggle); // Force full viewport on iPhone X+
-
-    if (browser.isIos) {
-      var viewport = document.head.querySelector('meta[name="viewport"]');
-      var property = 'viewport-fit=cover'; // Inject the viewport meta if required
-
-      if (!viewport) {
-        viewport = document.createElement('meta');
-        viewport.setAttribute('name', 'viewport');
-      } // Check if the property already exists
-
-
-      var hasProperty = is$1.string(viewport.content) && viewport.content.includes(property);
-
-      if (toggle) {
-        this.cleanupViewport = !hasProperty;
-
-        if (!hasProperty) {
-          viewport.content += ",".concat(property);
-        }
-      } else if (this.cleanupViewport) {
-        viewport.content = viewport.content.split(',').filter(function (part) {
-          return part.trim() !== property;
-        }).join(',');
-      } // Force a repaint as sometimes Safari doesn't want to fill the screen
-
-
-      setTimeout(function () {
-        return repaint(_this.target);
-      }, 100);
-    } // Toggle button and fire events
-
-
-    onChange.call(this);
-  }
-
-  var Fullscreen =
-  /*#__PURE__*/
-  function () {
+  var Fullscreen = /*#__PURE__*/function () {
     function Fullscreen(player) {
-      var _this2 = this;
+      var _this = this;
 
       _classCallCheck(this, Fullscreen);
 
@@ -6677,21 +10431,30 @@ typeof navigator === "object" && (function (global, factory) {
       this.scrollPosition = {
         x: 0,
         y: 0
-      }; // Register event listeners
+      }; // Force the use of 'full window/browser' rather than fullscreen
+
+      this.forceFallback = player.config.fullscreen.fallback === 'force'; // Get the fullscreen element
+      // Checks container is an ancestor, defaults to null
+
+      this.player.elements.fullscreen = player.config.fullscreen.container && closest(this.player.elements.container, player.config.fullscreen.container); // Register event listeners
       // Handle event (incase user presses escape etc)
 
       on.call(this.player, document, this.prefix === 'ms' ? 'MSFullscreenChange' : "".concat(this.prefix, "fullscreenchange"), function () {
         // TODO: Filter for target??
-        onChange.call(_this2);
+        _this.onChange();
       }); // Fullscreen toggle on double click
 
       on.call(this.player, this.player.elements.container, 'dblclick', function (event) {
         // Ignore double click in controls
-        if (is$1.element(_this2.player.elements.controls) && _this2.player.elements.controls.contains(event.target)) {
+        if (is$1.element(_this.player.elements.controls) && _this.player.elements.controls.contains(event.target)) {
           return;
         }
 
-        _this2.toggle();
+        _this.player.listeners.proxy(event, _this.toggle, 'fullscreen');
+      }); // Tap focus when in fullscreen
+
+      on.call(this, this.player.elements.container, 'keydown', function (event) {
+        return _this.trapFocus(event);
       }); // Update the UI
 
       this.update();
@@ -6699,11 +10462,116 @@ typeof navigator === "object" && (function (global, factory) {
 
 
     _createClass(Fullscreen, [{
+      key: "onChange",
+      value: function onChange() {
+        if (!this.enabled) {
+          return;
+        } // Update toggle button
+
+
+        var button = this.player.elements.buttons.fullscreen;
+
+        if (is$1.element(button)) {
+          button.pressed = this.active;
+        } // Always trigger events on the plyr / media element (not a fullscreen container) and let them bubble up
+
+
+        var target = this.target === this.player.media ? this.target : this.player.elements.container; // Trigger an event
+
+        triggerEvent.call(this.player, target, this.active ? 'enterfullscreen' : 'exitfullscreen', true);
+      }
+    }, {
+      key: "toggleFallback",
+      value: function toggleFallback() {
+        var toggle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        // Store or restore scroll position
+        if (toggle) {
+          this.scrollPosition = {
+            x: window.scrollX || 0,
+            y: window.scrollY || 0
+          };
+        } else {
+          window.scrollTo(this.scrollPosition.x, this.scrollPosition.y);
+        } // Toggle scroll
+
+
+        document.body.style.overflow = toggle ? 'hidden' : ''; // Toggle class hook
+
+        toggleClass(this.target, this.player.config.classNames.fullscreen.fallback, toggle); // Force full viewport on iPhone X+
+
+        if (browser.isIos) {
+          var viewport = document.head.querySelector('meta[name="viewport"]');
+          var property = 'viewport-fit=cover'; // Inject the viewport meta if required
+
+          if (!viewport) {
+            viewport = document.createElement('meta');
+            viewport.setAttribute('name', 'viewport');
+          } // Check if the property already exists
+
+
+          var hasProperty = is$1.string(viewport.content) && viewport.content.includes(property);
+
+          if (toggle) {
+            this.cleanupViewport = !hasProperty;
+
+            if (!hasProperty) {
+              viewport.content += ",".concat(property);
+            }
+          } else if (this.cleanupViewport) {
+            viewport.content = viewport.content.split(',').filter(function (part) {
+              return part.trim() !== property;
+            }).join(',');
+          }
+        } // Toggle button and fire events
+
+
+        this.onChange();
+      } // Trap focus inside container
+
+    }, {
+      key: "trapFocus",
+      value: function trapFocus(event) {
+        // Bail if iOS, not active, not the tab key
+        if (browser.isIos || !this.active || event.key !== 'Tab' || event.keyCode !== 9) {
+          return;
+        } // Get the current focused element
+
+
+        var focused = document.activeElement;
+        var focusable = getElements.call(this.player, 'a[href], button:not(:disabled), input:not(:disabled), [tabindex]');
+
+        var _focusable = _slicedToArray(focusable, 1),
+            first = _focusable[0];
+
+        var last = focusable[focusable.length - 1];
+
+        if (focused === last && !event.shiftKey) {
+          // Move focus to first element that can be tabbed if Shift isn't used
+          first.focus();
+          event.preventDefault();
+        } else if (focused === first && event.shiftKey) {
+          // Move focus to last element that can be tabbed if Shift is used
+          last.focus();
+          event.preventDefault();
+        }
+      } // Update UI
+
+    }, {
       key: "update",
-      // Update UI
       value: function update() {
         if (this.enabled) {
-          this.player.debug.log("".concat(Fullscreen.native ? 'Native' : 'Fallback', " fullscreen enabled"));
+          var mode;
+
+          if (this.forceFallback) {
+            mode = 'Fallback (forced)';
+          } else if (Fullscreen.native) {
+            mode = 'Native';
+          } else {
+            mode = 'Fallback';
+          }
+
+          this.player.debug.log("".concat(mode, " fullscreen enabled"));
         } else {
           this.player.debug.log('Fullscreen not supported and fallback disabled');
         } // Add styling hook to show button
@@ -6722,10 +10590,12 @@ typeof navigator === "object" && (function (global, factory) {
 
         if (browser.isIos && this.player.config.fullscreen.iosNative) {
           this.target.webkitEnterFullscreen();
-        } else if (!Fullscreen.native) {
-          toggleFallback.call(this, true);
+        } else if (!Fullscreen.native || this.forceFallback) {
+          this.toggleFallback(true);
         } else if (!this.prefix) {
-          this.target.requestFullscreen();
+          this.target.requestFullscreen({
+            navigationUI: 'hide'
+          });
         } else if (!is$1.empty(this.prefix)) {
           this.target["".concat(this.prefix, "Request").concat(this.property)]();
         }
@@ -6741,9 +10611,9 @@ typeof navigator === "object" && (function (global, factory) {
 
         if (browser.isIos && this.player.config.fullscreen.iosNative) {
           this.target.webkitExitFullscreen();
-          this.player.play();
-        } else if (!Fullscreen.native) {
-          toggleFallback.call(this, false);
+          silencePromise(this.player.play());
+        } else if (!Fullscreen.native || this.forceFallback) {
+          this.toggleFallback(false);
         } else if (!this.prefix) {
           (document.cancelFullScreen || document.exitFullscreen).call(document);
         } else if (!is$1.empty(this.prefix)) {
@@ -6762,6 +10632,13 @@ typeof navigator === "object" && (function (global, factory) {
         }
       }
     }, {
+      key: "usingNative",
+      // If we're actually using native
+      get: function get() {
+        return Fullscreen.native && !this.forceFallback;
+      } // Get the prefix for handlers
+
+    }, {
       key: "enabled",
       // Determine if fullscreen is enabled
       get: function get() {
@@ -6776,25 +10653,24 @@ typeof navigator === "object" && (function (global, factory) {
         } // Fallback using classname
 
 
-        if (!Fullscreen.native) {
+        if (!Fullscreen.native || this.forceFallback) {
           return hasClass(this.target, this.player.config.classNames.fullscreen.fallback);
         }
 
         var element = !this.prefix ? document.fullscreenElement : document["".concat(this.prefix).concat(this.property, "Element")];
-        return element === this.target;
+        return element && element.shadowRoot ? element === this.target.getRootNode().host : element === this.target;
       } // Get target element
 
     }, {
       key: "target",
       get: function get() {
-        return browser.isIos && this.player.config.fullscreen.iosNative ? this.player.media : this.player.elements.container;
+        return browser.isIos && this.player.config.fullscreen.iosNative ? this.player.media : this.player.elements.fullscreen || this.player.elements.container;
       }
     }], [{
       key: "native",
       get: function get() {
         return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled || document.msFullscreenEnabled);
-      } // Get the prefix for handlers
-
+      }
     }, {
       key: "prefix",
       get: function get() {
@@ -6826,16 +10702,18 @@ typeof navigator === "object" && (function (global, factory) {
     return Fullscreen;
   }();
 
-  // 20.2.2.28 Math.sign(x)
-  var _mathSign = Math.sign || function sign(x) {
+  // `Math.sign` method implementation
+  // https://tc39.github.io/ecma262/#sec-math.sign
+  var mathSign = Math.sign || function sign(x) {
     // eslint-disable-next-line no-self-compare
     return (x = +x) == 0 || x != x ? x : x < 0 ? -1 : 1;
   };
 
-  // 20.2.2.28 Math.sign(x)
-
-
-  _export(_export.S, 'Math', { sign: _mathSign });
+  // `Math.sign` method
+  // https://tc39.github.io/ecma262/#sec-math.sign
+  _export({ target: 'Math', stat: true }, {
+    sign: mathSign
+  });
 
   // ==========================================================================
   // Load image avoiding xhr/fetch CORS issues
@@ -6910,13 +10788,13 @@ typeof navigator === "object" && (function (global, factory) {
 
       this.volume = null; // Reset mute state
 
-      this.muted = null; // Reset speed
-
-      this.speed = null; // Reset loop state
+      this.muted = null; // Reset loop state
 
       this.loop = null; // Reset quality setting
 
-      this.quality = null; // Reset volume display
+      this.quality = null; // Reset speed
+
+      this.speed = null; // Reset volume display
 
       controls.updateVolume.call(this); // Reset time display
 
@@ -6995,7 +10873,9 @@ typeof navigator === "object" && (function (global, factory) {
       } // Set property synchronously to respect the call order
 
 
-      this.media.setAttribute('poster', poster); // Wait until ui is ready
+      this.media.setAttribute('data-poster', poster); // Show the poster
+
+      this.elements.poster.removeAttribute('hidden'); // Wait until ui is ready
 
       return ready.call(this) // Load image
       .then(function () {
@@ -7033,7 +10913,10 @@ typeof navigator === "object" && (function (global, factory) {
       toggleClass(this.elements.container, this.config.classNames.stopped, this.stopped); // Set state
 
       Array.from(this.elements.buttons.play || []).forEach(function (target) {
-        target.pressed = _this3.playing;
+        Object.assign(target, {
+          pressed: _this3.playing
+        });
+        target.setAttribute('aria-label', i18n.get(_this3.playing ? 'pause' : 'play', _this3.config));
       }); // Only update controls on non timeupdate events
 
       if (is$1.event(event) && event.type === 'timeupdate') {
@@ -7060,20 +10943,38 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Toggle controls based on state and `force` argument
     toggleControls: function toggleControls(force) {
-      var controls$$1 = this.elements.controls;
+      var controlsElement = this.elements.controls;
 
-      if (controls$$1 && this.config.hideControls) {
+      if (controlsElement && this.config.hideControls) {
         // Don't hide controls if a touch-device user recently seeked. (Must be limited to touch devices, or it occasionally prevents desktop controls from hiding.)
         var recentTouchSeek = this.touch && this.lastSeekTime + 2000 > Date.now(); // Show controls if force, loading, paused, button interaction, or recent seek, otherwise hide
 
-        this.toggleControls(Boolean(force || this.loading || this.paused || controls$$1.pressed || controls$$1.hover || recentTouchSeek));
+        this.toggleControls(Boolean(force || this.loading || this.paused || controlsElement.pressed || controlsElement.hover || recentTouchSeek));
+      }
+    },
+    // Migrate any custom properties from the media to the parent
+    migrateStyles: function migrateStyles() {
+      var _this5 = this;
+
+      // Loop through values (as they are the keys when the object is spread 🤔)
+      Object.values(_objectSpread2({}, this.media.style)) // We're only fussed about Plyr specific properties
+      .filter(function (key) {
+        return !is$1.empty(key) && is$1.string(key) && key.startsWith('--plyr');
+      }).forEach(function (key) {
+        // Set on the container
+        _this5.elements.container.style.setProperty(key, _this5.media.style.getPropertyValue(key)); // Clean up from media element
+
+
+        _this5.media.style.removeProperty(key);
+      }); // Remove attribute if empty
+
+      if (is$1.empty(this.media.style)) {
+        this.media.removeAttribute('style');
       }
     }
   };
 
-  var Listeners =
-  /*#__PURE__*/
-  function () {
+  var Listeners = /*#__PURE__*/function () {
     function Listeners(player) {
       _classCallCheck(this, Listeners);
 
@@ -7125,11 +11026,11 @@ typeof navigator === "object" && (function (global, factory) {
             var editable = player.config.selectors.editable;
             var seek = elements.inputs.seek;
 
-            if (focused !== seek && matches(focused, editable)) {
+            if (focused !== seek && matches$1(focused, editable)) {
               return;
             }
 
-            if (event.which === 32 && matches(focused, 'button, [role^="menuitem"]')) {
+            if (event.which === 32 && matches$1(focused, 'button, [role^="menuitem"]')) {
               return;
             }
           } // Which keycodes should we prevent default
@@ -7164,7 +11065,7 @@ typeof navigator === "object" && (function (global, factory) {
             case 75:
               // Space and K key
               if (!repeat) {
-                player.togglePlay();
+                silencePromise(player.togglePlay());
               }
 
               break;
@@ -7214,24 +11115,11 @@ typeof navigator === "object" && (function (global, factory) {
               // L key
               player.loop = !player.loop;
               break;
-
-            /* case 73:
-            this.setLoop('start');
-            break;
-            case 76:
-            this.setLoop();
-            break;
-            case 79:
-            this.setLoop('end');
-            break; */
-
-            default:
-              break;
           } // Escape is handle natively when in full screen
           // So we only need to worry about non native
 
 
-          if (!player.fullscreen.enabled && player.fullscreen.active && code === 27) {
+          if (code === 27 && !player.fullscreen.usingNative && player.fullscreen.active) {
             player.fullscreen.toggle();
           } // Store last code for next cycle
 
@@ -7291,15 +11179,17 @@ typeof navigator === "object" && (function (global, factory) {
         removeCurrent(); // Delay the adding of classname until the focus has changed
         // This event fires before the focusin event
 
-        this.focusTimer = setTimeout(function () {
-          var focused = document.activeElement; // Ignore if current focus element isn't inside the player
+        if (event.type !== 'focusout') {
+          this.focusTimer = setTimeout(function () {
+            var focused = document.activeElement; // Ignore if current focus element isn't inside the player
 
-          if (!elements.container.contains(focused)) {
-            return;
-          }
+            if (!elements.container.contains(focused)) {
+              return;
+            }
 
-          toggleClass(document.activeElement, player.config.classNames.tabFocus, true);
-        }, 10);
+            toggleClass(document.activeElement, player.config.classNames.tabFocus, true);
+          }, 10);
+        }
       } // Global window & document listeners
 
     }, {
@@ -7317,26 +11207,28 @@ typeof navigator === "object" && (function (global, factory) {
 
         once.call(player, document.body, 'touchstart', this.firstTouch); // Tab focus detection
 
-        toggleListener.call(player, document.body, 'keydown focus blur', this.setTabFocus, toggle, false, true);
+        toggleListener.call(player, document.body, 'keydown focus blur focusout', this.setTabFocus, toggle, false, true);
       } // Container listeners
 
     }, {
       key: "container",
       value: function container() {
         var player = this.player;
-        var elements = player.elements; // Keyboard shortcuts
+        var config = player.config,
+            elements = player.elements,
+            timers = player.timers; // Keyboard shortcuts
 
-        if (!player.config.keyboard.global && player.config.keyboard.focused) {
+        if (!config.keyboard.global && config.keyboard.focused) {
           on.call(player, elements.container, 'keydown keyup', this.handleKey, false);
         } // Toggle controls on mouse events and entering fullscreen
 
 
         on.call(player, elements.container, 'mousemove mouseleave touchstart touchmove enterfullscreen exitfullscreen', function (event) {
-          var controls$$1 = elements.controls; // Remove button states for fullscreen
+          var controlsElement = elements.controls; // Remove button states for fullscreen
 
-          if (controls$$1 && event.type === 'enterfullscreen') {
-            controls$$1.pressed = false;
-            controls$$1.hover = false;
+          if (controlsElement && event.type === 'enterfullscreen') {
+            controlsElement.pressed = false;
+            controlsElement.hover = false;
           } // Show, then hide after a timeout unless another control event occurs
 
 
@@ -7350,17 +11242,95 @@ typeof navigator === "object" && (function (global, factory) {
           } // Clear timer
 
 
-          clearTimeout(player.timers.controls); // Set new timer to prevent flicker when seeking
+          clearTimeout(timers.controls); // Set new timer to prevent flicker when seeking
 
-          player.timers.controls = setTimeout(function () {
+          timers.controls = setTimeout(function () {
             return ui.toggleControls.call(player, false);
           }, delay);
+        }); // Set a gutter for Vimeo
+
+        var setGutter = function setGutter(ratio, padding, toggle) {
+          if (!player.isVimeo || player.config.vimeo.premium) {
+            return;
+          }
+
+          var target = player.elements.wrapper.firstChild;
+
+          var _ratio = _slicedToArray(ratio, 2),
+              y = _ratio[1];
+
+          var _getAspectRatio$call = getAspectRatio.call(player),
+              _getAspectRatio$call2 = _slicedToArray(_getAspectRatio$call, 2),
+              videoX = _getAspectRatio$call2[0],
+              videoY = _getAspectRatio$call2[1];
+
+          target.style.maxWidth = toggle ? "".concat(y / videoY * videoX, "px") : null;
+          target.style.margin = toggle ? '0 auto' : null;
+        }; // Resize on fullscreen change
+
+
+        var setPlayerSize = function setPlayerSize(measure) {
+          // If we don't need to measure the viewport
+          if (!measure) {
+            return setAspectRatio.call(player);
+          }
+
+          var rect = elements.container.getBoundingClientRect();
+          var width = rect.width,
+              height = rect.height;
+          return setAspectRatio.call(player, "".concat(width, ":").concat(height));
+        };
+
+        var resized = function resized() {
+          clearTimeout(timers.resized);
+          timers.resized = setTimeout(setPlayerSize, 50);
+        };
+
+        on.call(player, elements.container, 'enterfullscreen exitfullscreen', function (event) {
+          var _player$fullscreen = player.fullscreen,
+              target = _player$fullscreen.target,
+              usingNative = _player$fullscreen.usingNative; // Ignore events not from target
+
+          if (target !== elements.container) {
+            return;
+          } // If it's not an embed and no ratio specified
+
+
+          if (!player.isEmbed && is$1.empty(player.config.ratio)) {
+            return;
+          }
+
+          var isEnter = event.type === 'enterfullscreen'; // Set the player size when entering fullscreen to viewport size
+
+          var _setPlayerSize = setPlayerSize(isEnter),
+              padding = _setPlayerSize.padding,
+              ratio = _setPlayerSize.ratio; // Set Vimeo gutter
+
+
+          setGutter(ratio, padding, isEnter); // Horrible hack for Safari 14 not repainting properly on entering fullscreen
+
+          if (isEnter) {
+            setTimeout(function () {
+              return repaint(elements.container);
+            }, 100);
+          } // If not using native browser fullscreen API, we need to check for resizes of viewport
+
+
+          if (!usingNative) {
+            if (isEnter) {
+              on.call(player, window, 'resize', resized);
+            } else {
+              off.call(player, window, 'resize', resized);
+            }
+          }
         });
       } // Listen for media events
 
     }, {
       key: "media",
       value: function media() {
+        var _this = this;
+
         var player = this.player;
         var elements = player.elements; // Time change on media
 
@@ -7370,19 +11340,15 @@ typeof navigator === "object" && (function (global, factory) {
 
         on.call(player, player.media, 'durationchange loadeddata loadedmetadata', function (event) {
           return controls.durationUpdate.call(player, event);
-        }); // Check for audio tracks on load
-        // We can't use `loadedmetadata` as it doesn't seem to have audio tracks at that point
-
-        on.call(player, player.media, 'canplay loadeddata', function () {
-          toggleHidden(elements.volume, !player.hasAudio);
-          toggleHidden(elements.buttons.mute, !player.hasAudio);
         }); // Handle the media finishing
 
         on.call(player, player.media, 'ended', function () {
           // Show poster on end
           if (player.isHTML5 && player.isVideo && player.config.resetOnEnd) {
             // Restart
-            player.restart();
+            player.restart(); // Call pause otherwise IE11 will start playing the video again
+
+            player.pause();
           }
         }); // Check for buffer progress
 
@@ -7400,23 +11366,6 @@ typeof navigator === "object" && (function (global, factory) {
 
         on.call(player, player.media, 'waiting canplay seeked playing', function (event) {
           return ui.checkLoading.call(player, event);
-        }); // If autoplay, then load advertisement if required
-        // TODO: Show some sort of loading state while the ad manager loads else there's a delay before ad shows
-
-        on.call(player, player.media, 'playing', function () {
-          if (!player.ads) {
-            return;
-          } // If ads are enabled, wait for them first
-
-
-          if (player.ads.enabled && !player.ads.initialized) {
-            // Wait for manager response
-            player.ads.managerPromise.then(function () {
-              return player.ads.play();
-            }).catch(function () {
-              return player.play();
-            });
-          }
         }); // Click video
 
         if (player.supported.ui && player.config.clickToPlay && !player.isAudio) {
@@ -7441,10 +11390,15 @@ typeof navigator === "object" && (function (global, factory) {
             }
 
             if (player.ended) {
-              player.restart();
-              player.play();
+              _this.proxy(event, player.restart, 'restart');
+
+              _this.proxy(event, function () {
+                silencePromise(player.play());
+              }, 'play');
             } else {
-              player.togglePlay();
+              _this.proxy(event, function () {
+                silencePromise(player.togglePlay());
+              }, 'play');
             }
           });
         } // Disable right click
@@ -7481,7 +11435,7 @@ typeof navigator === "object" && (function (global, factory) {
         }); // Update download link when ready and if quality changes
 
         on.call(player, player.media, 'ready qualitychange', function () {
-          controls.setDownloadLink.call(player);
+          controls.setDownloadUrl.call(player);
         }); // Proxy events to container
         // Bubble up key events for Edge
 
@@ -7511,7 +11465,7 @@ typeof navigator === "object" && (function (global, factory) {
         } // Only call default handler if not prevented in custom handler
 
 
-        if (returned && is$1.function(defaultHandler)) {
+        if (returned !== false && is$1.function(defaultHandler)) {
           defaultHandler.call(player, event);
         }
       } // Trigger custom and default handlers
@@ -7519,21 +11473,21 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "bind",
       value: function bind(element, type, defaultHandler, customHandlerKey) {
-        var _this = this;
+        var _this2 = this;
 
         var passive = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
         var player = this.player;
         var customHandler = player.config.listeners[customHandlerKey];
         var hasCustomHandler = is$1.function(customHandler);
         on.call(player, element, type, function (event) {
-          return _this.proxy(event, defaultHandler, customHandlerKey);
+          return _this2.proxy(event, defaultHandler, customHandlerKey);
         }, passive && !hasCustomHandler);
       } // Listen for control events
 
     }, {
       key: "controls",
-      value: function controls$$1() {
-        var _this2 = this;
+      value: function controls$1() {
+        var _this3 = this;
 
         var player = this.player;
         var elements = player.elements; // IE doesn't support input event, so we fallback to change
@@ -7542,16 +11496,26 @@ typeof navigator === "object" && (function (global, factory) {
 
         if (elements.buttons.play) {
           Array.from(elements.buttons.play).forEach(function (button) {
-            _this2.bind(button, 'click', player.togglePlay, 'play');
+            _this3.bind(button, 'click', function () {
+              silencePromise(player.togglePlay());
+            }, 'play');
           });
         } // Pause
 
 
         this.bind(elements.buttons.restart, 'click', player.restart, 'restart'); // Rewind
 
-        this.bind(elements.buttons.rewind, 'click', player.rewind, 'rewind'); // Rewind
+        this.bind(elements.buttons.rewind, 'click', function () {
+          // Record seek time so we can prevent hiding controls for a few seconds after rewind
+          player.lastSeekTime = Date.now();
+          player.rewind();
+        }, 'rewind'); // Rewind
 
-        this.bind(elements.buttons.fastForward, 'click', player.forward, 'fastForward'); // Mute toggle
+        this.bind(elements.buttons.fastForward, 'click', function () {
+          // Record seek time so we can prevent hiding controls for a few seconds after fast forward
+          player.lastSeekTime = Date.now();
+          player.forward();
+        }, 'fastForward'); // Mute toggle
 
         this.bind(elements.buttons.mute, 'click', function () {
           player.muted = !player.muted;
@@ -7578,9 +11542,11 @@ typeof navigator === "object" && (function (global, factory) {
         this.bind(elements.buttons.settings, 'click', function (event) {
           // Prevent the document click listener closing the menu
           event.stopPropagation();
+          event.preventDefault();
 
           controls.toggleMenu.call(player, event);
-        }); // Settings menu - keyboard toggle
+        }, null, false); // Can't be passive as we're preventing default
+        // Settings menu - keyboard toggle
         // We have to bind to keyup otherwise Firefox triggers a click when a keydown event handler shifts focus
         // https://bugzilla.mozilla.org/show_bug.cgi?id=1220143
 
@@ -7637,7 +11603,7 @@ typeof navigator === "object" && (function (global, factory) {
 
           if (play && done) {
             seek.removeAttribute(attribute);
-            player.play();
+            silencePromise(player.play());
           } else if (!done && player.playing) {
             seek.setAttribute(attribute, '');
             player.pause();
@@ -7649,7 +11615,7 @@ typeof navigator === "object" && (function (global, factory) {
         if (browser.isIos) {
           var inputs = getElements.call(player, 'input[type="range"]');
           Array.from(inputs).forEach(function (input) {
-            return _this2.bind(input, inputEvent, function (event) {
+            return _this3.bind(input, inputEvent, function (event) {
               return repaint(event.target);
             });
           });
@@ -7671,11 +11637,43 @@ typeof navigator === "object" && (function (global, factory) {
 
         this.bind(elements.progress, 'mouseenter mouseleave mousemove', function (event) {
           return controls.updateSeekTooltip.call(player, event);
+        }); // Preview thumbnails plugin
+        // TODO: Really need to work on some sort of plug-in wide event bus or pub-sub for this
+
+        this.bind(elements.progress, 'mousemove touchmove', function (event) {
+          var previewThumbnails = player.previewThumbnails;
+
+          if (previewThumbnails && previewThumbnails.loaded) {
+            previewThumbnails.startMove(event);
+          }
+        }); // Hide thumbnail preview - on mouse click, mouse leave, and video play/seek. All four are required, e.g., for buffering
+
+        this.bind(elements.progress, 'mouseleave touchend click', function () {
+          var previewThumbnails = player.previewThumbnails;
+
+          if (previewThumbnails && previewThumbnails.loaded) {
+            previewThumbnails.endMove(false, true);
+          }
+        }); // Show scrubbing preview
+
+        this.bind(elements.progress, 'mousedown touchstart', function (event) {
+          var previewThumbnails = player.previewThumbnails;
+
+          if (previewThumbnails && previewThumbnails.loaded) {
+            previewThumbnails.startScrubbing(event);
+          }
+        });
+        this.bind(elements.progress, 'mouseup touchend', function (event) {
+          var previewThumbnails = player.previewThumbnails;
+
+          if (previewThumbnails && previewThumbnails.loaded) {
+            previewThumbnails.endScrubbing(event);
+          }
         }); // Polyfill for lower fill in <input type="range"> for webkit
 
         if (browser.isWebkit) {
           Array.from(getElements.call(player, 'input[type="range"]')).forEach(function (element) {
-            _this2.bind(element, 'input', function (event) {
+            _this3.bind(element, 'input', function (event) {
               return controls.updateRangeFill.call(player, event.target);
             });
           });
@@ -7703,7 +11701,18 @@ typeof navigator === "object" && (function (global, factory) {
 
         this.bind(elements.controls, 'mouseenter mouseleave', function (event) {
           elements.controls.hover = !player.touch && event.type === 'mouseenter';
-        }); // Update controls.pressed state (used for ui.toggleControls to avoid hiding when interacting)
+        }); // Also update controls.hover state for any non-player children of fullscreen element (as above)
+
+        if (elements.fullscreen) {
+          Array.from(elements.fullscreen.children).filter(function (c) {
+            return !c.contains(elements.container);
+          }).forEach(function (child) {
+            _this3.bind(child, 'mouseenter mouseleave', function (event) {
+              elements.controls.hover = !player.touch && event.type === 'mouseenter';
+            });
+          });
+        } // Update controls.pressed state (used for ui.toggleControls to avoid hiding when interacting)
+
 
         this.bind(elements.controls, 'mousedown mouseup touchstart touchend touchcancel', function (event) {
           elements.controls.pressed = ['mousedown', 'touchstart'].includes(event.type);
@@ -7711,7 +11720,6 @@ typeof navigator === "object" && (function (global, factory) {
 
         this.bind(elements.controls, 'focusin', function () {
           var config = player.config,
-              elements = player.elements,
               timers = player.timers; // Skip transition to prevent focus from scrolling the parent element
 
           toggleClass(elements.controls, config.classNames.noTransition, true); // Toggle
@@ -7722,7 +11730,7 @@ typeof navigator === "object" && (function (global, factory) {
             toggleClass(elements.controls, config.classNames.noTransition, false);
           }, 0); // Delay a little more for mouse users
 
-          var delay = _this2.touch ? 3000 : 4000; // Clear timer
+          var delay = _this3.touch ? 3000 : 4000; // Clear timer
 
           clearTimeout(timers.controls); // Hide again after delay
 
@@ -7760,347 +11768,358 @@ typeof navigator === "object" && (function (global, factory) {
     return Listeners;
   }();
 
-  var dP$3 = _objectDp.f;
-  var FProto = Function.prototype;
-  var nameRE = /^\s*function ([^ (]*)/;
-  var NAME$1 = 'name';
+  var HAS_SPECIES_SUPPORT$3 = arrayMethodHasSpeciesSupport('splice');
+  var USES_TO_LENGTH$a = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
 
-  // 19.2.4.2 name
-  NAME$1 in FProto || _descriptors && dP$3(FProto, NAME$1, {
-    configurable: true,
-    get: function () {
-      try {
-        return ('' + this).match(nameRE)[1];
-      } catch (e) {
-        return '';
+  var max$3 = Math.max;
+  var min$5 = Math.min;
+  var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
+  var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
+
+  // `Array.prototype.splice` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.splice
+  // with adding support of @@species
+  _export({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT$3 || !USES_TO_LENGTH$a }, {
+    splice: function splice(start, deleteCount /* , ...items */) {
+      var O = toObject(this);
+      var len = toLength(O.length);
+      var actualStart = toAbsoluteIndex(start, len);
+      var argumentsLength = arguments.length;
+      var insertCount, actualDeleteCount, A, k, from, to;
+      if (argumentsLength === 0) {
+        insertCount = actualDeleteCount = 0;
+      } else if (argumentsLength === 1) {
+        insertCount = 0;
+        actualDeleteCount = len - actualStart;
+      } else {
+        insertCount = argumentsLength - 2;
+        actualDeleteCount = min$5(max$3(toInteger(deleteCount), 0), len - actualStart);
       }
-    }
-  });
-
-  // @@match logic
-  _fixReWks('match', 1, function (defined, MATCH, $match, maybeCallNative) {
-    return [
-      // `String.prototype.match` method
-      // https://tc39.github.io/ecma262/#sec-string.prototype.match
-      function match(regexp) {
-        var O = defined(this);
-        var fn = regexp == undefined ? undefined : regexp[MATCH];
-        return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
-      },
-      // `RegExp.prototype[@@match]` method
-      // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
-      function (regexp) {
-        var res = maybeCallNative($match, regexp, this);
-        if (res.done) return res.value;
-        var rx = _anObject(regexp);
-        var S = String(this);
-        if (!rx.global) return _regexpExecAbstract(rx, S);
-        var fullUnicode = rx.unicode;
-        rx.lastIndex = 0;
-        var A = [];
-        var n = 0;
-        var result;
-        while ((result = _regexpExecAbstract(rx, S)) !== null) {
-          var matchStr = String(result[0]);
-          A[n] = matchStr;
-          if (matchStr === '') rx.lastIndex = _advanceStringIndex(S, _toLength(rx.lastIndex), fullUnicode);
-          n++;
+      if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER$1) {
+        throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);
+      }
+      A = arraySpeciesCreate(O, actualDeleteCount);
+      for (k = 0; k < actualDeleteCount; k++) {
+        from = actualStart + k;
+        if (from in O) createProperty(A, k, O[from]);
+      }
+      A.length = actualDeleteCount;
+      if (insertCount < actualDeleteCount) {
+        for (k = actualStart; k < len - actualDeleteCount; k++) {
+          from = k + actualDeleteCount;
+          to = k + insertCount;
+          if (from in O) O[to] = O[from];
+          else delete O[to];
         }
-        return n === 0 ? null : A;
+        for (k = len; k > len - actualDeleteCount + insertCount; k--) delete O[k - 1];
+      } else if (insertCount > actualDeleteCount) {
+        for (k = len - actualDeleteCount; k > actualStart; k--) {
+          from = k + actualDeleteCount - 1;
+          to = k + insertCount - 1;
+          if (from in O) O[to] = O[from];
+          else delete O[to];
+        }
       }
-    ];
+      for (k = 0; k < insertCount; k++) {
+        O[k + actualStart] = arguments[k + 2];
+      }
+      O.length = len - actualDeleteCount + insertCount;
+      return A;
+    }
   });
 
   var loadjs_umd = createCommonjsModule(function (module, exports) {
-  (function(root, factory) {
-    {
-      module.exports = factory();
-    }
-  }(commonjsGlobal, function() {
-  /**
-   * Global dependencies.
-   * @global {Object} document - DOM
-   */
-
-  var devnull = function() {},
-      bundleIdCache = {},
-      bundleResultCache = {},
-      bundleCallbackQueue = {};
-
-
-  /**
-   * Subscribe to bundle load event.
-   * @param {string[]} bundleIds - Bundle ids
-   * @param {Function} callbackFn - The callback function
-   */
-  function subscribe(bundleIds, callbackFn) {
-    // listify
-    bundleIds = bundleIds.push ? bundleIds : [bundleIds];
-
-    var depsNotFound = [],
-        i = bundleIds.length,
-        numWaiting = i,
-        fn,
-        bundleId,
-        r,
-        q;
-
-    // define callback function
-    fn = function (bundleId, pathsNotFound) {
-      if (pathsNotFound.length) depsNotFound.push(bundleId);
-
-      numWaiting--;
-      if (!numWaiting) callbackFn(depsNotFound);
-    };
-
-    // register callback
-    while (i--) {
-      bundleId = bundleIds[i];
-
-      // execute callback if in result cache
-      r = bundleResultCache[bundleId];
-      if (r) {
-        fn(bundleId, r);
-        continue;
+    (function (root, factory) {
+      {
+        module.exports = factory();
       }
-
-      // add to callback queue
-      q = bundleCallbackQueue[bundleId] = bundleCallbackQueue[bundleId] || [];
-      q.push(fn);
-    }
-  }
-
-
-  /**
-   * Publish bundle load event.
-   * @param {string} bundleId - Bundle id
-   * @param {string[]} pathsNotFound - List of files not found
-   */
-  function publish(bundleId, pathsNotFound) {
-    // exit if id isn't defined
-    if (!bundleId) return;
-
-    var q = bundleCallbackQueue[bundleId];
-
-    // cache result
-    bundleResultCache[bundleId] = pathsNotFound;
-
-    // exit if queue is empty
-    if (!q) return;
-
-    // empty callback queue
-    while (q.length) {
-      q[0](bundleId, pathsNotFound);
-      q.splice(0, 1);
-    }
-  }
+    })(commonjsGlobal, function () {
+      /**
+       * Global dependencies.
+       * @global {Object} document - DOM
+       */
+      var devnull = function devnull() {},
+          bundleIdCache = {},
+          bundleResultCache = {},
+          bundleCallbackQueue = {};
+      /**
+       * Subscribe to bundle load event.
+       * @param {string[]} bundleIds - Bundle ids
+       * @param {Function} callbackFn - The callback function
+       */
 
 
-  /**
-   * Execute callbacks.
-   * @param {Object or Function} args - The callback args
-   * @param {string[]} depsNotFound - List of dependencies not found
-   */
-  function executeCallbacks(args, depsNotFound) {
-    // accept function as argument
-    if (args.call) args = {success: args};
+      function subscribe(bundleIds, callbackFn) {
+        // listify
+        bundleIds = bundleIds.push ? bundleIds : [bundleIds];
+        var depsNotFound = [],
+            i = bundleIds.length,
+            numWaiting = i,
+            fn,
+            bundleId,
+            r,
+            q; // define callback function
 
-    // success and error callbacks
-    if (depsNotFound.length) (args.error || devnull)(depsNotFound);
-    else (args.success || devnull)(args);
-  }
+        fn = function fn(bundleId, pathsNotFound) {
+          if (pathsNotFound.length) depsNotFound.push(bundleId);
+          numWaiting--;
+          if (!numWaiting) callbackFn(depsNotFound);
+        }; // register callback
 
 
-  /**
-   * Load individual file.
-   * @param {string} path - The file path
-   * @param {Function} callbackFn - The callback function
-   */
-  function loadFile(path, callbackFn, args, numTries) {
-    var doc = document,
-        async = args.async,
-        maxTries = (args.numRetries || 0) + 1,
-        beforeCallbackFn = args.before || devnull,
-        pathStripped = path.replace(/^(css|img)!/, ''),
-        isCss,
-        e;
+        while (i--) {
+          bundleId = bundleIds[i]; // execute callback if in result cache
 
-    numTries = numTries || 0;
+          r = bundleResultCache[bundleId];
 
-    if (/(^css!|\.css$)/.test(path)) {
-      isCss = true;
+          if (r) {
+            fn(bundleId, r);
+            continue;
+          } // add to callback queue
 
-      // css
-      e = doc.createElement('link');
-      e.rel = 'stylesheet';
-      e.href = pathStripped; //.replace(/^css!/, '');  // remove "css!" prefix
-    } else if (/(^img!|\.(png|gif|jpg|svg)$)/.test(path)) {
-      // image
-      e = doc.createElement('img');
-      e.src = pathStripped;    
-    } else {
-      // javascript
-      e = doc.createElement('script');
-      e.src = path;
-      e.async = async === undefined ? true : async;
-    }
 
-    e.onload = e.onerror = e.onbeforeload = function (ev) {
-      var result = ev.type[0];
-
-      // Note: The following code isolates IE using `hideFocus` and treats empty
-      // stylesheets as failures to get around lack of onerror support
-      if (isCss && 'hideFocus' in e) {
-        try {
-          if (!e.sheet.cssText.length) result = 'e';
-        } catch (x) {
-          // sheets objects created from load errors don't allow access to
-          // `cssText` (unless error is Code:18 SecurityError)
-          if (x.code != 18) result = 'e';
+          q = bundleCallbackQueue[bundleId] = bundleCallbackQueue[bundleId] || [];
+          q.push(fn);
         }
       }
+      /**
+       * Publish bundle load event.
+       * @param {string} bundleId - Bundle id
+       * @param {string[]} pathsNotFound - List of files not found
+       */
 
-      // handle retries in case of load failure
-      if (result == 'e') {
-        // increment counter
-        numTries += 1;
 
-        // exit function and try again
-        if (numTries < maxTries) {
-          return loadFile(path, callbackFn, args, numTries);
+      function publish(bundleId, pathsNotFound) {
+        // exit if id isn't defined
+        if (!bundleId) return;
+        var q = bundleCallbackQueue[bundleId]; // cache result
+
+        bundleResultCache[bundleId] = pathsNotFound; // exit if queue is empty
+
+        if (!q) return; // empty callback queue
+
+        while (q.length) {
+          q[0](bundleId, pathsNotFound);
+          q.splice(0, 1);
         }
       }
-
-      // execute callback
-      callbackFn(path, result, ev.defaultPrevented);
-    };
-
-    // add to document (unless callback returns `false`)
-    if (beforeCallbackFn(path, e) !== false) doc.head.appendChild(e);
-  }
+      /**
+       * Execute callbacks.
+       * @param {Object or Function} args - The callback args
+       * @param {string[]} depsNotFound - List of dependencies not found
+       */
 
 
-  /**
-   * Load multiple files.
-   * @param {string[]} paths - The file paths
-   * @param {Function} callbackFn - The callback function
-   */
-  function loadFiles(paths, callbackFn, args) {
-    // listify paths
-    paths = paths.push ? paths : [paths];
+      function executeCallbacks(args, depsNotFound) {
+        // accept function as argument
+        if (args.call) args = {
+          success: args
+        }; // success and error callbacks
 
-    var numWaiting = paths.length,
-        x = numWaiting,
-        pathsNotFound = [],
-        fn,
-        i;
-
-    // define callback function
-    fn = function(path, result, defaultPrevented) {
-      // handle error
-      if (result == 'e') pathsNotFound.push(path);
-
-      // handle beforeload event. If defaultPrevented then that means the load
-      // will be blocked (ex. Ghostery/ABP on Safari)
-      if (result == 'b') {
-        if (defaultPrevented) pathsNotFound.push(path);
-        else return;
+        if (depsNotFound.length) (args.error || devnull)(depsNotFound);else (args.success || devnull)(args);
       }
-
-      numWaiting--;
-      if (!numWaiting) callbackFn(pathsNotFound);
-    };
-
-    // load scripts
-    for (i=0; i < x; i++) loadFile(paths[i], fn, args);
-  }
+      /**
+       * Load individual file.
+       * @param {string} path - The file path
+       * @param {Function} callbackFn - The callback function
+       */
 
 
-  /**
-   * Initiate script load and register bundle.
-   * @param {(string|string[])} paths - The file paths
-   * @param {(string|Function)} [arg1] - The bundleId or success callback
-   * @param {Function} [arg2] - The success or error callback
-   * @param {Function} [arg3] - The error callback
-   */
-  function loadjs(paths, arg1, arg2) {
-    var bundleId,
-        args;
+      function loadFile(path, callbackFn, args, numTries) {
+        var doc = document,
+            async = args.async,
+            maxTries = (args.numRetries || 0) + 1,
+            beforeCallbackFn = args.before || devnull,
+            pathname = path.replace(/[\?|#].*$/, ''),
+            pathStripped = path.replace(/^(css|img)!/, ''),
+            isLegacyIECss,
+            e;
+        numTries = numTries || 0;
 
-    // bundleId (if string)
-    if (arg1 && arg1.trim) bundleId = arg1;
+        if (/(^css!|\.css$)/.test(pathname)) {
+          // css
+          e = doc.createElement('link');
+          e.rel = 'stylesheet';
+          e.href = pathStripped; // tag IE9+
 
-    // args (default is {})
-    args = (bundleId ? arg2 : arg1) || {};
+          isLegacyIECss = 'hideFocus' in e; // use preload in IE Edge (to detect load errors)
 
-    // throw error if bundle is already defined
-    if (bundleId) {
-      if (bundleId in bundleIdCache) {
-        throw "LoadJS";
-      } else {
-        bundleIdCache[bundleId] = true;
+          if (isLegacyIECss && e.relList) {
+            isLegacyIECss = 0;
+            e.rel = 'preload';
+            e.as = 'style';
+          }
+        } else if (/(^img!|\.(png|gif|jpg|svg|webp)$)/.test(pathname)) {
+          // image
+          e = doc.createElement('img');
+          e.src = pathStripped;
+        } else {
+          // javascript
+          e = doc.createElement('script');
+          e.src = path;
+          e.async = async === undefined ? true : async;
+        }
+
+        e.onload = e.onerror = e.onbeforeload = function (ev) {
+          var result = ev.type[0]; // treat empty stylesheets as failures to get around lack of onerror
+          // support in IE9-11
+
+          if (isLegacyIECss) {
+            try {
+              if (!e.sheet.cssText.length) result = 'e';
+            } catch (x) {
+              // sheets objects created from load errors don't allow access to
+              // `cssText` (unless error is Code:18 SecurityError)
+              if (x.code != 18) result = 'e';
+            }
+          } // handle retries in case of load failure
+
+
+          if (result == 'e') {
+            // increment counter
+            numTries += 1; // exit function and try again
+
+            if (numTries < maxTries) {
+              return loadFile(path, callbackFn, args, numTries);
+            }
+          } else if (e.rel == 'preload' && e.as == 'style') {
+            // activate preloaded stylesheets
+            return e.rel = 'stylesheet'; // jshint ignore:line
+          } // execute callback
+
+
+          callbackFn(path, result, ev.defaultPrevented);
+        }; // add to document (unless callback returns `false`)
+
+
+        if (beforeCallbackFn(path, e) !== false) doc.head.appendChild(e);
       }
-    }
-
-    // load scripts
-    loadFiles(paths, function (pathsNotFound) {
-      // execute callbacks
-      executeCallbacks(args, pathsNotFound);
-
-      // publish bundle load event
-      publish(bundleId, pathsNotFound);
-    }, args);
-  }
+      /**
+       * Load multiple files.
+       * @param {string[]} paths - The file paths
+       * @param {Function} callbackFn - The callback function
+       */
 
 
-  /**
-   * Execute callbacks when dependencies have been satisfied.
-   * @param {(string|string[])} deps - List of bundle ids
-   * @param {Object} args - success/error arguments
-   */
-  loadjs.ready = function ready(deps, args) {
-    // subscribe to bundle load event
-    subscribe(deps, function (depsNotFound) {
-      // execute callbacks
-      executeCallbacks(args, depsNotFound);
+      function loadFiles(paths, callbackFn, args) {
+        // listify paths
+        paths = paths.push ? paths : [paths];
+        var numWaiting = paths.length,
+            x = numWaiting,
+            pathsNotFound = [],
+            fn,
+            i; // define callback function
+
+        fn = function fn(path, result, defaultPrevented) {
+          // handle error
+          if (result == 'e') pathsNotFound.push(path); // handle beforeload event. If defaultPrevented then that means the load
+          // will be blocked (ex. Ghostery/ABP on Safari)
+
+          if (result == 'b') {
+            if (defaultPrevented) pathsNotFound.push(path);else return;
+          }
+
+          numWaiting--;
+          if (!numWaiting) callbackFn(pathsNotFound);
+        }; // load scripts
+
+
+        for (i = 0; i < x; i++) {
+          loadFile(paths[i], fn, args);
+        }
+      }
+      /**
+       * Initiate script load and register bundle.
+       * @param {(string|string[])} paths - The file paths
+       * @param {(string|Function|Object)} [arg1] - The (1) bundleId or (2) success
+       *   callback or (3) object literal with success/error arguments, numRetries,
+       *   etc.
+       * @param {(Function|Object)} [arg2] - The (1) success callback or (2) object
+       *   literal with success/error arguments, numRetries, etc.
+       */
+
+
+      function loadjs(paths, arg1, arg2) {
+        var bundleId, args; // bundleId (if string)
+
+        if (arg1 && arg1.trim) bundleId = arg1; // args (default is {})
+
+        args = (bundleId ? arg2 : arg1) || {}; // throw error if bundle is already defined
+
+        if (bundleId) {
+          if (bundleId in bundleIdCache) {
+            throw "LoadJS";
+          } else {
+            bundleIdCache[bundleId] = true;
+          }
+        }
+
+        function loadFn(resolve, reject) {
+          loadFiles(paths, function (pathsNotFound) {
+            // execute callbacks
+            executeCallbacks(args, pathsNotFound); // resolve Promise
+
+            if (resolve) {
+              executeCallbacks({
+                success: resolve,
+                error: reject
+              }, pathsNotFound);
+            } // publish bundle load event
+
+
+            publish(bundleId, pathsNotFound);
+          }, args);
+        }
+
+        if (args.returnPromise) return new Promise(loadFn);else loadFn();
+      }
+      /**
+       * Execute callbacks when dependencies have been satisfied.
+       * @param {(string|string[])} deps - List of bundle ids
+       * @param {Object} args - success/error arguments
+       */
+
+
+      loadjs.ready = function ready(deps, args) {
+        // subscribe to bundle load event
+        subscribe(deps, function (depsNotFound) {
+          // execute callbacks
+          executeCallbacks(args, depsNotFound);
+        });
+        return loadjs;
+      };
+      /**
+       * Manually satisfy bundle dependencies.
+       * @param {string} bundleId - The bundle id
+       */
+
+
+      loadjs.done = function done(bundleId) {
+        publish(bundleId, []);
+      };
+      /**
+       * Reset loadjs dependencies statuses
+       */
+
+
+      loadjs.reset = function reset() {
+        bundleIdCache = {};
+        bundleResultCache = {};
+        bundleCallbackQueue = {};
+      };
+      /**
+       * Determine if bundle has already been defined
+       * @param String} bundleId - The bundle id
+       */
+
+
+      loadjs.isDefined = function isDefined(bundleId) {
+        return bundleId in bundleIdCache;
+      }; // export
+
+
+      return loadjs;
     });
-
-    return loadjs;
-  };
-
-
-  /**
-   * Manually satisfy bundle dependencies.
-   * @param {string} bundleId - The bundle id
-   */
-  loadjs.done = function done(bundleId) {
-    publish(bundleId, []);
-  };
-
-
-  /**
-   * Reset loadjs dependencies statuses
-   */
-  loadjs.reset = function reset() {
-    bundleIdCache = {};
-    bundleResultCache = {};
-    bundleCallbackQueue = {};
-  };
-
-
-  /**
-   * Determine if bundle has already been defined
-   * @param String} bundleId - The bundle id
-   */
-  loadjs.isDefined = function isDefined(bundleId) {
-    return bundleId in bundleIdCache;
-  };
-
-
-  // export
-  return loadjs;
-
-  }));
   });
 
   function loadScript(url) {
@@ -8123,16 +12142,6 @@ typeof navigator === "object" && (function (global, factory) {
 
     var regex = /^.*(vimeo.com\/|video\/)(\d+).*/;
     return url.match(regex) ? RegExp.$2 : url;
-  } // Get aspect ratio for dimensions
-
-
-  function getAspectRatio(width, height) {
-    var getRatio = function getRatio(w, h) {
-      return h === 0 ? w : getRatio(h, w % h);
-    };
-
-    var ratio = getRatio(width, height);
-    return "".concat(width / ratio, ":").concat(height / ratio);
   } // Set playback state and trigger change (only on actual change)
 
 
@@ -8149,60 +12158,51 @@ typeof navigator === "object" && (function (global, factory) {
 
   var vimeo = {
     setup: function setup() {
-      var _this = this;
+      var player = this; // Add embed class for responsive
 
-      // Add embed class for responsive
-      toggleClass(this.elements.wrapper, this.config.classNames.embed, true); // Set intial ratio
+      toggleClass(player.elements.wrapper, player.config.classNames.embed, true); // Set speed options from config
 
-      vimeo.setAspectRatio.call(this); // Load the API if not already
+      player.options.speed = player.config.speed.options; // Set intial ratio
+
+      setAspectRatio.call(player); // Load the SDK if not already
 
       if (!is$1.object(window.Vimeo)) {
-        loadScript(this.config.urls.vimeo.sdk).then(function () {
-          vimeo.ready.call(_this);
+        loadScript(player.config.urls.vimeo.sdk).then(function () {
+          vimeo.ready.call(player);
         }).catch(function (error) {
-          _this.debug.warn('Vimeo API failed to load', error);
+          player.debug.warn('Vimeo SDK (player.js) failed to load', error);
         });
       } else {
-        vimeo.ready.call(this);
-      }
-    },
-    // Set aspect ratio
-    // For Vimeo we have an extra 300% height <div> to hide the standard controls and UI
-    setAspectRatio: function setAspectRatio(input) {
-      var _split$map = (is$1.string(input) ? input : this.config.ratio).split(':').map(Number),
-          _split$map2 = _slicedToArray(_split$map, 2),
-          x = _split$map2[0],
-          y = _split$map2[1];
-
-      var padding = 100 / x * y;
-      vimeo.padding = padding;
-      this.elements.wrapper.style.paddingBottom = "".concat(padding, "%");
-
-      if (this.supported.ui) {
-        var height = 240;
-        var offset = (height - padding) / (height / 50);
-        this.media.style.transform = "translateY(-".concat(offset, "%)");
+        vimeo.ready.call(player);
       }
     },
     // API Ready
-    ready: function ready$$1() {
-      var _this2 = this;
+    ready: function ready() {
+      var _this = this;
 
-      var player = this; // Get Vimeo params for the iframe
+      var player = this;
+      var config = player.config.vimeo;
 
-      var options = {
+      var premium = config.premium,
+          referrerPolicy = config.referrerPolicy,
+          frameParams = _objectWithoutProperties(config, ["premium", "referrerPolicy"]); // If the owner has a pro or premium account then we can hide controls etc
+
+
+      if (premium) {
+        Object.assign(frameParams, {
+          controls: false,
+          sidedock: false
+        });
+      } // Get Vimeo params for the iframe
+
+
+      var params = buildUrlParams(_objectSpread2({
         loop: player.config.loop.active,
         autoplay: player.autoplay,
-        // muted: player.muted,
-        byline: false,
-        portrait: false,
-        title: false,
-        speed: true,
-        transparent: 0,
+        muted: player.muted,
         gesture: 'media',
         playsinline: !this.config.fullscreen.iosNative
-      };
-      var params = buildUrlParams(options); // Get the source URL or ID
+      }, frameParams)); // Get the source URL or ID
 
       var source = player.media.getAttribute('src'); // Get from <div> if needed
 
@@ -8216,31 +12216,38 @@ typeof navigator === "object" && (function (global, factory) {
       var src = format(player.config.urls.vimeo.iframe, id, params);
       iframe.setAttribute('src', src);
       iframe.setAttribute('allowfullscreen', '');
-      iframe.setAttribute('allowtransparency', '');
-      iframe.setAttribute('allow', 'autoplay'); // Get poster, if already set
+      iframe.setAttribute('allow', 'autoplay,fullscreen,picture-in-picture'); // Set the referrer policy if required
 
-      var poster = player.poster; // Inject the package
-
-      var wrapper = createElement('div', {
-        poster: poster,
-        class: player.config.classNames.embedContainer
-      });
-      wrapper.appendChild(iframe);
-      player.media = replaceElement(wrapper, player.media); // Get poster image
-
-      fetch(format(player.config.urls.vimeo.api, id), 'json').then(function (response) {
-        if (is$1.empty(response)) {
-          return;
-        } // Get the URL for thumbnail
+      if (!is$1.empty(referrerPolicy)) {
+        iframe.setAttribute('referrerPolicy', referrerPolicy);
+      } // Inject the package
 
 
-        var url = new URL(response[0].thumbnail_large); // Get original image
+      if (premium || !config.customControls) {
+        iframe.setAttribute('data-poster', player.poster);
+        player.media = replaceElement(iframe, player.media);
+      } else {
+        var wrapper = createElement('div', {
+          class: player.config.classNames.embedContainer,
+          'data-poster': player.poster
+        });
+        wrapper.appendChild(iframe);
+        player.media = replaceElement(wrapper, player.media);
+      } // Get poster image
 
-        url.pathname = "".concat(url.pathname.split('_')[0], ".jpg"); // Set and show poster
 
-        ui.setPoster.call(player, url.href).catch(function () {});
-      }); // Setup instance
+      if (!config.customControls) {
+        fetch(format(player.config.urls.vimeo.api, src)).then(function (response) {
+          if (is$1.empty(response) || !response.thumbnail_url) {
+            return;
+          } // Set and show poster
+
+
+          ui.setPoster.call(player, response.thumbnail_url).catch(function () {});
+        });
+      } // Setup instance
       // https://github.com/vimeo/player.js
+
 
       player.embed = new window.Vimeo.Player(iframe, {
         autopause: player.config.autopause,
@@ -8310,11 +12317,9 @@ typeof navigator === "object" && (function (global, factory) {
           player.embed.setPlaybackRate(input).then(function () {
             speed = input;
             triggerEvent.call(player, player.media, 'ratechange');
-          }).catch(function (error) {
-            // Hide menu item (and menu if empty)
-            if (error.name === 'Error') {
-              controls.setSpeedMenu.call(player, []);
-            }
+          }).catch(function () {
+            // Cannot set Playback Rate, Video is probably not on Pro account
+            player.options.speed = [1];
           });
         }
       }); // Volume
@@ -8362,9 +12367,9 @@ typeof navigator === "object" && (function (global, factory) {
       var currentSrc;
       player.embed.getVideoUrl().then(function (value) {
         currentSrc = value;
-        controls.setDownloadLink.call(player);
+        controls.setDownloadUrl.call(player);
       }).catch(function (error) {
-        _this2.debug.warn(error);
+        _this.debug.warn(error);
       });
       Object.defineProperty(player.media, 'currentSrc', {
         get: function get() {
@@ -8379,8 +12384,12 @@ typeof navigator === "object" && (function (global, factory) {
       }); // Set aspect ratio based on video size
 
       Promise.all([player.embed.getVideoWidth(), player.embed.getVideoHeight()]).then(function (dimensions) {
-        vimeo.ratio = getAspectRatio(dimensions[0], dimensions[1]);
-        vimeo.setAspectRatio.call(_this2, vimeo.ratio);
+        var _dimensions = _slicedToArray(dimensions, 2),
+            width = _dimensions[0],
+            height = _dimensions[1];
+
+        player.embed.ratio = [width, height];
+        setAspectRatio.call(_this);
       }); // Set autopause
 
       player.embed.setAutopause(player.config.autopause).then(function (state) {
@@ -8389,7 +12398,7 @@ typeof navigator === "object" && (function (global, factory) {
 
       player.embed.getVideoTitle().then(function (title) {
         player.config.title = title;
-        ui.setTitle.call(_this2);
+        ui.setTitle.call(_this);
       }); // Get current time
 
       player.embed.getCurrentTime().then(function (value) {
@@ -8431,6 +12440,12 @@ typeof navigator === "object" && (function (global, factory) {
           frame.setAttribute('tabindex', -1);
         }
       });
+      player.embed.on('bufferstart', function () {
+        triggerEvent.call(player, player.media, 'waiting');
+      });
+      player.embed.on('bufferend', function () {
+        triggerEvent.call(player, player.media, 'playing');
+      });
       player.embed.on('play', function () {
         assurePlaybackState.call(player, true);
         triggerEvent.call(player, player.media, 'playing');
@@ -8471,29 +12486,13 @@ typeof navigator === "object" && (function (global, factory) {
       player.embed.on('error', function (detail) {
         player.media.error = detail;
         triggerEvent.call(player, player.media, 'error');
-      }); // Set height/width on fullscreen
-
-      player.on('enterfullscreen exitfullscreen', function (event) {
-        var target = player.fullscreen.target; // Ignore for iOS native
-
-        if (target !== player.elements.container) {
-          return;
-        }
-
-        var toggle = event.type === 'enterfullscreen';
-
-        var _vimeo$ratio$split$ma = vimeo.ratio.split(':').map(Number),
-            _vimeo$ratio$split$ma2 = _slicedToArray(_vimeo$ratio$split$ma, 2),
-            x = _vimeo$ratio$split$ma2[0],
-            y = _vimeo$ratio$split$ma2[1];
-
-        var dimension = x > y ? 'width' : 'height';
-        target.style[dimension] = toggle ? "".concat(vimeo.padding, "%") : null;
       }); // Rebuild UI
 
-      setTimeout(function () {
-        return ui.build.call(player);
-      }, 0);
+      if (config.customControls) {
+        setTimeout(function () {
+          return ui.build.call(player);
+        }, 0);
+      }
     }
   };
 
@@ -8518,78 +12517,76 @@ typeof navigator === "object" && (function (global, factory) {
     }
   }
 
+  function getHost$1(config) {
+    if (config.noCookie) {
+      return 'https://www.youtube-nocookie.com';
+    }
+
+    if (window.location.protocol === 'http:') {
+      return 'http://www.youtube.com';
+    } // Use YouTube's default
+
+
+    return undefined;
+  }
+
   var youtube = {
     setup: function setup() {
       var _this = this;
 
       // Add embed class for responsive
-      toggleClass(this.elements.wrapper, this.config.classNames.embed, true); // Set aspect ratio
-
-      youtube.setAspectRatio.call(this); // Setup API
+      toggleClass(this.elements.wrapper, this.config.classNames.embed, true); // Setup API
 
       if (is$1.object(window.YT) && is$1.function(window.YT.Player)) {
         youtube.ready.call(this);
       } else {
-        // Load the API
-        loadScript(this.config.urls.youtube.sdk).catch(function (error) {
-          _this.debug.warn('YouTube API failed to load', error);
-        }); // Setup callback for the API
-        // YouTube has it's own system of course...
-
-        window.onYouTubeReadyCallbacks = window.onYouTubeReadyCallbacks || []; // Add to queue
-
-        window.onYouTubeReadyCallbacks.push(function () {
-          youtube.ready.call(_this);
-        }); // Set callback to process queue
+        // Reference current global callback
+        var callback = window.onYouTubeIframeAPIReady; // Set callback to process queue
 
         window.onYouTubeIframeAPIReady = function () {
-          window.onYouTubeReadyCallbacks.forEach(function (callback) {
+          // Call global callback if set
+          if (is$1.function(callback)) {
             callback();
-          });
-        };
+          }
+
+          youtube.ready.call(_this);
+        }; // Load the SDK
+
+
+        loadScript(this.config.urls.youtube.sdk).catch(function (error) {
+          _this.debug.warn('YouTube API failed to load', error);
+        });
       }
     },
     // Get the media title
     getTitle: function getTitle(videoId) {
       var _this2 = this;
 
-      // Try via undocumented API method first
-      // This method disappears now and then though...
-      // https://github.com/sampotts/plyr/issues/709
-      if (is$1.function(this.embed.getVideoData)) {
-        var _this$embed$getVideoD = this.embed.getVideoData(),
-            title = _this$embed$getVideoD.title;
+      var url = format(this.config.urls.youtube.api, videoId);
+      fetch(url).then(function (data) {
+        if (is$1.object(data)) {
+          var title = data.title,
+              height = data.height,
+              width = data.width; // Set title
 
-        if (is$1.empty(title)) {
-          this.config.title = title;
-          ui.setTitle.call(this);
-          return;
+          _this2.config.title = title;
+          ui.setTitle.call(_this2); // Set aspect ratio
+
+          _this2.embed.ratio = [width, height];
         }
-      } // Or via Google API
 
-
-      var key = this.config.keys.google;
-
-      if (is$1.string(key) && !is$1.empty(key)) {
-        var url = format(this.config.urls.youtube.api, videoId, key);
-        fetch(url).then(function (result) {
-          if (is$1.object(result)) {
-            _this2.config.title = result.items[0].snippet.title;
-            ui.setTitle.call(_this2);
-          }
-        }).catch(function () {});
-      }
-    },
-    // Set aspect ratio
-    setAspectRatio: function setAspectRatio() {
-      var ratio = this.config.ratio.split(':');
-      this.elements.wrapper.style.paddingBottom = "".concat(100 / ratio[0] * ratio[1], "%");
+        setAspectRatio.call(_this2);
+      }).catch(function () {
+        // Set aspect ratio
+        setAspectRatio.call(_this2);
+      });
     },
     // API ready
-    ready: function ready$$1() {
-      var player = this; // Ignore already setup (race condition)
+    ready: function ready() {
+      var player = this;
+      var config = player.config.youtube; // Ignore already setup (race condition)
 
-      var currentId = player.media.getAttribute('id');
+      var currentId = player.media && player.media.getAttribute('id');
 
       if (!is$1.empty(currentId) && currentId.startsWith('youtube-')) {
         return;
@@ -8604,66 +12601,59 @@ typeof navigator === "object" && (function (global, factory) {
 
 
       var videoId = parseId$1(source);
-      var id = generateId(player.provider); // Get poster, if already set
-
-      var poster = player.poster; // Replace media element
+      var id = generateId(player.provider); // Replace media element
 
       var container = createElement('div', {
         id: id,
-        poster: poster
+        'data-poster': config.customControls ? player.poster : undefined
       });
-      player.media = replaceElement(container, player.media); // Id to poster wrapper
+      player.media = replaceElement(container, player.media); // Only load the poster when using custom controls
 
-      var posterSrc = function posterSrc(format$$1) {
-        return "https://img.youtube.com/vi/".concat(videoId, "/").concat(format$$1, "default.jpg");
-      }; // Check thumbnail images in order of quality, but reject fallback thumbnails (120px wide)
+      if (config.customControls) {
+        var posterSrc = function posterSrc(s) {
+          return "https://i.ytimg.com/vi/".concat(videoId, "/").concat(s, "default.jpg");
+        }; // Check thumbnail images in order of quality, but reject fallback thumbnails (120px wide)
 
 
-      loadImage(posterSrc('maxres'), 121) // Higest quality and unpadded
-      .catch(function () {
-        return loadImage(posterSrc('sd'), 121);
-      }) // 480p padded 4:3
-      .catch(function () {
-        return loadImage(posterSrc('hq'));
-      }) // 360p padded 4:3. Always exists
-      .then(function (image) {
-        return ui.setPoster.call(player, image.src);
-      }).then(function (posterSrc) {
-        // If the image is padded, use background-size "cover" instead (like youtube does too with their posters)
-        if (!posterSrc.includes('maxres')) {
-          player.elements.poster.style.backgroundSize = 'cover';
-        }
-      }).catch(function () {}); // Setup instance
+        loadImage(posterSrc('maxres'), 121) // Higest quality and unpadded
+        .catch(function () {
+          return loadImage(posterSrc('sd'), 121);
+        }) // 480p padded 4:3
+        .catch(function () {
+          return loadImage(posterSrc('hq'));
+        }) // 360p padded 4:3. Always exists
+        .then(function (image) {
+          return ui.setPoster.call(player, image.src);
+        }).then(function (src) {
+          // If the image is padded, use background-size "cover" instead (like youtube does too with their posters)
+          if (!src.includes('maxres')) {
+            player.elements.poster.style.backgroundSize = 'cover';
+          }
+        }).catch(function () {});
+      } // Setup instance
       // https://developers.google.com/youtube/iframe_api_reference
 
-      player.embed = new window.YT.Player(id, {
+
+      player.embed = new window.YT.Player(player.media, {
         videoId: videoId,
-        playerVars: {
-          autoplay: player.config.autoplay ? 1 : 0,
+        host: getHost$1(config),
+        playerVars: extend({}, {
           // Autoplay
-          hl: player.config.hl,
+          autoplay: player.config.autoplay ? 1 : 0,
           // iframe interface language
-          controls: player.supported.ui ? 0 : 1,
-          // Only show controls if not fully supported
-          rel: 0,
-          // No related vids
-          showinfo: 0,
-          // Hide info
-          iv_load_policy: 3,
-          // Hide annotations
-          modestbranding: 1,
-          // Hide logos as much as possible (they still show one in the corner when paused)
-          disablekb: 1,
+          hl: player.config.hl,
+          // Only show controls if not fully supported or opted out
+          controls: player.supported.ui && config.customControls ? 0 : 1,
           // Disable keyboard as we handle it
-          playsinline: 1,
+          disablekb: 1,
           // Allow iOS inline playback
-          // Tracking for stats
-          // origin: window ? `${window.location.protocol}//${window.location.host}` : null,
-          widget_referrer: window ? window.location.href : null,
+          playsinline: !player.config.fullscreen.iosNative ? 1 : 0,
           // Captions are flaky on YouTube
           cc_load_policy: player.captions.active ? 1 : 0,
-          cc_lang_pref: player.config.captions.language
-        },
+          cc_lang_pref: player.config.captions.language,
+          // Tracking for stats
+          widget_referrer: window ? window.location.href : null
+        }, config),
         events: {
           onError: function onError(event) {
             // YouTube may fire onError twice, so only handle it once
@@ -8768,6 +12758,7 @@ typeof navigator === "object" && (function (global, factory) {
                 var toggle = is$1.boolean(input) ? input : muted;
                 muted = toggle;
                 instance[toggle ? 'mute' : 'unMute']();
+                instance.setVolume(volume * 100);
                 triggerEvent.call(player, player.media, 'volumechange');
               }
             }); // Source
@@ -8784,9 +12775,13 @@ typeof navigator === "object" && (function (global, factory) {
               }
             }); // Get available speeds
 
-            player.options.speed = instance.getAvailablePlaybackRates(); // Set the tabindex to avoid focus entering iframe
+            var speeds = instance.getAvailablePlaybackRates(); // Filter based on config
 
-            if (player.supported.ui) {
+            player.options.speed = speeds.filter(function (s) {
+              return player.config.speed.options.includes(s);
+            }); // Set the tabindex to avoid focus entering iframe
+
+            if (player.supported.ui && config.customControls) {
               player.media.setAttribute('tabindex', -1);
             }
 
@@ -8813,9 +12808,11 @@ typeof navigator === "object" && (function (global, factory) {
               }
             }, 200); // Rebuild UI
 
-            setTimeout(function () {
-              return ui.build.call(player);
-            }, 50);
+            if (config.customControls) {
+              setTimeout(function () {
+                return ui.build.call(player);
+              }, 50);
+            }
           },
           onStateChange: function onStateChange(event) {
             // Get the instance
@@ -8861,7 +12858,7 @@ typeof navigator === "object" && (function (global, factory) {
 
               case 1:
                 // Restore paused state (YouTube starts playing on seek if the video hasn't been played yet)
-                if (player.media.paused && !player.embed.hasPlayed) {
+                if (config.customControls && !player.config.autoplay && player.media.paused && !player.embed.hasPlayed) {
                   player.media.pause();
                 } else {
                   assurePlaybackState$1.call(player, true);
@@ -8890,7 +12887,9 @@ typeof navigator === "object" && (function (global, factory) {
                 assurePlaybackState$1.call(player, false);
                 break;
 
-              default:
+              case 3:
+                // Trigger waiting event to add loading classes to container as the video buffers.
+                triggerEvent.call(player, player.media, 'waiting');
                 break;
             }
 
@@ -8929,16 +12928,17 @@ typeof navigator === "object" && (function (global, factory) {
           class: this.config.classNames.video
         }); // Wrap the video in a container
 
-        wrap(this.media, this.elements.wrapper); // Faux poster container
+        wrap$1(this.media, this.elements.wrapper); // Poster image container
 
         this.elements.poster = createElement('div', {
-          class: this.config.classNames.poster
+          class: this.config.classNames.poster,
+          hidden: ''
         });
         this.elements.wrapper.appendChild(this.elements.poster);
       }
 
       if (this.isHTML5) {
-        html5.extend.call(this);
+        html5.setup.call(this);
       } else if (this.isYouTube) {
         youtube.setup.call(this);
       } else if (this.isVimeo) {
@@ -8947,12 +12947,24 @@ typeof navigator === "object" && (function (global, factory) {
     }
   };
 
-  var Ads =
-  /*#__PURE__*/
-  function () {
+  var destroy = function destroy(instance) {
+    // Destroy our adsManager
+    if (instance.manager) {
+      instance.manager.destroy();
+    } // Destroy our adsManager
+
+
+    if (instance.elements.displayContainer) {
+      instance.elements.displayContainer.destroy();
+    }
+
+    instance.elements.container.remove();
+  };
+
+  var Ads = /*#__PURE__*/function () {
     /**
      * Ads constructor.
-     * @param {object} player
+     * @param {Object} player
      * @return {Ads}
      */
     function Ads(player) {
@@ -8961,7 +12973,7 @@ typeof navigator === "object" && (function (global, factory) {
       _classCallCheck(this, Ads);
 
       this.player = player;
-      this.publisherId = player.config.ads.publisherId;
+      this.config = player.config.ads;
       this.playing = false;
       this.initialized = false;
       this.elements = {
@@ -8994,18 +13006,20 @@ typeof navigator === "object" && (function (global, factory) {
       value: function load() {
         var _this2 = this;
 
-        if (this.enabled) {
-          // Check if the Google IMA3 SDK is loaded or load it ourselves
-          if (!is$1.object(window.google) || !is$1.object(window.google.ima)) {
-            loadScript(this.player.config.urls.googleIMA.sdk).then(function () {
-              _this2.ready();
-            }).catch(function () {
-              // Script failed to load or is blocked
-              _this2.trigger('error', new Error('Google IMA SDK failed to load'));
-            });
-          } else {
-            this.ready();
-          }
+        if (!this.enabled) {
+          return;
+        } // Check if the Google IMA3 SDK is loaded or load it ourselves
+
+
+        if (!is$1.object(window.google) || !is$1.object(window.google.ima)) {
+          loadScript(this.player.config.urls.googleIMA.sdk).then(function () {
+            _this2.ready();
+          }).catch(function () {
+            // Script failed to load or is blocked
+            _this2.trigger('error', new Error('Google IMA SDK failed to load'));
+          });
+        } else {
+          this.ready();
         }
       }
       /**
@@ -9014,11 +13028,16 @@ typeof navigator === "object" && (function (global, factory) {
 
     }, {
       key: "ready",
-      value: function ready$$1() {
+      value: function ready() {
         var _this3 = this;
 
-        // Start ticking our safety timer. If the whole advertisement
+        // Double check we're enabled
+        if (!this.enabled) {
+          destroy(this);
+        } // Start ticking our safety timer. If the whole advertisement
         // thing doesn't resolve within our set time; we bail
+
+
         this.startSafetyTimer(12000, 'ready()'); // Clear the safety timer
 
         this.managerPromise.then(function () {
@@ -9028,7 +13047,7 @@ typeof navigator === "object" && (function (global, factory) {
         this.listeners(); // Setup the IMA SDK
 
         this.setupIMA();
-      } // Build the default tag URL
+      } // Build the tag URL
 
     }, {
       key: "setupIMA",
@@ -9042,6 +13061,8 @@ typeof navigator === "object" && (function (global, factory) {
        * mobile devices, this initialization is done as the result of a user action.
        */
       value: function setupIMA() {
+        var _this4 = this;
+
         // Create the container for our advertisements
         this.elements.container = createElement('div', {
           class: this.player.config.classNames.ads
@@ -9050,10 +13071,20 @@ typeof navigator === "object" && (function (global, factory) {
 
         google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED); // Set language
 
-        google.ima.settings.setLocale(this.player.config.ads.language); // We assume the adContainer is the video container of the plyr element
-        // that will house the ads
+        google.ima.settings.setLocale(this.player.config.ads.language); // Set playback for iOS10+
 
-        this.elements.displayContainer = new google.ima.AdDisplayContainer(this.elements.container); // Request video ads to be pre-loaded
+        google.ima.settings.setDisableCustomPlaybackForIOS10Plus(this.player.config.playsinline); // We assume the adContainer is the video container of the plyr element that will house the ads
+
+        this.elements.displayContainer = new google.ima.AdDisplayContainer(this.elements.container, this.player.media); // Create ads loader
+
+        this.loader = new google.ima.AdsLoader(this.elements.displayContainer); // Listen and respond to ads loaded and error events
+
+        this.loader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, function (event) {
+          return _this4.onAdsManagerLoaded(event);
+        }, false);
+        this.loader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, function (error) {
+          return _this4.onAdError(error);
+        }, false); // Request video ads to be pre-loaded
 
         this.requestAds();
       }
@@ -9064,21 +13095,10 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "requestAds",
       value: function requestAds() {
-        var _this4 = this;
-
         var container = this.player.elements.container;
 
         try {
-          // Create ads loader
-          this.loader = new google.ima.AdsLoader(this.elements.displayContainer); // Listen and respond to ads loaded and error events
-
-          this.loader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, function (event) {
-            return _this4.onAdsManagerLoaded(event);
-          }, false);
-          this.loader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, function (error) {
-            return _this4.onAdError(error);
-          }, false); // Request video ads
-
+          // Request video ads
           var request = new google.ima.AdsRequest();
           request.adTagUrl = this.tagUrl; // Specify the linear and nonlinear slot sizes. This helps the SDK
           // to select the correct creative if multiple are returned
@@ -9098,7 +13118,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Update the ad countdown
-       * @param {boolean} start
+       * @param {Boolean} start
        */
 
     }, {
@@ -9147,27 +13167,7 @@ typeof navigator === "object" && (function (global, factory) {
 
         this.manager = event.getAdsManager(this.player, settings); // Get the cue points for any mid-rolls by filtering out the pre- and post-roll
 
-        this.cuePoints = this.manager.getCuePoints(); // Add advertisement cue's within the time line if available
-
-        if (!is$1.empty(this.cuePoints)) {
-          this.cuePoints.forEach(function (cuePoint) {
-            if (cuePoint !== 0 && cuePoint !== -1 && cuePoint < _this6.player.duration) {
-              var seekElement = _this6.player.elements.progress;
-
-              if (is$1.element(seekElement)) {
-                var cuePercentage = 100 / _this6.player.duration * cuePoint;
-                var cue = createElement('span', {
-                  class: _this6.player.config.classNames.cues
-                });
-                cue.style.left = "".concat(cuePercentage.toString(), "%");
-                seekElement.appendChild(cue);
-              }
-            }
-          });
-        } // Set volume to match player
-
-
-        this.manager.setVolume(this.player.volume); // Add listeners to the required events
+        this.cuePoints = this.manager.getCuePoints(); // Add listeners to the required events
         // Advertisement error events
 
         this.manager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, function (error) {
@@ -9175,12 +13175,35 @@ typeof navigator === "object" && (function (global, factory) {
         }); // Advertisement regular events
 
         Object.keys(google.ima.AdEvent.Type).forEach(function (type) {
-          _this6.manager.addEventListener(google.ima.AdEvent.Type[type], function (event) {
-            return _this6.onAdEvent(event);
+          _this6.manager.addEventListener(google.ima.AdEvent.Type[type], function (e) {
+            return _this6.onAdEvent(e);
           });
         }); // Resolve our adsManager
 
         this.trigger('loaded');
+      }
+    }, {
+      key: "addCuePoints",
+      value: function addCuePoints() {
+        var _this7 = this;
+
+        // Add advertisement cue's within the time line if available
+        if (!is$1.empty(this.cuePoints)) {
+          this.cuePoints.forEach(function (cuePoint) {
+            if (cuePoint !== 0 && cuePoint !== -1 && cuePoint < _this7.player.duration) {
+              var seekElement = _this7.player.elements.progress;
+
+              if (is$1.element(seekElement)) {
+                var cuePercentage = 100 / _this7.player.duration * cuePoint;
+                var cue = createElement('span', {
+                  class: _this7.player.config.classNames.cues
+                });
+                cue.style.left = "".concat(cuePercentage.toString(), "%");
+                seekElement.appendChild(cue);
+              }
+            }
+          });
+        }
       }
       /**
        * This is where all the event handling takes place. Retrieve the ad from the event. Some
@@ -9192,25 +13215,26 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "onAdEvent",
       value: function onAdEvent(event) {
-        var _this7 = this;
+        var _this8 = this;
 
         var container = this.player.elements.container; // Retrieve the ad from the event. Some events (e.g. ALL_ADS_COMPLETED)
         // don't have ad object associated
 
-        var ad = event.getAd(); // Proxy event
+        var ad = event.getAd();
+        var adData = event.getAdData(); // Proxy event
 
         var dispatchEvent = function dispatchEvent(type) {
-          var event = "ads".concat(type.replace(/_/g, '').toLowerCase());
-          triggerEvent.call(_this7.player, _this7.player.media, event);
-        };
+          triggerEvent.call(_this8.player, _this8.player.media, "ads".concat(type.replace(/_/g, '').toLowerCase()));
+        }; // Bubble the event
+
+
+        dispatchEvent(event.type);
 
         switch (event.type) {
           case google.ima.AdEvent.Type.LOADED:
             // This is the first event sent for an ad - it is possible to determine whether the
             // ad is a video ad or an overlay
-            this.trigger('loaded'); // Bubble event
-
-            dispatchEvent(event.type); // Start countdown
+            this.trigger('loaded'); // Start countdown
 
             this.pollCountdown(true);
 
@@ -9224,11 +13248,15 @@ typeof navigator === "object" && (function (global, factory) {
 
             break;
 
+          case google.ima.AdEvent.Type.STARTED:
+            // Set volume to match player
+            this.manager.setVolume(this.player.volume);
+            break;
+
           case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
             // All ads for the current videos are done. We can now request new advertisements
             // in case the video is re-played
-            // Fire event
-            dispatchEvent(event.type); // TODO: Example for what happens when a next video in a playlist would be loaded.
+            // TODO: Example for what happens when a next video in a playlist would be loaded.
             // So here we load a new video when all ads are done.
             // Then we load new ads within a new adsManager. When the video
             // Is started - after - the ads are loaded, then we get ads.
@@ -9249,15 +13277,19 @@ typeof navigator === "object" && (function (global, factory) {
             // };
             // TODO: So there is still this thing where a video should only be allowed to start
             // playing when the IMA SDK is ready or has failed
+            if (this.player.ended) {
+              this.loadAds();
+            } else {
+              // The SDK won't allow new ads to be called without receiving a contentComplete()
+              this.loader.contentComplete();
+            }
 
-            this.loadAds();
             break;
 
           case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
             // This event indicates the ad has started - the video player can adjust the UI,
             // for example display a pause button and remaining time. Fired when content should
             // be paused. This usually happens right before an ad is about to cover the content
-            dispatchEvent(event.type);
             this.pauseContent();
             break;
 
@@ -9266,20 +13298,15 @@ typeof navigator === "object" && (function (global, factory) {
             // appropriate UI actions, such as removing the timer for remaining time detection.
             // Fired when content should be resumed. This usually happens when an ad finishes
             // or collapses
-            dispatchEvent(event.type);
             this.pollCountdown();
             this.resumeContent();
             break;
 
-          case google.ima.AdEvent.Type.STARTED:
-          case google.ima.AdEvent.Type.MIDPOINT:
-          case google.ima.AdEvent.Type.COMPLETE:
-          case google.ima.AdEvent.Type.IMPRESSION:
-          case google.ima.AdEvent.Type.CLICK:
-            dispatchEvent(event.type);
-            break;
+          case google.ima.AdEvent.Type.LOG:
+            if (adData.adError) {
+              this.player.debug.warn("Non-fatal ad error: ".concat(adData.adError.getMessage()));
+            }
 
-          default:
             break;
         }
       }
@@ -9303,38 +13330,39 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "listeners",
       value: function listeners() {
-        var _this8 = this;
+        var _this9 = this;
 
         var container = this.player.elements.container;
-        var time; // Add listeners to the required events
-
-        this.player.on('ended', function () {
-          _this8.loader.contentComplete();
+        var time;
+        this.player.on('canplay', function () {
+          _this9.addCuePoints();
         });
-        this.player.on('seeking', function () {
-          time = _this8.player.currentTime;
-          return time;
+        this.player.on('ended', function () {
+          _this9.loader.contentComplete();
+        });
+        this.player.on('timeupdate', function () {
+          time = _this9.player.currentTime;
         });
         this.player.on('seeked', function () {
-          var seekedTime = _this8.player.currentTime;
+          var seekedTime = _this9.player.currentTime;
 
-          if (is$1.empty(_this8.cuePoints)) {
+          if (is$1.empty(_this9.cuePoints)) {
             return;
           }
 
-          _this8.cuePoints.forEach(function (cuePoint, index) {
+          _this9.cuePoints.forEach(function (cuePoint, index) {
             if (time < cuePoint && cuePoint < seekedTime) {
-              _this8.manager.discardAdBreak();
+              _this9.manager.discardAdBreak();
 
-              _this8.cuePoints.splice(index, 1);
+              _this9.cuePoints.splice(index, 1);
             }
           });
         }); // Listen to the resizing of the window. And resize ad accordingly
         // TODO: eventually implement ResizeObserver
 
         window.addEventListener('resize', function () {
-          if (_this8.manager) {
-            _this8.manager.resize(container.offsetWidth, container.offsetHeight, google.ima.ViewMode.NORMAL);
+          if (_this9.manager) {
+            _this9.manager.resize(container.offsetWidth, container.offsetHeight, google.ima.ViewMode.NORMAL);
           }
         });
       }
@@ -9345,7 +13373,7 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "play",
       value: function play() {
-        var _this9 = this;
+        var _this10 = this;
 
         var container = this.player.elements.container;
 
@@ -9355,24 +13383,27 @@ typeof navigator === "object" && (function (global, factory) {
 
 
         this.managerPromise.then(function () {
-          // Initialize the container. Must be done via a user action on mobile devices
-          _this9.elements.displayContainer.initialize();
+          // Set volume to match player
+          _this10.manager.setVolume(_this10.player.volume); // Initialize the container. Must be done via a user action on mobile devices
+
+
+          _this10.elements.displayContainer.initialize();
 
           try {
-            if (!_this9.initialized) {
+            if (!_this10.initialized) {
               // Initialize the ads manager. Ad rules playlist will start at this time
-              _this9.manager.init(container.offsetWidth, container.offsetHeight, google.ima.ViewMode.NORMAL); // Call play to start showing the ad. Single video and overlay ads will
+              _this10.manager.init(container.offsetWidth, container.offsetHeight, google.ima.ViewMode.NORMAL); // Call play to start showing the ad. Single video and overlay ads will
               // start at this time; the call will be ignored for ad rules
 
 
-              _this9.manager.start();
+              _this10.manager.start();
             }
 
-            _this9.initialized = true;
+            _this10.initialized = true;
           } catch (adError) {
             // An error may be thrown if there was a problem with the
             // VAST response
-            _this9.onAdError(adError);
+            _this10.onAdError(adError);
           }
         }).catch(function () {});
       }
@@ -9386,11 +13417,9 @@ typeof navigator === "object" && (function (global, factory) {
         // Hide the advertisement container
         this.elements.container.style.zIndex = ''; // Ad is stopped
 
-        this.playing = false; // Play our video
+        this.playing = false; // Play video
 
-        if (this.player.currentTime < this.player.duration) {
-          this.player.play();
-        }
+        silencePromise(this.player.media.play());
       }
       /**
        * Pause our video
@@ -9400,11 +13429,11 @@ typeof navigator === "object" && (function (global, factory) {
       key: "pauseContent",
       value: function pauseContent() {
         // Show the advertisement container
-        this.elements.container.style.zIndex = 3; // Ad is playing.
+        this.elements.container.style.zIndex = 3; // Ad is playing
 
         this.playing = true; // Pause our video.
 
-        this.player.pause();
+        this.player.media.pause();
       }
       /**
        * Destroy the adsManager so we can grab new ads after this. If we don't then we're not
@@ -9433,34 +13462,36 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "loadAds",
       value: function loadAds() {
-        var _this10 = this;
+        var _this11 = this;
 
         // Tell our adsManager to go bye bye
         this.managerPromise.then(function () {
           // Destroy our adsManager
-          if (_this10.manager) {
-            _this10.manager.destroy();
+          if (_this11.manager) {
+            _this11.manager.destroy();
           } // Re-set our adsManager promises
 
 
-          _this10.managerPromise = new Promise(function (resolve) {
-            _this10.on('loaded', resolve);
+          _this11.managerPromise = new Promise(function (resolve) {
+            _this11.on('loaded', resolve);
 
-            _this10.player.debug.log(_this10.manager);
-          }); // Now request some new advertisements
+            _this11.player.debug.log(_this11.manager);
+          }); // Now that the manager has been destroyed set it to also be un-initialized
 
-          _this10.requestAds();
+          _this11.initialized = false; // Now request some new advertisements
+
+          _this11.requestAds();
         }).catch(function () {});
       }
       /**
        * Handles callbacks after an ad event was invoked
-       * @param {string} event - Event type
+       * @param {String} event - Event type
        */
 
     }, {
       key: "trigger",
       value: function trigger(event) {
-        var _this11 = this;
+        var _this12 = this;
 
         for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
           args[_key - 1] = arguments[_key];
@@ -9471,21 +13502,21 @@ typeof navigator === "object" && (function (global, factory) {
         if (is$1.array(handlers)) {
           handlers.forEach(function (handler) {
             if (is$1.function(handler)) {
-              handler.apply(_this11, args);
+              handler.apply(_this12, args);
             }
           });
         }
       }
       /**
        * Add event listeners
-       * @param {string} event - Event type
-       * @param {function} callback - Callback for when event occurs
+       * @param {String} event - Event type
+       * @param {Function} callback - Callback for when event occurs
        * @return {Ads}
        */
 
     }, {
       key: "on",
-      value: function on$$1(event, callback) {
+      value: function on(event, callback) {
         if (!is$1.array(this.events[event])) {
           this.events[event] = [];
         }
@@ -9498,25 +13529,25 @@ typeof navigator === "object" && (function (global, factory) {
        * The advertisement has 12 seconds to get its things together. We stop this timer when the
        * advertisement is playing, or when a user action is required to start, then we clear the
        * timer on ad ready
-       * @param {number} time
-       * @param {string} from
+       * @param {Number} time
+       * @param {String} from
        */
 
     }, {
       key: "startSafetyTimer",
       value: function startSafetyTimer(time, from) {
-        var _this12 = this;
+        var _this13 = this;
 
         this.player.debug.log("Safety timer invoked from: ".concat(from));
         this.safetyTimer = setTimeout(function () {
-          _this12.cancel();
+          _this13.cancel();
 
-          _this12.clearSafetyTimer('startSafetyTimer()');
+          _this13.clearSafetyTimer('startSafetyTimer()');
         }, time);
       }
       /**
        * Clear our safety timer(s)
-       * @param {string} from
+       * @param {String} from
        */
 
     }, {
@@ -9531,11 +13562,18 @@ typeof navigator === "object" && (function (global, factory) {
     }, {
       key: "enabled",
       get: function get() {
-        return this.player.isHTML5 && this.player.isVideo && this.player.config.ads.enabled && !is$1.empty(this.publisherId);
+        var config = this.config;
+        return this.player.isHTML5 && this.player.isVideo && config.enabled && (!is$1.empty(config.publisherId) || is$1.url(config.tagUrl));
       }
     }, {
       key: "tagUrl",
       get: function get() {
+        var config = this.config;
+
+        if (is$1.url(config.tagUrl)) {
+          return config.tagUrl;
+        }
+
         var params = {
           AV_PUBLISHERID: '58c25bb0073ef448b1087ad6',
           AV_CHANNELID: '5a0458dc28a06145e4519d21',
@@ -9543,7 +13581,7 @@ typeof navigator === "object" && (function (global, factory) {
           cb: Date.now(),
           AV_WIDTH: 640,
           AV_HEIGHT: 480,
-          AV_CDIM2: this.publisherId
+          AV_CDIM2: config.publisherId
         };
         var base = 'https://go.aniview.com/api/adserver6/vast/';
         return "".concat(base, "?").concat(buildUrlParams(params));
@@ -9551,6 +13589,798 @@ typeof navigator === "object" && (function (global, factory) {
     }]);
 
     return Ads;
+  }();
+
+  var $findIndex = arrayIteration.findIndex;
+
+
+
+  var FIND_INDEX = 'findIndex';
+  var SKIPS_HOLES$1 = true;
+
+  var USES_TO_LENGTH$b = arrayMethodUsesToLength(FIND_INDEX);
+
+  // Shouldn't skip holes
+  if (FIND_INDEX in []) Array(1)[FIND_INDEX](function () { SKIPS_HOLES$1 = false; });
+
+  // `Array.prototype.findIndex` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.findindex
+  _export({ target: 'Array', proto: true, forced: SKIPS_HOLES$1 || !USES_TO_LENGTH$b }, {
+    findIndex: function findIndex(callbackfn /* , that = undefined */) {
+      return $findIndex(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    }
+  });
+
+  // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+  addToUnscopables(FIND_INDEX);
+
+  var min$6 = Math.min;
+  var nativeLastIndexOf = [].lastIndexOf;
+  var NEGATIVE_ZERO$1 = !!nativeLastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
+  var STRICT_METHOD$6 = arrayMethodIsStrict('lastIndexOf');
+  // For preventing possible almost infinite loop in non-standard implementations, test the forward version of the method
+  var USES_TO_LENGTH$c = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+  var FORCED$5 = NEGATIVE_ZERO$1 || !STRICT_METHOD$6 || !USES_TO_LENGTH$c;
+
+  // `Array.prototype.lastIndexOf` method implementation
+  // https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
+  var arrayLastIndexOf = FORCED$5 ? function lastIndexOf(searchElement /* , fromIndex = @[*-1] */) {
+    // convert -0 to +0
+    if (NEGATIVE_ZERO$1) return nativeLastIndexOf.apply(this, arguments) || 0;
+    var O = toIndexedObject(this);
+    var length = toLength(O.length);
+    var index = length - 1;
+    if (arguments.length > 1) index = min$6(index, toInteger(arguments[1]));
+    if (index < 0) index = length + index;
+    for (;index >= 0; index--) if (index in O && O[index] === searchElement) return index || 0;
+    return -1;
+  } : nativeLastIndexOf;
+
+  // `Array.prototype.lastIndexOf` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
+  _export({ target: 'Array', proto: true, forced: arrayLastIndexOf !== [].lastIndexOf }, {
+    lastIndexOf: arrayLastIndexOf
+  });
+
+  var parseVtt = function parseVtt(vttDataString) {
+    var processedList = [];
+    var frames = vttDataString.split(/\r\n\r\n|\n\n|\r\r/);
+    frames.forEach(function (frame) {
+      var result = {};
+      var lines = frame.split(/\r\n|\n|\r/);
+      lines.forEach(function (line) {
+        if (!is$1.number(result.startTime)) {
+          // The line with start and end times on it is the first line of interest
+          var matchTimes = line.match(/([0-9]{2})?:?([0-9]{2}):([0-9]{2}).([0-9]{2,3})( ?--> ?)([0-9]{2})?:?([0-9]{2}):([0-9]{2}).([0-9]{2,3})/); // Note that this currently ignores caption formatting directives that are optionally on the end of this line - fine for non-captions VTT
+
+          if (matchTimes) {
+            result.startTime = Number(matchTimes[1] || 0) * 60 * 60 + Number(matchTimes[2]) * 60 + Number(matchTimes[3]) + Number("0.".concat(matchTimes[4]));
+            result.endTime = Number(matchTimes[6] || 0) * 60 * 60 + Number(matchTimes[7]) * 60 + Number(matchTimes[8]) + Number("0.".concat(matchTimes[9]));
+          }
+        } else if (!is$1.empty(line.trim()) && is$1.empty(result.text)) {
+          // If we already have the startTime, then we're definitely up to the text line(s)
+          var lineSplit = line.trim().split('#xywh=');
+
+          var _lineSplit = _slicedToArray(lineSplit, 1);
+
+          result.text = _lineSplit[0];
+
+          // If there's content in lineSplit[1], then we have sprites. If not, then it's just one frame per image
+          if (lineSplit[1]) {
+            var _lineSplit$1$split = lineSplit[1].split(',');
+
+            var _lineSplit$1$split2 = _slicedToArray(_lineSplit$1$split, 4);
+
+            result.x = _lineSplit$1$split2[0];
+            result.y = _lineSplit$1$split2[1];
+            result.w = _lineSplit$1$split2[2];
+            result.h = _lineSplit$1$split2[3];
+          }
+        }
+      });
+
+      if (result.text) {
+        processedList.push(result);
+      }
+    });
+    return processedList;
+  };
+  /**
+   * Preview thumbnails for seek hover and scrubbing
+   * Seeking: Hover over the seek bar (desktop only): shows a small preview container above the seek bar
+   * Scrubbing: Click and drag the seek bar (desktop and mobile): shows the preview image over the entire video, as if the video is scrubbing at very high speed
+   *
+   * Notes:
+   * - Thumbs are set via JS settings on Plyr init, not HTML5 'track' property. Using the track property would be a bit gross, because it doesn't support custom 'kinds'. kind=metadata might be used for something else, and we want to allow multiple thumbnails tracks. Tracks must have a unique combination of 'kind' and 'label'. We would have to do something like kind=metadata,label=thumbnails1 / kind=metadata,label=thumbnails2. Square peg, round hole
+   * - VTT info: the image URL is relative to the VTT, not the current document. But if the url starts with a slash, it will naturally be relative to the current domain. https://support.jwplayer.com/articles/how-to-add-preview-thumbnails
+   * - This implementation uses multiple separate img elements. Other implementations use background-image on one element. This would be nice and simple, but Firefox and Safari have flickering issues with replacing backgrounds of larger images. It seems that YouTube perhaps only avoids this because they don't have the option for high-res previews (even the fullscreen ones, when mousedown/seeking). Images appear over the top of each other, and previous ones are discarded once the new ones have been rendered
+   */
+
+
+  var fitRatio = function fitRatio(ratio, outer) {
+    var targetRatio = outer.width / outer.height;
+    var result = {};
+
+    if (ratio > targetRatio) {
+      result.width = outer.width;
+      result.height = 1 / ratio * outer.width;
+    } else {
+      result.height = outer.height;
+      result.width = ratio * outer.height;
+    }
+
+    return result;
+  };
+
+  var PreviewThumbnails = /*#__PURE__*/function () {
+    /**
+     * PreviewThumbnails constructor.
+     * @param {Plyr} player
+     * @return {PreviewThumbnails}
+     */
+    function PreviewThumbnails(player) {
+      _classCallCheck(this, PreviewThumbnails);
+
+      this.player = player;
+      this.thumbnails = [];
+      this.loaded = false;
+      this.lastMouseMoveTime = Date.now();
+      this.mouseDown = false;
+      this.loadedImages = [];
+      this.elements = {
+        thumb: {},
+        scrubbing: {}
+      };
+      this.load();
+    }
+
+    _createClass(PreviewThumbnails, [{
+      key: "load",
+      value: function load() {
+        var _this = this;
+
+        // Toggle the regular seek tooltip
+        if (this.player.elements.display.seekTooltip) {
+          this.player.elements.display.seekTooltip.hidden = this.enabled;
+        }
+
+        if (!this.enabled) {
+          return;
+        }
+
+        this.getThumbnails().then(function () {
+          if (!_this.enabled) {
+            return;
+          } // Render DOM elements
+
+
+          _this.render(); // Check to see if thumb container size was specified manually in CSS
+
+
+          _this.determineContainerAutoSizing();
+
+          _this.loaded = true;
+        });
+      } // Download VTT files and parse them
+
+    }, {
+      key: "getThumbnails",
+      value: function getThumbnails() {
+        var _this2 = this;
+
+        return new Promise(function (resolve) {
+          var src = _this2.player.config.previewThumbnails.src;
+
+          if (is$1.empty(src)) {
+            throw new Error('Missing previewThumbnails.src config attribute');
+          } // Resolve promise
+
+
+          var sortAndResolve = function sortAndResolve() {
+            // Sort smallest to biggest (e.g., [120p, 480p, 1080p])
+            _this2.thumbnails.sort(function (x, y) {
+              return x.height - y.height;
+            });
+
+            _this2.player.debug.log('Preview thumbnails', _this2.thumbnails);
+
+            resolve();
+          }; // Via callback()
+
+
+          if (is$1.function(src)) {
+            src(function (thumbnails) {
+              _this2.thumbnails = thumbnails;
+              sortAndResolve();
+            });
+          } // VTT urls
+          else {
+              // If string, convert into single-element list
+              var urls = is$1.string(src) ? [src] : src; // Loop through each src URL. Download and process the VTT file, storing the resulting data in this.thumbnails
+
+              var promises = urls.map(function (u) {
+                return _this2.getThumbnail(u);
+              }); // Resolve
+
+              Promise.all(promises).then(sortAndResolve);
+            }
+        });
+      } // Process individual VTT file
+
+    }, {
+      key: "getThumbnail",
+      value: function getThumbnail(url) {
+        var _this3 = this;
+
+        return new Promise(function (resolve) {
+          fetch(url).then(function (response) {
+            var thumbnail = {
+              frames: parseVtt(response),
+              height: null,
+              urlPrefix: ''
+            }; // If the URLs don't start with '/', then we need to set their relative path to be the location of the VTT file
+            // If the URLs do start with '/', then they obviously don't need a prefix, so it will remain blank
+            // If the thumbnail URLs start with with none of '/', 'http://' or 'https://', then we need to set their relative path to be the location of the VTT file
+
+            if (!thumbnail.frames[0].text.startsWith('/') && !thumbnail.frames[0].text.startsWith('http://') && !thumbnail.frames[0].text.startsWith('https://')) {
+              thumbnail.urlPrefix = url.substring(0, url.lastIndexOf('/') + 1);
+            } // Download the first frame, so that we can determine/set the height of this thumbnailsDef
+
+
+            var tempImage = new Image();
+
+            tempImage.onload = function () {
+              thumbnail.height = tempImage.naturalHeight;
+              thumbnail.width = tempImage.naturalWidth;
+
+              _this3.thumbnails.push(thumbnail);
+
+              resolve();
+            };
+
+            tempImage.src = thumbnail.urlPrefix + thumbnail.frames[0].text;
+          });
+        });
+      }
+    }, {
+      key: "startMove",
+      value: function startMove(event) {
+        if (!this.loaded) {
+          return;
+        }
+
+        if (!is$1.event(event) || !['touchmove', 'mousemove'].includes(event.type)) {
+          return;
+        } // Wait until media has a duration
+
+
+        if (!this.player.media.duration) {
+          return;
+        }
+
+        if (event.type === 'touchmove') {
+          // Calculate seek hover position as approx video seconds
+          this.seekTime = this.player.media.duration * (this.player.elements.inputs.seek.value / 100);
+        } else {
+          // Calculate seek hover position as approx video seconds
+          var clientRect = this.player.elements.progress.getBoundingClientRect();
+          var percentage = 100 / clientRect.width * (event.pageX - clientRect.left);
+          this.seekTime = this.player.media.duration * (percentage / 100);
+
+          if (this.seekTime < 0) {
+            // The mousemove fires for 10+px out to the left
+            this.seekTime = 0;
+          }
+
+          if (this.seekTime > this.player.media.duration - 1) {
+            // Took 1 second off the duration for safety, because different players can disagree on the real duration of a video
+            this.seekTime = this.player.media.duration - 1;
+          }
+
+          this.mousePosX = event.pageX; // Set time text inside image container
+
+          this.elements.thumb.time.innerText = formatTime(this.seekTime);
+        } // Download and show image
+
+
+        this.showImageAtCurrentTime();
+      }
+    }, {
+      key: "endMove",
+      value: function endMove() {
+        this.toggleThumbContainer(false, true);
+      }
+    }, {
+      key: "startScrubbing",
+      value: function startScrubbing(event) {
+        // Only act on left mouse button (0), or touch device (event.button does not exist or is false)
+        if (is$1.nullOrUndefined(event.button) || event.button === false || event.button === 0) {
+          this.mouseDown = true; // Wait until media has a duration
+
+          if (this.player.media.duration) {
+            this.toggleScrubbingContainer(true);
+            this.toggleThumbContainer(false, true); // Download and show image
+
+            this.showImageAtCurrentTime();
+          }
+        }
+      }
+    }, {
+      key: "endScrubbing",
+      value: function endScrubbing() {
+        var _this4 = this;
+
+        this.mouseDown = false; // Hide scrubbing preview. But wait until the video has successfully seeked before hiding the scrubbing preview
+
+        if (Math.ceil(this.lastTime) === Math.ceil(this.player.media.currentTime)) {
+          // The video was already seeked/loaded at the chosen time - hide immediately
+          this.toggleScrubbingContainer(false);
+        } else {
+          // The video hasn't seeked yet. Wait for that
+          once.call(this.player, this.player.media, 'timeupdate', function () {
+            // Re-check mousedown - we might have already started scrubbing again
+            if (!_this4.mouseDown) {
+              _this4.toggleScrubbingContainer(false);
+            }
+          });
+        }
+      }
+      /**
+       * Setup hooks for Plyr and window events
+       */
+
+    }, {
+      key: "listeners",
+      value: function listeners() {
+        var _this5 = this;
+
+        // Hide thumbnail preview - on mouse click, mouse leave (in listeners.js for now), and video play/seek. All four are required, e.g., for buffering
+        this.player.on('play', function () {
+          _this5.toggleThumbContainer(false, true);
+        });
+        this.player.on('seeked', function () {
+          _this5.toggleThumbContainer(false);
+        });
+        this.player.on('timeupdate', function () {
+          _this5.lastTime = _this5.player.media.currentTime;
+        });
+      }
+      /**
+       * Create HTML elements for image containers
+       */
+
+    }, {
+      key: "render",
+      value: function render() {
+        // Create HTML element: plyr__preview-thumbnail-container
+        this.elements.thumb.container = createElement('div', {
+          class: this.player.config.classNames.previewThumbnails.thumbContainer
+        }); // Wrapper for the image for styling
+
+        this.elements.thumb.imageContainer = createElement('div', {
+          class: this.player.config.classNames.previewThumbnails.imageContainer
+        });
+        this.elements.thumb.container.appendChild(this.elements.thumb.imageContainer); // Create HTML element, parent+span: time text (e.g., 01:32:00)
+
+        var timeContainer = createElement('div', {
+          class: this.player.config.classNames.previewThumbnails.timeContainer
+        });
+        this.elements.thumb.time = createElement('span', {}, '00:00');
+        timeContainer.appendChild(this.elements.thumb.time);
+        this.elements.thumb.container.appendChild(timeContainer); // Inject the whole thumb
+
+        if (is$1.element(this.player.elements.progress)) {
+          this.player.elements.progress.appendChild(this.elements.thumb.container);
+        } // Create HTML element: plyr__preview-scrubbing-container
+
+
+        this.elements.scrubbing.container = createElement('div', {
+          class: this.player.config.classNames.previewThumbnails.scrubbingContainer
+        });
+        this.player.elements.wrapper.appendChild(this.elements.scrubbing.container);
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        if (this.elements.thumb.container) {
+          this.elements.thumb.container.remove();
+        }
+
+        if (this.elements.scrubbing.container) {
+          this.elements.scrubbing.container.remove();
+        }
+      }
+    }, {
+      key: "showImageAtCurrentTime",
+      value: function showImageAtCurrentTime() {
+        var _this6 = this;
+
+        if (this.mouseDown) {
+          this.setScrubbingContainerSize();
+        } else {
+          this.setThumbContainerSizeAndPos();
+        } // Find the desired thumbnail index
+        // TODO: Handle a video longer than the thumbs where thumbNum is null
+
+
+        var thumbNum = this.thumbnails[0].frames.findIndex(function (frame) {
+          return _this6.seekTime >= frame.startTime && _this6.seekTime <= frame.endTime;
+        });
+        var hasThumb = thumbNum >= 0;
+        var qualityIndex = 0; // Show the thumb container if we're not scrubbing
+
+        if (!this.mouseDown) {
+          this.toggleThumbContainer(hasThumb);
+        } // No matching thumb found
+
+
+        if (!hasThumb) {
+          return;
+        } // Check to see if we've already downloaded higher quality versions of this image
+
+
+        this.thumbnails.forEach(function (thumbnail, index) {
+          if (_this6.loadedImages.includes(thumbnail.frames[thumbNum].text)) {
+            qualityIndex = index;
+          }
+        }); // Only proceed if either thumbnum or thumbfilename has changed
+
+        if (thumbNum !== this.showingThumb) {
+          this.showingThumb = thumbNum;
+          this.loadImage(qualityIndex);
+        }
+      } // Show the image that's currently specified in this.showingThumb
+
+    }, {
+      key: "loadImage",
+      value: function loadImage() {
+        var _this7 = this;
+
+        var qualityIndex = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+        var thumbNum = this.showingThumb;
+        var thumbnail = this.thumbnails[qualityIndex];
+        var urlPrefix = thumbnail.urlPrefix;
+        var frame = thumbnail.frames[thumbNum];
+        var thumbFilename = thumbnail.frames[thumbNum].text;
+        var thumbUrl = urlPrefix + thumbFilename;
+
+        if (!this.currentImageElement || this.currentImageElement.dataset.filename !== thumbFilename) {
+          // If we're already loading a previous image, remove its onload handler - we don't want it to load after this one
+          // Only do this if not using sprites. Without sprites we really want to show as many images as possible, as a best-effort
+          if (this.loadingImage && this.usingSprites) {
+            this.loadingImage.onload = null;
+          } // We're building and adding a new image. In other implementations of similar functionality (YouTube), background image
+          // is instead used. But this causes issues with larger images in Firefox and Safari - switching between background
+          // images causes a flicker. Putting a new image over the top does not
+
+
+          var previewImage = new Image();
+          previewImage.src = thumbUrl;
+          previewImage.dataset.index = thumbNum;
+          previewImage.dataset.filename = thumbFilename;
+          this.showingThumbFilename = thumbFilename;
+          this.player.debug.log("Loading image: ".concat(thumbUrl)); // For some reason, passing the named function directly causes it to execute immediately. So I've wrapped it in an anonymous function...
+
+          previewImage.onload = function () {
+            return _this7.showImage(previewImage, frame, qualityIndex, thumbNum, thumbFilename, true);
+          };
+
+          this.loadingImage = previewImage;
+          this.removeOldImages(previewImage);
+        } else {
+          // Update the existing image
+          this.showImage(this.currentImageElement, frame, qualityIndex, thumbNum, thumbFilename, false);
+          this.currentImageElement.dataset.index = thumbNum;
+          this.removeOldImages(this.currentImageElement);
+        }
+      }
+    }, {
+      key: "showImage",
+      value: function showImage(previewImage, frame, qualityIndex, thumbNum, thumbFilename) {
+        var newImage = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : true;
+        this.player.debug.log("Showing thumb: ".concat(thumbFilename, ". num: ").concat(thumbNum, ". qual: ").concat(qualityIndex, ". newimg: ").concat(newImage));
+        this.setImageSizeAndOffset(previewImage, frame);
+
+        if (newImage) {
+          this.currentImageContainer.appendChild(previewImage);
+          this.currentImageElement = previewImage;
+
+          if (!this.loadedImages.includes(thumbFilename)) {
+            this.loadedImages.push(thumbFilename);
+          }
+        } // Preload images before and after the current one
+        // Show higher quality of the same frame
+        // Each step here has a short time delay, and only continues if still hovering/seeking the same spot. This is to protect slow connections from overloading
+
+
+        this.preloadNearby(thumbNum, true).then(this.preloadNearby(thumbNum, false)).then(this.getHigherQuality(qualityIndex, previewImage, frame, thumbFilename));
+      } // Remove all preview images that aren't the designated current image
+
+    }, {
+      key: "removeOldImages",
+      value: function removeOldImages(currentImage) {
+        var _this8 = this;
+
+        // Get a list of all images, convert it from a DOM list to an array
+        Array.from(this.currentImageContainer.children).forEach(function (image) {
+          if (image.tagName.toLowerCase() !== 'img') {
+            return;
+          }
+
+          var removeDelay = _this8.usingSprites ? 500 : 1000;
+
+          if (image.dataset.index !== currentImage.dataset.index && !image.dataset.deleting) {
+            // Wait 200ms, as the new image can take some time to show on certain browsers (even though it was downloaded before showing). This will prevent flicker, and show some generosity towards slower clients
+            // First set attribute 'deleting' to prevent multi-handling of this on repeat firing of this function
+            // eslint-disable-next-line no-param-reassign
+            image.dataset.deleting = true; // This has to be set before the timeout - to prevent issues switching between hover and scrub
+
+            var currentImageContainer = _this8.currentImageContainer;
+            setTimeout(function () {
+              currentImageContainer.removeChild(image);
+
+              _this8.player.debug.log("Removing thumb: ".concat(image.dataset.filename));
+            }, removeDelay);
+          }
+        });
+      } // Preload images before and after the current one. Only if the user is still hovering/seeking the same frame
+      // This will only preload the lowest quality
+
+    }, {
+      key: "preloadNearby",
+      value: function preloadNearby(thumbNum) {
+        var _this9 = this;
+
+        var forward = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            var oldThumbFilename = _this9.thumbnails[0].frames[thumbNum].text;
+
+            if (_this9.showingThumbFilename === oldThumbFilename) {
+              // Find the nearest thumbs with different filenames. Sometimes it'll be the next index, but in the case of sprites, it might be 100+ away
+              var thumbnailsClone;
+
+              if (forward) {
+                thumbnailsClone = _this9.thumbnails[0].frames.slice(thumbNum);
+              } else {
+                thumbnailsClone = _this9.thumbnails[0].frames.slice(0, thumbNum).reverse();
+              }
+
+              var foundOne = false;
+              thumbnailsClone.forEach(function (frame) {
+                var newThumbFilename = frame.text;
+
+                if (newThumbFilename !== oldThumbFilename) {
+                  // Found one with a different filename. Make sure it hasn't already been loaded on this page visit
+                  if (!_this9.loadedImages.includes(newThumbFilename)) {
+                    foundOne = true;
+
+                    _this9.player.debug.log("Preloading thumb filename: ".concat(newThumbFilename));
+
+                    var urlPrefix = _this9.thumbnails[0].urlPrefix;
+                    var thumbURL = urlPrefix + newThumbFilename;
+                    var previewImage = new Image();
+                    previewImage.src = thumbURL;
+
+                    previewImage.onload = function () {
+                      _this9.player.debug.log("Preloaded thumb filename: ".concat(newThumbFilename));
+
+                      if (!_this9.loadedImages.includes(newThumbFilename)) _this9.loadedImages.push(newThumbFilename); // We don't resolve until the thumb is loaded
+
+                      resolve();
+                    };
+                  }
+                }
+              }); // If there are none to preload then we want to resolve immediately
+
+              if (!foundOne) {
+                resolve();
+              }
+            }
+          }, 300);
+        });
+      } // If user has been hovering current image for half a second, look for a higher quality one
+
+    }, {
+      key: "getHigherQuality",
+      value: function getHigherQuality(currentQualityIndex, previewImage, frame, thumbFilename) {
+        var _this10 = this;
+
+        if (currentQualityIndex < this.thumbnails.length - 1) {
+          // Only use the higher quality version if it's going to look any better - if the current thumb is of a lower pixel density than the thumbnail container
+          var previewImageHeight = previewImage.naturalHeight;
+
+          if (this.usingSprites) {
+            previewImageHeight = frame.h;
+          }
+
+          if (previewImageHeight < this.thumbContainerHeight) {
+            // Recurse back to the loadImage function - show a higher quality one, but only if the viewer is on this frame for a while
+            setTimeout(function () {
+              // Make sure the mouse hasn't already moved on and started hovering at another image
+              if (_this10.showingThumbFilename === thumbFilename) {
+                _this10.player.debug.log("Showing higher quality thumb for: ".concat(thumbFilename));
+
+                _this10.loadImage(currentQualityIndex + 1);
+              }
+            }, 300);
+          }
+        }
+      }
+    }, {
+      key: "toggleThumbContainer",
+      value: function toggleThumbContainer() {
+        var toggle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+        var clearShowing = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+        var className = this.player.config.classNames.previewThumbnails.thumbContainerShown;
+        this.elements.thumb.container.classList.toggle(className, toggle);
+
+        if (!toggle && clearShowing) {
+          this.showingThumb = null;
+          this.showingThumbFilename = null;
+        }
+      }
+    }, {
+      key: "toggleScrubbingContainer",
+      value: function toggleScrubbingContainer() {
+        var toggle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+        var className = this.player.config.classNames.previewThumbnails.scrubbingContainerShown;
+        this.elements.scrubbing.container.classList.toggle(className, toggle);
+
+        if (!toggle) {
+          this.showingThumb = null;
+          this.showingThumbFilename = null;
+        }
+      }
+    }, {
+      key: "determineContainerAutoSizing",
+      value: function determineContainerAutoSizing() {
+        if (this.elements.thumb.imageContainer.clientHeight > 20 || this.elements.thumb.imageContainer.clientWidth > 20) {
+          // This will prevent auto sizing in this.setThumbContainerSizeAndPos()
+          this.sizeSpecifiedInCSS = true;
+        }
+      } // Set the size to be about a quarter of the size of video. Unless option dynamicSize === false, in which case it needs to be set in CSS
+
+    }, {
+      key: "setThumbContainerSizeAndPos",
+      value: function setThumbContainerSizeAndPos() {
+        if (!this.sizeSpecifiedInCSS) {
+          var thumbWidth = Math.floor(this.thumbContainerHeight * this.thumbAspectRatio);
+          this.elements.thumb.imageContainer.style.height = "".concat(this.thumbContainerHeight, "px");
+          this.elements.thumb.imageContainer.style.width = "".concat(thumbWidth, "px");
+        } else if (this.elements.thumb.imageContainer.clientHeight > 20 && this.elements.thumb.imageContainer.clientWidth < 20) {
+          var _thumbWidth = Math.floor(this.elements.thumb.imageContainer.clientHeight * this.thumbAspectRatio);
+
+          this.elements.thumb.imageContainer.style.width = "".concat(_thumbWidth, "px");
+        } else if (this.elements.thumb.imageContainer.clientHeight < 20 && this.elements.thumb.imageContainer.clientWidth > 20) {
+          var thumbHeight = Math.floor(this.elements.thumb.imageContainer.clientWidth / this.thumbAspectRatio);
+          this.elements.thumb.imageContainer.style.height = "".concat(thumbHeight, "px");
+        }
+
+        this.setThumbContainerPos();
+      }
+    }, {
+      key: "setThumbContainerPos",
+      value: function setThumbContainerPos() {
+        var seekbarRect = this.player.elements.progress.getBoundingClientRect();
+        var plyrRect = this.player.elements.container.getBoundingClientRect();
+        var container = this.elements.thumb.container; // Find the lowest and highest desired left-position, so we don't slide out the side of the video container
+
+        var minVal = plyrRect.left - seekbarRect.left + 10;
+        var maxVal = plyrRect.right - seekbarRect.left - container.clientWidth - 10; // Set preview container position to: mousepos, minus seekbar.left, minus half of previewContainer.clientWidth
+
+        var previewPos = this.mousePosX - seekbarRect.left - container.clientWidth / 2;
+
+        if (previewPos < minVal) {
+          previewPos = minVal;
+        }
+
+        if (previewPos > maxVal) {
+          previewPos = maxVal;
+        }
+
+        container.style.left = "".concat(previewPos, "px");
+      } // Can't use 100% width, in case the video is a different aspect ratio to the video container
+
+    }, {
+      key: "setScrubbingContainerSize",
+      value: function setScrubbingContainerSize() {
+        var _fitRatio = fitRatio(this.thumbAspectRatio, {
+          width: this.player.media.clientWidth,
+          height: this.player.media.clientHeight
+        }),
+            width = _fitRatio.width,
+            height = _fitRatio.height;
+
+        this.elements.scrubbing.container.style.width = "".concat(width, "px");
+        this.elements.scrubbing.container.style.height = "".concat(height, "px");
+      } // Sprites need to be offset to the correct location
+
+    }, {
+      key: "setImageSizeAndOffset",
+      value: function setImageSizeAndOffset(previewImage, frame) {
+        if (!this.usingSprites) {
+          return;
+        } // Find difference between height and preview container height
+
+
+        var multiplier = this.thumbContainerHeight / frame.h; // eslint-disable-next-line no-param-reassign
+
+        previewImage.style.height = "".concat(previewImage.naturalHeight * multiplier, "px"); // eslint-disable-next-line no-param-reassign
+
+        previewImage.style.width = "".concat(previewImage.naturalWidth * multiplier, "px"); // eslint-disable-next-line no-param-reassign
+
+        previewImage.style.left = "-".concat(frame.x * multiplier, "px"); // eslint-disable-next-line no-param-reassign
+
+        previewImage.style.top = "-".concat(frame.y * multiplier, "px");
+      }
+    }, {
+      key: "enabled",
+      get: function get() {
+        return this.player.isHTML5 && this.player.isVideo && this.player.config.previewThumbnails.enabled;
+      }
+    }, {
+      key: "currentImageContainer",
+      get: function get() {
+        if (this.mouseDown) {
+          return this.elements.scrubbing.container;
+        }
+
+        return this.elements.thumb.imageContainer;
+      }
+    }, {
+      key: "usingSprites",
+      get: function get() {
+        return Object.keys(this.thumbnails[0].frames[0]).includes('w');
+      }
+    }, {
+      key: "thumbAspectRatio",
+      get: function get() {
+        if (this.usingSprites) {
+          return this.thumbnails[0].frames[0].w / this.thumbnails[0].frames[0].h;
+        }
+
+        return this.thumbnails[0].width / this.thumbnails[0].height;
+      }
+    }, {
+      key: "thumbContainerHeight",
+      get: function get() {
+        if (this.mouseDown) {
+          var _fitRatio2 = fitRatio(this.thumbAspectRatio, {
+            width: this.player.media.clientWidth,
+            height: this.player.media.clientHeight
+          }),
+              height = _fitRatio2.height;
+
+          return height;
+        } // If css is used this needs to return the css height for sprites to work (see setImageSizeAndOffset)
+
+
+        if (this.sizeSpecifiedInCSS) {
+          return this.elements.thumb.imageContainer.clientHeight;
+        }
+
+        return Math.floor(this.player.media.clientWidth / this.thumbAspectRatio / 4);
+      }
+    }, {
+      key: "currentImageElement",
+      get: function get() {
+        if (this.mouseDown) {
+          return this.currentScrubbingImageElement;
+        }
+
+        return this.currentThumbnailImageElement;
+      },
+      set: function set(element) {
+        if (this.mouseDown) {
+          this.currentScrubbingImageElement = element;
+        } else {
+          this.currentThumbnailImageElement = element;
+        }
+      }
+    }]);
+
+    return PreviewThumbnails;
   }();
 
   var source = {
@@ -9672,11 +14502,27 @@ typeof navigator === "object" && (function (global, factory) {
         if (_this2.isHTML5 || _this2.isEmbed && !_this2.supported.ui) {
           // Setup interface
           ui.build.call(_this2);
-        }
+        } // Load HTML5 sources
+
 
         if (_this2.isHTML5) {
-          // Load HTML5 sources
           _this2.media.load();
+        } // Update previewThumbnails config & reload plugin
+
+
+        if (!is$1.empty(input.previewThumbnails)) {
+          Object.assign(_this2.config.previewThumbnails, input.previewThumbnails); // Cleanup previewThumbnails plugin if it was loaded
+
+          if (_this2.previewThumbnails && _this2.previewThumbnails.loaded) {
+            _this2.previewThumbnails.destroy();
+
+            _this2.previewThumbnails = null;
+          } // Create new instance if it is still enabled
+
+
+          if (_this2.config.previewThumbnails.enabled) {
+            _this2.previewThumbnails = new PreviewThumbnails(_this2);
+          }
         } // Update the fullscreen support
 
 
@@ -9685,13 +14531,30 @@ typeof navigator === "object" && (function (global, factory) {
     }
   };
 
+  /**
+   * Returns a number whose value is limited to the given range.
+   *
+   * Example: limit the output of this computation to between 0 and 255
+   * (x * 255).clamp(0, 255)
+   *
+   * @param {Number} input
+   * @param {Number} min The lower boundary of the output range
+   * @param {Number} max The upper boundary of the output range
+   * @returns A number in the range [min, max]
+   * @type Number
+   */
+  function clamp() {
+    var input = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+    var min = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    var max = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 255;
+    return Math.min(Math.max(input, min), max);
+  }
+
   // TODO: Use a WeakMap for private globals
   // const globals = new WeakMap();
   // Plyr instance
 
-  var Plyr =
-  /*#__PURE__*/
-  function () {
+  var Plyr = /*#__PURE__*/function () {
     function Plyr(target, options) {
       var _this = this;
 
@@ -9718,7 +14581,7 @@ typeof navigator === "object" && (function (global, factory) {
       } // Set config
 
 
-      this.config = extend({}, defaults, Plyr.defaults, options || {}, function () {
+      this.config = extend({}, defaults$1, Plyr.defaults, options || {}, function () {
         try {
           return JSON.parse(_this.media.getAttribute('data-plyr-config'));
         } catch (e) {
@@ -9728,6 +14591,7 @@ typeof navigator === "object" && (function (global, factory) {
 
       this.elements = {
         container: null,
+        fullscreen: null,
         captions: null,
         buttons: {},
         display: {},
@@ -9827,7 +14691,7 @@ typeof navigator === "object" && (function (global, factory) {
 
               if (this.isYouTube) {
                 this.config.playsinline = truthy.includes(url.searchParams.get('playsinline'));
-                this.config.hl = url.searchParams.get('hl'); // TODO: Should this be setting language?
+                this.config.youtube.hl = url.searchParams.get('hl'); // TODO: Should this be setting language?
               } else {
                 this.config.playsinline = true;
               }
@@ -9898,10 +14762,14 @@ typeof navigator === "object" && (function (global, factory) {
       this.media.plyr = this; // Wrap media
 
       if (!is$1.element(this.elements.container)) {
-        this.elements.container = createElement('div');
-        wrap(this.media, this.elements.container);
-      } // Add style hook
+        this.elements.container = createElement('div', {
+          tabindex: 0
+        });
+        wrap$1(this.media, this.elements.container);
+      } // Migrate custom properties from media to container (so they work 😉)
 
+
+      ui.migrateStyles.call(this); // Add style hook
 
       ui.addStyleHook.call(this); // Setup media
 
@@ -9911,9 +14779,11 @@ typeof navigator === "object" && (function (global, factory) {
         on.call(this, this.elements.container, this.config.events.join(' '), function (event) {
           _this.debug.log("event: ".concat(event.type));
         });
-      } // Setup interface
-      // If embed but not fully supported, build interface now to avoid flash of controls
+      } // Setup fullscreen
 
+
+      this.fullscreen = new Fullscreen(this); // Setup interface
+      // If embed but not fully supported, build interface now to avoid flash of controls
 
       if (this.isHTML5 || this.isEmbed && !this.supported.ui) {
         ui.build.call(this);
@@ -9922,21 +14792,25 @@ typeof navigator === "object" && (function (global, factory) {
 
       this.listeners.container(); // Global listeners
 
-      this.listeners.global(); // Setup fullscreen
-
-      this.fullscreen = new Fullscreen(this); // Setup ads if provided
+      this.listeners.global(); // Setup ads if provided
 
       if (this.config.ads.enabled) {
         this.ads = new Ads(this);
       } // Autoplay if required
 
 
-      if (this.config.autoplay) {
-        this.play();
+      if (this.isHTML5 && this.config.autoplay) {
+        this.once('canplay', function () {
+          return silencePromise(_this.play());
+        });
       } // Seek time will be recorded (in listeners.js) so we can prevent hiding controls for a few seconds after seek
 
 
-      this.lastSeekTime = 0;
+      this.lastSeekTime = 0; // Setup preview thumbnails if enabled
+
+      if (this.config.previewThumbnails.enabled) {
+        this.previewThumbnails = new PreviewThumbnails(this);
+      }
     } // ---------------------------------------
     // API
     // ---------------------------------------
@@ -9953,8 +14827,19 @@ typeof navigator === "object" && (function (global, factory) {
        * Play the media, or play the advertisement (if they are not blocked)
        */
       value: function play() {
+        var _this2 = this;
+
         if (!is$1.function(this.media.play)) {
           return null;
+        } // Intecept play with ads
+
+
+        if (this.ads && this.ads.enabled) {
+          this.ads.managerPromise.then(function () {
+            return _this2.ads.play();
+          }).catch(function () {
+            return silencePromise(_this2.media.play());
+          });
         } // Return the promise (for HTML5)
 
 
@@ -9968,10 +14853,10 @@ typeof navigator === "object" && (function (global, factory) {
       key: "pause",
       value: function pause() {
         if (!this.playing || !is$1.function(this.media.pause)) {
-          return;
+          return null;
         }
 
-        this.media.pause();
+        return this.media.pause();
       }
       /**
        * Get playing state
@@ -9982,17 +14867,17 @@ typeof navigator === "object" && (function (global, factory) {
 
       /**
        * Toggle playback based on current status
-       * @param {boolean} input
+       * @param {Boolean} input
        */
       value: function togglePlay(input) {
         // Toggle based on current state if nothing passed
         var toggle = is$1.boolean(input) ? input : !this.playing;
 
         if (toggle) {
-          this.play();
-        } else {
-          this.pause();
+          return this.play();
         }
+
+        return this.pause();
       }
       /**
        * Stop playback
@@ -10019,27 +14904,27 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Rewind
-       * @param {number} seekTime - how far to rewind in seconds. Defaults to the config.seekTime
+       * @param {Number} seekTime - how far to rewind in seconds. Defaults to the config.seekTime
        */
 
     }, {
       key: "rewind",
       value: function rewind(seekTime) {
-        this.currentTime = this.currentTime - (is$1.number(seekTime) ? seekTime : this.config.seekTime);
+        this.currentTime -= is$1.number(seekTime) ? seekTime : this.config.seekTime;
       }
       /**
        * Fast forward
-       * @param {number} seekTime - how far to fast forward in seconds. Defaults to the config.seekTime
+       * @param {Number} seekTime - how far to fast forward in seconds. Defaults to the config.seekTime
        */
 
     }, {
       key: "forward",
       value: function forward(seekTime) {
-        this.currentTime = this.currentTime + (is$1.number(seekTime) ? seekTime : this.config.seekTime);
+        this.currentTime += is$1.number(seekTime) ? seekTime : this.config.seekTime;
       }
       /**
        * Seek to a time
-       * @param {number} input - where to seek to in seconds. Defaults to 0 (the start)
+       * @param {Number} input - where to seek to in seconds. Defaults to 0 (the start)
        */
 
     }, {
@@ -10047,7 +14932,7 @@ typeof navigator === "object" && (function (global, factory) {
 
       /**
        * Increase volume
-       * @param {boolean} step - How much to decrease by (between 0 and 1)
+       * @param {Boolean} step - How much to decrease by (between 0 and 1)
        */
       value: function increaseVolume(step) {
         var volume = this.media.muted ? 0 : this.volume;
@@ -10055,7 +14940,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Decrease volume
-       * @param {boolean} step - How much to decrease by (between 0 and 1)
+       * @param {Boolean} step - How much to decrease by (between 0 and 1)
        */
 
     }, {
@@ -10065,7 +14950,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Set muted state
-       * @param {boolean} mute
+       * @param {Boolean} mute
        */
 
     }, {
@@ -10073,14 +14958,14 @@ typeof navigator === "object" && (function (global, factory) {
 
       /**
        * Toggle captions
-       * @param {boolean} input - Whether to enable captions
+       * @param {Boolean} input - Whether to enable captions
        */
       value: function toggleCaptions(input) {
         captions.toggle.call(this, input, false);
       }
       /**
        * Set the caption track by index
-       * @param {number} - Caption index
+       * @param {Number} - Caption index
        */
 
     }, {
@@ -10098,7 +14983,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Toggle the player controls
-       * @param {boolean} [toggle] - Whether to show the controls
+       * @param {Boolean} [toggle] - Whether to show the controls
        */
 
     }, {
@@ -10113,7 +14998,7 @@ typeof navigator === "object" && (function (global, factory) {
 
           var hiding = toggleClass(this.elements.container, this.config.classNames.hideControls, force); // Close menu
 
-          if (hiding && this.config.controls.includes('settings') && !is$1.empty(this.config.settings)) {
+          if (hiding && is$1.array(this.config.controls) && this.config.controls.includes('settings') && !is$1.empty(this.config.settings)) {
             controls.toggleMenu.call(this, false);
           } // Trigger event on change
 
@@ -10130,49 +15015,49 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Add event listeners
-       * @param {string} event - Event type
-       * @param {function} callback - Callback for when event occurs
+       * @param {String} event - Event type
+       * @param {Function} callback - Callback for when event occurs
        */
 
     }, {
       key: "on",
-      value: function on$$1(event, callback) {
+      value: function on$1(event, callback) {
         on.call(this, this.elements.container, event, callback);
       }
       /**
        * Add event listeners once
-       * @param {string} event - Event type
-       * @param {function} callback - Callback for when event occurs
+       * @param {String} event - Event type
+       * @param {Function} callback - Callback for when event occurs
        */
 
     }, {
       key: "once",
-      value: function once$$1(event, callback) {
+      value: function once$1(event, callback) {
         once.call(this, this.elements.container, event, callback);
       }
       /**
        * Remove event listeners
-       * @param {string} event - Event type
-       * @param {function} callback - Callback for when event occurs
+       * @param {String} event - Event type
+       * @param {Function} callback - Callback for when event occurs
        */
 
     }, {
       key: "off",
-      value: function off$$1(event, callback) {
+      value: function off$1(event, callback) {
         off(this.elements.container, event, callback);
       }
       /**
        * Destroy an instance
        * Event listeners are removed when elements are removed
        * http://stackoverflow.com/questions/12528049/if-a-dom-element-is-removed-are-its-listeners-also-removed-from-memory
-       * @param {function} callback - Callback for when destroy is complete
-       * @param {boolean} soft - Whether it's a soft destroy (for source changes etc)
+       * @param {Function} callback - Callback for when destroy is complete
+       * @param {Boolean} soft - Whether it's a soft destroy (for source changes etc)
        */
 
     }, {
       key: "destroy",
       value: function destroy(callback) {
-        var _this2 = this;
+        var _this3 = this;
 
         var soft = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
@@ -10184,20 +15069,20 @@ typeof navigator === "object" && (function (global, factory) {
           // Reset overflow (incase destroyed while in fullscreen)
           document.body.style.overflow = ''; // GC for embed
 
-          _this2.embed = null; // If it's a soft destroy, make minimal changes
+          _this3.embed = null; // If it's a soft destroy, make minimal changes
 
           if (soft) {
-            if (Object.keys(_this2.elements).length) {
+            if (Object.keys(_this3.elements).length) {
               // Remove elements
-              removeElement(_this2.elements.buttons.play);
-              removeElement(_this2.elements.captions);
-              removeElement(_this2.elements.controls);
-              removeElement(_this2.elements.wrapper); // Clear for GC
+              removeElement(_this3.elements.buttons.play);
+              removeElement(_this3.elements.captions);
+              removeElement(_this3.elements.controls);
+              removeElement(_this3.elements.wrapper); // Clear for GC
 
-              _this2.elements.buttons.play = null;
-              _this2.elements.captions = null;
-              _this2.elements.controls = null;
-              _this2.elements.wrapper = null;
+              _this3.elements.buttons.play = null;
+              _this3.elements.captions = null;
+              _this3.elements.controls = null;
+              _this3.elements.wrapper = null;
             } // Callback
 
 
@@ -10206,33 +15091,37 @@ typeof navigator === "object" && (function (global, factory) {
             }
           } else {
             // Unbind listeners
-            unbindListeners.call(_this2); // Replace the container with the original element provided
+            unbindListeners.call(_this3); // Cancel current network requests
 
-            replaceElement(_this2.elements.original, _this2.elements.container); // Event
+            html5.cancelRequests.call(_this3); // Replace the container with the original element provided
 
-            triggerEvent.call(_this2, _this2.elements.original, 'destroyed', true); // Callback
+            replaceElement(_this3.elements.original, _this3.elements.container); // Event
+
+            triggerEvent.call(_this3, _this3.elements.original, 'destroyed', true); // Callback
 
             if (is$1.function(callback)) {
-              callback.call(_this2.elements.original);
+              callback.call(_this3.elements.original);
             } // Reset state
 
 
-            _this2.ready = false; // Clear for garbage collection
+            _this3.ready = false; // Clear for garbage collection
 
             setTimeout(function () {
-              _this2.elements = null;
-              _this2.media = null;
+              _this3.elements = null;
+              _this3.media = null;
             }, 200);
           }
         }; // Stop playback
 
 
-        this.stop(); // Provider specific stuff
+        this.stop(); // Clear timeouts
+
+        clearTimeout(this.timers.loading);
+        clearTimeout(this.timers.controls);
+        clearTimeout(this.timers.resized); // Provider specific stuff
 
         if (this.isHTML5) {
-          // Clear timeout
-          clearTimeout(this.timers.loading); // Restore native video controls
-
+          // Restore native video controls
           ui.toggleNativeControls.call(this, true); // Clean up
 
           done();
@@ -10260,7 +15149,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Check for support for a mime type (HTML5 only)
-       * @param {string} type - Mime type
+       * @param {String} type - Mime type
        */
 
     }, {
@@ -10270,40 +15159,40 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Check for support
-       * @param {string} type - Player type (audio/video)
-       * @param {string} provider - Provider (html5/youtube/vimeo)
-       * @param {bool} inline - Where player has `playsinline` sttribute
+       * @param {String} type - Player type (audio/video)
+       * @param {String} provider - Provider (html5/youtube/vimeo)
+       * @param {Boolean} inline - Where player has `playsinline` sttribute
        */
 
     }, {
       key: "isHTML5",
       get: function get() {
-        return Boolean(this.provider === providers.html5);
+        return this.provider === providers.html5;
       }
     }, {
       key: "isEmbed",
       get: function get() {
-        return Boolean(this.isYouTube || this.isVimeo);
+        return this.isYouTube || this.isVimeo;
       }
     }, {
       key: "isYouTube",
       get: function get() {
-        return Boolean(this.provider === providers.youtube);
+        return this.provider === providers.youtube;
       }
     }, {
       key: "isVimeo",
       get: function get() {
-        return Boolean(this.provider === providers.vimeo);
+        return this.provider === providers.vimeo;
       }
     }, {
       key: "isVideo",
       get: function get() {
-        return Boolean(this.type === types.video);
+        return this.type === types.video;
       }
     }, {
       key: "isAudio",
       get: function get() {
-        return Boolean(this.type === types.audio);
+        return this.type === types.audio;
       }
     }, {
       key: "playing",
@@ -10407,7 +15296,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Set the player volume
-       * @param {number} value - must be between 0 and 1. Defaults to the value from local storage and config.volume if not set in storage
+       * @param {Number} value - must be between 0 and 1. Defaults to the value from local storage and config.volume if not set in storage
        */
 
     }, {
@@ -10504,12 +15393,14 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Set playback speed
-       * @param {number} speed - the speed of playback (0.5-2.0)
+       * @param {Number} speed - the speed of playback (0.5-2.0)
        */
 
     }, {
       key: "speed",
       set: function set(input) {
+        var _this4 = this;
+
         var speed = null;
 
         if (is$1.number(input)) {
@@ -10522,26 +15413,18 @@ typeof navigator === "object" && (function (global, factory) {
 
         if (!is$1.number(speed)) {
           speed = this.config.speed.selected;
-        } // Set min/max
+        } // Clamp to min/max
 
 
-        if (speed < 0.1) {
-          speed = 0.1;
-        }
-
-        if (speed > 2.0) {
-          speed = 2.0;
-        }
-
-        if (!this.config.speed.options.includes(speed)) {
-          this.debug.warn("Unsupported speed (".concat(speed, ")"));
-          return;
-        } // Update config
-
+        var min = this.minimumSpeed,
+            max = this.maximumSpeed;
+        speed = clamp(speed, min, max); // Update config
 
         this.config.speed.selected = speed; // Set media speed
 
-        this.media.playbackRate = speed;
+        setTimeout(function () {
+          _this4.media.playbackRate = speed;
+        }, 0);
       }
       /**
        * Get current playback speed
@@ -10551,9 +15434,49 @@ typeof navigator === "object" && (function (global, factory) {
         return Number(this.media.playbackRate);
       }
       /**
+       * Get the minimum allowed speed
+       */
+
+    }, {
+      key: "minimumSpeed",
+      get: function get() {
+        if (this.isYouTube) {
+          // https://developers.google.com/youtube/iframe_api_reference#setPlaybackRate
+          return Math.min.apply(Math, _toConsumableArray(this.options.speed));
+        }
+
+        if (this.isVimeo) {
+          // https://github.com/vimeo/player.js/#setplaybackrateplaybackrate-number-promisenumber-rangeerrorerror
+          return 0.5;
+        } // https://stackoverflow.com/a/32320020/1191319
+
+
+        return 0.0625;
+      }
+      /**
+       * Get the maximum allowed speed
+       */
+
+    }, {
+      key: "maximumSpeed",
+      get: function get() {
+        if (this.isYouTube) {
+          // https://developers.google.com/youtube/iframe_api_reference#setPlaybackRate
+          return Math.max.apply(Math, _toConsumableArray(this.options.speed));
+        }
+
+        if (this.isVimeo) {
+          // https://github.com/vimeo/player.js/#setplaybackrateplaybackrate-number-promisenumber-rangeerrorerror
+          return 2;
+        } // https://stackoverflow.com/a/32320020/1191319
+
+
+        return 16;
+      }
+      /**
        * Set playback quality
        * Currently HTML5 & YouTube only
-       * @param {number} input - Quality level
+       * @param {Number} input - Quality level
        */
 
     }, {
@@ -10570,7 +15493,7 @@ typeof navigator === "object" && (function (global, factory) {
         var updateStorage = true;
 
         if (!options.includes(quality)) {
-          var value = closest(options, quality);
+          var value = closest$1(options, quality);
           this.debug.warn("Unsupported quality option: ".concat(quality, ", using ").concat(value, " instead"));
           quality = value; // Don't update storage if quality is not supported
 
@@ -10598,7 +15521,7 @@ typeof navigator === "object" && (function (global, factory) {
       /**
        * Toggle loop
        * TODO: Finish fancy new logic. Set the indicator on load as user may pass loop as config
-       * @param {boolean} input - Whether to loop or not
+       * @param {Boolean} input - Whether to loop or not
        */
 
     }, {
@@ -10609,41 +15532,41 @@ typeof navigator === "object" && (function (global, factory) {
         this.media.loop = toggle; // Set default to be a true toggle
 
         /* const type = ['start', 'end', 'all', 'none', 'toggle'].includes(input) ? input : 'toggle';
-         switch (type) {
-            case 'start':
-                if (this.config.loop.end && this.config.loop.end <= this.currentTime) {
-                    this.config.loop.end = null;
-                }
-                this.config.loop.start = this.currentTime;
-                // this.config.loop.indicator.start = this.elements.display.played.value;
-                break;
-             case 'end':
-                if (this.config.loop.start >= this.currentTime) {
-                    return this;
-                }
-                this.config.loop.end = this.currentTime;
-                // this.config.loop.indicator.end = this.elements.display.played.value;
-                break;
-             case 'all':
-                this.config.loop.start = 0;
-                this.config.loop.end = this.duration - 2;
-                this.config.loop.indicator.start = 0;
-                this.config.loop.indicator.end = 100;
-                break;
-             case 'toggle':
-                if (this.config.loop.active) {
-                    this.config.loop.start = 0;
-                    this.config.loop.end = null;
-                } else {
+             switch (type) {
+                case 'start':
+                    if (this.config.loop.end && this.config.loop.end <= this.currentTime) {
+                        this.config.loop.end = null;
+                    }
+                    this.config.loop.start = this.currentTime;
+                    // this.config.loop.indicator.start = this.elements.display.played.value;
+                    break;
+                 case 'end':
+                    if (this.config.loop.start >= this.currentTime) {
+                        return this;
+                    }
+                    this.config.loop.end = this.currentTime;
+                    // this.config.loop.indicator.end = this.elements.display.played.value;
+                    break;
+                 case 'all':
                     this.config.loop.start = 0;
                     this.config.loop.end = this.duration - 2;
-                }
-                break;
-             default:
-                this.config.loop.start = 0;
-                this.config.loop.end = null;
-                break;
-        } */
+                    this.config.loop.indicator.start = 0;
+                    this.config.loop.indicator.end = 100;
+                    break;
+                 case 'toggle':
+                    if (this.config.loop.active) {
+                        this.config.loop.start = 0;
+                        this.config.loop.end = null;
+                    } else {
+                        this.config.loop.start = 0;
+                        this.config.loop.end = this.duration - 2;
+                    }
+                    break;
+                 default:
+                    this.config.loop.start = 0;
+                    this.config.loop.end = null;
+                    break;
+            } */
       }
       /**
        * Get current loop state
@@ -10654,7 +15577,7 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Set new media source
-       * @param {object} input - The new source object (see docs)
+       * @param {Object} input - The new source object (see docs)
        */
 
     }, {
@@ -10680,8 +15603,20 @@ typeof navigator === "object" && (function (global, factory) {
         return is$1.url(download) ? download : this.source;
       }
       /**
+       * Set the download URL
+       */
+      ,
+      set: function set(input) {
+        if (!is$1.url(input)) {
+          return;
+        }
+
+        this.config.urls.download = input;
+        controls.setDownloadUrl.call(this);
+      }
+      /**
        * Set the poster image for a video
-       * @param {input} - the URL for the new poster image
+       * @param {String} input - the URL for the new poster image
        */
 
     }, {
@@ -10703,11 +15638,43 @@ typeof navigator === "object" && (function (global, factory) {
           return null;
         }
 
-        return this.media.getAttribute('poster');
+        return this.media.getAttribute('poster') || this.media.getAttribute('data-poster');
+      }
+      /**
+       * Get the current aspect ratio in use
+       */
+
+    }, {
+      key: "ratio",
+      get: function get() {
+        if (!this.isVideo) {
+          return null;
+        }
+
+        var ratio = reduceAspectRatio(getAspectRatio.call(this));
+        return is$1.array(ratio) ? ratio.join(':') : ratio;
+      }
+      /**
+       * Set video aspect ratio
+       */
+      ,
+      set: function set(input) {
+        if (!this.isVideo) {
+          this.debug.warn('Aspect ratio can only be set for video');
+          return;
+        }
+
+        if (!is$1.string(input) || !validateRatio(input)) {
+          this.debug.error("Invalid aspect ratio specified (".concat(input, ")"));
+          return;
+        }
+
+        this.config.ratio = input;
+        setAspectRatio.call(this);
       }
       /**
        * Set the autoplay state
-       * @param {boolean} input - Whether to autoplay or not
+       * @param {Boolean} input - Whether to autoplay or not
        */
 
     }, {
@@ -10741,7 +15708,7 @@ typeof navigator === "object" && (function (global, factory) {
       /**
        * Set the wanted language for captions
        * Since tracks can be added later it won't update the actual caption track until there is a matching track
-       * @param {string} - Two character ISO language code (e.g. EN, FR, PT, etc)
+       * @param {String} - Two character ISO language code (e.g. EN, FR, PT, etc)
        */
 
     }, {
@@ -10811,19 +15778,19 @@ typeof navigator === "object" && (function (global, factory) {
       }
       /**
        * Load an SVG sprite into the page
-       * @param {string} url - URL for the SVG sprite
-       * @param {string} [id] - Unique ID
+       * @param {String} url - URL for the SVG sprite
+       * @param {String} [id] - Unique ID
        */
 
     }, {
       key: "loadSprite",
-      value: function loadSprite$$1(url, id) {
+      value: function loadSprite$1(url, id) {
         return loadSprite(url, id);
       }
       /**
        * Setup multiple instances
        * @param {*} selector
-       * @param {object} options
+       * @param {Object} options
        */
 
     }, {
@@ -10853,12 +15820,10 @@ typeof navigator === "object" && (function (global, factory) {
     return Plyr;
   }();
 
-  Plyr.defaults = cloneDeep(defaults);
+  Plyr.defaults = cloneDeep(defaults$1);
 
   // ==========================================================================
 
   return Plyr;
 
 })));
-
-//# sourceMappingURL=plyr.polyfilled.js.map
