@@ -281,7 +281,6 @@ class VRGUI extends EventEmitter {
 		this.rightIndex = 0;
 		
 		this.renderer.xr.getController(0).addEventListener('connected', (ev) => {
-			console.error("0", ev.data.handedness);
 			if (ev.data.handedness === "left") {
 				this.leftIndex = 0;
 			} else {
@@ -289,7 +288,6 @@ class VRGUI extends EventEmitter {
 			}
 		});
 		this.renderer.xr.getController(1).addEventListener('connected', (ev) => {
-			console.error("1", ev.data.handedness);
 			if (ev.data.handedness === "left") {
 				this.leftIndex = 1;
 			} else {
@@ -503,7 +501,6 @@ class VRGUI extends EventEmitter {
 	// 選択対象のplaneがあったら選択し、this.selectedIDs[idx]に選択中フラグを設定する
 	select(source) {
 		const isLeft = source.handedness === 'left';
-		console.error(source.handedness)
 		const controllerIndex = isLeft ? this.leftIndex : this.rightIndex;
 
 		// コントローラの向きを計算
