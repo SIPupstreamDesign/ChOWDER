@@ -99,6 +99,19 @@ class VRGUI extends EventEmitter {
 		this.store = store;
 		this.action = action;
 
+		// 平面モードかどうか
+		this.vrMode = "plane";
+		if (this.store.getGlobalSetting().hasOwnProperty('VRMode')) {
+			const mode = this.store.getGlobalSetting().VRMode;
+			if (mode) {
+				if (mode.toLowerCase() === "cylinder") {
+					this.vrMode = "cylinder";
+				} else if (mode.toLowerCase() === "360") {
+					this.vrMode = "360"
+				}
+			}
+		}
+
 		this.width = 3840;
 		this.height = 2160;
 
@@ -177,19 +190,10 @@ class VRGUI extends EventEmitter {
 		// 描画用の更新を止めるフラグ
 		this.stopUpdate = false;
 
-		// 平面モードかどうか
-		this.vrMode = "plane";
-		if (this.store.getGlobalSetting().hasOwnProperty('VRMode')) {
-			const mode = this.store.getGlobalSetting().VRMode;
-			if (mode) {
-				if (mode.toLowerCase() === "cylinder") {
-					this.vrMode = "cylinder";
-				}
-			}
-		}
-
 		if (this.isPlaneMode()) {
 			this.initCoverPlane();
+		} else if (this.is360Mode()) {
+			this.init360CoverCylinder()
 		} else {
 			this.initCoverCylinder();
 		}
@@ -208,6 +212,10 @@ class VRGUI extends EventEmitter {
 		return this.vrMode === "plane"
 	}
 
+	is360Mode() {
+		return this.vrMode === "360"
+	}
+	
 	initVR(windowSize) {
 		this.initVRRenderer(windowSize);
 		this.initVRController();
@@ -268,7 +276,27 @@ class VRGUI extends EventEmitter {
 				this.renderer.render(this.getFrontScene(), this.camera);
 			}
 		};
+
+		this.leftIndex = 0;
+		this.rightIndex = 0;
 		
+		this.renderer.xr.getController(0).addEventListener('connected', (ev) => {
+			console.error("0", ev.data.handedness);
+			if (ev.data.handedness === "left") {
+				this.leftIndex = 0;
+			} else {
+				this.rightIndex = 0;
+			}
+		});
+		this.renderer.xr.getController(1).addEventListener('connected', (ev) => {
+			console.error("1", ev.data.handedness);
+			if (ev.data.handedness === "left") {
+				this.leftIndex = 1;
+			} else {
+				this.rightIndex = 1;
+			}
+		});
+
 		this.renderer.xr.addEventListener('sessionend', (evt) => {
 			const canvas = document.getElementById('vr_area');
 			this.renderer.setAnimationLoop(null);
@@ -328,7 +356,7 @@ class VRGUI extends EventEmitter {
 			return mesh;
 		}
 
-		//右側の光線
+		//右側または左側の光線
 		const controller1 = this.renderer.xr.getController(0);
 		controller1.addEventListener('connected', function (event) {
 			this.add(createLine());
@@ -341,7 +369,7 @@ class VRGUI extends EventEmitter {
 		});
 		this.cameraBase.add(controller1);
 
-		//左側の光線
+		//右側または左側の光線
 		const controller2 = this.renderer.xr.getController(1);
 		controller2.addEventListener('connected', function (event) {
 			this.add(createLine());
@@ -356,12 +384,12 @@ class VRGUI extends EventEmitter {
 
 		const controllerModelFactory = new XRControllerModelFactory();
 
-		// 右手コントローラの3Dオブジェクト
+		// 右手または左手のコントローラの3Dオブジェクト
 		const grip1 = this.renderer.xr.getControllerGrip(0);
 		grip1.add(controllerModelFactory.createControllerModel(grip1));
 		this.cameraBase.add(grip1);
 
-		// 左手コントローラの3Dオブジェクト
+		// 右手または左手のコントローラの3Dオブジェクト
 		const grip2 = this.renderer.xr.getControllerGrip(1);
 		grip2.add(controllerModelFactory.createControllerModel(grip2));
 		this.cameraBase.add(grip2);
@@ -403,8 +431,7 @@ class VRGUI extends EventEmitter {
 			const trigerPressed = gamepad.buttons[0].pressed;
 			const cancelPressed = gamepad.buttons[1].pressed;
 			const isLeft = source.handedness === 'left';
-			const controllerIndex = isLeft ? 1 : 0;
-			const otherIndex = isLeft ? 0 : 1;
+			const controllerIndex = isLeft ? this.leftIndex : this.rightIndex;
 			this.isTrigerPressed[controllerIndex] = trigerPressed;
 			if (cancelPressed) {
 				if (this.isInitialCancel[controllerIndex]) {
@@ -476,7 +503,8 @@ class VRGUI extends EventEmitter {
 	// 選択対象のplaneがあったら選択し、this.selectedIDs[idx]に選択中フラグを設定する
 	select(source) {
 		const isLeft = source.handedness === 'left';
-		const controllerIndex = isLeft ? 1 : 0;
+		console.error(source.handedness)
+		const controllerIndex = isLeft ? this.leftIndex : this.rightIndex;
 
 		// コントローラの向きを計算
 		const controller = this.renderer.xr.getController(controllerIndex);
@@ -568,9 +596,9 @@ class VRGUI extends EventEmitter {
 
 	// 選択中のポインター移動によるコンテンツ移動
 	move() {
-		const isRight = (this.selectedIDs[0] !== null && this.isTrigerPressed[0] === true);
-		const isLeft = (this.selectedIDs[1] !== null && this.isTrigerPressed[1] === true);
-		const cindices = [isRight ? 0 : null, isLeft ? 1 : null];
+		const isRight = (this.selectedIDs[this.rightIndex] !== null && this.isTrigerPressed[this.rightIndex] === true);
+		const isLeft = (this.selectedIDs[this.leftIndex] !== null && this.isTrigerPressed[this.leftIndex] === true);
+		const cindices = [isRight ? this.rightIndex : null, isLeft ? this.leftIndex : null];
 		let isResized = false;
 		if (isRight && isLeft) {
 			if (!this.stopUpdate && this.selectedIDs[0] === this.selectedIDs[1]) {
@@ -662,10 +690,8 @@ class VRGUI extends EventEmitter {
 			xy.y = Math.min(Number(win.posy) + Number(win.height), xy.y);
 			return xy;
 		}
-		let cover = null;
-		if (this.isPlaneMode()) {
-			cover = this.coverPlane;
-		} else {
+		let cover = this.coverPlane;
+		if (!this.isPlaneMode()) {
 			cover = this.coverCylinder;
 		}
 
@@ -678,16 +704,16 @@ class VRGUI extends EventEmitter {
 			// 背景のメッシュの高さ
 			const ch = cover.geometry.parameters.height;
 			// UVをオフセットさせる値を計算
-			const offsetU = Number(win.posx) / this.width;
-			const offsetV = -Number(win.posy) / this.height;
-			const uScale = this.width / Number(win.width);
-			const vScale = ch / win.height;
+			const offsetU = Number(win.posx) / this.getWidth();
+			const offsetV = -Number(win.posy) / this.getHeight();
+			const uScale = this.getWidth() / Number(win.width);
+			const vScale = ch /  Number(win.height);
 
 			uv.x *= uScale;
 			uv.x += offsetU;
 			uv.y += - ((ch - Number(win.height)) / 2) / ch;
-			uv.y += offsetV;
 			uv.y *= vScale;
+			uv.y += offsetV;
 
 			let xy = {
 				x: Math.floor((Number(win.width) * uv.x)),
@@ -741,6 +767,33 @@ class VRGUI extends EventEmitter {
 		this.scene.add(this.coverCylinder);
 
 		const texture = new THREE.TextureLoader().load("src/image/vr_background.png");
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
+		material.map = texture;
+		material.needsUpdate = true;
+	}
+
+	init360CoverCylinder() {
+		const radius = this.width / Math.PI;
+		const height = radius * Math.tan(60 * Math.PI / 180) * 2; //= 4234.205916839362
+		const radialSegments = 512;
+		const heightSegments = 1;
+		// thetaStartは+z方向を0として、Y軸に対して反時計回りで角度を指定する。と思われる。
+		// xz平面を上から見たときに、+x → +z → -x となるような円弧を描く
+		const thetaStart = 1.5 * Math.PI; // right start
+		const thetaLength = Math.PI * 2;
+		const geometry = new THREE.CylinderGeometry(
+			radius, radius, height, radialSegments, heightSegments, true,
+			thetaStart, thetaLength);
+
+		const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+		this.coverCylinder = new THREE.Mesh(geometry, material);
+		this.setVRPlanePos(this.coverCylinder, 0, 1080, -100000);
+		// flip
+		this.coverCylinder.scale.z *= -1;
+		this.scene.add(this.coverCylinder);
+
+		const texture = new THREE.TextureLoader().load("src/image/vr_background_360.png");
 		texture.minFilter = THREE.LinearFilter;
 		texture.magFilter = THREE.LinearFilter;
 		material.map = texture;
@@ -922,13 +975,13 @@ class VRGUI extends EventEmitter {
 				// 高さ
 				const height = h;
 				// セグメント数
-				const radialSegments = Math.max(2, Math.floor(256 * w / this.width));
+				const radialSegments = Math.max(2, Math.floor(256 * w / this.getWidth()));
 				// thetaStartは+z方向を0として、Y軸に対して反時計回りで角度を指定する。と思われる。
 				// xz平面を上から見たときに、+x → +z → -x となるような円弧を描き
 				// 円弧の大きさ(thetaLength)は、コンテンツの初期幅となるように設定する。
 				const thetaStart = 1.5 * Math.PI; // right start
 				// 幅
-				const thetaLength = Math.PI * (w / this.width);
+				const thetaLength = Math.PI * (w / this.getWidth());
 				const geometry = new THREE.CylinderGeometry(
 					radius, radius, height, radialSegments, heightSegments, true,
 					thetaStart, thetaLength);
@@ -1758,6 +1811,9 @@ class VRGUI extends EventEmitter {
 	}
 
 	getWidth() {
+		if (this.is360Mode()) {
+			return this.width * 2;
+		}
 		return this.width;
 	}
 
