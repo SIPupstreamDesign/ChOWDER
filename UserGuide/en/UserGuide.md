@@ -38,6 +38,11 @@ Table of Contents
 - [Working with Display Screen](#working-with-display-screen)
   - [Overview](#overview-1)
   - [Working with Display: Menu](#working-with-display-menu)
+- [Working with VR Display](#working-with-vr-display)
+  - [VR Mode](#vr-mode)
+  - [VR mode settings](#vr-mode-settings)
+  - [Operation in VR mode](#operation-in-vr-mode)
+  - [VR mode restrictions](#vr-mode-restrictions)
 - [Coordinating with HIVE](#coordinating-with-hive)
   - [Interactive Rendering](#interactive-rendering)
   - [SceneNodeEditor](#scenenodeeditor)
@@ -234,7 +239,8 @@ The server program reads the `server/setting.json` file while launching to confi
         "enableSSL" : true,
         "HTTPPort" : 80,
         "SSLPort" : 443,
-        "enableCORS" : true
+        "enableCORS" : true,
+        "VRMode" : 'cylinder'
     }
 
 -   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
@@ -249,6 +255,7 @@ The server program reads the `server/setting.json` file while launching to confi
 -   `HTTPPort` sets the http port. websocket connections(ws) use the same port, too.
 -   `SSLPort` sets the https port. websocket connections(wss) use the same port, too.
 -   `enableCORS` sets whether CORS connections to chowder server is enabled or not. 
+-   `VRMode` sets the VR mode to use. Currently available values ​​are "plane" (plane view) or "cylinder" (curved surface view) or "360" (360 degree view).
 
 Managing Administrative Users
 ---------------------------------------------------
@@ -887,6 +894,86 @@ You can set up a recognizable Display ID in Controller. Type out the word (or le
 
 <img src="image/displaymenu3.png" alt="ディスプレイIDの設定" width="207" />
 *Display ID Setup*
+
+Working with VR Display
+========================================================================================
+
+VR Mode
+---------------------------------------------------
+
+When the Chowder page is displayed from the browser of the HMD tool, it can recognize the VR display, and fly to the immersive VR mode by WebXR.
+
+### Switch to VR mode
+
+When the Chowder page is displayed on the HMD device, it will be registered in the Chowder server as a new VR display, so it is necessary to set the permission on the controller.
+
+<img src="image/webxr1.png" alt="コントローラでの許可設定が必要" width="400" />
+*Allow setting on the controller is required*
+
+If the VR display is allowed, the VR Display button will be displayed and you can press it to switch to the immersive VR mode.
+
+<img src="image/webxr2.png" alt="VR Displayボタン" width="400" />
+*VR Display button*
+
+VR mode settings
+---------------------------------------------------
+
+By specifying VRMode in setting.json in [Basic Setup for Server](#basic-setup-for-server), You can switch the display method in VR mode.
+
+### Plane mode
+In flat mode, the flat Chowder display is placed in front of the initial viewpoint position.
+The display is equivalent to 3840px wide and 2160px high.
+It is arranged so that you can see the horizontal viewing angle of about 114 degrees and the vertical viewing angle of 120 degrees from the initial viewpoint position in HDM's static mode.
+
+<img src="image/webxr3.png" alt="平面モード" width="400" />
+*Plane mode*
+
+### Curved surface(Cylinder) mode
+In curved surface mode, a cylindrical rectangular area with a horizontal viewing angle of about 180 degrees and a vertical viewing angle of 120 degrees is placed in front of the initial viewpoint position.
+A display area with an aspect ratio of 16: 9 is displayed as a Chowder display in the rectangular area.
+The display is equivalent to a width of 3840px and a height of 2160px.
+
+<img src="image/webxr4.png" alt="曲面モード" width="400" />
+*Curved surface mode*
+
+### 360度モード
+360 degree mode is an extension of curved surface mode to a 360 degree cylindrical area.
+The display displayed in the rectangular area is equivalent to 7680px in width and 2160px in height.
+
+Operation in VR mode
+---------------------------------------------------
+
+In VR mode, you can use the hand controller of the VR device to select, move, scale, emphasize and cancel the content frame, and display and cancel the memo. The method of each operation is as follows.
+
+|Operation|Required controller operation|
+| ---- | ---- |
+|Content selection|Place the cursor on the content and pull the trigger (PrimaryIndexTrigger)|
+|Content deselection|Pull the trigger (PrimaryHandTrigger) of the controller that selected the content|
+|Move|With content selected, tilt the controller in the direction you want to move it|
+|Scale up|On the left and right controllers, tilt the controller and <br>pull the cursor away while pulling the trigger (PrimaryIndexTrigger) for the same content.|
+|Scale down|With the left and right controllers, tilt the controller and <br>bring the cursor closer while pulling the trigger (PrimaryIndexTrigger) for the same content.|
+|show/hide content borders highlights|After selecting the content, select the "☆" button with the trigger (Primary Index Trigger)|
+|show/hide notes|After selecting the content, select the "i" button with the trigger (Primary Index Trigger).|
+
+<img src="image/webxr5.png" alt="選択/強調表示" width="400" />
+*Selection / highlighting example*
+
+VR mode restrictions
+---------------------------------------------------
+
+### About the display area
+In VR mode, the content is displayed until it is completely out of the display area.
+Also, when moving content using a hand controller in VR mode, you can move content only within the display area.
+
+<img src="image/webxr6.png" alt="コンテンツ表示範囲" width="400" />
+*Display example of protruding content*
+
+### Displaying WebGL content (content that you want to use iTowns, qgis2three)
+There is a problem that WebGL content is displayed in black when newly added while displaying in VR mode.
+As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mode.
+
+<img src="image/webxr7.png" alt="WebGLコンテンツが黒く表示される問題" width="600" />
+*Left:VR Display, Right :ChOWDER Controller*
 
 Coordinating with HIVE
 ==================================================================
