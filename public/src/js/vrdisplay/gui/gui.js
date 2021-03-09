@@ -239,7 +239,16 @@ class GUI extends EventEmitter {
 						this.updateViewport(this.store.getWindowData())
 					}
 				}
-				this.updateContentVisible();
+				for (let i in metaDataDict) {
+					if (metaDataDict.hasOwnProperty(i)) {
+						let metaData = metaDataDict[i];
+						let elem = document.getElementById(metaData.id);
+						if (elem) {
+							this.updateContentVisible(elem, metaData);
+							this.getVRGUI().updateContentVisible(metaData);
+						}
+					}
+				}
 			}
 		});
 
