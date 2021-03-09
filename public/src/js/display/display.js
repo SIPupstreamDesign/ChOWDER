@@ -426,6 +426,7 @@ class Display {
 						this.gui.updateViewport(this.store.getWindowData())
 					}
 				}
+				this.updateContentVisible();
 			}
 		});
 
@@ -443,7 +444,7 @@ class Display {
 			}
 		});
 
-		this.store.on(Store.EVENT_DONE_UPDATE_WWINDOW_GROUP, (err, data) => {
+		this.store.on(Store.EVENT_DONE_UPDATE_WINDOW_GROUP, (err, data) => {
 			this.action.update({ updateType : 'content'});
 		})
 

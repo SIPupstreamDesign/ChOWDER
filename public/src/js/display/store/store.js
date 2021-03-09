@@ -555,10 +555,10 @@ class Store extends EventEmitter {
                 }
             }
             if (isGroupChanged) {
-                this.emit(Store.EVENT_DONE_UPDATE_WWINDOW_GROUP, err, json)
+                this.emit(Store.EVENT_DONE_UPDATE_WINDOW_GROUP, err, json)
             }
         }
-        this.emit(Store.EVENT_DONE_UPDATE_WWINDOW_METADATA, err, json)
+        this.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, json)
     }
 
     /**
@@ -782,7 +782,6 @@ Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_GET_CONTENT = "done_get_content";
 Store.EVENT_REQUEST_RELOAD_DISPLAY = "reload_display";
 Store.EVENT_UPDATE_TIME = "updat_time";
-Store.EVENT_DONE_UPDATE_WWINDOW_METADATA = "done_update_window_metadata";
-Store.EVENT_DONE_UPDATE_WWINDOW_GROUP = "done_update_window_group";
+Store.EVENT_DONE_UPDATE_WINDOW_GROUP = "done_update_window_group";
 
 export default Store;

@@ -145,12 +145,8 @@ class Receiver {
         });
 
         this.connector.on(Command.UpdateWindowMetaData, (data) => {
-            for (let i = 0; i < data.length; ++i) {
-                if (data[i].hasOwnProperty('id') && data[i].id === this.store.getWindowID()) {
-                    this.action.update({ updateType: 'window' });
-                    this.store.onUpdateWindowMetaData(null, data);
-                }
-            }
+            this.action.update({ updateType: 'window' });
+            this.store.onUpdateWindowMetaData(null, data);
         });
 
         this.connector.on(Command.UpdateVirtualDisplay, (data) => {
