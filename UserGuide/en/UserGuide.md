@@ -968,12 +968,16 @@ Also, when moving content using a hand controller in VR mode, you can move conte
 <img src="image/webxr6.png" alt="コンテンツ表示範囲" width="400" />
 *Display example of protruding content*
 
-### Displaying WebGL content (content that you want to use iTowns, qgis2three)
+### Displaying WebGL content (content using iTown)
 There is a problem that WebGL content is displayed in black when newly added while displaying in VR mode.
 As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mode.
 
 <img src="image/webxr7.png" alt="WebGLコンテンツが黒く表示される問題" width="600" />
 *Left:VR Display, Right :ChOWDER Controller*
+
+### Display PDF content
+There is a problem that PDF contents are not displayed when newly added while displaying in VR mode.
+As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mode.
 
 Coordinating with HIVE
 ==================================================================
