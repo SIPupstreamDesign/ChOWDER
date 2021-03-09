@@ -146,6 +146,10 @@ class VRGUI extends EventEmitter {
 		// 確実に手前に描画するシーン（ポインタなど）
 		this.frontScene = new THREE.Scene();
 
+		// 2D表示用シーン
+		this.scene2D = new THREE.Scene();
+		this.camera2D = new THREE.OrthographicCamera(0, this.width, 0, this.height, 0.001, 10000);
+
 		// 衝突検出用
 		this.raycaster = new THREE.Raycaster();
 		// コントローラの方向計算用ベクトル(テンポラリ)
@@ -206,6 +210,12 @@ class VRGUI extends EventEmitter {
 		this.markOnImage.src = "./src/image/vr_star_on.png";
 		this.markOffImage = new Image();
 		this.markOffImage.src = "./src/image/vr_star_off.png";
+		this.endImmersive = new Image();
+		this.endImmersive.src = "./src/image/vr_end_immersive.png";
+		this.endImmersiveYes = new Image();
+		this.endImmersiveYes.src = "./src/image/vr_end_immersive_yes.png";
+		this.endImmersiveNo = new Image();
+		this.endImmersiveNo.src = "./src/image/vr_end_immersive_no.png";
 	}
 
 	isPlaneMode() {
@@ -262,6 +272,8 @@ class VRGUI extends EventEmitter {
 		this.onXRFrame_ = this.onXRFrame.bind(this);
 
 		this.enableTracking = false;
+
+		this.createEndImmersiveDialog();
 
 		// レンダリング
 		const render = (timestamp) => {
@@ -343,6 +355,7 @@ class VRGUI extends EventEmitter {
 			geometry.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0.5, 0.5, 0.5], 3));
 			const material = new THREE.LineBasicMaterial({ vertexColors: true, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false });
 			const line = new THREE.Line(geometry, material);
+			line.renderOrder = 10000002;
 			line.scale.z = 5;
 			return line;
 		}
@@ -350,6 +363,7 @@ class VRGUI extends EventEmitter {
 			const gaze_geometry = new THREE.SphereGeometry(5, 16, 16).translate(0, 0, -1);
 			const gaze_material = new THREE.MeshBasicMaterial({ depthTest: false, depthWrite: false });
 			const mesh = new THREE.Mesh(gaze_geometry, gaze_material);
+			mesh.renderOrder = 10000002;
 			mesh.position.z = this.planeDepth;
 			return mesh;
 		}
@@ -424,9 +438,22 @@ class VRGUI extends EventEmitter {
 		for (const source of this.currentSession.inputSources) {
 			if (!source.gamepad) continue;
 			const gamepad = source.gamepad;
+			if (!gamepad.buttons || gamepad.buttons.length < 2) return;
+
+			// Bボタンの押下(他のボタンより優先)
+			let bbuttonPressed = false;
+			if (gamepad.buttons.length >= 5) {
+				bbuttonPressed = gamepad.buttons[5].pressed;
+			}
+			if (bbuttonPressed && !this.isShowDialog) {
+				// セッション停止用ダイアログを表示
+				this.showImmersiveEndDialog();
+				break;
+			}
 
 			//トリガー（人さし指）押下
 			const trigerPressed = gamepad.buttons[0].pressed;
+			//トリガー（中指）押下
 			const cancelPressed = gamepad.buttons[1].pressed;
 			const isLeft = source.handedness === 'left';
 			const controllerIndex = isLeft ? this.leftIndex : this.rightIndex;
@@ -444,7 +471,14 @@ class VRGUI extends EventEmitter {
 				this.controllerDir.set(0, 0, -1);
 				this.controllerDir.applyQuaternion(controller.quaternion);
 				this.raycaster.set(controller.getWorldPosition(new Vector3()), this.controllerDir);
-				// ボタン押してるか調べる
+			
+				// ダイアログ表示中であればダイアログの判定のみ行う
+				if (this.isShowDialog) {
+					this.resolveImmersiveEndDialog(controllerIndex);
+					return;
+				}
+			
+				// ボタン(コンテンツ左上のオンオフボタン）押してるか調べる
 				if (!this.pressedButtons[controllerIndex]) {
 					this.tryPressButton(controllerIndex);
 				}
@@ -487,6 +521,24 @@ class VRGUI extends EventEmitter {
 				this.isInitialTriger[controllerIndex] = true;
 				this.isInitialCancel[controllerIndex] = true;
 			}
+		}
+	}
+
+	showImmersiveEndDialog(source) {
+		this.immersiveEndDialog.visible = true;
+		this.isShowDialog = true;
+	}
+
+	resolveImmersiveEndDialog(controllerIndex) {
+		// ヒットテストを行い、当たったplaneのうち最もrenderOrderが高いものを選択
+		const intersects = this.raycaster.intersectObjects([this.immersiveEndNo, this.immersiveEndYes]);
+		let target = intersects.length > 0 ? intersects[0].object : null;
+		if (target === this.immersiveEndYes) {
+			this.currentSession.end();
+			this.currentSession = null;
+		} else if (target === this.immersiveEndNo) {
+			this.immersiveEndDialog.visible = false;
+			this.isShowDialog = false;
 		}
 	}
 
@@ -1125,6 +1177,45 @@ class VRGUI extends EventEmitter {
 		// planeDict[metaData.id].material.blending = THREE.NormalBlending;
 		planeDict[metaData.id].material.alphaTest = 0.5;
 		planeDict[metaData.id].material.needsUpdate = true;
+	}
+
+	createEndImmersiveDialog() {
+		const texture = new THREE.Texture(this.endImmersive);
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
+		texture.needsUpdate = true;
+		const material = new THREE.MeshBasicMaterial({ map: texture, color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+		const geo = new THREE.PlaneGeometry(800, 600);
+		this.immersiveEndDialog = new THREE.Mesh( geo, material );
+		this.immersiveEndDialog.position.set(0, 0, -800);
+		this.immersiveEndDialog.renderOrder = 10000000;
+		this.immersiveEndDialog.visible = false;
+		this.camera.add(this.immersiveEndDialog);
+		
+		{
+			const texture = new THREE.Texture(this.endImmersiveYes);
+			texture.minFilter = THREE.LinearFilter;
+			texture.magFilter = THREE.LinearFilter;
+			texture.needsUpdate = true;
+			const material = new THREE.MeshBasicMaterial({ map: texture, color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+			const yesGeo = new THREE.PlaneGeometry(128, 64);
+			this.immersiveEndYes = new THREE.Mesh( yesGeo, material );
+			this.immersiveEndYes.position.set(-100, -100, 0);
+			this.immersiveEndYes.renderOrder = 10000001;
+			this.immersiveEndDialog.add(this.immersiveEndYes);
+		}
+		{
+			const texture = new THREE.Texture(this.endImmersiveNo);
+			texture.minFilter = THREE.LinearFilter;
+			texture.magFilter = THREE.LinearFilter;
+			texture.needsUpdate = true;
+			const material = new THREE.MeshBasicMaterial({ map: texture, color: 0xFFFFFF, side: THREE.DoubleSide, depthTest: false });
+			const noGeo = new THREE.PlaneGeometry(128, 64);
+			this.immersiveEndNo = new THREE.Mesh( noGeo, material );
+			this.immersiveEndNo.position.set(100, -100, 0);
+			this.immersiveEndNo.renderOrder = 10000001;
+			this.immersiveEndDialog.add(this.immersiveEndNo);
+		}
 	}
 
 	/**
