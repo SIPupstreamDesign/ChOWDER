@@ -979,6 +979,13 @@ As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mod
 There is a problem that PDF contents are not displayed when newly added while displaying in VR mode.
 As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mode.
 
+### About still images with alpha (transparency)
+For still images with alpha values, 0.5 is set as the threshold value, and it is switched between displaying completely and making it transparent. (AlphaTest)
+The alpha value is not blended, and the part containing the alpha is shown or hidden.
+
+### About animated GIF format images
+Animation GIF format animation display is not supported in VR mode.
+
 Coordinating with HIVE
 ==================================================================
 
