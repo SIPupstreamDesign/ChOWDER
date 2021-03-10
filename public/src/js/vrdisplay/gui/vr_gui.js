@@ -534,6 +534,8 @@ class VRGUI extends EventEmitter {
 		const intersects = this.raycaster.intersectObjects([this.immersiveEndNo, this.immersiveEndYes]);
 		let target = intersects.length > 0 ? intersects[0].object : null;
 		if (target === this.immersiveEndYes) {
+			this.immersiveEndDialog.visible = false;
+			this.isShowDialog = false;
 			this.currentSession.end();
 			this.currentSession = null;
 		} else if (target === this.immersiveEndNo) {
