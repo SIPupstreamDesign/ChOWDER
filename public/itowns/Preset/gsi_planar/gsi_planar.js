@@ -185,6 +185,14 @@ window.onload = function () {
     });
     view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
 
+    const light = new itowns.THREE.AmbientLight(0xFFFFFF,  0.3);
+    view.scene.add(light);
+
+    const sun = new itowns.THREE.DirectionalLight(0xFFFFFF, 0.7);
+    sun.position.set(1, 1, 1);
+    sun.updateMatrixWorld(true);
+    view.scene.add(sun);
+
     new itowns.PlanarControls(view, {
         maxAltitude: 40000000
     });
