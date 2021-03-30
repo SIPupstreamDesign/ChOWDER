@@ -105,8 +105,7 @@ class VRButton {
 		}
 
 		function stylizeElement( element ) {
-
-			element.style.position = 'absolute';
+			element.style.position = 'fixed';
 			element.style.bottom = '20px';
 			element.style.padding = '12px';
 			element.style.border = 'none';
