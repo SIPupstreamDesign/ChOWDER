@@ -54,6 +54,15 @@
 			disp.onclick = function () {
 				location.href = 'display.html?id=' + s4();
 			}
+
+			let defaultDisp = document.getElementById('default_display_link');
+			defaultDisp.onclick = function () {
+				let displayID = s4();
+				let query = getQueryParams(location.search) || {};
+				displayID = query.id ? decodeURIComponent(query.id) : displayID;
+				location.href = 'display.html?id=' + displayID;
+			}
+
 			/*
 			let vrdisp = document.getElementById('vr_display_link');
 			vrdisp.onclick = function () {
@@ -90,16 +99,11 @@
 		<div class="list-box" id='vr_mode' style="display:none">
 			<iframe id='vr_frame'>
 			</iframe>
-			<!--div class="list-item">
-				<a id="vr_display_link">
-					<h1 class="display" style="width:230px">VR Display(曲面)</h1>
+			<div style="margin-left: calc(50% - 135px);">
+				<a id="default_display_link">
+					<div class="display">Normal Display</div>
 				</a>
 			</div>
-			<div class="list-item">
-				<a id="vr_display_link_plane">
-					<h1 class="display" style="margin-left: 30px; width:230px">VR Display(平面)</h1>
-				</a>
-			</div-->
 		</div>
 		<div class="license_wrap">
 			<a class="whitelink" href="licenses.md">
