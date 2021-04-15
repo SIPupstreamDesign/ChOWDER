@@ -3,9 +3,9 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 import * as THREE from 'three';
-import { OBJLoader2 } from 'three/examples/jsm/loaders/OBJLoader2.js';
+import { OBJLoader2 } from '../../../3rd/js/WWOBJLoader/examples/jsm/loaders/OBJLoader2.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
-import { MtlObjBridge } from 'three/examples/jsm/loaders/obj2/bridge/MtlObjBridge.js';
+import { MtlObjBridge } from '../../../3rd/js/WWOBJLoader/examples/jsm/loaders/obj2/bridge/MtlObjBridge.js';
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
 
 const OBJInitialScale = 10000;

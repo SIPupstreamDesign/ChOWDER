@@ -23,7 +23,7 @@
   "dependencies": {
     "argv": "0.0.2",
     "bson": "*",
-    "electron": "^4.1.1",
+    "electron": "^9.4.4",
     "image-size": "*",
     "node-zip": "^1.1.1",
     "phantom": "^6.0.3",
@@ -43,6 +43,6 @@
     "webpack": "^4.44.2",
     "webpack-cli": "^3.2.1",
     "webpack-dev-server": "^3.1.14",
-    "three": "0.121.1"
+    "three": "0.127.0"
   }
 }

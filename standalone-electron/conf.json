@@ -1,5 +1,5 @@
 {
-	"url": "http://localhost:8080/display.html",
+	"url": "http://localhost/display.html",
 	"password": "electronpassword",
 	"windows": {
 		"tile1": {

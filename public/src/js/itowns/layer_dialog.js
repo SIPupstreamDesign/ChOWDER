@@ -59,6 +59,11 @@ class LayerDialog extends EventEmitter {
         this.jsonURLInput.value = window.location.protocol + "//" + window.location.hostname + port + "/" + fileName;
     }
 
+    changeInputMTLValue(fileName) {
+        const port = window.location.port ? ":" + window.location.port : "";
+        this.mtlURLInput.value = window.location.protocol + "//" + window.location.hostname + port + "/" + fileName;
+    }
+
     init() {
         this.dom = document.createElement('div');
         this.dom.className = "layer_dialog";
@@ -219,7 +224,7 @@ class LayerDialog extends EventEmitter {
         this.jsonURLTitle.innerText = "JSON:";
         this.jsonURLInput = document.createElement('textarea');
         this.jsonURLInput.className = "layer_dialog_url_input";
-        this.jsonURLInput.value = "http://localhost/sample_data/bargraph/setting1.json";
+        this.changeInputJSONValue('sample_data/bargraph/setting1.json');
 
         this.jsonRow = this.createRow();
         this.jsonRow.className = "layer_dialog_row2"
@@ -234,7 +239,7 @@ class LayerDialog extends EventEmitter {
         this.mtlURLTitle.innerText = "MTL:";
         this.mtlURLInput = document.createElement('textarea');
         this.mtlURLInput.className = "layer_dialog_url_input";
-        this.mtlURLInput.value = "http://localhost/sample_data/obj/teapot/default.mtl";
+        this.changeInputMTLValue("sample_data/obj/teapot/default.mtl");
 
         this.mtlRow = this.createRow();
         this.mtlRow.className = "layer_dialog_row2"
