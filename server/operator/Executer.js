@@ -1598,6 +1598,8 @@
                 return util.detectImageType(contentData);
             } else if (metaData.type === 'webgl') {
                 return "application/webgl";
+            } else if (metaData.type === 'tileview') {
+                return "application/tileview";
             } else {
                 console.error("Error undefined type:" + metaData.type);
                 return null;

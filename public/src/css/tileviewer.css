@@ -1,0 +1,72 @@
+*:not(input) {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	font-family: "Hiragino Kaku Gothic Pro","Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+	box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+	width: 8px;
+	background-color: rgba(0,0,0,0);
+	-webkit-border-radius: 100px;
+}
+::-webkit-scrollbar:horizontal {
+	height: 8px;
+}
+
+::-webkit-scrollbar:hover {
+  background-color: rgba(0, 0, 0, 0.09);
+}
+
+::-webkit-scrollbar-thumb {
+	border : 1px solid rgba(255, 255, 255, 0.2);
+	background: rgba(4,19,25,1);
+	-webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:active {
+	background: rgba(4,19,25,1);
+	-webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar-corner
+{
+	overflow:hidden;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	background: rgba(0,0,0,0);
+}
+
+html {
+    background-color:rgb(7, 22, 50);
+}
+body {
+	overflow:hidden;
+	background-color: rgb(7, 22, 50);
+	margin: 0px;
+    height : 100%;
+}
+
+.head_mode_text
+{
+    background-color: rgba(63,63,63,1.0);
+}
+
+#chowder_text {
+	color : rgba(137,196,64,1.0);
+    text-decoration : none;
+}
+
+.loginbutton
+{
+    color : black;
+}
+
+.loginmenu_label
+{
+    font-size : 16px;
+}

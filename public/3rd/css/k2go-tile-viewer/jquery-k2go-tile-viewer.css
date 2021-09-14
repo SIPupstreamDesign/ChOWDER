@@ -1,0 +1,19 @@
+/******************************************************************************/
+/* k2go TileViewer for JQuery Plugin                                          */
+/* version   : 1.2.0                                                          */
+/* author    : Inoue Computer Service.                                        */
+/* Copyright (c) k2go. All rights reserved.                                   */
+/* See License.txt for the license information.                               */
+/******************************************************************************/
+.k2go-tile-viewer-main                                                                      { position:relative; overflow:hidden; background-repeat:no-repeat; }
+.k2go-tile-viewer-main:active                                                               { cursor:move; }
+.k2go-tile-viewer-main                              > *                                     { position:absolute; }
+.k2go-tile-viewer-main                              > * > .k2go-tile-viewer-image           { position:absolute; left:0px; top:0px; width:100%; height:100%; }
+.k2go-tile-viewer-main:not(.k2go-tile-viewer-clone) > * > .k2go-tile-viewer-image           { animation:k2go-tile-viewer-fade-in 0.3s ease-out 0s 1 normal; }
+.k2go-tile-viewer-main                              > * > .k2go-tile-viewer-no-image        { position:absolute; left:0px; top:0px; width:100%; height:100%; text-align:center; }
+.k2go-tile-viewer-main                              > * > .k2go-tile-viewer-no-image:before { position:absolute; left:0px; top:0px; right:0px; bottom:0px; height:1em; margin:auto; content:"No Image"; color:#aaa; }
+
+.k2go-tile-viewer-clone                                                                     { position:absolute; pointer-events:none; }
+.k2go-tile-viewer-entity                                                                    { position:absolute; }
+
+@keyframes k2go-tile-viewer-fade-in                                                         { 0% { opacity:0; } 100% { opacity:1; } }

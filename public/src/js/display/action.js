@@ -5,21 +5,19 @@
 
 "use strict";
 
-class Action extends EventEmitter
-{
-    constructor()
-    {
+class Action extends EventEmitter {
+    constructor() {
         super();
     }
 
-	// デバッグ用. release版作るときは消す
-	emit() {
-		if (arguments.length > 0) {
-			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!");
-			}
-		}
-		super.emit(...arguments);
+    // デバッグ用. release版作るときは消す
+    emit() {
+        if (arguments.length > 0) {
+            if (!arguments[0]) {
+                console.error("Not found EVENT NAME!");
+            }
+        }
+        super.emit(...arguments);
     }
 
     /**
@@ -123,7 +121,7 @@ class Action extends EventEmitter
      * コンテンツのZインデックスを一番手前にする
      * @param {*} data
      * {
-	 *    targetID : 対象のコンテンツのID
+     *    targetID : 対象のコンテンツのID
      * }
      */
     changeContentIndexToFront(data) {
@@ -134,7 +132,7 @@ class Action extends EventEmitter
      * コンテンツのTransformを変更
      * @param {*} data
      * {
-	 *    targetID : 対象のコンテンツのID
+     *    targetID : 対象のコンテンツのID
      *    x : x座標
      *    y : y座標
      * }
@@ -179,7 +177,19 @@ class Action extends EventEmitter
         this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
     }
 
-    updateQgisMetadata(metaData){
+    /**
+     * インラインフレームで開いたTileViewerと通信するための関数を、コンテンツごとに登録
+     * @param {*} data
+     * {
+     *   id : metaData.id,
+     *   func : { hogeFunc : () => {}, .. }
+     * }
+     */
+    addTileViewerFunc(data) {
+        this.emit(Action.EVENT_ADD_TILEVIEWER_FUNC, null, data);
+    }
+
+    updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
 
@@ -200,5 +210,6 @@ Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
+Action.EVENT_ADD_TILEVIEWER_FUNC = "addTileViewerFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
 export default Action;

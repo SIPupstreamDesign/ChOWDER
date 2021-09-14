@@ -179,7 +179,7 @@ class Store extends EventEmitter {
                     display_id: this.getWindowID(),
                     command: "measureITownPerformanceResult",
                     result: status
-                }, () => { })
+                }, () => {})
             });
         }
     }
@@ -203,13 +203,12 @@ class Store extends EventEmitter {
 
     _logout(data) {
         this.authority = null;
-        Connector.send(Command.Logout, {}, function () {
-        });
+        Connector.send(Command.Logout, {}, function() {});
     }
 
-	/**
-	 * ユーザーリストを最新に更新
-	 */
+    /**
+     * ユーザーリストを最新に更新
+     */
     _reloadUserList(data) {
         let callback = Store.extractCallback(data);
 
@@ -323,8 +322,7 @@ class Store extends EventEmitter {
     _registerWindow(data) {
         let wh = data.size;
         Vscreen.assignWhole(wh.width, wh.height, wh.width / 2.0, wh.height / 2.0, 1.0);
-        let windowID = '';
-        {
+        let windowID = ''; {
             let hash = location.hash.substring(1);
             if (hash !== '') {
                 windowID = decodeURIComponent(hash);
@@ -393,9 +391,9 @@ class Store extends EventEmitter {
         }
     }
 
-	/**
-	 * コンテンツのZインデックスを一番手前にする
-	 */
+    /**
+     * コンテンツのZインデックスを一番手前にする
+     */
     _changeContentIndexToFront(data) {
         let targetid = data.targetID;
         let max = 0;
@@ -417,14 +415,14 @@ class Store extends EventEmitter {
                 }
             }
             metaData.zIndex = max + 1;
-            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) { });
+            Connector.send(Command.UpdateMetaData, [metaData], function(err, reply) {});
         }
     }
 
-	/**
-	 * コンテンツのTransformを変更
-	 * @param {*} data
-	 */
+    /**
+     * コンテンツのTransformを変更
+     * @param {*} data
+     */
     _changeContentTransform(data) {
         let targetid = data.targetID;
         let x = data.x;
@@ -439,8 +437,7 @@ class Store extends EventEmitter {
             metaData.posx -= Vscreen.getWhole().x;
             metaData.posy -= Vscreen.getWhole().y;
 
-            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {
-            });
+            Connector.send(Command.UpdateMetaData, [metaData], function(err, reply) {});
         }
     }
 
@@ -457,55 +454,63 @@ class Store extends EventEmitter {
         if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
             this.itownFuncDict[data.id] = data.func;
             this.emit(Store.EVENT_DONE_ADD_ITOWN_FUNC, null, data.id);
-        }
-        else {
+        } else {
             console.error("addITownFun - invalid param");
         }
     }
 
-    _updateQgisMetadata(metaData){
-		let dom = document.getElementById(metaData.id);
-		if(!dom){
-			return;
-		}
-		// console.log("[store:_updateQgisMetadata]",dom,metaData.id);
-		let iframe = dom.childNodes[0];
-		if(!iframe || !iframe.contentWindow || !iframe.contentWindow.Q3D){
-			//iframe読み込みがまだ終わっていない
-			return;
-		}
+    _addTileViewerFunc(data) {
+        if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
+            this.itownFuncDict[data.id] = data.func;
+            this.emit(Store.EVENT_DONE_ADD_TILEVIEWER_FUNC, null, data.id);
+        } else {
+            console.error("addTileViewerFunc - invalid param");
+        }
+    }
+
+    _updateQgisMetadata(metaData) {
+        let dom = document.getElementById(metaData.id);
+        if (!dom) {
+            return;
+        }
+        // console.log("[store:_updateQgisMetadata]",dom,metaData.id);
+        let iframe = dom.childNodes[0];
+        if (!iframe || !iframe.contentWindow || !iframe.contentWindow.Q3D) {
+            //iframe読み込みがまだ終わっていない
+            return;
+        }
         if (!iframe.contentWindow.Q3D.application.hasOwnProperty('camera')) {
             return;
         }
-		
-		/* camera matrix */
-		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
+
+        /* camera matrix */
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
         if (metaData.hasOwnProperty('cameraWorldMatrix')) {
             try {
                 iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(metaData.cameraWorldMatrix);
-            } catch(e) {
+            } catch (e) {
                 // console.error(e, metaData)
             }
         }
-		let d = new iframe.contentWindow.THREE.Vector3();
-		let q = new iframe.contentWindow.THREE.Quaternion();
-		let s = new iframe.contentWindow.THREE.Vector3();
-		iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d,q,s);
-		iframe.contentWindow.Q3D.application.camera.position.copy( d );
-		iframe.contentWindow.Q3D.application.camera.quaternion.copy( q );
-		iframe.contentWindow.Q3D.application.camera.scale.copy( s );
-		iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
-		iframe.contentWindow.Q3D.application.scene.requestRender();
+        let d = new iframe.contentWindow.THREE.Vector3();
+        let q = new iframe.contentWindow.THREE.Quaternion();
+        let s = new iframe.contentWindow.THREE.Vector3();
+        iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d, q, s);
+        iframe.contentWindow.Q3D.application.camera.position.copy(d);
+        iframe.contentWindow.Q3D.application.camera.quaternion.copy(q);
+        iframe.contentWindow.Q3D.application.camera.scale.copy(s);
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
+        iframe.contentWindow.Q3D.application.scene.requestRender();
 
-		/* camera matrix */
-		const displayProperty = JSON.parse(metaData.displayProperty);
-		if(iframe.contentWindow.Q3D.application.labelVisible !== displayProperty.label){
-			iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
-		}
-		if(iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe){
-			iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
-		}
-	}
+        /* camera matrix */
+        const displayProperty = JSON.parse(metaData.displayProperty);
+        if (iframe.contentWindow.Q3D.application.labelVisible !== displayProperty.label) {
+            iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
+        }
+        if (iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe) {
+            iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+        }
+    }
 
     onGetWindowData(err, json) {
         if (!err && json) {
@@ -583,9 +588,9 @@ class Store extends EventEmitter {
         return ret;
     }
 
-	/**
-	 * VideoStoreを返す
-	 */
+    /**
+     * VideoStoreを返す
+     */
     getVideoStore() {
         return this.videoStore;
     }
@@ -624,10 +629,10 @@ class Store extends EventEmitter {
         this.authority = authority;
     }
 
-	/**
-	 * メタデータごとにfuncを実行
-	 * @param {*} func
-	 */
+    /**
+     * メタデータごとにfuncを実行
+     * @param {*} func
+     */
     for_each_metadata(func) {
         let i;
         for (i in this.metaDataDict) {
@@ -651,15 +656,15 @@ class Store extends EventEmitter {
         return this.groupDict;
     }
 
-	/**
-	 * 指定したIDのメタデータがあるかどうか
-	 */
+    /**
+     * 指定したIDのメタデータがあるかどうか
+     */
     hasMetadata(id) {
-        return this.metaDataDict.hasOwnProperty(id);
-    }
-	/**
-	 * 指定したIDのメタデータを取得
-	 */
+            return this.metaDataDict.hasOwnProperty(id);
+        }
+        /**
+         * 指定したIDのメタデータを取得
+         */
     getMetaData(id) {
         return this.metaDataDict[id];
     }
@@ -727,12 +732,12 @@ class Store extends EventEmitter {
 
     // パフォーマンス計算を行うかどうか
     isMeasureTimeEnable() {
-        if (this.globalSetting && this.globalSetting.enableMeasureTime) {
-            return (String(this.globalSetting.enableMeasureTime) === "true");
+            if (this.globalSetting && this.globalSetting.enableMeasureTime) {
+                return (String(this.globalSetting.enableMeasureTime) === "true");
+            }
+            return false;
         }
-        return false;
-    }
-    // パフォーマンス計算用時間を生成して返す
+        // パフォーマンス計算用時間を生成して返す
     fetchMeasureTime() {
         let time = null;
         if (this.isMeasureTimeEnable()) {
@@ -773,6 +778,7 @@ Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
 Store.EVENT_DONE_ADD_ITOWN_FUNC = "done_add_itown_func";
+Store.EVENT_DONE_ADD_TILEVIEWER_FUNC = "done_add_tileviewer_func";
 Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 
 // reviever
