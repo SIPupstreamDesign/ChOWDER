@@ -42,21 +42,28 @@ class TileViewer {
             const rectW = (rect.right - rect.left);
             const rectH = (rect.bottom - rect.top);
             const totalImageSize = this._getTotalImageSize();
-            const preW = this.baseScaleCamera.w * totalImageSize.w;
-            const preH = this.baseScaleCamera.h * totalImageSize.h;
-            const pivotX = (this.camera.x - this.baseScaleCamera.x);
-            const pivotY = (this.camera.y - this.baseScaleCamera.y);
+            const preW = this.baseScaleCamera.w;
+            const preH = this.baseScaleCamera.h;
             const scale = {
-                w: rectW / preW,
-                h: rectH / preH
+                w: rectW / (preW * totalImageSize.w),
+                h: rectH / (preH * totalImageSize.h)
             };
-            this.baseScaleCamera.x = (this.baseScaleCamera.x - this.camera.x) * scale.w + this.camera.x;
-            this.baseScaleCamera.y = (this.baseScaleCamera.y - this.camera.y) * scale.h + this.camera.y;
-            this.baseScaleCamera.w = (this.baseScaleCamera.w - pivotX) * scale.w + pivotX;
-            this.baseScaleCamera.h = (this.baseScaleCamera.h - pivotY) * scale.h + pivotY;
+            const right = this.baseScaleCamera.x + this.baseScaleCamera.w;
+            const bottom = this.baseScaleCamera.y + this.baseScaleCamera.h;
 
-            this._updateCameraFromBaseCamera();
-            this._update();
+            // 画面中心を維持しつつスケール
+            const pivotX = (this.baseScaleCamera.x + this.baseScaleCamera.w / 2);
+            const pivotY = (this.baseScaleCamera.y + this.baseScaleCamera.h / 2);
+            const newx = (this.baseScaleCamera.x - pivotX) * scale.w + pivotX;
+            const neww = (right - pivotX) * scale.w + pivotX - newx;
+            const diffScale = neww / preW;
+
+            this.baseScaleCamera.x = (this.baseScaleCamera.x - pivotX) * scale.w + pivotX;
+            this.baseScaleCamera.y = (this.baseScaleCamera.y - pivotY) * scale.h + pivotY;
+            this.baseScaleCamera.w = (right - pivotX) * scale.w + pivotX - this.baseScaleCamera.x;
+            this.baseScaleCamera.h = (bottom - pivotY) * scale.h + pivotY - this.baseScaleCamera.y;
+
+            this.setTransformScale(this.transformScale * diffScale);
         });
     }
 
