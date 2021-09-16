@@ -261,7 +261,7 @@ class ContentViewGUI extends EventEmitter {
         wrap.appendChild(iframe);
         contentElem.appendChild(wrap);
         contentElem.style.color = "white";
-        contentElem.style.overflow = "visible"; // Show all text
+        contentElem.style.overflow = "hidden";
         vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
         let url = metaData.url;
         iframe.src = url;

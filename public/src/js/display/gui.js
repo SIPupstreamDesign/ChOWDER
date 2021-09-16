@@ -654,18 +654,7 @@ class GUI extends EventEmitter {
     }
 
     updateTileViewerScale(connector, elem, wrap, metaData, rect) {
-        const contentRect = elem.getBoundingClientRect();
-        const win = this.store.getWindowData();
         const wholeScale = Vscreen.getWholeScale();
-        const unionRect = {
-            x: contentRect.x > 0 ? contentRect.x : 0,
-            y: contentRect.y > 0 ? contentRect.y : 0,
-            w: contentRect.x > 0 ?
-                Math.min(contentRect.width, parseFloat(win.width)) : Math.min(contentRect.width + contentRect.x, parseFloat(win.width)),
-            h: contentRect.y > 0 ?
-                Math.min(contentRect.height, parseFloat(win.height)) : Math.min(contentRect.height + contentRect.y, parseFloat(win.height))
-
-        }
         const baseWidth = Math.max(metaData.orgWidth * wholeScale, metaData.orgWidth);
         const baseHeight = Math.max(metaData.orgHeight * wholeScale, metaData.orgHeight);
         wrap.style.width = metaData.orgWidth + "px";
@@ -676,11 +665,38 @@ class GUI extends EventEmitter {
         } else {
             wrap.style.transform = "scale(1, 1)";
         }
+        TileViewerUtil.scaling(connector, {
+            displayScale: Vscreen.getWholeScale(),
+            width: parseInt(metaData.width),
+            height: parseInt(metaData.height),
+            baseWidth: parseInt(baseWidth),
+            baseHeight: parseInt(baseHeight)
+        });
+
+        const contentRect = {
+            left: parseFloat(metaData.posx),
+            top: parseFloat(metaData.posy),
+            right: parseFloat(metaData.posx) + parseFloat(metaData.width),
+            bottom: parseFloat(metaData.posy) + parseFloat(metaData.height),
+        }; // wrap.getBoundingClientRect();
+        const contentW = contentRect.right - contentRect.left;
+        const contentH = contentRect.bottom - contentRect.top;
+        const win = this.store.getWindowData();
+        const winLeft = parseFloat(win.posx);
+        const winTop = parseFloat(win.posy);
+        const winBottom = parseFloat(win.posy) + parseFloat(win.height);
+        const winRight = winLeft + parseFloat(win.width);
+        const intersectRect = {
+            left: contentRect.right > winLeft || contentRect.left < winRight ? Math.max(contentRect.left, winLeft) : 0,
+            top: contentRect.bottom > winTop || contentRect.top < winBottom ? Math.max(contentRect.top, winTop) : 0,
+            right: contentRect.right > winLeft || contentRect.left < winRight ? Math.min(contentRect.right, winRight) : 0,
+            bottom: contentRect.bottom > winTop || contentRect.top < winBottom ? Math.min(contentRect.bottom, winBottom) : 0
+        }
 
         TileViewerUtil.resize(connector, {
             rect: rect,
             contentRect: contentRect,
-            unionRect: unionRect,
+            intersectRect: intersectRect,
             displayScale: Vscreen.getWholeScale(),
             width: parseInt(metaData.width),
             height: parseInt(metaData.height),

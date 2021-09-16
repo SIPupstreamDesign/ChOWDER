@@ -1612,11 +1612,6 @@ class Controller {
         }
         if (json.type === Constants.TypeTileViewer) {
             this.action.updateTileViewerSize({ id: json.id });
-
-            let funcDict = this.store.getITownFuncDict();
-            if (funcDict && funcDict.hasOwnProperty(json.id)) {
-                funcDict[json.id].chowder_tileviewer_resize(json);
-            }
         }
         this.store.setMetaData(json.id, json);
         if (Validator.isCurrentTabMetaData(json)) {
