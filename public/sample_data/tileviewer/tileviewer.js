@@ -246,19 +246,26 @@ class TileViewer {
     //  }
     _prepareTileElements() {
         const camera = this.camera;
+        const s = this.options.scales[this.currentScaleIndex];
 
         // カメラスペースでの、タイル１枚の幅高さ
         const wh = this._calcTileSizeInCameraSpace();
+        // カメラスペースでの0.5ピクセル
+        const texelHalfX = wh.w / s.width / 2;
+        const texelHalfY = wh.h / s.height / 2;
+        // カメラスペースでの1ピクセル
+        const texelX = texelHalfX * 2;
+        const texelY = texelHalfY * 2;
         // 現在のビューで見えるタイルについて
         // 読み込んだか判定するようの二次元配列を作成
         // 初期値は全てfalse
         let tileMatrix = [];
-        for (let y = camera.y; y < (camera.y + camera.h + wh.h); y += wh.h) {
+        for (let y = camera.y - texelHalfY; y < (camera.y + camera.h + wh.h + texelY); y += wh.h) {
             const tile = this._calcTileInfoByCameraSpacePosition(camera.x, y);
             if (tile.ty >= 0) {
                 // (*, y)に対応するタイルが存在する
                 let row = [];
-                for (let x = camera.x; x < (camera.x + camera.w + wh.w); x += wh.w) {
+                for (let x = camera.x - texelHalfX; x < (camera.x + camera.w + wh.w + texelX); x += wh.w) {
                     const tile = this._calcTileInfoByCameraSpacePosition(x, y);
                     if (tile.tx >= 0) {
                         // (x, y)に対応するタイルが存在する

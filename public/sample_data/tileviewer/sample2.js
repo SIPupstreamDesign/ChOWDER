@@ -107,135 +107,137 @@ window.onload = () => {
         injectChOWDER(viewer, document.getElementById('tileviewer'));
     }, 100)
 
-    {
-        let button = document.createElement('button');
-        button.style.position = "absolute"
-        button.style.left = "0px";
-        button.style.top = "0px";
-        button.style.width = "50px"
-        button.style.height = "50px";
-        button.innerText = "+"
-        document.body.appendChild(button);
+    if (window.chowder_view_type !== undefined) {
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "0px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "+"
+            document.body.appendChild(button);
 
-        button.onclick = () => {
-            viewer.zoomIn();
+            button.onclick = () => {
+                viewer.zoomIn();
+            }
         }
-    }
 
-    {
-        let button = document.createElement('button');
-        button.style.position = "absolute"
-        button.style.left = "50px";
-        button.style.top = "0px";
-        button.style.width = "50px"
-        button.style.height = "50px";
-        button.innerText = "-"
-        document.body.appendChild(button);
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "50px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "-"
+            document.body.appendChild(button);
 
-        button.onclick = () => {
-            viewer.zoomOut();
+            button.onclick = () => {
+                viewer.zoomOut();
+            }
         }
-    }
 
-    {
-        let button = document.createElement('button');
-        button.style.position = "absolute"
-        button.style.left = "100px";
-        button.style.top = "0px";
-        button.style.width = "50px"
-        button.style.height = "50px";
-        button.innerText = "level+"
-        document.body.appendChild(button);
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "100px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "level+"
+            document.body.appendChild(button);
 
-        button.onclick = () => {
-            viewer.zoomIn(true);
+            button.onclick = () => {
+                viewer.zoomIn(true);
+            }
         }
-    }
 
-    {
-        let button = document.createElement('button');
-        button.style.position = "absolute"
-        button.style.left = "150px";
-        button.style.top = "0px";
-        button.style.width = "50px"
-        button.style.height = "50px";
-        button.innerText = "level-"
-        document.body.appendChild(button);
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "150px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "level-"
+            document.body.appendChild(button);
 
-        button.onclick = () => {
-            viewer.zoomOut(true);
+            button.onclick = () => {
+                viewer.zoomOut(true);
+            }
         }
-    }
 
-    {
-        let button = document.createElement('button');
-        button.style.position = "absolute"
-        button.style.left = "200px";
-        button.style.top = "0px";
-        button.style.width = "50px"
-        button.style.height = "50px";
-        button.innerText = "viewport"
-        document.body.appendChild(button);
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "200px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "viewport"
+            document.body.appendChild(button);
 
-        button.onclick = () => {
-            viewer.setViewport([0.5, 0, 1, 0.5]);
+            button.onclick = () => {
+                viewer.setViewport([0.5, 0, 1, 0.5]);
 
-            let div = document.createElement('div');
-            div.style.position = "absolute"
-            div.style.left = "50%"
-            div.style.width = "50%"
-            div.style.height = "50%"
-            div.style.border = "2px solid red"
-            document.body.appendChild(div);
+                let div = document.createElement('div');
+                div.style.position = "absolute"
+                div.style.left = "50%"
+                div.style.width = "50%"
+                div.style.height = "50%"
+                div.style.border = "2px solid red"
+                document.body.appendChild(div);
+            }
         }
-    }
 
 
-    let mouse = {
-        x: 0,
-        y: 0
-    }
-
-    let isLeftDown = false;
-    let isMiddleDown = false;
-
-    document.onmousedown = (ev) => {
-        if (ev.button === 0) {
-            isLeftDown = true;
-        } else if (ev.button === 1) {
-            isMiddleDown = true;
+        let mouse = {
+            x: 0,
+            y: 0
         }
-        mouse = {
-            x: ev.clientX,
-            y: ev.clientY
-        }
-    };
 
-    document.onmousemove = (ev) => {
-        if (isLeftDown) {
-            const mv = {
-                x: ev.clientX - mouse.x,
-                y: ev.clientY - mouse.y
-            };
-            viewer.move(mv);
+        let isLeftDown = false;
+        let isMiddleDown = false;
+
+        document.onmousedown = (ev) => {
+            if (ev.button === 0) {
+                isLeftDown = true;
+            } else if (ev.button === 1) {
+                isMiddleDown = true;
+            }
             mouse = {
                 x: ev.clientX,
                 y: ev.clientY
             }
-        }
-        if (isMiddleDown) {
-            if (Math.sign(ev.clientY - mouse.y) < 0) {
-                viewer.zoomIn();
-            } else {
-                viewer.zoomOut();
-            }
-        }
-    };
+        };
 
-    document.onmouseup = (ev) => {
-        isLeftDown = false;
-        isMiddleDown = false;
-    };
+        document.onmousemove = (ev) => {
+            if (isLeftDown) {
+                const mv = {
+                    x: ev.clientX - mouse.x,
+                    y: ev.clientY - mouse.y
+                };
+                viewer.move(mv);
+                mouse = {
+                    x: ev.clientX,
+                    y: ev.clientY
+                }
+            }
+            if (isMiddleDown) {
+                if (Math.sign(ev.clientY - mouse.y) < 0) {
+                    viewer.zoomIn();
+                } else {
+                    viewer.zoomOut();
+                }
+            }
+        };
+
+        document.onmouseup = (ev) => {
+            isLeftDown = false;
+            isMiddleDown = false;
+        };
+    }
 
     /*
     //OptionGSI.scales = createScales(128);
