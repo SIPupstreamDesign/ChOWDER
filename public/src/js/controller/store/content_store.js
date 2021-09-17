@@ -634,32 +634,6 @@ class ContentStore {
         }
         this.store.emit(Store.EVENT_DONE_SNAP_CONTENT_TO_SCREEN, null, data.element);
     }
-
-
-    /**
-     * TileViewer用スケール変更通信
-     * 少しでもTileViewerのサイズを変更した場合に呼ぶ（必須）
-     */
-    _updateTileViewerSize(data) {
-        let funcDict = this.store.getITownFuncDict();
-        if (data && data.id) {
-            const id = data.id;
-            if (funcDict.hasOwnProperty(id)) {
-                if (funcDict[id].hasOwnProperty('chowder_tileviewer_scaling')) {
-                    let metaData = this.store.getMetaData(id);
-                    funcDict[id].chowder_tileviewer_scaling(metaData);
-                }
-            }
-        } else {
-            for (let id in funcDict) {
-                if (funcDict[id].hasOwnProperty('chowder_tileviewer_scaling')) {
-                    let metaData = this.store.getMetaData(id);
-                    funcDict[id].chowder_tileviewer_scaling(metaData);
-                }
-            }
-        }
-
-    }
 }
 
 export default ContentStore;

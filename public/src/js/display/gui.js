@@ -653,34 +653,17 @@ class GUI extends EventEmitter {
         elem.appendChild(iframe);
     }
 
-    updateTileViewerScale(connector, elem, wrap, metaData, rect) {
+    updateTileViewerScale(connector, metaData, rect) {
         const wholeScale = Vscreen.getWholeScale();
         const baseWidth = Math.max(metaData.orgWidth * wholeScale, metaData.orgWidth);
         const baseHeight = Math.max(metaData.orgHeight * wholeScale, metaData.orgHeight);
-        wrap.style.width = metaData.orgWidth + "px";
-        wrap.style.height = metaData.orgHeight + "px";
-        if (wholeScale > 1) {
-            wrap.style.transformOrigin = "0 0";
-            wrap.style.transform = "scale(" + wholeScale + "," + wholeScale + ")";
-        } else {
-            wrap.style.transform = "scale(1, 1)";
-        }
-        TileViewerUtil.scaling(connector, {
-            displayScale: Vscreen.getWholeScale(),
-            width: parseInt(metaData.width),
-            height: parseInt(metaData.height),
-            baseWidth: parseInt(baseWidth),
-            baseHeight: parseInt(baseHeight)
-        });
 
         const contentRect = {
             left: parseFloat(metaData.posx),
             top: parseFloat(metaData.posy),
             right: parseFloat(metaData.posx) + parseFloat(metaData.width),
             bottom: parseFloat(metaData.posy) + parseFloat(metaData.height),
-        }; // wrap.getBoundingClientRect();
-        const contentW = contentRect.right - contentRect.left;
-        const contentH = contentRect.bottom - contentRect.top;
+        };
         const win = this.store.getWindowData();
         const winLeft = parseFloat(win.posx);
         const winTop = parseFloat(win.posy);
@@ -717,11 +700,6 @@ class GUI extends EventEmitter {
 
         //console.error(orgRect, orgWin, rect)
 
-        let wrap = document.createElement('div');
-        wrap.style.width = metaData.orgWidth + "px";
-        wrap.style.height = metaData.orgHeight + "px";
-        wrap.style.pointerEvents = "none";
-
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.pointerEvents = "none";
@@ -754,7 +732,7 @@ class GUI extends EventEmitter {
                     //TileViewerUtil.resize(connector, rect)
 
                     let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
-                    this.updateTileViewerScale(connector, elem, wrap, metaData, rect);
+                    this.updateTileViewerScale(connector, metaData, rect);
                 });
             } catch (err) {
                 console.error(err, metaData);
@@ -765,7 +743,7 @@ class GUI extends EventEmitter {
                 id: metaData.id,
                 func: {
                     chowder_tileviewer_resize: (metaData, rect) => {
-                        this.updateTileViewerScale(connector, elem, wrap, metaData, rect);
+                        this.updateTileViewerScale(connector, metaData, rect);
                     },
                     /*
                     chowder_itowns_update_camera: (metaData) => {
@@ -786,8 +764,7 @@ class GUI extends EventEmitter {
             });
         };
         elem.innerHTML = "";
-        wrap.appendChild(iframe);
-        elem.appendChild(wrap);
+        elem.appendChild(iframe);
     }
 
     /**

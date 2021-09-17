@@ -7,17 +7,18 @@ const OptionHimawarJP = {
         //"img/weathermap/%cd/%w/2019-04-30/000000_%x_%y.png"
     ],
     scales: [
-        { width: 600, height: 480, size: 0.5, count: 1 },
-        { width: 600, height: 480, size: 0.7, count: 1 },
+        //{ width: 600, height: 480, size: 0.5, count: 1 },
+        //{ width: 600, height: 480, size: 0.7, count: 1 },
         { width: 600, height: 480, size: 1.0, count: 1 },
-        { width: 600, height: 480, size: 1.4, count: 1 },
+        //{ width: 600, height: 480, size: 1.4, count: 1 },
         { width: 600, height: 480, size: 1.0, count: 2 },
-        { width: 600, height: 480, size: 1.4, count: 2 },
+        //{ width: 600, height: 480, size: 1.4, count: 2 },
         { width: 600, height: 480, size: 1.0, count: 4 },
-        { width: 600, height: 480, size: 1.2, count: 5 },
-        { width: 600, height: 480, size: 2.0, count: 5 },
-        { width: 600, height: 480, size: 2.8, count: 5 },
-        { width: 600, height: 480, size: 4.0, count: 5 }
+        { width: 600, height: 480, size: 1.0, count: 5 },
+        //{ width: 600, height: 480, size: 1.2, count: 5 },
+        //{ width: 600, height: 480, size: 2.0, count: 5 },
+        //{ width: 600, height: 480, size: 2.8, count: 5 },
+        //{ width: 600, height: 480, size: 4.0, count: 5 }
     ],
     geodeticSystem: "himawari8.jp",
     // 1以外にしてはならない。1以外にするとCSSのleft, topが%で指定されるため、

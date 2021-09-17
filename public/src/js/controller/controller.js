@@ -217,14 +217,12 @@ class Controller {
         // ディスプレイスケール変更中
         this.store.on(Store.EVENT_DISPLAY_SCALE_CHANGING, (err, displayScale) => {
             this.updateScreen();
-            this.action.updateTileViewerSize();
         });
 
         // ディスプレイスケール変更確定
         this.store.on(Store.EVENT_DISPLAY_SCALE_CHANGED, (err, displayScale) => {
             this.getControllerData().setDisplayScale(displayScale);
             this.updateScreen();
-            this.action.updateTileViewerSize();
         });
 
         // ディスプレイ位置確定
@@ -1610,9 +1608,6 @@ class Controller {
                 this.gui.showCopyrights(document.getElementById(metaData.id), metaData);
             }
         }
-        if (json.type === Constants.TypeTileViewer) {
-            this.action.updateTileViewerSize({ id: json.id });
-        }
         this.store.setMetaData(json.id, json);
         if (Validator.isCurrentTabMetaData(json)) {
             if (this.state.getLastSelectContentID() === json.id || (manipulator.isShowManipulator() && this.state.getLastSelectContentID() === json.id)) {
@@ -1729,10 +1724,6 @@ class Controller {
                 }
             } else {
                 this.gui.importContent(metaData, contentData);
-            }
-
-            if (metaData.type === Constants.TypeTileViewer) {
-                this.action.updateTileViewerSize({ id: metaData.id });
             }
 
             if (endCallback) {

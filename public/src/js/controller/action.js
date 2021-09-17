@@ -895,18 +895,6 @@ class Action extends EventEmitter {
     updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
-
-    /**
-     * TileViewer用スケール変更通信
-     * 少しでもTileViewerのサイズを変更した場合に呼ぶ（必須）
-     * @param {*} data
-     * {
-     *     id : metaData.id,
-     * }
-     */
-    updateTileViewerSize(data) {
-        this.emit(Action.EVENT_UPDATE_TILEVIEWER_SIZE, null, data);
-    }
 };
 
 Action.EVENT_INIT = "init";
@@ -994,6 +982,5 @@ Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
-Action.EVENT_UPDATE_TILEVIEWER_SIZE = "updateTileViewerSize";
 
 export default Action;

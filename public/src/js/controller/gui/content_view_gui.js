@@ -90,30 +90,6 @@ class ContentViewGUI extends EventEmitter {
         }, false);
     }
 
-    updateTileViewerScale(connector, wrap, metaData) {
-        if (!metaData || !metaData.hasOwnProperty('orgWidth')) return;
-        const wholeScale = Vscreen.getWholeScale();
-
-        const baseWidth = Math.max(metaData.orgWidth * wholeScale, metaData.orgWidth);
-        const baseHeight = Math.max(metaData.orgHeight * wholeScale, metaData.orgHeight);
-        wrap.style.width = metaData.orgWidth + "px";
-        wrap.style.height = metaData.orgHeight + "px";
-        if (wholeScale > 1) {
-            wrap.style.transformOrigin = "0 0";
-            wrap.style.transform = "scale(" + wholeScale + "," + wholeScale + ")";
-        } else {
-            wrap.style.transform = "scale(1, 1)";
-        }
-
-        TileViewerUtil.scaling(connector, {
-            displayScale: Vscreen.getWholeScale(),
-            width: parseInt(metaData.width),
-            height: parseInt(metaData.height),
-            baseWidth: parseInt(baseWidth),
-            baseHeight: parseInt(baseHeight)
-        });
-    }
-
     importWebGLContentFromQueue(data) {
         this.isImportingWebGL = true;
         let contentElem = data[0];
@@ -248,18 +224,13 @@ class ContentViewGUI extends EventEmitter {
             return;
         }
 
-        let wrap = document.createElement('div');
-        wrap.style.width = metaData.orgWidth + "px";
-        wrap.style.height = metaData.orgHeight + "px";
-        wrap.style.pointerEvents = "none";
         let iframe = document.createElement('iframe');
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.pointerEvents = "none";
         iframe.id = getWebGLIFrameID(metaData);
         contentElem.innerHTML = "";
-        wrap.appendChild(iframe);
-        contentElem.appendChild(wrap);
+        contentElem.appendChild(iframe);
         contentElem.style.color = "white";
         contentElem.style.overflow = "hidden";
         vscreen_util.assignMetaData(contentElem, metaData, true, groupDict);
@@ -271,17 +242,6 @@ class ContentViewGUI extends EventEmitter {
             iframe.contentWindow.document.body.style.backgroundColor = "tranparent"
             iframe.contentWindow.document.body.parentElement.style.backgroundColor = "tranparent"
             iframe.style.border = "none"
-                /*
-                iframe.style.width = metaData.orgWidth + "px";
-                iframe.style.height = metaData.orgHeight + "px";
-                iframe.contentWindow.addEventListener('resize', () => {
-                    const wh = {
-                        w: iframe.contentWindow.innerWidth / metaData.orgWidth,
-                        h: iframe.contentWindow.innerHeight / metaData.orgHeight
-                    };
-                    iframe.style.transformOrigin = "0 0";
-                    iframe.style.transform = "scale(" + wh.w + "," + wh.h + ")";
-                });*/
         }
         let connector = new IFrameConnector(iframe);
 
@@ -290,9 +250,6 @@ class ContentViewGUI extends EventEmitter {
             func: {
                 chowder_tileviewer_resize: (metaData) => {
                     this.updateTileViewerFrameSize(connector, metaData);
-                },
-                chowder_tileviewer_scaling: (metaData) => {
-                    this.updateTileViewerScale(connector, wrap, metaData);
                 },
             }
         });
@@ -310,9 +267,7 @@ class ContentViewGUI extends EventEmitter {
                 connector.send(TileViewerCommand.Resize, rect);
             });
 
-            connector.once(TileViewerCommand.InitLayers, (err, data) => {
-                this.updateTileViewerScale(connector, wrap, metaData);
-            });
+            connector.once(TileViewerCommand.InitLayers, (err, data) => {});
         } catch (err) {
             console.error(err);
         }
