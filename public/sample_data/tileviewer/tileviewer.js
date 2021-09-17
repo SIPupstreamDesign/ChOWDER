@@ -3,76 +3,60 @@ class TileViewer {
         // TileViewerエレメント
         this.viewerElem = viewerElem;
 
+        // 後の拡張で必要になる可能性があるので、親の下に1つdivを挟んでおく
+        // タイルはこのdiv以下に追加していく
         this.transformElem = document.createElement('div');
         this.transformElem.style.left = "0px";
         this.transformElem.style.top = "0px";
         this.transformElem.style.width = "100%";
         this.transformElem.style.height = "100%";
         this.transformElem.style.overflow = "hidden";
-        this._resetOrigin()
         this.viewerElem.appendChild(this.transformElem);
 
-        // 地図定義情報など
+        // 地図定義情報
         this.options = {};
 
         // 画像全体を正規化した空間（つまり左上0,0、右下1,1)で
         // 左上　x, y, 及び w, hによる仮想的なカメラを定義する
+        // これをカメラスペースと呼ぶこととする。
+        // 
         // 例えば画像左上4分の1をカメラに収める場合
         // {x:0, y:0, w:0.5, h:0.5)となる
         // DOMの解像度などによらず、任意に設定する。
-        this.camera = { x: 0, y: 0, w: 1, h: 1 };
         this.baseScaleCamera = { x: 0, y: 0, w: 1, h: 1 };
 
-        // カメラの表示範囲全体について
+        // baseScaleCameraから画面中心に対してどれだけスケーリングしたかを表すスケール値
+        this.transformScale = 1.0;
+
+        // transformScaleを考慮した実際の表示範囲を表すカメラ。
+        // 座標系はbaseScaleCameraと同様のカメラスペース
+        this.camera = { x: 0, y: 0, w: 1, h: 1 };
+
+        // this.cameraの表示範囲全体について
         // 左上(0,0), 右下(1,1)としたときの
-        // 実際に表示する領域[left, top, right, bottom]
+        // 実際に表示する領域[left, top, right, bottom]。
         // この領域外のタイルはカリングされる
-        // DOMの解像度などによらず、任意に設定する。
         this.viewport = [0, 0, 1, 1];
 
+        // opeions.scales[]の現在の使用インデックス
         this.currentScaleIndex = 0;
-
-        this.transformScale = 1.0;
 
         // タイル画像エレメントのclass名に必ず入れるclass
         this.tileImageClass = "___tile___";
 
-        window.addEventListener('resize', () => {
-            const rect = this.viewerElem.getBoundingClientRect();
-            const rectW = (rect.right - rect.left);
-            const rectH = (rect.bottom - rect.top);
-            const totalImageSize = this._getTotalImageSize();
-            const preW = this.baseScaleCamera.w;
-            const preH = this.baseScaleCamera.h;
-            const scale = {
-                w: rectW / (preW * totalImageSize.w),
-                h: rectH / (preH * totalImageSize.h)
-            };
-            const right = this.baseScaleCamera.x + this.baseScaleCamera.w;
-            const bottom = this.baseScaleCamera.y + this.baseScaleCamera.h;
-
-            // 画面中心を維持しつつスケール
-            const pivotX = (this.baseScaleCamera.x + this.baseScaleCamera.w / 2);
-            const pivotY = (this.baseScaleCamera.y + this.baseScaleCamera.h / 2);
-            const newx = (this.baseScaleCamera.x - pivotX) * scale.w + pivotX;
-            const neww = (right - pivotX) * scale.w + pivotX - newx;
-            const diffScale = neww / preW;
-
-            this.baseScaleCamera.x = (this.baseScaleCamera.x - pivotX) * scale.w + pivotX;
-            this.baseScaleCamera.y = (this.baseScaleCamera.y - pivotY) * scale.h + pivotY;
-            this.baseScaleCamera.w = (right - pivotX) * scale.w + pivotX - this.baseScaleCamera.x;
-            this.baseScaleCamera.h = (bottom - pivotY) * scale.h + pivotY - this.baseScaleCamera.y;
-
-            this.setTransformScale(this.transformScale * diffScale);
-        });
-    }
-
-    _resetOrigin() {
-        this._getRootElem().style.transformOrigin = "0 0";
+        // リサイズ時のスケーリングを有効にする
+        this._resizeScaling = this._resizeScaling.bind(this);
+        this.enableResizeScaling();
     }
 
     _getRootElem() {
         return this.transformElem;
+    }
+
+    // タイル情報からタイル固有のクラス名を作成して返す
+    // このクラス名は動作的には無くても動くが、表示された地図のタイルをdevtoolで調べるときに便利なので入れている
+    _generateTileClass(tileInfo) {
+        return tileInfo.scaleIndex + "_" + tileInfo.tx + "_" + tileInfo.ty;
     }
 
     // scaleIndex0のものと比べたときの、scaleIndexの画像全体の比率
@@ -85,18 +69,23 @@ class TileViewer {
         }
     }
 
-    // css transformを考慮した全体画像サイズを返す
+    // 全体画像サイズ(ピクセル数)を返す.
+    // this.transformScaleによるスケールは考慮しない.
+    // 
+    // 現在の実装ではscaleIndex=0以降はscaleIndex=0の全体画像サイズに収まるように
+    // 幅高さをスケールして表示される仕組みのため、
+    // どのscaleIndexであっても全体画像サイズは必ずsacaleIndex=0の全体画像サイズと同様となる。
     _getTotalImageSize() {
-        const s = this.options.scales[this.currentScaleIndex];
-        const ratio = this._getScaleRatio();
+        const s = this.options.scales[0];
+        //const ratio = this._getScaleRatio();
         return {
-            w: (s.width * s.count / ratio.x),
-            h: (s.height * s.count / ratio.y)
+            w: (s.width * s.count),
+            h: (s.height * s.count)
         }
     }
 
     // 現在の表示対象画像を原寸表示するためのカメラ座標を計算して返す
-    // css transformを考慮しない
+    // this.transformScaleによるスケールは考慮しない.
     // カメラ座標系はscaleIndex 0 の画像の全体サイズを基準に定められる
     _calcActualPixelSizeCamera(cameraSpaceX, cameraSpaceY) {
         const rect = this.viewerElem.getBoundingClientRect();
@@ -112,10 +101,9 @@ class TileViewer {
         return camera;
     }
 
-    // カメラ座標系の座標値での、タイル番号などの情報を返す
-    // 無効な座標を指定した場合はマイナス値を返す
-    // css transformを考慮しない
-    // scaleIndexによるズームを考慮する
+    // カメラ座標系の座標値での、タイル番号などの情報を返す。
+    // 無効な座標を指定した場合はマイナス値が入ったものを返す。
+    // scaleIndex及びthis.transformScaleによるスケールを考慮した座標が設定される。
     _calcTileInfoByCameraSpacePosition(cameraSpaceX, cameraSpaceY) {
         const wh = this._calcTileSizeInCameraSpace();
         const s = this.options.scales[this.currentScaleIndex];
@@ -175,20 +163,36 @@ class TileViewer {
         return tileInfo;
     }
 
-    // カメラ座標系での現在のスケールのタイル1枚の幅高さを返す
+    // カメラスペースでの現在のスケールのタイル1枚の幅高さを返す
     _calcTileSizeInCameraSpace() {
         const s = this.options.scales[this.currentScaleIndex];
-        const ratio = this._getScaleRatio();
         return {
             w: 1.0 / s.count,
             h: 1.0 / s.count,
         };
     }
 
+    // "x/y/z/"等を含んだURLをタイル情報を元に正しいURLに成形して返す
+    _formatUrl(url, tileInfo, count, zoom = null) {
+        try {
+            url = url.replace(/%x/g, tileInfo.tx.toString());
+            url = url.replace(/%y/g, tileInfo.ty.toString());
+            url = url.replace(/%w/g, tileInfo.tw.toString());
+            url = url.replace(/%h/g, tileInfo.th.toString());
+            url = url.replace(/%c/g, count.toString());
+            if (zoom !== null) {
+                url = url.replace(/%z/g, zoom.toString());
+            }
+            return url;
+        } catch (pError) {
+            console.error("TileViewer _formatUrl error: " + pError);
+        }
+    }
+
     // タイルを読み込み、位置や幅高さを設定して返す
     // 既に読み込み済の場合は、読み込み済エレメントに対して位置や幅高さを設定して返す。
     _loadTile(tileInfo) {
-        const tileClass = tileInfo.scaleIndex + "_" + tileInfo.tx + "_" + tileInfo.ty;
+        const tileClass = this._generateTileClass(tileInfo);
         if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
             let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
             elem.style.left = tileInfo.x + "px";
@@ -215,22 +219,7 @@ class TileViewer {
         return tile;
     }
 
-    _formatUrl(url, tileInfo, count, zoom = null) {
-        try {
-            url = url.replace(/%x/g, tileInfo.tx.toString());
-            url = url.replace(/%y/g, tileInfo.ty.toString());
-            url = url.replace(/%w/g, tileInfo.tw.toString());
-            url = url.replace(/%h/g, tileInfo.th.toString());
-            url = url.replace(/%c/g, count.toString());
-            if (zoom !== null) {
-                url = url.replace(/%z/g, zoom.toString());
-            }
-            return url;
-        } catch (pError) {
-            console.error("TileViewer _formatUrl error: " + pError);
-        }
-    }
-
+    // 全タイルの削除
     _removeTileElements() {
         let tiles = this._getRootElem().getElementsByClassName(this.tileImageClass);
         for (let i = tiles.length - 1; i >= 0; --i) {
@@ -238,21 +227,24 @@ class TileViewer {
         }
     }
 
-    // css transformによるカメラのオフセットを計算
-    // 現在のtransformScaleにおいて、カメラ座標系で
-    // カメラのx, y, w, hに対して必要なオフセット量を返す
-    _calcCameraCSSTransformOffset() {
-        const totalImageSize = this._getTotalImageSize();
-        const rect = this.viewerElem.getBoundingClientRect();
-        const rectW = (rect.right - rect.left);
-        const rectH = (rect.bottom - rect.top);
-        return {
-            x: -(rectW * (this.transformScale - 1.0) / 2.0) / totalImageSize.w,
-            y: -(rectH * (this.transformScale - 1.0) / 2.0) / totalImageSize.h,
-        };
-    }
-
-    _fillTileElements() {
+    // 現在のカメラ情報から、表示されるべきタイルの配置情報を計算し
+    // 2次元配列で返す。
+    // 配列インデックスは左上を(0,0)としx,y方向に対して増加する。
+    // 配列に格納される配置情報は以下の通り。
+    // {
+    //  x: カメラスペースでのタイルのサンプリングポイントのx座標(タイルの左上ではないことに注意),
+    //  y: カメラスペースでのタイルのサンプリングポイントのy座標(タイルの左上ではないことに注意),
+    //  tile : {
+    //       x : タイルとして配置されるべきDOMエレメントのx座標(ピクセル数),
+    //       y : タイルとして配置されるべきDOMエレメントのy座標(ピクセル数),
+    //       w : タイルとして配置されるべきDOMエレメントの幅(ピクセル数),
+    //       h : タイルとして配置されるべきDOMエレメントの高さ(ピクセル数),
+    //      tx : 現在のレベルでのx方向のタイル番号,
+    //      ty : 現在のレベルでのy方向のタイル番号, 
+    //      tw : 現在のレベルでのタイルの幅(ピクセル数),
+    //      tw : 現在のレベルでのタイルの高さ(ピクセル数)
+    //  }
+    _prepareTileElements() {
         const camera = this.camera;
 
         // カメラスペースでの、タイル１枚の幅高さ
@@ -280,6 +272,11 @@ class TileViewer {
                 tileMatrix.push(row);
             }
         }
+        return tileMatrix;
+    }
+
+    // 配置情報を元に、実際にタイル(DOMエレメントを)を配置し、画像を読み込んでいく
+    _fillTileElements(tileMatrix) {
         const yCount = tileMatrix.length;
         if (yCount <= 0) return [];
         const xCount = tileMatrix[0].length;
@@ -327,7 +324,7 @@ class TileViewer {
         return loadedElems;
     }
 
-    // fillで対象になっていないタイルが残っていたら消す
+    // fillで配置対象になっていないタイル(DOMエレメントを)が残っていたら消す
     _cullTileElements(loadedElems) {
         let tileElements = this._getRootElem().getElementsByClassName(this.tileImageClass);
         for (let i = tileElements.length - 1; i >= 0; --i) {
@@ -337,8 +334,62 @@ class TileViewer {
         }
     }
 
+    // スケールインデックスの変更
+    _setScaleIndex(scaleIndex) {
+        if (scaleIndex >= 0 && scaleIndex < this.options.scales.length) {
+            this.currentScaleIndex = scaleIndex;
+        }
+    }
+
+    // リサイズ時に画面中心を維持し、ビューの横方向が画面内に常に収まるように維持するように
+    // スケーリングを行う
+    _resizeScaling() {
+        const rect = this.viewerElem.getBoundingClientRect();
+        const rectW = (rect.right - rect.left);
+        const rectH = (rect.bottom - rect.top);
+        const totalImageSize = this._getTotalImageSize();
+        const preW = this.baseScaleCamera.w;
+        const preH = this.baseScaleCamera.h;
+        const scale = {
+            w: rectW / (preW * totalImageSize.w),
+            h: rectH / (preH * totalImageSize.h)
+        };
+        const bound = {
+            left: this.baseScaleCamera.x,
+            top: this.baseScaleCamera.y,
+            right: this.baseScaleCamera.x + this.baseScaleCamera.w,
+            bottom: this.baseScaleCamera.y + this.baseScaleCamera.h
+        };
+
+        // 画面中心を維持しつつスケール
+        const pivotX = (bound.left + bound.right) / 2;
+        const pivotY = (bound.top + bound.bottom) / 2;
+
+        this.baseScaleCamera.x = (bound.left - pivotX) * scale.w + pivotX;
+        this.baseScaleCamera.y = (bound.top - pivotY) * scale.h + pivotY;
+        this.baseScaleCamera.w = (bound.right - bound.left) * scale.w;
+        this.baseScaleCamera.h = (bound.bottom - bound.top) * scale.h;
+
+        const diffScale = this.baseScaleCamera.w / preW;
+        this.setTransformScale(this.transformScale * diffScale);
+    }
+
+    // baseScaleCameraを元にcameraを再設定する。
+    // baseScaleCameraを変更した場合に呼ぶ
+    _updateCameraFromBaseCamera() {
+        const cx = this.baseScaleCamera.x + this.baseScaleCamera.w / 2.0;
+        const cy = this.baseScaleCamera.y + this.baseScaleCamera.h / 2.0;
+        this.camera.w = this.baseScaleCamera.w / this.transformScale;
+        this.camera.h = this.baseScaleCamera.h / this.transformScale;
+        this.camera.x = (this.baseScaleCamera.x - cx) / this.transformScale + cx;
+        this.camera.y = (this.baseScaleCamera.y - cy) / this.transformScale + cy;
+    }
+
+    // 現在のカメラを元にタイルを更新する
     _update() {
-        this._cullTileElements(this._fillTileElements());
+        const tileMatrix = this._prepareTileElements();
+        const loadedElems = this._fillTileElements(tileMatrix);
+        this._cullTileElements(loadedElems);
     }
 
     create(position, callback) {
@@ -364,31 +415,29 @@ class TileViewer {
     }
 
     setTransformScale(scale) {
-        if (scale <= 0.1) return false;
-        const preScale = this.transformScale;
-        this.transformScale = scale;
+        if (scale < 0.1e-10) return false;
 
         if (this.currentScaleIndex + 1 < this.options.scales.length) {
             if (scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
                 // LoDレベルを上げる
-                this.currentScaleIndex++;
+                this._setScaleIndex(this.currentScaleIndex + 1);
             }
         }
         if (this.currentScaleIndex > 0) {
             if (scale < this._getScaleRatio(this.currentScaleIndex).x) {
                 // LoDレベルを下げる
-                this.currentScaleIndex--;
+                this._setScaleIndex(this.currentScaleIndex - 1);
             }
         }
 
+        this.transformScale = scale;
         this._updateCameraFromBaseCamera();
-
         this._update();
     }
 
     zoomIn(onlyLevel) {
         if (onlyLevel) {
-            this.currentScaleIndex++;
+            this._setScaleIndex(this.currentScaleIndex + 1);
             this._update();
         } else {
             this.setTransformScale(this.transformScale + 0.05 * Math.pow(2, this.currentScaleIndex));
@@ -397,30 +446,20 @@ class TileViewer {
 
     zoomOut(onlyLevel) {
         if (onlyLevel) {
-            if (this.currentScaleIndex > 0) {
-                this.currentScaleIndex--;
-                this._update();
-            }
+            this._setScaleIndex(this.currentScaleIndex - 1);
+            this._update();
         } else {
             this.setTransformScale(this.transformScale - 0.05 * Math.pow(2, this.currentScaleIndex));
         }
     }
 
-    _updateCameraFromBaseCamera() {
-        const cx = this.baseScaleCamera.x + this.baseScaleCamera.w / 2.0;
-        const cy = this.baseScaleCamera.y + this.baseScaleCamera.h / 2.0;
-        this.camera.w = this.baseScaleCamera.w / this.transformScale;
-        this.camera.h = this.baseScaleCamera.h / this.transformScale;
-        this.camera.x = (this.baseScaleCamera.x - cx) / this.transformScale + cx;
-        this.camera.y = (this.baseScaleCamera.y - cy) / this.transformScale + cy;
-    }
-
-    // [left, top, right, bottom] の形式で
-    // Viewportを設定する
-    // Viewportは、現在のTileViewerの描画領域全体について
-    // 左上(0,0), 右下(1,1)としたときの
-    // 実際に表示する領域[left, top, right, bottom].
-    // この領域外のタイルはカリングされる
+    /**
+     * [left, top, right, bottom] の形式でViewportを設定する
+     * Viewportは、現在のTileViewerの描画領域全体について
+     * 左上(0,0), 右下(1,1)としたときの
+     * 実際に表示する領域[left, top, right, bottom].
+     * この領域外のタイルはカリングされる
+     */
     setViewport(viewport) {
         this.viewport = viewport;
         this._update();
@@ -432,6 +471,14 @@ class TileViewer {
 
     getOptions() {
         return JSON.parse(JSON.stringify(this.options));
+    }
+
+    enableResizeScaling() {
+        window.addEventListener('resize', this._resizeScaling);
+    }
+
+    disableResizeScaling() {
+        window.removeEventListener('resize', this._resizeScaling);
     }
 }
 window.TileViewer = TileViewer;
