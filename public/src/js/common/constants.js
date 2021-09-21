@@ -24,6 +24,7 @@ const Constants = {
     TypeVideo: "video",
     TypePDF: "pdf",
     TypeWebGL: "webgl",
+    WebGLTypeQGIS2THREE: "qgis2three.js",
     TypeTileViewer: "tileviewer",
     PropertyTypeDisplay: "display",
     PropertyTypeWholeWindow: "whole_window",

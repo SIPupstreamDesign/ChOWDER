@@ -1592,8 +1592,8 @@ class Controller {
                 return;
             }
         }
-        if (json.type === "webgl") {
-            if (json.webglType && json.webglType === "qgis2three.js") {
+        if (json.type === Constants.TypeWebGL) {
+            if (json.webglType && json.webglType === Constants.WebGLTypeQGIS2THREE) {
                 /* qgis */
                 this.action.updateQgisMetadata(metaData);
             } else {
@@ -1606,6 +1606,13 @@ class Controller {
                     funcDict[json.id].chowder_itowns_update_layer_list(json);
                 }
                 this.gui.showCopyrights(document.getElementById(metaData.id), metaData);
+            }
+        }
+        if (json.type === Constants.TypeTileViewer) {
+            /* tileviewer */
+            let funcDict = this.store.getITownFuncDict();
+            if (funcDict && funcDict.hasOwnProperty(json.id)) {
+                funcDict[json.id].chowder_tileviewer_update_camera(json);
             }
         }
         this.store.setMetaData(json.id, json);

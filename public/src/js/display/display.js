@@ -204,8 +204,8 @@ class Display {
             }
         }
         // webglカメラなどの適用
-        if (metaData.type === "webgl") {
-            if (json.webglType && json.webglType === "qgis2three.js") {
+        if (metaData.type === Constants.TypeWebGL) {
+            if (json.webglType && json.webglType === Constants.WebGLTypeQGIS2THREE) {
                 /* qgis */
                 this.action.updateQgisMetadata(metaData);
             } else {
@@ -215,6 +215,13 @@ class Display {
                     funcDict[metaData.id].chowder_itowns_update_camera(metaData);
                     funcDict[metaData.id].chowder_itowns_update_layer_list(metaData);
                 }
+            }
+        }
+        if (json.type === Constants.TypeTileViewer) {
+            /* tileviewer */
+            let funcDict = this.store.getITownFuncDict();
+            if (funcDict && funcDict.hasOwnProperty(json.id)) {
+                funcDict[json.id].chowder_tileviewer_update_camera(json);
             }
         }
 

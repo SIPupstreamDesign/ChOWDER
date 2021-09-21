@@ -57,22 +57,34 @@ class Action extends EventEmitter {
     }
 
     /**
-     * windowのリサイズ.
-     * サーバに保存されている現在のdisplayサイズを更新する
+     * コンテンツのリサイズ
      * @param {*} data
      * {
      *    size : { w : , h : }
      * }
      */
-    resizeWindow(data) {
-        this.emit(Action.EVENT_RESIZE_WINDOW, null, data);
+    resizeContent(data) {
+        this.emit(Action.EVENT_RESIZE_CONTENT, null, data);
     }
+
+    /**
+     * カメラの更新
+     * @param {*} data 
+     * {
+     *    params : カメラのパラメータ
+     * }
+     */
+    updateCamera(data) {
+        this.emit(Action.EVENT_UPDATE_CAMERA, null, data);
+    }
+
 }
 
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_ADD_CONTENT = "addContent";
 Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
-Action.EVENT_RESIZE_WINDOW = "resizeWindow";
+Action.EVENT_UPDATE_CAMERA = "updateCamera";
+Action.EVENT_RESIZE_CONTENT = "resizeContent";
 
 export default Action;

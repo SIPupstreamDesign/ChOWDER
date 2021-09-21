@@ -105,7 +105,7 @@ class ContentViewGUI extends EventEmitter {
 
         let url = metaData.url;
         iframe.onload = ((metaData) => {
-            if (metaData.webglType && metaData.webglType === "qgis2three.js") {
+            if (metaData.webglType && metaData.webglType === Constants.WebGLTypeQGIS2THREE) {
                 // qgis
                 const connector = new IFrameConnector(iframe);
                 connector.connect(() => {
@@ -249,8 +249,21 @@ class ContentViewGUI extends EventEmitter {
             id: metaData.id,
             func: {
                 chowder_tileviewer_resize: (metaData) => {
+                    console.error('resize')
                     this.updateTileViewerFrameSize(connector, metaData);
                 },
+                chowder_tileviewer_update_camera: (metaData) => {
+                    const preMetaData = this.store.getMetaData(metaData.id);
+                    if (preMetaData) {
+                        const preParam = preMetaData.cameraParams;
+                        const param = metaData.cameraParams;
+                        if (preParam !== param) {
+                            TileViewerUtil.updateCamera(connector, metaData, () => {});
+                        }
+                    } else {
+                        TileViewerUtil.updateCamera(connector, metaData, () => {});
+                    }
+                }
             }
         });
 
@@ -267,7 +280,9 @@ class ContentViewGUI extends EventEmitter {
                 connector.send(TileViewerCommand.Resize, rect);
             });
 
-            connector.once(TileViewerCommand.InitLayers, (err, data) => {});
+            connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                TileViewerUtil.updateCamera(connector, metaData);
+            });
         } catch (err) {
             console.error(err);
         }

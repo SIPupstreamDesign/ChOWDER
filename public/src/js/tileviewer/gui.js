@@ -34,7 +34,7 @@ class GUI extends EventEmitter {
      * すべてのGUIの初期化
      */
     init() {
-        this.initWindowEvents();
+        //this.initWindowEvents();
         this.initLoginMenu();
         this.loginMenu.show(true);
         Translation.translate(function() {});
@@ -61,7 +61,6 @@ class GUI extends EventEmitter {
             // iframe内のカメラが更新された
             iframeConnector.on(TileViewerCommand.UpdateCamera, (err, params) => {
                 this.action.updateCamera({
-                    mat: params.mat,
                     params: params.params
                 });
             });
@@ -75,6 +74,13 @@ class GUI extends EventEmitter {
             // iframe内のレイヤーが更新された
             iframeConnector.on(TileViewerCommand.UpdateLayer, (err, params) => {
                 this.layerList.initLayerSelectList(params);
+            });
+
+            // iframe内でリサイズが起きた
+            iframeConnector.on(TileViewerCommand.Resize, (err, params) => {
+                this.action.resizeContent({
+                    size: params.size
+                });
             });
         });
 
@@ -103,24 +109,6 @@ class GUI extends EventEmitter {
         evt.offsetY = event.clientY;
         this.iframe.contentWindow.dispatchEvent(evt);
         this.iframe.contentWindow.document.documentElement.dispatchEvent(evt);
-    }
-
-    /**
-     * ウィンドウイベントの処理
-     */
-    initWindowEvents() {
-        // ウィンドウリサイズ時の処理
-        let timer;
-        window.onresize = () => {
-            if (timer) {
-                clearTimeout(timer);
-            }
-            timer = setTimeout(() => {
-                this.action.resizeWindow({
-                    size: this.getWindowSize()
-                });
-            }, 200);
-        };
     }
 
     /**
@@ -229,10 +217,11 @@ class GUI extends EventEmitter {
                 }),
                 posx: 0,
                 posy: 0,
-                width: this.getWindowSize().width,
-                height: this.getWindowSize().height,
-                orgWidth: this.getWindowSize().width,
-                orgHeight: this.getWindowSize().height,
+                width: param.width,
+                height: param.height,
+                orgWidth: param.width,
+                orgHeight: param.height,
+                group: Constants.DefaultGroup,
                 visible: true,
                 layerList: JSON.stringify(param.layerList),
                 url: decodeURI(selectValue.url)

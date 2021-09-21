@@ -728,11 +728,11 @@ class GUI extends EventEmitter {
                     */
                 });
                 connector.once(TileViewerCommand.InitLayers, (err, data) => {
-                    //let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
-                    //TileViewerUtil.resize(connector, rect)
-
+                    // 初回に一度実行
                     let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
                     this.updateTileViewerScale(connector, metaData, rect);
+
+                    TileViewerUtil.updateCamera(connector, metaData);
                 });
             } catch (err) {
                 console.error(err, metaData);
@@ -745,10 +745,10 @@ class GUI extends EventEmitter {
                     chowder_tileviewer_resize: (metaData, rect) => {
                         this.updateTileViewerScale(connector, metaData, rect);
                     },
-                    /*
-                    chowder_itowns_update_camera: (metaData) => {
-                        ITownsUtil.updateCamera(connector, metaData);
+                    chowder_tileviewer_update_camera: (metaData) => {
+                        TileViewerUtil.updateCamera(connector, metaData);
                     },
+                    /*
                     chowder_itowns_update_time: (metaDatam, time, range) => {
                         ITownsUtil.updateTime(connector, metaData, time, range);
                     },

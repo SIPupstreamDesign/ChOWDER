@@ -25,13 +25,37 @@ class Store extends EventEmitter {
 
         this.initEvents();
 
+        // コンテンツのメタデータ
+        // 1ウィンドウ1コンテンツなのでメタデータは1つ
+        this.metaData = null;
+
         // websocket接続が確立された.
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
             console.log("websocket connected")
                 //let loginOption = { id: "APIUser", password: "" }
                 //this.action.login(loginOption);
-        })
+        });
+
+        // 初回追加用カメラパラメータキャッシュ
+        this.initialCameraParams = null;
+
+        // コンテンツ追加完了した.
+        this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply, endCallback) => {
+            let isInitialContent = (!this.metaData);
+
+            this.metaData = reply;
+            if (isInitialContent) {
+                // 初回追加だった
+                // カメラ更新
+                if (this.initialCameraParams) {
+                    this._updateCamera({
+                        params: this.initialCameraParams,
+                    })
+                }
+            }
+            if (endCallback) { endCallback(); }
+        });
     }
 
     // デバッグ用. release版作るときは消す
@@ -89,7 +113,27 @@ class Store extends EventEmitter {
                 this.emit(Store.EVENT_DISCONNECTED, null);
             };
         })(client));
+
+        /// メタデータが更新された
+        Connector.on(Command.UpdateMetaData, (data) => {
+            let hasUpdateData = false;
+            for (let i = 0; i < data.length; ++i) {
+                let metaData = data[i];
+                if (metaData.type === Constants.TypeTileViewer && this.metaData && metaData.id === this.metaData.id) {
+                    this.metaData = metaData;
+                    hasUpdateData = true;
+                    break;
+                }
+            }
+
+            if (hasUpdateData) {
+                this.__changeLayerProeprty();
+            }
+        });
     }
+
+    // this.metaDataをもとに、iframe内のレイヤー情報を更新
+    __changeLayerProeprty(preLayerList = []) {}
 
     _login(data) {
         Connector.send(Command.Login, data, (err, reply) => {
@@ -164,6 +208,33 @@ class Store extends EventEmitter {
         let metaData = data.metaData;
         let contentData = data.contentData;
         this.operation.addContent(metaData, contentData, () => {});
+    }
+
+    _updateCamera(data) {
+        if (this.metaData) {
+            this.metaData.cameraParams = data.params;
+            let updateData = JSON.parse(JSON.stringify(this.metaData));
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+            this.operation.updateMetadata(updateData, (err, res) => {});
+        } else {
+            // コンテンツ追加完了前だった。完了後にカメラを更新するため、キャッシュしておく。
+            this.initialCameraParams = data.params;
+        }
+    }
+
+    // コンテンツのリサイズ
+    // コンテンツの現在の幅高さを考慮しつつ、入力されたsizeに応じて拡縮する
+    _resizeContent(data) {
+        let wh = data.size;
+        let metaData = this.metaData;
+        if (!metaData) { return; }
+        metaData.width = metaData.width * (wh.width / parseFloat(metaData.orgWidth));
+        metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
+        metaData.orgWidth = wh.width;
+        metaData.orgHeight = wh.height;
+        this.operation.updateMetadata(metaData, (err, res) => {});
     }
 }
 

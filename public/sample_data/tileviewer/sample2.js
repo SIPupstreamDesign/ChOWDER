@@ -107,7 +107,8 @@ window.onload = () => {
         injectChOWDER(viewer, document.getElementById('tileviewer'));
     }, 100)
 
-    if (window.chowder_view_type !== undefined) {
+    //if (window.chowder_view_type !== undefined) 
+    {
         {
             let button = document.createElement('button');
             button.style.position = "absolute"
@@ -191,6 +192,37 @@ window.onload = () => {
             }
         }
 
+
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "250px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "viewinfo"
+            document.body.appendChild(button);
+
+            button.onclick = () => {
+                console.log(JSON.stringify(viewer.getCameraInfo()));
+            }
+        }
+
+        {
+            let button = document.createElement('button');
+            button.style.position = "absolute"
+            button.style.left = "300px";
+            button.style.top = "0px";
+            button.style.width = "50px"
+            button.style.height = "50px";
+            button.innerText = "resume"
+            document.body.appendChild(button);
+
+            button.onclick = () => {
+                const viewInfo = { "camera": { "x": 0.87473024661842, "y": 0.3938979334483699, "w": 0.00862426776438951, "h": 0.007568359374999995 }, "baseScaleCamera": { "x": 0.8100482383854987, "y": 0.3371352381358699, "w": 0.13798828423023224, "h": 0.12109375 }, "transformScale": 16.00000000000001, "viewport": { "x": 0.8100482383854987, "y": 0.3371352381358699, "w": 0.13798828423023224, "h": 0.12109375 }, "scaleIndex": 4 }
+                viewer.setCameraInfo(viewInfo);
+            }
+        }
 
         let mouse = {
             x: 0,

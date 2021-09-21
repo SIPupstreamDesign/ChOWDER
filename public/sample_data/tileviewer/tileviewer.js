@@ -47,6 +47,8 @@ class TileViewer {
         // リサイズ時のスケーリングを有効にする
         this._resizeScaling = this._resizeScaling.bind(this);
         this.enableResizeScaling();
+
+        this.callbackDict = {};
     }
 
     _getRootElem() {
@@ -348,9 +350,16 @@ class TileViewer {
         }
     }
 
+    // 位置の変更コールバックを発火させる
+    // 位置が変更された場合必ず呼ぶ
+    _dispatchPosition() {
+        const event = new CustomEvent('position_changed', { detail: JSON.stringify(this.getCameraInfo()) });
+        this.transformElem.dispatchEvent(event);
+    }
+
     // リサイズ時に画面中心を維持し、ビューの横方向が画面内に常に収まるように維持するように
     // スケーリングを行う
-    _resizeScaling() {
+    _resizeScaling(withDispatch = true) {
         const rect = this.viewerElem.getBoundingClientRect();
         const rectW = (rect.right - rect.left);
         const rectH = (rect.bottom - rect.top);
@@ -378,18 +387,23 @@ class TileViewer {
         this.baseScaleCamera.h = (bound.bottom - bound.top) * scale.h;
 
         const diffScale = this.baseScaleCamera.w / preW;
-        this.setTransformScale(this.transformScale * diffScale);
+        this.setTransformScale(this.transformScale * diffScale, withDispatch);
     }
 
     // baseScaleCameraを元にcameraを再設定する。
     // baseScaleCameraを変更した場合に呼ぶ
-    _updateCameraFromBaseCamera() {
+    _updateCameraFromBaseCamera(withDispatch = true) {
         const cx = this.baseScaleCamera.x + this.baseScaleCamera.w / 2.0;
         const cy = this.baseScaleCamera.y + this.baseScaleCamera.h / 2.0;
         this.camera.w = this.baseScaleCamera.w / this.transformScale;
         this.camera.h = this.baseScaleCamera.h / this.transformScale;
         this.camera.x = (this.baseScaleCamera.x - cx) / this.transformScale + cx;
         this.camera.y = (this.baseScaleCamera.y - cy) / this.transformScale + cy;
+
+        // カメラの座標が変更されたので、位置変更コールバックを発火
+        if (withDispatch) {
+            this._dispatchPosition();
+        }
     }
 
     // 現在のカメラを元にタイルを更新する
@@ -400,6 +414,18 @@ class TileViewer {
     }
 
     create(position, callback) {
+        if (position) {
+            // 位置情報による調整
+            if (position.hasOwnProperty('center')) {
+                if (position.center.hasOwnProperty('relative')) {
+
+                }
+            }
+
+        } else {
+            // 描画領域のサイズに対して、画像全体がちょうど納まる最適なスケールおよび位置に調整
+
+        }
         this.camera = this._calcActualPixelSizeCamera(0.5, 0.3);
         this.baseScaleCamera = JSON.parse(JSON.stringify(this.camera));
 
@@ -421,7 +447,7 @@ class TileViewer {
         this._update();
     }
 
-    setTransformScale(scale) {
+    setTransformScale(scale, withDispatch = true) {
         if (scale < 0.1e-10) return false;
 
         if (this.currentScaleIndex + 1 < this.options.scales.length) {
@@ -438,7 +464,7 @@ class TileViewer {
         }
 
         this.transformScale = scale;
-        this._updateCameraFromBaseCamera();
+        this._updateCameraFromBaseCamera(withDispatch);
         this._update();
     }
 
@@ -468,8 +494,36 @@ class TileViewer {
      * この領域外のタイルはカリングされる
      */
     setViewport(viewport) {
-        this.viewport = viewport;
+        this.viewport = JSON.parse(JSON.stringify(viewport));
         this._update();
+    }
+
+    getViewport() {
+        return JSON.parse(JSON.stringify(this.viewport));
+    }
+
+    /**
+     * スケールやビューポートをすべて含んだカメラ情報を返す。
+     * この値を取得し、setCameraInfoを呼ぶことで、見た目を完全に再現させることができる。
+     * @returns スケールやビューポートをすべて含んだカメラ情報
+     */
+    getCameraInfo() {
+        return {
+            camera: JSON.parse(JSON.stringify(this.camera)),
+            baseScaleCamera: JSON.parse(JSON.stringify(this.baseScaleCamera)),
+            transformScale: this.transformScale,
+            viewport: JSON.parse(JSON.stringify(this.viewport)),
+            scaleIndex: this.currentScaleIndex
+        }
+    }
+
+    setCameraInfo(viewInfo) {
+        this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
+        this._updateCameraFromBaseCamera(false);
+        this.viewport = JSON.parse(JSON.stringify(viewInfo.viewport));
+        this._setScaleIndex(viewInfo.scaleIndex);
+        this.setTransformScale(viewInfo.transformScale, false);
+        this._resizeScaling(false);
     }
 
     setOptions(options) {
@@ -486,6 +540,25 @@ class TileViewer {
 
     disableResizeScaling() {
         window.removeEventListener('resize', this._resizeScaling);
+    }
+
+    addPositionCallback(callback) {
+        if (this.transformElem) {
+            this.callbackDict[callback] = (ev) => {
+                callback(ev.detail);
+            };
+            this.transformElem.addEventListener('position_changed', this.callbackDict[callback]);
+            return true;
+        }
+        return false;
+    }
+
+    removePositionCallback(callback) {
+        if (this.callbackDict.hasOwnProperty(callback)) {
+            this.transformElem.removeEventListener('position_cahnged', this.callbackDict[callback]);
+            return true;
+        }
+        return false;
     }
 }
 window.TileViewer = TileViewer;

@@ -218,7 +218,7 @@ class IFrameConnector extends EventEmitter {
             window.addEventListener("message", this.messageCallback);
 
             // 親ページからiframeへの接続
-            this.send(ITownsCommand.Init, {}, onopen());
+            this.send("Init", {}, onopen());
         } else {
             window.removeEventListener("message", this.messageCallback);
             window.addEventListener("message", this.messageCallback);
