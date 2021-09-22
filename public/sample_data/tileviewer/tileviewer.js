@@ -105,19 +105,26 @@ class TileViewer {
         }
     }
 
+    // 現在のビューワーのサイズ(幅,高さ)をピクセル単位で返す
+    _getViewerSize() {
+        const rect = this.viewerElem.getBoundingClientRect();
+        return {
+            w: rect.right - rect.left,
+            h: rect.bottom - rect.top
+        };
+    }
+
     // 現在の表示対象画像を原寸表示するためのカメラ座標を計算して返す
     // this.transformScaleによるスケールは考慮しない.
     // カメラ座標系はscaleIndex 0 の画像の全体サイズを基準に定められる
     _calcActualPixelSizeCamera(cameraSpaceX, cameraSpaceY) {
-        const rect = this.viewerElem.getBoundingClientRect();
-        const rectW = (rect.right - rect.left);
-        const rectH = (rect.bottom - rect.top);
+        const viewerSize = this._getViewerSize();
         const totalImageSize = this._getTotalImageSize();
         const camera = {
             x: cameraSpaceX,
             y: cameraSpaceY,
-            w: rectW / totalImageSize.w,
-            h: rectH / totalImageSize.h
+            w: viewerSize.w / totalImageSize.w,
+            h: viewerSize.h / totalImageSize.h
         };
         return camera;
     }
@@ -396,11 +403,13 @@ class TileViewer {
     }
 
     // スケールインデックスの変更
-    _setScaleIndex(scaleIndex) {
+    _setScaleIndex(scaleIndex, withDispatch = true) {
         if (scaleIndex >= 0 && scaleIndex < this.options.scales.length) {
             if (this.currentScaleIndex !== scaleIndex) {
                 this.currentScaleIndex = scaleIndex;
-                this._dispatchScaleIndex();
+                if (scaleIndex) {
+                    this._dispatchScaleIndex();
+                }
             }
         }
     }
@@ -422,15 +431,13 @@ class TileViewer {
     // リサイズ時に画面中心を維持し、ビューの横方向が画面内に常に収まるように維持するように
     // スケーリングを行う
     _resizeScaling(withDispatch = true) {
-        const rect = this.viewerElem.getBoundingClientRect();
-        const rectW = (rect.right - rect.left);
-        const rectH = (rect.bottom - rect.top);
+        const viewerSize = this._getViewerSize();
         const totalImageSize = this._getTotalImageSize();
         const preW = this.baseScaleCamera.w;
         const preH = this.baseScaleCamera.h;
         const scale = {
-            w: rectW / (preW * totalImageSize.w),
-            h: rectH / (preH * totalImageSize.h)
+            w: viewerSize.w / (preW * totalImageSize.w),
+            h: viewerSize.h / (preH * totalImageSize.h)
         };
         const bound = {
             left: this.baseScaleCamera.x,
@@ -478,15 +485,54 @@ class TileViewer {
         this._cullTileElements(loadedElems);
     }
 
+    // this.optionを元に、新規に地図を読み込む
+    // positionによりカメラ位置を指定する
     create(position, callback) {
         if (position) {
             // 位置情報による調整
+            // 後の計算時に使用するため、先にscaleIndexを設定
+            if (position.hasOwnProperty('scale')) {
+                this._setScaleIndex(position.scale);
+            }
+            // 位置情報による調整
             if (position.hasOwnProperty('center')) {
+                // カメラのwidth, heightをまず求める
+                // 通常はブラウザの幅高さを使用する
+                // positionにwidth, heightが指定されていればそちらを使用する
+                const viewerSize = this._getViewerSize();
+                let width = viewerSize.w;
+                let height = viewerSize.h;
+                if (position.hasOwnProperty('width')) {
+                    width = position.width;
+                }
+                if (position.hasOwnProperty('height')) {
+                    height = position.height;
+                }
+                const imageSize = this._getScreenImageSize();
+                const cameraW = width / imageSize.w;
+                const cameraH = height / imageSize.h;
+
                 if (position.center.hasOwnProperty('relative')) {
+                    const leftTop = position.center.relative;
+                    this.baseScaleCamera.x = leftTop.left - cameraW / 2;
+                    this.baseScaleCamera.y = leftTop.top - cameraH / 2;
+                    this.baseScaleCamera.w = cameraW;
+                    this.baseScaleCamera.h = cameraH;
+                } else if (position.center.hasOwnProperty('absolute')) {
+                    const leftTop = position.center.absolute;
+                    const totalImageSize = this._getTotalImageSize();
+                    const relativeX = (leftTop.left / totalImageSize.w);
+                    const relativeY = (leftTop.top / totalImageSize.h);
+                    this.baseScaleCamera.x = relativeX - cameraW / 2;
+                    this.baseScaleCamera.y = relativeY - cameraH / 2;
+                    this.baseScaleCamera.w = cameraW;
+                    this.baseScaleCamera.h = cameraH;
+                } else if (position.center.hasOwnProperty('degrees')) {
+                    const leftTop = position.center.degrees;
+
                     // TODO
                 }
             }
-
         } else {
             // 描画領域のサイズに対して、画像全体がちょうど納まる最適なスケールおよび位置に調整
             this.baseScaleCamera = {
@@ -498,7 +544,6 @@ class TileViewer {
         }
 
         this._resizeScaling();
-
         this._update();
     }
 
@@ -522,8 +567,8 @@ class TileViewer {
         this.transformScale = scale;
 
         // 画面サイズの半分より小さくしようとした場合は失敗とする
-        const rect = this.viewerElem.getBoundingClientRect();
-        const halfW = (rect.right - rect.left) / 2;
+        const viewerSize = this._getViewerSize();
+        const halfW = viewerSize.w / 2;
         if (this._getScreenImageSize().w < halfW) {
             this.transformScale = preScale;
             return false;
@@ -545,6 +590,7 @@ class TileViewer {
 
         this._updateCameraFromBaseCamera(withDispatch);
         this._update();
+        return true;
     }
 
     zoomIn(onlyLevel) {
@@ -596,6 +642,10 @@ class TileViewer {
         }
     }
 
+    /**
+     * スケールやビューポートをすべて含んだカメラ情報をセットする。
+     * getCameraInfoで得られた値を引数に入れることで、カメラ位置を復元できる
+     */
     setCameraInfo(viewInfo) {
         this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
         this._updateCameraFromBaseCamera(false);

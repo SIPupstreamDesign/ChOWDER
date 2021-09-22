@@ -20,10 +20,7 @@ const OptionHimawarJP = {
         //{ width: 600, height: 480, size: 2.8, count: 5 },
         //{ width: 600, height: 480, size: 4.0, count: 5 }
     ],
-    geodeticSystem: "himawari8.jp",
-    // 1以外にしてはならない。1以外にするとCSSのleft, topが%で指定されるため、
-    // リサイズ時に外側のdivサイズに依存して位置が勝手に動く
-    drawingSize: 1
+    geodeticSystem: "himawari8.jp"
 };
 
 
@@ -100,15 +97,21 @@ function showDebugGUI(viewer) {
         document.body.appendChild(button);
 
         button.onclick = () => {
-            viewer.setViewport([0.5, 0, 1, 0.5]);
-
-            let div = document.createElement('div');
-            div.style.position = "absolute"
-            div.style.left = "50%"
-            div.style.width = "50%"
-            div.style.height = "50%"
-            div.style.border = "2px solid red"
-            document.body.appendChild(div);
+            const preViewport = viewer.getViewport();
+            if (preViewport[0] === 0.5) {
+                viewer.setViewport([0, 0, 1, 1]);
+                document.body.removeChild(document.getElementById('viewport_rect'));
+            } else {
+                viewer.setViewport([0.5, 0, 1, 0.5]);
+                let div = document.createElement('div');
+                div.id = "viewport_rect"
+                div.style.position = "absolute"
+                div.style.left = "50%"
+                div.style.width = "50%"
+                div.style.height = "50%"
+                div.style.border = "2px solid red"
+                document.body.appendChild(div);
+            }
         }
     }
 
