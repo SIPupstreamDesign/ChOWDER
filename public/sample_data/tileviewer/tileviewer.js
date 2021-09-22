@@ -13,6 +13,14 @@ class TileViewer {
         this.transformElem.style.overflow = "hidden";
         this.viewerElem.appendChild(this.transformElem);
 
+        this.backgroundImage = new Image();
+        this.backgroundImageID = "___tileviewer_background_image___"
+        this.backgroundImage.id = this.backgroundImageID;
+        this.backgroundImage.style.zIndex = -1;
+        this.backgroundImage.style.display = "none";
+        this.backgroundImage.style.position = "absolute";
+        this.transformElem.appendChild(this.backgroundImage);
+
         // 地図定義情報
         this.options = {};
 
@@ -130,8 +138,8 @@ class TileViewer {
             }
         }
         const ratio = this._getScaleRatio();
-        const totalImageW = s.width / ratio.x * s.count;
-        const totalImageH = s.height / ratio.y * s.count;
+        const scaleIndexImageW = s.width / ratio.x * s.count;
+        const scaleIndexImageH = s.height / ratio.y * s.count;
         const rect = this._getRootElem().getBoundingClientRect();
         const rectW = (rect.right - rect.left);
         const rectH = (rect.bottom - rect.top);
@@ -147,8 +155,8 @@ class TileViewer {
         // タイルの左上のElementSpaceのx, y座標を計算
         // (あるレベルでタイル開始ピクセル位置) - (カメラの左上のピクセル位置)
         // transform scaleがかかる前の座標系でのx, yを計算
-        let x = (tileInfo.tx * s.width / ratio.x) - (this.baseScaleCamera.x * totalImageW);
-        let y = (tileInfo.ty * s.height / ratio.y) - (this.baseScaleCamera.y * totalImageH);
+        let x = (tileInfo.tx * s.width / ratio.x) - (this.baseScaleCamera.x * scaleIndexImageW);
+        let y = (tileInfo.ty * s.height / ratio.y) - (this.baseScaleCamera.y * scaleIndexImageH);
 
         tileInfo.x = Math.floor((x - centerX) * this.transformScale + centerX);
         tileInfo.y = Math.floor((y - centerY) * this.transformScale + centerY);
@@ -174,6 +182,32 @@ class TileViewer {
 
         tileInfo.scaleIndex = this.currentScaleIndex;
         return tileInfo;
+    }
+
+    _setBackgroundImage(url) {
+        const s = this.options.scales[this.currentScaleIndex];
+        const ratio = this._getScaleRatio();
+        const scaleIndexImageW = s.width / ratio.x * s.count;
+        const scaleIndexImageH = s.height / ratio.y * s.count;
+
+        const rect = this._getRootElem().getBoundingClientRect();
+        const rectW = (rect.right - rect.left);
+        const rectH = (rect.bottom - rect.top);
+        const centerX = rect.left + rectW / 2;
+        const centerY = rect.top + rectH / 2;
+
+        let x = -(this.baseScaleCamera.x * scaleIndexImageW);
+        let y = -(this.baseScaleCamera.y * scaleIndexImageH);
+        let left = Math.floor((x - centerX) * this.transformScale + centerX);
+        let top = Math.floor((y - centerY) * this.transformScale + centerY);
+
+        const wh = this._getScreenImageSize();
+        this.backgroundImage.src = url;
+        this.backgroundImage.style.left = left + "px";
+        this.backgroundImage.style.top = top + "px";
+        this.backgroundImage.style.width = wh.w + "px";
+        this.backgroundImage.style.height = wh.h + "px";
+        this.backgroundImage.style.display = "block";
     }
 
     // カメラスペースでの現在のスケールのタイル1枚の幅高さを返す
@@ -436,6 +470,9 @@ class TileViewer {
 
     // 現在のカメラを元にタイルを更新する
     _update() {
+        if (this.options.hasOwnProperty('backgroundImage')) {
+            this._setBackgroundImage(this.options.backgroundImage);
+        }
         const tileMatrix = this._prepareTileElements();
         const loadedElems = this._fillTileElements(tileMatrix);
         this._cullTileElements(loadedElems);
@@ -459,6 +496,7 @@ class TileViewer {
                 h: 1
             }
         }
+
         this._resizeScaling();
 
         this._update();

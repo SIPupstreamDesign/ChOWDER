@@ -26,7 +26,7 @@ const OptionGSI = {
 };
 
 // 単体デバッグ用GUIを表示
-function showDebugGUI() {
+function showDebugGUI(viewer) {
     {
         let button = document.createElement('button');
         button.style.position = "absolute"
