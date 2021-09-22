@@ -249,7 +249,6 @@ class ContentViewGUI extends EventEmitter {
             id: metaData.id,
             func: {
                 chowder_tileviewer_resize: (metaData) => {
-                    console.error('resize')
                     this.updateTileViewerFrameSize(connector, metaData);
                 },
                 chowder_tileviewer_update_camera: (metaData) => {

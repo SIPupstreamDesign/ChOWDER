@@ -236,6 +236,47 @@ class Store extends EventEmitter {
         metaData.orgHeight = wh.height;
         this.operation.updateMetadata(metaData, (err, res) => {});
     }
+
+    // サーバから現在登録されているwebglコンテンツのメタデータを取得してくる
+    _fetchContents(data) {
+        let metaDataDict = {}; // id, metaData
+        Connector.send(Command.GetMetaData, { type: "all", id: '' }, (err, metaData) => {
+            if (!err && metaData && metaData.type === Constants.TypeTileViewer) {
+                if (!metaDataDict.hasOwnProperty(metaData.id)) {
+                    metaDataDict[metaData.id] = metaData;
+                    this.emit(Store.EVENT_DONE_FETCH_CONTENTS, null, metaData);
+                }
+            }
+        });
+    }
+
+    _loadUserData(meta) {
+        let layerList = [];
+        try {
+            layerList = JSON.parse(meta.layerList);
+        } catch (err) {
+            console.error(err);
+        }
+        this.metaData = meta;
+        if (meta.hasOwnProperty('cameraParams')) {
+            // カメラをメタデータの値を元に設定
+            this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
+                params: JSON.parse(meta.cameraParams),
+            });
+        }
+        if (layerList.length > 0) {
+            // レイヤー初期化
+            this.iframeConnector.send(TileViewerCommand.InitLayers, layerList, (err, data) => {
+                this._changeTimeByTimeline({
+                    currentTime: this.timelineCurrentTime,
+                    startTime: this.timelineStartTime,
+                    endTime: this.timelineEndTime,
+                });
+            });
+            //this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
+            this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
+        }
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -246,4 +287,5 @@ Store.EVENT_LOGIN_FAILED = "login_failed";
 Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
+Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
 export default Store;

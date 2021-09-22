@@ -78,6 +78,20 @@ class Action extends EventEmitter {
         this.emit(Action.EVENT_UPDATE_CAMERA, null, data);
     }
 
+
+    /**
+     * コンテンツ情報を取得
+     */
+    fetchContents(data) {
+        this.emit(Action.EVENT_FETCH_CONTENTS, null, data);
+    }
+
+    /**
+     * (プリセットをもとに作られた)ユーザーデータを読み込み
+     */
+    loadUserData(data) {
+        this.emit(Action.EVENT_LOAD_USER_DATA, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -86,5 +100,7 @@ Action.EVENT_CONNECT_IFRAME = "connectIFrame";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_UPDATE_CAMERA = "updateCamera";
 Action.EVENT_RESIZE_CONTENT = "resizeContent";
+Action.EVENT_FETCH_CONTENTS = "fetchContents";
+Action.EVENT_LOAD_USER_DATA = "loadUserData";
 
 export default Action;

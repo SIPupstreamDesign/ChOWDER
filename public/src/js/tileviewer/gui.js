@@ -41,6 +41,16 @@ class GUI extends EventEmitter {
 
         // サンプルコンテンツの追加
         this.addPresetContentSelect();
+        this.store.on(Store.EVENT_CONNECT_SUCCESS, (err, data) => {
+            this.action.fetchContents();
+        });
+
+        // ページアクセス直後に全コンテンツのメタデータを取得し(action.fetchContents)、
+        // tileviewerコンテンツであった場合のみコールバックが呼ばれる
+        // 複数のtileviewerコンテンツがあった場合は, 複数回呼ばれる
+        this.store.on(Store.EVENT_DONE_FETCH_CONTENTS, (err, metaData) => {
+            this.addUserContentSelect(metaData);
+        });
 
         // ログイン成功
         this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
@@ -109,6 +119,14 @@ class GUI extends EventEmitter {
         evt.offsetY = event.clientY;
         this.iframe.contentWindow.dispatchEvent(evt);
         this.iframe.contentWindow.document.documentElement.dispatchEvent(evt);
+    }
+
+    addUserContentSelect(metaData) {
+        this.contentSelect.addOption(JSON.stringify({
+            type: "user",
+            url: metaData.url,
+            meta: metaData
+        }), "ContentID:" + metaData.id);
     }
 
     /**
