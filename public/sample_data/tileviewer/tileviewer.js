@@ -86,6 +86,17 @@ class TileViewer {
         }
     }
 
+    // 現在のスケールでのスクリーンでの画像表示サイズを返す
+    // this.transformScaleによるスケールを考慮。
+    _getScreenImageSize() {
+        const s = this.options.scales[this.currentScaleIndex];
+        const ratio = this._getScaleRatio();
+        return {
+            w: (s.width * s.count / ratio.x * this.transformScale),
+            h: (s.height * s.count / ratio.y * this.transformScale)
+        }
+    }
+
     // 現在の表示対象画像を原寸表示するためのカメラ座標を計算して返す
     // this.transformScaleによるスケールは考慮しない.
     // カメラ座標系はscaleIndex 0 の画像の全体サイズを基準に定められる
@@ -424,22 +435,23 @@ class TileViewer {
 
         } else {
             // 描画領域のサイズに対して、画像全体がちょうど納まる最適なスケールおよび位置に調整
-
+            this.baseScaleCamera = {
+                x: 0,
+                y: 0,
+                w: 1,
+                h: 1
+            }
         }
-        this.camera = this._calcActualPixelSizeCamera(0.5, 0.3);
-        this.baseScaleCamera = JSON.parse(JSON.stringify(this.camera));
+        this._resizeScaling();
 
         this._update();
     }
 
     move(mv, callback) {
-        const s = this.options.scales[this.currentScaleIndex];
-        const ratio = this._getScaleRatio();
-        const totalImageW = (s.width * s.count / ratio.x * this.transformScale);
-        const totalImageH = (s.height * s.count / ratio.y * this.transformScale);
+        const screenImageSize = this._getScreenImageSize();
         const cameraSpaceMove = {
-            x: mv.x / totalImageW,
-            y: mv.y / totalImageH
+            x: mv.x / screenImageSize.w,
+            y: mv.y / screenImageSize.h
         }
         this.baseScaleCamera.x -= cameraSpaceMove.x;
         this.baseScaleCamera.y -= cameraSpaceMove.y;
@@ -448,7 +460,20 @@ class TileViewer {
     }
 
     setTransformScale(scale, withDispatch = true) {
+        // 余りにも小さいスケールにしようとした場合は失敗とする
         if (scale < 0.1e-10) return false;
+
+        const preScale = this.transformScale;
+        this.transformScale = scale;
+
+        // 画面サイズの半分より小さくしようとした場合は失敗とする
+        const rect = this.viewerElem.getBoundingClientRect();
+        const halfW = (rect.right - rect.left) / 2;
+        if (this._getScreenImageSize().w < halfW) {
+            this.transformScale = preScale;
+            return false;
+        }
+
 
         if (this.currentScaleIndex + 1 < this.options.scales.length) {
             if (scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
@@ -463,7 +488,6 @@ class TileViewer {
             }
         }
 
-        this.transformScale = scale;
         this._updateCameraFromBaseCamera(withDispatch);
         this._update();
     }
