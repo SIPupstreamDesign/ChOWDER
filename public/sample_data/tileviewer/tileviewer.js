@@ -57,8 +57,8 @@ class TileViewer {
 
     // タイル情報からタイル固有のクラス名を作成して返す
     // このクラス名は動作的には無くても動くが、表示された地図のタイルをdevtoolで調べるときに便利なので入れている
-    _generateTileClass(tileInfo) {
-        return tileInfo.scaleIndex + "_" + tileInfo.tx + "_" + tileInfo.ty;
+    _generateTileClass(tileIndex, tileInfo) {
+        return tileIndex + "_" + tileInfo.scaleIndex + "_" + tileInfo.tx + "_" + tileInfo.ty;
     }
 
     // scaleIndex0のものと比べたときの、scaleIndexの画像全体の比率
@@ -190,6 +190,8 @@ class TileViewer {
         try {
             url = url.replace(/%x/g, tileInfo.tx.toString());
             url = url.replace(/%y/g, tileInfo.ty.toString());
+            url = url.replace(/%ws/g, tileInfo.tw.toString());
+            url = url.replace(/%hs/g, tileInfo.th.toString());
             url = url.replace(/%w/g, tileInfo.tw.toString());
             url = url.replace(/%h/g, tileInfo.th.toString());
             url = url.replace(/%c/g, count.toString());
@@ -205,31 +207,37 @@ class TileViewer {
     // タイルを読み込み、位置や幅高さを設定して返す
     // 既に読み込み済の場合は、読み込み済エレメントに対して位置や幅高さを設定して返す。
     _loadTile(tileInfo) {
-        const tileClass = this._generateTileClass(tileInfo);
-        if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
-            let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
-            elem.style.left = tileInfo.x + "px";
-            elem.style.top = tileInfo.y + "px";
-            elem.style.width = tileInfo.w + "px";
-            elem.style.height = tileInfo.h + "px";
-            return elem;
+        let resultTiles = [];
+        for (let i = 0; i < this.options.foregroundImages.length; ++i) {
+            const tileClass = this._generateTileClass(i, tileInfo);
+            if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
+                let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
+                elem.style.left = tileInfo.x + "px";
+                elem.style.top = tileInfo.y + "px";
+                elem.style.width = tileInfo.w + "px";
+                elem.style.height = tileInfo.h + "px";
+                resultTiles.push(elem);
+            } else {
+                const tile = new Image();
+                tile.classList.add(this.tileImageClass);
+                tile.classList.add(tileClass);
+                tile.style.pointerEvents = "none"
+                tile.style.position = "absolute";
+                tile.style.left = tileInfo.x + "px";
+                tile.style.top = tileInfo.y + "px";
+                tile.style.width = tileInfo.w + "px";
+                tile.style.height = tileInfo.h + "px";
+                //tile.style.border = "1px solid gray";
+                tile.style.boxSizing = "border-box";
+                // tile.innerText = tileInfo.scaleIndex;
+                const s = this.options.scales[this.currentScaleIndex];
+                tile.src = this._formatUrl(this.options.foregroundImages[i], tileInfo, s.count, s.zoom);
+                tile.style.zIndex = i;
+                this._getRootElem().appendChild(tile);
+                resultTiles.push(tile);
+            }
         }
-        const tile = new Image();
-        tile.classList.add(this.tileImageClass);
-        tile.classList.add(tileClass);
-        tile.style.pointerEvents = "none"
-        tile.style.position = "absolute";
-        tile.style.left = tileInfo.x + "px";
-        tile.style.top = tileInfo.y + "px";
-        tile.style.width = tileInfo.w + "px";
-        tile.style.height = tileInfo.h + "px";
-        //tile.style.border = "1px solid gray";
-        tile.style.boxSizing = "border-box";
-        tile.innerText = tileInfo.scaleIndex;
-        const s = this.options.scales[this.currentScaleIndex];
-        tile.src = this._formatUrl(this.options.foregroundImages[0], tileInfo, s.count, s.zoom);
-        this._getRootElem().appendChild(tile);
-        return tile;
+        return resultTiles;
     }
 
     // 全タイルの削除
@@ -311,26 +319,25 @@ class TileViewer {
         };
         const entry = tileMatrix[pos.y][pos.x];
         if (!entry.isLoaded) {
-            loadedElems.push(this._loadTile(entry.tile));
+            Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
         }
-
         // 右方向
         for (let x = pos.x + 1; x < xCount; ++x) {
             const entry = tileMatrix[pos.y][x];
-            loadedElems.push(this._loadTile(entry.tile));
+            Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
         }
 
         // 左方向
         for (let x = pos.x - 1; x >= 0; --x) {
             const entry = tileMatrix[pos.y][x];
-            loadedElems.push(this._loadTile(entry.tile));
+            Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
         }
 
         // 上方向
         for (let y = pos.y - 1; y >= 0; --y) {
             for (let x = 0; x < xCount; ++x) {
                 const entry = tileMatrix[y][x];
-                loadedElems.push(this._loadTile(entry.tile));
+                Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
             }
         }
 
@@ -338,7 +345,7 @@ class TileViewer {
         for (let y = pos.y + 1; y < yCount; ++y) {
             for (let x = 0; x < xCount; ++x) {
                 const entry = tileMatrix[y][x];
-                loadedElems.push(this._loadTile(entry.tile));
+                Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
             }
         }
         return loadedElems;
@@ -357,7 +364,10 @@ class TileViewer {
     // スケールインデックスの変更
     _setScaleIndex(scaleIndex) {
         if (scaleIndex >= 0 && scaleIndex < this.options.scales.length) {
-            this.currentScaleIndex = scaleIndex;
+            if (this.currentScaleIndex !== scaleIndex) {
+                this.currentScaleIndex = scaleIndex;
+                this._dispatchScaleIndex();
+            }
         }
     }
 
@@ -365,6 +375,13 @@ class TileViewer {
     // 位置が変更された場合必ず呼ぶ
     _dispatchPosition() {
         const event = new CustomEvent('position_changed', { detail: JSON.stringify(this.getCameraInfo()) });
+        this.transformElem.dispatchEvent(event);
+    }
+
+    // scaleIndex変更コールバックを発火させる
+    // scaleIndex変更された場合必ず呼ぶ
+    _dispatchScaleIndex() {
+        const event = new CustomEvent('scale_index_changed', { detail: this.currentScaleIndex });
         this.transformElem.dispatchEvent(event);
     }
 
@@ -580,6 +597,25 @@ class TileViewer {
     removePositionCallback(callback) {
         if (this.callbackDict.hasOwnProperty(callback)) {
             this.transformElem.removeEventListener('position_cahnged', this.callbackDict[callback]);
+            return true;
+        }
+        return false;
+    }
+
+    addScaleIndexCallback(callback) {
+        if (this.transformElem) {
+            this.callbackDict[callback] = (ev) => {
+                callback(ev.detail);
+            };
+            this.transformElem.addEventListener('scale_index_changed', this.callbackDict[callback]);
+            return true;
+        }
+        return false;
+    }
+
+    removeScaleIndexCallback(callback) {
+        if (this.callbackDict.hasOwnProperty(callback)) {
+            this.transformElem.removeEventListener('scale_index_changed', this.callbackDict[callback]);
             return true;
         }
         return false;

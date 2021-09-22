@@ -110,7 +110,7 @@ function showDebugGUI() {
         }
     }
 
-
+    /*
     {
         let button = document.createElement('button');
         button.style.position = "absolute"
@@ -141,6 +141,17 @@ function showDebugGUI() {
             viewer.setCameraInfo(viewInfo);
         }
     }
+    */
+
+    viewer.addScaleIndexCallback((data) => {
+        let scaleLabel = document.getElementById('__lod_scale_label__');
+        if (scaleLabel) {
+            const text = "Zoom Level : " + data;
+            if (scaleLabel.innerHTML !== text) {
+                scaleLabel.innerHTML = text;
+            }
+        }
+    });
 }
 
 // マウス制御の有効化
@@ -151,13 +162,13 @@ function enableMouseEvents(viewer) {
     }
 
     let isLeftDown = false;
-    let isMiddleDown = false;
+    let isZoomDown = false;
 
     document.onmousedown = (ev) => {
-        if (ev.button === 0) {
+        if (ev.button === 1 || (ev.ctrlKey == true && ev.button === 0)) {
+            isZoomDown = true;
+        } else if (ev.button === 0) {
             isLeftDown = true;
-        } else if (ev.button === 1) {
-            isMiddleDown = true;
         }
         mouse = {
             x: ev.clientX,
@@ -177,7 +188,7 @@ function enableMouseEvents(viewer) {
                 y: ev.clientY
             }
         }
-        if (isMiddleDown) {
+        if (isZoomDown) {
             if (Math.sign(ev.clientY - mouse.y) < 0) {
                 viewer.zoomIn();
             } else {
@@ -188,9 +199,8 @@ function enableMouseEvents(viewer) {
 
     document.onmouseup = (ev) => {
         isLeftDown = false;
-        isMiddleDown = false;
+        isZoomDown = false;
     };
-
 }
 
 window.onload = () => {
@@ -202,7 +212,7 @@ window.onload = () => {
         injectChOWDER(viewer, document.getElementById('tileviewer'));
 
         if (window.chowder_view_type === undefined) {
-            showDebugGUI();
+            showDebugGUI(viewer);
         }
     }, 100);
 
