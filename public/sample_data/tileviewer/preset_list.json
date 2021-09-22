@@ -1,6 +1,11 @@
 {
     "preset_list": [{
-        "name": "ひまわり(JP)",
-        "url": "sample_data/tileviewer/sample.html"
-    }]
+            "name": "ひまわり(JP)",
+            "url": "sample_data/tileviewer/himawari.html"
+        },
+        {
+            "name": "GSI",
+            "url": "sample_data/tileviewer/gsi.html"
+        }
+    ]
 }

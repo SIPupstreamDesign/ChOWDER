@@ -418,7 +418,7 @@ class TileViewer {
             // 位置情報による調整
             if (position.hasOwnProperty('center')) {
                 if (position.center.hasOwnProperty('relative')) {
-
+                    // TODO
                 }
             }
 
