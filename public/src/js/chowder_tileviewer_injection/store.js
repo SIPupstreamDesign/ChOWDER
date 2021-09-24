@@ -95,8 +95,9 @@ class Store extends EventEmitter {
      * }
      */
     changeLayerProperty(params, redraw = true) {
-        // console.error("changeLayerProperty", params)
-        this.instance.setOpacity(Number(params.id.split("_")[1]), params.opacity);
+        const layerIndex = Number(params.id.split("_")[1]);
+        this.instance.setOpacity(layerIndex, params.opacity);
+        this.instance.setVisible(layerIndex, params.visible);
     }
 
 

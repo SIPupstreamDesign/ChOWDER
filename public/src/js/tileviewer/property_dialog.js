@@ -1,4 +1,43 @@
+import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
+
+/**
+ * Propertyタブに入力プロパティを追加する
+ * @method addCheckProperty
+ * @param {String} leftLabel 左ラベル
+ * @param {String} rightLabel 右ラベル
+ * @param {String} value 初期入力値
+ */
+function addCheckProperty(parent, isEditable, className, leftLabel, value, changeCallback) {
+    /*
+    	<div class="input-group">
+    		<span class="input-group-addon">x</span>
+    		<input type="text" class="form-control" id="content_transform_x" value="0">
+    		<span class="input-group-addon">px</span>
+    	</div>
+    */
+    let group = document.createElement('div');
+    let leftSpan = document.createElement('span');
+    leftSpan.className = "input-group-addon content_property_checkbox_label";
+    let centerSpan = document.createElement('span');
+    let input = new Input("checkbox");
+    group.className = "input-group";
+    leftSpan.innerHTML = leftLabel;
+    centerSpan.className = "input-group-addon content_property_checkbox_wrap"
+    input.setValue(value);
+    input.getDOM().disabled = !isEditable;
+    input.getDOM().className = "content_property_checkbox " + className
+
+    centerSpan.appendChild(input.getDOM());
+    group.appendChild(leftSpan);
+    group.appendChild(centerSpan);
+    parent.appendChild(group);
+
+    input.on(Input.EVENT_CHANGE, (err, data) => {
+        changeCallback(err, data.target.checked);
+    });
+}
+
 
 class PropertyDialog extends EventEmitter {
     constructor(store, action) {
@@ -18,15 +57,35 @@ class PropertyDialog extends EventEmitter {
         this.dom.style.opacity = "0.9"
         this.dom.style.backgroundColor = "gray";
 
-        this.init();
+        this.init("Layer_" + 0, {
+            opacity: 1.0,
+            visible: true
+        });
     }
 
     // レイヤーID、プロパティをもとに初期値を設定
     // レイヤーを選択しなおすたびに毎回呼ぶ.
     init(layerID, layerProps) {
-        this.addOpacity("Layer_" + 0, {
-            opacity: 1.0
-        });
+        this.addVisible(layerID, layerProps)
+        this.addOpacity(layerID, layerProps);
+    }
+
+    addVisible(layerID, layerProps) {
+        if (layerProps && layerProps.hasOwnProperty('visible')) {
+            addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
+                this.action.changeLayerProperty({
+                    id: layerID,
+                    visible: data
+                })
+            });
+        } else {
+            addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
+                this.action.changeLayerProperty({
+                    id: layerID,
+                    visible: data
+                })
+            });
+        }
     }
 
     addOpacity(layerID, layerProps) {
