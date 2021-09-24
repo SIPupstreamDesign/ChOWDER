@@ -239,6 +239,7 @@ class GUI extends EventEmitter {
                 height: param.height,
                 orgWidth: param.width,
                 orgHeight: param.height,
+                cameraParams: param.cameraParams,
                 group: Constants.DefaultGroup,
                 visible: true,
                 layerList: JSON.stringify(param.layerList),

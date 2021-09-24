@@ -136,6 +136,7 @@ class Store extends EventEmitter {
                     layerList: this.layerDataList,
                     width: width,
                     height: height,
+                    cameraParams: JSON.stringify(this.instance.getCameraInfo())
                 }, function() {
                     done = true;
                 });
@@ -148,6 +149,7 @@ class Store extends EventEmitter {
                         layerList: this.layerDataList,
                         width: width,
                         height: height,
+                        cameraParams: JSON.stringify(this.instance.getCameraInfo())
                     }, function() {
                         done = true;
                     });
@@ -164,6 +166,7 @@ class Store extends EventEmitter {
                         layerList: this.layerDataList,
                         width: width,
                         height: height,
+                        cameraParams: JSON.stringify(this.instance.getCameraInfo())
                     }, function() {
                         done = true;
                     });
@@ -219,84 +222,7 @@ class Store extends EventEmitter {
 
     // displayまたはcontrollerから開かれた(tileviewer画面に対して操作不可)
     injectAsDisplayType(data) {
-
         if (window.chowder_view_type === "controller") {
-
-            /*
-            const objBoundsInfo = this.instance.k2goTileViewer("getBoundsInfo");
-            const bounds = {
-                bounds: {
-                    degrees: {
-                        left: objBoundsInfo.leftTop.degrees.left,
-                        top: objBoundsInfo.leftTop.degrees.top,
-                        right: objBoundsInfo.rightBottom.degrees.left,
-                        bottom: objBoundsInfo.rightBottom.degrees.top
-                    }
-                }
-            };
-            // 一定間隔同じイベントが来なかったら実行するための関数
-            let debounceCreate = (() => {
-                const interval = 250;
-                let timer;
-                return () => {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => {
-                        this.instance.k2goTileViewer("create", bounds, () => {
-                            console.log("create")
-                        });
-
-                    }, interval);
-                };
-            })();
-
-            window.addEventListener('resize', () => {
-                debounceCreate();
-            });
-            */
-            /*
-            const objBoundsInfo = this.instance.k2goTileViewer("getBoundsInfo");
-            const relative = {
-                left: objBoundsInfo.leftTop.relative.left,
-                top: objBoundsInfo.leftTop.relative.top,
-                right: objBoundsInfo.rightBottom.relative.left,
-                bottom: objBoundsInfo.rightBottom.relative.top
-            };
-            const rw = relative.right - relative.left;
-            const rh = relative.bottom - relative.top;
-
-            window.addEventListener('resize', () => {
-
-                const bounds = {
-                    bounds: {
-                        degrees: {
-                            left: objBoundsInfo.leftTop.degrees.left,
-                            top: objBoundsInfo.leftTop.degrees.top,
-                            right: objBoundsInfo.rightBottom.degrees.left,
-                            bottom: objBoundsInfo.rightBottom.degrees.top
-                        }
-                    }
-                };
-                this.instance.k2goTileViewer("create", bounds);
-
-            });
-            */
-
-            /*
-            const objBoundsInfo = this.instance.k2goTileViewer("getBoundsInfo");
-            const bounds = {
-                bounds: {
-                    degrees: {
-                        left: objBoundsInfo.leftTop.degrees.left,
-                        top: objBoundsInfo.leftTop.degrees.top,
-                        right: objBoundsInfo.rightBottom.degrees.left,
-                        bottom: objBoundsInfo.rightBottom.degrees.top
-                    }
-                }
-            };
-            window.addEventListener('resize', () => {
-                console.error(bounds.bounds.degrees)
-                this.instance.k2goTileViewer("create", bounds);
-            });*/
         }
     }
 
@@ -338,7 +264,7 @@ class Store extends EventEmitter {
 
         this.addLodScaleLabel();
 
-        this.iframeConnector.send(TileViewerCommand.InitLayers, {}, function() {});
+        this.iframeConnector.send(TileViewerCommand.InitLayers, this.instance.getCameraInfo(), function() {});
     }
 }
 
