@@ -56,6 +56,24 @@ class Store extends EventEmitter {
             }
             if (endCallback) { endCallback(); }
         });
+
+        /// メタデータが更新された
+        Connector.on(Command.UpdateMetaData, (data) => {
+            let hasUpdateData = false;
+            for (let i = 0; i < data.length; ++i) {
+                let metaData = data[i];
+                if (metaData.type === Constants.TypeTileViewer && this.metaData && metaData.id === this.metaData.id) {
+                    this.metaData = metaData;
+                    hasUpdateData = true;
+                    break;
+                }
+            }
+
+            if (hasUpdateData) {
+                this.__changeLayerProeprty();
+            }
+        });
+
     }
 
     // デバッグ用. release版作るときは消す
@@ -277,6 +295,90 @@ class Store extends EventEmitter {
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);
         }
     }
+
+    getLayerData(layerID) {
+        if (this.metaData && this.metaData.layerList) {
+            let layerList = JSON.parse(this.metaData.layerList);
+            for (let i = 0; i < layerList.length; ++i) {
+                let layer = layerList[i];
+                if (layer) {
+                    let id = layer.id;
+                    if (id === layerID) {
+                        return layer;
+                    }
+                }
+            }
+        }
+        console.log("Not found layer from current content.", layerID, JSON.parse(this.metaData.layerList));
+        return null;
+    }
+
+    // this.metaDataのlayerListにlayerDataを文字列として上書き保存する
+    saveLayer(layer) {
+        let layerList = JSON.parse(this.metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i) {
+            if (layerList[i]) {
+                let id = layerList[i].id;
+                if (id === layer.id) {
+                    layerList[i] = layer;
+                    //console.error("saveLayer", layerList)
+                    this.metaData.layerList = JSON.stringify(layerList);
+                    return;
+                }
+            }
+        }
+        console.error("Not found layer from current content.");
+        return null;
+    }
+
+    // this.metaDataをもとに、iframe内のitownsのレイヤー情報を更新
+    __changeLayerProeprty(preLayerList = []) {
+
+        try {
+            if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
+                // レイヤー情報が異なる場合は全レイヤー更新
+                if (preLayerList !== this.metaData.layerList) {
+                    let layerList = JSON.parse(this.metaData.layerList);
+                    for (let i = 0; i < layerList.length; ++i) {
+                        let layer = layerList[i];
+                        if (layer) {
+                            this.iframeConnector.send(TileViewerCommand.ChangeLayerProperty, layer, (err, reply) => {
+                                this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                            });
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    _changeLayerProperty(data) {
+        let layer = this.getLayerData(data.id);
+        if (layer) {
+            for (let key in data) {
+                if (key !== "id" && key !== "callback") {
+                    layer[key] = data[key];
+                }
+            }
+            this.saveLayer(layer);
+
+            this.operation.updateMetadata(this.metaData, (err, res) => {
+                if (data.hasOwnProperty('callback')) {
+                    data.callback();
+                }
+            });
+
+            // 接続されていなくても見た目上変わるようにしておく
+            if (!Connector.isConnected) {
+                this.iframeConnector.send(TileViewerCommand.ChangeLayerProperty, layer, (err, reply) => {
+                    this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                });
+            }
+        }
+    }
+
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -288,4 +390,5 @@ Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
+Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
 export default Store;

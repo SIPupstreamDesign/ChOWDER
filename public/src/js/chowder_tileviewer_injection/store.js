@@ -75,7 +75,30 @@ class Store extends EventEmitter {
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
+        this.iframeConnector.on(TileViewerCommand.ChangeLayerProperty, (err, param, request) => {
+            if (param) {
+                // レイヤープロパティ変更命令
+                this.changeLayerProperty(param);
+            }
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
     }
+
+    /**
+     * プロパティの変更
+     * @param params 
+     * {
+     *   id : 変更対象レイヤのID
+     *   opacity : 透明度(option)
+     *   visible : 表示非表示.表示の場合true(option)
+     * }
+     */
+    changeLayerProperty(params, redraw = true) {
+        // console.error("changeLayerProperty", params)
+        this.instance.setOpacity(Number(params.id.split("_")[1]), params.opacity);
+    }
+
 
     resizeWindow(param) {
         // console.log("resizeWindow", param);
@@ -107,6 +130,19 @@ class Store extends EventEmitter {
         ctx.font = "40px sans-serif";
         ctx.fillText("TileViewer", 10, 50);
         return canvas.toDataURL("image/jpeg");
+    }
+
+    initLayerDataList() {
+        const options = this.instance.getOptions();
+        for (let i = 0; i < options.foregroundImages.length; ++i) {
+            const url = options.foregroundImages[i];
+            this.layerDataList.push({
+                id: "Layer_" + i,
+                url: url,
+                opacity: 1.0,
+                visible: true
+            });
+        }
     }
 
     // 一定時間経過後にコンテンツ追加命令をpostMessageする
@@ -222,8 +258,7 @@ class Store extends EventEmitter {
 
     // displayまたはcontrollerから開かれた(tileviewer画面に対して操作不可)
     injectAsDisplayType(data) {
-        if (window.chowder_view_type === "controller") {
-        }
+        if (window.chowder_view_type === "controller") {}
     }
 
     addLodScaleLabel() {
@@ -262,6 +297,7 @@ class Store extends EventEmitter {
             this.injectAsDisplayType(data);
         }
 
+        this.initLayerDataList();
         this.addLodScaleLabel();
 
         this.iframeConnector.send(TileViewerCommand.InitLayers, this.instance.getCameraInfo(), function() {});

@@ -11,6 +11,7 @@ import Translation from '../common/translation';
 import Menu from '../components/menu';
 import Constants from '../common/constants';
 import TileViewerCommand from '../common/tileviewer_command'
+import PropertyDialog from './property_dialog'
 
 // Base64からバイナリへ変換
 function toArrayBuffer(base64) {
@@ -59,6 +60,7 @@ class GUI extends EventEmitter {
             // this.initPropertyPanel();
             // this.initMenu();
             this.showTileViewer();
+            this.initTemplateGUI();
         });
 
         // ログイン失敗
@@ -148,6 +150,22 @@ class GUI extends EventEmitter {
 
         let select = this.loginMenu.getUserSelect();
         select.addOption("APIUser", "APIUser");
+    }
+
+    /**
+     * TimelineTemplateの各種GUI部品の初期化
+     * イベント登録等を行う
+     */
+    initTemplateGUI() {
+        let propertyDialog = new PropertyDialog(this.store, this.action);
+        document.getElementById('content').appendChild(propertyDialog.getDOM());
+
+        // Select Data ボタン
+        const selectDataButton = document.getElementById('button_select_data');
+        selectDataButton.onclick = () => {
+            // セレクトダイアログを表示
+            propertyDialog.show();
+        };
     }
 
     addPresetContentSelect() {
@@ -281,6 +299,7 @@ class GUI extends EventEmitter {
             window.addEventListener('mousemove', this.onMouseMove);
 
             this.action.connectIFrame(this.iframe);
+
         };
         this.iframe.onunload = () => {
             window.removeEventListener('mouseup', this.onMouseUp);

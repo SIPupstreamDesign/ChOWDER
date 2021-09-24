@@ -24,6 +24,8 @@ class TileViewer {
         // 地図定義情報
         this.options = {};
 
+        this.opacities = [];
+
         // 画像全体を正規化した空間（つまり左上0,0、右下1,1)で
         // 左上　x, y, 及び w, hによる仮想的なカメラを定義する
         // これをカメラスペースと呼ぶこととする。
@@ -257,6 +259,7 @@ class TileViewer {
                 elem.style.top = tileInfo.y + "px";
                 elem.style.width = tileInfo.w + "px";
                 elem.style.height = tileInfo.h + "px";
+                elem.style.opacity = Number(this.opacities[i]);
                 resultTiles.push(elem);
             } else {
                 const tile = new Image();
@@ -271,6 +274,7 @@ class TileViewer {
                 tile.style.top = tileInfo.y + "px";
                 tile.style.width = tileInfo.w + "px";
                 tile.style.height = tileInfo.h + "px";
+                tile.style.opacity = Number(this.opacities[i]);
                 //tile.style.border = "1px solid gray";
                 tile.style.boxSizing = "border-box";
                 const s = this.options.scales[this.currentScaleIndex];
@@ -659,6 +663,15 @@ class TileViewer {
 
     setOptions(options) {
         this.options = options;
+
+        this.opacities.length = options.foregroundImages.length;
+        this.opacities.fill(1);
+    }
+
+    setOpacity(layerIndex, opacity) {
+        console.log("setOpacity", layerIndex, opacity)
+        this.opacities[layerIndex] = opacity;
+        this._update();
     }
 
     getOptions() {

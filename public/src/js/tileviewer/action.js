@@ -92,6 +92,15 @@ class Action extends EventEmitter {
     loadUserData(data) {
         this.emit(Action.EVENT_LOAD_USER_DATA, null, data);
     }
+
+    /**
+     * レイヤープロパティ変更
+     * @param {*} data 
+     */
+    changeLayerProperty(data) {
+        this.emit(Action.EVENT_CHANGE_LAYER_PROPERTY, null, data);
+    }
+
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -102,5 +111,6 @@ Action.EVENT_UPDATE_CAMERA = "updateCamera";
 Action.EVENT_RESIZE_CONTENT = "resizeContent";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
+Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
 
 export default Action;
