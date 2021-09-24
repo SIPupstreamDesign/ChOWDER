@@ -69,14 +69,6 @@ class Store extends EventEmitter {
                 const preInfo = this.instance.getCameraInfo();
                 const cameraInfo = cameraData.params;
                 this.instance.setCameraInfo(cameraInfo);
-
-                // ラベルの更新
-                const scaleIndex = cameraInfo.scaleIndex;
-                let lodScaleLabel = document.getElementById(LoDScaleLabelID);
-                const labelText = LoDScaleLabelPrefix + String(scaleIndex)
-                if (lodScaleLabel.innerText !== labelText) {
-                    lodScaleLabel.innerText = labelText;
-                }
             } catch (e) {
                 console.error(e);
             }
@@ -195,12 +187,6 @@ class Store extends EventEmitter {
         // カメラ位置送信
         this.instance.addPositionCallback((data) => {
             if (data) {
-                const scaleIndex = JSON.parse(data).scaleIndex;
-                let lodScaleLabel = document.getElementById(LoDScaleLabelID);
-                const labelText = LoDScaleLabelPrefix + String(scaleIndex)
-                if (lodScaleLabel.innerText !== labelText) {
-                    lodScaleLabel.innerText = labelText;
-                }
                 this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
                     params: data
                 });
@@ -323,6 +309,18 @@ class Store extends EventEmitter {
         lodScaleLabel.style.position = "fixed";
         lodScaleLabel.classList.add('fuchidori')
         document.body.appendChild(lodScaleLabel);
+
+        // カメラ位置送信
+        this.instance.addScaleIndexCallback((data) => {
+            if (data) {
+                const scaleIndex = data;
+                let lodScaleLabel = document.getElementById(LoDScaleLabelID);
+                const labelText = LoDScaleLabelPrefix + String(scaleIndex)
+                if (lodScaleLabel.innerText !== labelText) {
+                    lodScaleLabel.innerText = labelText;
+                }
+            }
+        });
     }
 
     _injectChOWDER(data) {
