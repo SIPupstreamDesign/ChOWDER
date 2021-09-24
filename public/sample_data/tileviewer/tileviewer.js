@@ -260,8 +260,11 @@ class TileViewer {
                 resultTiles.push(elem);
             } else {
                 const tile = new Image();
+                tile.alt = " No Image"
                 tile.classList.add(this.tileImageClass);
                 tile.classList.add(tileClass);
+                tile.style.fontSize = "12px"
+                tile.style.color = "lightgray"
                 tile.style.pointerEvents = "none"
                 tile.style.position = "absolute";
                 tile.style.left = tileInfo.x + "px";
@@ -270,7 +273,6 @@ class TileViewer {
                 tile.style.height = tileInfo.h + "px";
                 //tile.style.border = "1px solid gray";
                 tile.style.boxSizing = "border-box";
-                // tile.innerText = tileInfo.scaleIndex;
                 const s = this.options.scales[this.currentScaleIndex];
                 tile.src = this._formatUrl(this.options.foregroundImages[i], tileInfo, s.count, s.zoom);
                 tile.style.zIndex = i;
