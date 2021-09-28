@@ -74,3 +74,169 @@ body {
 .loginmenu_label {
     font-size: 16px;
 }
+
+
+/* ------ LayerList / LayerDialog ---------------*/
+
+.tileviewer_property_inner {
+    display: none;
+    position: absolute;
+    width: 250px;
+    height: 90%;
+    left: 10px;
+    top: 10px;
+    opacity: 0.9;
+    background-color: gray;
+}
+
+.layer_select {
+    margin: 5px;
+    width: 240px;
+    cursor: default;
+}
+
+.layer_select:disabled {
+    cursor: not-allowed;
+}
+
+.layer_button_area {
+    margin: 5px;
+    font-size: 20px;
+}
+
+.layer_button {
+    margin: 5px;
+    width: 24px;
+    height: 24px;
+}
+
+.layer_up_button {
+    margin: 5px;
+    width: 24px;
+    height: 24px;
+    background-image: url("../image/group_up.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.layer_down_button {
+    margin: 5px;
+    width: 24px;
+    height: 24px;
+    background-image: url("../image/group_down.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.layer_button.btn {
+    padding: 0px;
+    font-size: 20px;
+}
+
+.layer_dialog {
+    display: none;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 350px;
+    margin-top: calc(-350px / 2);
+    margin-left: calc(-500px / 2);
+    position: fixed;
+    z-index: 100000000;
+    background-color: rgb(83, 83, 83);
+    border-radius: 5px;
+}
+
+.layer_dialog_error {
+    padding-top: 10px;
+    color: orangered;
+}
+
+.layer_dialog_style_name_input {
+    width: 100px;
+}
+
+.layer_dialog_ok_button {
+    position: absolute;
+    font-size: 14px;
+    width: 60px;
+    height: 30px;
+    right: calc(10px + 10px + 60px);
+    bottom: 10px;
+}
+
+.layer_dialog_cancel_button {
+    position: absolute;
+    font-size: 14px;
+    width: 60px;
+    height: 30px;
+    right: 10px;
+    bottom: 10px;
+}
+
+.layer_dialog_wrap {
+    margin: 15px;
+}
+
+.layer_dialog_title {
+    font-size: 20px;
+    padding-bottom: 10px;
+}
+
+.layer_dialog_row {
+    width: 100%;
+    height: 40px;
+}
+
+.layer_dialog_row2 {
+    width: 100%;
+    height: 60px;
+}
+
+.layer_dialog_sub_title {
+    display: inline-block;
+}
+
+.layer_dialog_type_select {
+    margin-left: 6px;
+}
+
+.layer_dialog_id_input {
+    margin-left: 22px;
+}
+
+.layer_dialog_url_input {
+    width: 500px;
+    height: 50px;
+    margin-left: 10px;
+}
+
+.layer_dialog_zoom_title {
+    display: inline-block;
+    padding-right: 5px;
+}
+
+.layer_dialog_fileopen_title {
+    display: inline-block;
+    padding-right: 5px;
+}
+
+.layer_dialog_fileopen_input {
+    display: inline-block;
+}
+
+.layer_dialog_zoom_max_title {
+    padding-left: 10px;
+}
+
+.layer_property_title {
+    padding-top: 10px;
+}
+
+.layer_dialog_zoom_min_select:disabled {
+    background: lightgray;
+}
+
+.layer_dialog_zoom_max_select:disabled {
+    background: lightgray;
+}

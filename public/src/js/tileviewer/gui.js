@@ -11,7 +11,8 @@ import Translation from '../common/translation';
 import Menu from '../components/menu';
 import Constants from '../common/constants';
 import TileViewerCommand from '../common/tileviewer_command'
-import PropertyDialog from './property_dialog'
+import LayerProperty from './layer_property'
+import LayerList from './layer_list'
 
 // Base64からバイナリへ変換
 function toArrayBuffer(base64) {
@@ -96,6 +97,15 @@ class GUI extends EventEmitter {
             });
         });
 
+        // レイヤーが追加された
+        this.store.on(Store.EVENT_DONE_ADD_LAYER, (err, layerDataList) => {
+            if (!err) {
+                console.log("EVENT_DONE_ADD_LAYER", layerDataList)
+                this.layerList.initLayerSelectList(layerDataList);
+            }
+        })
+
+
         // iframe内にwindowのmousemoveを伝える用
         this.onMouseMove = this._onMouseMove.bind(this);
         // iframe内にwindowのmouseupを伝える用
@@ -157,14 +167,46 @@ class GUI extends EventEmitter {
      * イベント登録等を行う
      */
     initTemplateGUI() {
-        let propertyDialog = new PropertyDialog(this.store, this.action);
-        document.getElementById('content').appendChild(propertyDialog.getDOM());
+        let contentDOM = document.getElementById('content');
+
+        this.propInnerVisible = false;
+        this.propInner = document.createElement('div');
+        this.propInner.className = "tileviewer_property_inner";
+        contentDOM.appendChild(this.propInner);
+
+        // レイヤーリスト
+        this.layerList = new LayerList(this.store, this.action);
+        this.propInner.appendChild(this.layerList.getDOM());
+
+        // レイヤープロパティ
+        this.layerProperty = new LayerProperty(this.store, this.action);
+        this.propInner.appendChild(this.layerProperty.getDOM());
+
+        const initLayerProperty = (data) => {
+            let layerData = this.store.getLayerData(data.value);
+            this.layerProperty.init(data.value, layerData);
+        };
+
+        this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
+            initLayerProperty(data);
+        });
+        this.layerProperty.on(LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI, (err, data) => {
+            const scrollTop = propInner.scrollTop;
+            initLayerProperty(data);
+            propInner.scrollTop = scrollTop;
+        });
 
         // Select Data ボタン
         const selectDataButton = document.getElementById('button_select_data');
         selectDataButton.onclick = () => {
             // セレクトダイアログを表示
-            propertyDialog.toggleShow();
+            if (this.propInnerVisible) {
+                this.propInner.style.display = "none";
+                this.propInnerVisible = false;
+            } else {
+                this.propInner.style.display = "block";
+                this.propInnerVisible = true;
+            }
         };
     }
 

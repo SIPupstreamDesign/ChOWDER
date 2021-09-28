@@ -94,6 +94,38 @@ class Action extends EventEmitter {
     }
 
     /**
+     * レイヤーの追加
+     * @param {*} data 
+     */
+    addLayer(data) {
+        this.emit(Action.EVENT_ADD_LAYER, null, data);
+    }
+
+    /**
+     * レイヤーの選択
+     * @param {*} data 
+     */
+    selectLayer(data) {
+        this.emit(Action.EVENT_SELECT_LAYER, null, data);
+    }
+
+    /**
+     * レイヤーの削除
+     * @param {*} data 
+     */
+    deleteLayer(data) {
+        this.emit(Action.EVENT_DELETE_LAYER, null, data);
+    }
+
+    /**
+     * レイヤー順序変更
+     * @param {*} data 
+     */
+    changeLayerOrder(data) {
+        this.emit(Action.EVENT_CHANGE_LAYER_ORDER, null, data);
+    }
+
+    /**
      * レイヤープロパティ変更
      * @param {*} data 
      */
@@ -112,5 +144,9 @@ Action.EVENT_RESIZE_CONTENT = "resizeContent";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
 Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
+Action.EVENT_ADD_LAYER = "addLayer";
+Action.EVENT_SELECT_LAYER = "selectLayer";
+Action.EVENT_DELETE_LAYER = "deleteLayer";
+Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
 
 export default Action;

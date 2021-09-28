@@ -57,23 +57,6 @@ class Store extends EventEmitter {
             if (endCallback) { endCallback(); }
         });
 
-        /// メタデータが更新された
-        Connector.on(Command.UpdateMetaData, (data) => {
-            let hasUpdateData = false;
-            for (let i = 0; i < data.length; ++i) {
-                let metaData = data[i];
-                if (metaData.type === Constants.TypeTileViewer && this.metaData && metaData.id === this.metaData.id) {
-                    this.metaData = metaData;
-                    hasUpdateData = true;
-                    break;
-                }
-            }
-
-            if (hasUpdateData) {
-                this.__changeLayerProeprty();
-            }
-        });
-
     }
 
     // デバッグ用. release版作るときは消す
@@ -135,6 +118,7 @@ class Store extends EventEmitter {
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
             let hasUpdateData = false;
+            const preData = this.metaData.layerList;
             for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
                 if (metaData.type === Constants.TypeTileViewer && this.metaData && metaData.id === this.metaData.id) {
@@ -145,13 +129,10 @@ class Store extends EventEmitter {
             }
 
             if (hasUpdateData) {
-                this.__changeLayerProeprty();
+                this.__changeLayerProeprty(preData);
             }
         });
     }
-
-    // this.metaDataをもとに、iframe内のレイヤー情報を更新
-    __changeLayerProeprty(preLayerList = []) {}
 
     _login(data) {
         Connector.send(Command.Login, data, (err, reply) => {
@@ -171,8 +152,7 @@ class Store extends EventEmitter {
         this.iframeConnector = new IFrameConnector(iframe);
         this.iframeConnector.connect(() => {
 
-            /*
-            // iframe内のitownsのレイヤーが追加された
+            // iframe内のtileviewerのレイヤーが追加された
             // storeのメンバに保存
             this.iframeConnector.on(TileViewerCommand.AddLayer, (err, params) => {
 
@@ -216,7 +196,6 @@ class Store extends EventEmitter {
                 this.metaData.layerList = JSON.stringify(layerList);
                 this.operation.updateMetadata(this.metaData, (err, res) => {});
             });
-            */
 
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
         });
@@ -338,6 +317,7 @@ class Store extends EventEmitter {
             if (this.iframeConnector && this.metaData.hasOwnProperty('layerList')) {
                 // レイヤー情報が異なる場合は全レイヤー更新
                 if (preLayerList !== this.metaData.layerList) {
+                    // console.error(preLayerList, this.metaData.layerList)
                     let layerList = JSON.parse(this.metaData.layerList);
                     for (let i = 0; i < layerList.length; ++i) {
                         let layer = layerList[i];
@@ -354,6 +334,46 @@ class Store extends EventEmitter {
         }
     }
 
+    _addLayer(data) {
+        this.iframeConnector.send(TileViewerCommand.AddLayer, data);
+    }
+
+    _selectLayer(data) {
+        this.iframeConnector.send(TileViewerCommand.SelectLayer, data);
+    }
+
+    _deleteLayer(data) {
+        let layerList = JSON.parse(this.metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i) {
+            if (layerList[i]) {
+                let id = layerList[i].id;
+                if (id === data.id) {
+                    // レイヤー削除して上書き
+                    layerList.splice(i, 1);
+                    this.metaData.layerList = JSON.stringify(layerList);
+
+                    console.log("updateMetadata", data, this.metaData)
+                        // iframeへ送る
+                    this.iframeConnector.send(TileViewerCommand.DeleteLayer, data, (err, data) => {
+                        console.log("DeleteLayer")
+                            // サーバへ送る
+                        this.operation.updateMetadata(this.metaData, (err, res) => {
+                            this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
+                        });
+                    });
+                    break;
+                }
+            }
+        }
+    }
+
+    _changeLayerOrder(data) {
+        // TODO サーバ側更新
+        this.iframeConnector.send(TileViewerCommand.ChangeLayerOrder, data, (err, data) => {
+            this.emit(Store.EVENT_DONE_CHANGE_LAYER_ORDER, null, data);
+        });
+    }
+
     _changeLayerProperty(data) {
         let layer = this.getLayerData(data.id);
         if (layer) {
@@ -362,6 +382,10 @@ class Store extends EventEmitter {
                     layer[key] = data[key];
                 }
             }
+            this.iframeConnector.send(TileViewerCommand.ChangeLayerProperty, layer, (err, reply) => {
+                this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+            });
+
             this.saveLayer(layer);
 
             this.operation.updateMetadata(this.metaData, (err, res) => {
@@ -369,13 +393,6 @@ class Store extends EventEmitter {
                     data.callback();
                 }
             });
-
-            // 接続されていなくても見た目上変わるようにしておく
-            if (!Connector.isConnected) {
-                this.iframeConnector.send(TileViewerCommand.ChangeLayerProperty, layer, (err, reply) => {
-                    this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
-                });
-            }
         }
     }
 
@@ -390,5 +407,8 @@ Store.EVENT_DONE_IFRAME_CONNECT = "done_iframe_connect"
 Store.EVENT_DONE_ADD_CONTENT = "done_add_content";
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_FETCH_CONTENTS = "done_fetch_contents";
+Store.EVENT_DONE_ADD_LAYER = "done_add_layer";
+Store.EVENT_DONE_DELETE_LAYER = "done_delete_layer";
+Store.EVENT_DONE_CHANGE_LAYER_ORDER = "done_change_layer_order";
 Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
 export default Store;

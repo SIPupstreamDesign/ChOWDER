@@ -1,5 +1,6 @@
 import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
+import LayerList from './layer_list'
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -39,7 +40,7 @@ function addCheckProperty(parent, isEditable, className, leftLabel, value, chang
 }
 
 
-class PropertyDialog extends EventEmitter {
+class LayerProperty extends EventEmitter {
     constructor(store, action) {
         super();
 
@@ -48,7 +49,8 @@ class PropertyDialog extends EventEmitter {
 
         this.dom = document.createElement('div');
         this.dom.className = "layer_property";
-        this.dom.style.display = "none";
+        this.dom.style.display = "block";
+        /*
         this.dom.style.position = "absolute";
         this.dom.style.width = "250px"
         this.dom.style.height = "90%"
@@ -56,18 +58,22 @@ class PropertyDialog extends EventEmitter {
         this.dom.style.top = "10px";
         this.dom.style.opacity = "0.9"
         this.dom.style.backgroundColor = "gray";
+        */
 
-        this.visible = false;
+        this.visible = true;
 
+        /*
         this.init("Layer_" + 0, {
             opacity: 1.0,
             visible: true
         });
+        */
     }
 
     // レイヤーID、プロパティをもとに初期値を設定
     // レイヤーを選択しなおすたびに毎回呼ぶ.
     init(layerID, layerProps) {
+        this.dom.innerHTML = "";
         this.addVisible(layerID, layerProps)
         this.addOpacity(layerID, layerProps);
     }
@@ -119,5 +125,6 @@ class PropertyDialog extends EventEmitter {
         return this.dom;
     }
 }
+LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI = "layer_property_need_update_gui";
 
-export default PropertyDialog;
+export default LayerProperty;

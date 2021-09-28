@@ -26,9 +26,9 @@ class TileViewer {
 
         this.layerParams = [];
 
-        // 画像全体を正規化した空間（つまり左上0,0、右下1,1)で
-        // 左上　x, y, 及び w, hによる仮想的なカメラを定義する
-        // これをカメラスペースと呼ぶこととする。
+        // LoDレベル0の画像全体を正規化した空間（左上0,0、右下1,1)を
+        // カメラスペースと呼ぶこととする。
+        // カメラスペースで、左上　x, y, 及び w, hによる仮想的なカメラを定義する
         // 
         // 例えば画像左上4分の1をカメラに収める場合
         // {x:0, y:0, w:0.5, h:0.5)となる
@@ -210,13 +210,21 @@ class TileViewer {
         let left = Math.floor((x - centerX) * this.transformScale + centerX);
         let top = Math.floor((y - centerY) * this.transformScale + centerY);
 
+        let opacity = 1.0;
+        let display = "inline";
+        if (url) {
+            opacity = this.layerParams[0].opacity;
+            display = this.layerParams[0].visible ? "inline" : "none";
+        }
+
         const wh = this._getScreenImageSize();
         this.backgroundImage.src = url;
         this.backgroundImage.style.left = left + "px";
         this.backgroundImage.style.top = top + "px";
         this.backgroundImage.style.width = wh.w + "px";
         this.backgroundImage.style.height = wh.h + "px";
-        this.backgroundImage.style.display = "block";
+        this.backgroundImage.style.display = display;
+        this.backgroundImage.style.opacity = opacity;
     }
 
     // カメラスペースでの現在のスケールのタイル1枚の幅高さを返す
@@ -251,7 +259,9 @@ class TileViewer {
     // 既に読み込み済の場合は、読み込み済エレメントに対して位置や幅高さを設定して返す。
     _loadTile(tileInfo) {
         let resultTiles = [];
-        for (let i = 0; i < this.options.foregroundImages.length; ++i) {
+        let startIndex = this.options.hasOwnProperty('backgroundImage') ? 1 : 0;
+        for (let i = startIndex; i < this.layerParams.length; ++i) {
+            const foregroundImageIndex = i - startIndex;
             const layerParam = this.layerParams[i];
             const tileClass = this._generateTileClass(i, tileInfo);
             if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
@@ -282,7 +292,7 @@ class TileViewer {
                 //tile.style.border = "1px solid gray";
                 tile.style.boxSizing = "border-box";
                 const s = this.options.scales[this.currentScaleIndex];
-                tile.src = this._formatUrl(this.options.foregroundImages[i], tileInfo, s.count, s.zoom);
+                tile.src = this._formatUrl(this.options.foregroundImages[foregroundImageIndex], tileInfo, s.count, s.zoom);
                 tile.style.zIndex = i;
                 this._getRootElem().appendChild(tile);
                 resultTiles.push(tile);
@@ -649,7 +659,7 @@ class TileViewer {
     }
 
     /**
-     * 
+     * ズームインする。
      * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
      * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
@@ -668,6 +678,12 @@ class TileViewer {
         }
     }
 
+    /**
+     * ズームアウトする。
+     * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
+     * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
+     *                     nullの場合は画面中心で拡縮を行う。
+     */
     zoomOut(onlyLevel = false, pixelPos = null) {
         if (onlyLevel) {
             this._setScaleIndex(this.currentScaleIndex - 1);
@@ -729,15 +745,23 @@ class TileViewer {
     setOptions(options) {
         this.options = options;
 
-        this.layerParams.length = options.foregroundImages.length;
-        this.layerParams.fill({
-            opacity: 1,
-            visible: true
-        });
+        if (options.hasOwnProperty('backgroundImage')) {
+            this.layerParams.push({
+                opacity: 1,
+                visible: true
+            });
+        }
+
+        for (let i = 0; i < options.foregroundImages.length; ++i) {
+            this.layerParams.push({
+                opacity: 1,
+                visible: true
+            });
+        }
     }
 
     setOpacity(layerIndex, opacity) {
-        console.log("setOpacity", layerIndex, opacity)
+        console.log("setOpacity", layerIndex, this.layerParams)
         this.layerParams[layerIndex].opacity = opacity;
         this._update();
     }

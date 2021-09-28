@@ -95,9 +95,11 @@ class Store extends EventEmitter {
      * }
      */
     changeLayerProperty(params, redraw = true) {
-        const layerIndex = Number(params.id.split("_")[1]);
-        this.instance.setOpacity(layerIndex, params.opacity);
-        this.instance.setVisible(layerIndex, params.visible);
+        const layerIndex = this.getLayerIndex(params.id);
+        if (layerIndex !== null) {
+            this.instance.setOpacity(layerIndex, params.opacity);
+            this.instance.setVisible(layerIndex, params.visible);
+        }
     }
 
 
@@ -135,15 +137,39 @@ class Store extends EventEmitter {
 
     initLayerDataList() {
         const options = this.instance.getOptions();
+        if (options.hasOwnProperty('backgroundImage')) {
+            this.layerDataList.push({
+                id: "BackgourndImage",
+                url: options.backgroundImage,
+                opacity: 1.0,
+                visible: true,
+                type: "image"
+            });
+        }
         for (let i = 0; i < options.foregroundImages.length; ++i) {
             const url = options.foregroundImages[i];
             this.layerDataList.push({
                 id: "Layer_" + i,
                 url: url,
                 opacity: 1.0,
-                visible: true
+                visible: true,
+                type: options.geodeticSystem ? options.geodeticSystem : "not specified"
             });
         }
+    }
+
+    /**
+     * レイヤーを返す. ない場合はnullを返す
+     * @param id : 対象レイヤのID
+     */
+    getLayerIndex(id) {
+        let layers = this.layerDataList;
+        for (let i = 0; i < layers.length; ++i) {
+            if (layers[i].id === id) {
+                return i;
+            }
+        }
+        return null;
     }
 
     // 一定時間経過後にコンテンツ追加命令をpostMessageする
@@ -301,7 +327,10 @@ class Store extends EventEmitter {
         this.initLayerDataList();
         this.addLodScaleLabel();
 
-        this.iframeConnector.send(TileViewerCommand.InitLayers, this.instance.getCameraInfo(), function() {});
+        this.iframeConnector.send(TileViewerCommand.InitLayers, this.instance.getCameraInfo(), () => {});
+
+
+        this.iframeConnector.send(TileViewerCommand.AddLayer, this.layerDataList);
     }
 }
 
