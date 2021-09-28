@@ -164,7 +164,7 @@ class GUI extends EventEmitter {
         const selectDataButton = document.getElementById('button_select_data');
         selectDataButton.onclick = () => {
             // セレクトダイアログを表示
-            propertyDialog.show();
+            propertyDialog.toggleShow();
         };
     }
 

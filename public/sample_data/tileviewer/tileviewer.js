@@ -417,11 +417,13 @@ class TileViewer {
         if (scaleIndex >= 0 && scaleIndex < this.options.scales.length) {
             if (this.currentScaleIndex !== scaleIndex) {
                 this.currentScaleIndex = scaleIndex;
-                if (scaleIndex) {
+                if (withDispatch) {
                     this._dispatchScaleIndex();
                 }
+                return true;
             }
         }
+        return false;
     }
 
     // 位置の変更コールバックを発火させる
@@ -471,6 +473,7 @@ class TileViewer {
 
     // baseScaleCameraを元にcameraを再設定する。
     // baseScaleCameraを変更した場合に呼ぶ
+    // cameraには、baseScaleCameraの中央を基点としたtransformScaleによるスケールがかかる
     _updateCameraFromBaseCamera(withDispatch = true) {
         const cx = this.baseScaleCamera.x + this.baseScaleCamera.w / 2.0;
         const cy = this.baseScaleCamera.y + this.baseScaleCamera.h / 2.0;
@@ -584,17 +587,20 @@ class TileViewer {
             return false;
         }
 
-
         if (this.currentScaleIndex + 1 < this.options.scales.length) {
-            if (scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
+            while (scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
                 // LoDレベルを上げる
-                this._setScaleIndex(this.currentScaleIndex + 1);
+                if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
+                    break;
+                }
             }
         }
         if (this.currentScaleIndex > 0) {
-            if (scale < this._getScaleRatio(this.currentScaleIndex).x) {
+            while (scale < this._getScaleRatio(this.currentScaleIndex).x) {
                 // LoDレベルを下げる
-                this._setScaleIndex(this.currentScaleIndex - 1);
+                if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
+                    break;
+                }
             }
         }
 
@@ -603,19 +609,76 @@ class TileViewer {
         return true;
     }
 
-    zoomIn(onlyLevel) {
+    _convertPixelPositionToCameraPosition(pixelPos) {
+        const rect = this.viewerElem.getBoundingClientRect();
+        const viewerSize = this._getViewerSize();
+        return {
+            x: this.camera.x + this.camera.w * ((pixelPos.x - rect.left) / viewerSize.w),
+            y: this.camera.y + this.camera.h * ((pixelPos.y - rect.top) / viewerSize.h),
+        }
+    }
+
+    /**
+     * ある任意のピボット座標を中心とした、transformScaleによる拡縮を行う。
+     * @param {*} scale 新たに設定するtransformScale
+     * @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
+     * @param {*} withDispatch 変更イベントを発火するかどうか
+     */
+    _setTransformScaleWithPivot(scale, pivotXY, withDispatch = true) {
+        // カメラ座標系での画面中心
+        const centerXY = {
+            x: this.camera.x + this.camera.w * 0.5,
+            y: this.camera.y + this.camera.h * 0.5,
+        };
+        // ピボット位置を画面中心に動かすための移動量
+        const centerToPivot = {
+            x: centerXY.x - pivotXY.x,
+            y: centerXY.y - pivotXY.y
+        };
+        // ピボット位置を画面中心にする
+        this.baseScaleCamera.x -= centerToPivot.x;
+        this.baseScaleCamera.y -= centerToPivot.y;
+        const preTrans = this.transformScale;
+        this._updateCameraFromBaseCamera(false);
+        // 画面中心スケール
+        this.setTransformScale(scale, false);
+        const diffScale = this.transformScale / preTrans;
+        // 移動させていたのをスケールを考慮しつつ、元の戻す
+        this.baseScaleCamera.x += centerToPivot.x / diffScale;
+        this.baseScaleCamera.y += centerToPivot.y / diffScale;
+        this._updateCameraFromBaseCamera(withDispatch);
+        this._update();
+    }
+
+    /**
+     * 
+     * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
+     * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
+     *                     nullの場合は画面中心で拡縮を行う。
+     */
+    zoomIn(onlyLevel = false, pixelPos = null) {
         if (onlyLevel) {
             this._setScaleIndex(this.currentScaleIndex + 1);
             this._update();
+        } else if (pixelPos) {
+            // ピクセルでの位置を、カメラ座標系に変換
+            const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
+            this._setTransformScaleWithPivot(this.transformScale + 0.5 * Math.pow(2, this.currentScaleIndex), pivotXY);
         } else {
+            // 画面中心
             this.setTransformScale(this.transformScale + 0.05 * Math.pow(2, this.currentScaleIndex));
         }
     }
 
-    zoomOut(onlyLevel) {
+    zoomOut(onlyLevel = false, pixelPos = null) {
         if (onlyLevel) {
             this._setScaleIndex(this.currentScaleIndex - 1);
             this._update();
+        } else if (pixelPos) {
+            // ピクセルでの位置を、カメラ座標系に変換
+            // ピクセルでの位置を、カメラ座標系に変換
+            const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
+            this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(2, this.currentScaleIndex), pivotXY);
         } else {
             this.setTransformScale(this.transformScale - 0.05 * Math.pow(2, this.currentScaleIndex));
         }

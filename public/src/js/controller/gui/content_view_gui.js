@@ -283,7 +283,7 @@ class ContentViewGUI extends EventEmitter {
                 connector.send(TileViewerCommand.Resize, rect);
             });
 
-            connector.once(TileViewerCommand.InitLayers, (err, data) => {
+            connector.on(TileViewerCommand.InitLayers, (err, data) => {
                 TileViewerUtil.updateCamera(connector, metaData);
             });
         } catch (err) {

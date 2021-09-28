@@ -57,6 +57,8 @@ class PropertyDialog extends EventEmitter {
         this.dom.style.opacity = "0.9"
         this.dom.style.backgroundColor = "gray";
 
+        this.visible = false;
+
         this.init("Layer_" + 0, {
             opacity: 1.0,
             visible: true
@@ -103,8 +105,14 @@ class PropertyDialog extends EventEmitter {
         this.dom.appendChild(this.opacitySlider.getDOM());
     }
 
-    show() {
-        this.dom.style.display = "block";
+    toggleShow() {
+        if (this.visible) {
+            this.dom.style.display = "none";
+            this.visible = false;
+        } else {
+            this.dom.style.display = "block";
+            this.visible = true;
+        }
     }
 
     getDOM() {

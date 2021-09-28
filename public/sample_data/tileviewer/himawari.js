@@ -207,6 +207,36 @@ function enableMouseEvents(viewer) {
         isLeftDown = false;
         isZoomDown = false;
     };
+
+    // ダブルクリックによるズーム
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    let isLeftClicked = false;
+    let isRightClicked = false;
+    document.getElementById('tileviewer').onmousedown = (ev) => {
+        // ダブルクリック
+        if (isLeftClicked) {
+            ev.preventDefault();
+            isLeftClicked = false;
+            viewer.zoomIn(false, { x: ev.clientX, y: ev.clientY });
+            return;
+        }
+        if (isRightClicked) {
+            ev.preventDefault();
+            isRightClicked = false;
+            viewer.zoomOut(false, { x: ev.clientX, y: ev.clientY });
+            return;
+        }
+        // シングルクリック
+        isLeftClicked = (ev.button === 0);
+        isRightClicked = (ev.button === 2);
+        setTimeout(function() {
+            // single click
+            isLeftClicked = false;
+            isRightClicked = false;
+        }, 350);
+    };
 }
 
 window.onload = () => {
