@@ -707,11 +707,10 @@ class GUI extends EventEmitter {
             let connector = new IFrameConnector(iframe);
             try {
                 connector.connect(() => {});
-                connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                connector.on(TileViewerCommand.InitLayers, (err, data) => {
                     // 初回に一度実行
                     let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
                     this.updateTileViewerScale(connector, metaData, rect);
-
                     TileViewerUtil.updateCamera(connector, metaData);
                 });
             } catch (err) {
