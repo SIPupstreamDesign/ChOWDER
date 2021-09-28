@@ -698,8 +698,6 @@ class GUI extends EventEmitter {
         let iframe = document.createElement('iframe');
         iframe.src = metaData.url;
 
-        //console.error(orgRect, orgWin, rect)
-
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.pointerEvents = "none";
@@ -708,25 +706,7 @@ class GUI extends EventEmitter {
             iframe.contentWindow.chowder_view_type = "display";
             let connector = new IFrameConnector(iframe);
             try {
-                connector.connect(() => {
-
-                    //TileViewerUtil.resize(connector, rect);
-                    /*
-                    // 初回に一度実行
-                    if (metaData.hasOwnProperty('cameraWorldMatrix')) {
-                        connector.send(ITownsCommand.UpdateCamera, {
-                            mat: JSON.parse(metaData.cameraWorldMatrix),
-                            params: JSON.parse(metaData.cameraParams),
-                        }, () => {
-                            connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
-                                let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
-                                connector.send(ITownsCommand.Resize, rect);
-                            });
-                        });
-                    } else {
-                    }
-                    */
-                });
+                connector.connect(() => {});
                 connector.once(TileViewerCommand.InitLayers, (err, data) => {
                     // 初回に一度実行
                     let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
@@ -748,13 +728,13 @@ class GUI extends EventEmitter {
                     chowder_tileviewer_update_camera: (metaData) => {
                         TileViewerUtil.updateCamera(connector, metaData);
                     },
+                    chowder_tileviewer_update_layer_list: (metaData, callback) => {
+                        let preMetaData = this.store.getMetaData(metaData.id);
+                        TileViewerUtil.updateLayerList(connector, metaData, preMetaData, callback);
+                    },
                     /*
                     chowder_itowns_update_time: (metaDatam, time, range) => {
                         ITownsUtil.updateTime(connector, metaData, time, range);
-                    },
-                    chowder_itowns_update_layer_list: (metaData, callback) => {
-                        let preMetaData = this.store.getMetaData(metaData.id);
-                        ITownsUtil.updateLayerList(connector, metaData, preMetaData, callback);
                     },
                     chowder_itowns_measure_time: (callback) => {
                         connector.send(ITownsCommand.MeasurePerformance, {}, callback);

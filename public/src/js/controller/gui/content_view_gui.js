@@ -251,6 +251,10 @@ class ContentViewGUI extends EventEmitter {
                 chowder_tileviewer_resize: (metaData) => {
                     this.updateTileViewerFrameSize(connector, metaData);
                 },
+                chowder_tileviewer_update_layer_list: (metaData) => {
+                    let preMetaData = this.store.getMetaData(metaData.id);
+                    TileViewerUtil.updateLayerList(connector, metaData, preMetaData);
+                },
                 chowder_tileviewer_update_camera: (metaData) => {
                     const preMetaData = this.store.getMetaData(metaData.id);
                     if (preMetaData) {

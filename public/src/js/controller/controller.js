@@ -1613,6 +1613,7 @@ class Controller {
             let funcDict = this.store.getITownFuncDict();
             if (funcDict && funcDict.hasOwnProperty(json.id)) {
                 funcDict[json.id].chowder_tileviewer_update_camera(json);
+                funcDict[json.id].chowder_tileviewer_update_layer_list(json);
             }
         }
         this.store.setMetaData(json.id, json);
