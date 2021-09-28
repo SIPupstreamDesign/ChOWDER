@@ -587,20 +587,18 @@ class TileViewer {
             return false;
         }
 
-        if (this.currentScaleIndex + 1 < this.options.scales.length) {
-            while (scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
-                // LoDレベルを上げる
-                if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
-                    break;
-                }
+        while ((this.currentScaleIndex + 1 < this.options.scales.length) &&
+            scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
+            // LoDレベルを上げる
+            if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
+                break;
             }
         }
-        if (this.currentScaleIndex > 0) {
-            while (scale < this._getScaleRatio(this.currentScaleIndex).x) {
-                // LoDレベルを下げる
-                if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
-                    break;
-                }
+        while (this.currentScaleIndex > 0 &&
+            scale < this._getScaleRatio(this.currentScaleIndex).x) {
+            // LoDレベルを下げる
+            if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
+                break;
             }
         }
 

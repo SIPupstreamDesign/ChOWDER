@@ -212,29 +212,39 @@ function enableMouseEvents(viewer) {
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     });
-    let isLeftClicked = false;
-    let isRightClicked = false;
+    let leftClickPos = false;
+    let rightClickPos = false;
     document.getElementById('tileviewer').onmousedown = (ev) => {
         // ダブルクリック
-        if (isLeftClicked) {
+        if (leftClickPos) {
+            const distance2 =
+                Math.pow(ev.clientX - leftClickPos.x, 2) +
+                Math.pow(ev.clientY - leftClickPos.y, 2);
             ev.preventDefault();
-            isLeftClicked = false;
-            viewer.zoomIn(false, { x: ev.clientX, y: ev.clientY });
+            leftClickPos = null;
+            if (distance2 < 5) {
+                viewer.zoomIn(false, { x: ev.clientX, y: ev.clientY });
+            }
             return;
         }
-        if (isRightClicked) {
+        if (rightClickPos) {
+            const distance2 =
+                Math.pow(ev.clientX - rightClickPos.x, 2) +
+                Math.pow(ev.clientY - rightClickPos.y, 2);
             ev.preventDefault();
-            isRightClicked = false;
-            viewer.zoomOut(false, { x: ev.clientX, y: ev.clientY });
+            rightClickPos = null;
+            if (distance2 < 5) {
+                viewer.zoomOut(false, { x: ev.clientX, y: ev.clientY });
+            }
             return;
         }
         // シングルクリック
-        isLeftClicked = (ev.button === 0);
-        isRightClicked = (ev.button === 2);
+        leftClickPos = (ev.button === 0) ? { x: ev.clientX, y: ev.clientY } : null;
+        rightClickPos = (ev.button === 2) ? { x: ev.clientX, y: ev.clientY } : null;
         setTimeout(function() {
             // single click
-            isLeftClicked = false;
-            isRightClicked = false;
+            leftClickPos = null;
+            rightClickPos = null;
         }, 350);
     };
 }
