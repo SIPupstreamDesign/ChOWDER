@@ -295,6 +295,7 @@ class Store extends EventEmitter {
         lodScaleLabel.style.left = "1em";
         lodScaleLabel.style.bottom = "1em";
         lodScaleLabel.style.position = "fixed";
+        lodScaleLabel.style.zIndex = 10000;
         lodScaleLabel.classList.add('fuchidori')
         document.body.appendChild(lodScaleLabel);
 
