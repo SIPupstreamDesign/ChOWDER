@@ -49,6 +49,7 @@ const Constants = {
     ZIndexAlwaysOnTopValue: 0x7FFFFFFF,
     ZIndexAlwaysOnTopString: "AlwaysOnTop",
     ItownsAttributionKey: "attribution",
+    TileViewerAttributionKey: "attribution",
     // Firefox 1.0+
     IsFirefox: typeof InstallTrigger !== 'undefined',
     // Safari 3.0+ "[object HTMLElementConstructor]"

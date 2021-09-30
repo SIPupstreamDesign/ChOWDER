@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
+import Constants from './constants';
 import TileViewerCommand from "./tileviewer_command";
 
 class TileViewerUtil {
@@ -77,6 +78,27 @@ class TileViewerUtil {
         } catch (e) {
             console.error(e);
         }
+    }
+
+    static createCopyrightText(metaData) {
+        let copyrightText = "";
+        let layerList = JSON.parse(metaData.layerList);
+        for (let i = 0; i < layerList.length; ++i) {
+            if (layerList[i].hasOwnProperty(Constants.TileViewerAttributionKey)) {
+                let attrib = layerList[i][Constants.TileViewerAttributionKey];
+                if (attrib.hasOwnProperty('name') && attrib.name.length > 0) {
+                    copyrightText += attrib.name + "<br />"
+                }
+                if (attrib.hasOwnProperty('url') && attrib.url.length > 0) {
+                    copyrightText += '<a href="' +
+                        attrib.url +
+                        '" class="copyright_link">' +
+                        attrib.url +
+                        "</a><br />";
+                }
+            }
+        }
+        return copyrightText;
     }
 }
 

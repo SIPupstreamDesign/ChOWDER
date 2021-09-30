@@ -11,6 +11,7 @@ import Translation from '../common/translation';
 import Menu from '../components/menu';
 import Constants from '../common/constants';
 import TileViewerCommand from '../common/tileviewer_command'
+import TileViewerUtil from '../common/tileviewer_util'
 import LayerProperty from './layer_property'
 import LayerList from './layer_list'
 
@@ -106,6 +107,49 @@ class GUI extends EventEmitter {
         })
 
 
+        // コンテンツ追加後に
+        // MetaDataが更新されたタイミングでレイヤーリストをEnableにする
+        // syncボタンの状態を更新
+        this.store.on(Store.EVENT_DONE_UPDATE_METADATA, (err, metaData) => {
+            let meta = metaData;
+            if (metaData.length === 1) {
+                meta = metaData[0];
+            }
+            if (!err && meta.hasOwnProperty('id')) {
+                this.contentID.innerText = meta.id;
+                this.layerList.setEnable(true);
+
+                // copyright更新
+                this.showCopyrights(document.getElementById('content'), meta)
+            }
+            // syncの更新
+            /*
+            if (!err) {
+                const isSync = ITownsUtil.isTimelineSync(meta);
+                const dom = this.timelineSyncButton.getDOM();
+                if (isSync) {
+                    if (!dom.classList.contains(pressedClassName)) {
+                        dom.classList.add(pressedClassName);
+                    }
+                } else {
+                    if (dom.classList.contains(pressedClassName)) {
+                        dom.classList.remove(pressedClassName);
+                    }
+                }
+            }
+            */
+        });
+
+        this.store.on(Store.EVENT_DONE_ADD_CONTENT, (err, meta) => {
+            if (!err && meta.hasOwnProperty('id')) {
+                this.contentID.innerText = meta.id;
+                this.layerList.setEnable(true);
+
+                // copyright更新
+                this.showCopyrights(document.getElementById('content'), meta)
+            }
+        });
+
         // iframe内にwindowのmousemoveを伝える用
         this.onMouseMove = this._onMouseMove.bind(this);
         // iframe内にwindowのmouseupを伝える用
@@ -174,8 +218,35 @@ class GUI extends EventEmitter {
         this.propInner.className = "tileviewer_property_inner";
         contentDOM.appendChild(this.propInner);
 
+        // コンテンツIDタイトル
+        let contentIDTitle = document.createElement('p');
+        contentIDTitle.className = "tileviewer_property_title";
+        contentIDTitle.innerHTML = "Content ID";
+        this.propInner.appendChild(contentIDTitle);
+
+        // コンテンツID
+        this.contentID = document.createElement('p');
+        this.contentID.className = "tileviewer_property_text";
+        this.propInner.appendChild(this.contentID);
+
+        // ベースコンテンツタイトル
+        let contentTitle = document.createElement('p');
+        contentTitle.className = "tileviewer_property_title";
+        contentTitle.innerHTML = i18next.t('base_content');
+        this.propInner.appendChild(contentTitle);
+
+        // ベースコンテンツ名
+        let contentName = document.createElement('p');
+        contentName.className = "tileviewer_property_text";
+        let selectValue = this.getSelectedValueOnMenuContents();
+        contentName.innerHTML = selectValue.url;
+        this.propInner.appendChild(contentName);
+
+        this.propInner.appendChild(document.createElement('hr'));
+
         // レイヤーリスト
         this.layerList = new LayerList(this.store, this.action);
+        this.layerList.setEnable(false);
         this.propInner.appendChild(this.layerList.getDOM());
 
         // レイヤープロパティ
@@ -249,6 +320,50 @@ class GUI extends EventEmitter {
         this.contentSelect.getDOM().style.marginTop = "20px"
         wrapDom.appendChild(this.contentSelect.getDOM())
         document.getElementsByClassName('loginframe')[0].appendChild(wrapDom);
+    }
+
+    /**
+     * Copyrightを表示.
+     * elemにCopyright用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+    showCopyrights(elem, metaData) {
+        if (elem &&
+            metaData.type === Constants.TypeTileViewer &&
+            metaData.hasOwnProperty('layerList')) {
+
+            let copyrightText = TileViewerUtil.createCopyrightText(metaData);
+            if (copyrightText.length === 0) {
+                let copyrightElem = document.getElementById("copyright:" + metaData.id);
+                if (copyrightElem) {
+                    copyrightElem.style.display = "none";
+                }
+                return;
+            }
+
+            let copyrightElem = document.getElementById("copyright:" + metaData.id);
+            if (copyrightElem) {
+                copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.right = "0px";
+                copyrightElem.style.top = "0px";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+                copyrightElem.style.display = "inline";
+            } else {
+                copyrightElem = document.createElement("pre");
+                copyrightElem.style.display = "inline";
+                copyrightElem.id = "copyright:" + metaData.id;
+                copyrightElem.className = "copyright";
+                copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.right = "0px";
+                copyrightElem.style.top = "0px";
+                copyrightElem.style.position = "absolute";
+                copyrightElem.style.height = "auto";
+                copyrightElem.style.whiteSpace = "pre-line";
+                copyrightElem.style.zIndex = elem.style.zIndex;
+                elem.appendChild(copyrightElem);
+            }
+        }
     }
 
     /**

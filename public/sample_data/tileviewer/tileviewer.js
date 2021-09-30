@@ -502,6 +502,8 @@ class TileViewer {
     _update() {
         if (this.options.hasOwnProperty('backgroundImage')) {
             this._setBackgroundImage(this.options.backgroundImage);
+        } else {
+            this.backgroundImage.style.display = "none";
         }
         const tileMatrix = this._prepareTileElements();
         const loadedElems = this._fillTileElements(tileMatrix);

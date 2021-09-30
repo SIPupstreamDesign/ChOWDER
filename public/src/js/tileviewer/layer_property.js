@@ -39,6 +39,57 @@ function addCheckProperty(parent, isEditable, className, leftLabel, value, chang
     });
 }
 
+/**
+ * Propertyタブに入力プロパティを追加する
+ * @method addInputProperty
+ * @param {String} leftLabel 左ラベル
+ * @param {String} rightLabel 右ラベル
+ * @param {String} value 初期入力値
+ */
+function addTextAreaProperty(parentElem, isEditable, leftLabel, rightLabel, value, changeCallback) {
+    /*
+    	<div class="input-group">
+    		<span class="input-group-addon">x</span>
+    		<input type="text" class="form-control" id="content_transform_x" value="0">
+    		<span class="input-group-addon">px</span>
+    	</div>
+    */
+    let group = document.createElement('div');
+    let leftSpan = document.createElement('span');
+    let rightSpan = document.createElement('span');
+    let input = document.createElement('textarea');
+    input.style.maxWidth = "220px"
+    input.style.width = "220px"
+    input.style.height = "auto"
+
+    group.className = "input-group";
+    group.style.margin = "0px"
+    group.style.marginBottom = "5px"
+    leftSpan.className = "input-group-addon";
+    leftSpan.innerHTML = leftLabel;
+    rightSpan.className = "input-group-addon";
+    rightSpan.innerHTML = rightLabel;
+    input.className = "form-control";
+    input.value = value;
+    input.disabled = !isEditable;
+
+    //group.appendChild(leftSpan);
+    group.appendChild(input);
+    if (rightLabel) {
+        group.appendChild(rightSpan);
+    }
+    parentElem.appendChild(group);
+
+    input.onchange = (evt) => {
+        try {
+            changeCallback(null, evt.target.value);
+        } catch (ex) {
+            console.error(ex);
+            changeCallback(err, evt.target.value);
+        }
+    };
+}
+
 
 class LayerProperty extends EventEmitter {
     constructor(store, action) {
@@ -76,6 +127,7 @@ class LayerProperty extends EventEmitter {
         this.dom.innerHTML = "";
         this.addVisible(layerID, layerProps)
         this.addOpacity(layerID, layerProps);
+        this.addAttribution(layerID, layerProps);
     }
 
     addVisible(layerID, layerProps) {
@@ -109,6 +161,61 @@ class LayerProperty extends EventEmitter {
             });
         });
         this.dom.appendChild(this.opacitySlider.getDOM());
+    }
+
+    addAttribution(layerID, layerProps) {
+        // Attributionタイトル
+        let attributionTitle = document.createElement('p');
+        attributionTitle.className = "tileviewer_property_text_title";
+        attributionTitle.innerText = "Attribution";
+        attributionTitle.style.paddingTop = "10px";
+        this.dom.appendChild(attributionTitle);
+
+        // Attribution枠
+        let attributionDiv = document.createElement('div');
+        attributionDiv.style.height = "auto";
+        attributionDiv.style.border = "1px solid gray"
+        attributionDiv.style.marginLeft = "5px";
+        attributionDiv.style.marginRight = "5px";
+        this.dom.appendChild(attributionDiv);
+
+        // Attribution - Name
+        let attributionName = document.createElement('p');
+        attributionName.className = "tileviewer_property_text_title tileviewer_attribution_title";
+        attributionName.innerText = "Name";
+        attributionDiv.appendChild(attributionName);
+        const attribName = layerProps.hasOwnProperty('attribution') ? layerProps.attribution.name : "";
+        addTextAreaProperty(attributionDiv, layerID && layerProps, "name", "", attribName, (err, data) => {
+            let attrib = { name: "", url: "" };
+            let layer = this.store.getLayerData(layerID);
+            if (layer.hasOwnProperty('attribution')) {
+                attrib = JSON.parse(JSON.stringify(layer.attribution));
+            }
+            attrib.name = data;
+            this.action.changeLayerProperty({
+                id: layerID,
+                attribution: attrib
+            });
+        });
+
+        // Attribution - URL
+        let attributionURL = document.createElement('p');
+        attributionURL.className = "tileviewer_property_text_title tileviewer_attribution_title";
+        attributionURL.innerText = "URL";
+        attributionDiv.appendChild(attributionURL);
+        const attribURL = layerProps.hasOwnProperty('attribution') ? layerProps.attribution.url : "";
+        addTextAreaProperty(attributionDiv, layerID && layerProps, "url", "", attribURL, (err, data) => {
+            let attrib = { name: "", url: "" };
+            let layer = this.store.getLayerData(layerID);
+            if (layer.hasOwnProperty('attribution')) {
+                attrib = JSON.parse(JSON.stringify(layer.attribution));
+            }
+            attrib.url = data;
+            this.action.changeLayerProperty({
+                id: layerID,
+                attribution: attrib
+            });
+        });
     }
 
     toggleShow() {

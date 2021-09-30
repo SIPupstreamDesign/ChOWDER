@@ -20,7 +20,7 @@ class LayerList extends EventEmitter {
         // レイヤー一覧
         this.layerSelect = new Select();
         this.layerSelect.getDOM().className = "layer_select";
-        this.layerSelect.getDOM().size = 10;
+        this.layerSelect.getDOM().size = 7;
         this.dom.appendChild(this.layerSelect.getDOM());
 
         let layerButtonArea = document.createElement('div');

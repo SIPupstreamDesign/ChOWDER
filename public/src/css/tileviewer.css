@@ -58,6 +58,11 @@ body {
     height: 100%;
 }
 
+hr {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
 .head_mode_text {
     background-color: rgba(63, 63, 63, 1.0);
 }
@@ -82,11 +87,39 @@ body {
     display: none;
     position: absolute;
     width: 250px;
-    height: 90%;
+    height: calc(100% - 20px);
     left: 10px;
     top: 10px;
     opacity: 0.9;
-    background-color: gray;
+    background-color: #292d3e;
+    overflow-y: auto;
+}
+
+.tileviewer_property_title {
+    color: white;
+    font-size: 16px;
+    margin: 5px;
+}
+
+.tileviewer_property_text {
+    color: white;
+    margin-left: 14px;
+    margin-right: 14px;
+    border: 1px solid;
+    white-space: normal;
+    word-break: break-all;
+    user-select: text;
+}
+
+.tileviewer_attribution_title {
+    font-size: 11px;
+}
+
+.tileviewer_property_text_title {
+    color: white;
+    font-size: 16px;
+    margin-left: 14px;
+    margin-right: 14px;
 }
 
 .layer_select {
@@ -239,4 +272,35 @@ body {
 
 .layer_dialog_zoom_max_select:disabled {
     background: lightgray;
+}
+
+.input-group {
+    width: 230px;
+}
+
+
+/*---------------------------------------------------------------*/
+
+.copyright {
+    position: absolute;
+    color: black;
+    height: 50px;
+    font-size: 1em;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid gray;
+    padding: 10px;
+    box-sizing: border-box;
+    margin: unset;
+}
+
+.copyright_link:link {
+    color: black;
+}
+
+.copyright_link:visited {
+    color: black;
+}
+
+.copyright_link:hover {
+    color: lightgray;
 }
