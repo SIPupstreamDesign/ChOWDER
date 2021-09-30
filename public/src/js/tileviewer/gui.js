@@ -244,6 +244,12 @@ class GUI extends EventEmitter {
 
         this.propInner.appendChild(document.createElement('hr'));
 
+        // レイヤーリストタイトル
+        let layerTitle = document.createElement('p');
+        layerTitle.className = "tileviewer_property_title";
+        layerTitle.innerHTML = i18next.t('layer_list');
+        this.propInner.appendChild(layerTitle);
+
         // レイヤーリスト
         this.layerList = new LayerList(this.store, this.action);
         this.layerList.setEnable(false);

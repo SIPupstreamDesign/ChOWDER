@@ -58,13 +58,15 @@ function addTextAreaProperty(parentElem, isEditable, leftLabel, rightLabel, valu
     let leftSpan = document.createElement('span');
     let rightSpan = document.createElement('span');
     let input = document.createElement('textarea');
-    input.style.maxWidth = "220px"
-    input.style.width = "220px"
+    input.style.maxWidth = "215px"
+    input.style.width = "215px"
     input.style.height = "auto"
 
     group.className = "input-group";
-    group.style.margin = "0px"
-    group.style.marginBottom = "5px"
+    group.style.margin = "0px";
+    group.style.marginLeft = "5px";
+    group.style.marginBottom = "5px";
+    group.style.paddingBottom = "5px";
     leftSpan.className = "input-group-addon";
     leftSpan.innerHTML = leftLabel;
     rightSpan.className = "input-group-addon";

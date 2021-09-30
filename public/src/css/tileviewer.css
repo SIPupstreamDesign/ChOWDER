@@ -103,16 +103,13 @@ hr {
 
 .tileviewer_property_text {
     color: white;
-    margin-left: 14px;
-    margin-right: 14px;
+    font-size: 14px;
+    margin-left: 10px;
+    margin-right: 10px;
     border: 1px solid;
     white-space: normal;
     word-break: break-all;
     user-select: text;
-}
-
-.tileviewer_attribution_title {
-    font-size: 11px;
 }
 
 .tileviewer_property_text_title {
@@ -122,7 +119,12 @@ hr {
     margin-right: 14px;
 }
 
+.tileviewer_attribution_title {
+    font-size: 14px;
+}
+
 .layer_select {
+    font-size: 14px;
     margin: 5px;
     width: 240px;
     cursor: default;
