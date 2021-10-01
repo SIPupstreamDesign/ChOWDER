@@ -757,7 +757,9 @@ class TileViewer {
         for (let i = 0; i < options.foregroundImages.length; ++i) {
             this.layerParams.push({
                 opacity: 1,
-                visible: true
+                visible: true,
+                zoomLevel: this.scaleIndex,
+                fixedZoomLevel: false
             });
         }
     }

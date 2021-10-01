@@ -443,17 +443,24 @@ class GUI extends EventEmitter {
      */
     showCopyrights(elem, metaData) {
         if (elem &&
-            metaData.type === Constants.TypeWebGL &&
+            (metaData.type === Constants.TypeWebGL || metaData.type === Constants.TypeTileViewer) &&
             metaData.hasOwnProperty('layerList')) {
 
             let copyrightText = ITownsUtil.createCopyrightText(metaData);
-            if (copyrightText.length === 0) return;
+            if (copyrightText.length === 0) {
+                let copyrightElem = document.getElementById("copyright:" + metaData.id);
+                if (copyrightElem) {
+                    copyrightElem.style.display = "none";
+                }
+                return;
+            }
 
             let previewArea = document.getElementById('preview_area');
             let copyrightElem = document.getElementById("copyright:" + metaData.id);
             let previewRect = previewArea.getBoundingClientRect();
             if (copyrightElem) {
                 copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.display = "inline";
                 let rect = elem.getBoundingClientRect();
                 copyrightElem.style.right = (previewRect.right - rect.right) + "px";
                 if (metaData.display_time && String(metaData.display_time) === "true") {
@@ -478,6 +485,7 @@ class GUI extends EventEmitter {
                 copyrightElem.style.height = "auto";
                 copyrightElem.style.whiteSpace = "pre-line";
                 copyrightElem.style.zIndex = elem.style.zIndex;
+                copyrightElem.style.display = "inline";
                 previewArea.appendChild(copyrightElem);
             }
         }

@@ -129,6 +129,7 @@ class LayerProperty extends EventEmitter {
         this.dom.innerHTML = "";
         this.addVisible(layerID, layerProps)
         this.addOpacity(layerID, layerProps);
+        this.addZoomLevel(layerID, layerProps);
         this.addAttribution(layerID, layerProps);
     }
 
@@ -163,6 +164,18 @@ class LayerProperty extends EventEmitter {
             });
         });
         this.dom.appendChild(this.opacitySlider.getDOM());
+    }
+
+    addZoomLevel(layerID, layerProps) {
+        if (layerProps.type === "image") return;
+
+        if (layerProps && layerProps.hasOwnProperty('zoomLevel')) {
+            this.zoomSlider = new PropertySlider(layerID && layerProps, "level", "", layerProps.zoomLevel);
+        } else {
+            this.zoomSlider = new PropertySlider(layerID && layerProps, "level", "", 0, 20, true, 0, 20);
+        }
+        this.zoomSlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {});
+        this.dom.appendChild(this.zoomSlider.getDOM());
     }
 
     addAttribution(layerID, layerProps) {

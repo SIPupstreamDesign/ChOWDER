@@ -87,7 +87,7 @@ hr {
     display: none;
     position: absolute;
     width: 250px;
-    height: calc(100% - 20px);
+    height: calc(100% - 40px);
     left: 10px;
     top: 10px;
     opacity: 0.9;
@@ -287,7 +287,7 @@ hr {
     position: absolute;
     color: black;
     height: 50px;
-    font-size: 1em;
+    font-size: 0.8em;
     background-color: rgba(255, 255, 255, 0.5);
     border: 1px solid gray;
     padding: 10px;
