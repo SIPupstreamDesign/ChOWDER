@@ -2,6 +2,9 @@
     "preset_list": [{
             "name": "ひまわり(JP)",
             "url": "sample_data/tileviewer/himawari.html"
+        }, {
+            "name": "ひまわり(FD)",
+            "url": "sample_data/tileviewer/himawari_fd.html"
         },
         {
             "name": "GSI",

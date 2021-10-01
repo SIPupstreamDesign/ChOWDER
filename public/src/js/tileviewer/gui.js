@@ -37,6 +37,12 @@ class GUI extends EventEmitter {
      * すべてのGUIの初期化
      */
     init() {
+        // TimelineTemplateのViewURLを非表示とする
+        let viewURLElem = document.getElementById('button_view_url');
+        if (viewURLElem) {
+            viewURLElem.style.display = "none";
+        }
+
         //this.initWindowEvents();
         this.initLoginMenu();
         this.loginMenu.show(true);
