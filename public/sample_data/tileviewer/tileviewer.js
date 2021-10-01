@@ -593,7 +593,7 @@ class TileViewer {
 
         // 画面サイズの半分より小さくしようとした場合は失敗とする
         const viewerSize = this._getViewerSize();
-        const halfW = viewerSize.w / 2;
+        const halfW = viewerSize.w * (this.viewport[2] - this.viewport[0]) / 2;
         if (this._getScreenImageSize().w < halfW) {
             this.transformScale = preScale;
             return false;
@@ -717,28 +717,28 @@ class TileViewer {
     }
 
     /**
-     * スケールやビューポートをすべて含んだカメラ情報を返す。
+     * スケール等を含んだカメラ情報を返す。
      * この値を取得し、setCameraInfoを呼ぶことで、見た目を完全に再現させることができる。
-     * @returns スケールやビューポートをすべて含んだカメラ情報
+     * ただし、ビューポートは別途取得する必要がある。
+     * @returns スケールをすべて含んだカメラ情報
      */
     getCameraInfo() {
         return {
             camera: JSON.parse(JSON.stringify(this.camera)),
             baseScaleCamera: JSON.parse(JSON.stringify(this.baseScaleCamera)),
             transformScale: this.transformScale,
-            viewport: JSON.parse(JSON.stringify(this.viewport)),
             scaleIndex: this.currentScaleIndex
         }
     }
 
     /**
-     * スケールやビューポートをすべて含んだカメラ情報をセットする。
-     * getCameraInfoで得られた値を引数に入れることで、カメラ位置を復元できる
+     * スケール等含んだカメラ情報をセットする。
+     * getCameraInfoで得られた値を引数に入れることで、カメラ位置を復元できる。
+     * ただし、ビューポートは別途指定する必要がある。
      */
     setCameraInfo(viewInfo) {
         this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
         this._updateCameraFromBaseCamera(false);
-        this.viewport = JSON.parse(JSON.stringify(viewInfo.viewport));
         this._setScaleIndex(viewInfo.scaleIndex);
         this.setTransformScale(viewInfo.transformScale, false);
         this._resizeScaling(false);
