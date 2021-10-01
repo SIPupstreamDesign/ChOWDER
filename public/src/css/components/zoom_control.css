@@ -1,0 +1,56 @@
+.zoom_control_left_span {
+    width: 100px;
+    height: 33px;
+    padding: 6px 4px;
+}
+
+.zoom_control_right_span {
+    width: 125px;
+    padding: 0px;
+    right: 0px;
+    position: absolute;
+    height: 33px;
+    bottom: 0px;
+    z-index: -1;
+    margin-right: 5px;
+}
+
+.input-group {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.zoom_control_group {
+    table-layout: fixed;
+    width: 235px;
+}
+
+.zoom_control_sub_button {
+    color: dodgerblue;
+    border: none;
+    width: 32px;
+    height: 32px;
+}
+
+.zoom_control_sub_button:hover {
+    color: darkblue;
+}
+
+.zoom_control_add_button {
+    color: dodgerblue;
+    border: none;
+    width: 32px;
+    height: 32px;
+}
+
+.zoom_control_add_button:hover {
+    color: darkblue;
+}
+
+.zoom_control_input {
+    padding: 2px 0px;
+    font-size: 14px;
+    vertical-align: middle;
+    height: 32px;
+    border: none;
+}

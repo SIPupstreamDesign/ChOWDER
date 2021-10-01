@@ -1,6 +1,7 @@
 import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
 import LayerList from './layer_list'
+import ZoomControl from '../components/zoom_control'
 
 /**
  * Propertyタブに入力プロパティを追加する
@@ -170,9 +171,9 @@ class LayerProperty extends EventEmitter {
         if (layerProps.type === "image") return;
 
         if (layerProps && layerProps.hasOwnProperty('zoomLevel')) {
-            this.zoomSlider = new PropertySlider(layerID && layerProps, "level", "", layerProps.zoomLevel);
+            this.zoomSlider = new ZoomControl("zoom level", layerProps.zoomLevel, 0, 20);
         } else {
-            this.zoomSlider = new PropertySlider(layerID && layerProps, "level", "", 0, 20, true, 0, 20);
+            this.zoomSlider = new ZoomControl("zoom level", 0, 0, 20);
         }
         this.zoomSlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {});
         this.dom.appendChild(this.zoomSlider.getDOM());

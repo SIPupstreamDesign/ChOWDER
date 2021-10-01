@@ -692,7 +692,6 @@ class TileViewer {
             this._update();
         } else if (pixelPos) {
             // ピクセルでの位置を、カメラ座標系に変換
-            // ピクセルでの位置を、カメラ座標系に変換
             const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
             this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(2, this.currentScaleIndex), pivotXY);
         } else {
