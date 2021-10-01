@@ -51,6 +51,9 @@ class TileViewer {
         // opeions.scales[]の現在の使用インデックス
         this.currentScaleIndex = 0;
 
+        // ScaleIndexを固定とする場合trueにする
+        this.isFixedScaleIndex = false;
+
         // タイル画像エレメントのclass名に必ず入れるclass
         this.tileImageClass = "___tile___";
 
@@ -424,6 +427,9 @@ class TileViewer {
 
     // スケールインデックスの変更
     _setScaleIndex(scaleIndex, withDispatch = true) {
+        if (this.isFixedScaleIndex) {
+            return false;
+        }
         if (scaleIndex >= 0 && scaleIndex < this.options.scales.length) {
             if (this.currentScaleIndex !== scaleIndex) {
                 this.currentScaleIndex = scaleIndex;
@@ -773,6 +779,23 @@ class TileViewer {
         console.log("setVisible", layerIndex, visible)
         this.layerParams[layerIndex].visible = visible;
         this._update();
+    }
+
+    setZoomLevel(isFixedScaleIndex, scaleIndex) {
+        console.log("setZoomLevel", isFixedScaleIndex, scaleIndex);
+        // 一旦falseにしてscaleIndexを強制設定する
+        const preFixed = this.isFixedScaleIndex;
+        this.isFixedScaleIndex = false;
+        if (this._setScaleIndex(scaleIndex, true)) {
+            this._update();
+        }
+        // isFixedScaleIndexを最新の値に設定
+        this.isFixedScaleIndex = isFixedScaleIndex;
+        if (preFixed && !isFixedScaleIndex) {
+            // 固定から非固定になったとき, 一旦resize相当を走らせて
+            // スケールを自動設定する
+            this._resizeScaling();
+        }
     }
 
     getOptions() {

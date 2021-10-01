@@ -10,6 +10,9 @@ class ZoomControl extends EventEmitter {
     constructor(name, initialValue, minValue, maxValue) {
         super();
 
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+
         this.dom = document.createElement('div');
 
         let group = document.createElement('div');
@@ -25,52 +28,94 @@ class ZoomControl extends EventEmitter {
         rightSpan.className = "zoom_control input-group-addon zoom_control_right_span";
         rightSpan.style.borderRadius = "0px 4px 4px 0px"
 
-        let subButton = new Button();
-        subButton.setDataKey("◀");
-        subButton.getDOM().className = "zoom_control_sub_button";
+        this.subButton = new Button();
+        this.subButton.setDataKey("◀");
+        this.subButton.getDOM().className = "zoom_control_sub_button";
 
-        let levelInput = new Input("text");
-        levelInput.setValue(initialValue);
-        levelInput.getDOM().className = "zoom_control_input"
-        levelInput.getDOM().style.textAlign = "center";
-        levelInput.getDOM().style.width = "40px";
+        this.levelInput = new Input("text");
+        this.levelInput.setValue(initialValue);
+        this.levelInput.getDOM().className = "zoom_control_input"
+        this.levelInput.getDOM().style.textAlign = "center";
+        this.levelInput.getDOM().style.width = "40px";
 
-        let addButton = new Button();
-        addButton.setDataKey("▶");
-        addButton.getDOM().className = "zoom_control_add_button";
+        this.addButton = new Button();
+        this.addButton.setDataKey("▶");
+        this.addButton.getDOM().className = "zoom_control_add_button";
 
         group.appendChild(leftSpan);
-        group.appendChild(subButton.getDOM());
-        group.appendChild(levelInput.getDOM());
-        group.appendChild(addButton.getDOM());
+        group.appendChild(this.subButton.getDOM());
+        group.appendChild(this.levelInput.getDOM());
+        group.appendChild(this.addButton.getDOM());
         group.appendChild(rightSpan);
 
-        levelInput.on("change", (evt) => {
-            this.emit(ZoomControl.EVENT_CHANGE, null, evt);
+        this.levelInput.on("change", (evt) => {
+            this.emit(ZoomControl.EVENT_CHANGE, null, {
+                value: this.getValue()
+            });
         });
 
-        addButton.on('click', (evt) => {
-            const value = Number(levelInput.getValue());
+        this.addButton.on('click', (evt) => {
+            const value = Number(this.levelInput.getValue());
             if (value < maxValue) {
-                levelInput.setValue(value + 1);
+                this.levelInput.setValue(value + 1);
+                this.emit(ZoomControl.EVENT_CHANGE, null, {
+                    value: this.getValue()
+                });
             }
         });
 
-        subButton.on('click', (evt) => {
-            const value = Number(levelInput.getValue());
+        this.subButton.on('click', (evt) => {
+            const value = Number(this.levelInput.getValue());
             if (value > minValue) {
-                levelInput.setValue(value - 1);
+                this.levelInput.setValue(value - 1);
+                this.emit(ZoomControl.EVENT_CHANGE, null, {
+                    value: this.getValue()
+                });
             }
         });
 
         this.dom.appendChild(group);
     }
 
+    getValue() {
+        return this.levelInput.getValue();
+    }
+
+    setValue(value) {
+        if (value >= this.minValue && value <= this.maxValue) {
+            this.levelInput.setValue(value);
+        }
+    }
+
+    setMinValue(minValue) {
+        this.minValue = minValue;
+    }
+
+    setMaxValue(maxValue) {
+        this.maxValue = maxValue;
+    }
+
+    getMinValue() {
+        return this.minValue;
+    }
+
+    getMaxValue() {
+        return this.maxValue;
+    }
+
     setEnable(isEnable) {
         if (!isEnable) {
             this.dom.style.pointerEvents = "none";
+            this.levelInput.getDOM().style.background = "lightgray";
+            this.levelInput.getDOM().style.color = "lightgray";
+            this.addButton.getDOM().style.color = "lightgray";
+            this.subButton.getDOM().style.color = "lightgray";
         } else {
             this.dom.style.pointerEvents = "auto";
+            this.levelInput.getDOM().style.background = "white";
+            this.levelInput.getDOM().style.color = "black";
+            this.addButton.getDOM().style.color = "dodgerblue";
+            this.subButton.getDOM().style.color = "dodgerblue";
         }
     }
 

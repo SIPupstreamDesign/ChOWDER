@@ -130,6 +130,7 @@ class LayerProperty extends EventEmitter {
         this.dom.innerHTML = "";
         this.addVisible(layerID, layerProps)
         this.addOpacity(layerID, layerProps);
+        this.addFixedZoomLevel(layerID, layerProps);
         this.addZoomLevel(layerID, layerProps);
         this.addAttribution(layerID, layerProps);
     }
@@ -167,16 +168,44 @@ class LayerProperty extends EventEmitter {
         this.dom.appendChild(this.opacitySlider.getDOM());
     }
 
+    addFixedZoomLevel(layerID, layerProps) {
+        if (layerProps.type === "image") return;
+
+        if (layerProps && layerProps.hasOwnProperty('fixedZoomLevel')) {
+            addCheckProperty(this.dom, layerID && layerProps, "fixedZoomLevel", "enable fixed zoom", layerProps.fixedZoomLevel, (err, data) => {
+                this.zoomControl.setEnable(data);
+                this.action.changeLayerProperty({
+                    id: layerID,
+                    fixedZoomLevel: data
+                })
+            });
+        } else {
+            addCheckProperty(this.dom, layerID && layerProps, "fixedZoomLevel", "enable fixed zoom", false, (err, data) => {
+                this.zoomControl.setEnable(data);
+                this.action.changeLayerProperty({
+                    id: layerID,
+                    fixedZoomLevel: data
+                })
+            });
+        }
+    }
+
     addZoomLevel(layerID, layerProps) {
         if (layerProps.type === "image") return;
 
         if (layerProps && layerProps.hasOwnProperty('zoomLevel')) {
-            this.zoomSlider = new ZoomControl("zoom level", layerProps.zoomLevel, 0, 20);
+            this.zoomControl = new ZoomControl("zoom level", layerProps.zoomLevel, 0, 20);
         } else {
-            this.zoomSlider = new ZoomControl("zoom level", 0, 0, 20);
+            this.zoomControl = new ZoomControl("zoom level", 0, 0, 20);
         }
-        this.zoomSlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {});
-        this.dom.appendChild(this.zoomSlider.getDOM());
+        this.zoomControl.setEnable(layerProps.fixedZoomLevel);
+        this.zoomControl.on(ZoomControl.EVENT_CHANGE, (err, data) => {
+            this.action.changeLayerProperty({
+                id: layerID,
+                zoomLevel: data.value
+            });
+        });
+        this.dom.appendChild(this.zoomControl.getDOM());
     }
 
     addAttribution(layerID, layerProps) {

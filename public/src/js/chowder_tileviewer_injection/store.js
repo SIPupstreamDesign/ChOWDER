@@ -99,6 +99,7 @@ class Store extends EventEmitter {
         if (layerIndex !== null) {
             this.instance.setOpacity(layerIndex, params.opacity);
             this.instance.setVisible(layerIndex, params.visible);
+            this.instance.setZoomLevel(params.fixedZoomLevel, params.zoomLevel);
         }
     }
 
