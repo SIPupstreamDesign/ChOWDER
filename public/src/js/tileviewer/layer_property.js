@@ -171,8 +171,11 @@ class LayerProperty extends EventEmitter {
     addFixedZoomLevel(layerID, layerProps) {
         if (layerProps.type === "image") return;
 
+        // TODO レイヤーではなくコンテンツごとにzoomLevelを持つ
         if (layerProps && layerProps.hasOwnProperty('fixedZoomLevel')) {
             addCheckProperty(this.dom, layerID && layerProps, "fixedZoomLevel", "enable fixed zoom", layerProps.fixedZoomLevel, (err, data) => {
+                //let layer = this.store.getLayerData(layerID);
+                //this.zoomControl.setValue(layer.zoomLevel);
                 this.zoomControl.setEnable(data);
                 this.action.changeLayerProperty({
                     id: layerID,
@@ -181,6 +184,8 @@ class LayerProperty extends EventEmitter {
             });
         } else {
             addCheckProperty(this.dom, layerID && layerProps, "fixedZoomLevel", "enable fixed zoom", false, (err, data) => {
+                //let layer = this.store.getLayerData(layerID);
+                //this.zoomControl.setValue(layer.zoomLevel);
                 this.zoomControl.setEnable(data);
                 this.action.changeLayerProperty({
                     id: layerID,
@@ -193,6 +198,7 @@ class LayerProperty extends EventEmitter {
     addZoomLevel(layerID, layerProps) {
         if (layerProps.type === "image") return;
 
+        // TODO レイヤーではなくコンテンツごとにzoomLevelを持つ
         if (layerProps && layerProps.hasOwnProperty('zoomLevel')) {
             this.zoomControl = new ZoomControl("zoom level", layerProps.zoomLevel, 0, 20);
         } else {

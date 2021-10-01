@@ -782,19 +782,21 @@ class TileViewer {
     }
 
     setZoomLevel(isFixedScaleIndex, scaleIndex) {
-        console.log("setZoomLevel", isFixedScaleIndex, scaleIndex);
-        // 一旦falseにしてscaleIndexを強制設定する
-        const preFixed = this.isFixedScaleIndex;
-        this.isFixedScaleIndex = false;
-        if (this._setScaleIndex(scaleIndex, true)) {
-            this._update();
-        }
-        // isFixedScaleIndexを最新の値に設定
-        this.isFixedScaleIndex = isFixedScaleIndex;
-        if (preFixed && !isFixedScaleIndex) {
-            // 固定から非固定になったとき, 一旦resize相当を走らせて
-            // スケールを自動設定する
-            this._resizeScaling();
+        if (this.isFixedScaleIndex != isFixedScaleIndex || (isFixedScaleIndex && this.currentScaleIndex != scaleIndex)) {
+            console.log("setZoomLevel", this.isFixedScaleIndex, isFixedScaleIndex, this.currentScaleIndex, scaleIndex);
+            // 一旦falseにしてscaleIndexを強制設定する
+            const preFixed = this.isFixedScaleIndex;
+            this.isFixedScaleIndex = false;
+            if (this._setScaleIndex(scaleIndex, true)) {
+                this._update();
+            }
+            // isFixedScaleIndexを最新の値に設定
+            this.isFixedScaleIndex = isFixedScaleIndex;
+            if (preFixed && !isFixedScaleIndex) {
+                // 固定から非固定になったとき, 一旦resize相当を走らせて
+                // スケールを自動設定する
+                this._resizeScaling();
+            }
         }
     }
 
