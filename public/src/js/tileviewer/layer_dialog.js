@@ -11,16 +11,12 @@ import Select from "../components/select";
 import TileViewerConstants from "./tileviewer_constants.js"
 
 const SampleURLFileNames = {}
-SampleURLFileNames[TileViewerConstants.TypeColor] = "std/{z}/{x}/{y}.png";
+SampleURLFileNames[TileViewerConstants.TypeStandard] = "std/%z/%x/%y.png";
 SampleURLFileNames[TileViewerConstants.TypeElevation] = "std/{z}/{x}/{y}.png";
-SampleURLFileNames[TileViewerConstants.Type3DTile] = "something/tileset.json";
-SampleURLFileNames[TileViewerConstants.Type3DTilesTimeSeries] = "something/timeseries.json";
-SampleURLFileNames[TileViewerConstants.TypePointCloud] = "something/cloud.js";
-SampleURLFileNames[TileViewerConstants.TypePointCloudTimeSeries] = "something/timeseries.json";
-SampleURLFileNames[TileViewerConstants.TypeGeometry] = "something/data.pbf";
-SampleURLFileNames[TileViewerConstants.TypeBargraph] = "sample_data/bargraph/data1.csv";
-SampleURLFileNames[TileViewerConstants.TypeOBJ] = "sample_data/obj/teapot/teapot.obj";
-
+SampleURLFileNames[TileViewerConstants.TypeHimawariJP] = "%cd/%w/2019/04/30/000000_%x_%y.png";
+SampleURLFileNames[TileViewerConstants.TypeHimawariFD] = "%cd/%w/2019/04/30/000000_%x_%y.png";
+SampleURLFileNames[TileViewerConstants.TypeBackground] = "background.png";
+SampleURLFileNames[TileViewerConstants.TypeNone] = "std/%z/%x/%y.png";
 
 class LayerDialog extends EventEmitter {
     constructor(store, action) {
@@ -109,15 +105,11 @@ class LayerDialog extends EventEmitter {
         this.typeTitle.innerText = "Type:";
         this.typeSelect = new Select();
         this.typeSelect.getDOM().className = "layer_dialog_type_select";
-        this.typeSelect.addOption(TileViewerConstants.TypeColor, "Color");
-        this.typeSelect.addOption(TileViewerConstants.TypeElevation, "Elevation");
-        this.typeSelect.addOption(TileViewerConstants.Type3DTile, "3DTiles(tileset.json)");
-        this.typeSelect.addOption(TileViewerConstants.Type3DTilesTimeSeries, "3DTiles Timeseries(.json)");
-        this.typeSelect.addOption(TileViewerConstants.TypePointCloud, "PointCloud(potree cloud.js)");
-        this.typeSelect.addOption(TileViewerConstants.TypePointCloudTimeSeries, "PointCloudTimeSeries(.json)");
-        this.typeSelect.addOption(TileViewerConstants.TypeGeometry, "VectorTile(pbf, geojson)");
-        this.typeSelect.addOption(TileViewerConstants.TypeBargraph, "Bargraph(csv)");
-        this.typeSelect.addOption(TileViewerConstants.TypeOBJ, "OBJFile(obj)");
+        this.typeSelect.addOption(TileViewerConstants.TypeStandard, "standard");
+        this.typeSelect.addOption(TileViewerConstants.TypeHimawariJP, "himawari8.jp");
+        this.typeSelect.addOption(TileViewerConstants.TypeHimawariFD, "himawari8.fd");
+        this.typeSelect.addOption(TileViewerConstants.TypeBackground, "background image");
+        this.typeSelect.addOption(TileViewerConstants.TypeNone, "other");
 
         let typeRow = this.createRow();
         typeRow.appendChild(this.typeTitle);
@@ -195,7 +187,7 @@ class LayerDialog extends EventEmitter {
         this.urlTitle.innerText = "URL:";
         this.urlInput = document.createElement('textarea');
         this.urlInput.className = "layer_dialog_url_input";
-        this.changeInputURLValue(SampleURLFileNames[TileViewerConstants.TypeColor]);
+        this.changeInputURLValue(SampleURLFileNames[TileViewerConstants.TypeStandard]);
 
         let titleRow = this.createRow();
         titleRow.className = "layer_dialog_row2"

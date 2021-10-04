@@ -7,18 +7,11 @@
 const TileViewerConstants = {
     UploadTypeCSV: "itownsapp_csv",
     UploadTypeJSON: "itownsapp_json",
-    TypeColor: "color",
-    TypeElevation: "elevation",
-    Type3DTile: "3dtile",
-    TypePointCloud: "pointcloud",
-    TypeGeometry: "geometry",
-    TypeUser: "user",
-    TypeGlobe: "globe",
-    TypeAtomosphere: "atomosphere",
-    TypeBargraph: "bargraph", // 独自
-    TypeOBJ: "obj", // 独自
-    TypePointCloudTimeSeries: "pointcloud_timeseries", // 独自
-    Type3DTilesTimeSeries: "3dtiles_timeseries" // 独自
+    TypeStandard: "standard",
+    TypeHimawariJP: "himawari8.jp",
+    TypeHimawariFD: "himawari8.fd",
+    TypeNone: "none", // 独自
+    TypeBackground: "image", // 独自
 };
 
 export default TileViewerConstants;

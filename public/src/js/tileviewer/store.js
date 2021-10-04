@@ -217,7 +217,7 @@ class Store extends EventEmitter {
             this.operation.updateMetadata(updateData, (err, res) => {});
         } else {
             // コンテンツ追加完了前だった。完了後にカメラを更新するため、キャッシュしておく。
-            this.initialCameraParams = data.params;
+            this.initialCameraParams = JSON.stringify(data.params);
         }
     }
 
@@ -265,16 +265,16 @@ class Store extends EventEmitter {
         } catch (err) {
             console.error(err);
         }
+        if (meta.hasOwnProperty('cameraParams')) {
+            // カメラをメタデータの値を元に設定
+            this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
+                params: meta.cameraParams,
+            });
+        }
         this.metaData = meta;
         if (layerList.length > 0) {
             // レイヤー初期化
             this.iframeConnector.send(TileViewerCommand.InitLayers, layerList, (err, data) => {
-                if (meta.hasOwnProperty('cameraParams')) {
-                    // カメラをメタデータの値を元に設定
-                    this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
-                        params: JSON.parse(meta.cameraParams),
-                    });
-                }
                 this._changeTimeByTimeline({
                     currentTime: this.timelineCurrentTime,
                     startTime: this.timelineStartTime,

@@ -445,7 +445,7 @@ class TileViewer {
     // 位置の変更コールバックを発火させる
     // 位置が変更された場合必ず呼ぶ
     _dispatchPosition() {
-        const event = new CustomEvent('position_changed', { detail: JSON.stringify(this.getCameraInfo()) });
+        const event = new CustomEvent('position_changed', { detail: this.getCameraInfo() });
         this.transformElem.dispatchEvent(event);
     }
 
@@ -722,19 +722,34 @@ class TileViewer {
     }
 
     /**
+     * ズームレベルがscalesに定義されている場合は、現在のズームレベルを返す
+     * ズームレベルが定義されていない場合は, -1を返す
+     */
+    getZoomLevel() {
+        if (this.options.scales[this.currentScaleIndex].hasOwnProperty('zoom')) {
+            return Number(this.options.scales[this.currentScaleIndex].zoom);
+        }
+        return -1;
+    }
+
+    /**
      * スケール等を含んだカメラ情報を返す。
      * この値を取得し、setCameraInfoを呼ぶことで、見た目を完全に再現させることができる。
      * ただし、ビューポートは別途取得する必要がある。
      * @returns スケールをすべて含んだカメラ情報
      */
     getCameraInfo() {
-        return {
+        let info = {
             camera: JSON.parse(JSON.stringify(this.camera)),
             baseScaleCamera: JSON.parse(JSON.stringify(this.baseScaleCamera)),
             transformScale: this.transformScale,
             scaleIndex: this.currentScaleIndex,
-            fixedZoomLevel: this.fixedZoomLevel,
+            fixedZoomLevel: this.isFixedScaleIndex,
         }
+        if (this.getZoomLevel() >= 0) {
+            info.zoomLevel = this.getZoomLevel();
+        }
+        return info;
     }
 
     /**
@@ -744,7 +759,15 @@ class TileViewer {
      */
     setCameraInfo(viewInfo) {
         // 固定ズームレベルの設定
-        if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('scaleIndex')) {
+        if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('zoomLevel')) {
+            const scaleLen = this.options.scales.length;
+            for (let i = 0; i < scaleLen; ++i) {
+                if (this.options.scales[i].hasOwnProperty('zoom') &&
+                    this.options.scales[i].zoom == viewInfo.zoomLevel) {
+                    this.setZoomLevel(viewInfo.fixedZoomLevel, i);
+                }
+            }
+        } else if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('scaleIndex')) {
             this.setZoomLevel(viewInfo.fixedZoomLevel, viewInfo.scaleIndex);
         }
         this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));

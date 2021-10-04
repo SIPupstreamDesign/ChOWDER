@@ -50,10 +50,8 @@ class LayerList extends EventEmitter {
 
 
         // レイヤー追加ダイアログ
-        /*
         this.layerDialog = new LayerDialog(this.store, this.action);
         document.body.appendChild(this.layerDialog.getDOM());
-        */
 
         this.dom.appendChild(layerButtonArea);
 

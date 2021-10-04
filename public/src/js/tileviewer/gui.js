@@ -81,7 +81,7 @@ class GUI extends EventEmitter {
             // iframe内のカメラが更新された
             iframeConnector.on(TileViewerCommand.UpdateCamera, (err, params) => {
                 this.action.updateCamera({
-                    params: JSON.parse(params.params)
+                    params: params.params
                 });
             });
 
@@ -308,6 +308,13 @@ class GUI extends EventEmitter {
         this.propOuter.appendChild(this.zoomControlWrap);
     }
 
+    /**
+     * metaData.cameraParams.zoomLevel、または
+     * metaData.cameraParams.scaleIndex　を固定するためのGUIを追加する。
+     * 両方存在した場合は、metaData.cameraParams.zoomLevelが優先される。
+     * @param {*} parentElem 
+     * @param {*} metaData 
+     */
     addFixedZoomLevel(parentElem, metaData) {
         let cameraParams = metaData.cameraParams;
 
@@ -332,19 +339,31 @@ class GUI extends EventEmitter {
         }
     }
 
+    /**
+     * metaData.cameraParams.zoomLevel、または
+     * metaData.cameraParams.scaleIndex　をコントロールするためのGUIを追加する。
+     * 両方存在した場合は、metaData.cameraParams.zoomLevelが優先される。
+     * @param {*} parentElem 
+     * @param {*} metaData 
+     */
     addZoomLevel(parentElem, metaData) {
         let cameraParams = JSON.parse(metaData.cameraParams);
 
-        // TODO レイヤーではなくコンテンツごとにzoomLevelを持つ
         if (cameraParams && cameraParams.hasOwnProperty('zoomLevel')) {
-            this.zoomControl = new ZoomControl("zoom level", cameraParams.scaleIndex, 0, 20);
+            this.zoomControl = new ZoomControl("zoom level", cameraParams.zoomLevel, 0, 100);
+        } else if (cameraParams && cameraParams.hasOwnProperty('scaleIndex')) {
+            this.zoomControl = new ZoomControl("zoom level", cameraParams.scaleIndex, 0, 100);
         } else {
-            this.zoomControl = new ZoomControl("zoom level", 0, 0, 20);
+            this.zoomControl = new ZoomControl("zoom level", 0, 0, 100);
         }
         this.zoomControl.setEnable(cameraParams.fixedZoomLevel);
         this.zoomControl.on(ZoomControl.EVENT_CHANGE, (err, data) => {
             let cameraParams = JSON.parse(this.store.getMetaData().cameraParams);
-            cameraParams.scaleIndex = Number(data.value);
+            if (cameraParams.hasOwnProperty('zoomLevel')) {
+                cameraParams.zoomLevel = Number(data.value);
+            } else {
+                cameraParams.scaleIndex = Number(data.value);
+            }
             this.action.changeCameraParams({
                 params: cameraParams
             });
@@ -360,7 +379,11 @@ class GUI extends EventEmitter {
             this.addZoomLevel(parentElem, metaData);
         }
         const cameraParams = JSON.parse(metaData.cameraParams);
-        this.zoomControl.setValue(cameraParams.scaleIndex);
+        if (cameraParams.hasOwnProperty('zoomLevel')) {
+            this.zoomControl.setValue(cameraParams.zoomLevel);
+        } else {
+            this.zoomControl.setValue(cameraParams.scaleIndex);
+        }
         const fixedZoomElems = this.propInner.getElementsByClassName('fixedZoomLevel');
         if (fixedZoomElems.length > 0) {
             fixedZoomElems[0].checked = cameraParams.fixedZoomLevel;

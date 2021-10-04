@@ -246,7 +246,7 @@ class Store extends EventEmitter {
         // 初期カメラ位置送信
         const camera = this.instance.getCameraInfo();
         this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
-            params: JSON.stringify(camera)
+            params: camera
         });
 
         // カメラ位置送信
@@ -254,7 +254,7 @@ class Store extends EventEmitter {
             if (data) {
                 const camera = this.instance.getCameraInfo();
                 this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
-                    params: JSON.stringify(camera)
+                    params: camera
                 });
             }
         });
@@ -290,7 +290,12 @@ class Store extends EventEmitter {
 
     addLodScaleLabel() {
         let lodScaleLabel = document.createElement('div');
-        lodScaleLabel.innerText = LoDScaleLabelPrefix + "0";
+        const cameraInfo = this.instance.getCameraInfo();
+        if (cameraInfo.hasOwnProperty('zoomLevel')) {
+            lodScaleLabel.innerText = LoDScaleLabelPrefix + String(cameraInfo.zoomLevel);
+        } else {
+            lodScaleLabel.innerText = LoDScaleLabelPrefix + String(cameraInfo.scaleIndex);
+        }
         lodScaleLabel.id = LoDScaleLabelID;
         lodScaleLabel.style.left = "1em";
         lodScaleLabel.style.bottom = "5px";
@@ -299,12 +304,16 @@ class Store extends EventEmitter {
         lodScaleLabel.classList.add('fuchidori')
         document.body.appendChild(lodScaleLabel);
 
+
         // カメラ位置送信
         this.instance.addScaleIndexCallback((data) => {
             if (data !== undefined && data !== null) {
                 const scaleIndex = data;
                 let lodScaleLabel = document.getElementById(LoDScaleLabelID);
-                const labelText = LoDScaleLabelPrefix + String(scaleIndex)
+                let labelText = LoDScaleLabelPrefix + String(scaleIndex);
+                if (this.instance.getZoomLevel() >= 0) {
+                    labelText = LoDScaleLabelPrefix + this.instance.getZoomLevel();
+                }
                 if (lodScaleLabel.innerText !== labelText) {
                     lodScaleLabel.innerText = labelText;
                 }
