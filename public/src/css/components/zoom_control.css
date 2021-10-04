@@ -11,7 +11,6 @@
     position: absolute;
     height: 33px;
     bottom: 0px;
-    z-index: -1;
     margin-right: 5px;
 }
 
@@ -30,6 +29,8 @@
     border: none;
     width: 32px;
     height: 32px;
+    position: relative;
+    z-index: 1000000;
 }
 
 .zoom_control_sub_button:hover {
@@ -41,6 +42,8 @@
     border: none;
     width: 32px;
     height: 32px;
+    position: relative;
+    z-index: 1000000;
 }
 
 .zoom_control_add_button:hover {
@@ -53,4 +56,6 @@
     vertical-align: middle;
     height: 32px;
     border: none;
+    position: relative;
+    z-index: 1000000;
 }

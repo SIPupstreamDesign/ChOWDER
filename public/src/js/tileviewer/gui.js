@@ -6,14 +6,14 @@
 import Store from './store.js';
 import LoginMenu from '../components/login_menu.js';
 import Select from '../components/select';
-import ContentsSelect from '../components/contents_select.js';
 import Translation from '../common/translation';
-import Menu from '../components/menu';
 import Constants from '../common/constants';
 import TileViewerCommand from '../common/tileviewer_command'
 import TileViewerUtil from '../common/tileviewer_util'
 import LayerProperty from './layer_property'
 import LayerList from './layer_list'
+import ZoomControl from '../components/zoom_control'
+import GUIUtil from "./gui_util"
 
 // Base64からバイナリへ変換
 function toArrayBuffer(base64) {
@@ -81,7 +81,7 @@ class GUI extends EventEmitter {
             // iframe内のカメラが更新された
             iframeConnector.on(TileViewerCommand.UpdateCamera, (err, params) => {
                 this.action.updateCamera({
-                    params: params.params
+                    params: JSON.parse(params.params)
                 });
             });
 
@@ -125,6 +125,8 @@ class GUI extends EventEmitter {
                 this.contentID.innerText = meta.id;
                 this.layerList.setEnable(true);
 
+                this.updateZoomControl(this.zoomControlWrap, meta);
+
                 // copyright更新
                 this.showCopyrights(document.getElementById('content'), meta)
             }
@@ -150,6 +152,8 @@ class GUI extends EventEmitter {
             if (!err && meta.hasOwnProperty('id')) {
                 this.contentID.innerText = meta.id;
                 this.layerList.setEnable(true);
+
+                this.updateZoomControl(this.zoomControlWrap, meta);
 
                 // copyright更新
                 this.showCopyrights(document.getElementById('content'), meta)
@@ -219,10 +223,13 @@ class GUI extends EventEmitter {
     initTemplateGUI() {
         let contentDOM = document.getElementById('content');
 
-        this.propInnerVisible = false;
+        this.propOuterVisible = false;
+        this.propOuter = document.createElement('div');
+        this.propOuter.className = "tileviewer_property_outer";
         this.propInner = document.createElement('div');
         this.propInner.className = "tileviewer_property_inner";
-        contentDOM.appendChild(this.propInner);
+        this.propOuter.appendChild(this.propInner);
+        contentDOM.appendChild(this.propOuter);
 
         // コンテンツIDタイトル
         let contentIDTitle = document.createElement('p');
@@ -283,14 +290,81 @@ class GUI extends EventEmitter {
         const selectDataButton = document.getElementById('button_select_data');
         selectDataButton.onclick = () => {
             // セレクトダイアログを表示
-            if (this.propInnerVisible) {
-                this.propInner.style.display = "none";
-                this.propInnerVisible = false;
+            if (this.propOuterVisible) {
+                this.propOuter.style.display = "none";
+                this.propOuterVisible = false;
             } else {
-                this.propInner.style.display = "block";
-                this.propInnerVisible = true;
+                this.propOuter.style.display = "block";
+                this.propOuterVisible = true;
             }
         };
+
+        this.zoomControlWrap = document.createElement('div');
+        this.zoomControlWrap.style.backgroundColor = "#1b1e2b";
+        this.zoomControlWrap.style.height = "100px";
+        this.zoomControlWrap.style.position = "absolute";
+        this.zoomControlWrap.style.bottom = "0px";
+        this.zoomControlWrap.style.borderTop = "solid 1px rgba(0, 0, 0, 0.8)";
+        this.propOuter.appendChild(this.zoomControlWrap);
+    }
+
+    addFixedZoomLevel(parentElem, metaData) {
+        let cameraParams = metaData.cameraParams;
+
+        if (cameraParams && cameraParams.hasOwnProperty('fixedZoomLevel')) {
+            GUIUtil.addCheckProperty(parentElem, cameraParams, "fixedZoomLevel", "enable fixed zoom", cameraParams.fixedZoomLevel, (err, data) => {
+                let cameraParams = JSON.parse(this.store.getMetaData().cameraParams);
+                this.zoomControl.setEnable(data);
+                cameraParams.fixedZoomLevel = data;
+                this.action.changeCameraParams({
+                    params: cameraParams
+                })
+            });
+        } else {
+            GUIUtil.addCheckProperty(parentElem, cameraParams, "fixedZoomLevel", "enable fixed zoom", false, (err, data) => {
+                let cameraParams = JSON.parse(this.store.getMetaData().cameraParams);
+                this.zoomControl.setEnable(data);
+                cameraParams.fixedZoomLevel = data;
+                this.action.changeCameraParams({
+                    params: cameraParams
+                })
+            });
+        }
+    }
+
+    addZoomLevel(parentElem, metaData) {
+        let cameraParams = JSON.parse(metaData.cameraParams);
+
+        // TODO レイヤーではなくコンテンツごとにzoomLevelを持つ
+        if (cameraParams && cameraParams.hasOwnProperty('zoomLevel')) {
+            this.zoomControl = new ZoomControl("zoom level", cameraParams.scaleIndex, 0, 20);
+        } else {
+            this.zoomControl = new ZoomControl("zoom level", 0, 0, 20);
+        }
+        this.zoomControl.setEnable(cameraParams.fixedZoomLevel);
+        this.zoomControl.on(ZoomControl.EVENT_CHANGE, (err, data) => {
+            let cameraParams = JSON.parse(this.store.getMetaData().cameraParams);
+            cameraParams.scaleIndex = Number(data.value);
+            this.action.changeCameraParams({
+                params: cameraParams
+            });
+        });
+        parentElem.appendChild(this.zoomControl.getDOM());
+    }
+
+    updateZoomControl(parentElem, metaData) {
+        if (!metaData) return;
+        if (!metaData.hasOwnProperty('cameraParams')) return;
+        if (!this.zoomControl) {
+            this.addFixedZoomLevel(parentElem, metaData);
+            this.addZoomLevel(parentElem, metaData);
+        }
+        const cameraParams = JSON.parse(metaData.cameraParams);
+        this.zoomControl.setValue(cameraParams.scaleIndex);
+        const fixedZoomElems = this.propInner.getElementsByClassName('fixedZoomLevel');
+        if (fixedZoomElems.length > 0) {
+            fixedZoomElems[0].checked = cameraParams.fixedZoomLevel;
+        }
     }
 
     addPresetContentSelect() {

@@ -118,7 +118,7 @@ class Store extends EventEmitter {
         /// メタデータが更新された
         Connector.on(Command.UpdateMetaData, (data) => {
             let hasUpdateData = false;
-            const preData = this.metaData.layerList;
+            const preData = this.metaData ? this.metaData.layerList : null;
             for (let i = 0; i < data.length; ++i) {
                 let metaData = data[i];
                 if (metaData.type === Constants.TypeTileViewer && this.metaData && metaData.id === this.metaData.id) {
@@ -209,7 +209,7 @@ class Store extends EventEmitter {
 
     _updateCamera(data) {
         if (this.metaData) {
-            this.metaData.cameraParams = data.params;
+            this.metaData.cameraParams = JSON.stringify(data.params);
             let updateData = JSON.parse(JSON.stringify(this.metaData));
             // 幅高さは更新しない
             delete updateData.width;
@@ -218,6 +218,17 @@ class Store extends EventEmitter {
         } else {
             // コンテンツ追加完了前だった。完了後にカメラを更新するため、キャッシュしておく。
             this.initialCameraParams = data.params;
+        }
+    }
+
+    _changeCameraParams(data) {
+        if (data.hasOwnProperty('params')) {
+            // カメラをメタデータの値を元に設定
+            this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
+                params: JSON.stringify(data.params),
+            });
+            // サーバ側データも更新
+            this._updateCamera(data);
         }
     }
 
@@ -255,15 +266,15 @@ class Store extends EventEmitter {
             console.error(err);
         }
         this.metaData = meta;
-        if (meta.hasOwnProperty('cameraParams')) {
-            // カメラをメタデータの値を元に設定
-            this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
-                params: JSON.parse(meta.cameraParams),
-            });
-        }
         if (layerList.length > 0) {
             // レイヤー初期化
             this.iframeConnector.send(TileViewerCommand.InitLayers, layerList, (err, data) => {
+                if (meta.hasOwnProperty('cameraParams')) {
+                    // カメラをメタデータの値を元に設定
+                    this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
+                        params: JSON.parse(meta.cameraParams),
+                    });
+                }
                 this._changeTimeByTimeline({
                     currentTime: this.timelineCurrentTime,
                     startTime: this.timelineStartTime,
@@ -290,6 +301,10 @@ class Store extends EventEmitter {
         }
         console.log("Not found layer from current content.", layerID, JSON.parse(this.metaData.layerList));
         return null;
+    }
+
+    getMetaData() {
+        return this.metaData;
     }
 
     // this.metaDataのlayerListにlayerDataを文字列として上書き保存する

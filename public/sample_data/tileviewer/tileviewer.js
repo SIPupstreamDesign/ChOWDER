@@ -732,7 +732,8 @@ class TileViewer {
             camera: JSON.parse(JSON.stringify(this.camera)),
             baseScaleCamera: JSON.parse(JSON.stringify(this.baseScaleCamera)),
             transformScale: this.transformScale,
-            scaleIndex: this.currentScaleIndex
+            scaleIndex: this.currentScaleIndex,
+            fixedZoomLevel: this.fixedZoomLevel,
         }
     }
 
@@ -742,6 +743,10 @@ class TileViewer {
      * ただし、ビューポートは別途指定する必要がある。
      */
     setCameraInfo(viewInfo) {
+        // 固定ズームレベルの設定
+        if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('scaleIndex')) {
+            this.setZoomLevel(viewInfo.fixedZoomLevel, viewInfo.scaleIndex);
+        }
         this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
         this._updateCameraFromBaseCamera(false);
         this._setScaleIndex(viewInfo.scaleIndex);
@@ -762,9 +767,7 @@ class TileViewer {
         for (let i = 0; i < options.foregroundImages.length; ++i) {
             this.layerParams.push({
                 opacity: 1,
-                visible: true,
-                zoomLevel: this.scaleIndex,
-                fixedZoomLevel: false
+                visible: true
             });
         }
     }

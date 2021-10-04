@@ -64,10 +64,9 @@ class Store extends EventEmitter {
         });
         this.iframeConnector.on(TileViewerCommand.UpdateCamera, (err, cameraData, request) => {
             // カメラ更新命令
-            // console.error(cameraData.params)
             try {
                 const preInfo = this.instance.getCameraInfo();
-                const cameraInfo = cameraData.params;
+                const cameraInfo = JSON.parse(cameraData.params);
                 this.instance.setCameraInfo(cameraInfo);
             } catch (e) {
                 console.error(e);
@@ -99,9 +98,6 @@ class Store extends EventEmitter {
         if (layerIndex !== null) {
             this.instance.setOpacity(layerIndex, params.opacity);
             this.instance.setVisible(layerIndex, params.visible);
-            if (params.hasOwnProperty('fixedZoomLevel') && params.hasOwnProperty('zoomLevel')) {
-                this.instance.setZoomLevel(params.fixedZoomLevel, params.zoomLevel);
-            }
         }
     }
 
@@ -250,14 +246,15 @@ class Store extends EventEmitter {
         // 初期カメラ位置送信
         const camera = this.instance.getCameraInfo();
         this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
-            params: camera
+            params: JSON.stringify(camera)
         });
 
         // カメラ位置送信
         this.instance.addPositionCallback((data) => {
             if (data) {
+                const camera = this.instance.getCameraInfo();
                 this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
-                    params: data
+                    params: JSON.stringify(camera)
                 });
             }
         });
@@ -304,7 +301,7 @@ class Store extends EventEmitter {
 
         // カメラ位置送信
         this.instance.addScaleIndexCallback((data) => {
-            if (data) {
+            if (data !== undefined && data !== null) {
                 const scaleIndex = data;
                 let lodScaleLabel = document.getElementById(LoDScaleLabelID);
                 const labelText = LoDScaleLabelPrefix + String(scaleIndex)

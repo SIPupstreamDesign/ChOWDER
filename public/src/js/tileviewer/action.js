@@ -133,6 +133,13 @@ class Action extends EventEmitter {
         this.emit(Action.EVENT_CHANGE_LAYER_PROPERTY, null, data);
     }
 
+    /**
+     * (iframe内の)カメラパラメータを, TileViewerAppから変更
+     * @param {*} data 
+     */
+    changeCameraParams(data) {
+        this.emit(Action.EVENT_CHANGE_CAMERA_PARAMS, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -144,6 +151,7 @@ Action.EVENT_RESIZE_CONTENT = "resizeContent";
 Action.EVENT_FETCH_CONTENTS = "fetchContents";
 Action.EVENT_LOAD_USER_DATA = "loadUserData";
 Action.EVENT_CHANGE_LAYER_PROPERTY = "changeLayerProperty";
+Action.EVENT_CHANGE_CAMERA_PARAMS = "changeCameraParams";
 Action.EVENT_ADD_LAYER = "addLayer";
 Action.EVENT_SELECT_LAYER = "selectLayer";
 Action.EVENT_DELETE_LAYER = "deleteLayer";

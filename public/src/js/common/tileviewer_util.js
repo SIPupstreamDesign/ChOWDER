@@ -12,7 +12,7 @@ class TileViewerUtil {
     static updateCamera(iframeConnector, metaData, callback = null) {
         if (metaData.hasOwnProperty('cameraParams')) {
             iframeConnector.send(TileViewerCommand.UpdateCamera, {
-                params: JSON.parse(metaData.cameraParams),
+                params: metaData.cameraParams,
             }, callback);
         }
     }

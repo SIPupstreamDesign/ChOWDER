@@ -83,16 +83,22 @@ hr {
 
 /* ------ LayerList / LayerDialog ---------------*/
 
-.tileviewer_property_inner {
+.tileviewer_property_outer {
     display: none;
     position: absolute;
     width: 250px;
     height: calc(100% - 40px);
     left: 10px;
     top: 10px;
-    opacity: 0.9;
     background-color: #292d3e;
+}
+
+.tileviewer_property_inner {
+    width: 250px;
+    height: calc(100% - 100px);
     overflow-y: auto;
+    overflow-x: hidden;
+    opacity: 0.9;
 }
 
 .tileviewer_property_title {

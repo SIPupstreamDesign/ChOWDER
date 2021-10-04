@@ -1,98 +1,5 @@
-import Input from "../components/input"
 import PropertySlider from "../components/property_slider"
-import LayerList from './layer_list'
-import ZoomControl from '../components/zoom_control'
-
-/**
- * Propertyタブに入力プロパティを追加する
- * @method addCheckProperty
- * @param {String} leftLabel 左ラベル
- * @param {String} rightLabel 右ラベル
- * @param {String} value 初期入力値
- */
-function addCheckProperty(parent, isEditable, className, leftLabel, value, changeCallback) {
-    /*
-    	<div class="input-group">
-    		<span class="input-group-addon">x</span>
-    		<input type="text" class="form-control" id="content_transform_x" value="0">
-    		<span class="input-group-addon">px</span>
-    	</div>
-    */
-    let group = document.createElement('div');
-    let leftSpan = document.createElement('span');
-    leftSpan.className = "input-group-addon content_property_checkbox_label";
-    let centerSpan = document.createElement('span');
-    let input = new Input("checkbox");
-    group.className = "input-group";
-    leftSpan.innerHTML = leftLabel;
-    centerSpan.className = "input-group-addon content_property_checkbox_wrap"
-    input.setValue(value);
-    input.getDOM().disabled = !isEditable;
-    input.getDOM().className = "content_property_checkbox " + className
-
-    centerSpan.appendChild(input.getDOM());
-    group.appendChild(leftSpan);
-    group.appendChild(centerSpan);
-    parent.appendChild(group);
-
-    input.on(Input.EVENT_CHANGE, (err, data) => {
-        changeCallback(err, data.target.checked);
-    });
-}
-
-/**
- * Propertyタブに入力プロパティを追加する
- * @method addInputProperty
- * @param {String} leftLabel 左ラベル
- * @param {String} rightLabel 右ラベル
- * @param {String} value 初期入力値
- */
-function addTextAreaProperty(parentElem, isEditable, leftLabel, rightLabel, value, changeCallback) {
-    /*
-    	<div class="input-group">
-    		<span class="input-group-addon">x</span>
-    		<input type="text" class="form-control" id="content_transform_x" value="0">
-    		<span class="input-group-addon">px</span>
-    	</div>
-    */
-    let group = document.createElement('div');
-    let leftSpan = document.createElement('span');
-    let rightSpan = document.createElement('span');
-    let input = document.createElement('textarea');
-    input.style.maxWidth = "215px"
-    input.style.width = "215px"
-    input.style.height = "auto"
-
-    group.className = "input-group";
-    group.style.margin = "0px";
-    group.style.marginLeft = "5px";
-    group.style.marginBottom = "5px";
-    group.style.paddingBottom = "5px";
-    leftSpan.className = "input-group-addon";
-    leftSpan.innerHTML = leftLabel;
-    rightSpan.className = "input-group-addon";
-    rightSpan.innerHTML = rightLabel;
-    input.className = "form-control";
-    input.value = value;
-    input.disabled = !isEditable;
-
-    //group.appendChild(leftSpan);
-    group.appendChild(input);
-    if (rightLabel) {
-        group.appendChild(rightSpan);
-    }
-    parentElem.appendChild(group);
-
-    input.onchange = (evt) => {
-        try {
-            changeCallback(null, evt.target.value);
-        } catch (ex) {
-            console.error(ex);
-            changeCallback(err, evt.target.value);
-        }
-    };
-}
-
+import GUIUtil from "./gui_util"
 
 class LayerProperty extends EventEmitter {
     constructor(store, action) {
@@ -130,21 +37,21 @@ class LayerProperty extends EventEmitter {
         this.dom.innerHTML = "";
         this.addVisible(layerID, layerProps)
         this.addOpacity(layerID, layerProps);
-        this.addFixedZoomLevel(layerID, layerProps);
-        this.addZoomLevel(layerID, layerProps);
+        //this.addFixedZoomLevel(layerID, layerProps);
+        //this.addZoomLevel(layerID, layerProps);
         this.addAttribution(layerID, layerProps);
     }
 
     addVisible(layerID, layerProps) {
         if (layerProps && layerProps.hasOwnProperty('visible')) {
-            addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
+            GUIUtil.addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", layerProps.visible, (err, data) => {
                 this.action.changeLayerProperty({
                     id: layerID,
                     visible: data
                 })
             });
         } else {
-            addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
+            GUIUtil.addCheckProperty(this.dom, layerID && layerProps, "visible", "visible", true, (err, data) => {
                 this.action.changeLayerProperty({
                     id: layerID,
                     visible: data
@@ -168,51 +75,6 @@ class LayerProperty extends EventEmitter {
         this.dom.appendChild(this.opacitySlider.getDOM());
     }
 
-    addFixedZoomLevel(layerID, layerProps) {
-        if (layerProps.type === "image") return;
-
-        // TODO レイヤーではなくコンテンツごとにzoomLevelを持つ
-        if (layerProps && layerProps.hasOwnProperty('fixedZoomLevel')) {
-            addCheckProperty(this.dom, layerID && layerProps, "fixedZoomLevel", "enable fixed zoom", layerProps.fixedZoomLevel, (err, data) => {
-                //let layer = this.store.getLayerData(layerID);
-                //this.zoomControl.setValue(layer.zoomLevel);
-                this.zoomControl.setEnable(data);
-                this.action.changeLayerProperty({
-                    id: layerID,
-                    fixedZoomLevel: data
-                })
-            });
-        } else {
-            addCheckProperty(this.dom, layerID && layerProps, "fixedZoomLevel", "enable fixed zoom", false, (err, data) => {
-                //let layer = this.store.getLayerData(layerID);
-                //this.zoomControl.setValue(layer.zoomLevel);
-                this.zoomControl.setEnable(data);
-                this.action.changeLayerProperty({
-                    id: layerID,
-                    fixedZoomLevel: data
-                })
-            });
-        }
-    }
-
-    addZoomLevel(layerID, layerProps) {
-        if (layerProps.type === "image") return;
-
-        // TODO レイヤーではなくコンテンツごとにzoomLevelを持つ
-        if (layerProps && layerProps.hasOwnProperty('zoomLevel')) {
-            this.zoomControl = new ZoomControl("zoom level", layerProps.zoomLevel, 0, 20);
-        } else {
-            this.zoomControl = new ZoomControl("zoom level", 0, 0, 20);
-        }
-        this.zoomControl.setEnable(layerProps.fixedZoomLevel);
-        this.zoomControl.on(ZoomControl.EVENT_CHANGE, (err, data) => {
-            this.action.changeLayerProperty({
-                id: layerID,
-                zoomLevel: data.value
-            });
-        });
-        this.dom.appendChild(this.zoomControl.getDOM());
-    }
 
     addAttribution(layerID, layerProps) {
         // Attributionタイトル
@@ -236,7 +98,7 @@ class LayerProperty extends EventEmitter {
         attributionName.innerText = "Name";
         attributionDiv.appendChild(attributionName);
         const attribName = layerProps.hasOwnProperty('attribution') ? layerProps.attribution.name : "";
-        addTextAreaProperty(attributionDiv, layerID && layerProps, "name", "", attribName, (err, data) => {
+        GUIUtil.addTextAreaProperty(attributionDiv, layerID && layerProps, "name", "", attribName, (err, data) => {
             let attrib = { name: "", url: "" };
             let layer = this.store.getLayerData(layerID);
             if (layer.hasOwnProperty('attribution')) {
@@ -255,7 +117,7 @@ class LayerProperty extends EventEmitter {
         attributionURL.innerText = "URL";
         attributionDiv.appendChild(attributionURL);
         const attribURL = layerProps.hasOwnProperty('attribution') ? layerProps.attribution.url : "";
-        addTextAreaProperty(attributionDiv, layerID && layerProps, "url", "", attribURL, (err, data) => {
+        GUIUtil.addTextAreaProperty(attributionDiv, layerID && layerProps, "url", "", attribURL, (err, data) => {
             let attrib = { name: "", url: "" };
             let layer = this.store.getLayerData(layerID);
             if (layer.hasOwnProperty('attribution')) {

@@ -107,13 +107,11 @@ class ZoomControl extends EventEmitter {
         if (!isEnable) {
             this.dom.style.pointerEvents = "none";
             this.levelInput.getDOM().style.background = "lightgray";
-            this.levelInput.getDOM().style.color = "lightgray";
             this.addButton.getDOM().style.color = "lightgray";
             this.subButton.getDOM().style.color = "lightgray";
         } else {
             this.dom.style.pointerEvents = "auto";
             this.levelInput.getDOM().style.background = "white";
-            this.levelInput.getDOM().style.color = "black";
             this.addButton.getDOM().style.color = "dodgerblue";
             this.subButton.getDOM().style.color = "dodgerblue";
         }
