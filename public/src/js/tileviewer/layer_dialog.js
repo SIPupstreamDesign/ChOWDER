@@ -27,37 +27,11 @@ class LayerDialog extends EventEmitter {
 
         this.init();
         this.setting = {};
-        this.csv = null;
-        this.json = null;
-
-        this.store.on(Store.EVENT_DONE_UPLOAD, (err, data) => {
-            if (err) {
-                if (this.errorText) {
-                    this.errorText.textContent = 'Error: ' + err;
-                }
-            } else if (data.hasOwnProperty('path')) {
-                if (data.path.indexOf('.csv') > 0) {
-                    this.changeInputURLValue(data.path)
-                } else if (data.path.indexOf('.json') > 0) {
-                    this.changeInputJSONValue(data.path)
-                }
-            }
-        });
     }
 
     changeInputURLValue(fileName) {
         const port = window.location.port ? ":" + window.location.port : "";
         this.urlInput.value = window.location.protocol + "//" + window.location.hostname + port + "/" + fileName;
-    }
-
-    changeInputJSONValue(fileName) {
-        const port = window.location.port ? ":" + window.location.port : "";
-        this.jsonURLInput.value = window.location.protocol + "//" + window.location.hostname + port + "/" + fileName;
-    }
-
-    changeInputMTLValue(fileName) {
-        const port = window.location.port ? ":" + window.location.port : "";
-        this.mtlURLInput.value = window.location.protocol + "//" + window.location.hostname + port + "/" + fileName;
     }
 
     init() {
@@ -81,16 +55,9 @@ class LayerDialog extends EventEmitter {
 
         this.createTypeRow();
         this.createIDRow();
-        this.createTitleRow();
-        this.createJSONRow();
-        this.createStyleRow();
-        this.createMTLRow();
+        this.createURLRow();
         this.createZoomRow();
-        this.createFormatRow();
-        this.createEPSGRow();
 
-        this.createCSVOpenRow();
-        this.createJSONOpenRow();
         this.createErrorText();
 
         this.endCallback = null;
@@ -117,52 +84,13 @@ class LayerDialog extends EventEmitter {
 
         this.typeSelect.on(Select.EVENT_CHANGE, (err, val) => {
             let type = this.typeSelect.getSelectedValue();
-            if (type === TileViewerConstants.TypePointCloud ||
-                type === TileViewerConstants.TypePointCloudTimeSeries ||
-                type === TileViewerConstants.Type3DTile ||
-                type === TileViewerConstants.Type3DTilesTimeSeries ||
-                type === TileViewerConstants.TypeBargraph ||
-                type === TileViewerConstants.TypeOBJ) {
+            if (type === TileViewerConstants.TypeHimawariJP ||
+                type === TileViewerConstants.TypeHimawariFD ||
+                type === TileViewerConstants.TypeBackground) {
                 this.zoomRow.style.display = "none";
             } else {
                 this.zoomRow.style.display = "block";
             }
-            if (type === TileViewerConstants.TypeGeometry) {
-                this.styleRow.style.display = "block";
-            } else {
-                this.styleRow.style.display = "none";
-            }
-            if (type === TileViewerConstants.TypeOBJ) {
-                this.mtlRow.style.display = "block";
-            } else {
-                this.mtlRow.style.display = "none";
-            }
-            if (type === TileViewerConstants.TypeBargraph) {
-                this.csvOpenRow.style.display = "block";
-                this.jsonOpenRow.style.display = "block";
-                this.jsonRow.style.display = "block";
-            } else {
-                this.csvOpenRow.style.display = "none";
-                this.jsonOpenRow.style.display = "none";
-                this.jsonRow.style.display = "none";
-            }
-            if (type === TileViewerConstants.TypeElevation) {
-                this.formatRow.style.display = "block";
-            } else {
-                this.formatRow.style.display = "none";
-            }
-            if (type === TileViewerConstants.Type3DTile ||
-                type === TileViewerConstants.Type3DTilesTimeSeries) {
-                this.epsgRow.style.display = "block";
-                this.epsgCustomSrcRow.style.display = "none";
-                this.epsgCustomDstRow.style.display = "none";
-            } else {
-                this.epsgRow.style.display = "none";
-                this.epsgCustomSrcRow.style.display = "none";
-                this.epsgCustomDstRow.style.display = "none";
-            }
-            this.resetEPSGCustomSrcRowVisible();
-            this.resetEPSGCustomDstRowVisible();
 
             this.changeInputURLValue(SampleURLFileNames[type]);
         });
@@ -181,7 +109,7 @@ class LayerDialog extends EventEmitter {
         idRow.appendChild(this.idInput.getDOM());
     }
 
-    createTitleRow() {
+    createURLRow() {
         this.urlTitle = document.createElement('p');
         this.urlTitle.className = "layer_dialog_sub_title";
         this.urlTitle.innerText = "URL:";
@@ -210,36 +138,6 @@ class LayerDialog extends EventEmitter {
         this.styleRow.style.display = "none";
     }
 
-    createJSONRow() {
-        this.jsonURLTitle = document.createElement('p');
-        this.jsonURLTitle.className = "layer_dialog_sub_title";
-        this.jsonURLTitle.innerText = "JSON:";
-        this.jsonURLInput = document.createElement('textarea');
-        this.jsonURLInput.className = "layer_dialog_url_input";
-        this.changeInputJSONValue('sample_data/bargraph/setting1.json');
-
-        this.jsonRow = this.createRow();
-        this.jsonRow.className = "layer_dialog_row2"
-        this.jsonRow.appendChild(this.jsonURLTitle);
-        this.jsonRow.appendChild(this.jsonURLInput);
-        this.jsonRow.style.display = "none";
-    }
-
-    createMTLRow() {
-        this.mtlURLTitle = document.createElement('p');
-        this.mtlURLTitle.className = "layer_dialog_sub_title";
-        this.mtlURLTitle.innerText = "MTL:";
-        this.mtlURLInput = document.createElement('textarea');
-        this.mtlURLInput.className = "layer_dialog_url_input";
-        this.changeInputMTLValue("sample_data/obj/teapot/default.mtl");
-
-        this.mtlRow = this.createRow();
-        this.mtlRow.className = "layer_dialog_row2"
-        this.mtlRow.appendChild(this.mtlURLTitle);
-        this.mtlRow.appendChild(this.mtlURLInput);
-        this.mtlRow.style.display = "none";
-    }
-
     createZoomRow() {
         this.zoomMinTitle = document.createElement('p');
         this.zoomMinTitle.className = "layer_dialog_zoom_title";
@@ -249,13 +147,13 @@ class LayerDialog extends EventEmitter {
         this.zoomMaxTitle.innerText = "Max";
 
         this.zoomMinSelect = new Select();
-        for (let i = 1; i <= 20; ++i) {
+        for (let i = 0; i <= 24; ++i) {
             this.zoomMinSelect.addOption(i, String(i));
         }
         this.zoomMinSelect.getDOM().className = "layer_dialog_zoom_min_select";
 
         this.zoomMaxSelect = new Select();
-        for (let i = 1; i <= 20; ++i) {
+        for (let i = 0; i <= 24; ++i) {
             this.zoomMaxSelect.addOption(i, String(i));
         }
         this.zoomMaxSelect.getDOM().className = "layer_dialog_zoom_max_select";
@@ -278,321 +176,6 @@ class LayerDialog extends EventEmitter {
         this.errorRow.appendChild(this.errorText);
     }
 
-    createCSVOpenRow() {
-        this.csvOpenTitle = document.createElement('p');
-        this.csvOpenTitle.className = "layer_dialog_fileopen_title";
-        this.csvOpenTitle.innerText = "Import CSV File:";
-        this.csvOpenInput = new Input('file');
-        this.csvOpenInput.type = "file";
-        this.csvOpenInput.getDOM().style.display = "inline-block";
-
-        // csvアップロード中のぐるぐる回るアイコン
-        this.csvLoadingImage = document.createElement('span');
-        this.csvLoadingImage.className = 'layer_dialog_csv_loading'
-        this.csvLoadingImage.textContent = 'Uploading...'
-        this.csvLoadingImage.style.display = 'none';
-
-        this.csvOpenRow = this.createRow();
-        this.csvOpenRow.appendChild(this.csvOpenTitle);
-        this.csvOpenRow.appendChild(this.csvOpenInput.getDOM());
-        this.csvOpenRow.appendChild(this.csvLoadingImage);
-        this.csvOpenRow.style.display = "none";
-
-        this.csvOpenInput.on(Input.EVENT_CHANGE, (err, evt) => {
-            this.csvLoadingImage.style.display = 'inline';
-            this.errorText.style.display = 'none';
-
-            let files = evt.target.files;
-            let fileReader = new FileReader();
-            fileReader.onload = (e) => {
-                try {
-                    let data = new Uint8Array(e.target.result);
-                    let converted = window.Encoding.convert(data, {
-                        to: 'UNICODE',
-                        from: 'AUTO'
-                    });
-                    // パースできるか確かめる
-                    let str = Encoding.codeToString(converted);
-                    let parsed = window.Papa.parse(str);
-                    if (parsed.errors.length == 0) {
-                        console.error("upload")
-                        this.action.upload({
-                            filename: files[0].name,
-                            type: TileViewerConstants.UploadTypeCSV,
-                            binary: e.target.result
-                        });
-                    } else {
-                        throw 'Failed to parse CSV.'
-                    }
-                } catch (err) {
-                    this.errorText.textContent = 'Error:' + err.toString();
-                    this.errorText.style.display = 'block';
-                }
-                this.csvLoadingImage.style.display = 'none';
-            };
-            fileReader.readAsArrayBuffer(files[0]);
-        });
-    }
-
-    createJSONOpenRow() {
-        this.jsonOpenTitle = document.createElement('p');
-        this.jsonOpenTitle.className = "layer_dialog_fileopen_title";
-        this.jsonOpenTitle.innerText = "Import JSON File:";
-        this.jsonOpenInput = new Input('file');
-        this.jsonOpenInput.type = "file";
-        this.jsonOpenInput.getDOM().style.display = "inline-block";
-
-        // csvアップロード中のぐるぐる回るアイコン
-        this.jsonLoadingImage = document.createElement('span');
-        this.jsonLoadingImage.className = 'layer_dialog_csv_loading'
-        this.jsonLoadingImage.textContent = 'Uploading...'
-        this.jsonLoadingImage.style.display = 'none';
-
-        this.jsonOpenRow = this.createRow();
-        this.jsonOpenRow.appendChild(this.jsonOpenTitle);
-        this.jsonOpenRow.appendChild(this.jsonOpenInput.getDOM());
-        this.jsonOpenRow.appendChild(this.jsonLoadingImage);
-        this.jsonOpenRow.style.display = "none";
-
-        this.jsonOpenInput.on(Input.EVENT_CHANGE, (err, evt) => {
-            this.jsonLoadingImage.style.display = 'inline';
-            this.errorText.style.display = 'none';
-
-            let files = evt.target.files;
-            let fileReader = new FileReader();
-            fileReader.onload = (e) => {
-                try {
-                    let data = new Uint8Array(e.target.result);
-                    let str = new TextDecoder().decode(data);
-
-                    // パースできるか確かめる
-                    let parsed = JSON.parse(str);
-                    if (parsed) {
-                        this.action.upload({
-                            filename: files[0].name,
-                            type: TileViewerConstants.UploadTypeJSON,
-                            binary: e.target.result
-                        });
-                    } else {
-                        throw 'Failed to parse JSON.'
-                    }
-                } catch (err) {
-                    this.errorText.textContent = 'Error:' + err.toString();
-                    this.errorText.style.display = 'block';
-                }
-                this.jsonLoadingImage.style.display = 'none';
-            };
-            fileReader.readAsArrayBuffer(files[0]);
-        });
-    }
-
-    resetEPSGCustomSrcRowVisible() {
-        const type = this.typeSelect.getSelectedValue();
-        const enableEPSGInput = (
-            type === TileViewerConstants.Type3DTile ||
-            type === TileViewerConstants.Type3DTilesTimeSeries);
-
-        const customIndex = Object.keys(this.epsgSrcSelect.getOptions()).length - 1;
-        const isCustom = this.epsgSrcSelect.getSelectedIndex() === customIndex;
-        if (enableEPSGInput && isCustom) {
-            this.epsgCustomSrcRow.style.display = "block";
-        } else {
-            this.epsgCustomSrcRow.style.display = "none";
-        }
-    }
-
-    resetEPSGCustomDstRowVisible() {
-        const type = this.typeSelect.getSelectedValue();
-        const enableEPSGInput = (
-            type === TileViewerConstants.Type3DTile ||
-            type === TileViewerConstants.Type3DTilesTimeSeries);
-
-        const customIndex = Object.keys(this.epsgDstSelect.getOptions()).length - 1;
-        const isCustom = this.epsgDstSelect.getSelectedIndex() === customIndex;
-        if (enableEPSGInput && isCustom) {
-            this.epsgCustomDstRow.style.display = "block";
-        } else {
-            this.epsgCustomDstRow.style.display = "none";
-        }
-    }
-
-    createFormatRow() {
-        this.formatTitle = document.createElement('p');
-        this.formatTitle.className = "layer_dialog_sub_title";
-        this.formatTitle.innerText = "Format:";
-        this.formatSelect = new Select();
-        this.formatSelect.getDOM().className = "layer_dialog_type_select";
-        this.formatSelect.addOption("image/png", "png");
-        this.formatSelect.addOption("csv", "csv");
-        this.formatSelect.addOption("image/x-bil;bits=32", "BIL(wmts)");
-        this.formatSelect.addOption("image/png", "png(wmts)");
-
-        this.tileMatrixSetTitle = document.createElement('p');
-        this.tileMatrixSetTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
-        this.tileMatrixSetTitle.innerText = "tileMatrixSet:";
-        this.tileMatrixSetTitle.style.display = "none"
-
-        this.tileMatrixSetSelect = new Select();
-        this.tileMatrixSetSelect.addOption("WGS84G", "WGS84G");
-        this.tileMatrixSetSelect.addOption("PM", "PM");
-        this.tileMatrixSetSelect.addOption("iTowns", "iTowns");
-        this.tileMatrixSetSelect.addOption("Custom", "Custom");
-        this.tileMatrixSetSelect.getDOM().className = "layer_dialog_zoom_max_select";
-        this.tileMatrixSetSelect.setSelectedIndex(0);
-        this.tileMatrixSetSelect.getDOM().style.display = "none"
-
-        this.styleNameInputTitle = document.createElement('p')
-        this.styleNameInputTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
-        this.styleNameInputTitle.innerText = "style:";
-        this.styleNameInputTitle.style.display = "none"
-
-        this.styleNameInput = new Input("text");
-        this.styleNameInput.getDOM().className = "layer_dialog_style_name_input";
-        this.styleNameInput.setValue("normal");
-        this.styleNameInput.getDOM().style.display = "none"
-
-        this.formatRow = this.createRow();
-        this.formatRow.style.display = "none"
-        this.formatRow.appendChild(this.formatTitle);
-        this.formatRow.appendChild(this.formatSelect.getDOM());
-        this.formatRow.appendChild(this.tileMatrixSetTitle);
-        this.formatRow.appendChild(this.tileMatrixSetSelect.getDOM());
-        this.formatRow.appendChild(this.styleNameInputTitle);
-        this.formatRow.appendChild(this.styleNameInput.getDOM());
-
-        this.tileMatrixSetInputTitle = document.createElement('p')
-        this.tileMatrixSetInputTitle.className = "layer_dialog_zoom_title layer_dialog_zoom_max_title";
-        this.tileMatrixSetInputTitle.innerText = "tileMatrixSet(Custom):";
-
-        this.tileMatrixSetInput = new Input("text");
-        this.tileMatrixSetInput.getDOM().className = "layer_dialog_style_name_input";
-        this.tileMatrixSetInput.setValue("WGS84G");
-
-        this.tileMatrixSetCustomRow = this.createRow();
-        this.tileMatrixSetCustomRow.style.display = "none"
-        this.tileMatrixSetCustomRow.appendChild(this.tileMatrixSetInputTitle);
-        this.tileMatrixSetCustomRow.appendChild(this.tileMatrixSetInput.getDOM());
-
-        this.tileMatrixSetSelect.on(Select.EVENT_CHANGE, (err, val) => {
-            const isCustom = (this.tileMatrixSetSelect.getSelectedIndex() === Object.keys(this.tileMatrixSetSelect.getOptions()).length - 1);
-            if (isCustom) {
-                this.tileMatrixSetCustomRow.style.display = "block";
-            } else {
-                this.tileMatrixSetCustomRow.style.display = "none";
-            }
-        });
-
-        this.formatSelect.on(Select.EVENT_CHANGE, (err, val) => {
-            let index = this.formatSelect.getSelectedIndex();
-            if (index >= 2) {
-                // wmts
-                this.tileMatrixSetTitle.style.display = "inline"
-                this.tileMatrixSetSelect.getDOM().style.display = "inline"
-                this.styleNameInputTitle.style.display = "inline"
-                this.styleNameInput.getDOM().style.display = "inline"
-            } else {
-                this.tileMatrixSetTitle.style.display = "none"
-                this.tileMatrixSetSelect.getDOM().style.display = "none"
-                this.styleNameInputTitle.style.display = "none"
-                this.styleNameInput.getDOM().style.display = "none"
-            }
-        });
-    }
-
-    createEPSGRow() {
-        this.epsgTitle = document.createElement('p');
-        this.epsgTitle.className = "layer_dialog_sub_title";
-        this.epsgTitle.innerText = "Conversion:";
-
-        this.epsgFromTitle = document.createElement('p');
-        this.epsgFromTitle.className = "layer_dialog_epsg_title layer_dialog_epsg_from_title";
-        this.epsgFromTitle.innerText = "From";
-
-        this.epsgSrcSelect = new Select();
-        this.epsgSrcSelect.addOption("EPSG:4978", "EPSG:4978");
-        this.epsgSrcSelect.addOption("EPSG:3857", "EPSG:3857");
-        this.epsgSrcSelect.addOption("EPSG:2446", "EPSG:2446");
-        this.epsgSrcSelect.addOption("Custom", "Custom");
-        this.epsgSrcSelect.getDOM().className = "layer_dialog_epsg_min_select";
-        this.epsgSrcSelect.setSelectedIndex(0);
-
-        this.epsgToTile = document.createElement('p');
-        this.epsgToTile.className = "layer_dialog_epsg_title";
-        this.epsgToTile.innerText = "To";
-
-        this.epsgDstSelect = new Select();
-        this.epsgDstSelect.addOption("EPSG:4978", "EPSG:4978");
-        this.epsgDstSelect.addOption("EPSG:3857", "EPSG:3857");
-        this.epsgDstSelect.addOption("EPSG:2446", "EPSG:2446");
-        this.epsgDstSelect.addOption("Custom", "Custom");
-        this.epsgDstSelect.getDOM().className = "layer_dialog_epsg_max_select";
-        this.epsgDstSelect.setSelectedIndex(0);
-
-        this.epsgRow = this.createRow();
-        this.epsgRow.style.display = "none"
-        this.epsgRow.appendChild(this.epsgTitle);
-        this.epsgRow.appendChild(this.epsgFromTitle);
-        this.epsgRow.appendChild(this.epsgSrcSelect.getDOM());
-        this.epsgRow.appendChild(this.epsgToTile);
-        this.epsgRow.appendChild(this.epsgDstSelect.getDOM());
-
-        // EPSG Src 入力
-        this.epsgSrcTitle = document.createElement('p');
-        this.epsgSrcTitle.className = "layer_dialog_epsg_title layer_dialog_epsg_from_title";
-        this.epsgSrcTitle.innerText = "From Custom EPSG:";
-
-        this.epsgSrcInput = new Input("text");
-        this.epsgSrcInput.getDOM().className = "layer_dialog_epsg_input";
-        this.epsgSrcInput.setValue("4978");
-
-        this.epsgSrcCodeTitle = document.createElement('p');
-        this.epsgSrcCodeTitle.className = "layer_dialog_epsg_title";
-        this.epsgSrcCodeTitle.innerText = "PROJ.4";
-
-        this.epsgSrcCodeInput = new Input("text");
-        this.epsgSrcCodeInput.getDOM().className = "layer_dialog_epsg_definition_input";
-        this.epsgSrcCodeInput.setValue('+proj=geocent +datum=WGS84 +units=m +no_defs')
-
-        this.epsgCustomSrcRow = this.createRow();
-        this.epsgCustomSrcRow.style.display = "none"
-        this.epsgCustomSrcRow.appendChild(this.epsgSrcTitle);
-        this.epsgCustomSrcRow.appendChild(this.epsgSrcInput.getDOM());
-        this.epsgCustomSrcRow.appendChild(this.epsgSrcCodeTitle);
-        this.epsgCustomSrcRow.appendChild(this.epsgSrcCodeInput.getDOM());
-
-        // EPSG Dst 入力
-        this.epsgDstTitle = document.createElement('p');
-        this.epsgDstTitle.className = "layer_dialog_epsg_title layer_dialog_epsg_from_title";
-        this.epsgDstTitle.innerText = "To Custom EPSG:";
-
-        this.epsgDstInput = new Input("text");
-        this.epsgDstInput.getDOM().className = "layer_dialog_epsg_input";
-        this.epsgDstInput.setValue("4978");
-
-        this.epsgDstCodeTitle = document.createElement('p');
-        this.epsgDstCodeTitle.className = "layer_dialog_epsg_title";
-        this.epsgDstCodeTitle.innerText = "PROJ.4";
-
-        this.epsgDstCodeInput = new Input("text");
-        this.epsgDstCodeInput.getDOM().className = "layer_dialog_epsg_definition_input";
-        this.epsgDstCodeInput.setValue('+proj=geocent +datum=WGS84 +units=m +no_defs')
-
-        this.epsgCustomDstRow = this.createRow();
-        this.epsgCustomDstRow.style.display = "none"
-        this.epsgCustomDstRow.appendChild(this.epsgDstTitle);
-        this.epsgCustomDstRow.appendChild(this.epsgDstInput.getDOM());
-        this.epsgCustomDstRow.appendChild(this.epsgDstCodeTitle);
-        this.epsgCustomDstRow.appendChild(this.epsgDstCodeInput.getDOM());
-
-        this.epsgSrcSelect.on('change', () => {
-            this.resetEPSGCustomSrcRowVisible();
-        });
-
-        this.epsgDstSelect.on('change', () => {
-            this.resetEPSGCustomDstRowVisible();
-        });
-    }
-
     createPopupBackground() {
         this.okButton = new Button();
         this.okButton.setDataKey("OK");
@@ -611,57 +194,15 @@ class LayerDialog extends EventEmitter {
                 id: "",
                 url: "",
                 zoom: {
-                    min: 1,
-                    max: 20
+                    min: 0,
+                    max: 24
                 }
             };
             data.type = this.typeSelect.getSelectedValue();
-            if (data.type == TileViewerConstants.TypeBargraph) {
-                data.isBarGraph = true;
-                data.jsonurl = this.jsonURLInput.value.split("\n").join("");
-            }
-            if (data.type == TileViewerConstants.TypeOBJ) {
-                data.isOBJ = true;
-            }
             data.url = this.urlInput.value.split("\n").join("");
             data.id = this.idInput.getValue();
             data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
             data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
-
-            if (data.type === TileViewerConstants.TypeGeometry) {
-                data.style = this.styleURLInput.value.split("\n").join("");
-            }
-            if (data.isOBJ) {
-                data.mtlurl = this.mtlURLInput.value.split("\n").join("");
-            }
-            if (data.type === TileViewerConstants.TypeElevation) {
-                data.format = this.formatSelect.getSelectedValue();
-                if (this.formatSelect.getSelectedIndex() >= 2) {
-                    data.tileMatrixSet = this.tileMatrixSetSelect.getSelectedValue();
-                    if (data.tileMatrixSet === 'Custom') {
-                        data.tileMatrixSet = this.tileMatrixSetInput.getValue();
-                    }
-                    data.style = this.styleNameInput.getValue();
-                } else {
-                    data.tileMatrixSet = 'PM'
-                    data.style = 'normal'
-                }
-            }
-            if (data.type === TileViewerConstants.Type3DTile ||
-                data.type === TileViewerConstants.Type3DTilesTimeSeries) {
-                data.conversion = {
-                    src: this.epsgSrcSelect.getSelectedValue(),
-                    dst: this.epsgDstSelect.getSelectedValue()
-                };
-                if (data.conversion.src === 'Custom') {
-                    data.conversion.srcCustomEPSG = "EPSG:" + this.epsgSrcInput.getValue();
-                    data.conversion.srcCustomProj4 = this.epsgSrcCodeInput.getValue();
-                }
-                if (data.conversion.dst === 'Custom') {
-                    data.conversion.dstCustomEPSG = "EPSG:" + this.epsgDstInput.getValue();
-                    data.conversion.dstCustomProj4 = this.epsgDstCodeInput.getValue();
-                }
-            }
 
             if (this.endCallback) {
                 this.endCallback(isOK, data);

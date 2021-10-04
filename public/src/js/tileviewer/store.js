@@ -180,17 +180,12 @@ class Store extends EventEmitter {
             this.iframeConnector.on(TileViewerCommand.DeleteLayer, (err, params) => {});
 
             this.iframeConnector.on(TileViewerCommand.UpdateLayer, (err, params) => {
-                this.__execludeAndCacheCSVData(params);
                 let layerList = [];
                 if (params.length > 0 && this.metaData) {
                     for (let i = 0; i < params.length; ++i) {
                         let layerParam = params[i];
-                        let layer = this.getLayerData(layerParam.id);
-                        if (layer) {
-                            layerList.push(layerParam);
-                        } else {
-                            console.error("Not found layer on ChOWDER metadata", layerParam.id)
-                        }
+                        // let layer = this.getLayerData(layerParam.id);
+                        layerList.push(layerParam);
                     }
                 }
                 this.metaData.layerList = JSON.stringify(layerList);
@@ -272,14 +267,17 @@ class Store extends EventEmitter {
             });
         }
         this.metaData = meta;
+        console.error('layerList', layerList)
         if (layerList.length > 0) {
             // レイヤー初期化
             this.iframeConnector.send(TileViewerCommand.InitLayers, layerList, (err, data) => {
+                /*
                 this._changeTimeByTimeline({
                     currentTime: this.timelineCurrentTime,
                     startTime: this.timelineStartTime,
                     endTime: this.timelineEndTime,
                 });
+                */
             });
             //this.emit(Store.EVENT_DONE_ADD_LAYER, null, layerList);
             this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, meta);

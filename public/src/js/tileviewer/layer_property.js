@@ -145,6 +145,5 @@ class LayerProperty extends EventEmitter {
         return this.dom;
     }
 }
-LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI = "layer_property_need_update_gui";
 
 export default LayerProperty;

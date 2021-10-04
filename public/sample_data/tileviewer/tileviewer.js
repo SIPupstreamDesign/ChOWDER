@@ -242,6 +242,8 @@ class TileViewer {
     // "x/y/z/"等を含んだURLをタイル情報を元に正しいURLに成形して返す
     _formatUrl(url, tileInfo, count, zoom = null) {
         try {
+            url = url.replace(/{x}/g, tileInfo.tx.toString());
+            url = url.replace(/{y}/g, tileInfo.ty.toString());
             url = url.replace(/%x/g, tileInfo.tx.toString());
             url = url.replace(/%y/g, tileInfo.ty.toString());
             url = url.replace(/%ws/g, tileInfo.tw.toString());
@@ -250,6 +252,7 @@ class TileViewer {
             url = url.replace(/%h/g, tileInfo.th.toString());
             url = url.replace(/%c/g, count.toString());
             if (zoom !== null) {
+                url = url.replace(/{z}/g, zoom.toString());
                 url = url.replace(/%z/g, zoom.toString());
             }
             return url;
@@ -453,6 +456,13 @@ class TileViewer {
     // scaleIndex変更された場合必ず呼ぶ
     _dispatchScaleIndex() {
         const event = new CustomEvent('scale_index_changed', { detail: this.currentScaleIndex });
+        this.transformElem.dispatchEvent(event);
+    }
+
+    // オプション変更コールバックを発火させる
+    // オプションが変更された場合必ず呼ぶ
+    _dispatchOptions() {
+        const event = new CustomEvent('options_changed', { detail: JSON.parse(JSON.stringify(this.options)) });
         this.transformElem.dispatchEvent(event);
     }
 
@@ -780,6 +790,9 @@ class TileViewer {
     setOptions(options) {
         this.options = options;
 
+        // 古いものを削除してthis.layerParamsを作り直す
+        this.layerParams = [];
+
         if (options.hasOwnProperty('backgroundImage')) {
             this.layerParams.push({
                 opacity: 1,
@@ -793,6 +806,9 @@ class TileViewer {
                 visible: true
             });
         }
+        this._update();
+
+        this._dispatchOptions();
     }
 
     setOpacity(layerIndex, opacity) {
@@ -871,6 +887,26 @@ class TileViewer {
     removeScaleIndexCallback(callback) {
         if (this.callbackDict.hasOwnProperty(callback)) {
             this.transformElem.removeEventListener('scale_index_changed', this.callbackDict[callback]);
+            return true;
+        }
+        return false;
+    }
+
+
+    addOptionsCallback(callback) {
+        if (this.transformElem) {
+            this.callbackDict[callback] = (ev) => {
+                callback(ev.detail);
+            };
+            this.transformElem.addEventListener('options_changed', this.callbackDict[callback]);
+            return true;
+        }
+        return false;
+    }
+
+    removeOptionsCallback(callback) {
+        if (this.callbackDict.hasOwnProperty(callback)) {
+            this.transformElem.removeEventListener('options_changed', this.callbackDict[callback]);
             return true;
         }
         return false;

@@ -82,6 +82,65 @@ class Store extends EventEmitter {
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
+        this.iframeConnector.on(TileViewerCommand.AddLayer, (err, param, request) => {
+            // レイヤー追加命令
+            this.addLayer(param);
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
+        this.iframeConnector.on(TileViewerCommand.InitLayers, (err, param, request) => {
+            // レイヤー初期化命令
+            this.initLayers(param);
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
+    }
+
+    /**
+     * レイヤー追加
+     * @param params
+     * { 
+     *   id : 対象レイヤのID
+     *   url : 追加するURL
+     *   type : 追加するレイヤのタイプ
+     *   zoom : { min : 0, max : 24 } ズーム範囲 (option)
+     * }
+     */
+    addLayer(params) {
+        let options = this.instance.getOptions();
+        options.foregroundImages.push(params.url);
+        this.instance.setOptions(options);
+    }
+
+    initLayers(params) {
+        let options = this.instance.getOptions();
+        options.foregroundImages = [];
+        for (let i = 0; i < params.length; ++i) {
+            let param = params[i];
+            if (i === 0 && param.type === 'image') {
+                options.backgroundImage = param.url;
+            } else {
+                options.foregroundImages.push(param.url);
+            }
+        }
+        this.instance.setOptions(options);
+
+        // setOptionsでlayerDataListがリセット
+        this.layerDataList = [];
+
+        for (let i = 0; i < params.length; ++i) {
+            let param = params[i];
+            this.layerDataList.push({
+                id: param.id,
+                url: param.url,
+                opacity: param.opacity,
+                visible: param.visible,
+                type: param.type
+            });
+            this.instance.setOpacity(this.getLayerIndex(param.id), param.opacity);
+            this.instance.setVisible(this.getLayerIndex(param.id), param.visible);
+        }
+        this.iframeConnector.send(TileViewerCommand.UpdateLayer, this.layerDataList, () => {});
     }
 
     /**
@@ -135,6 +194,8 @@ class Store extends EventEmitter {
     }
 
     initLayerDataList() {
+        console.error('initLayerDataList')
+        this.layerDataList = [];
         const options = this.instance.getOptions();
         if (options.hasOwnProperty('backgroundImage')) {
             this.layerDataList.push({
@@ -336,6 +397,13 @@ class Store extends EventEmitter {
 
         this.initLayerDataList();
         this.addLodScaleLabel();
+
+        // オプションが変更された場合のコールバック
+        this.instance.addOptionsCallback((data) => {
+            this.initLayerDataList();
+            this.iframeConnector.send(TileViewerCommand.UpdateLayer, this.layerDataList, () => {});
+
+        });
 
         this.iframeConnector.send(TileViewerCommand.InitLayers, this.instance.getCameraInfo(), () => {});
 

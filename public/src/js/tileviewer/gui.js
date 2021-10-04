@@ -274,16 +274,12 @@ class GUI extends EventEmitter {
 
         const initLayerProperty = (data) => {
             let layerData = this.store.getLayerData(data.value);
+            //console.error('layerData', layerData)
             this.layerProperty.init(data.value, layerData);
         };
 
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {
             initLayerProperty(data);
-        });
-        this.layerProperty.on(LayerProperty.EVENT_LAYER_PROPERTY_NEED_UPDATE_GUI, (err, data) => {
-            const scrollTop = propInner.scrollTop;
-            initLayerProperty(data);
-            propInner.scrollTop = scrollTop;
         });
 
         // Select Data ボタン
