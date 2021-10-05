@@ -430,7 +430,11 @@ class TileViewer {
 
     _clearCache() {
         let tileElements = this._getRootElem();
-        tileElements.innerHTML = "";
+        for (let i = tileElements.length - 1; i >= 0; --i) {
+            if (tileElements[i].id !== this.backgroundImageID) {
+                tileElements.removeChild(tileElements[i]);
+            }
+        }
     }
 
     // スケールインデックスの変更
