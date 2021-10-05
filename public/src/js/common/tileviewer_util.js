@@ -53,8 +53,7 @@ class TileViewerUtil {
                                 iframeConnector.send(TileViewerCommand.AddLayer, layerList[i]);
                             }
                         }
-                    }
-                    if (layerList.length < preLayerList.length) {
+                    } else if (layerList.length < preLayerList.length) {
                         // 減っていた
                         let layerIDs = TileViewerUtil.getIDList(layerList);
                         let preLayerIDs = TileViewerUtil.getIDList(preLayerList);
@@ -64,6 +63,18 @@ class TileViewerUtil {
                                 //console.error("DeleteLayer", i)
                                 iframeConnector.send(TileViewerCommand.DeleteLayer, preLayerList[i]);
                             }
+                        }
+                    } else {
+                        // 順序変更あったか調べる
+                        let isOrderChanged = false;
+                        for (let i = 0; i < layerList.length; ++i) {
+                            if (preLayerList[i].id !== layerList[i].id) {
+                                isOrderChanged = true;
+                                break;
+                            }
+                        }
+                        if (isOrderChanged) {
+                            iframeConnector.send(TileViewerCommand.InitLayers, layerList);
                         }
                     }
                     for (let i = 0; i < layerList.length; ++i) {
