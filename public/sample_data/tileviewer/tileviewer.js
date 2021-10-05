@@ -428,6 +428,11 @@ class TileViewer {
         }
     }
 
+    _clearCache() {
+        let tileElements = this._getRootElem();
+        tileElements.innerHTML = "";
+    }
+
     // スケールインデックスの変更
     _setScaleIndex(scaleIndex, withDispatch = true) {
         if (this.isFixedScaleIndex) {
@@ -789,6 +794,8 @@ class TileViewer {
 
     setOptions(options) {
         this.options = options;
+
+        this._clearCache();
 
         // 古いものを削除してthis.layerParamsを作り直す
         this.layerParams = [];

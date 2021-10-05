@@ -128,7 +128,7 @@ class Store extends EventEmitter {
     deleteLayer(params) {
         if (params.hasOwnProperty('id')) {
             const layerIndex = this.getLayerIndex(params.id);
-            if (layerIndex) {
+            if (layerIndex >= 0) {
                 this.layerDataList.splice(layerIndex, 1);
                 this.initLayers(JSON.parse(JSON.stringify(this.layerDataList)));
             }
@@ -143,6 +143,11 @@ class Store extends EventEmitter {
             let param = params[i];
             if (i === 0 && param.type === 'image') {
                 options.backgroundImage = param.url;
+            } else if (i === 0) {
+                if (options.hasOwnProperty('backgroundImage')) {
+                    delete options.backgroundImage;
+                }
+                options.foregroundImages.push(param.url);
             } else {
                 options.foregroundImages.push(param.url);
             }
