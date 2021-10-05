@@ -123,6 +123,12 @@ class GUI extends EventEmitter {
             }
         });
 
+        this.store.on(Store.EVENT_DONE_CHANGE_LAYER_ORDER, (err, data) => {
+            if (this.propOuterVisible) {
+                this.layerList.setSelectedID(data.id);
+            }
+        });
+
         // コンテンツ追加後に
         // MetaDataが更新されたタイミングでレイヤーリストをEnableにする
         // syncボタンの状態を更新

@@ -118,25 +118,12 @@ class LayerList extends EventEmitter {
             let data = layerDatas[i];
             if (data) {
                 let type = data.type;
-                /*
-                if (data.isBarGraph) {
-                    type = TileViewerConstants.TypeBargraph;
-                }
-                if (data.isOBJ) {
-                    type = TileViewerConstants.TypeOBJ;
-                }
-                if (data.isTimeseriesPotree) {
-                    type = TileViewerConstants.TypePointCloudTimeSeries;
-                }
-                if (data.isTimeseriesC3DTiles) {
-                    type = TileViewerConstants.Type3DTilesTimeSeries;
-                }
-                */
                 this.layerSelect.addOption(data.id, data.id + " - " + type);
             }
         }
         if (currentSelectedIndex >= 0 && currentSelectedIndex < layerDatas.length) {
             this.layerSelect.setSelectedIndex(currentSelectedIndex);
+            this.layerSelect.getDOM().focus();
             this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {
                 index: this.layerSelect.getSelectedIndex(),
                 value: this.layerSelect.getSelectedValue()
@@ -146,10 +133,22 @@ class LayerList extends EventEmitter {
 
     setSelectedIndex(index) {
         this.layerSelect.setSelectedIndex(index);
+        this.layerSelect.getDOM().focus();
         this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {
             index: this.layerSelect.getSelectedIndex(),
             value: this.layerSelect.getSelectedValue()
         });
+    }
+
+    setSelectedID(id) {
+        const options = this.layerSelect.getOptions();
+        for (let i = 0; i < options.length; ++i) {
+            if (options[i].value === id) {
+                this.setSelectedIndex(i);
+                this.layerSelect.getDOM().focus();
+                break;
+            }
+        }
     }
 
     setEnable(isEnable) {

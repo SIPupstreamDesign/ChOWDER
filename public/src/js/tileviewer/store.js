@@ -370,8 +370,7 @@ class Store extends EventEmitter {
     }
 
     _changeLayerOrder(data) {
-        // TODO サーバ側更新
-        this.iframeConnector.send(TileViewerCommand.ChangeLayerOrder, data, (err, data) => {
+        this.iframeConnector.send(TileViewerCommand.ChangeLayerOrder, data, (err, data_) => {
             this.emit(Store.EVENT_DONE_CHANGE_LAYER_ORDER, null, data);
         });
     }

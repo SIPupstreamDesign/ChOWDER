@@ -168,7 +168,7 @@ class Store extends EventEmitter {
     }
 
     initLayers(params) {
-        console.error('initLayers', params)
+        // console.error('initLayers', params)
         let options = this.instance.getOptions();
         options.foregroundImages = [];
         for (let i = 0; i < params.length; ++i) {
