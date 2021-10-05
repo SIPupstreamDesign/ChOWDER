@@ -717,6 +717,10 @@ class GUI extends EventEmitter {
                 connector.connect(() => {});
 
                 connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                    let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
+                    this.updateTileViewerScale(connector, metaData, rect);
+                    TileViewerUtil.updateCamera(connector, metaData);
+
                     connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                         connector.on(TileViewerCommand.InitLayers, (err, data) => {
                             let rect = DisplayUtil.calcIFrameRect(this.store, metaData);

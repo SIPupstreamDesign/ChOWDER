@@ -275,6 +275,7 @@ class ContentViewGUI extends EventEmitter {
             connector.connect(() => {});
 
             connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                TileViewerUtil.updateCamera(connector, metaData);
                 connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                     connector.on(TileViewerCommand.InitLayers, (err, data) => {
                         TileViewerUtil.updateCamera(connector, metaData);

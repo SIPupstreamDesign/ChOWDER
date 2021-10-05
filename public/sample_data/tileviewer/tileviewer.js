@@ -429,10 +429,11 @@ class TileViewer {
     }
 
     _clearCache() {
-        let tileElements = this._getRootElem();
+        const rootElem = this._getRootElem();
+        let tileElements = rootElem.children;
         for (let i = tileElements.length - 1; i >= 0; --i) {
             if (tileElements[i].id !== this.backgroundImageID) {
-                tileElements.removeChild(tileElements[i]);
+                rootElem.removeChild(tileElements[i]);
             }
         }
     }

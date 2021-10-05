@@ -99,6 +99,12 @@ class Store extends EventEmitter {
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
+        this.iframeConnector.on(TileViewerCommand.ChangeLayerOrder, (err, param, request) => {
+            // レイヤー順序変更命令
+            this.changeLayerOrder(param);
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
     }
 
     /**
@@ -131,6 +137,32 @@ class Store extends EventEmitter {
             if (layerIndex >= 0) {
                 this.layerDataList.splice(layerIndex, 1);
                 this.initLayers(JSON.parse(JSON.stringify(this.layerDataList)));
+            }
+        }
+    }
+
+    changeLayerOrder(param) {
+        if (param.hasOwnProperty('id') && param.hasOwnProperty('isUp')) {
+            const isUp = param.isUp;
+            const layerIndex = this.getLayerIndex(param.id);
+            if (layerIndex >= 0) {
+                const hasBackground = this.layerDataList[0].type === "image";
+                if (layerIndex === 0 && hasBackground) {
+                    // 背景は移動できないこととする
+                    return;
+                }
+                const startIndex = hasBackground ? 1 : 0;
+                if (isUp && (layerIndex - 1) >= startIndex) {
+                    const v = this.layerDataList[layerIndex];
+                    this.layerDataList[layerIndex] = this.layerDataList[layerIndex - 1];
+                    this.layerDataList[layerIndex - 1] = v;
+                    this.initLayers(JSON.parse(JSON.stringify(this.layerDataList)));
+                } else if (!isUp && (layerIndex + 1) < this.layerDataList.length) {
+                    const v = this.layerDataList[layerIndex];
+                    this.layerDataList[layerIndex] = this.layerDataList[layerIndex + 1];
+                    this.layerDataList[layerIndex + 1] = v;
+                    this.initLayers(JSON.parse(JSON.stringify(this.layerDataList)));
+                }
             }
         }
     }
