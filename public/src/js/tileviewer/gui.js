@@ -109,9 +109,19 @@ class GUI extends EventEmitter {
             if (!err) {
                 console.log("EVENT_DONE_ADD_LAYER", layerDataList)
                 this.layerList.initLayerSelectList(layerDataList);
+                if (this.propOuterVisible) {
+                    this.layerList.setSelectedIndex(layerDataList.length - 1);
+                }
             }
         })
 
+        this.store.on(Store.EVENT_DONE_DELETE_LAYER, (err, layerDataList) => {
+            if (!err) {
+                if (this.propOuterVisible) {
+                    this.layerList.setSelectedIndex(layerDataList.length - 1);
+                }
+            }
+        });
 
         // コンテンツ追加後に
         // MetaDataが更新されたタイミングでレイヤーリストをEnableにする
@@ -273,9 +283,11 @@ class GUI extends EventEmitter {
         this.propInner.appendChild(this.layerProperty.getDOM());
 
         const initLayerProperty = (data) => {
-            let layerData = this.store.getLayerData(data.value);
-            //console.error('layerData', layerData)
-            this.layerProperty.init(data.value, layerData);
+            if (data.value !== undefined && data.value) {
+                let layerData = this.store.getLayerData(data.value);
+                //console.error('layerData', layerData)
+                this.layerProperty.init(data.value, layerData);
+            }
         };
 
         this.layerList.on(LayerList.EVENT_LAYER_SELECT_CHANGED, (err, data) => {

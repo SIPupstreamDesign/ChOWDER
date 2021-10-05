@@ -70,7 +70,7 @@ class LayerList extends EventEmitter {
         });
 
         this.layerDeleteButton.on('click', () => {
-            InputDialog.showOKCancelInput({
+            let dialog = InputDialog.showOKCancelInput({
                 name: this.layerSelect.getSelectedValue() + i18next.t('delete_is_ok'),
                 okButtonName: "OK"
             }, (isOK) => {
@@ -80,6 +80,7 @@ class LayerList extends EventEmitter {
                     });
                 }
             });
+            dialog.style.color = "white"
         });
 
         this.layerUpButton.on('click', () => {
@@ -111,6 +112,7 @@ class LayerList extends EventEmitter {
 
 
     initLayerSelectList(layerDatas) {
+        const currentSelectedIndex = this.layerSelect.getSelectedIndex();
         this.layerSelect.clear();
         for (let i = 0; i < layerDatas.length; ++i) {
             let data = layerDatas[i];
@@ -133,6 +135,21 @@ class LayerList extends EventEmitter {
                 this.layerSelect.addOption(data.id, data.id + " - " + type);
             }
         }
+        if (currentSelectedIndex >= 0 && currentSelectedIndex < layerDatas.length) {
+            this.layerSelect.setSelectedIndex(currentSelectedIndex);
+            this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {
+                index: this.layerSelect.getSelectedIndex(),
+                value: this.layerSelect.getSelectedValue()
+            });
+        }
+    }
+
+    setSelectedIndex(index) {
+        this.layerSelect.setSelectedIndex(index);
+        this.emit(LayerList.EVENT_LAYER_SELECT_CHANGED, null, {
+            index: this.layerSelect.getSelectedIndex(),
+            value: this.layerSelect.getSelectedValue()
+        });
     }
 
     setEnable(isEnable) {

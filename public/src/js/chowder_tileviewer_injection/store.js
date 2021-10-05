@@ -93,6 +93,12 @@ class Store extends EventEmitter {
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
+        this.iframeConnector.on(TileViewerCommand.DeleteLayer, (err, param, request) => {
+            // レイヤー削除命令
+            this.deleteLayer(param);
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
     }
 
     /**
@@ -106,13 +112,31 @@ class Store extends EventEmitter {
      * }
      */
     addLayer(params) {
+        this.layerDataList.push({
+            id: params.id,
+            url: params.url,
+            opacity: 1.0,
+            visible: true,
+            type: params.type
+        });
         let options = this.instance.getOptions();
         options.foregroundImages.push(params.url);
         this.instance.setOptions(options);
+        this.iframeConnector.send(TileViewerCommand.AddLayer, this.layerDataList, () => {})
+    }
+
+    deleteLayer(params) {
+        if (params.hasOwnProperty('id')) {
+            const layerIndex = this.getLayerIndex(params.id);
+            if (layerIndex) {
+                this.layerDataList.splice(layerIndex, 1);
+                this.initLayers(JSON.parse(JSON.stringify(this.layerDataList)));
+            }
+        }
     }
 
     initLayers(params) {
-        // console.error('initLayers', params)
+        console.error('initLayers', params)
         let options = this.instance.getOptions();
         options.foregroundImages = [];
         for (let i = 0; i < params.length; ++i) {
@@ -155,6 +179,9 @@ class Store extends EventEmitter {
     changeLayerProperty(params, redraw = true) {
         const layerIndex = this.getLayerIndex(params.id);
         if (layerIndex !== null) {
+            this.layerDataList[layerIndex].visible = params.visible;
+            this.layerDataList[layerIndex].opacity = params.opacity;
+
             this.instance.setOpacity(layerIndex, params.opacity);
             this.instance.setVisible(layerIndex, params.visible);
         }
@@ -402,7 +429,7 @@ class Store extends EventEmitter {
 
         // オプションが変更された場合のコールバック
         this.instance.addOptionsCallback((data) => {
-            this.initLayerDataList();
+            //this.initLayerDataList();
             this.iframeConnector.send(TileViewerCommand.UpdateLayer, this.layerDataList, () => {});
 
         });

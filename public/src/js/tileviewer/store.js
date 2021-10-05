@@ -359,18 +359,9 @@ class Store extends EventEmitter {
             if (layerList[i]) {
                 let id = layerList[i].id;
                 if (id === data.id) {
-                    // レイヤー削除して上書き
-                    layerList.splice(i, 1);
-                    this.metaData.layerList = JSON.stringify(layerList);
-
-                    console.log("updateMetadata", data, this.metaData)
-                        // iframeへ送る
+                    // iframeへ送る
                     this.iframeConnector.send(TileViewerCommand.DeleteLayer, data, (err, data) => {
-                        console.log("DeleteLayer")
-                            // サーバへ送る
-                        this.operation.updateMetadata(this.metaData, (err, res) => {
-                            this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
-                        });
+                        this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
                     });
                     break;
                 }
