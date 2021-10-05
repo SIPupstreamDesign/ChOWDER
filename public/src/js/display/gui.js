@@ -715,11 +715,15 @@ class GUI extends EventEmitter {
             let connector = new IFrameConnector(iframe);
             try {
                 connector.connect(() => {});
-                connector.on(TileViewerCommand.InitLayers, (err, data) => {
-                    // 初回に一度実行
-                    let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
-                    this.updateTileViewerScale(connector, metaData, rect);
-                    TileViewerUtil.updateCamera(connector, metaData);
+
+                connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                    connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                        connector.on(TileViewerCommand.InitLayers, (err, data) => {
+                            let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
+                            this.updateTileViewerScale(connector, metaData, rect);
+                            TileViewerUtil.updateCamera(connector, metaData);
+                        });
+                    });
                 });
             } catch (err) {
                 console.error(err, metaData);

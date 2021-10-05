@@ -151,7 +151,6 @@ class Store extends EventEmitter {
         let iframe = data;
         this.iframeConnector = new IFrameConnector(iframe);
         this.iframeConnector.connect(() => {
-
             // iframe内のtileviewerのレイヤーが追加された
             // storeのメンバに保存
             this.iframeConnector.on(TileViewerCommand.AddLayer, (err, params) => {
@@ -267,7 +266,6 @@ class Store extends EventEmitter {
             });
         }
         this.metaData = meta;
-        console.error('layerList', layerList)
         if (layerList.length > 0) {
             // レイヤー初期化
             this.iframeConnector.send(TileViewerCommand.InitLayers, layerList, (err, data) => {

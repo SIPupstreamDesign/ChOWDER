@@ -10,7 +10,8 @@ import EventEmitter from '../../../3rd/js/eventemitter3/index.js'
 import ITownsCommand from './itowns_command.js';
 import TileViewerCommand from './tileviewer_command.js';
 
-let messageID = 1;
+const IDOffset = 100000;
+let ConnectorCounter = 0;
 
 class IFrameConnector extends EventEmitter {
     constructor(iframe_ = null) {
@@ -18,6 +19,7 @@ class IFrameConnector extends EventEmitter {
         this.iframe = iframe_;
         this.contentWindow = this.iframe ? this.iframe.contentWindow : null;
         this.resultCallbacks = {};
+        this.messageID = 1 + IDOffset * ConnectorCounter++;
 
         this.messageCallback = (evt) => {
             try {
@@ -153,7 +155,7 @@ class IFrameConnector extends EventEmitter {
         let reqjson = {
                 jsonrpc: '2.0',
                 type: 'utf8',
-                id: messageID,
+                id: this.messageID,
                 method: method,
                 params: args,
             },
@@ -165,7 +167,7 @@ class IFrameConnector extends EventEmitter {
             reqjson.to = "parent";
         }
 
-        messageID = messageID + 1;
+        this.messageID = this.messageID + 1;
         try {
             data = JSON.stringify(reqjson);
             this.sendWrapper(reqjson.id, reqjson.method, data, resultCallback);
@@ -214,11 +216,13 @@ class IFrameConnector extends EventEmitter {
     connect(onopen, onclose) {
         // iframe内のchowder injectionの初期化
         if (this.iframe) {
+            console.error('connect')
             window.removeEventListener("message", this.messageCallback);
             window.addEventListener("message", this.messageCallback);
 
             // 親ページからiframeへの接続
-            this.send("Init", {}, onopen());
+            this.send("Init", {}, () => {});
+            onopen();
         } else {
             window.removeEventListener("message", this.messageCallback);
             window.addEventListener("message", this.messageCallback);

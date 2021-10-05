@@ -50,9 +50,8 @@ class Store extends EventEmitter {
 
     connectParent() {
         this.iframeConnector = new IFrameConnector();
-        this.iframeConnector.connect(async() => {
-            this.initIFrameEvents();
-        });
+        this.initIFrameEvents();
+        this.iframeConnector.connect(async() => {});
     }
 
     initIFrameEvents() {
@@ -113,6 +112,7 @@ class Store extends EventEmitter {
     }
 
     initLayers(params) {
+        // console.error('initLayers', params)
         let options = this.instance.getOptions();
         options.foregroundImages = [];
         for (let i = 0; i < params.length; ++i) {
@@ -194,7 +194,6 @@ class Store extends EventEmitter {
     }
 
     initLayerDataList() {
-        console.error('initLayerDataList')
         this.layerDataList = [];
         const options = this.instance.getOptions();
         if (options.hasOwnProperty('backgroundImage')) {
@@ -346,7 +345,10 @@ class Store extends EventEmitter {
 
     // displayまたはcontrollerから開かれた(tileviewer画面に対して操作不可)
     injectAsDisplayType(data) {
-        if (window.chowder_view_type === "controller") {}
+        // 初期化イベントに対する応答
+        this.iframeConnector.on(TileViewerCommand.Init, (err, param, request) => {
+            this.iframeConnector.sendResponse(request);
+        });
     }
 
     addLodScaleLabel() {

@@ -272,20 +272,16 @@ class ContentViewGUI extends EventEmitter {
 
         // IframeConnectorを通してiframeに接続
         try {
-            connector.connect(() => {
+            connector.connect(() => {});
 
-                let rect = {
-                    x: 0,
-                    y: 0,
-                    w: iframe.clientWidth,
-                    h: iframe.clientHeight
-                }
-                connector.send(TileViewerCommand.Resize, rect);
+            connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                    connector.on(TileViewerCommand.InitLayers, (err, data) => {
+                        TileViewerUtil.updateCamera(connector, metaData);
+                    });
+                });
             });
 
-            connector.on(TileViewerCommand.InitLayers, (err, data) => {
-                TileViewerUtil.updateCamera(connector, metaData);
-            });
         } catch (err) {
             console.error(err);
         }
