@@ -4,7 +4,7 @@ const OptionHimawarJP = {
     foregroundImages: [
         "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%w/" + HimawariDate + "/000000_%x_%y.png",
         "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%ws/coastline/ffff00_%x_%y.png",
-        //"img/weathermap/%cd/%w/2019-04-30/000000_%x_%y.png"
+        //"https://himawari8-dl.nict.go.jp/himawari8/img/weathermap/%cd/%w/2019-04-30/000000_%x_%y.png"
     ],
     scales: [
         //{ width : 550, height : 550, size : 0.5, count :  1 },
