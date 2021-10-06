@@ -1,25 +1,55 @@
 const HimawariDate = "2019/04/30";
 const OptionHimawarJP = {
     backgroundImage: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/thumbnail/600/" + HimawariDate + "/000000_0_0.png",
+    /*
     foregroundImages: [
         "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/" + HimawariDate + "/000000_%x_%y.png",
         "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%ws/coastline/ffff00_%x_%y.png",
         //"img/weathermap/%cd/%w/2019-04-30/000000_%x_%y.png"
     ],
+    */
+    maps: [{
+        url: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/" + HimawariDate + "/000000_%x_%y.png",
+        scales: [
+            { width: 600, height: 480, count: 1 },
+            { width: 600, height: 480, count: 2 },
+            { width: 600, height: 480, count: 4 },
+            { width: 600, height: 480, count: 5 }
+        ],
+    }, {
+        url: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%ws/coastline/ffff00_%x_%y.png",
+        scales: [
+            { width: 300, height: 240, count: 1 },
+            { width: 420, height: 336, count: 1 },
+            { width: 600, height: 480, count: 1 },
+            { width: 840, height: 672, count: 1 },
+            { width: 600, height: 480, count: 2 },
+            { width: 840, height: 672, count: 2 },
+            { width: 600, height: 480, count: 3 },
+            { width: 600, height: 480, count: 4 },
+            { width: 600, height: 480, count: 5 },
+            { width: 720, height: 576, count: 5 },
+            { width: 1200, height: 960, count: 5 },
+            { width: 1680, height: 1344, count: 5 },
+            { width: 2400, height: 1920, count: 5 }
+        ],
+    }],
+    /*
     scales: [
-        //{ width: 600, height: 480, size: 0.5, count: 1 },
-        //{ width: 600, height: 480, size: 0.7, count: 1 },
-        { width: 600, height: 480, size: 1.0, count: 1 },
-        //{ width: 600, height: 480, size: 1.4, count: 1 },
-        { width: 600, height: 480, size: 1.0, count: 2 },
-        //{ width: 600, height: 480, size: 1.4, count: 2 },
-        { width: 600, height: 480, size: 1.0, count: 4 },
-        { width: 600, height: 480, size: 1.0, count: 5 },
-        //{ width: 600, height: 480, size: 1.2, count: 5 },
-        //{ width: 600, height: 480, size: 2.0, count: 5 },
-        //{ width: 600, height: 480, size: 2.8, count: 5 },
-        //{ width: 600, height: 480, size: 4.0, count: 5 }
+        //{ width: 600, height: 480, size: 0.5, count: 1 }, // 300 coast count 1
+        //{ width: 600, height: 480, size: 0.7, count: 1 }, // 420 coast count 1
+        { width: 600, height: 480, size: 1.0, count: 1 }, // 600 coast count 1
+        //{ width: 600, height: 480, size: 1.4, count: 1 }, // 840 coast count 1
+        { width: 600, height: 480, size: 1.0, count: 2 }, // 600 coast count 2
+        //{ width: 600, height: 480, size: 1.4, count: 2 }, // 840 coast count 2
+        { width: 600, height: 480, size: 1.0, count: 4 }, // 600 coast count 4
+        { width: 600, height: 480, size: 1.0, count: 5 }, // 600 coast count 5
+        //{ width: 600, height: 480, size: 1.2, count: 5 },  // 720 coast count 5
+        //{ width: 600, height: 480, size: 2.0, count: 5 },  // 1200 coast count 5
+        //{ width: 600, height: 480, size: 2.8, count: 5 },  // 1680 coast count 5
+        //{ width: 600, height: 480, size: 4.0, count: 5 }   // 2400 coast count 5
     ],
+    */
     geodeticSystem: "himawari8.jp"
 };
 

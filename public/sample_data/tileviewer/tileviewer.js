@@ -24,6 +24,16 @@ class TileViewer {
         // 地図定義情報
         this.options = {};
 
+        // options内のscaleを合成(Union/和集合)したもの
+        this.combinedScales = [];
+
+        // 各mapのscalesに定義されているscaleの、合計画像幅のリスト
+        // 2重配列でthis.totalWidthCache[mapIndex] = [123, 456, 7891] などとする
+        // これを使用して、タイルのurl設定時に、mapに定義されていない別のmapのscaleについて
+        // url設定しようとした場合に弾く。
+        this.totalWidthCache = [];
+
+        // TODO:this.options.mapsに移行予定
         this.layerParams = [];
 
         // LoDレベル0の画像全体を正規化した空間（左上0,0、右下1,1)を
@@ -54,6 +64,8 @@ class TileViewer {
         // ScaleIndexを固定とする場合trueにする
         this.isFixedScaleIndex = false;
 
+        this.isEnableLimitOfMinimumScale = false;
+
         // タイル画像エレメントのclass名に必ず入れるclass
         this.tileImageClass = "___tile___";
 
@@ -69,15 +81,39 @@ class TileViewer {
     }
 
     // タイル情報からタイル固有のクラス名を作成して返す
-    // このクラス名は動作的には無くても動くが、表示された地図のタイルをdevtoolで調べるときに便利なので入れている
     _generateTileClass(tileIndex, tileInfo) {
         return tileIndex + "_" + tileInfo.scaleIndex + "_" + tileInfo.tx + "_" + tileInfo.ty;
     }
 
+    _getBaseSize() {
+        // maps[0].scales[0]を基準とする
+        if (this.options.maps.length > 0) {
+            let res = {
+                width: this.options.maps[0].scales[0].width,
+                height: this.options.maps[0].scales[0].height,
+                count: 1,
+            };
+            if (this.options.maps[0].scales[0].hasOwnProperty('zoom')) {
+                res.zoom = 0;
+            }
+            return res;
+        }
+        return {
+            width: 1000,
+            height: 1000,
+            count: 1,
+        }
+    }
+
     // scaleIndex0のものと比べたときの、scaleIndexの画像全体の比率
-    _getScaleRatio(scaleIndex = this.currentScaleIndex) {
-        const zero = this.options.scales[0];
-        const s = this.options.scales[scaleIndex];
+    _getScaleRatio(mapIndex = null, scaleIndex = this.currentScaleIndex) {
+        let zero = this._getBaseSize();
+        let s;
+        if (mapIndex !== null) {
+            s = this.options.maps[mapIndex].scales[scaleIndex];
+        } else {
+            s = this.combinedScales[scaleIndex];
+        }
         return {
             x: (s.width * s.count) / (zero.width * zero.count),
             y: (s.height * s.count) / (zero.height * zero.count),
@@ -91,7 +127,7 @@ class TileViewer {
     // 幅高さをスケールして表示される仕組みのため、
     // どのscaleIndexであっても全体画像サイズは必ずsacaleIndex=0の全体画像サイズと同様となる。
     _getTotalImageSize() {
-        const s = this.options.scales[0];
+        const s = this._getBaseSize();
         //const ratio = this._getScaleRatio();
         return {
             w: (s.width * s.count),
@@ -101,9 +137,9 @@ class TileViewer {
 
     // 現在のスケールでのスクリーンでの画像表示サイズを返す
     // this.transformScaleによるスケールを考慮。
-    _getScreenImageSize() {
-        const s = this.options.scales[this.currentScaleIndex];
-        const ratio = this._getScaleRatio();
+    _getScreenImageSize(scaleIndex = this.currentScaleIndex) {
+        const s = this.combinedScales[scaleIndex];
+        const ratio = this._getScaleRatio(null, scaleIndex);
         return {
             w: (s.width * s.count / ratio.x * this.transformScale),
             h: (s.height * s.count / ratio.y * this.transformScale)
@@ -137,9 +173,9 @@ class TileViewer {
     // カメラ座標系の座標値での、タイル番号などの情報を返す。
     // 無効な座標を指定した場合はマイナス値が入ったものを返す。
     // scaleIndex及びthis.transformScaleによるスケールを考慮した座標が設定される。
-    _calcTileInfoByCameraSpacePosition(cameraSpaceX, cameraSpaceY) {
-        const wh = this._calcTileSizeInCameraSpace();
-        const s = this.options.scales[this.currentScaleIndex];
+    _calcTileInfoByCameraSpacePosition(cameraSpaceX, cameraSpaceY, mapIndex, mapScaleIndex) {
+        const wh = this._calcTileSizeInCameraSpace(mapIndex, mapScaleIndex);
+        let s = this.options.maps[mapIndex].scales[mapScaleIndex];
         if ((cameraSpaceX + wh.w) < 0.0 || cameraSpaceX >= 1.0 ||
             (cameraSpaceY + wh.h) < 0.0 || cameraSpaceY >= 1.0) {
             return {
@@ -149,7 +185,7 @@ class TileViewer {
                 ty: -1,
             }
         }
-        const ratio = this._getScaleRatio();
+        const ratio = this._getScaleRatio(mapIndex, mapScaleIndex);
         const scaleIndexImageW = s.width / ratio.x * s.count;
         const scaleIndexImageH = s.height / ratio.y * s.count;
         const rect = this._getRootElem().getBoundingClientRect();
@@ -192,12 +228,12 @@ class TileViewer {
             tileInfo.ty = -1;
         }
 
-        tileInfo.scaleIndex = this.currentScaleIndex;
+        tileInfo.scaleIndex = mapScaleIndex;
         return tileInfo;
     }
 
     _setBackgroundImage(url) {
-        const s = this.options.scales[this.currentScaleIndex];
+        const s = this.combinedScales[this.currentScaleIndex];
         const ratio = this._getScaleRatio();
         const scaleIndexImageW = s.width / ratio.x * s.count;
         const scaleIndexImageH = s.height / ratio.y * s.count;
@@ -230,9 +266,14 @@ class TileViewer {
         this.backgroundImage.style.opacity = opacity;
     }
 
-    // カメラスペースでの現在のスケールのタイル1枚の幅高さを返す
-    _calcTileSizeInCameraSpace() {
-        const s = this.options.scales[this.currentScaleIndex];
+    // カメラスペースでの指定したスケールのタイル1枚の幅高さを返す
+    _calcTileSizeInCameraSpace(mapIndex = null, scaleIndex = this.currentScaleIndex) {
+        let s;
+        if (mapIndex !== null) {
+            s = this.options.maps[mapIndex].scales[scaleIndex];
+        } else {
+            s = this.combinedScales[scaleIndex];
+        }
         return {
             w: 1.0 / s.count,
             h: 1.0 / s.count,
@@ -263,46 +304,57 @@ class TileViewer {
 
     // タイルを読み込み、位置や幅高さを設定して返す
     // 既に読み込み済の場合は、読み込み済エレメントに対して位置や幅高さを設定して返す。
-    _loadTile(tileInfo) {
+    _loadTile(mapIndex, tileInfo) {
         let resultTiles = [];
         let startIndex = this.options.hasOwnProperty('backgroundImage') ? 1 : 0;
-        for (let i = startIndex; i < this.layerParams.length; ++i) {
-            const foregroundImageIndex = i - startIndex;
-            const layerParam = this.layerParams[i];
-            const tileClass = this._generateTileClass(i, tileInfo);
-            if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
-                let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
-                elem.style.left = tileInfo.x + "px";
-                elem.style.top = tileInfo.y + "px";
-                elem.style.width = tileInfo.w + "px";
-                elem.style.height = tileInfo.h + "px";
-                elem.style.opacity = layerParam.opacity;
-                elem.style.display = layerParam.visible ? "inline" : "none";
-                resultTiles.push(elem);
+        const layerParam = this.layerParams[mapIndex + startIndex];
+        const tileClass = this._generateTileClass(mapIndex + startIndex, tileInfo);
+        if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
+            let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
+            elem.style.left = tileInfo.x + "px";
+            elem.style.top = tileInfo.y + "px";
+            elem.style.width = tileInfo.w + "px";
+            elem.style.height = tileInfo.h + "px";
+            elem.style.opacity = layerParam.opacity;
+            elem.style.display = layerParam.visible ? "inline" : "none";
+            /*
+            if (mapIndex === 0) {
+                elem.style.border = "4px solid blue";
             } else {
-                const tile = new Image();
-                tile.alt = " No Image"
-                tile.classList.add(this.tileImageClass);
-                tile.classList.add(tileClass);
-                tile.style.fontSize = "12px"
-                tile.style.color = "lightgray"
-                tile.style.pointerEvents = "none"
-                tile.style.position = "absolute";
-                tile.style.left = tileInfo.x + "px";
-                tile.style.top = tileInfo.y + "px";
-                tile.style.width = tileInfo.w + "px";
-                tile.style.height = tileInfo.h + "px";
-                tile.style.opacity = layerParam.opacity;
-                tile.style.display = layerParam.visible ? "inline" : "none";
-
-                //tile.style.border = "1px solid gray";
-                tile.style.boxSizing = "border-box";
-                const s = this.options.scales[this.currentScaleIndex];
-                tile.src = this._formatUrl(this.options.foregroundImages[foregroundImageIndex], tileInfo, s.count, s.zoom);
-                tile.style.zIndex = i;
-                this._getRootElem().appendChild(tile);
-                resultTiles.push(tile);
+                elem.style.border = "2px solid red";
             }
+            */
+            resultTiles.push(elem);
+        } else {
+            const tile = new Image();
+            tile.alt = " No Image"
+            tile.classList.add(this.tileImageClass);
+            tile.classList.add(tileClass);
+            tile.style.fontSize = "12px";
+            tile.style.color = "lightgray";
+            /*
+            if (mapIndex === 0) {
+                tile.style.border = "4px solid blue";
+            } else {
+                tile.style.border = "2px solid red";
+            }
+            */
+            tile.style.pointerEvents = "none"
+            tile.style.position = "absolute";
+            tile.style.left = tileInfo.x + "px";
+            tile.style.top = tileInfo.y + "px";
+            tile.style.width = tileInfo.w + "px";
+            tile.style.height = tileInfo.h + "px";
+            tile.style.opacity = layerParam.opacity;
+            tile.style.display = layerParam.visible ? "inline" : "none";
+
+            //tile.style.border = "1px solid gray";
+            tile.style.boxSizing = "border-box";
+            const s = this.options.maps[mapIndex].scales[tileInfo.scaleIndex];
+            tile.src = this._formatUrl(this.options.maps[mapIndex].url, tileInfo, s.count, s.zoom);
+            tile.style.zIndex = mapIndex + startIndex;
+            this._getRootElem().appendChild(tile);
+            resultTiles.push(tile);
         }
         return resultTiles;
     }
@@ -332,12 +384,12 @@ class TileViewer {
     //      tw : 現在のレベルでのタイルの幅(ピクセル数),
     //      tw : 現在のレベルでのタイルの高さ(ピクセル数)
     //  }
-    _prepareTileElements() {
+    _prepareTileElements(mapIndex, mapScaleIndex) {
         const camera = this.camera;
-        const s = this.options.scales[this.currentScaleIndex];
+        const s = this.options.maps[mapIndex].scales[mapScaleIndex];
 
         // カメラスペースでの、タイル１枚の幅高さ
-        const wh = this._calcTileSizeInCameraSpace();
+        const wh = this._calcTileSizeInCameraSpace(mapIndex, mapScaleIndex);
         // カメラスペースでの0.5ピクセル
         const texelHalfX = wh.w / s.width / 2;
         const texelHalfY = wh.h / s.height / 2;
@@ -349,12 +401,12 @@ class TileViewer {
         // 初期値は全てfalse
         let tileMatrix = [];
         for (let y = camera.y - texelHalfY; y < (camera.y + camera.h + wh.h + texelY); y += wh.h) {
-            const tile = this._calcTileInfoByCameraSpacePosition(camera.x, y);
+            const tile = this._calcTileInfoByCameraSpacePosition(camera.x, y, mapIndex, mapScaleIndex);
             if (tile.ty >= 0) {
                 // (*, y)に対応するタイルが存在する
                 let row = [];
                 for (let x = camera.x - texelHalfX; x < (camera.x + camera.w + wh.w + texelX); x += wh.w) {
-                    const tile = this._calcTileInfoByCameraSpacePosition(x, y);
+                    const tile = this._calcTileInfoByCameraSpacePosition(x, y, mapIndex, mapScaleIndex);
                     if (tile.tx >= 0) {
                         // (x, y)に対応するタイルが存在する
                         row.push({
@@ -371,7 +423,7 @@ class TileViewer {
     }
 
     // 配置情報を元に、実際にタイル(DOMエレメントを)を配置し、画像を読み込んでいく
-    _fillTileElements(tileMatrix) {
+    _fillTileElements(mapIndex, tileMatrix) {
         const yCount = tileMatrix.length;
         if (yCount <= 0) return [];
         const xCount = tileMatrix[0].length;
@@ -386,25 +438,25 @@ class TileViewer {
         };
         const entry = tileMatrix[pos.y][pos.x];
         if (!entry.isLoaded) {
-            Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
+            Array.prototype.push.apply(loadedElems, this._loadTile(mapIndex, entry.tile));
         }
         // 右方向
         for (let x = pos.x + 1; x < xCount; ++x) {
             const entry = tileMatrix[pos.y][x];
-            Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
+            Array.prototype.push.apply(loadedElems, this._loadTile(mapIndex, entry.tile));
         }
 
         // 左方向
         for (let x = pos.x - 1; x >= 0; --x) {
             const entry = tileMatrix[pos.y][x];
-            Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
+            Array.prototype.push.apply(loadedElems, this._loadTile(mapIndex, entry.tile));
         }
 
         // 上方向
         for (let y = pos.y - 1; y >= 0; --y) {
             for (let x = 0; x < xCount; ++x) {
                 const entry = tileMatrix[y][x];
-                Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
+                Array.prototype.push.apply(loadedElems, this._loadTile(mapIndex, entry.tile));
             }
         }
 
@@ -412,7 +464,7 @@ class TileViewer {
         for (let y = pos.y + 1; y < yCount; ++y) {
             for (let x = 0; x < xCount; ++x) {
                 const entry = tileMatrix[y][x];
-                Array.prototype.push.apply(loadedElems, this._loadTile(entry.tile));
+                Array.prototype.push.apply(loadedElems, this._loadTile(mapIndex, entry.tile));
             }
         }
         return loadedElems;
@@ -443,7 +495,7 @@ class TileViewer {
         if (this.isFixedScaleIndex) {
             return false;
         }
-        if (scaleIndex >= 0 && scaleIndex < this.options.scales.length) {
+        if (scaleIndex >= 0 && scaleIndex < this.combinedScales.length) {
             if (this.currentScaleIndex !== scaleIndex) {
                 this.currentScaleIndex = scaleIndex;
                 if (withDispatch) {
@@ -524,6 +576,22 @@ class TileViewer {
         }
     }
 
+    // this.combinedScalesのindexを
+    // map[].scales[]内のindexに変換し返す
+    // 存在しない場合は、
+    // total_widthより小さく、total_widthに近いscaleのindexを返す
+    _getMapScaleIndex(mapIndex, combindScaleIndex) {
+        const cs = this.combinedScales[combindScaleIndex];
+        const scales = this.options.maps[mapIndex].scales;
+        for (let i = 0; i < scales.length; ++i) {
+            const s = scales[i];
+            if (s.width * s.count > cs.total_width) {
+                return Math.max(0, i - 1);
+            }
+        }
+        return scales.length - 1;
+    }
+
     // 現在のカメラを元にタイルを更新する
     _update() {
         if (this.options.hasOwnProperty('backgroundImage')) {
@@ -531,8 +599,12 @@ class TileViewer {
         } else {
             this.backgroundImage.style.display = "none";
         }
-        const tileMatrix = this._prepareTileElements();
-        const loadedElems = this._fillTileElements(tileMatrix);
+        let loadedElems = [];
+        for (let i = 0; i < this.options.maps.length; ++i) {
+            const scaleIndex = this._getMapScaleIndex(i, this.currentScaleIndex);
+            const tileMatrix = this._prepareTileElements(i, scaleIndex);
+            Array.prototype.push.apply(loadedElems, this._fillTileElements(i, tileMatrix));
+        }
         this._cullTileElements(loadedElems);
     }
 
@@ -618,23 +690,24 @@ class TileViewer {
         this.transformScale = scale;
 
         // 画面サイズの半分より小さくしようとした場合は失敗とする
-        const viewerSize = this._getViewerSize();
-        const halfW = viewerSize.w * (this.viewport[2] - this.viewport[0]) / 2;
-        const totalImageSize = this._getTotalImageSize();
-        if (totalImageSize.w > halfW && this._getScreenImageSize().w < halfW) {
-            this.transformScale = preScale;
-            return false;
+        if (this.isEnableLimitOfMinimumScale) {
+            const viewerSize = this._getViewerSize();
+            const halfW = viewerSize.w * (this.viewport[2] - this.viewport[0]) / 2;
+            if (this._getScreenImageSize().w < halfW) {
+                this.transformScale = preScale;
+                return false;
+            }
         }
 
-        while ((this.currentScaleIndex + 1 < this.options.scales.length) &&
-            scale >= this._getScaleRatio(this.currentScaleIndex + 1).x) {
+        while ((this.currentScaleIndex + 1 < this.combinedScales.length) &&
+            scale >= this._getScaleRatio(null, this.currentScaleIndex + 1).x) {
             // LoDレベルを上げる
             if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
                 break;
             }
         }
         while (this.currentScaleIndex > 0 &&
-            scale < this._getScaleRatio(this.currentScaleIndex).x) {
+            scale < this._getScaleRatio(null, this.currentScaleIndex).x) {
             // LoDレベルを下げる
             if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
                 break;
@@ -687,6 +760,14 @@ class TileViewer {
         this._update();
     }
 
+    _getcZoomBaseScale(isPlus = true) {
+        if (this.options.geodeticSystem === "standard") {
+            return 2;
+        } else {
+            return 1.1;
+        }
+    }
+
     /**
      * ズームインする。
      * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
@@ -700,10 +781,10 @@ class TileViewer {
         } else if (pixelPos) {
             // ピクセルでの位置を、カメラ座標系に変換
             const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
-            this._setTransformScaleWithPivot(this.transformScale + 0.5 * Math.pow(2, this.currentScaleIndex), pivotXY);
+            this._setTransformScaleWithPivot(this.transformScale + 0.5 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex), pivotXY);
         } else {
             // 画面中心
-            this.setTransformScale(this.transformScale + 0.05 * Math.pow(2, this.currentScaleIndex));
+            this.setTransformScale(this.transformScale + 0.05 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex));
         }
     }
 
@@ -720,9 +801,9 @@ class TileViewer {
         } else if (pixelPos) {
             // ピクセルでの位置を、カメラ座標系に変換
             const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
-            this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(2, this.currentScaleIndex), pivotXY);
+            this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex), pivotXY);
         } else {
-            this.setTransformScale(this.transformScale - 0.05 * Math.pow(2, this.currentScaleIndex));
+            this.setTransformScale(this.transformScale - 0.05 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex));
         }
     }
 
@@ -747,8 +828,8 @@ class TileViewer {
      * ズームレベルが定義されていない場合は, -1を返す
      */
     getZoomLevel() {
-        if (this.options.scales[this.currentScaleIndex].hasOwnProperty('zoom')) {
-            return Number(this.options.scales[this.currentScaleIndex].zoom);
+        if (this.combinedScales[this.currentScaleIndex].hasOwnProperty('zoom')) {
+            return Number(this.combinedScales[this.currentScaleIndex].zoom);
         }
         return -1;
     }
@@ -781,10 +862,10 @@ class TileViewer {
     setCameraInfo(viewInfo) {
         // 固定ズームレベルの設定
         if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('zoomLevel')) {
-            const scaleLen = this.options.scales.length;
+            const scaleLen = this.combinedScales.length;
             for (let i = 0; i < scaleLen; ++i) {
-                if (this.options.scales[i].hasOwnProperty('zoom') &&
-                    this.options.scales[i].zoom == viewInfo.zoomLevel) {
+                if (this.combinedScales[i].hasOwnProperty('zoom') &&
+                    this.combinedScales[i].zoom == viewInfo.zoomLevel) {
                     this.setZoomLevel(viewInfo.fixedZoomLevel, i);
                 }
             }
@@ -803,6 +884,31 @@ class TileViewer {
 
         this._clearCache();
 
+        // 古いものを削除してthis.combinedScalesを作り直す+
+        this.combinedScales = [];
+        this.totalWidthCache = [];
+        let visitedTotalWidth = [];
+        if (options.hasOwnProperty('maps')) {
+            for (let i = 0; i < options.maps.length; ++i) {
+                const map = options.maps[i];
+                this.totalWidthCache[i] = [];
+                for (let j = 0; j < map.scales.length; ++j) {
+                    let s = map.scales[j];
+                    s.total_width = s.width * s.count;
+                    // 今まで出現していないtotal_widthだった場合は、this.combinedScalesに追加
+                    if (visitedTotalWidth.indexOf(s.total_width) < 0) {
+                        visitedTotalWidth.push(s.total_width);
+                        this.combinedScales.push(s);
+                    }
+                    // キャッシュに入れておく
+                    this.totalWidthCache[i].push(s.total_width);
+                }
+            }
+        }
+        this.combinedScales.sort((a, b) => {
+            return a.total_width - b.total_width;
+        });
+
         // 古いものを削除してthis.layerParamsを作り直す
         this.layerParams = [];
 
@@ -813,11 +919,13 @@ class TileViewer {
             });
         }
 
-        for (let i = 0; i < options.foregroundImages.length; ++i) {
-            this.layerParams.push({
-                opacity: 1,
-                visible: true
-            });
+        if (options.hasOwnProperty('maps')) {
+            for (let i = 0; i < options.maps.length; ++i) {
+                this.layerParams.push({
+                    opacity: 1,
+                    visible: true
+                });
+            }
         }
         this._update();
 

@@ -107,6 +107,25 @@ class Store extends EventEmitter {
         });
     }
 
+
+    createStandardScaleEntries(width, height, minZoom, maxZoom) {
+        let result = [];
+        for (let i = minZoom; i <= maxZoom; ++i) {
+            result.push({ width: width, height: height, count: Math.pow(2, i), zoom: i });
+        }
+        return result;
+    }
+
+    generateScales(params) {
+        if (params.hasOwnProperty('scales')) {
+            return JSON.parse(JSON.stringify(params.scales));
+        }
+        if (params.type === "standard") {
+            return this.createStandardScaleEntries(256, 256, 0, 20);
+        }
+        return [];
+    }
+
     /**
      * レイヤー追加
      * @param params
@@ -126,7 +145,10 @@ class Store extends EventEmitter {
             type: params.type
         });
         let options = this.instance.getOptions();
-        options.foregroundImages.push(params.url);
+        options.maps.push({
+            url: params.url,
+            scales: this.generateScales(params)
+        });
         this.instance.setOptions(options);
         this.iframeConnector.send(TileViewerCommand.AddLayer, this.layerDataList, () => {})
     }
@@ -168,9 +190,9 @@ class Store extends EventEmitter {
     }
 
     initLayers(params) {
-        // console.error('initLayers', params)
+        console.error('initLayers', params)
         let options = this.instance.getOptions();
-        options.foregroundImages = [];
+        options.maps = [];
         for (let i = 0; i < params.length; ++i) {
             let param = params[i];
             if (i === 0 && param.type === 'image') {
@@ -179,9 +201,14 @@ class Store extends EventEmitter {
                 if (options.hasOwnProperty('backgroundImage')) {
                     delete options.backgroundImage;
                 }
-                options.foregroundImages.push(param.url);
+                options.maps.push({
+                    url: param.url
+                });
             } else {
-                options.foregroundImages.push(param.url);
+                options.maps.push({
+                    url: param.url,
+                    scales: this.generateScales(param)
+                });
             }
         }
         this.instance.setOptions(options);
@@ -196,6 +223,7 @@ class Store extends EventEmitter {
                 url: param.url,
                 opacity: param.opacity,
                 visible: param.visible,
+                scales: this.generateScales(param),
                 type: param.type
             });
             this.instance.setOpacity(this.getLayerIndex(param.id), param.opacity);
@@ -269,13 +297,15 @@ class Store extends EventEmitter {
                 type: "image"
             });
         }
-        for (let i = 0; i < options.foregroundImages.length; ++i) {
-            const url = options.foregroundImages[i];
+        for (let i = 0; i < options.maps.length; ++i) {
+            const map = options.maps[i];
+            const url = map.url;
             this.layerDataList.push({
                 id: "Layer_" + i,
                 url: url,
                 opacity: 1.0,
                 visible: true,
+                scales: JSON.parse(JSON.stringify(map.scales)),
                 type: options.geodeticSystem ? options.geodeticSystem : "not specified"
             });
         }
