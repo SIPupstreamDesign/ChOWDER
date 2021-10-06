@@ -4,6 +4,11 @@ const OptionGSI = {
         "https://cyberjapandata.gsi.go.jp/xyz/std/%z/%x/%y.png"
     ],
     scales: [
+        { width: 256, height: 256, size: 1.0, count: 1, zoom: 0 },
+        { width: 256, height: 256, size: 1.0, count: 2, zoom: 1 },
+        { width: 256, height: 256, size: 1.0, count: 4, zoom: 2 },
+        { width: 256, height: 256, size: 1.0, count: 8, zoom: 3 },
+        { width: 256, height: 256, size: 1.0, count: 16, zoom: 4 },
         { width: 256, height: 256, size: 1.0, count: 32, zoom: 5 },
         { width: 256, height: 256, size: 1.0, count: 64, zoom: 6 },
         { width: 256, height: 256, size: 1.0, count: 128, zoom: 7 },

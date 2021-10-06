@@ -620,7 +620,8 @@ class TileViewer {
         // 画面サイズの半分より小さくしようとした場合は失敗とする
         const viewerSize = this._getViewerSize();
         const halfW = viewerSize.w * (this.viewport[2] - this.viewport[0]) / 2;
-        if (this._getScreenImageSize().w < halfW) {
+        const totalImageSize = this._getTotalImageSize();
+        if (totalImageSize.w > halfW && this._getScreenImageSize().w < halfW) {
             this.transformScale = preScale;
             return false;
         }
