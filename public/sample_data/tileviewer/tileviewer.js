@@ -176,8 +176,7 @@ class TileViewer {
     _calcTileInfoByCameraSpacePosition(cameraSpaceX, cameraSpaceY, mapIndex, mapScaleIndex) {
         const wh = this._calcTileSizeInCameraSpace(mapIndex, mapScaleIndex);
         let s = this.options.maps[mapIndex].scales[mapScaleIndex];
-        if ((cameraSpaceX + wh.w) < 0.0 || cameraSpaceX >= 1.0 ||
-            (cameraSpaceY + wh.h) < 0.0 || cameraSpaceY >= 1.0) {
+        if (cameraSpaceX >= 1.0 || cameraSpaceY >= 1.0) {
             return {
                 x: -1,
                 y: -1,
