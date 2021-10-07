@@ -647,7 +647,7 @@ class TileViewer {
         this._update();
     }
 
-    _getcZoomBaseScale(isPlus = true) {
+    _getZoomBaseScale(isPlus = true) {
         if (this.options.geodeticSystem === "standard") {
             return 2;
         } else {
@@ -779,10 +779,10 @@ class TileViewer {
         } else if (pixelPos) {
             // ピクセルでの位置を、カメラ座標系に変換
             const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
-            this._setTransformScaleWithPivot(this.transformScale + 0.5 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex), pivotXY);
+            this._setTransformScaleWithPivot(this.transformScale + 0.5 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex), pivotXY);
         } else {
             // 画面中心
-            this.setTransformScale(this.transformScale + 0.05 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex));
+            this.setTransformScale(this.transformScale + 0.05 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex));
         }
     }
 
@@ -799,9 +799,9 @@ class TileViewer {
         } else if (pixelPos) {
             // ピクセルでの位置を、カメラ座標系に変換
             const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
-            this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex), pivotXY);
+            this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex), pivotXY);
         } else {
-            this.setTransformScale(this.transformScale - 0.05 * Math.pow(this._getcZoomBaseScale(), this.currentScaleIndex));
+            this.setTransformScale(this.transformScale - 0.05 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex));
         }
     }
 

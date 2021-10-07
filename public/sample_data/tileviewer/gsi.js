@@ -262,6 +262,7 @@ window.onload = () => {
             }
         }
     });
+    viewer.setTransformScale(Math.pow(2, 5));
 
     setTimeout(() => {
         injectChOWDER(viewer, document.getElementById('tileviewer'));
