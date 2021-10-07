@@ -80,6 +80,10 @@ hr {
     font-size: 16px;
 }
 
+.loginmenu {
+    top: -2px;
+}
+
 
 /* ------ LayerList / LayerDialog ---------------*/
 

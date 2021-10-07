@@ -27,12 +27,6 @@ class TileViewer {
         // options内のscaleを合成(Union/和集合)したもの
         this.combinedScales = [];
 
-        // 各mapのscalesに定義されているscaleの、合計画像幅のリスト
-        // 2重配列でthis.totalWidthCache[mapIndex] = [123, 456, 7891] などとする
-        // これを使用して、タイルのurl設定時に、mapに定義されていない別のmapのscaleについて
-        // url設定しようとした場合に弾く。
-        this.totalWidthCache = [];
-
         // TODO:this.options.mapsに移行予定
         this.layerParams = [];
 
@@ -58,7 +52,7 @@ class TileViewer {
         // この領域外のタイルはカリングされる
         this.viewport = [0, 0, 1, 1];
 
-        // opeions.scales[]の現在の使用インデックス
+        // this.combinedScale似たする現在の使用インデックス
         this.currentScaleIndex = 0;
 
         // ScaleIndexを固定とする場合trueにする
@@ -85,6 +79,9 @@ class TileViewer {
         return tileIndex + "_" + tileInfo.scaleIndex + "_" + tileInfo.tx + "_" + tileInfo.ty;
     }
 
+    // 現在の実装ではscaleIndex=0以降はscaleIndex=0の全体画像サイズに収まるように
+    // 幅高さをスケールして表示される仕組みのため、
+    // どのscaleIndexであっても全体画像サイズは必ずmapIndex=0のscaleIndex=0の全体画像サイズと同様となる。
     _getBaseSize() {
         // maps[0].scales[0]を基準とする
         if (this.options.maps.length > 0) {
@@ -125,10 +122,9 @@ class TileViewer {
     // 
     // 現在の実装ではscaleIndex=0以降はscaleIndex=0の全体画像サイズに収まるように
     // 幅高さをスケールして表示される仕組みのため、
-    // どのscaleIndexであっても全体画像サイズは必ずsacaleIndex=0の全体画像サイズと同様となる。
+    // どのscaleIndexであっても全体画像サイズは必ずmapIndex=0のscaleIndex=0の全体画像サイズと同様となる。
     _getTotalImageSize() {
         const s = this._getBaseSize();
-        //const ratio = this._getScaleRatio();
         return {
             w: (s.width * s.count),
             h: (s.height * s.count)
@@ -137,9 +133,9 @@ class TileViewer {
 
     // 現在のスケールでのスクリーンでの画像表示サイズを返す
     // this.transformScaleによるスケールを考慮。
-    _getScreenImageSize(scaleIndex = this.currentScaleIndex) {
-        const s = this.combinedScales[scaleIndex];
-        const ratio = this._getScaleRatio(null, scaleIndex);
+    _getScreenImageSize() {
+        const s = this.combinedScales[this.currentScaleIndex];
+        const ratio = this._getScaleRatio();
         return {
             w: (s.width * s.count / ratio.x * this.transformScale),
             h: (s.height * s.count / ratio.y * this.transformScale)
@@ -593,18 +589,70 @@ class TileViewer {
 
     // 現在のカメラを元にタイルを更新する
     _update() {
+        // 単一の背景画像の読み込みまたは非表示
         if (this.options.hasOwnProperty('backgroundImage')) {
             this._setBackgroundImage(this.options.backgroundImage);
         } else {
             this.backgroundImage.style.display = "none";
         }
         let loadedElems = [];
+        // 各mapのscalesに対して、それぞれ別のindexでアクセスし、
+        // 各mapごとのtileエレメントのセット(tileMatrix)を作成して、画像で埋める
         for (let i = 0; i < this.options.maps.length; ++i) {
             const scaleIndex = this._getMapScaleIndex(i, this.currentScaleIndex);
             const tileMatrix = this._prepareTileElements(i, scaleIndex);
             Array.prototype.push.apply(loadedElems, this._fillTileElements(i, tileMatrix));
         }
         this._cullTileElements(loadedElems);
+    }
+
+    _convertPixelPositionToCameraPosition(pixelPos) {
+        const rect = this.viewerElem.getBoundingClientRect();
+        const viewerSize = this._getViewerSize();
+        return {
+            x: this.camera.x + this.camera.w * ((pixelPos.x - rect.left) / viewerSize.w),
+            y: this.camera.y + this.camera.h * ((pixelPos.y - rect.top) / viewerSize.h),
+        }
+    }
+
+    /**
+     * ある任意のピボット座標を中心とした、transformScaleによる拡縮を行う。
+     * @param {*} scale 新たに設定するtransformScale
+     * @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
+     * @param {*} withDispatch 変更イベントを発火するかどうか
+     */
+    _setTransformScaleWithPivot(scale, pivotXY, withDispatch = true) {
+        // カメラ座標系での画面中心
+        const centerXY = {
+            x: this.camera.x + this.camera.w * 0.5,
+            y: this.camera.y + this.camera.h * 0.5,
+        };
+        // ピボット位置を画面中心に動かすための移動量
+        const centerToPivot = {
+            x: centerXY.x - pivotXY.x,
+            y: centerXY.y - pivotXY.y
+        };
+        // ピボット位置を画面中心にする
+        this.baseScaleCamera.x -= centerToPivot.x;
+        this.baseScaleCamera.y -= centerToPivot.y;
+        const preTrans = this.transformScale;
+        this._updateCameraFromBaseCamera(false);
+        // 画面中心スケール
+        this.setTransformScale(scale, false);
+        const diffScale = this.transformScale / preTrans;
+        // 移動させていたのをスケールを考慮しつつ、元の戻す
+        this.baseScaleCamera.x += centerToPivot.x / diffScale;
+        this.baseScaleCamera.y += centerToPivot.y / diffScale;
+        this._updateCameraFromBaseCamera(withDispatch);
+        this._update();
+    }
+
+    _getcZoomBaseScale(isPlus = true) {
+        if (this.options.geodeticSystem === "standard") {
+            return 2;
+        } else {
+            return 1.1;
+        }
     }
 
     // this.optionを元に、新規に地図を読み込む
@@ -718,55 +766,6 @@ class TileViewer {
         return true;
     }
 
-    _convertPixelPositionToCameraPosition(pixelPos) {
-        const rect = this.viewerElem.getBoundingClientRect();
-        const viewerSize = this._getViewerSize();
-        return {
-            x: this.camera.x + this.camera.w * ((pixelPos.x - rect.left) / viewerSize.w),
-            y: this.camera.y + this.camera.h * ((pixelPos.y - rect.top) / viewerSize.h),
-        }
-    }
-
-    /**
-     * ある任意のピボット座標を中心とした、transformScaleによる拡縮を行う。
-     * @param {*} scale 新たに設定するtransformScale
-     * @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
-     * @param {*} withDispatch 変更イベントを発火するかどうか
-     */
-    _setTransformScaleWithPivot(scale, pivotXY, withDispatch = true) {
-        // カメラ座標系での画面中心
-        const centerXY = {
-            x: this.camera.x + this.camera.w * 0.5,
-            y: this.camera.y + this.camera.h * 0.5,
-        };
-        // ピボット位置を画面中心に動かすための移動量
-        const centerToPivot = {
-            x: centerXY.x - pivotXY.x,
-            y: centerXY.y - pivotXY.y
-        };
-        // ピボット位置を画面中心にする
-        this.baseScaleCamera.x -= centerToPivot.x;
-        this.baseScaleCamera.y -= centerToPivot.y;
-        const preTrans = this.transformScale;
-        this._updateCameraFromBaseCamera(false);
-        // 画面中心スケール
-        this.setTransformScale(scale, false);
-        const diffScale = this.transformScale / preTrans;
-        // 移動させていたのをスケールを考慮しつつ、元の戻す
-        this.baseScaleCamera.x += centerToPivot.x / diffScale;
-        this.baseScaleCamera.y += centerToPivot.y / diffScale;
-        this._updateCameraFromBaseCamera(withDispatch);
-        this._update();
-    }
-
-    _getcZoomBaseScale(isPlus = true) {
-        if (this.options.geodeticSystem === "standard") {
-            return 2;
-        } else {
-            return 1.1;
-        }
-    }
-
     /**
      * ズームインする。
      * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
@@ -818,6 +817,10 @@ class TileViewer {
         this._update();
     }
 
+    /**
+     * 
+     * @returns viewportを返す
+     */
     getViewport() {
         return JSON.parse(JSON.stringify(this.viewport));
     }
@@ -878,6 +881,10 @@ class TileViewer {
         this._resizeScaling(false);
     }
 
+    /**
+     * TileViewerの全オプション情報の設定
+     * @param {*} options 
+     */
     setOptions(options) {
         this.options = options;
 
@@ -885,12 +892,10 @@ class TileViewer {
 
         // 古いものを削除してthis.combinedScalesを作り直す+
         this.combinedScales = [];
-        this.totalWidthCache = [];
         let visitedTotalWidth = [];
         if (options.hasOwnProperty('maps')) {
             for (let i = 0; i < options.maps.length; ++i) {
                 const map = options.maps[i];
-                this.totalWidthCache[i] = [];
                 for (let j = 0; j < map.scales.length; ++j) {
                     let s = map.scales[j];
                     s.total_width = s.width * s.count;
@@ -899,8 +904,6 @@ class TileViewer {
                         visitedTotalWidth.push(s.total_width);
                         this.combinedScales.push(s);
                     }
-                    // キャッシュに入れておく
-                    this.totalWidthCache[i].push(s.total_width);
                 }
             }
         }
@@ -972,6 +975,14 @@ class TileViewer {
 
     disableResizeScaling() {
         window.removeEventListener('resize', this._resizeScaling);
+    }
+
+    enableLimitOfMinimumScale() {
+        this.isEnableLimitOfMinimumScale = true;
+    }
+
+    disableLimitOfMinimumScale() {
+        this.isEnableLimitOfMinimumScale = false;
     }
 
     addPositionCallback(callback) {
