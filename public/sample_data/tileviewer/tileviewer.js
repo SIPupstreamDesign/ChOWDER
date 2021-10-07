@@ -890,7 +890,7 @@ class TileViewer {
 
         this._clearCache();
 
-        // 古いものを削除してthis.combinedScalesを作り直す+
+        // 古いものを削除してthis.combinedScalesを作り直す
         this.combinedScales = [];
         let visitedTotalWidth = [];
         if (options.hasOwnProperty('maps')) {
@@ -910,6 +910,14 @@ class TileViewer {
         this.combinedScales.sort((a, b) => {
             return a.total_width - b.total_width;
         });
+        // combinedScalesが減少した可能性があるので、
+        // scaleIndexを再設定
+        const scaleIndex = Math.min(this.combinedScales.length - 1, this.currentScaleIndex);
+        if (scaleIndex !== this.currentScaleIndex) {
+            if (!this._setScaleIndex(scaleIndex)) {
+                this.currentScaleIndex = 0;
+            }
+        }
 
         // 古いものを削除してthis.layerParamsを作り直す
         this.layerParams = [];
