@@ -357,7 +357,7 @@ class Store extends EventEmitter {
                     done = true;
                 });
             }
-            image.onerror = () => {
+            image.onerror = (err) => {
                 // サムネイルは作れないけどとりあえず追加する
                 if (!done) {
                     this.iframeConnector.send(TileViewerCommand.AddContent, {
@@ -372,7 +372,7 @@ class Store extends EventEmitter {
                     done = true;
                 }
             }
-            image.src = options.backgroundImage;
+            image.src = this.instance._formatUrl(options.backgroundImage);
         } else {
             // サムネイルは作れないけどとりあえず追加する
             setTimeout(() => {
