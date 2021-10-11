@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
@@ -10,6 +9,7 @@ import StringUtil from '../../common/string_util'
 import RemoteCursorBuilder from '../remote_cursor_builder'
 import ITownsUtil from '../../common/itowns_util';
 import Constants from '../../common/constants';
+import TileViewerUtil from '../../common/tileviewer_util';
 
 class Receiver {
     constructor(connector, store, action) {
@@ -44,7 +44,7 @@ class Receiver {
                         json.from = "view";
                         this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
                             key: rtcKey
-                        }), function (err, reply) { });
+                        }), function(err, reply) {});
                         delete json.from;
                     }
                 }
@@ -74,33 +74,35 @@ class Receiver {
             this.store.once(Store.EVENT_LOGIN_FAILED, () => {
                 window.location.reload(true);
             });
-			let loginOption = { id : "Display", password : "", displayid : this.store.getWindowID() }
+            let loginOption = { id: "Display", password: "", displayid: this.store.getWindowID() }
 
-			let isLoginPrcessed = false;
-			window.electronLogin((isElectron,password)=>{
-				if(isElectron){
-					if (!isLoginPrcessed) {
-						loginOption.password = password;
-						loginOption.id = "ElectronDisplay";
-						isLoginPrcessed = true;
-						this.action.login(loginOption);
-					}
-				}else{
-					this.action.login(loginOption);
-				}
-			});
+            let isLoginPrcessed = false;
+            window.electronLogin((isElectron, password) => {
+                if (isElectron) {
+                    if (!isLoginPrcessed) {
+                        loginOption.password = password;
+                        loginOption.id = "ElectronDisplay";
+                        isLoginPrcessed = true;
+                        this.action.login(loginOption);
+                    }
+                } else {
+                    this.action.login(loginOption);
+                }
+            });
         });
 
         // 権限変更時に送られてくる
         this.connector.on(Command.ChangeAuthority, () => {
             let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
-                this.action.reloadUserList({ callback : () => {
-                    this.store.setAuthority(reply.authority);
-                    this.action.update({ updateType: 'window' });
-                    this.action.update({ updateType: 'group' });
-                    this.action.update({ updateType: 'content' });
-                }});
+                this.action.reloadUserList({
+                    callback: () => {
+                        this.store.setAuthority(reply.authority);
+                        this.action.update({ updateType: 'window' });
+                        this.action.update({ updateType: 'group' });
+                        this.action.update({ updateType: 'content' });
+                    }
+                });
             });
         });
 
@@ -109,13 +111,15 @@ class Receiver {
         this.connector.on(Command.ChangeDB, () => {
             let request = { id: "Display", password: "", displayid: this.store.getWindowID() };
             this.connector.send(Command.Login, request, (err, reply) => {
-                this.action.reloadUserList({ callback : () => {
-                    this.store.setAuthority(reply.authority);
-                    this.action.deleteAllElements();
-                    this.action.update({ updateType: 'window' });
-                    this.action.update({ updateType: 'group' });
-                    this.action.update({ updateType: 'content' });
-                }});
+                this.action.reloadUserList({
+                    callback: () => {
+                        this.store.setAuthority(reply.authority);
+                        this.action.deleteAllElements();
+                        this.action.update({ updateType: 'window' });
+                        this.action.update({ updateType: 'group' });
+                        this.action.update({ updateType: 'content' });
+                    }
+                });
             });
         });
 
@@ -201,7 +205,7 @@ class Receiver {
                         this.connector.sendBinary(Command.RTCAnswer, metaData, JSON.stringify({
                             key: rtcKey,
                             sdp: answer
-                        }), function () { });
+                        }), function() {});
                     });
                 }
             }
@@ -264,15 +268,30 @@ class Receiver {
                         if (metaDataDict.hasOwnProperty(id)) {
                             let metaData = metaDataDict[id];
                             if (metaData.type === Constants.TypeWebGL) {
-                                if (ITownsUtil.isTimelineSync(metaData, data.data.id, data.data.senderSync))
-                                {
+                                if (ITownsUtil.isTimelineSync(metaData, data.data.id, data.data.senderSync)) {
                                     this.store.time[data.data.id] = new Date(data.data.time);
                                 }
                             }
                         }
                     }
-                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data.data, (err, reply) => {
-                    });
+                    this.store.emit(Store.EVENT_ITOWNS_UPDATE_TIME, null, data.data, (err, reply) => {});
+                }
+            }
+            if (data.command === 'changeTileViewerContentTime') {
+                if (data.hasOwnProperty('data')) {
+                    // 各メタデータごとに時刻を保存
+                    let metaDataDict = this.store.getMetaDataDict();
+                    for (let id in metaDataDict) {
+                        if (metaDataDict.hasOwnProperty(id)) {
+                            let metaData = metaDataDict[id];
+                            if (metaData.type === Constants.TypeTileViewer) {
+                                if (TileViewerUtil.isTimelineSync(metaData, data.data.id, data.data.senderSync)) {
+                                    this.store.time[data.data.id] = new Date(data.data.time);
+                                }
+                            }
+                        }
+                    }
+                    this.store.emit(Store.EVENT_TILEVIEWER_UPDATE_TIME, null, data.data, (err, reply) => {});
                 }
             }
             // VideoControllerの動画一括コントロール.

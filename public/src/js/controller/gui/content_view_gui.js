@@ -219,7 +219,7 @@ class ContentViewGUI extends EventEmitter {
     }
 
     importTileViewerContent(contentElem, contentData, metaData, groupDict) {
-        console.error("importTileViewerContent", metaData);
+        console.log("importTileViewerContent", metaData);
         if (document.getElementById(getWebGLIFrameID(metaData))) {
             return;
         }
@@ -254,6 +254,9 @@ class ContentViewGUI extends EventEmitter {
                 chowder_tileviewer_update_layer_list: (metaData) => {
                     let preMetaData = this.store.getMetaData(metaData.id);
                     TileViewerUtil.updateLayerList(connector, metaData, preMetaData);
+                },
+                chowder_tileviewer_update_time: (metaData, time, range) => {
+                    TileViewerUtil.updateTime(connector, metaData, time, range);
                 },
                 chowder_tileviewer_update_camera: (metaData) => {
                     const preMetaData = this.store.getMetaData(metaData.id);

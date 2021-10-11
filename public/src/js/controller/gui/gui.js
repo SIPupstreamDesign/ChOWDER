@@ -32,6 +32,7 @@ import manipulator from '../manipulator.js';
 import VideoController from '../../components/video_controller.js';
 import InputDialog from '../../components/input_dialog'
 import ITownsUtil from '../../common/itowns_util'
+import TileViewerUtil from '../../common/tileviewer_util.js';
 
 "use strict";
 
@@ -156,43 +157,59 @@ class GUI extends EventEmitter {
             manipulator.updateMarkToggleButton(metaData);
         });
 
-        this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
-                // 全コンテンツデータの時刻をビューポートをもとに更新
-                const metaDataDict = this.store.getMetaDataDict();
-                const funcDict = this.store.getITownFuncDict();
-                const time = new Date(data.time);
-                let range = {}
-                if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') &&
-                    data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
-                    range = {
-                        rangeStartTime: new Date(data.rangeStartTime),
-                        rangeEndTime: new Date(data.rangeEndTime)
-                    }
+        this.store.on(Store.EVENT_ITOWNS_UPDATE_TIME, (err, data) => {
+            // 全コンテンツデータの時刻をビューポートをもとに更新
+            const metaDataDict = this.store.getMetaDataDict();
+            const funcDict = this.store.getITownFuncDict();
+            const time = new Date(data.time);
+            let range = {}
+            if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') &&
+                data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
+                range = {
+                    rangeStartTime: new Date(data.rangeStartTime),
+                    rangeEndTime: new Date(data.rangeEndTime)
                 }
-                for (let id in metaDataDict) {
-                    if (metaDataDict.hasOwnProperty(id)) {
-                        let metaData = metaDataDict[id];
-                        if (metaData.type === Constants.TypeWebGL) {
-                            if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync)) {
-                                if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
-                                    funcDict[metaData.id].chowder_itowns_update_time(metaData, time, range);
-                                }
+            }
+            for (let id in metaDataDict) {
+                if (metaDataDict.hasOwnProperty(id)) {
+                    let metaData = metaDataDict[id];
+                    if (metaData.type === Constants.TypeWebGL) {
+                        if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync)) {
+                            if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+                                funcDict[metaData.id].chowder_itowns_update_time(metaData, time, range);
                             }
                         }
                     }
                 }
-            })
-            // this.store.on(Store.EVENT_ASK_DISPLAY_PERMISSION, (err, logindata)=>{
-            // 	console.log("gui",logindata);
-            // 	const setting = {
-            // 		name : "connection request : " + logindata.displayid,
-            // 	}
+            }
+        });
 
-        // 	InputDialog.showOKCancelInput(setting,(result)=>{
-        // 		logindata.permission = result;
-        // 		this.action.changeDisplayPermission(logindata);
-        // 	});
-        // });
+        this.store.on(Store.EVENT_TILEVIEWER_UPDATE_TIME, (err, data) => {
+            // 全コンテンツデータの時刻をビューポートをもとに更新
+            const metaDataDict = this.store.getMetaDataDict();
+            const funcDict = this.store.getITownFuncDict();
+            const time = new Date(data.time);
+            let range = {}
+            if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') &&
+                data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
+                range = {
+                    rangeStartTime: new Date(data.rangeStartTime),
+                    rangeEndTime: new Date(data.rangeEndTime)
+                }
+            }
+            for (let id in metaDataDict) {
+                if (metaDataDict.hasOwnProperty(id)) {
+                    let metaData = metaDataDict[id];
+                    if (metaData.type === Constants.TypeTileViewer) {
+                        if (TileViewerUtil.isTimelineSync(metaData, data.id, data.senderSync)) {
+                            if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+                                funcDict[metaData.id].chowder_tileviewer_update_time(metaData, time, range);
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
     }
 

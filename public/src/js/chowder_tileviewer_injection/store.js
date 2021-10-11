@@ -190,7 +190,7 @@ class Store extends EventEmitter {
     }
 
     initLayers(params) {
-        console.error('initLayers', params)
+        console.log('initLayers', params)
         let options = this.instance.getOptions();
         options.maps = [];
         for (let i = 0; i < params.length; ++i) {
@@ -516,7 +516,7 @@ class Store extends EventEmitter {
     _injectChOWDER(data) {
         this.viewerDiv = data.viewerDiv;
         this.instance = data.instance;
-        console.error(window.chowder_view_type)
+        console.log("chowder_view_type", window.chowder_view_type)
 
         if (window.chowder_view_type === "control") {
             // tileviewer追加用コントローラーからひかれた(tileviewer画面に対して操作可)

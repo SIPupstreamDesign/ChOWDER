@@ -959,13 +959,13 @@ class TileViewer {
     }
 
     setOpacity(layerIndex, opacity) {
-        console.log("setOpacity", layerIndex, this.layerParams)
+        // console.log("setOpacity", layerIndex, this.layerParams)
         this.layerParams[layerIndex].opacity = opacity;
         this._update();
     }
 
     setVisible(layerIndex, visible) {
-        console.log("setVisible", layerIndex, visible)
+        // console.log("setVisible", layerIndex, visible)
         this.layerParams[layerIndex].visible = visible;
         this._update();
     }

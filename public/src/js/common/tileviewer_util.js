@@ -112,6 +112,17 @@ class TileViewerUtil {
         return copyrightText;
     }
 
+    static updateTime(iframeConnector, metaData, time, range) {
+        let timeData = {
+            time: time.toJSON()
+        };
+        if (range.hasOwnProperty('rangeStartTime') && range.hasOwnProperty('rangeEndTime')) {
+            timeData.rangeStartTime = range.rangeStartTime.toJSON();
+            timeData.rangeEndTime = range.rangeEndTime.toJSON();
+        }
+        iframeConnector.send(TileViewerCommand.UpdateTime, timeData);
+    }
+
     // 指定のメタデータがタイムライン同期対象となっているか返す.
     static isTimelineSync(metaData, senderID = null, senderSync = null) {
         let isSync = (!metaData.hasOwnProperty('sync')) // syncボタンが1回も押されていない

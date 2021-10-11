@@ -216,7 +216,7 @@ class IFrameConnector extends EventEmitter {
     connect(onopen, onclose) {
         // iframe内のchowder injectionの初期化
         if (this.iframe) {
-            console.error('connect')
+            console.log('connect')
             window.removeEventListener("message", this.messageCallback);
             window.addEventListener("message", this.messageCallback);
 

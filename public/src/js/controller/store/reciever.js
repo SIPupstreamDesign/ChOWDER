@@ -6,12 +6,11 @@
 import Store from './store'
 import Command from '../../common/command'
 import StringUtil from '../../common/string_util'
-import manipulator  from '../manipulator'
+import manipulator from '../manipulator'
 import Constants from '../../common/constants';
 import ContentUtil from '../content_util';
 
-class Receiver
-{
+class Receiver {
     constructor(connector, store, action) {
         this.store = store;
         this.action = action;
@@ -28,8 +27,7 @@ class Receiver
                 let id = metaData.id;
                 if (this.store.getManagement().isViewable(metaData.group)) {
                     if (id) {
-                        this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {
-                        });
+                        this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {});
                     }
                 }
             }
@@ -44,10 +42,8 @@ class Receiver
                 this.store.operation.getContent(metaData, (err, reply) => {
                     if (reply.hasOwnProperty('metaData')) {
                         if (this.store.hasMetadata(metaData.id)) {
-                            this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {
-                            });
-                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {
-                            });
+                            this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {});
+                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {});
                         }
                     }
                 }, true);
@@ -61,8 +57,7 @@ class Receiver
             if (data instanceof Array) {
                 for (let i = 0; i < data.length; ++i) {
                     let metaData = data[i];
-                    this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, metaData, (err, reply) => {
-                    });
+                    this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, metaData, (err, reply) => {});
                     if (this.store.getState().getSelectedID()) {
                         if (!this.store.getState().isSelectionRectShown()) {
                             let elem = document.getElementById(this.store.getState().getSelectedID());
@@ -74,8 +69,7 @@ class Receiver
                 }
             } else {
                 let metaData = data;
-                this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, metaData, (err, reply) => {
-                });
+                this.store.emit(Store.EVENT_DONE_GET_WINDOW_METADATA, null, metaData, (err, reply) => {});
                 if (this.store.getState().getSelectedID()) {
                     let elem = document.getElementById(this.store.getState().getSelectedID());
                     if (elem) {
@@ -98,8 +92,7 @@ class Receiver
                 let request = { userid: "", password: "", loginkey: key };
 
                 this.action.loginForCheckAuthority(request);
-            }
-            else {
+            } else {
                 this.action.getGroupList();
             }
             this.store.emit(Store.EVENT_DONE_UPDATE_GROUP, null, metaData);
@@ -108,27 +101,25 @@ class Receiver
         // コンテンツ追加時などにブロードキャストされてくる.
         this.connector.on(Command.Update, (metaData) => {
             if (!this.store.isInitialized()) { return; }
-			if (metaData) {
+            if (metaData) {
                 this.store.operation.getContent(metaData);
             }
         });
 
         // windowが更新されたときにブロードキャストされてくる.
-        this.connector.on(Command.UpdateMouseCursor, (metaData) => { });
+        this.connector.on(Command.UpdateMouseCursor, (metaData) => {});
 
         // コンテンツが削除されたときにブロードキャストされてくる.
         this.connector.on(Command.DeleteContent, (data) => {
             // console.log("onDeleteContent", data);
-            this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, null, data, (err, reply) => {
-            });
+            this.store.emit(Store.EVENT_DONE_DELETE_CONTENT, null, data, (err, reply) => {});
         });
 
         // ウィンドウが削除されたときにブロードキャストされてくる.
         this.connector.on(Command.DeleteWindowMetaData, (metaDataList) => {
             // console.log("DeleteWindowMetaData", metaDataList);
             for (let i = 0; i < metaDataList.length; i = i + 1) {
-                this.store.emit(Store.EVENT_DONE_DELETE_WINDOW_METADATA, null, metaDataList[i], (err, reply) => {
-                });
+                this.store.emit(Store.EVENT_DONE_DELETE_WINDOW_METADATA, null, metaDataList[i], (err, reply) => {});
             }
         });
 
@@ -152,8 +143,12 @@ class Receiver
             }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {
-                    this.store.emit(Store.EVENT_UPDATE_TIME, null, data.data, (err, reply) => {
-                    });
+                    this.store.emit(Store.EVENT_ITOWNS_UPDATE_TIME, null, data.data, (err, reply) => {});
+                }
+            }
+            if (data.command === 'changeTileViewerContentTime') {
+                if (data.hasOwnProperty('data')) {
+                    this.store.emit(Store.EVENT_TILEVIEWER_UPDATE_TIME, null, data.data, (err, reply) => {});
                 }
             }
 
@@ -193,7 +188,7 @@ class Receiver
             this.action.reloadUserList();
             this.action.reloadGlobalSetting();
             this.action.reloadDBList({
-                callback : (err, reply) => {
+                callback: (err, reply) => {
                     if (!err) {
                         this.store.emit(Store.EVENT_DONE_UPDATE_SETTING, err, reply);
                     }
@@ -209,7 +204,7 @@ class Receiver
             try {
                 let keyStr = StringUtil.arrayBufferToString(data.contentData.data);
                 key = JSON.parse(keyStr).key;
-            }  catch (e) {
+            } catch (e) {
                 console.error(e);
                 return;
             }
@@ -230,7 +225,7 @@ class Receiver
             try {
                 let keyStr = StringUtil.arrayBufferToString(data.contentData.data);
                 key = JSON.parse(keyStr).key;
-            }  catch (e) {
+            } catch (e) {
                 console.error(e);
                 return;
             }
