@@ -40,6 +40,20 @@ class Store extends EventEmitter {
         // 初回追加用カメラパラメータキャッシュ
         this.initialCameraParams = null;
 
+        const year = 2019;
+        const month = 4;
+        const day = 30;
+        const minHour = 10;
+
+        // タイムラインStart Time
+        this.timelineStartTime = new Date(year, (month - 1), day, minHour, 0, 0)
+            // タイムラインEnd Time
+        this.timelineEndTime = new Date(year, (month - 1), day, 23, 59, 59)
+            // タイムラインCurrent Time
+        this.timelineCurrentTime = new Date(year, (month - 1), day, 13, 51);
+        // タイムラインのRangeBar(オレンジのやつ)
+        this.timelineRangeBar = null;
+
         // コンテンツ追加完了した.
         this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply, endCallback) => {
             let isInitialContent = (!this.metaData);
@@ -397,6 +411,110 @@ class Store extends EventEmitter {
         }
     }
 
+    _changeTimelineRange(data) {
+        if (data.hasOwnProperty('start') && data.hasOwnProperty('end')) {
+            this.timelineStartTime = data.start;
+            this.timelineEndTime = data.end;
+            if (this.timelineCurrentTime.getTime() < this.timelineStartTime.getTime()) {
+                this.timelineCurrentTime = this.timelineStartTime;
+            }
+            if (this.timelineCurrentTime.getTime() > this.timelineEndTime.getTime()) {
+                this.timelineCurrentTime = this.timelineEndTime;
+            }
+            this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+        }
+    }
+
+    _changeTimelineRangeBar(data) {
+        if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime')) {
+            this.timelineRangeBar = data;
+            if (data.rangeStartTime.getTime() === data.rangeEndTime.getTime()) {
+                data.rangeEndTime = new Date(data.rangeStartTime.getTime() + 24 * 60 * 60 * 1000);
+            }
+        } else {
+            this.timelineRangeBar = null;
+        }
+        this._changeTimeByTimeline({
+            currentTime: this.timelineCurrentTime,
+            startTime: this.timelineStartTime,
+            endTime: this.timelineEndTime,
+        });
+        this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR, null);
+    }
+
+    // タイムラインのGUIから時刻を変更した場合
+    // 変更完了イベントを投げない（再描画を行わない）
+    // 現在のstoreの時刻からタイムラインを再描画させるとタイムラインの設計的にtimeChangeが走って無限ループする。
+    _changeTimeByTimeline(data) {
+        this.timelineCurrentTime = data.currentTime;
+        this.timelineStartTime = data.startTime;
+        this.timelineEndTime = data.endTime;
+
+        if (this.metaData) {
+            const isSync = TileViewerUtil.isTimelineSync(this.metaData);
+            // console.error("sendmessage", this.metaData.id)
+            let message = {
+                command: "changeTileViewerContentTime",
+                data: {
+                    time: data.currentTime.toJSON(),
+                    rangeStartTime: this.timelineRangeBar ? this.timelineRangeBar.rangeStartTime.toJSON() : "",
+                    rangeEndTime: this.timelineRangeBar ? this.timelineRangeBar.rangeEndTime.toJSON() : "",
+                    id: this.metaData.id,
+                    senderSync: isSync // 送信元のsync状態
+                }
+            };
+            Connector.send(Command.SendMessage, message, () => {
+                this.iframeConnector.send(TileViewerCommand.UpdateTime, {
+                    time: data.currentTime.toJSON(),
+                    rangeStartTime: this.timelineRangeBar ? this.timelineRangeBar.rangeStartTime.toJSON() : "",
+                    rangeEndTime: this.timelineRangeBar ? this.timelineRangeBar.rangeEndTime.toJSON() : "",
+                });
+            })
+        }
+    }
+
+    getTimelineStartTime() {
+        return this.timelineStartTime;
+    }
+
+    getTimelineEndTime() {
+        return this.timelineEndTime;
+    }
+
+    getTimelineCurrentTime() {
+        return this.timelineCurrentTime;
+    }
+
+    getTimelineRangeBar() {
+        return this.timelineRangeBar;
+    }
+
+    getTimelineCurrentTimeString() {
+        const time = this.timelineCurrentTime;
+        const year = time.getFullYear();
+        const month = ("0" + (time.getMonth() + 1)).slice(-2);
+        const date = ("0" + time.getDate()).slice(-2);
+        const hour = ("0" + time.getHours()).slice(-2);
+        const minutes = ("0" + time.getMinutes()).slice(-2);
+        const seconds = ("0" + time.getSeconds()).slice(-2);
+        const offset = time.getTimezoneOffset();
+        const sign = Math.sign(-offset) >= 0 ? "+" : "-";
+        const offsetMin = Math.abs(time.getTimezoneOffset() % 60);
+        let offsetStr = "GMT" + sign + Math.floor(Math.abs(time.getTimezoneOffset() / 60));
+        if (offsetMin > 0) {
+            offsetStr += ":" + offsetMin;
+        }
+        if (offset === 0) {
+            offsetStr = "GMT";
+        }
+        const ymdhms = year + "/" + month + "/" + date + " " +
+            hour + ":" +
+            minutes + ":" +
+            seconds + " " + offsetStr
+
+        return ymdhms;
+    }
+
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
@@ -412,4 +530,7 @@ Store.EVENT_DONE_ADD_LAYER = "done_add_layer";
 Store.EVENT_DONE_DELETE_LAYER = "done_delete_layer";
 Store.EVENT_DONE_CHANGE_LAYER_ORDER = "done_change_layer_order";
 Store.EVENT_DONE_CHANGE_LAYER_PROPERTY = "done_change_layer_property";
+Store.EVENT_DONE_CHANGE_TIMELINE_RANGE = "done_change_timeline_range";
+Store.EVENT_DONE_CHANGE_TIME = "done_change_time";
+Store.EVENT_DONE_CHANGE_TIMELINE_RANGE_BAR = "done_change_timeline_range_bar";
 export default Store;

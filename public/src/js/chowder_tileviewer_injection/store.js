@@ -404,7 +404,7 @@ class Store extends EventEmitter {
         });
 
         // カメラ位置送信
-        this.instance.addPositionCallback((data) => {
+        this.instance.addEventListener(TileViewer.EVENT_POSITION_CHANGED, (data) => {
             if (data) {
                 const camera = this.instance.getCameraInfo();
                 this.iframeConnector.send(TileViewerCommand.UpdateCamera, {
@@ -463,7 +463,7 @@ class Store extends EventEmitter {
 
 
         // カメラ位置送信
-        this.instance.addScaleIndexCallback((data) => {
+        this.instance.addEventListener(TileViewer.EVENT_SCALE_INDEX_CHANGED, (data) => {
             if (data !== undefined && data !== null) {
                 const scaleIndex = data;
                 let lodScaleLabel = document.getElementById(LoDScaleLabelID);
@@ -475,6 +475,41 @@ class Store extends EventEmitter {
                     lodScaleLabel.innerText = labelText;
                 }
             }
+        });
+    }
+
+    // 時刻更新に対応する画像切り替え処理の初期化
+    initTimelineControl(data) {
+        this.iframeConnector.on(TileViewerCommand.UpdateTime, (err, param, request) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            this.date = new Date(param.time);
+            if (data.timeCallback) {
+                data.timeCallback(this.date);
+            }
+            this.range = {}
+            if (param.hasOwnProperty('rangeStartTime') &&
+                param.hasOwnProperty('rangeEndTime') &&
+                param.rangeStartTime.length > 0 &&
+                param.rangeEndTime.length > 0) {
+                this.range = {
+                    rangeStartTime: new Date(param.rangeStartTime),
+                    rangeEndTime: new Date(param.rangeEndTime),
+                }
+            }
+            this.instance.setDate(this.date);
+            /*
+            const layers = this.getTimescaleLayers();
+            if (layers.length > 0) {
+                for (let i = 0; i < layers.length; ++i) {
+                    layers[i].updateByTime(this.date, this.range);
+                }
+                this.itownsView.notifyChange();
+            }
+            */
+            this.iframeConnector.sendResponse(request);
         });
     }
 
@@ -493,9 +528,10 @@ class Store extends EventEmitter {
 
         this.initLayerDataList();
         this.addLodScaleLabel();
+        this.initTimelineControl(data);
 
         // オプションが変更された場合のコールバック
-        this.instance.addOptionsCallback((data) => {
+        this.instance.addEventListener(TileViewer.EVENT_OPTIONS_CHANGED, (data) => {
             //this.initLayerDataList();
             this.iframeConnector.send(TileViewerCommand.UpdateLayer, this.layerDataList, () => {});
 

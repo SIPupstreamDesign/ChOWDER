@@ -151,7 +151,7 @@ function showDebugGUI(viewer) {
     }
     */
 
-    viewer.addScaleIndexCallback((data) => {
+    viewer.addEventListener(TileViewer.EVENT_SCALE_INDEX_CHANGED, (data) => {
         let scaleLabel = document.getElementById('__lod_scale_label__');
         if (scaleLabel) {
             const text = "Zoom Level : " + data;

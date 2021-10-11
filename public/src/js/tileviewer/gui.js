@@ -14,6 +14,7 @@ import LayerProperty from './layer_property'
 import LayerList from './layer_list'
 import ZoomControl from '../components/zoom_control'
 import GUIUtil from "./gui_util"
+import TimelineTemplateMain from "./timeline_template_main"
 
 // Base64からバイナリへ変換
 function toArrayBuffer(base64) {
@@ -69,6 +70,7 @@ class GUI extends EventEmitter {
             // this.initMenu();
             this.showTileViewer();
             this.initTemplateGUI();
+            this.initTimeline();
         });
 
         // ログイン失敗
@@ -320,6 +322,60 @@ class GUI extends EventEmitter {
         this.zoomControlWrap.style.bottom = "0px";
         this.zoomControlWrap.style.borderTop = "solid 1px rgba(0, 0, 0, 0.8)";
         this.propOuter.appendChild(this.zoomControlWrap);
+    }
+
+    // TimelineTemplateに対するイベント処理などの初期化
+    initTimeline() {
+        // 一定間隔同じイベントが来なかったら実行するための関数
+        let debounceChangeTime = (() => {
+            const interval = 100;
+            let timer;
+            return (timeInfo, func = null) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    this.action.changeTimeByTimeline({
+                        currentTime: new Date(timeInfo.currentTime),
+                        startTime: new Date(timeInfo.startTime),
+                        endTime: new Date(timeInfo.endTime)
+                    });
+                    if (func) {
+                        func();
+                    }
+                }, interval);
+            };
+        })();
+
+        TimelineTemplateMain.initTimelineTemplate({
+            startTime: this.store.getTimelineStartTime(), // 左端の日時
+            endTime: this.store.getTimelineEndTime(), // 右端の日時
+            currentTime: this.store.getTimelineCurrentTime(), // 摘み（ポインタ）の日時
+            // 以下を設定してもウィンドウサイズ変えると勝手に表示可能範囲が変わる上、
+            // ホイールスクロールの時にズームインできるけどズームアウトできなくなる。
+            //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
+            //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
+            timeChange: (timeInfo) => {
+                console.error("timeChange", timeInfo);
+                debounceChangeTime(timeInfo, () => {});
+
+                // timeInfo.  startTimeから左端の日時を取得
+                // timeInfo.    endTimeから右端の日時を取得
+                // timeInfo.currentTimeから摘み（ポインタ）の日時を取得
+            },
+            barMove: (timeInfo) => {
+                debounceChangeTime(timeInfo, () => {
+                    console.error("barMove", this.store.getTimelineCurrentTimeString());
+                });
+            },
+            barMoveEnd: (timeInfo) => {
+                debounceChangeTime(timeInfo, () => {
+                    console.error("barMoveEnd", this.store.getTimelineCurrentTimeString());
+                });
+            },
+            rangeMoveEnd: (timeInfo) => {
+                this.action.changeTimelineRangeBar(timeInfo);
+            }
+        });
+        TimelineTemplateMain.initTimelineTemplateEvents();
     }
 
     /**

@@ -30,6 +30,9 @@ class TileViewer {
         // TODO:this.options.mapsに移行予定
         this.layerParams = [];
 
+        // 表示対象時刻。nullの場合は現在時刻とみなす
+        this.date = null;
+
         // LoDレベル0の画像全体を正規化した空間（左上0,0、右下1,1)を
         // カメラスペースと呼ぶこととする。
         // カメラスペースで、左上　x, y, 及び w, hによる仮想的なカメラを定義する
@@ -252,7 +255,7 @@ class TileViewer {
         }
 
         const wh = this._getScreenImageSize();
-        this.backgroundImage.src = url;
+        this.backgroundImage.src = this._formatUrl(url);
         this.backgroundImage.style.left = left + "px";
         this.backgroundImage.style.top = top + "px";
         this.backgroundImage.style.width = wh.w + "px";
@@ -278,15 +281,28 @@ class TileViewer {
     // "x/y/z/"等を含んだURLをタイル情報を元に正しいURLに成形して返す
     _formatUrl(url, tileInfo, count, zoom = null) {
         try {
-            url = url.replace(/{x}/g, tileInfo.tx.toString());
-            url = url.replace(/{y}/g, tileInfo.ty.toString());
-            url = url.replace(/%x/g, tileInfo.tx.toString());
-            url = url.replace(/%y/g, tileInfo.ty.toString());
-            url = url.replace(/%ws/g, tileInfo.tw.toString());
-            url = url.replace(/%hs/g, tileInfo.th.toString());
-            url = url.replace(/%w/g, tileInfo.tw.toString());
-            url = url.replace(/%h/g, tileInfo.th.toString());
-            url = url.replace(/%c/g, count.toString());
+            if (tileInfo) {
+                url = url.replace(/{x}/g, tileInfo.tx.toString());
+                url = url.replace(/{y}/g, tileInfo.ty.toString());
+                url = url.replace(/%x/g, tileInfo.tx.toString());
+                url = url.replace(/%y/g, tileInfo.ty.toString());
+                url = url.replace(/%ws/g, tileInfo.tw.toString());
+                url = url.replace(/%hs/g, tileInfo.th.toString());
+                url = url.replace(/%w/g, tileInfo.tw.toString());
+                url = url.replace(/%h/g, tileInfo.th.toString());
+                url = url.replace(/%c/g, count.toString());
+            }
+
+            if (this.date) {
+                url = url.replace(/%Y/g, this.date.getFullYear());
+                url = url.replace(/%M/g, ("0" + (this.date.getMonth() + 1)).slice(-2));
+                url = url.replace(/%D/g, ("0" + this.date.getDate()).slice(-2));
+            } else {
+                const date = new Date(Date.now());
+                url = url.replace(/%Y/g, date.getFullYear());
+                url = url.replace(/%M/g, ("0" + (date.getMonth() + 1)).slice(-2));
+                url = url.replace(/%D/g, ("0" + date.getDate()).slice(-2));
+            }
             if (zoom !== null) {
                 url = url.replace(/{z}/g, zoom.toString());
                 url = url.replace(/%z/g, zoom.toString());
@@ -505,21 +521,21 @@ class TileViewer {
     // 位置の変更コールバックを発火させる
     // 位置が変更された場合必ず呼ぶ
     _dispatchPosition() {
-        const event = new CustomEvent('position_changed', { detail: this.getCameraInfo() });
+        const event = new CustomEvent(TileViewer.EVENT_POSITION_CHANGED, { detail: this.getCameraInfo() });
         this.transformElem.dispatchEvent(event);
     }
 
     // scaleIndex変更コールバックを発火させる
     // scaleIndex変更された場合必ず呼ぶ
     _dispatchScaleIndex() {
-        const event = new CustomEvent('scale_index_changed', { detail: this.currentScaleIndex });
+        const event = new CustomEvent(TileViewer.EVENT_SCALE_INDEX_CHANGED, { detail: this.currentScaleIndex });
         this.transformElem.dispatchEvent(event);
     }
 
     // オプション変更コールバックを発火させる
     // オプションが変更された場合必ず呼ぶ
     _dispatchOptions() {
-        const event = new CustomEvent('options_changed', { detail: JSON.parse(JSON.stringify(this.options)) });
+        const event = new CustomEvent(TileViewer.EVENT_OPTIONS_CHANGED, { detail: JSON.parse(JSON.stringify(this.options)) });
         this.transformElem.dispatchEvent(event);
     }
 
@@ -973,6 +989,21 @@ class TileViewer {
         }
     }
 
+    setDate(date) {
+        const preDate = this.date ? this.date : new Date(Date.now());
+        this.date = date;
+        if (preDate.getFullYear() !== date.getFullYear() ||
+            preDate.getMonth() !== date.getMonth() ||
+            preDate.getDate() !== date.getDate()) {
+            this._clearCache();
+            this._update();
+        }
+    }
+
+    getDate() {
+        return this.date;
+    }
+
     getOptions() {
         return JSON.parse(JSON.stringify(this.options));
     }
@@ -993,62 +1024,45 @@ class TileViewer {
         this.isEnableLimitOfMinimumScale = false;
     }
 
-    addPositionCallback(callback) {
+    /**
+     * イベントリスナーを追加する
+     * @param {*} eventName イベント名。TileViewer.EVENT_～を参照
+     * @param {*} callback イベント発生時のコールバック関数
+     * @returns 追加に成功したかどうか
+     */
+    addEventListener(eventName, callback) {
         if (this.transformElem) {
             this.callbackDict[callback] = (ev) => {
                 callback(ev.detail);
             };
-            this.transformElem.addEventListener('position_changed', this.callbackDict[callback]);
+            this.transformElem.addEventListener(eventName, this.callbackDict[callback]);
             return true;
         }
         return false;
     }
 
-    removePositionCallback(callback) {
-        if (this.callbackDict.hasOwnProperty(callback)) {
-            this.transformElem.removeEventListener('position_cahnged', this.callbackDict[callback]);
+    /**
+     * イベントリスナーを削除する
+     * @param {*} eventName イベント名。TileViewer.EVENT_～を参照
+     * @param {*} callback イベントのコールバック関数。
+     *                     nullを指定した場合は対象イベント名のすべてのコールバックが削除される。
+     * @returns 削除に成功したかどうか
+     */
+    removeEventListener(eventName, callback = null) {
+        if (callback === null) {
+            this.transformElem.removeEventListener(eventName);
+            // TODO this.callbackDictから消せるようにする
             return true;
-        }
-        return false;
-    }
-
-    addScaleIndexCallback(callback) {
-        if (this.transformElem) {
-            this.callbackDict[callback] = (ev) => {
-                callback(ev.detail);
-            };
-            this.transformElem.addEventListener('scale_index_changed', this.callbackDict[callback]);
-            return true;
-        }
-        return false;
-    }
-
-    removeScaleIndexCallback(callback) {
-        if (this.callbackDict.hasOwnProperty(callback)) {
-            this.transformElem.removeEventListener('scale_index_changed', this.callbackDict[callback]);
-            return true;
-        }
-        return false;
-    }
-
-
-    addOptionsCallback(callback) {
-        if (this.transformElem) {
-            this.callbackDict[callback] = (ev) => {
-                callback(ev.detail);
-            };
-            this.transformElem.addEventListener('options_changed', this.callbackDict[callback]);
-            return true;
-        }
-        return false;
-    }
-
-    removeOptionsCallback(callback) {
-        if (this.callbackDict.hasOwnProperty(callback)) {
-            this.transformElem.removeEventListener('options_changed', this.callbackDict[callback]);
+        } else if (this.callbackDict.hasOwnProperty(callback)) {
+            this.transformElem.removeEventListener(eventName, this.callbackDict[callback]);
             return true;
         }
         return false;
     }
 }
+
+TileViewer.EVENT_POSITION_CHANGED = 'position_changed';
+TileViewer.EVENT_SCALE_INDEX_CHANGED = 'scale_index_changed';
+TileViewer.EVENT_OPTIONS_CHANGED = 'options_changed';
+
 window.TileViewer = TileViewer;

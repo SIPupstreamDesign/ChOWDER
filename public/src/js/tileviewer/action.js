@@ -140,6 +140,69 @@ class Action extends EventEmitter {
     changeCameraParams(data) {
         this.emit(Action.EVENT_CHANGE_CAMERA_PARAMS, null, data);
     }
+
+    /**
+     * コンテンツに対する時刻の変更
+     * @param data
+     * {
+     *    currentTime : 時刻を表すDateインスタンス
+     * }
+     */
+    changeTime(data) {
+        this.emit(Action.EVENT_CHANGE_TIME, null, data);
+    }
+
+    /**
+     * コンテンツに対する時刻の変更(GUIを使用して変更した場合)
+     * 同時に複数のパラメータが変化したりする
+     * @param data
+     * {
+     *    currentTime: new Date(pTimeInfo.currentTime),
+     *    startTime: new Date(pTimeInfo.startTime),
+     *    endTime: new Date(pTimeInfo.endTime)
+     * }
+     */
+    changeTimeByTimeline(data) {
+        this.emit(Action.EVENT_CHANGE_TIME_BY_TIMELINE, null, data);
+    }
+
+    /**
+     * タイムラインのレンジ(start, end)を変更
+     * @param {*} data 
+     * {
+     *   start: Date,
+     *   end : Date
+     * }
+     */
+    changeTimelineRange(data) {
+        this.emit(Action.EVENT_CHANGE_TIMELINE_RANGE, null, data);
+    }
+
+    /**
+     * タイムラインのレンジバー(rangeStartTime, rangeEndTime)を変更
+     * @param {*} data 
+     * {
+     *   rangeStartTime: Date,
+     *   rangeEndTime : Date
+     * }
+     * または {} (レンジバー非表示の場合)
+     */
+    changeTimelineRangeBar(data) {
+        this.emit(Action.EVENT_CHANGE_TIMELINE_RANGE_BAR, null, data);
+    }
+
+
+    /**
+     * タイムラインの同期設定の変更
+     * @param {*} data 
+     * {
+     *    "sync" : true または false
+     * }
+     */
+    changeTimelineSync(data) {
+        this.emit(Action.EVENT_CHANGE_TIMELINE_SYNC, null, data);
+    }
+
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -156,5 +219,10 @@ Action.EVENT_ADD_LAYER = "addLayer";
 Action.EVENT_SELECT_LAYER = "selectLayer";
 Action.EVENT_DELETE_LAYER = "deleteLayer";
 Action.EVENT_CHANGE_LAYER_ORDER = "changeLayerOrder";
+Action.EVENT_CHANGE_TIME = "changeTime";
+Action.EVENT_CHANGE_TIME_BY_TIMELINE = "changeTimeByTimeline";
+Action.EVENT_CHANGE_TIMELINE_RANGE = "changeTimelineRange";
+Action.EVENT_CHANGE_TIMELINE_RANGE_BAR = "changeTimelineRangeBar";
+Action.EVENT_CHANGE_TIMELINE_SYNC = "changeTimelineSync";
 
 export default Action;

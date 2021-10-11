@@ -1,4 +1,4 @@
-const HimawariDate = "2019/04/30";
+const HimawariDate = "%Y/%M/%D";
 const OptionHimawarJP = {
     backgroundImage: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/thumbnail/600/" + HimawariDate + "/000000_0_0.png",
     /*
@@ -179,7 +179,7 @@ function showDebugGUI(viewer) {
     }
     */
 
-    viewer.addScaleIndexCallback((data) => {
+    viewer.addEventListener(TileViewer.EVENT_SCALE_INDEX_CHANGED, (data) => {
         let scaleLabel = document.getElementById('__lod_scale_label__');
         if (scaleLabel) {
             const text = "Zoom Level : " + data;
