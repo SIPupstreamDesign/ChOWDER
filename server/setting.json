@@ -11,5 +11,6 @@
     "HTTPPort" : 80,
     "SSLPort" : 443,
     "enableCORS" : true,
-    "VRMode" : "cylinder"
+    "VRMode" : "cylinder",
+    "reduceUpdate": false
 }

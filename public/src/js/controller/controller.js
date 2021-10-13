@@ -68,7 +68,30 @@ class Controller {
         this.doneGetMetaData = this.doneGetMetaData.bind(this);
         this.doneDeleteWindowMetaData = this.doneDeleteWindowMetaData.bind(this);
 
+        // 一定間隔同じイベントが来なかったら実行するための関数
+        this.debounceUpdateMetadata = (() => {
+            const interval = 100;
+            let timer;
+            return (targetMetaDatas) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    this.store.operation.updateMetadataMulti(targetMetaDatas);
+                }, interval);
+            };
+        })();
+
         this.initEvent();
+    }
+
+    updateMetaDatas(targetMetaDatas) {
+        if (targetMetaDatas.length > 0) {
+            if (this.store.getGlobalSetting().hasOwnProperty('reduceUpdate') &&
+                this.store.getGlobalSetting().reduceUpdate) {
+                this.debounceUpdateMetadata(targetMetaDatas);
+            } else {
+                this.store.operation.updateMetadataMulti(targetMetaDatas);
+            }
+        }
     }
 
     /**
@@ -565,9 +588,7 @@ class Controller {
                     targetMetaDatas.push(metaData);
                 }
             }
-            if (targetMetaDatas.length > 0) {
-                this.store.operation.updateMetadataMulti(targetMetaDatas);
-            }
+            this.updateMetaDatas(targetMetaDatas);
         }
     }
 
@@ -728,7 +749,7 @@ class Controller {
             }
         });
         if (targetMetaDatas.length > 0) {
-            this.store.operation.updateMetadataMulti(targetMetaDatas);
+            this.updateMetaDatas(targetMetaDatas);
             this.updateSelectionRect();
         }
         if (manipulator.getDraggingManip()) {
@@ -1287,7 +1308,7 @@ class Controller {
             }
         }
         if (targetMetaDatas.length > 0) {
-            this.store.operation.updateMetadataMulti(targetMetaDatas);
+            this.updateMetaDatas(targetMetaDatas);
         }
         this.updateSelectionRect();
     }
