@@ -1,6 +1,5 @@
-const HimawariDate = "%Y/%M/%D";
 const OptionHimawarJP = {
-    backgroundImage: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/thumbnail/600/" + HimawariDate + "/000000_0_0.png",
+    backgroundImage: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/thumbnail/600/%YYYY/%MM/%DD/%hh%mm%ss_0_0.png",
     /*
     foregroundImages: [
         "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/" + HimawariDate + "/000000_%x_%y.png",
@@ -9,10 +8,11 @@ const OptionHimawarJP = {
     ],
     */
     maps: [{
-        url: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/" + HimawariDate + "/000000_%x_%y.png",
+        url: "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png",
         scales: [
             { width: 600, height: 480, count: 1 },
             { width: 600, height: 480, count: 2 },
+            { width: 600, height: 480, count: 3 },
             { width: 600, height: 480, count: 4 },
             { width: 600, height: 480, count: 5 }
         ],
@@ -63,6 +63,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "+"
         document.body.appendChild(button);
 
@@ -78,6 +79,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "-"
         document.body.appendChild(button);
 
@@ -93,6 +95,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "level+"
         document.body.appendChild(button);
 
@@ -108,6 +111,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "level-"
         document.body.appendChild(button);
 
@@ -123,6 +127,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "viewport"
         document.body.appendChild(button);
 
@@ -142,6 +147,22 @@ function showDebugGUI(viewer) {
                 div.style.border = "2px solid red"
                 document.body.appendChild(div);
             }
+        }
+    }
+
+    {
+        let button = document.createElement('button');
+        button.style.position = "absolute"
+        button.style.left = "250px";
+        button.style.top = "0px";
+        button.style.width = "50px"
+        button.style.height = "50px";
+        button.style.zIndex = 10;
+        button.innerText = "10/1 9:00"
+        document.body.appendChild(button);
+
+        button.onclick = () => {
+            viewer.setDate(new Date(2021, 10 - 1, 1, 9, 0, 0, 0));
         }
     }
 

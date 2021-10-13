@@ -354,7 +354,7 @@ class GUI extends EventEmitter {
             //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
             //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
             timeChange: (timeInfo) => {
-                console.error("timeChange", timeInfo);
+                // console.error("timeChange", timeInfo);
                 debounceChangeTime(timeInfo, () => {});
 
                 // timeInfo.  startTimeから左端の日時を取得
