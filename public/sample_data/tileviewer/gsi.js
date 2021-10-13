@@ -36,6 +36,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "+"
         document.body.appendChild(button);
 
@@ -51,6 +52,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "-"
         document.body.appendChild(button);
 
@@ -66,6 +68,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "level+"
         document.body.appendChild(button);
 
@@ -81,6 +84,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "level-"
         document.body.appendChild(button);
 
@@ -96,6 +100,7 @@ function showDebugGUI(viewer) {
         button.style.top = "0px";
         button.style.width = "50px"
         button.style.height = "50px";
+        button.style.zIndex = 10;
         button.innerText = "viewport"
         document.body.appendChild(button);
 
