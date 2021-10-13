@@ -785,7 +785,7 @@ class TileViewer {
      * @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
      * @param {*} withDispatch 変更イベントを発火するかどうか
      */
-    _setTransformScaleWithPivot(scale, pivotXY, withDispatch = true) {
+    async _setTransformScaleWithPivot(scale, pivotXY, withDispatch = true) {
         // カメラ座標系での画面中心
         const centerXY = {
             x: this.camera.x + this.camera.w * 0.5,
@@ -802,7 +802,8 @@ class TileViewer {
         const preTrans = this.transformScale;
         this._updateCameraFromBaseCamera(false);
         // 画面中心スケール
-        this.setTransformScale(scale, false);
+        this.setTransformScale(scale, false, false);
+
         const diffScale = this.transformScale / preTrans;
         // 移動させていたのをスケールを考慮しつつ、元の戻す
         this.baseScaleCamera.x += centerToPivot.x / diffScale;
@@ -893,7 +894,7 @@ class TileViewer {
         this._update();
     }
 
-    setTransformScale(scale, withDispatch = true) {
+    setTransformScale(scale, withDispatch = true, withUpdate = true) {
         // 余りにも小さいスケールにしようとした場合は失敗とする
         if (scale < 0.1e-10) return false;
 
@@ -926,7 +927,9 @@ class TileViewer {
         }
 
         this._updateCameraFromBaseCamera(withDispatch);
-        this._update();
+        if (withUpdate) {
+            this._update();
+        }
         return true;
     }
 
