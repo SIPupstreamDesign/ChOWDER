@@ -29,10 +29,18 @@ class Store extends EventEmitter {
         // 1ウィンドウ1コンテンツなのでメタデータは1つ
         this.metaData = null;
 
+        this.globalSetting = {};
+
         // websocket接続が確立された.
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
             console.log("websocket connected")
+            
+            // グローバル設定を取得
+            Connector.send(Command.GetGlobalSetting, {}, (err, reply) => {
+                this.globalSetting = reply;
+            });
+
                 //let loginOption = { id: "APIUser", password: "" }
                 //this.action.login(loginOption);
         });
@@ -71,6 +79,26 @@ class Store extends EventEmitter {
             if (endCallback) { endCallback(); }
         });
 
+        // 一定間隔同じイベントが来なかったら実行するための関数
+        this.debounceUpdateMetadata = (() => {
+            const interval = 100;
+            let timer;
+            return (targetMetaData, callback) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    this.operation.updateMetadata(targetMetaData, callback);
+                }, interval);
+            };
+        })();
+    }
+
+    __updateMetaData(targetMetaData, callback) {
+        if (this.getGlobalSetting().hasOwnProperty('reduceUpdate') &&
+            String(this.getGlobalSetting().reduceUpdate) === "true") {
+            this.debounceUpdateMetadata(targetMetaData, callback);
+        } else {
+            this.operation.updateMetadata(targetMetaData, callback);
+        }
     }
 
     // デバッグ用. release版作るときは消す
@@ -179,7 +207,7 @@ class Store extends EventEmitter {
                             this.metaData.layerList = JSON.stringify(layerList);
                         }
                     }
-                    this.operation.updateMetadata(this.metaData, (err, res) => {
+                    this.__updateMetaData(this.metaData, (err, res) => {
                         this.emit(Store.EVENT_DONE_ADD_LAYER, null, params)
                     });
                     return;
@@ -202,7 +230,7 @@ class Store extends EventEmitter {
                     }
                 }
                 this.metaData.layerList = JSON.stringify(layerList);
-                this.operation.updateMetadata(this.metaData, (err, res) => {});
+                this.__updateMetaData(this.metaData,  (err, res) => {});
             });
 
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
@@ -222,7 +250,7 @@ class Store extends EventEmitter {
             // 幅高さは更新しない
             delete updateData.width;
             delete updateData.height;
-            this.operation.updateMetadata(updateData, (err, res) => {});
+            this.__updateMetaData(updateData, (err, res) => {});
         } else {
             // コンテンツ追加完了前だった。完了後にカメラを更新するため、キャッシュしておく。
             this.initialCameraParams = JSON.stringify(data.params);
@@ -250,7 +278,7 @@ class Store extends EventEmitter {
         metaData.height = metaData.height * (wh.height / parseFloat(metaData.orgHeight));
         metaData.orgWidth = wh.width;
         metaData.orgHeight = wh.height;
-        this.operation.updateMetadata(metaData, (err, res) => {});
+        this.__updateMetaData(metaData, (err, res) => {});
     }
 
     // サーバから現在登録されているwebglコンテンツのメタデータを取得してくる
@@ -401,7 +429,7 @@ class Store extends EventEmitter {
 
             this.saveLayer(layer);
 
-            this.operation.updateMetadata(this.metaData, (err, res) => {
+            this.__updateMetaData(this.metaData, (err, res) => {
                 if (data.hasOwnProperty('callback')) {
                     data.callback();
                 }
@@ -513,6 +541,9 @@ class Store extends EventEmitter {
         return ymdhms;
     }
 
+    getGlobalSetting() {
+        return this.globalSetting;
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";

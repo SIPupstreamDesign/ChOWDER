@@ -86,7 +86,7 @@ class Controller {
     updateMetaDatas(targetMetaDatas) {
         if (targetMetaDatas.length > 0) {
             if (this.store.getGlobalSetting().hasOwnProperty('reduceUpdate') &&
-                this.store.getGlobalSetting().reduceUpdate) {
+                String(this.store.getGlobalSetting().reduceUpdate) === "true") {
                 this.debounceUpdateMetadata(targetMetaDatas);
             } else {
                 this.store.operation.updateMetadataMulti(targetMetaDatas);
