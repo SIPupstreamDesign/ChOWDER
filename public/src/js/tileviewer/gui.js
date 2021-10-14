@@ -386,10 +386,8 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      */
      addZoomLabelVisible(parentElem, metaData) {
-        let cameraParams = metaData.cameraParams;
-
         if (metaData && metaData.hasOwnProperty('zoomLabelVisible')) {
-            GUIUtil.addCheckProperty(parentElem, metaData, "zoomLabelVisible", "show zoom label", metaData.zoomLabelVisible, (err, data) => {
+            GUIUtil.addCheckProperty(parentElem, metaData, "zoomLabelVisible", "show zoom label", String(metaData.zoomLabelVisible) === "true", (err, data) => {
                 this.action.changeZoomLabelVisible({
                     params: data
                 })

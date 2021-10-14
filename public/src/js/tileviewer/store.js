@@ -307,6 +307,9 @@ class Store extends EventEmitter {
                 params: meta.cameraParams,
             });
         }
+        if (meta.hasOwnProperty('zoomLabelVisible')) {
+            TileViewerUtil.updateViewerParam(this.iframeConnector, meta, null);
+        }
         this.metaData = meta;
         if (layerList.length > 0) {
             // レイヤー初期化
@@ -506,6 +509,7 @@ class Store extends EventEmitter {
             delete updateData.width;
             delete updateData.height;
             updateData.zoomLabelVisible = data.params;
+            TileViewerUtil.updateViewerParam(this.iframeConnector, updateData, null);
             this.__updateMetaData(updateData, (err, res) => {});
         }
     }

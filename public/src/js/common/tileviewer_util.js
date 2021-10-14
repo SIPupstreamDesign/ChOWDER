@@ -17,8 +17,8 @@ class TileViewerUtil {
         }
     }
 
-    static updateViewerParam(iframeConnector, metaData, preMetaData) {
-        if (preMetaData.zoomLabelVisible !== metaData.zoomLabelVisible) {
+    static updateViewerParam(iframeConnector, metaData, preMetaData = null) {
+        if (preMetaData === null || preMetaData.zoomLabelVisible !== metaData.zoomLabelVisible) {
             iframeConnector.send(TileViewerCommand.UpdateViewerParam, {
                 params: {
                     zoomLabelVisible : metaData.zoomLabelVisible
