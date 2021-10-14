@@ -317,7 +317,7 @@ class GUI extends EventEmitter {
 
         this.zoomControlWrap = document.createElement('div');
         this.zoomControlWrap.style.backgroundColor = "#1b1e2b";
-        this.zoomControlWrap.style.height = "100px";
+        this.zoomControlWrap.style.height = "135px";
         this.zoomControlWrap.style.position = "absolute";
         this.zoomControlWrap.style.bottom = "0px";
         this.zoomControlWrap.style.borderTop = "solid 1px rgba(0, 0, 0, 0.8)";
@@ -363,12 +363,12 @@ class GUI extends EventEmitter {
             },
             barMove: (timeInfo) => {
                 debounceChangeTime(timeInfo, () => {
-                    console.error("barMove", this.store.getTimelineCurrentTimeString());
+                    // console.error("barMove", this.store.getTimelineCurrentTimeString());
                 });
             },
             barMoveEnd: (timeInfo) => {
                 debounceChangeTime(timeInfo, () => {
-                    console.error("barMoveEnd", this.store.getTimelineCurrentTimeString());
+                    // console.error("barMoveEnd", this.store.getTimelineCurrentTimeString());
                 });
             },
             rangeMoveEnd: (timeInfo) => {
@@ -376,6 +376,31 @@ class GUI extends EventEmitter {
             }
         });
         TimelineTemplateMain.initTimelineTemplateEvents();
+    }
+
+    /**
+     * metaData.cameraParams.zoomLevel、または
+     * metaData.cameraParams.scaleIndex　を固定するためのGUIを追加する。
+     * 両方存在した場合は、metaData.cameraParams.zoomLevelが優先される。
+     * @param {*} parentElem 
+     * @param {*} metaData 
+     */
+     addZoomLabelVisible(parentElem, metaData) {
+        let cameraParams = metaData.cameraParams;
+
+        if (metaData && metaData.hasOwnProperty('zoomLabelVisible')) {
+            GUIUtil.addCheckProperty(parentElem, metaData, "zoomLabelVisible", "show zoom label", metaData.zoomLabelVisible, (err, data) => {
+                this.action.changeZoomLabelVisible({
+                    params: data
+                })
+            });
+        } else {
+            GUIUtil.addCheckProperty(parentElem, metaData, "zoomLabelVisible", "show zoom label", true, (err, data) => {
+                this.action.changeZoomLabelVisible({
+                    params: data
+                })
+            });
+        }
     }
 
     /**
@@ -445,6 +470,7 @@ class GUI extends EventEmitter {
         if (!metaData) return;
         if (!metaData.hasOwnProperty('cameraParams')) return;
         if (!this.zoomControl) {
+            this.addZoomLabelVisible(parentElem, metaData);
             this.addFixedZoomLevel(parentElem, metaData);
             this.addZoomLevel(parentElem, metaData);
         }

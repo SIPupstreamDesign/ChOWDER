@@ -105,6 +105,23 @@ class Store extends EventEmitter {
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
         });
+        this.iframeConnector.on(TileViewerCommand.UpdateViewerParam, (err, param, request) => {
+            this.updateViewerParam(param);
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request);
+        });
+    }
+
+    updateViewerParam(param) {
+        if (param && param.params.hasOwnProperty('zoomLabelVisible'))
+        {
+            let lodScaleLabel = document.getElementById(LoDScaleLabelID);
+            if ((String(param.params.zoomLabelVisible) === "true")) {
+                lodScaleLabel.style.display = "block";
+            } else {
+                lodScaleLabel.style.display = "none";
+            }
+        }
     }
 
 

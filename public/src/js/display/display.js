@@ -221,6 +221,7 @@ class Display {
             /* tileviewer */
             let funcDict = this.store.getITownFuncDict();
             if (funcDict && funcDict.hasOwnProperty(json.id)) {
+                funcDict[json.id].chowder_tileviewer_update_viewer_param(json);
                 funcDict[json.id].chowder_tileviewer_update_camera(json);
                 funcDict[json.id].chowder_tileviewer_update_layer_list(metaData);
             }

@@ -35,7 +35,9 @@ const TileViewerCommand = {
     // 現在時刻の更新
     UpdateTime: "UpdateTime",
     // tileviewer側からのレイヤー初期化完了通知
-    LayersInitialized: "LayersInitialized"
+    LayersInitialized: "LayersInitialized",
+    // Viewerのグローバルパラメータの変更
+    UpdateViewerParam : "UpdateViewerParam"
 };
 
 export default TileViewerCommand;

@@ -17,6 +17,16 @@ class TileViewerUtil {
         }
     }
 
+    static updateViewerParam(iframeConnector, metaData, preMetaData) {
+        if (preMetaData.zoomLabelVisible !== metaData.zoomLabelVisible) {
+            iframeConnector.send(TileViewerCommand.UpdateViewerParam, {
+                params: {
+                    zoomLabelVisible : metaData.zoomLabelVisible
+                },
+            }, null);
+        }
+    }
+
     static getIDList(layerList) {
         let IDList = [];
         for (let i = 0; i < layerList.length; ++i) {

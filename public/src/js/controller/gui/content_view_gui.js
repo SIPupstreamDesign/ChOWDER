@@ -258,6 +258,10 @@ class ContentViewGUI extends EventEmitter {
                 chowder_tileviewer_update_time: (metaData, time, range) => {
                     TileViewerUtil.updateTime(connector, metaData, time, range);
                 },
+                chowder_tileviewer_update_viewer_param: (metaData) => {
+                    const preMetaData = this.store.getMetaData(metaData.id);
+                    TileViewerUtil.updateViewerParam(connector, metaData, preMetaData);
+                },
                 chowder_tileviewer_update_camera: (metaData) => {
                     const preMetaData = this.store.getMetaData(metaData.id);
                     if (preMetaData) {
@@ -279,6 +283,7 @@ class ContentViewGUI extends EventEmitter {
 
             connector.once(TileViewerCommand.InitLayers, (err, data) => {
                 TileViewerUtil.updateCamera(connector, metaData);
+                TileViewerUtil.updateViewerParam(connector, metaData);
                 connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                     connector.on(TileViewerCommand.InitLayers, (err, data) => {
                         TileViewerUtil.updateCamera(connector, metaData);

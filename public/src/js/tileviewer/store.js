@@ -499,6 +499,17 @@ class Store extends EventEmitter {
         }
     }
 
+    _changeZoomLabelVisible(data) {
+        if (this.metaData) {
+            let updateData = JSON.parse(JSON.stringify(this.metaData));
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+            updateData.zoomLabelVisible = data.params;
+            this.__updateMetaData(updateData, (err, res) => {});
+        }
+    }
+
     getTimelineStartTime() {
         return this.timelineStartTime;
     }

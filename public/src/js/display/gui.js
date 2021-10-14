@@ -752,6 +752,7 @@ class GUI extends EventEmitter {
                     let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
                     this.updateTileViewerScale(connector, metaData, rect);
                     TileViewerUtil.updateCamera(connector, metaData);
+                    TileViewerUtil.updateViewerParam(connector, metaData);
 
                     connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                         connector.on(TileViewerCommand.InitLayers, (err, data) => {
@@ -778,6 +779,10 @@ class GUI extends EventEmitter {
                     chowder_tileviewer_update_layer_list: (metaData, callback) => {
                         let preMetaData = this.store.getMetaData(metaData.id);
                         TileViewerUtil.updateLayerList(connector, metaData, preMetaData, callback);
+                    },
+                    chowder_tileviewer_update_viewer_param: (metaData) => {
+                        let preMetaData = this.store.getMetaData(metaData.id);
+                        TileViewerUtil.updateViewerParam(connector, metaData, preMetaData);
                     },
                     chowder_tileviewer_update_time: (metaDatam, time, range) => {
                         TileViewerUtil.updateTime(connector, metaData, time, range);

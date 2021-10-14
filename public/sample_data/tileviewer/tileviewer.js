@@ -334,7 +334,6 @@ class TileViewer {
                     const second = (num150 * 150) % 60;
                     url = url.replace(/%mm/g, ("0" + minutes).slice(-2));
                     url = url.replace(/%ss/g, ("0" + second).slice(-2));
-                    console.error("minutes", minutes, second)
                 } else if (this.options.geodeticSystem === "himawari8.fd") {
                     // ひまわりFDは10分ごとのデータ
                     const minutes = Math.floor(this.date.getUTCMinutes() / 10) * 10;
@@ -357,7 +356,6 @@ class TileViewer {
                     const second = (num150 * 150) % 60;
                     url = url.replace(/%mm/g, ("0" + minutes).slice(-2));
                     url = url.replace(/%ss/g, ("0" + second).slice(-2));
-                    console.error("minutes", minutes, second)
                 } else if (this.options.geodeticSystem === "himawari8.fd") {
                     // ひまわりFDは10分ごとのデータ
                     const minutes = Math.floor(date.getUTCMinutes() / 10) * 10;
