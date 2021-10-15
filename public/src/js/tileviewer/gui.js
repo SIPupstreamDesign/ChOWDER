@@ -316,7 +316,7 @@ class GUI extends EventEmitter {
         };
 
         this.zoomControlWrap = document.createElement('div');
-        this.zoomControlWrap.style.backgroundColor = "#1b1e2b";
+        this.zoomControlWrap.style.backgroundColor = "rgba(27, 30, 43, 0.9)";
         this.zoomControlWrap.style.height = "135px";
         this.zoomControlWrap.style.position = "absolute";
         this.zoomControlWrap.style.bottom = "0px";

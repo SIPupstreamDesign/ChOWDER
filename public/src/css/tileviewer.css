@@ -94,7 +94,7 @@ hr {
     height: calc(100% - 40px);
     left: 10px;
     top: 10px;
-    background-color: #292d3e;
+    background-color: rgba(41, 45, 62, 0.9);
 }
 
 .tileviewer_property_inner {
