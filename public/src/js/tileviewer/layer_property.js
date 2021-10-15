@@ -35,6 +35,20 @@ class LayerProperty extends EventEmitter {
     // レイヤーを選択しなおすたびに毎回呼ぶ.
     init(layerID, layerProps) {
         this.dom.innerHTML = "";
+        
+		// レイヤーURLタイトル
+		let layerURLTitle = document.createElement('p');
+		layerURLTitle.className = "tileviewer_property_text_title";
+		layerURLTitle.innerText = "URL";
+		this.dom.appendChild(layerURLTitle);
+
+		// レイヤーURL
+		this.layerURL = document.createElement('p');
+		this.layerURL.className = "tileviewer_property_text";
+		this.layerURL.innerText = layerProps.url;
+		this.dom.appendChild(this.layerURL);
+
+
         this.addVisible(layerID, layerProps)
         this.addOpacity(layerID, layerProps);
         //this.addFixedZoomLevel(layerID, layerProps);
