@@ -15,6 +15,7 @@ import LayerList from './layer_list'
 import ZoomControl from '../components/zoom_control'
 import GUIUtil from "./gui_util"
 import TimelineTemplateMain from "./timeline_template_main"
+import Button from '../components/button'
 
 // Base64からバイナリへ変換
 function toArrayBuffer(base64) {
@@ -25,6 +26,8 @@ function toArrayBuffer(base64) {
     }
     return buffer.buffer;
 }
+
+const pressedClassName = 'timeline_sync_button_pressed';
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -149,9 +152,8 @@ class GUI extends EventEmitter {
                 this.showCopyrights(document.getElementById('content'), meta)
             }
             // syncの更新
-            /*
             if (!err) {
-                const isSync = ITownsUtil.isTimelineSync(meta);
+                const isSync = TileViewerUtil.isTimelineSync(meta);
                 const dom = this.timelineSyncButton.getDOM();
                 if (isSync) {
                     if (!dom.classList.contains(pressedClassName)) {
@@ -163,7 +165,6 @@ class GUI extends EventEmitter {
                     }
                 }
             }
-            */
         });
 
         this.store.on(Store.EVENT_DONE_ADD_CONTENT, (err, meta) => {
@@ -376,6 +377,24 @@ class GUI extends EventEmitter {
             }
         });
         TimelineTemplateMain.initTimelineTemplateEvents();
+        
+        // Syncボタン
+        this.timelineSyncButton = new Button();
+        document.getElementById('timeline').appendChild(this.timelineSyncButton.getDOM());
+        this.timelineSyncButton.getDOM().className = 'timeline_sync_button timeline_sync_button_pressed';
+        this.timelineSyncButton.setDataKey('Sync');
+        document.body.appendChild(this.timelineSyncButton.getDOM());
+        this.timelineSyncButton.on('click', (evt) => {
+            const dom = this.timelineSyncButton.getDOM();
+            if (dom.classList.contains(pressedClassName)) {
+                dom.classList.remove(pressedClassName);
+                this.action.changeTimelineSync({ sync: false });
+            } else {
+                dom.classList.add(pressedClassName);
+                this.action.changeTimelineSync({ sync: true });
+            }
+        });
+
     }
 
     /**

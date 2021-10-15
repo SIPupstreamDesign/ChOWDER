@@ -174,6 +174,33 @@ class Store extends EventEmitter {
                 this.__changeLayerProeprty(preData);
             }
         });
+        
+        // タイムライン時刻変更の受信
+        // パフォーマンス計測結果の受信
+        Connector.on(Command.SendMessage, (data) => {
+            if (data && data.hasOwnProperty('command') && data.command === "changeTileViewerContentTime") {
+                if (data.hasOwnProperty('data') && data.data.hasOwnProperty('time')) {
+                    // sync状態でない場合、同じコンテンツIDのものにしか反映させない)
+                    if (TileViewerUtil.isTimelineSync(this.metaData, data.data.id, data.data.senderSync)) {
+                        if (this.timelineCurrentTime.toJSON() != data.data.time) {
+                            let range = (this.timelineEndTime.getTime() - this.timelineStartTime.getTime()) / 2;
+                            this.timelineCurrentTime = new Date(data.data.time);
+                            this.timelineStartTime = new Date(this.timelineCurrentTime.getTime() - range);
+                            this.timelineEndTime = new Date(this.timelineCurrentTime.getTime() + range);
+                            let message = {
+                                time: data.data.time,
+                            }
+                            if (data.data.hasOwnProperty('rangeStartTime') && data.data.hasOwnProperty('rangeEndTime')) {
+                                message.rangeStartTime = data.data.rangeStartTime;
+                                message.rangeEndTime = data.data.rangeEndTime;
+                            }
+                            this.iframeConnector.send(TileViewerCommand.UpdateTime, message);
+                            this.emit(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, null);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     _login(data) {
@@ -514,6 +541,14 @@ class Store extends EventEmitter {
         }
     }
 
+    _changeTimelineSync(data) {
+        if (this.metaData) {
+            this.metaData.sync = data.sync;
+            this.operation.updateMetadata(this.metaData, (err, res) => {});
+            this.emit(Store.EVENT_DONE_UPDATE_METADATA, null, this.metaData);
+        }
+    }
+    
     getTimelineStartTime() {
         return this.timelineStartTime;
     }

@@ -320,3 +320,29 @@ hr {
 .copyright_link:hover {
     color: lightgray;
 }
+
+
+.timeline_sync_button {
+	position : fixed;
+    width: 60px;
+	height : 32px;
+	right : 35px;
+	bottom : 30px;
+	border : 5px solid rgb(253, 221, 221);
+	border-radius: 3px;
+	
+    padding: 0px;
+    font-size: 11px;
+    font-weight: bold;
+    color: darkgray;
+}
+
+.timeline_sync_button:hover {
+	border : 5px solid gray;
+}
+
+.timeline_sync_button_pressed {
+	background : rgb(81, 191, 93);
+	border-color:#b1ffb9;
+	color : black;
+}
