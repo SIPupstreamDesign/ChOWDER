@@ -138,7 +138,7 @@ class Store extends EventEmitter {
             return JSON.parse(JSON.stringify(params.scales));
         }
         if (params.type === "standard") {
-            return this.createStandardScaleEntries(256, 256, 0, 20);
+            return this.createStandardScaleEntries(256, 256, params.zoom.min, params.zoom.max);
         }
         return [];
     }
@@ -154,13 +154,17 @@ class Store extends EventEmitter {
      * }
      */
     addLayer(params) {
-        this.layerDataList.push({
+        let layerData = {
             id: params.id,
             url: params.url,
             opacity: 1.0,
             visible: true,
             type: params.type
-        });
+        };
+        if (params.hasOwnProperty('zoom')) {
+            layerData.zoom = JSON.parse(JSON.stringify(params.zoom));
+        }
+        this.layerDataList.push(layerData);
         let options = this.instance.getOptions();
         options.maps.push({
             url: params.url,
@@ -228,24 +232,33 @@ class Store extends EventEmitter {
                 });
             }
         }
-        this.instance.setOptions(options);
+        this.instance.setOptions(options, false);
 
         // setOptionsでlayerDataListがリセット
         this.layerDataList = [];
 
         for (let i = 0; i < params.length; ++i) {
             let param = params[i];
-            this.layerDataList.push({
+            let layerData = {
                 id: param.id,
                 url: param.url,
                 opacity: param.opacity,
                 visible: param.visible,
-                scales: this.generateScales(param),
                 type: param.type
-            });
-            this.instance.setOpacity(this.getLayerIndex(param.id), param.opacity);
-            this.instance.setVisible(this.getLayerIndex(param.id), param.visible);
+            }
+            if (param.hasOwnProperty('zoom')) {
+                layerData.zoom = JSON.parse(JSON.stringify(param.zoom));
+            }
+            this.layerDataList.push(layerData);
+            if (param.hasOwnProperty('opacity')) {
+                this.instance.setOpacity(this.getLayerIndex(param.id), param.opacity, false);
+            }
+            if (param.hasOwnProperty('visible')) {
+                this.instance.setVisible(this.getLayerIndex(param.id), param.visible, false);
+            }
         }
+        this.instance.update();
+        
         this.iframeConnector.send(TileViewerCommand.UpdateLayer, this.layerDataList, () => {});
     }
 
@@ -264,8 +277,9 @@ class Store extends EventEmitter {
             this.layerDataList[layerIndex].visible = params.visible;
             this.layerDataList[layerIndex].opacity = params.opacity;
 
-            this.instance.setOpacity(layerIndex, params.opacity);
-            this.instance.setVisible(layerIndex, params.visible);
+            this.instance.setOpacity(layerIndex, params.opacity, false);
+            this.instance.setVisible(layerIndex, params.visible, false);
+            this.instance.update();
         }
     }
 

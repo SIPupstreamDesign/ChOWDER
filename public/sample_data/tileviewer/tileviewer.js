@@ -76,6 +76,16 @@ class TileViewer {
         this.updateCancelFuncs = [];
 
         this.callbackDict = {};
+
+        this.isDisableUpdate = false;
+    }
+
+    _disableUpdate() {
+        this.isDisableUpdate = true;
+    }
+
+    _enableUpdate() {
+        this.isDisableUpdate = false;
     }
 
     // タイル画像が存在しないときに基準とするサイズを返す
@@ -235,8 +245,8 @@ class TileViewer {
 
         tileInfo.x = ((x - centerX) * this.transformScale + centerX);
         tileInfo.y = ((y - centerY) * this.transformScale + centerY);
-        tileInfo.w = (s.width / ratio.x * this.transformScale);
-        tileInfo.h = (s.height / ratio.y * this.transformScale);
+        tileInfo.w = Math.ceil(s.width / ratio.x * this.transformScale);
+        tileInfo.h = Math.ceil(s.height / ratio.y * this.transformScale);
 
         if ((tileInfo.x + tileInfo.w) < (rect.left + rectW * this.viewport[0])) {
             tileInfo.x = -1;
@@ -636,16 +646,14 @@ class TileViewer {
     }
 
     // スケールインデックスの変更
-    _setScaleIndex(scaleIndex, withDispatch = true) {
+    _setScaleIndex(scaleIndex) {
         if (this.isFixedScaleIndex) {
             return false;
         }
         if (this._hasValidScales(scaleIndex)) {
             if (this.currentScaleIndex !== scaleIndex) {
                 this.currentScaleIndex = scaleIndex;
-                if (withDispatch) {
-                    this._dispatchScaleIndex();
-                }
+                this._dispatchScaleIndex();
                 return true;
             }
         }
@@ -702,6 +710,7 @@ class TileViewer {
 
         const diffScale = this.baseScaleCamera.w / preW;
         this.setTransformScale(this.transformScale * diffScale, withDispatch);
+        this.update();
     }
 
     // baseScaleCameraを元にcameraを再設定する。
@@ -740,7 +749,11 @@ class TileViewer {
     }
 
     // 現在のカメラを元にタイルを更新する
-    async _update() {
+    async update() {
+        if (this.isDisableUpdate) {
+            return;
+        }
+        
         for (let i = 0; i < this.updateCancelFuncs.length; ++i) {
             this.updateCancelFuncs[i]();
         }
@@ -768,6 +781,21 @@ class TileViewer {
         this._cullTileElements(loadedElems);
     }
 
+    _withUpdate(func, updateFlag = true) {
+        const preUpdate = this.isDisableUpdate;
+        try {
+            this._disableUpdate();
+            func();
+        } catch(e) {
+            throw e;
+        } finally {
+            this.isDisableUpdate = preUpdate;
+            if (updateFlag) {
+                this.update();
+            }
+        }
+    }
+
     _convertPixelPositionToCameraPosition(pixelPos) {
         const rect = this.viewerElem.getBoundingClientRect();
         const viewerSize = this._getViewerSize();
@@ -783,31 +811,34 @@ class TileViewer {
      * @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
      * @param {*} withDispatch 変更イベントを発火するかどうか
      */
-    async _setTransformScaleWithPivot(scale, pivotXY, withDispatch = true) {
-        // カメラ座標系での画面中心
-        const centerXY = {
-            x: this.camera.x + this.camera.w * 0.5,
-            y: this.camera.y + this.camera.h * 0.5,
-        };
-        // ピボット位置を画面中心に動かすための移動量
-        const centerToPivot = {
-            x: centerXY.x - pivotXY.x,
-            y: centerXY.y - pivotXY.y
-        };
-        // ピボット位置を画面中心にする
-        this.baseScaleCamera.x -= centerToPivot.x;
-        this.baseScaleCamera.y -= centerToPivot.y;
-        const preTrans = this.transformScale;
-        this._updateCameraFromBaseCamera(false);
-        // 画面中心スケール
-        this.setTransformScale(scale, false, false);
+    async _setTransformScaleWithPivot(scale, pivotXY) {
+        this._withUpdate(() => {
+            this._disableUpdate();
+            
+            // カメラ座標系での画面中心
+            const centerXY = {
+                x: this.camera.x + this.camera.w * 0.5,
+                y: this.camera.y + this.camera.h * 0.5,
+            };
+            // ピボット位置を画面中心に動かすための移動量
+            const centerToPivot = {
+                x: centerXY.x - pivotXY.x,
+                y: centerXY.y - pivotXY.y
+            };
+            // ピボット位置を画面中心にする
+            this.baseScaleCamera.x -= centerToPivot.x;
+            this.baseScaleCamera.y -= centerToPivot.y;
+            const preTrans = this.transformScale;
+            this._updateCameraFromBaseCamera(false);
+            // 画面中心スケール
+            this.setTransformScale(scale, false);
 
-        const diffScale = this.transformScale / preTrans;
-        // 移動させていたのをスケールを考慮しつつ、元の戻す
-        this.baseScaleCamera.x += centerToPivot.x / diffScale;
-        this.baseScaleCamera.y += centerToPivot.y / diffScale;
-        this._updateCameraFromBaseCamera(withDispatch);
-        this._update();
+            const diffScale = this.transformScale / preTrans;
+            // 移動させていたのをスケールを考慮しつつ、元の戻す
+            this.baseScaleCamera.x += centerToPivot.x / diffScale;
+            this.baseScaleCamera.y += centerToPivot.y / diffScale;
+            this._updateCameraFromBaseCamera(true);
+        });
     }
 
     _getZoomBaseScale(isPlus = true) {
@@ -821,63 +852,64 @@ class TileViewer {
     // this.optionを元に、新規に地図を読み込む
     // positionによりカメラ位置を指定する
     create(position, callback) {
-        if (position) {
-            // 位置情報による調整
-            // 後の計算時に使用するため、先にscaleIndexを設定
-            if (position.hasOwnProperty('scale')) {
-                this._setScaleIndex(position.scale);
-            }
-            // 位置情報による調整
-            if (position.hasOwnProperty('center')) {
-                // カメラのwidth, heightをまず求める
-                // 通常はブラウザの幅高さを使用する
-                // positionにwidth, heightが指定されていればそちらを使用する
-                const viewerSize = this._getViewerSize();
-                let width = viewerSize.w;
-                let height = viewerSize.h;
-                if (position.hasOwnProperty('width')) {
-                    width = position.width;
+        this._withUpdate(() => {
+                
+            if (position) {
+                // 位置情報による調整
+                // 後の計算時に使用するため、先にscaleIndexを設定
+                if (position.hasOwnProperty('scale')) {
+                    this._setScaleIndex(position.scale);
                 }
-                if (position.hasOwnProperty('height')) {
-                    height = position.height;
+                // 位置情報による調整
+                if (position.hasOwnProperty('center')) {
+                    // カメラのwidth, heightをまず求める
+                    // 通常はブラウザの幅高さを使用する
+                    // positionにwidth, heightが指定されていればそちらを使用する
+                    const viewerSize = this._getViewerSize();
+                    let width = viewerSize.w;
+                    let height = viewerSize.h;
+                    if (position.hasOwnProperty('width')) {
+                        width = position.width;
+                    }
+                    if (position.hasOwnProperty('height')) {
+                        height = position.height;
+                    }
+                    const imageSize = this._getScreenImageSize();
+                    const cameraW = width / imageSize.w;
+                    const cameraH = height / imageSize.h;
+
+                    if (position.center.hasOwnProperty('relative')) {
+                        const leftTop = position.center.relative;
+                        this.baseScaleCamera.x = leftTop.left - cameraW / 2;
+                        this.baseScaleCamera.y = leftTop.top - cameraH / 2;
+                        this.baseScaleCamera.w = cameraW;
+                        this.baseScaleCamera.h = cameraH;
+                    } else if (position.center.hasOwnProperty('absolute')) {
+                        const leftTop = position.center.absolute;
+                        const totalImageSize = this._getTotalImageSize();
+                        const relativeX = (leftTop.left / totalImageSize.w);
+                        const relativeY = (leftTop.top / totalImageSize.h);
+                        this.baseScaleCamera.x = relativeX - cameraW / 2;
+                        this.baseScaleCamera.y = relativeY - cameraH / 2;
+                        this.baseScaleCamera.w = cameraW;
+                        this.baseScaleCamera.h = cameraH;
+                    } else if (position.center.hasOwnProperty('degrees')) {
+                        const leftTop = position.center.degrees;
+
+                        // TODO
+                    }
                 }
-                const imageSize = this._getScreenImageSize();
-                const cameraW = width / imageSize.w;
-                const cameraH = height / imageSize.h;
-
-                if (position.center.hasOwnProperty('relative')) {
-                    const leftTop = position.center.relative;
-                    this.baseScaleCamera.x = leftTop.left - cameraW / 2;
-                    this.baseScaleCamera.y = leftTop.top - cameraH / 2;
-                    this.baseScaleCamera.w = cameraW;
-                    this.baseScaleCamera.h = cameraH;
-                } else if (position.center.hasOwnProperty('absolute')) {
-                    const leftTop = position.center.absolute;
-                    const totalImageSize = this._getTotalImageSize();
-                    const relativeX = (leftTop.left / totalImageSize.w);
-                    const relativeY = (leftTop.top / totalImageSize.h);
-                    this.baseScaleCamera.x = relativeX - cameraW / 2;
-                    this.baseScaleCamera.y = relativeY - cameraH / 2;
-                    this.baseScaleCamera.w = cameraW;
-                    this.baseScaleCamera.h = cameraH;
-                } else if (position.center.hasOwnProperty('degrees')) {
-                    const leftTop = position.center.degrees;
-
-                    // TODO
+            } else {
+                // 描画領域のサイズに対して、画像全体がちょうど納まる最適なスケールおよび位置に調整
+                this.baseScaleCamera = {
+                    x: 0,
+                    y: 0,
+                    w: 1,
+                    h: 1
                 }
             }
-        } else {
-            // 描画領域のサイズに対して、画像全体がちょうど納まる最適なスケールおよび位置に調整
-            this.baseScaleCamera = {
-                x: 0,
-                y: 0,
-                w: 1,
-                h: 1
-            }
-        }
-
-        this._resizeScaling();
-        this._update();
+            this._resizeScaling(false);
+        });
     }
 
     move(mv, callback) {
@@ -889,46 +921,54 @@ class TileViewer {
         this.baseScaleCamera.x -= cameraSpaceMove.x;
         this.baseScaleCamera.y -= cameraSpaceMove.y;
         this._updateCameraFromBaseCamera();
-        this._update();
+        this.update();
     }
 
-    setTransformScale(scale, withDispatch = true, withUpdate = true) {
+    setTransformScale(scale, withDispatch = true) {
         // 余りにも小さいスケールにしようとした場合は失敗とする
         if (scale < 0.1e-10) return false;
 
-        const preScale = this.transformScale;
-        this.transformScale = scale;
+        this._withUpdate(() => {
+            const preScale = this.transformScale;
+            this.transformScale = scale;
 
-        // 画面サイズの半分より小さくしようとした場合は失敗とする
-        if (this.isEnableLimitOfMinimumScale) {
-            const viewerSize = this._getViewerSize();
-            const halfW = viewerSize.w * (this.viewport[2] - this.viewport[0]) / 2;
-            if (this._getScreenImageSize().w < halfW) {
-                this.transformScale = preScale;
-                return false;
+            // 画面サイズの半分より小さくしようとした場合は失敗とする
+            if (this.isEnableLimitOfMinimumScale) {
+                const viewerSize = this._getViewerSize();
+                const halfW = viewerSize.w * (this.viewport[2] - this.viewport[0]) / 2;
+                if (this._getScreenImageSize().w < halfW) {
+                    this.transformScale = preScale;
+                    return false;
+                }
             }
-        }
+            
+            while ((this.currentScaleIndex + 1 < this.combinedScales.length) &&
+                scale >= this._getScaleRatio(null, this.currentScaleIndex + 1).x) {
+                // LoDレベルを上げる
+                if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
+                    break;
+                }
+            }
+            while (this.currentScaleIndex > 0 &&
+                scale < this._getScaleRatio(null, this.currentScaleIndex).x) {
+                // LoDレベルを下げる
+                if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
+                    break;
+                }
+            }
 
-        while ((this.currentScaleIndex + 1 < this.combinedScales.length) &&
-            scale >= this._getScaleRatio(null, this.currentScaleIndex + 1).x) {
-            // LoDレベルを上げる
-            if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
-                break;
-            }
-        }
-        while (this.currentScaleIndex > 0 &&
-            scale < this._getScaleRatio(null, this.currentScaleIndex).x) {
-            // LoDレベルを下げる
-            if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
-                break;
-            }
-        }
-
-        this._updateCameraFromBaseCamera(withDispatch);
-        if (withUpdate) {
-            this._update();
-        }
+            this._updateCameraFromBaseCamera(withDispatch);
+        });
         return true;
+    }
+
+    _calcScalingFactor() {
+        let  offset = 0;
+        if (this.combinedScales.length > 0 && this.combinedScales[0].hasOwnProperty('zoom')) {
+            offset = Math.max(0, this.combinedScales[0].zoom - 1);
+            return Math.pow(this._getZoomBaseScale(), this.currentScaleIndex + offset);
+        }
+        return Math.pow(this._getZoomBaseScale(), this.currentScaleIndex);
     }
 
     /**
@@ -942,17 +982,20 @@ class TileViewer {
         if (!this._hasValidScales()) {
             return false;
         }
-        if (onlyLevel) {
-            this._setScaleIndex(this.currentScaleIndex + 1);
-            this._update();
-        } else if (pixelPos) {
-            // ピクセルでの位置を、カメラ座標系に変換
-            const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
-            this._setTransformScaleWithPivot(this.transformScale + 0.5 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex), pivotXY);
-        } else {
-            // 画面中心
-            this.setTransformScale(this.transformScale + 0.05 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex));
-        }
+
+        this._withUpdate(() => {
+            if (onlyLevel) {
+                this._clearCache();
+                this._setScaleIndex(this.currentScaleIndex + 1);
+            } else if (pixelPos) {
+                // ピクセルでの位置を、カメラ座標系に変換
+                const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
+                this._setTransformScaleWithPivot(this.transformScale + 0.5 * this._calcScalingFactor(), pivotXY);
+            } else {
+                // 画面中心
+                this.setTransformScale(this.transformScale + 0.05 * this._calcScalingFactor(), true);
+            }
+        });
         return true;
     }
 
@@ -967,16 +1010,20 @@ class TileViewer {
         if (!this._hasValidScales()) {
             return false;
         }
-        if (onlyLevel) {
-            this._setScaleIndex(this.currentScaleIndex - 1);
-            this._update();
-        } else if (pixelPos) {
-            // ピクセルでの位置を、カメラ座標系に変換
-            const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
-            this._setTransformScaleWithPivot(this.transformScale - 0.5 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex), pivotXY);
-        } else {
-            this.setTransformScale(this.transformScale - 0.05 * Math.pow(this._getZoomBaseScale(), this.currentScaleIndex));
-        }
+        this._withUpdate(() => {
+            this._disableUpdate();
+                
+            if (onlyLevel) {
+                this._clearCache();
+                this._setScaleIndex(this.currentScaleIndex - 1);
+            } else if (pixelPos) {
+                // ピクセルでの位置を、カメラ座標系に変換
+                const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
+                this._setTransformScaleWithPivot(this.transformScale - 0.5 * this._calcScalingFactor(), pivotXY);
+            } else {
+                this.setTransformScale(this.transformScale - 0.05 * this._calcScalingFactor(), true);
+            }
+        });
         return true;
     }
 
@@ -989,7 +1036,7 @@ class TileViewer {
      */
     setViewport(viewport) {
         this.viewport = JSON.parse(JSON.stringify(viewport));
-        this._update();
+        this.update();
     }
 
     /**
@@ -1039,96 +1086,121 @@ class TileViewer {
      * ただし、ビューポートは別途指定する必要がある。
      */
     setCameraInfo(viewInfo) {
-        // 固定ズームレベルの設定
-        if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('zoomLevel')) {
-            const scaleLen = this.combinedScales.length;
-            for (let i = 0; i < scaleLen; ++i) {
-                if (this.combinedScales[i].hasOwnProperty('zoom') &&
-                    this.combinedScales[i].zoom == viewInfo.zoomLevel) {
-                    this.setZoomLevel(viewInfo.fixedZoomLevel, i);
+        this._withUpdate(() => {
+            // 固定ズームレベルの設定
+            if (viewInfo.hasOwnProperty('fixedZoomLevel'))
+            {
+                if (viewInfo.hasOwnProperty('zoomLevel')) {
+                    const scaleLen = this.combinedScales.length;
+                    for (let i = 0; i < scaleLen; ++i) {
+                        if (this.combinedScales[i].hasOwnProperty('zoom') &&
+                            this.combinedScales[i].zoom == viewInfo.zoomLevel) {
+                            this.setZoomLevel(viewInfo.fixedZoomLevel, i);
+                        }
+                    }
+                } else if (viewInfo.hasOwnProperty('scaleIndex')) {
+                    this.setZoomLevel(viewInfo.fixedZoomLevel, viewInfo.scaleIndex);
                 }
-            }
-        } else if (viewInfo.hasOwnProperty('fixedZoomLevel') && viewInfo.hasOwnProperty('scaleIndex')) {
-            this.setZoomLevel(viewInfo.fixedZoomLevel, viewInfo.scaleIndex);
-        }
-        this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
-        this._updateCameraFromBaseCamera(false);
-        this._setScaleIndex(viewInfo.scaleIndex);
-        this.setTransformScale(viewInfo.transformScale, false);
-        this._resizeScaling(false);
+            } 
+                
+            this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
+            this._updateCameraFromBaseCamera(false);
+            this._setScaleIndex(viewInfo.scaleIndex);
+            this.setTransformScale(viewInfo.transformScale);
+            this._resizeScaling(true);
+        });
     }
 
     /**
      * TileViewerの全オプション情報の設定
      * @param {*} options 
      */
-    setOptions(options) {
-        this.options = options;
+    setOptions(options, withUpdate = true) {
+        console.log('setOptions', options)
 
-        this._clearCache();
+        this._withUpdate(() => {
+            this.options = options;
+            this._clearCache();
 
-        // 古いものを削除してthis.combinedScalesを作り直す
-        this.combinedScales = [];
-        let visitedTotalWidth = [];
-        if (options.hasOwnProperty('maps')) {
-            for (let i = 0; i < options.maps.length; ++i) {
-                const map = options.maps[i];
-                for (let j = 0; j < map.scales.length; ++j) {
-                    let s = map.scales[j];
-                    s.total_width = s.width * s.count;
-                    // 今まで出現していないtotal_widthだった場合は、this.combinedScalesに追加
-                    if (visitedTotalWidth.indexOf(s.total_width) < 0) {
-                        visitedTotalWidth.push(s.total_width);
-                        this.combinedScales.push(s);
+            let preCS = null;
+            let preTotalWidth;
+            if (this._hasValidScales()) {
+                preCS = this.combinedScales[this.currentScaleIndex];
+                preTotalWidth = preCS.width * preCS.count;
+            }
+            const preFixedScale = this.isFixedScaleIndex;
+
+            // 古いものを削除してthis.combinedScalesを作り直す
+            this.combinedScales = [];
+            let visitedTotalWidth = [];
+            if (options.hasOwnProperty('maps')) {
+                for (let i = 0; i < options.maps.length; ++i) {
+                    const map = options.maps[i];
+                    for (let j = 0; j < map.scales.length; ++j) {
+                        let s = map.scales[j];
+                        s.total_width = s.width * s.count;
+                        // 今まで出現していないtotal_widthだった場合は、this.combinedScalesに追加
+                        if (visitedTotalWidth.indexOf(s.total_width) < 0) {
+                            visitedTotalWidth.push(s.total_width);
+                            this.combinedScales.push(s);
+                        }
                     }
                 }
             }
-        }
-        this.combinedScales.sort((a, b) => {
-            return a.total_width - b.total_width;
-        });
-        // combinedScalesが減少した可能性があるので、
-        // scaleIndexを再設定
-        const scaleIndex = Math.min(this.combinedScales.length - 1, this.currentScaleIndex);
-        if (scaleIndex !== this.currentScaleIndex) {
-            if (!this._setScaleIndex(scaleIndex)) {
-                this.currentScaleIndex = 0;
-            }
-        }
-
-        // 古いものを削除してthis.layerParamsを作り直す
-        this.layerParams = [];
-
-        if (options.hasOwnProperty('backgroundImage')) {
-            this.layerParams.push({
-                opacity: 1,
-                visible: true
+            this.combinedScales.sort((a, b) => {
+                return a.total_width - b.total_width;
             });
-        }
+            // combinedScalesが増減した可能性があるので、
+            // scaleIndexを再設定
+            if (preCS) {
+                for (let i = 0; i < this.combinedScales.length; ++i) {
+                    const s = this.combinedScales[i];
+                    if (s.width * s.count > preTotalWidth) {
+                        this.isFixedScaleIndex = false;
+                        this._setScaleIndex(Math.max(0, i - 1));
+                        this.isFixedScaleIndex = preFixedScale;
+                        break;
+                    }
+                }
+            }
 
-        if (options.hasOwnProperty('maps')) {
-            for (let i = 0; i < options.maps.length; ++i) {
+            // 古いものを削除してthis.layerParamsを作り直す
+            this.layerParams = [];
+
+            if (options.hasOwnProperty('backgroundImage')) {
                 this.layerParams.push({
                     opacity: 1,
                     visible: true
                 });
             }
-        }
-        this._update();
 
-        this._dispatchOptions();
+            if (options.hasOwnProperty('maps')) {
+                for (let i = 0; i < options.maps.length; ++i) {
+                    this.layerParams.push({
+                        opacity: 1,
+                        visible: true
+                    });
+                }
+            }
+
+            this._dispatchOptions();
+        }, withUpdate);
     }
 
-    setOpacity(layerIndex, opacity) {
+    setOpacity(layerIndex, opacity, withUpdate = true) {
         // console.log("setOpacity", layerIndex, this.layerParams)
         this.layerParams[layerIndex].opacity = opacity;
-        this._update();
+        if (withUpdate) {
+            this.update();
+        }
     }
 
-    setVisible(layerIndex, visible) {
+    setVisible(layerIndex, visible, withUpdate = true) {
         // console.log("setVisible", layerIndex, visible)
         this.layerParams[layerIndex].visible = visible;
-        this._update();
+        if (withUpdate) {
+            this.update();
+        }
     }
 
     setZoomLevel(isFixedScaleIndex, scaleIndex) {
@@ -1137,16 +1209,10 @@ class TileViewer {
             // 一旦falseにしてscaleIndexを強制設定する
             const preFixed = this.isFixedScaleIndex;
             this.isFixedScaleIndex = false;
-            if (this._setScaleIndex(scaleIndex, true)) {
-                this._update();
-            }
+            this._setScaleIndex(scaleIndex);
+
             // isFixedScaleIndexを最新の値に設定
             this.isFixedScaleIndex = isFixedScaleIndex;
-            if (preFixed && !isFixedScaleIndex) {
-                // 固定から非固定になったとき, 一旦resize相当を走らせて
-                // スケールを自動設定する
-                this._resizeScaling();
-            }
         }
     }
 
@@ -1166,7 +1232,7 @@ class TileViewer {
                     this._clearCache(i);
                 }
             }
-            this._update();
+            this.update();
         }
     }
 

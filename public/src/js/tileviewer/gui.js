@@ -443,9 +443,9 @@ class GUI extends EventEmitter {
         let cameraParams = JSON.parse(metaData.cameraParams);
 
         if (cameraParams && cameraParams.hasOwnProperty('zoomLevel')) {
-            this.zoomControl = new ZoomControl("zoom level", cameraParams.zoomLevel, 0, 100);
+            this.zoomControl = new ZoomControl("zoom level", Number(cameraParams.zoomLevel), 0, 100);
         } else if (cameraParams && cameraParams.hasOwnProperty('scaleIndex')) {
-            this.zoomControl = new ZoomControl("zoom level", cameraParams.scaleIndex, 0, 100);
+            this.zoomControl = new ZoomControl("zoom level", Number(cameraParams.scaleIndex), 0, 100);
         } else {
             this.zoomControl = new ZoomControl("zoom level", 0, 0, 100);
         }

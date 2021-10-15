@@ -426,13 +426,13 @@ class Store extends EventEmitter {
                     layer[key] = data[key];
                 }
             }
-            this.iframeConnector.send(TileViewerCommand.ChangeLayerProperty, layer, (err, reply) => {
-                this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
-            });
 
             this.saveLayer(layer);
 
             this.__updateMetaData(this.metaData, (err, res) => {
+                this.iframeConnector.send(TileViewerCommand.ChangeLayerProperty, layer, (err, reply) => {
+                    this.emit(Store.EVENT_DONE_CHANGE_LAYER_PROPERTY, null, layer);
+                });
                 if (data.hasOwnProperty('callback')) {
                     data.callback();
                 }
