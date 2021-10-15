@@ -223,7 +223,8 @@ class Store extends EventEmitter {
                     delete options.backgroundImage;
                 }
                 options.maps.push({
-                    url: param.url
+                    url: param.url,
+                    scales: this.generateScales(param)
                 });
             } else {
                 options.maps.push({

@@ -1,5 +1,8 @@
 {
     "preset_list": [{
+            "name": "Empty",
+            "url": "sample_data/tileviewer/empty.html"
+        }, {
             "name": "ひまわり(JP)",
             "url": "sample_data/tileviewer/himawari.html"
         }, {
