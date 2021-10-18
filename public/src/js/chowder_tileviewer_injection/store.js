@@ -312,7 +312,6 @@ class Store extends EventEmitter {
                 this.instance.setVisible(this.getLayerIndex(param.id), param.visible, false);
             }
         }
-        console.error(params, this.layerDataList)
         this.instance.update();
         
         this.iframeConnector.send(TileViewerCommand.UpdateLayer, this.layerDataList, () => {});

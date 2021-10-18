@@ -1,0 +1,31 @@
+{
+    "backgroundImage": "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/thumbnail/600/%YYYY/%MM/%DD/%hh%mm%ss_0_0.png",
+    "maps": [{
+        "url": "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png",
+        "scales": [
+            { "width": 600, "height": 480, "count": 1 },
+            { "width": 600, "height": 480, "count": 2 },
+            { "width": 600, "height": 480, "count": 3 },
+            { "width": 600, "height": 480, "count": 4 },
+            { "width": 600, "height": 480, "count": 5 }
+        ]
+    }, {
+        "url": "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%ws/coastline/ffff00_%x_%y.png",
+        "scales": [
+            { "width": 300, "height": 240, "count": 1 },
+            { "width": 420, "height": 336, "count": 1 },
+            { "width": 600, "height": 480, "count": 1 },
+            { "width": 840, "height": 672, "count": 1 },
+            { "width": 600, "height": 480, "count": 2 },
+            { "width": 840, "height": 672, "count": 2 },
+            { "width": 600, "height": 480, "count": 3 },
+            { "width": 600, "height": 480, "count": 4 },
+            { "width": 600, "height": 480, "count": 5 },
+            { "width": 720, "height": 576, "count": 5 },
+            { "width": 1200, "height": 960, "count": 5 },
+            { "width": 1680, "height": 1344, "count": 5 },
+            { "width": 2400, "height": 1920, "count": 5 }
+        ]
+    }],
+    "geodeticSystem": "himawari8.jp"
+}

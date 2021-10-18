@@ -1,59 +1,3 @@
-const HimawariDate = "%Y/%M/%D";
-const OptionHimawarJP = {
-    backgroundImage: "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/thumbnail/550/%YYYY/%MM/%DD/%hh%mm%ss_0_0.png",
-    /*
-    foregroundImages: [
-        "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%w/" + HimawariDate + "/000000_%x_%y.png",
-        "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%ws/coastline/ffff00_%x_%y.png",
-        //"https://himawari8-dl.nict.go.jp/himawari8/img/weathermap/%cd/%w/2019-04-30/000000_%x_%y.png"
-    ],
-    */
-    maps: [{
-        url: "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png",
-        scales: [
-            { width: 550, height: 550, count: 1 },
-            { width: 550, height: 550, count: 2 },
-            { width: 550, height: 550, count: 4 },
-            { width: 550, height: 550, count: 8 },
-            { width: 550, height: 550, count: 16 },
-            { width: 550, height: 550, count: 20 }
-        ],
-    }, {
-        url: "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%ws/coastline/ffff00_%x_%y.png",
-        scales: [
-            { width: 275, height: 275, count: 1 },
-            { width: 385, height: 385, count: 1 },
-            { width: 550, height: 550, count: 1 },
-            { width: 770, height: 770, count: 1 },
-            { width: 550, height: 550, count: 2 },
-            { width: 770, height: 770, count: 2 },
-            { width: 550, height: 550, count: 4 },
-            { width: 770, height: 770, count: 4 },
-            { width: 550, height: 550, count: 8 },
-            { width: 770, height: 770, count: 8 },
-            { width: 550, height: 550, count: 16 },
-            { width: 550, height: 550, count: 20 }
-        ],
-    }],
-    /*
-    scales: [
-        //{ width : 550, height : 550, size : 0.5, count :  1 }, // 275 
-        //{ width : 550, height : 550, size : 0.7, count :  1 }, // 385 
-        { width: 550, height: 550, size: 1.0, count: 1 },        // 550 
-        //{ width : 550, height : 550, size : 1.4, count :  1 }, // 770 
-        { width: 550, height: 550, size: 1.0, count: 2 },        // 550 2
-        //{ width : 550, height : 550, size : 1.4, count :  2 }, // 770 2
-        { width: 550, height: 550, size: 1.0, count: 4 },        // 550 4
-        //{ width : 550, height : 550, size : 1.4, count :  4 }, // 770 4
-        { width: 550, height: 550, size: 1.0, count: 8 },        // 550 8
-        //{ width : 550, height : 550, size : 1.4, count :  8 }, // 770 8
-        { width: 550, height: 550, size: 1.0, count: 16 },       // 550 16
-        { width: 550, height: 550, size: 1.0, count: 20 }        // 550 20
-    ],
-    */
-    geodeticSystem: "himawari8.fd"
-};
-
 
 // 単体デバッグ用GUIを表示
 function showDebugGUI(viewer) {
@@ -287,17 +231,19 @@ function enableMouseEvents(viewer) {
 }
 
 window.onload = () => {
-    let viewer = new TileViewer(document.getElementById('tileviewer'));
-    viewer.setOptions(OptionHimawarJP);
-    viewer.create();
-
-    setTimeout(() => {
-        injectChOWDER(viewer, document.getElementById('tileviewer'));
-
-        if (window.chowder_view_type === undefined) {
-            showDebugGUI(viewer);
-        }
-    }, 100);
-
-    enableMouseEvents(viewer);
+    fetch('himawari_fd.json')
+        .then(response => response.json())
+        .then(async data => {
+            let viewer = new TileViewer(document.getElementById('tileviewer'));
+            viewer.setOptions(data);
+            await viewer.create();
+        
+            if (window.chowder_view_type !== undefined) {
+                injectChOWDER(viewer, document.getElementById('tileviewer'));
+            } else {
+                showDebugGUI(viewer);
+            }
+        
+            enableMouseEvents(viewer);
+        });
 };

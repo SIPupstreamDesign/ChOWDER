@@ -683,7 +683,7 @@ class TileViewer {
 
     // リサイズ時に画面中心を維持し、ビューの横方向が画面内に常に収まるように維持するように
     // スケーリングを行う
-    _resizeScaling(withDispatch = true) {
+    _resizeScaling(withDispatch = false) {
         const viewerSize = this._getViewerSize();
         const totalImageSize = this._getTotalImageSize();
         const preW = this.baseScaleCamera.w;
@@ -716,14 +716,14 @@ class TileViewer {
     // baseScaleCameraを元にcameraを再設定する。
     // baseScaleCameraを変更した場合に呼ぶ
     // cameraには、baseScaleCameraの中央を基点としたtransformScaleによるスケールがかかる
-    _updateCameraFromBaseCamera(withDispatch = true) {
+    _updateCameraFromBaseCamera(withDispatch = false) {
         const cx = this.baseScaleCamera.x + this.baseScaleCamera.w / 2.0;
         const cy = this.baseScaleCamera.y + this.baseScaleCamera.h / 2.0;
         this.camera.w = this.baseScaleCamera.w / this.transformScale;
         this.camera.h = this.baseScaleCamera.h / this.transformScale;
         this.camera.x = (this.baseScaleCamera.x - cx) / this.transformScale + cx;
         this.camera.y = (this.baseScaleCamera.y - cy) / this.transformScale + cy;
-
+        
         // カメラの座標が変更されたので、位置変更コールバックを発火
         if (withDispatch) {
             this._dispatchPosition();
@@ -781,7 +781,16 @@ class TileViewer {
         this._cullTileElements(loadedElems);
     }
 
-    _withUpdate(func, updateFlag = true) {
+    /**
+     * 指定したfuncを実行し、最後にupdate()を行う。
+     * updateFlagがfalseの場合はupdate()は行わない。
+     * func内で、さらに_withUpdate()がネストして使用されていた場合、
+     * 最初の_withUpdate()のupdate()のみ実行される。
+     * 非同期で複数個所から同じタイミングで呼んだ場合は、それらのうち最も最初のupdate()のみ成功する。
+     * @param {*} func 
+     * @param {*} updateFlag 
+     */
+    async _withUpdate(func, updateFlag = true) {
         const preUpdate = this.isDisableUpdate;
         try {
             this._disableUpdate();
@@ -791,7 +800,7 @@ class TileViewer {
         } finally {
             this.isDisableUpdate = preUpdate;
             if (updateFlag) {
-                this.update();
+                await this.update();
             }
         }
     }
@@ -851,8 +860,8 @@ class TileViewer {
 
     // this.optionを元に、新規に地図を読み込む
     // positionによりカメラ位置を指定する
-    create(position, callback) {
-        this._withUpdate(() => {
+    async create(position) {
+        await this._withUpdate(() => {
                 
             if (position) {
                 // 位置情報による調整
@@ -908,11 +917,11 @@ class TileViewer {
                     h: 1
                 }
             }
-            this._resizeScaling(false);
+            this._resizeScaling(true);
         });
     }
 
-    move(mv, callback) {
+    async move(mv, callback) {
         const screenImageSize = this._getScreenImageSize();
         const cameraSpaceMove = {
             x: mv.x / screenImageSize.w,
@@ -920,15 +929,15 @@ class TileViewer {
         }
         this.baseScaleCamera.x -= cameraSpaceMove.x;
         this.baseScaleCamera.y -= cameraSpaceMove.y;
-        this._updateCameraFromBaseCamera();
-        this.update();
+        this._updateCameraFromBaseCamera(true);
+        await this.update();
     }
 
-    setTransformScale(scale, withDispatch = true) {
+    async setTransformScale(scale, withDispatch = false) {
         // 余りにも小さいスケールにしようとした場合は失敗とする
         if (scale < 0.1e-10) return false;
 
-        this._withUpdate(() => {
+        await this._withUpdate(() => {
             const preScale = this.transformScale;
             this.transformScale = scale;
 
@@ -977,13 +986,13 @@ class TileViewer {
      * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
      */
-    zoomIn(onlyLevel = false, pixelPos = null) {
+     async zoomIn(onlyLevel = false, pixelPos = null) {
         // mapがない場合などはズーム無効
         if (!this._hasValidScales()) {
             return false;
         }
 
-        this._withUpdate(() => {
+        await this._withUpdate(() => {
             if (onlyLevel) {
                 this._clearCache();
                 this._setScaleIndex(this.currentScaleIndex + 1);
@@ -1005,12 +1014,12 @@ class TileViewer {
      * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
      */
-    zoomOut(onlyLevel = false, pixelPos = null) {
+    async zoomOut(onlyLevel = false, pixelPos = null) {
         // mapがない場合などはズーム無効
         if (!this._hasValidScales()) {
             return false;
         }
-        this._withUpdate(() => {
+        await this._withUpdate(() => {
             this._disableUpdate();
                 
             if (onlyLevel) {
@@ -1034,9 +1043,9 @@ class TileViewer {
      * 実際に表示する領域[left, top, right, bottom].
      * この領域外のタイルはカリングされる
      */
-    setViewport(viewport) {
+    async setViewport(viewport) {
         this.viewport = JSON.parse(JSON.stringify(viewport));
-        this.update();
+        await this.update();
     }
 
     /**
@@ -1085,8 +1094,8 @@ class TileViewer {
      * getCameraInfoで得られた値を引数に入れることで、カメラ位置を復元できる。
      * ただし、ビューポートは別途指定する必要がある。
      */
-    setCameraInfo(viewInfo) {
-        this._withUpdate(() => {
+    async setCameraInfo(viewInfo) {
+        await this._withUpdate(() => {
             // 固定ズームレベルの設定
             if (viewInfo.hasOwnProperty('fixedZoomLevel'))
             {
@@ -1095,18 +1104,18 @@ class TileViewer {
                     for (let i = 0; i < scaleLen; ++i) {
                         if (this.combinedScales[i].hasOwnProperty('zoom') &&
                             this.combinedScales[i].zoom == viewInfo.zoomLevel) {
-                            this.setZoomLevel(viewInfo.fixedZoomLevel, i);
+                            this._setZoomLevel(viewInfo.fixedZoomLevel, i);
                         }
                     }
                 } else if (viewInfo.hasOwnProperty('scaleIndex')) {
-                    this.setZoomLevel(viewInfo.fixedZoomLevel, viewInfo.scaleIndex);
+                    this._setZoomLevel(viewInfo.fixedZoomLevel, viewInfo.scaleIndex);
                 }
             } 
                 
             this.baseScaleCamera = JSON.parse(JSON.stringify(viewInfo.baseScaleCamera));
             this._updateCameraFromBaseCamera(false);
             this._setScaleIndex(viewInfo.scaleIndex);
-            this.setTransformScale(viewInfo.transformScale);
+            this.setTransformScale(viewInfo.transformScale, true);
             this._resizeScaling(true);
         });
     }
@@ -1115,10 +1124,10 @@ class TileViewer {
      * TileViewerの全オプション情報の設定
      * @param {*} options 
      */
-    setOptions(options, withUpdate = true) {
-        console.log('setOptions', options)
+    async setOptions(options, withUpdate = true) {
+        // console.log('setOptions', options)
 
-        this._withUpdate(() => {
+        await this._withUpdate(() => {
             this.options = options;
             this._clearCache();
 
@@ -1187,23 +1196,23 @@ class TileViewer {
         }, withUpdate);
     }
 
-    setOpacity(layerIndex, opacity, withUpdate = true) {
+    async setOpacity(layerIndex, opacity, withUpdate = true) {
         // console.log("setOpacity", layerIndex, this.layerParams)
         this.layerParams[layerIndex].opacity = opacity;
         if (withUpdate) {
-            this.update();
+            await this.update();
         }
     }
 
-    setVisible(layerIndex, visible, withUpdate = true) {
+    async setVisible(layerIndex, visible, withUpdate = true) {
         // console.log("setVisible", layerIndex, visible)
         this.layerParams[layerIndex].visible = visible;
         if (withUpdate) {
-            this.update();
+            await this.update();
         }
     }
 
-    setZoomLevel(isFixedScaleIndex, scaleIndex) {
+    _setZoomLevel(isFixedScaleIndex, scaleIndex) {
         if (this.isFixedScaleIndex != isFixedScaleIndex || (isFixedScaleIndex && this.currentScaleIndex != scaleIndex)) {
             console.log("setZoomLevel", this.isFixedScaleIndex, isFixedScaleIndex, this.currentScaleIndex, scaleIndex);
             // 一旦falseにしてscaleIndexを強制設定する
@@ -1216,23 +1225,24 @@ class TileViewer {
         }
     }
 
-    setDate(date) {
+    async setDate(date) {
         const preDate = this.date ? this.date : new Date(Date.now());
         this.date = date;
         if (preDate.toJSON() !== date.toJSON()) {
-            for (let i = 0; i < this.options.maps.length; ++i) {
-                const map = this.options.maps[i];
-                if (map.url.indexOf('%YYYY') >= 0 ||
-                    map.url.indexOf('%MM') >= 0 ||
-                    map.url.indexOf('%DD') >= 0 ||
-                    map.url.indexOf('%hh') >= 0 ||
-                    map.url.indexOf('%mm') >= 0 ||
-                    map.url.indexOf('%ss') >= 0) {
-
-                    this._clearCache(i);
+            await this._withUpdate(() => {
+                for (let i = 0; i < this.options.maps.length; ++i) {
+                    const map = this.options.maps[i];
+                    if (map.url.indexOf('%YYYY') >= 0 ||
+                        map.url.indexOf('%MM') >= 0 ||
+                        map.url.indexOf('%DD') >= 0 ||
+                        map.url.indexOf('%hh') >= 0 ||
+                        map.url.indexOf('%mm') >= 0 ||
+                        map.url.indexOf('%ss') >= 0) {
+    
+                        this._clearCache(i);
+                    }
                 }
-            }
-            this.update();
+            });
         }
     }
 
