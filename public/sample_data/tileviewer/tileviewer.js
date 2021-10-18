@@ -308,6 +308,10 @@ class TileViewer {
             display = this.layerParams[0].visible ? "inline" : "none";
         }
 
+        this.backgroundImage.onerror = () => {
+            this.backgroundImage.src = 'no_image.png';
+            this.backgroundImage.removeAttribute('onerror');
+        };
         this.backgroundImage.src = this._formatUrl(url);
         this.backgroundImage.style.left = left + "px";
         this.backgroundImage.style.top = top + "px";

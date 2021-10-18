@@ -207,7 +207,7 @@ class Store extends EventEmitter {
      *   zoom : { min : 0, max : 24 } ズーム範囲 (option)
      * }
      */
-    addLayer(params) {
+    async addLayer(params) {
         let layerData = {
             id: params.id,
             url: params.url,
@@ -219,6 +219,11 @@ class Store extends EventEmitter {
             layerData.zoom = JSON.parse(JSON.stringify(params.zoom));
         }
         let options = this.instance.getOptions();
+        if (options.maps.length === 0) {
+            if (params.type.indexOf('himawari8') >= 0) {
+                options.geodeticSystem = params.type;
+            }
+        }
         // 画像の場合は背景画像として扱う
         if (params.type === "image") {
             options.backgroundImage = layerData.url;
@@ -253,7 +258,7 @@ class Store extends EventEmitter {
                 this.instance.setVisible(this.getLayerIndex(data.id), data.visible, false);
             }
         }
-        this.instance.update();
+        await this.instance.update();
         this.instance._resizeScaling(true);
 
         this.iframeConnector.send(TileViewerCommand.AddLayer, this.layerDataList, () => {})
