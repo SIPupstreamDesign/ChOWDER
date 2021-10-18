@@ -29,11 +29,28 @@ class LayerProperty extends EventEmitter {
             visible: true
         });
         */
+       this._onOpacityChanged = null;
     }
+
+    onOpacityChanged(layerID, layerProps) {
+        return (err, data) => {
+             this.action.changeLayerProperty({
+                 id: layerID,
+                 opacity: data
+             });
+         };
+     }
 
     // レイヤーID、プロパティをもとに初期値を設定
     // レイヤーを選択しなおすたびに毎回呼ぶ.
     init(layerID, layerProps) {
+        
+		if (this.opacitySlider) {
+			this.opacitySlider.off(PropertySlider.EVENT_CHANGE, this._onOpacityChange)
+			this.opacitySlider.release();
+			this.opacitySlider = null;
+		}
+
         this.dom.innerHTML = "";
         
 		// レイヤーURLタイトル
@@ -80,12 +97,8 @@ class LayerProperty extends EventEmitter {
         } else {
             this.opacitySlider = new PropertySlider(layerID && layerProps, "opacity", "", 1.0);
         }
-        this.opacitySlider.on(PropertySlider.EVENT_CHANGE, (err, data) => {
-            this.action.changeLayerProperty({
-                id: layerID,
-                opacity: data
-            });
-        });
+        this._onOpacityChanged = this.onOpacityChanged(layerID, layerProps)
+        this.opacitySlider.on(PropertySlider.EVENT_CHANGE, this._onOpacityChanged);
         this.dom.appendChild(this.opacitySlider.getDOM());
     }
 
