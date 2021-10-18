@@ -3,15 +3,19 @@
             "name": "Empty",
             "url": "sample_data/tileviewer/empty.html"
         }, {
-            "name": "ひまわり(JP)",
+            "name": "HIMAWARI 8 Japan Area",
             "url": "sample_data/tileviewer/himawari.html"
         }, {
-            "name": "ひまわり(FD)",
+            "name": "HIMAWARI 8 Full Disk",
             "url": "sample_data/tileviewer/himawari_fd.html"
         },
         {
-            "name": "GSI",
+            "name": "GSI Map",
             "url": "sample_data/tileviewer/gsi.html"
+        },
+        {
+            "name": "OpenStreetMap",
+            "url": "sample_data/tileviewer/osm.html"
         }
     ]
 }
