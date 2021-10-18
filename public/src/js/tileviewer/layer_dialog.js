@@ -91,6 +91,11 @@ class LayerDialog extends EventEmitter {
             } else {
                 this.zoomRow.style.display = "block";
             }
+            if (type === TileViewerConstants.TypeBackground) {
+                this.idRow.style.display = "none";
+            } else {
+                this.idRow.style.display = "block";
+            }
 
             this.changeInputURLValue(SampleURLFileNames[type]);
         });
@@ -104,9 +109,9 @@ class LayerDialog extends EventEmitter {
         this.idInput.getDOM().className = "layer_dialog_id_input";
         this.idInput.setValue("Layer_" + Math.floor(Math.random() * 100));
 
-        let idRow = this.createRow();
-        idRow.appendChild(this.idTitle);
-        idRow.appendChild(this.idInput.getDOM());
+        this.idRow = this.createRow();
+        this.idRow.appendChild(this.idTitle);
+        this.idRow.appendChild(this.idInput.getDOM());
     }
 
     createURLRow() {
@@ -123,6 +128,7 @@ class LayerDialog extends EventEmitter {
         titleRow.appendChild(this.urlInput);
     }
 
+    /*
     createStyleRow() {
         this.styleURLTitle = document.createElement('p');
         this.styleURLTitle.className = "layer_dialog_sub_title";
@@ -137,6 +143,7 @@ class LayerDialog extends EventEmitter {
         this.styleRow.appendChild(this.styleURLInput);
         this.styleRow.style.display = "none";
     }
+    */
 
     createZoomRow() {
         this.zoomMinTitle = document.createElement('p');
@@ -200,7 +207,11 @@ class LayerDialog extends EventEmitter {
             };
             data.type = this.typeSelect.getSelectedValue();
             data.url = this.urlInput.value.split("\n").join("");
-            data.id = this.idInput.getValue();
+            if (data.type === "image") {
+                data.id = "BackgroundImage"
+            } else {
+                data.id = this.idInput.getValue();
+            }
             data.zoom.min = parseInt(this.zoomMinSelect.getSelectedValue(), 10);
             data.zoom.max = parseInt(this.zoomMaxSelect.getSelectedValue(), 10);
 

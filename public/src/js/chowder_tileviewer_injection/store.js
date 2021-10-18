@@ -218,13 +218,44 @@ class Store extends EventEmitter {
         if (params.hasOwnProperty('zoom')) {
             layerData.zoom = JSON.parse(JSON.stringify(params.zoom));
         }
-        this.layerDataList.push(layerData);
         let options = this.instance.getOptions();
-        options.maps.push({
-            url: params.url,
-            scales: this.generateScales(params)
-        });
-        this.instance.setOptions(options);
+        // 画像の場合は背景画像として扱う
+        if (params.type === "image") {
+            options.backgroundImage = layerData.url;
+            if (this.layerDataList.length > 0) {
+                if (this.layerDataList[0].type === "image")
+                {
+                    // 既に背景画像が設定されている場合
+                    this.layerDataList[0].url = layerData.url;
+                } else {
+                    // 新規背景追加
+                    this.layerDataList.unshift(layerData);
+                }
+            } else {
+                // 新規背景追加
+                this.layerDataList.unshift(layerData);
+            }
+        } else {
+            this.layerDataList.push(layerData);
+            options.maps.push({
+                url: params.url,
+                scales: this.generateScales(params)
+            });
+        }
+        this.instance.setOptions(options, false);
+        
+        for (let i = 0; i < this.layerDataList.length; ++i) {
+            let data = this.layerDataList[i];
+            if (data.hasOwnProperty('opacity')) {
+                this.instance.setOpacity(this.getLayerIndex(data.id), data.opacity, false);
+            }
+            if (data.hasOwnProperty('visible')) {
+                this.instance.setVisible(this.getLayerIndex(data.id), data.visible, false);
+            }
+        }
+        this.instance.update();
+        this.instance._resizeScaling(true);
+
         this.iframeConnector.send(TileViewerCommand.AddLayer, this.layerDataList, () => {})
     }
 
@@ -234,6 +265,7 @@ class Store extends EventEmitter {
             if (layerIndex >= 0) {
                 this.layerDataList.splice(layerIndex, 1);
                 this.initLayers(JSON.parse(JSON.stringify(this.layerDataList)));
+                this.iframeConnector.send(TileViewerCommand.DeleteLayer, this.layerDataList, () => {})
             }
         }
     }

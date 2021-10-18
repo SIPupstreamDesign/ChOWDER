@@ -129,6 +129,9 @@ class GUI extends EventEmitter {
         this.store.on(Store.EVENT_DONE_DELETE_LAYER, (err, layerDataList) => {
             if (!err) {
                 if (this.propOuterVisible) {
+                    if (layerDataList.length <= 0) {
+                        this.layerProperty.init(null, null);
+                    }
                     this.layerList.setSelectedIndex(layerDataList.length - 1);
                 }
             }

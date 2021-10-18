@@ -245,7 +245,9 @@ class Store extends EventEmitter {
 
             //  iframe内のitownsのレイヤーが削除された
             // storeのメンバに保存
-            this.iframeConnector.on(TileViewerCommand.DeleteLayer, (err, params) => {});
+            this.iframeConnector.on(TileViewerCommand.DeleteLayer, (err, params) => {
+                this.emit(Store.EVENT_DONE_DELETE_LAYER, null, params);
+            });
 
             this.iframeConnector.on(TileViewerCommand.UpdateLayer, (err, params) => {
                 let layerList = [];
@@ -280,7 +282,7 @@ class Store extends EventEmitter {
             this.__updateMetaData(updateData, (err, res) => {});
         } else {
             // コンテンツ追加完了前だった。完了後にカメラを更新するため、キャッシュしておく。
-            this.initialCameraParams = JSON.stringify(data.params);
+            this.initialCameraParams = data.params;
         }
     }
 
@@ -430,8 +432,7 @@ class Store extends EventEmitter {
                 let id = layerList[i].id;
                 if (id === data.id) {
                     // iframeへ送る
-                    this.iframeConnector.send(TileViewerCommand.DeleteLayer, data, (err, data) => {
-                        this.emit(Store.EVENT_DONE_DELETE_LAYER, null, data);
+                    this.iframeConnector.send(TileViewerCommand.DeleteLayer, data, (err, data_) => {
                     });
                     break;
                 }
