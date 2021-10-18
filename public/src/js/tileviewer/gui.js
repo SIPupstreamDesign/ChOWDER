@@ -46,6 +46,12 @@ class GUI extends EventEmitter {
         if (viewURLElem) {
             viewURLElem.style.display = "none";
         }
+        // HELPボタン
+        const helpButton = document.getElementById('button_help');
+        if (helpButton) {
+            helpButton.href = "https://github.com/SIPupstreamDesign/ChOWDER/blob/master/UserGuide/jp/UserGuide.md";
+            helpButton.target = "_blank";
+        }
 
         //this.initWindowEvents();
         this.initLoginMenu();
