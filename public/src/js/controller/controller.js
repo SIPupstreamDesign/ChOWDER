@@ -1638,6 +1638,7 @@ class Controller {
                 funcDict[json.id].chowder_tileviewer_update_camera(json);
                 funcDict[json.id].chowder_tileviewer_update_layer_list(json);
             }
+            this.gui.setVisibleTimeLabel(metaData);
             this.gui.showCopyrights(document.getElementById(metaData.id), metaData);
         }
         this.store.setMetaData(json.id, json);

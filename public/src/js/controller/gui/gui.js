@@ -204,6 +204,7 @@ class GUI extends EventEmitter {
                         if (TileViewerUtil.isTimelineSync(metaData, data.id, data.senderSync)) {
                             if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
                                 funcDict[metaData.id].chowder_tileviewer_update_time(metaData, time, range);
+                                this.showTime(document.getElementById(metaData.id), metaData, time);
                             }
                         }
                     }
@@ -1204,6 +1205,58 @@ class GUI extends EventEmitter {
             }
         }
     }
+    
+    /**
+     * 時刻を表示.
+     * elemに時刻用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+     showTime(elem, metaData, dataTime) {
+        if (elem && metaData.hasOwnProperty('display_time')) {
+            let timeElem = document.getElementById("time:" + metaData.id);
+            let time = "Time not received";
+            if (dataTime) {
+                let date = dataTime;
+                const y = date.getFullYear();
+                const m = ("00" + (date.getMonth() + 1)).slice(-2);
+                const d = ("00" + date.getDate()).slice(-2);
+                const hh = ("00" + date.getHours()).slice(-2);
+                const mm = ("00" + date.getMinutes()).slice(-2);
+                const ss = ("00" + date.getSeconds()).slice(-2);
+                time = y + "/" + m + "/" + d + " " + hh + ":" + mm + ":" + ss;
+            }
+            if (timeElem) {
+                timeElem.innerHTML = time;
+                timeElem.style.right ="0px";
+                timeElem.style.top ="0px";
+                timeElem.style.zIndex = elem.style.zIndex;
+                timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
+            } else {
+                timeElem = document.createElement("pre");
+                timeElem.id = "time:" + metaData.id;
+                timeElem.className = "time";
+                timeElem.innerHTML = time;
+                timeElem.style.right = "0px";
+                timeElem.style.top = "0px";
+                timeElem.style.position = "absolute";
+                timeElem.style.height = "auto";
+                timeElem.style.whiteSpace = "pre-line";
+                timeElem.style.zIndex = elem.style.zIndex;
+                timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
+                elem.appendChild(timeElem);
+            }
+        }
+    }
+
+    setVisibleTimeLabel(metaData) {
+        if (metaData.hasOwnProperty('display_time')) {
+            let timeElem = document.getElementById("time:" + metaData.id);
+            if (timeElem) {
+                timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
+            }
+        }
+    }
 
     /**
      * Copyrightを表示.
@@ -1225,9 +1278,7 @@ class GUI extends EventEmitter {
                 return;
             }
 
-            let previewArea = document.getElementById('preview_area');
             let copyrightElem = document.getElementById("copyright:" + metaData.id);
-            let previewRect = previewArea.getBoundingClientRect();
             if (copyrightElem) {
                 copyrightElem.innerHTML = copyrightText;
                 copyrightElem.style.display = "inline";
