@@ -395,7 +395,7 @@ class Store extends EventEmitter {
         this.instance.setViewport(viewport);
     }
 
-    generateDummyThumbnail() {
+    generateDummyThumbnail(id) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 256;
@@ -405,6 +405,9 @@ class Store extends EventEmitter {
         ctx.fillStyle = "black";
         ctx.font = "40px sans-serif";
         ctx.fillText("TileViewer", 10, 50);
+        ctx.font = "30px sans-serif";
+        ctx.fillText("ID:", 10, 100);
+        ctx.fillText(id, 60, 100);
         return canvas.toDataURL("image/jpeg");
     }
 
@@ -448,12 +451,24 @@ class Store extends EventEmitter {
         return null;
     }
 
+    /**
+     * random ID (8 chars)
+     */
+     static generateID() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000000).toString(16);
+        }
+        return s4();
+    }
+
     // 一定時間経過後にコンテンツ追加命令をpostMessageする
     addContentWithInterval() {
         let done = false;
         const interval = 500;
         let thumbnailBase64;
 
+        // クライアント側で登録IDを作ってしまう
+        const id = Store.generateID();
         const options = this.instance.getOptions();
 
         const rect = this.viewerDiv.getBoundingClientRect();
@@ -462,7 +477,7 @@ class Store extends EventEmitter {
 
         if (options.hasOwnProperty('backgroundImage') && options.backgroundImage) {
             const image = new Image();
-            image.crossOrigin = 'Anonymous';
+            image.crossOrigin = 'anonymous';
             image.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -471,6 +486,7 @@ class Store extends EventEmitter {
                 ctx.drawImage(image, 0, 0);
                 thumbnailBase64 = canvas.toDataURL("image/jpeg");
                 this.iframeConnector.send(TileViewerCommand.AddContent, {
+                    id : id,
                     thumbnail: thumbnailBase64,
                     layerList: this.layerDataList,
                     width: width,
@@ -484,7 +500,8 @@ class Store extends EventEmitter {
                 // サムネイルは作れないけどとりあえず追加する
                 if (!done) {
                     this.iframeConnector.send(TileViewerCommand.AddContent, {
-                        thumbnail: this.generateDummyThumbnail(),
+                        id : id,
+                        thumbnail: this.generateDummyThumbnail(id),
                         layerList: this.layerDataList,
                         width: width,
                         height: height,
@@ -501,7 +518,8 @@ class Store extends EventEmitter {
             setTimeout(() => {
                 if (!done) {
                     this.iframeConnector.send(TileViewerCommand.AddContent, {
-                        thumbnail: this.generateDummyThumbnail(),
+                        id : id,
+                        thumbnail: this.generateDummyThumbnail(id),
                         layerList: this.layerDataList,
                         width: width,
                         height: height,

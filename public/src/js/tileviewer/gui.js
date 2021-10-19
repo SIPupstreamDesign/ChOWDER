@@ -591,7 +591,7 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      */
      showTime(elem, metaData) {
-        if (elem && metaData.hasOwnProperty('display_time')) {
+        if (elem && metaData && metaData.hasOwnProperty('display_time')) {
             let timeElem = document.getElementById("time:" + metaData.id);
             let time = "Time not received";
             if (this.store.getTimelineCurrentTime()) {
@@ -737,6 +737,9 @@ class GUI extends EventEmitter {
                 layerList: JSON.stringify(param.layerList),
                 url: decodeURI(selectValue.url)
             };
+            if (param.hasOwnProperty('id')) {
+                metaData.id = param.id;
+            }
             let data = {
                 metaData: metaData,
                 contentData: thumbnailBuffer
