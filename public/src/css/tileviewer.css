@@ -346,3 +346,15 @@ hr {
 	border-color:#b1ffb9;
 	color : black;
 }
+
+.picker__select--month
+{
+    padding : 0em;
+    padding-left: .5em;
+}
+
+.picker__select--year
+{
+    padding : 0em;
+    padding-left: .5em;
+}
