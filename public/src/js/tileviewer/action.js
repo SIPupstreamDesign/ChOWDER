@@ -210,6 +210,14 @@ class Action extends EventEmitter {
     changeZoomLabelVisible(data) {
         this.emit(Action.EVENT_CHANGE_ZOOM_LABEL_VISIBLE, null, data);
     }
+
+    /**
+     * 時刻ラベルの表示非表示の切り替え
+     * @param {*} data 
+     */
+    changeDisplayTimeVisible(data) {
+        this.emit(Action.EVENT_CHANGE_DISPLAY_TIME_LABEL_VISIBLE, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -232,5 +240,6 @@ Action.EVENT_CHANGE_TIMELINE_RANGE = "changeTimelineRange";
 Action.EVENT_CHANGE_TIMELINE_RANGE_BAR = "changeTimelineRangeBar";
 Action.EVENT_CHANGE_TIMELINE_SYNC = "changeTimelineSync";
 Action.EVENT_CHANGE_ZOOM_LABEL_VISIBLE = "changeZoomLabelVisible";
+Action.EVENT_CHANGE_DISPLAY_TIME_LABEL_VISIBLE = "changeDisplayTimeLabelVisible";
 
 export default Action;

@@ -542,6 +542,18 @@ class Store extends EventEmitter {
         }
     }
 
+    _changeDisplayTimeLabelVisible(data) {
+        if (this.metaData) {
+            let updateData = JSON.parse(JSON.stringify(this.metaData));
+            // 幅高さは更新しない
+            delete updateData.width;
+            delete updateData.height;
+            updateData.display_time = data.params;
+            TileViewerUtil.updateViewerParam(this.iframeConnector, updateData, null);
+            this.__updateMetaData(updateData, (err, res) => {});
+        }
+    }
+
     _changeTimelineSync(data) {
         if (this.metaData) {
             this.metaData.sync = data.sync;

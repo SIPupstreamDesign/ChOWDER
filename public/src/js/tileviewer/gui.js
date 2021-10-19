@@ -82,6 +82,11 @@ class GUI extends EventEmitter {
             this.initTimeline();
         });
 
+        this.store.on(Store.EVENT_DONE_CHANGE_TIMELINE_RANGE, () => {
+            // Time更新
+            this.showTime(document.getElementById('content'), this.store.getMetaData())
+        });
+
         // ログイン失敗
         this.store.on(Store.EVENT_LOGIN_FAILED, (err, data) => {
             this.loginMenu.showInvalidLabel(true);
@@ -157,6 +162,8 @@ class GUI extends EventEmitter {
 
                 this.updateZoomControl(this.zoomControlWrap, meta);
 
+                // Time更新
+                this.showTime(document.getElementById('content'), meta)
                 // copyright更新
                 this.showCopyrights(document.getElementById('content'), meta)
             }
@@ -183,6 +190,8 @@ class GUI extends EventEmitter {
 
                 this.updateZoomControl(this.zoomControlWrap, meta);
 
+                // Time更新
+                this.showTime(document.getElementById('content'), meta)
                 // copyright更新
                 this.showCopyrights(document.getElementById('content'), meta)
             }
@@ -327,7 +336,7 @@ class GUI extends EventEmitter {
 
         this.zoomControlWrap = document.createElement('div');
         this.zoomControlWrap.style.backgroundColor = "rgba(27, 30, 43, 0.9)";
-        this.zoomControlWrap.style.height = "135px";
+        this.zoomControlWrap.style.height = "170px";
         this.zoomControlWrap.style.position = "absolute";
         this.zoomControlWrap.style.bottom = "0px";
         this.zoomControlWrap.style.borderTop = "solid 1px rgba(0, 0, 0, 0.8)";
@@ -348,6 +357,8 @@ class GUI extends EventEmitter {
                         startTime: new Date(timeInfo.startTime),
                         endTime: new Date(timeInfo.endTime)
                     });
+                    // Time更新
+                    this.showTime(document.getElementById('content'), this.store.getMetaData())
                     if (func) {
                         func();
                     }
@@ -407,9 +418,28 @@ class GUI extends EventEmitter {
     }
 
     /**
-     * metaData.cameraParams.zoomLevel、または
-     * metaData.cameraParams.scaleIndex　を固定するためのGUIを追加する。
-     * 両方存在した場合は、metaData.cameraParams.zoomLevelが優先される。
+     * metaData.display_timeを設定するためのGUIを追加する。
+     * @param {*} parentElem 
+     * @param {*} metaData 
+     */
+     addDisplayTimeLabelVisible(parentElem, metaData) {
+        if (metaData && metaData.hasOwnProperty('display_time')) {
+            GUIUtil.addCheckProperty(parentElem, metaData, "display_time", "show time label", String(metaData.display_time) === "true", (err, data) => {
+                this.action.changeDisplayTimeVisible({
+                    params: data
+                })
+            });
+        } else {
+            GUIUtil.addCheckProperty(parentElem, metaData, "display_time", "show time label", true, (err, data) => {
+                this.action.changeDisplayTimeVisible({
+                    params: data
+                })
+            });
+        }
+    }
+
+    /**
+     * metaData.zoomLabelVisibleを設定するためのGUIを追加する。
      * @param {*} parentElem 
      * @param {*} metaData 
      */
@@ -496,6 +526,7 @@ class GUI extends EventEmitter {
         if (!metaData) return;
         if (!metaData.hasOwnProperty('cameraParams')) return;
         if (!this.zoomControl) {
+            this.addDisplayTimeLabelVisible(parentElem, metaData);
             this.addZoomLabelVisible(parentElem, metaData);
             this.addFixedZoomLevel(parentElem, metaData);
             this.addZoomLevel(parentElem, metaData);
@@ -554,6 +585,51 @@ class GUI extends EventEmitter {
     }
 
     /**
+     * 時刻を表示.
+     * elemに時刻用エレメントをappendChild
+     * @param {*} elem 
+     * @param {*} metaData 
+     */
+     showTime(elem, metaData) {
+        if (elem && metaData.hasOwnProperty('display_time')) {
+            let timeElem = document.getElementById("time:" + metaData.id);
+            let time = "Time not received";
+            if (this.store.getTimelineCurrentTime()) {
+                let date = this.store.getTimelineCurrentTime();
+                const y = date.getFullYear();
+                const m = ("00" + (date.getMonth() + 1)).slice(-2);
+                const d = ("00" + date.getDate()).slice(-2);
+                const hh = ("00" + date.getHours()).slice(-2);
+                const mm = ("00" + date.getMinutes()).slice(-2);
+                const ss = ("00" + date.getSeconds()).slice(-2);
+                time = y + "/" + m + "/" + d + " " + hh + ":" + mm + ":" + ss;
+            }
+            if (timeElem) {
+                timeElem.innerHTML = time;
+                let rect = elem.getBoundingClientRect();
+                timeElem.style.right ="0px";
+                timeElem.style.top ="0px";
+                timeElem.style.zIndex = elem.style.zIndex;
+                timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
+            } else {
+                timeElem = document.createElement("pre");
+                timeElem.id = "time:" + metaData.id;
+                timeElem.className = "time";
+                timeElem.innerHTML = time;
+                let rect = elem.getBoundingClientRect();
+                timeElem.style.right = "0px";
+                timeElem.style.top = "0px";
+                timeElem.style.position = "absolute";
+                timeElem.style.height = "auto";
+                timeElem.style.whiteSpace = "pre-line";
+                timeElem.style.zIndex = elem.style.zIndex;
+                timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
+                elem.appendChild(timeElem);
+            }
+        }
+    }
+
+    /**
      * Copyrightを表示.
      * elemにCopyright用エレメントをappendChild
      * @param {*} elem 
@@ -577,7 +653,11 @@ class GUI extends EventEmitter {
             if (copyrightElem) {
                 copyrightElem.innerHTML = copyrightText;
                 copyrightElem.style.right = "0px";
-                copyrightElem.style.top = "0px";
+                if (metaData.display_time && String(metaData.display_time) === "true") {
+                    copyrightElem.style.top = "50px";
+                } else {
+                    copyrightElem.style.top = "0px";
+                }
                 copyrightElem.style.zIndex = elem.style.zIndex;
                 copyrightElem.style.display = "inline";
             } else {
@@ -587,7 +667,11 @@ class GUI extends EventEmitter {
                 copyrightElem.className = "copyright";
                 copyrightElem.innerHTML = copyrightText;
                 copyrightElem.style.right = "0px";
-                copyrightElem.style.top = "0px";
+                if (metaData.display_time && String(metaData.display_time) === "true") {
+                    copyrightElem.style.top = "50px";
+                } else {
+                    copyrightElem.style.top = "0px";
+                }
                 copyrightElem.style.position = "absolute";
                 copyrightElem.style.height = "auto";
                 copyrightElem.style.whiteSpace = "pre-line";
@@ -648,6 +732,8 @@ class GUI extends EventEmitter {
                 cameraParams: param.cameraParams,
                 group: Constants.DefaultGroup,
                 visible: true,
+                display_time: true,
+                zoomLabelVisible : true,
                 layerList: JSON.stringify(param.layerList),
                 url: decodeURI(selectValue.url)
             };
