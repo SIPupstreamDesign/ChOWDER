@@ -866,15 +866,22 @@ class TileViewer {
     // positionによりカメラ位置を指定する
     async create(position) {
         await this._withUpdate(() => {
+            if (this.options.hasOwnProperty('initialPosition')) {
+                position = this.options.initialPosition;
+            }
                 
             if (position) {
                 // 位置情報による調整
                 // 後の計算時に使用するため、先にscaleIndexを設定
                 if (position.hasOwnProperty('scale')) {
-                    this._setScaleIndex(position.scale);
+                    //this._setScaleIndex(position.scale);
                 }
                 // 位置情報による調整
                 if (position.hasOwnProperty('center')) {
+                    // 4隅の座標は特に指定されていないので、
+                    // 現在のtransformScaleを使用して画面サイズによる拡縮を行う
+                    this._resizeScaling(false);
+
                     // カメラのwidth, heightをまず求める
                     // 通常はブラウザの幅高さを使用する
                     // positionにwidth, heightが指定されていればそちらを使用する
@@ -922,6 +929,10 @@ class TileViewer {
                 }
             }
             this._resizeScaling(true);
+            
+            if (position && position.hasOwnProperty('scale')) {
+                this._setScaleIndex(position.scale);
+            }
         });
     }
 
@@ -1129,7 +1140,7 @@ class TileViewer {
      * @param {*} options 
      */
     async setOptions(options, withUpdate = true) {
-        // console.log('setOptions', options)
+        console.log('setOptions', options)
 
         await this._withUpdate(() => {
             this.options = options;

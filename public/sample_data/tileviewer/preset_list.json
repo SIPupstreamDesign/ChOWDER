@@ -1,21 +1,24 @@
 {
-    "preset_list": [{
+    "preset_list": [
+        {
             "name": "Empty",
-            "url": "sample_data/tileviewer/empty.html"
-        }, {
+            "url": "sample_data/tileviewer/index.html?json=empty"
+        },
+        {
             "name": "HIMAWARI 8 Japan Area",
-            "url": "sample_data/tileviewer/himawari.html"
-        }, {
+            "url": "sample_data/tileviewer/index.html?json=himawari_jp"
+        },
+        {
             "name": "HIMAWARI 8 Full Disk",
-            "url": "sample_data/tileviewer/himawari_fd.html"
+            "url": "sample_data/tileviewer/index.html?json=himawari_fd"
         },
         {
             "name": "GSI Map",
-            "url": "sample_data/tileviewer/gsi.html"
+            "url": "sample_data/tileviewer/index.html?json=gsi"
         },
         {
             "name": "OpenStreetMap",
-            "url": "sample_data/tileviewer/osm.html"
+            "url": "sample_data/tileviewer/index.html?json=osm"
         }
     ]
 }

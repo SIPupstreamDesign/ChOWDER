@@ -111,25 +111,6 @@ function showDebugGUI(viewer) {
         }
     }
 
-    /*
-
-    {
-        let button = document.createElement('button');
-        button.style.position = "absolute"
-        button.style.left = "300px";
-        button.style.top = "0px";
-        button.style.width = "50px"
-        button.style.height = "50px";
-        button.innerText = "resume"
-        document.body.appendChild(button);
-
-        button.onclick = () => {
-            const viewInfo = { "camera": { "x": 0.87473024661842, "y": 0.3938979334483699, "w": 0.00862426776438951, "h": 0.007568359374999995 }, "baseScaleCamera": { "x": 0.8100482383854987, "y": 0.3371352381358699, "w": 0.13798828423023224, "h": 0.12109375 }, "transformScale": 16.00000000000001, "viewport": { "x": 0.8100482383854987, "y": 0.3371352381358699, "w": 0.13798828423023224, "h": 0.12109375 }, "scaleIndex": 4 }
-            viewer.setCameraInfo(viewInfo);
-        }
-    }
-    */
-
     viewer.addEventListener(TileViewer.EVENT_SCALE_INDEX_CHANGED, (data) => {
         let scaleLabel = document.getElementById('__lod_scale_label__');
         if (scaleLabel) {
@@ -230,20 +211,27 @@ function enableMouseEvents(viewer) {
     };
 }
 
-window.onload = () => {
-    fetch('himawari_fd.json')
-        .then(response => response.json())
-        .then(async data => {
-            let viewer = new TileViewer(document.getElementById('tileviewer'));
-            viewer.setOptions(data);
-            await viewer.create();
-        
-            if (window.chowder_view_type !== undefined) {
-                injectChOWDER(viewer, document.getElementById('tileviewer'));
-            } else {
-                showDebugGUI(viewer);
-            }
-        
-            enableMouseEvents(viewer);
-        });
+window.onload =  () => {
+    const viewer = new TileViewer(document.getElementById('tileviewer'));
+    
+    // jsonパラメータがあれば取得
+    const url = new URL(location.href);
+    const params = url.searchParams;
+    const jsonName = params.get('json');
+    if (jsonName) {
+        fetch('settings/' + jsonName+'.json')
+            .then(response => response.json())
+            .then(async data => {
+                viewer.setOptions(data);
+                await viewer.create();
+                
+                if (window.chowder_view_type !== undefined) {
+                    injectChOWDER(viewer, document.getElementById('tileviewer'));
+                } else {
+                    showDebugGUI(viewer);
+                }
+            
+                enableMouseEvents(viewer);
+            });
+    }
 };
