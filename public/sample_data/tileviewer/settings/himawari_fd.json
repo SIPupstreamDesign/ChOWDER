@@ -33,5 +33,5 @@
         "opacity": 1.0,
         "visible" : true
     }],
-    "geodeticSystem": "himawari8.fd",
+    "geodeticSystem": "himawari8.fd"
 }
