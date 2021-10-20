@@ -20,5 +20,13 @@
             { "width": 256, "height": 256, "count": 262144, "zoom": 18 }
         ]
     }],
-    "geodeticSystem" : "standard"
+    "geodeticSystem" : "standard",
+    "initialPosition" : {
+        "center": {
+            "relative": {
+                "left": 0.88,
+                "top": 0.3888
+            }
+        }
+    }
 }
