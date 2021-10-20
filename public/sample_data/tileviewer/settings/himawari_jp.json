@@ -1,5 +1,7 @@
 {
     "backgroundImage": "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/thumbnail/600/%YYYY/%MM/%DD/%hh%mm%ss_0_0.png",
+    "backgroundOpacity" : 1.0,
+    "backgroundVisible" : true,
     "maps": [{
         "url": "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png",
         "scales": [
@@ -8,7 +10,9 @@
             { "width": 600, "height": 480, "count": 3 },
             { "width": 600, "height": 480, "count": 4 },
             { "width": 600, "height": 480, "count": 5 }
-        ]
+        ],
+        "opacity": 1.0,
+        "visible" : true
     }, {
         "url": "https://himawari8-dl.nict.go.jp/himawari8/img/D531107/%cd/%ws/coastline/ffff00_%x_%y.png",
         "scales": [
@@ -25,7 +29,9 @@
             { "width": 1200, "height": 960, "count": 5 },
             { "width": 1680, "height": 1344, "count": 5 },
             { "width": 2400, "height": 1920, "count": 5 }
-        ]
+        ],
+        "opacity": 1.0,
+        "visible" : true
     }],
     "geodeticSystem": "himawari8.jp"
 }

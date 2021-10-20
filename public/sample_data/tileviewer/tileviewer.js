@@ -27,9 +27,6 @@ class TileViewer {
         // options内のscaleを合成(Union/和集合)したもの
         this.combinedScales = [];
 
-        // TODO:this.options.mapsに移行予定
-        this.layerParams = [];
-
         // 表示対象時刻。nullの場合は現在時刻とみなす
         this.date = null;
 
@@ -304,8 +301,14 @@ class TileViewer {
         let opacity = 1.0;
         let display = "inline";
         if (url) {
-            opacity = this.layerParams[0].opacity;
-            display = this.layerParams[0].visible ? "inline" : "none";
+            if (this.options.hasOwnProperty('backgroundOpacity')) {
+                opacity = Number(this.options.backgroundOpacity);
+            }
+            if (this.options.hasOwnProperty('backgroundVisible')) {
+                if (String(this.options.backgroundVisible) === "false") {
+                    display = "none";
+                }
+            }
         }
 
         this.backgroundImage.onerror = () => {
@@ -406,8 +409,8 @@ class TileViewer {
     // 既に読み込み済の場合は、読み込み済エレメントに対して位置や幅高さを設定して返す。
     _loadTile(mapIndex, tileInfo) {
         let resultTiles = [];
-        let startIndex = this.options.hasOwnProperty('backgroundImage') ? 1 : 0;
-        const layerParam = this.layerParams[mapIndex + startIndex];
+        const startIndex = this.options.hasOwnProperty('backgroundImage') ? 1 : 0;
+        const mapParam = this.options.maps[mapIndex];
         const tileClass = this._generateTileClass(mapIndex, tileInfo);
         if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
             let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
@@ -415,8 +418,8 @@ class TileViewer {
             elem.style.top = tileInfo.y + "px";
             elem.style.width = tileInfo.w + "px";
             elem.style.height = tileInfo.h + "px";
-            elem.style.opacity = layerParam.opacity;
-            elem.style.display = layerParam.visible ? "inline" : "none";
+            elem.style.opacity = this.getOpacity(mapIndex);
+            elem.style.display = this.getVisible(mapIndex) ? "inline" : "none";
             /*
             if (mapIndex === 0) {
                 elem.style.border = "4px solid blue";
@@ -445,8 +448,9 @@ class TileViewer {
             tile.style.top = tileInfo.y + "px";
             tile.style.width = tileInfo.w + "px";
             tile.style.height = tileInfo.h + "px";
-            tile.style.opacity = layerParam.opacity;
-            tile.style.display = layerParam.visible ? "inline" : "none";
+            tile.style.opacity = this.getOpacity(mapIndex);
+            tile.style.display = this.getVisible(mapIndex) ? "inline" : "none";
+            
             // visibilityにより複数タイルのロード待ち中非表示とする
             tile.style.visibility = "hidden";
 
@@ -752,69 +756,25 @@ class TileViewer {
         return scales.length - 1;
     }
 
-    // 現在のカメラを元にタイルを更新する
-    async update() {
-        if (this.isDisableUpdate) {
-            return;
-        }
-        
-        for (let i = 0; i < this.updateCancelFuncs.length; ++i) {
-            this.updateCancelFuncs[i]();
-        }
-        this.updateCancelFuncs = [];
-
-        // 単一の背景画像の読み込みまたは非表示
-        if (this.options.hasOwnProperty('backgroundImage')) {
-            this._setBackgroundImage(this.options.backgroundImage);
-        } else {
-            this.backgroundImage.style.display = "none";
-        }
-        let loadedElems = [];
-        // 各mapのscalesに対して、それぞれ別のindexでアクセスし、
-        // 各mapごとのtileエレメントのセット(tileMatrix)を作成して、画像で埋める
-        for (let i = 0; i < this.options.maps.length; ++i) {
-            const scaleIndex = this._getMapScaleIndex(i, this.currentScaleIndex);
-            const tileMatrix = this._prepareTileElements(i, scaleIndex);
-            const tiles = await this._fillTileElements(i, tileMatrix, this.updateCancelFuncs);
-            if (!tiles) {
-                // キャンセルされた
-                return;
-            }
-            Array.prototype.push.apply(loadedElems, tiles);
-        }
-        this._cullTileElements(loadedElems);
-    }
-
-    /**
-     * 指定したfuncを実行し、最後にupdate()を行う。
-     * updateFlagがfalseの場合はupdate()は行わない。
-     * func内で、さらに_withUpdate()がネストして使用されていた場合、
-     * 最初の_withUpdate()のupdate()のみ実行される。
-     * 非同期で複数個所から同じタイミングで呼んだ場合は、それらのうち最も最初のupdate()のみ成功する。
-     * @param {*} func 
-     * @param {*} updateFlag 
-     */
-    async _withUpdate(func, updateFlag = true) {
-        const preUpdate = this.isDisableUpdate;
-        try {
-            this._disableUpdate();
-            func();
-        } catch(e) {
-            throw e;
-        } finally {
-            this.isDisableUpdate = preUpdate;
-            if (updateFlag) {
-                await this.update();
-            }
-        }
-    }
-
     _convertPixelPositionToCameraPosition(pixelPos) {
         const rect = this.viewerElem.getBoundingClientRect();
         const viewerSize = this._getViewerSize();
         return {
             x: this.camera.x + this.camera.w * ((pixelPos.x - rect.left) / viewerSize.w),
             y: this.camera.y + this.camera.h * ((pixelPos.y - rect.top) / viewerSize.h),
+        }
+    }
+
+    _setZoomLevel(isFixedScaleIndex, scaleIndex) {
+        if (this.isFixedScaleIndex != isFixedScaleIndex || (isFixedScaleIndex && this.currentScaleIndex != scaleIndex)) {
+            console.log("setZoomLevel", this.isFixedScaleIndex, isFixedScaleIndex, this.currentScaleIndex, scaleIndex);
+            // 一旦falseにしてscaleIndexを強制設定する
+            const preFixed = this.isFixedScaleIndex;
+            this.isFixedScaleIndex = false;
+            this._setScaleIndex(scaleIndex);
+
+            // isFixedScaleIndexを最新の値に設定
+            this.isFixedScaleIndex = isFixedScaleIndex;
         }
     }
 
@@ -860,6 +820,63 @@ class TileViewer {
         } else {
             return 1.1;
         }
+    }
+
+    /**
+     * 指定したfuncを実行し、最後にupdate()を行う。
+     * updateFlagがfalseの場合はupdate()は行わない。
+     * func内で、さらに_withUpdate()がネストして使用されていた場合、
+     * 最初の_withUpdate()のupdate()のみ実行される。
+     * 非同期で複数個所から同じタイミングで呼んだ場合は、それらのうち最も最初のupdate()のみ成功する。
+     * @param {*} func 
+     * @param {*} updateFlag 
+     */
+     async _withUpdate(func, updateFlag = true) {
+        const preUpdate = this.isDisableUpdate;
+        try {
+            this._disableUpdate();
+            func();
+        } catch(e) {
+            throw e;
+        } finally {
+            this.isDisableUpdate = preUpdate;
+            if (updateFlag) {
+                await this.update();
+            }
+        }
+    }
+
+    // 現在のカメラを元にタイルを更新する
+    async update() {
+        if (this.isDisableUpdate) {
+            return;
+        }
+        
+        for (let i = 0; i < this.updateCancelFuncs.length; ++i) {
+            this.updateCancelFuncs[i]();
+        }
+        this.updateCancelFuncs = [];
+
+        // 単一の背景画像の読み込みまたは非表示
+        if (this.options.hasOwnProperty('backgroundImage')) {
+            this._setBackgroundImage(this.options.backgroundImage);
+        } else {
+            this.backgroundImage.style.display = "none";
+        }
+        let loadedElems = [];
+        // 各mapのscalesに対して、それぞれ別のindexでアクセスし、
+        // 各mapごとのtileエレメントのセット(tileMatrix)を作成して、画像で埋める
+        for (let i = 0; i < this.options.maps.length; ++i) {
+            const scaleIndex = this._getMapScaleIndex(i, this.currentScaleIndex);
+            const tileMatrix = this._prepareTileElements(i, scaleIndex);
+            const tiles = await this._fillTileElements(i, tileMatrix, this.updateCancelFuncs);
+            if (!tiles) {
+                // キャンセルされた
+                return;
+            }
+            Array.prototype.push.apply(loadedElems, tiles);
+        }
+        this._cullTileElements(loadedElems);
     }
 
     // this.optionを元に、新規に地図を読み込む
@@ -936,7 +953,11 @@ class TileViewer {
         });
     }
 
-    async move(mv, callback) {
+    /**
+     * カメラを移動させる
+     * @param {*} mv { x : ..., y : ... } の形式で, 移動させる量をピクセル数で指定する.
+     */
+    async move(mv) {
         const screenImageSize = this._getScreenImageSize();
         const cameraSpaceMove = {
             x: mv.x / screenImageSize.w,
@@ -948,6 +969,12 @@ class TileViewer {
         await this.update();
     }
 
+    /**
+     * カメラのスケーリング値を変更する
+     * @param {*} scale baseScaleCameraに対するスケール値
+     * @param {*} withDispatch trueを指定した場合スケール変更イベントを発火させる
+     * @returns 成功したかどうか
+     */
     async setTransformScale(scale, withDispatch = false) {
         // 余りにも小さいスケールにしようとした場合は失敗とする
         if (scale < 0.1e-10) return false;
@@ -1188,58 +1215,116 @@ class TileViewer {
                 }
             }
 
-            // 古いものを削除してthis.layerParamsを作り直す
-            this.layerParams = [];
-
-            if (options.hasOwnProperty('backgroundImage')) {
-                this.layerParams.push({
-                    opacity: 1,
-                    visible: true
-                });
-            }
-
-            if (options.hasOwnProperty('maps')) {
-                for (let i = 0; i < options.maps.length; ++i) {
-                    this.layerParams.push({
-                        opacity: 1,
-                        visible: true
-                    });
-                }
-            }
-
             this._dispatchOptions();
         }, withUpdate);
     }
-
-    async setOpacity(layerIndex, opacity, withUpdate = true) {
-        // console.log("setOpacity", layerIndex, this.layerParams)
-        this.layerParams[layerIndex].opacity = opacity;
+    
+    /**
+     * 背景画像に対するopacityプロパティを設定し、更新する.
+     * @param {*} opacity  0.0~1.0
+     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     */
+    async setBackgroundOpacity(opacity, withUpdate = true) {
+        this.options.backgroundOpacity = opacity;
         if (withUpdate) {
             await this.update();
         }
     }
 
-    async setVisible(layerIndex, visible, withUpdate = true) {
-        // console.log("setVisible", layerIndex, visible)
-        this.layerParams[layerIndex].visible = visible;
+    /**
+     * @returns 背景画像に対するopacityプロパティをを返す
+     */
+    getBackgroundOpacity() {
+        if (this.options.hasOwnProperty('backgroundOpacity')) {
+            return Number(this.options.backgroundOpacity);
+        }
+        return 1;
+    }
+
+    /**
+     * 背景画像に対するvisibleプロパティを設定し、更新する.
+     * @param {*} visible trueまたはfalse
+     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     */
+    async setBackgroundVisible(visible, withUpdate = true) {
+        this.options.backgroundVisible = visible;
         if (withUpdate) {
             await this.update();
         }
     }
 
-    _setZoomLevel(isFixedScaleIndex, scaleIndex) {
-        if (this.isFixedScaleIndex != isFixedScaleIndex || (isFixedScaleIndex && this.currentScaleIndex != scaleIndex)) {
-            console.log("setZoomLevel", this.isFixedScaleIndex, isFixedScaleIndex, this.currentScaleIndex, scaleIndex);
-            // 一旦falseにしてscaleIndexを強制設定する
-            const preFixed = this.isFixedScaleIndex;
-            this.isFixedScaleIndex = false;
-            this._setScaleIndex(scaleIndex);
+    /**
+     * @returns 背景画像に対するvisibleプロパティをを返す
+     */
+     getBackgroundVisible() {
+        if (this.options.hasOwnProperty('backgroundVisible')) {
+            return this.options.backgroundVisible === "true";
+        }
+        return true;
+    }
 
-            // isFixedScaleIndexを最新の値に設定
-            this.isFixedScaleIndex = isFixedScaleIndex;
+    /**
+     * 指定したmapに対して、opacityプロパティを設定し、更新する.
+     * @param {*} mapIndex this.options.mapsに対するインデックス
+     * @param {*} opacity  0.0~1.0
+     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     */
+    async setOpacity(mapIndex, opacity, withUpdate = true) {
+        // console.log("setOpacity", mapIndex, opacity)
+        this.options.maps[mapIndex].opacity = opacity;
+        if (withUpdate) {
+            await this.update();
         }
     }
 
+    /**
+     * 指定したmapIndexのopacityプロパティを返す. 
+     * mapIndexにopacityプロパティが存在しない場合はデフォルト値1が返る.
+     * @param {*} mapIndex this.options.mapsに対するインデックス
+     * @returns 
+     */
+    getOpacity(mapIndex) {
+        if (mapIndex >= 0 && mapIndex < this.options.maps.length) {
+            const mapParam = this.options.maps[mapIndex];
+            return mapParam.hasOwnProperty('opacity') ? Number(mapParam.opacity) : 1;
+        }
+        return 1;
+    }
+
+    /**
+     * 指定したmapに対して、visibleプロパティを設定し、更新する.
+     * @param {*} mapIndex this.options.mapsに対するインデックス
+     * @param {*} visible trueまたはfalse
+     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     */
+    async setVisible(mapIndex, visible, withUpdate = true) {
+        // console.log("setVisible", mapIndex, visible)
+        this.options.maps[mapIndex].visible = visible;
+        if (withUpdate) {
+            await this.update();
+        }
+    }
+
+    /**
+     * 指定したmapIndexのvisibleプロパティを返す. 
+     * mapIndexにvisibleプロパティが存在しない場合はデフォルト値trueが返る.
+     * @param {*} mapIndex 
+     * @returns 
+     */
+    getVisible(mapIndex) {
+        if (mapIndex >= 0 && mapIndex < this.options.maps.length) {
+            const mapParam = this.options.maps[mapIndex];
+            if (mapParam.hasOwnProperty('visible') && String(mapParam.visible) === "false") {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 日時を設定し、タイルを更新する
+     * @param {*} date 任意のDateオブジェクト
+     */
     async setDate(date) {
         const preDate = this.date ? this.date : new Date(Date.now());
         this.date = date;
@@ -1261,26 +1346,44 @@ class TileViewer {
         }
     }
 
+    /**
+     * @returns 設定されている日付を返す
+     */
     getDate() {
-        return this.date;
+        return new Date(this.date.valueOf());
     }
 
+    /**
+     * @returns 設定されているオプションを返す
+     */
     getOptions() {
         return JSON.parse(JSON.stringify(this.options));
     }
 
+    /**
+     * ウィンドウリサイズ時の自動スケール設定を有効にする
+     */
     enableResizeScaling() {
         window.addEventListener('resize', this._resizeScaling);
     }
 
+    /**
+     * ウィンドウリサイズ時の自動スケール設定を無効にする
+     */
     disableResizeScaling() {
         window.removeEventListener('resize', this._resizeScaling);
     }
 
+    /**
+     * ウィンドウに対してタイル表示が小さすぎる場合にスケールを停止させる機能を有効にする
+     */
     enableLimitOfMinimumScale() {
         this.isEnableLimitOfMinimumScale = true;
     }
 
+    /**
+     * ウィンドウに対してタイル表示が小さすぎる場合にスケールを停止させる機能を無効にする
+     */
     disableLimitOfMinimumScale() {
         this.isEnableLimitOfMinimumScale = false;
     }

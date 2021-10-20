@@ -227,6 +227,8 @@ class Store extends EventEmitter {
         // 画像の場合は背景画像として扱う
         if (params.type === "image") {
             options.backgroundImage = layerData.url;
+            options.backgroundVisible = layerData.visible;
+            options.backgroundOpacity = layerData.opacity;
             if (this.layerDataList.length > 0) {
                 if (this.layerDataList[0].type === "image")
                 {
@@ -244,20 +246,12 @@ class Store extends EventEmitter {
             this.layerDataList.push(layerData);
             options.maps.push({
                 url: params.url,
-                scales: this.generateScales(params)
+                scales: this.generateScales(params),
+                visible : params.visible,
+                opacity : params.opacity
             });
         }
         this.instance.setOptions(options, false);
-        
-        for (let i = 0; i < this.layerDataList.length; ++i) {
-            let data = this.layerDataList[i];
-            if (data.hasOwnProperty('opacity')) {
-                this.instance.setOpacity(this.getLayerIndex(data.id), data.opacity, false);
-            }
-            if (data.hasOwnProperty('visible')) {
-                this.instance.setVisible(this.getLayerIndex(data.id), data.visible, false);
-            }
-        }
         await this.instance.update();
         this.instance._resizeScaling(true);
 
@@ -315,12 +309,16 @@ class Store extends EventEmitter {
                 }
                 options.maps.push({
                     url: param.url,
-                    scales: this.generateScales(param)
+                    scales: this.generateScales(param),
+                    visible : param.visible,
+                    opacity : param.opacity,
                 });
             } else {
                 options.maps.push({
                     url: param.url,
-                    scales: this.generateScales(param)
+                    scales: this.generateScales(param),
+                    visible : param.visible,
+                    opacity : param.opacity,
                 });
             }
         }
@@ -342,12 +340,6 @@ class Store extends EventEmitter {
                 layerData.zoom = JSON.parse(JSON.stringify(param.zoom));
             }
             this.layerDataList.push(layerData);
-            if (param.hasOwnProperty('opacity')) {
-                this.instance.setOpacity(this.getLayerIndex(param.id), param.opacity, false);
-            }
-            if (param.hasOwnProperty('visible')) {
-                this.instance.setVisible(this.getLayerIndex(param.id), param.visible, false);
-            }
         }
         this.instance.update();
         
@@ -365,13 +357,24 @@ class Store extends EventEmitter {
      */
     changeLayerProperty(params, redraw = true) {
         const layerIndex = this.getLayerIndex(params.id);
+        // this.layerDataListに設定
         if (layerIndex !== null) {
             this.layerDataList[layerIndex].visible = params.visible;
             this.layerDataList[layerIndex].opacity = params.opacity;
+        }
 
-            this.instance.setOpacity(layerIndex, params.opacity, false);
-            this.instance.setVisible(layerIndex, params.visible, false);
+        // tileviewerのほうにも設定
+        if (params.type ==='image') {
+            this.instance.setBackgroundOpacity(params.opacity, false);
+            this.instance.setBackgroundVisible(params.visible, false);
             this.instance.update();
+        } else {
+            const mapIndex = this.getMapIndex(params.id);
+            if (mapIndex !== null) {
+                this.instance.setOpacity(mapIndex, params.opacity, false);
+                this.instance.setVisible(mapIndex, params.visible, false);
+                this.instance.update();
+            }
         }
     }
 
@@ -418,8 +421,8 @@ class Store extends EventEmitter {
             this.layerDataList.push({
                 id: "BackgourndImage",
                 url: options.backgroundImage,
-                opacity: 1.0,
-                visible: true,
+                opacity: this.instance.getBackgroundOpacity(),
+                visible: this.instance.getBackgroundVisible(),
                 type: "image"
             });
         }
@@ -429,8 +432,8 @@ class Store extends EventEmitter {
             this.layerDataList.push({
                 id: "Layer_" + i,
                 url: url,
-                opacity: 1.0,
-                visible: true,
+                opacity: this.instance.getOpacity(i),
+                visible: this.instance.getVisible(i),
                 scales: JSON.parse(JSON.stringify(map.scales)),
                 type: options.geodeticSystem ? options.geodeticSystem : "not specified"
             });
@@ -446,6 +449,24 @@ class Store extends EventEmitter {
         for (let i = 0; i < layers.length; ++i) {
             if (layers[i].id === id) {
                 return i;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * mapのインデックスを返す. ない場合はnullを返す
+     * @param id : 対象レイヤのID
+     */
+     getMapIndex(id) {
+        let layers = this.layerDataList;
+        let mapIndex = 0;
+        for (let i = 0; i < layers.length; ++i) {
+            if (layers[i].id === id) {
+                return mapIndex;
+            }
+            if (layers[i].type !== "image") {
+                ++mapIndex;
             }
         }
         return null;
