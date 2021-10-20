@@ -32,7 +32,5 @@
                 "top": 0.3888
             }
         }
-    },
-    "backgroundOpacity" : 0.5,
-    "backgroundVisible" : false 
+    }
 }
