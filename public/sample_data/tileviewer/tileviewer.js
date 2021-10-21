@@ -691,34 +691,35 @@ class TileViewer {
 
     // リサイズ時に画面中心を維持し、ビューの横方向が画面内に常に収まるように維持するように
     // スケーリングを行う
-    _resizeScaling(withDispatch = false) {
-        const viewerSize = this._getViewerSize();
-        const totalImageSize = this._getTotalImageSize();
-        const preW = this.baseScaleCamera.w;
-        const preH = this.baseScaleCamera.h;
-        const scale = {
-            w: viewerSize.w / (preW * totalImageSize.w),
-            h: viewerSize.h / (preH * totalImageSize.h)
-        };
-        const bound = {
-            left: this.baseScaleCamera.x,
-            top: this.baseScaleCamera.y,
-            right: this.baseScaleCamera.x + this.baseScaleCamera.w,
-            bottom: this.baseScaleCamera.y + this.baseScaleCamera.h
-        };
-
-        // 画面中心を維持しつつスケール
-        const pivotX = (bound.left + bound.right) / 2;
-        const pivotY = (bound.top + bound.bottom) / 2;
-
-        this.baseScaleCamera.x = (bound.left - pivotX) * scale.w + pivotX;
-        this.baseScaleCamera.y = (bound.top - pivotY) * scale.h + pivotY;
-        this.baseScaleCamera.w = (bound.right - bound.left) * scale.w;
-        this.baseScaleCamera.h = (bound.bottom - bound.top) * scale.h;
-
-        const diffScale = this.baseScaleCamera.w / preW;
-        this.setTransformScale(this.transformScale * diffScale, withDispatch);
-        this.update();
+    async _resizeScaling(withDispatch = false) {
+        await this._withUpdate(() => {
+            const viewerSize = this._getViewerSize();
+            const totalImageSize = this._getTotalImageSize();
+            const preW = this.baseScaleCamera.w;
+            const preH = this.baseScaleCamera.h;
+            const scale = {
+                w: viewerSize.w / (preW * totalImageSize.w),
+                h: viewerSize.h / (preH * totalImageSize.h)
+            };
+            const bound = {
+                left: this.baseScaleCamera.x,
+                top: this.baseScaleCamera.y,
+                right: this.baseScaleCamera.x + this.baseScaleCamera.w,
+                bottom: this.baseScaleCamera.y + this.baseScaleCamera.h
+            };
+    
+            // 画面中心を維持しつつスケール
+            const pivotX = (bound.left + bound.right) / 2;
+            const pivotY = (bound.top + bound.bottom) / 2;
+    
+            this.baseScaleCamera.x = (bound.left - pivotX) * scale.w + pivotX;
+            this.baseScaleCamera.y = (bound.top - pivotY) * scale.h + pivotY;
+            this.baseScaleCamera.w = (bound.right - bound.left) * scale.w;
+            this.baseScaleCamera.h = (bound.bottom - bound.top) * scale.h;
+    
+            const diffScale = this.baseScaleCamera.w / preW;
+            this.setTransformScale(this.transformScale * diffScale, withDispatch);
+        });
     }
 
     // baseScaleCameraを元にcameraを再設定する。

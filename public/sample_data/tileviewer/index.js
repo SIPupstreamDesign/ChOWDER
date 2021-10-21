@@ -222,7 +222,7 @@ window.onload =  () => {
         fetch('settings/' + jsonName+'.json')
             .then(response => response.json())
             .then(async data => {
-                viewer.setOptions(data);
+                await viewer.setOptions(data);
                 await viewer.create();
                 
                 if (window.chowder_view_type !== undefined) {
