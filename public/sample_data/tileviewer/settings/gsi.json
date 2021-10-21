@@ -2,27 +2,10 @@
     "backgroundImage": "https://cyberjapandata.gsi.go.jp/xyz/std/0/0/0.png",
     "maps": [{
         "url": "https://cyberjapandata.gsi.go.jp/xyz/std/%z/%x/%y.png",
-        "scales": [
-            { "width": 256, "height": 256, "count": 1, "zoom": 0 },
-            { "width": 256, "height": 256, "count": 2, "zoom": 1 },
-            { "width": 256, "height": 256, "count": 4, "zoom": 2 },
-            { "width": 256, "height": 256, "count": 8, "zoom": 3 },
-            { "width": 256, "height": 256, "count": 16, "zoom": 4 },
-            { "width": 256, "height": 256, "count": 32, "zoom": 5 },
-            { "width": 256, "height": 256, "count": 64, "zoom": 6 },
-            { "width": 256, "height": 256, "count": 128, "zoom": 7 },
-            { "width": 256, "height": 256, "count": 256, "zoom": 8 },
-            { "width": 256, "height": 256, "count": 512, "zoom": 9 },
-            { "width": 256, "height": 256, "count": 1024, "zoom": 10 },
-            { "width": 256, "height": 256, "count": 2048, "zoom": 11 },
-            { "width": 256, "height": 256, "count": 4096, "zoom": 12 },
-            { "width": 256, "height": 256, "count": 8192, "zoom": 13 },
-            { "width": 256, "height": 256, "count": 16384, "zoom": 14 },
-            { "width": 256, "height": 256, "count": 32768, "zoom": 15 },
-            { "width": 256, "height": 256, "count": 65536, "zoom": 16 },
-            { "width": 256, "height": 256, "count": 131072, "zoom": 17 },
-            { "width": 256, "height": 256, "count": 262144, "zoom": 18 }
-        ]
+        "zoom" : {
+            "min" : 0,
+            "max" : 18
+        }
     }],
     "geodeticSystem": "standard",
     "initialPosition" : {

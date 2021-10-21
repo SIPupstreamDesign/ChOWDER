@@ -823,6 +823,15 @@ class TileViewer {
         }
     }
 
+
+    _createStandardScaleEntries(width, height, minZoom, maxZoom) {
+        let result = [];
+        for (let i = minZoom; i <= maxZoom; ++i) {
+            result.push({ width: width, height: height, count: Math.pow(2, i), zoom: i });
+        }
+        return result;
+    }
+
     /**
      * 指定したfuncを実行し、最後にupdate()を行う。
      * updateFlagがfalseの場合はupdate()は行わない。
@@ -1164,6 +1173,80 @@ class TileViewer {
     }
 
     /**
+     * zoom率やgeodeticSystemに応じたscale設定を作成する
+     * standardでは, zoom.minからzoom.maxまで、2の累乗で増えていくscale設定が作成される
+     * himawari8.jp及びhimawari8.fdでは、予め用意されたscale設定を返す
+     * himawari8.jp及びhimawari8.fdで、urlにcoastが含まれている場合、
+     * 予め用意された海岸線用のscale設定を返す
+     * @param {*} mapParams 
+     * @param {*} geodeticSystem 
+     * @returns 
+     */
+    generateScales(mapParams, geodeticSystem) {
+        if (mapParams.hasOwnProperty('scales')) {
+            return JSON.parse(JSON.stringify(mapParams.scales));
+        }
+        if (geodeticSystem === "standard") {
+            return this._createStandardScaleEntries(256, 256, mapParams.zoom.min, mapParams.zoom.max);
+        }
+        else if (geodeticSystem === "himawari8.jp") {
+            if (mapParams.url.indexOf('coast') >= 0) {
+                return [
+                    { width: 300, height: 240, count: 1 },
+                    { width: 420, height: 336, count: 1 },
+                    { width: 600, height: 480, count: 1 },
+                    { width: 840, height: 672, count: 1 },
+                    { width: 600, height: 480, count: 2 },
+                    { width: 840, height: 672, count: 2 },
+                    { width: 600, height: 480, count: 3 },
+                    { width: 600, height: 480, count: 4 },
+                    { width: 600, height: 480, count: 5 },
+                    { width: 720, height: 576, count: 5 },
+                    { width: 1200, height: 960, count: 5 },
+                    { width: 1680, height: 1344, count: 5 },
+                    { width: 2400, height: 1920, count: 5 }
+                ]
+            } else {
+                return [
+                    { width: 600, height: 480, count: 1 },
+                    { width: 600, height: 480, count: 2 },
+                    { width: 600, height: 480, count: 3 },
+                    { width: 600, height: 480, count: 4 },
+                    { width: 600, height: 480, count: 5 }
+                ]
+            }
+
+        } else if (geodeticSystem === "himawari8.fd") {
+            if (mapParams.url.indexOf('coast') >= 0) {
+                return [
+                    { width: 275, height: 275, count: 1 },
+                    { width: 385, height: 385, count: 1 },
+                    { width: 550, height: 550, count: 1 },
+                    { width: 770, height: 770, count: 1 },
+                    { width: 550, height: 550, count: 2 },
+                    { width: 770, height: 770, count: 2 },
+                    { width: 550, height: 550, count: 4 },
+                    { width: 770, height: 770, count: 4 },
+                    { width: 550, height: 550, count: 8 },
+                    { width: 770, height: 770, count: 8 },
+                    { width: 550, height: 550, count: 16 },
+                    { width: 550, height: 550, count: 20 }
+                ]
+            } else {
+                return [
+                    { width: 550, height: 550, count: 1 },
+                    { width: 550, height: 550, count: 2 },
+                    { width: 550, height: 550, count: 4 },
+                    { width: 550, height: 550, count: 8 },
+                    { width: 550, height: 550, count: 16 },
+                    { width: 550, height: 550, count: 20 }
+                ]
+            }
+        }
+         return [];
+    }
+
+    /**
      * TileViewerの全オプション情報の設定
      * @param {*} options 
      */
@@ -1186,6 +1269,15 @@ class TileViewer {
             this.combinedScales = [];
             let visitedTotalWidth = [];
             if (options.hasOwnProperty('maps')) {
+                // zoom率やgeodeticSystemからscaleを生成
+                for (let i = 0; i < options.maps.length; ++i) {
+                    let map = options.maps[i];
+                    if (!map.hasOwnProperty('scales')) {
+                        map.scales = this.generateScales(map, options.geodeticSystem);
+                    }
+                }
+
+                // this.combinedScalesを作り直す
                 for (let i = 0; i < options.maps.length; ++i) {
                     const map = options.maps[i];
                     for (let j = 0; j < map.scales.length; ++j) {
@@ -1257,7 +1349,7 @@ class TileViewer {
     /**
      * @returns 背景画像に対するvisibleプロパティをを返す
      */
-     getBackgroundVisible() {
+    getBackgroundVisible() {
         if (this.options.hasOwnProperty('backgroundVisible')) {
             return this.options.backgroundVisible === "true";
         }
