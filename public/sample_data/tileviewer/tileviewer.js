@@ -72,8 +72,10 @@ class TileViewer {
         this.timeout = 0;
         this.updateCancelFuncs = [];
 
+        // addEventListenerで登録したコールバックを保持
         this.callbackDict = {};
 
+        // update()の内部処理を行うかどうかのフラグ
         this.isDisableUpdate = false;
     }
 
@@ -941,9 +943,35 @@ class TileViewer {
                         this.baseScaleCamera.w = cameraW;
                         this.baseScaleCamera.h = cameraH;
                     } else if (position.center.hasOwnProperty('degrees')) {
-                        const leftTop = position.center.degrees;
+                        const degrees = position.center.degrees;
+                        let lonLat = {
+                            lon : null,
+                            lat : null
+                        };
+                        if (degrees.hasOwnProperty('lon') && degrees.hasOwnProperty('lat')) {
+                            lonLat.lon = Number(degrees.lon);
+                            lonLat.lat = Number(degrees.lat);
+                        } else if (degrees.hasOwnProperty('left') && degrees.hasOwnProperty('top')) {
+                            lonLat.lon = Number(degrees.left);
+                            lonLat.lat = Number(degrees.top);
+                        }
+                        if (lonLat.lon !== null && lonLat.lat !== null) {
+                            let coord = null;
+                            if (this.options.geodeticSystem === "standard") {
+                                coord = TileViewer.convertStandardLonLatToCameraCoord(lonLat);
+                            } else if (this.options.geodeticSystem === "himawari8.fd") {
+                                coord = TileViewer.convertHimawariFDLonLatToCameraCoord(lonLat);
+                            } else if (this.options.geodeticSystem === "himawari8.jp") {
+//TODO
+                            }
+                            if (coord.x !== null && coord.y !== null) {
+                                this.baseScaleCamera.x = Math.max(0.0, Math.min(1.0, coord.x)) - cameraW / 2;
+                                this.baseScaleCamera.y = Math.max(0.0, Math.min(1.0, coord.y)) - cameraH / 2;
+                            }
+                        }
 
-                        // TODO
+                        this.baseScaleCamera.w = cameraW;
+                        this.baseScaleCamera.h = cameraH;
                     }
                 }
             } else {
@@ -1517,6 +1545,190 @@ class TileViewer {
         return false;
     }
 }
+
+const DEGTORAD = (Math.PI / 180.0);
+const RADTODEG = (180.0 / Math.PI);
+
+/**
+ * メルカトル座標系における経度緯度をカメラ座標に変換して返す
+ * @param {*} lonLat { lon: .., lat : .. }の形式でdegree値. 
+ *                   経度は -180～180,  緯度は-90~90を想定.
+ * @returns カメラ座標 { x: .. , y: .. }の形式で、xは0～1, 
+ * y値については、0~1 であるが、メルカトル座標に収まらない緯度の場合は0未満または1より大きい値となる
+ */
+TileViewer.convertStandardLonLatToCameraCoord = (lonLat) => {
+    let lon = lonLat.lon;
+    let lat = lonLat.lat;
+    while (lon > 180.0) { lon -= 360.0; } // [deg]
+    while (lon < -180.0) { lon += 360.0; } // [deg]
+    let x = lon / 360 + 0.5;
+    const y = Math.log(Math.tan((90 + lat) * DEGTORAD / 2)) / Math.PI;
+    return { x : x, y : 1.0 - (y + 1) / 2 };
+};
+
+TileViewer.convertCameraCoordToStandardLonLat = (coord) => {
+    let x = coord.x * 2 - 1;  // -1 ~ +1
+    let y = coord.y * 2 - 1;  // -1 ~ +1
+    const lon = x * 180;
+    const lat = Math.atan(Math.exp(y * Math.PI)) * 2 * RADTODEG - 90; 
+    return { lon: lon, lat : lat };
+};
+
+const SCLUNIT = 1.525878906250000e-05; 	// (= 2^-16)  scaling function 
+const Rs = 42164;
+const Req =  6378.1370;
+const Rpol =  6356.7523;
+const Rval11 =  0.00669438444;
+const Rval12 =  0.993305616;
+const Rval13 =  1.006739501;
+const sub_lon = 140.7;
+// band5~16の5500x5500の値を使用して計算
+// 最後に5500で割って0~1にして返す
+const COFF = 2750.5;
+const LOFF = 2750.5;
+const LFAC = 20466275;
+const CFAC = 20466275;
+const Sd = 1737122264;
+
+TileViewer.convertHimawariFDLonLatToCameraCoord = (lonLat) => {
+
+    let lon = lonLat.lon;
+    let lat = lonLat.lat;
+    // (1) init
+    // invalid value
+    const invalidValue = {
+        x : null,
+        y : null
+    }; 
+    // (2) check latitude
+    if (lat < -90.0 || 90.0 < lat) {
+        console.error("invalid lat", lat);
+        return invalidValue;
+    }
+    // (3) check longitude
+    while (lon > 180.0) { lon -= 360.0; } // [deg]
+    while (lon < -180.0) { lon += 360.0; } // [deg]
+    // (4) degree to radian
+    lon = lon * DEGTORAD; // [rad]
+    lat = lat * DEGTORAD; // [rad]
+    // (5) geocentric latitude
+    // Global Specification 4.4.3.2
+    // phi = arctan( (Rpol^2)/(Req^2) * tan(lat) )
+    // 
+    // (Rpol^2)/(Req^2) =Rval12
+    const phi = Math.atan(Rval12 * Math.tan(lat));
+    // (6) The length of Re
+    // Re = (Rpol) / sqrt( 1 - (Req^2 - Rpol^2) / Req^2 * cos^2(phi) )
+    //
+    // Rpol = Rpol
+    // (Req^2 - Rpol^2) / Req^2 = Rval11
+    const Re = (Rpol) / Math.sqrt(1 - Rval11 * Math.cos(phi) * Math.cos(phi));
+    // (7) The cartesian components of the vector rs result as follows:
+    // r1 = h - Re * cos(phi) * cos(Le-Ld)
+    // r2 =    -Re * cos(phi) * sin(Le-Ld)
+    // r3 =     Re * sin(phi)
+    //
+    // Le : longitude
+    // Ld : sub_lon = sub_lon
+    // h  : distance from Earth's center to satellite (=Rs)
+    const r1 = Rs - Re * Math.cos(phi) * Math.cos(lon - sub_lon * DEGTORAD);
+    const r2 = - Re * Math.cos(phi) * Math.sin(lon - sub_lon * DEGTORAD);
+    const r3 = Re * Math.sin(phi);
+    // (8) check seeablibity
+    //	double vx = Re * cos(phi) * cos( lon - sub_lon * DEGTORAD );
+    //	if(0 < -r1 * vx - r2 * r2 + r3 * r3){
+    //		return(ERROR_END);
+    //	}
+    if (0 < (r1 * (r1 - Rs) + (r2 * r2) + (r3 * r3))) {
+        return invalidValue;
+    }
+    // (9) The projection function is as follows:
+    // x  = arctan(-r2/r1)
+    // y  = arcsin(r3/rn)
+    // rn = sqrt(r1^2 + r2^2 + r3^2)
+    const rn = Math.sqrt(r1 * r1 + r2 * r2 + r3 * r3);
+    const x = Math.atan2(-r2, r1) * RADTODEG;
+    const y = Math.asin(-r3 / rn) * RADTODEG;
+    // (10)
+    // Global Specification 4.4.4
+    // c  = COFF + nint(x * 2^-16 * CFAC)
+    // l  = LOFF + nint(y * 2^-16 * LFAC)
+    const c = (COFF + x * SCLUNIT * CFAC) / 5500;
+    const l = (LOFF + y * SCLUNIT * LFAC) / 5500;
+    return {
+        x : c,
+        y : l
+    };
+};
+
+TileViewer.convertCameraCoordToHimawariFDLonLat = (coord) => {
+    // invalid value
+    const invalidValue = {
+        lon : null,
+        lat : null
+    }; 
+    let c = coord.x * 5500;
+    let l = coord.y * 5500;
+    // (2) the intermediate coordinates (x,y)
+    // Global Specification 4.4.4 Scaling Function 
+    //    c = COFF + nint(x * 2^-16 * CFAC)
+    //    l = LOFF + nint(y * 2^-16 * LFAC)
+    // The intermediate coordinates (x,y) are as follows :
+    //    x = (c -COFF) / (2^-16 * CFAC)
+    //    y = (l -LOFF) / (2^-16 * LFAC)
+    //    SCLUNIT = 2^-16
+    const x = DEGTORAD * (c - COFF) / (SCLUNIT * CFAC);
+    const y = DEGTORAD * (l - LOFF) / (SCLUNIT * LFAC);
+    // (3) longtitude,latitude
+    // Global Specification 4.4.3.2
+    // The invers projection function is as follows : 
+    //   lon = arctan(S2/S1) + sub_lon
+    //   lat = arctan( (Req^2/Rpol^2) * S3 / Sxy )
+    // 
+    // Thererin the variables S1,S2,S3,Sxy are as follows :
+    //    S1  = Rs - Sn * cos(x) * cos(y)
+    //    S2  = Sn * sin(x) * cos(y)
+    //    S3  =-Sn * sin(y)
+    //    Sxy = sqrt(S1^2 + S2^2)
+    //    Sn  =(Rs * cos(x) * cos(y) - Sd ) /
+    //         (cos(y) * cos(y) + (Req^2/Rpol^2) * sin(y) * sin(y))
+    //    Sd  =sqrt( (Rs * cos(x) * cos(y))^2
+    //               - ( cos(y) * cos(y) + (Req^2/Rpol^2) * sin(y) * sin(y) )
+    //               * (Rs^2 - Req^2)
+    // The variables Rs,Rpol,Req,(Req^2/Rpol^2),(Rs^2 - Req^2) are as follows :
+    //    Rs  : distance from Earth center to satellite= Rs
+    //    Rpol: polar radius of the Earth              = Rpol
+    //    Req : equator raidus of the Earth            = Req
+    //    (Req^2/Rpol^2)                               = Rval13
+    //    (Rs^2 - Req^2)                               = Sd
+    let sd = (Rs * Math.cos(x) * Math.cos(y)) *
+        (Rs * Math.cos(x) * Math.cos(y)) -
+        (Math.cos(y) * Math.cos(y) + Rval13 * Math.sin(y) * Math.sin(y)) *
+        Sd;
+    if (sd < 0) {
+        return invalidValue;
+    } else {
+        sd = Math.sqrt(sd);
+    }
+    const Sn = (Rs * Math.cos(x) * Math.cos(y) - sd) /
+                 (Math.cos(y) * Math.cos(y) + Rval13 * Math.sin(y) * Math.sin(y));
+    const S1 = Rs - (Sn * Math.cos(x) * Math.cos(y));
+    const S2 = Sn * Math.sin(x) * Math.cos(y);
+    const S3 = -Sn * Math.sin(y);
+    const Sxy = Math.sqrt(S1 * S1 + S2 * S2);
+
+    let lon = RADTODEG * Math.atan2(S2, S1) + sub_lon;
+    let lat = RADTODEG * Math.atan(Rval13 * S3 / Sxy);
+
+    //(4) check longtitude
+    while (lon > 180.0) { lon = lon - 360.0; }
+    while (lon < -180.0) { lon = lon + 360.0; }
+
+    return {
+        lon: lon,
+        lat: lat
+    }
+};
 
 TileViewer.EVENT_POSITION_CHANGED = 'position_changed';
 TileViewer.EVENT_SCALE_INDEX_CHANGED = 'scale_index_changed';

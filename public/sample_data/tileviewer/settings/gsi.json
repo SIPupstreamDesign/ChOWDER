@@ -10,9 +10,9 @@
     "geodeticSystem": "standard",
     "initialPosition" : {
         "center": {
-            "relative": {
-                "left": 0.88,
-                "top": 0.3888
+            "degrees": {
+                "lon": 139.69167,
+                "lat": 35.68944
             }
         }
     }
