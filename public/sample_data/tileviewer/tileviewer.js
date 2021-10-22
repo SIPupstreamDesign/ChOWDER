@@ -962,7 +962,7 @@ class TileViewer {
                             } else if (this.options.geodeticSystem === "himawari8.fd") {
                                 coord = TileViewer.convertHimawariFDLonLatToCameraCoord(lonLat);
                             } else if (this.options.geodeticSystem === "himawari8.jp") {
-//TODO
+                                coord = TileViewer.convertHimawariJPLonLatToCameraCoord(lonLat);
                             }
                             if (coord.x !== null && coord.y !== null) {
                                 this.baseScaleCamera.x = Math.max(0.0, Math.min(1.0, coord.x)) - cameraW / 2;
@@ -1566,6 +1566,11 @@ TileViewer.convertStandardLonLatToCameraCoord = (lonLat) => {
     return { x : x, y : 1.0 - (y + 1) / 2 };
 };
 
+/**
+ * カメラ座標をメルカトル座標系における経度緯度に変換して返す
+ * @param {*} coord { x: .., y : .. }の形式でカメラ座標値. 
+ * @returns 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
+ */
 TileViewer.convertCameraCoordToStandardLonLat = (coord) => {
     let x = coord.x * 2 - 1;  // -1 ~ +1
     let y = coord.y * 2 - 1;  // -1 ~ +1
@@ -1590,6 +1595,12 @@ const LFAC = 20466275;
 const CFAC = 20466275;
 const Sd = 1737122264;
 
+/**
+ * ひまわり8号 フルディスクを想定した緯度経度座標を、カメラ座標に変換して返す
+ * @param {*} lonLat 
+ * @returns カメラ座標 { x: .. , y : .. }の形式
+ * x, y値は、0~1 であるが、フルディスクに収まらない緯度経度の場合はnullとなる
+ */
 TileViewer.convertHimawariFDLonLatToCameraCoord = (lonLat) => {
 
     let lon = lonLat.lon;
@@ -1661,6 +1672,12 @@ TileViewer.convertHimawariFDLonLatToCameraCoord = (lonLat) => {
     };
 };
 
+/**
+ * カメラ座標を、ひまわり8号 フルディスクを想定した緯度経度座標に変換して返す
+ * @param {*} coord 
+ * @returns 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
+ * lon, lat値は、無効である場合nullが入る
+ */
 TileViewer.convertCameraCoordToHimawariFDLonLat = (coord) => {
     // invalid value
     const invalidValue = {
@@ -1728,6 +1745,47 @@ TileViewer.convertCameraCoordToHimawariFDLonLat = (coord) => {
         lon: lon,
         lat: lat
     }
+};
+
+/**
+ * ひまわり8号 日本域を想定した緯度経度座標を、カメラ座標に変換して返す
+ * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
+ * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
+ * 投影方法：緯度経度座標、測地系はWGS84に準拠 
+ * @param {*} lonLat 
+ * @returns カメラ座標 { x: .. , y : .. }の形式
+ * x, y値は、0~1 であるが、日本域に収まらない緯度経度の場合は0未満または1より大きい値となる
+ */
+TileViewer.convertHimawariJPLonLatToCameraCoord = (lonLat) => {
+    let lon = lonLat.lon;
+    let lat = lonLat.lat;
+    while (lon > 180.0) { lon -= 360.0; }
+    while (lon < -180.0) { lon += 360.0; }
+    const x = (lon - 119.0) / (152.0 - 119.0);
+    const y = (1 - (lat -  21.5) / ( 48.5 -  21.5));
+    return {
+        x : x,
+        y : y
+    }
+};
+
+/**
+ * カメラ座標を、ひまわり8号 日本域を想定した緯度経度に変換して返す
+ * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
+ * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
+ * 投影方法：緯度経度座標、測地系はWGS84に準拠 
+ * @param {*} lonLat 
+ * @returns カメラ座標 { lon: .. , lat : .. }の形式
+ * lon, lat値は、無効である場合nullが入る
+ */
+
+TileViewer.convertHimawariJPCameraCoordToLonLat = (coord) => {
+    const lon = coord.x * (152.0 - 119.0) + 119.0;
+    const lat = (1 - coord.y) * (48.5 - 21.5) + 21.5;
+    return {
+        lon : (lon < 119 || lon > 152) ? null : lon,
+        lat : (lat < 21.5 || lat > 48.5) ? null : lat
+    };
 };
 
 TileViewer.EVENT_POSITION_CHANGED = 'position_changed';
