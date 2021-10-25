@@ -342,6 +342,23 @@ class Store extends EventEmitter {
         return canvas.toDataURL("image/jpeg");
     }
 
+    generateThumbnail(image, id) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 256;
+        canvas.height = 256 * (image.naturalHeight / image.naturalWidth);
+        ctx.drawImage(image, 0, 0);
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+        ctx.fillStyle = "black";
+        ctx.font = "40px sans-serif";
+        ctx.fillText("TileViewer", 10, 50);
+        ctx.font = "30px sans-serif";
+        ctx.fillText("ID:", 10, 100);
+        ctx.fillText(id, 60, 100);
+        return canvas.toDataURL("image/jpeg");
+    }
+
     initLayerDataList() {
         this.layerDataList = [];
         const options = this.instance.getOptions();
@@ -428,12 +445,7 @@ class Store extends EventEmitter {
             const image = new Image();
             image.crossOrigin = 'anonymous';
             image.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 256;
-                canvas.height = 256 * (image.naturalHeight / image.naturalWidth);
-                ctx.drawImage(image, 0, 0);
-                thumbnailBase64 = canvas.toDataURL("image/jpeg");
+                thumbnailBase64 = this.generateThumbnail(image, id);
                 this.iframeConnector.send(TileViewerCommand.AddContent, {
                     id : id,
                     thumbnail: thumbnailBase64,
