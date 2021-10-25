@@ -1,3 +1,5 @@
+
+/** TileViewer */
 class TileViewer {
     constructor(viewerElem) {
         // TileViewerエレメント
@@ -632,10 +634,8 @@ class TileViewer {
         }
     }
 
-    /**
-     * タイルのキャッシュを削除する
-     * @param {*} mapIndex null以外が指定された場合は、特定のmapIndexのキャッシュのみ削除する
-     */
+    // タイルのキャッシュを削除する
+    // @param {Integer} mapIndex null以外が指定された場合は、特定のmapIndexのキャッシュのみ削除する
     _clearCache(mapIndex = null) {
         const rootElem = this._getRootElem();
         let tileElements = rootElem.children;
@@ -781,12 +781,10 @@ class TileViewer {
         }
     }
 
-    /**
-     * ある任意のピボット座標を中心とした、transformScaleによる拡縮を行う。
-     * @param {*} scale 新たに設定するtransformScale
-     * @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
-     * @param {*} withDispatch 変更イベントを発火するかどうか
-     */
+    // ある任意のピボット座標を中心とした、transformScaleによる拡縮を行う。
+    // @param {*} scale 新たに設定するtransformScale
+    // @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
+    // @param {*} withDispatch 変更イベントを発火するかどうか
     async _setTransformScaleWithPivot(scale, pivotXY) {
         this._withUpdate(() => {
             this._disableUpdate();
@@ -834,15 +832,14 @@ class TileViewer {
         return result;
     }
 
-    /**
-     * 指定したfuncを実行し、最後にupdate()を行う。
-     * updateFlagがfalseの場合はupdate()は行わない。
-     * func内で、さらに_withUpdate()がネストして使用されていた場合、
-     * 最初の_withUpdate()のupdate()のみ実行される。
-     * 非同期で複数個所から同じタイミングで呼んだ場合は、それらのうち最も最初のupdate()のみ成功する。
-     * @param {*} func 
-     * @param {*} updateFlag 
-     */
+    
+    // 指定したfuncを実行し、最後にupdate()を行う。
+    // updateFlagがfalseの場合はupdate()は行わない。
+    // func内で、さらに_withUpdate()がネストして使用されていた場合、
+    // 最初の_withUpdate()のupdate()のみ実行される。
+    // 非同期で複数個所から同じタイミングで呼んだ場合は、それらのうち最も最初のupdate()のみ成功する。
+    // @param {*} func 
+    // @param {*} updateFlag 
      async _withUpdate(func, updateFlag = true) {
         const preUpdate = this.isDisableUpdate;
         try {
@@ -1062,8 +1059,8 @@ class TileViewer {
 
     /**
      * ズームインする。
-     * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
-     * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
+     * @param {Boolean} onlyLevel レベルのみ変更する場合はtrueとする
+     * @param {Object} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
      */
      async zoomIn(onlyLevel = false, pixelPos = null) {
@@ -1090,8 +1087,8 @@ class TileViewer {
 
     /**
      * ズームアウトする。
-     * @param {*} onlyLevel レベルのみ変更する場合はtrueとする
-     * @param {*} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
+     * @param {Boolean} onlyLevel レベルのみ変更する場合はtrueとする
+     * @param {Object} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
      */
     async zoomOut(onlyLevel = false, pixelPos = null) {
@@ -1122,6 +1119,7 @@ class TileViewer {
      * 左上(0,0), 右下(1,1)としたときの
      * 実際に表示する領域[left, top, right, bottom].
      * この領域外のタイルはカリングされる
+     * @param {Array} viewport [left, top, right, bottom] の形式のViewport
      */
     async setViewport(viewport) {
         this.viewport = JSON.parse(JSON.stringify(viewport));
@@ -1206,9 +1204,9 @@ class TileViewer {
      * himawari8.jp及びhimawari8.fdでは、予め用意されたscale設定を返す
      * himawari8.jp及びhimawari8.fdで、urlにcoastが含まれている場合、
      * 予め用意された海岸線用のscale設定を返す
-     * @param {*} mapParams 
-     * @param {*} geodeticSystem 
-     * @returns 
+     * @param {Object} mapParams options.maps内に記載されている1つのマップに対応したObject
+     * @param {String} geodeticSystem 測地系の定義文字列
+     * @returns scale設定
      */
     generateScales(mapParams, geodeticSystem) {
         if (mapParams.hasOwnProperty('scales')) {
@@ -1343,7 +1341,7 @@ class TileViewer {
     /**
      * 背景画像に対するopacityプロパティを設定し、更新する.
      * @param {*} opacity  0.0~1.0
-     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setBackgroundOpacity(opacity, withUpdate = true) {
         this.options.backgroundOpacity = opacity;
@@ -1364,8 +1362,8 @@ class TileViewer {
 
     /**
      * 背景画像に対するvisibleプロパティを設定し、更新する.
-     * @param {*} visible trueまたはfalse
-     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     * @param {Boolean} visible trueまたはfalse
+     * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setBackgroundVisible(visible, withUpdate = true) {
         this.options.backgroundVisible = visible;
@@ -1386,9 +1384,9 @@ class TileViewer {
 
     /**
      * 指定したmapに対して、opacityプロパティを設定し、更新する.
-     * @param {*} mapIndex this.options.mapsに対するインデックス
-     * @param {*} opacity  0.0~1.0
-     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     * @param {Integer} mapIndex this.options.mapsに対するインデックス
+     * @param {Number} opacity  0.0~1.0
+     * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setOpacity(mapIndex, opacity, withUpdate = true) {
         // console.log("setOpacity", mapIndex, opacity)
@@ -1401,7 +1399,7 @@ class TileViewer {
     /**
      * 指定したmapIndexのopacityプロパティを返す. 
      * mapIndexにopacityプロパティが存在しない場合はデフォルト値1が返る.
-     * @param {*} mapIndex this.options.mapsに対するインデックス
+     * @param {Integer} mapIndex this.options.mapsに対するインデックス
      * @returns 
      */
     getOpacity(mapIndex) {
@@ -1414,9 +1412,9 @@ class TileViewer {
 
     /**
      * 指定したmapに対して、visibleプロパティを設定し、更新する.
-     * @param {*} mapIndex this.options.mapsに対するインデックス
-     * @param {*} visible trueまたはfalse
-     * @param {*} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
+     * @param {Integer} mapIndex this.options.mapsに対するインデックス
+     * @param {Boolean} visible trueまたはfalse
+     * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setVisible(mapIndex, visible, withUpdate = true) {
         // console.log("setVisible", mapIndex, visible)
@@ -1429,7 +1427,7 @@ class TileViewer {
     /**
      * 指定したmapIndexのvisibleプロパティを返す. 
      * mapIndexにvisibleプロパティが存在しない場合はデフォルト値trueが返る.
-     * @param {*} mapIndex 
+     * @param {Integer} mapIndex 
      * @returns 
      */
     getVisible(mapIndex) {
@@ -1444,7 +1442,7 @@ class TileViewer {
 
     /**
      * 日時を設定し、タイルを更新する
-     * @param {*} date 任意のDateオブジェクト
+     * @param {Date} date 任意のDateオブジェクト
      */
     async setDate(date) {
         const preDate = this.date ? this.date : new Date(Date.now());
@@ -1511,8 +1509,8 @@ class TileViewer {
 
     /**
      * イベントリスナーを追加する
-     * @param {*} eventName イベント名。TileViewer.EVENT_～を参照
-     * @param {*} callback イベント発生時のコールバック関数
+     * @param {String} eventName イベント名。TileViewer.EVENT_～を参照
+     * @param {Function} callback イベント発生時のコールバック関数
      * @returns 追加に成功したかどうか
      */
     addEventListener(eventName, callback) {
@@ -1528,8 +1526,8 @@ class TileViewer {
 
     /**
      * イベントリスナーを削除する
-     * @param {*} eventName イベント名。TileViewer.EVENT_～を参照
-     * @param {*} callback イベントのコールバック関数。
+     * @param {String} eventName イベント名。TileViewer.EVENT_～を参照
+     * @param {Function} callback イベントのコールバック関数。
      *                     nullを指定した場合は対象イベント名のすべてのコールバックが削除される。
      * @returns 削除に成功したかどうか
      */
@@ -1551,7 +1549,7 @@ const RADTODEG = (180.0 / Math.PI);
 
 /**
  * メルカトル座標系における経度緯度をカメラ座標に変換して返す
- * @param {*} lonLat { lon: .., lat : .. }の形式でdegree値. 
+ * @param {Object} lonLat { lon: .., lat : .. }の形式でdegree値. 
  *                   経度は -180～180,  緯度は-90~90を想定.
  * @returns カメラ座標 { x: .. , y: .. }の形式で、xは0～1, 
  * y値については、0~1 であるが、メルカトル座標に収まらない緯度の場合は0未満または1より大きい値となる
@@ -1567,8 +1565,8 @@ TileViewer.convertStandardLonLatToCameraCoord = (lonLat) => {
 };
 
 /**
- * カメラ座標をメルカトル座標系における経度緯度に変換して返す
- * @param {*} coord { x: .., y : .. }の形式でカメラ座標値. 
+ * カメラ座標を、メルカトル座標系における経度緯度に変換して返す
+ * @param {Object} coord { x: .., y : .. }の形式でカメラ座標値. 
  * @returns 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
  */
 TileViewer.convertCameraCoordToStandardLonLat = (coord) => {
@@ -1597,7 +1595,7 @@ const Sd = 1737122264;
 
 /**
  * ひまわり8号 フルディスクを想定した緯度経度座標を、カメラ座標に変換して返す
- * @param {*} lonLat 
+ * @param {Object} lonLat 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
  * @returns カメラ座標 { x: .. , y : .. }の形式
  * x, y値は、0~1 であるが、フルディスクに収まらない緯度経度の場合はnullとなる
  */
@@ -1674,7 +1672,7 @@ TileViewer.convertHimawariFDLonLatToCameraCoord = (lonLat) => {
 
 /**
  * カメラ座標を、ひまわり8号 フルディスクを想定した緯度経度座標に変換して返す
- * @param {*} coord 
+ * @param {Object} coord カメラ座標 { x: .. , y : .. }の形式
  * @returns 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
  * lon, lat値は、無効である場合nullが入る
  */
@@ -1752,7 +1750,7 @@ TileViewer.convertCameraCoordToHimawariFDLonLat = (coord) => {
  * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
  * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
  * 投影方法：緯度経度座標、測地系はWGS84に準拠 
- * @param {*} lonLat 
+ * @param {Object} lonLat 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
  * @returns カメラ座標 { x: .. , y : .. }の形式
  * x, y値は、0~1 であるが、日本域に収まらない緯度経度の場合は0未満または1より大きい値となる
  */
@@ -1774,7 +1772,7 @@ TileViewer.convertHimawariJPLonLatToCameraCoord = (lonLat) => {
  * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
  * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
  * 投影方法：緯度経度座標、測地系はWGS84に準拠 
- * @param {*} lonLat 
+ * @param {Object} lonLat カメラ座標 { x: .. , y : .. }の形式
  * @returns カメラ座標 { lon: .. , lat : .. }の形式
  * lon, lat値は、無効である場合nullが入る
  */
