@@ -1400,7 +1400,7 @@ class TileViewer {
      * 指定したmapIndexのopacityプロパティを返す. 
      * mapIndexにopacityプロパティが存在しない場合はデフォルト値1が返る.
      * @param {Integer} mapIndex this.options.mapsに対するインデックス
-     * @returns 
+     * @returns  指定したmapIndexのopacityプロパティ
      */
     getOpacity(mapIndex) {
         if (mapIndex >= 0 && mapIndex < this.options.maps.length) {
@@ -1428,7 +1428,7 @@ class TileViewer {
      * 指定したmapIndexのvisibleプロパティを返す. 
      * mapIndexにvisibleプロパティが存在しない場合はデフォルト値trueが返る.
      * @param {Integer} mapIndex 
-     * @returns 
+     * @returns 指定したmapIndexのvisibleプロパティ
      */
     getVisible(mapIndex) {
         if (mapIndex >= 0 && mapIndex < this.options.maps.length) {
@@ -1549,9 +1549,9 @@ const RADTODEG = (180.0 / Math.PI);
 
 /**
  * メルカトル座標系における経度緯度をカメラ座標に変換して返す
- * @param {Object} lonLat { lon: .., lat : .. }の形式でdegree値. 
+ * @param {Object} lonLat \{ lon: , lat : \}の形式でdegree値. 
  *                   経度は -180～180,  緯度は-90~90を想定.
- * @returns カメラ座標 { x: .. , y: .. }の形式で、xは0～1, 
+ * @returns カメラ座標 \{ x:  , y:  \}の形式で、xは0～1, 
  * y値については、0~1 であるが、メルカトル座標に収まらない緯度の場合は0未満または1より大きい値となる
  */
 TileViewer.convertStandardLonLatToCameraCoord = (lonLat) => {
@@ -1566,8 +1566,8 @@ TileViewer.convertStandardLonLatToCameraCoord = (lonLat) => {
 
 /**
  * カメラ座標を、メルカトル座標系における経度緯度に変換して返す
- * @param {Object} coord { x: .., y : .. }の形式でカメラ座標値. 
- * @returns 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
+ * @param {Object} coord \{ x:  , y:  \}の形式でカメラ座標値. 
+ * @returns 経度緯度\{ lon: , lat : \}の形式でdegree値. 
  */
 TileViewer.convertCameraCoordToStandardLonLat = (coord) => {
     let x = coord.x * 2 - 1;  // -1 ~ +1
@@ -1595,8 +1595,8 @@ const Sd = 1737122264;
 
 /**
  * ひまわり8号 フルディスクを想定した緯度経度座標を、カメラ座標に変換して返す
- * @param {Object} lonLat 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
- * @returns カメラ座標 { x: .. , y : .. }の形式
+ * @param {Object} lonLat 経度緯度\{ lon: , lat : \}の形式でdegree値. 
+ * @returns カメラ座標 \{ x:  , y:  \}の形式
  * x, y値は、0~1 であるが、フルディスクに収まらない緯度経度の場合はnullとなる
  */
 TileViewer.convertHimawariFDLonLatToCameraCoord = (lonLat) => {
@@ -1672,8 +1672,8 @@ TileViewer.convertHimawariFDLonLatToCameraCoord = (lonLat) => {
 
 /**
  * カメラ座標を、ひまわり8号 フルディスクを想定した緯度経度座標に変換して返す
- * @param {Object} coord カメラ座標 { x: .. , y : .. }の形式
- * @returns 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
+ * @param {Object} coord カメラ座標 \{ x:  , y:  \}の形式
+ * @returns 経度緯度\{ lon: , lat : \}の形式でdegree値. 
  * lon, lat値は、無効である場合nullが入る
  */
 TileViewer.convertCameraCoordToHimawariFDLonLat = (coord) => {
@@ -1750,8 +1750,8 @@ TileViewer.convertCameraCoordToHimawariFDLonLat = (coord) => {
  * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
  * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
  * 投影方法：緯度経度座標、測地系はWGS84に準拠 
- * @param {Object} lonLat 経度緯度{ lon: .., lat : .. }の形式でdegree値. 
- * @returns カメラ座標 { x: .. , y : .. }の形式
+ * @param {Object} lonLat 経度緯度\{ lon: , lat : \}}の形式でdegree値. 
+ * @returns カメラ座標 \{ x:  , y:  \}の形式
  * x, y値は、0~1 であるが、日本域に収まらない緯度経度の場合は0未満または1より大きい値となる
  */
 TileViewer.convertHimawariJPLonLatToCameraCoord = (lonLat) => {
@@ -1772,8 +1772,8 @@ TileViewer.convertHimawariJPLonLatToCameraCoord = (lonLat) => {
  * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
  * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
  * 投影方法：緯度経度座標、測地系はWGS84に準拠 
- * @param {Object} lonLat カメラ座標 { x: .. , y : .. }の形式
- * @returns カメラ座標 { lon: .. , lat : .. }の形式
+ * @param {Object} lonLat カメラ座標 \{ x:  , y:  \}の形式
+ * @returns カメラ座標 \{ lon: , lat : \}の形式
  * lon, lat値は、無効である場合nullが入る
  */
 
