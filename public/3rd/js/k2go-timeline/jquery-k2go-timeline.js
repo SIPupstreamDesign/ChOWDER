@@ -922,9 +922,13 @@
         }
         else
         {
-          _moveBar  ($main.data("options.k2goTimeline").speed / (1000 / $main.data("options.k2goTimeline").fps) * -1);
-          _setLabel ();
-          _moveRange();
+          if (typeof pOptions.wait == "function" && pOptions.wait()) {
+            // wait for permission
+          } else {
+            _moveBar  ($main.data("options.k2goTimeline").speed / (1000 / $main.data("options.k2goTimeline").fps) * -1);
+            _setLabel ();
+            _moveRange();
+          }
           setTimeout(_loop, $main.data("options.k2goTimeline").fps);
         }
       }

@@ -178,7 +178,7 @@ function initTimelineTemplate(options) {
     });
 }
 
-function initTimelineTemplateEvents() {
+function initTimelineTemplateEvents(options) {
     /******************************************************************************/
     /* window.resize                                                              */
     /******************************************************************************/
@@ -342,7 +342,7 @@ function initTimelineTemplateEvents() {
                     if ($Env.speed > -1 || $Env.speed < -5) $Env.speed = -1;
                 }
 
-                startTimeline();
+                startTimeline(options);
                 $("#lockWindow").removeClass("show");
             }
             /*-----* stop *---------------------------------------------------------------*/
@@ -354,7 +354,7 @@ function initTimelineTemplateEvents() {
             else if ($this.attr("id") == "button_loop") {
                 $this.toggleClass("active");
                 $Env.loop = $this.hasClass("active");
-                if (flgStarting) startTimeline();
+                if (flgStarting) startTimeline(options);
                 $("#lockWindow").removeClass("show");
             }
             /*-----* fwd or back *--------------------------------------------------------*/
@@ -398,7 +398,7 @@ function initTimelineTemplateEvents() {
                 $("#timeline").k2goTimeline("create", {
                     timeInfo: objTimeInfo,
                     callback: function(pTimeInfo) {
-                        if (flgStarting) startTimeline();
+                        if (flgStarting) startTimeline(options);
                         $Env.creating = false;
                         $("#lockWindow").removeClass("show");
                     }

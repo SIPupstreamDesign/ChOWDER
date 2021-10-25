@@ -394,9 +394,13 @@ class GUI extends EventEmitter {
             },
             rangeMoveEnd: (timeInfo) => {
                 this.action.changeTimelineRangeBar(timeInfo);
+            },
+        });
+        TimelineTemplateMain.initTimelineTemplateEvents({
+            wait : () => {
+                return this.store.isLoadingTiles(); // 読み込み中ならtrue(= waiting)
             }
         });
-        TimelineTemplateMain.initTimelineTemplateEvents();
         
         // Syncボタン
         this.timelineSyncButton = new Button();

@@ -125,10 +125,11 @@ function adjustRangeBar()
     }
   }, 1);
 }
+
 /******************************************************************************/
 /* startTimeline                                                              */
 /******************************************************************************/
-function startTimeline()
+function startTimeline(options)
 {
   $Env.starting = true;
 
@@ -157,6 +158,7 @@ function startTimeline()
     fps   : 10,
     speed : $Env.speed * 30,
     loop  : $Env.loop,
+    wait : options.hasOwnProperty('wait') ? options.wait : null,
     stop  : function()
     {
       $("#button_play"             ).removeClass("active");

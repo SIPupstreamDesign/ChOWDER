@@ -503,6 +503,12 @@ class Store extends EventEmitter {
             }
         });
 
+        this.instance.addEventListener(TileViewer.EVENT_LOADING_STATUS_CHANGED, (status) => {
+            this.iframeConnector.send(TileViewerCommand.LoadingStatusChanged, {
+                status: status
+            });
+        });
+
         // リサイズの送信
         const debounceResize = (() => {
             const interval = 500;

@@ -37,7 +37,9 @@ const TileViewerCommand = {
     // tileviewer側からのレイヤー初期化完了通知
     LayersInitialized: "LayersInitialized",
     // Viewerのグローバルパラメータの変更
-    UpdateViewerParam : "UpdateViewerParam"
+    UpdateViewerParam : "UpdateViewerParam",
+    // 読み込み状況が更新された（タイル全部読み込み完了したなど）
+    LoadingStatusChanged : "LoadingStatusChanged"
 };
 
 export default TileViewerCommand;

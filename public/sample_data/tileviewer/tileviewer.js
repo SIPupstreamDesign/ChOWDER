@@ -72,6 +72,12 @@ class TileViewer {
         // 更新時のタイムアウト処理用時間デフォルト値
         // options.timeoutに値があればそちらを使用する
         this.timeout = 0;
+        // 時刻変更時のタイムアウト処理用時間デフォルト値
+        // options.timeout_on_setting_dateに値があればそちらを使用する
+        this.timeout_on_setting_date = 1000;
+        // timeout_on_setting_dateを時刻変更時のみに適用するためのフラグ
+        this.isSettingDate = false;
+
         this.updateCancelFuncs = [];
 
         // addEventListenerで登録したコールバックを保持
@@ -79,6 +85,8 @@ class TileViewer {
 
         // update()の内部処理を行うかどうかのフラグ
         this.isDisableUpdate = false;
+
+        this.loadingStatus = "loading"
     }
 
     _disableUpdate() {
@@ -415,9 +423,15 @@ class TileViewer {
         let resultTiles = [];
         const startIndex = this.options.hasOwnProperty('backgroundImage') ? 1 : 0;
         const mapParam = this.options.maps[mapIndex];
+        const s = this.options.maps[mapIndex].scales[tileInfo.scaleIndex];
         const tileClass = this._generateTileClass(mapIndex, tileInfo);
         if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
             let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
+            const url =  this._formatUrl(this.options.maps[mapIndex].url, tileInfo, s.count, s.zoom);
+            if (elem.src !== url) {
+                elem.style.display = "none";
+                elem.src = url;
+            }
             elem.style.left = tileInfo.x + "px";
             elem.style.top = tileInfo.y + "px";
             elem.style.width = tileInfo.w + "px";
@@ -456,7 +470,7 @@ class TileViewer {
             tile.style.display = this.getVisible(mapIndex) ? "inline" : "none";
             
             // visibilityにより複数タイルのロード待ち中非表示とする
-            tile.style.visibility = "hidden";
+            tile.style.display = "none";
 
             tile.onerror = () => {
                 tile.src = 'no_image.png';
@@ -464,7 +478,6 @@ class TileViewer {
             };
             //tile.style.border = "1px solid gray";
             tile.style.boxSizing = "border-box";
-            const s = this.options.maps[mapIndex].scales[tileInfo.scaleIndex];
             tile.src = this._formatUrl(this.options.maps[mapIndex].url, tileInfo, s.count, s.zoom);
             tile.style.zIndex = mapIndex + startIndex;
             this._getRootElem().appendChild(tile);
@@ -595,28 +608,39 @@ class TileViewer {
         }
 
         const waitForLoad = new Promise(resolve => {
+            let loadingHandle = null;
             updateCancelFuncs.push(() => {
+                if (loadingHandle) {
+                    clearInterval(loadingHandle);
+                }
                 resolve(false);
             });
             if (isTilesLoaded()) {
+                if (loadingHandle) {
+                    clearInterval(loadingHandle);
+                }
                 resolve(true);
                 return;
             }
-            let loadingHandle = setInterval(() => {
+            loadingHandle = setInterval(() => {
                 if (isTilesLoaded()) {
                     clearInterval(loadingHandle);
                     resolve(true);
                 }
             }, 50);
+            let timeout = this.options.hasOwnProperty('timeout') ? this.options.timeout : this.timeout;
+            if (this.isSettingDate) {
+                timeout = this.options.hasOwnProperty('timeout_on_setting_date') ? this.options.timeout_on_setting_date : this.timeout_on_setting_date;
+            }
             setTimeout(() => {
                 clearInterval(loadingHandle);
                 resolve(true);
-            }, this.options.hasOwnProperty('timeout') ? this.options.timeout : this.timeout);
+            }, timeout);
         });
 
         if (await waitForLoad) {
             for (let i = 0; i < loadedElems.length; ++i) {
-                loadedElems[i].style.visibility = "visible";
+                loadedElems[i].style.display = this.getVisible(mapIndex) ? "inline" : "none";
             }
 
             return loadedElems;
@@ -653,6 +677,10 @@ class TileViewer {
                 }
             }
         }
+        if (this.loadingStatus !== "loading") {
+            this.loadingStatus = "loading";
+            this._dispatchLoadingStatus();
+        }
     }
 
     // スケールインデックスの変更
@@ -688,6 +716,14 @@ class TileViewer {
     // オプションが変更された場合必ず呼ぶ
     _dispatchOptions() {
         const event = new CustomEvent(TileViewer.EVENT_OPTIONS_CHANGED, { detail: JSON.parse(JSON.stringify(this.options)) });
+        this.transformElem.dispatchEvent(event);
+    }
+
+    // 読み込み状況変更コールバックを発火させる
+    // 読み込み状況が変更された場合必ず呼ぶ
+    // @param status 読み込み状況を示す文字列
+    _dispatchLoadingStatus() {
+        const event = new CustomEvent(TileViewer.EVENT_LOADING_STATUS_CHANGED, { detail: this.loadingStatus });
         this.transformElem.dispatchEvent(event);
     }
 
@@ -860,6 +896,10 @@ class TileViewer {
         if (this.isDisableUpdate) {
             return;
         }
+        if (this.loadingStatus !== "loading") {
+            this.loadingStatus = "loading";
+            this._dispatchLoadingStatus();
+        }
         
         for (let i = 0; i < this.updateCancelFuncs.length; ++i) {
             this.updateCancelFuncs[i]();
@@ -886,6 +926,10 @@ class TileViewer {
             Array.prototype.push.apply(loadedElems, tiles);
         }
         this._cullTileElements(loadedElems);
+        if (this.loadingStatus !== "loaded") {
+            this.loadingStatus = "loaded";
+            this._dispatchLoadingStatus();
+        }
     }
 
     // this.optionを元に、新規に地図を読み込む
@@ -1449,20 +1493,26 @@ class TileViewer {
         const preDate = this.date ? this.date : new Date(Date.now());
         this.date = date;
         if (preDate.toJSON() !== date.toJSON()) {
-            await this._withUpdate(() => {
-                for (let i = 0; i < this.options.maps.length; ++i) {
-                    const map = this.options.maps[i];
-                    if (map.url.indexOf('%YYYY') >= 0 ||
-                        map.url.indexOf('%MM') >= 0 ||
-                        map.url.indexOf('%DD') >= 0 ||
-                        map.url.indexOf('%hh') >= 0 ||
-                        map.url.indexOf('%mm') >= 0 ||
-                        map.url.indexOf('%ss') >= 0) {
-    
-                        this._clearCache(i);
-                    }
+            let hasDateContent = false;
+            for (let i = 0; i < this.options.maps.length; ++i) {
+                const map = this.options.maps[i];
+                if (map.url.indexOf('%YYYY') >= 0 ||
+                    map.url.indexOf('%MM') >= 0 ||
+                    map.url.indexOf('%DD') >= 0 ||
+                    map.url.indexOf('%hh') >= 0 ||
+                    map.url.indexOf('%mm') >= 0 ||
+                    map.url.indexOf('%ss') >= 0) {
+                        hasDateContent = true;
+                        break;
                 }
-            });
+            }
+
+            if (hasDateContent) {
+                this.isSettingDate = true;
+                await this._withUpdate(() => {
+                });
+                this.isSettingDate = false;
+            }
         }
     }
 
@@ -1790,5 +1840,6 @@ TileViewer.convertHimawariJPCameraCoordToLonLat = (coord) => {
 TileViewer.EVENT_POSITION_CHANGED = 'position_changed';
 TileViewer.EVENT_SCALE_INDEX_CHANGED = 'scale_index_changed';
 TileViewer.EVENT_OPTIONS_CHANGED = 'options_changed';
+TileViewer.EVENT_LOADING_STATUS_CHANGED = 'loading_status_changed';
 
 window.TileViewer = TileViewer;

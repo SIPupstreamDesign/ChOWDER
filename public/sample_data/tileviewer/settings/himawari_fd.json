@@ -33,5 +33,7 @@
         "opacity": 1.0,
         "visible" : true
     }],
+    "timeout" : 0,
+    "timeout_on_setting_date" : 5000,
     "geodeticSystem": "himawari8.fd"
 }

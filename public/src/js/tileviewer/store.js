@@ -62,6 +62,10 @@ class Store extends EventEmitter {
         // タイムラインのRangeBar(オレンジのやつ)
         this.timelineRangeBar = null;
 
+        // タイル読み込み中かどうか
+        // 読み込み中だったらtrue
+        this.isLoadingTiles_ = false;
+
         // コンテンツ追加完了した.
         this.on(Store.EVENT_DONE_ADD_CONTENT, (err, reply, endCallback) => {
             let isInitialContent = (!this.metaData);
@@ -260,6 +264,12 @@ class Store extends EventEmitter {
                 }
                 this.metaData.layerList = JSON.stringify(layerList);
                 this.__updateMetaData(this.metaData,  (err, res) => {});
+            });
+
+            this.iframeConnector.on(TileViewerCommand.LoadingStatusChanged, (err, params) => {
+                const status = params.status;
+                const isLoading = (status === "loading") ? true : false;
+                this.isLoadingTiles_ = isLoading;
             });
 
             this.emit(Store.EVENT_DONE_IFRAME_CONNECT, null, this.iframeConnector);
@@ -606,6 +616,10 @@ class Store extends EventEmitter {
 
     getGlobalSetting() {
         return this.globalSetting;
+    }
+
+    isLoadingTiles() {
+        return this.isLoadingTiles_;
     }
 }
 
