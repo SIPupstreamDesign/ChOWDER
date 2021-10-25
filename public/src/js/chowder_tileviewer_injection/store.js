@@ -363,25 +363,33 @@ class Store extends EventEmitter {
         this.layerDataList = [];
         const options = this.instance.getOptions();
         if (options.hasOwnProperty('backgroundImage')) {
-            this.layerDataList.push({
+            let layerData = {
                 id: "BackgourndImage",
                 url: options.backgroundImage,
                 opacity: this.instance.getBackgroundOpacity(),
                 visible: this.instance.getBackgroundVisible(),
                 type: "image"
-            });
+            };
+            if (options.hasOwnProperty('attribution')) {
+                layerData.attribution = JSON.parse(JSON.stringify(options.attribution));
+            }
+            this.layerDataList.push(layerData);
         }
         for (let i = 0; i < options.maps.length; ++i) {
             const map = options.maps[i];
             const url = map.url;
-            this.layerDataList.push({
+            let layerData = {
                 id: "Layer_" + i,
                 url: url,
                 opacity: this.instance.getOpacity(i),
                 visible: this.instance.getVisible(i),
                 scales: JSON.parse(JSON.stringify(map.scales)),
                 type: options.geodeticSystem ? options.geodeticSystem : "not specified"
-            });
+            };
+            if (map.hasOwnProperty('attribution')) {
+                layerData.attribution = JSON.parse(JSON.stringify(map.attribution));
+            }
+            this.layerDataList.push(layerData);
         }
     }
 

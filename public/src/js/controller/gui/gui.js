@@ -1283,17 +1283,24 @@ class GUI extends EventEmitter {
                 copyrightElem.innerHTML = copyrightText;
                 copyrightElem.style.display = "inline";
                 copyrightElem.style.right = "0px";
-                copyrightElem.style.top = "0px";
+                if (metaData.display_time && String(metaData.display_time) === "true") {
+                    copyrightElem.style.top = "calc(1em + 20px)";
+                } else {
+                    copyrightElem.style.top = "0px";
+                }
                 copyrightElem.style.zIndex = elem.style.zIndex;
             } else {
                 copyrightElem = document.createElement("pre");
                 copyrightElem.id = "copyright:" + metaData.id;
                 copyrightElem.className = "copyright";
                 copyrightElem.innerHTML = copyrightText;
-                let rect = elem.getBoundingClientRect();
                 copyrightElem.style.display = "inline";
                 copyrightElem.style.right = "0px";
-                copyrightElem.style.top = "0px";
+                if (metaData.display_time && String(metaData.display_time) === "true") {
+                    copyrightElem.style.top = "calc(1em + 20px)";
+                } else {
+                    copyrightElem.style.top = "0px";
+                }
                 copyrightElem.style.position = "absolute";
                 copyrightElem.style.height = "auto";
                 copyrightElem.style.whiteSpace = "pre-line";

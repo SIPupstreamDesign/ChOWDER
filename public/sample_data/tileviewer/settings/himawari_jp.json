@@ -35,5 +35,9 @@
     }],
     "timeout" : 0,
     "timeout_on_setting_date" : 5000,
-    "geodeticSystem": "himawari8.jp"
+    "geodeticSystem": "himawari8.jp",
+    "attribution":  {
+        "name" : "提供：情報通信研究機構（NICT）",
+        "url" : "https://www.nict.go.jp/"
+    }
 }

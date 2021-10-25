@@ -5,6 +5,10 @@
         "zoom" : {
             "min" : 0,
             "max" : 18
+        },
+        "attribution":  {
+            "name" : "出典：国土地理院",
+            "url" : "https://maps.gsi.go.jp/development/ichiran.html"
         }
     }],
     "geodeticSystem": "standard",

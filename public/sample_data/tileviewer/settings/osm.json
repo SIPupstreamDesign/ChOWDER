@@ -5,6 +5,10 @@
         "zoom" : {
             "min" : 5,
             "max" : 18
+        },
+        "attribution":  {
+            "name" : "© OpenStreetMap contributors",
+            "url" : "https://www.openstreetmap.org/copyright"
         }
     }],
     "geodeticSystem" : "standard",

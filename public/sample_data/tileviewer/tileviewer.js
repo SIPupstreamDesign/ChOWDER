@@ -125,7 +125,7 @@ class TileViewer {
     // どのscaleIndexであっても全体画像サイズは必ずmapIndex=0のscaleIndex=0の全体画像サイズと同様となる。
     _getBaseSize() {
         // maps[0].scales[0]を基準とする
-        if (this.options.maps.length > 0) {
+        if (this.options.hasOwnProperty('maps') && this.options.maps.length > 0) {
             let res = {
                 width: this.options.maps[0].scales[0].width,
                 height: this.options.maps[0].scales[0].height,
@@ -912,20 +912,22 @@ class TileViewer {
         } else {
             this.backgroundImage.style.display = "none";
         }
-        let loadedElems = [];
         // 各mapのscalesに対して、それぞれ別のindexでアクセスし、
         // 各mapごとのtileエレメントのセット(tileMatrix)を作成して、画像で埋める
-        for (let i = 0; i < this.options.maps.length; ++i) {
-            const scaleIndex = this._getMapScaleIndex(i, this.currentScaleIndex);
-            const tileMatrix = this._prepareTileElements(i, scaleIndex);
-            const tiles = await this._fillTileElements(i, tileMatrix, this.updateCancelFuncs);
-            if (!tiles) {
-                // キャンセルされた
-                return;
+        if (this.options.hasOwnProperty('maps')) {
+            let loadedElems = [];
+            for (let i = 0; i < this.options.maps.length; ++i) {
+                const scaleIndex = this._getMapScaleIndex(i, this.currentScaleIndex);
+                const tileMatrix = this._prepareTileElements(i, scaleIndex);
+                const tiles = await this._fillTileElements(i, tileMatrix, this.updateCancelFuncs);
+                if (!tiles) {
+                    // キャンセルされた
+                    return;
+                }
+                Array.prototype.push.apply(loadedElems, tiles);
             }
-            Array.prototype.push.apply(loadedElems, tiles);
+            this._cullTileElements(loadedElems);
         }
-        this._cullTileElements(loadedElems);
         if (this.loadingStatus !== "loaded") {
             this.loadingStatus = "loaded";
             this._dispatchLoadingStatus();
