@@ -17,7 +17,7 @@ TileViewer
         * [.getCameraInfo()](#TileViewer+getCameraInfo) ⇒
         * [.setCameraInfo()](#TileViewer+setCameraInfo)
         * [.generateScales(mapParams, geodeticSystem)](#TileViewer+generateScales) ⇒
-        * [.setOptions(options)](#TileViewer+setOptions)
+        * [.setOptions(options, withUpdate)](#TileViewer+setOptions)
         * [.setBackgroundOpacity(opacity, withUpdate)](#TileViewer+setBackgroundOpacity)
         * [.getBackgroundOpacity()](#TileViewer+getBackgroundOpacity) ⇒
         * [.setBackgroundVisible(visible, withUpdate)](#TileViewer+setBackgroundVisible)
@@ -52,7 +52,7 @@ TileViewer
 
 | Param | Type | Description |
 | --- | --- | --- |
-| mv | <code>\*</code> | { x : ..., y : ... } の形式で, 移動させる量をピクセル数で指定する. |
+| mv | <code>Object</code> | { x : ..., y : ... } の形式で, 移動させる量をピクセル数で指定する. |
 
 <a name="TileViewer+setTransformScale"></a>
 
@@ -64,8 +64,8 @@ TileViewer
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| scale | <code>\*</code> |  | baseScaleCameraに対するスケール値 |
-| withDispatch | <code>\*</code> | <code>false</code> | trueを指定した場合スケール変更イベントを発火させる |
+| scale | <code>Number</code> |  | baseScaleCameraに対するスケール値 |
+| withDispatch | <code>Object</code> | <code>false</code> | trueを指定した場合スケール変更イベントを発火させる |
 
 <a name="TileViewer+zoomIn"></a>
 
@@ -141,14 +141,15 @@ zoom率やgeodeticSystemに応じたscale設定を作成するstandardでは, z
 
 <a name="TileViewer+setOptions"></a>
 
-### tileViewer.setOptions(options)
+### tileViewer.setOptions(options, withUpdate)
 TileViewerの全オプション情報の設定
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 
-| Param | Type |
-| --- | --- |
-| options | <code>\*</code> | 
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| options | <code>Object</code> |  |  |
+| withUpdate | <code>Boolean</code> | <code>true</code> | 更新するかどうか. falseを指定した場合は更新は行わない. |
 
 <a name="TileViewer+setBackgroundOpacity"></a>
 
@@ -159,7 +160,7 @@ TileViewerの全オプション情報の設定
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| opacity | <code>\*</code> |  | 0.0~1.0 |
+| opacity | <code>Number</code> |  | 0.0~1.0 |
 | withUpdate | <code>Boolean</code> | <code>true</code> | 更新するかどうか. falseを指定した場合は更新は行わない. |
 
 <a name="TileViewer+getBackgroundOpacity"></a>

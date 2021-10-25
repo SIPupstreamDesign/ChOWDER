@@ -990,7 +990,7 @@ class TileViewer {
 
     /**
      * カメラを移動させる
-     * @param {*} mv { x : ..., y : ... } の形式で, 移動させる量をピクセル数で指定する.
+     * @param {Object} mv { x : ..., y : ... } の形式で, 移動させる量をピクセル数で指定する.
      */
     async move(mv) {
         const screenImageSize = this._getScreenImageSize();
@@ -1006,8 +1006,8 @@ class TileViewer {
 
     /**
      * カメラのスケーリング値を変更する
-     * @param {*} scale baseScaleCameraに対するスケール値
-     * @param {*} withDispatch trueを指定した場合スケール変更イベントを発火させる
+     * @param {Number} scale baseScaleCameraに対するスケール値
+     * @param {Object} withDispatch trueを指定した場合スケール変更イベントを発火させる
      * @returns 成功したかどうか
      */
     async setTransformScale(scale, withDispatch = false) {
@@ -1274,7 +1274,8 @@ class TileViewer {
 
     /**
      * TileViewerの全オプション情報の設定
-     * @param {*} options 
+     * @param {Object} options 
+     * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setOptions(options, withUpdate = true) {
         console.log('setOptions', options)
@@ -1340,7 +1341,7 @@ class TileViewer {
     
     /**
      * 背景画像に対するopacityプロパティを設定し、更新する.
-     * @param {*} opacity  0.0~1.0
+     * @param {Number} opacity  0.0~1.0
      * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setBackgroundOpacity(opacity, withUpdate = true) {
