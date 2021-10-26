@@ -699,6 +699,19 @@ class GUI extends EventEmitter {
 
     /**
      * 
+     * @returns ビューワサイズ
+     */
+    getViewerSize() {
+        const viewer = document.getElementById('content');
+        const rect = viewer.getBoundingClientRect();
+        return {
+            width : rect.right - rect.left,
+            height: rect.bottom - rect.top
+        };
+    }
+
+    /**
+     * 
      * @returns メニューにて選択されたコンテンツの値(コンテンツURL)を返す.
      */
     getSelectedValueOnMenuContents() {
@@ -721,6 +734,12 @@ class GUI extends EventEmitter {
         if (selectValue.type === "user") {
             let metaData = selectValue.meta;
             this.action.loadUserData(metaData);
+            this.action.resizeContent({
+                size : {
+                    width :  this.getViewerSize().width,
+                    height :  this.getViewerSize().height,
+                }
+            })
         } else {
             let metaData = {
                 type: Constants.TypeTileViewer,

@@ -383,7 +383,7 @@ class Store extends EventEmitter {
                 url: url,
                 opacity: this.instance.getOpacity(i),
                 visible: this.instance.getVisible(i),
-                scales: JSON.parse(JSON.stringify(map.scales)),
+                zoom : map.hasOwnProperty('zoom') ? map.zoom : undefined,
                 type: options.geodeticSystem ? options.geodeticSystem : "not specified"
             };
             if (map.hasOwnProperty('attribution')) {

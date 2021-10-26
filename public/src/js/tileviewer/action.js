@@ -60,7 +60,7 @@ class Action extends EventEmitter {
      * コンテンツのリサイズ
      * @param {*} data
      * {
-     *    size : { w : , h : }
+     *    size : { width : , height : }
      * }
      */
     resizeContent(data) {

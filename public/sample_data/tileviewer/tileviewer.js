@@ -1825,7 +1825,7 @@ TileViewer.convertHimawariJPLonLatToCameraCoord = (lonLat) => {
  * https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
  * 日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
  * 投影方法：緯度経度座標、測地系はWGS84に準拠 
- * @param {Object} lonLat カメラ座標 \{ x:  , y:  \}の形式
+ * @param {Object} coord カメラ座標 \{ x:  , y:  \}の形式
  * @returns カメラ座標 \{ lon: , lat : \}の形式
  * lon, lat値は、無効である場合nullが入る
  */
