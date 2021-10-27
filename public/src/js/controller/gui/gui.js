@@ -1294,6 +1294,7 @@ class GUI extends EventEmitter {
                 copyrightElem.id = "copyright:" + metaData.id;
                 copyrightElem.className = "copyright";
                 copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.pointerEvents = "none";
                 copyrightElem.style.display = "inline";
                 copyrightElem.style.right = "0px";
                 if (metaData.display_time && String(metaData.display_time) === "true") {
