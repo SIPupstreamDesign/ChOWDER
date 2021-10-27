@@ -10,6 +10,31 @@ class RemoteCursorBuilder
         this.controllers = controllers;
         let ctrlid = res.data.controllerID;
 
+        let pos = Vscreen.transform(Vscreen.makeRect(Number(res.data.x), Number(res.data.y), 0, 0));
+
+        let lonLatText = "";
+        let arrow1ClassName = "before";
+        let arrow2ClassName = "after";
+        let hasLonLat = false;
+        if (res.data.hasOwnProperty('lonLat')) {
+            if (res.data.lonLat.lon !== null && res.data.lonLat.lat !== null) {
+                lonLatText += "\nLon: " + res.data.lonLat.lon.toFixed(10); 
+                lonLatText += "\nLat: " + res.data.lonLat.lat.toFixed(10);
+                if (res.data.hasOwnProperty('id')) {
+                    const meta = store.getMetaData(res.data.id);
+                    const scale = meta.orgWidth / parseFloat(meta.width);
+                    pos = Vscreen.transform(Vscreen.makeRect(
+                        Number(meta.posx) + Number(res.data.x) * Number(meta.width), 
+                        Number(meta.posy) + Number(res.data.y) * Number(meta.height),  0, 0));
+                
+                    arrow1ClassName += "_lonlat";
+                    arrow2ClassName += "_lonlat";
+                    hasLonLat = true;
+                }
+            } else {
+                return;
+            }
+        }
 
         if (!this.controllers.hasOwnProperty(ctrlid)) {
             ++this.controllers.connectionCount;
@@ -18,7 +43,6 @@ class RemoteCursorBuilder
                 lastActive: 0
             };
         }
-        let pos = Vscreen.transform(Vscreen.makeRect(Number(res.data.x), Number(res.data.y), 0, 0));
         this.elem = document.getElementById('hiddenCursor' + ctrlid);
         this.controllerID = document.getElementById('controllerID' + ctrlid);
         if (!this.elem) {
@@ -26,12 +50,15 @@ class RemoteCursorBuilder
             this.elem.id = 'hiddenCursor' + ctrlid;
             this.elem.className = 'hiddenCursor';
             this.elem.style.backgroundColor = 'transparent';
+            if (hasLonLat) {
+                this.elem.style.overflow = "visible";
+            }
             let before = document.createElement('div');
-            before.className = 'before';
+            before.className = arrow1ClassName;
             before.style.backgroundColor = res.data.rgb;
             this.elem.appendChild(before);
             let after = document.createElement('div');
-            after.className = 'after';
+            after.className = arrow2ClassName;
             after.style.backgroundColor = res.data.rgb;
             this.elem.appendChild(after);
 
@@ -41,16 +68,16 @@ class RemoteCursorBuilder
             this.controllerID.style.color = res.data.rgb;
             this.controllerID.style.position = "absolute"
             this.controllerID.style.fontSize = "20px";
-            this.controllerID.innerText = res.data.controllerID;
+            this.controllerID.innerText = res.data.controllerID + lonLatText;
             document.body.appendChild(this.controllerID);
 
             document.body.appendChild(this.elem);
             // console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
         } else {
-            this.controllerID.innerText = res.data.controllerID;
+            this.controllerID.innerText = res.data.controllerID + lonLatText;
             this.controllerID.style.color = res.data.rgb;
-            this.elem.getElementsByClassName('before')[0].style.backgroundColor = res.data.rgb;
-            this.elem.getElementsByClassName('after')[0].style.backgroundColor = res.data.rgb;
+            this.elem.getElementsByClassName(arrow1ClassName)[0].style.backgroundColor = res.data.rgb;
+            this.elem.getElementsByClassName(arrow2ClassName)[0].style.backgroundColor = res.data.rgb;
         }
         this.controllerID.style.textShadow =
                 "1px 1px 0 white,"
@@ -63,6 +90,9 @@ class RemoteCursorBuilder
         this.elem.style.top  = Math.round(pos.y) + 'px';
         this.controllerID.style.left = Math.round(pos.x) + 'px';
         this.controllerID.style.top  = Math.round(pos.y + Number(ratio * 100)) + 'px';
+        if (hasLonLat) {
+            this.controllerID.style.top  = Math.round(pos.y - 50 + Number(ratio * 100)) + 'px';
+        }
         this.controllers[ctrlid].lastActive = Date.now();
 
         this.store.on(Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY, (err, vd)=>{
@@ -71,9 +101,12 @@ class RemoteCursorBuilder
         });
     }
 
-    static releaseCursor(res,controllers){
+    static releaseCursor(res, store, controllers){
         this.controllers = controllers;
-        let ctrlid = res.controllerID;
+        let ctrlid = "";
+        if (res.hasOwnProperty('data') && res.data.hasOwnProperty('controllerID')) {
+            ctrlid = res.data.controllerID;
+        }
 
         if (this.controllers.hasOwnProperty(ctrlid)) {
             let elem = document.getElementById('hiddenCursor' + ctrlid);

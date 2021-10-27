@@ -795,15 +795,6 @@ class TileViewer {
         return scales.length - 1;
     }
 
-    _convertPixelPositionToCameraPosition(pixelPos) {
-        const rect = this.viewerElem.getBoundingClientRect();
-        const viewerSize = this._getViewerSize();
-        return {
-            x: this.camera.x + this.camera.w * ((pixelPos.x - rect.left) / viewerSize.w),
-            y: this.camera.y + this.camera.h * ((pixelPos.y - rect.top) / viewerSize.h),
-        }
-    }
-
     _setZoomLevel(isFixedScaleIndex, scaleIndex) {
         if (this.isFixedScaleIndex != isFixedScaleIndex || (isFixedScaleIndex && this.currentScaleIndex != scaleIndex)) {
             console.log("setZoomLevel", this.isFixedScaleIndex, isFixedScaleIndex, this.currentScaleIndex, scaleIndex);
@@ -1035,6 +1026,35 @@ class TileViewer {
     }
 
     /**
+     * ピクセル位置をカメラ位置に変換する
+     * @param {*} pixelPos ピクセル位置\{x: , y:  \}
+     * @returns カメラ位置\{x: , y:  \}
+     */
+    convertPixelPosToCameraCoord(pixelPos) {
+        const rect = this.viewerElem.getBoundingClientRect();
+        const viewerSize = this._getViewerSize();
+        return {
+            x: this.camera.x + this.camera.w * ((pixelPos.x - rect.left) / viewerSize.w),
+            y: this.camera.y + this.camera.h * ((pixelPos.y - rect.top) / viewerSize.h),
+        }
+    }
+
+    /**
+     * カメラ位置をgeodeticSystem値に応じたlon, latに変換して返す
+     * @param {*} coord カメラ位置\{x: , y:  \}
+     * @returns 緯度経度\{lon: , lat:  \}
+     */
+    convertCameraCoordToLonLat(coord) {
+        if (this.options.geodeticSystem === "himawari8.fd") {
+            return TileViewer.convertCameraCoordToHimawariFDLonLat(coord);
+        } else if (this.options.geodeticSystem === "himawari8.jp") {
+            return TileViewer.convertCameraCoordToHimawariJPLonLat(coord);
+        } else {
+            return TileViewer.convertCameraCoordToStandardLonLat(coord);
+        }
+    }
+
+    /**
      * カメラを移動させる
      * @param {Object} mv { x : ..., y : ... } の形式で, 移動させる量をピクセル数で指定する.
      */
@@ -1121,7 +1141,7 @@ class TileViewer {
                 this._setScaleIndex(this.currentScaleIndex + 1);
             } else if (pixelPos) {
                 // ピクセルでの位置を、カメラ座標系に変換
-                const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
+                const pivotXY = this.convertPixelPosToCameraCoord(pixelPos);
                 this._setTransformScaleWithPivot(this.transformScale + 0.5 * this._calcScalingFactor(), pivotXY);
             } else {
                 // 画面中心
@@ -1150,7 +1170,7 @@ class TileViewer {
                 this._setScaleIndex(this.currentScaleIndex - 1);
             } else if (pixelPos) {
                 // ピクセルでの位置を、カメラ座標系に変換
-                const pivotXY = this._convertPixelPositionToCameraPosition(pixelPos);
+                const pivotXY = this.convertPixelPosToCameraCoord(pixelPos);
                 this._setTransformScaleWithPivot(this.transformScale - 0.5 * this._calcScalingFactor(), pivotXY);
             } else {
                 this.setTransformScale(this.transformScale - 0.05 * this._calcScalingFactor(), true);
@@ -1828,7 +1848,7 @@ TileViewer.convertHimawariJPLonLatToCameraCoord = (lonLat) => {
  * lon, lat値は、無効である場合nullが入る
  */
 
-TileViewer.convertHimawariJPCameraCoordToLonLat = (coord) => {
+TileViewer.convertCameraCoordToHimawariJPLonLat = (coord) => {
     const lon = coord.x * (152.0 - 119.0) + 119.0;
     const lat = (1 - coord.y) * (48.5 - 21.5) + 21.5;
     return {

@@ -218,6 +218,24 @@ class Action extends EventEmitter {
     changeDisplayTimeVisible(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_TIME_LABEL_VISIBLE, null, data);
     }
+    
+    /**
+     * リモートカーソルの有効無効設定
+     * @param {*} data
+     * {
+     *   isEnable : 有効ならtrue
+     *   x: mousePos.x,
+     *   y: mousePos.y,
+     *   rgb: 色
+     * }
+     */
+     updateRemoteCursor(data) {
+        this.emit(Action.EVENT_UPDATE_REMOTE_CURSOR, null, data);
+    }
+
+    changeRemoteCursorColor(data) {
+        this.emit(Action.EVENT_CHANGE_REMOTE_CURSOR_COLOR, null, data);
+    }
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -241,5 +259,7 @@ Action.EVENT_CHANGE_TIMELINE_RANGE_BAR = "changeTimelineRangeBar";
 Action.EVENT_CHANGE_TIMELINE_SYNC = "changeTimelineSync";
 Action.EVENT_CHANGE_ZOOM_LABEL_VISIBLE = "changeZoomLabelVisible";
 Action.EVENT_CHANGE_DISPLAY_TIME_LABEL_VISIBLE = "changeDisplayTimeLabelVisible";
+Action.EVENT_UPDATE_REMOTE_CURSOR = "updateRemoteCursor";
+Action.EVENT_CHANGE_REMOTE_CURSOR_COLOR = "changeRemoteCursorColor";
 
 export default Action;

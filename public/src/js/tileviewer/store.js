@@ -16,12 +16,53 @@ import TileViewerUtil from '../common/tileviewer_util';
 
 const reconnectTimeout = 2000;
 
+function hsv(h, s, v){
+	if(s > 1 || v > 1){return;}
+	let th = h % 360;
+	let i = Math.floor(th / 60);
+	let f = th / 60 - i;
+	let m = v * (1 - s);
+	let n = v * (1 - s * f);
+	let k = v * (1 - s * (1 - f));
+	let color = new Array();
+	if(!s > 0 && !s < 0){
+		color.push(v, v, v);
+	} else {
+		let r = new Array(v, n, m, m, k, v);
+		let g = new Array(k, v, v, n, m, m);
+		let b = new Array(m, m, k, v, v, n);
+		color.push(r[i], g[i], b[i]);
+	}
+	return color;
+}
+
+function generateCursorColor() {
+	let i = Math.floor(Math.random() * 14);
+	let j, c;
+	// hsv は約 7 分割されるような循環
+	// 奇数回周目は v を半減させ視認性を上げる
+	if(i < 7){
+		j = 1.0;
+	}else{
+		j = 0.5;
+	}
+	c = hsv(49.21875 * i, 1.0, j);
+	if(c){
+		c[0] = Math.floor(c[0] * 255);
+		c[1] = Math.floor(c[1] * 255);
+		c[2] = Math.floor(c[2] * 255);
+		return 'rgb(' + (c.join(',')) + ')';
+	}
+	return 'rgb(255, 255, 255)';
+}
+
 class Store extends EventEmitter {
     constructor(action) {
         super();
         this.action = action;
         this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
         this.isInitialized_ = false;
+        this.cursorColor = generateCursorColor();
 
         this.initEvents();
 
@@ -94,6 +135,16 @@ class Store extends EventEmitter {
                 }, interval);
             };
         })();
+        this.debounceUpdateRemoteCursor = (() => {
+            const interval = 5;
+            let timer;
+            return (targetMetaData, callback) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    Connector.send(Command.UpdateMouseCursor, targetMetaData, callback)
+                }, interval);
+            };
+        })();
     }
 
     __updateMetaData(targetMetaData, callback) {
@@ -115,7 +166,11 @@ class Store extends EventEmitter {
         super.emit(...arguments);
     }
 
-    release() {}
+    release() {
+        let metaData = {};
+        metaData.controllerID = "TileViewer_" + this.metaData.id;
+        Connector.send(Command.UpdateMouseCursor, metaData, (err, reply) => {});
+    }
 
     initEvents() {
         for (let i in Action) {
@@ -279,6 +334,7 @@ class Store extends EventEmitter {
     _addContent(data) {
         let metaData = data.metaData;
         let contentData = data.contentData;
+        console.error('addContent', metaData)
         this.operation.addContent(metaData, contentData, () => {});
     }
 
@@ -572,6 +628,35 @@ class Store extends EventEmitter {
         }
     }
     
+    /**
+     * リモートカーソルの更新
+     * @param {*} data
+     */
+     _updateRemoteCursor(data) {
+        if (data.isEnable === false) {
+            data.controllerID = "TileViewer_" + this.metaData.id;
+            // OFFにする場合
+            Connector.send(Command.UpdateMouseCursor, data, (err, reply) => {});
+        } else {
+            this.iframeConnector.send(TileViewerCommand.GetLonLat, {}, (err, lonLat) => {
+                if (!err && data) {
+                    // ONの場合
+                    let metaData = data;
+                    delete metaData.isEnable;
+                    metaData.controllerID = "TileViewer_" + this.metaData.id;
+                    metaData.rgb = this.cursorColor;
+                    metaData.cursor_size = 100;
+                    metaData.lonLat = {
+                        lon : lonLat.lon, // 東経を＋とする
+                        lat : -lonLat.lat // 北緯を＋とする
+                    };
+                    //console.error("hoge", metaData);
+                    this.debounceUpdateRemoteCursor(metaData, (err, reply) => {});
+                }
+            });
+        }
+    }
+
     getTimelineStartTime() {
         return this.timelineStartTime;
     }
@@ -612,6 +697,10 @@ class Store extends EventEmitter {
             seconds + " " + offsetStr
 
         return ymdhms;
+    }
+
+    _changeRemoteCursorColor() {
+        this.cursorColor = generateCursorColor();
     }
 
     getGlobalSetting() {

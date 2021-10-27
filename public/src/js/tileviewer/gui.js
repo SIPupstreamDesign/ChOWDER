@@ -16,6 +16,7 @@ import ZoomControl from '../components/zoom_control'
 import GUIUtil from "./gui_util"
 import TimelineTemplateMain from "./timeline_template_main"
 import Button from '../components/button'
+import Input from '../components/input.js';
 
 // Base64からバイナリへ変換
 function toArrayBuffer(base64) {
@@ -35,6 +36,8 @@ class GUI extends EventEmitter {
         console.log("[gui]:constructor")
         this.store = store;
         this.action = action;
+
+        this.isShowRemoteCursor = false;
     }
 
     /**
@@ -52,6 +55,39 @@ class GUI extends EventEmitter {
             helpButton.href = "https://github.com/SIPupstreamDesign/ChOWDER/blob/master/UserGuide/jp/UserGuide.md";
             helpButton.target = "_blank";
         }
+
+        // Cursor
+	    let cursorCheck = new Input("checkbox");
+        let leftMenu = document.querySelector("#function_bar > .left");
+        cursorCheck.getDOM().style.width = "14px"
+        cursorCheck.getDOM().style.height = "14px"
+        cursorCheck.getDOM().style.position = "relative"
+        cursorCheck.getDOM().style.top = "3px"
+        cursorCheck.getDOM().style.cursor = "pointer";
+        leftMenu.appendChild(cursorCheck.getDOM());
+        cursorCheck.on('change', () => {
+            this.action.updateRemoteCursor({ isEnable : false });
+            this.isShowRemoteCursor = !this.isShowRemoteCursor;
+        });
+        
+	    let cursorLabel = document.createElement('a');
+        cursorLabel.className = "cursor_label";
+        cursorLabel.innerText = "Cursor";
+        cursorLabel.style.cursor = "pointer";
+        cursorLabel.style.paddingLeft = "5px";
+        leftMenu.appendChild(cursorLabel);
+        cursorLabel.addEventListener('click', () => {
+            cursorCheck.getDOM().click();
+        });
+
+	    let cursorColor = document.createElement('a');
+        cursorColor.innerText = 'ChagneCursorColor';
+        cursorColor.className = "change_cursor_color";
+        cursorColor.style.backgroundColor = "rgba(27, 30, 43, 0.8)";
+        cursorColor.addEventListener('click', () => {
+            this.action.changeRemoteCursorColor();
+        });
+        leftMenu.appendChild(cursorColor);
 
         //this.initWindowEvents();
         this.initLoginMenu();
@@ -792,6 +828,22 @@ class GUI extends EventEmitter {
             this.iframe.contentWindow.onmousedown = () => {
                 this.iframe.contentWindow.focus();
             };
+
+            this.iframe.contentWindow.addEventListener('mousemove', (ev) => {
+                if (this.isShowRemoteCursor)
+                {
+                    const clRect = this.iframe.getBoundingClientRect();
+                    if (ev.pageX !== undefined && ev.pageY !== undefined ) {
+                        // x, yには幅高さに対する割合を入れることとする
+                        this.action.updateRemoteCursor({
+                            id : this.store.getMetaData().id,
+                            x : ev.clientX / (clRect.right - clRect.left),
+                            y : ev.clientY / (clRect.bottom - clRect.top),
+                            isEnable : true,
+                        });
+                    }
+                }
+            });
 
             // iframe外のmouseupを拾ってiframeに投げる
             window.addEventListener('mouseup', this.onMouseUp);

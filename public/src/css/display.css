@@ -303,6 +303,27 @@ pre {
 	border-bottom : 1px solid white;
 }
 
+.hiddenCursor .before_lonlat {
+    background-color: white;
+    content: '　';
+    width: 5px;
+    height: 100px;
+	display: inline-block;
+    transform: rotate(0deg) translate(-2.5px,-50px);
+	border :  1px solid white;
+	opacity : 0.8;
+}
+.hiddenCursor .after_lonlat {
+    background-color: white;
+    content: '　';
+    width: 5px;
+    height: 100px;
+	display: inline-block;
+	transform: rotate(-90deg) translate(50px,-5px);
+	border : 1px solid white;
+	opacity : 0.8;
+}
+
 .change_id_text {
 	position : absolute;
 	top : 7px;

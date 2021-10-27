@@ -84,6 +84,20 @@ hr {
     top: -2px;
 }
 
+.change_cursor_color {
+    padding : 1px;
+    position : absolute;
+    left : 230px;
+    top : 24px;
+    color : #428bca;
+    cursor : pointer;
+}
+.change_cursor_color:hover {
+    color : rgba(255, 255, 255, 0.5);
+}
+.cursor_label:hover {
+    color : rgba(255, 255, 255, 0.5);
+}
 
 /* ------ LayerList / LayerDialog ---------------*/
 

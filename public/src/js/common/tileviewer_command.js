@@ -39,7 +39,9 @@ const TileViewerCommand = {
     // Viewerのグローバルパラメータの変更
     UpdateViewerParam : "UpdateViewerParam",
     // 読み込み状況が更新された（タイル全部読み込み完了したなど）
-    LoadingStatusChanged : "LoadingStatusChanged"
+    LoadingStatusChanged : "LoadingStatusChanged",
+    // マウス位置のLonLat取得
+    GetLonLat : "GetLonLat"
 };
 
 export default TileViewerCommand;

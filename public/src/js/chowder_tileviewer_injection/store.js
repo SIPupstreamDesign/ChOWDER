@@ -18,6 +18,7 @@ class Store extends EventEmitter {
         super();
         this.action = action;
         this.layerDataList = [];
+        this.lonLat = null;
 
         this.isResizing = false;
         this.initEvents();
@@ -109,6 +110,10 @@ class Store extends EventEmitter {
             this.updateViewerParam(param);
             // メッセージの返信
             this.iframeConnector.sendResponse(request);
+        });
+        this.iframeConnector.on(TileViewerCommand.GetLonLat, (err, param, request) => {
+            // メッセージの返信
+            this.iframeConnector.sendResponse(request, this.lonLat);
         });
     }
 
@@ -550,6 +555,16 @@ class Store extends EventEmitter {
         })();
         window.addEventListener('resize', () => {
             debounceResize();
+        });
+
+        this.viewerDiv.addEventListener('mousemove', (ev) => {
+            let pos = {
+                x : ev.pageX,
+                y : ev.pageY
+            };
+            const coord = this.instance.convertPixelPosToCameraCoord(pos);
+            const lonLat = this.instance.convertCameraCoordToLonLat(coord);
+            this.lonLat = lonLat;
         });
     }
 
