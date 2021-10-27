@@ -1492,29 +1492,27 @@ class TileViewer {
      * @param {Date} date 任意のDateオブジェクト
      */
     async setDate(date) {
-        const preDate = this.date ? this.date : new Date(Date.now());
         this.date = date;
-        if (preDate.toJSON() !== date.toJSON()) {
-            let hasDateContent = false;
-            for (let i = 0; i < this.options.maps.length; ++i) {
-                const map = this.options.maps[i];
-                if (map.url.indexOf('%YYYY') >= 0 ||
-                    map.url.indexOf('%MM') >= 0 ||
-                    map.url.indexOf('%DD') >= 0 ||
-                    map.url.indexOf('%hh') >= 0 ||
-                    map.url.indexOf('%mm') >= 0 ||
-                    map.url.indexOf('%ss') >= 0) {
-                        hasDateContent = true;
-                        break;
-                }
+    
+        let hasDateContent = false;
+        for (let i = 0; i < this.options.maps.length; ++i) {
+            const map = this.options.maps[i];
+            if (map.url.indexOf('%YYYY') >= 0 ||
+                map.url.indexOf('%MM') >= 0 ||
+                map.url.indexOf('%DD') >= 0 ||
+                map.url.indexOf('%hh') >= 0 ||
+                map.url.indexOf('%mm') >= 0 ||
+                map.url.indexOf('%ss') >= 0) {
+                    hasDateContent = true;
+                    break;
             }
+        }
 
-            if (hasDateContent) {
-                this.isSettingDate = true;
-                await this._withUpdate(() => {
-                });
-                this.isSettingDate = false;
-            }
+        if (hasDateContent) {
+            this.isSettingDate = true;
+            await this._withUpdate(() => {
+            });
+            this.isSettingDate = false;
         }
     }
 

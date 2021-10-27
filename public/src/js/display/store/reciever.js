@@ -269,7 +269,7 @@ class Receiver {
                             let metaData = metaDataDict[id];
                             if (metaData.type === Constants.TypeWebGL) {
                                 if (ITownsUtil.isTimelineSync(metaData, data.data.id, data.data.senderSync)) {
-                                    this.store.time[data.data.id] = new Date(data.data.time);
+                                    this.store.time[metaData.id] = new Date(data.data.time);
                                 }
                             }
                         }
@@ -286,7 +286,7 @@ class Receiver {
                             let metaData = metaDataDict[id];
                             if (metaData.type === Constants.TypeTileViewer) {
                                 if (TileViewerUtil.isTimelineSync(metaData, data.data.id, data.data.senderSync)) {
-                                    this.store.time[data.data.id] = new Date(data.data.time);
+                                    this.store.time[metaData.id] = new Date(data.data.time);
                                 }
                             }
                         }

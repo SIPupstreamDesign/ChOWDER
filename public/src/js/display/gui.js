@@ -753,6 +753,10 @@ class GUI extends EventEmitter {
                     this.updateTileViewerScale(connector, metaData, rect);
                     TileViewerUtil.updateCamera(connector, metaData);
                     TileViewerUtil.updateViewerParam(connector, metaData);
+                    if (this.store.getTime(metaData.id)) {
+                        const time = this.store.getTime(metaData.id);
+                        TileViewerUtil.updateTime(connector, metaData, time, {});
+                    }
 
                     connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
                         connector.on(TileViewerCommand.InitLayers, (err, data) => {
