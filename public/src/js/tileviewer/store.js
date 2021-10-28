@@ -126,9 +126,12 @@ class Store extends EventEmitter {
 
         // 一定間隔同じイベントが来なかったら実行するための関数
         this.debounceUpdateMetadata = (() => {
-            const interval = 100;
+            let interval = 100;
             let timer;
             return (targetMetaData, callback) => {
+                if (this.getGlobalSetting() && this.getGlobalSetting().hasOwnProperty('reduceInterval')) {
+                    interval = Number(this.getGlobalSetting().reduceInterval)
+                }
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     this.operation.updateMetadata(targetMetaData, callback);
@@ -650,7 +653,10 @@ class Store extends EventEmitter {
                         lon : lonLat.lon, // 東経を＋とする
                         lat : lonLat.lat  // 北緯を＋とする
                     };
-                    //console.error("hoge", metaData);
+                    if (this.getGlobalSetting() && this.getGlobalSetting().hasOwnProperty('tileviewerCursorSize')) {
+                        metaData.cursor_size = Number(this.getGlobalSetting().tileviewerCursorSize);
+                    }
+                    // console.error("remote cursor", metaData);
                     this.debounceUpdateRemoteCursor(metaData, (err, reply) => {});
                 }
             });

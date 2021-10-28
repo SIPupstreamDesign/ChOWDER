@@ -302,6 +302,9 @@ class GUI extends EventEmitter {
             const interval = 100;
             let timer;
             return (pTimeInfo, func = null) => {
+                if (this.store.getGlobalSetting() && this.store.getGlobalSetting().hasOwnProperty('reduceInterval')) {
+                    interval = Number(this.store.getGlobalSetting().reduceInterval)
+                }
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     this.action.changeTimeByTimeline({

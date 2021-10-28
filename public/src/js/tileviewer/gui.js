@@ -383,9 +383,12 @@ class GUI extends EventEmitter {
     initTimeline() {
         // 一定間隔同じイベントが来なかったら実行するための関数
         let debounceChangeTime = (() => {
-            const interval = 100;
+            let interval = 100;
             let timer;
             return (timeInfo, func = null) => {
+                if (this.store.getGlobalSetting() && this.store.getGlobalSetting().hasOwnProperty('reduceInterval')) {
+                    interval = Number(this.store.getGlobalSetting().reduceInterval)
+                }
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     this.action.changeTimeByTimeline({

@@ -12,5 +12,7 @@
     "SSLPort" : 443,
     "enableCORS" : true,
     "VRMode" : "cylinder",
-    "reduceUpdate": false
+    "reduceUpdate": false,
+    "reduceInterval" : 500,
+    "tileviewerCursorSize" : 100
 }
