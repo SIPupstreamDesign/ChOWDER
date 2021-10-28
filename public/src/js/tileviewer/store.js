@@ -648,7 +648,7 @@ class Store extends EventEmitter {
                     metaData.cursor_size = 100;
                     metaData.lonLat = {
                         lon : lonLat.lon, // 東経を＋とする
-                        lat : -lonLat.lat // 北緯を＋とする
+                        lat : lonLat.lat  // 北緯を＋とする
                     };
                     //console.error("hoge", metaData);
                     this.debounceUpdateRemoteCursor(metaData, (err, reply) => {});

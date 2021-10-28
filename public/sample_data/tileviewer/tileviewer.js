@@ -1041,6 +1041,7 @@ class TileViewer {
 
     /**
      * カメラ位置をgeodeticSystem値に応じたlon, latに変換して返す
+     * lon, latが存在しない場合はlon, latにnullを入れて返す
      * @param {*} coord カメラ位置\{x: , y:  \}
      * @returns 緯度経度\{lon: , lat:  \}
      */
@@ -1049,8 +1050,13 @@ class TileViewer {
             return TileViewer.convertCameraCoordToHimawariFDLonLat(coord);
         } else if (this.options.geodeticSystem === "himawari8.jp") {
             return TileViewer.convertCameraCoordToHimawariJPLonLat(coord);
-        } else {
+        } else if (this.options.geodeticSystem === "standard") {
             return TileViewer.convertCameraCoordToStandardLonLat(coord);
+        } else {
+            return {
+                lon : null,
+                lat : null
+            };
         }
     }
 
@@ -1644,7 +1650,7 @@ TileViewer.convertCameraCoordToStandardLonLat = (coord) => {
     let x = coord.x * 2 - 1;  // -1 ~ +1
     let y = coord.y * 2 - 1;  // -1 ~ +1
     const lon = x * 180;
-    const lat = Math.atan(Math.exp(y * Math.PI)) * 2 * RADTODEG - 90; 
+    const lat = -(Math.atan(Math.exp(y * Math.PI)) * 2 * RADTODEG - 90); 
     return { lon: lon, lat : lat };
 };
 
