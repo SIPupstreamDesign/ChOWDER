@@ -252,6 +252,9 @@ The server program reads the `server/setting.json` file while launching to confi
         "SSLPort" : 443,
         "enableCORS" : true,
         "VRMode" : 'cylinder'
+        "reduceUpdate": false,
+        "reduceInterval" : 500,
+        "tileviewerCursorSize" : 100
     }
 
 -   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
@@ -267,6 +270,9 @@ The server program reads the `server/setting.json` file while launching to confi
 -   `SSLPort` sets the https port. websocket connections(wss) use the same port, too.
 -   `enableCORS` sets whether CORS connections to chowder server is enabled or not. 
 -   `VRMode` sets the VR mode to use. Currently available values ​​are "plane" (plane view) or "cylinder" (curved surface view) or "360" (360 degree view).
+-   `reduceUpdate` Set true to reduce the frequency of issuing various update notifications from the Controller. The default is false.
+-   `reduceInterval` When `reduceUpdate` is true, specify the maximum waiting time in milliseconds when reducing the frequency of issuing update notifications, etc. The default value is 500.
+-   `tileviewerCursorSize` Set the cursor size as a relative value when using the RemoteCursor function in TileViewer. The default value is 100.
 
 Managing Administrative Users
 ---------------------------------------------------

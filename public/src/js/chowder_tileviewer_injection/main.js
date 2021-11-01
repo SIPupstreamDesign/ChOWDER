@@ -8,6 +8,7 @@ import Store from './store';
 /**
  * tileviewerを使ったwebアプリケーションをchowder対応するための関数
  * injectChOWDER(viewerDiv); と呼び出す
+ * @param instance TileViewerのinstance
  * @param viewerDiv viewerのdiv
  * @param timeCallback 時刻が変更されたとき呼び出される、function(time) {} 形式のコールバック関数
  */
