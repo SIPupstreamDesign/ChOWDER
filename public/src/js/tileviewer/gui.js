@@ -383,11 +383,14 @@ class GUI extends EventEmitter {
     initTimeline() {
         // 一定間隔同じイベントが来なかったら実行するための関数
         let debounceChangeTime = (() => {
-            let interval = 100;
+            let interval_ = 100;
             let timer;
-            return (timeInfo, func = null) => {
+            return (timeInfo, interval = null, func = null) => {
                 if (this.store.getGlobalSetting() && this.store.getGlobalSetting().hasOwnProperty('reduceInterval')) {
-                    interval = Number(this.store.getGlobalSetting().reduceInterval)
+                    interval_ = Number(this.store.getGlobalSetting().reduceInterval)
+                }
+                if (interval !== null) {
+                    interval_ = interval;
                 }
                 clearTimeout(timer);
                 timer = setTimeout(() => {
@@ -401,7 +404,7 @@ class GUI extends EventEmitter {
                     if (func) {
                         func();
                     }
-                }, interval);
+                }, interval_);
             };
         })();
 
@@ -414,20 +417,19 @@ class GUI extends EventEmitter {
             //minTime: this.store.getTimelineStartTime(), // 過去方向への表示可能範囲
             //maxTime: this.store.getTimelineEndTime(), // 未来方向への表示可能範囲
             timeChange: (timeInfo) => {
-                // console.error("timeChange", timeInfo);
-                debounceChangeTime(timeInfo, () => {});
+                debounceChangeTime(timeInfo, 100, () => {});
 
                 // timeInfo.  startTimeから左端の日時を取得
                 // timeInfo.    endTimeから右端の日時を取得
                 // timeInfo.currentTimeから摘み（ポインタ）の日時を取得
             },
             barMove: (timeInfo) => {
-                debounceChangeTime(timeInfo, () => {
+                debounceChangeTime(timeInfo, null, () => {
                     // console.error("barMove", this.store.getTimelineCurrentTimeString());
                 });
             },
             barMoveEnd: (timeInfo) => {
-                debounceChangeTime(timeInfo, () => {
+                debounceChangeTime(timeInfo, null, () => {
                     // console.error("barMoveEnd", this.store.getTimelineCurrentTimeString());
                 });
             },
