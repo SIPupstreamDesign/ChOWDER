@@ -762,8 +762,8 @@ chowder_injection関数を使用して初期化する必要がある.
 このときのディスプレイ/コントローラとコンテンツの関係は, iTownsAppの場合と同様に, 
 WebSocketによるサーバ間通信, 及び, EventTargetインタフェースによるiframe-html親ページ間での通信が行われる.
 
-TileViewerを使用した開発の詳細については,　別途DeveloperGuide_ForTileViewer.mdを参照してください.
-また, TileViewerのAPIについては, TileViewer_API.mdを, TileViewerの実装詳細に関しては, TileViewer_Dev.mdを参照してください。
+TileViewerを使用した開発の詳細については,　別途 DeveloperGuide_ForTileViewer.md (DevelperGuide For TileViewer)を参照してください.
+また, TileViewerのAPIについては, TileViewer_API.mdを, TileViewerの実装詳細に関しては, TileViewer_Dev.md (ChOWDER用TileViewer 実装詳細)を参照してください。
 
 動作環境について
 ========================================================================================
