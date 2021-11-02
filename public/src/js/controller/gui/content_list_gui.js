@@ -271,7 +271,7 @@ class ContentListGUI extends EventEmitter
 
 				divElem.style.height = "150px";
 				aspect = metaData.orgWidth / metaData.orgHeight;
-				let w = 150 * aspect;
+				let w = Math.min(150, 150 * aspect);
 				divElem.style.width = w + "px";
 
 				if (metaData.type === Constants.TypeTileImage) {
