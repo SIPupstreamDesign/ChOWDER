@@ -81,7 +81,7 @@ class GUI extends EventEmitter {
         });
 
 	    let cursorColor = document.createElement('a');
-        cursorColor.innerText = 'ChagneCursorColor';
+        cursorColor.innerText = 'ChangeCursorColor';
         cursorColor.className = "change_cursor_color";
         cursorColor.style.backgroundColor = "rgba(27, 30, 43, 0.8)";
         cursorColor.addEventListener('click', () => {
