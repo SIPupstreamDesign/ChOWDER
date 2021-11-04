@@ -132,6 +132,9 @@ function enableMouseEvents(viewer) {
     let isLeftDown = false;
     let isZoomDown = false;
 
+    let yMovingAverage = [null, null, null];
+    let yMovingAverageIndex = 0;
+
     document.onmousedown = (ev) => {
         if (ev.button === 1 || (ev.ctrlKey == true && ev.button === 0)) {
             isZoomDown = true;
@@ -142,6 +145,8 @@ function enableMouseEvents(viewer) {
             x: ev.clientX,
             y: ev.clientY
         }
+        yMovingAverage[0] = mouse.y;
+        yMovingAverageIndex = 1;
     };
 
     document.onmousemove = (ev) => {
@@ -157,10 +162,25 @@ function enableMouseEvents(viewer) {
             }
         }
         if (isZoomDown) {
-            if (Math.sign(ev.clientY - mouse.y) < 0) {
-                viewer.zoomIn();
-            } else {
-                viewer.zoomOut();
+            // 前回のマウス位置と、現在のマウスY座標の差が
+            // 3回連続プラスかマイナスになった場合に
+            // zoomInまたはzoomOutを行う
+            yMovingAverage[yMovingAverageIndex % 3] = Math.sign(ev.clientY - mouse.y);
+            ++yMovingAverageIndex;
+            if (yMovingAverageIndex > 2) {
+                let val = 0;
+                for (let i = 0; i < 3; ++i) {
+                    val += yMovingAverage[i];
+                }
+                if (val == -3) {
+                    viewer.zoomIn();
+                } else if (val === 3) {
+                    viewer.zoomOut();
+                }
+            }
+            mouse = {
+                x: ev.clientX,
+                y: ev.clientY
             }
         }
     };
@@ -168,6 +188,8 @@ function enableMouseEvents(viewer) {
     document.onmouseup = (ev) => {
         isLeftDown = false;
         isZoomDown = false;
+        yMovingAverage = [null, null, null];
+        yMovingAverageIndex = 0;
     };
 
     // ダブルクリックによるズーム
@@ -230,7 +252,6 @@ window.onload =  () => {
                 } else {
                     showDebugGUI(viewer);
                 }
-            
                 enableMouseEvents(viewer);
             });
     }
