@@ -1135,7 +1135,7 @@ class TileViewer {
      * @param {Object} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
      */
-     async zoomIn(onlyLevel = false, pixelPos = null) {
+     async zoomIn(onlyLevel = false, pixelPos = null, speed = 1.0) {
         // mapがない場合などはズーム無効
         if (!this._hasValidScales()) {
             return false;
@@ -1148,10 +1148,10 @@ class TileViewer {
             } else if (pixelPos) {
                 // ピクセルでの位置を、カメラ座標系に変換
                 const pivotXY = this.convertPixelPosToCameraCoord(pixelPos);
-                this._setTransformScaleWithPivot(this.transformScale + 0.5 * this._calcScalingFactor(), pivotXY);
+                this._setTransformScaleWithPivot(this.transformScale + 0.5 * this._calcScalingFactor() * speed, pivotXY);
             } else {
                 // 画面中心
-                this.setTransformScale(this.transformScale + 0.05 * this._calcScalingFactor(), true);
+                this.setTransformScale(this.transformScale + 0.05 * this._calcScalingFactor() * speed, true);
             }
         });
         return true;
@@ -1163,7 +1163,7 @@ class TileViewer {
      * @param {Object} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
      */
-    async zoomOut(onlyLevel = false, pixelPos = null) {
+    async zoomOut(onlyLevel = false, pixelPos = null, speed = 1.0) {
         // mapがない場合などはズーム無効
         if (!this._hasValidScales()) {
             return false;
@@ -1177,9 +1177,9 @@ class TileViewer {
             } else if (pixelPos) {
                 // ピクセルでの位置を、カメラ座標系に変換
                 const pivotXY = this.convertPixelPosToCameraCoord(pixelPos);
-                this._setTransformScaleWithPivot(this.transformScale - 0.5 * this._calcScalingFactor(), pivotXY);
+                this._setTransformScaleWithPivot(this.transformScale - 0.5 * this._calcScalingFactor() * speed, pivotXY);
             } else {
-                this.setTransformScale(this.transformScale - 0.05 * this._calcScalingFactor(), true);
+                this.setTransformScale(this.transformScale - 0.05 * this._calcScalingFactor() * speed, true);
             }
         });
         return true;

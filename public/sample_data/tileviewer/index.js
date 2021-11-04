@@ -231,6 +231,25 @@ function enableMouseEvents(viewer) {
             rightClickPos = null;
         }, 350);
     };
+
+    // ホイールイベント
+    let onWheel = (e) => {
+        if (!e) e = window.event; //for legacy IE
+        let delta = e.deltaY ? -(e.deltaY) : e.wheelDelta ? e.wheelDelta : -(e.detail);
+        if (delta < 0) {
+            //下にスクロールした場合の処理
+            viewer.zoomOut(false, { x: e.clientX, y: e.clientY }, 0.3);
+        } else if (delta > 0) {
+            //上にスクロールした場合の処理
+            viewer.zoomIn(false, { x: e.clientX, y: e.clientY }, 0.3);
+        }
+    };
+    let mousewheelevent = 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll';
+    try {
+        document.addEventListener(mousewheelevent, onWheel, false);
+    } catch (e) {
+        document.attachEvent("onmousewheel", onWheel); //for legacy IE
+    }
 }
 
 window.onload =  () => {
