@@ -11,8 +11,8 @@ TileViewer
         * [.convertCameraCoordToLonLat(coord)](#TileViewer+convertCameraCoordToLonLat) ⇒
         * [.move(mv)](#TileViewer+move)
         * [.setTransformScale(scale, withDispatch)](#TileViewer+setTransformScale) ⇒
-        * [.zoomIn(onlyLevel, pixelPos)](#TileViewer+zoomIn)
-        * [.zoomOut(onlyLevel, pixelPos)](#TileViewer+zoomOut)
+        * [.zoomIn(onlyLevel, pixelPos, speed)](#TileViewer+zoomIn)
+        * [.zoomOut(onlyLevel, pixelPos, speed)](#TileViewer+zoomOut)
         * [.setViewport(viewport)](#TileViewer+setViewport)
         * [.getViewport()](#TileViewer+getViewport) ⇒
         * [.getZoomLevel()](#TileViewer+getZoomLevel)
@@ -95,7 +95,7 @@ TileViewer
 
 <a name="TileViewer+zoomIn"></a>
 
-### tileViewer.zoomIn(onlyLevel, pixelPos)
+### tileViewer.zoomIn(onlyLevel, pixelPos, speed)
 ズームインする。
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
@@ -104,10 +104,11 @@ TileViewer
 | --- | --- | --- | --- |
 | onlyLevel | <code>Boolean</code> | <code>false</code> | レベルのみ変更する場合はtrueとする |
 | pixelPos | <code>Object</code> | <code></code> | 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)                     nullの場合は画面中心で拡縮を行う。 |
+| speed | <code>Number</code> | <code>1</code> | ズームアウト時の速度に乗算される係数. onlyLevel = falseの場合にのみ有効. デフォルトは1.0. |
 
 <a name="TileViewer+zoomOut"></a>
 
-### tileViewer.zoomOut(onlyLevel, pixelPos)
+### tileViewer.zoomOut(onlyLevel, pixelPos, speed)
 ズームアウトする。
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
@@ -116,6 +117,7 @@ TileViewer
 | --- | --- | --- | --- |
 | onlyLevel | <code>Boolean</code> | <code>false</code> | レベルのみ変更する場合はtrueとする |
 | pixelPos | <code>Object</code> | <code></code> | 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)                     nullの場合は画面中心で拡縮を行う。 |
+| speed | <code>Number</code> | <code>1</code> | ズームアウト時の速度に乗算される係数. onlyLevel = falseの場合にのみ有効. デフォルトは1.0. |
 
 <a name="TileViewer+setViewport"></a>
 

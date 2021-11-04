@@ -1134,6 +1134,7 @@ class TileViewer {
      * @param {Boolean} onlyLevel レベルのみ変更する場合はtrueとする
      * @param {Object} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
+     * @param {Number} speed ズームアウト時の速度に乗算される係数. onlyLevel = falseの場合にのみ有効. デフォルトは1.0.
      */
      async zoomIn(onlyLevel = false, pixelPos = null, speed = 1.0) {
         // mapがない場合などはズーム無効
@@ -1162,6 +1163,7 @@ class TileViewer {
      * @param {Boolean} onlyLevel レベルのみ変更する場合はtrueとする
      * @param {Object} pixelPos 拡縮の中心とする座標（viewerElem上でのx, y。単位：ピクセル数)
      *                     nullの場合は画面中心で拡縮を行う。
+     * @param {Number} speed ズームアウト時の速度に乗算される係数. onlyLevel = falseの場合にのみ有効. デフォルトは1.0.
      */
     async zoomOut(onlyLevel = false, pixelPos = null, speed = 1.0) {
         // mapがない場合などはズーム無効
