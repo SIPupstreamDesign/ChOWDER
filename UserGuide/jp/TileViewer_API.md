@@ -1,6 +1,4 @@
-<a name="TileViewer"></a>
-
-## TileViewer
+## TileViewer API Document
 TileViewer
 
 **Kind**: global class  
@@ -60,7 +58,8 @@ TileViewer
 <a name="TileViewer+convertCameraCoordToLonLat"></a>
 
 ### tileViewer.convertCameraCoordToLonLat(coord) ⇒
-カメラ位置をgeodeticSystem値に応じたlon, latに変換して返すlon, latが存在しない場合はlon, latにnullを入れて返す
+カメラ位置をgeodeticSystem値に応じたlon, latに変換して返す
+lon, latが存在しない場合はlon, latにnullを入れて返す
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 **Returns**: 緯度経度\{lon: , lat:  \}  
@@ -122,7 +121,11 @@ TileViewer
 <a name="TileViewer+setViewport"></a>
 
 ### tileViewer.setViewport(viewport)
-[left, top, right, bottom] の形式でViewportを設定するViewportは、現在のTileViewerの描画領域全体について左上(0,0), 右下(1,1)としたときの実際に表示する領域[left, top, right, bottom].この領域外のタイルはカリングされる
+[left, top, right, bottom] の形式でViewportを設定する
+Viewportは、現在のTileViewerの描画領域全体について
+左上(0,0), 右下(1,1)としたときの
+実際に表示する領域[left, top, right, bottom].
+この領域外のタイルはカリングされる
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 
@@ -138,26 +141,35 @@ TileViewer
 <a name="TileViewer+getZoomLevel"></a>
 
 ### tileViewer.getZoomLevel()
-ズームレベルがscalesに定義されている場合は、現在のズームレベルを返すズームレベルが定義されていない場合は, -1を返す
+ズームレベルがscalesに定義されている場合は、現在のズームレベルを返す
+ズームレベルが定義されていない場合は, -1を返す
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 <a name="TileViewer+getCameraInfo"></a>
 
 ### tileViewer.getCameraInfo() ⇒
-スケール等を含んだカメラ情報を返す。この値を取得し、setCameraInfoを呼ぶことで、見た目を完全に再現させることができる。ただし、ビューポートは別途取得する必要がある。
+スケール等を含んだカメラ情報を返す。
+この値を取得し、setCameraInfoを呼ぶことで、見た目を完全に再現させることができる。
+ただし、ビューポートは別途取得する必要がある。
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 **Returns**: スケールをすべて含んだカメラ情報  
 <a name="TileViewer+setCameraInfo"></a>
 
 ### tileViewer.setCameraInfo()
-スケール等含んだカメラ情報をセットする。getCameraInfoで得られた値を引数に入れることで、カメラ位置を復元できる。ただし、ビューポートは別途指定する必要がある。
+スケール等含んだカメラ情報をセットする。
+getCameraInfoで得られた値を引数に入れることで、カメラ位置を復元できる。
+ただし、ビューポートは別途指定する必要がある。
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 <a name="TileViewer+generateScales"></a>
 
 ### tileViewer.generateScales(mapParams, geodeticSystem) ⇒
-zoom率やgeodeticSystemに応じたscale設定を作成するstandardでは, zoom.minからzoom.maxまで、2の累乗で増えていくscale設定が作成されるhimawari8.jp及びhimawari8.fdでは、予め用意されたscale設定を返すhimawari8.jp及びhimawari8.fdで、urlにcoastが含まれている場合、予め用意された海岸線用のscale設定を返す
+zoom率やgeodeticSystemに応じたscale設定を作成する
+standardでは, zoom.minからzoom.maxまで、2の累乗で増えていくscale設定が作成される
+himawari8.jp及びhimawari8.fdでは、予め用意されたscale設定を返す
+himawari8.jp及びhimawari8.fdで、urlにcoastが含まれている場合、
+予め用意された海岸線用のscale設定を返す
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 **Returns**: scale設定  
@@ -229,7 +241,8 @@ TileViewerの全オプション情報の設定
 <a name="TileViewer+getOpacity"></a>
 
 ### tileViewer.getOpacity(mapIndex) ⇒
-指定したmapIndexのopacityプロパティを返す. mapIndexにopacityプロパティが存在しない場合はデフォルト値1が返る.
+指定したmapIndexのopacityプロパティを返す. 
+mapIndexにopacityプロパティが存在しない場合はデフォルト値1が返る.
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 **Returns**: 指定したmapIndexのopacityプロパティ  
@@ -254,7 +267,8 @@ TileViewerの全オプション情報の設定
 <a name="TileViewer+getVisible"></a>
 
 ### tileViewer.getVisible(mapIndex) ⇒
-指定したmapIndexのvisibleプロパティを返す. mapIndexにvisibleプロパティが存在しない場合はデフォルト値trueが返る.
+指定したmapIndexのvisibleプロパティを返す. 
+mapIndexにvisibleプロパティが存在しない場合はデフォルト値trueが返る.
 
 **Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
 **Returns**: 指定したmapIndexのvisibleプロパティ  
@@ -340,7 +354,8 @@ TileViewerの全オプション情報の設定
 メルカトル座標系における経度緯度をカメラ座標に変換して返す
 
 **Kind**: static method of [<code>TileViewer</code>](#TileViewer)  
-**Returns**: カメラ座標 \{ x:  , y:  \}の形式で、xは0～1, y値については、0~1 であるが、メルカトル座標に収まらない緯度の場合は0未満または1より大きい値となる  
+**Returns**: カメラ座標 \{ x:  , y:  \}の形式で、xは0～1, 
+y値については、0~1 であるが、メルカトル座標に収まらない緯度の場合は0未満または1より大きい値となる  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -364,7 +379,8 @@ TileViewerの全オプション情報の設定
 ひまわり8号 フルディスクを想定した緯度経度座標を、カメラ座標に変換して返す
 
 **Kind**: static method of [<code>TileViewer</code>](#TileViewer)  
-**Returns**: カメラ座標 \{ x:  , y:  \}の形式x, y値は、0~1 であるが、フルディスクに収まらない緯度経度の場合はnullとなる  
+**Returns**: カメラ座標 \{ x:  , y:  \}の形式
+x, y値は、0~1 であるが、フルディスクに収まらない緯度経度の場合はnullとなる  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -376,7 +392,8 @@ TileViewerの全オプション情報の設定
 カメラ座標を、ひまわり8号 フルディスクを想定した緯度経度座標に変換して返す
 
 **Kind**: static method of [<code>TileViewer</code>](#TileViewer)  
-**Returns**: 経度緯度\{ lon: , lat : \}の形式でdegree値. lon, lat値は、無効である場合nullが入る  
+**Returns**: 経度緯度\{ lon: , lat : \}の形式でdegree値. 
+lon, lat値は、無効である場合nullが入る  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -385,10 +402,14 @@ TileViewerの全オプション情報の設定
 <a name="TileViewer.convertHimawariJPLonLatToCameraCoord"></a>
 
 ### TileViewer.convertHimawariJPLonLatToCameraCoord(lonLat) ⇒
-ひまわり8号 日本域を想定した緯度経度座標を、カメラ座標に変換して返すhttps://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度投影方法：緯度経度座標、測地系はWGS84に準拠
+ひまわり8号 日本域を想定した緯度経度座標を、カメラ座標に変換して返す
+https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
+日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
+投影方法：緯度経度座標、測地系はWGS84に準拠
 
 **Kind**: static method of [<code>TileViewer</code>](#TileViewer)  
-**Returns**: カメラ座標 \{ x:  , y:  \}の形式x, y値は、0~1 であるが、日本域に収まらない緯度経度の場合は0未満または1より大きい値となる  
+**Returns**: カメラ座標 \{ x:  , y:  \}の形式
+x, y値は、0~1 であるが、日本域に収まらない緯度経度の場合は0未満または1より大きい値となる  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -397,10 +418,14 @@ TileViewerの全オプション情報の設定
 <a name="TileViewer.convertCameraCoordToHimawariJPLonLat"></a>
 
 ### TileViewer.convertCameraCoordToHimawariJPLonLat(coord) ⇒
-カメラ座標を、ひまわり8号 日本域を想定した緯度経度に変換して返すhttps://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度投影方法：緯度経度座標、測地系はWGS84に準拠
+カメラ座標を、ひまわり8号 日本域を想定した緯度経度に変換して返す
+https://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf
+日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度
+投影方法：緯度経度座標、測地系はWGS84に準拠
 
 **Kind**: static method of [<code>TileViewer</code>](#TileViewer)  
-**Returns**: カメラ座標 \{ lon: , lat : \}の形式lon, lat値は、無効である場合nullが入る  
+**Returns**: カメラ座標 \{ lon: , lat : \}の形式
+lon, lat値は、無効である場合nullが入る  
 
 | Param | Type | Description |
 | --- | --- | --- |

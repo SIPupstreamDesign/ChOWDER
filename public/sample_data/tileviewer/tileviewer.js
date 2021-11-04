@@ -1126,6 +1126,10 @@ class TileViewer {
             offset = Math.max(0, this.combinedScales[0].zoom - 1);
             return Math.pow(this._getZoomBaseScale(), this.currentScaleIndex + offset);
         }
+        if (this.combinedScales.length > 0) {
+            const factor = this.combinedScales[this.currentScaleIndex].total_width / this.combinedScales[0].total_width * 0.3;
+            return factor;
+        }
         return Math.pow(this._getZoomBaseScale(), this.currentScaleIndex);
     }
 
