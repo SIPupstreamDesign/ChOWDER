@@ -91,7 +91,7 @@ TileViewer
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | scale | <code>Number</code> |  | baseScaleCameraに対するスケール値 |
-| withDispatch | <code>Object</code> | <code>false</code> | trueを指定した場合スケール変更イベントを発火させる |
+| withDispatch | <code>Boolean</code> | <code>false</code> | trueを指定した場合スケール変更イベントを発火させる |
 
 <a name="TileViewer+zoomIn"></a>
 
@@ -174,7 +174,7 @@ TileViewerの全オプション情報の設定
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| options | <code>Object</code> |  |  |
+| options | <code>Object</code> |  | 全オプション情報 |
 | withUpdate | <code>Boolean</code> | <code>true</code> | 更新するかどうか. falseを指定した場合は更新は行わない. |
 
 <a name="TileViewer+setBackgroundOpacity"></a>

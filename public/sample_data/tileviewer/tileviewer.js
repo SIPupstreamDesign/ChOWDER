@@ -1079,7 +1079,7 @@ class TileViewer {
     /**
      * カメラのスケーリング値を変更する
      * @param {Number} scale baseScaleCameraに対するスケール値
-     * @param {Object} withDispatch trueを指定した場合スケール変更イベントを発火させる
+     * @param {Boolean} withDispatch trueを指定した場合スケール変更イベントを発火させる
      * @returns 成功したかどうか
      */
     async setTransformScale(scale, withDispatch = false) {
@@ -1346,7 +1346,7 @@ class TileViewer {
 
     /**
      * TileViewerの全オプション情報の設定
-     * @param {Object} options 
+     * @param {Object} options 全オプション情報
      * @param {Boolean} withUpdate 更新するかどうか. falseを指定した場合は更新は行わない.
      */
     async setOptions(options, withUpdate = true) {
