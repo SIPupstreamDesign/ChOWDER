@@ -7,6 +7,8 @@ TileViewer
 
 * [TileViewer](#TileViewer)
     * _instance_
+        * [.convertPixelPosToCameraCoord(pixelPos)](#TileViewer+convertPixelPosToCameraCoord) ⇒
+        * [.convertCameraCoordToLonLat(coord)](#TileViewer+convertCameraCoordToLonLat) ⇒
         * [.move(mv)](#TileViewer+move)
         * [.setTransformScale(scale, withDispatch)](#TileViewer+setTransformScale) ⇒
         * [.zoomIn(onlyLevel, pixelPos)](#TileViewer+zoomIn)
@@ -41,7 +43,31 @@ TileViewer
         * [.convertHimawariFDLonLatToCameraCoord(lonLat)](#TileViewer.convertHimawariFDLonLatToCameraCoord) ⇒
         * [.convertCameraCoordToHimawariFDLonLat(coord)](#TileViewer.convertCameraCoordToHimawariFDLonLat) ⇒
         * [.convertHimawariJPLonLatToCameraCoord(lonLat)](#TileViewer.convertHimawariJPLonLatToCameraCoord) ⇒
-        * [.convertHimawariJPCameraCoordToLonLat(lonLat)](#TileViewer.convertHimawariJPCameraCoordToLonLat) ⇒
+        * [.convertCameraCoordToHimawariJPLonLat(coord)](#TileViewer.convertCameraCoordToHimawariJPLonLat) ⇒
+
+<a name="TileViewer+convertPixelPosToCameraCoord"></a>
+
+### tileViewer.convertPixelPosToCameraCoord(pixelPos) ⇒
+ピクセル位置をカメラ位置に変換する
+
+**Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
+**Returns**: カメラ位置\{x: , y:  \}  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| pixelPos | <code>\*</code> | ピクセル位置\{x: , y:  \} |
+
+<a name="TileViewer+convertCameraCoordToLonLat"></a>
+
+### tileViewer.convertCameraCoordToLonLat(coord) ⇒
+カメラ位置をgeodeticSystem値に応じたlon, latに変換して返すlon, latが存在しない場合はlon, latにnullを入れて返す
+
+**Kind**: instance method of [<code>TileViewer</code>](#TileViewer)  
+**Returns**: 緯度経度\{lon: , lat:  \}  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| coord | <code>\*</code> | カメラ位置\{x: , y:  \} |
 
 <a name="TileViewer+move"></a>
 
@@ -366,9 +392,9 @@ TileViewerの全オプション情報の設定
 | --- | --- | --- |
 | lonLat | <code>Object</code> | 経度緯度\{ lon: , lat : \}}の形式でdegree値. |
 
-<a name="TileViewer.convertHimawariJPCameraCoordToLonLat"></a>
+<a name="TileViewer.convertCameraCoordToHimawariJPLonLat"></a>
 
-### TileViewer.convertHimawariJPCameraCoordToLonLat(lonLat) ⇒
+### TileViewer.convertCameraCoordToHimawariJPLonLat(coord) ⇒
 カメラ座標を、ひまわり8号 日本域を想定した緯度経度に変換して返すhttps://www.data.jma.go.jp/suishin/jyouhou/pdf/456.pdf日本域は、北緯 48.5 度から北緯 21.5 度、東経 119 度から東経 152 度投影方法：緯度経度座標、測地系はWGS84に準拠
 
 **Kind**: static method of [<code>TileViewer</code>](#TileViewer)  
@@ -376,5 +402,5 @@ TileViewerの全オプション情報の設定
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lonLat | <code>Object</code> | カメラ座標 \{ x:  , y:  \}の形式 |
+| coord | <code>Object</code> | カメラ座標 \{ x:  , y:  \}の形式 |
 
