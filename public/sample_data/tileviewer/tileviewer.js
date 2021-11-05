@@ -811,7 +811,6 @@ class TileViewer {
     // ある任意のピボット座標を中心とした、transformScaleによる拡縮を行う。
     // @param {*} scale 新たに設定するtransformScale
     // @param {*} pivotXY 拡縮の基点とするピボット（カメラ座標系で{x: .., y: .. }の形式
-    // @param {*} withDispatch 変更イベントを発火するかどうか
     async _setTransformScaleWithPivot(scale, pivotXY) {
         this._withUpdate(() => {
             this._disableUpdate();
