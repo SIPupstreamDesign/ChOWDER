@@ -130,6 +130,6 @@
  "physical_value_2": "PhysicalValue2 (color)",
  "physical_expression_1": "Please input expression for PhysicalValue1",
  "physical_expression_2": "Please input expression for PhysicalValue2",
- "reload_all_display": "Reload All Display",
+ "reload_all_display": "Reload All Displays",
  "application_control": "Application Control"
 }

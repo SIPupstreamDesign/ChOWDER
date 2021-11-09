@@ -130,5 +130,5 @@ physical_value_1,物理量1 (棒グラフの長さ),PhysicalValue1 (length)
 physical_value_2,物理量2 (棒グラフの色),PhysicalValue2 (color)
 physical_expression_1,物理量1の数式を入力してください,Please input expression for PhysicalValue1
 physical_expression_2,物理量2の数式を入力してください,Please input expression for PhysicalValue2
-reload_all_display,Reload All Display,Reload All Display
+reload_all_display,Reload All Displays,Reload All Displays
 application_control,Application Control,Application Control
