@@ -458,6 +458,28 @@ class ManagementDialog extends EventEmitter {
             this.applyDisplaySettingMessage.className = "apply_display_setting_message";
             displayPermissionFrame.appendChild(this.applyDisplaySettingMessage);
         }
+
+        
+        let title5 = document.createElement('h4');
+        title5.textContent = i18next.t("application_control");
+        this.dom.appendChild(title5);
+
+        let displayControlBackground = document.createElement('div');
+        displayControlBackground.className = "management_db_frame_bg"
+        this.dom.appendChild(displayControlBackground)
+
+        {
+            let reloadAllDisplayFrame = document.createElement('div');
+            reloadAllDisplayFrame.className = "apply_pass_frame";
+            {
+                this.reloadAllDisplayButton = new Button();
+                this.reloadAllDisplayButton.getDOM().classList.add('management_reload_all_display_button');
+                this.reloadAllDisplayButton.setDataKey("reload_all_display");
+                reloadAllDisplayFrame.appendChild(this.reloadAllDisplayButton.getDOM());
+            }
+            displayControlBackground.appendChild(reloadAllDisplayFrame);
+        }
+
     }
 
     /**
@@ -612,6 +634,16 @@ class ManagementDialog extends EventEmitter {
             });
         });
         this.displaySelect.setData(displayPermissionList);
+    }
+
+    /**
+     *  Application Control設定の初期化
+     */
+    initApplicationControlGUI()
+    {
+        this.reloadAllDisplayButton.on('click', () => {
+            this.emit(ManagementDialog.EVENT_RELOAD_ALL_DISPLAY, null);
+        });
     }
 
     /**
@@ -1046,6 +1078,8 @@ class ManagementDialog extends EventEmitter {
 
         this.initDisplayPermission(contents, displayPermissionList);
 
+        this.initApplicationControlGUI();
+
         document.body.appendChild(this.dom);
     }
 
@@ -1097,5 +1131,8 @@ ManagementDialog.EVENT_CHANGE_HISTORY_NUM = "change_history_num";
 
 // 最大履歴保存数の適用
 ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "change_display_permission_list";
+
+// 全Displayリロード
+ManagementDialog.EVENT_RELOAD_ALL_DISPLAY = "reload_all_display";
 
 export default ManagementDialog;

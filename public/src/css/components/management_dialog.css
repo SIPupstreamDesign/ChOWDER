@@ -86,6 +86,11 @@ input[disabled] {
 	width : 100px;
 }
 
+.management_reload_all_display_button {
+	margin : 10px;
+	width : 200px;
+}
+
 .group_add_delete_check {
 	width : 18px;
 	height : 18px;

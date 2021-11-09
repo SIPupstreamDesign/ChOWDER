@@ -140,6 +140,10 @@ class ManagementGUI
 			});
 		});
 
+		this.managementDialog.on(ManagementDialog.EVENT_RELOAD_ALL_DISPLAY, (err) => {
+			this.action.reloadDisplay();
+		});
+
 		this.action.reloadGlobalSetting();
 	}
 
