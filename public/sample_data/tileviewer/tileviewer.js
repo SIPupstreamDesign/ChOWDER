@@ -422,14 +422,22 @@ class TileViewer {
     _loadTile(mapIndex, tileInfo) {
         let resultTiles = [];
         const startIndex = this.options.hasOwnProperty('backgroundImage') ? 1 : 0;
-        const mapParam = this.options.maps[mapIndex];
         const s = this.options.maps[mapIndex].scales[tileInfo.scaleIndex];
         const tileClass = this._generateTileClass(mapIndex, tileInfo);
+    
+        // visibilityにより複数タイルのロード待ち中非表示とする
+        let timeout = this.options.hasOwnProperty('timeout') ? this.options.timeout : this.timeout;
+        if (this.isSettingDate) {
+            timeout = this.options.hasOwnProperty('timeout_on_setting_date') ? this.options.timeout_on_setting_date : this.timeout_on_setting_date;
+        }
+        
         if (this._getRootElem().getElementsByClassName(tileClass).length > 0) {
             let elem = this._getRootElem().getElementsByClassName(tileClass)[0];
             const url =  this._formatUrl(this.options.maps[mapIndex].url, tileInfo, s.count, s.zoom);
             if (elem.src !== url) {
-                elem.style.display = "none";
+                if (timeout > 0) {
+                    tile.style.display = "none";
+                }
                 elem.src = url;
             }
             elem.style.left = tileInfo.x + "px";
@@ -469,8 +477,9 @@ class TileViewer {
             tile.style.opacity = this.getOpacity(mapIndex);
             tile.style.display = this.getVisible(mapIndex) ? "inline" : "none";
             
-            // visibilityにより複数タイルのロード待ち中非表示とする
-            tile.style.display = "none";
+            if (timeout > 0) {
+                tile.style.display = "none";
+            }
 
             tile.onerror = () => {
                 tile.src = 'no_image.png';
