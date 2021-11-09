@@ -332,12 +332,13 @@ class Display {
                 }
                 if (isWindow) {
                     this.gui.updateViewport(this.store.getWindowData());
-                } else {
-                    this.gui.showMemo(elem, metaData);
-                    this.gui.showTime(elem, metaData);
-                    this.gui.showCopyrights(elem, metaData);
-                    this.gui.toggleMark(elem, metaData);
                 }
+            }
+            if (!isWindow) {
+                this.gui.showMemo(elem, metaData);
+                this.gui.showTime(elem, metaData);
+                this.gui.showCopyrights(elem, metaData);
+                this.gui.toggleMark(elem, metaData);
             }
         }
     }
