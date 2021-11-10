@@ -29,7 +29,7 @@ while true;do
 done
 
 # redis
-if [ "$(umame)" != "Darwin" ]; then
+if [ "$(uname)" != "Darwin" ]; then
     if [ ! -e "../redis/redis-server" ]; then
         if [ ! -e "/usr/bin/redis-server" ]; then
             curl -O http://download.redis.io/redis-stable.tar.gz
