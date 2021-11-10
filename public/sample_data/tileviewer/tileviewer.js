@@ -436,7 +436,7 @@ class TileViewer {
             const url =  this._formatUrl(this.options.maps[mapIndex].url, tileInfo, s.count, s.zoom);
             if (elem.src !== url) {
                 if (timeout > 0) {
-                    tile.style.display = "none";
+                    elem.style.display = "none";
                 }
                 elem.src = url;
             }
