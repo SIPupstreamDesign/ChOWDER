@@ -111,10 +111,40 @@ function showDebugGUI(viewer) {
         }
     }
 
+
+    {
+        let scaleLabel = document.createElement('div');
+        scaleLabel.id = "__lod_scale_label__";
+        scaleLabel.style.position = "fixed";
+        scaleLabel.style.left = "0px";
+        scaleLabel.style.bottom = "0px";
+        scaleLabel.style.width = "500px";
+        scaleLabel.style.height = "20px";
+        scaleLabel.style.bottom = "0px";
+        scaleLabel.style.zIndex = "1";
+        scaleLabel.style.background = "lightgray";
+        scaleLabel.style.color = "black";
+        scaleLabel.innerHTML = "Zoom Level : " + viewer.getZoomLevel() 
+        + " / TransformScale: " + viewer.getCameraInfo().transformScale;
+        document.body.appendChild(scaleLabel);
+    }
+
     viewer.addEventListener(TileViewer.EVENT_SCALE_INDEX_CHANGED, (data) => {
         let scaleLabel = document.getElementById('__lod_scale_label__');
         if (scaleLabel) {
-            const text = "Zoom Level : " + data;
+            const text = "Zoom Level : " + data
+                + " / TransformScale: " + viewer.getCameraInfo().transformScale;
+            if (scaleLabel.innerHTML !== text) {
+                scaleLabel.innerHTML = text;
+            }
+        }
+    });
+    
+    viewer.addEventListener(TileViewer.EVENT_POSITION_CHANGED, (data) => {
+        let scaleLabel = document.getElementById('__lod_scale_label__');
+        if (scaleLabel) {
+            const text = "Zoom Level : " + viewer.getZoomLevel() 
+                + " / TransformScale: " + viewer.getCameraInfo().transformScale;
             if (scaleLabel.innerHTML !== text) {
                 scaleLabel.innerHTML = text;
             }

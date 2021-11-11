@@ -1,3 +1,11 @@
+// ズームレベルの切り替えをスムーズに行うかというフラグ
+// - trueの場合 ズームレベル 2から3に遷移するとき、
+//   ズームレベル2.5の時点で、LoDレベル3のタイルが縮小表示される。
+//   その後ズームレベル3.0の時点で等倍表示となり、3.499.. までレベル3が拡大表示される。
+// - falseの場合 ズームレベル 2から3に遷移するとき、
+//   ズームレベル3.0の時点で、LoDレベル3のタイルが(等倍)表示される。
+//   その後3.999.. までレベル3が拡大表示される。
+const SMOOTH_SCALING = true;
 
 /** TileViewer */
 class TileViewer {
@@ -1108,15 +1116,55 @@ class TileViewer {
                 }
             }
             
+            const calcNextHalfX = () => {
+                const nextS = this.combinedScales[this.currentScaleIndex + 1];
+                const nextTotalX = (nextS.width * nextS.count);
+                const currentS = this.combinedScales[this.currentScaleIndex];
+                const currentTotalX = (currentS.width * currentS.count);
+                const t = currentTotalX / (nextTotalX + currentTotalX);
+
+                const nextX = this._getScaleRatio(null, this.currentScaleIndex + 1).x;
+                const currentX = this._getScaleRatio(null, this.currentScaleIndex).x;
+                return currentX + t * (nextX - currentX);
+            }
+            
+            const calcPreHalfX = () => {
+                const preS = this.combinedScales[this.currentScaleIndex - 1];
+                const preTotalS = (preS.width * preS.count);
+                const currentS = this.combinedScales[this.currentScaleIndex];
+                const currentTotalX = (currentS.width * currentS.count);
+                const t = currentTotalX / (preTotalS + currentTotalX);
+
+                const currentX = this._getScaleRatio(null, this.currentScaleIndex).x;
+                const preX = this._getScaleRatio(null, this.currentScaleIndex - 1).x;
+                return currentX + t * (preX - currentX);
+            }
+
+            const calcNextIndexChangePoint = () => {
+                if (SMOOTH_SCALING === true) {
+                    return calcNextHalfX();
+                } else {
+                    return this._getScaleRatio(null, this.currentScaleIndex + 1).x
+                }
+            }
+            
+            const calcPreIndexChangePoint = () => {
+                if (SMOOTH_SCALING === true) {
+                    return calcPreHalfX();
+                } else {
+                    return this._getScaleRatio(null, this.currentScaleIndex).x
+                }
+            }
+
             while ((this.currentScaleIndex + 1 < this.combinedScales.length) &&
-                scale >= this._getScaleRatio(null, this.currentScaleIndex + 1).x) {
+                scale >= calcNextIndexChangePoint()) {
                 // LoDレベルを上げる
                 if (!this._setScaleIndex(this.currentScaleIndex + 1)) {
                     break;
                 }
             }
             while (this.currentScaleIndex > 0 &&
-                scale < this._getScaleRatio(null, this.currentScaleIndex).x) {
+                scale < calcPreIndexChangePoint()) {
                 // LoDレベルを下げる
                 if (!this._setScaleIndex(this.currentScaleIndex - 1)) {
                     break;
