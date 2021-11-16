@@ -31,16 +31,14 @@ done
 # redis
 if [ "$(uname)" != "Darwin" ]; then
     if [ ! -e "../redis/redis-server" ]; then
-        if [ ! -e "/usr/bin/redis-server" ]; then
-            curl -O http://download.redis.io/redis-stable.tar.gz
-            tar xf redis-stable.tar.gz
-            cd redis-stable
-            make distclean
-            make
-            cp src/redis-server ../../redis/
-            cd ..
-            rm -rf redis-*
-        fi
+        curl -O http://download.redis.io/redis-stable.tar.gz
+        tar xf redis-stable.tar.gz
+        cd redis-stable
+        make distclean
+        make
+        cp src/redis-server ../../redis/
+        cd ..
+        rm -rf redis-*
     fi
 else
     # mac
