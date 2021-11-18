@@ -245,7 +245,6 @@ class Display {
                 isOutside = VscreenUtil.isOutsideWindow(json, whole);
                 //// console.log(isOutside, json, Vscreen.getWhole());
             }
-            // console.log("isOutside:", isOutside);
 
             if (isOutside) {
                 // webrtcコンテンツが画面外にいったら切断して削除しておく.
@@ -258,7 +257,10 @@ class Display {
                 }
                 this.store.getVideoStore().closeVideo(json);
             } else {
-                if (elem && elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type)) {
+                if (elem && 
+                    (elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type) ||
+                    (json.type === Constants.TypeVideo)))
+                {
                     if (Validator.isVisible(json)) {
                         VscreenUtil.assignMetaData(elem, json, false, groupDict);
                         elem.style.display = "block";
