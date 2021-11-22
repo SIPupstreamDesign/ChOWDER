@@ -21,6 +21,8 @@ class Store extends EventEmitter {
         this.operation = new Operation(Connector, this); // 各種storeからのみ限定的に使う
         this.isInitialized_ = false;
 
+        this.globalSetting = {};
+
         this.initEvents();
 
         // itownコンテンツのメタデータ
@@ -53,8 +55,11 @@ class Store extends EventEmitter {
         // ログインする.
         this.on(Store.EVENT_CONNECT_SUCCESS, (err) => {
             console.log("websocket connected")
-                //let loginOption = { id: "APIUser", password: "" }
-                //this.action.login(loginOption);
+            
+            // グローバル設定を取得
+            Connector.send(Command.GetGlobalSetting, {}, (err, reply) => {
+                this.globalSetting = reply;
+            });
         })
 
         // コンテンツ追加完了した.
@@ -675,6 +680,10 @@ class Store extends EventEmitter {
         Connector.sendBinary(Command.Upload, param, data.binary, (err, reply) => {
             this.emit(Store.EVENT_DONE_UPLOAD, err, reply);
         });
+    }
+
+    getGlobalSetting() {
+        return this.globalSetting;
     }
 }
 

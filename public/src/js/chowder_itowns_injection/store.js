@@ -385,7 +385,7 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             let mapSource = new itowns.TMSSource(config);
-            if (config.format === "image/x-bil;bits=32" || (config.hasOwnProperty('tileMatrixSet') && data.url.indexOf('?LAYER=') > 0)) {
+            if (config.format === "image/x-bil;bits=32" || (config.hasOwnProperty('tileMatrixSet') && config.url.indexOf('?LAYER=') > 0)) {
                 config.name = config.id;
                 mapSource = new itowns.WMTSSource(config);
             } else if (config.format === "csv" || config.format === "txt") {

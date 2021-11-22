@@ -366,6 +366,7 @@ class GUI extends EventEmitter {
         if (previewArea) {
             if (Validator.isVisible(json)) {
                 VscreenUtil.assignMetaData(previewArea, json, false, groupDict);
+                previewArea.style.position = "fixed";
                 previewArea.style.display = "block";
             } else {
                 previewArea.style.display = "none";
