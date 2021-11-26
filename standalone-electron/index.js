@@ -73,7 +73,11 @@ function createWindows() {
 			transparent: !frame,
 			toolbar: false,
 			fullscreen: typeof windowProps.fullscreen !== 'undefined' ? windowProps.fullscreen : true,
-			enableLargerThanScreen : true
+			enableLargerThanScreen : true,
+			webPreferences: {
+			  nodeIntegration: true,
+			  contextIsolation: false
+			}
 		});
 		window.setSize(windowProps.size[0], windowProps.size[1]);
 		tileWindows[id] = window;
