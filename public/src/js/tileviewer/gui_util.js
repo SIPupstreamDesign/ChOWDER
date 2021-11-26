@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.
+ */
+
 import Input from "../components/input"
 import LayerList from './layer_list'
 

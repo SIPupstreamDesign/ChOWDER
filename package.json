@@ -27,7 +27,7 @@
     "image-size": "*",
     "jszip": "^3.7.1",
     "phantom": "^6.0.3",
-    "redis": "*",
+    "redis": "3.1.2",
     "websocket": "*"
   },
   "devDependencies": {

@@ -1,3 +1,6 @@
+/**
+ * Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.
+ */
 
 // 単体デバッグ用GUIを表示
 function showDebugGUI(viewer) {

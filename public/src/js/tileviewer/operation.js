@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
- * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
+ * Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.
  */
 
  import Validator from '../common/validator'

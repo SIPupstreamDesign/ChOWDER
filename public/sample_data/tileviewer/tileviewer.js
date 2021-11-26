@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.
+ */
+
 // ズームレベルの切り替えをスムーズに行うかというフラグ
 // - trueの場合 ズームレベル 2から3に遷移するとき、
 //   ズームレベル2.5の時点で、LoDレベル3のタイルが縮小表示される。

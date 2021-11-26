@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.
+ */
+
 /******************************************************************************/
 /* Sample for k2goTimeline                                                    */
 /* halloweenjack inc.                                                         */

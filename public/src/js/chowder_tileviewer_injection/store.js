@@ -1,4 +1,8 @@
 /**
+ * Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.
+ */
+
+/**
  * Store.
  * tileviewerに操作を行うため, tileviewerのviewインスタンスを保持する
  * また, iframeの親windowと通信を行う
