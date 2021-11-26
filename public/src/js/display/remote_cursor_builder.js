@@ -1,6 +1,7 @@
 
 import Vscreen from '../common/vscreen'
 import Store from './store/store'
+import Validator from '../common/validator';
 
 class RemoteCursorBuilder
 {
@@ -22,7 +23,7 @@ class RemoteCursorBuilder
                 lonLatText += "\nLat: " + res.data.lonLat.lat.toFixed(10);
                 if (res.data.hasOwnProperty('id')) {
                     const meta = store.getMetaData(res.data.id);
-                    const scale = meta.orgWidth / parseFloat(meta.width);
+
                     pos = Vscreen.transform(Vscreen.makeRect(
                         Number(meta.posx) + Number(res.data.x) * Number(meta.width), 
                         Number(meta.posy) + Number(res.data.y) * Number(meta.height),  0, 0));
@@ -47,6 +48,7 @@ class RemoteCursorBuilder
         this.controllerID = document.getElementById('controllerID' + ctrlid);
         if (!this.elem) {
             this.elem = document.createElement('div');
+            this.elem.style.display = "block";
             this.elem.id = 'hiddenCursor' + ctrlid;
             this.elem.className = 'hiddenCursor';
             this.elem.style.backgroundColor = 'transparent';
@@ -64,6 +66,7 @@ class RemoteCursorBuilder
 
             this.controllerID = document.createElement('div');
             this.controllerID.id = 'controllerID' + ctrlid;
+            this.controllerID.style.display = "block";
             this.controllerID.className = 'controller_id';
             this.controllerID.style.color = res.data.rgb;
             this.controllerID.style.position = "absolute"
@@ -75,7 +78,9 @@ class RemoteCursorBuilder
             // console.log('new controller cursor! => id: ' + res.data.connectionCount + ', color: ' + res.data.rgb);
         } else {
             this.controllerID.innerText = res.data.controllerID + lonLatText;
+            this.controllerID.style.display = "block";
             this.controllerID.style.color = res.data.rgb;
+            this.elem.style.display = "block";
             this.elem.getElementsByClassName(arrow1ClassName)[0].style.backgroundColor = res.data.rgb;
             this.elem.getElementsByClassName(arrow2ClassName)[0].style.backgroundColor = res.data.rgb;
         }
@@ -104,18 +109,25 @@ class RemoteCursorBuilder
     static releaseCursor(res, store, controllers){
         this.controllers = controllers;
         let ctrlid = "";
+
+        // コントローラに紐づくカーソル
         if (res.hasOwnProperty('data') && res.data.hasOwnProperty('controllerID')) {
             ctrlid = res.data.controllerID;
+        }
+
+        // TileViewer等で使用しているコントローラに紐づかない、コンテンツIDに紐づくカーソル
+        if (res.hasOwnProperty('data') && res.data.hasOwnProperty('id')) {
+            if (this.controllers.hasOwnProperty(res.data.id)) {
+                ctrlid = res.data.id;
+            }
         }
 
         if (this.controllers.hasOwnProperty(ctrlid)) {
             let elem = document.getElementById('hiddenCursor' + ctrlid);
             let controllerID = document.getElementById('controllerID' + ctrlid);
             if (elem) {
-                elem.style.left = '-999999px';
-                elem.style.top  = '-999999px';
-                controllerID.style.left = '-999999px';
-                controllerID.style.top  = '-999999px';
+                elem.style.display = 'none';
+                controllerID.style.display = 'none';
             }
             if (elem && elem.parentNode) { elem.parentNode.removeChild(elem); }
             if (controllerID && controllerID.parentNode) { controllerID.parentNode.removeChild(controllerID); }

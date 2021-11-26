@@ -171,7 +171,7 @@ class Store extends EventEmitter {
 
     release() {
         let metaData = {};
-        metaData.controllerID = "TileViewer_" + this.metaData.id;
+        metaData.controllerID = this.metaData.id;
         Connector.send(Command.UpdateMouseCursor, metaData, (err, reply) => {});
     }
 
@@ -637,7 +637,7 @@ class Store extends EventEmitter {
      */
      _updateRemoteCursor(data) {
         if (data.isEnable === false) {
-            data.controllerID = "TileViewer_" + this.metaData.id;
+            data.controllerID = this.metaData.id;
             // OFFにする場合
             Connector.send(Command.UpdateMouseCursor, data, (err, reply) => {});
         } else {
@@ -646,7 +646,7 @@ class Store extends EventEmitter {
                     // ONの場合
                     let metaData = data;
                     delete metaData.isEnable;
-                    metaData.controllerID = "TileViewer_" + this.metaData.id;
+                    metaData.controllerID = this.metaData.id;
                     metaData.rgb = this.cursorColor;
                     metaData.cursor_size = 100;
                     metaData.lonLat = {

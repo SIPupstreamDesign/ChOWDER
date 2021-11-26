@@ -12,6 +12,7 @@ import VscreenUtil from '../../common/vscreen_util';
 import VideoStore from './video_store';
 import Receiver from './reciever';
 import PerformanceLogger from '../performance_logger';
+import RemoteCursorBuilder from '../remote_cursor_builder'
 
 "use strict";
 
@@ -30,6 +31,7 @@ class Store extends EventEmitter {
         this.globalSetting = null;
         this.virtualDisplay = null;
         this.itownFuncDict = {};
+        this.controllerCounterForCursor = { connectionCount: -1 };
 
         // 接続時に遅延して初期化する
         this.receiver = null;
@@ -759,6 +761,30 @@ class Store extends EventEmitter {
 
     getGlobalSetting() {
         return this.globalSetting;
+    }
+
+    _updateRemoteCursor(cusrorData) {
+        if (cusrorData.hasOwnProperty('data'))
+        {
+            if (cusrorData.data.hasOwnProperty('id')) {
+                const meta = this.getMetaData(cusrorData.data.id);
+                // 緯度経度表示可能なタイルビューワ用のカーソルは
+                // 対象コンテンツが非表示となった場合に非表示とする
+                if (!meta || !Validator.isVisible(meta)) {
+                    // カーソル削除
+                    RemoteCursorBuilder.releaseCursor(cusrorData, this, this.controllerCounterForCursor);
+                    return;
+                }
+            }
+            // カーソル作成
+            if (cusrorData.data.hasOwnProperty('x') && cusrorData.data.hasOwnProperty('y')) {
+                RemoteCursorBuilder.createCursor(cusrorData, this, this.controllerCounterForCursor);
+                return;
+            }
+        }
+        
+        // カーソル削除
+        RemoteCursorBuilder.releaseCursor(cusrorData, this, this.controllerCounterForCursor);
     }
 }
 

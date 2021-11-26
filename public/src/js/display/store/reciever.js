@@ -6,7 +6,6 @@
 import Command from '../../common/command'
 import Store from './store'
 import StringUtil from '../../common/string_util'
-import RemoteCursorBuilder from '../remote_cursor_builder'
 import ITownsUtil from '../../common/itowns_util';
 import Constants from '../../common/constants';
 import TileViewerUtil from '../../common/tileviewer_util';
@@ -16,8 +15,6 @@ class Receiver {
         this.store = store;
         this.action = action;
         this.connector = connector;
-
-        this.controllers = { connectionCount: -1 };
 
         this.init();
     }
@@ -152,11 +149,7 @@ class Receiver {
 
         /// リモートカーソルが更新された
         this.connector.on(Command.UpdateMouseCursor, (res) => {
-            if (res.hasOwnProperty('data') && res.data.hasOwnProperty('x') && res.data.hasOwnProperty('y')) {
-                RemoteCursorBuilder.createCursor(res, this.store, this.controllers);
-            } else {
-                RemoteCursorBuilder.releaseCursor(res, this.store, this.controllers);
-            }
+            this.action.updateRemoteCursor(res);
         });
 
         /// WindowID表示要求がきた

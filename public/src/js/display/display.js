@@ -341,6 +341,9 @@ class Display {
                 this.gui.showTime(elem, metaData);
                 this.gui.showCopyrights(elem, metaData);
                 this.gui.toggleMark(elem, metaData);
+                if (!Validator.isVisible(metaData)) {
+                    this.action.updateRemoteCursor({ data : { id : metaData.id } });
+                }
             }
         }
     }
@@ -362,6 +365,7 @@ class Display {
         if (copyright) {
             previewArea.removeChild(copyright);
         }
+        this.action.updateRemoteCursor({ data : { id : id } });
     }
 
     /**
@@ -471,10 +475,7 @@ class Display {
             for (let i = 0; i < data.length; ++i) {
                 let elem = document.getElementById(data[i].id);
                 if (elem) {
-                    this.gui.deleteTime(elem, data[i].id);
-                    this.gui.deleteMark(elem, data[i].id);
-                    this.gui.deleteCopyright(elem, data[i].id);
-                    previewArea.removeChild(elem);
+                    this.removeContent(previewArea, data[i].id);
                 }
             }
         })

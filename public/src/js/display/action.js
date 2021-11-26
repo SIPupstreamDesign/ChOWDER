@@ -193,6 +193,14 @@ class Action extends EventEmitter {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
 
+    /**
+     * リモートカーソルの更新
+     * @param {*} data 
+     */
+    updateRemoteCursor(data) {
+        this.emit(Action.EVENT_UPDATE_REMOTE_CURSOR, null, data);
+    }
+
 }
 
 Action.EVENT_CONNECT = "connect";
@@ -212,4 +220,5 @@ Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_ADD_TILEVIEWER_FUNC = "addTileViewerFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_UPDATE_REMOTE_CURSOR = "updateRemoteCursor";
 export default Action;
