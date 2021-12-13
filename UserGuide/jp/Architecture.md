@@ -750,6 +750,20 @@ chowder_injection関数を使用して初期化する必要がある.
 
 iTownsAppを使用した開発の詳細については,　別途DeveloperGuide_ForITownsSupport.mdを参照してください.
 
+TileViewerについて
+========================================================================================
+
+GIS表示機能として, EPSG3857のカラータイル画像を使用したコンテンツ, 及び
+気象衛星ひまわり8号の衛星画像を使用したコンテンツを, ChOWDERのTileViewerコンテンツとして設定/使用できる.
+TileViewerを使用したコンテンツは,  他の画像などのコンテンツと異なり, メタデータにタイルコンテンツのURLを含んだ, type: tileviewerのコンテンツであり, 
+chowder_injection関数を使用して初期化する必要がある.
+コンテンツ初期化後に, ディプレイ/コントローラにおいて, インラインフレーム内に表示される.
+
+このときのディスプレイ/コントローラとコンテンツの関係は, iTownsAppの場合と同様に, 
+WebSocketによるサーバ間通信, 及び, EventTargetインタフェースによるiframe-html親ページ間での通信が行われる.
+
+TileViewerを使用した開発の詳細については,　別途 DeveloperGuide_ForTileViewer.md (DevelperGuide For TileViewer)を参照してください.
+また, TileViewerのAPIについては, TileViewer_API.mdを, TileViewerの実装詳細に関しては, TileViewer_Dev.md (ChOWDER用TileViewer 実装詳細)を参照してください。
 
 動作環境について
 ========================================================================================

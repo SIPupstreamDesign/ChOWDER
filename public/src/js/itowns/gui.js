@@ -302,6 +302,9 @@ class GUI extends EventEmitter {
             const interval = 100;
             let timer;
             return (pTimeInfo, func = null) => {
+                if (this.store.getGlobalSetting() && this.store.getGlobalSetting().hasOwnProperty('reduceInterval')) {
+                    interval = Number(this.store.getGlobalSetting().reduceInterval)
+                }
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     this.action.changeTimeByTimeline({
@@ -788,12 +791,18 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      */
     showCopyrights(elem, metaData) {
-        if (elem
-            && metaData.type === Constants.TypeWebGL
-            && metaData.hasOwnProperty('layerList')) {
+        if (elem &&
+            metaData.type === Constants.TypeWebGL &&
+            metaData.hasOwnProperty('layerList')) {
 
             let copyrightText = ITownsUtil.createCopyrightText(metaData);
-            if (copyrightText.length === 0) return;
+            if (copyrightText.length === 0) {
+                let copyrightElem = document.getElementById("copyright:" + metaData.id);
+                if (copyrightElem) {
+                    copyrightElem.style.display = "none";
+                }
+                return;
+            }
 
             let copyrightElem = document.getElementById("copyright:" + metaData.id);
             if (copyrightElem) {
@@ -801,8 +810,10 @@ class GUI extends EventEmitter {
                 copyrightElem.style.right = "0px";
                 copyrightElem.style.top = "0px";
                 copyrightElem.style.zIndex = elem.style.zIndex;
+                copyrightElem.style.display = "inline";
             } else {
                 copyrightElem = document.createElement("pre");
+                copyrightElem.style.display = "inline";
                 copyrightElem.id = "copyright:" + metaData.id;
                 copyrightElem.className = "copyright";
                 copyrightElem.innerHTML = copyrightText;

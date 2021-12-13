@@ -71,21 +71,32 @@ Table of Contents
   - [GIS layer properties](#gis-layer-properties)
   - [GIS timeline settings and usage](#gis-timeline-settings-and-usage)
   - [Settings on the controller](#settings-on-the-controller)
-- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+- [Using the TileViewer](#using-the-tileviewer)
   - [Overview](#overview-7)
+  - [Application Setup](#application-setup-2)
+  - [Layer Menu](#layer-menu)
+  - [Layer addition function](#layer-addition-function)
+  - [How to set and operate the timeline](#how-to-set-and-operate-the-timeline)
+  - [Preset settings for TileViewer](#preset-settings-for-tileviewer)
+- [Using the Qgis2threejs plugin output drawing function](#using-the-qgis2threejs-plugin-output-drawing-function)
+  - [Overview](#overview-8)
+  - [Application Setup](#application-setup-3)
+  - [Uploading data](#uploading-data)
+- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+  - [Overview](#overview-9)
   - [Installing the Application](#installing-the-application)
   - [Launching the Application](#launching-the-application-1)
   - [Application Setup](#application-setup-1)
   - [Editing the Configuration File](#editing-the-configuration-file)
   - [Installation on remote host](#installation-on-remote-host)
 - [Using HTTPS](#using-https)
-  - [Overview](#overview-8)
-- [Using coturn](#using-coturn)
-  - [Overview](#overview-9)
-- [Using Himawari parser](#using-himawari-parser)
   - [Overview](#overview-10)
-- [Using Himawari amaterass parser](#using-amaterass-parser)
+- [Using coturn](#using-coturn)
   - [Overview](#overview-11)
+- [Using Himawari parser](#using-himawari-parser)
+  - [Overview](#overview-12)
+- [Using Himawari amaterass parser](#using-amaterass-parser)
+  - [Overview](#overview-13)
 
 About ChOWDER
 ==================================================================
@@ -241,6 +252,9 @@ The server program reads the `server/setting.json` file while launching to confi
         "SSLPort" : 443,
         "enableCORS" : true,
         "VRMode" : 'cylinder'
+        "reduceUpdate": false,
+        "reduceInterval" : 500,
+        "tileviewerCursorSize" : 100
     }
 
 -   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
@@ -256,6 +270,9 @@ The server program reads the `server/setting.json` file while launching to confi
 -   `SSLPort` sets the https port. websocket connections(wss) use the same port, too.
 -   `enableCORS` sets whether CORS connections to chowder server is enabled or not. 
 -   `VRMode` sets the VR mode to use. Currently available values ​​are "plane" (plane view) or "cylinder" (curved surface view) or "360" (360 degree view).
+-   `reduceUpdate` Set true to reduce the frequency of issuing various update notifications from the Controller. The default is false.
+-   `reduceInterval` When `reduceUpdate` is true, specify the maximum waiting time in milliseconds when reducing the frequency of issuing update notifications, etc. The default value is 500.
+-   `tileviewerCursorSize` Set the cursor size as a relative value when using the RemoteCursor function in TileViewer. The default value is 100.
 
 Managing Administrative Users
 ---------------------------------------------------
@@ -1471,6 +1488,174 @@ Settings on the controller
 The controller cannot operate the camera of GIS content, etc.,
 In addition to the normal content settings, you can set the display / non-display of the time information on the timeline
 
+
+
+Using the TileViewer
+========================================================================================
+
+Overview
+--------------------------------------------------------------------------------
+
+Using the 2D Tile Viewer, satellite images of the meteorological satellite Himawari and map data in Web Mercator format can be registered as Chowder content and drawn on the Chowder display.
+
+Application Setup
+-----------------------------------------------------------
+
+You can use the functions of TileViewer by accessing the following URL.
+-   HTTP URL … http://ChOWDER_Server_Address/tileviewer.html
+-   HTTPS URL … https://ChOWDER_Server_Address/tileviewer.html
+
+Select the API User password and the file to use, and log in.
+
+<img src="image/tileviewer1.png" alt="TileViewerの利用" width="500" />
+
+Select the APIUser password and the preset to display, and log in.
+
+When the content loads successfully, the displayed presets are added as Chowder content at the same time.
+
+<img src="image/tileviewer2.png" alt="TileViewerの利用" width="500" />
+
+ - 1. The time (date and time) to be displayed is displayed, and you can change the date and time.
+ - 2. From the left, the layer menu display, help display, remote cursor enable, and remote cursor color change buttons.
+ - 3. It is a play / stop button of the time (date and time).
+ - 4. Specifies the scale of the timeline.
+ - 5. Enables or disables the range bar on the timeline.
+ - 6. It is a timeline. You can operate the time (date and time).
+ - 7. A toggle button that toggles whether the time on the timeline is synchronized between content.
+
+Layer Menu
+-----------------------------------------------------------
+
+<img src="image/tileviewer3.png" alt="TileViewerの利用" width="500" />
+
+ - 1. The content ID is displayed
+ - 2. The URL of the preset that is the content source is displayed.
+ - 3. A list of layers containing the current content is displayed.
+ - 4. From the left, move the layer order up, move the layer order down, add a new layer, delete a new layer.
+ - 5. The tile URL of the layer is displayed.
+ - 6. From the top, it is the setting of showing / hiding (visible) of the layer and the setting of opacity (opacity) of the layer.
+ - 7. Set the copyright information (name, URL) to the layer. When set, it will be displayed in the upper left of the content.
+ - 8. Toggles the display / non-display of the time label on the upper left of the content.
+ - 9. Shows or hides the zoom label at the bottom right of the content.
+ - 10. Toggles whether the zoom factor is fixed for all controllers / displays.
+ - 11. You can set a fixed zoom factor when the zoom factor is fixed.
+
+Layer addition function
+--------------------------------------------------------------------------------
+
+By pressing the add layer button, in the add layer dialog
+You can add layers.
+
+<img src="image/tileviewer4.png" alt="TileViewerの利用" width="500" />
+
+The type of layer that can be added and the method of specifying the URL are as follows.
+ - `standard` : EPSG3857 color tile layer
+    - In the URL, such as `https://server-address/{z}/{x}/{y}.png`, specify the tile number part by {x} {y} {z} or %x %y %z.
+    - For ZOOM, specify the scope of expansion (MIN, MAX) of the data source. Corresponds to {z} in the tile URL.
+ - `himawari8.jp` : Layer of meteorological satellite Himawari 8 in Japan.
+    - In the URL, such as `https://localhost/himawari8/img/D531107/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png`, The `%` variable is described below. For the time (%hh%mm%ss), a value is inserted every 2 minutes and 30 seconds.
+ - `himawari8.fd` : Layer of meteorological satellite Himawari 8 in full disk format.
+    - In the URL, such as `https://localhost/himawari8/img/D531106/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png` The `%` variable is described below. For the time (%hh%mm%ss), a value is inserted every 10 minutes.
+ - `background image` : Add a background image. Or replace the existing background image.
+    -  In the URL, such as `https://localhost/backgroundImage.png` 
+ - `other` : It is used for images of uniquely defined presets that do not belong to the above.
+
+The meanings of the `%` and `{}` variables are as follows.
+ - `{x}{y}{z}`or`%x%y%z` : Indicates the tile number xy and zoom rate z.
+ - %c : Shows the dimensions of the image of Himawari-8
+ - %w : Shows the width of the image. It is replaced with the image width described in scales when the image is acquired.
+ - %YYYY%MM%DD : Indicates the year, month, and day.
+ - %hh%mm%ss : Indicates hours, minutes and seconds.
+
+How to set and operate the timeline
+--------------------------------------------------------------------------------
+
+The timeline for TileViewer uses k2go Timeline (https://www.k2go.jp/public/Timeline/).
+You can specify the time corresponding to the data and play, stop, etc.
+
+If you press the RangeBar button on the bottom left to enable it, you can specify an area called the RangeBar and control the playable area.
+
+Also, if the Sync button on the bottom right is enabled, the time information of the timeline operation will be transmitted to all other Sync-enabled TileViewer contents.
+You can enable / disable it by pressing the button.
+
+<img src="image/tileviewer5.png" alt="TileViewerの利用" width="500" />
+
+Preset settings for TileViewer
+--------------------------------------------------------------------------------
+
+TileViewer presets are defined by the json file stored below.
+ - Preset list definition file : public/sample_data/tileviewer/preset_list.json
+ - Preset definition files : public/sample_data/tileviewer/settings/osm.json etc
+
+### Preset list definition file
+"url": "sample_data/tileviewer/index.html?json=xxxx"
+In the format of, put the preset definition json file name in the xxxx part.
+
+For example, in a preset that uses osm.json, specify:
+
+```
+{
+    "preset_list": [
+        {
+            "name": "OpenStreetMap",
+            "url": "sample_data/tileviewer/index.html?json=osm"
+        }
+    ]
+}
+```
+
+This will cause the `OpenStreetMap` preset to appear in the preset list when accessing the tile viewer, allowing you to use the tile map with the osm.json definition information.
+
+### Preset definition file
+
+In the preset definition file, describe the URL of the map, etc., and create the state when the preset is loaded.
+
+```
+// An example of preset definition file (json)
+{
+    "backgroundImage": "https://cyberjapandata.gsi.go.jp/xyz/std/0/0/0.png",
+    "maps": [{
+        "url": "https://cyberjapandata.gsi.go.jp/xyz/std/%z/%x/%y.png",
+        "zoom" : {
+            "min" : 0,
+            "max" : 18
+        },
+        "attribution":  {
+            "name" : "出典：国土地理院",
+            "url" : "https://maps.gsi.go.jp/development/ichiran.html"
+        },
+        "opacity": 1.0,
+        "visible" : true
+    }],
+    "geodeticSystem": "standard",
+    "initialPosition" : {
+        "center": {
+            "degrees": {
+                "lon": 139.69167,
+                "lat": 35.68944
+            }
+        }
+    },
+    "timeout" : 0,
+    "timeout_on_setting_date" : 5000,
+}
+
+```
+
+ - backgroundImage : Specify the URL of the background image
+ - maps : Define layers in array format. The items that can be set for each layer are as follows.
+     - url : Specify the URL of the tile map.
+     - zoom : If the geodeticSystem is a standard map, set the minimum and maximum values ​​for zoom.
+     - scales : If the geodeticSystem is a map other than standard, set the map information for each zoom level. (see himawari_jp.json)
+     - attribution : Specify the name and URL of the copyright information.
+     - opacity : Specifies the opacity immediately after loading the preset. The default is 1.0.
+     - visible : Specifies the display / non-display state immediately after loading the preset. The default is true.
+ - geodeticSystem : Specifies the coordinate system for this preset. `standard`(EPSG3857) `himawari8.jp`(Himawari 8 for Japan) `himawari8.fd`(Himawari 8 FullDisk) can be specified.
+ - initialPosition : You can specify the initial camera position in latitude and longitude.
+ - timeout : Set the maximum waiting time in milliseconds to wait until the tile display is completed during normal operation. The default is 0.
+ - timeout_on_setting_date : Set the maximum waiting time in milliseconds to wait until the tile display is completed when the time is changed. The default is 1000.
+
+
 Using the Qgis2threejs plugin output drawing function
 ========================================================================================
 
@@ -1479,7 +1664,7 @@ Overview
 
 HTML + Javascript content output from Qgis2threejs, an open source plug-in for QGIS, can be registered as ChOWDER content and rendered on a ChOWDER display.
 
-アプリケーションの利用方法
+Application Setup
 -----------------------------------------------------------
 
 You can access the following URL and use the WebGL distributed drawing function.

@@ -1,6 +1,5 @@
-
 class PropertySlider extends EventEmitter {
-	/**
+    /**
      * プロパティ入力用スライダー
      * bootstrapのcssと併用前提でデザインしてある
      * @param {String} leftLabel 左ラベル
@@ -73,7 +72,7 @@ class PropertySlider extends EventEmitter {
         // 初期値の設定
         this.input.value = value * scale + this.minVal;
         let scaledVal = this.clamp(parseFloat(this.input.value), this.minVal, this.maxVal);
-        let val = (scaledVal - this.minVal)  / scale;
+        let val = (scaledVal - this.minVal) / scale;
         this.slider.style.width = String(Math.max(0, Math.min(Math.floor(val * 100), 100))) + "px";
         this.initEvent();
     }
@@ -123,6 +122,14 @@ class PropertySlider extends EventEmitter {
         }
         this.dom.removeEventListener('mousemove', this.onMouseMove)
         window.removeEventListener('mouseup', this.onMouseUp);
+    }
+
+    setEnable(isEnable) {
+        if (!isEnable) {
+            this.dom.style.pointerEvents = "none";
+        } else {
+            this.dom.style.pointerEvents = "auto";
+        }
     }
 
     getDOM() {

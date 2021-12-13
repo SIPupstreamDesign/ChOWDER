@@ -1,7 +1,7 @@
 ;(function($){ var objMethods = {
 /******************************************************************************/
 /* k2go Timeline for JQuery Plugin                                            */
-/* version 1.7.0                                                              */
+/* version 1.8.0                                                              */
 /* author  Inoue Computer Service.                                            */
 /* Copyright (c) k2go. All rights reserved.                                   */
 /* See License.txt for the license information.                               */
@@ -67,8 +67,9 @@
 /******************************************************************************/
     $main.on(strMouseWheel + ".k2goTimeline", function(pEvent)
     {
-      if (flgEvent                       ) { if (event.cancelable) event.preventDefault(); } else { if (pEvent.cancelable) pEvent.preventDefault(); }
-      if ($main.data("lock.k2goTimeline")) return;                                           else $main.data("lock.k2goTimeline", true);
+      if (flgEvent                                      ) { if (event.cancelable) event.preventDefault(); } else { if (pEvent.cancelable) pEvent.preventDefault(); }
+      if ($main.data("options.k2goTimeline").disableZoom) return;
+      if ($main.data("lock.k2goTimeline"   )            ) return;                                           else $main.data("lock.k2goTimeline", true);
 
       if ($main.data("wheel.k2goTimeline"))
       {
@@ -79,10 +80,21 @@
         if (typeof $main.data("options.k2goTimeline").zoomStart == "function") setTimeout(function() { $main.data("options.k2goTimeline").zoomStart(_getTimeInfo()); }, 1);
       }
 
-      var intDelta = pEvent.originalEvent.deltaY ? -(pEvent.originalEvent.deltaY) : pEvent.originalEvent.wheelDelta ? pEvent.originalEvent.wheelDelta : -(pEvent.originalEvent.detail);
-      var intScale = $main.data("options.k2goTimeline").scale * 0.1 * (intDelta < 0 ? 1 : -1);
+      var intDelta     = pEvent.originalEvent.deltaY ? -(pEvent.originalEvent.deltaY) : pEvent.originalEvent.wheelDelta ? pEvent.originalEvent.wheelDelta : -(pEvent.originalEvent.detail);
+      var intScale     = $main.data("options.k2goTimeline").scale * 0.1 * (intDelta < 0 ? 1 : -1);
+      var flgPickHover = false;
 
-      _movePick (pEvent.pageX);
+      $(":hover").each(function()
+      {
+        if ($(this).hasClass("k2go-timeline-pick"))
+        {
+          flgPickHover = true;
+          return false;
+        }
+      });
+
+      if (!flgPickHover) _movePick(pEvent.pageX);
+
       _zoomBar  (intScale);
       _setLabel ();
       _moveRange();
@@ -127,9 +139,13 @@
 
             if ($main.data("dblTap.k2goTimeline"))
             {
-              _movePick(intBaseX1);
-              $this      .k2goTimeline( flgTouch ? "zoomIn"   : (pEvent.which == 3 ? "zoomOut" : "zoomIn"));
-              $main      .data        ("dblTap.k2goTimeline", false);
+              if (!$main.data("options.k2goTimeline").disableZoom)
+              {
+                _movePick(intBaseX1);
+                $this.k2goTimeline( flgTouch ? "zoomIn" : (pEvent.which == 3 ? "zoomOut" : "zoomIn"));
+              }
+
+              $main.data("dblTap.k2goTimeline", false);
               return;
             }
             else
@@ -152,7 +168,8 @@
             intBaseDis = Math.sqrt(Math.pow(intBaseX1 - intBaseX2, 2));
 
             $(document).trigger((flgTouch ? "touchend" : "mouseup") + ".k2goTimeline");
-            if (typeof $main.data("options.k2goTimeline").zoomStart == "function") setTimeout(function() { $main.data("options.k2goTimeline").zoomStart(_getTimeInfo()); }, 1);
+
+            if (!$main.data("options.k2goTimeline").disableZoom && typeof $main.data("options.k2goTimeline").zoomStart == "function") setTimeout(function() { $main.data("options.k2goTimeline").zoomStart(_getTimeInfo()); }, 1);
           }
           else
             return;
@@ -177,7 +194,7 @@
 
                 if (typeof $main.data("options.k2goTimeline").barMove == "function") setTimeout(function() { $main.data("options.k2goTimeline").barMove(_getTimeInfo()); }, 1);
               }
-              else if (flgDouble)
+              else if (flgDouble && !$main.data("options.k2goTimeline").disableZoom)
               {
                 intMoveX1  = flgEvent ? event.touches[0].pageX : flgTouch ? pEvent.originalEvent.touches.item(0).pageX : pEvent.touches[0].pageX;
                 intMoveX2  = flgEvent ? event.touches[1].pageX : flgTouch ? pEvent.originalEvent.touches.item(1).pageX : pEvent.touches[1].pageX;
@@ -225,7 +242,7 @@
               {
                 if (typeof $main.data("options.k2goTimeline").barMoveEnd == "function") setTimeout(function() { $main.data("options.k2goTimeline").barMoveEnd(_getTimeInfo()); }, 1);
               }
-              else if (flgDouble)
+              else if (flgDouble && !$main.data("options.k2goTimeline").disableZoom)
               {
                 if (typeof $main.data("options.k2goTimeline").zoomEnd    == "function") setTimeout(function() { $main.data("options.k2goTimeline").zoomEnd   (_getTimeInfo()); }, 1);
               }
@@ -626,7 +643,8 @@
     var $main      = $(".k2go-timeline-main");
     var intCounter = 0;
 
-    if ($main.data("lock.k2goTimeline")) return this; else $main.data("lock.k2goTimeline", true);
+    if ($main.data("options.k2goTimeline").disableZoom) return this;
+    if ($main.data("lock.k2goTimeline"   )            ) return this; else $main.data("lock.k2goTimeline", true);
 
     if (typeof $main.data("options.k2goTimeline").zoomStart == "function") setTimeout(function() { $main.data("options.k2goTimeline").zoomStart(_getTimeInfo()); }, 1);
 
@@ -904,9 +922,13 @@
         }
         else
         {
-          _moveBar  ($main.data("options.k2goTimeline").speed / (1000 / $main.data("options.k2goTimeline").fps) * -1);
-          _setLabel ();
-          _moveRange();
+          if (typeof pOptions.wait == "function" && pOptions.wait()) {
+            // wait for permission
+          } else {
+            _moveBar  ($main.data("options.k2goTimeline").speed / (1000 / $main.data("options.k2goTimeline").fps) * -1);
+            _setLabel ();
+            _moveRange();
+          }
           setTimeout(_loop, $main.data("options.k2goTimeline").fps);
         }
       }

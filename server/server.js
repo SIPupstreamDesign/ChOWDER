@@ -154,6 +154,8 @@
 					res.writeHead(200, {'Content-Type': 'text/css', charaset: 'UTF-8'});
 				} else if (ext === "html" || ext === "htm") {
 					res.writeHead(200, {'Content-Type': 'text/html', charaset: 'UTF-8'});
+				} else if (ext === "svg") {
+					res.writeHead(200, {'Content-Type': 'image/svg+xml', charaset: 'UTF-8'});
 				} else if (ext === "js" || ext === "json") {
 					res.writeHead(200, {'Content-Type': 'text/javascript', charaset: 'UTF-8'});
 				} else {

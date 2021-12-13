@@ -16,6 +16,8 @@ import Button from '../components/button';
 import ITownsCommand from '../common/itowns_command';
 import IFrameConnector from '../common/iframe_connector';
 import ITownsUtil from '../common/itowns_util';
+import TileViewerUtil from '../common/tileviewer_util'
+import TileViewerCommand from '../common/tileviewer_command'
 
 class GUI extends EventEmitter {
     constructor(store, action) {
@@ -23,7 +25,7 @@ class GUI extends EventEmitter {
 
         this.store = store;
         this.action = action;
-        
+
         this.store.on(Store.EVENT_DONE_DELETE_ALL_ELEMENTS, (err, idList) => {
             console.error("EVENT_DONE_DELETE_ALL_ELEMENTS", idList)
             let previewArea = document.getElementById('preview_area');
@@ -62,32 +64,63 @@ class GUI extends EventEmitter {
             }
         })
 
-        this.store.on(Store.EVENT_UPDATE_TIME, (err, data) => {
+        this.store.on(Store.EVENT_ITOWNS_UPDATE_TIME, (err, data) => {
             // 全コンテンツデータの時刻をビューポートをもとに更新
             const metaDataDict = this.store.getMetaDataDict();
             const funcDict = this.store.getITownFuncDict();
-			const time = new Date(data.time);
+            const time = new Date(data.time);
             let range = {}
-			if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') && 
-				data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
+            if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') &&
+                data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
                 range = {
-                    rangeStartTime : new Date(data.rangeStartTime),
-                    rangeEndTime : new Date(data.rangeEndTime)
+                    rangeStartTime: new Date(data.rangeStartTime),
+                    rangeEndTime: new Date(data.rangeEndTime)
                 }
             }
             for (let id in metaDataDict) {
                 if (metaDataDict.hasOwnProperty(id)) {
                     let metaData = metaDataDict[id];
                     if (metaData.type === Constants.TypeWebGL) {
-                        if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync))
-                        {
+                        if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync)) {
                             let elem = document.getElementById(id);
                             this.showTime(elem, metaData);
                             // timeが変更された場合は、copyrightの位置が変更される
                             this.showCopyrights(elem, metaData);
-                            
+
                             if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
                                 funcDict[metaData.id].chowder_itowns_update_time(metaData, time, range);
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        this.store.on(Store.EVENT_TILEVIEWER_UPDATE_TIME, (err, data) => {
+            // 全コンテンツデータの時刻をビューポートをもとに更新
+            const metaDataDict = this.store.getMetaDataDict();
+            const funcDict = this.store.getITownFuncDict();
+            const time = new Date(data.time);
+            let range = {}
+            if (data.hasOwnProperty('rangeStartTime') && data.hasOwnProperty('rangeEndTime') &&
+                data.rangeStartTime.length > 0 && data.rangeEndTime.length > 0) {
+                range = {
+                    rangeStartTime: new Date(data.rangeStartTime),
+                    rangeEndTime: new Date(data.rangeEndTime)
+                }
+            }
+            for (let id in metaDataDict) {
+                if (metaDataDict.hasOwnProperty(id)) {
+                    let metaData = metaDataDict[id];
+                    if (metaData.type === Constants.TypeTileViewer) {
+                        if (ITownsUtil.isTimelineSync(metaData, data.id, data.senderSync)) {
+                            let elem = document.getElementById(id);
+                            this.showTime(elem, metaData);
+                            // timeが変更された場合は、copyrightの位置が変更される
+                            this.showCopyrights(elem, metaData);
+
+                            if (funcDict && funcDict.hasOwnProperty(metaData.id)) {
+                                funcDict[metaData.id].chowder_tileviewer_update_time(metaData, time, range);
                             }
                         }
                     }
@@ -113,7 +146,7 @@ class GUI extends EventEmitter {
             }
             timer = setTimeout(() => {
                 this.action.resizeWindow({
-                    size : this.getWindowSize()
+                    size: this.getWindowSize()
                 });
             }, 200);
         };
@@ -126,26 +159,25 @@ class GUI extends EventEmitter {
         let registered = false;
         let onfocus = false;
         // 時間たったら隠す関数
-        let hideMenuFunc = function () {
-                // console.log("onfocus:", onfocus);
-                if (!onfocus) {
-                    // console.log("hideMenuFunc");
-                    document.getElementById('head_menu').classList.add('hide');
-                }
-                registered = false;
-            };
+        let hideMenuFunc = function() {
+            // console.log("onfocus:", onfocus);
+            if (!onfocus) {
+                // console.log("hideMenuFunc");
+                document.getElementById('head_menu').classList.add('hide');
+            }
+            registered = false;
+        };
 
-        window.addEventListener('mousemove', function (evt) {
+        window.addEventListener('mousemove', function(evt) {
             document.getElementById('head_menu').classList.remove('hide');
             if (!registered) {
                 registered = true;
                 setTimeout(hideMenuFunc, 3000);
             }
         });
-        
-        setTimeout( () => {
-            if (!document.getElementById('head_menu').classList.contains('hide'))
-            {
+
+        setTimeout(() => {
+            if (!document.getElementById('head_menu').classList.contains('hide')) {
                 if (!registered) {
                     registered = true;
                     setTimeout(hideMenuFunc, 2000);
@@ -156,37 +188,35 @@ class GUI extends EventEmitter {
         // メニュー設定
         let menuSetting = null;
         if (window.isElectron()) {
-            menuSetting = [
-                {
-                    Setting : [{
-                        Fullscreen : {
-                            func : function(evt, menu) { 
-                                if (!DisplayUtil.isFullScreen()) {
-                                    menu.changeName("Fullscreen", "CancelFullscreen")
-                                } else {
-                                    menu.changeName("CancelFullscreen", "Fullscreen")
-                                }
-                                DisplayUtil.toggleFullScreen();
+            menuSetting = [{
+                Setting: [{
+                    Fullscreen: {
+                        func: function(evt, menu) {
+                            if (!DisplayUtil.isFullScreen()) {
+                                menu.changeName("Fullscreen", "CancelFullscreen")
+                            } else {
+                                menu.changeName("CancelFullscreen", "Fullscreen")
+                            }
+                            DisplayUtil.toggleFullScreen();
+                        }
+                    }
+                }]
+            }];
+        } else {
+            menuSetting = [{
+                    Display: [{
+                        Controller: {
+                            func: () => {
+                                window.open("controller.html"); // TODO コントローラIDの設定どうするか
                             }
                         }
-                    }]
-                }];
-        } else {
-            menuSetting = [
-                {
-                    Display : [{
-                            Controller : {
-                                func : () => {
-                                    window.open("controller.html"); // TODO コントローラIDの設定どうするか
-                                }
-                            }
-                        }],
-                    url : "display.html"
+                    }],
+                    url: "display.html"
                 },
                 {
-                    Setting : [{
-                        Fullscreen : {
-                            func : function(evt, menu) { 
+                    Setting: [{
+                        Fullscreen: {
+                            func: function(evt, menu) {
                                 if (!DisplayUtil.isFullScreen()) {
                                     menu.changeName("Fullscreen", "CancelFullscreen")
                                 } else {
@@ -196,7 +226,8 @@ class GUI extends EventEmitter {
                             }
                         }
                     }]
-                }];
+                }
+            ];
         }
 
         this.headMenu = new Menu("display", menuSetting);
@@ -211,12 +242,12 @@ class GUI extends EventEmitter {
         this.headMenu.getIDInput().onblur = (ev) => {
             // console.log("onblur");
             onfocus = false;
-            this.action.changeDisplayID({ id : this.headMenu.getIDValue()});
+            this.action.changeDisplayID({ id: this.headMenu.getIDValue() });
         };
         this.headMenu.getIDInput().onkeypress = (ev) => {
             // console.log(ev.keyCode);
             if (ev.keyCode === 13) { // enter
-                this.action.changeDisplayID({ id : this.headMenu.getIDValue()});
+                this.action.changeDisplayID({ id: this.headMenu.getIDValue() });
             }
         };
     }
@@ -233,11 +264,11 @@ class GUI extends EventEmitter {
      */
     getWindowSize() {
         return {
-            width : window.innerWidth,
-            height : window.innerHeight
+            width: window.innerWidth,
+            height: window.innerHeight
         };
     }
-    
+
     /**
      * マークによるコンテンツ強調表示のトグル
      * @param {Element} elem 対象エレメント
@@ -260,26 +291,24 @@ class GUI extends EventEmitter {
                     elem.style.borderWidth = "0px";
                 }
             }
-            let memo =  document.getElementById("memo:" + metaData.id);
+            let memo = document.getElementById("memo:" + metaData.id);
             if (memo) {
                 if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
                     memo.style.borderColor = "lightgray";
-                    memo.style.backgroundColor = "lightgray"; 
+                    memo.style.backgroundColor = "lightgray";
                 }
-                if (String(metaData[Constants.MARK_MEMO]) === 'true' && String(metaData.visible) === 'true')
-                {
+                if (String(metaData[Constants.MARK_MEMO]) === 'true' && String(metaData.visible) === 'true') {
                     memo.style.display = "block";
                 } else {
                     memo.style.display = "none";
                 }
             }
-            let time =  document.getElementById("time:" + metaData.id);
+            let time = document.getElementById("time:" + metaData.id);
             if (time) {
                 if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
                     time.style.borderColor = groupDict[metaData.group].color;
                 }
-                if (String(metaData.display_time) === 'true')
-                {
+                if (String(metaData.display_time) === 'true') {
                     time.style.display = "block";
                 } else {
                     time.style.display = "none";
@@ -290,7 +319,7 @@ class GUI extends EventEmitter {
 
     deleteMark(elem, id) {
         if (elem) {
-            let memo =  document.getElementById("memo:" + id);
+            let memo = document.getElementById("memo:" + id);
             if (memo) {
                 memo.style.display = "none";
                 if (memo.parentNode) {
@@ -299,10 +328,10 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     deleteTime(elem, id) {
         if (elem) {
-            let time =  document.getElementById("time:" + id);
+            let time = document.getElementById("time:" + id);
             if (time) {
                 time.style.display = "none";
                 if (time.parentNode) {
@@ -311,10 +340,10 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     deleteCopyright(elem, id) {
         if (elem) {
-            let copyright =  document.getElementById("copyright:" + id);
+            let copyright = document.getElementById("copyright:" + id);
             if (copyright) {
                 copyright.style.display = "none";
                 if (copyright.parentNode) {
@@ -337,6 +366,7 @@ class GUI extends EventEmitter {
         if (previewArea) {
             if (Validator.isVisible(json)) {
                 VscreenUtil.assignMetaData(previewArea, json, false, groupDict);
+                previewArea.style.position = "fixed";
                 previewArea.style.display = "block";
             } else {
                 previewArea.style.display = "none";
@@ -351,7 +381,7 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     /**
      * メモを表示.
      * elemにメモ用エレメントをappendChild
@@ -368,7 +398,7 @@ class GUI extends EventEmitter {
                 let rect = elem.getBoundingClientRect();
                 memo.style.width = (rect.right - rect.left) + "px";
                 memo.style.left = rect.left + "px";
-                memo.style.top =  rect.bottom + "px";
+                memo.style.top = rect.bottom + "px";
                 memo.style.zIndex = elem.style.zIndex;
             } else {
                 memo = document.createElement("pre");
@@ -385,10 +415,10 @@ class GUI extends EventEmitter {
                 memo.style.zIndex = elem.style.zIndex;
                 previewArea.appendChild(memo);
             }
-            
+
             if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
                 memo.style.borderColor = groupDict[metaData.group].color;
-                memo.style.backgroundColor = groupDict[metaData.group].color; 
+                memo.style.backgroundColor = groupDict[metaData.group].color;
             }
         }
     }
@@ -408,7 +438,7 @@ class GUI extends EventEmitter {
             if (this.store.getTime(metaData.id)) {
                 let date = this.store.getTime(metaData.id);
                 const y = date.getFullYear();
-                const m = ("00" + (date.getMonth()+1)).slice(-2);
+                const m = ("00" + (date.getMonth() + 1)).slice(-2);
                 const d = ("00" + date.getDate()).slice(-2);
                 const hh = ("00" + date.getHours()).slice(-2);
                 const mm = ("00" + date.getMinutes()).slice(-2);
@@ -419,7 +449,7 @@ class GUI extends EventEmitter {
                 timeElem.innerHTML = time;
                 let rect = elem.getBoundingClientRect();
                 timeElem.style.right = (previewRect.right - rect.right) + "px";
-                timeElem.style.top =  rect.top + "px";
+                timeElem.style.top = rect.top + "px";
                 timeElem.style.zIndex = elem.style.zIndex;
             } else {
                 timeElem = document.createElement("pre");
@@ -445,25 +475,31 @@ class GUI extends EventEmitter {
      * @param {*} metaData 
      */
     showCopyrights(elem, metaData) {
-        if (elem 
-            && metaData.type === Constants.TypeWebGL
-            && metaData.hasOwnProperty('layerList')) 
-            {
+        if (elem &&
+            (metaData.type === Constants.TypeWebGL || metaData.type === Constants.TypeTileViewer) &&
+            metaData.hasOwnProperty('layerList')) {
 
             let copyrightText = ITownsUtil.createCopyrightText(metaData);
-            if (copyrightText.length === 0) return;
+            if (copyrightText.length === 0) {
+                let copyrightElem = document.getElementById("copyright:" + metaData.id);
+                if (copyrightElem) {
+                    copyrightElem.style.display = "none";
+                }
+                return;
+            }
 
             let previewArea = document.getElementById('preview_area');
             let copyrightElem = document.getElementById("copyright:" + metaData.id);
             let previewRect = previewArea.getBoundingClientRect();
             if (copyrightElem) {
                 copyrightElem.innerHTML = copyrightText;
+                copyrightElem.style.display = "inline";
                 let rect = elem.getBoundingClientRect();
                 copyrightElem.style.right = (previewRect.right - rect.right) + "px";
                 if (metaData.display_time && String(metaData.display_time) === "true") {
-                    copyrightElem.style.top =  (rect.top + 50) + "px";
+                    copyrightElem.style.top = (rect.top + 50) + "px";
                 } else {
-                    copyrightElem.style.top =  rect.top + "px";
+                    copyrightElem.style.top = rect.top + "px";
                 }
                 copyrightElem.style.zIndex = elem.style.zIndex;
             } else {
@@ -474,14 +510,15 @@ class GUI extends EventEmitter {
                 let rect = elem.getBoundingClientRect();
                 copyrightElem.style.right = (previewRect.right - rect.right) + "px";
                 if (metaData.display_time && String(metaData.display_time) === "true") {
-                    copyrightElem.style.top =  (rect.top + 50) + "px";
+                    copyrightElem.style.top = (rect.top + 50) + "px";
                 } else {
-                    copyrightElem.style.top =  rect.top + "px";
+                    copyrightElem.style.top = rect.top + "px";
                 }
                 copyrightElem.style.position = "absolute";
                 copyrightElem.style.height = "auto";
                 copyrightElem.style.whiteSpace = "pre-line";
                 copyrightElem.style.zIndex = elem.style.zIndex;
+                copyrightElem.style.display = "inline";
                 previewArea.appendChild(copyrightElem);
             }
         }
@@ -502,31 +539,31 @@ class GUI extends EventEmitter {
         window.PDFJS.cMapUrl = '/3rd/js/pdfjs/cmaps/';
         window.PDFJS.cMapPacked = true;
 
-        pdfjsLib.getDocument(contentData).then(function (pdf) {
+        pdfjsLib.getDocument(contentData).then(function(pdf) {
             metaData.pdfNumPages = pdf.numPages;
 
             let lastTask = Promise.resolve();
             let lastDate = 0;
             let lastPage = 0;
             let lastWidth = 0;
-            elem.loadPage = function (p, width) {
+            elem.loadPage = function(p, width) {
                 let date = Date.now();
                 lastDate = date;
 
                 if (lastPage === p && lastWidth === width) { return; }
 
-                setTimeout(function () {
+                setTimeout(function() {
                     if (lastDate !== date) { return; }
                     lastPage = p;
                     lastWidth = width;
 
-                    pdf.getPage(p).then(function (page) {
+                    pdf.getPage(p).then(function(page) {
                         const originalSize = page.getViewport(1);
                         let viewport = page.getViewport(width / originalSize.width);
                         let orgAspect = metaData.orgWidth / metaData.orgHeight;
                         let pageAspect = viewport.width / viewport.height;
 
-                        if ((viewport.width * viewport.height) > (7680*4320)) {
+                        if ((viewport.width * viewport.height) > (7680 * 4320)) {
                             if (viewport.width > viewport.height) {
                                 viewport.width = 7680;
                                 viewport.height = viewport.width / pageAspect;
@@ -540,18 +577,18 @@ class GUI extends EventEmitter {
                         elem.width = width;
                         elem.height = width / orgAspect;
 
-                        let transform = [ 1, 0, 0, 1, 0, 0 ];
-                        if ( orgAspect < pageAspect ) {
-                            let margin = ( 1.0 / orgAspect - 1.0 / pageAspect ) * width;
-                            transform[ 5 ] = margin / 2;
+                        let transform = [1, 0, 0, 1, 0, 0];
+                        if (orgAspect < pageAspect) {
+                            let margin = (1.0 / orgAspect - 1.0 / pageAspect) * width;
+                            transform[5] = margin / 2;
                         } else {
-                            let margin = ( orgAspect - pageAspect ) * width;
-                            transform[ 4 ] = margin / 2;
-                            transform[ 0 ] = ( width - margin ) / width;
-                            transform[ 3 ] = transform[ 0 ];
+                            let margin = (orgAspect - pageAspect) * width;
+                            transform[4] = margin / 2;
+                            transform[0] = (width - margin) / width;
+                            transform[3] = transform[0];
                         }
 
-                        lastTask = lastTask.then(function () {
+                        lastTask = lastTask.then(function() {
                             return page.render({
                                 canvasContext: context,
                                 viewport: viewport,
@@ -582,16 +619,16 @@ class GUI extends EventEmitter {
         iframe.style.pointerEvents = "none";
         iframe.style.border = "none"
         iframe.onload = () => {
-            if(metaData.webglType && metaData.webglType === "qgis2three.js"){
+            if (metaData.webglType && metaData.webglType === "qgis2three.js") {
                 // qgis
                 const connector = new IFrameConnector(iframe);
                 connector.connect(() => {
                     this.action.updateQgisMetadata(metaData);
                 });
 
-            }else{
+            } else {
                 // itowns
-    
+
                 iframe.contentWindow.chowder_itowns_view_type = "display";
                 // iframe内のitownsからのコールバック
                 /*
@@ -607,24 +644,24 @@ class GUI extends EventEmitter {
 
                 try {
                     connector.connect(() => {
-                    // 初回に一度実行
-                    if (metaData.hasOwnProperty('cameraWorldMatrix')) {
-                        connector.send(ITownsCommand.UpdateCamera, {
-                            mat: JSON.parse(metaData.cameraWorldMatrix),
-                            params: JSON.parse(metaData.cameraParams),
-                        }, () => {
+                        // 初回に一度実行
+                        if (metaData.hasOwnProperty('cameraWorldMatrix')) {
+                            connector.send(ITownsCommand.UpdateCamera, {
+                                mat: JSON.parse(metaData.cameraWorldMatrix),
+                                params: JSON.parse(metaData.cameraParams),
+                            }, () => {
+                                connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                                    let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
+                                    connector.send(ITownsCommand.Resize, rect);
+                                });
+                            });
+                        } else {
                             connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
-                                let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
+                                let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
                                 connector.send(ITownsCommand.Resize, rect);
                             });
-                        });
-                    } else {
-                        connector.send(ITownsCommand.InitLayers, JSON.parse(metaData.layerList), () => {
-                            let rect = DisplayUtil.calcWebGLFrameRect(this.store, metaData);
-                            connector.send(ITownsCommand.Resize, rect);
-                        });
-                    }
-                });
+                        }
+                    });
                 } catch (err) {
                     console.error(err, metaData);
                 }
@@ -657,6 +694,116 @@ class GUI extends EventEmitter {
         elem.appendChild(iframe);
     }
 
+    updateTileViewerScale(connector, metaData, rect) {
+        const wholeScale = Vscreen.getWholeScale();
+        const baseWidth = Math.max(metaData.orgWidth * wholeScale, metaData.orgWidth);
+        const baseHeight = Math.max(metaData.orgHeight * wholeScale, metaData.orgHeight);
+
+        const contentRect = {
+            left: parseFloat(metaData.posx),
+            top: parseFloat(metaData.posy),
+            right: parseFloat(metaData.posx) + parseFloat(metaData.width),
+            bottom: parseFloat(metaData.posy) + parseFloat(metaData.height),
+        };
+        const win = this.store.getWindowData();
+        const winLeft = parseFloat(win.posx);
+        const winTop = parseFloat(win.posy);
+        const winBottom = parseFloat(win.posy) + parseFloat(win.height);
+        const winRight = winLeft + parseFloat(win.width);
+        const intersectRect = {
+            left: contentRect.right > winLeft || contentRect.left < winRight ? Math.max(contentRect.left, winLeft) : 0,
+            top: contentRect.bottom > winTop || contentRect.top < winBottom ? Math.max(contentRect.top, winTop) : 0,
+            right: contentRect.right > winLeft || contentRect.left < winRight ? Math.min(contentRect.right, winRight) : 0,
+            bottom: contentRect.bottom > winTop || contentRect.top < winBottom ? Math.min(contentRect.bottom, winBottom) : 0
+        }
+
+        TileViewerUtil.resize(connector, {
+            rect: rect,
+            contentRect: contentRect,
+            intersectRect: intersectRect,
+            displayScale: Vscreen.getWholeScale(),
+            width: parseInt(metaData.width),
+            height: parseInt(metaData.height),
+            baseWidth: parseInt(baseWidth),
+            baseHeight: parseInt(baseHeight)
+        }, true);
+    }
+
+    /**
+     * TileViewerを表示
+     * @param {*} elem 
+     * @param {*} metaData 
+     * @param {*} contentData 
+     */
+    showTileViewer(elem, metaData, contentData) {
+        let iframe = document.createElement('iframe');
+        iframe.src = metaData.url;
+
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.pointerEvents = "none";
+        iframe.style.border = "none"
+        iframe.onload = () => {
+            iframe.contentWindow.chowder_view_type = "display";
+            let connector = new IFrameConnector(iframe);
+            try {
+                connector.connect(() => {});
+
+                connector.once(TileViewerCommand.InitLayers, (err, data) => {
+                    let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
+                    this.updateTileViewerScale(connector, metaData, rect);
+                    TileViewerUtil.updateCamera(connector, metaData);
+                    TileViewerUtil.updateViewerParam(connector, metaData);
+                    if (this.store.getTime(metaData.id)) {
+                        const time = this.store.getTime(metaData.id);
+                        TileViewerUtil.updateTime(connector, metaData, time, {});
+                    }
+
+                    connector.send(TileViewerCommand.InitLayers, JSON.parse(metaData.layerList), () => {
+                        connector.on(TileViewerCommand.InitLayers, (err, data) => {
+                            let rect = DisplayUtil.calcIFrameRect(this.store, metaData);
+                            this.updateTileViewerScale(connector, metaData, rect);
+                            TileViewerUtil.updateCamera(connector, metaData);
+                        });
+                    });
+                });
+            } catch (err) {
+                console.error(err, metaData);
+            }
+
+            // chowderサーバから受信したカメラ情報などを、displayのiframe内に随時送るためのコールバックイベントを登録
+            this.action.addTileViewerFunc({
+                id: metaData.id,
+                func: {
+                    chowder_tileviewer_resize: (metaData, rect) => {
+                        this.updateTileViewerScale(connector, metaData, rect);
+                    },
+                    chowder_tileviewer_update_camera: (metaData) => {
+                        TileViewerUtil.updateCamera(connector, metaData);
+                    },
+                    chowder_tileviewer_update_layer_list: (metaData, callback) => {
+                        let preMetaData = this.store.getMetaData(metaData.id);
+                        TileViewerUtil.updateLayerList(connector, metaData, preMetaData, callback);
+                    },
+                    chowder_tileviewer_update_viewer_param: (metaData) => {
+                        let preMetaData = this.store.getMetaData(metaData.id);
+                        TileViewerUtil.updateViewerParam(connector, metaData, preMetaData);
+                    },
+                    chowder_tileviewer_update_time: (metaDatam, time, range) => {
+                        TileViewerUtil.updateTime(connector, metaData, time, range);
+                    },
+                    /*
+                    chowder_itowns_measure_time: (callback) => {
+                        connector.send(ITownsCommand.MeasurePerformance, {}, callback);
+                    }
+                    */
+                }
+            });
+        };
+        elem.innerHTML = "";
+        elem.appendChild(iframe);
+    }
+
     /**
      * videoを表示
      * @param {*} videpPlayer 
@@ -666,13 +813,13 @@ class GUI extends EventEmitter {
     showVideo(videpPlayer, metaData) {
         let webRTCDict = this.store.getVideoStore().getWebRTCDict();
         let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
-        
+
         if (!webRTCDict.hasOwnProperty(rtcKey)) {
             metaData.from = "view";
             this.action.requestWebRTC({
-                metaData : metaData,
+                metaData: metaData,
                 player: videpPlayer,
-                request : JSON.stringify({ key : rtcKey })
+                request: JSON.stringify({ key: rtcKey })
             });
             delete metaData.from;
         }
@@ -685,7 +832,7 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showText(elem, metaData, contentData) {
-    	elem.innerHTML = contentData;
+        elem.innerHTML = contentData;
     }
 
     /**
@@ -699,7 +846,7 @@ class GUI extends EventEmitter {
         if (metaData.hasOwnProperty('mime')) {
             mime = metaData.mime;
         }
-        let blob = new Blob([contentData], {type: mime});
+        let blob = new Blob([contentData], { type: mime });
         if (elem && blob) {
             URL.revokeObjectURL(elem.src);
             elem.onload = () => {
@@ -723,17 +870,17 @@ class GUI extends EventEmitter {
         // console.log("showDisplayID:" + id);
         if (id && this.store.getWindowData().id === id) {
             document.getElementById('displayid_area').style.display = "block";
-            setTimeout(function () {
+            setTimeout(function() {
                 document.getElementById('displayid_area').style.display = "none";
             }, 8 * 1000);
         } else if (id === "") {
             document.getElementById('displayid_area').style.display = "block";
-            setTimeout(function () {
+            setTimeout(function() {
                 document.getElementById('displayid_area').style.display = "none";
             }, 8 * 1000);
         }
     }
-    
+
     /**
      * デバッグメッセージの表示
      * @param {*} metaData 
@@ -742,15 +889,15 @@ class GUI extends EventEmitter {
         document.getElementById('debug_message_area').innerHTML = message;
         if (message) {
             document.getElementById('debug_message_area').style.display = "block";
-            setTimeout(function () {
+            setTimeout(function() {
                 document.getElementById('debug_message_area').style.display = "none";
             }, 8 * 1000);
         } else if (message === "") {
             document.getElementById('debug_message_area').style.display = "block";
-            setTimeout(function () {
+            setTimeout(function() {
                 document.getElementById('debug_message_area').style.display = "none";
             }, 8 * 1000);
-        } 
+        }
     }
 
     /**
@@ -784,10 +931,10 @@ class GUI extends EventEmitter {
         let groupDict = this.store.getGroupDict();
         let videoPlayer = null;
         // console.log("assignContent", "id=" + metaData.id);
-        if (Validator.isWindowType(metaData) || 
+        if (Validator.isWindowType(metaData) ||
             (metaData.hasOwnProperty('visible') && String(metaData.visible) === "true")) {
             let tagName = DisplayUtil.getTagName(metaData.type);
-    
+
             // 既に読み込み済みのコンテンツかどうか
             if (document.getElementById(metaData.id)) {
                 elem = document.getElementById(metaData.id);
@@ -802,7 +949,7 @@ class GUI extends EventEmitter {
                     metaData = metaDataDict[metaData.id];
                 }
             }
-    
+
             if (!elem) {
                 if (metaData.type === 'video') {
                     videoPlayer = new VideoPlayer(true);
@@ -828,6 +975,8 @@ class GUI extends EventEmitter {
                 this.showPDF(elem, metaData, contentData);
             } else if (metaData.type === 'webgl') {
                 this.showWebGL(elem, metaData, contentData);
+            } else if (metaData.type === 'tileviewer') {
+                this.showTileViewer(elem, metaData, contentData);
             } else if (metaData.type === 'tileimage') {
                 console.error("Error : faild to handle tileimage");
             } else {
@@ -835,18 +984,18 @@ class GUI extends EventEmitter {
                 this.showImage(elem, metaData, contentData);
             }
             VscreenUtil.assignMetaData(elem, metaData, false, groupDict);
-            
+
             // 同じコンテンツを参照しているメタデータがあれば更新
             if (elem) {
                 DisplayUtil.copyContentData(this.store, elem, null, metaData, false);
             }
-    
+
             this.showMemo(elem, metaData);
             this.showTime(elem, metaData);
             this.showCopyrights(elem, metaData);
         }
     }
-    
+
     /**
      * タイル画像の枠を全部再生成する。中身の画像(image.src)は作らない。
      * @param {*} elem 
@@ -892,8 +1041,8 @@ class GUI extends EventEmitter {
     }
 
     assignTileReductionImage(metaData, contentData) {
-        if (metaData.hasOwnProperty('reductionWidth')
-            && metaData.hasOwnProperty('reductionHeight')) {
+        if (metaData.hasOwnProperty('reductionWidth') &&
+            metaData.hasOwnProperty('reductionHeight')) {
 
             let mime = "image/jpeg";
             let elem = document.getElementById(metaData.id);
@@ -902,13 +1051,13 @@ class GUI extends EventEmitter {
                 elem = document.getElementById(metaData.id);
             }
             let reductionElem = elem.getElementsByClassName('reduction_image')[0];
-        
+
             // contentData(reduction data)を生成
             // 解像度によらず生成する
             if (!reductionElem.src.length === 0) {
-                URL.revokeObjectURL(reductionElem.src);	
+                URL.revokeObjectURL(reductionElem.src);
             }
-            let blob = new Blob([contentData], {type: mime});
+            let blob = new Blob([contentData], { type: mime });
             reductionElem.src = URL.createObjectURL(blob);
         }
     }
@@ -929,10 +1078,10 @@ class GUI extends EventEmitter {
         let mime = "image/jpeg";
         let previousImage = null;
         let isInitial = true;
-		const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
-		const ow = Number(metaData.orgWidth);
+        const orgRect = Vscreen.transformOrg(VscreenUtil.toIntRect(metaData));
+        const ow = Number(metaData.orgWidth);
         const oh = Number(metaData.orgHeight);
-        
+
         let win = this.getWindowSize();
 
         let loadedTiles = [];
@@ -943,7 +1092,7 @@ class GUI extends EventEmitter {
                 let rect = VscreenUtil.getTileRect(metaData, k, i);
                 // let frect = Vscreen.transformOrg(VscreenUtil.toFloatRect(rect));
                 let frect = Vscreen.transform(VscreenUtil.toFloatRect(rect));
-                frect.w =  Math.round(rect.width / ow * orgRect.w);
+                frect.w = Math.round(rect.width / ow * orgRect.w);
                 frect.h = Math.round(rect.height / oh * orgRect.h);
 
                 /*
@@ -960,11 +1109,11 @@ class GUI extends EventEmitter {
                 if (frect.w === 0 || frect.h === 0) { continue; }
                 // windowの中にあるか外にあるかで可視不可視判定
                 let visible = !VscreenUtil.isOutsideWindow({
-                    posx: frect.x, 
-                    posy : frect.y,
-                    width : frect.w,
-                    height : frect.h
-                }, { x : 0, y: 0, w : win.width, h: win.height});
+                    posx: frect.x,
+                    posy: frect.y,
+                    width: frect.w,
+                    height: frect.h
+                }, { x: 0, y: 0, w: win.width, h: win.height });
                 let previousElem = null;
                 // windowの中にあるか外にあるかで可視不可視判定
                 if (visible) {
@@ -979,7 +1128,7 @@ class GUI extends EventEmitter {
                         elem = document.getElementById(metaData.id);
                         VscreenUtil.resizeTileImages(elem, metaData);
                     }
-                                
+
                     // 全タイル読み込み済じゃなかったら返る
                     if (String(metaData.tile_finished) !== "true") {
                         ++tileIndex;
@@ -988,9 +1137,9 @@ class GUI extends EventEmitter {
 
                     // metadataの解像度がcontentData（縮小版画像）より小さいか調べる
                     // aspectがreduction~と違う場合は、初期画像とは別解像度の画像に切り替わったと判断し、強制タイル表示
-                    if (isInitial
-                        && metaData.hasOwnProperty('reductionWidth')
-                        && metaData.hasOwnProperty('reductionHeight')) {
+                    if (isInitial &&
+                        metaData.hasOwnProperty('reductionWidth') &&
+                        metaData.hasOwnProperty('reductionHeight')) {
 
                         let reductionElem = elem.getElementsByClassName('reduction_image')[0];
                         // ディスプレイ座標系での画像全体の解像度（画面外にはみ出ているものを含む）
@@ -1004,7 +1153,7 @@ class GUI extends EventEmitter {
                         const mh = Number(metaData.height);
                         let reductionAspect = rw / rh;
                         let aspect = mw / mh;
-                        let isSameImage = Math.abs(reductionAspect-aspect) < 0.2;
+                        let isSameImage = Math.abs(reductionAspect - aspect) < 0.2;
                         if (isSameImage && ew <= rw && eh <= rh) {
                             // ディスプレイ内のreduction divの解像度 < オリジナルの縮小版画像の解像度
                             // reductionを表示、タイルを非表示に
@@ -1028,7 +1177,7 @@ class GUI extends EventEmitter {
 
                     // 全タイル読み込み完了時にログを出すため
                     loadedTiles.push(false);
-                    
+
                     if (!previousImage || isReload) {
                         let image = elem.getElementsByClassName(tileClassName)[0];
                         // assignTileImageを複数回呼ばれたときに、
@@ -1040,19 +1189,19 @@ class GUI extends EventEmitter {
                         }
 
                         this.action.getTileContent({
-                            request : request,
-                            callback :  ((index, image) => {
+                            request: request,
+                            callback: ((index, image) => {
                                 return (err, data) => {
                                     if (err) {
                                         console.error(err);
                                         return;
                                     }
                                     if (previousImage) {
-                                        URL.revokeObjectURL(image.src);	
+                                        URL.revokeObjectURL(image.src);
                                     }
                                     if (this.store.isMeasureTimeEnable()) {
                                         image.onload = () => {
-                                            if (!loadedTiles) { 
+                                            if (!loadedTiles) {
                                                 return;
                                             }
                                             loadedTiles[index] = true;
@@ -1074,10 +1223,10 @@ class GUI extends EventEmitter {
                                             }
                                         }
                                     }
-                                    let blob = new Blob([data.contentData], {type: mime});
+                                    let blob = new Blob([data.contentData], { type: mime });
                                     image.src = URL.createObjectURL(blob);
                                 }
-                            })(loadedTiles ? loadedTiles.length-1 : 0, image)
+                            })(loadedTiles ? loadedTiles.length - 1 : 0, image)
                         })
                     }
 
@@ -1102,11 +1251,11 @@ class GUI extends EventEmitter {
             elem.style.borderWidth = "1px";
             elem.style.border = "solid";
             elem.is_dragging = true;
-            
+
             if (elem.classList.contains("mark")) {
                 elem.style.borderWidth = "6px";
                 if (metaData.hasOwnProperty("group") && groupDict.hasOwnProperty(metaData.group)) {
-                    elem.style.borderColor = groupDict[metaData.group].color; 
+                    elem.style.borderColor = groupDict[metaData.group].color;
                 }
             }
         }
@@ -1152,7 +1301,7 @@ class GUI extends EventEmitter {
      */
     setupContent(elem, targetid) {
         let d = DisplayUtil.getTargetEvent();
-        if(d.mode === 'mouse'){
+        if (d.mode === 'mouse') {
             elem.addEventListener(d.start, ((elem, targetid) => {
                 return (evt) => {
                     const rect = elem.getBoundingClientRect();
@@ -1161,12 +1310,12 @@ class GUI extends EventEmitter {
                     elem.draggingOffsetLeft = evt.clientX - rect.left;
                     elem.draggingOffsetTop = evt.clientY - rect.top;
                     this.action.changeContentIndexToFront({
-                        targetID : targetid
+                        targetID: targetid
                     });
                     evt.preventDefault();
                 };
-            })(elem, targetid),  { passive: false });
-        }else{
+            })(elem, targetid), { passive: false });
+        } else {
             elem.addEventListener(d.start, ((elem, targetid) => {
                 return (evt) => {
                     const rect = elem.getBoundingClientRect();
@@ -1175,17 +1324,17 @@ class GUI extends EventEmitter {
                     elem.draggingOffsetLeft = evt.changedTouches[0].clientX - rect.left;
                     elem.draggingOffsetTop = evt.changedTouches[0].clientY - rect.top;
                     this.action.changeContentIndexToFront({
-                        targetID : targetid
+                        targetID: targetid
                     });
                     evt.preventDefault();
                 };
-            })(elem, targetid),  { passive: false });
+            })(elem, targetid), { passive: false });
         }
     };
 
     setupWindowEvents() {
         if (DisplayUtil.getTargetEvent().mode === 'mouse') {
-            window.document.addEventListener("mousedown", function () {
+            window.document.addEventListener("mousedown", function() {
                 let displayArea = document.getElementById('displayid_area');
                 if (displayArea.style.display !== "none") {
                     displayArea.style.display = "none";
@@ -1198,15 +1347,15 @@ class GUI extends EventEmitter {
                 const elem = this.getSelectedElem();
                 if (elem && elem.is_dragging) {
                     this.action.changeContentTransform({
-                        targetID : elem.id, 
-                        x : evt.pageX - elem.draggingOffsetLeft, 
-                        y : evt.pageY - elem.draggingOffsetTop
+                        targetID: elem.id,
+                        x: evt.pageX - elem.draggingOffsetLeft,
+                        y: evt.pageY - elem.draggingOffsetTop
                     });
                 }
                 evt.preventDefault();
-            },  { passive: false });
+            }, { passive: false });
         } else {
-            window.document.addEventListener("touchstart", function () {
+            window.document.addEventListener("touchstart", function() {
                 let displayArea = document.getElementById('displayid_area');
                 if (displayArea.style.display !== "none") {
                     displayArea.style.display = "none";
@@ -1219,16 +1368,16 @@ class GUI extends EventEmitter {
                 const elem = this.getSelectedElem();
                 if (elem && elem.is_dragging) {
                     this.action.changeContentTransform({
-                        targetID : elem.id,
-                        x : evt.changedTouches[0].pageX - elem.draggingOffsetLeft, 
-                        y : evt.changedTouches[0].pageY - elem.draggingOffsetTop
+                        targetID: elem.id,
+                        x: evt.changedTouches[0].pageX - elem.draggingOffsetLeft,
+                        y: evt.changedTouches[0].pageY - elem.draggingOffsetTop
                     });
                 }
                 evt.preventDefault();
-            },  { passive: false });
+            }, { passive: false });
         }
     }
-    
+
 
     /**
      * windowDataをもとにビューポートを更新する.
@@ -1248,7 +1397,7 @@ class GUI extends EventEmitter {
         Vscreen.setWholeScale(scale);
         // trans
         Vscreen.translateWhole(-cx, -cy);
-        
+
         // 全コンテンツデータの座標をビューポートをもとに更新
         let metaDataDict = this.store.getMetaDataDict();
         let groupDict = this.store.getGroupDict();

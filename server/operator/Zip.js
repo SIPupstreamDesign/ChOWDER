@@ -2,7 +2,7 @@
     "use strict";
     const fs = require('fs');
     const path = require("path");
-    const nodeZip = require("node-zip");
+    const JSZip = require("jszip");
 
     class Zip{
         /**
@@ -14,11 +14,15 @@
          * @return {Promise<Array<Error,string>>} [{err,dir},{err,dir},{err,dir}]
          */
         static async extract(binaryData, extractDir){
-            const zip = new nodeZip(binaryData, {base64: false, checkCRC32: true});
-
+            const zip = new JSZip();
+            await zip.loadAsync(binaryData, {base64: false, checkCRC32: true});
+            
             let fileList = [];
             for(let i in zip.files){
-                const ret = await this._extractFile(zip,i,extractDir).catch((err)=>{return err;});
+                const ret = await this._extractFile(zip,i,extractDir).catch((err)=>{
+                    // console.log(err);
+                    return err;
+                });
                 fileList.push(ret);
             }
             return fileList;
@@ -31,31 +35,34 @@
          */
         static _extractFile(zip,file,extractDir){
             return new Promise((resolve,reject)=>{
-                if(zip.files[file].options.dir === true){
-                    console.log("@@@@@@@@@@@"+extractDir+zip.files[file].name,fs.existsSync(extractDir+zip.files[file].name));
-                    if(!fs.existsSync(extractDir+zip.files[file].name)){
-                        console.log("[mkdir] : ",extractDir+zip.files[file].name);
-                        fs.mkdir(extractDir+zip.files[file].name, { recursive: true },(err)=>{
+                let zipFile = zip.files[file];
+                if(zipFile.dir === true){
+                    console.log("@@@@@@@@@@@"+extractDir+zipFile.name,fs.existsSync(extractDir+zipFile.name));
+                    if(!fs.existsSync(extractDir+zipFile.name)){
+                        console.log("[mkdir] : ",extractDir+zipFile.name);
+                        fs.mkdir(extractDir+zipFile.name, { recursive: true },(err)=>{
                             if(err){
                                 console.log(err)
                                 reject({err:err,dir:null});
                             };
-                            resolve({err:null,dir:extractDir+zip.files[file].name});
+                            resolve({err:null,dir:extractDir+zipFile.name});
                         });
                     }else{
                         reject({err:new Error("this filename already exist"),dir:null});
                     }
                 }else{
-                    if(!fs.existsSync(path.parse(extractDir+zip.files[file].name).dir)){
-                        fs.mkdirSync(path.parse(extractDir+zip.files[file].name).dir);
+                    if(!fs.existsSync(path.parse(extractDir+zipFile.name).dir)){
+                        fs.mkdirSync(path.parse(extractDir+zipFile.name).dir);
                     }
-                    fs.writeFile(extractDir+zip.files[file].name,zip.files[file]._data,"binary",(err)=>{
-                        console.log("[writeFile] : ",extractDir+zip.files[file].name);
-                        if(err){
-                            console.log(err)
-                            reject({err:err,dir:null});
-                        };
-                        resolve({err:null,dir:extractDir+zip.files[file].name});
+                    zipFile.async("uint8array").then(function (binary) {
+                        fs.writeFile(extractDir+zipFile.name,binary,"binary",(err)=>{
+                            console.log("[writeFile] : ",extractDir+zipFile.name);
+                            if(err){
+                                console.log(err)
+                                reject({err:err,dir:null});
+                            };
+                            resolve({err:null,dir:extractDir+zipFile.name});
+                        });
                     });
                 }
             });

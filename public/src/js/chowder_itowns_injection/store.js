@@ -21,8 +21,7 @@ const getTextureFloat = (buffer, view) => {
         const texture = new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.RedFormat, itowns.THREE.FloatType);
         texture.internalFormat = 'R32F';
         return texture;
-    }
-    else {
+    } else {
         // webgl1
         return new itowns.THREE.DataTexture(buffer, 256, 256, itowns.THREE.AlphaFormat, itowns.THREE.FloatType);
     }
@@ -248,9 +247,9 @@ class Store extends EventEmitter {
         let res = [];
         let layers = this.itownsView.getLayers();
         for (let i = 0; i < layers.length; ++i) {
-            if (isBarGraphLayer(layers[i])
-                || isTimeseriesPotreeLayer(layers[i])
-                || isTimeseriesC3DTilesLayer(layers[i])) {
+            if (isBarGraphLayer(layers[i]) ||
+                isTimeseriesPotreeLayer(layers[i]) ||
+                isTimeseriesC3DTilesLayer(layers[i])) {
                 res.push(layers[i]);
             }
         }
@@ -274,7 +273,7 @@ class Store extends EventEmitter {
     installCSVElevationParsar(mapSource) {
         console.log("installCSVElevationParsar");
 
-        mapSource.fetcher = function (url, options = {}) {
+        mapSource.fetcher = function(url, options = {}) {
             return fetchText(url, options).then((data) => {
                 let LF = String.fromCharCode(10);
                 let lines = data.split(LF);
@@ -303,6 +302,7 @@ class Store extends EventEmitter {
     installPNGElevationParsar(mapSource) {
         console.log("installPNGElevationParsar");
         let textureLoader = new itowns.THREE.TextureLoader();
+
         function texture(url, options = {}) {
             let res;
             let rej;
@@ -311,7 +311,7 @@ class Store extends EventEmitter {
                 res = resolve;
                 rej = reject;
             });
-            textureLoader.load(url, res, () => { }, rej);
+            textureLoader.load(url, res, () => {}, rej);
             return promise;
         }
         let canvas = document.createElement("canvas");
@@ -385,7 +385,7 @@ class Store extends EventEmitter {
         }
         if (type === ITownsConstants.TypeElevation) {
             let mapSource = new itowns.TMSSource(config);
-            if (config.format === "image/x-bil;bits=32" || config.hasOwnProperty('tileMatrixSet')) {
+            if (config.format === "image/x-bil;bits=32" || (config.hasOwnProperty('tileMatrixSet') && config.url.indexOf('?LAYER=') > 0)) {
                 config.name = config.id;
                 mapSource = new itowns.WMTSSource(config);
             } else if (config.format === "csv" || config.format === "txt") {
@@ -470,12 +470,12 @@ class Store extends EventEmitter {
                     }),
                     source: mapSource
                 });
-            }
-            else if (config.format === "pbf") {
+            } else if (config.format === "pbf") {
                 // Add a vector tile layer
                 function inter(z) {
                     return z - (z % 5);
                 }
+
                 function isValidData(data, extentDestination) {
                     const isValid = inter(extentDestination.zoom) == inter(data.extent.zoom);
                     return isValid;
@@ -555,8 +555,8 @@ class Store extends EventEmitter {
                 config.style = params.style;
             }
         }
-        if (type === ITownsConstants.TypePointCloud
-            || type === ITownsConstants.TypePointCloudTimeSeries) {
+        if (type === ITownsConstants.TypePointCloud ||
+            type === ITownsConstants.TypePointCloudTimeSeries) {
             if (params.hasOwnProperty('file')) {
                 url += params.file;
             }
@@ -569,8 +569,8 @@ class Store extends EventEmitter {
                 "protocol": 'potreeconverter'
             };
         }
-        if (type === ITownsConstants.Type3DTile
-            || type === ITownsConstants.Type3DTilesTimeSeries) {
+        if (type === ITownsConstants.Type3DTile ||
+            type === ITownsConstants.Type3DTilesTimeSeries) {
             config = {
                 "name": params.hasOwnProperty('id') ? params.id : "3dtile",
                 "source": new itowns.C3DTilesSource({
@@ -743,8 +743,8 @@ class Store extends EventEmitter {
                 continue;
             } else {
                 const id = this.layerDataList[i].id;
-                if ((this.layerDataList[i].hasOwnProperty('url') && this.layerDataList[i].url !== "none")
-                    || (this.layerDataList[i].hasOwnProperty('file') && this.layerDataList[i].file)) {
+                if ((this.layerDataList[i].hasOwnProperty('url') && this.layerDataList[i].url !== "none") ||
+                    (this.layerDataList[i].hasOwnProperty('file') && this.layerDataList[i].file)) {
                     let layer = this.getLayer(id);
                     if (layer) {
                         this.itownsView.removeLayer(id);
@@ -770,7 +770,7 @@ class Store extends EventEmitter {
                 this.changeLayerProperty(layerList[i])
             }
 
-            this.iframeConnector.send(ITownsCommand.LayersInitialized, {}, function () { });
+            this.iframeConnector.send(ITownsCommand.LayersInitialized, {}, function() {});
             this.itownsView.removeEventListener('layers-initialized', initializeOneTime);
         }
 
@@ -817,18 +817,18 @@ class Store extends EventEmitter {
                     if (attachedIndex >= 0) {
                         // attachedLayerを移動したい
                         // "attachedLayers"内で移動を試みる
-                        if (isUp
-                            && attachedIndex > 0
-                            && validLayers.indexOf(attachedLayers[i]) >= 0) // 入れ替え先レイヤーが有効かどうか
+                        if (isUp &&
+                            attachedIndex > 0 &&
+                            validLayers.indexOf(attachedLayers[i]) >= 0) // 入れ替え先レイヤーが有効かどうか
                         {
                             console.log("up!", this.itownsView, id)
                             itowns.ColorLayersOrdering.moveLayerUp(this.itownsView, id);
                             attachedLayers.splice(i - 1, 2, attachedLayers[i], attachedLayers[i - 1]);
                             this.itownsView.dispatchEvent({ type: itowns.VIEW_EVENTS.COLOR_LAYERS_ORDER_CHANGED });
                             this.itownsView.notifyChange();
-                        } else if (!isUp
-                            && attachedIndex < (attachedLayers.length - 1)
-                            && validLayers.indexOf(attachedLayers[i + 1]) >= 0) // 入れ替え先レイヤーが有効かどうか) 
+                        } else if (!isUp &&
+                            attachedIndex < (attachedLayers.length - 1) &&
+                            validLayers.indexOf(attachedLayers[i + 1]) >= 0) // 入れ替え先レイヤーが有効かどうか) 
                         {
                             console.log("moveLayerDown", i, i + 1)
                             itowns.ColorLayersOrdering.moveLayerDown(this.itownsView, id);
@@ -873,9 +873,9 @@ class Store extends EventEmitter {
         let isChanged = false;
         if (layer) {
             let isUpdateSource = false;
-            if (params.hasOwnProperty('url')
-                && layer.hasOwnProperty('source')
-                && layer.source.hasOwnProperty('url')) {
+            if (params.hasOwnProperty('url') &&
+                layer.hasOwnProperty('source') &&
+                layer.source.hasOwnProperty('url')) {
                 // URLが違う場合はソース更新
                 isUpdateSource = isUpdateSource || (params.url !== layer.source.url);
                 // update_idが違う場合はソース更新
@@ -950,9 +950,9 @@ class Store extends EventEmitter {
                 console.error("pointBudget", layer.pointBudget)
             }
             */
-            if ((params.hasOwnProperty('offset_xyz')
-                || params.hasOwnProperty('offset_uvw')
-                || params.hasOwnProperty('offset_small_uv')) &&
+            if ((params.hasOwnProperty('offset_xyz') ||
+                    params.hasOwnProperty('offset_uvw') ||
+                    params.hasOwnProperty('offset_small_uv')) &&
                 layer.object3d) {
 
                 // layerからパラメータを取得できるように、layerに入れておく
@@ -1006,7 +1006,7 @@ class Store extends EventEmitter {
                     w = vec.clone();
                     w.normalize();
                 }
-                
+
                 let mw = { x: 0, y: 0, z: 0 };
                 let xyz = { x: 0, y: 0, z: 0 };
                 // position
@@ -1108,9 +1108,9 @@ class Store extends EventEmitter {
 
     isViewReady() {
         //const allReady = this.itownsView.getLayers().every(layer => layer.ready);
-        if (//*allReady &&
+        if ( //*allReady &&
             this.itownsView.mainLoop.scheduler.commandsWaitingExecutionCount() == 0 &&
-            this.itownsView.mainLoop.renderingState == 0 /*RENDERING_PAUSED*/) {
+            this.itownsView.mainLoop.renderingState == 0 /*RENDERING_PAUSED*/ ) {
             return true;
         }
         return false;
@@ -1132,8 +1132,7 @@ class Store extends EventEmitter {
                     if (this.isViewReady()) {
                         func(view, sumDT);
                         sumDT = 0.0;
-                    }
-                    else {
+                    } else {
                         debounceRedraw(func, view, sumDT);
                     }
                 }, interval);
@@ -1142,7 +1141,7 @@ class Store extends EventEmitter {
 
         let aspectForResize = 1.0
 
-        const getAspect = function (div) {
+        const getAspect = function(div) {
             const rect = div.getBoundingClientRect();
             return (rect.right - rect.left) / (rect.bottom - rect.top);
         }
@@ -1176,7 +1175,7 @@ class Store extends EventEmitter {
             // 具体的には、連続したredrawが発行された際に、最後に1回だけ実行するようにする。
             if (window.chowder_itowns_view_type === "controller") {
                 const origRenderView = this.itownsView.mainLoop.__proto__._renderView.bind(this.itownsView.mainLoop);
-                this.itownsView.mainLoop.__proto__._renderView = function (view, dt) {
+                this.itownsView.mainLoop.__proto__._renderView = function(view, dt) {
                     debounceRedraw(origRenderView, view, dt);
                 }
 
@@ -1207,10 +1206,10 @@ class Store extends EventEmitter {
                 data.timeCallback(this.date);
             }
             this.range = {}
-            if (param.hasOwnProperty('rangeStartTime')
-                && param.hasOwnProperty('rangeEndTime')
-                && param.rangeStartTime.length > 0
-                && param.rangeEndTime.length > 0) {
+            if (param.hasOwnProperty('rangeStartTime') &&
+                param.hasOwnProperty('rangeEndTime') &&
+                param.rangeStartTime.length > 0 &&
+                param.rangeEndTime.length > 0) {
                 this.range = {
                     rangeStartTime: new Date(param.rangeStartTime),
                     rangeEndTime: new Date(param.rangeEndTime),
@@ -1446,7 +1445,7 @@ class Store extends EventEmitter {
                         this.iframeConnector.send(ITownsCommand.AddContent, {
                             thumbnail: thumbnailBase64,
                             layerList: this.layerDataList
-                        }, function () {
+                        }, function() {
                             done = true;
                         });
                     }
@@ -1460,7 +1459,7 @@ class Store extends EventEmitter {
                 this.iframeConnector.send(ITownsCommand.AddContent, {
                     thumbnail: thumbnailBase64,
                     layerList: this.layerDataList
-                }, function () {
+                }, function() {
                     done = true;
                 });
                 done = true;
@@ -1550,10 +1549,10 @@ class Store extends EventEmitter {
                 data.timeCallback(this.date);
             }
             this.range = {}
-            if (param.hasOwnProperty('rangeStartTime')
-                && param.hasOwnProperty('rangeEndTime')
-                && param.rangeStartTime.length > 0
-                && param.rangeEndTime.length > 0) {
+            if (param.hasOwnProperty('rangeStartTime') &&
+                param.hasOwnProperty('rangeEndTime') &&
+                param.rangeStartTime.length > 0 &&
+                param.rangeEndTime.length > 0) {
                 this.range = {
                     rangeStartTime: new Date(param.rangeStartTime),
                     rangeEndTime: new Date(param.rangeEndTime),
@@ -1570,11 +1569,11 @@ class Store extends EventEmitter {
         });
 
         this.layerDataList = await this.getLayerDataList();
-        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, async (evt) => {
+        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, async(evt) => {
             this.layerDataList = await this.getLayerDataList();
             this.iframeConnector.send(ITownsCommand.AddLayer, this.layerDataList);
         });
-        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, async (evt) => {
+        this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_REMOVED, async(evt) => {
             if (!this.isStopDispatchRemoveEvent) {
                 this.layerDataList = await this.getLayerDataList();
                 this.iframeConnector.send(ITownsCommand.UpdateLayer, this.layerDataList);
@@ -1688,7 +1687,7 @@ class Store extends EventEmitter {
             changeButton.style.zIndex = 1;
             changeButton.style.color = "white"
             changeButton.style.borderRadius = "4px"
-            changeButton.onclick = function () {
+            changeButton.onclick = function() {
                 controls.setMyOrbitMode(!controls.isMyOrbitMode);
                 changeButton.textContent = controls.isMyOrbitMode ? 'Mode: Cartecian' : 'Mode: Earth';
                 fitButton.style.display = controls.isMyOrbitMode ? 'block' : 'none';
@@ -1705,7 +1704,7 @@ class Store extends EventEmitter {
             resetButton.style.color = "white"
             resetButton.style.borderRadius = "4px"
             resetButton.textContent = 'Reset Camera'
-            resetButton.onclick = function () {
+            resetButton.onclick = function() {
                 controls.resetCamera();
             }
             document.body.appendChild(resetButton);

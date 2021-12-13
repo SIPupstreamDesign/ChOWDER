@@ -6,13 +6,12 @@
 import Vscreen from '../common/vscreen';
 import VscreenUtil from '../common/vscreen_util';
 
-class DisplayUtil
-{
+class DisplayUtil {
     /**
      * エレメント間でコンテントデータをコピーする.
      */
     static copyContentData(store, fromElem, toElem, metaData, isListContent) {
-        store.for_each_metadata(function (id, meta) {
+        store.for_each_metadata(function(id, meta) {
             let elem;
             if (id !== metaData.id) {
                 if (meta.content_id === metaData.content_id) {
@@ -49,8 +48,8 @@ class DisplayUtil
     }
 
     static isFullScreen() {
-        return !(!document.fullscreenElement &&    // alternative standard method
-            !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement );
+        return !(!document.fullscreenElement && // alternative standard method
+            !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement);
     }
 
     static toggleFullScreen() {
@@ -77,15 +76,15 @@ class DisplayUtil
         }
     }
 
-    static getTargetEvent(){
-        if(window.ontouchstart !== undefined){
+    static getTargetEvent() {
+        if (window.ontouchstart !== undefined) {
             return {
                 mode: 'touch',
                 start: 'touchstart',
                 move: 'touchmove',
                 end: 'touchend'
             };
-        }else{
+        } else {
             return {
                 mode: 'mouse',
                 start: 'mousedown',
@@ -111,6 +110,8 @@ class DisplayUtil
         } else if (contentType === 'tileimage') {
             tagName = 'div';
         } else if (contentType === 'webgl') {
+            tagName = 'div';
+        } else if (contentType === 'tileviewer') {
             tagName = 'div';
         } else {
             tagName = 'img';
@@ -155,41 +156,41 @@ class DisplayUtil
             return;
         }
     }
-    
+
     /**
      * webGLのiframeのサイズを計算して返す
      * @param {*} metaData
      */
-    static calcWebGLFrameRect(store, metaData) {
+    static calcIFrameRect(store, metaData) {
 
         let win = store.getWindowData();
-        
-		let winR = Vscreen.makeRect(
-			win.posx,
-			win.posy,
-			win.width,
-			win.height
+
+        let winR = Vscreen.makeRect(
+            win.posx,
+            win.posy,
+            win.width,
+            win.height
         );
-        
-		let metaR = Vscreen.makeRect(
-			metaData.posx,
-			metaData.posy,
-			metaData.width,
-			metaData.height
+
+        let metaR = Vscreen.makeRect(
+            metaData.posx,
+            metaData.posy,
+            metaData.width,
+            metaData.height
         );
-        
+
         // 左上0,0で、実ピクセルサイズ
-        const orgWin =  Vscreen.transform(winR);
+        const orgWin = Vscreen.transform(winR);
         // orgWinと同様の座標系でのコンテンツrect
         const orgRect = Vscreen.transform(metaR);
         // コンテンツ左上を(0,0)とした座標系での、windowのrectを求める。
-        
+
         // 結果用rect
         let rect = {
-            x : Math.floor(orgWin.x - orgRect.x - 0.5),
-            y : Math.floor(orgWin.y - orgRect.y - 0.5),
-            w : Math.ceil(orgWin.w + 1.0),
-            h : Math.ceil(orgWin.h + 1.0)
+            x: Math.floor(orgWin.x - orgRect.x - 0.5),
+            y: Math.floor(orgWin.y - orgRect.y - 0.5),
+            w: Math.ceil(orgWin.w + 1.0),
+            h: Math.ceil(orgWin.h + 1.0)
         }
 
         return rect;

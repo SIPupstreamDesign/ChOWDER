@@ -11,5 +11,8 @@
     "HTTPPort" : 80,
     "SSLPort" : 443,
     "enableCORS" : true,
-    "VRMode" : "cylinder"
+    "VRMode" : "cylinder",
+    "reduceUpdate": false,
+    "reduceInterval" : 500,
+    "tileviewerCursorSize" : 100
 }
