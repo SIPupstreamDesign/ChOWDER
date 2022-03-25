@@ -32,8 +32,8 @@ let generateThumb = function(filepath, maxreso) {
 		throw new Error(filepath + 'は存在しません。');
 	}
 
-	let image = sharp(filepath);
-	return image.limitInputPixels(0).metadata().then(function(metadata) {
+	let image = sharp(filepath, {limitInputPixels:0});
+	return image.metadata().then(function(metadata) {
 		let width = metadata.width;
 		let height = metadata.height;
 
@@ -67,8 +67,8 @@ let splitImage = function(filepath, xsplit, ysplit, parallels, forEach, startLog
 		throw new Error(filepath + 'は存在しません。');
 	}
 	
-	let image = sharp(filepath);
-	return image.limitInputPixels(0).metadata().then(function(metadata) {
+	let image = sharp(filepath, {limitInputPixels:0} );
+	return image.metadata().then(function(metadata) {
 		let width = metadata.width;
 		let height = metadata.height;
 
