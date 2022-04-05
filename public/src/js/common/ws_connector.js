@@ -30,6 +30,8 @@ if (location.port)
 	url = get_protocol() + location.hostname + ":" + (Number(location.port)) + "/" + currentVersion + "/";
 }
 
+let TimeOutID = null;
+
 class WsConnector {
 
 	/**
@@ -153,8 +155,23 @@ class WsConnector {
 
 		messageID = messageID + 1;
 		try {
-			data = JSON.stringify(reqjson);
-			WsConnector.sendWrapper(reqjson.id, reqjson.method, data, resultCallback);
+			
+			if(method != null && method == "UpdateMetaData"){
+
+				if(TimeOutID != null ){
+					clearTimeout(TimeOutID);
+				}
+				
+				TimeOutID = setTimeout(()=>{
+					data = JSON.stringify(reqjson);			
+					WsConnector.sendWrapper(reqjson.id, reqjson.method, data, resultCallback);
+				}, 100 );			
+
+			} else {
+				data = JSON.stringify(reqjson);			
+				WsConnector.sendWrapper(reqjson.id, reqjson.method, data, resultCallback);
+			}
+
 		} catch (e) {
 			console.error(e);
 		}
