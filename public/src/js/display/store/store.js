@@ -444,12 +444,20 @@ class Store extends EventEmitter {
     }
 
     _getTileContent(data) {
-        let callback = Store.extractCallback(data);
-        Connector.send(Command.GetTileContent, data.request, (err, reply) => {
-            if (callback) {
-                callback(err, reply);
-            }
-        });
+
+        const callback = Store.extractCallback(data);
+        const req = JSON.stringify(data.request);
+
+        // タイルビュワーフリーズ対策。ランダムを使用し、リクエスト間隔をばらす。
+        setTimeout((callback, req) =>{
+            const reqJ = JSON.parse(req);
+            Connector.send(Command.GetTileContent, reqJ, (err, reply) => {
+                if (callback) {
+                    callback(err, reply);
+                }
+            });
+        }, Math.floor(Math.random() * 100), callback, req);
+
     }
 
     _addItownFunc(data) {
