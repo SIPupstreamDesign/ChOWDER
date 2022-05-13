@@ -456,7 +456,7 @@ class Store extends EventEmitter {
                     callback(err, reply);
                 }
             });
-        }, Math.floor(Math.random() * 100), callback, req);
+        }, Math.floor(200 + Math.random() * 200), callback, req);
 
     }
 
