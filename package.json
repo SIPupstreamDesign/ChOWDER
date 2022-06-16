@@ -26,7 +26,7 @@
     "phantom": "^6.0.3",
     "redis": "*",
     "websocket": "*",
-    "electron": "^4.1.1"
+    "electron": "^15.5.5"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
