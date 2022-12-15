@@ -142,7 +142,7 @@ class Action extends EventEmitter {
 
     /**
      * コンテンツの時刻表示の可視不可視を変更
-     * @param {*} data 
+     * @param {*} data
      */
     changeContentDisplayTime(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_TIME, null, data);
@@ -870,7 +870,7 @@ class Action extends EventEmitter {
 
     /**
      * 配信許可設定の変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    permissionList : ディスプレイ許可リスト,
      *    callback : 終了時コールバック(option)
@@ -894,6 +894,11 @@ class Action extends EventEmitter {
 
     updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
+    }
+
+    uploadTileimageFile(data){
+        console.log("[uploadTileimageFile]")
+        this.emit(Action.EVENT_UPLOAD_TILEIMAGEFILE, null, data);
     }
 };
 
@@ -982,5 +987,6 @@ Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_UPLOAD_TILEIMAGEFILE = "uploadTileimageFile";
 
 export default Action;

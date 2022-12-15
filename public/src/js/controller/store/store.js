@@ -377,6 +377,23 @@ class Store extends EventEmitter {
         }
     }
 
+    _uploadTileimageFile(data){
+        console.log("[_uploadTileimageFile]@@@@@@@@@@@@@@@@@",data);
+        // Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
+        //     this.emit(Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED, null, "")
+        // });
+
+        const CONFIG_WS_MAX_MESSAGE_SIZE = this.managementStore.getMaxMessageSize();
+        console.log("[_uploadTileimageFile]CONFIG_WS_MAX_MESSAGE_SIZE",CONFIG_WS_MAX_MESSAGE_SIZE);
+
+        console.log("🐔このへんでいい具合に分割する🐔")
+
+        Connector.sendBinary(Command.UploadTileimage, data.metaData, data.contentData, (err, reply) => {
+            console.log("[_uploadTileimageFile]send done");
+        });
+
+    }
+
     getDisplayPermissionList() {
         return this.displayPermissionList;
     }

@@ -24,6 +24,7 @@
 		GetWindowMetaData : "GetWindowMetaData",
 		GetVirtualDisplay : "GetVirtualDisplay",
 		GetGroupList : "GetGroupList",
+		UploadTileimage : "UploadTileimage",
 
 		// using both server and client
 		Update : "Update",

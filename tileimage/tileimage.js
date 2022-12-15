@@ -3,7 +3,7 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
- 
+
 'use strict';
 
 // パフォーマンス計測用
@@ -160,7 +160,7 @@ wsWrapper.connect(config.url).then(function() {
 		throw new Error('Login failed: ' + parsed.error);
 	}
 	console.log('Logged in as ' + parsed.result.id);
-	
+
 	return wsWrapper.sendUTF('GetGlobalSetting', {});
 
 }).then(function(parsed) {
@@ -248,7 +248,7 @@ wsWrapper.connect(config.url).then(function() {
 			metaData.time_register = new Date().toISOString();
 			savePerformanceLog("Start_AddTileContent", fetchMeasureTime());
 		}
-		
+
 		// == send each image fragment =============================================
 		return wsWrapper.sendBinary('AddTileContent', metaData, buffer);
 	}, (i) => {

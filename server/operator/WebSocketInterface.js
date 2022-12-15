@@ -282,6 +282,13 @@
                 this.commandOperator.upload(metaData, binaryData, resultCallback);
             });
 
+            ws_connector.on(Command.UploadTileimage, (data, resultCallback) => {
+                console.log("🐔[WebsocketInterface]UploadTileimage🐔")
+                let metaData = data.metaData,
+                    binaryData = data.contentData;
+                // this.commandOperator.upload(metaData, binaryData, resultCallback);
+            });
+
             ws_connector.registerEvent(ws, ws_connection);
 
 
