@@ -255,7 +255,11 @@ class ContentPropertyGUI extends EventEmitter {
 		this.store.on(Store.EVENT_CONTENT_VISIBLE_CHANGED, (err, metaData) => {
 			let contentVisibleCheck = document.getElementsByClassName('content_visible')[0];
 			if (contentVisibleCheck) {
-				contentVisibleCheck.checked = String(metaData.visible) === "true";
+				let setValue = metaData.visible;
+				if(metaData.length > 1){ 
+					setValue = metaData[metaData.length - 1].visible; 
+				}
+				contentVisibleCheck.checked = String(setValue) === "true";
 			}
 		})
 		
@@ -468,6 +472,11 @@ class ContentPropertyGUI extends EventEmitter {
 			this.setIDLabel("Content ID:");
 			this.setID("");
 			this.setGroupLabel("");
+			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('content_visible')[0].checked;
+				this.action.changeContentVisibleMulti(meta);
+			});
 			addInputProperty(isEditable, 'multi_transform_z', 'z', 'index', '', () => {
 				let multiZ = document.getElementById('multi_transform_z');
 				let val = parseInt(multiZ.value, 10);

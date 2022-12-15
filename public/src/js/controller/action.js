@@ -141,6 +141,13 @@ class Action extends EventEmitter {
     }
 
     /**
+     * コンテンツの可視不可視を変更
+     * @param {*} data metaData
+     */
+     changeContentVisibleMulti(data) {
+        this.emit(Action.EVENT_CHANGE_CONTENT_VISIBLE2, null, data);
+    }
+    /**
      * コンテンツの時刻表示の可視不可視を変更
      * @param {*} data 
      */
@@ -909,6 +916,7 @@ Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_CHANGE_CONTENT_INDEX = "changeContentIndex";
 Action.EVENT_CHANGE_CONTENT_VISIBLE = "changeContentVisible";
+Action.EVENT_CHANGE_CONTENT_VISIBLE2 = "changeContentVisibleMulti";
 Action.EVENT_CHANGE_DISPLAY_TIME = "changeContentDisplayTime";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_CHANGE_CONTENT_METAINFO = "changeContentMetaInfo";
