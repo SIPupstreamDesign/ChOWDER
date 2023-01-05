@@ -10,6 +10,7 @@
     const path = require('path');
     const Util = require('./../util.js');
     const Zip = require("./Zip.js");
+    const SegmentReceiver = require("./SegmentReceiver.js");
 
     let phantom = null;
     try {
@@ -43,6 +44,8 @@
 
     class Executer {
         constructor() {
+            this.segmentReceiver = new SegmentReceiver();
+
             this.client = redis.createClient(6379, '127.0.0.1', { 'return_buffers': true });
             this.textClient = redis.createClient(6379, '127.0.0.1', { 'return_buffers': false });
 
@@ -1580,8 +1583,8 @@
 
         /**
          * 適切なサポート済Mimeを返す
-         * @param {*} metaData 
-         * @param {*} contentData 
+         * @param {*} metaData
+         * @param {*} contentData
          */
         getMime(metaData, contentData) {
             if (metaData.type === "video") {
@@ -3078,7 +3081,7 @@
         }
 
         /*
-        * @param {Function} callback (string, displayIDList)  
+        * @param {Function} callback (string, displayIDList)
         *                   displayIDListはこの関数によって設定変更されたdisplayのdisplayidのリスト
         */
         updateDisplayPermissionList(data, callback) {
@@ -3272,6 +3275,24 @@
             } else {
                 callback(new Error("JSONRPC param.type undefined").toString(), null);
             }
+        }
+
+        async receiveTileimage(metaParams, binaryData, socketID, endCallback){
+            console.log("🐔🐔",metaParams);
+            const arrBuf = this.segmentReceiver.receive(metaParams, binaryData, socketID);
+            if(arrBuf !== null){
+                const buf = Buffer.from(arrBuf);
+                const writefilepath = `../bin/${metaParams.id}.${metaParams.file_ext}`;
+                fs.writeFile(writefilepath,buf,()=>{
+                    console.log("writeeeeee");
+                    this.segmentReceiver.deleteContainer(metaParams.id);
+
+                    if (endCallback) {
+                        endCallback();
+                    }
+                });
+            }
+
         }
     }
 

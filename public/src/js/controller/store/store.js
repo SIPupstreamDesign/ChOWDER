@@ -380,27 +380,30 @@ class Store extends EventEmitter {
 
     async _uploadTileimageFile(data){
 
+        console.log("🐔");
         const CONFIG_WS_MAX_MESSAGE_SIZE = this.managementStore.getMaxMessageSize();
         const binSize = CONFIG_WS_MAX_MESSAGE_SIZE - 1000; // meta message の分減らす
         console.log("[_uploadTileimageFile]CONFIG_WS_MAX_MESSAGE_SIZE",CONFIG_WS_MAX_MESSAGE_SIZE);
 
-        const segment_max = Math.ceil(data.byteLength / binSize);
-        const byteLength = data.byteLength;
+        const segment_max = Math.ceil(data.contentData.byteLength / binSize);
+        const byteLength = data.contentData.byteLength;
         const hashid = await StringUtil.digestMessage(new Date().toString());
         console.log(hashid);
+        const filename = data.metaData.filename;
 
+        const file_ext = filename.split('.').pop();
 
         for(let i=0;i*binSize < data.contentData.byteLength;i++){
             const segment = data.contentData.slice(i*binSize, (i+1)*binSize);
 
             const params = {
+                file_ext: file_ext,
                 id : hashid,
                 byteLength : byteLength,
                 segment_max : segment_max,
                 segment_index : i,
                 type : "binary"
             };
-
             Connector.sendBinary(Command.UploadTileimage, params, segment, (err, reply) => {
                 console.log("[_uploadTileimageFile]send done");
             });

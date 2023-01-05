@@ -215,7 +215,7 @@
                     if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
                         // Historyから復元して取得
                         if (meta.hasOwnProperty('history_id')) {
-    
+
                             // Historyの場合は全タイル登録済かどうかのフラグを返す
                             this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished) => {
                                 if (!err && tile_finished[0]) {
@@ -248,7 +248,7 @@
                                 return;
                             });
                         }
-    
+
                         // コンテンツの返却.
                         // サムネイルやプレビュー用画像がある場合はリストに入れて返す
                         this.executer.client.hgetall(this.executer.contentThumbnailPrefix + meta.content_id, (err, thumbnailData) => {
@@ -268,7 +268,7 @@
                                     binaryList.push(thumbnailData.preview);
                                 }
                             }
-    
+
                             // 履歴から復元して取得
                             if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
                                 let backupList = this.executer.sortBackupList(JSON.parse(meta.backup_list));
@@ -289,7 +289,7 @@
                                     return;
                                 }
                             }
-    
+
                             // 通常の取得
                             this.executer.getContent(meta.type, meta.content_id, (reply) => {
                                 if (reply === null) {
@@ -1326,6 +1326,10 @@
 
         updateQgisContentsList(endCallback){
             this.executer.updateQgisContentsList(endCallback);
+        }
+
+        receiveTileimage(metaParams, binaryData, socketID, endCallback){
+            this.executer.receiveTileimage(metaParams, binaryData, socketID, endCallback);
         }
     }
 
