@@ -19,6 +19,7 @@ import ControllerData from '../controller_data'
 import Operation from './operation'
 import Translation from '../../common/translation'
 import Command from '../../common/command'
+import StringUtil from '../../common/string_util'
 import Receiver from './reciever.js';
 
 "use strict";
@@ -377,21 +378,33 @@ class Store extends EventEmitter {
         }
     }
 
-    _uploadTileimageFile(data){
-        console.log("[_uploadTileimageFile]@@@@@@@@@@@@@@@@@",data);
-        // Connector.send(Command.GetDisplayPermissionList, null, (err, reply) => {
-        //     this.emit(Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED, null, "")
-        // });
+    async _uploadTileimageFile(data){
 
         const CONFIG_WS_MAX_MESSAGE_SIZE = this.managementStore.getMaxMessageSize();
+        const binSize = CONFIG_WS_MAX_MESSAGE_SIZE - 1000; // meta message の分減らす
         console.log("[_uploadTileimageFile]CONFIG_WS_MAX_MESSAGE_SIZE",CONFIG_WS_MAX_MESSAGE_SIZE);
 
-        console.log("🐔このへんでいい具合に分割する🐔")
+        const segment_max = Math.ceil(data.byteLength / binSize);
+        const byteLength = data.byteLength;
+        const hashid = await StringUtil.digestMessage(new Date().toString());
+        console.log(hashid);
 
-        Connector.sendBinary(Command.UploadTileimage, data.metaData, data.contentData, (err, reply) => {
-            console.log("[_uploadTileimageFile]send done");
-        });
 
+        for(let i=0;i*binSize < data.contentData.byteLength;i++){
+            const segment = data.contentData.slice(i*binSize, (i+1)*binSize);
+
+            const params = {
+                id : hashid,
+                byteLength : byteLength,
+                segment_max : segment_max,
+                segment_index : i,
+                type : "binary"
+            };
+
+            Connector.sendBinary(Command.UploadTileimage, params, segment, (err, reply) => {
+                console.log("[_uploadTileimageFile]send done");
+            });
+        }
     }
 
     getDisplayPermissionList() {
