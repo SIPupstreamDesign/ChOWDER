@@ -7,15 +7,15 @@ class SegmentReceiver{
         //
 
         /**
-         * @description ここにバイナリを溜めていく
+         * ここにバイナリを溜めていく
          * @type {[{id:string,segments:[ArrayBuffer]}]}
          */
         this.container = [];
     }
 
     /**
+     * 分割されたtileimageを順次受け取って、全部揃ったら合体したものを返す
      * @function receive
-     * @description この関数で千切れたバイナリを受け取る。完成してたら完成品を返す
      * @param {{id:string,segment_index:number,segment_max:number}} params metadataから抽出したparams
      * @param {ArrayBuffer} content 千切れたbinary
      * @return {Buffer}

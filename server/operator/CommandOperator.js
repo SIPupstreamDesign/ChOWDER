@@ -1328,8 +1328,22 @@
             this.executer.updateQgisContentsList(endCallback);
         }
 
-        receiveTileimage(metaParams, binaryData, socketID, endCallback){
-            this.executer.receiveTileimage(metaParams, binaryData, socketID, endCallback);
+        async receiveTileimage(metaParams, binaryData, socketID, endCallback){
+            const wholeBinary = this.executer.receiveTileimage(metaParams, binaryData, socketID);
+            if(wholeBinary === null){ // 全部集まってなかったら次の欠片を待ち受ける
+                return;
+            }
+
+            /* ここからバイナリが完成したあとの処理 */
+            const filepath = await this.executer.writeTileimageFile(metaParams, wholeBinary);
+
+            await this.executer.runTileimageShell(filepath);
+
+            await this.executer.removeTileimageFile(filepath);
+
+            if (endCallback) {
+                endCallback();
+            }
         }
     }
 

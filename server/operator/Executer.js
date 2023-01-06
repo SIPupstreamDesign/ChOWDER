@@ -8,6 +8,7 @@
 
     const fs = require('fs');
     const path = require('path');
+    const child_process = require("child_process");
     const Util = require('./../util.js');
     const Zip = require("./Zip.js");
     const SegmentReceiver = require("./SegmentReceiver.js");
@@ -3277,22 +3278,77 @@
             }
         }
 
-        async receiveTileimage(metaParams, binaryData, socketID, endCallback){
-            console.log("🐔🐔",metaParams);
+        /**
+         * 分割されたtileimageを順次受け取って、全部揃ったら合体したものを返す
+         * @method receiveTileimage
+         * @param {{id:string,segment_index:number,segment_max:number}} metaParams metadataから抽出したparams
+         * @param {ArrayBuffer} binaryData 千切れたbinary
+         * @return {Buffer}
+         */
+        receiveTileimage(metaParams, binaryData, socketID){
             const arrBuf = this.segmentReceiver.receive(metaParams, binaryData, socketID);
             if(arrBuf !== null){
-                const buf = Buffer.from(arrBuf);
-                const writefilepath = `../bin/${metaParams.id}.${metaParams.file_ext}`;
-                fs.writeFile(writefilepath,buf,()=>{
-                    console.log("writeeeeee");
-                    this.segmentReceiver.deleteContainer(metaParams.id);
-
-                    if (endCallback) {
-                        endCallback();
-                    }
-                });
+                return Buffer.from(arrBuf);
             }
+            return null;
+        }
 
+        /**
+         * バイナリをファイルとして書き込む。書き込んだらメモリからデータを消す
+         * @method writeTileimageFile
+         * @param {{id:string,segment_index:number,segment_max:number}} metaParams metadataから抽出したparams
+         * @param {ArrayBuffer} wholeBinary
+         * @return {Buffer}
+         */
+        writeTileimageFile(metaParams, wholeBinary){
+            return new Promise((resolve,reject)=>{
+                const writefilepath = `../bin/${metaParams.id}.${metaParams.file_ext}`;
+                fs.writeFile(writefilepath,wholeBinary,(err)=>{
+                    if(err){
+                        reject(err);
+                    }
+                    this.segmentReceiver.deleteContainer(metaParams.id);
+                    resolve(writefilepath);
+                });
+            });
+        }
+
+        runTileimageShell(filepath){
+            return new Promise((resolve,reject)=>{
+                const shellCmd = (()=>{
+                    console.log("server os:",process.platform);
+                    if(process.platform==='win32'){
+                        return `cd ../bin/ && tileimage.bat ${filepath}`;
+                    }else if(process.platform==='linux'){
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }else if(process.platform==='darwin'){
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }else{
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }
+                })();
+
+                child_process.exec(shellCmd,(err,stdout,stderr)=>{
+                    if(err){
+                        console.log(stderr);
+                        reject(err);
+                    }
+                    resolve();
+                });
+
+            });
+        }
+
+        removeTileimageFile(filepath){
+            return new Promise((resolve,reject)=>{
+                fs.unlink(filepath,(err)=>{
+                    if(err){
+                        console.log(stderr);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            });
         }
     }
 
