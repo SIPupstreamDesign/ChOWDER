@@ -90,7 +90,8 @@ class ContentInputGUI
 							width : img.naturalWidth,
 							height : img.naturalHeight,
 							visible: true,
-							user_data_text: JSON.stringify({ text: name })
+							user_data_text: JSON.stringify({ text: name }),
+							creator:this.store.controllerData.userName
 						}
 						VscreenUtil.transPosInv(metaData);
 						this.action.inputImageFile({
@@ -147,7 +148,8 @@ class ContentInputGUI
 					width : width,
 					height : height,
 					visible: true,
-					user_data_text : JSON.stringify({ text: text })
+					user_data_text : JSON.stringify({ text: text }),
+					creator:this.store.controllerData.userName
 				}
 				VscreenUtil.transPosInv(metaData);
 				this.action.inputText({
@@ -193,7 +195,8 @@ class ContentInputGUI
 						posx: posx,
 						posy: posy,
 						visible: true,
-						user_data_text: JSON.stringify({ text: name })
+						user_data_text: JSON.stringify({ text: name }),
+						creator:this.store.controllerData.userName
 					}
 					this.action.inputVideoFile({
 						contentData : data,
@@ -233,7 +236,8 @@ class ContentInputGUI
 				let metaData = {
 					posx: posx,
 					posy: posy,
-					visible: true
+					visible: true,
+					creator:this.store.controllerData.userName
 				}
 				this.action.inputPDFFile({
 					contentData : data,
@@ -352,6 +356,7 @@ class ContentInputGUI
 		metaData.width = elem.offsetWidth / Vscreen.getWholeScale();
 		metaData.height = elem.offsetHeight / Vscreen.getWholeScale();
 		metaData.visible = true;
+		metaData.creator = this.store.controllerData.userName;
 		this.previewArea.removeChild(elem);
 		// テキストのときはメタデータにもテキストをつっこむ
 		metaData.user_data_text = JSON.stringify({ text: text });
@@ -569,7 +574,8 @@ class ContentInputGUI
 									posx: Vscreen.getWhole().x, 
 									posy: Vscreen.getWhole().y, 
 									visible: true,
-									subtype : "screen"
+									subtype : "screen",
+									creator:this.store.controllerData.userName
 								},
 								timestamp : time
 							})
@@ -596,7 +602,8 @@ class ContentInputGUI
 						posx: Vscreen.getWhole().x,
 						posy: Vscreen.getWhole().y,
 						visible: true,
-						subtype : "screen"
+						subtype : "screen",
+						creator:this.store.controllerData.userName
 					},
 					timestamp : time
 				})
@@ -617,7 +624,8 @@ class ContentInputGUI
 						posx: Vscreen.getWhole().x,
 						posy: Vscreen.getWhole().y,
 						visible: true,
-						subtype : "camera"
+						subtype : "camera",
+						creator:this.store.controllerData.userName
 					},
 					timestamp : time
 				})
