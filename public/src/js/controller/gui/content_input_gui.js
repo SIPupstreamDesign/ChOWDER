@@ -118,7 +118,6 @@ class ContentInputGUI
 	 * @param {Object} evt FileOpenイベント
 	 */
 	onInputTileimageFile(evt, x, y) {
-		console.log("[onInputTileimageFile]");
 		const time = new Date().toISOString();
 		const files = evt.target.files;
 		const fileReader = new FileReader();
@@ -137,7 +136,7 @@ class ContentInputGUI
 					timestamp : time
 				});
 			}else{
-				console.log("[onInputTileimageFile] cant load tileimage")
+				console.log("[onInputTileimageFile] cannot load tileimage")
 			}
 		});
 

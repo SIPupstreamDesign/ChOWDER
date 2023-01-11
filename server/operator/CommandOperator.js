@@ -1345,6 +1345,7 @@
                 endCallback();
             }
         }
+
     }
 
     module.exports = CommandOperator;

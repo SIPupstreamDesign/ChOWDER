@@ -3307,7 +3307,7 @@
                     if(err){
                         reject(err);
                     }
-                    this.segmentReceiver.deleteContainer(metaParams.id);
+                    this.segmentReceiver.deleteContainerFromImageID(metaParams.id);
                     resolve(writefilepath);
                 });
             });
@@ -3349,6 +3349,10 @@
                     resolve();
                 });
             });
+        }
+
+        deleteTileimageContainerFromSocketID(socketID){
+            this.segmentReceiver.deleteContainerFromSocketID(socketID);
         }
     }
 

@@ -897,7 +897,6 @@ class Action extends EventEmitter {
     }
 
     uploadTileimageFile(data){
-        console.log("[uploadTileimageFile]")
         this.emit(Action.EVENT_UPLOAD_TILEIMAGEFILE, null, data);
     }
 };

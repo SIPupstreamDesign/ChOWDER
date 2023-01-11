@@ -83,7 +83,9 @@
 					});
 
 					console.log('connection closed :' + connection.id);
-					//🐔このへんで分割受信解放処理
+
+					// 分割受信解放処理
+					executer.deleteTileimageContainerFromSocketID(connection.id);
 				};
 			})(connection));
 		}

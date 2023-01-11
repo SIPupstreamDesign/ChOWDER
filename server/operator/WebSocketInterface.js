@@ -283,7 +283,6 @@
             });
 
             ws_connector.on(Command.UploadTileimage, (data, resultCallback, socketID) => {
-                console.log("🐔[WebsocketInterface]UploadTileimage🐔")
                 this.commandOperator.receiveTileimage(data.metaData, data.contentData, socketID, resultCallback);
             });
 
