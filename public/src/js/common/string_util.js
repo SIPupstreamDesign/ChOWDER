@@ -27,7 +27,7 @@ class StringUtil {
 		}
 		return decodedString;
 	}
-	
+
 	//
 	// String To ArrayBuffer funciton
 	//
@@ -46,7 +46,7 @@ class StringUtil {
 			i,
 			j,
 			c;
-		
+
 		for (i = 0; i < n; i = i + 1) {
 			c = str.charCodeAt(i);
 			if (c <= 0x7F) {
@@ -76,6 +76,20 @@ class StringUtil {
 			}
 		}
 		return bytes;
+	}
+
+	/**
+	 * UTF8文字列をSHA-512hashに変換して返す
+	 * @method digestMessage
+	 * @param {String} message UTF8文字列
+	 * @return {String} hash
+	 */
+	static async digestMessage(message) {
+		const msgUint8 = new TextEncoder("utf-8").encode(message);
+		const hashBuffer = await crypto.subtle.digest('SHA-512', msgUint8);
+		const hashArray = Array.from(new Uint8Array(hashBuffer));
+		const hashHex = hashArray.map(function(b){return b.toString(16).padStart(2, '0')}).join('');
+		return hashHex;
 	}
 }
 

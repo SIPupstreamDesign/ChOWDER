@@ -19,6 +19,7 @@ import ControllerData from '../controller_data'
 import Operation from './operation'
 import Translation from '../../common/translation'
 import Command from '../../common/command'
+import StringUtil from '../../common/string_util'
 import Receiver from './reciever.js';
 
 "use strict";
@@ -374,6 +375,36 @@ class Store extends EventEmitter {
         }
         if (iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe) {
             iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+        }
+    }
+
+    async _uploadTileimageFile(data){
+
+        console.log("🐔1");
+        const CONFIG_WS_MAX_MESSAGE_SIZE = this.managementStore.getMaxMessageSize();
+        const binSize = CONFIG_WS_MAX_MESSAGE_SIZE - 1000; // meta message の分減らす
+
+        const segment_max = Math.ceil(data.contentData.byteLength / binSize);
+        const byteLength = data.contentData.byteLength;
+        const hashid = await StringUtil.digestMessage(new Date().toString());
+        const filename = data.metaData.filename;
+
+        const file_ext = filename.split('.').pop();
+
+        for(let i=0;i*binSize < data.contentData.byteLength;i++){
+            const segment = data.contentData.slice(i*binSize, (i+1)*binSize);
+
+            const params = {
+                file_ext: file_ext,
+                id : hashid,
+                byteLength : byteLength,
+                segment_max : segment_max,
+                segment_index : i,
+                type : "binary"
+            };
+            Connector.sendBinary(Command.UploadTileimage, params, segment, (err, reply) => {
+                console.log("[_uploadTileimageFile]send done");
+            });
         }
     }
 

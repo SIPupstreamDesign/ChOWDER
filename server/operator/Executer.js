@@ -8,8 +8,10 @@
 
     const fs = require('fs');
     const path = require('path');
+    const child_process = require("child_process");
     const Util = require('./../util.js');
     const Zip = require("./Zip.js");
+    const SegmentReceiver = require("./SegmentReceiver.js");
 
     let phantom = null;
     try {
@@ -43,6 +45,8 @@
 
     class Executer {
         constructor() {
+            this.segmentReceiver = new SegmentReceiver();
+
             this.client = redis.createClient(6379, '127.0.0.1', { 'return_buffers': true });
             this.textClient = redis.createClient(6379, '127.0.0.1', { 'return_buffers': false });
 
@@ -1623,8 +1627,8 @@
 
         /**
          * 適切なサポート済Mimeを返す
-         * @param {*} metaData 
-         * @param {*} contentData 
+         * @param {*} metaData
+         * @param {*} contentData
          */
         getMime(metaData, contentData) {
             if (metaData.type === "video") {
@@ -3121,7 +3125,7 @@
         }
 
         /*
-        * @param {Function} callback (string, displayIDList)  
+        * @param {Function} callback (string, displayIDList)
         *                   displayIDListはこの関数によって設定変更されたdisplayのdisplayidのリスト
         */
         updateDisplayPermissionList(data, callback) {
@@ -3315,6 +3319,83 @@
             } else {
                 callback(new Error("JSONRPC param.type undefined").toString(), null);
             }
+        }
+
+        /**
+         * 分割されたtileimageを順次受け取って、全部揃ったら合体したものを返す
+         * @method receiveTileimage
+         * @param {{id:string,segment_index:number,segment_max:number}} metaParams metadataから抽出したparams
+         * @param {ArrayBuffer} binaryData 千切れたbinary
+         * @return {Buffer}
+         */
+        receiveTileimage(metaParams, binaryData, socketID){
+            const arrBuf = this.segmentReceiver.receive(metaParams, binaryData, socketID);
+            if(arrBuf !== null){
+                return Buffer.from(arrBuf);
+            }
+            return null;
+        }
+
+        /**
+         * バイナリをファイルとして書き込む。書き込んだらメモリからデータを消す
+         * @method writeTileimageFile
+         * @param {{id:string,segment_index:number,segment_max:number}} metaParams metadataから抽出したparams
+         * @param {ArrayBuffer} wholeBinary
+         * @return {Buffer}
+         */
+        writeTileimageFile(metaParams, wholeBinary){
+            return new Promise((resolve,reject)=>{
+                const writefilepath = `../bin/${metaParams.id}.${metaParams.file_ext}`;
+                fs.writeFile(writefilepath,wholeBinary,(err)=>{
+                    if(err){
+                        reject(err);
+                    }
+                    this.segmentReceiver.deleteContainerFromImageID(metaParams.id);
+                    resolve(writefilepath);
+                });
+            });
+        }
+
+        runTileimageShell(filepath){
+            return new Promise((resolve,reject)=>{
+                const shellCmd = (()=>{
+                    console.log("server os:",process.platform);
+                    if(process.platform==='win32'){
+                        return `cd ../bin/ && tileimage.bat ${filepath}`;
+                    }else if(process.platform==='linux'){
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }else if(process.platform==='darwin'){
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }else{
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }
+                })();
+
+                child_process.exec(shellCmd,(err,stdout,stderr)=>{
+                    if(err){
+                        console.log(stderr);
+                        reject(err);
+                    }
+                    resolve();
+                });
+
+            });
+        }
+
+        removeTileimageFile(filepath){
+            return new Promise((resolve,reject)=>{
+                fs.unlink(filepath,(err)=>{
+                    if(err){
+                        console.log(stderr);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            });
+        }
+
+        deleteTileimageContainerFromSocketID(socketID){
+            this.segmentReceiver.deleteContainerFromSocketID(socketID);
         }
     }
 

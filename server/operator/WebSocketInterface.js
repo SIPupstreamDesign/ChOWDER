@@ -282,6 +282,10 @@
                 this.commandOperator.upload(metaData, binaryData, resultCallback);
             });
 
+            ws_connector.on(Command.UploadTileimage, (data, resultCallback, socketID) => {
+                this.commandOperator.receiveTileimage(data.metaData, data.contentData, socketID, resultCallback);
+            });
+
             ws_connector.registerEvent(ws, ws_connection);
 
 

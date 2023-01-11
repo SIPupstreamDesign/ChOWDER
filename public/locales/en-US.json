@@ -131,5 +131,6 @@
  "physical_expression_1": "Please input expression for PhysicalValue1",
  "physical_expression_2": "Please input expression for PhysicalValue2",
  "reload_all_display": "Reload All Displays",
- "application_control": "Application Control"
+ "application_control": "Application Control",
+ "add_tileimage": "Add Tileimage"
 }
