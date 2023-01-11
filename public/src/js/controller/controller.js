@@ -107,6 +107,10 @@ class Controller {
      * @method init
      */
     init(data) {
+        // data.controllerDataに表示ユーザー名を追加
+        if(data.controllerData != undefined){
+            data.controllerData.userName = data.loginUserName;
+        }
         this.getControllerData().set(data.controllerData);
         let controllerData = this.getControllerData();
 

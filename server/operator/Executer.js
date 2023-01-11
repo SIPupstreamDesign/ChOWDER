@@ -739,17 +739,38 @@
                                 displayEditable: "all",
                                 viewableSite: "all",
                                 group_manipulatable: false
-                            });
-                        }, () => {
-                            // ElectronDisplay設定の初期登録
-                            this.changeGroupUserSetting("master", "ElectronDisplay", {
-                                viewable: "all",
-                                editable: "all",
-                                displayEditable: "all",
-                                viewableSite: "all",
-                                group_manipulatable: false
-                            });
-                        });
+
+                            }, () => {
+                                // ElectronDisplay設定の初期登録
+                                this.changeGroupUserSetting("master", "ElectronDisplay", {
+                                    viewable: "all",
+                                    editable: "all",
+                                    displayEditable: "all",
+                                    viewableSite: "all",
+                                    group_manipulatable: false
+
+                                }, () => {
+                                    // Moderator設定の初期登録
+                                    this.changeGroupUserSetting("master", "Moderator", {
+                                        viewable: "all",
+                                        editable: "all",
+                                        displayEditable: "all",
+                                        viewableSite: "all",
+                                        group_manipulatable: false
+
+                                    }, () => {
+                                        // Moderator設定の初期登録
+                                        this.changeGroupUserSetting("master", "Attendee", {
+                                            viewable: "all",
+                                            editable: "all",
+                                            displayEditable: "all",
+                                            viewableSite: "all",
+                                            group_manipulatable: false
+                                        })
+                                    })
+                                })
+                            })
+                        })
                     });
                 }
                 this.addGroup("master", "group_default", "default", null, (err, reply) => {
@@ -1190,6 +1211,28 @@
                             }
                         }
                         userList.push(electronDisplayData);
+
+                        // Moderator/Attendee
+                        let moderatorData = { name: "Moderator", id: "Moderator", type: "moderator" };
+                        if (setting.hasOwnProperty("Moderator")) {
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (setting.Moderator.hasOwnProperty(key)) {
+                                    moderatorData[key] = setting.Moderator[key];
+                                }
+                            }
+                        }
+                        userList.push(moderatorData);
+                        let attendeeData = { name: "Attendee", id: "Attendee", type: "attendee" };
+                        if (setting.hasOwnProperty("Attendee")) {
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (setting.Attendee.hasOwnProperty(key)) {
+                                    attendeeData[key] = setting.Attendee[key];
+                                }
+                            }
+                        }
+                        userList.push(attendeeData);
 
                         if (endCallback) {
                             endCallback(null, userList);

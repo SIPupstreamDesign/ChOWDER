@@ -1210,6 +1210,10 @@
                                 this.executer.changeGroupUserSetting(socketid, userList[i].id, {
                                     password: data.password
                                 }, endCallback);
+                            } else if (userList[i].type === "moderator" || userList[i].type === "attendee") {
+                                this.executer.changeGroupUserSetting(socketid, userList[i].id, {
+                                    password: data.password
+                                }, endCallback);
                             } else {
                                 endCallback("failed to change password (3)");
                             }

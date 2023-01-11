@@ -936,7 +936,7 @@ class ManagementDialog extends EventEmitter {
                 if (type === "admin") {
                     this.adminAuthSelectPass.addOption(this.userList[i].id, this.userList[i].name);
                 }
-                if (type !== "admin" && type !== "guest" && type !== "display") {
+                if (type !== "admin" && type !== "guest" && type !== "display" && type !== "electronDisplay") {
                     this.authSelectPass.addOption(this.userList[i].id, this.userList[i].name);
                 }
             }
@@ -960,7 +960,7 @@ class ManagementDialog extends EventEmitter {
                             oldInput.setEnable(true);
                             newInput.setEnable(true);
                         }
-                        else if (type === "group" || type === "api" || type === "electron") {
+                        else if (type === "group" || type === "api" || type === "electron" || type === "moderator" || type === "attendee") {
                             oldInput.setEnable(false);
                             newInput.setEnable(true);
                         }
