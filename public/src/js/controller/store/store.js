@@ -379,8 +379,6 @@ class Store extends EventEmitter {
     }
 
     async _uploadTileimageFile(data){
-
-        console.log("🐔1");
         const CONFIG_WS_MAX_MESSAGE_SIZE = this.managementStore.getMaxMessageSize();
         const binSize = CONFIG_WS_MAX_MESSAGE_SIZE - 1000; // meta message の分減らす
 

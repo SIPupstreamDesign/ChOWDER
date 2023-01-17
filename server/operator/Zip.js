@@ -16,7 +16,7 @@
         static async extract(binaryData, extractDir){
             const zip = new JSZip();
             await zip.loadAsync(binaryData, {base64: false, checkCRC32: true});
-            
+
             let fileList = [];
             for(let i in zip.files){
                 const ret = await this._extractFile(zip,i,extractDir).catch((err)=>{
@@ -37,7 +37,7 @@
             return new Promise((resolve,reject)=>{
                 let zipFile = zip.files[file];
                 if(zipFile.dir === true){
-                    console.log("@@@@@@@@@@@"+extractDir+zipFile.name,fs.existsSync(extractDir+zipFile.name));
+                    // console.log("@@@@@@@@@@@"+extractDir+zipFile.name,fs.existsSync(extractDir+zipFile.name));
                     if(!fs.existsSync(extractDir+zipFile.name)){
                         console.log("[mkdir] : ",extractDir+zipFile.name);
                         fs.mkdir(extractDir+zipFile.name, { recursive: true },(err)=>{
