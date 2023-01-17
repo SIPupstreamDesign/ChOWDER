@@ -20,7 +20,7 @@ class LoginMenu extends EventEmitter
 
         this.header = document.createElement('div');
         this.header.className = "head_menu";
-        if (title) 
+        if (title)
         {
             let titleDiv = '<div class="head_mode_menu">';
             titleDiv += '<div class="head_mode_text stopselect">';
@@ -49,29 +49,41 @@ class LoginMenu extends EventEmitter
         this.loginMenu.className = "loginmenu";
         this.dom.appendChild(this.loginMenu);
 
-        let loginFrame = document.createElement('div');
+        const loginFrame = document.createElement('div');
         loginFrame.className = "loginframe";
         this.loginMenu.appendChild(loginFrame);
 
-        let useLabelWrap = document.createElement('div');
+        const useLabelWrap = document.createElement('div');
+        useLabelWrap.className = "userlabel";
+        loginFrame.appendChild(useLabelWrap);
+
         {
-            let menuLabel = document.createElement('p');
+            const menuLabel = document.createElement('p');
             menuLabel.className = "loginmenu_label";
             menuLabel.setAttribute('data-key', 'user');
             useLabelWrap.appendChild(menuLabel);
-            
+
             this.loginUserSelect = new Select();
             this.loginUserSelect.getDOM().classList.add("loginuser");
             useLabelWrap.appendChild(this.loginUserSelect.getDOM());
         }
-        loginFrame.appendChild(useLabelWrap);
 
-        let passwordWrap = document.createElement('div');
         {
-            let menuLabel = document.createElement('p');
-            menuLabel.className = "loginmenu_label";
-            menuLabel.setAttribute('data-key', 'password');
-            useLabelWrap.appendChild(menuLabel);
+            const controlleridLabel = document.createElement('p');
+            controlleridLabel.className = "loginmenu_label";
+            controlleridLabel.setAttribute('data-key', 'User Name');
+            useLabelWrap.appendChild(controlleridLabel);
+
+            this.controlleridInput = new Input();
+            this.controlleridInput.getDOM().classList.add("controllerid");
+            useLabelWrap.appendChild(this.controlleridInput.getDOM());
+        }
+
+        {
+            const passwardLabel = document.createElement('p');
+            passwardLabel.className = "loginmenu_label";
+            passwardLabel.setAttribute('data-key', 'password');
+            useLabelWrap.appendChild(passwardLabel);
 
             this.passInput = new Input("password");
             this.passInput.getDOM().classList.add("loginpass");
@@ -79,30 +91,37 @@ class LoginMenu extends EventEmitter
             useLabelWrap.appendChild(this.passInput.getDOM());
             this.passInput.getDOM().onkeypress = (evt) => {
                 if (evt.which == 13) {
+                    location.hash = this.getControllerid();
                     this.emit(LoginMenu.EVENT_LOGIN, null);
                 }
             };
-            
-            let loginButton = new Button();
+
+            const loginButton = new Button();
             loginButton.getDOM().classList.add("loginbutton");
             loginButton.getDOM().classList.add("btn-primary");
             loginButton.setDataKey('login');
             useLabelWrap.appendChild(loginButton.getDOM());
 
             loginButton.on(Button.EVENT_CLICK, (err) => {
+                location.hash = this.getControllerid();
                 this.emit(LoginMenu.EVENT_LOGIN, err);
             });
         }
-        loginFrame.appendChild(passwordWrap);
 
-        this.invalidLogin = document.createElement('p');
-        this.invalidLogin.className = "invalid_login";
-        this.invalidLogin.setAttribute('data-key', 'invalid_login');
-        loginFrame.appendChild(this.invalidLogin);
+        {
+            this.invalidLogin = document.createElement('p');
+            this.invalidLogin.className = "invalid_login";
+            this.invalidLogin.setAttribute('data-key', 'invalid_login');
+            loginFrame.appendChild(this.invalidLogin);
+        }
     }
 
     getUserSelect() {
         return this.loginUserSelect;
+    }
+
+    getControllerid() {
+        return this.controlleridInput.getValue();
     }
 
     getPassword() {

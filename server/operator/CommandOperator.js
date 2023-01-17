@@ -1080,7 +1080,7 @@
                             // 対応関係を保存
                             this.executer.socketidToLoginKey[socketid] = data.loginkey;
                             socketid = data.loginkey;
-                            let result = {
+                            const result = {
                                 id: this.executer.socketidToUserID[socketid],
                                 loginkey: socketid,
                                 authority: this.executer.socketidToAccessAuthority[socketid]

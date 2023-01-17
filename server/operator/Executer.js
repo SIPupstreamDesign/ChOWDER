@@ -1350,7 +1350,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         login(id, password, socketid, controllerid, endCallback) {
-            let getLoginResult = (controllerData) => {
+            const getLoginResult = (controllerData) => {
                 if (this.socketidToAccessAuthority.hasOwnProperty(socketid)) {
                     return {
                         id: id,
@@ -1371,7 +1371,7 @@
                 this.getAdminUserSetting((err, data) => {
                     if (data.hasOwnProperty(id)) {
                         // 管理ユーザー
-                        let isValid = this.validatePassword(data[id].password, password);
+                        const isValid = this.validatePassword(data[id].password, password);
                         if (isValid) {
                             this.saveLoginInfo(socketid, id, data);
                             // 成功したらsocketidを返す

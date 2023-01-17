@@ -56,7 +56,7 @@ class LoginStore {
 						loginData = JSON.parse(JSON.stringify(data));
 					} catch(e) {
 						console.error(e);
-					} 
+					}
 					loginData.onetime = true;
 					this._login(loginData);
 				}
@@ -156,9 +156,9 @@ class LoginStore {
 	 * @method getControllerID
 	 */
 	getControllerID() {
-		let hashid = location.hash.split("#").join("");
+		const hashid = location.hash.split("#").join("");
 		if (hashid.length > 0) {
-			let controller_id = decodeURIComponent(hashid);
+			const controller_id = decodeURIComponent(hashid);
 			if (!controller_id || controller_id === undefined || controller_id === "undefined") {
 				controller_id = '';
 			}
@@ -166,14 +166,14 @@ class LoginStore {
 		}
 		return "";
     }
-    
+
     /**
      * ログインキーを取得
      */
 	getLoginKey() {
 		return this.cookie.getLoginKey(this.getControllerID());
 	}
-	
+
 }
 
 export default LoginStore;
