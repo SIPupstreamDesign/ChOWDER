@@ -12,6 +12,7 @@
     const Util = require('./../util.js');
     const Zip = require("./Zip.js");
     const SegmentReceiver = require("./SegmentReceiver.js");
+    const LoginUser = require("./LoginUser.js");
 
     let phantom = null;
     try {
@@ -46,6 +47,7 @@
     class Executer {
         constructor() {
             this.segmentReceiver = new SegmentReceiver();
+            this.loginUser = new LoginUser();
 
             this.client = redis.createClient(6379, '127.0.0.1', { 'return_buffers': true });
             this.textClient = redis.createClient(6379, '127.0.0.1', { 'return_buffers': false });
@@ -1368,12 +1370,13 @@
                 }
             };
             this.getControllerData(controllerid, (err, controllerData) => {
-                this.getAdminUserSetting((err, data) => {
-                    if (data.hasOwnProperty(id)) {
+                this.getAdminUserSetting((err, adminUserData) => {
+                    if (adminUserData.hasOwnProperty(id)) {
                         // 管理ユーザー
-                        const isValid = this.validatePassword(data[id].password, password);
+                        const isValid = this.validatePassword(adminUserData[id].password, password);
                         if (isValid) {
-                            this.saveLoginInfo(socketid, id, data);
+                            this.saveLoginInfo(socketid, id, adminUserData);
+                            this.loginUser.put(controllerid, socketid);
                             // 成功したらsocketidを返す
                             endCallback(null, getLoginResult(controllerData));
                         } else {
@@ -1384,18 +1387,24 @@
                             if (!err) {
                                 if (setting.hasOwnProperty(id)) {
                                     // グループユーザー設定登録済グループユーザー
-                                    let isValid = this.validatePassword(setting[id].password, password);
-                                    if (id === "Guest" || id === "Display") {
-                                        isValid = true;
-                                    }
+                                    const isValid = (()=>{
+                                        if (id === "Guest" || id === "Display") {
+                                            return true;
+                                        }else{
+                                            return this.validatePassword(setting[id].password, password);
+                                        }
+                                    })();
+
                                     if (isValid) {
                                         this.saveLoginInfo(socketid, id, null, setting);
+                                        this.loginUser.put(controllerid, socketid);
                                         endCallback(null, getLoginResult(controllerData));
                                     } else {
                                         endCallback("failed to login");
                                     }
                                 } else {
                                     // グループユーザー設定に登録されていないグループ
+                                    this.loginUser.put(controllerid, socketid);
                                     endCallback(null, getLoginResult(controllerData));
                                 }
                             } else {
@@ -1405,6 +1414,15 @@
                     }
                 });
             });
+        }
+
+        logout(socketid){
+            this.removeAuthority(socketid);
+            this.loginUser.delete(socketid);
+        }
+
+        getLoginUserList(){
+            return this.loginUser.getUserList();
         }
 
         /**
@@ -3358,7 +3376,7 @@
 
         runTileimageShell(filepath){
             return new Promise((resolve,reject)=>{
-                const shellCmd = (()=>{
+                const batCmd = (()=>{
                     console.log("server os:",process.platform);
                     if(process.platform==='win32'){
                         return `cd ../bin/ && tileimage.bat ${filepath}`;
@@ -3371,14 +3389,24 @@
                     }
                 })();
 
-                child_process.exec(shellCmd,(err,stdout,stderr)=>{
-                    if(err){
-                        console.log(stderr);
-                        reject(err);
-                    }
-                    resolve();
-                });
-
+                if(process.platform==='win32'){
+                    child_process.exec(batCmd,(err,stdout,stderr)=>{
+                        if(err){
+                            console.log(stderr);
+                            reject(err);
+                        }
+                        resolve();
+                    });
+                }else{
+                    const command = child_process.spawn("sh", [`../bin/tileimage.sh`, `${filepath}`]);
+                    command.stdout.on("data",(stdout)=>{
+                        console.log(stdout.toString());
+                    });
+                    command.on("close",(code)=>{
+                        console.log(`[runTileimageShell] close code:${code}`);
+                        resolve();
+                    });
+                }
             });
         }
 

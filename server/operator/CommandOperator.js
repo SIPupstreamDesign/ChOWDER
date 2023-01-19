@@ -1085,6 +1085,8 @@
                                 loginkey: socketid,
                                 authority: this.executer.socketidToAccessAuthority[socketid]
                             }
+                            this.executer.loginUser.put(data.controllerID, socketid);
+
                             this.executer.getControllerData(data.controllerID, ((result) => {
                                 return (err, controllerData) => {
                                     result.controllerData = controllerData;
@@ -1253,6 +1255,11 @@
 
         }
 
+        getLoginUserList(data, endCallback){
+            const loginUserList = this.executer.getLoginUserList();
+            endCallback(null, loginUserList);
+        }
+
         /**
          * 権限情報を変更する
          */
@@ -1315,11 +1322,11 @@
         logout(data, socketid, endCallback) {
             if (data.hasOwnProperty('loginkey')) {
                 console.log("Logout", data.loginkey)
-                this.executer.removeAuthority(data.loginkey);
+                this.executer.logout(data.loginkey);
                 endCallback(null, data.loginkey);
             } else {
                 console.log("Logout", socketid)
-                this.executer.removeAuthority(socketid);
+                this.executer.logout(socketid);
                 endCallback(null, socketid);
             }
         }

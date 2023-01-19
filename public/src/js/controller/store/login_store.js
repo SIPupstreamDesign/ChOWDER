@@ -43,9 +43,9 @@ class LoginStore {
 	 * ログイン
 	 */
 	_login(data) {
-		let callback = Store.extractCallback(data);
+		const callback = Store.extractCallback(data);
 
-		let controllerID = this.getControllerID();
+		const controllerID = this.getControllerID();
 		if ((!controllerID || controllerID.length === 0) && !data.onetime) {
 			this.connector.send(Command.GenerateControllerID, {}, (err, reply) => {
 				if (!err) {
@@ -63,18 +63,18 @@ class LoginStore {
 			});
 			return;
 		}
-		let request = { id: data.userid, password: data.password, controllerID: controllerID };
+		const request = { id: data.userid, password: data.password, controllerID: controllerID };
 		if (data.loginkey && data.loginkey.length > 0) {
 			request.loginkey = data.loginkey;
 		}
 		this.connector.send(Command.Login, request, (err, reply) => {
 			if (err || reply === "failed") {
-				let data = {};
+				const data = {};
 				data.loginkey = "";
 				this.cookie.setLoginKey(this.getControllerID(), data.loginkey);
 				this.store.emit(Store.EVENT_LOGIN_FAILED, err, data);
 			} else {
-				let userList = this.getUserList();
+				const userList = this.getUserList();
 
 				let data;
 				try {

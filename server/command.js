@@ -9,7 +9,7 @@
 (()=>{
 	"use strict";
 
-	let Command = {
+	const Command = {
 		// request command
 		AddContent : "AddContent",
 		AddTileContent : "AddTileContent",
@@ -25,6 +25,7 @@
 		GetVirtualDisplay : "GetVirtualDisplay",
 		GetGroupList : "GetGroupList",
 		UploadTileimage : "UploadTileimage",
+		GetLoginUserList : "GetLoginUserList",
 
 		// using both server and client
 		Update : "Update",

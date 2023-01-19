@@ -86,6 +86,9 @@
 
 					// 分割受信解放処理
 					executer.deleteTileimageContainerFromSocketID(connection.id);
+
+					// ログインユーザリストから削除
+					executer.loginUser.delete(connection.id);
 				};
 			})(connection));
 		}

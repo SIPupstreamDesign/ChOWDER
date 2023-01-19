@@ -63,6 +63,10 @@
                 }
             }
 
+            ws_connector.on(Command.GetLoginUserList, (data, resultCallback) => {
+                this.commandOperator.getLoginUserList(data, resultCallback);
+            });
+
             ws_connector.on(Command.AddMetaData, (data, resultCallback) => {
                 this.commandOperator.addMetaData(data, resultCallback);
             });

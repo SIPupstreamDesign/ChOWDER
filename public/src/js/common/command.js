@@ -23,6 +23,7 @@ const Command = {
 	GetVirtualDisplay : "GetVirtualDisplay",
 	GetGroupList : "GetGroupList",
 	UploadTileimage : "UploadTileimage",
+	GetLoginUserList : "GetLoginUserList",
 
 	// using both server and client
 	Update : "Update",
