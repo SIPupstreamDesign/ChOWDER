@@ -378,6 +378,17 @@ class ContentPropertyGUI extends EventEmitter {
 		history_slider_area.disabled = isDisable;
 	}
 
+	showAlignmentArea(isShow) {
+		let align_area = document.getElementById("alignment_area");
+		if (align_area) {
+			if (isShow && this.authority.isAdmin()) {
+				align_area.style.display = "block";
+			} else {
+				align_area.style.display = "none";
+			}
+		}
+	}
+
 	disableRestoreButton(isDisable) {
 		let restore_button = document.getElementById('backup_restore');
 		restore_button.disabled = isDisable;
@@ -444,6 +455,7 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
 			this.showColorPicker(isEditable);
+			this.showAlignmentArea(false);
 		}
 		else if (Validator.isVirtualDisplayType(metaData)) {
 			this.setIDLabel("Virtual Display Setting");
@@ -466,6 +478,7 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showMetaLabel(false);
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
+			this.showAlignmentArea(false);
 			this.showColorPicker(false);
 		}
 		else if (type === Constants.PropertyTypeMultiDisplay || type === Constants.PropertyTypeMultiContent) {
@@ -488,6 +501,7 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showMetaLabel(false);
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
+			this.showAlignmentArea(true);
 			this.showColorPicker(false);
 		}
 		else if (type === Constants.PropertyTypeLayout) {
@@ -498,6 +512,7 @@ class ContentPropertyGUI extends EventEmitter {
 			addTextInputProperty(isEditable, 'content_text', "");
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
+			this.showAlignmentArea(false);
 			this.showColorPicker(false);
 		}
 		else { // content (text, image, url... )
@@ -582,6 +597,7 @@ class ContentPropertyGUI extends EventEmitter {
 					}
 				}
 			}
+			this.showAlignmentArea(false);
 		}
 	}
 	initVideoPropertyArea(isEditable, metaData, type) {
@@ -795,6 +811,7 @@ class ContentPropertyGUI extends EventEmitter {
 		this.showDownloadButton(false);
 		this.showBackupArea(false);
 		this.showHistoryArea(false);
+		this.showAlignmentArea(false);
 	}
 
 	init(metaData, groupName, type, isOwnVideo) {
@@ -821,8 +838,82 @@ class ContentPropertyGUI extends EventEmitter {
 				this.restoreContent(index);
 			}
 		};
+
+		let alignLeft_button  = document.getElementById('align_left');
+		alignLeft_button.onclick = () => {this.setAllign("left")};
+
+		let alignRight_button  = document.getElementById('align_right');
+		alignRight_button.onclick = () => {this.setAllign("right")};
+
 		this.initPropertyArea(metaData, groupName, type, isOwnVideo);
 	}
+
+	setAllign(_flg){
+		let metaDataList = [];
+		this.store.getState().for_each_selected_id((i, id) => {
+			if (this.store.hasMetadata(id)) {
+				let metaData = this.store.getMetaData(id);
+				metaDataList.push(metaData);
+			}
+		});
+		if (metaDataList.length > 0) {
+			// セットする座標を探す
+			let targetPos = -65535;
+			// 左寄せ or 上寄せの場合は、最小値を探す必要があるので最大値をセットする
+			if(_flg == "left" || _flg == "top"){
+				targetPos *= -1;
+			}
+			if(_flg == "cent1" || _flg == "cent2"){}
+
+			// 各セット地点を探す
+			for(let cnt = 0; cnt < metaDataList.length; cnt++){
+				if(_flg == "left"){
+					if(metaDataList[cnt].posx < targetPos){
+						targetPos = metaDataList[cnt].posx ;
+					}
+				} else if(_flg == "top"){
+					if(metaDataList[cnt].posy < targetPos){
+						targetPos = metaDataList[cnt].posy; 
+					}
+				} else if(_flg == "right"){
+					if(metaDataList[cnt].posx + metaDataList[cnt].width > targetPos){
+						targetPos = Number(metaDataList[cnt].posx) + Number(metaDataList[cnt].width); 
+					}
+				} else if(_flg == "bottom"){
+					if(metaDataList[cnt].posy + metaDataList[cnt].height > targetPos){
+						targetPos = Number(metaDataList[cnt].posy) + Number(metaDataList[cnt].height); 
+					}
+				} else if(_flg == "cent1"){
+					targetPos += metaDataList[cnt].posx; 
+				} else if(_flg == "cent2"){
+					targetPos += metaDataList[cnt].posy; 
+				}
+			}
+
+			if(_flg == "cent1" || _flg == "cent1"){
+				targetPos = targetPos /  metaDataList.length;
+			} 
+
+			//実際の値のセット
+			for(let cnt = 0; cnt < metaDataList.length; cnt++){
+				if(_flg == "left"){
+					metaDataList[cnt].posx = targetPos;
+				} else if(_flg == "top"){
+					metaDataList[cnt].posy = targetPos;
+				} else if(_flg == "right"){
+					metaDataList[cnt].posx = targetPos - Number(metaDataList[cnt].width);
+				} else if(_flg == "bottom"){					
+					metaDataList[cnt].posy = targetPos - Number(metaDataList[cnt].height);
+				} else if(_flg == "cent1"){
+					
+				} else if(_flg == "cent2"){
+					 
+				}				
+			}
+			this.store.operation.updateMetadataMulti(metaDataList);
+		}
+	}
+
 	/**
 	 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
 	 * @method assignVirtualDisplay

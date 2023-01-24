@@ -688,6 +688,17 @@ class Action extends EventEmitter {
     }
 
     /**
+     * 検索文字列の変更
+     * {
+     *   text : text
+     *   groups : groups
+     * }
+     */
+    changeUserSerchInput(data) {
+        this.emit(Action.EVENT_CHANGE_USERSEARCH_INPUT, null, data);
+    }
+
+    /**
      * コントローラIDを変更
      * @param {*} data
      * {
@@ -966,6 +977,7 @@ Action.EVENT_CHANGE_GROUP_COLOR = "changeGroupColor";
 Action.EVENT_CHANGE_TAB = "changeTab";
 Action.EVENT_CHANGE_SNAP_TYPE = "changeSnapType";
 Action.EVENT_CHANGE_SEARCH_INPUT = "changeSearchInput";
+Action.EVENT_CHANGE_USERSEARCH_INPUT = "changeUserSearchInput";
 Action.EVENT_CHANGE_CONTROLLER_ID = "changeControllerID";
 Action.EVENT_UPDATE_REMOTE_CURSOR = "updateRemoteCursor";
 Action.EVENT_REWIND_ALL_VIDEO = "rewindAllVideo";

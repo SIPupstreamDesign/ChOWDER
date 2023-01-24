@@ -142,6 +142,34 @@
 	border-bottom : 0px;
 }
 
+
+#users_tab {
+	position : absolute;
+	text-align: center;
+	background-color:yellow;
+	border-style: none;
+	top: 4px;
+	left: 340px;
+	width : 80px;
+	height : 26px;
+	padding-top: 6px;
+	font-size: 13px;
+}
+
+#users_tab.active {
+	text-align: center;
+	background-color: yellow;
+	border: 0px 0px 0px 0px;
+	border : 1px solid rgb(230, 230, 230);
+	border-bottom : 0px;
+}
+
+#users_tab_box {
+	border: 2px solid yellow;
+	background : rgba(150, 150, 150, 0.1);
+}
+
+
 #notice_tab_box {
 	border: 2px solid darkgray;
 	background : rgba(150, 150, 150, 0.1);

@@ -49,6 +49,19 @@
 	float : left;
 }
 
+.users_tab {
+	background: rgb(209, 214, 58);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	top: 5px;
+	left : 4px;
+	width : 170px;
+	height : 30px;
+	padding-left : 5px;
+	padding-right : 2px;
+	font-size: 14px;
+	float : left;
+}
+
 .display_tab {
 	background: rgb(54,187,68);
 	border: 1px solid rgba(255, 255, 255, 0.3);
@@ -214,6 +227,10 @@
 }
 
 #layout_tab_box {
+	background-color : rgba(255, 255, 255, 0.1);
+}
+
+#users_tab_box {
 	background-color : rgba(255, 255, 255, 0.1);
 }
 

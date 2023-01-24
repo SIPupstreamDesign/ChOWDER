@@ -40,6 +40,7 @@ const Constants = {
     TabIDSearch: "search_tab",
     TabIDLayout: "layout_tab",
     TabIDNotice: "notice_tab",
+    TabIDUsers: "users_tab",
     SnapTypeFree: "free",
     SnapTypeGrid: "grid",
     SnapTypeDisplay: "display",

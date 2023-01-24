@@ -251,6 +251,14 @@ class Store extends EventEmitter {
     }
 
     /**
+     * 検索文字列変更
+     * @param {*} data
+     */
+    _changeUserSearchInput(data) {
+        this.emit(Store.EVENT_USERSEARCH_INPUT_CHANGED, null, data.text, data.groups);
+    }
+
+    /**
      * コントローラIDの変更
      */
     _changeControllerID(data) {
@@ -618,6 +626,7 @@ Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_SNAP_TYPE_CHANGED = "snap_type_changed";
 Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 Store.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
+Store.EVENT_USERSEARCH_INPUT_CHANGED = "usersearch_input_changed";
 Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";
 
 Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED = "display_permission_list_reloaded";

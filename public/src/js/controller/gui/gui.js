@@ -716,6 +716,8 @@ class GUI extends EventEmitter {
         let displaySetting = { tabs: [] };
         let searchSetting = { groups: [], colors: [] };
         let layoutSetting = { tabs: [] };
+        let usersSetting = { tabs: [] };
+
         for (let i = 0; i < groupList.length; i = i + 1) {
             let groupName = groupList[i].name;
             let groupColor = groupList[i].color;
@@ -760,7 +762,7 @@ class GUI extends EventEmitter {
             displaySetting.tabs.push(displayGroupTab);
         }
 
-        this.groupGUI.update(contentSetting, displaySetting, searchSetting, layoutSetting);
+        this.groupGUI.update(contentSetting, displaySetting, searchSetting, layoutSetting, usersSetting);
 
         /*
         // コンテキストメニューを刷新
