@@ -36,6 +36,17 @@ class PerformanceLogger
         }
     }
     
+    logByVals(title, method, timeString, id) {
+        if (!this.store) return;
+        let message = title
+            + "," + method
+            + "," + timeString
+            + "," + id 
+            + ",";
+        console.debug(message);
+        this.logText += message + "\n";
+    }
+
     logFromRegisterToShow(method, metaData) {
         if (!this.store) return;
         let message = "登録から表示完了までの時間" 
@@ -47,9 +58,13 @@ class PerformanceLogger
         this.logText += message + "\n";
     }
 
+    validate() {
+        return (this.store) ? true : false;
+    }
+
     save(filename) {
         let bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-        let text = "label,method,id,time,tile_index,\n" + this.logText;
+        let text = "label,method,time,id,tile_index,\n" + this.logText;
         let blob = new Blob([bom, text], {type: 'text/csv'});
 
         let url = (window.URL || window.webkitURL);

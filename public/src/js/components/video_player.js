@@ -1,4 +1,4 @@
-import Button from "./button";
+import Constants from "../common/constants";
 
 /**
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
@@ -20,15 +20,23 @@ class VideoPlayer extends EventEmitter {
         
         this.video.setAttribute('crossorigin', '');
         this.video.setAttribute('playsinline', '');
-        this.video.setAttribute('autoplay', '');
+        // this.video.setAttribute('autoplay', '');
+        if (Constants.IsMobile) {
+            this.video.setAttribute('muted', 'muted');
+        }
         this.video.removeAttribute('controls');
         if (isDisplay) {
-            this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "progress", "current-time", "mute", "volume", "fullscreen"] }');
+            if (Constants.IsChrome) {
+                this.video.setAttribute('muted', 'muted');
+            }
+            this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false,  "controls" : [ "progress", "current-time", "mute", "volume", "fullscreen"] }');
         } else {
+            this.video.setAttribute('muted', 'muted');
             this.video.setAttribute('data-plyr-config', '{ "clickToPlay" : false, "controls" : [ "play", "progress", "current-time", "mute", "volume", "fullscreen"] }');
         }
 
         this.player = new Plyr(this.video, {
+            storage : { enabled: false },
             listeners: {
                 seek: (e) => {
                     if (!this.isSeekEnabled) {
@@ -43,9 +51,11 @@ class VideoPlayer extends EventEmitter {
 
         this.player.on('ready', () => {
             let container = this.dom.getElementsByClassName('plyr--full-ui')[0];
-            container.style.minWidth = "unset";
-            container.style.width = "100%";
-            container.style.height = "100%";
+            if (container) {
+                container.style.minWidth = "unset";
+                container.style.width = "100%";
+                container.style.height = "100%";
+            }
             this.emit(VideoPlayer.EVENT_READY, null);
         });
     }
@@ -62,6 +72,12 @@ class VideoPlayer extends EventEmitter {
 		}
 		this.video.src = "";
     }
+    
+    isPlaying() {
+        //https://stackoverflow.com/questions/36803176/how-to-prevent-the-play-request-was-interrupted-by-a-call-to-pause-error
+        return this.video.currentTime > 0 && !this.video.paused && !this.video.ended 
+                && this.video.readyState > this.video.HAVE_CURRENT_DATA;
+    } 
 
     getDOM() {
         return this.dom;

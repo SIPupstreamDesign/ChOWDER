@@ -1,0 +1,192 @@
+#play_box {
+  display: grid;
+  grid-template-columns: 30px 1fr 30px;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  width: 350px;
+  height: 36px;
+  margin: 0 auto 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#play_box.disable2 {
+  pointer-events: none;
+}
+
+#play_ctl {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 280px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  background: rgba(27, 30, 43, 0.8);
+  border-radius: 20px;
+  transition: 0.3s;
+}
+#play_box a {
+  display: block;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+}
+#play_box #blank {
+  visibility: hidden;
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin: 0;
+  padding: 0;
+  background: rgba(27, 30, 43, 0.8);
+}
+/* button_loop */
+#play_box #button_loop {
+  visibility: hidden;
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: url(../../image/k2go-timeline-template/play_loop.svg) no-repeat center center rgba(27, 30, 43, 0.8);
+  background-size: 20px 20px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+#play_box #button_loop:active {
+  opacity: 0.5;
+  transform: scale(0.9);
+}
+#play_box #button_loop.active {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_loop_active.svg) no-repeat center center rgba(27, 30, 43, 0.8);
+  background-size: 20px 20px;
+}
+/* button_back_edge */
+#button_back_edge {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_edge.svg) no-repeat center center;
+  background-size: 30px 30px;
+  transform: rotate(180deg);
+}
+#button_back_edge:active {
+  opacity: 0.5;
+  transform: scale(0.9) rotate(180deg);
+}
+/* button_back */
+#button_back {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_frame.svg) no-repeat center center;
+  background-size: 30px 30px;
+  transform: rotate(180deg);
+}
+#button_back:active {
+  opacity: 0.5;
+  transform: scale(0.9) rotate(180deg);
+}
+/* button_play_reverse */
+#button_play_reverse {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_play.svg) no-repeat center center;
+  background-size: 30px 30px;
+  position: relative;
+  font-size: 13px;
+  transform: rotate(180deg);
+}
+#button_play_reverse span{
+  font-family: 'VT323', monospace;
+  display: table-cell;
+  vertical-align: middle;
+  margin: 0;
+  padding: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 13px;
+  position: absolute;
+  top: 20px;
+  left: 23px;
+  color: var(--active-color);
+  text-align: center;
+  user-select: none;
+  transform: rotate(180deg);
+}
+#button_play_reverse:active {
+  opacity: 0.5;
+  }
+#button_play_reverse.active {
+  background: url(../../image/k2go-timeline-template/play_play_active.svg) no-repeat center center;
+  background-size: 30px 30px;
+  transform: rotate(180deg);
+}
+/* button_stop */
+#button_stop {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_stop.svg) no-repeat center center;
+  background-size: 30px 30px;
+}
+#button_stop:active {
+  opacity: 0.5;
+  transform: scale(0.9);
+}
+/* button_play */
+#button_play {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_play.svg) no-repeat center center;
+  background-size: 30px 30px;
+  position: relative;
+  font-size: 13px;
+}
+#button_play span{
+  font-family: 'VT323', monospace;
+  display: table-cell;
+  vertical-align: middle;
+  margin: 0;
+  padding: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 13px;
+  position: absolute;
+  top: 3px;
+  left: 24px;
+  color: var(--active-color);
+  text-align: center;
+  user-select: none;
+  transition: 0.3s
+}
+#button_play:active {
+  opacity: 0.5;
+  transform: scale(0.9);
+}
+#button_play.active {
+  background: url(../../image/k2go-timeline-template/play_play_active.svg) no-repeat center center;
+  background-size: 30px 30px;
+}
+/* button_fwd */
+#button_fwd {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_frame.svg) no-repeat center center;
+  background-size: 30px 30px;
+}
+#button_fwd:active {
+  opacity: 0.5;
+  transform: scale(0.9);
+}
+/* button_fwd_edge */
+#button_fwd_edge {
+  display: block;
+  background: url(../../image/k2go-timeline-template/play_edge.svg) no-repeat center center;
+  background-size: 30px 30px;
+}
+#button_fwd_edge:active {
+  opacity: 0.5;
+  transform: scale(0.9);
+}
+
+

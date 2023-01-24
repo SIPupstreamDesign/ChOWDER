@@ -12,6 +12,7 @@ import VscreenUtil from '../../common/vscreen_util';
 import VideoStore from './video_store';
 import Receiver from './reciever';
 import PerformanceLogger from '../performance_logger';
+import RemoteCursorBuilder from '../remote_cursor_builder'
 
 "use strict";
 
@@ -29,12 +30,15 @@ class Store extends EventEmitter {
         this.groupDict = {};
         this.globalSetting = null;
         this.virtualDisplay = null;
+        this.itownFuncDict = {};
+        this.controllerCounterForCursor = { connectionCount: -1 };
 
         // 接続時に遅延して初期化する
         this.receiver = null;
         this.videoStore = null;
 
         this.initEvents();
+        this.time = {};
 
         this.onGetWindowData = this.onGetWindowData.bind(this);
         this.onGetMetaData = this.onGetMetaData.bind(this);
@@ -165,20 +169,57 @@ class Store extends EventEmitter {
         };
     }
 
+    // iTownsのパフォーマンス計測を行う
+    // PerformanceLoggerは使用しない
+    measureITownPerformance(id) {
+        let funcDict = this.getITownFuncDict();
+        console.log(funcDict, id)
+        if (funcDict && funcDict.hasOwnProperty(id)) {
+            funcDict[id].chowder_itowns_measure_time((err, status) => {
+                Connector.send("SendMessage", {
+                    id: id,
+                    display_id: this.getWindowID(),
+                    command: "measureITownPerformanceResult",
+                    result: status
+                }, () => {})
+            });
+        }
+    }
+
     _login(data) {
         Connector.send(Command.Login, data, (err, reply) => {
             if (err || reply === null) {
                 console.log(err);
+                this.emit(Store.EVENT_LOGIN_FAILED, null);
             } else {
-                this.authority = reply.authority;
-                this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+                // ユーザーリスト取得
+                this._reloadUserList({
+                    callback: () => {
+                        this.authority = reply.authority;
+                        this.emit(Store.EVENT_LOGIN_SUCCESS, null);
+                    }
+                });
             }
         });
     }
 
     _logout(data) {
         this.authority = null;
-        Connector.send(Command.Logout, {}, function () {
+        Connector.send(Command.Logout, {}, function() {});
+    }
+
+    /**
+     * ユーザーリストを最新に更新
+     */
+    _reloadUserList(data) {
+        let callback = Store.extractCallback(data);
+
+        Connector.send(Command.GetUserList, {}, (err, userList) => {
+            this.userList = userList;
+            if (callback) {
+                callback(err, userList);
+            }
+            this.emit(Store.EVENT_USERLIST_RELOADED, null);
         });
     }
 
@@ -231,7 +272,7 @@ class Store extends EventEmitter {
         if (metaData) {
             params.posx = metaData.posx;
             params.posy = metaData.posy;
-            params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);   
+            params.scale = parseFloat(metaData.orgWidth) / parseFloat(metaData.width);
         } else {
             params.posx = 0;
             params.posy = 0;
@@ -283,8 +324,7 @@ class Store extends EventEmitter {
     _registerWindow(data) {
         let wh = data.size;
         Vscreen.assignWhole(wh.width, wh.height, wh.width / 2.0, wh.height / 2.0, 1.0);
-        let windowID = '';
-        {
+        let windowID = ''; {
             let hash = location.hash.substring(1);
             if (hash !== '') {
                 windowID = decodeURIComponent(hash);
@@ -294,7 +334,7 @@ class Store extends EventEmitter {
         let query = this.getQueryParams(location.search) || {};
         windowID = query.id ? decodeURIComponent(query.id) : windowID;
         let groupId = undefined;
-        
+
         let f = () => {
             if (windowID !== '') {
                 Connector.send(Command.GetWindowMetaData, { id: windowID }, (err, metaData) => {
@@ -353,9 +393,9 @@ class Store extends EventEmitter {
         }
     }
 
-	/**
-	 * コンテンツのZインデックスを一番手前にする
-	 */
+    /**
+     * コンテンツのZインデックスを一番手前にする
+     */
     _changeContentIndexToFront(data) {
         let targetid = data.targetID;
         let max = 0;
@@ -367,22 +407,24 @@ class Store extends EventEmitter {
                     if (metaDataDict[i].id !== metaData.id &&
                         !Validator.isWindowType(metaDataDict[i]) &&
                         metaDataDict[i].hasOwnProperty("zIndex")) {
-                        let index = parseInt(metaDataDict[i].zIndex, 10);
-                        if (!isNaN(index)) {
-                            max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+                        if (metaDataDict[i].zIndex < Constants.ZIndexAlwaysOnTopValue) {
+                            let index = parseInt(metaDataDict[i].zIndex, 10);
+                            if (!isNaN(index)) {
+                                max = Math.max(max, parseInt(metaDataDict[i].zIndex, 10));
+                            }
                         }
                     }
                 }
             }
             metaData.zIndex = max + 1;
-            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) { });
+            Connector.send(Command.UpdateMetaData, [metaData], function(err, reply) {});
         }
     }
 
-	/**
-	 * コンテンツのTransformを変更
-	 * @param {*} data
-	 */
+    /**
+     * コンテンツのTransformを変更
+     * @param {*} data
+     */
     _changeContentTransform(data) {
         let targetid = data.targetID;
         let x = data.x;
@@ -397,18 +439,87 @@ class Store extends EventEmitter {
             metaData.posx -= Vscreen.getWhole().x;
             metaData.posy -= Vscreen.getWhole().y;
 
-            Connector.send(Command.UpdateMetaData, [metaData], function (err, reply) {
-            });
+            Connector.send(Command.UpdateMetaData, [metaData], function(err, reply) {});
         }
     }
 
     _getTileContent(data) {
-        let callback = Store.extractCallback(data);
-        Connector.send(Command.GetTileContent, data.request, (err, reply) => {
-            if (callback) {
-                callback(err, reply);
+
+        const callback = Store.extractCallback(data);
+        const req = JSON.stringify(data.request);
+
+        // タイルビュワーフリーズ対策。ランダムを使用し、リクエスト間隔をばらす。
+        setTimeout((callback, req) =>{
+            const reqJ = JSON.parse(req);
+            Connector.send(Command.GetTileContent, reqJ, (err, reply) => {
+                if (callback) {
+                    callback(err, reply);
+                }
+            });
+        }, Math.floor(200 + Math.random() * 200), callback, req);
+
+    }
+
+    _addItownFunc(data) {
+        if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
+            this.itownFuncDict[data.id] = data.func;
+            this.emit(Store.EVENT_DONE_ADD_ITOWN_FUNC, null, data.id);
+        } else {
+            console.error("addITownFun - invalid param");
+        }
+    }
+
+    _addTileViewerFunc(data) {
+        if (data.hasOwnProperty('id') && data.hasOwnProperty('func')) {
+            this.itownFuncDict[data.id] = data.func;
+            this.emit(Store.EVENT_DONE_ADD_TILEVIEWER_FUNC, null, data.id);
+        } else {
+            console.error("addTileViewerFunc - invalid param");
+        }
+    }
+
+    _updateQgisMetadata(metaData) {
+        let dom = document.getElementById(metaData.id);
+        if (!dom) {
+            return;
+        }
+        // console.log("[store:_updateQgisMetadata]",dom,metaData.id);
+        let iframe = dom.childNodes[0];
+        if (!iframe || !iframe.contentWindow || !iframe.contentWindow.Q3D) {
+            //iframe読み込みがまだ終わっていない
+            return;
+        }
+        if (!iframe.contentWindow.Q3D.application.hasOwnProperty('camera')) {
+            return;
+        }
+
+        /* camera matrix */
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = false;
+        if (metaData.hasOwnProperty('cameraWorldMatrix')) {
+            try {
+                iframe.contentWindow.Q3D.application.camera.matrixWorld.elements = JSON.parse(metaData.cameraWorldMatrix);
+            } catch (e) {
+                // console.error(e, metaData)
             }
-        });
+        }
+        let d = new iframe.contentWindow.THREE.Vector3();
+        let q = new iframe.contentWindow.THREE.Quaternion();
+        let s = new iframe.contentWindow.THREE.Vector3();
+        iframe.contentWindow.Q3D.application.camera.matrixWorld.decompose(d, q, s);
+        iframe.contentWindow.Q3D.application.camera.position.copy(d);
+        iframe.contentWindow.Q3D.application.camera.quaternion.copy(q);
+        iframe.contentWindow.Q3D.application.camera.scale.copy(s);
+        iframe.contentWindow.Q3D.application.camera.matrixAutoUpdate = true;
+        iframe.contentWindow.Q3D.application.scene.requestRender();
+
+        /* camera matrix */
+        const displayProperty = JSON.parse(metaData.displayProperty);
+        if (iframe.contentWindow.Q3D.application.labelVisible !== displayProperty.label) {
+            iframe.contentWindow.Q3D.application.setLabelVisible(displayProperty.label);
+        }
+        if (iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe) {
+            iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+        }
     }
 
     onGetWindowData(err, json) {
@@ -446,11 +557,20 @@ class Store extends EventEmitter {
 
     onUpdateWindowMetaData(err, json) {
         if (!err) {
+            let isGroupChanged = false;
             for (let i = 0; i < json.length; i = i + 1) {
                 this.metaDataDict[json[i].id] = json[i];
                 if (!this.windowData || this.windowData.id === json[i].id) {
+                    if (!isGroupChanged) {
+                        if (this.windowData && this.windowData.group !== json[i].group) {
+                            isGroupChanged = true;
+                        }
+                    }
                     this.windowData = json[i];
                 }
+            }
+            if (isGroupChanged) {
+                this.emit(Store.EVENT_DONE_UPDATE_WINDOW_GROUP, err, json)
             }
         }
         this.emit(Store.EVENT_DONE_UPDATE_WINDOW_METADATA, err, json)
@@ -478,9 +598,9 @@ class Store extends EventEmitter {
         return ret;
     }
 
-	/**
-	 * VideoStoreを返す
-	 */
+    /**
+     * VideoStoreを返す
+     */
     getVideoStore() {
         return this.videoStore;
     }
@@ -519,10 +639,10 @@ class Store extends EventEmitter {
         this.authority = authority;
     }
 
-	/**
-	 * メタデータごとにfuncを実行
-	 * @param {*} func
-	 */
+    /**
+     * メタデータごとにfuncを実行
+     * @param {*} func
+     */
     for_each_metadata(func) {
         let i;
         for (i in this.metaDataDict) {
@@ -538,24 +658,28 @@ class Store extends EventEmitter {
         return this.metaDataDict;
     }
 
+    getITownFuncDict() {
+        return this.itownFuncDict;
+    }
+
     getGroupDict() {
         return this.groupDict;
     }
 
-	/**
-	 * 指定したIDのメタデータがあるかどうか
-	 */
-	hasMetadata(id) {
-		return this.metaDataDict.hasOwnProperty(id);
+    /**
+     * 指定したIDのメタデータがあるかどうか
+     */
+    hasMetadata(id) {
+            return this.metaDataDict.hasOwnProperty(id);
+        }
+        /**
+         * 指定したIDのメタデータを取得
+         */
+    getMetaData(id) {
+        return this.metaDataDict[id];
     }
-	/**
-	 * 指定したIDのメタデータを取得
-	 */
-	getMetaData(id) {
-		return this.metaDataDict[id];
-	}
 
-    
+
     /**
      * 閲覧情報があるか返す
      */
@@ -569,6 +693,9 @@ class Store extends EventEmitter {
         if (group === Constants.DefaultGroup) {
             return true;
         }
+        if (!this.isViewableSite(group)) {
+            return false;
+        }
         let groupDict = this.getGroupDict();
         if (groupDict.hasOwnProperty(group)) {
             if (this.getAuthority().viewable === "all") {
@@ -581,14 +708,46 @@ class Store extends EventEmitter {
         return false;
     }
 
-    // パフォーマンス計算を行うかどうか
-    isMeasureTimeEnable() {
-        if (this.globalSetting && this.globalSetting.enableMeasureTime) {
-            return (String(this.globalSetting.enableMeasureTime) === "true");
+    /**
+     * socketidユーザーがdisplaygroupを表示可能かどうか返す
+     * @method isViewableDisplay
+     * @param {String} group group
+     */
+    isViewableSite(group) {
+        if (group === Constants.DefaultGroup) {
+            return true;
+        }
+        if (group === undefined || group === "") {
+            return true;
+        }
+        // displayからのアクセスだった
+        const windowData = this.getWindowData();
+        if (!windowData) {
+            return false;
+        }
+        for (let i = 0; i < this.userList.length; ++i) {
+            const authority = this.userList[i];
+            if (authority.id === group) {
+                if (authority.hasOwnProperty('viewableSite')) {
+                    if (authority.viewableSite !== "all") {
+                        return authority.viewableSite.indexOf(windowData.group) >= 0;
+                    }
+                }
+                // viewableSiteの設定が無い、または"all"
+                return true;
+            }
         }
         return false;
     }
-    // パフォーマンス計算用時間を生成して返す
+
+    // パフォーマンス計算を行うかどうか
+    isMeasureTimeEnable() {
+            if (this.globalSetting && this.globalSetting.enableMeasureTime) {
+                return (String(this.globalSetting.enableMeasureTime) === "true");
+            }
+            return false;
+        }
+        // パフォーマンス計算用時間を生成して返す
     fetchMeasureTime() {
         let time = null;
         if (this.isMeasureTimeEnable()) {
@@ -600,12 +759,48 @@ class Store extends EventEmitter {
     getVirtualDisplay() {
         return this.virtualDisplay;
     }
+
+    getTime(id) {
+        if (this.time.hasOwnProperty(id)) {
+            return this.time[id];
+        }
+        return null;
+    }
+
+    getGlobalSetting() {
+        return this.globalSetting;
+    }
+
+    _updateRemoteCursor(cusrorData) {
+        if (cusrorData.hasOwnProperty('data'))
+        {
+            if (cusrorData.data.hasOwnProperty('id')) {
+                const meta = this.getMetaData(cusrorData.data.id);
+                // 緯度経度表示可能なタイルビューワ用のカーソルは
+                // 対象コンテンツが非表示となった場合に非表示とする
+                if (!meta || !Validator.isVisible(meta)) {
+                    // カーソル削除
+                    RemoteCursorBuilder.releaseCursor(cusrorData, this, this.controllerCounterForCursor);
+                    return;
+                }
+            }
+            // カーソル作成
+            if (cusrorData.data.hasOwnProperty('x') && cusrorData.data.hasOwnProperty('y')) {
+                RemoteCursorBuilder.createCursor(cusrorData, this, this.controllerCounterForCursor);
+                return;
+            }
+        }
+        
+        // カーソル削除
+        RemoteCursorBuilder.releaseCursor(cusrorData, this, this.controllerCounterForCursor);
+    }
 }
 
 Store.EVENT_DISCONNECTED = "disconnected";
 Store.EVENT_CONNECT_SUCCESS = "connect_success";
 Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_LOGIN_SUCCESS = "login_success";
+Store.EVENT_LOGIN_FAILED = "login_failed"
 Store.EVENT_DISPLAY_ID_CHANGED = "display_id_changed";
 Store.EVENT_DONE_UPDATE_WINDOW_METADATA = "done_update_window_metadata";
 Store.EVENT_DONE_DELETE_ALL_ELEMENTS = "done_delete_all_elements";
@@ -616,11 +811,18 @@ Store.EVENT_CONTENT_INDEX_CHANGED = "content_index_changed";
 Store.EVENT_CONTENT_TRANSFORM_CHANGED = "content_transform_changed";
 Store.EVENT_DONE_GET_VIRTUAL_DISPLAY = "done_get_virtual_display";
 Store.EVENT_DONE_UPDATE_VIRTUAL_DISPLAY = "done_update_virtual_display";
+Store.EVENT_DONE_ADD_ITOWN_FUNC = "done_add_itown_func";
+Store.EVENT_DONE_ADD_TILEVIEWER_FUNC = "done_add_tileviewer_func";
+Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 
 // reviever
 Store.EVENT_DONE_DELETE_CONTENT = "done_delete_content"
 Store.EVENT_REQUEST_SHOW_DISPLAY_ID = "request_show_display_id"
 Store.EVENT_DONE_UPDATE_METADATA = "done_update_metadata";
 Store.EVENT_DONE_GET_CONTENT = "done_get_content";
+Store.EVENT_REQUEST_RELOAD_DISPLAY = "reload_display";
+Store.EVENT_ITOWNS_UPDATE_TIME = "itowns_update_time";
+Store.EVENT_TILEVIEWER_UPDATE_TIME = "tileviewer_update_time";
+Store.EVENT_DONE_UPDATE_WINDOW_GROUP = "done_update_window_group";
 
 export default Store;

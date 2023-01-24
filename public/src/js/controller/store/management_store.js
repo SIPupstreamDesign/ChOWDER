@@ -214,8 +214,41 @@ class ManagementStore {
 		return this.getAuthorityObject().isAdmin();
 	}
 	isViewable(group) {
-		return this.getAuthorityObject().isViewable(group);
+		return this.getAuthorityObject().isViewable(group) && this.isViewableSite(group);
 	}
+    /**
+     * groupのコンテンツが、displaygroupでで表示可能かどうか返す
+     * @method isViewableDisplay
+     * @param {String} group group
+     */
+    isViewableSite(group) {
+		// displayからのアクセスだった
+		let userList = this.store.getLoginStore().userList;
+		if (!userList) { return false; }
+		const displayGroup = this.store.getState().getDisplaySelectedGroup();
+		if (displayGroup === "" || displayGroup === Constants.DefaultGroup) {
+			// defaultグループだった
+			return true;
+		}
+		if (group === "" || group === Constants.DefaultGroup) {
+			// defaultグループだった
+			return true;
+		}
+        for (let i = 0; i < userList.length; ++i) {
+            const authority = userList[i];
+            if (authority.id === group) {
+                if (authority.hasOwnProperty('viewableSite')) {
+                    if (authority.viewableSite !== "all") {
+                        return authority.viewableSite.indexOf(displayGroup) >= 0;
+                    }
+                }
+                // viewableSiteの設定が無い、または"all"
+                return true;
+            }
+        }
+        return false;
+    }
+
 	isEditable(group) {
 		return this.getAuthorityObject().isEditable(group);
 	}
@@ -237,7 +270,7 @@ class ManagementStore {
 	}
 	// パフォーマンス計算を行うかどうか
 	isMeasureTimeEnable() {
-		if (this.globalSetting.enableMeasureTime) {
+		if (this.globalSetting && this.globalSetting.enableMeasureTime) {
 			return (String(this.globalSetting.enableMeasureTime) === "true");
 		}
 		return false;

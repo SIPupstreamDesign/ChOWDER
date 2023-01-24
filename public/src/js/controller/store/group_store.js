@@ -18,8 +18,6 @@ class GroupStore
         this.store = store;
 		this.action = action;
 
-		this.currentGroupID = Constants.DefaultGroup;
-
 		this.groupList = [];
 		this.groupDict = {};
 		this.contentGroupList = [];
@@ -158,12 +156,21 @@ class GroupStore
      */
     _changeGroupSelect(data) {
 		let groupID = data.groupID;
-		this.currentGroupID = groupID;
+		this.store.getState().setContentSelectedGroup(groupID);
+		this.store.emit(Store.EVENT_GROUP_SELECT_CHANGED, null, data);
+	}
+	
+    /**
+     * DisplayGroupの選択が変更された
+     */
+	_changeDisplayGroupSelect(data) {
+		let groupID = data.groupID;
+		this.currentDisplayGroupID = groupID;
         this.store.operation.getVirtualDisplay(groupID, (err, data) => {
             this.store.getState().setDisplaySelectedGroup(groupID);
-            this.store.emit(Store.EVENT_GROUP_SELECT_CHANGED, err, data);
+            this.store.emit(Store.EVENT_DISPLAY_GROUP_SELECT_CHANGED, err, data);
         }, true);
-    }
+	}
 
 	/**
 	 * Groupを１つ下に
@@ -360,7 +367,7 @@ class GroupStore
 	 * 現在のグループIDを取得
 	 */
 	getCurrentGroupID() {
-		return this.currentGroupID;
+		return this.state.getContentSelectedGroup();
 	}
 
 	/**

@@ -33,6 +33,7 @@ const Command = {
 	DeleteContent : "DeleteContent",
 	DeleteWindowMetaData : "DeleteWindowMetaData",
 	ShowWindowID : "ShowWindowID",
+	ReloadDisplay : "ReloadDisplay",
 	UpdateMouseCursor : "UpdateMouseCursor",
 
 	SendMessage: "SendMessage",
@@ -78,6 +79,8 @@ const Command = {
 	DeleteDisplayPermissionList : "DeleteDisplayPermissionList",
 
 	GetDisplayPermissionList : "GetDisplayPermissionList", // コントローラが許可設定一覧をサーバに要求する
+
+	Upload : "Upload",
 };
 
 export default Command;

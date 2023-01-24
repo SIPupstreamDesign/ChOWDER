@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <!--Copyright (c) 2021 National Institute of Information and Communications Technology (NICT). All rights reserved.-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link type="text/css" href="3rd/css/bootstrap.css" rel="stylesheet" />
+    <link type="text/css" href="3rd/css/k2go-timeline/jquery-k2go-timeline.css" rel="stylesheet" />
+    <link type="text/css" href="3rd/css/k2go-timeline-template/index.css" rel="stylesheet" />
+    <link type="text/css" href="3rd/css/k2go-timeline-template/style.css" rel="stylesheet" />
+    <link type="text/css" href="3rd/css/k2go-timeline-template/play_box.css" rel="stylesheet" />
+    <link type="text/css" href="3rd/css/k2go-timeline-template/default.css" rel="stylesheet" />
+    <link type="text/css" href="3rd/css/k2go-timeline-template/default.date.css" rel="stylesheet" />
+
+    <!--link href="3rd/css/bootstrap.css" rel="stylesheet" />
+	<script type="text/javascript" src="3rd/js/bootstrap-without-jquery.min.js"></script-->
+    <script type="text/javascript" src="3rd/js/i18next/i18next.min.js"></script>
+    <script type="text/javascript" src="3rd/js/i18next/i18nextXHRBackend.min.js"></script>
+    <script type="text/javascript" src="3rd/js/i18next/i18nextBrowserLanguageDetector.min.js"></script>
+    <script type="text/javascript" src="3rd/js/eventemitter3/index.js"></script>
+
+    <script type="text/javascript" src="3rd/js/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="3rd/js/k2go-timeline/jquery-k2go-timeline.js"></script>
+    <script type="text/javascript" src="3rd/js/k2go-timeline-template/lib/picker.js"></script>
+    <script type="text/javascript" src="3rd/js/k2go-timeline-template/lib/picker.date.js"></script>
+    <script type="text/javascript" src="3rd/js/k2go-timeline-template/lib/picker.date.lang.js"></script>
+    <script type="text/javascript" src="3rd/js/k2go-timeline-template/env.js"></script>
+    <script type="text/javascript" src="3rd/js/k2go-timeline-template/fnc.js"></script>
+    <!--script type="text/javascript" src="3rd/js/k2go-timeline-template/main.js"></script-->
+    <script type="text/javascript" src="tileviewer.bundle.js"></script>
+</head>
+
+<body>
+    <header>
+        <div id="head_top_bar">
+            <div class="left">
+                <span>Timeline</span>
+            </div>
+            <div class="center">
+                <span id="date_box">
+					<span id="cal"></span>
+                <span id="date">0000-00-00 00:00:00</span>
+                <span id="current_time" class="timeCurrent"></span>
+                </span>
+            </div>
+            <div class="right"></div>
+        </div>
+    </header>
+
+    <div id="function_bar">
+        <div class="left">
+            <a id="button_select_data">Select Data</a>
+            <a id="button_view_url">View URL</a>
+            <a id="button_help">HELP</a>
+        </div>
+        <div class="center">
+            <div id="play_box">
+                <a id="button_loop"></a>
+                <div id="play_ctl">
+                    <a id="button_back_edge"></a>
+                    <a id="button_back"></a>
+                    <a id="button_play_reverse"><span></span></a>
+                    <a id="button_stop"></a>
+                    <a id="button_play"><span></span></a>
+                    <a id="button_fwd"></a>
+                    <a id="button_fwd_edge"></a>
+                </div>
+                <div id="blank"></div>
+            </div>
+        </div>
+        <div class="right">
+            <div id="slider_label">1 day</div>
+            <div id="slider">
+                <a id="button_minus"></a>
+                <input id="zoom-range" type="range" class="input-range" min="0" step="1" />
+                <a id="button_plus"></a>
+            </div>
+        </div>
+    </div>
+
+    <div id="main">
+        <div id="content">
+            <!--table class="app_table">
+          <tbody>
+            <tr>
+              <td id="min_time">min time<br /><span></span></td>
+              <td></td>
+              <td id="max_time">max time<br /><span></span></td>
+            </tr>
+            <tr>
+              <td id="start_time">start time<br /><span></span></td>
+              <td id="current_time">current time<br /><span></span></td>
+              <td id="end_time">end time<br /><span></span></td>
+            </tr>
+            <tr>
+              <td id="range_start_time">range start time<br /><span></span></td>
+              <td></td>
+              <td id="range_end_time">range end time<br /><span></span></td>
+            </tr>
+            <tr>
+              <td colspan="3">event info<br /><div id="event_info"></div></td>
+            </tr>
+          </tbody>
+        </table-->
+        </div>
+    </div>
+
+    <footer>
+        <div id="button_range"><span>RangeBar</span></div>
+        <div id="timeline"></div>
+    </footer>
+
+    <div id="view_url">
+        <div id="view_url_box">
+            <div class="view_url_box_header">
+                <div class="view_url_box_title">ViewURL</div>
+                <div class="view_url_box_close"></div>
+            </div>
+            <div class="view_url_box_body">
+                <div class="input_group">
+                    <input type="text" value="" aria-label="" readonly="" id="view_url_input">
+                    <div class="input_group_button"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="lockWindow"></div>
+
+</body>
+
+</html>

@@ -12,8 +12,7 @@ import Constants from "../common/constants";
 import InputDialog from './input_dialog';
 import CompareList from "./compare_list";
 
-class ManagementDialog extends EventEmitter
-{
+class ManagementDialog extends EventEmitter {
     constructor() {
         super();
     }
@@ -26,9 +25,9 @@ class ManagementDialog extends EventEmitter
 
         let title = document.createElement('h2');
         title.textContent = i18next.t("management");
-        
+
         this.dom.appendChild(title);
-        
+
         let title3 = document.createElement('h4');
         title3.textContent = i18next.t("global_settings");
         this.dom.appendChild(title3);
@@ -209,7 +208,7 @@ class ManagementDialog extends EventEmitter
         let title4 = document.createElement('h4');
         title4.textContent = i18next.t("per_db_settings");
         this.dom.appendChild(title4);
-        
+
         let perDBBackground = document.createElement('div');
         perDBBackground.className = "management_db_frame_bg"
         this.dom.appendChild(perDBBackground)
@@ -223,7 +222,7 @@ class ManagementDialog extends EventEmitter
                 <div>
                     <span class="auth_target_label" data-key="editable_content"></span>
                     <span class="auth_target_label" data-key="viewable_content"></span>
-                    <span id="display_manipulate_label" data-key="editable_display"></span>
+                    <span id="display_manipulate_label" data-key="editable_site"></span>
                 </div>
                 <div id="auth_target_frame">
                     <!-- 閲覧権限、編集権限、ディスプレイ編集権限のリスト -->
@@ -255,29 +254,70 @@ class ManagementDialog extends EventEmitter
             this.authSelect.getDOM().classList.add("auth_select");
             authSettingFrame.appendChild(this.authSelect.getDOM());
 
-            let authLabelWrap = document.createElement('div');
+            let authTargetAllWrap = document.createElement('div');
+            authTargetAllWrap.style.width = "100%";
+
             {
-                this.editableContentLabel = document.createElement('span');
-                this.editableContentLabel.className = "auth_target_label";
-                this.editableContentLabel.textContent = i18next.t("editable_content");
-                authLabelWrap.appendChild(this.editableContentLabel);
+                let authTargetWrap1 = document.createElement('div');
+                authTargetWrap1.style.width = "380px";
+                authTargetWrap1.style.display = "inline-block"
+                authTargetAllWrap.appendChild(authTargetWrap1);
+    
+                // ラベル
+                let authLabelWrap1 = document.createElement('div');
+                {
+                    // 編集可能コンテンツ
+                    this.editableContentLabel = document.createElement('span');
+                    this.editableContentLabel.className = "auth_target_label";
+                    this.editableContentLabel.textContent = i18next.t("editable_content");
+                    authLabelWrap1.appendChild(this.editableContentLabel);
+    
+                    // 閲覧可能コンテンツ
+                    this.viewableContentLabel = document.createElement('span');
+                    this.viewableContentLabel.className = "auth_target_label";
+                    this.viewableContentLabel.textContent = i18next.t("viewable_content");
+                    authLabelWrap1.appendChild(this.viewableContentLabel);
+                }
+                authTargetWrap1.appendChild(authLabelWrap1);
+    
+                // Selectを入れるdiv
+                this.authTargetFrame1 = document.createElement('div');
+                this.authTargetFrame1.className = "auth_target_frame";
+                authTargetWrap1.appendChild(this.authTargetFrame1);
 
-                this.viewableContentLabel = document.createElement('span');
-                this.viewableContentLabel.className = "auth_target_label";
-                this.viewableContentLabel.textContent = i18next.t("viewable_content");
-                authLabelWrap.appendChild(this.viewableContentLabel);
-
-                this.editableDisplayLabel = document.createElement('span');
-                this.editableDisplayLabel.className = "display_manipulate_label";
-                this.editableDisplayLabel.textContent = i18next.t("editable_display");
-                authLabelWrap.appendChild(this.editableDisplayLabel);
             }
-            authSettingFrame.appendChild(authLabelWrap);
 
-            this.authTargetFrame = document.createElement('div');
-            this.authTargetFrame.className = "auth_target_frame";
-            authSettingFrame.appendChild(this.authTargetFrame);
+            {
+                let authTargetWrap2 = document.createElement('div');
+                authTargetWrap2.style.width = "380px";
+                authTargetWrap2.style.display = "inline-block"
+                authTargetAllWrap.appendChild(authTargetWrap2);
+                
+                // ラベル
+                let authLabelWrap2 = document.createElement('div');
+                {
+                    // 編集可能サイト
+                    this.editableDisplayLabel = document.createElement('span');
+                    this.editableDisplayLabel.className = "auth_target_label";
+                    this.editableDisplayLabel.textContent = i18next.t("editable_site");
+                    authLabelWrap2.appendChild(this.editableDisplayLabel);
 
+                    // 表示許可サイト
+                    this.viewableSiteLabel = document.createElement('span');
+                    this.viewableSiteLabel.className = "auth_target_label";
+                    this.viewableSiteLabel.textContent = i18next.t("viewable_site");
+                    authLabelWrap2.appendChild(this.viewableSiteLabel);
+                }
+                authTargetWrap2.appendChild(authLabelWrap2);
+                
+                // Selectを入れるdiv
+                this.authTargetFrame2 = document.createElement('div');
+                this.authTargetFrame2.className = "auth_target_frame";
+                authTargetWrap2.appendChild(this.authTargetFrame2);
+            }
+            authSettingFrame.appendChild(authTargetAllWrap);
+
+            // グループの編集を許可
             let deleteCheckWrap = document.createElement('div');
             {
                 this.deleteCheckBox = new Input('checkbox');
@@ -302,29 +342,29 @@ class ManagementDialog extends EventEmitter
             authSettingFrame.appendChild(applyAuthWrap);
         }
 
-       /*
-        <h4 data-key="setting_password"></h4>
-        <div class="frame">
-            <div class="passinput_frame">
-                <p data-key="setting_target"></p>
-                <select id="auth_select_pass" class="auth_select"></select>
-            </div>
-            <div>
-                <div class="passinput_frame">
-                    <p data-key="old_password"></p>
-                    <input class="passinput" id="old_password" type="password" style="color:black" value="" />
-                </div>
-                <div class="passinput_frame">
-                    <p data-key="new_password"></p>
-                    <input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
-                </div>
-            </div>
-            <div class="apply_pass_frame">
-                <input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" data-key="apply" value="" />
-                <p id="apply_pass_message" data-key="password_changed"></p>
-            </div>
-        </div>
-        */
+        /*
+         <h4 data-key="setting_password"></h4>
+         <div class="frame">
+             <div class="passinput_frame">
+                 <p data-key="setting_target"></p>
+                 <select id="auth_select_pass" class="auth_select"></select>
+             </div>
+             <div>
+                 <div class="passinput_frame">
+                     <p data-key="old_password"></p>
+                     <input class="passinput" id="old_password" type="password" style="color:black" value="" />
+                 </div>
+                 <div class="passinput_frame">
+                     <p data-key="new_password"></p>
+                     <input class="passinput" id="new_password" type="password" autocomplete="new-password" style="color:black" value="" />
+                 </div>
+             </div>
+             <div class="apply_pass_frame">
+                 <input id="apply_pass_button" type="button" class="btn management_apply_button" style="color:black" data-key="apply" value="" />
+                 <p id="apply_pass_message" data-key="password_changed"></p>
+             </div>
+         </div>
+         */
         {
             let title = document.createElement('h4');
             title.textContent = i18next.t("setting_password");
@@ -409,16 +449,37 @@ class ManagementDialog extends EventEmitter
             displayPermissionTitle.textContent = i18next.t("display_permission");
             displayPermissionFrame.appendChild(displayPermissionTitle);
 
-            this.displaySelect = new CompareList(i18next.t("allowed"),i18next.t("blocked"));
+            this.displaySelect = new CompareList(i18next.t("allowed"), i18next.t("blocked"));
 
             displayPermissionFrame.appendChild(this.displaySelect.getDOM());
-            
+
             this.applyDisplaySettingMessage = document.createElement('p');
             this.applyDisplaySettingMessage.textContent = i18next.t("display_setting_changed");
             this.applyDisplaySettingMessage.className = "apply_display_setting_message";
             displayPermissionFrame.appendChild(this.applyDisplaySettingMessage);
-            
         }
+
+        
+        let title5 = document.createElement('h4');
+        title5.textContent = i18next.t("application_control");
+        this.dom.appendChild(title5);
+
+        let displayControlBackground = document.createElement('div');
+        displayControlBackground.className = "management_db_frame_bg"
+        this.dom.appendChild(displayControlBackground)
+
+        {
+            let reloadAllDisplayFrame = document.createElement('div');
+            reloadAllDisplayFrame.className = "apply_pass_frame";
+            {
+                this.reloadAllDisplayButton = new Button();
+                this.reloadAllDisplayButton.getDOM().classList.add('management_reload_all_display_button');
+                this.reloadAllDisplayButton.setDataKey("reload_all_display");
+                reloadAllDisplayFrame.appendChild(this.reloadAllDisplayButton.getDOM());
+            }
+            displayControlBackground.appendChild(reloadAllDisplayFrame);
+        }
+
     }
 
     /**
@@ -562,9 +623,9 @@ class ManagementDialog extends EventEmitter
     /**
      *  ディスプレイ配信許可設定の初期化
      */
-    initDisplayPermission(contents,displayPermissionList) {
-        this.displaySelect.on(CompareList.EVENT_APPLY , (err,data) => {
-            this.emit(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data, (err, data)=>{
+    initDisplayPermission(contents, displayPermissionList) {
+        this.displaySelect.on(CompareList.EVENT_APPLY, (err, data) => {
+            this.emit(ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data, (err, data) => {
                 let message = this.applyDisplaySettingMessage;
                 message.style.visibility = "visible";
                 setTimeout(function () {
@@ -573,6 +634,16 @@ class ManagementDialog extends EventEmitter
             });
         });
         this.displaySelect.setData(displayPermissionList);
+    }
+
+    /**
+     *  Application Control設定の初期化
+     */
+    initApplicationControlGUI()
+    {
+        this.reloadAllDisplayButton.on('click', () => {
+            this.emit(ManagementDialog.EVENT_RELOAD_ALL_DISPLAY, null);
+        });
     }
 
     /**
@@ -598,9 +669,17 @@ class ManagementDialog extends EventEmitter
     initAuthorityGUI(contents) {
         // 閲覧・編集権限の設定のリスト
         let i;
+
+        // 編集可能コンテンツ
         this.editableSelect = new SelectList();
+        // 閲覧可能コンテンツ
         this.viewableSelect = new SelectList();
+        // 編集可能サイト
         this.displayEditableSelect = new SelectList();
+        // 表示許可サイト
+        this.viewableSiteSelect = new SelectList();
+
+
         let allAccessText = i18next.t("all");
         // グループの追加削除を許可のチェック
         this.deleteLabel.onclick = () => {
@@ -624,7 +703,31 @@ class ManagementDialog extends EventEmitter
             this.viewableSelect.deselectAll();
             this.editableSelect.deselectAll();
             this.displayEditableSelect.deselectAll();
+            this.viewableSiteSelect.deselectAll();
+
             if (user) {
+                if (user.type === "group")
+                {
+                    this.viewableSiteLabel.style.display = "inline-block"
+                    this.viewableSiteSelect.getDOM().style.display = "inline-block"
+                }
+                else
+                {
+                    this.viewableSiteLabel.style.display = "none"
+                    this.viewableSiteSelect.getDOM().style.display = "none"
+                }
+    
+                if (user.type === "display")
+                {
+                    this.editableDisplayLabel.style.display = "none"
+                    this.displayEditableSelect.getDOM().style.display = "none"
+                }
+                else
+                {
+                    this.editableDisplayLabel.style.display = "inline-block"
+                    this.displayEditableSelect.getDOM().style.display = "inline-block"
+                }
+    
                 for (let i = 0; i < this.userList.length; i = i + 1) {
                     if (this.userList[i].type !== "admin" && this.userList[i].type !== "api") {
                         let listContentName = this.userList[i].id;
@@ -641,6 +744,9 @@ class ManagementDialog extends EventEmitter
                     if (user.displayEditable && (user.displayEditable === "all" || user.displayEditable.indexOf(listContentName) >= 0)) {
                         this.displayEditableSelect.select(this.displayGroupList[i].name);
                     }
+                    if (user.viewableSite && (user.viewableSite === "all" || user.viewableSite.indexOf(listContentName) >= 0)) {
+                        this.viewableSiteSelect.select(this.displayGroupList[i].name);
+                    }
                 }
                 if (user.viewable && user.viewable === "all") {
                     this.viewableSelect.select(allAccessText);
@@ -650,6 +756,9 @@ class ManagementDialog extends EventEmitter
                 }
                 if (user.displayEditable && user.displayEditable === "all") {
                     this.displayEditableSelect.select(allAccessText);
+                }
+                if (user.viewableSite && user.viewableSite === "all") {
+                    this.viewableSiteSelect.select(allAccessText);
                 }
                 if (user.hasOwnProperty('group_manipulatable')) {
                     this.deleteCheckBox.check(user.group_manipulatable);
@@ -712,10 +821,30 @@ class ManagementDialog extends EventEmitter
                 }
             }
         });
-        this.authTargetFrame.innerHTML = "";
+        this.viewableSiteSelect.on('change', (err, text, isSelected) => {
+            if (text === allAccessText) {
+                if (isSelected) {
+                    this.viewableSiteSelect.selectAll();
+                }
+                else {
+                    this.viewableSiteSelect.deselectAll();
+                }
+            }
+            else {
+                // 全てが選択された状態で全て以外が選択解除された. 全てを選択解除する.
+                let viewableSite = this.viewableSiteSelect.getSelectedValues();
+                if (!isSelected && text !== allAccessText && viewableSite.indexOf(allAccessText) >= 0) {
+                    this.viewableSiteSelect.deselect(allAccessText);
+                }
+            }
+        });
+
+        this.authTargetFrame1.innerHTML = "";
+        this.authTargetFrame2.innerHTML = "";
         this.editableSelect.add(allAccessText, allAccessText);
         this.viewableSelect.add(allAccessText, allAccessText);
         this.displayEditableSelect.add(allAccessText, allAccessText);
+        this.viewableSiteSelect.add(allAccessText, allAccessText);
         for (i = 0; i < this.userList.length; i = i + 1) {
             if (this.userList[i].type !== "admin" &&
                 this.userList[i].type !== "display" &&
@@ -729,11 +858,13 @@ class ManagementDialog extends EventEmitter
         for (i = 0; i < this.displayGroupList.length; ++i) {
             if (this.displayGroupList[i].id !== Constants.DefaultGroup) {
                 this.displayEditableSelect.add(this.displayGroupList[i].name, this.displayGroupList[i].id);
+                this.viewableSiteSelect.add(this.displayGroupList[i].name, this.displayGroupList[i].id);
             }
         }
-        this.authTargetFrame.appendChild(this.editableSelect.getDOM());
-        this.authTargetFrame.appendChild(this.viewableSelect.getDOM());
-        this.authTargetFrame.appendChild(this.displayEditableSelect.getDOM());
+        this.authTargetFrame1.appendChild(this.editableSelect.getDOM());
+        this.authTargetFrame1.appendChild(this.viewableSelect.getDOM());
+        this.authTargetFrame2.appendChild(this.displayEditableSelect.getDOM());
+        this.authTargetFrame2.appendChild(this.viewableSiteSelect.getDOM());
         this.authApplyButton.on(Button.EVENT_CLICK, () => {
             let index = this.authSelect.getSelectedIndex();
             if (index >= 0 && this.authSelect.getOptions().length > index) {
@@ -741,6 +872,7 @@ class ManagementDialog extends EventEmitter
                 let editable = this.editableSelect.getSelectedValues();
                 let viewable = this.viewableSelect.getSelectedValues();
                 let displayEditable = this.displayEditableSelect.getSelectedValues();
+                let viewableSite = this.viewableSiteSelect.getSelectedValues();
                 let group_manipulatable = this.deleteCheckBox.getChecked();
                 if (editable.indexOf(allAccessText) >= 0) {
                     editable = "all";
@@ -751,7 +883,10 @@ class ManagementDialog extends EventEmitter
                 if (displayEditable.indexOf(allAccessText) >= 0) {
                     displayEditable = "all";
                 }
-                this.emit(ManagementDialog.EVENT_CHANGE_AUTHORITY, id, editable, viewable, displayEditable, group_manipulatable, () => {
+                if (viewableSite.indexOf(allAccessText) >= 0) {
+                    viewableSite = "all";
+                }
+                this.emit(ManagementDialog.EVENT_CHANGE_AUTHORITY, id, editable, viewable, displayEditable, viewableSite, group_manipulatable, () => {
                     let message = this.authMessage;
                     message.style.visibility = "visible";
                     setTimeout(function () {
@@ -841,7 +976,7 @@ class ManagementDialog extends EventEmitter
         this.adminAuthSelectPass.on(Select.EVENT_CHANGE, AuthSelectChangeFunc(this.adminAuthSelectPass, this.adminOldPassInput, this.adminNewPassInput));
         this.authSelectPass.emit(Select.EVENT_CHANGE);
         this.adminAuthSelectPass.emit(Select.EVENT_CHANGE);
-        
+
         let PasswordApplyFunc = (select, oldInput, newInput, message) => {
             return () => {
                 let id = select.getSelectedValue();
@@ -890,23 +1025,23 @@ class ManagementDialog extends EventEmitter
                     }
                     this.emit(ManagementDialog.EVENT_CHANGE_PASSWORD, id,
                         oldInput.getValue(), newInput.getValue(), (err, reply) => {
-                        if (err) {
-                            console.error(err, reply);
-                            InputDialog.showOKInput({
-                                name: i18next.t('input_valid_password'),
-                                opacity: 0.7,
-                                zIndex: 90000001,
-                                backgroundColor: "#888"
-                            }, function () {
+                            if (err) {
+                                console.error(err, reply);
+                                InputDialog.showOKInput({
+                                    name: i18next.t('input_valid_password'),
+                                    opacity: 0.7,
+                                    zIndex: 90000001,
+                                    backgroundColor: "#888"
+                                }, function () {
+                                    return;
+                                });
                                 return;
-                            });
-                            return;
-                        }
-                        message.style.visibility = "visible";
-                        setTimeout(function () {
-                            message.style.visibility = "hidden";
-                        }, 2000);
-                    });
+                            }
+                            message.style.visibility = "visible";
+                            setTimeout(function () {
+                                message.style.visibility = "hidden";
+                            }, 2000);
+                        });
                 }
             }
         };
@@ -941,7 +1076,9 @@ class ManagementDialog extends EventEmitter
         this.initPasswordGUI(contents);
         // 権限情報をGUIに反映.
 
-        this.initDisplayPermission(contents,displayPermissionList);
+        this.initDisplayPermission(contents, displayPermissionList);
+
+        this.initApplicationControlGUI();
 
         document.body.appendChild(this.dom);
     }
@@ -952,7 +1089,11 @@ class ManagementDialog extends EventEmitter
             this.background.close();
             this.background = null;
         }
-        document.body.removeChild(this.dom);
+        if (this.dom)
+        {
+            document.body.removeChild(this.dom);
+            this.dom = null;
+        }
     }
 
     isShow() {
@@ -990,5 +1131,8 @@ ManagementDialog.EVENT_CHANGE_HISTORY_NUM = "change_history_num";
 
 // 最大履歴保存数の適用
 ManagementDialog.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "change_display_permission_list";
+
+// 全Displayリロード
+ManagementDialog.EVENT_RELOAD_ALL_DISPLAY = "reload_all_display";
 
 export default ManagementDialog;

@@ -17,6 +17,7 @@ body {
 
 .license_wrap {
 	position : absolute;
+	top : 260px;
 	width : 100%;
 	padding-top : 50px;
 	text-align: center;
@@ -43,7 +44,7 @@ div {
 	position: absolute;
 	left: 0px;
 	top: 200px;
-	height: 230px;
+	height: 300px;
 	right: 0px;
 	background-color: #7e7e7e;
 }
@@ -95,6 +96,7 @@ div {
 }
 .controller:hover {
 	background-color: rgb(81, 191, 93);
+	cursor:pointer;
 }
 
 
@@ -113,4 +115,5 @@ div {
 }
 .display:hover {
 	background-color: rgb(72, 164, 255);
+	cursor:pointer;
 }

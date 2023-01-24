@@ -306,6 +306,24 @@ class ContentInputGUI
 	}
 
 	/**
+	 * WebGL URL入力
+	 */
+	inputWebGL() {
+		InputDialog.showTextInput({
+				name : i18next.t('add_url'),
+				initialName :  "http://localhost:8080/itowns/index.html",
+				okButtonName : "Send",
+			}, (value) => {
+				const time = this.store.getManagement().fetchMeasureTime();
+				this.action.inputWebGL({
+					url : value,
+					timestamp : time
+				});
+				//this.emit(GUI.EVENT_URLSENDBUTTON_CLICKED, null, value);
+			});
+	}
+
+	/**
 	 * テキスト入力
 	 */
 	onInputText(value, w, h) {
@@ -574,7 +592,7 @@ class ContentInputGUI
 				this.action.inputVideoStream({
 					contentData : stream,
 					metaData : {
-						group: gui.getCurrentGroupID(),
+						group: this.store.getGroupStore().getCurrentGroupID(),
 						posx: Vscreen.getWhole().x,
 						posy: Vscreen.getWhole().y,
 						visible: true,

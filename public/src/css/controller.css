@@ -940,3 +940,34 @@ p {
 .content_property_checkbox_label {
 	border: 1px solid #ccc !important;
 }
+
+.time {
+	position : absolute;
+	color : black;
+	height : 100px;
+	font-size : 1em;
+	background-color: white;
+	border : 1px solid gray;
+	padding : 5px;
+	box-sizing: border-box;
+    margin : 0px;
+}
+
+.copyright {
+	color : black;
+	font-size : 0.8em;
+	background-color: rgba(255, 255, 255, 0.5);
+	border : 1px solid gray;
+	padding : 3px;
+	box-sizing: border-box;
+	margin: unset;
+}
+.copyright_link:link {
+	color : black;
+}
+.copyright_link:visited {
+	color : black;
+}
+.copyright_link:hover {
+	color : lightgray;
+}

@@ -38,6 +38,8 @@ function getTagName(contentType) {
 		tagName = 'div';
 	} else if (contentType === "video") {
 		tagName = 'img';
+	} else if (contentType === 'webgl') {
+		tagName = 'img';
 	} else {
 		tagName = 'img';
 	}
@@ -231,6 +233,7 @@ class ContentListGUI extends EventEmitter
 				window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
 				window.PDFJS.cMapPacked = true;
 
+				// thumbaniの生成
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
 					pdf.getPage(1).then(function (page) {
 						let viewport = page.getViewport(1);
@@ -262,10 +265,13 @@ class ContentListGUI extends EventEmitter
 					mime = metaData.mime;
 					//console.log("mime:" + mime);
 				}
+				if (metaData.type === Constants.TypeWebGL) {
+					mime = "image/png"
+				}
 
 				divElem.style.height = "150px";
 				aspect = metaData.orgWidth / metaData.orgHeight;
-				let w = 150 * aspect;
+				let w = Math.min(150, 150 * aspect);
 				divElem.style.width = w + "px";
 
 				if (metaData.type === Constants.TypeTileImage) {

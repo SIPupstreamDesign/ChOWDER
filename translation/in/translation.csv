@@ -9,6 +9,7 @@ change_group,グループ変更,Change Group
 change_displaygroup,サイト変更,Change Site
 select_all_in_a_group,グループ内全て選択,Select All in a Group
 select_all_in_a_site,サイト内全て選択,Select All in a Site
+always_on_top,常に最前面に表示,Always on top
 move_to_front,最前面に移動,Move to front
 move_to_back,最背面に移動,Move to back
 add_content,コンテンツ追加,Add Content
@@ -41,7 +42,8 @@ setting_target,設定対象,Setting Target
 editable_content,編集可能コンテンツ,Editable Content
 viewable_content,閲覧可能コンテンツ,Viewable Content
 allow_editting_group,グループの編集を許可,Allow Edit of Groups
-editable_display,編集可能サイト,Editable Site
+editable_site,編集可能サイト,Editable Site
+viewable_site,表示許可サイト,Display Permitted Site
 setting_password,パスワードの設定,Password Settings
 old_password,変更前のパスワード,Old Password
 new_password,新規パスワード,New Password
@@ -116,3 +118,17 @@ display_setting_changed,ディスプレイ許可設定を変更しました,Display permission wa
 global_settings,全体設定,Global Settings
 per_db_settings,DBごとの設定,Local Settings in DB
 admin_setting_password,管理パスワードの設定,Administrator's Password Settings
+add_layer,レイヤーの追加,Add Layer
+layer_list,レイヤーリスト,Layer List
+base_content,ベースコンテンツ,Base Content
+layer_property,レイヤープロパティ,Layer Property
+selection_initial,選択してください,Please Select
+timestamp,時刻,Timestamp
+longitude,Longitude (経度),Longitude
+latitude,Latitude (緯度),Latitude
+physical_value_1,物理量1 (棒グラフの長さ),PhysicalValue1 (length)
+physical_value_2,物理量2 (棒グラフの色),PhysicalValue2 (color)
+physical_expression_1,物理量1の数式を入力してください,Please input expression for PhysicalValue1
+physical_expression_2,物理量2の数式を入力してください,Please input expression for PhysicalValue2
+reload_all_display,Reload All Displays,Reload All Displays
+application_control,Application Control,Application Control

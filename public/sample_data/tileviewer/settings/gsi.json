@@ -1,0 +1,23 @@
+{
+    "backgroundImage": "https://cyberjapandata.gsi.go.jp/xyz/std/0/0/0.png",
+    "maps": [{
+        "url": "https://cyberjapandata.gsi.go.jp/xyz/std/%z/%x/%y.png",
+        "zoom" : {
+            "min" : 0,
+            "max" : 18
+        },
+        "attribution":  {
+            "name" : "出典：国土地理院",
+            "url" : "https://maps.gsi.go.jp/development/ichiran.html"
+        }
+    }],
+    "geodeticSystem": "standard",
+    "initialPosition" : {
+        "center": {
+            "degrees": {
+                "lon": 139.69167,
+                "lat": 35.68944
+            }
+        }
+    }
+}
