@@ -115,6 +115,13 @@ function MenuSetting(management) {
                         }
                     },
                 }, {
+                    Tileimage : {
+                        func : () => {
+                            this.initContextPos();
+                            this.contentInputGUI.inputTileimageFile();
+                        }
+                    },
+                }, {
                     URL : {
                         func : () => {
                             this.initContextPos();

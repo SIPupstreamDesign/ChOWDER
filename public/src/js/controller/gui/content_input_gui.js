@@ -10,7 +10,7 @@ import VscreenUtil from '../../common/vscreen_util'
 import Validator from '../../common/validator'
 import Constants from '../../common/constants'
 
-	
+
 function offsetX(eve) {
 	return eve.offsetX || eve.pageX - eve.target.getBoundingClientRect().left;
 }
@@ -42,6 +42,9 @@ class ContentInputGUI
 	initContentsInput() {
 		this.contentsInput.on(ContentsInput.EVENT_IMAGEFILEINPUT_CHANGE, (err, evt, x, y) => {
 			this.onInputImageFile(evt, x, y);
+		});
+		this.contentsInput.on(ContentsInput.EVENT_TILEIMAGEFILEINPUT_CHANGE, (err, evt, x, y) => {
+			this.onInputTileimageFile(evt, x, y);
 		});
 		this.contentsInput.on(ContentsInput.EVENT_TEXTFILEINPUT_CHANGE, (err, evt, x, y) => {
 			this.onInputTextFile(evt, x, y);
@@ -112,6 +115,42 @@ class ContentInputGUI
 	}
 
 	/**
+	 * タイルイメージ用画像ファイルFileOpenハンドラ
+	 * @param {Object} evt FileOpenイベント
+	 */
+	onInputTileimageFile(evt, x, y) {
+		const time = new Date().toISOString();
+		const files = evt.target.files;
+		const fileReader = new FileReader();
+
+		const metaData = {
+			filename : files[0].name
+		};
+
+		fileReader.addEventListener("load",(event)=>{
+			const data = event.target.result;
+			if (data && data instanceof ArrayBuffer) {
+				const buffer = new Uint8Array(data).buffer;
+				this.action.uploadTileimageFile({
+					contentData : buffer,
+					metaData : metaData,
+					timestamp : time
+				});
+			}else{
+				console.log("[onInputTileimageFile] cannot load tileimage")
+			}
+		});
+
+		for (let i = 0, file = files[i]; file; i = i + 1, file = files[i]) {
+			if (file.type.match('image.*')) {
+				fileReader.readAsArrayBuffer(file);
+			}else{
+				console.log("[onInputTileimageFile] maybe, its not image file")
+			}
+		}
+	}
+
+	/**
 	 * テキストファイルFileOpenハンドラ
 	 * @param {Object} evt FileOpenイベント
 	 */
@@ -141,7 +180,7 @@ class ContentInputGUI
 				let width = elem.offsetWidth / Vscreen.getWholeScale();
 				let height = elem.offsetHeight / Vscreen.getWholeScale();
 				this.previewArea.removeChild(elem);
-				
+
 				let metaData = {
 					posx: posx,
 					posy: posy,
@@ -165,12 +204,12 @@ class ContentInputGUI
 			}
 		}
 	}
-	
+
 	/**
 	 * 動画ファイルFileOpenハンドラ
-	 * @param {*} evt 
-	 * @param {*} x 
-	 * @param {*} y 
+	 * @param {*} evt
+	 * @param {*} x
+	 * @param {*} y
 	 */
 	onInputVideoFile(evt, x, y) {
 		const time = this.store.getManagement().fetchMeasureTime();
@@ -188,7 +227,7 @@ class ContentInputGUI
 		fileReader.onload = ((name) => {
 			return (e) => {
 				let data = e.target.result;
-				
+
 				if (data && data instanceof ArrayBuffer) {
 					let blob = new Blob([data], { type: "video/mp4" });
 					let metaData = {
@@ -255,7 +294,7 @@ class ContentInputGUI
 
 	/**
 	 * 画像差し替え
-	 * @param {*} evt 
+	 * @param {*} evt
 	 */
 	onUpdateImage(evt) {
 		// ユーザー入力画像をファイルから読み込んだ後、actionを発火
@@ -470,21 +509,28 @@ class ContentInputGUI
     setUpdateImageID(id) {
 		this.contentsInput.setUpdateImageID(id);
     }
-    
+
 	/**
 	 * 更新画像ファイルID取得
 	 */
     getUpdateImageID() {
         return this.contentsInput.getUpdateImageID();
 	}
-	
+
 	/**
 	 * 画像ファイル入力
 	 */
-    inputImageFile() {
+	inputImageFile() {
         this.contentsInput.inputImageFile();
 	}
-	
+
+	/**
+	 * タイルイメージ用画像ファイル入力
+	 */
+	inputTileimageFile() {
+        this.contentsInput.inputTileimageFile();
+	}
+
 	/**
 	 * 更新画像ファイル入力
 	 */
@@ -512,11 +558,11 @@ class ContentInputGUI
     inputVideoFile() {
         this.contentsInput.inputVideoFile();
 	}
-	
+
 	/**
 	 * テキスト入力
 	 */
-	inputText() {	
+	inputText() {
 		InputDialog.showMultiTextInput({
 				name : i18next.t('add_text'),
 				okButtonName : "Send"
@@ -571,8 +617,8 @@ class ContentInputGUI
 							this.action.inputVideoStream({
 								contentData : stream,
 								metaData : {
-									posx: Vscreen.getWhole().x, 
-									posy: Vscreen.getWhole().y, 
+									posx: Vscreen.getWhole().x,
+									posy: Vscreen.getWhole().y,
 									visible: true,
 									subtype : "screen",
 									creator:this.store.controllerData.userName
@@ -638,7 +684,7 @@ class ContentInputGUI
 	updateLayout() {
 		let metaData;
 		let isLayoutSelected = false;
-	
+
 		this.store.getState().for_each_selected_id((i, id) => {
 			if (this.store.hasMetadata(id)) {
 				metaData = this.store.getMetaData(id);
@@ -667,7 +713,7 @@ class ContentInputGUI
     setUpdateImageID(id) {
         this.contentsInput.setUpdateImageID(id);
     }
-    
+
 	getDOM() {
 		return this.dom;
 	}
