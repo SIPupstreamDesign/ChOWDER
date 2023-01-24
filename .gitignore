@@ -6,3 +6,5 @@
 # redis dumpfiles
 *.rdb
 package-lock.json
+*/*.bundle.js
+*/*.bundle.js.*
