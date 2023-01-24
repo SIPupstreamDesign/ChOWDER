@@ -5,3 +5,4 @@
 
 # redis dumpfiles
 *.rdb
+package-lock.json
