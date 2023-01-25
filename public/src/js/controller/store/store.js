@@ -229,12 +229,16 @@ class Store extends EventEmitter {
      */
     _changeTab(data) {
         if (data.isBefore) {
-            this.emit(Store.EVENT_TAB_CHANGED_PRE, null, data.data);
+            this.emit(Store.EVENT_TAB_CHANGED_PRE, null, data);
         } else {
-            Connector.send(Command.GetLoginUserList, {}, (err, reply) => {
-                console.log("🐔",reply);
-            });
-            this.emit(Store.EVENT_TAB_CHANGED_POST, null, data.data);
+            if(data.data.tabName == "Users"){
+                Connector.send(Command.GetLoginUserList, {}, (err, reply) => {                    
+                    this.emit(Store.EVENT_TAB_CHANGED_POST,{"tabName":data.data.tabName, "reply":reply});
+                    // console.log("🐔",reply);
+                });
+            } else {
+                this.emit(Store.EVENT_TAB_CHANGED_POST, data.data);
+            }
         }
     }
 

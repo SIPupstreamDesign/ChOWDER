@@ -369,8 +369,11 @@ class Controller {
             this.unselectAll(true);
         });
 
-        this.store.on(Store.EVENT_TAB_CHANGED_POST, () => {
+        this.store.on(Store.EVENT_TAB_CHANGED_POST, (data) => {
             // グループを選択しなおす
+            if(data.tabName == "Users"){
+                this.gui.groupGUI.usersBox.drawList(data.reply);
+            }
             let currentGroup = this.gui.getCurrentGroupID();
             this.gui.selectGroup(currentGroup);
         });
