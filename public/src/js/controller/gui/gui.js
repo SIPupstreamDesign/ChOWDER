@@ -691,6 +691,7 @@ class GUI extends EventEmitter {
             contentPreviewArea.style.opacity = 1.0;
             displayPreviewArea.style.zIndex = 0;
             contentPreviewArea.style.zIndex = 10;
+            this.displayMenu.show(false);
             this.contentMenu.show(true);
             this.layoutMenu.show(false);
         } else if (tabName === "Layout") {
@@ -701,6 +702,14 @@ class GUI extends EventEmitter {
             this.displayMenu.show(false);
             this.contentMenu.show(false);
             this.layoutMenu.show(true);
+        } else if (tabName === "Users") {
+            displayPreviewArea.style.opacity = 0.3;
+            contentPreviewArea.style.opacity = 1.0;
+            displayPreviewArea.style.zIndex = 0;
+            contentPreviewArea.style.zIndex = 10;
+            this.displayMenu.show(false);
+            this.contentMenu.show(false);
+            this.layoutMenu.show(false);
         }
     }
 
