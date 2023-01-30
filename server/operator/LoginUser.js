@@ -6,15 +6,16 @@
     constructor(){
         /**
          * ログインユーザのリスト
-         * @type {[{controllerID:string, socketID:string}]}
+         * @type {[{controllerID:string, socketID:string, groupID:string}]}
          */
         this.userList = [];
     }
 
-    put(controllerID, socketID){
+    put(controllerID, socketID, groupID){
         this.userList.push({
-            controllerID:controllerID,
-            socketID:socketID
+            controllerID : controllerID,
+            socketID : socketID,
+            groupID : groupID
         });
     }
 
@@ -26,8 +27,18 @@
         }
     }
 
-    getUserList(){
+    getList(){
         return this.userList;
+    }
+
+    getGroupIDFromSocketID(socketID){
+        const user = this.userList.find((user)=>{
+            if(user.socketID === socketID){
+                return true;
+            }
+            return false;
+        });
+        return user.groupID;
     }
 }
 module.exports = LoginUser;
