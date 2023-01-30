@@ -217,17 +217,24 @@
             this.textClient.exists(this.groupListPrefix, (err, doesExists) => {
                 if (!err && doesExists !== 0) {
                     this.textClient.get(this.groupListPrefix, (err, reply) => {
-                        let data = reply;
                         if (!reply) {
-                            data = { "grouplist": [], "displaygrouplist": [] };
+                            const data = { "grouplist": [], "displaygrouplist": [] };
                             endCallback(err, data);
                             return;
                         }
-                        try {
-                            data = JSON.parse(data);
-                        } catch (e) {
+
+                        const data = (()=>{
+                            try {
+                                return JSON.parse(reply);
+                            } catch (e) {
+                                return null;
+                            }
+                        })();
+
+                        if(data === null){
                             return false;
                         }
+
                         endCallback(err, data);
                     });
                 } else {
@@ -1291,6 +1298,7 @@
                             authority.viewableSite = "all";
                             authority.group_manipulatable = true;
                             authority.is_admin = true;
+
                             this.socketidToAccessAuthority[socketid] = authority;
                         }
                     }
@@ -1335,6 +1343,7 @@
             if (!this.socketidToUserID.hasOwnProperty(socketid)) {
                 this.socketidToUserID[socketid] = id;
             }
+
             if (!this.socketidToAccessAuthority.hasOwnProperty(socketid)) {
                 this.socketidToAccessAuthority[socketid] = {};
                 // socketidごとの権限情報キャッシュを全て更新する
@@ -1376,7 +1385,7 @@
                         const isValid = this.validatePassword(adminUserData[id].password, password);
                         if (isValid) {
                             this.saveLoginInfo(socketid, id, adminUserData);
-                            this.loginUser.put(controllerid, socketid);
+                            this.loginUser.put(controllerid, socketid, id);
                             // 成功したらsocketidを返す
                             endCallback(null, getLoginResult(controllerData));
                         } else {
@@ -1397,14 +1406,14 @@
 
                                     if (isValid) {
                                         this.saveLoginInfo(socketid, id, null, setting);
-                                        this.loginUser.put(controllerid, socketid);
+                                        this.loginUser.put(controllerid, socketid, id);
                                         endCallback(null, getLoginResult(controllerData));
                                     } else {
                                         endCallback("failed to login");
                                     }
                                 } else {
                                     // グループユーザー設定に登録されていないグループ
-                                    this.loginUser.put(controllerid, socketid);
+                                    this.loginUser.put(controllerid, socketid, id);
                                     endCallback(null, getLoginResult(controllerData));
                                 }
                             } else {
@@ -1422,7 +1431,7 @@
         }
 
         getLoginUserList(){
-            return this.loginUser.getUserList();
+            return this.loginUser.getList();
         }
 
         /**
