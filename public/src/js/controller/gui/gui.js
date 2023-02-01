@@ -1219,12 +1219,12 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     /**
      * 時刻を表示.
      * elemに時刻用エレメントをappendChild
-     * @param {*} elem 
-     * @param {*} metaData 
+     * @param {*} elem
+     * @param {*} metaData
      */
      showTime(elem, metaData, dataTime) {
         if (elem && metaData.hasOwnProperty('display_time')) {
@@ -1275,8 +1275,8 @@ class GUI extends EventEmitter {
     /**
      * Copyrightを表示.
      * elemにCopyright用エレメントをappendChild
-     * @param {*} elem 
-     * @param {*} metaData 
+     * @param {*} elem
+     * @param {*} metaData
      */
     showCopyrights(elem, metaData) {
         if (elem &&

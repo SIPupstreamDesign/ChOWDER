@@ -11,8 +11,11 @@ import Input from "./input";
 
 class LoginMenu extends EventEmitter
 {
-    constructor(title) {
+    constructor(title, type) {
         super();
+
+        this.type = type;
+        this.TYPE_CONTROLLER = "Controller";
 
         this.dom = document.createElement('div');
         this.dom.style.width = "100%";
@@ -68,7 +71,7 @@ class LoginMenu extends EventEmitter
             useLabelWrap.appendChild(this.loginUserSelect.getDOM());
         }
 
-        {
+        if(this.type === this.TYPE_CONTROLLER){
             const controlleridLabel = document.createElement('p');
             controlleridLabel.className = "loginmenu_label";
             controlleridLabel.setAttribute('data-key', 'User Name');
@@ -91,8 +94,7 @@ class LoginMenu extends EventEmitter
             useLabelWrap.appendChild(this.passInput.getDOM());
             this.passInput.getDOM().onkeypress = (evt) => {
                 if (evt.which == 13) {
-                    location.hash = this.getControllerid();
-                    this.emit(LoginMenu.EVENT_LOGIN, null);
+                    this._runLogin();
                 }
             };
 
@@ -103,8 +105,7 @@ class LoginMenu extends EventEmitter
             useLabelWrap.appendChild(loginButton.getDOM());
 
             loginButton.on(Button.EVENT_CLICK, (err) => {
-                location.hash = this.getControllerid();
-                this.emit(LoginMenu.EVENT_LOGIN, err);
+                this._runLogin(err);
             });
         }
 
@@ -114,6 +115,16 @@ class LoginMenu extends EventEmitter
             this.invalidLogin.setAttribute('data-key', 'invalid_login');
             loginFrame.appendChild(this.invalidLogin);
         }
+    }
+
+    _runLogin(err){
+        if(this.type === this.TYPE_CONTROLLER){
+            const inputControllerID = this.getControllerid();
+            if(inputControllerID){
+                location.hash = inputControllerID;
+            }
+        }
+        this.emit(LoginMenu.EVENT_LOGIN, err);
     }
 
     getUserSelect() {
