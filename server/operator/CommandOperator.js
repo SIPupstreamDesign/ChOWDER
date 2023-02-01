@@ -1085,7 +1085,7 @@
                                 loginkey: socketid,
                                 authority: this.executer.socketidToAccessAuthority[socketid]
                             }
-                            this.executer.loginUser.put(data.controllerID, socketid);
+                            this.executer.loginUser.put(data.controllerID, socketid, data.id);
 
                             this.executer.getControllerData(data.controllerID, ((result) => {
                                 return (err, controllerData) => {
@@ -1109,7 +1109,7 @@
                 execLogin(data, socketid, (err, loginResult) => {
                     if (err || loginResult.authority === null) {
                         /* ElectronDisplayとしてパスワードでログインに失敗したので、普通のdisplayとして処理する */
-                        let logindata = data;
+                        const logindata = data;
                         logindata.id = "Display";
                         this.login(logindata, socketid, endCallback, suspendCallback);
                         return;
