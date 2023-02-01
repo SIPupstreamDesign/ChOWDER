@@ -689,7 +689,9 @@
 
         changeUUIDPrefix(socketid, dbname, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     this.textClient.hget(this.frontPrefix + 'dblist', dbname, (err, reply) => {
                         if (!err) {
                             this.getGlobalSetting((err, setting) => {
@@ -813,7 +815,9 @@
          */
         newDB(socketid, name, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     if (name.length > 0) {
                         this.textClient.hexists(this.frontPrefix + 'dblist', name, (err, doesExists) => {
                             if (!err && doesExists !== 1) {
@@ -852,7 +856,9 @@
          */
         renameDB(socketid, name, newName, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     if (name.length > 0 && newName.length > 0) {
                         if (name === "default" || newName === "default") {
                             endCallback("cannot change default db name");
@@ -982,7 +988,9 @@
          */
         changeGlobalSetting(socketid, json, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     this.textClient.hmset(this.globalSettingPrefix, json, (err) => {
                         if (err) {
                             console.error(err);
