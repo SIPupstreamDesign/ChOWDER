@@ -299,6 +299,11 @@ p {
 	padding-left : 3px;
 }
 
+.controller_id {
+	margin: 10px;
+	padding-left : 3px;
+}
+
 .group_name {
 	margin: 10px;
 	padding-left : 3px;
@@ -819,6 +824,13 @@ p {
 .alignment_area .btn {
 	margin-left : 8px;
 	width : 64px;
+	height: 30px;
+	background-color: #AAA;
+}	
+
+.alignment_area .btn2 {
+	margin-left : 8px;
+	width : 196px;
 	height: 30px;
 	background-color: #AAA;
 }	

@@ -371,11 +371,9 @@ class Controller {
 
         this.store.on(Store.EVENT_TAB_CHANGED_POST, (data) => {
             // グループを選択しなおす
-            if(data.tabName == "Users"){
-                this.gui.groupGUI.usersBox.drawList(data.reply);
-            }
-            let currentGroup = this.gui.getCurrentGroupID();
-            this.gui.selectGroup(currentGroup);
+
+            //let currentGroup = this.gui.getCurrentGroupID();
+            //this.gui.selectGroup(currentGroup);
         });
 
         // 選択解除された
@@ -925,7 +923,7 @@ class Controller {
                     if (Validator.isFreeMode()) {
                         this.store.operation.updateMetadata(metaData);
                     } else if (Validator.isDisplayMode()) {
-                        if (draggingIDList.length === 1) {
+                        if (draggingIDList.length === 1 && this.state.selectedIDList.length === 1) {
                             let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
                             let screen = Vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
                             if (screen) {
@@ -940,7 +938,7 @@ class Controller {
                         }
                     } else {
                         // grid mode
-                        if (draggingIDList.length === 1) {
+                        if (draggingIDList.length === 1 && this.state.selectedIDList.length === 1) {
                             let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
                             let splitWhole = Vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
                             if (splitWhole) {

@@ -94,7 +94,7 @@ class ContentInputGUI
 							height : img.naturalHeight,
 							visible: true,
 							user_data_text: JSON.stringify({ text: name }),
-							creator:this.store.controllerData.userName
+							creator:this.store.loginStore.getControllerID()
 						}
 						VscreenUtil.transPosInv(metaData);
 						this.action.inputImageFile({
@@ -188,7 +188,7 @@ class ContentInputGUI
 					height : height,
 					visible: true,
 					user_data_text : JSON.stringify({ text: text }),
-					creator:this.store.controllerData.userName
+					creator:this.store.loginStore.getControllerID()
 				}
 				VscreenUtil.transPosInv(metaData);
 				this.action.inputText({

@@ -180,6 +180,7 @@ class Vscreen {
 				w = whole_subscreens[i];
 				if (w.x <= px && px < (w.x + w.w)) {
 					if (w.y <= py && py < (w.y + w.h)) {
+						w.splits = {x:split_x,y:split_y };
 						return w;
 					}
 				}

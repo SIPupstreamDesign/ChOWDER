@@ -95,6 +95,15 @@
 	display : none;
 }
 
+.content_creator{
+	background: #0b8b2b;
+	position : absolute;
+	text-align: center;
+	right :0px;
+	bottom : 0px;
+	width : 100%;
+}
+
 #layout_tab {
 	position : absolute;
 	text-align: center;
