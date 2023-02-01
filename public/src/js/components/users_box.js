@@ -137,13 +137,40 @@ class UsersBox extends EventEmitter {
         this.item_area.innerHTML = "";
         if(this.item_area){
             for(let i =0; i < result.length;  i++){
+
+                if(!result[i].controllerID){continue;}
+
                 let tgtspan = document.createElement('div');
                 tgtspan.className = "users_tab_item";
                 tgtspan.innerText = result[i].controllerID;
+
+                tgtspan.onclick = () => {
+                    let i, tabElem;
+                    this.tabs.emit("tab_changed_pre", null);
+                    for (i = 0; i < this.tabs.tabIDs.length; i = i + 1) {
+                        document.getElementById(this.tabs.tabIDs[i] + "_box").style.display = "none";
+                        tabElem = document.getElementById(this.tabs.tabIDs[i]);
+                        tabElem.className = tabElem.className.split(" active").join("");
+                    }
+                    tabElem = document.getElementById("content_tab");
+                    tabElem.className = tabElem.className + " active";
+                    document.getElementById("content_tab" + "_box").style.display = "block";
+                    for (i = 0; i < this.tabs.setting.length; i = i + 1) {
+                        if(this.tabs.setting[i].name == "Content"){
+                            this.tabs.setting[i].onclick();
+                            break;
+                        }
+                    }
+                    this.tabs.emit("tab_changed_post",null, {"tabName":"Content", "creator": result[i].controllerID});
+                };
+
                 this.item_area.appendChild(tgtspan);
             }
         }
     }
+
+
+
 }
 
 // 検索ボックスに入力されたときのイベント

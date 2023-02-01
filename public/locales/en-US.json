@@ -33,6 +33,7 @@
  "align_left": "Left",
  "align_center": "Center",
  "align_right": "Right",
+ "align_grid": "Align Grid",
  "login": "Login",
  "invalid_login": "Invalid Login. Controller or Password isn't correct.",
  "restore": "Restore",

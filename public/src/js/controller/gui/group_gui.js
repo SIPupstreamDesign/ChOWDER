@@ -100,7 +100,7 @@ class GroupGUI
 				}],
 				colors : ["rgb(54,187,68)"]
 			}, GroupBox.TYPE_CONTENT);
-		this.initUsersBoxEvents(this.usersBox);
+		this.initUsersBoxEvents(this.usersBox, this.tabs);
 
         // Searchテキストが入力された
         this.store.on(Store.EVENT_SEARCH_INPUT_CHANGED, (err, text, groups) => {
@@ -256,7 +256,8 @@ class GroupGUI
 	/**
 	 * userのタブに対するイベントを設定.
 	 */
-	initUsersBoxEvents(usersBox) {
+	initUsersBoxEvents(usersBox, _tabs) {
+        usersBox.tabs = _tabs;
 		usersBox.on(UsersBox.EVENT_INPUT_CHANGED, (err, value, groups) => {
             this.action.changeUserSerchInput({
                 text :  value,
@@ -283,9 +284,9 @@ class GroupGUI
         this.initGroupBoxEvents(this.layoutBox);
 
         //if(userSetting != undefined){
-            document.getElementById('users_tab_box').innerHTML = "";
-            this.usersBox = new UsersBox(this.store.getManagement().getAuthorityObject(), document.getElementById('users_tab_box'), userSetting, GroupBox.TYPE_CONTENT);
-            this.initGroupBoxEvents(this.usersBox);
+            //document.getElementById('users_tab_box').innerHTML = "";
+            //this.usersBox = new UsersBox(this.store.getManagement().getAuthorityObject(), document.getElementById('users_tab_box'), userSetting, GroupBox.TYPE_CONTENT);
+            //this.initGroupBoxEvents(this.usersBox);
         //}
 
         // DisplayBoxの中にNoticeBoxを突っ込む

@@ -328,10 +328,7 @@ class ContentListGUI extends EventEmitter {
 		// add creator name
 		if (metaData.creator != "" && metaData.creator != undefined) {
 			const creatorDiv = document.createElement('div');
-			creatorDiv.style.position = "absolute";
-			creatorDiv.style.right = "0px";
-			creatorDiv.style.bottom = "0px";
-			creatorDiv.style.width = "80%";
+			creatorDiv.className = "content_creator";
 			creatorDiv.innerHTML = metaData.creator;
 			divElem.appendChild(creatorDiv);
 		}

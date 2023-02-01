@@ -250,12 +250,31 @@ class GUI extends EventEmitter {
         }
 
         this.state.setSelectedIDList([]);
-        // 以前選択していたものを再選択する.
-        if (id) {
-            this.action.selectContent({
-                id: id,
-                isListViewArea: false
-            });
+        if(err.tabName == "Users"){
+            this.groupGUI.usersBox.drawList(err.reply);
+        } else if (err.tabName == "Content" && err.creator) {
+            // creatorのMetadataを選択する            
+            this.action.unselectContent({ isUpdateMetaInfo: false });
+            
+            let keys = Object.keys(this.store.getMetaDataDict());
+            for(let i =0; i < keys.length;i++){
+                if(this.store.metaDataDict[keys[i]].creator){
+                    if(this.store.metaDataDict[keys[i]].creator == err.creator){
+                        this.action.selectContent({
+                            id: keys[i],
+                            isListViewArea: false
+                        });
+                    }
+                }
+            }
+        } else {
+            // 以前選択していたものを再選択する.
+            if (id) {
+                this.action.selectContent({
+                    id: id,
+                    isListViewArea: false
+                });
+            }
         }
         this.state.setDraggingIDList([]);
     }
@@ -766,7 +785,7 @@ class GUI extends EventEmitter {
                 className: Constants.TabIDDisplay,
                 color: groupColor,
                 selected: displaySelectedGroup === groupID
-                    //checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
+                //checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
             };
             displaySetting.tabs.push(displayGroupTab);
         }
@@ -1226,7 +1245,7 @@ class GUI extends EventEmitter {
      * @param {*} elem
      * @param {*} metaData
      */
-     showTime(elem, metaData, dataTime) {
+    showTime(elem, metaData, dataTime) {
         if (elem && metaData.hasOwnProperty('display_time')) {
             let timeElem = document.getElementById("time:" + metaData.id);
             let time = "Time not received";
@@ -1242,8 +1261,8 @@ class GUI extends EventEmitter {
             }
             if (timeElem) {
                 timeElem.innerHTML = time;
-                timeElem.style.right ="0px";
-                timeElem.style.top ="0px";
+                timeElem.style.right = "0px";
+                timeElem.style.top = "0px";
                 timeElem.style.zIndex = elem.style.zIndex;
                 timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
             } else {

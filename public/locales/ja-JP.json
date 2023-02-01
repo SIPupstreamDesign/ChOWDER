@@ -33,6 +33,7 @@
  "align_left": "左寄せ",
  "align_center": "中央寄せ",
  "align_right": "右寄せ",
+ "align_grid": "グリッドに合わせる",
  "login": "ログイン",
  "invalid_login": "コントローラまたはパスワードが正しくありません",
  "restore": "復元",
