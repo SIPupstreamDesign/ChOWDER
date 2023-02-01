@@ -12,6 +12,11 @@
     }
 
     put(controllerID, socketID, groupID){
+        for(let i = 0; i < this.userList.length ; i++){
+            if(socketID === this.userList[i].socketID){
+                return;
+            }
+        }
         this.userList.push({
             controllerID : controllerID,
             socketID : socketID,
