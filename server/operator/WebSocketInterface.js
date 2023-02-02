@@ -67,6 +67,10 @@
                 this.commandOperator.getLoginUserList(data, resultCallback);
             });
 
+            ws_connector.on(Command.GetSelfStatus, (data, resultCallback, socketid) => {
+                this.commandOperator.getSelfStatus(socketid, data, resultCallback);
+            });
+
             ws_connector.on(Command.AddMetaData, (data, resultCallback) => {
                 this.commandOperator.addMetaData(data, resultCallback);
             });

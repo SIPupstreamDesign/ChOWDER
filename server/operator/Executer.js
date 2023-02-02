@@ -1289,17 +1289,13 @@
          * socketidごとの権限情報キャッシュを全て更新する
          */
         updateAuthority(adminSetting, groupSetting) {
-            let i,
-                socketid,
-                authority;
-
-            for (socketid in this.socketidToAccessAuthority) {
-                authority = this.socketidToAccessAuthority[socketid];
+            for (let socketid in this.socketidToAccessAuthority) {
+                const authority = this.socketidToAccessAuthority[socketid];
                 if (this.socketidToUserID.hasOwnProperty(socketid)) {
-                    let id = this.socketidToUserID[socketid];
+                    const role_id = this.socketidToUserID[socketid];
                     if (adminSetting) {
-                        if (adminSetting.hasOwnProperty(id)) {
-                            authority.id = id;
+                        if (adminSetting.hasOwnProperty(role_id)) {
+                            authority.id = role_id;
                             authority.viewable = "all";
                             authority.editable = "all";
                             authority.displayEditable = [];
@@ -1311,12 +1307,12 @@
                         }
                     }
                     if (groupSetting) {
-                        if (groupSetting.hasOwnProperty(id)) {
-                            authority.id = id;
+                        if (groupSetting.hasOwnProperty(role_id)) {
+                            authority.id = role_id;
                             for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (groupSetting[id].hasOwnProperty(key)) {
-                                    authority[key] = groupSetting[id][key];
+                                const key = userSettingKeys[k];
+                                if (groupSetting[role_id].hasOwnProperty(key)) {
+                                    authority[key] = groupSetting[role_id][key];
                                 }
                             }
                             this.socketidToAccessAuthority[socketid] = authority;
@@ -1324,7 +1320,7 @@
                     }
                 }
             }
-            console.log("-----updateAuthority------")
+            console.log("-----updateAuthority------");
             //console.log(this.socketidToAccessAuthority)
         }
 
@@ -1440,6 +1436,10 @@
 
         getLoginUserList(){
             return this.loginUser.getList();
+        }
+
+        getUserStatus(socketid){
+            return this.loginUser.getAllStatusFromSocketID(socketid);
         }
 
         /**

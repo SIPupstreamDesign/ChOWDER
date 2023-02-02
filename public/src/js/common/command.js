@@ -24,6 +24,7 @@ const Command = {
 	GetGroupList : "GetGroupList",
 	UploadTileimage : "UploadTileimage",
 	GetLoginUserList : "GetLoginUserList",
+	GetSelfStatus : "GetSelfStatus",
 
 	// using both server and client
 	Update : "Update",

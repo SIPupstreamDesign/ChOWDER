@@ -1079,13 +1079,13 @@
                         if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey)) {
                             // 対応関係を保存
                             this.executer.socketidToLoginKey[socketid] = data.loginkey;
+                            this.executer.loginUser.put(data.controllerID, socketid, data.id);
                             socketid = data.loginkey;
                             const result = {
                                 id: this.executer.socketidToUserID[socketid],
                                 loginkey: socketid,
                                 authority: this.executer.socketidToAccessAuthority[socketid]
                             }
-                            this.executer.loginUser.put(data.controllerID, socketid, data.id);
 
                             this.executer.getControllerData(data.controllerID, ((result) => {
                                 return (err, controllerData) => {
@@ -1258,6 +1258,11 @@
         getLoginUserList(data, endCallback){
             const loginUserList = this.executer.getLoginUserList();
             endCallback(null, loginUserList);
+        }
+
+        getSelfStatus(socketid, data, endCallback){
+            const userStatus = this.executer.getUserStatus(socketid);
+            endCallback(null, userStatus);
         }
 
         /**

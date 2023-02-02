@@ -20,10 +20,11 @@ class ManagementStore {
 		this.store = store;
 
 		this.authority = null;
+		this.userStatus = null;
 		this.maxMesageSize = null;
 
 		this.globalSetting = null;
-		
+
 		// 全体設定更新時
 		this.store.on(Store.EVENT_GLOBAL_SETTING_RELOADED, (err, data) => {
 			if (data && data.hasOwnProperty('max_history_num')) {
@@ -60,7 +61,7 @@ class ManagementStore {
 		this.connector.send(Command.NewDB, data,  () => {
 		});
 	}
-	
+
 	_renameDB(data) {
 		this.connector.send(Command.RenameDB, data, () => {});
 	}
@@ -115,7 +116,7 @@ class ManagementStore {
 
 	/**
 	 * 権限変更
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_changeAuthority(data) {
 		let callback = Store.extractCallback(data);
@@ -213,6 +214,14 @@ class ManagementStore {
 	isAdmin() {
 		return this.getAuthorityObject().isAdmin();
 	}
+
+	isModerator(){
+		if(this.userStatus.groupID === "Moderator"){
+			return true;
+		}
+		return false;
+	}
+
 	isViewable(group) {
 		return this.getAuthorityObject().isViewable(group) && this.isViewableSite(group);
 	}

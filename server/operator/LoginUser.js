@@ -45,5 +45,15 @@
         });
         return user.groupID;
     }
+
+    getAllStatusFromSocketID(socketID){
+        const user = this.userList.find((user)=>{
+            if(user.socketID === socketID){
+                return true;
+            }
+            return false;
+        });
+        return user;
+    }
 }
 module.exports = LoginUser;
