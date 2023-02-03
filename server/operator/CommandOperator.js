@@ -1079,7 +1079,7 @@
                         if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey)) {
                             // 対応関係を保存
                             this.executer.socketidToLoginKey[socketid] = data.loginkey;
-                            this.executer.loginUser.put(data.controllerID, socketid, data.id);
+                            this.executer.loginUser.put(data.controllerID, socketid, this.executer.socketidToUserID[data.loginkey]);
                             socketid = data.loginkey;
                             const result = {
                                 id: this.executer.socketidToUserID[socketid],
