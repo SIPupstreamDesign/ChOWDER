@@ -216,10 +216,18 @@ class ManagementStore {
 	}
 
 	isModerator(){
-		if(this.userStatus.groupID === "Moderator"){
-			return true;
+		console.log("[isModerator]🐔",this.userStatus);
+		if(this.userStatus){
+			if(this.userStatus.groupID === "Moderator"){
+				console.log("[isModerator]🐔",true);
+				return true;
+			}else{
+				console.log("[isModerator]🐔",false);
+				return false;
+			}
+		}else{
+			return null;
 		}
-		return false;
 	}
 
 	isViewable(group) {

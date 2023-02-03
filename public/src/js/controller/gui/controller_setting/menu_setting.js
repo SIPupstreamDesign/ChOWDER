@@ -58,7 +58,9 @@ function MenuSetting(management) {
         }]
     }];
 
-    if (management.getAuthorityObject().isAdmin()) {
+    console.log("[management_store]🐔pre showManagementGUI");
+    if (management.getAuthorityObject().isAdmin() || management.isModerator()) {
+        console.log("[management_store]🐔 admin or moder");
         settingMenu.push( {
             Management : {
                 func : () => { this.showManagementGUI(true); }
