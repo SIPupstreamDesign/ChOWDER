@@ -55,7 +55,7 @@ class GUI extends EventEmitter {
         this.state.setContextPos(0, 0);
     }
 
-    init(controllerData) {
+    async init(controllerData) {
         this.management = this.store.getManagement();
         this.controllerData = controllerData;
 
@@ -68,7 +68,7 @@ class GUI extends EventEmitter {
         this.contentPropertyGUI = new ContentPropertyGUI(this.store, this.action, this.getContentPreviewArea());
 
         // 上部メニュー
-        this.menu = new Menu("controller", MenuSetting.bind(this)(this.management));
+        this.menu = new Menu("controller", await MenuSetting.bind(this)(this.management));
         this.menu.setIDValue(this.store.getLoginStore().getControllerID());
         document.getElementById('layout').insertBefore(this.menu.getDOM(), document.getElementById('layout').childNodes[0]);
 
@@ -253,9 +253,9 @@ class GUI extends EventEmitter {
         if(err.tabName == "Users"){
             this.groupGUI.usersBox.drawList(err.reply);
         } else if (err.tabName == "Content" && err.creator) {
-            // creatorのMetadataを選択する            
+            // creatorのMetadataを選択する
             this.action.unselectContent({ isUpdateMetaInfo: false });
-            
+
             let keys = Object.keys(this.store.getMetaDataDict());
             for(let i =0; i < keys.length;i++){
                 if(this.store.metaDataDict[keys[i]].creator){
