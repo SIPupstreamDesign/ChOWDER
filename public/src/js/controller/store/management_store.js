@@ -216,18 +216,20 @@ class ManagementStore {
 	}
 
 	isModerator(){
-		console.log("[isModerator]🐔",this.userStatus);
-		if(this.userStatus){
-			if(this.userStatus.groupID === "Moderator"){
-				console.log("[isModerator]🐔",true);
-				return true;
-			}else{
-				console.log("[isModerator]🐔",false);
-				return false;
-			}
-		}else{
-			return null;
-		}
+		return new Promise((resolve,reject)=>{
+			this.connector.send(Command.GetSelfStatus, {}, (err, reply) => {
+				this.userStatus = reply;
+				if(this.userStatus){
+					if(this.userStatus.groupID === "Moderator"){
+						resolve(true);
+					}else{
+						resolve(false);
+					}
+				}else{
+					reject("[isModerator] Command.GetSelfStatus failure");
+				}
+			});
+		});
 	}
 
 	isViewable(group) {

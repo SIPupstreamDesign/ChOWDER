@@ -1083,7 +1083,6 @@ class ManagementDialog extends EventEmitter {
 
         this.initApplicationControlGUI();
 
-        console.log("🐔management_dialog.show");
         if(isAdmin === true){
             this.adminSetting.style.display = "block";
         }else{

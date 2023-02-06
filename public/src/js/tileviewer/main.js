@@ -5,17 +5,16 @@
  import Action from './action';
  import GUI from './gui';
  import Store from './store';
- 
+
  const action = new Action();
  const store = new Store(action);
  const gui = new GUI(store, action);
- 
- window.addEventListener('load', () => {
+
+ window.addEventListener('load', async() => {
      console.log("[main]:load")
      action.connect();
-     gui.init();
+     await gui.init();
  });
  window.onunload = () => {
      store.release();
  };
- 

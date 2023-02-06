@@ -76,10 +76,6 @@ class Store extends EventEmitter {
             this.managementStore.globalSetting = null;
             //this.managementStore.userList = userList;
             this.managementStore.authority = data.authority;
-
-            Connector.send(Command.GetSelfStatus, {}, (err, reply) => {
-                this.managementStore.userStatus = reply;
-            });
         });
         this.on(Store.EVENT_LOGIN_FAILED, () => {
             // management新規作成
@@ -235,10 +231,8 @@ class Store extends EventEmitter {
         if (data.isBefore) {
             this.emit(Store.EVENT_TAB_CHANGED_PRE, null, data);
         } else {
-            console.log("[changetab]🐔isModerator",this.managementStore.isModerator());
             if(data.data.tabName == "Users"){
                 Connector.send(Command.GetLoginUserList, {}, (err, reply) => {
-                    console.log("[changetab]🐔GetLoginUserList",reply);
                     this.emit(Store.EVENT_TAB_CHANGED_POST,{"tabName":data.data.tabName, "reply":reply});
                 });
             } else {
