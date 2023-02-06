@@ -124,7 +124,8 @@ class ContentInputGUI
 		const fileReader = new FileReader();
 
 		const metaData = {
-			filename : files[0].name
+			filename : files[0].name,
+			creator : this.store.loginStore.getControllerID()
 		};
 
 		fileReader.addEventListener("load",(event)=>{

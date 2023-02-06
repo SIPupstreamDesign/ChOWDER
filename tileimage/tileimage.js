@@ -93,6 +93,9 @@ if (!fs.existsSync(imagePath)) {
 }
 console.log('Image file: ' + imagePath);
 
+let creator = args.targets[ 1 ];
+if(!creator) { creator = "TileImage"; }
+
 // == パフォーマンス計算用 ==============================================
 let enableMeasureTime = false;
 const OUTPUT_DIR = path.join(__dirname, "./log");
@@ -206,6 +209,7 @@ wsWrapper.connect(config.url).then(function() {
 			type: 'tileimage',
 			id: config.contentid,
 			content_id: config.contentid,
+			creator: creator,
 			group: groupId,
 			posx: 0,
 			posy: 0,

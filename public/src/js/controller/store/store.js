@@ -278,7 +278,7 @@ class Store extends EventEmitter {
             let id = data.id;
             if (id !== this.getLoginStore().getControllerID()) {
                 location.hash = fixedEncodeURIComponent(id);
-                location.reload(true);
+                // location.reload(true);
             }
         }
     }
@@ -405,6 +405,7 @@ class Store extends EventEmitter {
         const byteLength = data.contentData.byteLength;
         const hashid = await StringUtil.digestMessage(new Date().toString());
         const filename = data.metaData.filename;
+        const creator = data.metaData.creator;
 
         const file_ext = filename.split('.').pop();
 
@@ -414,6 +415,7 @@ class Store extends EventEmitter {
             const params = {
                 file_ext: file_ext,
                 id : hashid,
+                creator : creator,
                 byteLength : byteLength,
                 segment_max : segment_max,
                 segment_index : i,

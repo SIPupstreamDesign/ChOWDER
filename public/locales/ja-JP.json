@@ -25,6 +25,7 @@
  "change_name": "名前変更",
  "change_color": "色変更",
  "user": "コントローラ",
+ "username": "表示名",
  "password": "パスワード",
  "meta_info": "メタ情報",
  "movie_setting": "動画設定",

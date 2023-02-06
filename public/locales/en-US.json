@@ -25,6 +25,7 @@
  "change_name": "Rename",
  "change_color": "Change Color",
  "user": "Controller",
+ "username": "Controller Name",
  "password": "Password",
  "meta_info": "Meta Info",
  "movie_setting": "Movie Settings",

@@ -74,7 +74,7 @@ class LoginMenu extends EventEmitter
         if(this.type === this.TYPE_CONTROLLER){
             const controlleridLabel = document.createElement('p');
             controlleridLabel.className = "loginmenu_label";
-            controlleridLabel.setAttribute('data-key', 'User Name');
+            controlleridLabel.setAttribute('data-key', 'username');
             useLabelWrap.appendChild(controlleridLabel);
 
             this.controlleridInput = new Input();

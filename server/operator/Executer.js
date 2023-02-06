@@ -2346,7 +2346,7 @@
          */
         addHistoricalContent(socketid, metaData, data, endCallback) {
             let contentData = data;
-            console.log("addHistoricalContent:" + metaData.id + ":" + metaData.content_id);
+            console.log("addHistoricalContent:" + metaData.id + "  :" + metaData.creator);
 
             const mime = this.getMime(metaData, contentData);
             if (mime) {
@@ -3391,12 +3391,12 @@
             });
         }
 
-        runTileimageShell(filepath){
+        runTileimageShell(filepath, metaParams){
             return new Promise((resolve,reject)=>{
                 const batCmd = (()=>{
                     console.log("server os:",process.platform);
                     if(process.platform==='win32'){
-                        return `cd ../bin/ && tileimage.bat ${filepath}`;
+                        return `cd ../bin/ && tileimage.bat ${filepath}  ${metaParams.creator}`;
                     }else if(process.platform==='linux'){
                         return `sh ../bin/tileimage.sh ${filepath}`;
                     }else if(process.platform==='darwin'){
@@ -3415,7 +3415,7 @@
                         resolve();
                     });
                 }else{
-                    const command = child_process.spawn("sh", [`../bin/tileimage.sh`, `${filepath}`]);
+                    const command = child_process.spawn("sh", [`../bin/tileimage.sh`, `${filepath}`, `${metaParams.creator}`]);
                     command.stdout.on("data",(stdout)=>{
                         console.log(stdout.toString());
                     });

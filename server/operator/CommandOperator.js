@@ -1353,7 +1353,10 @@
             /* ここからバイナリが完成したあとの処理 */
             const filepath = await this.executer.writeTileimageFile(metaParams, wholeBinary);
 
-            await this.executer.runTileimageShell(filepath);
+            console.log("creator : " + metaParams.creator);
+            console.log("id :  : " + metaParams.id);
+
+            await this.executer.runTileimageShell(filepath, metaParams);
 
             await this.executer.removeTileimageFile(filepath);
 

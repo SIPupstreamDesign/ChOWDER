@@ -145,19 +145,19 @@ class UsersBox extends EventEmitter {
                 tgtspan.innerText = result[i].controllerID;
 
                 tgtspan.onclick = () => {
-                    let i, tabElem;
+                    let m, tabElem;
                     this.tabs.emit("tab_changed_pre", null);
-                    for (i = 0; i < this.tabs.tabIDs.length; i = i + 1) {
-                        document.getElementById(this.tabs.tabIDs[i] + "_box").style.display = "none";
-                        tabElem = document.getElementById(this.tabs.tabIDs[i]);
+                    for (m = 0; m < this.tabs.tabIDs.length; m = m + 1) {
+                        document.getElementById(this.tabs.tabIDs[m] + "_box").style.display = "none";
+                        tabElem = document.getElementById(this.tabs.tabIDs[m]);
                         tabElem.className = tabElem.className.split(" active").join("");
                     }
                     tabElem = document.getElementById("content_tab");
                     tabElem.className = tabElem.className + " active";
                     document.getElementById("content_tab" + "_box").style.display = "block";
-                    for (i = 0; i < this.tabs.setting.length; i = i + 1) {
-                        if(this.tabs.setting[i].name == "Content"){
-                            this.tabs.setting[i].onclick();
+                    for (m = 0; m < this.tabs.setting.length; m = m + 1) {
+                        if(this.tabs.setting[m].name == "Content"){
+                            this.tabs.setting[m].onclick();
                             break;
                         }
                     }
