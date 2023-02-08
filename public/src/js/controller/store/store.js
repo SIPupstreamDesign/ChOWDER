@@ -272,6 +272,8 @@ class Store extends EventEmitter {
         if (data.id) {
             let id = data.id;
             if (id !== this.getLoginStore().getControllerID()) {
+                Connector.send(Command.UpdateLoginUserControllerID, { controllerID: id }, (err, reply) => {
+                });
                 location.hash = fixedEncodeURIComponent(id);
                 // location.reload(true);
             }

@@ -71,6 +71,10 @@
                 this.commandOperator.getSelfStatus(socketid, data, resultCallback);
             });
 
+            ws_connector.on(Command.UpdateLoginUserControllerID, (data, resultCallback, socketid) => {
+                this.commandOperator.updateLoginUserControllerID(socketid, data, resultCallback);
+            });
+
             ws_connector.on(Command.AddMetaData, (data, resultCallback) => {
                 this.commandOperator.addMetaData(data, resultCallback);
             });

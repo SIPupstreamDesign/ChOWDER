@@ -27,6 +27,7 @@
 		UploadTileimage : "UploadTileimage",
 		GetLoginUserList : "GetLoginUserList",
 		GetSelfStatus : "GetSelfStatus",
+		UpdateLoginUserControllerID : "UpdateLoginUserControllerID",
 
 		// using both server and client
 		Update : "Update",

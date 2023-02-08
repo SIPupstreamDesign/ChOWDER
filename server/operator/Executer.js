@@ -1434,14 +1434,6 @@
             this.loginUser.delete(socketid);
         }
 
-        getLoginUserList(){
-            return this.loginUser.getList();
-        }
-
-        getUserStatus(socketid){
-            return this.loginUser.getAllStatusFromSocketID(socketid);
-        }
-
         /**
          * 指定されたタイプ、idのメタデータ設定
          * @method setMetaData

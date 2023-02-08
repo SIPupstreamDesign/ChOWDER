@@ -1256,13 +1256,18 @@
         }
 
         getLoginUserList(data, endCallback){
-            const loginUserList = this.executer.getLoginUserList();
+            const loginUserList = this.executer.loginUser.getList();
             endCallback(null, loginUserList);
         }
 
         getSelfStatus(socketid, data, endCallback){
-            const userStatus = this.executer.getUserStatus(socketid);
+            const userStatus = this.executer.loginUser.getAllStatusFromSocketID(socketid);
             endCallback(null, userStatus);
+        }
+
+        updateLoginUserControllerID(socketid, data, endCallback){
+            const success = this.executer.loginUser.updateControllerID(socketid, data.controllerID);
+            endCallback(null, success);
         }
 
         /**
