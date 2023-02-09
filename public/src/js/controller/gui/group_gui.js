@@ -256,7 +256,7 @@ class GroupGUI
 	/**
 	 * userのタブに対するイベントを設定.
 	 */
-	initUsersBoxEvents(usersBox, _tabs) {
+	initUsersBoxEvents(usersBox, _tabs) {7
         usersBox.tabs = _tabs;
 		usersBox.on(UsersBox.EVENT_INPUT_CHANGED, (err, value, groups) => {
             this.action.changeUserSerchInput({
@@ -295,6 +295,10 @@ class GroupGUI
         displayBox.appendChild(this.noticeBox.getDOM());
         this.initNoticeEvents(this.noticeBox);
 
+        const groupID = this.store.managementStore.userStatus.groupID;
+        if(groupID != "Moderator" && !this.store.managementStore.getAuthorityObject().isAdmin()){
+            document.getElementById('users_tab').style.display = "none";
+        }
     }
 
 

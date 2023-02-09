@@ -58,7 +58,7 @@ async function MenuSetting(management) {
         }]
     }];
 
-    if (management.getAuthorityObject().isAdmin() || await management.isModerator()) {
+    if (await management.isModerator() || management.getAuthorityObject().isAdmin()) {
         settingMenu.push( {
             Management : {
                 func : () => { this.showManagementGUI(true); }

@@ -395,7 +395,7 @@ class ContentPropertyGUI extends EventEmitter {
 	showAlignmentArea(isShow) {
 		let align_area = document.getElementById("alignment_area");
 		if (align_area) {
-			if (isShow && this.authority.isAdmin()) {
+			if (isShow && (this.authority.isAdmin() || this.store.managementStore.userStatus.groupID == "Moderator" )) {
 				align_area.style.display = "block";
 			} else {
 				align_area.style.display = "none";
