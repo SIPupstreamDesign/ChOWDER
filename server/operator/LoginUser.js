@@ -56,7 +56,7 @@
             }
             return false;
         });
-        if(user !== undefined){
+        if(user === undefined){
             return null;
         }
         return user;
