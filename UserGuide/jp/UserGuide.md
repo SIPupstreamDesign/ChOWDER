@@ -1361,7 +1361,7 @@ CLIアプリケーション経由で、巨大な画像データをChOWDERサー�
 
 -   `id` は `APIUser` で固定となります。
 -   `password` には、 `APIUser` のパスワードを指定します。パスワードは、[管理画面](#管理画面) のパスワードの設定より変更が可能です。
--   `url` には、ChOWDER WebSocketサーバのURLを指定します。
+-   `url` には、ChOWDER WebSocketサーバのURLを指定します。ChOWDERのサーバーアドレスに変更等が発生した場合はこちらの変更も行ってください。
 -   `xsplit` ・ `ysplit` にはそれぞれ、横・縦方向の画像分割数を指定できます。
 -   `contentid` ・ `contentgrp` にはそれぞれ、コンテンツID・コンテンツグループを指定します。
 -   `reload_latest`には、`--metadata`オプションを使用して登録した最新画像を, Displayで表示し続けるかどうかを`true`または`false`で指定します。
