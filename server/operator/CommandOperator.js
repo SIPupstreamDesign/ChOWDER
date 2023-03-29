@@ -913,14 +913,13 @@
          */
         getDBList(socketid, resultCallback) {
             this.executer.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (!err && (isAdmin || this.executer.loginUser.getGroupIDFromSocketID(socketid) === "Moderator")) {
                     this.executer.textClient.hgetall(this.executer.frontPrefix + 'dblist', resultCallback);
                 } else {
                     resultCallback("access denied");
                 }
             });
         }
-
         /**
          * 各種設定の変更
          * @method ChangeGlobalSetting
