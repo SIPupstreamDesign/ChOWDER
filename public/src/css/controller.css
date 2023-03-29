@@ -299,6 +299,11 @@ p {
 	padding-left : 3px;
 }
 
+.controller_id {
+	margin: 10px;
+	padding-left : 3px;
+}
+
 .group_name {
 	margin: 10px;
 	padding-left : 3px;
@@ -804,6 +809,31 @@ p {
 .history_sync_on {
 	border : 2px  solid white !important;
 }
+
+.align_info {
+	margin-bottom: 10px;
+	padding-top : 3px;
+	padding-left : 3px;
+}
+
+.alignment_area {
+	height : 400px;
+	padding: 10px;
+}
+
+.alignment_area .btn {
+	margin-left : 8px;
+	width : 64px;
+	height: 30px;
+	background-color: #AAA;
+}	
+
+.alignment_area .btn2 {
+	margin-left : 8px;
+	width : 196px;
+	height: 30px;
+	background-color: #AAA;
+}	
 
 .property_text_label {
     margin: 5px;

@@ -141,8 +141,15 @@ class Action extends EventEmitter {
     }
 
     /**
+     * コンテンツの可視不可視を変更
+     * @param {*} data metaData
+     */
+     changeContentVisibleMulti(data) {
+        this.emit(Action.EVENT_CHANGE_CONTENT_VISIBLE2, null, data);
+    }
+    /**
      * コンテンツの時刻表示の可視不可視を変更
-     * @param {*} data 
+     * @param {*} data
      */
     changeContentDisplayTime(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_TIME, null, data);
@@ -681,6 +688,17 @@ class Action extends EventEmitter {
     }
 
     /**
+     * 検索文字列の変更
+     * {
+     *   text : text
+     *   groups : groups
+     * }
+     */
+    changeUserSerchInput(data) {
+        this.emit(Action.EVENT_CHANGE_USERSEARCH_INPUT, null, data);
+    }
+
+    /**
      * コントローラIDを変更
      * @param {*} data
      * {
@@ -870,7 +888,7 @@ class Action extends EventEmitter {
 
     /**
      * 配信許可設定の変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    permissionList : ディスプレイ許可リスト,
      *    callback : 終了時コールバック(option)
@@ -895,6 +913,10 @@ class Action extends EventEmitter {
     updateQgisMetadata(metaData) {
         this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
     }
+
+    uploadTileimageFile(data){
+        this.emit(Action.EVENT_UPLOAD_TILEIMAGEFILE, null, data);
+    }
 };
 
 Action.EVENT_INIT = "init";
@@ -909,6 +931,7 @@ Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_CHANGE_CONTENT_INDEX = "changeContentIndex";
 Action.EVENT_CHANGE_CONTENT_VISIBLE = "changeContentVisible";
+Action.EVENT_CHANGE_CONTENT_VISIBLE2 = "changeContentVisibleMulti";
 Action.EVENT_CHANGE_DISPLAY_TIME = "changeContentDisplayTime";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_CHANGE_CONTENT_METAINFO = "changeContentMetaInfo";
@@ -958,6 +981,7 @@ Action.EVENT_CHANGE_GROUP_COLOR = "changeGroupColor";
 Action.EVENT_CHANGE_TAB = "changeTab";
 Action.EVENT_CHANGE_SNAP_TYPE = "changeSnapType";
 Action.EVENT_CHANGE_SEARCH_INPUT = "changeSearchInput";
+Action.EVENT_CHANGE_USERSEARCH_INPUT = "changeUserSearchInput";
 Action.EVENT_CHANGE_CONTROLLER_ID = "changeControllerID";
 Action.EVENT_UPDATE_REMOTE_CURSOR = "updateRemoteCursor";
 Action.EVENT_REWIND_ALL_VIDEO = "rewindAllVideo";
@@ -982,5 +1006,6 @@ Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_UPLOAD_TILEIMAGEFILE = "uploadTileimageFile";
 
 export default Action;

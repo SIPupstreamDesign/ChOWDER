@@ -10,7 +10,7 @@ import ContentUtil from '../../content_util';
  * 上部メニュー設定
  * GUI(gui.js)にバインドして使用する
  */
-function MenuSetting(management) {
+async function MenuSetting(management) {
     let settingMenu = [{
         VirtualDisplay : {
             func : () => {
@@ -58,7 +58,7 @@ function MenuSetting(management) {
         }]
     }];
 
-    if (management.getAuthorityObject().isAdmin()) {
+    if (await management.isModerator() || management.getAuthorityObject().isAdmin()) {
         settingMenu.push( {
             Management : {
                 func : () => { this.showManagementGUI(true); }
@@ -112,6 +112,13 @@ function MenuSetting(management) {
                         func : () => {
                             this.initContextPos();
                             this.contentInputGUI.inputPDFFile();
+                        }
+                    },
+                }, {
+                    Tileimage : {
+                        func : () => {
+                            this.initContextPos();
+                            this.contentInputGUI.inputTileimageFile();
                         }
                     },
                 }, {

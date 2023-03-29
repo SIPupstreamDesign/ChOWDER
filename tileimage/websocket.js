@@ -3,7 +3,7 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
- 
+
 /* global Promise */
 'use strict';
 
@@ -46,11 +46,11 @@ WebSocketWrapper.prototype.connect = function(url) {
 	return new Promise(function(resolve) {
 		this.client.on('connect', function(connection) {
 			this.connection = connection;
-			
+
 			connection.on('error', function(error) {
 				throw new Error('Connection error: ' + error.toString());
 			});
-			
+
 			connection.on('close', function () {
 				console.log('Connection has been closed');
 			});

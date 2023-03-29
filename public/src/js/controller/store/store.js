@@ -19,6 +19,7 @@ import ControllerData from '../controller_data'
 import Operation from './operation'
 import Translation from '../../common/translation'
 import Command from '../../common/command'
+import StringUtil from '../../common/string_util'
 import Receiver from './reciever.js';
 
 "use strict";
@@ -228,9 +229,15 @@ class Store extends EventEmitter {
      */
     _changeTab(data) {
         if (data.isBefore) {
-            this.emit(Store.EVENT_TAB_CHANGED_PRE, null, data.data);
+            this.emit(Store.EVENT_TAB_CHANGED_PRE, null, data);
         } else {
-            this.emit(Store.EVENT_TAB_CHANGED_POST, null, data.data);
+            if(data.data.tabName == "Users"){
+                Connector.send(Command.GetLoginUserList, {}, (err, reply) => {
+                    this.emit(Store.EVENT_TAB_CHANGED_POST,{"tabName":data.data.tabName, "reply":reply});
+                });
+            } else {
+                this.emit(Store.EVENT_TAB_CHANGED_POST, data.data);
+            }
         }
     }
 
@@ -251,14 +258,24 @@ class Store extends EventEmitter {
     }
 
     /**
+     * 検索文字列変更
+     * @param {*} data
+     */
+    _changeUserSearchInput(data) {
+        this.emit(Store.EVENT_USERSEARCH_INPUT_CHANGED, null, data.text, data.groups);
+    }
+
+    /**
      * コントローラIDの変更
      */
     _changeControllerID(data) {
         if (data.id) {
             let id = data.id;
             if (id !== this.getLoginStore().getControllerID()) {
+                Connector.send(Command.UpdateLoginUserControllerID, { controllerID: id }, (err, reply) => {
+                });
                 location.hash = fixedEncodeURIComponent(id);
-                location.reload(true);
+                // location.reload(true);
             }
         }
     }
@@ -374,6 +391,36 @@ class Store extends EventEmitter {
         }
         if (iframe.contentWindow.Q3D.application._wireframeMode !== displayProperty.wireframe) {
             iframe.contentWindow.Q3D.application.setWireframeMode(displayProperty.wireframe);
+        }
+    }
+
+    async _uploadTileimageFile(data){
+        const CONFIG_WS_MAX_MESSAGE_SIZE = this.managementStore.getMaxMessageSize();
+        const binSize = CONFIG_WS_MAX_MESSAGE_SIZE - 1000; // meta message の分減らす
+
+        const segment_max = Math.ceil(data.contentData.byteLength / binSize);
+        const byteLength = data.contentData.byteLength;
+        const hashid = await StringUtil.digestMessage(new Date().toString());
+        const filename = data.metaData.filename;
+        const creator = data.metaData.creator;
+
+        const file_ext = filename.split('.').pop();
+
+        for(let i=0;i*binSize < data.contentData.byteLength;i++){
+            const segment = data.contentData.slice(i*binSize, (i+1)*binSize);
+
+            const params = {
+                file_ext: file_ext,
+                id : hashid,
+                creator : creator,
+                byteLength : byteLength,
+                segment_max : segment_max,
+                segment_index : i,
+                type : "binary"
+            };
+            Connector.sendBinary(Command.UploadTileimage, params, segment, (err, reply) => {
+                console.log("[_uploadTileimageFile]send done");
+            });
         }
     }
 
@@ -618,6 +665,7 @@ Store.EVENT_CONNECT_FAILED = "connect_failed";
 Store.EVENT_SNAP_TYPE_CHANGED = "snap_type_changed";
 Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
 Store.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
+Store.EVENT_USERSEARCH_INPUT_CHANGED = "usersearch_input_changed";
 Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";
 
 Store.EVENT_DISPLAY_PREMISSION_LIST_RELOADED = "display_permission_list_reloaded";

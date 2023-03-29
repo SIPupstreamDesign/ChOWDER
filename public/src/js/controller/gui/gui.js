@@ -55,7 +55,7 @@ class GUI extends EventEmitter {
         this.state.setContextPos(0, 0);
     }
 
-    init(controllerData) {
+    async init(controllerData) {
         this.management = this.store.getManagement();
         this.controllerData = controllerData;
 
@@ -68,7 +68,7 @@ class GUI extends EventEmitter {
         this.contentPropertyGUI = new ContentPropertyGUI(this.store, this.action, this.getContentPreviewArea());
 
         // 上部メニュー
-        this.menu = new Menu("controller", MenuSetting.bind(this)(this.management));
+        this.menu = new Menu("controller", await MenuSetting.bind(this)(this.management));
         this.menu.setIDValue(this.store.getLoginStore().getControllerID());
         document.getElementById('layout').insertBefore(this.menu.getDOM(), document.getElementById('layout').childNodes[0]);
 
@@ -250,12 +250,31 @@ class GUI extends EventEmitter {
         }
 
         this.state.setSelectedIDList([]);
-        // 以前選択していたものを再選択する.
-        if (id) {
-            this.action.selectContent({
-                id: id,
-                isListViewArea: false
-            });
+        if(err.tabName == "Users"){
+            this.groupGUI.usersBox.drawList(err.reply);
+        } else if (err.tabName == "Content" && err.creator) {
+            // creatorのMetadataを選択する
+            this.action.unselectContent({ isUpdateMetaInfo: false });
+
+            let keys = Object.keys(this.store.getMetaDataDict());
+            for(let i =0; i < keys.length;i++){
+                if(this.store.metaDataDict[keys[i]].creator){
+                    if(this.store.metaDataDict[keys[i]].creator == err.creator){
+                        this.action.selectContent({
+                            id: keys[i],
+                            isListViewArea: false
+                        });
+                    }
+                }
+            }
+        } else {
+            // 以前選択していたものを再選択する.
+            if (id) {
+                this.action.selectContent({
+                    id: id,
+                    isListViewArea: false
+                });
+            }
         }
         this.state.setDraggingIDList([]);
     }
@@ -691,6 +710,7 @@ class GUI extends EventEmitter {
             contentPreviewArea.style.opacity = 1.0;
             displayPreviewArea.style.zIndex = 0;
             contentPreviewArea.style.zIndex = 10;
+            this.displayMenu.show(false);
             this.contentMenu.show(true);
             this.layoutMenu.show(false);
         } else if (tabName === "Layout") {
@@ -701,6 +721,14 @@ class GUI extends EventEmitter {
             this.displayMenu.show(false);
             this.contentMenu.show(false);
             this.layoutMenu.show(true);
+        } else if (tabName === "Users") {
+            displayPreviewArea.style.opacity = 0.3;
+            contentPreviewArea.style.opacity = 1.0;
+            displayPreviewArea.style.zIndex = 0;
+            contentPreviewArea.style.zIndex = 10;
+            this.displayMenu.show(false);
+            this.contentMenu.show(false);
+            this.layoutMenu.show(false);
         }
     }
 
@@ -716,6 +744,8 @@ class GUI extends EventEmitter {
         let displaySetting = { tabs: [] };
         let searchSetting = { groups: [], colors: [] };
         let layoutSetting = { tabs: [] };
+        let usersSetting = { tabs: [] };
+
         for (let i = 0; i < groupList.length; i = i + 1) {
             let groupName = groupList[i].name;
             let groupColor = groupList[i].color;
@@ -755,12 +785,12 @@ class GUI extends EventEmitter {
                 className: Constants.TabIDDisplay,
                 color: groupColor,
                 selected: displaySelectedGroup === groupID
-                    //checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
+                //checked : groupCheckDict.hasOwnProperty(groupID) ? groupCheckDict[groupID] : false
             };
             displaySetting.tabs.push(displayGroupTab);
         }
 
-        this.groupGUI.update(contentSetting, displaySetting, searchSetting, layoutSetting);
+        this.groupGUI.update(contentSetting, displaySetting, searchSetting, layoutSetting, usersSetting);
 
         /*
         // コンテキストメニューを刷新
@@ -1208,14 +1238,14 @@ class GUI extends EventEmitter {
             }
         }
     }
-    
+
     /**
      * 時刻を表示.
      * elemに時刻用エレメントをappendChild
-     * @param {*} elem 
-     * @param {*} metaData 
+     * @param {*} elem
+     * @param {*} metaData
      */
-     showTime(elem, metaData, dataTime) {
+    showTime(elem, metaData, dataTime) {
         if (elem && metaData.hasOwnProperty('display_time')) {
             let timeElem = document.getElementById("time:" + metaData.id);
             let time = "Time not received";
@@ -1231,8 +1261,8 @@ class GUI extends EventEmitter {
             }
             if (timeElem) {
                 timeElem.innerHTML = time;
-                timeElem.style.right ="0px";
-                timeElem.style.top ="0px";
+                timeElem.style.right = "0px";
+                timeElem.style.top = "0px";
                 timeElem.style.zIndex = elem.style.zIndex;
                 timeElem.style.display = String(metaData.display_time) === "true" ? "inline" : "none";
             } else {
@@ -1264,8 +1294,8 @@ class GUI extends EventEmitter {
     /**
      * Copyrightを表示.
      * elemにCopyright用エレメントをappendChild
-     * @param {*} elem 
-     * @param {*} metaData 
+     * @param {*} elem
+     * @param {*} metaData
      */
     showCopyrights(elem, metaData) {
         if (elem &&

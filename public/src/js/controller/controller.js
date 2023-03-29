@@ -106,14 +106,18 @@ class Controller {
      * GUI/Dispacher/controller初期化
      * @method init
      */
-    init(data) {
+    async init(data) {
+        // data.controllerDataに表示ユーザー名を追加
+        if(data.controllerData != undefined){
+            data.controllerData.userName = data.loginUserName;
+        }
         this.getControllerData().set(data.controllerData);
         let controllerData = this.getControllerData();
 
         let displayScale = controllerData.getDisplayScale();
         Vscreen.setWholeScale(displayScale, true);
 
-        this.gui.init(controllerData);
+        await this.gui.init(controllerData);
         // マウスイベントの登録
         this.gui.on('mousemove', this.onMouseMove);
         this.gui.on('mouseup', this.onMouseUp);
@@ -180,10 +184,10 @@ class Controller {
         });
 
         // ログイン成功
-        this.store.on(Store.EVENT_LOGIN_SUCCESS, (err, data) => {
+        this.store.on(Store.EVENT_LOGIN_SUCCESS, async(err, data) => {
             Validator.init(this.store, this.gui);
 
-            this.init(data);
+            await this.init(data);
         });
 
         // websocket接続が確立された
@@ -365,10 +369,11 @@ class Controller {
             this.unselectAll(true);
         });
 
-        this.store.on(Store.EVENT_TAB_CHANGED_POST, () => {
+        this.store.on(Store.EVENT_TAB_CHANGED_POST, (data) => {
             // グループを選択しなおす
-            let currentGroup = this.gui.getCurrentGroupID();
-            this.gui.selectGroup(currentGroup);
+
+            //let currentGroup = this.gui.getCurrentGroupID();
+            //this.gui.selectGroup(currentGroup);
         });
 
         // 選択解除された
@@ -918,7 +923,7 @@ class Controller {
                     if (Validator.isFreeMode()) {
                         this.store.operation.updateMetadata(metaData);
                     } else if (Validator.isDisplayMode()) {
-                        if (draggingIDList.length === 1) {
+                        if (draggingIDList.length === 1 && this.state.selectedIDList.length === 1) {
                             let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
                             let screen = Vscreen.getScreenByPos(orgPos.x, orgPos.y, draggingID);
                             if (screen) {
@@ -933,7 +938,7 @@ class Controller {
                         }
                     } else {
                         // grid mode
-                        if (draggingIDList.length === 1) {
+                        if (draggingIDList.length === 1 && this.state.selectedIDList.length === 1) {
                             let orgPos = Vscreen.transformOrgInv(Vscreen.makeRect(clientX, clientY, 0, 0));
                             let splitWhole = Vscreen.getSplitWholeByPos(orgPos.x, orgPos.y);
                             if (splitWhole) {

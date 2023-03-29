@@ -83,6 +83,12 @@
 					});
 
 					console.log('connection closed :' + connection.id);
+
+					// 分割受信解放処理
+					executer.deleteTileimageContainerFromSocketID(connection.id);
+
+					// ログインユーザリストから削除
+					executer.loginUser.delete(connection.id);
 				};
 			})(connection));
 		}
@@ -173,7 +179,7 @@
 			console.error("Error: Failed to load setting.json.");
 			return;
 		}
-	
+
 		// 設定ファイルをパース
 		try {
 			settings = JSON.parse(String(data));
@@ -213,7 +219,7 @@
 					maxReceivedMessageSize: Number(settings.wsMaxMessageSize),
 					maxReceivedFrameSize :Number(settings.wsMaxMessageSize),
 					autoAcceptConnections : false});
-			
+
 			// 設定ファイルのメッセージサイズによる起動が失敗した場合、固定のサイズで起動する
 			if (!ws2) {
 				ws2 = new WebSocket.server({ httpServer : opsever,
@@ -227,7 +233,7 @@
 			}
 		}
 		if (enableSSL) {
-			let opsever_s = https.createServer(options, opserver_http_request);	
+			let opsever_s = https.createServer(options, opserver_http_request);
 			opsever_s.listen(sslport);
 			/// web socket server instance
 			ws2_s = new WebSocket.server({ httpServer : opsever_s,
@@ -257,7 +263,7 @@
 			console.log('start server "http://localhost' + portSTR + '/"');
 			console.log('start ws operate server "ws://localhost' + portSTR + '/"');
 		}
-		
+
 		if (enableSSL) {
 			// リクエストを受け付けるコールバックを設定
 			ws2_s.on('request', ws_request(wsList));

@@ -3,7 +3,7 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
- 
+
 'use strict';
 
 // パフォーマンス計測用
@@ -27,6 +27,8 @@ let argv = require('argv');
 let readline = require('readline');
 
 let WebSocketWrapper = require('./websocket');
+
+const Crypto = require("crypto");
 
 // == prepare image processor ==================================================
 let imageProcessor = null;
@@ -92,6 +94,16 @@ if (!fs.existsSync(imagePath)) {
 	throw new Error('Image file not found: ' + imagePath);
 }
 console.log('Image file: ' + imagePath);
+
+let creator = args.targets[ 1 ];
+let contentsId = config.contentid;
+if(!creator) { 
+	creator = "TileImage"; 
+} else {
+	const buff = Crypto.randomBytes(4);  // バイナリで8byteのランダムな値を生成
+	contentsId  = buff.toString("hex");   // 16進数の文字列に変換
+}
+
 
 // == パフォーマンス計算用 ==============================================
 let enableMeasureTime = false;
@@ -160,7 +172,7 @@ wsWrapper.connect(config.url).then(function() {
 		throw new Error('Login failed: ' + parsed.error);
 	}
 	console.log('Logged in as ' + parsed.result.id);
-	
+
 	return wsWrapper.sendUTF('GetGlobalSetting', {});
 
 }).then(function(parsed) {
@@ -204,8 +216,9 @@ wsWrapper.connect(config.url).then(function() {
 		console.log('Group id: ' + groupId);
 		let metaData = {
 			type: 'tileimage',
-			id: config.contentid,
-			content_id: config.contentid,
+			id: contentsId,
+			content_id: contentsId,
+			creator: creator,
 			group: groupId,
 			posx: 0,
 			posy: 0,
@@ -222,6 +235,8 @@ wsWrapper.connect(config.url).then(function() {
 			savePerformanceLog("Start_AddHistoricalContent", fetchMeasureTime());
 		}
 		// == send thumbnail =======================================================
+		
+		console.log("### start AddHistoricalContent ### " + metaData);
 		return wsWrapper.sendBinary('AddHistoricalContent', metaData, thumb.buffer);
 	});
 }).then(function(parsed) {
@@ -240,7 +255,7 @@ wsWrapper.connect(config.url).then(function() {
 		process.stdout.write('Tiled image processing: ' + ((i + 1) / n * 100.0).toFixed(0) + '%');
 
 		let metaData = {
-			id: config.contentid,
+			id: contentsId,
 			history_id: historyId,
 			tile_index: i
 		};
@@ -248,8 +263,10 @@ wsWrapper.connect(config.url).then(function() {
 			metaData.time_register = new Date().toISOString();
 			savePerformanceLog("Start_AddTileContent", fetchMeasureTime());
 		}
-		
+
 		// == send each image fragment =============================================
+		
+		console.log("### start AddTileContent ### " + metaData);
 		return wsWrapper.sendBinary('AddTileContent', metaData, buffer);
 	}, (i) => {
 		if (enableMeasureTime) {

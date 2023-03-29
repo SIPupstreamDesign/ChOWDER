@@ -215,7 +215,7 @@
                     if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
                         // Historyから復元して取得
                         if (meta.hasOwnProperty('history_id')) {
-    
+
                             // Historyの場合は全タイル登録済かどうかのフラグを返す
                             this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished) => {
                                 if (!err && tile_finished[0]) {
@@ -248,7 +248,7 @@
                                 return;
                             });
                         }
-    
+
                         // コンテンツの返却.
                         // サムネイルやプレビュー用画像がある場合はリストに入れて返す
                         this.executer.client.hgetall(this.executer.contentThumbnailPrefix + meta.content_id, (err, thumbnailData) => {
@@ -268,7 +268,7 @@
                                     binaryList.push(thumbnailData.preview);
                                 }
                             }
-    
+
                             // 履歴から復元して取得
                             if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
                                 let backupList = this.executer.sortBackupList(JSON.parse(meta.backup_list));
@@ -289,7 +289,7 @@
                                     return;
                                 }
                             }
-    
+
                             // 通常の取得
                             this.executer.getContent(meta.type, meta.content_id, (reply) => {
                                 if (reply === null) {
@@ -913,14 +913,13 @@
          */
         getDBList(socketid, resultCallback) {
             this.executer.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (!err && (isAdmin || this.executer.loginUser.getGroupIDFromSocketID(socketid) === "Moderator")) {
                     this.executer.textClient.hgetall(this.executer.frontPrefix + 'dblist', resultCallback);
                 } else {
                     resultCallback("access denied");
                 }
             });
         }
-
         /**
          * 各種設定の変更
          * @method ChangeGlobalSetting
@@ -1079,12 +1078,14 @@
                         if (this.executer.socketidToAccessAuthority.hasOwnProperty(data.loginkey)) {
                             // 対応関係を保存
                             this.executer.socketidToLoginKey[socketid] = data.loginkey;
+                            this.executer.loginUser.put(data.controllerID, socketid, this.executer.socketidToUserID[data.loginkey]);
                             socketid = data.loginkey;
-                            let result = {
+                            const result = {
                                 id: this.executer.socketidToUserID[socketid],
                                 loginkey: socketid,
                                 authority: this.executer.socketidToAccessAuthority[socketid]
                             }
+
                             this.executer.getControllerData(data.controllerID, ((result) => {
                                 return (err, controllerData) => {
                                     result.controllerData = controllerData;
@@ -1107,7 +1108,7 @@
                 execLogin(data, socketid, (err, loginResult) => {
                     if (err || loginResult.authority === null) {
                         /* ElectronDisplayとしてパスワードでログインに失敗したので、普通のdisplayとして処理する */
-                        let logindata = data;
+                        const logindata = data;
                         logindata.id = "Display";
                         this.login(logindata, socketid, endCallback, suspendCallback);
                         return;
@@ -1210,6 +1211,10 @@
                                 this.executer.changeGroupUserSetting(socketid, userList[i].id, {
                                     password: data.password
                                 }, endCallback);
+                            } else if (userList[i].type === "moderator" || userList[i].type === "attendee") {
+                                this.executer.changeGroupUserSetting(socketid, userList[i].id, {
+                                    password: data.password
+                                }, endCallback);
                             } else {
                                 endCallback("failed to change password (3)");
                             }
@@ -1247,6 +1252,21 @@
                 endCallback("failed");
             }
 
+        }
+
+        getLoginUserList(data, endCallback){
+            const loginUserList = this.executer.loginUser.getList();
+            endCallback(null, loginUserList);
+        }
+
+        getSelfStatus(socketid, data, endCallback){
+            const userStatus = this.executer.loginUser.getAllStatusFromSocketID(socketid);
+            endCallback(null, userStatus);
+        }
+
+        updateLoginUserControllerID(socketid, data, endCallback){
+            const success = this.executer.loginUser.updateControllerID(socketid, data.controllerID);
+            endCallback(null, success);
         }
 
         /**
@@ -1311,11 +1331,11 @@
         logout(data, socketid, endCallback) {
             if (data.hasOwnProperty('loginkey')) {
                 console.log("Logout", data.loginkey)
-                this.executer.removeAuthority(data.loginkey);
+                this.executer.logout(data.loginkey);
                 endCallback(null, data.loginkey);
             } else {
                 console.log("Logout", socketid)
-                this.executer.removeAuthority(socketid);
+                this.executer.logout(socketid);
                 endCallback(null, socketid);
             }
         }
@@ -1327,6 +1347,28 @@
         updateQgisContentsList(endCallback){
             this.executer.updateQgisContentsList(endCallback);
         }
+
+        async receiveTileimage(metaParams, binaryData, socketID, endCallback){
+            const wholeBinary = this.executer.receiveTileimage(metaParams, binaryData, socketID);
+            if(wholeBinary === null){ // 全部集まってなかったら次の欠片を待ち受ける
+                return;
+            }
+
+            /* ここからバイナリが完成したあとの処理 */
+            const filepath = await this.executer.writeTileimageFile(metaParams, wholeBinary);
+
+            console.log("creator : " + metaParams.creator);
+            console.log("id :  : " + metaParams.id);
+
+            await this.executer.runTileimageShell(filepath, metaParams);
+
+            await this.executer.removeTileimageFile(filepath);
+
+            if (endCallback) {
+                endCallback();
+            }
+        }
+
     }
 
     module.exports = CommandOperator;

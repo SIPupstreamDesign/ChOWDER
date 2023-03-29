@@ -339,7 +339,7 @@ class ContentStore {
     }
 
     /**
-     * コンテンツを非表示にする
+     * コンテンツ表示/非表示切り替え
      */
     _changeContentVisible(metaData) {
         if (!this.store.getManagement().isEditable(metaData.group)) {
@@ -353,6 +353,32 @@ class ContentStore {
             this.store.emit(Store.EVENT_CONTENT_VISIBLE_CHANGED, null, metaData)
         });
     }
+
+    
+    /**
+     * コンテンツ表示/非表示切り替え（複数選択版
+     * @param {Object} data { toFront : 最前面に移動ならtrue, 最背面に移動ならfalse }
+     */
+     _changeContentVisibleMulti(data) {
+        let metaDataList = [];
+        this.store.getState().for_each_selected_id((i, id) => {
+            if (this.store.hasMetadata(id)) {
+                let metaData = this.store.getMetaData(id);
+                metaDataList.push(metaData);
+            }
+        });
+        manipulator.removeManipulator();
+        if (metaDataList.length > 0) {
+            let setValue = metaDataList[metaDataList.length - 1].visible; 
+            for(let cnt = 0; cnt < metaDataList.length; cnt++){
+                metaDataList[cnt].visible = setValue;
+            }
+            this.store.operation.updateMetadataMulti(metaDataList, () => {
+                this.store.emit(Store.EVENT_CONTENT_VISIBLE_CHANGED, null, metaDataList)
+            });
+        }
+    }
+
 
     /**
      * コンテンツの時刻表示の表示非表示を変更する

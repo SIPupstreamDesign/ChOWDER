@@ -25,10 +25,16 @@
  "change_name": "Rename",
  "change_color": "Change Color",
  "user": "Controller",
+ "username": "Controller Name",
  "password": "Password",
  "meta_info": "Meta Info",
  "movie_setting": "Movie Settings",
  "change_history": "Replacement History",
+ "align_info": "Alignment",
+ "align_left": "Left",
+ "align_center": "Center",
+ "align_right": "Right",
+ "align_grid": "Align Grid",
  "login": "Login",
  "invalid_login": "Invalid Login. Controller or Password isn't correct.",
  "restore": "Restore",
@@ -131,5 +137,6 @@
  "physical_expression_1": "Please input expression for PhysicalValue1",
  "physical_expression_2": "Please input expression for PhysicalValue2",
  "reload_all_display": "Reload All Displays",
- "application_control": "Application Control"
+ "application_control": "Application Control",
+ "add_tileimage": "Add Tileimage"
 }

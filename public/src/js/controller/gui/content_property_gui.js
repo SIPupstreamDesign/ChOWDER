@@ -255,10 +255,14 @@ class ContentPropertyGUI extends EventEmitter {
 		this.store.on(Store.EVENT_CONTENT_VISIBLE_CHANGED, (err, metaData) => {
 			let contentVisibleCheck = document.getElementsByClassName('content_visible')[0];
 			if (contentVisibleCheck) {
-				contentVisibleCheck.checked = String(metaData.visible) === "true";
+				let setValue = metaData.visible;
+				if (metaData.length > 1) {
+					setValue = metaData[metaData.length - 1].visible;
+				}
+				contentVisibleCheck.checked = String(setValue) === "true";
 			}
 		})
-		
+
 		this.store.on(Store.EVENT_CONTENT_DISPLAY_TIME_CHANGED, (err, metaData) => {
 			let contentDisplayTimeCheck = document.getElementsByClassName('display_time')[0];
 			if (contentDisplayTimeCheck) {
@@ -275,8 +279,22 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 	}
 
+	setIDLabel2(str) {
+		let idlabel = document.getElementById('controller_id_label');
+		if (idlabel) {
+			idlabel.innerHTML = str;
+		}
+	}
+
 	setID(str) {
 		let content_id = document.getElementById('content_id');
+		if (content_id) {
+			content_id.innerHTML = str;
+		}
+	}
+
+	setID2(str) {
+		let content_id = document.getElementById('controller_id');
 		if (content_id) {
 			content_id.innerHTML = str;
 		}
@@ -374,6 +392,17 @@ class ContentPropertyGUI extends EventEmitter {
 		history_slider_area.disabled = isDisable;
 	}
 
+	showAlignmentArea(isShow) {
+		let align_area = document.getElementById("alignment_area");
+		if (align_area) {
+			if (isShow && (this.authority.isAdmin() || this.store.managementStore.userStatus.groupID == "Moderator" )) {
+				align_area.style.display = "block";
+			} else {
+				align_area.style.display = "none";
+			}
+		}
+	}
+
 	disableRestoreButton(isDisable) {
 		let restore_button = document.getElementById('backup_restore');
 		restore_button.disabled = isDisable;
@@ -391,8 +420,8 @@ class ContentPropertyGUI extends EventEmitter {
 
 	isAlwaysOnTop(zIndex) {
 		return (Number(zIndex) === Constants.ZIndexAlwaysOnTopValue)
-		|| (String(zIndex) === Constants.ZIndexAlwaysOnTopString);
-	} 
+			|| (String(zIndex) === Constants.ZIndexAlwaysOnTopString);
+	}
 
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
@@ -411,6 +440,7 @@ class ContentPropertyGUI extends EventEmitter {
 		this.disableRestoreButton(!isEditable);
 		this.disableHistoryArea(!isEditable);
 		this.setID(metaData.id ? metaData.id : "");
+		this.setID2(metaData.creator ? metaData.creator : "");
 		this.setGroupName(groupName ? groupName : "");
 
 		{
@@ -430,6 +460,7 @@ class ContentPropertyGUI extends EventEmitter {
 				meta.visible = document.getElementsByClassName('display_visible')[0].checked;
 				this.action.changeDisplayVisible(meta);
 			});
+			this.setIDLabel2("");
 			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
@@ -440,10 +471,13 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
 			this.showColorPicker(isEditable);
+			this.showAlignmentArea(false);
 		}
 		else if (Validator.isVirtualDisplayType(metaData)) {
 			this.setIDLabel("Virtual Display Setting");
+			this.setIDLabel2("");
 			this.setID("");
+			this.setID2("");
 			this.setGroupLabel("");
 			addInputProperty(isEditable, 'whole_width', 'w', 'px', '1000', () => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
@@ -462,12 +496,20 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showMetaLabel(false);
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
+			this.showAlignmentArea(false);
 			this.showColorPicker(false);
 		}
 		else if (type === Constants.PropertyTypeMultiDisplay || type === Constants.PropertyTypeMultiContent) {
 			this.setIDLabel("Content ID:");
+			this.setIDLabel2("Controller ID:");
 			this.setID("");
+			this.setID2("");
 			this.setGroupLabel("");
+			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('content_visible')[0].checked;
+				this.action.changeContentVisibleMulti(meta);
+			});
 			addInputProperty(isEditable, 'multi_transform_z', 'z', 'index', '', () => {
 				let multiZ = document.getElementById('multi_transform_z');
 				let val = parseInt(multiZ.value, 10);
@@ -479,20 +521,25 @@ class ContentPropertyGUI extends EventEmitter {
 			this.showMetaLabel(false);
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
+			this.showAlignmentArea(true);
 			this.showColorPicker(false);
 		}
 		else if (type === Constants.PropertyTypeLayout) {
 			this.setIDLabel("Layout ID:");
+			this.setID2("");
+			this.setIDLabel2("");
 			this.showDownloadButton(false);
 			this.setGroupLabel("Group:");
 			this.showMetaLabel(true);
 			addTextInputProperty(isEditable, 'content_text', "");
 			this.showBackupArea(false);
 			this.showHistoryArea(false);
+			this.showAlignmentArea(false);
 			this.showColorPicker(false);
 		}
 		else { // content (text, image, url... )
 			this.setIDLabel("Content ID:");
+			this.setIDLabel2("Controller ID:");
 			this.setGroupLabel("Group:");
 			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
 				let meta = this.store.getMetaData(metaData.id);
@@ -573,6 +620,7 @@ class ContentPropertyGUI extends EventEmitter {
 					}
 				}
 			}
+			this.showAlignmentArea(false);
 		}
 	}
 	initVideoPropertyArea(isEditable, metaData, type) {
@@ -781,11 +829,13 @@ class ContentPropertyGUI extends EventEmitter {
 			});
 		}
 		this.setID("");
+		this.setID2("");
 		this.clearTransform();
 		this.clearContentText();
 		this.showDownloadButton(false);
 		this.showBackupArea(false);
 		this.showHistoryArea(false);
+		this.showAlignmentArea(false);
 	}
 
 	init(metaData, groupName, type, isOwnVideo) {
@@ -812,8 +862,127 @@ class ContentPropertyGUI extends EventEmitter {
 				this.restoreContent(index);
 			}
 		};
+
+		/*
+		let alignLeft_button  = document.getElementById('align_left');
+		alignLeft_button.onclick = () => {this.setAllign("left")};
+
+		let alignRight_button  = document.getElementById('align_right');
+		alignRight_button.onclick = () => {this.setAllign("right")};
+		*/
+
+		let aligngrid_button = document.getElementById('align_grid');
+		aligngrid_button.onclick = () => { this.setAllignGrid() };
+
 		this.initPropertyArea(metaData, groupName, type, isOwnVideo);
 	}
+
+	setAllignGrid() {
+		let metaDataList = [];
+		this.store.getState().for_each_selected_id((i, id) => {
+			if (this.store.hasMetadata(id)) {
+				let metaData = this.store.getMetaData(id);
+				metaDataList.push(metaData);
+			}
+		});
+		if (metaDataList.length > 0) {
+			// gridレイアウトを取得			
+			let splitWholeBase = Vscreen.getSplitWholeByPos(0, 0);
+			for (let cnt = 0; cnt < metaDataList.length; cnt++) {
+				// セットする座標を探す
+				let elem = document.getElementById(metaDataList[cnt].id);
+
+				let x = cnt % splitWholeBase.splits.x;
+				let y = Math.floor(cnt / splitWholeBase.splits.x);
+				// ↓は「一番近いグリッドに寄せる」機能になっている。これはこれで使えそうなのでコメントで残している
+				// let splitWhole = Vscreen.getSplitWholeByPos(metaDataList[cnt].posx, metaDataList[cnt].posy);
+
+				let splitWhole = Vscreen.getSplitWholeByPos(splitWholeBase.w * x,splitWholeBase.h * y);
+				if (!splitWhole) {
+					splitWhole = {
+						x:splitWholeBase.w * x,
+						y:splitWholeBase.h * y,
+						w:splitWholeBase.w,
+						h:splitWholeBase.h 
+					};
+				}
+				this.action.snapContentToScreen({
+					element: elem,
+					metaData: metaDataList[cnt],
+					screen: splitWhole
+				});
+				this.store.operation.updateMetadata(metaDataList[cnt]);
+			}			
+			// this.store.operation.updateMetadataMulti(metaDataList);
+		}
+	}
+
+	setAllign(_flg) {
+		let metaDataList = [];
+		this.store.getState().for_each_selected_id((i, id) => {
+			if (this.store.hasMetadata(id)) {
+				let metaData = this.store.getMetaData(id);
+				metaDataList.push(metaData);
+			}
+		});
+		if (metaDataList.length > 0) {
+			// セットする座標を探す
+			let targetPos = -65535;
+			// 左寄せ or 上寄せの場合は、最小値を探す必要があるので最大値をセットする
+			if (_flg == "left" || _flg == "top") {
+				targetPos *= -1;
+			}
+			if (_flg == "cent1" || _flg == "cent2") { }
+
+			// 各セット地点を探す
+			for (let cnt = 0; cnt < metaDataList.length; cnt++) {
+				if (_flg == "left") {
+					if (metaDataList[cnt].posx < targetPos) {
+						targetPos = metaDataList[cnt].posx;
+					}
+				} else if (_flg == "top") {
+					if (metaDataList[cnt].posy < targetPos) {
+						targetPos = metaDataList[cnt].posy;
+					}
+				} else if (_flg == "right") {
+					if (metaDataList[cnt].posx + metaDataList[cnt].width > targetPos) {
+						targetPos = Number(metaDataList[cnt].posx) + Number(metaDataList[cnt].width);
+					}
+				} else if (_flg == "bottom") {
+					if (metaDataList[cnt].posy + metaDataList[cnt].height > targetPos) {
+						targetPos = Number(metaDataList[cnt].posy) + Number(metaDataList[cnt].height);
+					}
+				} else if (_flg == "cent1") {
+					targetPos += metaDataList[cnt].posx;
+				} else if (_flg == "cent2") {
+					targetPos += metaDataList[cnt].posy;
+				}
+			}
+
+			if (_flg == "cent1" || _flg == "cent1") {
+				targetPos = targetPos / metaDataList.length;
+			}
+
+			//実際の値のセット
+			for (let cnt = 0; cnt < metaDataList.length; cnt++) {
+				if (_flg == "left") {
+					metaDataList[cnt].posx = targetPos;
+				} else if (_flg == "top") {
+					metaDataList[cnt].posy = targetPos;
+				} else if (_flg == "right") {
+					metaDataList[cnt].posx = targetPos - Number(metaDataList[cnt].width);
+				} else if (_flg == "bottom") {
+					metaDataList[cnt].posy = targetPos - Number(metaDataList[cnt].height);
+				} else if (_flg == "cent1") {
+
+				} else if (_flg == "cent2") {
+
+				}
+			}
+			this.store.operation.updateMetadataMulti(metaDataList);
+		}
+	}
+
 	/**
 	 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
 	 * @method assignVirtualDisplay
@@ -867,8 +1036,7 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		if (transz && metaData.hasOwnProperty('zIndex')) {
 			transz.value = parseInt(metaData.zIndex, 10);
-			if (metaData.zIndex == Constants.ZIndexAlwaysOnTopValue)
-			{
+			if (metaData.zIndex == Constants.ZIndexAlwaysOnTopValue) {
 				transz.value = Constants.ZIndexAlwaysOnTopString;
 			}
 		}

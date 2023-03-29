@@ -23,7 +23,7 @@
   "dependencies": {
     "argv": "0.0.2",
     "bson": "*",
-    "electron": "^9.4.4",
+    "electron": "*",
     "image-size": "*",
     "jszip": "^3.7.1",
     "phantom": "^6.0.3",
@@ -34,15 +34,16 @@
     "@babel/core": "^7.2.2",
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.2.3",
+    "@babel/plugin-transform-runtime": "^7.19.6",
     "babel-loader": "^8.0.5",
     "babel-polyfill": "^6.26.0",
     "css-loader": "^2.1.0",
     "file-loader": "^3.0.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
-    "webpack": "^5.63.0",
-    "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.4.0",
+    "webpack": "*",
+    "webpack-cli": "*",
+    "webpack-dev-server": "*",
     "three": "0.127.0"
   }
 }

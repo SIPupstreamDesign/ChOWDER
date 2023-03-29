@@ -48,6 +48,11 @@ class ContentsInput extends EventEmitter
                 <p style="margin-left:20px" data-key="add_pdf"></p>
                 <input type="file" name="filename" class="pdf_file_input" style="margin-left:20px" />
             </div>
+            <hr>
+            <div>
+                <p style="margin-left:20px" data-key="add_tileimage"></p>
+                <input type="file" name="filename" class="tileimage_file_input" style="margin-left:20px" />
+            </div>
         </div>
         `
 
@@ -56,6 +61,7 @@ class ContentsInput extends EventEmitter
 
     initEvent() {
         let imageFileInput = this.dom.getElementsByClassName('image_file_input')[0];
+        let tileimageFileInput = this.dom.getElementsByClassName('tileimage_file_input')[0];
         let textFileInput = this.dom.getElementsByClassName('text_file_input')[0];
         let pdfFileInput = this.dom.getElementsByClassName('pdf_file_input')[0];
         let updateImageInput = this.dom.getElementsByClassName('update_image_input')[0];
@@ -65,12 +71,17 @@ class ContentsInput extends EventEmitter
             this.emit(ContentsInput.EVENT_IMAGEFILEINPUT_CHANGE, null, evt, this.contextPosX, this.contextPosY);
             imageFileInput.value = "";
         }, false);
-        
+
+        tileimageFileInput.addEventListener('change', (evt) => {
+            this.emit(ContentsInput.EVENT_TILEIMAGEFILEINPUT_CHANGE, null, evt, this.contextPosX, this.contextPosY);
+            tileimageFileInput.value = "";
+        }, false);
+
         textFileInput.addEventListener('change', (evt) => {
             this.emit(ContentsInput.EVENT_TEXTFILEINPUT_CHANGE, null, evt, this.contextPosX, this.contextPosY);
             textFileInput.value = "";
         }, false);
-        
+
         pdfFileInput.addEventListener('change', (evt) => {
             this.emit(ContentsInput.EVENT_PDFFILEINPUT_CHANGE, null, evt, this.contextPosX, this.contextPosY);
             pdfFileInput.value = '';
@@ -102,10 +113,14 @@ class ContentsInput extends EventEmitter
         this.dom.getElementsByClassName('pdf_file_input')[0].click();
     }
 
+    inputTileimageFile() {
+        this.dom.getElementsByClassName('tileimage_file_input')[0].click();
+    }
+
     inputVideoFile() {
         this.dom.getElementsByClassName('video_file_input')[0].click();
     }
-    
+
     getUpdateImageID() {
         return this.dom.getElementsByClassName('update_content_id')[0].innerHTML;
     }
@@ -120,6 +135,7 @@ class ContentsInput extends EventEmitter
 }
 
 ContentsInput.EVENT_IMAGEFILEINPUT_CHANGE = "imagefileinput_change";
+ContentsInput.EVENT_TILEIMAGEFILEINPUT_CHANGE = "tileimagefileinput_change";
 ContentsInput.EVENT_TEXTFILEINPUT_CHANGE = "textfileinput_change";
 ContentsInput.EVENT_PDFFILEINPUT_CHANGE = "pdffileinput_change";
 ContentsInput.EVENT_UPDATEIMAGEINPUT_CHANGE = "updateimageinput_change";

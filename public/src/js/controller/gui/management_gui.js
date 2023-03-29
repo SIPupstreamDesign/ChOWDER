@@ -158,7 +158,7 @@ class ManagementGUI
 		let currentDB = this.management.getCurrentDB();
 		let maxHistoryNum = this.management.getMaxHistoryNum();
 		let displayPermissionList = this.store.getDisplayPermissionList();
-		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermissionList);
+		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermissionList,this.store.managementStore.isAdmin());
 	}
 
 	close() {
