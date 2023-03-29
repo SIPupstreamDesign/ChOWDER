@@ -145,8 +145,8 @@
 
 ### Node.jsのインストール
 
-ポータルGUIの動作にはNode.jsのインストールが必要です.
-Node.jsの公式サイト(`http://nodejs.org/`)からNode.js本体をダウンロードし,インストールします.(下図)
+ポータルGUIの動作にはNode.js(ver 14系列)のインストールが必要です.
+Node.jsの公式サイト(`https://nodejs.org/ja/download/releases`)から【Node.js 14.xx.x】の行の「Release」を押していただき、対応するプラットフォームのNode.js本体をダウンロードし,インストールします.(下図)
 
 <img src="image/NodeJS.png" alt="node.jsのinstall画面" width="377" />
 *node.jsのinstall画面*
@@ -941,6 +941,11 @@ DB 管理では, 保存領域の新規作成, 切り替え, 名前変更, 削除
 <img src="image/management6.png" alt="パスワードの設定" width="585" />
 *パスワードの設定*
 
+<img src="image/management6_2.png" alt="パスワードの設定" width="585" />
+*パスワードの設定(管理者以外）*
+`Moderator`及び `Attendee`については、この設定でパスワードを設定するまでログインが出来ません。必ず設定を行ってください。
+
+
 ### ディスプレイ設定
 ディスプレイ設定では, コンテンツ配信許可設定を変更できます.
 許可されたディスプレイのみに配信されます.
@@ -1361,7 +1366,7 @@ CLIアプリケーション経由で、巨大な画像データをChOWDERサー�
 
 -   `id` は `APIUser` で固定となります。
 -   `password` には、 `APIUser` のパスワードを指定します。パスワードは、[管理画面](#管理画面) のパスワードの設定より変更が可能です。
--   `url` には、ChOWDER WebSocketサーバのURLを指定します。ChOWDERのサーバーアドレスに変更等が発生した場合はこちらの変更も行ってください。
+-   `url` には、ChOWDER WebSocketサーバのURLを指定します。ChOWDERのサーバーアドレスに変更等が発生した場合はこちらの変更も行ってください。ブラウザのURLではなく、サーバの内側からアクセスできる形で指定してください。基本的には `ws://localhost:{ポート番号}/{サーバ内ChOWDERフォルダ位置}/v2/`になります。
 -   `xsplit` ・ `ysplit` にはそれぞれ、横・縦方向の画像分割数を指定できます。
 -   `contentid` ・ `contentgrp` にはそれぞれ、コンテンツID・コンテンツグループを指定します。
 -   `reload_latest`には、`--metadata`オプションを使用して登録した最新画像を, Displayで表示し続けるかどうかを`true`または`false`で指定します。
