@@ -1,5 +1,10 @@
 /node_modules
 /.vscode
 
+*/log/
+
 # redis dumpfiles
 *.rdb
+package-lock.json
+*/*.bundle.js
+*/*.bundle.js.*

@@ -1,0 +1,46 @@
+
+.property_slider_slider {
+    width : 100px;
+    height: 34px;
+    background : dodgerblue;
+    border-top: 2px solid snow;
+    border-bottom: 2px solid snow;
+    position: absolute;
+    left : calc(100% - 165px);
+    top: 0px;
+}
+
+.property_slider_slider_back {
+    width : 104px;
+    height: 34px;
+    background : white;
+    border: 2px solid snow;
+    position: absolute;
+    right: 63px;
+    top: 0px;
+}
+
+.property_slider_slider.disabled {
+    cursor:not-allowed;
+}
+
+input.property_slider.form-control {
+    width: 58px;
+    float: right;
+    right: 0px;
+}
+
+.property_slider_left_span {
+    width : 63px;
+    padding: 6px 4px;
+}
+
+.input-group {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.property_slider_group {
+    table-layout: fixed;
+    width: 235px;
+}

@@ -23,7 +23,12 @@ let resultCallbacks = {},
 	client = null,
 	is_connected = false,
 	currentVersion = "v2",
-	url = get_protocol() + location.hostname + ":" + (Number(location.port) + 1) + "/" + currentVersion + "/";
+	url = get_protocol() + location.hostname + "/" + currentVersion + "/";
+
+if (location.port)
+{
+	url = get_protocol() + location.hostname + ":" + (Number(location.port)) + "/" + currentVersion + "/";
+}
 
 class WsConnector {
 
@@ -47,8 +52,6 @@ class WsConnector {
 			} else if (metaData.hasOwnProperty('id') && metaData.hasOwnProperty('result')) {
 				if (resultCallbacks[metaData.id]) {
 					resultCallbacks[metaData.id](null, metaData.result);
-				} else {
-					console.error("[Error] not found :", metaData)
 				}
 			} else {
 				if (metaData.hasOwnProperty('id') && resultCallbacks.hasOwnProperty(metaData.id)) {
@@ -61,6 +64,11 @@ class WsConnector {
 				}
 			}
 		}
+		/*
+		if (resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete resultCallbacks[metaData.id]
+		}
+		*/
 	}
 
 	/**
@@ -102,6 +110,11 @@ class WsConnector {
 				}
 			}
 		}
+		/*
+		if (resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete resultCallbacks[metaData.id]
+		}
+		*/
 	}
 
 	static sendWrapper(id, method, reqdata, resultCallback) {

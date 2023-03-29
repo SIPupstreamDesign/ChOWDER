@@ -326,6 +326,19 @@
 		return null;
 	}
 
+	function createTimestamp(){
+		const d = new Date(); // Today
+		const DateTimeFormat = 'YYYYMMDD_hhmiss';
+		let timestamp = DateTimeFormat
+			.replace(/YYYY/g, String(d.getFullYear()))
+			.replace(/MM/g, ('0' + (d.getMonth() + 1)).slice(-2))
+			.replace(/DD/g, ('0' + d.getDate()).slice(-2))
+			.replace(/hh/g, ('0' + d.getHours()).slice(-2))
+			.replace(/mi/g, ('0' + d.getMinutes()).slice(-2))
+			.replace(/ss/g, ('0' + d.getSeconds()).slice(-2));
+		
+		return timestamp;
+	}
 	module.exports.generateUUID = generateUUID;
 	module.exports.generateUUID8 = generateUUID8;
 	module.exports.getExtention = getExtention;
@@ -340,4 +353,5 @@
 	module.exports.detectImageType = detectImageType;
 	module.exports.sortHistory = sortHistory;
 	module.exports.extractHistoryData = extractHistoryData;
+	module.exports.createTimestamp = createTimestamp;
 })();

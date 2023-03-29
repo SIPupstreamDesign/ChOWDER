@@ -8,12 +8,30 @@
 
     const fs = require('fs');
     const path = require('path');
+    const child_process = require("child_process");
+    const Util = require('./../util.js');
+    const Zip = require("./Zip.js");
+    const SegmentReceiver = require("./SegmentReceiver.js");
+    const LoginUser = require("./LoginUser.js");
 
-    const phantom = require('phantom');
+    let phantom = null;
+    try {
+        phantom = require('phantom');
+    } catch (e) {
+        console.log("not found phantom");
+    }
     const redis = require("redis");
 
     const image_size = require('image-size');
-    const Thumbnail = require('./../thumbnail.js');
+    let Thumbnail = {
+        create: (meta, binary, func) => { func(null, null, null); },
+        setPreviewWH: () => { }
+    }
+    try {
+        Thumbnail = require('./../thumbnail.js');
+    } catch (e) {
+        console.log("thumbnail require faild");
+    }
 
     const util = require('./../util.js');
 
@@ -21,12 +39,16 @@
         "viewable",
         "editable",
         "displayEditable",
+        "viewableSite",
         "group_manipulatable"
     ];
     const expireTime = 60 * 60 * 24 * 365 * 100; // 100years
 
     class Executer {
         constructor() {
+            this.segmentReceiver = new SegmentReceiver();
+            this.loginUser = new LoginUser();
+
             this.client = redis.createClient(6379, '127.0.0.1', { 'return_buffers': true });
             this.textClient = redis.createClient(6379, '127.0.0.1', { 'return_buffers': false });
 
@@ -57,7 +79,7 @@
             this.socketidToAccessAuthority = {};
             this.socketidToUserID = {};
             this.socketidToLoginKey = {};
-            
+
             // 拒否設定のDisplayのsocketidのキャッシュ.
             // 拒否設定のDisplayに対するbroadcast防止用.
             // { socketidA : displayIDa,  socketidB : displayIDb, .. }
@@ -84,32 +106,36 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         renderURL(url, endCallback) {
-            phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
-                instance.createPage().then(function (page) {
-                    page.property('viewportSize', { width: 1024, height: 600 }).then(function () {
-                        page.open(url).then(function (status) {
-                            if (status !== 'success') {
-                                console.error('renderURL: Page open failed: ' + status);
-                                return;
-                            }
+            if (phantom === null) {
+                console.log("not found phantom");
+            } else {
+                phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
+                    instance.createPage().then(function (page) {
+                        page.property('viewportSize', { width: 1024, height: 600 }).then(function () {
+                            page.open(url).then(function (status) {
+                                if (status !== 'success') {
+                                    console.error('renderURL: Page open failed: ' + status);
+                                    return;
+                                }
 
-                            page.evaluate(function () {
-                                return { /* eslint-disable */
-                                    width: document.body.scrollWidth,
-                                    height: document.body.scrollHeight,
-                                    deviceScaleFactor: window.devicePixelRatio
-                                }; /* eslint-enable */
-                            }).then(function (dim) {
-                                page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
-                                    const filename = path.resolve('/tmp', Date.now().toString() + '.png');
-                                    page.render(filename).then(function () {
-                                        fs.readFile(filename, function (err, data) {
-                                            if (err) {
-                                                console.error(err);
-                                                return;
-                                            }
-                                            endCallback(data, image_size(data));
-                                            instance.exit();
+                                page.evaluate(function () {
+                                    return { /* eslint-disable */
+                                        width: document.body.scrollWidth,
+                                        height: document.body.scrollHeight,
+                                        deviceScaleFactor: window.devicePixelRatio
+                                    }; /* eslint-enable */
+                                }).then(function (dim) {
+                                    page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
+                                        const filename = path.resolve('/tmp', Date.now().toString() + '.png');
+                                        page.render(filename).then(function () {
+                                            fs.readFile(filename, function (err, data) {
+                                                if (err) {
+                                                    console.error(err);
+                                                    return;
+                                                }
+                                                endCallback(data, image_size(data));
+                                                instance.exit();
+                                            });
                                         });
                                     });
                                 });
@@ -117,7 +143,7 @@
                         });
                     });
                 });
-            });
+            }
         }
 
         generateID(prefix, endCallback) {
@@ -191,17 +217,24 @@
             this.textClient.exists(this.groupListPrefix, (err, doesExists) => {
                 if (!err && doesExists !== 0) {
                     this.textClient.get(this.groupListPrefix, (err, reply) => {
-                        let data = reply;
                         if (!reply) {
-                            data = { "grouplist": [], "displaygrouplist": [] };
+                            const data = { "grouplist": [], "displaygrouplist": [] };
                             endCallback(err, data);
                             return;
                         }
-                        try {
-                            data = JSON.parse(data);
-                        } catch (e) {
+
+                        const data = (()=>{
+                            try {
+                                return JSON.parse(reply);
+                            } catch (e) {
+                                return null;
+                            }
+                        })();
+
+                        if(data === null){
                             return false;
                         }
+
                         endCallback(err, data);
                     });
                 } else {
@@ -290,6 +323,7 @@
                         this.changeGroupUserSetting(socketid, id, {
                             viewable: [id],
                             editable: [id],
+                            viewableSite: "all",
                             group_manipulatable: false
                         }, (err, reply) => {
                             if (endCallback) {
@@ -655,7 +689,9 @@
 
         changeUUIDPrefix(socketid, dbname, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     this.textClient.hget(this.frontPrefix + 'dblist', dbname, (err, reply) => {
                         if (!err) {
                             this.getGlobalSetting((err, setting) => {
@@ -700,6 +736,7 @@
                         viewable: [],
                         editable: [],
                         displayEditable: [],
+                        viewableSite: [],
                         group_manipulatable: false
                     }, () => {
                         // Display設定の初期登録
@@ -707,6 +744,7 @@
                             viewable: "all",
                             editable: "all",
                             displayEditable: "all",
+                            viewableSite: "all",
                             group_manipulatable: false
                         }, () => {
                             // APIUser設定の初期登録
@@ -714,17 +752,40 @@
                                 viewable: "all",
                                 editable: "all",
                                 displayEditable: "all",
+                                viewableSite: "all",
                                 group_manipulatable: false
-                            });
-                        }, () => {
-                            // ElectronDisplay設定の初期登録
-                            this.changeGroupUserSetting("master", "ElectronDisplay", {
-                                viewable: "all",
-                                editable: "all",
-                                displayEditable: "all",
-                                group_manipulatable: false
-                            });
-                        });
+
+                            }, () => {
+                                // ElectronDisplay設定の初期登録
+                                this.changeGroupUserSetting("master", "ElectronDisplay", {
+                                    viewable: "all",
+                                    editable: "all",
+                                    displayEditable: "all",
+                                    viewableSite: "all",
+                                    group_manipulatable: false
+
+                                }, () => {
+                                    // Moderator設定の初期登録
+                                    this.changeGroupUserSetting("master", "Moderator", {
+                                        viewable: "all",
+                                        editable: "all",
+                                        displayEditable: "all",
+                                        viewableSite: "all",
+                                        group_manipulatable: false
+
+                                    }, () => {
+                                        // Moderator設定の初期登録
+                                        this.changeGroupUserSetting("master", "Attendee", {
+                                            viewable: "all",
+                                            editable: "all",
+                                            displayEditable: "all",
+                                            viewableSite: "all",
+                                            group_manipulatable: false
+                                        })
+                                    })
+                                })
+                            })
+                        })
                     });
                 }
                 this.addGroup("master", "group_default", "default", null, (err, reply) => {
@@ -754,7 +815,9 @@
          */
         newDB(socketid, name, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     if (name.length > 0) {
                         this.textClient.hexists(this.frontPrefix + 'dblist', name, (err, doesExists) => {
                             if (!err && doesExists !== 1) {
@@ -793,7 +856,9 @@
          */
         renameDB(socketid, name, newName, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     if (name.length > 0 && newName.length > 0) {
                         if (name === "default" || newName === "default") {
                             endCallback("cannot change default db name");
@@ -923,7 +988,9 @@
          */
         changeGlobalSetting(socketid, json, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
-                if (!err && isAdmin) {
+                if (err) {
+                    endCallback("error");
+                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
                     this.textClient.hmset(this.globalSettingPrefix, json, (err) => {
                         if (err) {
                             console.error(err);
@@ -1166,6 +1233,28 @@
                         }
                         userList.push(electronDisplayData);
 
+                        // Moderator/Attendee
+                        let moderatorData = { name: "Moderator", id: "Moderator", type: "moderator" };
+                        if (setting.hasOwnProperty("Moderator")) {
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (setting.Moderator.hasOwnProperty(key)) {
+                                    moderatorData[key] = setting.Moderator[key];
+                                }
+                            }
+                        }
+                        userList.push(moderatorData);
+                        let attendeeData = { name: "Attendee", id: "Attendee", type: "attendee" };
+                        if (setting.hasOwnProperty("Attendee")) {
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (setting.Attendee.hasOwnProperty(key)) {
+                                    attendeeData[key] = setting.Attendee[key];
+                                }
+                            }
+                        }
+                        userList.push(attendeeData);
+
                         if (endCallback) {
                             endCallback(null, userList);
                         }
@@ -1196,36 +1285,34 @@
             return master === util.encrypt(pass);
         }
 
-    	/**
+        /**
          * socketidごとの権限情報キャッシュを全て更新する
          */
         updateAuthority(adminSetting, groupSetting) {
-            let i,
-                socketid,
-                authority;
-
-            for (socketid in this.socketidToAccessAuthority) {
-                authority = this.socketidToAccessAuthority[socketid];
+            for (let socketid in this.socketidToAccessAuthority) {
+                const authority = this.socketidToAccessAuthority[socketid];
                 if (this.socketidToUserID.hasOwnProperty(socketid)) {
-                    let id = this.socketidToUserID[socketid];
+                    const role_id = this.socketidToUserID[socketid];
                     if (adminSetting) {
-                        if (adminSetting.hasOwnProperty(id)) {
-                            authority.id = id;
+                        if (adminSetting.hasOwnProperty(role_id)) {
+                            authority.id = role_id;
                             authority.viewable = "all";
                             authority.editable = "all";
                             authority.displayEditable = [];
+                            authority.viewableSite = "all";
                             authority.group_manipulatable = true;
                             authority.is_admin = true;
+
                             this.socketidToAccessAuthority[socketid] = authority;
                         }
                     }
                     if (groupSetting) {
-                        if (groupSetting.hasOwnProperty(id)) {
-                            authority.id = id;
+                        if (groupSetting.hasOwnProperty(role_id)) {
+                            authority.id = role_id;
                             for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (groupSetting[id].hasOwnProperty(key)) {
-                                    authority[key] = groupSetting[id][key];
+                                const key = userSettingKeys[k];
+                                if (groupSetting[role_id].hasOwnProperty(key)) {
+                                    authority[key] = groupSetting[role_id][key];
                                 }
                             }
                             this.socketidToAccessAuthority[socketid] = authority;
@@ -1233,7 +1320,7 @@
                     }
                 }
             }
-            console.log("-----updateAuthority------")
+            console.log("-----updateAuthority------");
             //console.log(this.socketidToAccessAuthority)
         }
 
@@ -1260,6 +1347,7 @@
             if (!this.socketidToUserID.hasOwnProperty(socketid)) {
                 this.socketidToUserID[socketid] = id;
             }
+
             if (!this.socketidToAccessAuthority.hasOwnProperty(socketid)) {
                 this.socketidToAccessAuthority[socketid] = {};
                 // socketidごとの権限情報キャッシュを全て更新する
@@ -1277,7 +1365,7 @@
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
         login(id, password, socketid, controllerid, endCallback) {
-            let getLoginResult = (controllerData) => {
+            const getLoginResult = (controllerData) => {
                 if (this.socketidToAccessAuthority.hasOwnProperty(socketid)) {
                     return {
                         id: id,
@@ -1295,12 +1383,13 @@
                 }
             };
             this.getControllerData(controllerid, (err, controllerData) => {
-                this.getAdminUserSetting((err, data) => {
-                    if (data.hasOwnProperty(id)) {
+                this.getAdminUserSetting((err, adminUserData) => {
+                    if (adminUserData.hasOwnProperty(id)) {
                         // 管理ユーザー
-                        let isValid = this.validatePassword(data[id].password, password);
+                        const isValid = this.validatePassword(adminUserData[id].password, password);
                         if (isValid) {
-                            this.saveLoginInfo(socketid, id, data);
+                            this.saveLoginInfo(socketid, id, adminUserData);
+                            this.loginUser.put(controllerid, socketid, id);
                             // 成功したらsocketidを返す
                             endCallback(null, getLoginResult(controllerData));
                         } else {
@@ -1311,18 +1400,24 @@
                             if (!err) {
                                 if (setting.hasOwnProperty(id)) {
                                     // グループユーザー設定登録済グループユーザー
-                                    let isValid = this.validatePassword(setting[id].password, password);
-                                    if (id === "Guest" || id === "Display") {
-                                        isValid = true;
-                                    }
+                                    const isValid = (()=>{
+                                        if (id === "Guest" || id === "Display") {
+                                            return true;
+                                        }else{
+                                            return this.validatePassword(setting[id].password, password);
+                                        }
+                                    })();
+
                                     if (isValid) {
                                         this.saveLoginInfo(socketid, id, null, setting);
+                                        this.loginUser.put(controllerid, socketid, id);
                                         endCallback(null, getLoginResult(controllerData));
                                     } else {
                                         endCallback("failed to login");
                                     }
                                 } else {
                                     // グループユーザー設定に登録されていないグループ
+                                    this.loginUser.put(controllerid, socketid, id);
                                     endCallback(null, getLoginResult(controllerData));
                                 }
                             } else {
@@ -1332,6 +1427,11 @@
                     }
                 });
             });
+        }
+
+        logout(socketid){
+            this.removeAuthority(socketid);
+            this.loginUser.delete(socketid);
         }
 
         /**
@@ -1554,8 +1654,8 @@
 
         /**
          * 適切なサポート済Mimeを返す
-         * @param {*} metaData 
-         * @param {*} contentData 
+         * @param {*} metaData
+         * @param {*} contentData
          */
         getMime(metaData, contentData) {
             if (metaData.type === "video") {
@@ -1570,6 +1670,10 @@
                 return util.detectImageType(contentData);
             } else if (metaData.type === "tileimage" && contentData instanceof Buffer) {
                 return util.detectImageType(contentData);
+            } else if (metaData.type === 'webgl') {
+                return "application/webgl";
+            } else if (metaData.type === 'tileviewer') {
+                return "application/tileviewer";
             } else {
                 console.error("Error undefined type:" + metaData.type);
                 return null;
@@ -1628,7 +1732,7 @@
                 // タイルイメージの場合は画像バイナリからサイズを求めない.
                 return;
             }
-            
+
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
@@ -1702,7 +1806,7 @@
          */
         addContent(metaData, data, endCallback) {
             let contentData = data;
-            
+
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
@@ -1761,7 +1865,7 @@
 
         /**
          * タイルコンテンツ追加
-         * @method addContent
+         * @method addTileContent
          * @param {JSON} metaData contentメタデータ
          * @param {BLOB} data バイナリデータ
          * @param {Number} totalTileCount 合計タイル数
@@ -1809,8 +1913,7 @@
                                             if (finishCallback) {
                                                 let kv = { tile_finished: true }
                                                 this.client.hmset(this.contentHistoryDataPrefix + history_id, kv, () => {
-                                                    if (!this.tileFinishCache.hasOwnProperty(content_id + "_" + history_id))
-                                                    {
+                                                    if (!this.tileFinishCache.hasOwnProperty(content_id + "_" + history_id)) {
                                                         this.tileFinishCache[content_id + "_" + history_id] = true;
                                                         finishCallback(err, metaData, contentData);
                                                     }
@@ -1984,7 +2087,7 @@
          */
         storeHistoricalData(socketid, metaData, keyvalue, endCallback) {
             let kvLen = Object.keys(keyvalue).length;
-            
+
             if (!metaData.hasOwnProperty('history_id')) {
                 metaData.history_id = util.generateUUID8();
             }
@@ -2005,20 +2108,20 @@
                                     let key;
                                     let historyMetaData = {};
                                     let count = 0;
-                                        for (key in keyvalue) {
-                                            let value = keyvalue[key];
-                                            historyMetaData = {};
-                                            historyMetaData[value] = JSON.stringify(metaData);
-                                            this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
-                                                ++count;
-                                                if (count >= kvLen) {
-                                                    if (endCallback) {
-                                                        endCallback(err, reply, metaData.history_id);
-                                                    }
+                                    for (key in keyvalue) {
+                                        let value = keyvalue[key];
+                                        historyMetaData = {};
+                                        historyMetaData[value] = JSON.stringify(metaData);
+                                        this.client.hmset(this.metadataHistoryPrefix + metaData.id + ":" + key, historyMetaData, (err) => {
+                                            ++count;
+                                            if (count >= kvLen) {
+                                                if (endCallback) {
+                                                    endCallback(err, reply, metaData.history_id);
                                                 }
-                                            });
-                                        }
-                                    });
+                                            }
+                                        });
+                                    }
+                                });
                             } else {
                                 endCallback(err, null, metaData.history_id);
                             }
@@ -2073,7 +2176,7 @@
             if (mime) {
                 metaData.mime = mime;
             }
-            
+
             this.textClient.exists(this.contentPrefix + metaData.content_id, (err, doesExist) => {
                 if (!err && doesExist === 1) {
                     let backupList = [];
@@ -2235,8 +2338,8 @@
          */
         addHistoricalContent(socketid, metaData, data, endCallback) {
             let contentData = data;
-            console.log("addHistoricalContent:" + metaData.id + ":" + metaData.content_id);
-            
+            console.log("addHistoricalContent:" + metaData.id + "  :" + metaData.creator);
+
             const mime = this.getMime(metaData, contentData);
             if (mime) {
                 metaData.mime = mime;
@@ -2263,7 +2366,7 @@
 
                         // finishキャッシュを空にする
                         this.tileFinishCache = {};
-                        
+
                         if (!metaData.hasOwnProperty('reductionWidth')) {
                             let dimensions = image_size(contentData);
                             metaData.reductionWidth = dimensions.width;
@@ -2411,7 +2514,7 @@
                                             if (userID === "ElectronDisplay") {
                                                 let perm = {};
                                                 perm[windowData.id] = "true";
-                                                let data = { permissionList : [perm] };
+                                                let data = { permissionList: [perm] };
                                                 this.allDisplayCache[socketid] = windowData.id;
                                                 this.updateDisplayPermissionList(data, (err, changeList) => {
                                                     if (permissionChangeCallback) {
@@ -2561,7 +2664,7 @@
                         if (!err && doesExist === 1) {
                             this.textClient.del(this.windowContentPrefix + meta.content_id, (err) => {
                                 if (!err) {
-                                    this.deleteDisplayPermissionList({ displayIDList : [meta.id] }, (err, reply) => {
+                                    this.deleteDisplayPermissionList({ displayIDList: [meta.id] }, (err, reply) => {
                                         if (!err) {
                                             this.textClient.del(this.windowContentRefPrefix + meta.content_id);
                                             if (meta.hasOwnProperty('reference_count')) {
@@ -2714,6 +2817,7 @@
             if (groupID === undefined || groupID === "") {
                 return true;
             }
+            // ここでDisplayならsocketid=Displayとなる
             if (this.socketidToLoginKey.hasOwnProperty(socketid)) {
                 socketid = this.socketidToLoginKey[socketid];
             }
@@ -2788,6 +2892,49 @@
                 }
             }
             return false;
+        }
+
+        /**
+         * socketidユーザーがdisplaygroupを表示可能かどうか返す
+         * @method isViewableDisplay
+         * @param {String} socketid socketid
+         * @param {String} group group
+         */
+        isViewableSite(socketid, groupID, endCallback) {
+            if (groupID === "group_default") {
+                endCallback(null, true);
+                return;
+            }
+            if (groupID === undefined || groupID === "") {
+                endCallback(null, true);
+                return;
+            }
+            if (this.allDisplayCache.hasOwnProperty(socketid)) {
+                // displayからのアクセスだった
+                const displayID = this.allDisplayCache[socketid];
+                this.getWindowMetaData({ id: displayID }, (windowMeta) => {
+                    this.getGroupUserSetting((err, data) => {
+                        if (!err && data) {
+                            if (data.hasOwnProperty(groupID)) {
+                                const authority = data[groupID];
+                                if (authority.hasOwnProperty('viewableSite')) {
+                                    if (authority.viewableSite !== "all") {
+                                        endCallback(null, authority.viewableSite.indexOf(windowMeta.group) >= 0);
+                                        return;
+                                    }
+                                }
+                                // viewableSiteの設定が無い、または"all"
+                                endCallback(null, true);
+                                return;
+                            }
+                        }
+                        endCallback(err, false);
+                    });
+                });
+            } else {
+                // controllerからのアクセスだった
+                endCallback(null, true);
+            }
         }
 
         isGroupManipulatable(socketid, groupID, endCallback) {
@@ -3005,7 +3152,7 @@
         }
 
         /*
-        * @param {Function} callback (string, displayIDList)  
+        * @param {Function} callback (string, displayIDList)
         *                   displayIDListはこの関数によって設定変更されたdisplayのdisplayidのリスト
         */
         updateDisplayPermissionList(data, callback) {
@@ -3020,7 +3167,7 @@
                 for (let i = 0; i < permissionList.length; ++i) {
                     let key = Object.keys(permissionList[i])[0];
                     let value = String(permissionList[i][key]);
-                    
+
                     //  設定が変更されたdisplay idを詰める
                     if (permissionDict && permissionDict.hasOwnProperty(key)) {
                         if (permissionDict[key] !== value) {
@@ -3100,6 +3247,193 @@
             });
         }
 
+
+        /**
+         * upload
+         * @method upload
+         * @param {Object} param param
+         * @param {BLOB} binaryData binaryData
+         * @param {Function} callback (string err, {string dirname})=>{}
+         */
+        upload(param, binaryData, callback) {
+            /* sendBinary の JSONRPC の param.type で何がアップロードされたか見る */
+            if (param.type === "qgis2three.js") {
+                /* qgis app 用のqgis2three.jsファイル */
+                const timestamp = Util.createTimestamp();
+                const extractDir = "../public/userdata/qgis/" + timestamp + "/";
+                /* タイムスタンプでディレクトリ掘る */
+                fs.mkdir(extractDir, { recursive: true }, (err) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        /* ファイルを解凍する */
+                        (async () => {
+                            const fileList = await Zip.extract(binaryData, extractDir);
+
+                            if (typeof fileList === Error) {
+                                // 想定外の実行時エラーでrejectされた
+                                console.log("err:", fileList.toString());
+                                callback(fileList.toString(), null);
+                                return;
+                            }
+
+                            /* index.htmlを探す */
+                            let htmlDir = null;
+                            for (let file of fileList) {
+                                if (file.err !== null) {
+                                    /* 解凍時にファイル単位でエラーになってた */
+                                    callback(file.err.toString(), null);//最初に起きたエラー
+                                    return;
+                                }
+                                if (file.dir.match(/index.html$/)) {
+                                    // console.log("HTML EXIST:",file.dir);
+                                    const dir = file.dir.substr(9);
+                                    htmlDir = dir;
+                                }
+                            }
+
+                            if (htmlDir === null) {
+                                /* index.html がないってことは qgis2three.js のファイルじゃないと思う */
+                                console.log("it is not qgis2three.js file");
+                                callback(new Error("it is not qgis2three.js file").toString(), null);
+                                return;
+                            }
+
+                            callback(null, { dirname: htmlDir });//エラーはなかった
+                        })();
+                    }
+                });
+            } else if (param.type === "itownsapp_csv") {
+                const timestamp = Util.createTimestamp();
+                const extractDir = "../public/userdata/itowns/" + timestamp + "/";
+                /* タイムスタンプでディレクトリ掘る */
+                fs.mkdir(extractDir, { recursive: true }, (err) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        // csvファイル書き込み
+                        const csvFilePath = path.join(extractDir, 'data.csv')
+                        fs.writeFile(csvFilePath, binaryData, (err) => {
+                            if (err) {
+                                callback(err, null);
+                            } else {
+                                const posixPath = path.relative('../public', csvFilePath).split(path.sep).join(path.posix.sep);
+                                callback(null, { path: posixPath });
+                            }
+                        })
+                    }
+                });
+            } else if (param.type === 'itownsapp_json') {
+                const timestamp = Util.createTimestamp();
+                const extractDir = "../public/userdata/itowns/" + timestamp + "/";
+                /* タイムスタンプでディレクトリ掘る */
+                fs.mkdir(extractDir, { recursive: true }, (err) => {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        // jsonファイル書き込み
+                        const jsonFile = path.join(extractDir, 'data.json')
+                        fs.writeFile(jsonFile, binaryData, (err) => {
+                            if (err) {
+                                callback(err, null);
+                            } else {
+                                const posixPath = path.relative('../public', jsonFile).split(path.sep).join(path.posix.sep);
+                                callback(null, { path: posixPath });
+                            }
+                        })
+                    }
+                });
+            } else {
+                callback(new Error("JSONRPC param.type undefined").toString(), null);
+            }
+        }
+
+        /**
+         * 分割されたtileimageを順次受け取って、全部揃ったら合体したものを返す
+         * @method receiveTileimage
+         * @param {{id:string,segment_index:number,segment_max:number}} metaParams metadataから抽出したparams
+         * @param {ArrayBuffer} binaryData 千切れたbinary
+         * @return {Buffer}
+         */
+        receiveTileimage(metaParams, binaryData, socketID){
+            const arrBuf = this.segmentReceiver.receive(metaParams, binaryData, socketID);
+            if(arrBuf !== null){
+                return Buffer.from(arrBuf);
+            }
+            return null;
+        }
+
+        /**
+         * バイナリをファイルとして書き込む。書き込んだらメモリからデータを消す
+         * @method writeTileimageFile
+         * @param {{id:string,segment_index:number,segment_max:number}} metaParams metadataから抽出したparams
+         * @param {ArrayBuffer} wholeBinary
+         * @return {Buffer}
+         */
+        writeTileimageFile(metaParams, wholeBinary){
+            return new Promise((resolve,reject)=>{
+                const writefilepath = `../bin/${metaParams.id}.${metaParams.file_ext}`;
+                fs.writeFile(writefilepath,wholeBinary,(err)=>{
+                    if(err){
+                        reject(err);
+                    }
+                    this.segmentReceiver.deleteContainerFromImageID(metaParams.id);
+                    resolve(writefilepath);
+                });
+            });
+        }
+
+        runTileimageShell(filepath, metaParams){
+            return new Promise((resolve,reject)=>{
+                const batCmd = (()=>{
+                    console.log("server os:",process.platform);
+                    if(process.platform==='win32'){
+                        return `cd ../bin/ && tileimage.bat ${filepath}  ${metaParams.creator}`;
+                    }else if(process.platform==='linux'){
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }else if(process.platform==='darwin'){
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }else{
+                        return `sh ../bin/tileimage.sh ${filepath}`;
+                    }
+                })();
+
+                if(process.platform==='win32'){
+                    child_process.exec(batCmd,(err,stdout,stderr)=>{
+                        if(err){
+                            console.log(stderr);
+                            reject(err);
+                        }
+                        resolve();
+                    });
+                }else{
+                    const command = child_process.spawn("sh", [`../bin/tileimage.sh`, `${filepath}`, `${metaParams.creator}`]);
+                    command.stdout.on("data",(stdout)=>{
+                        console.log(stdout.toString());
+                    });
+                    command.on("close",(code)=>{
+                        console.log(`[runTileimageShell] close code:${code}`);
+                        resolve();
+                    });
+                }
+            });
+        }
+
+        removeTileimageFile(filepath){
+            return new Promise((resolve,reject)=>{
+                fs.unlink(filepath,(err)=>{
+                    if(err){
+                        console.log(stderr);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            });
+        }
+
+        deleteTileimageContainerFromSocketID(socketID){
+            this.segmentReceiver.deleteContainerFromSocketID(socketID);
+        }
     }
 
     module.exports = Executer;

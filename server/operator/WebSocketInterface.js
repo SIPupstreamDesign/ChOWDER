@@ -63,6 +63,18 @@
                 }
             }
 
+            ws_connector.on(Command.GetLoginUserList, (data, resultCallback) => {
+                this.commandOperator.getLoginUserList(data, resultCallback);
+            });
+
+            ws_connector.on(Command.GetSelfStatus, (data, resultCallback, socketid) => {
+                this.commandOperator.getSelfStatus(socketid, data, resultCallback);
+            });
+
+            ws_connector.on(Command.UpdateLoginUserControllerID, (data, resultCallback, socketid) => {
+                this.commandOperator.updateLoginUserControllerID(socketid, data, resultCallback);
+            });
+
             ws_connector.on(Command.AddMetaData, (data, resultCallback) => {
                 this.commandOperator.addMetaData(data, resultCallback);
             });
@@ -138,7 +150,16 @@
                 }
             });
 
+            ws_connector.on(Command.ReloadDisplay, (data, resultCallback) => {
+                console.log("ReloadDisplay")
+                ws_connector.broadcast(ws, Command.ReloadDisplay, data);
+                if (resultCallback) {
+                    resultCallback();
+                }
+            });
+
             ws_connector.on(Command.SendMessage, (data, resultCallback) => {
+                console.log('SendMessage');
                 ws_connector.broadcast(ws, Command.SendMessage, data);
                 if (resultCallback) {
                     resultCallback();
@@ -264,6 +285,17 @@
                 if (resultCallback) {
                     resultCallback();
                 }
+            });
+
+            ws_connector.on(Command.Upload, (data, resultCallback) => {
+                console.log("[WebsocketInterface]upload")
+                let metaData = data.metaData,
+                    binaryData = data.contentData;
+                this.commandOperator.upload(metaData, binaryData, resultCallback);
+            });
+
+            ws_connector.on(Command.UploadTileimage, (data, resultCallback, socketID) => {
+                this.commandOperator.receiveTileimage(data.metaData, data.contentData, socketID, resultCallback);
             });
 
             ws_connector.registerEvent(ws, ws_connection);

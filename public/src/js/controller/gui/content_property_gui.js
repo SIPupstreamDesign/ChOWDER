@@ -235,7 +235,7 @@ class ContentPropertyGUI extends EventEmitter {
 
 		this.store = store;
 		this.action = action;
-        this.previewArea = previewArea;
+		this.previewArea = previewArea;
 
 		this.colorselector = null;
 		this.authority = this.store.getManagement().getAuthorityObject();
@@ -251,14 +251,178 @@ class ContentPropertyGUI extends EventEmitter {
 				displayVisibleCheck.checked = String(metaData.visible) === "true";
 			}
 		});
-		
+
 		this.store.on(Store.EVENT_CONTENT_VISIBLE_CHANGED, (err, metaData) => {
 			let contentVisibleCheck = document.getElementsByClassName('content_visible')[0];
 			if (contentVisibleCheck) {
-				contentVisibleCheck.checked = String(metaData.visible) === "true";
+				let setValue = metaData.visible;
+				if (metaData.length > 1) {
+					setValue = metaData[metaData.length - 1].visible;
+				}
+				contentVisibleCheck.checked = String(setValue) === "true";
+			}
+		})
+
+		this.store.on(Store.EVENT_CONTENT_DISPLAY_TIME_CHANGED, (err, metaData) => {
+			let contentDisplayTimeCheck = document.getElementsByClassName('display_time')[0];
+			if (contentDisplayTimeCheck) {
+				contentDisplayTimeCheck.checked = String(metaData.display_time) === "true";
 			}
 		})
 	}
+
+
+	setIDLabel(str) {
+		let idlabel = document.getElementById('content_id_label');
+		if (idlabel) {
+			idlabel.innerHTML = str;
+		}
+	}
+
+	setIDLabel2(str) {
+		let idlabel = document.getElementById('controller_id_label');
+		if (idlabel) {
+			idlabel.innerHTML = str;
+		}
+	}
+
+	setID(str) {
+		let content_id = document.getElementById('content_id');
+		if (content_id) {
+			content_id.innerHTML = str;
+		}
+	}
+
+	setID2(str) {
+		let content_id = document.getElementById('controller_id');
+		if (content_id) {
+			content_id.innerHTML = str;
+		}
+	}
+
+	setGroupLabel(str) {
+		let grouplabel = document.getElementById('group_name_label');
+		if (grouplabel) {
+			grouplabel.innerHTML = str;
+		}
+	}
+
+	setGroupName(str) {
+		let group_name = document.getElementById('group_name');
+		if (group_name) {
+			group_name.innerHTML = str;
+		}
+	}
+
+	showVideoInfo(isShow) {
+		let video_info = document.getElementById('video_info');
+		if (video_info) {
+			if (isShow) {
+				video_info.style.display = "block";
+			} else {
+				video_info.style.display = "none";
+			}
+		}
+	}
+
+	showDownloadButton(isShow, url) {
+		let download_button = document.getElementById('download_button');
+		if (download_button) {
+			if (isShow) {
+				download_button.style.display = "block";
+				download_button.href = url;
+				download_button.target = "_blank";
+			} else {
+				download_button.style.display = "none";
+			}
+		}
+	}
+
+	showMetaLabel(isShow) {
+		let metalabel = document.getElementById("meta_info");
+		if (metalabel) {
+			if (isShow) {
+				metalabel.style.display = "block";
+			} else {
+				metalabel.style.display = "none";
+			}
+		}
+	}
+
+	showBackupArea(isShow) {
+		let backup_area = document.getElementById("backup_area");
+		if (backup_area) {
+			if (isShow) {
+				backup_area.style.display = "block";
+			} else {
+				backup_area.style.display = "none";
+			}
+		}
+	}
+
+	showColorPicker(isShow) {
+		let color_picker = document.getElementById('color_picker');
+		if (color_picker) {
+			if (isShow) {
+				color_picker.style.display = "block";
+			} else {
+				color_picker.style.display = "none";
+			}
+		}
+	}
+
+	showHistoryArea(isShow) {
+		let history_area = document.getElementById('history_area');
+		let history_slider_area = document.getElementById('history_slider_area');
+		if (history_area && history_slider_area) {
+			if (isShow) {
+				history_area.style.display = "block";
+				history_slider_area.style.display = "block";
+			} else {
+				history_area.style.display = "none";
+				history_slider_area.style.display = "none";
+			}
+		}
+	}
+
+	disableHistoryArea(isDisable) {
+		let history_area = document.getElementById('history_area');
+		let history_slider_area = document.getElementById('history_slider_area');
+		history_area.disabled = isDisable;
+		history_slider_area.disabled = isDisable;
+	}
+
+	showAlignmentArea(isShow) {
+		let align_area = document.getElementById("alignment_area");
+		if (align_area) {
+			if (isShow && (this.authority.isAdmin() || this.store.managementStore.userStatus.groupID == "Moderator" )) {
+				align_area.style.display = "block";
+			} else {
+				align_area.style.display = "none";
+			}
+		}
+	}
+
+	disableRestoreButton(isDisable) {
+		let restore_button = document.getElementById('backup_restore');
+		restore_button.disabled = isDisable;
+	}
+
+	isEditableContent(metaData) {
+		if (Validator.isWindowType(metaData)) {
+			return this.authority.isDisplayEditable(metaData.group);
+		} else if (Validator.isVirtualDisplayType(metaData)) {
+			return this.authority.isDisplayEditable(metaData.group);
+		} else {
+			return this.authority.isEditable(metaData.group);
+		}
+	}
+
+	isAlwaysOnTop(zIndex) {
+		return (Number(zIndex) === Constants.ZIndexAlwaysOnTopValue)
+			|| (String(zIndex) === Constants.ZIndexAlwaysOnTopString);
+	}
+
 	/**
 	 * Property表示領域初期化。selectされたtypeに応じて作成されるelementが変更される。
 	 * @method initPropertyArea
@@ -268,189 +432,182 @@ class ContentPropertyGUI extends EventEmitter {
 	 * @param {Boolean} isOwnVideo 動画を所有しているかどうか(optional)
 	 */
 	initPropertyArea(metaData, groupName, type, isOwnVideo) {
-		let transform_input = document.getElementById('transform_input'), 
-			user_data_input = document.getElementById('user_data_input'), 
-			video_info = document.getElementById('video_info'), 
-			video_input = document.getElementById('video_input'), 
-			idlabel = document.getElementById('content_id_label'),
-			grouplabel = document.getElementById('group_name_label'), 
-			idtext = document.getElementById('content_id'),
-			group_name = document.getElementById('group_name'), 
-			download_button = document.getElementById('download_button'), 
-			metalabel = document.getElementById("meta_info"), 
-			backup_area = document.getElementById("backup_area"), 
-			content_id = document.getElementById('content_id'), 
-			color_picker = document.getElementById('color_picker'), 
-			restore_button = document.getElementById('backup_restore'), 
-			history_area = document.getElementById('history_area'), 
-			history_slider_area = document.getElementById('history_slider_area'), 
-			extension, 
-			rectChangeFunc = (evt) => {
-				this.action.changeContentTransform(this.getContentTransform());
-			},
-			isEditableContent;
+		let rectChangeFunc = (evt) => {
+			this.action.changeContentTransform(this.getContentTransform());
+		};
 
-		if (Validator.isWindowType(metaData)) {
-			isEditableContent = this.authority.isDisplayEditable(metaData.group);
+		const isEditable = this.isEditableContent(metaData);
+		this.disableRestoreButton(!isEditable);
+		this.disableHistoryArea(!isEditable);
+		this.setID(metaData.id ? metaData.id : "");
+		this.setID2(metaData.creator ? metaData.creator : "");
+		this.setGroupName(groupName ? groupName : "");
+
+		{
+			let transform_input = document.getElementById('transform_input');
+			let user_data_input = document.getElementById('user_data_input');
+			let video_input = document.getElementById('video_input');
+			transform_input.innerHTML = "";
+			user_data_input.innerHTML = "";
+			video_input.innerHTML = "";
 		}
-		else {
-			isEditableContent = this.authority.isEditable(metaData.group);
-		}
-		restore_button.disabled = !isEditableContent;
-		history_area.disabled = !isEditableContent;
-		history_slider_area.disabled = !isEditableContent;
-		if (metaData.id) {
-			content_id.innerHTML = metaData.id;
-		}
-		else {
-			content_id.innerHTML = "";
-		}
-		if (groupName) {
-			group_name.innerHTML = groupName;
-		}
-		else {
-			group_name.innerHTML = "";
-		}
-		transform_input.innerHTML = "";
-		user_data_input.innerHTML = "";
-		video_input.innerHTML = "";
-		video_info.style.display = "none";
+
+		this.showVideoInfo(false);
 		if (type === Constants.PropertyTypeDisplay) {
-			idlabel.innerHTML = "Display ID:";
-			addCheckProperty(isEditableContent, 'display_visible', 'visible', String(metaData.visible) === "true", () => {
-				metaData.visible = document.getElementsByClassName('display_visible')[0].checked;
-				this.action.changeDisplayVisible(metaData);
+			this.setIDLabel("Display ID:");
+			addCheckProperty(isEditable, 'display_visible', 'visible', String(metaData.visible) === "true", () => {
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('display_visible')[0].checked;
+				this.action.changeDisplayVisible(meta);
 			});
-			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
-			addTextInputProperty(isEditableContent, 'content_text', "");
-			download_button.style.display = "none";
-			metalabel.style.display = "block";
-			backup_area.style.display = "none";
-			history_area.style.display = "none";
-			history_slider_area.style.display = "none";
-			color_picker.style.display = isEditableContent ? "block" : "none";
+			this.setIDLabel2("");
+			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addTextInputProperty(isEditable, 'content_text', "");
+			this.showDownloadButton(false);
+			this.showMetaLabel(true);
+			this.showBackupArea(false);
+			this.showHistoryArea(false);
+			this.showColorPicker(isEditable);
+			this.showAlignmentArea(false);
 		}
 		else if (Validator.isVirtualDisplayType(metaData)) {
-			isEditableContent = this.authority.isDisplayEditable(metaData.group);
-			idlabel.innerHTML = "Virtual Display Setting";
-			idtext.innerHTML = "";
-			grouplabel.innerHTML = "";
-			addInputProperty(isEditableContent, 'whole_width', 'w', 'px', '1000', () => {
+			this.setIDLabel("Virtual Display Setting");
+			this.setIDLabel2("");
+			this.setID("");
+			this.setID2("");
+			this.setGroupLabel("");
+			addInputProperty(isEditable, 'whole_width', 'w', 'px', '1000', () => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
-			addInputProperty(isEditableContent, 'whole_height', 'h', 'px', '900', () => {
+			addInputProperty(isEditable, 'whole_height', 'h', 'px', '900', () => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
-			addInputProperty(isEditableContent, 'whole_split_x', 'split x', '', '1', (evt) => {
+			addInputProperty(isEditable, 'whole_split_x', 'split x', '', '1', (evt) => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
-			addInputProperty(isEditableContent, 'whole_split_y', 'split y', '', '1', (evt) => {
+			addInputProperty(isEditable, 'whole_split_y', 'split y', '', '1', (evt) => {
 				this.action.changeDisplayProperty(this.getDisplayValues());
 			});
 			//addTextInputProperty('content_text', "");
-			download_button.style.display = "none";
-			metalabel.style.display = "none";
-			backup_area.style.display = "none";
-			history_area.style.display = "none";
-			history_slider_area.style.display = "none";
-			color_picker.style.display = "none";
+			this.showDownloadButton(false);
+			this.showMetaLabel(false);
+			this.showBackupArea(false);
+			this.showHistoryArea(false);
+			this.showAlignmentArea(false);
+			this.showColorPicker(false);
 		}
 		else if (type === Constants.PropertyTypeMultiDisplay || type === Constants.PropertyTypeMultiContent) {
-			idlabel.innerHTML = "Content ID:";
-			idtext.innerHTML = "";
-			grouplabel.innerHTML = "";
-			addInputProperty(isEditableContent, 'multi_transform_z', 'z', 'index', '', () => {
+			this.setIDLabel("Content ID:");
+			this.setIDLabel2("Controller ID:");
+			this.setID("");
+			this.setID2("");
+			this.setGroupLabel("");
+			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('content_visible')[0].checked;
+				this.action.changeContentVisibleMulti(meta);
+			});
+			addInputProperty(isEditable, 'multi_transform_z', 'z', 'index', '', () => {
 				let multiZ = document.getElementById('multi_transform_z');
 				let val = parseInt(multiZ.value, 10);
 				this.action.changeContentIndex({
-					zIndex : val
+					zIndex: val
 				});
 			});
-			download_button.style.display = "none";
-			metalabel.style.display = "none";
-			backup_area.style.display = "none";
-			history_area.style.display = "none";
-			history_slider_area.style.display = "none";
-			color_picker.style.display = "none";
+			this.showDownloadButton(false);
+			this.showMetaLabel(false);
+			this.showBackupArea(false);
+			this.showHistoryArea(false);
+			this.showAlignmentArea(true);
+			this.showColorPicker(false);
 		}
 		else if (type === Constants.PropertyTypeLayout) {
-			idlabel.innerHTML = "Layout ID:";
-			download_button.style.display = "none";
-			grouplabel.innerHTML = "Group:";
-			if (metalabel) {
-				metalabel.style.display = "block";
-			}
-			addTextInputProperty(isEditableContent, 'content_text', "");
-			backup_area.style.display = "none";
-			history_area.style.display = "none";
-			history_slider_area.style.display = "none";
-			color_picker.style.display = "none";
+			this.setIDLabel("Layout ID:");
+			this.setID2("");
+			this.setIDLabel2("");
+			this.showDownloadButton(false);
+			this.setGroupLabel("Group:");
+			this.showMetaLabel(true);
+			addTextInputProperty(isEditable, 'content_text', "");
+			this.showBackupArea(false);
+			this.showHistoryArea(false);
+			this.showAlignmentArea(false);
+			this.showColorPicker(false);
 		}
 		else { // content (text, image, url... )
-			idlabel.innerHTML = "Content ID:";
-			grouplabel.innerHTML = "Group:";
-			addCheckProperty(isEditableContent, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
-				metaData.visible = document.getElementsByClassName('content_visible')[0].checked;
-				this.action.changeContentVisible(metaData);
+			this.setIDLabel("Content ID:");
+			this.setIDLabel2("Controller ID:");
+			this.setGroupLabel("Group:");
+			addCheckProperty(isEditable, 'content_visible', 'visible', String(metaData.visible) === "true", () => {
+				let meta = this.store.getMetaData(metaData.id);
+				meta.visible = document.getElementsByClassName('content_visible')[0].checked;
+				this.action.changeContentVisible(meta);
 			});
-			addInputProperty(isEditableContent, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
-			addInputProperty(isEditableContent, 'content_transform_z', 'z', 'index', '0', () => {
+			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_w', 'w', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_h', 'h', 'px', '0', rectChangeFunc);
+			addInputProperty(isEditable, 'content_transform_z', 'z', 'index', '0', () => {
 				let transz = document.getElementById('content_transform_z');
-				let val = parseInt(transz.value, 10);
-				this.action.changeContentIndex({
-					zIndex : val
-				});
+				if (this.isAlwaysOnTop(transz.value)) {
+					document.getElementsByClassName('always_on_top')[0].checked = true;
+				} else {
+					let val = parseInt(transz.value, 10);
+					this.action.changeContentIndex({
+						zIndex: val
+					});
+				}
 			});
-			addTextInputProperty(isEditableContent, 'content_text', "");
-			download_button.style.display = "block";
-			download_button.href = "download?" + metaData.id;
-			download_button.target = "_blank";
-			if (type === Constants.PropertyTypePDF) {
-				download_button.download = metaData.id + ".pdf";
-			}
-			else if (type === Constants.PropertyTypeText) {
-				download_button.download = metaData.id + ".txt";
-			}
-			else {
-				// image or url
-				if (metaData.mime) {
-					extension = metaData.mime.split('/')[1];
-					download_button.download = metaData.id + "." + extension;
+			const isTop = this.isAlwaysOnTop(metaData.zIndex);
+			addCheckProperty(isEditable, 'always_on_top', 'AlwaysOnTop', isTop, () => {
+				let transz = document.getElementById('content_transform_z');
+				if (document.getElementsByClassName('always_on_top')[0].checked) {
+					this.action.changeContentIndex({
+						zIndex: Constants.ZIndexAlwaysOnTopValue
+					});
+					transz.disabled = true;
+				} else {
+					this.action.changeContentIndex({
+						zIndex: 0
+					});
+					transz.disabled = false;
 				}
-				else {
-					download_button.download = metaData.id + ".img";
-				}
+			});
+			if (isTop) {
+				const transz = document.getElementById('content_transform_z');
+				transz.disabled = true;
 			}
-			if (metalabel) {
-				metalabel.style.display = "block";
+			if (metaData.type === Constants.TypeWebGL) {
+				addCheckProperty(isEditable, 'display_time', 'display time', String(metaData.display_time) === "true", () => {
+					let meta = this.store.getMetaData(metaData.id);
+					meta.display_time = document.getElementsByClassName('display_time')[0].checked;
+					this.action.changeContentDisplayTime(meta);
+				});
 			}
+			addTextInputProperty(isEditable, 'content_text', "");
+			this.showDownloadButton(true, "download?" + metaData.id);
+			this.showMetaLabel(true);
 			if (type !== "" && type !== Constants.PropertTypeContent && metaData.type !== Constants.TypeTileImage) {
-				backup_area.style.display = "block";
+				this.showBackupArea(true);
 			}
 			if (metaData.type === Constants.TypeTileImage) {
-				download_button.style.display = "none";
+				this.showDownloadButton(false);
 				if (metaData.hasOwnProperty('keyvalue')) {
-					history_area.style.display = "block";
-					history_slider_area.style.display = "block";
+					this.showHistoryArea(true);
 				}
 			}
 			else {
-				history_area.style.display = "none";
-				history_slider_area.style.display = "none";
+				this.showHistoryArea(false);
 			}
-			color_picker.style.display = "none";
+			this.showColorPicker(false);
 			if (type === Constants.PropertTypeVideo && metaData.subtype) {
 				// 動画の場合、差し替え履歴、ダウンロード非表示
-				backup_area.style.display = "none";
-				history_area.style.display = "none";
-				history_slider_area.style.display = "none";
-				download_button.style.display = "none";
+				this.showBackupArea(false);
+				this.showHistoryArea(false);
+				this.showDownloadButton(false);
 				// 動画専用プロパティを追加設定
 				if (isOwnVideo) {
 					if (metaData.hasOwnProperty('use_datachannel') && String(metaData.use_datachannel) === "true") {
@@ -458,14 +615,15 @@ class ContentPropertyGUI extends EventEmitter {
 
 					} else {
 						// webrtc動画用 設定エリアを表示
-						video_info.style.display = "block";
-						this.initVideoPropertyArea(isEditableContent, metaData, type);
+						this.showVideoInfo(true);
+						this.initVideoPropertyArea(isEditable, metaData, type);
 					}
 				}
 			}
+			this.showAlignmentArea(false);
 		}
 	}
-	initVideoPropertyArea(isEditableContent, metaData, type) {
+	initVideoPropertyArea(isEditable, metaData, type) {
 		if (!navigator.mediaDevices) {
 			// IEなど
 			return
@@ -492,58 +650,58 @@ class ContentPropertyGUI extends EventEmitter {
 				}
 				if (metaData.subtype === "camera") {
 					addVideoTextLabel('video_select_video_title', i18next.t('video_input'));
-					addVideoSelectProperty(isEditableContent, 'video_select_input_video', videos, metaData.video_device, (deviceID) => {
+					addVideoSelectProperty(isEditable, 'video_select_input_video', videos, metaData.video_device, (deviceID) => {
 						this.action.changeVideoDevice({
-							id : metaData.id,
-							deviceInfo : this.getDeviceInfo(metaData)
+							id: metaData.id,
+							deviceInfo: this.getDeviceInfo(metaData)
 						});
 					});
 					addVideoTextLabel('video_select_audio_title', i18next.t('audio_input'));
-					addVideoSelectProperty(isEditableContent, 'video_select_input_audio', audios, metaData.audio_device, (deviceID) => {
+					addVideoSelectProperty(isEditable, 'video_select_input_audio', audios, metaData.audio_device, (deviceID) => {
 						this.action.changeAudioDevice({
-							id : metaData.id,
-							deviceInfo : this.getDeviceInfo(metaData)
+							id: metaData.id,
+							deviceInfo: this.getDeviceInfo(metaData)
 						});
 					});
 				}
 				addVideoTextLabel('video_select_quality_title', i18next.t('video_quality'));
-				addVideoSelectProperty(isEditableContent, 'video_select_input_quality', videoQualities, 50, (val) => {
+				addVideoSelectProperty(isEditable, 'video_select_input_quality', videoQualities, 50, (val) => {
 					this.updateQualityDisplay();
 					this.action.changeVideoQuality({
-						id : metaData.id,
-						quality : this.getVideoQualityValues(metaData.id)
+						id: metaData.id,
+						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_min", i18next.t("min_bitrate"), "kbps", "300", () => {
+				addVideoQualityProperty(isEditable, "video_quality", "video_quality_min", i18next.t("min_bitrate"), "kbps", "300", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id,
-						quality : this.getVideoQualityValues(metaData.id)
+						id: metaData.id,
+						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "video_quality", "video_quality_max", i18next.t("max_bitrate"), "kbps", "1000", () => {
+				addVideoQualityProperty(isEditable, "video_quality", "video_quality_max", i18next.t("max_bitrate"), "kbps", "1000", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id,
-						quality : this.getVideoQualityValues(metaData.id)
+						id: metaData.id,
+						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
 				addVideoTextLabel('video_select_quality_title', i18next.t('audio_quality'));
-				addVideoSelectProperty(isEditableContent, 'audio_select_input_quality', audioQualities, 100, (val) => {
+				addVideoSelectProperty(isEditable, 'audio_select_input_quality', audioQualities, 100, (val) => {
 					this.updateQualityDisplay()
 					this.action.changeVideoQuality({
-						id : metaData.id,
-						quality : this.getVideoQualityValues(metaData.id)
+						id: metaData.id,
+						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_min", i18next.t("min_bitrate"), "kbps", "50", () => {
+				addVideoQualityProperty(isEditable, "audio_quality", "audio_quality_min", i18next.t("min_bitrate"), "kbps", "50", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id,
-						quality : this.getVideoQualityValues(metaData.id)
+						id: metaData.id,
+						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
-				addVideoQualityProperty(isEditableContent, "audio_quality", "audio_quality_max", i18next.t("max_bitrate"), "kbps", "300", () => {
+				addVideoQualityProperty(isEditable, "audio_quality", "audio_quality_max", i18next.t("max_bitrate"), "kbps", "300", () => {
 					this.action.changeVideoQuality({
-						id : metaData.id,
-						quality : this.getVideoQualityValues(metaData.id)
+						id: metaData.id,
+						quality: this.getVideoQualityValues(metaData.id)
 					});
 				});
 				if (metaData.hasOwnProperty('webrtc_status')) {
@@ -574,18 +732,19 @@ class ContentPropertyGUI extends EventEmitter {
 				console.error('enumerateDevide ERROR:', err);
 			});
 	}
+
 	submitText(endcallback) {
 		let content_text = document.getElementById('content_text');
 		if (content_text && !content_text.disabled) {
-			
+
 			let id = this.store.getState().getSelectedID();
 			if (id && this.store.hasMetadata(id)) {
 				let metaData = this.store.getMetaData(id);
-				
+
 				let newData = JSON.stringify({ text: content_text.value });
 				if (newData !== metaData.user_data_text) {
 					metaData.user_data_text = newData;
-						
+
 					if (Validator.isTextType(metaData)) {
 						// テキストのメモ変更.
 						// テキストはコンテンツ部分にも同じテキストがあるので更新.
@@ -595,53 +754,39 @@ class ContentPropertyGUI extends EventEmitter {
 						this.previewArea.appendChild(elem);
 						metaData.orgWidth = elem.offsetWidth / Vscreen.getWholeScale();
 						metaData.orgHeight = elem.offsetHeight / Vscreen.getWholeScale();
-					
+
 						// テキストのメモ変更.
 						// テキストはコンテンツ部分にも同じテキストがあるので更新.
 						this.action.correctContentAspect({
-							metaData : metaData,
-							callback : () => {
+							metaData: metaData,
+							callback: () => {
 								//console.error("metaData", metaData)
 								this.action.changeContentMetaInfo({
-									metaData : metaData,
-									contentData : content_text.value,
-									callback : endcallback
+									metaData: metaData,
+									contentData: content_text.value,
+									callback: endcallback
 								})
 							}
 						})
 						this.previewArea.removeChild(elem);
 					} else {
 						this.action.changeContentMetaInfo({
-							metaData : metaData,
-							contentData : content_text.value,
-							callback : endcallback
+							metaData: metaData,
+							contentData: content_text.value,
+							callback: endcallback
 						})
 					}
 				}
 			}
 		}
 	}
-	/**
-	 * Propertyエリアパラメータ消去
-	 * @method clearProperty
-	 */
-	clear(updateText) {
-		let content_text = document.getElementById('content_text');
-		if (content_text && updateText) {
-			this.submitText(() => {
-				this.clear(false);
-			});
-		}
+
+	clearTransform() {
 		let transx = document.getElementById('content_transform_x');
 		let transy = document.getElementById('content_transform_y');
 		let transw = document.getElementById('content_transform_w');
 		let transh = document.getElementById('content_transform_h');
 		let transz = document.getElementById('content_transform_z');
-		let dlbtn = document.getElementById('download_button');
-		let content_id = document.getElementById('content_id');
-		let backup_area = document.getElementById("backup_area");
-		let history_area = document.getElementById("history_area");
-		let history_slider_area = document.getElementById("history_slider_area");
 		if (transx) {
 			transx.value = 0;
 			transx.disabled = true;
@@ -662,33 +807,44 @@ class ContentPropertyGUI extends EventEmitter {
 			transz.value = 0;
 			transz.disabled = true;
 		}
-		if (content_id) {
-			content_id.innerHTML = "";
-		}
-		if (dlbtn) {
-			dlbtn.style.display = 'none';
-		}
+	}
+
+	clearContentText() {
+		let content_text = document.getElementById('content_text');
 		if (content_text) {
 			content_text.value = "";
 			content_text.disabled = true;
 		}
-		if (backup_area) {
-			backup_area.style.display = "none";
-		}
-		if (history_area) {
-			history_area.style.display = "none";
-		}
-		if (history_slider_area) {
-			history_slider_area.style.display = "none";
-		}
 	}
+
+	/**
+	 * Propertyエリアパラメータ消去
+	 * @method clearProperty
+	 */
+	clear(updateText) {
+		let content_text = document.getElementById('content_text');
+		if (content_text && updateText) {
+			this.submitText(() => {
+				this.clear(false);
+			});
+		}
+		this.setID("");
+		this.setID2("");
+		this.clearTransform();
+		this.clearContentText();
+		this.showDownloadButton(false);
+		this.showBackupArea(false);
+		this.showHistoryArea(false);
+		this.showAlignmentArea(false);
+	}
+
 	init(metaData, groupName, type, isOwnVideo) {
 		if (!this.colorselector) {
 			this.colorselector = new ColorSelector((colorvalue) => {
 				let colorstr = "rgb(" + colorvalue[0] + "," + colorvalue[1] + "," + colorvalue[2] + ")";
 				// ディスプレイ枠色変更
 				this.action.changeDisplayColor({
-					color : colorstr
+					color: colorstr
 				});
 			}, 234, 120); // 幅、高さ
 			let color_picker = document.getElementById('color_picker');
@@ -706,8 +862,127 @@ class ContentPropertyGUI extends EventEmitter {
 				this.restoreContent(index);
 			}
 		};
+
+		/*
+		let alignLeft_button  = document.getElementById('align_left');
+		alignLeft_button.onclick = () => {this.setAllign("left")};
+
+		let alignRight_button  = document.getElementById('align_right');
+		alignRight_button.onclick = () => {this.setAllign("right")};
+		*/
+
+		let aligngrid_button = document.getElementById('align_grid');
+		aligngrid_button.onclick = () => { this.setAllignGrid() };
+
 		this.initPropertyArea(metaData, groupName, type, isOwnVideo);
 	}
+
+	setAllignGrid() {
+		let metaDataList = [];
+		this.store.getState().for_each_selected_id((i, id) => {
+			if (this.store.hasMetadata(id)) {
+				let metaData = this.store.getMetaData(id);
+				metaDataList.push(metaData);
+			}
+		});
+		if (metaDataList.length > 0) {
+			// gridレイアウトを取得			
+			let splitWholeBase = Vscreen.getSplitWholeByPos(0, 0);
+			for (let cnt = 0; cnt < metaDataList.length; cnt++) {
+				// セットする座標を探す
+				let elem = document.getElementById(metaDataList[cnt].id);
+
+				let x = cnt % splitWholeBase.splits.x;
+				let y = Math.floor(cnt / splitWholeBase.splits.x);
+				// ↓は「一番近いグリッドに寄せる」機能になっている。これはこれで使えそうなのでコメントで残している
+				// let splitWhole = Vscreen.getSplitWholeByPos(metaDataList[cnt].posx, metaDataList[cnt].posy);
+
+				let splitWhole = Vscreen.getSplitWholeByPos(splitWholeBase.w * x,splitWholeBase.h * y);
+				if (!splitWhole) {
+					splitWhole = {
+						x:splitWholeBase.w * x,
+						y:splitWholeBase.h * y,
+						w:splitWholeBase.w,
+						h:splitWholeBase.h 
+					};
+				}
+				this.action.snapContentToScreen({
+					element: elem,
+					metaData: metaDataList[cnt],
+					screen: splitWhole
+				});
+				this.store.operation.updateMetadata(metaDataList[cnt]);
+			}			
+			// this.store.operation.updateMetadataMulti(metaDataList);
+		}
+	}
+
+	setAllign(_flg) {
+		let metaDataList = [];
+		this.store.getState().for_each_selected_id((i, id) => {
+			if (this.store.hasMetadata(id)) {
+				let metaData = this.store.getMetaData(id);
+				metaDataList.push(metaData);
+			}
+		});
+		if (metaDataList.length > 0) {
+			// セットする座標を探す
+			let targetPos = -65535;
+			// 左寄せ or 上寄せの場合は、最小値を探す必要があるので最大値をセットする
+			if (_flg == "left" || _flg == "top") {
+				targetPos *= -1;
+			}
+			if (_flg == "cent1" || _flg == "cent2") { }
+
+			// 各セット地点を探す
+			for (let cnt = 0; cnt < metaDataList.length; cnt++) {
+				if (_flg == "left") {
+					if (metaDataList[cnt].posx < targetPos) {
+						targetPos = metaDataList[cnt].posx;
+					}
+				} else if (_flg == "top") {
+					if (metaDataList[cnt].posy < targetPos) {
+						targetPos = metaDataList[cnt].posy;
+					}
+				} else if (_flg == "right") {
+					if (metaDataList[cnt].posx + metaDataList[cnt].width > targetPos) {
+						targetPos = Number(metaDataList[cnt].posx) + Number(metaDataList[cnt].width);
+					}
+				} else if (_flg == "bottom") {
+					if (metaDataList[cnt].posy + metaDataList[cnt].height > targetPos) {
+						targetPos = Number(metaDataList[cnt].posy) + Number(metaDataList[cnt].height);
+					}
+				} else if (_flg == "cent1") {
+					targetPos += metaDataList[cnt].posx;
+				} else if (_flg == "cent2") {
+					targetPos += metaDataList[cnt].posy;
+				}
+			}
+
+			if (_flg == "cent1" || _flg == "cent1") {
+				targetPos = targetPos / metaDataList.length;
+			}
+
+			//実際の値のセット
+			for (let cnt = 0; cnt < metaDataList.length; cnt++) {
+				if (_flg == "left") {
+					metaDataList[cnt].posx = targetPos;
+				} else if (_flg == "top") {
+					metaDataList[cnt].posy = targetPos;
+				} else if (_flg == "right") {
+					metaDataList[cnt].posx = targetPos - Number(metaDataList[cnt].width);
+				} else if (_flg == "bottom") {
+					metaDataList[cnt].posy = targetPos - Number(metaDataList[cnt].height);
+				} else if (_flg == "cent1") {
+
+				} else if (_flg == "cent2") {
+
+				}
+			}
+			this.store.operation.updateMetadataMulti(metaDataList);
+		}
+	}
+
 	/**
 	 * 選択されているVirtualDisplayをPropertyエリアのパラメータに設定
 	 * @method assignVirtualDisplay
@@ -730,7 +1005,7 @@ class ContentPropertyGUI extends EventEmitter {
 			wholeSplitY.value = splitCount.y;
 		}
 	}
-	
+
 	/**
 	 * メタデータをPropertyエリアに反映
 	 * @method assignContentProperty
@@ -761,6 +1036,9 @@ class ContentPropertyGUI extends EventEmitter {
 		}
 		if (transz && metaData.hasOwnProperty('zIndex')) {
 			transz.value = parseInt(metaData.zIndex, 10);
+			if (metaData.zIndex == Constants.ZIndexAlwaysOnTopValue) {
+				transz.value = Constants.ZIndexAlwaysOnTopString;
+			}
 		}
 		// メタ情報
 		if (metaData.hasOwnProperty('user_data_text')) {
@@ -993,13 +1271,13 @@ class ContentPropertyGUI extends EventEmitter {
 					if (history_sync_button.classList.contains('history_sync_on')) {
 						history_sync_button.classList.remove('history_sync_on');
 						this.action.syncContent({
-							isSync : false
+							isSync: false
 						});
 					}
 					else {
 						history_sync_button.classList.add('history_sync_on');
 						this.action.syncContent({
-							isSync : true
+							isSync: true
 						});
 					}
 				};
@@ -1023,8 +1301,8 @@ class ContentPropertyGUI extends EventEmitter {
 			if (res === "yes" || res === "no") {
 				let isRestore = (res === "yes");
 				this.action.restoreContent({
-					isRestore : isRestore,
-					restoreIndex : restoreIndex
+					isRestore: isRestore,
+					restoreIndex: restoreIndex
 				})
 			}
 		});
@@ -1032,9 +1310,9 @@ class ContentPropertyGUI extends EventEmitter {
 
 	restoreHistoryContent(id, key, value) {
 		this.action.restoreHistoryContent({
-			id : id,
-			restoreKey : key,
-			restoreValue : value
+			id: id,
+			restoreKey: key,
+			restoreValue: value
 		});
 	}
 
@@ -1071,26 +1349,26 @@ class ContentPropertyGUI extends EventEmitter {
 			}
 		}
 		return {
-			width : w,
-			height : h,
-			centerX : cx,
-			centerY : cy,
-			splitX : ix,
-			splitY : iy,
-			scale : s
+			width: w,
+			height: h,
+			centerX: cx,
+			centerY: cy,
+			splitX: ix,
+			splitY: iy,
+			scale: s
 		};
 	}
 
 	getVideoQualityValues(metadataID) {
 		let quality = {
-			video_quality_enable : this.isVideoQualityEnable(),
-			audio_quality_enable : this.isAudioQualityEnable(),
-			raw_resolution : this.isRawResolution(),
-			screen : this.getVideoQuality(metadataID).min,
-			video : this.getVideoQuality(metadataID).min,
-			audio : this.getAudioQuality(metadataID).min,
-			video_max : this.getVideoQuality(metadataID).max,
-			audio_max : this.getAudioQuality(metadataID).max
+			video_quality_enable: this.isVideoQualityEnable(),
+			audio_quality_enable: this.isAudioQualityEnable(),
+			raw_resolution: this.isRawResolution(),
+			screen: this.getVideoQuality(metadataID).min,
+			video: this.getVideoQuality(metadataID).min,
+			audio: this.getAudioQuality(metadataID).min,
+			video_max: this.getVideoQuality(metadataID).max,
+			audio_max: this.getAudioQuality(metadataID).max
 		};
 		if (quality.video_max < quality.video) {
 			quality.video_max = quality.video;
@@ -1115,24 +1393,24 @@ class ContentPropertyGUI extends EventEmitter {
 
 	getDeviceInfo(metaData) {
 		return {
-			isCameraOn : metaData.hasOwnProperty('is_video_on') ? metaData.is_video_on : true,
-			isMicOn : metaData.hasOwnProperty('is_audio_on') ? metaData.is_audio_on : true,
-			audioDeviceID : this.getAudioDeviceID(),
-			videoDeviceID : this.getVideoDeviceID()
+			isCameraOn: metaData.hasOwnProperty('is_video_on') ? metaData.is_video_on : true,
+			isMicOn: metaData.hasOwnProperty('is_audio_on') ? metaData.is_audio_on : true,
+			audioDeviceID: this.getAudioDeviceID(),
+			videoDeviceID: this.getVideoDeviceID()
 		}
 	}
 
 	getContentTransform() {
 		let elem = this.getSelectedElem();
 		return {
-			posx : document.getElementById('content_transform_x').value,
-			posy : document.getElementById('content_transform_y').value,
-			width : document.getElementById('content_transform_w').value,
-			height : document.getElementById('content_transform_h').value,
-			aspect : elem.naturalHeight / elem.naturalWidth
+			posx: document.getElementById('content_transform_x').value,
+			posy: document.getElementById('content_transform_y').value,
+			width: document.getElementById('content_transform_w').value,
+			height: document.getElementById('content_transform_h').value,
+			aspect: elem.naturalHeight / elem.naturalWidth
 		}
 	}
-	
+
 	getSelectedElem() {
 		let targetID = document.getElementById('content_id').innerHTML;
 		if (targetID) {

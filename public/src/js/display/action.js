@@ -5,21 +5,19 @@
 
 "use strict";
 
-class Action extends EventEmitter
-{
-    constructor()
-    {
+class Action extends EventEmitter {
+    constructor() {
         super();
     }
 
-	// デバッグ用. release版作るときは消す
-	emit() {
-		if (arguments.length > 0) {
-			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!");
-			}
-		}
-		super.emit(...arguments);
+    // デバッグ用. release版作るときは消す
+    emit() {
+        if (arguments.length > 0) {
+            if (!arguments[0]) {
+                console.error("Not found EVENT NAME!");
+            }
+        }
+        super.emit(...arguments);
     }
 
     /**
@@ -50,6 +48,14 @@ class Action extends EventEmitter
      */
     logout(data) {
         this.emit(Action.EVENT_LOGOUT, null, data);
+    }
+
+    /**
+     * ユーザリストの再読み込み
+     * @param {*} data
+     */
+    reloadUserList(data) {
+        this.emit(Action.EVENT_RELOAD_USERLIST, null, data);
     }
 
     /**
@@ -115,7 +121,7 @@ class Action extends EventEmitter
      * コンテンツのZインデックスを一番手前にする
      * @param {*} data
      * {
-	 *    targetID : 対象のコンテンツのID
+     *    targetID : 対象のコンテンツのID
      * }
      */
     changeContentIndexToFront(data) {
@@ -126,7 +132,7 @@ class Action extends EventEmitter
      * コンテンツのTransformを変更
      * @param {*} data
      * {
-	 *    targetID : 対象のコンテンツのID
+     *    targetID : 対象のコンテンツのID
      *    x : x座標
      *    y : y座標
      * }
@@ -158,11 +164,49 @@ class Action extends EventEmitter
     getTileContent(data) {
         this.emit(Action.EVENT_GET_TILE_CONTENT, null, data);
     }
+
+    /**
+     * インラインフレームで開いたitownと通信するための関数を、コンテンツごとに登録
+     * @param {*} data
+     * {
+     *   id : metaData.id,
+     *   func : { hogeFunc : () => {}, .. }
+     * }
+     */
+    addItownFunc(data) {
+        this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
+    }
+
+    /**
+     * インラインフレームで開いたTileViewerと通信するための関数を、コンテンツごとに登録
+     * @param {*} data
+     * {
+     *   id : metaData.id,
+     *   func : { hogeFunc : () => {}, .. }
+     * }
+     */
+    addTileViewerFunc(data) {
+        this.emit(Action.EVENT_ADD_TILEVIEWER_FUNC, null, data);
+    }
+
+    updateQgisMetadata(metaData) {
+        this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
+    }
+
+    /**
+     * リモートカーソルの更新
+     * @param {*} data 
+     */
+    updateRemoteCursor(data) {
+        this.emit(Action.EVENT_UPDATE_REMOTE_CURSOR, null, data);
+    }
+
 }
 
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
+Action.EVENT_RELOAD_USERLIST = "reloadUserList";
 Action.EVENT_CHANGE_DISPLAY_ID = "changeDisplayID";
 Action.EVENT_RESIZE_WINDOW = "resizeWindow";
 Action.EVENT_DELETE_ALL_ELEMENTS = "deleteAllElements";
@@ -173,5 +217,8 @@ Action.EVENT_CHANGE_CONTENT_INDEX_TO_FRONT = "changeContentIndexToFront";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
-
+Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
+Action.EVENT_ADD_TILEVIEWER_FUNC = "addTileViewerFunc";
+Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_UPDATE_REMOTE_CURSOR = "updateRemoteCursor";
 export default Action;

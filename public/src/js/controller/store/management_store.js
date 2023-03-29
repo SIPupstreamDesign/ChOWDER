@@ -20,10 +20,11 @@ class ManagementStore {
 		this.store = store;
 
 		this.authority = null;
+		this.userStatus = null;
 		this.maxMesageSize = null;
 
 		this.globalSetting = null;
-		
+
 		// 全体設定更新時
 		this.store.on(Store.EVENT_GLOBAL_SETTING_RELOADED, (err, data) => {
 			if (data && data.hasOwnProperty('max_history_num')) {
@@ -60,7 +61,7 @@ class ManagementStore {
 		this.connector.send(Command.NewDB, data,  () => {
 		});
 	}
-	
+
 	_renameDB(data) {
 		this.connector.send(Command.RenameDB, data, () => {});
 	}
@@ -115,7 +116,7 @@ class ManagementStore {
 
 	/**
 	 * 権限変更
-	 * @param {*} data 
+	 * @param {*} data
 	 */
 	_changeAuthority(data) {
 		let callback = Store.extractCallback(data);
@@ -213,9 +214,60 @@ class ManagementStore {
 	isAdmin() {
 		return this.getAuthorityObject().isAdmin();
 	}
-	isViewable(group) {
-		return this.getAuthorityObject().isViewable(group);
+
+	isModerator(){
+		return new Promise((resolve,reject)=>{
+			this.connector.send(Command.GetSelfStatus, {}, (err, reply) => {
+				this.userStatus = reply;
+				if(this.userStatus){
+					if(this.userStatus.groupID === "Moderator"){
+						resolve(true);
+					}else{
+						resolve(false);
+					}
+				}else{
+					reject("[isModerator] Command.GetSelfStatus failure");
+				}
+			});
+		});
 	}
+
+	isViewable(group) {
+		return this.getAuthorityObject().isViewable(group) && this.isViewableSite(group);
+	}
+    /**
+     * groupのコンテンツが、displaygroupでで表示可能かどうか返す
+     * @method isViewableDisplay
+     * @param {String} group group
+     */
+    isViewableSite(group) {
+		// displayからのアクセスだった
+		let userList = this.store.getLoginStore().userList;
+		if (!userList) { return false; }
+		const displayGroup = this.store.getState().getDisplaySelectedGroup();
+		if (displayGroup === "" || displayGroup === Constants.DefaultGroup) {
+			// defaultグループだった
+			return true;
+		}
+		if (group === "" || group === Constants.DefaultGroup) {
+			// defaultグループだった
+			return true;
+		}
+        for (let i = 0; i < userList.length; ++i) {
+            const authority = userList[i];
+            if (authority.id === group) {
+                if (authority.hasOwnProperty('viewableSite')) {
+                    if (authority.viewableSite !== "all") {
+                        return authority.viewableSite.indexOf(displayGroup) >= 0;
+                    }
+                }
+                // viewableSiteの設定が無い、または"all"
+                return true;
+            }
+        }
+        return false;
+    }
+
 	isEditable(group) {
 		return this.getAuthorityObject().isEditable(group);
 	}
@@ -237,7 +289,7 @@ class ManagementStore {
 	}
 	// パフォーマンス計算を行うかどうか
 	isMeasureTimeEnable() {
-		if (this.globalSetting.enableMeasureTime) {
+		if (this.globalSetting && this.globalSetting.enableMeasureTime) {
 			return (String(this.globalSetting.enableMeasureTime) === "true");
 		}
 		return false;
