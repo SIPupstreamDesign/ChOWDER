@@ -1,0 +1,17 @@
+{
+	"id": "GSI Elevation",
+	"source": {
+		"projection": "EPSG:3857",
+		"format": "image/png",
+		"url": "https://cyberjapandata.gsi.go.jp/xyz/dem_png/%TILEMATRIX/%COL/%ROW.png",
+		"attribution": {
+			"name": "出典：国土地理院発行 標高タイル（基盤地図情報数値標高モデル）",
+			"url": "https://maps.gsi.go.jp/development/ichiran.html"
+		},
+		"tileMatrixSet": "PM",
+		"zoom": {
+			"min": 2,
+			"max": 12
+		}
+	}
+}

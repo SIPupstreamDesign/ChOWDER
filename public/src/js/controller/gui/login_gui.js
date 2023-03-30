@@ -36,7 +36,7 @@ class LoginGUI extends EventEmitter {
 			let select = this.loginMenu.getUserSelect();
 			for (let i = 0; i < userList.length; i = i + 1) {
 				if (userList[i].type !== "display" && userList[i].type !== "api" && userList[i].type !== "electron") {
-					select.addOption(userList[i].name, userList[i].name);
+					select.addOption(i, userList[i].name);
 				}
 			}
 		});
@@ -44,7 +44,7 @@ class LoginGUI extends EventEmitter {
 	}
 
 	initLoginMenu() {
-		this.loginMenu = new LoginMenu();
+		this.loginMenu = new LoginMenu(null,"Controller");
 		document.body.insertBefore(this.loginMenu.getDOM(), document.body.childNodes[0]);
 
 		// ログインが実行された場合
@@ -53,7 +53,7 @@ class LoginGUI extends EventEmitter {
 			let userSelect = this.loginMenu.getUserSelect();
 			// ログイン実行
 			this.action.login({
-				userid : userList[userSelect.getSelectedIndex()].id,
+				userid : userList[userSelect.getSelectedValue()].id,
 				password : this.loginMenu.getPassword()
 			});
 		});

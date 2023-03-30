@@ -38,6 +38,11 @@ Table of Contents
 - [Working with Display Screen](#working-with-display-screen)
   - [Overview](#overview-1)
   - [Working with Display: Menu](#working-with-display-menu)
+- [Working with VR Display](#working-with-vr-display)
+  - [VR Mode](#vr-mode)
+  - [VR mode settings](#vr-mode-settings)
+  - [Operation in VR mode](#operation-in-vr-mode)
+  - [VR mode restrictions](#vr-mode-restrictions)
 - [Coordinating with HIVE](#coordinating-with-hive)
   - [Interactive Rendering](#interactive-rendering)
   - [SceneNodeEditor](#scenenodeeditor)
@@ -59,15 +64,39 @@ Table of Contents
   - [Application Setup](#application-setup)
   - [Using the Application](#using-the-application)
 - [Displaying and Managing Large Scale Image Data](#displaying-and-managing-large-scale-image-data)
-- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+- [Using the WebGL distributed drawing function](#using-the-webgl-distributed-drawing-function)
   - [Overview](#overview-6)
+  - [Application Setup](#application-setup-1)
+  - [GIS layer addition function](#gis-layer-addition-function)
+  - [GIS layer properties](#gis-layer-properties)
+  - [GIS timeline settings and usage](#gis-timeline-settings-and-usage)
+  - [Settings on the controller](#settings-on-the-controller)
+- [Using the TileViewer](#using-the-tileviewer)
+  - [Overview](#overview-7)
+  - [Application Setup](#application-setup-2)
+  - [Layer Menu](#layer-menu)
+  - [Layer addition function](#layer-addition-function)
+  - [How to set and operate the timeline](#how-to-set-and-operate-the-timeline)
+  - [Preset settings for TileViewer](#preset-settings-for-tileviewer)
+- [Using the Qgis2threejs plugin output drawing function](#using-the-qgis2threejs-plugin-output-drawing-function)
+  - [Overview](#overview-8)
+  - [Application Setup](#application-setup-3)
+  - [Uploading data](#uploading-data)
+- [Using the Display Application for the Electron version of ChOWDER](#using-the-display-application-for-the-electron-version-of-chowder)
+  - [Overview](#overview-9)
   - [Installing the Application](#installing-the-application)
   - [Launching the Application](#launching-the-application-1)
   - [Application Setup](#application-setup-1)
   - [Editing the Configuration File](#editing-the-configuration-file)
   - [Installation on remote host](#installation-on-remote-host)
 - [Using HTTPS](#using-https)
-  - [Overview](#overview-7)
+  - [Overview](#overview-10)
+- [Using coturn](#using-coturn)
+  - [Overview](#overview-11)
+- [Using Himawari parser](#using-himawari-parser)
+  - [Overview](#overview-12)
+- [Using Himawari amaterass parser](#using-amaterass-parser)
+  - [Overview](#overview-13)
 
 About ChOWDER
 ==================================================================
@@ -144,6 +173,13 @@ Run the installation script in the `bin` directory.
        $ sh install.sh
 ~~~
 
+To install the turn server for WebRTC at the same time.
+
+~~~
+       $cd bin
+       $sh install_with_turn.sh
+~~~
+
 ### On Windows
 
 Run the installation script in the `bin` directory. 
@@ -183,7 +219,7 @@ Run the execution script in the `bin` directory.
 Accessing ChOWDER from a Web Browser
 ---------------------------------------------------
 
-Enter ChOWDER's URL (`http://localhost:8080` by default) in the address bar of a web browser.
+Enter ChOWDER's URL (`http://localhost/` by default) in the address bar of a web browser.
 
 <img src="image/home.png" alt="install終了後ホーム画面" width="585" />
 *The home screen of ChOWDER's client page*
@@ -205,13 +241,38 @@ The server program reads the `server/setting.json` file while launching to confi
     {
         "wsMaxMessageSize": 67108864,
         "reductionResolution" : 1920,
-        "enableMeasureTime" : false
+        "enableMeasureTime" : false,
+        "stunServerUrl" : "",
+        "turnServerUrl" : "",
+        "turnServerUsername" : "",
+        "turnServerCredential" : "",
+        "enableHTTP" : true,
+        "enableSSL" : true,
+        "HTTPPort" : 80,
+        "SSLPort" : 443,
+        "enableCORS" : true,
+        "VRMode" : 'cylinder'
+        "reduceUpdate": false,
+        "reduceInterval" : 500,
+        "tileviewerCursorSize" : 100
     }
 
 -   `wsMaxMessageSize` sets the maximum size of a single message that the server transmits. 
 -   `reductionResolution` sets the size of the reduced image of large scale image data. When large scale image data that exceed this size is registered, a reduced image is generated which may be used to display depending on the resolution. 
 -   `enableMeasureTime` sets whether time log output is enabled or not. The log file is output to `tileimage/log`, `server/log`. You can also download logs on Display on Display.
-
+-   `stunServerUrl` sets the STUN server URL in the WebRTC connection.
+-   `turnServerUrl` sets the TURN server URL in the WebRTC connection.
+-   `turnServerUsername` sets the username in the WebRTC credential.
+-   `turnServerCredential` sets the password in the WebRTC credential.
+-   `enableHTTP` sets whether http server is enabled or not. 
+-   `enableSSL` sets whether https server is enabled or not. 
+-   `HTTPPort` sets the http port. websocket connections(ws) use the same port, too.
+-   `SSLPort` sets the https port. websocket connections(wss) use the same port, too.
+-   `enableCORS` sets whether CORS connections to chowder server is enabled or not. 
+-   `VRMode` sets the VR mode to use. Currently available values ​​are "plane" (plane view) or "cylinder" (curved surface view) or "360" (360 degree view).
+-   `reduceUpdate` Set true to reduce the frequency of issuing various update notifications from the Controller. The default is false.
+-   `reduceInterval` When `reduceUpdate` is true, specify the maximum waiting time in milliseconds when reducing the frequency of issuing update notifications, etc. The default value is 500.
+-   `tileviewerCursorSize` Set the cursor size as a relative value when using the RemoteCursor function in TileViewer. The default value is 100.
 
 Managing Administrative Users
 ---------------------------------------------------
@@ -247,7 +308,7 @@ The Home Screen of ChOWDER
 What's on Your Home Screen?
 ---------------------------------------------------
 
-To access ChOWDER, run the server and visit `http://localhost:8080` with a web browser to open the home screen. The screen offers two modes, *display* and *controller*.
+To access ChOWDER, run the server and visit `http://localhost/` with a web browser to open the home screen. The screen offers two modes, *display* and *controller*.
 
 - **Controller mode** lets you set the screen configuration and move the displayed contents.
 
@@ -851,6 +912,97 @@ You can set up a recognizable Display ID in Controller. Type out the word (or le
 <img src="image/displaymenu3.png" alt="ディスプレイIDの設定" width="207" />
 *Display ID Setup*
 
+Working with VR Display
+========================================================================================
+
+VR Mode
+---------------------------------------------------
+
+When the Chowder page is displayed from the browser of the HMD tool, it can recognize the VR display, and fly to the immersive VR mode by WebXR.
+
+### Switch to VR mode
+
+When the Chowder page is displayed on the HMD device, it will be registered in the Chowder server as a new VR display, so it is necessary to set the permission on the controller.
+
+<img src="image/webxr1.png" alt="コントローラでの許可設定が必要" width="400" />
+*Allow setting on the controller is required*
+
+If the VR display is allowed, the VR Display button will be displayed and you can press it to switch to the immersive VR mode.
+
+<img src="image/webxr2.png" alt="VR Displayボタン" width="400" />
+*VR Display button*
+
+VR mode settings
+---------------------------------------------------
+
+By specifying VRMode in setting.json in [Basic Setup for Server](#basic-setup-for-server), You can switch the display method in VR mode.
+
+### Plane mode
+In flat mode, the flat Chowder display is placed in front of the initial viewpoint position.
+The display is equivalent to 3840px wide and 2160px high.
+It is arranged so that you can see the horizontal viewing angle of about 114 degrees and the vertical viewing angle of 120 degrees from the initial viewpoint position in HDM's static mode.
+
+<img src="image/webxr3.png" alt="平面モード" width="400" />
+*Plane mode*
+
+### Curved surface(Cylinder) mode
+In curved surface mode, a cylindrical rectangular area with a horizontal viewing angle of about 180 degrees and a vertical viewing angle of 120 degrees is placed in front of the initial viewpoint position.
+A display area with an aspect ratio of 16: 9 is displayed as a Chowder display in the rectangular area.
+The display is equivalent to a width of 3840px and a height of 2160px.
+
+<img src="image/webxr4.png" alt="曲面モード" width="400" />
+*Curved surface mode*
+
+### 360度モード
+360 degree mode is an extension of curved surface mode to a 360 degree cylindrical area.
+The display displayed in the rectangular area is equivalent to 7680px in width and 2160px in height.
+
+Operation in VR mode
+---------------------------------------------------
+
+In VR mode, you can use the hand controller of the VR device to select, move, scale, emphasize and cancel the content frame, and display and cancel the memo. The method of each operation is as follows.
+
+|Operation|Required controller operation|
+| ---- | ---- |
+|Content selection|Place the cursor on the content and pull the trigger (PrimaryIndexTrigger)|
+|Content deselection|Pull the trigger (PrimaryHandTrigger) of the controller that selected the content|
+|Move|With content selected, tilt the controller in the direction you want to move it|
+|Scale up|On the left and right controllers, tilt the controller and <br>pull the cursor away while pulling the trigger (PrimaryIndexTrigger) for the same content.|
+|Scale down|With the left and right controllers, tilt the controller and <br>bring the cursor closer while pulling the trigger (PrimaryIndexTrigger) for the same content.|
+|show/hide content borders highlights|After selecting the content, select the "☆" button with the trigger (Primary Index Trigger)|
+|show/hide notes|After selecting the content, select the "i" button with the trigger (Primary Index Trigger).|
+
+<img src="image/webxr5.png" alt="選択/強調表示" width="400" />
+*Selection / highlighting example*
+
+VR mode restrictions
+---------------------------------------------------
+
+### About the display area
+In VR mode, the content is displayed until it is completely out of the display area.
+Also, when moving content using a hand controller in VR mode, you can move content only within the display area.
+
+<img src="image/webxr6.png" alt="コンテンツ表示範囲" width="400" />
+*Display example of protruding content*
+
+### Displaying WebGL content (content using iTown)
+There is a problem that WebGL content is displayed in black when newly added while displaying in VR mode.
+As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mode.
+
+<img src="image/webxr7.png" alt="WebGLコンテンツが黒く表示される問題" width="600" />
+*Left:VR Display, Right :ChOWDER Controller*
+
+### Display PDF content
+There is a problem that PDF contents are not displayed when newly added while displaying in VR mode.
+As a workaround, exit VR mode once, wait a few seconds, and then re-enter VR mode.
+
+### About still images with alpha (transparency)
+For still images with alpha values, 0.5 is set as the threshold value, and it is switched between displaying completely and making it transparent. (AlphaTest)
+The alpha value is not blended, and the part containing the alpha is shown or hidden.
+
+### About animated GIF format images
+Animation GIF format animation display is not supported in VR mode.
+
 Coordinating with HIVE
 ==================================================================
 
@@ -1172,6 +1324,387 @@ The following commands are available by selecting large scale image in Controlle
 3. Synching of selected large scale image data begins upon pressing the Sync button. All contents in sync within the same group will switch to the corresponding image data according to the selection of `key` and `value` in `metadata`.
 4. The slider may also be used to switch `value` as described in item 2 above.
 
+Using the WebGL distributed drawing function
+========================================================================================
+
+Overview
+--------------------------------------------------------------------------------
+
+Using iTowns, a GIS drawing library, GIS content can be drawn on a ChOWDER display using WebGL.
+
+Application Setup
+--------------------------------------------------------------------------------
+
+You can access the following URL and use the WebGL distributed drawing function.
+In the URL for HTTPS, it is necessary to add to the exception.
+
+-   HTTP URL … http://ChOWDER_Server_Address/itowns.html
+-   HTTPS URL … https://ChOWDER_Server_Address/itowns.html
+
+<img src="image/itowns1.png" alt="WebGL分散描画機能" width="500" />
+
+Select the APIUser password and the preset to be displayed, and log in.
+When the content is loaded successfully, the displayed preset will be added as a ChOWDER content at the same time.
+
+<img src="image/itowns2.jpg" alt="WebGL分散描画機能" width="500" />
+
+ - 1. The registered content ID
+ - 2. The URL of the preset
+ - 3. Operable GIS layers 
+ - 4. Add and delete GIS layers
+ - 5. Manipulate GIS layer properties
+ - 6. Display performance measurement function
+ - 7. In the content corresponding to the time change, the time change by the timeline operation is reflected
+
+GIS layer addition function
+--------------------------------------------------------------------------------
+
+By pressing the Add Layer button, the Add Layer dialog will appear.
+You can add layers.
+
+<img src="image/itowns3.png" alt="レイヤー追加ダイアログ" width="500" />
+
+The type of layer that can be added and the method of specifying the URL are as follows
+ - Color : EPSG3857 Color Tiles
+    - http://server-address/{z}/{x}/{y}.png - Specify the tile number part with {x} {y} {z}
+ - Elevation : EPSG4326 Elevation Tiles or DEM Tiles in gsi.co.jp
+    - http://server-address/{z}/{x}/{y}.txt- Specify the tile number part with {x} {y} {z}
+ - 3D Tile : 3D Tiles(b3dm)
+    - http://server-address/tileset.json - Specify json address
+ - 3DTiles Timeseries : 3D Tiles Layer of timeseries defined by json
+    - http://server-address/timeseries.json Specify json address
+ - PointCloud : Point cloud data created by potree Converter
+    - http://server-address/cloud.json - Specify json address
+ - PointCloudTimeSeries : Time series point cloud data created by potree Converter
+    - http://server-address/timeseries.json - Specify json address
+ - VectorTile : Vector tiles such as pbf
+    - http://server-address/vectortile.pbf - Specify vector tile address
+ - Bargraph : Bargraph layer defined by CSV file.
+    - http://server-address/data1.csv - Specify csv address, or upload local file by `Import CSV File`.
+    - http://server-address/setting1.json - Specify json addressm or upload local file by `Import JSON File`.
+ - OBJ : Wavefront OBJ Layer
+    - http://server-address/teapot.obj - Specify obj address
+    - http://server-address/default.mtl - Specify mtl address
+
+
+For the ID, set the name displayed in the layer list. Must be a unique name.
+
+For ZOOM, specify the expansion range of the data source.
+Corresponds to {z} in the tile URL.
+
+For timeseries.json, specity following format
+ - As a Key, wirte the timeseries's timestamp defined by ISO8601
+ - For 3DTiles, enter the address of tileset.json as the value.
+ - For PointCloud, enter the cloud.json address as the value.
+
+In 3D Tiles and 3D Tiles Time series Type,<br>
+You can perform coordinate conversion by specifying the EPSG code when reading. <br>
+The specification method is as follows, <br>
+- Conversion : From - Select or enter the EPSG code for your data
+- Conversion : To - Select or enter the EPSG code to which you want to convert the data
+
+<img src="image/itowns4.png" alt="レイヤー追加ダイアログ" width="500" />
+<br><br>
+
+GIS layer properties
+--------------------------------------------------------------------------------
+
+The following properties can be set from the GUI for each type of layer added
+
+  - All Layers
+    - attribution - name and url for copyright
+ - Color
+    - visible - Show / Hide
+    - opacity - Opacity
+ - Elevation
+    - scale - Elevation magnification
+ - 3D Tiles
+    - visible - Show / Hide
+    - opacity - Opacity
+    - wireframe - Show / Hide of wireframe
+    - sseThreshold  - Threshold used for LoD processing
+    - offset tu, offset uv, offset u, offset v - Tangent position offset
+    - offset w  - Position offset in height direction
+
+ - PointCloud
+    - visible - Show / Hide
+    - bbox - Show / Hide of bounding box
+    - opacity - Opacity
+    - size  - Point size in screen space
+    - sseThreshold  - Threshold used for LoD processing
+    - offset tu, offset uv, offset u, offset v - Tangent position offset
+    - offset w  - Position offset in height direction
+
+  - Bargraph
+    - time - Select the CSV column name that contains the ISO8601 time string.
+    - Latitude - Select the CSV column name that contains the latitude number.
+    - Longitude - Select the CSV column name that contains the longitude number.
+    - PhysicalValue1 - Select the CSV column name to use as the bargraph height value. <br>
+                     - The overall height can be adjusted separately with the scale value.
+    - PhysicalValue2 - Select the CSV column name to use as the color value for the bargraph.<br>
+                    - Of the values ​​included in CSV, the minimum to maximum values ​​are assigned to the jet color map and used as colors.
+
+PhysicalValue2 Min→<img src="image/jet.png" alt="物理量2" width="300" />←PhysicalValue2 Max
+
+GIS timeline settings and usage
+--------------------------------------------------------------------------------
+In the timeline for GIS, you can specify the time corresponding to the data and play / stop it.
+An area called the range bar can be specified on the timeline, and ChOWDER uses it as the data display range.
+
+<img src="image/timeline.png" alt="タイムライン" width="500" />
+
+ - 1. Play/Stop button - Plays / stops the timeline.
+ - 2. Range bar - In ChOWDER, it is used as a data display range.
+ - 3. Sync button - Determines whether the time in the timeline is synchronized between different iTowns contents.<br>
+                  - The default is sync.
+ - 4. Setting button - You can set the display range of the timeline and the range of the range bar.
+
+The range setting GUI by the setting button is as follows.
+
+<img src="image/timeline_setting.png" alt="タイムライン" width="500" />
+
+ - 1. Setting the start date and time and end date and time of the timeline<br>
+                   - Usually changed automatically by scrolling the timeline or changing the window size
+ - 2. Setting the start date and time and end date and time of the range bar<br>
+                   - Set the effective range of data display.
+
+The data corresponding to the timeline and the details of showing / hiding are as follows.
+
+ - Bargraph
+     - If the value in the column specified as the time is a time stamp before the time on the timeline, a bar graph will be displayed.
+     - If the time stamp is after the time on the timeline, the bar graph will be hidden.
+     - If there are multiple time stamps before the time on the timeline, all the relevant bar graphs will be displayed.
+
+ - 3DTiles Timeseries
+ - PointCloudTimeSeries
+     - If the time stamp specified in json is a time stamp earlier than the time on the timeline, the data will be displayed.
+     - If there are multiple time stamps specified in json, only the data of the nearest past time stamp will be displayed.
+
+Settings on the controller
+--------------------------------------------------------------------------------
+
+<img src="image/itowns5.jpg" alt="コントローラでの設定" width="500" />
+
+The controller cannot operate the camera of GIS content, etc.,
+In addition to the normal content settings, you can set the display / non-display of the time information on the timeline
+
+
+
+Using the TileViewer
+========================================================================================
+
+Overview
+--------------------------------------------------------------------------------
+
+Using the 2D Tile Viewer, satellite images of the meteorological satellite Himawari and map data in Web Mercator format can be registered as Chowder content and drawn on the Chowder display.
+
+Application Setup
+-----------------------------------------------------------
+
+You can use the functions of TileViewer by accessing the following URL.
+-   HTTP URL … http://ChOWDER_Server_Address/tileviewer.html
+-   HTTPS URL … https://ChOWDER_Server_Address/tileviewer.html
+
+Select the API User password and the file to use, and log in.
+
+<img src="image/tileviewer1.png" alt="TileViewerの利用" width="500" />
+
+Select the APIUser password and the preset to display, and log in.
+
+When the content loads successfully, the displayed presets are added as Chowder content at the same time.
+
+<img src="image/tileviewer2.png" alt="TileViewerの利用" width="500" />
+
+ - 1. The time (date and time) to be displayed is displayed, and you can change the date and time.
+ - 2. From the left, the layer menu display, help display, remote cursor enable, and remote cursor color change buttons.
+ - 3. It is a play / stop button of the time (date and time).
+ - 4. Specifies the scale of the timeline.
+ - 5. Enables or disables the range bar on the timeline.
+ - 6. It is a timeline. You can operate the time (date and time).
+ - 7. A toggle button that toggles whether the time on the timeline is synchronized between content.
+
+Layer Menu
+-----------------------------------------------------------
+
+<img src="image/tileviewer3.png" alt="TileViewerの利用" width="500" />
+
+ - 1. The content ID is displayed
+ - 2. The URL of the preset that is the content source is displayed.
+ - 3. A list of layers containing the current content is displayed.
+ - 4. From the left, move the layer order up, move the layer order down, add a new layer, delete a new layer.
+ - 5. The tile URL of the layer is displayed.
+ - 6. From the top, it is the setting of showing / hiding (visible) of the layer and the setting of opacity (opacity) of the layer.
+ - 7. Set the copyright information (name, URL) to the layer. When set, it will be displayed in the upper left of the content.
+ - 8. Toggles the display / non-display of the time label on the upper left of the content.
+ - 9. Shows or hides the zoom label at the bottom right of the content.
+ - 10. Toggles whether the zoom factor is fixed for all controllers / displays.
+ - 11. You can set a fixed zoom factor when the zoom factor is fixed.
+
+Layer addition function
+--------------------------------------------------------------------------------
+
+By pressing the add layer button, in the add layer dialog
+You can add layers.
+
+<img src="image/tileviewer4.png" alt="TileViewerの利用" width="500" />
+
+The type of layer that can be added and the method of specifying the URL are as follows.
+ - `standard` : EPSG3857 color tile layer
+    - In the URL, such as `https://server-address/{z}/{x}/{y}.png`, specify the tile number part by {x} {y} {z} or %x %y %z.
+    - For ZOOM, specify the scope of expansion (MIN, MAX) of the data source. Corresponds to {z} in the tile URL.
+ - `himawari8.jp` : Layer of meteorological satellite Himawari 8 in Japan.
+    - In the URL, such as `https://localhost/himawari8/img/D531107/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png`, The `%` variable is described below. For the time (%hh%mm%ss), a value is inserted every 2 minutes and 30 seconds.
+ - `himawari8.fd` : Layer of meteorological satellite Himawari 8 in full disk format.
+    - In the URL, such as `https://localhost/himawari8/img/D531106/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png` The `%` variable is described below. For the time (%hh%mm%ss), a value is inserted every 10 minutes.
+ - `background image` : Add a background image. Or replace the existing background image.
+    -  In the URL, such as `https://localhost/backgroundImage.png` 
+ - `other` : It is used for images of uniquely defined presets that do not belong to the above.
+
+The meanings of the `%` and `{}` variables are as follows.
+ - `{x}{y}{z}`or`%x%y%z` : Indicates the tile number xy and zoom rate z.
+ - %c : Shows the dimensions of the image of Himawari-8
+ - %w : Shows the width of the image. It is replaced with the image width described in scales when the image is acquired.
+ - %YYYY%MM%DD : Indicates the year, month, and day.
+ - %hh%mm%ss : Indicates hours, minutes and seconds.
+
+How to set and operate the timeline
+--------------------------------------------------------------------------------
+
+The timeline for TileViewer uses k2go Timeline (https://www.k2go.jp/public/Timeline/).
+You can specify the time corresponding to the data and play, stop, etc.
+
+If you press the RangeBar button on the bottom left to enable it, you can specify an area called the RangeBar and control the playable area.
+
+Also, if the Sync button on the bottom right is enabled, the time information of the timeline operation will be transmitted to all other Sync-enabled TileViewer contents.
+You can enable / disable it by pressing the button.
+
+<img src="image/tileviewer5.png" alt="TileViewerの利用" width="500" />
+
+Preset settings for TileViewer
+--------------------------------------------------------------------------------
+
+TileViewer presets are defined by the json file stored below.
+ - Preset list definition file : public/sample_data/tileviewer/preset_list.json
+ - Preset definition files : public/sample_data/tileviewer/settings/osm.json etc
+
+### Preset list definition file
+"url": "sample_data/tileviewer/index.html?json=xxxx"
+In the format of, put the preset definition json file name in the xxxx part.
+
+For example, in a preset that uses osm.json, specify:
+
+```
+{
+    "preset_list": [
+        {
+            "name": "OpenStreetMap",
+            "url": "sample_data/tileviewer/index.html?json=osm"
+        }
+    ]
+}
+```
+
+This will cause the `OpenStreetMap` preset to appear in the preset list when accessing the tile viewer, allowing you to use the tile map with the osm.json definition information.
+
+### Preset definition file
+
+In the preset definition file, describe the URL of the map, etc., and create the state when the preset is loaded.
+
+```
+// An example of preset definition file (json)
+{
+    "backgroundImage": "https://cyberjapandata.gsi.go.jp/xyz/std/0/0/0.png",
+    "maps": [{
+        "url": "https://cyberjapandata.gsi.go.jp/xyz/std/%z/%x/%y.png",
+        "zoom" : {
+            "min" : 0,
+            "max" : 18
+        },
+        "attribution":  {
+            "name" : "出典：国土地理院",
+            "url" : "https://maps.gsi.go.jp/development/ichiran.html"
+        },
+        "opacity": 1.0,
+        "visible" : true
+    }],
+    "geodeticSystem": "standard",
+    "initialPosition" : {
+        "center": {
+            "degrees": {
+                "lon": 139.69167,
+                "lat": 35.68944
+            }
+        }
+    },
+    "timeout" : 0,
+    "timeout_on_setting_date" : 5000,
+}
+
+```
+
+ - backgroundImage : Specify the URL of the background image
+ - maps : Define layers in array format. The items that can be set for each layer are as follows.
+     - url : Specify the URL of the tile map.
+     - zoom : If the geodeticSystem is a standard map, set the minimum and maximum values ​​for zoom.
+     - scales : If the geodeticSystem is a map other than standard, set the map information for each zoom level. (see himawari_jp.json)
+     - attribution : Specify the name and URL of the copyright information.
+     - opacity : Specifies the opacity immediately after loading the preset. The default is 1.0.
+     - visible : Specifies the display / non-display state immediately after loading the preset. The default is true.
+ - geodeticSystem : Specifies the coordinate system for this preset. `standard`(EPSG3857) `himawari8.jp`(Himawari 8 for Japan) `himawari8.fd`(Himawari 8 FullDisk) can be specified.
+ - initialPosition : You can specify the initial camera position in latitude and longitude.
+ - timeout : Set the maximum waiting time in milliseconds to wait until the tile display is completed during normal operation. The default is 0.
+ - timeout_on_setting_date : Set the maximum waiting time in milliseconds to wait until the tile display is completed when the time is changed. The default is 1000.
+
+
+Using the Qgis2threejs plugin output drawing function
+========================================================================================
+
+Overview
+------------------------------------------------------------------
+
+HTML + Javascript content output from Qgis2threejs, an open source plug-in for QGIS, can be registered as ChOWDER content and rendered on a ChOWDER display.
+
+Application Setup
+-----------------------------------------------------------
+
+You can access the following URL and use the WebGL distributed drawing function.
+In the URL for HTTPS, it is necessary to add to the exception.
+
+-   HTTP URL … http://ChOWDER_Server_Address/qgis.html
+-   HTTPS URL … https://ChOWDER_Server_Address/qgis.html
+
+<img src="image/qgis2threejs.png" alt="Qgis2threejsプラグイン出力描画機能" width="500" />
+
+Select the APIUser password and the file to be used, and login.
+
+The selected file will be uploaded, and as soon as the content is successfully loaded, the selected Qgis2threejs plugin output data will be added as ChOWDER content.
+
+<img src="image/qgis2threejs2.png" alt="Qgis2threejsプラグイン出力描画機能" width="500" />
+
+ - 1. The registered content ID.
+ - 2. The URL of the content
+ - 3. Toggles the label display.
+ - 4. Toggles the wire frame display.
+ - 5. Resets the camera to its initial state.
+ 
+
+
+Uploading data
+-----------------------------------------------------------
+Upload the data specified in the file selection of "Select and load a zip file" when you log in.
+
+The file to be uploaded is in zip format, and should be the following directory structure output from the Qgis2threejs plugin compressed into a single file.
+
+```
+filename/
+    data/
+    threejs/
+    index.html
+    Qgis2threejs.css
+    Qgis2threejs.js
+    Qgis2threejs.png
+```
+
 
 Using the Display Application for the Electron version of ChOWDER
 ==================================================================
@@ -1203,7 +1736,7 @@ Create the setup file named `conf.json` in the `standalone-electron` directory.
 The format for the setup file is as follows:
 
     {
-        "url": "http://localhost:8080/view.html",
+        "url": "http://localhost/view.html",
         "password" : "password",
         "windows": {
             "tile1": {
@@ -1233,7 +1766,7 @@ The format for the setup file is as follows:
     Content is delivered without separately setting display permission.
 -	`windows` is the object that has the Display ID as key and display setup as value.
     -	Designate the site in `Group`.
-    -	Set the position `[Vertical, Horizontal]` of the window in `position`. The origin is the upper left corner of screen.
+    -	Set the position `[Vertical, Horizontal]` of the window on display device in `position`. This is the screen coordinates of the display device. The origin is the upper left corner of screen.
     -	Set the size `[width, height]` of the window in `size`.
     -	Set the position `[Vertical, Horizontal]` within VDA in `vda_position`. The origin is the upper left corner of Virtual Display.
     -	Set the enlargement factor within VDA in `vda_scale`.
@@ -1266,5 +1799,74 @@ There may be occasions screen sharing and camera sharing are activated only when
 
 ChOWDER has a built-in HTTPS server as well as a temporary SSL certificate. Under default settings, you can access the URL below and add it as a one-off exception to use a page using HTTPS. 
 
-- URL for HTTPS — https://localhost:9090
-- WebSocket Port for HTTPS — https://localhost:9091
+- URL for HTTPS — https://localhost/
+
+Using coturn
+==================================================================
+
+Overview
+---------------------------------------------------
+
+In a Linux environment, coturn can be used as a STUN / TURN server for WebRTC.
+coturn is installed at the same time as install.sh and is used by default.
+If you want to use another STUN/TURN server, you can specify any STUN/TURN server by [Basic Setup for Server](#basic-setup-for-server).
+
+Using Himawari parser
+==================================================================
+
+Overview
+---------------------------------------------------
+ChOWDER contains the parser for the DAT file of [the Himawari 8/9 weather satellite] (https://www.data.jma.go.jp/sat_info/himawari/satellite.html) in ChOWDER/server/parser.
+The parser is written for use with node.js and is implemented with the following format information.
+
+Himawari 8/9 Himawari Standard Data Usage Guide
+https://www.data.jma.go.jp/mscweb/ja/info/pdf/HS_D_users_guide_jp_v13.pdf
+
+
+Using Himawari Parser
+---------------------------------------------------
+(1) The absolute path of the data file (10 files) used for conversion is described in himawari_parse_test_file_list.txt.
+
+(2) When himawari_parse_test.js is executed by the following command, various physical quantities are saved as a geotiff file (output.tiff).
+
+> node --max-old-space-size=32000 himawari_parse_test.js
+
+The physical quantities that are stored are as follows.
+ - In bands 1 to 6, radiance is converted to reflectance and stored as a physical quantity.
+ - In bands 7 to 16, radiance is converted to luminance temperature and stored as a physical quantity.
+
+For information on how to convert data to latitude / longitude coordinates
+[Meteorological Satellite Center "Himawari Standard Data Reading Sample Program"] (https://www.data.jma.go.jp/mscweb/ja/info/sample_data_program.html)
+It is implemented as the following function by javascript with reference to hisd_pixlin2lonlat.c.
+ - (In himawari_parser.js) HimawariConverter.convertPixLinToLonLat
+ - (In himawari_parser.js) HimawariConverter.convertLonLatToPixLin
+
+See the code in himawari_parse_test.js and himawari_convert_test.js for detailed usage.
+
+Using Amaterass Parser
+==================================================================
+
+Overview
+---------------------------------------------------
+ChOWDER contains the parser for the data provided by the [Solar Radiation Consortium](http://www.amaterass.org/).
+The parser is written for use with node.js and is implemented with the following format information.
+
+About solar radiation consortium's data:
+http://www.amaterass.org/data.html
+
+Using Amaterass Parser
+---------------------------------------------------
+When amaterass_parse_test.js is executed by the following command, the physical quantity stored in the data is saved as a geotiff file (output.tiff).
+
+> node --max-old-space-size=32000 ./amaterass_parse_test.js amaterassDataAbsolutePath
+
+In amaterassDataAbsolutePath, describe the path of the data to be parsed with an absolute path.
+
+ - When amaterass_convert_test.js is executed by the following command, the point cloud data in xyziRGB (.txt) format is saved as output.txt based on the cloud top altitude and cloud thickness stored in the data.
+ - By default, point cloud data of about 400 million points is created, so be careful about the disk capacity.
+
+ > node --max-old-space-size=32000 ./amaterass_convert_test.js heightFileAbsolutePath thicknessFileAbsolutePath
+
+In heightFileAbsolutePath, describe the path of the cloud top altitude data as an absolute path.
+
+In thicknessFileAbsolutePath, describe the path of cloud thickness data as an absolute path.

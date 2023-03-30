@@ -84,7 +84,7 @@ class VideoStore {
 			this.deleteVideoPlayer(i);
 		}
 	}
-    
+
     getCodec(info) {
         let audioCodec = null;
         let videoCodec = null;
@@ -108,7 +108,7 @@ class VideoStore {
             videoCodec : videoCodec
         }
 	}
-	
+
 	processMovieBlob(metaData, videoElem, blob, id, callback) {
 		//let fileSize   = file.size;
 		let offset = 0;
@@ -130,7 +130,7 @@ class VideoStore {
 		let player = null;
 		let chunkSize  = 1024 * 1024 * 1024; // bytes
 		mp4box.onReady = (info) => {
-			const codec = this.getCodec(info);    
+			const codec = this.getCodec(info);
 
 			console.log("codec", codec.videoCodec, codec.audioCodec,
 				MediaSource.isTypeSupported(codec.videoCodec),
@@ -215,7 +215,7 @@ class VideoStore {
 			buffer.fileStart = 0;
 			mp4box.appendBuffer(buffer);
 		}
-		
+
 		onparsedbuffer(mp4box, blob); // callback for handling read chunk
 
 		return {
@@ -243,8 +243,8 @@ class VideoStore {
 			}
 			readBlock(offset, chunkSize, file);
 		}
-		
-		
+
+
 		readBlock = function(_offset, length, _file) {
 			let r = new FileReader();
 			let blob = _file.slice(_offset, length + _offset);
@@ -266,7 +266,7 @@ class VideoStore {
 		if (!this.webRTCDict.hasOwnProperty(keyStr)) {
 			// 初回読み込み時
 			let stream = captureStream(video);
-			webRTC = new WebRTC();
+			webRTC = new WebRTC(this.store.getManagement().globalSetting);
 			webRTC.setIsScreenSharing(metaData.subtype === "screen");
 			this.webRTCDict[keyStr] = webRTC;
 			if (!stream) {
@@ -329,7 +329,7 @@ class VideoStore {
 				setTimeout(((metaData) => {
 					return () => {
 						let webRTC = this.webRTCDict[keyStr];
-	
+
 						webRTC.getStatus((status) => {
 							let meta = this.store.getMetaData(metaData.id);
 							if (meta) {
@@ -422,8 +422,8 @@ class VideoStore {
 			let isUseDataChannel = false;
 			try {
 				let quality = JSON.parse(metaData.quality);
-				isUseDataChannel = quality 
-					&& quality.hasOwnProperty('raw_resolution') 
+				isUseDataChannel = quality
+					&& quality.hasOwnProperty('raw_resolution')
 					&& String(quality.raw_resolution) === "true";
 			} catch(e) {
 			}
@@ -452,7 +452,7 @@ class VideoStore {
 			}), function (err, reply) { });
 		});
 	}
-	
+
 	/**
 	 * 動画ファイル処理用内部関数
 	 */
@@ -460,27 +460,31 @@ class VideoStore {
         let subtype = metaData.subtype;
 		let videoData;
 		if (subtype === "file") {
-			
+
 			// 通常のwebrtc
 			// 解像度はwebrtcによって自動的に変更される
 			let blobObj = new Blob([blob]);
 			// https://developer.mozilla.org/ja/docs/Web/API/HTMLMediaElement/srcObject
-			
+
 			try {
 				videoData = blobObj;
 				video.srcObject = blobObj;
 			} catch (error) {
 				try {
 					videoData = URL.createObjectURL(blobObj);
+					URL.revokeObjectURL(video.src);
 					video.src = videoData;
 				} catch (e) {
 					console.error(e);
 				}
 			}
-			video.load();
+			setTimeout(() => {
+				video.load();
+				video.play();
+			}, 100)
 		}
 		this.setVideoData(metaData.id, blob);
-		
+
 		video.oncanplaythrough = function () {
 			if (subtype !== "file") {
 				window.setTimeout(function(){
@@ -522,10 +526,10 @@ class VideoStore {
 							let metaData = this.store.getMetaData(id);
 							metaData.isPlaying = true;
 							metaData.currentTime = String(video.currentTime)
-							this.store.operation.updateMetadata(metaData);	
+							this.store.operation.updateMetadata(metaData);
 						}
 					})(metaData.id);
-			
+
 					video.onpause = ((id) => {
 						return () => {
 							if (subtype !== 'file') { return; }
@@ -535,7 +539,7 @@ class VideoStore {
 							this.store.operation.updateMetadata(metaData);
 						}
 					})(metaData.id);
-			
+
 					video.onended = ((id) => {
 						return () => {
 							if (subtype !== 'file') { return; }
@@ -546,15 +550,15 @@ class VideoStore {
 							this.store.operation.updateMetadata(metaData);
 						}
 					})(metaData.id);
-					
+
 				});
 			}
 		};
 	}
-    
+
     /**
      * 動画ファイルの入力
-     * @param {*} data 
+     * @param {*} data
      */
     _inputVideoFile(data) {
         let metaData = data.metaData;
@@ -562,7 +566,7 @@ class VideoStore {
 		if (data.hasOwnProperty('subtype')) {
 			metaData.subtype = data.subtype;
 		}
-		
+
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
 		// 追加後のメタデータとローカルで保持しているコンテンツデータを紐づけるため
@@ -592,14 +596,13 @@ class VideoStore {
 			});
 		}
 	}
-	
+
 	/**
 	 * 動画ファイル処理用内部関数
 	 */
 	__processVideoStream(metaData, video, blob) {
         let subtype = metaData.subtype;
 		let videoData;
-		let isAlreadyLoaded = video.srcObject || video.src;
 
 		// stream
 		try {
@@ -614,13 +617,13 @@ class VideoStore {
 				console.error(e);
 			}
 		}
-		
+
 		setTimeout(() => {
 			video.load();
 			video.play();
 		}, 100)
 		this.setVideoData(metaData.id, blob);
-		
+
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
 			if (!metaData.hasOwnProperty("width")) {
@@ -652,7 +655,7 @@ class VideoStore {
 
     /**
      * 動画ストリームを入力
-     * @param {*} data 
+     * @param {*} data
      */
     _inputVideoStream(data) {
         let metaData = data.metaData;
@@ -684,7 +687,7 @@ class VideoStore {
 			});
 		}
     }
-    
+
 	// TODO
 	restartCamera(metadataID, deviceInfo) {
 		let isCameraOn = deviceInfo.isCameraOn;
@@ -709,7 +712,7 @@ class VideoStore {
 			constraints.audio = true;
 			saveDeviceID.audio_device = true;
 		}
-		
+
 		if (!constraints.video && !constraints.audio) {
 			// どちらか有効にしないといけない
 			constraints.audio = true;
@@ -754,7 +757,7 @@ class VideoStore {
 
     /**
      * 動画デバイスの変更
-     * @param {*} data 
+     * @param {*} data
      * {
 	 *    id : metaData.id,
 	 *    deviceID : deviceID
@@ -824,7 +827,7 @@ class VideoStore {
 						// DataChannel使用終了、webrtcに切り替え
 						if (this.hasVideoData(meta.id)) {
 							let player = this.getVideoPlayer(meta.id);
-							
+
 							let webRTCDict = this.webRTCDict;
 							if (webRTCDict) {
 								for (let k in webRTCDict) {
@@ -833,7 +836,7 @@ class VideoStore {
 									}
 								}
 							}
-							
+
 							// raw_resolutionの動画をクリア
 							if (player.hasOwnProperty('rawInstances')) {
 								if (this.segmentDict[meta.id].playHandle) {
@@ -942,7 +945,7 @@ class VideoStore {
 		}
 	}
 
-	
+
 	getWebRTCDict() {
 		return this.webRTCDict;
 	}
@@ -1000,13 +1003,13 @@ class VideoStore {
 		player.release();
 		delete this.videoPlayerDict[id];
 	}
-	
+
 	isDataChannelUsed(metaData) {
 		let isUseDataChannel = false;
 		try {
 			let quality = JSON.parse(metaData.quality);
-			isUseDataChannel = (quality 
-				&& quality.hasOwnProperty('raw_resolution') 
+			isUseDataChannel = (quality
+				&& quality.hasOwnProperty('raw_resolution')
 				&& quality.raw_resolution === true);
 		} catch(e) {
 			console.error(e);

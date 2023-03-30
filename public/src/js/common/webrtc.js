@@ -22,8 +22,10 @@ let MediaOptions = {
 };
 
 class WebRTC extends EventEmitter {
-	constructor() {
+	constructor(globalSetting) {
 		super();
+		this.globalSetting = globalSetting;
+
 		this.peer = this.prepareNewConnection();
 		this.bandwidth = null;
 		this.isScreenSharing = false;
@@ -31,13 +33,53 @@ class WebRTC extends EventEmitter {
 	}
 	prepareNewConnection() {
 		printDebug("prepareNewConnection");
+
 		let pc_config = {
-			"iceServers": [
-				{ "urls": "stun:stun.l.google.com:19302" },
-				{ "urls": "stun:stun1.l.google.com:19302" },
-				{ "urls": "stun:stun2.l.google.com:19302" }
+			iceServers:[]
+		};
+
+		/* STUN config */
+		if(!this.globalSetting.stunServerUrl || this.globalSetting.stunServerUrl === ""){
+			let stun = {
+				urls: ["stun:" + window.location.hostname + ":9092"]
+			};
+			pc_config.iceServers.push(stun);
+		}else{
+			let stun = {
+				urls: [this.globalSetting.stunServerUrl]
+			};
+			pc_config.iceServers.push(stun);
+		}
+
+		/* google STUN */
+		let googlestun = {
+			urls: [
+				"stun:stun.l.google.com:19302",
+				"stun:stun1.l.google.com:19302",
+				// 現時点では、5つ以上URLを含めると、ブラウザのwebrtc sdk内でエラーが吐かれるため
+				// 合計5つ以内に抑える必要がある
+				// "stun:stun2.l.google.com:19302"
 			]
 		};
+		pc_config.iceServers.push(googlestun);
+
+		/* TURN config */
+		if(!this.globalSetting.turnServerUrl || this.globalSetting.turnServerUrl === ""){
+			let turn = {
+				urls: ["turn:" + window.location.hostname + ":9092"],
+				username:"chowder",
+				credential:"395FFEB08356282A867A63D2B4729D039859F6E6C98294C1DCAAE494DAF87A6048DC4D06FB0ADF9D387F67EB41780B362AA9C3FD9AF4515A24FF1ECE5B85E70E"
+			};
+			pc_config.iceServers.push(turn);
+		}else{
+			let turn = {
+				urls: [this.globalSetting.turnServerUrl],
+				username:this.globalSetting.turnServerUsername,
+				credential:this.globalSetting.turnServerCredential
+			};
+			pc_config.iceServers.push(turn);
+		}
+
 		this.peer = null;
 		try {
 			this.peer = new RTCPeerConnection(pc_config);
@@ -90,7 +132,7 @@ class WebRTC extends EventEmitter {
 				}
 			};
 		}
-		
+
 		this.peer.onicecandidate = (evt) => {
 			printDebug("icecandidate", evt.candidate); //, evt, this.peer);
 			if (evt.candidate) {
@@ -192,7 +234,7 @@ class WebRTC extends EventEmitter {
 			this.videoDataChannel.onerror = function (error) {
 				printDebug('dataChannel.onerror', error);
 			};
-			
+
 			this.audioDataChannel = this.peer.createDataChannel("ForAudio" , dataChannelOptions);
 			this.audioDataChannel.binaryType = "arraybuffer";
 			this.audioDataChannel.onopen = () => {
@@ -211,7 +253,7 @@ class WebRTC extends EventEmitter {
 				printDebug('dataChannel.onerror', error);
 			};
 		}
-		
+
 		printDebug('offer');
 		this.peer.createOffer((sdp) => {
 			// 成功

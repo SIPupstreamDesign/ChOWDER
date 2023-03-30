@@ -91,6 +91,11 @@
 				})(ws_connection),  ws_connection.id);
 			}
 		}
+		/*
+		if (resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete resultCallbacks[metaData.id]
+		}
+		*/
 	}
 
 	/**
@@ -131,6 +136,11 @@
 				})(ws_connection), ws_connection.id);
 			}
 		}
+		/*
+		if (resultCallbacks.hasOwnProperty(metaData.id)) {
+			delete resultCallbacks[metaData.id]
+		}
+		*/
 	}
 
 	/**

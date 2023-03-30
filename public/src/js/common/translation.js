@@ -16,6 +16,15 @@ function checkExistence(key, value) {
 class Translation 
 {
     static translate(callback) {
+        const dir1 = location.href.split("/");
+        let dir2 = "";
+        if(dir1.length == 4){dir2 = ";"} else {
+            for(let i = 2; i < dir1.length; i++){
+                dir2 = dir2 + "/" + dir1[i];
+            }
+        }
+        console.log(dir2);
+
         i18next
             .use(window.i18nextXHRBackend)
             .use(window.i18nextBrowserLanguageDetector)
@@ -24,7 +33,7 @@ class Translation
                 lng : language,
                 backend: {
                     // for all available options read the backend's repository readme file
-                    loadPath: '/locales/{{lng}}.json'
+                    loadPath: dir2 + '/locales/{{lng}}.json'
                 },
                 debug: false
             }, function (err, t) {

@@ -24,7 +24,6 @@ class PopupBackground extends EventEmitter {
 		document.body.appendChild(this.background);
 		this.background.onclick = () => {
 			this.background.style.display = "none";
-			this.emit(PopupBackground.EVENT_CLOSE, null);
 			this.close();
 		};
 	}
@@ -32,6 +31,7 @@ class PopupBackground extends EventEmitter {
 		if (this.background) {
 			document.body.removeChild(this.background);
 			this.background = null;
+			this.emit(PopupBackground.EVENT_CLOSE, null);
 		}
 	}
 }

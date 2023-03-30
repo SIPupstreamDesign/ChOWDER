@@ -1,0 +1,10 @@
+{
+  "name": "himawari_parsar",
+  "main": "himawari_parsar.js",
+  "scripts": {
+    "start": "node --max-old-space-size=32000 ./himawari_parse_test.js"
+  },
+  "dependencies": {
+    "color-interpolate": "^1.0.5"
+  }
+}

@@ -49,6 +49,42 @@
 	float : left;
 }
 
+.users_tab {
+	background: rgb(209, 214, 58);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	top: 5px;
+	left : 4px;
+	width : 170px;
+	height : 30px;
+	padding-left : 5px;
+	padding-right : 2px;
+	font-size: 14px;
+	float : left;
+}
+
+.user_item_wrapper {
+	width : 100%; /*calc(100% - 170px);*/
+	height : 100%;
+	overflow : auto;
+	/* border-left: 2px solid #FF8055;*/
+	box-sizing: content-box;
+}
+
+.users_tab_item {
+	width: min(170px, 10%);
+	margin: 5px;
+	padding: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
+	float: left;
+	text-align: center;
+	background-color: wheat;
+	color: black;
+}
+.users_tab_item:hover {
+	background-color :goldenrod;
+}
+
 .display_tab {
 	background: rgb(54,187,68);
 	border: 1px solid rgba(255, 255, 255, 0.3);
@@ -214,6 +250,10 @@
 }
 
 #layout_tab_box {
+	background-color : rgba(255, 255, 255, 0.1);
+}
+
+#users_tab_box {
 	background-color : rgba(255, 255, 255, 0.1);
 }
 

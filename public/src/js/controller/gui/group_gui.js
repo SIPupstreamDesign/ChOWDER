@@ -6,6 +6,7 @@
 import Constants from '../../common/constants'
 import GroupBox from '../../components/group_box'
 import SearchBox from '../../components/search_box.js';
+import UsersBox from '../../components/users_box.js';
 import NoticeBox from '../../components/notice_box.js';
 import Tabs from '../../components/tabs'
 import Store from '../store/store'
@@ -90,6 +91,16 @@ class GroupGUI
 			}, GroupBox.TYPE_CONTENT);
         this.initGroupBoxEvents(this.layoutBox);
 
+		// userエリアの中身を作成
+		this.usersBox = new UsersBox(this.store.getManagement().getAuthorityObject(), document.getElementById('users_tab_box'),
+			{
+				groups : [{
+					id : Constants.DefaultGroup,
+					name : "default"
+				}],
+				colors : ["rgb(54,187,68)"]
+			}, GroupBox.TYPE_CONTENT);
+		this.initUsersBoxEvents(this.usersBox, this.tabs);
 
         // Searchテキストが入力された
         this.store.on(Store.EVENT_SEARCH_INPUT_CHANGED, (err, text, groups) => {
@@ -209,8 +220,11 @@ class GroupGUI
 		groupBox.on('group_changed', (err) => {
 			if (this.isActiveTab(Constants.TabIDDisplay)) {
 				let id = groupBox.getCurrentGroupID();
+                this.action.changeDisplayGroupSelect({ groupID : id });
+			} else {
+                let id = groupBox.getCurrentGroupID();
 				this.action.changeGroupSelect({ groupID : id });
-			}
+            }
 		});
 	}
 
@@ -239,7 +253,21 @@ class GroupGUI
         });
     }
 
-    update(contentSetting, displaySetting, searchSetting, layoutSetting) {
+	/**
+	 * userのタブに対するイベントを設定.
+	 */
+	initUsersBoxEvents(usersBox, _tabs) {7
+        usersBox.tabs = _tabs;
+		usersBox.on(UsersBox.EVENT_INPUT_CHANGED, (err, value, groups) => {
+            this.action.changeUserSerchInput({
+                text :  value,
+                groups : groups
+            })
+        });
+    }
+
+
+    update(contentSetting, displaySetting, searchSetting, layoutSetting, userSetting) {
         document.getElementById('display_tab_box').innerHTML = "";
         this.displayBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('display_tab_box'), displaySetting, GroupBox.TYPE_DISPLAY);
         this.initGroupBoxEvents(this.displayBox);
@@ -255,12 +283,22 @@ class GroupGUI
         this.layoutBox = new GroupBox(this.store.getManagement().getAuthorityObject(), document.getElementById('layout_tab_box'), layoutSetting, GroupBox.TYPE_CONTENT);
         this.initGroupBoxEvents(this.layoutBox);
 
+        //if(userSetting != undefined){
+            //document.getElementById('users_tab_box').innerHTML = "";
+            //this.usersBox = new UsersBox(this.store.getManagement().getAuthorityObject(), document.getElementById('users_tab_box'), userSetting, GroupBox.TYPE_CONTENT);
+            //this.initGroupBoxEvents(this.usersBox);
+        //}
+
         // DisplayBoxの中にNoticeBoxを突っ込む
         this.noticeBox = new NoticeBox();
         let displayBox = document.getElementById('display_tab_box');
         displayBox.appendChild(this.noticeBox.getDOM());
         this.initNoticeEvents(this.noticeBox);
 
+        const groupID = this.store.managementStore.userStatus.groupID;
+        if(groupID != "Moderator" && !this.store.managementStore.getAuthorityObject().isAdmin()){
+            document.getElementById('users_tab').style.display = "none";
+        }
     }
 
 
@@ -273,8 +311,15 @@ class GroupGUI
     }
 
 	selectGroup(group_id) {
-		this.getContentBox().selectTab(group_id);
-		this.getLayoutBox().selectTab(group_id);
+        if (this.isActiveTab(Constants.TabIDDisplay))
+        {
+            this.getDisplayBox().selectTab(group_id);
+        }
+        else
+        {
+            this.getContentBox().selectTab(group_id);
+            this.getLayoutBox().selectTab(group_id);
+        }
     }
 
     getDisplayBox() {
@@ -291,6 +336,10 @@ class GroupGUI
 
     getLayoutBox() {
         return this.layoutBox;
+    }
+
+    getUsersBox() {
+        return this.usersBox;
     }
 
     getTabs() {

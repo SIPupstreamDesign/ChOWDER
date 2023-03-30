@@ -43,9 +43,9 @@ class LoginStore {
 	 * ログイン
 	 */
 	_login(data) {
-		let callback = Store.extractCallback(data);
+		const callback = Store.extractCallback(data);
 
-		let controllerID = this.getControllerID();
+		const controllerID = this.getControllerID();
 		if ((!controllerID || controllerID.length === 0) && !data.onetime) {
 			this.connector.send(Command.GenerateControllerID, {}, (err, reply) => {
 				if (!err) {
@@ -56,25 +56,25 @@ class LoginStore {
 						loginData = JSON.parse(JSON.stringify(data));
 					} catch(e) {
 						console.error(e);
-					} 
+					}
 					loginData.onetime = true;
 					this._login(loginData);
 				}
 			});
 			return;
 		}
-		let request = { id: data.userid, password: data.password, controllerID: controllerID };
+		const request = { id: data.userid, password: data.password, controllerID: controllerID };
 		if (data.loginkey && data.loginkey.length > 0) {
 			request.loginkey = data.loginkey;
 		}
 		this.connector.send(Command.Login, request, (err, reply) => {
 			if (err || reply === "failed") {
-				let data = {};
+				const data = {};
 				data.loginkey = "";
 				this.cookie.setLoginKey(this.getControllerID(), data.loginkey);
 				this.store.emit(Store.EVENT_LOGIN_FAILED, err, data);
 			} else {
-				let userList = this.getUserList();
+				const userList = this.getUserList();
 
 				let data;
 				try {
@@ -156,9 +156,9 @@ class LoginStore {
 	 * @method getControllerID
 	 */
 	getControllerID() {
-		let hashid = location.hash.split("#").join("");
+		const hashid = location.hash.split("#").join("");
 		if (hashid.length > 0) {
-			let controller_id = decodeURIComponent(hashid);
+			const controller_id = decodeURIComponent(hashid);
 			if (!controller_id || controller_id === undefined || controller_id === "undefined") {
 				controller_id = '';
 			}
@@ -166,14 +166,14 @@ class LoginStore {
 		}
 		return "";
     }
-    
+
     /**
      * ログインキーを取得
      */
 	getLoginKey() {
 		return this.cookie.getLoginKey(this.getControllerID());
 	}
-	
+
 }
 
 export default LoginStore;

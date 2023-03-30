@@ -299,6 +299,11 @@ p {
 	padding-left : 3px;
 }
 
+.controller_id {
+	margin: 10px;
+	padding-left : 3px;
+}
+
 .group_name {
 	margin: 10px;
 	padding-left : 3px;
@@ -805,6 +810,31 @@ p {
 	border : 2px  solid white !important;
 }
 
+.align_info {
+	margin-bottom: 10px;
+	padding-top : 3px;
+	padding-left : 3px;
+}
+
+.alignment_area {
+	height : 400px;
+	padding: 10px;
+}
+
+.alignment_area .btn {
+	margin-left : 8px;
+	width : 64px;
+	height: 30px;
+	background-color: #AAA;
+}	
+
+.alignment_area .btn2 {
+	margin-left : 8px;
+	width : 196px;
+	height: 30px;
+	background-color: #AAA;
+}	
+
 .property_text_label {
     margin: 5px;
     padding-left: 10px;
@@ -939,4 +969,35 @@ p {
 
 .content_property_checkbox_label {
 	border: 1px solid #ccc !important;
+}
+
+.time {
+	position : absolute;
+	color : black;
+	height : 100px;
+	font-size : 1em;
+	background-color: white;
+	border : 1px solid gray;
+	padding : 5px;
+	box-sizing: border-box;
+    margin : 0px;
+}
+
+.copyright {
+	color : black;
+	font-size : 0.8em;
+	background-color: rgba(255, 255, 255, 0.5);
+	border : 1px solid gray;
+	padding : 3px;
+	box-sizing: border-box;
+	margin: unset;
+}
+.copyright_link:link {
+	color : black;
+}
+.copyright_link:visited {
+	color : black;
+}
+.copyright_link:hover {
+	color : lightgray;
 }

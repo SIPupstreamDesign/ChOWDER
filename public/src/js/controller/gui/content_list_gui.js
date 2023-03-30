@@ -8,7 +8,7 @@ import Constants from '../../common/constants.js';
 import Validator from '../../common/validator.js';
 import ContentUtil from '../content_util';
 
- "use strict";
+"use strict";
 
 /**
  * コンテンツタイプから適切なクラス名を取得する.
@@ -38,6 +38,8 @@ function getTagName(contentType) {
 		tagName = 'div';
 	} else if (contentType === "video") {
 		tagName = 'img';
+	} else if (contentType === 'webgl') {
+		tagName = 'img';
 	} else {
 		tagName = 'img';
 	}
@@ -51,7 +53,7 @@ function fixDivSize(divElem, w, aspect) {
 	if (w > 200) {
 		divElem.style.width = '200px';
 		h = 200 / aspect;
-		divElem.style.paddingBottom = (150 - h) + 'px'; 
+		divElem.style.paddingBottom = (150 - h) + 'px';
 		if (150 - h > 140.0) {
 			divElem.style.paddingBottom = '140px';
 		}
@@ -67,8 +69,7 @@ function fixDivSize(divElem, w, aspect) {
 /**
  * コンテンツリストビュー
  */
-class ContentListGUI extends EventEmitter
-{
+class ContentListGUI extends EventEmitter {
 	constructor(store, action) {
 		super();
 
@@ -78,7 +79,7 @@ class ContentListGUI extends EventEmitter
 
 	createMicCameraButton(divElem, metaData) {
 		let cameraButton = document.createElement('div');
-		let micButton  = document.createElement('div');
+		let micButton = document.createElement('div');
 		cameraButton.className = "video_camera_button";
 		micButton.className = "video_mic_button";
 		if (metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) === "false") {
@@ -98,9 +99,9 @@ class ContentListGUI extends EventEmitter
 			}
 			if (metaData.hasOwnProperty("subtype")) {
 				this.action.changeCameraMicEnable({
-					id : metaData.id,
-					isCameraOn : this.isCameraOn(metaData.id),
-					isMicOn : this.isMicOn(metaData.id)
+					id: metaData.id,
+					isCameraOn: this.isCameraOn(metaData.id),
+					isMicOn: this.isMicOn(metaData.id)
 				});
 			} else {
 				console.error("Error : invalid metadata", metaData);
@@ -115,9 +116,9 @@ class ContentListGUI extends EventEmitter
 			}
 			if (metaData.hasOwnProperty("subtype")) {
 				this.action.changeCameraMicEnable({
-					id : metaData.id,
-					isCameraOn : this.isCameraOn(metaData.id),
-					isMicOn : this.isMicOn(metaData.id)
+					id: metaData.id,
+					isCameraOn: this.isCameraOn(metaData.id),
+					isMicOn: this.isMicOn(metaData.id)
 				});
 			} else {
 				console.error("Error : invalid metadata", metaData);
@@ -176,19 +177,19 @@ class ContentListGUI extends EventEmitter
 
 		tagName = getTagName(metaData.type);
 		classname = getClassName(metaData.type);
-		
+
 		if (divElem) {
 			contentElem = divElem.childNodes[0];
 		}
-		
+
 		if (!divElem) {
 			contentElem = document.createElement(tagName);
 			divElem = document.createElement('div');
 			divElem.id = onlistID;
 
 			this.action.setupContentElement({
-				element : divElem,
-				id : onlistID
+				element: divElem,
+				id: onlistID
 			});
 
 			//setupContent(divElem, onlistID);
@@ -231,6 +232,7 @@ class ContentListGUI extends EventEmitter
 				window.PDFJS.cMapUrl = './js/3rd/pdfjs/cmaps/';
 				window.PDFJS.cMapPacked = true;
 
+				// thumbaniの生成
 				pdfjsLib.getDocument(contentData).then(function (pdf) {
 					pdf.getPage(1).then(function (page) {
 						let viewport = page.getViewport(1);
@@ -262,10 +264,13 @@ class ContentListGUI extends EventEmitter
 					mime = metaData.mime;
 					//console.log("mime:" + mime);
 				}
+				if (metaData.type === Constants.TypeWebGL) {
+					mime = "image/png"
+				}
 
 				divElem.style.height = "150px";
 				aspect = metaData.orgWidth / metaData.orgHeight;
-				let w = 150 * aspect;
+				let w = Math.min(150, 150 * aspect);
 				divElem.style.width = w + "px";
 
 				if (metaData.type === Constants.TypeTileImage) {
@@ -279,7 +284,7 @@ class ContentListGUI extends EventEmitter
 				}
 
 				if (thumbnail !== undefined && thumbnail) {
-					blob = new Blob([thumbnail], {type: "image/jpeg"});
+					blob = new Blob([thumbnail], { type: "image/jpeg" });
 					// 縮小サムネイルデータがあった場合
 					if (contentElem) {
 						URL.revokeObjectURL(contentElem.src);
@@ -287,7 +292,7 @@ class ContentListGUI extends EventEmitter
 						fixDivSize(divElem, w, aspect);
 					}
 				} else {
-					blob = new Blob([contentData], {type: mime});
+					blob = new Blob([contentData], { type: mime });
 					if (contentElem && blob) {
 						URL.revokeObjectURL(contentElem.src);
 						contentElem.src = URL.createObjectURL(blob);
@@ -306,7 +311,7 @@ class ContentListGUI extends EventEmitter
 		divElem.style.margin = "5px";
 		divElem.style.color = "white";
 		divElem.style.float = "left";
-		
+
 		// 同じコンテンツを参照しているメタデータがあれば更新
 		if (!contentData && contentElem) {
 			ContentUtil.copyContentData(this.store, null, contentElem, metaData, true);
@@ -318,6 +323,14 @@ class ContentListGUI extends EventEmitter
 			}
 		} else {
 			ContentUtil.copyContentData(this.store, contentElem, null, metaData, true);
+		}
+
+		// add creator name
+		if (metaData.creator != "" && metaData.creator != undefined) {
+			const creatorDiv = document.createElement('div');
+			creatorDiv.className = "content_creator";
+			creatorDiv.innerHTML = metaData.creator;
+			divElem.appendChild(creatorDiv);
 		}
 	}
 
@@ -332,7 +345,7 @@ class ContentListGUI extends EventEmitter
 		}
 		return false;
 	}
-	
+
 	isMicOn(metadataID) {
 		const onlistID = "onlist:" + metadataID;
 		let listElem = document.getElementById(onlistID);

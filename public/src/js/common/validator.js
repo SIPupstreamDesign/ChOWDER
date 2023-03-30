@@ -148,6 +148,16 @@ class Validator
 	}
 
 	/**
+	 * リストでUserタブが選択されているかを判別する。
+	 * @method isUserTabSelected
+	 * @return {bool} リストでuserタブが選択されていたらtrueを返す.
+	 */
+	isUserTabSelected() {
+		return this.gui.isActiveTab(Constants.TabIDUsers);
+	}
+
+
+	/**
 	 * メタデータのtypeが現在開いているタブに合致するか返す
 	 */
 	isCurrentTabMetaData(meta) {

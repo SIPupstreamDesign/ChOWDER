@@ -1,5 +1,18 @@
 {
     "wsMaxMessageSize": 67108864,
     "reductionResolution" : 1920,
-    "enableMeasureTime" : false
+    "enableMeasureTime" : false,
+    "stunServerUrl" : "",
+    "turnServerUrl" : "",
+    "turnServerUsername" : "",
+    "turnServerCredential" : "",
+    "enableHTTP" : true,
+    "enableSSL" : true,
+    "HTTPPort" : 80,
+    "SSLPort" : 443,
+    "enableCORS" : true,
+    "VRMode" : "cylinder",
+    "reduceUpdate": false,
+    "reduceInterval" : 500,
+    "tileviewerCursorSize" : 100
 }

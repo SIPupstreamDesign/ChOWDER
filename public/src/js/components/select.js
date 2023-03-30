@@ -43,7 +43,12 @@ class Select extends EventEmitter
     }
 
     getSelectedValue() {
-        return this.dom.childNodes[this.getSelectedIndex()].value;
+        let selectedIndex = this.getSelectedIndex();
+        if (selectedIndex !== undefined && selectedIndex >= 0) {
+            return this.dom.childNodes[selectedIndex].value;
+        }
+        console.error("Not found selected index:", selectedIndex)
+        return null;
     }
 
     clear() {

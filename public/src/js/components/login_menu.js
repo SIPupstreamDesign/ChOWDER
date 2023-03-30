@@ -11,8 +11,11 @@ import Input from "./input";
 
 class LoginMenu extends EventEmitter
 {
-    constructor() {
+    constructor(title, type) {
         super();
+
+        this.type = type;
+        this.TYPE_CONTROLLER = "Controller";
 
         this.dom = document.createElement('div');
         this.dom.style.width = "100%";
@@ -20,13 +23,25 @@ class LoginMenu extends EventEmitter
 
         this.header = document.createElement('div');
         this.header.className = "head_menu";
-        this.header.innerHTML =  `
-            <div class="head_mode_menu">
-                <div class="head_mode_text stopselect">
-                    <a href="index.html" id="chowder_text">ChOWDER</a>
+        if (title)
+        {
+            let titleDiv = '<div class="head_mode_menu">';
+            titleDiv += '<div class="head_mode_text stopselect">';
+            titleDiv += '<a href="index.html" id="chowder_text">';
+            titleDiv += title;
+            titleDiv += '</a></div></div>';
+            this.header.innerHTML = titleDiv;
+        }
+        else
+        {
+            this.header.innerHTML =  `
+                <div class="head_mode_menu">
+                    <div class="head_mode_text stopselect">
+                        <a href="index.html" id="chowder_text">ChOWDER</a>
+                    </div>
                 </div>
-            </div>
-            `
+                `
+        }
         this.dom.appendChild(this.header);
 
         this.background = document.createElement('div');
@@ -37,29 +52,41 @@ class LoginMenu extends EventEmitter
         this.loginMenu.className = "loginmenu";
         this.dom.appendChild(this.loginMenu);
 
-        let loginFrame = document.createElement('div');
+        const loginFrame = document.createElement('div');
         loginFrame.className = "loginframe";
         this.loginMenu.appendChild(loginFrame);
 
-        let useLabelWrap = document.createElement('div');
+        const useLabelWrap = document.createElement('div');
+        useLabelWrap.className = "userlabel";
+        loginFrame.appendChild(useLabelWrap);
+
         {
-            let menuLabel = document.createElement('p');
+            const menuLabel = document.createElement('p');
             menuLabel.className = "loginmenu_label";
             menuLabel.setAttribute('data-key', 'user');
             useLabelWrap.appendChild(menuLabel);
-            
+
             this.loginUserSelect = new Select();
             this.loginUserSelect.getDOM().classList.add("loginuser");
             useLabelWrap.appendChild(this.loginUserSelect.getDOM());
         }
-        loginFrame.appendChild(useLabelWrap);
 
-        let passwordWrap = document.createElement('div');
+        if(this.type === this.TYPE_CONTROLLER){
+            const controlleridLabel = document.createElement('p');
+            controlleridLabel.className = "loginmenu_label";
+            controlleridLabel.setAttribute('data-key', 'username');
+            useLabelWrap.appendChild(controlleridLabel);
+
+            this.controlleridInput = new Input();
+            this.controlleridInput.getDOM().classList.add("controllerid");
+            useLabelWrap.appendChild(this.controlleridInput.getDOM());
+        }
+
         {
-            let menuLabel = document.createElement('p');
-            menuLabel.className = "loginmenu_label";
-            menuLabel.setAttribute('data-key', 'password');
-            useLabelWrap.appendChild(menuLabel);
+            const passwardLabel = document.createElement('p');
+            passwardLabel.className = "loginmenu_label";
+            passwardLabel.setAttribute('data-key', 'password');
+            useLabelWrap.appendChild(passwardLabel);
 
             this.passInput = new Input("password");
             this.passInput.getDOM().classList.add("loginpass");
@@ -67,30 +94,45 @@ class LoginMenu extends EventEmitter
             useLabelWrap.appendChild(this.passInput.getDOM());
             this.passInput.getDOM().onkeypress = (evt) => {
                 if (evt.which == 13) {
-                    this.emit(LoginMenu.EVENT_LOGIN, null);
+                    this._runLogin();
                 }
             };
-            
-            let loginButton = new Button();
+
+            const loginButton = new Button();
             loginButton.getDOM().classList.add("loginbutton");
             loginButton.getDOM().classList.add("btn-primary");
             loginButton.setDataKey('login');
             useLabelWrap.appendChild(loginButton.getDOM());
 
             loginButton.on(Button.EVENT_CLICK, (err) => {
-                this.emit(LoginMenu.EVENT_LOGIN, err);
+                this._runLogin(err);
             });
         }
-        loginFrame.appendChild(passwordWrap);
 
-        this.invalidLogin = document.createElement('p');
-        this.invalidLogin.className = "invalid_login";
-        this.invalidLogin.setAttribute('data-key', 'invalid_login');
-        loginFrame.appendChild(this.invalidLogin);
+        {
+            this.invalidLogin = document.createElement('p');
+            this.invalidLogin.className = "invalid_login";
+            this.invalidLogin.setAttribute('data-key', 'invalid_login');
+            loginFrame.appendChild(this.invalidLogin);
+        }
+    }
+
+    _runLogin(err){
+        if(this.type === this.TYPE_CONTROLLER){
+            const inputControllerID = this.getControllerid();
+            if(inputControllerID){
+                location.hash = inputControllerID;
+            }
+        }
+        this.emit(LoginMenu.EVENT_LOGIN, err);
     }
 
     getUserSelect() {
         return this.loginUserSelect;
+    }
+
+    getControllerid() {
+        return this.controlleridInput.getValue();
     }
 
     getPassword() {

@@ -5,21 +5,19 @@
 
 "use strict";
 
-class Action extends EventEmitter
-{
-    constructor()
-    {
+class Action extends EventEmitter {
+    constructor() {
         super();
     }
 
-	// デバッグ用. release版作るときは消す
-	emit() {
-		if (arguments.length > 0) {
-			if (!arguments[0]) {
-				console.error("Not found EVENT NAME!")
-			}
-		}
-		super.emit(...arguments);
+    // デバッグ用. release版作るときは消す
+    emit() {
+        if (arguments.length > 0) {
+            if (!arguments[0]) {
+                console.error("Not found EVENT NAME!")
+            }
+        }
+        super.emit(...arguments);
     }
 
     init(data) {
@@ -89,7 +87,7 @@ class Action extends EventEmitter
     }
 
     /**
-	 * 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
+     * 全てのコンテンツ、ディスプレイなどを取得し、グループを含めて全てリロード
      */
     reloadAll(data) {
         this.emit(Action.EVENT_RELOAD_ALL, null, data);
@@ -126,7 +124,7 @@ class Action extends EventEmitter
      * 選択中のコンテンツのインデックスを変更する
      * @param {*} data
      * {
-	 *    zIndex : 設定するzIndex
+     *    zIndex : 設定するzIndex
      *    toFront : 最前面に移動ならtrue, 最背面に移動ならfalse. こちらの値がzIndexより優先される.
      * }
      */
@@ -140,6 +138,21 @@ class Action extends EventEmitter
      */
     changeContentVisible(data) {
         this.emit(Action.EVENT_CHANGE_CONTENT_VISIBLE, null, data);
+    }
+
+    /**
+     * コンテンツの可視不可視を変更
+     * @param {*} data metaData
+     */
+     changeContentVisibleMulti(data) {
+        this.emit(Action.EVENT_CHANGE_CONTENT_VISIBLE2, null, data);
+    }
+    /**
+     * コンテンツの時刻表示の可視不可視を変更
+     * @param {*} data
+     */
+    changeContentDisplayTime(data) {
+        this.emit(Action.EVENT_CHANGE_DISPLAY_TIME, null, data);
     }
 
     /**
@@ -167,8 +180,8 @@ class Action extends EventEmitter
      * 動画デバイスの変更
      * @param {*} data
      * {
-	 *    id : metaData.id,
-	 *    deviceID : deviceID
+     *    id : metaData.id,
+     *    deviceID : deviceID
      * }
      */
     changeVideoDevice(data) {
@@ -179,8 +192,8 @@ class Action extends EventEmitter
      * 音声デバイスの変更
      * @param {*} data
      * {
-	 *    id : metaData.id,
-	 *    deviceID : deviceID
+     *    id : metaData.id,
+     *    deviceID : deviceID
      * }
      */
     changeAudioDevice(data) {
@@ -191,7 +204,7 @@ class Action extends EventEmitter
      * 動画クオリティの変更
      * @param {*} data
      * {
-	 *    id : metaData.id,
+     *    id : metaData.id,
      *    quality : 動画クオリティ
      * }
      */
@@ -255,6 +268,17 @@ class Action extends EventEmitter
      */
     inputURL(data) {
         this.emit(Action.EVENT_INPUT_URL, null, data);
+    }
+
+    /**
+     * WebGL URLを入力
+     * {
+     *   contentData : WebGL URL,
+     *   metaData : 登録用メタデータ
+     * }
+     */
+    inputWebGL(data) {
+        this.emit(Action.EVENT_INPUT_WEBGL, null, data);
     }
 
     /**
@@ -441,6 +465,13 @@ class Action extends EventEmitter
     }
 
     /**
+     * 全ディスプレイリロード（デバッグ用）
+     */
+    reloadDisplay(data) {
+        this.emit(Action.EVENT_RELOAD_DISPLAY, null, data);
+    }
+
+    /**
      * VirualDisplayボタンをクリックした
      * @param {*} data
      */
@@ -463,14 +494,14 @@ class Action extends EventEmitter
     /**
      * ディスプレイプロパティの変更
      * {
-	 * width : w,
-	 * height : h,
-	 * centerX : 中心のX座標,
-	 * centerY : 中心のY座標,
-	 * splitX : 横分割数,
-	 * splitY : 縦分割数,
-	 * scale : スケール
-	 * }
+     * width : w,
+     * height : h,
+     * centerX : 中心のX座標,
+     * centerY : 中心のY座標,
+     * splitX : 横分割数,
+     * splitY : 縦分割数,
+     * scale : スケール
+     * }
      */
     changeDisplayProperty(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_PROPERTY, null, data);
@@ -575,6 +606,16 @@ class Action extends EventEmitter
     }
 
     /**
+     * DisplayGroupの選択が変更された
+     * {
+     *    groupID : グループID
+     * }
+     */
+    changeDisplayGroupSelect(data) {
+        this.emit(Action.EVENT_CHANGE_DISPLAY_GROUP_SELECT, null, data);
+    }
+
+    /**
      * Groupを下に移動
      * {
      *    groupID : グループID
@@ -644,6 +685,17 @@ class Action extends EventEmitter
      */
     changeSearchInput(data) {
         this.emit(Action.EVENT_CHANGE_SEARCH_INPUT, null, data);
+    }
+
+    /**
+     * 検索文字列の変更
+     * {
+     *   text : text
+     *   groups : groups
+     * }
+     */
+    changeUserSerchInput(data) {
+        this.emit(Action.EVENT_CHANGE_USERSEARCH_INPUT, null, data);
     }
 
     /**
@@ -767,6 +819,10 @@ class Action extends EventEmitter
 
     /**
      * 強調表示のトグル
+     * {
+     *    element : セットアップするelement,
+     *    metaData : metaData
+     * }
      */
     toggleContentMarkIcon(data) {
         this.emit(Action.EVENT_TOGGLE_CONTENT_MARK_ICON, null, data);
@@ -786,7 +842,7 @@ class Action extends EventEmitter
 
     /**
      * アスペクト比の調整
-	 * metaDataのorgWidth,orgHeightを元にアスペクト比を調整
+     * metaDataのorgWidth,orgHeightを元にアスペクト比を調整
      * @param {*} data metaData
      * {
      *   metaData : metaData,
@@ -826,22 +882,41 @@ class Action extends EventEmitter
      * 配信許可設定の再読み込み
      * @param {*} data windowData
      */
-    reloadDisplayPermissionList(){
+    reloadDisplayPermissionList() {
         this.emit(Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST, null, null);
     }
 
     /**
      * 配信許可設定の変更
-     * @param {*} data 
+     * @param {*} data
      * {
      *    permissionList : ディスプレイ許可リスト,
      *    callback : 終了時コールバック(option)
      * }
      */
-    changeDisplayPermissionList(data){
+    changeDisplayPermissionList(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST, null, data);
     }
 
+    /**
+     * インラインフレームで開いたitownと通信するための関数を、コンテンツごとに登録
+     * @param {*} data
+     * {
+     *   id : metaData.id,
+     *   func : { hogeFunc : () => {}, .. }
+     * }
+     */
+    addItownFunc(data) {
+        this.emit(Action.EVENT_ADD_ITOWN_FUNC, null, data);
+    }
+
+    updateQgisMetadata(metaData) {
+        this.emit(Action.EVENT_UPDATE_QGIS_METADATA, null, metaData);
+    }
+
+    uploadTileimageFile(data){
+        this.emit(Action.EVENT_UPLOAD_TILEIMAGEFILE, null, data);
+    }
 };
 
 Action.EVENT_INIT = "init";
@@ -856,6 +931,8 @@ Action.EVENT_LOGIN = "login";
 Action.EVENT_LOGOUT = "logout";
 Action.EVENT_CHANGE_CONTENT_INDEX = "changeContentIndex";
 Action.EVENT_CHANGE_CONTENT_VISIBLE = "changeContentVisible";
+Action.EVENT_CHANGE_CONTENT_VISIBLE2 = "changeContentVisibleMulti";
+Action.EVENT_CHANGE_DISPLAY_TIME = "changeContentDisplayTime";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_CHANGE_CONTENT_METAINFO = "changeContentMetaInfo";
 Action.EVENT_CHANGE_VIDEO_DEVICE = "changeVideoDevice";
@@ -865,6 +942,7 @@ Action.EVENT_INPUT_IMAGE_FILE = "inputImageFile";
 Action.EVENT_INPUT_VIDEO_FILE = "inputVideoFile";
 Action.EVENT_INPUT_PDF_FILE = "inputPDFFile";
 Action.EVENT_INPUT_URL = "inputURL";
+Action.EVENT_INPUT_WEBGL = "inputWebGL";
 Action.EVENT_INPUT_TEXT = "inputText";
 Action.EVENT_INPUT_LAYOUT = "inputLayout";
 Action.EVENT_INPUT_VIDEO_STREAM = "inputVideoStream";
@@ -881,6 +959,7 @@ Action.EVENT_CHANGE_DISPLAY_SCALE = "changeDisplayScale";
 Action.EVENT_CHANGE_DISPLAY_TRANS = "changeDisplayTrans";
 Action.EVENT_DELETE_DISPLAY = "deleteDisplay";
 Action.EVENT_SHOW_DISPLAY_ID = "showDisplayID";
+Action.EVENT_RELOAD_DISPLAY = "reloadDisplay";
 Action.EVENT_CLICK_VIRTUAL_DISPLAY = "clickVirtualDisplay";
 Action.EVENT_CHANGE_DISPLAY_COLOR = "changeDisplayColor";
 Action.EVENT_CHANGE_DISPLAY_PROPERTY = "changeDisplayProperty";
@@ -896,11 +975,13 @@ Action.EVENT_GET_GROUP_LIST = "getGroupList";
 Action.EVENT_DELETE_GROUP = "deleteGroup";
 Action.EVENT_CHANGE_GROUP = "changeGroup";
 Action.EVENT_CHANGE_GROUP_SELECT = "changeGroupSelect";
+Action.EVENT_CHANGE_DISPLAY_GROUP_SELECT = "changeDisplayGroupSelect";
 Action.EVENT_CHANGE_GROUP_NAME = "changeGroupName";
 Action.EVENT_CHANGE_GROUP_COLOR = "changeGroupColor";
 Action.EVENT_CHANGE_TAB = "changeTab";
 Action.EVENT_CHANGE_SNAP_TYPE = "changeSnapType";
 Action.EVENT_CHANGE_SEARCH_INPUT = "changeSearchInput";
+Action.EVENT_CHANGE_USERSEARCH_INPUT = "changeUserSearchInput";
 Action.EVENT_CHANGE_CONTROLLER_ID = "changeControllerID";
 Action.EVENT_UPDATE_REMOTE_CURSOR = "updateRemoteCursor";
 Action.EVENT_REWIND_ALL_VIDEO = "rewindAllVideo";
@@ -923,5 +1004,8 @@ Action.EVENT_LOGIN_FOR_CHECK_AUTHORITY = "loginForCheckAuthority";
 Action.EVENT_SYNC_CONTENT = "syncContent";
 Action.EVENT_RELOAD_DISPLAY_PERMISSION_LIST = "reloadDisplayPermissionList";
 Action.EVENT_CHANGE_DISPLAY_PERMISSION_LIST = "changeDisplayPermissionList";
+Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
+Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";
+Action.EVENT_UPLOAD_TILEIMAGEFILE = "uploadTileimageFile";
 
 export default Action;
