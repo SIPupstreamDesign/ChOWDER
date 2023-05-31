@@ -3398,7 +3398,7 @@
                     }
                 })();
 
-                if(process.platform==='win32'){
+                // if(process.platform==='win32'){
                     child_process.exec(batCmd,(err,stdout,stderr)=>{
                         if(err){
                             console.log(stderr);
@@ -3406,8 +3406,8 @@
                         }
                         resolve();
                     });
-                }else{
-                    const command = child_process.spawn("sh", [`../bin/tileimage.sh`, `${filepath}`, `${metaParams.creator}`]);
+                /*}else{
+                    const command = child_process.exec("sh", [`../bin/tileimage.sh`, `${filepath}`, `${metaParams.creator}`]);
                     command.stdout.on("data",(stdout)=>{
                         console.log(stdout.toString());
                     });
@@ -3415,7 +3415,7 @@
                         console.log(`[runTileimageShell] close code:${code}`);
                         resolve();
                     });
-                }
+                }*/
             });
         }
 
