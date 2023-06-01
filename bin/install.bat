@@ -2,6 +2,6 @@
 pushd %~dp0
 
 cd ..
-npm install
+npm install --force
 
 popd
