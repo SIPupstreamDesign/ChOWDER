@@ -145,8 +145,8 @@
 
 ### Node.jsのインストール
 
-ポータルGUIの動作にはNode.js(ver 14系列)のインストールが必要です.
-Node.jsの公式サイト(`https://nodejs.org/ja/download/releases`)から【Node.js 14.xx.x】の行の「Release」を押していただき、対応するプラットフォームのNode.js本体をダウンロードし,インストールします.(下図)
+ポータルGUIの動作にはNode.js(ver 16系列)のインストールが必要です.
+Node.jsの公式サイト(`https://nodejs.org/ja/download/releases`)から【Node.js 16.xx.x】の行の「Release」を押していただき、対応するプラットフォームのNode.js本体をダウンロードし,インストールします.(下図)
 
 <img src="image/NodeJS.png" alt="node.jsのinstall画面" width="377" />
 *node.jsのinstall画面*
@@ -943,7 +943,7 @@ DB 管理では, 保存領域の新規作成, 切り替え, 名前変更, 削除
 
 <img src="image/management6_2.png" alt="パスワードの設定" width="585" />
 *パスワードの設定(管理者以外）*
-`Moderator`及び `Attendee`については、この設定でパスワードを設定するまでログインが出来ません。必ず設定を行ってください。
+`Moderator`及び `Attendee`については、この設定でパスワードを設定するまでログインが出来ません。`Moderator`及び `Attendee`権限を使用する場合は、必ず前もってAdmin権限ユーザーでパスワード設定を行ってください。
 
 
 ### ディスプレイ設定
