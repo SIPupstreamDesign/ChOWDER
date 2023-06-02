@@ -5,7 +5,7 @@
 
 "use strict";
 
-let language = 'ja-JP';
+let language = 'ja_JP';
 
 function checkExistence(key, value) {
     if (!value || key === value) {
@@ -18,7 +18,7 @@ class Translation
     static translate(callback) {
         const dir1 = location.href.split("/");
         let dir2 = "";
-        if(dir1.length == 4){dir2 = ";"} else {
+        if(dir1.length != 4){
             for(let i = 2; i < dir1.length; i++){
                 dir2 = dir2 + "/" + dir1[i];
             }
@@ -29,7 +29,7 @@ class Translation
             .use(window.i18nextXHRBackend)
             .use(window.i18nextBrowserLanguageDetector)
             .init({
-                fallbackLng: 'en-US',
+                fallbackLng: 'en_US',
                 lng : language,
                 backend: {
                     // for all available options read the backend's repository readme file

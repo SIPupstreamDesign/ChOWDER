@@ -42,16 +42,16 @@ async function MenuSetting(management) {
         Language : [{
             Japanese : {
                 func : () => {
-                    this.store.getCookie().setLanguage("ja-JP");
-                    Translation.changeLanguage("ja-JP");
+                    this.store.getCookie().setLanguage("ja_JP");
+                    Translation.changeLanguage("ja_JP");
                     Translation.translate();
                 }
             }
         }, {
             English : {
                 func : () => {
-                    this.store.getCookie().setLanguage("en-US");
-                    Translation.changeLanguage("en-US");
+                    this.store.getCookie().setLanguage("en_US");
+                    Translation.changeLanguage("en_US");
                     Translation.translate();
                 }
             }

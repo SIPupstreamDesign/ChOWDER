@@ -1,135 +1,135 @@
-KEYS,ja-JP,en-US
-show_id,ID‚ğ•\¦,Show ID
-select_all,‘S‚Ä‘I‘ğ,Select All
-hide,”ñ•\¦,Hide
-delete,íœ,Delete
-add_layout,ƒŒƒCƒAƒEƒg’Ç‰Á,Add Layout
-overwrite_layout,ƒŒƒCƒAƒEƒgã‘‚«,Overwrite Layout
-change_group,ƒOƒ‹[ƒv•ÏX,Change Group
-change_displaygroup,ƒTƒCƒg•ÏX,Change Site
-select_all_in_a_group,ƒOƒ‹[ƒv“à‘S‚Ä‘I‘ğ,Select All in a Group
-select_all_in_a_site,ƒTƒCƒg“à‘S‚Ä‘I‘ğ,Select All in a Site
-always_on_top,í‚ÉÅ‘O–Ê‚É•\¦,Always on top
-move_to_front,Å‘O–Ê‚ÉˆÚ“®,Move to front
-move_to_back,Å”w–Ê‚ÉˆÚ“®,Move to back
-add_content,ƒRƒ“ƒeƒ“ƒc’Ç‰Á,Add Content
-swap_image,‰æ‘œ·‚µ‘Ö‚¦,Replace Image
-image_file,‰æ‘œƒtƒ@ƒCƒ‹,Image File
-movie_file,“®‰æƒtƒ@ƒCƒ‹,Movie File
-text,ƒeƒLƒXƒg,Text
-text_file,ƒeƒLƒXƒgƒtƒ@ƒCƒ‹,Text File
-pdf_file,PDFƒtƒ@ƒCƒ‹,PDF File
+KEYS,ja_JP,en_US
+show_id,IDï¿½ï¿½\ï¿½ï¿½,Show ID
+select_all,ï¿½Sï¿½Ä‘Iï¿½ï¿½,Select All
+hide,ï¿½ï¿½\ï¿½ï¿½,Hide
+delete,ï¿½íœ,Delete
+add_layout,ï¿½ï¿½ï¿½Cï¿½Aï¿½Eï¿½gï¿½Ç‰ï¿½,Add Layout
+overwrite_layout,ï¿½ï¿½ï¿½Cï¿½Aï¿½Eï¿½gï¿½ã‘ï¿½ï¿½,Overwrite Layout
+change_group,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½ÏX,Change Group
+change_displaygroup,ï¿½Tï¿½Cï¿½gï¿½ÏX,Change Site
+select_all_in_a_group,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½ï¿½ï¿½Sï¿½Ä‘Iï¿½ï¿½,Select All in a Group
+select_all_in_a_site,ï¿½Tï¿½Cï¿½gï¿½ï¿½ï¿½Sï¿½Ä‘Iï¿½ï¿½,Select All in a Site
+always_on_top,ï¿½ï¿½ÉÅ‘Oï¿½Ê‚É•\ï¿½ï¿½,Always on top
+move_to_front,ï¿½Å‘Oï¿½Ê‚ÉˆÚ“ï¿½,Move to front
+move_to_back,ï¿½Å”wï¿½Ê‚ÉˆÚ“ï¿½,Move to back
+add_content,ï¿½Rï¿½ï¿½ï¿½eï¿½ï¿½ï¿½cï¿½Ç‰ï¿½,Add Content
+swap_image,ï¿½æ‘œï¿½ï¿½ï¿½ï¿½ï¿½Ö‚ï¿½,Replace Image
+image_file,ï¿½æ‘œï¿½tï¿½@ï¿½Cï¿½ï¿½,Image File
+movie_file,ï¿½ï¿½ï¿½ï¿½tï¿½@ï¿½Cï¿½ï¿½,Movie File
+text,ï¿½eï¿½Lï¿½Xï¿½g,Text
+text_file,ï¿½eï¿½Lï¿½Xï¿½gï¿½tï¿½@ï¿½Cï¿½ï¿½,Text File
+pdf_file,PDFï¿½tï¿½@ï¿½Cï¿½ï¿½,PDF File
 url,URL,URL
-screenshare,ƒXƒNƒŠ[ƒ“‹¤—L,Share Screen
-camerashare,ƒJƒƒ‰‹¤—L,Share Camera
-change_name,–¼‘O•ÏX,Rename
-change_color,F•ÏX,Change Color
-user,ƒRƒ“ƒgƒ[ƒ‰,Controller
-password,ƒpƒXƒ[ƒh,Password
-meta_info,ƒƒ^î•ñ,Meta Info
-movie_setting,“®‰æİ’è,Movie Settings
-change_history,·‚µ‘Ö‚¦—š—ğ,Replacement History
-login,ƒƒOƒCƒ“,Login
-invalid_login,ƒRƒ“ƒgƒ[ƒ‰‚Ü‚½‚ÍƒpƒXƒ[ƒh‚ª³‚µ‚­‚ ‚è‚Ü‚¹‚ñ,Invalid Login. Controller or Password isn't correct.
-restore,•œŒ³,Restore
-management,ŠÇ—,Management
-db_management,DBŠÇ—,DB Management
-history_management,—š—ğŠÇ—,History Management
-max_history,Å‘å—š—ğ•Û‘¶”(0‚Å–³§ŒÀ),MAX history (0:unlimited)
-authority_setting,‰{——E•ÒWŒ ŒÀ‚Ìİ’è,Authority Settings
-applied,İ’è‚ğ“K—p‚µ‚Ü‚µ‚½,The setting is applied.
-setting_target,İ’è‘ÎÛ,Setting Target
-editable_content,•ÒW‰Â”\ƒRƒ“ƒeƒ“ƒc,Editable Content
-viewable_content,‰{——‰Â”\ƒRƒ“ƒeƒ“ƒc,Viewable Content
-allow_editting_group,ƒOƒ‹[ƒv‚Ì•ÒW‚ğ‹–‰Â,Allow Edit of Groups
-editable_site,•ÒW‰Â”\ƒTƒCƒg,Editable Site
-viewable_site,•\¦‹–‰ÂƒTƒCƒg,Display Permitted Site
-setting_password,ƒpƒXƒ[ƒh‚Ìİ’è,Password Settings
-old_password,•ÏX‘O‚ÌƒpƒXƒ[ƒh,Old Password
-new_password,V‹KƒpƒXƒ[ƒh,New Password
-password_changed,ƒpƒXƒ[ƒh‚ğ•ÏX‚µ‚Ü‚µ‚½,Password was changed successfully.
-add_text_file,ƒeƒLƒXƒgƒtƒ@ƒCƒ‹‚Ì’Ç‰Á,Add Text File
-add_url,URL‚Ì’Ç‰Á,Add URL
-add_image,‰æ‘œ‚Ì’Ç‰Á,Add Image
-add_movie,“®‰æ‚Ì’Ç‰Á,Add Movie
-add_pdf,PDF‚Ì’Ç‰Á,Add PDF
-all,‘S‚Ä,All
-change,Ø‚è‘Ö‚¦,Change
-new,V‹K,New
-initialize,‰Šú‰»,Initialize
-apply,“K—p,Apply
-new_group,V‹KƒOƒ‹[ƒv,New Group
-new_site,V‹KƒTƒCƒg,New Site
-add_new_group,V‹KƒOƒ‹[ƒv‚Ì’Ç‰Á,Add New Group
-add_new_site,V‹KƒTƒCƒg‚Ì’Ç‰Á,Add New Site
-move_up,1‚Âã‚ÉˆÚ“®,Move Up
-move_down,1‚Â‰º‚ÉˆÚ“®,Move Down
-change_group_name,ƒOƒ‹[ƒv–¼•ÏX,Change Group Name
-change_group_color,ƒOƒ‹[ƒvF•ÏX,Change Group Color
-save_name,V‹K•Û‘¶–¼,Name
-create,ì¬,Create
-already_exists,Šù‚É‘¶İ‚·‚é–¼‘O‚Å‚·,The name already exists.
-cannot_empty,‹ó‚Ì–¼‘O‚É‚Í‚Å‚«‚Ü‚¹‚ñ,The name is empty.
-cannot_set_to_this_user,‚±‚Ìİ’è‘ÎÛ‚É‚ÍƒpƒXƒ[ƒh‚Íİ’è‚Å‚«‚Ü‚¹‚ñ,Cannot set password to this target.
-input_valid_password,—LŒø‚ÈƒpƒXƒ[ƒh‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢,Input valid password.
-delete_is_ok,‚ğíœ‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©?,"will be deleted, OK?"
-init_is_ok,‚ğ‰Šú‰»‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©?,"will be initialized, OK?"
-layout_apply_is_ok,Layout‚ğ“K—p‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©?,"Layout will be applied, OK?"
-video_input,ƒrƒfƒI“ü—Í,Video Input
-audio_input,ƒI[ƒfƒBƒI“ü—Í,Audio Input
-video_quality,ƒrƒfƒI•i¿,Video Quality
-audio_quality,ƒI[ƒfƒBƒI•i¿,Audio Quality
-initial_quality_info,‰Šú•i¿î•ñ,Initial Quality Information
-video_src_width,“®‰æƒ\[ƒX‚Ì•,Video Src Width
-video_src_height,“®‰æƒ\[ƒX‚Ì‚‚³,Video Src Height
-video_codec,ƒrƒfƒIƒR[ƒfƒbƒN,Video Codec
-audio_codec,ƒI[ƒfƒBƒIƒR[ƒfƒbƒN,Audio Codec
-available_send_band_width,—˜—p‰Â”\‚È‘—Mƒoƒ“ƒh•,Available transmission bandwidth
-target_enc_bitrate,ƒ^[ƒQƒbƒgƒGƒ“ƒR[ƒhƒrƒbƒgƒŒ[ƒg,Target encoding bitrate
-actual_enc_bitrate,ÀÛ‚ÌƒGƒ“ƒR[ƒhƒrƒbƒgƒŒ[ƒg,Actual encoding bitrate
-transmit_bitrate,“`‘—ƒrƒbƒgƒŒ[ƒg,Transmission bitrate
-connected_to_server,ƒT[ƒo[‚ÆÚ‘±‚³‚ê‚Ä‚¢‚Ü‚·,Connected to the server.
-cannot_connect_to_server,ƒT[ƒo[‚ÆÚ‘±‚Å‚«‚Ä‚¢‚Ü‚¹‚ñ,Isn't connected to the server.
-add_layout_memo,ƒŒƒCƒAƒEƒg’Ç‰Á - ƒƒ‚,Add Layout - memo
-input_extension_id,ExtensionID‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢,Input ExtensionID
-select_target_layout,ã‘‚«‘ÎÛ‚ÌƒŒƒCƒAƒEƒg‚ğ‘I‘ğ‚µ‚Ä‚­‚¾‚³‚¢,Select target layout.
-layout_overwrite_is_ok,‘I‘ğ’†‚ÌƒŒƒCƒAƒEƒg‚ğã‘‚«‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H,"Overwrite selected Layout, OK?"
-restore_content,ƒRƒ“ƒeƒ“ƒc‚ğ•œŒ³‚µ‚Ü‚·,Restore content.
-restore_here,Œ»İˆÊ’u‚É•œŒ³,Restore to current position.
-delete_content_in_group_is_ok,ƒOƒ‹[ƒv“à‚ÌƒRƒ“ƒeƒ“ƒc‚àíœ‚³‚ê‚Ü‚·. ‚æ‚ë‚µ‚¢‚Å‚·‚©?,"Contents in the group will also be deleted, is it OK?"
-add_text,ƒeƒLƒXƒg‚Ì’Ç‰Á,Add Text
-change_saving_name,•Û‘¶–¼‚Ì•ÏX,Change name
-control_videos_in_a_group,ƒOƒ‹[ƒv“à“®‰æ‚ÌˆêŠ‡‘€ì,Control All Videos in a Group
-video_controller,“®‰æˆêŠ‡§Œä,Video Controller
-change_timeseries_key,Œn—ñƒf[ƒ^‚ÌØ‚è‘Ö‚¦,Change timeseries
-sync,“¯Šú,Sync
-auto,©“®,Auto
-custom,è“®,Custom
-raw_resolution,Œ´¡,RawResolution
-min_bitrate,Å¬bitrate,bitrate min
-max_bitrate,Å‘åbitrate,bitrate max
-display_settings,ƒfƒBƒXƒvƒŒƒCİ’è,Display settings
-display_permission,ƒfƒBƒXƒvƒŒƒC‹–‰Â,Display permission
-allowed,‹–‰Â,Allowed
-blocked,‹‘”Û,Blocked
-allow,‹–‰Â,allow
-block,‹‘”Û,block
-display_setting_changed,ƒfƒBƒXƒvƒŒƒC‹–‰Âİ’è‚ğ•ÏX‚µ‚Ü‚µ‚½,Display permission was changed successfully.
-global_settings,‘S‘Ìİ’è,Global Settings
-per_db_settings,DB‚²‚Æ‚Ìİ’è,Local Settings in DB
-admin_setting_password,ŠÇ—ƒpƒXƒ[ƒh‚Ìİ’è,Administrator's Password Settings
-add_layer,ƒŒƒCƒ„[‚Ì’Ç‰Á,Add Layer
-layer_list,ƒŒƒCƒ„[ƒŠƒXƒg,Layer List
-base_content,ƒx[ƒXƒRƒ“ƒeƒ“ƒc,Base Content
-layer_property,ƒŒƒCƒ„[ƒvƒƒpƒeƒB,Layer Property
-selection_initial,‘I‘ğ‚µ‚Ä‚­‚¾‚³‚¢,Please Select
-timestamp,,Timestamp
-longitude,Longitude (Œo“x),Longitude
-latitude,Latitude (ˆÜ“x),Latitude
-physical_value_1,•¨——Ê1 (–_ƒOƒ‰ƒt‚Ì’·‚³),PhysicalValue1 (length)
-physical_value_2,•¨——Ê2 (–_ƒOƒ‰ƒt‚ÌF),PhysicalValue2 (color)
-physical_expression_1,•¨——Ê1‚Ì”®‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢,Please input expression for PhysicalValue1
-physical_expression_2,•¨——Ê2‚Ì”®‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢,Please input expression for PhysicalValue2
+screenshare,ï¿½Xï¿½Nï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½L,Share Screen
+camerashare,ï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½L,Share Camera
+change_name,ï¿½ï¿½ï¿½Oï¿½ÏX,Rename
+change_color,ï¿½Fï¿½ÏX,Change Color
+user,ï¿½Rï¿½ï¿½ï¿½gï¿½ï¿½ï¿½[ï¿½ï¿½,Controller
+password,ï¿½pï¿½Xï¿½ï¿½ï¿½[ï¿½h,Password
+meta_info,ï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½,Meta Info
+movie_setting,ï¿½ï¿½ï¿½ï¿½İ’ï¿½,Movie Settings
+change_history,ï¿½ï¿½ï¿½ï¿½ï¿½Ö‚ï¿½ï¿½ï¿½ï¿½ï¿½,Replacement History
+login,ï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½,Login
+invalid_login,ï¿½Rï¿½ï¿½ï¿½gï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Íƒpï¿½Xï¿½ï¿½ï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,Invalid Login. Controller or Password isn't correct.
+restore,ï¿½ï¿½ï¿½ï¿½,Restore
+management,ï¿½Ç—ï¿½,Management
+db_management,DBï¿½Ç—ï¿½,DB Management
+history_management,ï¿½ï¿½ï¿½ï¿½ï¿½Ç—ï¿½,History Management
+max_history,ï¿½Å‘å—šï¿½ï¿½Û‘ï¿½ï¿½ï¿½(0ï¿½Å–ï¿½ï¿½ï¿½ï¿½ï¿½),MAX history (0:unlimited)
+authority_setting,ï¿½{ï¿½ï¿½ï¿½Eï¿½ÒWï¿½ï¿½ï¿½ï¿½ï¿½Ìİ’ï¿½,Authority Settings
+applied,ï¿½İ’ï¿½ï¿½Kï¿½pï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,The setting is applied.
+setting_target,ï¿½İ’ï¿½Îï¿½,Setting Target
+editable_content,ï¿½ÒWï¿½Â”\ï¿½Rï¿½ï¿½ï¿½eï¿½ï¿½ï¿½c,Editable Content
+viewable_content,ï¿½{ï¿½ï¿½ï¿½Â”\ï¿½Rï¿½ï¿½ï¿½eï¿½ï¿½ï¿½c,Viewable Content
+allow_editting_group,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½Ì•ÒWï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Allow Edit of Groups
+editable_site,ï¿½ÒWï¿½Â”\ï¿½Tï¿½Cï¿½g,Editable Site
+viewable_site,ï¿½\ï¿½ï¿½ï¿½ï¿½ï¿½ÂƒTï¿½Cï¿½g,Display Permitted Site
+setting_password,ï¿½pï¿½Xï¿½ï¿½ï¿½[ï¿½hï¿½Ìİ’ï¿½,Password Settings
+old_password,ï¿½ÏXï¿½Oï¿½Ìƒpï¿½Xï¿½ï¿½ï¿½[ï¿½h,Old Password
+new_password,ï¿½Vï¿½Kï¿½pï¿½Xï¿½ï¿½ï¿½[ï¿½h,New Password
+password_changed,ï¿½pï¿½Xï¿½ï¿½ï¿½[ï¿½hï¿½ï¿½ÏXï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,Password was changed successfully.
+add_text_file,ï¿½eï¿½Lï¿½Xï¿½gï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ì’Ç‰ï¿½,Add Text File
+add_url,URLï¿½Ì’Ç‰ï¿½,Add URL
+add_image,ï¿½æ‘œï¿½Ì’Ç‰ï¿½,Add Image
+add_movie,ï¿½ï¿½ï¿½ï¿½Ì’Ç‰ï¿½,Add Movie
+add_pdf,PDFï¿½Ì’Ç‰ï¿½,Add PDF
+all,ï¿½Sï¿½ï¿½,All
+change,ï¿½Ø‚ï¿½Ö‚ï¿½,Change
+new,ï¿½Vï¿½K,New
+initialize,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Initialize
+apply,ï¿½Kï¿½p,Apply
+new_group,ï¿½Vï¿½Kï¿½Oï¿½ï¿½ï¿½[ï¿½v,New Group
+new_site,ï¿½Vï¿½Kï¿½Tï¿½Cï¿½g,New Site
+add_new_group,ï¿½Vï¿½Kï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½Ì’Ç‰ï¿½,Add New Group
+add_new_site,ï¿½Vï¿½Kï¿½Tï¿½Cï¿½gï¿½Ì’Ç‰ï¿½,Add New Site
+move_up,1ï¿½Âï¿½ÉˆÚ“ï¿½,Move Up
+move_down,1ï¿½Â‰ï¿½ï¿½ÉˆÚ“ï¿½,Move Down
+change_group_name,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½ï¿½ï¿½ÏX,Change Group Name
+change_group_color,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½Fï¿½ÏX,Change Group Color
+save_name,ï¿½Vï¿½Kï¿½Û‘ï¿½ï¿½ï¿½,Name
+create,ï¿½ì¬,Create
+already_exists,ï¿½ï¿½ï¿½É‘ï¿½ï¿½İ‚ï¿½ï¿½é–¼ï¿½Oï¿½Å‚ï¿½,The name already exists.
+cannot_empty,ï¿½ï¿½Ì–ï¿½ï¿½Oï¿½É‚Í‚Å‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,The name is empty.
+cannot_set_to_this_user,ï¿½ï¿½ï¿½Ìİ’ï¿½ÎÛ‚É‚Íƒpï¿½Xï¿½ï¿½ï¿½[ï¿½hï¿½Íİ’ï¿½Å‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,Cannot set password to this target.
+input_valid_password,ï¿½Lï¿½ï¿½ï¿½Èƒpï¿½Xï¿½ï¿½ï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Input valid password.
+delete_is_ok,ï¿½ï¿½ï¿½íœï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½ï¿½ë‚µï¿½ï¿½ï¿½Å‚ï¿½ï¿½ï¿½?,"will be deleted, OK?"
+init_is_ok,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½ï¿½ë‚µï¿½ï¿½ï¿½Å‚ï¿½ï¿½ï¿½?,"will be initialized, OK?"
+layout_apply_is_ok,Layoutï¿½ï¿½Kï¿½pï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½ï¿½ë‚µï¿½ï¿½ï¿½Å‚ï¿½ï¿½ï¿½?,"Layout will be applied, OK?"
+video_input,ï¿½rï¿½fï¿½Iï¿½ï¿½ï¿½ï¿½,Video Input
+audio_input,ï¿½Iï¿½[ï¿½fï¿½Bï¿½Iï¿½ï¿½ï¿½ï¿½,Audio Input
+video_quality,ï¿½rï¿½fï¿½Iï¿½iï¿½ï¿½,Video Quality
+audio_quality,ï¿½Iï¿½[ï¿½fï¿½Bï¿½Iï¿½iï¿½ï¿½,Audio Quality
+initial_quality_info,ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½ï¿½ï¿½,Initial Quality Information
+video_src_width,ï¿½ï¿½ï¿½ï¿½\ï¿½[ï¿½Xï¿½Ì•ï¿½,Video Src Width
+video_src_height,ï¿½ï¿½ï¿½ï¿½\ï¿½[ï¿½Xï¿½Ìï¿½ï¿½ï¿½,Video Src Height
+video_codec,ï¿½rï¿½fï¿½Iï¿½Rï¿½[ï¿½fï¿½bï¿½N,Video Codec
+audio_codec,ï¿½Iï¿½[ï¿½fï¿½Bï¿½Iï¿½Rï¿½[ï¿½fï¿½bï¿½N,Audio Codec
+available_send_band_width,ï¿½ï¿½ï¿½pï¿½Â”\ï¿½È‘ï¿½ï¿½Mï¿½oï¿½ï¿½ï¿½hï¿½ï¿½,Available transmission bandwidth
+target_enc_bitrate,ï¿½^ï¿½[ï¿½Qï¿½bï¿½gï¿½Gï¿½ï¿½ï¿½Rï¿½[ï¿½hï¿½rï¿½bï¿½gï¿½ï¿½ï¿½[ï¿½g,Target encoding bitrate
+actual_enc_bitrate,ï¿½ï¿½ï¿½Û‚ÌƒGï¿½ï¿½ï¿½Rï¿½[ï¿½hï¿½rï¿½bï¿½gï¿½ï¿½ï¿½[ï¿½g,Actual encoding bitrate
+transmit_bitrate,ï¿½`ï¿½ï¿½ï¿½rï¿½bï¿½gï¿½ï¿½ï¿½[ï¿½g,Transmission bitrate
+connected_to_server,ï¿½Tï¿½[ï¿½oï¿½[ï¿½ÆÚ‘ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½,Connected to the server.
+cannot_connect_to_server,ï¿½Tï¿½[ï¿½oï¿½[ï¿½ÆÚ‘ï¿½ï¿½Å‚ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,Isn't connected to the server.
+add_layout_memo,ï¿½ï¿½ï¿½Cï¿½Aï¿½Eï¿½gï¿½Ç‰ï¿½ - ï¿½ï¿½ï¿½ï¿½,Add Layout - memo
+input_extension_id,ExtensionIDï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Input ExtensionID
+select_target_layout,ï¿½ã‘ï¿½ï¿½ï¿½ÎÛ‚Ìƒï¿½ï¿½Cï¿½Aï¿½Eï¿½gï¿½ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Select target layout.
+layout_overwrite_is_ok,ï¿½Iï¿½ğ’†‚Ìƒï¿½ï¿½Cï¿½Aï¿½Eï¿½gï¿½ï¿½ï¿½ã‘ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½ï¿½ë‚µï¿½ï¿½ï¿½Å‚ï¿½ï¿½ï¿½ï¿½H,"Overwrite selected Layout, OK?"
+restore_content,ï¿½Rï¿½ï¿½ï¿½eï¿½ï¿½ï¿½cï¿½ğ•œŒï¿½ï¿½ï¿½ï¿½Ü‚ï¿½,Restore content.
+restore_here,ï¿½ï¿½ï¿½İˆÊ’uï¿½É•ï¿½ï¿½ï¿½,Restore to current position.
+delete_content_in_group_is_ok,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½ï¿½ï¿½ÌƒRï¿½ï¿½ï¿½eï¿½ï¿½ï¿½cï¿½ï¿½ï¿½íœï¿½ï¿½ï¿½ï¿½Ü‚ï¿½. ï¿½ï¿½ë‚µï¿½ï¿½ï¿½Å‚ï¿½ï¿½ï¿½?,"Contents in the group will also be deleted, is it OK?"
+add_text,ï¿½eï¿½Lï¿½Xï¿½gï¿½Ì’Ç‰ï¿½,Add Text
+change_saving_name,ï¿½Û‘ï¿½ï¿½ï¿½ï¿½Ì•ÏX,Change name
+control_videos_in_a_group,ï¿½Oï¿½ï¿½ï¿½[ï¿½vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÌˆêŠ‡ï¿½ï¿½ï¿½ï¿½,Control All Videos in a Group
+video_controller,ï¿½ï¿½ï¿½ï¿½êŠ‡ï¿½ï¿½ï¿½ï¿½,Video Controller
+change_timeseries_key,ï¿½ï¿½ï¿½nï¿½ï¿½fï¿½[ï¿½^ï¿½ÌØ‚ï¿½Ö‚ï¿½,Change timeseries
+sync,ï¿½ï¿½ï¿½ï¿½,Sync
+auto,ï¿½ï¿½ï¿½ï¿½,Auto
+custom,ï¿½è“®,Custom
+raw_resolution,ï¿½ï¿½ï¿½ï¿½,RawResolution
+min_bitrate,ï¿½Åï¿½bitrate,bitrate min
+max_bitrate,ï¿½Å‘ï¿½bitrate,bitrate max
+display_settings,ï¿½fï¿½Bï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½İ’ï¿½,Display settings
+display_permission,ï¿½fï¿½Bï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½ï¿½,Display permission
+allowed,ï¿½ï¿½ï¿½ï¿½,Allowed
+blocked,ï¿½ï¿½ï¿½ï¿½,Blocked
+allow,ï¿½ï¿½ï¿½ï¿½,allow
+block,ï¿½ï¿½ï¿½ï¿½,block
+display_setting_changed,ï¿½fï¿½Bï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½Âİ’ï¿½ï¿½ÏXï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½,Display permission was changed successfully.
+global_settings,ï¿½Sï¿½Ìİ’ï¿½,Global Settings
+per_db_settings,DBï¿½ï¿½ï¿½Æ‚Ìİ’ï¿½,Local Settings in DB
+admin_setting_password,ï¿½Ç—ï¿½ï¿½pï¿½Xï¿½ï¿½ï¿½[ï¿½hï¿½Ìİ’ï¿½,Administrator's Password Settings
+add_layer,ï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½[ï¿½Ì’Ç‰ï¿½,Add Layer
+layer_list,ï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Xï¿½g,Layer List
+base_content,ï¿½xï¿½[ï¿½Xï¿½Rï¿½ï¿½ï¿½eï¿½ï¿½ï¿½c,Base Content
+layer_property,ï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½[ï¿½vï¿½ï¿½ï¿½pï¿½eï¿½B,Layer Property
+selection_initial,ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Please Select
+timestamp,ï¿½ï¿½ï¿½ï¿½,Timestamp
+longitude,Longitude (ï¿½oï¿½x),Longitude
+latitude,Latitude (ï¿½Ü“x),Latitude
+physical_value_1,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1 (ï¿½_ï¿½Oï¿½ï¿½ï¿½tï¿½Ì’ï¿½ï¿½ï¿½),PhysicalValue1 (length)
+physical_value_2,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2 (ï¿½_ï¿½Oï¿½ï¿½ï¿½tï¿½ÌF),PhysicalValue2 (color)
+physical_expression_1,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Please input expression for PhysicalValue1
+physical_expression_2,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Please input expression for PhysicalValue2
 reload_all_display,Reload All Displays,Reload All Displays
 application_control,Application Control,Application Control
 add_tileimage,Add Tileimage,Add Tileimage
