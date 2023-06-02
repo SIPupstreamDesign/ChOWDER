@@ -45,6 +45,6 @@ else
     cp ../redis/redis-server.mac ../redis/redis-server
 fi
 
-npm install
+npm install --force
 
 cd $ORIGIN
