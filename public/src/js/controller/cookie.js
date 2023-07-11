@@ -38,7 +38,7 @@ class Cookie
 {
 	constructor() {
 		this.loginkey = {}
-		this.language = 'en-US';
+		this.language = 'en_US';
 	}
 	
 	load() {

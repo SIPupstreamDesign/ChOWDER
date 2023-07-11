@@ -236,7 +236,7 @@ class ContentInputGUI
 						posy: posy,
 						visible: true,
 						user_data_text: JSON.stringify({ text: name }),
-						creator:this.store.controllerData.userName
+						creator : this.store.loginStore.getControllerID()
 					}
 					this.action.inputVideoFile({
 						contentData : data,
@@ -277,7 +277,7 @@ class ContentInputGUI
 					posx: posx,
 					posy: posy,
 					visible: true,
-					creator:this.store.controllerData.userName
+					creator : this.store.loginStore.getControllerID()
 				}
 				this.action.inputPDFFile({
 					contentData : data,
@@ -396,7 +396,8 @@ class ContentInputGUI
 		metaData.width = elem.offsetWidth / Vscreen.getWholeScale();
 		metaData.height = elem.offsetHeight / Vscreen.getWholeScale();
 		metaData.visible = true;
-		metaData.creator = this.store.controllerData.userName;
+		metaData.creator = this.store.loginStore.getControllerID();
+		
 		this.previewArea.removeChild(elem);
 		// テキストのときはメタデータにもテキストをつっこむ
 		metaData.user_data_text = JSON.stringify({ text: text });
