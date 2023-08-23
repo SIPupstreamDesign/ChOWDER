@@ -2,7 +2,7 @@
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
-// import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
+import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
 import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
 import Rainbow from '../../../3rd/js/colormap.js'
 import ExprEval from '../../../3rd/js/expr-eval.js'
@@ -48,7 +48,7 @@ function createCSVBargraphSource(itownsView, config) {
 				from: 'AUTO'
 			});
 			let str = Encoding.codeToString(converted);
-			let parsed = {}; //Papaparse.parse(str);
+			let parsed = Papaparse.parse(str);
 
 			// 初回パース時にジオメトリを生成しておく
 			let group = new itowns.THREE.Group();
