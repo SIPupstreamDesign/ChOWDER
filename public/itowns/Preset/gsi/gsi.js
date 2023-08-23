@@ -43,7 +43,7 @@ window.onload = function () {
     view.camera.camera3D.far = itowns.ellipsoidSizes.x * 30;
     view.camera.resize(viewerDiv.clientWidth, viewerDiv.clientHeight);
     view.mainLoop.gfxEngine.renderer.outputEncoding = itowns.THREE.sRGBEncoding;
-    view.controls = new itowns.EarthControls(view, placement);
+    view.controls = new itowns.GlobeControls(view, placement);
     
     loadGSIColor();
 

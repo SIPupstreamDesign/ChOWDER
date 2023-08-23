@@ -1640,8 +1640,8 @@ class Store extends EventEmitter {
 
     addEarthControls() {
         const controls = this.itownsView.controls;
-        console.error('addEarthControls', controls instanceof itowns.EarthControls);
-        if (controls instanceof itowns.EarthControls) {
+        console.error('addEarthControls', controls instanceof itowns.GlobeControls);
+        if (controls instanceof itowns.GlobeControls) {
             const fitButton = document.createElement('button');
             fitButton.style.position = 'fixed'
             fitButton.style.bottom = '70px'
