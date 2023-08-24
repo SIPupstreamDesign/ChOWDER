@@ -65,7 +65,7 @@ window.onload = function () {
     sun.updateMatrixWorld(true);
     view.scene.add(sun);
 
-    var controls = new itowns.EarthControls(view, placement, { isOrbitMode : true });
+    var controls = new itowns.GlobeControls(view, placement, { isOrbitMode : true });
     view.controls = controls;
 
     // itownsコントローラから開かれた場合のみコントロールを表示
