@@ -794,6 +794,7 @@
                                                     editable: "all",
                                                     displayEditable: "all",
                                                     viewableSite: "all",
+                                                    isEncrypted:true,
                                                     group_manipulatable: false
                                                 }
                                             }
@@ -846,8 +847,14 @@
                                 this.textClient.hset(this.frontPrefix + 'dblist', name, id, (err, reply) => {
                                     if (!err) {
                                         // ModeratorとAttendeeのGroup設定を取り出しておく
-                                        this.getGroupUserSetting((err,groupUser)=>{
-                                            
+                                        this.getGroupUserSetting((err,groupUser)=>{       
+                                            // 取り出した設定はハッシュ暗号化済みなので、暗号化しない設定を付与                                     
+                                            if(groupUser.Moderator){
+                                                groupUser.Moderator.isEncrypted = true;
+                                            }
+                                            if(groupUser.Attendee){
+                                                groupUser.Attendee.isEncrypted = true;
+                                            }
                                             // DB変更
                                             this.changeUUIDPrefix(socketid, name, (err, reply) => {
                                                 this.groupInitialSettting(groupUser.Moderator, groupUser.Attendee);
@@ -1075,7 +1082,11 @@
                     data[groupID] = {};
                 }
                 if (setting.hasOwnProperty('password')) {
-                    data[groupID].password = util.encrypt(setting.password);
+                    if(setting.isEncrypted){
+                        data[groupID].password = setting.password;
+                    } else{
+                        data[groupID].password = util.encrypt(setting.password);
+                    }
                 }
                 for (let i = 0; i < userSettingKeys.length; i = i + 1) {
                     let key = userSettingKeys[i];
