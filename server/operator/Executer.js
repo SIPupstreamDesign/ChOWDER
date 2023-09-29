@@ -687,6 +687,9 @@
             });
         }
 
+        /**
+         * DB変更 
+         */
         changeUUIDPrefix(socketid, dbname, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
                 if (err) {
@@ -728,7 +731,7 @@
             });
         }
 
-        groupInitialSettting() {
+        groupInitialSettting(moderator, attendee) {
             this.textClient.exists(this.groupUserPrefix, (err, doesExists) => {
                 if (doesExists !== 1) {
                     // group設定の初期登録
@@ -766,22 +769,37 @@
 
                                 }, () => {
                                     // Moderator設定の初期登録
-                                    this.changeGroupUserSetting("master", "Moderator", {
-                                        viewable: "all",
-                                        editable: "all",
-                                        displayEditable: "all",
-                                        viewableSite: "all",
-                                        group_manipulatable: false
-
-                                    }, () => {
-                                        // Moderator設定の初期登録
-                                        this.changeGroupUserSetting("master", "Attendee", {
-                                            viewable: "all",
-                                            editable: "all",
-                                            displayEditable: "all",
-                                            viewableSite: "all",
-                                            group_manipulatable: false
-                                        })
+                                    const moderatorSettings = (()=>{
+                                        if(moderator){
+                                            return moderator;
+                                        }else{
+                                            return {
+                                                viewable: "all",
+                                                editable: "all",
+                                                displayEditable: "all",
+                                                viewableSite: "all",
+                                                group_manipulatable: false
+                                            }
+                                        }
+                                    })();
+                                    this.changeGroupUserSetting("master", "Moderator", moderatorSettings
+                                    , () => {
+                                        // Attendee設定の初期登録
+                                        const attendeeSettings = (()=>{
+                                            if(attendee){
+                                                return attendee;
+                                            }else{
+                                                return {
+                                                    viewable: "all",
+                                                    editable: "all",
+                                                    displayEditable: "all",
+                                                    viewableSite: "all",
+                                                    isEncrypted:true,
+                                                    group_manipulatable: false
+                                                }
+                                            }
+                                        })();
+                                        this.changeGroupUserSetting("master", "Attendee", attendeeSettings)
                                     })
                                 })
                             })
@@ -828,10 +846,23 @@
                                 }
                                 this.textClient.hset(this.frontPrefix + 'dblist', name, id, (err, reply) => {
                                     if (!err) {
-                                        this.changeUUIDPrefix(socketid, name, (err, reply) => {
-                                            this.groupInitialSettting();
-                                            endCallback(err);
+                                        // ModeratorとAttendeeのGroup設定を取り出しておく
+                                        this.getGroupUserSetting((err,groupUser)=>{       
+                                            // 取り出した設定はハッシュ暗号化済みなので、暗号化しない設定を付与                                     
+                                            if(groupUser.Moderator){
+                                                groupUser.Moderator.isEncrypted = true;
+                                            }
+                                            if(groupUser.Attendee){
+                                                groupUser.Attendee.isEncrypted = true;
+                                            }
+                                            // DB変更
+                                            this.changeUUIDPrefix(socketid, name, (err, reply) => {
+                                                this.groupInitialSettting(groupUser.Moderator, groupUser.Attendee);
+                                                endCallback(err);
+                                            });
+
                                         });
+
                                     } else {
                                         endCallback("failed to create new db");
                                     }
@@ -1051,7 +1082,11 @@
                     data[groupID] = {};
                 }
                 if (setting.hasOwnProperty('password')) {
-                    data[groupID].password = util.encrypt(setting.password);
+                    if(setting.isEncrypted){
+                        data[groupID].password = setting.password;
+                    } else{
+                        data[groupID].password = util.encrypt(setting.password);
+                    }
                 }
                 for (let i = 0; i < userSettingKeys.length; i = i + 1) {
                     let key = userSettingKeys[i];
