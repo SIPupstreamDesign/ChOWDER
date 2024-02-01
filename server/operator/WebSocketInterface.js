@@ -241,6 +241,9 @@
             ws_connector.on(Command.GetUserList, (data, resultCallback) => {
                 this.commandOperator.getUserList(resultCallback);
             });
+            ws_connector.on(Command.GetContentGroupList, (data, resultCallback) => {
+                this.commandOperator.getContentGroupList(resultCallback);
+            });
             ws_connector.on(Command.GenerateControllerID, (data, resultCallback) => {
                 this.commandOperator.generateControllerID(resultCallback);
             });

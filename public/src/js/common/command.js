@@ -26,6 +26,7 @@ const Command = {
 	GetLoginUserList : "GetLoginUserList",
 	GetSelfStatus : "GetSelfStatus",
 	UpdateLoginUserControllerID : "UpdateLoginUserControllerID",
+	GetContentGroupList : "GetContentGroupList",
 
 	// using both server and client
 	Update : "Update",

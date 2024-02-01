@@ -186,6 +186,7 @@ class Receiver {
             if (!this.store.isInitialized()) { return; }
             // ユーザーリスト再取得
             this.action.reloadUserList();
+            this.action.reloadContentGroupList();
             this.action.reloadGlobalSetting();
             this.action.reloadDBList({
                 callback: (err, reply) => {

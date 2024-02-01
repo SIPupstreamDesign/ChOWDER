@@ -125,6 +125,21 @@ class LoginStore {
 			this.store.emit(Store.EVENT_USERLIST_RELOADED, null);
 		});
 	}
+	
+	/**
+	* コンテンツグループリストを最新に更新
+	*/
+	_reloadContentGroupList(data) {
+		let callback = Store.extractCallback(data);
+
+		this.connector.send(Command.GetContentGroupList, {}, (err, contentGroupList) => {
+			this.contentGroupList = contentGroupList;
+			if (callback) {
+				callback(err, contentGroupList);
+			}
+			this.store.emit(Store.EVENT_CONTENTGROUPLIST_RELOADED, null);
+		});
+	}
 
 	/**
 	 * ログアウト
@@ -139,6 +154,9 @@ class LoginStore {
 		return this.userList;
 	}
 
+	getContentGroupList() {
+		return this.contentGroupList;
+	}
 
 	getLanguage() {
 		return this.cookie.getLanguage();

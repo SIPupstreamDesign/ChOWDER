@@ -490,9 +490,9 @@ class ManagementDialog extends EventEmitter {
      */
     getUser(id) {
         let i;
-        for (i = 0; i < this.userList.length; i = i + 1) {
-            if (this.userList[i].id === id) {
-                return this.userList[i];
+        for (i = 0; i < this.userGroupList.length; i = i + 1) {
+            if (this.userGroupList[i].id === id) {
+                return this.userGroupList[i];
             }
         }
         return null;
@@ -689,10 +689,10 @@ class ManagementDialog extends EventEmitter {
             this.deleteCheckBox.getDOM().click();
         };
         // ユーザー名リストの設定
-        if (this.userList) {
+        if (this.userGroupList) {
             this.authSelect.clear();
-            for (i = 0; i < this.userList.length; i = i + 1) {
-                let user = this.userList[i];
+            for (i = 0; i < this.userGroupList.length; i = i + 1) {
+                let user = this.userGroupList[i];
                 if (user.type !== "admin" && user.type !== "api" && user.type !== "electron") {
                     this.authSelect.addOption(user.id, user.name);
                 }
@@ -731,14 +731,14 @@ class ManagementDialog extends EventEmitter {
                     this.displayEditableSelect.getDOM().style.display = "inline-block"
                 }
 
-                for (let i = 0; i < this.userList.length; i = i + 1) {
-                    if (this.userList[i].type !== "admin" && this.userList[i].type !== "api") {
-                        let listContentName = this.userList[i].id;
+                for (let i = 0; i < this.userGroupList.length; i = i + 1) {
+                    if (this.userGroupList[i].type !== "admin" && this.userGroupList[i].type !== "api") {
+                        let listContentName = this.userGroupList[i].id;
                         if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
-                            this.viewableSelect.select(this.userList[i].name);
+                            this.viewableSelect.select(this.userGroupList[i].name);
                         }
                         if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
-                            this.editableSelect.select(this.userList[i].name);
+                            this.editableSelect.select(this.userGroupList[i].name);
                         }
                     }
                 }
@@ -848,14 +848,14 @@ class ManagementDialog extends EventEmitter {
         this.viewableSelect.add(allAccessText, allAccessText);
         this.displayEditableSelect.add(allAccessText, allAccessText);
         this.viewableSiteSelect.add(allAccessText, allAccessText);
-        for (i = 0; i < this.userList.length; i = i + 1) {
-            if (this.userList[i].type !== "admin" &&
-                this.userList[i].type !== "display" &&
-                this.userList[i].type !== "guest" &&
-                this.userList[i].type !== "api" &&
-                this.userList[i].type !== "electron") {
-                this.editableSelect.add(this.userList[i].name, this.userList[i].id);
-                this.viewableSelect.add(this.userList[i].name, this.userList[i].id);
+        for (i = 0; i < this.userGroupList.length; i = i + 1) {
+            if (this.userGroupList[i].type !== "admin" &&
+                this.userGroupList[i].type !== "display" &&
+                this.userGroupList[i].type !== "guest" &&
+                this.userGroupList[i].type !== "api" &&
+                this.userGroupList[i].type !== "electron") {
+                this.editableSelect.add(this.userGroupList[i].name, this.userGroupList[i].id);
+                this.viewableSelect.add(this.userGroupList[i].name, this.userGroupList[i].id);
             }
         }
         for (i = 0; i < this.displayGroupList.length; ++i) {
@@ -931,16 +931,16 @@ class ManagementDialog extends EventEmitter {
      */
     initPasswordGUI(contents) {
         // ユーザー名リストの設定
-        if (this.userList) {
+        if (this.userGroupList) {
             this.authSelectPass.clear();
             this.adminAuthSelectPass.clear();
-            for (let i = 0; i < this.userList.length; i = i + 1) {
-                const type = this.userList[i].type;
+            for (let i = 0; i < this.userGroupList.length; i = i + 1) {
+                const type = this.userGroupList[i].type;
                 if (type === "admin") {
-                    this.adminAuthSelectPass.addOption(this.userList[i].id, this.userList[i].name);
+                    this.adminAuthSelectPass.addOption(this.userGroupList[i].id, this.userGroupList[i].name);
                 }
                 if (type !== "admin" && type !== "guest" && type !== "display" && type !== "electronDisplay") {
-                    this.authSelectPass.addOption(this.userList[i].id, this.userList[i].name);
+                    this.authSelectPass.addOption(this.userGroupList[i].id, this.userGroupList[i].name);
                 }
             }
         }
@@ -951,14 +951,14 @@ class ManagementDialog extends EventEmitter {
                 if (select.getSelectedIndex() >= 0) {
                     let index = -1;
                     let id = select.getSelectedValue();
-                    for (let i = 0; i < this.userList.length; i = i + 1) {
-                        if (this.userList[i].id === id) {
+                    for (let i = 0; i < this.userGroupList.length; i = i + 1) {
+                        if (this.userGroupList[i].id === id) {
                             index = i;
                             break;
                         }
                     }
-                    if (index >= 0 && this.userList.length > index) {
-                        let type = this.userList[index].type;
+                    if (index >= 0 && this.userGroupList.length > index) {
+                        let type = this.userGroupList[index].type;
                         if (type === "admin") {
                             oldInput.setEnable(true);
                             newInput.setEnable(true);
@@ -984,14 +984,14 @@ class ManagementDialog extends EventEmitter {
             return () => {
                 let id = select.getSelectedValue();
                 let index = -1;
-                for (let i = 0; i < this.userList.length; i = i + 1) {
-                    if (this.userList[i].id === id) {
+                for (let i = 0; i < this.userGroupList.length; i = i + 1) {
+                    if (this.userGroupList[i].id === id) {
                         index = i;
                         break;
                     }
                 }
                 if (index >= 0) {
-                    let id = this.userList[index].id;
+                    let id = this.userGroupList[index].id;
                     if (newInput.getValue() <= 0) {
                         if (id === "Display" || id === "Guest") {
                             InputDialog.showOKInput({
@@ -1055,13 +1055,17 @@ class ManagementDialog extends EventEmitter {
 
     /**
      * 管理GUIを表示する
-     * @param contents.dblist dbリスト
+     * @param db.dblist dbリスト
      */
-    show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermissionList, isAdmin) {
+    show(userGroupList, contentGroupList, displayGroupList, db, currentDB, maxHistoryNum, displayPermissionList, isAdmin) {
         this.initAll();
-        this.userList = userList;
+        this.userGroupList = userGroupList;
+        this.contentGroupList = contentGroupList;
         this.displayGroupList = displayGroupList;
-        this.contents = contents;
+        this.db = db;
+        // console.log("🐔🐔🐔🐔🐔🐔",contentGroupList);
+        // console.log("🐔🐔🐔🐔🐔🐔",displayGroupList);
+        // console.log("🐔🐔🐔🐔🐔🐔",db);
         this.background = new PopupBackground();
         this.background.show();
         this.background.on('close', () => {
@@ -1070,16 +1074,16 @@ class ManagementDialog extends EventEmitter {
         });
         this.dom.style.display = "block";
         // DBの操作GUIの初期化
-        this.initDBGUI(contents, currentDB);
+        this.initDBGUI(db, currentDB);
         // 履歴管理GUIの初期化
-        this.initHistoryGUI(contents, maxHistoryNum);
+        this.initHistoryGUI(db, maxHistoryNum);
         // 閲覧・編集権限GUIの初期化
-        this.initAuthorityGUI(contents);
+        this.initAuthorityGUI(db);
         // パスワード設定GUIの初期化
-        this.initPasswordGUI(contents);
+        this.initPasswordGUI(db);
         // 権限情報をGUIに反映.
 
-        this.initDisplayPermission(contents, displayPermissionList);
+        this.initDisplayPermission(db, displayPermissionList);
 
         this.initApplicationControlGUI();
 

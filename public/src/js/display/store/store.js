@@ -217,7 +217,7 @@ class Store extends EventEmitter {
         let callback = Store.extractCallback(data);
 
         Connector.send(Command.GetUserList, {}, (err, userList) => {
-            this.userList = userList;
+            this.userGroupList = userList;
             if (callback) {
                 callback(err, userList);
             }
@@ -719,8 +719,8 @@ class Store extends EventEmitter {
         if (!windowData) {
             return false;
         }
-        for (let i = 0; i < this.userList.length; ++i) {
-            const authority = this.userList[i];
+        for (let i = 0; i < this.userGroupList.length; ++i) {
+            const authority = this.userGroupList[i];
             if (authority.id === group) {
                 if (authority.hasOwnProperty('viewableSite')) {
                     if (authority.viewableSite !== "all") {

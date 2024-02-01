@@ -1143,7 +1143,6 @@
          * 全グループ名と、guest, display, 全管理者名が返る.
          */
         getUserList(endCallback) {
-            // contentgroupも返ってるので治す
             this.getAdminList((err, data) => {
                 const userList = [];
 
@@ -1156,83 +1155,115 @@
                         endCallback(null, userList);
                         return;
                     }
-                    this.getGroupList((err, groupData) => {
-
-                        // Guestユーザー
-                        const guestUserData = { name: "Guest", id: "Guest", type: "guest" };
-                        if (setting.hasOwnProperty("Guest")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Guest.hasOwnProperty(key)) {
-                                    guestUserData[key] = setting.Guest[key];
-                                }
+                    
+                    // Guestユーザー
+                    const guestUserData = { name: "Guest", id: "Guest", type: "guest" };
+                    if (setting.hasOwnProperty("Guest")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Guest.hasOwnProperty(key)) {
+                                guestUserData[key] = setting.Guest[key];
                             }
                         }
-                        userList.push(guestUserData);
+                    }
+                    userList.push(guestUserData);
 
-                        // Displayユーザー
-                        let displayUserData = { name: "Display", id: "Display", type: "display" };
-                        if (setting.hasOwnProperty("Display")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Display.hasOwnProperty(key)) {
-                                    displayUserData[key] = setting.Display[key];
-                                }
+                    // Displayユーザー
+                    let displayUserData = { name: "Display", id: "Display", type: "display" };
+                    if (setting.hasOwnProperty("Display")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Display.hasOwnProperty(key)) {
+                                displayUserData[key] = setting.Display[key];
                             }
                         }
-                        userList.push(displayUserData);
+                    }
+                    userList.push(displayUserData);
 
-                        // APIUser
-                        let apiUserData = { name: "APIUser", id: "APIUser", type: "api" };
-                        if (setting.hasOwnProperty("APIUser")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.APIUser.hasOwnProperty(key)) {
-                                    apiUserData[key] = setting.APIUser[key];
-                                }
+                    // APIUser
+                    let apiUserData = { name: "APIUser", id: "APIUser", type: "api" };
+                    if (setting.hasOwnProperty("APIUser")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.APIUser.hasOwnProperty(key)) {
+                                apiUserData[key] = setting.APIUser[key];
                             }
                         }
-                        userList.push(apiUserData);
+                    }
+                    userList.push(apiUserData);
 
-                        // ElectronDisplay
-                        let electronDisplayData = { name: "ElectronDisplay", id: "ElectronDisplay", type: "electron" };
-                        if (setting.hasOwnProperty("ElectronDisplay")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.ElectronDisplay.hasOwnProperty(key)) {
-                                    electronDisplayData[key] = setting.ElectronDisplay[key];
-                                }
+                    // ElectronDisplay
+                    let electronDisplayData = { name: "ElectronDisplay", id: "ElectronDisplay", type: "electron" };
+                    if (setting.hasOwnProperty("ElectronDisplay")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.ElectronDisplay.hasOwnProperty(key)) {
+                                electronDisplayData[key] = setting.ElectronDisplay[key];
                             }
                         }
-                        userList.push(electronDisplayData);
+                    }
+                    userList.push(electronDisplayData);
 
-                        // Moderator/Attendee
-                        let moderatorData = { name: "Moderator", id: "Moderator", type: "moderator" };
-                        if (setting.hasOwnProperty("Moderator")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Moderator.hasOwnProperty(key)) {
-                                    moderatorData[key] = setting.Moderator[key];
-                                }
+                    // Moderator/Attendee
+                    let moderatorData = { name: "Moderator", id: "Moderator", type: "moderator" };
+                    if (setting.hasOwnProperty("Moderator")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Moderator.hasOwnProperty(key)) {
+                                moderatorData[key] = setting.Moderator[key];
                             }
                         }
-                        userList.push(moderatorData);
-                        let attendeeData = { name: "Attendee", id: "Attendee", type: "attendee" };
-                        if (setting.hasOwnProperty("Attendee")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Attendee.hasOwnProperty(key)) {
-                                    attendeeData[key] = setting.Attendee[key];
-                                }
+                    }
+                    userList.push(moderatorData);
+                    let attendeeData = { name: "Attendee", id: "Attendee", type: "attendee" };
+                    if (setting.hasOwnProperty("Attendee")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Attendee.hasOwnProperty(key)) {
+                                attendeeData[key] = setting.Attendee[key];
                             }
                         }
-                        userList.push(attendeeData);
+                    }
+                    userList.push(attendeeData);
 
-                        if (endCallback) {
-                            endCallback(null, userList);
-                        }
-                    });
+                    if (endCallback) {
+                        endCallback(null, userList);
+                    }
+
                 });
+            });
+        }
+
+        /**
+         * コンテンツグループリストの取得
+         */
+        getContentGroupList(endCallback) {
+            this.getGroupList((err, groupData) => {
+                const contentGroupList = [];
+
+                // コンテンツグループ
+                if (groupData.hasOwnProperty("grouplist")) {
+                    for (let i = 0; i < groupData.grouplist.length; i = i + 1) {
+                        const groupSetting = {};
+                        const name = groupData.grouplist[i].name;
+                        const id = groupData.grouplist[i].id;
+                        // defaultグループは特殊扱いでユーザー無し
+                        if (id !== "group_default") {
+                            const contentGroupData = { name: name, id: id, type: "group" };
+
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (groupSetting.hasOwnProperty(key)) {
+                                    contentGroupData[key] = groupSetting[key];
+                                }
+                            }
+                            contentGroupList.push(contentGroupData);
+                        }
+                    }
+                }
+                if (endCallback) {
+                    endCallback(null, contentGroupList);
+                }
             });
         }
 

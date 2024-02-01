@@ -1051,6 +1051,15 @@
         }
 
         /**
+         *コンテンツグループリスト取得コマンドを実行する
+         * @method GetContentGroupList
+         * @param {Function} endCallback 終了時に呼ばれるコールバック
+         */
+        getContentGroupList(endCallback) {
+            this.executer.getContentGroupList(endCallback);
+        }
+
+        /**
          * ユニークなコントローラIDを生成して返す
          * @method GenerateCOntrollerID
          * @param {Function} endCallback 終了時に呼ばれるコールバック

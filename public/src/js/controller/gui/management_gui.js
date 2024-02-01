@@ -37,6 +37,13 @@ class ManagementGUI
 			// リストの順番がリネームによりことなるので、再度同じDBを選択できない
 			//this.managementDialog.setSelectedDBIndex(selectedDBIndex);
 		});
+		this.store.on(Store.EVENT_CONTENTGROUPLIST_RELOADED, () => {
+			if (this.isShow())
+			{
+				this.close();
+				this.show();
+			}
+		});
 	}
 
 	/**
@@ -152,13 +159,14 @@ class ManagementGUI
 	}
 
 	show() {
-		let userList = this.store.getLoginStore().getUserList();
-		let displayGroupList = this.store.getGroupStore().getDisplayGroupList();
-		let contents = { dblist : this.dblist };
-		let currentDB = this.management.getCurrentDB();
-		let maxHistoryNum = this.management.getMaxHistoryNum();
-		let displayPermissionList = this.store.getDisplayPermissionList();
-		this.managementDialog.show(userList, displayGroupList, contents, currentDB, maxHistoryNum, displayPermissionList,this.store.managementStore.isAdmin());
+		const userGroupList = this.store.getLoginStore().getUserList();
+		const contentGroupList = this.store.getLoginStore().getContentGroupList();
+		const displayGroupList = this.store.getGroupStore().getDisplayGroupList();
+		const db = { dblist : this.dblist };
+		const currentDB = this.management.getCurrentDB();
+		const maxHistoryNum = this.management.getMaxHistoryNum();
+		const displayPermissionList = this.store.getDisplayPermissionList();
+		this.managementDialog.show(userGroupList, contentGroupList, displayGroupList, db, currentDB, maxHistoryNum, displayPermissionList,this.store.managementStore.isAdmin());
 	}
 
 	close() {
