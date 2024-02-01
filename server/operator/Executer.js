@@ -319,17 +319,9 @@
                 }
                 this.textClient.set(this.groupListPrefix, JSON.stringify(data), () => {
                     this.getGroupID(groupName, (id) => {
-                        // グループ設定を追加する.
-                        this.changeGroupUserSetting(socketid, id, {
-                            viewable: [id],
-                            editable: [id],
-                            viewableSite: "all",
-                            group_manipulatable: false
-                        }, (err, reply) => {
-                            if (endCallback) {
-                                endCallback(err, id);
-                            }
-                        });
+                        if (endCallback) {
+                            endCallback(err, id);
+                        }
                     })
                 });
             });

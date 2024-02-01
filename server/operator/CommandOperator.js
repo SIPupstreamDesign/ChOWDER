@@ -783,16 +783,16 @@
                                         }
                                     });
                                 } else {
-                                    endCallback("faild to add group");
++                                    endCallback("faild to add group");
                                 }
                             });
                         }
                     } else {
-                        endCallback("access denied");
++                        endCallback("access denied");
                     }
                 });
             } else {
-                endCallback("faild to add group : invalid parameter");
++                endCallback("faild to add group : invalid parameter");
             }
         }
 
