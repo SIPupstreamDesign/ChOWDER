@@ -292,7 +292,7 @@
         }
 
         /**
-         * グループリストにgroupを追加
+         * コンテンツグループリストにgroupを追加
          * @param {String} id グループid. nullの場合自動割り当て.
          * @param {String} groupName グループ名.
          * @param {String} color グループ色.
@@ -717,7 +717,7 @@
                                     this.windowContentRefPrefix = this.frontPrefix + this.uuidPrefix + "window_contentref:";
                                     this.virtualDisplayIDStr = this.frontPrefix + this.uuidPrefix + "virtual_display";
                                     this.groupListPrefix = this.frontPrefix + this.uuidPrefix + "grouplist";
-                                    this.groupUserPrefix = this.frontPrefix + this.uuidPrefix + "group_user"; // グループユーザー設定
+                                    this.groupUserPrefix = this.frontPrefix + "group_user"; // グループユーザー設定
                                     endCallback(null);
                                 });
                             });
@@ -731,7 +731,28 @@
             });
         }
 
-        groupInitialSettting(moderator, attendee) {
+        groupInitialSettting() {
+            this.addGroup("master", "group_default", "default", null, (err, reply) => {
+                this.addDisplayGroup("master", "group_default", "default", null, (err, reply) => { });
+            });
+
+            this.textClient.exists(this.globalSettingPrefix, (err, doesExists) => {
+                if (doesExists !== 1) {
+                    // global設定の初期登録
+                    this.changeGlobalSetting("master", {
+                        max_history_num: 10
+                    });
+                }
+            });
+            // virtualdisplayの初期設定
+            this.textClient.exists(this.virtualDisplayIDStr, (err, doesExists) => {
+                if (doesExists !== 1) {
+                    this.setVirtualDisplay(this.getInitialVirtualDisplayData());
+                }
+            });
+        }
+
+        groupUserInitialSetting() {
             this.textClient.exists(this.groupUserPrefix, (err, doesExists) => {
                 if (doesExists !== 1) {
                     // group設定の初期登録
@@ -769,59 +790,27 @@
 
                                 }, () => {
                                     // Moderator設定の初期登録
-                                    const moderatorSettings = (()=>{
-                                        if(moderator){
-                                            return moderator;
-                                        }else{
-                                            return {
-                                                viewable: "all",
-                                                editable: "all",
-                                                displayEditable: "all",
-                                                viewableSite: "all",
-                                                group_manipulatable: false
-                                            }
-                                        }
-                                    })();
-                                    this.changeGroupUserSetting("master", "Moderator", moderatorSettings
-                                    , () => {
+                                    this.changeGroupUserSetting("master", "Moderator", {
+                                        viewable: "all",
+                                        editable: "all",
+                                        displayEditable: "all",
+                                        viewableSite: "all",
+                                        group_manipulatable: false
+
+                                    }, () => {
                                         // Attendee設定の初期登録
-                                        const attendeeSettings = (()=>{
-                                            if(attendee){
-                                                return attendee;
-                                            }else{
-                                                return {
-                                                    viewable: "all",
-                                                    editable: "all",
-                                                    displayEditable: "all",
-                                                    viewableSite: "all",
-                                                    isEncrypted:true,
-                                                    group_manipulatable: false
-                                                }
-                                            }
-                                        })();
-                                        this.changeGroupUserSetting("master", "Attendee", attendeeSettings)
+                                        this.changeGroupUserSetting("master", "Attendee", {
+                                            viewable: "all",
+                                            editable: "all",
+                                            displayEditable: "all",
+                                            viewableSite: "all",
+                                            group_manipulatable: false
+                                        }, () =>{});
                                     })
                                 })
                             })
                         })
                     });
-                }
-                this.addGroup("master", "group_default", "default", null, (err, reply) => {
-                    this.addDisplayGroup("master", "group_default", "default", null, (err, reply) => { });
-                });
-            });
-            this.textClient.exists(this.globalSettingPrefix, (err, doesExists) => {
-                if (doesExists !== 1) {
-                    // global設定の初期登録
-                    this.changeGlobalSetting("master", {
-                        max_history_num: 10
-                    });
-                }
-            });
-            // virtualdisplayの初期設定
-            this.textClient.exists(this.virtualDisplayIDStr, (err, doesExists) => {
-                if (doesExists !== 1) {
-                    this.setVirtualDisplay(this.getInitialVirtualDisplayData());
                 }
             });
         }
@@ -846,21 +835,10 @@
                                 }
                                 this.textClient.hset(this.frontPrefix + 'dblist', name, id, (err, reply) => {
                                     if (!err) {
-                                        // ModeratorとAttendeeのGroup設定を取り出しておく
-                                        this.getGroupUserSetting((err,groupUser)=>{       
-                                            // 取り出した設定はハッシュ暗号化済みなので、暗号化しない設定を付与                                     
-                                            if(groupUser.Moderator){
-                                                groupUser.Moderator.isEncrypted = true;
-                                            }
-                                            if(groupUser.Attendee){
-                                                groupUser.Attendee.isEncrypted = true;
-                                            }
-                                            // DB変更
-                                            this.changeUUIDPrefix(socketid, name, (err, reply) => {
-                                                this.groupInitialSettting(groupUser.Moderator, groupUser.Attendee);
-                                                endCallback(err);
-                                            });
-
+                                        // DB変更
+                                        this.changeUUIDPrefix(socketid, name, (err, reply) => {
+                                            this.groupInitialSettting();
+                                            endCallback(err);
                                         });
 
                                     } else {
@@ -1073,7 +1051,6 @@
         changeGroupUserSetting(socketid, groupID, setting, endCallback) {
             console.log("changeGroupUserSetting", groupID)
             this.getGroupUserSetting((err, data) => {
-                let groupSetting;
                 if (!data) {
                     // 新規.
                     data = {};
@@ -1082,11 +1059,8 @@
                     data[groupID] = {};
                 }
                 if (setting.hasOwnProperty('password')) {
-                    if(setting.isEncrypted){
-                        data[groupID].password = setting.password;
-                    } else{
-                        data[groupID].password = util.encrypt(setting.password);
-                    }
+                    data[groupID].password = util.encrypt(setting.password);
+
                 }
                 for (let i = 0; i < userSettingKeys.length; i = i + 1) {
                     let key = userSettingKeys[i];
@@ -3043,7 +3017,7 @@
         }
 
         /**
-         * UUIDを登録する.
+         * サーバ起動時にUUIDを登録する.
          * @method registerUUID
          * @param {String} id UUID
          */
@@ -3068,7 +3042,7 @@
             this.controllerDataPrefix = this.frontPrefix + this.controllerDataPrefix;
             this.globalSettingPrefix = this.frontPrefix + this.globalSettingPrefix;
             this.adminUserPrefix = this.frontPrefix + this.adminUserPrefix; // 管理ユーザー設定
-            this.groupUserPrefix = this.frontPrefix + this.uuidPrefix + this.groupUserPrefix; // グループユーザー設定
+            this.groupUserPrefix = this.frontPrefix + this.groupUserPrefix; // グループユーザー設定
             console.log("idstr:" + this.contentPrefix);
             console.log("idstr:" + this.contentRefPrefix);
             console.log("idstr:" + this.metadataPrefix);
@@ -3126,6 +3100,7 @@
                 });
             });
             this.groupInitialSettting();
+            this.groupUserInitialSetting();
 
             this.getGlobalSetting((err, setting) => {
                 if (!err && setting && setting.current_db) {
