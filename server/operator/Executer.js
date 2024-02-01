@@ -1143,12 +1143,12 @@
          * 全グループ名と、guest, display, 全管理者名が返る.
          */
         getUserList(endCallback) {
+            // contentgroupも返ってるので治す
             this.getAdminList((err, data) => {
-                let i,
-                    userList = [];
+                const userList = [];
 
                 // 管理ユーザー
-                for (i = 0; i < data.adminlist.length; i = i + 1) {
+                for (let i = 0; i < data.adminlist.length; i = i + 1) {
                     userList.push({ name: data.adminlist[i].name, id: data.adminlist[i].id, type: "admin" });;
                 }
                 this.getGroupUserSetting((err, setting) => {
@@ -1157,10 +1157,9 @@
                         return;
                     }
                     this.getGroupList((err, groupData) => {
-                        let isFoundGuest = false;
 
                         // Guestユーザー
-                        let guestUserData = { name: "Guest", id: "Guest", type: "guest" };
+                        const guestUserData = { name: "Guest", id: "Guest", type: "guest" };
                         if (setting.hasOwnProperty("Guest")) {
                             for (let k = 0; k < userSettingKeys.length; k = k + 1) {
                                 let key = userSettingKeys[k];
@@ -1171,33 +1170,6 @@
                         }
                         userList.push(guestUserData);
 
-                        // 通常のグループユーザー
-                        if (groupData.hasOwnProperty("grouplist")) {
-                            let i,
-                                name,
-                                userListData,
-                                groupSetting,
-                                id;
-                            for (i = 0; i < groupData.grouplist.length; i = i + 1) {
-                                groupSetting = {};
-                                name = groupData.grouplist[i].name;
-                                id = groupData.grouplist[i].id;
-                                // defaultグループは特殊扱いでユーザー無し
-                                if (id !== "group_default") {
-                                    userListData = { name: name, id: id, type: "group" };
-                                    if (setting.hasOwnProperty(id)) {
-                                        groupSetting = setting[id];
-                                    }
-                                    for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                        let key = userSettingKeys[k];
-                                        if (groupSetting.hasOwnProperty(key)) {
-                                            userListData[key] = groupSetting[key];
-                                        }
-                                    }
-                                    userList.push(userListData);
-                                }
-                            }
-                        }
                         // Displayユーザー
                         let displayUserData = { name: "Display", id: "Display", type: "display" };
                         if (setting.hasOwnProperty("Display")) {
