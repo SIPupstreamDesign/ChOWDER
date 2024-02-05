@@ -683,7 +683,7 @@ class ManagementDialog extends EventEmitter {
         this.viewableSiteSelect = new SelectList();
 
 
-        let allAccessText = i18next.t("all");
+        const allAccessText = i18next.t("all");
         // グループの追加削除を許可のチェック
         this.deleteLabel.onclick = () => {
             this.deleteCheckBox.getDOM().click();
@@ -692,7 +692,7 @@ class ManagementDialog extends EventEmitter {
         if (this.userGroupList) {
             this.authSelect.clear();
             for (i = 0; i < this.userGroupList.length; i = i + 1) {
-                let user = this.userGroupList[i];
+                const user = this.userGroupList[i];
                 if (user.type !== "admin" && user.type !== "api" && user.type !== "electron") {
                     this.authSelect.addOption(user.id, user.name);
                 }
@@ -701,8 +701,8 @@ class ManagementDialog extends EventEmitter {
         // セレクト変更された
         this.authSelect.on(Select.EVENT_CHANGE, () => {
             // 編集可能、閲覧可能のリストを選択する.
-            let id = this.authSelect.getSelectedValue();
-            let user = this.getUser(id);
+            const id = this.authSelect.getSelectedValue();
+            const user = this.getUser(id);
             this.viewableSelect.deselectAll();
             this.editableSelect.deselectAll();
             this.displayEditableSelect.deselectAll();
@@ -731,19 +731,17 @@ class ManagementDialog extends EventEmitter {
                     this.displayEditableSelect.getDOM().style.display = "inline-block"
                 }
 
-                for (let i = 0; i < this.userGroupList.length; i = i + 1) {
-                    if (this.userGroupList[i].type !== "admin" && this.userGroupList[i].type !== "api") {
-                        let listContentName = this.userGroupList[i].id;
-                        if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
-                            this.viewableSelect.select(this.userGroupList[i].name);
-                        }
-                        if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
-                            this.editableSelect.select(this.userGroupList[i].name);
-                        }
+                for (let i = 0; i < this.contentGroupList.length; i = i + 1) {
+                    const listContentName = this.contentGroupList[i].id;
+                    if (user.viewable && (user.viewable === "all" || user.viewable.indexOf(listContentName) >= 0)) {
+                        this.viewableSelect.select(this.contentGroupList[i].name);
+                    }
+                    if (user.editable && (user.editable === "all" || user.editable.indexOf(listContentName) >= 0)) {
+                        this.editableSelect.select(this.contentGroupList[i].name);
                     }
                 }
                 for (let i = 0; i < this.displayGroupList.length; i = i + 1) {
-                    let listContentName = this.displayGroupList[i].id;
+                    const listContentName = this.displayGroupList[i].id;
                     if (user.displayEditable && (user.displayEditable === "all" || user.displayEditable.indexOf(listContentName) >= 0)) {
                         this.displayEditableSelect.select(this.displayGroupList[i].name);
                     }
@@ -848,15 +846,9 @@ class ManagementDialog extends EventEmitter {
         this.viewableSelect.add(allAccessText, allAccessText);
         this.displayEditableSelect.add(allAccessText, allAccessText);
         this.viewableSiteSelect.add(allAccessText, allAccessText);
-        for (i = 0; i < this.userGroupList.length; i = i + 1) {
-            if (this.userGroupList[i].type !== "admin" &&
-                this.userGroupList[i].type !== "display" &&
-                this.userGroupList[i].type !== "guest" &&
-                this.userGroupList[i].type !== "api" &&
-                this.userGroupList[i].type !== "electron") {
-                this.editableSelect.add(this.userGroupList[i].name, this.userGroupList[i].id);
-                this.viewableSelect.add(this.userGroupList[i].name, this.userGroupList[i].id);
-            }
+        for (i = 0; i < this.contentGroupList.length; i = i + 1) {
+            this.editableSelect.add(this.contentGroupList[i].name, this.contentGroupList[i].id);
+            this.viewableSelect.add(this.contentGroupList[i].name, this.contentGroupList[i].id);
         }
         for (i = 0; i < this.displayGroupList.length; ++i) {
             if (this.displayGroupList[i].id !== Constants.DefaultGroup) {
@@ -1063,9 +1055,6 @@ class ManagementDialog extends EventEmitter {
         this.contentGroupList = contentGroupList;
         this.displayGroupList = displayGroupList;
         this.db = db;
-        // console.log("🐔🐔🐔🐔🐔🐔",contentGroupList);
-        // console.log("🐔🐔🐔🐔🐔🐔",displayGroupList);
-        // console.log("🐔🐔🐔🐔🐔🐔",db);
         this.background = new PopupBackground();
         this.background.show();
         this.background.on('close', () => {
