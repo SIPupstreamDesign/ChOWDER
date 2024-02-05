@@ -861,14 +861,14 @@ class ManagementDialog extends EventEmitter {
         this.authTargetFrame2.appendChild(this.displayEditableSelect.getDOM());
         this.authTargetFrame2.appendChild(this.viewableSiteSelect.getDOM());
         this.authApplyButton.on(Button.EVENT_CLICK, () => {
-            let index = this.authSelect.getSelectedIndex();
+            const index = this.authSelect.getSelectedIndex();
             if (index >= 0 && this.authSelect.getOptions().length > index) {
-                let id = this.authSelect.getSelectedValue();
+                const id = this.authSelect.getSelectedValue();
                 let editable = this.editableSelect.getSelectedValues();
                 let viewable = this.viewableSelect.getSelectedValues();
                 let displayEditable = this.displayEditableSelect.getSelectedValues();
                 let viewableSite = this.viewableSiteSelect.getSelectedValues();
-                let group_manipulatable = this.deleteCheckBox.getChecked();
+                const group_manipulatable = this.deleteCheckBox.getChecked();
                 if (editable.indexOf(allAccessText) >= 0) {
                     editable = "all";
                 }
@@ -882,7 +882,7 @@ class ManagementDialog extends EventEmitter {
                     viewableSite = "all";
                 }
                 this.emit(ManagementDialog.EVENT_CHANGE_AUTHORITY, id, editable, viewable, displayEditable, viewableSite, group_manipulatable, () => {
-                    let message = this.authMessage;
+                    const message = this.authMessage;
                     message.style.visibility = "visible";
                     setTimeout(function () {
                         message.style.visibility = "hidden";

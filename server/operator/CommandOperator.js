@@ -1282,6 +1282,7 @@
          * 権限情報を変更する
          */
         changeAuthority(socketid, data, endCallback) {
+            console.log("@@@@@changeAuthority",socketid, data);
             let authority;
             if (this.executer.socketidToLoginKey.hasOwnProperty(socketid)) {
                 socketid = this.executer.socketidToLoginKey[socketid];
@@ -1300,12 +1301,15 @@
                 && data.hasOwnProperty('viewable')
                 && data.hasOwnProperty('group_manipulatable')) {
                 this.executer.getUserList((err, userList) => {
-                    let i;
                     this.executer.getGroupList((err, groupList) => {
-                        for (i = 0; i < userList.length; i = i + 1) {
+                        for (let i = 0; i < userList.length; i = i + 1) {
                             if (userList[i].id === data.id) {
-                                if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
-                                    let setting = {
+                                if (userList[i].type === "group" || 
+                                    userList[i].type === "guest" || 
+                                    userList[i].type === "moderator" || 
+                                    userList[i].type === "attendee" || 
+                                    userList[i].type === "display") {
+                                    const setting = {
                                         viewable: data.viewable,
                                         editable: data.editable,
                                         group_manipulatable: data.group_manipulatable
