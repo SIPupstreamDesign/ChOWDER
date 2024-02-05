@@ -484,8 +484,8 @@ class Controller {
                 return document.getElementById(uid);
             } else {
                 let previewArea;
-                let srcElem = document.getElementById(id);
-                let child = srcElem.childNodes[0].cloneNode();
+                const srcElem = document.getElementById(id);
+                const child = srcElem.childNodes[0].cloneNode();
                 child.id = uid;
                 child.innerHTML = srcElem.childNodes[0].innerHTML;
                 if (Validator.isDisplayTabSelected()) {
@@ -493,7 +493,7 @@ class Controller {
                 } else {
                     previewArea = this.gui.getContentPreviewArea();
                 }
-                delete srcElem.childNodes[0];
+                srcElem.childNodes[0].remove();
                 if (isListViewArea) {
                     child.style.display = "none";
                     child.style.margin = "0px";

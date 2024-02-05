@@ -29,9 +29,7 @@ class LayoutListGUI extends EventEmitter {
 	 * @param {BLOB} layoutData レイアウトデータ
 	 */
 	importContent(layoutArea, listElem, metaData, layoutData) {
-		let metaDataDict = this.store.getMetaDataDict();
-		let layoutElem;
-		let divElem = listElem;
+		const metaDataDict = this.store.getMetaDataDict();
 		const onlistID = "onlist:" + metaData.id;
 		if (!Validator.isLayoutType(metaData)) {
 			return;
@@ -41,31 +39,38 @@ class LayoutListGUI extends EventEmitter {
 		if (metaDataDict.hasOwnProperty(metaData.id)) {
 			metaData = metaDataDict[metaData.id];
 		}
-		let tagName = "div";
-		let classname = "layoutcontent";
-		if (divElem) {
-			layoutElem = listElem.childNodes[0];
-		}
-		if (!divElem) {
-			layoutElem = document.createElement(tagName);
-			divElem = document.createElement('div');
-			divElem.id = onlistID;
-			
-			this.action.setupContentElement({
-				element : divElem,
-				id : onlistID
-			});
+		const tagName = "div";
+		const classname = "layoutcontent";
 
-			//setupContent(divElem, onlistID);
-			divElem.appendChild(layoutElem);
-			layoutArea.appendChild(divElem);
-		}
+		const divElem = ((listElem)=>{
+			if(listElem){
+				return listElem;
+			}else{
+				const div = document.createElement('div');
+				const onlistID = "onlist:" + metaData.id;
+				div.id = onlistID;
+				return div;
+			}
+		})(listElem);
+
+
+		const layoutElem = document.createElement(tagName);
 		layoutElem.classList.add(classname);
+
+		this.action.setupContentElement({
+			element : divElem,
+			id : onlistID
+		});
+
+		//setupContent(divElem, onlistID);
+		divElem.appendChild(layoutElem);
+		layoutArea.appendChild(divElem);
+
 		//console.log("id=" + metaData.id);
 		if (layoutData) {
 			// layoutData is text
 			let data = JSON.parse(layoutData);
-			let memo = JSON.parse(metaData.user_data_text);
+			const memo = JSON.parse(metaData.user_data_text);
 			layoutElem.innerHTML = "Layout : " + metaData.id + "<br>"
 				+ String(new Date(metaData.date).toLocaleString()) + "<br><br>"
 				+ String(memo.text);
