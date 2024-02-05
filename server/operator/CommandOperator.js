@@ -1282,7 +1282,6 @@
          * 権限情報を変更する
          */
         changeAuthority(socketid, data, endCallback) {
-            console.log("@@@@@changeAuthority",socketid, data);
             let authority;
             if (this.executer.socketidToLoginKey.hasOwnProperty(socketid)) {
                 socketid = this.executer.socketidToLoginKey[socketid];
