@@ -25,6 +25,8 @@ class LayoutListGUI extends EventEmitter {
 	 * レイアウトをリストビューにインポートする。
 	 * doneGetContent時にコールされる。
 	 * @method importContentToList
+	 * @param {HTMLElement} layoutArea
+	 * @param {HTMLElement} listElem
 	 * @param {JSON} metaData メタデータ
 	 * @param {BLOB} layoutData レイアウトデータ
 	 */
@@ -42,7 +44,7 @@ class LayoutListGUI extends EventEmitter {
 		const tagName = "div";
 		const classname = "layoutcontent";
 
-		const divElem = ((listElem)=>{
+		const layoutWrap = ((listElem)=>{
 			if(listElem){
 				return listElem;
 			}else{
@@ -58,13 +60,16 @@ class LayoutListGUI extends EventEmitter {
 		layoutElem.classList.add(classname);
 
 		this.action.setupContentElement({
-			element : divElem,
+			element : layoutWrap,
 			id : onlistID
 		});
 
 		//setupContent(divElem, onlistID);
-		divElem.appendChild(layoutElem);
-		layoutArea.appendChild(divElem);
+		while(layoutWrap.firstChild){
+			layoutWrap.removeChild(layoutWrap.firstChild);
+		}
+		layoutWrap.appendChild(layoutElem);
+		layoutArea.appendChild(layoutWrap);
 
 		//console.log("id=" + metaData.id);
 		if (layoutData) {
@@ -74,20 +79,20 @@ class LayoutListGUI extends EventEmitter {
 			layoutElem.innerHTML = "Layout : " + metaData.id + "<br>"
 				+ String(new Date(metaData.date).toLocaleString()) + "<br><br>"
 				+ String(memo.text);
-			divElem.style.width = "150px";
-			divElem.style.height = "150px";
-			divElem.style.color = "white";
+			layoutWrap.style.width = "150px";
+			layoutWrap.style.height = "150px";
+			layoutWrap.style.color = "white";
 		}
 		layoutElem.style.width = "100%";
 		layoutElem.style.height = "100%";
-		divElem.style.position = "relative";
-		divElem.style.top = "5px";
-		divElem.style.left = "20px";
-		divElem.style.border = "solid";
-		divElem.style.borderColor = "lightgray";
-		divElem.style.margin = "5px";
-		divElem.style.color = "white";
-		divElem.style.float = "left";
+		layoutWrap.style.position = "relative";
+		layoutWrap.style.top = "5px";
+		layoutWrap.style.left = "20px";
+		layoutWrap.style.border = "solid";
+		layoutWrap.style.borderColor = "lightgray";
+		layoutWrap.style.margin = "5px";
+		layoutWrap.style.color = "white";
+		layoutWrap.style.float = "left";
 		
 		ContentUtil.copyContentData(this.store, layoutElem, null, metaData, true);
 	}
