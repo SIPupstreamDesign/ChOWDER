@@ -97,7 +97,16 @@ class DisplayStore {
      * Displayをリロード(デバッグ用)
      */
     _reloadDisplay(data) {
-        this.connector.send(Command.ReloadDisplay, {}, (err, reply) => {
+        this.connector.send(Command.ReloadDisplay, data, (err, reply) => {
+            this.store.emit(Store.EVENT_DONE_RELOAD_DISPLAY, err, reply);
+        });
+    }
+
+    /**
+     * 再表示＆計測
+     */
+    _measureDisplay(data) {
+        this.connector.send(Command.MeasureDisplay, data, (err, reply) => {
             this.store.emit(Store.EVENT_DONE_RELOAD_DISPLAY, err, reply);
         });
     }

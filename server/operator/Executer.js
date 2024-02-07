@@ -3433,6 +3433,8 @@
                     }
                 })();
 
+                console.log(`[runTileimageShell] batCmd:${batCmd}`);
+
                 // if(process.platform==='win32'){
                     child_process.exec(batCmd,(err,stdout,stderr)=>{
                         if(err){

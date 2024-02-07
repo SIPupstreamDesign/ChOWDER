@@ -683,8 +683,8 @@ class GUI extends EventEmitter {
                             let preMetaData = this.store.getMetaData(metaData.id);
                             ITownsUtil.updateLayerList(connector, metaData, preMetaData, callback);
                         },
-                        chowder_itowns_measure_time: (callback) => {
-                            connector.send(ITownsCommand.MeasurePerformance, {}, callback);
+                        chowder_itowns_measure_time: (metadata, callback) => {
+                            connector.send(ITownsCommand.MeasurePerformance, metadata, callback);
                         }
                     }
                 });
@@ -792,11 +792,11 @@ class GUI extends EventEmitter {
                     chowder_tileviewer_update_time: (metaDatam, time, range) => {
                         TileViewerUtil.updateTime(connector, metaData, time, range);
                     },
-                    /*
-                    chowder_itowns_measure_time: (callback) => {
-                        connector.send(ITownsCommand.MeasurePerformance, {}, callback);
+                    
+                    chowder_itowns_measure_time: (metaData, callback) => {
+                        connector.send(ITownsCommand.MeasurePerformance, metaData, callback);
                     }
-                    */
+                    
                 }
             });
         };

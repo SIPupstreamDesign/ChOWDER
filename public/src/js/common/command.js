@@ -42,6 +42,8 @@ const Command = {
 
 	SendMessage: "SendMessage",
 
+	MeasureDisplay : "MeasureDisplay",
+
 	// to client
 	Disconnect : "Disconnect",
 

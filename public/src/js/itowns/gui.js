@@ -739,24 +739,33 @@ class GUI extends EventEmitter {
         let result = this.store.getPerformanceResult();
         let text = "";
         text += "DisplayID, ";
+        text += "BeginRequestTime, ";
+        text += "BroadcastTime, ";
+        text += "RequestArrivalTime, ";
         text += "updateDuration, "
+        /*  Lv毎の出力はしていない
         text += "zoom0, zoom1, zoom2, zoom3, zoom4, zoom5, ";
         text += "zoom6, zoom7, zoom8, zoom9, zoom10, zoom11, zoom12, ";
         text += "zoom13, zoom14, zoom15, zoom16, zoom17, zoom18, zoom19, zoom20,";
+        */
         text += "displayed nodes, textures, geometries, triangles, points, lines,";
+        text += "usingMemorySize(MB),";
         text += "\n";
-
+ 
         for (let id in result) {
             let data = result[id];
-            text += id + ", "; // DisplayID
-            text += String(data.updateDuration) + ", "; // DisplayID
+            text += id + ","; // DisplayID
+            text += String(data.BeginRequestTime) + ","; // BeginRequestTime
+            text += String(data.BroadcastTime) + ","; // BroadcastTime
+            text += String(data.RequestArrivalTime) + ","; // RequestArrivalTime
+            text += String(data.updateDuration) + ", "; // updateDuration
             let displayedNodes = 0;
             for (let k = 0; k <= 20; ++k) {
                 if (data.nodeVisible.hasOwnProperty(String(k))) {
-                    text += String(data.nodeVisible[k][1]) + ", ";
+                    //text += String(data.nodeVisible[k][1]) + ", ";
                     displayedNodes += data.nodeVisible[k][1];
                 } else {
-                    text += "0, ";
+                    //text += "0, ";
                 }
             }
             text += String(displayedNodes) + ", ";
@@ -765,6 +774,7 @@ class GUI extends EventEmitter {
             text += data.triangleCount + ", ";
             text += data.pointCount + ", ";
             text += data.lineCount + ", ";
+            text += String( Math.floor((data.usingMemorySize / 1024 / 1024)*100) *0.01 ) + ", ";
             text += "\n";
         }
 
@@ -781,7 +791,8 @@ class GUI extends EventEmitter {
             a.download = filename;
             a.dispatchEvent(e);
         }
-        save(text, "performance_" + dataID + ".csv")
+        save(text, "performance_" + dataID + ".csv");
+        this.store.performanceResult = {};
     }
 
     /**

@@ -1,7 +1,7 @@
 {
     "wsMaxMessageSize": 67108864,
     "reductionResolution" : 1920,
-    "enableMeasureTime" : false,
+    "enableMeasureTime" : true,
     "stunServerUrl" : "",
     "turnServerUrl" : "",
     "turnServerUsername" : "",

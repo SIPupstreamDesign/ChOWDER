@@ -1231,6 +1231,7 @@ class Store extends EventEmitter {
                 let before = 0;
                 let frameCount = 0;
                 let totalMillis = 0;
+                let firstTime = new Date(Date.now());
                 // パフォーマンス計測命令
                 let result = this.measurePerformance();
 
@@ -1248,10 +1249,30 @@ class Store extends EventEmitter {
                         let updateDuration = totalMillis / frameCount;
 
                         result.updateDuration = updateDuration;
-                        // メッセージの返信
-                        this.iframeConnector.sendResponse(request, result);
+                        
+                        //testadd
+                        const formatDate = (date, sep="") => date.getFullYear() + sep + ('00' + (date.getMonth()+1)).slice(-2) + sep +('00' + date.getDate()).slice(-2) + " " + date.getHours() + ":" + date.getMinutes()+ ":" + date.getSeconds() + ":" + date.getMilliseconds();
+                        let clickTime = new Date(request.params.clickTime);
+                        let broadcastTime = new Date(request.params.broadcastTime);
 
-                        frameCount = null; // invalid
+                        result.BeginRequestTime = formatDate(clickTime, "/");
+                        result.BroadcastTime =  formatDate(broadcastTime, "/");
+                        result.RequestArrivalTime = formatDate(firstTime, "/");
+                        result.usingMemorySize = performance.memory.usedJSHeapSize;
+
+                        if(window.crossOriginIsolated){     
+                            const getMemoryInfo = (async(request) => {
+                                const result = await measureMemory();
+                                // メッセージの返信
+                                result.usingMemorySize = "geted";
+                                this.iframeConnector.sendResponse(request, result);
+                                frameCount = null; // invalid 
+                            })(request);  
+                        } else {
+                            // メッセージの返信
+                            this.iframeConnector.sendResponse(request, result);
+                            frameCount = null; // invalid
+                        }          
                     } else {
                         this.itownsView.notifyChange();
                     }
@@ -1528,6 +1549,11 @@ class Store extends EventEmitter {
             status.lineCount = renderer.info.render.lines;
         }
         return status;
+    }
+
+    async measureMemory(){
+        const memorySample = await performance.measureUserAgentSpecificMemory();
+        return memorySample;
     }
 
     async injectAsChOWDERiTownController(data) {
