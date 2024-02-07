@@ -3,9 +3,9 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 // import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
-import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
 import Rainbow from '../../../3rd/js/colormap.js'
-import ExprEval from '../../../3rd/js/expr-eval.js'
+const Encoding = require('../../../3rd/js/encoding-japanese/encoding.min.js');
+const ExprEval = require('../../../3rd/js/expr-eval.js');
 
 /**
  * 汎用csvパーサーを,fileSourceに設定する.
