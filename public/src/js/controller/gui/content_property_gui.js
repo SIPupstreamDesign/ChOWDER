@@ -228,6 +228,43 @@ function addVideoQualityProperty(isEditable, containerClassName, id, leftLabel, 
 	video_input.appendChild(container);
 }
 
+/**
+ * Propertyタブに入力プロパティを追加する
+ * @method addInputButtonProperty
+ * @param {Object} input element id
+ * @param {String} leftLabel 左ラベル
+ * @param {String} rightLabel 右ラベル
+ * @param {String} value 初期入力値
+ */
+function addInputButtonProperty(isEditable, className, leftLabel, onClickCallback) {
+	/*
+		<div class="input-group">
+			<span class="input-group-addon">x</span>
+			<input type="text" class="form-control" id="content_transform_x" value="0">
+			<span class="input-group-addon">px</span>
+		</div>
+	*/
+	let transform_input = document.getElementById('transform_input');
+	let group = document.createElement('div');
+	let leftSpan = document.createElement('span');
+	leftSpan.className = "input-group-addon content_property_checkbox_label";
+	let centerSpan = document.createElement('span');
+	let input = new Input("button");
+	group.className = "input-group";
+	leftSpan.innerHTML = leftLabel;
+	centerSpan.className = "input-group-addon"
+	//input.setValue(value);
+	// input.getDOM().disabled = !isEditable;
+	// input.getDOM().className = "content_property_checkbox " + className
+
+	centerSpan.appendChild(input.getDOM());
+	group.appendChild(leftSpan);
+	group.appendChild(centerSpan);
+	transform_input.appendChild(group);
+
+	input.getDOM().onclick = onClickCallback;
+}
+
 // colorselector insert ui
 class ContentPropertyGUI extends EventEmitter {
 	constructor(store, action, previewArea) {
@@ -459,6 +496,18 @@ class ContentPropertyGUI extends EventEmitter {
 				let meta = this.store.getMetaData(metaData.id);
 				meta.visible = document.getElementsByClassName('display_visible')[0].checked;
 				this.action.changeDisplayVisible(meta);
+			});
+			addInputButtonProperty(isEditable, 'display_visible', 'Reload', () => {
+				let meta = this.store.getMetaData(metaData.id);
+				//meta.visible = document.getElementsByClassName('display_visible')[0].checked;
+				meta.target = metaData.id;
+				this.action.displayReloadSingle(meta);
+			});
+			addInputButtonProperty(isEditable, 'display_visible', 'GL Measure', () => {
+				let meta = this.store.getMetaData(metaData.id);
+				//meta.visible = document.getElementsByClassName('display_visible')[0].checked;
+				meta.target = metaData.id;
+				this.action.displayMeasureSingle(meta);
 			});
 			this.setIDLabel2("");
 			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);

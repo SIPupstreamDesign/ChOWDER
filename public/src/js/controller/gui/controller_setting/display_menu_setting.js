@@ -56,6 +56,12 @@ function DisplayMenuSetting(isDebugMode = false) {
                 className : "reload_all_display",
                 dataKey : "reload_all_display",
                 onmousedown : (evt) => { this.action.reloadDisplay() }
+            },
+              // 計測モード起動
+              {
+                className : "measure_all_display",
+                dataKey : "measure_all_display",
+                onmousedown : (evt) => { this.action.measureDisplay() }
             });
     }
     

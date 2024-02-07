@@ -42,6 +42,7 @@
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		ReloadDisplay : "ReloadDisplay",
+		MeasureDisplay : "MeasureDisplay",
 		SendMessage: "SendMessage",
 
 		// to client

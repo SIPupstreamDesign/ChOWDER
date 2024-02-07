@@ -163,7 +163,32 @@ class Receiver {
             if (window.isElectron()) {
                 window.electronReload();
             } else {
-                window.location.reload(true);
+                // dataにdisplayIDが入っていたら、自分のID出なかった場合はリロードしない
+                let flg = data === undefined;
+                if(!flg){ flg = data.target === undefined}
+                if(!flg){ flg = data.target === this.store.windowData.id}
+                if(flg){
+                    window.location.reload(true);
+                }
+            }
+        });
+
+        /// DisplayWebGL計測
+        this.connector.on(Command.MeasureDisplay, (data) => {
+            if (window.isElectron()) {
+                window.electronReload();
+            } else {
+                let flg = data === undefined;
+                if(!flg){ flg = data.target === undefined}
+                if(!flg){ flg = data.target === this.store.windowData.id}
+                if(flg){
+                    // ディスプレイ内にiTownsのコンテンツがあるかどうかを探す
+                    const keys = Object.keys(this.store.itownFuncDict);
+                    if(keys != undefined && keys.length > 0){
+                        this.store.measureITownPerformance(data, keys[0]);
+                    }
+                    // this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
+                }
             }
         });
 
@@ -251,7 +276,8 @@ class Receiver {
 
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'measureITownPerformance') {
-                this.store.measureITownPerformance(data.id);
+                let metaData = data.metaData;
+                this.store.measureITownPerformance(metaData, data);
             }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {

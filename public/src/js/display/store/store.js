@@ -173,13 +173,21 @@ class Store extends EventEmitter {
 
     // iTownsのパフォーマンス計測を行う
     // PerformanceLoggerは使用しない
-    measureITownPerformance(id) {
+    measureITownPerformance(metadata, data) {
         let funcDict = this.getITownFuncDict();
-        console.log(funcDict, id)
+        console.log(funcDict, data.id)
+        if(metadata === undefined){
+            metadata = {"clickTime" : 0, "broadcastTime" : 0};
+        }
+        const id = data.id;
+        metadata.clickTime = data.clickTime;
+        metadata.broadcastTime = data.broadcastTime;
         if (funcDict && funcDict.hasOwnProperty(id)) {
-            funcDict[id].chowder_itowns_measure_time((err, status) => {
+            funcDict[id].chowder_itowns_measure_time(metadata, (err, status) => {
                 Connector.send("SendMessage", {
-                    id: id,
+                    id: data.id,
+                    broadcastTime:data.broadcastTime, 
+                    clickTime:data.clickTime, 
                     display_id: this.getWindowID(),
                     command: "measureITownPerformanceResult",
                     result: status
