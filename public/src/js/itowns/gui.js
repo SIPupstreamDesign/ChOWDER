@@ -299,7 +299,7 @@ class GUI extends EventEmitter {
     initTimeline() {
         // 一定間隔同じイベントが来なかったら実行するための関数
         let debounceChangeTime = (() => {
-            const interval = 100;
+            let interval = 100;
             let timer;
             return (pTimeInfo, func = null) => {
                 if (this.store.getGlobalSetting() && this.store.getGlobalSetting().hasOwnProperty('reduceInterval')) {

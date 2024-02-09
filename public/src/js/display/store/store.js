@@ -676,26 +676,33 @@ class Store extends EventEmitter {
 
     /**
      * 閲覧情報があるか返す
+     * @method isViewable
+     * @param {String} contentsGroup ContentsGroup
      */
-    isViewable(group) {
+
+    isViewable(contentsGroup) {
         if (!this.getAuthority()) {
             return false;
         }
-        if (group === undefined || group === "") {
+        if (contentsGroup === undefined || contentsGroup === "") {
             return true;
         }
-        if (group === Constants.DefaultGroup) {
+
+        // コンテンツがdefaultグループなら無条件で通す
+        if (contentsGroup === Constants.DefaultGroup) {
             return true;
         }
-        if (!this.isViewableSite(group)) {
-            return false;
-        }
-        let groupDict = this.getGroupDict();
-        if (groupDict.hasOwnProperty(group)) {
+        // if (!this.isViewableSite(group)) {
+        //     return false;
+        // }
+        const groupDict = this.getGroupDict();
+        if (groupDict.hasOwnProperty(contentsGroup)) {
             if (this.getAuthority().viewable === "all") {
+                // authority "all"
                 return true;
             }
-            if (this.getAuthority().viewable.indexOf(group) >= 0) {
+            if (this.getAuthority().viewable.indexOf(contentsGroup) >= 0) {
+                // authority 当該コンテンツグループが許可されている
                 return true;
             }
         }

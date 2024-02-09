@@ -2898,49 +2898,6 @@
             return false;
         }
 
-        /**
-         * socketidユーザーがdisplaygroupを表示可能かどうか返す
-         * @method isViewableDisplay
-         * @param {String} socketid socketid
-         * @param {String} group group
-         */
-        isViewableSite(socketid, groupID, endCallback) {
-            if (groupID === "group_default") {
-                endCallback(null, true);
-                return;
-            }
-            if (groupID === undefined || groupID === "") {
-                endCallback(null, true);
-                return;
-            }
-            if (this.allDisplayCache.hasOwnProperty(socketid)) {
-                // displayからのアクセスだった
-                const displayID = this.allDisplayCache[socketid];
-                this.getWindowMetaData({ id: displayID }, (windowMeta) => {
-                    this.getGroupUserSetting((err, data) => {
-                        if (!err && data) {
-                            if (data.hasOwnProperty(groupID)) {
-                                const authority = data[groupID];
-                                if (authority.hasOwnProperty('viewableSite')) {
-                                    if (authority.viewableSite !== "all") {
-                                        endCallback(null, authority.viewableSite.indexOf(windowMeta.group) >= 0);
-                                        return;
-                                    }
-                                }
-                                // viewableSiteの設定が無い、または"all"
-                                endCallback(null, true);
-                                return;
-                            }
-                        }
-                        endCallback(err, false);
-                    });
-                });
-            } else {
-                // controllerからのアクセスだった
-                endCallback(null, true);
-            }
-        }
-
         isGroupManipulatable(socketid, groupID, endCallback) {
             this.getGroupList((err, data) => {
                 if (groupID === "group_default") {
