@@ -1422,11 +1422,6 @@ class Controller {
 
         let isContentInViewableSite = true;
         if (metaData && Validator.isContentType(metaData)) {
-            if (!this.store.getManagement().isViewableSite(metaData.group)) {
-                // コンテンツは現在表示中のサイトで表示可能な場合のみ
-                // マニピュレータを出す
-                isContentInViewableSite = false;
-            }
         }
         if (isContentInViewableSite) {
             this.state.setDraggingIDList(JSON.parse(JSON.stringify(this.state.getSelectedIDList())));
