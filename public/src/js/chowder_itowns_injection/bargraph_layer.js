@@ -2,10 +2,12 @@
  * Copyright (c) 2016-2018 Research Institute for Information Technology(RIIT), Kyushu University. All rights reserved.
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
-// import Papaparse from '../../../3rd/js/papaparse/papaparse.min.js'
+import papaparse_ from '../../../3rd/js/papaparse/papaparse.js'; // この中でwindow.Papa が定義されている
+const Papa = window.Papa;
 import Rainbow from '../../../3rd/js/colormap.js'
-const Encoding = require('../../../3rd/js/encoding-japanese/encoding.min.js');
-const ExprEval = require('../../../3rd/js/expr-eval.js');
+import ExprEval from '../../../3rd/js/expr-eval.mjs';
+import encoding_ from '../../../3rd/js/encoding-japanese/encoding.min.js'; // この中でwindow.Encoding が定義されている
+const Encoding = window.Encoding;
 
 /**
  * 汎用csvパーサーを,fileSourceに設定する.
@@ -48,7 +50,7 @@ function createCSVBargraphSource(itownsView, config) {
 				from: 'AUTO'
 			});
 			let str = Encoding.codeToString(converted);
-			let parsed = {}; //Papaparse.parse(str);
+			let parsed = Papa.parse(str);
 
 			// 初回パース時にジオメトリを生成しておく
 			let group = new itowns.THREE.Group();
