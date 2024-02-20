@@ -1283,6 +1283,11 @@ class Store extends EventEmitter {
                         result.RequestArrivalTime = formatDate(firstTime, "/");
                         result.usingMemorySize = performance.memory.usedJSHeapSize;
 
+                        result.usingGLTexSize = 0;
+                        for(let lp=0; lp<window.measureDLTex.length; lp++){
+                            result.usingGLTexSize += window.measureDLTex[lp];
+                        }
+
                         this.reloadParam = null;
                         if(window.crossOriginIsolated){     
                             const getMemoryInfo = (async(request) => {

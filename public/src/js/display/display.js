@@ -34,7 +34,9 @@ class Display {
                 clickTime: Number(params.get("ct")),
                 broadcastTime:Number(params.get("bt"))
             };
-            this.measureMode = true;
+            this.measureMode = true;            
+            window.nowMeasurePerformance = 1;   //テクスチャ再取得用変数セット
+            // performance.mark('drawStart');
         }         
     }
 
