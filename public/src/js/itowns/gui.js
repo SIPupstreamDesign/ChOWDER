@@ -749,7 +749,7 @@ class GUI extends EventEmitter {
         text += "zoom13, zoom14, zoom15, zoom16, zoom17, zoom18, zoom19, zoom20,";
         */
         text += "displayed nodes, textures, geometries, triangles, points, lines,";
-        text += "usingMemorySize(MB),";
+        text += "usingMemorySize(MB),GLMemorySize(MB)";
         text += "\n";
  
         for (let id in result) {
@@ -758,7 +758,7 @@ class GUI extends EventEmitter {
             text += String(data.BeginRequestTime) + ","; // BeginRequestTime
             text += String(data.BroadcastTime) + ","; // BroadcastTime
             text += String(data.RequestArrivalTime) + ","; // RequestArrivalTime
-            text += String(data.updateDuration) + ", "; // updateDuration
+            text += String(data.updateDuration) + ","; // updateDuration
             let displayedNodes = 0;
             for (let k = 0; k <= 20; ++k) {
                 if (data.nodeVisible.hasOwnProperty(String(k))) {
@@ -768,13 +768,23 @@ class GUI extends EventEmitter {
                     //text += "0, ";
                 }
             }
-            text += String(displayedNodes) + ", ";
-            text += data.textureCount + ", ";
-            text += data.geometryCount + ", ";
-            text += data.triangleCount + ", ";
-            text += data.pointCount + ", ";
-            text += data.lineCount + ", ";
-            text += String( Math.floor((data.usingMemorySize / 1024 / 1024)*100) *0.01 ) + ", ";
+            text += String(displayedNodes) + ",";
+            text += data.textureCount + ",";
+            text += data.geometryCount + ",";
+            text += data.triangleCount + ",";
+            text += data.pointCount + ",";
+            text += data.lineCount + ",";
+            text += String( Math.floor((data.usingMemorySize / 1024 / 1024)*100) *0.01 ) + ",";
+            // トライアングル数からGLメモリ量を算出。
+            // トライアングル数*頂点位置(float30)*4(harfFloat)+トライアングル数*UV(float2)*4(harfFloat) + トライアングル数*Index(3)
+            let glMem = data.triangleCount * 3 * 4;
+            glMem = glMem + data.triangleCount * 2 * 4;
+            glMem = glMem + data.triangleCount * 2 ;
+            // ジオメトリ数からMatrix
+            glMem = glMem +  data.geometryCount * 4 * 4 * 4;
+            // ジオメトリ数からテクスチャ容量を計算
+            glMem = glMem + data.geometryCount * (256*256*4);
+            text += String( Math.floor((glMem / 1024 / 1024)*100) *0.01 ) + ",";
             text += "\n";
         }
 

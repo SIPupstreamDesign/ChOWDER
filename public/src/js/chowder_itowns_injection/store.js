@@ -1232,34 +1232,58 @@ class Store extends EventEmitter {
                 let frameCount = 0;
                 let totalMillis = 0;
                 let firstTime = new Date(Date.now());
-                // パフォーマンス計測命令
-                let result = this.measurePerformance();
+                let lastUpDateTime = new Date(Date.now());
+       
+                window.nowMeasurePerformance = 1;   //テクスチャ再取得用変数セット
+                // performance.mark('drawStart');
 
                 let updateStart = () => {
-                    if (frameCount === null) { return; }
+                    if (frameCount === null) { return; }                  
                     before = Date.now();
                 }
+
                 let updateEnd = () => {
                     if (frameCount === null) { return; }
-                    ++frameCount;
-                    totalMillis += Date.now() - before;
-                    if (frameCount >= 10) {
+                    const loop = this.itownsView.mainLoop;
+                    if(loop.renderingState != 0){
+                        frameCount =0;
+                        lastUpDateTime = new Date(Date.now());
+                        // performance.mark('drawEnd');
+                    } else {
+                        ++frameCount;
+                    }
+                    if (frameCount >= 150) {
+                        // パフォーマンス計測命令
+                        let result = this.measurePerformance();
+                        window.nowMeasurePerformance = 0;
                         this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_START, updateStart);
                         this.itownsView.removeFrameRequester(itowns.MAIN_LOOP_EVENTS.UPDATE_END, updateEnd);
-                        let updateDuration = totalMillis / frameCount;
+                        //let updateDuration = totalMillis / frameCount;
 
-                        result.updateDuration = updateDuration;
-                        
-                        //testadd
                         const formatDate = (date, sep="") => date.getFullYear() + sep + ('00' + (date.getMonth()+1)).slice(-2) + sep +('00' + date.getDate()).slice(-2) + " " + date.getHours() + ":" + date.getMinutes()+ ":" + date.getSeconds() + ":" + date.getMilliseconds();
                         let clickTime = new Date(request.params.clickTime);
                         let broadcastTime = new Date(request.params.broadcastTime);
 
+                        if(firstTime < broadcastTime){
+                            firstTime = broadcastTime + 50;
+                        }
+                        let updateDuration = lastUpDateTime.getTime() - firstTime.getTime();                        
+                        result.updateDuration = updateDuration * 0.001; //ミリ秒→秒
+                        /*
+                        performance.measure(
+                            'measureDraw', // 計測名
+                            'drawStart', // 計測開始点
+                            'drawEnd' // 計測終了点
+                        );
+                        const result2 = performance.getEntriesByName('measureDraw');
+                        console.log(result2[0]);
+                        */
                         result.BeginRequestTime = formatDate(clickTime, "/");
                         result.BroadcastTime =  formatDate(broadcastTime, "/");
                         result.RequestArrivalTime = formatDate(firstTime, "/");
                         result.usingMemorySize = performance.memory.usedJSHeapSize;
 
+                        this.reloadParam = null;
                         if(window.crossOriginIsolated){     
                             const getMemoryInfo = (async(request) => {
                                 const result = await measureMemory();
@@ -1283,10 +1307,12 @@ class Store extends EventEmitter {
             });
 
             // VR用step更新
+            /*
             this.iframeConnector.on(ITownsCommand.StepForce, (err, param, request) => {
                 this.itownsView.mainLoop._step(this.itownsView, param.timestamp);
                 this.iframeConnector.sendResponse(request);
             });
+            */
         }
     }
 
@@ -1534,6 +1560,8 @@ class Store extends EventEmitter {
 
             // update bar graph
             const stats = {};
+            status.id = tileLayer.id;
+            status.offset_uvw = tileLayer.offset_uvw;
             countVisible(tileLayer.object3d, stats);
             status.nodeVisible = stats;
         }
@@ -1548,6 +1576,7 @@ class Store extends EventEmitter {
             status.pointCount = renderer.info.render.points;
             status.lineCount = renderer.info.render.lines;
         }
+        
         return status;
     }
 
