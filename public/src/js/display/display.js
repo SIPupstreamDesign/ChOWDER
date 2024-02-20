@@ -23,6 +23,19 @@ class Display {
         this.doneGetContent = this.doneGetContent.bind(this);
         this.doneGetMetaData = this.doneGetMetaData.bind(this);
         this.initEvent();
+
+        let url = new URL(window.location.href);
+        let params = url.searchParams;
+        let modeValue = params.get("m");
+        if(modeValue == "measure"){
+            console.log("in measure mode");
+            this.measureData = {
+                id:params.get("t_id"),
+                clickTime: Number(params.get("ct")),
+                broadcastTime:Number(params.get("bt"))
+            };
+            this.measureMode = true;
+        }         
     }
 
     /**
@@ -515,6 +528,17 @@ class Display {
                     funcDict[metaData.id].chowder_itowns_update_camera(metaData);
                     this.updateIFrameRect(metaData);
                 }
+            }
+
+            if(this.measureMode){
+                this.measureMode = false;
+                let timer;
+                clearTimeout(timer);
+                timer = setTimeout((() => {
+                return () => {
+                    this.store.measureITownPerformance(undefined, this.measureData);
+                    }
+                })(), 500);   
             }
         });
 

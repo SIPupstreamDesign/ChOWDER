@@ -503,12 +503,6 @@ class ContentPropertyGUI extends EventEmitter {
 				meta.target = metaData.id;
 				this.action.displayReloadSingle(meta);
 			});
-			addInputButtonProperty(isEditable, 'display_visible', 'GL Measure', () => {
-				let meta = this.store.getMetaData(metaData.id);
-				//meta.visible = document.getElementsByClassName('display_visible')[0].checked;
-				meta.target = metaData.id;
-				this.action.displayMeasureSingle(meta);
-			});
 			this.setIDLabel2("");
 			addInputProperty(isEditable, 'content_transform_x', 'x', 'px', '0', rectChangeFunc);
 			addInputProperty(isEditable, 'content_transform_y', 'y', 'px', '0', rectChangeFunc);

@@ -165,10 +165,18 @@ class Receiver {
             } else {
                 // dataにdisplayIDが入っていたら、自分のID出なかった場合はリロードしない
                 let flg = data === undefined;
+                let flg2 = false;
                 if(!flg){ flg = data.target === undefined}
-                if(!flg){ flg = data.target === this.store.windowData.id}
+                if(!flg){ flg2 = flg = data.target === this.store.windowData.id}
                 if(flg){
-                    window.location.reload(true);
+                    let weit=1;
+                    if(!flg2){
+                        weit = this.getReloadTime();
+                    }
+                    window.setTimeout(()=>{
+                        // window.location.reload(true);
+                        window.location.href = window.location.href;
+                    }, weit);
                 }
             }
         });
@@ -179,15 +187,17 @@ class Receiver {
                 window.electronReload();
             } else {
                 let flg = data === undefined;
+                let flg2 = false;
                 if(!flg){ flg = data.target === undefined}
-                if(!flg){ flg = data.target === this.store.windowData.id}
+                if(!flg){ flg2 = flg = data.target === this.store.windowData.id}
                 if(flg){
                     // ディスプレイ内にiTownsのコンテンツがあるかどうかを探す
                     const keys = Object.keys(this.store.itownFuncDict);
                     if(keys != undefined && keys.length > 0){
-                        this.store.measureITownPerformance(data, keys[0]);
+                        window.setTimeout(()=>{
+                            window.location.href = window.location.href + "&m=measure"; 
+                        }, this.getReloadTime() );                                          
                     }
-                    // this.store.emit(Store.EVENT_DONE_UPDATE_METADATA, null, data);
                 }
             }
         });
@@ -276,8 +286,9 @@ class Receiver {
 
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'measureITownPerformance') {
-                let metaData = data.metaData;
-                this.store.measureITownPerformance(metaData, data);
+                window.setTimeout(()=>{
+                    window.location.href = window.location.href + "&m=measure&t_id=" + data.id + "&bt=" + data.broadcastTime + "&ct=" + data.clickTime
+                }, this.getReloadTime() );  
             }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {
@@ -324,7 +335,16 @@ class Receiver {
                 });
             }
         });
-    }
+    };
+    
+    getReloadTime() {
+        let weit = 1;
+        weit += (this.store.windowData.posx /  this.store.windowData.width) * 100;
+        weit += (this.store.windowData.posy /  this.store.windowData.height) * 400;
+        weit += Math.random() * 0.2;
+        return Math.floor(weit);
+    };
+
 }
 
 export default Receiver;
