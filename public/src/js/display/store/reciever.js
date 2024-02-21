@@ -340,8 +340,8 @@ class Receiver {
     getReloadTime() {
         let weit = 1;
         weit += (this.store.windowData.posx /  this.store.windowData.width) * 100;
-        weit += (this.store.windowData.posy /  this.store.windowData.height) * 400;
-        weit += Math.random() * 0.2;
+        weit += (this.store.windowData.posy /  this.store.windowData.height) * 500;
+        // weit += Math.random() * 0.2;
         return Math.floor(weit);
     };
 
