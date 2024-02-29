@@ -1232,10 +1232,10 @@ class Store extends EventEmitter {
                 let frameCount = 0;
                 let totalMillis = 0;
                 let firstTime = new Date(Date.now());
-                let lastUpDateTime = new Date(Date.now());
+                let lastUpDateTime = Date.now();
        
                 window.nowMeasurePerformance = 1;   //テクスチャ再取得用変数セット
-                // performance.mark('drawStart');
+                performance.mark('drawStart');
 
                 let updateStart = () => {
                     if (frameCount === null) { return; }                  
@@ -1245,14 +1245,15 @@ class Store extends EventEmitter {
                 let updateEnd = () => {
                     if (frameCount === null) { return; }
                     const loop = this.itownsView.mainLoop;
-                    if(loop.renderingState != 0){
+                    if(loop.renderingState != 0 || window.findb3dm > 0){
                         frameCount =0;
-                        lastUpDateTime = new Date(Date.now());
-                        // performance.mark('drawEnd');
+window.findb3dm = 0;
+                        lastUpDateTime = Date.now();
+                        performance.mark('drawEnd');
                     } else {
                         ++frameCount;
                     }
-                    if (frameCount >= 150) {
+                    if (frameCount >= 600) {
                         // パフォーマンス計測命令
                         let result = this.measurePerformance();
                         window.nowMeasurePerformance = 0;
@@ -1267,17 +1268,17 @@ class Store extends EventEmitter {
                         if(firstTime < broadcastTime){
                             firstTime = broadcastTime + 50;
                         }
-                        let updateDuration = lastUpDateTime.getTime() - firstTime.getTime();                        
+                        let updateDuration = lastUpDateTime - firstTime.getTime();                        
                         result.updateDuration = updateDuration * 0.001; //ミリ秒→秒
-                        /*
+                        
                         performance.measure(
                             'measureDraw', // 計測名
                             'drawStart', // 計測開始点
                             'drawEnd' // 計測終了点
                         );
                         const result2 = performance.getEntriesByName('measureDraw');
-                        console.log(result2[0]);
-                        */
+                        // console.log(result2[0]);
+                        result.updateDuration = Math.floor(result2[0].duration) / 1000 ;
                         result.BeginRequestTime = formatDate(clickTime, "/");
                         result.BroadcastTime =  formatDate(broadcastTime, "/");
                         result.RequestArrivalTime = formatDate(firstTime, "/");

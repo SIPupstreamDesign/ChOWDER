@@ -260,7 +260,7 @@ class GUI extends EventEmitter {
         });
 
         let timer;
-        const interval = 5 * 1000;
+        const interval = 25 * 1000;
         let background = null;
         this.store.on(Store.EVENT_UPDATE_MEASURE_PERFORMANCE, (err, id, displayID) => {
             // 一定間隔同じイベントが来なかったら実行
@@ -777,16 +777,15 @@ class GUI extends EventEmitter {
             text += String( Math.floor((data.usingMemorySize / 1024 / 1024)*100) *0.01 ) + ",";
             // トライアングル数からGLメモリ量を算出。
             // トライアングル数*頂点位置(float30)*4(harfFloat)+トライアングル数*UV(float2)*4(harfFloat) + トライアングル数*Index(3)
-            /*
             let glMem = data.triangleCount * 3 * 4;
             glMem = glMem + data.triangleCount * 2 * 4;
             glMem = glMem + data.triangleCount * 2 ;
             // ジオメトリ数からMatrix
             glMem = glMem +  data.geometryCount * 4 * 4 * 4;
             // ジオメトリ数からテクスチャ容量を計算
-            glMem = glMem + data.geometryCount * (256*256*4);
-            */
-            let glMem = data.usingGLTexSize;
+            // glMem = glMem + data.geometryCount * (256*256*4);
+            glMem = data.usingGLTexSize;
+
             text += String( Math.floor((glMem / 1024 / 1024)*100) *0.01 ) + ",";
             text += "\n";
         }
