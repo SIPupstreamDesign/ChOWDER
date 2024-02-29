@@ -118,7 +118,7 @@ class Store extends EventEmitter {
         }, (() => {
             return (ev) => {
                 this.emit(Store.EVENT_CONNECT_FAILED, null);
-
+		console.log("coco");
                 if (!isDisconnect) {
                     setTimeout(() => {
                         this._connect();

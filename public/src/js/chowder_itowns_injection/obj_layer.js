@@ -6,7 +6,8 @@ import * as THREE from 'three';
 import { OBJLoader2 } from '../../../3rd/js/WWOBJLoader/examples/jsm/loaders/OBJLoader2.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { MtlObjBridge } from '../../../3rd/js/WWOBJLoader/examples/jsm/loaders/obj2/bridge/MtlObjBridge.js';
-import Encoding from '../../../3rd/js/encoding-japanese/encoding.min.js'
+import encoding_ from '../../../3rd/js/encoding-japanese/encoding.min.js'; // この中でwindow.Encoding が定義されている
+const Encoding = window.Encoding;
 
 const OBJInitialScale = 10000;
 
