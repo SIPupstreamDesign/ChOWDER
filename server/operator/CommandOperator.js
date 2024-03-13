@@ -199,113 +199,104 @@
                 endCallback("access denied");
                 return;
             }
-            // 取得しようとしているコンテンツのgroupが、
-            // socketidに紐づくDisplayが所属するSiteで表示可能か調べる
-            // socketidに紐づくものがControllerだった場合は表示可能とする
-            this.executer.isViewableSite(socketid, json.group, (err, isViewable) => {
-                if (err || !isViewable) {
+            this.executer.getMetaData(socketid, json.type, json.id, (err, meta) => {
+                if (err) {
                     endCallback(err);
                     return;
                 }
-                this.executer.getMetaData(socketid, json.type, json.id, (err, meta) => {
-                    if (err) {
-                        endCallback(err);
-                        return;
-                    }
-                    if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
-                        // Historyから復元して取得
-                        if (meta.hasOwnProperty('history_id')) {
+                if (meta && meta.hasOwnProperty('content_id') && meta.content_id !== '') {
+                    // Historyから復元して取得
+                    if (meta.hasOwnProperty('history_id')) {
 
-                            // Historyの場合は全タイル登録済かどうかのフラグを返す
-                            this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished) => {
-                                if (!err && tile_finished[0]) {
-                                    meta.tile_finished = String(tile_finished[0]) === "true";
-                                }
-                                // Historyの場合はpreview画像をバイナリに入れて返す.
-                                // サムネイル画像がある場合はリストに入れて返す
-                                // その後タイル画像リクエストが複数回client→serverにくる.
-                                this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "thumbnail", (err, thumbnail) => {
-                                    let metaList = [];
-                                    let binaryList = [];
-                                    if (!err && thumbnail[0]) {
-                                        metaList.push({
-                                            type: "thumbnail"
-                                        });
-                                        binaryList.push(thumbnail[0]);
-                                    }
-                                    this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "preview", (err, preview) => {
-                                        if (binaryList.length > 0) {
-                                            if (!err && preview[0]) {
-                                                metaList.unshift(meta);
-                                                binaryList.unshift(preview[0]);
-                                            }
-                                            endCallback(err, metaList, binaryList);
-                                        } else {
-                                            endCallback(err, meta, preview[0]);
-                                        }
-                                    });
-                                });
-                                return;
-                            });
-                        }
-
-                        // コンテンツの返却.
-                        // サムネイルやプレビュー用画像がある場合はリストに入れて返す
-                        this.executer.client.hgetall(this.executer.contentThumbnailPrefix + meta.content_id, (err, thumbnailData) => {
-                            let metaList = [];
-                            let binaryList = [];
-                            if (!err && thumbnailData) {
-                                if (thumbnailData.hasOwnProperty('thumbnail')) {
+                        // Historyの場合は全タイル登録済かどうかのフラグを返す
+                        this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "tile_finished", (err, tile_finished) => {
+                            if (!err && tile_finished[0]) {
+                                meta.tile_finished = String(tile_finished[0]) === "true";
+                            }
+                            // Historyの場合はpreview画像をバイナリに入れて返す.
+                            // サムネイル画像がある場合はリストに入れて返す
+                            // その後タイル画像リクエストが複数回client→serverにくる.
+                            this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "thumbnail", (err, thumbnail) => {
+                                let metaList = [];
+                                let binaryList = [];
+                                if (!err && thumbnail[0]) {
                                     metaList.push({
                                         type: "thumbnail"
                                     });
-                                    binaryList.push(thumbnailData.thumbnail);
+                                    binaryList.push(thumbnail[0]);
                                 }
-                                if (thumbnailData.hasOwnProperty('preview')) {
-                                    metaList.push({
-                                        type: "preview"
-                                    });
-                                    binaryList.push(thumbnailData.preview);
-                                }
-                            }
-
-                            // 履歴から復元して取得
-                            if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
-                                let backupList = this.executer.sortBackupList(JSON.parse(meta.backup_list));
-                                let restore_index = Number(json.restore_index);
-                                if (restore_index >= 0 && backupList.length > restore_index) {
-                                    let backup_date = backupList[restore_index];
-                                    this.executer.textClient.hmget(this.executer.metadataBackupPrefix + meta.id, backup_date, (err, metaData) => {
-                                        this.executer.client.hmget(this.executer.contentBackupPrefix + meta.content_id, backup_date, (err, reply) => {
-                                            if (binaryList.length > 0) {
-                                                metaList.unshift(JSON.parse(metaData));
-                                                binaryList.unshift(reply[0]);
-                                                endCallback(err, metaList, binaryList);
-                                            } else {
-                                                endCallback(err, JSON.parse(metaData), reply[0]);
-                                            }
-                                        });
-                                    })
-                                    return;
-                                }
-                            }
-
-                            // 通常の取得
-                            this.executer.getContent(meta.type, meta.content_id, (reply) => {
-                                if (reply === null) {
-                                    reply = "";
-                                }
-                                if (binaryList.length > 0) {
-                                    metaList.unshift(meta);
-                                    binaryList.unshift(reply);
-                                    endCallback(null, metaList, binaryList);
-                                } else {
-                                    endCallback(null, meta, reply);
-                                }
+                                this.executer.client.hmget(this.executer.contentHistoryDataPrefix + meta.history_id, "preview", (err, preview) => {
+                                    if (binaryList.length > 0) {
+                                        if (!err && preview[0]) {
+                                            metaList.unshift(meta);
+                                            binaryList.unshift(preview[0]);
+                                        }
+                                        endCallback(err, metaList, binaryList);
+                                    } else {
+                                        endCallback(err, meta, preview[0]);
+                                    }
+                                });
                             });
+                            return;
                         });
                     }
-                });
+
+                    // コンテンツの返却.
+                    // サムネイルやプレビュー用画像がある場合はリストに入れて返す
+                    this.executer.client.hgetall(this.executer.contentThumbnailPrefix + meta.content_id, (err, thumbnailData) => {
+                        let metaList = [];
+                        let binaryList = [];
+                        if (!err && thumbnailData) {
+                            if (thumbnailData.hasOwnProperty('thumbnail')) {
+                                metaList.push({
+                                    type: "thumbnail"
+                                });
+                                binaryList.push(thumbnailData.thumbnail);
+                            }
+                            if (thumbnailData.hasOwnProperty('preview')) {
+                                metaList.push({
+                                    type: "preview"
+                                });
+                                binaryList.push(thumbnailData.preview);
+                            }
+                        }
+
+                        // 履歴から復元して取得
+                        if (json.hasOwnProperty('restore_index') && meta.hasOwnProperty('backup_list')) {
+                            let backupList = this.executer.sortBackupList(JSON.parse(meta.backup_list));
+                            let restore_index = Number(json.restore_index);
+                            if (restore_index >= 0 && backupList.length > restore_index) {
+                                let backup_date = backupList[restore_index];
+                                this.executer.textClient.hmget(this.executer.metadataBackupPrefix + meta.id, backup_date, (err, metaData) => {
+                                    this.executer.client.hmget(this.executer.contentBackupPrefix + meta.content_id, backup_date, (err, reply) => {
+                                        if (binaryList.length > 0) {
+                                            metaList.unshift(JSON.parse(metaData));
+                                            binaryList.unshift(reply[0]);
+                                            endCallback(err, metaList, binaryList);
+                                        } else {
+                                            endCallback(err, JSON.parse(metaData), reply[0]);
+                                        }
+                                    });
+                                })
+                                return;
+                            }
+                        }
+
+                        // 通常の取得
+                        this.executer.getContent(meta.type, meta.content_id, (reply) => {
+                            if (reply === null) {
+                                reply = "";
+                            }
+                            if (binaryList.length > 0) {
+                                metaList.unshift(meta);
+                                binaryList.unshift(reply);
+                                endCallback(null, metaList, binaryList);
+                            } else {
+                                endCallback(null, meta, reply);
+                            }
+                        });
+                    });
+                }
             });
         }
 
@@ -783,16 +774,16 @@
                                         }
                                     });
                                 } else {
-                                    endCallback("faild to add group");
++                                    endCallback("faild to add group");
                                 }
                             });
                         }
                     } else {
-                        endCallback("access denied");
++                        endCallback("access denied");
                     }
                 });
             } else {
-                endCallback("faild to add group : invalid parameter");
++                endCallback("faild to add group : invalid parameter");
             }
         }
 
@@ -1051,6 +1042,15 @@
         }
 
         /**
+         *コンテンツグループリスト取得コマンドを実行する
+         * @method GetContentGroupList
+         * @param {Function} endCallback 終了時に呼ばれるコールバック
+         */
+        getContentGroupList(endCallback) {
+            this.executer.getContentGroupList(endCallback);
+        }
+
+        /**
          * ユニークなコントローラIDを生成して返す
          * @method GenerateCOntrollerID
          * @param {Function} endCallback 終了時に呼ばれるコールバック
@@ -1291,12 +1291,15 @@
                 && data.hasOwnProperty('viewable')
                 && data.hasOwnProperty('group_manipulatable')) {
                 this.executer.getUserList((err, userList) => {
-                    let i;
                     this.executer.getGroupList((err, groupList) => {
-                        for (i = 0; i < userList.length; i = i + 1) {
+                        for (let i = 0; i < userList.length; i = i + 1) {
                             if (userList[i].id === data.id) {
-                                if (userList[i].type === "group" || userList[i].type === "guest" || userList[i].type === "display") {
-                                    let setting = {
+                                if (userList[i].type === "group" || 
+                                    userList[i].type === "guest" || 
+                                    userList[i].type === "moderator" || 
+                                    userList[i].type === "attendee" || 
+                                    userList[i].type === "display") {
+                                    const setting = {
                                         viewable: data.viewable,
                                         editable: data.editable,
                                         group_manipulatable: data.group_manipulatable

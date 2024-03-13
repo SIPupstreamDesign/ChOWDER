@@ -62,6 +62,7 @@ class GroupStore
 		this.connector.send(Command.AddGroup, metaData, (err, groupID) => {
 			// UserList再取得
 			this.action.reloadUserList();
+			this.action.reloadContentGroupList();
 		});
 
     }
@@ -110,6 +111,8 @@ class GroupStore
 					}
 					// UserList再取得
 					this.action.reloadUserList();
+					this.action.reloadContentGroupList();
+
 				});
 				return true; // break
 			}
@@ -246,6 +249,7 @@ class GroupStore
 					if (!err) {
 						// グループリスト更新
 						this.action.reloadUserList();
+						this.action.reloadContentGroupList();
 					} else {
 						console.error("Error update group failed", err)
 					}

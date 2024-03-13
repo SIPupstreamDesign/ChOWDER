@@ -36,6 +36,10 @@ class Action extends EventEmitter {
         this.emit(Action.EVENT_RELOAD_USERLIST, null, data);
     }
 
+    reloadContentGroupList(data) {
+        this.emit(Action.EVENT_RELOAD_CONTENTGROUPLIST, null, data);
+    }
+
     /**
      * ログイン
      * @param {*} data
@@ -945,6 +949,7 @@ class Action extends EventEmitter {
 Action.EVENT_INIT = "init";
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_RELOAD_USERLIST = "reloadUserList";
+Action.EVENT_RELOAD_CONTENTGROUPLIST = "reloadContentGroupList";
 Action.EVENT_CHANGE_PASSWORD = "changePassword";
 Action.EVENT_CHANGE_AUTHORITY = "changeAuthority";
 Action.EVENT_RELOAD_GLOBAL_SETTING = "reloadGlobalSetting";

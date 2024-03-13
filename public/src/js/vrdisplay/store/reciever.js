@@ -125,6 +125,7 @@ class Receiver {
                     this.action.update({ updateType: 'group' });
                     this.action.update({ updateType: 'content' });
                 }});
+                this.action.reloadContentGroupList();
             });
         });
 
