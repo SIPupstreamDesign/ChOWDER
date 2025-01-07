@@ -4,7 +4,8 @@ const webpack = require('webpack');
 var NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
 var ExternalsPlugin = webpack.ExternalsPlugin
 
-const DEBUG = !process.argv.includes('--release');
+const DEBUG = process.argv.includes('--mode=development');
+console.log("DEBUG=", DEBUG);
 
 module.exports = {
     // モードの設定、v4系以降はmodeを指定しないと、webpack実行時に警告が出る
@@ -32,7 +33,15 @@ module.exports = {
             // CSSを読み込むローダー
             {
                 test: /\.css$/,
-                use: ['style-loader', 'css-loader'], // `-loader`は省略可能
+                use: [
+                    'style-loader', // スタイルをDOMに挿入
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: DEBUG, // ソースマップを有効化
+                        },
+                    },
+                ],
             },
             // ファイルを読み込むローダー
             {
@@ -53,7 +62,7 @@ module.exports = {
             }
         ],
     },
-    devtool: DEBUG ? 'inline-source-map' : false,
+    devtool: DEBUG ? 'source-map' : false, // ソースマップを生成する
     // webpack-dev-serverの設定
     devServer: {
         contentBase: path.join(__dirname, 'public'),
