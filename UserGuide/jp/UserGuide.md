@@ -165,6 +165,15 @@ bin配下の以下のシェルスクリプトを実行します.
        $cd bin
        $sh install.sh
 
+<!-- shibatam＠photron追記
+```
+       Please input the private IP address for this host. (e.g. 192.168.xxx.xxx) ”空Enter”を入力
+       Do you install a cert key for SSL? (yes or no) "no"と入力
+
+       yesを選択した場合、server/cert.pemが0バイトファイルとなり、server/key.pemが書き換わってしまうためChOWDERサーバーの起動に失敗します。
+```
+-->
+
 Linux環境において、WebRTC用のturnサーバを同時にインストールする場合は以下を実行します.
 (turnはLinux環境のみ動作確認しております. Mac環境では非対応となります.)
 
@@ -188,7 +197,8 @@ Mac/Linuxの場合
 
 bin配下の以下のシェルスクリプトを実行します.
 
-       ./run.sh
+       sh run.sh
+<!-- shibatam＠photron追記 この手順ではshに実行権限が付与されていないのでshコマンドで実行する必要があります。 -->
 
 Windowsの場合
 ---------------------------------------------------
@@ -226,7 +236,14 @@ ChOWDERへのアクセスは、Webブラウザのアドレス欄に「 http://lo
 サーバープログラムの終了
 ---------------------------------------------------
 
-run.sh(bat)を起動したterminalをCTRL+Cで終了するか、 serverプログラムをkillします.
+Windowsの場合
+---------------------------------------------------
+run.batを起動したterminalをCTRL+Cで終了してください。
+
+Mac/Linuxの場合
+---------------------------------------------------
+run.shで起動したserverプログラムをkillします.
+`sh stop.sh`を実行することでport指定で実行中のChOWDER(port:80)とredisサーバー(port:6379)を終了します。
 
 redisの終了
 ---------------------------------------------------
