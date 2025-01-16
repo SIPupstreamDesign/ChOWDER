@@ -1001,3 +1001,7 @@ p {
 .copyright_link:hover {
 	color : lightgray;
 }
+/* DisplayID選択可 */
+.content_id_text{
+	user-select: text;
+}
