@@ -30,7 +30,8 @@
     "update": "^0.7.4",
     "sharp": "0.30.0",
     "images": "^3.2.3",
-    "websocket": "*"
+    "websocket": "*",
+    "mediasoup": "^3.15.2"
   },
   "devDependencies": {
     "@babel/core": "^7.21.3",
@@ -44,8 +45,8 @@
     "style-loader": "^0.23.1",
     "three": "0.127.0",
     "url-loader": "^1.1.2",
-    "webpack": "^5.76.3",
-    "webpack-cli": "^5.0.1",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.2.1",
     "webpack-dev-server": "*"
   }
 }

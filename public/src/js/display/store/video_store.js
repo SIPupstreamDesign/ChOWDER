@@ -9,6 +9,7 @@ import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
 import WebRTC from '../../common/webrtc';
+import MediasoupConsumer from "../../common/mediasoup_consumer";
 import DisplayUtil from '../display_util';
 
 "use strict";
@@ -20,6 +21,8 @@ class VideoStore {
         this.connector = connector;
         this.store = store;
 		this.action = action;
+
+        this.mediasoupConsumer = {};
 
 		// WebRTC用キーから WebRTCインスタンスへのマップ
         this.webRTCDict = {};
@@ -51,6 +54,12 @@ class VideoStore {
         for (let i in this.webRTCDict) {
             this.webRTCDict[i].close();
         }
+
+        for (let id in this.mediasoupConsumer) {
+			this.mediasoupConsumer[id].close(true);
+		}
+		this.mediasoupConsumer = {};
+
         for (let i in this.mediaPlayerDict) {
             this.mediaPlayerDict[i].release();
         }
@@ -83,8 +92,26 @@ class VideoStore {
         }
     }
 
+    async _mediasoupHandshake(data){
+        const metaData = data.metaData;
+        const request = data.request;
+        const player = data.player;
+
+        console.log("[video_store.js]__mediasoupHandshake",data);
+
+        const router_id = metaData.id;
+		if(this.mediasoupConsumer[router_id]){
+			console.log("[video_store.js]__mediasoupHandshake: consumer router_id available");
+		}else{
+			this.mediasoupConsumer[router_id] = new MediasoupConsumer(this.connector, router_id);
+		}
+
+		this.mediasoupConsumer[router_id].handShake();
+		this.mediasoupConsumer[router_id].setPlayer(player);
+	}
+
     _requestWebRTC(data) {
-        //console.error("requestWebRTC")
+        console.error("requestWebRTC")
         let metaData = data.metaData;
         let request = data.request;
         this.videoPlayerDict[metaData.id] = data.player;

@@ -148,7 +148,7 @@ class Action extends EventEmitter {
      * コンテンツの可視不可視を変更
      * @param {*} data metaData
      */
-     changeContentVisibleMulti(data) {
+    changeContentVisibleMulti(data) {
         this.emit(Action.EVENT_CHANGE_CONTENT_VISIBLE2, null, data);
     }
     /**
@@ -322,6 +322,7 @@ class Action extends EventEmitter {
      * }
      */
     inputVideoStream(data) {
+        console.log("[action.js]inputVideoStream");
         this.emit(Action.EVENT_INPUT_VIDEO_STREAM, null, data);
     }
 

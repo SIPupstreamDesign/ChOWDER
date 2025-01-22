@@ -213,7 +213,7 @@ class Receiver {
                 // このコントローラが動画データを持っているか判別
                 if (this.store.getVideoStore().hasVideoData(metaData.id)) {
                     // webrtc接続開始
-                    this.store.getVideoStore().connectWebRTC(metaData, key);
+                    // this.store.getVideoStore().connectWebRTC(metaData, key);
                 }
             }
         });

@@ -123,7 +123,6 @@
 			params: args,
 			to: 'master'
 		}, data;
-		
 		messageID = messageID + 1;
 		try {
 			data = JSON.stringify(reqjson);

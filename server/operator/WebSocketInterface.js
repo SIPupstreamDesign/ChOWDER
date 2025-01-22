@@ -168,7 +168,7 @@
                 }
             });
 
-            ws_connector.on(Command.SendMessage, (data, resultCallback) => {               
+            ws_connector.on(Command.SendMessage, (data, resultCallback) => {
                 if(data === undefined){
                     data = {broadcastTime : 0}
                     console.log('SendMessage : ' + Date.now());
@@ -315,6 +315,49 @@
 
             ws_connector.on(Command.UploadTileimage, (data, resultCallback, socketID) => {
                 this.commandOperator.receiveTileimage(data.metaData, data.contentData, socketID, resultCallback);
+            });
+
+            ws_connector.on(Command.MediasoupProducerRTPCapabilities, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupRTPCapabilities(Command.MediasoupProducerRTPCapabilities, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupProducerRTPCapabilities,result);
+            });
+            ws_connector.on(Command.MediasoupCreateProducerTransport, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupCreateProducerTransport(Command.MediasoupCreateProducerTransport, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupCreateProducerTransport,result);
+            });
+            ws_connector.on(Command.MediasoupConnectProducerTransport, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupConnectProducerTransport(Command.MediasoupConnectProducerTransport, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupConnectProducerTransport,result);
+            });
+            ws_connector.on(Command.MediasoupProduceStream, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupProduceStream(Command.MediasoupProduceStream, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupProduceStream,result);
+                ws_connector.broadcast(ws,Command.MediasoupNewProducerBroadcast,result);
+            });
+
+            ws_connector.on(Command.MediasoupConsumerRTPCapabilities, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupRTPCapabilities(Command.MediasoupConsumerRTPCapabilities, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupConsumerRTPCapabilities,result);
+            });
+            ws_connector.on(Command.MediasoupCreateConsumerTransport, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupCreateConsumerTransport(Command.MediasoupCreateConsumerTransport, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupCreateConsumerTransport,result);
+            });
+            ws_connector.on(Command.MediasoupConnectConsumerTransport, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupConnectConsumerTransport(Command.MediasoupConnectConsumerTransport, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupConnectConsumerTransport,result);
+            });
+            ws_connector.on(Command.MediasoupConsumeStream, async(data, resultCallback) => {
+                const result = await this.commandOperator.mediasoupConsumeStream(Command.MediasoupConsumeStream, data);
+                result.uuid = data.uuid;
+                ws_connector.broadcast(ws,Command.MediasoupConsumeStream,result);
             });
 
             ws_connector.registerEvent(ws, ws_connection);

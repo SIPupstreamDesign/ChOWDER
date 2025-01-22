@@ -167,25 +167,29 @@ class Display {
             let oldMetaData = metaDataDict[json.id];
             if (oldMetaData) {
                 let videoStore = this.store.getVideoStore();
-                let isAlreadyUsed = videoStore.isDataChannelUsed(oldMetaData);
-                let isDataChannelUsed = videoStore.isDataChannelUsed(json);
+                // let isAlreadyUsed = videoStore.isDataChannelUsed(oldMetaData);
+                // let isDataChannelUsed = videoStore.isDataChannelUsed(json);
                 let videoPlayer = videoStore.getVideoPlayer(json.id);
-                if (!isAlreadyUsed && isDataChannelUsed) {
-                    // DataChannel使用開始
-                    videoStore.closeVideo(json);
-                    this.gui.showVideo(videoPlayer, json);
-                    metaDataDict[json.id] = json;
-                    videoPlayer.enableSeek(false);
-                    return;
-                }
-                if (isAlreadyUsed && !isDataChannelUsed) {
-                    // DataChannel使用終了、webrtcに切り替え
-                    videoStore.closeVideo(json);
-                    this.gui.showVideo(videoPlayer, json);
-                    metaDataDict[json.id] = json;
-                    videoPlayer.enableSeek(true);
-                    return;
-                }
+                // if (!isAlreadyUsed && isDataChannelUsed) {
+                //     // DataChannel使用開始
+                //     videoStore.closeVideo(json);
+                //     this.gui.showVideo(videoPlayer, json);
+                //     metaDataDict[json.id] = json;
+                //     videoPlayer.enableSeek(false);
+                //     return;
+                // }
+                // if (isAlreadyUsed && !isDataChannelUsed) {
+                //     // DataChannel使用終了、webrtcに切り替え
+                //     videoStore.closeVideo(json);
+                //     this.gui.showVideo(videoPlayer, json);
+                //     metaDataDict[json.id] = json;
+                //     videoPlayer.enableSeek(true);
+                //     return;
+                // }
+                this.gui.showVideo(videoPlayer, json);
+                metaDataDict[json.id] = json;
+                videoPlayer.enableSeek(true);
+
                 if (json.hasOwnProperty('isPlaying')) {
                     // 動画再生状態の変化
                     if (String(json.isPlaying) === "true" && videoPlayer.getVideo().paused) {

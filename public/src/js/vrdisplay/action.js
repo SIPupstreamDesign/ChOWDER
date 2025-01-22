@@ -155,6 +155,19 @@ class Action extends EventEmitter {
     }
 
     /**
+     * mediasoupHandshake開始
+     * @param {*} data
+     * {
+     *   metaData: metaData,
+     *   request : "{ key : リクエストキー }" (リクエスト文字列).
+     *   element : 表示対象エレメント
+     * }
+     */
+    mediasoupHandshake(data) {
+        this.emit(Action.EVENT_MEDIASOUP_HANDSHAKE, null, data);
+    }
+
+    /**
      * タイルコンテンツの取得
      * @param {*} data
      * {
@@ -218,6 +231,7 @@ Action.EVENT_UPDATE = "update";
 Action.EVENT_CHANGE_CONTENT_INDEX_TO_FRONT = "changeContentIndexToFront";
 Action.EVENT_CHANGE_CONTENT_TRANSFORM = "changeContentTransform";
 Action.EVENT_REQUEST_WEBRTC = "requestWebRTC";
+Action.EVENT_MEDIASOUP_HANDSHAKE = "mediasoupHandshake";
 Action.EVENT_GET_TILE_CONTENT = "getTileContent";
 Action.EVENT_ADD_ITOWN_FUNC = "addItownFunc";
 Action.EVENT_UPDATE_QGIS_METADATA = "updateQgisMetadata";

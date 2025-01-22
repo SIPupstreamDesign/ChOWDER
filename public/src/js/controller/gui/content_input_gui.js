@@ -589,76 +589,75 @@ class ContentInputGUI
 	/**
 	 * スクリーンシェア入力
 	 */
-	inputScreenShare() {
-		let request = { sources: ['screen', 'window', 'tab', 'audio'] };
-		let userAgent = window.navigator.userAgent.toLowerCase();
-		if (userAgent.indexOf('chrome') != -1) {
-			// chrome
-			InputDialog.showTextInput({
-				name: i18next.t('input_extension_id'),
-				okButtonName: "OK"
-			}, (extensionID) => {
-				chrome.runtime.sendMessage(extensionID, request, (response) => {
-					let target = {
-						video: {
-							mandatory: {
-								chromeMediaSource: 'desktop',
-								chromeMediaSourceId: response.streamId,
-							}
-						},
-						audio: {
-							mandatory: {
-								chromeMediaSource: 'desktop',
-								chromeMediaSourceId: response.streamId,
-							}
-						}
-					};
-					if (response && response.type === 'success') {
-						navigator.getUserMedia(target, (stream) => {
-							const time = this.store.getManagement().fetchMeasureTime();
-							this.action.inputVideoStream({
-								contentData : stream,
-								metaData : {
-									posx: Vscreen.getWhole().x,
-									posy: Vscreen.getWhole().y,
-									visible: true,
-									subtype : "screen",
-									creator:this.store.controllerData.userName
-								},
-								timestamp : time
-							})
-						}, function (err) {
-							console.error('Could not get stream: ', err);
-						});
-					} else {
-						console.error('Could not get stream');
-					}
-				});
-			});
-		} else {
-			let mediaConstraints = {
-				video: {
-					mediaSource: "screen"
+	async inputScreenShare() {
+		// let request = { sources: ['screen', 'window', 'tab', 'audio'] };
+		// let userAgent = window.navigator.userAgent.toLowerCase();
+		// if (userAgent.indexOf('chrome') != -1) {
+		// 	// chrome
+		// 	InputDialog.showTextInput({
+		// 		name: i18next.t('input_extension_id'),
+		// 		okButtonName: "OK"
+		// 	}, (extensionID) => {
+		// 		chrome.runtime.sendMessage(extensionID, request, (response) => {
+		// 			let target = {
+		// 				video: {
+		// 					mandatory: {
+		// 						chromeMediaSource: 'desktop',
+		// 						chromeMediaSourceId: response.streamId,
+		// 					}
+		// 				},
+		// 				audio: {
+		// 					mandatory: {
+		// 						chromeMediaSource: 'desktop',
+		// 						chromeMediaSourceId: response.streamId,
+		// 					}
+		// 				}
+		// 			};
+		// 			if (response && response.type === 'success') {
+		// 				navigator.getUserMedia(target, (stream) => {
+		// 					const time = this.store.getManagement().fetchMeasureTime();
+		// 					this.action.inputVideoStream({
+		// 						contentData : stream,
+		// 						metaData : {
+		// 							posx: Vscreen.getWhole().x,
+		// 							posy: Vscreen.getWhole().y,
+		// 							visible: true,
+		// 							subtype : "screen",
+		// 							creator:this.store.controllerData.userName
+		// 						},
+		// 						timestamp : time
+		// 					})
+		// 				}, function (err) {
+		// 					console.error('Could not get stream: ', err);
+		// 				});
+		// 			} else {
+		// 				console.error('Could not get stream');
+		// 			}
+		// 		});
+		// 	});
+		// } else {
+			// const mediaConstraints = {
+			// 	video: {
+			// 		mediaSource: "screen"
+			// 	},
+			// };
+			console.log("[content_input_gui.js]inputScreenShare");
+
+			const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+			const time = this.store.getManagement().fetchMeasureTime();
+			this.action.inputVideoStream({
+				contentData : stream,
+				metaData : {
+					group: this.store.getGroupStore().getCurrentGroupID(),
+					posx: Vscreen.getWhole().x,
+					posy: Vscreen.getWhole().y,
+					visible: true,
+					subtype : "screen",
+					creator:this.store.controllerData.userName
 				},
-			};
-			navigator.mediaDevices.getUserMedia(mediaConstraints).then((stream) => {
-				const time = this.store.getManagement().fetchMeasureTime();
-				this.action.inputVideoStream({
-					contentData : stream,
-					metaData : {
-						group: this.store.getGroupStore().getCurrentGroupID(),
-						posx: Vscreen.getWhole().x,
-						posy: Vscreen.getWhole().y,
-						visible: true,
-						subtype : "screen",
-						creator:this.store.controllerData.userName
-					},
-					timestamp : time
-				})
-			}).catch(function (err) {
-				console.error('Could not get stream: ', err);
-			});
-		}
+				timestamp : time
+			})
+		// }
 	}
 
 	inputCameraShare() {

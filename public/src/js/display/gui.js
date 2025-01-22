@@ -811,18 +811,24 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showVideo(videpPlayer, metaData) {
-        let webRTCDict = this.store.getVideoStore().getWebRTCDict();
-        let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
+        console.log("[gui.js]showVideo",metaData);
+        // let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+        // let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
 
-        if (!webRTCDict.hasOwnProperty(rtcKey)) {
-            metaData.from = "view";
-            this.action.requestWebRTC({
-                metaData: metaData,
-                player: videpPlayer,
-                request: JSON.stringify({ key: rtcKey })
-            });
-            delete metaData.from;
-        }
+        // if (!webRTCDict.hasOwnProperty(rtcKey)) {
+        //     metaData.from = "view";
+        //     this.action.requestWebRTC({
+        //         metaData: metaData,
+        //         player: videpPlayer,
+        //         request: JSON.stringify({ key: rtcKey })
+        //     });
+        //     delete metaData.from;
+        // }
+        this.action.mediasoupHandshake({
+            metaData: metaData,
+            player: videpPlayer,
+            request: null
+        });
     }
 
     /**
