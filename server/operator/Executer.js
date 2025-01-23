@@ -1923,8 +1923,8 @@
                                                     }
                                                 });
                                             }
-                                        }
-                                        if (endCallback) {
+                                        } else if (endCallback) {
+                                            metaData.addedTileCount = tileCount;
                                             endCallback(err, metaData);
                                         }
                                     });

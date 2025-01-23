@@ -1129,6 +1129,13 @@ class GUI extends EventEmitter {
                 icons[i].style.backgroundColor = bgcolor;
             }
         }
+        let icons2 =  listElem.getElementsByClassName('tileimage_prg_for_list')[0];
+        if(icons2 && metaData.addedTileCount){
+            icons2.style.display = "";
+            icons2.innerText = Math.floor(metaData.addedTileCount / 64 * 100) + "%";
+        } else {
+            icons2.style.display = "none";
+        }
     }
 
     // Update
