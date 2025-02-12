@@ -151,15 +151,31 @@
             });
 
             ws_connector.on(Command.ReloadDisplay, (data, resultCallback) => {
-                console.log("ReloadDisplay")
+                console.log("ReloadDisplay");
                 ws_connector.broadcast(ws, Command.ReloadDisplay, data);
                 if (resultCallback) {
                     resultCallback();
                 }
             });
 
-            ws_connector.on(Command.SendMessage, (data, resultCallback) => {
-                console.log('SendMessage');
+            ws_connector.on(Command.MeasureDisplay, (data, resultCallback) => {
+                console.log("MeasureDisplay");
+                if(data === undefined){ date = {broadcastTime : 0}}
+                data.broadcastTime = Date.now();
+                ws_connector.broadcast(ws, Command.MeasureDisplay, data);
+                if (resultCallback) {
+                    resultCallback();
+                }
+            });
+
+            ws_connector.on(Command.SendMessage, (data, resultCallback) => {               
+                if(data === undefined){
+                    data = {broadcastTime : 0}
+                    console.log('SendMessage : ' + Date.now());
+                } else{
+                    console.log('SendMessage : command : ' + data.command);
+                }
+                data.broadcastTime = Date.now();
                 ws_connector.broadcast(ws, Command.SendMessage, data);
                 if (resultCallback) {
                     resultCallback();
@@ -240,6 +256,9 @@
             });
             ws_connector.on(Command.GetUserList, (data, resultCallback) => {
                 this.commandOperator.getUserList(resultCallback);
+            });
+            ws_connector.on(Command.GetContentGroupList, (data, resultCallback) => {
+                this.commandOperator.getContentGroupList(resultCallback);
             });
             ws_connector.on(Command.GenerateControllerID, (data, resultCallback) => {
                 this.commandOperator.generateControllerID(resultCallback);

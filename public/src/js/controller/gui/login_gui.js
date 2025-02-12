@@ -69,6 +69,7 @@ class LoginGUI extends EventEmitter {
 		Translation.changeLanguage(this.loginStore.getLanguage());
 		Translation.translate(function () {});
 
+		this.action.reloadContentGroupList();
 		// 最初にユーザーリスト取得
 		this.action.reloadUserList({
 			callback : () => {

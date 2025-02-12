@@ -664,6 +664,7 @@ Store.EVENT_CONNECT_FAILED = "connect_failed";
 
 Store.EVENT_SNAP_TYPE_CHANGED = "snap_type_changed";
 Store.EVENT_USERLIST_RELOADED = "user_list_reloaded";
+Store.EVENT_CONTENTGROUPLIST_RELOADED = "content_group_list_reloaded";
 Store.EVENT_SEARCH_INPUT_CHANGED = "search_input_changed";
 Store.EVENT_USERSEARCH_INPUT_CHANGED = "usersearch_input_changed";
 Store.EVENT_DONE_RELOAD_ALL = "done_reload_all";

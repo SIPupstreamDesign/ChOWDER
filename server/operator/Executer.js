@@ -292,7 +292,7 @@
         }
 
         /**
-         * グループリストにgroupを追加
+         * コンテンツグループリストにgroupを追加
          * @param {String} id グループid. nullの場合自動割り当て.
          * @param {String} groupName グループ名.
          * @param {String} color グループ色.
@@ -319,17 +319,9 @@
                 }
                 this.textClient.set(this.groupListPrefix, JSON.stringify(data), () => {
                     this.getGroupID(groupName, (id) => {
-                        // グループ設定を追加する.
-                        this.changeGroupUserSetting(socketid, id, {
-                            viewable: [id],
-                            editable: [id],
-                            viewableSite: "all",
-                            group_manipulatable: false
-                        }, (err, reply) => {
-                            if (endCallback) {
-                                endCallback(err, id);
-                            }
-                        });
+                        if (endCallback) {
+                            endCallback(err, id);
+                        }
                     })
                 });
             });
@@ -687,6 +679,9 @@
             });
         }
 
+        /**
+         * DB変更 
+         */
         changeUUIDPrefix(socketid, dbname, endCallback) {
             this.isAdmin(socketid, (err, isAdmin) => {
                 if (err) {
@@ -714,7 +709,7 @@
                                     this.windowContentRefPrefix = this.frontPrefix + this.uuidPrefix + "window_contentref:";
                                     this.virtualDisplayIDStr = this.frontPrefix + this.uuidPrefix + "virtual_display";
                                     this.groupListPrefix = this.frontPrefix + this.uuidPrefix + "grouplist";
-                                    this.groupUserPrefix = this.frontPrefix + this.uuidPrefix + "group_user"; // グループユーザー設定
+                                    this.groupUserPrefix = this.frontPrefix + "group_user"; // グループユーザー設定
                                     endCallback(null);
                                 });
                             });
@@ -729,6 +724,27 @@
         }
 
         groupInitialSettting() {
+            this.addGroup("master", "group_default", "default", null, (err, reply) => {
+                this.addDisplayGroup("master", "group_default", "default", null, (err, reply) => { });
+            });
+
+            this.textClient.exists(this.globalSettingPrefix, (err, doesExists) => {
+                if (doesExists !== 1) {
+                    // global設定の初期登録
+                    this.changeGlobalSetting("master", {
+                        max_history_num: 10
+                    });
+                }
+            });
+            // virtualdisplayの初期設定
+            this.textClient.exists(this.virtualDisplayIDStr, (err, doesExists) => {
+                if (doesExists !== 1) {
+                    this.setVirtualDisplay(this.getInitialVirtualDisplayData());
+                }
+            });
+        }
+
+        groupUserInitialSetting() {
             this.textClient.exists(this.groupUserPrefix, (err, doesExists) => {
                 if (doesExists !== 1) {
                     // group設定の初期登録
@@ -774,36 +790,19 @@
                                         group_manipulatable: false
 
                                     }, () => {
-                                        // Moderator設定の初期登録
+                                        // Attendee設定の初期登録
                                         this.changeGroupUserSetting("master", "Attendee", {
                                             viewable: "all",
                                             editable: "all",
                                             displayEditable: "all",
                                             viewableSite: "all",
                                             group_manipulatable: false
-                                        })
+                                        }, () =>{});
                                     })
                                 })
                             })
                         })
                     });
-                }
-                this.addGroup("master", "group_default", "default", null, (err, reply) => {
-                    this.addDisplayGroup("master", "group_default", "default", null, (err, reply) => { });
-                });
-            });
-            this.textClient.exists(this.globalSettingPrefix, (err, doesExists) => {
-                if (doesExists !== 1) {
-                    // global設定の初期登録
-                    this.changeGlobalSetting("master", {
-                        max_history_num: 10
-                    });
-                }
-            });
-            // virtualdisplayの初期設定
-            this.textClient.exists(this.virtualDisplayIDStr, (err, doesExists) => {
-                if (doesExists !== 1) {
-                    this.setVirtualDisplay(this.getInitialVirtualDisplayData());
                 }
             });
         }
@@ -828,10 +827,12 @@
                                 }
                                 this.textClient.hset(this.frontPrefix + 'dblist', name, id, (err, reply) => {
                                     if (!err) {
+                                        // DB変更
                                         this.changeUUIDPrefix(socketid, name, (err, reply) => {
                                             this.groupInitialSettting();
                                             endCallback(err);
                                         });
+
                                     } else {
                                         endCallback("failed to create new db");
                                     }
@@ -1042,7 +1043,6 @@
         changeGroupUserSetting(socketid, groupID, setting, endCallback) {
             console.log("changeGroupUserSetting", groupID)
             this.getGroupUserSetting((err, data) => {
-                let groupSetting;
                 if (!data) {
                     // 新規.
                     data = {};
@@ -1052,6 +1052,7 @@
                 }
                 if (setting.hasOwnProperty('password')) {
                     data[groupID].password = util.encrypt(setting.password);
+
                 }
                 for (let i = 0; i < userSettingKeys.length; i = i + 1) {
                     let key = userSettingKeys[i];
@@ -1143,11 +1144,10 @@
          */
         getUserList(endCallback) {
             this.getAdminList((err, data) => {
-                let i,
-                    userList = [];
+                const userList = [];
 
                 // 管理ユーザー
-                for (i = 0; i < data.adminlist.length; i = i + 1) {
+                for (let i = 0; i < data.adminlist.length; i = i + 1) {
                     userList.push({ name: data.adminlist[i].name, id: data.adminlist[i].id, type: "admin" });;
                 }
                 this.getGroupUserSetting((err, setting) => {
@@ -1155,111 +1155,115 @@
                         endCallback(null, userList);
                         return;
                     }
-                    this.getGroupList((err, groupData) => {
-                        let isFoundGuest = false;
+                    
+                    // Guestユーザー
+                    const guestUserData = { name: "Guest", id: "Guest", type: "guest" };
+                    if (setting.hasOwnProperty("Guest")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Guest.hasOwnProperty(key)) {
+                                guestUserData[key] = setting.Guest[key];
+                            }
+                        }
+                    }
+                    userList.push(guestUserData);
 
-                        // Guestユーザー
-                        let guestUserData = { name: "Guest", id: "Guest", type: "guest" };
-                        if (setting.hasOwnProperty("Guest")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Guest.hasOwnProperty(key)) {
-                                    guestUserData[key] = setting.Guest[key];
-                                }
+                    // Displayユーザー
+                    let displayUserData = { name: "Display", id: "Display", type: "display" };
+                    if (setting.hasOwnProperty("Display")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Display.hasOwnProperty(key)) {
+                                displayUserData[key] = setting.Display[key];
                             }
                         }
-                        userList.push(guestUserData);
+                    }
+                    userList.push(displayUserData);
 
-                        // 通常のグループユーザー
-                        if (groupData.hasOwnProperty("grouplist")) {
-                            let i,
-                                name,
-                                userListData,
-                                groupSetting,
-                                id;
-                            for (i = 0; i < groupData.grouplist.length; i = i + 1) {
-                                groupSetting = {};
-                                name = groupData.grouplist[i].name;
-                                id = groupData.grouplist[i].id;
-                                // defaultグループは特殊扱いでユーザー無し
-                                if (id !== "group_default") {
-                                    userListData = { name: name, id: id, type: "group" };
-                                    if (setting.hasOwnProperty(id)) {
-                                        groupSetting = setting[id];
-                                    }
-                                    for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                        let key = userSettingKeys[k];
-                                        if (groupSetting.hasOwnProperty(key)) {
-                                            userListData[key] = groupSetting[key];
-                                        }
-                                    }
-                                    userList.push(userListData);
-                                }
+                    // APIUser
+                    let apiUserData = { name: "APIUser", id: "APIUser", type: "api" };
+                    if (setting.hasOwnProperty("APIUser")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.APIUser.hasOwnProperty(key)) {
+                                apiUserData[key] = setting.APIUser[key];
                             }
                         }
-                        // Displayユーザー
-                        let displayUserData = { name: "Display", id: "Display", type: "display" };
-                        if (setting.hasOwnProperty("Display")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Display.hasOwnProperty(key)) {
-                                    displayUserData[key] = setting.Display[key];
-                                }
-                            }
-                        }
-                        userList.push(displayUserData);
+                    }
+                    userList.push(apiUserData);
 
-                        // APIUser
-                        let apiUserData = { name: "APIUser", id: "APIUser", type: "api" };
-                        if (setting.hasOwnProperty("APIUser")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.APIUser.hasOwnProperty(key)) {
-                                    apiUserData[key] = setting.APIUser[key];
-                                }
+                    // ElectronDisplay
+                    let electronDisplayData = { name: "ElectronDisplay", id: "ElectronDisplay", type: "electron" };
+                    if (setting.hasOwnProperty("ElectronDisplay")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.ElectronDisplay.hasOwnProperty(key)) {
+                                electronDisplayData[key] = setting.ElectronDisplay[key];
                             }
                         }
-                        userList.push(apiUserData);
+                    }
+                    userList.push(electronDisplayData);
 
-                        // ElectronDisplay
-                        let electronDisplayData = { name: "ElectronDisplay", id: "ElectronDisplay", type: "electron" };
-                        if (setting.hasOwnProperty("ElectronDisplay")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.ElectronDisplay.hasOwnProperty(key)) {
-                                    electronDisplayData[key] = setting.ElectronDisplay[key];
-                                }
+                    // Moderator/Attendee
+                    let moderatorData = { name: "Moderator", id: "Moderator", type: "moderator" };
+                    if (setting.hasOwnProperty("Moderator")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Moderator.hasOwnProperty(key)) {
+                                moderatorData[key] = setting.Moderator[key];
                             }
                         }
-                        userList.push(electronDisplayData);
+                    }
+                    userList.push(moderatorData);
+                    let attendeeData = { name: "Attendee", id: "Attendee", type: "attendee" };
+                    if (setting.hasOwnProperty("Attendee")) {
+                        for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                            let key = userSettingKeys[k];
+                            if (setting.Attendee.hasOwnProperty(key)) {
+                                attendeeData[key] = setting.Attendee[key];
+                            }
+                        }
+                    }
+                    userList.push(attendeeData);
 
-                        // Moderator/Attendee
-                        let moderatorData = { name: "Moderator", id: "Moderator", type: "moderator" };
-                        if (setting.hasOwnProperty("Moderator")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Moderator.hasOwnProperty(key)) {
-                                    moderatorData[key] = setting.Moderator[key];
-                                }
-                            }
-                        }
-                        userList.push(moderatorData);
-                        let attendeeData = { name: "Attendee", id: "Attendee", type: "attendee" };
-                        if (setting.hasOwnProperty("Attendee")) {
-                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
-                                let key = userSettingKeys[k];
-                                if (setting.Attendee.hasOwnProperty(key)) {
-                                    attendeeData[key] = setting.Attendee[key];
-                                }
-                            }
-                        }
-                        userList.push(attendeeData);
+                    if (endCallback) {
+                        endCallback(null, userList);
+                    }
 
-                        if (endCallback) {
-                            endCallback(null, userList);
-                        }
-                    });
                 });
+            });
+        }
+
+        /**
+         * コンテンツグループリストの取得
+         */
+        getContentGroupList(endCallback) {
+            this.getGroupList((err, groupData) => {
+                const contentGroupList = [];
+
+                // コンテンツグループ
+                if (groupData.hasOwnProperty("grouplist")) {
+                    for (let i = 0; i < groupData.grouplist.length; i = i + 1) {
+                        const groupSetting = {};
+                        const name = groupData.grouplist[i].name;
+                        const id = groupData.grouplist[i].id;
+                        // defaultグループは特殊扱いでユーザー無し
+                        if (id !== "group_default") {
+                            const contentGroupData = { name: name, id: id, type: "group" };
+
+                            for (let k = 0; k < userSettingKeys.length; k = k + 1) {
+                                let key = userSettingKeys[k];
+                                if (groupSetting.hasOwnProperty(key)) {
+                                    contentGroupData[key] = groupSetting[key];
+                                }
+                            }
+                            contentGroupList.push(contentGroupData);
+                        }
+                    }
+                }
+                if (endCallback) {
+                    endCallback(null, contentGroupList);
+                }
             });
         }
 
@@ -2894,49 +2898,6 @@
             return false;
         }
 
-        /**
-         * socketidユーザーがdisplaygroupを表示可能かどうか返す
-         * @method isViewableDisplay
-         * @param {String} socketid socketid
-         * @param {String} group group
-         */
-        isViewableSite(socketid, groupID, endCallback) {
-            if (groupID === "group_default") {
-                endCallback(null, true);
-                return;
-            }
-            if (groupID === undefined || groupID === "") {
-                endCallback(null, true);
-                return;
-            }
-            if (this.allDisplayCache.hasOwnProperty(socketid)) {
-                // displayからのアクセスだった
-                const displayID = this.allDisplayCache[socketid];
-                this.getWindowMetaData({ id: displayID }, (windowMeta) => {
-                    this.getGroupUserSetting((err, data) => {
-                        if (!err && data) {
-                            if (data.hasOwnProperty(groupID)) {
-                                const authority = data[groupID];
-                                if (authority.hasOwnProperty('viewableSite')) {
-                                    if (authority.viewableSite !== "all") {
-                                        endCallback(null, authority.viewableSite.indexOf(windowMeta.group) >= 0);
-                                        return;
-                                    }
-                                }
-                                // viewableSiteの設定が無い、または"all"
-                                endCallback(null, true);
-                                return;
-                            }
-                        }
-                        endCallback(err, false);
-                    });
-                });
-            } else {
-                // controllerからのアクセスだった
-                endCallback(null, true);
-            }
-        }
-
         isGroupManipulatable(socketid, groupID, endCallback) {
             this.getGroupList((err, data) => {
                 if (groupID === "group_default") {
@@ -3008,7 +2969,7 @@
         }
 
         /**
-         * UUIDを登録する.
+         * サーバ起動時にUUIDを登録する.
          * @method registerUUID
          * @param {String} id UUID
          */
@@ -3033,7 +2994,7 @@
             this.controllerDataPrefix = this.frontPrefix + this.controllerDataPrefix;
             this.globalSettingPrefix = this.frontPrefix + this.globalSettingPrefix;
             this.adminUserPrefix = this.frontPrefix + this.adminUserPrefix; // 管理ユーザー設定
-            this.groupUserPrefix = this.frontPrefix + this.uuidPrefix + this.groupUserPrefix; // グループユーザー設定
+            this.groupUserPrefix = this.frontPrefix + this.groupUserPrefix; // グループユーザー設定
             console.log("idstr:" + this.contentPrefix);
             console.log("idstr:" + this.contentRefPrefix);
             console.log("idstr:" + this.metadataPrefix);
@@ -3091,6 +3052,7 @@
                 });
             });
             this.groupInitialSettting();
+            this.groupUserInitialSetting();
 
             this.getGlobalSetting((err, setting) => {
                 if (!err && setting && setting.current_db) {
@@ -3397,6 +3359,8 @@
                         return `sh ../bin/tileimage.sh ${filepath}`;
                     }
                 })();
+
+                console.log(`[runTileimageShell] batCmd:${batCmd}`);
 
                 // if(process.platform==='win32'){
                     child_process.exec(batCmd,(err,stdout,stderr)=>{

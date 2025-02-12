@@ -61,7 +61,6 @@ class SegmentReceiver{
      */
     _putKnownID(params,content){
         for(let data of this.container){
-            // console.log("@@@@@",data.id,params.id)
             if(data.imageID === params.id){ // このid知ってる
                 data.segments[params.segment_index] = content;
                 return true;

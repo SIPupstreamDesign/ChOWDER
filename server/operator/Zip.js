@@ -37,7 +37,6 @@
             return new Promise((resolve,reject)=>{
                 let zipFile = zip.files[file];
                 if(zipFile.dir === true){
-                    // console.log("@@@@@@@@@@@"+extractDir+zipFile.name,fs.existsSync(extractDir+zipFile.name));
                     if(!fs.existsSync(extractDir+zipFile.name)){
                         console.log("[mkdir] : ",extractDir+zipFile.name);
                         fs.mkdir(extractDir+zipFile.name, { recursive: true },(err)=>{

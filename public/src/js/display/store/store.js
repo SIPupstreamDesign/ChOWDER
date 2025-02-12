@@ -118,7 +118,7 @@ class Store extends EventEmitter {
         }, (() => {
             return (ev) => {
                 this.emit(Store.EVENT_CONNECT_FAILED, null);
-
+		console.log("coco");
                 if (!isDisconnect) {
                     setTimeout(() => {
                         this._connect();
@@ -173,13 +173,21 @@ class Store extends EventEmitter {
 
     // iTownsのパフォーマンス計測を行う
     // PerformanceLoggerは使用しない
-    measureITownPerformance(id) {
+    measureITownPerformance(metadata, data) {
         let funcDict = this.getITownFuncDict();
-        console.log(funcDict, id)
+        console.log(funcDict, data.id)
+        if(metadata === undefined){
+            metadata = {"clickTime" : 0, "broadcastTime" : 0};
+        }
+        const id = data.id;
+        metadata.clickTime = data.clickTime;
+        metadata.broadcastTime = data.broadcastTime;
         if (funcDict && funcDict.hasOwnProperty(id)) {
-            funcDict[id].chowder_itowns_measure_time((err, status) => {
+            funcDict[id].chowder_itowns_measure_time(metadata, (err, status) => {
                 Connector.send("SendMessage", {
-                    id: id,
+                    id: data.id,
+                    broadcastTime:data.broadcastTime, 
+                    clickTime:data.clickTime, 
                     display_id: this.getWindowID(),
                     command: "measureITownPerformanceResult",
                     result: status
@@ -217,7 +225,7 @@ class Store extends EventEmitter {
         let callback = Store.extractCallback(data);
 
         Connector.send(Command.GetUserList, {}, (err, userList) => {
-            this.userList = userList;
+            this.userGroupList = userList;
             if (callback) {
                 callback(err, userList);
             }
@@ -684,26 +692,33 @@ class Store extends EventEmitter {
 
     /**
      * 閲覧情報があるか返す
+     * @method isViewable
+     * @param {String} contentsGroup ContentsGroup
      */
-    isViewable(group) {
+
+    isViewable(contentsGroup) {
         if (!this.getAuthority()) {
             return false;
         }
-        if (group === undefined || group === "") {
+        if (contentsGroup === undefined || contentsGroup === "") {
             return true;
         }
-        if (group === Constants.DefaultGroup) {
+
+        // コンテンツがdefaultグループなら無条件で通す
+        if (contentsGroup === Constants.DefaultGroup) {
             return true;
         }
-        if (!this.isViewableSite(group)) {
-            return false;
-        }
-        let groupDict = this.getGroupDict();
-        if (groupDict.hasOwnProperty(group)) {
+        // if (!this.isViewableSite(group)) {
+        //     return false;
+        // }
+        const groupDict = this.getGroupDict();
+        if (groupDict.hasOwnProperty(contentsGroup)) {
             if (this.getAuthority().viewable === "all") {
+                // authority "all"
                 return true;
             }
-            if (this.getAuthority().viewable.indexOf(group) >= 0) {
+            if (this.getAuthority().viewable.indexOf(contentsGroup) >= 0) {
+                // authority 当該コンテンツグループが許可されている
                 return true;
             }
         }
@@ -727,8 +742,8 @@ class Store extends EventEmitter {
         if (!windowData) {
             return false;
         }
-        for (let i = 0; i < this.userList.length; ++i) {
-            const authority = this.userList[i];
+        for (let i = 0; i < this.userGroupList.length; ++i) {
+            const authority = this.userGroupList[i];
             if (authority.id === group) {
                 if (authority.hasOwnProperty('viewableSite')) {
                     if (authority.viewableSite !== "all") {

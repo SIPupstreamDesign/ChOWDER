@@ -36,6 +36,10 @@ class Action extends EventEmitter {
         this.emit(Action.EVENT_RELOAD_USERLIST, null, data);
     }
 
+    reloadContentGroupList(data) {
+        this.emit(Action.EVENT_RELOAD_CONTENTGROUPLIST, null, data);
+    }
+
     /**
      * ログイン
      * @param {*} data
@@ -472,6 +476,13 @@ class Action extends EventEmitter {
     }
 
     /**
+     * 全ディスプレイWebGL計測
+     */
+    measureDisplay(data) {
+        this.emit(Action.EVENT_MEASURE_DISPLAY, null, data);
+    }
+    
+    /**
      * VirualDisplayボタンをクリックした
      * @param {*} data
      */
@@ -513,6 +524,22 @@ class Action extends EventEmitter {
      */
     changeDisplayVisible(data) {
         this.emit(Action.EVENT_CHANGE_DISPLAY_VISIBLE, null, data);
+    }
+
+    /**
+     * ディスプレイの単品リロード
+     * @param {*} data windowData
+     */
+    displayReloadSingle(data) {
+        this.emit(Action.EVENT_RELOAD_DISPLAY, null, data);
+    }
+
+    /**
+     * ディスプレイの単品WebGL計測
+     * @param {*} data windowData
+     */
+    displayMeasureSingle(data) {
+        this.emit(Action.EVENT_MEASURE_DISPLAY, null, data);
     }
 
     /**
@@ -922,6 +949,7 @@ class Action extends EventEmitter {
 Action.EVENT_INIT = "init";
 Action.EVENT_CONNECT = "connect";
 Action.EVENT_RELOAD_USERLIST = "reloadUserList";
+Action.EVENT_RELOAD_CONTENTGROUPLIST = "reloadContentGroupList";
 Action.EVENT_CHANGE_PASSWORD = "changePassword";
 Action.EVENT_CHANGE_AUTHORITY = "changeAuthority";
 Action.EVENT_RELOAD_GLOBAL_SETTING = "reloadGlobalSetting";
@@ -960,6 +988,7 @@ Action.EVENT_CHANGE_DISPLAY_TRANS = "changeDisplayTrans";
 Action.EVENT_DELETE_DISPLAY = "deleteDisplay";
 Action.EVENT_SHOW_DISPLAY_ID = "showDisplayID";
 Action.EVENT_RELOAD_DISPLAY = "reloadDisplay";
+Action.EVENT_MEASURE_DISPLAY = "measureDisplay";
 Action.EVENT_CLICK_VIRTUAL_DISPLAY = "clickVirtualDisplay";
 Action.EVENT_CHANGE_DISPLAY_COLOR = "changeDisplayColor";
 Action.EVENT_CHANGE_DISPLAY_PROPERTY = "changeDisplayProperty";

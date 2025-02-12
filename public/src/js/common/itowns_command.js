@@ -36,6 +36,8 @@ const ITownsCommand = {
     LayersInitialized : "LayersInitialized",
     // 強制ステップ実行(VR用)
     StepForce : "StepForce",
+    // パフォーマンス計測2
+    MeasurePerformance2 : "MeasurePerformance2",
 };
 
 export default ITownsCommand;

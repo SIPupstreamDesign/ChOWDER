@@ -117,6 +117,7 @@ class Receiver {
                         this.action.update({ updateType: 'content' });
                     }
                 });
+                this.action.reloadContentGroupList();
             });
         });
 
@@ -163,7 +164,42 @@ class Receiver {
             if (window.isElectron()) {
                 window.electronReload();
             } else {
-                window.location.reload(true);
+                // dataにdisplayIDが入っていたら、自分のID出なかった場合はリロードしない
+                let flg = data === undefined;
+                let flg2 = false;
+                if(!flg){ flg = data.target === undefined}
+                if(!flg){ flg2 = flg = data.target === this.store.windowData.id}
+                if(flg){
+                    let weit=1;
+                    if(!flg2){
+                        weit = this.getReloadTime();
+                    }
+                    window.setTimeout(()=>{
+                        // window.location.reload(true);
+                        window.location.href = window.location.href;
+                    }, weit);
+                }
+            }
+        });
+
+        /// DisplayWebGL計測
+        this.connector.on(Command.MeasureDisplay, (data) => {
+            if (window.isElectron()) {
+                window.electronReload();
+            } else {
+                let flg = data === undefined;
+                let flg2 = false;
+                if(!flg){ flg = data.target === undefined}
+                if(!flg){ flg2 = flg = data.target === this.store.windowData.id}
+                if(flg){
+                    // ディスプレイ内にiTownsのコンテンツがあるかどうかを探す
+                    const keys = Object.keys(this.store.itownFuncDict);
+                    if(keys != undefined && keys.length > 0){
+                        window.setTimeout(()=>{
+                            window.location.href = window.location.href + "&m=measure"; 
+                        }, this.getReloadTime() );                                          
+                    }
+                }
             }
         });
 
@@ -251,7 +287,9 @@ class Receiver {
 
         this.connector.on(Command.SendMessage, (data) => {
             if (data.command === 'measureITownPerformance') {
-                this.store.measureITownPerformance(data.id);
+                window.setTimeout(()=>{
+                    window.location.href = window.location.href + "&m=measure&t_id=" + data.id + "&bt=" + data.broadcastTime + "&ct=" + data.clickTime
+                }, this.getReloadTime() );  
             }
             if (data.command === 'changeItownsContentTime') {
                 if (data.hasOwnProperty('data')) {
@@ -298,7 +336,16 @@ class Receiver {
                 });
             }
         });
-    }
+    };
+    
+    getReloadTime() {
+        let weit = 1;
+        weit += (this.store.windowData.posx /  this.store.windowData.width) * 100;
+        weit += (this.store.windowData.posy /  this.store.windowData.height) * 500;
+        // weit += Math.random() * 0.2;
+        return Math.floor(weit);
+    };
+
 }
 
 export default Receiver;

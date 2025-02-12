@@ -26,6 +26,7 @@ const Command = {
 	GetLoginUserList : "GetLoginUserList",
 	GetSelfStatus : "GetSelfStatus",
 	UpdateLoginUserControllerID : "UpdateLoginUserControllerID",
+	GetContentGroupList : "GetContentGroupList",
 
 	// using both server and client
 	Update : "Update",
@@ -41,6 +42,8 @@ const Command = {
 	UpdateMouseCursor : "UpdateMouseCursor",
 
 	SendMessage: "SendMessage",
+
+	MeasureDisplay : "MeasureDisplay",
 
 	// to client
 	Disconnect : "Disconnect",

@@ -590,7 +590,8 @@ class Store extends EventEmitter {
         this.performanceResult = {};
         Connector.send(Command.SendMessage, {
             command: "measureITownPerformance",
-            id: this.metaData.id
+            id: this.metaData.id,
+            clickTime:Date.now()
         }, () => {});
     }
 

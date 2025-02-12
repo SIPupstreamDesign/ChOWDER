@@ -43,8 +43,11 @@ if [ "$(uname)" != "Darwin" ]; then
 else
     # mac
     cp ../redis/redis-server.mac ../redis/redis-server
+    chmod a+x ../redis/redis-server
 fi
 
-npm install --force
+# npm install --force
+npm install --arch=x64 --force
+npm audit fix --force
 
 cd $ORIGIN

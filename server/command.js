@@ -28,6 +28,7 @@
 		GetLoginUserList : "GetLoginUserList",
 		GetSelfStatus : "GetSelfStatus",
 		UpdateLoginUserControllerID : "UpdateLoginUserControllerID",
+		GetContentGroupList : "GetContentGroupList",
 
 		// using both server and client
 		Update : "Update",
@@ -42,6 +43,7 @@
 		DeleteWindowMetaData : "DeleteWindowMetaData",
 		ShowWindowID : "ShowWindowID",
 		ReloadDisplay : "ReloadDisplay",
+		MeasureDisplay : "MeasureDisplay",
 		SendMessage: "SendMessage",
 
 		// to client
