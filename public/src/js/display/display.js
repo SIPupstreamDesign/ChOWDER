@@ -166,10 +166,10 @@ class Display {
         if (json.type === "video" && json.hasOwnProperty("subtype") && json.subtype === "file") {
             let oldMetaData = metaDataDict[json.id];
             if (oldMetaData) {
-                let videoStore = this.store.getVideoStore();
+                const videoStore = this.store.getVideoStore();
                 // let isAlreadyUsed = videoStore.isDataChannelUsed(oldMetaData);
                 // let isDataChannelUsed = videoStore.isDataChannelUsed(json);
-                let videoPlayer = videoStore.getVideoPlayer(json.id);
+                const videoPlayer = videoStore.getVideoPlayer(json.id);
                 // if (!isAlreadyUsed && isDataChannelUsed) {
                 //     // DataChannel使用開始
                 //     videoStore.closeVideo(json);
@@ -187,39 +187,39 @@ class Display {
                 //     return;
                 // }
                 this.gui.showVideo(videoPlayer, json);
-                metaDataDict[json.id] = json;
-                videoPlayer.enableSeek(true);
+                // metaDataDict[json.id] = json;
+                // videoPlayer.enableSeek(true);
 
-                if (json.hasOwnProperty('isPlaying')) {
-                    // 動画再生状態の変化
-                    if (String(json.isPlaying) === "true" && videoPlayer.getVideo().paused) {
-                        // 再生に変化
-                        if (json.hasOwnProperty('currentTime')) {
-                            const currentTime = Number(json.currentTime);
-                            videoPlayer.getVideo().currentTime = currentTime;
-                        }
-                        videoPlayer.getVideo().play();
-                        return;
-                    } else if (String(json.isPlaying) === "false" && !videoPlayer.getVideo().paused) {
-                        // 一時停止に変化
-                        if (json.hasOwnProperty('currentTime')) {
-                            const currentTime = Number(json.currentTime);
-                            if (videoPlayer.getVideo().currentTime < currentTime) {
-                                // コントローラ側より遅れている場合, コントローラの時間まで待ってからpause
-                                let subTime = currentTime - videoPlayer.getVideo().currentTime;
-                                setTimeout(() => {
-                                    videoPlayer.getVideo().pause();
-                                }, subTime * 1000);
-                                return;
-                            } else {
-                                // コントローラ側より進んでいる場合, コントローラの時間に合わせてpause
-                                videoPlayer.getVideo().currentTime = currentTime;
-                                videoPlayer.getVideo().pause();
-                            }
-                        }
-                        return;
-                    }
-                }
+                // if (json.hasOwnProperty('isPlaying')) {
+                //     // 動画再生状態の変化
+                //     if (String(json.isPlaying) === "true" && videoPlayer.getVideo().paused) {
+                //         // 再生に変化
+                //         if (json.hasOwnProperty('currentTime')) {
+                //             const currentTime = Number(json.currentTime);
+                //             videoPlayer.getVideo().currentTime = currentTime;
+                //         }
+                //         videoPlayer.getVideo().play();
+                //         return;
+                //     } else if (String(json.isPlaying) === "false" && !videoPlayer.getVideo().paused) {
+                //         // 一時停止に変化
+                //         if (json.hasOwnProperty('currentTime')) {
+                //             const currentTime = Number(json.currentTime);
+                //             if (videoPlayer.getVideo().currentTime < currentTime) {
+                //                 // コントローラ側より遅れている場合, コントローラの時間まで待ってからpause
+                //                 let subTime = currentTime - videoPlayer.getVideo().currentTime;
+                //                 setTimeout(() => {
+                //                     videoPlayer.getVideo().pause();
+                //                 }, subTime * 1000);
+                //                 return;
+                //             } else {
+                //                 // コントローラ側より進んでいる場合, コントローラの時間に合わせてpause
+                //                 videoPlayer.getVideo().currentTime = currentTime;
+                //                 videoPlayer.getVideo().pause();
+                //             }
+                //         }
+                //         return;
+                //     }
+                // }
             }
         }
         // webglカメラなどの適用

@@ -25,6 +25,10 @@ class MediasoupProducer {
         this.stream = stream;
     }
 
+    getStream(){
+        return this.stream;
+    }
+
     async handShake(){
         // console.log("[mediasoup_producer.js]handshake()");
         this.connector.on(Command.MediasoupProducerRTPCapabilities, async(data) => {

@@ -466,7 +466,7 @@ class VideoStore {
 	 * 動画ファイル処理用内部関数
 	 */
 	__processVideoFile(metaData, video, blob, timestamp) {
-        let subtype = metaData.subtype;
+        const subtype = metaData.subtype;
 		let videoData;
 		if (subtype === "file") {
 
@@ -487,9 +487,12 @@ class VideoStore {
 					console.error(e);
 				}
 			}
-			setTimeout(() => {
+			setTimeout(async() => {
 				video.load();
 				video.play();
+				video.loop = true;
+				const stream = video.captureStream();
+				await this.__mediasoupHandshake(metaData, stream);
 			}, 100)
 		}
 		this.setVideoData(metaData.id, blob);
@@ -571,7 +574,7 @@ class VideoStore {
      */
     _inputVideoFile(data) {
         let metaData = data.metaData;
-		let blob = data.contentData;
+		const blob = data.contentData;
 		if (data.hasOwnProperty('subtype')) {
 			metaData.subtype = data.subtype;
 		}
@@ -587,15 +590,15 @@ class VideoStore {
 			metaData.id = ContentUtil.generateID();
 		}
 		if (this.hasVideoPlayer(metaData.id)) {
-			let player = this.getVideoPlayer(metaData.id);
-			let video = player.getVideo();
+			const player = this.getVideoPlayer(metaData.id);
+			const video = player.getVideo();
 			this.__processVideoFile(metaData, video, blob, data.timestamp);
 		}
 		else {
 			//video = document.createElement('video');
-			let player = new VideoPlayer();
+			const player = new VideoPlayer();
 			this.setVideoPlayer(metaData.id, player);
-			let video = player.getVideo();
+			const video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
 			if (metaData.subtype === "camera" || metaData.subtype === "screen") {
 				video.muted = true;

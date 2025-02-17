@@ -97,171 +97,180 @@ class VideoStore {
         const request = data.request;
         const player = data.player;
 
-        console.log("[video_store.js]__mediasoupHandshake",data);
 
         const router_id = metaData.id;
 		if(this.mediasoupConsumer[router_id]){
-			console.log("[video_store.js]__mediasoupHandshake: consumer router_id available");
+            const video = player.getVideo();
+            
+            if(metaData.isPlaying === "true"){
+                if (!player.isPlaying()) {
+                    setTimeout(async()=>{
+                        await video.play();
+    
+                    },100);
+                }
+            }
 		}else{
 			this.mediasoupConsumer[router_id] = new MediasoupConsumer(this.connector, router_id);
-		}
 
-		this.mediasoupConsumer[router_id].handShake();
-		this.mediasoupConsumer[router_id].setPlayer(player);
+            this.mediasoupConsumer[router_id].handShake();
+            this.mediasoupConsumer[router_id].setPlayer(player);    
+        }
+
 	}
 
-    _requestWebRTC(data) {
-        console.error("requestWebRTC")
-        let metaData = data.metaData;
-        let request = data.request;
-        this.videoPlayerDict[metaData.id] = data.player;
-        let elem = data.player.getVideo();
-        let rtcKey = this.getRTCKey(metaData);
-        let meta = this.store.getMetaData(metaData.id);
-        const isUseDataChannel = this.isDataChannelUsed(metaData);
+    // _requestWebRTC(data) {
+    //     console.error("requestWebRTC")
+    //     let metaData = data.metaData;
+    //     let request = data.request;
+    //     this.videoPlayerDict[metaData.id] = data.player;
+    //     let elem = data.player.getVideo();
+    //     let rtcKey = this.getRTCKey(metaData);
+    //     let meta = this.store.getMetaData(metaData.id);
+    //     const isUseDataChannel = this.isDataChannelUsed(metaData);
 
-        // 既にDatachannel使ってるか？
-        let isAlreadyUsed =  this.isDataChannelUsed(meta);
-        // Datachannel使ってるか？
-        let isDataChannelUsed = this.isDataChannelUsed(metaData);
+    //     // 既にDatachannel使ってるか？
+    //     let isAlreadyUsed =  this.isDataChannelUsed(meta);
+    //     // Datachannel使ってるか？
+    //     let isDataChannelUsed = this.isDataChannelUsed(metaData);
 
-        this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
-			let webRTC = new WebRTC(this.store.globalSetting);
-            this.webRTCDict[rtcKey] = webRTC;
+    //     this.connector.sendBinary(Command.RTCRequest, metaData, request, () => {
+	// 		let webRTC = new WebRTC(this.store.globalSetting);
+    //         this.webRTCDict[rtcKey] = webRTC;
 
-            if (isDataChannelUsed) {
-                // DataChannel使用開始
-                URL.revokeObjectURL(elem.src); // 通常のWebRTC用のソースを消す.
-                if (elem.hasOwnProperty('srcObject')) {
-                    elem.srcObject = null;
-                }
-            }
+    //         if (isDataChannelUsed) {
+    //             // DataChannel使用開始
+    //             URL.revokeObjectURL(elem.src); // 通常のWebRTC用のソースを消す.
+    //             if (elem.hasOwnProperty('srcObject')) {
+    //                 elem.srcObject = null;
+    //             }
+    //         }
 
-            if (isDataChannelUsed) {
-                let info = null;
-                try {
-                    info = JSON.parse(metaData.video_info);
-                } catch(e) {
-                    console.error(e, metaData.video_info);
-                }
-                console.log("isUseDataChannel!", info)
+    //         if (isDataChannelUsed) {
+    //             let info = null;
+    //             try {
+    //                 info = JSON.parse(metaData.video_info);
+    //             } catch(e) {
+    //                 console.error(e, metaData.video_info);
+    //             }
+    //             console.log("isUseDataChannel!", info)
 
-                if (info) {
-                    const codec = this.getCodec(info);
-                    const duration = info.duration/info.timescale;
+    //             if (info) {
+    //                 const codec = this.getCodec(info);
+    //                 const duration = info.duration/info.timescale;
 
-                    console.log("codec", codec.videoCodec, codec.audioCodec,
-                        MediaSource.isTypeSupported(codec.videoCodec),
-                        MediaSource.isTypeSupported(codec.audioCodec)
-                    );
-                    let player = new MediaPlayer(elem, codec.videoCodec, codec.audioCodec);
-                    if (info.hasOwnProperty('duration') && info.hasOwnProperty('timescale')) {
-                        player.setSampleSec(info.duration / info.timescale);
-                    }
-                    player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
-                        player.setDuration(duration);
-                    });
-                    player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
-                        console.log("EVENT_NEED_RELOAD")
-                    });
-                    this.mediaPlayerDict[rtcKey] = player;
-                    elem.load();
-                }
-            } else {
-                if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-                    this.mediaPlayerDict[rtcKey].release();
-                    delete this.mediaPlayerDict[rtcKey];
-                }
-            }
+    //                 console.log("codec", codec.videoCodec, codec.audioCodec,
+    //                     MediaSource.isTypeSupported(codec.videoCodec),
+    //                     MediaSource.isTypeSupported(codec.audioCodec)
+    //                 );
+    //                 let player = new MediaPlayer(elem, codec.videoCodec, codec.audioCodec);
+    //                 if (info.hasOwnProperty('duration') && info.hasOwnProperty('timescale')) {
+    //                     player.setSampleSec(info.duration / info.timescale);
+    //                 }
+    //                 player.on(MediaPlayer.EVENT_SOURCE_OPEN, () => {
+    //                     player.setDuration(duration);
+    //                 });
+    //                 player.on(MediaPlayer.EVENT_NEED_RELOAD, (err, time) => {
+    //                     console.log("EVENT_NEED_RELOAD")
+    //                 });
+    //                 this.mediaPlayerDict[rtcKey] = player;
+    //                 elem.load();
+    //             }
+    //         } else {
+    //             if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+    //                 this.mediaPlayerDict[rtcKey].release();
+    //                 delete this.mediaPlayerDict[rtcKey];
+    //             }
+    //         }
 
-            webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
+    //         webRTC.on(WebRTC.EVENT_ADD_STREAM, (evt) => {
 
-                if (!isUseDataChannel) {
-                    let stream = evt.stream ? evt.stream : evt.streams[0];
-                    if (elem.srcObject !== stream) {
-                        try {
-                            elem.srcObject = stream;
-                        } catch(e) {
-                            elem.src = stream;
-                        }
+    //             if (!isUseDataChannel) {
+    //                 let stream = evt.stream ? evt.stream : evt.streams[0];
+    //                 if (elem.srcObject !== stream) {
+    //                     try {
+    //                         elem.srcObject = stream;
+    //                     } catch(e) {
+    //                         elem.src = stream;
+    //                     }
     
-                        if (!data.player.isPlaying()) {
-                            elem.load();
-                            elem.play();
-                        }
-                    }
-                }
+    //                     if (!data.player.isPlaying()) {
+    //                         elem.load();
+    //                         elem.play();
+    //                     }
+    //                 }
+    //             }
 
-                if (!webRTC.statusHandle) {
-                    let t = 0;
-                    webRTC.statusHandle = setInterval( ((rtcKey) => {
-                        let webRTC = this.webRTCDict[rtcKey];
-                        t += 1;
-                        webRTC.getStatus((status) => {
-                            let bytes = 0;
-                            if (status.video && status.video.bytesReceived) {
-                                bytes += status.video.bytesReceived;
-                            }
-                            if (status.audio && status.audio.bytesReceived) {
-                                bytes += status.audio.bytesReceived;
-                            }
-                            // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
-                        });
-                    })(rtcKey), 1000);
-                }
-            });
+    //             if (!webRTC.statusHandle) {
+    //                 let t = 0;
+    //                 webRTC.statusHandle = setInterval( ((rtcKey) => {
+    //                     let webRTC = this.webRTCDict[rtcKey];
+    //                     t += 1;
+    //                     webRTC.getStatus((status) => {
+    //                         let bytes = 0;
+    //                         if (status.video && status.video.bytesReceived) {
+    //                             bytes += status.video.bytesReceived;
+    //                         }
+    //                         if (status.audio && status.audio.bytesReceived) {
+    //                             bytes += status.audio.bytesReceived;
+    //                         }
+    //                         // console.log("webrtc key:"+ rtcKey + "  bitrate:" + Math.floor(bytes * 8 / this / 1000) + "kbps");
+    //                     });
+    //                 })(rtcKey), 1000);
+    //             }
+    //         });
 
-            webRTC.on(WebRTC.EVENT_ICECANDIDATE, ((rtcKey) => {
-                return (type, data) => {
-                    if (type === "tincle") {
-                        metaData.from = "view";
-                        this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
-                            key : rtcKey,
-                            candidate: data
-                        }), function (err, reply) {});
-                        delete metaData.from;
-                    }
-                }
-            })(rtcKey));
+    //         webRTC.on(WebRTC.EVENT_ICECANDIDATE, ((rtcKey) => {
+    //             return (type, data) => {
+    //                 if (type === "tincle") {
+    //                     metaData.from = "view";
+    //                     this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
+    //                         key : rtcKey,
+    //                         candidate: data
+    //                     }), function (err, reply) {});
+    //                     delete metaData.from;
+    //                 }
+    //             }
+    //         })(rtcKey));
 
-            if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-                webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_MESSAGE, ((mediaPlayer) => {
-                    return (err, message) => {
-                        mediaPlayer.onVideoFrame(message);
-                    }
-                })(this.mediaPlayerDict[rtcKey]));
-            }
+    //         if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+    //             webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_MESSAGE, ((mediaPlayer) => {
+    //                 return (err, message) => {
+    //                     mediaPlayer.onVideoFrame(message);
+    //                 }
+    //             })(this.mediaPlayerDict[rtcKey]));
+    //         }
 
-            if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-                webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE, ((mediaPlayer) => {
-                    return (err, message) => {
-                        mediaPlayer.onAudioFrame(message);
-                    }
-                })(this.mediaPlayerDict[rtcKey]));
-            }
+    //         if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+    //             webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_MESSAGE, ((mediaPlayer) => {
+    //                 return (err, message) => {
+    //                     mediaPlayer.onAudioFrame(message);
+    //                 }
+    //             })(this.mediaPlayerDict[rtcKey]));
+    //         }
 
-			webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
-                console.error("EVENT_NEGOTIATION_NEEDED")
-            });
-            webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
-                return () => {
-                    //console.error("closed")
-                    if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-                        this.mediaPlayerDict[rtcKey].release();
-                        delete this.mediaPlayerDict[rtcKey];
-                    }
-                    if (this.webRTCDict.hasOwnProperty(rtcKey)) {
-                        if (this.webRTCDict[rtcKey].statusHandle) {
-                            clearInterval(this.webRTCDict[rtcKey].statusHandle);
-                            this.webRTCDict[rtcKey].statusHandle = null;
-                        }
-                        this.webRTCDict[rtcKey].close();
-                        delete this.webRTCDict[rtcKey];
-                    }
-                }
-            })(rtcKey));
-        });
-    }
+	// 		webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
+    //             console.error("EVENT_NEGOTIATION_NEEDED")
+    //         });
+    //         webRTC.on(WebRTC.EVENT_CLOSED, ((rtcKey) => {
+    //             return () => {
+    //                 //console.error("closed")
+    //                 if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+    //                     this.mediaPlayerDict[rtcKey].release();
+    //                     delete this.mediaPlayerDict[rtcKey];
+    //                 }
+    //                 if (this.webRTCDict.hasOwnProperty(rtcKey)) {
+    //                     if (this.webRTCDict[rtcKey].statusHandle) {
+    //                         clearInterval(this.webRTCDict[rtcKey].statusHandle);
+    //                         this.webRTCDict[rtcKey].statusHandle = null;
+    //                     }
+    //                     this.webRTCDict[rtcKey].close();
+    //                     delete this.webRTCDict[rtcKey];
+    //                 }
+    //             }
+    //         })(rtcKey));
+    //     });
+    // }
 
 	getWebRTCDict() {
 		return this.webRTCDict;
@@ -289,7 +298,7 @@ class VideoStore {
 		return isUseDataChannel;
 	}
 	getVideoPlayer(id) {
-		return this.videoPlayerDict[id];
+		return this.mediasoupConsumer[id].getPlayer();
 	}
 	hasVideoPlayer(id) {
 		return this.videoPlayerDict.hasOwnProperty(id);

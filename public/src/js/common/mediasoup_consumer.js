@@ -19,10 +19,17 @@ class MediasoupConsumer {
         this.transportParameters = null;
 
         this.player = null;
+
+        this.stream = null;
+        this.consumer = null;
     }
 
     setPlayer(player){
         this.player = player;
+    }
+
+    getPlayer(){
+        return this.player;
     }
 
     async handShake(){
@@ -133,11 +140,19 @@ class MediasoupConsumer {
         // console.log('handleConsumerStreamCreated',params);
         // console.log('handleConsumerStreamCreated: this.transport',this.transport);
 
-        const consumer = await this.transport.consume({ id, producerId, kind, rtpParameters });
-        const stream = new MediaStream([consumer.track]);
+        this.consumer = await this.transport.consume({ id, producerId, kind, rtpParameters });
+        await this.createStream();
         
-        this.player.getVideo().srcObject = stream;
+        this.player.getVideo().srcObject = this.stream;
+    }
 
+    async createStream(){
+        if(this.consumer === null){
+            console.log("[mediasoup_consumer.js]createStream: consumer is null");
+            return null;
+        }
+        this.stream = new MediaStream([this.consumer.track]);
+        return this.stream;
     }
 
     latestProducer(producerId){
