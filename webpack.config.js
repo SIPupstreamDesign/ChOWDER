@@ -20,6 +20,7 @@ module.exports = {
         "chowder_tileviewer_injection": ['@babel/polyfill', './public/src/chowder_tileviewer_injection.js'],
         "qgis": ['@babel/polyfill', './public/src/qgis_app.js'],
         "tileviewer": ['@babel/polyfill', './public/src/tileviewer_app.js'],
+        "visionUtil": './public/src/vision.js',
     },
     // 出力の設定
     output: {
