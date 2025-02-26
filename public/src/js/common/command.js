@@ -10,6 +10,7 @@ const Command = {
 	// request command
 	AddContent : "AddContent",
 	AddTileContent : "AddTileContent",
+	AddTileContentCount : "AddTileContentCount",
 	AddHistoricalContent : "AddHistoricalContent",
 	AddMetaData : "AddMetaData",
 	AddWindowMetaData : "AddWindowMetaData",

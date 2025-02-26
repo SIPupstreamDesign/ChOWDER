@@ -388,7 +388,9 @@
         post_addTileContent(ws, resultCallback) {
             return (err, reply) => {
                 // broadcastしない.
-                // ws_connector.broadcast(ws, Command.Update);
+                console.log("post_addTileContent:" + reply.id, "count:" + reply.addedTileCount);
+                //ws_connector.broadcast(ws, Command.UpdateMetaData, reply);
+                ws_connector.broadcast(ws, Command.AddTileContentCount, reply);
                 if (resultCallback) {
                     resultCallback(err, reply);
                 }

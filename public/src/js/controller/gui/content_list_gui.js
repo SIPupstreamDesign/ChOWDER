@@ -281,6 +281,15 @@ class ContentListGUI extends EventEmitter {
 						divElem.appendChild(icon);
 						icon.title = "Tiled Image";
 					}
+					//進捗度合い表示
+					if (divElem.getElementsByClassName('tileimage_prg_for_list').length === 0) {
+						let icon = document.createElement('div');
+						icon.className = 'tileimage_prg_for_list';
+						icon.innerText = "xx %";
+						icon.style.display = "none";
+						divElem.appendChild(icon);
+						icon.title = "Tiled Image Progress";
+					}
 				}
 
 				if (thumbnail !== undefined && thumbnail) {
