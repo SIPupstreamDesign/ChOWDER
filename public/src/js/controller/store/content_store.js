@@ -234,7 +234,9 @@ class ContentStore {
         if (metaDataList.length > 0) {
             this.store.operation.deleteContent(metaDataList);
             for(let metaData of metaDataList){
-                this.store.videoStore.mediasoupProducer[metaData.id].disConnect();
+                if(this.store.videoStore.mediasoupProducer[metaData.id]){
+                    this.store.videoStore.mediasoupProducer[metaData.id].disConnect();
+                }
             }
 
         }
