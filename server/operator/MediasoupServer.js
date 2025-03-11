@@ -6,19 +6,43 @@
 (() => {
     const mediasoup = require('mediasoup');
     const Command = require('./../command.js');
+    const fs = require("fs");
+    const path = require("path");
 
     class MediasoupServer {
         constructor(){
             this.worker = null;
             this.routers = {};
+            this.settings = null;
+        }
+
+        setSettingJSON(){
+            return new Promise((resolve, reject)=>{
+                fs.readFile(path.join(__dirname, "..", 'mediasoupSettings.json'), (err, json)=>{
+                    if(err){
+                        console.error(err);
+                        console.error("[MediasoupServer] Failed to readfile setting.json");
+                        process.exit(-1);
+                    }
+                    try {
+                        const settings = JSON.parse(String(json));
+                        resolve(settings);
+                    } catch (e) {
+                        console.error(e);
+                        console.error("[MediasoupServer] Failed to load setting.json");
+                        process.exit(-1);
+                    }    
+                });    
+            });
         }
 
         async init(){
             this.worker = await mediasoup.createWorker();
+            this.settings = await this.setSettingJSON();
         }
 
         async createRouter(router_id){
-            this.routers[router_id] = new MediasoupRouter(router_id, this.worker);
+            this.routers[router_id] = new MediasoupRouter(this.settings, router_id, this.worker);
             await this.routers[router_id].startRouter();
         }
 
@@ -42,28 +66,30 @@
     }
 
     class MediasoupRouter {
-        constructor(router_id, worker) {
+        constructor(settings, router_id, worker) {
             this.router_id = router_id;
             this.consumerList = {};
             this.latestProducer = {
-                    transport: null,
-                    producer: null
-                }
+                transport: null,
+                producer: null
+            }
 
             this.worker = worker;
             this.router = null;
 
-            this.transportOption = {
+            this.transportOption = this.createOption(settings);
+        }
+
+        createOption(settings){
+            const option = {
                 listenInfos: [{
                     ip: '0.0.0.0',
-                    // announcedIp: '54.248.209.128',
-                    announcedIp: '127.0.0.1',
+                    announcedIp: '192.168.3.8',
                     portRange: {
                         min: 40000,
                         max: 49999
                     },
                 }],
-                // listenIps: [{ ip: '0.0.0.0', announcedIp: '54.248.209.128' }], // 適切なIPに変更
                 enableUdp: true,
                 enableTcp: true,
                 preferUdp: true,
@@ -71,6 +97,27 @@
                 initialAvailableOutgoingBitrate: 1000000, // 初期ビットレート
             };
 
+            console.log("@@@@@settings",settings);
+
+            if (!settings){
+                console.error("mediasoupSettings.json data is not available.");
+                process.exit(-1);    
+            }
+
+            if(
+                !settings.hasOwnProperty('listenInfos') ||
+                !settings.hasOwnProperty('initialAvailableOutgoingBitrate')
+            ){
+                console.error("mediasoupSettings option is not available.");
+                process.exit(-1);    
+            }
+        
+            option.listenInfos = settings.listenInfos;
+            option.initialAvailableOutgoingBitrate = settings.initialAvailableOutgoingBitrate;
+            
+            console.log("@@@@@option",option);
+
+            return option;
         }
 
         async startRouter() {
