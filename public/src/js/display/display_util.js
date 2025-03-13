@@ -113,6 +113,8 @@ class DisplayUtil {
             tagName = 'div';
         } else if (contentType === 'tileviewer') {
             tagName = 'div';
+        }  else if (contentType === 'url') {
+            tagName = 'div';
         } else {
             tagName = 'img';
         }

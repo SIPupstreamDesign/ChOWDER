@@ -411,10 +411,10 @@ class GUI extends EventEmitter {
                 //e.preventDefault();
                 if (delta < 0) {
                     //下にスクロールした場合の処理
-                    this.displayScale = this.displayScale + 0.05;
+                    this.displayScale = this.displayScale + 0.0002 * delta;
                 } else if (delta > 0) {
                     //上にスクロールした場合の処理
-                    this.displayScale = this.displayScale - 0.05;
+                    this.displayScale = this.displayScale + 0.0002 * delta
                 }
 
                 if (this.displayScale < 0.05) {
