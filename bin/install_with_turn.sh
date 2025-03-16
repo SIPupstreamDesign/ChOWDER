@@ -9,24 +9,24 @@ echo "Please input the private IP address for this host. (e.g. 192.168.xxx.xxx)"
 read privateip
 echo "Private IP : $privateip"
 
-# ssl
-while true;do
-    echo "Do you install a cert key for SSL? (yes or no)"
-    read answer
-    case $answer in
-        yes|y)
-			echo "creating cert.."
-			sh create_local_cert.sh $privateip
-            break
-            ;;
-        no|n)
-            break
-            ;;
-        *)
-            echo -e "cannot understand $answer.\n"
-            ;;
-    esac
-done
+## ssl
+# while true;do
+#    echo "Do you install a cert key for SSL? (yes or no)"
+#    read answer
+#    case $answer in
+#        yes|y)
+#			echo "creating cert.."
+#			sh create_local_cert.sh $privateip
+#            break
+#            ;;
+#        no|n)
+#            break
+#            ;;
+#        *)
+#            echo -e "cannot understand $answer.\n"
+#            ;;
+#    esac
+# done
 
 # turnserver
 echo "installing turnserver..."
@@ -71,8 +71,11 @@ if [ "$(uname)" != "Darwin" ]; then
 else
     # mac
     cp ../redis/redis-server.mac ../redis/redis-server
+    chmod a+x ../redis/redis-server
 fi
 
-npm install --unsafe-perm
+# npm install --unsafe-perm
+npm install --arch=x64 --force
+npm audit fix --force
 
 cd $ORIGIN

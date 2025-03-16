@@ -886,7 +886,7 @@ class GUI extends EventEmitter {
 
         iframe.style.width = "100%";
         iframe.style.height = "100%";
-        iframe.style.pointerEvents = "none";
+        // iframe.style.pointerEvents = "none";
         iframe.style.border = "none";
         elem.innerHTML = "";
         elem.appendChild(iframe);
