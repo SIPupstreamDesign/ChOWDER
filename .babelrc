@@ -14,5 +14,6 @@
         "useBuiltIns": true
       }
     ]
-  ]
+  ],
+  "compact": true
 }
