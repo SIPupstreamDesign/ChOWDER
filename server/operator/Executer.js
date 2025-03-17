@@ -2760,10 +2760,10 @@
                     if (image) {
                         metaData.posx = 0;
                         metaData.posy = 0;
-                        metaData.width = dimension.width;
-                        metaData.height = dimension.height;
-                        metaData.orgWidth = dimension.width;
-                        metaData.orgHeight = dimension.height;
+                        metaData.width = Math.min(1024,dimension.width);  //一時対応：全領域ではなく一部領域を表示する
+                        metaData.height = Math.min(640,dimension.height);
+                        metaData.orgWidth = Math.min(1024,dimension.width);
+                        metaData.orgHeight = Math.min(640,dimension.height);
                         this.addContent(metaData, image, (metaData, contentData) => {
                             if (endCallback) {
                                 endCallback(null, metaData);

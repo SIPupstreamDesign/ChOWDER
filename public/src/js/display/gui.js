@@ -867,6 +867,32 @@ class GUI extends EventEmitter {
         }
     }
 
+
+    /**
+     * iFrameでURLを表示
+     * @param {*} elem 
+     * @param {*} metaData 
+     * @param {*} contentData 
+     */
+    showURL(elem, metaData, contentData) {
+        let iframe = document.createElement('iframe');
+
+        let url = JSON.parse(metaData.user_data_text).text;
+
+        iframe.src = url;
+        elem.style.width = Math.min(elem.clientWidth, 1024) + "px";
+        elem.style.height = Math.min(elem.clientHeight, 600)+ "px";
+        //console.error(orgRect, orgWin, rect)
+
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        // iframe.style.pointerEvents = "none";
+        iframe.style.border = "none";
+        elem.innerHTML = "";
+        elem.appendChild(iframe);
+    }
+
+
     /**
      * ディスプレイIDの表示.
      * @method showDisplayID
@@ -985,7 +1011,9 @@ class GUI extends EventEmitter {
                 this.showTileViewer(elem, metaData, contentData);
             } else if (metaData.type === 'tileimage') {
                 console.error("Error : faild to handle tileimage");
-            } else {
+            } else if (metaData.type === 'url') {
+                this.showURL(elem, metaData, contentData);
+            }else {
                 // contentData is blob
                 this.showImage(elem, metaData, contentData);
             }

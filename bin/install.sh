@@ -37,7 +37,7 @@ while true;do
             echo -e "cannot understand $answer.\n"
             ;;
     esac
-done
+ done
 
 # redis
 if [ "$(uname)" != "Darwin" ]; then
