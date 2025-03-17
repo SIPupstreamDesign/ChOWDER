@@ -10,23 +10,23 @@ read privateip
 echo "Private IP : $privateip"
 
 ## ssl
-# while true;do
-#    echo "Do you install a cert key for SSL? (yes or no)"
-#    read answer
-#    case $answer in
-#        yes|y)
-#			echo "creating cert.."
-#			sh create_local_cert.sh $privateip
-#            break
-#            ;;
-#        no|n)
-#            break
-#            ;;
-#        *)
-#            echo -e "cannot understand $answer.\n"
-#            ;;
-#    esac
-# done
+ while true;do
+    echo "Do you install a cert key for SSL? (yes or no)"
+    read answer
+    case $answer in
+        yes|y)
+			echo "creating cert.."
+			sh create_local_cert.sh $privateip
+            break
+            ;;
+        no|n)
+            break
+            ;;
+        *)
+            echo -e "cannot understand $answer.\n"
+            ;;
+    esac
+ done
 
 # redis
 if [ "$(uname)" != "Darwin" ]; then
