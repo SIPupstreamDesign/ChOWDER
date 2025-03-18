@@ -49,6 +49,22 @@ class Receiver {
                 }, true);
             }
         });
+        
+        // TileImageのカウントup時.
+        this.connector.on(Command.AddTileContentCount, (metaData) => {
+            console.log('AddTileContentCount', metaData);
+            let id = metaData.id;
+            if (id) {
+                this.store.operation.getContent(metaData, (err, reply) => {
+                    if (reply.hasOwnProperty('metaData')) {
+                        if (this.store.hasMetadata(metaData.id)) {
+                            //this.store.emit(Store.EVENT_DONE_GET_CONTENT, null, reply, (err, reply) => {});
+                            this.store.emit(Store.EVENT_DONE_GET_METADATA, null, metaData, (err, reply) => {});
+                        }
+                    }
+                }, true);
+            }
+        });
 
         // windowが更新されたときにブロードキャストされてくる.
         this.connector.on(Command.UpdateWindowMetaData, (data) => {
@@ -213,7 +229,7 @@ class Receiver {
                 // このコントローラが動画データを持っているか判別
                 if (this.store.getVideoStore().hasVideoData(metaData.id)) {
                     // webrtc接続開始
-                    this.store.getVideoStore().connectWebRTC(metaData, key);
+                    // this.store.getVideoStore().connectWebRTC(metaData, key);
                 }
             }
         });

@@ -10,6 +10,7 @@ const Command = {
 	// request command
 	AddContent : "AddContent",
 	AddTileContent : "AddTileContent",
+	AddTileContentCount : "AddTileContentCount",
 	AddHistoricalContent : "AddHistoricalContent",
 	AddMetaData : "AddMetaData",
 	AddWindowMetaData : "AddWindowMetaData",
@@ -79,6 +80,18 @@ const Command = {
 	RTCAnswer : "RTCAnswer",
 	RTCIceCandidate : "RTCIceCandidate",
 	RTCClose : "RTCClose",
+
+	// Mediasoup handshake
+	MediasoupProducerRTPCapabilities: "MediasoupProducerRTPCapabilities",
+	MediasoupCreateProducerTransport: "MediasoupCreateProducerTransport",
+	MediasoupConnectProducerTransport: "MediasoupConnectProducerTransport",
+	MediasoupProduceStream: "MediasoupProduceStream",
+	MediasoupNewProducerBroadcast: "MediasoupNewProducerBroadcast",
+
+	MediasoupConsumerRTPCapabilities: "MediasoupConsumerRTPCapabilities",
+	MediasoupCreateConsumerTransport: "MediasoupCreateConsumerTransport",
+	MediasoupConnectConsumerTransport: "MediasoupConnectConsumerTransport",
+	MediasoupConsumeStream: "MediasoupConsumeStream",
 
 	// ディスプレイ配信許可設定
 	AskDisplayPermission : "AskDisplayPermission", // ログイン時に、サーバが許可していいか聞く

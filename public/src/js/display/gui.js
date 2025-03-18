@@ -811,18 +811,24 @@ class GUI extends EventEmitter {
      * @param {*} contentData 
      */
     showVideo(videpPlayer, metaData) {
-        let webRTCDict = this.store.getVideoStore().getWebRTCDict();
-        let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
+        console.log("[gui.js]showVideo",metaData);
+        // let webRTCDict = this.store.getVideoStore().getWebRTCDict();
+        // let rtcKey = this.store.getVideoStore().getRTCKey(metaData);
 
-        if (!webRTCDict.hasOwnProperty(rtcKey)) {
-            metaData.from = "view";
-            this.action.requestWebRTC({
-                metaData: metaData,
-                player: videpPlayer,
-                request: JSON.stringify({ key: rtcKey })
-            });
-            delete metaData.from;
-        }
+        // if (!webRTCDict.hasOwnProperty(rtcKey)) {
+        //     metaData.from = "view";
+        //     this.action.requestWebRTC({
+        //         metaData: metaData,
+        //         player: videpPlayer,
+        //         request: JSON.stringify({ key: rtcKey })
+        //     });
+        //     delete metaData.from;
+        // }
+        this.action.mediasoupHandshake({
+            metaData: metaData,
+            player: videpPlayer,
+            request: null
+        });
     }
 
     /**
@@ -860,6 +866,32 @@ class GUI extends EventEmitter {
             elem.src = URL.createObjectURL(blob);
         }
     }
+
+
+    /**
+     * iFrameでURLを表示
+     * @param {*} elem 
+     * @param {*} metaData 
+     * @param {*} contentData 
+     */
+    showURL(elem, metaData, contentData) {
+        let iframe = document.createElement('iframe');
+
+        let url = JSON.parse(metaData.user_data_text).text;
+
+        iframe.src = url;
+        elem.style.width = Math.min(elem.clientWidth, 1024) + "px";
+        elem.style.height = Math.min(elem.clientHeight, 600)+ "px";
+        //console.error(orgRect, orgWin, rect)
+
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        // iframe.style.pointerEvents = "none";
+        iframe.style.border = "none";
+        elem.innerHTML = "";
+        elem.appendChild(iframe);
+    }
+
 
     /**
      * ディスプレイIDの表示.
@@ -979,7 +1011,9 @@ class GUI extends EventEmitter {
                 this.showTileViewer(elem, metaData, contentData);
             } else if (metaData.type === 'tileimage') {
                 console.error("Error : faild to handle tileimage");
-            } else {
+            } else if (metaData.type === 'url') {
+                this.showURL(elem, metaData, contentData);
+            }else {
                 // contentData is blob
                 this.showImage(elem, metaData, contentData);
             }

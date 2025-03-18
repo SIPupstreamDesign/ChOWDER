@@ -7,7 +7,18 @@ privateip=127.0.0.1
 
 echo "Please input the private IP address for this host. (e.g. 192.168.xxx.xxx)"
 read privateip
+
+if ! [[ $privateip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+    echo "Error: Invalid IP address format."
+    exit 1
+fi
+
 echo "Private IP : $privateip"
+
+# mediasoupSettings.json
+mediasoup_json="../server/mediasoupSettings.json"
+awk -v ipaddress="$privateip" '{gsub(/"announcedIp"[[:space:]]*:[[:space:]]*"[^"]+"/, "\"announcedIp\": \"" ipaddress "\"")}1' "$mediasoup_json" > tmp.json
+mv tmp.json "$mediasoup_json"
 
 # ssl
 while true;do
@@ -26,7 +37,7 @@ while true;do
             echo -e "cannot understand $answer.\n"
             ;;
     esac
-done
+ done
 
 # redis
 if [ "$(uname)" != "Darwin" ]; then

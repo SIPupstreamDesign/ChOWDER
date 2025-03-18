@@ -1989,6 +1989,9 @@ class Controller {
         }
         let json = reply;
         // console.log("doneAddContent:" + json.id + ":" + json.type);
+        json.group = "group_default";
+        json.visible = "true";
+
         // DisplayタブだったらContentタブに変更する.
         if (this.gui.isActiveTab(Constants.TabIDDisplay)) {
             this.gui.changeTabByID(Constants.TabIDContent);

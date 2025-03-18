@@ -144,6 +144,7 @@ class WsConnector {
 			resultCallback(-1, null);
 			return;
 		}
+
 		let reqjson = {
 			jsonrpc: '2.0',
 			type : 'utf8',
@@ -155,7 +156,6 @@ class WsConnector {
 
 		messageID = messageID + 1;
 		try {
-			
 			if(method != null && method == "UpdateMetaData"){
 
 				if(TimeOutID != null ){
@@ -254,7 +254,7 @@ class WsConnector {
 			let data = message.data,
 				parsed,
 				result;
-
+				// console.log("[ws_connector] onmessage",data);
 			if (typeof data === "string") {
 				try {
 					parsed = JSON.parse(data);

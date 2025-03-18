@@ -7,10 +7,13 @@
     "use strict";
     const Executer = require("./Executer.js");
     const Util = require('./../util.js');
+    const MediasoupServer = require("./MediasoupServer.js");
 
     class CommandOperator { // 通信APIと実際に中身をいじる部分の中間層 兼 サーバ内部向け関数提供クラス
         constructor() {
             this.executer = new Executer();
+            this.mediasoupServer = new MediasoupServer();
+            this.mediasoupServer.init();
 
             this.connectionId = {};
             this.connectionCount = 0;
@@ -25,7 +28,7 @@
          * @param {Function} updateEndCallback コンテンツ差し替えした場合に終了時に呼ばれるコールバック
          */
         addContent(socketid, metaData, binaryData, endCallback, updateEndCallback) {
-            //console.log("AddContent", metaData);
+            console.log("AddContent", metaData);
 
             if (this.executer.isEditable(socketid, metaData.group)) {
                 if (metaData.hasOwnProperty('id') && metaData.id !== "") {
@@ -1294,10 +1297,10 @@
                     this.executer.getGroupList((err, groupList) => {
                         for (let i = 0; i < userList.length; i = i + 1) {
                             if (userList[i].id === data.id) {
-                                if (userList[i].type === "group" || 
-                                    userList[i].type === "guest" || 
-                                    userList[i].type === "moderator" || 
-                                    userList[i].type === "attendee" || 
+                                if (userList[i].type === "group" ||
+                                    userList[i].type === "guest" ||
+                                    userList[i].type === "moderator" ||
+                                    userList[i].type === "attendee" ||
                                     userList[i].type === "display") {
                                     const setting = {
                                         viewable: data.viewable,
@@ -1370,6 +1373,36 @@
             if (endCallback) {
                 endCallback();
             }
+        }
+
+        async mediasoupRTPCapabilities(command ,data){
+            console.log("[CommandOperator.js]mediasoupRTPCapabilities",command);
+            return await this.mediasoupServer.websocketMessage(command ,data);
+        }
+
+        async mediasoupCreateProducerTransport(command ,data){
+            console.log("[CommandOperator.js]mediasoupCreateProducerTransport",command);
+            return await this.mediasoupServer.websocketMessage(command ,data);
+        }
+        async mediasoupConnectProducerTransport(command ,data){
+            console.log("[CommandOperator.js]mediasoupConnectProducerTransport",command);
+            return await this.mediasoupServer.websocketMessage(command ,data);
+        }
+        async mediasoupProduceStream(command ,data){
+            console.log("[CommandOperator.js]mediasoupProduceStream",command);
+            return await this.mediasoupServer.websocketMessage(command ,data);
+        }
+
+        async mediasoupCreateConsumerTransport(command ,data){
+            console.log("[CommandOperator.js]mediasoupCreateConsumerTransport",command);
+            return await this.mediasoupServer.websocketMessage(command ,data);
+        }
+        async mediasoupConnectConsumerTransport(command ,data){
+            console.log("[CommandOperator.js]mediasoupConnectConsumerTransport",command);
+            return await this.mediasoupServer.websocketMessage(command ,data);
+        }
+        async mediasoupConsumeStream(command ,data){
+            return await this.mediasoupServer.websocketMessage(command ,data);
         }
 
     }

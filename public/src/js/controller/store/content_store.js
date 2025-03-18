@@ -233,6 +233,12 @@ class ContentStore {
         }
         if (metaDataList.length > 0) {
             this.store.operation.deleteContent(metaDataList);
+            for(let metaData of metaDataList){
+                if(this.store.videoStore.mediasoupProducer[metaData.id]){
+                    this.store.videoStore.mediasoupProducer[metaData.id].disConnect();
+                }
+            }
+
         }
     }
 

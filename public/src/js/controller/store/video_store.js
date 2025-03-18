@@ -9,6 +9,7 @@ import Store from './store';
 import Action from '../action';
 import MediaPlayer from '../../common/mediaplayer'
 import WebRTC from '../../common/webrtc';
+import MediasoupProducer from "../../common/mediasoup_producer";
 import Vscreen from '../../common/vscreen'
 import VideoPlayer from '../../components/video_player'
 import Validator from '../../common/validator'
@@ -31,6 +32,8 @@ class VideoStore {
         this.state = state;
         this.store = store;
 		this.action = action;
+
+		this.mediasoupProducer = {};
 
 		// WebRTC用キーから WebRTCインスタンスへのマップ
 		this.webRTCDict = {};
@@ -67,6 +70,12 @@ class VideoStore {
 			this.webRTCDict[i].close(true);
 		}
 		this.webRTCDict = {};
+
+		for (let id in this.mediasoupProducer) {
+			this.mediasoupProducer[id].disConnect(true);
+		}
+		this.mediasoupProducer = {};
+
 		let metaDataList = [];
 		for (i in this.videoDict) {
 			if (this.store.hasMetadata(i)) {
@@ -259,205 +268,205 @@ class VideoStore {
 	 * WebRTC接続開始
 	 * @method connectWebRTC
 	 */
-	connectWebRTC(metaData, keyStr) {
-		let player = this.getVideoPlayer(metaData.id);
-		let video = player.getVideo();
-		let webRTC;
-		if (!this.webRTCDict.hasOwnProperty(keyStr)) {
-			// 初回読み込み時
-			let stream = captureStream(video);
-			webRTC = new WebRTC(this.store.getManagement().globalSetting);
-			webRTC.setIsScreenSharing(metaData.subtype === "screen");
-			this.webRTCDict[keyStr] = webRTC;
-			if (!stream) {
-				// for safari
-				stream = video.srcObject;
-			}
-			webRTC.addStream(stream);
-			video.ontimeupdate = () => {
-				let meta = this.store.getMetaData(metaData.id);
-				if (meta && meta.isEnded === 'true') {
-					for (let i in this.webRTCDict) {
-						if (i.indexOf(meta.id) >= 0) {
-							this.webRTCDict[i].removeStream();
-							this.webRTCDict[i].addStream(captureStream(video));
-						}
-					}
-					meta.isEnded = false;
-					this.store.operation.updateMetadata(meta);
-				}
-			};
-			webRTC.on(WebRTC.EVENT_ICECANDIDATE, (type, data) => {
-				if (type === "tincle") {
-					metaData.from = "controller";
-					this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
-						key: keyStr,
-						candidate: data
-					}), function (err, reply) { });
-					delete metaData.from;
-				}
-			});
-			webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
-				let webRTC = this.webRTCDict[keyStr];
-				webRTC.offer((sdp) => {
-					this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
-						key: keyStr,
-						sdp: sdp
-					}), function (err, reply) { });
-                });
-                this._changeCameraMicEnable({
-                    id : metaData.id,
-                    isMicOn : metaData.is_audio_on,
-                    isCameraOn : metaData.is_video_on
-                })
-			});
-			webRTC.on(WebRTC.EVENT_CLOSED, () => {
-				delete this.webRTCDict[keyStr];
-			});
-			webRTC.on(WebRTC.EVENT_NEED_RESTART, () => {
-				let webRTC = this.webRTCDict[keyStr];
-				webRTC.removeStream();
-				webRTC.addStream(stream);
-				webRTC.offer((sdp) => {
-					this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
-						key: keyStr,
-						sdp: sdp
-					}), function (err, reply) { });
-				});
-			});
-			webRTC.on(WebRTC.EVENT_CONNECTED, () => {
-				setTimeout(((metaData) => {
-					return () => {
-						let webRTC = this.webRTCDict[keyStr];
+	// connectWebRTC(metaData, keyStr) {
+	// 	let player = this.getVideoPlayer(metaData.id);
+	// 	let video = player.getVideo();
+	// 	let webRTC;
+	// 	if (!this.webRTCDict.hasOwnProperty(keyStr)) {
+	// 		// 初回読み込み時
+	// 		let stream = captureStream(video);
+	// 		webRTC = new WebRTC(this.store.getManagement().globalSetting);
+	// 		webRTC.setIsScreenSharing(metaData.subtype === "screen");
+	// 		this.webRTCDict[keyStr] = webRTC;
+	// 		if (!stream) {
+	// 			// for safari
+	// 			stream = video.srcObject;
+	// 		}
+	// 		webRTC.addStream(stream);
+	// 		video.ontimeupdate = () => {
+	// 			let meta = this.store.getMetaData(metaData.id);
+	// 			if (meta && meta.isEnded === 'true') {
+	// 				for (let i in this.webRTCDict) {
+	// 					if (i.indexOf(meta.id) >= 0) {
+	// 						this.webRTCDict[i].removeStream();
+	// 						this.webRTCDict[i].addStream(captureStream(video));
+	// 					}
+	// 				}
+	// 				meta.isEnded = false;
+	// 				this.store.operation.updateMetadata(meta);
+	// 			}
+	// 		};
+	// 		webRTC.on(WebRTC.EVENT_ICECANDIDATE, (type, data) => {
+	// 			if (type === "tincle") {
+	// 				metaData.from = "controller";
+	// 				this.connector.sendBinary(Command.RTCIceCandidate, metaData, JSON.stringify({
+	// 					key: keyStr,
+	// 					candidate: data
+	// 				}), function (err, reply) { });
+	// 				delete metaData.from;
+	// 			}
+	// 		});
+	// 		webRTC.on(WebRTC.EVENT_NEGOTIATION_NEEDED, () => {
+	// 			let webRTC = this.webRTCDict[keyStr];
+	// 			webRTC.offer((sdp) => {
+	// 				this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
+	// 					key: keyStr,
+	// 					sdp: sdp
+	// 				}), function (err, reply) { });
+    //             });
+    //             this._changeCameraMicEnable({
+    //                 id : metaData.id,
+    //                 isMicOn : metaData.is_audio_on,
+    //                 isCameraOn : metaData.is_video_on
+    //             })
+	// 		});
+	// 		webRTC.on(WebRTC.EVENT_CLOSED, () => {
+	// 			delete this.webRTCDict[keyStr];
+	// 		});
+	// 		webRTC.on(WebRTC.EVENT_NEED_RESTART, () => {
+	// 			let webRTC = this.webRTCDict[keyStr];
+	// 			webRTC.removeStream();
+	// 			webRTC.addStream(stream);
+	// 			webRTC.offer((sdp) => {
+	// 				this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
+	// 					key: keyStr,
+	// 					sdp: sdp
+	// 				}), function (err, reply) { });
+	// 			});
+	// 		});
+	// 		webRTC.on(WebRTC.EVENT_CONNECTED, () => {
+	// 			setTimeout(((metaData) => {
+	// 				return () => {
+	// 					let webRTC = this.webRTCDict[keyStr];
 
-						webRTC.getStatus((status) => {
-							let meta = this.store.getMetaData(metaData.id);
-							if (meta) {
-								meta.webrtc_status = JSON.stringify({
-									bandwidth: {
-										availableSendBandwidth: status.bandwidth.availableSendBandwidth,
-										actualEncBitrate: status.bandwidth.googActualEncBitrate,
-										targetEncBitrate: status.bandwidth.googTargetEncBitrate,
-										transmitBitrate: status.bandwidth.googTransmitBitrate,
-									},
-									resolution: status.resolutions.send,
-									video_codec: status.video.send.codecs[0],
-									audio_codec: status.video.send.codecs[0]
-								});
-								this.store.operation.updateMetadata(meta);
-							}
-						});
-					}
-				})(metaData), 5000);
-			});
+	// 					webRTC.getStatus((status) => {
+	// 						let meta = this.store.getMetaData(metaData.id);
+	// 						if (meta) {
+	// 							meta.webrtc_status = JSON.stringify({
+	// 								bandwidth: {
+	// 									availableSendBandwidth: status.bandwidth.availableSendBandwidth,
+	// 									actualEncBitrate: status.bandwidth.googActualEncBitrate,
+	// 									targetEncBitrate: status.bandwidth.googTargetEncBitrate,
+	// 									transmitBitrate: status.bandwidth.googTransmitBitrate,
+	// 								},
+	// 								resolution: status.resolutions.send,
+	// 								video_codec: status.video.send.codecs[0],
+	// 								audio_codec: status.video.send.codecs[0]
+	// 							});
+	// 							this.store.operation.updateMetadata(meta);
+	// 						}
+	// 					});
+	// 				}
+	// 			})(metaData), 5000);
+	// 		});
 
 
-			let currentPos = {
-				video : 0,
-				audio : 0,
-			}
-			const VideoType = 0;
-			const AudioType = 1;
-			let maxBytes = 65535;
-			const NUM_SEGMENTS_A_TIME = 5;
-			let updateLoop = (loopCount, type, updateTime) => {
-				setTimeout(() => {
-					let webRTC = this.webRTCDict[keyStr];
-					if (this.segmentDict.hasOwnProperty(metaData.id)) {
-						let segments = (type === VideoType) ? this.segmentDict[metaData.id].video : this.segmentDict[metaData.id].audio;
-						let current =  (type === VideoType) ? currentPos.video : currentPos.audio;
-						let datachannel = (type === VideoType) ? webRTC.videoDataChannel : webRTC.audioDataChannel;
-						try {
-							if (current === segments.length) {
-								return;
-							}
+	// 		let currentPos = {
+	// 			video : 0,
+	// 			audio : 0,
+	// 		}
+	// 		const VideoType = 0;
+	// 		const AudioType = 1;
+	// 		let maxBytes = 65535;
+	// 		const NUM_SEGMENTS_A_TIME = 5;
+	// 		let updateLoop = (loopCount, type, updateTime) => {
+	// 			setTimeout(() => {
+	// 				let webRTC = this.webRTCDict[keyStr];
+	// 				if (this.segmentDict.hasOwnProperty(metaData.id)) {
+	// 					let segments = (type === VideoType) ? this.segmentDict[metaData.id].video : this.segmentDict[metaData.id].audio;
+	// 					let current =  (type === VideoType) ? currentPos.video : currentPos.audio;
+	// 					let datachannel = (type === VideoType) ? webRTC.videoDataChannel : webRTC.audioDataChannel;
+	// 					try {
+	// 						if (current === segments.length) {
+	// 							return;
+	// 						}
 
-							// 10segmentsずつ送る.
-							for (let maxPos = current + 5; current < maxPos && current < segments.length; ) {
-								// 1segmentについてmaxBytesで分割しながら送る
-								if (segments[current].byteLength >= maxBytes) {
-									let pos = 0;
-									while (true) {
-										if ((pos + maxBytes) > segments[current].byteLength) {
-											//console.error("slice", pos)
-											let data = segments[current].slice(pos);
-											datachannel.send(data);
-										}
-										else {
-											//console.error("slice", pos, pos + maxBytes)
-											datachannel.send(segments[current].slice(pos, pos + maxBytes));
-										}
-										pos += maxBytes;
-										if (pos > segments[current].byteLength) {
-											break;
-										}
-									}
-								}
-								else {
-									//console.error(segments[current].byteLength)
-									datachannel.send(segments[current]);
-								}
-								if (type === VideoType) {
-									++currentPos.video;
-									current = currentPos.video;
-								} else {
-									++currentPos.audio;
-									current = currentPos.audio;
-								}
-							}
-							if (loopCount > 0) {
-								updateLoop(--loopCount, type, updateTime);
-							}
-						}
-						catch (e) {
-							// 送信失敗した場合、途中から再送を試みる
-							console.warn(e);
-							updateLoop(Math.ceil((segments.length - current)/ NUM_SEGMENTS_A_TIME), type, updateTime);
-							//webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
-						}
-					}
-				}, updateTime);
-			};
+	// 						// 10segmentsずつ送る.
+	// 						for (let maxPos = current + 5; current < maxPos && current < segments.length; ) {
+	// 							// 1segmentについてmaxBytesで分割しながら送る
+	// 							if (segments[current].byteLength >= maxBytes) {
+	// 								let pos = 0;
+	// 								while (true) {
+	// 									if ((pos + maxBytes) > segments[current].byteLength) {
+	// 										//console.error("slice", pos)
+	// 										let data = segments[current].slice(pos);
+	// 										datachannel.send(data);
+	// 									}
+	// 									else {
+	// 										//console.error("slice", pos, pos + maxBytes)
+	// 										datachannel.send(segments[current].slice(pos, pos + maxBytes));
+	// 									}
+	// 									pos += maxBytes;
+	// 									if (pos > segments[current].byteLength) {
+	// 										break;
+	// 									}
+	// 								}
+	// 							}
+	// 							else {
+	// 								//console.error(segments[current].byteLength)
+	// 								datachannel.send(segments[current]);
+	// 							}
+	// 							if (type === VideoType) {
+	// 								++currentPos.video;
+	// 								current = currentPos.video;
+	// 							} else {
+	// 								++currentPos.audio;
+	// 								current = currentPos.audio;
+	// 							}
+	// 						}
+	// 						if (loopCount > 0) {
+	// 							updateLoop(--loopCount, type, updateTime);
+	// 						}
+	// 					}
+	// 					catch (e) {
+	// 						// 送信失敗した場合、途中から再送を試みる
+	// 						console.warn(e);
+	// 						updateLoop(Math.ceil((segments.length - current)/ NUM_SEGMENTS_A_TIME), type, updateTime);
+	// 						//webRTC.emit(WebRTC.EVENT_NEED_RESTART, null);
+	// 					}
+	// 				}
+	// 			}, updateTime);
+	// 		};
 
-			let isUseDataChannel = false;
-			try {
-				let quality = JSON.parse(metaData.quality);
-				isUseDataChannel = quality
-					&& quality.hasOwnProperty('raw_resolution')
-					&& String(quality.raw_resolution) === "true";
-			} catch(e) {
-			}
-			if (isUseDataChannel) {
-				webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_OPEN, () => {
-					if (this.segmentDict[metaData.id]) {
-						let videoSegments = this.segmentDict[metaData.id].video;
-						updateLoop(Math.ceil(videoSegments.length/ NUM_SEGMENTS_A_TIME), VideoType, 500);
-					}
-				});
-				webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_OPEN, () => {
-					if (this.segmentDict[metaData.id]) {
-						let audioSegments = this.segmentDict[metaData.id].audio;
-						updateLoop(Math.ceil(audioSegments.length/ NUM_SEGMENTS_A_TIME), AudioType, 500);
-					}
-				});
-			}
-		}
-		else {
-			webRTC = this.webRTCDict[keyStr];
-		}
-		webRTC.offer((sdp) => {
-			this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
-				key: keyStr,
-				sdp: sdp
-			}), function (err, reply) { });
-		});
-	}
+	// 		let isUseDataChannel = false;
+	// 		try {
+	// 			let quality = JSON.parse(metaData.quality);
+	// 			isUseDataChannel = quality
+	// 				&& quality.hasOwnProperty('raw_resolution')
+	// 				&& String(quality.raw_resolution) === "true";
+	// 		} catch(e) {
+	// 		}
+	// 		if (isUseDataChannel) {
+	// 			webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_VIDEO_OPEN, () => {
+	// 				if (this.segmentDict[metaData.id]) {
+	// 					let videoSegments = this.segmentDict[metaData.id].video;
+	// 					updateLoop(Math.ceil(videoSegments.length/ NUM_SEGMENTS_A_TIME), VideoType, 500);
+	// 				}
+	// 			});
+	// 			webRTC.on(WebRTC.EVENT_DATACHANNEL_FOR_AUDIO_OPEN, () => {
+	// 				if (this.segmentDict[metaData.id]) {
+	// 					let audioSegments = this.segmentDict[metaData.id].audio;
+	// 					updateLoop(Math.ceil(audioSegments.length/ NUM_SEGMENTS_A_TIME), AudioType, 500);
+	// 				}
+	// 			});
+	// 		}
+	// 	}
+	// 	else {
+	// 		webRTC = this.webRTCDict[keyStr];
+	// 	}
+	// 	webRTC.offer((sdp) => {
+	// 		this.connector.sendBinary(Command.RTCOffer, metaData, JSON.stringify({
+	// 			key: keyStr,
+	// 			sdp: sdp
+	// 		}), function (err, reply) { });
+	// 	});
+	// }
 
 	/**
 	 * 動画ファイル処理用内部関数
 	 */
 	__processVideoFile(metaData, video, blob, timestamp) {
-        let subtype = metaData.subtype;
+        const subtype = metaData.subtype;
 		let videoData;
 		if (subtype === "file") {
 
@@ -478,9 +487,12 @@ class VideoStore {
 					console.error(e);
 				}
 			}
-			setTimeout(() => {
+			setTimeout(async() => {
 				video.load();
 				video.play();
+				video.loop = true;
+				const stream = video.captureStream();
+				await this.__mediasoupHandshake(metaData, stream);
 			}, 100)
 		}
 		this.setVideoData(metaData.id, blob);
@@ -562,7 +574,7 @@ class VideoStore {
      */
     _inputVideoFile(data) {
         let metaData = data.metaData;
-		let blob = data.contentData;
+		const blob = data.contentData;
 		if (data.hasOwnProperty('subtype')) {
 			metaData.subtype = data.subtype;
 		}
@@ -578,15 +590,15 @@ class VideoStore {
 			metaData.id = ContentUtil.generateID();
 		}
 		if (this.hasVideoPlayer(metaData.id)) {
-			let player = this.getVideoPlayer(metaData.id);
-			let video = player.getVideo();
+			const player = this.getVideoPlayer(metaData.id);
+			const video = player.getVideo();
 			this.__processVideoFile(metaData, video, blob, data.timestamp);
 		}
 		else {
 			//video = document.createElement('video');
-			let player = new VideoPlayer();
+			const player = new VideoPlayer();
 			this.setVideoPlayer(metaData.id, player);
-			let video = player.getVideo();
+			const video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
 			if (metaData.subtype === "camera" || metaData.subtype === "screen") {
 				video.muted = true;
@@ -597,20 +609,32 @@ class VideoStore {
 		}
 	}
 
-	/**
-	 * 動画ファイル処理用内部関数
-	 */
-	__processVideoStream(metaData, video, blob) {
-        let subtype = metaData.subtype;
-		let videoData;
+	async __mediasoupHandshake(metaData, stream){
+		console.log("[video_store.js]__mediasoupHandshake");
+		const router_id = metaData.id;
+		if(this.mediasoupProducer[router_id]){
+			console.log("[video_store.js]__mediasoupHandshake: producer router_id available");
+		}else{
+			this.mediasoupProducer[router_id] = new MediasoupProducer(this.connector, router_id);
+		}
 
+		this.mediasoupProducer[router_id].handShake();
+		this.mediasoupProducer[router_id].setStream(stream);
+	}
+
+	/**
+	 * 動画stream処理用内部関数
+	 */
+	async __processVideoStream(metaData, video, stream) {
+		console.log("[video_store.js]__processVideoStream");
+		let videoData;
 		// stream
 		try {
-			videoData = blob;
-			video.srcObject = blob;
+			videoData = stream;
+			video.srcObject = stream;
 		} catch (error) {
 			try {
-				videoData = URL.createObjectURL(blob);
+				videoData = URL.createObjectURL(stream);
 				URL.revokeObjectURL(video.src);
 				video.src = videoData;
 			} catch (e) {
@@ -618,11 +642,12 @@ class VideoStore {
 			}
 		}
 
-		setTimeout(() => {
+		setTimeout(async() => {
 			video.load();
 			video.play();
+			await this.__mediasoupHandshake(metaData, stream);
 		}, 100)
-		this.setVideoData(metaData.id, blob);
+		this.setVideoData(metaData.id, stream);
 
 		video.onloadedmetadata = (e) => {
 			metaData.type = "video";
@@ -634,7 +659,8 @@ class VideoStore {
 			}
 			metaData.group = this.store.getGroupStore().getCurrentGroupID();
 		};
-		video.onloadeddata = () => {
+
+		video.onloadeddata = async() => {
 			let data;
 			if (!metaData.hasOwnProperty('is_video_on') ||
 				metaData.hasOwnProperty('is_video_on') && String(metaData.is_video_on) !== "false") {
@@ -650,7 +676,9 @@ class VideoStore {
 				data = this.getElem(metaData.id, true).src;
 			}
 			this.store.getContentStore().addContent(metaData, data, (err, reply) => {});
+
 		};
+
 	}
 
     /**
@@ -658,8 +686,10 @@ class VideoStore {
      * @param {*} data
      */
     _inputVideoStream(data) {
+		console.log("[video_store.js]_inputVideoStream",data);
+
         let metaData = data.metaData;
-        let blob = data.contentData;
+        const stream = data.contentData;
 
 		// 動画は実体は送らずメタデータのみ送る
 		// データとしてSDPを送る
@@ -670,20 +700,21 @@ class VideoStore {
 		} else {
 			metaData.id = ContentUtil.generateID();
 		}
+
 		if (this.hasVideoPlayer(metaData.id)) {
-			let player = this.getVideoPlayer(metaData.id);
-			let video = player.getVideo();
-			this.__processVideoStream(metaData, video, blob);
+			const player = this.getVideoPlayer(metaData.id);
+			const video = player.getVideo();
+			this.__processVideoStream(metaData, video, stream);
 		} else {
-			let player = new VideoPlayer();
+			const player = new VideoPlayer();
 			this.setVideoPlayer(metaData.id, player);
-			let video = player.getVideo();
+			const video = player.getVideo();
 			// カメラ,スクリーン共有は追加したコントローラではmuteにする
 			if (metaData.subtype === "camera" || metaData.subtype === "screen") {
 				video.muted = true;
 			}
 			player.on(VideoPlayer.EVENT_READY, () => {
-				this.__processVideoStream(metaData, video, blob);
+				this.__processVideoStream(metaData, video, stream);
 			});
 		}
     }

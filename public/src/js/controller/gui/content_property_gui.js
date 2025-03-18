@@ -658,7 +658,7 @@ class ContentPropertyGUI extends EventEmitter {
 
 					} else {
 						// webrtc動画用 設定エリアを表示
-						this.showVideoInfo(true);
+						this.showVideoInfo(false);
 						this.initVideoPropertyArea(isEditable, metaData, type);
 					}
 				}

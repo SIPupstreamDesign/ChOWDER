@@ -411,10 +411,10 @@ class GUI extends EventEmitter {
                 //e.preventDefault();
                 if (delta < 0) {
                     //下にスクロールした場合の処理
-                    this.displayScale = this.displayScale + 0.05;
+                    this.displayScale = this.displayScale + 0.0002 * delta;
                 } else if (delta > 0) {
                     //上にスクロールした場合の処理
-                    this.displayScale = this.displayScale - 0.05;
+                    this.displayScale = this.displayScale + 0.0002 * delta
                 }
 
                 if (this.displayScale < 0.05) {
@@ -1128,6 +1128,13 @@ class GUI extends EventEmitter {
             if (icons[i]) {
                 icons[i].style.backgroundColor = bgcolor;
             }
+        }
+        let icons2 =  listElem.getElementsByClassName('tileimage_prg_for_list')[0];
+        if(icons2 && metaData.addedTileCount){
+            icons2.style.display = "";
+            icons2.innerText = Math.floor(metaData.addedTileCount / 64 * 100) + "%";
+        } else {
+            icons2.style.display = "none";
         }
     }
 

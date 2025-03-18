@@ -159,20 +159,21 @@ savePerformanceLog("StartTime", startTime);
 let wsWrapper = new WebSocketWrapper();
 
 // == connect to the websocket server ==========================================
-wsWrapper.connect(config.url).then(function() {
+wsWrapper.connect(config.url).then(function(_data) {
 	console.log('WebSocket connection established');
-
 	// == login as display =======================================================
 	return wsWrapper.sendUTF('Login', {
 		id: config.id,
 		password: config.password
 	});
 }).then(function(parsed) {
+	// apiuserのパスワードチェックを無効化
+	/*
 	if (parsed.error) {
 		throw new Error('Login failed: ' + parsed.error);
 	}
 	console.log('Logged in as ' + parsed.result.id);
-
+	*/
 	return wsWrapper.sendUTF('GetGlobalSetting', {});
 
 }).then(function(parsed) {
