@@ -298,6 +298,9 @@ class VideoStore {
 		return isUseDataChannel;
 	}
 	getVideoPlayer(id) {
+        if(!this.mediasoupConsumer[id]){
+            return null;
+        }
 		return this.mediasoupConsumer[id].getPlayer();
 	}
 	hasVideoPlayer(id) {

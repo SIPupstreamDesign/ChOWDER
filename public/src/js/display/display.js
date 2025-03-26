@@ -186,7 +186,13 @@ class Display {
                 //     videoPlayer.enableSeek(true);
                 //     return;
                 // }
-                this.gui.showVideo(videoPlayer, json);
+                if(videoPlayer === null){
+                    this.gui.createVideoPlayer(oldMetaData, (player)=>{
+                        this.gui.showVideo(player, json);
+                    });
+                }else{
+                    this.gui.showVideo(videoPlayer, json);
+                }
                 // metaDataDict[json.id] = json;
                 // videoPlayer.enableSeek(true);
 
