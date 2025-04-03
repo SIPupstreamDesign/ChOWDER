@@ -280,7 +280,10 @@ class Display {
                         elem.parentNode.removeChild(elem);
                     }
                 }
-                this.store.getVideoStore().closeVideo(json);
+
+                if(json.type === Constants.TypeVideo){
+                    this.store.getVideoStore().closeVideo(json);
+                }
             } else {
                 if (elem && 
                     (elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type) ||
