@@ -186,7 +186,13 @@ class Display {
                 //     videoPlayer.enableSeek(true);
                 //     return;
                 // }
-                this.gui.showVideo(videoPlayer, json);
+                if(videoPlayer === null){
+                    this.gui.createVideoPlayer(oldMetaData, (player)=>{
+                        this.gui.showVideo(player, json);
+                    });
+                }else{
+                    this.gui.showVideo(videoPlayer, json);
+                }
                 // metaDataDict[json.id] = json;
                 // videoPlayer.enableSeek(true);
 
@@ -274,7 +280,10 @@ class Display {
                         elem.parentNode.removeChild(elem);
                     }
                 }
-                this.store.getVideoStore().closeVideo(json);
+
+                if(json.type === Constants.TypeVideo){
+                    this.store.getVideoStore().closeVideo(json);
+                }
             } else {
                 if (elem && 
                     (elem.tagName.toLowerCase() === DisplayUtil.getTagName(json.type) ||
