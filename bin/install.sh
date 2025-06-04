@@ -58,6 +58,6 @@ else
 fi
 
 # npm install --force
-npm install --arch=x64 --force
+npm install --arch=x64
 
 cd $ORIGIN
