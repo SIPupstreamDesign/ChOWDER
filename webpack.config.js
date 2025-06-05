@@ -1,4 +1,3 @@
-require('babel-polyfill');
 const path = require('path');
 const webpack = require('webpack');
 var NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
@@ -14,12 +13,11 @@ module.exports = {
     entry: {
         "controller": './public/src/controller_app.js',
         "display": './public/src/display_app.js',
-        "vrdisplay": ['@babel/polyfill', './public/src/vrdisplay_app.js'],
         "itowns": './public/src/itowns_app.js',
-        "chowder_injection": ['@babel/polyfill', './public/src/chowder_itowns_injection.js'],
-        "chowder_tileviewer_injection": ['@babel/polyfill', './public/src/chowder_tileviewer_injection.js'],
-        "qgis": ['@babel/polyfill', './public/src/qgis_app.js'],
-        "tileviewer": ['@babel/polyfill', './public/src/tileviewer_app.js'],
+        "chowder_injection": ['./public/src/polyfill.js', './public/src/chowder_itowns_injection.js'],
+        "chowder_tileviewer_injection": ['./public/src/polyfill.js', './public/src/chowder_tileviewer_injection.js'],
+        "qgis": ['./public/src/polyfill.js', './public/src/qgis_app.js'],
+        "tileviewer": ['./public/src/polyfill.js', './public/src/tileviewer_app.js'],
         "visionUtil": './public/src/vision.js',
     },
     // 出力の設定
