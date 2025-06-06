@@ -14,11 +14,11 @@
     const SegmentReceiver = require("./SegmentReceiver.js");
     const LoginUser = require("./LoginUser.js");
 
-    let phantom = null;
+    let puppeteer = null;
     try {
-        phantom = require('phantom');
+        puppeteer = require('puppeteer');
     } catch (e) {
-        console.log("not found phantom");
+        console.log("not found puppeteer");
     }
     const redis = require("redis");
 
@@ -105,47 +105,34 @@
          * @param {String} url URL文字列
          * @param {Function} endCallback 終了時に呼ばれるコールバック
          */
-        renderURL(url, endCallback) {
-            if (phantom === null) {
+        async renderURL(url, endCallback) {
+            if (puppeteer === null) {
                 console.log("not found phantom");
             } else {
-                phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
-                    instance.createPage().then(function (page) {
-                        page.property('viewportSize', { width: 1280, height: 720 }).then(function () {
-                            page.open(url).then(function (status) {
-                                if (status !== 'success') {
-                                    console.error('renderURL: Page open failed: ' + status);
-                                    return;
-                                }
-
-                                page.evaluate(function () {
-                                    return { /* eslint-disable */
-                                        width: document.body.scrollWidth,
-                                        height: document.body.scrollHeight,
-                                        deviceScaleFactor: window.devicePixelRatio
-                                    }; /* eslint-enable */
-                                }).then(function (dim) {
-                                    page.property('clipRect', { top: 0, left: 0, width: 1280, height: 720 }).then(() => {
-                                        page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
-                                            const filename = path.resolve('/tmp', Date.now().toString() + '.png');
-                                            page.render(filename).then(function () {
-                                                fs.readFile(filename, function (err, data) {
-                                                    if (err) {
-                                                        console.error(err);
-                                                        return;
-                                                    }
-                                                    endCallback(data, image_size(data));
-                                                    instance.exit();
-                                                });
-                                            });
-                                        });
-                                    });
-                                });
-                            });
-                        });
-                    });
+                const browser = await puppeteer.launch({
+                    headless: true,
+                    args: ['--no-sandbox', '--disable-setuid-sandbox'],
                 });
+        
+                const page = await browser.newPage();
+                await page.setViewport({ width: 1280, height: 720 });
+                const response = await page.goto(url, { waitUntil: 'networkidle2' });
+                if (!response || !response.ok()) {
+                    console.error('Page open failed');
+                    await browser.close();
+                    endCallback(null, null);
+                    return;
+                }
+        
+                const filename = path.resolve('/tmp', Date.now().toString() + '.png');
+                await page.screenshot({ path: filename, fullPage: true });
+        
+                const data = fs.readFileSync(filename);
+                endCallback(data, image_size(data));
+        
+                await browser.close();
             }
+            
         }
 
         generateID(prefix, endCallback) {
