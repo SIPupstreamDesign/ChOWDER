@@ -14,7 +14,7 @@
     "start": "cd server && node server.js",
     "webpack": "webpack",
     "install": "webpack --mode=production && cd standalone-electron && npm install",
-    "dev": "webpack-dev-server",
+    "dev": "webpack serve --mode development",
     "watch": "webpack --mode=development --watch"
   },
   "dependencies": {
@@ -30,6 +30,8 @@
     "redis": "3.1.2",
     "sharp": "0.30.0",
     "update": "^0.7.4",
+    "webpack": "^5.99.9",
+    "webpack-dev-server": "^4.15.2",
     "websocket": "*"
   },
   "devDependencies": {
@@ -44,8 +46,6 @@
     "style-loader": "^0.23.1",
     "three": "0.127.0",
     "url-loader": "^1.1.2",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.2.1",
-    "webpack-dev-server": "^3.11.3"
+    "webpack-cli": "^5.1.4"
   }
 }

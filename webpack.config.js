@@ -64,7 +64,9 @@ module.exports = {
     devtool: DEBUG ? 'source-map' : false, // ソースマップを生成する
     // webpack-dev-serverの設定
     devServer: {
-        contentBase: path.join(__dirname, 'public'),
+        static: {
+            directory: path.join(__dirname, 'public'),
+        },
         compress: true,
         port: 8080,
         open: true,
