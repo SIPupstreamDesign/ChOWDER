@@ -107,7 +107,7 @@
          */
         async renderURL(url, endCallback) {
             if (puppeteer === null) {
-                console.log("not found phantom");
+                console.log("not found puppeteer");
             } else {
                 const browser = await puppeteer.launch({
                     headless: true,
