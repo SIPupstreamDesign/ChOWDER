@@ -44,8 +44,16 @@ module.exports = {
             },
             // ファイルを読み込むローダー
             {
-                test: /\.(jpg|png|gif)$/,
-                use: ['url-loader'],
+                test: /\.(png|jpe?g|gif)$/i,
+                type: 'asset',
+                parser: {
+                    dataUrlCondition: {
+                        maxSize: 8 * 1024, // 8 KB
+                    },
+                },
+                generator: {
+                    filename: 'images/[name].[hash:8][ext]',
+                },
             },
             // jsを読み込むローダー
             {

@@ -40,12 +40,10 @@
     "@babel/preset-env": "^7.20.2",
     "babel-loader": "^8.3.0",
     "core-js": "^3.34.1",
-    "css-loader": "^2.1.0",
-    "file-loader": "^3.0.1",
+    "css-loader": "^7.1.2",
     "regenerator-runtime": "^0.14.1",
-    "style-loader": "^0.23.1",
+    "style-loader": "^4.0.0",
     "three": "0.127.0",
-    "url-loader": "^1.1.2",
     "webpack-cli": "^5.1.4"
   }
 }
