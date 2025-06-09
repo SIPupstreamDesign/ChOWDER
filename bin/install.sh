@@ -57,7 +57,7 @@ else
     chmod a+x ../redis/redis-server
 fi
 
-# npm install --force
-npm install --arch=x64
+# npm install
+npm install
 
 cd $ORIGIN
