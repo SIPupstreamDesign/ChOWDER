@@ -24,6 +24,13 @@ class MediasoupConsumer {
         this.consumer = null;
     }
 
+    isConnected(){
+        if(this.consumer === null){
+            return false;
+        }
+        return true;
+    }
+
     setPlayer(player){
         this.player = player;
     }
@@ -106,6 +113,10 @@ class MediasoupConsumer {
     async handleCreateConsumerTransport(params) {
         // console.log('[mediasoup_consumer.js]Consumer Transport params received:', params);
         // console.log('[mediasoup_consumer.js]handleCreateConsumerTransport: Device',this.device);
+        if(this.transport !== null){
+            console.log("[mediasoup_consumer.js]handleCreateConsumerTransport transport is not null");
+            return null;
+        }
 
         this.transport = this.device.createRecvTransport(params.transportParameters);
         // console.log("[mediasoup_consumer.js]transport",this.transport);
@@ -127,7 +138,11 @@ class MediasoupConsumer {
         this.transport.on("connectionstatechange", async(state) => {
             console.log("Transport state:", state);
             if (state === "connected") {
-                console.log("transport state connected");
+                const video = this.player.getVideo();
+                if (!this.player.isPlaying()) {
+                    video.load();
+                    video.play();
+                }
             }
             if (state === "disconnected") {
                 console.log("transport state disconnected");
@@ -179,6 +194,17 @@ class MediasoupConsumer {
         }, () => {});
 
     }
+
+    connectionClose(){
+        if(this.consumer){
+            this.consumer.close();
+            this.transport.close();
+            console.log("[mediasoup_consumer.js]consumer close");
+        }
+        this.consumer = null;
+        this.transport = null;
+    }
+
     release(){
 
     }

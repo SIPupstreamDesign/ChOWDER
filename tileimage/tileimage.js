@@ -23,7 +23,7 @@ const MethodToMeaning = {
 // == load modules =============================================================
 let fs = require('fs');
 let path = require('path');
-let argv = require('argv');
+const minimist = require('minimist');
 let readline = require('readline');
 
 let WebSocketWrapper = require('./websocket');
@@ -61,41 +61,35 @@ let getRandomColor = function() {
 };
 
 // == process argv =============================================================
-let args = argv.option([
-	{
-		name: 'config',
-		short: 'c',
-		type: 'path'
-	},
-	{
-		name: 'metadata',
-		short: 'm',
-		type: 'string'
-	}
-]).run();
+const args = minimist(process.argv.slice(2), {
+	string: ['config', 'metadata'],
+	alias: { c: 'config', m: 'metadata' },
+	default: {}
+});
 
-if (args.targets.length === 0) {
-	console.log( 'Usage: tileimage --metadata={\\"key\\":\\"value\\"} image.jpg' );
+if (args._.length === 0) {
+	console.log('Usage: tileimage --metadata=\'{"key":"value"}\' image.jpg');
 	process.exit();
 }
 
-let configPath = (args.options.config || path.resolve(__dirname, './config.json'));
+const configPath = args.config ? path.resolve(args.config) : path.resolve(__dirname, './config.json');
 console.log('Config file: ' + configPath);
-let config = require(configPath);
+const config = require(configPath);
 
 let keyvalue = undefined;
-if (args.options.metadata) {
-	console.log('Metadata: ' + args.options.metadata);
-	keyvalue = JSON.parse(args.options.metadata);
+if (args.metadata) {
+	console.log('Metadata: ' + args.metadata);
+	keyvalue = JSON.parse(args.metadata);
 }
 
-let imagePath = path.resolve(process.cwd(), args.targets[ 0 ]);
+const imagePath = path.resolve(process.cwd(), args._[0]);
 if (!fs.existsSync(imagePath)) {
 	throw new Error('Image file not found: ' + imagePath);
 }
 console.log('Image file: ' + imagePath);
 
-let creator = args.targets[ 1 ];
+let creator = args._[1];
+
 let contentsId = config.contentid;
 if(!creator) { 
 	creator = "TileImage"; 

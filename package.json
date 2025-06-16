@@ -5,8 +5,7 @@
   "description": "redis test",
   "main": "server/server.js",
   "optionalDependencies": {
-    "hiredis": "*",
-    "phantom": "^6.0.3"
+    "hiredis": "*"
   },
   "scripts": {
     "standalone-electron": "electron standalone-electron",
@@ -15,38 +14,38 @@
     "start": "cd server && node server.js",
     "webpack": "webpack",
     "install": "webpack --mode=production && cd standalone-electron && npm install",
-    "dev": "webpack-dev-server",
+    "dev": "webpack serve --mode development",
     "watch": "webpack --mode=development --watch"
   },
   "dependencies": {
-    "@babel/runtime" : "*",
-    "argv": "0.0.2",
+    "@babel/runtime": "*",
     "bson": "^5.1.0",
     "electron": "*",
     "image-size": "^1.0.2",
-    "jszip": "^3.7.1",
-    "phantom": "^6.0.3",
-    "redis": "3.1.2",
-    "update": "^0.7.4",
-    "sharp": "0.30.0",
     "images": "^3.2.3",
-    "websocket": "*",
-    "mediasoup": "^3.15.2"
+    "jszip": "^3.7.1",
+    "mediasoup": "^3.15.2",
+    "minimist": "^1.2.8",
+    "puppeteer": "^24.10.0",
+    "redis": "3.1.2",
+    "sharp": "^0.34.2",
+    "webpack": "^5.99.9",
+    "webpack-dev-server": "^4.15.2",
+    "websocket": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.21.3",
     "@babel/plugin-transform-runtime": "^7.21.0",
-    "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.20.2",
     "babel-loader": "^8.3.0",
-    "babel-polyfill": "^6.26.0",
-    "css-loader": "^2.1.0",
-    "file-loader": "^3.0.1",
-    "style-loader": "^0.23.1",
+    "core-js": "^3.34.1",
+    "css-loader": "^7.1.2",
+    "regenerator-runtime": "^0.14.1",
+    "style-loader": "^4.0.0",
     "three": "0.127.0",
-    "url-loader": "^1.1.2",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.2.1",
-    "webpack-dev-server": "*"
+    "webpack-cli": "^5.1.4"
+  },
+  "overrides": {
+    "rimraf": "^4.3.1"
   }
 }

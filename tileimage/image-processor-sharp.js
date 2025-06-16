@@ -81,14 +81,21 @@ let splitImage = function(filepath, xsplit, ysplit, parallels, forEach, startLog
 			for (let ix = 0; ix < xsplit; ix ++) {
 				let x = ix * sizex;
 				let y = iy * sizey;
+				let w = Math.min(sizex, width - x);
+				let h = Math.min(sizey, height - y);
+
+				if (w <= 0 || h <= 0 || x + w > width || y + h > height){
+					continue;
+				}
+				
 				let i = ix + iy * xsplit;
 				tasks[taskIndex] = tasks[taskIndex].then(function() {
 					if (startLogFunc) { startLogFunc(i); }
-					return image.extract({
+					return sharp(filepath, {limitInputPixels:0}).extract({
 						left: x,
 						top: y,
-						width: Math.min(sizex, width - x),
-						height: Math.min(sizey, height - y)
+						width: w,
+						height: h
 					}).toBuffer().then(function(buffer) {
 						if (endSplitLogFunc) { endSplitLogFunc(i); }
 						return forEach(buffer, i);
