@@ -23,4 +23,4 @@ Data source: Geospatial Information Authority of Japan (https://maps.gsi.go.jp/d
 Data source (Cloud data): Himawari 8/9 gridded data are distributed by the Center for Environmental Remote Sensing (CEReS), Chiba University, Japan. Data source (Map): Geospatial Information Authority of Japan (https://maps.gsi.go.jp/development/ichiran.html) 
 
 #### In the current version, unnatural triangular artifacts may appear when rendering the point clouds. We are currently investigating ways to improve this phenomenon.
-![Artifacts](https://github.com/SIPupstreamDesign/ChOWDER/blob/master/IMG_2998.jpg)
+![Artifacts](https://github.com/SIPupstreamDesign/ChOWDER/blob/master/IMG_2995.jpg)
