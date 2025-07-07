@@ -19,7 +19,7 @@ An example of 3D WebGIS displayed on a tiled display consisting of 15 4K display
 Data source: Geospatial Information Authority of Japan (https://maps.gsi.go.jp/development/ichiran.html) 
 
 
-![Use case 2]()
+![Use case 2](https://github.com/SIPupstreamDesign/ChOWDER/blob/master/IMG_2998.jpg)
 An example of cloud data captured by a weather satellite converted into a 3D point cloud and displayed.
 Data source (Cloud data): Himawari 8/9 gridded data are distributed by the Center for Environmental Remote Sensing (CEReS), Chiba University, Japan. 
 Data source (Map): Geospatial Information Authority of Japan (https://maps.gsi.go.jp/development/ichiran.html) 
