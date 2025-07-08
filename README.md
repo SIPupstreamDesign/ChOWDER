@@ -8,6 +8,17 @@ Cooperative workspace driver
 ### Japanese
 [./UserGuide/jp/UserGuide.md](./UserGuide/jp/UserGuide.md)
 
+## Publications
+KAWANABE, T., et al. On the Performance of Distributed Rendering System for 3DWebGIS Application on Ultra-High-Resolution Display. International Journal of Geoinformatics, 2025, 21.1: 15-25.
+
+KAWANABE, Tomohiro; HATTA, Kazuma; ONO, Kenji. ChOWDER: A New Approach for Viewing 3D Web GIS on Ultra-High-Resolution Scalable Display. In: 2020 IEEE International Conference on Cluster Computing (CLUSTER). IEEE, 2020. p. 412-413.
+
+KAWANABE, Tomohiro, et al. Showing Ultra-High-Resolution Images in VDA-Based Scalable Displays. In: International Conference on Cooperative Design, Visualization and Engineering. Cham: Springer International Publishing, 2019. p. 116-122.
+
+KAWANABE, Tomohiro, et al. ChOWDER: an adaptive tiled display wall driver for dynamic remote collaboration. In: International Conference on Cooperative Design, Visualization and Engineering. Cham: Springer International Publishing, 2018. p. 11-15.
+
+
+
 ## Introduction of 3DWebGIS Distributed Rendering Feature
 
 We added the 3DWebGIS distributed rendering feature.
