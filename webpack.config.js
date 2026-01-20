@@ -1,4 +1,3 @@
-require('babel-polyfill');
 const path = require('path');
 const webpack = require('webpack');
 var NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
@@ -14,12 +13,11 @@ module.exports = {
     entry: {
         "controller": './public/src/controller_app.js',
         "display": './public/src/display_app.js',
-        "vrdisplay": ['@babel/polyfill', './public/src/vrdisplay_app.js'],
         "itowns": './public/src/itowns_app.js',
-        "chowder_injection": ['@babel/polyfill', './public/src/chowder_itowns_injection.js'],
-        "chowder_tileviewer_injection": ['@babel/polyfill', './public/src/chowder_tileviewer_injection.js'],
-        "qgis": ['@babel/polyfill', './public/src/qgis_app.js'],
-        "tileviewer": ['@babel/polyfill', './public/src/tileviewer_app.js'],
+        "chowder_injection": ['./public/src/polyfill.js', './public/src/chowder_itowns_injection.js'],
+        "chowder_tileviewer_injection": ['./public/src/polyfill.js', './public/src/chowder_tileviewer_injection.js'],
+        "qgis": ['./public/src/polyfill.js', './public/src/qgis_app.js'],
+        "tileviewer": ['./public/src/polyfill.js', './public/src/tileviewer_app.js'],
         "visionUtil": './public/src/vision.js',
     },
     // 出力の設定
@@ -46,8 +44,16 @@ module.exports = {
             },
             // ファイルを読み込むローダー
             {
-                test: /\.(jpg|png|gif)$/,
-                use: ['url-loader'],
+                test: /\.(png|jpe?g|gif)$/i,
+                type: 'asset',
+                parser: {
+                    dataUrlCondition: {
+                        maxSize: 8 * 1024, // 8 KB
+                    },
+                },
+                generator: {
+                    filename: 'images/[name].[hash:8][ext]',
+                },
             },
             // jsを読み込むローダー
             {
@@ -66,7 +72,9 @@ module.exports = {
     devtool: DEBUG ? 'source-map' : false, // ソースマップを生成する
     // webpack-dev-serverの設定
     devServer: {
-        contentBase: path.join(__dirname, 'public'),
+        static: {
+            directory: path.join(__dirname, 'public'),
+        },
         compress: true,
         port: 8080,
         open: true,
