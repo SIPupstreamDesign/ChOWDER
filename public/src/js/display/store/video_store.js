@@ -100,21 +100,28 @@ class VideoStore {
 
         const router_id = metaData.id;
 		if(this.mediasoupConsumer[router_id]){
-            const video = player.getVideo();
-            
-            if(metaData.isPlaying === "true"){
-                if (!player.isPlaying()) {
-                    setTimeout(async()=>{
-                        await video.play();
-    
-                    },100);
+            if(this.mediasoupConsumer[router_id].isConnected() === true){
+                console.log("[video_store.js]_mediasoupHandshake play()");
+                const video = player.getVideo();
+                
+                if(metaData.isPlaying === "true"){
+                    if (!player.isPlaying()) {
+                        setTimeout(async()=>{
+                            await video.play();
+        
+                        },100);
+                    }
                 }
+            }else{
+                console.log("[video_store.js]_mediasoupHandshake reconnect");
+                this.mediasoupConsumer[router_id].setPlayer(player);    
+                this.mediasoupConsumer[router_id].handShake();
             }
 		}else{
+            console.log("[video_store.js]_mediasoupHandshake firtst time connecting");
 			this.mediasoupConsumer[router_id] = new MediasoupConsumer(this.connector, router_id);
-
-            this.mediasoupConsumer[router_id].handShake();
             this.mediasoupConsumer[router_id].setPlayer(player);    
+            this.mediasoupConsumer[router_id].handShake();
         }
 
 	}
@@ -298,6 +305,9 @@ class VideoStore {
 		return isUseDataChannel;
 	}
 	getVideoPlayer(id) {
+        if(!this.mediasoupConsumer[id]){
+            return null;
+        }
 		return this.mediasoupConsumer[id].getPlayer();
 	}
 	hasVideoPlayer(id) {
@@ -310,28 +320,31 @@ class VideoStore {
     }
 
     closeVideo(json) {
-		let webRTCDict = this.getWebRTCDict();
-		let rtcKey = this.getRTCKey(json);
-		if (webRTCDict.hasOwnProperty(rtcKey)) {
-            webRTCDict[rtcKey].close(true);
-            // console.error("closewebrtc")
+		// let webRTCDict = this.getWebRTCDict();
+		// let rtcKey = this.getRTCKey(json);
+		// if (webRTCDict.hasOwnProperty(rtcKey)) {
+        //     webRTCDict[rtcKey].close(true);
+        //     // console.error("closewebrtc")
 
-			json.from = "view";
-			this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
-				key : rtcKey
-			}), function (err, reply) {});
-			delete json.from;
-        }
-        if (this.hasVideoPlayer(json.id)) {
-            let player = this.getVideoPlayer(json.id);
-            URL.revokeObjectURL(player.video.src); // 通常のWebRTC用のソースを消す.
-            if (player.video.hasOwnProperty('srcObject')) {
-                player.video.srcObject = null;
-            }
-        }
-        if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
-            this.mediaPlayerDict[rtcKey].release();
-            delete this.mediaPlayerDict[rtcKey]
+		// 	json.from = "view";
+		// 	this.connector.sendBinary(Command.RTCClose, json, JSON.stringify({
+		// 		key : rtcKey
+		// 	}), function (err, reply) {});
+		// 	delete json.from;
+        // }
+        // if (this.hasVideoPlayer(json.id)) {
+        //     let player = this.getVideoPlayer(json.id);
+        //     URL.revokeObjectURL(player.video.src); // 通常のWebRTC用のソースを消す.
+        //     if (player.video.hasOwnProperty('srcObject')) {
+        //         player.video.srcObject = null;
+        //     }
+        // }
+        // if (this.mediaPlayerDict.hasOwnProperty(rtcKey)) {
+        //     this.mediaPlayerDict[rtcKey].release();
+        //     delete this.mediaPlayerDict[rtcKey]
+        // }
+        if(this.mediasoupConsumer[json.id]){
+            this.mediasoupConsumer[json.id].connectionClose();
         }
     }
 };

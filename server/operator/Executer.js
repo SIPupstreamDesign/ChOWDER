@@ -111,7 +111,7 @@
             } else {
                 phantom.create().then(function (instance) { //  Arrow functions such as () => {} are not supported in PhantomJS.
                     instance.createPage().then(function (page) {
-                        page.property('viewportSize', { width: 1024, height: 600 }).then(function () {
+                        page.property('viewportSize', { width: 1280, height: 720 }).then(function () {
                             page.open(url).then(function (status) {
                                 if (status !== 'success') {
                                     console.error('renderURL: Page open failed: ' + status);
@@ -125,16 +125,18 @@
                                         deviceScaleFactor: window.devicePixelRatio
                                     }; /* eslint-enable */
                                 }).then(function (dim) {
-                                    page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
-                                        const filename = path.resolve('/tmp', Date.now().toString() + '.png');
-                                        page.render(filename).then(function () {
-                                            fs.readFile(filename, function (err, data) {
-                                                if (err) {
-                                                    console.error(err);
-                                                    return;
-                                                }
-                                                endCallback(data, image_size(data));
-                                                instance.exit();
+                                    page.property('clipRect', { top: 0, left: 0, width: 1280, height: 720 }).then(() => {
+                                        page.property('viewportSize', { width: dim.width, height: dim.height }).then(() => {
+                                            const filename = path.resolve('/tmp', Date.now().toString() + '.png');
+                                            page.render(filename).then(function () {
+                                                fs.readFile(filename, function (err, data) {
+                                                    if (err) {
+                                                        console.error(err);
+                                                        return;
+                                                    }
+                                                    endCallback(data, image_size(data));
+                                                    instance.exit();
+                                                });
                                             });
                                         });
                                     });
@@ -223,7 +225,7 @@
                             return;
                         }
 
-                        const data = (()=>{
+                        const data = (() => {
                             try {
                                 return JSON.parse(reply);
                             } catch (e) {
@@ -231,7 +233,7 @@
                             }
                         })();
 
-                        if(data === null){
+                        if (data === null) {
                             return false;
                         }
 
@@ -686,7 +688,7 @@
             this.isAdmin(socketid, (err, isAdmin) => {
                 if (err) {
                     endCallback("error");
-                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
+                } else if (isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator") {
                     this.textClient.hget(this.frontPrefix + 'dblist', dbname, (err, reply) => {
                         if (!err) {
                             this.getGlobalSetting((err, setting) => {
@@ -797,7 +799,7 @@
                                             displayEditable: "all",
                                             viewableSite: "all",
                                             group_manipulatable: false
-                                        }, () =>{});
+                                        }, () => { });
                                     })
                                 })
                             })
@@ -816,7 +818,7 @@
             this.isAdmin(socketid, (err, isAdmin) => {
                 if (err) {
                     endCallback("error");
-                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
+                } else if (isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator") {
                     if (name.length > 0) {
                         this.textClient.hexists(this.frontPrefix + 'dblist', name, (err, doesExists) => {
                             if (!err && doesExists !== 1) {
@@ -859,7 +861,7 @@
             this.isAdmin(socketid, (err, isAdmin) => {
                 if (err) {
                     endCallback("error");
-                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
+                } else if (isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator") {
                     if (name.length > 0 && newName.length > 0) {
                         if (name === "default" || newName === "default") {
                             endCallback("cannot change default db name");
@@ -991,7 +993,7 @@
             this.isAdmin(socketid, (err, isAdmin) => {
                 if (err) {
                     endCallback("error");
-                } else if(isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator"){
+                } else if (isAdmin || this.loginUser.getGroupIDFromSocketID(socketid) === "Moderator") {
                     this.textClient.hmset(this.globalSettingPrefix, json, (err) => {
                         if (err) {
                             console.error(err);
@@ -1155,7 +1157,7 @@
                         endCallback(null, userList);
                         return;
                     }
-                    
+
                     // Guestユーザー
                     const guestUserData = { name: "Guest", id: "Guest", type: "guest" };
                     if (setting.hasOwnProperty("Guest")) {
@@ -1404,10 +1406,10 @@
                             if (!err) {
                                 if (setting.hasOwnProperty(id)) {
                                     // グループユーザー設定登録済グループユーザー
-                                    const isValid = (()=>{
+                                    const isValid = (() => {
                                         if (id === "Guest" || id === "Display") {
                                             return true;
-                                        }else{
+                                        } else {
                                             return this.validatePassword(setting[id].password, password);
                                         }
                                     })();
@@ -1433,7 +1435,7 @@
             });
         }
 
-        logout(socketid){
+        logout(socketid) {
             this.removeAuthority(socketid);
             this.loginUser.delete(socketid);
         }
@@ -2760,10 +2762,10 @@
                     if (image) {
                         metaData.posx = 0;
                         metaData.posy = 0;
-                        metaData.width = Math.min(1024,dimension.width);  //一時対応：全領域ではなく一部領域を表示する
-                        metaData.height = Math.min(640,dimension.height);
-                        metaData.orgWidth = Math.min(1024,dimension.width);
-                        metaData.orgHeight = Math.min(640,dimension.height);
+                        metaData.width = Math.min(1280, dimension.width);  //一時対応：全領域ではなく一部領域を表示する
+                        metaData.height = Math.min(720, dimension.height);
+                        metaData.orgWidth = Math.max(1280, dimension.width);
+                        metaData.orgHeight = Math.max(720, dimension.height);
                         this.addContent(metaData, image, (metaData, contentData) => {
                             if (endCallback) {
                                 endCallback(null, metaData);
@@ -3317,9 +3319,9 @@
          * @param {ArrayBuffer} binaryData 千切れたbinary
          * @return {Buffer}
          */
-        receiveTileimage(metaParams, binaryData, socketID){
+        receiveTileimage(metaParams, binaryData, socketID) {
             const arrBuf = this.segmentReceiver.receive(metaParams, binaryData, socketID);
-            if(arrBuf !== null){
+            if (arrBuf !== null) {
                 return Buffer.from(arrBuf);
             }
             return null;
@@ -3332,11 +3334,11 @@
          * @param {ArrayBuffer} wholeBinary
          * @return {Buffer}
          */
-        writeTileimageFile(metaParams, wholeBinary){
-            return new Promise((resolve,reject)=>{
+        writeTileimageFile(metaParams, wholeBinary) {
+            return new Promise((resolve, reject) => {
                 const writefilepath = `../bin/${metaParams.id}.${metaParams.file_ext}`;
-                fs.writeFile(writefilepath,wholeBinary,(err)=>{
-                    if(err){
+                fs.writeFile(writefilepath, wholeBinary, (err) => {
+                    if (err) {
                         reject(err);
                     }
                     this.segmentReceiver.deleteContainerFromImageID(metaParams.id);
@@ -3345,17 +3347,17 @@
             });
         }
 
-        runTileimageShell(filepath, metaParams){
-            return new Promise((resolve,reject)=>{
-                const batCmd = (()=>{
-                    console.log("server os:",process.platform);
-                    if(process.platform==='win32'){
+        runTileimageShell(filepath, metaParams) {
+            return new Promise((resolve, reject) => {
+                const batCmd = (() => {
+                    console.log("server os:", process.platform);
+                    if (process.platform === 'win32') {
                         return `cd ../bin/ && tileimage.bat ${filepath}  ${metaParams.creator}`;
-                    }else if(process.platform==='linux'){
+                    } else if (process.platform === 'linux') {
                         return `sh ../bin/tileimage.sh ${filepath}`;
-                    }else if(process.platform==='darwin'){
+                    } else if (process.platform === 'darwin') {
                         return `sh ../bin/tileimage.sh ${filepath}`;
-                    }else{
+                    } else {
                         return `sh ../bin/tileimage.sh ${filepath}`;
                     }
                 })();
@@ -3363,13 +3365,13 @@
                 console.log(`[runTileimageShell] batCmd:${batCmd}`);
 
                 // if(process.platform==='win32'){
-                    child_process.exec(batCmd,(err,stdout,stderr)=>{
-                        if(err){
-                            console.log(stderr);
-                            reject(err);
-                        }
-                        resolve();
-                    });
+                child_process.exec(batCmd, (err, stdout, stderr) => {
+                    if (err) {
+                        console.log(stderr);
+                        reject(err);
+                    }
+                    resolve();
+                });
                 /*}else{
                     const command = child_process.exec("sh", [`../bin/tileimage.sh`, `${filepath}`, `${metaParams.creator}`]);
                     command.stdout.on("data",(stdout)=>{
@@ -3383,10 +3385,10 @@
             });
         }
 
-        removeTileimageFile(filepath){
-            return new Promise((resolve,reject)=>{
-                fs.unlink(filepath,(err)=>{
-                    if(err){
+        removeTileimageFile(filepath) {
+            return new Promise((resolve, reject) => {
+                fs.unlink(filepath, (err) => {
+                    if (err) {
                         console.log(stderr);
                         reject(err);
                     }
@@ -3395,7 +3397,7 @@
             });
         }
 
-        deleteTileimageContainerFromSocketID(socketID){
+        deleteTileimageContainerFromSocketID(socketID) {
             this.segmentReceiver.deleteContainerFromSocketID(socketID);
         }
     }

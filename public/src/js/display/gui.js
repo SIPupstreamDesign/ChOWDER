@@ -950,6 +950,21 @@ class GUI extends EventEmitter {
         DisplayUtil.insertElementWithDictionarySort(previewArea, elem);
     }
 
+    createVideoPlayer(metaData, callback){
+        let previewArea = document.getElementById('preview_area');
+        const videoPlayer = new VideoPlayer(true);
+        const elem = videoPlayer.getDOM();
+        elem.id = metaData.id;
+        elem.style.position = "absolute";
+        elem.style.color = "white";
+        this.setupContent(elem, elem.id);
+        DisplayUtil.insertElementWithDictionarySort(previewArea, elem);
+
+        videoPlayer.on(VideoPlayer.EVENT_READY, () => {
+            callback(videoPlayer);
+        });
+    }
+
     /**
      * メタバイナリからコンテンツelementを作成してVirtualScreenに登録
      * @method assignContent
