@@ -1,0 +1,11 @@
+{
+    "listenInfos" : [{
+        "ip" : "0.0.0.0",
+        "announcedIp" : "192.168.3.8",
+        "portRange" : {
+            "min" : 40000,
+            "max" : 49999
+        }
+    }],
+    "initialAvailableOutgoingBitrate" : 1000000
+}

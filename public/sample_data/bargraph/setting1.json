@@ -1,0 +1,6 @@
+{
+	"Latitude" :"latitude",
+	"Longitude" : "longitude",
+	"Physical1": "depth",
+	"Physical2" : "depth * depth"
+}

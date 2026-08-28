@@ -1,0 +1,1 @@
+require("./js/chowder_tileviewer_injection/main.js");

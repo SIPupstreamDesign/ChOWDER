@@ -1,0 +1,23 @@
+{
+    "backgroundImage"  : "http://tile.openstreetmap.jp/0/0/0.png",
+    "maps" : [{
+        "url" : "http://tile.openstreetmap.jp/%z/%x/%y.png",
+        "zoom" : {
+            "min" : 5,
+            "max" : 18
+        },
+        "attribution":  {
+            "name" : "© OpenStreetMap contributors",
+            "url" : "https://www.openstreetmap.org/copyright"
+        }
+    }],
+    "geodeticSystem" : "standard",
+    "initialPosition" : {
+        "center": {
+            "relative": {
+                "left": 0.88,
+                "top": 0.3888
+            }
+        }
+    }
+}

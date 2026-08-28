@@ -1,0 +1,386 @@
+*:not(input) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    font-family: "Hiragino Kaku Gothic Pro", "Hiragino Kaku Gothic Pro W3", Meiryo, sans-serif;
+    box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background-color: rgba(0, 0, 0, 0);
+    -webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar:horizontal {
+    height: 8px;
+}
+
+::-webkit-scrollbar:hover {
+    background-color: rgba(0, 0, 0, 0.09);
+}
+
+::-webkit-scrollbar-thumb {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(4, 19, 25, 1);
+    -webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: rgba(4, 19, 25, 1);
+    -webkit-border-radius: 100px;
+}
+
+::-webkit-scrollbar-corner {
+    overflow: hidden;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0);
+}
+
+.input-group {
+    margin: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+html {
+    background-color: rgb(7, 22, 50);
+}
+
+body {
+    overflow: hidden;
+    background-color: rgb(7, 22, 50);
+    margin: 0px;
+    height: 100%;
+}
+
+hr {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.head_mode_text {
+    background-color: rgba(63, 63, 63, 1.0);
+}
+
+#chowder_text {
+    color: rgba(137, 196, 64, 1.0);
+    text-decoration: none;
+}
+
+.loginbutton {
+    color: black;
+}
+
+.loginmenu_label {
+    font-size: 16px;
+}
+
+.loginmenu {
+    top: -2px;
+}
+
+.change_cursor_color {
+    padding : 1px;
+    position : absolute;
+    left : 230px;
+    top : 24px;
+    color : #428bca;
+    cursor : pointer;
+}
+.change_cursor_color:hover {
+    color : rgba(255, 255, 255, 0.5);
+}
+.cursor_label:hover {
+    color : rgba(255, 255, 255, 0.5);
+}
+
+/* ------ LayerList / LayerDialog ---------------*/
+
+.tileviewer_property_outer {
+    display: none;
+    position: absolute;
+    width: 250px;
+    height: calc(100% - 40px);
+    left: 10px;
+    top: 10px;
+    background-color: rgba(41, 45, 62, 0.9);
+}
+
+.tileviewer_property_inner {
+    width: 250px;
+    height: calc(100% - 170px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    opacity: 0.9;
+}
+
+.tileviewer_property_title {
+    color: white;
+    font-size: 16px;
+    margin: 5px;
+}
+
+.tileviewer_property_text {
+    color: white;
+    font-size: 14px;
+    margin-left: 10px;
+    margin-right: 10px;
+    border: 1px solid;
+    white-space: normal;
+    word-break: break-all;
+    user-select: text;
+}
+
+.tileviewer_property_text_title {
+    color: white;
+    font-size: 16px;
+    margin-left: 14px;
+    margin-right: 14px;
+}
+
+.tileviewer_attribution_title {
+    font-size: 14px;
+}
+
+.layer_select {
+    font-size: 14px;
+    margin: 5px;
+    width: 240px;
+    cursor: default;
+}
+
+.layer_select:disabled {
+    cursor: not-allowed;
+}
+
+.layer_button_area {
+    margin: 5px;
+    font-size: 20px;
+}
+
+.layer_button {
+    margin: 5px;
+    width: 24px;
+    height: 24px;
+}
+
+.layer_up_button {
+    margin: 5px;
+    width: 24px;
+    height: 24px;
+    background-image: url("../image/group_up.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.layer_down_button {
+    margin: 5px;
+    width: 24px;
+    height: 24px;
+    background-image: url("../image/group_down.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.layer_button.btn {
+    padding: 0px;
+    font-size: 20px;
+}
+
+.layer_dialog {
+    display: none;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 350px;
+    margin-top: calc(-350px / 2);
+    margin-left: calc(-500px / 2);
+    position: fixed;
+    z-index: 100000000;
+    background-color: rgb(83, 83, 83);
+    border-radius: 5px;
+}
+
+.layer_dialog_error {
+    padding-top: 10px;
+    color: orangered;
+}
+
+.layer_dialog_style_name_input {
+    width: 100px;
+}
+
+.layer_dialog_ok_button {
+    position: absolute;
+    font-size: 14px;
+    width: 60px;
+    height: 30px;
+    right: calc(10px + 10px + 60px);
+    bottom: 10px;
+}
+
+.layer_dialog_cancel_button {
+    position: absolute;
+    font-size: 14px;
+    width: 60px;
+    height: 30px;
+    right: 10px;
+    bottom: 10px;
+}
+
+.layer_dialog_wrap {
+    margin: 15px;
+    font-size: 16px;
+}
+
+.layer_dialog_title {
+    font-size: 20px;
+    padding-bottom: 10px;
+    color: white;
+}
+
+.layer_dialog_row {
+    width: 100%;
+    height: 40px;
+}
+
+.layer_dialog_row2 {
+    width: 100%;
+    height: 60px;
+}
+
+.layer_dialog_sub_title {
+    color: white;
+    display: inline-block;
+}
+
+.layer_dialog_type_select {
+    margin-left: 6px;
+}
+
+.layer_dialog_id_input {
+    margin-left: 22px;
+}
+
+.layer_dialog_url_input {
+    width: 500px;
+    height: 50px;
+    margin-left: 10px;
+}
+
+.layer_dialog_zoom_title {
+    color: white;
+    display: inline-block;
+    padding-right: 5px;
+}
+
+.layer_dialog_fileopen_title {
+    display: inline-block;
+    padding-right: 5px;
+}
+
+.layer_dialog_fileopen_input {
+    display: inline-block;
+}
+
+.layer_dialog_zoom_max_title {
+    padding-left: 10px;
+}
+
+.layer_property_title {
+    padding-top: 10px;
+}
+
+.layer_dialog_zoom_min_select:disabled {
+    background: lightgray;
+}
+
+.layer_dialog_zoom_max_select:disabled {
+    background: lightgray;
+}
+
+.input-group {
+    width: 230px;
+}
+
+
+/*---------------------------------------------------------------*/
+
+.time {
+	position : absolute;
+	color : black;
+	height : 100px;
+	font-size : 22px;
+	background-color: white;
+	border : 1px solid gray;
+	padding : 5px;
+	box-sizing: border-box;
+    margin : 0px;
+}
+
+.copyright {
+    position: absolute;
+    color: black;
+    height: 50px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid gray;
+    padding: 10px;
+    box-sizing: border-box;
+    margin: unset;
+}
+
+.copyright_link:link {
+    color: black;
+}
+
+.copyright_link:visited {
+    color: black;
+}
+
+.copyright_link:hover {
+    color: lightgray;
+}
+
+
+.timeline_sync_button {
+	position : fixed;
+    width: 60px;
+	height : 32px;
+	right : 35px;
+	bottom : 30px;
+	border : 5px solid rgb(253, 221, 221);
+	border-radius: 3px;
+	
+    padding: 0px;
+    font-size: 11px;
+    font-weight: bold;
+    color: darkgray;
+}
+
+.timeline_sync_button:hover {
+	border : 5px solid gray;
+}
+
+.timeline_sync_button_pressed {
+	background : rgb(81, 191, 93);
+	border-color:#b1ffb9;
+	color : black;
+}
+
+.picker__select--month
+{
+    padding : 0em;
+    padding-left: .5em;
+}
+
+.picker__select--year
+{
+    padding : 0em;
+    padding-left: .5em;
+}

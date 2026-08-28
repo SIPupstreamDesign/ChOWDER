@@ -1,0 +1,15 @@
+{
+	"name": "tiled_display",
+	"private": true,
+	"version": "1.0.0",
+	"single-instance": false,
+	"description": "tiled_display view",
+	"main": "index.html",
+	"window": {
+		"toolbar": false,
+		"resizable": true,
+		"fullscreen": false,
+		"width": 1024,
+		"height": 768
+	}
+}

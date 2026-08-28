@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<link href="css/bootstrap.css" rel="stylesheet" />
+	<link href="css/setting.css" rel="stylesheet"/>
+	<script type="text/javascript" src="js/options.js"></script>
+	<script type="text/javascript" src="js/setting.js"></script>
+</head>
+<body style="width: 210px">
+	<div class="raw_container">
+		URL:<input type="text" id="wsurl" style="width:140px" value="" />
+		<div id="reset_url" class="btn resetbutton" title="reset"></div>
+	</div>
+	<div class="raw_container">
+		<span>Interval:</span>
+		<span style="width:140px"><input type="number" min="0.01" step="0.01" id="interval" /><span>sec</span></span>
+		<div id="reset_interval" class="btn resetbutton" title="reset" />
+	</div>
+	<div style="margin:5px; float:right; width:210px; text-align:right">
+		<div id="apply_button" class="btn btn-primary">Apply</div>
+		<div id="cancel_button" class="btn btn-primary">Cancel</div>
+	</div>
+</body>
+</html>

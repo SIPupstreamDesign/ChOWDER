@@ -1,0 +1,43 @@
+{
+    "backgroundImage": "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/thumbnail/550/%YYYY/%MM/%DD/%hh%mm%ss_0_0.png",
+    "backgroundOpacity" : 1.0,
+    "backgroundVisible" : true,
+    "maps": [{
+        "url": "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%w/%YYYY/%MM/%DD/%hh%mm%ss_%x_%y.png",
+        "scales": [
+            { "width": 550, "height": 550, "count": 1 },
+            { "width": 550, "height": 550, "count": 2 },
+            { "width": 550, "height": 550, "count": 4 },
+            { "width": 550, "height": 550, "count": 8 },
+            { "width": 550, "height": 550, "count": 16 },
+            { "width": 550, "height": 550, "count": 20 }
+        ],
+        "opacity": 1.0,
+        "visible" : true
+    }, {
+        "url": "https://himawari8-dl.nict.go.jp/himawari8/img/D531106/%cd/%ws/coastline/ffff00_%x_%y.png",
+        "scales": [
+            { "width": 275, "height": 275, "count": 1 },
+            { "width": 385, "height": 385, "count": 1 },
+            { "width": 550, "height": 550, "count": 1 },
+            { "width": 770, "height": 770, "count": 1 },
+            { "width": 550, "height": 550, "count": 2 },
+            { "width": 770, "height": 770, "count": 2 },
+            { "width": 550, "height": 550, "count": 4 },
+            { "width": 770, "height": 770, "count": 4 },
+            { "width": 550, "height": 550, "count": 8 },
+            { "width": 770, "height": 770, "count": 8 },
+            { "width": 550, "height": 550, "count": 16 },
+            { "width": 550, "height": 550, "count": 20 }
+        ],
+        "opacity": 1.0,
+        "visible" : true
+    }],
+    "timeout" : 0,
+    "timeout_on_setting_date" : 5000,
+    "geodeticSystem": "himawari8.fd",
+    "attribution":  {
+        "name" : "提供：情報通信研究機構（NICT）",
+        "url" : "https://www.nict.go.jp/"
+    }
+}
