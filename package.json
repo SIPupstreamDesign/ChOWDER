@@ -13,7 +13,8 @@
     "test": "find src -name '*.test.ts' ! -path '*/tests/*.integration.test.ts' | xargs npx tsx --test",
     "test:integration": "tsx --test 'src/**/tests/*.integration.test.ts'",
     "build:docs": "eleventy",
-    "dev:docs": "eleventy --watch"
+    "dev:docs": "eleventy --watch",
+    "generate-licenses": "license-checker-rseidelsohn --production --csv --out THIRD_PARTY_LICENSES.csv"
   },
   "dependencies": {
     "@babel/runtime": "^7.26.0",
@@ -43,6 +44,7 @@
     "css-loader": "^7.1.2",
     "html-webpack-plugin": "^5.6.5",
     "ioredis-mock": "^8.13.1",
+    "license-checker-rseidelsohn": "^4.4.2",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.4",
     "tsx": "^4.21.0",
