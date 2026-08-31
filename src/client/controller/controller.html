@@ -1,0 +1,742 @@
+<!doctype html>
+
+<head>
+    <!--
+        大きさ変更の速度変更＆アス比をキープ
+        重なり順が変更できない
+        コンテンツ選択UIのセット
+        接続済みディスプレイリストをサイト毎にする
+
+        ディスプレイの承認：初期値は　100 : 100
+        接続してきた枚数が増えるたびに　100 :100 ずつ加算していく
+    -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChOWDER Controller Client</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <style>body { visibility: hidden; background: #1a1a1a; }</style>
+</head>
+<html lang="ja">
+
+<body>
+    <div class="header" style="display: block">
+        <h1>ChOWDER Controller</h1>
+        <div id="status" class="status disconnected">Disconnected</div>
+        <div id="auth-status" class="status" style="display: none">
+            Not Logged In
+        </div>
+    </div>
+    <div id="login-lang-switcher" class="login-lang-switcher">
+        <span class="lang-switcher-icon">🌐</span>
+        <div class="lang-segment">
+            <button class="lang-seg-btn" data-lang="en">EN</button>
+            <button class="lang-seg-btn" data-lang="ja">JA</button>
+        </div>
+    </div>
+
+    <div class="container" id="beforeLoginView">
+        <div class="panel">
+            <h2>🔐 Login</h2>
+            <form id="login-form" autocomplete="on" onsubmit="return false;">
+                <div class="control-group">
+                    <label>User ID</label>
+                    <input type="text" id="user-id" placeholder="User ID" autocomplete="username" />
+                </div>
+                <div class="control-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" id="login-btn">Login</button>
+                </div>
+            </form>
+
+            <div id="errinfoWap" style="display: none; margin-top: 2em; background-color: #5a4a00;padding: 0.5em; font-size: 0.8em;">
+                <span id="errinfo1"  data-i18n="loginErr"></span><span id="errinfo2"></span>
+            </div>
+
+            <div style="margin-top: 12px; text-align: right;">
+                <button id="goto-change-password-btn" class="link-btn" data-i18n="gotoChangePassword">🔑 パスワードを変更する</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="changePasswordView" style="display: none;">
+        <div class="panel">
+            <h2 data-i18n="changePasswordTitle">🔑 パスワード変更</h2>
+            <div class="control-group">
+                <label>User ID</label>
+                <input type="text" id="chpw-user-id" placeholder="User ID" />
+            </div>
+            <div class="control-group">
+                <label data-i18n="currentPasswordLabel">現在のパスワード</label>
+                <input type="password" id="chpw-old-password" placeholder="Current password" />
+            </div>
+            <div class="control-group">
+                <label data-i18n="newPasswordLabel">新しいパスワード</label>
+                <input type="password" id="chpw-new-password" placeholder="New password" />
+            </div>
+            <div class="control-group">
+                <label data-i18n="newPasswordConfirmLabel">新しいパスワード（確認）</label>
+                <input type="password" id="chpw-new-password-confirm" placeholder="Confirm new password" />
+            </div>
+            <div class="button-row">
+                <button id="chpw-submit-btn" data-i18n="chpwSubmit">変更する</button>
+                <button id="chpw-cancel-btn" class="btn-secondary" data-i18n="chpwCancel">キャンセル</button>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="loginedView" style="display: none;">
+        <div id="view-area">
+            <div id="preview-ruler" style="z-index: -1;">
+            </div>
+            <div id="preview-content-area" style="position: absolute; opacity: 1.0; z-index: 10;" class="no-select"> </div>
+            <div id="preview-display-area" style="position: absolute; opacity: 0.3; z-index: 1;" class="no-select">
+                <svg id="site-grid-overlay" width="0" height="0" style="display:none;"></svg>
+            </div>
+            <div id="preview-cursor-area" style="position: absolute;z-index: 100;opacity: 0.5;"  class="no-select"></div>
+        </div>
+
+        <div id="mode-button-1" style="position: absolute; top:0.2em; left: 1em;">
+            <button class="action-btn" id="btn-chgmode-c">
+                <span class="icon">🧩</span><br>
+                Contents
+            </button>
+            <button class="action-btn btn-yellow" id="btn-chgmode-d">
+                <span class="icon">🖥️</span><br>
+                Displays
+            </button>
+            <button class="action-btn btn-ice" id="btn-chgmode-x">
+                <span class="icon">🔲</span><br>
+                Hide UI
+            </button>
+
+        </div>
+
+        <div id="mode-button-2" style="position: absolute; top:0.2em; right: 1em;">
+            <div id="lang-switcher">
+                <span class="lang-switcher-icon">🌐</span>
+                <div class="lang-segment">
+                    <button class="lang-seg-btn" data-lang="en">EN</button>
+                    <button class="lang-seg-btn" data-lang="ja">JA</button>
+                </div>
+            </div>
+            <button class="action-btn btn-red" id="logout-btn" style="display: block;">
+                <span class="icon">🚫</span><br>
+                LogOut
+            </button>
+
+            <button class="action-btn btn-red" id="btn-adminConfig" style="display: block; margin-right: 2em;">
+                <span class="icon">⚙️</span><br>
+                Admin
+            </button>
+
+            <a href="manual/3_1.html" target="_blank" style=" text-decoration: none;">
+            <button class="action-btn" id="btn-admin-help" style="display: block; width: 7em;">
+                <span class="icon">❔</span><br>
+                Help
+            </button>
+            </a>
+        </div>
+        <!------ content items ---------->
+
+        <div id="content-info" class="infodiv-base" style="overflow: auto;" data-panel-group="content" >
+            <h2 style="margin-bottom: 0.5em;" data-i18n="fixContentTitle">Edit Content</h2>
+
+            <div id="content-info-body" style="display:none;">
+            <!--
+            <div class="control-group">
+                <label>URL</label>
+                <input type="text" id="url-input" />
+            </div>
+            -->
+            <div class="control-group" style="display: flex; margin-bottom: 0;">
+                <div style="width: 13em;">
+                    Type : <span id="info-content-type"></span>
+                </div>
+                <div class="control-group" style="margin-bottom: 0.5em;">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="toggle-content-visible" data-checked="false">
+                        <span class="label-text no-select">Visible</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="fix-text-wap" class="control-group" style="display:none;">
+                <label>Text</label>
+                <textarea id="edit-text-input" rows="4" style="width:100%;resize:vertical;"></textarea>
+            </div>
+
+            <div class="grid-inputs" style="">
+                <div class="control-group">
+                    <label>X Position (px)</label>
+                    <input type="number" id="pos-x" value="100" />
+                </div>
+                <div class="control-group">
+                    <label>Y Position (px)</label>
+                    <input type="number" id="pos-y" value="100" />
+                </div>
+                <div class="control-group">
+                    <label>Width (px)</label>
+                    <input type="number" id="width" value="400" />
+                </div>
+                <div class="control-group">
+                    <label>Height (px)</label>
+                    <input type="number" id="height" value="300" />
+                </div>
+
+            </div>
+
+            <div style="display: flex; margin-top: 0em;">
+                <div class="control-group">
+                    <label>Z-index</label>
+                    <input type="number" id="zindex" value="1" style="width: 5em;" />
+                </div>
+
+                <div  id="fix-fontcol-wap" style="margin-left: 2em; display:none;">
+                    <label>Font Color</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="color" id="edit-font-color" value="#ffffff"
+                            style="width:48px; height:36px; padding:2px; cursor:pointer; flex-shrink:0;">
+                            <!--
+                        <span id="edit-font-color-preview"
+                            style="display:inline-block; width:36px; height:36px; border-radius:4px; border:1px solid #555; background:#fff; flex-shrink:0;"></span>
+                        <span id="edit-font-color-hex"
+                            style="font-size:13px; color:#b0b0b0; font-family:monospace;"></span>
+                            -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!--
+            <hr style="margin: 16px 0; border-color: #404040;" />
+
+            <h3 style="color: #4a9eff; margin-bottom: 10px; font-size: 15px;">Tile Image</h3>
+            <div class="control-group">
+                <label>Large Image File</label>
+                <input type="file" id="tileimage-file-input" accept="image/*" />
+            </div>
+            <button id="add-tileimage-btn" disabled>Add Tile Image</button>
+            <div id="tileimage-progress" style="display: none; margin-top: 10px;">
+                <div style="margin-bottom: 4px; font-size: 12px; color: #b0b0b0;">
+                    <span id="tileimage-progress-label">Uploading...</span>
+                </div>
+                <progress id="tileimage-progress-bar" value="0" max="100" style="width: 100%; height: 8px;"></progress>
+            </div>
+            -->
+
+            <div style="margin-top: 12px">
+                <button id="delete-btn" class="danger" disabled>Delete</button>
+            </div>
+            </div><!-- end content-info-body -->
+        </div>
+
+        <div id="content-list" class="infodiv-base" data-panel-group="content" >
+            <h2 data-i18n="contentListTitle" style="margin-bottom: 0em;display: inline-block;">Content List</h2>
+            <div id="metadata-list" style="margin-top: 12px"></div>
+        </div>
+
+        <div id="content-addpanel" class="tabs-container tabs-content infodiv-base" data-panel-group="content" >
+            <h2 style="padding-bottom: 0; padding-left: 1em; margin: 0.5em 1em " data-i18n="addContentTitle">Add Content</h2>
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-target="tab-content1" data-useSubmit="true">🖼️<br>File</button>
+                <button class="tab-btn" data-target="tab-content2" data-useSubmit="true">✒️<br>Text</button>
+                <button class="tab-btn" data-target="tab-content3">📹<br>Camera</button>
+                <button class="tab-btn" data-target="tab-content4">🖥️<br>Screen</button>
+                <button class="tab-btn" data-target="tab-content5" data-useSubmit="true">🎬<br>Video</button>
+                <button class="tab-btn" data-target="tab-content6">🗺️<br>GIS</button>
+            </div>
+
+            <div class="tab-contents">
+                <div id="tab-content1" class="tab-panel active">
+                    <div class="control-group">
+                        <label>File</label>
+                        <input type="file" id="file-input" accept="image/*, .pdf, application/pdf" />
+                    </div>
+                </div>
+                <div id="tab-content2" class="tab-panel">
+                    <div class="control-group">
+                        <label>Text</label>
+                        <textarea id="text-input" rows="4" style="width:100%;resize:vertical;"></textarea>
+
+                        <div style="display: flex; margin-top: 1em;">
+                            <div style="margin-left: 0;">
+                                <label>Font Color</label>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <input type="color" id="new-font-color" value="#ffffff"
+                                        style="width:48px; height:36px; padding:2px; cursor:pointer; flex-shrink:0;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-content3" class="tab-panel">
+                    <div class="control-group">
+                        <label>Stream Name</label>
+                        <input type="text" id="stream-name" value="WebCam" placeholder="WebCam">
+                    </div>
+
+                    <div class="tabbox-submit">
+                        <div class="button-row" style="margin-top: 0em;">
+                            <button id="start-camera-btn" disabled>Start Camera</button>
+                        </div>
+                        <div id="camera-status" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
+                    </div>
+                </div>
+                <div id="tab-content4" class="tab-panel">
+                    <div class="control-group">
+                        <label>Stream Name</label>
+                        <input type="text" id="screen-name" value="Screen Share" placeholder="Screen Share">
+                    </div>
+                    <div class="tabbox-submit">
+                        <div class="button-row">
+                            <button id="start-screen-btn" disabled>Start Screen Share</button>
+                        </div>
+                        <div id="screen-status" style="margin-top: 8px; font-size: 12px; color: #666; "></div>
+                    </div>
+
+                </div>
+                <div id="tab-content5" class="tab-panel">
+                    <div class="control-group">
+                        <label>Video File</label>
+                        <input type="file" id="video-file-input" accept="video/*" style="color:#ccc;">
+                    </div>
+                </div>
+                <div id="tab-content6" class="tab-panel">
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 13px; display: block; margin-bottom: 4px;">コンテンツ:</label>
+                        <select id="itowns2-content-select" style="width: 100%; padding: 6px; font-size: 13px;"></select>
+                    </div>
+
+                    <div class="tabbox-submit">
+                        <button id="open-itowns2-btn">🗺️ Open GIS Viewer</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tabbox-submit">
+                <button id="add-content-btn" disabled>Add Content</button>
+            </div>
+
+        </div>
+
+
+        <div class="side-panel left visible" id="left-panel"  style="display: none;">
+            <div class="panel" style="margin-top: 20px; position: relative;max-height:none;">
+                <h2>📹 Camera Share</h2>
+
+                <div class="grid-inputs">
+                    <div class="control-group">
+                        <label>X Position (px)</label>
+                        <input type="number" id="stream-x" value="50">
+                    </div>
+                    <div class="control-group">
+                        <label>Y Position (px)</label>
+                        <input type="number" id="stream-y" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="stream-width" value="640">
+                    </div>
+                    <div class="control-group">
+                        <label>Height (px)</label>
+                        <input type="number" id="stream-height" value="480">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="panel" style="margin-top: 20px; position: relative;max-height:none;">
+                <h2> Screen Share</h2>
+
+                <div class="grid-inputs">
+                    <div class="control-group">
+                        <label>X Position</label>
+                        <input type="number" id="screen-x" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label>Y Position</label>
+                        <input type="number" id="screen-y" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label>Width</label>
+                        <input type="number" id="screen-width" value="960">
+                    </div>
+                    <div class="control-group">
+                        <label>Height</label>
+                        <input type="number" id="screen-height" value="540">
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div id="layout-panel" class="infodiv-base"  data-panel-group="content" style="">
+            <h2 data-i18n="saveLayoutTitle">🗂️ Save Contents Layout</h2>
+            <div class="control-group">
+                <input type="text" id="layout-name-input" placeholder="Layout name"
+                    style="width:100%; box-sizing:border-box;" />
+                <button id="save-layout-btn" style="width:100%; margin-top:0.4em;" disabled>Save</button>
+            </div>
+            <h2 data-i18n="layoutListTitle"> Layout List</h2>
+            <div id="layout-list"></div>
+            <div class="button-row">
+                <button id="restore-layout-btn" class="secondary" disabled>Restore</button>
+                <button id="delete-layout-btn" class="danger" disabled>Delete</button>
+            </div>
+        </div>
+
+
+        <!------ display items ---------->
+
+
+        <div id="vda-management" class="vda-manage-panel infodiv-base-d"  data-panel-group="display" style="" >
+            <h3 data-i18n="screenManagementTitle">🪟 Screen management</h3>
+
+            <!-- test item-->
+
+        <div id="sitename-scm" class="infodiv-base-d"
+            style="margin-bottom: 1em;font-size: medium; display: inline-block; padding: 2px 8px;"></div>
+
+            <div class="grid-inputs">
+
+                <div class="control-group">
+                    <label>Grid X Split</label>
+                    <input type="number" id="vda-grid-x" value="4">
+                </div>
+                <div class="control-group">
+                    <label>Grid Y Split</label>
+                    <input type="number" id="vda-grid-y" value="4">
+                </div>
+
+                <div class="control-group">
+                    <label>VDA Reference Width</label>
+                    <input type="number" id="vda-width" value="1024">
+                </div>
+                <div class="control-group">
+                    <label>VDA Reference Height</label>
+                    <input type="number" id="vda-height" value="1024">
+                </div>
+            </div>
+
+             <div class="control-group" style="margin-top: 2em;">
+               <label class="custom-checkbox">
+                    <input type="checkbox" id="toggle-vda-attach" data-checked="false">
+                    <span class="label-text no-select">VDA Attach on Grid</span>
+                </label>
+             </div>
+
+        </div>
+
+
+        <div id="display-info" class="infodiv-base-d" style="overflow: auto;" data-panel-group="display" >
+            <h3 style="margin-bottom: 0;" data-i18n="fixDisplayTitle">Edit Display</h3>
+
+            <div id="display-info-body" style="display:none;">
+             <div id="display-name-info" class="display-name" style="font-size: 1.4em; margin-bottom: 0.5em;"></div>
+             <div class="control-group">
+               <label class="custom-checkbox">
+                    <input type="checkbox" id="toggle-display-visible" data-checked="false">
+                    <span class="label-text no-select">On</span>
+                </label>
+             </div>
+
+            <div class="grid-inputs" style="">
+                <div class="control-group">
+                    <label>X Position (px)</label>
+                    <input type="number" id="pos-x-d" value="100" />
+                </div>
+                <div class="control-group">
+                    <label>Y Position (px)</label>
+                    <input type="number" id="pos-y-d" value="100" />
+                </div>
+                <div class="control-group">
+                    <label>Width (px)</label>
+                    <input type="number" id="width-d" value="400" />
+                </div>
+                <div class="control-group">
+                    <label>Height (px)</label>
+                    <input type="number" id="height-d" value="300" />
+                </div>
+            </div>
+
+            <div style="margin-top: 12px">
+                <button id="delete-btn-d" class="danger" disabled>Delete</button>
+            </div>
+            </div><!-- end display-info-body -->
+        </div>
+
+
+        <div id="display-list-d" class="infodiv-base-d" data-panel-group="display" >
+
+            <div style="display: flex;width: 100%; height: 90%;gap:0.5em">
+                <div style="width:13em;">
+                    <h3 style="margin-bottom: 0.5em;display: inline-block;" data-i18n="siteListTitle">Site List</h3>
+                    <div id="site-list-d"  class="infodiv-base-d" style="width:13em;height: 90%;overflow-y: auto;">
+
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <div><h3 style="margin-bottom: 0.5em; white-space: nowrap;display: inline-block;" data-i18n="displayListTitle" >Display List</h3>
+                         <h3 id="selectedSiteNameinList" style="margin-bottom: 0.5em; white-space: nowrap;display: inline-block;">AAA</h3>
+                    </div>
+                    <div id="site-in-display-list"  class="infodiv-base-d"  style="height: 90%;">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <div class="panel" style="margin-top: 20px; position: relative;max-height:none;display: none;">
+        <h2>📹 Camera Share</h2>
+
+        <div class="grid-inputs">
+            <div class="control-group">
+                <label>X Position</label>
+                <input type="number" id="stream-x" value="50">
+            </div>
+            <div class="control-group">
+                <label>Y Position</label>
+                <input type="number" id="stream-y" value="100">
+            </div>
+            <div class="control-group">
+                <label>Width</label>
+                <input type="number" id="stream-width" value="640">
+            </div>
+            <div class="control-group">
+                <label>Height</label>
+                <input type="number" id="stream-height" value="480">
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 20px; position: relative;max-height:none;display: none;">
+        <h2>🖥️ Screen Share</h2>
+
+        <div class="grid-inputs">
+            <div class="control-group">
+                <label>X Position</label>
+                <input type="number" id="screen-x" value="100">
+            </div>
+            <div class="control-group">
+                <label>Y Position</label>
+                <input type="number" id="screen-y" value="100">
+            </div>
+            <div class="control-group">
+                <label>Width</label>
+                <input type="number" id="screen-width" value="960">
+            </div>
+            <div class="control-group">
+                <label>Height</label>
+                <input type="number" id="screen-height" value="540">
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 20px; position: relative;max-height:none;display: none;">
+        <h2>🎬 Video File Share</h2>
+
+        <div class="grid-inputs">
+            <div class="control-group">
+                <label>X Position</label>
+                <input type="number" id="video-file-x" value="100">
+            </div>
+            <div class="control-group">
+                <label>Y Position</label>
+                <input type="number" id="video-file-y" value="100">
+            </div>
+            <div class="control-group">
+                <label>Width</label>
+                <input type="number" id="video-file-width" value="960">
+            </div>
+            <div class="control-group">
+                <label>Height</label>
+                <input type="number" id="video-file-height" value="540">
+            </div>
+        </div>
+
+    </div>
+
+
+    <div id="tile-upload-overlay" style="display:none;">
+        <div id="tile-upload-card">
+            <p id="tile-upload-filename"></p>
+            <p id="tile-upload-label">Uploading...</p>
+            <progress id="tile-upload-bar" value="0" max="100"></progress>
+        </div>
+    </div>
+
+    <div id="init-loading-overlay" style="display:none;">
+        <div id="init-loading-card">
+            <p id="init-loading-label">Loading...</p>
+            <progress id="init-loading-bar" value="0" max="100"></progress>
+        </div>
+    </div>
+
+    <!------ admin items ---------->
+    <div class="container" id="modalView" style="display: none;">
+        <div id="modal-dialog">
+
+            <div id="modal-header">
+                <h1>Admin Menu</h1>
+            </div>
+
+            <div id="modal-body">
+
+                <div class="admin_button_wap">
+                    <button class="action-btn" id="btn-admin-display">
+                        <span class="icon">🖥️</span>
+                        Display
+                    </button>
+                    <button class="action-btn" id="btn-admin-user">
+                        <span class="icon">👤</span>
+                        User
+                    </button>
+                    <a href="manual/2_1.html" target="_blank" style="text-decoration: none;">
+                        <button class="action-btn" id="btn-admin-help">
+                            <span class="icon">❔</span>
+                            Help
+                        </button>
+                    </a>
+                </div>
+
+                <div id="modal-main">
+
+                    <div id="admin-display-manage" style="display: none; flex-direction: column; align-items: center; gap:1em">
+                        <div class="panel" id="waitApproval" style="width: 60vw; max-width: 700px;background: #5a4a00;display: none;">
+                            <h3 data-i18n="pendingDisplaysTitle">🚨 Pending Displays</h3><!--❗-->
+                            <div id="pending-displays" class="display-list" style="max-height: 220px; min-height: 220px;"></div>
+                        </div>
+
+                        <div class="panel" style="width: 60vw; max-width: 700px; position: relative; max-height: none;">
+                            <h2 data-i18n="displayManagementTitle">🖥️ Display Management (Admin)</h2>
+                            <button id="refresh-displays-btn">Refresh Displays</button>
+
+                            <div style="margin-top: 16px;">
+                                <h3 style="font-size: 14px; color: #b0b0b0; margin-bottom: 8px;">Approved Displays</h3>
+                                <div id="approved-displays" class="display-list" style="max-height: 40vh;"></div>
+                            </div>
+                        </div>
+
+                        <div class="panel" style="width: 60vw; max-width: 700px; position: relative; max-height: none;">
+                            <h2 data-i18n="siteManagementTitle">🏢 Site Management (Admin)</h2>
+
+                            <div style="margin-top: 16px;">
+                                <h3 style="font-size: 14px; color: #b0b0b0; margin-bottom: 8px;">Sites</h3>
+                                <div id="site-list" class="site-list" style="max-height: 150px; min-height: 150px;"></div>
+                            </div>
+
+                            <div class="control-group" style="margin-top: 1em;">
+                                <label>New Site Name</label>
+                                <input type="text" id="new-site-name" placeholder="Site A">
+                            </div>
+                            <div class="control-group">
+                                <label>Site Color</label>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <input type="color" id="new-site-color" value="#4a9eff"
+                                        style="width:48px; height:36px; padding:2px; cursor:pointer; flex-shrink:0;">
+                                    <span id="new-site-color-preview"
+                                        style="display:inline-block; width:36px; height:36px; border-radius:4px; border:1px solid #555; background:#4a9eff; flex-shrink:0;"></span>
+                                    <span id="new-site-color-hex"
+                                        style="font-size:13px; color:#b0b0b0; font-family:monospace;">#4a9eff</span>
+                                </div>
+                            </div>
+                            <button id="create-site-btn" disabled>Create Site</button>
+                        </div>
+
+                    </div>
+
+                    <div id="admin-user-manage" style="display: flex; flex-direction: column; align-items: center; gap:1em">
+
+                        <div class="panel" style="width: 60vw; max-width: 700px;">
+                            <h2 data-i18n="createUserTitle">👤 Create User (Admin)</h2>
+                            <div class="control-group">
+                                <label>User ID</label>
+                                <input type="text" id="new-user-id" placeholder="user1">
+                            </div>
+                            <div class="control-group">
+                                <label>Password</label>
+                                <input type="password" id="new-password" placeholder="password">
+                            </div>
+                            <div class="control-group">
+                                <label>Role</label>
+                                <select id="new-role">
+                                    <option value="member">Member</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button id="create-user-btn" disabled>Create User</button>
+                        </div>
+
+                        <div class="panel" style="width: 60vw; max-width: 700px; max-height: none;">
+                            <h2>👥 User List (Admin)</h2>
+                            <button id="refresh-user-list-btn" disabled>Refresh</button>
+                            <div style="max-height: 30vh; overflow-y: auto; margin-top: 0.5em;">
+                                <table id="user-list-table" style="width:100%; border-collapse:collapse;">
+                                    <thead style="position: sticky; top: 0; background: #2a2a2a;">
+                                        <tr>
+                                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #555;">User ID</th>
+                                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #555;">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="user-list-body"></tbody>
+                                </table>
+                            </div>
+                            <div style="margin-top: 0.5em; display: flex; gap: 8px; align-items: center;">
+                                <span id="user-list-selected-label" style="flex:1; color:#aaa; font-size:0.9em;"></span>
+                                <button id="user-list-change-pw-btn" style="width:auto; margin-top:0;" disabled>Change PW</button>
+                                <button id="user-list-delete-btn" style="width:auto; margin-top:0;" disabled>Delete</button>
+                            </div>
+                            <div id="user-list-change-pw-form" style="display:none; margin-top: 0.5em;">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <span style="white-space:nowrap;">New Password:</span>
+                                    <input type="password" id="user-list-pw-input" placeholder="new password" style="flex:1;">
+                                    <button id="user-list-pw-confirm-btn" style="width:auto; margin-top:0;">Change</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div><!-- #modal-main -->
+
+            </div><!-- #modal-body -->
+
+        </div><!-- #modal-dialog -->
+    </div>
+
+    <div id="right-menu-wap">
+        <div id="right-menu-panel" class="right-menu">
+        <ul>
+            <li id="right-menu-top" data-i18n="contentSetTopZ">最前面に移動</li>
+            <li id="right-menu-back" data-i18n="contentSetBottomZ">最背面に移動</li>
+            <li id="right-menu-hide" data-i18n="contentSetUnvisible">非表示にする</li>
+            <li id="right-menu-visible" data-i18n="contentSetVisible">表示する</li>
+            <!--
+            <hr>
+            <li onclick="action('delete')" style="color: red;">削除</li>
+            -->
+        </ul>
+        </div>
+    </div>
+
+    <div id="client-cursor-base" class="cursor-item">
+        <div class="cursor-item-arrow">↖ </div>
+        <div class="cursor-item-label">aaeebb</div>
+    </div>
+
+
+</body>
+
+</html>

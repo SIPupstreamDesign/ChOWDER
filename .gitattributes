@@ -1,0 +1,9 @@
+# Normalize text files to LF in repository
+* text=auto eol=lf
+
+# Keep shell scripts LF for Linux execution
+*.sh text eol=lf
+
+# Keep Windows scripts CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf

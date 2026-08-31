@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChOWDER iTowns</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #1a1a2e;
+    }
+    #itowns {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: calc(100% - 220px);
+      height: calc(100% - 40px);
+    }
+    #itowns_property {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 220px;
+      height: calc(100% - 40px);
+      overflow-y: auto;
+    }
+    #timeline_wrap {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      z-index: 50;
+    }
+    #timeline {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="itowns"></div>
+  <div id="itowns_property"></div>
+  <div id="timeline_wrap">
+    <div id="timeline"></div>
+  </div>
+</body>
+</html>

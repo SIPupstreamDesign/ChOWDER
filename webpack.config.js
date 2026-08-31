@@ -1,111 +1,182 @@
 const path = require('path');
+const fs = require('fs');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
-var NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin')
-var ExternalsPlugin = webpack.ExternalsPlugin
 
-const DEBUG = process.argv.includes('--mode=development');
-console.log("DEBUG=", DEBUG);
+class WatchHtmlTemplatesPlugin {
+  constructor(files) {
+    this.files = files;
+  }
+  apply(compiler) {
+    compiler.hooks.afterCompile.tap('WatchHtmlTemplatesPlugin', (compilation) => {
+      this.files.forEach(file => compilation.fileDependencies.add(file));
+    });
+  }
+}
 
-module.exports = {
-    // モードの設定、v4系以降はmodeを指定しないと、webpack実行時に警告が出る
-    mode: 'development',
-    // エントリーポイントの設定
+class CopyITownsAssetsPlugin {
+  constructor(options = {}) {
+    this.sourceRoot = options.sourceRoot;
+    this.targetRoot = options.targetRoot;
+  }
+
+  apply(compiler) {
+    compiler.hooks.afterCompile.tap('CopyITownsAssetsPlugin', (compilation) => {
+      const sourceDirs = this.getSourceDirs();
+      sourceDirs.forEach((dir) => {
+        compilation.contextDependencies.add(dir);
+      });
+    });
+
+    compiler.hooks.afterEmit.tap('CopyITownsAssetsPlugin', () => {
+      const sourceDirs = this.getSourceDirs();
+      fs.mkdirSync(this.targetRoot, { recursive: true });
+      sourceDirs.forEach((sourceDir) => {
+        const destDir = path.join(this.targetRoot, path.basename(sourceDir));
+        fs.cpSync(sourceDir, destDir, { recursive: true, force: true });
+      });
+    });
+  }
+
+  getSourceDirs() {
+    const entries = fs.readdirSync(this.sourceRoot, { withFileTypes: true });
+    return entries
+      .filter((entry) => {
+        return entry.isDirectory();
+      })
+      .map((entry) => {
+        return path.join(this.sourceRoot, entry.name);
+      });
+  }
+}
+
+module.exports = (_env, argv) => {
+  const mode = argv.mode || 'development';
+  const isProduction = mode === 'production';
+  const distClientPath = path.resolve(__dirname, 'dist/client');
+  const sourceITownsPath = path.resolve(__dirname, 'src/client/itowns');
+  const targetITownsPath = path.resolve(distClientPath, 'itowns');
+
+  return {
+    mode,
+    name: 'client',
     entry: {
-        "controller": './public/src/controller_app.js',
-        "display": './public/src/display_app.js',
-        "itowns": './public/src/itowns_app.js',
-        "chowder_injection": ['./public/src/polyfill.js', './public/src/chowder_itowns_injection.js'],
-        "chowder_tileviewer_injection": ['./public/src/polyfill.js', './public/src/chowder_tileviewer_injection.js'],
-        "qgis": ['./public/src/polyfill.js', './public/src/qgis_app.js'],
-        "tileviewer": ['./public/src/polyfill.js', './public/src/tileviewer_app.js'],
-        "visionUtil": './public/src/vision.js',
+      index: './src/client/index.ts',
+      controller: './src/client/controller/controller.ts',
+      display: './src/client/display/display.ts',
+      itowns: './src/client/itowns/index.ts',
+      chowder_injection: [
+        './src/client/itowns/src/polyfill.js',
+        './src/client/itowns/src/chowder_itowns_injection.ts'
+      ],
     },
-    // 出力の設定
-    output: {
-        // 出力するファイル名
-        filename: '[name].bundle.js',
-        // 出力先のパス（v2系以降は絶対パスを指定する必要がある）
-        path: path.join(__dirname, 'public')
-    },
+    target: 'web',
+    devtool: isProduction ? false : 'source-map',
     module: {
-        rules: [
-            // CSSを読み込むローダー
-            {
-                test: /\.css$/,
-                use: [
-                    'style-loader', // スタイルをDOMに挿入
-                    {
-                        loader: 'css-loader',
-                        options: {
-                            sourceMap: DEBUG, // ソースマップを有効化
-                        },
-                    },
-                ],
-            },
-            // ファイルを読み込むローダー
-            {
-                test: /\.(png|jpe?g|gif)$/i,
-                type: 'asset',
-                parser: {
-                    dataUrlCondition: {
-                        maxSize: 8 * 1024, // 8 KB
-                    },
-                },
-                generator: {
-                    filename: 'images/[name].[hash:8][ext]',
-                },
-            },
-            // jsを読み込むローダー
-            {
-                test: /\.js$/,
-                exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: ['@babel/preset-env'],
-                        plugins: ['@babel/plugin-transform-runtime'],
-                    }
-                }
+      rules: [
+        {
+          test: /\.ts$/,
+          use: {
+            loader: 'ts-loader',
+            options: {
+              configFile: 'tsconfig.webpack.json'
             }
-        ],
-    },
-    devtool: DEBUG ? 'source-map' : false, // ソースマップを生成する
-    // webpack-dev-serverの設定
-    devServer: {
-        static: {
-            directory: path.join(__dirname, 'public'),
+          },
+          include: [
+            path.resolve(__dirname, 'src/client'),
+            path.resolve(__dirname, 'src/common')
+          ],
         },
-        compress: true,
-        port: 8080,
-        open: true,
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              plugins: ['@babel/plugin-transform-runtime'],
+            }
+          }
+        },
+        {
+          test: /\.css$/,
+          use: [
+            'style-loader',
+            {
+              loader: 'css-loader',
+              options: {
+                sourceMap: !isProduction,
+              },
+            },
+          ],
+        },
+        {
+          test: /\.(png|jpe?g|gif)$/i,
+          type: 'asset',
+          parser: {
+            dataUrlCondition: {
+              maxSize: 8 * 1024,
+            },
+          },
+          generator: {
+            filename: 'images/[name].[hash:8][ext]',
+          },
+        },
+      ],
     },
-    // 容量大きすぎるときの警告を出さないようにする
-    performance: { hints: false },
+    resolve: {
+      extensions: ['.ts', '.js'],
+      fallback: {
+        "stream": false,
+        "buffer": false,
+        "util": false
+      }
+    },
+    output: {
+      filename: '[name].bundle.js',
+      path: distClientPath,
+      publicPath: '/',
+      clean: true,
+    },
     plugins: [
-        new webpack.ProvidePlugin({
-            THREE: 'three/build/three'
-        }),
-        new webpack.NoEmitOnErrorsPlugin(),
-        new ExternalsPlugin('commonjs', [
-            'app',
-            'auto-updater',
-            'browser-window',
-            'content-tracing',
-            'dialog',
-            'global-shortcut',
-            'ipc',
-            'menu',
-            'menu-item',
-            'power-monitor',
-            'protocol',
-            'tray',
-            'remote',
-            'web-frame',
-            'clipboard',
-            'crash-reporter',
-            'screen',
-            'shell'
-        ]),
-        new NodeTargetPlugin()
+      new webpack.ProvidePlugin({
+        THREE: 'three/build/three'
+      }),
+      new WatchHtmlTemplatesPlugin([
+        path.resolve(__dirname, 'src/client/index.html'),
+        path.resolve(__dirname, 'src/client/controller/controller.html'),
+        path.resolve(__dirname, 'src/client/display/display.html'),
+        path.resolve(__dirname, 'src/client/itowns/index.html'),
+      ]),
+      new CopyITownsAssetsPlugin({
+        sourceRoot: sourceITownsPath,
+        targetRoot: targetITownsPath,
+      }),
+      new HtmlWebpackPlugin({
+        template: './src/client/index.html',
+        filename: 'index.html',
+        chunks: ['index'],
+        inject: 'body',
+      }),
+      new HtmlWebpackPlugin({
+        template: './src/client/controller/controller.html',
+        filename: 'controller.html',
+        chunks: ['controller'],
+        inject: 'body',
+      }),
+      new HtmlWebpackPlugin({
+        template: './src/client/display/display.html',
+        filename: 'display.html',
+        chunks: ['display'],
+        inject: 'body',
+      }),
+      new HtmlWebpackPlugin({
+        template: './src/client/itowns/index.html',
+        filename: 'itowns/index.html',
+        chunks: ['itowns'],
+        inject: 'body',
+      }),
     ],
+    performance: { hints: false },
+  };
 };

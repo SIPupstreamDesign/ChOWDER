@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3080:80"
+      - "3443:443"
+      - "10000-10100:10000-10100/udp"
+      - "10000-10100:10000-10100/tcp"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./dist:/app/dist
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.server.json:/app/tsconfig.server.json
+      - ./tsconfig.webpack.json:/app/tsconfig.webpack.json
+      - ./webpack.config.js:/app/webpack.config.js
+      - ./document:/app/document
+      - ./eleventy.config.js:/app/eleventy.config.js
+      - ./config:/app/config
+      - /app/node_modules
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TSX_TSCONFIG_PATH=tsconfig.server.json
+      - MEDIASOUP_ANNOUNCED_IP=${MEDIASOUP_ANNOUNCED_IP:-127.0.0.1}
+      - MEDIASOUP_LAN_IP=${MEDIASOUP_LAN_IP}
+      - MEDIASOUP_WAN_IP=${MEDIASOUP_WAN_IP}
+      - MEDIASOUP_RTC_MIN_PORT=${MEDIASOUP_RTC_MIN_PORT:-10000}
+      - MEDIASOUP_RTC_MAX_PORT=${MEDIASOUP_RTC_MAX_PORT:-10100}
+    depends_on:
+      - redis
+    command: npm run dev
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data

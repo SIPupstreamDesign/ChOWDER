@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/server",       // 出力先
+    "rootDir": "./src",              // src 全体を対象にして common も含める
+    "module": "Node16",              // Node.js用（CJS出力。package.jsonにtype:moduleがないため）
+    "moduleResolution": "Node16",
+    "target": "ES2022"
+  },
+  "include": ["src/server/**/*", "src/common/**/*"]  // サーバーと共通コードを対象にする
+}

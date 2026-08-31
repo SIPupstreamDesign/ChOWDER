@@ -1,0 +1,488 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+#display-area {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    background: #000;
+    overflow: clip; /* forcus-scrolling対策 */
+}
+
+#content-area {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#display-cursor-area {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.display-cursor-item {
+    position: absolute;
+    display: none;
+}
+
+.display-cursor-arrow {
+    color: #ffffff;
+    font-size: 2em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.display-cursor-label {
+    position: absolute;
+    top: 2em;
+    left: 1em;
+    padding: 0.15em 0.4em;
+    color: #ffffff;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-shadow: none;
+}
+
+#view-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.content-element {
+    position: absolute;
+    border: 0px;
+    pointer-events: auto;
+}
+
+.content-element video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#debug-info {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #0f0;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border: 1px solid #0f0;
+    border-radius: 4px;
+    z-index: 10000;
+    display: none;
+}
+
+#debug-info.show {
+    display: block;
+}
+
+.content-item {
+    position: absolute;
+    border: 2px solid transparent;
+    -webkit-user-select: none;
+    /* Safari */
+    -ms-user-select: none;
+    /* IE/Edge */
+    user-select: none;
+    /* 標準 */
+    -webkit-user-drag: none;
+}
+
+.content-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.content-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.content-item pre {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    padding: 0;
+    color: #e0e0e0;
+    white-space: pre;
+}
+
+/* ステータス表示 */
+#status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 5px 15px;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 9999;
+    /* 非表示の設定（アニメーション付き） */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* JavaScriptでこのクラスが付与されたら表示する */
+#status-bar.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+#status-bar .status-item {
+    margin-right: 15px;
+}
+
+#status-bar .status-connected {
+    color: #4a9eff;
+}
+
+#status-bar .status-disconnected {
+    color: #ff4a4a;
+}
+
+/* ローディング表示 */
+#loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10001;
+}
+
+#loading .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #4a9eff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#loading.hidden {
+    display: none;
+}
+
+/* 接続画面 */
+#connection-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+}
+
+#connection-screen.hidden {
+    display: none;
+}
+
+#connection-screen h1 {
+    font-size: 48px;
+    margin-bottom: 30px;
+    color: #4a9eff;
+}
+
+#connection-screen .form-group {
+    margin-bottom: 20px;
+    width: 400px;
+}
+
+#connection-screen label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #aaa;
+}
+
+#connection-screen input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background: #1a1a1a;
+    border: 2px solid #404040;
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+}
+
+#connection-screen input:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+#connect-btn {
+    width: 400px;
+    padding: 14px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #4a9eff;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#connect-btn:hover {
+    background: #3a8edf;
+}
+
+#connect-btn:active {
+    background: #2a7ecf;
+}
+
+#connection-screen .info-text {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+    min-height: 2.6em;
+}
+
+.display-lang-switcher {
+    position: fixed;
+    top: 1em;
+    right: 1em;
+    z-index: 10003;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.display-lang-switcher .lang-switcher-icon {
+    font-size: 1.2em;
+    color: #888;
+}
+
+.display-lang-switcher .lang-segment {
+    display: flex;
+    border: 1px solid #444;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.display-lang-switcher .lang-seg-btn {
+    background: #1a2332;
+    color: #666;
+    border: none;
+    padding: 0;
+    width: 36px;
+    height: 26px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.display-lang-switcher .lang-seg-btn:first-child {
+    border-right: 1px solid #444;
+}
+
+.display-lang-switcher .lang-seg-btn.active {
+    background: #4a9eff;
+    color: #fff;
+}
+
+.display-lang-switcher .lang-seg-btn:not(.active):hover {
+    background: #232f43;
+    color: #ddd;
+}
+
+/* 承認待ち画面 */
+#waiting-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+}
+
+#waiting-screen.show {
+    display: flex;
+}
+
+#waiting-screen .waiting-icon {
+    width: 80px;
+    height: 80px;
+    border: 4px solid rgba(255, 165, 0, 0.3);
+    border-top: 4px solid #ffa500;
+    border-radius: 50%;
+    animation: spin 1.5s linear infinite;
+    margin-bottom: 30px;
+}
+
+#waiting-screen h2 {
+    font-size: 36px;
+    margin-bottom: 15px;
+    color: #ffa500;
+}
+
+#waiting-screen .display-id {
+    font-size: 28px;
+    font-family: 'Courier New', monospace;
+    color: #4a9eff;
+    margin-bottom: 20px;
+    padding: 15px 30px;
+    background: rgba(74, 158, 255, 0.1);
+    border: 2px solid #4a9eff;
+    border-radius: 8px;
+}
+
+#waiting-screen .message {
+    font-size: 18px;
+    color: #aaa;
+    text-align: center;
+    max-width: 500px;
+    line-height: 1.6;
+}
+
+/* 拒否画面 */
+#rejected-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+}
+
+#rejected-screen.show {
+    display: flex;
+}
+
+#rejected-screen .rejected-icon {
+    font-size: 80px;
+    margin-bottom: 30px;
+}
+
+#rejected-screen h2 {
+    font-size: 36px;
+    margin-bottom: 15px;
+    color: #ff4444;
+}
+
+#rejected-screen .message {
+    font-size: 18px;
+    color: #aaa;
+    text-align: center;
+    max-width: 500px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+#rejected-screen button {
+    padding: 14px 36px;
+    font-size: 16px;
+    background: #555;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#rejected-screen button:hover {
+    background: #777;
+}
+
+#menu {
+    font-size: 36px;
+    color: white;
+    background-color: #4a9eff;
+    text-align: left;
+    max-width: 100%;
+    height: 50px;
+    display: 'flex';
+    justify-content: 'center';
+}
+
+#menu .button {
+    font-size: 18px;
+    color: black;
+    border: 2px solid black;
+}
+
+#menu .change-display-name {
+    font-size: 18px;
+    color: white;
+}
+
+
+#fullscr-btn {
+  position: fixed;
+  top: 0px;
+  right: calc(1% + 200px);
+  width:  max(10%, 200px);
+  height: max(5%, 50px);
+  z-index: 65500;
+  background-color: #3a8edf;
+  color: #e0e0e0;
+  /* 非表示の設定（アニメーション付き） */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+/* JavaScriptでこのクラスが付与されたら表示する */
+#fullscr-btn.is-visible {
+  opacity: 1;
+  visibility: visible;
+}

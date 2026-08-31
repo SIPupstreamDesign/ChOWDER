@@ -1,0 +1,7 @@
+{
+  "tileImage": {
+    "widthThreshold": 3840,
+    "heightThreshold": 2160,
+    "tileSize": 512
+  }
+}
