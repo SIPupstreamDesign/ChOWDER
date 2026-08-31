@@ -1,37 +1,81 @@
-# ChOWDER
+## Windows環境での開発手順
+* wslとubuntuインストール
+    - 動作確認:Ubuntu 24.04
 
-Cooperative workspace driver
+* ubuntuでnode.js, docker, docker-composeインストール
+    - node v20.20.0
+    - Docker version 28.1.1, build 4eba377
+    - Docker Compose version v2.35.1
 
-## User Guide
-### English
-[./UserGuide/en/UserGuide.md](./UserGuide/en/UserGuide.md)
-### Japanese
-[./UserGuide/jp/UserGuide.md](./UserGuide/jp/UserGuide.md)
+* WSLで `git clone` ChOWDER2ディレクトリ上に移動
 
-## Publications
-KAWANABE, T., et al. On the Performance of Distributed Rendering System for 3DWebGIS Application on Ultra-High-Resolution Display. International Journal of Geoinformatics, 2025, 21.1: 15-25.
+* 開発環境用の自己証明書を作る
+> sh generate_ssl_cert.sh
 
-KAWANABE, Tomohiro; HATTA, Kazuma; ONO, Kenji. ChOWDER: A New Approach for Viewing 3D Web GIS on Ultra-High-Resolution Scalable Display. In: 2020 IEEE International Conference on Cluster Computing (CLUSTER). IEEE, 2020. p. 412-413.
+* docker-compose 起動
+> docker compose up --build
 
-KAWANABE, Tomohiro, et al. Showing Ultra-High-Resolution Images in VDA-Based Scalable Displays. In: International Conference on Cooperative Design, Visualization and Engineering. Cham: Springer International Publishing, 2019. p. 116-122.
-
-KAWANABE, Tomohiro, et al. ChOWDER: an adaptive tiled display wall driver for dynamic remote collaboration. In: International Conference on Cooperative Design, Visualization and Engineering. Cham: Springer International Publishing, 2018. p. 11-15.
-
+* npm install
+    * VSCodeの赤波線消すため
 
 
-## Introduction of 3DWebGIS Distributed Rendering Feature
+### TypeScriptコードの変更
+* src/ 内のコードを修正すると自動でTS/Webpackビルドが走ってDocker内のフロント/サーバが更新される
 
-We added the 3DWebGIS distributed rendering feature.
-This feature was developed based on [iTowns](https://github.com/itowns), and by distributing and rendering data across multiple browsers, it is possible to display data in ultra-high resolution and handle data that exceeds the browser's heap memory limit.
+### package.jsonレベルで変更があった場合
+* docker-composeを落として再ビルドしてください
+> docker compose up --build
 
-### Examples of the 3DWebGIS distributed rendering feature
-#### An example of 3D WebGIS displayed on a tiled display consisting of 15 4K displays
-![Use case 1](https://github.com/SIPupstreamDesign/ChOWDER/blob/master/fig_usecase01.jpg)
-Data source: Geospatial Information Authority of Japan (https://maps.gsi.go.jp/development/ichiran.html) 
 
-#### An example of cloud data captured by a weather satellite converted into a 3D point cloud and displayed
-![Use case 2](https://github.com/SIPupstreamDesign/ChOWDER/blob/master/IMG_2998.jpg)
-Data source (Cloud data): Himawari 8/9 gridded data are distributed by the Center for Environmental Remote Sensing (CEReS), Chiba University, Japan. Data source (Map): Geospatial Information Authority of Japan (https://maps.gsi.go.jp/development/ichiran.html) 
+### 初期管理者ユーザーの運用
+* 初回起動時のみ、初期ユーザーとして以下が自動作成されます。
+    - admin: ID/PW = ChOWDERAdministrator
+* 初回ログイン後は、セキュリティのため初期ユーザーを削除またはパスワード変更してください。
+* いったん初期化が完了すると、初期ユーザーを削除しても通常の再起動では復活しません。
+* `bash clean_restart.sh` は Redis データを削除するため、次回起動時は再び初期化が走ります。
 
-#### In the current version, unnatural triangular artifacts may appear when rendering the point clouds. We are currently investigating ways to improve this phenomenon.
-![Artifacts](https://github.com/SIPupstreamDesign/ChOWDER/blob/master/IMG_2995.jpg)
+
+### WebRTC設定
+.envにローカルIPとグローバルIPを書いて
+ホストマシンのポートを解放してください
+* HTTPS
+    - TCP: 443
+* WebRTC
+    - TCP/UDP: .env および docker-compose.ymlで指定したもの
+
+
+### apacheでリバースプロキシする場合の設定の一例
+
+> sudo apt install apache2 -y
+> sudo a2enmod proxy proxy_http ssl proxy_wstunnel rewrite
+> sudo systemctl restart apache2
+
+> touch /etc/apache2/sites-available/docker-ssl.conf
+```conf
+# docker-ssl.conf
+<VirtualHost *:443>
+    ServerName localhost
+
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/apache.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+
+    ProxyPreserveHost On
+
+    # HTTPヘッダーを見てWebSocket通信を検知し、ws:// に流す
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*)           ws://localhost:3080/$1 [P,L]
+
+    # 上記に合致しない通常の通信は http:// に流す
+    ProxyPass / http://localhost:3080/
+    ProxyPassReverse / http://localhost:3080/
+
+    # エラーログ設定
+    ErrorLog ${APACHE_LOG_DIR}/docker-proxy-error.log
+    CustomLog ${APACHE_LOG_DIR}/docker-proxy-access.log combined
+</VirtualHost>
+```
+> sudo a2ensite docker-ssl.conf
+> sudo apache2ctl configtest
+> sudo systemctl restart apache2

@@ -1,0 +1,16 @@
+{
+	"preset_list" : [
+		{
+			"name" : "地理院地図 2.5D",
+			"url" : "itowns/Preset/gsi_planar/gsi_planar.html"
+		},
+		{
+			"name" : "地理院地図 3D",
+			"url" : "itowns/Preset/gsi/gsi.html"
+		},
+		{
+			"name" : "汎用直交座標用",
+			"url" : "itowns/Preset/cartesian/cartesian.html"
+		}
+	]
+}

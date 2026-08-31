@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChOWDER</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #4a9eff;
+            font-size: 48px;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 16px;
+            margin-bottom: 60px;
+        }
+
+        .links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .link-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            padding: 40px 48px;
+            background: #2a2a2a;
+            border: 2px solid #404040;
+            border-radius: 16px;
+            width: 240px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .link-card:hover {
+            border-color: #4a9eff;
+            background: #2f3a4a;
+        }
+
+        .link-card .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .link-card .label {
+            font-size: 22px;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+        }
+
+        .link-card .desc {
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+            min-height: 2.8em;
+        }
+
+        #index-lang-switcher {
+            position: fixed;
+            top: 1em;
+            right: 1em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #index-lang-switcher .lang-switcher-icon {
+            font-size: 1.2em;
+            color: #aaa;
+        }
+
+        #index-lang-switcher .lang-segment {
+            display: flex;
+            border: 1px solid #444;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        #index-lang-switcher .lang-seg-btn {
+            background: #1a2332;
+            color: #666;
+            border: none;
+            padding: 0;
+            width: 36px;
+            height: 26px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        #index-lang-switcher .lang-seg-btn:first-child {
+            border-right: 1px solid #444;
+        }
+
+        #index-lang-switcher .lang-seg-btn.active {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        #index-lang-switcher .lang-seg-btn:not(.active):hover {
+            background: #232f43;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div id="index-lang-switcher">
+        <span class="lang-switcher-icon">🌐</span>
+        <div class="lang-segment">
+            <button class="lang-seg-btn" data-lang="en">EN</button>
+            <button class="lang-seg-btn" data-lang="ja">JA</button>
+        </div>
+    </div>
+
+    <h1>ChOWDER</h1>
+    <p class="subtitle">Collaborative Wall Display Environment for Researchers</p>
+
+    <div class="links">
+        <a class="link-card" href="/controller.html">
+            <div class="icon">🎮</div>
+            <div class="label">Controller</div>
+            <div class="desc" data-i18n="indexControllerDesc">コンテンツ管理・ディスプレイ制御</div>
+        </a>
+        <a class="link-card" href="/display.html">
+            <div class="icon">🖥️</div>
+            <div class="label">Display</div>
+            <div class="desc" data-i18n="indexDisplayDesc">ディスプレイクライアント</div>
+        </a>
+    </div>
+    <br>
+    <a class="link-card" href="https://github.com/SIPupstreamDesign/ChOWDER" style="display: block;padding: 10px;width: 5%; margin-top: 5em;">
+        <div ><img src="Octicons-mark-github.svg" width="100%"></div>
+        <div class="label">Github</div>
+    </a>
+
+</body>
+</html>
