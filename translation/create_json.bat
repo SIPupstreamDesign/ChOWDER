@@ -1,2 +1,0 @@
-node convert.js 
-pause
