@@ -1,0 +1,60 @@
+{
+  "name": "prototype-app",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev:server": "tsx watch --clear-screen=false --watch-path=src/server src/server/index.ts",
+    "dev:client": "webpack --watch --mode development",
+    "dev": "concurrently --kill-others-on-fail -n \"SERVER,CLIENT,DOCS\" -c \"magenta,cyan,green\" \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:docs\"",
+    "build:client": "webpack --mode production",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build": "npm run build:client && npm run build:server",
+    "start": "node dist/server/index.js",
+    "test": "find src -name '*.test.ts' ! -path '*/tests/*.integration.test.ts' | xargs npx tsx --test",
+    "test:integration": "tsx --test 'src/**/tests/*.integration.test.ts'",
+    "build:docs": "eleventy",
+    "dev:docs": "eleventy --watch"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.26.0",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "core-js": "^3.39.0",
+    "express": "^5.2.1",
+    "i18next": "^26.2.0",
+    "ioredis": "^5.9.1",
+    "mediasoup": "^3.15.7",
+    "mediasoup-client": "^3.7.16",
+    "regenerator-runtime": "^0.14.1",
+    "sharp": "^0.33.5",
+    "three": "^0.170.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.5",
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-transform-runtime": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.7",
+    "@types/ws": "^8.18.1",
+    "babel-loader": "^9.2.1",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.5",
+    "ioredis-mock": "^8.13.1",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "mediasoup": {
+    "worker": {
+      "rtcMinPort": 40000,
+      "rtcMaxPort": 49999
+    }
+  }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChOWDER Display</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+</head>
+
+<body>
+    <div id="menu">
+        <button id="full-screen-button" class="full-screen button">FULL SCREEN</button>
+        <button id="controller-button" class="controller button">CONTROLLER</button>
+
+        <span class="change-display-name">
+            <input type="text" id="change-display-name-input" list="change-display-name-list" />
+            <datalist id="change-display-name-list">
+            </datalist>
+            <button id="change-display-btn">CHANGE</button>
+        </span>
+    </div>
+    <!-- 接続画面 -->
+    <div id="connection-screen">
+        <h1>🖥️ ChOWDER Display</h1>
+        <div id="display-lang-switcher" class="display-lang-switcher">
+            <span class="lang-switcher-icon">🌐</span>
+            <div class="lang-segment">
+                <button class="lang-seg-btn" data-lang="en">EN</button>
+                <button class="lang-seg-btn" data-lang="ja">JA</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="display-name-input" data-i18n="displayNameLabel">ディスプレイ名 / Display Name</label>
+            <input type="text" id="display-name-input" list="display-name-list"
+                placeholder="例: 会議室A / Example: Meeting Room A" />
+            <datalist id="display-name-list">
+            </datalist>
+        </div>
+        <button id="connect-btn" data-i18n="connectBtn">Connect</button>
+        <div class="info-text" data-i18n="displayConnectInfo">
+            This display will wait for controller approval after connection.
+        </div>
+    </div>
+
+    <!-- 承認待ち画面 -->
+    <div id="waiting-screen">
+        <div class="waiting-icon"></div>
+        <h2 data-i18n="waitingForApproval">Waiting for Approval</h2>
+        <div class="display-id" id="waiting-display-id">-</div>
+        <div class="message" data-i18n="waitingMessage">
+            This display is connected and waiting for approval from the controller.<br>
+            Please approve this display from the controller interface.
+        </div>
+    </div>
+
+    <!-- 拒否画面 -->
+    <div id="rejected-screen">
+        <div class="rejected-icon">🚫</div>
+        <h2 data-i18n="connectionRejected">Connection Rejected</h2>
+        <div class="message" data-i18n="rejectedMessage">
+            This display was rejected by the controller.<br>
+            Please reload the page to reconnect.
+        </div>
+        <button id="rejected-reload-btn" data-i18n="reloadBtn">Reload / 再読み込み</button>
+    </div>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>Connecting...</div>
+    </div>
+
+    <div id="display-area" style="transform-origin: top left !important; transform: scale(1);"><div id="content-area" style="position: absolute;"></div><div id="display-cursor-area"></div></div>
+    <button id="fullscr-btn" >FullScreen</button>
+
+    <!-- ライブストリーム表示用 -->
+    <div id="view-area"></div>
+
+    <div id="debug-info">
+        <div>Window ID: <span id="debug-window-id">-</span></div>
+        <div>Position: <span id="debug-position">-</span></div>
+        <div>VirtualWidth/Height: <span id="debug-size">-</span></div>
+        <div>FPS: <span id="debug-fps">-</span></div>
+    </div>
+
+    <div id="status-bar">
+        <div>
+            <span class="status-item">
+                Status: <span id="status-connection" class="status-disconnected">Disconnected</span>
+            </span>
+            <span class="status-item">
+                Name: <span id="status-display-name">-</span>
+            </span>
+            <span class="status-item">
+                Window: <span id="status-window-id">-</span>
+            </span>
+        </div>
+        <div>
+            <span class="status-item">Press [D] for debug info</span>
+        </div>
+    </div>
+
+</body>
+
+</html>

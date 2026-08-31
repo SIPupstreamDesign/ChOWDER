@@ -1,0 +1,31 @@
+old/
+memo.md
+
+
+# 依存ライブラリ
+node_modules/
+ssl/*.pem
+
+# ビルド成果物
+dist/
+build/
+
+# Docker/DBのデータ（ローカルで保持するもの）
+redis-data/
+
+# ログファイル
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OSのシステムファイル
+.DS_Store
+Thumbs.db
+
+# 環境変数（セキュリティのため）
+.env
+
+.github
+.vscode
+.agents
