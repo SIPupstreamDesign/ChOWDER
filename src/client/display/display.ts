@@ -1,3 +1,7 @@
+
+interface PendingCameraUpdate {
+    params: any;
+}
 /**
  * ChOWDER Display Client
  * ディスプレイクライアント - VirtualDisplayの一部を表示
@@ -37,6 +41,7 @@ interface JSONRPCMessage {
     id: string;
     method: string;
     params: any;
+    to?: string;
 }
 
 interface JSONRPCResponse {
@@ -64,6 +69,8 @@ class DisplayClient {
     private liveStreamManager: LiveStreamManager | null = null;
 
     private wsMessagePool: any[] = [];
+    private pendingCameraUpdates: Map<string, PendingCameraUpdate> = new Map();
+    private cameraFlushScheduled = false;
 
     private fps: number = 10;
     private lastTime: number = 0;
@@ -134,7 +141,7 @@ class DisplayClient {
                 statusBar?.classList.remove('is-visible');
             }
         });
-        topBtn?.addEventListener('click' , (event) => {
+        topBtn?.addEventListener('click', (event) => {
             if (!statusBar) return;
             if (!document.fullscreenElement) {
                 statusBar.style.display = "none";
@@ -230,6 +237,19 @@ class DisplayClient {
 
         this.ws.onmessage = (event) => {
             if (typeof event.data === 'string') {
+                let message: JSONRPCMessage;
+                try {
+                    message = JSON.parse(event.data);
+                } catch (error) {
+                    console.error('[Display] Failed to parse JSON message:', error);
+                    return;
+                }
+
+                if (this.isCameraUpdateMessage(message)) {
+                    this.enqueueCameraUpdate(message.params);
+                    return;
+                }
+
                 this.wsMessagePool.push(event);
             } else if (event.data instanceof Blob) {
                 this.handleBinaryMessage(event.data);
@@ -539,10 +559,10 @@ class DisplayClient {
                 normalizedMetadata.width,
                 normalizedMetadata.height,
             );
-            elem.style.left    = `${lsCoords.x}px`;
-            elem.style.top     = `${lsCoords.y}px`;
-            elem.style.width   = `${lsCoords.w}px`;
-            elem.style.height  = `${lsCoords.h}px`;
+            elem.style.left = `${lsCoords.x}px`;
+            elem.style.top = `${lsCoords.y}px`;
+            elem.style.width = `${lsCoords.w}px`;
+            elem.style.height = `${lsCoords.h}px`;
             elem.style.display = normalizedMetadata.visible !== false ? 'block' : 'none';
             elem.style.zIndex = `${normalizeContentZIndex(normalizedMetadata.zindex)}`;
 
@@ -629,7 +649,7 @@ class DisplayClient {
             await this.displayContent(metadata);
         }
         this.renderer.sendAllWebGLResize();
-        
+
         //強制リフローで、サイズ変更時の挙動を安定化させる狙いの行
         const vh = this.displayArea.getBoundingClientRect();
         let n = vh.width;
@@ -674,7 +694,9 @@ class DisplayClient {
 
     private handleMessage2(message: any): void {
         if (message.to === 'client') {
-            console.log('[Display] Received broadcast:', message.method, message.params);
+            if (message.method !== 'UpdateCameraMatrix') {
+                console.log('[Display] Received broadcast:', message.method, message.params);
+            }
             this.handleBroadcast(message.method, message.params);
         } else if (message.id !== undefined && message.id !== null && this.callbacks.has(String(message.id))) {
             const callback = this.callbacks.get(String(message.id))!;
@@ -685,6 +707,34 @@ class DisplayClient {
                 callback(null, message.result);
             }
         }
+    }
+
+    private isCameraUpdateMessage(message: JSONRPCMessage): boolean {
+        const params = message.params;
+        return message.to === 'client'
+            && message.method === 'UpdateCameraMatrix'
+            && Boolean(params?.metadataId)
+            && Boolean(params?.cameraWorldMatrix)
+            && Boolean(params?.cameraParams);
+    }
+
+    private enqueueCameraUpdate(params: any): void {
+        this.pendingCameraUpdates.set(params.metadataId, { params });
+
+        if (this.cameraFlushScheduled) return;
+        this.cameraFlushScheduled = true;
+        queueMicrotask(() => {
+            this.cameraFlushScheduled = false;
+            const updates = this.pendingCameraUpdates;
+            this.pendingCameraUpdates = new Map();
+            for (const { params: updateParams } of updates.values()) {
+                this.renderer.sendWebGLCameraUpdate(
+                    updateParams.metadataId,
+                    updateParams.cameraWorldMatrix,
+                    updateParams.cameraParams,
+                );
+            }
+        });
     }
 
     private async handleBinaryMessage(data: Blob): Promise<void> {
@@ -698,7 +748,7 @@ class DisplayClient {
             }
 
             const message = parsed.metadata;
-            const binary  = parsed.binary;
+            const binary = parsed.binary;
 
             if (message.id && this.callbacks.has(message.id)) {
                 const callback = this.callbacks.get(message.id)!;
@@ -797,13 +847,13 @@ class DisplayClient {
             }
             if (this.windowMetaData && myParams) {
                 console.log('[Display] Before update - virtualHeight:', this.windowMetaData.virtualHeight, '-> will become:', myParams.virtualHeight ?? this.windowMetaData.virtualHeight);
-                this.windowMetaData.posx          = myParams.posx          ?? this.windowMetaData.posx;
-                this.windowMetaData.posy          = myParams.posy          ?? this.windowMetaData.posy;
-                this.windowMetaData.virtualWidth  = myParams.virtualWidth  ?? this.windowMetaData.virtualWidth;
+                this.windowMetaData.posx = myParams.posx ?? this.windowMetaData.posx;
+                this.windowMetaData.posy = myParams.posy ?? this.windowMetaData.posy;
+                this.windowMetaData.virtualWidth = myParams.virtualWidth ?? this.windowMetaData.virtualWidth;
                 this.windowMetaData.virtualHeight = myParams.virtualHeight ?? this.windowMetaData.virtualHeight;
                 // pixelWidth/Height は常に実際の表示領域サイズを使用する
                 // （コントローラ側から送られてくる古いキャッシュ値で上書きしない）
-                this.windowMetaData.pixelWidth  = this.displayArea.clientWidth;
+                this.windowMetaData.pixelWidth = this.displayArea.clientWidth;
                 this.windowMetaData.pixelHeight = this.displayArea.clientHeight;
                 if (myParams.contentVisible !== undefined) {
                     this.windowMetaData.contentVisible = myParams.contentVisible;

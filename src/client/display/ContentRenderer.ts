@@ -22,7 +22,7 @@ export class ContentRenderer {
     constructor(
         private readonly sendCommand: SendCommandFn,
         private readonly getWindowMeta: GetWindowMetaFn,
-    ) {}
+    ) { }
 
     // ----------------------------------------------------------------
     // 画像
@@ -116,7 +116,6 @@ export class ContentRenderer {
 
             const connector = new IFrameConnector(iframe);
             this.webglConnectors.set(metadataId, { iframe, connector, contentMeta: metadata });
-
             connector.connect(() => {
                 if (content.cameraWorldMatrix && content.cameraParams) {
                     try {
@@ -223,9 +222,11 @@ export class ContentRenderer {
         const webgl = this.webglConnectors.get(metadataId);
         if (!webgl) return;
         try {
+            const cameraMatrix = JSON.parse(cameraWorldMatrix);
+            const cameraParameters = JSON.parse(cameraParams);
             webgl.connector.send('UpdateCamera', {
-                mat: JSON.parse(cameraWorldMatrix),
-                params: JSON.parse(cameraParams),
+                mat: cameraMatrix,
+                params: cameraParameters,
             });
         } catch (e) {
             console.error('[ContentRenderer] UpdateCamera parse error:', e);
@@ -282,7 +283,7 @@ export class ContentRenderer {
         }
         const xs = xsplit || 1;
         const ys = ysplit || 1;
-        const imgW = orgWidth  || xs * TILE_SIZE;
+        const imgW = orgWidth || xs * TILE_SIZE;
         const imgH = orgHeight || ys * TILE_SIZE;
         const keyvalue = String(meta.keyvalue ?? metadataId);
 
@@ -299,8 +300,8 @@ export class ContentRenderer {
             container = document.createElement('div');
             container.className = 'tile-container';
             container.style.position = 'relative';
-            container.style.width    = '100%';
-            container.style.height   = '100%';
+            container.style.width = '100%';
+            container.style.height = '100%';
 
             // reduction image（常時バックグラウンド）
             const redImg = document.createElement('img');
@@ -333,13 +334,13 @@ export class ContentRenderer {
             elem.appendChild(container);
         }
 
-        const redImg   = container.querySelector<HTMLImageElement>('.reduction_image')!;
+        const redImg = container.querySelector<HTMLImageElement>('.reduction_image')!;
         const tileGrid = container.querySelector<HTMLElement>('.tile-grid')!;
 
         // LOD分岐
         if (useReduction) {
             tileGrid.style.display = 'none';
-            redImg.style.display   = 'block';
+            redImg.style.display = 'block';
 
             if (redImg.dataset.metadataId !== metadataId) {
                 try {
@@ -358,7 +359,7 @@ export class ContentRenderer {
         }
 
         // タイルモード: reduction は裏に維持（ちらつき防止のバックグラウンド）
-        redImg.style.display   = 'block';
+        redImg.style.display = 'block';
         tileGrid.style.display = 'grid';
 
         if (redImg.dataset.metadataId !== metadataId) {
@@ -371,13 +372,13 @@ export class ContentRenderer {
                         redImg.dataset.metadataId = metadataId;
                     }
                 })
-                .catch(() => {/* ignore */});
+                .catch(() => {/* ignore */ });
         }
 
         // 画面外スキップ + keyvalue キャッシュで必要タイルのみ取得
-        const scaleX = meta.width  > 0 ? meta.width  / imgW : 1;
+        const scaleX = meta.width > 0 ? meta.width / imgW : 1;
         const scaleY = meta.height > 0 ? meta.height / imgH : 1;
-        const pixW = windowMeta?.pixelWidth  ?? window.innerWidth;
+        const pixW = windowMeta?.pixelWidth ?? window.innerWidth;
         const pixH = windowMeta?.pixelHeight ?? window.innerHeight;
 
         const fetchPromises: Promise<void>[] = [];
@@ -398,7 +399,7 @@ export class ContentRenderer {
                 const sc = virtualToWindowCoordinates(tvx, tvy, tvw, tvh, windowMeta);
                 const inView =
                     sc.x + sc.w > 0 && sc.y + sc.h > 0 &&
-                    sc.x < pixW    && sc.y < pixH;
+                    sc.x < pixW && sc.y < pixH;
                 if (!inView) continue;
 
                 fetchPromises.push(
@@ -411,7 +412,7 @@ export class ContentRenderer {
                                 img.dataset.keyvalue = keyvalue;
                             }
                         })
-                        .catch(() => {/* ignore */})
+                        .catch(() => {/* ignore */ })
                 );
             }
         }

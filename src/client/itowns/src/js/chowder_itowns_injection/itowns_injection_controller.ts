@@ -12,6 +12,21 @@ import { createTimescalePotreeLayer } from './timeseries_potree_layer';
 import { createTimescaleC3DTilesLayer } from './timeseries_c3dtiles_layer';
 import { C3DTileUtil } from './c3dtile_util';
 
+// itowns の Camera ラッパー（three.js の camera3D とは別オブジェクト）が保持する LOD 判定用の値。
+// preSSE はタイル(地形/画像)のSSE計算に、viewportWidth/viewportHeightは点群レイヤーのSSE計算に使われる。
+interface ITownsCameraParams {
+    fovy: number;
+    zoom: number;
+    near: number;
+    far: number;
+    filmOffset: number;
+    filmGauge: number;
+    aspect: number;
+    preSSE: number;
+    viewportWidth: number;
+    viewportHeight: number;
+}
+
 // ---------------------------------------------------------------------------
 // ユーティリティ関数
 // ---------------------------------------------------------------------------
@@ -58,6 +73,8 @@ export class ITownsInjectionController {
     private range: { rangeStartTime: Date; rangeEndTime: Date } | null = null;
     private BarGraphExtent: any;
     private isStopDispatchRemoveEvent: boolean = false;
+    // 送信元と同期したLOD判定用の値。camera.resize()系の呼び出しで上書きされた際の再適用に使う。
+    private lastSyncedLOD: { preSSE: number; width: number; height: number } | null = null;
 
     constructor(view: any, viewerDiv: HTMLElement, timeCallback: ((date: Date) => void) | null = null) {
         this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
@@ -162,6 +179,8 @@ export class ITownsInjectionController {
     // -----------------------------------------------------------------------
 
     private injectaAsChOWDERDisplayController(data: { view: any; viewerDiv: HTMLElement; timeCallback: ((date: Date) => void) | null }): void {
+        // main.ts のシムにより、'resize' に undefined を渡すと登録済みの resize リスナー
+        // （itowns自身の_resizeListenerを含む）を一括解除できる。
         window.removeEventListener('resize', undefined as any);
 
         const debounceRedraw = (() => {
@@ -198,6 +217,9 @@ export class ITownsInjectionController {
                     // アスペクト比にかかわらず常に renderer をリサイズする
                     // （マニピュレータがアスペクト比ロックで拡縮する時も地図が正しくスケールする）
                     func();
+                    // origResize(=View.resize)はcamera.resize()を内部で呼び、同期済みのLOD判定用の値を
+                    // 実DOMサイズで上書きしてしまうため、直後に送信元の値へ戻す。
+                    this.restoreSyncedLOD();
                     const canvas = this.itownsViewerDiv!.getElementsByTagName('canvas')[0] as HTMLCanvasElement | undefined;
                     if (canvas) {
                         canvas.style.width = '100%';
@@ -417,7 +439,10 @@ export class ITownsInjectionController {
     // カメラ操作
     // -----------------------------------------------------------------------
 
-    private applyCamera(worldMat: number[], cameraParams: any): void {
+    private applyCamera(
+        worldMat: number[],
+        cameraParams: ITownsCameraParams,
+    ): void {
         const cam = this.itownsView.camera.camera3D;
         cam.matrixAutoUpdate = false;
         cam.matrixWorld.elements = worldMat;
@@ -442,12 +467,36 @@ export class ITownsInjectionController {
         const viewerH = this.itownsViewerDiv?.clientHeight ?? 0;
         cam.aspect = (viewerW > 0 && viewerH > 0) ? viewerW / viewerH : cameraParams.aspect;
         cam.matrixAutoUpdate = true;
+        // near/far/fov/zoom/aspectの変更はupdateProjectionMatrix()を呼ばない限り投影行列に反映されない。
+        cam.updateProjectionMatrix();
+
+        // LOD(SSE)判定用の値は描画解像度と独立させ、送信元(itowns本体)の値をそのまま反映する。
+        // camera.width/heightは点群レイヤーがSSE計算で直接参照するためpreSSEだけでは不十分。
+        this.itownsView.camera._preSSE = cameraParams.preSSE;
+        this.itownsView.camera.width = cameraParams.viewportWidth;
+        this.itownsView.camera.height = cameraParams.viewportHeight;
+        this.lastSyncedLOD = {
+            preSSE: cameraParams.preSSE,
+            width: cameraParams.viewportWidth,
+            height: cameraParams.viewportHeight,
+        };
 
         this.itownsView.notifyChange(cam);
     }
 
+    // camera.resize()系の呼び出しで上書きされた場合に、直近で送信元と同期したLOD判定用の値を復元する。
+    private restoreSyncedLOD(): void {
+        if (this.lastSyncedLOD === null) {
+            return;
+        }
+        this.itownsView.camera._preSSE = this.lastSyncedLOD.preSSE;
+        this.itownsView.camera.width = this.lastSyncedLOD.width;
+        this.itownsView.camera.height = this.lastSyncedLOD.height;
+    }
+
     private getCameraParams(camera3D: any): string {
-        return JSON.stringify({
+        const camera = this.itownsView.camera;
+        const params: ITownsCameraParams = {
             fovy: camera3D.fov,
             zoom: camera3D.zoom,
             near: camera3D.near,
@@ -455,7 +504,11 @@ export class ITownsInjectionController {
             filmOffset: camera3D.filmOffset,
             filmGauge: camera3D.filmGauge,
             aspect: camera3D.aspect,
-        });
+            preSSE: camera._preSSE,
+            viewportWidth: camera.width,
+            viewportHeight: camera.height,
+        };
+        return JSON.stringify(params);
     }
 
     // -----------------------------------------------------------------------
@@ -540,9 +593,9 @@ export class ITownsInjectionController {
             // Display モード: elem が virtualToWindowCoordinates で配置済み
             // iframe は 100%x100% = コンテンツピクセルサイズ、setViewOffset は使わずフルレンダリング
             // body の overflow:hidden がディスプレイ矩形外をクリップする
-            this.itownsViewerDiv!.style.left   = '0px';
-            this.itownsViewerDiv!.style.top    = '0px';
-            this.itownsViewerDiv!.style.width  = '100%';
+            this.itownsViewerDiv!.style.left = '0px';
+            this.itownsViewerDiv!.style.top = '0px';
+            this.itownsViewerDiv!.style.width = '100%';
             this.itownsViewerDiv!.style.height = '100%';
             this.itownsView.camera.camera3D.clearViewOffset();
             this.itownsView.mainLoop.gfxEngine.renderer.setSize(width, height);
@@ -558,12 +611,12 @@ export class ITownsInjectionController {
             if (!rect) return;
             // Controller モード: 既存の挙動
             this.itownsViewerDiv!.style.left = parseInt(rect.x) + 'px';
-            this.itownsViewerDiv!.style.top  = parseInt(rect.y) + 'px';
+            this.itownsViewerDiv!.style.top = parseInt(rect.y) + 'px';
             if (isSetOffset) {
-                this.itownsViewerDiv!.style.width  = parseInt(rect.w) + 'px';
+                this.itownsViewerDiv!.style.width = parseInt(rect.w) + 'px';
                 this.itownsViewerDiv!.style.height = parseInt(rect.h) + 'px';
             } else {
-                this.itownsViewerDiv!.style.width  = '100%';
+                this.itownsViewerDiv!.style.width = '100%';
                 this.itownsViewerDiv!.style.height = '100%';
             }
             this.itownsView.camera.camera3D.setViewOffset(width, height, rect.x, rect.y, rect.w, rect.h);
@@ -638,7 +691,7 @@ export class ITownsInjectionController {
         const loadTexture = (url: string, options: any = {}): Promise<any> => {
             return new Promise((resolve, reject) => {
                 textureLoader.crossOrigin = options.crossOrigin;
-                textureLoader.load(url, resolve, () => {}, reject);
+                textureLoader.load(url, resolve, () => { }, reject);
             });
         };
 
@@ -733,7 +786,7 @@ export class ITownsInjectionController {
                 layer.object3d.updateMatrixWorld();
             });
             if ('conversion' in config) {
-                layer.defineLayerProperty('conversion', config.conversion, () => {});
+                layer.defineLayerProperty('conversion', config.conversion, () => { });
                 C3DTileUtil.applyConvertSetting(layer, config);
             }
             return layer;
@@ -901,7 +954,7 @@ export class ITownsInjectionController {
 
         const initializeOneTime = () => {
             for (const item of layerList) this.changeLayerProperty(item);
-            this.iframeConnector.send(ITownsCommand.LayersInitialized, {}, () => {});
+            this.iframeConnector.send(ITownsCommand.LayersInitialized, {}, () => { });
             this.itownsView.removeEventListener('layers-initialized', initializeOneTime);
         };
         this.itownsView.addEventListener('layers-initialized', initializeOneTime);

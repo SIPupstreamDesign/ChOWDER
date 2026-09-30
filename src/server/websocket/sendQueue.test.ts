@@ -101,6 +101,45 @@ describe('SendQueue', () => {
         done();
     });
 
+    it('同じキーの未送信メッセージは最新値だけ送信される', () => {
+        let pendingCallback: ((err?: Error) => void) | null = null;
+        const sent: (string | Buffer)[] = [];
+        const mock = {
+            send(data: string | Buffer, cb?: (err?: Error) => void) {
+                sent.push(data);
+                pendingCallback = cb ?? null;
+            },
+        };
+        const q = new SendQueue(mock as unknown as WebSocket);
+
+        q.pushLatest('camera:content-a', 'a1');
+        q.pushLatest('camera:content-a', 'a2');
+        q.pushLatest('camera:content-a', 'a3');
+        (pendingCallback as ((err?: Error) => void) | null)?.();
+
+        assert.deepStrictEqual(sent, ['a1', 'a3']);
+    });
+
+    it('異なるキーの最新値は互いに置き換わらない', () => {
+        let pendingCallback: ((err?: Error) => void) | null = null;
+        const sent: (string | Buffer)[] = [];
+        const mock = {
+            send(data: string | Buffer, cb?: (err?: Error) => void) {
+                sent.push(data);
+                pendingCallback = cb ?? null;
+            },
+        };
+        const q = new SendQueue(mock as unknown as WebSocket);
+
+        q.pushLatest('camera:content-a', 'a1');
+        q.pushLatest('camera:content-b', 'b1');
+        q.pushLatest('camera:content-a', 'a2');
+        (pendingCallback as ((err?: Error) => void) | null)?.();
+        (pendingCallback as ((err?: Error) => void) | null)?.();
+
+        assert.deepStrictEqual(sent, ['a1', 'b1', 'a2']);
+    });
+
     it('clear() を呼ぶと未送信メッセージが破棄される', () => {
         const { ws, sent } = createMockWs({ callbackTiming: 'never' });
         const q = new SendQueue(ws);

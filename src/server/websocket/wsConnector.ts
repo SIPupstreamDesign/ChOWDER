@@ -17,6 +17,8 @@ export interface ExtendedWebSocket extends WebSocket {
     isAlive: boolean;
     /** 2レーン送信キュー（priority / normal） */
     sendQueued(data: string | Buffer, priority?: boolean): void;
+    /** キー単位で未送信データを最新値に置き換える送信 */
+    sendLatestQueued(key: string, data: string | Buffer): void;
     _sendQueue?: SendQueue;
 }
 
@@ -201,6 +203,9 @@ export class WSConnector {
         ws.sendQueued = (data: string | Buffer, priority: boolean = false) => {
             queue.push(data, priority);
         };
+        ws.sendLatestQueued = (key: string, data: string | Buffer) => {
+            queue.pushLatest(key, data);
+        };
 
         ws.on('message', (data: RawData) => {
             // Bufferの場合は一旦文字列に変換してみる
@@ -344,6 +349,39 @@ export class WSConnector {
             } else {
                 console.log('[Error] Not found the method in connector:', data);
             }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    broadcastLatest(
+        wss: Set<ExtendedWebSocket>,
+        method: string,
+        args: any,
+        key: string,
+        excludeSocketId?: string
+    ): void {
+        const reqjson: JSONRPCMessage = {
+            jsonrpc: '2.0',
+            id: String(this.messageID),
+            method,
+            params: args,
+            to: 'client',
+        };
+        this.messageID++;
+
+        try {
+            const data = JSON.stringify(reqjson);
+            if (!Command.hasOwnProperty(method)) {
+                console.log('[Error] Not found the method in connector:', data);
+                return;
+            }
+
+            wss.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN && client.id !== excludeSocketId) {
+                    client.sendLatestQueued(key, data);
+                }
+            });
         } catch (e) {
             console.error(e);
         }
