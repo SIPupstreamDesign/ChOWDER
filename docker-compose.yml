@@ -8,6 +8,8 @@ services:
       - "10000-10100:10000-10100/tcp"
     volumes:
       - ./src:/app/src
+      - ./vendor:/app/vendor
+      - /app/vendor/itowns/node_modules
       - ./public:/app/public
       - ./dist:/app/dist
       - ./package.json:/app/package.json
@@ -18,11 +20,13 @@ services:
       - ./document:/app/document
       - ./eleventy.config.js:/app/eleventy.config.js
       - ./config:/app/config
+      - ./logs/client-diagnostics:/app/logs/client-diagnostics
       - /app/node_modules
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - TSX_TSCONFIG_PATH=tsconfig.server.json
+      - CLIENT_DIAGNOSTIC_ENABLED=${CLIENT_DIAGNOSTIC_ENABLED:-false}
       - MEDIASOUP_ANNOUNCED_IP=${MEDIASOUP_ANNOUNCED_IP:-127.0.0.1}
       - MEDIASOUP_LAN_IP=${MEDIASOUP_LAN_IP}
       - MEDIASOUP_WAN_IP=${MEDIASOUP_WAN_IP}

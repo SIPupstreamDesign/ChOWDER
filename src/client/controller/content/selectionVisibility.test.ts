@@ -57,11 +57,11 @@ function makeDiv(id = '') {
         value: '',
         appendChild(child: any) { children.push(child); return child; },
         insertBefore(child: any) { children.unshift(child); return child; },
-        addEventListener() {},
-        removeEventListener() {},
+        addEventListener() { },
+        removeEventListener() { },
         querySelector(_: string) { return null; },
         querySelectorAll(_: string) { return []; },
-        remove() {},
+        remove() { },
         firstChild: null,
     };
 }
@@ -75,9 +75,9 @@ function makeManipulatorSpy() {
     let showCount = 0;
     return {
         removeManipulator() { removeCount++; },
-        showManipulator() { showCount++ ; },
-        init() {},
-        setAspectRatio() {},
+        showManipulator() { showCount++; },
+        init() { },
+        setAspectRatio() { },
         isShowManipulator() { return false; },
         get removeCallCount() { return removeCount; },
         get showCallCount() { return showCount; },
@@ -108,7 +108,7 @@ function makeElements(): TestElements {
         viewArea: makeDiv('view-area'),
         previewContent: makeDiv('preview-content'),
         tileUploadOverlay: makeDiv('tile-upload-overlay'),
-        metadataList: { innerHTML: '', appendChild() {}, querySelector() { return null; } },
+        metadataList: { innerHTML: '', appendChild() { }, querySelector() { return null; } },
         deleteBtn: { disabled: true },
         contentInfoBody: makeDiv('content-info-body'),
         fixTextWap: makeDiv('fix-text-wap'),
@@ -131,22 +131,22 @@ function makeDeps(elements: TestElements, manipSpy: ReturnType<typeof makeManipu
         elements,
         sendCmd: overrides?.sendCmdImpl ?? (async () => ({})),
         sendBinaryCmd: async () => ({}),
-        logFn: () => {},
+        logFn: () => { },
         manipulator: manipSpy as any,
         getZoom: () => 1,
-        pushUpdateStock: () => {},
+        pushUpdateStock: () => { },
         getSocketId: () => 'sock1',
         getCurrentUser: () => 'user1',
         getLiveStreamManager: () => null,
         tileUploader: {} as any,
-        registerBroadcast: () => {},
+        registerBroadcast: () => { },
         consumePendingProducer: () => null,
-        handleNewProducer: async () => {},
+        handleNewProducer: async () => { },
         getEditMode: () => 1,
-        showRightClickMenu: () => {},
+        showRightClickMenu: () => { },
         stopVideoFileByMetadata: async (_id: string): Promise<boolean> => overrides?.stopVideoResult ?? false,
         stopLiveStreamByProducerId: async (_id: string): Promise<boolean> => overrides?.stopLiveStreamResult ?? false,
-        addVideoFile: async () => {},
+        addVideoFile: async () => { },
     };
 }
 
@@ -171,12 +171,12 @@ function setupDom() {
             return {
                 style, dataset, classList,
                 innerHTML: '',
-                addEventListener() {},
-                appendChild() {},
+                addEventListener() { },
+                appendChild() { },
             };
         },
         getElementById(_id: string) { return null; },
-        body: { appendChild() {} },
+        body: { appendChild() { } },
     };
 }
 
@@ -334,6 +334,10 @@ describe('ContentManager: 選択状態と UI 可視性', () => {
                 },
             }));
             (cm as any)._selectedMetadataId = 'meta-1';
+            const removedPreviewIds: string[] = [];
+            cm.removeContentFromViewArea = (metadataId: string): void => {
+                removedPreviewIds.push(metadataId);
+            };
 
             // confirm を自動 OK にする
             const origConfirm = (globalThis as any).confirm;
@@ -345,6 +349,7 @@ describe('ContentManager: 選択状態と UI 可視性', () => {
             }
 
             assert.strictEqual(el.contentInfoBody.style.display, 'none');
+            assert.deepStrictEqual(removedPreviewIds, ['meta-1']);
         });
     });
 

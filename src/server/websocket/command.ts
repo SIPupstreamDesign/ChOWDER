@@ -106,6 +106,7 @@ export const Command = {
     Produce: "Produce",
     CloseProducer: "CloseProducer",
     Consume: "Consume",
+    CloseConsumer: "CloseConsumer",
     ResumeConsumer: "ResumeConsumer",
     GetActiveProducers: "GetActiveProducers",
 
@@ -135,6 +136,7 @@ export const Command = {
 
     // タイルイメージアップロード進捗
     TileimageProgress: "TileimageProgress",
+    TileimageHeartbeat: "TileimageHeartbeat",
     TileimageUploadFailed: "TileimageUploadFailed",
 
     // itowns 自動ログイン用OTP
@@ -143,6 +145,8 @@ export const Command = {
 
     // iTowns カメラ更新（content:camera キーのみ指定）
     UpdateCameraMatrix: "UpdateCameraMatrix",
+    RegisterCameraSource: "RegisterCameraSource",
+    ReportClientDiagnostic: "ReportClientDiagnostic",
 
     // サムネイル
     GetThumbnail: "GetThumbnail",         // クライアント → サーバー: サムネイル取得

@@ -123,6 +123,64 @@ describe('MediaService', () => {
         });
     });
 
+    describe('closeConsumer', () => {
+        it('所有socketのConsumerと受信Transportを解放する', { timeout: 5000 }, async (): Promise<void> => {
+            const socketId = 'display-socket';
+            const consumerId = 'consumer-1';
+            const transportId = 'recv-transport-1';
+            const consumer = { closed: false, close(): void { this.closed = true; } };
+            const transport = { closed: false, close(): void { this.closed = true; } };
+
+            (mediaService as any).consumers.set(consumerId, consumer);
+            (mediaService as any).consumerInfos.set(consumerId, {
+                consumerId,
+                socketId,
+                producerId: 'producer-1',
+                transportId,
+                kind: 'video',
+                created: new Date(),
+            });
+            (mediaService as any).transports.set(transportId, transport);
+            (mediaService as any).transportInfos.set(transportId, {
+                transportId,
+                socketId,
+                direction: 'recv',
+                created: new Date(),
+            });
+
+            await mediaService.closeConsumer(socketId, consumerId, transportId);
+
+            assert.strictEqual(consumer.closed, true);
+            assert.strictEqual(transport.closed, true);
+            assert.strictEqual((mediaService as any).consumers.has(consumerId), false);
+            assert.strictEqual((mediaService as any).consumerInfos.has(consumerId), false);
+            assert.strictEqual((mediaService as any).transports.has(transportId), false);
+            assert.strictEqual((mediaService as any).transportInfos.has(transportId), false);
+        });
+
+        it('別socketが所有する受信Transportを解放しない', { timeout: 5000 }, async (): Promise<void> => {
+            const transportId = 'recv-transport-owned';
+            const transport = { closed: false, close(): void { this.closed = true; } };
+            (mediaService as any).transports.set(transportId, transport);
+            (mediaService as any).transportInfos.set(transportId, {
+                transportId,
+                socketId: 'owner-socket',
+                direction: 'recv',
+                created: new Date(),
+            });
+
+            await assert.rejects(
+                async (): Promise<void> => {
+                    await mediaService.closeConsumer('other-socket', undefined, transportId);
+                },
+                /Unauthorized transport/,
+            );
+
+            assert.strictEqual(transport.closed, false);
+            assert.strictEqual((mediaService as any).transports.has(transportId), true);
+        });
+    });
+
     describe('Router 未初期化時のエラー', () => {
         it('initialize() 前に getRouterRtpCapabilities を呼ぶとエラーになること', () => {
             assert.throws(() => {

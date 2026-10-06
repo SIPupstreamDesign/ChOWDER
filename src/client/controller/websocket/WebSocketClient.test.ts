@@ -34,7 +34,7 @@ function createMockWebSocket(): MockWebSocket {
         onerror: null,
         onmessage: null,
         send(data: string) { this.sentMessages.push(data); },
-        close() {},
+        close() { },
         triggerOpen() { this.onopen?.(); },
         triggerMessage(data: string) { this.onmessage?.({ data }); },
         triggerClose() { this.onclose?.(); },
@@ -88,7 +88,7 @@ describe('WebSocketClient', () => {
                 configurable: true,
             });
             this.send = (data: string) => mock.sentMessages.push(data);
-            this.close = () => {};
+            this.close = () => { };
         };
     });
 
@@ -101,9 +101,9 @@ describe('WebSocketClient', () => {
         const broadcasts: any[] = [];
         const client = new WebSocketClient(
             (msg) => broadcasts.push(msg),
-            () => {},
-            () => {},
-            () => {},
+            () => { },
+            () => { },
+            () => { },
         );
         await assert.rejects(
             () => client.sendCommand('Ping', {}),
@@ -113,10 +113,10 @@ describe('WebSocketClient', () => {
 
     it('接続後に sendCommand() を呼ぶと JSON-RPC メッセージを送信する', async () => {
         const client = new WebSocketClient(
-            () => {},
-            () => {},
-            () => {},
-            () => {},
+            () => { },
+            () => { },
+            () => { },
+            () => { },
         );
         client.connect();
         mock.triggerOpen();
@@ -139,10 +139,10 @@ describe('WebSocketClient', () => {
 
     it('エラーレスポンスが来た場合 sendCommand() は拒否される', async () => {
         const client = new WebSocketClient(
-            () => {},
-            () => {},
-            () => {},
-            () => {},
+            () => { },
+            () => { },
+            () => { },
+            () => { },
         );
         client.connect();
         mock.triggerOpen();
@@ -158,9 +158,9 @@ describe('WebSocketClient', () => {
         const broadcasts: any[] = [];
         const client = new WebSocketClient(
             (msg) => broadcasts.push(msg),
-            () => {},
-            () => {},
-            () => {},
+            () => { },
+            () => { },
+            () => { },
         );
         client.connect();
         mock.triggerOpen();
@@ -176,19 +176,19 @@ describe('WebSocketClient', () => {
     });
 
     it('registerBroadcastHandler で登録したハンドラを getRegisteredBroadcastHandler で取得できる', () => {
-        const client = new WebSocketClient(() => {}, () => {}, () => {}, () => {});
-        const handler = (_params: any) => {};
+        const client = new WebSocketClient(() => { }, () => { }, () => { }, () => { });
+        const handler = (_params: any) => { };
         client.registerBroadcastHandler('MyEvent', handler);
         assert.strictEqual(client.getRegisteredBroadcastHandler('MyEvent'), handler);
     });
 
     it('isConnected は接続前は false である', () => {
-        const client = new WebSocketClient(() => {}, () => {}, () => {}, () => {});
+        const client = new WebSocketClient(() => { }, () => { }, () => { }, () => { });
         assert.strictEqual(client.isConnected, false);
     });
 
     it('stopReconnect() を呼ぶと再接続が無効になる', () => {
-        const client = new WebSocketClient(() => {}, () => {}, () => {}, () => {});
+        const client = new WebSocketClient(() => { }, () => { }, () => { }, () => { });
         assert.strictEqual(client.isReconnectEnabled(), true);
         client.stopReconnect();
         assert.strictEqual(client.isReconnectEnabled(), false);
@@ -202,7 +202,7 @@ describe('WebSocketClient', () => {
             return 0;
         };
         try {
-            const client = new WebSocketClient(() => {}, () => {}, () => {}, () => {});
+            const client = new WebSocketClient(() => { }, () => { }, () => { }, () => { });
             client.connect();
             mock.triggerOpen();
             client.stopReconnect();
@@ -213,5 +213,33 @@ describe('WebSocketClient', () => {
         } finally {
             (globalThis as any).setTimeout = originalSetTimeout;
         }
+    });
+
+    it('display requests time out once and ignore late responses', { timeout: 5000 }, async (context): Promise<void> => {
+        context.mock.timers.enable({ apis: ['setTimeout'] });
+        const client = new WebSocketClient((): void => { }, (): void => { }, (): void => { }, (): void => { });
+        client.connect();
+        mock.triggerOpen();
+        const request = client.sendCommand('UpdateWindowMetaData', { id: 'a' });
+        const rejection = assert.rejects(request, /timed out/);
+        context.mock.timers.tick(10000);
+        await rejection;
+        mock.triggerMessage(JSON.stringify({ jsonrpc: '2.0', id: '1', result: { id: 'a' } }));
+        const next = client.sendCommand('GetWindowMetaData');
+        mock.triggerMessage(JSON.stringify({ jsonrpc: '2.0', id: '2', result: [] }));
+        assert.deepStrictEqual(await next, []);
+        context.mock.timers.tick(10000);
+    });
+
+    it('disconnect immediately rejects text and binary pending requests', { timeout: 5000 }, async (): Promise<void> => {
+        const client = new WebSocketClient((): void => { }, (): void => { }, (): void => { }, (): void => { });
+        client.stopReconnect();
+        client.connect();
+        mock.triggerOpen();
+        const first = assert.rejects(client.sendCommand('GetWindowMetaData'), /Connection closed/);
+        const second = assert.rejects(client.sendBinaryCommand('UpdateContent', {}, new ArrayBuffer(0)), /Connection closed/);
+        mock.triggerClose();
+        await Promise.all([first, second]);
+        assert.strictEqual(client.isConnected, false);
     });
 });

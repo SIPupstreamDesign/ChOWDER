@@ -12,6 +12,7 @@ export interface WindowMetaData {
     pixelWidth: number;
     pixelHeight: number;
     contentVisible: boolean;
+    revision?: number;
 }
 
 export interface ContentMetadata {

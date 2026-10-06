@@ -9,12 +9,20 @@ import { WebSocketClient } from './websocket/WebSocketClient';
 import type { LogFn } from './websocket/WebSocketClient';
 import { AuthManager } from './auth/AuthManager';
 import { ContentManager } from './content/ContentManager';
+import { cameraMirrorUpdates } from '../common/cameraMirrorUpdates';
+import {
+    adjustContentLayoutDimensions,
+    parseContentLayoutValues,
+    resolveContentAspectRatio,
+    type ContentLayoutDimension,
+} from './content/contentLayoutValues';
 import { DisplayManager } from './display/DisplayManager';
+import { DisplayUpdateQueue } from './display/displayUpdateBatch';
 import { SiteManager } from './site/SiteManager';
 import { LayoutManager } from './layout/LayoutManager';
 import { LiveStreamController } from './livestream/LiveStreamController';
 import { ViewportState } from './viewport/ViewportState';
-import type { UpdateStockData, JSONRPCMessage } from './types';
+import type { UpdateStockData, JSONRPCMessage, DisplayUpdateData, ContentUpdateData } from './types';
 import {
     compareContentMetadataForDisplayOrder,
     normalizeContentZIndex,
@@ -30,6 +38,13 @@ interface DragState {
 }
 
 export class ChOWDERClient {
+    private diagnosticSessionId: string | null = null;
+    private readonly diagnosticInstanceId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    private diagnosticSequence = 0;
+    private diagnosticStartedAt = performance.now();
+
     private elements: any = {};
     private viewport: ViewportState;
     private dragState: DragState = { isDragging: false, startX: 0, startY: 0, startCenterX: 0, startCenterY: 0 };
@@ -38,6 +53,7 @@ export class ChOWDERClient {
     private cachedUserList: { userId: string; role: string }[] = [];
 
     private updateStock: UpdateStockData[] = [];
+    private readonly displayUpdateQueue: DisplayUpdateQueue;
     private fps = 5;
     private lastTime = 0;
     private interval = 1000 / this.fps;
@@ -77,8 +93,10 @@ export class ChOWDERClient {
                 this.updateStatus('connected', '✅ Connected');
                 this.log('Connected successfully', 'success');
                 this.fetchServerConfig();
+                if (this.auth.isAuthenticated) { void this.displayManager.refreshDisplays(); }
             },
             () => {
+                this.displayManager.cancelInteraction();
                 if (this.auth.isAuthenticated) {
                     location.replace(location.href);
                     return;
@@ -97,6 +115,14 @@ export class ChOWDERClient {
 
         const sendCmd = (m: string, p?: any) => this.wsClient.sendCommand(m, p);
         const sendBinaryCmd = (m: string, p: any, b: ArrayBuffer) => this.wsClient.sendBinaryCommand(m, p, b);
+        this.displayUpdateQueue = new DisplayUpdateQueue(async (data): Promise<void> => {
+            const result = await this.wsClient.sendCommand('UpdateWindowMetaData', {
+                id: data.windowId, posx: data.posx, posy: data.posy,
+                virtualWidth: data.virtualWidth, virtualHeight: data.virtualHeight, contentVisible: data.contentVisible,
+            });
+            if (result === null || result === undefined) { throw new Error('Display window no longer exists'); }
+            if (!Array.isArray(result)) { this.displayManager.updateWindowFrameByMetaData(result); }
+        });
 
         // 認証
         this.auth = new AuthManager(sendCmd, logFn);
@@ -151,6 +177,7 @@ export class ChOWDERClient {
                 this.refreshVDASettings(siteId);
             },
             onDisplaySelect: () => this.onDisplaySelected("", null),
+            onSiteChanging: (): void => { this.displayManager.selectDisplay(null, null); },
         });
 
         // Display 管理
@@ -163,18 +190,17 @@ export class ChOWDERClient {
             getSites: () => this.siteManager.sites,
             getZoom: () => this.viewport.zoom,
             pushUpdateStock: (data) => this.updateStock.push(data),
-            getSelectedMetadataId: () => this.contentManager.selectedMetadataId,
             setVisiblePendingList: (v) => this.setVisiblePendingList(v),
             buildSiteSelect: (id?) => this.siteManager.buildSiteSelect(id),
-            displayWindowFrames: () => this.displayManager.displayWindowFrames(this.siteManager.currentSiteId),
             renderSiteGrid: (siteId) => this.renderSiteGrid(siteId),
             onDisplaySelected: (displayId, windowData) => this.onDisplaySelected(displayId, windowData),
             getCurrentSiteId: () => this.siteManager.currentSiteId,
             getEditMode: () => this.nowModeNum,
-            contentCreateUpdateStock: (elem) => this.contentManager.createUpdateStock(elem),
-            getSelectedDisplayId: () => this.getSelectedDisplayId(),
             renderAllSiteGrid: () => this.renderAllSiteGrid(),
             getIsAdmin: () => this.auth.isAdmin(),
+            updateQueue: this.displayUpdateQueue,
+            isConnected: (): boolean => { return this.wsClient.isConnected; },
+            onEditabilityChanged: (): void => { this.updateDisplayInputAvailability(); },
         });
 
         // コンテンツ管理
@@ -398,9 +424,6 @@ export class ChOWDERClient {
             chpwSubmitBtn: document.getElementById('chpw-submit-btn'),
             chpwCancelBtn: document.getElementById('chpw-cancel-btn'),
             clientCursorBase: document.getElementById('client-cursor-base'),
-            
-            showHelpButton: document.getElementById('btn-view-help'),
-            showAdminHelpButton: document.getElementById('btn-view-help-admin'),
         };
 
         //ルーラーエレメント
@@ -563,8 +586,10 @@ export class ChOWDERClient {
         // Visible状態変更時のリスナーは ContentManager で設定
 
         this.elements.changeModeContent?.addEventListener('click', () => {
+            this.displayManager.cancelInteraction();
             this.contentManager.resetSelectedMetadata();
             this.displayManager.selectDisplay(null, null);
+            this.manipulator.init(this.contentManager.createUpdateStock);
 
             document.querySelectorAll<HTMLElement>('[data-panel-group="content"]').forEach((el) => { el.style.display = ''; });
             document.querySelectorAll<HTMLElement>('[data-panel-group="display"]').forEach((el) => { el.style.display = 'none'; });
@@ -580,10 +605,12 @@ export class ChOWDERClient {
             this.elements.previewDisplay.style.zIndex = '1';
             this.elements.previewDisplay.style.opacity = '0.3';
             this.nowModeNum = 1;
+            void this.displayManager.refreshDisplays();
             this.elements.changeModeClear.style.display = "block";
         });
 
         this.elements.changeModeDisplay?.addEventListener('click', () => {
+            this.displayManager.cancelInteraction();
             this.contentManager.resetSelectedMetadata();
             const selectedSite = this.siteManager.currentSiteId;
             if (selectedSite == null || selectedSite.length == 0) {
@@ -599,6 +626,7 @@ export class ChOWDERClient {
             this.elements.previewDisplay.style.zIndex = '10';
             this.elements.previewDisplay.style.opacity = '1.0';
             this.nowModeNum = 2;
+            void this.displayManager.refreshDisplays();
             this.elements.changeModeClear.style.display = "block";
         });
 
@@ -642,71 +670,140 @@ export class ChOWDERClient {
         const getEditFontColor = () =>
             this.elements.editContentFontColor?.value ?? '#ffffff';
 
-        const pushContentUpdate = async (e: Event) => {
-            const cd = this.contentManager.selectedMetadataId;
-            if (!cd) return;
-            const elem = document.querySelector(`[data-metadata-id="${this.contentManager.selectedMetadataId}"]`) as HTMLInputElement;
-            if (!elem) { console.log("notFound Content!! :", cd); return; }
+        const restoreContentLayoutInputs = (elem: HTMLElement): void => {
+            this.elements.posX.value = elem.dataset.worldX ?? '';
+            this.elements.posY.value = elem.dataset.worldY ?? '';
+            this.elements.width.value = elem.dataset.width ?? '';
+            this.elements.height.value = elem.dataset.height ?? '';
+            this.elements.zIndex.value = elem.style.zIndex;
+        };
 
-            elem.dataset.worldX = this.elements.posX.value;
-            elem.dataset.worldY = this.elements.posY.value;
-            elem.dataset.width = this.elements.width.value;
-            elem.dataset.height = this.elements.height.value;
-            elem.style.zIndex = this.elements.zIndex.value;
+        const pushContentLayoutUpdate = (changedDimension: ContentLayoutDimension | null): void => {
+            const metadataId = this.contentManager.selectedMetadataId;
+            if (!metadataId) return;
+            const elem = document.querySelector(`[data-metadata-id="${metadataId}"]`) as HTMLElement | null;
+            if (!elem) return;
 
-            const updateData = this.contentManager.createUpdateStock(elem as HTMLInputElement);
-            if (!updateData) return;
-
-            //metaBinaryの更新が必要な場合1
-            if (this.elements.infoContentType.innerText == "text") {
-                const textVal = getEditTextValue();
-                const fontColor = getEditFontColor();
-                const bufferStr = JSON.stringify({
-                    type: 'text',
-                    value: textVal,
-                    fontColor,
-                });
-                const arrayBuffer = new TextEncoder().encode(bufferStr).buffer;
-                this.log('Update content Binary!..', 'info');
-                await this.wsClient.sendBinaryCommand('UpdateContent', updateData, arrayBuffer!);
-                // サムネイルをローカル即時更新（サーバーのブロードキャスト待ちなし）
-                this.contentManager.updateTextThumbnailLocal(cd, textVal, fontColor);
-                // コントローラ側VDA表示も即時更新
-                this.contentManager.updateTextContentPreview(cd, textVal, fontColor);
+            const layoutValues = parseContentLayoutValues({
+                posX: this.elements.posX.value,
+                posY: this.elements.posY.value,
+                width: this.elements.width.value,
+                height: this.elements.height.value,
+            });
+            const zIndexInput = this.elements.zIndex.value.trim();
+            const zIndex = zIndexInput === '' ? Number.NaN : Number(zIndexInput);
+            if (layoutValues === null || !Number.isFinite(zIndex)) {
+                restoreContentLayoutInputs(elem);
+                return;
             }
 
+            let width = layoutValues.width;
+            let height = layoutValues.height;
+            const aspectRatio = resolveContentAspectRatio(elem.dataset);
+            if (changedDimension !== null && aspectRatio !== null) {
+                // The edited side is the anchor; derive only the opposite side from the intrinsic ratio.
+                const adjustedDimensions = adjustContentLayoutDimensions(
+                    { width, height },
+                    changedDimension,
+                    aspectRatio,
+                );
+                if (adjustedDimensions === null) {
+                    restoreContentLayoutInputs(elem);
+                    return;
+                }
+                width = adjustedDimensions.width;
+                height = adjustedDimensions.height;
+                this.elements.width.value = String(width);
+                this.elements.height.value = String(height);
+            }
+
+            elem.dataset.worldX = String(layoutValues.posx);
+            elem.dataset.worldY = String(layoutValues.posy);
+            elem.dataset.width = String(width);
+            elem.dataset.height = String(height);
+            elem.style.zIndex = String(zIndex);
+
+            // Keep the local queue metadata-only; UpdateContent is reserved for the content payload.
+            const updateData = this.contentManager.createUpdateStock(elem);
+            if (!updateData) {
+                restoreContentLayoutInputs(elem);
+            }
         };
-        this.elements.posX?.addEventListener('change', pushContentUpdate);
-        this.elements.posY?.addEventListener('change', pushContentUpdate);
-        this.elements.width?.addEventListener('change', pushContentUpdate);
-        this.elements.height?.addEventListener('change', pushContentUpdate);
-        this.elements.zIndex?.addEventListener('change', pushContentUpdate);
-        this.elements.toggleContentVisible?.addEventListener('change', pushContentUpdate);
-        this.elements.editTextInput?.addEventListener('change', pushContentUpdate);
-        this.elements.editContentFontColor?.addEventListener('change', pushContentUpdate);
+
+        const pushTextContentUpdate = async (): Promise<void> => {
+            const metadataId = this.contentManager.selectedMetadataId;
+            if (!metadataId || this.elements.infoContentType.innerText !== 'text') return;
+
+            const textValue = getEditTextValue();
+            const fontColor = getEditFontColor();
+            const buffer = new TextEncoder().encode(JSON.stringify({
+                type: 'text',
+                value: textValue,
+                fontColor,
+            })).buffer;
+
+            // Omitting layout fields prevents a payload edit from restoring stale geometry.
+            await this.wsClient.sendBinaryCommand('UpdateContent', { metadataId }, buffer);
+            this.contentManager.updateTextThumbnailLocal(metadataId, textValue, fontColor);
+            this.contentManager.updateTextContentPreview(metadataId, textValue, fontColor);
+        };
+
+        this.elements.posX?.addEventListener('change', (): void => { pushContentLayoutUpdate(null); });
+        this.elements.posY?.addEventListener('change', (): void => { pushContentLayoutUpdate(null); });
+        this.elements.width?.addEventListener('change', (): void => { pushContentLayoutUpdate('width'); });
+        this.elements.height?.addEventListener('change', (): void => { pushContentLayoutUpdate('height'); });
+        this.elements.zIndex?.addEventListener('change', (): void => { pushContentLayoutUpdate(null); });
+        this.elements.editTextInput?.addEventListener('change', pushTextContentUpdate);
+        this.elements.editContentFontColor?.addEventListener('change', pushTextContentUpdate);
+        // ContentManager owns the visibility listener and enqueues that metadata change.
 
         // display-info パネル
-        const pushDisplayUpdate = () => {
+        const pushDisplayUpdate = (update: Partial<Omit<DisplayUpdateData, 'type' | 'windowId'>>): void => {
             const wd = this.displayManager.selectedWindowData;
             if (!wd) return;
+            if (update.contentVisible === undefined && !this.displayManager.isWindowEditable(wd.id)) { return; }
+            if ((update.virtualWidth !== undefined || update.virtualHeight !== undefined) && !this.displayManager.isSelectedResizeEnabled) { return; }
+            if (update.contentVisible === false) { this.displayManager.cancelInteraction(); }
+
             this.updateStock.push({
                 windowId: wd.id,
                 type: 'display',
-                posx: Number((this.elements.posXD as HTMLInputElement).value),
-                posy: Number((this.elements.posYD as HTMLInputElement).value),
-                width: Number((this.elements.widthD as HTMLInputElement).value),
-                height: Number((this.elements.heightD as HTMLInputElement).value),
-                visible: Boolean((this.elements.toggleDisplayVisible as HTMLInputElement).checked),
-                originWidth: wd.pixelWidth,
-                originHeight: wd.pixelHeight,
-                zindex: 1
+                ...update,
             });
         };
-        this.elements.posXD?.addEventListener('change', pushDisplayUpdate);
-        this.elements.posYD?.addEventListener('change', pushDisplayUpdate);
-        this.elements.widthD?.addEventListener('change', pushDisplayUpdate);
-        this.elements.heightD?.addEventListener('change', pushDisplayUpdate);
-        this.elements.toggleDisplayVisible?.addEventListener('change', pushDisplayUpdate);
+        const pushDisplayPositionUpdate = (field: 'posx' | 'posy', input: HTMLInputElement): void => {
+            const value = input.value.trim();
+            const parsedValue = value === '' ? Number.NaN : Number(value);
+            if (!Number.isFinite(parsedValue)) {
+                const selectedWindow = this.displayManager.selectedWindowData;
+                if (selectedWindow) {
+                    input.value = String(selectedWindow[field]);
+                }
+                return;
+            }
+            pushDisplayUpdate({ [field]: parsedValue });
+        };
+
+        const pushDisplayDimensionUpdate = (field: 'virtualWidth' | 'virtualHeight', input: HTMLInputElement): void => {
+            const value = input.value.trim();
+            const parsedValue = value === '' ? Number.NaN : Number(value);
+            if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+                const selectedWindow = this.displayManager.selectedWindowData;
+                if (selectedWindow) {
+                    input.value = String(selectedWindow[field]);
+                }
+                return;
+            }
+            pushDisplayUpdate({ [field]: parsedValue });
+        };
+
+        this.elements.posXD?.addEventListener('change', (): void => { pushDisplayPositionUpdate('posx', this.elements.posXD as HTMLInputElement); });
+        this.elements.posYD?.addEventListener('change', (): void => { pushDisplayPositionUpdate('posy', this.elements.posYD as HTMLInputElement); });
+        this.elements.widthD?.addEventListener('change', (): void => { pushDisplayDimensionUpdate('virtualWidth', this.elements.widthD as HTMLInputElement); });
+        this.elements.heightD?.addEventListener('change', (): void => { pushDisplayDimensionUpdate('virtualHeight', this.elements.heightD as HTMLInputElement); });
+        this.elements.toggleDisplayVisible?.addEventListener('change', (): void => {
+            pushDisplayUpdate({ contentVisible: Boolean((this.elements.toggleDisplayVisible as HTMLInputElement).checked) });
+        });
 
         // VDA 設定変更
         const onVDAChange = () => this.updateVDASettings();
@@ -734,16 +831,6 @@ export class ChOWDERClient {
         this.elements.rightMenuSetHide?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentSetVisible(false); });
         this.elements.rightMenuSetVisible?.addEventListener('click', () => this.contentManager.contentSetVisible(true));
         this.elements.rightMenuSetVisible?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentSetVisible(true); });
-        
-        this.elements.showHelpButton?.addEventListener('click', () => {
-            const locale = currentLocale();
-            this.elements.showHelpButton.href = 'manual/'+locale+'/3_1.html';
-        });
-        
-        this.elements.showAdminHelpButton?.addEventListener('click', () => {
-            const locale = currentLocale();
-            this.elements.showHelpButton.href = 'manual/'+locale+'/2_1.html';
-        });
     }
 
 
@@ -758,6 +845,7 @@ export class ChOWDERClient {
         viewArea.addEventListener('contextmenu', (e: Event) => e.preventDefault());
 
         viewArea.addEventListener('mousedown', (e: MouseEvent) => {
+            if (this.displayManager.isInteracting) { return; }
             if (e.button === 2) {
                 e.preventDefault();
                 this.dragState.isDragging = true;
@@ -797,6 +885,7 @@ export class ChOWDERClient {
 
         viewArea.addEventListener('wheel', (e: WheelEvent) => {
             e.preventDefault();
+            if (this.displayManager.isInteracting) { return; }
             const factor = e.deltaY < 0 ? 1.1 : 0.9;
             const rect = this.elements.viewArea.getBoundingClientRect();
             const transformOrigin = this.getTransformOriginPixels(this.elements.viewArea, rect.width, rect.height);
@@ -840,8 +929,14 @@ export class ChOWDERClient {
         });
 
         window.addEventListener('resize', () => {
+            this.displayManager.cancelInteraction();
             this.viewport.resize(window.innerWidth, window.innerHeight - 80);
             this.renderViewArea();
+        });
+
+        window.addEventListener('blur', (): void => { this.displayManager.cancelInteraction(); });
+        document.addEventListener('visibilitychange', (): void => {
+            if (document.hidden) { this.displayManager.cancelInteraction(); }
         });
 
         // UI パネルとモードボタンのイベントを loginedView に到達させない
@@ -894,6 +989,9 @@ export class ChOWDERClient {
     private async fetchServerConfig(): Promise<void> {
         try {
             const config = await this.wsClient.sendCommand('GetServerConfig');
+            if (config?.clientDiagnostics?.enabled === true && typeof config.clientDiagnostics.sessionId === 'string') {
+                this.diagnosticSessionId = config.clientDiagnostics.sessionId;
+            }
             if (config?.tileImage) {
                 this.contentManager.setTileThresholds({
                     width: config.tileImage.widthThreshold,
@@ -915,6 +1013,33 @@ export class ChOWDERClient {
     // メインループ
     // =========================================================================
 
+    private reportCameraDiagnostic(update: any, result: any): void {
+        if (
+            this.diagnosticSessionId === null
+            || update.diagnosticSessionId !== this.diagnosticSessionId
+            || !result
+        ) {
+            return;
+        }
+
+        this.diagnosticSequence += 1;
+        void this.wsClient.sendCommand('ReportClientDiagnostic', {
+            event: 'camera-rendered',
+            diagnosticSessionId: this.diagnosticSessionId,
+            diagnosticId: update.diagnosticId,
+            instanceId: this.diagnosticInstanceId,
+            sequence: this.diagnosticSequence,
+            clientWallTime: new Date().toISOString(),
+            clientElapsedMs: performance.now() - this.diagnosticStartedAt,
+            metadataId: update.metadataId,
+            phase: result.phase,
+            clientState: result.state ?? null,
+            renderElapsedMs: result.clientElapsedMs ?? null,
+        }).catch((error: unknown) => {
+            console.warn('[ChOWDERClient] Failed to report camera diagnostic:', error);
+        });
+    }
+
     private async frameUpdate(): Promise<void> {
         requestAnimationFrame(() => this.frameUpdate());
         const currentTime = Date.now();
@@ -926,48 +1051,33 @@ export class ChOWDERClient {
         const stockSnapshot = this.updateStock.slice();
         this.updateStock = [];
 
-        const updatedIds: string[] = [];
+        for (const item of stockSnapshot) {
+            if (item.type !== 'display') { continue; }
+            void this.displayUpdateQueue.enqueue(item).catch((error: unknown): void => {
+                this.displayManager.handleUpdateFailure(item.windowId, error);
+            });
+        }
+        this.displayUpdateQueue.flush();
+        const contentUpdatesByMetadataId = new Map<string, ContentUpdateData>();
         for (let i = stockSnapshot.length - 1; i >= 0; i--) {
             const item = stockSnapshot[i];
-            const itemId = item.type === 'display' ? item.windowId : item.metadataId;
-            if (updatedIds.includes(itemId)) {
-                continue;
+            if (item.type === 'content' && !contentUpdatesByMetadataId.has(item.metadataId)) {
+                contentUpdatesByMetadataId.set(item.metadataId, item);
             }
-            if (item.type === 'display') {
-                await this.wsClient.sendCommand('UpdateWindowMetaData', {
-                    id: item.windowId,
-                    posx: item.posx,
-                    posy: item.posy,
-                    visible: item.visible,
-                    virtualWidth: item.width,
-                    virtualHeight: item.height,
-                    pixelWidth: item.originWidth,
-                    pixelHeight: item.originHeight,
-                });
-            } else if (item.contentType === 'webgl') {
-                // WebGLコンテンツは位置・サイズのみの変更なので UpdateMetaData で通知。
-                // ディスプレイ側の iframe を再生成せずに済む。
-                await this.wsClient.sendCommand('UpdateMetaData', {
-                    metadataId: item.metadataId,
-                    posx: item.posx,
-                    posy: item.posy,
-                    visible: item.visible,
-                    width: item.width,
-                    height: item.height,
-                    zindex: item.zindex,
-                });
-            } else {
-                await this.wsClient.sendCommand('UpdateContent', {
-                    metadataId: item.metadataId,
-                    posx: item.posx,
-                    posy: item.posy,
-                    visible: item.visible,
-                    width: item.width,
-                    height: item.height,
-                    zindex: item.zindex,
-                });
-            }
-            updatedIds.push(itemId);
+        }
+        const updatesToSend = [...contentUpdatesByMetadataId.values()];
+
+        for (const item of updatesToSend) {
+            // Layout changes use one metadata-only command for every content type.
+            await this.wsClient.sendCommand('UpdateMetaData', {
+                metadataId: item.metadataId,
+                posx: item.posx,
+                posy: item.posy,
+                visible: item.visible,
+                width: item.width,
+                height: item.height,
+                zindex: item.zindex,
+            });
         }
 
         //マウスカーソル位置のSend
@@ -1030,10 +1140,10 @@ export class ChOWDERClient {
             if (displayInfoBody) displayInfoBody.style.display = 'block';
             displayName.innerText = windowData.displayName;
             displayName.dataset.displayId = displayId;
-            posXD.value = String(Math.round(windowData.posx ?? 0));
-            posYD.value = String(Math.round(windowData.posy ?? 0));
-            widthD.value = String(Math.round(windowData.virtualWidth ?? 0));
-            heightD.value = String(Math.round(windowData.virtualHeight ?? 0));
+            posXD.value = String(windowData.posx ?? 0);
+            posYD.value = String(windowData.posy ?? 0);
+            widthD.value = String(windowData.virtualWidth ?? 0);
+            heightD.value = String(windowData.virtualHeight ?? 0);
             const visible = windowData.contentVisible !== false;
             toggleVisible.checked = visible;
             toggleVisible.dataset.checked = String(visible);
@@ -1052,10 +1162,15 @@ export class ChOWDERClient {
         }
     }
 
-    private getSelectedDisplayId(): string {
-        const displayName = this.elements.displayNameInInfo as HTMLElement;
-        const refstr = displayName.dataset.displayId;
-        return refstr ? refstr : "";
+    private updateDisplayInputAvailability(): void {
+        const windowData = this.displayManager.selectedWindowData;
+        const disabled = windowData === null || !this.displayManager.isWindowEditable(windowData.id);
+        for (const input of [this.elements.posXD, this.elements.posYD, this.elements.widthD, this.elements.heightD]) {
+            if (input !== null && input !== undefined) {
+                const dimension = input === this.elements.widthD || input === this.elements.heightD;
+                input.disabled = disabled || (dimension && !this.displayManager.isSelectedResizeEnabled);
+            }
+        }
     }
 
     private refreshVDASettings(siteId: string | null): void {
@@ -1366,7 +1481,7 @@ export class ChOWDERClient {
                 this.updateInitLoading('initLoadingLoadContents', 20);
                 await this.contentManager.displayAllContentsOnCanvas();
                 this.updateInitLoading('initLoadingFetchDisplays', 65);
-                await this.displayManager.displayWindowFrames(this.siteManager.currentSiteId);
+                await this.displayManager.refreshDisplays();
                 this.updateInitLoading('initLoadingLoadSettings', 80);
                 this.enableAuthenticatedFeatures();
                 await this.layoutManager.refreshLayoutList();
@@ -1655,14 +1770,23 @@ export class ChOWDERClient {
 
             case 'UpdateCameraMatrix':
                 if (this.auth.isAuthenticated && message.params?.metadataId) {
+                    if (!cameraMirrorUpdates.remember(message.params)) {
+                        break;
+                    }
                     const { metadataId, cameraWorldMatrix, cameraParams } = message.params;
                     const webgl = this.contentManager.webglConnectors.get(metadataId);
                     if (webgl && cameraWorldMatrix && cameraParams) {
                         try {
-                            webgl.connector.send('UpdateCamera', {
-                                mat: JSON.parse(cameraWorldMatrix),
-                                params: JSON.parse(cameraParams),
-                            });
+                            if (
+                                typeof message.params.diagnosticId === 'string'
+                                && typeof message.params.diagnosticSessionId === 'string'
+                            ) {
+                                cameraMirrorUpdates.send(webgl.connector, metadataId, (_error, result) => {
+                                    this.reportCameraDiagnostic(message.params, result);
+                                });
+                            } else {
+                                cameraMirrorUpdates.send(webgl.connector, metadataId);
+                            }
                         } catch (e) {
                             console.error('[ChOWDERClient] UpdateCamera parse error:', e);
                         }
@@ -1673,14 +1797,10 @@ export class ChOWDERClient {
             case 'DeleteContent':
                 this.log('🔔 Content deleted by another user', 'info');
                 if (this.auth.isAuthenticated) {
-                    if (message.params?.metadataId &&
-                        message.params.metadataId === this.contentManager.selectedMetadataId) {
-                        this.contentManager.resetSelectedMetadata();
+                    if (message.params?.metadataId) {
+                        this.contentManager.applyContentDeletion(message.params.metadataId);
                     }
                     this.contentManager.refreshMetadataList();
-                    if (message.params?.metadataId) {
-                        this.contentManager.removeContentFromViewArea(message.params.metadataId);
-                    }
                 }
                 break;
 
@@ -1809,6 +1929,12 @@ export class ChOWDERClient {
 
             case 'TileimageProgress': {
                 const handler = this.wsClient.getRegisteredBroadcastHandler('TileimageProgress');
+                if (handler && message.params) handler(message.params);
+                break;
+            }
+
+            case 'TileimageHeartbeat': {
+                const handler = this.wsClient.getRegisteredBroadcastHandler('TileimageHeartbeat');
                 if (handler && message.params) handler(message.params);
                 break;
             }

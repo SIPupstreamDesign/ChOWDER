@@ -544,6 +544,7 @@ export class MediaService {
             consumerId: consumer.id,
             socketId,
             producerId: request.producerId,
+            transportId: request.transportId,
             kind: consumer.kind as 'audio' | 'video',
             created: new Date(),
         });
@@ -558,6 +559,49 @@ export class MediaService {
             kind: consumer.kind as 'audio' | 'video',
             rtpParameters: consumer.rtpParameters,
         };
+    }
+
+    /** Consumerと専用受信Transportを所有socketの範囲で解放する */
+    async closeConsumer(
+        socketId: string,
+        consumerId: string | undefined,
+        transportId: string,
+    ): Promise<void> {
+        const transportInfo = this.transportInfos.get(transportId);
+        if (transportInfo && transportInfo.socketId !== socketId) {
+            throw new Error('Unauthorized transport');
+        }
+        if (transportInfo && transportInfo.direction !== 'recv') {
+            throw new Error('Transport is not a receive transport');
+        }
+
+        const consumerInfo = consumerId ? this.consumerInfos.get(consumerId) : undefined;
+        if (consumerInfo && consumerInfo.socketId !== socketId) {
+            throw new Error('Unauthorized consumer');
+        }
+        if (consumerInfo && consumerInfo.transportId !== transportId) {
+            throw new Error('Consumer does not belong to transport');
+        }
+
+        if (consumerId) {
+            const consumer = this.consumers.get(consumerId);
+            consumer?.close();
+            this.consumers.delete(consumerId);
+            this.consumerInfos.delete(consumerId);
+        }
+
+        for (const [associatedConsumerId, associatedInfo] of this.consumerInfos.entries()) {
+            if (associatedInfo.transportId !== transportId) {
+                continue;
+            }
+            this.consumers.get(associatedConsumerId)?.close();
+            this.consumers.delete(associatedConsumerId);
+            this.consumerInfos.delete(associatedConsumerId);
+        }
+
+        this.transports.get(transportId)?.close();
+        this.transports.delete(transportId);
+        this.transportInfos.delete(transportId);
     }
 
     /**

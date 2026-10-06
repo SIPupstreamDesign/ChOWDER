@@ -1,0 +1,13 @@
+{
+    "name": "chowder-itowns-build",
+    "private": true,
+    "version": "1.0.0",
+    "dependencies": {
+        "itowns": "2.44.2",
+        "proj4": "2.11.0",
+        "three": "0.165.0"
+    },
+    "overrides": {
+        "3d-tiles-renderer": "0.3.37"
+    }
+}

@@ -2,6 +2,17 @@
 interface PendingCameraUpdate {
     params: any;
 }
+
+interface StreamProducerNotification {
+    producerId: string;
+    userId: string;
+    kind: 'audio' | 'video';
+    metadataId?: string;
+    streamId?: string;
+    socketId?: string;
+}
+
+const MAX_PENDING_STREAM_PRODUCERS = 128;
 /**
  * ChOWDER Display Client
  * ディスプレイクライアント - VirtualDisplayの一部を表示
@@ -17,7 +28,8 @@ import {
     type WindowMetaData,
     type ContentMetadata,
 } from './contentCoordinates';
-import { IFrameConnector } from './IFrameConnector';
+import { IFrameConnector } from '../common/IFrameConnector';
+import { cameraMirrorUpdates } from '../common/cameraMirrorUpdates';
 import { ContentRenderer } from './ContentRenderer';
 import { ConnectionScreen } from './ConnectionScreen';
 import {
@@ -27,6 +39,7 @@ import {
 } from '../../common/contentOrder';
 import { DisplayCursorOverlay } from './displayCursorOverlay';
 import { shouldReloadRegularContentByPolicy } from './updateContentReloadPolicy';
+import { ensureLiveStreamElement } from './liveStreamElement';
 
 interface VirtualDisplay {
     virtualWidth: number;
@@ -58,12 +71,25 @@ class DisplayClient {
     private displayId: string = '';
     private displayName: string = '';
     private windowMetaData: WindowMetaData | null = null;
+    private diagnosticSessionId: string | null = null;
+    private readonly diagnosticInstanceId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    private diagnosticSequence = 0;
+    private diagnosticStartedAt = performance.now();
+    private lastLayoutDiagnosticAt = Number.NEGATIVE_INFINITY;
+    private scrollDiagnosticsInitialized = false;
+    private scrollDiagnosticTimer: number | null = null;
+    private lastScrollDiagnosticAt = Number.NEGATIVE_INFINITY;
+    private lastPointerMoveAt = Number.NEGATIVE_INFINITY;
+    private recentScrollInteractions: Array<Record<string, unknown>> = [];
     private virtualDisplay: VirtualDisplay | null = null;
     private contents: Map<string, ContentMetadata> = new Map();
     private displayArea: HTMLElement;
     private contentArea: HTMLElement;
     private pendingCommands: Array<{ method: string; params: any; resolve: (value: any) => void; reject: (reason: any) => void }> = [];
-    private pendingStreamProducers: Array<any> = [];
+    private pendingStreamProducers: Map<string, StreamProducerNotification> = new Map();
+    private streamAttachmentPromises: Map<string, Promise<void>> = new Map();
     private messageId = 0;
     private callbacks: Map<string, (error: any, result?: any) => void> = new Map();
     private liveStreamManager: LiveStreamManager | null = null;
@@ -87,6 +113,8 @@ class DisplayClient {
         this.renderer = new ContentRenderer(
             (method, params) => this.sendCommand(method, params),
             () => this.windowMetaData,
+            (metadataId, interaction) => this.recordIFrameInteraction(metadataId, interaction),
+            () => this.diagnosticSessionId,
         );
 
         const cursorArea = document.getElementById('display-cursor-area');
@@ -284,12 +312,13 @@ class DisplayClient {
         };
 
         this.sendCommand('RegisterDisplay', registerData)
-            .then((res) => {
+            .then(async (res) => {
                 console.log('[Display] Registered:', res);
                 this.isRegistered = true;
 
                 this.displayId = res.session.displayId;
                 this.displayName = res.session.displayName;
+                await this.loadDiagnosticConfig();
 
                 if (res.session.status === 'approved') {
                     console.log('[Display] Already approved, fetching window metadata...');
@@ -328,6 +357,7 @@ class DisplayClient {
                 virtualWidth: windowData.virtualWidth,
                 virtualHeight: windowData.virtualHeight,
                 contentVisible: windowData.contentVisible,
+                revision: windowData.revision,
             });
         } catch (err) {
             console.error('[Display] Failed to load approved display window:', err);
@@ -358,6 +388,7 @@ class DisplayClient {
             virtualHeight: data.virtualHeight,
             pixelWidth: this.displayArea.clientWidth,
             pixelHeight: this.displayArea.clientHeight,
+            revision: data.revision,
             contentVisible: data.contentVisible !== undefined ? data.contentVisible : true,
         };
 
@@ -374,7 +405,24 @@ class DisplayClient {
             id: this.windowMetaData.id,
             pixelWidth: this.displayArea.clientWidth,
             pixelHeight: this.displayArea.clientHeight,
+        }).then((updatedWindow: WindowMetaData) => {
+            if (this.windowMetaData !== null) {
+                this.windowMetaData.revision = updatedWindow?.revision ?? this.windowMetaData.revision;
+                this.reportDisplayLayout('display-initial');
+            }
         }).catch((err) => console.warn('[Display] Failed to sync pixel size on approved:', err));
+    }
+
+    private async loadDiagnosticConfig(): Promise<void> {
+        try {
+            const config = await this.sendCommand('GetServerConfig');
+            if (config?.clientDiagnostics?.enabled === true && typeof config.clientDiagnostics.sessionId === 'string') {
+                this.diagnosticSessionId = config.clientDiagnostics.sessionId;
+                this.initializeScrollDiagnostics();
+            }
+        } catch (error) {
+            console.warn('[Display] Failed to load diagnostic config:', error);
+        }
     }
 
     private async loadVirtualDisplay(): Promise<void> {
@@ -485,8 +533,407 @@ class DisplayClient {
         elem.style.top = `${coords.y}px`;
         elem.style.width = `${coords.w}px`;
         elem.style.height = `${coords.h}px`;
-        elem.style.display = normalizedMetadata.visible !== false ? 'block' : 'none';
+        const isInDisplay = normalizedMetadata.type !== 'live-stream'
+            || this.isContentInWindow(normalizedMetadata);
+        elem.style.display = normalizedMetadata.visible !== false && isInDisplay ? 'block' : 'none';
         elem.style.zIndex = `${normalizeContentZIndex(normalizedMetadata.zindex)}`;
+    }
+
+    private reportDisplayLayout(
+        event: string,
+        options: {
+            force?: boolean;
+            scrollEvent?: Record<string, unknown>;
+            recentInteractions?: Array<Record<string, unknown>>;
+            diagnosticInteraction?: Record<string, unknown>;
+        } = {},
+    ): void {
+        if (this.diagnosticSessionId === null || this.windowMetaData === null) {
+            return;
+        }
+
+        const now = performance.now();
+        if (options.force !== true && now - this.lastLayoutDiagnosticAt < 100) {
+            return;
+        }
+        this.lastLayoutDiagnosticAt = now;
+
+        const windowMeta = this.windowMetaData;
+        const displayRect = this.displayArea.getBoundingClientRect();
+        const contentRect = this.contentArea.getBoundingClientRect();
+        const contents = [...this.contents.values()].slice(0, 20).map((metadata) => {
+            const element = document.getElementById(`content-${metadata.metadataId}`);
+            if (element === null) {
+                return { metadataId: metadata.metadataId, rendered: false };
+            }
+
+            const expectedRect = this.virtualToWindowCoordinates(
+                metadata.posx,
+                metadata.posy,
+                metadata.width,
+                metadata.height,
+            );
+            const actualRect = element.getBoundingClientRect();
+            const offsetParent = element.offsetParent;
+            return {
+                metadataId: metadata.metadataId,
+                rendered: true,
+                expectedRect,
+                appliedStyle: {
+                    left: element.style.left,
+                    top: element.style.top,
+                    width: element.style.width,
+                    height: element.style.height,
+                    transform: element.style.transform,
+                },
+                actualRect: {
+                    left: actualRect.left - contentRect.left,
+                    top: actualRect.top - contentRect.top,
+                    width: actualRect.width,
+                    height: actualRect.height,
+                },
+                actualViewportRect: {
+                    left: actualRect.left,
+                    top: actualRect.top,
+                    width: actualRect.width,
+                    height: actualRect.height,
+                },
+                offsetParent: offsetParent instanceof HTMLElement
+                    ? this.describeLayoutElement(offsetParent)
+                    : null,
+            };
+        });
+        const layoutAncestors: Array<Record<string, unknown>> = [];
+        let ancestor: HTMLElement | null = this.contentArea;
+        while (ancestor !== null && layoutAncestors.length < 8) {
+            layoutAncestors.push(this.describeLayoutElement(ancestor));
+            ancestor = ancestor.parentElement;
+        }
+
+        this.diagnosticSequence += 1;
+        void this.sendCommand('ReportClientDiagnostic', {
+            event,
+            diagnosticSessionId: this.diagnosticSessionId,
+            instanceId: this.diagnosticInstanceId,
+            sequence: this.diagnosticSequence,
+            clientWallTime: new Date().toISOString(),
+            clientElapsedMs: performance.now() - this.diagnosticStartedAt,
+            displayId: this.displayId,
+            windowId: windowMeta.id,
+            clientAppliedRevision: windowMeta.revision ?? null,
+            clientWindow: {
+                posx: windowMeta.posx,
+                posy: windowMeta.posy,
+                virtualWidth: windowMeta.virtualWidth,
+                virtualHeight: windowMeta.virtualHeight,
+                pixelWidth: windowMeta.pixelWidth,
+                pixelHeight: windowMeta.pixelHeight,
+            },
+            viewport: {
+                displayArea: {
+                    left: displayRect.left,
+                    top: displayRect.top,
+                    width: this.displayArea.clientWidth,
+                    height: this.displayArea.clientHeight,
+                },
+                contentArea: {
+                    left: contentRect.left,
+                    top: contentRect.top,
+                    width: this.contentArea.clientWidth,
+                    height: this.contentArea.clientHeight,
+                    scrollLeft: this.contentArea.scrollLeft,
+                    scrollTop: this.contentArea.scrollTop,
+                    scrollWidth: this.contentArea.scrollWidth,
+                    scrollHeight: this.contentArea.scrollHeight,
+                    maxScrollLeft: Math.max(0, this.contentArea.scrollWidth - this.contentArea.clientWidth),
+                    maxScrollTop: Math.max(0, this.contentArea.scrollHeight - this.contentArea.clientHeight),
+                },
+                displayAreaScrollLeft: this.displayArea.scrollLeft,
+                displayAreaScrollTop: this.displayArea.scrollTop,
+                windowScrollX: window.scrollX,
+                windowScrollY: window.scrollY,
+                documentScrollLeft: document.scrollingElement?.scrollLeft ?? 0,
+                documentScrollTop: document.scrollingElement?.scrollTop ?? 0,
+                devicePixelRatio: window.devicePixelRatio,
+                visualViewportScale: window.visualViewport?.scale ?? null,
+                viewportWidth: window.innerWidth,
+                viewportHeight: window.innerHeight,
+                fullscreen: document.fullscreenElement !== null,
+            },
+            layoutAncestors,
+            contents,
+            ...(options.scrollEvent ? {
+                scrollEvent: options.scrollEvent,
+                recentInteractions: options.recentInteractions ?? [],
+            } : {}),
+            ...(options.diagnosticInteraction ? { diagnosticInteraction: options.diagnosticInteraction } : {}),
+        }).catch((error: unknown) => {
+            console.warn('[Display] Failed to report diagnostic layout:', error);
+        });
+    }
+
+    private initializeScrollDiagnostics(): void {
+        if (this.scrollDiagnosticsInitialized || this.diagnosticSessionId === null) {
+            return;
+        }
+        this.scrollDiagnosticsInitialized = true;
+
+        const scrollKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
+        const recordInteraction = (event: Event): void => {
+            if (!(event.target instanceof HTMLElement) || !this.contentArea.contains(event.target)) {
+                return;
+            }
+
+            const now = performance.now();
+            const interaction: Record<string, unknown> = {
+                type: event.type,
+                clientWallTime: new Date().toISOString(),
+                clientElapsedMs: now - this.diagnosticStartedAt,
+                isTrusted: event.isTrusted,
+                target: this.describeInteractionTarget(event.target),
+            };
+
+            if (event instanceof PointerEvent) {
+                if (event.type === 'pointermove') {
+                    if (event.buttons === 0 || now - this.lastPointerMoveAt < 100) {
+                        return;
+                    }
+                    this.lastPointerMoveAt = now;
+                }
+                interaction.pointer = {
+                    pointerType: event.pointerType,
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    button: event.button,
+                    buttons: event.buttons,
+                };
+            } else if (event instanceof WheelEvent) {
+                interaction.wheel = {
+                    deltaX: event.deltaX,
+                    deltaY: event.deltaY,
+                    deltaMode: event.deltaMode,
+                };
+            } else if (event instanceof KeyboardEvent) {
+                if (!scrollKeys.has(event.key)) {
+                    return;
+                }
+                interaction.key = event.key;
+            }
+
+            this.storeRecentScrollInteraction(interaction);
+        };
+
+        for (const eventType of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'focusin', 'focusout', 'keydown']) {
+            this.contentArea.addEventListener(eventType, recordInteraction, { capture: true, passive: true });
+        }
+
+        let latestScrollEvent: Record<string, unknown> | null = null;
+        this.contentArea.addEventListener('scroll', (event: Event): void => {
+            const now = performance.now();
+            latestScrollEvent = {
+                clientWallTime: new Date().toISOString(),
+                clientElapsedMs: now - this.diagnosticStartedAt,
+                isTrusted: event.isTrusted,
+                target: 'contentArea',
+                scrollLeft: this.contentArea.scrollLeft,
+                scrollTop: this.contentArea.scrollTop,
+                scrollWidth: this.contentArea.scrollWidth,
+                scrollHeight: this.contentArea.scrollHeight,
+                clientWidth: this.contentArea.clientWidth,
+                clientHeight: this.contentArea.clientHeight,
+                maxScrollLeft: Math.max(0, this.contentArea.scrollWidth - this.contentArea.clientWidth),
+                maxScrollTop: Math.max(0, this.contentArea.scrollHeight - this.contentArea.clientHeight),
+                activeElement: this.describeInteractionTarget(document.activeElement),
+            };
+
+            if (now - this.lastScrollDiagnosticAt >= 100) {
+                this.lastScrollDiagnosticAt = now;
+                this.reportDisplayLayout('display-scroll', {
+                    force: true,
+                    scrollEvent: latestScrollEvent,
+                    recentInteractions: this.getRecentScrollInteractions(now),
+                });
+            }
+
+            if (this.scrollDiagnosticTimer !== null) {
+                window.clearTimeout(this.scrollDiagnosticTimer);
+            }
+            this.scrollDiagnosticTimer = window.setTimeout((): void => {
+                this.scrollDiagnosticTimer = null;
+                this.lastScrollDiagnosticAt = performance.now();
+                this.reportDisplayLayout('display-scroll-settled', {
+                    force: true,
+                    scrollEvent: latestScrollEvent ?? undefined,
+                    recentInteractions: this.getRecentScrollInteractions(performance.now()),
+                });
+            }, 150);
+        }, { passive: true });
+    }
+
+    private recordIFrameInteraction(metadataId: string, interaction: Record<string, unknown>): void {
+        if (this.diagnosticSessionId === null) {
+            return;
+        }
+
+        const interactionType = typeof interaction.type === 'string' ? interaction.type : null;
+        if (interaction.diagnosticSessionId !== this.diagnosticSessionId) {
+            this.reportDisplayLayout('itowns-interaction-rejected', {
+                force: true,
+                diagnosticInteraction: {
+                    metadataId,
+                    receivedType: interactionType,
+                    reason: 'session-mismatch',
+                },
+            });
+            return;
+        }
+        if (interactionType === null) {
+            this.reportDisplayLayout('itowns-interaction-rejected', {
+                force: true,
+                diagnosticInteraction: { metadataId, reason: 'missing-type' },
+            });
+            return;
+        }
+        if (interactionType === 'diagnostic-ready') {
+            this.reportDisplayLayout('itowns-diagnostic-ready', {
+                force: true,
+                diagnosticInteraction: {
+                    metadataId,
+                    sessionMatched: true,
+                    viewType: interaction.viewType === 'display' ? interaction.viewType : null,
+                    listenersInitialized: interaction.listenersInitialized === true,
+                    frameWallTime: typeof interaction.frameWallTime === 'string' ? interaction.frameWallTime : null,
+                    frameElapsedMs: typeof interaction.frameElapsedMs === 'number' ? interaction.frameElapsedMs : null,
+                },
+            });
+            return;
+        }
+        const supportedTypes = new Set([
+            'pointerdown',
+            'pointermove',
+            'pointerup',
+            'pointercancel',
+            'wheel',
+            'focusin',
+            'focusout',
+            'keydown',
+            'iframe-focus',
+            'iframe-blur',
+        ]);
+        if (!supportedTypes.has(interactionType)) {
+            this.reportDisplayLayout('itowns-interaction-rejected', {
+                force: true,
+                diagnosticInteraction: {
+                    metadataId,
+                    receivedType: interactionType,
+                    reason: 'unsupported-type',
+                },
+            });
+            return;
+        }
+
+        this.storeRecentScrollInteraction({
+            type: interactionType.startsWith('iframe-') ? interactionType : `iframe-${interactionType}`,
+            source: 'itowns-iframe',
+            metadataId,
+            clientWallTime: new Date().toISOString(),
+            clientElapsedMs: performance.now() - this.diagnosticStartedAt,
+            frameWallTime: typeof interaction.frameWallTime === 'string' ? interaction.frameWallTime : null,
+            frameElapsedMs: typeof interaction.frameElapsedMs === 'number' ? interaction.frameElapsedMs : null,
+            isTrusted: interaction.isTrusted === true,
+            target: typeof interaction.target === 'object' && interaction.target !== null
+                ? interaction.target
+                : null,
+            pointer: typeof interaction.pointer === 'object' && interaction.pointer !== null
+                ? interaction.pointer
+                : null,
+            wheel: typeof interaction.wheel === 'object' && interaction.wheel !== null
+                ? interaction.wheel
+                : null,
+            key: typeof interaction.key === 'string' ? interaction.key : null,
+        });
+    }
+
+    private storeRecentScrollInteraction(interaction: Record<string, unknown>): void {
+        this.recentScrollInteractions.push(interaction);
+        if (this.recentScrollInteractions.length > 10) {
+            this.recentScrollInteractions.shift();
+        }
+    }
+
+    private describeInteractionTarget(target: Element | null): Record<string, unknown> | null {
+        if (target === null) {
+            return null;
+        }
+        const targetElement = target instanceof HTMLElement ? target : null;
+        const contentElement = targetElement?.closest('[id^="content-"]') as HTMLElement | null;
+        return {
+            tagName: target.tagName,
+            id: targetElement?.id || null,
+            metadataId: contentElement?.id.startsWith('content-')
+                ? contentElement.id.slice('content-'.length)
+                : null,
+            role: target.getAttribute('role'),
+        };
+    }
+
+    private getRecentScrollInteractions(now: number): Array<Record<string, unknown>> {
+        const cutoff = now - 3000;
+        return this.recentScrollInteractions
+            .filter((interaction) => typeof interaction.clientElapsedMs === 'number' && interaction.clientElapsedMs >= cutoff - this.diagnosticStartedAt)
+            .slice(-10);
+    }
+
+    private describeLayoutElement(element: HTMLElement): Record<string, unknown> {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return {
+            tagName: element.tagName,
+            id: element.id,
+            className: typeof element.className === 'string' ? element.className : '',
+            rect: {
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+            },
+            scrollLeft: element.scrollLeft,
+            scrollTop: element.scrollTop,
+            computedStyle: {
+                position: style.position,
+                transform: style.transform,
+                overflowX: style.overflowX,
+                overflowY: style.overflowY,
+            },
+        };
+    }
+
+    private reportCameraDiagnostic(update: any, result: any): void {
+        if (
+            this.diagnosticSessionId === null
+            || update.diagnosticSessionId !== this.diagnosticSessionId
+            || !result
+        ) {
+            return;
+        }
+
+        this.diagnosticSequence += 1;
+        void this.sendCommand('ReportClientDiagnostic', {
+            event: 'camera-rendered',
+            diagnosticSessionId: this.diagnosticSessionId,
+            diagnosticId: update.diagnosticId,
+            instanceId: this.diagnosticInstanceId,
+            sequence: this.diagnosticSequence,
+            clientWallTime: new Date().toISOString(),
+            clientElapsedMs: performance.now() - this.diagnosticStartedAt,
+            displayId: this.displayId,
+            metadataId: update.metadataId,
+            phase: result.phase,
+            clientState: result.state ?? null,
+            renderElapsedMs: result.clientElapsedMs ?? null,
+        }).catch((error: unknown) => {
+            console.warn('[Display] Failed to report camera diagnostic:', error);
+        });
     }
 
     private shouldReloadWebGLContent(
@@ -529,50 +976,26 @@ class DisplayClient {
         if (normalizedMetadata.type === 'live-stream') {
             console.log('[Display] Live stream metadata received:', normalizedMetadata.metadataId);
 
-            if (!this.isContentInWindow(normalizedMetadata)) {
-                const outElem = document.getElementById(`content-${normalizedMetadata.metadataId}`);
-                if (outElem) outElem.style.display = 'none';
-                return;
-            }
+            const elem = ensureLiveStreamElement(this.contentArea, normalizedMetadata.metadataId);
 
-            let elem = document.getElementById(`content-${normalizedMetadata.metadataId}`);
-            if (!elem) {
-                elem = document.createElement('div');
-                elem.id = `content-${normalizedMetadata.metadataId}`;
-                elem.className = 'content-item';
-
-                const video = document.createElement('video');
-                video.autoplay = true;
-                video.playsInline = true;
-                video.muted = false;
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.objectFit = 'contain';
-                elem.appendChild(video);
-
-                this.contentArea.appendChild(elem);
-            }
-
-            const lsCoords = this.virtualToWindowCoordinates(
-                normalizedMetadata.posx,
-                normalizedMetadata.posy,
-                normalizedMetadata.width,
-                normalizedMetadata.height,
-            );
-            elem.style.left = `${lsCoords.x}px`;
-            elem.style.top = `${lsCoords.y}px`;
-            elem.style.width = `${lsCoords.w}px`;
-            elem.style.height = `${lsCoords.h}px`;
-            elem.style.display = normalizedMetadata.visible !== false ? 'block' : 'none';
-            elem.style.zIndex = `${normalizeContentZIndex(normalizedMetadata.zindex)}`;
+            this.applyElementLayout(normalizedMetadata, elem);
 
             const producerId = (normalizedMetadata as any).producerId;
             if (producerId) {
-                const pendingIndex = this.pendingStreamProducers.findIndex(p => p.producerId === producerId);
-                if (pendingIndex >= 0) {
-                    const pendingProducer = this.pendingStreamProducers[pendingIndex];
-                    this.pendingStreamProducers.splice(pendingIndex, 1);
+                const pendingProducer = this.pendingStreamProducers.get(producerId);
+                if (pendingProducer) {
+                    this.pendingStreamProducers.delete(producerId);
                     await this.handleNewProducer(pendingProducer);
+                } else {
+                    const existingStream = this.liveStreamManager?.getStreamForExistingConsumer(producerId);
+                    const video = elem.querySelector('video');
+                    if (existingStream && (video === null || video.srcObject === null)) {
+                        this.liveStreamManager?.attachStreamToElement(
+                            elem.id,
+                            existingStream,
+                            'video',
+                        );
+                    }
                 }
             }
             return;
@@ -596,6 +1019,7 @@ class DisplayClient {
 
         if (meta.type === 'tileimage') {
             if (!meta.tileFinished) {
+                this.renderer.destroyTileImage(metadata.metadataId);
                 elem.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#888;font-size:12px;">Processing...</div>';
                 return;
             }
@@ -610,6 +1034,10 @@ class DisplayClient {
 
         try {
             const content = await this.sendCommand('GetContent', { metadataId: metadata.metadataId });
+            const latestMetadata = this.contents.get(metadata.metadataId);
+            if (!elem.isConnected || latestMetadata === undefined || (metadata.type === 'webgl' && latestMetadata.url !== metadata.url)) {
+                return;
+            }
 
             if (content.type.startsWith('image') && content.binary) {
                 this.renderer.displayImage(elem, content.binary, content.mime || 'image/png');
@@ -618,7 +1046,7 @@ class DisplayClient {
             } else if (content.type === 'video' && content.binary) {
                 this.renderer.displayVideo(elem, content.binary, content.mime || 'video/mp4');
             } else if (content.type === 'webgl' && content.url) {
-                this.renderer.displayWebGL(elem, content, metadata);
+                this.renderer.displayWebGL(elem, content, latestMetadata);
             } else if (content.type === 'pdf' && content.binary) {
                 this.renderer.displayPDF(elem, content);
             } else {
@@ -655,6 +1083,14 @@ class DisplayClient {
         let n = vh.width;
     }
 
+    private async refreshTileImages(): Promise<void> {
+        for (const metadata of this.contents.values()) {
+            if (metadata.type === 'tileimage') {
+                await this.displayContent(metadata);
+            }
+        }
+    }
+
     private async reloadAllContents(): Promise<void> {
         console.log('[Display] Reloading all contents...');
         for (const [metadataId, metadata] of this.contents) {
@@ -671,6 +1107,7 @@ class DisplayClient {
     }
 
     private removeContentElement(metadataId: string): void {
+        this.renderer.destroyTileImage(metadataId);
         const elem = document.getElementById(`content-${metadataId}`);
         if (elem) {
             elem.remove();
@@ -732,6 +1169,9 @@ class DisplayClient {
                     updateParams.metadataId,
                     updateParams.cameraWorldMatrix,
                     updateParams.cameraParams,
+                    undefined,
+                    undefined,
+                    updateParams,
                 );
             }
         });
@@ -821,15 +1261,32 @@ class DisplayClient {
         } else if (method === 'UpdateCameraMatrix') {
             // iTowns カメラ行列のみの更新（位置・サイズDOM更新は不要）
             if (params && params.metadataId && params.cameraWorldMatrix && params.cameraParams) {
-                this.renderer.sendWebGLCameraUpdate(
-                    params.metadataId,
-                    params.cameraWorldMatrix,
-                    params.cameraParams,
-                );
+                if (typeof params.diagnosticId === 'string' && typeof params.diagnosticSessionId === 'string') {
+                    this.renderer.sendWebGLCameraUpdate(
+                        params.metadataId,
+                        params.cameraWorldMatrix,
+                        params.cameraParams,
+                        {
+                            diagnosticId: params.diagnosticId,
+                            diagnosticSessionId: params.diagnosticSessionId,
+                        },
+                        (result: any) => this.reportCameraDiagnostic(params, result),
+                        params,
+                    );
+                } else {
+                    this.renderer.sendWebGLCameraUpdate(
+                        params.metadataId,
+                        params.cameraWorldMatrix,
+                        params.cameraParams,
+                        undefined,
+                        undefined,
+                        params,
+                    );
+                }
             }
         } else if (method === 'DeleteContent') {
             if (params && params.metadataId) {
-                this.onContentDeleted(params.metadataId);
+                await this.onContentDeleted(params.metadataId);
             }
         } else if (method === 'UpdateDisplaySpace') {
             if (params) {
@@ -851,6 +1308,7 @@ class DisplayClient {
                 this.windowMetaData.posy = myParams.posy ?? this.windowMetaData.posy;
                 this.windowMetaData.virtualWidth = myParams.virtualWidth ?? this.windowMetaData.virtualWidth;
                 this.windowMetaData.virtualHeight = myParams.virtualHeight ?? this.windowMetaData.virtualHeight;
+                this.windowMetaData.revision = myParams.revision ?? this.windowMetaData.revision;
                 // pixelWidth/Height は常に実際の表示領域サイズを使用する
                 // （コントローラ側から送られてくる古いキャッシュ値で上書きしない）
                 this.windowMetaData.pixelWidth = this.displayArea.clientWidth;
@@ -862,6 +1320,7 @@ class DisplayClient {
                 await this.refreshDisplay();
                 this.cursorOverlay.reflowAllCursors();
                 this.updateDebugInfo();
+                this.reportDisplayLayout('window-metadata-applied');
             }
         } else if (method === 'RefreshDisplayContent') {
             await this.reloadAllContents();
@@ -888,6 +1347,7 @@ class DisplayClient {
             await this.displayContent(normalizedMetadata);
             this.reorderContentAreaByMetadataOrder();
         }
+        this.reportDisplayLayout('content-layout-applied');
     }
 
     private async handleRegularMetaUpdate(updatedMeta: ContentMetadata): Promise<void> {
@@ -896,15 +1356,25 @@ class DisplayClient {
         const existingElem = document.getElementById(`content-${normalizedMetadata.metadataId}`);
         if (existingElem !== null) {
             this.applyElementLayout(normalizedMetadata, existingElem as HTMLElement);
+            if (normalizedMetadata.type === 'tileimage') {
+                await this.displayContent(normalizedMetadata);
+            } else if (normalizedMetadata.type === 'text') {
+                this.renderer.resizeTextContent(existingElem as HTMLElement);
+            }
             this.reorderContentAreaByMetadataOrder();
         } else if (this.isContentInWindow(normalizedMetadata)) {
             await this.displayContent(normalizedMetadata);
             this.reorderContentAreaByMetadataOrder();
         }
+        this.reportDisplayLayout('content-layout-applied');
     }
 
     private async onContentUpdated(metadata: ContentMetadata, forceReload: boolean = false): Promise<void> {
         const normalizedMetadata = this.normalizeMetadataForOrder(metadata);
+        const previous = this.contents.get(normalizedMetadata.metadataId);
+        if (normalizedMetadata.type === 'webgl' && previous !== undefined && previous.url !== normalizedMetadata.url) {
+            cameraMirrorUpdates.invalidateUrl(normalizedMetadata.metadataId, normalizedMetadata.url ?? '');
+        }
         console.log('[Display] Content updated:', normalizedMetadata.metadataId, 'pos:', normalizedMetadata.posx, normalizedMetadata.posy, 'size:', normalizedMetadata.width, normalizedMetadata.height);
         this.contents.set(normalizedMetadata.metadataId, normalizedMetadata);
         const existingElem = document.getElementById(`content-${normalizedMetadata.metadataId}`);
@@ -913,16 +1383,27 @@ class DisplayClient {
         }
         await this.displayContent(normalizedMetadata);
         this.reorderContentAreaByMetadataOrder();
+        this.reportDisplayLayout('content-layout-applied');
     }
 
-    private onContentDeleted(metadataId: string): void {
+    private async onContentDeleted(metadataId: string): Promise<void> {
+        cameraMirrorUpdates.forget(metadataId);
         console.log('[Display] Content deleted:', metadataId);
 
         const metadata = this.contents.get(metadataId);
+        let producerId: string | null = null;
+        for (const [pendingProducerId, pendingProducer] of this.pendingStreamProducers.entries()) {
+            if (pendingProducer.metadataId === metadataId) {
+                this.pendingStreamProducers.delete(pendingProducerId);
+            }
+        }
         if (metadata) {
             console.log('[Display] Found metadata for deletion:', metadata);
             if ((metadata as any).producerId) {
-                console.log('[Display] ProducerId found:', (metadata as any).producerId);
+                producerId = (metadata as any).producerId as string;
+                console.log('[Display] ProducerId found:', producerId);
+                this.pendingStreamProducers.delete(producerId);
+                this.liveStreamManager?.detachStreamFromElement(`content-${metadataId}`, 'video');
             }
         }
 
@@ -930,6 +1411,9 @@ class DisplayClient {
         this.renderer.destroyWebGL(metadataId);
         this.contents.delete(metadataId);
         this.updateContentCount();
+        if (producerId !== null) {
+            await this.liveStreamManager?.closeConsumer(producerId);
+        }
     }
 
     // ----------------------------------------------------------------
@@ -1025,6 +1509,25 @@ class DisplayClient {
     }
 
     private initWindowResizeHandler(): void {
+        let dprMediaQuery: MediaQueryList | null = null;
+        const handleDevicePixelRatioChange = (): void => {
+            observeDevicePixelRatio();
+            this.refreshTileImages().catch((error: unknown) => {
+                console.error('[Display] Failed to refresh tile images after DPR change:', error);
+            });
+        };
+        const observeDevicePixelRatio = (): void => {
+            if (dprMediaQuery !== null) {
+                dprMediaQuery.removeEventListener('change', handleDevicePixelRatioChange);
+            }
+            dprMediaQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+            dprMediaQuery.addEventListener('change', handleDevicePixelRatioChange, { once: true });
+        };
+        observeDevicePixelRatio();
+
+        document.addEventListener('fullscreenchange', (): void => {
+            this.reportDisplayLayout('display-fullscreen');
+        });
         let resizeTimeout: number | null = null;
         window.addEventListener('resize', () => {
             if (resizeTimeout !== null) clearTimeout(resizeTimeout);
@@ -1037,6 +1540,9 @@ class DisplayClient {
                         id: this.windowMetaData.id,
                         pixelWidth: this.displayArea.clientWidth,
                         pixelHeight: this.displayArea.clientHeight,
+                    }).then((updatedWindow: WindowMetaData) => {
+                        this.windowMetaData!.revision = updatedWindow?.revision ?? this.windowMetaData!.revision;
+                        this.reportDisplayLayout('display-resize');
                     }).catch((err) => console.error('[Display] Failed to notify resize:', err));
                     await this.refreshDisplay();
                     this.cursorOverlay.reflowAllCursors();
@@ -1062,43 +1568,100 @@ class DisplayClient {
         this.liveStreamManager = new LiveStreamManager(callbacks);
     }
 
-    private async handleNewProducer(params: any): Promise<void> {
-        const { producerId, userId, kind } = params;
+    private async handleNewProducer(params: StreamProducerNotification): Promise<void> {
+        const { producerId, userId, kind, metadataId } = params;
+        if (kind !== 'video' || typeof metadataId !== 'string' || metadataId === '') {
+            return;
+        }
+
         console.log(`[Display] New ${kind} producer available from ${userId}`);
+        const metadata = this.contents.get(metadataId);
+        if (!metadata) {
+            this.queuePendingStreamProducer(params);
+            return;
+        }
+        if (metadata.type !== 'live-stream' || (metadata as any).producerId !== producerId) {
+            return;
+        }
+
+        const elementId = `content-${metadata.metadataId}`;
+        if (!document.getElementById(elementId)) {
+            this.queuePendingStreamProducer(params);
+            return;
+        }
+
+        const pendingAttachment = this.streamAttachmentPromises.get(producerId);
+        if (pendingAttachment) {
+            await pendingAttachment;
+            return;
+        }
+
+        this.initLiveStreamManager();
+        const attachment = this.attachStreamProducer(params, metadata);
+        this.streamAttachmentPromises.set(producerId, attachment);
+        try {
+            await attachment;
+        } finally {
+            if (this.streamAttachmentPromises.get(producerId) === attachment) {
+                this.streamAttachmentPromises.delete(producerId);
+            }
+        }
+    }
+
+    private async attachStreamProducer(
+        params: StreamProducerNotification,
+        metadata: ContentMetadata,
+    ): Promise<void> {
+        const manager = this.liveStreamManager;
+        if (!manager) {
+            return;
+        }
+
+        const producerId = params.producerId;
+        const elementId = `content-${metadata.metadataId}`;
+        const existingStream = manager.getStreamForExistingConsumer(producerId);
+        if (existingStream) {
+            manager.attachStreamToElement(elementId, existingStream, 'video');
+            return;
+        }
+
+        const config = {
+            streamName: (metadata as any).streamName || `Stream from ${params.userId}`,
+            posx: metadata.posx,
+            posy: metadata.posy,
+            width: metadata.width,
+            height: metadata.height,
+        };
 
         try {
-            this.initLiveStreamManager();
-
-            let metadata: ContentMetadata | undefined;
-            for (const meta of this.contents.values()) {
-                if (meta.type === 'live-stream' && (meta as any).producerId === producerId) {
-                    metadata = meta;
-                    break;
-                }
-            }
-
-            if (!metadata) {
-                console.log(`[Display] Metadata not yet available for ${kind} producer ${producerId}, pending...`);
-                this.pendingStreamProducers.push(params);
+            const { stream, kind } = await manager.consumeStream(producerId, config);
+            const currentMetadata = this.contents.get(metadata.metadataId);
+            const element = document.getElementById(elementId);
+            if (
+                currentMetadata === undefined
+                || currentMetadata.type !== 'live-stream'
+                || (currentMetadata as any).producerId !== producerId
+                || element === null
+            ) {
+                await manager.closeConsumer(producerId);
                 return;
             }
-
-            const config = {
-                streamName: (metadata as any).streamName || `Stream from ${userId}`,
-                posx: metadata.posx,
-                posy: metadata.posy,
-                width: metadata.width,
-                height: metadata.height,
-            };
-            console.log(`[Display] Using metadata position for ${kind}: (${config.posx}, ${config.posy})`);
-
-            const { stream, kind: streamKind } = await this.liveStreamManager!.consumeStream(producerId, config);
-            const elementId = `content-${metadata.metadataId}`;
-            this.liveStreamManager!.attachStreamToElement(elementId, stream, streamKind);
+            manager.attachStreamToElement(elementId, stream, kind);
             console.log(`[Display] Stream attached to ${elementId}`);
-        } catch (error: any) {
-            console.error(`[Display] Failed to consume stream: ${error.message}`);
+        } catch (error: unknown) {
+            console.error('[Display] Failed to consume stream:', error);
         }
+    }
+
+    private queuePendingStreamProducer(params: StreamProducerNotification): void {
+        if (!this.pendingStreamProducers.has(params.producerId)
+            && this.pendingStreamProducers.size >= MAX_PENDING_STREAM_PRODUCERS) {
+            const oldestProducerId = this.pendingStreamProducers.keys().next().value;
+            if (oldestProducerId !== undefined) {
+                this.pendingStreamProducers.delete(oldestProducerId);
+            }
+        }
+        this.pendingStreamProducers.set(params.producerId, params);
     }
 
     private async fetchActiveProducers(): Promise<void> {

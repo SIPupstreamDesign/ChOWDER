@@ -9,6 +9,9 @@ export interface WindowMetaData {
     /** ウィンドウID */
     id: string;
 
+    /** サーバー内で単調増加する更新番号 */
+    revision?: number;
+
     /** VirtualDisplay座標系でのウィンドウ左上X座標 */
     posx: number;
 

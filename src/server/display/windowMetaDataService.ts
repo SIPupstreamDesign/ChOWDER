@@ -42,6 +42,7 @@ export class WindowMetaDataService {
 
         const windowMetaData: WindowMetaData = {
             id: windowId,
+            revision: 1,
             posx: request.posx,
             posy: request.posy,
             virtualWidth: request.virtualWidth,
@@ -83,7 +84,9 @@ export class WindowMetaDataService {
             for (const key of displayKeys) {
                 const data = await this.redis.get(key);
                 if (data) {
-                    windows.push(JSON.parse(data) as WindowMetaData);
+                    const windowMetaData = JSON.parse(data) as WindowMetaData;
+                    windowMetaData.revision ??= 0;
+                    windows.push(windowMetaData);
                 }
             }
 
@@ -92,7 +95,9 @@ export class WindowMetaDataService {
             // 単一取得
             const data = await this.redis.get(REDIS_KEYS.DISPLAY.WINDOW(id!));
             if (data) {
-                return JSON.parse(data) as WindowMetaData;
+                const windowMetaData = JSON.parse(data) as WindowMetaData;
+                windowMetaData.revision ??= 0;
+                return windowMetaData;
             }
             return null;
         }
@@ -138,6 +143,7 @@ export class WindowMetaDataService {
         const updated: WindowMetaData = {
             ...current,
             ...updates,
+            revision: (current.revision ?? 0) + 1,
             siteId: newSiteId,
         };
 

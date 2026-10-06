@@ -1,5 +1,6 @@
-import { IFrameConnector } from '../../IFrameConnector';
+import { IFrameConnector } from '../../../common/IFrameConnector';
 import type { ContentRenderer, RendererContext } from './BaseRenderer';
+import { cameraMirrorUpdates } from '../../../common/cameraMirrorUpdates';
 
 /**
  * `webgl` タイプのコンテンツを iframe + IFrameConnector で描画するレンダラー。
@@ -16,6 +17,7 @@ export class WebGLRenderer implements ContentRenderer {
         if (!result.url) {
             return;
         }
+        elem.dataset.webglUrl = result.url;
 
         // itowns コンテンツの初期アスペクト比を metadata から事前設定する
         // （ViewportResize が届く前にマニピュレータを操作してもロックが効く）
@@ -32,7 +34,7 @@ export class WebGLRenderer implements ContentRenderer {
         elem.appendChild(iframe);
 
         iframe.onload = () => {
-            try { (iframe.contentWindow as any).chowder_itowns_view_type = 'controller'; } catch (_) {}
+            try { (iframe.contentWindow as any).chowder_itowns_view_type = 'controller'; } catch (_) { }
             const connector = new IFrameConnector(iframe);
             ctx.webglConnectors.set(metadata.metadataId, { iframe, connector });
 
@@ -63,13 +65,8 @@ export class WebGLRenderer implements ContentRenderer {
 
     private _applyCamera(connector: IFrameConnector, result: any): void {
         try {
-            connector.send('UpdateCamera', {
-                mat: JSON.parse(result.cameraWorldMatrix),
-                params: JSON.parse(result.cameraParams),
-            }, () => {
-                // カメラ適用後に renderer サイズ・アスペクト比を確定させる
-                connector.send('Resize', { displayMode: true });
-            });
+            cameraMirrorUpdates.restore(connector, result);
+            connector.send('Resize', { displayMode: true });
         } catch (e) {
             console.error('[WebGLRenderer] UpdateCamera parse error:', e);
             connector.send('Resize', { displayMode: true });

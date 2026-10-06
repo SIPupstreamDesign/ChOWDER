@@ -10,7 +10,8 @@ import {
 } from '../../thumbnailCapture';
 import { resizeTextElem } from '../../common/textUtils';
 import type { LiveStreamManager } from '../../liveStreamManager';
-import { IFrameConnector } from '../IFrameConnector';
+import { IFrameConnector } from '../../common/IFrameConnector';
+import { cameraMirrorUpdates } from '../../common/cameraMirrorUpdates';
 import { Manipulator } from '../../manipulator';
 import type { ContentMetadata, ContentUpdateData } from '../types';
 import type { LogFn, SendCommandFn } from '../websocket/WebSocketClient';
@@ -27,6 +28,7 @@ import { PdfRenderer, UrlRenderer, TextRenderer } from './renderers/MiscRenderer
 import { MetadataListBadgeRenderer } from './renderers/MetadataListBadgeRenderer';
 import { MetadataListItemRenderer } from './renderers/MetadataListItemRenderer';
 import { VisibleStateManager } from './VisibleStateManager';
+import { resolveContentAspectRatio } from './contentLayoutValues';
 
 export type SendBinaryCommandFn = (method: string, params: any, binary: ArrayBuffer) => Promise<any>;
 
@@ -46,7 +48,7 @@ export interface ContentManagerDeps {
     consumePendingProducer: (producerId: string) => any | null;
     handleNewProducer: (params: any, knownMetadata?: any) => Promise<void>;
     getEditMode: () => number;
-    showRightClickMenu: (e:MouseEvent)=> void;
+    showRightClickMenu: (e: MouseEvent) => void;
     /** 自分が送信者の video-file コンテンツを metadataId で停止する。停止した場合 true を返す。 */
     stopVideoFileByMetadata: (metadataId: string) => Promise<boolean>;
     /** 自分が送信者の camera/screen コンテンツを producerId で停止する。停止した場合 true を返す。 */
@@ -73,6 +75,7 @@ export class ContentManager {
     private _textResizeObservers = new Map<string, ResizeObserver>();
     private _webglConnectors = new Map<string, { iframe: HTMLIFrameElement; connector: IFrameConnector }>();
     private _displayInFlightByMetadataId = new Map<string, Promise<void>>();
+    private readonly _renderGenerations = new Map<string, number>();
 
     private readonly _contentRenderers: ContentRenderer[];
     private readonly _badgeRenderer = new MetadataListBadgeRenderer();
@@ -93,12 +96,12 @@ export class ContentManager {
     private readonly consumePendingProducer: (producerId: string) => any | null;
     private readonly handleNewProducer: (params: any, knownMetadata?: any) => Promise<void>;
     private readonly getEditMode: () => number;
-    private readonly showRightClickMenu: (e:MouseEvent) => void;
+    private readonly showRightClickMenu: (e: MouseEvent) => void;
     private readonly stopVideoFileByMetadata: (metadataId: string) => Promise<boolean>;
     private readonly stopLiveStreamByProducerId: (producerId: string) => Promise<boolean>;
     private readonly _addVideoFileDep: (file: File, streamName: string) => Promise<void>;
 
-    private readonly dmyElmStr:string = 'position:absolute;width:100%;height:100%;left:0;top:0;background-color:rgba(0,0,0,0.01);';
+    private readonly dmyElmStr: string = 'position:absolute;width:100%;height:100%;left:0;top:0;background-color:rgba(0,0,0,0.01);';
 
     private tileThresholds: { width: number; height: number } | null = null;
 
@@ -303,12 +306,12 @@ export class ContentManager {
         }
     }
 
-    serchSetPos():number{
+    serchSetPos(): number {
         let setPosX = 0;
         let setPosY = 0;
         //追加位置を探す
-        for(let i=0; i < this._metadataList.length;i++){
-            if(this._metadataList[i].posx == setPosX && this._metadataList[i].posy == setPosY){
+        for (let i = 0; i < this._metadataList.length; i++) {
+            if (this._metadataList[i].posx == setPosX && this._metadataList[i].posy == setPosY) {
                 setPosX = setPosX + 100;
                 setPosY = setPosY + 100;
                 i = 0;
@@ -562,7 +565,7 @@ export class ContentManager {
                 const scaleW = imageSize.width > MAX_W ? MAX_W / imageSize.width : 1;
                 const scaleH = imageSize.height > MAX_H ? MAX_H / imageSize.height : 1;
                 const scale = Math.min(scaleW, scaleH);
-                initialWidth  = Math.round(imageSize.width  * scale);
+                initialWidth = Math.round(imageSize.width * scale);
                 initialHeight = Math.round(imageSize.height * scale);
             }
 
@@ -607,16 +610,13 @@ export class ContentManager {
     private async _addTileimageFromFile(file: File, imageSize?: { width: number; height: number }): Promise<void> {
         const MAX_SEGMENT_SIZE = 512 * 1024;
         let hideOverlayOnExit = true;
-        const MAX_W = 1920;
-        const MAX_H = 1080;
-        let initialWidth = MAX_W;
-        let initialHeight = MAX_H;
+        const FALLBACK_WIDTH = 1920;
+        const FALLBACK_HEIGHT = 1080;
+        let initialWidth = FALLBACK_WIDTH;
+        let initialHeight = FALLBACK_HEIGHT;
         if (imageSize !== undefined) {
-            const scaleW = imageSize.width > MAX_W ? MAX_W / imageSize.width : 1;
-            const scaleH = imageSize.height > MAX_H ? MAX_H / imageSize.height : 1;
-            const scale = Math.min(scaleW, scaleH);
-            initialWidth  = Math.round(imageSize.width  * scale);
-            initialHeight = Math.round(imageSize.height * scale);
+            initialWidth = imageSize.width;
+            initialHeight = imageSize.height;
         }
         const setPosX = this.serchSetPos();
         const contentMeta = {
@@ -718,7 +718,7 @@ export class ContentManager {
             );
 
             // テキストプレビューまたはサムネイル
-            const textPreview = metadata.type === 'text' 
+            const textPreview = metadata.type === 'text'
                 ? this._textContentCache.get(metadata.metadataId)
                 : undefined;
             const thumbnailUrl = !textPreview && metadata.type !== 'text'
@@ -852,7 +852,7 @@ export class ContentManager {
     }
 
     selectMetadata(metadataId: string): void {
-        if(this.getEditMode() != 1){return;}
+        if (this.getEditMode() != 1) { return; }
 
         this._selectedMetadataId = metadataId;
         this.renderMetadataList();
@@ -876,14 +876,7 @@ export class ContentManager {
             if (contentDom.dataset.metadataId === metadataId) {
                 contentDom.classList.add('content-active');
                 this.manipulator?.init(this.createUpdateStock);
-                // webgl はビューポートアスペクト比、画像/映像は読み込み時に取得したアスペクト比でロック
-                const itownsAspect = (contentDom.dataset.itownsAspect !== undefined && contentDom.dataset.itownsAspect !== '')
-                    ? Number(contentDom.dataset.itownsAspect)
-                    : null;
-                const contentAspect = (contentDom.dataset.contentAspect !== undefined && contentDom.dataset.contentAspect !== '')
-                    ? Number(contentDom.dataset.contentAspect)
-                    : null;
-                this.manipulator?.setAspectRatio(itownsAspect ?? contentAspect);
+                this.manipulator?.setAspectRatio(resolveContentAspectRatio(contentDom.dataset));
                 if (this.el.viewArea) this.manipulator?.showManipulator(contentDom, this.el.viewArea, this.getZoom());
                 this.updateContentsParameter(contentDom);
             } else {
@@ -967,8 +960,8 @@ export class ContentManager {
             }
 
             await this.sendCmd('DeleteContent', { metadataId: targetId });
+            this.applyContentDeletion(targetId);
             this.logFn('✅ Content deleted', 'success');
-            this.resetSelectedMetadata();
             this.refreshMetadataList();
         } catch (error: any) {
             this.logFn(`Failed to delete: ${error.message}`, 'error');
@@ -1086,6 +1079,7 @@ export class ContentManager {
     }
 
     private async displayContentOnViewAreaInternal(metadata: any, normalizedMetadataId: string): Promise<void> {
+        const generation = this._renderGenerations.get(normalizedMetadataId) ?? 0;
         try {
             const existingElem = document.getElementById(`view-${normalizedMetadataId}`) as HTMLElement | null;
             if (existingElem !== null) {
@@ -1097,6 +1091,9 @@ export class ContentManager {
             }
 
             const result = await this.sendCmd('GetContent', { metadataId: normalizedMetadataId });
+            if (generation !== (this._renderGenerations.get(normalizedMetadataId) ?? 0)) {
+                return;
+            }
             if (!this.el.viewArea) {
                 return;
             }
@@ -1236,14 +1233,7 @@ export class ContentManager {
                 zindex: Number(elem.style.zIndex),
             });
 
-            // webgl はビューポートアスペクト比、画像/映像は読み込み時に取得したアスペクト比でロック
-            const itownsAspectDrag = (elem.dataset.itownsAspect !== undefined && elem.dataset.itownsAspect !== '')
-                ? Number(elem.dataset.itownsAspect)
-                : null;
-            const contentAspectDrag = (elem.dataset.contentAspect !== undefined && elem.dataset.contentAspect !== '')
-                ? Number(elem.dataset.contentAspect)
-                : null;
-            this.manipulator?.setAspectRatio(itownsAspectDrag ?? contentAspectDrag);
+            this.manipulator?.setAspectRatio(resolveContentAspectRatio(elem.dataset));
             this.manipulator?.showManipulator(elem, this.el.viewArea, this.getZoom());
         };
 
@@ -1339,7 +1329,32 @@ export class ContentManager {
         }
     }
 
+    applyContentDeletion(metadataId: string): void {
+        this._metadataList = this._metadataList.filter((metadata): boolean => {
+            return metadata.metadataId !== metadataId;
+        });
+        this._thumbnailCache.delete(metadataId);
+        this._textContentCache.delete(metadataId);
+        this._textResizeObservers.get(metadataId)?.disconnect();
+        this._textResizeObservers.delete(metadataId);
+        cameraMirrorUpdates.forget(metadataId);
+        this.removeContentFromViewArea(metadataId);
+        if (this._selectedMetadataId === metadataId) {
+            this.resetSelectedMetadata();
+        }
+    }
+
     removeContentFromViewArea(metadataId: string): void {
+        this._renderGenerations.set(metadataId, (this._renderGenerations.get(metadataId) ?? 0) + 1);
+        this._displayInFlightByMetadataId.delete(metadataId);
+        this._webglConnectors.get(metadataId)?.connector.destroy();
+        this._webglConnectors.delete(metadataId);
+        const previewElements = this.el.previewContent?.querySelectorAll('.content-item') ?? [];
+        for (const previewElement of previewElements) {
+            if (previewElement.id === `view-${metadataId}`) {
+                previewElement.remove();
+            }
+        }
         const elem = document.getElementById(`view-${metadataId}`);
         if (elem) elem.remove();
     }
@@ -1351,15 +1366,21 @@ export class ContentManager {
     updateWebGLContentLayout(metadata: any): void {
         const elem = document.getElementById(`view-${metadata.metadataId}`) as HTMLElement | null;
         if (!elem) return;
+        if (typeof metadata.url === 'string' && elem.dataset.webglUrl !== undefined && metadata.url !== elem.dataset.webglUrl) {
+            cameraMirrorUpdates.invalidateUrl(metadata.metadataId, metadata.url);
+            this.removeContentFromViewArea(metadata.metadataId);
+            void this.displayContentOnViewArea(metadata);
+            return;
+        }
         const normalizedZIndex = normalizeContentZIndex(metadata.zindex);
-        elem.style.left   = `${metadata.posx}px`;
-        elem.style.top    = `${metadata.posy}px`;
-        elem.style.width  = `${metadata.width}px`;
+        elem.style.left = `${metadata.posx}px`;
+        elem.style.top = `${metadata.posy}px`;
+        elem.style.width = `${metadata.width}px`;
         elem.style.height = `${metadata.height}px`;
         elem.style.zIndex = `${normalizedZIndex}`;
         elem.dataset.worldX = String(metadata.posx);
         elem.dataset.worldY = String(metadata.posy);
-        elem.dataset.width  = String(metadata.width);
+        elem.dataset.width = String(metadata.width);
         elem.dataset.height = String(metadata.height);
         elem.dataset.type = elem.dataset.type ?? 'webgl';
         const isVisible = metadata.visible !== false;
@@ -1368,8 +1389,9 @@ export class ContentManager {
         if (metadata.width > 0 && metadata.height > 0) {
             elem.dataset.itownsAspect = String(metadata.height / metadata.width);
         }
+        this.syncSelectedContentDimensions(metadata.metadataId, metadata.width, metadata.height);
         if (this.manipulator?.targetElement === elem) {
-            const aspect = Number(elem.dataset.itownsAspect) || null;
+            const aspect = resolveContentAspectRatio(elem.dataset);
             this.manipulator.setAspectRatio(aspect);
             this.manipulator.moveManipulator(elem);
         }
@@ -1391,21 +1413,31 @@ export class ContentManager {
         const elem = document.getElementById(`view-${metadata.metadataId}`) as HTMLElement | null;
         if (!elem) return;
         const normalizedZIndex = normalizeContentZIndex(metadata.zindex);
-        elem.style.left   = `${metadata.posx}px`;
-        elem.style.top    = `${metadata.posy}px`;
-        elem.style.width  = `${metadata.width}px`;
+        elem.style.left = `${metadata.posx}px`;
+        elem.style.top = `${metadata.posy}px`;
+        elem.style.width = `${metadata.width}px`;
         elem.style.height = `${metadata.height}px`;
         elem.style.zIndex = `${normalizedZIndex}`;
         elem.dataset.worldX = String(metadata.posx);
         elem.dataset.worldY = String(metadata.posy);
-        elem.dataset.width  = String(metadata.width);
+        elem.dataset.width = String(metadata.width);
         elem.dataset.height = String(metadata.height);
         const isVisible = metadata.visible !== false;
         elem.dataset.visible = isVisible ? 'true' : 'false';
         elem.style.display = isVisible ? 'block' : 'none';
+        this.syncSelectedContentDimensions(metadata.metadataId, metadata.width, metadata.height);
         if (this.manipulator?.targetElement === elem) {
             this.manipulator.moveManipulator(elem);
         }
+    }
+
+    /** Mirror server-confirmed dimensions into the selected content property fields. */
+    private syncSelectedContentDimensions(metadataId: string, width: number, height: number): void {
+        if (this._selectedMetadataId !== metadataId) {
+            return;
+        }
+        this.el.width.value = String(width);
+        this.el.height.value = String(height);
     }
 
     clearViewArea(): void {
@@ -1423,14 +1455,14 @@ export class ContentManager {
             const elems = document.querySelectorAll<HTMLElement>(`[data-metadata-id="${this._selectedMetadataId}"]`);
             if (!elems) return null;
 
-            if(elems.length == 1){
-                elem =  elems[0];
+            if (elems.length == 1) {
+                elem = elems[0];
                 elem.dataset.visible = this.el.contentVisible.dataset.checked;
                 elem.style.display = visibleFlg ? 'block' : 'none';
             } else {
                 elems.forEach((el2) => {
                     el2.dataset.visible = this.el.contentVisible.dataset.checked;
-                    if(Object.hasOwn(el2.dataset, 'worldX')){
+                    if (Object.hasOwn(el2.dataset, 'worldX')) {
                         //↑のプロパティで、VDAプレビュー内か下段リスト内かを判別している
                         elem = el2;
                         el2.style.display = visibleFlg ? 'block' : 'none';
@@ -1447,8 +1479,8 @@ export class ContentManager {
         }
 
         //MetadaListからターゲットを探して変更する
-        for(let i=0; i<this._metadataList.length;i++){
-            if(this._metadataList[i].metadataId == metadataId){
+        for (let i = 0; i < this._metadataList.length; i++) {
+            if (this._metadataList[i].metadataId == metadataId) {
                 this._metadataList[i].visible = visibleFlg;
                 break;
             }
@@ -1466,7 +1498,7 @@ export class ContentManager {
             visible: visibleFlg,
             originWidth: Number(elem.dataset.originWidth),
             originHeight: Number(elem.dataset.originHeight),
-            zindex:Number(elem.style.zIndex),
+            zindex: Number(elem.style.zIndex),
         }
 
         this.pushUpdateStock(refUpdateStock);
@@ -1486,7 +1518,7 @@ export class ContentManager {
         this.updateContentsParameter(null);
     }
 
-    contentMoveToMostTopBack (flg:number) : void {
+    contentMoveToMostTopBack(flg: number): void {
         let minZ = 655350;
         let maxZ = -655350;
 
@@ -1494,17 +1526,17 @@ export class ContentManager {
 
         const contentItemsDom = [...this.el.previewContent.children];
         contentItemsDom.forEach((contentDom: any) => {
-            if(contentDom.dataset.metadataId == this._selectedMetadataId ){ targetDom = contentDom; }
+            if (contentDom.dataset.metadataId == this._selectedMetadataId) { targetDom = contentDom; }
             const targetZ = normalizeContentZIndex(Number(contentDom.style.zIndex));
             minZ = Math.min(minZ, targetZ);
             maxZ = Math.max(maxZ, targetZ);
         });
 
-        if(targetDom){
-            if(flg == 1){
+        if (targetDom) {
+            if (flg == 1) {
                 targetDom.style.zIndex = maxZ + 1;
             }
-            if(flg == -1){
+            if (flg == -1) {
                 targetDom.style.zIndex = minZ - 1;
             }
             this.el.zIndex.value = targetDom.style.zIndex;
@@ -1515,7 +1547,7 @@ export class ContentManager {
         if (this._selectedMetadataId) this.selectMetadata(this._selectedMetadataId);
     }
 
-    contentSetVisible (flg:boolean) : void {
+    contentSetVisible(flg: boolean): void {
         this.el.contentVisible.checked = flg;
         const changeEvent = new Event('change');
         this.el.contentVisible.dispatchEvent(changeEvent);

@@ -16,6 +16,7 @@ export interface TileWorkerInput {
     imageBuffer: ArrayBuffer;
     /** タイル1辺のピクセル数 */
     tileSize: number;
+    heartbeatIntervalMs: number;
 }
 
 /**
@@ -27,6 +28,10 @@ export interface TileWorkerProgressMessage {
     completed: number;
     /** 総タイル数 */
     total: number;
+}
+
+export interface TileWorkerHeartbeatMessage {
+    type: 'heartbeat';
 }
 
 /**
@@ -64,6 +69,7 @@ export interface TileWorkerErrorMessage {
 
 export type TileWorkerMessage =
     | TileWorkerProgressMessage
+    | TileWorkerHeartbeatMessage
     | TileWorkerDoneMessage
     | TileWorkerErrorMessage;
 
@@ -72,16 +78,27 @@ export type TileWorkerMessage =
 // ---------------------------------------------------------------------------
 
 async function run(): Promise<void> {
-    const { imageBuffer, tileSize }: TileWorkerInput = workerData;
+    const { imageBuffer, tileSize, heartbeatIntervalMs }: TileWorkerInput = workerData;
     const srcBuf = Buffer.from(imageBuffer);
     const createSharpFromSource = () => {
         return sharp(srcBuf, { limitInputPixels: false });
     };
 
+    if (!Number.isInteger(tileSize) || tileSize <= 0) {
+        throw new Error(`Invalid tile size: ${tileSize}`);
+    }
+
     // 元画像のサイズを取得
     const meta = await createSharpFromSource().metadata();
-    const imgWidth = meta.width!;
-    const imgHeight = meta.height!;
+    if (
+        meta.width === undefined || meta.height === undefined
+        || !Number.isInteger(meta.width) || !Number.isInteger(meta.height)
+        || meta.width <= 0 || meta.height <= 0
+    ) {
+        throw new Error('Unable to determine a valid source image size');
+    }
+    const imgWidth = meta.width;
+    const imgHeight = meta.height;
 
     // タイル分割数を計算
     const xsplit = Math.ceil(imgWidth / tileSize);
@@ -101,12 +118,6 @@ async function run(): Promise<void> {
 
             const tileBuf = await createSharpFromSource()
                 .extract({ left, top, width: extractWidth, height: extractHeight })
-                // 端部タイルをパディングして tileSize x tileSize に統一
-                .resize(tileSize, tileSize, {
-                    fit: 'contain',
-                    position: 'left top',
-                    background: { r: 0, g: 0, b: 0 },
-                })
                 .jpeg({ quality: 85 })
                 .toBuffer();
 
@@ -155,10 +166,16 @@ async function run(): Promise<void> {
     parentPort!.postMessage(doneMsg, [reductionAB, ...tileABs]);
 }
 
+const heartbeatTimer = setInterval((): void => {
+    parentPort?.postMessage({ type: 'heartbeat' } satisfies TileWorkerHeartbeatMessage);
+}, (workerData as TileWorkerInput).heartbeatIntervalMs);
+
 run().catch((err: Error) => {
     const errMsg: TileWorkerErrorMessage = {
         type: 'error',
         message: err.message,
     };
     parentPort!.postMessage(errMsg);
+}).finally((): void => {
+    clearInterval(heartbeatTimer);
 });

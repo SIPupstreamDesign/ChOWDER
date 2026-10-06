@@ -31,6 +31,7 @@ export const createWebSocketServer = async (servers: (Server | HttpsServer)[], r
 
     // コンテンツサービス
     const contentService = new ContentService(redis);
+    await contentService.migrateLegacyCameraData();
 
     // ディスプレイサービス
     const windowMetaDataService = new WindowMetaDataService(redis);
@@ -209,7 +210,7 @@ export const createWebSocketServer = async (servers: (Server | HttpsServer)[], r
                             jsonrpc: '2.0',
                             id: randomBytes(4).toString('hex'),
                             method: 'ControllerDisconnected',
-                            params:  extWs.id ,
+                            params: extWs.id,
                             to: 'client',
                         };
                         client.sendQueued(JSON.stringify(notifyMessage));

@@ -1,5 +1,8 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { Redis } from 'ioredis';
 import { CommandHandler } from './commandHandler';
 import { Command } from './command';
@@ -14,6 +17,7 @@ import { SiteService } from '../site/siteService';
 import { LayoutService } from '../layout/layoutService';
 import { createTestRedis, cleanupTestRedis } from '../tests/setup';
 import { OtpService } from '../auth/otpService';
+import { ClientDiagnosticLogService } from '../diagnostics/clientDiagnosticLogService';
 
 describe('CommandHandler', () => {
     let redis: Redis;
@@ -28,7 +32,10 @@ describe('CommandHandler', () => {
     let commandHandler: CommandHandler;
     let clients: Set<ExtendedWebSocket>;
 
-    const createMockClient = (socketId: string, options?: { throwOnSendQueued?: boolean }): ExtendedWebSocket => {
+    const createMockClient = (
+        socketId: string,
+        options?: { throwOnSendQueued?: boolean },
+    ): ExtendedWebSocket & { sentMessages: string[] } => {
         const state = { closeCalled: false, sentMessages: [] as string[] };
         const client: any = {
             id: socketId,
@@ -50,7 +57,7 @@ describe('CommandHandler', () => {
                 return state.sentMessages;
             },
         };
-        return client as ExtendedWebSocket;
+        return client as ExtendedWebSocket & { sentMessages: string[] };
     };
 
     beforeEach(async () => {
@@ -197,6 +204,73 @@ describe('CommandHandler', () => {
     });
 
     describe('uploadTileimage', () => {
+        interface TestTileUpload {
+            metadataId: string;
+            uploadId: string;
+            byteLength: number;
+            segmentMax: number;
+            fileExt: string;
+        }
+
+        const addTileUpload = async (
+            socketId: string,
+            uploadId: string,
+            byteLength: number,
+            segmentMax: number,
+        ): Promise<TestTileUpload> => {
+            const fileExt = 'jpg';
+            const result = await new Promise<any>((resolve) => {
+                commandHandler.addContent(socketId, {
+                    metaData: {
+                        type: 'tileimage',
+                        metadataId: 'client-chosen-tile-id',
+                        posx: 0,
+                        posy: 0,
+                        width: 100,
+                        height: 100,
+                        tileImageUpload: {
+                            uploadId,
+                            byteLength,
+                            segment_max: segmentMax,
+                            file_ext: fileExt,
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (error, response) => { resolve({ error, response }); });
+            });
+            if (result.error) {
+                throw new Error(String(result.error.message ?? result.error));
+            }
+            return {
+                metadataId: result.response.metadataId,
+                uploadId,
+                byteLength,
+                segmentMax,
+                fileExt,
+            };
+        };
+
+        const sendTileSegment = async (
+            socketId: string,
+            upload: TestTileUpload,
+            segmentIndex: number,
+            content: Buffer,
+        ): Promise<{ error: any; response: any }> => {
+            let result: { error: any; response: any } = { error: null, response: undefined };
+            await commandHandler.uploadTileimage(socketId, {
+                metaData: {
+                    metadataId: upload.metadataId,
+                    uploadId: upload.uploadId,
+                    byteLength: upload.byteLength,
+                    segment_max: upload.segmentMax,
+                    segment_index: segmentIndex,
+                    file_ext: upload.fileExt,
+                },
+                contentData: content,
+            }, (error, response) => { result = { error, response }; });
+            return result;
+        };
+
         it('タイル生成失敗時に送信元へ TileimageUploadFailed を通知すること', async () => {
             await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
             const sender = createMockClient('socket123');
@@ -205,28 +279,21 @@ describe('CommandHandler', () => {
             clients.add(sender);
             clients.add(watcher);
 
-            (commandHandler as any).tileImageService.generateTiles = async (): Promise<any> => {
+            (commandHandler as any).tileImageService.generateTiles = async (
+                _imageBuffer: Buffer,
+                onProgress?: (completed: number, total: number) => void,
+                onHeartbeat?: () => void,
+            ): Promise<any> => {
+                onProgress?.(1, 1);
+                onHeartbeat?.();
                 throw new Error('sharp failed');
             };
 
-            let callbackResult: any = null;
-            await commandHandler.uploadTileimage('socket123', {
-                metaData: {
-                    metadataId: 'meta-upload-fail',
-                    id: 'image-1',
-                    file_ext: 'jpg',
-                    creator: '',
-                    byteLength: 4,
-                    segment_max: 1,
-                    segment_index: 0,
-                },
-                contentData: Buffer.from([1, 2, 3, 4]),
-            }, (err, res) => {
-                callbackResult = { err, res };
-            });
+            const upload = await addTileUpload('socket123', 'upload-fail-1', 4, 1);
+            const callbackResult = await sendTileSegment('socket123', upload, 0, Buffer.from([1, 2, 3, 4]));
 
-            assert.strictEqual(callbackResult.err, null);
-            assert.strictEqual(callbackResult.res.ok, true);
+            assert.strictEqual(callbackResult.error, null);
+            assert.strictEqual(callbackResult.response.ok, true);
 
             const failedMessage = (sender as any).sentMessages
                 .map((raw: string) => {
@@ -235,6 +302,9 @@ describe('CommandHandler', () => {
                 .find((msg: any) => {
                     return msg.method === Command.TileimageUploadFailed;
                 });
+            const heartbeatMessage = (sender as any).sentMessages
+                .map((raw: string) => { return JSON.parse(raw); })
+                .find((msg: any) => { return msg.method === Command.TileimageHeartbeat; });
 
             const deleteMessageForSender = (sender as any).sentMessages
                 .map((raw: string) => {
@@ -253,13 +323,250 @@ describe('CommandHandler', () => {
                 });
 
             assert.ok(failedMessage);
-            assert.strictEqual(failedMessage.params.metadataId, 'meta-upload-fail');
+            assert.strictEqual(failedMessage.params.metadataId, upload.metadataId);
             assert.ok(typeof failedMessage.params.reason === 'string');
             assert.ok(failedMessage.params.reason.length > 0);
+            assert.ok(heartbeatMessage);
+            assert.strictEqual(heartbeatMessage.params.metadataId, upload.metadataId);
             assert.ok(deleteMessageForSender);
-            assert.strictEqual(deleteMessageForSender.params.metadataId, 'meta-upload-fail');
+            assert.strictEqual(deleteMessageForSender.params.metadataId, upload.metadataId);
             assert.ok(deleteMessageForWatcher);
-            assert.strictEqual(deleteMessageForWatcher.params.metadataId, 'meta-upload-fail');
+            assert.strictEqual(deleteMessageForWatcher.params.metadataId, upload.metadataId);
+        });
+
+        it('別socketから他ユーザーのmetadataIdでuploadできず、contentを保持する', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-owner', 'testuser', UserRole.MEMBER);
+            await sessionManager.createSession('socket-intruder', 'admin', UserRole.ADMIN);
+            const ownerClient = createMockClient('socket-owner');
+            clients.add(ownerClient);
+            const ownerUpload = await addTileUpload('socket-owner', 'upload-owned', 4, 1);
+
+            let workerStarted = false;
+            (commandHandler as any).tileImageService.generateTiles = async (): Promise<any> => {
+                workerStarted = true;
+                throw new Error('should not run');
+            };
+            let attackResult: any = null;
+            await commandHandler.uploadTileimage('socket-intruder', {
+                metaData: {
+                    metadataId: ownerUpload.metadataId,
+                    uploadId: ownerUpload.uploadId,
+                    byteLength: ownerUpload.byteLength,
+                    segment_max: ownerUpload.segmentMax,
+                    segment_index: 0,
+                    file_ext: ownerUpload.fileExt,
+                },
+                contentData: Buffer.from([1, 2, 3, 4]),
+            }, (error, response) => { attackResult = { error, response }; });
+
+            assert.strictEqual(attackResult.error.code, -32072);
+            assert.strictEqual(workerStarted, false);
+            assert.strictEqual((await contentService.getMetadata(ownerUpload.metadataId))?.creatorId, 'testuser');
+            assert.strictEqual(ownerClient.sentMessages.some((raw: string): boolean => {
+                return JSON.parse(raw).method === Command.DeleteContent;
+            }), false);
+            await commandHandler.cleanupTileimageOnDisconnect('socket-owner');
+        });
+
+        it('生成枠は同時に1件で、Worker失敗後に次のアップロードを受け付けること', { timeout: 10000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-first', 'testuser', UserRole.MEMBER);
+            await sessionManager.createSession('socket-second', 'testuser', UserRole.MEMBER);
+            await sessionManager.createSession('socket-third', 'testuser', UserRole.MEMBER);
+
+            let generationCount = 0;
+            let signalGenerationStarted: (() => void) | undefined;
+            let releaseFirstGeneration: (() => void) | undefined;
+            const generationStarted = new Promise<void>((resolve): void => {
+                signalGenerationStarted = resolve;
+            });
+            const firstGenerationReleased = new Promise<void>((resolve): void => {
+                releaseFirstGeneration = resolve;
+            });
+            (commandHandler as any).tileImageService.generateTiles = async (): Promise<any> => {
+                generationCount += 1;
+                if (generationCount === 1) {
+                    signalGenerationStarted?.();
+                    await firstGenerationReleased;
+                }
+                throw new Error('test generation failure');
+            };
+
+            const firstTileUpload = await addTileUpload('socket-first', 'upload-first', 4, 1);
+            const firstUpload = sendTileSegment(
+                'socket-first',
+                firstTileUpload,
+                0,
+                Buffer.from([1, 2, 3, 4]),
+            );
+            await generationStarted;
+
+            const busyResult = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket-second', {
+                    metaData: {
+                        type: 'tileimage',
+                        posx: 0,
+                        posy: 0,
+                        width: 100,
+                        height: 100,
+                        tileImageUpload: {
+                            uploadId: 'upload-second',
+                            byteLength: 4,
+                            segment_max: 1,
+                            file_ext: 'jpg',
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (error, response) => { resolve({ error, response }); });
+            });
+
+            assert.strictEqual(busyResult.error.code, -32072);
+            assert.strictEqual(await contentService.getMetadata('upload-second'), null);
+            assert.strictEqual(generationCount, 1);
+            releaseFirstGeneration?.();
+            const firstResult = await firstUpload;
+            assert.strictEqual(firstResult.error, null);
+            assert.strictEqual(firstResult.response.ok, true);
+
+            const thirdTileUpload = await addTileUpload('socket-third', 'upload-third', 4, 1);
+            await sendTileSegment('socket-third', thirdTileUpload, 0, Buffer.from([1, 2, 3, 4]));
+            assert.strictEqual(generationCount, 2);
+        });
+
+        it('セグメント受信中に切断されたら生成枠を解放すること', { timeout: 10000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-disconnected', 'testuser', UserRole.MEMBER);
+            await sessionManager.createSession('socket-next', 'testuser', UserRole.MEMBER);
+
+            let generationCount = 0;
+            (commandHandler as any).tileImageService.generateTiles = async (): Promise<any> => {
+                generationCount += 1;
+                throw new Error('test generation failure');
+            };
+
+            const disconnectedUpload = await addTileUpload('socket-disconnected', 'upload-disconnected', 8, 2);
+            await sendTileSegment('socket-disconnected', disconnectedUpload, 0, Buffer.from([1, 2, 3, 4]));
+
+            await commandHandler.cleanupTileimageOnDisconnect('socket-disconnected');
+
+            const nextUpload = await addTileUpload('socket-next', 'upload-next', 4, 1);
+            const nextCallbackResult = await sendTileSegment(
+                'socket-next',
+                nextUpload,
+                0,
+                Buffer.from([5, 6, 7, 8]),
+            );
+
+            assert.strictEqual(nextCallbackResult.error, null);
+            assert.strictEqual(nextCallbackResult.response.ok, true);
+            assert.strictEqual(generationCount, 1);
+        });
+
+        it('AddContent保存がidle timeoutするとslotを解放し、遅延metadataをcleanupする', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-tile-add-timeout', 'testuser', UserRole.MEMBER);
+            (commandHandler as any).tileImageUploadIdleTimeoutMs = 15;
+
+            let signalAddContentStored: (() => void) | undefined;
+            let releaseAddContent: (() => void) | undefined;
+            const addContentStored = new Promise<void>((resolve): void => {
+                signalAddContentStored = resolve;
+            });
+            const addContentRelease = new Promise<void>((resolve): void => {
+                releaseAddContent = resolve;
+            });
+            const originalAddContent = contentService.addContent.bind(contentService);
+            contentService.addContent = async (request) => {
+                const metadata = await originalAddContent(request);
+                signalAddContentStored?.();
+                await addContentRelease;
+                return metadata;
+            };
+
+            let callbackCount = 0;
+            const rpcResponse = new Promise<any>((resolve) => {
+                const addPromise = commandHandler.addContent('socket-tile-add-timeout', {
+                    metaData: {
+                        type: 'tileimage',
+                        posx: 0,
+                        posy: 0,
+                        width: 100,
+                        height: 100,
+                        tileImageUpload: {
+                            uploadId: 'upload-tile-add-timeout',
+                            byteLength: 4,
+                            segment_max: 1,
+                            file_ext: 'jpg',
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (error, response) => {
+                    callbackCount += 1;
+                    resolve({ error, response });
+                });
+                void addPromise;
+            });
+
+            await addContentStored;
+            const response = await rpcResponse;
+            assert.strictEqual(response.error.code, -32072);
+            releaseAddContent?.();
+            await new Promise<void>((resolve): void => { setTimeout(resolve, 0); });
+
+            assert.strictEqual(callbackCount, 1);
+            assert.strictEqual((await contentService.getAllMetadata()).length, 0);
+        });
+
+        it('Worker開始後に送信元が切断しても処理を継続し完成metadataを保存すること', { timeout: 10000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-processing-owner', 'testuser', UserRole.MEMBER);
+            const sender = createMockClient('socket-processing-owner');
+            const watcher = createMockClient('socket-processing-watcher');
+            await sessionManager.createSession('socket-processing-watcher', 'watcher', UserRole.MEMBER);
+            clients.add(sender);
+            clients.add(watcher);
+
+            let signalWorkerStarted: (() => void) | undefined;
+            let releaseWorker: (() => void) | undefined;
+            const workerStarted = new Promise<void>((resolve): void => { signalWorkerStarted = resolve; });
+            const workerRelease = new Promise<void>((resolve): void => { releaseWorker = resolve; });
+            (commandHandler as any).tileImageService.generateTiles = async (
+                _imageBuffer: Buffer,
+                _onProgress?: (completed: number, total: number) => void,
+                onHeartbeat?: () => void,
+            ): Promise<any> => {
+                signalWorkerStarted?.();
+                onHeartbeat?.();
+                await workerRelease;
+                return {
+                    xsplit: 1,
+                    ysplit: 1,
+                    tileSize: 256,
+                    imgWidth: 100,
+                    imgHeight: 100,
+                    reductionWidth: 100,
+                    reductionHeight: 100,
+                    tiles: [Buffer.from([1, 2, 3])],
+                    reduction: Buffer.from([4, 5, 6]),
+                };
+            };
+
+            const upload = await addTileUpload('socket-processing-owner', 'upload-processing-owner', 4, 1);
+            const uploadPromise = sendTileSegment(
+                'socket-processing-owner',
+                upload,
+                0,
+                Buffer.from([1, 2, 3, 4]),
+            );
+            await workerStarted;
+            clients.delete(sender);
+            await commandHandler.cleanupTileimageOnDisconnect('socket-processing-owner');
+            assert.strictEqual(((await contentService.getMetadata(upload.metadataId)) as any)?.tileFinished, undefined);
+            releaseWorker?.();
+            const result = await uploadPromise;
+
+            assert.strictEqual(result.error, null);
+            assert.strictEqual(result.response.ok, true);
+            assert.strictEqual(((await contentService.getMetadata(upload.metadataId)) as any)?.tileFinished, true);
+            const watcherMethods = watcher.sentMessages.map((raw: string) => { return JSON.parse(raw).method; });
+            assert.strictEqual(watcherMethods.includes(Command.UpdateContent), true);
+            assert.strictEqual(watcherMethods.includes(Command.DeleteContent), false);
         });
     });
 
@@ -588,7 +895,98 @@ describe('CommandHandler', () => {
         });
     });
 
+    describe('closeConsumer', () => {
+        it('未ログインユーザーはConsumerを閉じられない', { timeout: 5000 }, async (): Promise<void> => {
+            const result = await new Promise<{ err: any; res: any }>((resolve) => {
+                commandHandler.closeConsumer(
+                    'no_session_socket',
+                    { consumerId: 'consumer-1', transportId: 'transport-1' },
+                    (err, res) => resolve({ err, res }),
+                );
+            });
+
+            assert.ok(result.err);
+            assert.strictEqual(result.err.code, -32001);
+        });
+
+        it('認証済みユーザーはConsumer closeを要求できる', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
+            const result = await new Promise<{ err: any; res: any }>((resolve) => {
+                commandHandler.closeConsumer(
+                    'socket123',
+                    { consumerId: 'consumer-missing', transportId: 'transport-missing' },
+                    (err, res) => resolve({ err, res }),
+                );
+            });
+
+            assert.strictEqual(result.err, null);
+            assert.deepStrictEqual(result.res, { success: true });
+        });
+
+        it('transportIdが欠けている場合は入力エラーを返す', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
+            const result = await new Promise<{ err: any; res: any }>((resolve) => {
+                commandHandler.closeConsumer(
+                    'socket123',
+                    { consumerId: 'consumer-1' },
+                    (err, res) => resolve({ err, res }),
+                );
+            });
+
+            assert.ok(result.err);
+            assert.strictEqual(result.err.code, -32112);
+        });
+    });
+
     describe('produce (WebRTC)', () => {
+        it('NewProducerAvailable通知にlive-stream metadataIdを含める', { timeout: 5000 }, async (): Promise<void> => {
+            const senderSocketId = 'producer-socket';
+            const displaySocketId = 'display-socket';
+            await sessionManager.createSession(senderSocketId, 'testuser', UserRole.MEMBER);
+            await sessionManager.createSession(displaySocketId, 'testuser', UserRole.MEMBER);
+            const displayClient = createMockClient(displaySocketId);
+            clients.add(displayClient);
+            (mediaService as any).produce = async () => ({
+                producerId: 'producer-live-1',
+                streamId: 'stream-live-1',
+                metadataId: 'metadata-live-1',
+            });
+
+            let resolveResult: (result: { err: any; res: any }) => void = () => { };
+            const resultPromise = new Promise<{ err: any; res: any }>((resolve) => {
+                resolveResult = resolve;
+            });
+            const producePromise = commandHandler.produce(senderSocketId, {
+                transportId: 'send-transport-1',
+                kind: 'video',
+                rtpParameters: {},
+            }, (err, res) => resolveResult({ err, res }));
+            await producePromise;
+            const result = await resultPromise;
+
+            assert.strictEqual(result.err, null);
+            const notification = JSON.parse(displayClient.sentMessages[0]);
+            assert.strictEqual(notification.method, 'NewProducerAvailable');
+            assert.strictEqual(notification.params.metadataId, 'metadata-live-1');
+
+            (mediaService as any).getActiveProducers = async () => ({
+                producers: [{
+                    producerId: 'producer-live-2',
+                    userId: 'testuser',
+                    socketId: senderSocketId,
+                    kind: 'video',
+                    streamId: 'stream-live-1',
+                    streamName: 'Screen Share',
+                    metadataId: 'metadata-live-1',
+                }],
+            });
+            await (commandHandler as any).notifyExistingStreams(displaySocketId);
+
+            const existingNotification = JSON.parse(displayClient.sentMessages[1]);
+            assert.strictEqual(existingNotification.method, 'NewProducerAvailable');
+            assert.strictEqual(existingNotification.params.metadataId, 'metadata-live-1');
+        });
+
         it('未ログインユーザーは Produce を呼べないこと', async () => {
             const result = await new Promise((resolve) => {
                 commandHandler.produce('no_session_socket', {
@@ -957,6 +1355,72 @@ describe('CommandHandler', () => {
             await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
         });
 
+        it('片側virtual寸法をanchorに最新pixel比から両寸法を確定する', { timeout: 5000 }, async (): Promise<void> => {
+            await windowMetaDataService.addWindowMetaData({
+                id: 'window_aspect_anchor',
+                posx: 0,
+                posy: 0,
+                virtualWidth: 800,
+                virtualHeight: 600,
+                pixelWidth: 1920,
+                pixelHeight: 1080,
+            });
+
+            const update = (data: Record<string, unknown>): Promise<{ err: any; res: any }> => {
+                return new Promise((resolve) => {
+                    commandHandler.updateWindowMetaData('socket123', data, (err, res) => {
+                        resolve({ err, res });
+                    });
+                });
+            };
+
+            const widthResult = await update({ id: 'window_aspect_anchor', virtualWidth: 640 });
+            assert.strictEqual(widthResult.err, null);
+            assert.strictEqual(widthResult.res.virtualWidth, 640);
+            assert.strictEqual(widthResult.res.virtualHeight, 360);
+            assert.strictEqual(widthResult.res.pixelWidth, 1920);
+            assert.strictEqual(widthResult.res.pixelHeight, 1080);
+
+            const heightResult = await update({ id: 'window_aspect_anchor', virtualHeight: 540 });
+            assert.strictEqual(heightResult.err, null);
+            assert.strictEqual(heightResult.res.virtualWidth, 960);
+            assert.strictEqual(heightResult.res.virtualHeight, 540);
+
+            const positionResult = await update({ id: 'window_aspect_anchor', posx: 120 });
+            assert.strictEqual(positionResult.err, null);
+            assert.strictEqual(positionResult.res.posx, 120);
+            assert.strictEqual(positionResult.res.virtualWidth, 960);
+            assert.strictEqual(positionResult.res.virtualHeight, 540);
+        });
+
+        it('Controllerからpixel寸法が届いた場合は拒否し保存値を変更しない', { timeout: 5000 }, async (): Promise<void> => {
+            await windowMetaDataService.addWindowMetaData({
+                id: 'window_pixel_authority',
+                posx: 0,
+                posy: 0,
+                virtualWidth: 800,
+                virtualHeight: 450,
+                pixelWidth: 1920,
+                pixelHeight: 1080,
+            });
+
+            const result = await new Promise<{ err: any; res: any }>((resolve) => {
+                commandHandler.updateWindowMetaData('socket123', {
+                    id: 'window_pixel_authority',
+                    pixelWidth: 1280,
+                    pixelHeight: 960,
+                }, (err, res) => {
+                    resolve({ err, res });
+                });
+            });
+
+            assert.strictEqual(result.err?.code, -32074);
+            const stored = await windowMetaDataService.getWindowMetaData({ id: 'window_pixel_authority', type: 'single' });
+            assert.ok(!Array.isArray(stored));
+            assert.strictEqual(stored?.pixelWidth, 1920);
+            assert.strictEqual(stored?.pixelHeight, 1080);
+        });
+
         it('contentVisible: false に更新できること', async () => {
             // 事前にウィンドウを追加
             const added = await windowMetaDataService.addWindowMetaData({
@@ -1108,7 +1572,7 @@ describe('CommandHandler', () => {
         });
 
         it('承認済みDisplayがリサイズすると virtualHeight がアスペクト比に合わせて再計算されること', async () => {
-            // 1920x1920 → 1280x960 にリサイズ（4:3 → virtualHeight = round(1920 * 960/1280) = 1440）
+            // 1920x1920 → 1280x960 にリサイズ（4:3 → virtualHeight = 1440）
             const result = await new Promise((resolve) => {
                 commandHandler.updateWindowMetaData(displaySocketId, {
                     id: windowId,
@@ -1129,6 +1593,80 @@ describe('CommandHandler', () => {
             // Redis にも反映されていること
             const stored = await windowMetaDataService.getWindowMetaData({ id: windowId, type: 'single' });
             assert.ok(!Array.isArray(stored));
+            assert.strictEqual(stored?.virtualHeight, 1440);
+        });
+
+        it('同一windowIdのController位置変更とDisplay物理リサイズを直列にマージする', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
+
+            const originalUpdate = windowMetaDataService.updateWindowMetaData.bind(windowMetaDataService);
+            const positionWriteStarted: { resolve: () => void } = {
+                resolve: (): void => { },
+            };
+            const releasePositionWrite: { resolve: () => void } = {
+                resolve: (): void => { },
+            };
+            const positionWriteStartedPromise = new Promise<void>((resolve) => {
+                positionWriteStarted.resolve = resolve;
+            });
+            const positionWriteGate = new Promise<void>((resolve) => {
+                releasePositionWrite.resolve = resolve;
+            });
+            let pixelWriteStarted = false;
+            windowMetaDataService.updateWindowMetaData = async (request): Promise<any> => {
+                const updated = await originalUpdate(request);
+                if (request.posx === 100) {
+                    positionWriteStarted.resolve();
+                    await positionWriteGate;
+                }
+                if (request.pixelWidth === 1280) {
+                    pixelWriteStarted = true;
+                }
+                return updated;
+            };
+
+            const positionUpdate = new Promise<void>((resolve, reject) => {
+                commandHandler.updateWindowMetaData('socket123', {
+                    id: windowId,
+                    posx: 100,
+                }, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+            await positionWriteStartedPromise;
+
+            const pixelResize = new Promise<void>((resolve, reject) => {
+                commandHandler.updateWindowMetaData(displaySocketId, {
+                    id: windowId,
+                    pixelWidth: 1280,
+                    pixelHeight: 960,
+                }, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, 0);
+            });
+
+            assert.strictEqual(pixelWriteStarted, false);
+            releasePositionWrite.resolve();
+            await Promise.all([positionUpdate, pixelResize]);
+
+            const stored = await windowMetaDataService.getWindowMetaData({ id: windowId, type: 'single' });
+            assert.ok(!Array.isArray(stored));
+            assert.strictEqual(stored?.posx, 100);
+            assert.strictEqual(stored?.pixelWidth, 1280);
+            assert.strictEqual(stored?.pixelHeight, 960);
             assert.strictEqual(stored?.virtualHeight, 1440);
         });
 
@@ -1283,6 +1821,249 @@ describe('CommandHandler', () => {
             assert.strictEqual(result.err, null);
             assert.ok(result.res.metadataId);
             assert.strictEqual(result.res.creatorId, 'testuser');
+        });
+
+        it('tileimage AddContentはupload descriptorを保持せず、枠busyならmetadataを作らない', { timeout: 10000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-tile-first', 'testuser', UserRole.MEMBER);
+            await sessionManager.createSession('socket-tile-second', 'admin', UserRole.ADMIN);
+
+            const firstResult = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket-tile-first', {
+                    metaData: {
+                        type: 'tileimage',
+                        posx: 0,
+                        posy: 0,
+                        width: 512,
+                        height: 512,
+                        tileImageUpload: {
+                            uploadId: 'upload-tile-first',
+                            byteLength: 8,
+                            segment_max: 1,
+                            file_ext: 'png',
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (err, res) => { resolve({ err, res }); });
+            });
+
+            assert.strictEqual(firstResult.err, null);
+            assert.notStrictEqual(firstResult.res.metadataId, 'client-chosen-tile-id');
+            const firstMetadata = await contentService.getMetadata(firstResult.res.metadataId);
+            assert.strictEqual((firstMetadata as any).tileImageUpload, undefined);
+
+            const secondResult = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket-tile-second', {
+                    metaData: {
+                        type: 'tileimage',
+                        posx: 10,
+                        posy: 20,
+                        width: 256,
+                        height: 256,
+                        tileImageUpload: {
+                            uploadId: 'upload-tile-second',
+                            byteLength: 4,
+                            segment_max: 1,
+                            file_ext: 'jpg',
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (err, res) => { resolve({ err, res }); });
+            });
+
+            assert.strictEqual(secondResult.err.code, -32072);
+            assert.strictEqual(await contentService.getMetadata(secondResult.res?.metadataId ?? ''), null);
+            assert.strictEqual((await contentService.getAllMetadata()).length, 1);
+            await commandHandler.cleanupTileimageOnDisconnect('socket-tile-first');
+        });
+
+        it('tileimage AddContentの本文binaryは拒否しmetadataを作らない', async (): Promise<void> => {
+            await sessionManager.createSession('socket-tile-binary', 'testuser', UserRole.MEMBER);
+
+            const result = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket-tile-binary', {
+                    metaData: {
+                        type: 'tileimage',
+                        tileImageUpload: {
+                            uploadId: 'upload-tile-binary',
+                            byteLength: 4,
+                            segment_max: 1,
+                            file_ext: 'jpg',
+                        },
+                    },
+                    contentData: Buffer.from([1, 2, 3, 4]),
+                }, (error, response) => { resolve({ error, response }); });
+            });
+
+            assert.strictEqual(result.error.code, -32025);
+            assert.strictEqual((await contentService.getAllMetadata()).length, 0);
+        });
+
+        it('AddContent保存中に切断されたら、遅延保存完了後にmetadataをcleanupする', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-tile-race', 'testuser', UserRole.MEMBER);
+            const client = createMockClient('socket-tile-race');
+            clients.add(client);
+
+            let signalAddContentStored: (() => void) | undefined;
+            let releaseAddContent: (() => void) | undefined;
+            const addContentStored = new Promise<void>((resolve): void => {
+                signalAddContentStored = resolve;
+            });
+            const addContentRelease = new Promise<void>((resolve): void => {
+                releaseAddContent = resolve;
+            });
+            const originalAddContent = contentService.addContent.bind(contentService);
+            contentService.addContent = async (request) => {
+                const metadata = await originalAddContent(request);
+                signalAddContentStored?.();
+                await addContentRelease;
+                return metadata;
+            };
+
+            let callbackCalled = false;
+            const addPromise = commandHandler.addContent('socket-tile-race', {
+                metaData: {
+                    type: 'tileimage',
+                    posx: 0,
+                    posy: 0,
+                    width: 100,
+                    height: 100,
+                    tileImageUpload: {
+                        uploadId: 'upload-tile-race',
+                        byteLength: 4,
+                        segment_max: 1,
+                        file_ext: 'jpg',
+                    },
+                },
+                contentData: Buffer.alloc(0),
+            }, (): void => { callbackCalled = true; });
+
+            await addContentStored;
+            clients.delete(client);
+            await commandHandler.cleanupTileimageOnDisconnect('socket-tile-race');
+            releaseAddContent?.();
+            await addPromise;
+
+            assert.strictEqual(callbackCalled, false);
+            assert.strictEqual((await contentService.getAllMetadata()).length, 0);
+            assert.strictEqual(client.sentMessages.some((raw: string): boolean => {
+                return JSON.parse(raw).method === Command.AddContent;
+            }), false);
+
+            const nextReservation = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket-tile-race', {
+                    metaData: {
+                        type: 'tileimage',
+                        posx: 0,
+                        posy: 0,
+                        width: 100,
+                        height: 100,
+                        tileImageUpload: {
+                            uploadId: 'upload-after-race',
+                            byteLength: 1,
+                            segment_max: 1,
+                            file_ext: 'jpg',
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (error, response) => { resolve({ error, response }); });
+            });
+            assert.strictEqual(nextReservation.error, null);
+            await commandHandler.cleanupTileimageOnDisconnect('socket-tile-race');
+        });
+
+        it('AddContent保存がidle timeoutを超えて後から完了してもmetadataを残さず一度だけ応答する', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-tile-add-timeout', 'testuser', UserRole.MEMBER);
+            (commandHandler as any).tileImageUploadIdleTimeoutMs = 15;
+
+            let signalAddContentStored: (() => void) | undefined;
+            let releaseAddContent: (() => void) | undefined;
+            const addContentStored = new Promise<void>((resolve): void => {
+                signalAddContentStored = resolve;
+            });
+            const addContentRelease = new Promise<void>((resolve): void => {
+                releaseAddContent = resolve;
+            });
+            const originalAddContent = contentService.addContent.bind(contentService);
+            contentService.addContent = async (request) => {
+                const metadata = await originalAddContent(request);
+                signalAddContentStored?.();
+                await addContentRelease;
+                return metadata;
+            };
+
+            let callbackCount = 0;
+            let callbackResult: any = null;
+            const addPromise = commandHandler.addContent('socket-tile-add-timeout', {
+                metaData: {
+                    type: 'tileimage',
+                    posx: 0,
+                    posy: 0,
+                    width: 100,
+                    height: 100,
+                    tileImageUpload: {
+                        uploadId: 'upload-tile-add-timeout',
+                        byteLength: 4,
+                        segment_max: 1,
+                        file_ext: 'jpg',
+                    },
+                },
+                contentData: Buffer.alloc(0),
+            }, (error, response) => {
+                callbackCount += 1;
+                callbackResult = { error, response };
+            });
+
+            await addContentStored;
+            await new Promise<void>((resolve): void => {
+                setTimeout(resolve, 30);
+            });
+            assert.strictEqual(callbackResult.error.code, -32072);
+
+            releaseAddContent?.();
+            await addPromise;
+
+            assert.strictEqual(callbackCount, 1);
+            assert.strictEqual((await contentService.getAllMetadata()).length, 0);
+        });
+
+        it('AddContent後に最初のsegmentが届かなければidle timeoutでcleanupする', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket-tile-idle', 'testuser', UserRole.MEMBER);
+            const sender = createMockClient('socket-tile-idle');
+            clients.add(sender);
+            (commandHandler as any).tileImageUploadIdleTimeoutMs = 15;
+
+            const addResult = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket-tile-idle', {
+                    metaData: {
+                        type: 'tileimage',
+                        posx: 0,
+                        posy: 0,
+                        width: 100,
+                        height: 100,
+                        tileImageUpload: {
+                            uploadId: 'upload-tile-idle',
+                            byteLength: 4,
+                            segment_max: 1,
+                            file_ext: 'jpg',
+                        },
+                    },
+                    contentData: Buffer.alloc(0),
+                }, (error, response) => { resolve({ error, response }); });
+            });
+            assert.strictEqual(addResult.error, null);
+            const metadataId = addResult.response.metadataId;
+            assert.notStrictEqual(await contentService.getMetadata(metadataId), null);
+
+            await new Promise<void>((resolve): void => {
+                setTimeout(resolve, 40);
+            });
+
+            assert.strictEqual(await contentService.getMetadata(metadataId), null);
+            const failureMessage = sender.sentMessages
+                .map((raw: string) => { return JSON.parse(raw); })
+                .find((message: any) => { return message.method === Command.TileimageUploadFailed; });
+            assert.ok(failureMessage);
+            assert.strictEqual(failureMessage.params.metadataId, metadataId);
         });
 
         it('未ログインはコンテンツ追加を拒否すること', async () => {
@@ -1466,6 +2247,91 @@ describe('CommandHandler', () => {
             assert.strictEqual(result.res.posy, 60);
         });
 
+        it('同一metadataIdの本文更新をメタデータ更新後に処理すること', { timeout: 5000 }, async (): Promise<void> => {
+            await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
+            const addResult = await new Promise<any>((resolve) => {
+                commandHandler.addContent('socket123', {
+                    metaData: { type: 'text', posx: 0, posy: 0, width: 100, height: 80 },
+                    contentData: Buffer.from('original'),
+                }, (err, res) => resolve({ err, res }));
+            });
+            const metadataId = addResult.res.metadataId;
+            const receiverClient = createMockClient('socket456');
+            clients.add(receiverClient);
+
+            const metadataUpdateEntered: { resolve: () => void } = {
+                resolve: (): void => { },
+            };
+            const releaseMetadataUpdate: { resolve: () => void } = {
+                resolve: (): void => { },
+            };
+            const metadataUpdateEnteredPromise = new Promise<void>((resolve) => {
+                metadataUpdateEntered.resolve = resolve;
+            });
+            const metadataUpdateGate = new Promise<void>((resolve) => {
+                releaseMetadataUpdate.resolve = resolve;
+            });
+
+            const originalUpdateMetadata = contentService.updateMetadata.bind(contentService);
+            let shouldPauseMetadataUpdate = true;
+            contentService.updateMetadata = async (id, updates) => {
+                const updated = await originalUpdateMetadata(id, updates);
+                if (shouldPauseMetadataUpdate && updates.posx === 50) {
+                    shouldPauseMetadataUpdate = false;
+                    metadataUpdateEntered.resolve();
+                    await metadataUpdateGate;
+                }
+                return updated;
+            };
+
+            const originalUpdateContent = contentService.updateContent.bind(contentService);
+            let contentUpdateStarted = false;
+            contentService.updateContent = async (request) => {
+                contentUpdateStarted = true;
+                return originalUpdateContent(request);
+            };
+
+            const metadataUpdatePromise = new Promise<void>((resolve, reject) => {
+                commandHandler.updateMetaData('socket123', { metadataId, posx: 50 }, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+            await metadataUpdateEnteredPromise;
+
+            const contentUpdatePromise = new Promise<void>((resolve, reject) => {
+                commandHandler.updateContent('socket123', {
+                    metadataId,
+                    binary: Buffer.from('updated'),
+                }, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, 0);
+            });
+
+            assert.strictEqual(contentUpdateStarted, false);
+            releaseMetadataUpdate.resolve();
+            await Promise.all([metadataUpdatePromise, contentUpdatePromise]);
+
+            const finalMetadata = await contentService.getMetadata(metadataId);
+            assert.strictEqual(finalMetadata?.posx, 50);
+            const broadcastMethods = receiverClient.sentMessages.map((message) => {
+                return JSON.parse(message).method;
+            });
+            assert.deepStrictEqual(broadcastMethods, [Command.UpdateMetaData, Command.UpdateContent]);
+        });
+
         it('配列で複数メタデータを一括更新できること', async () => {
             await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
             const addResult1 = await new Promise<any>((resolve) => {
@@ -1539,6 +2405,84 @@ describe('CommandHandler', () => {
         });
     });
 
+    describe('client diagnostic reporting', () => {
+        it('records client geometry with the authoritative server window snapshot', async (): Promise<void> => {
+            const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'chowder-diagnostic-command-'));
+            const diagnosticLogService = new ClientDiagnosticLogService({ enabled: true, directory });
+            const diagnosticHandler = new CommandHandler(
+                sessionManager,
+                authService,
+                contentService,
+                windowMetaDataService,
+                displaySessionService,
+                mediaService,
+                siteService,
+                layoutService,
+                { tileImage: { widthThreshold: 3840, heightThreshold: 2160, tileSize: 256 } },
+                diagnosticLogService,
+            );
+
+            try {
+                await sessionManager.createSession('diagnostic-socket', 'testuser', UserRole.MEMBER);
+                const windowMetaData = await windowMetaDataService.addWindowMetaData({
+                    id: 'diagnostic-window',
+                    posx: 100,
+                    posy: 50,
+                    virtualWidth: 1920,
+                    virtualHeight: 1080,
+                    pixelWidth: 1920,
+                    pixelHeight: 1080,
+                });
+
+                const result = await new Promise<{ error: any; data: any }>((resolve) => {
+                    diagnosticHandler.reportClientDiagnostic('diagnostic-socket', {
+                        event: 'display-initial',
+                        diagnosticSessionId: diagnosticLogService.sessionId,
+                        role: 'display',
+                        windowId: windowMetaData.id,
+                        clientAppliedRevision: 1,
+                        clientWindow: { posx: 100, posy: 50, virtualWidth: 1920, virtualHeight: 1080 },
+                    }, (error, data) => {
+                        resolve({ error, data });
+                    });
+                });
+                const readyResult = await new Promise<{ error: any; data: any }>((resolve) => {
+                    diagnosticHandler.reportClientDiagnostic('diagnostic-socket', {
+                        event: 'itowns-diagnostic-ready',
+                        diagnosticSessionId: diagnosticLogService.sessionId,
+                        windowId: windowMetaData.id,
+                        diagnosticInteraction: {
+                            metadataId: 'diagnostic-content',
+                            sessionMatched: true,
+                            listenersInitialized: true,
+                        },
+                    }, (error, data) => {
+                        resolve({ error, data });
+                    });
+                });
+                await diagnosticLogService.flush();
+
+                assert.strictEqual(result.error, null);
+                assert.strictEqual(result.data.accepted, true);
+                assert.strictEqual(readyResult.error, null);
+                assert.strictEqual(readyResult.data.accepted, true);
+                const files = await fs.readdir(directory);
+                const records = (await fs.readFile(path.join(directory, files[0]), 'utf8'))
+                    .trim()
+                    .split('\n')
+                    .map((line) => JSON.parse(line));
+                assert.strictEqual(records[0].role, 'controller');
+                assert.strictEqual(records[0].serverWindow.id, 'diagnostic-window');
+                assert.strictEqual(records[0].serverWindow.revision, 1);
+                assert.strictEqual(records[0].serverWindowMetaDataRevision, 1);
+                assert.strictEqual(records[1].event, 'itowns-diagnostic-ready');
+                assert.strictEqual(records[1].diagnosticInteraction.sessionMatched, true);
+            } finally {
+                await fs.rm(directory, { recursive: true, force: true });
+            }
+        });
+    });
+
     describe('updateCameraMatrix', () => {
         it('カメラデータを保存してブロードキャストできること', async () => {
             await sessionManager.createSession('socket123', 'testuser', UserRole.MEMBER);
@@ -1552,12 +2496,16 @@ describe('CommandHandler', () => {
 
             const cameraMatrix = JSON.stringify({ elements: [1, 0, 0, 0] });
             const cameraParams = JSON.stringify({ fov: 45 });
+            const lease = await contentService.registerCameraSource(metadataId, 'source', 'socket123');
 
             const result = await new Promise<any>((resolve) => {
                 commandHandler.updateCameraMatrix('socket123', {
                     metadataId,
                     cameraWorldMatrix: cameraMatrix,
                     cameraParams: cameraParams,
+                    ...lease,
+                    sourceInstanceId: 'source',
+                    sourceSequence: 1,
                 }, (err, res) => resolve({ err, res }));
             });
 
@@ -1603,9 +2551,10 @@ describe('CommandHandler', () => {
 
             const cameraMatrix = JSON.stringify({ elements: [2, 0, 0, 0] });
             const cameraParams = JSON.stringify({ fov: 30 });
+            const lease = await contentService.registerCameraSource(metadataId, 'source', 'socket123');
 
             await new Promise<void>((resolve) => {
-                commandHandler.updateCameraMatrix('socket123', { metadataId, cameraWorldMatrix: cameraMatrix, cameraParams }, (err) => {
+                commandHandler.updateCameraMatrix('socket123', { metadataId, cameraWorldMatrix: cameraMatrix, cameraParams, ...lease, sourceInstanceId: 'source', sourceSequence: 1 }, (err) => {
                     resolve();
                 });
             });
@@ -2431,7 +3380,7 @@ describe('CommandHandler', () => {
     describe('Site管理', () => {
         describe('getSite', () => {
             it('レスポンスに displaySpace フィールドが含まれること', async () => {
-                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => {});
+                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => { });
                 const site = await siteService.createSite({ siteName: 'Test Site' });
 
                 const result = await new Promise<any>((resolve) => {
@@ -2449,7 +3398,7 @@ describe('CommandHandler', () => {
             });
 
             it('displaySpace 更新後に getSite で最新の値が返ること', async () => {
-                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => {});
+                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => { });
                 const site = await siteService.createSite({ siteName: 'Updated DS Site' });
 
                 await siteService.updateDisplaySpace(site.siteId, {
@@ -2474,7 +3423,7 @@ describe('CommandHandler', () => {
 
         describe('getSiteList', () => {
             it('各 Site に displaySpace フィールドが含まれること', async () => {
-                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => {});
+                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => { });
                 await siteService.createSite({ siteName: 'Site A' });
                 await siteService.createSite({ siteName: 'Site B' });
 
@@ -2497,7 +3446,7 @@ describe('CommandHandler', () => {
 
         describe('updateSite', () => {
             it('color を指定して更新でき、レスポンスに color と displaySpace が含まれること', async () => {
-                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => {});
+                await commandHandler.login('socket_admin', { id: 'admin', password: 'admin123' }, () => { });
                 const site = await siteService.createSite({ siteName: 'Rainbow' });
 
                 const result = await new Promise<any>((resolve) => {
@@ -2515,7 +3464,7 @@ describe('CommandHandler', () => {
             });
 
             it('Admin以外は updateSite できないこと', async () => {
-                await commandHandler.login('socket_member', { id: 'testuser', password: 'password123' }, () => {});
+                await commandHandler.login('socket_member', { id: 'testuser', password: 'password123' }, () => { });
                 const site = await siteService.createSite({ siteName: 'Protected' });
 
                 const result = await new Promise<any>((resolve) => {

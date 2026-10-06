@@ -3,7 +3,7 @@
  * Copyright (c) 2016-2018 RIKEN Center for Computational Science. All rights reserved.
  */
 
-import { IFrameConnector } from '../common/iframe_connector';
+import { IFrameConnector } from '../../../../common/IFrameConnector';
 import { ITownsCommand } from '../common/itowns_command';
 import { ITownsConstants } from '../itowns/itowns_constants';
 import { createBarGraphLayer } from './bargraph_layer';
@@ -11,10 +11,20 @@ import { createOBJLayer } from './obj_layer';
 import { createTimescalePotreeLayer } from './timeseries_potree_layer';
 import { createTimescaleC3DTilesLayer } from './timeseries_c3dtiles_layer';
 import { C3DTileUtil } from './c3dtile_util';
+import { resizeMirrorRendering, stopMirrorControls } from './mirrorRendering';
+import { isCameraRevision, isNewerCamera, type CameraRevision } from '../../../../../common/cameraState';
 
 // itowns の Camera ラッパー（three.js の camera3D とは別オブジェクト）が保持する LOD 判定用の値。
 // preSSE はタイル(地形/画像)のSSE計算に、viewportWidth/viewportHeightは点群レイヤーのSSE計算に使われる。
 interface ITownsCameraParams {
+    cameraType: 'perspective' | 'orthographic';
+    projectionMatrix: number[];
+    view: Record<string, number | boolean> | null;
+    left?: number;
+    right?: number;
+    top?: number;
+    bottom?: number;
+    target?: number[];
     fovy: number;
     zoom: number;
     near: number;
@@ -25,6 +35,13 @@ interface ITownsCameraParams {
     preSSE: number;
     viewportWidth: number;
     viewportHeight: number;
+}
+
+interface ReceivedCamera extends CameraRevision {
+    mat: number[];
+    params: ITownsCameraParams;
+    diagnosticId?: string;
+    diagnosticSessionId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,17 +90,21 @@ export class ITownsInjectionController {
     private range: { rangeStartTime: Date; rangeEndTime: Date } | null = null;
     private BarGraphExtent: any;
     private isStopDispatchRemoveEvent: boolean = false;
-    // 送信元と同期したLOD判定用の値。camera.resize()系の呼び出しで上書きされた際の再適用に使う。
-    private lastSyncedLOD: { preSSE: number; width: number; height: number } | null = null;
+    private pendingDiagnosticCameraId: string | null = null;
+    private diagnosticSessionId: string | null = null;
+    private reportedDiagnosticSessionId: string | null = null;
+    private diagnosticInteractionListenersInitialized = false;
+    private diagnosticInteractionStartedAt = performance.now();
+    private lastDiagnosticPointerMoveAt = Number.NEGATIVE_INFINITY;
+    private lastDiagnosticWheelAt = Number.NEGATIVE_INFINITY;
+    private renderingObserver: ResizeObserver | null = null;
+    private contextLost = false;
+    private latestCameraRevision: CameraRevision | null = null;
+    private readonly pendingLayerProperties = new Map<string, Record<string, unknown>>();
 
     constructor(view: any, viewerDiv: HTMLElement, timeCallback: ((date: Date) => void) | null = null) {
         this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
         itowns.proj4.defs('EPSG:2446', '+proj=tmerc +lat_0=33 +lon_0=133.5 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
-
-        this.iframeConnector = new IFrameConnector();
-        this.iframeConnector.connect(() => {
-            this.initIFrameEvents();
-        });
 
         this.itownsView = view;
         this.itownsViewerDiv = viewerDiv;
@@ -95,18 +116,27 @@ export class ITownsInjectionController {
                 console.warn(`addLayer: id '${layer.id}' is already used, skipping`);
                 return Promise.resolve(layer);
             }
-            return origAddLayer(layer, ...args);
+            return Promise.resolve(origAddLayer(layer, ...args)).then((addedLayer: unknown): unknown => {
+                const properties = this.pendingLayerProperties.get(layer.id);
+                if (properties !== undefined) {
+                    this.changeLayerProperty(properties);
+                }
+                if (this.date !== null && typeof layer.updateByTime === 'function') {
+                    layer.updateByTime(this.date, this.range);
+                    this.itownsView.notifyChange();
+                }
+                return addedLayer;
+            });
         };
 
-        let done = false;
-        this.itownsView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.AFTER_RENDER, () => {
-            if (!done) {
-                if (window.chowder_itowns_view_type === 'itowns') {
-                    this.injectAsChOWDERiTownController({ view, viewerDiv, timeCallback });
-                } else {
-                    this.injectaAsChOWDERDisplayController({ view, viewerDiv, timeCallback });
-                }
-                done = true;
+        this.iframeConnector = new IFrameConnector();
+        this.iframeConnector.connect(async (role): Promise<void> => {
+            window.chowder_itowns_view_type = role;
+            this.initIFrameEvents();
+            if (role === 'itowns') {
+                await this.injectAsChOWDERiTownController({ view, viewerDiv, timeCallback });
+            } else {
+                this.injectaAsChOWDERDisplayController({ view, viewerDiv, timeCallback });
             }
         });
     }
@@ -136,12 +166,23 @@ export class ITownsInjectionController {
             }
         });
 
-        this.iframeConnector.on(ITownsCommand.UpdateCamera, (_err, cameraData: any, request) => {
+        this.iframeConnector.on<ReceivedCamera>(ITownsCommand.UpdateCamera, (_err, cameraData, request): void => {
+            if (!isCameraRevision(cameraData) || !isNewerCamera(cameraData, this.latestCameraRevision)) {
+                this.iframeConnector.sendResponse(request, { phase: 'superseded' });
+                return;
+            }
+            this.latestCameraRevision = { generation: cameraData.generation, revision: cameraData.revision };
             this.applyCamera(cameraData.mat, cameraData.params);
-            this.iframeConnector.sendResponse(request);
+            if (typeof cameraData.diagnosticId === 'string' && typeof cameraData.diagnosticSessionId === 'string') {
+                this.setDiagnosticSession(cameraData.diagnosticSessionId);
+                this.reportCameraAfterRender(request, cameraData);
+            } else {
+                this.iframeConnector.sendResponse(request);
+            }
         });
 
         this.iframeConnector.on(ITownsCommand.Resize, (_err, param: any, request) => {
+            this.setDiagnosticSession(param?.diagnosticSessionId);
             this.resizeWindow(param);
             this.iframeConnector.sendResponse(request);
         });
@@ -172,6 +213,102 @@ export class ITownsInjectionController {
             }
             this.iframeConnector.sendResponse(request);
         });
+
+    }
+
+    private setDiagnosticSession(sessionId: unknown): void {
+        this.diagnosticSessionId = window.chowder_itowns_view_type === 'display' && typeof sessionId === 'string'
+            ? sessionId
+            : null;
+        if (this.diagnosticSessionId === null) {
+            this.reportedDiagnosticSessionId = null;
+            return;
+        }
+
+        this.initDiagnosticInteractionEvents();
+        if (this.reportedDiagnosticSessionId !== this.diagnosticSessionId) {
+            this.reportedDiagnosticSessionId = this.diagnosticSessionId;
+            this.iframeConnector.send(ITownsCommand.DiagnosticInteraction, {
+                type: 'diagnostic-ready',
+                diagnosticSessionId: this.diagnosticSessionId,
+                frameWallTime: new Date().toISOString(),
+                frameElapsedMs: performance.now() - this.diagnosticInteractionStartedAt,
+                viewType: window.chowder_itowns_view_type,
+                listenersInitialized: this.diagnosticInteractionListenersInitialized,
+            });
+        }
+    }
+
+    private initDiagnosticInteractionEvents(): void {
+        if (this.diagnosticInteractionListenersInitialized) {
+            return;
+        }
+        this.diagnosticInteractionListenersInitialized = true;
+
+        const scrollKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
+        const report = (event: Event): void => {
+            if (this.diagnosticSessionId === null) {
+                return;
+            }
+            const now = performance.now();
+            const details: Record<string, unknown> = {
+                type: event.type,
+                diagnosticSessionId: this.diagnosticSessionId,
+                frameWallTime: new Date().toISOString(),
+                frameElapsedMs: now - this.diagnosticInteractionStartedAt,
+                isTrusted: event.isTrusted,
+                target: this.describeDiagnosticTarget(event.target),
+            };
+
+            if (event instanceof PointerEvent) {
+                if (event.type === 'pointermove') {
+                    if (event.buttons === 0 || now - this.lastDiagnosticPointerMoveAt < 100) {
+                        return;
+                    }
+                    this.lastDiagnosticPointerMoveAt = now;
+                }
+                details.pointer = {
+                    pointerType: event.pointerType,
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    button: event.button,
+                    buttons: event.buttons,
+                };
+            } else if (event instanceof WheelEvent) {
+                if (now - this.lastDiagnosticWheelAt < 100) {
+                    return;
+                }
+                this.lastDiagnosticWheelAt = now;
+                details.wheel = {
+                    deltaX: event.deltaX,
+                    deltaY: event.deltaY,
+                    deltaMode: event.deltaMode,
+                };
+            } else if (event instanceof KeyboardEvent) {
+                if (!scrollKeys.has(event.key)) {
+                    return;
+                }
+                details.key = event.key;
+            }
+
+            this.iframeConnector.send(ITownsCommand.DiagnosticInteraction, details);
+        };
+
+        for (const eventType of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'focusin', 'focusout', 'keydown']) {
+            document.addEventListener(eventType, report, { capture: true, passive: true });
+        }
+    }
+
+    private describeDiagnosticTarget(target: EventTarget | null): Record<string, unknown> | null {
+        if (!(target instanceof Element)) {
+            return null;
+        }
+        const element = target instanceof HTMLElement ? target : null;
+        return {
+            tagName: target.tagName,
+            id: element?.id || null,
+            role: target.getAttribute('role'),
+        };
     }
 
     // -----------------------------------------------------------------------
@@ -179,94 +316,35 @@ export class ITownsInjectionController {
     // -----------------------------------------------------------------------
 
     private injectaAsChOWDERDisplayController(data: { view: any; viewerDiv: HTMLElement; timeCallback: ((date: Date) => void) | null }): void {
-        // main.ts のシムにより、'resize' に undefined を渡すと登録済みの resize リスナー
-        // （itowns自身の_resizeListenerを含む）を一括解除できる。
         window.removeEventListener('resize', undefined as any);
-
-        const debounceRedraw = (() => {
-            const interval = 500;
-            let timer: ReturnType<typeof setTimeout>;
-            let sumDT = 0.0;
-            return (func: (view: any, dt: number) => void, view: any, dt: number) => {
-                sumDT += dt;
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    if (this.isViewReady()) {
-                        func(view, sumDT);
-                        sumDT = 0.0;
-                    } else {
-                        debounceRedraw(func, view, sumDT);
-                    }
-                }, interval);
-            };
-        })();
-
-        let aspectForResize = 1.0;
-
-        const getAspect = (div: HTMLElement) => {
-            const rect = div.getBoundingClientRect();
-            return (rect.right - rect.left) / (rect.bottom - rect.top);
-        };
-
-        const debounceResize = (() => {
-            const interval = 500;
-            let timer: ReturnType<typeof setTimeout>;
-            return (func: () => void) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    // アスペクト比にかかわらず常に renderer をリサイズする
-                    // （マニピュレータがアスペクト比ロックで拡縮する時も地図が正しくスケールする）
-                    func();
-                    // origResize(=View.resize)はcamera.resize()を内部で呼び、同期済みのLOD判定用の値を
-                    // 実DOMサイズで上書きしてしまうため、直後に送信元の値へ戻す。
-                    this.restoreSyncedLOD();
-                    const canvas = this.itownsViewerDiv!.getElementsByTagName('canvas')[0] as HTMLCanvasElement | undefined;
-                    if (canvas) {
-                        canvas.style.width = '100%';
-                        canvas.style.height = '100%';
-                    }
-                    // アスペクト比が実際に変化したときのみ親へ通知
-                    // （elem.style.height変更 → iframe window.resize → 無限ループを防ぐ）
-                    const aspect = getAspect(this.itownsViewerDiv!);
-                    if (Math.abs(aspectForResize - aspect) > 0.02) {
-                        console.log('[itowns] aspect changed:', aspectForResize.toFixed(3), '->', aspect.toFixed(3));
-                        aspectForResize = aspect;
-                        this.sendViewportResize();
-                    }
-                }, interval);
-            };
-        })();
-
         this.iframeConnector.on(ITownsCommand.Init, (_err, _param, request) => {
             this.iframeConnector.sendResponse(request);
         });
-
-        // controller セットアップは Init ハンドラに依存せず、
-        // AFTER_RENDER 後に確実に呼び出される injectaAsChOWDERDisplayController の
-        // 本体に直接書く（Init メッセージのタイミング競合を回避）
-        if (window.chowder_itowns_view_type === 'controller') {
-            if (this.itownsView.mainLoop.__proto__._renderView) {
-                const origRenderView = this.itownsView.mainLoop.__proto__._renderView.bind(this.itownsView.mainLoop);
-                this.itownsView.mainLoop.__proto__._renderView = (view: any, dt: number) => {
-                    debounceRedraw(origRenderView, view, dt);
-                };
+        stopMirrorControls(this.itownsView, (view, camera): void => { itowns.CameraUtils.stop(view, camera); });
+        const updateRendering = (): void => {
+            if (this.contextLost) {
+                return;
             }
-
-            aspectForResize = getAspect(this.itownsViewerDiv!);
-            const canvas = this.itownsViewerDiv!.getElementsByTagName('canvas')[0] as HTMLCanvasElement | undefined;
-            if (canvas) {
-                canvas.style.width = '100%';
-                canvas.style.height = '100%';
-            }
-
-            const origResize = this.itownsView.__proto__.resize.bind(this.itownsView);
-            window.addEventListener('resize', () => {
-                debounceResize(origResize);
-            });
-
-            // 初期アスペクト比を親へ通知（AFTER_RENDER 後なのでビューポートサイズは有効）
-            this.sendViewportResize();
-        }
+            resizeMirrorRendering(this.itownsView, data.viewerDiv.clientWidth, data.viewerDiv.clientHeight);
+        };
+        this.renderingObserver = new ResizeObserver(updateRendering);
+        this.renderingObserver.observe(data.viewerDiv);
+        document.addEventListener('visibilitychange', updateRendering);
+        const canvas = this.itownsView.mainLoop.gfxEngine.renderer.domElement as HTMLCanvasElement;
+        canvas.addEventListener('webglcontextlost', (event): void => {
+            event.preventDefault();
+            this.contextLost = true;
+        });
+        canvas.addEventListener('webglcontextrestored', (): void => {
+            this.contextLost = false;
+            updateRendering();
+        });
+        window.addEventListener('pagehide', (): void => {
+            this.renderingObserver?.disconnect();
+            document.removeEventListener('visibilitychange', updateRendering);
+            this.iframeConnector.destroy();
+        }, { once: true });
+        updateRendering();
 
         this.iframeConnector.on(ITownsCommand.UpdateTime, (err, param: any, request) => {
             if (err) { console.error(err); return; }
@@ -386,7 +464,12 @@ export class ITownsInjectionController {
             this.iframeConnector.sendResponse(request);
         });
 
-        this.layerDataList = await this.getLayerDataList();
+        void this.getLayerDataList().then((layers): void => {
+            this.layerDataList = layers;
+            this.iframeConnector.send(ITownsCommand.AddLayer, layers);
+        }).catch((error: unknown): void => {
+            console.error('[ITowns] Initial layer data unavailable', error);
+        });
 
         this.itownsView.addEventListener(itowns.VIEW_EVENTS.LAYER_ADDED, async () => {
             this.layerDataList = await this.getLayerDataList();
@@ -439,13 +522,101 @@ export class ITownsInjectionController {
     // カメラ操作
     // -----------------------------------------------------------------------
 
+    private reportCameraAfterRender(request: any, cameraData: any): void {
+        const diagnosticId = cameraData.diagnosticId as string;
+        const startedAt = performance.now();
+        this.pendingDiagnosticCameraId = diagnosticId;
+
+        let completed = false;
+        let timer: ReturnType<typeof setTimeout>;
+        const finish = (phase: 'rendered' | 'render-timeout'): void => {
+            if (completed) {
+                return;
+            }
+            completed = true;
+            clearTimeout(timer);
+            this.itownsView.removeEventListener(itowns.VIEW_EVENTS.AFTER_RENDER, onAfterRender);
+
+            if (this.pendingDiagnosticCameraId !== diagnosticId) {
+                this.iframeConnector.sendResponse(request, {
+                    diagnosticId,
+                    diagnosticSessionId: cameraData.diagnosticSessionId,
+                    phase: 'stale',
+                    clientElapsedMs: performance.now() - startedAt,
+                });
+                return;
+            }
+
+            this.pendingDiagnosticCameraId = null;
+            this.iframeConnector.sendResponse(request, {
+                diagnosticId,
+                diagnosticSessionId: cameraData.diagnosticSessionId,
+                phase,
+                clientElapsedMs: performance.now() - startedAt,
+                state: phase === 'rendered' ? this.getCameraDiagnosticState() : null,
+            });
+        };
+        const onAfterRender = (): void => {
+            finish('rendered');
+        };
+
+        this.itownsView.addEventListener(itowns.VIEW_EVENTS.AFTER_RENDER, onAfterRender);
+        timer = setTimeout((): void => {
+            finish('render-timeout');
+        }, 250);
+        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
+    }
+
+    private getCameraDiagnosticState(): Record<string, unknown> {
+        const camera = this.itownsView.camera.camera3D;
+        const canvas = this.itownsViewerDiv?.getElementsByTagName('canvas')[0] as HTMLCanvasElement | undefined;
+        const canvasRect = canvas?.getBoundingClientRect();
+        const layers = this.itownsView.getLayers().slice(0, 40).map((layer: any) => {
+            return {
+                id: layer.id ?? null,
+                type: layer.type ?? null,
+                visible: layer.visible !== false,
+                loaded: layer.ready === true,
+            };
+        });
+
+        return {
+            position: [camera.position.x, camera.position.y, camera.position.z],
+            quaternion: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w],
+            matrixWorld: Array.from(camera.matrixWorld.elements),
+            projection: {
+                fov: camera.fov,
+                zoom: camera.zoom,
+                near: camera.near,
+                far: camera.far,
+                aspect: camera.aspect,
+                matrix: Array.from(camera.projectionMatrix.elements),
+            },
+            coordinateReferenceSystem: this.itownsView.referenceCrs ?? null,
+            viewport: {
+                width: canvas?.clientWidth ?? 0,
+                height: canvas?.clientHeight ?? 0,
+                bufferWidth: canvas?.width ?? 0,
+                bufferHeight: canvas?.height ?? 0,
+                left: canvasRect?.left ?? 0,
+                top: canvasRect?.top ?? 0,
+            },
+            layers,
+            currentTime: this.date?.toISOString() ?? null,
+        };
+    }
+
     private applyCamera(
         worldMat: number[],
         cameraParams: ITownsCameraParams,
     ): void {
-        const cam = this.itownsView.camera.camera3D;
+        let cam = this.itownsView.camera.camera3D;
+        if ((cameraParams.cameraType === 'orthographic') !== Boolean(cam.isOrthographicCamera)) {
+            cam = cameraParams.cameraType === 'orthographic' ? new itowns.THREE.OrthographicCamera() : new itowns.THREE.PerspectiveCamera();
+            this.itownsView.camera.camera3D = cam;
+        }
         cam.matrixAutoUpdate = false;
-        cam.matrixWorld.elements = worldMat;
+        cam.matrixWorld.fromArray(worldMat);
 
         const d = new itowns.THREE.Vector3();
         const q = new itowns.THREE.Quaternion();
@@ -461,42 +632,38 @@ export class ITownsInjectionController {
         cam.zoom = cameraParams.zoom;
         cam.filmOffset = cameraParams.filmOffset;
         cam.filmGauge = cameraParams.filmGauge;
-        // aspect は送信元環境のビューポートサイズに依存するため、受信側の viewerDiv の実サイズから再計算する。
-        // viewerDiv が未取得の場合（初期化前など）は fallback として cameraParams.aspect を使用。
-        const viewerW = this.itownsViewerDiv?.clientWidth ?? 0;
-        const viewerH = this.itownsViewerDiv?.clientHeight ?? 0;
-        cam.aspect = (viewerW > 0 && viewerH > 0) ? viewerW / viewerH : cameraParams.aspect;
+        cam.aspect = cameraParams.aspect;
+        cam.left = cameraParams.left;
+        cam.right = cameraParams.right;
+        cam.top = cameraParams.top;
+        cam.bottom = cameraParams.bottom;
+        cam.view = cameraParams.view === null ? null : { ...cameraParams.view };
         cam.matrixAutoUpdate = true;
-        // near/far/fov/zoom/aspectの変更はupdateProjectionMatrix()を呼ばない限り投影行列に反映されない。
-        cam.updateProjectionMatrix();
+        cam.projectionMatrix.fromArray(cameraParams.projectionMatrix);
+        cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
+        if (cameraParams.target !== undefined && typeof this.itownsView.controls?.getCameraTargetPosition === 'function') {
+            this.itownsView.controls.getCameraTargetPosition().fromArray(cameraParams.target);
+        }
 
         // LOD(SSE)判定用の値は描画解像度と独立させ、送信元(itowns本体)の値をそのまま反映する。
         // camera.width/heightは点群レイヤーがSSE計算で直接参照するためpreSSEだけでは不十分。
         this.itownsView.camera._preSSE = cameraParams.preSSE;
         this.itownsView.camera.width = cameraParams.viewportWidth;
         this.itownsView.camera.height = cameraParams.viewportHeight;
-        this.lastSyncedLOD = {
-            preSSE: cameraParams.preSSE,
-            width: cameraParams.viewportWidth,
-            height: cameraParams.viewportHeight,
-        };
-
         this.itownsView.notifyChange(cam);
-    }
-
-    // camera.resize()系の呼び出しで上書きされた場合に、直近で送信元と同期したLOD判定用の値を復元する。
-    private restoreSyncedLOD(): void {
-        if (this.lastSyncedLOD === null) {
-            return;
-        }
-        this.itownsView.camera._preSSE = this.lastSyncedLOD.preSSE;
-        this.itownsView.camera.width = this.lastSyncedLOD.width;
-        this.itownsView.camera.height = this.lastSyncedLOD.height;
     }
 
     private getCameraParams(camera3D: any): string {
         const camera = this.itownsView.camera;
         const params: ITownsCameraParams = {
+            cameraType: camera3D.isOrthographicCamera ? 'orthographic' : 'perspective',
+            projectionMatrix: Array.from(camera3D.projectionMatrix.elements),
+            view: camera3D.view === null ? null : { ...camera3D.view },
+            left: camera3D.left,
+            right: camera3D.right,
+            top: camera3D.top,
+            bottom: camera3D.bottom,
+            target: this.itownsView.controls?.getCameraTargetPosition?.().toArray(),
             fovy: camera3D.fov,
             zoom: camera3D.zoom,
             near: camera3D.near,
@@ -580,61 +747,17 @@ export class ITownsInjectionController {
     }
 
     private resizeWindow(param: any): void {
-        const rect = param.rect;
-        const isSetOffset = param.isSetOffset;
-
-        const width = document.body.clientWidth;
-        const height = document.body.clientHeight;
-
         document.body.style.pointerEvents = 'none';
-        this.itownsViewerDiv!.style.position = 'relative';
-
-        if (param.displayMode === true) {
-            // Display モード: elem が virtualToWindowCoordinates で配置済み
-            // iframe は 100%x100% = コンテンツピクセルサイズ、setViewOffset は使わずフルレンダリング
-            // body の overflow:hidden がディスプレイ矩形外をクリップする
-            this.itownsViewerDiv!.style.left = '0px';
-            this.itownsViewerDiv!.style.top = '0px';
-            this.itownsViewerDiv!.style.width = '100%';
-            this.itownsViewerDiv!.style.height = '100%';
-            this.itownsView.camera.camera3D.clearViewOffset();
-            this.itownsView.mainLoop.gfxEngine.renderer.setSize(width, height);
-            // renderer サイズに合わせて aspect を更新する。
-            // applyCamera() で設定された itowns クライアント側の aspect はディスプレイ/コントローラの
-            // ビューポートと一致しない場合があるため、常に実レンダラサイズから再計算する。
-            if (height > 0) {
-                const cam = this.itownsView.camera.camera3D;
-                cam.aspect = width / height;
-                cam.updateProjectionMatrix();
-            }
-        } else {
-            if (!rect) return;
-            // Controller モード: 既存の挙動
-            this.itownsViewerDiv!.style.left = parseInt(rect.x) + 'px';
-            this.itownsViewerDiv!.style.top = parseInt(rect.y) + 'px';
-            if (isSetOffset) {
-                this.itownsViewerDiv!.style.width = parseInt(rect.w) + 'px';
-                this.itownsViewerDiv!.style.height = parseInt(rect.h) + 'px';
-            } else {
-                this.itownsViewerDiv!.style.width = '100%';
-                this.itownsViewerDiv!.style.height = '100%';
-            }
-            this.itownsView.camera.camera3D.setViewOffset(width, height, rect.x, rect.y, rect.w, rect.h);
-            this.itownsView.mainLoop.gfxEngine.renderer.setSize(rect.w, rect.h);
+        const viewer = this.itownsViewerDiv;
+        if (viewer === null || this.contextLost) {
+            return;
         }
-
-        if (window.chowder_itowns_view_type === 'controller') {
-            for (const listener of window.resizeListeners) {
-                (listener as EventListener)(new Event('resize'));
-            }
-        }
-
-        const canvas = this.itownsViewerDiv!.getElementsByTagName('canvas')[0] as HTMLCanvasElement | undefined;
-        if (canvas) {
-            canvas.style.width = '100%';
-            canvas.style.height = '100%';
-        }
-        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
+        viewer.style.position = 'relative';
+        viewer.style.left = '0px';
+        viewer.style.top = '0px';
+        viewer.style.width = '100%';
+        viewer.style.height = '100%';
+        resizeMirrorRendering(this.itownsView, viewer.clientWidth, viewer.clientHeight);
     }
 
     // -----------------------------------------------------------------------
@@ -932,6 +1055,10 @@ export class ITownsInjectionController {
     }
 
     initLayers(layerList: any[]): void {
+        this.pendingLayerProperties.clear();
+        for (const item of layerList) {
+            this.pendingLayerProperties.set(item.id, { ...item });
+        }
         this.isStopDispatchRemoveEvent = true;
         for (let i = this.layerDataList.length - 1; i >= 0; --i) {
             const item = this.layerDataList[i];
@@ -961,6 +1088,7 @@ export class ITownsInjectionController {
     }
 
     deleteLayer(params: any): void {
+        this.pendingLayerProperties.delete(params.id);
         const layer = this.getLayer(params.id);
         if (layer) {
             this.itownsView.removeLayer(params.id);
@@ -1008,6 +1136,7 @@ export class ITownsInjectionController {
     }
 
     changeLayerProperty(params: any, redraw = true): void {
+        this.pendingLayerProperties.set(params.id, { ...params });
         const layer = this.getLayer(params.id);
         if (!layer) return;
         if (!layer.ready) { console.warn('layer is not ready'); return; }

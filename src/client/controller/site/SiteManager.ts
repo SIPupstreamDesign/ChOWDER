@@ -6,7 +6,8 @@ export interface SiteManagerDeps {
     logFn: LogFn;
     renderSiteGrid: (siteId: string | null) => void;
     onSiteSelected?: (siteId: string | null, displayIds: string[]) => void;
-    onDisplaySelect?: () =>void;
+    onDisplaySelect?: () => void;
+    onSiteChanging?: () => void;
 }
 
 export class SiteManager {
@@ -19,6 +20,7 @@ export class SiteManager {
     private readonly renderSiteGridFn: (siteId: string | null) => void;
     private readonly onSiteSelectedFn?: (siteId: string | null, displayIds: string[]) => void;
     private readonly onDisplaySelectFn?: () => void;
+    private readonly onSiteChangingFn?: () => void;
 
     constructor(deps: SiteManagerDeps) {
         this.el = deps.elements;
@@ -27,6 +29,7 @@ export class SiteManager {
         this.renderSiteGridFn = deps.renderSiteGrid;
         this.onSiteSelectedFn = deps.onSiteSelected;
         this.onDisplaySelectFn = deps.onDisplaySelect;
+        this.onSiteChangingFn = deps.onSiteChanging;
     }
 
     get sites(): any[] { return this._sites; }
@@ -74,7 +77,7 @@ export class SiteManager {
             item.appendChild(nameSpan);
 
             item.style.cursor = 'pointer';
-            item.addEventListener('click', () => {this.filterSites(site.siteId) ; this.onDisplaySelectFn?.();});
+            item.addEventListener('click', () => { this.filterSites(site.siteId); this.onDisplaySelectFn?.(); });
             container.appendChild(item);
         }
     }
@@ -183,7 +186,7 @@ export class SiteManager {
     }
 
     selectDefaultsite(): void {
-       for (const site of this._sites) {
+        for (const site of this._sites) {
             if (site.isDefault) {
                 this._currentSiteId = site.siteId;
                 break;
@@ -192,6 +195,7 @@ export class SiteManager {
     }
 
     async filterSites(siteId: string | null = null): Promise<void> {
+        if (siteId !== this._currentSiteId) { this.onSiteChangingFn?.(); }
         this._currentSiteId = siteId;
         this.renderSiteGridFn(this._currentSiteId);
 
@@ -204,10 +208,10 @@ export class SiteManager {
         const siteListDItems = [...(this.el.siteListD?.children ?? [])];
         siteListDItems.forEach((item: any) => {
             item.classList.toggle('selected', item.dataset.siteId === siteId);
-            if(item.dataset.siteId === siteId){
+            if (item.dataset.siteId === siteId) {
                 const siteItemElements = [...(item.children ?? [])];
                 siteItemElements.forEach((item2: any) => {
-                    if(item2.classList.contains('site-name')){
+                    if (item2.classList.contains('site-name')) {
                         this.el.siteNameListHeader.innerText = item2.innerText;
                     }
                 });
@@ -221,7 +225,7 @@ export class SiteManager {
             viewAreaChildren.forEach((contentDom: any) => {
                 if (contentDom.classList.contains('window-frame')) {
                     const find = displayIds.some((id) => contentDom.dataset.displayId === id);
-                    contentDom.style.display = find ? 'block' : 'none';
+                    contentDom.style.display = find && contentDom.dataset.contentVisible !== 'false' ? 'block' : 'none';
                 }
             });
             this.onSiteSelectedFn?.(this._currentSiteId, displayIds);

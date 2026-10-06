@@ -40,6 +40,7 @@ export const REDIS_KEYS = {
 
     /** iTowns カメラデータ: content:camera:{contentId} (String - JSON) */
     CAMERA: (contentId: string) => `content:camera:${contentId}`,
+    CAMERA_GENERATION: 'content:camera-generation',
   },
 
   /**

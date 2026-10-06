@@ -9,11 +9,15 @@ import { AuthService, UserRole } from '../auth/authService';
 import { ContentService } from '../content/contentService';
 import { ContentType, type ContentMetadata } from '../content/contentTypes';
 import { TileImageService, SegmentReceiver } from '../content/tileImageService';
+import { TileImageGenerationGate } from '../content/tileImageGenerationGate';
+import type { TileImageUploadReservation } from '../content/tileImageGenerationGate';
+import { TileImageProgressBroadcaster } from '../content/tileImageProgressBroadcaster';
+import type { TileImageUploadDescriptor, TileimageSegmentParams } from '../content/tileImageService';
 import { ThumbnailService } from '../content/thumbnailService';
-import type { TileimageSegmentParams } from '../content/tileImageService';
 import type { TileimageProgressPayload, TileImageMetadata } from '../content/contentTypes';
 
 import { WindowMetaDataService } from '../display/windowMetaDataService';
+import type { UpdateWindowMetaDataRequest, WindowMetaData } from '../display/displayTypes';
 import { DisplaySessionService } from '../display/displaySessionService';
 import { MediaService } from '../media/mediaService';
 import { SiteService, DEFAULT_SITE_ID } from '../site/siteService';
@@ -29,9 +33,41 @@ import type {
 import { compareContentMetadataForDisplayOrder } from '../../common/contentOrder';
 import { inspectContentSample, normalizeIncomingContentType } from '../utils/binaryInspector';
 import type { ContentInspectResult } from '../utils/binaryInspector';
+import { KeyedSerialExecutor } from '../utils/keyedSerialExecutor';
 import { AuthHandler } from './handlers/AuthHandler';
+import { ClientDiagnosticLogService } from '../diagnostics/clientDiagnosticLogService';
 
 type ResultCallback = (err: any, res?: any, binary?: Buffer) => void;
+const TILE_IMAGE_UPLOAD_IDLE_TIMEOUT_MS = 120_000;
+
+function isTileImageUploadDescriptor(value: unknown): value is TileImageUploadDescriptor {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+
+    const descriptor = value as Record<string, unknown>;
+    return typeof descriptor.uploadId === 'string'
+        && descriptor.uploadId.length > 0
+        && Number.isSafeInteger(descriptor.byteLength)
+        && (descriptor.byteLength as number) >= 0
+        && Number.isSafeInteger(descriptor.segment_max)
+        && (descriptor.segment_max as number) > 0
+        && typeof descriptor.file_ext === 'string'
+        && descriptor.file_ext.length > 0;
+}
+
+const CLIENT_DIAGNOSTIC_EVENTS = new Set([
+    'display-initial',
+    'display-resize',
+    'display-fullscreen',
+    'display-scroll',
+    'display-scroll-settled',
+    'window-metadata-applied',
+    'content-layout-applied',
+    'camera-rendered',
+    'itowns-diagnostic-ready',
+    'itowns-interaction-rejected',
+]);
 
 /**
  * コマンドハンドラクラス
@@ -39,6 +75,8 @@ type ResultCallback = (err: any, res?: any, binary?: Buffer) => void;
 export class CommandHandler {
     private wsConnector: WSConnector | null = null;
     private clients: Set<ExtendedWebSocket> | null = null;
+    private readonly metadataUpdateExecutor = new KeyedSerialExecutor();
+    private readonly windowMetadataUpdateExecutor = new KeyedSerialExecutor();
     private sessionManager: SessionManager;
     private authService: AuthService;
     private contentService: ContentService;
@@ -55,12 +93,16 @@ export class CommandHandler {
     private tileImageService: TileImageService;
     /** セグメント受信器（分割バイナリ再合成） */
     private segmentReceiver: SegmentReceiver;
+    private readonly tileImageGenerationGate = new TileImageGenerationGate();
+    private readonly tileImageUploadTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
+    private tileImageUploadIdleTimeoutMs: number = TILE_IMAGE_UPLOAD_IDLE_TIMEOUT_MS;
     /** OTPサービス（itowns自動ログイン用） */
     private otpService: OtpService;
     /** サムネイルサービス */
     private thumbnailService: ThumbnailService;
     /** 認証ハンドラ */
     private authHandler: AuthHandler;
+    private readonly clientDiagnosticLogService: ClientDiagnosticLogService;
 
     constructor(
         sessionManager: SessionManager,
@@ -71,7 +113,8 @@ export class CommandHandler {
         mediaService: MediaService,
         siteService: SiteService,
         layoutService: LayoutService,
-        serverConfig: ServerConfig
+        serverConfig: ServerConfig,
+        clientDiagnosticLogService: ClientDiagnosticLogService = new ClientDiagnosticLogService(),
     ) {
         this.sessionManager = sessionManager;
         this.authService = authService;
@@ -82,6 +125,7 @@ export class CommandHandler {
         this.siteService = siteService;
         this.layoutService = layoutService;
         this.serverConfig = serverConfig;
+        this.clientDiagnosticLogService = clientDiagnosticLogService;
         this.tileImageService = new TileImageService(serverConfig.tileImage.tileSize);
         this.segmentReceiver = new SegmentReceiver();
         // OtpServiceはRedisが必要なため後から設定する
@@ -300,6 +344,7 @@ export class CommandHandler {
                     kind: producer.kind,
                     streamId: producer.streamId,
                     streamName: producer.streamName,
+                    metadataId: producer.metadataId,
                 },
                 to: 'client',
             };
@@ -418,7 +463,76 @@ export class CommandHandler {
      * サーバー設定取得（認証不要）
      */
     async getServerConfig(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
-        resultCallback(null, this.serverConfig);
+        resultCallback(null, {
+            ...this.serverConfig,
+            clientDiagnostics: {
+                enabled: this.clientDiagnosticLogService.isActive(),
+                sessionId: this.clientDiagnosticLogService.isActive()
+                    ? this.clientDiagnosticLogService.sessionId
+                    : null,
+            },
+        });
+    }
+
+    async reportClientDiagnostic(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
+        if (!this.clientDiagnosticLogService.isActive() || this.clientDiagnosticLogService.sessionId === null) {
+            resultCallback({ code: -32090, message: 'Client diagnostics are disabled' });
+            return;
+        }
+
+        const session = await this.sessionManager.getSession(socketId);
+        let role: 'controller' | 'display';
+        if (session && session.role !== UserRole.DISPLAY) {
+            role = 'controller';
+        } else {
+            const displaySession = await this.displaySessionService.getDisplaySessionBySocketId(socketId);
+            if (!displaySession || displaySession.status !== 'approved' || !displaySession.isOnline) {
+                resultCallback({ code: -32001, message: 'Authentication or display approval required' });
+                return;
+            }
+            role = 'display';
+        }
+
+        if (
+            data?.diagnosticSessionId !== this.clientDiagnosticLogService.sessionId
+            || typeof data.event !== 'string'
+            || !CLIENT_DIAGNOSTIC_EVENTS.has(data.event)
+        ) {
+            resultCallback({ code: -32091, message: 'Invalid client diagnostic event' });
+            return;
+        }
+
+        const windowId = typeof data.windowId === 'string' && data.windowId.length <= 128
+            ? data.windowId
+            : null;
+        let serverWindow: WindowMetaData | null = null;
+        if (windowId !== null) {
+            const result = await this.windowMetaDataService.getWindowMetaData({ id: windowId, type: 'single' });
+            serverWindow = result && !Array.isArray(result) ? result : null;
+        }
+        const serverWindowGeometry = serverWindow === null ? null : {
+            id: serverWindow.id,
+            revision: serverWindow.revision ?? 0,
+            posx: serverWindow.posx,
+            posy: serverWindow.posy,
+            virtualWidth: serverWindow.virtualWidth,
+            virtualHeight: serverWindow.virtualHeight,
+            pixelWidth: serverWindow.pixelWidth,
+            pixelHeight: serverWindow.pixelHeight,
+            contentVisible: serverWindow.contentVisible,
+        };
+
+        const accepted = this.clientDiagnosticLogService.append({
+            ...data,
+            role,
+            serverWindow: serverWindowGeometry,
+            serverWindowMetaDataRevision: serverWindowGeometry?.revision ?? null,
+        });
+        if (!accepted) {
+            resultCallback({ code: -32092, message: 'Client diagnostic event exceeds limits' });
+            return;
+        }
+        resultCallback(null, { accepted: true });
     }
 
     /**
@@ -470,33 +584,43 @@ export class CommandHandler {
     async addContent(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
         console.log('[CommandHandler] AddContent called for socketId:', socketId);
 
-        if (!await this.checkAuth(socketId, resultCallback)) {
+        let responseSent = false;
+        const respondOnce: ResultCallback = (error: any, response?: any, binary?: Buffer): void => {
+            if (responseSent) {
+                return;
+            }
+            responseSent = true;
+            resultCallback(error, response, binary);
+        };
+
+        if (!await this.checkAuth(socketId, respondOnce)) {
             console.log('[CommandHandler] AddContent auth failed for socketId:', socketId);
             return;
         }
 
+        let reservedUploadId: string | null = null;
         try {
             // セッションから作成者情報を取得
             const session = await this.sessionManager.getSession(socketId);
             console.log('[CommandHandler] Session:', session);
 
             if (!session) {
-                resultCallback({ code: -32020, message: 'Session not found' });
+                respondOnce({ code: -32020, message: 'Session not found' });
                 return;
             }
 
             // wsConnectorから渡されるデータ形式: { metaData, contentData }
-            const metadata = data.metaData;
-            const binary = data.contentData;
-
-            if (!metadata) {
-                resultCallback({ code: -32021, message: 'Missing metadata' });
+            const inputMetadata: unknown = data?.metaData;
+            if (typeof inputMetadata !== 'object' || inputMetadata === null || Array.isArray(inputMetadata)) {
+                respondOnce({ code: -32021, message: 'Missing metadata' });
                 return;
             }
+            const metadata = { ...(inputMetadata as Record<string, unknown>) };
+            const binary = data?.contentData;
 
             const normalizedType = normalizeIncomingContentType(metadata.type);
             if (normalizedType === null) {
-                resultCallback({ code: -32023, message: 'Invalid metadata.type' });
+                respondOnce({ code: -32023, message: 'Invalid metadata.type' });
                 return;
             }
             metadata.type = normalizedType;
@@ -504,8 +628,40 @@ export class CommandHandler {
             // tileimage はバイナリなし（UploadTileimage で別途送信）で登録を許可
             const isTileimage = metadata.type === ContentType.TILEIMAGE;
             if (!binary && !isTileimage) {
-                resultCallback({ code: -32021, message: 'Missing binary' });
+                respondOnce({ code: -32021, message: 'Missing binary' });
                 return;
+            }
+            if (isTileimage && binary !== undefined && binary !== null && (!Buffer.isBuffer(binary) || binary.byteLength !== 0)) {
+                respondOnce({ code: -32025, message: 'Tileimage AddContent must not include image binary data' });
+                return;
+            }
+
+            let uploadDescriptor: TileImageUploadDescriptor | null = null;
+            if (isTileimage) {
+                const candidateDescriptor: unknown = metadata.tileImageUpload;
+                if (!isTileImageUploadDescriptor(candidateDescriptor)) {
+                    respondOnce({ code: -32024, message: 'Invalid tileimage upload descriptor' });
+                    return;
+                }
+                uploadDescriptor = candidateDescriptor;
+                delete metadata.tileImageUpload;
+                delete metadata.metadataId;
+
+                if (!this.tileImageGenerationGate.tryReserve(uploadDescriptor, socketId, session.userId)) {
+                    respondOnce({ code: -32072, message: 'Tile image generation is busy; retry the upload later' });
+                    return;
+                }
+                reservedUploadId = uploadDescriptor.uploadId;
+                const reservation = this.tileImageGenerationGate.getReservationForSocket(socketId);
+                if (reservation === null) {
+                    this.tileImageGenerationGate.release(uploadDescriptor.uploadId, socketId);
+                    reservedUploadId = null;
+                    respondOnce({ code: -32072, message: 'Tile image reservation was cancelled' });
+                    return;
+                }
+                this.refreshTileImageUploadTimeout(reservation, (): void => {
+                    respondOnce({ code: -32072, message: 'Tile image AddContent timed out before metadata creation' });
+                });
             }
 
             // creatorIdを自動設定
@@ -518,8 +674,37 @@ export class CommandHandler {
             });
             console.log('[CommandHandler] AddContent result:', result);
 
+            if (uploadDescriptor !== null) {
+                const isReservationActive = this.tileImageGenerationGate.bindMetadata(
+                    uploadDescriptor.uploadId,
+                    socketId,
+                    result.metadataId,
+                );
+                if (!isReservationActive) {
+                    await this.deleteIncompleteTileimageData(result.metadataId, session.userId);
+                    this.tileImageGenerationGate.release(uploadDescriptor.uploadId, socketId);
+                    reservedUploadId = null;
+                    if (this.isSocketConnected(socketId)) {
+                        respondOnce({ code: -32072, message: 'Tile image AddContent was cancelled' });
+                    }
+                    return;
+                }
+
+                const reservation = this.tileImageGenerationGate.getReservationForSocket(socketId);
+                if (reservation === null) {
+                    await this.deleteIncompleteTileimageData(result.metadataId, session.userId);
+                    this.tileImageGenerationGate.release(uploadDescriptor.uploadId, socketId);
+                    reservedUploadId = null;
+                    if (this.isSocketConnected(socketId)) {
+                        respondOnce({ code: -32072, message: 'Tile image AddContent was cancelled' });
+                    }
+                    return;
+                }
+                this.refreshTileImageUploadTimeout(reservation);
+            }
+
             // 送信元に成功レスポンス
-            resultCallback(null, result);
+            respondOnce(null, result);
 
             // 全クライアントにブロードキャスト
             if (this.wsConnector && this.clients) {
@@ -534,7 +719,11 @@ export class CommandHandler {
             // (TILEIMAGEのサムネイルは uploadTileimage 完了時にサーバー側で生成)
         } catch (error: any) {
             console.error('[CommandHandler] AddContent error:', error);
-            resultCallback({ code: -32022, message: error.message });
+            if (reservedUploadId !== null) {
+                this.clearTileImageUploadTimeout(reservedUploadId);
+                this.tileImageGenerationGate.release(reservedUploadId, socketId);
+            }
+            respondOnce({ code: -32022, message: error.message });
         }
     }
 
@@ -602,8 +791,7 @@ export class CommandHandler {
             // バイナリ付きでレスポンス。webgl タイプの場合はカメラデータもマージして返す
             const result: any = { ...content.metadata };
             if (content.cameraData) {
-                result.cameraWorldMatrix = content.cameraData.cameraWorldMatrix;
-                result.cameraParams = content.cameraData.cameraParams;
+                Object.assign(result, content.cameraData);
             }
             resultCallback(null, result, content.binary);
         } catch (error: any) {
@@ -632,18 +820,22 @@ export class CommandHandler {
                         continue; // スキップ
                     }
 
-                    const updatedMetadata = await this.contentService.updateMetadata(metadataId, updates);
+                    const updatedMetadata = await this.metadataUpdateExecutor.run(
+                        metadataId,
+                        async (): Promise<ContentMetadata | null> => {
+                            const metadata = await this.contentService.updateMetadata(metadataId, updates);
+                            if (metadata && this.wsConnector && this.clients) {
+                                this.wsConnector.broadcast(
+                                    this.clients,
+                                    Command.UpdateMetaData,
+                                    { metadata }
+                                );
+                            }
+                            return metadata;
+                        },
+                    );
                     if (updatedMetadata) {
                         results.push(updatedMetadata);
-
-                        // 各アイテムごとにブロードキャスト
-                        if (this.wsConnector && this.clients) {
-                            this.wsConnector.broadcast(
-                                this.clients,
-                                Command.UpdateMetaData,
-                                { metadata: updatedMetadata }
-                            );
-                        }
                     }
                 }
 
@@ -659,23 +851,29 @@ export class CommandHandler {
                     return;
                 }
 
-                const updatedMetadata = await this.contentService.updateMetadata(metadataId, updates);
+                const updatedMetadata = await this.metadataUpdateExecutor.run(
+                    metadataId,
+                    async (): Promise<ContentMetadata | null> => {
+                        const metadata = await this.contentService.updateMetadata(metadataId, updates);
+                        if (!metadata) {
+                            return null;
+                        }
+
+                        resultCallback(null, metadata);
+                        if (this.wsConnector && this.clients) {
+                            this.wsConnector.broadcast(
+                                this.clients,
+                                Command.UpdateMetaData,
+                                { metadata }
+                            );
+                        }
+                        return metadata;
+                    },
+                );
 
                 if (!updatedMetadata) {
                     resultCallback({ code: -32041, message: 'Metadata not found' });
                     return;
-                }
-
-                // 送信元に成功レスポンス
-                resultCallback(null, updatedMetadata);
-
-                // 全クライアントにブロードキャスト
-                if (this.wsConnector && this.clients) {
-                    this.wsConnector.broadcast(
-                        this.clients,
-                        Command.UpdateMetaData,
-                        { metadata: updatedMetadata }
-                    );
                 }
             }
         } catch (error: any) {
@@ -689,6 +887,21 @@ export class CommandHandler {
      * content:camera:{id} キーのみ書き込んで UpdateCameraMatrix でブロードキャストする。
      * content:metadata は変更しないため posx/posy のロールバックは起きない。
      */
+    async registerCameraSource(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
+        if (!await this.checkAuth(socketId, resultCallback)) {
+            return;
+        }
+        try {
+            if (typeof data.metadataId !== 'string' || typeof data.sourceInstanceId !== 'string') {
+                throw new Error('Missing camera source identity');
+            }
+            const lease = await this.contentService.registerCameraSource(data.metadataId, data.sourceInstanceId, socketId);
+            resultCallback(null, lease);
+        } catch (error: unknown) {
+            resultCallback({ code: -32063, message: error instanceof Error ? error.message : 'Camera registration failed' });
+        }
+    }
+
     async updateCameraMatrix(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
         if (!await this.checkAuth(socketId, resultCallback)) return;
 
@@ -708,8 +921,29 @@ export class CommandHandler {
             }
 
             const cameraData = await this.contentService.updateCameraData(
-                resolvedId, cameraWorldMatrix, cameraParams
+                resolvedId, cameraWorldMatrix, cameraParams,
+                { generation: data.generation, sourceEpoch: data.sourceEpoch, sourceInstanceId: data.sourceInstanceId, sourceSequence: data.sourceSequence, ownerSocketId: socketId },
             );
+            if (cameraData === null) {
+                resultCallback(null, { phase: 'superseded' });
+                return;
+            }
+
+            if (
+                this.clientDiagnosticLogService.isActive()
+                && data.diagnosticSessionId === this.clientDiagnosticLogService.sessionId
+                && typeof data.diagnosticId === 'string'
+            ) {
+                this.clientDiagnosticLogService.append({
+                    event: 'camera-source',
+                    diagnosticId: data.diagnosticId,
+                    instanceId: data.instanceId ?? null,
+                    metadataId: resolvedId,
+                    role: 'itowns-source',
+                    cameraWorldMatrix,
+                    cameraParams,
+                });
+            }
 
             resultCallback(null, cameraData);
 
@@ -717,7 +951,11 @@ export class CommandHandler {
                 this.wsConnector.broadcastLatest(
                     this.clients,
                     Command.UpdateCameraMatrix,
-                    { metadataId: resolvedId, cameraWorldMatrix, cameraParams },
+                    {
+                        ...cameraData,
+                        diagnosticId: data.diagnosticId,
+                        diagnosticSessionId: data.diagnosticSessionId,
+                    },
                     `camera:${resolvedId}`
                 );
             }
@@ -762,29 +1000,35 @@ export class CommandHandler {
                 return;
             }
 
-            const updatedMetadata = await this.contentService.updateContent({
-                metadataId: normalizedMetadataId,
-                binary,
-                metadata
-            });
+            const updatedMetadata = await this.metadataUpdateExecutor.run(
+                normalizedMetadataId,
+                async (): Promise<ContentMetadata | null> => {
+                    const updated = await this.contentService.updateContent({
+                        metadataId: normalizedMetadataId,
+                        binary,
+                        metadata
+                    });
+                    if (!updated) {
+                        return null;
+                    }
+
+                    resultCallback(null, updated);
+                    if (this.wsConnector && this.clients) {
+                        this.wsConnector.broadcast(
+                            this.clients,
+                            Command.UpdateContent,
+                            { metadata: updated },
+                            undefined,
+                            socketId
+                        );
+                    }
+                    return updated;
+                },
+            );
 
             if (!updatedMetadata) {
                 resultCallback({ code: -32044, message: 'Content not found' });
                 return;
-            }
-
-            // 送信元に成功レスポンス
-            resultCallback(null, updatedMetadata);
-
-            // 全クライアントにブロードキャスト
-            if (this.wsConnector && this.clients) {
-                this.wsConnector.broadcast(
-                    this.clients,
-                    Command.UpdateContent,
-                    { metadata: updatedMetadata },
-                    undefined,
-                    socketId
-                );
             }
         } catch (error: any) {
             console.error('[CommandHandler] UpdateContent error:', error);
@@ -876,30 +1120,81 @@ export class CommandHandler {
     async uploadTileimage(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
         if (!await this.checkAuth(socketId, resultCallback)) return;
 
-        const metaParams: TileimageSegmentParams = data.metaData;
-        const segmentBinary: Buffer = data.contentData;
-
-        if (!metaParams || !segmentBinary) {
-            resultCallback({ code: -32070, message: 'Missing metaData or contentData' });
+        const metaParams = data?.metaData as TileimageSegmentParams | undefined;
+        const segmentBinary = data?.contentData;
+        const reservation = this.tileImageGenerationGate.getReservationForSocket(socketId);
+        if (reservation === null || reservation.phase !== 'receiving' || reservation.metadataId === null) {
+            resultCallback({ code: -32072, message: 'No active tile image upload; start with AddContent' });
             return;
         }
 
-        const { metadataId, id: imageId, segment_index, segment_max } = metaParams;
-
-        if (!metadataId) {
-            resultCallback({ code: -32071, message: 'Missing metadataId in metaData' });
+        const session = await this.sessionManager.getSession(socketId);
+        if (session === null || session.userId !== reservation.userId) {
+            resultCallback({ code: -32073, message: 'Tile image upload session owner mismatch' });
             return;
         }
 
-        // セグメントを登録し、全部揃ったら整合バイナリを受け取る
-        const assembled = this.segmentReceiver.receive(metaParams, segmentBinary, socketId);
+        const currentMetadata = await this.contentService.getMetadata(reservation.metadataId);
+        if (
+            currentMetadata === null
+            || currentMetadata.type !== ContentType.TILEIMAGE
+            || currentMetadata.creatorId !== session.userId
+            || (currentMetadata as TileImageMetadata).tileFinished === true
+        ) {
+            this.clearTileImageUploadTimeout(reservation.uploadId);
+            this.segmentReceiver.deleteByImageId(reservation.uploadId, socketId);
+            this.tileImageGenerationGate.release(reservation.uploadId, socketId);
+            resultCallback({ code: -32073, message: 'Tile image metadata is unavailable or no longer uploadable' });
+            return;
+        }
+
+        const failActiveUpload = async (code: number, message: string): Promise<void> => {
+            this.clearTileImageUploadTimeout(reservation.uploadId);
+            this.segmentReceiver.deleteByImageId(reservation.uploadId, socketId);
+            this.tileImageGenerationGate.release(reservation.uploadId, socketId);
+            await this.cleanupIncompleteTileimageContent(reservation.metadataId!, session.userId);
+            resultCallback({ code, message });
+        };
+
+        if (!metaParams || !Buffer.isBuffer(segmentBinary)) {
+            await failActiveUpload(-32070, 'Missing or invalid segment metadata or binary');
+            return;
+        }
+
+        const descriptor = reservation.descriptor;
+        if (
+            metaParams.uploadId !== descriptor.uploadId
+            || metaParams.metadataId !== reservation.metadataId
+            || metaParams.byteLength !== descriptor.byteLength
+            || metaParams.segment_max !== descriptor.segment_max
+            || metaParams.file_ext !== descriptor.file_ext
+        ) {
+            await failActiveUpload(-32071, 'Segment does not match the AddContent upload descriptor');
+            return;
+        }
+
+        let receiveResult;
+        try {
+            receiveResult = this.segmentReceiver.receive(metaParams, segmentBinary, socketId);
+        } catch (error: unknown) {
+            const reason = error instanceof Error ? error.message : String(error);
+            await failActiveUpload(-32073, reason);
+            return;
+        }
+
+        if (!receiveResult.accepted) {
+            resultCallback(null, { ok: true, duplicate: true });
+            return;
+        }
+
+        this.refreshTileImageUploadTimeout(reservation);
 
         // 送信元に進捗を通知（アップロードフェーズ）
         if (this.wsConnector && this.clients) {
             const progressPayload: TileimageProgressPayload = {
-                metadataId,
-                receivedSegments: segment_index + 1,
-                totalSegments: segment_max,
+                metadataId: reservation.metadataId,
+                receivedSegments: receiveResult.receivedCount,
+                totalSegments: descriptor.segment_max,
                 phase: 'uploading',
             };
             this.wsConnector.broadcastToTargets(
@@ -914,93 +1209,204 @@ export class CommandHandler {
         resultCallback(null, { ok: true });
 
         // まだ揃っていない場合は次のセグメントを待つ
-        if (!assembled) return;
+        if (receiveResult.assembled === null) return;
 
-        console.log(`[CommandHandler] UploadTileimage all segments received: metadataId=${metadataId} size=${assembled.length}`);
+        this.clearTileImageUploadTimeout(reservation.uploadId);
+        this.tileImageGenerationGate.markProcessing(reservation.uploadId, socketId);
+
+        console.log(`[CommandHandler] UploadTileimage all segments received: metadataId=${reservation.metadataId} size=${receiveResult.assembled.length}`);
+        const progressBroadcaster = new TileImageProgressBroadcaster(
+            (completed: number, total: number): void => {
+                if (!this.wsConnector || !this.clients) {
+                    return;
+                }
+                try {
+                    const progressPayload: TileimageProgressPayload = {
+                        metadataId: reservation.metadataId!,
+                        receivedSegments: completed,
+                        totalSegments: total,
+                        phase: 'processing',
+                    };
+                    this.wsConnector.broadcastToTargets(
+                        [socketId],
+                        this.clients,
+                        Command.TileimageProgress,
+                        progressPayload,
+                    );
+                } catch (error: unknown) {
+                    console.warn('[CommandHandler] Failed to broadcast tileimage progress:', error);
+                }
+            },
+        );
 
         try {
             // Worker Thread でタイル生成（進捗通知 phase: 'processing'）
             const redis = (this.contentService as any).redis;
 
             const tileSet = await this.tileImageService.generateTiles(
-                assembled,
+                receiveResult.assembled,
                 (completed, total) => {
+                    progressBroadcaster.publish(completed, total);
+                },
+                (): void => {
                     if (this.wsConnector && this.clients) {
-                        const pp: TileimageProgressPayload = {
-                            metadataId,
-                            receivedSegments: completed,
-                            totalSegments: total,
-                            phase: 'processing',
-                        };
-                        this.wsConnector.broadcastToTargets(
-                            [socketId],
-                            this.clients,
-                            Command.TileimageProgress,
-                            pp
-                        );
+                        try {
+                            this.wsConnector.broadcastToTargets(
+                                [socketId],
+                                this.clients,
+                                Command.TileimageHeartbeat,
+                                { metadataId: reservation.metadataId },
+                            );
+                        } catch (error: unknown) {
+                            console.warn('[CommandHandler] Failed to broadcast tileimage heartbeat:', error);
+                        }
                     }
-                }
+                },
             );
 
             // Redis にタイルを保存
-            await this.tileImageService.storeTiles(redis, metadataId, tileSet);
+            await this.tileImageService.storeTiles(redis, reservation.metadataId!, tileSet);
 
             // アップロード元画像のサイズを元から計算（元バイナリのサイズ情報が必要なためシャープで再取得）
-            const updatedMeta = await this.contentService.updateMetadata(metadataId, {
-                xsplit: tileSet.xsplit,
-                ysplit: tileSet.ysplit,
-                tileSize: tileSet.tileSize,
-                orgWidth: tileSet.imgWidth,
-                orgHeight: tileSet.imgHeight,
-                reductionWidth: tileSet.reductionWidth,
-                reductionHeight: tileSet.reductionHeight,
-                tileFinished: true,
-            } as Partial<TileImageMetadata>);
+            const updatedMeta = await this.metadataUpdateExecutor.run(
+                reservation.metadataId!,
+                async (): Promise<ContentMetadata | null> => {
+                    const updated = await this.contentService.updateMetadata(reservation.metadataId!, {
+                        xsplit: tileSet.xsplit,
+                        ysplit: tileSet.ysplit,
+                        tileSize: tileSet.tileSize,
+                        orgWidth: tileSet.imgWidth,
+                        orgHeight: tileSet.imgHeight,
+                        reductionWidth: tileSet.reductionWidth,
+                        reductionHeight: tileSet.reductionHeight,
+                        tileFinished: true,
+                    } as Partial<TileImageMetadata>);
+                    if (updated && this.wsConnector && this.clients) {
+                        this.wsConnector.broadcast(
+                            this.clients,
+                            Command.UpdateContent,
+                            { metadata: updated }
+                        );
+                    }
+                    return updated;
+                },
+            );
 
             if (!updatedMeta) {
-                console.error(`[CommandHandler] UploadTileimage: metadata not found for ${metadataId}`);
-                this.notifyTileimageUploadFailed(socketId, metadataId, 'Tile upload metadata not found after processing');
+                console.error(`[CommandHandler] UploadTileimage: metadata not found for ${reservation.metadataId}`);
+                this.notifyTileimageUploadFailed(socketId, reservation.metadataId!, 'Tile upload metadata not found after processing');
                 return;
             }
 
-            console.log(`[CommandHandler] UploadTileimage complete: metadataId=${metadataId} xsplit=${tileSet.xsplit} ysplit=${tileSet.ysplit}`);
-
-            // 全クライアントに UpdateContent ブロードキャスト
-            if (this.wsConnector && this.clients) {
-                this.wsConnector.broadcast(
-                    this.clients,
-                    Command.UpdateContent,
-                    { metadata: updatedMeta }
-                );
-            }
+            console.log(`[CommandHandler] UploadTileimage complete: metadataId=${reservation.metadataId} xsplit=${tileSet.xsplit} ysplit=${tileSet.ysplit}`);
 
             // タイル画像の縮小版からサムネイルを生成
             const reductionBuf = Buffer.from(tileSet.reduction);
-            this.generateAndBroadcastThumbnail(metadataId, reductionBuf, 'image/jpeg')
+            this.generateAndBroadcastThumbnail(reservation.metadataId!, reductionBuf, 'image/jpeg')
                 .catch((err) => console.error('[CommandHandler] Tileimage thumbnail generation failed:', err));
         } catch (error: any) {
             console.error('[CommandHandler] UploadTileimage processing error:', error);
             const reason = error instanceof Error ? error.message : String(error);
-            this.notifyTileimageUploadFailed(socketId, metadataId, `Tile upload processing failed: ${reason}`);
-            // エラー時は不完全コンテンツを削除
+            let cleanedIncompleteContent = false;
             try {
-                const redis = (this.contentService as any).redis;
-                await this.tileImageService.deleteIncompleteContent(redis, metadataId);
-                // メタデータも削除
-                await this.contentService.deleteContent(metadataId);
-                // サムネイルも削除（存在しない場合も例外にならない）
-                await this.thumbnailService.deleteThumbnail(metadataId);
-                if (this.wsConnector && this.clients) {
-                    this.wsConnector.broadcast(
-                        this.clients,
-                        Command.DeleteContent,
-                        { metadataId }
-                    );
-                }
+                cleanedIncompleteContent = await this.cleanupIncompleteTileimageContent(
+                    reservation.metadataId!,
+                    reservation.userId,
+                );
             } catch (cleanupErr) {
                 console.error('[CommandHandler] UploadTileimage cleanup error:', cleanupErr);
             }
+            if (cleanedIncompleteContent) {
+                this.notifyTileimageUploadFailed(socketId, reservation.metadataId!, `Tile upload processing failed: ${reason}`);
+            }
+        } finally {
+            progressBroadcaster.dispose();
+            this.clearTileImageUploadTimeout(reservation.uploadId);
+            this.tileImageGenerationGate.release(reservation.uploadId, socketId);
         }
+    }
+
+    private refreshTileImageUploadTimeout(
+        reservation: TileImageUploadReservation,
+        onCreationTimeout?: () => void,
+    ): void {
+        if (reservation.phase !== 'creating' && (reservation.phase !== 'receiving' || reservation.metadataId === null)) {
+            return;
+        }
+
+        const uploadId = reservation.uploadId;
+        this.clearTileImageUploadTimeout(uploadId);
+        const timeoutId = setTimeout((): void => {
+            this.tileImageUploadTimeouts.delete(uploadId);
+            const currentReservation = this.tileImageGenerationGate.getReservationForSocket(reservation.socketId);
+            if (currentReservation === null || currentReservation.uploadId !== uploadId) {
+                return;
+            }
+
+            if (currentReservation.phase === 'creating') {
+                this.tileImageGenerationGate.release(uploadId, reservation.socketId);
+                onCreationTimeout?.();
+                return;
+            }
+            if (currentReservation.phase !== 'receiving' || currentReservation.metadataId === null) {
+                return;
+            }
+
+            const released = this.tileImageGenerationGate.release(uploadId, reservation.socketId);
+            if (released === null) {
+                return;
+            }
+            this.segmentReceiver.deleteByImageId(uploadId, reservation.socketId);
+            const reason = 'Tile image upload timed out while receiving segments';
+            this.cleanupIncompleteTileimageContent(currentReservation.metadataId!, currentReservation.userId).then((deleted: boolean): void => {
+                if (deleted) {
+                    this.notifyTileimageUploadFailed(reservation.socketId, currentReservation.metadataId!, reason);
+                }
+            }).catch((error: unknown) => {
+                console.error('[CommandHandler] Tile image upload timeout cleanup failed:', error);
+            });
+        }, this.tileImageUploadIdleTimeoutMs);
+        this.tileImageUploadTimeouts.set(reservation.uploadId, timeoutId);
+    }
+
+    private clearTileImageUploadTimeout(imageId: string): void {
+        const timeoutId = this.tileImageUploadTimeouts.get(imageId);
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+            this.tileImageUploadTimeouts.delete(imageId);
+        }
+    }
+
+    private async cleanupIncompleteTileimageContent(metadataId: string, expectedOwner: string): Promise<boolean> {
+        const deleted = await this.deleteIncompleteTileimageData(metadataId, expectedOwner);
+        if (!deleted) {
+            return false;
+        }
+        if (this.wsConnector && this.clients) {
+            this.wsConnector.broadcast(
+                this.clients,
+                Command.DeleteContent,
+                { metadataId },
+            );
+        }
+        return true;
+    }
+
+    private async deleteIncompleteTileimageData(metadataId: string, expectedOwner: string): Promise<boolean> {
+        const redis = (this.contentService as any).redis;
+        return this.tileImageService.deleteIncompleteContent(redis, metadataId, expectedOwner);
+    }
+
+    private isSocketConnected(socketId: string): boolean {
+        if (this.clients === null) {
+            return false;
+        }
+        for (const client of this.clients) {
+            if (client.id === socketId && client.readyState === 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private notifyTileimageUploadFailed(socketId: string, metadataId: string, reason: string): void {
@@ -1107,22 +1513,21 @@ export class CommandHandler {
      * websocketServer.ts の on('close') 内で呼び出すこと。
      */
     async cleanupTileimageOnDisconnect(socketId: string): Promise<void> {
-        // 未完了アップロードの metadataId を取得（deleteBySocketId より前）
-        const pendingMetadataIds = this.segmentReceiver.getPendingMetadataIds(socketId);
+        const cancellation = this.tileImageGenerationGate.cancelForSocket(socketId);
         this.segmentReceiver.deleteBySocketId(socketId);
-
-        if (pendingMetadataIds.length === 0) return;
-
-        const redis = (this.contentService as any).redis;
-        for (const metadataId of pendingMetadataIds) {
-            console.log(`[CommandHandler] Cleanup incomplete tileimage: metadataId=${metadataId}`);
-            try {
-                await this.tileImageService.deleteIncompleteContent(redis, metadataId);
-                await this.contentService.deleteContent(metadataId);
-                // サムネイルも削除（存在しない場合も例外にならない）
-                await this.thumbnailService.deleteThumbnail(metadataId);
-            } catch (err) {
-                console.error(`[CommandHandler] Cleanup error for ${metadataId}:`, err);
+        if (cancellation !== null) {
+            const { reservation, cleanupAfterMetadataCreate } = cancellation;
+            this.clearTileImageUploadTimeout(reservation.uploadId);
+            if (cleanupAfterMetadataCreate) {
+                return;
+            }
+            if (reservation.metadataId !== null) {
+                this.segmentReceiver.deleteByImageId(reservation.uploadId, socketId);
+                try {
+                    await this.cleanupIncompleteTileimageContent(reservation.metadataId, reservation.userId);
+                } catch (error: unknown) {
+                    console.error(`[CommandHandler] Cleanup error for ${reservation.metadataId}:`, error);
+                }
             }
         }
     }
@@ -1172,6 +1577,90 @@ export class CommandHandler {
         }
     }
 
+    private async updateControllerWindowMetaData(
+        socketId: string,
+        data: Record<string, unknown>,
+    ): Promise<WindowMetaData | null> {
+        const windowId = typeof data.id === 'string' ? data.id : '';
+        if (windowId.trim() === '') {
+            throw new Error('Missing window id');
+        }
+
+        return this.windowMetadataUpdateExecutor.run(windowId, async (): Promise<WindowMetaData | null> => {
+            const current = await this.windowMetaDataService.getWindowMetaData({ id: windowId, type: 'single' });
+            if (!current || Array.isArray(current)) {
+                return null;
+            }
+
+            const updates: UpdateWindowMetaDataRequest = { id: windowId };
+            const hasVirtualWidth = data.virtualWidth !== undefined;
+            const hasVirtualHeight = data.virtualHeight !== undefined;
+            if (hasVirtualWidth || hasVirtualHeight) {
+                if (
+                    !Number.isFinite(current.pixelWidth) ||
+                    !Number.isFinite(current.pixelHeight) ||
+                    current.pixelWidth <= 0 ||
+                    current.pixelHeight <= 0
+                ) {
+                    throw new Error('Window pixel dimensions are not available');
+                }
+
+                const virtualWidth = hasVirtualWidth
+                    ? data.virtualWidth
+                    : Number(data.virtualHeight) * current.pixelWidth / current.pixelHeight;
+                if (typeof virtualWidth !== 'number' || !Number.isFinite(virtualWidth) || virtualWidth <= 0) {
+                    throw new Error('Invalid virtualWidth');
+                }
+
+                const virtualHeight = virtualWidth * current.pixelHeight / current.pixelWidth;
+                if (!Number.isFinite(virtualHeight) || virtualHeight <= 0) {
+                    throw new Error('Invalid virtualHeight');
+                }
+                updates.virtualWidth = virtualWidth;
+                updates.virtualHeight = virtualHeight;
+            }
+
+            if (data.posx !== undefined) {
+                if (typeof data.posx !== 'number' || !Number.isFinite(data.posx)) {
+                    throw new Error('Invalid posx');
+                }
+                updates.posx = data.posx;
+            }
+            if (data.posy !== undefined) {
+                if (typeof data.posy !== 'number' || !Number.isFinite(data.posy)) {
+                    throw new Error('Invalid posy');
+                }
+                updates.posy = data.posy;
+            }
+
+            const contentVisible = data.contentVisible ?? data.visible;
+            if (contentVisible !== undefined) {
+                if (typeof contentVisible !== 'boolean') {
+                    throw new Error('Invalid contentVisible');
+                }
+                updates.contentVisible = contentVisible;
+            }
+            if (typeof data.siteId === 'string') {
+                updates.siteId = data.siteId;
+            }
+            if (typeof data.displayName === 'string') {
+                updates.displayName = data.displayName;
+            }
+
+            const updated = await this.windowMetaDataService.updateWindowMetaData(updates);
+            if (updated && this.wsConnector && this.clients) {
+                this.wsConnector.broadcast(
+                    this.clients,
+                    Command.UpdateWindowMetaData,
+                    updated,
+                    undefined,
+                    socketId,
+                );
+            }
+            return updated;
+        });
+    }
+
     async updateWindowMetaData(socketId: string, data: any, resultCallback: ResultCallback): Promise<void> {
         const isAuthenticated = await this.sessionManager.isAuthenticated(socketId);
         if (!isAuthenticated) {
@@ -1187,33 +1676,48 @@ export class CommandHandler {
                 resultCallback({ code: -32003, message: 'Display can only update its own window' });
                 return;
             }
-            if (singleData.pixelWidth === undefined || singleData.pixelHeight === undefined) {
+            const allowedDisplayFields = new Set(['id', 'pixelWidth', 'pixelHeight']);
+            if (Object.keys(singleData).some((field) => !allowedDisplayFields.has(field))) {
                 resultCallback({ code: -32003, message: 'Display can only update pixelWidth and pixelHeight' });
                 return;
             }
-            // 現在の virtualWidth を取得してアスペクト比から virtualHeight を再計算
-            const current = await this.windowMetaDataService.getWindowMetaData({ id: singleData.id, type: 'single' });
-            if (!current || Array.isArray(current)) {
-                resultCallback({ code: -32072, message: 'Window not found' });
+            if (
+                typeof singleData.pixelWidth !== 'number' ||
+                typeof singleData.pixelHeight !== 'number' ||
+                !Number.isFinite(singleData.pixelWidth) ||
+                !Number.isFinite(singleData.pixelHeight) ||
+                singleData.pixelWidth <= 0 ||
+                singleData.pixelHeight <= 0
+            ) {
+                resultCallback({ code: -32074, message: 'Invalid physical pixel dimensions' });
                 return;
             }
-            const newVirtualHeight = Math.round(current.virtualWidth * singleData.pixelHeight / singleData.pixelWidth);
-            const allowedUpdate = {
-                id: singleData.id,
-                pixelWidth: singleData.pixelWidth,
-                pixelHeight: singleData.pixelHeight,
-                virtualHeight: newVirtualHeight,
-            };
-            console.log('[CommandHandler] UpdateWindowMetaData - allowedUpdate:', JSON.stringify(allowedUpdate, null, 2));
-            const result = await this.windowMetaDataService.updateWindowMetaData(allowedUpdate);
+            const result = await this.windowMetadataUpdateExecutor.run(
+                singleData.id,
+                async (): Promise<WindowMetaData | null> => {
+                    const current = await this.windowMetaDataService.getWindowMetaData({ id: singleData.id, type: 'single' });
+                    if (!current || Array.isArray(current)) {
+                        return null;
+                    }
+                    const virtualHeight = current.virtualWidth * singleData.pixelHeight / singleData.pixelWidth;
+                    if (!Number.isFinite(virtualHeight) || virtualHeight <= 0) {
+                        throw new Error('Invalid virtualHeight after physical resize');
+                    }
+                    const updated = await this.windowMetaDataService.updateWindowMetaData({
+                        id: singleData.id,
+                        pixelWidth: singleData.pixelWidth,
+                        pixelHeight: singleData.pixelHeight,
+                        virtualHeight,
+                    });
+                    if (updated && this.wsConnector && this.clients) {
+                        this.wsConnector.broadcast(this.clients, Command.UpdateWindowMetaData, updated);
+                    }
+                    return updated;
+                },
+            );
             if (!result) {
                 resultCallback({ code: -32072, message: 'Window not found' });
                 return;
-            }
-            console.log('[CommandHandler] UpdateWindowMetaData - result to broadcast:', JSON.stringify(result, null, 2));
-            if (this.wsConnector && this.clients) {
-                // ディスプレイ自身もブロードキャストを受け取る必要があるため、excludeSocketId を指定しない
-                this.wsConnector.broadcast(this.clients, Command.UpdateWindowMetaData, result, undefined, undefined);
             }
             resultCallback(null, result);
             return;
@@ -1221,83 +1725,41 @@ export class CommandHandler {
 
         console.log('[CommandHandler] UpdateWindowMetaData called', data);
 
+        const containsPixelDimensions = Array.isArray(data)
+            ? data.some((item: any) => item?.pixelWidth !== undefined || item?.pixelHeight !== undefined)
+            : data?.pixelWidth !== undefined || data?.pixelHeight !== undefined;
+        if (containsPixelDimensions) {
+            resultCallback({ code: -32074, message: 'Controller cannot update physical pixel dimensions' });
+            return;
+        }
+
         try {
             // 配列の場合は各要素を処理
             if (Array.isArray(data)) {
                 const results = [];
                 for (const item of data) {
-                    const dataJson: { id: any; posx: any; posy: any; virtualWidth: any; virtualHeight: any; pixelWidth: any; pixelHeight: any; contentVisible?: any; siteId?: any } = {
-                        id: item.id,
-                        posx: item.posx,
-                        posy: item.posy,
-                        virtualWidth: item.virtualWidth,
-                        virtualHeight: item.virtualHeight,
-                        pixelWidth: item.pixelWidth,
-                        pixelHeight: item.pixelHeight,
-                    };
-                    if (item.contentVisible !== undefined) {
-                        dataJson.contentVisible = item.contentVisible;
-                    } else if (item.visible !== undefined) {
-                        dataJson.contentVisible = item.visible;
+                    if (!item || typeof item.id !== 'string') {
+                        continue;
                     }
-                    if (`siteId` in item) {
-                        dataJson.siteId = item.siteId;
-                    }
-                    const result = await this.windowMetaDataService.updateWindowMetaData(dataJson);
+                    const result = await this.updateControllerWindowMetaData(socketId, item as Record<string, unknown>);
 
                     if (result) {
                         results.push(result);
                     }
                 }
 
-                // 他のクライアントに通知
-                if (this.wsConnector && this.clients) {
-                    this.wsConnector.broadcast(
-                        this.clients,
-                        Command.UpdateWindowMetaData,
-                        results,
-                        undefined,
-                        socketId
-                    );
-                }
-
                 resultCallback(null, results);
             } else {
                 // 単一オブジェクトの場合
-                const dataJson: { id: any; posx: any; posy: any; virtualWidth: any; virtualHeight: any; pixelWidth: any; pixelHeight: any; contentVisible?: any; siteId?: any } = {
-                    id: data.id,
-                    posx: data.posx,
-                    posy: data.posy,
-                    virtualWidth: data.virtualWidth,
-                    virtualHeight: data.virtualHeight,
-                    pixelWidth: data.pixelWidth,
-                    pixelHeight: data.pixelHeight,
-                };
-                if (data.contentVisible !== undefined) {
-                    dataJson.contentVisible = data.contentVisible;
-                } else if (data.visible !== undefined) {
-                    dataJson.contentVisible = data.visible;
+                if (!data || typeof data !== 'object' || typeof data.id !== 'string') {
+                    resultCallback({ code: -32072, message: 'Missing window id' });
+                    return;
                 }
-                if (`siteId` in data) {
-                    dataJson.siteId = data.siteId;
-                }
-
-                const result = await this.windowMetaDataService.updateWindowMetaData(dataJson);
+                const result = await this.updateControllerWindowMetaData(socketId, data as Record<string, unknown>);
 
                 if (!result) {
                     resultCallback({ code: -32072, message: 'Window not found' });
                     return;
-                }
-
-                // 他のクライアントに通知
-                if (this.wsConnector && this.clients) {
-                    this.wsConnector.broadcast(
-                        this.clients,
-                        Command.UpdateWindowMetaData,
-                        result,
-                        undefined,
-                        socketId
-                    );
                 }
 
                 resultCallback(null, result);
@@ -1646,35 +2108,45 @@ export class CommandHandler {
 
             // 承認済みの場合、WindowMetaDataが存在するか確認し、なければ作成
             if (session.status === 'approved' && session.windowId) {
-                const existingWindow = await this.windowMetaDataService.getWindowMetaData({
-                    id: session.windowId,
-                    type: 'single'
-                });
+                const approvedWindowId = session.windowId;
+                await this.windowMetadataUpdateExecutor.run(approvedWindowId, async (): Promise<void> => {
+                    const existingWindow = await this.windowMetaDataService.getWindowMetaData({
+                        id: approvedWindowId,
+                        type: 'single'
+                    });
 
-                if (!existingWindow || Array.isArray(existingWindow)) {
-                    // WindowMetaDataがない場合は再作成（データ整合性のため）
-                    const windowData = await this.windowMetaDataService.addWindowMetaData({
-                        id: session.windowId,
-                        posx: 0,
-                        posy: 0,
-                        virtualWidth: screenWidth,
-                        virtualHeight: screenHeight,
-                        pixelWidth: screenWidth,
-                        pixelHeight: screenHeight,
-                        contentVisible: true,
-                        displayId: session.displayId,
+                    if (!existingWindow || Array.isArray(existingWindow)) {
+                        await this.windowMetaDataService.addWindowMetaData({
+                            id: approvedWindowId,
+                            posx: 0,
+                            posy: 0,
+                            virtualWidth: screenWidth,
+                            virtualHeight: screenHeight,
+                            pixelWidth: screenWidth,
+                            pixelHeight: screenHeight,
+                            contentVisible: true,
+                            displayId: session.displayId,
+                            displayName: session.displayName,
+                        });
+                        console.log(`[CommandHandler] WindowMetaData recreated for approved display: ${session.displayId}`);
+                        return;
+                    }
+
+                    const pixelDimensionsValid = Number.isFinite(screenWidth)
+                        && Number.isFinite(screenHeight)
+                        && screenWidth > 0
+                        && screenHeight > 0;
+                    const updates: UpdateWindowMetaDataRequest = {
+                        id: approvedWindowId,
                         displayName: session.displayName,
-                    });
-                    console.log(`[CommandHandler] WindowMetaData recreated for approved display: ${session.displayId}`);
-                } else {
-                    // pixelWidth/pixelHeight/displayNameを更新
-                    await this.windowMetaDataService.updateWindowMetaData({
-                        id: session.windowId,
-                        pixelWidth: screenWidth,
-                        pixelHeight: screenHeight,
-                        displayName: session.displayName,
-                    });
-                }
+                    };
+                    if (pixelDimensionsValid) {
+                        updates.pixelWidth = screenWidth;
+                        updates.pixelHeight = screenHeight;
+                        updates.virtualHeight = existingWindow.virtualWidth * screenHeight / screenWidth;
+                    }
+                    await this.windowMetaDataService.updateWindowMetaData(updates);
+                });
             }
 
             resultCallback(null, {
@@ -2176,6 +2648,7 @@ export class CommandHandler {
                         socketId: socketId,  // 送信元のsocketIdを追加
                         kind: request.kind,
                         streamId: response.streamId,
+                        metadataId: response.metadataId,
                     },
                     to: 'client',
                 };
@@ -2306,6 +2779,35 @@ export class CommandHandler {
         } catch (error: any) {
             console.error('[CommandHandler] Consume error:', error);
             resultCallback({ code: -32108, message: error.message });
+        }
+    }
+
+    /**
+     * Consumerと専用受信Transportを閉じる
+     */
+    async closeConsumer(
+        socketId: string,
+        data: any,
+        resultCallback: ResultCallback
+    ): Promise<void> {
+        try {
+            if (!(await this.checkAuthOrApprovedDisplay(socketId, resultCallback))) return;
+
+            const { consumerId, transportId } = data;
+            if (typeof transportId !== 'string' || transportId.length === 0) {
+                resultCallback({ code: -32112, message: 'Missing transportId' });
+                return;
+            }
+            if (consumerId !== undefined && typeof consumerId !== 'string') {
+                resultCallback({ code: -32113, message: 'Invalid consumerId' });
+                return;
+            }
+
+            await this.mediaService.closeConsumer(socketId, consumerId, transportId);
+            resultCallback(null, { success: true });
+        } catch (error: any) {
+            console.error('[CommandHandler] CloseConsumer error:', error);
+            resultCallback({ code: -32114, message: error.message });
         }
     }
 

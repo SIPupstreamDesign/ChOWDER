@@ -58,7 +58,7 @@ function makeDiv(id = '') {
             registered.push(handler);
             listeners.set(type, registered);
         },
-        removeEventListener() {},
+        removeEventListener() { },
         dispatchEvent(event: any) {
             const type = String(event?.type ?? '');
             const registered = listeners.get(type) ?? [];
@@ -69,7 +69,7 @@ function makeDiv(id = '') {
         },
         querySelector() { return null; },
         querySelectorAll() { return []; },
-        remove() {},
+        remove() { },
         innerHTML: '',
     };
 }
@@ -86,12 +86,12 @@ function setupDom() {
     (globalThis as any).document = {
         createElement(_tag: string) { return makeDiv(); },
         getElementById(_id: string) { return null; },
-        body: { appendChild(_child: unknown) {} },
+        body: { appendChild(_child: unknown) { } },
     };
 
     (globalThis as any).URL = {
         createObjectURL(_blob: unknown): string { return 'blob:mock'; },
-        revokeObjectURL(_url: string): void {},
+        revokeObjectURL(_url: string): void { },
     };
 
     (globalThis as any).Image = class MockImage {
@@ -174,7 +174,7 @@ function makeMinimalDeps(spy: SpyCalls) {
         },
         manipulator: null,
         getZoom: (): number => { return 1; },
-        pushUpdateStock: (): void => {},
+        pushUpdateStock: (): void => { },
         getSocketId: (): string | null => { return 'socket-id'; },
         getCurrentUser: (): string | null => { return 'user'; },
         getLiveStreamManager: (): null => { return null; },
@@ -186,11 +186,11 @@ function makeMinimalDeps(spy: SpyCalls) {
                 }
             },
         } as any,
-        registerBroadcast: (): void => {},
+        registerBroadcast: (): void => { },
         consumePendingProducer: (): null => { return null; },
-        handleNewProducer: async (_params: unknown): Promise<void> => {},
+        handleNewProducer: async (_params: unknown): Promise<void> => { },
         getEditMode: (): number => { return 0; },
-        showRightClickMenu: (_e: MouseEvent): void => {},
+        showRightClickMenu: (_e: MouseEvent): void => { },
         stopVideoFileByMetadata: async (_metadataId: string): Promise<boolean> => { return false; },
         addVideoFile: async (file: File, streamName: string): Promise<void> => {
             spy.addVideoFileCalls.push({ file, streamName });
@@ -243,6 +243,8 @@ describe('ContentManager.addImageFile', () => {
         await manager.addImageFile(file);
 
         assert.strictEqual(spy.tileUploaderUploadCalls.length, 1);
+        assert.strictEqual(spy.tileUploaderUploadCalls[0].contentMeta.width, 4000);
+        assert.strictEqual(spy.tileUploaderUploadCalls[0].contentMeta.height, 3000);
         assert.strictEqual(spy.sendBinaryCalls.length, 0);
     });
 
@@ -258,6 +260,8 @@ describe('ContentManager.addImageFile', () => {
         await manager.addImageFile(file);
 
         assert.strictEqual(spy.tileUploaderUploadCalls.length, 1);
+        assert.strictEqual(spy.tileUploaderUploadCalls[0].contentMeta.width, 1000);
+        assert.strictEqual(spy.tileUploaderUploadCalls[0].contentMeta.height, 4000);
         assert.strictEqual(spy.sendBinaryCalls.length, 0);
     });
 

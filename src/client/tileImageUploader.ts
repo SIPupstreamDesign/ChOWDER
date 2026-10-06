@@ -21,6 +21,10 @@ export interface TileimageUploadFailedPayload {
     reason: string;
 }
 
+export interface TileimageHeartbeatPayload {
+    metadataId: string;
+}
+
 export interface TileImageMetadata {
     metadataId: string;
     type: 'tileimage';
@@ -43,6 +47,13 @@ export interface UploadContentMetadata {
     posy: number;
     width: number;
     height: number;
+}
+
+export interface TileImageUploadDescriptor {
+    uploadId: string;
+    byteLength: number;
+    segment_max: number;
+    file_ext: string;
 }
 
 export type ProgressCallback = (
@@ -79,6 +90,19 @@ function getFileExt(filename: string): string {
     return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : 'bin';
 }
 
+function normalizeUploadError(error: unknown): Error {
+    if (error instanceof Error) {
+        return error;
+    }
+    if (typeof error === 'object' && error !== null) {
+        const message: unknown = Reflect.get(error, 'message');
+        if (typeof message === 'string' && message.length > 0) {
+            return new Error(message);
+        }
+    }
+    return new Error(String(error));
+}
+
 export class TileImageUploader {
     private sendCommandFn: (method: string, params: any) => Promise<any>;
     private sendBinaryCommandFn: (method: string, params: any, binary: ArrayBuffer) => Promise<any>;
@@ -110,8 +134,12 @@ export class TileImageUploader {
     constructor(
         sendCommand: (method: string, params: any) => Promise<any>,
         sendBinaryCommand: (method: string, params: any, binary: ArrayBuffer) => Promise<any>,
-        registerBroadcast: (method: string, handler: (params: any) => void) => void
+        registerBroadcast: (method: string, handler: (params: any) => void) => void,
+        private readonly minimumCompletionTimeoutMs: number = 360000,
     ) {
+        if (!Number.isSafeInteger(minimumCompletionTimeoutMs) || minimumCompletionTimeoutMs < 0) {
+            throw new Error('minimumCompletionTimeoutMs must be a non-negative safe integer');
+        }
         this.sendCommandFn = sendCommand;
         this.sendBinaryCommandFn = sendBinaryCommand;
         this.registerBroadcastFn = registerBroadcast;
@@ -125,6 +153,10 @@ export class TileImageUploader {
                     pending.onProgress(params.phase, params.receivedSegments, params.totalSegments);
                 }
             }
+        });
+
+        this.registerBroadcastFn('TileimageHeartbeat', (params: TileimageHeartbeatPayload) => {
+            this.handleHeartbeat(params);
         });
 
         this.registerBroadcastFn('TileimageUploadFailed', (params: TileimageUploadFailedPayload) => {
@@ -157,6 +189,13 @@ export class TileImageUploader {
         }
     }
 
+    handleHeartbeat(params: TileimageHeartbeatPayload): void {
+        const pending = this.pendingUploads.get(params.metadataId);
+        if (pending !== undefined) {
+            this.refreshCompletionTimeout(params.metadataId, pending);
+        }
+    }
+
     /**
      * タイルイメージをアップロードする。
      *
@@ -171,9 +210,24 @@ export class TileImageUploader {
         contentMeta: UploadContentMetadata,
         onProgress?: ProgressCallback,
         maxSegmentSize: number = 512 * 1024,
-        completionTimeoutMs: number = 120000
+        completionTimeoutMs: number = 360000
     ): Promise<TileImageMetadata> {
-        // 1. AddContent(type='tileimage') でコンテンツ登録
+        if (!Number.isSafeInteger(maxSegmentSize) || maxSegmentSize <= 0) {
+            throw new Error('maxSegmentSize must be a positive safe integer');
+        }
+        if (!Number.isSafeInteger(completionTimeoutMs) || completionTimeoutMs <= 0) {
+            throw new Error('completionTimeoutMs must be a positive safe integer');
+        }
+        const effectiveCompletionTimeoutMs = Math.max(completionTimeoutMs, this.minimumCompletionTimeoutMs);
+
+        // Prepare the complete transfer descriptor before creating server metadata.
+        const arrayBuffer = await file.arrayBuffer();
+        const totalBytes = arrayBuffer.byteLength;
+        const totalSegments = Math.max(1, Math.ceil(totalBytes / maxSegmentSize));
+        const uploadId = generateId();
+        const fileExt = getFileExt(file.name);
+
+        // AddContent reserves the server-side upload slot before persisting metadata.
         const addResult = await this.sendBinaryCommandFn(
             'AddContent',
             {
@@ -182,9 +236,17 @@ export class TileImageUploader {
                 posy: contentMeta.posy,
                 width: contentMeta.width,
                 height: contentMeta.height,
+                tileImageUpload: {
+                    uploadId,
+                    byteLength: totalBytes,
+                    segment_max: totalSegments,
+                    file_ext: fileExt,
+                } satisfies TileImageUploadDescriptor,
             },
             new ArrayBuffer(0)
-        );
+        ).catch((error: unknown): never => {
+            throw normalizeUploadError(error);
+        });
 
         const metadataId: string = addResult?.metadataId;
         if (!metadataId) {
@@ -193,24 +255,17 @@ export class TileImageUploader {
 
         // 2. 完了 Promise を登録
         const completionPromise = new Promise<TileImageMetadata>((resolve, reject) => {
-            const timeoutId = this.scheduleCompletionTimeout(metadataId, completionTimeoutMs);
+            const timeoutId = this.scheduleCompletionTimeout(metadataId, effectiveCompletionTimeoutMs);
             this.pendingUploads.set(metadataId, {
                 resolve,
                 reject,
                 onProgress,
                 timeoutId,
-                timeoutMs: completionTimeoutMs,
+                timeoutMs: effectiveCompletionTimeoutMs,
             });
         });
 
-        // 3. ファイルを ArrayBuffer に変換
-        const arrayBuffer = await file.arrayBuffer();
-        const totalBytes = arrayBuffer.byteLength;
-        const totalSegments = Math.max(1, Math.ceil(totalBytes / maxSegmentSize));
-        const imageId = generateId();
-        const fileExt = getFileExt(file.name);
-
-        // 4. セグメント送信
+        // Send all segments after the server has accepted and reserved the upload.
         try {
             for (let i = 0; i < totalSegments; i++) {
                 const start = i * maxSegmentSize;
@@ -219,9 +274,8 @@ export class TileImageUploader {
 
                 const segmentParams = {
                     metadataId,
-                    id: imageId,
+                    uploadId,
                     file_ext: fileExt,
-                    creator: '',         // サーバー側でセッションから取得するため空文字でよい
                     byteLength: totalBytes,
                     segment_max: totalSegments,
                     segment_index: i,
@@ -235,7 +289,7 @@ export class TileImageUploader {
                 this.pendingUploads.delete(metadataId);
                 clearTimeout(pending.timeoutId);
             }
-            throw error;
+            throw normalizeUploadError(error);
         }
 
         // 5. 完了（UpdateContent tileFinished=true）まで待機

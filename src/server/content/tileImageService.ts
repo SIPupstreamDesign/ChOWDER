@@ -7,6 +7,7 @@
 
 import path from 'path';
 import { Worker } from 'worker_threads';
+import type { WorkerOptions } from 'worker_threads';
 import type { Redis } from 'ioredis';
 import { REDIS_KEYS } from '../common/redisKeys';
 import type {
@@ -14,37 +15,48 @@ import type {
     TileWorkerMessage,
 } from './tileImageWorker';
 
+const TILE_WORKER_IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+const TILE_WORKER_HEARTBEAT_INTERVAL_MS = 30 * 1000;
+
 // ---------------------------------------------------------------------------
 // SegmentReceiver
 // ---------------------------------------------------------------------------
 
 interface SegmentContainer {
-    /** 受け取った各セグメントのバイナリ（未着は null） */
-    segments: (Buffer | null)[];
-    /** 受信済みセグメント数 */
-    receivedCount: number;
-    /** 全セグメント数 */
+    segments: Map<number, Buffer>;
+    receivedBytes: number;
     total: number;
+    byteLength: number;
+    metadataId: string;
+    fileExt: string;
+    socketId: string;
 }
 
-/**
- * UploadTileimage コマンドで受け取るメタパラメータ
- */
-export interface TileimageSegmentParams {
-    /** ファイル拡張子 (例: "jpg") */
-    file_ext: string;
-    /** アップロードセッション固有 ID */
-    id: string;
-    /** AddContent で取得したコンテンツのメタデータ ID */
-    metadataId: string;
-    /** 送信者のユーザー名 */
-    creator: string;
+export interface TileImageUploadDescriptor {
+    /** クライアントが生成する一時upload ID */
+    uploadId: string;
     /** 元ファイルの合計バイト数 */
     byteLength: number;
     /** 全セグメント数 */
     segment_max: number;
+    /** ファイル拡張子 */
+    file_ext: string;
+}
+
+/**
+ * UploadTileimage コマンドで受け取るsegment metadata
+ */
+export interface TileimageSegmentParams extends TileImageUploadDescriptor {
+    /** AddContent で取得したコンテンツのメタデータ ID */
+    metadataId: string;
     /** このセグメントの番号（0 始まり） */
     segment_index: number;
+}
+
+export interface SegmentReceiveResult {
+    accepted: boolean;
+    receivedCount: number;
+    assembled: Buffer | null;
 }
 
 /**
@@ -58,67 +70,100 @@ export class SegmentReceiver {
     private socketToImages: Map<string, Set<string>> = new Map();
     /** imageId -> metadataId (AddContent で登録したコンテンツID) */
     private imageToMetadata: Map<string, string> = new Map();
+    private imageToSocket: Map<string, string> = new Map();
 
     /**
      * セグメントを受け取る。全部そろったら合体した Buffer を返す。
      * まだ揃っていない場合は null を返す。
      */
-    receive(params: TileimageSegmentParams, binary: Buffer, socketId: string): Buffer | null {
-        const { id, segment_index, segment_max } = params;
+    receive(params: TileimageSegmentParams, binary: Buffer, socketId: string): SegmentReceiveResult {
+        const { uploadId, metadataId, byteLength, segment_max, segment_index, file_ext } = params;
+        if (
+            typeof uploadId !== 'string' || uploadId.length === 0
+            || typeof metadataId !== 'string' || metadataId.length === 0
+            || typeof socketId !== 'string' || socketId.length === 0
+            || !Number.isSafeInteger(byteLength) || byteLength < 0
+            || !Number.isSafeInteger(segment_max) || segment_max <= 0
+            || !Number.isSafeInteger(segment_index) || segment_index < 0 || segment_index >= segment_max
+            || typeof file_ext !== 'string' || file_ext.length === 0
+            || !Buffer.isBuffer(binary)
+            || binary.byteLength > byteLength
+        ) {
+            throw new Error('Invalid tileimage segment metadata or binary');
+        }
 
-        // コンテナ初期化
-        if (!this.containers.has(id)) {
-            this.containers.set(id, {
-                segments: new Array(segment_max).fill(null),
-                receivedCount: 0,
+        let container = this.containers.get(uploadId);
+        if (container === undefined) {
+            container = {
+                segments: new Map<number, Buffer>(),
+                receivedBytes: 0,
                 total: segment_max,
-            });
-            // metadataId を記録
-            this.imageToMetadata.set(id, params.metadataId);
+                byteLength,
+                metadataId,
+                fileExt: file_ext,
+                socketId,
+            };
+            this.containers.set(uploadId, container);
+            this.imageToMetadata.set(uploadId, metadataId);
+            this.imageToSocket.set(uploadId, socketId);
+            let imageIds = this.socketToImages.get(socketId);
+            if (imageIds === undefined) {
+                imageIds = new Set<string>();
+                this.socketToImages.set(socketId, imageIds);
+            }
+            imageIds.add(uploadId);
+        } else if (
+            container.socketId !== socketId
+            || container.metadataId !== metadataId
+            || container.byteLength !== byteLength
+            || container.total !== segment_max
+            || container.fileExt !== file_ext
+        ) {
+            throw new Error('Tileimage segment metadata changed within an upload');
         }
 
-        // socketId と imageId の対応を記録（切断時クリーンアップ用）
-        if (!this.socketToImages.has(socketId)) {
-            this.socketToImages.set(socketId, new Set());
+        const existingSegment = container.segments.get(segment_index);
+        if (existingSegment !== undefined) {
+            if (existingSegment.equals(binary)) {
+                return { accepted: false, receivedCount: container.segments.size, assembled: null };
+            }
+            throw new Error('Conflicting duplicate tileimage segment');
         }
-        this.socketToImages.get(socketId)!.add(id);
-
-        const container = this.containers.get(id)!;
-
-        // 重複受信チェック
-        if (container.segments[segment_index] !== null) {
-            return null;
+        if (binary.byteLength > container.byteLength - container.receivedBytes) {
+            throw new Error('Tileimage upload exceeds declared byteLength');
         }
 
-        container.segments[segment_index] = binary;
-        container.receivedCount++;
-
-        if (container.receivedCount < container.total) {
-            return null; // まだ揃っていない
+        container.segments.set(segment_index, Buffer.from(binary));
+        container.receivedBytes += binary.byteLength;
+        if (container.segments.size < container.total) {
+            return { accepted: true, receivedCount: container.segments.size, assembled: null };
+        }
+        if (container.receivedBytes !== container.byteLength) {
+            throw new Error('Tileimage upload does not match declared byteLength');
         }
 
-        // 全セグメント揃った → 結合して返す
-        const assembled = Buffer.concat(
-            container.segments.filter((s): s is Buffer => s !== null)
-        );
-        this.containers.delete(id);
-        this.imageToMetadata.delete(id);
+        const orderedSegments: Buffer[] = [];
+        for (let index = 0; index < container.total; index++) {
+            const segment = container.segments.get(index);
+            if (segment === undefined) {
+                throw new Error('Tileimage upload is missing a segment');
+            }
+            orderedSegments.push(segment);
+        }
 
-        // socketId のマッピングからも削除
-        this.socketToImages.get(socketId)?.delete(id);
-
-        return assembled;
+        const assembled = Buffer.concat(orderedSegments, container.receivedBytes);
+        const receivedCount = container.segments.size;
+        this.deleteByImageId(uploadId, socketId);
+        return { accepted: true, receivedCount, assembled };
     }
 
     /** ソケット切断時に未完成のセグメント受信状態を削除 */
     deleteBySocketId(socketId: string): void {
         const imageIds = this.socketToImages.get(socketId);
         if (imageIds) {
-            imageIds.forEach((id) => {
-                this.containers.delete(id);
-                this.imageToMetadata.delete(id);
-            });
-            this.socketToImages.delete(socketId);
+            for (const imageId of imageIds) {
+                this.deleteByImageId(imageId, socketId);
+            }
         }
     }
 
@@ -140,8 +185,16 @@ export class SegmentReceiver {
     /** imageId に紐づくコンテナを削除 */
     deleteByImageId(imageId: string, socketId?: string): void {
         this.containers.delete(imageId);
-        if (socketId) {
-            this.socketToImages.get(socketId)?.delete(imageId);
+        this.imageToMetadata.delete(imageId);
+        const ownerSocketId = this.imageToSocket.get(imageId);
+        this.imageToSocket.delete(imageId);
+        const cleanupSocketId = socketId ?? ownerSocketId;
+        if (cleanupSocketId !== undefined) {
+            const imageIds = this.socketToImages.get(cleanupSocketId);
+            imageIds?.delete(imageId);
+            if (imageIds?.size === 0) {
+                this.socketToImages.delete(cleanupSocketId);
+            }
         }
     }
 }
@@ -173,15 +226,36 @@ export interface TileSet {
  * Worker 進捗コールバック（タイル生成フェーズ）
  */
 export type OnWorkerProgress = (completed: number, total: number) => void;
+export type OnWorkerHeartbeat = () => void;
+
+export interface TileImageServiceOptions {
+    workerIdleTimeoutMs?: number;
+    workerHeartbeatIntervalMs?: number;
+    createWorker?: (filename: string, options: WorkerOptions) => Worker;
+}
 
 /**
  * タイル画像の生成・保存・取得を担うサービス
  */
 export class TileImageService {
     private readonly tileSize: number;
+    private readonly workerIdleTimeoutMs: number;
+    private readonly workerHeartbeatIntervalMs: number;
+    private readonly createWorker: (filename: string, options: WorkerOptions) => Worker;
 
-    constructor(tileSize: number = 256) {
+    constructor(tileSize: number = 256, options: TileImageServiceOptions = {}) {
         this.tileSize = tileSize;
+        this.workerIdleTimeoutMs = options.workerIdleTimeoutMs ?? TILE_WORKER_IDLE_TIMEOUT_MS;
+        this.workerHeartbeatIntervalMs = options.workerHeartbeatIntervalMs ?? TILE_WORKER_HEARTBEAT_INTERVAL_MS;
+        this.createWorker = options.createWorker ?? ((filename: string, workerOptions: WorkerOptions): Worker => {
+            return new Worker(filename, workerOptions);
+        });
+        if (!Number.isSafeInteger(this.workerIdleTimeoutMs) || this.workerIdleTimeoutMs <= 0) {
+            throw new Error('Worker idle timeout must be a positive safe integer');
+        }
+        if (!Number.isSafeInteger(this.workerHeartbeatIntervalMs) || this.workerHeartbeatIntervalMs <= 0) {
+            throw new Error('Worker heartbeat interval must be a positive safe integer');
+        }
     }
 
     /**
@@ -189,8 +263,12 @@ export class TileImageService {
      * 進捗は onProgress で通知される。
      * @returns 生成されたタイルセット
      */
-    generateTiles(imageBuffer: Buffer, onProgress?: OnWorkerProgress): Promise<TileSet> {
-        return new Promise((resolve, reject) => {
+    generateTiles(
+        imageBuffer: Buffer,
+        onProgress?: OnWorkerProgress,
+        onHeartbeat?: OnWorkerHeartbeat,
+    ): Promise<TileSet> {
+        return new Promise((resolvePromise, rejectPromise) => {
             // 本番(`*.js`)と開発(`*.ts`)で Worker スクリプトパスを切り替え
             const isDev = __filename.endsWith('.ts');
             const workerFile = isDev
@@ -207,19 +285,57 @@ export class TileImageService {
             const input: TileWorkerInput = {
                 imageBuffer: ab,
                 tileSize: this.tileSize,
+                heartbeatIntervalMs: this.workerHeartbeatIntervalMs,
             };
 
-            const worker = new Worker(workerFile, {
+            const worker = this.createWorker(workerFile, {
                 execArgv,
                 workerData: input,
                 transferList: [ab],
             });
 
+            let settled = false;
+            let idleTimeoutId: ReturnType<typeof setTimeout>;
+            const rejectWorker = (error: Error): void => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                clearTimeout(idleTimeoutId);
+                rejectPromise(error);
+                void worker.terminate().catch((terminateError: unknown) => {
+                    console.error('[TileImageService] Failed to terminate idle worker:', terminateError);
+                });
+            };
+            const resetIdleTimeout = (): void => {
+                clearTimeout(idleTimeoutId);
+                idleTimeoutId = setTimeout((): void => {
+                    rejectWorker(new Error('TileImage worker made no progress before the idle timeout'));
+                }, this.workerIdleTimeoutMs);
+            };
+            resetIdleTimeout();
+
             worker.on('message', (msg: TileWorkerMessage) => {
-                if (msg.type === 'progress') {
-                    onProgress?.(msg.completed, msg.total);
+                if (msg.type === 'heartbeat') {
+                    try {
+                        onHeartbeat?.();
+                    } catch (error: unknown) {
+                        rejectWorker(error instanceof Error ? error : new Error(String(error)));
+                    }
+                } else if (msg.type === 'progress') {
+                    resetIdleTimeout();
+                    try {
+                        onProgress?.(msg.completed, msg.total);
+                    } catch (error: unknown) {
+                        rejectWorker(error instanceof Error ? error : new Error(String(error)));
+                    }
                 } else if (msg.type === 'done') {
-                    resolve({
+                    if (settled) {
+                        return;
+                    }
+                    settled = true;
+                    clearTimeout(idleTimeoutId);
+                    resolvePromise({
                         xsplit: msg.xsplit,
                         ysplit: msg.ysplit,
                         tileSize: msg.tileSize,
@@ -231,14 +347,19 @@ export class TileImageService {
                         reduction: Buffer.from(msg.reduction),
                     });
                 } else if (msg.type === 'error') {
-                    reject(new Error(msg.message));
+                    rejectWorker(new Error(msg.message));
                 }
             });
 
-            worker.on('error', reject);
+            worker.on('error', (error: Error) => {
+                rejectWorker(error);
+            });
             worker.on('exit', (code) => {
-                if (code !== 0) {
-                    reject(new Error(`TileImage worker exited with code ${code}`));
+                if (!settled) {
+                    const message = code === 0
+                        ? 'TileImage worker exited before returning a result'
+                        : `TileImage worker exited with code ${code}`;
+                    rejectWorker(new Error(message));
                 }
             });
         });
@@ -285,10 +406,59 @@ export class TileImageService {
      * 未完了（tileFinished: false）コンテンツの Redis データを削除する。
      * セグメント転送途中に切断された場合のクリーンアップに使用。
      */
-    async deleteIncompleteContent(redis: Redis, contentId: string): Promise<void> {
+    async deleteIncompleteContent(
+        redis: Redis,
+        contentId: string,
+        expectedOwner?: string,
+    ): Promise<boolean> {
         const metaKey = REDIS_KEYS.CONTENT.METADATA(contentId);
-        const binaryKey = REDIS_KEYS.CONTENT.BINARY(contentId);
+        const thumbnailKey = REDIS_KEYS.CONTENT.THUMBNAIL(contentId);
         const tileKey = REDIS_KEYS.CONTENT.TILE_DATA(contentId);
-        await redis.del(metaKey, binaryKey, tileKey);
+        const cleanupRedis = redis.duplicate();
+        try {
+            for (let attempt = 0; attempt < 3; attempt++) {
+                await cleanupRedis.watch(metaKey);
+                const metadataJson = await cleanupRedis.get(metaKey);
+                if (metadataJson === null) {
+                    await cleanupRedis.unwatch();
+                    return false;
+                }
+
+                const metadata = JSON.parse(metadataJson) as {
+                    metadataId?: string;
+                    binaryId?: string | null;
+                    creatorId?: string;
+                    type?: string;
+                    tileFinished?: unknown;
+                };
+                if (
+                    metadata.metadataId !== contentId
+                    || metadata.type !== 'tileimage'
+                    || metadata.tileFinished === true
+                    || (expectedOwner !== undefined && metadata.creatorId !== expectedOwner)
+                ) {
+                    await cleanupRedis.unwatch();
+                    return false;
+                }
+
+                const keysToDelete = [metaKey, tileKey, thumbnailKey];
+                if (typeof metadata.binaryId === 'string' && metadata.binaryId !== '') {
+                    keysToDelete.push(REDIS_KEYS.CONTENT.BINARY(metadata.binaryId));
+                }
+
+                const results = await cleanupRedis.multi().del(...keysToDelete).exec();
+                if (results !== null) {
+                    for (const [error] of results) {
+                        if (error !== null) {
+                            throw error;
+                        }
+                    }
+                    return true;
+                }
+            }
+            throw new Error(`Tileimage cleanup conflicted repeatedly: ${contentId}`);
+        } finally {
+            await cleanupRedis.quit();
+        }
     }
 }

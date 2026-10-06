@@ -25,6 +25,7 @@
 
 import { Redis } from 'ioredis';
 import { REDIS_KEYS, REDIS_PATTERNS } from '../common/redisKeys';
+import { TileImageService } from './tileImageService';
 
 /** checkAndRepair() の実行オプション */
 export interface CheckAndRepairOptions {
@@ -49,6 +50,9 @@ export interface IntegrityCheckResult {
 
     /** metadata のみ残存していたエントリの metadataId 一覧 */
     orphanedMetadata: string[];
+
+    /** 未完了状態で残存していたtileimageのmetadataId一覧 */
+    incompleteTileimages: string[];
 
     /** stream info が存在しない live-stream metadata の metadataId 一覧 */
     orphanedStreamMetadata: string[];
@@ -110,6 +114,7 @@ export class ContentIntegrityService {
         const result: IntegrityCheckResult = {
             orphanedBinaries: [],
             orphanedMetadata: [],
+            incompleteTileimages: [],
             orphanedStreamMetadata: [],
             orphanedStreamInfos: [],
             orphanedTiles: [],
@@ -119,6 +124,7 @@ export class ContentIntegrityService {
             dryRun,
         };
 
+        await this.checkIncompleteTileimages(result, gracePeriodMs, dryRun);
         await this.checkOrphanedBinaries(result, gracePeriodMs, dryRun);
         await this.checkOrphanedMetadata(result, gracePeriodMs, dryRun);
         await this.checkOrphanedStreamInfos(result, gracePeriodMs, dryRun);
@@ -128,6 +134,7 @@ export class ContentIntegrityService {
         result.totalDeleted =
             result.orphanedBinaries.length +
             result.orphanedMetadata.length +
+            result.incompleteTileimages.length +
             result.orphanedStreamMetadata.length +
             result.orphanedStreamInfos.length +
             result.orphanedTiles.length +
@@ -141,6 +148,7 @@ export class ContentIntegrityService {
                 `${result.totalDeleted} orphaned entry/entries ` +
                 `(binary:${result.orphanedBinaries.length}, ` +
                 `metadata:${result.orphanedMetadata.length}, ` +
+                `incompleteTileimage:${result.incompleteTileimages.length}, ` +
                 `streamMetadata:${result.orphanedStreamMetadata.length}, ` +
                 `streamInfo:${result.orphanedStreamInfos.length}, ` +
                 `tile:${result.orphanedTiles.length}, ` +
@@ -154,6 +162,47 @@ export class ContentIntegrityService {
         }
 
         return result;
+    }
+
+    private async checkIncompleteTileimages(
+        result: IntegrityCheckResult,
+        gracePeriodMs: number,
+        dryRun: boolean,
+    ): Promise<void> {
+        const metadataKeys = await this.redis.keys(REDIS_PATTERNS.CONTENT_METADATA);
+        const cutoff = Date.now() - gracePeriodMs;
+        const tileImageService = new TileImageService();
+
+        for (const metadataKey of metadataKeys) {
+            const metadataJson = await this.redis.get(metadataKey);
+            if (metadataJson === null) {
+                continue;
+            }
+
+            let metadata: { metadataId?: string; type?: string; tileFinished?: unknown; date?: string };
+            try {
+                metadata = JSON.parse(metadataJson) as typeof metadata;
+            } catch {
+                continue;
+            }
+            if (metadata.type !== 'tileimage' || metadata.tileFinished === true) {
+                continue;
+            }
+            if (gracePeriodMs > 0 && metadata.date && new Date(metadata.date).getTime() > cutoff) {
+                continue;
+            }
+
+            const metadataId = this.extractId(metadataKey);
+            if (dryRun) {
+                result.incompleteTileimages.push(metadataId);
+                continue;
+            }
+
+            const deleted = await tileImageService.deleteIncompleteContent(this.redis, metadataId);
+            if (deleted) {
+                result.incompleteTileimages.push(metadataId);
+            }
+        }
     }
 
     /**

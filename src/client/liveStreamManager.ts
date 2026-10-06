@@ -105,6 +105,7 @@ export class LiveStreamManager {
     // 受信
     private recvTransports: Map<string, Transport> = new Map();
     private consumers: Map<string, Consumer> = new Map();
+    private pendingConsumerCreations: Map<string, Promise<{ stream: MediaStream; kind: 'audio' | 'video' }>> = new Map();
 
     // セッション ID 生成用カウンタ
     private sessionIdCounter = 0;
@@ -442,39 +443,92 @@ export class LiveStreamManager {
         producerId: string,
         config: StreamConfig,
     ): Promise<{ stream: MediaStream; kind: 'audio' | 'video' }> {
+        const existingConsumer = this.consumers.get(producerId);
+        if (existingConsumer && existingConsumer.track.readyState !== 'ended') {
+            return {
+                stream: new MediaStream([existingConsumer.track]),
+                kind: existingConsumer.kind,
+            };
+        }
+        if (existingConsumer) {
+            await this.closeConsumer(producerId);
+        }
+
+        const pendingCreation = this.pendingConsumerCreations.get(producerId);
+        if (pendingCreation) {
+            return pendingCreation;
+        }
+
+        const creation = this.createConsumerStream(producerId, config);
+        this.pendingConsumerCreations.set(producerId, creation);
         try {
-            this.callbacks.log(`Consuming stream from producer ${producerId}...`, 'info');
-            await this.initializeDevice();
-
-            const recvTransport = await this.createRecvTransport(producerId);
-
-            const result = await this.callbacks.sendCommand('Consume', {
-                transportId: recvTransport.id,
-                producerId,
-                rtpCapabilities: this.device!.rtpCapabilities,
-            });
-
-            const consumer = await recvTransport.consume({
-                id: result.consumerId,
-                producerId: result.producerId,
-                kind: result.kind,
-                rtpParameters: result.rtpParameters,
-            });
-
-            this.consumers.set(producerId, consumer);
-
-            await this.callbacks.sendCommand('ResumeConsumer', { consumerId: consumer.id });
-
-            this.callbacks.log(
-                `✅ Consumer created [id:${consumer.id}, kind:${consumer.kind}]`,
-                'success',
-            );
-
-            const stream = new MediaStream([consumer.track]);
-            return { stream, kind: result.kind };
+            return await creation;
         } catch (error: any) {
+            await this.closeConsumer(producerId);
             this.callbacks.log(`Failed to consume stream: ${error.message}`, 'error');
             throw error;
+        } finally {
+            if (this.pendingConsumerCreations.get(producerId) === creation) {
+                this.pendingConsumerCreations.delete(producerId);
+            }
+        }
+    }
+
+    private async createConsumerStream(
+        producerId: string,
+        config: StreamConfig,
+    ): Promise<{ stream: MediaStream; kind: 'audio' | 'video' }> {
+        this.callbacks.log(`Consuming stream from producer ${producerId}...`, 'info');
+        await this.initializeDevice();
+
+        const recvTransport = await this.createRecvTransport(producerId);
+
+        const result = await this.callbacks.sendCommand('Consume', {
+            transportId: recvTransport.id,
+            producerId,
+            rtpCapabilities: this.device!.rtpCapabilities,
+        });
+
+        const consumer = await recvTransport.consume({
+            id: result.consumerId,
+            producerId: result.producerId,
+            kind: result.kind,
+            rtpParameters: result.rtpParameters,
+        });
+
+        this.consumers.set(producerId, consumer);
+
+        await this.callbacks.sendCommand('ResumeConsumer', { consumerId: consumer.id });
+
+        this.callbacks.log(
+            `✅ Consumer created [id:${consumer.id}, kind:${consumer.kind}]`,
+            'success',
+        );
+
+        const stream = new MediaStream([consumer.track]);
+        return { stream, kind: result.kind };
+    }
+
+    async closeConsumer(producerId: string): Promise<void> {
+        const consumer = this.consumers.get(producerId);
+        const recvTransport = this.recvTransports.get(producerId);
+        if (!consumer && !recvTransport) {
+            return;
+        }
+
+        this.consumers.delete(producerId);
+        this.recvTransports.delete(producerId);
+
+        try {
+            await this.callbacks.sendCommand('CloseConsumer', {
+                consumerId: consumer?.id,
+                transportId: recvTransport?.id,
+            });
+        } catch (error: unknown) {
+            this.callbacks.log(`Failed to close consumer for producer ${producerId}: ${String(error)}`, 'error');
+        } finally {
+            consumer?.close();
+            recvTransport?.close();
         }
     }
 

@@ -7,26 +7,35 @@
  * マニピュレータ
  * @method Manipulator
  */
+export interface ManipulatorLifecycle {
+	onStart: (target: HTMLElement) => boolean;
+	onEnd: (target: HTMLElement, changed: boolean) => void;
+	onCancel: (target: HTMLElement) => void;
+}
+
 export class Manipulator {
-	private draggingManip : HTMLElement | null = null;
-	private manipulators : HTMLElement[] = [];
-	private parent : HTMLElement | null = null;
-	private targetElem : HTMLElement  | null = null;
-	private closeFunc? : any;
+	private draggingManip: HTMLElement | null = null;
+	private manipulators: HTMLElement[] = [];
+	private parent: HTMLElement | null = null;
+	private targetElem: HTMLElement | null = null;
+	private closeFunc?: any;
 
-	private isDragging:boolean = false;
-	private startX:number = 0;
-	private startY:number = 0;
-	private startWidth:number =0;
-	private startHeight:number =0;
+	private isDragging: boolean = false;
+	private startX: number = 0;
+	private startY: number = 0;
+	private startWidth: number = 0;
+	private startHeight: number = 0;
 
-	private createUpdateStock: (elem:HTMLElement | null) => void = () => {};
+	private createUpdateStock: (elem: HTMLElement | null) => void = () => { };
 	private draggingHandleIndex: number = -1;
 	private startLeft: number = 0;
 	private startTop: number = 0;
 	private zoom: number = 1;
 	/** null=フリー、数値=ロック (height/width) */
 	private aspectRatio: number | null = null;
+	private lifecycle: ManipulatorLifecycle | null = null;
+	private previousCursor = '';
+	private previousUserSelect = '';
 
 	constructor() {
 		//this.manipulatorMenus = [];
@@ -37,8 +46,64 @@ export class Manipulator {
 	}
 
 
-	init(callCreateStock:(elem:HTMLElement|null)=>void) {
+	init(callCreateStock: (elem: HTMLElement | null) => void) {
 		this.createUpdateStock = callCreateStock;
+		this.lifecycle = null;
+	}
+
+	setLifecycle(lifecycle: ManipulatorLifecycle): void {
+		this.lifecycle = lifecycle;
+	}
+
+	get isInteracting(): boolean { return this.isDragging; }
+
+	beginResize(target: HTMLElement, handleIndex: number, event: MouseEvent): void {
+		if (event.button !== 0 || this.isDragging) { return; }
+		const width = Number(target.dataset.width);
+		const height = Number(target.dataset.height);
+		const left = Number(target.dataset.worldX ?? 0);
+		const top = Number(target.dataset.worldY ?? 0);
+		if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) { return; }
+		if (!Number.isFinite(left) || !Number.isFinite(top)) { return; }
+		if (this.lifecycle !== null && !this.lifecycle.onStart(target)) { return; }
+		this.targetElem = target;
+		this.isDragging = true;
+		this.startX = event.clientX;
+		this.startY = event.clientY;
+		this.startWidth = width;
+		this.startHeight = height;
+		this.draggingHandleIndex = handleIndex;
+		this.startLeft = left;
+		this.startTop = top;
+		this.previousUserSelect = document.body.style.userSelect;
+		this.previousCursor = document.body.style.cursor;
+		document.body.style.userSelect = 'none';
+		document.body.style.cursor = 'nwse-resize';
+		document.addEventListener('mousemove', this.onMouseMove);
+		document.addEventListener('mouseup', this.onMouseUp);
+	}
+
+	private endDrag(): void {
+		this.isDragging = false;
+		document.body.style.userSelect = this.previousUserSelect;
+		document.body.style.cursor = this.previousCursor;
+		document.removeEventListener('mousemove', this.onMouseMove);
+		document.removeEventListener('mouseup', this.onMouseUp);
+	}
+
+	cancel(): void {
+		const target = this.targetElem;
+		const lifecycle = this.lifecycle;
+		const wasDragging = this.isDragging;
+		if (wasDragging) { this.endDrag(); }
+		this.removeManipulator();
+		this.targetElem = null;
+		this.parent = null;
+		this.lifecycle = null;
+		this.createUpdateStock = (): void => { };
+		this.aspectRatio = null;
+		this.draggingManip = null;
+		if (wasDragging && target !== null) { lifecycle?.onCancel(target); }
 	}
 
 	/**
@@ -67,7 +132,7 @@ export class Manipulator {
 	setDraggingOffsetFunc(func : any) {
 		this.draggingOffsetFunc = func;
 	}
- 	*/
+	  */
 
 	/**
 	 * クローズコールバックの設定
@@ -91,7 +156,7 @@ export class Manipulator {
 	 * @method moveManipulator
 	 * @param {Element} targetElem 移動したエレメント
 	 */
-	moveManipulator(targetElem : HTMLElement) {
+	moveManipulator(targetElem: HTMLElement) {
 		//console.log("moveManipulator:", targetElem);
 		if (this.manipulators.length < 3) {
 			//console.log("manipulators:", manipulators);
@@ -137,9 +202,9 @@ export class Manipulator {
 		*/
 	}
 
-	mousedownFunc(manip : HTMLElement) {
-		return (evt : any) => {
-			if(evt.button != 0){return;}
+	mousedownFunc(manip: HTMLElement) {
+		return (evt: any) => {
+			if (evt.button != 0) { return; }
 
 			this.draggingManip = manip;
 
@@ -173,8 +238,8 @@ export class Manipulator {
 		};
 	}
 
-	mousemoveFunc(manip : HTMLElement, cursor : string) {
-		return (evt : any) => {
+	mousemoveFunc(manip: HTMLElement, cursor: string) {
+		return (evt: any) => {
 			manip.style.cursor = cursor;
 		};
 	}
@@ -185,7 +250,7 @@ export class Manipulator {
 		 * @param {Element} manip マニピュレータエレメント
 		 */
 	setupManipulator(manip: HTMLElement, targetElem: HTMLElement) {
-		let cursor : string = "";
+		let cursor: string = "";
 		let manipHalfWidth = 5, manipHalfHeight = 5, isdragging = false;
 		manip.classList.add("nativeScale");
 		manip.style.position = "absolute";
@@ -233,36 +298,13 @@ export class Manipulator {
 				manip.onmousemove = this.mousemoveFunc(manip, cursor);
 			}
 			*/
-			manip.addEventListener('mousedown', (e:MouseEvent) => {
-				// 左クリック（0）以外は無視
-				if (e.button !== 0) return;
-
-				this.isDragging = true;
-
-				// クリックした瞬間のマウス座標を記録
-				this.startX = e.clientX;
-				this.startY = e.clientY;
-
-				// クリックした瞬間の要素のサイズを記録
-				//const rect = targetElem.getBoundingClientRect();
-				this.startWidth = parseInt(targetElem.dataset.width ?? '0');
-				this.startHeight = parseInt(targetElem.dataset.height ?? '0');
-				this.draggingHandleIndex = parseInt(manip.id.replace('_manip_', ''));
-				this.startLeft = Number(targetElem.dataset.worldX ?? 0);
-				this.startTop = Number(targetElem.dataset.worldY ?? 0);
-
-				// ドラッグ中のテキスト選択を防ぎ、画面全体のカーソルを固定
-				document.body.style.userSelect = 'none';
-				document.body.style.cursor = 'nwse-resize';
-
-				// ドラッグ操作用のイベントを document に追加
-				document.addEventListener('mousemove', this.onMouseMove);
-				document.addEventListener('mouseup', this.onMouseUp);
+			manip.addEventListener('mousedown', (event: MouseEvent): void => {
+				this.beginResize(targetElem, Number(manip.id.replace('_manip_', '')), event);
 			});
 		}
 	}
 	// 2. マウスを動かしている時の処理
-	onMouseMove = (e:MouseEvent) : void => {
+	onMouseMove = (e: MouseEvent): void => {
 		if (!this.isDragging) return;
 		if (!this.targetElem) return;
 
@@ -285,26 +327,26 @@ export class Manipulator {
 		// ハンドル別に拡縮方向を切り替える (0=NW, 1=SW, 2=SE, 3=NE)
 		switch (this.draggingHandleIndex) {
 			case 0: // NW: 右下固定、左上が移動
-				newWidth  = Math.max(50, this.startWidth  - dx);
-				newLeft   = this.startLeft + (this.startWidth  - newWidth);
+				newWidth = Math.max(50, this.startWidth - dx);
+				newLeft = this.startLeft + (this.startWidth - newWidth);
 				newHeight = Math.max(50, this.startHeight - dy);
-				newTop    = this.startTop  + (this.startHeight - newHeight);
+				newTop = this.startTop + (this.startHeight - newHeight);
 				positionChanged = true;
 				break;
 			case 1: // SW: 右上固定、左下が移動
-				newWidth  = Math.max(50, this.startWidth  - dx);
-				newLeft   = this.startLeft + (this.startWidth  - newWidth);
+				newWidth = Math.max(50, this.startWidth - dx);
+				newLeft = this.startLeft + (this.startWidth - newWidth);
 				newHeight = Math.max(50, this.startHeight + dy);
 				positionChanged = true;
 				break;
 			case 2: // SE: 左上固定、右下が移動
-				newWidth  = Math.max(50, this.startWidth  + dx);
+				newWidth = Math.max(50, this.startWidth + dx);
 				newHeight = Math.max(50, this.startHeight + dy);
 				break;
 			case 3: // NE: 左下固定、右上が移動
-				newWidth  = Math.max(50, this.startWidth  + dx);
+				newWidth = Math.max(50, this.startWidth + dx);
 				newHeight = Math.max(50, this.startHeight - dy);
-				newTop    = this.startTop  + (this.startHeight - newHeight);
+				newTop = this.startTop + (this.startHeight - newHeight);
 				positionChanged = true;
 				break;
 		}
@@ -315,13 +357,13 @@ export class Manipulator {
 			// s: 各ハンドルの拡縮スカラー（対角線方向への正射影）
 			let s: number;
 			switch (this.draggingHandleIndex) {
-				case 2: s =  (dx + r * dy) / (1 + r * r); break; // SE: 右下
+				case 2: s = (dx + r * dy) / (1 + r * r); break; // SE: 右下
 				case 0: s = -(dx + r * dy) / (1 + r * r); break; // NW: 左上
 				case 1: s = (-dx + r * dy) / (1 + r * r); break; // SW: 左下
-				case 3: s =  (dx - r * dy) / (1 + r * r); break; // NE: 右上
+				case 3: s = (dx - r * dy) / (1 + r * r); break; // NE: 右上
 				default: s = dx;
 			}
-			newWidth  = Math.max(50, this.startWidth + s);
+			newWidth = Math.max(50, this.startWidth + s);
 			newHeight = newWidth * r;
 			// 左辺が動くハンドル (NW=0, SW=1) は left を再調整
 			if (this.draggingHandleIndex === 0 || this.draggingHandleIndex === 1) {
@@ -342,7 +384,7 @@ export class Manipulator {
 
 		if (positionChanged) {
 			this.targetElem.style.left = `${newLeft}px`;
-			this.targetElem.style.top  = `${newTop}px`;
+			this.targetElem.style.top = `${newTop}px`;
 			this.targetElem.dataset.worldX = String(newLeft);
 			this.targetElem.dataset.worldY = String(newTop);
 		}
@@ -351,24 +393,23 @@ export class Manipulator {
 	};
 
 	// 3. マウスのボタンを離した時の処理
-	onMouseUp = () : void =>{
+	onMouseUp = (): void => {
 		if (!this.isDragging) return;
-		this.isDragging = false;
-
-		// スタイルを元に戻す
-		document.body.style.userSelect = '';
-		document.body.style.cursor = '';
-
-		// 不要になったイベントリスナーを削除（メモリ節約）
-		document.removeEventListener('mousemove', this.onMouseMove);
-		document.removeEventListener('mouseup', this.onMouseUp);
-
-		this.createUpdateStock(this.targetElem);
+		this.endDrag();
+		const target = this.targetElem;
+		const changed = target !== null && (
+			Number(target.dataset.width) !== this.startWidth ||
+			Number(target.dataset.height) !== this.startHeight ||
+			Number(target.dataset.worldX ?? 0) !== this.startLeft ||
+			Number(target.dataset.worldY ?? 0) !== this.startTop
+		);
+		if (changed || this.lifecycle === null) { this.createUpdateStock(target); }
 
 		this.removeManipulator();
 		if (this.targetElem && this.parent) {
 			this.showManipulator(this.targetElem, this.parent, this.zoom);
 		}
+		if (target !== null) { this.lifecycle?.onEnd(target, changed); }
 	};
 
 	/**
@@ -408,7 +449,7 @@ export class Manipulator {
 		 * @param {Element} targetElem ターゲットエレメント(imgなど)
 		 * @param {Element} metaData メタデータ
 		 */
-	setupManipulatorMenus(previewArea : HTMLElement, targetElem : HTMLElement, metaData : any) {
+	setupManipulatorMenus(previewArea: HTMLElement, targetElem: HTMLElement, metaData: any) {
 		let star = document.createElement('div'), memo = document.createElement('div');
 		// 星のトグルボタン
 		/*
@@ -541,7 +582,7 @@ export class Manipulator {
 		 * @param {Element} previewArea 表示先エレメント
 		 * @param {Element} displayGroup 現在のディスプレイグループ
 		 */
-	showManipulator(targetElem : HTMLElement, previewArea: HTMLElement, zoom: number = 1) {
+	showManipulator(targetElem: HTMLElement, previewArea: HTMLElement, zoom: number = 1) {
 		this.zoom = zoom;
 		//let authority = this.store.getManagement().getAuthorityObject();
 		//let metaDataList = this.store.getSelectedMetaDataList();
@@ -586,7 +627,7 @@ export class Manipulator {
 	}
 
 	// メモボタンのオンオフの表示状態を変更する
-	updateMemoToggleButton(metaData : any) {
+	updateMemoToggleButton(metaData: any) {
 		if (!this.isShowManipulator()) return;
 		const isMemoVisible = (metaData.hasOwnProperty('mark_memo') && (metaData.mark_memo === 'true' || metaData.mark_memo === true));
 		const memo = document.getElementById('_manip_menu_1');
