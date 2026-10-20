@@ -714,10 +714,11 @@ export class CommandHandler {
             resultCallback(null, cameraData);
 
             if (this.wsConnector && this.clients) {
-                this.wsConnector.broadcast(
+                this.wsConnector.broadcastLatest(
                     this.clients,
                     Command.UpdateCameraMatrix,
-                    { metadataId: resolvedId, cameraWorldMatrix, cameraParams }
+                    { metadataId: resolvedId, cameraWorldMatrix, cameraParams },
+                    `camera:${resolvedId}`
                 );
             }
         } catch (error: any) {

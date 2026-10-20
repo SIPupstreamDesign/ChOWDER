@@ -2,6 +2,12 @@ import { WebSocket } from 'ws';
 
 const QUEUE_WARN_THRESHOLD = 100;
 
+interface QueueItem {
+    data: string | Buffer;
+    kind: 'priority' | 'normal' | 'latest';
+    key?: string;
+}
+
 /**
  * 2レーン送信キュー（priority / normal）
  *
@@ -16,6 +22,9 @@ const QUEUE_WARN_THRESHOLD = 100;
 export class SendQueue {
     private priorityQueue: (string | Buffer)[] = [];
     private normalQueue: (string | Buffer)[] = [];
+    private latestQueue: Map<string, string | Buffer> = new Map();
+    private latestOrder: string[] = [];
+    private preferLatest = true;
     private flushing: boolean = false;
     private ws: WebSocket;
 
@@ -46,19 +55,30 @@ export class SendQueue {
         }
     }
 
+    pushLatest(key: string, data: string | Buffer): void {
+        if (!this.latestQueue.has(key)) {
+            this.latestOrder.push(key);
+        }
+        this.latestQueue.set(key, data);
+
+        if (!this.flushing) {
+            this.flush();
+        }
+    }
+
     /**
      * キューを drain する。priority レーンを優先して 1 件ずつ送信し、
      * コールバック後に次を送る。
      */
     private flush(): void {
-        const data = this.priorityQueue.shift() ?? this.normalQueue.shift();
-        if (data === undefined) {
+        const item = this.takeNext();
+        if (item === undefined) {
             this.flushing = false;
             return;
         }
 
         this.flushing = true;
-        this.ws.send(data, (err) => {
+        this.ws.send(item.data, (err) => {
             if (err) {
                 // 接続切断等のエラー：残キューを破棄して終了
                 this.clear();
@@ -68,6 +88,31 @@ export class SendQueue {
         });
     }
 
+    private takeNext(): QueueItem | undefined {
+        const priorityData = this.priorityQueue.shift();
+        if (priorityData !== undefined) {
+            return { data: priorityData, kind: 'priority' };
+        }
+
+        const hasLatest = this.latestOrder.length > 0;
+        const hasNormal = this.normalQueue.length > 0;
+        const shouldSendLatest = hasLatest && (!hasNormal || this.preferLatest);
+
+        if (shouldSendLatest) {
+            const key = this.latestOrder.shift()!;
+            const data = this.latestQueue.get(key);
+            this.latestQueue.delete(key);
+            this.preferLatest = false;
+            return data === undefined ? undefined : { data, kind: 'latest', key };
+        }
+
+        const normalData = this.normalQueue.shift();
+        if (normalData !== undefined) {
+            this.preferLatest = true;
+        }
+        return normalData === undefined ? undefined : { data: normalData, kind: 'normal' };
+    }
+
     /**
      * 両キューを空にし、flushing フラグをリセットする。
      * 接続切断時に呼び出してメモリを解放する。
@@ -75,6 +120,9 @@ export class SendQueue {
     clear(): void {
         this.priorityQueue = [];
         this.normalQueue = [];
+        this.latestQueue.clear();
+        this.latestOrder = [];
+        this.preferLatest = true;
         this.flushing = false;
     }
 
@@ -86,5 +134,10 @@ export class SendQueue {
     /** priority キューの現在の長さ */
     get priorityQueueLength(): number {
         return this.priorityQueue.length;
+    }
+
+    /** 最新値キューに登録されているコンテンツ数 */
+    get latestQueueLength(): number {
+        return this.latestOrder.length;
     }
 }

@@ -2,7 +2,7 @@ import { setLocale, currentLocale, applyI18n, t, type Locale, type TranslationKe
 import { arrayBufferToBase64 } from '../metaBinaryClient';
 import { TileImageUploader } from '../tileImageUploader';
 import { Manipulator } from '../manipulator';
-import { ClientCursor } from  '../clientCursor';
+import { ClientCursor } from '../clientCursor';
 import { AdminPendingBadge } from '../adminPendingBadge';
 
 import { WebSocketClient } from './websocket/WebSocketClient';
@@ -41,9 +41,9 @@ export class ChOWDERClient {
     private fps = 5;
     private lastTime = 0;
     private interval = 1000 / this.fps;
-    private nowModeNum  = 1; /* 編集中モード。1=contetn、2=display */
+    private nowModeNum = 1; /* 編集中モード。1=contetn、2=display */
 
-    private lastMousePos: {x: number, y: number} = {x: 0, y: 0};
+    private lastMousePos: { x: number, y: number } = { x: 0, y: 0 };
     private hasMouseMoved = false;
 
     private readonly wsClient: WebSocketClient;
@@ -150,7 +150,7 @@ export class ChOWDERClient {
                 this.displayManager.filterApprovedDisplaysByIds(displayIds.length > 0 ? displayIds : null);
                 this.refreshVDASettings(siteId);
             },
-            onDisplaySelect :() => this.onDisplaySelected("" ,null),
+            onDisplaySelect: () => this.onDisplaySelected("", null),
         });
 
         // Display 管理
@@ -170,10 +170,10 @@ export class ChOWDERClient {
             renderSiteGrid: (siteId) => this.renderSiteGrid(siteId),
             onDisplaySelected: (displayId, windowData) => this.onDisplaySelected(displayId, windowData),
             getCurrentSiteId: () => this.siteManager.currentSiteId,
-            getEditMode:() => this.nowModeNum,
+            getEditMode: () => this.nowModeNum,
             contentCreateUpdateStock: (elem) => this.contentManager.createUpdateStock(elem),
             getSelectedDisplayId: () => this.getSelectedDisplayId(),
-            renderAllSiteGrid:() =>this.renderAllSiteGrid(),
+            renderAllSiteGrid: () => this.renderAllSiteGrid(),
             getIsAdmin: () => this.auth.isAdmin(),
         });
 
@@ -193,8 +193,8 @@ export class ChOWDERClient {
             registerBroadcast: (method, handler) => this.wsClient.registerBroadcastHandler(method, handler),
             consumePendingProducer: (id) => this.liveStreamController.consumePendingProducer(id),
             handleNewProducer: (params, knownMetadata) => this.liveStreamController.handleNewProducer(params, this.contentManager.metadataList, knownMetadata),
-            getEditMode:() => this.nowModeNum,
-            showRightClickMenu:(e:MouseEvent) => this.showRightClickMenu(e),
+            getEditMode: () => this.nowModeNum,
+            showRightClickMenu: (e: MouseEvent) => this.showRightClickMenu(e),
             stopVideoFileByMetadata: (id: string) => this.liveStreamController.stopVideoFileByMetadata(id),
             stopLiveStreamByProducerId: (id: string) => this.liveStreamController.stopLiveStreamByProducerId(id),
             addVideoFile: (file: File, streamName: string) => this.liveStreamController.startVideoFileShareWithFile(file, streamName),
@@ -291,7 +291,7 @@ export class ChOWDERClient {
             previewDisplay: document.getElementById('preview-display-area'),
             siteGridOverlay: document.getElementById('site-grid-overlay') as SVGSVGElement | null,
             refreshDisplaysBtn: document.getElementById('refresh-displays-btn'),
-            waitApprovalWap:document.getElementById('waitApproval'),
+            waitApprovalWap: document.getElementById('waitApproval'),
             pendingDisplays: document.getElementById('pending-displays'),
             approvedDisplays: document.getElementById('approved-displays'),
             siteInDisplayList: document.getElementById('site-in-display-list'),
@@ -330,7 +330,7 @@ export class ChOWDERClient {
             createSiteBtn: document.getElementById('create-site-btn'),
             siteList: document.getElementById('site-list'),
             siteListD: document.getElementById('site-list-d'),
-            siteNameListHeader:document.getElementById("selectedSiteNameinList"),
+            siteNameListHeader: document.getElementById("selectedSiteNameinList"),
             beforeLoginView: document.getElementById('beforeLoginView'),
             loginedView: document.getElementById('loginedView'),
             contentInfo: document.getElementById('content-info'),
@@ -373,20 +373,20 @@ export class ChOWDERClient {
             toggleVdaAttach: document.getElementById('toggle-vda-attach'),
             sitenameScm: document.getElementById('sitename-scm'),
             infoContentType: document.getElementById('info-content-type'),
-            displayNameInInfo:  document.getElementById('display-name-info'),
-            adminDisplayButton:  document.getElementById('btn-admin-display'),
-            adminUseryButton:  document.getElementById('btn-admin-user'),
-            adminDisplayPanel:  document.getElementById('admin-display-manage'),
-            adminUseryPanel:  document.getElementById('admin-user-manage'),
+            displayNameInInfo: document.getElementById('display-name-info'),
+            adminDisplayButton: document.getElementById('btn-admin-display'),
+            adminUseryButton: document.getElementById('btn-admin-user'),
+            adminDisplayPanel: document.getElementById('admin-display-manage'),
+            adminUseryPanel: document.getElementById('admin-user-manage'),
 
-            rightMenuPanel:document.getElementById('right-menu-panel'),
-            rightMenuWap:document.getElementById('right-menu-wap'),
-            rightMenutoTop:document.getElementById('right-menu-top'),
-            rightMenutoBack:document.getElementById('right-menu-back'),
-            rightMenuSetHide:document.getElementById('right-menu-hide'),
-            rightMenuSetVisible:document.getElementById('right-menu-visible'),
+            rightMenuPanel: document.getElementById('right-menu-panel'),
+            rightMenuWap: document.getElementById('right-menu-wap'),
+            rightMenutoTop: document.getElementById('right-menu-top'),
+            rightMenutoBack: document.getElementById('right-menu-back'),
+            rightMenuSetHide: document.getElementById('right-menu-hide'),
+            rightMenuSetVisible: document.getElementById('right-menu-visible'),
 
-            rulerDiv:document.getElementById('preview-ruler'),
+            rulerDiv: document.getElementById('preview-ruler'),
             langSwitcher: document.getElementById('lang-switcher'),
             loginLangSwitcher: document.getElementById('login-lang-switcher'),
             gotoChangePasswordBtn: document.getElementById('goto-change-password-btn'),
@@ -398,43 +398,46 @@ export class ChOWDERClient {
             chpwSubmitBtn: document.getElementById('chpw-submit-btn'),
             chpwCancelBtn: document.getElementById('chpw-cancel-btn'),
             clientCursorBase: document.getElementById('client-cursor-base'),
+            
+            showHelpButton: document.getElementById('btn-view-help'),
+            showAdminHelpButton: document.getElementById('btn-view-help-admin'),
         };
 
         //ルーラーエレメント
         const targetDiv = this.elements.rulerDiv;
-        for(let y = 0; y < 300; y++){
+        for (let y = 0; y < 300; y++) {
             const d = document.createElement("div");
             d.className = "rurler_y";
             d.style.left = "-5px";
-            d.style.top =  (y * 100) + "px";
+            d.style.top = (y * 100) + "px";
             targetDiv.appendChild(d);
-            if(y % 10 ==0){
+            if (y % 10 == 0) {
                 d.style.width = "60px";
-            } else if(y % 5 ==0){
+            } else if (y % 5 == 0) {
                 d.style.width = "40px";
             }
         }
-        for(let x = 0; x < 400; x++){
+        for (let x = 0; x < 400; x++) {
             const d = document.createElement("div");
             d.className = "rurler_x";
             d.style.left = (x * 100) + "px";
-            d.style.top =  "-5px";
+            d.style.top = "-5px";
             targetDiv.appendChild(d);
-            if(x % 10 ==0){
+            if (x % 10 == 0) {
                 d.style.height = "60px";
-            } else if(x % 5 ==0){
+            } else if (x % 5 == 0) {
                 d.style.height = "40px";
             }
         }
     }
 
-    private showRightClickMenu(e:MouseEvent):void{
+    private showRightClickMenu(e: MouseEvent): void {
         e.preventDefault();
         // マウスの位置にメニューを移動
         this.elements.rightMenuPanel.style.left = `${e.pageX}px`;
         this.elements.rightMenuPanel.style.top = `${e.pageY}px`;
         //表示/非表示切り替え
-        if(!Object.hasOwn(e, 'isVisible') || (e as any).isVisible == "true"){
+        if (!Object.hasOwn(e, 'isVisible') || (e as any).isVisible == "true") {
             this.elements.rightMenuSetHide.style.display = "block";
             this.elements.rightMenuSetVisible.style.display = "none";
         } else {
@@ -544,7 +547,7 @@ export class ChOWDERClient {
 
         this.elements.pendingDisplays?.addEventListener('click', (e: Event) => e.stopPropagation());
 
-        Array.from(this.elements.modalView.children).forEach( child => {
+        Array.from(this.elements.modalView.children).forEach(child => {
             const childEl = child as HTMLElement;
             childEl.addEventListener('click', (e: Event) => e.stopPropagation());
         });
@@ -570,7 +573,7 @@ export class ChOWDERClient {
                 if (el.matches('div') || el.matches('svg')) {
                     el.style.display = 'none';
                 }
-             });
+            });
             this.renderAllSiteGrid();
             this.elements.previewContent.style.zIndex = '10';
             this.elements.previewContent.style.opacity = '1.0';
@@ -583,7 +586,7 @@ export class ChOWDERClient {
         this.elements.changeModeDisplay?.addEventListener('click', () => {
             this.contentManager.resetSelectedMetadata();
             const selectedSite = this.siteManager.currentSiteId;
-            if(selectedSite == null || selectedSite.length == 0 ){
+            if (selectedSite == null || selectedSite.length == 0) {
                 this.siteManager.selectDefaultsite();
             }
             this.siteManager.filterSites(this.siteManager.currentSiteId);
@@ -639,11 +642,11 @@ export class ChOWDERClient {
         const getEditFontColor = () =>
             this.elements.editContentFontColor?.value ?? '#ffffff';
 
-        const pushContentUpdate = async (e:Event) => {
+        const pushContentUpdate = async (e: Event) => {
             const cd = this.contentManager.selectedMetadataId;
             if (!cd) return;
-            const elem = document.querySelector(`[data-metadata-id="${this.contentManager.selectedMetadataId}"]`)  as HTMLInputElement;
-            if (!elem) { console.log("notFound Content!! :" , cd);  return;}
+            const elem = document.querySelector(`[data-metadata-id="${this.contentManager.selectedMetadataId}"]`) as HTMLInputElement;
+            if (!elem) { console.log("notFound Content!! :", cd); return; }
 
             elem.dataset.worldX = this.elements.posX.value;
             elem.dataset.worldY = this.elements.posY.value;
@@ -655,7 +658,7 @@ export class ChOWDERClient {
             if (!updateData) return;
 
             //metaBinaryの更新が必要な場合1
-            if(this.elements.infoContentType.innerText == "text"){
+            if (this.elements.infoContentType.innerText == "text") {
                 const textVal = getEditTextValue();
                 const fontColor = getEditFontColor();
                 const bufferStr = JSON.stringify({
@@ -696,7 +699,7 @@ export class ChOWDERClient {
                 visible: Boolean((this.elements.toggleDisplayVisible as HTMLInputElement).checked),
                 originWidth: wd.pixelWidth,
                 originHeight: wd.pixelHeight,
-                zindex:1
+                zindex: 1
             });
         };
         this.elements.posXD?.addEventListener('change', pushDisplayUpdate);
@@ -718,19 +721,29 @@ export class ChOWDERClient {
         this.elements.rightMenuWap?.addEventListener('click', () => {
             this.elements.rightMenuWap.style.display = 'none';
         });
-         this.elements.rightMenuWap?.addEventListener('contextmenu', (e: MouseEvent) => {
+        this.elements.rightMenuWap?.addEventListener('contextmenu', (e: MouseEvent) => {
             e.preventDefault();
             this.elements.rightMenuWap.style.display = 'none';
         });
 
         this.elements.rightMenutoTop?.addEventListener('click', () => this.contentManager.contentMoveToMostTopBack(1));
         this.elements.rightMenutoTop?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentMoveToMostTopBack(1); });
-        this.elements.rightMenutoBack?.addEventListener('click', () =>this.contentManager.contentMoveToMostTopBack(-1));
+        this.elements.rightMenutoBack?.addEventListener('click', () => this.contentManager.contentMoveToMostTopBack(-1));
         this.elements.rightMenutoBack?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentMoveToMostTopBack(-1); });
-        this.elements.rightMenuSetHide?.addEventListener('click', () =>this.contentManager.contentSetVisible(false));
+        this.elements.rightMenuSetHide?.addEventListener('click', () => this.contentManager.contentSetVisible(false));
         this.elements.rightMenuSetHide?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentSetVisible(false); });
-        this.elements.rightMenuSetVisible?.addEventListener('click', () =>this.contentManager.contentSetVisible(true));
+        this.elements.rightMenuSetVisible?.addEventListener('click', () => this.contentManager.contentSetVisible(true));
         this.elements.rightMenuSetVisible?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentSetVisible(true); });
+        
+        this.elements.showHelpButton?.addEventListener('click', () => {
+            const locale = currentLocale();
+            this.elements.showHelpButton.href = 'manual/'+locale+'/3_1.html';
+        });
+        
+        this.elements.showAdminHelpButton?.addEventListener('click', () => {
+            const locale = currentLocale();
+            this.elements.showHelpButton.href = 'manual/'+locale+'/2_1.html';
+        });
     }
 
 
@@ -963,7 +976,7 @@ export class ChOWDERClient {
             const rect = this.elements.viewArea.getBoundingClientRect();
             const viewportLeft = rect.left;
             const viewportTop = rect.top;
-            await this.wsClient.sendCommand('UpdateMouseCursor', { socketId: this.auth.socketId, userId: this.auth.currentUser, data:{x:(this.lastMousePos.x - viewportLeft) / this.viewport.zoom, y:(this.lastMousePos.y - viewportTop) / this.viewport.zoom}  });
+            await this.wsClient.sendCommand('UpdateMouseCursor', { socketId: this.auth.socketId, userId: this.auth.currentUser, data: { x: (this.lastMousePos.x - viewportLeft) / this.viewport.zoom, y: (this.lastMousePos.y - viewportTop) / this.viewport.zoom } });
         }
     }
 
@@ -1039,10 +1052,10 @@ export class ChOWDERClient {
         }
     }
 
-    private getSelectedDisplayId():string {
+    private getSelectedDisplayId(): string {
         const displayName = this.elements.displayNameInInfo as HTMLElement;
         const refstr = displayName.dataset.displayId;
-        return refstr? refstr : "";
+        return refstr ? refstr : "";
     }
 
     private refreshVDASettings(siteId: string | null): void {
@@ -1110,10 +1123,10 @@ export class ChOWDERClient {
         }
     }
 
-    setAdminPanelDisplay (elm : HTMLElement): void{
+    setAdminPanelDisplay(elm: HTMLElement): void {
         const panelArray = [this.elements.adminDisplayPanel, this.elements.adminUseryPanel];
         panelArray.forEach(element => {
-            if(elm == element){
+            if (elm == element) {
                 element.style.display = "flex";
             } else {
                 element.style.display = "none";
@@ -1128,7 +1141,7 @@ export class ChOWDERClient {
         this.elements.viewArea.style.left = `${this.viewport.centerX}px`;
         this.elements.viewArea.style.top = `${this.viewport.centerY}px`;
         this.clientCursor.updateAllCursorScales(this.viewport.zoom);
-        const selectedId = this.nowModeNum == 1? this.contentManager.selectedMetadataId : this.displayManager.selectedDisplayId;
+        const selectedId = this.nowModeNum == 1 ? this.contentManager.selectedMetadataId : this.displayManager.selectedDisplayId;
         if (selectedId) {
             const elem = document.getElementById(`view-${selectedId}`);
             if (elem) this.manipulator.showManipulator(elem, this.elements.viewArea, this.viewport.zoom);
@@ -1360,11 +1373,11 @@ export class ChOWDERClient {
                 this.updateInitLoading('initLoadingComplete', 100);
 
                 // 全ての要素が読み終わったときの処理
-                window.setTimeout( ()=>{
+                window.setTimeout(() => {
                     this.hideInitLoading();
                     this.elements.changeModeContent.click();
                     this.fizZoomAllContent();
-                } ,33);
+                }, 33);
 
             }
         } catch (error: any) {
@@ -1529,7 +1542,7 @@ export class ChOWDERClient {
     }
 
     ///すべてのコンテンツが見えるようにズームを調整する
-    private fizZoomAllContent(): void{
+    private fizZoomAllContent(): void {
         let minX = 655350;
         let maxX = -655350;
         let minY = 655350;
@@ -1537,8 +1550,8 @@ export class ChOWDERClient {
 
         const contentItemsDom = [...this.elements.previewContent.children];
         contentItemsDom.forEach((contentDom: any) => {
-            let targetX= Number(contentDom.offsetLeft);
-            let targetY= Number(contentDom.offsetTop);
+            let targetX = Number(contentDom.offsetLeft);
+            let targetY = Number(contentDom.offsetTop);
             minX = Math.min(minX, targetX);
             minY = Math.min(minY, targetY);
             targetX += Number(contentDom.offsetWidth);
@@ -1777,7 +1790,7 @@ export class ChOWDERClient {
                             } else {
                                 // 画像等のレイアウト更新
                                 for (const metadata of this.contentManager.metadataList) {
-                                    if(metadata.metadataId == normalizedUpdatedMeta.metadataId){
+                                    if (metadata.metadataId == normalizedUpdatedMeta.metadataId) {
                                         metadata.posx = normalizedUpdatedMeta.posx;
                                         metadata.posy = normalizedUpdatedMeta.posy;
                                         metadata.width = normalizedUpdatedMeta.width;
@@ -1847,7 +1860,7 @@ export class ChOWDERClient {
             case 'ControllerDisconnected':
                 this.log('🔔 Controller disconnected', 'info');
                 if (message.params) {
-                    if(message.params != this.auth.socketId){
+                    if (message.params != this.auth.socketId) {
                         this.clientCursor.removeCursor(message.params);
                     }
                 }
@@ -1869,7 +1882,7 @@ export class ChOWDERClient {
                 //自分以外を対象とする
                 // console.log(message.params);
                 if (message.params) {
-                    if(message.params.socketId != this.auth.socketId){
+                    if (message.params.socketId != this.auth.socketId) {
                         this.clientCursor.updateCursor(message.params, this.viewport.zoom);
                     }
                 }

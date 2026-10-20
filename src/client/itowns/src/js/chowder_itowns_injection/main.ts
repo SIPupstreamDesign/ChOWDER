@@ -36,4 +36,6 @@ const originalRemoveEventListener = window.removeEventListener.bind(window);
  */
 window.injectChOWDER = (view: any, viewerDiv: HTMLElement, timeCallback: ((date: Date) => void) | null = null) => {
     new ITownsInjectionController(view, viewerDiv, timeCallback);
+    // DevToolsのコンソールからLOD判定用の値（view.camera._preSSE/.width/.height）を直接調査できるようにする。
+    (window as any).__itownsDebugView = view;
 };
