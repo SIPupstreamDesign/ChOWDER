@@ -228,6 +228,8 @@ describe('WindowMetaDataService', () => {
             assert.strictEqual(updated.posx, 100);
             assert.strictEqual(updated.posy, 200);
             assert.strictEqual(updated.virtualWidth, 1920); // 変更されていない
+            assert.strictEqual(added.revision, 1);
+            assert.strictEqual(updated.revision, 2);
         });
 
         it('contentVisible属性をtrueからfalseに更新できること', async () => {

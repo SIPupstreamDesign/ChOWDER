@@ -5,8 +5,11 @@
  * WebGL コネクタ（IFrameConnector）の生存管理を担う。
  */
 
-import { IFrameConnector } from './IFrameConnector';
+import { IFrameConnector } from '../common/IFrameConnector';
+import { cameraMirrorUpdates } from '../common/cameraMirrorUpdates';
+import { isCameraRevision, type CameraRevision } from '../../common/cameraState';
 import { virtualToWindowCoordinates, type ContentMetadata, type WindowMetaData } from './contentCoordinates';
+import { TileImageRenderer, type TileImageMetadata } from './TileImageRenderer';
 import { resizeTextElem } from '../common/textUtils';
 
 /** sendCommand の型エイリアス */
@@ -14,15 +17,21 @@ export type SendCommandFn = (method: string, params?: any) => Promise<any>;
 
 /** ContentRenderer が DisplayClient に問い合わせる情報の取得関数 */
 export type GetWindowMetaFn = () => WindowMetaData | null;
+export type ReportIFrameInteractionFn = (metadataId: string, interaction: Record<string, unknown>) => void;
 
 export class ContentRenderer {
     /** webgl コンテンツの metadataId → { iframe, connector, contentMeta } マップ */
     private webglConnectors: Map<string, { iframe: HTMLIFrameElement; connector: IFrameConnector; contentMeta: ContentMetadata }> = new Map();
+    private readonly tileImageRenderer: TileImageRenderer;
 
     constructor(
         private readonly sendCommand: SendCommandFn,
         private readonly getWindowMeta: GetWindowMetaFn,
-    ) { }
+        private readonly reportIFrameInteraction?: ReportIFrameInteractionFn,
+        private readonly getDiagnosticSessionId: () => string | null = () => null,
+    ) {
+        this.tileImageRenderer = new TileImageRenderer(sendCommand, getWindowMeta);
+    }
 
     // ----------------------------------------------------------------
     // 画像
@@ -55,6 +64,22 @@ export class ContentRenderer {
             console.error('[ContentRenderer] Failed to parse text content:', e);
             elem.innerHTML = '<pre>(text content unavailable)</pre>';
         }
+    }
+
+    resizeTextContent(elem: HTMLElement): void {
+        const preElem = elem.querySelector('pre');
+        if (preElem === null) {
+            return;
+        }
+
+        const height = elem.clientHeight > 0
+            ? elem.clientHeight
+            : parseFloat(elem.style.height);
+        if (!Number.isFinite(height) || height <= 0) {
+            return;
+        }
+
+        resizeTextElem(preElem, height);
     }
 
     // ----------------------------------------------------------------
@@ -114,17 +139,30 @@ export class ContentRenderer {
                 (iframe.contentWindow as any).chowder_itowns_view_type = 'display';
             } catch (_) { /* cross-origin guard */ }
 
-            const connector = new IFrameConnector(iframe);
+            const connector = new IFrameConnector(iframe, 'display');
             this.webglConnectors.set(metadataId, { iframe, connector, contentMeta: metadata });
+            connector.on('DiagnosticInteraction', (_error, params) => {
+                if (typeof params === 'object' && params !== null) {
+                    this.reportIFrameInteraction?.(metadataId, params as Record<string, unknown>);
+                }
+            });
+            const reportFrameFocus = (event: FocusEvent): void => {
+                this.reportIFrameInteraction?.(metadataId, {
+                    type: `iframe-${event.type}`,
+                    diagnosticSessionId: this.getDiagnosticSessionId(),
+                    isTrusted: event.isTrusted,
+                    target: { tagName: 'IFRAME', metadataId },
+                });
+            };
+            if (this.getDiagnosticSessionId() !== null) {
+                iframe.addEventListener('focus', reportFrameFocus);
+                iframe.addEventListener('blur', reportFrameFocus);
+            }
             connector.connect(() => {
                 if (content.cameraWorldMatrix && content.cameraParams) {
                     try {
-                        connector.send('UpdateCamera', {
-                            mat: JSON.parse(content.cameraWorldMatrix),
-                            params: JSON.parse(content.cameraParams),
-                        }, () => {
-                            this.sendInitLayers(connector, content);
-                        });
+                        cameraMirrorUpdates.restore(connector, { ...content, metadataId });
+                        this.sendInitLayers(connector, content);
                     } catch (e) {
                         this.sendInitLayers(connector, content);
                     }
@@ -144,7 +182,12 @@ export class ContentRenderer {
         const webgl = this.webglConnectors.get(metadataId);
         if (!webgl) return;
         // Display モード: setViewOffset は使わず、elem サイズ = document.body サイズ でフルレンダリング
-        webgl.connector.send('Resize', { displayMode: true });
+        const resizeParams: Record<string, unknown> = { displayMode: true };
+        const diagnosticSessionId = this.getDiagnosticSessionId();
+        if (diagnosticSessionId !== null) {
+            resizeParams.diagnosticSessionId = diagnosticSessionId;
+        }
+        webgl.connector.send('Resize', resizeParams);
     }
 
     /**
@@ -218,16 +261,30 @@ export class ContentRenderer {
     /**
      * WebGL コネクタへカメラ更新を転送
      */
-    sendWebGLCameraUpdate(metadataId: string, cameraWorldMatrix: string, cameraParams: string): void {
+    sendWebGLCameraUpdate(
+        metadataId: string,
+        cameraWorldMatrix: string,
+        cameraParams: string,
+        diagnostic?: { diagnosticId: string; diagnosticSessionId: string },
+        onDiagnostic?: (result: any) => void,
+        revision?: CameraRevision,
+    ): void {
+        if (!isCameraRevision(revision)) {
+            return;
+        }
+        if (!cameraMirrorUpdates.remember({ ...revision, metadataId, cameraWorldMatrix, cameraParams, ...diagnostic })) {
+            return;
+        }
         const webgl = this.webglConnectors.get(metadataId);
         if (!webgl) return;
         try {
-            const cameraMatrix = JSON.parse(cameraWorldMatrix);
-            const cameraParameters = JSON.parse(cameraParams);
-            webgl.connector.send('UpdateCamera', {
-                mat: cameraMatrix,
-                params: cameraParameters,
-            });
+            cameraMirrorUpdates.send(webgl.connector, metadataId, onDiagnostic
+                ? (error, result) => {
+                    if (!error) {
+                        onDiagnostic(result);
+                    }
+                }
+                : undefined);
         } catch (e) {
             console.error('[ContentRenderer] UpdateCamera parse error:', e);
         }
@@ -274,150 +331,16 @@ export class ContentRenderer {
     //  - ウィンドウ矩形 [0, 0, pixelWidth, pixelHeight] と非重複なタイルはリクエストしない
     // ----------------------------------------------------------------
 
-    async displayTileImage(elem: HTMLElement, meta: any): Promise<void> {
-        const { metadataId, xsplit, ysplit, reductionWidth, reductionHeight, orgWidth, orgHeight } = meta;
-        const TILE_SIZE: number = meta.tileSize;
-        if (TILE_SIZE === undefined || TILE_SIZE === null) {
-            console.error(`[ContentRenderer] displayTileImage: meta.tileSize is missing for metadataId=${metadataId}. Skipping render.`);
-            return;
-        }
-        const xs = xsplit || 1;
-        const ys = ysplit || 1;
-        const imgW = orgWidth || xs * TILE_SIZE;
-        const imgH = orgHeight || ys * TILE_SIZE;
-        const keyvalue = String(meta.keyvalue ?? metadataId);
+    async displayTileImage(elem: HTMLElement, meta: TileImageMetadata): Promise<void> {
+        await this.tileImageRenderer.update(elem, meta);
+    }
 
-        // LOD 判定
-        const windowMeta = this.getWindowMeta();
-        const coords = virtualToWindowCoordinates(meta.posx, meta.posy, meta.width, meta.height, windowMeta);
-        const useReduction =
-            coords.w <= (reductionWidth || 1920) &&
-            coords.h <= (reductionHeight || 1080);
+    destroyTileImage(metadataId: string): void {
+        this.tileImageRenderer.destroy(metadataId);
+    }
 
-        // DOM構造を初回のみ構築（以降は使い回す）
-        let container = elem.querySelector<HTMLElement>('.tile-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'tile-container';
-            container.style.position = 'relative';
-            container.style.width = '100%';
-            container.style.height = '100%';
-
-            // reduction image（常時バックグラウンド）
-            const redImg = document.createElement('img');
-            redImg.className = 'reduction_image';
-            redImg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill;';
-            container.appendChild(redImg);
-
-            // タイルグリッド（reduction の上に重ねる）
-            const tileGrid = document.createElement('div');
-            tileGrid.className = 'tile-grid';
-            tileGrid.style.cssText =
-                `position:absolute;left:0;top:0;width:100%;height:100%;` +
-                `display:grid;` +
-                `grid-template-columns:repeat(${xs},1fr);` +
-                `grid-template-rows:repeat(${ys},1fr);`;
-            for (let yi = 0; yi < ys; yi++) {
-                for (let xi = 0; xi < xs; xi++) {
-                    const cell = document.createElement('div');
-                    cell.style.overflow = 'hidden';
-                    const img = document.createElement('img');
-                    img.className = `tile_index_${yi * xs + xi}`;
-                    img.style.cssText = 'width:100%;height:100%;object-fit:fill;display:block;';
-                    cell.appendChild(img);
-                    tileGrid.appendChild(cell);
-                }
-            }
-            container.appendChild(tileGrid);
-
-            elem.innerHTML = '';
-            elem.appendChild(container);
-        }
-
-        const redImg = container.querySelector<HTMLImageElement>('.reduction_image')!;
-        const tileGrid = container.querySelector<HTMLElement>('.tile-grid')!;
-
-        // LOD分岐
-        if (useReduction) {
-            tileGrid.style.display = 'none';
-            redImg.style.display = 'block';
-
-            if (redImg.dataset.metadataId !== metadataId) {
-                try {
-                    const content = await this.sendCommand('GetContent', { metadataId });
-                    if (content?.binary) {
-                        if (redImg.src) URL.revokeObjectURL(redImg.src);
-                        const blob = new Blob([content.binary], { type: 'image/png' });
-                        redImg.src = URL.createObjectURL(blob);
-                        redImg.dataset.metadataId = metadataId;
-                    }
-                } catch (err) {
-                    console.error('[ContentRenderer] GetContent (reduction) failed:', err);
-                }
-            }
-            return;
-        }
-
-        // タイルモード: reduction は裏に維持（ちらつき防止のバックグラウンド）
-        redImg.style.display = 'block';
-        tileGrid.style.display = 'grid';
-
-        if (redImg.dataset.metadataId !== metadataId) {
-            this.sendCommand('GetContent', { metadataId })
-                .then(content => {
-                    if (content?.binary && redImg.dataset.metadataId !== metadataId) {
-                        if (redImg.src) URL.revokeObjectURL(redImg.src);
-                        const blob = new Blob([content.binary], { type: 'image/png' });
-                        redImg.src = URL.createObjectURL(blob);
-                        redImg.dataset.metadataId = metadataId;
-                    }
-                })
-                .catch(() => {/* ignore */ });
-        }
-
-        // 画面外スキップ + keyvalue キャッシュで必要タイルのみ取得
-        const scaleX = meta.width > 0 ? meta.width / imgW : 1;
-        const scaleY = meta.height > 0 ? meta.height / imgH : 1;
-        const pixW = windowMeta?.pixelWidth ?? window.innerWidth;
-        const pixH = windowMeta?.pixelHeight ?? window.innerHeight;
-
-        const fetchPromises: Promise<void>[] = [];
-
-        for (let yi = 0; yi < ys; yi++) {
-            for (let xi = 0; xi < xs; xi++) {
-                const tileIndex = yi * xs + xi;
-                const img = container.querySelector<HTMLImageElement>(`.tile_index_${tileIndex}`)!;
-
-                if (img.dataset.keyvalue === keyvalue && img.src) {
-                    continue;
-                }
-
-                const tvx = meta.posx + xi * TILE_SIZE * scaleX;
-                const tvy = meta.posy + yi * TILE_SIZE * scaleY;
-                const tvw = Math.min(TILE_SIZE, imgW - xi * TILE_SIZE) * scaleX;
-                const tvh = Math.min(TILE_SIZE, imgH - yi * TILE_SIZE) * scaleY;
-                const sc = virtualToWindowCoordinates(tvx, tvy, tvw, tvh, windowMeta);
-                const inView =
-                    sc.x + sc.w > 0 && sc.y + sc.h > 0 &&
-                    sc.x < pixW && sc.y < pixH;
-                if (!inView) continue;
-
-                fetchPromises.push(
-                    this.sendCommand('GetTileContent', { metadataId, tileIndex })
-                        .then(data => {
-                            if (data?.binary) {
-                                if (img.src) URL.revokeObjectURL(img.src);
-                                const blob = new Blob([data.binary], { type: 'image/png' });
-                                img.src = URL.createObjectURL(blob);
-                                img.dataset.keyvalue = keyvalue;
-                            }
-                        })
-                        .catch(() => {/* ignore */ })
-                );
-            }
-        }
-
-        await Promise.all(fetchPromises);
+    destroyAllTileImages(): void {
+        this.tileImageRenderer.destroyAll();
     }
 
     // ----------------------------------------------------------------

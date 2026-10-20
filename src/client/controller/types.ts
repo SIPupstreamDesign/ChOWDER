@@ -15,7 +15,7 @@ export interface ContentMetadata {
     posy: number;
     width: number;
     height: number;
-    zindex?:number;
+    zindex?: number;
     mime?: string;
     visible?: boolean;
     /** 作成日時（ISO 8601形式）。更新時は変更しない。 */
@@ -40,14 +40,11 @@ export interface ContentUpdateData {
 export interface DisplayUpdateData {
     type: 'display';
     windowId: string;
-    posx: number;
-    posy: number;
-    width: number;
-    height: number;
-    visible: boolean;
-    originWidth: number;
-    originHeight: number;
-    zindex: number;
+    posx?: number;
+    posy?: number;
+    virtualWidth?: number;
+    virtualHeight?: number;
+    contentVisible?: boolean;
 }
 
 export type UpdateStockData = ContentUpdateData | DisplayUpdateData;

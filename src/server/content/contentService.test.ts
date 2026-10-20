@@ -83,6 +83,57 @@ describe('ContentService', () => {
             assert.strictEqual(metadata.metadataId, customId);
         });
 
+        it('tileimage metadataはclient IDを無視してserver IDで作成し、binaryを保存しないこと', async (): Promise<void> => {
+            const clientMetadataId = 'client-tileimage-id';
+            const collisionId = 'existing-normal-content';
+            const original = await service.addContent({
+                metadata: {
+                    metadataId: collisionId,
+                    type: ContentType.IMAGE,
+                    creatorId: 'original-owner',
+                    width: 100,
+                    height: 100,
+                },
+                binary: Buffer.from('original-binary'),
+            });
+
+            const originalGenerateId = (service as any).generateId.bind(service);
+            (service as any).generateId = (): string => { return collisionId; };
+            await assert.rejects(async (): Promise<void> => {
+                await service.addContent({
+                    metadata: {
+                        metadataId: clientMetadataId,
+                        type: ContentType.TILEIMAGE,
+                        creatorId: 'other-owner',
+                        width: 200,
+                        height: 200,
+                    },
+                    binary: Buffer.alloc(0),
+                });
+            });
+            (service as any).generateId = originalGenerateId;
+
+            const stored = await service.getMetadata(collisionId);
+            assert.strictEqual(stored?.creatorId, 'original-owner');
+            assert.strictEqual(stored?.width, 100);
+            const storedContent = await service.getContent(collisionId);
+            assert.strictEqual(storedContent?.binary.toString(), 'original-binary');
+
+            const tileMetadata = await service.addContent({
+                metadata: {
+                    metadataId: clientMetadataId,
+                    type: ContentType.TILEIMAGE,
+                    creatorId: 'testuser',
+                    width: 100,
+                    height: 100,
+                },
+                binary: Buffer.alloc(0),
+            });
+            assert.notStrictEqual(tileMetadata.metadataId, clientMetadataId);
+            assert.strictEqual(await redis.exists(`content:binary:${tileMetadata.metadataId}`), 0);
+            assert.notStrictEqual(original.metadataId, tileMetadata.metadataId);
+        });
+
         it('binaryIdとmetadataIdが同じであること', async () => {
             const binary = Buffer.from('test data');
             const metadata = await service.addContent({
@@ -371,6 +422,48 @@ describe('ContentService', () => {
     });
 
     describe('getCameraData / updateCameraData', () => {
+        it('migrates complete saved cameras once while preserving the original record', { timeout: 5000 }, async (): Promise<void> => {
+            const content = await service.addContent({ metadata: { type: ContentType.WEBGL, creatorId: 'testuser' }, binary: Buffer.from('') });
+            const original = { metadataId: content.metadataId, cameraWorldMatrix: JSON.stringify([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), cameraParams: JSON.stringify({ fovy: 30, aspect: 16 / 9, near: 1, far: 10000, zoom: 1, filmOffset: 0, filmGauge: 35, preSSE: 900, viewportWidth: 1600, viewportHeight: 900 }) };
+            await service.getRedis().set(`content:camera:${content.metadataId}`, JSON.stringify(original));
+            await service.migrateLegacyCameraData();
+            const migrated = await service.getCameraData(content.metadataId);
+            assert.ok(migrated);
+            assert.equal(JSON.parse(migrated.cameraParams).projectionMatrix.length, 16);
+            assert.equal(migrated.cameraWorldMatrix, original.cameraWorldMatrix);
+            const stored = JSON.parse((await service.getRedis().get(`content:camera:${content.metadataId}`)) ?? '{}');
+            assert.equal(stored.legacyCameraData, JSON.stringify(original));
+            await service.migrateLegacyCameraData();
+            assert.deepEqual(await service.getCameraData(content.metadataId), migrated);
+        });
+
+        it('rejects reverse-order updates and revoked source leases', { timeout: 5000 }, async (): Promise<void> => {
+            const content = await service.addContent({ metadata: { type: ContentType.WEBGL, creatorId: 'testuser' }, binary: Buffer.from('') });
+            const first = await service.registerCameraSource(content.metadataId, 'first', 'socket1');
+            const identity = { ...first, sourceInstanceId: 'first', ownerSocketId: 'socket1', sourceSequence: 10 };
+            const newest = await service.updateCameraData(content.metadataId, 'newest', '{}', identity);
+            assert.ok(newest);
+            const stale = await service.updateCameraData(content.metadataId, 'stale', '{}', { ...identity, sourceSequence: 9 });
+            assert.equal(stale, null);
+            assert.equal((await service.getCameraData(content.metadataId))?.cameraWorldMatrix, 'newest');
+            const second = await service.registerCameraSource(content.metadataId, 'second', 'socket2');
+            assert.equal(second.generation, first.generation);
+            assert.ok(second.sourceEpoch > first.sourceEpoch);
+            await assert.rejects(service.updateCameraData(content.metadataId, 'revoked', '{}', { ...identity, sourceSequence: 11 }), /replaced/);
+            const accepted = await service.updateCameraData(content.metadataId, 'second', '{}', { ...second, sourceInstanceId: 'second', ownerSocketId: 'socket2', sourceSequence: 1 });
+            assert.equal(accepted?.revision, newest.revision + 1);
+        });
+
+        it('starts a new persistent generation when the content URL changes', { timeout: 5000 }, async (): Promise<void> => {
+            const content = await service.addContent({ metadata: { type: ContentType.WEBGL, creatorId: 'testuser', url: 'https://example.test/first' }, binary: Buffer.from('') });
+            const first = await service.registerCameraSource(content.metadataId, 'source', 'socket');
+            await service.updateCameraData(content.metadataId, 'first', '{}', { ...first, sourceInstanceId: 'source', ownerSocketId: 'socket', sourceSequence: 1 });
+            await service.updateMetadata(content.metadataId, { url: 'https://example.test/second' });
+            assert.equal(await service.getCameraData(content.metadataId), null);
+            const second = await service.registerCameraSource(content.metadataId, 'source', 'socket');
+            assert.ok(second.generation > first.generation);
+        });
+
         it('カメラデータを保存・取得できること', async () => {
             const added = await service.addContent({
                 metadata: { type: ContentType.WEBGL, creatorId: 'testuser', width: 800, height: 600 },
@@ -379,7 +472,9 @@ describe('ContentService', () => {
             const matrix = JSON.stringify({ elements: [1, 0, 0, 0] });
             const params = JSON.stringify({ fov: 60 });
 
-            const saved = await service.updateCameraData(added.metadataId, matrix, params);
+            const lease = await service.registerCameraSource(added.metadataId, 'source', 'socket');
+            const saved = await service.updateCameraData(added.metadataId, matrix, params, { ...lease, sourceInstanceId: 'source', ownerSocketId: 'socket', sourceSequence: 1 });
+            assert.ok(saved);
             assert.strictEqual(saved.metadataId, added.metadataId);
             assert.strictEqual(saved.cameraWorldMatrix, matrix);
             assert.strictEqual(saved.cameraParams, params);
@@ -401,7 +496,8 @@ describe('ContentService', () => {
                 binary: Buffer.from(''),
             });
             const matrix = JSON.stringify({ elements: [1, 0, 0, 0] });
-            await service.updateCameraData(added.metadataId, matrix, '{}');
+            const lease = await service.registerCameraSource(added.metadataId, 'source', 'socket');
+            await service.updateCameraData(added.metadataId, matrix, '{}', { ...lease, sourceInstanceId: 'source', ownerSocketId: 'socket', sourceSequence: 1 });
 
             // 削除前にカメラデータが存在することを確認
             const before = await service.getCameraData(added.metadataId);
@@ -514,7 +610,7 @@ describe('ContentService', () => {
         it('tileimageのコンテンツを削除するとタイルデータも削除されること', async () => {
             const added = await service.addContent({
                 metadata: { type: ContentType.TILEIMAGE, creatorId: 'testuser', width: 100, height: 100 },
-                binary: Buffer.from('reduction-image'),
+                binary: Buffer.alloc(0),
             });
 
             // タイルハッシュを直接書き込み（TileImageService の役割を模倣）

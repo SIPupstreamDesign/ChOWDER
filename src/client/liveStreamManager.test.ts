@@ -24,12 +24,23 @@ interface MockProducer {
     close(): void;
 }
 
+interface MockConsumer {
+    id: string;
+    kind: 'audio' | 'video';
+    producerId: string;
+    track: { id: string; kind: 'audio' | 'video'; readyState: string };
+    closed: boolean;
+    close(): void;
+}
+
 interface MockTransport {
     id: string;
     closed: boolean;
     producers: MockProducer[];
+    consumers: MockConsumer[];
     on(event: string, handler: any): void;
     produce(opts: any): Promise<MockProducer>;
+    consume(opts: any): Promise<MockConsumer>;
     close(): void;
 }
 
@@ -42,6 +53,7 @@ interface MockTransport {
  * beforeEach でリセットすることで、テスト間の干渉を防ぐ。
  */
 let createdTransports: MockTransport[] = [];
+let mockConsumerSeq = 0;
 
 /**
  * モック Transport を生成する。
@@ -61,6 +73,7 @@ function createMockTransport(id: string): MockTransport {
         id,
         closed: false,
         producers: [],
+        consumers: [],
 
         on(event: string, handler: any) {
             if (event === 'produce') {
@@ -95,6 +108,23 @@ function createMockTransport(id: string): MockTransport {
             };
             transport.producers.push(producer);
             return producer;
+        },
+
+        async consume(opts: any): Promise<MockConsumer> {
+            const consumer: MockConsumer = {
+                id: `consumer-${++mockConsumerSeq}`,
+                kind: opts.kind,
+                producerId: opts.producerId,
+                track: {
+                    id: `consumer-track-${mockConsumerSeq}`,
+                    kind: opts.kind,
+                    readyState: 'live',
+                },
+                closed: false,
+                close() { this.closed = true; },
+            };
+            transport.consumers.push(consumer);
+            return consumer;
         },
 
         close() {
@@ -132,10 +162,14 @@ function createMockDevice(): any {
  */
 function createCallbacks(): MediasoupCallbacks & {
     closeProducerIds: string[];
+    closeConsumerRequests: Array<{ consumerId: string | undefined; transportId: string | undefined }>;
+    consumeRequestCount: number;
 } {
     let transportSeq = 0;
     let producerSeq = 0;
     const closeProducerIds: string[] = [];
+    const closeConsumerRequests: Array<{ consumerId: string | undefined; transportId: string | undefined }> = [];
+    let consumeRequestCount = 0;
 
     const sendCommand = async (method: string, params: any): Promise<any> => {
         switch (method) {
@@ -156,8 +190,27 @@ function createCallbacks(): MediasoupCallbacks & {
             case 'Produce':
                 return { producerId: `producer-${++producerSeq}` };
 
+            case 'Consume':
+                consumeRequestCount += 1;
+                return {
+                    consumerId: `consumer-${consumeRequestCount}`,
+                    producerId: params.producerId,
+                    kind: 'video',
+                    rtpParameters: {},
+                };
+
+            case 'ResumeConsumer':
+                return {};
+
             case 'CloseProducer':
                 closeProducerIds.push(params.producerId as string);
+                return {};
+
+            case 'CloseConsumer':
+                closeConsumerRequests.push({
+                    consumerId: params.consumerId as string | undefined,
+                    transportId: params.transportId as string | undefined,
+                });
                 return {};
 
             default:
@@ -169,6 +222,8 @@ function createCallbacks(): MediasoupCallbacks & {
         sendCommand,
         log: (_msg: string, _type?: 'info' | 'error' | 'success') => { /* noop */ },
         closeProducerIds,
+        closeConsumerRequests,
+        get consumeRequestCount(): number { return consumeRequestCount; },
     };
 }
 
@@ -252,6 +307,7 @@ function patchBrowserAPIs() {
 
     save('document');
     save('URL');
+    save('MediaStream');
 
     (globalThis as any).document = {
         createElement(tag: string) {
@@ -264,6 +320,17 @@ function patchBrowserAPIs() {
         },
         getElementById: (_id: string) => null,
         body: { appendChild(_el: any) { /* noop */ } },
+    };
+    (globalThis as any).MediaStream = class {
+        private readonly tracks: any[];
+
+        constructor(tracks: any[]) {
+            this.tracks = tracks;
+        }
+
+        getTracks(): any[] {
+            return this.tracks;
+        }
     };
 
     // URL.createObjectURL / revokeObjectURL を差し替え
@@ -317,6 +384,7 @@ describe('LiveStreamManager', () => {
     beforeEach(() => {
         // 状態のリセット
         createdTransports = [];
+        mockConsumerSeq = 0;
         createdVideoElements = [];
         trackSeq = 0;
         videoElSeq = 0;
@@ -330,6 +398,43 @@ describe('LiveStreamManager', () => {
     afterEach(async () => {
         restoreBrowserAPIs();
         await manager.cleanup().catch(() => { /* cleanup errors を無視 */ });
+    });
+
+    describe('consumeStream / closeConsumer', () => {
+        it('同じProducerの並行consumeを1つのConsumerにまとめる', { timeout: 5000 }, async (): Promise<void> => {
+            const firstPromise = manager.consumeStream('producer-live-1', DEFAULT_STREAM_CONFIG);
+            const secondPromise = manager.consumeStream('producer-live-1', DEFAULT_STREAM_CONFIG);
+
+            const [first, second] = await Promise.all([firstPromise, secondPromise]);
+            const recvTransport = createdTransports.find((transport) => {
+                return transport.consumers.length > 0;
+            });
+
+            assert.ok(recvTransport);
+            assert.strictEqual(recvTransport.consumers.length, 1);
+            assert.strictEqual(callbacks.consumeRequestCount, 1);
+            assert.strictEqual(first.kind, 'video');
+            assert.strictEqual(second.kind, 'video');
+        });
+
+        it('Producer単位でConsumerと受信Transportを閉じてサーバーへ通知する', { timeout: 5000 }, async (): Promise<void> => {
+            await manager.consumeStream('producer-live-2', DEFAULT_STREAM_CONFIG);
+            const recvTransport = createdTransports.find((transport) => {
+                return transport.consumers.length > 0;
+            });
+            assert.ok(recvTransport);
+            const consumer = recvTransport.consumers[0];
+
+            await manager.closeConsumer('producer-live-2');
+
+            assert.strictEqual(consumer.closed, true);
+            assert.strictEqual(recvTransport.closed, true);
+            assert.deepStrictEqual(callbacks.closeConsumerRequests, [{
+                consumerId: consumer.id,
+                transportId: recvTransport.id,
+            }]);
+            assert.strictEqual(manager.getStreamForExistingConsumer('producer-live-2'), null);
+        });
     });
 
     // ==========================================================

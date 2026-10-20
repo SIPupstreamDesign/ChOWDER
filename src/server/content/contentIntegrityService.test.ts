@@ -124,7 +124,7 @@ describe('ContentIntegrityService', () => {
         });
 
         it('正常なtileimage（metadata + binary + tile）は削除されないこと', async () => {
-            await writeMetadata(redis, 'tile1', { type: 'tileimage', binaryId: 'tile1' });
+            await writeMetadata(redis, 'tile1', { type: 'tileimage', binaryId: 'tile1', tileFinished: true });
             await writeBinary(redis, 'tile1');
             await writeTile(redis, 'tile1');
 
@@ -132,6 +132,25 @@ describe('ContentIntegrityService', () => {
 
             assert.strictEqual(result.totalDeleted, 0);
             assert.strictEqual(result.orphanedTiles.length, 0);
+        });
+
+        it('tileFinished=falseのtileimageと関連キーを回収すること', async (): Promise<void> => {
+            await writeMetadata(redis, 'incomplete-tile', {
+                type: 'tileimage',
+                binaryId: 'incomplete-tile',
+                tileFinished: false,
+            });
+            await writeBinary(redis, 'incomplete-tile');
+            await writeTile(redis, 'incomplete-tile');
+            await redis.set('content:thumbnail:incomplete-tile', Buffer.from('thumbnail'));
+
+            const result = await service.checkAndRepair();
+
+            assert.deepStrictEqual(result.incompleteTileimages, ['incomplete-tile']);
+            assert.strictEqual(await redis.exists('content:metadata:incomplete-tile'), 0);
+            assert.strictEqual(await redis.exists('content:binary:incomplete-tile'), 0);
+            assert.strictEqual(await redis.exists('content:tile:incomplete-tile'), 0);
+            assert.strictEqual(await redis.exists('content:thumbnail:incomplete-tile'), 0);
         });
     });
 
@@ -307,7 +326,7 @@ describe('ContentIntegrityService', () => {
             await writeTile(redis, 'orphan-tile-a');
             await writeTile(redis, 'orphan-tile-b');
             // 正常なtileimage（metadata + binary + tile すべてあり）
-            await writeMetadata(redis, 'normal-tile', { type: 'tileimage' });
+            await writeMetadata(redis, 'normal-tile', { type: 'tileimage', tileFinished: true });
             await writeBinary(redis, 'normal-tile');  // 縮小版バイナリ
             await writeTile(redis, 'normal-tile');
 

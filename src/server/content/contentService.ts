@@ -5,6 +5,7 @@
 
 import { Redis } from 'ioredis';
 import { randomBytes } from 'crypto';
+import { PerspectiveCamera } from 'three';
 import { REDIS_KEYS, REDIS_PATTERNS } from '../common/redisKeys';
 import {
     ContentMetadata,
@@ -20,12 +21,23 @@ import {
     compareContentMetadataForDisplayOrder,
     normalizeContentZIndex,
 } from '../../common/contentOrder';
+import { isCameraRevision, type CameraSourceLease, type CameraSourceUpdate } from '../../common/cameraState';
+
+interface StoredCamera extends ITownsCameraData {
+    sourceInstanceId: string;
+    sourceEpoch: number;
+    sourceSequence: number;
+    ownerSocketId: string;
+    sourceUrl: string;
+    legacyCameraData?: string;
+}
 
 /**
  * コンテンツサービスクラス
  */
 export class ContentService {
     private redis: Redis;
+    private readonly cameraQueues = new Map<string, Promise<void>>();
 
     constructor(redis: Redis) {
         this.redis = redis;
@@ -118,8 +130,8 @@ export class ContentService {
             throw new Error('creatorId is required');
         }
 
-        // メタデータIDの生成または取得
-        const metadataId = metadata.metadataId || this.generateId();
+        const isTileimage = metadata.type === ContentType.TILEIMAGE;
+        const metadataId = isTileimage ? this.generateId() : metadata.metadataId || this.generateId();
 
         // binaryIdはmetadataIdと同一（1対1対応）
         const binaryId = metadataId;
@@ -145,7 +157,22 @@ export class ContentService {
         };
         const normalizedMetadata = this.normalizeContentMetadata(fullMetadata);
 
-        // tileimage かつバイナリなし → メタデータのみ保存（タイルは UploadTileimage で後から格納）
+        if (isTileimage) {
+            if (binary !== undefined && binary !== null && binary.byteLength !== 0) {
+                throw new Error('Tileimage AddContent cannot include image binary data');
+            }
+            const createResult = await this.redis.set(
+                REDIS_KEYS.CONTENT.METADATA(metadataId),
+                JSON.stringify(normalizedMetadata),
+                'NX',
+            );
+            if (createResult !== 'OK') {
+                throw new Error(`Tileimage metadata ID collision: ${metadataId}`);
+            }
+            return normalizedMetadata;
+        }
+
+        // tileimage以外のバイナリなしコンテンツをメタデータのみ保存する。
         if (!binary) {
             await this.redis.set(
                 REDIS_KEYS.CONTENT.METADATA(metadataId),
@@ -204,7 +231,50 @@ export class ContentService {
     async getCameraData(metadataId: string): Promise<ITownsCameraData | null> {
         const str = await this.redis.get(REDIS_KEYS.CONTENT.CAMERA(metadataId));
         if (!str) return null;
-        return JSON.parse(str) as ITownsCameraData;
+        const camera: StoredCamera = JSON.parse(str);
+        const metadata = await this.getMetadata(metadataId);
+        if (!isCameraRevision(camera) || camera.cameraWorldMatrix === '' || metadata === null || camera.sourceUrl !== (metadata.url ?? '')) {
+            return null;
+        }
+        return {
+            metadataId,
+            generation: camera.generation,
+            revision: camera.revision,
+            cameraWorldMatrix: camera.cameraWorldMatrix,
+            cameraParams: camera.cameraParams,
+            sourceUrl: camera.sourceUrl,
+        };
+    }
+
+    async registerCameraSource(metadataId: string, sourceInstanceId: string, ownerSocketId: string): Promise<CameraSourceLease> {
+        return this.serializeCamera(metadataId, async (): Promise<CameraSourceLease> => {
+            const metadata = await this.getMetadata(metadataId);
+            if (metadata === null || metadata.type !== ContentType.WEBGL || sourceInstanceId.length === 0 || sourceInstanceId.length > 128) {
+                throw new Error('Invalid camera source registration');
+            }
+            const serialized = await this.redis.get(REDIS_KEYS.CONTENT.CAMERA(metadataId));
+            const previous: StoredCamera | null = serialized === null ? null : JSON.parse(serialized);
+            const sameContent = previous !== null && isCameraRevision(previous) && previous.sourceUrl === (metadata.url ?? '');
+            if (sameContent && previous.ownerSocketId === ownerSocketId && previous.sourceInstanceId === sourceInstanceId) {
+                return { generation: previous.generation, sourceEpoch: previous.sourceEpoch };
+            }
+            const generation = sameContent ? previous.generation : await this.redis.incr(REDIS_KEYS.CONTENT.CAMERA_GENERATION);
+            const camera: StoredCamera = {
+                metadataId,
+                generation,
+                revision: sameContent ? previous.revision : 0,
+                cameraWorldMatrix: sameContent ? previous.cameraWorldMatrix : '',
+                cameraParams: sameContent ? previous.cameraParams : '',
+                sourceInstanceId,
+                sourceEpoch: sameContent ? previous.sourceEpoch + 1 : 1,
+                sourceSequence: 0,
+                ownerSocketId,
+                sourceUrl: metadata.url ?? '',
+                legacyCameraData: previous?.legacyCameraData,
+            };
+            await this.redis.set(REDIS_KEYS.CONTENT.CAMERA(metadataId), JSON.stringify(camera));
+            return { generation, sourceEpoch: camera.sourceEpoch };
+        });
     }
 
     /**
@@ -213,14 +283,91 @@ export class ContentService {
     async updateCameraData(
         metadataId: string,
         cameraWorldMatrix: string,
-        cameraParams: string
-    ): Promise<ITownsCameraData> {
-        const cameraData: ITownsCameraData = { metadataId, cameraWorldMatrix, cameraParams };
-        await this.redis.set(
-            REDIS_KEYS.CONTENT.CAMERA(metadataId),
-            JSON.stringify(cameraData)
-        );
-        return cameraData;
+        cameraParams: string,
+        source: CameraSourceUpdate,
+    ): Promise<ITownsCameraData | null> {
+        return this.serializeCamera(metadataId, async (): Promise<ITownsCameraData | null> => {
+            const serialized = await this.redis.get(REDIS_KEYS.CONTENT.CAMERA(metadataId));
+            const metadata = await this.getMetadata(metadataId);
+            if (serialized === null || metadata === null || source === undefined) {
+                throw new Error('Camera source is not registered');
+            }
+            const previous: StoredCamera = JSON.parse(serialized);
+            if (previous.generation !== source.generation || previous.sourceEpoch !== source.sourceEpoch
+                || previous.sourceInstanceId !== source.sourceInstanceId || previous.ownerSocketId !== source.ownerSocketId
+                || previous.sourceUrl !== (metadata.url ?? '')) {
+                throw new Error('Camera source has been replaced');
+            }
+            if (!Number.isSafeInteger(source.sourceSequence) || source.sourceSequence <= 0) {
+                throw new Error('Invalid camera sequence');
+            }
+            if (source.sourceSequence <= previous.sourceSequence) {
+                return null;
+            }
+            const stored: StoredCamera = { ...previous, cameraWorldMatrix, cameraParams, revision: previous.revision + 1, sourceSequence: source.sourceSequence };
+            await this.redis.set(REDIS_KEYS.CONTENT.CAMERA(metadataId), JSON.stringify(stored));
+            return { metadataId, generation: stored.generation, revision: stored.revision, cameraWorldMatrix, cameraParams, sourceUrl: stored.sourceUrl };
+        });
+    }
+
+    private async serializeCamera<Result>(metadataId: string, operation: () => Promise<Result>): Promise<Result> {
+        const previous = this.cameraQueues.get(metadataId) ?? Promise.resolve();
+        const result = previous.then(operation);
+        const settled = result.then((): void => { }, (): void => { });
+        this.cameraQueues.set(metadataId, settled);
+        try {
+            return await result;
+        } finally {
+            if (this.cameraQueues.get(metadataId) === settled) {
+                this.cameraQueues.delete(metadataId);
+            }
+        }
+    }
+
+    async migrateLegacyCameraData(): Promise<void> {
+        const keys = await this.redis.keys('content:camera:*');
+        for (const key of keys) {
+            const serialized = await this.redis.get(key);
+            if (serialized === null) {
+                continue;
+            }
+            try {
+                const legacy: { metadataId: string; cameraWorldMatrix: string; cameraParams: string } = JSON.parse(serialized);
+                if (isCameraRevision(legacy)) {
+                    continue;
+                }
+                const params: Record<string, unknown> = JSON.parse(legacy.cameraParams);
+                const matrix: unknown = JSON.parse(legacy.cameraWorldMatrix);
+                const metadata = await this.getMetadata(legacy.metadataId);
+                const numericFields = ['fovy', 'aspect', 'near', 'far', 'zoom', 'filmOffset', 'filmGauge', 'preSSE', 'viewportWidth', 'viewportHeight'];
+                if (metadata === null || metadata.type !== ContentType.WEBGL
+                    || !Array.isArray(matrix) || matrix.length !== 16 || !matrix.every((value): boolean => { return typeof value === 'number' && Number.isFinite(value); })
+                    || !numericFields.every((field): boolean => { return typeof params[field] === 'number' && Number.isFinite(params[field]); })) {
+                    throw new Error('Legacy camera is incomplete');
+                }
+                const camera = new PerspectiveCamera(Number(params.fovy), Number(params.aspect), Number(params.near), Number(params.far));
+                camera.zoom = Number(params.zoom);
+                camera.filmOffset = Number(params.filmOffset);
+                camera.filmGauge = Number(params.filmGauge);
+                camera.updateProjectionMatrix();
+                const migrated: StoredCamera & { legacyCameraData: string } = {
+                    metadataId: legacy.metadataId,
+                    generation: await this.redis.incr(REDIS_KEYS.CONTENT.CAMERA_GENERATION),
+                    revision: 1,
+                    sourceEpoch: 0,
+                    sourceSequence: 0,
+                    sourceInstanceId: '',
+                    ownerSocketId: '',
+                    sourceUrl: metadata.url ?? '',
+                    cameraWorldMatrix: legacy.cameraWorldMatrix,
+                    cameraParams: JSON.stringify({ ...params, cameraType: 'perspective', projectionMatrix: camera.projectionMatrix.toArray(), view: null }),
+                    legacyCameraData: serialized,
+                };
+                await this.redis.set(key, JSON.stringify(migrated));
+            } catch (error: unknown) {
+                console.error('[CameraMigration] Preserving unconvertible camera', key, error);
+            }
+        }
     }
 
     /**

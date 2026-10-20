@@ -6,13 +6,14 @@
  */
 
 import { ITownsMetaData, LayerData, RangeBar } from './types/types';
-import { IFrameConnector } from './iframe/iframeConnector';
+import { IFrameConnector } from '../common/IFrameConnector';
 import { LayerList } from './gui/layerList';
 import { LayerProperty } from './gui/layerProperty';
 import { LayerDialog } from './gui/layerDialog';
 import { TimelineSettingDialog } from './gui/timelineSettingDialog';
 import { ITownsCommand } from './commands/itownsCommands';
 import { ITownsConstants } from './constants/layerConstants';
+import type { CameraSourceLease } from '../../common/cameraState';
 
 // ===== MetaBinary ユーティリティ =====
 
@@ -64,6 +65,18 @@ interface ContentEntry {
     meta?: ITownsMetaData;
 }
 
+interface CameraUpdatePayload {
+    sourceInstanceId: string;
+    sourceSequence: number;
+    metadataId?: string;
+    id?: string;
+    cameraWorldMatrix: any;
+    cameraParams: any;
+    diagnosticId?: string;
+    diagnosticSessionId?: string;
+    instanceId?: string;
+}
+
 // ===== ITowns2Client =====
 
 class ITowns2Client {
@@ -74,6 +87,16 @@ class ITowns2Client {
     private receivers = new Map<string, (params: any) => void>();
     private isDisconnect = false;
     private debounceUpdateMetaTimer: ReturnType<typeof setTimeout> | null = null;
+    private diagnosticSessionId: string | null = null;
+    private lastDiagnosticCameraSendTime = 0;
+    private readonly diagnosticInstanceId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    private diagnosticSequence = 0;
+    private cameraSourceSequence = 0;
+    private cameraLease: Promise<CameraSourceLease> | null = null;
+    private cameraLeaseMetadataId: string | null = null;
+    private latestCameraPayload: CameraUpdatePayload | null = null;
 
     // カメラ更新スロットル用
     private lastCameraSendTime = 0;
@@ -149,6 +172,7 @@ class ITowns2Client {
             onConnected?.();
         };
         this.ws.onclose = () => {
+            this.cameraLease = null;
             if (!this.isDisconnect) {
                 setTimeout(() => this.connect(onConnected), 2000);
             }
@@ -204,7 +228,7 @@ class ITowns2Client {
         }
     }
 
-    private sendCommand(method: string, params: any, cb: Callback = () => {}): void {
+    private sendCommand(method: string, params: any, cb: Callback = () => { }): void {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             cb(-1, null);
             return;
@@ -215,13 +239,13 @@ class ITowns2Client {
         this.ws.send(JSON.stringify(req));
     }
 
-    private sendCommandDebounced(method: string, params: any, cb: Callback = () => {}): void {
+    private sendCommandDebounced(method: string, params: any, cb: Callback = () => { }): void {
         // UpdateMetaData はデバウンス
         if (this.debounceUpdateMetaTimer != null) clearTimeout(this.debounceUpdateMetaTimer);
         this.debounceUpdateMetaTimer = setTimeout(() => this.sendCommand(method, params, cb), 100);
     }
 
-    private sendBinaryCommand(method: string, meta: any, binary: ArrayBuffer, cb: Callback = () => {}): void {
+    private sendBinaryCommand(method: string, meta: any, binary: ArrayBuffer, cb: Callback = () => { }): void {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             cb(-1, null);
             return;
@@ -236,15 +260,23 @@ class ITowns2Client {
     // ===== 接続後の処理 =====
 
     private onConnectSuccess(): void {
-        this.sendCommand('GetGlobalSetting', {}, () => {/* ignore */});
+        this.sendCommand('GetGlobalSetting', {}, () => {/* ignore */ });
+        this.sendCommand('GetServerConfig', {}, (error, config) => {
+            if (error || config?.clientDiagnostics?.enabled !== true) {
+                return;
+            }
+            if (typeof config.clientDiagnostics.sessionId === 'string') {
+                this.diagnosticSessionId = config.clientDiagnostics.sessionId;
+            }
+        });
 
         // サーバーからのプッシュ登録
         this.receivers.set('UpdateMetaData', (payload: any) => {
             // サーバーは { metadata: updatedMetadata } 形式で送信する
             const list: any[] = Array.isArray(payload) ? payload
                 : payload?.metadata ? [payload.metadata]
-                : payload?.metaDataList ? payload.metaDataList
-                : [];
+                    : payload?.metaDataList ? payload.metaDataList
+                        : [];
             for (const meta of list) {
                 const id = meta.metadataId ?? meta.id;
                 const myId = this.metaData?.metadataId ?? this.metaData?.id;
@@ -306,6 +338,9 @@ class ITowns2Client {
 
     private onLoginSuccess(): void {
         this.hideLoginView();
+        if (this.latestCameraPayload !== null) {
+            this.sendVersionedCameraUpdate(this.latestCameraPayload);
+        }
         if (this.viewerView) this.viewerView.style.display = 'block';
         this.fetchContents();
         if (this.initialContent) {
@@ -354,12 +389,12 @@ class ITowns2Client {
      * 慣性移動中もほぼリアルタイムに伝わりつつ、最終位置も確実に届く。
      * UpdateCameraMatrix コマンドを使用する（UpdateMetaData とは別経路）。
      */
-    private sendCameraUpdateThrottled(payload: { metadataId?: string; id?: string; cameraWorldMatrix: any; cameraParams: any }): void {
+    private sendCameraUpdateThrottled(payload: CameraUpdatePayload): void {
         // トレイリングタイマーを常にリセット（最終フレームを確実に送る）
         if (this.cameraTrailTimer !== null) clearTimeout(this.cameraTrailTimer);
         this.cameraTrailTimer = setTimeout(() => {
             this.cameraTrailTimer = null;
-            this.sendCommand('UpdateCameraMatrix', payload);
+            this.sendVersionedCameraUpdate(payload);
             this.lastCameraSendTime = Date.now();
         }, ITowns2Client.CAMERA_INTERVAL_MS);
 
@@ -370,7 +405,7 @@ class ITowns2Client {
                 clearTimeout(this.cameraTrailTimer);
                 this.cameraTrailTimer = null;
             }
-            this.sendCommand('UpdateCameraMatrix', payload);
+            this.sendVersionedCameraUpdate(payload);
             this.lastCameraSendTime = now;
         }
     }
@@ -382,7 +417,10 @@ class ITowns2Client {
     // ===== IFrame 接続 =====
 
     private connectIFrame(iframe: HTMLIFrameElement): void {
-        this.iframeConnector = new IFrameConnector(iframe);
+        this.iframeConnector?.destroy();
+        this.cameraLease = null;
+        this.latestCameraPayload = null;
+        this.iframeConnector = new IFrameConnector(iframe, 'itowns');
         this.iframeConnector.connect(() => {
             this.iframeConnector!.on(ITownsCommand.AddLayer, (_err: any, params: LayerData[]) => {
                 this.excludeAndCacheCSV(params);
@@ -401,7 +439,7 @@ class ITowns2Client {
                 this.layerList?.initLayerSelectList(params);
             });
 
-            this.iframeConnector!.on(ITownsCommand.DeleteLayer, () => {});
+            this.iframeConnector!.on(ITownsCommand.DeleteLayer, () => { });
 
             this.iframeConnector!.on(ITownsCommand.UpdateLayer, (_err: any, params: LayerData[]) => {
                 this.excludeAndCacheCSV(params);
@@ -455,12 +493,22 @@ class ITowns2Client {
         if (this.metaData) {
             // カメラ更新時は UpdateCameraMatrix でカメラ情報のみ送信。
             // this.metaData にはカメラを保持しないので UpdateMetaData けに混入しない。
-            const payload = {
+            const payload: CameraUpdatePayload = {
+                sourceInstanceId: this.diagnosticInstanceId,
+                sourceSequence: ++this.cameraSourceSequence,
                 metadataId: this.metaData.metadataId,
                 id: this.metaData.id,
                 cameraWorldMatrix: mat,
                 cameraParams: params,
             };
+            const now = Date.now();
+            if (this.diagnosticSessionId !== null && now - this.lastDiagnosticCameraSendTime >= 100) {
+                this.diagnosticSequence += 1;
+                payload.diagnosticSessionId = this.diagnosticSessionId;
+                payload.diagnosticId = `${this.diagnosticSessionId}:${this.diagnosticInstanceId}:${this.diagnosticSequence}`;
+                payload.instanceId = this.diagnosticInstanceId;
+                this.lastDiagnosticCameraSendTime = now;
+            }
             this.sendCameraUpdateThrottled(payload);
         } else {
             this.initialMatrix = mat;
@@ -469,6 +517,37 @@ class ITowns2Client {
     }
 
     // ===== レイヤー操作 =====
+    private sendVersionedCameraUpdate(payload: CameraUpdatePayload): void {
+        const metadataId = payload.metadataId;
+        if (metadataId === undefined) {
+            return;
+        }
+        this.latestCameraPayload = payload;
+        if (this.cameraLease === null || this.cameraLeaseMetadataId !== metadataId) {
+            this.cameraLeaseMetadataId = metadataId;
+            this.cameraLease = new Promise<CameraSourceLease>((resolve, reject): void => {
+                this.sendCommand('RegisterCameraSource', { metadataId, sourceInstanceId: payload.sourceInstanceId }, (error, result): void => {
+                    if (error !== null && error !== undefined) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
+        }
+        const registration = this.cameraLease;
+        void registration.then((lease): void => {
+            if (this.cameraLease !== registration || this.latestCameraPayload !== payload) {
+                return;
+            }
+            this.sendCommand('UpdateCameraMatrix', { ...payload, ...lease }, (error): void => {
+                if (error !== null && error !== undefined) {
+                    console.error('[ITowns] Camera update rejected', error);
+                }
+            });
+        }).catch((error: unknown): void => { console.error('[ITowns] Camera registration failed', error); });
+    }
+
 
     addLayer(data: any): void {
         this.iframeConnector?.send(ITownsCommand.AddLayer, data);
@@ -756,6 +835,15 @@ class ITowns2Client {
 
     private loadContent(entry: ContentEntry): void {
         this.currentEntry = entry;
+        this.cameraLease = null;
+        this.latestCameraPayload = null;
+        this.metaData = entry.type === 'user' ? entry.meta ?? null : null;
+        this.initialMatrix = null;
+        this.initialCameraParams = null;
+        if (this.cameraTrailTimer !== null) {
+            clearTimeout(this.cameraTrailTimer);
+            this.cameraTrailTimer = null;
+        }
         const itownsEl = document.getElementById('itowns');
         if (!itownsEl) return;
 
@@ -769,11 +857,26 @@ class ITowns2Client {
         this.iframe.src = src;
         itownsEl.appendChild(this.iframe);
 
-        this.iframe.addEventListener('load', () => {
-            (this.iframe!.contentWindow as any).chowder_itowns_view_type = 'itowns';
-            this.connectIFrame(this.iframe!);
+        const iframe = this.iframe;
+        this.iframe.addEventListener('load', async (): Promise<void> => {
+            let restored = entry.meta;
             if (entry.type === 'user' && entry.meta) {
-                this.loadUserData(entry.meta);
+                restored = await new Promise<ITownsMetaData>((resolve, reject): void => {
+                    this.sendCommand('GetContent', { metadataId: entry.meta?.metadataId }, (error, result): void => {
+                        if (error !== null && error !== undefined) {
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
+                    });
+                });
+            }
+            if (this.iframe !== iframe) {
+                return;
+            }
+            this.connectIFrame(iframe);
+            if (entry.type === 'user' && restored !== undefined) {
+                this.loadUserData(restored);
             }
         });
     }
@@ -788,6 +891,8 @@ class ITowns2Client {
         const initialCamera = meta as any;
         if (initialCamera.cameraWorldMatrix) {
             this.iframeConnector?.send(ITownsCommand.UpdateCamera, {
+                generation: initialCamera.generation,
+                revision: initialCamera.revision,
                 mat: JSON.parse(initialCamera.cameraWorldMatrix),
                 params: JSON.parse(initialCamera.cameraParams ?? '{}'),
             });

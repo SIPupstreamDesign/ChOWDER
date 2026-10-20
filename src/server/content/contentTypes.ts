@@ -90,6 +90,9 @@ export interface ContentMetadata {
  * ContentMetadata には含まれない。
  */
 export interface ITownsCameraData {
+    sourceUrl: string;
+    generation: number;
+    revision: number;
     metadataId: string;
     cameraWorldMatrix: string; // Three.js Matrix4 の JSON 文字列
     cameraParams: string;      // カメラパラメータの JSON 文字列

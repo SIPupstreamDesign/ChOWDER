@@ -5,12 +5,21 @@ export type LogFn = (msg: string, type?: 'info' | 'error' | 'success') => void;
 export type SendCommandFn = (method: string, params?: any) => Promise<any>;
 export type SendBinaryCommandFn = (method: string, params: any, binary: ArrayBuffer) => Promise<any>;
 
+const TIMED_DISPLAY_COMMANDS = new Set([
+    'GetApprovedDisplays', 'GetWindowMetaData', 'GetPendingDisplays', 'GetDisplaysBySite', 'UpdateWindowMetaData',
+]);
+
+interface PendingRequest {
+    complete: (error: unknown, result?: unknown) => void;
+    timer?: ReturnType<typeof setTimeout>;
+}
+
 export class WebSocketClient {
     private ws: WebSocket | null = null;
     private _isConnected = false;
     private reconnectEnabled = true;
     private messageId = 1;
-    private callbacks = new Map<string, (error: any, result?: any) => void>();
+    private callbacks = new Map<string, PendingRequest>();
     private broadcastHandlers = new Map<string, (params: any) => void>();
 
     constructor(
@@ -18,7 +27,7 @@ export class WebSocketClient {
         private readonly onConnected: () => void,
         private readonly onDisconnected: () => void,
         private readonly logFn: LogFn,
-    ) {}
+    ) { }
 
     get isConnected(): boolean { return this._isConnected; }
     isReconnectEnabled(): boolean { return this.reconnectEnabled; }
@@ -46,6 +55,9 @@ export class WebSocketClient {
 
         this.ws.onclose = () => {
             this._isConnected = false;
+            for (const id of this.callbacks.keys()) {
+                this.completeRequest(id, new Error('Connection closed'));
+            }
             this.onDisconnected();
             if (this.reconnectEnabled) {
                 setTimeout(() => this.connect(), 5000);
@@ -80,21 +92,18 @@ export class WebSocketClient {
                 message = JSON.parse(data);
             }
 
-            if(message.method === 'UpdateMouseCursor') {
+            if (message.method === 'UpdateMouseCursor') {
 
-            }else{
+            } else {
                 this.logFn(`📨 Received: ${message.method || 'response'}`, 'info');
             }
-            
-            if (message.id && this.callbacks.has(message.id)) {
-                const callback = this.callbacks.get(message.id)!;
-                this.callbacks.delete(message.id);
 
+            if (message.id && this.callbacks.has(message.id)) {
                 if (message.error) {
                     this.logFn(`Error: ${JSON.stringify(message.error)}`, 'error');
-                    callback(message.error, null);
+                    this.completeRequest(message.id, message.error);
                 } else {
-                    callback(null, binary ? { ...message.result, binary } : message.result);
+                    this.completeRequest(message.id, null, binary ? { ...message.result, binary } : message.result);
                 }
             } else if (message.method) {
                 this.onBroadcast(message);
@@ -105,46 +114,48 @@ export class WebSocketClient {
     }
 
     sendCommand(method: string, params: any = {}): Promise<any> {
-        return new Promise((resolve, reject) => {
-            if (!this._isConnected || !this.ws) {
-                reject(new Error('Not connected'));
-                return;
-            }
-
-            const id = String(this.messageId++);
-            const message: JSONRPCMessage = { jsonrpc: '2.0', id, method, params };
-
-            this.callbacks.set(id, (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-            });
-
-            if(method === 'UpdateMouseCursor') {
-            }else {
-                this.logFn(`📤 Sending: ${method}`, 'info');
-            }
-            this.ws!.send(JSON.stringify(message));
+        return this.request(method, (socket, id): void => {
+            socket.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
         });
     }
 
     sendBinaryCommand(method: string, params: any, binary: ArrayBuffer): Promise<any> {
-        return new Promise((resolve, reject) => {
-            if (!this._isConnected || !this.ws) {
-                reject(new Error('Not connected'));
-                return;
-            }
+        return this.request(method, (socket, id): void => {
+            socket.send(createMetaBinary({ jsonrpc: '2.0', id, method, params }, binary));
+        });
+    }
 
+    private completeRequest(id: string, error: unknown, result?: unknown): void {
+        const request = this.callbacks.get(id);
+        if (request === undefined) { return; }
+        this.callbacks.delete(id);
+        if (request.timer !== undefined) { clearTimeout(request.timer); }
+        request.complete(error, result);
+    }
+
+    private request(method: string, send: (socket: WebSocket, id: string) => void): Promise<unknown> {
+        return new Promise<unknown>((resolve, reject): void => {
+            const socket = this.ws;
+            if (!this._isConnected || socket === null) { reject(new Error('Not connected')); return; }
             const id = String(this.messageId++);
-            const message: JSONRPCMessage = { jsonrpc: '2.0', id, method, params };
-
-            this.callbacks.set(id, (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-                this.callbacks.delete(id);
-            });
-
-            const metaBinary = createMetaBinary(message, binary);
-            this.ws!.send(metaBinary);
+            const request: PendingRequest = {
+                complete: (error, result): void => {
+                    if (error !== null && error !== undefined) { reject(error); }
+                    else { resolve(result); }
+                },
+            };
+            if (TIMED_DISPLAY_COMMANDS.has(method)) {
+                request.timer = setTimeout((): void => {
+                    this.completeRequest(id, new Error(`${method} timed out after 10000ms; save outcome may be unknown`));
+                }, 10000);
+            }
+            this.callbacks.set(id, request);
+            try {
+                if (method !== 'UpdateMouseCursor') { this.logFn(`Sending: ${method}`, 'info'); }
+                send(socket, id);
+            } catch (error: unknown) {
+                this.completeRequest(id, error);
+            }
         });
     }
 

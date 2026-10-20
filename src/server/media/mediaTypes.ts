@@ -52,6 +52,7 @@ export interface ConsumerInfo {
     consumerId: string;
     socketId: string;       // 受信者のsocketId
     producerId: string;     // どのProducerを受信しているか
+    transportId: string;
     kind: 'audio' | 'video';
     created: Date;
 }

@@ -30,13 +30,13 @@ function makeMockCanvas() {
         height: 0,
         getContext(_type: string) {
             return {
-                drawImage() {},
-                fillRect() {},
+                drawImage() { },
+                fillRect() { },
                 fillStyle: '' as string,
                 font: '' as string,
                 textAlign: '' as string,
                 textBaseline: '' as string,
-                fillText() {},
+                fillText() { },
             };
         },
         toBlob(cb: (blob: Blob | null) => void) {
@@ -56,16 +56,16 @@ function makeDiv(id = '') {
             get(t, k) { return t[String(k)] ?? ''; },
         }),
         dataset,
-        classList: { add() {} },
+        classList: { add() { } },
         firstChild: null,
         children,
         appendChild(child: any) { children.push(child); return child; },
         insertBefore(child: any) { children.unshift(child); return child; },
-        addEventListener() {},
-        removeEventListener() {},
+        addEventListener() { },
+        removeEventListener() { },
         querySelector() { return null; },
         querySelectorAll() { return []; },
-        remove() {},
+        remove() { },
         innerHTML: '',
     };
 }
@@ -82,10 +82,10 @@ function makeVideoElement() {
         loop: false,
         style: {} as Record<string, string>,
         dataset: {} as Record<string, string>,
-        classList: { add() {} },
-        addEventListener() {},
-        removeEventListener() {},
-        appendChild() {},
+        classList: { add() { } },
+        addEventListener() { },
+        removeEventListener() { },
+        appendChild() { },
     };
 }
 
@@ -117,7 +117,7 @@ function setupDom() {
             return null; // 既存要素なし
         },
         body: {
-            appendChild() {},
+            appendChild() { },
         },
     };
 }
@@ -158,14 +158,14 @@ function makeMinimalDeps(
         metadataList: { innerHTML: '' },
         // video-file sender path で使う
         _getVideoFilePreviewElement: (_producerId: string): HTMLVideoElement | null => null,
-        _setPendingVideoFileElemId: (_elemId: string, _producerId: string): void => {},
+        _setPendingVideoFileElemId: (_elemId: string, _producerId: string): void => { },
         _buildVideoFileOverlay: null,
     };
 
     const fakeLsm: any = {
         getStreamForProducer: () => null,
         getStreamForExistingConsumer: () => null,
-        attachStreamToElement() {},
+        attachStreamToElement() { },
         localStream: null,
     };
 
@@ -179,25 +179,25 @@ function makeMinimalDeps(
             spy.sendBinaryCalls.push({ method, params });
             return {};
         },
-        logFn: () => {},
+        logFn: () => { },
         manipulator: null,
         getZoom: () => 1,
-        pushUpdateStock: () => {},
+        pushUpdateStock: () => { },
         getSocketId: () => socketId,
         getCurrentUser: () => currentUser,
         getLiveStreamManager: () => fakeLsm,
         tileUploader: {
             // TileImageUploader の最小スタブ
         } as any,
-        registerBroadcast: () => {},
+        registerBroadcast: () => { },
         consumePendingProducer: overrides.consumePendingProducer ?? (() => null),
         handleNewProducer: async (params: any) => {
             spy.handleNewProducerCalls.push(params);
         },
         getEditMode: () => 0,
-        showRightClickMenu: (_e: MouseEvent) => {},
+        showRightClickMenu: (_e: MouseEvent) => { },
         stopVideoFileByMetadata: async (_id: string): Promise<boolean> => false,
-        addVideoFile: async (_file: File, _streamName: string): Promise<void> => {},
+        addVideoFile: async (_file: File, _streamName: string): Promise<void> => { },
     };
 }
 
@@ -208,6 +208,33 @@ function makeMinimalDeps(
 describe('ContentManager.displayContentOnViewArea', () => {
     beforeEach(() => setupDom());
     afterEach(() => teardownDom());
+
+    it('削除済みmetadataと同IDの重複プレビューを回収し、二重通知でも他contentを保持する', (): void => {
+        const spy: SpyCalls = { handleNewProducerCalls: [], sendBinaryCalls: [] };
+        const deps = makeMinimalDeps({}, spy);
+        const removedIds: string[] = [];
+        const previewElements = [
+            { id: 'view-tile-delete', remove: (): void => { removedIds.push('first'); } },
+            { id: 'view-tile-delete', remove: (): void => { removedIds.push('second'); } },
+            { id: 'view-other', remove: (): void => { removedIds.push('other'); } },
+        ];
+        deps.elements.previewContent.querySelectorAll = (): any[] => {
+            return previewElements.filter((element): boolean => {
+                return element.id !== 'view-tile-delete' || removedIds.length === 0;
+            });
+        };
+        const manager = new ContentManager(deps);
+        (manager as any)._metadataList = [
+            { metadataId: 'tile-delete', type: 'tileimage' },
+            { metadataId: 'other', type: 'image' },
+        ];
+
+        manager.applyContentDeletion('tile-delete');
+        manager.applyContentDeletion('tile-delete');
+
+        assert.deepStrictEqual(removedIds, ['first', 'second']);
+        assert.deepStrictEqual((manager as any)._metadataList, [{ metadataId: 'other', type: 'image' }]);
+    });
 
     describe('送信側 video-file: srcVideo が存在するとき captureAndSendLiveStreamThumbnail が呼ばれる', () => {
         it('captureAndSendLiveStreamThumbnail にメタデータIDと srcVideo が渡される', async () => {
@@ -238,7 +265,7 @@ describe('ContentManager.displayContentOnViewArea', () => {
             deps.elements._getVideoFilePreviewElement = (producerId: string): any => {
                 return producerId === 'prod-1' ? readyVideo : null;
             };
-            deps.elements._buildVideoFileOverlay = () => {};
+            deps.elements._buildVideoFileOverlay = () => { };
 
             const cm = new ContentManager(deps);
 

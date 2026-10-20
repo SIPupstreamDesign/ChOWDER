@@ -40,6 +40,8 @@ export const ITownsCommand = {
     CaptureScreen: "CaptureScreen",
     // ビューポートサイズ通知(iframe->parent, controllerモードのみ)
     ViewportResize: "ViewportResize",
+    // 診断用のユーザー操作trace(iframe->parent)
+    DiagnosticInteraction: "DiagnosticInteraction",
 } as const;
 
 export type ITownsCommandType = typeof ITownsCommand[keyof typeof ITownsCommand];

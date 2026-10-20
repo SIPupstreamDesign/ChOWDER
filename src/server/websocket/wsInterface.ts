@@ -92,6 +92,13 @@ export class WSInterface {
         this.wsConnector.on(Command.UpdateCameraMatrix, (data, resultCallback, socketId) => {
             this.commandHandler.updateCameraMatrix(socketId, data, resultCallback);
         });
+        this.wsConnector.on(Command.RegisterCameraSource, (data, resultCallback, socketId) => {
+            this.commandHandler.registerCameraSource(socketId, data, resultCallback);
+        });
+
+        this.wsConnector.on(Command.ReportClientDiagnostic, (data, resultCallback, socketId) => {
+            this.commandHandler.reportClientDiagnostic(socketId, data, resultCallback);
+        });
 
         // コンテンツ関連
         this.wsConnector.on(Command.AddContent, (data, resultCallback, socketId) => {
@@ -245,6 +252,10 @@ export class WSInterface {
 
         this.wsConnector.on(Command.Consume, (data, resultCallback, socketId) => {
             this.commandHandler.consume(socketId, data, resultCallback);
+        });
+
+        this.wsConnector.on(Command.CloseConsumer, (data, resultCallback, socketId) => {
+            this.commandHandler.closeConsumer(socketId, data, resultCallback);
         });
 
         this.wsConnector.on(Command.ResumeConsumer, (data, resultCallback, socketId) => {

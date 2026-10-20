@@ -1,4 +1,5 @@
 import type { ContentRenderer, RendererContext } from './BaseRenderer';
+import { adjustContentLayoutDimensions } from '../contentLayoutValues';
 
 /**
  * `live-stream` タイプのコンテンツを video 要素で描画するレンダラー。
@@ -38,33 +39,7 @@ export class LiveStreamRenderer implements ContentRenderer {
             if (video.videoWidth <= 0 || video.videoHeight <= 0) {
                 return;
             }
-            const aspect = video.videoHeight / video.videoWidth;
-            elem.dataset.contentAspect = String(aspect);
-            const newHeight = Math.round(Number(elem.dataset.width) * aspect);
-            elem.style.height = `${newHeight}px`;
-            elem.dataset.height = String(newHeight);
-            if (ctx.manipulator?.targetElement === elem) {
-                ctx.manipulator.setAspectRatio(aspect);
-                ctx.manipulator.moveManipulator(elem);
-            }
-            const metadataId = ctx.getValidMetadataIdFromElem(elem);
-            if (metadataId === null) {
-                return;
-            }
-            ctx.pushUpdateStock({
-                metadataId,
-                binaryId:   elem.dataset.binaryId ?? '',
-                type: 'content',
-                contentType: elem.dataset.type ?? '',
-                posx: Number(elem.dataset.worldX),
-                posy: Number(elem.dataset.worldY),
-                width: Number(elem.dataset.width),
-                height: newHeight,
-                visible: elem.dataset.visible !== 'false',
-                originWidth:  Number(elem.dataset.originWidth),
-                originHeight: Number(elem.dataset.originHeight),
-                zindex: Number(elem.style.zIndex),
-            });
+            this._syncVideoAspect(elem, video.videoWidth, video.videoHeight, ctx);
         }, { once: true });
 
         elem.appendChild(video);
@@ -155,11 +130,25 @@ export class LiveStreamRenderer implements ContentRenderer {
     ): void {
         const aspect = videoHeight / videoWidth;
         elem.dataset.contentAspect = String(aspect);
-        const newHeight = Math.round(Number(elem.dataset.width) * aspect);
+        const currentWidth = Number(elem.dataset.width);
+        const currentHeight = Number(elem.dataset.height);
+        const adjustedDimensions = adjustContentLayoutDimensions(
+            { width: currentWidth, height: currentHeight },
+            'width',
+            aspect,
+        );
+        if (ctx.manipulator?.targetElement === elem) {
+            ctx.manipulator.setAspectRatio(aspect);
+        }
+        if (adjustedDimensions === null) {
+            return;
+        }
+
+        // A late video ratio corrects height once from the latest user-selected width.
+        const newHeight = adjustedDimensions.height;
         elem.style.height = `${newHeight}px`;
         elem.dataset.height = String(newHeight);
         if (ctx.manipulator?.targetElement === elem) {
-            ctx.manipulator.setAspectRatio(aspect);
             ctx.manipulator.moveManipulator(elem);
         }
         const metadataId = ctx.getValidMetadataIdFromElem(elem);
@@ -168,7 +157,7 @@ export class LiveStreamRenderer implements ContentRenderer {
         }
         ctx.pushUpdateStock({
             metadataId,
-            binaryId:   elem.dataset.binaryId ?? '',
+            binaryId: elem.dataset.binaryId ?? '',
             type: 'content',
             contentType: elem.dataset.type ?? '',
             posx: Number(elem.dataset.worldX),
@@ -176,7 +165,7 @@ export class LiveStreamRenderer implements ContentRenderer {
             width: Number(elem.dataset.width),
             height: newHeight,
             visible: elem.dataset.visible !== 'false',
-            originWidth:  Number(elem.dataset.originWidth),
+            originWidth: Number(elem.dataset.originWidth),
             originHeight: Number(elem.dataset.originHeight),
             zindex: Number(elem.style.zIndex),
         });

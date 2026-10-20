@@ -43,7 +43,7 @@ export interface RendererContext {
     /** overlay 用のダミー要素スタイル文字列 */
     dmyElmStr: string;
     /** WebGL コネクタの Map（IFrameConnector を格納） */
-    webglConnectors: Map<string, { iframe: HTMLIFrameElement; connector: import('../../IFrameConnector').IFrameConnector }>;
+    webglConnectors: Map<string, { iframe: HTMLIFrameElement; connector: import('../../../common/IFrameConnector').IFrameConnector }>;
 }
 
 /**
